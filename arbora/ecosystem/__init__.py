@@ -1,7 +1,7 @@
 """Arbora's own ecosystem-governance modules (ARBORA-HOST-R008).
 
 Hosts the agent-manager-dashboard module moved from the agent runtime.
-Further AU-BOUNDARY-R014 modules land here incrementally, one
+Further MERISTEM-BOUNDARY-R014 modules land here incrementally, one
 ARBORA-HOST-R008 slice at a time.
 """
 

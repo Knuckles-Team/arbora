@@ -374,7 +374,7 @@ _SENSITIVE_CONFIG_KEY_RE = re.compile(
 )
 _CHILD_ENV_ALLOWLIST = frozenset(
     {
-        "AGENT_UTILITIES_CONFIG_DIR",
+        "ARBORA_CONFIG_DIR",
         "COMSPEC",
         "APPDATA",
         "HOME",
@@ -1786,7 +1786,7 @@ def _provider_child_sandbox_environment(
         "XDG_STATE_HOME": str(roots["state"]),
         "XDG_CACHE_HOME": str(roots["cache"]),
         "XDG_RUNTIME_DIR": str(roots["runtime"]),
-        "AGENT_UTILITIES_CONFIG_DIR": str(roots["config"]),
+        "ARBORA_CONFIG_DIR": str(roots["config"]),
         "ARBORA_DATA_DIR": str(roots["data"]),
         "ARBORA_CACHE_DIR": str(roots["cache"]),
         "TEMP": str(roots["temp"]),

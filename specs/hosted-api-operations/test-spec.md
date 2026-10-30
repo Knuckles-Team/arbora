@@ -47,7 +47,7 @@ Run `uv run pytest tests/api tests/fleet tests/mcp_server tests/gateway`, `uv ru
 - ARBORA-OPS-R052.4/.5/.6: `tests/integration/test_projection_scope.py` holds visible projections fixed while varying only hidden projections. Caller-visible response contents, counts, refusal details and trace fields must remain identical. A denied caller cannot read withheld counts through any audit view; its operator-audit request refuses without indirect count leakage. A separately authorized operator can read the withheld count. The typed refusal leaves no effect.
 - ARBORA-OPS-R053: the hot-path proof test passes and the typed refusal leaves no effect.
 
-R050/R051/R053 served fixtures cross shared invoke into public EG producer ports. They check engine verdict provenance and typed unavailability when a producer is absent. R051 uses EG-DECISION-ENGINE-R138 for scorer/verdict decisions and R133 for quotas/trace commits; AU only runs probes. R053 uses engine retrieval/context decisions and SDK source ingestion. Discovery fixtures use FLEET-R029 find/act/manage over R011/R013 registry machinery, with no retired fleet meta-tools or duplicate registry.
+R050/R051/R053 served fixtures cross shared invoke into public EG producer ports. They check engine verdict provenance and typed unavailability when a producer is absent. R051 uses MEDULLA-DECISION-ENGINE-R138 for scorer/verdict decisions and R133 for quotas/trace commits; AU only runs probes. R053 uses engine retrieval/context decisions and SDK source ingestion. Discovery fixtures use FLEET-R029 find/act/manage over R011/R013 registry machinery, with no retired fleet meta-tools or duplicate registry.
 
 ## Planned served acceptance for run reads
 

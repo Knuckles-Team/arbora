@@ -65,7 +65,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `ARBORA-
 - [x] Define `A2AAgentCapabilities.from_wired_authorities` plus `A2AStreamingAuthority`/`A2APushNotificationAuthority`/`A2ATransitionHistoryAuthority` runtime-checkable protocols in `arbora/a2a/models.py` (`ARBORA-A2A-R009`, `ARBORA-A2A-R009.1`). Default capabilities stay all-false; a non-conforming authority object raises `TypeError` instead of being silently accepted. Proven by `tests/a2a/test_models.py`.
 - [ ] Wait for `ARBORA-A2A` (context-budget subset) to land; do not implement the streaming cursor or push-trigger machinery ahead of it (`ARBORA-A2A-R014`).
 - [ ] Implement `message/stream` reading AU's task-event reader through its public port; the owner requirement and export remain unassigned; no local event-log copy (`ARBORA-A2A-R010`).
-- [ ] Implement `tasks/get` history read-through to epistemic-graph's durable kernel (`EG-DURABLE-KERNEL`) (`ARBORA-A2A-R011`).
+- [ ] Implement `tasks/get` history read-through to epistemic-graph's durable kernel (`MEDULLA-DURABLE-KERNEL`) (`ARBORA-A2A-R011`).
 - [ ] Add the `A2ATransitionHistoryUnavailable` typed refusal for an absent/unreachable history authority (`ARBORA-A2A-R012`).
   - [x] `ARBORA-A2A-R012.1`: landed inventory only — the protocol exists, the error type does not. Proven by `tests/a2a/test_models.py`.
   - [ ] `ARBORA-A2A-R012.2`: add the `A2ATransitionHistoryUnavailable` error type to `arbora/a2a/authority.py`.
@@ -76,13 +76,13 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `ARBORA-
 ## A2A context-budget tool-subset admission
 Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](plan.md) and [tests](test-spec.md).
 
-- [x] Open this spec, linking EG's `AgentAssemble` owner (`EG-DECISION-ENGINE-001`/`EG-DECISION-ENGINE-R036`) and AU's signed envelope owner (`AU-CONTROL-R035`) by stable ID.
-- [x] Open the AU owner row this door depends on: `AU-CONTROL-R035`, the signed `AgentTurnEnvelope`'s missing allowed-tool-subset field (agent-utilities PR #135, merged).
+- [x] Open this spec, linking EG's `AgentAssemble` owner (`EG-DECISION-ENGINE-001`/`MEDULLA-DECISION-ENGINE-R036`) and AU's signed envelope owner (`MERISTEM-CONTROL-R035`) by stable ID.
+- [x] Open the AU owner row this door depends on: `MERISTEM-CONTROL-R035`, the signed `AgentTurnEnvelope`'s missing allowed-tool-subset field (agent-utilities PR #135, merged).
 - [x] Add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models (`arbora/a2a/admission.py`), reusing the existing `_WireModel` base and `A2AContextBudget` (`ARBORA-A2A-R016`).
 - [x] Add `admit_tool_subset`, returning today's exact fail-closed `EG_ASSEMBLE_UNAVAILABLE` refusal (`ARBORA-A2A-R016.1`).
 - [x] Add the refusal unit test (`tests/a2a/test_admission.py`) proving the exact fields of that result (`ARBORA-A2A-R016.1`, `ARBORA-A2A-R019`).
 - [ ] **Prerequisite (owner repo: epistemic-graph):** `AgentAssemble` must stop returning unavailable before `admit_tool_subset` can derive a real subset (`ARBORA-A2A-R017`).
-- [ ] **Prerequisite (owner repo: agent-utilities, opened as `AU-CONTROL-R035`):** the signed `AgentTurnEnvelope` must carry and let a harness enforce an allowed-tool-subset field before an admitted decision can be cryptographically carried (`ARBORA-A2A-R018`).
+- [ ] **Prerequisite (owner repo: agent-utilities, opened as `MERISTEM-CONTROL-R035`):** the signed `AgentTurnEnvelope` must carry and let a harness enforce an allowed-tool-subset field before an admitted decision can be cryptographically carried (`ARBORA-A2A-R018`).
 - [ ] Once both prerequisites land: wire `admit_tool_subset` to the real EG assembly client and the signed envelope, add the admitted-path and partial/stale-refusal tests in [test-spec.md](test-spec.md), and replace `OrchestratorA2ARouter`'s and `WorkItemA2AAuthority`'s inline `A2AAssemblyUnavailable` raises with a call to this one admission authority.
 - [ ] **ARBORA-A2A-R016.2:** Admission request carries model profile and task class. Touches the file named in the requirement row.
 - [ ] **ARBORA-A2A-R016.3:** Admission decision carries the committed harness answer. Touches the file named in the requirement row.
@@ -131,11 +131,11 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
 
 - [ ] ARBORA-A2A-R010.1 — Wire the opt-in terminal read through shared task service and current session; validate producer bindings and explicit unavailable results.
 
-- [ ] **ARBORA-A2A-R001.3:** Back the served agent with the durable task store and serve caller-filtered `tasks/list`. Consumer: `TUI-RUNTIME-R012.3`.
-- [ ] **ARBORA-A2A-R001.4:** Refuse `message/stream` by type on the served agent, then serve turn events. Consumer: `TUI-RUNTIME-R012.1`.
-- [ ] **ARBORA-A2A-R001.5:** Accept bounded file parts on the served agent. Consumer: `TUI-RUNTIME-R012.5`.
+- [ ] **ARBORA-A2A-R001.3:** Back the served agent with the durable task store and serve caller-filtered `tasks/list`. Consumer: `TUIG-RUNTIME-R012.3`.
+- [ ] **ARBORA-A2A-R001.4:** Refuse `message/stream` by type on the served agent, then serve turn events. Consumer: `TUIG-RUNTIME-R012.1`.
+- [ ] **ARBORA-A2A-R001.5:** Accept bounded file parts on the served agent. Consumer: `TUIG-RUNTIME-R012.5`.
 - [x] **ARBORA-A2A-R001.6:** Serve non-blocking `message/send` with `configuration.blocking: false`; follow the task with `tasks/get`.
-- [ ] **ARBORA-A2A-R016.6:** Honour an allowed caller model preference and serve `models.list`. Consumer: `TUI-RUNTIME-R012.2`.
+- [ ] **ARBORA-A2A-R016.6:** Honour an allowed caller model preference and serve `models.list`. Consumer: `TUIG-RUNTIME-R012.2`.
 
 - [ ] **ARBORA-A2A-R001.5.1:** Serve bounded inline UTF-8 text files.
 - [ ] **ARBORA-A2A-R001.5.2:** Bind binary input to selected-model capabilities and atomic admission.

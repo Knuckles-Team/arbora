@@ -169,7 +169,9 @@ def _confidence_rollup(engine: Any, label: str) -> dict[str, Any] | None:
     if rows is None:
         return None
 
-    raise not_served("knowledge_graph.core.epistemic_row", "EG-DURABLE-KERNEL-R609")
+    raise not_served(
+        "knowledge_graph.core.epistemic_row", "MEDULLA-DURABLE-KERNEL-R609"
+    )
 
 
 def _posture() -> dict[str, Any]:

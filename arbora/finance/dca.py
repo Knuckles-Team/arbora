@@ -7,7 +7,7 @@ live mode. ``build_dca_proposal_key`` derives one deterministic proposal key
 per due occurrence from the plan's revision, so replay or clock drift can
 never produce two proposals for the same occurrence. ``record_dca_proposal``
 is the dedupe core, mirroring ``record_schedule_run``. Binding live-mode
-proposals to human approval and the AU-CONTEXT-R006 connector write-back
+proposals to human approval and the MERISTEM-CONTEXT-R006 connector write-back
 lease, and reporting a missed contribution, is GDM-07a follow-on work; this
 module owns only the plan model and the proposal dedupe record.
 """

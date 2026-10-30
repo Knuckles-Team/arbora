@@ -62,6 +62,7 @@ Check a task only after its linked code and tests land. A checked source task is
 - [x] T22 (ARBORA-FLEET-R029): Rename the internal `find_tools`/`load_tools`/`unload_tools`/`multiplexer_status` methods and comments in `arbora/fleet/` and `arbora/api/ops/fleet.py` to the intent operation names.
 - [x] **ARBORA-FLEET-R029.1:** Refuse an empty unscoped `fleet.catalog.search` as `INVALID_ARGUMENT` (HTTP 400), not an internal error.
 - [x] **ARBORA-FLEET-R015.1:** Classify a failed `fleet.call` by the cause inside the task group. Log that cause. Keep a remote tracing-service child in the catalog without keys.
+- [x] **ARBORA-FLEET-R015.3:** Deny an unreadable policy ledger as `ledger_unreadable` with its cause, never as a spent rate budget.
 - [x] T15 (ARBORA-FLEET-R026): Skip a registration without a component, log it, and report it in `multiplexer_status`.
 - [x] T16 (ARBORA-FLEET-R027): Add `arbora/fleet/onboarding.py`, the `onboard-fleet` command and the background boot pass.
 - [x] T17 (ARBORA-FLEET-R028): Renew fleet and self-served leases each pass with windowed idempotency keys; refresh the catalog after admission.
@@ -282,5 +283,6 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] `ARBORA-FLEET-R052.4.4`: Deliver the requirement in requirements.md.
 - [ ] `ARBORA-FLEET-R052.4.5`: Deliver the requirement in requirements.md.
 - [ ] `ARBORA-FLEET-R052.4.6`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-FLEET-R053`: Deliver the requirement in requirements.md.
 - [ ] `ARBORA-FLEET-R045`: Deliver the requirement in requirements.md.
 - [ ] `ARBORA-FLEET-R034.15`: Deliver the requirement in requirements.md.

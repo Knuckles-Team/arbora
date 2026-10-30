@@ -4,7 +4,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spe
 
 ## Existing wiring to reuse
 
-`arbora.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `arbora.gateway.graph_api.register_graph_routes` composes the REST host. `arbora.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `arbora.a2a` already has authenticated unary task methods. `arbora.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `epistemic-graph`. Decisions, context, traces and durable WorkItems belong to `epistemic-graph`. `agent-utilities` is the agent harness that applies engine decisions. Connector ingestion belongs to `agent-connector-sdk` (SDK-CONNECTOR-CONTROL-R005). Connector effects belong to the SDK and fleet. Arbora authenticates, composes, supervises, routes and projects.
+`arbora.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `arbora.gateway.graph_api.register_graph_routes` composes the REST host. `arbora.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `arbora.a2a` already has authenticated unary task methods. `arbora.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `epistemic-graph`. Decisions, context, traces and durable WorkItems belong to `epistemic-graph`. `agent-utilities` is the agent harness that applies engine decisions. Connector ingestion belongs to `agent-connector-sdk` (SCION-CONNECTOR-CONTROL-R005). Connector effects belong to the SDK and fleet. Arbora authenticates, composes, supervises, routes and projects.
 
 ## Component and data flow
 
@@ -57,7 +57,7 @@ The retirement inventory is a checked artifact produced from the existing host r
 
 ## Gateway carry-over: dashboard, Live Artifacts, widget
 
-Cross-repo IDs: AU-BOUNDARY-R001.2, AU-BOUNDARY-R001.3, AU-BOUNDARY-R001.7 (agent-utilities deletions); ARBORA-HOST-R005. Provenance: agent-utilities commits 0eb67c99c (dashboard router), 902f906ca (Live Artifacts router), 7717d2e62 (genius_agent widget).
+Cross-repo IDs: MERISTEM-BOUNDARY-R001.2, MERISTEM-BOUNDARY-R001.3, MERISTEM-BOUNDARY-R001.7 (agent-utilities deletions); ARBORA-HOST-R005. Provenance: agent-utilities commits 0eb67c99c (dashboard router), 902f906ca (Live Artifacts router), 7717d2e62 (genius_agent widget).
 
 Deleted dashboard router: prefix `/api/dashboard`. Every route except `/health` requires read capability; mutations require write capability. Capabilities: gateway:read, gateway:write, gateway:admin, admin. API-key callers are unrestricted:
 - GET `/layout` and PUT `/layout`: read and persist the dashboard layout (shared YAML, reads always go back to disk).
@@ -123,7 +123,7 @@ No route is missing. The capability resolver still imports internal agent-utilit
 
 Evidence: `arbora/api/registry/scopes.py` exports `FinanceScope`, `FleetScope`, `LoopsScope`, `OpsScope`; `arbora/api/policy/domain_scopes.py` lists `fleet:events` and `webui:{admin,maintainer,reader,user}`. The pinned engine `contract/scopes.json` (175 rows, the file `eg_binding._load_scopes` reads and `tests/api/test_registry_factory.py` checks for "unregistered EG scope") has no `gateway:*` row. So `gateway:read` and `gateway:write` are NOT registry scopes. They are identity capabilities that the dashboard resolves from the identity group capability map (`_dashboard_capabilities`). The earlier text calling them "already in the engine contract" was wrong and is corrected above.
 
-Decision: the artifact routes use the same dependencies as the dashboard routes (`_require_dashboard_read` for GET, `_require_dashboard_write` for POST, reused from `dashboard_api.py`, not copied). Behaviour matches sibling routes and no engine change is needed. Gateway scopes need no addition to the engine. `EG-IDENTITY-R007` registers `identity:admin`, `loops:read` and `loops:control` and is unrelated. The `loops:*` scopes are absent from the pinned `scopes.json` today. That is the concern of that row. Alternative rejected: map to registry scopes `webui:reader`/`webui:user`; those are the WebUI role namespace. That mapping creates a second authorization model for one gateway.
+Decision: the artifact routes use the same dependencies as the dashboard routes (`_require_dashboard_read` for GET, `_require_dashboard_write` for POST, reused from `dashboard_api.py`, not copied). Behaviour matches sibling routes and no engine change is needed. Gateway scopes need no addition to the engine. `MEDULLA-IDENTITY-R007` registers `identity:admin`, `loops:read` and `loops:control` and is unrelated. The `loops:*` scopes are absent from the pinned `scopes.json` today. That is the concern of that row. Alternative rejected: map to registry scopes `webui:reader`/`webui:user`; those are the WebUI role namespace. That mapping creates a second authorization model for one gateway.
 
 #### D4 Agent-utilities export for artifacts (CONFIRMED; proposed AU row)
 
@@ -131,7 +131,7 @@ Read `agent_utilities/knowledge_graph/live_artifacts/`. Public names: `LiveArtif
 
 Proposed agent-utilities row (orchestrator adds it; new file `agent_utilities/api/live_artifacts.py`, re-exported from `agent_utilities/api/__init__.py`):
 
-> `AU-BOUNDARY-R013.<n>` **Export the Live Artifact store, models and refresh service.** Re-export `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `LiveArtifactStore`, `get_live_artifact_store`, `RefreshService`, `RefreshResult`, `DataSource` and `kg_source_resolver` from `agent_utilities.knowledge_graph.live_artifacts` through `agent_utilities.api.live_artifacts`; delete the dead `install_kg_artifact_source`. Verification: an agent-utilities test imports each name from `agent_utilities.api` and the layout fence still passes.
+> `MERISTEM-BOUNDARY-R013.<n>` **Export the Live Artifact store, models and refresh service.** Re-export `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `LiveArtifactStore`, `get_live_artifact_store`, `RefreshService`, `RefreshResult`, `DataSource` and `kg_source_resolver` from `agent_utilities.knowledge_graph.live_artifacts` through `agent_utilities.api.live_artifacts`; delete the dead `install_kg_artifact_source`. Verification: an agent-utilities test imports each name from `agent_utilities.api` and the layout fence still passes.
 
 Because the AU resolver already re-runs `source_query`, ARBORA-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The arbora request model does not copy them.
 
@@ -145,8 +145,8 @@ Arbora must authenticate, route and project reads. It must not collect counters,
 
 [EG orchestration vocabulary](https://github.com/Knuckles-Team/epistemic-graph/tree/main/specs/orchestration-vocabulary) owns the trace and query contracts.
 [AU harness evolution](https://github.com/Knuckles-Team/agent-utilities/tree/main/specs/harness-evolution) owns run mechanisms.
-`AU-HARNESS-R017.3` collects counters. `AU-HARNESS-R017.4` forwards them through the ordered `_record_execution_trace` writer.
-`EG-ORCH-VOCAB-R009.15` through `.17` own validated ingestion and readback.
+`MERISTEM-HARNESS-R017.3` collects counters. `MERISTEM-HARNESS-R017.4` forwards them through the ordered `_record_execution_trace` writer.
+`MEDULLA-ORCH-VOCAB-R009.15` through `.17` own validated ingestion and readback.
 Those rows prove graph readback; they do not promise a dedicated `get_run_summary` engine method.
 The adapter must use a published engine client contract. Missing client support blocks implementation, not the entire operation registry.
 
@@ -157,12 +157,12 @@ Views must consume those fields without reading RDF names or guessing aliases.
 
 | Engine source | Arbora `runs.get` field | View meaning |
 |---|---|---|
-| `terminationReason`, `EG-ORCH-VOCAB-R009.1` | `termination_reason` | Recorded terminal reason |
-| `peakContextTokens`, `EG-ORCH-VOCAB-R009.2` | `peak_context_tokens` | Peak tokens, not current occupancy |
-| `contextBudgetTokens`, `EG-ORCH-VOCAB-R009.3` | `context_budget_tokens` | Run context budget |
-| `costUsd`, `EG-ORCH-VOCAB-R009.8` | `cost_usd` | This run's cost in USD |
-| `appliedHarnessConfig`, `EG-ORCH-VOCAB-R009.9` | `harness_config_ref`, `harness_config` | Committed decision reference and authorized projection |
-| AU `PlanState`, `AU-HARNESS-R014.1` | `current_plan` | Separate run-state snapshot described below |
+| `terminationReason`, `MEDULLA-ORCH-VOCAB-R009.1` | `termination_reason` | Recorded terminal reason |
+| `peakContextTokens`, `MEDULLA-ORCH-VOCAB-R009.2` | `peak_context_tokens` | Peak tokens, not current occupancy |
+| `contextBudgetTokens`, `MEDULLA-ORCH-VOCAB-R009.3` | `context_budget_tokens` | Run context budget |
+| `costUsd`, `MEDULLA-ORCH-VOCAB-R009.8` | `cost_usd` | This run's cost in USD |
+| `appliedHarnessConfig`, `MEDULLA-ORCH-VOCAB-R009.9` | `harness_config_ref`, `harness_config` | Committed decision reference and authorized projection |
+| AU `PlanState`, `MERISTEM-HARNESS-R014.1` | `current_plan` | Separate run-state snapshot described below |
 
 The applied configuration must resolve the recorded decision edge under the same caller authority.
 `harness_config` projects `context_policy`, `plan_scaffold` and `action_space`; it must not recompute the current configuration.
@@ -173,8 +173,8 @@ The adapter must reject malformed producer values rather than silently coerce th
 
 `RunMetricsParams` selects optional `model_profile_ref`, `task_class` and a bounded time window.
 The engine must apply filters before aggregation. Arbora must preserve the engine's grouping keys and evidence.
-`EG-ORCH-VOCAB-R010` defines solved as `final_answer` with `evaluationScore` equal to 1.0.
-`EG-ORCH-VOCAB-R010.1` supplies `success_rate`; `.3` supplies `overflow_rate`, grouped by model and task class.
+`MEDULLA-ORCH-VOCAB-R010` defines solved as `final_answer` with `evaluationScore` equal to 1.0.
+`MEDULLA-ORCH-VOCAB-R010.1` supplies `success_rate`; `.3` supplies `overflow_rate`, grouped by model and task class.
 `.2` supplies `cost_per_solved_task_usd`, grouped by model, task class and applied configuration reference.
 The numerator includes costs from all traces; the denominator includes solved traces only.
 Zero solved traces must yield null cost and explicit abstention, never zero, infinity or a mean per run.
@@ -194,7 +194,7 @@ Arbora must reject mismatched runs, malformed items and regressing revisions wit
 Unavailable, expired or inaccessible state must carry no items and must not appear current.
 The producer must define expiry and revision semantics before Arbora accepts a snapshot as current.
 
-`AU-HARNESS-R014.1` through `.5` own mutable scaffold state and injection outside stored history.
+`MERISTEM-HARNESS-R014.1` through `.5` own mutable scaffold state and injection outside stored history.
 They specify no public snapshot export, authority binding, revision or expiry contract today.
 The AU owner must extend R014 with that public read contract before this projection becomes available.
 Arbora must not invent an AU method, persist the scaffold, or reconstruct it from stored messages.
@@ -231,17 +231,17 @@ Types: `PolicyEntity`, `ConstitutionSource`, `PolicyChange`. Failure: `POLICY_DE
 
 Existing code: arbora/control_plane/policy/repository.py:100, :117, :129, :179; arbora/control_plane/policy/models.py:203; arbora/api/ops/policy.py:36; arbora/api/invoke/pipeline.py:198, :208, :218. Reachable today: no. `PolicyAuthority` has no production constructor.
 
-Decision: Arbora serves the operation and admits plans, and the engine decides violation. Rejected: a policy evaluator inside Arbora, which duplicates engine decisions. Cross-repository: EG-DECISION-ENGINE-R001 owns policy decisions; Arbora owns authenticated operation admission and transport. Clause interpretation requires a published engine producer contract, not an AU policy evaluator.
+Decision: Arbora serves the operation and admits plans, and the engine decides violation. Rejected: a policy evaluator inside Arbora, which duplicates engine decisions. Cross-repository: MEDULLA-DECISION-ENGINE-R001 owns policy decisions; Arbora owns authenticated operation admission and transport. Clause interpretation requires a published engine producer contract, not an AU policy evaluator.
 
 ## Scoped security-evaluation operation (ARBORA-OPS-R051)
 
-Data flow starts with `security.evaluate` over POST /api/v1/ops/{op_id}. `_effect` (arbora/api/invoke/pipeline.py:218) checks verified target authorization before calling new public EG selection/verdict adapters (EG-DECISION-ENGINE-R001/R138). The AU harness executes admitted probes. The engine returns the verdict, which is recorded in the audit record. Runtime limits and trace commits use EG-DECISION-ENGINE-R133; Decide itself remains read-only.
+Data flow starts with `security.evaluate` over POST /api/v1/ops/{op_id}. `_effect` (arbora/api/invoke/pipeline.py:218) checks verified target authorization before calling new public EG selection/verdict adapters (MEDULLA-DECISION-ENGINE-R001/R138). The AU harness executes admitted probes. The engine returns the verdict, which is recorded in the audit record. Runtime limits and trace commits use MEDULLA-DECISION-ENGINE-R133; Decide itself remains read-only.
 
 Types: `EvaluationGoal`, `EvaluationCatalog`, `EvaluationScope`, `Finding`. Failure: `SUBJECT_ACCESS_DENIED` before any attack runs.
 
 Existing code: arbora/security/security_policy_middleware.py:52; arbora/api/ops/registry_factory.py. Reachable today: no. Search terms used: red team, attack, scorer, jailbreak, target scope.
 
-Decision: EG owns catalog facts, selection and probe verdicts (EG-DECISION-ENGINE-R001/R138). AU executes the selected probes. Arbora admits by scope and serves the result. Reuse this R051 consumer instead of adding another security-evaluation rollup. Missing engine ports remain unavailable.
+Decision: EG owns catalog facts, selection and probe verdicts (MEDULLA-DECISION-ENGINE-R001/R138). AU executes the selected probes. Arbora admits by scope and serves the result. Reuse this R051 consumer instead of adding another security-evaluation rollup. Missing engine ports remain unavailable.
 
 ## Authorization-segmented virtual schema projections (ARBORA-OPS-R052)
 
@@ -251,7 +251,7 @@ Types: `SchemaProjection`. Failure: `SUBJECT_ACCESS_DENIED` or `UNAVAILABLE`.
 
 Existing code: arbora/api/ops/_common.py:106; arbora/api/http/openapi.py:1; arbora/control_plane/agents/repository.py:81. Reachable today: no for projections. Search terms used: virtual schema, schema_context, projection, authorization boundary.
 
-Decision: Arbora filters by the caller's verified grants over engine labels. Rejected: Arbora-side boundary inference. Cross-repository: EG-IDENTITY-R001, EG-FEDERATED-QUERY-R001; ARBORA-DATA-MARKET-R005 owns schema_context.
+Decision: Arbora filters by the caller's verified grants over engine labels. Rejected: Arbora-side boundary inference. Cross-repository: MEDULLA-IDENTITY-R001, MEDULLA-FEDERATED-QUERY-R001; ARBORA-DATA-MARKET-R005 owns schema_context.
 
 Caller-visible responses, counts, refusal details, traces and audit views reveal no uncovered projection, including indirectly through a withheld count. Such counts may exist only in a separately authorized operator audit that the denied caller cannot read. Served acceptance holds visible projections fixed while varying hidden projections. It checks that caller-visible fields stay unchanged. The denied caller's operator-audit read must refuse without count leakage. The separately authorized operator must be permitted to inspect the count.
 
@@ -263,13 +263,13 @@ Types: `InteractionSpace`, `CorpusBoundary`, `QueryDirectory`. Failure: `LOAD_CA
 
 Existing code: arbora/api/ops/retrieval.py:60, :77; arbora/control_plane/retrieval/service.py:37, :61. Reachable today: no for the governed retriever; yes for `retrieval.search`. Search terms used: bm25, top_k, interaction space, working dir, corpus.
 
-Decision: the engine ranks and Arbora bounds the space. Rejected: returning ranked snippets only. Cross-repository: EG-FEDERATED-QUERY-R001 supplies query results, EG-DECISION-ENGINE-R029 chooses retrieval plans, EG-DECISION-ENGINE-R137 supplies context limits, and SDK-CONNECTOR-CONTROL-R005 supplies connector ingestion. AU executes engine-directed exploration.
+Decision: the engine ranks and Arbora bounds the space. Rejected: returning ranked snippets only. Cross-repository: MEDULLA-FEDERATED-QUERY-R001 supplies query results, MEDULLA-DECISION-ENGINE-R029 chooses retrieval plans, MEDULLA-DECISION-ENGINE-R137 supplies context limits, and SCION-CONNECTOR-CONTROL-R005 supplies connector ingestion. AU executes engine-directed exploration.
 
 ## Versioned memory files (ARBORA-OPS-R024.4)
 
 ### Producer and existing boundary
 
-[EG-DURABLE-KERNEL-R085](https://github.com/Knuckles-Team/epistemic-graph/tree/c0b952776129fd509b9f87b411a298593c2591ec/specs/durable-graph-kernel) owns authoritative content, versions, conflicts and sync evidence.
+[MEDULLA-DURABLE-KERNEL-R085](https://github.com/Knuckles-Team/epistemic-graph/tree/c0b952776129fd509b9f87b411a298593c2591ec/specs/durable-graph-kernel) owns authoritative content, versions, conflicts and sync evidence.
 R085 is a producer definition. Its merge does not establish runtime availability.
 R084.3, R084.4 and R084.6 remain concurrency prerequisites, not a file-sync contract.
 Arbora owns hosted file projection, authenticated serving and materialization acknowledgments.
@@ -358,22 +358,22 @@ Existing R009/R013 delivery evidence does not prove these new memory-specific re
 
 ### WebUI consumer mapping
 
-[WEBUI-APPS-R031](https://github.com/Knuckles-Team/agent-webui/tree/main/specs/arbora-app-surface) remains the existing presentation owner.
+[OVERSTORY-APPS-R031](https://github.com/Knuckles-Team/agent-webui/tree/main/specs/arbora-app-surface) remains the existing presentation owner.
 This Arbora change does not edit or deliver WebUI requirements.
 
 | Consumer row | Arbora prerequisite | Required alignment |
 |---|---|---|
-| WEBUI-APPS-R031.2 | R024.4.1–.3 and .6 | `listMemoryFiles` uses memory.files.list; `saveMemoryFile` uses memory.files.save; exact content uses memory.files.read |
-| WEBUI-APPS-R031.3 | R024.4.2 and .6 | The real Files tab uses registered generated contracts through WebUI's `invoke` in `src/lib/arbora-api/invoke.ts` |
-| WEBUI-APPS-R031.4 | R024.4.3 and .5 | Display both versions only for authorized conflict_retained; refused contains no versions or head |
-| WEBUI-APPS-R031.7 | R024.4.4–.6 | Prove two-client conflict, restart readback and generation-bound acknowledgment through real served components |
+| OVERSTORY-APPS-R031.2 | R024.4.1–.3 and .6 | `listMemoryFiles` uses memory.files.list; `saveMemoryFile` uses memory.files.save; exact content uses memory.files.read |
+| OVERSTORY-APPS-R031.3 | R024.4.2 and .6 | The real Files tab uses registered generated contracts through WebUI's `invoke` in `src/lib/arbora-api/invoke.ts` |
+| OVERSTORY-APPS-R031.4 | R024.4.3 and .5 | Display both versions only for authorized conflict_retained; refused contains no versions or head |
+| OVERSTORY-APPS-R031.7 | R024.4.4–.6 | Prove two-client conflict, restart readback and generation-bound acknowledgment through real served components |
 
 Producer order is R085 implementation and generated contracts, Arbora port and serving, host materializer, then WebUI consumption.
 Missing producer implementation must remain unavailable. Definitions and planned tests must never count as served receipts.
 
 ## Owner-bound projections (ARBORA-OPS-R054–R058, R061, R063)
 
-- **R054:** Keep `rlm.benchmark` separate from serving-technique evidence. Add a projection through `arbora/api/ops/registry_factory.py:get_registry` and `arbora/api/invoke/pipeline.py:invoke` only after `AU-INTEGRATION-R014` publishes its producer and receipt.
+- **R054:** Keep `rlm.benchmark` separate from serving-technique evidence. Add a projection through `arbora/api/ops/registry_factory.py:get_registry` and `arbora/api/invoke/pipeline.py:invoke` only after `MERISTEM-INTEGRATION-R014` publishes its producer and receipt.
 - **R055:** Bind a read/proposal projection through the shared registry/invoke path only after AU publishes liveness and proposal contracts. No Arbora termination adapter exists.
 - **R056:** Keep `decide.commit` unchanged. Add a distinct review projection through the shared registry/invoke path. Wait until EG/AU publish the review operation and evidence contract.
 - **R057:** Add no repository-writeback attachment until EG `R094.2/.3/.5/.7` and SDK source-effect/receipt contracts publish. The current Arbora tree has no serializer or served handler.
@@ -381,14 +381,14 @@ Missing producer implementation must remain unavailable. Definitions and planned
 
 ### ARBORA-OPS-R061: indexed usage projection
 
-1. Bind the Arbora read to EG RunTraceUsageQueryV1 / EG-ORCH-VOCAB-R010.101; derive tenant only from verified caller claims and pass the producer's bounded window, model/project/agent grouping, currency, page size, and snapshot cursor.
+1. Bind the Arbora read to EG RunTraceUsageQueryV1 / MEDULLA-ORCH-VOCAB-R010.101; derive tenant only from verified caller claims and pass the producer's bounded window, model/project/agent grouping, currency, page size, and snapshot cursor.
 2. Extend the usage.py reader with closed UsageQueryV1 and UsageProjectionV1 models. Add a distinct usage.index.query port beside usage.read. Use existing usage:read, build_read_op, registry_factory, and shared invoke. Keep accounting separate from runs.metrics (R021.4.3/.4) and usage.read.
 3. Preserve four disjoint EG counters, producer totals, unknown reasons, pinned PriceTableV1, minor units, revisions, coverage, watermark, and cursor. Aggregate exact rational amounts by final group and category. Apply half-even rounding once. Keep unknown values unknown with reasons and coverage; never use zero. Keep currencies separate unless EG supplies pinned FX. Bind p95 <= 500 ms from authenticated-handler entry through serialized response. Use 1,000,000 indexed traces, 32 readers, and 1,000 fixed-window queries. Bind data/index/cache-policy revisions. Missing or invalid profile evidence is unavailable; an exceeded bound is not success.
 4. Connect the projection to WebUI ObservabilityView.tsx under WEBUI-APPS-R004.8.1-.6. Served proof compares groups with an independent EG ledger. It exercises authorization, pagination, unknown values, stale revisions, and absent, invalid, or exceeded profile evidence. This remains planned work, not runtime delivery.
 
 ### ARBORA-OPS-R063: retrieval evaluation and context projection
 
-1. Bind the EG-DECISION-ENGINE-R100.100 DecisionEval ranking receipt. Map RetrievalRankingSubmit to RetrievalRankingV1. Map Method::RetrievalContextSearch to RetrievalContextSearchV1. Do not derive quality from retrieval.search or local RRF.
+1. Bind the MEDULLA-DECISION-ENGINE-R100.100 DecisionEval ranking receipt. Map RetrievalRankingSubmit to RetrievalRankingV1. Map Method::RetrievalContextSearch to RetrievalContextSearchV1. Do not derive quality from retrieval.search or local RRF.
 2. Extend arbora/api/ops/retrieval.py with closed evaluation, comparison, and context models. Register retrieval.evaluation.compare and retrieval.context.search. Use existing build_read_op, memory:read, registry factory, and shared invoke for HTTP/MCP.
 3. Require identical corpus, complete label-set revision/digest, query-set ID/revision/digest, evaluator revision, k, and query inputs across algorithms. Pin each algorithm's settings digest to its own registered configuration. Preserve producer metrics and result digests. For hits_at_k, use the full identically labeled query set as denominator. Count a query when any relevant result appears in top k. Preserve half-open UTF-8 offsets into original stored text. Bind query/index/authorization revisions and a snapshot cursor. Limit responses to 100 spans and 8 KiB each. If indexing normalizes text, preserve a separate NFC digest and validate its byte map to original text.
 4. Align WebUI TryItPanel.tsx under WEBUI-APPS-R001.1.1-.6. Served proof checks two-algorithm metrics and identical inputs. It tests hostile-source escaping before highlighting and preserves original byte spans. It also checks Unicode slicing, authorization, staleness, missing labels, invalid maps, and limits. This remains planned work, not runtime delivery.
@@ -426,12 +426,12 @@ A proposed method name below describes an owner specification, not an existing r
 ### R059: evolution metrics
 
 Extend `arbora/api/ops/usage.py:operations` and its composed reader for `evolution.proposals.metrics`.
-The producer is `EG-ORCH-VOCAB-R010.100`, proposed `Method::EvolutionTraceMetrics` and `EvolutionTraceMetricsV1`.
+The producer is `MEDULLA-ORCH-VOCAB-R010.100`, proposed `Method::EvolutionTraceMetrics` and `EvolutionTraceMetricsV1`.
 Preserve proposal, prompt, metric-window, metric, progress, and trace IDs, revisions, and digests.
 Preserve ordered trace references, missing IDs, measured/unknown states, units, and partial coverage.
 Missing traces never become zero; trace counts and calibration never substitute for AU progress.
 The AU progress-to-ordered-run producer schema remains unassigned. Its publication blocks positive served acceptance.
-Map the result to WEBUI-APPS-R004.7 without joining or authoring progress in the browser or host.
+Map the result to OVERSTORY-APPS-R004.7 without joining or authoring progress in the browser or host.
 Planned proof: `tests/api/test_evolution_metrics_served.py::test_proposal_metrics_preserve_owner_join_and_denial`.
 Independently read two stored traces, their metrics, and AU progress through authenticated HTTP and MCP.
 Refuse stale windows, changed digests, unknown prompt revisions, and foreign tenants without data disclosure.
@@ -439,9 +439,9 @@ Refuse stale windows, changed digests, unknown prompt revisions, and foreign ten
 ### R060: harness sessions
 
 Extend the existing usage reader and registry for manifest, discovery, browse, search, and cost projections.
-SDK-SOURCE-INGEST-R013 owns `connector-sync --once` and the complete source-operation manifest.
-EG-ORCH-VOCAB-R009.101 specifies `Method::SearchHarnessSessions` over the `IndexHarnessSessionBatch` projection.
-Session costs use EG-ORCH-VOCAB-R010.101 accounting, currency, and coverage semantics.
+SCION-SOURCE-INGEST-R013 owns `connector-sync --once` and the complete source-operation manifest.
+MEDULLA-ORCH-VOCAB-R009.101 specifies `Method::SearchHarnessSessions` over the `IndexHarnessSessionBatch` projection.
+Session costs use MEDULLA-ORCH-VOCAB-R010.101 accounting, currency, and coverage semantics.
 Arbora reads those authorities; it cannot create another session index or author a supported-source list.
 Require a complete owner-approved manifest with source operations, revisions, authority, cursor forms, and coverage.
 That manifest remains an external prerequisite; do not infer supported harnesses from example fixtures.
@@ -449,12 +449,12 @@ Use page sizes from 1 through 100 and preserve the producer's snapshot-bound cur
 Bind manifest and sync receipt digests, indexed revision, source identity, missing sources, and explicit refusal states.
 Return unavailable sources in coverage without revealing their protected session metadata.
 Planned proof: `tests/api/test_sessions_served.py::test_full_manifest_sessions_and_costs_survive_restart`.
-Exercise two available sources and a third unavailable source through HTTP, MCP, and WEBUI-APPS-R006.4.
+Exercise two available sources and a third unavailable source through HTTP, MCP, and OVERSTORY-APPS-R006.4.
 Check independent trace readback, replay, restart, cursor paging, cost units, unknown prices, and cross-tenant refusal.
 
 ### R062: graph changes
 
-EG-DURABLE-KERNEL-R043.100 specifies `Method::OpenGraphSnapshot` and `Method::ReadGraphChanges`.
+MEDULLA-DURABLE-KERNEL-R043.100 specifies `Method::OpenGraphSnapshot` and `Method::ReadGraphChanges`.
 Extend the composed read operations in `arbora/api/ops/memory.py:operations` for feed and recovery projection.
 Preserve graph incarnation, committed revision, event identity, visibility revision, snapshot digest, and high-water cursor.
 Use producer page sizes from 1 through 256 and the 24-hour retention contract.
@@ -468,7 +468,7 @@ Measure 600 updates from durable acknowledgement to both authorized browsers app
 Use synchronized measurement timestamps and record clock uncertainty; uncertainty above 10 ms invalidates qualification.
 Require nearest-rank p95 at most 2,000 ms for each browser and no missing final revision.
 The EG feed's separate 1,000 ms boundary ends at authorized feed read, not browser application.
-WEBUI-APPS-R030.8 owns readable-layout and interaction limits; their declaration and evidence remain separate prerequisites.
+OVERSTORY-APPS-R030.8 owns readable-layout and interaction limits; their declaration and evidence remain separate prerequisites.
 Planned proof: `tests/api/test_graph_changes_served.py::test_two_clients_recover_and_reauthorize_committed_feed`.
 Exercise concurrent writes, duplicates, delayed/reordered events, gaps, expiry, reconnect, and revocation.
 A missing profile, measurement, adapter, or owner binding cannot produce a passing latency result.
@@ -476,37 +476,37 @@ A missing profile, measurement, adapter, or owner binding cannot produce a passi
 ### R064: viewport queries
 
 Extend `arbora/api/ops/retrieval.py:operations` with viewport and selection handlers using its composed EG reader.
-EG-FEDERATED-QUERY-R081.103 owns `ViewportQueryV1` through `Method::UnifiedQuery` and `Method::ResolveViewportSelection`.
+MEDULLA-FEDERATED-QUERY-R081.103 owns `ViewportQueryV1` through `Method::UnifiedQuery` and `Method::ResolveViewportSelection`.
 Preserve its scatter/line formulas, typed axes, source/index/viewport revisions, policy digest, and closed selection union.
 Pixel dimensions range from 1 through 4096; the requested byte ceiling ranges from 1 through 16777216.
 Apply the producer's effective serialized-response ceiling and bin formulas. Do not invent a host decimator.
 Refuse ceilings too small for the mandatory envelope, stale indexes, invalid selections, and exceeded limits before usable output.
 Planned proof: `tests/api/test_viewport_served.py::test_billion_point_viewport_keeps_bins_selection_and_byte_bounds`.
 Enter HTTP and MCP with scatter and line requests against a declared billion-point indexed source.
-Independently inspect serialized bytes and bin counts. Check pan, zoom, selection, gaps, and stale-token refusal with WEBUI-APPS-R001.2.
+Independently inspect serialized bytes and bin counts. Check pan, zoom, selection, gaps, and stale-token refusal with OVERSTORY-APPS-R001.2.
 
 ### R065: meetings
 
 Extend the composed operation declarations in `arbora/api/ops/memory.py:operations` for transcript and summary reads.
 Route provider effects through the existing invocation policy and receipt boundary, never through a read handler.
-SDK-SOURCE-INGEST-R014 owns ordered transcript transport and selected provider dispatch.
-EG-MEDIA-VOCAB-R001.101 specifies `Method::MeetingTranscriptRevision`, `MeetingSummaryContextV1`, and `CommitMeetingSummaryV1`.
-AU-SEMANTIC-R030 owns provider admission, retry/attempt accounting, and disabled-provider refusal.
+SCION-SOURCE-INGEST-R014 owns ordered transcript transport and selected provider dispatch.
+MEDULLA-MEDIA-VOCAB-R001.101 specifies `Method::MeetingTranscriptRevision`, `MeetingSummaryContextV1`, and `CommitMeetingSummaryV1`.
+MERISTEM-SEMANTIC-R030 owns provider admission, retry/attempt accounting, and disabled-provider refusal.
 The SDK meeting operation and AU receipt contract remain unbound; single-shot dictation cannot satisfy them.
 Preserve segment sequence, correction and finalization revisions, transcript digest, and selected local/hosted provider identity.
 Summary context requires at most 128 spans, 16384 bytes per segment, and 8192 tokens under the EG limit policy.
 Only the current complete finalized transcript permits summary effects. Corrections stale older summaries.
 Missing admission or a disabled local provider cannot trigger hosted fallback.
 Planned proof: `tests/api/test_meeting_served.py::test_corrected_final_transcript_binds_selected_summary_provider`.
-Exercise partial segments, gaps, corrections, exact replay, finalization, and both admitted execution classes with WEBUI-APPS-R001.5.
+Exercise partial segments, gaps, corrections, exact replay, finalization, and both admitted execution classes with OVERSTORY-APPS-R001.5.
 Check independent provenance readback and zero provider calls for stale revisions or denied capture/egress.
 
 ### R066: bookmarks
 
 Extend `arbora/api/ops/retrieval.py:operations` with search, relationship, and bounded export projections.
-EG-MEDIA-VOCAB-R001.102 specifies `Method::BookmarkSemanticSearch` and `Method::BookmarkRelations`.
-SDK-SOURCE-INGEST-R005.7 through R005.12 owns ingestion into the existing SourceIngest/ChangeEnvelope path.
-Use one authorized snapshot for search, relationships, and CSV/JSON export consumed by WEBUI-APPS-R001.6.
+MEDULLA-MEDIA-VOCAB-R001.102 specifies `Method::BookmarkSemanticSearch` and `Method::BookmarkRelations`.
+SCION-SOURCE-INGEST-R005.7 through R005.12 owns ingestion into the existing SourceIngest/ChangeEnvelope path.
+Use one authorized snapshot for search, relationships, and CSV/JSON export consumed by OVERSTORY-APPS-R001.6.
 Require at most 100 hits, 500 relationships, and 1048576 serialized response bytes under the EG query limit policy.
 Preserve receipt, source, index, query, authorization, snapshot, and limit-policy digests and explicit unknown metadata.
 An expired snapshot or exceeded bound refuses; export cannot silently switch revisions or truncate success.
@@ -519,7 +519,7 @@ All named proofs in this section are planned and have not run.
 They require the corresponding owner contracts and real authenticated HTTP, MCP, and browser consumer paths.
 This section grants no delivery or runtime evidence.
 
-References: [EG orchestration](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/orchestration-vocabulary/spec.md), [EG durable kernel](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/durable-graph-kernel/spec.md), [EG query](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/federated-query-and-reasoning/spec.md), [EG media](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/media-and-personal-vocabulary/spec.md), [SDK ingest](https://github.com/Knuckles-Team/agent-connector-sdk/blob/a0f78fefbb486e4c7d97e608462cf5847a46bc7d/specs/SDK-SOURCE-INGEST/spec.md).
+References: [EG orchestration](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/orchestration-vocabulary/spec.md), [EG durable kernel](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/durable-graph-kernel/spec.md), [EG query](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/federated-query-and-reasoning/spec.md), [EG media](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/media-and-personal-vocabulary/spec.md), [SDK ingest](https://github.com/Knuckles-Team/agent-connector-sdk/blob/a0f78fefbb486e4c7d97e608462cf5847a46bc7d/specs/SCION-SOURCE-INGEST/spec.md).
 
 ### 2026-10-16: Generated Python invocation boundary
 
@@ -614,7 +614,7 @@ The pinned engine contract generates one `eg.<domain>.<Method>` operation per ca
 
 ## Amendment 2026-10-18: SDK current-plan contract adoption
 
-ARBORA-OPS-R021.4.5.1 consumes SDK-CONNECTOR-CONTROL-R070 through the SDK's published package. Replace the local item, snapshot, read and request definitions with the SDK models. Keep the existing caller forwarding, read-only operation, scope, unavailable shape and freshness projection. Regenerate the API registry and check wire compatibility. A real SDK-created read must pass projection; body-supplied tenant or principal must fail before calling the reader.
+ARBORA-OPS-R021.4.5.1 consumes SCION-CONNECTOR-CONTROL-R070 through the SDK's published package. Replace the local item, snapshot, read and request definitions with the SDK models. Keep the existing caller forwarding, read-only operation, scope, unavailable shape and freshness projection. Regenerate the API registry and check wire compatibility. A real SDK-created read must pass projection; body-supplied tenant or principal must fail before calling the reader.
 
 This migration does not compose a producer, grant run access, choose a run owner, change authentication, or implement runs.get. An absent reader stays unavailable. The release and dependency lock must resolve from PyPI before this consumer change ships. Lease-bound publication remains an EG dependency; the pending run-owner admission policy must not be inferred from worker identity.
 
@@ -622,14 +622,14 @@ The consumer stays on the SDK 0.2 release line for this change. SDK 0.3 changes 
 
 ## Web research operation (R067)
 
-`research.web` is one served operation. It composes owners; it decides nothing. The engine answers the search as a virtual source (`EG-UNIFIED-DATA-PLANE-R038.7.7`). The engine selects the pages (`EG-DECISION-ENGINE-R802`). A connector reads each page through the SDK contract (`SDK-SOURCE-INGEST-R005.40`). The engine ingests and enriches each page (`EG-UNIFIED-DATA-PLANE-R651.7`).
+`research.web` is one served operation. It composes owners; it decides nothing. The engine answers the search as a virtual source (`MEDULLA-UNIFIED-DATA-PLANE-R038.7.7`). The engine selects the pages (`MEDULLA-DECISION-ENGINE-R802`). A connector reads each page through the SDK contract (`SCION-SOURCE-INGEST-R005.40`). The engine ingests and enriches each page (`MEDULLA-UNIFIED-DATA-PLANE-R651.7`).
 
 ### Web-source conformance admission (R067.10)
 
 The existing `FleetCaller` obtains an effect decision from `fleet_gateway`.
 The gateway resolves the admitted item again at call time. That decision path
 must require the EG evidence record. Its owner is
-[EG-TYPED-PACKS-R110](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/requirements.md).
+[MEDULLA-TYPED-PACKS-R110](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/requirements.md).
 No Arbora certification store or operator pass flag grants admission.
 
 The resolved record binds tenant, connector, package revision and pack digest.
@@ -658,7 +658,7 @@ Budget: 5 pages and a 60 s deadline by default, with at most 32 pages and 300 s.
 
 ## Connector sources through the SDK sync runner (ARBORA-OPS-R020.6)
 
-Depends-on: [SDK source sync runner](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/SDK-SOURCE-INGEST/spec.md)
+Depends-on: [SDK source sync runner](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/SCION-SOURCE-INGEST/spec.md)
 
 Arbora serves connector sources. It owns admission, scopes and the durable job. The SDK owns the declarations and the runner. The engine owns `SourceIngest`, KV and WorkItems. No engine change is needed.
 
@@ -682,7 +682,7 @@ The published client must include its Textual stylesheets. Mounted-terminal acce
 The native reader is stateless and receives ExecutionContext for each call. It reuses caller-bound EG dispatch authority checks and binds exact caller claims. The serving root composes it without retaining request identity. Publication still needs real native run admission and a live lease from A2A; no producer or harness decision is invented. EG 2.27.5 installed acceptance remains pending.
 
 
-The remaining producer uses EG-DURABLE-KERNEL-R028.4 for native run-owner admission
+The remaining producer uses MEDULLA-DURABLE-KERNEL-R028.4 for native run-owner admission
 and R028.5 for the exact live fence and snapshot transaction. A2A currently
 passes its verified session and exact native claim through a private, revocable
 host scope while AU executes. The scope binds canonical task, context and run
@@ -693,7 +693,7 @@ The authoritative metadata preserves the original run correlation. No alias
 store or copied engine identity algorithm is used. Legacy admission remains the
 default. Durable TaskPlan publication and planner/dispatch integration remain
 missing; native admission alone does not enable dependency execution.
-EG-DECISION-ENGINE-R128.3 and R128.6 define the harness answer and scaffold rule.
+MEDULLA-DECISION-ENGINE-R128.3 and R128.6 define the harness answer and scaffold rule.
 Successful served evaluation remains an owner implementation prerequisite; a
 test-supplied decision cannot stand in for it. No additional user policy decision
 is identified for this reader slice.
@@ -702,15 +702,15 @@ is identified for this reader slice.
 
 arbora serves the reads and the adoption of the versioned harness
 substrate. The component reads bind to the engine query of
-EG-ORCH-VOCAB-R801 under `kg:read`. The lesson query binds to
-EG-ORCH-VOCAB-R802.3. The report reads the contrast and the decision
-record of EG-DECISION-ENGINE-R803. The adoption commits only a
+MEDULLA-ORCH-VOCAB-R801 under `kg:read`. The lesson query binds to
+MEDULLA-ORCH-VOCAB-R802.3. The report reads the contrast and the decision
+record of MEDULLA-DECISION-ENGINE-R803. The adoption commits only a
 decision record that names the engine decision. It routes through the
 service executor only, per the ARBORA-OPS-R021.1 pattern. It writes
-the adopted harness of EG-ORCH-VOCAB-R802. arbora computes no
+the adopted harness of MEDULLA-ORCH-VOCAB-R802. arbora computes no
 ranking and stores no harness content. The engine is the sole
 authority for versions, contrasts and lessons. The in-run cycle that
-drives these operations belongs to agent-utilities (AU-HARNESS-CYCLE-R001).
+drives these operations belongs to agent-utilities (MERISTEM-HARNESS-CYCLE-R001).
 
 ## Served source operations (R848)
 
@@ -791,7 +791,7 @@ landing, the fast gates of the pipelines gate standard run against the
 changeset's tree. They are format, hygiene, secrets, types and
 tests-fast. A failing fast gate refuses the landing with a typed
 reason. After landing, the full suite runs. On failure, the engine
-records the bisect and revert decision of EG-SCM-R009. No merge queue
+records the bisect and revert decision of MEDULLA-SCM-R009. No merge queue
 is kept.
 
 ## Virtual checkout endpoint (R850)
@@ -816,14 +816,14 @@ holds no rule, role table or policy for any of them.
 
 | Row | Operations | Engine owner |
 |---|---|---|
-| R848.4 | `source.edit_symbol` | EG-SCM-R013 |
-| R852 | `harness.optimize`, `harness.promote`, `harness.rollback` | EG-DECISION-ENGINE-R804, R805 |
-| R853 | `defect.*`, `release.record`, `deployment.record`, `spec.status`, `lifecycle.trace` | EG-SDLC-R001 to R006 |
-| R854 | `retrieval.feedback`, `agent.knowledge_scope.set` | EG-FEDERATED-QUERY-R704, R705 |
-| R855 | `product.*`, `access_request.*` (catalog reads are intent-routed graph queries) | EG-TYPED-PACKS-R801, R802, R805; EG-UNIFIED-DATA-PLANE-R764 |
-| R856 | `quality.*`, `profile.run`, `lineage.columns` | EG-UNIFIED-DATA-PLANE-R761 to R763 |
-| R857 | SPARQL 1.1 Protocol and Graph Store HTTP Protocol routes | EG-FEDERATED-QUERY-R707 |
-| R858 | `wire_access.grant`, `wire_access.revoke` | EG-ENGINE-PARITY-R007 |
+| R848.4 | `source.edit_symbol` | MEDULLA-SCM-R013 |
+| R852 | `harness.optimize`, `harness.promote`, `harness.rollback` | MEDULLA-DECISION-ENGINE-R804, R805 |
+| R853 | `defect.*`, `release.record`, `deployment.record`, `spec.status`, `lifecycle.trace` | MEDULLA-SDLC-R001 to R006 |
+| R854 | `retrieval.feedback`, `agent.knowledge_scope.set` | MEDULLA-FEDERATED-QUERY-R704, R705 |
+| R855 | `product.*`, `access_request.*` (catalog reads are intent-routed graph queries) | MEDULLA-TYPED-PACKS-R801, R802, R805; MEDULLA-UNIFIED-DATA-PLANE-R764 |
+| R856 | `quality.*`, `profile.run`, `lineage.columns` | MEDULLA-UNIFIED-DATA-PLANE-R761 to R763 |
+| R857 | SPARQL 1.1 Protocol and Graph Store HTTP Protocol routes | MEDULLA-FEDERATED-QUERY-R707 |
+| R858 | `wire_access.grant`, `wire_access.revoke` | MEDULLA-ENGINE-PARITY-R007 |
 
 Each new module registers in the curated module loop at `arbora/api/ops/registry_factory.py:52`.
 Each handler calls its generated `eg.*` method. The registry then lists the tool with its
@@ -831,7 +831,7 @@ read-only or destructive hint.
 
 ## Served program optimization operations (R860)
 
-The engine compiles programs and holds the champion pointer (EG-DECISION-ENGINE-R810, EG-DECISION-ENGINE-R812). arbora serves three thin operations over them. `program.optimize` submits the job. `program.promote` and `program.rollback` need an approved plan and commit through the engine. arbora holds no score, threshold or verdict.
+The engine compiles programs and holds the champion pointer (MEDULLA-DECISION-ENGINE-R810, MEDULLA-DECISION-ENGINE-R812). arbora serves three thin operations over them. `program.optimize` submits the job. `program.promote` and `program.rollback` need an approved plan and commit through the engine. arbora holds no score, threshold or verdict.
 ### 2026-10-22: durable public replay (ARBORA-OPS-R021.4.7)
 
 Reuse canonical WorkItem ownership and EG RunEvent nodes, not a host event store.
@@ -909,7 +909,7 @@ terminal production.
 
 ## Served dashboard operations (R861)
 
-No spec owned user-saved assets. The search `git grep -n -i "dashboard\|catalog asset\|saved query" -- specs` found only the gateway layout router (R039) and the fleet catalog operations. Neither stores a user document. R861 extends this spec because it owns served operations. The consumer is WEBUI-DASH-R010 in agent-webui.
+No spec owned user-saved assets. The search `git grep -n -i "dashboard\|catalog asset\|saved query" -- specs` found only the gateway layout router (R039) and the fleet catalog operations. Neither stores a user document. R861 extends this spec because it owns served operations. The consumer is OVERSTORY-DASH-R010 in agent-webui.
 
 The engine stores each dashboard as a catalog asset with an owner, grants and a revision. arbora serves the operations and holds no store. The engine catalog asset rows do not exist yet. An epistemic-graph row must define the asset type, the owner and grant facts, and compare-and-set on the revision. R861.8 depends on that row. Until it lands, the operations stay SPECIFIED.
 

@@ -131,6 +131,37 @@ _ALLOWING = {DECISION_ALLOW, DECISION_ALLOW_NOTIFY}
 # How many recent audit rows the durable rate/blast accounting scans.
 _LEDGER_SCAN_LIMIT = 500
 
+#: ``ActionDecision.denial`` codes of the rate/blast pre-checks.
+DENIAL_RATE_LIMITED = "rate_limited"
+DENIAL_LEDGER_UNREADABLE = "ledger_unreadable"
+
+#: The persisted label of every policy decision (also the rate/blast ledger).
+ACTION_DECISION_LABEL = "ActionDecision"
+
+
+@dataclass(frozen=True)
+class LedgerUnreadable:
+    """The decision ledger for one action kind cannot be read; budgets are unknown.
+
+    ``reason`` names the cause (an engine read failure, or ``unlabeled`` rows
+    that ``MATCH (d:ActionDecision)`` cannot see) so a fail-closed denial says
+    what is wrong instead of claiming the budget is spent.
+    """
+
+    reason: str
+    unlabeled: int = 0
+
+
+def _budget_set(limit: Any, key: str) -> bool:
+    """Whether a rate/blast mapping sets a positive budget under ``key``."""
+    if not isinstance(limit, dict):
+        return False
+    try:
+        return int(limit.get(key, 0)) > 0
+    except (TypeError, ValueError):
+        return False
+
+
 POLICY_RECEIPT_SCHEMA = "policy-receipt.v1"
 
 #: The durable control-lease ``kind`` an action approval is filed under
@@ -492,6 +523,10 @@ class ActionDecision:
     # error). ``verify_ms`` is the verifier's own measured latency for observability.
     invariant: str = ""
     verify_ms: float = 0.0
+    # Why the safety pre-checks denied: ``DENIAL_RATE_LIMITED`` (the budget is
+    # spent) or ``DENIAL_LEDGER_UNREADABLE`` (the budget cannot be read, so the
+    # gate fails closed). Empty for every other outcome.
+    denial: str = ""
 
     @property
     def allowed(self) -> bool:
@@ -512,6 +547,43 @@ class ActionDecision:
         if self.decision in _ALLOWING:
             return PolicyDisposition.APPROVE
         return PolicyDisposition.DENY
+
+
+def action_decision_record(decision: ActionDecision) -> dict[str, Any]:
+    """The properties of one ``ActionDecision`` ledger row: its only writer.
+
+    :meth:`ActionPolicy._audit` writes exactly this through
+    :func:`arbora.unique_records.create_record`, which adds the label. The
+    persisted-shape gate (``tests/test_persisted_shapes.py``) fingerprints it,
+    so a field change here needs a data migration in the same change.
+    """
+    req = decision.request
+    return {
+        "kind": req.kind,
+        "target": req.target,
+        "params_json": json.dumps(req.params, default=str)[:2000],
+        "source": req.source,
+        "tier": decision.tier,
+        "decision": decision.decision,
+        "reason": decision.reason[:500],
+        "rule_origin": decision.rule_origin,
+        "approval_id": decision.approval_id or "",
+        "request_digest": req.digest(),
+        "receipt_schema": POLICY_RECEIPT_SCHEMA,
+        "decided_at": _now_iso(),
+        "decided_unix": _now(),
+    }
+
+
+def _count(rows: Any) -> int:
+    """The ``n`` of a single-row ``RETURN count(..) AS n`` read (0 when absent)."""
+    for row in rows or []:
+        if isinstance(row, dict):
+            try:
+                return int(row.get("n") or 0)
+            except (TypeError, ValueError):
+                return 0
+    return 0
 
 
 def _policy_receipt(decision: ActionDecision) -> PolicyReceipt | None:
@@ -727,27 +799,33 @@ class ActionPolicy:
 
     # ── durable accounting (reads the ActionDecision ledger) ────────
 
-    def _recent_decisions(self, kind: str) -> list[dict[str, Any]] | None:
-        """Recent ``ActionDecision`` rows for ``kind``, or ``None`` on a ledger read failure.
+    def _recent_decisions(self, kind: str) -> list[dict[str, Any]] | LedgerUnreadable:
+        """Recent ``ActionDecision`` rows for ``kind``, or :class:`LedgerUnreadable`.
 
-        D-DST-6: ``None`` is distinct from a genuinely empty ledger (``[]``) --
-        callers (``_rate_exceeded``/``_blast_exceeded``) MUST fail CLOSED (treat
-        an unreadable ledger as "exceeded"/rate-limited), matching this class's
-        own established convention (``decide()``/``evaluate()`` are explicitly
-        commented as failing CLOSED). Silently treating a read failure as "no
-        prior decisions" would let rate-limit AND blast-radius checks report
-        "not exceeded" during exactly the KG-outage window when they matter most.
+        D-DST-6: an unreadable ledger is distinct from a genuinely empty one
+        (``[]``) -- callers MUST fail CLOSED on it, never treat it as unused
+        budget. Two causes are told apart: the engine read failed, or rows of
+        this kind carry ``type`` without the ``node_type`` label and so are
+        invisible to the labelled read (ARBORA-FLEET-R015). The startup data
+        migration (:mod:`arbora.data_migrations`) labels such rows in place.
         """
         if self.engine is None:
             return []
         try:
             legacy = self.engine.query_cypher(
                 "MATCH (d {type: 'ActionDecision', kind: $kind}) "
-                "WHERE d.node_type IS NULL RETURN d.id AS id LIMIT 1",
+                "WHERE d.node_type IS NULL RETURN count(d) AS n",
                 {"kind": kind},
             )
-            if legacy:
-                return None
+            unlabeled = _count(legacy)
+            if unlabeled:
+                return LedgerUnreadable(
+                    reason=(
+                        f"ledger unreadable: {unlabeled} rows lack label "
+                        f"{ACTION_DECISION_LABEL} (kind {kind})"
+                    ),
+                    unlabeled=unlabeled,
+                )
             rows = self.engine.query_cypher(
                 "MATCH (d:ActionDecision {kind: $kind}) "
                 "RETURN d.id AS id, d.target AS target, d.decision AS decision, "
@@ -756,10 +834,17 @@ class ActionPolicy:
             )
         except Exception as e:  # noqa: BLE001 — ledger read failed; callers must fail CLOSED on None, never treat it as an empty (=clear) ledger
             logger.warning("action_policy: ledger scan failed, failing closed: %s", e)
-            return None
+            return LedgerUnreadable(
+                reason=f"ledger unreadable: read failed ({type(e).__name__})"
+            )
         return [r for r in rows or [] if isinstance(r, dict)]
 
-    def _rate_exceeded(self, request: ActionRequest, limit: dict[str, Any]) -> bool:
+    def _rate_exceeded(
+        self,
+        request: ActionRequest,
+        limit: dict[str, Any],
+        recent: list[dict[str, Any]] | LedgerUnreadable | None = None,
+    ) -> bool:
         """True when (kind, target) already used its allowed budget in the window."""
         try:
             max_n = int(limit.get("max", 0))
@@ -768,8 +853,9 @@ class ActionPolicy:
             return False
         if max_n <= 0:
             return False
-        recent = self._recent_decisions(request.kind)
         if recent is None:
+            recent = self._recent_decisions(request.kind)
+        if isinstance(recent, LedgerUnreadable):
             return True  # ledger unreadable -- fail closed
         since = _now() - window_s
         n = sum(
@@ -781,7 +867,12 @@ class ActionPolicy:
         )
         return n >= max_n
 
-    def _blast_exceeded(self, request: ActionRequest, cap: dict[str, Any]) -> bool:
+    def _blast_exceeded(
+        self,
+        request: ActionRequest,
+        cap: dict[str, Any],
+        recent: list[dict[str, Any]] | LedgerUnreadable | None = None,
+    ) -> bool:
         """True when allowing this target widens the kind's window beyond the cap."""
         try:
             max_targets = int(cap.get("max_targets", 0))
@@ -790,8 +881,9 @@ class ActionPolicy:
             return False
         if max_targets <= 0:
             return False
-        recent = self._recent_decisions(request.kind)
         if recent is None:
+            recent = self._recent_decisions(request.kind)
+        if isinstance(recent, LedgerUnreadable):
             return True  # ledger unreadable -- fail closed
         since = _now() - window_s
         targets = {
@@ -1111,18 +1203,28 @@ class ActionPolicy:
         if tier_decision is not None:
             return tier_decision
 
-        # auto / auto_notify — run the safety pre-checks.
+        # auto / auto_notify — run the safety pre-checks over one ledger read.
         rate = rule.rate_limit or defaults.get("rate_limit") or {}
-        if isinstance(rate, dict) and self._rate_exceeded(request, rate):
+        blast = rule.blast_radius or defaults.get("blast_radius") or {}
+        recent: list[dict[str, Any]] | LedgerUnreadable = []
+        if _budget_set(rate, "max") or _budget_set(blast, "max_targets"):
+            recent = self._recent_decisions(request.kind)
+        if isinstance(recent, LedgerUnreadable):
+            # Fail closed, and say why: an unreadable ledger is not a spent budget.
+            base.decision = DECISION_DENY
+            base.reason = recent.reason
+            base.denial = DENIAL_LEDGER_UNREADABLE
+            return base
+        if isinstance(rate, dict) and self._rate_exceeded(request, rate, recent):
             base.decision = DECISION_DENY
             base.reason = (
                 f"rate limit exceeded ({rate.get('max')}/{rate.get('window_s')}s "
                 "for this action+target)"
             )
+            base.denial = DENIAL_RATE_LIMITED
             return base
 
-        blast = rule.blast_radius or defaults.get("blast_radius") or {}
-        if isinstance(blast, dict) and self._blast_exceeded(request, blast):
+        if isinstance(blast, dict) and self._blast_exceeded(request, blast, recent):
             return self._hold(
                 base,
                 f"blast-radius cap ({blast.get('max_targets')} targets/"
@@ -1156,7 +1258,7 @@ class ActionPolicy:
     def granted_approval_id(self, request: ActionRequest) -> str | None:
         """Return an approval bound to this exact request, never a target match.
 
-        Public read-only probe (AU-SEC-R007): a caller outside this class --
+        Public read-only probe (MERISTEM-SEC-R007): a caller outside this class --
         e.g. a guardrail evolution step checking for an already-approved
         loosening -- may ask whether a durable approval exists without going
         through :meth:`decide`, which has queueing/audit side effects. Shares
@@ -1242,27 +1344,12 @@ class ActionPolicy:
         if self.engine is None:
             return None
         audit_id = f"action_decision:{uuid.uuid4().hex}"
-        req = decision.request
         try:
             created = create_record(
                 self.engine,
                 audit_id,
-                "ActionDecision",
-                {
-                    "kind": req.kind,
-                    "target": req.target,
-                    "params_json": json.dumps(req.params, default=str)[:2000],
-                    "source": req.source,
-                    "tier": decision.tier,
-                    "decision": decision.decision,
-                    "reason": decision.reason[:500],
-                    "rule_origin": decision.rule_origin,
-                    "approval_id": decision.approval_id or "",
-                    "request_digest": req.digest(),
-                    "receipt_schema": POLICY_RECEIPT_SCHEMA,
-                    "decided_at": _now_iso(),
-                    "decided_unix": _now(),
-                },
+                ACTION_DECISION_LABEL,
+                action_decision_record(decision),
             )
         except Exception as e:  # noqa: BLE001 — missing audit evidence cannot authorize
             logger.debug("action_policy: audit write failed: %s", e)

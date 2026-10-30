@@ -280,6 +280,7 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 - `ARBORA-FLEET-R041.9`: `tests/fleet/test_handshake_onboard.py::test_failed_capture_serves_tools_reports_gap_and_retries_with_backoff`.
 - `ARBORA-FLEET-R041.10`: `tests/fleet/test_handshake_onboard.py::test_large_shrink_on_handshake_waits_for_mass_withdrawal_approval`.
 - `ARBORA-FLEET-R015.2`: `tests/fleet/test_plan_confirmation.py` (real SDK-guarded child: confirmed delete runs; unconfirmed and other-tool plans are cancelled; expired, mismatched and unknown plans dispatch nothing).
+- `ARBORA-FLEET-R015.3`: `tests/test_data_migrations.py::test_spent_budget_and_unreadable_ledger_are_distinct_denials` (doubles) and `::test_native_unreadable_ledger_denial_names_the_cause` (released native engine).
 - `ARBORA-FLEET-R041.15`: `tests/fleet/test_declarations.py::test_sdk_pack_declaration_is_read_from_its_archive_section`, `::test_a_section_that_does_not_match_its_digest_is_refused`, `::test_sdk_pack_ontology_bodies_are_read_from_the_archive`.
 - `ARBORA-FLEET-R041.16`: `tests/api/test_served_replay_owners.py::test_served_pack_status_is_a_read_and_reaches_dispatch_without_a_key`, `::test_pack_status_tenant_comes_from_the_caller_not_the_request`.
 - `ARBORA-FLEET-R041.17`: `tests/fleet/test_catalog_graph.py::test_pack_becomes_typed_assets_candidates_and_lineage`, `tests/fleet/test_catalog_graph.py::test_ntriples_escape_literals_and_dedupe`, `tests/fleet/test_catalog_graph.py::test_onboarding_writes_the_catalog_and_never_fails_on_a_refusal`.
@@ -372,5 +373,6 @@ ARBORA-FLEET-R027.7.2 remains planned: qualify the complete original onboarding 
 - `ARBORA-FLEET-R052.4.4`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-FLEET-R052.4.5`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-FLEET-R052.4.6`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-FLEET-R053`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-FLEET-R045`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-FLEET-R034.15`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.

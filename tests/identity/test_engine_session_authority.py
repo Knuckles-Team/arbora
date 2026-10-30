@@ -193,7 +193,7 @@ async def test_real_generated_atomic_record_when_producer_available():
     from epistemic_graph.generated import models
 
     if "session_record" not in models.PrincipalResolution.model_fields:
-        pytest.skip("EG-TYPED-PACKS-R085.1 generated producer is not installed")
+        pytest.skip("MEDULLA-TYPED-PACKS-R085.1 generated producer is not installed")
     ports = build_engine_identity_ports(Client(reply_value()), graph="identity-fixture")
     state = await ports.sessions.resolve_session("opaque-fixture-session")
     assert state.session_ref == record_value()["session_ref"]

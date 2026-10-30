@@ -6,7 +6,7 @@ caller's context budget (see ``docs/a2a.md``, "Tool-subset assembly
 status"). This fails closed today because epistemic-graph's
 ``AgentAssemble`` operation returns unavailable and the signed AU
 ``AgentTurnEnvelope`` carries no allowed-tool-subset field
-(agent-utilities ``AU-CONTROL-R035``). Neither upstream gap is bridged with a
+(agent-utilities ``MERISTEM-CONTROL-R035``). Neither upstream gap is bridged with a
 local heuristic, a cached prior subset, or an advisory best-effort answer.
 """
 

@@ -260,7 +260,7 @@ async def daemon_status() -> dict[str, Any]:
 @dashboard_router.get("/daemon/shards")
 async def daemon_shards() -> dict[str, Any]:
     """Return the engine shard topology and per-shard reachability."""
-    raise not_served("knowledge_graph.core.shard_topology", "EG-PLACEMENT-R611")
+    raise not_served("knowledge_graph.core.shard_topology", "MEDULLA-PLACEMENT-R611")
 
 
 @dashboard_router.post("/daemon/start")
@@ -275,11 +275,11 @@ async def daemon_start(request: Request) -> dict[str, Any]:
 
 
 def _active_engine() -> Any:
-    raise not_served("knowledge_graph.core.engine", "EG-PLACEMENT-R611")
+    raise not_served("knowledge_graph.core.engine", "MEDULLA-PLACEMENT-R611")
 
 
 def _hydration_manager() -> Any:
-    raise not_served("knowledge_graph.core.hydration", "EG-INGEST-WORKER-R606")
+    raise not_served("knowledge_graph.core.hydration", "MEDULLA-INGEST-WORKER-R606")
 
 
 @dashboard_router.post("/hydrate/{source}")

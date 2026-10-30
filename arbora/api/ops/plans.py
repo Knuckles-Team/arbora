@@ -1,8 +1,8 @@
 """``agents.plan_run``: run an engine-decided task DAG (ARBORA-RELEASE-R003.4.1).
 
 Arbora admits, serves and executes a task plan. It never plans: the plan comes
-from the engine's ``Decide``/``TaskPlan`` decision (EG-CQ-ORCH-R001,
-EG-DECISION-ENGINE-R134.111). One served call does this:
+from the engine's ``Decide``/``TaskPlan`` decision (MEDULLA-CQ-ORCH-R001,
+MEDULLA-DECISION-ENGINE-R134.111). One served call does this:
 
 1. **Decide.** The caller's explicit tasks, dependencies, output task and
    limits become one engine ``TaskPlan`` request. The engine validates the
@@ -155,7 +155,7 @@ def engine_task_plan(client: Any, graph: str | None = None) -> TaskPlanEngine:
             {
                 "reason": "the engine does not serve TaskPlan decisions",
                 "requires": TASK_PLAN_ENGINE_RELEASE,
-                "spec": "EG-CQ-ORCH-R001",
+                "spec": "MEDULLA-CQ-ORCH-R001",
             },
         ) from exc
     decisions = DecisionClient(client, graph)

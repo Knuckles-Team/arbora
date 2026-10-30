@@ -48,6 +48,7 @@
     "ARBORA-FLEET-R015",
     "ARBORA-FLEET-R015.1",
     "ARBORA-FLEET-R015.2",
+    "ARBORA-FLEET-R015.3",
     "ARBORA-FLEET-R016",
     "ARBORA-FLEET-R017",
     "ARBORA-FLEET-R018",
@@ -208,6 +209,7 @@
     "ARBORA-FLEET-R052.4.4",
     "ARBORA-FLEET-R052.4.5",
     "ARBORA-FLEET-R052.4.6",
+    "ARBORA-FLEET-R053",
     "ARBORA-FLEET-R045",
     "ARBORA-FLEET-R034.15"
   ],
@@ -720,10 +722,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "0248fc5f595a",
+        "154ad4cd6e25",
         "54834624dbb4",
         "68e31b75248a",
-        "760ec8539a13",
-        "9532a0c5f38f"
+        "760ec8539a13"
       ],
       "verified_by": [
         "tests/access/test_legacy_policy_history.py:11",
@@ -734,7 +736,8 @@
       ],
       "rollup_of": [
         "ARBORA-FLEET-R015.1",
-        "ARBORA-FLEET-R015.2"
+        "ARBORA-FLEET-R015.2",
+        "ARBORA-FLEET-R015.3"
       ]
     },
     {
@@ -761,6 +764,17 @@
       ],
       "verified_by": [
         "tests/fleet/test_plan_confirmation.py:22"
+      ]
+    },
+    {
+      "id": "ARBORA-FLEET-R015.3",
+      "title": "An unreadable policy ledger is denied with its cause, not as a spent budget",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "154ad4cd6e25"
+      ],
+      "verified_by": [
+        "tests/test_data_migrations.py:194"
       ]
     },
     {
@@ -2331,6 +2345,13 @@
     {
       "id": "ARBORA-FLEET-R052.4.6",
       "title": "Probe: \"Delegate: list running containers.\"",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R053",
+      "title": "Scheduled fleet smoke sweep",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

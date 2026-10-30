@@ -95,7 +95,7 @@ filesystem:
       path: /tmp/.local/state
       writable_path_ref: /tmp
     - env_var: ARBORA_DATA_DIR
-      path: /tmp/.local/share/agent-utilities
+      path: /tmp/.local/share/arbora
       writable_path_ref: /tmp
 
 configuration:

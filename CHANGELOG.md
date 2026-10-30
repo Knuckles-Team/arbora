@@ -5,6 +5,16 @@
 - Genesis environments and fleet child processes set `ARBORA_DATA_DIR` and `ARBORA_CACHE_DIR` in place of `AGENT_UTILITIES_DATA_DIR` and `AGENT_UTILITIES_CACHE_DIR`, matching meristem's `ARBORA_*_DIR` directory overrides.
 - Requires meristem 4.2.0, the first release that reads `ARBORA_*_DIR` and defaults its data, cache and log directories to `arbora`.
 
+## [0.1.8.dev7] - 2026-10-30
+
+### Removed
+- The configuration resolver no longer falls back to `GRAPH_OS_CONFIG_DIR`, `AGENT_UTILITIES_CONFIG_DIR`, `~/.config/graph-os` or `~/.config/agent-utilities`, and the deprecation warning is gone. Configuration lives under `ARBORA_CONFIG_DIR` / `~/.config/arbora` only; move any files still under the old directories. The multiplexer sandbox and child-environment allowlist pass `ARBORA_CONFIG_DIR`, the venv auto-sync queue lives under `~/.local/state/arbora`, and the Genesis seed paths and environment profiles point at `~/.config/arbora` and the `meristem` data directory.
+
+### Fixed
+- Versioned data migrations run at serving start under the process authority and are recorded as `DataMigration` nodes. Migration `0001-action-decision-node-type-label` labels the `ActionDecision` rows written type-only before 0.1.8.dev5, so the action-policy ledger reads again (ARBORA-HOST-R033.2).
+- An unreadable action-policy ledger is denied as `ledger_unreadable` with its cause, never as "rate limit exceeded"; the connector-pack provisioning refusal carries the policy reason (ARBORA-FLEET-R015.3).
+- One label model (`record_body`) for every served-engine write; a persisted-shape gate ties writer changes to a migration (ARBORA-HOST-R033.1, ARBORA-HOST-R033.3).
+
 ## [0.1.8.dev6] - 2026-10-29
 
 - Fleet catalog engine reads run under the Arbora process authority, so operator callers see the admitted fleet and `fleet.call` resolves its tools (ARBORA-FLEET-R026.2).

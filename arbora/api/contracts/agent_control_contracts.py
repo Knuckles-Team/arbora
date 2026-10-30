@@ -75,7 +75,7 @@ EvidenceClass = Literal["claim"]
 
 class TaskClassificationClaim(_StrictModel):
     """A free-text task's proposed mapping onto one of EG's native task
-    IRIs -- ALWAYS a labelled claim, never a proof (AU-CONTROL-R008).
+    IRIs -- ALWAYS a labelled claim, never a proof (MERISTEM-CONTROL-R008).
 
     Deterministic and LLM-free (lexical keyword overlap against each IRI's
     own ontology labels, see :mod:`arbora.api.contracts.task_classification`);

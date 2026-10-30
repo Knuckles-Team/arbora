@@ -149,7 +149,7 @@ def register_candidate_claim_tools(mcp):
 
                 raise not_served(
                     "knowledge_graph.extraction.candidate_claims",
-                    "EG-INGEST-WORKER-R701",
+                    "MEDULLA-INGEST-WORKER-R701",
                 )
 
             if action == "resolve_identities":
@@ -163,7 +163,7 @@ def register_candidate_claim_tools(mcp):
                     )
 
                 raise not_served(
-                    "knowledge_graph.assimilation", "EG-DECISION-ENGINE-R707"
+                    "knowledge_graph.assimilation", "MEDULLA-DECISION-ENGINE-R707"
                 )
 
             return json.dumps({"error": f"unknown action {action!r}"})

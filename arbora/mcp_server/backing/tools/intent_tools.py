@@ -20,7 +20,7 @@ condensed contract (:mod:`arbora.mcp_server.backing.intent_contract`) — ``acti
 (an operation id of the generated manifest, or ``describe``), ``params``,
 optional natural-language ``intent`` and ``execute``. ``find`` also reaches the
 fleet catalog and ``act`` also calls fleet tools — directly by
-``action='<server>.<tool>'`` (AU-CONTROL-R032) or indirectly via
+``action='<server>.<tool>'`` (MERISTEM-CONTROL-R032) or indirectly via
 ``action='fleet.call'`` — and the host's native operations, so no separate
 fleet meta-tool exists.
 
@@ -1431,7 +1431,7 @@ def _declared_default_action(tool: str) -> str | None:
 def _zero_score_falls_back(
     verb: str, candidate: CapabilityCandidate, explicit_tool: bool, explicit_action: Any
 ) -> bool:
-    """AU-CONTROL-R034: no matched term sends an unpinned read to the NL planner."""
+    """MERISTEM-CONTROL-R034: no matched term sends an unpinned read to the NL planner."""
     return (
         not candidate.matched_terms
         and not explicit_tool
@@ -1455,7 +1455,7 @@ def _fallback_reason(fell_back: bool, candidate: CapabilityCandidate) -> str:
 def _routed_tool(
     verb: str, candidate: CapabilityCandidate, explicit_tool: bool, explicit_action: Any
 ) -> str:
-    """The top candidate's tool, or the NL planner under AU-CONTROL-R034."""
+    """The top candidate's tool, or the NL planner under MERISTEM-CONTROL-R034."""
     if _zero_score_falls_back(verb, candidate, explicit_tool, explicit_action):
         return _ASK_FALLBACK_TOOL
     return candidate.tool
@@ -1468,7 +1468,7 @@ def _read_tie_outcome(
     filtered: list[tuple[str, float]],
     ambiguity: dict[str, Any],
 ) -> tuple[list[tuple[str, float]], dict[str, Any] | None]:
-    """AU-CONTROL-R033: run the declared default on a read tie, else refuse.
+    """MERISTEM-CONTROL-R033: run the declared default on a read tie, else refuse.
 
     The default leads the ranked list; the tied alternatives stay in it, so the
     routing record reports them.
@@ -1726,7 +1726,7 @@ async def _question_route(
     """Route an unpinned ``ask`` that is a planning or cross-source question.
 
     Arbora holds no planner and never derives a plan from free text
-    (EG-CQ-ORCH-R001). A plan is the engine's ``TaskPlan`` decision over
+    (MEDULLA-CQ-ORCH-R001). A plan is the engine's ``TaskPlan`` decision over
     explicit tasks, served and executed by the registry operation
     ``agents.plan_run`` (ARBORA-RELEASE-R003.4.1), which capability ranking
     resolves like any other operation. So a bare ``ask`` is not intercepted
@@ -2294,7 +2294,7 @@ def _operation_hints(
 
 
 def _fleet_mux(mcp: Any) -> Any:
-    """The attached fleet multiplexer, or a precise refusal (AU-CONTROL-R031).
+    """The attached fleet multiplexer, or a precise refusal (MERISTEM-CONTROL-R031).
 
     ``runtime.ensure_tools_registered``'s headless build records the exact
     attach failure on ``mcp._fleet_mux_unavailable_reason`` when it could not
@@ -2415,7 +2415,7 @@ async def _fleet_call(mcp: Any, params: dict[str, Any], execute: bool) -> Any:
 
 def _fleet_dotted_tool_name(mcp: Any, action: str) -> str | None:
     """Resolve ``act(action='<server>.<tool>')`` to its fleet prefixed tool name
-    (AU-CONTROL-R032), or ``None`` when no catalog server matches the prefix.
+    (MERISTEM-CONTROL-R032), or ``None`` when no catalog server matches the prefix.
 
     The multiplexer's own internal join is ``<prefix>__<cleaned tool name>``
     (:func:`~arbora.fleet.multiplexer.clean_tool_name`); this is the
@@ -2436,7 +2436,7 @@ def _fleet_dotted_tool_name(mcp: Any, action: str) -> str | None:
 
 def _fleet_dispatch_params(tool: str, params: dict[str, Any]) -> dict[str, Any]:
     """Build ``_fleet_call``'s ``{tool, arguments}`` params shape for a direct
-    ``act(action='<server>.<tool>')`` dispatch (AU-CONTROL-R032).
+    ``act(action='<server>.<tool>')`` dispatch (MERISTEM-CONTROL-R032).
 
     Mirrors native-operation ergonomics: ``params`` IS the argument dict
     directly (no caller-visible ``arguments`` nesting), exactly like
@@ -2563,10 +2563,10 @@ def _find_result(candidate: CapabilityCandidate) -> dict[str, Any]:
 
 
 def _fleet_how_to_call(hit: dict[str, Any], server: str) -> str:
-    """The verb call that reaches one fleet discovery hit (AU-CONTROL-R031/R032)."""
+    """The verb call that reaches one fleet discovery hit (MERISTEM-CONTROL-R031/R032)."""
     prefixed = str(hit.get("prefixed_name") or "")
     if prefixed:
-        # AU-CONTROL-R032: the dotted action id dispatches through the SAME
+        # MERISTEM-CONTROL-R032: the dotted action id dispatches through the SAME
         # fleet.call path as the indirect params form below.
         dotted = prefixed.replace("__", ".", 1)
         return (
@@ -2678,7 +2678,7 @@ async def _lakehouse_status(hints: dict[str, Any]) -> dict[str, Any]:
     # CDC-lag — CA-21's Debezium consumer (kafka_adapter.py) has no lag-
     # measurement function yet. Same ``getattr`` rationale as above.
     refusal = not_served(
-        "knowledge_graph.streams.kafka_adapter", "EG-UNIFIED-DATA-PLANE-R008.700"
+        "knowledge_graph.streams.kafka_adapter", "MEDULLA-UNIFIED-DATA-PLANE-R008.700"
     )
     out["cdc_lag"] = {"status": "error", "detail": type(refusal).__name__}
     return out
@@ -2707,7 +2707,7 @@ async def _host_dispatch(
         return {"executed": True, "action": action, "status": status}
     if verb == "act" and action in host_operations(mcp):
         return await _host_operation(mcp, action, params, execute)
-    # AU-CONTROL-R032: act(action='<server>.<tool>') dispatches a fleet tool
+    # MERISTEM-CONTROL-R032: act(action='<server>.<tool>') dispatches a fleet tool
     # through the SAME fleet.call path, without the caller needing the
     # indirect act(action='fleet.call', params={'tool': ..., 'arguments': {...}})
     # wrapping. The native manifest (resolve_operation) always wins a real
