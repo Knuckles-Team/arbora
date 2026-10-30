@@ -85,3 +85,21 @@ async def test_handler_returns_the_verdict_for_an_authorized_call() -> None:
         "healthy_probes": 0,
         "probes": 1,
     }
+
+
+@pytest.mark.asyncio
+async def test_handler_reproduces_success_and_unobserved_verdicts() -> None:
+    (op,) = fleet_deploy_watch.operations()
+    context = SimpleNamespace(caller=object(), services={})
+    success = await fleet_deploy_watch.handle_fleet_deploy_watch_evaluate(
+        context,
+        {"service": "checkout-api", "probes": ({"status": "up"}, {"status": "up"})},
+        op,
+    )
+    assert success["outcome"] == "success"
+    assert (success["healthy_probes"], success["probes"]) == (2, 2)
+    unobserved = await fleet_deploy_watch.handle_fleet_deploy_watch_evaluate(
+        context, {"service": "checkout-api", "probes": ()}, op
+    )
+    assert unobserved["outcome"] == "unobserved"
+    assert (unobserved["healthy_probes"], unobserved["probes"]) == (0, 0)
