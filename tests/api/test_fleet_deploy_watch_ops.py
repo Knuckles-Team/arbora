@@ -15,6 +15,9 @@ from arbora.api.ops import fleet_deploy_watch
 from arbora.api.registry import Caller, Effect, Registry, Surface, Verb, authorized
 
 
+pytestmark = pytest.mark.spec("ARBORA-FLEET-R024.1")
+
+
 @dataclass(frozen=True)
 class _FakeCaller:
     """A concrete stand-in structurally satisfying ``arbora.api.registry.Caller``."""
