@@ -6719,12 +6719,12 @@
         "offer to take this work item"
       ],
       "id": "work.offers.create",
-      "summary": "Create an offer against an owned work item",
+      "summary": "Price an offer on a Gap whose WorkItem lease the caller holds",
       "tags": [
         "work"
       ],
       "verb": "act"
     }
   ],
-  "registry_digest": "4214511d703c721e010c215faebad403bdaab482a9f522194383fc0bb3c66509"
+  "registry_digest": "255766c3d4d60603c273877de05d4a09de1e716f2c553c568fc20dfd6068ef41"
 }

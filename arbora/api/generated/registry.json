@@ -29557,22 +29557,126 @@
       "params": {
         "model": "arbora.api.ops.work.WorkOfferCreateParams",
         "schema": {
-          "additionalProperties": false,
-          "properties": {
-            "item_id": {
-              "maxLength": 80,
-              "minLength": 1,
-              "title": "Item Id",
-              "type": "string"
-            },
-            "terms": {
-              "additionalProperties": true,
-              "title": "Terms",
+          "$defs": {
+            "WorkOfferTerms": {
+              "additionalProperties": false,
+              "description": "The engine ``WorkOffer``: a priced, evidence-cited offer on one Gap.",
+              "properties": {
+                "blast_radius": {
+                  "enum": [
+                    "local",
+                    "repository",
+                    "fleet"
+                  ],
+                  "title": "Blast Radius",
+                  "type": "string"
+                },
+                "cooldown_until_ms": {
+                  "anyOf": [
+                    {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "title": "Cooldown Until Ms"
+                },
+                "cost_uncertainty_ppm": {
+                  "minimum": 0,
+                  "title": "Cost Uncertainty Ppm",
+                  "type": "integer"
+                },
+                "depends_on_gap_ids": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 64,
+                  "title": "Depends On Gap Ids",
+                  "type": "array"
+                },
+                "evidence_digests": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 64,
+                  "minItems": 1,
+                  "title": "Evidence Digests",
+                  "type": "array"
+                },
+                "expected_cost_microunits": {
+                  "minimum": 0,
+                  "title": "Expected Cost Microunits",
+                  "type": "integer"
+                },
+                "expected_utility_micros": {
+                  "minimum": 0,
+                  "title": "Expected Utility Micros",
+                  "type": "integer"
+                },
+                "probability_of_closure_ppm": {
+                  "maximum": 1000000,
+                  "minimum": 0,
+                  "title": "Probability Of Closure Ppm",
+                  "type": "integer"
+                },
+                "repository_scope": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 64,
+                  "title": "Repository Scope",
+                  "type": "array"
+                },
+                "required_capabilities": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 64,
+                  "title": "Required Capabilities",
+                  "type": "array"
+                },
+                "reversible": {
+                  "title": "Reversible",
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "blast_radius",
+                "cost_uncertainty_ppm",
+                "evidence_digests",
+                "expected_cost_microunits",
+                "expected_utility_micros",
+                "probability_of_closure_ppm",
+                "reversible"
+              ],
+              "title": "WorkOfferTerms",
               "type": "object"
             }
           },
+          "additionalProperties": false,
+          "properties": {
+            "expected_offer_version": {
+              "minimum": 0,
+              "title": "Expected Offer Version",
+              "type": "integer"
+            },
+            "gap_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Gap Id",
+              "type": "string"
+            },
+            "offer": {
+              "$ref": "#/$defs/WorkOfferTerms"
+            }
+          },
           "required": [
-            "item_id"
+            "gap_id",
+            "expected_offer_version",
+            "offer"
           ],
           "title": "WorkOfferCreateParams",
           "type": "object"
@@ -29599,11 +29703,11 @@
         }
       },
       "scopes": [
-        "work:write"
+        "work:offer-write"
       ],
       "stability": "stable",
       "subject": null,
-      "summary": "Create an offer against an owned work item",
+      "summary": "Price an offer on a Gap whose WorkItem lease the caller holds",
       "surfaces": [
         "a2a",
         "http",
@@ -29612,5 +29716,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "4214511d703c721e010c215faebad403bdaab482a9f522194383fc0bb3c66509"
+  "registry_digest": "255766c3d4d60603c273877de05d4a09de1e716f2c553c568fc20dfd6068ef41"
 }

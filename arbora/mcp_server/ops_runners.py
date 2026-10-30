@@ -18,6 +18,9 @@ __all__ = ["EngineDecideRunner", "EngineWorkRunner"]
 
 ClientFactory = Callable[[str], Awaitable[Any]]
 
+# Mint decisions that prove the caller holds the live lease right now.
+_LIVE_LEASE = frozenset({"minted", "replayed"})
+
 
 async def _send(
     client: Any, method: str, params: dict[str, Any], graph: str, key: str | None
@@ -76,15 +79,68 @@ class EngineWorkRunner:
 
     async def create_offer(
         self,
-        item_id: str,
+        caller_client: Any,
         *,
-        terms: Mapping[str, Any],
+        gap_id: str,
+        expected_offer_version: int,
+        offer: Mapping[str, Any],
         tenant: str,
-        principal: str,
         idempotency_key: str,
     ) -> Mapping[str, Any]:
-        # Offers are priced on a Gap (WorkOfferPut), not on a bare WorkItem id;
-        # the item-to-gap mapping has no engine owner yet, so fail closed.
-        raise OperationRefused(
-            "UNAVAILABLE", {"reason": "work offer pricing has no engine mapping"}
+        """Price ``offer`` on ``gap_id`` only for the live lease holder.
+
+        Every call goes through ``caller_client`` -- the engine client bound
+        to the verified caller's own claims -- so the engine, not Arbora,
+        decides whether this principal holds the Gap's WorkItem lease
+        (``MintWorkItemClaimCapability``) and may write the offer.
+        """
+        gap = await _send(
+            caller_client,
+            "GapGet",
+            {"tenant": tenant, "gap_id": gap_id},
+            self._graph,
+            None,
         )
+        if not isinstance(gap, Mapping) or not gap.get("work_item_id"):
+            raise OperationRefused("NOT_FOUND", {"reason": "gap not found"})
+        proof = await _send(
+            caller_client,
+            "MintWorkItemClaimCapability",
+            {
+                "request": {
+                    "schema_version": "1",
+                    "work_item_id": gap["work_item_id"],
+                }
+            },
+            self._graph,
+            f"{idempotency_key}:lease-proof",
+        )
+        if (
+            not isinstance(proof, Mapping)
+            or proof.get("valid") is not True
+            or proof.get("decision") not in _LIVE_LEASE
+        ):
+            decision = proof.get("decision") if isinstance(proof, Mapping) else None
+            raise OperationRefused(
+                "PRINCIPAL_NOT_ALLOWED",
+                {
+                    "reason": "caller does not hold the work item lease",
+                    "decision": str(decision),
+                },
+            )
+        result = await _send(
+            caller_client,
+            "WorkOfferPut",
+            {
+                "request": {
+                    "tenant": tenant,
+                    "gap_id": gap_id,
+                    "expected_offer_version": expected_offer_version,
+                    "idempotency_key": idempotency_key,
+                    "offer": dict(offer),
+                }
+            },
+            self._graph,
+            idempotency_key,
+        )
+        return dict(result)
