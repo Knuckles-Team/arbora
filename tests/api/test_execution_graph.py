@@ -321,7 +321,7 @@ async def test_http_and_mcp_share_native_owner_checked_projection(monkeypatch, a
     from arbora.api.invoke.pipeline import invoke
     from arbora.api.mcp.caller import caller_from_session
     from arbora.api.mcp.verbs import MCPProjection, dispatch_verb
-    from arbora.api.registry import Registry, contract_admission
+    from arbora.api.registry import Registry
     from tests.api.test_invoke_contract import setup_services
 
     op = next(item for item in operations() if item.id == "runs.execution_graph")
@@ -350,9 +350,6 @@ async def test_http_and_mcp_share_native_owner_checked_projection(monkeypatch, a
         return True
 
     runtime.dispatch = dispatch
-    monkeypatch.setattr(
-        contract_admission, "validate_contract_admission", lambda _: None
-    )
     auth = AmbientHTTPAuthenticator(session_for_request=lambda _: caller.session)
     auth.authenticate = authenticate
     app = create_api_application(

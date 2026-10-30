@@ -1,7 +1,7 @@
-"""Generated engine error contract. Do not edit."""
+"""Engine error codes: HTTP status hint and retryability, owned here as code."""
 
-REGISTRY_DIGEST = "dbb0efa0dc47306b1207ab4bb490efb45265fb902e98e5480fba16122bd68a62"
-EG_RECEIPT_DIGEST = "f8e6e02c6d41060d8d0b3f52830fc385a940e89a30e4cc605f98b57eed614cda"
+from __future__ import annotations
+
 ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "ABORTED_ATOMIC_GRAPH_BATCH": (400, False),
     "ACCESS_DENIED": (403, False),

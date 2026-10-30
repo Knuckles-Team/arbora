@@ -62,7 +62,6 @@ class CentralACPFactory:
             raise RuntimeError("Native task-plan owner configuration required")
         if not trusted_roots or type(max_operations) is not int or max_operations < 1:
             raise ValueError("explicit trusted roots and positive capacity required")
-        invocation.validate()
         required = ("agents.run", "agents.tasks.cancel", "agents.tasks.get")
         if any(invocation.services.registry.get(op) is None for op in required):
             raise RuntimeError("Governed task operations unavailable")

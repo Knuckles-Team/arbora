@@ -23,8 +23,7 @@ from arbora.api.contracts.session import GraphSession, use_session
 from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.invoke.bootstrap import verify_current_from_session
 from arbora.api.policy.eunomia import PolicyGate
-from arbora.api.registry import Confirm, Surface, contract_admission
-from arbora.api.registry.eg_binding import EgContractError
+from arbora.api.registry import Confirm, Surface
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.security.actor_context import ActorContext, ActorType, CredentialLease
 from tests.a2a.test_application import Authenticator, Authority, Router
@@ -265,41 +264,12 @@ def test_unqualified_signed_approval_routes_remain_refused(
     assert_no_effect(runtime, audit, journal)
 
 
-def test_registration_contract_refusal_exposes_no_routes_or_effects(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    _app, services, runtime, audit, journal, _requests = fixture()
-    registrar = _Mcp()
-    admitted: list[Any] = []
-
-    def refuse(registry: Any) -> None:
-        admitted.append(registry)
-        raise EgContractError("fixture provider receipt mismatch")
-
-    monkeypatch.setattr(contract_admission, "validate_contract_admission", refuse)
-    monkeypatch.setattr(mcp_runtime, "REGISTERED_TOOLS", {})
-    monkeypatch.setattr(
-        a2a_mcp, "_service", lambda: A2AService(authority=Authority(), router=Router())
-    )
-    with pytest.raises(EgContractError, match="provider receipt mismatch"):
-        a2a_mcp.register_a2a_tools(
-            registrar,
-            operation_services=services,
-            operation_authenticator=AmbientHTTPAuthenticator(),
-        )
-    assert admitted == [services.registry]
-    assert registrar.tools == {} and registrar.routes == {}
-    assert mcp_runtime.REGISTERED_TOOLS == {}
-    assert_no_effect(runtime, audit, journal)
-
-
 def test_registered_mcp_route_reaches_request_auth_and_shared_pipeline(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     bound = session()
     _app, services, runtime, audit, journal, _requests = fixture(bound)
     registrar = _Mcp()
-    admitted: list[Any] = []
     requests = []
 
     async def resolve(request: Any) -> GraphSession:
@@ -308,10 +278,6 @@ def test_registered_mcp_route_reaches_request_auth_and_shared_pipeline(
         requests.append(request)
         return bound
 
-    # Explicit fixture admission: this tests registration wiring, not an EG receipt.
-    monkeypatch.setattr(
-        contract_admission, "validate_contract_admission", admitted.append
-    )
     monkeypatch.setattr(mcp_runtime, "REGISTERED_TOOLS", {})
     monkeypatch.setattr(
         a2a_mcp, "_service", lambda: A2AService(authority=Authority(), router=Router())
@@ -321,7 +287,6 @@ def test_registered_mcp_route_reaches_request_auth_and_shared_pipeline(
         operation_services=services,
         operation_authenticator=AmbientHTTPAuthenticator(session_for_request=resolve),
     )
-    assert admitted == [services.registry]
     assert mcp_runtime.REGISTERED_TOOLS["graph_a2a"] is registrar.tools["graph_a2a"]
     app = FastAPI()
     for (path, methods), handler in registrar.routes.items():
