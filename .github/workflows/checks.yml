@@ -146,8 +146,8 @@ jobs:
         run: |
           set -euo pipefail
           if [ -n "${PROHIBITED_IDENTITY_CATALOG:-}" ]; then
-            mkdir -p "$HOME/.config/agent-utilities/governance"
-            printf '%s' "$PROHIBITED_IDENTITY_CATALOG" > "$HOME/.config/agent-utilities/governance/prohibited-identities.json"
+            mkdir -p "$HOME/.config/arbora/governance"
+            printf '%s' "$PROHIBITED_IDENTITY_CATALOG" > "$HOME/.config/arbora/governance/prohibited-identities.json"
           fi
           # ste-staged (prose lint) is advisory: the report-only step below
           # runs it, so it never blocks a merge or a release.
