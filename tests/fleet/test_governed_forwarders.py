@@ -25,6 +25,7 @@ def test_default_cap_requires_explicit_lru_and_preserves_other_sessions() -> Non
     assert sessions.loaded("second") == frozenset({"private"})
 
 
+@pytest.mark.spec("ARBORA-OPS-R033")
 def test_hard_cap_and_one_hour_idle_expiry() -> None:
     with pytest.raises(ValueError, match="1..256"):
         SessionLoads(cap=257)

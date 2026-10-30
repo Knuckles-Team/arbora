@@ -236,7 +236,7 @@ def run(
     )
 
 
-@pytest.mark.spec("ARBORA-OPS-R009")
+@pytest.mark.spec("ARBORA-OPS-R009", "ARBORA-OPS-R036")
 @pytest.mark.parametrize("surface", list(Surface))
 def test_equivalent_surface_authority_and_result(surface):
     services, runtime, audit, _, _ = setup_services()
@@ -470,7 +470,7 @@ def test_service_subject_denial_and_caller_owner():
     assert context.owner_ref.startswith("principal:sha256:")
 
 
-@pytest.mark.spec("ARBORA-A2A-R007")
+@pytest.mark.spec("ARBORA-A2A-R007", "ARBORA-OPS-R036")
 def test_audit_reservation_failure_prevents_dispatch():
     services, runtime, audit, journal, _ = setup_services()
     audit.fail_reserve = True

@@ -55,6 +55,7 @@ async def test_catalog_is_one_filtered_view_across_kinds() -> None:
     assert await catalog.get("fleet:prompt:s/guide", caller) is None
 
 
+@pytest.mark.spec("ARBORA-OPS-R033", "ARBORA-OPS-R023")
 @pytest.mark.asyncio
 async def test_load_cap_lru_and_forwarder_invokes_governed_fleet_call() -> None:
     clock = [10.0]

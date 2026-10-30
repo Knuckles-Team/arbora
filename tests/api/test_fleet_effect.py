@@ -171,6 +171,7 @@ def test_manifest_admin_override_requires_console_human() -> None:
         annotation_effect(None, override="unknown")
 
 
+@pytest.mark.spec("ARBORA-OPS-R023")
 @pytest.mark.asyncio
 async def test_effect_hook_uses_caller_filtered_descriptor() -> None:
     calls: list[tuple[str, str, object]] = []

@@ -35,6 +35,7 @@ def test_agent_and_browser_ops_have_unique_ids_and_surface_limits() -> None:
     assert all(op.examples for op in registry)
 
 
+@pytest.mark.spec("ARBORA-OPS-R023", "ARBORA-OPS-R002")
 @pytest.mark.asyncio
 async def test_agent_run_uses_the_existing_a2a_service(
     monkeypatch: pytest.MonkeyPatch,
@@ -67,6 +68,7 @@ async def test_agent_run_uses_the_existing_a2a_service(
     ]
 
 
+@pytest.mark.spec("ARBORA-OPS-R023")
 @pytest.mark.asyncio
 async def test_browser_op_uses_the_registered_authority(
     monkeypatch: pytest.MonkeyPatch,
