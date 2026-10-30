@@ -81,6 +81,7 @@ async def test_security_posture_read_fails_closed_when_reader_not_composed(
     assert excinfo.value.code == "UNAVAILABLE"
 
 
+@pytest.mark.spec("ARBORA-OPS-R024.2")
 def test_security_operation_declares_the_read_scope() -> None:
     (op,) = security.operations()
     assert op.id == "security.posture.read"

@@ -11,6 +11,9 @@ from arbora.api.registry import (
     LoopsScope,
     OpsScope,
 )
+import pytest
+
+pytestmark = pytest.mark.spec("ARBORA-OPS-R028")
 
 _SCOPE_RE = re.compile(r"^[a-z]+:[a-z]+$")
 
