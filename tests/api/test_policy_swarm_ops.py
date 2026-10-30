@@ -16,6 +16,8 @@ from arbora.api.ops.policy import PolicyState
 from arbora.api.ops.swarm import SwarmTopology
 from tests.api._ops_support import tenant_reader_context as _context
 
+pytestmark = pytest.mark.spec("ARBORA-OPS-R021.3")
+
 
 class _FakePolicyReader:
     def __init__(self) -> None:
