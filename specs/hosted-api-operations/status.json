@@ -453,8 +453,8 @@
       "title": "Six resident MCP verbs with typed discovery",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "21ce14fb84cc",
         "6b63aeb7ba03",
-        "ca7c3067b9c8",
         "ea736715b7fb"
       ],
       "verified_by": [
@@ -975,7 +975,7 @@
       "title": "Policy and swarm read operations — policy slice",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "ca7c3067b9c8",
+        "21ce14fb84cc",
         "cc90ee37583f"
       ],
       "verified_by": [
@@ -1223,8 +1223,8 @@
       "title": "Security operations — security slice",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b69b27f1d76",
-        "ca7c3067b9c8"
+        "21ce14fb84cc",
+        "4b69b27f1d76"
       ],
       "verified_by": [
         "tests/api/test_telemetry_security_usage_ops.py:84"
@@ -1494,12 +1494,12 @@
       "title": "Exported domain scope classes",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "21ce14fb84cc",
         "4b83c69e2b41",
-        "b47b39eac0ae",
-        "ca7c3067b9c8"
+        "b47b39eac0ae"
       ],
       "verified_by": [
-        "tests/api/test_registry_scopes.py:16"
+        "tests/api/test_registry_scopes.py:17"
       ]
     },
     {
@@ -1737,8 +1737,8 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "1fb96633563e",
-        "21b64f3d097e",
-        "ca7c3067b9c8",
+        "21ce14fb84cc",
+        "3e67ac0a2237",
         "ea736715b7fb",
         "f13ce20b05dc"
       ],
