@@ -11,7 +11,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import pytest
 import yaml
+
+pytestmark = pytest.mark.spec("ARBORA-HOST-R012")
 
 _SEEDS_PATH = (
     Path(__file__).parents[1] / "architecture" / "component-registry-boundary-seeds.yml"

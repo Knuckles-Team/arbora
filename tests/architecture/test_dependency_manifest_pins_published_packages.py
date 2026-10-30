@@ -15,6 +15,10 @@ import re
 import tomllib
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.spec("ARBORA-HOST-R014")
+
 PYPROJECT_PATH = Path(__file__).resolve().parents[2] / "pyproject.toml"
 
 SPLIT_REPOSITORY_PACKAGES = (
