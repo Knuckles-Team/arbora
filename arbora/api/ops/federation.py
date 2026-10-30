@@ -71,7 +71,9 @@ def redact(value: Any) -> Any:
 
 def _port(context: Any) -> Any:
     return bound_service(
-        context, "federation_sources", reason="federation source catalog is not composed"
+        context,
+        "federation_sources",
+        reason="federation source catalog is not composed",
     )
 
 
