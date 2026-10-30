@@ -199,7 +199,6 @@ def test_ops_admin_operations_declare_distinct_read_and_admin_scopes() -> None:
     assert restore_op.idempotency.value == "key_required"
 
 
-@pytest.mark.spec("ARBORA-OPS-R024.5")
 def test_backup_and_restore_need_console_step_up_and_write_audit() -> None:
     import time
 
