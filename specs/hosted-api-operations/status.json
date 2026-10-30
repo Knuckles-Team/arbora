@@ -1383,11 +1383,14 @@
     {
       "id": "ARBORA-OPS-R024.5",
       "title": "Operational admin operations — admin slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "8d1bc46ecbdb"
+        "8d1bc46ecbdb",
+        "d9dfc2d2b451"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/mcp_server/test_ops_admin_store_bootstrap.py:79"
+      ]
     },
     {
       "id": "ARBORA-OPS-R025",
