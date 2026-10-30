@@ -244,6 +244,7 @@ def test_configured_fleet_reads_the_active_arbora_directory(
     )
 
 
+@pytest.mark.spec("ARBORA-FLEET-R028")
 def test_renewal_reregisters_only_lapsing_or_absent_leases() -> None:
     registry = _Registry(
         leases={
@@ -272,6 +273,7 @@ def test_renewal_reregisters_only_lapsing_or_absent_leases() -> None:
     assert all(params["ttl_secs"] == 86_400 for params, _key in registry.registers)
 
 
+@pytest.mark.spec("ARBORA-FLEET-R028")
 def test_provision_reregistration_issues_a_fresh_key_per_call() -> None:
     """A (re)registration outside a renewal window is a fresh issue.
 
@@ -569,6 +571,7 @@ def test_service_pass_publishes_its_report_to_multiplexer_status(
     assert mux._fleet_onboarding == report.as_dict()
 
 
+@pytest.mark.spec("ARBORA-FLEET-R028")
 def test_service_runs_once_then_per_interval_until_stopped(eg: _Registry) -> None:
     stop = threading.Event()
     service = FleetOnboardingService(

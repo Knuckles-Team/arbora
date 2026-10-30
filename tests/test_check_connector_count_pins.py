@@ -6,6 +6,8 @@ exactly as a caller would, as a subprocess, never by importing it as a mock.
 
 from __future__ import annotations
 
+import pytest
+
 import subprocess
 import sys
 from pathlib import Path
@@ -18,6 +20,9 @@ from arbora.fleet.connector_count_pins import (
 _SCRIPT = (
     Path(__file__).resolve().parents[1] / "scripts" / "check_connector_count_pins.py"
 )
+
+
+pytestmark = pytest.mark.spec("ARBORA-FLEET-R023.1")
 
 
 def _run(*args: str) -> subprocess.CompletedProcess[str]:
