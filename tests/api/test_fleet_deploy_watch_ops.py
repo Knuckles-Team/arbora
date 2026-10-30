@@ -14,7 +14,6 @@ import pytest
 from arbora.api.ops import fleet_deploy_watch
 from arbora.api.registry import Caller, Effect, Registry, Surface, Verb, authorized
 
-
 pytestmark = pytest.mark.spec("ARBORA-FLEET-R024.1")
 
 
