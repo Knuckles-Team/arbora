@@ -95,9 +95,7 @@ def operations() -> tuple[OpSpec, ...]:
             verb=Verb.MANAGE,
             summary="Register a foreign source with the engine (governed write)",
             examples=("register a federated source",),
-            params=EgSchemaRef(
-                path=_REQUEST.format(method="RegisterForeignSource")
-            ),
+            params=EgSchemaRef(path=_REQUEST.format(method="RegisterForeignSource")),
             result=EgSchemaRef(
                 path=_RESULT.format(domain="cluster", method="RegisterForeignSource")
             ),

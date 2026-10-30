@@ -6,9 +6,9 @@ from typing import Any
 
 import pytest
 
+from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import federation, query_engine
 from arbora.api.ops.registry_factory import get_registry
-from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.registry import Effect, EgMethod
 from tests.api._ops_support import service_context
 
@@ -20,7 +20,11 @@ class _Catalog:
                 "source_id": "s1",
                 "owner": "alice",
                 "grantees": [],
-                "config": {"host": "db", "password": "hunter2", "nested": {"api_key": "k"}},
+                "config": {
+                    "host": "db",
+                    "password": "hunter2",
+                    "nested": {"api_key": "k"},
+                },
             }
         }
         self.probes: list[str] = []
@@ -105,15 +109,23 @@ async def test_only_owner_and_grantees_see_source_and_revoke_blocks_probe() -> N
         await _call("federation.sources.probe", catalog, "bob", source_id="s1")
     # A non-grantee cannot even see the source, so cannot share it.
     with pytest.raises(LookupError):
-        await _call("federation.sources.share", catalog, "bob", source_id="s1", grantee="bob")
-    await _call("federation.sources.share", catalog, "alice", source_id="s1", grantee="bob")
+        await _call(
+            "federation.sources.share", catalog, "bob", source_id="s1", grantee="bob"
+        )
+    await _call(
+        "federation.sources.share", catalog, "alice", source_id="s1", grantee="bob"
+    )
     assert len((await listed("bob"))["value"]["sources"]) == 1
     await _call("federation.sources.probe", catalog, "bob", source_id="s1")
     assert catalog.probes == ["s1"]
     # Grantees cannot unshare.
     with pytest.raises(PermissionError):
-        await _call("federation.sources.unshare", catalog, "bob", source_id="s1", grantee="bob")
-    await _call("federation.sources.unshare", catalog, "alice", source_id="s1", grantee="bob")
+        await _call(
+            "federation.sources.unshare", catalog, "bob", source_id="s1", grantee="bob"
+        )
+    await _call(
+        "federation.sources.unshare", catalog, "alice", source_id="s1", grantee="bob"
+    )
     with pytest.raises(LookupError):
         await _call("federation.sources.probe", catalog, "bob", source_id="s1")
     assert catalog.probes == ["s1"]
