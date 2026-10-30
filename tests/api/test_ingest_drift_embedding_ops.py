@@ -70,7 +70,6 @@ def test_operations_declare_scopes_and_effects() -> None:
         assert _op(op_id).scopes == {"ingest:write"}
 
 
-@pytest.mark.spec("ARBORA-OPS-R020.4")
 @pytest.mark.asyncio
 async def test_repair_previews_then_applies_only_against_approval() -> None:
     assert _op("ingest.drift.repair_approve").audit.value == "event"
@@ -95,7 +94,6 @@ async def test_repair_previews_then_applies_only_against_approval() -> None:
         await _run("ingest.drift.list", None)
 
 
-@pytest.mark.spec("ARBORA-OPS-R020.5")
 @pytest.mark.asyncio
 async def test_embedding_operations_reach_runner_and_report_job_state() -> None:
     runner = _Runner()
