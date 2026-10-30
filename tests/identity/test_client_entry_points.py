@@ -12,6 +12,7 @@ from arbora.identity.client_entry_points import (
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R017")
+@pytest.mark.spec("ARBORA-IDENTITY-R017.1")
 def test_every_client_entry_point_is_registered() -> None:
     registered = {req.entry_point for req in CLIENT_TOKEN_REQUIREMENTS}
 
@@ -19,6 +20,7 @@ def test_every_client_entry_point_is_registered() -> None:
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R017")
+@pytest.mark.spec("ARBORA-IDENTITY-R017.1")
 def test_every_client_entry_point_carries_a_verified_token() -> None:
     # Empty once every client path has migrated -- the precondition
     # ARBORA-IDENTITY-R017 requires before Arbora can stop relying on

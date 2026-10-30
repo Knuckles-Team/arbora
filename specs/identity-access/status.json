@@ -302,11 +302,15 @@
     {
       "id": "ARBORA-IDENTITY-R006.1",
       "title": "Typed MFA enrollment model",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "cd652df8f6c8"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/identity/test_bootstrap_mfa_admin_console_models.py:34",
+        "tests/identity/test_bootstrap_mfa_admin_console_models.py:40",
+        "tests/identity/test_bootstrap_mfa_admin_console_models.py:46"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R006.2",
@@ -334,11 +338,14 @@
     {
       "id": "ARBORA-IDENTITY-R007.1",
       "title": "Typed admin-console tab model",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "cd652df8f6c8"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/identity/test_bootstrap_mfa_admin_console_models.py:52",
+        "tests/identity/test_bootstrap_mfa_admin_console_models.py:57"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R007.2",
@@ -821,8 +828,8 @@
       ],
       "verified_by": [
         "tests/identity/test_mail_capability.py:15",
-        "tests/identity/test_mail_capability.py:30",
-        "tests/identity/test_mail_capability.py:45"
+        "tests/identity/test_mail_capability.py:31",
+        "tests/identity/test_mail_capability.py:47"
       ],
       "rollup_of": [
         "ARBORA-IDENTITY-R016.1",
@@ -832,11 +839,15 @@
     {
       "id": "ARBORA-IDENTITY-R016.1",
       "title": "Arbora-side mail capability model",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "adf48206cdff"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/identity/test_mail_capability.py:16",
+        "tests/identity/test_mail_capability.py:32",
+        "tests/identity/test_mail_capability.py:48"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R016.2",
@@ -854,7 +865,7 @@
       ],
       "verified_by": [
         "tests/identity/test_client_entry_points.py:14",
-        "tests/identity/test_client_entry_points.py:21"
+        "tests/identity/test_client_entry_points.py:22"
       ],
       "rollup_of": [
         "ARBORA-IDENTITY-R017.1",
@@ -870,11 +881,14 @@
     {
       "id": "ARBORA-IDENTITY-R017.1",
       "title": "Client entry-point token audit registry",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "adf48206cdff"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/identity/test_client_entry_points.py:15",
+        "tests/identity/test_client_entry_points.py:23"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R017.2",
