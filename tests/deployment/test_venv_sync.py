@@ -570,7 +570,7 @@ def test_session_start_hint_names_a_stale_editable_member(
     hint = session_start_hint(workspace)
     assert hint is not None
     assert "alpha" in hint
-    assert "agent-utilities-venv status" in hint
+    assert "arbora-venv status" in hint
 
 
 def test_session_start_hint_is_none_without_a_venv(tmp_path: Path) -> None:

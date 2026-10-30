@@ -13,10 +13,10 @@
 version: 1
 entrypoints:
   substrate: arbora-genesis
-  preflight: agent-utilities-doctor --preflight --profile <profile> [--component <c>]
+  preflight: arbora-doctor --preflight --profile <profile> [--component <c>]
   install: 'scripts/install.sh (Windows: scripts/install.ps1)'
   config: setup-config generate --profile <profile>
-  verify: agent-utilities-doctor
+  verify: arbora-doctor
   single_node_skill: arbora-deployment
   multi_node_skill: arbora-deployment
   handoff: arbora-genesis -> InfrastructureHandoff(substrate_resolved=true) -> arbora-deployment
@@ -143,7 +143,7 @@ run_plan:
     podman-compose: podman-mesh-provisioner
     docker-compose: docker-compose-operator
 preflight:
-  command: agent-utilities-doctor --preflight
+  command: arbora-doctor --preflight
   mcp_action: graph_configure action=preflight config_key=<profile>
   always:
   - python>=3.11,<3.15

@@ -824,6 +824,23 @@
         "title": "Browse",
         "type": "boolean"
       },
+      "Schema3101c791258b26b03735e3ed550ae7f7563992b15ab146ab61aec5e5cce84d57": {
+        "additionalProperties": false,
+        "properties": {
+          "provenance": {
+            "$ref": "#/components/schemas/Schema7674907c33a9ecf0fa0ffba068298e486727a53946cc9e2740c3fb945ef51329"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value",
+          "provenance"
+        ],
+        "title": "DecideCommitResult",
+        "type": "object"
+      },
       "Schema32476afa85e2c25d4095f317c9aa89dee9a44d2a0939e2817dba4e2052e26aeb": {
         "const": "observed_prefix_only",
         "default": "observed_prefix_only",
@@ -1564,6 +1581,13 @@
         "title": "Request Digest",
         "type": "string"
       },
+      "Schema7674907c33a9ecf0fa0ffba068298e486727a53946cc9e2740c3fb945ef51329": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "title": "Provenance",
+        "type": "object"
+      },
       "Schema76952d8e68e95459f7f755aff3c03b8aca5fd6f35ca6a7d995fa700520f5926d": {
         "default": 50,
         "maximum": 100,
@@ -2147,19 +2171,6 @@
         "minimum": 0,
         "title": "Lease Epoch",
         "type": "integer"
-      },
-      "Schema98dc3299c790a50960c20713290429c4de3145295b6a16deda970a22fe9c49bc": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "DecideCommitResult",
-        "type": "object"
       },
       "Schema98e20a37770424c557c7afcf2e7cf2b9483ccbf22d8ab9bd1a7b19d8911073a6": {
         "additionalProperties": false,
@@ -4186,7 +4197,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Schema98dc3299c790a50960c20713290429c4de3145295b6a16deda970a22fe9c49bc"
+                  "$ref": "#/components/schemas/Schema3101c791258b26b03735e3ed550ae7f7563992b15ab146ab61aec5e5cce84d57"
                 }
               }
             },
@@ -21792,5 +21803,5 @@
       }
     }
   },
-  "x-registry-digest": "dbb0efa0dc47306b1207ab4bb490efb45265fb902e98e5480fba16122bd68a62"
+  "x-registry-digest": "134212527336b58c1119e7365a948f9c527c07d8c41fd3210f8fd8cb17fcfdcf"
 }

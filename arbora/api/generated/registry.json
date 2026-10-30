@@ -2308,6 +2308,13 @@
         "schema": {
           "additionalProperties": false,
           "properties": {
+            "provenance": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "title": "Provenance",
+              "type": "object"
+            },
             "value": {
               "additionalProperties": true,
               "title": "Value",
@@ -2315,7 +2322,8 @@
             }
           },
           "required": [
-            "value"
+            "value",
+            "provenance"
           ],
           "title": "DecideCommitResult",
           "type": "object"
@@ -26202,7 +26210,7 @@
           "type": "object"
         }
       },
-      "principals": "any",
+      "principals": "human_undelegated",
       "remove_in": null,
       "result": {
         "model": "arbora.api.ops.ops.OpsBackupResult",
@@ -26255,6 +26263,7 @@
       "summary": "Reserve a durable backup scoped to the caller's own tenant",
       "surfaces": [
         "a2a",
+        "console",
         "http",
         "mcp"
       ],
@@ -26456,7 +26465,7 @@
           "type": "object"
         }
       },
-      "principals": "any",
+      "principals": "human_undelegated",
       "remove_in": null,
       "result": {
         "model": "arbora.api.ops.ops.OpsRestoreResult",
@@ -26509,6 +26518,7 @@
       "summary": "Restore a durable backup scoped to the caller's own tenant",
       "surfaces": [
         "a2a",
+        "console",
         "http",
         "mcp"
       ],
@@ -28577,5 +28587,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "dbb0efa0dc47306b1207ab4bb490efb45265fb902e98e5480fba16122bd68a62"
+  "registry_digest": "134212527336b58c1119e7365a948f9c527c07d8c41fd3210f8fd8cb17fcfdcf"
 }

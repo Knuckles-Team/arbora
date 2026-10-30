@@ -12,13 +12,13 @@ Run from a new directory of your choice:
 ```bash
 mkdir arbora-src
 cd arbora-src
-for repo in epistemic-graph agent-connector-sdk agent-utilities arbora agent-webui; do
+for repo in epistemic-graph agent-connector-sdk meristem arbora agent-webui; do
   git clone "https://github.com/Knuckles-Team/${repo}.git"
 done
 
-mkdir -p agent-utilities/.uv-workspace-siblings agent-webui/.uv-workspace-siblings
-ln -s ../../epistemic-graph agent-utilities/.uv-workspace-siblings/epistemic-graph
-ln -s ../../agent-connector-sdk agent-utilities/.uv-workspace-siblings/agent-connector-sdk
+mkdir -p meristem/.uv-workspace-siblings agent-webui/.uv-workspace-siblings
+ln -s ../../epistemic-graph meristem/.uv-workspace-siblings/epistemic-graph
+ln -s ../../agent-connector-sdk meristem/.uv-workspace-siblings/agent-connector-sdk
 ln -s ../../agent-utilities agent-webui/.uv-workspace-siblings/agent-utilities
 ```
 

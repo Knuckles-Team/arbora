@@ -37,6 +37,6 @@ independently, keeping every submission behind the same human-review boundary.
 
 ## Human-in-the-Loop
 
-Do not attempt to auto-merge the Pull Request. The central repository requires a human maintainer to review and approve all autonomous contributions before they are ingested globally via agent-utilities' `knowledge_graph/core/engine_ingestion.py`. Use an economy model for the routine
+Do not attempt to auto-merge the Pull Request. The central repository requires a human maintainer to review and approve all autonomous contributions before they are ingested globally via meristem's `knowledge_graph/core/engine_ingestion.py`. Use an economy model for the routine
 packaging and formatting steps above; escalate to a stronger model only when the
 performance metrics justifying the promotion are ambiguous.

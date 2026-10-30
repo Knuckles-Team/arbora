@@ -22,7 +22,7 @@ description: >
 data through the same five steps, then (optionally) the KG writes intelligence back. The
 mechanism is uniform — the only per-source differences are credentials, which tool
 ingests, and whether a metamodel/backfeed exists. Deep per-source runbooks live in
-agent-utilities's docs (linked in the matrix); this skill is the standard driver.
+meristem's docs (linked in the matrix); this skill is the standard driver.
 
 > **Why not fold this into `arbora-genesis`?** Genesis provisions or attaches the
 > environment-neutral Day-0 substrate; `arbora-deployment` installs the
@@ -63,7 +63,7 @@ via the capability registry. Sources without a native delta fall back to a full 
 
 Store via `secret-vault-manager` (OpenBao/Vault) or `config.json` / connector `.env`.
 
-**LeanIX** (agent-utilities config): `LEANIX_URL`, `LEANIX_TOKEN`, `LEANIX_VERIFY_SSL`,
+**LeanIX** (meristem config): `LEANIX_URL`, `LEANIX_TOKEN`, `LEANIX_VERIFY_SSL`,
 `LEANIX_ENABLE_WRITE` (fail-closed backfeed gate). Verify:
 `python -c "from agent_utilities.ecosystem.ea_clients import get_leanix_client; assert get_leanix_client()"`
 
@@ -109,7 +109,7 @@ arbora call source_sync {"source": "<X>", "mode": "delta"}      # only what chan
 arbora call source_sync {"source": "leanix", "mode": "reconcile"} # tombstone deletions (delta-capable sources)
 ```
 
-Schedule in `agent-utilities/deploy/schedules.yml` — `kind: skill`, `ref: <source>`,
+Schedule in `meristem/deploy/schedules.yml` — `kind: skill`, `ref: <source>`,
 `action: delta|full|reconcile` dispatches generically to `source_sync` (LeanIX ships with
 `leanix-delta-sync` every 30 min + nightly `leanix-reconcile`). Webhook: call
 `source_sync` with `ids_json` for near-real-time narrowing.
@@ -156,7 +156,7 @@ risk reason together and the inventory push dedupes across them via `ALIGNED_WIT
 - Step 3: `source_sync … mode=full` → `nodes_hydrated`/`nodes` > 0; Cypher count by type.
 - Step 4: run `mode=delta` twice → second run only processes changes.
 - Backfeed: `*_writeback … dry_run=true` lists proposals, nothing written.
-- `python scripts/check_surface_parity.py` (agent-utilities) → 0 unexposed.
+- `python scripts/check_surface_parity.py` (meristem) → 0 unexposed.
 
 ## Troubleshooting (quick)
 
@@ -175,7 +175,7 @@ For per-source depth and architecture, follow the matrix's deep-doc links.
 
 - Connection creds for connector-backed sources (Camunda/ARIS/ServiceNow/…) are
   **connector** config in their own packages; only the agent-utilities-side gates
-  (`LEANIX_ENABLE_WRITE`, `KG_PROCESS_WRITEBACK`, `ARIS_ENABLE_WRITE`) are agent-utilities flags.
+  (`LEANIX_ENABLE_WRITE`, `KG_PROCESS_WRITEBACK`, `ARIS_ENABLE_WRITE`) are meristem flags.
 - Ingest/delta never write upstream; backfeed is always gated + dry-run-first.
 - New source? Register it in the hydration `CAPABILITY_REGISTRY` (or add a delta handler
   in `core/source_sync.py` `_DELTA_HANDLERS`) — then it works through this same skill.

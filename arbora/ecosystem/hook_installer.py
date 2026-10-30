@@ -58,16 +58,14 @@ _STALENESS_CMD = "agent-utilities staleness-audit --cwd $PWD"
 # CONCEPT:AU-OS.deployment.workspace-venv-reconciler (D-VS-6) — the one piece of
 # shared-venv drift detection cheap enough (no `uv` subprocess) to run on every
 # SessionStart. Silent when clean; `2>/dev/null || true` means a host where
-# `agent-utilities-venv` is not on PATH (or the shared venv doesn't apply here)
+# `arbora-venv` is not on PATH (or the shared venv doesn't apply here)
 # degrades to a no-op rather than a broken session-start hook. This constant is
 # wired into the templates below at import time (a source-only change) but only
 # reaches an already-installed agent surface's config the next time an operator
 # runs `install_hooks()` for it — deliberately not retroactive, matching the
 # autosync precedent (D-VS-3): shipping the capability is not the same as an
 # operator opting every already-configured surface into its latency.
-_VENV_SESSION_HINT_CMD = (
-    "agent-utilities-venv session-hint --workspace $PWD 2>/dev/null || true"
-)
+_VENV_SESSION_HINT_CMD = "arbora-venv session-hint --workspace $PWD 2>/dev/null || true"
 
 _CLAUDE_HOOKS = {
     "hooks": {

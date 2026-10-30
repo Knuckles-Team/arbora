@@ -6,7 +6,7 @@
 |---|---|---|
 | arbora | The runtime: MCP server (intent verbs + fleet multiplexer meta-tools), REST/A2A control plane, web UI, identity broker, policy (Eunomia), fleet gateway, background daemons | the main process/container |
 | epistemic-graph (EG) | The engine and sole durable authority: graph, SQL catalog, RBAC, identity store, secrets graph, federation, audit | same pod/container as arbora (unified) or a separate service (shared) |
-| agent-utilities (AU) | Agent-orchestration library (agents, harness, workflows) imported by arbora | a Python dependency only; no service, no port |
+| meristem (AU) | Agent-orchestration library (agents, harness, workflows) imported by arbora | a Python dependency only; no service, no port |
 | connectors | MCP servers built on agent-connector-sdk | separate processes/pods reached through the fleet multiplexer |
 
 arbora is the only public surface. Nothing else should be exposed to users.
@@ -65,7 +65,7 @@ genuinely required.
 ## Images
 
 The Compose file and the chart consume an operator-supplied **unified image**:
-arbora, agent-utilities, agent-connector-sdk, the web UI extra, and the
+arbora, meristem, agent-connector-sdk, the web UI extra, and the
 `epistemic-graph-server` binary at a matching release. arbora does not
 publish an authoritative image of its own; the deploying organization builds
 it from released artifacts and pins it by digest. Check the CPU baseline of

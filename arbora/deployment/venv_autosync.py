@@ -764,7 +764,7 @@ def _apply_drain(
                 payload["proposal"] = (
                     "a merge changed packaging metadata, so uv.lock no longer "
                     "matches the manifests. Review and apply it with "
-                    "`agent-utilities-venv relock` (backed up, verified, "
+                    "`arbora-venv relock` (backed up, verified, "
                     "auto-rolled-back), or set on_metadata_change=relock to "
                     "have this happen automatically."
                 )

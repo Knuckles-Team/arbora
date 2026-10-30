@@ -4,7 +4,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spe
 
 ## Existing wiring to reuse
 
-`arbora.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `arbora.gateway.graph_api.register_graph_routes` composes the REST host. `arbora.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `arbora.a2a` already has authenticated unary task methods. `arbora.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `epistemic-graph`. Decisions, context, traces and durable WorkItems belong to `epistemic-graph`. `agent-utilities` is the agent harness that applies engine decisions. Connector ingestion belongs to `agent-connector-sdk` (SCION-CONNECTOR-CONTROL-R005). Connector effects belong to the SDK and fleet. Arbora authenticates, composes, supervises, routes and projects.
+`arbora.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `arbora.gateway.graph_api.register_graph_routes` composes the REST host. `arbora.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `arbora.a2a` already has authenticated unary task methods. `arbora.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `epistemic-graph`. Decisions, context, traces and durable WorkItems belong to `epistemic-graph`. `meristem` is the agent harness that applies engine decisions. Connector ingestion belongs to `agent-connector-sdk` (SCION-CONNECTOR-CONTROL-R005). Connector effects belong to the SDK and fleet. Arbora authenticates, composes, supervises, routes and projects.
 
 ## Component and data flow
 
@@ -57,7 +57,7 @@ The retirement inventory is a checked artifact produced from the existing host r
 
 ## Gateway carry-over: dashboard, Live Artifacts, widget
 
-Cross-repo IDs: MERISTEM-BOUNDARY-R001.2, MERISTEM-BOUNDARY-R001.3, MERISTEM-BOUNDARY-R001.7 (agent-utilities deletions); ARBORA-HOST-R005. Provenance: agent-utilities commits 0eb67c99c (dashboard router), 902f906ca (Live Artifacts router), 7717d2e62 (genius_agent widget).
+Cross-repo IDs: MERISTEM-BOUNDARY-R001.2, MERISTEM-BOUNDARY-R001.3, MERISTEM-BOUNDARY-R001.7 (meristem deletions); ARBORA-HOST-R005. Provenance: meristem commits 0eb67c99c (dashboard router), 902f906ca (Live Artifacts router), 7717d2e62 (genius_agent widget).
 
 Deleted dashboard router: prefix `/api/dashboard`. Every route except `/health` requires read capability; mutations require write capability. Capabilities: gateway:read, gateway:write, gateway:admin, admin. API-key callers are unrestricted:
 - GET `/layout` and PUT `/layout`: read and persist the dashboard layout (shared YAML, reads always go back to disk).
@@ -79,7 +79,7 @@ Deleted Agent summary widget: dashboard tile with type genius_agent, env prefix 
 ### Design in this repository
 
 - Dashboard: owned by the existing dashboard router module and its aggregator, config manager and registry under the gateway package. No new module; add census and capability tests only.
-- Live Artifacts: new router module `arbora/gateway/artifacts_api.py` (to be created) with typed request model, a store port and a refresh port declared in the gateway ports module, and a register function that mounts the three routes. The store and refresh service come from a public `agent_utilities.api` export (prerequisite row); arbora never imports the agent-utilities knowledge-graph package directly.
+- Live Artifacts: new router module `arbora/gateway/artifacts_api.py` (to be created) with typed request model, a store port and a refresh port declared in the gateway ports module, and a register function that mounts the three routes. The store and refresh service come from a public `agent_utilities.api` export (prerequisite row); arbora never imports the meristem knowledge-graph package directly.
 - Pass the source resolver as a port argument, never a module global. The host supplies a graph-backed resolver. The default preserves prior data.
 - Agent summary widget: nothing to build.
 
@@ -87,7 +87,7 @@ Deleted Agent summary widget: dashboard tile with type genius_agent, env prefix 
 
 - Dashboard: the register function in the dashboard router module mounts routes and the websocket; already called by the host.
 - Artifacts: the host composition point already mounts graph and usage routes. It calls a new register function for artifacts. Authentication: reuse the dashboard capability dependencies unchanged, as decision D3 states below. Use gateway:read for GET and gateway:write for POST, plus the gateway:admin and admin supersets. These are identity capabilities, not engine registry scopes. The old router had no router-level check, so this is an intentional tightening, called out in the parity table.
-- Config: the artifact store location follows the agent-utilities store default; no new env key.
+- Config: the artifact store location follows the meristem store default; no new env key.
 
 Out of scope:
 
@@ -117,7 +117,7 @@ Compared `git show 0eb67c99c^:agent_utilities/gateway/api.py` (328 lines) with `
 | POST /hydrate | write | none / hydration result dict | 403, 500 no engine, 500 sanitized | DIFFERS: same (row R001.7) |
 | GET /hydration-status | read | none / status dict | 403 | DIFFERS: same (row R001.7) |
 
-No route is missing. The capability resolver still imports internal agent-utilities modules core.config and security.identity. This dependency difference belongs to R001.9. Decision: use the engine client session and source-sync methods required by ARBORA-HOST-R002 for shard, hydration, and active-engine state. Do not add another agent-utilities public API export. Row R001.6 first tests whether the installed client exposes these methods. If not, block that row on the engine client owner. Keep present imports until then.
+No route is missing. The capability resolver still imports internal meristem modules core.config and security.identity. This dependency difference belongs to R001.9. Decision: use the engine client session and source-sync methods required by ARBORA-HOST-R002 for shard, hydration, and active-engine state. Do not add another meristem public API export. Row R001.6 first tests whether the installed client exposes these methods. If not, block that row on the engine client owner. Keep present imports until then.
 
 #### D3 Live Artifacts authentication (DECIDED; not blocked)
 
@@ -129,9 +129,9 @@ Decision: the artifact routes use the same dependencies as the dashboard routes 
 
 Read `agent_utilities/knowledge_graph/live_artifacts/`. Public names: `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `render_template` (models.py); `LiveArtifactStore`, `get_live_artifact_store`, `ArtifactWriter` (store.py); `RefreshService`, `RefreshResult`, `DataSource` (refresh.py); `kg_source_resolver` (kg_source.py). `install_kg_artifact_source` imports the deleted `agent_utilities.gateway.artifacts_api` and always logs a failure; it must not be exported.
 
-Proposed agent-utilities row (orchestrator adds it; new file `agent_utilities/api/live_artifacts.py`, re-exported from `agent_utilities/api/__init__.py`):
+Proposed meristem row (orchestrator adds it; new file `agent_utilities/api/live_artifacts.py`, re-exported from `agent_utilities/api/__init__.py`):
 
-> `MERISTEM-BOUNDARY-R013.<n>` **Export the Live Artifact store, models and refresh service.** Re-export `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `LiveArtifactStore`, `get_live_artifact_store`, `RefreshService`, `RefreshResult`, `DataSource` and `kg_source_resolver` from `agent_utilities.knowledge_graph.live_artifacts` through `agent_utilities.api.live_artifacts`; delete the dead `install_kg_artifact_source`. Verification: an agent-utilities test imports each name from `agent_utilities.api` and the layout fence still passes.
+> `MERISTEM-BOUNDARY-R013.<n>` **Export the Live Artifact store, models and refresh service.** Re-export `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `LiveArtifactStore`, `get_live_artifact_store`, `RefreshService`, `RefreshResult`, `DataSource` and `kg_source_resolver` from `agent_utilities.knowledge_graph.live_artifacts` through `agent_utilities.api.live_artifacts`; delete the dead `install_kg_artifact_source`. Verification: an meristem test imports each name from `agent_utilities.api` and the layout fence still passes.
 
 Because the AU resolver already re-runs `source_query`, ARBORA-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The arbora request model does not copy them.
 
@@ -610,7 +610,7 @@ Each row composes served `eg.<domain>.<Method>` operations (see `arbora/api/regi
 
 ## ARBORA-OPS-R843 — replaced tool wrappers
 
-The pinned engine contract generates one `eg.<domain>.<Method>` operation per callable method (`ARBORA-OPS-R008`). The wrapper modules in agent-utilities call the same methods through an in-process client. A harness that reaches arbora over MCP or `fleet.call` needs none of them. `ARBORA-OPS-R843.2` records where each remaining module goes.
+The pinned engine contract generates one `eg.<domain>.<Method>` operation per callable method (`ARBORA-OPS-R008`). The wrapper modules in meristem call the same methods through an in-process client. A harness that reaches arbora over MCP or `fleet.call` needs none of them. `ARBORA-OPS-R843.2` records where each remaining module goes.
 
 ## Amendment 2026-10-18: SDK current-plan contract adoption
 
@@ -710,7 +710,7 @@ service executor only, per the ARBORA-OPS-R021.1 pattern. It writes
 the adopted harness of MEDULLA-ORCH-VOCAB-R802. arbora computes no
 ranking and stores no harness content. The engine is the sole
 authority for versions, contrasts and lessons. The in-run cycle that
-drives these operations belongs to agent-utilities (MERISTEM-HARNESS-CYCLE-R001).
+drives these operations belongs to meristem (MERISTEM-HARNESS-CYCLE-R001).
 
 ## Served source operations (R848)
 
@@ -901,7 +901,7 @@ refuse mismatches and unavailable legacy evidence. Lease authority is unchanged.
 
 ARBORA-OPS-R001 composes immutable admission recovery, authorized completed
 retry reads, planner failure accounting, failed A2A receipts and native owner
-graph terminal reads. New runtime imports use agent-utilities' allowed runtime
+graph terminal reads. New runtime imports use meristem's allowed runtime
 facade and preserve the owning classes. Dispatch returns completed retries
 before execution, so its remaining execution path needs no duplicate terminal
 branch. Source-overlay checks do not qualify released dependencies or native

@@ -111,7 +111,7 @@ flowchart LR
 
 1. **This PR (`ARBORA-A2A-R016.1`):** add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models and the `admit_tool_subset` function returning today's exact fail-closed result. Add the refusal unit test. Open the spec and the AU owner row (`MERISTEM-CONTROL-R035`) this door depends on.
 2. Once epistemic-graph publishes a non-stub `AgentAssemble` client, inject it into `admit_tool_subset` and add the `ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET` refusal path for the still-missing AU field.
-3. Once agent-utilities lands `MERISTEM-CONTROL-R035` (the signed envelope's allowed-tool-subset field) and publishes the updated generated client, wire the admitted path: EG answer in, signed envelope out, with signature verification before any dispatch treats the subset as enforced.
+3. Once meristem lands `MERISTEM-CONTROL-R035` (the signed envelope's allowed-tool-subset field) and publishes the updated generated client, wire the admitted path: EG answer in, signed envelope out, with signature verification before any dispatch treats the subset as enforced.
 4. Replace `OrchestratorA2ARouter`'s and `WorkItemA2AAuthority`'s inline `A2AAssemblyUnavailable` raises with a call to `admit_tool_subset`, so there is exactly one admission authority.
 5. Update [test-spec.md](test-spec.md) coverage for the admitted path and record exact default-branch evidence before changing delivery state.
 
@@ -182,7 +182,7 @@ The source of `priority` and the field names inside the `resolve_capability` res
 
 ## A2A tool-action admission (ARBORA-A2A-R005.3 to R005.8)
 
-Consumers: MERISTEM-SEC-R012. Moves from agent-utilities: `agent_utilities/security/tool_guard.py:383`.
+Consumers: MERISTEM-SEC-R012. Moves from meristem: `agent_utilities/security/tool_guard.py:383`.
 
 Existing code: `arbora/a2a/application.py:140` (fail-closed confirm stub), `arbora/a2a/models.py:104` (`A2APlanConfirmParams`), `arbora/api/invoke/pipeline.py:641` (`_confirmation_gate`). `arbora/access/service.py:54` is operator-console elevation and is not an A2A approval port. Reachable today: no. The stub is reachable and always refuses; no admission function exists. Search terms: `admission`, `approval`, `untrusted`, `taint`, `pending_call`.
 
@@ -200,7 +200,7 @@ Cross-repository: `MEDULLA-DECISION-ENGINE` (verdict on a tool action after untr
 
 ## A2A held-item admission (ARBORA-A2A-R006.3 to R006.8)
 
-Consumers: MERISTEM-CONTROL-R040, MERISTEM-HARNESS-R023. Moves from agent-utilities: `agent_utilities/knowledge_graph/enrichment/writeback/approval.py:47`.
+Consumers: MERISTEM-CONTROL-R040, MERISTEM-HARNESS-R023. Moves from meristem: `agent_utilities/knowledge_graph/enrichment/writeback/approval.py:47`.
 
 Existing code: `arbora/a2a/application.py:140`, `arbora/a2a/models.py:104`, `arbora/access/service.py:54`, `agent_utilities/knowledge_graph/enrichment/writeback/approval.py:170` (`approve_proposal`, called from `agent_utilities/mcp/tools/ontology_tools.py:335`). Reachable today: no for arbora; yes for the harness-side function. Search terms: `admit`, `proposal`, `verdict`, `approve_proposal`, `stored program`.
 

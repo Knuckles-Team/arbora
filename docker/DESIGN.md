@@ -14,8 +14,8 @@ runtime still lives in agent-utilities.
 An eventual image definition here must:
 
 - install exact released Arbora, epistemic-graph, agent-connector-sdk,
-  agent-utilities, and optional agent-webui artifacts;
-- run the public `arbora` entrypoint rather than an agent-utilities alias;
+  meristem, and optional agent-webui artifacts;
+- run the public `arbora` entrypoint rather than an meristem alias;
 - resolve endpoints and credentials from deployment configuration and secret
   references, never from values embedded in the image;
 - retain the same fail-closed capability checks documented in

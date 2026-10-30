@@ -53,14 +53,14 @@ operations.
 
 Arbora authenticates, composes, routes, supervises, and projects. Durable
 graph state and RDF/OWL/SHACL semantics belong to `epistemic-graph`; agent
-decisions and workflows belong to `agent-utilities`; source-specific transport
+decisions and workflows belong to `meristem`; source-specific transport
 and effects belong to `agent-connector-sdk` and connector services; browser
 presentation belongs to `agent-webui`.
 
 ```mermaid
 flowchart LR
     Clients["MCP, REST, A2A, WebUI"] --> Arbora["Arbora"]
-    Arbora --> Agents["agent-utilities"]
+    Arbora --> Agents["meristem"]
     Arbora --> EG["epistemic-graph client"]
     Arbora --> Fleet["MCP fleet"]
     Fleet --> Sources["connector services"]
@@ -116,8 +116,8 @@ The package publishes these operator commands:
 |---|---|
 | `arbora` | Serve the native MCP composition over `stdio` or `streamable-http` |
 | `setup-config` | Generate, validate, and describe deployment configuration |
-| `agent-utilities-doctor` | Run deployment and dependency diagnostics |
-| `agent-utilities-venv` | Inspect and reconcile managed runtime environments |
+| `arbora-doctor` | Run deployment and dependency diagnostics |
+| `arbora-venv` | Inspect and reconcile managed runtime environments |
 | `arbora-release-canary` | Check a candidate release and catalog |
 | `arbora-production-ops` | Run guarded backup, restore, and production checks |
 

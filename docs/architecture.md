@@ -12,7 +12,7 @@ capabilities through one governed surface.
 
 Product display names map to existing repositories: Overstory (`agent-webui`),
 Tuig (`agent-terminal-ui`), Scion SDK (`agent-connector-sdk`), Meristem
-(`agent-utilities`) and Axil (`geniusbot`). Package/import names and
+(`meristem`) and Axil (`geniusbot`). Package/import names and
 repository URLs are unchanged. The Tuig executable remains `tuig`.
 
 | Layer | Owns | Arbora relationship |

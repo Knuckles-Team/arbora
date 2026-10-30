@@ -29,14 +29,14 @@ gh run list --workflow=release.yml -R Knuckles-Team/agent-connector-sdk --branch
 Same proof shape as stage 1, against the revision this release's
 `agent-connector-sdk` dependency pins.
 
-## 3. Agent runtime (`agent-utilities`)
+## 3. Agent runtime (`meristem`)
 
 ```bash
 gh run list --workflow=release.yml -R Knuckles-Team/agent-utilities --branch main --limit 1
 ```
 
 Same proof shape as stage 1, against the revision this release's
-`agent-utilities` dependency pins.
+`meristem` dependency pins.
 
 ## 4. Arbora itself
 
@@ -87,7 +87,7 @@ this stage's check does not depend on that name.
 ## 6. Connector package fleet
 
 ```bash
-agent-utilities-doctor --only mcp_fleet mcp_fleet_secrets --live
+arbora-doctor --only mcp_fleet mcp_fleet_secrets --live
 ```
 
 Both checks must report healthy for every connector package this release's

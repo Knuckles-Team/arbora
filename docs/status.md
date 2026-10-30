@@ -24,9 +24,9 @@ same multiplexer owned by the serving loop.
 
 | Capability | Required runtime state | Behavior when absent |
 |---|---|---|
-| EG-backed fleet catalog | Generated server-registration and AgentComponent clients. Matching agent-utilities read ports | Startup refuses readiness; no static catalog is selected |
+| EG-backed fleet catalog | Generated server-registration and AgentComponent clients. Matching meristem read ports | Startup refuses readiness; no static catalog is selected |
 | Connector runner | Generated ConnectorPack and SourceIngest clients, SDK runner, and live policy resolver | Connector execution is refused |
-| Semantic content packs | Provisioned `arbora` and `agent-utilities` packs attached through GraphSchema | Content checks report the missing or stale attachment |
+| Semantic content packs | Provisioned `arbora` and `meristem` packs attached through GraphSchema | Content checks report the missing or stale attachment |
 | WebUI application routes | Overstory installed with its application-composer seam | Arbora runs without the optional WebUI co-service |
 | Attended browser control | WebUI identity validation, backchannel revalidation, and engine mutation authorities | Browser control remains unavailable |
 

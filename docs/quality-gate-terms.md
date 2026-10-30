@@ -8,7 +8,7 @@ file allowlist, frozen count, or inline suppression.
 ## The rule about rules
 
 The project rule is **NO RATCHETS — expose tech debt**, exactly as stated in
-epistemic-graph's and agent-utilities' own `docs/quality-gate-terms.md`
+epistemic-graph's and meristem's own `docs/quality-gate-terms.md`
 pages (read those for the full worked examples — the Rust exhaustive-dispatch
 cyclomatic exemption on EG, the KISS threshold recalibration method on
 both). The test is mechanical, and identical here:

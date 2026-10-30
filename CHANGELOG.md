@@ -3,6 +3,10 @@
 ## [Unreleased]
 
 ### Removed
+- Rename cutover: `arbora-doctor` and `arbora-venv` replace the `agent-utilities-doctor` and `agent-utilities-venv` commands.
+- `ARBORA_SKILL_CERT_OIDC_CLIENT_SECRET` and `ARBORA_SKILL_CERT_OIDC_TLS_PROFILE` replace the `GRAPHOS_SKILL_CERT_OIDC_*` variables. Arbora no longer reads the old names.
+- The skill-certification OIDC audience is `arbora-skill-certification`.
+- This release drops the one-time `scripts/rename_to_arbora.py` script. Specs and docs say Arbora in place of graph-os.
 - `AGENT_UTILITIES_TOKEN_SECRET` and `AGENT_UTILITIES_MCP_TASK_CHANNEL_SECRET` are no longer read. Set `ARBORA_TOKEN_SECRET` and `ARBORA_MCP_TASK_CHANNEL_SECRET` instead; the secret values are unchanged.
 - The Codex registration test that imported the removed `agent_connector_sdk` is deleted.
 

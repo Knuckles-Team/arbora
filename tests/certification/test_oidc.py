@@ -38,7 +38,7 @@ def test_fixture_mints_token_verified_with_served_jwks(certification_authority):
     authority = certification_authority
     environment = authority.child_environment({}, model_private_hosts=[])
     oauth = json.loads(environment["KG_IDENTITY_OAUTH2"])
-    secret = environment["GRAPHOS_SKILL_CERT_OIDC_CLIENT_SECRET"]
+    secret = environment["ARBORA_SKILL_CERT_OIDC_CLIENT_SECRET"]
     with httpx.Client(verify=_tls(authority.ca_pem), trust_env=False) as client:
         keys = client.get(f"{authority.issuer}/jwks").json()["keys"]
         denied = client.post(
