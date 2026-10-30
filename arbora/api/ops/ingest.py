@@ -14,6 +14,8 @@ ARBORA-OPS-R020.3 through R020.5 in ``specs/hosted-api-operations/``.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from arbora.api.registry import (
@@ -25,11 +27,15 @@ from arbora.api.registry import (
     Verb,
 )
 from arbora.ingest.service import (
+    cancel_job,
     get_job_status,
     get_source_status,
     index_repository,
+    list_jobs,
     list_packs,
     list_sources,
+    prioritize_job,
+    submit_ingest,
     sync_source,
 )
 
@@ -41,11 +47,15 @@ from arbora.ingest.service import (
 __all__ = [
     "NATIVE_IDEMPOTENCY",
     "operations",
+    "cancel_job",
     "get_job_status",
     "get_source_status",
     "index_repository",
+    "list_jobs",
     "list_packs",
     "list_sources",
+    "prioritize_job",
+    "submit_ingest",
     "sync_source",
 ]
 
@@ -109,6 +119,40 @@ class IngestJobStatusParams(_Params):
 
 class IngestJobStatusResult(_Params):
     value: dict[str, str]
+
+
+class IngestSubmitParams(_Params):
+    kind: Literal[
+        "ingest", "ingest_url", "ingest_knowledge_pack", "fact_extract", "distill"
+    ]
+    target: str = Field(min_length=1, max_length=2048)
+    options: dict[str, str] = Field(default_factory=dict, max_length=8)
+
+
+class IngestSubmitResult(_Params):
+    value: dict[str, str]
+
+
+class IngestJobsListParams(_Params):
+    cursor: str | None = Field(default=None, max_length=512)
+    limit: int = Field(default=50, ge=1, le=100)
+
+
+class IngestJobsListResult(_Params):
+    value: dict[str, object]
+
+
+class IngestJobCancelParams(_Params):
+    job_id: str = Field(min_length=1, max_length=256)
+
+
+class IngestJobPrioritizeParams(_Params):
+    job_id: str = Field(min_length=1, max_length=256)
+    bucket: int = Field(ge=0, le=9)
+
+
+class IngestJobControlResult(_Params):
+    value: dict[str, object]
 
 
 def operations() -> tuple[OpSpec, ...]:
@@ -182,5 +226,55 @@ def operations() -> tuple[OpSpec, ...]:
             binding=Composite(handler="arbora.api.ops.ingest.get_job_status"),
             scopes=frozenset({"ingest:read"}),
             effect=Effect.READ,
+        ),
+        OpSpec(
+            id="ingest.submissions.create",
+            verb=Verb.ACT,
+            summary="Queue a durable ingest, URL, pack, fact-extract or distill job",
+            examples=("ingest this url", "distill this document"),
+            params=IngestSubmitParams,
+            result=IngestSubmitResult,
+            binding=Composite(handler="arbora.api.ops.ingest.submit_ingest"),
+            scopes=frozenset({"ingest:write"}),
+            effect=Effect.WRITE,
+            idempotency=Idempotency.KEY_REQUIRED,
+            audit=AuditClass.EVENT,
+        ),
+        OpSpec(
+            id="ingest.jobs.list",
+            verb=Verb.FIND,
+            summary="List this tenant's durable ingestion jobs",
+            examples=("list my ingestion jobs",),
+            params=IngestJobsListParams,
+            result=IngestJobsListResult,
+            binding=Composite(handler="arbora.api.ops.ingest.list_jobs"),
+            scopes=frozenset({"ingest:read"}),
+            effect=Effect.READ,
+        ),
+        OpSpec(
+            id="ingest.jobs.cancel",
+            verb=Verb.ACT,
+            summary="Cancel one pending ingestion job",
+            examples=("cancel this ingestion job",),
+            params=IngestJobCancelParams,
+            result=IngestJobControlResult,
+            binding=Composite(handler="arbora.api.ops.ingest.cancel_job"),
+            scopes=frozenset({"ingest:write"}),
+            effect=Effect.WRITE,
+            idempotency=Idempotency.NATURAL,
+            audit=AuditClass.EVENT,
+        ),
+        OpSpec(
+            id="ingest.jobs.prioritize",
+            verb=Verb.ACT,
+            summary="Set the priority bucket of one ingestion job",
+            examples=("prioritize this ingestion job",),
+            params=IngestJobPrioritizeParams,
+            result=IngestJobControlResult,
+            binding=Composite(handler="arbora.api.ops.ingest.prioritize_job"),
+            scopes=frozenset({"ingest:write"}),
+            effect=Effect.WRITE,
+            idempotency=Idempotency.NATURAL,
+            audit=AuditClass.EVENT,
         ),
     )

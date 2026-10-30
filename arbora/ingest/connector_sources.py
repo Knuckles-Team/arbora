@@ -33,15 +33,18 @@ from agent_connector_sdk.ingest.transport import EpistemicGraphIngestTransport
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.fleet.declarations import RESOURCES_URI, parse_declaration
 from arbora.ingest.service import (
+    IngestJobControlReceipt,
+    IngestJobInventory,
     IngestJobRecord,
     IngestPackInventory,
     IngestPackRecord,
     IngestSourceInventory,
     IngestSourceRecord,
+    IngestSubmissionReceipt,
     IngestSyncReceipt,
 )
 
-__all__ = ["SOURCE_SYNC_KIND", "ConnectorIngestRunner", "FleetSourceSession"]
+__all__ = ["SOURCE_SYNC_KIND", "SUBMISSION_KIND", "ConnectorIngestRunner", "FleetSourceSession"]
 
 #: The prefix of a failed sync's WorkItem ``error_ref``.
 _ERROR_REF = "ingest-source-error"
@@ -65,6 +68,8 @@ def _parse_error_ref(value: Any) -> tuple[str | None, str | None]:
 
 #: The engine WorkItem kind of one connector source sync.
 SOURCE_SYNC_KIND = "arbora.ingest.source_sync"
+#: The engine WorkItem kind of one queued ingest submission; a worker leases it.
+SUBMISSION_KIND = "arbora.ingest.submission"
 _LEASE_S = 600.0
 _SEAM_TIMEOUT_S = 60.0
 #: The fleet catalog page size (its maximum) and page bound for one listing.
@@ -446,6 +451,112 @@ class ConnectorIngestRunner:
                 )
             )
         return IngestPackInventory(packs=tuple(packs))
+
+    @staticmethod
+    def _job_record(tenant: str, job_id: str, item: Mapping[str, Any]) -> IngestJobRecord:
+        mapped = {"succeeded": "completed", "failed": "failed", "leased": "running"}
+        reason, engine_code = _parse_error_ref(item.get("error_ref"))
+        return IngestJobRecord(
+            job_id=job_id,
+            tenant=tenant,
+            status=mapped.get(str(item.get("status")), "queued"),  # type: ignore[arg-type]
+            reason=reason,
+            engine_code=engine_code,
+        )
+
+    async def _control(self, tenant: str) -> _SyncEngine:
+        return _SyncEngine(
+            await self._control_client(tenant), asyncio.get_running_loop()
+        )
+
+    async def submit_ingest(
+        self,
+        *,
+        tenant: str,
+        kind: str,
+        target: str,
+        options: Mapping[str, str],
+        idempotency_key: str,
+        caller: Any = None,
+    ) -> IngestSubmissionReceipt:
+        """Queue one submission as a durable engine WorkItem for the ingest worker."""
+        from arbora import work_items
+
+        key = hashlib.sha256(
+            f"{kind}|{target}|{sorted(options.items())}|{idempotency_key}".encode()
+        ).hexdigest()
+        control = await self._control(tenant)
+        try:
+            with _caller_session(caller):
+                item_id, _ = await _seam(
+                    work_items.submit_work_item_atomic,
+                    control,
+                    kind=SUBMISSION_KIND,
+                    idempotency_key=key,
+                    tenant=tenant,
+                    description=f"{kind} {target}"[:256],
+                    metadata={"submission_kind": kind, "target": target, **options},
+                )
+        except work_items.WorkItemBackendUnavailable as exc:
+            raise OperationRefused("UNAVAILABLE", {"reason": str(exc)}) from exc
+        return IngestSubmissionReceipt(
+            job_id=item_id, tenant=tenant, kind=kind, status="queued"  # type: ignore[arg-type]
+        )
+
+    async def list_jobs(
+        self,
+        *,
+        tenant: str,
+        cursor: str | None = None,
+        limit: int = 50,
+        caller: Any = None,
+    ) -> IngestJobInventory:
+        from arbora import work_items
+
+        control = await self._control(tenant)
+        jobs: list[IngestJobRecord] = []
+        next_cursor = None
+        with _caller_session(caller):
+            for kind in (SOURCE_SYNC_KIND, SUBMISSION_KIND):
+                page = await _seam(
+                    work_items.list_work_items,
+                    control,
+                    kind=kind,
+                    cursor=cursor if kind == SOURCE_SYNC_KIND else None,
+                    limit=limit,
+                )
+                next_cursor = next_cursor or page.get("next_cursor")
+                jobs.extend(
+                    self._job_record(tenant, str(it["work_item_id"]), it)
+                    for it in page["items"]
+                )
+        return IngestJobInventory(jobs=tuple(jobs), next_cursor=next_cursor)
+
+    async def cancel_job(
+        self, *, tenant: str, job_id: str, caller: Any = None
+    ) -> IngestJobControlReceipt:
+        from arbora import work_items
+
+        control = await self._control(tenant)
+        with _caller_session(caller):
+            applied = await _seam(work_items.cancel_work_item, control, job_id)
+        return IngestJobControlReceipt(
+            job_id=job_id, tenant=tenant, action="cancel", applied=bool(applied)
+        )
+
+    async def prioritize_job(
+        self, *, tenant: str, job_id: str, bucket: int, caller: Any = None
+    ) -> IngestJobControlReceipt:
+        from arbora import work_items
+
+        control = await self._control(tenant)
+        with _caller_session(caller):
+            applied = await _seam(
+                work_items.set_priority_bucket, control, job_id, bucket=bucket
+            )
+        return IngestJobControlReceipt(
+            job_id=job_id, tenant=tenant, action="prioritize", applied=bool(applied)
+        )
 
     async def get_job_status(
         self, *, tenant: str, job_id: str, caller: Any = None

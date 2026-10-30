@@ -69,6 +69,15 @@ def validate_served_actions(
 CODE_NAVIGATION_ACTIONS = ("code_context", "call_graph", "routes")
 IMPACT_ACTIONS = ("blast_radius", "change_coupling")
 SIMILARITY_ACTIONS = ("similar_code",)
+INGEST_SUBMISSION_ACTIONS = (
+    "ingest",
+    "ingest_url",
+    "ingest_knowledge_pack",
+    "fact_extract",
+    "distill",
+)
+#: Legacy ``graph_config`` / ``graph_configure`` reads served by ``ops.config``.
+CONFIG_READ_ACTIONS = ("describe", "get", "get_config", "list_config")
 CODE_GRAPH_QUERY_ACTIONS = CODE_NAVIGATION_ACTIONS + IMPACT_ACTIONS + SIMILARITY_ACTIONS
 
 
@@ -89,10 +98,24 @@ APPROVED_ACTION_MAPPING = build_approved_action_mapping(
         ActionOperationMapping("explain", "query.nl"),
         ActionOperationMapping("recall_memory", "graph_query.recall_memory"),
         ActionOperationMapping("submit_sdd", "graph_orchestrate.submit_sdd"),
-        ActionOperationMapping(
-            "ingest_knowledge_pack", "source_sync.ingest_knowledge_pack"
+        # Ingest submission and job lifecycle: durable engine WorkItems behind
+        # the ingestion runner port (ARBORA-HOST-R005.2.3.2 / .2.3.4).
+        *(
+            ActionOperationMapping(action, "ingest.submissions.create")
+            for action in INGEST_SUBMISSION_ACTIONS
         ),
-        ActionOperationMapping("process_writeback", "source_sync.process_writeback"),
+        ActionOperationMapping("jobs", "ingest.jobs.list"),
+        ActionOperationMapping("job_status", "ingest.jobs.status"),
+        ActionOperationMapping("cancel", "ingest.jobs.cancel"),
+        ActionOperationMapping("prioritize", "ingest.jobs.prioritize"),
+        # Write-back is the engine's WriteBack method, passed through the
+        # registry (ARBORA-HOST-R005.2.1.4).
+        ActionOperationMapping("process_writeback", "eg.storage.WriteBack"),
+        # Configuration reads are the served operational config (R005.2.2).
+        *(
+            ActionOperationMapping(action, "ops.config")
+            for action in CONFIG_READ_ACTIONS
+        ),
         ActionOperationMapping("set_secret", "secret_vault.set_secret"),
         ActionOperationMapping("vault_sync", "secret_vault.vault_sync"),
         ActionOperationMapping("install_hooks", "graph_loops.install_hooks"),
