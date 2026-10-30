@@ -362,6 +362,34 @@ def _with_write_back(
     }
 
 
+def _with_federation_sources(
+    bindings: Mapping[str, Any] | None,
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+) -> Mapping[str, Any] | None:
+    """Bind ``federation_sources`` to the engine-held ownership graph.
+
+    ARBORA-OPS-R019.1/.2: ownership and grants are control-graph nodes and
+    edges; the foreign source itself is registered on the tenant graph.
+    """
+    if bindings is None or "federation_sources" in bindings:
+        return bindings
+    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+    from arbora.mcp_server.federation_sources import EngineFederationSources
+
+    async def data_client(tenant: str) -> Any:
+        return await pool.connected_client(connect_context(tenant), graph)
+
+    async def control_client(tenant: str) -> Any:
+        return await pool.connected_client(connect_context(tenant), CONTROL_GRAPH)
+
+    port = EngineFederationSources(
+        control_client, data_client, control_graph=CONTROL_GRAPH, data_graph=graph
+    )
+    return {**bindings, "federation_sources": port}
+
+
 def _with_fleet_source_executor(
     bindings: Mapping[str, Any] | None,
     pool: Any,
@@ -694,6 +722,7 @@ def compose_served_invocation(
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
     bindings = _with_ops_runners(bindings, pool, graph, connect_context)
     bindings = _with_ops_admin_store(bindings, pool, graph, connect_context)
+    bindings = _with_federation_sources(bindings, pool, graph, connect_context)
     bindings = _with_fleet_source_executor(bindings, pool, graph)
     bindings = _with_write_back(bindings, pool, connect_context, session)
     bindings = _with_nl_federation_planner(bindings)

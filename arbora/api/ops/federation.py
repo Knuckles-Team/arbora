@@ -1,7 +1,9 @@
-"""Federation source list, get, probe, share and unshare (ARBORA-OPS-R019.1/.2).
+"""Federation source register, list, get, probe, share and unshare (ARBORA-OPS-R019.1/.2).
 
-Registration and column reads pass straight through to the engine
-(:mod:`arbora.api.ops.query_engine`).  The visibility rule is Arbora's: a
+Column reads pass straight through to the engine
+(:mod:`arbora.api.ops.query_engine`).  Registration records the caller as the
+source's owner in the engine-held ownership graph before handing the endpoint
+configuration to the engine's ``RegisterForeignSource``.  The visibility rule is Arbora's: a
 source is visible only to its owner and its grantees, only the owner shares or
 unshares it, and a probe re-checks that access on every call, so revoking a
 grantee blocks that grantee's next probe.  Probe results never carry
@@ -22,7 +24,7 @@ from arbora.api.ops._common import (
     build_read_op,
     build_write_op,
 )
-from arbora.api.registry import OpSpec, Verb
+from arbora.api.registry import Effect, OpSpec, Verb
 
 _SECRET_MARKERS = (
     "password",
@@ -40,6 +42,11 @@ REDACTED = "[redacted]"
 
 class SourceRefParams(Params):
     source_id: str = Field(min_length=1, max_length=256)
+
+
+class SourceRegisterParams(Params):
+    source_id: str = Field(min_length=1, max_length=256)
+    source: dict[str, Any]
 
 
 class SourcesListParams(Params):
@@ -97,6 +104,17 @@ async def handle_federation(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     principal = context.caller.principal
+    if op.id == "federation.sources.register":
+        if not context.idempotency_key:
+            raise ValueError("Idempotency-Key is required")
+        record = await _port(context).register(
+            params["source_id"],
+            dict(params["source"]),
+            tenant=context.caller.tenant,
+            owner=principal,
+            idempotency_key=context.idempotency_key,
+        )
+        return {"value": _public(record)}
     if op.id == "federation.sources.list":
         records = await _port(context).list(tenant=context.caller.tenant)
         return {
@@ -121,11 +139,17 @@ async def handle_federation(
     port = _port(context)
     if op.id == "federation.sources.share":
         updated = await port.grant(
-            params["source_id"], params["grantee"], tenant=context.caller.tenant
+            params["source_id"],
+            params["grantee"],
+            tenant=context.caller.tenant,
+            idempotency_key=context.idempotency_key,
         )
     elif op.id == "federation.sources.unshare":
         updated = await port.revoke(
-            params["source_id"], params["grantee"], tenant=context.caller.tenant
+            params["source_id"],
+            params["grantee"],
+            tenant=context.caller.tenant,
+            idempotency_key=context.idempotency_key,
         )
     else:
         raise ValueError("unknown federation operation")
@@ -135,6 +159,17 @@ async def handle_federation(
 def operations() -> tuple[OpSpec, ...]:
     handler = "arbora.api.ops.federation.handle_federation"
     return (
+        build_write_op(
+            op_id="federation.sources.register",
+            verb=Verb.MANAGE,
+            summary="Register a foreign source owned by the caller (governed write)",
+            examples=("register a federated source",),
+            params=SourceRegisterParams,
+            result=SourceResult,
+            handler=handler,
+            scope="federation:admin",
+            effect=Effect.ADMIN,
+        ),
         build_read_op(
             op_id="federation.sources.list",
             summary="List the federation sources visible to the caller",
