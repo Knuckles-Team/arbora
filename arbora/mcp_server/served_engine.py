@@ -27,6 +27,7 @@ from collections.abc import Mapping
 from typing import Any, cast
 
 from arbora.security.anonymous import client_scope, session_context
+from arbora.unique_records import record_body
 
 __all__ = [
     "ServedEngine",
@@ -322,7 +323,7 @@ class ServedEngine:
         from epistemic_graph.generated.graph import send_add_node
 
         client = self._session_client()
-        body = {**dict(properties or {}), "type": label, "node_type": label}
+        body = record_body(label, properties)
         params = {
             "node_id": node_id,
             "properties_msgpack": msgpack.packb(body, use_bin_type=True),
@@ -356,7 +357,7 @@ class ServedEngine:
         from epistemic_graph.generated.graph import send_create_node_if_absent
 
         client = self._session_client()
-        body = {**dict(properties or {}), "type": label, "node_type": label}
+        body = record_body(label, properties)
         params = {
             "node_id": node_id,
             "properties_msgpack": msgpack.packb(body, use_bin_type=True),
@@ -368,6 +369,40 @@ class ServedEngine:
                 params,
                 client.graph_name,
                 idempotency_key=f"arbora:create-node:{node_id}",
+            )
+
+        return bool(_run_blocking(run))
+
+    def compare_and_set_node(
+        self,
+        node_id: str,
+        conditions: Mapping[str, Any],
+        updates: Mapping[str, Any],
+        *,
+        idempotency_key: str,
+    ) -> bool:
+        """Merge ``updates`` into one node iff every condition holds (EG CAS).
+
+        EG ``CompareAndSetNodeFields`` reads a missing field as ``None``, keeps
+        every untouched property and re-files the node's labels when a label
+        field changes. Returns whether the merge applied.
+        """
+        import msgpack
+        from epistemic_graph.generated.graph import send_compare_and_set_node_fields
+
+        client = self._session_client()
+        params = {
+            "node_id": node_id,
+            "conditions_msgpack": msgpack.packb(dict(conditions), use_bin_type=True),
+            "updates_msgpack": msgpack.packb(dict(updates), use_bin_type=True),
+        }
+
+        async def run() -> Any:
+            return await send_compare_and_set_node_fields(
+                client,
+                params,
+                client.graph_name,
+                idempotency_key=idempotency_key,
             )
 
         return bool(_run_blocking(run))

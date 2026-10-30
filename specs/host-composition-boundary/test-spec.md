@@ -95,6 +95,9 @@ Missing receipt fields or public consumer exports block positive served acceptan
 - `ARBORA-HOST-R010.8`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-HOST-R032`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-HOST-R033`: Unit tests drive the action policy and the served engine with recording doubles. They prove a create never reaches `AddNode`, including an add-only binding with an existing answered inbox record: capability detection refuses it and a direct create leaves the record and write count unchanged. These helper tests do not qualify older-store onboarding.
+- `ARBORA-HOST-R033.1`: `tests/test_persisted_shapes.py::test_the_one_action_decision_writer_stores_the_label` and `::test_served_engine_writes_build_their_body_from_the_label_model`.
+- `ARBORA-HOST-R033.2`: `tests/test_data_migrations.py`. The native tests need `ARBORA_NOAUTH_TEST_ENGINE_BINARY` and skip explicitly without it.
+- `ARBORA-HOST-R033.3`: `tests/test_persisted_shapes.py::test_every_covered_writer_shape_has_its_migration`, `::test_migration_ids_are_unique_and_ordered` and `::test_the_label_model_is_part_of_the_shape`.
 
 ## Unsupported interface refusal
 

@@ -613,3 +613,9 @@ whitespace from `ARBORA_CONFIG_DIR`. The old Meristem helper treated that
 whitespace as part of the path. The agent data directory
 stays outside this cut. Tests cover the explicit and XDG paths and real reads.
 This slice does not establish the R008 package-layout census or all cutovers.
+
+## Amendments
+
+### 2026-10-29 — R033.1–R033.3 persisted record shapes and data migrations
+
+Root cause of the unreadable action-policy ledger: from `a3967b23` (0.1.0) the served engine wrote labelled nodes with `type` only. The released engine files a Cypher label from `node_type`. `ccce23e3` (0.1.8.dev5) added `node_type` to new writes. Rows written before it stayed type-only. `760ec853` then made accounting fail closed while such rows exist, as `ARBORA-FLEET-R015` requires. It shipped no repair, so production refused every rate-limited `connector_pack_import` while reporting "rate limit exceeded". The label change shipped without a data migration, which is the gap these rows close. `record_body` is the one label model. Migrations are recorded and run at start. The shape gate ties a writer change to its migration.

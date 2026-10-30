@@ -19,7 +19,22 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-__all__ = ["create_record", "has_record_writer"]
+__all__ = ["create_record", "has_record_writer", "record_body"]
+
+
+def record_body(
+    label: str, properties: Mapping[str, Any] | None = None
+) -> dict[str, Any]:
+    """The stored property blob of one ``label`` record: the one label model.
+
+    The engine files a Cypher label from ``node_type``; ``type`` stays as
+    ordinary metadata for readers that already use it. Every engine write of a
+    labelled node builds its body here, so no writer can store a record that
+    ``MATCH (n:<label>)`` cannot see. A change to this body changes the shape
+    of every persisted record and needs a data migration
+    (:mod:`arbora.data_migrations`).
+    """
+    return {**dict(properties or {}), "type": label, "node_type": label}
 
 
 def has_record_writer(engine: Any) -> bool:

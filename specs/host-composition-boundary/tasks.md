@@ -140,6 +140,9 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 - [ ] `ARBORA-HOST-R010.8`: Deliver every requirement in requirements.md.
 - [ ] `ARBORA-HOST-R032`: Deliver every requirement in requirements.md.
 - [x] `ARBORA-HOST-R033`: Route every unique-id record write through `create_record` (EG `CreateNodeIfAbsent`).
+- [x] `ARBORA-HOST-R033.1`: Build every labelled body in `record_body`; one `ActionDecision` writer.
+- [x] `ARBORA-HOST-R033.2`: Run recorded, idempotent data migrations at serving start; label type-only `ActionDecision` rows.
+- [x] `ARBORA-HOST-R033.3`: Gate persisted shapes on a declared migration.
 
 - [x] `ARBORA-HOST-R010.9`: Refuse unsupported explicit interfaces before workspace, graph or listener effects.
 
