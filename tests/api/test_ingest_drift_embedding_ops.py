@@ -97,7 +97,7 @@ async def test_repair_previews_then_applies_only_against_approval() -> None:
     assert applied["value"]["applied"] is True
     assert runner.events[-1] == ("apply", "ap-1")
     # approval_ref is mandatory, and an absent runner fails closed.
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         ingest.IngestRepairApproveParams(repair_id="r1")
     with pytest.raises(OperationRefused):
         await _run("ingest.drift.list", None)
