@@ -444,13 +444,20 @@
     {
       "id": "ARBORA-FLEET-R009",
       "title": "Run admission evaluates, commits and publishes with capacity control",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "58ee1a06a392",
         "67b1b9ab916e",
+        "af34104f496e",
         "c77ede8726fa"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/a2a/test_capacity_gated_publication.py:16",
+        "tests/a2a/test_capacity_gated_publication.py:57",
+        "tests/control_plane/admission/test_capacity_acquisition.py:13",
+        "tests/control_plane/admission/test_capacity_acquisition.py:23",
+        "tests/control_plane/admission/test_capacity_acquisition.py:35"
+      ],
       "rollup_of": [
         "ARBORA-FLEET-R009.1",
         "ARBORA-FLEET-R009.2",
@@ -476,21 +483,28 @@
     {
       "id": "ARBORA-FLEET-R009.2",
       "title": "Routing and composition publish only through acquired capacity",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "58ee1a06a392",
+        "af34104f496e",
         "c77ede8726fa"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/a2a/test_capacity_gated_publication.py:16",
+        "tests/a2a/test_capacity_gated_publication.py:57"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R009.3",
       "title": "Run admission publishes with all-or-nothing capacity control",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "58ee1a06a392"
+        "58ee1a06a392",
+        "af34104f496e"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/control_plane/test_policy_runs.py:407"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R010",
@@ -623,7 +637,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "4b83c69e2b41",
-        "907fee1976a5"
+        "a7c25b4e76aa"
       ],
       "verified_by": [
         "tests/api/test_api_registry.py:112",
@@ -651,7 +665,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "6b63aeb7ba03",
-        "907fee1976a5",
+        "a7c25b4e76aa",
         "ea736715b7fb"
       ],
       "verified_by": [
@@ -805,7 +819,7 @@
       "title": "Authority-parity oracle validates principal, operation and surface",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "907fee1976a5",
+        "a7c25b4e76aa",
         "ba0aa6a11b4a"
       ],
       "verified_by": [
@@ -817,9 +831,9 @@
       "title": "Multiplexer exposes four resident fleet tools over one catalog",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "531b2f30db55",
-        "907fee1976a5",
-        "e1d37ca10ef7"
+        "a7c25b4e76aa",
+        "e1d37ca10ef7",
+        "e241347ae841"
       ],
       "verified_by": [
         "tests/fleet/test_gateway_ops.py:17",
@@ -879,11 +893,18 @@
     {
       "id": "ARBORA-FLEET-R051",
       "title": "Catalog reload rejects invalid candidates, proves replica convergence",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "1a8d280ab981"
+        "1a8d280ab981",
+        "795e7f2f2f17"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/test_fleet_catalog_reader.py:211",
+        "tests/test_fleet_catalog_reader.py:223",
+        "tests/test_fleet_catalog_reader.py:234",
+        "tests/test_fleet_catalog_reader.py:251",
+        "tests/test_fleet_catalog_reader.py:262"
+      ],
       "rollup_of": [
         "ARBORA-FLEET-R051.1",
         "ARBORA-FLEET-R051.2"
@@ -895,7 +916,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "667a206c800e",
-        "907fee1976a5"
+        "a7c25b4e76aa"
       ],
       "verified_by": [
         "tests/test_check_connector_count_pins.py:25"
@@ -910,7 +931,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "667a206c800e",
-        "907fee1976a5"
+        "a7c25b4e76aa"
       ],
       "verified_by": [
         "tests/test_check_connector_count_pins.py:25"
@@ -957,20 +978,23 @@
     {
       "id": "ARBORA-FLEET-R051.2",
       "title": "Multi-replica convergence is observed by generation and digest",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "1a8d280ab981"
+        "1a8d280ab981",
+        "795e7f2f2f17"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/test_fleet_catalog_reader.py:391"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R024.1",
       "title": "Deploy-watch verdict is a typed Arbora operation",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "531b2f30db55",
-        "907fee1976a5",
-        "c2d8c8ce46b8"
+        "a7c25b4e76aa",
+        "c2d8c8ce46b8",
+        "e241347ae841"
       ],
       "verified_by": [
         "tests/api/test_fleet_deploy_watch_ops.py:17"
@@ -1118,7 +1142,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "619d25ac8e69",
-        "907fee1976a5",
+        "a7c25b4e76aa",
         "d9015e6d6cda"
       ],
       "verified_by": [
@@ -1145,7 +1169,7 @@
       "title": "`find` ranks catalog-admitted tools when a live probe cannot answer",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "907fee1976a5",
+        "a7c25b4e76aa",
         "d43ff2da921f"
       ],
       "verified_by": [
