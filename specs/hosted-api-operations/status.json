@@ -928,14 +928,12 @@
     {
       "id": "ARBORA-OPS-R021.1",
       "title": "Decide operations (service-executed) — decide slice",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "LANDED",
       "landed_in": [
         "1ded59edd1a6",
         "4016e049e45e"
       ],
-      "verified_by": [
-        "tests/api/test_decide_ops.py:35"
-      ]
+      "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R021.2",
@@ -1282,7 +1280,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:342"
+        "tests/api/test_registry_factory.py:375"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1377,20 +1375,18 @@
         "5f79be652726"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:342"
+        "tests/api/test_registry_factory.py:375"
       ]
     },
     {
       "id": "ARBORA-OPS-R024.5",
       "title": "Operational admin operations — admin slice",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "LANDED",
       "landed_in": [
         "4016e049e45e",
         "8d1bc46ecbdb"
       ],
-      "verified_by": [
-        "tests/api/test_ops_admin_ops.py:202"
-      ]
+      "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R025",
@@ -2630,7 +2626,7 @@
         "d673cd573c77"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:351"
+        "tests/api/test_registry_factory.py:384"
       ]
     },
     {
