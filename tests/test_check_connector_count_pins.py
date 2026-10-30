@@ -6,11 +6,11 @@ exactly as a caller would, as a subprocess, never by importing it as a mock.
 
 from __future__ import annotations
 
-import pytest
-
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 from arbora.fleet.connector_count_pins import (
     CountPinSite,
