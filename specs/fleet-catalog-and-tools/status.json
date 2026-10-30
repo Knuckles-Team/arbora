@@ -40,6 +40,7 @@
     "ARBORA-FLEET-R007.3",
     "ARBORA-FLEET-R011",
     "ARBORA-FLEET-R012",
+    "ARBORA-FLEET-R012.1",
     "ARBORA-FLEET-R013",
     "ARBORA-FLEET-R014",
     "ARBORA-FLEET-R014.1",
@@ -633,7 +634,7 @@
     {
       "id": "ARBORA-FLEET-R012",
       "title": "EG-direct binding generator with reviewed exclusions",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "4b83c69e2b41",
         "68e31b75248a",
@@ -643,7 +644,17 @@
         "tests/api/test_eg_binding.py:133",
         "tests/api/test_eg_binding.py:204",
         "tests/api/test_eg_binding.py:88"
+      ],
+      "rollup_of": [
+        "ARBORA-FLEET-R012.1"
       ]
+    },
+    {
+      "id": "ARBORA-FLEET-R012.1",
+      "title": "Engine operations come from the engine's served descriptors, not a contract file",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-FLEET-R013",

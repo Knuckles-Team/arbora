@@ -7,6 +7,7 @@
     "ARBORA-IDENTITY-R001",
     "ARBORA-IDENTITY-R002",
     "ARBORA-IDENTITY-R002.1",
+    "ARBORA-IDENTITY-R002.2",
     "ARBORA-IDENTITY-R003",
     "ARBORA-IDENTITY-R004",
     "ARBORA-IDENTITY-R004.1",
@@ -151,20 +152,18 @@
     {
       "id": "ARBORA-IDENTITY-R002",
       "title": "Domain scopes consume the generated scope registry",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "9e7f6499d96f",
         "a2212420d6c6",
         "d497f656144a"
       ],
       "verified_by": [
-        "tests/api/test_domain_scopes.py:50",
-        "tests/security/test_scope_registry.py:26",
-        "tests/security/test_scope_registry.py:35",
-        "tests/security/test_scope_registry.py:45"
+        "tests/api/test_domain_scopes.py:50"
       ],
       "rollup_of": [
-        "ARBORA-IDENTITY-R002.1"
+        "ARBORA-IDENTITY-R002.1",
+        "ARBORA-IDENTITY-R002.2"
       ]
     },
     {
@@ -179,6 +178,13 @@
         "tests/security/test_scope_registry.py:35",
         "tests/security/test_scope_registry.py:45"
       ]
+    },
+    {
+      "id": "ARBORA-IDENTITY-R002.2",
+      "title": "The scope registry is ingested from the handshake",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R003",
