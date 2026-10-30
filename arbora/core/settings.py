@@ -4,11 +4,7 @@ Every Arbora module reads a setting through :func:`setting` (the environment
 at call time, typed by the default) and locates its configuration files through
 :func:`config_dir` / :func:`platform_config_file`. Arbora owns
 ``~/.config/arbora``: ``ARBORA_CONFIG_DIR`` wins, then
-``$XDG_CONFIG_HOME/arbora``. For one release a file that exists only under a
-legacy location is still found, with a single deprecation warning: first the
-previous project name (its ``*_CONFIG_DIR`` variable or ``$XDG_CONFIG_HOME``
-directory), then ``AGENT_UTILITIES_CONFIG_DIR`` (or
-``$XDG_CONFIG_HOME/agent-utilities``).
+``$XDG_CONFIG_HOME/arbora``. No other location is read.
 """
 
 from __future__ import annotations
@@ -16,7 +12,6 @@ from __future__ import annotations
 import json
 import os
 import threading
-import warnings
 from collections.abc import Mapping
 from functools import cache
 from pathlib import Path
@@ -45,12 +40,6 @@ __all__ = [
 
 CONFIG_DIR_SETTING = "ARBORA_CONFIG_DIR"
 _APP_DIR = "arbora"
-#: One-release read fallbacks, newest first: (directory variable, XDG directory).
-_LEGACY_LOCATIONS = (
-    ("GRAPH_OS_CONFIG_DIR", "graph-os"),  # arbora-rename: keep
-    ("AGENT_UTILITIES_CONFIG_DIR", "agent-utilities"),
-)
-_warned_legacy: set[Path] = set()
 
 
 def _config_home() -> Path:
@@ -72,44 +61,12 @@ def mcp_config_path() -> Path:
     return config_dir() / "mcp_config.json"
 
 
-def _legacy_config_dirs() -> tuple[Path, ...]:
-    return tuple(
-        _env_dir(variable) or _config_home() / app_dir
-        for variable, app_dir in _LEGACY_LOCATIONS
-    )
-
-
 def platform_config_file(name: str) -> Path:
-    """Return the path of configuration file ``name``.
+    """Return the path of configuration file ``name`` under :func:`config_dir`.
 
-    The Arbora location is returned unless the file is absent there, no
-    explicit ``ARBORA_CONFIG_DIR`` is set, and it exists at a legacy
-    location (searched newest first); that fallback warns once per legacy
-    directory.
+    The file may not exist yet, for a writer to create.
     """
-    preferred = config_dir() / name
-    if preferred.exists() or _env_dir(CONFIG_DIR_SETTING) is not None:
-        return preferred
-    found = next(
-        (
-            (directory, directory / name)
-            for directory in _legacy_config_dirs()
-            if (directory / name).exists()
-        ),
-        None,
-    )
-    if found is None:
-        return preferred
-    legacy_dir, legacy = found
-    if legacy_dir not in _warned_legacy:
-        _warned_legacy.add(legacy_dir)
-        warnings.warn(
-            f"reading Arbora configuration from legacy {legacy_dir}; "
-            f"move it to {config_dir()}",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-    return legacy
+    return config_dir() / name
 
 
 _CREDENTIAL_SUFFIXES = (
@@ -176,9 +133,6 @@ class ArboraConfig(BaseModel):
         default=None,
         alias="AGENT_POLICIES_PATH",
         description="Path to agent_policies.json for identity-based governance (CONCEPT:AU-OS.state.cognitive-scheduler-preemption).",
-    )
-    agent_utilities_config_dir: str | None = Field(
-        default=None, alias="AGENT_UTILITIES_CONFIG_DIR", description=""
     )
     allowed_hosts: str | None = Field(
         default=None,

@@ -405,7 +405,7 @@ def default_state_dir(root: Path) -> Path:
 
     base = Path.home() / ".local" / "state"
     digest = hashlib.sha256(str(root).encode("utf-8")).hexdigest()[:12]
-    return base / "agent-utilities" / "venv-autosync" / f"{root.name}-{digest}"
+    return base / "arbora" / "venv-autosync" / f"{root.name}-{digest}"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
