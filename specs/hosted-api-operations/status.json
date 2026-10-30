@@ -312,11 +312,15 @@
     {
       "id": "ARBORA-OPS-R002",
       "title": "Scoped A2A task routing and fleet tool exposure",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "20f773df9ddd"
+        "20f773df9ddd",
+        "fdb84774eb3a"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_agent_browser_ops.py:38",
+        "tests/api/test_mcp_verbs.py:143"
+      ]
     },
     {
       "id": "ARBORA-OPS-R003",
@@ -924,11 +928,14 @@
     {
       "id": "ARBORA-OPS-R021.1",
       "title": "Decide operations (service-executed) — decide slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "1ded59edd1a6"
+        "1ded59edd1a6",
+        "fdb84774eb3a"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_decide_ops.py:35"
+      ]
     },
     {
       "id": "ARBORA-OPS-R021.2",
@@ -1128,11 +1135,14 @@
     {
       "id": "ARBORA-OPS-R022.1",
       "title": "Work-item and offer operations — work slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "c4cc3e21b439"
+        "c4cc3e21b439",
+        "fdb84774eb3a"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_work_ops.py:140"
+      ]
     },
     {
       "id": "ARBORA-OPS-R022.2",
@@ -1186,11 +1196,17 @@
     {
       "id": "ARBORA-OPS-R023",
       "title": "Agent, browser, RLM, and fleet call operations",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "e1d37ca10ef7"
+        "e1d37ca10ef7",
+        "fdb84774eb3a"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_agent_browser_ops.py:38",
+        "tests/api/test_agent_browser_ops.py:71",
+        "tests/api/test_fleet_effect.py:174",
+        "tests/fleet/test_gateway_ops.py:58"
+      ]
     },
     {
       "id": "ARBORA-OPS-R024",
@@ -1370,11 +1386,14 @@
     {
       "id": "ARBORA-OPS-R024.5",
       "title": "Operational admin operations — admin slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "8d1bc46ecbdb"
+        "8d1bc46ecbdb",
+        "fdb84774eb3a"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_ops_admin_ops.py:202"
+      ]
     },
     {
       "id": "ARBORA-OPS-R025",
@@ -1499,7 +1518,7 @@
         "ca7c3067b9c8"
       ],
       "verified_by": [
-        "tests/api/test_registry_scopes.py:16"
+        "tests/api/test_registry_scopes.py:17"
       ]
     },
     {
@@ -1664,20 +1683,30 @@
     {
       "id": "ARBORA-OPS-R033",
       "title": "Dynamic multiplexer discovery, load, and call",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "b9141334e1ba"
+        "b9141334e1ba",
+        "fdb84774eb3a"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/fleet/test_gateway_ops.py:58",
+        "tests/fleet/test_governed_forwarders.py:28"
+      ]
     },
     {
       "id": "ARBORA-OPS-R034",
       "title": "Eunomia narrowing-only policy enforcement",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b83c69e2b41"
+        "4b83c69e2b41",
+        "fdb84774eb3a"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_policy_eunomia.py:137",
+        "tests/api/test_policy_eunomia.py:57",
+        "tests/api/test_policy_eunomia.py:77",
+        "tests/deployment/test_doctor.py:302"
+      ]
     },
     {
       "id": "ARBORA-OPS-R035",
@@ -1712,11 +1741,17 @@
     {
       "id": "ARBORA-OPS-R036",
       "title": "Pre-dispatch audit reservation for governed effects",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "a9025191159e"
+        "a9025191159e",
+        "fdb84774eb3a"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_api_registry.py:168",
+        "tests/api/test_invoke_contract.py:239",
+        "tests/api/test_invoke_contract.py:473",
+        "tests/api/test_invoke_governance.py:443"
+      ]
     },
     {
       "id": "ARBORA-OPS-R037",

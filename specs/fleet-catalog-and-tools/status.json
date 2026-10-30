@@ -999,8 +999,8 @@
         "db8d44259c3d"
       ],
       "verified_by": [
-        "tests/api/test_fleet_effect.py:548",
-        "tests/api/test_fleet_effect.py:573"
+        "tests/api/test_fleet_effect.py:549",
+        "tests/api/test_fleet_effect.py:574"
       ],
       "rollup_of": [
         "ARBORA-FLEET-R029.1"
@@ -1014,8 +1014,8 @@
         "4fabd9b042be"
       ],
       "verified_by": [
-        "tests/api/test_fleet_effect.py:548",
-        "tests/api/test_fleet_effect.py:573"
+        "tests/api/test_fleet_effect.py:549",
+        "tests/api/test_fleet_effect.py:574"
       ]
     },
     {
