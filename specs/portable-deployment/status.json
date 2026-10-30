@@ -154,7 +154,7 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "45283d0137b9",
-        "847ea6608cbe",
+        "83d47dd6fd2d",
         "d58ee3e25028",
         "d6f16cd447e2",
         "f42856691f97"
@@ -168,7 +168,7 @@
       "title": "Arbora hosts deployment doctor and skill certification",
       "delivery_state": "LANDED",
       "landed_in": [
-        "847ea6608cbe",
+        "83d47dd6fd2d",
         "9e7f6499d96f",
         "d6f16cd447e2",
         "fd761d59a171"
@@ -212,7 +212,7 @@
       "title": "`arbora-daemon` console script retired",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "847ea6608cbe",
+        "83d47dd6fd2d",
         "fd761d59a171"
       ],
       "verified_by": [
@@ -379,7 +379,7 @@
       "title": "The serving container is the one in-pod host process",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "847ea6608cbe",
+        "83d47dd6fd2d",
         "8b20c11b5dc5",
         "eb31b7757681",
         "f3bcee6dfbcf"
