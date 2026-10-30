@@ -525,18 +525,9 @@
     {
       "id": "ARBORA-HOST-R005.2.1",
       "title": "Approved mapping for the analyze action family",
-      "delivery_state": "VERIFIED",
-      "landed_in": [
-        "128144f67fbc",
-        "54119f435f15"
-      ],
-      "verified_by": [
-        "tests/mcp_server/test_legacy_analyze_intent_mapping.py:31",
-        "tests/mcp_server/test_legacy_analyze_intent_mapping.py:36",
-        "tests/mcp_server/test_legacy_analyze_intent_mapping.py:41",
-        "tests/mcp_server/test_legacy_ingest_writeback_mapping.py:27",
-        "tests/mcp_server/test_legacy_ingest_writeback_mapping.py:33"
-      ],
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
       "rollup_of": [
         "ARBORA-HOST-R005.2.1.1",
         "ARBORA-HOST-R005.2.1.2",
@@ -579,7 +570,7 @@
       "title": "Add arbora operation for `process_writeback`",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "128144f67fbc"
+        "0e3849ffb48c"
       ],
       "verified_by": [
         "tests/mcp_server/test_legacy_ingest_writeback_mapping.py:27"
@@ -590,7 +581,7 @@
       "title": "Approve the analyze mappings",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "128144f67fbc"
+        "0e3849ffb48c"
       ],
       "verified_by": [
         "tests/mcp_server/test_legacy_ingest_writeback_mapping.py:33"
