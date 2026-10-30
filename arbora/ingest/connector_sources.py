@@ -44,7 +44,12 @@ from arbora.ingest.service import (
     IngestSyncReceipt,
 )
 
-__all__ = ["SOURCE_SYNC_KIND", "SUBMISSION_KIND", "ConnectorIngestRunner", "FleetSourceSession"]
+__all__ = [
+    "SOURCE_SYNC_KIND",
+    "SUBMISSION_KIND",
+    "ConnectorIngestRunner",
+    "FleetSourceSession",
+]
 
 #: The prefix of a failed sync's WorkItem ``error_ref``.
 _ERROR_REF = "ingest-source-error"
@@ -453,7 +458,9 @@ class ConnectorIngestRunner:
         return IngestPackInventory(packs=tuple(packs))
 
     @staticmethod
-    def _job_record(tenant: str, job_id: str, item: Mapping[str, Any]) -> IngestJobRecord:
+    def _job_record(
+        tenant: str, job_id: str, item: Mapping[str, Any]
+    ) -> IngestJobRecord:
         mapped = {"succeeded": "completed", "failed": "failed", "leased": "running"}
         reason, engine_code = _parse_error_ref(item.get("error_ref"))
         return IngestJobRecord(
@@ -500,7 +507,10 @@ class ConnectorIngestRunner:
         except work_items.WorkItemBackendUnavailable as exc:
             raise OperationRefused("UNAVAILABLE", {"reason": str(exc)}) from exc
         return IngestSubmissionReceipt(
-            job_id=item_id, tenant=tenant, kind=kind, status="queued"  # type: ignore[arg-type]
+            job_id=item_id,
+            tenant=tenant,
+            kind=kind,
+            status="queued",  # type: ignore[arg-type]
         )
 
     async def list_jobs(
