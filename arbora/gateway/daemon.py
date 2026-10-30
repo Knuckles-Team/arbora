@@ -324,25 +324,3 @@ def stop_host_daemon() -> None:
             logger.warning("engine checkpoint on shutdown skipped: %s", exc)
     _engine = None
     logger.info("Host daemon stopped.")
-
-
-def main() -> None:
-    """Run the single consolidated KG daemon as a standalone host process.
-
-    This is the daemon ``host`` when the full API gateway (agent-webui) isn't
-    run as a long-lived service: it starts the one consolidated daemon and
-    blocks, draining the durable task queue that ``KG_DAEMON_ROLE=client``
-    processes (MCP server / CLI / scripts) submit to. The singleton host lock
-    (``host_lock.py``) guarantees only one host runs; a second start raises a
-    descriptive ``KGHostAlreadyRunning``. Console entry point: ``arbora-daemon``.
-    (CONCEPT:EG-KG.storage.nonblocking-checkpoint / OS-5.9)
-
-    Flags: ``--drain-queue`` purges the durable queue before starting (recovery);
-    ``--status`` prints the live host + daemon status and exits.
-    """
-
-    raise not_served("knowledge_graph.core.host_lock", "arbora", owner="arbora")
-
-
-if __name__ == "__main__":
-    main()

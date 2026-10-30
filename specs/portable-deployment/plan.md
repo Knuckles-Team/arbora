@@ -4,7 +4,7 @@
 
 `arbora.deployment.genesis_environments` already models ten closed profile sections and reference-only secrets. `config_generator` and `cli` provide configuration commands; `preflight` checks profile-specific host prerequisites; `doctor`, `doctor_coverage` and `doctor_certification` diagnose installed capabilities; `release_canary` checks installed entrypoints and engine binary without starting services; `production_ops` performs guarded operational actions. `deploy/environments/` contains sample profile data. Extend these owners and their tests instead of adding a second installer, configuration parser or doctor.
 
-The package defines `arbora`, `arbora-daemon`, `setup-config`, `agent-utilities-doctor`, `agent-utilities-venv`, `arbora-release-canary` and `arbora-production-ops` scripts. Script existence is not functional proof; clean wheel installation and representative invocations are required.
+The package defines `arbora`, `setup-config`, `agent-utilities-doctor`, `agent-utilities-venv`, `arbora-release-canary` and `arbora-production-ops` scripts. Script existence is not functional proof; clean wheel installation and representative invocations are required.
 
 ## Configuration contract
 
@@ -32,7 +32,7 @@ The renderer can vary by target, but profile validation, config resolution, engi
 
 ## ARBORA-DEPLOY-R016 plan
 
-The serving container stays at the client role. A second container in the same pod runs the host daemon. It reuses the serving image, source mounts and process identity configuration. It reaches the engine over the shared Unix socket volume. A non-empty endpoint setting makes the engine resolver connect-only. The daemon therefore never starts a second engine. The daemon shares the task-queue data volume, so work that clients enqueue reaches the host.
+There is no separate daemon container: its `arbora-daemon` entry point was never served (it raised a not-served error), so the sidecar could only crash-loop, and `ARBORA-HOST-R004` retires the script. The serving container holds the host role whenever the engine is in the pod. In sidecar placement it reaches the engine over the shared Unix socket volume; a non-empty endpoint setting makes the engine resolver connect-only, so no second engine starts.
 
 ## ARBORA-DEPLOY-R017 plan: engine-routed deployment placement and assembly
 
@@ -95,7 +95,7 @@ One script, one `_valid_image`, one exit contract (0 pass, 1 error, at least one
 |---|---|---|
 | `deploy/compose/compose.yaml` | One service, `arbora`: `image: ${ARBORA_IMAGE:?set ARBORA_IMAGE ...@sha256:<digest>}` (line 21). The engine runs inside the same container; no other service. | No literal digest. Compose refuses to start when the variable is unset; nothing checks that its value carries a digest. |
 | `deploy/swarm/stack.yml` | One service, `arbora`: the same `${ARBORA_IMAGE:?...}` form (line 31). | Same: fail-closed on unset, digest not checked. |
-| `deploy/helm/arbora` | `arbora.image` serves the `arbora` container and the `arbora-daemon` container (`templates/arbora.yaml` lines 62 and 123, via `arbora.image`); the engine container uses `arbora.engineImage` (lines 34 and `engine.yaml` 26), which falls back to `arbora.image` when `engine.image.repository` is empty; every `connectors[]` and `components[]` entry renders its own `image` (`extensions.yaml` line 37). | No. `values.yaml` defaults are `tag: replace-me`, `digest: ""`; `_helpers.tpl` renders `repository@digest` only when `digest` is set, otherwise `repository:tag`. Default rendering is therefore tag-based and would fail the checker (the intended fail-safe). |
+| `deploy/helm/arbora` | `arbora.image` serves the `arbora` container (`templates/arbora.yaml`, via `arbora.image`); the engine container uses `arbora.engineImage` (lines 34 and `engine.yaml` 26), which falls back to `arbora.image` when `engine.image.repository` is empty; every `connectors[]` and `components[]` entry renders its own `image` (`extensions.yaml` line 37). | No. `values.yaml` defaults are `tag: replace-me`, `digest: ""`; `_helpers.tpl` renders `repository@digest` only when `digest` is set, otherwise `repository:tag`. Default rendering is therefore tag-based and would fail the checker (the intended fail-safe). |
 
 Environment profiles: `prod.yaml` and `test.yaml` declare `tag_policy: digest-pinned`; `dev.yaml` declares `floating-tag` (non-prod only). The profile policy and the artifact check are separate; this design makes the checker enforce it per target.
 

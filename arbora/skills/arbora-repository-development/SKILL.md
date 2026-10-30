@@ -115,7 +115,6 @@ The package publishes these operator commands:
 | Command | Purpose |
 |---|---|
 | `arbora` | Serve the native MCP composition over `stdio` or `streamable-http` |
-| `arbora-daemon` | Run or inspect the consolidated graph host daemon |
 | `setup-config` | Generate, validate, and describe deployment configuration |
 | `agent-utilities-doctor` | Run deployment and dependency diagnostics |
 | `agent-utilities-venv` | Inspect and reconcile managed runtime environments |

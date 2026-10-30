@@ -255,12 +255,6 @@ The canary reports aggregate readiness probes and does not print paths,
 credentials, identities, or graph contents. A failed canary is a release
 failure, not a warning to suppress.
 
-The host daemon can be inspected independently:
-
-```bash
-arbora-daemon --status
-```
-
 ## Production operations
 
 `arbora-production-ops` provides guarded backup and restore-validation

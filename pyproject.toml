@@ -107,28 +107,12 @@ test = [
     # venv. tests/test_dependency_manifest.py reads
     # `setuptools.config.pyprojecttoml` directly to prove the published
     # manifest contract (host-composition-boundary spec, dependency-manifest
-    # requirement), and tests/gateway/test_gateway_widgets_extra.py does the same, so the same floor must also be reachable at test time.
+    # requirement).
     "setuptools>=84.0.0",
 ]
 webui = [
     "agent-webui>=2.8.3,<3.0.0",
     "uvicorn>=0.54.0",
-]
-# portable-deployment spec, gateway-widgets extra requirement: arbora/gateway/widgets/*.py
-# each call BaseWidget._fleet_client() (arbora/fleet) for live data -- the served
-# fleet admission seam, never a direct connector-package import (see the
-# `dependencies` comment above). No widget today transitively needs a
-# fleet connector package's own distribution, but any future widget that
-# does must resolve a connector built against agent-connector-sdk's current,
-# post-split module layout, not a pre-split agent-utilities-runtime shape.
-# This extra is Arbora's side of that floor -- the agent-utilities
-# `gateway-widgets` extra it replaces (retired there under the AU boundary /
-# host-composition-boundary spec) pinned the same SDK transitively
-# through each connector package's own dependency on it. Full requirement
-# IDs: specs/portable-deployment/requirements.md,
-# specs/host-composition-boundary/requirements.md.
-gateway-widgets = [
-    "scion-sdk[a2a,mcp]>=0.5.9,<0.6.0",
 ]
 # Messaging channel adapters (CONCEPT:AU-ECO.messaging.native-backend-abstraction):
 # each chat platform SDK is its own extra so importing arbora.messaging never
@@ -161,7 +145,6 @@ messaging = [
 
 [project.scripts]
 arbora = "arbora.console:main"
-arbora-daemon = "arbora.gateway.daemon:main"
 arbora-acp = "arbora.acp.local_runtime:main"
 arbora-release-canary = "arbora.deployment.release_canary:main"
 arbora-production-ops = "arbora.deployment.production_ops:main"

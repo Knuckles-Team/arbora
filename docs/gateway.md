@@ -1,7 +1,7 @@
 # REST gateway
 
 `arbora.gateway` owns HTTP routing, dashboard aggregation, the widget
-registry, and the `arbora-daemon` host lifecycle. Agent, graph, ontology,
+registry, and the in-process host lifecycle. Agent, graph, ontology,
 catalog, and policy behavior remains owned by agent-utilities or
 epistemic-graph.
 
