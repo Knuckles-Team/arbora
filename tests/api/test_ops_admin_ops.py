@@ -61,13 +61,13 @@ class _FakeOpsAdminStore:
         return TenantPage(tenants=(tenant,), next_cursor=None)
 
     async def backup(
-        self, *, tenant: str, label: str, idempotency_key: str
+        self, *, tenant: str, destination: str, label: str | None, idempotency_key: str
     ) -> BackupReceipt:
-        self.backup_calls.append((tenant, label, idempotency_key))
+        self.backup_calls.append((tenant, destination, idempotency_key))
         return BackupReceipt(tenant=tenant, backup_id="backup-1", status="reserved")
 
     async def restore(
-        self, *, tenant: str, backup_id: str, idempotency_key: str
+        self, *, tenant: str, backup_id: str, target_shards: int, idempotency_key: str
     ) -> RestoreReceipt:
         self.restore_calls.append((tenant, backup_id, idempotency_key))
         return RestoreReceipt(tenant=tenant, backup_id=backup_id, status="reserved")
@@ -130,10 +130,15 @@ async def test_ops_backup_is_scoped_to_the_callers_own_tenant() -> None:
     store = _FakeOpsAdminStore()
     context = _context(store=store, tenant="tenant-b")
     result = await ops_admin.handle_ops_backup(
-        context, {"label": "nightly"}, _OPS["ops.backup"]
+        context, {"destination": "nightly", "label": "nightly"}, _OPS["ops.backup"]
     )
     assert result == {
-        "value": {"tenant": "tenant-b", "backup_id": "backup-1", "status": "reserved"}
+        "value": {
+            "tenant": "tenant-b",
+            "backup_id": "backup-1",
+            "status": "reserved",
+            "engine_receipt": {},
+        }
     }
     assert store.backup_calls == [("tenant-b", "nightly", "idem-1")]
 
@@ -142,7 +147,7 @@ async def test_ops_backup_fails_closed_when_store_not_composed() -> None:
     context = _context(store=None)
     with pytest.raises(OperationRefused) as excinfo:
         await ops_admin.handle_ops_backup(
-            context, {"label": "nightly"}, _OPS["ops.backup"]
+            context, {"destination": "nightly", "label": "nightly"}, _OPS["ops.backup"]
         )
     assert excinfo.value.code == "UNAVAILABLE"
 
@@ -151,7 +156,7 @@ async def test_ops_backup_requires_an_idempotency_key() -> None:
     context = _context(store=_FakeOpsAdminStore(), idempotency_key=None)
     with pytest.raises(ValueError, match="Idempotency-Key"):
         await ops_admin.handle_ops_backup(
-            context, {"label": "nightly"}, _OPS["ops.backup"]
+            context, {"destination": "nightly", "label": "nightly"}, _OPS["ops.backup"]
         )
 
 
@@ -159,10 +164,15 @@ async def test_ops_restore_is_scoped_to_the_callers_own_tenant() -> None:
     store = _FakeOpsAdminStore()
     context = _context(store=store, tenant="tenant-b")
     result = await ops_admin.handle_ops_restore(
-        context, {"backup_id": "backup-1"}, _OPS["ops.restore"]
+        context, {"backup_id": "backup-1", "target_shards": 4}, _OPS["ops.restore"]
     )
     assert result == {
-        "value": {"tenant": "tenant-b", "backup_id": "backup-1", "status": "reserved"}
+        "value": {
+            "tenant": "tenant-b",
+            "backup_id": "backup-1",
+            "status": "reserved",
+            "engine_receipt": {},
+        }
     }
     assert store.restore_calls == [("tenant-b", "backup-1", "idem-1")]
 
@@ -171,7 +181,7 @@ async def test_ops_restore_fails_closed_when_store_not_composed() -> None:
     context = _context(store=None)
     with pytest.raises(OperationRefused) as excinfo:
         await ops_admin.handle_ops_restore(
-            context, {"backup_id": "backup-1"}, _OPS["ops.restore"]
+            context, {"backup_id": "backup-1", "target_shards": 4}, _OPS["ops.restore"]
         )
     assert excinfo.value.code == "UNAVAILABLE"
 
@@ -180,7 +190,7 @@ async def test_ops_restore_requires_an_idempotency_key() -> None:
     context = _context(store=_FakeOpsAdminStore(), idempotency_key=None)
     with pytest.raises(ValueError, match="Idempotency-Key"):
         await ops_admin.handle_ops_restore(
-            context, {"backup_id": "backup-1"}, _OPS["ops.restore"]
+            context, {"backup_id": "backup-1", "target_shards": 4}, _OPS["ops.restore"]
         )
 
 
@@ -209,9 +219,9 @@ def test_backup_and_restore_need_console_step_up_and_write_audit() -> None:
     for op_id in ("ops.backup", "ops.restore"):
         op = _OPS[op_id]
         params = (
-            {"backup_id": "backup-1"}
+            {"backup_id": "backup-1", "target_shards": 4}
             if op_id == "ops.restore"
-            else {"label": "nightly"}
+            else {"destination": "nightly", "label": "nightly"}
         )
         services, runtime, audit, _, _ = setup_services(op)
 
