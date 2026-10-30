@@ -19,7 +19,7 @@ import logging
 import uuid
 from collections.abc import Awaitable, Callable, Iterator, Mapping
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, cast
 
 from agent_connector_sdk.ingest.service import KnowledgeIngest
 from agent_connector_sdk.ingest.source_sync import (
@@ -40,6 +40,7 @@ from arbora.ingest.service import (
     IngestPackRecord,
     IngestSourceInventory,
     IngestSourceRecord,
+    IngestSubmissionKind,
     IngestSubmissionReceipt,
     IngestSyncReceipt,
 )
@@ -509,8 +510,8 @@ class ConnectorIngestRunner:
         return IngestSubmissionReceipt(
             job_id=item_id,
             tenant=tenant,
-            kind=kind,
-            status="queued",  # type: ignore[arg-type]
+            kind=cast(IngestSubmissionKind, kind),
+            status="queued",
         )
 
     async def list_jobs(
