@@ -612,11 +612,15 @@
     {
       "id": "ARBORA-OPS-R019",
       "title": "Federation source registration and sharing operations",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "641b519cb0f2",
         "64a0c091b354"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/mcp_server/test_federation_sources_bootstrap.py:107",
+        "tests/mcp_server/test_federation_sources_bootstrap.py:142"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R019.1",
         "ARBORA-OPS-R019.2"
@@ -625,20 +629,26 @@
     {
       "id": "ARBORA-OPS-R019.1",
       "title": "Federation source register, list, get, and probe",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "641b519cb0f2",
         "64a0c091b354"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/mcp_server/test_federation_sources_bootstrap.py:107"
+      ]
     },
     {
       "id": "ARBORA-OPS-R019.2",
       "title": "Federation source share and unshare",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "641b519cb0f2",
         "64a0c091b354"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/mcp_server/test_federation_sources_bootstrap.py:142"
+      ]
     },
     {
       "id": "ARBORA-OPS-R020",
