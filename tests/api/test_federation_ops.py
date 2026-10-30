@@ -15,7 +15,7 @@ from tests.api._ops_support import service_context
 
 class _Catalog:
     def __init__(self) -> None:
-        self.records = {
+        self.records: dict[str, dict[str, Any]] = {
             "s1": {
                 "source_id": "s1",
                 "owner": "alice",
