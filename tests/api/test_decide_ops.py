@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-
 from arbora.api.invoke.steps import principal_rule
 from arbora.api.ops import decide
 from tests.api._ops_support import service_context

@@ -186,18 +186,14 @@ async def test_offer_write_needs_declared_scope_and_offers_stay_with_their_tenan
     # Same tenant, different principal: the offer is not visible.
     with pytest.raises(LookupError):
         await work.handle_work(
-            service_context(
-                tenant="tenant:one", principal="p:two", work_runner=runner
-            ),
+            service_context(tenant="tenant:one", principal="p:two", work_runner=runner),
             {"item_id": "item-1"},
             get_op,
         )
     # Different tenant, same principal id: not visible either.
     with pytest.raises(LookupError):
         await work.handle_work(
-            service_context(
-                tenant="tenant:two", principal="p:one", work_runner=runner
-            ),
+            service_context(tenant="tenant:two", principal="p:one", work_runner=runner),
             {"item_id": "item-1"},
             get_op,
         )

@@ -31,7 +31,10 @@ class _Runner:
     async def get_repair(self, *, tenant, repair_id):
         if repair_id != "r1":
             return None
-        return {"repair_id": "r1", "preview": {"changes": 2} if self.previewed else None}
+        return {
+            "repair_id": "r1",
+            "preview": {"changes": 2} if self.previewed else None,
+        }
 
     async def apply_repair(self, *, tenant, repair_id, approval_ref, idempotency_key):
         self.events.append(("apply", approval_ref))
@@ -77,14 +80,20 @@ async def test_repair_previews_then_applies_only_against_approval() -> None:
     # Approving a proposal that was never previewed is refused and applies nothing.
     runner.previewed = False
     with pytest.raises(OperationRefused):
-        await _run("ingest.drift.repair_approve", runner, repair_id="r1", approval_ref="ap-1")
+        await _run(
+            "ingest.drift.repair_approve", runner, repair_id="r1", approval_ref="ap-1"
+        )
     assert runner.events == []
     with pytest.raises(LookupError):
-        await _run("ingest.drift.repair_approve", runner, repair_id="nope", approval_ref="ap-1")
+        await _run(
+            "ingest.drift.repair_approve", runner, repair_id="nope", approval_ref="ap-1"
+        )
     proposed = await _run("ingest.drift.repair_propose", runner, drift_id="d1")
     assert proposed["value"]["preview"] == {"changes": 2}
     assert runner.events == [("propose", "d1")]  # propose applied nothing
-    applied = await _run("ingest.drift.repair_approve", runner, repair_id="r1", approval_ref="ap-1")
+    applied = await _run(
+        "ingest.drift.repair_approve", runner, repair_id="r1", approval_ref="ap-1"
+    )
     assert applied["value"]["applied"] is True
     assert runner.events[-1] == ("apply", "ap-1")
     # approval_ref is mandatory, and an absent runner fails closed.

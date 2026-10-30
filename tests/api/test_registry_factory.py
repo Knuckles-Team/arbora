@@ -46,7 +46,6 @@ from arbora.api.registry import (
 from arbora.api.registry.eg_binding import EgContractError
 from tests.api.test_eg_binding import _curated, _fixture
 
-
 _ENGINE_METHODS = {
     "Uql",
     "NlQuery",
@@ -130,9 +129,7 @@ def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Pat
         "result.cluster.json",
     ):
         path = contract / "schemas" / filename
-        synthetic = (
-            json.loads(path.read_text()) if path.exists() else {"methods": {}}
-        )
+        synthetic = json.loads(path.read_text()) if path.exists() else {"methods": {}}
         actual_schema = json.loads(source.joinpath("schemas", filename).read_text())
         synthetic["methods"].update(
             {
