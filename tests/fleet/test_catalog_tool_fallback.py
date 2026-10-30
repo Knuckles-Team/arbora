@@ -19,11 +19,16 @@ refresh, never the only source, and the server still appears in
 
 from __future__ import annotations
 
+import pytest
+
 from types import SimpleNamespace
 
 import pytest
 
 from tests.fleet.test_multiplexer_dynamic_gateway import CNT, _mux_with_children
+
+pytestmark = pytest.mark.spec("ARBORA-FLEET-R031")
+
 
 pytestmark = pytest.mark.spec("ARBORA-FLEET-R031")
 

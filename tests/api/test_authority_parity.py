@@ -77,7 +77,8 @@ def _case_id(case: dict[str, Any]) -> str:
 
 
 def _case_param(case: dict[str, Any]) -> Any:
-    marks = [pytest.mark.spec(spec_id) for spec_id in case.get("specs", ())]
+    spec_ids = {"ARBORA-FLEET-R017", *case.get("specs", ())}
+    marks = [pytest.mark.spec(spec_id) for spec_id in sorted(spec_ids)]
     return pytest.param(case, id=_case_id(case), marks=marks)
 
 

@@ -17,6 +17,9 @@ from arbora.api.registry import Caller, Effect, Registry, Surface, Verb, authori
 pytestmark = pytest.mark.spec("ARBORA-FLEET-R024.1")
 
 
+pytestmark = pytest.mark.spec("ARBORA-FLEET-R024.1")
+
+
 @dataclass(frozen=True)
 class _FakeCaller:
     """A concrete stand-in structurally satisfying ``arbora.api.registry.Caller``."""
