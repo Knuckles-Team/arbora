@@ -50,6 +50,7 @@ def test_unbound_without_composition_is_not_bound() -> None:
 @pytest.mark.spec("ARBORA-OPS-R021.1")
 async def test_decide_commit_is_served_from_the_bootstrap_binding(sent: Any) -> None:
     bound = _with_ops_runners({}, _Pool(), "tenant-graph", lambda t: t)
+    assert bound is not None
     assert isinstance(bound["decide_runner"], EngineDecideRunner)
     (op,) = decide.operations()
     out = await decide.handle_decide_commit(
@@ -62,6 +63,7 @@ async def test_decide_commit_is_served_from_the_bootstrap_binding(sent: Any) -> 
 
 async def test_work_reads_are_served_from_the_bootstrap_binding(sent: Any) -> None:
     bound = _with_ops_runners({}, _Pool(), "tenant-graph", lambda t: t)
+    assert bound is not None
     assert isinstance(bound["work_runner"], EngineWorkRunner)
     ops = {o.id: o for o in work.operations()}
     listed = await work.handle_work(
