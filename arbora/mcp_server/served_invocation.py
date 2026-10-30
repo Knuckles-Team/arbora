@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import importlib.resources
 import json
-from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
+from collections.abc import AsyncIterator, Callable, Coroutine, Mapping
 from contextlib import asynccontextmanager
 from functools import cache
 from pathlib import Path
@@ -479,7 +479,7 @@ def _task_plan_schema_publisher(
     graph: str,
     connect_context: Callable[[str], Any],
     session: Callable[[], Any],
-) -> Callable[[str, Mapping[str, Any]], Awaitable[str]]:
+) -> Callable[[str, Mapping[str, Any]], Coroutine[Any, Any, str]]:
     """The process-lifecycle publisher; it installs the process authority."""
     from arbora.api.contracts.session import resolve_session, use_session
     from arbora.api.task_plan_schema import engine_publish
@@ -520,7 +520,7 @@ def _with_task_plan_schema(
     graph: str,
     connect_context: Callable[[str], Any],
     session: Callable[[], Any],
-) -> tuple[Mapping[str, Any] | None, Callable[[], Awaitable[Any]] | None]:
+) -> tuple[Mapping[str, Any] | None, Callable[[], Coroutine[Any, Any, Any]] | None]:
     """Bind the verified task-plan schema pin (ARBORA-RELEASE-R003.4.4).
 
     The committed body binds only when its digest matches the installed

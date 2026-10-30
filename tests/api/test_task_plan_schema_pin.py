@@ -539,7 +539,9 @@ def test_startup_publishes_every_served_tenant_with_bounded_retry(
     assert result == {"tenant-a": True, "tenant-b": True, "tenant-c": False}
     assert calls == ["tenant-a"] * 3 + ["tenant-b"] + ["tenant-c"] * 3
     assert delays == [0.5, 1.0, 0.5, 1.0]
-    assert pins.pin_for("tenant-a")["definition_digest"] == DEFINITION + "tenant-a"
+    published = pins.pin_for("tenant-a")
+    assert published is not None
+    assert published["definition_digest"] == DEFINITION + "tenant-a"
     assert pins.pin_for("tenant-c") is None
     assert "not published for tenant-c after 3 attempts" in caplog.text
 
