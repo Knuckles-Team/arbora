@@ -57,5 +57,7 @@ def test_no_daemon_container_and_serving_container_holds_host_role(
     documents = _render(tmp_path, values)
     pod_spec = _deployment(documents)["spec"]["template"]["spec"]
     assert _container(pod_spec, "daemon") is None
-    assert all("arbora-daemon" not in (c.get("command") or []) for c in pod_spec["containers"])
+    assert all(
+        "arbora-daemon" not in (c.get("command") or []) for c in pod_spec["containers"]
+    )
     assert _configmap_role(documents) == ("client" if mode == "shared" else "host")
