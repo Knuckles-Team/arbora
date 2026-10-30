@@ -451,12 +451,15 @@
     {
       "id": "ARBORA-OPS-R011",
       "title": "Six resident MCP verbs with typed discovery",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "6b63aeb7ba03",
+        "ca7c3067b9c8",
         "ea736715b7fb"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_mcp_verbs.py:25"
+      ]
     },
     {
       "id": "ARBORA-OPS-R012",
@@ -484,9 +487,9 @@
         "ea736715b7fb"
       ],
       "verified_by": [
-        "tests/api/test_http_projection.py:188",
-        "tests/api/test_http_projection.py:288",
-        "tests/api/test_http_projection.py:326",
+        "tests/api/test_http_projection.py:189",
+        "tests/api/test_http_projection.py:289",
+        "tests/api/test_http_projection.py:327",
         "tests/api/test_http_projection.py:91"
       ]
     },
@@ -970,11 +973,14 @@
     {
       "id": "ARBORA-OPS-R021.3",
       "title": "Policy and swarm read operations — policy slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "ca7c3067b9c8",
         "cc90ee37583f"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_policy_swarm_ops.py:19"
+      ]
     },
     {
       "id": "ARBORA-OPS-R021.4",
@@ -1215,11 +1221,14 @@
     {
       "id": "ARBORA-OPS-R024.2",
       "title": "Security operations — security slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "4b69b27f1d76"
+        "4b69b27f1d76",
+        "ca7c3067b9c8"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_telemetry_security_usage_ops.py:84"
+      ]
     },
     {
       "id": "ARBORA-OPS-R024.3",
@@ -1483,12 +1492,15 @@
     {
       "id": "ARBORA-OPS-R028",
       "title": "Exported domain scope classes",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "4b83c69e2b41",
-        "b47b39eac0ae"
+        "b47b39eac0ae",
+        "ca7c3067b9c8"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_registry_scopes.py:16"
+      ]
     },
     {
       "id": "ARBORA-OPS-R029",
@@ -1722,13 +1734,16 @@
     {
       "id": "ARBORA-OPS-R038",
       "title": "Generated OpenAPI served through Swagger UI",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "1fb96633563e",
+        "ca7c3067b9c8",
         "ea736715b7fb",
         "f13ce20b05dc"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_http_projection.py:162"
+      ]
     },
     {
       "id": "ARBORA-OPS-R039",
