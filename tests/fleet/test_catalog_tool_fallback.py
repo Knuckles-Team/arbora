@@ -19,8 +19,6 @@ refresh, never the only source, and the server still appears in
 
 from __future__ import annotations
 
-import pytest
-
 from types import SimpleNamespace
 
 import pytest
