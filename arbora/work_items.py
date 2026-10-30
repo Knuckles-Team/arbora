@@ -19,7 +19,7 @@ from typing import Any
 from arbora.security.anonymous import session_context
 
 #: The engine's spec row that owns durable WorkItem transitions.
-SPEC_ROW = "EG-INGEST-WORKER-R605"
+SPEC_ROW = "MEDULLA-INGEST-WORKER-R605"
 
 #: Statuses after which a WorkItem never transitions again.
 TERMINAL_WORK_ITEM_STATUSES = frozenset(

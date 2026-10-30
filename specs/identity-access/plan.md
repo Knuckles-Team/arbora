@@ -214,14 +214,14 @@ Their current broker import is `agent_utilities.mcp.remote_oauth_broker`; that i
 Missing wiring includes the scoped vault broker, SDK challenge-result adapter, qualified bearer-to-EG binding and all protocol enforcement adapters.
 The protocol-grant binding requires a qualified EG contract; existing graph access checks alone do not prove that producer capability.
 No second token store, local grant authority, OAuth manager or access-decision engine is introduced.
-SDK-CONNECTOR-CONTROL-R035/R046 must preserve challenge bindings, typed bounded errors and broker-owned persistence before these host flows become available.
+SCION-CONNECTOR-CONTROL-R035/R046 must preserve challenge bindings, typed bounded errors and broker-owned persistence before these host flows become available.
 No runtime security or access configuration changes are authorized by this definition batch.
 No external derivation is claimed; the inputs describe protocol and ownership requirements.
 
 
 ## Connector-bound grants and provider token profiles
 
-This shared contract refines ARBORA-IDENTITY-R023 and SDK-CONNECTOR-CONTROL-R035/R046. Implementation still needs the required runtime wiring.
+This shared contract refines ARBORA-IDENTITY-R023 and SCION-CONNECTOR-CONTROL-R035/R046. Implementation still needs the required runtime wiring.
 The exact credential-use tuple includes tenant, owner principal, requesting principal/client, connector, provider, audience, scopes, resource and operation.
 The host derives connector from authenticated admission and the certified target connector registration, with its immutable registry revision.
 A caller's connector ID is only a requested target; it cannot populate the trusted binding or current grant.
@@ -265,7 +265,7 @@ These shared typed refusals stop persistence readiness and operation continuatio
 
 ### Atomic session record consumption
 
-ARBORA-IDENTITY-R005.1 consumes EG-TYPED-PACKS-R085.1 through the existing
+ARBORA-IDENTITY-R005.1 consumes MEDULLA-TYPED-PACKS-R085.1 through the existing
 Session.Resolve operation. EG projects committed record identity, tenant and
 expiry facts under the same storage transaction. Arbora retains authentication
 and admission through its existing SessionAuthority and identity composition.
@@ -295,7 +295,7 @@ Human action approvals remain separate, single-use and nonrenewable.
 
 Some connector tools act for a user, not for the platform. The fleet acceptance run of 2026-10-18 showed `keycloak-mcp` and `vector-mcp` refuse such calls with `IdentityRequiredError`. Arbora called them with its process credential only.
 
-R028 adds a delegated identity. The SDK marks each actor-required tool (SDK-CONNECTOR-CONTROL-R902). Arbora exchanges the verified caller token for an audience-bound token by RFC 8693 token exchange. The child binds that actor through the SDK transport. A call with no user caller refuses before any connector call.
+R028 adds a delegated identity. The SDK marks each actor-required tool (SCION-CONNECTOR-CONTROL-R902). Arbora exchanges the verified caller token for an audience-bound token by RFC 8693 token exchange. The child binds that actor through the SDK transport. A call with no user caller refuses before any connector call.
 
 ## Amendment: 2026-10-23 WebUI deployment identity composition
 
@@ -478,7 +478,7 @@ The concrete source adapter uses the public generated GetRunWorkItem sender and 
 
 ## Local anonymous text send
 
-The host composes explicit local admission with `AU-BOUNDARY-R043.13.1`, the received text-only execution constraint. EG owns run admission, idempotency, the exact lease and terminal state. The source slice stores a bounded terminal event with existing native node methods. It checks readback, then commits its opaque content reference. Replay reads that committed reference only after owner-bound run lookup. A usage receipt alone never becomes answer text. Installed proof and durable answer recovery remain separate open children. Native in-flight limits and finite per-run bounds do not claim a cumulative spending quota. No live security setting changes are part of this source work.
+The host composes explicit local admission with `MERISTEM-BOUNDARY-R043.13.1`, the received text-only execution constraint. EG owns run admission, idempotency, the exact lease and terminal state. The source slice stores a bounded terminal event with existing native node methods. It checks readback, then commits its opaque content reference. Replay reads that committed reference only after owner-bound run lookup. A usage receipt alone never becomes answer text. Installed proof and durable answer recovery remain separate open children. Native in-flight limits and finite per-run bounds do not claim a cumulative spending quota. No live security setting changes are part of this source work.
 
 Cancellation currently covers the run deadline and explicit policy withdrawal, with native terminal cleanup after the provider drains. Browser disconnect alone does not promise immediate cancellation; the finite deadline still applies. Failed or uncertain submit, claim or cleanup requires native reconciliation, never automatic model re-execution. A native deadline is not a promise of automatic capacity reclamation.
 

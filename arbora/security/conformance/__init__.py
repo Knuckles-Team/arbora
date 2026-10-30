@@ -5,10 +5,10 @@ from __future__ import annotations
 
 CONCEPT:AU-OS.identity.stack-wide-auth-conformance — see
 ``plans/arbora-completion-program/decisions/GOC-62-keycloak-auth-standard.md``
-§D2 for the full design. Hosted here (ARBORA-HOST-R008, AU-BOUNDARY-R014's
+§D2 for the full design. Hosted here (ARBORA-HOST-R008, MERISTEM-BOUNDARY-R014's
 security/* seed group) because the surface it introspects —
 ``mcp/tools/query_tools.py``'s ``graph_query`` dialect dispatcher — is itself
-seeded to arbora (AU-BOUNDARY-R003); this package's enumeration crosses
+seeded to arbora (MERISTEM-BOUNDARY-R003); this package's enumeration crosses
 into agent-utilities for now via :data:`surface_inventory.QUERY_TOOLS_MODULE`
 (resolved through the installed package, not a same-repo relative path).
 

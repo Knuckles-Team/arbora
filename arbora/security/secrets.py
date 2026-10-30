@@ -2,7 +2,7 @@
 
 :class:`VaultBackend` implements :class:`SecretsBackend` over a KV v2 store.
 Tests and hosts may pass any other :class:`SecretsBackend`. The engine does not
-serve a durable secret store yet (hand-off EG-IDENTITY-R951).
+serve a durable secret store yet (hand-off MEDULLA-IDENTITY-R951).
 
 ``resolve_ref`` resolves bounded ``env://``, ``vault://`` and ``secret://``
 references.

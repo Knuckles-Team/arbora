@@ -1258,7 +1258,7 @@ class ActionPolicy:
     def granted_approval_id(self, request: ActionRequest) -> str | None:
         """Return an approval bound to this exact request, never a target match.
 
-        Public read-only probe (AU-SEC-R007): a caller outside this class --
+        Public read-only probe (MERISTEM-SEC-R007): a caller outside this class --
         e.g. a guardrail evolution step checking for an already-approved
         loosening -- may ask whether a durable approval exists without going
         through :meth:`decide`, which has queueing/audit side effects. Shares

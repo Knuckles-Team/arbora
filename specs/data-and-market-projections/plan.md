@@ -144,7 +144,7 @@ Existing code: `_effect` at arbora/api/invoke/pipeline.py:218 binds the plan at 
 The shared invocation path reserves durable audit and effect identity before dispatch.
 Reachable today: no order or wallet operation exists. Signature verification and its trust resolver are new SDK producer wiring.
 
-Producer: SDK-GOVERNED-WRITEBACK-R001.1 through R001.6 owns WalletProofRequest, WalletProofResult, canonical payload and supported verifier profiles.
+Producer: SCION-GOVERNED-WRITEBACK-R001.1 through R001.6 owns WalletProofRequest, WalletProofResult, canonical payload and supported verifier profiles.
 Arbora imports the published contract and consumes its authenticated result unchanged; it contains no crypto verifier or key registry.
 Use EG's authorization decision and the existing account entitlement and effect reservation authorities.
 Confirmation binds the immutable intent digest defined below. The separate proof must match that digest and all authority bindings.
@@ -158,12 +158,12 @@ Replays resolve the same bound durable receipt; uncertain effects enter existing
 The producer's explicit dependency gaps still block runtime delivery after owners publish these definitions.
 
 Decision: reuse the shared plan/confirm and governed effect path. Reject a finance-only approval path or local replay store.
-Cross-repository rows: SDK-GOVERNED-WRITEBACK-R001.1 through R001.6 and R004; ARBORA-DATA-MARKET-R003; ARBORA-OPS-R017.2.
+Cross-repository rows: SCION-GOVERNED-WRITEBACK-R001.1 through R001.6 and R004; ARBORA-DATA-MARKET-R003; ARBORA-OPS-R017.2.
 
 
 ## Immutable intent and separate execution proof
 
-This contract is shared by SDK-GOVERNED-WRITEBACK-R001 and ARBORA-DATA-MARKET-R007. All new wiring remains SPECIFIED.
+This contract is shared by SCION-GOVERNED-WRITEBACK-R001 and ARBORA-DATA-MARKET-R007. All new wiring remains SPECIFIED.
 `WalletBusinessIntent` is a closed JSON object with these exact required keys:
 `schema_version`, `operation_id`, `connector_id`, `account_id`, `wallet_id`, `network_id`, `mode`, `action`,
 `destination`, `asset_id`, `amount`, `business_terms`, `change_set_id`, `idempotency_key`.

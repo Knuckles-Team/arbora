@@ -989,7 +989,7 @@ def _register_served_intent_surface(mcp: Any, invocation: Any) -> Any:
 
 
 def _attach_headless_fleet_loader(mcp: Any) -> None:
-    """Attach the fleet loader (AU-CONTROL-R031) to a headless build.
+    """Attach the fleet loader (MERISTEM-CONTROL-R031) to a headless build.
 
     The served process attaches the fleet in :mod:`arbora.mcp_server.server`;
     a gateway-only process reaches the tools only through

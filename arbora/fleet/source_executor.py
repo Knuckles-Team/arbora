@@ -1,7 +1,7 @@
 """Virtual-graph source executor over the governed ``fleet.call`` path.
 
 ARBORA-FLEET-R043.7. The engine reads a connector's data at query time and
-asks arbora to run each source read (EG-FEDERATED-QUERY-R722). This executor
+asks arbora to run each source read (MEDULLA-FEDERATED-QUERY-R722). This executor
 routes every read through :meth:`FleetGateway.call`, so each read is admitted
 under the caller's own delegation: the gateway rechecks scope, policy and the
 tool's current effect at dispatch. Only READ tools run; a tool whose effect

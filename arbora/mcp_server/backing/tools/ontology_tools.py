@@ -132,7 +132,7 @@ def _ontology_interface_list(reg: Any, registry: str) -> str:
 
 
 def _ontology_interface_implementers(reg: Any, name: str) -> str:
-    raise not_served("knowledge_graph.ontology.interfaces", "EG-TYPED-PACKS-R650")
+    raise not_served("knowledge_graph.ontology.interfaces", "MEDULLA-TYPED-PACKS-R650")
 
 
 def _ontology_interface_conforms(reg: Any, name: str, object_json: str) -> str:
@@ -145,16 +145,16 @@ def _ontology_interface_owl(reg: Any) -> str:
 
 
 def _ontology_interface_schema(reg: Any, registry: str, action: str) -> str:
-    raise not_served("knowledge_graph.ontology.links", "EG-TYPED-PACKS-R650")
+    raise not_served("knowledge_graph.ontology.links", "MEDULLA-TYPED-PACKS-R650")
 
 
 def _ontology_interface_lint(reg: Any, registry: str) -> str:
-    raise not_served("knowledge_graph.ontology.style_lint", "EG-TYPED-PACKS-R651")
+    raise not_served("knowledge_graph.ontology.style_lint", "MEDULLA-TYPED-PACKS-R651")
 
 
 def _ontology_interface_explain_routing() -> str:
     raise not_served(
-        "graph.routing.enrichers.capability_routing", "EG-DECISION-ENGINE-R035.750"
+        "graph.routing.enrichers.capability_routing", "MEDULLA-DECISION-ENGINE-R035.750"
     )
 
 
@@ -178,7 +178,7 @@ class _WritebackCtx:
 def _graph_writeback_proposals() -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
-        "SDK-SOURCE-INGEST-R600",
+        "SCION-SOURCE-INGEST-R600",
         owner="agent-connector-sdk",
     )
 
@@ -186,7 +186,7 @@ def _graph_writeback_proposals() -> str:
 def _graph_writeback_approve(proposal_id: str, ctx: _WritebackCtx) -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
-        "SDK-SOURCE-INGEST-R600",
+        "SCION-SOURCE-INGEST-R600",
         owner="agent-connector-sdk",
     )
 
@@ -194,7 +194,7 @@ def _graph_writeback_approve(proposal_id: str, ctx: _WritebackCtx) -> str:
 def _graph_writeback_asset_mirror(ctx: _WritebackCtx) -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
-        "SDK-SOURCE-INGEST-R600",
+        "SCION-SOURCE-INGEST-R600",
         owner="agent-connector-sdk",
     )
 
@@ -202,7 +202,7 @@ def _graph_writeback_asset_mirror(ctx: _WritebackCtx) -> str:
 def _graph_writeback_inventory(ctx: _WritebackCtx) -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
-        "SDK-SOURCE-INGEST-R600",
+        "SCION-SOURCE-INGEST-R600",
         owner="agent-connector-sdk",
     )
 
@@ -210,7 +210,7 @@ def _graph_writeback_inventory(ctx: _WritebackCtx) -> str:
 def _graph_writeback_findings(ctx: _WritebackCtx, creations_json: str) -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
-        "SDK-SOURCE-INGEST-R600",
+        "SCION-SOURCE-INGEST-R600",
         owner="agent-connector-sdk",
     )
 
@@ -225,7 +225,7 @@ def _graph_writeback_default(
 ) -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
-        "SDK-SOURCE-INGEST-R600",
+        "SCION-SOURCE-INGEST-R600",
         owner="agent-connector-sdk",
     )
 
@@ -243,7 +243,7 @@ class _SpecTicketCtx:
 def _spec_ticket_pull(target: str, user: str, project_id: str) -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
-        "SDK-SOURCE-INGEST-R600",
+        "SCION-SOURCE-INGEST-R600",
         owner="agent-connector-sdk",
     )
 
@@ -259,7 +259,7 @@ def _spec_ticket_link(
 ) -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
-        "SDK-SOURCE-INGEST-R600",
+        "SCION-SOURCE-INGEST-R600",
         owner="agent-connector-sdk",
     )
 
@@ -304,15 +304,17 @@ def _source_sync_resolve_engine(connection: str, graph: str) -> tuple[Any, str |
 def _source_sync_run(
     engine: Any, source: str, mode: str, ids: list[Any], graph: str, connection: str
 ) -> dict[str, Any]:
-    raise not_served("knowledge_graph.core.source_sync", "EG-INGEST-WORKER-R605")
+    raise not_served("knowledge_graph.core.source_sync", "MEDULLA-INGEST-WORKER-R605")
 
 
 def _graph_etl_list() -> str:
-    raise not_served("knowledge_graph.enrichment.registry", "EG-INGEST-WORKER-R606")
+    raise not_served(
+        "knowledge_graph.enrichment.registry", "MEDULLA-INGEST-WORKER-R606"
+    )
 
 
 def _graph_etl_lineage(engine: Any, source: str, sink: str, limit: int) -> str:
-    raise not_served("knowledge_graph.etl", "EG-UNIFIED-DATA-PLANE-R702")
+    raise not_served("knowledge_graph.etl", "MEDULLA-UNIFIED-DATA-PLANE-R702")
 
 
 def _graph_etl_resolve_sink_backend(sink: str) -> Any:
@@ -339,12 +341,12 @@ class _EtlRunArgs:
 
 
 def _graph_etl_run(args: _EtlRunArgs) -> str:
-    raise not_served("knowledge_graph.etl", "EG-UNIFIED-DATA-PLANE-R702")
+    raise not_served("knowledge_graph.etl", "MEDULLA-UNIFIED-DATA-PLANE-R702")
 
 
 def _classification_claim_from_json(raw: str) -> Any:
     raise not_served(
-        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
+        "knowledge_graph.ontology.classification_claims", "MEDULLA-TYPED-PACKS-R652"
     )
 
 
@@ -384,67 +386,67 @@ class _ClassificationClaimsCtx:
 
 def _classification_claims_record(ctx: _ClassificationClaimsCtx) -> str:
     raise not_served(
-        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
+        "knowledge_graph.ontology.classification_claims", "MEDULLA-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_query(ctx: _ClassificationClaimsCtx) -> str:
     raise not_served(
-        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
+        "knowledge_graph.ontology.classification_claims", "MEDULLA-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_categories(ctx: _ClassificationClaimsCtx) -> str:
     raise not_served(
-        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
+        "knowledge_graph.ontology.classification_claims", "MEDULLA-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_history(ctx: _ClassificationClaimsCtx) -> str:
     raise not_served(
-        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
+        "knowledge_graph.ontology.classification_claims", "MEDULLA-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_resolve_evidence(ctx: _ClassificationClaimsCtx) -> str:
     raise not_served(
-        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
+        "knowledge_graph.ontology.classification_claims", "MEDULLA-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_review(ctx: _ClassificationClaimsCtx) -> str:
     raise not_served(
-        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
+        "knowledge_graph.ontology.classification_claims", "MEDULLA-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_promote(ctx: _ClassificationClaimsCtx) -> str:
     raise not_served(
-        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
+        "knowledge_graph.ontology.classification_claims", "MEDULLA-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_reject(ctx: _ClassificationClaimsCtx) -> str:
     raise not_served(
-        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
+        "knowledge_graph.ontology.classification_claims", "MEDULLA-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_supersede(ctx: _ClassificationClaimsCtx) -> str:
     raise not_served(
-        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
+        "knowledge_graph.ontology.classification_claims", "MEDULLA-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_lifecycle_history(ctx: _ClassificationClaimsCtx) -> str:
     raise not_served(
-        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
+        "knowledge_graph.ontology.classification_claims", "MEDULLA-TYPED-PACKS-R652"
     )
 
 
 def _classification_claims_propose_identity(ctx: _ClassificationClaimsCtx) -> str:
     raise not_served(
-        "knowledge_graph.ontology.classification_claims", "EG-TYPED-PACKS-R652"
+        "knowledge_graph.ontology.classification_claims", "MEDULLA-TYPED-PACKS-R652"
     )
 
 
@@ -467,7 +469,7 @@ def _repo_provenance_snapshot(
     repo_id: str, commit_sha: str, ref: str
 ) -> tuple[Any, str, str | None]:
     raise not_served(
-        "knowledge_graph.ontology.repository_provenance", "EG-TYPED-PACKS-R651"
+        "knowledge_graph.ontology.repository_provenance", "MEDULLA-TYPED-PACKS-R651"
     )
 
 
@@ -475,7 +477,7 @@ def _repo_provenance_branch(
     repo_id: str, name: str, commit_sha: str
 ) -> tuple[Any, str, str | None]:
     raise not_served(
-        "knowledge_graph.ontology.repository_provenance", "EG-TYPED-PACKS-R651"
+        "knowledge_graph.ontology.repository_provenance", "MEDULLA-TYPED-PACKS-R651"
     )
 
 
@@ -483,7 +485,7 @@ def _repo_provenance_tag(
     repo_id: str, name: str, commit_sha: str, annotation: str
 ) -> tuple[Any, str, str | None]:
     raise not_served(
-        "knowledge_graph.ontology.repository_provenance", "EG-TYPED-PACKS-R651"
+        "knowledge_graph.ontology.repository_provenance", "MEDULLA-TYPED-PACKS-R651"
     )
 
 
@@ -492,17 +494,19 @@ def _repo_provenance_change_event(
 ) -> tuple[Any, str, str | None]:
 
     raise not_served(
-        "knowledge_graph.ontology.repository_provenance", "EG-TYPED-PACKS-R651"
+        "knowledge_graph.ontology.repository_provenance", "MEDULLA-TYPED-PACKS-R651"
     )
 
 
 def _repo_provenance_ingest(engine: Any, obj: Any, node_id: str, repo_id: str) -> str:
-    raise not_served("knowledge_graph.ingestion.envelope_ingest", "EG-REPO-INGEST-R002")
+    raise not_served(
+        "knowledge_graph.ingestion.envelope_ingest", "MEDULLA-REPO-INGEST-R002"
+    )
 
 
 def _ontology_derive_list() -> str:
     raise not_served(
-        "knowledge_graph.ontology.derived_properties", "EG-TYPED-PACKS-R650"
+        "knowledge_graph.ontology.derived_properties", "MEDULLA-TYPED-PACKS-R650"
     )
 
 
@@ -541,15 +545,15 @@ def _object_edits_compare_and_set() -> str:
     # node still matches ``expect`` (missing field ≡ null), under the engine
     # write lock. If we lose the race we record NOTHING and surface
     # applied=false — never a misleading audit edit.
-    raise not_served("knowledge_graph.ontology.edits", "EG-TYPED-PACKS-R651")
+    raise not_served("knowledge_graph.ontology.edits", "MEDULLA-TYPED-PACKS-R651")
 
 
 def _object_edits_record(ledger: Any, args: _ObjectEditsRecordArgs) -> str:
-    raise not_served("knowledge_graph.ontology.edits", "EG-TYPED-PACKS-R651")
+    raise not_served("knowledge_graph.ontology.edits", "MEDULLA-TYPED-PACKS-R651")
 
 
 def _object_edits_revert(ledger: Any, edit_id: str, actor: str) -> str:
-    raise not_served("knowledge_graph.ontology.edits", "EG-TYPED-PACKS-R651")
+    raise not_served("knowledge_graph.ontology.edits", "MEDULLA-TYPED-PACKS-R651")
 
 
 def _object_edits_history(ledger: Any, object_id: str) -> str:
@@ -570,27 +574,27 @@ def _object_edits_as_of(ledger: Any, object_id: str, ts: float) -> str:
 
 def _graph_share_hierarchy(action: str, tenant_id: str, parent_tenant_id: str) -> str:
 
-    raise not_served("knowledge_graph.core.tenant_registry", "EG-IDENTITY-R610")
+    raise not_served("knowledge_graph.core.tenant_registry", "MEDULLA-IDENTITY-R610")
 
 
 def _graph_share_org(node_id: str) -> str:
-    raise not_served("knowledge_graph.core.tenant_sharing", "EG-IDENTITY-R610")
+    raise not_served("knowledge_graph.core.tenant_sharing", "MEDULLA-IDENTITY-R610")
 
 
 def _graph_share_commons(node_id: str) -> str:
-    raise not_served("knowledge_graph.core.tenant_sharing", "EG-IDENTITY-R610")
+    raise not_served("knowledge_graph.core.tenant_sharing", "MEDULLA-IDENTITY-R610")
 
 
 def _graph_share_mark(node_id: str, marking: str) -> str:
-    raise not_served("knowledge_graph.core.tenant_sharing", "EG-IDENTITY-R610")
+    raise not_served("knowledge_graph.core.tenant_sharing", "MEDULLA-IDENTITY-R610")
 
 
 def _graph_share_private(node_id: str) -> str:
-    raise not_served("knowledge_graph.core.tenant_sharing", "EG-IDENTITY-R610")
+    raise not_served("knowledge_graph.core.tenant_sharing", "MEDULLA-IDENTITY-R610")
 
 
 def _object_set_path(source_id: str, target_id: str) -> str:
-    raise not_served("knowledge_graph.ontology.object_path", "EG-TYPED-PACKS-R650")
+    raise not_served("knowledge_graph.ontology.object_path", "MEDULLA-TYPED-PACKS-R650")
 
 
 def _object_set_base(
@@ -691,7 +695,7 @@ def register_ontology_tools(mcp):
     ) -> str:
         """List/describe ontology property types and resolve/validate a type reference."""
         raise not_served(
-            "knowledge_graph.ontology.property_types", "EG-TYPED-PACKS-R650"
+            "knowledge_graph.ontology.property_types", "MEDULLA-TYPED-PACKS-R650"
         )
 
     runtime.REGISTERED_TOOLS["ontology_property_types"] = ontology_property_types
@@ -713,7 +717,9 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """List/describe value types and validate or coerce a value through one."""
-        raise not_served("knowledge_graph.ontology.value_types", "EG-TYPED-PACKS-R650")
+        raise not_served(
+            "knowledge_graph.ontology.value_types", "MEDULLA-TYPED-PACKS-R650"
+        )
 
     runtime.REGISTERED_TOOLS["ontology_value_types"] = ontology_value_types
 
@@ -766,7 +772,9 @@ def register_ontology_tools(mcp):
     ) -> str:
         """Resolve interface targeting, check conformance, emit interface OWL/SHACL, or explain
         WHY a candidate is routing-eligible (X-4)."""
-        raise not_served("knowledge_graph.ontology.interfaces", "EG-TYPED-PACKS-R650")
+        raise not_served(
+            "knowledge_graph.ontology.interfaces", "MEDULLA-TYPED-PACKS-R650"
+        )
 
     runtime.REGISTERED_TOOLS["ontology_interface"] = ontology_interface
 
@@ -823,7 +831,9 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """Attach, inspect, replace, or detach EG GraphSchema sources."""
-        raise not_served("knowledge_graph.ontology.lifecycle", "EG-TYPED-PACKS-R651")
+        raise not_served(
+            "knowledge_graph.ontology.lifecycle", "MEDULLA-TYPED-PACKS-R651"
+        )
 
     runtime.REGISTERED_TOOLS["graph_ontology"] = graph_ontology
 
@@ -1058,7 +1068,9 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """Report progress of a chunked drain or list chunked-drain-capable sources."""
-        raise not_served("knowledge_graph.core.chunked_drain", "EG-INGEST-WORKER-R605")
+        raise not_served(
+            "knowledge_graph.core.chunked_drain", "MEDULLA-INGEST-WORKER-R605"
+        )
 
     runtime.REGISTERED_TOOLS["source_drain"] = source_drain
 
@@ -1381,7 +1393,9 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """List registered ontology functions or invoke one with typed params."""
-        raise not_served("knowledge_graph.ontology.functions", "EG-TYPED-PACKS-R650")
+        raise not_served(
+            "knowledge_graph.ontology.functions", "MEDULLA-TYPED-PACKS-R650"
+        )
 
     runtime.REGISTERED_TOOLS["ontology_function"] = ontology_function
 
@@ -1395,7 +1409,7 @@ def register_ontology_tools(mcp):
             default="compute",
             description="'list' declarations, 'compute' one property, or "
             "'compute_all'. (Schema-discovery/standalone-generation proposals "
-            "moved behind EG pack compilation, AU-SEMANTIC-R021.2 — no longer "
+            "moved behind EG pack compilation, MERISTEM-SEMANTIC-R021.2 — no longer "
             "served from this tool.)",
         ),
         object_json: str = Field(
@@ -1440,7 +1454,7 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """List link types or reify + persist a M:N link via the graph_write path."""
-        raise not_served("knowledge_graph.ontology.links", "EG-TYPED-PACKS-R650")
+        raise not_served("knowledge_graph.ontology.links", "MEDULLA-TYPED-PACKS-R650")
 
     runtime.REGISTERED_TOOLS["ontology_link_materialize"] = ontology_link_materialize
 
@@ -1588,7 +1602,7 @@ def register_ontology_tools(mcp):
     ) -> str:
         """Redact / restrict / mark objects for the AMBIENT actor (no spoofable clearance)."""
         raise not_served(
-            "knowledge_graph.ontology.permissioning", "EG-TYPED-PACKS-R652"
+            "knowledge_graph.ontology.permissioning", "MEDULLA-TYPED-PACKS-R652"
         )
 
     runtime.REGISTERED_TOOLS["object_permissioning"] = object_permissioning
@@ -1734,7 +1748,7 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """Process a document into Document + Chunk ontology objects through the live graph."""
-        raise not_served("knowledge_graph.facade", "EG-CONTRACT-R005")
+        raise not_served("knowledge_graph.facade", "MEDULLA-CONTRACT-R005")
 
     runtime.REGISTERED_TOOLS["document_process"] = document_process
 
@@ -1766,6 +1780,6 @@ def register_ontology_tools(mcp):
         ),
     ) -> str:
         """List or run a document-source connector (CONCEPT:AU-ECO.connector.document-source-framework–4.29)."""
-        raise not_served("knowledge_graph.facade", "EG-CONTRACT-R005")
+        raise not_served("knowledge_graph.facade", "MEDULLA-CONTRACT-R005")
 
     runtime.REGISTERED_TOOLS["source_connector"] = source_connector

@@ -78,7 +78,7 @@ The proposed served scenarios have not been run and establish no runtime deliver
 
 ## Planned authenticated terminal log acceptance
 
-These cases extend ARBORA-HOST-R009.5, R009.6 and R010.7 with TUI-RUNTIME-R002.2 through R002.6. These cases have not been run.
+These cases extend ARBORA-HOST-R009.5, R009.6 and R010.7 with TUIG-RUNTIME-R002.2 through R002.6. These cases have not been run.
 
 - `tests/host/test_terminal_host_served.py::test_effective_log_preference_is_authenticated`: start the real host and enter run_host_terminal. Check the strict effective web_logs value and host, workspace, tenant, principal, session, generation and expiry bindings. Change each binding independently. Missing, altered or expired bindings yield zero HostLogReader.read calls and zero delivered records.
 - `tests/host/test_terminal_host_served.py::test_terminal_log_mode_preference_matrix`: use terminal, web and both with true and false preferences. Only terminal/both with true show a correlated HTTP log during agent interaction. False, absent preference, missing reader and all web cases produce zero TUI reads. Check HTTP serving, the required redacted sink and agent interaction remain available where their interfaces are selected.
