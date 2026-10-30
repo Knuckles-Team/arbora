@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import re
 
+import pytest
+
 from arbora.api.registry import (
     DOMAIN_SCOPE_CLASSES,
     FinanceScope,
@@ -11,7 +13,6 @@ from arbora.api.registry import (
     LoopsScope,
     OpsScope,
 )
-import pytest
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R028")
 
