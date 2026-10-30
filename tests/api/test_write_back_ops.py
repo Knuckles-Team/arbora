@@ -27,7 +27,7 @@ def _ctx(calls: list):
     )
 
 
-@pytest.mark.spec("ARBORA-FLEET-R003.2")
+# R003.2 unbound: write_back_ledger and write_back_effect are not supplied by the production bootstrap.
 @pytest.mark.asyncio
 async def test_preview_then_commit_and_idempotent_replay_returns_original_receipt() -> (
     None
@@ -49,7 +49,7 @@ async def test_preview_then_commit_and_idempotent_replay_returns_original_receip
     assert first["value"]["receipt"] == {"id": 1}
 
 
-@pytest.mark.spec("ARBORA-FLEET-R003.2")
+# R003.2 unbound: write_back_ledger and write_back_effect are not supplied by the production bootstrap.
 @pytest.mark.asyncio
 async def test_commit_without_matching_preview_or_with_mismatch_is_refused() -> None:
     calls: list = []
@@ -69,7 +69,7 @@ async def test_commit_without_matching_preview_or_with_mismatch_is_refused() -> 
     assert calls == []
 
 
-@pytest.mark.spec("ARBORA-FLEET-R003.2")
+# R003.2 unbound: write_back_ledger and write_back_effect are not supplied by the production bootstrap.
 def test_operations_are_registered_gated_and_not_native_child_tools() -> None:
     registry = get_registry()
     commit = registry["fleet.write_back.commit"]
