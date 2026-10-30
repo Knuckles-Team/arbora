@@ -25,16 +25,9 @@ The generated profile uses secret references instead of plaintext credentials.
 The doctor reports any authority that is unavailable before Arbora accepts
 traffic.
 
-## Register the local door
+## Connect a client
 
-```bash
-setup-config codex
-```
-
-Arbora now appears as the `arbora` MCP server in Codex. It runs as a local
-child process and keeps protocol output isolated on `stdio`.
-
-For another MCP client, configure the same launcher directly:
+Clients that launch Arbora as a child process configure this launcher:
 
 ```bash
 arbora --transport stdio

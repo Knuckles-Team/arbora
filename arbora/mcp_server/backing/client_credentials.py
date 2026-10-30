@@ -28,10 +28,8 @@ selected by ``MCP_CLIENT_AUTH``:
     something reconnects it. Reading the file fresh on every request instead
     renews the credential IN-BAND, inside the SAME long-lived session, with no
     reconnect: the daemon's next scheduled write is picked up by the very next
-    call. This is the general form of the mechanism ``arbora-codex-bridge.py``
-    already proved for Codex's stdio bridge (``RotatingBearerAuth``); this module
-    makes it a first-class, tested primitive any agent-utilities-built MCP client
-    can select via config, instead of a one-off script reimplementing it.
+    call. This module makes it a first-class, tested primitive any
+    agent-utilities-built MCP client can select via config.
 
 Either way the credential is never applied over a child's explicit ``Authorization``
 header. Once a service-auth mode is selected, incomplete configuration or a mint
@@ -312,8 +310,7 @@ def read_rotating_bearer_token(path: Path) -> str:
     caller (:class:`RotatingFileBearerAuth`) invokes this once per outbound
     request, so a file an out-of-process daemon rewrites between two requests
     is picked up by the very next one, in the SAME long-lived session, with no
-    reconnect. Mirrors the validation ``arbora-codex-bridge.py``'s
-    ``RotatingBearerAuth`` already proved for Codex's stdio bridge: the file
+    reconnect. The file
     must be exactly mode 0600 (refuse a token an unrelated local user could
     have read or written) and non-empty; anything else raises rather than
     silently falling back to an unauthenticated or stale request.

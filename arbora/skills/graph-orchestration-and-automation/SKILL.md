@@ -51,7 +51,7 @@ auto-hydrate before delegating rather than failing:
    RETURN s.name AS server, count(r) AS tool_count ORDER BY tool_count DESC LIMIT 50")`
    — an empty result means the KG is cold.
 2. **Hydrate** (only if cold): ingest every discoverable `mcp_config*.json` (scan known IDE
-   paths — Antigravity, XDG agent-utilities, Windsurf, Claude Code, Codex, Devin — dedupe
+   paths — Antigravity, XDG agent-utilities, Windsurf, Claude Code, Devin — dedupe
    by `command`+`args`) and the skill directories via `graph_ingest(action="agent_toolkit",
    target_path='["<path1>", ...]')`. The epistemic-graph backend MERGE-deduplicates
    `Server` ids natively, so re-hydration is idempotent.

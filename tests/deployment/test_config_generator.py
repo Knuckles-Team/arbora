@@ -185,7 +185,6 @@ def test_write_config_default_uses_active_config_root_without_returning_path(
     assert str(root) not in json.dumps(result)
 
 
-# Codex registration is covered in test_codex_registration.py.
 # ── reference ──────────────────────────────────────────────────────────────
 def test_config_reference_groups_all_fields():
     ref = config_reference()

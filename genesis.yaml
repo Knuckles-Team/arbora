@@ -208,7 +208,6 @@ components:
 ide_targets:
   install: agent-utilities install
   install_mcp: mcp-installer --all-detected
-  register_codex_mcp: setup-config codex
   harness_fence: setup-config harness-fence --target ~/.claude
   tools:
   - claude
@@ -217,7 +216,6 @@ ide_targets:
   - opencode
   - openclaw
   - antigravity
-  - codex
   - devin
   - cursor
   - zed
