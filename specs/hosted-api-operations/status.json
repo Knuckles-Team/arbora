@@ -382,7 +382,7 @@
         "97061e59c412"
       ],
       "verified_by": [
-        "tests/api/test_api_registry.py:110",
+        "tests/api/test_api_registry.py:111",
         "tests/api/test_api_registry.py:63",
         "tests/api/test_http_session_scope.py:31",
         "tests/api/test_http_session_scope.py:68"
@@ -928,11 +928,14 @@
     {
       "id": "ARBORA-OPS-R021.1",
       "title": "Decide operations (service-executed) — decide slice",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "1ded59edd1a6"
+        "1ded59edd1a6",
+        "ef1519749a08"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/mcp_server/test_ops_runners_bootstrap.py:50"
+      ]
     },
     {
       "id": "ARBORA-OPS-R021.2",
@@ -1199,7 +1202,7 @@
         "tests/api/test_agent_browser_ops.py:38",
         "tests/api/test_agent_browser_ops.py:71",
         "tests/api/test_fleet_effect.py:174",
-        "tests/fleet/test_gateway_ops.py:58"
+        "tests/fleet/test_gateway_ops.py:59"
       ]
     },
     {
@@ -1279,7 +1282,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:375"
+        "tests/api/test_registry_factory.py:377"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1374,7 +1377,7 @@
         "5f79be652726"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:375"
+        "tests/api/test_registry_factory.py:377"
       ]
     },
     {
@@ -1495,8 +1498,8 @@
         "4b9d181069e4"
       ],
       "verified_by": [
-        "tests/api/test_authority_parity.py:114",
-        "tests/api/test_authority_parity.py:120"
+        "tests/api/test_authority_parity.py:115",
+        "tests/api/test_authority_parity.py:121"
       ]
     },
     {
@@ -1680,7 +1683,7 @@
         "b9141334e1ba"
       ],
       "verified_by": [
-        "tests/fleet/test_gateway_ops.py:58",
+        "tests/fleet/test_gateway_ops.py:59",
         "tests/fleet/test_governed_forwarders.py:28"
       ]
     },
@@ -1738,7 +1741,7 @@
         "a9025191159e"
       ],
       "verified_by": [
-        "tests/api/test_api_registry.py:168",
+        "tests/api/test_api_registry.py:170",
         "tests/api/test_invoke_contract.py:239",
         "tests/api/test_invoke_contract.py:473",
         "tests/api/test_invoke_governance.py:443"
@@ -2623,7 +2626,7 @@
         "d673cd573c77"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:384"
+        "tests/api/test_registry_factory.py:386"
       ]
     },
     {

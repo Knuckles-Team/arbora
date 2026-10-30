@@ -669,9 +669,9 @@
         "f8ddf8ecea69"
       ],
       "verified_by": [
-        "tests/api/test_mcp_verbs.py:141",
-        "tests/api/test_mcp_verbs.py:260",
-        "tests/api/test_mcp_verbs.py:308"
+        "tests/api/test_mcp_verbs.py:144",
+        "tests/api/test_mcp_verbs.py:263",
+        "tests/api/test_mcp_verbs.py:311"
       ]
     },
     {
@@ -834,7 +834,7 @@
       ],
       "verified_by": [
         "tests/fleet/test_gateway_ops.py:17",
-        "tests/fleet/test_gateway_ops.py:60"
+        "tests/fleet/test_gateway_ops.py:61"
       ]
     },
     {
