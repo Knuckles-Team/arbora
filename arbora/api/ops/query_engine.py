@@ -10,14 +10,9 @@ method; Arbora keeps no local ontology store and builds no SQL strings.
 from __future__ import annotations
 
 from arbora.api.registry import (
-    AuditClass,
-    Effect,
     EgMethod,
     EgSchemaRef,
-    Idempotency,
     OpSpec,
-    PrincipalRule,
-    Surface,
     Verb,
 )
 
@@ -89,27 +84,6 @@ def operations() -> tuple[OpSpec, ...]:
             "federation:read",
             "Read the columns of a registered foreign source",
             "show the columns of this federated source",
-        ),
-        OpSpec(
-            id="federation.sources.register",
-            verb=Verb.MANAGE,
-            summary="Register a foreign source with the engine (governed write)",
-            examples=("register a federated source",),
-            params=EgSchemaRef(path=_REQUEST.format(method="RegisterForeignSource")),
-            result=EgSchemaRef(
-                path=_RESULT.format(domain="cluster", method="RegisterForeignSource")
-            ),
-            binding=EgMethod(
-                service="RegisterForeignSource", op="RegisterForeignSource"
-            ),
-            scopes=frozenset({"federation:admin"}),
-            effect=Effect.ADMIN,
-            idempotency=Idempotency.KEY_REQUIRED,
-            audit=AuditClass.EVENT,
-            principals=PrincipalRule.HUMAN_UNDELEGATED,
-            surfaces=frozenset(
-                {Surface.MCP, Surface.HTTP, Surface.A2A, Surface.CONSOLE}
-            ),
         ),
     )
 

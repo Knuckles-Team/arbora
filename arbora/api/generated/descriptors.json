@@ -556,6 +556,18 @@
     {
       "domain": "eg",
       "examples": [
+        "RegisterForeignSource cluster"
+      ],
+      "id": "eg.cluster.RegisterForeignSource",
+      "summary": "opaque prepared/committed control receipt; endpoint configuration is not duplicated in the ledger",
+      "tags": [
+        "eg"
+      ],
+      "verb": "manage"
+    },
+    {
+      "domain": "eg",
+      "examples": [
         "RegisterServer cluster"
       ],
       "id": "eg.cluster.RegisterServer",
@@ -5947,7 +5959,7 @@
         "register a federated source"
       ],
       "id": "federation.sources.register",
-      "summary": "Register a foreign source with the engine (governed write)",
+      "summary": "Register a foreign source owned by the caller (governed write)",
       "tags": [
         "federation"
       ],
@@ -6108,6 +6120,30 @@
         "fleet"
       ],
       "verb": "manage"
+    },
+    {
+      "domain": "fleet",
+      "examples": [
+        "commit this previewed connector write-back"
+      ],
+      "id": "fleet.write_back.commit",
+      "summary": "Commit a previously previewed connector write-back",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "fleet",
+      "examples": [
+        "preview this connector write-back"
+      ],
+      "id": "fleet.write_back.preview",
+      "summary": "Preview a connector write-back without applying it",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "write"
     },
     {
       "domain": "ingest",
@@ -6702,5 +6738,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "66403b30f5f8dd91c56ba03e05027d5041d1844a14c3276f5ecfab9f468ec713"
+  "registry_digest": "4c8b0b5c1d63130a40ebead87d8844497497fa17e7aa92c9931ab88cf5f59358"
 }

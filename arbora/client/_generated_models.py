@@ -9,7 +9,7 @@ from typing import Literal
 
 from arbora.client._schema import _expanded_spec
 
-REGISTRY_DIGEST = "66403b30f5f8dd91c56ba03e05027d5041d1844a14c3276f5ecfab9f468ec713"
+REGISTRY_DIGEST = "4c8b0b5c1d63130a40ebead87d8844497497fa17e7aa92c9931ab88cf5f59358"
 API_VERSION = "1"
 type OperationId = Literal[
     "access.check",
@@ -58,6 +58,7 @@ type OperationId = Literal[
     "eg.cluster.RaftChangeMembership",
     "eg.cluster.RebalanceExecute",
     "eg.cluster.RebalancePlan",
+    "eg.cluster.RegisterForeignSource",
     "eg.cluster.RegisterServer",
     "eg.cluster.Reshard",
     "eg.cluster.Shutdown",
@@ -521,6 +522,8 @@ type OperationId = Literal[
     "fleet.status",
     "fleet.tools.load",
     "fleet.tools.unload",
+    "fleet.write_back.commit",
+    "fleet.write_back.preview",
     "ingest.drift.get",
     "ingest.drift.list",
     "ingest.drift.repair_approve",

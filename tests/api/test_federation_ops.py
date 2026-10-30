@@ -39,11 +39,11 @@ class _Catalog:
         self.probes.append(source_id)
         return {"ok": True, "token": "t0ps3cret", "latency_ms": 3}
 
-    async def grant(self, source_id: str, grantee: str, *, tenant: str):
+    async def grant(self, source_id: str, grantee: str, *, tenant: str, **_: Any):
         self.records[source_id]["grantees"].append(grantee)
         return self.records[source_id]
 
-    async def revoke(self, source_id: str, grantee: str, *, tenant: str):
+    async def revoke(self, source_id: str, grantee: str, *, tenant: str, **_: Any):
         self.records[source_id]["grantees"].remove(grantee)
         return self.records[source_id]
 
@@ -64,9 +64,7 @@ async def _call(op_id: str, catalog: _Catalog | None, who: str, **params: Any):
 def test_register_is_a_governed_engine_write_and_reads_pass_through() -> None:
     registry = get_registry()
     register = registry["federation.sources.register"]
-    assert register.binding == EgMethod(
-        service="RegisterForeignSource", op="RegisterForeignSource"
-    )
+    assert register.binding.handler == "arbora.api.ops.federation.handle_federation"
     assert register.effect is Effect.ADMIN and register.scopes == {"federation:admin"}
     for op in query_engine.operations():
         assert isinstance(op.binding, EgMethod)
