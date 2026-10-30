@@ -77,11 +77,11 @@ def _case_id(case: dict[str, Any]) -> str:
 
 
 def _case_param(case: dict[str, Any]) -> Any:
-    spec_ids = {"ARBORA-FLEET-R017", *case.get("specs", ())}
-    marks = [pytest.mark.spec(spec_id) for spec_id in sorted(spec_ids)]
+    marks = [pytest.mark.spec(spec_id) for spec_id in case.get("specs", ())]
     return pytest.param(case, id=_case_id(case), marks=marks)
 
 
+@pytest.mark.spec("ARBORA-FLEET-R017")
 @pytest.mark.parametrize("case", [_case_param(case) for case in _load_matrix()])
 def test_authority_matrix_row_matches_expected_outcome(case: dict[str, Any]) -> None:
     op = OpSpec(
