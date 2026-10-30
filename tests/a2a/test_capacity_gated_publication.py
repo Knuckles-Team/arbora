@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from arbora.a2a.composition import CapacityGatedPublisher
@@ -17,13 +19,17 @@ def test_evaluate_commit_grant_publish_redecision_and_stop_release() -> None:
     publisher = CapacityGatedPublisher(capacity)
     log: list[str] = []
 
+    def logged(entry: str, value: Any) -> Any:
+        log.append(entry)
+        return value
+
     def run(run_id: str):
         return publisher.publish(
             run_id,
             {"slots": 1},
-            evaluate=lambda: log.append(f"eval:{run_id}") or run_id,
-            commit=lambda c: log.append(f"commit:{c}") or {"run": c, "evidence": "syn"},
-            publish=lambda c: log.append(f"pub:{c['run']}") or c["run"],
+            evaluate=lambda: logged(f"eval:{run_id}", run_id),
+            commit=lambda c: logged(f"commit:{c}", {"run": c, "evidence": "syn"}),
+            publish=lambda c: logged(f"pub:{c['run']}", c["run"]),
         )
 
     first = run("r1")
