@@ -55,11 +55,9 @@ data:
   KG_DAEMON_ROLE: "client"
   {{- else if include "arbora.sidecar" . }}
   GRAPH_SERVICE_ENDPOINTS: "unix:///run/epistemic-graph/epistemic-graph.sock"
-  {{- /* ARBORA-DEPLOY-R016: the dedicated daemon container (arbora.yaml)
-         holds the host role via its own env override; this shared
-         ConfigMap's default keeps the arbora serving container at client
-         so it never races the daemon for the host lock. */}}
-  KG_DAEMON_ROLE: {{ if .Values.daemon.enabled }}"client"{{ else }}"host"{{ end }}
+  {{- /* ARBORA-DEPLOY-R016: the serving container is the one host-role
+         process; there is no separate daemon container. */}}
+  KG_DAEMON_ROLE: "host"
   {{- else }}
   # child placement: arbora starts and supervises the engine itself.
   GRAPH_SERVICE_ENDPOINTS: ""

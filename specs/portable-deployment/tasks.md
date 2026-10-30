@@ -137,7 +137,7 @@ owns the entry point). ARBORA-DEPLOY-R007.1 (`agent-utilities-doctor`) is tracke
 ([agent-utilities PR #118](https://github.com/Knuckles-Team/agent-utilities/pull/118)).
 
 - [x] **ARBORA-DEPLOY-R007.2** — `setup-config` console-script collision.
-- [x] **ARBORA-DEPLOY-R007.3** — `arbora-daemon` console-script collision.
+- [x] **ARBORA-DEPLOY-R007.3** — `arbora-daemon` console script retired (ARBORA-HOST-R004).
 - [x] **ARBORA-DEPLOY-R007.4** — `agent-utilities-venv` console-script collision.
 - [x] **ARBORA-DEPLOY-R007.5** — `arbora-release-canary` console-script collision.
 - [x] **ARBORA-DEPLOY-R007.6** — engine_domains and graph_connections doctor checks. Evidence: `tests/deployment/test_doctor_graph.py`.
@@ -156,16 +156,11 @@ non-test importer (or, for `agent_utilities.deployment.cli`, a direct test impor
   their remaining non-test importers first): the unresolved core of ARBORA-DEPLOY-R007 proper,
   alongside `agent_utilities.deployment.doctor`'s retirement noted under R007.1.
 
-## ARBORA-DEPLOY-R016 host daemon container
+## ARBORA-DEPLOY-R016 serving container is the in-pod host
 
-- [x] Add the `arbora-daemon` container to the internal deployment manifest. The container runs `python3 -m arbora.gateway.daemon` with `KG_DAEMON_ROLE=host` and `KG_DEV_MODE=false`.
-- [x] Extend the serving-role contract test. The test asserts one host-role container and keeps the serving container at the client role.
-- [x] Validate the manifest with a server-side dry run.
-- [ ] Apply the manifest. Record the daemon log line `Verified graph host process authority minted`.
-- [ ] Record `arbora-daemon --status` output that shows the host-lock holder.
-- [ ] Record the chat index sparse coverage before and after baseline ingestion.
-- [ ] Watch the serving container memory. The engine child counts against the serving container limit. Daemon-driven hydration raises that load.
-- [x] Add the daemon container to the Helm production profile under `deploy/`.
+- [x] Retire the separate daemon container and its values/schema keys; the serving container holds the host role in child and sidecar placement.
+- [x] Contract test `tests/deployment/test_helm_daemon_sidecar.py` renders every placement.
+- [ ] Apply the manifest and record the serving container as host-lock holder.
 
 ## Decomposition children (tracked)
 
