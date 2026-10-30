@@ -7,10 +7,10 @@ CONCEPT:AU-ECO.messaging.native-backend-abstraction -- Cross-Agent Memory Hook I
 
 Writes startup/checkpoint hooks into external agent configurations so they
 call ``agent-utilities context`` at session start and ``agent-utilities observe``
-at session end.  Supports 10 agent surfaces with platform-aware pathing.
+at session end.  Supports 9 agent surfaces with platform-aware pathing.
 
 Supported Agents:
-    Claude Code, Codex, Grok Build, Devin, Antigravity, Windsurf,
+    Claude Code, Grok Build, Devin, Antigravity, Windsurf,
     OpenCode, agent-terminal-ui, Cowork, Hermes
 """
 
@@ -95,14 +95,19 @@ _CLAUDE_HOOKS = {
     }
 }
 
-_CODEX_HOOKS = {
-    "hooks": {
-        "on_session_start": (
-            f"{_CONTEXT_CMD.format(agent='codex')}; {_VENV_SESSION_HINT_CMD}"
-        ),
-        "on_session_end": _OBSERVE_CMD.format(agent="codex"),
+
+
+def _session_hooks(agent: str) -> dict[str, Any]:
+    """Return on_session_start/on_session_end hooks tagged with ``agent``."""
+    return {
+        "hooks": {
+            "on_session_start": (
+                f"{_CONTEXT_CMD.format(agent=agent)}; {_VENV_SESSION_HINT_CMD}"
+            ),
+            "on_session_end": _OBSERVE_CMD.format(agent=agent),
+        }
     }
-}
+
 
 _GROK_HOOKS = {
     "name": "agent-utilities-memory",
@@ -128,12 +133,6 @@ AGENT_SURFACES: dict[str, dict[str, Any]] = {
         "hook_data": _CLAUDE_HOOKS,
         "merge_key": "hooks",
     },
-    "codex": {
-        "name": "Codex",
-        "config_path": lambda: _home() / ".codex" / "hooks.json",
-        "hook_data": _CODEX_HOOKS,
-        "merge_key": "hooks",
-    },
     "grok": {
         "name": "Grok Build",
         "config_path": lambda: (
@@ -145,7 +144,7 @@ AGENT_SURFACES: dict[str, dict[str, Any]] = {
     "devin": {
         "name": "Devin",
         "config_path": lambda: _home() / ".devin" / "hooks.json",
-        "hook_data": _CODEX_HOOKS,
+        "hook_data": _session_hooks("devin"),
         "merge_key": "hooks",
     },
     "antigravity": {
@@ -167,7 +166,7 @@ AGENT_SURFACES: dict[str, dict[str, Any]] = {
     "opencode": {
         "name": "OpenCode",
         "config_path": lambda: _home() / ".opencode" / "hooks.json",
-        "hook_data": _CODEX_HOOKS,
+        "hook_data": _session_hooks("opencode"),
         "merge_key": "hooks",
     },
     "agent-terminal-ui": {
