@@ -1973,6 +1973,7 @@
       "title": "Versioned, idempotent data migrations run at serving start and are recorded",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "e27376e52ab7",
         "f3179c2af813"
       ],
       "verified_by": [
