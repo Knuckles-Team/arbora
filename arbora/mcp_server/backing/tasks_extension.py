@@ -170,7 +170,7 @@ TASKS_EXTENSION_ID = "io.modelcontextprotocol/tasks"
 # gates method registration, while this value lets a multiplexer reject a
 # route from a server that implements a different task projection.
 TASKS_EXTENSION_REVISION = "2c1425d9a288b9b1f489430fe1e00bb392b47e48"
-_TASK_DELEGATION_CHANNEL_ENV = "AGENT_UTILITIES_MCP_TASK_CHANNEL_SECRET"
+_TASK_DELEGATION_CHANNEL_ENV = "ARBORA_MCP_TASK_CHANNEL_SECRET"
 _TASK_METHOD_VERSIONS = frozenset(MODERN_PROTOCOL_VERSIONS)
 
 
@@ -1056,7 +1056,7 @@ class WorkItemTasksExtension(ServerExtension):
         """Verify an authenticated multiplexer-on-behalf-of task envelope.
 
         The multiplexer mints a short-lived run token using the existing
-        ``AGENT_UTILITIES_TOKEN_SECRET`` substrate.  The child validates the
+        ``ARBORA_TOKEN_SECRET`` substrate.  The child validates the
         signature and expiry locally, then checks the token's endpoint,
         operation, tenant, owner, and canonical request binding. A direct
         end-user request cannot forge the delegated tenant/owner metadata.
