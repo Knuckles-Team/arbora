@@ -11,6 +11,16 @@
         },
         "required": true
       },
+      "Shared5d9f7295a954ea0064c3becce31f62cd2c651d8e281f0094c52867b9a5c92a82": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schemad0ccfca22e0aae71f863979c5a34eaaf57d3bdca68e06bce313815b4e9016920"
+            }
+          }
+        },
+        "required": true
+      },
       "Shared609223667d61742eff1fa5cda38ebc09655ba5ea242d2c80a83aada95e87b4df": {
         "content": {
           "application/json": {
@@ -196,6 +206,9 @@
       "Definition1638cff4afae4652d1e1272a58fc6981e98700fb4ec39feefa96e170c75f5de1": {
         "$ref": "#/components/schemas/Schema905870712697c5033de203e9970c73bcd2c6ec3112b28fa127fe1807b1a832ed"
       },
+      "Definition1d89b45169c34280aaf80982e7f7d9eaabc5ed71df72c876fb0a011cbca2c7a7": {
+        "$ref": "#/components/schemas/Schemab3792d7c91191c6877e53a017f7326f4933ef61d3ede2fc8bf259b0f9f16a16c"
+      },
       "Definition1d94b3ae8ce88d43ac1686464a61940f16a15a81254ceb60f584d0996bea92e8": {
         "$ref": "#/components/schemas/Schema1d94b3ae8ce88d43ac1686464a61940f16a15a81254ceb60f584d0996bea92e8"
       },
@@ -214,9 +227,6 @@
       "Definition4f5dfbf56e0de092f883b05fe0bf3704716990f7570cea9d48315898543b424f": {
         "$ref": "#/components/schemas/Schema831ec574a54316d5003e0352c2bbfe07d556aaf4381971c4a00037e9b4f8f569"
       },
-      "Definition5b9ce03c9f077b89cb597ce0377b8192731720e40d52957756822770f589a905": {
-        "$ref": "#/components/schemas/Schema461ca204e766f2aab4db33300ca288c50942031318ed9c2f6f157cc8ec141641"
-      },
       "Definition70ae138f070865177e13f32ee80b2720c661ba5061320081e1642da31d3a79ac": {
         "$ref": "#/components/schemas/Schema0e3f6bda126de4f424f309e193b2600ad1f3e4571979abb86e4b07884de1b206"
       },
@@ -232,14 +242,14 @@
       "Definitionae1b8a29e07c26df95489a53fc7d896f999a99829ed2d84b52491ed5cfaffa4e": {
         "$ref": "#/components/schemas/Schema4cc5fb01b4eff0f49b5d0349071f1346bbd6ce26f9df8cfdc51a65772486fbdf"
       },
+      "Definitionc7de4dca0847b2dcceadb0be13014a48d06500fe09adfee60bb72194607c46a5": {
+        "$ref": "#/components/schemas/Schema2fdd17f02cc745eae1507ed58a56f354dbccf742395e453839536c23611e3e9f"
+      },
       "Definitionda935471d1a4b0239d7591cb066897a8442219998fa78e1f825fd5698d277a33": {
         "$ref": "#/components/schemas/Schemafd0e5294fb798d7acd41f0ad0147df8db96695d44e295daa0ebfc2d4db76b117"
       },
       "Definitione45c4ad451e8edf4611455c10f4f7713dbf67f23923dc368095c32dbe7dcdca2": {
         "$ref": "#/components/schemas/Schema5b63d53c53a51b5f3241685cd3b52cc7246d1a7ed8ed6836d9909bf0b92607b5"
-      },
-      "Definitione5b304c2722adb849beeb376352a983b964bf1b970f2562fb7f323c0f6998d92": {
-        "$ref": "#/components/schemas/Schemaeda27189feb9fb8e2a62f858582ff3b547da8992f50e88542ff64d6adfe6f67f"
       },
       "Definitione6adbae83b1ca820b7889d1e573716a265f0056909c7fc2ce9ee3aaeafa68f1c": {
         "$ref": "#/components/schemas/Schemaeadcd3a3a4d494daf3adeb7e3e5727836ee92cff18632ef807918fb9c7b34836"
@@ -390,6 +400,11 @@
         "title": "Agent Id",
         "type": "string"
       },
+      "Schema0742a938f85173bc6cf47f3663027a5106d494a3739149b6358c77cf6002edd8": {
+        "default": false,
+        "title": "Applied",
+        "type": "boolean"
+      },
       "Schema075c03b9cd39e20d2715d1d32e08519fd970c1e13528fa2016cdbe3891953f82": {
         "title": "Value"
       },
@@ -445,6 +460,35 @@
           "run_id"
         ],
         "title": "RunEventsParams",
+        "type": "object"
+      },
+      "Schema0c47a210dedf5212214cc35a60e93e407e63007b2b38013fce307a3dd578c484": {
+        "additionalProperties": false,
+        "description": "What a D18 write-back preview returns: a plan, never an applied write.",
+        "properties": {
+          "applied": {
+            "$ref": "#/components/schemas/Schema0742a938f85173bc6cf47f3663027a5106d494a3739149b6358c77cf6002edd8"
+          },
+          "connector": {
+            "$ref": "#/components/schemas/Schema63fc35ccac5ed67e92a7aa9115c8345b041af70adbebb05ac70f34f73eb15e36"
+          },
+          "idempotency_key": {
+            "$ref": "#/components/schemas/Schema70f77c0d3c41c503178860a3d40a729129a9740e609aa4cf30d8775ccb680b2b"
+          },
+          "target": {
+            "$ref": "#/components/schemas/Schemac91e573451799a0daf06bff6c3ee40316ef7b7c901a4329a2815e965a87e19cb"
+          },
+          "would_apply": {
+            "$ref": "#/components/schemas/Schemad03d0e71933b49bb8167e346fecc671e3db9e0d3455dbc8b6b4ca2f2b6625088"
+          }
+        },
+        "required": [
+          "connector",
+          "target",
+          "idempotency_key",
+          "would_apply"
+        ],
+        "title": "WriteBackPreviewResult",
         "type": "object"
       },
       "Schema0cf045aeb7f5a65f4e35ee7f604234ca74de2d02df68a390cf953eb741561563": {
@@ -578,6 +622,13 @@
         "title": "Edges",
         "type": "array"
       },
+      "Schema1560da120fbab55afcff3df44a358abda22d2ebd8762aaea990c3ddb0a682a54": {
+        "description": "Required current target shard layout for the restored copy",
+        "maximum": 4096,
+        "minimum": 1,
+        "title": "Target Shards",
+        "type": "integer"
+      },
       "Schema1586391e7bddb14d8851d51228eead72df1407792af0f2a2416ccdefdd03b058": {
         "title": "Justification",
         "type": "string"
@@ -601,6 +652,11 @@
         ],
         "title": "FleetCallParams",
         "type": "object"
+      },
+      "Schema16957dc0f8c894b429e83cc84a4b04e588afb5337b1eb2a78b8ed9d0ec72a334": {
+        "minLength": 1,
+        "title": "Connector",
+        "type": "string"
       },
       "Schema1871ecd8d81a41f1dce41dd92b0a2f10d5b7c78f93061455de8f8e940013d06a": {
         "additionalProperties": false,
@@ -684,6 +740,35 @@
       },
       "Schema1e0b1cbf54c5771a7d13d62d42a58b76f82bc92b1d95baaa6a4154858b5a43da": {
         "type": "integer"
+      },
+      "Schema1e2dee03bfc7772d69d24077fcfbe11746ac01943ccfe6668b51dfc0131e8925": {
+        "additionalProperties": false,
+        "description": "The receipt of one committed write-back; replays return it verbatim.",
+        "properties": {
+          "applied": {
+            "$ref": "#/components/schemas/Schemad5feeda29afb94156c5567c3af9a00c8258aedc623c6dabf141a206179563ae5"
+          },
+          "connector": {
+            "$ref": "#/components/schemas/Schema63fc35ccac5ed67e92a7aa9115c8345b041af70adbebb05ac70f34f73eb15e36"
+          },
+          "idempotency_key": {
+            "$ref": "#/components/schemas/Schema70f77c0d3c41c503178860a3d40a729129a9740e609aa4cf30d8775ccb680b2b"
+          },
+          "receipt": {
+            "$ref": "#/components/schemas/Schema808d55a011415d9dcdc286f34dd9d20dee388d53cdb0a5fed31c503d290be952"
+          },
+          "target": {
+            "$ref": "#/components/schemas/Schemac91e573451799a0daf06bff6c3ee40316ef7b7c901a4329a2815e965a87e19cb"
+          }
+        },
+        "required": [
+          "connector",
+          "target",
+          "idempotency_key",
+          "receipt"
+        ],
+        "title": "WriteBackCommitResult",
+        "type": "object"
       },
       "Schema1e7725d4d415dbde904b132e123b828d9b6d26e1e0c02091bc0d62478abe237e": {
         "items": {
@@ -928,6 +1013,31 @@
         "title": "FleetResourceReadParams",
         "type": "object"
       },
+      "Schema2fdd17f02cc745eae1507ed58a56f354dbccf742395e453839536c23611e3e9f": {
+        "additionalProperties": false,
+        "description": "One durable restore receipt; the store owns its exact shape.",
+        "properties": {
+          "backup_id": {
+            "$ref": "#/components/schemas/Schema419baaf5641802ec2a772ec2e7bd19064dff5602ad7da82164cfd75e0c674f85"
+          },
+          "engine_receipt": {
+            "$ref": "#/components/schemas/Schema49120fed65596c57b990830b99c0f34093b79a7f2d625d616f90dde801e040dc"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Schemaef5b28ba0e5a9726e9c589be27f8195802cbce4383e0012bcdfff88464bb9251"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/Schemade6177482fecb4008c482d49b57c689d4d259fd0a9ade91795cd9703c2a7f2f1"
+          }
+        },
+        "required": [
+          "tenant",
+          "backup_id",
+          "status"
+        ],
+        "title": "RestoreReceipt",
+        "type": "object"
+      },
       "Schema301ec8242bf2781b88c446d8878caf84a26f47852e285cc5cbd06437211b45e2": {
         "default": false,
         "title": "Browse",
@@ -1170,6 +1280,12 @@
         "title": "Backup Id",
         "type": "string"
       },
+      "Schema44a6c43494b43dc43d6396a220071099a97f2738ad5c26def5a61f9df0e22880": {
+        "description": "Logical bundle name to restore",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+        "title": "Backup Id",
+        "type": "string"
+      },
       "Schema45b4c97251e4a6985437f5cbc2d889c6db0940df0dc93664571dbb2a09b2d53a": {
         "additionalProperties": false,
         "properties": {
@@ -1183,32 +1299,15 @@
         "title": "WorkItemRefParams",
         "type": "object"
       },
-      "Schema461ca204e766f2aab4db33300ca288c50942031318ed9c2f6f157cc8ec141641": {
-        "additionalProperties": false,
-        "description": "One durable backup receipt; the store owns its exact shape.",
-        "properties": {
-          "backup_id": {
-            "$ref": "#/components/schemas/Schema419baaf5641802ec2a772ec2e7bd19064dff5602ad7da82164cfd75e0c674f85"
-          },
-          "status": {
-            "$ref": "#/components/schemas/Schemaef5b28ba0e5a9726e9c589be27f8195802cbce4383e0012bcdfff88464bb9251"
-          },
-          "tenant": {
-            "$ref": "#/components/schemas/Schemade6177482fecb4008c482d49b57c689d4d259fd0a9ade91795cd9703c2a7f2f1"
-          }
-        },
-        "required": [
-          "tenant",
-          "backup_id",
-          "status"
-        ],
-        "title": "BackupReceipt",
-        "type": "object"
-      },
       "Schema474d9b5b66d700f50b0cd1755060b999373f06b516a982f9823652bda26bf7f0": {
         "additionalProperties": false,
         "properties": {},
         "title": "Empty",
+        "type": "object"
+      },
+      "Schema49120fed65596c57b990830b99c0f34093b79a7f2d625d616f90dde801e040dc": {
+        "additionalProperties": true,
+        "title": "Engine Receipt",
         "type": "object"
       },
       "Schema4a0e6218d6e5ee87d767e81e0abff7ef2380a111517339f26c22105f0210ff36": {
@@ -1449,6 +1548,11 @@
         ],
         "default": null
       },
+      "Schema5e55e3d3bea8bc3367bb791ccb0a3fdfb2f755868df16ca29c6eb2cc08dc4adb": {
+        "minLength": 1,
+        "title": "Idempotency Key",
+        "type": "string"
+      },
       "Schema5fe52441a29accdd7a067e6b34a95713e222cd89cdb03b3901e3655523f3b3ad": {
         "additionalProperties": false,
         "properties": {},
@@ -1484,6 +1588,10 @@
             "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
           }
         ]
+      },
+      "Schema63fc35ccac5ed67e92a7aa9115c8345b041af70adbebb05ac70f34f73eb15e36": {
+        "title": "Connector",
+        "type": "string"
       },
       "Schema65cad14bbb3646c08579cdfbe008061f7d5f15ea916f92eb0e89a7d22f2fb13a": {
         "default": 0,
@@ -1541,19 +1649,6 @@
         "minimum": 0,
         "title": "Covered After",
         "type": "integer"
-      },
-      "Schema6888b91d862d53905c53fe288c511fce2c2b2511377c824b89ea6b1dd21e0622": {
-        "additionalProperties": false,
-        "properties": {
-          "label": {
-            "$ref": "#/components/schemas/Schemaef33411d03dd91c6ec761b6ae93f2128c5d7459ed4d0b65538124fe441c4b502"
-          }
-        },
-        "required": [
-          "label"
-        ],
-        "title": "OpsBackupParams",
-        "type": "object"
       },
       "Schema696db2ea1789ae41ea22108195eb30a6f45892997d2e9591b50de90c69884a00": {
         "additionalProperties": false,
@@ -1627,6 +1722,10 @@
         "title": "Scopes",
         "type": "array"
       },
+      "Schema70f77c0d3c41c503178860a3d40a729129a9740e609aa4cf30d8775ccb680b2b": {
+        "title": "Idempotency Key",
+        "type": "string"
+      },
       "Schema71683111c0c16d66555d9868d431c82b5ee9b75473c7279894df615ea5f8fd0c": {
         "maxLength": 16384,
         "minLength": 1,
@@ -1673,19 +1772,6 @@
         "additionalProperties": false,
         "properties": {},
         "title": "SwarmTopologyReadParams",
-        "type": "object"
-      },
-      "Schema747b41258db828a82a58ffba6e56aabddf23c7e871967a322995696f2dc55edb": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Definitione5b304c2722adb849beeb376352a983b964bf1b970f2562fb7f323c0f6998d92"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "OpsRestoreResult",
         "type": "object"
       },
       "Schema74f3eab3901a745aaac7e91347f7cb2c08680398b472c7c9f086e6a5c3d7d5b3": {
@@ -1920,6 +2006,11 @@
         "minLength": 1,
         "title": "Server",
         "type": "string"
+      },
+      "Schema808d55a011415d9dcdc286f34dd9d20dee388d53cdb0a5fed31c503d290be952": {
+        "additionalProperties": true,
+        "title": "Receipt",
+        "type": "object"
       },
       "Schema80c415b6e27c6ebdf8c60f1b60917cec9ac60695c634197de2c32b96a71b34d9": {
         "type": "number"
@@ -2385,6 +2476,11 @@
         "title": "Drift Id",
         "type": "string"
       },
+      "Schema9bcea083f793fe0e0e7aa0102b67e0532633be7a5761dfa87ba866a676e0e5aa": {
+        "additionalProperties": true,
+        "title": "Change",
+        "type": "object"
+      },
       "Schema9db2a7e151e69a0e0ae9739c5a0847202964c9b69c94c9344245fd7c77e9cbf8": {
         "description": "One elevation as EG reports it, plus the time left for a countdown.",
         "properties": {
@@ -2469,19 +2565,6 @@
         "title": "Sequence",
         "type": "integer"
       },
-      "Schema9f61a7ec03c21c9f017ed0d88eea2e595fbda44ae6d60dddf600f21628c27b1e": {
-        "additionalProperties": false,
-        "properties": {
-          "backup_id": {
-            "$ref": "#/components/schemas/Schemaeca5e522b1b43875c4628805ebf44b32ade05fa99eb4d075fb4a0664a1f8515d"
-          }
-        },
-        "required": [
-          "backup_id"
-        ],
-        "title": "OpsRestoreParams",
-        "type": "object"
-      },
       "Schema9f653a27b12e264c5c6cc1d3254785686adf00300f40876e3bf245e142a9d862": {
         "additionalProperties": false,
         "properties": {
@@ -2532,6 +2615,23 @@
         "title": "Tool",
         "type": "string"
       },
+      "Schemaa32b59e626656217268333c0369e9266c80923fac823c2b25c7a25fb21459a4a": {
+        "additionalProperties": false,
+        "properties": {
+          "backup_id": {
+            "$ref": "#/components/schemas/Schema44a6c43494b43dc43d6396a220071099a97f2738ad5c26def5a61f9df0e22880"
+          },
+          "target_shards": {
+            "$ref": "#/components/schemas/Schema1560da120fbab55afcff3df44a358abda22d2ebd8762aaea990c3ddb0a682a54"
+          }
+        },
+        "required": [
+          "backup_id",
+          "target_shards"
+        ],
+        "title": "OpsRestoreParams",
+        "type": "object"
+      },
       "Schemaa3ae4a490ad058ba1b38691fea5d1ea3d982d1379cda16248110870d46360787": {
         "default": "webarchiver",
         "enum": [
@@ -2554,6 +2654,19 @@
       "Schemaa5af9fa380f11a11430012f77d4294c4d1d74f645cb0c41fcf6d80e977251297": {
         "maxLength": 2048,
         "type": "string"
+      },
+      "Schemaa5f5b45b77cdb4a2d989d95675ab5f1f61349d9bd3f1e1c9434744ab572adb59": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Definitionc7de4dca0847b2dcceadb0be13014a48d06500fe09adfee60bb72194607c46a5"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "OpsRestoreResult",
+        "type": "object"
       },
       "Schemaa71b8d29fbe15a323ed2a37b180006bc5f8754e70850c410326aaac2e99a4642": {
         "maxLength": 256,
@@ -2743,6 +2856,31 @@
         "title": "IngestSourceStatusResult",
         "type": "object"
       },
+      "Schemab3792d7c91191c6877e53a017f7326f4933ef61d3ede2fc8bf259b0f9f16a16c": {
+        "additionalProperties": false,
+        "description": "One durable backup receipt; the store owns its exact shape.",
+        "properties": {
+          "backup_id": {
+            "$ref": "#/components/schemas/Schema419baaf5641802ec2a772ec2e7bd19064dff5602ad7da82164cfd75e0c674f85"
+          },
+          "engine_receipt": {
+            "$ref": "#/components/schemas/Schema49120fed65596c57b990830b99c0f34093b79a7f2d625d616f90dde801e040dc"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Schemaef5b28ba0e5a9726e9c589be27f8195802cbce4383e0012bcdfff88464bb9251"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/Schemade6177482fecb4008c482d49b57c689d4d259fd0a9ade91795cd9703c2a7f2f1"
+          }
+        },
+        "required": [
+          "tenant",
+          "backup_id",
+          "status"
+        ],
+        "title": "BackupReceipt",
+        "type": "object"
+      },
       "Schemab3f000c70ab02110b0c2096d32ea30c2b17fe66b750ffbbf1cb5aed4fc0290fa": {
         "default": 4096,
         "maximum": 1000000,
@@ -2810,6 +2948,18 @@
         "pattern": "^(full|incremental)$",
         "title": "Mode",
         "type": "string"
+      },
+      "Schemab86888dd2bedecd32770a257d48286e827856255125a5eea47e7bd3b88c4bd89": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema97d85a5eaee82b974fb191d31d18a72016ca5f810b9304ce29d1bc08a7c55bc0"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Label"
       },
       "Schemab869bcd0ff453a823656af030064e3c25e039bfc157f3657b89c90214bb9fbc4": {
         "additionalProperties": false,
@@ -2882,6 +3032,12 @@
         "type": "array"
       },
       "Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7": {
+        "type": "string"
+      },
+      "Schemabfe39e6b41796e401eb91e518a5b686adac5a457cca595f454f7f5222525447c": {
+        "description": "Logical bundle name under the engine's backup root; never a path",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+        "title": "Destination",
         "type": "string"
       },
       "Schemac28c84dca6e1d411767b18ad6a705252aeb3c3382cf57d95cdabbb5679e1e61d": {
@@ -3008,6 +3164,10 @@
         "default": null,
         "title": "Msg"
       },
+      "Schemac91e573451799a0daf06bff6c3ee40316ef7b7c901a4329a2815e965a87e19cb": {
+        "title": "Target",
+        "type": "string"
+      },
       "Schemaca8f60d0cef719b220d7f687763bb1ee1b4a0d0c576a8301983f393cd9306eed": {
         "items": {
           "$ref": "#/components/schemas/Schemab697b1595c2d8f9677b6d14572d7a100ee9694279919359d64f493f6cadc3541"
@@ -3074,6 +3234,37 @@
         "title": "Event Id",
         "type": "string"
       },
+      "Schemad03d0e71933b49bb8167e346fecc671e3db9e0d3455dbc8b6b4ca2f2b6625088": {
+        "additionalProperties": true,
+        "title": "Would Apply",
+        "type": "object"
+      },
+      "Schemad0ccfca22e0aae71f863979c5a34eaaf57d3bdca68e06bce313815b4e9016920": {
+        "additionalProperties": false,
+        "description": "A connector write-back candidate, always evaluated as a preview.",
+        "properties": {
+          "change": {
+            "$ref": "#/components/schemas/Schema9bcea083f793fe0e0e7aa0102b67e0532633be7a5761dfa87ba866a676e0e5aa"
+          },
+          "connector": {
+            "$ref": "#/components/schemas/Schema16957dc0f8c894b429e83cc84a4b04e588afb5337b1eb2a78b8ed9d0ec72a334"
+          },
+          "idempotency_key": {
+            "$ref": "#/components/schemas/Schema5e55e3d3bea8bc3367bb791ccb0a3fdfb2f755868df16ca29c6eb2cc08dc4adb"
+          },
+          "target": {
+            "$ref": "#/components/schemas/Schemaeb30cea748e1c71bcda5f4dcdfb677e2a008cb28ab237e1e981860a7a7bebbbc"
+          }
+        },
+        "required": [
+          "connector",
+          "target",
+          "change",
+          "idempotency_key"
+        ],
+        "title": "WriteBackPreviewRequest",
+        "type": "object"
+      },
       "Schemad20c4af0ddeca947da3945fcfbab9e9c3fad42bd28a49e2aae1791145f905dbc": {
         "anyOf": [
           {
@@ -3084,19 +3275,6 @@
           }
         ],
         "title": "Current Limit"
-      },
-      "Schemad26234ec73517a8683e1fc6827a5a24a2d57607bbaf6a597c27e81f2889e3e36": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Definition5b9ce03c9f077b89cb597ce0377b8192731720e40d52957756822770f589a905"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "OpsBackupResult",
-        "type": "object"
       },
       "Schemad36830bb2f942da26edafc74d6ab2a8219e4255c1b342694da705baa07f23b49": {
         "additionalProperties": false,
@@ -3121,6 +3299,24 @@
       "Schemad56b2365dc0728a1120781d622c7d26a8aba18910c2500b60e3be35f357a80c6": {
         "title": "Policy Revision",
         "type": "string"
+      },
+      "Schemad5feeda29afb94156c5567c3af9a00c8258aedc623c6dabf141a206179563ae5": {
+        "default": true,
+        "title": "Applied",
+        "type": "boolean"
+      },
+      "Schemad61d33961a3a08aa32cec3c31e27b2aa30d78127f8a24c8aafdb2953687419b5": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Definition1d89b45169c34280aaf80982e7f7d9eaabc5ed71df72c876fb0a011cbca2c7a7"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "OpsBackupResult",
+        "type": "object"
       },
       "Schemad67628332a9abe4fb81e4cbb39432939bb18f6899164f8d92149b1532a04c384": {
         "additionalProperties": false,
@@ -3379,6 +3575,22 @@
         "default": null,
         "title": "Status"
       },
+      "Schemae5dbe4157a4a83727a626af46365e378bd35c6c610a537939672257265c7594c": {
+        "additionalProperties": false,
+        "properties": {
+          "destination": {
+            "$ref": "#/components/schemas/Schemabfe39e6b41796e401eb91e518a5b686adac5a457cca595f454f7f5222525447c"
+          },
+          "label": {
+            "$ref": "#/components/schemas/Schemab86888dd2bedecd32770a257d48286e827856255125a5eea47e7bd3b88c4bd89"
+          }
+        },
+        "required": [
+          "destination"
+        ],
+        "title": "OpsBackupParams",
+        "type": "object"
+      },
       "Schemae7980f190ba942c4e5e15c7d367afd0e10b739075fe809ae16398de25f0138f7": {
         "maxLength": 128,
         "minLength": 1,
@@ -3470,14 +3682,13 @@
         "default": null,
         "title": "Task Id"
       },
-      "Schemaebfd7f24843456b3e02e97bd2085f819c39ef62a20398d74626160b410a732b5": {
-        "title": "Child",
+      "Schemaeb30cea748e1c71bcda5f4dcdfb677e2a008cb28ab237e1e981860a7a7bebbbc": {
+        "minLength": 1,
+        "title": "Target",
         "type": "string"
       },
-      "Schemaeca5e522b1b43875c4628805ebf44b32ade05fa99eb4d075fb4a0664a1f8515d": {
-        "maxLength": 256,
-        "minLength": 1,
-        "title": "Backup Id",
+      "Schemaebfd7f24843456b3e02e97bd2085f819c39ef62a20398d74626160b410a732b5": {
+        "title": "Child",
         "type": "string"
       },
       "Schemaed2d1ae3a9dc3c32aa01daa9cf76a050af1b15b3d306ea8395a48b45513fc607": {
@@ -3491,28 +3702,6 @@
           }
         },
         "title": "OpsTenantsParams",
-        "type": "object"
-      },
-      "Schemaeda27189feb9fb8e2a62f858582ff3b547da8992f50e88542ff64d6adfe6f67f": {
-        "additionalProperties": false,
-        "description": "One durable restore receipt; the store owns its exact shape.",
-        "properties": {
-          "backup_id": {
-            "$ref": "#/components/schemas/Schema419baaf5641802ec2a772ec2e7bd19064dff5602ad7da82164cfd75e0c674f85"
-          },
-          "status": {
-            "$ref": "#/components/schemas/Schemaef5b28ba0e5a9726e9c589be27f8195802cbce4383e0012bcdfff88464bb9251"
-          },
-          "tenant": {
-            "$ref": "#/components/schemas/Schemade6177482fecb4008c482d49b57c689d4d259fd0a9ade91795cd9703c2a7f2f1"
-          }
-        },
-        "required": [
-          "tenant",
-          "backup_id",
-          "status"
-        ],
-        "title": "RestoreReceipt",
         "type": "object"
       },
       "Schemaedbe51c22d1e84c9d826d7ec124da6a83bea1374204fdf0bc9039f02edafa6cc": {
@@ -3551,12 +3740,6 @@
         },
         "title": "LeaseList",
         "type": "object"
-      },
-      "Schemaef33411d03dd91c6ec761b6ae93f2128c5d7459ed4d0b65538124fe441c4b502": {
-        "maxLength": 256,
-        "minLength": 1,
-        "title": "Label",
-        "type": "string"
       },
       "Schemaef5b28ba0e5a9726e9c589be27f8195802cbce4383e0012bcdfff88464bb9251": {
         "title": "Status",
@@ -20761,6 +20944,60 @@
         ]
       }
     },
+    "/api/v1/ops/fleet.write_back.commit": {
+      "post": {
+        "operationId": "fleet.write_back.commit",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Shared5d9f7295a954ea0064c3becce31f62cd2c651d8e281f0094c52867b9a5c92a82"
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema1e2dee03bfc7772d69d24077fcfbe11746ac01943ccfe6668b51dfc0131e8925"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Commit a previously previewed connector write-back",
+        "tags": [
+          "fleet"
+        ]
+      }
+    },
+    "/api/v1/ops/fleet.write_back.preview": {
+      "post": {
+        "operationId": "fleet.write_back.preview",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Shared5d9f7295a954ea0064c3becce31f62cd2c651d8e281f0094c52867b9a5c92a82"
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema0c47a210dedf5212214cc35a60e93e407e63007b2b38013fce307a3dd578c484"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Preview a connector write-back without applying it",
+        "tags": [
+          "fleet"
+        ]
+      }
+    },
     "/api/v1/ops/ingest.drift.get": {
       "post": {
         "operationId": "ingest.drift.get",
@@ -21316,7 +21553,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Schema6888b91d862d53905c53fe288c511fce2c2b2511377c824b89ea6b1dd21e0622"
+                "$ref": "#/components/schemas/Schemae5dbe4157a4a83727a626af46365e378bd35c6c610a537939672257265c7594c"
               }
             }
           },
@@ -21329,10 +21566,10 @@
                 "schema": {
                   "$defs": {
                     "BackupReceipt": {
-                      "$ref": "#/components/schemas/Definition5b9ce03c9f077b89cb597ce0377b8192731720e40d52957756822770f589a905"
+                      "$ref": "#/components/schemas/Definition1d89b45169c34280aaf80982e7f7d9eaabc5ed71df72c876fb0a011cbca2c7a7"
                     }
                   },
-                  "$ref": "#/components/schemas/Schemad26234ec73517a8683e1fc6827a5a24a2d57607bbaf6a597c27e81f2889e3e36"
+                  "$ref": "#/components/schemas/Schemad61d33961a3a08aa32cec3c31e27b2aa30d78127f8a24c8aafdb2953687419b5"
                 }
               }
             },
@@ -21342,7 +21579,7 @@
             "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
           }
         },
-        "summary": "Reserve a durable backup scoped to the caller's own tenant",
+        "summary": "Take an online engine backup into a named logical bundle",
         "tags": [
           "ops"
         ]
@@ -21433,7 +21670,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Schema9f61a7ec03c21c9f017ed0d88eea2e595fbda44ae6d60dddf600f21628c27b1e"
+                "$ref": "#/components/schemas/Schemaa32b59e626656217268333c0369e9266c80923fac823c2b25c7a25fb21459a4a"
               }
             }
           },
@@ -21446,10 +21683,10 @@
                 "schema": {
                   "$defs": {
                     "RestoreReceipt": {
-                      "$ref": "#/components/schemas/Definitione5b304c2722adb849beeb376352a983b964bf1b970f2562fb7f323c0f6998d92"
+                      "$ref": "#/components/schemas/Definitionc7de4dca0847b2dcceadb0be13014a48d06500fe09adfee60bb72194607c46a5"
                     }
                   },
-                  "$ref": "#/components/schemas/Schema747b41258db828a82a58ffba6e56aabddf23c7e871967a322995696f2dc55edb"
+                  "$ref": "#/components/schemas/Schemaa5f5b45b77cdb4a2d989d95675ab5f1f61349d9bd3f1e1c9434744ab572adb59"
                 }
               }
             },
@@ -21459,7 +21696,7 @@
             "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
           }
         },
-        "summary": "Restore a durable backup scoped to the caller's own tenant",
+        "summary": "Stage an engine restore of a named bundle onto a target shard layout",
         "tags": [
           "ops"
         ]
@@ -22297,5 +22534,5 @@
       }
     }
   },
-  "x-registry-digest": "66403b30f5f8dd91c56ba03e05027d5041d1844a14c3276f5ecfab9f468ec713"
+  "x-registry-digest": "4214511d703c721e010c215faebad403bdaab482a9f522194383fc0bb3c66509"
 }

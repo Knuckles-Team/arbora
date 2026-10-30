@@ -293,6 +293,27 @@ def _with_ops_runners(
     return {**bindings, **added}
 
 
+def _with_ops_admin_store(
+    bindings: Mapping[str, Any] | None,
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+) -> Mapping[str, Any] | None:
+    """Bind ``ops_admin_store``: Arbora config plus engine Health/Backup/Restore.
+
+    ARBORA-OPS-R024.5.  The engine is reached through the served pool under
+    Arbora's verified process identity.
+    """
+    if bindings is None or "ops_admin_store" in bindings:
+        return bindings
+    from arbora.mcp_server.ops_admin_store import ArboraOpsAdminStore
+
+    async def client(tenant: str) -> Any:
+        return await pool.connected_client(connect_context(tenant), graph)
+
+    return {**bindings, "ops_admin_store": ArboraOpsAdminStore(client, graph=graph)}
+
+
 def _with_fleet_source_executor(
     bindings: Mapping[str, Any] | None,
     pool: Any,
@@ -624,6 +645,7 @@ def compose_served_invocation(
     minted = session()
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
     bindings = _with_ops_runners(bindings, pool, graph, connect_context)
+    bindings = _with_ops_admin_store(bindings, pool, graph, connect_context)
     bindings = _with_fleet_source_executor(bindings, pool, graph)
     bindings = _with_nl_federation_planner(bindings)
     bindings, process_startup = _with_task_plan_schema(

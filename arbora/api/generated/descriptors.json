@@ -6110,6 +6110,30 @@
       "verb": "manage"
     },
     {
+      "domain": "fleet",
+      "examples": [
+        "commit this previewed connector write-back"
+      ],
+      "id": "fleet.write_back.commit",
+      "summary": "Commit a previously previewed connector write-back",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "write"
+    },
+    {
+      "domain": "fleet",
+      "examples": [
+        "preview this connector write-back"
+      ],
+      "id": "fleet.write_back.preview",
+      "summary": "Preview a connector write-back without applying it",
+      "tags": [
+        "fleet"
+      ],
+      "verb": "write"
+    },
+    {
       "domain": "ingest",
       "examples": [
         "show this drift"
@@ -6359,7 +6383,7 @@
         "back up this tenant now"
       ],
       "id": "ops.backup",
-      "summary": "Reserve a durable backup scoped to the caller's own tenant",
+      "summary": "Take an online engine backup into a named logical bundle",
       "tags": [
         "ops"
       ],
@@ -6395,7 +6419,7 @@
         "restore this tenant from a backup"
       ],
       "id": "ops.restore",
-      "summary": "Restore a durable backup scoped to the caller's own tenant",
+      "summary": "Stage an engine restore of a named bundle onto a target shard layout",
       "tags": [
         "ops"
       ],
@@ -6702,5 +6726,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "66403b30f5f8dd91c56ba03e05027d5041d1844a14c3276f5ecfab9f468ec713"
+  "registry_digest": "4214511d703c721e010c215faebad403bdaab482a9f522194383fc0bb3c66509"
 }

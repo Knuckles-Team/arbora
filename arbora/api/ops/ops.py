@@ -2,9 +2,12 @@
 
 Implements the admin slice of ``ARBORA-OPS-R024``: ``ops.doctor``,
 ``ops.config``, ``ops.tenants``, ``ops.backup``, and ``ops.restore`` over
-the hosted operational-admin store, bound by the caller's own authority and
-scoped to the caller's own tenant, through one typed port, matching the
-port convention in :mod:`arbora.api.ops.ingest`. An uncomposed
+one typed ``ops_admin_store`` port the served bootstrap composes
+(:mod:`arbora.mcp_server.ops_admin_store`).  ``ops.config`` and ``ops.tenants``
+read Arbora's own configuration (``ARBORA_CONFIG_DIR`` / ``~/.config/arbora``);
+``ops.doctor`` reads the engine ``Health`` report; ``ops.backup`` and
+``ops.restore`` drive the engine ``Backup``/``Restore`` methods with the logical
+bundle name and target shard layout they require. An uncomposed
 store fails closed with a typed ``UNAVAILABLE`` refusal rather than
 fabricating a result. Graph/query/search/ontology administration is out of
 scope here; it is owned by ``ARBORA-HOST-R026.x``.
@@ -41,12 +44,26 @@ class OpsTenantsParams(Params):
     limit: int = Field(default=50, ge=1, le=200)
 
 
+_BUNDLE_NAME = r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+
+
 class OpsBackupParams(Params):
-    label: str = Field(min_length=1, max_length=256)
+    destination: str = Field(
+        pattern=_BUNDLE_NAME,
+        description="Logical bundle name under the engine's backup root; never a path",
+    )
+    label: str | None = Field(default=None, min_length=1, max_length=256)
 
 
 class OpsRestoreParams(Params):
-    backup_id: str = Field(min_length=1, max_length=256)
+    backup_id: str = Field(
+        pattern=_BUNDLE_NAME, description="Logical bundle name to restore"
+    )
+    target_shards: int = Field(
+        ge=1,
+        le=4096,
+        description="Required current target shard layout for the restored copy",
+    )
 
 
 class DoctorReport(TenantState):
@@ -74,6 +91,7 @@ class _TenantReceipt(TenantState):
 
     backup_id: str
     status: str
+    engine_receipt: dict[str, Any] = Field(default_factory=dict)
 
 
 class BackupReceipt(_TenantReceipt):
@@ -117,11 +135,11 @@ class OpsAdminStore(Protocol):
     ) -> TenantPage: ...
 
     async def backup(
-        self, *, tenant: str, label: str, idempotency_key: str
+        self, *, tenant: str, destination: str, label: str | None, idempotency_key: str
     ) -> BackupReceipt: ...
 
     async def restore(
-        self, *, tenant: str, backup_id: str, idempotency_key: str
+        self, *, tenant: str, backup_id: str, target_shards: int, idempotency_key: str
     ) -> RestoreReceipt: ...
 
 
@@ -171,7 +189,8 @@ async def handle_ops_backup(
     store = _bound_store(context)
     receipt = await store.backup(
         tenant=context.caller.tenant,
-        label=params["label"],
+        destination=params["destination"],
+        label=params.get("label"),
         idempotency_key=context.idempotency_key,
     )
     return {"value": receipt.model_dump(mode="json")}
@@ -187,6 +206,7 @@ async def handle_ops_restore(
     receipt = await store.restore(
         tenant=context.caller.tenant,
         backup_id=params["backup_id"],
+        target_shards=params["target_shards"],
         idempotency_key=context.idempotency_key,
     )
     return {"value": receipt.model_dump(mode="json")}
@@ -223,7 +243,7 @@ def operations() -> tuple[OpSpec, ...]:
         ),
         build_write_op(
             op_id="ops.backup",
-            summary="Reserve a durable backup scoped to the caller's own tenant",
+            summary="Take an online engine backup into a named logical bundle",
             examples=("back up this tenant now",),
             params=OpsBackupParams,
             result=OpsBackupResult,
@@ -233,7 +253,7 @@ def operations() -> tuple[OpSpec, ...]:
         ),
         build_write_op(
             op_id="ops.restore",
-            summary="Restore a durable backup scoped to the caller's own tenant",
+            summary="Stage an engine restore of a named bundle onto a target shard layout",
             examples=("restore this tenant from a backup",),
             params=OpsRestoreParams,
             result=OpsRestoreResult,
