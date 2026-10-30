@@ -38,6 +38,7 @@ def test_impact_actions_resolve_to_engine_query_ops() -> None:
     _assert_resolves(IMPACT_ACTIONS)
 
 
-@pytest.mark.spec("ARBORA-HOST-R005.2.1.3")
+# R005.2.1.3 unbound: it also covers the remaining graph_analyze actions, which
+# this test does not enumerate; only similar_code is checked here.
 def test_similarity_action_resolves_to_engine_query_ops() -> None:
     _assert_resolves(SIMILARITY_ACTIONS)
