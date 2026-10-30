@@ -200,21 +200,14 @@
           }
         },
         "description": "Operation result"
-      },
-      "Sharedf6bc34ea32a522bd95e19dc3f465ffd10ad203bfc1a41e856ef4a37e4b53faca": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Schemab2cfdbaa45beacb98302dd56ec7ecba25af5383c368de5fbc5e726a76e974fc4"
-            }
-          }
-        },
-        "description": "Operation result"
       }
     },
     "schemas": {
       "Definition1638cff4afae4652d1e1272a58fc6981e98700fb4ec39feefa96e170c75f5de1": {
         "$ref": "#/components/schemas/Schema905870712697c5033de203e9970c73bcd2c6ec3112b28fa127fe1807b1a832ed"
+      },
+      "Definition1d89b45169c34280aaf80982e7f7d9eaabc5ed71df72c876fb0a011cbca2c7a7": {
+        "$ref": "#/components/schemas/Schemab3792d7c91191c6877e53a017f7326f4933ef61d3ede2fc8bf259b0f9f16a16c"
       },
       "Definition1d94b3ae8ce88d43ac1686464a61940f16a15a81254ceb60f584d0996bea92e8": {
         "$ref": "#/components/schemas/Schema1d94b3ae8ce88d43ac1686464a61940f16a15a81254ceb60f584d0996bea92e8"
@@ -234,9 +227,6 @@
       "Definition4f5dfbf56e0de092f883b05fe0bf3704716990f7570cea9d48315898543b424f": {
         "$ref": "#/components/schemas/Schema831ec574a54316d5003e0352c2bbfe07d556aaf4381971c4a00037e9b4f8f569"
       },
-      "Definition5b9ce03c9f077b89cb597ce0377b8192731720e40d52957756822770f589a905": {
-        "$ref": "#/components/schemas/Schema461ca204e766f2aab4db33300ca288c50942031318ed9c2f6f157cc8ec141641"
-      },
       "Definition70ae138f070865177e13f32ee80b2720c661ba5061320081e1642da31d3a79ac": {
         "$ref": "#/components/schemas/Schema0e3f6bda126de4f424f309e193b2600ad1f3e4571979abb86e4b07884de1b206"
       },
@@ -252,14 +242,14 @@
       "Definitionae1b8a29e07c26df95489a53fc7d896f999a99829ed2d84b52491ed5cfaffa4e": {
         "$ref": "#/components/schemas/Schema4cc5fb01b4eff0f49b5d0349071f1346bbd6ce26f9df8cfdc51a65772486fbdf"
       },
+      "Definitionc7de4dca0847b2dcceadb0be13014a48d06500fe09adfee60bb72194607c46a5": {
+        "$ref": "#/components/schemas/Schema2fdd17f02cc745eae1507ed58a56f354dbccf742395e453839536c23611e3e9f"
+      },
       "Definitionda935471d1a4b0239d7591cb066897a8442219998fa78e1f825fd5698d277a33": {
         "$ref": "#/components/schemas/Schemafd0e5294fb798d7acd41f0ad0147df8db96695d44e295daa0ebfc2d4db76b117"
       },
       "Definitione45c4ad451e8edf4611455c10f4f7713dbf67f23923dc368095c32dbe7dcdca2": {
         "$ref": "#/components/schemas/Schema5b63d53c53a51b5f3241685cd3b52cc7246d1a7ed8ed6836d9909bf0b92607b5"
-      },
-      "Definitione5b304c2722adb849beeb376352a983b964bf1b970f2562fb7f323c0f6998d92": {
-        "$ref": "#/components/schemas/Schemaeda27189feb9fb8e2a62f858582ff3b547da8992f50e88542ff64d6adfe6f67f"
       },
       "Definitione6adbae83b1ca820b7889d1e573716a265f0056909c7fc2ce9ee3aaeafa68f1c": {
         "$ref": "#/components/schemas/Schemaeadcd3a3a4d494daf3adeb7e3e5727836ee92cff18632ef807918fb9c7b34836"
@@ -520,35 +510,10 @@
         "title": "UsageReadResult",
         "type": "object"
       },
-      "Schema0d4ecbd4c4810303fec166d7080e355e7b49ee42f03eeb15def2af2a432d40a0": {
-        "anyOf": [
-          {
-            "$ref": "#/components/schemas/Schema3cdb2ff0de9162783534b259d476e06c70ae53dfc1601e1142e194ac1ea15598"
-          },
-          {
-            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
-          }
-        ],
-        "default": null,
-        "title": "Cursor"
-      },
       "Schema0d597b9e947f06c3eea71bc63bd3f2d86f4f091c6f5039d1c94e3eab79430dd5": {
         "const": "arbora-execution-graph-v1",
         "title": "Schema Version",
         "type": "string"
-      },
-      "Schema0da43ab78b0f7615b615a265651482f8f2d69a1ca9a27bc828cacbd587fed811": {
-        "additionalProperties": false,
-        "properties": {
-          "cursor": {
-            "$ref": "#/components/schemas/Schema0d4ecbd4c4810303fec166d7080e355e7b49ee42f03eeb15def2af2a432d40a0"
-          },
-          "limit": {
-            "$ref": "#/components/schemas/Schema76952d8e68e95459f7f755aff3c03b8aca5fd6f35ca6a7d995fa700520f5926d"
-          }
-        },
-        "title": "IngestJobsListParams",
-        "type": "object"
       },
       "Schema0df999ba07ffbcfd6469c0b4f5c32815bb99563ee4f66ff9409c9707354430c9": {
         "additionalProperties": false,
@@ -656,6 +621,13 @@
         "maxItems": 2016,
         "title": "Edges",
         "type": "array"
+      },
+      "Schema1560da120fbab55afcff3df44a358abda22d2ebd8762aaea990c3ddb0a682a54": {
+        "description": "Required current target shard layout for the restored copy",
+        "maximum": 4096,
+        "minimum": 1,
+        "title": "Target Shards",
+        "type": "integer"
       },
       "Schema1586391e7bddb14d8851d51228eead72df1407792af0f2a2416ccdefdd03b058": {
         "title": "Justification",
@@ -973,19 +945,6 @@
         "title": "SourceHistoryParams",
         "type": "object"
       },
-      "Schema2c726dca5463d0c63019250fcfdcdc2950392d3a6c8b01219609029bfce2812e": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schemacf39ffc76907695a68d495a9c1e411fd37da742cfa5f8b9f90231effff240e3c"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "IngestSubmitResult",
-        "type": "object"
-      },
       "Schema2db1e0b735a231257bc16ca3f2a2f7b503acca69ba97dc893290c4555197f853": {
         "anyOf": [
           {
@@ -1052,6 +1011,31 @@
           "uri"
         ],
         "title": "FleetResourceReadParams",
+        "type": "object"
+      },
+      "Schema2fdd17f02cc745eae1507ed58a56f354dbccf742395e453839536c23611e3e9f": {
+        "additionalProperties": false,
+        "description": "One durable restore receipt; the store owns its exact shape.",
+        "properties": {
+          "backup_id": {
+            "$ref": "#/components/schemas/Schema419baaf5641802ec2a772ec2e7bd19064dff5602ad7da82164cfd75e0c674f85"
+          },
+          "engine_receipt": {
+            "$ref": "#/components/schemas/Schema49120fed65596c57b990830b99c0f34093b79a7f2d625d616f90dde801e040dc"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Schemaef5b28ba0e5a9726e9c589be27f8195802cbce4383e0012bcdfff88464bb9251"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/Schemade6177482fecb4008c482d49b57c689d4d259fd0a9ade91795cd9703c2a7f2f1"
+          }
+        },
+        "required": [
+          "tenant",
+          "backup_id",
+          "status"
+        ],
+        "title": "RestoreReceipt",
         "type": "object"
       },
       "Schema301ec8242bf2781b88c446d8878caf84a26f47852e285cc5cbd06437211b45e2": {
@@ -1233,10 +1217,6 @@
         "title": "Query",
         "type": "string"
       },
-      "Schema3cdb2ff0de9162783534b259d476e06c70ae53dfc1601e1142e194ac1ea15598": {
-        "maxLength": 512,
-        "type": "string"
-      },
       "Schema3d707d2656317bd106cd45297754733e58e9cace5a039104cd95583004a3f58d": {
         "anyOf": [
           {
@@ -1300,6 +1280,12 @@
         "title": "Backup Id",
         "type": "string"
       },
+      "Schema44a6c43494b43dc43d6396a220071099a97f2738ad5c26def5a61f9df0e22880": {
+        "description": "Logical bundle name to restore",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+        "title": "Backup Id",
+        "type": "string"
+      },
       "Schema45b4c97251e4a6985437f5cbc2d889c6db0940df0dc93664571dbb2a09b2d53a": {
         "additionalProperties": false,
         "properties": {
@@ -1313,32 +1299,15 @@
         "title": "WorkItemRefParams",
         "type": "object"
       },
-      "Schema461ca204e766f2aab4db33300ca288c50942031318ed9c2f6f157cc8ec141641": {
-        "additionalProperties": false,
-        "description": "One durable backup receipt; the store owns its exact shape.",
-        "properties": {
-          "backup_id": {
-            "$ref": "#/components/schemas/Schema419baaf5641802ec2a772ec2e7bd19064dff5602ad7da82164cfd75e0c674f85"
-          },
-          "status": {
-            "$ref": "#/components/schemas/Schemaef5b28ba0e5a9726e9c589be27f8195802cbce4383e0012bcdfff88464bb9251"
-          },
-          "tenant": {
-            "$ref": "#/components/schemas/Schemade6177482fecb4008c482d49b57c689d4d259fd0a9ade91795cd9703c2a7f2f1"
-          }
-        },
-        "required": [
-          "tenant",
-          "backup_id",
-          "status"
-        ],
-        "title": "BackupReceipt",
-        "type": "object"
-      },
       "Schema474d9b5b66d700f50b0cd1755060b999373f06b516a982f9823652bda26bf7f0": {
         "additionalProperties": false,
         "properties": {},
         "title": "Empty",
+        "type": "object"
+      },
+      "Schema49120fed65596c57b990830b99c0f34093b79a7f2d625d616f90dde801e040dc": {
+        "additionalProperties": true,
+        "title": "Engine Receipt",
         "type": "object"
       },
       "Schema4a0e6218d6e5ee87d767e81e0abff7ef2380a111517339f26c22105f0210ff36": {
@@ -1411,17 +1380,6 @@
           "write"
         ],
         "title": "Action",
-        "type": "string"
-      },
-      "Schema4fa428a7bc7e9750272fa0eeefda418ee278966bb9a3215500dcdd5cf6b55def": {
-        "enum": [
-          "ingest",
-          "ingest_url",
-          "ingest_knowledge_pack",
-          "fact_extract",
-          "distill"
-        ],
-        "title": "Kind",
         "type": "string"
       },
       "Schema514d94bc4da230c9dc22e57272fc7b5ac4c76bc00ccce58c3d17e9d208e26d49": {
@@ -1692,19 +1650,6 @@
         "title": "Covered After",
         "type": "integer"
       },
-      "Schema6888b91d862d53905c53fe288c511fce2c2b2511377c824b89ea6b1dd21e0622": {
-        "additionalProperties": false,
-        "properties": {
-          "label": {
-            "$ref": "#/components/schemas/Schemaef33411d03dd91c6ec761b6ae93f2128c5d7459ed4d0b65538124fe441c4b502"
-          }
-        },
-        "required": [
-          "label"
-        ],
-        "title": "OpsBackupParams",
-        "type": "object"
-      },
       "Schema696db2ea1789ae41ea22108195eb30a6f45892997d2e9591b50de90c69884a00": {
         "additionalProperties": false,
         "properties": {
@@ -1829,19 +1774,6 @@
         "title": "SwarmTopologyReadParams",
         "type": "object"
       },
-      "Schema747b41258db828a82a58ffba6e56aabddf23c7e871967a322995696f2dc55edb": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Definitione5b304c2722adb849beeb376352a983b964bf1b970f2562fb7f323c0f6998d92"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "OpsRestoreResult",
-        "type": "object"
-      },
       "Schema74f3eab3901a745aaac7e91347f7cb2c08680398b472c7c9f086e6a5c3d7d5b3": {
         "anyOf": [
           {
@@ -1950,19 +1882,6 @@
           "justification"
         ],
         "title": "ElevationAsk",
-        "type": "object"
-      },
-      "Schema77c704f5198eb62dcec9d985d8809a2f450c7a16e032304a35698a711717fefd": {
-        "additionalProperties": false,
-        "properties": {
-          "job_id": {
-            "$ref": "#/components/schemas/Schemaf2c1064c292fcac6d09d4990528216f1245ef286458d7f8833db49e01d4177a7"
-          }
-        },
-        "required": [
-          "job_id"
-        ],
-        "title": "IngestJobCancelParams",
         "type": "object"
       },
       "Schema787a0c3560d38a50dc8470f5e7b807a8b061fa8ebe37bdd6509f96f3cc8a7e7e": {
@@ -2473,23 +2392,6 @@
         "default": null,
         "title": "Expected Version"
       },
-      "Schema953c4f01a65a007aebf81f31e08ab2b31cc9e4cbe59ab3b9767aa1b983fe1584": {
-        "additionalProperties": false,
-        "properties": {
-          "bucket": {
-            "$ref": "#/components/schemas/Schemaf98c23f3e1426042123c4e427de8421eb6e83fbc12f21c2144a4205e05b4f61e"
-          },
-          "job_id": {
-            "$ref": "#/components/schemas/Schemaf2c1064c292fcac6d09d4990528216f1245ef286458d7f8833db49e01d4177a7"
-          }
-        },
-        "required": [
-          "job_id",
-          "bucket"
-        ],
-        "title": "IngestJobPrioritizeParams",
-        "type": "object"
-      },
       "Schema9651beb0cda06d2616ad93118c2b167a41ca32c607fa07700b0579b6e42ce4d9": {
         "title": "Allowed",
         "type": "boolean"
@@ -2573,19 +2475,6 @@
         "minLength": 1,
         "title": "Drift Id",
         "type": "string"
-      },
-      "Schema9b6ecf3f1107d98ead48bd9ab0edfe062b3fb111e049a2d9b617918b80318f48": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "IngestJobsListResult",
-        "type": "object"
       },
       "Schema9bcea083f793fe0e0e7aa0102b67e0532633be7a5761dfa87ba866a676e0e5aa": {
         "additionalProperties": true,
@@ -2676,19 +2565,6 @@
         "title": "Sequence",
         "type": "integer"
       },
-      "Schema9f61a7ec03c21c9f017ed0d88eea2e595fbda44ae6d60dddf600f21628c27b1e": {
-        "additionalProperties": false,
-        "properties": {
-          "backup_id": {
-            "$ref": "#/components/schemas/Schemaeca5e522b1b43875c4628805ebf44b32ade05fa99eb4d075fb4a0664a1f8515d"
-          }
-        },
-        "required": [
-          "backup_id"
-        ],
-        "title": "OpsRestoreParams",
-        "type": "object"
-      },
       "Schema9f653a27b12e264c5c6cc1d3254785686adf00300f40876e3bf245e142a9d862": {
         "additionalProperties": false,
         "properties": {
@@ -2739,6 +2615,23 @@
         "title": "Tool",
         "type": "string"
       },
+      "Schemaa32b59e626656217268333c0369e9266c80923fac823c2b25c7a25fb21459a4a": {
+        "additionalProperties": false,
+        "properties": {
+          "backup_id": {
+            "$ref": "#/components/schemas/Schema44a6c43494b43dc43d6396a220071099a97f2738ad5c26def5a61f9df0e22880"
+          },
+          "target_shards": {
+            "$ref": "#/components/schemas/Schema1560da120fbab55afcff3df44a358abda22d2ebd8762aaea990c3ddb0a682a54"
+          }
+        },
+        "required": [
+          "backup_id",
+          "target_shards"
+        ],
+        "title": "OpsRestoreParams",
+        "type": "object"
+      },
       "Schemaa3ae4a490ad058ba1b38691fea5d1ea3d982d1379cda16248110870d46360787": {
         "default": "webarchiver",
         "enum": [
@@ -2761,6 +2654,19 @@
       "Schemaa5af9fa380f11a11430012f77d4294c4d1d74f645cb0c41fcf6d80e977251297": {
         "maxLength": 2048,
         "type": "string"
+      },
+      "Schemaa5f5b45b77cdb4a2d989d95675ab5f1f61349d9bd3f1e1c9434744ab572adb59": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Definitionc7de4dca0847b2dcceadb0be13014a48d06500fe09adfee60bb72194607c46a5"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "OpsRestoreResult",
+        "type": "object"
       },
       "Schemaa71b8d29fbe15a323ed2a37b180006bc5f8754e70850c410326aaac2e99a4642": {
         "maxLength": 256,
@@ -2937,19 +2843,6 @@
         "title": "Sources",
         "type": "array"
       },
-      "Schemab2cfdbaa45beacb98302dd56ec7ecba25af5383c368de5fbc5e726a76e974fc4": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "IngestJobControlResult",
-        "type": "object"
-      },
       "Schemab2e631b4636bd6bbe796db78f5f0efafe42402deb58b8bc7828ce6ee8e61274a": {
         "additionalProperties": false,
         "properties": {
@@ -2961,6 +2854,31 @@
           "value"
         ],
         "title": "IngestSourceStatusResult",
+        "type": "object"
+      },
+      "Schemab3792d7c91191c6877e53a017f7326f4933ef61d3ede2fc8bf259b0f9f16a16c": {
+        "additionalProperties": false,
+        "description": "One durable backup receipt; the store owns its exact shape.",
+        "properties": {
+          "backup_id": {
+            "$ref": "#/components/schemas/Schema419baaf5641802ec2a772ec2e7bd19064dff5602ad7da82164cfd75e0c674f85"
+          },
+          "engine_receipt": {
+            "$ref": "#/components/schemas/Schema49120fed65596c57b990830b99c0f34093b79a7f2d625d616f90dde801e040dc"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Schemaef5b28ba0e5a9726e9c589be27f8195802cbce4383e0012bcdfff88464bb9251"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/Schemade6177482fecb4008c482d49b57c689d4d259fd0a9ade91795cd9703c2a7f2f1"
+          }
+        },
+        "required": [
+          "tenant",
+          "backup_id",
+          "status"
+        ],
+        "title": "BackupReceipt",
         "type": "object"
       },
       "Schemab3f000c70ab02110b0c2096d32ea30c2b17fe66b750ffbbf1cb5aed4fc0290fa": {
@@ -3030,6 +2948,18 @@
         "pattern": "^(full|incremental)$",
         "title": "Mode",
         "type": "string"
+      },
+      "Schemab86888dd2bedecd32770a257d48286e827856255125a5eea47e7bd3b88c4bd89": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema97d85a5eaee82b974fb191d31d18a72016ca5f810b9304ce29d1bc08a7c55bc0"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Label"
       },
       "Schemab869bcd0ff453a823656af030064e3c25e039bfc157f3657b89c90214bb9fbc4": {
         "additionalProperties": false,
@@ -3102,6 +3032,12 @@
         "type": "array"
       },
       "Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7": {
+        "type": "string"
+      },
+      "Schemabfe39e6b41796e401eb91e518a5b686adac5a457cca595f454f7f5222525447c": {
+        "description": "Logical bundle name under the engine's backup root; never a path",
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+        "title": "Destination",
         "type": "string"
       },
       "Schemac28c84dca6e1d411767b18ad6a705252aeb3c3382cf57d95cdabbb5679e1e61d": {
@@ -3216,12 +3152,6 @@
         },
         "type": "object"
       },
-      "Schemac77c32ae1fe2fa1e69153ebcef53e215f6dc2dca280f30c1bfd126063b74ae2d": {
-        "maxLength": 2048,
-        "minLength": 1,
-        "title": "Target",
-        "type": "string"
-      },
       "Schemac8988ac0c133eee1d37a57c7873fc8e2d0d2270106728130e931394b807f0e53": {
         "anyOf": [
           {
@@ -3248,14 +3178,6 @@
       "Schemacac9b06c3ec93a7fc8bde8feaeb94be496804f70091072f05fe0a117f04fb850": {
         "title": "Mode",
         "type": "string"
-      },
-      "Schemacc6fe20bda57203f610589d58c58fddb2597099c49ad747ce54b0d45eb7109ea": {
-        "additionalProperties": {
-          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
-        },
-        "maxProperties": 8,
-        "title": "Options",
-        "type": "object"
       },
       "Schemaccaf437a4d2f3796fc8df7087e95f0521813d43a9f29cea0f760bc425fc1e9aa": {
         "description": "Where the alert went; never the channel credentials.",
@@ -3354,19 +3276,6 @@
         ],
         "title": "Current Limit"
       },
-      "Schemad26234ec73517a8683e1fc6827a5a24a2d57607bbaf6a597c27e81f2889e3e36": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Definition5b9ce03c9f077b89cb597ce0377b8192731720e40d52957756822770f589a905"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "OpsBackupResult",
-        "type": "object"
-      },
       "Schemad36830bb2f942da26edafc74d6ab2a8219e4255c1b342694da705baa07f23b49": {
         "additionalProperties": false,
         "properties": {
@@ -3395,6 +3304,19 @@
         "default": true,
         "title": "Applied",
         "type": "boolean"
+      },
+      "Schemad61d33961a3a08aa32cec3c31e27b2aa30d78127f8a24c8aafdb2953687419b5": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Definition1d89b45169c34280aaf80982e7f7d9eaabc5ed71df72c876fb0a011cbca2c7a7"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "OpsBackupResult",
+        "type": "object"
       },
       "Schemad67628332a9abe4fb81e4cbb39432939bb18f6899164f8d92149b1532a04c384": {
         "additionalProperties": false,
@@ -3653,6 +3575,22 @@
         "default": null,
         "title": "Status"
       },
+      "Schemae5dbe4157a4a83727a626af46365e378bd35c6c610a537939672257265c7594c": {
+        "additionalProperties": false,
+        "properties": {
+          "destination": {
+            "$ref": "#/components/schemas/Schemabfe39e6b41796e401eb91e518a5b686adac5a457cca595f454f7f5222525447c"
+          },
+          "label": {
+            "$ref": "#/components/schemas/Schemab86888dd2bedecd32770a257d48286e827856255125a5eea47e7bd3b88c4bd89"
+          }
+        },
+        "required": [
+          "destination"
+        ],
+        "title": "OpsBackupParams",
+        "type": "object"
+      },
       "Schemae7980f190ba942c4e5e15c7d367afd0e10b739075fe809ae16398de25f0138f7": {
         "maxLength": 128,
         "minLength": 1,
@@ -3753,12 +3691,6 @@
         "title": "Child",
         "type": "string"
       },
-      "Schemaeca5e522b1b43875c4628805ebf44b32ade05fa99eb4d075fb4a0664a1f8515d": {
-        "maxLength": 256,
-        "minLength": 1,
-        "title": "Backup Id",
-        "type": "string"
-      },
       "Schemaed2d1ae3a9dc3c32aa01daa9cf76a050af1b15b3d306ea8395a48b45513fc607": {
         "additionalProperties": false,
         "properties": {
@@ -3770,28 +3702,6 @@
           }
         },
         "title": "OpsTenantsParams",
-        "type": "object"
-      },
-      "Schemaeda27189feb9fb8e2a62f858582ff3b547da8992f50e88542ff64d6adfe6f67f": {
-        "additionalProperties": false,
-        "description": "One durable restore receipt; the store owns its exact shape.",
-        "properties": {
-          "backup_id": {
-            "$ref": "#/components/schemas/Schema419baaf5641802ec2a772ec2e7bd19064dff5602ad7da82164cfd75e0c674f85"
-          },
-          "status": {
-            "$ref": "#/components/schemas/Schemaef5b28ba0e5a9726e9c589be27f8195802cbce4383e0012bcdfff88464bb9251"
-          },
-          "tenant": {
-            "$ref": "#/components/schemas/Schemade6177482fecb4008c482d49b57c689d4d259fd0a9ade91795cd9703c2a7f2f1"
-          }
-        },
-        "required": [
-          "tenant",
-          "backup_id",
-          "status"
-        ],
-        "title": "RestoreReceipt",
         "type": "object"
       },
       "Schemaedbe51c22d1e84c9d826d7ec124da6a83bea1374204fdf0bc9039f02edafa6cc": {
@@ -3830,12 +3740,6 @@
         },
         "title": "LeaseList",
         "type": "object"
-      },
-      "Schemaef33411d03dd91c6ec761b6ae93f2128c5d7459ed4d0b65538124fe441c4b502": {
-        "maxLength": 256,
-        "minLength": 1,
-        "title": "Label",
-        "type": "string"
       },
       "Schemaef5b28ba0e5a9726e9c589be27f8195802cbce4383e0012bcdfff88464bb9251": {
         "title": "Status",
@@ -3885,26 +3789,6 @@
         "minLength": 1,
         "title": "Job Id",
         "type": "string"
-      },
-      "Schemaf35a6e00b6bea508892e856710104af70ad3e30ef17ef9e96c145f6409d756c5": {
-        "additionalProperties": false,
-        "properties": {
-          "kind": {
-            "$ref": "#/components/schemas/Schema4fa428a7bc7e9750272fa0eeefda418ee278966bb9a3215500dcdd5cf6b55def"
-          },
-          "options": {
-            "$ref": "#/components/schemas/Schemacc6fe20bda57203f610589d58c58fddb2597099c49ad747ce54b0d45eb7109ea"
-          },
-          "target": {
-            "$ref": "#/components/schemas/Schemac77c32ae1fe2fa1e69153ebcef53e215f6dc2dca280f30c1bfd126063b74ae2d"
-          }
-        },
-        "required": [
-          "kind",
-          "target"
-        ],
-        "title": "IngestSubmitParams",
-        "type": "object"
       },
       "Schemaf4304c500b7b9581c3b477077102e76b64359987bcd3faf2d51c25603695929e": {
         "maxLength": 2048,
@@ -3959,12 +3843,6 @@
         "default": "plan_step",
         "title": "Kind",
         "type": "string"
-      },
-      "Schemaf98c23f3e1426042123c4e427de8421eb6e83fbc12f21c2144a4205e05b4f61e": {
-        "maximum": 9,
-        "minimum": 0,
-        "title": "Bucket",
-        "type": "integer"
       },
       "Schemaf9dc517ae1de981c6ec75b9eeef87a8f7750cc487c591961e000cc918273c329": {
         "default": 0,
@@ -21268,94 +21146,6 @@
         ]
       }
     },
-    "/api/v1/ops/ingest.jobs.cancel": {
-      "post": {
-        "operationId": "ingest.jobs.cancel",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schema77c704f5198eb62dcec9d985d8809a2f450c7a16e032304a35698a711717fefd"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Sharedf6bc34ea32a522bd95e19dc3f465ffd10ad203bfc1a41e856ef4a37e4b53faca"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "Cancel one pending ingestion job",
-        "tags": [
-          "ingest"
-        ]
-      }
-    },
-    "/api/v1/ops/ingest.jobs.list": {
-      "post": {
-        "operationId": "ingest.jobs.list",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schema0da43ab78b0f7615b615a265651482f8f2d69a1ca9a27bc828cacbd587fed811"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Schema9b6ecf3f1107d98ead48bd9ab0edfe062b3fb111e049a2d9b617918b80318f48"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "List this tenant's durable ingestion jobs",
-        "tags": [
-          "ingest"
-        ]
-      }
-    },
-    "/api/v1/ops/ingest.jobs.prioritize": {
-      "post": {
-        "operationId": "ingest.jobs.prioritize",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schema953c4f01a65a007aebf81f31e08ab2b31cc9e4cbe59ab3b9767aa1b983fe1584"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Sharedf6bc34ea32a522bd95e19dc3f465ffd10ad203bfc1a41e856ef4a37e4b53faca"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "Set the priority bucket of one ingestion job",
-        "tags": [
-          "ingest"
-        ]
-      }
-    },
     "/api/v1/ops/ingest.jobs.status": {
       "post": {
         "operationId": "ingest.jobs.status",
@@ -21555,40 +21345,6 @@
           }
         },
         "summary": "Request a durable sync of one ingestion source",
-        "tags": [
-          "ingest"
-        ]
-      }
-    },
-    "/api/v1/ops/ingest.submissions.create": {
-      "post": {
-        "operationId": "ingest.submissions.create",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Schemaf35a6e00b6bea508892e856710104af70ad3e30ef17ef9e96c145f6409d756c5"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Schema2c726dca5463d0c63019250fcfdcdc2950392d3a6c8b01219609029bfce2812e"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "Queue a durable ingest, URL, pack, fact-extract or distill job",
         "tags": [
           "ingest"
         ]
@@ -21797,7 +21553,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Schema6888b91d862d53905c53fe288c511fce2c2b2511377c824b89ea6b1dd21e0622"
+                "$ref": "#/components/schemas/Schemae5dbe4157a4a83727a626af46365e378bd35c6c610a537939672257265c7594c"
               }
             }
           },
@@ -21810,10 +21566,10 @@
                 "schema": {
                   "$defs": {
                     "BackupReceipt": {
-                      "$ref": "#/components/schemas/Definition5b9ce03c9f077b89cb597ce0377b8192731720e40d52957756822770f589a905"
+                      "$ref": "#/components/schemas/Definition1d89b45169c34280aaf80982e7f7d9eaabc5ed71df72c876fb0a011cbca2c7a7"
                     }
                   },
-                  "$ref": "#/components/schemas/Schemad26234ec73517a8683e1fc6827a5a24a2d57607bbaf6a597c27e81f2889e3e36"
+                  "$ref": "#/components/schemas/Schemad61d33961a3a08aa32cec3c31e27b2aa30d78127f8a24c8aafdb2953687419b5"
                 }
               }
             },
@@ -21823,7 +21579,7 @@
             "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
           }
         },
-        "summary": "Reserve a durable backup scoped to the caller's own tenant",
+        "summary": "Take an online engine backup into a named logical bundle",
         "tags": [
           "ops"
         ]
@@ -21914,7 +21670,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Schema9f61a7ec03c21c9f017ed0d88eea2e595fbda44ae6d60dddf600f21628c27b1e"
+                "$ref": "#/components/schemas/Schemaa32b59e626656217268333c0369e9266c80923fac823c2b25c7a25fb21459a4a"
               }
             }
           },
@@ -21927,10 +21683,10 @@
                 "schema": {
                   "$defs": {
                     "RestoreReceipt": {
-                      "$ref": "#/components/schemas/Definitione5b304c2722adb849beeb376352a983b964bf1b970f2562fb7f323c0f6998d92"
+                      "$ref": "#/components/schemas/Definitionc7de4dca0847b2dcceadb0be13014a48d06500fe09adfee60bb72194607c46a5"
                     }
                   },
-                  "$ref": "#/components/schemas/Schema747b41258db828a82a58ffba6e56aabddf23c7e871967a322995696f2dc55edb"
+                  "$ref": "#/components/schemas/Schemaa5f5b45b77cdb4a2d989d95675ab5f1f61349d9bd3f1e1c9434744ab572adb59"
                 }
               }
             },
@@ -21940,7 +21696,7 @@
             "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
           }
         },
-        "summary": "Restore a durable backup scoped to the caller's own tenant",
+        "summary": "Stage an engine restore of a named bundle onto a target shard layout",
         "tags": [
           "ops"
         ]
@@ -22778,5 +22534,5 @@
       }
     }
   },
-  "x-registry-digest": "7ebb1d154faa78aa1cec0201cb6dd40036a060c81c15d1da1d41ef1a0f2272a7"
+  "x-registry-digest": "4214511d703c721e010c215faebad403bdaab482a9f522194383fc0bb3c66509"
 }
