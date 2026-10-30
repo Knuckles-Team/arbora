@@ -20,7 +20,6 @@ def test_host_deployment_scripts_point_to_arbora_modules() -> None:
         "agent-utilities-doctor": "arbora.deployment.doctor:main",
         "agent-utilities-venv": "arbora.deployment.venv_sync:main",
         "arbora": "arbora.console:main",
-        "arbora-daemon": "arbora.gateway.daemon:main",
         "arbora-acp": "arbora.acp.local_runtime:main",
         "arbora-production-ops": "arbora.deployment.production_ops:main",
         "arbora-connector-count-pins": "arbora.fleet.connector_count_pins:main",

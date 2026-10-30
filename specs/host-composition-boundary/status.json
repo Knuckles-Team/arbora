@@ -467,12 +467,15 @@
     {
       "id": "ARBORA-HOST-R004",
       "title": "Single gateway implementation under arbora/gateway",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
         "45283d0137b9",
+        "83d47dd6fd2d",
         "f37f67d33d37"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/architecture/test_single_gateway_implementation.py:40"
+      ]
     },
     {
       "id": "ARBORA-HOST-R005",
@@ -496,8 +499,8 @@
       ],
       "verified_by": [
         "tests/mcp_server/test_legacy_action_mapping.py:17",
-        "tests/mcp_server/test_legacy_action_mapping.py:28",
-        "tests/mcp_server/test_legacy_action_mapping.py:35"
+        "tests/mcp_server/test_legacy_action_mapping.py:30",
+        "tests/mcp_server/test_legacy_action_mapping.py:37"
       ]
     },
     {
@@ -536,16 +539,24 @@
     {
       "id": "ARBORA-HOST-R005.2.1.1",
       "title": "Add arbora operation for code navigation actions",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "23f2884b39ba"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_legacy_analyze_intent_mapping.py:31"
+      ]
     },
     {
       "id": "ARBORA-HOST-R005.2.1.2",
       "title": "Add arbora operation for impact actions",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": []
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "23f2884b39ba"
+      ],
+      "verified_by": [
+        "tests/mcp_server/test_legacy_analyze_intent_mapping.py:36"
+      ]
     },
     {
       "id": "ARBORA-HOST-R005.2.1.3",

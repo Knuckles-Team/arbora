@@ -249,7 +249,7 @@ skips analytical daemons). Hardened hot paths: O(1) id-keyed upserts +
 concurrent chat concept extraction (`KG_CHAT_CONCURRENCY`); a dedicated
 embedding-backfill daemon thread (`KG_EMBED_BACKFILL`) so vector features have
 substrate. The KG runs ONE consolidated daemon (`KG_DAEMON_ROLE` host/client/auto)
-hosted by the gateway / `arbora-daemon`.
+hosted by the serving process.
 
 ## Declarative full-ingest manifest
 
