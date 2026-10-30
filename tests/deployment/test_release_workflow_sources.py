@@ -8,14 +8,11 @@ dependency installs from PyPI, so the workflow checks out no sibling source.
 
 from __future__ import annotations
 
-import os
 import re
-import subprocess
 import tomllib
 from pathlib import Path
 from typing import Any
 
-import pytest
 import yaml
 
 ROOT = Path(__file__).parents[2]
@@ -24,7 +21,7 @@ PRE_COMMIT_RUN = 'pre-commit run --config "$PINNED_PRECOMMIT"'
 
 
 def _workflow() -> dict[Any, Any]:
-    """The read-only checks (gates, build, install smoke, scanners)."""
+    """The read-only checks (gates, build, install smoke)."""
     path = ROOT / ".github" / "workflows" / "checks.yml"
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
@@ -221,165 +218,6 @@ def test_release_dependency_readiness_reports_on_tag_builds_only() -> None:
     assert workflow["jobs"]["build"]["needs"] == ["gates"]
 
 
-def test_scanner_versions_receive_distinct_argv_and_the_job_is_advisory() -> None:
-    scanner = _workflow()["jobs"]["scanner-quality"]
-    command = next(
-        step["run"]
-        for step in scanner["steps"]
-        if "pipelines-hook scanner-versions" in step.get("run", "")
-    )
-
-    assert "pipelines-hook scanner-versions cccc kiss dupehound jscpd" in command
-    assert "['cccc'" not in command
-    assert scanner["continue-on-error"] is True
-    for job in ("build", "install-smoke"):
-        assert "scanner-quality" not in _workflow()["jobs"][job].get("needs", [])
-    for job in ("checks", "publish-pypi", "github-release"):
-        assert "scanner-quality" not in _release()["jobs"][job].get("needs", [])
-
-
-def _scanner_step(name: str) -> dict[str, Any]:
-    return next(
-        step
-        for step in _workflow()["jobs"]["scanner-quality"]["steps"]
-        if step.get("name") == name
-    )
-
-
-def test_scanner_cache_retains_installation_and_all_checks_before_save() -> None:
-    scanner = _workflow()["jobs"]["scanner-quality"]
-    steps = scanner["steps"]
-    restore = _scanner_step("Restore scanner toolchain")
-    provision = _scanner_step("Provision pinned scanner toolchain")
-    checks = _scanner_step(
-        "Shared scanner hooks (versions, censuses, clone differentials)"
-    )
-    save = _scanner_step("Save verified scanner toolchain")
-
-    assert steps.index(restore) < steps.index(provision) < steps.index(checks)
-    assert steps.index(checks) < steps.index(save)
-    # Both cold misses and warm hits take the same installer/verification path.
-    assert "if" not in provision
-    assert "if" not in checks
-    assert provision["run"].startswith("bash scripts/install_scanners.sh ")
-    assert "$RUNNER_TEMP/arbora-scanners" in provision["run"]
-    assert set(_manual_hooks_named(checks["run"])) == {
-        "complexity-census",
-        "kiss-census",
-        "dupehound-changed",
-        "jscpd-differential",
-        "jscpd-census",
-    }
-    assert save["if"] == "success() && steps.scanner-cache.outputs.cache-hit != 'true'"
-    for step in (restore, provision, checks, save):
-        assert "continue-on-error" not in step
-    assert _workflow()["permissions"] == {"contents": "read"}
-    assert "permissions" not in scanner
-
-
-def test_scanner_cache_is_exact_and_contains_only_the_scanner_prefix() -> None:
-    restore = _scanner_step("Restore scanner toolchain")
-    save = _scanner_step("Save verified scanner toolchain")
-    identity = _scanner_step("Resolve scanner cache identity")
-
-    assert (
-        restore["with"]
-        == save["with"]
-        == {
-            "path": "${{ runner.temp }}/arbora-scanners",
-            "key": "${{ steps.scanner-cache-identity.outputs.key }}",
-        }
-    )
-    for operation, step in (("restore", restore), ("save", save)):
-        action, _, revision = step["uses"].partition("@")
-        assert action == f"actions/cache/{operation}"
-        assert SHA.fullmatch(revision)
-    assert identity["env"]["SCANNER_RECIPE"] == (
-        "${{ hashFiles('scripts/install_scanners.sh') }}"
-    )
-
-
-@pytest.fixture
-def scanner_identity_environment(tmp_path: Path) -> dict[str, str]:
-    commands = tmp_path / "commands"
-    commands.mkdir()
-    for name in ("rustc", "cargo"):
-        command = commands / name
-        command.write_text(
-            '#!/bin/sh\n[ "$FAIL_TOOL" != "' + name + '" ] || exit 23\n'
-            'printf "%s\\n" "$TEST_' + name.upper() + '_IDENTITY"\n'
-        )
-        command.chmod(0o755)
-    return {
-        **os.environ,
-        **_workflow()["jobs"]["scanner-quality"]["env"],
-        "PATH": f"{commands}{os.pathsep}{os.environ['PATH']}",
-        "GITHUB_OUTPUT": str(tmp_path / "output"),
-        "RUNNER_OS": "Linux",
-        "RUNNER_ARCH": "X64",
-        "ImageOS": "ubuntu24",
-        "ImageVersion": "20261001.1.0",
-        "SCANNER_RECIPE": "installer-and-provider-inputs",
-        "TEST_RUSTC_IDENTITY": "rustc fixture compiler",
-        "TEST_CARGO_IDENTITY": "cargo fixture compiler",
-        "FAIL_TOOL": "",
-        "RUSTFLAGS": "",
-        "CARGO_ENCODED_RUSTFLAGS": "",
-    }
-
-
-def _scanner_cache_identity(env: dict[str, str]) -> tuple[int, str]:
-    output = Path(env["GITHUB_OUTPUT"])
-    output.unlink(missing_ok=True)
-    result = subprocess.run(
-        ["bash", "-c", _scanner_step("Resolve scanner cache identity")["run"]],
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=10,
-        check=False,
-    )
-    return result.returncode, output.read_text() if output.exists() else ""
-
-
-@pytest.mark.parametrize(
-    "changed_input",
-    [
-        "RUNNER_OS",
-        "RUNNER_ARCH",
-        "ImageOS",
-        "ImageVersion",
-        "SCANNER_RECIPE",
-        "TEST_RUSTC_IDENTITY",
-        "TEST_CARGO_IDENTITY",
-        "CARGO_BUILD_JOBS",
-        "CARGO_PROFILE_RELEASE_DEBUG",
-        "RUSTFLAGS",
-        "CARGO_ENCODED_RUSTFLAGS",
-    ],
-)
-def test_scanner_cache_identity_changes_with_build_inputs(
-    scanner_identity_environment: dict[str, str], changed_input: str
-) -> None:
-    env = scanner_identity_environment
-    code, before = _scanner_cache_identity(env)
-    assert code == 0
-    assert re.fullmatch(r"key=arbora-scanners-v1-[0-9a-f]{64}\n", before)
-    assert _scanner_cache_identity(env) == (0, before)
-    code, after = _scanner_cache_identity({**env, changed_input: "changed"})
-    assert code == 0
-    assert after != before
-
-
-@pytest.mark.parametrize("tool", ["rustc", "cargo"])
-def test_scanner_cache_identity_fails_closed_without_a_compiler(
-    scanner_identity_environment: dict[str, str], tool: str
-) -> None:
-    assert _scanner_cache_identity(
-        {**scanner_identity_environment, "FAIL_TOOL": tool}
-    ) == (23, "")
-
-
 def test_checks_leave_concurrency_to_the_caller_and_a_publish_is_never_cancelled() -> (
     None
 ):
@@ -490,15 +328,13 @@ def test_installed_sdk_contains_schema_disclosure_contract() -> None:
     assert {"SchemaManifest", "reconstruct_schema"} <= names
 
 
-def test_scanner_runs_on_branches_and_checks_never_run_on_pull_requests():
+def test_checks_never_run_on_pull_requests():
     workflow = _workflow()
     jobs = workflow["jobs"]
     # checks.yml is only ever called; it has no trigger of its own.
     assert set(workflow[True]) == {"workflow_call"}
     assert workflow["permissions"] == {"contents": "read"}
-    assert "scanner-scope" not in jobs
-    assert jobs["scanner-quality"]["if"] == "github.ref_type == 'branch'"
-    assert jobs["scanner-quality"]["continue-on-error"] is True
+    assert "scanner-quality" not in jobs
     assert "if" not in jobs["build"]
     assert jobs["build"]["needs"] == ["gates"]
     build_commands = "\n".join(step.get("run", "") for step in jobs["build"]["steps"])
