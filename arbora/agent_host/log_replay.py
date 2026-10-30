@@ -10,7 +10,6 @@ import math
 import os
 import secrets
 import stat
-import time
 from collections.abc import Iterator
 
 from arbora.agent_host.log_access import (
@@ -62,7 +61,6 @@ def cursor_key(directory: int) -> bytes:
 def retained_records(
     directory: int, workspace: str
 ) -> Iterator[tuple[HostLogRecord, str]]:
-    deadline = time.monotonic() + 0.75
     sequences: dict[tuple[str, str], int] = {}
     for name in (
         "server.log.4",
@@ -79,8 +77,6 @@ def retained_records(
             if os.fstat(source.fileno()).st_size > 10 * 1024 * 1024:
                 raise HostLogDenied("log_unavailable")
             while line := source.readline(16385):
-                if time.monotonic() > deadline:
-                    raise TimeoutError("log_unavailable")
                 if len(line) > 16384 or not line.endswith(b"\n"):
                     raise HostLogDenied("log_unavailable")
                 record = decode_record(line, workspace)
