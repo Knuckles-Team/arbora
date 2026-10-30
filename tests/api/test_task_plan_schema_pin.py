@@ -551,5 +551,3 @@ def test_committed_pin_matches_the_installed_engine() -> None:
     assert pins_module.drift(committed, installed) == []
     assert committed["available"] == installed["available"]
     assert pins_module.verify(committed, installed) is None
-
-
