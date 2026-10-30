@@ -15,10 +15,17 @@ LOCAL_HOOK = ROOT / "scripts" / "local_hook.sh"
 @pytest.mark.spec("ARBORA-DEPLOY-R004")
 def test_mypy_hook_does_not_exclude_the_test_suite() -> None:
     config = yaml.safe_load(CONFIG.read_text(encoding="utf-8"))
-    hooks = [hook for repo in config["repos"] for hook in repo["hooks"] if "mypy" in hook["id"]]
+    hooks = [
+        hook
+        for repo in config["repos"]
+        for hook in repo["hooks"]
+        if "mypy" in hook["id"]
+    ]
     # One type check: the locked-environment hook. A second, isolated mypy
     # environment duplicated it and cost about two and a half minutes a run.
     assert [hook["id"] for hook in hooks] == ["mypy-env"]
     assert "tests" not in str(hooks[0].get("exclude", ""))
-    assert "uv run --no-sync mypy arbora tests" in LOCAL_HOOK.read_text(encoding="utf-8")
+    assert "uv run --no-sync mypy arbora tests" in LOCAL_HOOK.read_text(
+        encoding="utf-8"
+    )
     assert "tests" not in str(config.get("exclude", ""))
