@@ -521,25 +521,17 @@ def _plan_model(context: Any) -> Any:
 
 
 async def _feature_schema(context: Any, tenant: str) -> Mapping[str, Any]:
-    """The tenant's published task-plan schema pin (ARBORA-RELEASE-R003.4.4)."""
+    """The tenant's published task-plan schema pin (ARBORA-RELEASE-R003.4.4).
+
+    Read-only: the server lifespan publishes the pin under the process
+    authority, and a request never publishes it.
+    """
     fixed = context.services.get("task_plan_feature_schema")
     if isinstance(fixed, Mapping):
         return fixed
-    pins = context.services.get("task_plan_schema_pins")
-    publish = context.services.get("task_plan_schema_publish")
-    if pins is None or publish is None:
-        raise OperationRefused(
-            "UNAVAILABLE", {"reason": "no verified task-plan schema pin"}
-        )
-    try:
-        return await pins.for_tenant(tenant, publish)
-    except OperationRefused:
-        raise
-    except Exception as exc:
-        raise OperationRefused(
-            "UNAVAILABLE",
-            {"reason": f"task-plan schema publish failed: {type(exc).__name__}"},
-        ) from exc
+    from arbora.api.task_plan_schema import published_pin
+
+    return published_pin(context.services.get("task_plan_schema_pins"), tenant)
 
 
 def _native_plan_run_id(plan: Mapping[str, Any], caller: Any | None = None) -> str:

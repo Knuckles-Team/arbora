@@ -199,9 +199,9 @@ def test_publishes_once_per_tenant_and_uses_the_returned_definition(
 
     async def scenario() -> list[dict[str, Any]]:
         first = await asyncio.gather(
-            *(pins.for_tenant("tenant-a", publish) for _ in range(5))
+            *(pins.publish_for("tenant-a", publish) for _ in range(5))
         )
-        return [*first, await pins.for_tenant("tenant-b", publish)]
+        return [*first, await pins.publish_for("tenant-b", publish)]
 
     results = asyncio.run(scenario())
     assert calls == ["tenant-a", "tenant-b"]
@@ -326,9 +326,9 @@ def test_startup_publisher_preserves_released_export_and_returned_definition(
     publisher = pins_module.engine_publish(client_for, _publication_context)
 
     async def scenario() -> None:
-        first = await pins.for_tenant("tenant-a", publisher)
+        first = await pins.publish_for("tenant-a", publisher)
         assert first["definition_digest"] == DEFINITION
-        assert await pins.for_tenant("tenant-a", publisher) == first
+        assert await pins.publish_for("tenant-a", publisher) == first
 
     asyncio.run(scenario())
     ((params, _key),) = engine.sent
@@ -481,18 +481,69 @@ def test_plan_run_refuses_unavailable_without_a_verified_pin() -> None:
         asyncio.run(plans._feature_schema(context, "t"))
     assert refused.value.code == "UNAVAILABLE"
 
-    async def failing(_tenant: str, _pin: Any) -> str:
-        raise RuntimeError("engine down")
 
-    context.services = {
-        "task_plan_schema_pins": pins_module.TaskPlanSchemaPins(
-            {"component_id": "c", "kind": "feature_schema"}
-        ),
-        "task_plan_schema_publish": failing,
-    }
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.4")
+def test_unpublished_tenant_refuses_unavailable_and_never_publishes() -> None:
+    """A request only reads the pin; publication is the process lifecycle's."""
+    calls: list[str] = []
+
+    async def publish(tenant: str, _pin: Any) -> str:
+        calls.append(tenant)
+        return DEFINITION + tenant
+
+    pins = pins_module.TaskPlanSchemaPins(_pin())
+    context = SimpleNamespace(
+        services={"task_plan_schema_pins": pins, "task_plan_schema_publish": publish},
+        caller=SimpleNamespace(tenant="t"),
+    )
     with pytest.raises(OperationRefused) as refused:
         asyncio.run(plans._feature_schema(context, "t"))
     assert refused.value.code == "UNAVAILABLE"
+    assert "not yet published" in refused.value.details["reason"]
+    assert calls == [] and pins.pin_for("t") is None
+
+    asyncio.run(pins.publish_for("t", publish))
+    assert asyncio.run(plans._feature_schema(context, "t")) == pins.pin_for("t")
+    assert calls == ["t"]
+
+
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.4")
+def test_startup_publishes_every_served_tenant_with_bounded_retry(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    failures = {"tenant-a": 2, "tenant-b": 0, "tenant-c": 99}
+    calls: list[str] = []
+    delays: list[float] = []
+
+    async def publish(tenant: str, _pin: Any) -> str:
+        calls.append(tenant)
+        if failures[tenant] > 0:
+            failures[tenant] -= 1
+            raise RuntimeError("engine not ready")
+        return DEFINITION + tenant
+
+    async def sleep(delay: float) -> None:
+        delays.append(delay)
+
+    pins = pins_module.TaskPlanSchemaPins(_pin())
+    result = asyncio.run(
+        pins_module.publish_at_startup(
+            pins,
+            publish,
+            ("tenant-a", "tenant-b", "tenant-a", "tenant-c"),
+            attempts=3,
+            initial_delay_s=0.5,
+            sleep=sleep,
+        )
+    )
+    assert result == {"tenant-a": True, "tenant-b": True, "tenant-c": False}
+    assert calls == ["tenant-a"] * 3 + ["tenant-b"] + ["tenant-c"] * 3
+    assert delays == [0.5, 1.0, 0.5, 1.0]
+    published = pins.pin_for("tenant-a")
+    assert published is not None
+    assert published["definition_digest"] == DEFINITION + "tenant-a"
+    assert pins.pin_for("tenant-c") is None
+    assert "not published for tenant-c after 3 attempts" in caplog.text
 
 
 # spec: ARBORA-RELEASE-R003.4.4
@@ -502,12 +553,3 @@ def test_committed_pin_matches_the_installed_engine() -> None:
     assert pins_module.drift(committed, installed) == []
     assert committed["available"] == installed["available"]
     assert pins_module.verify(committed, installed) is None
-
-
-@pytest.mark.spec("ARBORA-RELEASE-R003.4.4")
-def test_schema_warmup_without_loop_reports_deferred_cause(caplog):
-    from arbora.mcp_server.served_invocation import _warm_task_plan_schema
-
-    _warm_task_plan_schema(object(), object(), "tenant")
-    assert "task-plan schema warmup deferred to first use" in caplog.text
-    assert "no running event loop" in caplog.text

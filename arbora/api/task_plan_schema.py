@@ -9,10 +9,15 @@ that component from the engine package in two steps and never makes one up.
    content digest). It writes the body and its digest to
    ``arbora/api/generated/task_plan_schema.json``.
 2. **Serving time.** At start-up Arbora compares the committed digest with the
-   installed engine's export. If they match, Arbora publishes the body to the
-   Agent Library once per tenant. The publish is idempotent. Arbora then uses
-   the ``definition_digest`` that the engine returns as the pin. If they differ,
-   ``agents.plan_run`` stays ``UNAVAILABLE`` and the reason is logged.
+   installed engine's export. If they match, the server lifespan publishes the
+   body to the Agent Library for every served tenant under the process
+   authority (:func:`publish_at_startup`). The publish is idempotent. Arbora
+   then uses the ``definition_digest`` that the engine returns as the pin. If
+   they differ, ``agents.plan_run`` stays ``UNAVAILABLE`` and the reason is
+   logged.
+
+Publication is process lifecycle only. A request reads the published pin
+(:func:`published_pin`) and never publishes.
 """
 
 from __future__ import annotations
@@ -200,15 +205,31 @@ def idempotency_key(pin: Mapping[str, Any], tenant: str) -> str:
 
 
 class TaskPlanSchemaPins:
-    """The verified pin, published once per tenant and cached process-wide."""
+    """The verified pin and its per-tenant publications, cached process-wide.
+
+    :meth:`publish_for` is the process-lifecycle write. :meth:`pin_for` is
+    the only call a request makes, and it never publishes.
+    """
 
     def __init__(self, pin: Mapping[str, Any]) -> None:
         self.pin = dict(pin)
         self._published: dict[str, str] = {}
         self._locks: dict[str, asyncio.Lock] = {}
 
-    async def for_tenant(self, tenant: str, publish: Publish) -> dict[str, Any]:
-        """The ``ComponentDependency`` pin for ``tenant``; publishes on first use."""
+    def pin_for(self, tenant: str) -> dict[str, Any] | None:
+        """The ``ComponentDependency`` pin for ``tenant``, or ``None`` if unpublished."""
+        digest = self._published.get(tenant)
+        return None if digest is None else self._dependency(digest)
+
+    def _dependency(self, digest: str) -> dict[str, Any]:
+        return {
+            "component_id": self.pin["component_id"],
+            "kind": self.pin["kind"],
+            "definition_digest": digest,
+        }
+
+    async def publish_for(self, tenant: str, publish: Publish) -> dict[str, Any]:
+        """Publish ``tenant``'s pin once; the caller holds the process authority."""
         if tenant not in self._published:
             lock = self._locks.setdefault(tenant, asyncio.Lock())
             async with lock:
@@ -217,11 +238,75 @@ class TaskPlanSchemaPins:
                     if not isinstance(digest, str) or not digest:
                         raise ValueError("the engine returned no definition digest")
                     self._published[tenant] = digest
-        return {
-            "component_id": self.pin["component_id"],
-            "kind": self.pin["kind"],
-            "definition_digest": self._published[tenant],
-        }
+        return self._dependency(self._published[tenant])
+
+
+async def publish_at_startup(
+    pins: TaskPlanSchemaPins,
+    publish: Publish,
+    tenants: Sequence[str],
+    *,
+    attempts: int = 4,
+    initial_delay_s: float = 0.5,
+    sleep: Callable[[float], Awaitable[Any]] = asyncio.sleep,
+) -> dict[str, bool]:
+    """Publish every served tenant's pin, with bounded retry and backoff.
+
+    The server lifespan awaits this under the process authority. A tenant that
+    still fails is logged, and ``agents.plan_run`` refuses ``UNAVAILABLE`` for
+    it. Start-up continues.
+    """
+    published: dict[str, bool] = {}
+    for tenant in dict.fromkeys(tenants):
+        published[tenant] = False
+        for attempt in range(1, attempts + 1):
+            try:
+                await pins.publish_for(tenant, publish)
+            except Exception as exc:  # noqa: BLE001 - logged; the op stays UNAVAILABLE
+                if attempt == attempts:
+                    logger.error(
+                        "task-plan schema not published for %s after %d attempts "
+                        "(%s: %s); agents.plan_run refuses UNAVAILABLE",
+                        tenant,
+                        attempts,
+                        type(exc).__name__,
+                        exc,
+                    )
+                    break
+                delay = initial_delay_s * 2 ** (attempt - 1)
+                logger.warning(
+                    "task-plan schema publish for %s failed (%s: %s); retry in %.1fs",
+                    tenant,
+                    type(exc).__name__,
+                    exc,
+                    delay,
+                )
+                await sleep(delay)
+            else:
+                published[tenant] = True
+                break
+    return published
+
+
+def published_pin(pins: TaskPlanSchemaPins | None, tenant: str) -> dict[str, Any]:
+    """The caller tenant's published pin; read-only, never publishes.
+
+    Refuses with the retryable ``UNAVAILABLE`` when no pin is verified or the
+    tenant's publication has not completed.
+    """
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    if pins is None:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "no verified task-plan schema pin"}
+        )
+    pin = pins.pin_for(tenant)
+    if pin is None:
+        raise OperationRefused(
+            "UNAVAILABLE",
+            {"reason": "the task-plan schema is not yet published for this tenant"},
+        )
+    return pin
 
 
 def startup_pins(path: Path = PIN_PATH) -> TaskPlanSchemaPins | None:
@@ -318,6 +403,8 @@ __all__ = [
     "load_pin",
     "pin_bytes",
     "publication",
+    "publish_at_startup",
+    "published_pin",
     "startup_pins",
     "verify",
 ]
