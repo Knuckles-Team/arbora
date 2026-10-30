@@ -264,10 +264,26 @@ def compute_schema_fingerprint(schema: Mapping[str, Any]) -> str:
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
+_PROBE_IDENTITY_KEYS: dict[str, tuple[str, ...]] = {
+    "resource": ("uri", "name"),
+    "resource_template": ("uriTemplate", "name"),
+}
+_SKILL_SCHEME = "skill://"
+_SKILL_MAIN = "/SKILL.md"
+
+
+def _is_skill_resource(row: Mapping[str, Any]) -> bool:
+    uri = str(row.get("uri") or "")
+    return uri.startswith(_SKILL_SCHEME) and uri.endswith(_SKILL_MAIN)
+
+
 def _probed_item(
     server: str, kind: ItemKind, row: Mapping[str, Any]
 ) -> CatalogItem | None:
-    name = row.get("name") or row.get("uri") or row.get("uriTemplate")
+    # A resource is read by its URI, so its catalog identity is the URI, not
+    # the display name (ARBORA-FLEET-R040): ``resource_uri`` reads it back.
+    keys = _PROBE_IDENTITY_KEYS.get(kind, ("name",))
+    name = next((row[key] for key in keys if row.get(key)), None)
     if not isinstance(name, str) or not name:
         return None
     schema = row.get("inputSchema") or {}
@@ -298,13 +314,17 @@ def items_from_child_probe(
         ("native_prompts", "prompt"),
         ("resources", "resource"),
         ("resource_templates", "resource_template"),
+        ("skills", "skill"),
     )
     if info.get("error"):
         return ()
+    # ``skill://<name>/SKILL.md`` resources are the skills family, projected
+    # once as ``skill`` items by name; they are not also plain resources.
     items = (
         _probed_item(server, kind, row)
         for field_name, kind in families
         for row in info.get(field_name, ())
+        if not (kind == "resource" and _is_skill_resource(row))
     )
     return tuple(item for item in items if item is not None)
 
