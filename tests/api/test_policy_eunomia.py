@@ -54,6 +54,7 @@ def test_profile_defaults(mode):
     assert policy_mode(mode, "none") == "none"
 
 
+@pytest.mark.spec("ARBORA-OPS-R034")
 async def test_off_still_requires_exact_scopes_and_principal():
     gate = PolicyGate("none")
     caller = Caller()
@@ -73,6 +74,7 @@ async def test_off_still_requires_exact_scopes_and_principal():
     assert await gate.visible([service_only], caller) == [False]
 
 
+@pytest.mark.spec("ARBORA-OPS-R034")
 async def test_enabled_denial_and_unavailable_are_distinct():
     pdp = PDP(False)
     gate = PolicyGate("embedded", pdp)
@@ -132,6 +134,7 @@ async def test_default_embedded_policy_denies_destructive_fleet_to_non_admin():
     assert await gate.visible([item("destructive")], admin) == [True]
 
 
+@pytest.mark.spec("ARBORA-OPS-R034")
 async def test_missing_pdp_fails_closed():
     gate = PolicyGate("embedded")
     with pytest.raises(PolicyUnavailable):

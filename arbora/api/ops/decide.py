@@ -37,6 +37,7 @@ class DecideCommitParams(_Params):
 
 class DecideCommitResult(_Params):
     value: dict[str, Any]
+    provenance: dict[str, str]
 
 
 async def handle_decide_commit(
@@ -47,7 +48,14 @@ async def handle_decide_commit(
     if runner is None:
         raise RuntimeError("decide runner is not composed")
     result = await runner.commit(dict(params["request"]), tenant=context.caller.tenant)
-    return {"value": dict(result)}
+    return {
+        "value": dict(result),
+        "provenance": {
+            "op": op.id,
+            "tenant": str(context.caller.tenant),
+            "principal": str(getattr(context.caller, "principal", "")),
+        },
+    }
 
 
 def operations() -> tuple[OpSpec, ...]:

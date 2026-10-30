@@ -165,6 +165,7 @@ def test_tenant_subject_is_typed_and_cannot_read_a_request_field() -> None:
         SubjectRef(path="$caller.tenant")
 
 
+@pytest.mark.spec("ARBORA-OPS-R036")
 def test_mutating_operation_must_declare_an_audit_class() -> None:
     with pytest.raises(ValidationError, match="requires an audit class"):
         make_op(audit=AuditClass.NONE)

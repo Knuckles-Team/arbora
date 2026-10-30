@@ -23,6 +23,8 @@ from arbora.api.registry import (
     Effect,
     Idempotency,
     OpSpec,
+    PrincipalRule,
+    Surface,
     Verb,
 )
 
@@ -86,6 +88,8 @@ def _build_op(
     effect: Effect,
     idempotency: Idempotency = Idempotency.NONE,
     audit: AuditClass = AuditClass.NONE,
+    principals: PrincipalRule = PrincipalRule.ANY,
+    surfaces: frozenset[Surface] = frozenset({Surface.MCP, Surface.HTTP, Surface.A2A}),
 ) -> OpSpec:
     """The one OpSpec constructor every builder below specializes."""
     return OpSpec(
@@ -100,6 +104,8 @@ def _build_op(
         effect=effect,
         idempotency=idempotency,
         audit=audit,
+        principals=principals,
+        surfaces=surfaces,
     )
 
 
@@ -112,6 +118,18 @@ def build_read_op(*, verb: Verb = Verb.ASK, **kwargs: Any) -> OpSpec:
 build_tenant_read_op = build_read_op
 
 
+def _admin_authority(effect: Effect) -> dict[str, Any]:
+    """Admin effects need an undelegated human and the console step-up surface."""
+    if effect is not Effect.ADMIN:
+        return {}
+    return {
+        "principals": PrincipalRule.HUMAN_UNDELEGATED,
+        "surfaces": frozenset(
+            {Surface.MCP, Surface.HTTP, Surface.A2A, Surface.CONSOLE}
+        ),
+    }
+
+
 def build_write_op(
     *, verb: Verb = Verb.ACT, effect: Effect = Effect.WRITE, **kwargs: Any
 ) -> OpSpec:
@@ -119,6 +137,7 @@ def build_write_op(
     return _build_op(
         verb=verb,
         effect=effect,
+        **_admin_authority(effect),
         idempotency=Idempotency.KEY_REQUIRED,
         audit=AuditClass.EVENT,
         **kwargs,

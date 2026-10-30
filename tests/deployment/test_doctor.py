@@ -299,6 +299,7 @@ def test_permission_governance_doctor_verifies_authority(monkeypatch):
     assert result["data"]["identity_verified"] is True
 
 
+@pytest.mark.spec("ARBORA-OPS-R034")
 def test_eunomia_doctor_warns_when_narrowing_policy_is_off(monkeypatch):
     monkeypatch.setattr(
         "arbora.core.settings.ArboraConfig",
