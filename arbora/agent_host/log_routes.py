@@ -18,6 +18,9 @@ from arbora.deployment.host_config import load_hosting_deployment_settings
 from arbora.identity.engine import IdentityUnavailable
 from arbora.security.http_boundary import normalize_host_authorities
 
+# Per-request deadline for the reference and read owners; slower owners refuse.
+HOST_LOG_REQUEST_BUDGET_SECONDS = 1.0
+
 
 class LogReadRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
@@ -125,7 +128,7 @@ def register_host_log_routes(app: FastAPI, access: HostLogAccess | None) -> None
         endpoint = _trusted_request_origin(request)
         credential = host_log_credential(request)
         try:
-            async with asyncio.timeout(1):
+            async with asyncio.timeout(HOST_LOG_REQUEST_BUDGET_SECONDS):
                 value = await service.reference(credential)
         except PermissionError:
             raise HTTPException(403, "workspace_denied") from None
@@ -143,7 +146,7 @@ def register_host_log_routes(app: FastAPI, access: HostLogAccess | None) -> None
         service = available()
         credential = host_log_credential(request)
         try:
-            async with asyncio.timeout(1):
+            async with asyncio.timeout(HOST_LOG_REQUEST_BUDGET_SECONDS):
                 batch = await service.read(
                     credential,
                     body.log_ref,
