@@ -1,12 +1,65 @@
 # Hosted API and intent operations — architecture
 
-Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spec](spec.md).
+## Summary
 
-## Existing wiring to reuse
+This plan serves the rows of `ARBORA-OPS` in requirements.md. Arbora serves one typed operation registry over MCP and HTTP. The graph-native development rows `ARBORA-OPS-R896.1` to `.6` add artifact-graph reads, project mode, run start and observation, and proposal review. The engine owns every fact and decision. The earlier design record stays under Phase 1.
+
+## Technical Context
+
+- **Language/Version**: Python 3.14 (floor 3.12)
+- **Primary Dependencies**: The packaged engine contract, the connector SDK and the MCP library. Each row names more.
+- **Storage**: The medulla engine. Arbora holds no durable store of its own.
+- **Testing**: pytest. Each row names the test and the proof level that it needs.
+- **Target Platform**: Linux hosts and CI runners
+- **Project Type**: Service with MCP and HTTP surfaces
+- **Performance Goals**: N/A. A row states its own budget when it has one.
+- **Constraints**: Public files stay neutral and portable. A row states any further limit.
+- **Scale/Scope**: The rows of requirements.md.
+
+## Constitution Check
+
+- **I. One owner per concept**: No departure is recorded in this plan; the rows carry the proof.
+- **II. Extend before you create**: No departure is recorded in this plan; the rows carry the proof.
+- **III. Specs describe the current state only**: No departure is recorded in this plan; the rows carry the proof.
+- **IV. Requirements are neutral and controlled**: No departure is recorded in this plan; the rows carry the proof.
+- **V. Hard cutover, no legacy path**: No departure is recorded in this plan; the rows carry the proof.
+- **VI. Names carry no version suffix**: No departure is recorded in this plan; the rows carry the proof.
+- **VII. One engine, no second database, no sync**: No departure is recorded in this plan; the rows carry the proof.
+- **VIII. Ask the graph, not a bespoke operation**: No departure is recorded in this plan; the rows carry the proof.
+- **IX. Connectors depend on the SDK and are called through arbora**: No departure is recorded in this plan; the rows carry the proof.
+- **X. Every ontology class rolls up to the core**: No departure is recorded in this plan; the rows carry the proof.
+- **XI. Code stays small, simple and unduplicated**: No departure is recorded in this plan; the rows carry the proof.
+- **XII. No ratchets and no suppressions**: No departure is recorded in this plan; the rows carry the proof.
+- **XIII. Zero flakes**: No departure is recorded in this plan; the rows carry the proof.
+- **XIV. Compile first, then review**: No departure is recorded in this plan; the rows carry the proof.
+- **XV. Python 3.14 standard, 3.12 floor**: No departure is recorded in this plan; the rows carry the proof.
+- **XVI. Install and deploy only from published releases**: No departure is recorded in this plan; the rows carry the proof.
+- **XVII. Publish the gate's tool before the gate**: No departure is recorded in this plan; the rows carry the proof.
+- **XVIII. Landed means reachable**: No departure is recorded in this plan; the rows carry the proof.
+- **XIX. A tag push publishes, with no manual approval**: No departure is recorded in this plan; the rows carry the proof.
+- **XX. Secrets are never traced or logged**: No departure is recorded in this plan; the rows carry the proof.
+- **XXI. Public files stay portable and neutral**: No departure is recorded in this plan; the rows carry the proof.
+
+
+## Project Structure
+
+```text
+specs/hosted-api-operations/          existing: spec.md, plan.md, requirements.md, tasks.md, test-spec.md
+arbora/api/ops/development.py         new: artifact reads, project mode, run start and status, proposal review (R896.1 to R896.5)
+tests/api/test_development_surface_served.py   new: served proofs of R896.1 to R896.6
+```
+
+## Phase 0: Research
+
+No unknowns; no research.md.
+
+## Phase 1: Design
+
+### Existing wiring to reuse
 
 `arbora.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `arbora.gateway.graph_api.register_graph_routes` composes the REST host. `arbora.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `arbora.a2a` already has authenticated unary task methods. `arbora.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `medulla`. Decisions, context, traces and durable WorkItems belong to `medulla`. `meristem` is the agent harness that applies engine decisions. Connector ingestion belongs to `agent-connector-sdk` (SCION-CONNECTOR-CONTROL-R005). Connector effects belong to the SDK and fleet. Arbora authenticates, composes, supervises, routes and projects.
 
-## Component and data flow
+### Component and data flow
 
 ```mermaid
 flowchart LR
@@ -24,7 +77,7 @@ Use immutable `OpSpec` data grouped by domain. An engine binding is generated fr
 
 The invocation order is: resolve and allowed surface. Strict params including authority-field rejection. Authenticate. Principal kind. Exact caller scopes. Eunomia decision. Caller-side subject access for service execution. Effect preview/confirmation. Durable audit reservation for governed effect. Execute under caller claims or allowlisted service identity. Record outcome. Map to one envelope. The service executor stamps the verified caller as record owner, refuses caller-supplied owner, and rechecks authorization before deferred work. A post-effect audit failure returns an indeterminate receipt and reconciliation handle.
 
-## Wire contracts
+### Wire contracts
 
 `POST /api/v1/ops/{op_id}` accepts the operation's JSON schema; `Idempotency-Key` is required for non-natural write ops. `GET /api/v1/registry` is caller-filtered and returns a digest ETag. `GET /api/v1/ops` and OpenAPI expose only public schema metadata; sensitive discovery is filtered per caller. Resource routes, including identity and fleet catalog paths, are generated from `HttpShape` and use the same handler. `Arbora-Plan-Ref` resumes a plan. HTTP preview returns 428 with `CONFIRMATION_REQUIRED` or `STEP_UP_REQUIRED`. MCP returns the same envelope in tool result. `meta.registry_digest` and `meta.api_version` are mandatory.
 
@@ -34,7 +87,7 @@ Scopes are exact. `mcp:discover` and `mcp:delegate` do not imply each other; `mc
 
 Error source is `engine`, `fleet`, or `arbora`. Engine error codes pass through unchanged from the packaged error contract; Arbora owns one mapping table for its closed enum. Details may include missing public scope names or a public target name, never secrets or private actor/tenant values. Timeouts and unknown outcomes remain typed errors. Stable API compatibility is checked against the merge base of public generated registry artifacts.
 
-## Migration and implementation order
+### Migration and implementation order
 
 1. Pin a public engine wheel that ships method/error/scope schemas. Add registry data and direct bindings. Check exact coverage and exclusions.
 2. Add invocation, policy, error, audit-reservation, and plan-lease services with fixture-backed tests. Reuse verified-session middleware and current server/client composition.
@@ -45,7 +98,7 @@ Error source is `engine`, `fleet`, or `arbora`. Engine error codes pass through 
 
 The retirement inventory is a checked artifact produced from the existing host registration table and the new registry. Each prior tool/route is labeled `mapped` with its new op ID or `dropped` with a reason and consumer search result. The cutover check enumerates FastMCP tools, Starlette routes and A2A methods at runtime and rejects undeclared extras. It also scans source for ad hoc `mcp.tool`, route registration, and child transport dispatch outside the approved factories. A transition is atomic for supported callers: generated client release, server mount, caller migration and old endpoint removal are reviewed together; no permanent fallback dispatcher remains. External clients receive v1 contract and migration note before stable path removal.
 
-## Fresh-checkout and quality design
+### Fresh-checkout and quality design
 
 - Run `uv sync --extra test` and `uv run pytest tests/api tests/fleet`.
 - Run `uv run ruff check .` and `uv run ruff format --check .`.
@@ -55,7 +108,7 @@ The retirement inventory is a checked artifact produced from the existing host r
 - Keep registry domain tables small. Prefer step tables over nested branching. Use one endpoint factory per surface and generated declarative types. Avoid repeated function bodies.
 - Eliminate the old implementation during cutover. Scanners and reviewers must see one authority.
 
-## Gateway carry-over: dashboard, Live Artifacts, widget
+### Gateway carry-over: dashboard, Live Artifacts, widget
 
 Cross-repo IDs: MERISTEM-BOUNDARY-R001.2, MERISTEM-BOUNDARY-R001.3, MERISTEM-BOUNDARY-R001.7 (meristem deletions); ARBORA-HOST-R005. Provenance: meristem commits 0eb67c99c (dashboard router), 902f906ca (Live Artifacts router), 7717d2e62 (genius_agent widget).
 
@@ -76,14 +129,14 @@ Deleted Live Artifacts router (no router-level auth in the old module):
 
 Deleted Agent summary widget: dashboard tile with type genius_agent, env prefix GENIUS_AGENT and observability category. Its fields were agents, skills, mcp_tools and status. Its data call returned hardcoded numbers and never contacted anything.
 
-### Design in this repository
+#### Design in this repository
 
 - Dashboard: owned by the existing dashboard router module and its aggregator, config manager and registry under the gateway package. No new module; add census and capability tests only.
 - Live Artifacts: new router module `arbora/gateway/artifacts_api.py` (to be created) with typed request model, a store port and a refresh port declared in the gateway ports module, and a register function that mounts the three routes. The store and refresh service come from a public `agent_utilities.api` export (prerequisite row); arbora never imports the meristem knowledge-graph package directly.
 - Pass the source resolver as a port argument, never a module global. The host supplies a graph-backed resolver. The default preserves prior data.
 - Agent summary widget: nothing to build.
 
-### Wiring
+#### Wiring
 
 - Dashboard: the register function in the dashboard router module mounts routes and the websocket; already called by the host.
 - Artifacts: the host composition point already mounts graph and usage routes. It calls a new register function for artifacts. Authentication: reuse the dashboard capability dependencies unchanged, as decision D3 states below. Use gateway:read for GET and gateway:write for POST, plus the gateway:admin and admin supersets. These are identity capabilities, not engine registry scopes. The old router had no router-level check, so this is an intentional tightening, called out in the parity table.
@@ -93,9 +146,9 @@ Out of scope:
 
 Out of scope: moving the Live Artifact store or refresh service from agent-utilities. Also out of scope: new dashboard widgets, layout-format changes, and an MCP artifact tool. The research-artifact tool is unrelated.
 
-### Caveat resolutions (design, 2026-10-10)
+#### Caveat resolutions (design, 2026-10-10)
 
-#### D2 Dashboard route parity (CONFIRMED by reading both files)
+##### D2 Dashboard route parity (CONFIRMED by reading both files)
 
 Compared `git show 0eb67c99c^:agent_utilities/gateway/api.py` (328 lines) with `arbora/gateway/dashboard_api.py` (389 lines). Both define the same 15 REST routes. The only addition is the websocket `/ws/dashboard` (moved from agent-webui; not part of the old router). Shared helpers are line-for-line equal. These include `_SERVICE_ID_RE` and the read and write capability sets (`gateway:read`, `gateway:write`, `gateway:admin`, `admin`; write excludes `gateway:read`). Both leave API-key callers unrestricted and exempt `/health` in the read dependency. Both fail closed with 403 when capability resolution raises and set `Cache-Control: no-store` on health. Supporting modules differ only in import paths, a naive-UTC `_naive_utcnow` replacing deprecated `datetime.utcnow` in `models.py` (same value), and a new service-session in `aggregator.py`.
 
@@ -119,13 +172,13 @@ Compared `git show 0eb67c99c^:agent_utilities/gateway/api.py` (328 lines) with `
 
 No route is missing. The capability resolver still imports internal meristem modules core.config and security.identity. This dependency difference belongs to R001.9. Decision: use the engine client session and source-sync methods required by ARBORA-HOST-R002 for shard, hydration, and active-engine state. Do not add another meristem public API export. Row R001.6 first tests whether the installed client exposes these methods. If not, block that row on the engine client owner. Keep present imports until then.
 
-#### D3 Live Artifacts authentication (DECIDED; not blocked)
+##### D3 Live Artifacts authentication (DECIDED; not blocked)
 
 Evidence: `arbora/api/registry/scopes.py` exports `FinanceScope`, `FleetScope`, `LoopsScope`, `OpsScope`; `arbora/api/policy/domain_scopes.py` lists `fleet:events` and `webui:{admin,maintainer,reader,user}`. The pinned engine `contract/scopes.json` (175 rows, the file `eg_binding._load_scopes` reads and `tests/api/test_registry_factory.py` checks for "unregistered EG scope") has no `gateway:*` row. So `gateway:read` and `gateway:write` are NOT registry scopes. They are identity capabilities that the dashboard resolves from the identity group capability map (`_dashboard_capabilities`). The earlier text calling them "already in the engine contract" was wrong and is corrected above.
 
 Decision: the artifact routes use the same dependencies as the dashboard routes (`_require_dashboard_read` for GET, `_require_dashboard_write` for POST, reused from `dashboard_api.py`, not copied). Behaviour matches sibling routes and no engine change is needed. Gateway scopes need no addition to the engine. `MEDULLA-IDENTITY-R007` registers `identity:admin`, `loops:read` and `loops:control` and is unrelated. The `loops:*` scopes are absent from the pinned `scopes.json` today. That is the concern of that row. Alternative rejected: map to registry scopes `webui:reader`/`webui:user`; those are the WebUI role namespace. That mapping creates a second authorization model for one gateway.
 
-#### D4 Agent-utilities export for artifacts (CONFIRMED; proposed AU row)
+##### D4 Agent-utilities export for artifacts (CONFIRMED; proposed AU row)
 
 Read `agent_utilities/knowledge_graph/live_artifacts/`. Public names: `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `render_template` (models.py); `LiveArtifactStore`, `get_live_artifact_store`, `ArtifactWriter` (store.py); `RefreshService`, `RefreshResult`, `DataSource` (refresh.py); `kg_source_resolver` (kg_source.py). `install_kg_artifact_source` imports the deleted `agent_utilities.gateway.artifacts_api` and always logs a failure; it must not be exported.
 
@@ -135,9 +188,9 @@ Proposed meristem row (orchestrator adds it; new file `agent_utilities/api/live_
 
 Because the AU resolver already re-runs `source_query`, ARBORA-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The arbora request model does not copy them.
 
-## Run read operations
+### Run read operations
 
-### Model and owner boundaries
+#### Model and owner boundaries
 
 `ARBORA-OPS-R021.4.1` through `.6` define the producer contract for both clients.
 The `runs` module, models, adapter and registry entries do not exist in current main.
@@ -150,7 +203,7 @@ Arbora must authenticate, route and project reads. It must not collect counters,
 Those rows prove graph readback; they do not promise a dedicated `get_run_summary` engine method.
 The adapter must use a published engine client contract. Missing client support blocks implementation, not the entire operation registry.
 
-### Explicit per-run mapping
+#### Explicit per-run mapping
 
 Arbora wire and generated client models must use the snake_case fields below.
 Views must consume those fields without reading RDF names or guessing aliases.
@@ -169,7 +222,7 @@ The applied configuration must resolve the recorded decision edge under the same
 Missing values must remain null with explicit availability metadata. A measured zero must remain zero.
 The adapter must reject malformed producer values rather than silently coerce them.
 
-### Aggregate semantics
+#### Aggregate semantics
 
 `RunMetricsParams` selects optional `model_profile_ref`, `task_class` and a bounded time window.
 The engine must apply filters before aggregation. Arbora must preserve the engine's grouping keys and evidence.
@@ -183,7 +236,7 @@ The result must keep different query groupings separate. Arbora must not broadca
 Any `run_count` must come from the engine for the same filter and grouping, never a client-side count.
 `cost_usd` belongs only to `runs.get`; aggregate cost must never populate that per-run field.
 
-### Current-plan read boundary
+#### Current-plan read boundary
 
 `ARBORA-OPS-R021.4.5` must expose `current_plan` as a read-only projection with explicit availability.
 A present snapshot must contain `run_id`, a producer revision, observation time, and ordered `items`.
@@ -202,7 +255,7 @@ Any durable graph projection needs an EG-owned contract first; R009 does not sup
 `runs.get` may return trace fields while `current_plan` remains explicitly unavailable.
 Clients must offer no plan mutation control. This read contract does not move harness or engine responsibilities.
 
-### Wiring and evidence
+#### Wiring and evidence
 
 REST `POST /api/v1/ops/{op_id}` and MCP must enter the existing invoke pipeline under `ARBORA-OPS-R009`.
 `handle_runs_get` and `handle_runs_metrics` must resolve `run_trace_reader` through `bound_service`.
@@ -211,7 +264,7 @@ REST `POST /api/v1/ops/{op_id}` and MCP must enter the existing invoke pipeline 
 Planned tests must enter those served surfaces, verify authority propagation, and observe the engine result or refusal.
 A protocol import or mocked handler alone must not count as served evidence.
 
-## ARBORA-OPS-R042 content screening and redaction
+### ARBORA-OPS-R042 content screening and redaction
 
 Data flow: POST route (arbora/api/http/routes.py:127) → `invoke` (arbora/api/invoke/pipeline.py:810) → screen → effect → redactor → response and trace.
 
@@ -223,7 +276,7 @@ Decision: one screen inside the single pipeline boundary. Rejected alternative: 
 
 Cross-repository: engine memory-write refusal, owner prefix `EG`, contract name memory write origin.
 
-## Policy lifecycle operations that guard plans (ARBORA-OPS-R050)
+### Policy lifecycle operations that guard plans (ARBORA-OPS-R050)
 
 Data flow starts with `policy.create` over POST /api/v1/ops/{op_id}. It calls `_base_authority` (arbora/api/invoke/pipeline.py:208), then `_policy` (:198). Next, `PolicyAuthority.authorize` (arbora/control_plane/policy/repository.py:179) produces the audit record.
 
@@ -233,7 +286,7 @@ Existing code: arbora/control_plane/policy/repository.py:100, :117, :129, :179; 
 
 Decision: Arbora serves the operation and admits plans, and the engine decides violation. Rejected: a policy evaluator inside Arbora, which duplicates engine decisions. Cross-repository: MEDULLA-DECISION-ENGINE-R001 owns policy decisions; Arbora owns authenticated operation admission and transport. Clause interpretation requires a published engine producer contract, not an AU policy evaluator.
 
-## Scoped security-evaluation operation (ARBORA-OPS-R051)
+### Scoped security-evaluation operation (ARBORA-OPS-R051)
 
 Data flow starts with `security.evaluate` over POST /api/v1/ops/{op_id}. `_effect` (arbora/api/invoke/pipeline.py:218) checks verified target authorization before calling new public EG selection/verdict adapters (MEDULLA-DECISION-ENGINE-R001/R138). The AU harness executes admitted probes. The engine returns the verdict, which is recorded in the audit record. Runtime limits and trace commits use MEDULLA-DECISION-ENGINE-R133; Decide itself remains read-only.
 
@@ -243,7 +296,7 @@ Existing code: arbora/security/security_policy_middleware.py:52; arbora/api/ops/
 
 Decision: EG owns catalog facts, selection and probe verdicts (MEDULLA-DECISION-ENGINE-R001/R138). AU executes the selected probes. Arbora admits by scope and serves the result. Reuse this R051 consumer instead of adding another security-evaluation rollup. Missing engine ports remain unavailable.
 
-## Authorization-segmented virtual schema projections (ARBORA-OPS-R052)
+### Authorization-segmented virtual schema projections (ARBORA-OPS-R052)
 
 Data flow: `query.projections` over POST /api/v1/ops/{op_id} -> `build_operation_runtime` (arbora/api/invoke/bootstrap.py:167) -> `scope_covers` -> audit record.
 
@@ -255,7 +308,7 @@ Decision: Arbora filters by the caller's verified grants over engine labels. Rej
 
 Caller-visible responses, counts, refusal details, traces and audit views reveal no uncovered projection, including indirectly through a withheld count. Such counts may exist only in a separately authorized operator audit that the denied caller cannot read. Served acceptance holds visible projections fixed while varying hidden projections. It checks that caller-visible fields stay unchanged. The denied caller's operator-audit read must refuse without count leakage. The separately authorized operator must be permitted to inspect the count.
 
-## Bounded interaction space (ARBORA-OPS-R053)
+### Bounded interaction space (ARBORA-OPS-R053)
 
 Data flow: `retrieval.space` over POST /api/v1/ops/{op_id} -> the governed retriever entry (arbora/control_plane/retrieval/service.py:61) -> `union_top_k` -> audit record.
 
@@ -265,9 +318,9 @@ Existing code: arbora/api/ops/retrieval.py:60, :77; arbora/control_plane/retriev
 
 Decision: the engine ranks and Arbora bounds the space. Rejected: returning ranked snippets only. Cross-repository: MEDULLA-FEDERATED-QUERY-R001 supplies query results, MEDULLA-DECISION-ENGINE-R029 chooses retrieval plans, MEDULLA-DECISION-ENGINE-R137 supplies context limits, and SCION-CONNECTOR-CONTROL-R005 supplies connector ingestion. AU executes engine-directed exploration.
 
-## Versioned memory files (ARBORA-OPS-R024.4)
+### Versioned memory files (ARBORA-OPS-R024.4)
 
-### Producer and existing boundary
+#### Producer and existing boundary
 
 [MEDULLA-DURABLE-KERNEL-R085](https://github.com/Knuckles-Team/medulla/tree/c0b952776129fd509b9f87b411a298593c2591ec/specs/durable-graph-kernel) owns authoritative content, versions, conflicts and sync evidence.
 R085 is a producer definition. Its merge does not establish runtime availability.
@@ -281,7 +334,7 @@ The current models contain no revisions, conflict retention, cursors or material
 Extend that module and service binding; do not add another authoritative store or reinterpret generic writes as versioned saves.
 Existing R024.4 evidence covers the generic operations only. Each new child requires independent acceptance.
 
-### Proposed Arbora operation contracts
+#### Proposed Arbora operation contracts
 
 These IDs define the Arbora consumer contract; they are not registered runtime capabilities yet.
 All calls use `POST /api/v1/ops/{op_id}` and the corresponding resident MCP verb.
@@ -304,7 +357,7 @@ Kinds are observations, reflections, profile and active_context.
 Cursor scope, ordering, authorization and expiry remain EG decisions under R085.2.
 The client must restart pagination after a refused cursor, never silently combine different snapshots.
 
-### Tagged outcomes and non-disclosure
+#### Tagged outcomes and non-disclosure
 
 Preserve EG's applied, observation_retained, conflict_retained, materialization_acknowledged and refused variants.
 There must be no shared accepted-head field outside the authorized variants.
@@ -321,7 +374,7 @@ The accepted head remains unchanged. Storage failure must not claim conflict ret
 Only an authorized exact-head resolve may change that head.
 EG controls retention and named holders; hosted artifact deletion must not release engine history independently.
 
-### Hosted files and observation-generation acknowledgments
+#### Hosted files and observation-generation acknowledgments
 
 A new host adapter must project snapshots under a configured hosted-memory root.
 The root and capability wiring attach beside `build_operation_runtime` at `arbora/api/invoke/bootstrap.py:167`.
@@ -343,7 +396,7 @@ Pending edits and unresolved conflicts prevent in_sync; missing evidence yields 
 Arbora must display EG's in_sync, graph_ahead, file_ahead, conflict or unavailable without a local competing state machine.
 Crash recovery must reread EG evidence and current hosted bytes before retrying materialization or acknowledgment.
 
-### R009 authority and R013 idempotency alignment
+#### R009 authority and R013 idempotency alignment
 
 The generated HTTP route must enter `invoke` at `arbora/api/invoke/pipeline.py:810` before calling the memory port.
 Use its verified tenant, principal, graph incarnation and policy; request bodies must not replace them.
@@ -356,7 +409,7 @@ Same identity with another body must refuse. Replay after revocation must not re
 Arbora journal integration must preserve EG's durable idempotency identity rather than minting another identity on retry.
 Existing R009/R013 delivery evidence does not prove these new memory-specific requirements.
 
-### WebUI consumer mapping
+#### WebUI consumer mapping
 
 [OVERSTORY-APPS-R031](https://github.com/Knuckles-Team/agent-webui/tree/main/specs/arbora-app-surface) remains the existing presentation owner.
 This Arbora change does not edit or deliver WebUI requirements.
@@ -371,7 +424,7 @@ This Arbora change does not edit or deliver WebUI requirements.
 Producer order is R085 implementation and generated contracts, Arbora port and serving, host materializer, then WebUI consumption.
 Missing producer implementation must remain unavailable. Definitions and planned tests must never count as served receipts.
 
-## Owner-bound projections (ARBORA-OPS-R054–R058, R061, R063)
+### Owner-bound projections (ARBORA-OPS-R054–R058, R061, R063)
 
 - **R054:** Keep `rlm.benchmark` separate from serving-technique evidence. Add a projection through `arbora/api/ops/registry_factory.py:get_registry` and `arbora/api/invoke/pipeline.py:invoke` only after `MERISTEM-INTEGRATION-R014` publishes its producer and receipt.
 - **R055:** Bind a read/proposal projection through the shared registry/invoke path only after AU publishes liveness and proposal contracts. No Arbora termination adapter exists.
@@ -379,21 +432,21 @@ Missing producer implementation must remain unavailable. Definitions and planned
 - **R057:** Add no repository-writeback attachment until EG `R094.2/.3/.5/.7` and SDK source-effect/receipt contracts publish. The current Arbora tree has no serializer or served handler.
 - **R058:** Use the existing schema-context routes/service for read-only data. Add no table mutation or statistics until WebUI and EG publish their contracts.
 
-### ARBORA-OPS-R061: indexed usage projection
+#### ARBORA-OPS-R061: indexed usage projection
 
 1. Bind the Arbora read to EG RunTraceUsageQueryV1 / MEDULLA-ORCH-VOCAB-R010.101; derive tenant only from verified caller claims and pass the producer's bounded window, model/project/agent grouping, currency, page size, and snapshot cursor.
 2. Extend the usage.py reader with closed UsageQueryV1 and UsageProjectionV1 models. Add a distinct usage.index.query port beside usage.read. Use existing usage:read, build_read_op, registry_factory, and shared invoke. Keep accounting separate from runs.metrics (R021.4.3/.4) and usage.read.
 3. Preserve four disjoint EG counters, producer totals, unknown reasons, pinned PriceTableV1, minor units, revisions, coverage, watermark, and cursor. Aggregate exact rational amounts by final group and category. Apply half-even rounding once. Keep unknown values unknown with reasons and coverage; never use zero. Keep currencies separate unless EG supplies pinned FX. Bind p95 <= 500 ms from authenticated-handler entry through serialized response. Use 1,000,000 indexed traces, 32 readers, and 1,000 fixed-window queries. Bind data/index/cache-policy revisions. Missing or invalid profile evidence is unavailable; an exceeded bound is not success.
 4. Connect the projection to WebUI ObservabilityView.tsx under WEBUI-APPS-R004.8.1-.6. Served proof compares groups with an independent EG ledger. It exercises authorization, pagination, unknown values, stale revisions, and absent, invalid, or exceeded profile evidence. This remains planned work, not runtime delivery.
 
-### ARBORA-OPS-R063: retrieval evaluation and context projection
+#### ARBORA-OPS-R063: retrieval evaluation and context projection
 
 1. Bind the MEDULLA-DECISION-ENGINE-R100.100 DecisionEval ranking receipt. Map RetrievalRankingSubmit to RetrievalRankingV1. Map Method::RetrievalContextSearch to RetrievalContextSearchV1. Do not derive quality from retrieval.search or local RRF.
 2. Extend arbora/api/ops/retrieval.py with closed evaluation, comparison, and context models. Register retrieval.evaluation.compare and retrieval.context.search. Use existing build_read_op, memory:read, registry factory, and shared invoke for HTTP/MCP.
 3. Require identical corpus, complete label-set revision/digest, query-set ID/revision/digest, evaluator revision, k, and query inputs across algorithms. Pin each algorithm's settings digest to its own registered configuration. Preserve producer metrics and result digests. For hits_at_k, use the full identically labeled query set as denominator. Count a query when any relevant result appears in top k. Preserve half-open UTF-8 offsets into original stored text. Bind query/index/authorization revisions and a snapshot cursor. Limit responses to 100 spans and 8 KiB each. If indexing normalizes text, preserve a separate NFC digest and validate its byte map to original text.
 4. Align WebUI TryItPanel.tsx under WEBUI-APPS-R001.1.1-.6. Served proof checks two-algorithm metrics and identical inputs. It tests hostile-source escaping before highlighting and preserves original byte spans. It also checks Unicode slicing, authorization, staleness, missing labels, invalid maps, and limits. This remains planned work, not runtime delivery.
 
-## Additional owner requirements
+### Additional owner requirements
 
 - `ARBORA-OPS-R024.1.1`: Plan the owner work and dependencies defined in requirements.md.
 - `ARBORA-OPS-R014.1`: Plan the owner work and dependencies defined in requirements.md.
@@ -411,7 +464,7 @@ Missing producer implementation must remain unavailable. Definitions and planned
 - `ARBORA-OPS-R065`: Plan the owner work and dependencies defined in requirements.md.
 - `ARBORA-OPS-R066`: Plan the owner work and dependencies defined in requirements.md.
 
-## Projection bindings and producer prerequisites (R059, R060, R062, R064–R066)
+### Projection bindings and producer prerequisites (R059, R060, R062, R064–R066)
 
 These operation names and schemas are proposed contracts. No new operation is registered by this specification change.
 All six projections reuse the current authenticated invocation path.
@@ -423,7 +476,7 @@ Bind verified caller authority before producer access; client-supplied tenant fi
 Derive scopes from the published EG contract. Missing scope or owner method keeps the operation unavailable.
 A proposed method name below describes an owner specification, not an existing runtime export.
 
-### R059: evolution metrics
+#### R059: evolution metrics
 
 Extend `arbora/api/ops/usage.py:operations` and its composed reader for `evolution.proposals.metrics`.
 The producer is `MEDULLA-ORCH-VOCAB-R010.100`, proposed `Method::EvolutionTraceMetrics` and `EvolutionTraceMetricsV1`.
@@ -436,7 +489,7 @@ Planned proof: `tests/api/test_evolution_metrics_served.py::test_proposal_metric
 Independently read two stored traces, their metrics, and AU progress through authenticated HTTP and MCP.
 Refuse stale windows, changed digests, unknown prompt revisions, and foreign tenants without data disclosure.
 
-### R060: harness sessions
+#### R060: harness sessions
 
 Extend the existing usage reader and registry for manifest, discovery, browse, search, and cost projections.
 SCION-SOURCE-INGEST-R013 owns `connector-sync --once` and the complete source-operation manifest.
@@ -452,7 +505,7 @@ Planned proof: `tests/api/test_sessions_served.py::test_full_manifest_sessions_a
 Exercise two available sources and a third unavailable source through HTTP, MCP, and OVERSTORY-APPS-R006.4.
 Check independent trace readback, replay, restart, cursor paging, cost units, unknown prices, and cross-tenant refusal.
 
-### R062: graph changes
+#### R062: graph changes
 
 MEDULLA-DURABLE-KERNEL-R043.100 specifies `Method::OpenGraphSnapshot` and `Method::ReadGraphChanges`.
 Extend the composed read operations in `arbora/api/ops/memory.py:operations` for feed and recovery projection.
@@ -473,7 +526,7 @@ Planned proof: `tests/api/test_graph_changes_served.py::test_two_clients_recover
 Exercise concurrent writes, duplicates, delayed/reordered events, gaps, expiry, reconnect, and revocation.
 A missing profile, measurement, adapter, or owner binding cannot produce a passing latency result.
 
-### R064: viewport queries
+#### R064: viewport queries
 
 Extend `arbora/api/ops/retrieval.py:operations` with viewport and selection handlers using its composed EG reader.
 MEDULLA-FEDERATED-QUERY-R081.103 owns `ViewportQueryV1` through `Method::UnifiedQuery` and `Method::ResolveViewportSelection`.
@@ -485,7 +538,7 @@ Planned proof: `tests/api/test_viewport_served.py::test_billion_point_viewport_k
 Enter HTTP and MCP with scatter and line requests against a declared billion-point indexed source.
 Independently inspect serialized bytes and bin counts. Check pan, zoom, selection, gaps, and stale-token refusal with OVERSTORY-APPS-R001.2.
 
-### R065: meetings
+#### R065: meetings
 
 Extend the composed operation declarations in `arbora/api/ops/memory.py:operations` for transcript and summary reads.
 Route provider effects through the existing invocation policy and receipt boundary, never through a read handler.
@@ -501,7 +554,7 @@ Planned proof: `tests/api/test_meeting_served.py::test_corrected_final_transcrip
 Exercise partial segments, gaps, corrections, exact replay, finalization, and both admitted execution classes with OVERSTORY-APPS-R001.5.
 Check independent provenance readback and zero provider calls for stale revisions or denied capture/egress.
 
-### R066: bookmarks
+#### R066: bookmarks
 
 Extend `arbora/api/ops/retrieval.py:operations` with search, relationship, and bounded export projections.
 MEDULLA-MEDIA-VOCAB-R001.102 specifies `Method::BookmarkSemanticSearch` and `Method::BookmarkRelations`.
@@ -521,7 +574,7 @@ This section grants no delivery or runtime evidence.
 
 References: [EG orchestration](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/orchestration-vocabulary/spec.md), [EG durable kernel](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/durable-graph-kernel/spec.md), [EG query](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/federated-query-and-reasoning/spec.md), [EG media](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/media-and-personal-vocabulary/spec.md), [SDK ingest](https://github.com/Knuckles-Team/agent-connector-sdk/blob/a0f78fefbb486e4c7d97e608462cf5847a46bc7d/specs/SCION-SOURCE-INGEST/spec.md).
 
-### 2026-10-16: Generated Python invocation boundary
+#### 2026-10-16: Generated Python invocation boundary
 
 R025.1 extends the existing scripts/gen_api.py emitter. Validate operation IDs
 against its packaged registry before transport. Compare every response digest
@@ -529,11 +582,11 @@ with the generated registry identity before returning the envelope. Preserve
 matching refusal details. Full R025 still requires deterministic generation from
 a compatible engine contract and packaged artifacts.
 
-### 2026-10-16 — Separate deterministic and natural-language queries
+#### 2026-10-16 — Separate deterministic and natural-language queries
 
 `query.uql` remains deterministic under `query:unified`; `query.nl` is the authorized resolver fallback under `query:nl`. The latter binds its inner graph from the verified caller and preserves provider planner-unavailable refusals. No scope is automatically granted. Remaining SQL, search, indexes and analytics acceptance under R018.2 remains deferred.
 
-### 2026-10-16: R025.2 packaged schema references
+#### 2026-10-16: R025.2 packaged schema references
 
 Generate each provider schema document once per artifact surface. Registry
 snapshots and OpenAPI components reference those documents. Keep the provider
@@ -547,7 +600,7 @@ The wheel includes the registry and shared schema documents. Acceptance covers
 clean installed-wheel use, missing and unsafe references, deterministic generation
 and equality of resolved schemas. This proof does not establish a live server.
 
-### 2026-10-17: R025.2 canonical client and OpenAPI schemas
+#### 2026-10-17: R025.2 canonical client and OpenAPI schemas
 
 Share schema reference resolution between generation and the installed client.
 Keep the generic transport invoker as one runtime source. Generate only its
@@ -559,7 +612,7 @@ scanner acceptance without exclusions or reduced thresholds.
 Run the canonical hosted scanner for generator, generated artifact and scanner
 workflow changes in pull requests. Keep publication limited to release tags.
 
-## Parity composed operations (ARBORA-OPS-R801 to R842)
+### Parity composed operations (ARBORA-OPS-R801 to R842)
 
 Each row composes served `eg.<domain>.<Method>` operations (see `arbora/api/registry/eg_binding.py`) into one operation or skill for a named consumer. No row adds an engine method. Writes go through the governed change path and carry `Confirm.PLAN`.
 
@@ -608,11 +661,11 @@ Each row composes served `eg.<domain>.<Method>` operations (see `arbora/api/regi
 | `ARBORA-OPS-R841` | `ingest.packs.validate` | `eg.storage.ConnectorPack`, `eg.reasoning.ShaclValidate`, `eg.reasoning.OntologyInspect`, `eg.graph.AddNode` | skill library ingest; universal-skills |
 | `ARBORA-OPS-R842` | `actions.run` | `eg.graph.ApplyMutation`, `eg.transactions.TxnPlanWriteback`, `eg.storage.WriteBack`, `eg.security.GovernedChange`, `eg.reasoning.ShaclValidate`, `eg.transactions.BeginTxn`, `eg.transactions.Commit` | agent-webui actions |
 
-## ARBORA-OPS-R843 — replaced tool wrappers
+### ARBORA-OPS-R843 — replaced tool wrappers
 
 The pinned engine contract generates one `eg.<domain>.<Method>` operation per callable method (`ARBORA-OPS-R008`). The wrapper modules in meristem call the same methods through an in-process client. A harness that reaches arbora over MCP or `fleet.call` needs none of them. `ARBORA-OPS-R843.2` records where each remaining module goes.
 
-## Amendment 2026-10-18: SDK current-plan contract adoption
+### Amendment 2026-10-18: SDK current-plan contract adoption
 
 ARBORA-OPS-R021.4.5.1 consumes SCION-CONNECTOR-CONTROL-R070 through the SDK's published package. Replace the local item, snapshot, read and request definitions with the SDK models. Keep the existing caller forwarding, read-only operation, scope, unavailable shape and freshness projection. Regenerate the API registry and check wire compatibility. A real SDK-created read must pass projection; body-supplied tenant or principal must fail before calling the reader.
 
@@ -620,11 +673,11 @@ This migration does not compose a producer, grant run access, choose a run owner
 
 The consumer stays on the SDK 0.2 release line for this change. SDK 0.3 changes the default MCP tool surface and requires separate compatibility acceptance. Successful task admission or these DTO tests do not prove live tool execution. The reported agents.run refusal for an unavailable native tool remains a separate served acceptance requirement.
 
-## Web research operation (R067)
+### Web research operation (R067)
 
 `research.web` is one served operation. It composes owners; it decides nothing. The engine answers the search as a virtual source (`MEDULLA-UNIFIED-DATA-PLANE-R038.7.7`). The engine selects the pages (`MEDULLA-DECISION-ENGINE-R802`). A connector reads each page through the SDK contract (`SCION-SOURCE-INGEST-R005.40`). The engine ingests and enriches each page (`MEDULLA-UNIFIED-DATA-PLANE-R651.7`).
 
-### Web-source conformance admission (R067.10)
+#### Web-source conformance admission (R067.10)
 
 The existing `FleetCaller` obtains an effect decision from `fleet_gateway`.
 The gateway resolves the admitted item again at call time. That decision path
@@ -656,7 +709,7 @@ Reuse: the ingest runner port of `ARBORA-OPS-R020.1`, the job status read of `AR
 
 Budget: 5 pages and a 60 s deadline by default, with at most 32 pages and 300 s. These are starting defaults. A measurement on this platform replaces them.
 
-## Connector sources through the SDK sync runner (ARBORA-OPS-R020.6)
+### Connector sources through the SDK sync runner (ARBORA-OPS-R020.6)
 
 Depends-on: [SDK source sync runner](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/SCION-SOURCE-INGEST/spec.md)
 
@@ -668,11 +721,11 @@ Call path for `ingest.sources.sync`: `invoke` → `sync_source` (`arbora/ingest/
 
 A sync is resumable. The KV checkpoint keeps the cursor and the record digests after each accepted batch. A later sync with a new idempotency key resumes from that checkpoint.
 
-### 2026-10-18 installed-wheel model fixture correction (ARBORA-OPS-R001)
+#### 2026-10-18 installed-wheel model fixture correction (ARBORA-OPS-R001)
 
 The unary A2A boot check copies its local model server into the isolated test directory. It waits for that subprocess to listen before starting Arbora. A missing or exited fixture must report its startup log rather than surface as a later model connection error. Qualification covers actual loopback completions and the workflow fixture bundle. TUI qualification requires a published client with the current A2A contract. The published ACP client is not compatible evidence. This correction grants no host authority and makes no streaming or production-model claim.
 
-### 2026-10-18 published TUI qualification dependency (ARBORA-OPS-R001)
+#### 2026-10-18 published TUI qualification dependency (ARBORA-OPS-R001)
 
 The test extra must install the published A2A-capable TUI client. The wheel boot job exports this extra with hashes. It runs the existing headless prompt test against the authenticated local stack and model fixture. Passing requires the expected model reply and no skipped tests. Source checkouts do not replace this package qualification.
 
@@ -698,7 +751,7 @@ Successful served evaluation remains an owner implementation prerequisite; a
 test-supplied decision cannot stand in for it. No additional user policy decision
 is identified for this reader slice.
 
-## Served harness component and improvement library operations (R068)
+### Served harness component and improvement library operations (R068)
 
 arbora serves the reads and the adoption of the versioned harness
 substrate. The component reads bind to the engine query of
@@ -712,7 +765,7 @@ ranking and stores no harness content. The engine is the sole
 authority for versions, contrasts and lessons. The in-run cycle that
 drives these operations belongs to meristem (MERISTEM-HARNESS-CYCLE-R001).
 
-## Served source operations (R848)
+### Served source operations (R848)
 
 arbora serves the source operations over the engine source control.
 `source.tree`, `source.blob`, `source.diff`, `source.history` and
@@ -726,7 +779,7 @@ The development surface is served through the repository-manager
 connector's tools. repository-manager is the development surface used
 inside arbora MCP. arbora serves the underlying `source.*` operations.
 
-### 2026-10-20: R848 decomposition; read delivery on the pinned EG 2.27.3 substrate (R848.1, R850)
+#### 2026-10-20: R848 decomposition; read delivery on the pinned EG 2.27.3 substrate (R848.1, R850)
 
 R848 splits into `ARBORA-OPS-R848.1` (the source reads -- delivered),
 `ARBORA-OPS-R848.2` (the source writes -- pending the engine changeset
@@ -784,7 +837,7 @@ before any content. A denied subpath ends the stream with a terminal
 error frame. Traversal and frame counts stay bounded: 4096 tree
 calls, 100000 entries.
 
-## Server-side landing policy (R849)
+### Server-side landing policy (R849)
 
 `source.land` applies the landing policy on the server. Before
 landing, the fast gates of the pipelines gate standard run against the
@@ -794,14 +847,14 @@ reason. After landing, the full suite runs. On failure, the engine
 records the bisect and revert decision of MEDULLA-SCM-R009. No merge queue
 is kept.
 
-## Virtual checkout endpoint (R850)
+### Virtual checkout endpoint (R850)
 
 The endpoint serves a virtual checkout as a stream. It resolves
 directories, then blobs. Resolution is recursive and resumable. A
 resumed checkout continues from the last acknowledged entry. Clients
 obtain only what they need. The stream honors the caller's path ACL.
 
-## Git bridge (R851)
+### Git bridge (R851)
 
 The bridge serves a git smart-HTTP read endpoint. It accepts clone
 and sync requests over EG trees for legacy git tools. Mirror push
@@ -809,7 +862,7 @@ goes to the public git hosting mirrors. The repository-manager
 connector owns mirror sync and the connector mapping. arbora serves
 the underlying `source.*` operations.
 
-## Graph-driven development, context, governance and wire-access operations (R848.4, R852 to R858)
+### Graph-driven development, context, governance and wire-access operations (R848.4, R852 to R858)
 
 These rows serve engine methods. arbora adds admission, scopes, approvals and tool hints. It
 holds no rule, role table or policy for any of them.
@@ -829,10 +882,10 @@ Each new module registers in the curated module loop at `arbora/api/ops/registry
 Each handler calls its generated `eg.*` method. The registry then lists the tool with its
 read-only or destructive hint.
 
-## Served program optimization operations (R860)
+### Served program optimization operations (R860)
 
 The engine compiles programs and holds the champion pointer (MEDULLA-DECISION-ENGINE-R810, MEDULLA-DECISION-ENGINE-R812). arbora serves three thin operations over them. `program.optimize` submits the job. `program.promote` and `program.rollback` need an approved plan and commit through the engine. arbora holds no score, threshold or verdict.
-### 2026-10-22: durable public replay (ARBORA-OPS-R021.4.7)
+#### 2026-10-22: durable public replay (ARBORA-OPS-R021.4.7)
 
 Reuse canonical WorkItem ownership and EG RunEvent nodes, not a host event store.
 AU owns event sequence and completion. The public v1 projection carries
@@ -855,7 +908,7 @@ Histories above 10,000 events or with earlier gaps, repeated IDs or terminal
 continuation fail closed. Owner and query engine refusals retain their native
 code through the shared HTTP/MCP pipeline.
 
-### 2026-10-22: native replay task identity (ARBORA-OPS-R021.4.7)
+#### 2026-10-22: native replay task identity (ARBORA-OPS-R021.4.7)
 
 Both run reads accept the authoritative root `task_id` separately from `run_id`.
 Authorize that task through the shared WorkItem authority, then match the stored
@@ -864,7 +917,7 @@ Never derive native IDs or scan owners. Event task IDs still identify children.
 Payload hydration uses small bounded batches and stops at the raw page budget. This is a memory bound, not a performance qualification.
 
 
-### 2026-10-22: native owner boundary decomposition (ARBORA-OPS-R001)
+#### 2026-10-22: native owner boundary decomposition (ARBORA-OPS-R001)
 
 Factor native claim validation, scoped execution, admitted identity validation,
 and WorkItem submission into bounded helpers. Preserve authority and ledger routing. Preserve exact owner graph, separate WorkItem/run identities,
@@ -873,7 +926,7 @@ Run-event ordering and terminal record validation retain existing semantics.
 The committed terminal reader still routes via session.graph; a separate
 owner-routing slice must bind the trusted WorkItem engine graph and test
 session/owner graph divergence before changing this behavior.
-### 2026-10-22: Decompose public replay validation
+#### 2026-10-22: Decompose public replay validation
 
 ARBORA-OPS-R021.4.7 keeps its admission and replay contract unchanged while
 separating event identity, safe payload projection, ordered page validation,
@@ -889,7 +942,7 @@ changed modules within cyclomatic 10 and cognitive 15; no limits or exclusions
 changed. This is consumer-side regression evidence, not native producer or
 released-dependency qualification.
 
-### 2026-10-22: immutable native admission recovery (ARBORA-OPS-R001)
+#### 2026-10-22: immutable native admission recovery (ARBORA-OPS-R001)
 
 Before native submission, read the configured EG owner-bound run admission.
 Compare every original Submit field and context field except issuance and expiry
@@ -897,7 +950,7 @@ timestamps. Matching admissions reuse only the engine-issued identity, never
 resubmit historical context. Recover ambiguous submits with one owner lookup;
 refuse mismatches and unavailable legacy evidence. Lease authority is unchanged.
 
-### 2026-10-22: compose failure recovery through the public runtime facade
+#### 2026-10-22: compose failure recovery through the public runtime facade
 
 ARBORA-OPS-R001 composes immutable admission recovery, authorized completed
 retry reads, planner failure accounting, failed A2A receipts and native owner
@@ -907,7 +960,7 @@ before execution, so its remaining execution path needs no duplicate terminal
 branch. Source-overlay checks do not qualify released dependencies or native
 terminal production.
 
-## Served dashboard operations (R861)
+### Served dashboard operations (R861)
 
 No spec owned user-saved assets. The search `git grep -n -i "dashboard\|catalog asset\|saved query" -- specs` found only the gateway layout router (R039) and the fleet catalog operations. Neither stores a user document. R861 extends this spec because it owns served operations. The consumer is OVERSTORY-DASH-R010 in agent-webui.
 
@@ -915,7 +968,7 @@ The engine stores each dashboard as a catalog asset with an owner, grants and a 
 
 Call path: the served `invoke` receives the call and resolves the caller principal and tenant. It validates params. It then calls the engine through the client in `arbora/api/ops/dashboard.py`. `dashboard.delete` follows the existing `Confirm.PLAN` pattern of R860.3. `dashboard.list` and `dashboard.get` are reads. `dashboard.save` and `dashboard.share` are writes. Panel queries remain opaque strings. A later `query` call, made by the viewer under the viewer principal, runs them.
 
-### 2026-10-24: shared execution explorer, without a parallel graph service
+#### 2026-10-24: shared execution explorer, without a parallel graph service
 
 `ARBORA-OPS-R021.4.8` and `ARBORA-OPS-R021.4.9` extend the existing
 `runs.get` / `runs.events`, RunTraceReader and public projection. They do not
@@ -968,7 +1021,7 @@ active-message and completed-continuation admission contracts in
 required before any client advertises an interaction. No EG changes or new native
 authority work are part of this specification change.
 
-### 2026-10-24: bounded flat read extension
+#### 2026-10-24: bounded flat read extension
 
 R021.4.8.1 is the first bounded slice, not a replacement for R021.4.8.
 `runs.execution_graph` negotiates a new projection with a required schema version
@@ -1003,7 +1056,7 @@ R021.4.8.2 retains the parent row's nested production and snapshot/update proof.
 It remains open after the flat slice passes its source checks. The parent row
 cannot close from the flat slice alone.
 
-### 2026-10-24: boolean schemas in the compatibility gate
+#### 2026-10-24: boolean schemas in the compatibility gate
 
 R026.2 compares legitimate JSON Schema booleans before dictionary traversal.
 An input schema must not narrow the previously accepted values. A result schema
@@ -1016,14 +1069,14 @@ The flat projection permits canonical keys for the full run/step ID bounds,
 including non-BMP Unicode. It counts serialized node and edge contributions
 before whole-snapshot serialization, then checks the exact final byte size.
 
-### 2026-10-24: bounded graph validation functions
+#### 2026-10-24: bounded graph validation functions
 
 R021.4.8.1 separates predecessor validation and lifecycle transition validation.
 The extraction preserves validation order, identity checks, bounds and refusal
 messages. Source tests cover every step-state and task-event pair. This does not
 expand the projection or qualify the parent requirement.
 
-## Medulla companion rows (2026-10-28)
+### Medulla companion rows (2026-10-28)
 
 - `ARBORA-OPS-R069`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-OPS-R070`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
@@ -1031,11 +1084,11 @@ expand the projection or qualify the parent requirement.
 - `ARBORA-OPS-R072`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-OPS-R073`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 
-## Build contract
+### Build contract
 
 This section applies to `ARBORA-OPS-R009.6` to `ARBORA-OPS-R009.9`, `ARBORA-OPS-R024.6` and `ARBORA-OPS-R897` with its children. Each row must pass the pre-commit gates on the first commit.
 
-### Gates and values
+#### Gates and values
 
 The values come from `.pre-commit-config.yaml` and `pyproject.toml`.
 
@@ -1047,7 +1100,7 @@ The values come from `.pre-commit-config.yaml` and `pyproject.toml`.
 - The clone gate allows 0 new clone pairs among changed functions. The two modules `participants.py` and `assistants.py` share one builder table and one result mapper.
 - The surface gate `scripts/check_api_surface.py` expects the added operations in the registry. The scope gate expects the five new scopes in `arbora/security/scope_registry.py`.
 
-### Shapes
+#### Shapes
 
 - Dispatch on an operation is a table from operation id to engine method and op name. No handler branches on the operation id.
 - A request is one pydantic model or one dataclass. `HookRequest` and `DeliveryRequest` replace argument lists.
@@ -1056,8 +1109,32 @@ The values come from `.pre-commit-config.yaml` and `pyproject.toml`.
 - Reuse these helpers and write no near-copy: `build_read_op`, `build_write_op`, `Params`, the span masker of `arbora/security/log_redaction.py`, `Registry.get`, `_typed_refusal` and the KV calls of `arbora/api/ops/memory.py`.
 - Register every module where the wiring gate sees it: `registry_factory.py` for operation modules and `InvokeServices` for the hook chain.
 
-### Design points
+#### Design points
 
 - The engine owns every memory fact and refusal. Arbora forwards the caller's own session and adds no rule.
 - The input hook runs after `_resolve` and before `_confirmation_gate`. The call then has a verified caller, and no audit or effect reservation exists yet.
 - The output hook runs before `_record`, so the effect journal stores the hooked outcome and a replay returns it.
+
+## Phase 2: Task approach
+
+tasks.md carries one numbered task line for each active row. Tasks run producer first. A task marked `[P]` may run in parallel with its neighbours. The development rows `R896.1` to `R896.5` run after the engine rows they cite.
+
+## Complexity Tracking
+
+none
+
+## Build contract
+
+Each row names its test. The repository pre-commit and pre-push hooks and the pull request gates apply. No row may use a suppression or a ratchet. The development operations must add no per-question operation and no policy table.
+
+## Production caller chain
+
+Each row names its entry point and caller chain in its own text. The development rows enter at the MCP intent tools, pass `invoke`, and reach `arbora/api/ops/development.py`. That module calls the engine and holds no decision.
+
+## Cross-repo seams
+
+- `MEDULLA-SDLC-R014.6` and `MEDULLA-SDLC-R014.7` provide the competency queries that `ARBORA-OPS-R896.1` runs. The medulla contract is `specs/development-lifecycle/contracts/spec-artifact-graph.md`.
+- `MEDULLA-SDLC-R012.8` provides the project mode that `ARBORA-OPS-R896.2` serves.
+- `MEDULLA-SDLC-R015` provides the dispatch decision that `ARBORA-OPS-R896.3` and `.4` start and observe. `MERISTEM-SCM` holds the task-run row.
+- `MEDULLA-SDLC-R017` provides the proposals that `ARBORA-OPS-R896.5` lists and reviews. The medulla contract is `specs/development-lifecycle/contracts/proposal-review.md`.
+- The `Depends on` lines of requirements.md name every other seam by the row ID that owns it in the other repository.

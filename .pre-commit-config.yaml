@@ -96,6 +96,8 @@ repos:
     stages: [pre-commit, pre-push]
   - id: spec
     stages: [pre-push, manual]
+  - id: spec-templates
+    stages: [pre-push, manual]
 
 - repo: local
   hooks:
