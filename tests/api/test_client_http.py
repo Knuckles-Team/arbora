@@ -7,9 +7,13 @@ import json
 import httpx
 import pytest
 
-from arbora.client._generated_models import REGISTRY_DIGEST
+from arbora.client._models import registry_digest
 from arbora.client.http import HttpTransport, OperationError
 from arbora.client.invoke import invoke
+
+# spec: ARBORA-OPS-R025
+# spec: ARBORA-OPS-R025.1
+# spec: ARBORA-HOST-R001.3
 
 
 def _transport(
@@ -31,7 +35,7 @@ async def test_invoke_posts_the_operation_with_a_bearer_token() -> None:
         {
             "ok": True,
             "result": {"value": {}},
-            "meta": {"registry_digest": REGISTRY_DIGEST},
+            "meta": {"registry_digest": registry_digest()},
         },
     )
     http = HttpTransport("https://arbora.example", "tok", transport=mock)
@@ -50,7 +54,7 @@ async def test_refusal_raises_the_operation_code() -> None:
         {
             "ok": False,
             "error": {"code": "ACCESS_DENIED"},
-            "meta": {"registry_digest": REGISTRY_DIGEST},
+            "meta": {"registry_digest": registry_digest()},
         },
     )
     http = HttpTransport("https://arbora.example", "tok", transport=mock)

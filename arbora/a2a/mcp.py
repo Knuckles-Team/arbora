@@ -40,12 +40,6 @@ def _admitted_handlers(
         operation_services=operation_services,
         operation_authenticator=operation_authenticator,
     )
-    if operation_services is not None:
-        from arbora.api.registry.contract_admission import (
-            validate_contract_admission,
-        )
-
-        validate_contract_admission(operation_services.registry)
     return handlers
 
 

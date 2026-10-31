@@ -1,8 +1,7 @@
-"""Privacy-safe errors; engine codes derive only from generated provider evidence."""
+"""Privacy-safe errors; engine codes map through arbora.api.engine_errors."""
 
 from __future__ import annotations
 
-import importlib
 import json
 import logging
 import re
@@ -111,19 +110,13 @@ class EngineRefusal(Exception):
 
 
 def _engine_error(code: str) -> tuple[int, bool]:
-    from arbora.api.registry.contract_admission import _error_entry
+    from arbora.api.engine_errors import ENGINE_ERRORS
     from arbora.api.registry.eg_binding import EgContractError
 
     try:
-        table = importlib.import_module(
-            "arbora.api.generated.engine_errors"
-        ).ENGINE_ERRORS
-        entry = table[code]
-        if not isinstance(entry, tuple) or len(entry) != 2:
-            raise EgContractError("malformed generated engine error entry")
-        return _error_entry(code, *entry)
-    except (ImportError, AttributeError, KeyError, TypeError) as exc:
-        raise EgContractError("engine error is absent from generated contract") from exc
+        return ENGINE_ERRORS[code]
+    except KeyError as exc:
+        raise EgContractError("unknown engine error code") from exc
 
 
 @dataclass(slots=True)
