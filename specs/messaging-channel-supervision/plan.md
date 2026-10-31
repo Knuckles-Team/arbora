@@ -41,3 +41,23 @@ Authenticated GET /api/dashboard/health and graph_configure(action="health") exp
 ## Quality and environment
 
 At implementation, run the focused messaging tests and served health acceptance cases in test-spec.md, then the repository's standard spec and lifecycle gates. This spec publication adds no runtime code and claims no execution of the newly defined served health cases.
+
+## Build contract
+
+This section applies to `ARBORA-MESSAGING-R700.1` to `ARBORA-MESSAGING-R700.4`. Each row must pass the pre-commit gates on the first commit.
+
+### Gates and values
+
+The values come from `.pre-commit-config.yaml` and `pyproject.toml`. They match the list in the `hosted-api-operations` plan.
+
+- Ruff selects `E`, `F`, `I`, `UP` and `B` with line length 88. Mypy checks each new module. Vulture runs at confidence 95.
+- The wiring gate fails a module with no production fan-in. `memory_subscriptions.py` is reached from `arbora/api/ops/messaging.py`. `webhook_delivery.py` and `memory_webhooks.py` are reached from the supervised job registered in `arbora/messaging/supervision.py`.
+- New functions stay at cyclomatic 10, cognitive 15 and 35 statements. The clone gate allows 0 new clone pairs.
+
+### Shapes
+
+- Delivery is one function that takes a `DeliveryRequest`. The function reuses `send_webhook` of `arbora/messaging/action_dispatch.py` and adds no second transport.
+- Matching an event to subscriptions is a table lookup from topic to subscription list.
+- A function takes at most one boolean parameter.
+- Each concern has its own file: `memory_subscriptions.py`, `webhook_delivery.py` and `memory_webhooks.py`.
+- Engine calls go through `send_engine` of `arbora/api/ops/_engine.py` (`ARBORA-OPS-R897.1`).

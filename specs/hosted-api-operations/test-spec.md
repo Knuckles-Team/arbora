@@ -407,3 +407,20 @@ The failing real-boot assertion remains unchanged until the hosted serving path 
 - `ARBORA-OPS-R071`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-OPS-R072`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-OPS-R073`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+
+## Participant memory, operator hooks and assistant profiles
+
+- `ARBORA-OPS-R009.6`: Test: `tests/api/test_operator_hooks.py::test_bootstrap_refuses_absent_write_or_recursive_hook` (module test). Test: `tests/api/test_operator_hooks.py::test_hooks_load_in_declared_order` (module test). Hot-path proof: `ARBORA-OPS-R009.9`.
+- `ARBORA-OPS-R009.7`: Test: `tests/api/test_operator_hooks.py::test_input_hook_allow_redact_and_reject` (served: HTTP and MCP through the registry `invoke`) asserts the three decisions and the order of two hooks.
+- `ARBORA-OPS-R009.8`: Test: `tests/api/test_operator_hooks.py::test_output_hook_redacts_and_rejects_and_replay_matches` (served: HTTP and MCP) asserts the replayed response equals the hooked response.
+- `ARBORA-OPS-R009.9`: Test: `tests/api/test_operator_hooks.py::test_timeout_error_and_unknown_decision_reject_with_hook_failed` (served) and `::test_decisions_are_recorded_without_matched_text` (served). Hot-path proof: `tests/api/test_operator_hooks.py::test_two_hooks_through_http_and_mcp` enters through the HTTP route and the MCP tool.
+- `ARBORA-OPS-R024.6`: Test: `tests/api/test_participant_ops_served.py::test_derivation_status_reaches_the_engine` (served: HTTP and MCP, loopback engine).
+- `ARBORA-OPS-R897`: Satisfied only when every child is satisfied. Root journey: `tests/api/test_participant_ops_served.py::test_participant_memory_journey` (served: HTTP and MCP).
+- `ARBORA-OPS-R897.1`: Test: `tests/api/test_participant_models.py::test_models_round_trip_engine_vectors` (module test). Test: `tests/api/test_memory_ops.py::test_memory_ops_still_round_trip_after_send_extraction` (served).
+- `ARBORA-OPS-R897.2`: Test: `tests/api/test_participant_ops_served.py::test_participant_put_and_member_add_round_trip` (served: HTTP and MCP) asserts replay by idempotency key and both refusal codes.
+- `ARBORA-OPS-R897.3`: Test: `tests/api/test_participant_ops_served.py::test_scope_and_observation_round_trip_with_refusals` (served).
+- `ARBORA-OPS-R897.4`: Test: `tests/api/test_participant_ops_served.py::test_turn_append_commits_and_enqueues` (served, loopback engine) and `::test_backlog_refusal_keeps_the_turn`.
+- `ARBORA-OPS-R897.5`: Test: `tests/api/test_participant_ops_served.py::test_ask_and_card_return_citations_or_typed_refusals` (served).
+- `ARBORA-OPS-R897.6`: Test: `tests/api/test_assistant_ops_served.py::test_profile_and_document_set_round_trip_and_run_reference` (served).
+- `ARBORA-OPS-R897.7`: Test: `tests/api/test_participant_registration.py::test_registry_lists_every_operation_and_scope_is_registered` (module test). Test: `tests/api/test_participant_registration.py::test_engine_codes_map_to_status` (module test).
+- `ARBORA-OPS-R897.8`: Test: `tests/api/test_participant_ops_served.py::test_participant_memory_journey` (served: HTTP and MCP).
