@@ -244,8 +244,13 @@ warn_unused_ignores = true
 testpaths = ["tests"]
 addopts = "-q"
 # A hung test fails with its name and stack instead of stalling the gate to
-# the job cap (the full suite stalled at 8% for 24 minutes, no test failing).
-timeout = 300
+# the job cap. The thread method fires even when the test is blocked outside
+# the interpreter loop or in a fixture finalizer, where the signal method never
+# ran (the full suite stalled at 94% until the 20-minute job cap, timeout=300
+# never firing). It dumps every thread's stack and ends the worker, so xdist
+# reports the hanging test by name.
+timeout = 120
+timeout_method = "thread"
 asyncio_mode = "auto"
 markers = [
     "spec: binds a test to a spec requirement ID",

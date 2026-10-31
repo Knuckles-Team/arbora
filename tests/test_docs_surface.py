@@ -44,10 +44,7 @@ def test_architecture_names_each_supported_ecosystem_entrypoint() -> None:
     ):
         assert entrypoint in architecture
     assert "conversational ACP chat remains an explicit contract gap" in architecture
-    assert (
-        "adapters and the inbound router remain owned by agent-utilities"
-        in architecture
-    )
+    assert "Meristem holds no adapters or router" in architecture
 
 
 def test_pages_uses_the_sanctioned_shared_brand_reference() -> None:

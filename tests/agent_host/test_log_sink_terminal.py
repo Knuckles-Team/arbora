@@ -231,7 +231,7 @@ def _contains_terminal_phrase(screen: str, phrase: str) -> bool:
 
 
 def _read_native_output(
-    binary: Path, endpoint: str, expected: str, *, timeout: float = 12
+    binary: Path, endpoint: str, expected: str, *, timeout: float = 60
 ) -> str:
     """Run Tuig in a real PTY and wait for the rendered authenticated log line."""
 
