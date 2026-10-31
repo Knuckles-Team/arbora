@@ -59,7 +59,7 @@ Specs are already designed. The work is implementation, delivered in very small,
 **Specs update themselves (land VERIFIED, not just LANDED)**
 - Every commit that delivers a requirement ends with the trailer "Spec: <ID>[, <ID>...]". A commit that touches code without delivering one says "Spec: none (ci|deps|refactor|fix-forward)".
 - Every delivered ID gets at least one test bound to it in the same PR. Python: "@pytest.mark.spec("<ID>")". Rust/TypeScript: a `// spec: <ID>` line directly above the test.
-- `status.json` is computed at read time and never committed (`pipelines-hook spec-status --write` writes an ignored local copy). Never write placeholder SHAs. If the work is only part of a requirement, decompose it into `<ID>.<n>` children first and deliver whole children.
+- Spec status is computed at read time and never committed ("pipelines-hook spec-status --write" writes an ignored local copy). Never write placeholder SHAs. If the work is only part of a requirement, decompose it into `<ID>.<n>` children first and deliver whole children.
 - Write the marker with the literal ID, never a variable. Put `Spec:` and `Co-Authored-By:` on consecutive lines in the last paragraph of the commit message, or `Spec:` is not read as a trailer.
 - The generator applies the rules. Run "pipelines-hook spec-status" to see each row's state.
 
