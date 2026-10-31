@@ -20,7 +20,7 @@ Governing spec: [spec.md](spec.md).
 
 ## Quality and release gates
 
-[Specify applicable CCCC, jscpd, dupehound, KISS, language-native, contract, package, runtime, and release gates with their exact repo commands. No scanner gaming or duplicate implementation.]
+[Specify applicable language-native, contract, package, runtime, and release gates with their exact repo commands. No duplicate implementation.]
 
 ## Risks, alternatives, and decisions
 
