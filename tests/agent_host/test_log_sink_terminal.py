@@ -279,10 +279,10 @@ def _read_native_output(
                     break
                 screen.feed(decoder.decode(chunk))
 
-            # AGENT_TASK_ID keeps the native UI out of the composer.  Open the
-            # real host-log view through its normal key route once the UI has
-            # drawn its key hint, not after a fixed delay a loaded runner can miss.
-            if not sent_logs_key and "l: host logs" in screen.snapshot():
+            # AGENT_TASK_ID keeps the native UI out of the composer.  Once the
+            # initial task request has had a bounded opportunity to settle,
+            # open the real host-log view through its normal key route.
+            if not sent_logs_key and time.monotonic() - started >= 2:
                 os.write(master, b"l")
                 sent_logs_key = True
 
