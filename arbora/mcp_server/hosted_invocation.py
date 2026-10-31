@@ -7,7 +7,6 @@ from typing import Any
 from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.invoke.pipeline import InvokeServices, OperationRefused, invoke
 from arbora.api.invoke.steps import RequestCaller
-from arbora.api.registry.contract_admission import validate_contract_admission
 from arbora.mcp_server.task_plan import TaskPlanConfig, evaluate_task_plan
 
 
@@ -37,11 +36,6 @@ class HostedInvocation:
             self.task_plan_config, TaskPlanConfig
         ):
             raise TypeError("task plan configuration must be trusted TaskPlanConfig")
-        self.validate()
-
-    def validate(self) -> None:
-        """Recheck provider admission before each surface is mounted."""
-        validate_contract_admission(self.services.registry)
 
     async def evaluate_task_plan(
         self, caller: RequestCaller, question_id: str, proposal: Mapping[str, Any]
@@ -49,7 +43,6 @@ class HostedInvocation:
         """Shared backend evaluation; durable execution admission is separate."""
         if self.task_plan_config is None:
             raise OperationRefused("UNAVAILABLE", {"capability": "task_plan"})
-        self.validate()
         return await evaluate_task_plan(
             self.services, self.task_plan_config, caller, question_id, proposal
         )
@@ -62,14 +55,12 @@ class HostedInvocation:
         """
         from arbora.acp.central_runtime import configure_central_acp
 
-        self.validate()
         configure_central_acp(app, self, trusted_roots=trusted_roots)
 
     def http_application(self) -> Any:
         """The operation-invoke API application over these shared services."""
         from arbora.api.http.app import create_api_application
 
-        self.validate()
         return create_api_application(
             services=self.services,
             visibility=self.services.policy_gate.check_op,
@@ -80,7 +71,6 @@ class HostedInvocation:
     def run_compatibility_application(self) -> Any:
         from arbora.api.http.app import create_run_compatibility_application
 
-        self.validate()
         return create_run_compatibility_application(
             services=self.services, authenticator=self.authenticator, invoke=invoke
         )

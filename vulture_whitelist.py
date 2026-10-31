@@ -8,4 +8,14 @@ after_version_id: object = None
 after_server_id: object = None
 after_sequence: object = None
 target_url: object = None
-_ = (after_agent_id, after_version_id, after_server_id, after_sequence, target_url)
+drift_id: object = None
+repair_id: object = None
+_ = (
+    after_agent_id,
+    after_version_id,
+    after_server_id,
+    after_sequence,
+    target_url,
+    drift_id,
+    repair_id,
+)

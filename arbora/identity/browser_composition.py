@@ -116,7 +116,6 @@ def build_browser_boundary(
     from arbora.identity.issuer import IssuerSettings, LocalIssuer
     from arbora.security.request_identity import verify_local_bearer_token
 
-    invocation.validate()
     ports = build_engine_identity_ports(client, graph=graph, refresh=False)
     signer = LocalIssuer(
         store, IssuerSettings(issuer, audience, tenant), ports.credentials

@@ -259,7 +259,6 @@ class NativeGatewayApplication:
         if all(value is None for value in dependencies):
             mount_rest_routes(app, prefix=prefix)
             return
-        from arbora.api.registry.contract_admission import validate_contract_admission
         from arbora.api.registry.eg_binding import EgContractError
 
         if any(value is None for value in dependencies):
@@ -268,7 +267,6 @@ class NativeGatewayApplication:
             )
         from arbora.api.http.app import create_api_application
 
-        validate_contract_admission(services.registry)
         child = create_api_application(
             services=services,
             visibility=visibility,

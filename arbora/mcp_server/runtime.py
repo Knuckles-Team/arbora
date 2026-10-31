@@ -915,7 +915,6 @@ def _register_graph_tool_surface(
 
         if not isinstance(invocation, HostedInvocation):
             raise TypeError("admitted hosted invocation is required")
-        invocation.validate()
         # ARBORA-HOST-R024: Arbora serves its own intent surface over the
         # shared operation registry and invocation pipeline, so every served
         # operation (``eg.*`` included) is discoverable and callable through

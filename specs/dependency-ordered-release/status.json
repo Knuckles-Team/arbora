@@ -199,11 +199,11 @@
         "6d39a589385a"
       ],
       "verified_by": [
-        "tests/api/test_task_plan_schema_pin.py:143",
-        "tests/api/test_task_plan_schema_pin.py:155",
-        "tests/api/test_task_plan_schema_pin.py:171",
-        "tests/api/test_task_plan_schema_pin.py:187",
-        "tests/api/test_task_plan_schema_pin.py:343"
+        "tests/api/test_task_plan_schema_pin.py:141",
+        "tests/api/test_task_plan_schema_pin.py:153",
+        "tests/api/test_task_plan_schema_pin.py:169",
+        "tests/api/test_task_plan_schema_pin.py:184",
+        "tests/api/test_task_plan_schema_pin.py:338"
       ]
     },
     {
