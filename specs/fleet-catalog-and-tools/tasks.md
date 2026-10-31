@@ -50,7 +50,7 @@ Check a task only after its linked code and tests land. A checked source task is
 - T12 — Run the disposable two-replica reload and fault probe against the landed revision. Attach generation, receipt, trace, timing, and policy evidence. Record completed acceptance only for passing slices.
 - T13 — Add or verify a check script that scans every fleet connector count-pin site (compatibility matrix, bundle-catalog schema, check scripts, `ontology.lock`, federated IRI, `genesis.yaml`) and fails when any site disagrees with the live connector count. Cover ARBORA-FLEET-R023, not covered by T01–T12.
 - T14 (ARBORA-FLEET-R024): Take over fleet reconciliation, autoscaling, scaling authority and deploy watch from the agent runtime as typed Arbora operations with parity and authorization tests. Split into T14.1–T14.3 below; ARBORA-FLEET-R024 is now a rollup over ARBORA-FLEET-R024.1–R024.3.
-- ARBORA-FLEET-R023.1 (child, producer): `arbora/fleet/connector_count_pins.py` + `scripts/check_connector_count_pins.py` + `tests/test_check_connector_count_pins.py`. Real sites (compatibility matrix, bundle-catalog schema, `ontology.lock`, federated IRI) remain cross-repo/Meristem-owned follow-up.
+- ARBORA-FLEET-R023.1 (child, producer): `arbora/fleet/connector_count_pins.py` + `scripts/check_connector_count_pins.py` + `tests/test_check_connector_count_pins.py`. Real sites (compatibility matrix, bundle-catalog schema, `ontology.lock`, federated IRI) remain cross-repo/AU-owned follow-up.
 - T14 (ARBORA-FLEET-R024): Take over fleet reconciliation, autoscaling, scaling authority and deploy watch from the agent runtime as typed Arbora operations with parity and authorization tests.
 - T14 (ARBORA-FLEET-R024): Take over fleet reconciliation, autoscaling, scaling authority and deploy watch from the agent runtime as typed Arbora operations with parity and authorization tests. Split into T14.1–T14.3 below; ARBORA-FLEET-R024 is now a rollup over ARBORA-FLEET-R024.1–R024.3.
 - T14.1 (ARBORA-FLEET-R024.1): Port the deploy-watch verdict decision (`agent_utilities.orchestration.deploy_watch.run_deploy_watch`'s probe-reduction rule) as a typed `fleet.deploy_watch.evaluate` Arbora operation behind the shared registry caller/scope/policy chokepoint, with parity tests against the original success/failed/unobserved rule and a negative test refusing a caller without the `mcp:delegate` scope.
@@ -318,7 +318,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T051 ARBORA-FLEET-R007.2 meristem's arbora bridge surface gains native prompt/resource/template registration (cross-repo, owner: meristem).
 - [ ] T052 ARBORA-FLEET-R007.3 The served bridge exercises native prompts, resources and templates end to end.
 - [ ] T053 ARBORA-FLEET-R011 Registry core computes a canonical digest and authorized find.
-- [ ] T054 ARBORA-FLEET-R012 Medulla-direct binding generator with reviewed exclusions.
+- [ ] T054 ARBORA-FLEET-R012 EG-direct binding generator with reviewed exclusions.
 - [ ] T055 ARBORA-FLEET-R012.1 Engine operations come from the engine's served descriptors, not a contract file.
 - [ ] T056 ARBORA-FLEET-R013 MCP projection exposes the six verbs with typed schemas.
 - [ ] T057 ARBORA-FLEET-R014 Resolver ranks catalog items with partitioned feedback.

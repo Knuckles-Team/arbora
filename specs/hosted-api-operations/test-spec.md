@@ -460,7 +460,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R039.5` | Test: `tests/gateway/test_dashboard_api.py::test_daemon_status_key_sets_are_pinned` (L2). It fails when any of the five keys is dropped. |
 | `ARBORA-OPS-R039.6` | Test: `tests/gateway/test_dashboard_api.py::test_daemon_shards_reads_engine_snapshot_and_refuses_when_absent` (L3). It asserts the snapshot body, both refusals and no import of `knowledge_graph` modules. |
 | `ARBORA-OPS-R039.7` | Test: `tests/gateway/test_dashboard_api.py::test_hydration_routes_call_served_ingest_and_keep_refusal_codes` (L3). It asserts the job identifier, the three refusal codes and the status shape. |
-| `ARBORA-OPS-R039.9` | tests/gateway/test_dashboard_api.py: 403 cases unchanged; an import census shows no Meristem-internal import. |
+| `ARBORA-OPS-R039.9` | tests/gateway/test_dashboard_api.py: 403 cases unchanged; an import census shows no AU-internal import. |
 | `ARBORA-OPS-R040.1` | An meristem test imports each name from the public module. |
 | `ARBORA-OPS-R040.2` | Test: `tests/gateway/test_artifacts_api.py::test_create_request_rejects_empty_template_and_oversize_data` (L1). Verified by the route test `test_create_and_refusal_cases`. |
 | `ARBORA-OPS-R040.3` | Test: `tests/gateway/test_ports.py::test_artifact_ports_are_runtime_protocols` (L1). |

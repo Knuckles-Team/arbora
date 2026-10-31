@@ -240,7 +240,7 @@ Do not fill this gap with an unsigned preference, client-selected scope or files
 
 R010.7 resolves terminal, web or both before startup and passes the authenticated effective preference to R009.5.
 R009.5 provides `agent_terminal_ui.app.run_host_terminal(receipt: HostLaunchReceipt, *, client: AgentClient, log_reader: HostLogReader | None) -> None`.
-Inject the existing authenticated client and the Tuig-defined `agent_terminal_ui.client.HostLogReader` implementation.
+Inject the existing authenticated client and the TUI-defined `agent_terminal_ui.client.HostLogReader` implementation.
 Its asynchronous method is `read(log_ref: str, *, cursor: str | None, limit: int) -> HostLogBatch`.
 Arbora implements the authorized producer side under R009.3 and R009.4; TUI owns rendering, subscription and cancellation under R002.3 through R002.5.
 The reader uses only the opaque reference and reauthorizes each read and reconnect. No new route or file reader is implied.
@@ -532,7 +532,7 @@ attached-plan retries remain fail closed until protected receipt reuse and
 private fence renewal are validated without reconstructing publication times.
 
 Scoped source tests verify original limits, measured initial consumption and
-matching aggregate result/event usage. Native first owner submission and claim pass against the rebuilt engine. Replay still fails with an idempotency conflict because the request context timestamps change. Resolve replay via an Medulla-owned protected lookup by admitted run identity. Validate caller, request digest and native run binding. Do not guess engine-assigned ids or timestamps.
+matching aggregate result/event usage. Native first owner submission and claim pass against the rebuilt engine. Replay still fails with an idempotency conflict because the request context timestamps change. Resolve replay via an EG-owned protected lookup by admitted run identity. Validate caller, request digest and native run binding. Do not guess engine-assigned ids or timestamps.
 The complete native submit/retry/get/list/cancel proof has not passed.
 
 Initial publication uses EG's required empty revision zero. The controlled
