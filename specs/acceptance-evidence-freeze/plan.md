@@ -46,3 +46,17 @@ Targeted pytest: `tests/test_check_acceptance_evidence.py`, covering a fully evi
 ## Risks, alternatives, and decisions
 
 Alternative considered: extending `check_public_specs.py`'s `_requirement_entry_errors` to also fail on an incomplete `ACCEPTED`-readiness set for `LANDED` rows. Rejected for this slice because that function enforces structural correctness of claims already made (a row that claims `ACCEPTED` without evidence is a lie and must hard-fail CI); a `LANDED` row that is simply not yet audited is not a lie and must not fail the public-specs gate. The two concerns stay in separate tools so the readiness worklist can be run informationally without blocking delivery-lane PRs.
+
+## Concept-proof phases
+
+Delivery follows five phases. Each phase closes a larger loop. A family joins the earliest phase whose scenario exercises it (`ARBORA-ACCEPTANCE-R006`).
+
+| Phase | Proves | Families |
+|---|---|---|
+| P1 | An agent writes an evidenced claim and a later run retrieves it under policy | Durable kernel core writes, contract basics, arbora identity, host and ingress, meristem harness cycle, retrieval and context bundles, run-trace vocabulary |
+| P2 | The loop is reliable, inspectable and measurably useful | Provenance and bitemporal reads, version-checked writes, retrieval outcomes and evaluation, one SDK source-ingest connector |
+| P3 | Ownership boundaries hold with several agents and humans | Meristem boundary cuts, arbora fleet and A2A, node-level visibility, contradiction records |
+| P4 | The unified planner earns its scope | One cross-modal plan with its falsification gate, write-time shapes and a small entailment set, memory decay and consolidation |
+| P5 | Scale and breadth | Cluster and resharding, lakehouse formats, finance, media vocabularies, wire-protocol parity, every other family |
+
+P5 work starts only after P4 passes. If the P4 falsification gate fails, the unified planner stops expanding. Medulla then serves as the durable evidence store, and cross-modal work runs through contracts.
