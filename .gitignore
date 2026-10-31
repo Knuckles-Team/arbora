@@ -34,6 +34,7 @@ site/
 !/.specify/memory/
 /.specify/memory/*
 !/.specify/memory/constitution.md
+!/.specify/templates/
 dist-*/
 target-*/
 .venv/
