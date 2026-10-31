@@ -2,14 +2,21 @@
   "schema_version": 2,
   "spec_id": "ARBORA-ACCEPTANCE",
   "owner_repo": "arbora",
-  "delivery_state": "VERIFIED",
+  "delivery_state": "SPECIFIED",
   "requirement_ids": [
     "ARBORA-ACCEPTANCE-R001",
     "ARBORA-ACCEPTANCE-R001.1",
     "ARBORA-ACCEPTANCE-R002",
     "ARBORA-ACCEPTANCE-R003",
     "ARBORA-ACCEPTANCE-R004",
-    "ARBORA-ACCEPTANCE-R005"
+    "ARBORA-ACCEPTANCE-R005",
+    "ARBORA-ACCEPTANCE-R006",
+    "ARBORA-ACCEPTANCE-R006.1",
+    "ARBORA-ACCEPTANCE-R006.2",
+    "ARBORA-ACCEPTANCE-R006.3",
+    "ARBORA-ACCEPTANCE-R006.4",
+    "ARBORA-ACCEPTANCE-R006.5",
+    "ARBORA-ACCEPTANCE-R006.6"
   ],
   "requirements": [
     {
@@ -93,6 +100,63 @@
       "verified_by": [
         "tests/test_check_acceptance_evidence.py:272"
       ]
+    },
+    {
+      "id": "ARBORA-ACCEPTANCE-R006",
+      "title": "Concept-proof scenarios define done for each delivery phase (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-ACCEPTANCE-R006.1",
+        "ARBORA-ACCEPTANCE-R006.2",
+        "ARBORA-ACCEPTANCE-R006.3",
+        "ARBORA-ACCEPTANCE-R006.4",
+        "ARBORA-ACCEPTANCE-R006.5",
+        "ARBORA-ACCEPTANCE-R006.6"
+      ]
+    },
+    {
+      "id": "ARBORA-ACCEPTANCE-R006.1",
+      "title": "P1 scenario: the minimal closed loop on one node",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-ACCEPTANCE-R006.2",
+      "title": "P2 scenario: the loop is reliable and inspectable",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-ACCEPTANCE-R006.3",
+      "title": "P3 scenario: boundaries hold with several agents",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-ACCEPTANCE-R006.4",
+      "title": "P4 scenario: the cross-modal bet and memory maintenance",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-ACCEPTANCE-R006.5",
+      "title": "Scenarios run in process on every pull request",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-ACCEPTANCE-R006.6",
+      "title": "An ephemeral deployed stack validates the scenarios nightly",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }
