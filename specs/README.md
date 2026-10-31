@@ -18,7 +18,7 @@ integration, quality and release proof), `tasks.md` (ordered implementation and 
 carries one entry per requirement ID defined in `requirements.md`, each with its own
 `delivery_state` and evidence; a requirement counts as delivered only with a merged-head commit on
 the default branch.
-Start from [`_template/`](_template/). Keep status and evidence explicit; a planned or tested item
+Start from the templates in `.specify/templates/`. Keep status and evidence explicit; a planned or tested item
 is not a landed item. Put durable evidence links in the spec directory, never local scratch output.
 This follows a specify/plan/tasks flow with an explicit test contract. The tracked [constitution](../.specify/memory/constitution.md) records this repository's governing principles.
 
