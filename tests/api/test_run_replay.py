@@ -207,7 +207,7 @@ async def test_http_and_mcp_use_same_registered_run_handler(
     from arbora.api.http.auth import AmbientHTTPAuthenticator
     from arbora.api.invoke.pipeline import invoke
     from arbora.api.mcp.verbs import MCPProjection, dispatch_verb
-    from arbora.api.registry import Registry, contract_admission
+    from arbora.api.registry import Registry
     from tests.api.test_invoke_contract import setup_services
 
     op = next(item for item in operations() if item.id == "runs.events")
@@ -235,9 +235,6 @@ async def test_http_and_mcp_use_same_registered_run_handler(
         return caller
 
     runtime.dispatch = dispatch
-    monkeypatch.setattr(
-        contract_admission, "validate_contract_admission", lambda _: None
-    )
     auth = AmbientHTTPAuthenticator(session_for_request=lambda _: caller.session)
     auth.authenticate = resolve
     app = create_run_compatibility_application(
@@ -349,7 +346,7 @@ async def test_native_refusals_preserved_on_http_and_mcp(
     from arbora.api.http.auth import AmbientHTTPAuthenticator
     from arbora.api.invoke.pipeline import invoke
     from arbora.api.mcp.verbs import MCPProjection, dispatch_verb
-    from arbora.api.registry import Registry, contract_admission
+    from arbora.api.registry import Registry
     from arbora.mcp_server.run_reader import NativeRunReader
     from tests.api.test_invoke_contract import setup_services
 
@@ -382,9 +379,6 @@ async def test_native_refusals_preserved_on_http_and_mcp(
         return caller
 
     runtime.dispatch = dispatch
-    monkeypatch.setattr(
-        contract_admission, "validate_contract_admission", lambda _: None
-    )
     auth = AmbientHTTPAuthenticator(session_for_request=lambda _: caller.session)
     auth.authenticate = resolve
     app = create_run_compatibility_application(

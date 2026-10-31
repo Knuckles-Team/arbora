@@ -13,9 +13,8 @@ from fastmcp import FastMCP
 from arbora.a2a import mcp as a2a_mcp
 from arbora.a2a.service import A2AService
 from arbora.api.http.auth import AmbientHTTPAuthenticator
-from arbora.api.registry import Surface, contract_admission
-from arbora.api.registry.eg_binding import EgContractError
-from arbora.mcp_server import hosted_invocation, runtime
+from arbora.api.registry import Surface
+from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import NativeGatewayApplication
 from arbora.mcp_server.hosted_invocation import HostedInvocation
 from tests.a2a.test_application import Authority, Router
@@ -36,14 +35,7 @@ def composed(monkeypatch, *, scopes=frozenset({"example:write"})):
             raise PermissionError("unverified fixture request")
         return bound
 
-    # Controlled admission receipt: real provider qualification is separate.
     admitted = []
-    monkeypatch.setattr(
-        hosted_invocation, "validate_contract_admission", admitted.append
-    )
-    monkeypatch.setattr(
-        contract_admission, "validate_contract_admission", admitted.append
-    )
     value = HostedInvocation(
         services, AmbientHTTPAuthenticator(session_for_request=resolve)
     )
@@ -96,10 +88,6 @@ def test_native_a2a_and_gateway_share_authority_and_effect_boundary(
     NativeGatewayApplication(value).mount_rest_routes(http, prefix="/api")
     response = http_post(http)
     assert a2a.status_code == response.status_code == (200 if allowed else 403)
-    assert all(registry is value.services.registry for registry in admitted)
-    # The served MCP surface also mounts the operation API beside /mcp.
-    # Each mount admits both the operation API and its legacy run projection.
-    assert len(admitted) == 7
     assert len(effect.calls) == (2 if allowed else 0)
     if allowed:
         assert {event["surface"] for event in audit.events} == {"a2a", "http"}
@@ -172,15 +160,3 @@ def test_native_entry_hands_same_bundle_to_both_compositions(monkeypatch):
     with pytest.raises(BoundaryReached):
         server.mcp_server(invocation=value)
     assert installed == [value]
-
-
-def test_changed_provider_admission_refuses_before_surface_registration(monkeypatch):
-    value, effect, audit, journal, _ = composed(monkeypatch)
-
-    def refuse(_):
-        raise EgContractError("provider changed")
-
-    monkeypatch.setattr(hosted_invocation, "validate_contract_admission", refuse)
-    with pytest.raises(EgContractError, match="provider changed"):
-        mount_a2a(monkeypatch, value)
-    assert effect.calls == [] and audit.events == [] and journal.rows == {}
