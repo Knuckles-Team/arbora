@@ -20,7 +20,7 @@ The environment adapter resolves the profile and validates host capabilities, th
 | Single-host container | Container runtime, pinned images, explicit writable volumes and secret references | One Arbora host, one graph authority, guarded identity and repeatable startup/recovery. |
 | Kubernetes | Namespace/RBAC target, pinned image digest, secret-provider references, mounts and probes | Explicit service account, rollout/rollback, readiness and post-deploy functional receipts. |
 
-The renderer can vary by target, but profile validation, config resolution, engine contract verification and functional check definitions are shared. Keep engine storage and graph semantics in `epistemic-graph`; Arbora owns only deployment composition and diagnostics. The WebUI is an optional co-service, not a required core import. Public sample profiles use placeholder domains and secret references only.
+The renderer can vary by target, but profile validation, config resolution, engine contract verification and functional check definitions are shared. Keep engine storage and graph semantics in `medulla`; Arbora owns only deployment composition and diagnostics. The WebUI is an optional co-service, not a required core import. Public sample profiles use placeholder domains and secret references only.
 
 ## Delivery order
 
