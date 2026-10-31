@@ -287,7 +287,23 @@
     "ARBORA-OPS-R070",
     "ARBORA-OPS-R071",
     "ARBORA-OPS-R072",
-    "ARBORA-OPS-R073"
+    "ARBORA-OPS-R073",
+    "ARBORA-OPS-R862",
+    "ARBORA-OPS-R863",
+    "ARBORA-OPS-R864",
+    "ARBORA-OPS-R865",
+    "ARBORA-OPS-R866",
+    "ARBORA-OPS-R867",
+    "ARBORA-OPS-R868",
+    "ARBORA-OPS-R869",
+    "ARBORA-OPS-R870",
+    "ARBORA-OPS-R871",
+    "ARBORA-OPS-R872",
+    "ARBORA-OPS-R873",
+    "ARBORA-OPS-R874",
+    "ARBORA-OPS-R875",
+    "ARBORA-OPS-R876",
+    "ARBORA-OPS-R877"
   ],
   "requirements": [
     {
@@ -3198,6 +3214,118 @@
     {
       "id": "ARBORA-OPS-R073",
       "title": "Host resource-grant binding for incremental indexing",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R862",
+      "title": "Surface a recommendation only after a passing safety-bound verdict",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R863",
+      "title": "Issue a recommendation approval receipt bound to a record digest",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R864",
+      "title": "Execute only the bound retrieval provider",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R865",
+      "title": "Approve queued write-back proposals",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R866",
+      "title": "Serve tool search from the Medulla tool ranking",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R867",
+      "title": "Block an action until approval when medulla requires confirmation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R868",
+      "title": "Carry the table-of-contents identity in space directory listings",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R869",
+      "title": "Gate generated-code materialization on a committed admission record",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R870",
+      "title": "Serve authenticated changeset review and call medulla Decide",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R871",
+      "title": "Accept a playbook write step only with a committed Decide record",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R872",
+      "title": "Check the certification attestation before workflow invocation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R873",
+      "title": "Start the workflow engine lazily on first invocation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R874",
+      "title": "Return registry identities from the host semantic workflow match",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R875",
+      "title": "Run the upgrade admission before the invoke certification step",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R876",
+      "title": "Report the loop continuation from the latest committed record",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R877",
+      "title": "Write team records and apply the coordination decision",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
