@@ -209,8 +209,8 @@ Absent producer compatibility contracts return PRODUCER_UNAVAILABLE. Host parsin
 
 | Producer | Required public contract | Host consumer and remaining gap |
 |---|---|---|
-| [EG typed packs](https://github.com/Knuckles-Team/epistemic-graph/tree/main/specs/typed-packs-and-catalog) | Attested skill/prompt identity and versioned content | R002/R027/R034 need version compatibility and certification binding |
-| [EG specs](https://github.com/Knuckles-Team/epistemic-graph/tree/main/specs) | Distribution and aggregation. | R024 requires generated operation ID/version and result receipt schema before implementation. |
+| [EG typed packs](https://github.com/Knuckles-Team/medulla/tree/main/specs/typed-packs-and-catalog) | Attested skill/prompt identity and versioned content | R002/R027/R034 need version compatibility and certification binding |
+| [EG specs](https://github.com/Knuckles-Team/medulla/tree/main/specs) | Distribution and aggregation. | R024 requires generated operation ID/version and result receipt schema before implementation. |
 | [SDK connector control](https://github.com/Knuckles-Team/agent-connector-sdk/tree/main/specs/SCION-CONNECTOR-CONTROL) | Certified tool schema, governed effects and provider transport | R002/R024 require compatibility evidence and typed allocation/reconciliation producer contracts |
 | [AU specs](https://github.com/Knuckles-Team/agent-utilities/tree/main/specs) | Approved orchestration, local model call and returned-result path | R024/R034 require producer wiring to certification and EG aggregation; no host replacement |
 
@@ -393,7 +393,7 @@ The source validation environment resolves MCP >=2.3,<3 with the landed SDK. The
 
 ## ARBORA-FLEET-R036 — connect-time contract handshake
 
-References: [MEDULLA-TYPED-PACKS-R103](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/spec.md), [MEDULLA-TYPED-PACKS-R104](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/spec.md), [SCION-CONNECTOR-CONTROL-R068](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/SCION-CONNECTOR-CONTROL/spec.md)
+References: [MEDULLA-TYPED-PACKS-R103](https://github.com/Knuckles-Team/medulla/blob/main/specs/typed-packs-and-catalog/spec.md), [MEDULLA-TYPED-PACKS-R104](https://github.com/Knuckles-Team/medulla/blob/main/specs/typed-packs-and-catalog/spec.md), [SCION-CONNECTOR-CONTROL-R068](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/SCION-CONNECTOR-CONTROL/spec.md)
 
 Call path: multiplexer client connect or `list_changed` -> `onboard` (`arbora/fleet/onboarding.py:236`) -> `capture` (line 254) -> digest compare -> engine `ImportOntology` and seed import -> existing `import_attested_pack` for the pack head.
 
@@ -403,7 +403,7 @@ Budget: one onboarding pass per connector per 2 s window; resources of 8 MiB or 
 
 ## ARBORA-FLEET-R037 — job-scoped lazy tool loading
 
-References: [MEDULLA-DECISION-ENGINE-R176](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/decision-engine/spec.md), [MEDULLA-DECISION-ENGINE-R177](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/decision-engine/spec.md)
+References: [MEDULLA-DECISION-ENGINE-R176](https://github.com/Knuckles-Team/medulla/blob/main/specs/decision-engine/spec.md), [MEDULLA-DECISION-ENGINE-R177](https://github.com/Knuckles-Team/medulla/blob/main/specs/decision-engine/spec.md)
 
 Call path: harness -> `find` verb (`verbs.py:18`) -> `find_tools` (`multiplexer_ops.py:150`) -> engine `Decide` load set -> `load_tools` (`multiplexer_ops.py:245`) -> `tools/list_changed` to the caller.
 

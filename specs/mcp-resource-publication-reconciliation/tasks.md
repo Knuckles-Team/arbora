@@ -10,9 +10,9 @@ the final release task records served evidence.
   mismatched, generation-mismatched, partial-family, and wrong-tenant receipts as
   `reingestion-unreconciled`, and a fully matching fresh receipt as `reconciled`. Cover
   `ARBORA-MCP-RESOURCES-R001.1`.
-- [ ] T03 — Confirm and link the epistemic-graph producing contract (`EG-REPO-INGEST-001`) in
+- [ ] T03 — Confirm and link the medulla producing contract (`MEDULLA-REPO-INGEST-001`) in
   `spec.md`/`requirements.md`. Cover `ARBORA-MCP-RESOURCES-R002`. (Link added this PR; EG-side
-  delivery is tracked in epistemic-graph's own spec, not here.)
+  delivery is tracked in medulla's own spec, not here.)
 - [ ] T04 — Add `require_reconciled_for_swap()` and `PublicationRefusedError` with refusal tests.
   Cover `ARBORA-MCP-RESOURCES-R003.1`.
 - [ ] T04.1 — Call the guard from the ARBORA-FLEET-001 atomic generation-publish step once

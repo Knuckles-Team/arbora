@@ -108,7 +108,7 @@
     },
     {
       "id": "ARBORA-RELEASE-R003.1",
-      "title": "Exit-criteria matrix registry and audit mechanism (arbora side, against the currently pinned epistemic-graph)",
+      "title": "Exit-criteria matrix registry and audit mechanism (arbora side, against the currently pinned medulla)",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "03ec8432da14",
