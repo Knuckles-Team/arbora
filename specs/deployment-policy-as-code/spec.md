@@ -26,11 +26,11 @@ language cannot express those.
 Every requirement ID this spec owns lives in [requirements.md](requirements.md). The IDs are
 `ARBORA-DEPLOY-POLICY-R001`–`R006`. Architecture and live wiring live in [plan.md](plan.md).
 The test contract lives in [test-spec.md](test-spec.md). Ordered work lives in
-[tasks.md](tasks.md). Machine-readable delivery state lives in [status.json](status.json).
+[tasks.md](tasks.md). Machine-readable delivery state lives in the computed status (`pipelines-hook spec-status`).
 
 ## Acceptance
 
-The spec accepts when every row reaches `VERIFIED` in [status.json](status.json). Each row
+The spec accepts when every row reaches `VERIFIED` in the computed status (`pipelines-hook spec-status`). Each row
 carries its bound test evidence.
 
 - A deployment manifest lints. It plans a typed diff. It applies idempotently with a
