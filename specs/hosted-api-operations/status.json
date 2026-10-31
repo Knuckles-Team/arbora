@@ -365,7 +365,8 @@
     "ARBORA-OPS-R892",
     "ARBORA-OPS-R893",
     "ARBORA-OPS-R894",
-    "ARBORA-OPS-R895"
+    "ARBORA-OPS-R895",
+    "ARBORA-OPS-R896"
   ],
   "requirements": [
     {
@@ -3901,6 +3902,13 @@
     {
       "id": "ARBORA-OPS-R895",
       "title": "Summarize a finalized meeting under an admitted provider",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R896",
+      "title": "Development surface over MCP",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
