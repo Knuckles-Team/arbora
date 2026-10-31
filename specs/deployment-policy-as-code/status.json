@@ -9,7 +9,8 @@
     "ARBORA-DEPLOY-POLICY-R003",
     "ARBORA-DEPLOY-POLICY-R004",
     "ARBORA-DEPLOY-POLICY-R005",
-    "ARBORA-DEPLOY-POLICY-R006"
+    "ARBORA-DEPLOY-POLICY-R006",
+    "ARBORA-DEPLOY-POLICY-R007"
   ],
   "requirements": [
     {
@@ -28,7 +29,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-POLICY-R003",
-      "title": "Drift inspection and destructive-change approval gates",
+      "title": "Drift inspection and destructive-change approval",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -42,14 +43,21 @@
     },
     {
       "id": "ARBORA-DEPLOY-POLICY-R005",
-      "title": "Epistemic policy predicates (stated advantage)",
+      "title": "Epistemic policy predicates",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-POLICY-R006",
-      "title": "Served agent surface: llms.txt, MCP best-practice resources, versioned skill export",
+      "title": "Served agent surface: llms.txt, best-practice resources, versioned skill export",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DEPLOY-POLICY-R007",
+      "title": "Rollout records a deployment through deployment.record",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

@@ -76,12 +76,18 @@
     "ARBORA-DEPLOY-R600.4",
     "ARBORA-DEPLOY-R600.5",
     "ARBORA-DEPLOY-R600.6",
-    "ARBORA-DEPLOY-R017.17"
+    "ARBORA-DEPLOY-R017.17",
+    "ARBORA-DEPLOY-R017.18",
+    "ARBORA-DEPLOY-R017.19",
+    "ARBORA-DEPLOY-R017.20",
+    "ARBORA-DEPLOY-R017.21",
+    "ARBORA-DEPLOY-R018.9",
+    "ARBORA-DEPLOY-R601"
   ],
   "requirements": [
     {
       "id": "ARBORA-DEPLOY-R001",
-      "title": "Worker topology manifest is digest-pinned",
+      "title": "Rendered workload images are digest-pinned",
       "delivery_state": "LANDED",
       "landed_in": [
         "e7ae64dec334"
@@ -165,7 +171,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-R007",
-      "title": "Arbora hosts deployment doctor and skill certification",
+      "title": "Arbora hosts deployment doctor and skill certification (rollup)",
       "delivery_state": "LANDED",
       "landed_in": [
         "4d1f17345cbb",
@@ -230,7 +236,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-R007.5",
-      "title": "`arbora-release-canary` console-script collision resolved",
+      "title": "`arbora-release-canary` is declared only by arbora",
       "delivery_state": "LANDED",
       "landed_in": [
         "fd761d59a171"
@@ -259,7 +265,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-R009",
-      "title": "Arbora owns hosting/deployment configuration settings",
+      "title": "Arbora owns hosting and deployment settings",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "ae856bc9a101"
@@ -288,7 +294,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-R009.4",
-      "title": "Arbora owns the `graph_config` operation",
+      "title": "Arbora owns the config administration core",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
@@ -298,7 +304,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-R010",
-      "title": "Ecosystem and repository development skills are published",
+      "title": "Ecosystem and repository development skills are published (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "96e23d7f4ed4"
@@ -313,7 +319,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-R011",
-      "title": "Deployment layout test suite passes in full",
+      "title": "Deployment test suite passes in full",
       "delivery_state": "LANDED",
       "landed_in": [
         "2b605acbf3a6",
@@ -333,7 +339,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-R013",
-      "title": "Development and production deployment profiles",
+      "title": "Development and production deployment profiles (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "0da5f7440603",
@@ -355,7 +361,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-R014",
-      "title": "Agent runtime split into connector SDK, Arbora and engine",
+      "title": "Split packages are consumed by published version range",
       "delivery_state": "LANDED",
       "landed_in": [
         "fe7c5c9a4a32"
@@ -411,7 +417,11 @@
         "ARBORA-DEPLOY-R017.14",
         "ARBORA-DEPLOY-R017.15",
         "ARBORA-DEPLOY-R017.16",
-        "ARBORA-DEPLOY-R017.17"
+        "ARBORA-DEPLOY-R017.17",
+        "ARBORA-DEPLOY-R017.18",
+        "ARBORA-DEPLOY-R017.19",
+        "ARBORA-DEPLOY-R017.20",
+        "ARBORA-DEPLOY-R017.21"
       ]
     },
     {
@@ -437,35 +447,35 @@
     },
     {
       "id": "ARBORA-DEPLOY-R017.4",
-      "title": "Confirm through plan/confirm",
+      "title": "Confirm through plan confirmation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R017.5",
-      "title": "Typed refusal while unavailable",
+      "title": "Typed refusal while a producer is unavailable",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R017.6",
-      "title": "Existing artifact per target",
+      "title": "Select the existing artifact per target",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R017.7",
-      "title": "In-process unchanged",
+      "title": "In-process start stays unchanged",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R017.8",
-      "title": "Thin setup-config subcommand",
+      "title": "Thin deploy subcommand",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -479,7 +489,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-R017.10",
-      "title": "Compose/Swarm literal images use the existing grammar",
+      "title": "Compose and swarm literal images use the existing grammar",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -500,7 +510,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-R017.13",
-      "title": "Run the checker on the shipped Compose and Swarm files",
+      "title": "Run the checker on the shipped Compose and swarm files",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -521,14 +531,14 @@
     },
     {
       "id": "ARBORA-DEPLOY-R017.16",
-      "title": "Environment policy drives the check",
+      "title": "Environment policy drives the digest check",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R018",
-      "title": "Small deployment shares one engine per host",
+      "title": "Small deployment shares one engine per host (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -540,7 +550,8 @@
         "ARBORA-DEPLOY-R018.5",
         "ARBORA-DEPLOY-R018.6",
         "ARBORA-DEPLOY-R018.7",
-        "ARBORA-DEPLOY-R018.8"
+        "ARBORA-DEPLOY-R018.8",
+        "ARBORA-DEPLOY-R018.9"
       ]
     },
     {
@@ -573,7 +584,7 @@
     },
     {
       "id": "ARBORA-DEPLOY-R018.5",
-      "title": "Owner stands down the engine",
+      "title": "Last client out stops the engine arbora started",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -587,84 +598,84 @@
     },
     {
       "id": "ARBORA-DEPLOY-R010.1",
-      "title": "Preserve development skill coverage",
+      "title": "Development skill keeps every original topic",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R010.2",
-      "title": "Keep deployment guidance executable and synchronized",
+      "title": "Deployment examples stay executable and synchronized",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R010.3",
-      "title": "Publish complete supported-profile instructions",
+      "title": "Supported-profile instructions are complete",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R013.1",
-      "title": "Preserve original profile and first-boot obligations",
+      "title": "Profile and first-boot obligations are retained",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R013.2",
-      "title": "Record explicit component deploy or reuse choices",
+      "title": "Record explicit deploy or reuse choice per component",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R013.3",
-      "title": "Make reused components connect-only",
+      "title": "Reused components are connect-only",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R013.4",
-      "title": "Define the complete deployment target matrix",
+      "title": "Deployment target matrix is complete",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R013.5",
-      "title": "Bind confirmed profiles to governed deployment",
+      "title": "Confirmed profiles bind to governed deployment",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R013.6",
-      "title": "Prove component choices and target profiles",
+      "title": "Component choices and target profiles are proven served",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R018.7",
-      "title": "Preserve reuse through engine attachment",
+      "title": "A reused engine only attaches",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R018.8",
-      "title": "Keep reused resources alive across host shutdown",
+      "title": "A reused engine survives host shutdown",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R009.2",
-      "title": "EG:53 Arbora definition slice",
+      "title": "Single-image deployment with no external service (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "9e7f6499d96f"
@@ -690,35 +701,35 @@
     },
     {
       "id": "ARBORA-DEPLOY-R009.2.2",
-      "title": "Single-image deployment with capability parity",
+      "title": "Single image serves a capability and refusal parity matrix",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R009.3",
-      "title": "EG:57 Arbora definition slice",
+      "title": "Deployment selection imports the approved ontology once",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R013.7",
-      "title": "ARBORA:12 Arbora definition slice",
+      "title": "Secrets default to the vault and the trust bundle reaches every component",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R010.4",
-      "title": "ARBORA:13 Arbora definition slice",
+      "title": "Complexity gate adds argument-count and try-statement rules",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R600",
-      "title": "Process singleton locks guard the served host (rollup)",
+      "title": "Process locks guard the local engine spawn (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -733,42 +744,42 @@
     },
     {
       "id": "ARBORA-DEPLOY-R600.1",
-      "title": "Model",
+      "title": "Lock model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R600.2",
-      "title": "Behavior",
+      "title": "Spawn guard behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R600.3",
-      "title": "Wiring",
+      "title": "Lock wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R600.4",
-      "title": "Refusal",
+      "title": "Lock refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R600.5",
-      "title": "Evidence",
+      "title": "Lock evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-DEPLOY-R600.6",
-      "title": "Hot-path proof",
+      "title": "Lock hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -776,6 +787,48 @@
     {
       "id": "ARBORA-DEPLOY-R017.17",
       "title": "Capacity-adjustment actuation and applied-state receipt",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DEPLOY-R017.18",
+      "title": "Digest checker lives in the package",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DEPLOY-R017.19",
+      "title": "Serve the placement and apply operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DEPLOY-R017.20",
+      "title": "Publish the deployment template and its tool components",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DEPLOY-R017.21",
+      "title": "Run the confirmed step graph through governed fleet calls",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DEPLOY-R018.9",
+      "title": "Engine pool wires the local lifecycle",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DEPLOY-R601",
+      "title": "Publish deployment templates and tool components",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

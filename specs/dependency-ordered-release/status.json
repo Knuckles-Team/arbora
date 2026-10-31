@@ -28,7 +28,8 @@
     "ARBORA-RELEASE-R003.8",
     "ARBORA-RELEASE-R003.9",
     "ARBORA-RELEASE-R003.4.12",
-    "ARBORA-RELEASE-R003.4.13"
+    "ARBORA-RELEASE-R003.4.13",
+    "ARBORA-RELEASE-R003.10"
   ],
   "requirements": [
     {
@@ -85,7 +86,7 @@
     },
     {
       "id": "ARBORA-RELEASE-R003",
-      "title": "Exit-criteria matrix maps readiness to tests",
+      "title": "Exit-criteria matrix maps readiness to tests (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "03ec8432da14",
@@ -101,7 +102,8 @@
         "ARBORA-RELEASE-R003.6",
         "ARBORA-RELEASE-R003.7",
         "ARBORA-RELEASE-R003.8",
-        "ARBORA-RELEASE-R003.9"
+        "ARBORA-RELEASE-R003.9",
+        "ARBORA-RELEASE-R003.10"
       ]
     },
     {
@@ -120,21 +122,21 @@
     },
     {
       "id": "ARBORA-RELEASE-R003.2",
-      "title": "Full exit-criteria matrix closes green across all seven obligations",
+      "title": "Exit-criteria matrix closes across all seven obligations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.3",
-      "title": "SPARQL and natural-language query-proof rows",
+      "title": "SPARQL and natural-language query-proof row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.4",
-      "title": "multi-agent orchestration-graph row",
+      "title": "Multi-agent orchestration-graph row (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -240,14 +242,14 @@
     },
     {
       "id": "ARBORA-RELEASE-R003.4.9",
-      "title": "Wiring",
+      "title": "Plan run wiring binds the governed caller",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.4.10",
-      "title": "Hot-path proof",
+      "title": "Plan run hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -269,28 +271,28 @@
     },
     {
       "id": "ARBORA-RELEASE-R003.5",
-      "title": "connector-certification row",
+      "title": "Connector-certification row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.6",
-      "title": "write-back receipt row",
+      "title": "Write-back receipt row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.7",
-      "title": "browser-and-identity-provider login probe row",
+      "title": "Browser-and-identity-provider login probe row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-RELEASE-R003.8",
-      "title": "typed-abstention response row",
+      "title": "Typed-abstention response row",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -312,6 +314,13 @@
     {
       "id": "ARBORA-RELEASE-R003.4.13",
       "title": "Admit explicit completed-child continuation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-RELEASE-R003.10",
+      "title": "Candidate planning audits the exit-criteria matrix",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

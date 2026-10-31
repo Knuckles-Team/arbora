@@ -11,13 +11,22 @@
     "ARBORA-CAPACITY-R003",
     "ARBORA-CAPACITY-R004",
     "ARBORA-CAPACITY-R001.3",
+    "ARBORA-CAPACITY-R001.3.1",
+    "ARBORA-CAPACITY-R001.3.2",
+    "ARBORA-CAPACITY-R001.3.3",
+    "ARBORA-CAPACITY-R001.3.4",
+    "ARBORA-CAPACITY-R001.4",
+    "ARBORA-CAPACITY-R001.5",
     "ARBORA-CAPACITY-R750",
     "ARBORA-CAPACITY-R750.750",
     "ARBORA-CAPACITY-R750.751",
     "ARBORA-CAPACITY-R750.752",
     "ARBORA-CAPACITY-R750.753",
     "ARBORA-CAPACITY-R750.754",
-    "ARBORA-CAPACITY-R750.755"
+    "ARBORA-CAPACITY-R750.755",
+    "ARBORA-CAPACITY-R751",
+    "ARBORA-CAPACITY-R752",
+    "ARBORA-CAPACITY-R753"
   ],
   "requirements": [
     {
@@ -31,7 +40,9 @@
       "rollup_of": [
         "ARBORA-CAPACITY-R001.1",
         "ARBORA-CAPACITY-R001.2",
-        "ARBORA-CAPACITY-R001.3"
+        "ARBORA-CAPACITY-R001.3",
+        "ARBORA-CAPACITY-R001.4",
+        "ARBORA-CAPACITY-R001.5"
       ]
     },
     {
@@ -82,7 +93,55 @@
     },
     {
       "id": "ARBORA-CAPACITY-R001.3",
-      "title": "EG:9 Arbora definition slice",
+      "title": "Closed-loop capacity proposals and applied-state receipt (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-CAPACITY-R001.3.1",
+        "ARBORA-CAPACITY-R001.3.2",
+        "ARBORA-CAPACITY-R001.3.3",
+        "ARBORA-CAPACITY-R001.3.4"
+      ]
+    },
+    {
+      "id": "ARBORA-CAPACITY-R001.3.1",
+      "title": "Capacity proposal builder",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-CAPACITY-R001.3.2",
+      "title": "Engine verdict call",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-CAPACITY-R001.3.3",
+      "title": "Apply an allowed proposal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-CAPACITY-R001.3.4",
+      "title": "Applied-state receipt readback",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-CAPACITY-R001.4",
+      "title": "Outcome capture and controller loop",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-CAPACITY-R001.5",
+      "title": "Admission limiter at fleet forward",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -175,6 +234,27 @@
       "verified_by": [
         "tests/fleet/scaling/test_resource_reservation.py:14"
       ]
+    },
+    {
+      "id": "ARBORA-CAPACITY-R751",
+      "title": "Throttle actuation asks the engine to evaluate a capacity proposal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-CAPACITY-R752",
+      "title": "Per-model concurrency applies the engine decision",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-CAPACITY-R753",
+      "title": "Resource grant for index jobs",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }

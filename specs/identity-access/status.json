@@ -136,12 +136,26 @@
     "ARBORA-IDENTITY-R004.9.2",
     "ARBORA-IDENTITY-R004.9.3",
     "ARBORA-IDENTITY-R004.9.3.1",
-    "ARBORA-IDENTITY-R004.9.3.2"
+    "ARBORA-IDENTITY-R004.9.3.2",
+    "ARBORA-IDENTITY-R013.1",
+    "ARBORA-IDENTITY-R013.2",
+    "ARBORA-IDENTITY-R013.3",
+    "ARBORA-IDENTITY-R014.1",
+    "ARBORA-IDENTITY-R018.1",
+    "ARBORA-IDENTITY-R018.2",
+    "ARBORA-IDENTITY-R018.3",
+    "ARBORA-IDENTITY-R018.4",
+    "ARBORA-IDENTITY-R018.5",
+    "ARBORA-IDENTITY-R018.6",
+    "ARBORA-IDENTITY-R018.7",
+    "ARBORA-IDENTITY-R019.7",
+    "ARBORA-IDENTITY-R651",
+    "ARBORA-IDENTITY-R652"
   ],
   "requirements": [
     {
       "id": "ARBORA-IDENTITY-R001",
-      "title": "Elevation request, approve, and revoke surfaces",
+      "title": "Elevation request, approve and revoke operations on every surface",
       "delivery_state": "LANDED",
       "landed_in": [
         "4a3410afa6de"
@@ -169,7 +183,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R002.1",
-      "title": "Arbora owns the scope registry generated from EG `scopes.json`",
+      "title": "Arbora owns the scope registry read from the engine",
       "delivery_state": "VERIFIED",
       "landed_in": [
         "9e7f6499d96f"
@@ -192,7 +206,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R004",
-      "title": "Rollup",
+      "title": "Tokenless local serving (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "4a3410afa6de"
@@ -226,7 +240,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R004.2",
-      "title": "Bootstrap resolution path",
+      "title": "Unsecured-mode indicators",
       "delivery_state": "LANDED",
       "landed_in": [
         "4a3410afa6de"
@@ -254,7 +268,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R005",
-      "title": "Local account lifecycle with server-side sessions",
+      "title": "Local account lifecycle with server-side sessions (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "9a8cbf921748"
@@ -280,14 +294,14 @@
     },
     {
       "id": "ARBORA-IDENTITY-R005.2",
-      "title": "Complete served account lifecycle acceptance",
+      "title": "Account ceremonies and throttling",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R006",
-      "title": "Optional MFA with TOTP, WebAuthn, and recovery codes",
+      "title": "Optional MFA with TOTP, WebAuthn and recovery codes (rollup)",
       "delivery_state": "LANDED",
       "landed_in": [
         "4a3410afa6de",
@@ -325,7 +339,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R007",
-      "title": "Admin console tabs with mapping dry-run and mode wizard",
+      "title": "Admin console tabs with mapping dry-run and mode wizard (rollup)",
       "delivery_state": "LANDED",
       "landed_in": [
         "4a3410afa6de",
@@ -353,7 +367,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R007.2",
-      "title": "Admin console behavior",
+      "title": "Mapping dry-run and mode-transition behaviour",
       "delivery_state": "LANDED",
       "landed_in": [
         "4a3410afa6de"
@@ -383,7 +397,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R009",
-      "title": "Multi-provider OIDC with mapping rules and JIT policy",
+      "title": "Multi-provider OIDC with mapping rules and JIT policy (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "4a3410afa6de",
@@ -397,7 +411,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R010",
-      "title": "LDAPS bind with nested group sync",
+      "title": "LDAPS bind with nested group sync (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "e74110bb69b5"
@@ -494,17 +508,18 @@
     },
     {
       "id": "ARBORA-IDENTITY-R009.2.3",
-      "title": "Callback handler wiring",
+      "title": "OIDC callback wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R009.2.4",
-      "title": "Live IdP probe",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: a live provider probe duplicates the committed browser probe",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "a live provider probe duplicates the committed browser probe"
     },
     {
       "id": "ARBORA-IDENTITY-R010.1",
@@ -587,7 +602,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R010.2.3.2",
-      "title": "Scheduled apply",
+      "title": "Scheduled directory sync apply",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -601,7 +616,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R011",
-      "title": "SCIM 2.0 provisioning server",
+      "title": "SCIM 2.0 provisioning server (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "117ad5b56bc6"
@@ -614,7 +629,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R012",
-      "title": "Native SAML service provider",
+      "title": "Native SAML service provider (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "117ad5b56bc6"
@@ -718,7 +733,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R012.2",
-      "title": "Assertion verification and sign-in (rollup of .2.1-.2.4)",
+      "title": "SAML assertion verification and sign-in (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -759,7 +774,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R012.2.3",
-      "title": "Replay check and sign-in handler wiring (rollup)",
+      "title": "SAML replay check and sign-in wiring (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -784,35 +799,43 @@
     },
     {
       "id": "ARBORA-IDENTITY-R012.2.3.2",
-      "title": "Sign-in handler wiring into the browser authority",
+      "title": "SAML sign-in handler",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R012.2.4",
-      "title": "Live IdP sign-in probe",
+      "title": "Live SAML provider sign-in probe",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R013",
-      "title": "Identity CLI commands and doctor diagnostics",
-      "delivery_state": "LANDED",
+      "title": "Identity CLI commands and doctor diagnostics (rollup)",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "4a3410afa6de"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-IDENTITY-R013.1",
+        "ARBORA-IDENTITY-R013.2",
+        "ARBORA-IDENTITY-R013.3"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R014",
       "title": "Shared RBAC decision oracle across identity modes",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "4a3410afa6de"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-IDENTITY-R014.1"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R015",
@@ -856,14 +879,14 @@
     },
     {
       "id": "ARBORA-IDENTITY-R016.2",
-      "title": "SMTP/listmonk send integration",
+      "title": "SMTP send transport for identity email",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R017",
-      "title": "Remove the unauthenticated opt-out once clients migrate",
+      "title": "Remove the unauthenticated opt-out (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "adf48206cdff"
@@ -905,59 +928,68 @@
     },
     {
       "id": "ARBORA-IDENTITY-R017.3",
-      "title": "Model",
+      "title": "Bearer model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R017.4",
-      "title": "Behavior",
+      "title": "Bearer verification behaviour",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R017.5",
-      "title": "Wiring",
+      "title": "Bearer ingress wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R017.6",
-      "title": "Refusal",
+      "title": "Bearer refusals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R017.7",
-      "title": "Evidence",
+      "title": "Bearer evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R017.8",
-      "title": "Hot-path proof",
+      "title": "Bearer hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R018",
-      "title": "Identity administration operations for self, admin, config",
-      "delivery_state": "LANDED",
+      "title": "Identity administration operations (rollup)",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "2c70abad2b68",
         "336f9faf3f21"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-IDENTITY-R018.1",
+        "ARBORA-IDENTITY-R018.2",
+        "ARBORA-IDENTITY-R018.3",
+        "ARBORA-IDENTITY-R018.4",
+        "ARBORA-IDENTITY-R018.5",
+        "ARBORA-IDENTITY-R018.6",
+        "ARBORA-IDENTITY-R018.7"
+      ]
     },
     {
       "id": "ARBORA-IDENTITY-R019",
-      "title": "Access operations for elevation and approval decisions",
+      "title": "Access operations for elevation and approval decisions (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "d467b8f6c708",
@@ -971,54 +1003,55 @@
         "ARBORA-IDENTITY-R019.3",
         "ARBORA-IDENTITY-R019.4",
         "ARBORA-IDENTITY-R019.5",
-        "ARBORA-IDENTITY-R019.6"
+        "ARBORA-IDENTITY-R019.6",
+        "ARBORA-IDENTITY-R019.7"
       ]
     },
     {
       "id": "ARBORA-IDENTITY-R019.1",
-      "title": "Model",
+      "title": "Resource access model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R019.2",
-      "title": "Behavior",
+      "title": "Resource grant evaluation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R019.3",
-      "title": "Wiring",
+      "title": "Resource gate wiring at fleet.call",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R019.4",
-      "title": "Refusal",
+      "title": "Resource gate refusals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R019.5",
-      "title": "Evidence",
+      "title": "Resource access evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R019.6",
-      "title": "Hot-path proof",
+      "title": "Resource access hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R020",
-      "title": "Domain scope registry covers finance, fleet, loops, ops",
+      "title": "Domain scope registry covers finance, fleet, loops and ops",
       "delivery_state": "LANDED",
       "landed_in": [
         "a2212420d6c6"
@@ -1056,7 +1089,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R023",
-      "title": "Native, self-refreshing credentials for MCP clients",
+      "title": "Native self-refreshing credentials for MCP clients (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1071,63 +1104,63 @@
     },
     {
       "id": "ARBORA-IDENTITY-R023.1",
-      "title": "Model",
+      "title": "Credential reuse model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R023.2",
-      "title": "Behavior",
+      "title": "Credential reuse behaviour",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R023.3",
-      "title": "Wiring",
+      "title": "Credential reuse wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R023.4",
-      "title": "Refusal",
+      "title": "Credential reuse refusals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R023.5",
-      "title": "Evidence",
+      "title": "Credential reuse evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R023.6",
-      "title": "Hot-path proof",
+      "title": "Credential reuse hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R024",
-      "title": "Committed browser and Keycloak SSO probe",
+      "title": "Committed browser and SSO provider probe",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R025",
-      "title": "Register identity ops once the engine contract lists `identity:admin`",
+      "title": "Register identity operations in the registry",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R026",
-      "title": "Hosted sessions are attributed to a client and segmented by principal",
+      "title": "Hosted sessions are attributed to a client and segmented by principal (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1193,7 +1226,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R026.8",
-      "title": "ARBORA:16 Arbora definition slice",
+      "title": "Authenticated session inbox operations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1291,21 +1324,21 @@
     },
     {
       "id": "ARBORA-IDENTITY-R029.5",
-      "title": "Logout and session revocation routes",
+      "title": "Logout and session revocation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R029.6",
-      "title": "Renewal consults the engine's session liveness",
+      "title": "Renewal consults engine session liveness",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R028",
-      "title": "Connector calls that need a user identity carry a delegated identity (rollup)",
+      "title": "Delegated identity for connector calls (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1320,42 +1353,42 @@
     },
     {
       "id": "ARBORA-IDENTITY-R028.1",
-      "title": "Model",
+      "title": "Delegated identity model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R028.2",
-      "title": "Behavior",
+      "title": "Token exchange behaviour",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R028.3",
-      "title": "Wiring",
+      "title": "Delegation wiring in fleet.call",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R028.4",
-      "title": "Refusal",
+      "title": "Delegation refusals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R028.5",
-      "title": "Evidence",
+      "title": "Delegation evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-IDENTITY-R028.6",
-      "title": "Hot-path proof",
+      "title": "Delegation hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1424,7 +1457,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R004.7.2",
-      "title": "Installed identity-mode startup",
+      "title": "Installed identity-mode startup qualification",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1448,7 +1481,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R004.4.2",
-      "title": "Installed browser identity lifecycle",
+      "title": "Installed browser identity lifecycle qualification",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
@@ -1489,7 +1522,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R004.5.3",
-      "title": "Installed and native dispatch qualification",
+      "title": "Installed dispatch and streaming qualification",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
@@ -1562,7 +1595,7 @@
     },
     {
       "id": "ARBORA-IDENTITY-R004.9.2",
-      "title": "Installed local execution",
+      "title": "Installed local execution qualification",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1591,7 +1624,105 @@
     },
     {
       "id": "ARBORA-IDENTITY-R004.9.3.2",
-      "title": "Installed answer recovery",
+      "title": "Installed answer recovery qualification",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R013.1",
+      "title": "CLI skeleton with claim and link-claim",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R013.2",
+      "title": "CLI transition, reset-admin and rotate",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R013.3",
+      "title": "Doctor diagnostics for exposed mode and generated secret",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R014.1",
+      "title": "Mode transition operation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R018.1",
+      "title": "Identity operations module and port",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R018.2",
+      "title": "Self operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R018.3",
+      "title": "User, session, API key and service account operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R018.4",
+      "title": "Role, group and provider operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R018.5",
+      "title": "Policy, mode, issuer, audit and SCIM client operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R018.6",
+      "title": "Admin gate",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R018.7",
+      "title": "Identity operations served parity",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R019.7",
+      "title": "Register approvals operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R651",
+      "title": "Share grant and revoke operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-IDENTITY-R652",
+      "title": "Graph ownership plan and apply operations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

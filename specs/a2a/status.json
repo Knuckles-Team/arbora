@@ -85,12 +85,23 @@
     "ARBORA-A2A-R010.1",
     "ARBORA-A2A-R001.3",
     "ARBORA-A2A-R001.4",
+    "ARBORA-A2A-R001.4.1",
     "ARBORA-A2A-R001.5",
     "ARBORA-A2A-R001.6",
     "ARBORA-A2A-R001.5.1",
     "ARBORA-A2A-R001.5.2",
+    "ARBORA-A2A-R001.7",
+    "ARBORA-A2A-R002.2.3.3",
+    "ARBORA-A2A-R002.2.3.4",
+    "ARBORA-A2A-R002.2.3.5",
+    "ARBORA-A2A-R013.1",
+    "ARBORA-A2A-R013.2",
+    "ARBORA-A2A-R013.3",
+    "ARBORA-A2A-R013.4",
     "ARBORA-A2A-R016.6",
-    "ARBORA-A2A-R023"
+    "ARBORA-A2A-R023",
+    "ARBORA-A2A-R024",
+    "ARBORA-A2A-R025"
   ],
   "requirements": [
     {
@@ -116,7 +127,8 @@
         "ARBORA-A2A-R001.3",
         "ARBORA-A2A-R001.4",
         "ARBORA-A2A-R001.5",
-        "ARBORA-A2A-R001.6"
+        "ARBORA-A2A-R001.6",
+        "ARBORA-A2A-R001.7"
       ]
     },
     {
@@ -228,7 +240,10 @@
       "verified_by": [],
       "rollup_of": [
         "ARBORA-A2A-R002.2.3.1",
-        "ARBORA-A2A-R002.2.3.2"
+        "ARBORA-A2A-R002.2.3.2",
+        "ARBORA-A2A-R002.2.3.3",
+        "ARBORA-A2A-R002.2.3.4",
+        "ARBORA-A2A-R002.2.3.5"
       ]
     },
     {
@@ -279,7 +294,7 @@
     },
     {
       "id": "ARBORA-A2A-R005",
-      "title": "Durable, fail-closed A2A approval exchange for tool calls",
+      "title": "Durable, fail-closed A2A approval exchange for tool calls (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "9a79acee8b6c"
@@ -309,7 +324,7 @@
     },
     {
       "id": "ARBORA-A2A-R005.2",
-      "title": "Full signed human approval chain and input-required task emission",
+      "title": "Full signed human approval chain with input-required task emission (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "c935d6686ef5",
@@ -326,7 +341,7 @@
     },
     {
       "id": "ARBORA-A2A-R005.2.1",
-      "title": "Durable, revocable human-grant store with atomic compare-and-set consumption",
+      "title": "Human-grant store over the engine pending-call lease with atomic consume-once",
       "delivery_state": "LANDED",
       "landed_in": [
         "cdde0200a54a"
@@ -372,21 +387,21 @@
     },
     {
       "id": "ARBORA-A2A-R005.2.5",
-      "title": "Native and served full-chain qualification remains open",
+      "title": "Served full-chain qualification of the signed approval",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R005.3",
-      "title": "Model",
+      "title": "Model: tool-action admission request and approval",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R005.4",
-      "title": "Behavior",
+      "title": "Behavior: one engine round trip returns the verdict unchanged",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -400,21 +415,21 @@
     },
     {
       "id": "ARBORA-A2A-R005.6",
-      "title": "Refusal",
+      "title": "Refusal: a refusal never reads as approval",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R005.7",
-      "title": "Evidence",
+      "title": "Evidence: audit entry names the decision without values",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R005.8",
-      "title": "Hot-path proof",
+      "title": "Hot-path proof: confirm returns the engine verdict with one audit entry",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -452,7 +467,7 @@
     },
     {
       "id": "ARBORA-A2A-R006.2",
-      "title": "Bridge `arbora.op/invoke` to the shared hosted-operation registry",
+      "title": "Parity of `arbora.op/invoke` with the shared hosted-operation registry",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "cdde0200a54a"
@@ -499,7 +514,7 @@
     },
     {
       "id": "ARBORA-A2A-R006.2.2",
-      "title": "Compose shared invocation into A2A",
+      "title": "Compose shared invocation into the served A2A routes",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
@@ -508,42 +523,42 @@
     },
     {
       "id": "ARBORA-A2A-R006.3",
-      "title": "Model",
+      "title": "Model: held-item admission request and verdict",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R006.4",
-      "title": "Behavior",
+      "title": "Behavior: the engine verdict on a held item returns unchanged",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R006.5",
-      "title": "Wiring",
+      "title": "Wiring: the held_item branch of the confirm dispatcher",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R006.6",
-      "title": "Refusal",
+      "title": "Refusal: a refusal leaves the item held",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R006.7",
-      "title": "Evidence",
+      "title": "Evidence: audit entry names the verdict and the item",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R006.8",
-      "title": "Hot-path proof",
+      "title": "Hot-path proof: confirm admits or rejects a held item",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -626,7 +641,7 @@
     },
     {
       "id": "ARBORA-A2A-R011",
-      "title": "Transition history is read-through to epistemic-graph",
+      "title": "Transition history reads through to the engine WorkItem ledger",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -667,21 +682,27 @@
     },
     {
       "id": "ARBORA-A2A-R012.3",
-      "title": "Blocked: wire `tasks/get`'s typed refusal",
+      "title": "Wire `tasks/get` to raise the typed history refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R013",
-      "title": "Push notifications are best-effort over a durable outbox",
+      "title": "Push notifications deliver from a durable engine queue (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-A2A-R013.1",
+        "ARBORA-A2A-R013.2",
+        "ARBORA-A2A-R013.3",
+        "ARBORA-A2A-R013.4"
+      ]
     },
     {
       "id": "ARBORA-A2A-R014",
-      "title": "No capability advertised before ARBORA-A2A lands",
+      "title": "Capability fields derive only from wired authorities (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -691,21 +712,21 @@
     },
     {
       "id": "ARBORA-A2A-R014.1",
-      "title": "Card advertises no harness capability before it works",
+      "title": "The card carries no harness field until admission works end to end",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R015",
-      "title": "Caller-visible card matches served behavior",
+      "title": "The served card equals the capabilities the integration fixture exercises",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R016",
-      "title": "Typed admission request/decision model",
+      "title": "Typed admission request and decision at the A2A door (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "35257e780f7c"
@@ -735,7 +756,7 @@
     },
     {
       "id": "ARBORA-A2A-R016.2",
-      "title": "Admission request carries model profile and task class",
+      "title": "Admission request carries the model profile and task class",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -749,21 +770,21 @@
     },
     {
       "id": "ARBORA-A2A-R016.4",
-      "title": "Refusal enum gains the harness reasons",
+      "title": "Refusal reasons for admission form one closed set",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R016.5",
-      "title": "Routing decision carries model profile and task class",
+      "title": "Routing decision carries the model profile and task class",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R017",
-      "title": "Context-budget-bound subset sourced from EG assembly",
+      "title": "Admitted tool subset comes from the committed harness decision (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -778,7 +799,7 @@
     },
     {
       "id": "ARBORA-A2A-R017.1",
-      "title": "Engine decision port for HarnessConfig",
+      "title": "Engine decision port for the harness configuration",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -799,14 +820,14 @@
     },
     {
       "id": "ARBORA-A2A-R017.4",
-      "title": "Missing budget refuses",
+      "title": "A missing budget refuses before the engine call",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R017.5",
-      "title": "Wire admission into the send path",
+      "title": "Admission runs on the send path",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -831,21 +852,21 @@
     },
     {
       "id": "ARBORA-A2A-R018.1",
-      "title": "Envelope carries harness_config",
+      "title": "The dispatch request carries the harness decision reference",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R018.2",
-      "title": "Envelope without the field refuses",
+      "title": "A dispatch contract without the field refuses",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R019",
-      "title": "Typed refusal reason and provenance on every decision",
+      "title": "Every admission decision carries a refusal reason and provenance",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "35257e780f7c"
@@ -859,14 +880,14 @@
     },
     {
       "id": "ARBORA-A2A-R019.1",
-      "title": "Provenance names the harness decision",
+      "title": "Provenance names the harness decision record",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R020",
-      "title": "No advisory, cached, or partial substitute",
+      "title": "No advisory, cached or partial substitute",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "35257e780f7c"
@@ -888,14 +909,14 @@
     },
     {
       "id": "ARBORA-A2A-R020.2",
-      "title": "Unavailable, stale, or partial answers refuse",
+      "title": "Unavailable, stale or partial answers refuse",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R021",
-      "title": "Fresh checkout",
+      "title": "Fresh checkout runs the admission tests",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -909,7 +930,7 @@
     },
     {
       "id": "ARBORA-A2A-R001.2",
-      "title": "AU:21 Arbora definition slice",
+      "title": "Run checkpoint and event-cursor binding",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -935,7 +956,17 @@
     },
     {
       "id": "ARBORA-A2A-R001.4",
-      "title": "Served agent streams turn events or refuses streaming by type",
+      "title": "Served agent refuses streaming by type until served",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-A2A-R001.4.1"
+      ]
+    },
+    {
+      "id": "ARBORA-A2A-R001.4.1",
+      "title": "Served agent streams turn events",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -984,15 +1015,85 @@
       "verified_by": []
     },
     {
+      "id": "ARBORA-A2A-R001.7",
+      "title": "Outbound A2A peer registry served as operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-A2A-R002.2.3.3",
+      "title": "Original-caller authority resolver",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-A2A-R002.2.3.4",
+      "title": "Uncertain-effect reconciliation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-A2A-R002.2.3.5",
+      "title": "Duplicate delivery is idempotent",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-A2A-R013.1",
+      "title": "Model and registration of a push target",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-A2A-R013.2",
+      "title": "Delivery worker with bounded retry and dead letter",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-A2A-R013.3",
+      "title": "Advertise push only when the worker runs",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-A2A-R013.4",
+      "title": "Hot-path proof: pending pushes survive a restart",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
       "id": "ARBORA-A2A-R016.6",
-      "title": "Caller model preference",
+      "title": "Caller model preference is a request the engine decides",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-A2A-R023",
-      "title": "Inbound A2A tasks route through medulla Decide",
+      "title": "Inbound A2A tasks route through the medulla `A2aRoute` decision",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-A2A-R024",
+      "title": "Hub federation forwards topic messages to a registered peer",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-A2A-R025",
+      "title": "Admit anonymous chat under the text-only constraint",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

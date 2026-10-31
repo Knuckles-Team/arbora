@@ -76,35 +76,35 @@
     },
     {
       "id": "ARBORA-ACP-R001.4",
-      "title": "Behavior",
+      "title": "Behavior: workspace trust and permission rules for coding sessions",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-ACP-R001.5",
-      "title": "Wiring",
+      "title": "Wiring: the effect path reaches the session policy",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-ACP-R001.6",
-      "title": "Refusal",
+      "title": "Refusal: typed reasons return before any forwarded request",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-ACP-R001.7",
-      "title": "Evidence",
+      "title": "Evidence: one trace record per admission and capability request",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-ACP-R001.8",
-      "title": "Hot-path proof",
+      "title": "Hot-path proof: coding session over the registered route",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

@@ -213,12 +213,21 @@
     "ARBORA-HOST-R010.7.2.2.2.1",
     "ARBORA-HOST-R010.7.2.2.2.2",
     "ARBORA-HOST-R001.2.1.1",
-    "ARBORA-HOST-R001.2.1.2"
+    "ARBORA-HOST-R001.2.1.2",
+    "ARBORA-HOST-R001.2.5",
+    "ARBORA-HOST-R005.2.9",
+    "ARBORA-HOST-R007.2.70",
+    "ARBORA-HOST-R007.3",
+    "ARBORA-HOST-R031.1",
+    "ARBORA-HOST-R034",
+    "ARBORA-HOST-R035",
+    "ARBORA-HOST-R036",
+    "ARBORA-HOST-R037"
   ],
   "requirements": [
     {
       "id": "ARBORA-HOST-R001",
-      "title": "Cross-repository composition boundary assignment",
+      "title": "Cross-repository composition boundary assignment (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "9760bef27075"
@@ -250,7 +259,7 @@
     {
       "id": "ARBORA-HOST-R001.2",
       "title": "Arbora registers the harness host bindings at startup",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "120446dcdd0c",
         "192099593cdd",
@@ -259,17 +268,18 @@
         "52ad3952c2c8"
       ],
       "verified_by": [
-        "tests/a2a/test_failed_usage.py:18",
-        "tests/mcp_server/test_arbora_016_served_fixes.py:179",
         "tests/mcp_server/test_harness_host.py:110",
         "tests/mcp_server/test_harness_host.py:142",
-        "tests/mcp_server/test_harness_host.py:29"
+        "tests/mcp_server/test_harness_host.py:29",
+        "tests/mcp_server/test_harness_host.py:37",
+        "tests/mcp_server/test_harness_host.py:77"
       ],
       "rollup_of": [
         "ARBORA-HOST-R001.2.1",
         "ARBORA-HOST-R001.2.2",
         "ARBORA-HOST-R001.2.3",
-        "ARBORA-HOST-R001.2.4"
+        "ARBORA-HOST-R001.2.4",
+        "ARBORA-HOST-R001.2.5"
       ]
     },
     {
@@ -397,7 +407,7 @@
     },
     {
       "id": "ARBORA-HOST-R001.9",
-      "title": "The tiny profile serves the graph with zero containers",
+      "title": "The tiny profile serves the graph with zero containers (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "9e7f6499d96f"
@@ -423,7 +433,7 @@
     },
     {
       "id": "ARBORA-HOST-R001.9.2",
-      "title": "The tiny profile serves the graph with zero containers",
+      "title": "The tiny profile cold-boots and serves graph reads and writes",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -446,7 +456,7 @@
     },
     {
       "id": "ARBORA-HOST-R002",
-      "title": "Graph engine client exposes the session/discovery surface",
+      "title": "The installed engine client exposes every symbol that Arbora imports",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -479,7 +489,7 @@
     },
     {
       "id": "ARBORA-HOST-R005",
-      "title": "arbora.mcp_server.runtime serves retired MCP actions",
+      "title": "Every retired MCP action resolves to a served registry operation or a named owner row",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "4ca77fbff9e3"
@@ -519,7 +529,8 @@
         "ARBORA-HOST-R005.2.5",
         "ARBORA-HOST-R005.2.6",
         "ARBORA-HOST-R005.2.7",
-        "ARBORA-HOST-R005.2.8"
+        "ARBORA-HOST-R005.2.8",
+        "ARBORA-HOST-R005.2.9"
       ]
     },
     {
@@ -549,18 +560,19 @@
     },
     {
       "id": "ARBORA-HOST-R005.2.1.2",
-      "title": "Add arbora operation for impact actions",
-      "delivery_state": "VERIFIED",
+      "title": "RETIRED: no bespoke impact operation",
+      "delivery_state": "RETIRED",
       "landed_in": [
         "e1f67d6033f1"
       ],
       "verified_by": [
         "tests/mcp_server/test_legacy_analyze_intent_mapping.py:36"
-      ]
+      ],
+      "retired_reason": "no bespoke impact operation"
     },
     {
       "id": "ARBORA-HOST-R005.2.1.3",
-      "title": "Add arbora operation for `similar_code` and the remaining `graph_analyze` actions",
+      "title": "Map the remaining analyze actions without adding read operations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -624,49 +636,49 @@
     },
     {
       "id": "ARBORA-HOST-R005.2.3.2",
-      "title": "Add arbora operation for ingest submission actions",
+      "title": "Map ingest submission actions to the submission operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R005.2.3.3",
-      "title": "Add arbora operation for `corpus`",
+      "title": "Map `corpus` to the ingest source operations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R005.2.3.4",
-      "title": "Add arbora operation for job lifecycle actions",
+      "title": "Map job lifecycle actions to the job operations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R005.2.3.5",
-      "title": "Add arbora operation for `rebuild_indexes` and `observe`",
+      "title": "Map `rebuild_indexes` and `observe`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R005.2.3.6",
-      "title": "Add arbora operation for `materialize` and `materialize_source`",
+      "title": "Map `materialize` and `materialize_source`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R005.2.3.7",
-      "title": "Add arbora operation for `reflect` and `agent_toolkit`",
+      "title": "Map `reflect` and `agent_toolkit`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R005.2.3.8",
-      "title": "Approve the ingest mappings",
+      "title": "Check the ingest family table is complete",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -701,7 +713,7 @@
     },
     {
       "id": "ARBORA-HOST-R005.2.8",
-      "title": "Parity test over the full legacy action surface",
+      "title": "Parity test over the frozen legacy action list",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -721,7 +733,7 @@
     },
     {
       "id": "ARBORA-HOST-R007",
-      "title": "Agent runtime imported only through its public API",
+      "title": "The agent runtime is imported only through its declared public modules",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "c467b28d2385"
@@ -729,7 +741,8 @@
       "verified_by": [],
       "rollup_of": [
         "ARBORA-HOST-R007.1",
-        "ARBORA-HOST-R007.2"
+        "ARBORA-HOST-R007.2",
+        "ARBORA-HOST-R007.3"
       ]
     },
     {
@@ -741,7 +754,7 @@
     },
     {
       "id": "ARBORA-HOST-R007.2",
-      "title": "Add the import-fence test (rollup of `ARBORA-HOST-R007.2.1` to `ARBORA-HOST-R007.2.69`)",
+      "title": "Rewire every import site to the declared public modules (rollup of `.2.1` to `.2.70`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -814,7 +827,8 @@
         "ARBORA-HOST-R007.2.66",
         "ARBORA-HOST-R007.2.67",
         "ARBORA-HOST-R007.2.68",
-        "ARBORA-HOST-R007.2.69"
+        "ARBORA-HOST-R007.2.69",
+        "ARBORA-HOST-R007.2.70"
       ]
     },
     {
@@ -840,7 +854,7 @@
     },
     {
       "id": "ARBORA-HOST-R007.2.4",
-      "title": "Rewire `arbora/agent_host/__init__.py` off agent-runtime internals",
+      "title": "Rewire `arbora/agent_host/__init__.py` to `meristem.graph`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -980,7 +994,7 @@
     },
     {
       "id": "ARBORA-HOST-R007.2.24",
-      "title": "Rewire `arbora/deployment/doctor.py` off agent-runtime internals",
+      "title": "Make the doctor check `meristem`, not `agent_utilities`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1008,7 +1022,7 @@
     },
     {
       "id": "ARBORA-HOST-R007.2.28",
-      "title": "Rewire `arbora/deployment/release_canary.py` off agent-runtime internals",
+      "title": "Certify the renamed `arbora-doctor` entry point",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1057,7 +1071,7 @@
     },
     {
       "id": "ARBORA-HOST-R007.2.35",
-      "title": "Rewire `arbora/fleet/multiplexer.py` off agent-runtime internals",
+      "title": "Rename the child-policy entry-point group to `arbora.mcp_child_policies`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1078,14 +1092,14 @@
     },
     {
       "id": "ARBORA-HOST-R007.2.38",
-      "title": "Rewire `arbora/gateway/config.py` off agent-runtime internals",
+      "title": "Own `data_dir` in `arbora.core.settings`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R007.2.39",
-      "title": "Rewire `arbora/gateway/daemon.py` off agent-runtime internals",
+      "title": "Delete `drain_task_queue` from the gateway daemon",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1190,7 +1204,7 @@
     },
     {
       "id": "ARBORA-HOST-R007.2.54",
-      "title": "Rewire `arbora/mcp_server/runtime.py` off agent-runtime internals",
+      "title": "Emit run events through `meristem.host_ports`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1253,7 +1267,7 @@
     },
     {
       "id": "ARBORA-HOST-R007.2.63",
-      "title": "Rewire `arbora/messaging/registry.py` off agent-runtime internals",
+      "title": "Rename the messaging entry-point groups to `arbora.messaging`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1295,14 +1309,14 @@
     },
     {
       "id": "ARBORA-HOST-R007.2.69",
-      "title": "Add the `agent_utilities.api`-only import-fence test",
+      "title": "Gate every import with the declared-module fence test",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R008",
-      "title": "Arbora hosts its own boundary modules",
+      "title": "Arbora hosts its boundary modules",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "776ceb15e7ba",
@@ -1351,7 +1365,7 @@
     },
     {
       "id": "ARBORA-HOST-R010",
-      "title": "Arbora owns hosting/deployment configuration settings",
+      "title": "Arbora owns hosting and deployment configuration settings",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "396d8307596f",
@@ -1443,12 +1457,13 @@
     },
     {
       "id": "ARBORA-HOST-R016",
-      "title": "main branch includes the published dependency composition",
-      "delivery_state": "LANDED",
+      "title": "RETIRED: a past-commit ancestry check proves no behaviour; the census in the parent covers dependency direction",
+      "delivery_state": "RETIRED",
       "landed_in": [
         "20f773df9ddd"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "a past-commit ancestry check proves no behaviour; the census in the parent covers dependency direction"
     },
     {
       "id": "ARBORA-HOST-R017",
@@ -1478,7 +1493,7 @@
     },
     {
       "id": "ARBORA-HOST-R019",
-      "title": "Arbora serves the service dashboard surface the web UI composes",
+      "title": "Arbora serves the service dashboard surface",
       "delivery_state": "LANDED",
       "landed_in": [
         "975596a67ed0",
@@ -1488,7 +1503,7 @@
     },
     {
       "id": "ARBORA-HOST-R020",
-      "title": "Serving start installs the decide consumers",
+      "title": "Serving start binds the decide operations",
       "delivery_state": "LANDED",
       "landed_in": [
         "91c0d96adb17",
@@ -1500,7 +1515,7 @@
     },
     {
       "id": "ARBORA-HOST-R021",
-      "title": "Serving start binds the assembler's commit and publish providers and installs the topology asker",
+      "title": "Serving start binds the assembler commit and publish contexts and the topology asker",
       "delivery_state": "LANDED",
       "landed_in": [
         "117301017944",
@@ -1510,7 +1525,7 @@
     },
     {
       "id": "ARBORA-HOST-R022",
-      "title": "Serving start binds the task planner's capability-search, guardrail and workflow lookups",
+      "title": "Serving start binds the planner capability search, guardrail and workflow lookups",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "af5f5c292007",
@@ -1556,50 +1571,47 @@
     },
     {
       "id": "ARBORA-HOST-R025",
-      "title": "The agent runtime's MCP serving stack is removed",
-      "delivery_state": "LANDED",
+      "title": "RETIRED: the agent runtime no longer holds the MCP serving modules and the import fence blocks any return",
+      "delivery_state": "RETIRED",
       "landed_in": [
         "c39349d16c53"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "the agent runtime no longer holds the MCP serving modules and the import fence blocks any return"
     },
     {
       "id": "ARBORA-HOST-R026",
-      "title": "Durable A2A task persistence in the arbora agent host",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: a second task-store port duplicates engine-owned task state",
+      "delivery_state": "RETIRED",
       "landed_in": [
         "8d1bc46ecbdb"
       ],
       "verified_by": [],
-      "rollup_of": [
-        "ARBORA-HOST-R026.1",
-        "ARBORA-HOST-R026.2",
-        "ARBORA-HOST-R026.3",
-        "ARBORA-HOST-R026.4",
-        "ARBORA-HOST-R026.5",
-        "ARBORA-HOST-R026.6"
-      ]
+      "retired_reason": "a second task-store port duplicates engine-owned task state"
     },
     {
       "id": "ARBORA-HOST-R026.1",
-      "title": "Define the typed A2A task-store port",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: a second task-store port duplicates engine-owned task state",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "a second task-store port duplicates engine-owned task state"
     },
     {
       "id": "ARBORA-HOST-R026.2",
-      "title": "Implement the engine-backed A2A task store",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: a second task-store port duplicates engine-owned task state",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "a second task-store port duplicates engine-owned task state"
     },
     {
       "id": "ARBORA-HOST-R026.3",
-      "title": "Wire the hosted A2A app to the task store, fail-closed when absent",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: a second task-store port duplicates engine-owned task state",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "a second task-store port duplicates engine-owned task state"
     },
     {
       "id": "ARBORA-HOST-R026.4",
@@ -1610,10 +1622,11 @@
     },
     {
       "id": "ARBORA-HOST-R026.5",
-      "title": "Point the `g34-a2a` certification gate at arbora tests",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: the gate `g34-a2a` lives in pipelines; the `tests/a2a/` suite already runs in Arbora",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "the gate `g34-a2a` lives in pipelines; the `tests/a2a/` suite already runs in Arbora"
     },
     {
       "id": "ARBORA-HOST-R027",
@@ -1692,14 +1705,18 @@
       "title": "Coding-agent discovery and sandbox handoff",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-HOST-R031.1"
+      ]
     },
     {
       "id": "ARBORA-HOST-R010.1",
-      "title": "Preserve configuration ownership",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: a preserve-the-parent row restates its parent",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "a preserve-the-parent row restates its parent"
     },
     {
       "id": "ARBORA-HOST-R010.2",
@@ -1738,10 +1755,11 @@
     },
     {
       "id": "ARBORA-HOST-R008.1",
-      "title": "Preserve every boundary module",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: a preserve-the-parent row restates its parent",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "a preserve-the-parent row restates its parent"
     },
     {
       "id": "ARBORA-HOST-R008.2",
@@ -1766,24 +1784,36 @@
     },
     {
       "id": "ARBORA-HOST-R008.5",
-      "title": "Prove detected-harness installation",
+      "title": "Prove detected-harness installation through the real command",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R009.1",
-      "title": "Preserve hosted protocols and task authority",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: a preserve-the-parent row restates its parent",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "a preserve-the-parent row restates its parent"
     },
     {
       "id": "ARBORA-HOST-R010.7",
-      "title": "Select terminal web or combined start",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "title": "Select terminal, web or combined start",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "906170980099",
+        "aee6cfa29204",
+        "d8f76638c57b",
+        "effb1096d829"
+      ],
+      "verified_by": [
+        "tests/agent_host/test_native_start_grant.py:2",
+        "tests/agent_host/test_start_admission.py:113",
+        "tests/agent_host/test_start_admission.py:126",
+        "tests/agent_host/test_start_admission.py:158",
+        "tests/agent_host/test_start_admission.py:169"
+      ],
       "rollup_of": [
         "ARBORA-HOST-R010.7.1",
         "ARBORA-HOST-R010.7.2"
@@ -1809,9 +1839,17 @@
     {
       "id": "ARBORA-HOST-R010.7.2",
       "title": "Wire admitted interface startup",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "906170980099"
+      ],
+      "verified_by": [
+        "tests/agent_host/test_start_admission.py:262",
+        "tests/agent_host/test_start_admission.py:303",
+        "tests/agent_host/test_start_admission.py:329",
+        "tests/agent_host/test_start_admission.py:345",
+        "tests/agent_host/test_start_admission.py:352"
+      ],
       "rollup_of": [
         "ARBORA-HOST-R010.7.2.1",
         "ARBORA-HOST-R010.7.2.2"
@@ -1834,14 +1872,11 @@
     },
     {
       "id": "ARBORA-HOST-R010.7.2.2",
-      "title": "Complete admitted client composition",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: the nested completion rows restate the interface startup wiring",
+      "delivery_state": "RETIRED",
       "landed_in": [],
       "verified_by": [],
-      "rollup_of": [
-        "ARBORA-HOST-R010.7.2.2.1",
-        "ARBORA-HOST-R010.7.2.2.2"
-      ]
+      "retired_reason": "the nested completion rows restate the interface startup wiring"
     },
     {
       "id": "ARBORA-HOST-R009.2",
@@ -1911,17 +1946,18 @@
     },
     {
       "id": "ARBORA-HOST-R006.2",
-      "title": "Use one standard transport scaffold",
+      "title": "Serve stdio and streamable HTTP from one entrypoint",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R023.1",
-      "title": "Preserve the entire intent surface",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: a preserve-the-parent row restates its parent",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "a preserve-the-parent row restates its parent"
     },
     {
       "id": "ARBORA-HOST-R023.2",
@@ -1932,14 +1968,15 @@
     },
     {
       "id": "ARBORA-HOST-R023.3",
-      "title": "AU:20 Arbora definition slice",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: medulla methods are served automatically as `eg.*` operations, so no per-capability Arbora operation or binding is needed",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "medulla methods are served automatically as `eg.*` operations, so no per-capability Arbora operation or binding is needed"
     },
     {
       "id": "ARBORA-HOST-R008.6",
-      "title": "AU:96 Arbora definition slice",
+      "title": "Bind the harness target and version matrix",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1960,7 +1997,7 @@
     },
     {
       "id": "ARBORA-HOST-R010.8",
-      "title": "ARBORA:9 Arbora definition slice",
+      "title": "Public environment declaration exports from SDK and Meristem",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -2158,28 +2195,28 @@
     },
     {
       "id": "ARBORA-HOST-R008.1001",
-      "title": "Model",
+      "title": "Model of the send decision and the fleet agent",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R008.1002",
-      "title": "Behavior",
+      "title": "Behaviour of the turn handler and send gate",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R008.1003",
-      "title": "Wiring",
+      "title": "Wiring of messaging, readiness and A2A mounting",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R008.1004",
-      "title": "Refusal",
+      "title": "Refusals of send, A2A and readiness",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -2204,14 +2241,14 @@
     },
     {
       "id": "ARBORA-HOST-R008.1007",
-      "title": "Behavior",
+      "title": "Behaviour of correlation and probes",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R008.1008",
-      "title": "Refusal",
+      "title": "Refusals of trace export and asset reading",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -2230,14 +2267,11 @@
     },
     {
       "id": "ARBORA-HOST-R010.7.2.2.2",
-      "title": "Serve admitted clients",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: the nested completion rows restate the interface startup wiring",
+      "delivery_state": "RETIRED",
       "landed_in": [],
       "verified_by": [],
-      "rollup_of": [
-        "ARBORA-HOST-R010.7.2.2.2.1",
-        "ARBORA-HOST-R010.7.2.2.2.2"
-      ]
+      "retired_reason": "the nested completion rows restate the interface startup wiring"
     },
     {
       "id": "ARBORA-HOST-R010.7.2.2.2.1",
@@ -2259,10 +2293,11 @@
     },
     {
       "id": "ARBORA-HOST-R010.7.2.2.2.2",
-      "title": "Complete live client activation",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: the nested completion rows restate the interface startup wiring",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "the nested completion rows restate the interface startup wiring"
     },
     {
       "id": "ARBORA-HOST-R001.2.1.1",
@@ -2289,6 +2324,69 @@
         "tests/mcp_server/test_task_plan_runtime.py:29",
         "tests/mcp_server/test_task_plan_settings.py:12"
       ]
+    },
+    {
+      "id": "ARBORA-HOST-R001.2.5",
+      "title": "Arbora binds the engine read and write methods to the decision port",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-HOST-R005.2.9",
+      "title": "Resolve legacy actions at the MCP dispatch and delete the unwired validator",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-HOST-R007.2.70",
+      "title": "Rename the harness import from `agent_utilities` to `meristem` across `arbora/` and `tests/`",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-HOST-R007.3",
+      "title": "Rename the gateway metric prefix from `agent_utilities_` to `arbora_`",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-HOST-R031.1",
+      "title": "Admit and read back sandbox allocations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-HOST-R034",
+      "title": "Specialist package install is transactional per provider root and registers catalog nodes",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-HOST-R035",
+      "title": "Host registers the harness cycle providers and drives one tick per completed run",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-HOST-R036",
+      "title": "Attach run receipt nodes to the terminal commit",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-HOST-R037",
+      "title": "Connector runner composes the release lock",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }

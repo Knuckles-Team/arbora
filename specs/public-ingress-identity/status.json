@@ -2,22 +2,28 @@
   "schema_version": 2,
   "spec_id": "ARBORA-INGRESS",
   "owner_repo": "arbora",
-  "delivery_state": "LANDED",
+  "delivery_state": "SPECIFIED",
   "requirement_ids": [
     "ARBORA-INGRESS-R001",
-    "ARBORA-INGRESS-R001.1"
+    "ARBORA-INGRESS-R001.1",
+    "ARBORA-INGRESS-R001.2",
+    "ARBORA-INGRESS-R001.3",
+    "ARBORA-INGRESS-R001.4"
   ],
   "requirements": [
     {
       "id": "ARBORA-INGRESS-R001",
-      "title": "Public ingress rename with Keycloak and OpenBao cutover",
-      "delivery_state": "LANDED",
+      "title": "Public ingress rename with identity-provider and secret-store cutover (rollup)",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "d35d445334f2"
       ],
       "verified_by": [],
       "rollup_of": [
-        "ARBORA-INGRESS-R001.1"
+        "ARBORA-INGRESS-R001.1",
+        "ARBORA-INGRESS-R001.2",
+        "ARBORA-INGRESS-R001.3",
+        "ARBORA-INGRESS-R001.4"
       ]
     },
     {
@@ -27,6 +33,27 @@
       "landed_in": [
         "d35d445334f2"
       ],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-INGRESS-R001.2",
+      "title": "Profile wiring into environment rendering",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-INGRESS-R001.3",
+      "title": "Time-bounded legacy hostname redirect",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-INGRESS-R001.4",
+      "title": "Cutover served probe",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     }
   ]

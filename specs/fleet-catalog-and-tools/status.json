@@ -211,7 +211,15 @@
     "ARBORA-FLEET-R052.4.6",
     "ARBORA-FLEET-R053",
     "ARBORA-FLEET-R045",
-    "ARBORA-FLEET-R034.15"
+    "ARBORA-FLEET-R034.15",
+    "ARBORA-FLEET-R041.17.1",
+    "ARBORA-FLEET-R051.2.1",
+    "ARBORA-FLEET-R052.5",
+    "ARBORA-FLEET-R054",
+    "ARBORA-FLEET-R055",
+    "ARBORA-FLEET-R056",
+    "ARBORA-FLEET-R057",
+    "ARBORA-FLEET-R058"
   ],
   "requirements": [
     {
@@ -267,12 +275,13 @@
     },
     {
       "id": "ARBORA-FLEET-R002.2",
-      "title": "Remaining scope of ARBORA-FLEET-R002 (slice .2): Tool schema fingerprints recomputed from served schemas (rollup)",
-      "delivery_state": "LANDED",
+      "title": "RETIRED: placeholder slice with no requirement of its own",
+      "delivery_state": "RETIRED",
       "landed_in": [
         "0f346a4d0e4a"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "placeholder slice with no requirement of its own"
     },
     {
       "id": "ARBORA-FLEET-R003",
@@ -368,12 +377,13 @@
     },
     {
       "id": "ARBORA-FLEET-R005.2",
-      "title": "Remaining scope of ARBORA-FLEET-R005 (slice .2): A2A task routing with typed work-item and lease operations (rollup)",
-      "delivery_state": "LANDED",
+      "title": "RETIRED: placeholder slice with no requirement of its own",
+      "delivery_state": "RETIRED",
       "landed_in": [
         "3b404ee3ecf8"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "placeholder slice with no requirement of its own"
     },
     {
       "id": "ARBORA-FLEET-R006",
@@ -393,7 +403,7 @@
     },
     {
       "id": "ARBORA-FLEET-R007",
-      "title": "Bridge upgraded to FastMCP 4 (rollup)",
+      "title": "Bridge runs on FastMCP 4 with native primitives (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "67b1b9ab916e"
@@ -538,7 +548,7 @@
     },
     {
       "id": "ARBORA-FLEET-R006.3",
-      "title": "Dead harvest helpers removed (rollup over `ARBORA-FLEET-R006.3.1`-`.4`)",
+      "title": "Dead harvest helpers removed (rollup over `.3.1` to `.3.4`)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -584,7 +594,7 @@
     },
     {
       "id": "ARBORA-FLEET-R006.4",
-      "title": "Residual `_harvest`-named symbol renamed off the removed path",
+      "title": "Residual harvest-named symbol renamed off the removed path",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -598,7 +608,7 @@
     },
     {
       "id": "ARBORA-FLEET-R007.1",
-      "title": "agent-connector-sdk's FastMCP instance gains native prompt/resource/template registration (cross-repo, owner: agent-connector-sdk)",
+      "title": "Connector SDK server registers native prompts, resources and templates",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -612,7 +622,7 @@
     },
     {
       "id": "ARBORA-FLEET-R007.3",
-      "title": "arbora's served bridge exercises native prompts, resources and templates end to end",
+      "title": "The served bridge exercises native prompts, resources and templates end to end",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -852,7 +862,7 @@
     },
     {
       "id": "ARBORA-FLEET-R021",
-      "title": "Fleet capability checks require exact scopes, deny unknown tools",
+      "title": "Fleet capability checks require exact scopes and deny unknown tools",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "18038a22a875",
@@ -878,8 +888,8 @@
     },
     {
       "id": "ARBORA-FLEET-R051",
-      "title": "Catalog reload rejects invalid candidates, proves replica convergence",
-      "delivery_state": "LANDED",
+      "title": "Catalog reload rejects invalid candidates, proves replica convergence (rollup)",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "1a8d280ab981"
       ],
@@ -918,7 +928,7 @@
     },
     {
       "id": "ARBORA-FLEET-R024",
-      "title": "Fleet reconciliation, scaling and deploy watch are served by Arbora",
+      "title": "Fleet reconciliation, scaling and deploy watch are served by arbora (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "c2d8c8ce46b8"
@@ -957,11 +967,14 @@
     {
       "id": "ARBORA-FLEET-R051.2",
       "title": "Multi-replica convergence is observed by generation and digest",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "1a8d280ab981"
       ],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-FLEET-R051.2.1"
+      ]
     },
     {
       "id": "ARBORA-FLEET-R024.1",
@@ -978,17 +991,18 @@
     },
     {
       "id": "ARBORA-FLEET-R024.2",
-      "title": "Remaining fleet reconciler, autoscaler, scaling-authority and deploy-watch scheduling behavior is served by Arbora",
+      "title": "Reconcile, scale and deploy-watch dispatch are served operations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-FLEET-R024.3",
-      "title": "Agent runtime no longer ships the superseded fleet modules (cross-repo)",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: meristem origin/main ships none of the superseded orchestration modules",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "meristem origin/main ships none of the superseded orchestration modules"
     },
     {
       "id": "ARBORA-FLEET-R024.750",
@@ -1165,7 +1179,7 @@
     },
     {
       "id": "ARBORA-FLEET-R033",
-      "title": "Fleet-catalog `servers` read owned by arbora",
+      "title": "Fleet-catalog `servers` read owned by arbora (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1183,14 +1197,14 @@
     },
     {
       "id": "ARBORA-FLEET-R033.2",
-      "title": "Add refusal tests for the `servers` reader",
+      "title": "Refusals of the `servers` reader",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-FLEET-R034",
-      "title": "Skills and SI workflows are admitted before they run (rollup)",
+      "title": "Skills and workflows are admitted before they run (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1424,49 +1438,48 @@
     },
     {
       "id": "ARBORA-FLEET-R019.1",
-      "title": "Behavior",
+      "title": "Workflow admission applies the same narrowing boundary",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-FLEET-R021.1",
-      "title": "Behavior",
+      "title": "Every workflow tool requires its declaration and grant binding",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-FLEET-R005.3",
-      "title": "Behavior",
+      "title": "Integrated work-item distribution and provisioning use the R027 flow",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-FLEET-R019.2",
-      "title": "Original policy contract",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: duplicate of the root contract; its acceptance now sits in the root",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "duplicate of the root contract; its acceptance now sits in the root"
     },
     {
       "id": "ARBORA-FLEET-R021.2",
-      "title": "Original fleet authority contract",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: duplicate of the root contract; its acceptance now sits in the root",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "duplicate of the root contract; its acceptance now sits in the root"
     },
     {
       "id": "ARBORA-FLEET-R027.7",
-      "title": "Original fleet onboarding contract",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: duplicate of the root contract; its acceptance now sits in the root",
+      "delivery_state": "RETIRED",
       "landed_in": [],
       "verified_by": [],
-      "rollup_of": [
-        "ARBORA-FLEET-R027.7.1",
-        "ARBORA-FLEET-R027.7.2"
-      ]
+      "retired_reason": "duplicate of the root contract; its acceptance now sits in the root"
     },
     {
       "id": "ARBORA-FLEET-R027.7.1",
@@ -1481,10 +1494,11 @@
     },
     {
       "id": "ARBORA-FLEET-R027.7.2",
-      "title": "Remaining original onboarding acceptance",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: residual restatement of the root contract",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "residual restatement of the root contract"
     },
     {
       "id": "ARBORA-FLEET-R027.8",
@@ -1499,10 +1513,11 @@
     },
     {
       "id": "ARBORA-FLEET-R003.4",
-      "title": "Original writable-fleet acceptance residual",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: duplicate of the restart rows",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "duplicate of the restart rows"
     },
     {
       "id": "ARBORA-FLEET-R003.5",
@@ -1581,21 +1596,22 @@
     },
     {
       "id": "ARBORA-FLEET-R002.9",
-      "title": "AU:52 Arbora definition slice",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: the compatibility producer is the medulla skill-upgrade decision",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "the compatibility producer is the medulla skill-upgrade decision"
     },
     {
       "id": "ARBORA-FLEET-R034.13",
-      "title": "AU:98 Arbora definition slice",
+      "title": "Skill upgrades are admitted on contract compatibility",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-FLEET-R034.14",
-      "title": "ARBORA:8 Arbora definition slice",
+      "title": "Certification producer and consumer are bound to the engine decision",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1723,7 +1739,7 @@
     },
     {
       "id": "ARBORA-FLEET-R039",
-      "title": "Domain pack reads compose engine methods",
+      "title": "Domain pack reads compose engine methods (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -2038,7 +2054,7 @@
     {
       "id": "ARBORA-FLEET-R041.17",
       "title": "Onboarding writes the agent-library catalog into EG",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "3ffdccaea68b",
         "76c14ffa5264"
@@ -2047,6 +2063,9 @@
         "tests/fleet/test_catalog_graph.py:118",
         "tests/fleet/test_catalog_graph.py:133",
         "tests/fleet/test_catalog_graph.py:89"
+      ],
+      "rollup_of": [
+        "ARBORA-FLEET-R041.17.1"
       ]
     },
     {
@@ -2304,7 +2323,8 @@
         "ARBORA-FLEET-R052.1",
         "ARBORA-FLEET-R052.2",
         "ARBORA-FLEET-R052.3",
-        "ARBORA-FLEET-R052.4"
+        "ARBORA-FLEET-R052.4",
+        "ARBORA-FLEET-R052.5"
       ]
     },
     {
@@ -2401,7 +2421,63 @@
     },
     {
       "id": "ARBORA-FLEET-R034.15",
-      "title": "Cross-link: DecisionEval attestation consumption proof",
+      "title": "DecisionEval attestation consumption proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R041.17.1",
+      "title": "Onboarding writes owner, version, term, lineage-hop and schema nodes with the asset set",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R051.2.1",
+      "title": "Convergence status is a served read",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R052.5",
+      "title": "Serve the cross-source questions through the intent surface",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R054",
+      "title": "Onboarding passes the seed body to the pack import",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R055",
+      "title": "Serve the composed execution answer through the intent surface",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R056",
+      "title": "Intent surface answers the job, downtime and plan questions",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R057",
+      "title": "Source executor relays read-time access checks",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-FLEET-R058",
+      "title": "Host bootstrap declares data-prep fields to the engine",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

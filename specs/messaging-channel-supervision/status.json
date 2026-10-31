@@ -11,10 +11,12 @@
     "ARBORA-MESSAGING-R004",
     "ARBORA-MESSAGING-R005",
     "ARBORA-MESSAGING-R005.1",
+    "ARBORA-MESSAGING-R005.1.1",
     "ARBORA-MESSAGING-R006",
     "ARBORA-MESSAGING-R007",
     "ARBORA-MESSAGING-R007.1",
     "ARBORA-MESSAGING-R008",
+    "ARBORA-MESSAGING-R008.1",
     "ARBORA-MESSAGING-R009",
     "ARBORA-MESSAGING-R009.1",
     "ARBORA-MESSAGING-R009.2",
@@ -52,7 +54,7 @@
   "requirements": [
     {
       "id": "ARBORA-MESSAGING-R001",
-      "title": "Typed channel supervision state machine",
+      "title": "Typed channel supervision state machine (rollup)",
       "delivery_state": "LANDED",
       "landed_in": [
         "63a66f60915a"
@@ -64,7 +66,7 @@
     },
     {
       "id": "ARBORA-MESSAGING-R001.1",
-      "title": "Typed state model, transition table, and refusal tests",
+      "title": "Typed state model, transition table and refusal tests",
       "delivery_state": "LANDED",
       "landed_in": [
         "63a66f60915a"
@@ -109,7 +111,7 @@
     },
     {
       "id": "ARBORA-MESSAGING-R005",
-      "title": "Typed degraded adapter state and configuration-aware health",
+      "title": "Typed degraded adapter state and configuration-aware health (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "29a592980f26",
@@ -128,6 +130,16 @@
       "title": "Typed adapter degradation and configuration-aware health",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-MESSAGING-R005.1.1"
+      ]
+    },
+    {
+      "id": "ARBORA-MESSAGING-R005.1.1",
+      "title": "Consume connector component states on the health endpoint",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {
@@ -139,7 +151,7 @@
     },
     {
       "id": "ARBORA-MESSAGING-R007",
-      "title": "Served channel gateway",
+      "title": "Served channel gateway with an explicit intake switch and sender allowlist",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "11a776ff65df",
@@ -164,7 +176,7 @@
     {
       "id": "ARBORA-MESSAGING-R008",
       "title": "Alert intake operation",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "11a776ff65df",
         "6afc063796e6",
@@ -176,11 +188,21 @@
         "tests/messaging/test_alert_operation.py:155",
         "tests/messaging/test_alert_operation.py:185",
         "tests/messaging/test_alert_operation.py:194"
+      ],
+      "rollup_of": [
+        "ARBORA-MESSAGING-R008.1"
       ]
     },
     {
+      "id": "ARBORA-MESSAGING-R008.1",
+      "title": "Shared signed inbound webhook ingress for webhook based adapters",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
       "id": "ARBORA-MESSAGING-R009",
-      "title": "Additional channel platforms",
+      "title": "Additional channel platforms (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -379,7 +401,7 @@
     },
     {
       "id": "ARBORA-MESSAGING-R800.1",
-      "title": "Model",
+      "title": "Model: contract records and entry-point discovery",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
@@ -401,7 +423,7 @@
     },
     {
       "id": "ARBORA-MESSAGING-R800.3",
-      "title": "Wiring",
+      "title": "Wiring: lazy adapter loading names the missing extra",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -431,7 +453,7 @@
     },
     {
       "id": "ARBORA-MESSAGING-R800.6",
-      "title": "Hot-path proof",
+      "title": "Hot-path proof: render and dispatch latency",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

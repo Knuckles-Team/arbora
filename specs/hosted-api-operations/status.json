@@ -200,6 +200,7 @@
     "ARBORA-OPS-R009.2",
     "ARBORA-OPS-R009.3",
     "ARBORA-OPS-R009.4",
+    "ARBORA-OPS-R009.5",
     "ARBORA-OPS-R053.8",
     "ARBORA-OPS-R059",
     "ARBORA-OPS-R060",
@@ -283,11 +284,54 @@
     "ARBORA-OPS-R021.4.9",
     "ARBORA-OPS-R021.4.8.1",
     "ARBORA-OPS-R021.4.8.2",
+    "ARBORA-OPS-R054.1",
+    "ARBORA-OPS-R054.2",
+    "ARBORA-OPS-R055.1",
+    "ARBORA-OPS-R055.2",
+    "ARBORA-OPS-R059.1",
+    "ARBORA-OPS-R059.2",
+    "ARBORA-OPS-R059.3",
+    "ARBORA-OPS-R059.4",
+    "ARBORA-OPS-R060.1",
+    "ARBORA-OPS-R060.2",
+    "ARBORA-OPS-R060.3",
+    "ARBORA-OPS-R060.4",
+    "ARBORA-OPS-R060.5",
+    "ARBORA-OPS-R061.1",
+    "ARBORA-OPS-R061.2",
+    "ARBORA-OPS-R061.3",
+    "ARBORA-OPS-R061.4",
+    "ARBORA-OPS-R061.5",
+    "ARBORA-OPS-R062.1",
+    "ARBORA-OPS-R062.2",
+    "ARBORA-OPS-R062.3",
+    "ARBORA-OPS-R062.4",
+    "ARBORA-OPS-R062.5",
+    "ARBORA-OPS-R063.1",
+    "ARBORA-OPS-R063.2",
+    "ARBORA-OPS-R063.3",
+    "ARBORA-OPS-R063.4",
+    "ARBORA-OPS-R063.5",
+    "ARBORA-OPS-R064.1",
+    "ARBORA-OPS-R064.2",
+    "ARBORA-OPS-R064.3",
+    "ARBORA-OPS-R064.4",
+    "ARBORA-OPS-R065.1",
+    "ARBORA-OPS-R065.2",
+    "ARBORA-OPS-R065.3",
+    "ARBORA-OPS-R065.4",
+    "ARBORA-OPS-R065.5",
+    "ARBORA-OPS-R066.1",
+    "ARBORA-OPS-R066.2",
+    "ARBORA-OPS-R066.3",
+    "ARBORA-OPS-R066.4",
+    "ARBORA-OPS-R066.5",
     "ARBORA-OPS-R069",
     "ARBORA-OPS-R070",
     "ARBORA-OPS-R071",
     "ARBORA-OPS-R072",
     "ARBORA-OPS-R073",
+    "ARBORA-OPS-R855.3.1",
     "ARBORA-OPS-R862",
     "ARBORA-OPS-R863",
     "ARBORA-OPS-R864",
@@ -303,7 +347,25 @@
     "ARBORA-OPS-R874",
     "ARBORA-OPS-R875",
     "ARBORA-OPS-R876",
-    "ARBORA-OPS-R877"
+    "ARBORA-OPS-R877",
+    "ARBORA-OPS-R878",
+    "ARBORA-OPS-R879",
+    "ARBORA-OPS-R880",
+    "ARBORA-OPS-R881",
+    "ARBORA-OPS-R882",
+    "ARBORA-OPS-R883",
+    "ARBORA-OPS-R884",
+    "ARBORA-OPS-R885",
+    "ARBORA-OPS-R886",
+    "ARBORA-OPS-R887",
+    "ARBORA-OPS-R888",
+    "ARBORA-OPS-R889",
+    "ARBORA-OPS-R890",
+    "ARBORA-OPS-R891",
+    "ARBORA-OPS-R892",
+    "ARBORA-OPS-R893",
+    "ARBORA-OPS-R894",
+    "ARBORA-OPS-R895"
   ],
   "requirements": [
     {
@@ -435,7 +497,7 @@
     },
     {
       "id": "ARBORA-OPS-R009",
-      "title": "Single invoke pipeline for authority, effect, and audit",
+      "title": "Single invoke pipeline for authority, effect and audit",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "5cd1a427c6a1",
@@ -453,7 +515,8 @@
         "ARBORA-OPS-R009.1",
         "ARBORA-OPS-R009.2",
         "ARBORA-OPS-R009.3",
-        "ARBORA-OPS-R009.4"
+        "ARBORA-OPS-R009.4",
+        "ARBORA-OPS-R009.5"
       ]
     },
     {
@@ -515,31 +578,31 @@
     },
     {
       "id": "ARBORA-OPS-R014",
-      "title": "Identity self-service and admin operations",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: identity operations have one owner",
+      "delivery_state": "RETIRED",
       "landed_in": [],
       "verified_by": [],
-      "rollup_of": [
-        "ARBORA-OPS-R014.1"
-      ]
+      "retired_reason": "identity operations have one owner"
     },
     {
       "id": "ARBORA-OPS-R015",
-      "title": "Access elevation, approval, and lease operations",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: access operations have one owner",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "access operations have one owner"
     },
     {
       "id": "ARBORA-OPS-R016",
-      "title": "Capacity status and throttle mode operations",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: capacity operations have one owner",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "capacity operations have one owner"
     },
     {
       "id": "ARBORA-OPS-R017",
-      "title": "Finance and markets operations with tenant isolation",
+      "title": "Finance and markets operations with tenant isolation (rollup)",
       "delivery_state": "LANDED",
       "landed_in": [
         "64a0c091b354"
@@ -573,7 +636,7 @@
     },
     {
       "id": "ARBORA-OPS-R018",
-      "title": "Query, search, ontology, and analytics operations",
+      "title": "Query, search, ontology and analytics operations (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -584,7 +647,7 @@
     },
     {
       "id": "ARBORA-OPS-R018.1",
-      "title": "Sparql, sql_schema, and ontology operations",
+      "title": "Sparql, schema and ontology operations",
       "delivery_state": "LANDED",
       "landed_in": [
         "64a0c091b354"
@@ -593,7 +656,7 @@
     },
     {
       "id": "ARBORA-OPS-R018.2",
-      "title": "Uql, sql, search, indexes, and analytics.series operations",
+      "title": "Uql, sql, search, index and series operations",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "64a0c091b354"
@@ -620,14 +683,14 @@
     },
     {
       "id": "ARBORA-OPS-R018.2.2",
-      "title": "Remaining query, SQL, search, indexes and analytics serving acceptance",
+      "title": "Query serving acceptance, budgets and planner refusal",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R019",
-      "title": "Federation source registration and sharing operations",
+      "title": "Federation source operations (rollup)",
       "delivery_state": "LANDED",
       "landed_in": [
         "64a0c091b354"
@@ -640,7 +703,7 @@
     },
     {
       "id": "ARBORA-OPS-R019.1",
-      "title": "Federation source register, list, get, and probe",
+      "title": "Federation source register, list, get and probe",
       "delivery_state": "LANDED",
       "landed_in": [
         "64a0c091b354"
@@ -658,7 +721,7 @@
     },
     {
       "id": "ARBORA-OPS-R020",
-      "title": "Ingest operations through a typed SDK runner facade",
+      "title": "Ingest operations through a typed runner facade (rollup)",
       "delivery_state": "LANDED",
       "landed_in": [
         "06d8baf844a1",
@@ -930,7 +993,7 @@
     },
     {
       "id": "ARBORA-OPS-R021",
-      "title": "Decision, retrieval, and policy operations",
+      "title": "Decision, retrieval, runs and policy operations (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -943,7 +1006,7 @@
     },
     {
       "id": "ARBORA-OPS-R021.1",
-      "title": "Decide operations (service-executed) — decide slice",
+      "title": "Decide operations, service-executed commit",
       "delivery_state": "LANDED",
       "landed_in": [
         "1ded59edd1a6",
@@ -953,12 +1016,16 @@
     },
     {
       "id": "ARBORA-OPS-R021.2",
-      "title": "Retrieval, context, and freshness read operations — retrieval slice",
-      "delivery_state": "SPECIFIED",
+      "title": "Retrieval, context and freshness read operations (rollup)",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "e78a5e5b701e"
+        "e78a5e5b701e",
+        "f6f2177ab1e0"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_retrieval_ops.py:68",
+        "tests/api/test_retrieval_ops.py:81"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R021.2.1",
         "ARBORA-OPS-R021.2.2"
@@ -966,8 +1033,8 @@
     },
     {
       "id": "ARBORA-OPS-R021.2.1",
-      "title": "`retrieval.search` op",
-      "delivery_state": "SPECIFIED",
+      "title": "The retrieval.search operation",
+      "delivery_state": "RETIRED",
       "landed_in": [
         "e78a5e5b701e"
       ],
@@ -1005,7 +1072,7 @@
     },
     {
       "id": "ARBORA-OPS-R021.4",
-      "title": "Run read operations — runs slice",
+      "title": "Run read operations (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1023,28 +1090,28 @@
     },
     {
       "id": "ARBORA-OPS-R021.4.1",
-      "title": "RunTraceReader port",
+      "title": "The RunTraceReader port",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R021.4.2",
-      "title": "Engine adapter",
+      "title": "The engine run adapter",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R021.4.3",
-      "title": "Aggregate models",
+      "title": "Run metric models",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R021.4.4",
-      "title": "Aggregate operation",
+      "title": "The runs.metrics operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1128,14 +1195,14 @@
     },
     {
       "id": "ARBORA-OPS-R021.4.6",
-      "title": "Registration and served proof",
+      "title": "Run operation registration and served proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R022",
-      "title": "Work and evolution loop operations",
+      "title": "Work and evolution loop operations (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1157,7 +1224,7 @@
     },
     {
       "id": "ARBORA-OPS-R022.2",
-      "title": "Evolution loop, schedule, and proposal operations — evolution slice",
+      "title": "Evolution loop, schedule and proposal operations (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1171,35 +1238,35 @@
     },
     {
       "id": "ARBORA-OPS-R022.2.1",
-      "title": "evolution.loops.status operation",
+      "title": "The evolution.loops.status operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R022.2.2",
-      "title": "`evolution.schedules.list` op",
+      "title": "The evolution.schedules.list operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R022.2.3",
-      "title": "`evolution.proposals.list` op",
+      "title": "The evolution.proposals.list operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R022.2.4",
-      "title": "`evolution.loops.run` op",
+      "title": "The evolution.loops.run operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R022.2.5",
-      "title": "`evolution.loops.pause` op",
+      "title": "The evolution.loops.pause operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1221,7 +1288,7 @@
     },
     {
       "id": "ARBORA-OPS-R024",
-      "title": "Telemetry, security, usage, and admin operations",
+      "title": "Telemetry, security, usage, memory and admin operations (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1235,7 +1302,7 @@
     },
     {
       "id": "ARBORA-OPS-R024.1",
-      "title": "Telemetry operations — telemetry slice",
+      "title": "Telemetry read operation",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "4b69b27f1d76"
@@ -1259,7 +1326,7 @@
     },
     {
       "id": "ARBORA-OPS-R024.3",
-      "title": "Usage operations — usage slice",
+      "title": "Usage operations rollup",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "4b69b27f1d76"
@@ -1286,7 +1353,7 @@
     },
     {
       "id": "ARBORA-OPS-R024.4",
-      "title": "Memory operations — memory slice",
+      "title": "Memory operations rollup",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "383897ed5238",
@@ -1309,7 +1376,7 @@
     },
     {
       "id": "ARBORA-OPS-R024.4.1",
-      "title": "Versioned memory port",
+      "title": "Memory file models",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1396,7 +1463,7 @@
     },
     {
       "id": "ARBORA-OPS-R024.5",
-      "title": "Operational admin operations — admin slice",
+      "title": "Operational admin operations",
       "delivery_state": "LANDED",
       "landed_in": [
         "4016e049e45e",
@@ -1584,7 +1651,7 @@
     },
     {
       "id": "ARBORA-OPS-R032",
-      "title": "Identity dependency inversion via ports",
+      "title": "Identity dependency inversion via ports (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1641,7 +1708,7 @@
     },
     {
       "id": "ARBORA-OPS-R032.2.3",
-      "title": "Inject identity ports into webui_host and webui_co_service (rollup)",
+      "title": "Inject identity into webui_host (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1652,14 +1719,15 @@
     },
     {
       "id": "ARBORA-OPS-R032.2.3.1",
-      "title": "compose_web_application requires injected identity ports",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: superseded by session-boundary injection",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "superseded by session-boundary injection"
     },
     {
       "id": "ARBORA-OPS-R032.2.3.2",
-      "title": "Thread identity ports through run_web_ui and the webui_host package (rollup)",
+      "title": "Thread the session boundary through start_composed_services",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -1670,21 +1738,22 @@
     },
     {
       "id": "ARBORA-OPS-R032.2.3.2.1",
-      "title": "run_web_ui accepts and binds identity ports",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: superseded by session-boundary injection",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "superseded by session-boundary injection"
     },
     {
       "id": "ARBORA-OPS-R032.2.3.2.2",
-      "title": "Supply identity ports from mcp_server composition to the agent-webui start call",
+      "title": "Supply the boundary from composition to the webui start call",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R032.2.4",
-      "title": "Integration test of single injected identity runtime",
+      "title": "Single injected identity runtime proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1810,14 +1879,14 @@
     },
     {
       "id": "ARBORA-OPS-R039.1",
-      "title": "Add one test in tests/gateway/test_dashboard_route_census.py asserting the served dashboard router exposes all 15 old method and path pairs",
+      "title": "Dashboard route census",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R039.2",
-      "title": "Add one test in tests/gateway/test_dashboard_api.py. Assert read-capability callers get 403 on PUT /layout, POST /daemon/start, POST /hydrate and POST /hydrate/{source}. Assert API-key callers pass",
+      "title": "Dashboard write capability",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1835,28 +1904,28 @@
     },
     {
       "id": "ARBORA-OPS-R039.4",
-      "title": "Add one test in tests/gateway/test_dashboard_api.py asserting a malformed hydrate source returns 422 and an unknown service id returns 404",
+      "title": "Dashboard input refusals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R039.5",
-      "title": "Add one test in tests/gateway/test_dashboard_api.py pinning the key set returned by GET /daemon/status and POST /daemon/start against `arbora.gateway.daemon.daemon_status`, compared with the old keys role, threads, jobs and queue depth",
+      "title": "Daemon status key set",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R039.6",
-      "title": "Replace the `agent_utilities.knowledge_graph.core.shard_topology` import in arbora/gateway/dashboard_api.py `daemon_shards` with the engine client shard-topology method, after a contract test in tests/gateway/test_dashboard_api.py shows the installed client exposes it (`ARBORA-HOST-R002`). BLOCKED on the engine client owner if the method is absent",
+      "title": "Shard topology from the engine",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R039.7",
-      "title": "Replace `_active_engine` and `_hydration_manager` in arbora/gateway/dashboard_api.py with the engine client source-sync methods. Keep 500 on no engine, 400 on `ValueError` and 422 on a malformed source",
+      "title": "Hydration through served ingest",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1907,49 +1976,49 @@
     },
     {
       "id": "ARBORA-OPS-R040.2",
-      "title": "Add one typed model: create-artifact request in arbora/gateway/artifacts_api.py, rejecting empty template and oversize data",
+      "title": "Create-artifact request model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R040.3",
-      "title": "Add one port: artifact store and refresh ports plus a resolver callable type in arbora/gateway/ports.py",
+      "title": "Artifact store and refresh ports",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R040.4",
-      "title": "Add one route: POST /api/artifacts, returning id and rendered output, 400 on a bounded-JSON error",
+      "title": "Create artifact route",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R040.5",
-      "title": "Add one route: GET /api/artifacts/{artifact_id}, 404 when absent",
+      "title": "Get artifact route",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R040.6",
-      "title": "Add one route: POST /api/artifacts/{artifact_id}/refresh with inline data or resolver, 404 when absent, prior render preserved on failure",
+      "title": "Refresh artifact route",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R040.7",
-      "title": "Wire one call site: a register function in arbora/gateway/artifacts_api.py called where the host mounts the graph and usage routes, reusing `_require_dashboard_read` on GET and `_require_dashboard_write` on POST from arbora/gateway/dashboard_api.py (capabilities, not engine scopes; decision D3)",
+      "title": "Mount the artifact routes",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R040.8",
-      "title": "Wire one function: pass the exported `kg_source_resolver` (row ARBORA-OPS-R040.1) as the artifacts register function's resolver argument in arbora/gateway/artifacts_api.py; no arbora re-derivation code. Without it the default preserve-prior-data resolver is used",
+      "title": "Wire the source resolver",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -1963,7 +2032,7 @@
     },
     {
       "id": "ARBORA-OPS-R040.10",
-      "title": "Add one test in tests/gateway/test_artifacts_route_mount.py asserting a caller without gateway:read gets 403 on GET and a caller with only gateway:read gets 403 on both POST routes, while API-key callers pass",
+      "title": "Artifact route capability matrix",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -2010,49 +2079,49 @@
     },
     {
       "id": "ARBORA-OPS-R042.1",
-      "title": "Model",
+      "title": "Screening model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R042.2",
-      "title": "Behavior",
+      "title": "Default screen rules and output redactor",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R042.3",
-      "title": "Wiring",
+      "title": "Screening wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R042.4",
-      "title": "Refusal",
+      "title": "Screening refusals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R042.5",
-      "title": "Evidence",
+      "title": "Screening evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R042.6",
-      "title": "Hot-path proof",
+      "title": "Screening hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R050",
-      "title": "Policy lifecycle operations that guard plans",
+      "title": "Policy lifecycle operations that guard plans (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -2067,14 +2136,14 @@
     },
     {
       "id": "ARBORA-OPS-R050.1",
-      "title": "Model",
+      "title": "Policy lifecycle model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R050.2",
-      "title": "Behavior",
+      "title": "Policy change behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -2084,35 +2153,35 @@
     },
     {
       "id": "ARBORA-OPS-R050.3",
-      "title": "Wiring",
+      "title": "Policy wiring and plan guard",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R050.4",
-      "title": "Refusal",
+      "title": "Policy refusals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R050.5",
-      "title": "Evidence",
+      "title": "Policy evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R050.6",
-      "title": "Hot-path proof",
+      "title": "Policy hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R051",
-      "title": "Scoped security-evaluation operation",
+      "title": "Scoped security-evaluation operation (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -2127,49 +2196,49 @@
     },
     {
       "id": "ARBORA-OPS-R051.1",
-      "title": "Model",
+      "title": "Security evaluation model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R051.2",
-      "title": "Behavior",
+      "title": "Security evaluation behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R051.3",
-      "title": "Wiring",
+      "title": "Security evaluation wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R051.4",
-      "title": "Refusal",
+      "title": "Security evaluation refusals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R051.5",
-      "title": "Evidence",
+      "title": "Security evaluation evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R051.6",
-      "title": "Hot-path proof",
+      "title": "Security evaluation hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R052",
-      "title": "Authorization-segmented virtual schema projections",
+      "title": "Authorization-segmented virtual schema projections (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -2184,49 +2253,49 @@
     },
     {
       "id": "ARBORA-OPS-R052.1",
-      "title": "Model",
+      "title": "Projection model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R052.2",
-      "title": "Behavior",
+      "title": "Projection scope behavior",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R052.3",
-      "title": "Wiring",
+      "title": "Projection wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R052.4",
-      "title": "Refusal",
+      "title": "Projection refusals and non-disclosure",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R052.5",
-      "title": "Evidence",
+      "title": "Projection evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R052.6",
-      "title": "Hot-path proof",
+      "title": "Projection hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R053",
-      "title": "Bounded interaction space",
+      "title": "Bounded interaction space (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -2243,94 +2312,119 @@
     },
     {
       "id": "ARBORA-OPS-R053.1",
-      "title": "Model",
+      "title": "Interaction space model",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R053.2",
-      "title": "Behavior",
+      "title": "Interaction space build",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R053.3",
-      "title": "Wiring",
+      "title": "Interaction space wiring",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R053.4",
-      "title": "Refusal",
+      "title": "Interaction space refusals",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R053.5",
-      "title": "Evidence",
+      "title": "Interaction space evidence",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R053.6",
-      "title": "Hot-path proof",
+      "title": "Interaction space hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R054",
-      "title": "Technique-bound benchmark adoption",
+      "title": "Technique-bound benchmark adoption (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R054.1",
+        "ARBORA-OPS-R054.2"
+      ]
     },
     {
       "id": "ARBORA-OPS-R055",
-      "title": "Run-bound process remediation",
+      "title": "Run-bound process remediation (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R055.1",
+        "ARBORA-OPS-R055.2"
+      ]
     },
     {
       "id": "ARBORA-OPS-R056",
-      "title": "Source-bound changeset review",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: served by the changeset review operation",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "served by the changeset review operation"
     },
     {
       "id": "ARBORA-OPS-R057",
-      "title": "Stable prompt serialization and difference oracle",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: owned by the engine contract and governed write-back",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "owned by the engine contract and governed write-back"
     },
     {
       "id": "ARBORA-OPS-R058",
-      "title": "Authorized table-browser projection",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: served by the query operations and schema context",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "served by the query operations and schema context"
     },
     {
       "id": "ARBORA-OPS-R061",
-      "title": "Indexed token and cost projection",
+      "title": "Indexed token and cost projection (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R061.1",
+        "ARBORA-OPS-R061.2",
+        "ARBORA-OPS-R061.3",
+        "ARBORA-OPS-R061.4",
+        "ARBORA-OPS-R061.5"
+      ]
     },
     {
       "id": "ARBORA-OPS-R063",
-      "title": "Retrieval evaluation and authorized context projection",
+      "title": "Retrieval evaluation and authorized context projection (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R063.1",
+        "ARBORA-OPS-R063.2",
+        "ARBORA-OPS-R063.3",
+        "ARBORA-OPS-R063.4",
+        "ARBORA-OPS-R063.5"
+      ]
     },
     {
       "id": "ARBORA-OPS-R024.1.1",
@@ -2362,31 +2456,34 @@
     },
     {
       "id": "ARBORA-OPS-R053.7",
-      "title": "AU:71 Arbora definition slice",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: served by the engine indexless method",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "served by the engine indexless method"
     },
     {
       "id": "ARBORA-OPS-R021.2.1.1",
-      "title": "AU:93 Arbora definition slice",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: bound retrieval provider execution has one owner",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "bound retrieval provider execution has one owner"
     },
     {
       "id": "ARBORA-OPS-R050.2.1",
-      "title": "EG:61 Arbora definition slice",
+      "title": "Bind a reviewed policy source to the active policy",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R009.1",
-      "title": "ARBORA:17 Arbora definition slice",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: recommendation approval and decision-wide evidence have one owner per side",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "recommendation approval and decision-wide evidence have one owner per side"
     },
     {
       "id": "ARBORA-OPS-R009.2",
@@ -2432,53 +2529,101 @@
       ]
     },
     {
-      "id": "ARBORA-OPS-R053.8",
-      "title": "ARBORA:25 Arbora definition slice",
+      "id": "ARBORA-OPS-R009.5",
+      "title": "Forward the approval reference to connector calls",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R053.8",
+      "title": "RETIRED: served by the engine line table and span read",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "served by the engine line table and span read"
     },
     {
       "id": "ARBORA-OPS-R059",
-      "title": "Proposal outcome projection",
+      "title": "Proposal outcome projection (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R059.1",
+        "ARBORA-OPS-R059.2",
+        "ARBORA-OPS-R059.3",
+        "ARBORA-OPS-R059.4"
+      ]
     },
     {
       "id": "ARBORA-OPS-R060",
-      "title": "Supported-harness discovery and session projections",
+      "title": "Supported-harness discovery and session projections (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R060.1",
+        "ARBORA-OPS-R060.2",
+        "ARBORA-OPS-R060.3",
+        "ARBORA-OPS-R060.4",
+        "ARBORA-OPS-R060.5"
+      ]
     },
     {
       "id": "ARBORA-OPS-R062",
-      "title": "Authenticated graph-change feed and recovery",
+      "title": "Authenticated graph-change feed and recovery (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R062.1",
+        "ARBORA-OPS-R062.2",
+        "ARBORA-OPS-R062.3",
+        "ARBORA-OPS-R062.4",
+        "ARBORA-OPS-R062.5"
+      ]
     },
     {
       "id": "ARBORA-OPS-R064",
-      "title": "Viewport bins and selection",
+      "title": "Viewport bins and selection (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R064.1",
+        "ARBORA-OPS-R064.2",
+        "ARBORA-OPS-R064.3",
+        "ARBORA-OPS-R064.4"
+      ]
     },
     {
       "id": "ARBORA-OPS-R065",
-      "title": "Live meeting transcript and summary provider operations",
+      "title": "Live meeting transcript and summary provider operations (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R065.1",
+        "ARBORA-OPS-R065.2",
+        "ARBORA-OPS-R065.3",
+        "ARBORA-OPS-R065.4",
+        "ARBORA-OPS-R065.5"
+      ]
     },
     {
       "id": "ARBORA-OPS-R066",
-      "title": "Bounded bookmark search, relationships, and export",
+      "title": "Bounded bookmark search, relationships and export (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R066.1",
+        "ARBORA-OPS-R066.2",
+        "ARBORA-OPS-R066.3",
+        "ARBORA-OPS-R066.4",
+        "ARBORA-OPS-R066.5"
+      ]
     },
     {
       "id": "ARBORA-OPS-R067",
@@ -2691,7 +2836,7 @@
     },
     {
       "id": "ARBORA-OPS-R848",
-      "title": "`source.*` served operations",
+      "title": "`source.*` served operations (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -2769,28 +2914,27 @@
     },
     {
       "id": "ARBORA-OPS-R852",
-      "title": "Harness optimize, promote and rollback operations (rollup)",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: duplicate of ARBORA-OPS-R860",
+      "delivery_state": "RETIRED",
       "landed_in": [],
       "verified_by": [],
-      "rollup_of": [
-        "ARBORA-OPS-R852.1",
-        "ARBORA-OPS-R852.2"
-      ]
+      "retired_reason": "duplicate of ARBORA-OPS-R860"
     },
     {
       "id": "ARBORA-OPS-R852.1",
-      "title": "Wiring",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: duplicate of ARBORA-OPS-R860",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "duplicate of ARBORA-OPS-R860"
     },
     {
       "id": "ARBORA-OPS-R852.2",
-      "title": "Hot-path proof",
-      "delivery_state": "SPECIFIED",
+      "title": "RETIRED: duplicate of ARBORA-OPS-R860",
+      "delivery_state": "RETIRED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "retired_reason": "duplicate of ARBORA-OPS-R860"
     },
     {
       "id": "ARBORA-OPS-R853",
@@ -2881,7 +3025,10 @@
       "title": "Trust flag, curation review and query workspace operations",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
-      "verified_by": []
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-OPS-R855.3.1"
+      ]
     },
     {
       "id": "ARBORA-OPS-R855.4",
@@ -2994,7 +3141,7 @@
     },
     {
       "id": "ARBORA-OPS-R860",
-      "title": "Served program optimization, promotion and rollback operations (rollup)",
+      "title": "Served program optimization and revision promotion and rollback operations (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -3178,7 +3325,301 @@
     },
     {
       "id": "ARBORA-OPS-R021.4.8.2",
-      "title": "Nested lineage and snapshot/update reconciliation",
+      "title": "Nested lineage and snapshot reconciliation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R054.1",
+      "title": "Technique activation model and behavior",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R054.2",
+      "title": "Technique activation wiring and proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R055.1",
+      "title": "Process remediation proposal",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R055.2",
+      "title": "Process termination bound to approval",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R059.1",
+      "title": "Evolution metrics models",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R059.2",
+      "title": "Evolution metrics behavior and wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R059.3",
+      "title": "Evolution metrics refusals",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R059.4",
+      "title": "Evolution metrics hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R060.1",
+      "title": "Session and harness models",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R060.2",
+      "title": "Harness manifest and discovery status operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R060.3",
+      "title": "Session browse, search and cost operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R060.4",
+      "title": "Session operation refusals",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R060.5",
+      "title": "Session projection hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R061.1",
+      "title": "Usage index models",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R061.2",
+      "title": "Usage index forwarding",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R061.3",
+      "title": "Usage index wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R061.4",
+      "title": "Usage index refusals and latency profile",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R061.5",
+      "title": "Usage index hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R062.1",
+      "title": "Graph change models",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R062.2",
+      "title": "Subscribe and stream",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R062.3",
+      "title": "Snapshot recovery",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R062.4",
+      "title": "Revocation, refusals and visibility limit",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R062.5",
+      "title": "Graph change hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R063.1",
+      "title": "Retrieval evaluation and context models",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R063.2",
+      "title": "Retrieval evaluation forwarding",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R063.3",
+      "title": "Authorized context search forwarding",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R063.4",
+      "title": "Retrieval evaluation refusals",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R063.5",
+      "title": "Retrieval evaluation hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R064.1",
+      "title": "Viewport models",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R064.2",
+      "title": "Viewport behavior and wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R064.3",
+      "title": "Viewport refusals",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R064.4",
+      "title": "Viewport hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R065.1",
+      "title": "Meeting models",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R065.2",
+      "title": "Transcript stream",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R065.3",
+      "title": "Providers and summary operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R065.4",
+      "title": "Meeting egress refusals",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R065.5",
+      "title": "Meeting hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R066.1",
+      "title": "Bookmark models",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R066.2",
+      "title": "Bookmark search and relationships",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R066.3",
+      "title": "Bookmark export",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R066.4",
+      "title": "Bookmark refusals",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R066.5",
+      "title": "Bookmark hot-path proof",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -3214,6 +3655,13 @@
     {
       "id": "ARBORA-OPS-R073",
       "title": "Host resource-grant binding for incremental indexing",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R855.3.1",
+      "title": "arbora consumes catalog trust-flag events and notifies stored-query owners",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
@@ -3326,6 +3774,133 @@
     {
       "id": "ARBORA-OPS-R877",
       "title": "Write team records and apply the coordination decision",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R878",
+      "title": "Read operation `models.list` lists the model profiles a caller may prefer",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R879",
+      "title": "Serve hook install and uninstall as registry operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R880",
+      "title": "Serve the cross-source report as a registered operation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R881",
+      "title": "Artifact operations in the registry for eg authentication mode",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R882",
+      "title": "Agent bus operations over medulla topic, roster and work-item methods",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R883",
+      "title": "Retrieval operations carry the verified agent reference",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R884",
+      "title": "Meeting summary orchestration with provider admission",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R885",
+      "title": "Review a policy revision and return a review approval",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R886",
+      "title": "Admitted ingest maintenance operation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R887",
+      "title": "Served operation entity.approve_link",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R888",
+      "title": "Admit data-product access requests against the steward role",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R889",
+      "title": "Serve an OpenLineage-compatible run-event route that calls `LineageIngest`",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R890",
+      "title": "Bind the engine decision port at host start",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R891",
+      "title": "Step usage events reach the usage ledger",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R892",
+      "title": "RETIRED: duplicate of ARBORA-OPS-R890",
+      "delivery_state": "RETIRED",
+      "landed_in": [],
+      "verified_by": [],
+      "retired_reason": "duplicate of ARBORA-OPS-R890"
+    },
+    {
+      "id": "ARBORA-OPS-R893",
+      "title": "arbora serves the credential access authority port to the SDK",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R894",
+      "title": "Register the changeset submitter and gate runner at host start",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R895",
+      "title": "Summarize a finalized meeting under an admitted provider",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

@@ -5,6 +5,7 @@
   "delivery_state": "SPECIFIED",
   "requirement_ids": [
     "ARBORA-DATA-MARKET-R001",
+    "ARBORA-DATA-MARKET-R001.1",
     "ARBORA-DATA-MARKET-R002",
     "ARBORA-DATA-MARKET-R003",
     "ARBORA-DATA-MARKET-R004",
@@ -22,16 +23,37 @@
     "ARBORA-DATA-MARKET-R003.3",
     "ARBORA-DATA-MARKET-R003.4",
     "ARBORA-DATA-MARKET-R003.5",
-    "ARBORA-DATA-MARKET-R003.6"
+    "ARBORA-DATA-MARKET-R003.6",
+    "ARBORA-DATA-MARKET-R003.7",
+    "ARBORA-DATA-MARKET-R003.8",
+    "ARBORA-DATA-MARKET-R003.9",
+    "ARBORA-DATA-MARKET-R003.10",
+    "ARBORA-DATA-MARKET-R003.11",
+    "ARBORA-DATA-MARKET-R003.12",
+    "ARBORA-DATA-MARKET-R003.13",
+    "ARBORA-DATA-MARKET-R003.14",
+    "ARBORA-DATA-MARKET-R003.15",
+    "ARBORA-DATA-MARKET-R007.7",
+    "ARBORA-DATA-MARKET-R008"
   ],
   "requirements": [
     {
       "id": "ARBORA-DATA-MARKET-R001",
       "title": "Durable, deduplicated flip alert delivery",
-      "delivery_state": "LANDED",
+      "delivery_state": "SPECIFIED",
       "landed_in": [
         "e61c0e3df8b7"
       ],
+      "verified_by": [],
+      "rollup_of": [
+        "ARBORA-DATA-MARKET-R001.1"
+      ]
+    },
+    {
+      "id": "ARBORA-DATA-MARKET-R001.1",
+      "title": "Durable finance receipt store",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
       "verified_by": []
     },
     {
@@ -45,7 +67,7 @@
     },
     {
       "id": "ARBORA-DATA-MARKET-R003",
-      "title": "Server-side finance and markets reads and paper order submission",
+      "title": "Server-side finance and markets reads, paper submission and market compute (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [
         "57391db3828f",
@@ -58,7 +80,16 @@
         "ARBORA-DATA-MARKET-R003.3",
         "ARBORA-DATA-MARKET-R003.4",
         "ARBORA-DATA-MARKET-R003.5",
-        "ARBORA-DATA-MARKET-R003.6"
+        "ARBORA-DATA-MARKET-R003.6",
+        "ARBORA-DATA-MARKET-R003.7",
+        "ARBORA-DATA-MARKET-R003.8",
+        "ARBORA-DATA-MARKET-R003.9",
+        "ARBORA-DATA-MARKET-R003.10",
+        "ARBORA-DATA-MARKET-R003.11",
+        "ARBORA-DATA-MARKET-R003.12",
+        "ARBORA-DATA-MARKET-R003.13",
+        "ARBORA-DATA-MARKET-R003.14",
+        "ARBORA-DATA-MARKET-R003.15"
       ]
     },
     {
@@ -94,7 +125,7 @@
     },
     {
       "id": "ARBORA-DATA-MARKET-R007",
-      "title": "Confirmed order and position changes",
+      "title": "Confirmed order and position changes (rollup)",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [],
@@ -104,7 +135,8 @@
         "ARBORA-DATA-MARKET-R007.3",
         "ARBORA-DATA-MARKET-R007.4",
         "ARBORA-DATA-MARKET-R007.5",
-        "ARBORA-DATA-MARKET-R007.6"
+        "ARBORA-DATA-MARKET-R007.6",
+        "ARBORA-DATA-MARKET-R007.7"
       ]
     },
     {
@@ -187,6 +219,83 @@
     {
       "id": "ARBORA-DATA-MARKET-R003.6",
       "title": "Producer port, registration, and read/effect separation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DATA-MARKET-R003.7",
+      "title": "Paper order submission",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DATA-MARKET-R003.8",
+      "title": "Market signal compute operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DATA-MARKET-R003.9",
+      "title": "Served market.size operation over RegimeSizingInput",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DATA-MARKET-R003.10",
+      "title": "Served market.evaluate operation over medulla NumericEvaluate",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DATA-MARKET-R003.11",
+      "title": "Served market.positions operation over FinanceAccountProject",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DATA-MARKET-R003.12",
+      "title": "Research kernel compute operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DATA-MARKET-R003.13",
+      "title": "Market compute port and sizing operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DATA-MARKET-R003.14",
+      "title": "Banking compute operations",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DATA-MARKET-R003.15",
+      "title": "Finance guide projection",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DATA-MARKET-R007.7",
+      "title": "Order stage and confirm operations call the proposal door",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-DATA-MARKET-R008",
+      "title": "Served forecast operation `market.forecast.sample`",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
