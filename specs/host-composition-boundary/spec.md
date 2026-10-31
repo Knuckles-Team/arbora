@@ -32,7 +32,7 @@ One Arbora process authenticates, authorizes, composes, routes, supervises and p
 
 ## Public dependencies
 
-This contract uses the published `medulla`, `agent-connector-sdk` and `agent-utilities` package APIs. Their own specifications explain implementation of the durable engine, connector effects and agent runtime. The Arbora request, composition and parity obligations above are complete here.
+This contract uses the published `medulla`, `agent-connector-sdk` and `meristem` package APIs. Their own specifications explain implementation of the durable engine, connector effects and agent runtime. The Arbora request, composition and parity obligations above are complete here.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
 

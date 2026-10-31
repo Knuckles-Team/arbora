@@ -247,7 +247,7 @@ Run diagnostics against the resolved deployment configuration, then run the
 bounded release canary in the candidate environment:
 
 ```bash
-agent-utilities-doctor
+arbora-doctor
 arbora-release-canary
 ```
 

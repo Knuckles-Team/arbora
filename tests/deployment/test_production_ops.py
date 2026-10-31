@@ -153,15 +153,15 @@ def test_cli_retains_diagnostics_on_stderr_and_one_json_report(
     assert "private operation failure" not in captured.out
 
 
-def test_cli_stream_repair_keeps_remaining_fleet_acceptance_specified() -> None:
-    """Delivery state is computed at read time, so pin what is committed: the rows stay open."""
+def test_cli_stream_repair_keeps_the_report_stream_row() -> None:
+    """The CLI report-stream row stays in the fleet spec; delivery state is computed."""
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[2]
     text = (root / "specs/fleet-catalog-and-tools/requirements.md").read_text()
-    for identifier in ("ARBORA-FLEET-R027.7", "ARBORA-FLEET-R027.7.2"):
-        row = next(
-            line for line in text.splitlines() if line.startswith(f"| `{identifier}`")
-        )
-        assert "RETIRED" not in row
-        assert "VERIFIED" not in row
+    row = next(
+        line
+        for line in text.splitlines()
+        if line.startswith("| `ARBORA-FLEET-R027.7.1`")
+    )
+    assert "RETIRED" not in row

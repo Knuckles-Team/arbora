@@ -3,7 +3,7 @@ name: arbora-evolution
 skill_type: skill
 description: >-
   Research-driven development and code-health pipeline that evolves
-  agent-utilities (and, by the same mechanism, any sibling agent-packages
+  meristem (and, by the same mechanism, any sibling agent-packages
   codebase) from evidence to a reviewed proposal and measured improvement.
   Orchestrates topic detection over the Knowledge Graph, research-scanner,
   graph-ingestion-and-integration, comparative-analysis, and an SDD
@@ -12,7 +12,7 @@ description: >-
   wiring sweep for concept traceability, dead-code detection, and import
   graph analysis. For a concrete approved repository change or diff review,
   hand off to agent-utilities-development. Triggers on "evolve
-  agent-utilities", "run evolution pipeline", "find and implement research",
+  meristem", "run evolution pipeline", "find and implement research",
   "research-driven development", "auto-evolve", "evolution scan", "wiring
   sweep", "concept audit", "dead code analysis", "traceability check", "code
   health".
@@ -23,7 +23,7 @@ description: >-
 Turn new evidence or runtime failures into a bounded proposal, validate it
 against the existing system, and promote only improvements that pass review
 and regression gates. Combines research discovery with code-health analysis
-tailored to agent-utilities' 5-pillar, KG-driven architecture (ORCH, KG, AHE,
+tailored to meristem's 5-pillar, KG-driven architecture (ORCH, KG, AHE,
 ECO, OS).
 
 Keep evidence triage, proposal, and evaluation ownership here; hand concrete
@@ -42,7 +42,7 @@ This skill orchestrates **7 capabilities** into one evolution pipeline:
 3. **Knowledge Graph ingest** — ingest discovered papers and codebases into
    the KG.
 4. **Comparative analysis** — analyze ingested items against the target
-   codebase (default: agent-utilities) for gaps and feature extraction.
+   codebase (default: meristem) for gaps and feature extraction.
 5. **SDD plan generation** — create implementation plans with
    constitution-mandated artifacts.
 
@@ -57,9 +57,9 @@ This skill orchestrates **7 capabilities** into one evolution pipeline:
 ### Code-enhancer domains (agent-utilities-specific)
 
 The following analysis domains from the `code-enhancer` skill are natively
-integrated, tailored to agent-utilities' 5-pillar architecture:
+integrated, tailored to meristem's 5-pillar architecture:
 
-| Domain | What it checks | agent-utilities specialization |
+| Domain | What it checks | meristem specialization |
 |--------|---------------|-------------------------------|
 | **Concept traceability** | 1:1:1 Code→Tests→Docs coverage for all `CONCEPT:X-Y.Z` tags | Validates against `docs/concept_map.md`; checks pillar doc pages |
 | **Architecture review** | C4 component compliance, SOLID principles, deep modules | Validates all 5 pillars have matching C4 diagrams in `architecture_c4.md`; checks mixin MRO integrity |
@@ -113,7 +113,7 @@ the live `EvolutionState` (stage, saturation, backlog) and `graph_loops
 ## Graph-native assimilation engine (CONCEPT:AU-KG.query.vendor-agnostic-traversal)
 
 The comparative-analysis → plan-generation work is a **graph-compute
-pipeline** (agent-utilities' `knowledge_graph/assimilation/`), not per-source
+pipeline** (meristem's `knowledge_graph/assimilation/`), not per-source
 LLM reading. After sources are ingested, run the assimilation pass — directly
 or via MCP:
 
@@ -150,7 +150,7 @@ the agent-packages fleet — all into one graph.
 
 ## Mining flywheel (CONCEPT:AU-KG.evolution.mining-flywheel)
 
-The loop controller (agent-utilities' `knowledge_graph/research/
+The loop controller (meristem's `knowledge_graph/research/
 loop_controller.py`, `LoopController.run_one_cycle`) runs a `mine_discovery`
 stage after `reason` and before `synthesize` each cycle (gated by
 `config.kg_loop_mine_discovery`, default **ON**; override per-call via
@@ -180,7 +180,7 @@ build, and feeds:
 All write-back is **propose-only**: it materializes typed KG facts for a
 human/agent to review via `graph_query`/`graph_loops(action="state")`; it
 never creates an SDD plan, edits code, or triggers a merge by itself. See
-agent-utilities' `knowledge_graph/research/loop_controller.py`
+meristem's `knowledge_graph/research/loop_controller.py`
 (`_run_mine_discovery` + the three `_mine_*` helpers) and its
 `tests/unit/knowledge_graph/test_loop_controller.py` for the concrete call
 sequence and scope cuts.
@@ -197,7 +197,7 @@ parses but is **live-verified to return 0 rows** instead of "every
 unaddressed concept" (property access on the unbound optional variable does
 not evaluate to a comparable `NULL` on this engine). So express the negation
 as a **set difference over two supported queries** instead of one — the same
-pattern agent-utilities' `topic_resolver.unresolved_topics`
+pattern meristem's `topic_resolver.unresolved_topics`
 (`knowledge_graph/adaptation/topic_resolver.py`) already uses:
 
 ```
@@ -230,7 +230,7 @@ If fewer than 3 topics are found from any source, ask clarifying questions:
 | Target research areas | KG-derived topics | Always if no topics found |
 | arxiv categories to scan | cs.AI, cs.MA, cs.CL, cs.SE | If user doesn't specify |
 | Papers per scan | All RSS feed available | If user wants to cap it |
-| Target codebase | agent-utilities | If user doesn't specify |
+| Target codebase | meristem | If user doesn't specify |
 | Auto-execute SDD? | No (generate plan only) | Always ask before execution |
 
 ### Step 2 — Research scan
@@ -254,7 +254,7 @@ Delegate to the `research-scanner` skill:
 ### Step 4 — Comparative analysis
 
 Run comparative analysis against the target codebase (default:
-agent-utilities):
+meristem):
 
 1. Use `graph_analyze` with action `relevance_sweep` to score all ingested
    items against the target codebase.
@@ -401,7 +401,7 @@ arbora-wiring-sweep /path/to/agent-utilities --json
 arbora-wiring-sweep /path/to/agent-utilities --output report.md
 ```
 
-`root` must be an agent-utilities checkout: the tool always scans
+`root` must be an meristem checkout: the tool always scans
 `<root>/agent_utilities/` and `<root>/docs/concept_map.md`.
 
 ### What it analyzes
@@ -425,7 +425,7 @@ arbora-wiring-sweep /path/to/agent-utilities --output report.md
 ### CI integration
 
 The script exits with code 1 if the health score is below 60, making it
-suitable for use as a pre-commit check or CI gate in agent-utilities:
+suitable for use as a pre-commit check or CI gate in meristem:
 
 ```yaml
 # .config/pre-commit.yaml
@@ -463,7 +463,7 @@ concept traceability consistent.
 
 ### CONCEPT ID bridge strategy
 
-All agent-packages projects connect to agent-utilities via
+All agent-packages projects connect to meristem via
 `CONCEPT:AU-ECO.messaging.native-backend-abstraction` (Unified Toolkit
 Ingestion). Each project has:
 
@@ -478,7 +478,7 @@ Ingestion). Each project has:
 | Prefix | Project | | Prefix | Project |
 |--------|---------|---|--------|--------|
 | `ABOX` | archivebox-api | | `ARR` | arr-mcp |
-| `ATL` | atlassian-agent | | `AU` | agent-utilities |
+| `ATL` | atlassian-agent | | `AU` | meristem |
 | `CMGR` | container-manager-mcp | | `DSCI` | data-science-mcp |
 | `DOCDB` | documentdb-mcp | | | |
 | `GH` | github-agent | | `GL` | gitlab-api |

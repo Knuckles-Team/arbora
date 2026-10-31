@@ -20,10 +20,10 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](p
   remains open under the parent requirement.
 - [x] Prove no duplicate skill/prompt harvest path (ARBORA-A2A-R003): a
   static source-level absence check confirms arbora never imports
-  agent-utilities' legacy `agent_utilities.mcp.multiplexer` /
+  meristem's legacy `agent_utilities.mcp.multiplexer` /
   `shared_multiplexer`, and that the skill/prompt body-harvest functions
   are defined in exactly one module, `arbora/fleet/multiplexer.py`.
-- [ ] **Prerequisite for ARBORA-A2A-R002** (owner repo: agent-utilities):
+- [ ] **Prerequisite for ARBORA-A2A-R002** (owner repo: meristem):
   `WorkItemA2AAuthority._enqueue`/`dispatch` in `arbora/a2a/authority.py`
   refuse every request carrying `decision.selected_tools` because AU's
   dispatch carrier (`agent_utilities.orchestration.agent_dispatch.
@@ -77,12 +77,12 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `ARBORA-
 Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](plan.md) and [tests](test-spec.md).
 
 - [x] Open this spec, linking EG's `AgentAssemble` owner (`MEDULLA-DECISION-ENGINE-001`/`MEDULLA-DECISION-ENGINE-R036`) and AU's signed envelope owner (`MERISTEM-CONTROL-R035`) by stable ID.
-- [x] Open the AU owner row this door depends on: `MERISTEM-CONTROL-R035`, the signed `AgentTurnEnvelope`'s missing allowed-tool-subset field (agent-utilities PR #135, merged).
+- [x] Open the AU owner row this door depends on: `MERISTEM-CONTROL-R035`, the signed `AgentTurnEnvelope`'s missing allowed-tool-subset field (meristem PR #135, merged).
 - [x] Add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models (`arbora/a2a/admission.py`), reusing the existing `_WireModel` base and `A2AContextBudget` (`ARBORA-A2A-R016`).
 - [x] Add `admit_tool_subset`, returning today's exact fail-closed `EG_ASSEMBLE_UNAVAILABLE` refusal (`ARBORA-A2A-R016.1`).
 - [x] Add the refusal unit test (`tests/a2a/test_admission.py`) proving the exact fields of that result (`ARBORA-A2A-R016.1`, `ARBORA-A2A-R019`).
 - [ ] **Prerequisite (owner repo: medulla):** `AgentAssemble` must stop returning unavailable before `admit_tool_subset` can derive a real subset (`ARBORA-A2A-R017`).
-- [ ] **Prerequisite (owner repo: agent-utilities, opened as `MERISTEM-CONTROL-R035`):** the signed `AgentTurnEnvelope` must carry and let a harness enforce an allowed-tool-subset field before an admitted decision can be cryptographically carried (`ARBORA-A2A-R018`).
+- [ ] **Prerequisite (owner repo: meristem, opened as `MERISTEM-CONTROL-R035`):** the signed `AgentTurnEnvelope` must carry and let a harness enforce an allowed-tool-subset field before an admitted decision can be cryptographically carried (`ARBORA-A2A-R018`).
 - [ ] Once both prerequisites land: wire `admit_tool_subset` to the real EG assembly client and the signed envelope, add the admitted-path and partial/stale-refusal tests in [test-spec.md](test-spec.md), and replace `OrchestratorA2ARouter`'s and `WorkItemA2AAuthority`'s inline `A2AAssemblyUnavailable` raises with a call to this one admission authority.
 - [ ] **ARBORA-A2A-R016.2:** Admission request carries model profile and task class. Touches the file named in the requirement row.
 - [ ] **ARBORA-A2A-R016.3:** Admission decision carries the committed harness answer. Touches the file named in the requirement row.

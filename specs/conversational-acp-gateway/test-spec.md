@@ -20,7 +20,7 @@
 
 ## Release proof
 
-Record the exact commit, `uv run pytest` result for the targeted module, and the fast-subset hook results (`complexity-staged`, `kiss-staged`, `dupehound-changed`, `jscpd-differential`) on the changed files. A source test alone does not establish served or integration acceptance against a real agent-utilities adapter. That remains open until a live receipt exists.
+Record the exact commit, `uv run pytest` result for the targeted module, and the fast-subset hook results (`complexity-staged`, `kiss-staged`, `dupehound-changed`, `jscpd-differential`) on the changed files. A source test alone does not establish served or integration acceptance against a real meristem adapter. That remains open until a live receipt exists.
 
 
 ## R001.9 current-request authority guard

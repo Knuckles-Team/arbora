@@ -105,7 +105,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R039.9:** Replace the `agent_utilities
 - [ ] **ARBORA-OPS-R040:** Live Artifacts routes
 - [ ] **ARBORA-OPS-R040.1:** Cross-repo prerequisite
-- [ ] **ARBORA-OPS-R040.9:** Cross-repo prerequisite (owner: agent-utilities): add the proposed `MERISTEM-BOUNDARY-R013
+- [ ] **ARBORA-OPS-R040.9:** Cross-repo prerequisite (owner: meristem): add the proposed `MERISTEM-BOUNDARY-R013
 - [ ] **ARBORA-OPS-R040.10:** Add one test in tests/gateway/test_artifacts_route_mount
 - [ ] **ARBORA-OPS-R041:** Agent summary widget dropped
 - [ ] **ARBORA-OPS-R050:** Policy lifecycle operations that guard plans.
@@ -229,7 +229,7 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] **ARBORA-OPS-R841:** Skill pack validation.
 - [ ] **ARBORA-OPS-R842:** Governed actions.
 
-- [ ] **ARBORA-OPS-R843:** Served engine operations replace the in-run agent-utilities tool wrappers.
+- [ ] **ARBORA-OPS-R843:** Served engine operations replace the in-run meristem tool wrappers.
 - [x] **ARBORA-OPS-R843.1:** Delivered wrapper behaviour, bound to `tests/api/test_au_tool_parity.py`.
 - [ ] **ARBORA-OPS-R843.2:** Re-point the remaining modules to their composed rows or the harness.
 

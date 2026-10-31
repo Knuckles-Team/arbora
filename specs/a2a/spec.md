@@ -52,7 +52,7 @@ An A2A caller needs to know, truthfully, whether this Arbora deployment can stre
 
 Depends on [`ARBORA-A2A`](spec.md) (the context-budget subset of the A2A task projection) landing first: this spec's streaming and push projections reuse the same bounded event-cursor and context-budget machinery ARBORA-A2A introduces, rather than inventing a second one.
 
-Arbora owns the transport, authenticated Agent Card projection and typed refusal. [agent-utilities](https://github.com/Knuckles-Team/agent-utilities) owns the harness-facing task-event producer. Its exact durable task/tenant reader requirement and public export remain unassigned. The required events cover launch, step, tool, usage, artifact, receipt and terminal outcomes. [medulla](https://github.com/Knuckles-Team/medulla) (`MEDULLA-DURABLE-KERNEL`) owns the durable, append-only transition-history ledger this spec projects as `tasks/get` history. Arbora must not persist a second WorkItem event log, a second transition-history ledger, or synthesize history from in-process state when the durable authority is unavailable.
+Arbora owns the transport, authenticated Agent Card projection and typed refusal. [meristem](https://github.com/Knuckles-Team/agent-utilities) owns the harness-facing task-event producer. Its exact durable task/tenant reader requirement and public export remain unassigned. The required events cover launch, step, tool, usage, artifact, receipt and terminal outcomes. [medulla](https://github.com/Knuckles-Team/medulla) (`MEDULLA-DURABLE-KERNEL`) owns the durable, append-only transition-history ledger this spec projects as `tasks/get` history. Arbora must not persist a second WorkItem event log, a second transition-history ledger, or synthesize history from in-process state when the durable authority is unavailable.
 
 ### Requirements
 
@@ -93,7 +93,7 @@ An authenticated A2A caller submits a task whose execution needs more than the t
 Two other owners' public contracts are load-bearing and are linked here by stable ID, never copied:
 
 - **medulla** owns agent/tool assembly and the `AgentAssemble` operation that derives a legal tool subset for a capability-constrained agent graph: [`MEDULLA-DECISION-ENGINE-001`](https://github.com/Knuckles-Team/medulla/blob/main/specs/decision-engine/spec.md), requirement `MEDULLA-DECISION-ENGINE-R036`.
-- **agent-utilities** owns the signed dispatch carrier that must cryptographically bind and let a harness enforce the admitted subset: [`MERISTEM-CONTROL-R035`](https://github.com/Knuckles-Team/agent-utilities/blob/50c313ab01871ff7e10aee2a9d0254fa55d71f07/specs/agent-control-plane/spec.md).
+- **meristem** owns the signed dispatch carrier that must cryptographically bind and let a harness enforce the admitted subset: [`MERISTEM-CONTROL-R035`](https://github.com/Knuckles-Team/agent-utilities/blob/50c313ab01871ff7e10aee2a9d0254fa55d71f07/specs/agent-control-plane/spec.md).
 
 Arbora owns admission, refusal, and provenance at the door: given a request naming a selected agent graph and a context budget, it returns either an admitted tool subset grounded in a committed EG assembly answer and carried in a signed AU envelope, or a typed, provenanced refusal. Today both upstream seams are incomplete — EG's `AgentAssemble` returns unavailable and AU's `AgentTurnEnvelope` has no allowed-tool-subset field (`MERISTEM-CONTROL-R035`, opened by this spec) — so this door must fail closed rather than approximate, cache, or silently widen the exposed tool surface.
 

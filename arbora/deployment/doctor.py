@@ -1950,9 +1950,9 @@ def _check_venv_drift() -> dict[str, Any]:
             None
             if status == "ok"
             else (
-                "`agent-utilities-venv status` for detail, then "
-                "`agent-utilities-venv sync` (safe form, guardrailed) or "
-                "`agent-utilities-venv relock` when a manifest moved."
+                "`arbora-venv status` for detail, then "
+                "`arbora-venv sync` (safe form, guardrailed) or "
+                "`arbora-venv relock` when a manifest moved."
             )
         ),
         data=report.as_dict(),
@@ -2305,11 +2305,11 @@ def interactive_apply(
 
 
 def _doctor_arg_parser() -> Any:
-    """The ``agent-utilities-doctor`` console argument parser."""
+    """The ``arbora-doctor`` console argument parser."""
     import argparse
 
     parser = argparse.ArgumentParser(
-        prog="agent-utilities-doctor",
+        prog="arbora-doctor",
         description="Holistic health sweep of an agent-utilities deployment.",
     )
     parser.add_argument("--only", nargs="*", choices=list(CHECKS), default=None)
@@ -2396,7 +2396,7 @@ def _run_interactive_cli(report: dict[str, Any]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """``agent-utilities-doctor`` console entry."""
+    """``arbora-doctor`` console entry."""
     import json
 
     args = _doctor_arg_parser().parse_args(argv)

@@ -2,7 +2,7 @@
 
 `arbora.gateway` owns HTTP routing, dashboard aggregation, the widget
 registry, and the in-process host lifecycle. Agent, graph, ontology,
-catalog, and policy behavior remains owned by agent-utilities or
+catalog, and policy behavior remains owned by meristem or
 epistemic-graph.
 
 The application boundary is `GatewayApplicationPort`. The composition root
@@ -13,7 +13,7 @@ calls `register_graph_routes()`.
   <li class="site-flow__step"><span class="site-flow__title">Receive HTTP</span><span class="site-flow__body">The Arbora gateway receives an authenticated application request.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Cross one port</span><span class="site-flow__body">GatewayApplicationPort connects routes to the shared application runtime.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Use one composition</span><span class="site-flow__body">MCP and fleet services share the same Arbora process state.</span></li>
-  <li class="site-flow__step"><span class="site-flow__title">Reach the owner</span><span class="site-flow__body">Typed agent-utilities and epistemic-graph contracts perform domain work.</span></li>
+  <li class="site-flow__step"><span class="site-flow__title">Reach the owner</span><span class="site-flow__body">Typed meristem and epistemic-graph contracts perform domain work.</span></li>
 </ol>
 
 There is no fallback import of AU's `kg_server` or multiplexer. An unconfigured

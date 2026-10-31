@@ -10,7 +10,7 @@ capabilities through one governed surface.
 
 ## One request, five clear owners
 
-Arbora was formerly graph-os. Medulla was formerly epistemic-graph. Meristem
+Arbora was formerly arbora. Medulla was formerly epistemic-graph. Meristem
 was formerly agent-utilities. Scion SDK was formerly agent-connector-sdk.
 Overstory is the browser UI, Tuig the terminal, and Axil the desktop.
 Arbora specification IDs use the `ARBORA-` prefix.

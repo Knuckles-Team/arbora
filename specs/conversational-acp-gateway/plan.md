@@ -14,11 +14,11 @@ Idle expiry is `last_activity_at + idle_limit`; absolute expiry is `admitted_at 
 
 ## Adapter-unavailable refusal
 
-The admission check and the per-message check both consult the same adapter-availability input and return the identical typed refusal code when it is unavailable, before any session is admitted or any reply is attempted. This is the explicit, intentional behavior while agent-utilities' chat adapter does not yet exist or is down — not an error path to be hidden.
+The admission check and the per-message check both consult the same adapter-availability input and return the identical typed refusal code when it is unavailable, before any session is admitted or any reply is attempted. This is the explicit, intentional behavior while meristem's chat adapter does not yet exist or is down — not an error path to be hidden.
 
 ## Live integration path
 
-`R001.1` ships the typed model and admission check with no transport wiring. A later child slice wires it behind the actual ACP endpoint once agent-utilities' adapter is reachable. Existing identity resolution and status/doctor reporting are the integration points. No new identity issuer or session cookie is introduced.
+`R001.1` ships the typed model and admission check with no transport wiring. A later child slice wires it behind the actual ACP endpoint once meristem's adapter is reachable. Existing identity resolution and status/doctor reporting are the integration points. No new identity issuer or session cookie is introduced.
 
 ## Quality and release gates
 

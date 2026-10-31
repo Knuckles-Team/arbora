@@ -42,9 +42,9 @@ def _declarers(script: str) -> list[tuple[str, str]]:
 @pytest.mark.spec("ARBORA-DEPLOY-R007.1")
 def test_agent_utilities_doctor_declared_only_by_arbora() -> None:
     scripts = PYPROJECT["project"]["scripts"]
-    assert scripts["agent-utilities-doctor"] == "arbora.deployment.doctor:main"
+    assert scripts["arbora-doctor"] == "arbora.deployment.doctor:main"
     assert "arbora.deployment.doctor:main" in {
-        v for _, v in _declarers("agent-utilities-doctor")
+        v for _, v in _declarers("arbora-doctor")
     }
 
 

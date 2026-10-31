@@ -4,7 +4,7 @@
 
 `arbora.deployment.genesis_environments` already models ten closed profile sections and reference-only secrets. `config_generator` and `cli` provide configuration commands; `preflight` checks profile-specific host prerequisites; `doctor`, `doctor_coverage` and `doctor_certification` diagnose installed capabilities; `release_canary` checks installed entrypoints and engine binary without starting services; `production_ops` performs guarded operational actions. `deploy/environments/` contains sample profile data. Extend these owners and their tests instead of adding a second installer, configuration parser or doctor.
 
-The package defines `arbora`, `setup-config`, `agent-utilities-doctor`, `agent-utilities-venv`, `arbora-release-canary` and `arbora-production-ops` scripts. Script existence is not functional proof; clean wheel installation and representative invocations are required.
+The package defines `arbora`, `setup-config`, `arbora-doctor`, `arbora-venv`, `arbora-release-canary` and `arbora-production-ops` scripts. Script existence is not functional proof; clean wheel installation and representative invocations are required.
 
 ## Configuration contract
 
@@ -36,7 +36,7 @@ There is no separate daemon container: its `arbora-daemon` entry point was never
 
 ## ARBORA-DEPLOY-R017 plan: engine-routed deployment placement and assembly
 
-The agent-utilities planner (deleted by commit `db29b2da6`, MERISTEM-BOUNDARY-R002.2) is not re-created. Arbora holds no plan type, no backend-selection logic and no renderer.
+The meristem planner (deleted by commit `db29b2da6`, MERISTEM-BOUNDARY-R002.2) is not re-created. Arbora holds no plan type, no backend-selection logic and no renderer.
 
 ### Why this is not a separate planner
 
@@ -105,7 +105,7 @@ Extend the existing script rather than add a checker. Compose/Swarm `${NAME:?...
 
 ### D2 to D4 and D5
 
-Dashboard parity, artifact authentication and the agent-utilities export are resolved in `specs/hosted-api-operations/plan.md` (ARBORA-OPS-R039 to R041).
+Dashboard parity, artifact authentication and the meristem export are resolved in `specs/hosted-api-operations/plan.md` (ARBORA-OPS-R039 to R041).
 
 ### D5 systemd target (DECIDED: keep unsupported)
 

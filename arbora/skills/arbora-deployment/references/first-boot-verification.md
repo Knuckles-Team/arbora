@@ -11,7 +11,7 @@ graph, and an agent can reach the same backend over MCP.
       allowed Host header; readiness reports the engine reachable.
 - [ ] Exactly one writer: one arbora pod/container; the engine store lock is
       held by that unit only.
-- [ ] `agent-utilities-doctor` (and `setup-config doctor --profile <profile>`)
+- [ ] `arbora-doctor` (and `setup-config doctor --profile <profile>`)
       has no failing in-scope check. Note every WARN: `none` mode exposed,
       auto-generated engine secret, Eunomia off, default policies.
 - [ ] The persist directory is the durable volume (not ephemeral storage).

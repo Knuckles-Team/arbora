@@ -149,8 +149,8 @@ arbora-acp = "arbora.acp.local_runtime:main"
 arbora-release-canary = "arbora.deployment.release_canary:main"
 arbora-production-ops = "arbora.deployment.production_ops:main"
 setup-config = "arbora.deployment.cli:main"
-agent-utilities-doctor = "arbora.deployment.doctor:main"
-agent-utilities-venv = "arbora.deployment.venv_sync:main"
+arbora-doctor = "arbora.deployment.doctor:main"
+arbora-venv = "arbora.deployment.venv_sync:main"
 arbora-wiring-sweep = "arbora.evolution.wiring_sweep:main"
 arbora-connector-count-pins = "arbora.fleet.connector_count_pins:main"
 arbora-check-import-boundaries = "arbora.architecture.boundary_census:main"
@@ -244,8 +244,13 @@ warn_unused_ignores = true
 testpaths = ["tests"]
 addopts = "-q"
 # A hung test fails with its name and stack instead of stalling the gate to
-# the job cap (the full suite stalled at 8% for 24 minutes, no test failing).
-timeout = 300
+# the job cap. The thread method fires even when the test is blocked outside
+# the interpreter loop or in a fixture finalizer, where the signal method never
+# ran (the full suite stalled at 94% until the 20-minute job cap, timeout=300
+# never firing). It dumps every thread's stack and ends the worker, so xdist
+# reports the hanging test by name.
+timeout = 120
+timeout_method = "thread"
 asyncio_mode = "auto"
 markers = [
     "spec: binds a test to a spec requirement ID",

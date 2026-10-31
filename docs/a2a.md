@@ -1,7 +1,7 @@
 # Unary A2A facade
 
 Arbora exposes one authenticated, unary-only A2A boundary over the existing
-agent-utilities WorkItem and signed agent-dispatch authorities. It does not
+meristem WorkItem and signed agent-dispatch authorities. It does not
 create an A2A-specific task database, broker, worker, or orchestration loop.
 
 ## Discovery and transports
@@ -33,7 +33,7 @@ tenant and task owner.
   <li class="site-flow__step"><span class="site-flow__title">Authenticate</span><span class="site-flow__body">A2A, MCP, or REST establishes a verified bearer GraphSession.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Normalize</span><span class="site-flow__body">The typed unary service resolves one canonical capability request.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Admit</span><span class="site-flow__body">The WorkItem authority applies tenant, ownership, and idempotency fences.</span></li>
-  <li class="site-flow__step"><span class="site-flow__title">Dispatch</span><span class="site-flow__body">agent-utilities receives a signed agent request.</span></li>
+  <li class="site-flow__step"><span class="site-flow__title">Dispatch</span><span class="site-flow__body">meristem receives a signed agent request.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Record</span><span class="site-flow__body">RunTrace and tool-call provenance bind the result to the request.</span></li>
 </ol>
 

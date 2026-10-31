@@ -1,6 +1,6 @@
 # ARBORA-DEPLOY-POLICY — Deployment and Policy as Code, with a Served Agent Surface
 
-Owner: graph-os (`GRAPHOS`). Sole owner.
+Owner: arbora (`ARBORA`). Sole owner.
 
 ## User outcome
 

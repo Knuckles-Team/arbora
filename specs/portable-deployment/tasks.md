@@ -114,40 +114,40 @@ qualification environment; this documentation phase performs none of them.
 ## ARBORA-DEPLOY-R007 split: one console-script collision per child
 
 ARBORA-DEPLOY-R007 is a rollup; split by code root/script per SPEC-SIZING-AND-DEPENDENCIES.md §3,
-producer (agent-utilities, which deletes its duplicate) before consumer (arbora, which already
+producer (meristem, which deletes its duplicate) before consumer (arbora, which already
 owns the entry point).
 
-- [x] **ARBORA-DEPLOY-R007.1** — `agent-utilities-doctor` console-script collision. arbora already
-  declares `agent-utilities-doctor = arbora.deployment.doctor:main` on main
+- [x] **ARBORA-DEPLOY-R007.1** — `arbora-doctor` console-script collision. arbora already
+  declares `arbora-doctor = arbora.deployment.doctor:main` on main
   ([merge `fd761d59a171c148b7f2d7d952369c3b2b1a8628`](https://github.com/Knuckles-Team/arbora/commit/fd761d59a171c148b7f2d7d952369c3b2b1a8628)).
-  agent-utilities side:
+  meristem side:
   [PR #118](https://github.com/Knuckles-Team/agent-utilities/pull/118) removes its duplicate
-  `agent-utilities-doctor = agent_utilities.deployment.doctor:main` registration (module itself
+  `arbora-doctor = agent_utilities.deployment.doctor:main` registration (module itself
   stays; it still has real non-test importers). Open, not yet merged.
 - [ ] Three more of the same literal collision, found while landing R007.1, each its own child:
-  `setup-config` (agent-utilities: `agent_utilities.deployment.cli:main` vs arbora:
-  `arbora.deployment.cli:main`), `agent-utilities-venv` (`agent_utilities.deployment.venv_sync:main`
+  `setup-config` (meristem: `agent_utilities.deployment.cli:main` vs arbora:
+  `arbora.deployment.cli:main`), `arbora-venv` (`agent_utilities.deployment.venv_sync:main`
   vs `arbora.deployment.venv_sync:main`), `arbora-release-canary`
   (`agent_utilities.deployment.release_canary:main` vs `arbora.deployment.release_canary:main`),
   and `arbora-daemon` (`agent_utilities.gateway.daemon:main` vs `arbora.gateway.daemon:main`).
 - [ ] Full module retirement of `agent_utilities.deployment.doctor` and the rest of the agent
   runtime's deployment package remains separate, larger work (migrate its remaining non-test
   importers first): the unresolved core of ARBORA-DEPLOY-R007 proper.
-owns the entry point). ARBORA-DEPLOY-R007.1 (`agent-utilities-doctor`) is tracked separately
-([agent-utilities PR #118](https://github.com/Knuckles-Team/agent-utilities/pull/118)).
+owns the entry point). ARBORA-DEPLOY-R007.1 (`arbora-doctor`) is tracked separately
+([meristem PR #118](https://github.com/Knuckles-Team/agent-utilities/pull/118)).
 
 - [x] **ARBORA-DEPLOY-R007.2** — `setup-config` console-script collision.
 - [x] **ARBORA-DEPLOY-R007.3** — `arbora-daemon` console script retired (ARBORA-HOST-R004).
-- [x] **ARBORA-DEPLOY-R007.4** — `agent-utilities-venv` console-script collision.
+- [x] **ARBORA-DEPLOY-R007.4** — `arbora-venv` console-script collision.
 - [x] **ARBORA-DEPLOY-R007.5** — `arbora-release-canary` console-script collision.
 - [x] **ARBORA-DEPLOY-R007.6** — engine_domains and graph_connections doctor checks. Evidence: `tests/deployment/test_doctor_graph.py`.
 
 All four: arbora already declares the script on main
 ([merge `fd761d59a171c148b7f2d7d952369c3b2b1a8628`](https://github.com/Knuckles-Team/arbora/commit/fd761d59a171c148b7f2d7d952369c3b2b1a8628)).
-agent-utilities side: one PR removes all four duplicate registrations at once (same mechanical
+meristem side: one PR removes all four duplicate registrations at once (same mechanical
 change, kept to one PR pair to keep CI load down) —
-[agent-utilities PR #120](https://github.com/Knuckles-Team/agent-utilities/pull/120). Open, not
-yet merged. None of the four underlying agent-utilities modules is deleted; each still has a real
+[meristem PR #120](https://github.com/Knuckles-Team/agent-utilities/pull/120). Open, not
+yet merged. None of the four underlying meristem modules is deleted; each still has a real
 non-test importer (or, for `agent_utilities.deployment.cli`, a direct test importer and a
 `python -m` invocation path), so full module retirement remains separate, larger work.
 
