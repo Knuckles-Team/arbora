@@ -1,6 +1,6 @@
 # Messaging channel supervision lifecycle — tasks
 
-See [design](plan.md) and [tests](test-spec.md). Generated delivery evidence is recorded in [status.json](status.json).
+See [design](plan.md) and [tests](test-spec.md). Generated delivery evidence is recorded in the computed status (`pipelines-hook spec-status`).
 
 - [x] Define `ChannelSupervisionState`, the legal-transition table, and `transition()`/`IllegalSupervisionTransition` in `arbora/messaging/supervision.py` (`ARBORA-MESSAGING-R001.1`).
 - [x] Cover every legal transition and a representative illegal set in `tests/messaging/test_supervision.py` (`MSG-T01`, `MSG-T02`).
