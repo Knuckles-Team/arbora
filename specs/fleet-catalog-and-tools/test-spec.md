@@ -376,3 +376,54 @@ ARBORA-FLEET-R027.7.2 remains planned: qualify the complete original onboarding 
 - `ARBORA-FLEET-R053`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-FLEET-R045`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-FLEET-R034.15`: Future tests cover the acceptance and refusals in requirements.md. Tests have not run.
+
+## Entries added for rows without a prior entry
+
+| Test ID | Requirement | Expected observation |
+|---|---|---|
+| T-ARBORA-FLEET-R041.19 | ARBORA-FLEET-R041.19 | Test: `tests/fleet/test_auto_onboard.py::test_commit_then_projection_failure_names_code_and_graph_and_reprojects_once`. |
+| T-ARBORA-FLEET-R041.20 | ARBORA-FLEET-R041.20 | Test: `tests/fleet/test_auto_onboard.py::test_pass_longer_than_authority_lifetime_renews_between_imports`. |
+| T-ARBORA-FLEET-R041.21 | ARBORA-FLEET-R041.21 | Test: `tests/fleet/test_catalog_attest.py::test_attest_key_changes_when_the_published_component_moves`. |
+
+## Entries added for rows without a prior entry
+
+| Test ID | Requirement | Expected observation |
+|---|---|---|
+| T-ARBORA-FLEET-R003.2 | ARBORA-FLEET-R003.2 | Test: `tests/api/test_write_back_ops.py::test_preview_commit_replay_and_refusals` (L2) covers preview-then-commit, replayed commit returning the original receipt, no preview and a mismatched key. |
+| T-ARBORA-FLEET-R008.2 | ARBORA-FLEET-R008.2 | Test: `tests/fleet/test_feed_catalog_served.py::test_feed_events_sanitized_and_tenant_scoped` (L3) feeds one event per kind and a rejected one through `find` over HTTP and MCP. |
+| T-ARBORA-FLEET-R009.2 | ARBORA-FLEET-R009.2 | Test: `tests/a2a/test_run_admission_capacity_served.py::test_evaluate_commit_publish_with_capacity` (L3) drives grant, one re-decision, publish and release on stop. |
+| T-ARBORA-FLEET-R009.3 | ARBORA-FLEET-R009.3 | Test: `tests/a2a/test_run_admission_capacity_served.py::test_all_or_nothing_and_release` (L3) asserts no partial hold on denial and release on stop. |
+| T-ARBORA-FLEET-R003.3 | ARBORA-FLEET-R003.3 | Test: `tests/fleet/test_write_back_restart.py::test_write_back_survives_restart` (L3) rebuilds the registry mid-sequence and asserts one effect and an unchanged receipt. |
+| T-ARBORA-FLEET-R006.3.2 | ARBORA-FLEET-R006.3.2 | The inventory test confirms `_harvest_resource_bodies` no longer exists and the skill/prompt discovery tests still pass. |
+| T-ARBORA-FLEET-R006.3.3 | ARBORA-FLEET-R006.3.3 | Test: `tests/fleet/test_harvest_inventory.py::test_deadline_helpers_absent` (L1) asserts the symbols are gone; the probe deadline tests still pass. |
+| T-ARBORA-FLEET-R006.3.4 | ARBORA-FLEET-R006.3.4 | Test: `tests/fleet/test_harvest_inventory.py::test_harvest_specs_absent` (L1) asserts the spec symbols are gone; the `_probe_skills` and `_probe_prompts` tests pass. |
+| T-ARBORA-FLEET-R006.4 | ARBORA-FLEET-R006.4 | Test: `tests/fleet/test_harvest_inventory.py::test_no_harvest_named_symbol` (L1) greps `multiplexer.py` for `_harvest` names outside comments; `probe_catalog` tests pass. |
+| T-ARBORA-FLEET-R006.5 | ARBORA-FLEET-R006.5 | Test: `tests/fleet/test_no_harvest_remains.py::test_baseline_is_zero` (L1) passes. |
+| T-ARBORA-FLEET-R007.1 | ARBORA-FLEET-R007.1 | Test: `tests/test_mcp_native_primitives.py` in scion-sdk (L3, conformance kit) lists the prompt. It reads the resource and lists the template through the served instance. |
+| T-ARBORA-FLEET-R007.2 | ARBORA-FLEET-R007.2 | A protocol test in meristem confirms `register_arbora_surface()`'s backing instance exposes native prompts/resources/templates alongside `arbora_registrars()`'s tools. |
+| T-ARBORA-FLEET-R007.3 | ARBORA-FLEET-R007.3 | Test: `tests/mcp/test_fastmcp4_native.py::test_served_bridge_native_primitives` (L3) runs against the started MCP surface. |
+| T-ARBORA-FLEET-R012.1 | ARBORA-FLEET-R012.1 | A test builds the registry from a fixture served descriptor set and gets the same operations as the file-based build for the same methods. A test proves a missing descriptor set refuses the build. A source scan finds no read of the packaged contract directory. |
+| T-ARBORA-FLEET-R022 | ARBORA-FLEET-R022 | Test: `tests/fleet/test_catalog_replay.py::test_replay_twice_same_state` (L3) replays a delta sequence twice through the booted catalog. It asserts identical state, the gap refusal and the digest refusal. |
+| T-ARBORA-FLEET-R024.2 | ARBORA-FLEET-R024.2 | Test: `tests/fleet/test_fleet_ops_served.py::test_reconcile_scale_and_watch_served` (L3) reproduces the recorded scale-up, scale-down and watch decisions and refuses an unauthorized caller. |
+| T-ARBORA-FLEET-R033.1 | ARBORA-FLEET-R033.1 | Test: `tests/gateway/test_servers_reader.py::test_servers_scoped_by_tenant_and_principal` (L3) lists only servers visible to the calling tenant and principal through the served route. |
+| T-ARBORA-FLEET-R033.2 | ARBORA-FLEET-R033.2 | Test: `tests/gateway/test_servers_reader.py::test_refusals_leak_no_records` (L3) asserts each code and an empty body. |
+| T-ARBORA-FLEET-R034.1 | ARBORA-FLEET-R034.1 | Test: `tests/fleet/test_admission_models.py::test_required_fields` (L1) refuses each missing field. |
+| T-ARBORA-FLEET-R034.2 | ARBORA-FLEET-R034.2 | Test: `tests/fleet/test_admission_models.py::test_default_policies_pass_and_fail` (L2) covers pass, over-limit and each missing workflow field. |
+| T-ARBORA-FLEET-R034.3 | ARBORA-FLEET-R034.3 | Test: `tests/fleet/test_admission_wiring.py::test_policies_run_before_effect` (L3) asserts the order through the served route. |
+| T-ARBORA-FLEET-R034.4 | ARBORA-FLEET-R034.4 | Test: `tests/fleet/test_admission_wiring.py::test_refusal_names_field_or_limit` (L3) asserts both codes and their detail. |
+| T-ARBORA-FLEET-R034.5 | ARBORA-FLEET-R034.5 | Test: `tests/fleet/test_admission_wiring.py::test_trace_records_digest_policy_fields` (L3) reads the trace back. |
+| T-ARBORA-FLEET-R034.6 | ARBORA-FLEET-R034.6 | Test: `tests/fleet/test_admission_hot_path.py::test_unsafe_ownerless_and_complete` (L3) passes over HTTP and MCP. |
+| T-ARBORA-FLEET-R039.1 | ARBORA-FLEET-R039.1 | Test: `tests/api/test_domain_pack_contract.py::test_request_and_result_fields` (L1). It lists both models and fails on an extra field. |
+| T-ARBORA-FLEET-R039.2 | ARBORA-FLEET-R039.2 | Test: `tests/api/test_domain_pack_contract.py::test_result_equals_three_engine_responses` (L2). A recorded-engine fixture compares the result with the three responses. |
+| T-ARBORA-FLEET-R039.3 | ARBORA-FLEET-R039.3 | Test: `tests/api/test_domain_pack_contract.py::test_served_tool_reaches_three_engine_methods` (L3). It asserts the three recorded engine calls under the caller tenant. |
+| T-ARBORA-FLEET-R039.4 | ARBORA-FLEET-R039.4 | Test: `tests/api/test_domain_pack_contract.py::test_refusals_carry_stable_codes` (L3). One case per refusal asserts the stable code. |
+| T-ARBORA-FLEET-R039.5 | ARBORA-FLEET-R039.5 | Test: `tests/api/test_domain_pack_contract.py::test_result_carries_digest_and_request_ids` (L3). |
+| T-ARBORA-FLEET-R039.6 | ARBORA-FLEET-R039.6 | Test: `tests/fleet/test_domain_pack_served.py::test_domain_pack_read_composes_engine_methods` (L4). |
+| T-ARBORA-FLEET-R041.17.1 | ARBORA-FLEET-R041.17.1 | `tests/fleet/test_catalog_graph.py::test_onboarding_writes_owner_version_hops_and_schema_nodes` (L3, served onboarding against a loopback engine). |
+| T-ARBORA-FLEET-R051.2.1 | ARBORA-FLEET-R051.2.1 | Test: `tests/fleet/test_catalog_convergence_served.py::test_convergence_read_over_mcp` (L4) reads the state over MCP. |
+| T-ARBORA-FLEET-R052.5 | ARBORA-FLEET-R052.5 | Test: `tests/fleet/test_cq_xsrc_served.py::test_three_questions_over_http_and_mcp` (L3) runs each question over HTTP and MCP against a loopback engine. |
+| T-ARBORA-FLEET-R054 | ARBORA-FLEET-R054 | Test: `tests/fleet/test_connect_contract.py::test_seed_body_reaches_pack_import` (L3) asserts the recorded engine request carries the seed body and a seed refusal propagates. |
+| T-ARBORA-FLEET-R055 | ARBORA-FLEET-R055 | Test: `tests/fleet/test_orchestration_probes.py::test_execution_answer_through_intent_surface` (L5) asserts seven parts with provenance over a loopback medulla engine. |
+| T-ARBORA-FLEET-R056 | ARBORA-FLEET-R056 | Test: `tests/fleet/test_job_downtime_plan_intent.py::test_five_questions_through_intent_surface` (L5) connects two fixture connectors and asks all five questions through `find`. |
+| T-ARBORA-FLEET-R057 | ARBORA-FLEET-R057 | Test: `tests/fleet/test_source_executor_access_check.py::test_timeout_denies_every_record` runs the executor against a loopback connector (served). |
+| T-ARBORA-FLEET-R058 | ARBORA-FLEET-R058 | Test: `tests/fleet/test_data_prep_bootstrap.py::test_bootstrap_declares_each_capability_once` (L3) uses a recorded engine and asserts one call per capability. |
