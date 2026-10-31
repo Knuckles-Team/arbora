@@ -11,7 +11,7 @@ idempotency keys were used. No older reservation was replayed.
 | Arbora source | [`15764cc9792b8f536421e8eaca5fcaa9bcea5c46`](https://github.com/Knuckles-Team/arbora/commit/15764cc9792b8f536421e8eaca5fcaa9bcea5c46) |
 | Deployed image | `sha256:2c9e179fc6dc90fa010bde2735c04836660ba555bf6491ffdaf97f04a3290fe0` |
 | Deployment | `arbora-f9f4f764b-84p2g`; Ready; zero restarts; 731 live payload hashes and the exact source marker verified |
-| Native contract | epistemic-graph `2.27.7` |
+| Native contract | medulla `2.27.7` |
 | Hosted qualification | [Arbora Release workflow 40355229100](https://github.com/Knuckles-Team/arbora/actions/runs/40355229100) — required gates/build and supported-install qualification passed |
 | Focused source tests | `uv run --offline --no-sync pytest -q tests/mcp_server/test_current_plan_reader.py tests/api/test_execution_graph.py` (command-private cache) — exit `0` |
 
@@ -64,7 +64,7 @@ consumer receipt:
 
 * `MERISTEM-HARNESS-R014.6` through `MERISTEM-HARNESS-R014.11` remain `SPECIFIED`. No AU
   producer run, model-request proof, or stored-history proof occurred.
-* `MEDULLA-DURABLE-KERNEL-R028.4.1` is already `VERIFIED` in epistemic-graph.
+* `MEDULLA-DURABLE-KERNEL-R028.4.1` is already `VERIFIED` in medulla.
   `MEDULLA-DURABLE-KERNEL-R028.5` and `.5.1`–`.5.3` remain EG-owned `SPECIFIED`
   rows. This is consumer evidence only. No EG source landing, restart proof,
   or `.5.4` benchmark is claimed.

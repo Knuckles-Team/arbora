@@ -6,7 +6,7 @@
 |---|---|---|
 | `arbora/fleet/catalog_reader.py` (`FleetCatalogIntegrityError`, `ReadReceipt`, `_verify_receipt`) | Prior art for a typed, fail-closed receipt check against an exact context/provenance match | Pattern only. Not modified or replaced by this spec |
 | `specs/fleet-catalog-and-tools/` (ARBORA-FLEET-001 R022, ARBORA-FLEET-R051) | Owns the atomic generation-publish state machine this gate will be called from | One pre-swap gate call for four MCP families (`ARBORA-MCP-RESOURCES-R003`). Reload state machine unchanged |
-| epistemic-graph `specs/repository-index-and-ingestion` (EG-REPO-INGEST-001) | Produces the durable commit and the reconciliation receipt | Consumed by ID only; this repository defines no EG-side behavior |
+| medulla `specs/repository-index-and-ingestion` (MEDULLA-REPO-INGEST-001) | Produces the durable commit and the reconciliation receipt | Consumed by ID only; this repository defines no EG-side behavior |
 | `docs/status.md`, `docs/fleet.md` | Existing public description of the `reingestion-unreconciled` refusal | Kept truthful by `ARBORA-MCP-RESOURCES-R004`; not restructured |
 
 This is a contract spec, not a new store: arbora holds no second copy of the four-family set
@@ -16,7 +16,7 @@ and the pure gate function. Everything else is a wiring obligation on an existin
 ## Data model
 
 ```text
-epistemic-graph durable commit (EG-REPO-INGEST-001)
+medulla durable commit (MEDULLA-REPO-INGEST-001)
     -> ReconciliationReceipt {tenant_id, catalog_generation, snapshot_digest,
                                acknowledged_families, issued_at_ms}
     -> gate_mcp_resource_publication(receipt, candidate, now, max_age)
@@ -28,7 +28,7 @@ epistemic-graph durable commit (EG-REPO-INGEST-001)
 
 `ReconciliationReceipt` and `PublicationGateResult` are frozen dataclasses (`slots=True`); the gate
 is a pure function with no I/O, no caching, and no local persistence — the receipt is supplied by
-the caller, who is responsible for having actually asked epistemic-graph for it.
+the caller, who is responsible for having actually asked medulla for it.
 
 ## Sequence
 
