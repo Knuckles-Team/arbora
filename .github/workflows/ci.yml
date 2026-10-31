@@ -150,6 +150,41 @@ jobs:
           # Every gate below uses the shared gate source frozen for this run.
           echo "PINNED_PRECOMMIT=$(bash scripts/pin_gate_source.sh "$PIPELINES_REF" "$RUNNER_TEMP/pre-commit-pinned.yaml")" >> "$GITHUB_ENV"
 
+      # Hook environments took 15+ minutes to install cold on every run.
+      # The shared gate source is pinned by commit, so a partial restore never
+      # serves a stale hook: pre-commit installs only the repositories whose
+      # pinned rev changed. The save runs even when the job is cancelled, and
+      # pre-commit marks an environment ready only when it is complete, so a
+      # cut-off install keeps its finished environments for the next run.
+      - name: Restore pre-commit environments
+        id: hook-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}-${{ env.PIPELINES_REF }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}-${{ env.PIPELINES_REF }}-partial-
+            pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}-
+            pre-commit-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Install pre-commit environments
+        id: hook-install
+        run: uvx --from pre-commit==4.6.0 pre-commit install-hooks --config "$PINNED_PRECOMMIT"
+
+      - name: Save pre-commit environments
+        if: success() && steps.hook-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}-${{ env.PIPELINES_REF }}
+
+      - name: Save partly installed pre-commit environments
+        if: (failure() || cancelled()) && steps.hook-install.outcome != 'success'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}-${{ env.PIPELINES_REF }}-partial-${{ github.run_id }}-${{ github.run_attempt }}
+
       # The prohibited-identity catalog is operator-owned and never committed;
       # a missing catalog makes the tracked-privacy hook fail closed.
       - name: Commit- and push-stage hooks (.pre-commit-config.yaml)

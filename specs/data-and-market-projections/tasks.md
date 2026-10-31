@@ -10,7 +10,7 @@ exists. Current status for every task: **WAITING**.
     capability-gated service (`arbora/gateway/schema_context_service.py`)
     land SC-01 (strict rejection) and SC-04 (typed `UNAVAILABLE`, zero
     engine dispatch) for ARBORA-DATA-MARKET-R005.
-  - [ ] SC-02/SC-03 wait on epistemic-graph publishing a `schema_context`
+  - [ ] SC-02/SC-03 wait on medulla publishing a `schema_context`
     client; no such capability exists yet to dispatch against.
 - [ ] **GDM-03:** Wire MCP and REST schema-context routes through that service. Done when SC-05 served parity proves identical authorization and bounded errors.
 - [ ] **GDM-04:** Add a durable application-admission aggregate and dry run with source, mapping, conformance and rollback checks. Done when AD-01/03/06 pass and dry run has no effects.

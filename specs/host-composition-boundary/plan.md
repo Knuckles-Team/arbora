@@ -452,7 +452,7 @@ and map the returned plan to AU DependencyPlan. Explicit dependency requests
 remain unavailable; this amendment adds no mode or silent serial fallback.
 
 
-Producer attachment points are EG's `crates/eg-types/src/current_plan.rs`,
+Producer attachment points are EG's `crates/medulla-types/src/current_plan.rs`,
 `src/redb_store/work_item/current_plan.rs::{publish,read_current}`, and
 `src/redb_store/work_item/run_owner.rs::admit_owner`. The native publication request carries tenant, worker_id, lease_epoch, fencing_token and idempotency_key. Authenticated principal and graph come from admission.
 `src/server/mutation_batch/commit/work_item.rs` commits through the existing

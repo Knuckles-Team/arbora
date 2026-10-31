@@ -59,7 +59,7 @@ Each directory's `requirements.md` is the authoritative definition of its requir
 
 | Prefix | Repository specs | Responsibility |
 |---|---|---|
-| `EG` | [epistemic-graph](https://github.com/Knuckles-Team/epistemic-graph/tree/main/specs) | Rust database, graph compute, ontology, governed ingestion, durable records and clients |
+| `EG` | [medulla](https://github.com/Knuckles-Team/medulla/tree/main/specs) | Rust database, graph compute, ontology, governed ingestion, durable records and clients |
 | `SDK` | [agent-connector-sdk](https://github.com/Knuckles-Team/agent-connector-sdk/tree/main/specs) | connector control, transport, manifests, certification, governed effects |
 | `AU` | [agent-utilities](https://github.com/Knuckles-Team/agent-utilities/tree/main/specs) | agent orchestration and control workflows |
 | `GRAPHOS` | [graph-os](https://github.com/Knuckles-Team/graph-os/tree/main/specs) | serving composition, fleet, gateway, A2A, deployment operations |

@@ -4,7 +4,7 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spe
 
 ## Existing wiring to reuse
 
-`arbora.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `arbora.gateway.graph_api.register_graph_routes` composes the REST host. `arbora.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `arbora.a2a` already has authenticated unary task methods. `arbora.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `epistemic-graph`. Decisions, context, traces and durable WorkItems belong to `epistemic-graph`. `agent-utilities` is the agent harness that applies engine decisions. Connector ingestion belongs to `agent-connector-sdk` (SCION-CONNECTOR-CONTROL-R005). Connector effects belong to the SDK and fleet. Arbora authenticates, composes, supervises, routes and projects.
+`arbora.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `arbora.gateway.graph_api.register_graph_routes` composes the REST host. `arbora.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `arbora.a2a` already has authenticated unary task methods. `arbora.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `medulla`. Decisions, context, traces and durable WorkItems belong to `medulla`. `agent-utilities` is the agent harness that applies engine decisions. Connector ingestion belongs to `agent-connector-sdk` (SCION-CONNECTOR-CONTROL-R005). Connector effects belong to the SDK and fleet. Arbora authenticates, composes, supervises, routes and projects.
 
 ## Component and data flow
 
@@ -143,7 +143,7 @@ Because the AU resolver already re-runs `source_query`, ARBORA-OPS-R040.8 wires 
 The `runs` module, models, adapter and registry entries do not exist in current main.
 Arbora must authenticate, route and project reads. It must not collect counters, select configuration or compute aggregates.
 
-[EG orchestration vocabulary](https://github.com/Knuckles-Team/epistemic-graph/tree/main/specs/orchestration-vocabulary) owns the trace and query contracts.
+[EG orchestration vocabulary](https://github.com/Knuckles-Team/medulla/tree/main/specs/orchestration-vocabulary) owns the trace and query contracts.
 [AU harness evolution](https://github.com/Knuckles-Team/agent-utilities/tree/main/specs/harness-evolution) owns run mechanisms.
 `MERISTEM-HARNESS-R017.3` collects counters. `MERISTEM-HARNESS-R017.4` forwards them through the ordered `_record_execution_trace` writer.
 `MEDULLA-ORCH-VOCAB-R009.15` through `.17` own validated ingestion and readback.
@@ -269,7 +269,7 @@ Decision: the engine ranks and Arbora bounds the space. Rejected: returning rank
 
 ### Producer and existing boundary
 
-[MEDULLA-DURABLE-KERNEL-R085](https://github.com/Knuckles-Team/epistemic-graph/tree/c0b952776129fd509b9f87b411a298593c2591ec/specs/durable-graph-kernel) owns authoritative content, versions, conflicts and sync evidence.
+[MEDULLA-DURABLE-KERNEL-R085](https://github.com/Knuckles-Team/medulla/tree/c0b952776129fd509b9f87b411a298593c2591ec/specs/durable-graph-kernel) owns authoritative content, versions, conflicts and sync evidence.
 R085 is a producer definition. Its merge does not establish runtime availability.
 R084.3, R084.4 and R084.6 remain concurrency prerequisites, not a file-sync contract.
 Arbora owns hosted file projection, authenticated serving and materialization acknowledgments.
@@ -519,7 +519,7 @@ All named proofs in this section are planned and have not run.
 They require the corresponding owner contracts and real authenticated HTTP, MCP, and browser consumer paths.
 This section grants no delivery or runtime evidence.
 
-References: [EG orchestration](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/orchestration-vocabulary/spec.md), [EG durable kernel](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/durable-graph-kernel/spec.md), [EG query](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/federated-query-and-reasoning/spec.md), [EG media](https://github.com/Knuckles-Team/epistemic-graph/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/media-and-personal-vocabulary/spec.md), [SDK ingest](https://github.com/Knuckles-Team/agent-connector-sdk/blob/a0f78fefbb486e4c7d97e608462cf5847a46bc7d/specs/SCION-SOURCE-INGEST/spec.md).
+References: [EG orchestration](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/orchestration-vocabulary/spec.md), [EG durable kernel](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/durable-graph-kernel/spec.md), [EG query](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/federated-query-and-reasoning/spec.md), [EG media](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/media-and-personal-vocabulary/spec.md), [SDK ingest](https://github.com/Knuckles-Team/agent-connector-sdk/blob/a0f78fefbb486e4c7d97e608462cf5847a46bc7d/specs/SCION-SOURCE-INGEST/spec.md).
 
 ### 2026-10-16: Generated Python invocation boundary
 
@@ -629,7 +629,7 @@ The consumer stays on the SDK 0.2 release line for this change. SDK 0.3 changes 
 The existing `FleetCaller` obtains an effect decision from `fleet_gateway`.
 The gateway resolves the admitted item again at call time. That decision path
 must require the EG evidence record. Its owner is
-[MEDULLA-TYPED-PACKS-R110](https://github.com/Knuckles-Team/epistemic-graph/blob/main/specs/typed-packs-and-catalog/requirements.md).
+[MEDULLA-TYPED-PACKS-R110](https://github.com/Knuckles-Team/medulla/blob/main/specs/typed-packs-and-catalog/requirements.md).
 No Arbora certification store or operator pass flag grants admission.
 
 The resolved record binds tenant, connector, package revision and pack digest.
@@ -911,7 +911,7 @@ terminal production.
 
 No spec owned user-saved assets. The search `git grep -n -i "dashboard\|catalog asset\|saved query" -- specs` found only the gateway layout router (R039) and the fleet catalog operations. Neither stores a user document. R861 extends this spec because it owns served operations. The consumer is OVERSTORY-DASH-R010 in agent-webui.
 
-The engine stores each dashboard as a catalog asset with an owner, grants and a revision. arbora serves the operations and holds no store. The engine catalog asset rows do not exist yet. An epistemic-graph row must define the asset type, the owner and grant facts, and compare-and-set on the revision. R861.8 depends on that row. Until it lands, the operations stay SPECIFIED.
+The engine stores each dashboard as a catalog asset with an owner, grants and a revision. arbora serves the operations and holds no store. The engine catalog asset rows do not exist yet. An medulla row must define the asset type, the owner and grant facts, and compare-and-set on the revision. R861.8 depends on that row. Until it lands, the operations stay SPECIFIED.
 
 Call path: the served `invoke` receives the call and resolves the caller principal and tenant. It validates params. It then calls the engine through the client in `arbora/api/ops/dashboard.py`. `dashboard.delete` follows the existing `Confirm.PLAN` pattern of R860.3. `dashboard.list` and `dashboard.get` are reads. `dashboard.save` and `dashboard.share` are writes. Panel queries remain opaque strings. A later `query` call, made by the viewer under the viewer principal, runs them.
 
@@ -1033,7 +1033,7 @@ expand the projection or qualify the parent requirement.
 
 ## Build contract
 
-This section applies to `ARBORA-OPS-R009.5` to `ARBORA-OPS-R009.8`, `ARBORA-OPS-R024.6` and `ARBORA-OPS-R878` with its children. Each row must pass the pre-commit gates on the first commit.
+This section applies to `ARBORA-OPS-R009.6` to `ARBORA-OPS-R009.9`, `ARBORA-OPS-R024.6` and `ARBORA-OPS-R897` with its children. Each row must pass the pre-commit gates on the first commit.
 
 ### Gates and values
 
