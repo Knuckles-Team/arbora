@@ -551,3 +551,13 @@ transport and malformed-response failures remain unavailable. Preserve all
 identity binding checks and refuse before effects. Consumer regressions and a
 synthetic login/logout replay cover this classification; the installed browser
 replay gate still requires HTTP 401 and remains unqualified until it passes.
+
+## North star
+
+Delivery runs in phases P1 to P5. Concept-proof scenarios define each phase (`ARBORA-ACCEPTANCE-R006`). The terminal UI replaces third-party coding front ends for daily development.
+
+## Delivery phase
+
+Rows `ARBORA-IDENTITY-R030.1` to `.3` serve P1, because a coding client and the terminal UI need a native sign-in before any scenario can enter through the public boundary.
+
+Native client authentication: the operator enrols a named client once. The client then fetches tokens itself or through a header helper. The served endpoint publishes protected-resource metadata, so clients with native OAuth need no bridge. This retires the token-refresh service and the stdio bridge.

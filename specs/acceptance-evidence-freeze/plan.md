@@ -57,6 +57,16 @@ Delivery follows five phases. Each phase closes a larger loop. A family joins th
 | P2 | The loop is reliable, inspectable and measurably useful | Provenance and bitemporal reads, version-checked writes, retrieval outcomes and evaluation, one SDK source-ingest connector |
 | P3 | Ownership boundaries hold with several agents and humans | Meristem boundary cuts, arbora fleet and A2A, node-level visibility, contradiction records |
 | P4 | The unified planner earns its scope | One cross-modal plan with its falsification gate, write-time shapes and a small entailment set, memory decay and consolidation |
-| P5 | Scale and breadth | Cluster and resharding, lakehouse formats, finance, media vocabularies, wire-protocol parity, every other family |
+| P5 | Answers across connectors and across virtual graphs (`ARBORA-ACCEPTANCE-R006.7`), then scale and breadth | Cross-connector competency answers, federated reads over virtual graphs, execution answers from onboarded tools, source refusals in coverage, cluster and resharding, lakehouse formats, finance, media vocabularies, wire-protocol parity, every other family |
 
-P5 work starts only after P4 passes. If the P4 falsification gate fails, the unified planner stops expanding. Medulla then serves as the durable evidence store, and cross-modal work runs through contracts.
+P5 work starts only after P4 passes. Each phase has a scenario; P1 is `R006.1`, P2 `R006.2`, P3 `R006.3`, P4 `R006.4` and P5 `R006.7`. If the P4 falsification gate fails, the unified planner stops expanding. Medulla then serves as the durable evidence store, and cross-modal work runs through contracts.
+
+## North star
+
+Delivery runs in phases P1 to P5. Concept-proof scenarios define each phase (`ARBORA-ACCEPTANCE-R006`). The exit gate is competency questions. The ontology answers how to execute a task and produces cross-source reports from connector virtual graphs. Deployment comes only from published package releases. Releases ship delivered cross-repository spec bundles.
+
+## Delivery phase
+
+Rows `R006.1` to `R006.4` serve P1 to P4. Row `R006.7` serves P5, the final validation. P5 runs only on the ephemeral stack, because it needs onboarded fixture connectors and their virtual graphs.
+
+P5 scenario design: the scenario asserts four answers through the served `ask` and `find` operations. They are a cross-connector join, a federated read over two virtual graphs and engine facts, an execution-plan answer, and refusals that name excluded sources in the coverage block. Arbora supplies the stack and the served operations. Medulla supplies the engine rows `MEDULLA-CQ-XSRC-R012`, `MEDULLA-CQ-CONN-R090` and `MEDULLA-CQ-ORCH-R012`. The release manifest and its scenario field are `PIPE-RELEASE-R023`. The earlier tracker checks for the live door (discovery, connector calls, data, agents, governance, terminal UI) map to P1 to P4. The one open tracker check, a cross-source query over at least two ingested sources, is closed by P5.
