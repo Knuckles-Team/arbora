@@ -11,7 +11,7 @@ the final release task records served evidence.
   `reingestion-unreconciled`, and a fully matching fresh receipt as `reconciled`. Cover
   `ARBORA-MCP-RESOURCES-R001.1`.
 - [ ] T03 — Confirm and link the medulla producing contract (`MEDULLA-REPO-INGEST-001`) in
-  `spec.md`/`requirements.md`. Cover `ARBORA-MCP-RESOURCES-R002`. (Link added this PR; EG-side
+  `spec.md`/`requirements.md`. Cover `ARBORA-MCP-RESOURCES-R002`. (Link added this PR; Medulla-side
   delivery is tracked in medulla's own spec, not here.)
 - [ ] T04 — Add `require_reconciled_for_swap()` and `PublicationRefusedError` with refusal tests.
   Cover `ARBORA-MCP-RESOURCES-R003.1`.

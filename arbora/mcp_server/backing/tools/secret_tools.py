@@ -1,4 +1,4 @@
-"""graph_secret MCP tool — engine-backed encrypted secret store (CONCEPT:AU-OS.identity.encrypted-secret-store).
+"""graph_secret MCP tool — engine-backed encrypted secret store (CONCEPT:MERISTEM-OS.identity.encrypted-secret-store).
 
 Thin wrapper over :class:`arbora.security.secrets.SecretsClient`
 (the one core). Secret set/get/list/delete reach the durable, engine-encrypted
@@ -13,7 +13,7 @@ are not gated, mirroring the read posture of the other graph surfaces. Secret
 VALUES are never returned by ``list`` and are only returned by ``get`` to the
 authorized caller.
 
-CONCEPT:AU-OS.identity.encrypted-secret-store — Engine-backed encrypted secret store (MCP + REST surfaces)
+CONCEPT:MERISTEM-OS.identity.encrypted-secret-store — Engine-backed encrypted secret store (MCP + REST surfaces)
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ from arbora.mcp_server import runtime
 
 
 def _gate(kind: str, target: str, reason: str) -> tuple[bool, dict]:
-    """Run the ActionPolicy gate for a secret mutation. CONCEPT:AU-OS.identity.encrypted-secret-store."""
+    """Run the ActionPolicy gate for a secret mutation. CONCEPT:MERISTEM-OS.identity.encrypted-secret-store."""
     from arbora.access.action_policy import (
         ActionRequest,
         get_action_policy,
@@ -50,12 +50,12 @@ def _gate(kind: str, target: str, reason: str) -> tuple[bool, dict]:
 
 
 def register_secret_tools(mcp):
-    """Register the ``graph_secret`` tool onto the MCP server. CONCEPT:AU-OS.identity.encrypted-secret-store"""
+    """Register the ``graph_secret`` tool onto the MCP server. CONCEPT:MERISTEM-OS.identity.encrypted-secret-store"""
 
     @mcp.tool(
         name="graph_secret",
         description=(
-            "Manage secrets (CONCEPT:AU-OS.identity.encrypted-secret-store) in the durable, engine-encrypted "
+            "Manage secrets (CONCEPT:MERISTEM-OS.identity.encrypted-secret-store) in the durable, engine-encrypted "
             "__secrets__ store (secret VALUES are sealed by the engine's "
             "encryption-at-rest; key NAMES + metadata stay queryable). Actions: "
             "'set' (key+value [+metadata] → store/overwrite, GOVERNED by "

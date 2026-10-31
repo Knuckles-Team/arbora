@@ -209,7 +209,7 @@ READ_ONLY_ACTIONS: Mapping[str, frozenset[str]] = MappingProxyType(
         ),
         "graph_ingest": frozenset({"jobs", "job_status", "status"}),
         # Only ``set`` mutates; the other four are pure reads over the pydantic
-        # model and the effective configuration (CONCEPT:AU-OS.config.two-surfaces-by-default).
+        # model and the effective configuration (CONCEPT:MERISTEM-OS.config.two-surfaces-by-default).
         # ``reload`` re-reads from disk without writing, so it is a read of the
         # world, not a change to it.
         "graph_config": frozenset({"describe", "get", "diff", "reload"}),

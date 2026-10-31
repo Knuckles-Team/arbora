@@ -223,7 +223,7 @@ _MAX_CACHED_CONTENTS: Final = 50_000
 
 
 class FleetCatalogReader:
-    """Read and verify one complete EG-native fleet catalog snapshot."""
+    """Read and verify one complete Medulla-native fleet catalog snapshot."""
 
     def __init__(
         self,
@@ -654,7 +654,7 @@ class DeferredFleetCatalogReader:
 
     The MCP surface is constructed before the engine transport exists. Passing
     this reader into ``MCPMultiplexer`` disables its static-file path from the
-    first instruction; startup later installs exactly one EG-backed reader and
+    first instruction; startup later installs exactly one Medulla-backed reader and
     performs the initial refresh before readiness. Calls before installation
     fail closed rather than discovering another catalog.
     """

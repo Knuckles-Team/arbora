@@ -1,4 +1,4 @@
-"""Unit tests for ``arbora.mcp_server.backing.tools.mcp_apps`` (CONCEPT:AU-ECO.ui.mcp-apps-host).
+"""Unit tests for ``arbora.mcp_server.backing.tools.mcp_apps`` (CONCEPT:MERISTEM-ECO.ui.mcp-apps-host).
 
 Covers BOTH shipped MCP Apps -- task-progress (pre-existing, previously untested)
 and trace-waterfall (D-25-1, new): each entry-point tool registers with the

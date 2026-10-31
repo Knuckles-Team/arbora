@@ -63,7 +63,7 @@ latter still has no marker (older images predate this fix) and keeps the
 original fail-loud CRITICAL behavior unchanged. See :class:`LiveMountStatus`
 and :func:`check_live_mount_status` for the typed, four-state result this
 now feeds into ``observability.runtime_health``'s capability-health model
-(CONCEPT:AU-OS.observability.co-service-visibility) instead of a bare log line.
+(CONCEPT:MERISTEM-OS.observability.co-service-visibility) instead of a bare log line.
 """
 
 from __future__ import annotations
@@ -231,7 +231,7 @@ def check_live_mount_status(
     booleans/short strings, matching ``observability.runtime_health``'s
     redaction convention (that module is this function's primary caller,
     reporting it as one more typed capability check rather than a bare log
-    line -- CONCEPT:AU-OS.observability.co-service-visibility).
+    line -- CONCEPT:MERISTEM-OS.observability.co-service-visibility).
 
     Never raises: a false positive that crashes the whole MCP fleet would be
     strictly worse than the silent-staleness defect this guard exists to

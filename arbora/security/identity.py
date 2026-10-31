@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from __future__ import annotations
 
-"""IdP-agnostic identity normalization (CONCEPT:AU-OS.identity.idp-agnostic-role-inheritance).
+"""IdP-agnostic identity normalization (CONCEPT:MERISTEM-OS.identity.idp-agnostic-role-inheritance).
 
 The platform authenticates callers against ANY OIDC issuer (Okta, Keycloak,
 Auth0, Entra ID). Each provider spells "the caller's roles/groups" differently:

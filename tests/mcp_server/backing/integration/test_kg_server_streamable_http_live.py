@@ -10,7 +10,7 @@ real JWT (RS256, verified against a real local JWKS HTTP endpoint — the same
 verification path FastMCP uses against Keycloak in production) is used as the
 Bearer credential.
 
-CONCEPT:AU-OS.identity.authenticated-identity-enforcement / OS-5.14
+CONCEPT:MERISTEM-OS.identity.authenticated-identity-enforcement / OS-5.14
 
 Scope note: this intentionally calls ``_build_server()`` directly rather than
 the ``mcp_server()`` CLI entrypoint, so it exercises the transport/auth
@@ -171,7 +171,7 @@ def _live_streamable_http_server(
         mcp.add_middleware(middleware)
 
     # A purpose-built, read-only introspection tool: proves the REAL identity
-    # bridge (ActorContextMiddleware.on_call_tool, CONCEPT:AU-OS.identity.idp-agnostic-role-inheritance)
+    # bridge (ActorContextMiddleware.on_call_tool, CONCEPT:MERISTEM-OS.identity.idp-agnostic-role-inheritance)
     # actually ran for this call and minted a caller-scoped ActorContext +
     # GraphSession — the precise, engine-independent contract a duplicate/
     # shadowed middleware definition previously broke (it minted the actor but

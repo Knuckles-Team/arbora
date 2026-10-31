@@ -1390,7 +1390,7 @@ def _check_secrets_backend() -> dict[str, Any]:
 
     ``SecretsClient.resolve_ref`` resolves every ``vault://``/``secret://``
     reference through whichever backend is active — the scheme itself never
-    selects a backend (CONCEPT:AU-OS.config.secrets-authentication). So a
+    selects a backend (CONCEPT:MERISTEM-OS.config.secrets-authentication). So a
     ``vault://`` reference silently resolves against the engine-backed
     ``__secrets__`` store instead of the named Vault/OpenBao instance when
     ``SECRETS_BACKEND != "vault"`` — and can even appear "resolved" if a
@@ -1497,7 +1497,7 @@ def _check_auth() -> dict[str, Any]:
     ]
     if not missing:
         # IdP-agnostic: any OIDC issuer's JWKS works. Name it for the report so
-        # an operator on Okta isn't told they need Keycloak (CONCEPT:AU-OS.deployment.vault-first-routine-genesis genesis
+        # an operator on Okta isn't told they need Keycloak (CONCEPT:MERISTEM-OS.deployment.vault-first-routine-genesis genesis
         # IdP choice — keycloak deploy-if-absent OR an existing okta/other-oidc org).
         low = jwks.lower()
         idp = "Okta" if "okta" in low else ("Keycloak" if "keycloak" in low else "OIDC")
@@ -1904,7 +1904,7 @@ def _check_prepush_hook() -> dict[str, Any]:
 def _check_venv_drift() -> dict[str, Any]:
     """Is the shared uv-workspace venv still what its lock says it should be?
 
-    CONCEPT:AU-OS.host.venv-drift-detector
+    CONCEPT:MERISTEM-OS.host.venv-drift-detector
 
     This check exists because the shared development environment silently sat
     ten days behind its own lock: one import failed, an entire test module

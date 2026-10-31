@@ -1,4 +1,4 @@
-"""Gateway-hosted unified KG daemon (CONCEPT:EG-KG.storage.nonblocking-checkpoint /
+"""Gateway-hosted unified KG daemon (CONCEPT:MEDULLA-KG.storage.nonblocking-checkpoint /
 OS-5.9).
 
 The API gateway is the single process that runs the ONE consolidated KG
@@ -39,7 +39,7 @@ _metrics_started = False
 def start_daemon_metrics_listener() -> bool:
     """Expose this daemon's ``agent_utilities_*`` Prometheus registry over HTTP.
 
-    CONCEPT:AU-OS.observability.daemon-metrics-listener (D-OG-4). The
+    CONCEPT:MERISTEM-OS.observability.daemon-metrics-listener (D-OG-4). The
     consolidated KG host daemon this module runs records the
     ``SCHEDULED_JOB_*``/``LANE_*``/``KG_INGEST_*``/``DISPATCH_*`` families
     (``observability/gateway_metrics.py``) into the SAME per-process
@@ -141,7 +141,7 @@ def start_daemon_metrics_listener() -> bool:
         _metrics_started = True
         logger.info(
             "Daemon metrics listener started on %s:%d "
-            "(CONCEPT:AU-OS.observability.daemon-metrics-listener).",
+            "(CONCEPT:MERISTEM-OS.observability.daemon-metrics-listener).",
             redact_for_log(host),
             port,
         )
@@ -243,7 +243,7 @@ def start_host_daemon() -> Any:
     with _lock:
         if _engine is not None:
             return _engine
-        # CONCEPT:AU-OS.identity.per-agent-on-behalf-delegation (decision 3) — fail
+        # CONCEPT:MERISTEM-OS.identity.per-agent-on-behalf-delegation (decision 3) — fail
         # closed at
         # startup when delegated identity is on but no run-token signing secret
         # resolves, so the
@@ -256,7 +256,7 @@ def start_host_daemon() -> Any:
         # The gateway process is the authoritative daemon host.
         os.environ["KG_DAEMON_ROLE"] = "host"
         raise not_served("knowledge_graph.core.engine", "MEDULLA-PLACEMENT-R611")
-    # CONCEPT:AU-ECO.messaging.inbound-messaging-router-runs — the inbound messaging
+    # CONCEPT:MERISTEM-ECO.messaging.inbound-messaging-router-runs — the inbound messaging
     # router runs in its OWN process
     # (the messaging intake co-service), NOT here,
     # so

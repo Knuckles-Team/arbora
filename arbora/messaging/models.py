@@ -1,10 +1,10 @@
-"""Pydantic models for the Native Messaging Backend (CONCEPT:AU-ECO.messaging.native-backend-abstraction).
+"""Pydantic models for the Native Messaging Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction).
 
 Provides transport-agnostic data models for cross-platform messaging.
 All models are Pydantic BaseModel subclasses for runtime validation
 and seamless serialization to/from the Knowledge Graph.
 
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ class MessageDirection(enum.StrEnum):
 class EventType(enum.StrEnum):
     """Types of inbound events from messaging platforms.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction — Modeled after OpenClaw's ChannelGatewayEventType
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Modeled after OpenClaw's ChannelGatewayEventType
     with Python-idiomatic naming.
     """
 
@@ -67,7 +67,7 @@ class MediaType(enum.StrEnum):
 class PlatformId(enum.StrEnum):
     """Canonical identifiers for all supported messaging platforms.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction — Equivalent to OpenClaw's ChannelId union type.
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Equivalent to OpenClaw's ChannelId union type.
     """
 
     DISCORD = "discord"
@@ -95,7 +95,7 @@ class PlatformId(enum.StrEnum):
 class MediaAttachment(BaseModel):
     """A media file attached to a message.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
     Attributes:
         media_type: The type of media (image, video, audio, etc.).
@@ -109,7 +109,7 @@ class MediaAttachment(BaseModel):
             required to download ``url`` — some platforms (Slack, Mattermost) serve
             attachments from an authenticated endpoint, unlike Telegram's pre-signed
             file URLs. Populated by the owning backend at receive time from its own
-            bot credential; never persisted or logged (CONCEPT:AU-ECO.messaging.voice-attachment-fallback).
+            bot credential; never persisted or logged (CONCEPT:MERISTEM-ECO.messaging.voice-attachment-fallback).
     """
 
     media_type: MediaType = MediaType.FILE
@@ -125,7 +125,7 @@ class MediaAttachment(BaseModel):
 class Channel(BaseModel):
     """A messaging channel or conversation target.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
     Represents a channel, group, DM, or conversation on any platform.
     The ``platform_id`` field ties this to a specific backend.
@@ -154,7 +154,7 @@ class Channel(BaseModel):
 class Thread(BaseModel):
     """A message thread or reply chain.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
     Attributes:
         id: Platform-specific thread identifier.
@@ -176,7 +176,7 @@ class Thread(BaseModel):
 class Message(BaseModel):
     """A message sent or received on any messaging platform.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
     This is the canonical representation of a message across all 17
     supported platforms. Platform-specific features (e.g., Discord embeds,
@@ -218,7 +218,7 @@ class Message(BaseModel):
 class InboundEvent(BaseModel):
     """An event received from a messaging platform.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
     All inbound events (messages, reactions, typing indicators, presence
     updates, etc.) are normalized into this model. The ``event_type``
@@ -256,7 +256,7 @@ class InboundEvent(BaseModel):
 class SendResult(BaseModel):
     """Result of sending a message to a platform.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
     Attributes:
         success: Whether the message was sent successfully.
@@ -278,7 +278,7 @@ class SendResult(BaseModel):
 class MessagingConfig(BaseModel):
     """Configuration for a messaging backend instance.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
     Attributes:
         platform: Which platform this config is for.

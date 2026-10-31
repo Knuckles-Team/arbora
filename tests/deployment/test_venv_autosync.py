@@ -1,6 +1,6 @@
 """Merge-trigger regression tests.
 
-CONCEPT:AU-OS.deployment.merge-triggered-venv-flip
+CONCEPT:MERISTEM-OS.deployment.merge-triggered-venv-flip
 
 Covers the four things that decide whether this feature is safe to leave on:
 the off switch really is off, a merge in a *linked worktree* does not flip the

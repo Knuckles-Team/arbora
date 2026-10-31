@@ -1,6 +1,6 @@
 """The multiplexer speaks MCP SDK v2's remote-transport contract.
 
-CONCEPT:AU-ECO.mcp.protocol-compat-bridge
+CONCEPT:MERISTEM-ECO.mcp.protocol-compat-bridge
 
 Regression guard for the fastmcp-4 default. SDK v2 renamed
 ``streamablehttp_client`` -> ``streamable_http_client`` AND replaced its

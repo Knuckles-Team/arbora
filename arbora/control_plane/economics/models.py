@@ -6,7 +6,7 @@ the control plane receives only an opaque source reference, a content digest, an
 bounded numeric facts.  The models are frozen so a correction is a new record and
 never an in-place mutation of accounting or SLO history.
 
-CONCEPT:AU-OS.control-plane.economics — auditable usage, pricing, and SLO read
+CONCEPT:MERISTEM-OS.control-plane.economics — auditable usage, pricing, and SLO read
 models with deterministic identities and tenant-scoped projections.
 """
 

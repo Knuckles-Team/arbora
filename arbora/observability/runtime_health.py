@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from __future__ import annotations
 
-"""The ONE shared runtime health-check core for arbora (CONCEPT:AU-OS.observability.no-op-without-metrics).
+"""The ONE shared runtime health-check core for arbora (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics).
 
 Both the REST gateway (the REST gateway's ``/health``
 and ``/health/ready``, plus ``graph_configure(action="health")``'s REST twin
@@ -10,7 +10,7 @@ and ``/health/ready``, plus ``graph_configure(action="health")``'s REST twin
 its ``graph_configure`` tool) dispatch into :func:`collect_health` — async
 transports through :func:`collect_health_async` — so there is exactly one
 implementation of "is this deployment actually healthy", never two that can
-drift (CONCEPT:AU-OS.config.two-surfaces-by-default).
+drift (CONCEPT:MERISTEM-OS.config.two-surfaces-by-default).
 
 Replaces the historical stub that returned ``{"status": "ok"}`` unconditionally
 and never checked anything — which reported healthy through a ~2.5-minute real
@@ -26,7 +26,7 @@ never lets a broken probe read as healthy, and it never lets a probe hang the
 endpoint past its bound (each check runs in its own thread with a hard wall-
 clock ceiling; a stuck check is abandoned, not awaited).
 
-Four-state semantics per check (CONCEPT:AU-OS.observability.co-service-visibility):
+Four-state semantics per check (CONCEPT:MERISTEM-OS.observability.co-service-visibility):
 
 * ``ok``             — configured (or mandatory) and verified reachable/healthy.
 * ``unhealthy``       — configured (or mandatory) and NOT healthy. Always carries
@@ -41,7 +41,7 @@ Four-state semantics per check (CONCEPT:AU-OS.observability.co-service-visibilit
   over one; ``degraded`` carries a ``reason``/``detail`` like ``unhealthy``
   does, but — same as ``not_configured`` — never fails the overall rollup.
 
-Liveness vs readiness (CONCEPT:AU-OS.deployment.liveness-vs-readiness-split — see the callers):
+Liveness vs readiness (CONCEPT:MERISTEM-OS.deployment.liveness-vs-readiness-split — see the callers):
 this module computes ONE truthful report; it is the callers (the HTTP routes)
 that decide what to do with it. A liveness probe must keep returning 200 (the
 process itself is alive and answering) even when the body says "unhealthy" —
@@ -85,7 +85,7 @@ __all__ = [
 # otherwise-cheap /health calls queued behind it until kubelet killed the healthy
 # foreground process. Two workers let liveness and readiness overlap without
 # competing with general work. This is a correctness constant, not an operator
-# tuning surface (CONCEPT:AU-OS.deployment.liveness-vs-readiness-split).
+# tuning surface (CONCEPT:MERISTEM-OS.deployment.liveness-vs-readiness-split).
 _COLLECTOR_EXECUTOR = ThreadPoolExecutor(
     max_workers=2, thread_name_prefix="au-health-collector"
 )
@@ -635,7 +635,7 @@ def _run_bounded(
     except Exception as exc:
         # The one place a bug INSIDE a check function still cannot report
         # healthy — any exception here becomes an explicit "unhealthy", never
-        # a swallowed pass. (CONCEPT:AU-OS.observability.no-op-without-metrics)
+        # a swallowed pass. (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics)
         result = _unhealthy(name, f"probe raised {type(exc).__name__}: {exc}")
     result.setdefault("name", name)
     result["latency_ms"] = round((time.monotonic() - started) * 1000.0, 1)

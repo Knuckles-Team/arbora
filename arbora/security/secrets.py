@@ -523,7 +523,7 @@ class SecretsClient:
         - ``vault://path#field`` → backend lookup of one field within the secret
         - ``vault://path#field@2`` → that field at pinned KV v2 **version** 2, not
           "whatever is latest" — a :class:`VaultBackend` reads exactly that version
-          (CONCEPT:AU-KG.ontology.release-key-rotation, D-OC-1); other backends simply
+          (CONCEPT:MERISTEM-KG.ontology.release-key-rotation, D-OC-1); other backends simply
           have no second version and the pin is a no-op on them.
         - ``env://VAR_NAME`` → ``setting(VAR_NAME)``
         Args:

@@ -3,9 +3,9 @@ from __future__ import annotations
 
 """Durable, idempotent ScaleIntent reconciliation.
 
-CONCEPT:AU-OS.scaling.reactive-replica-autoscaling
+CONCEPT:MERISTEM-OS.scaling.reactive-replica-autoscaling
 
-This module owns the AU-side transaction seam between a durable scale intent
+This module owns the Meristem-side transaction seam between a durable scale intent
 and a typed actuator.  It deliberately does not know Kubernetes, Docker,
 Swarm, or a graph client's wire shape.  A deployment supplies a durable
 ``ScaleIntentLedger`` and a typed, idempotent ``ScaleActuator``.

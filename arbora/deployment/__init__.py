@@ -3,7 +3,7 @@
 This package owns host-facing deployment composition: profile/config generation,
 preflight and doctor checks, release canary, production backup/restore validation,
 the safe venv reconciler, and deterministic backend plans.  The AU release and
-skill/connector certification implementations remain AU-owned product tooling;
+skill/connector certification implementations remain Meristem-owned product tooling;
 the doctor consumes those checks without extracting them.
 
 The public console scripts are registered in ``pyproject.toml`` and point here

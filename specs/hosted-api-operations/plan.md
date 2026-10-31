@@ -251,7 +251,7 @@ The producer must define expiry and revision semantics before Arbora accepts a s
 They specify no public snapshot export, authority binding, revision or expiry contract today.
 The AU owner must extend R014 with that public read contract before this projection becomes available.
 Arbora must not invent an AU method, persist the scaffold, or reconstruct it from stored messages.
-Any durable graph projection needs an EG-owned contract first; R009 does not supply one.
+Any durable graph projection needs an Medulla-owned contract first; R009 does not supply one.
 `runs.get` may return trace fields while `current_plan` remains explicitly unavailable.
 Clients must offer no plan mutation control. This read contract does not move harness or engine responsibilities.
 
@@ -326,7 +326,7 @@ Decision: the engine ranks and Arbora bounds the space. Rejected: returning rank
 R085 is a producer definition. Its merge does not establish runtime availability.
 R084.3, R084.4 and R084.6 remain concurrency prerequisites, not a file-sync contract.
 Arbora owns hosted file projection, authenticated serving and materialization acknowledgments.
-AU remains an EG-driven harness. WebUI displays returned state and submits edits.
+AU remains an Medulla-driven harness. WebUI displays returned state and submits edits.
 
 Current `arbora/api/ops/memory.py` defines tenant-scoped generic `memory.read` and `memory.write` through `MemoryStore`.
 `handle_memory_read` at line 65 and `handle_memory_write` at line 74 resolve the existing `memory_store` binding.
@@ -437,14 +437,14 @@ Missing producer implementation must remain unavailable. Definitions and planned
 1. Bind the Arbora read to EG RunTraceUsageQueryV1 / MEDULLA-ORCH-VOCAB-R010.101; derive tenant only from verified caller claims and pass the producer's bounded window, model/project/agent grouping, currency, page size, and snapshot cursor.
 2. Extend the usage.py reader with closed UsageQueryV1 and UsageProjectionV1 models. Add a distinct usage.index.query port beside usage.read. Use existing usage:read, build_read_op, registry_factory, and shared invoke. Keep accounting separate from runs.metrics (R021.4.3/.4) and usage.read.
 3. Preserve four disjoint EG counters, producer totals, unknown reasons, pinned PriceTableV1, minor units, revisions, coverage, watermark, and cursor. Aggregate exact rational amounts by final group and category. Apply half-even rounding once. Keep unknown values unknown with reasons and coverage; never use zero. Keep currencies separate unless EG supplies pinned FX. Bind p95 <= 500 ms from authenticated-handler entry through serialized response. Use 1,000,000 indexed traces, 32 readers, and 1,000 fixed-window queries. Bind data/index/cache-policy revisions. Missing or invalid profile evidence is unavailable; an exceeded bound is not success.
-4. Connect the projection to WebUI ObservabilityView.tsx under WEBUI-APPS-R004.8.1-.6. Served proof compares groups with an independent EG ledger. It exercises authorization, pagination, unknown values, stale revisions, and absent, invalid, or exceeded profile evidence. This remains planned work, not runtime delivery.
+4. Connect the projection to WebUI ObservabilityView.tsx under OVERSTORY-APPS-R004.8.1-.6. Served proof compares groups with an independent EG ledger. It exercises authorization, pagination, unknown values, stale revisions, and absent, invalid, or exceeded profile evidence. This remains planned work, not runtime delivery.
 
 #### ARBORA-OPS-R063: retrieval evaluation and context projection
 
 1. Bind the MEDULLA-DECISION-ENGINE-R100.100 DecisionEval ranking receipt. Map RetrievalRankingSubmit to RetrievalRankingV1. Map Method::RetrievalContextSearch to RetrievalContextSearchV1. Do not derive quality from retrieval.search or local RRF.
 2. Extend arbora/api/ops/retrieval.py with closed evaluation, comparison, and context models. Register retrieval.evaluation.compare and retrieval.context.search. Use existing build_read_op, memory:read, registry factory, and shared invoke for HTTP/MCP.
 3. Require identical corpus, complete label-set revision/digest, query-set ID/revision/digest, evaluator revision, k, and query inputs across algorithms. Pin each algorithm's settings digest to its own registered configuration. Preserve producer metrics and result digests. For hits_at_k, use the full identically labeled query set as denominator. Count a query when any relevant result appears in top k. Preserve half-open UTF-8 offsets into original stored text. Bind query/index/authorization revisions and a snapshot cursor. Limit responses to 100 spans and 8 KiB each. If indexing normalizes text, preserve a separate NFC digest and validate its byte map to original text.
-4. Align WebUI TryItPanel.tsx under WEBUI-APPS-R001.1.1-.6. Served proof checks two-algorithm metrics and identical inputs. It tests hostile-source escaping before highlighting and preserves original byte spans. It also checks Unicode slicing, authorization, staleness, missing labels, invalid maps, and limits. This remains planned work, not runtime delivery.
+4. Align WebUI TryItPanel.tsx under OVERSTORY-APPS-R001.1.1-.6. Served proof checks two-algorithm metrics and identical inputs. It tests hostile-source escaping before highlighting and preserves original byte spans. It also checks Unicode slicing, authorization, staleness, missing labels, invalid maps, and limits. This remains planned work, not runtime delivery.
 
 ### Additional owner requirements
 

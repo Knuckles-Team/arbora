@@ -1,6 +1,6 @@
 """Drift test for the GOC-62 conformance suite's enumeration mechanism (D2/D3(b)).
 
-CONCEPT:AU-OS.identity.stack-wide-auth-conformance
+CONCEPT:MERISTEM-OS.identity.stack-wide-auth-conformance
 
 This is the test that makes "a new surface is covered by default" real rather
 than aspirational: it re-derives the live set of `graph_query` dialects by

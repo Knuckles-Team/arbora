@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """Knowledge Graph MCP Server — Thin wrapper over IntelligenceGraphEngine.
 
-CONCEPT:AU-ECO.mcp.knowledge-graph-exposure — Knowledge Graph MCP Exposure
+CONCEPT:MERISTEM-ECO.mcp.knowledge-graph-exposure — Knowledge Graph MCP Exposure
 
 Exposes the internal Knowledge Graph as MCP tools for external agents
 (Claude Code, Antigravity IDE, OpenCode, Devin) to query, search, and
@@ -275,7 +275,7 @@ async def _execute_tool(tool_name: str, **kwargs) -> Any:
 
     import asyncio
 
-    # Dispatch isolation (CONCEPT:AU-ECO.mcp.gateway-dispatch-isolation): most graph_*/
+    # Dispatch isolation (CONCEPT:MERISTEM-ECO.mcp.gateway-dispatch-isolation): most graph_*/
     # engine_* tools are SYNC and do blocking engine I/O. Running them inline blocks the ONE
     # gateway asyncio loop, so a single hung/misbehaving tool call (an uncompiled engine
     # surface, a bad action, a wedged backend) freezes the whole arbora child and
@@ -285,7 +285,7 @@ async def _execute_tool(tool_name: str, **kwargs) -> Any:
     # killed. Threads propagate the current contextvars (actor/session) via to_thread.
     _TOOL_CALL_TIMEOUT_S = 320.0
 
-    # Dispatch isolation (CONCEPT:AU-ECO.mcp.gateway-dispatch-isolation): most graph_*/
+    # Dispatch isolation (CONCEPT:MERISTEM-ECO.mcp.gateway-dispatch-isolation): most graph_*/
     # engine_* tools are SYNC and do blocking engine I/O. Running them inline blocks the ONE
     # gateway asyncio loop, so a single hung/misbehaving tool call (an uncompiled engine
     # surface, a bad action, a wedged backend) freezes the whole arbora child and
@@ -333,7 +333,7 @@ async def _execute_tool(tool_name: str, **kwargs) -> Any:
                 "degraded": True,
             }
 
-    # CONCEPT:AU-ORCH.scheduling.resource-priority-edict — an MCP tool call is the
+    # CONCEPT:MERISTEM-ORCH.scheduling.resource-priority-edict — an MCP tool call is the
     # INTERACTIVE entry boundary (a live Claude / end-user request). Tag the whole
     # dispatch INTERACTIVE so its engine reads — including a delegation's RAG
     # context-compilation GetNodeProperties point-reads, which run on the ``to_thread``
@@ -801,7 +801,7 @@ def _build_server(
         transport_choices=("stdio", "streamable-http"),
     )
 
-    # Unauthenticated liveness + readiness for HTTP deployments (CONCEPT:AU-OS.deployment.liveness-vs-readiness-split).
+    # Unauthenticated liveness + readiness for HTTP deployments (CONCEPT:MERISTEM-OS.deployment.liveness-vs-readiness-split).
     # Both dispatch into the ONE shared health-check core
     # (``observability.runtime_health.collect_health``) also used by the REST
     # gateway's ``/health``/``/health/ready`` and by ``graph_configure(action=
@@ -849,7 +849,7 @@ def _build_server(
             headers={"Cache-Control": "no-store"},
         )
 
-    # ARD registry surface (CONCEPT:AU-ECO.mcp.eco-serves-two-ard/ECO-4.97) — the arbora twin of the
+    # ARD registry surface (CONCEPT:MERISTEM-ECO.mcp.eco-serves-two-ard/ECO-4.97) — the arbora twin of the
     # gateway routes in server/routers/ard.py. This is the container the deploy
     # mechanic restarts, so it must answer the well-known + search paths too. Both
     # delegate into the same ecosystem.ard_* core to stay in lockstep with the gateway.

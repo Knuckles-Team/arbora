@@ -495,7 +495,7 @@ def _add_mappings(catalog: Any, contracts: Sequence[Any]) -> int:
         mapping = VirtualMapping(**fields)
         previous = existing.get(mapping.mapping_id)
         if previous is not None:
-            # A renewal must not turn an already EG-approved projection back
+            # A renewal must not turn an already Medulla-approved projection back
             # into a held one.  Conversely, changed contract fields replace
             # the old row with a held candidate so stale data can never keep
             # serving after a connector release.
@@ -541,7 +541,7 @@ def bind_approved_mapping(
     policy_id: str = "eg.connector-pack.source-approval",
     scope: tuple[str, str] | None = None,
 ) -> SourceApprovalDecision:
-    """Apply an EG-approved receipt to one existing catalog candidate.
+    """Apply an Medulla-approved receipt to one existing catalog candidate.
 
     The local ``approved`` bit is only a selection projection.  The foreign
     read adapter still sends the EG receipt, and EG rechecks its durable

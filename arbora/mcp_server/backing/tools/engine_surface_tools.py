@@ -1,4 +1,4 @@
-"""New engine-surface MCP tools — CONCEPT:AU-KG.coordination.engine-message-broker.
+"""New engine-surface MCP tools — CONCEPT:MERISTEM-KG.coordination.engine-message-broker.
 
 epistemic-graph v2.2.0 grew several engine capabilities that agent-utilities
 should expose to the fleet as first-class, purpose-shaped MCP tools rather than
@@ -8,7 +8,7 @@ leaving them reachable only through the generic ``engine_<domain>`` 1:1 surface
 * ``graph_broker``          — the message broker (declare exchange/queue, bind,
   publish, consume, stats — AMQP-style).
 * ``graph_kvcache``         — the shared, content-addressed KV-cache over the
-  EG-187 HTTP surface, driven through the KG-2.306
+  MEDULLA-187 HTTP surface, driven through the KG-2.306
   :class:`~agent_utilities.kvcache.EpistemicGraphKVBackend` connector.
 * ``graph_federated_search``— federated search fanned across registered external
   graph references.
@@ -20,7 +20,7 @@ leaving them reachable only through the generic ``engine_<domain>`` 1:1 surface
   already-built ViewSpec/dataset pass-through), ``describe_chart`` (an
   LLM-facing summary of a ``ViewResult``), ``capability_matrix``. The
   ergonomic layer over the raw ``engine_viz`` 1:1 passthrough.
-* ``graph_memory``          — the EG-318 memory surface: episodic→semantic memory
+* ``graph_memory``          — the MEDULLA-318 memory surface: episodic→semantic memory
   (create-summary / consolidate / maintain), the spatial scene graph
   (add-scene-object / world-transform), and RL trajectories (start-trajectory /
   append-step / discounted-return), plus their reads.
@@ -41,7 +41,7 @@ Design (matches the rest of ``arbora/mcp_server/backing/tools``):
   ``ACTION_TOOL_ROUTES`` (auto-mounted by the generic factory), keeping MCP⇄REST
   parity like every other tool.
 
-CONCEPT:AU-KG.coordination.engine-message-broker — MCP surface for the new engine ops (broker / kvcache /
+CONCEPT:MERISTEM-KG.coordination.engine-message-broker — MCP surface for the new engine ops (broker / kvcache /
 federated-search / promql / traces / gis).
 """
 
@@ -69,7 +69,7 @@ from arbora.mcp_server.backing.tools._surface_selection import (
 
 logger = logging.getLogger(__name__)
 
-# CONCEPT:AU-KG.mining.dsm-forecast-delegation — the fleet write-side connector (call
+# CONCEPT:MERISTEM-KG.mining.dsm-forecast-delegation — the fleet write-side connector (call
 # a named MCP server's tool once, synchronously, decoded) is the SAME primitive the
 # governed ``fleet.write_record`` ontology Action uses
 # (``agent_utilities/knowledge_graph/actions/fleet_writeback.py``) — reused here,
@@ -119,9 +119,9 @@ _LOGS_QUERY_CANDIDATES: tuple[tuple[str, str], ...] = (
     ("logs", "search"),
 )
 
-# graph_memory — EG-318 memory / scene / trajectory ops. Each logical action maps
+# graph_memory — MEDULLA-318 memory / scene / trajectory ops. Each logical action maps
 # to a small probe list of ``(sub_client_attr, method_attr)`` paths the engine
-# build / client may plausibly expose the EG-318 wire Method under (the client
+# build / client may plausibly expose the MEDULLA-318 wire Method under (the client
 # wraps each wire ``Method`` as a snake_case method on a sub-client). The first
 # callable found wins; when none resolve the tool degrades cleanly. Any action not
 # listed here falls back to probing the three sub-clients with the action name
@@ -158,7 +158,7 @@ _MEMORY_ACTION_CANDIDATES: dict[str, tuple[tuple[str, str], ...]] = {
 }
 
 
-# ── graph_mine action manifest (CONCEPT:EG-KG.mining.frequent-itemset-mining) ─
+# ── graph_mine action manifest (CONCEPT:MEDULLA-KG.mining.frequent-itemset-mining) ─
 def _mining_actions() -> frozenset[str]:
     """The valid ``graph_mine`` actions.
 
@@ -167,7 +167,7 @@ def _mining_actions() -> frozenset[str]:
     mirroring ``engine_tools._discover_domains``) that already drives the
     granular ``engine_mining`` 1:1 tool — as the one source of truth, so this
     surface can never drift out of sync with the real client again
-    (CONCEPT:AU-KG.compute.engine-surface-manifest). Empty only when the
+    (CONCEPT:MERISTEM-KG.compute.engine-surface-manifest). Empty only when the
     ``epistemic_graph`` client itself can't be imported (an environment/build
     issue unrelated to action naming); callers then skip the allow-list check
     below and fall through to the normal dispatch/degrade path.
@@ -194,10 +194,10 @@ def _client(graph: str) -> Any:
     """Resolve the shared ``SyncEpistemicGraphClient`` for ``graph``.
 
     Delegates to :func:`engine_tools._client_for` so these tools ride the exact
-    same connect path (CONCEPT:AU-OS.deployment.engine-resolver-auto-provision resolver, connection caching) as the
+    same connect path (CONCEPT:MERISTEM-OS.deployment.engine-resolver-auto-provision resolver, connection caching) as the
     low-level ``engine_<domain>`` tools — one transport, no reinvention. Isolated
     behind this thin indirection so unit tests can inject a mock client
-    (CONCEPT:AU-KG.coordination.engine-message-broker).
+    (CONCEPT:MERISTEM-KG.coordination.engine-message-broker).
     """
     from arbora.mcp_server.backing.tools import engine_tools
 
@@ -205,10 +205,10 @@ def _client(graph: str) -> Any:
 
 
 def _kv_backend() -> Any:
-    """Build the KG-2.306 KV-cache connector from the engine's EG-187 environment.
+    """Build the KG-2.306 KV-cache connector from the engine's MEDULLA-187 environment.
 
     Isolated behind this indirection so unit tests can inject a fake backend
-    (CONCEPT:AU-KG.coordination.engine-message-broker).
+    (CONCEPT:MERISTEM-KG.coordination.engine-message-broker).
     """
     raise not_served("kvcache", "MEDULLA-DURABLE-KERNEL-R800")
 
@@ -216,7 +216,7 @@ def _kv_backend() -> Any:
 class _EngineComputeAdapter:
     """Minimal ``compute`` shape (``._client`` + ``.graph_name``) the MediaStore-style
     graph-resource stores expect, built from the low-level engine client this module
-    already resolves (CONCEPT:AU-KG.memory.kv-checkpoint-resource). No new transport —
+    already resolves (CONCEPT:MERISTEM-KG.memory.kv-checkpoint-resource). No new transport —
     reuses the same :func:`_client` every other tool in this module rides."""
 
     def __init__(self, client: Any, graph_name: str) -> None:
@@ -247,7 +247,7 @@ def _checkpoint_outcome(action: str, outcome: Any, *, advisory: bool = False) ->
 
 def _checkpoint_error_code(exc: Exception) -> str:
     """Map a :class:`~agent_utilities.kvcache.KVCheckpointError` to one of the
-    platform's registered public error codes (CONCEPT:AU-KG.memory.kv-checkpoint-resource).
+    platform's registered public error codes (CONCEPT:MERISTEM-KG.memory.kv-checkpoint-resource).
 
     Deliberately coarse: :func:`~arbora.security.error_surface.public_error_payload`
     only recognizes a small fixed code vocabulary and collapses anything else to
@@ -263,7 +263,7 @@ def _checkpoint_error_code(exc: Exception) -> str:
 
 def _checkpoint_store(graph: str) -> Any:
     """Build a :class:`~agent_utilities.kvcache.KVCheckpointStore` bound to the
-    live engine client for ``graph`` (CONCEPT:AU-KG.memory.kv-checkpoint-resource).
+    live engine client for ``graph`` (CONCEPT:MERISTEM-KG.memory.kv-checkpoint-resource).
 
     Isolated behind this indirection so unit tests can inject a fake compute
     object, matching every other resolver in this module.
@@ -272,7 +272,7 @@ def _checkpoint_store(graph: str) -> Any:
 
 
 #: Process-lifetime RAM tier shared by every ``graph_kv_checkpoint`` call
-#: (CONCEPT:AU-KG.memory.checkpoint-worthiness-scoring). It MUST outlive a single tool
+#: (CONCEPT:MERISTEM-KG.memory.checkpoint-worthiness-scoring). It MUST outlive a single tool
 #: invocation — "checkpoint to RAM, then decide later whether to persist" is the whole
 #: point of the tier — so it is built once and reused, not per call.
 _RAM_CHECKPOINT_STORE: Any | None = None
@@ -311,7 +311,7 @@ def _measured_fields(observation: Any) -> dict[str, Any]:
 def _session_bound_tenant(declared: str) -> str:
     """Return the tenant a KV-checkpoint operation runs under, bound to the session.
 
-    CONCEPT:AU-OS.governance.authority-derived-persistence-eligibility. When a verified
+    CONCEPT:MERISTEM-OS.governance.authority-derived-persistence-eligibility. When a verified
     ``GraphSession`` is bound (every served boundary), ITS tenant is authoritative and a
     payload tenant that disagrees is REFUSED rather than quietly preferred — a caller
     may not name someone else's tenancy. With no session bound (an isolated in-process
@@ -377,7 +377,7 @@ def _contributing_sources(
 ) -> tuple[Any, ...]:
     """Resolve the sources that contributed to the checkpointed context.
 
-    CONCEPT:AU-OS.governance.authority-derived-persistence-eligibility — the material
+    CONCEPT:MERISTEM-OS.governance.authority-derived-persistence-eligibility — the material
     half of the derivation. Two inputs, in precedence order:
 
     1. ``sources_json`` — an explicit list of source refs (strings) or fully-labelled
@@ -485,11 +485,11 @@ def _kv_checkpoint_intelligence(
 ) -> str:
     """The worthiness/tiering/eligibility half of ``graph_kv_checkpoint``.
 
-    CONCEPT:AU-KG.memory.checkpoint-worthiness-scoring. Split out of the tool body so
+    CONCEPT:MERISTEM-KG.memory.checkpoint-worthiness-scoring. Split out of the tool body so
     the three trigger paths can be exercised directly, and so the tool function stays
     argument-marshalling only.
 
-    CONCEPT:AU-OS.governance.authority-derived-persistence-eligibility — **the tenant a
+    CONCEPT:MERISTEM-OS.governance.authority-derived-persistence-eligibility — **the tenant a
     durable write is authorized under is read from the verified session, never from the
     payload.** Before this, ``initiator="user", operator_grant=true`` were arguments an
     agent could simply assert, which made the deny-by-default gate defeatable by any
@@ -619,7 +619,7 @@ def _waterfall_result(entry: dict[str, Any], trace_id: str) -> dict[str, Any]:
 def _trace_row(raw: dict[str, Any]) -> dict[str, Any]:
     """Normalize a raw ``TraceBackend.get_traces``/``get_trace_summary`` dict
     (``id``/``duration_ms``) into ``graph_traces``' own ``trace_id``/``duration``
-    row shape (CONCEPT:AU-KG.coordination.engine-message-broker)."""
+    row shape (CONCEPT:MERISTEM-KG.coordination.engine-message-broker)."""
     return {
         "trace_id": raw.get("id") or raw.get("trace_id"),
         "name": raw.get("name"),
@@ -688,7 +688,7 @@ def _surface_error(
 def _require_process_perspective(params: dict[str, Any]) -> Any:
     """Mint the explicit, versioned ``ProcessPerspective`` a flattening needs.
 
-    CONCEPT:AU-KG.mining.governed-perspective-flattening — classical
+    CONCEPT:MERISTEM-KG.mining.governed-perspective-flattening — classical
     single-case flattening (one trace per object) is a real information loss
     over the object-centric source truth, so ``graph_mine(action="process")``
     refuses to derive traces from a bare ``object_type`` string: a caller must
@@ -706,7 +706,7 @@ def _resolve(client: Any, candidates: tuple[tuple[str, str], ...]) -> Any:
     """Return the first callable ``client.<sub>.<method>`` among ``candidates``.
 
     Returns ``None`` when none of the candidate surfaces are present so the caller
-    can degrade gracefully (CONCEPT:AU-KG.coordination.engine-message-broker).
+    can degrade gracefully (CONCEPT:MERISTEM-KG.coordination.engine-message-broker).
     """
     for sub_attr, meth_attr in candidates:
         sub = getattr(client, sub_attr, None)
@@ -730,7 +730,7 @@ def _invoke(
 
     Every failure mode is returned as data, never raised: engine unreachable →
     ``error``; surface absent → ``degraded``; bad kwargs / engine error →
-    ``error`` (CONCEPT:AU-KG.coordination.engine-message-broker).
+    ``error`` (CONCEPT:MERISTEM-KG.coordination.engine-message-broker).
     """
     try:
         client = _client(graph)
@@ -775,7 +775,7 @@ def _invoke_promql(
     candidates: tuple[tuple[str, str], ...],
     params: dict[str, Any],
 ) -> str:
-    """``graph_promql``'s own dispatch (CONCEPT:AU-KG.coordination.engine-message-broker):
+    """``graph_promql``'s own dispatch (CONCEPT:MERISTEM-KG.coordination.engine-message-broker):
     the connected engine's native PromQL surface wins when present; only when the
     engine build has NO promql surface does this fall back to a directly
     configured Prometheus HTTP endpoint (:func:`_prometheus_http_query`); only
@@ -1228,7 +1228,7 @@ def _viz_plot_from_query(
 
 def _prometheus_base_url() -> str | None:
     """The directly configured Prometheus HTTP base URL for ``graph_promql``'s
-    fallback (CONCEPT:AU-KG.coordination.engine-message-broker) — consulted only
+    fallback (CONCEPT:MERISTEM-KG.coordination.engine-message-broker) — consulted only
     when the connected engine build has no native PromQL surface. Unset by
     default: no engine surface + no URL configured is a clean degrade, never an
     invented hostname.
@@ -1246,7 +1246,7 @@ def _prometheus_http_query(
     fallback when the connected engine build has no native PromQL surface.
 
     Mirrors ``orchestration.scaling_signals.PrometheusHttpProvider``'s own
-    request/parse shape (CONCEPT:AU-KG.coordination.engine-message-broker):
+    request/parse shape (CONCEPT:MERISTEM-KG.coordination.engine-message-broker):
     any transport/HTTP/parse problem — including "not configured" — degrades to
     a clean ``None`` (no data), never a raised exception.
     """
@@ -1272,7 +1272,7 @@ def _prometheus_http_query(
     return result if isinstance(result, list) else None
 
 
-# CONCEPT:AU-KG.memory.unified-memory-crud-core — the unified memory-CRUD core. graph_memory's recall/store/link
+# CONCEPT:MERISTEM-KG.memory.unified-memory-crud-core — the unified memory-CRUD core. graph_memory's recall/store/link
 # actions route into the SAME ``graph_write`` tool the REST ``/graph/write/memory``
 # [``/recall``] twins and the harness ``kg_memory_recall``/``kg_memory_store`` tools
 # already use — one core, no fourth memory surface. ``link`` reuses graph_write's
@@ -1342,7 +1342,7 @@ def _sandbox_available(sb: Any) -> bool:
 
 
 def _pick_warm_fork_sandbox(preferred: str = "") -> Any:
-    """Return the cheapest available warm-fork rung, or ``None`` (CONCEPT:AU-KG.coordination.warm-fork-fanout).
+    """Return the cheapest available warm-fork rung, or ``None`` (CONCEPT:MERISTEM-KG.coordination.warm-fork-fanout).
 
     Reuses the ORCH-1.86 sandbox registry (``default_sandboxes()``, cheapest-first)
     and selects the first backend whose capabilities advertise ``warm_fork`` and
@@ -1361,7 +1361,7 @@ def _fork_fanout(branches: list[Any], seed_vars: dict[str, Any], preferred: str)
     :class:`ForkableSandbox.execute` warms-or-reuses one parent (copy-on-write) and
     forks a child per branch. Fan-out is concurrent ``execute`` calls sharing that
     one warm parent. Degrades cleanly to a structured ``unavailable`` payload when no
-    warm-fork rung is available on this host (CONCEPT:AU-KG.coordination.warm-fork-fanout).
+    warm-fork rung is available on this host (CONCEPT:MERISTEM-KG.coordination.warm-fork-fanout).
     """
     sb = _pick_warm_fork_sandbox(preferred)
     if sb is None:
@@ -1384,19 +1384,21 @@ def _fork_fanout(branches: list[Any], seed_vars: dict[str, Any], preferred: str)
         )
 
     raise not_served(
-        "rlm.sandboxes.base", "AU-harness (deleted from AU)", owner="agent-utilities"
+        "rlm.sandboxes.base",
+        "Meristem-harness (deleted from AU)",
+        owner="agent-utilities",
     )
 
 
 # ══════════════════════════════════════════════════════════════════
 # graph_mine_deep — Phase-6 heavy-dep delegation to data-science-mcp
 # ══════════════════════════════════════════════════════════════════
-# CONCEPT:AU-KG.mining.dsm-forecast-delegation — the data-mining plan's Phase 6: the engine
+# CONCEPT:MERISTEM-KG.mining.dsm-forecast-delegation — the data-mining plan's Phase 6: the engine
 # core stays pure-Rust (never torch/GPU); the deep-learning / heavy-Python family
 # (LSTM/RNN sequence forecasting, MLP/deep classifiers, autoencoders, an XGBoost-
 # family boosting classifier) is ORCHESTRATED over MCP to ``agents/data-science-mcp``
 # — this module ships features out, that service trains/infers, and the result
-# folds back into the KG as typed nodes (CONCEPT:AU-KG.mining.foldback-typed-nodes). Word/text
+# folds back into the KG as typed nodes (CONCEPT:MERISTEM-KG.mining.foldback-typed-nodes). Word/text
 # embeddings are deliberately NOT re-homed here — they already live on the remote
 # vLLM embedder (``core/embedding_utilities``); the 'embed' action below embeds
 # arbitrary NUMERIC feature rows via a small neural autoencoder, a distinct
@@ -1489,7 +1491,7 @@ def _gather_kg_feature_rows(
     Runs one read-only Cypher projection through the existing ``graph_query`` tool
     (compute-near-data — no bespoke second engine client) and returns
     ``(node_ids, rows)`` so a caller can ship ``rows`` to data-science-mcp and fold
-    the result back onto the SAME ``node_ids`` (CONCEPT:AU-KG.mining.dsm-forecast-delegation).
+    the result back onto the SAME ``node_ids`` (CONCEPT:MERISTEM-KG.mining.dsm-forecast-delegation).
 
     The three validations run in their original order — label, then fields, then
     limit — so a multiply-invalid spec still reports the same first offence.
@@ -1509,7 +1511,7 @@ def _gather_kg_feature_rows(
 
 def _deep_write_node(node_type: str, properties: dict[str, Any], graph: str) -> str:
     """Materialize one delegated-deep-mining result row as a typed KG node
-    (CONCEPT:AU-KG.mining.foldback-typed-nodes). Best-effort — never raises, since a foldback
+    (CONCEPT:MERISTEM-KG.mining.foldback-typed-nodes). Best-effort — never raises, since a foldback
     failure must not fail the already-completed delegated call. Returns the new node id."""
     node_id = f"{node_type.lower()}_dsm_{uuid.uuid4().hex}"
     try:
@@ -1631,7 +1633,7 @@ def _record_process_signal_evidence(
 ) -> None:
     """Best-effort Unified-Evidence ``process_signal`` write.
 
-    CONCEPT:AU-KG.evolution.unified-evidence-resource (D-71-1) — recorded at
+    CONCEPT:MERISTEM-KG.evolution.unified-evidence-resource (D-71-1) — recorded at
     the one place the import's real outcome is computed, never re-derived by a
     second query. A pure observability side-channel: it must never gate the
     import, so every failure is swallowed at DEBUG. ``engine`` is resolved
@@ -1651,7 +1653,7 @@ def _record_process_signal_evidence(
 def _ocel_replay_deriver(slice_: Any) -> Any:
     """Replay an imported OCEL slice through the incremental deriver.
 
-    CONCEPT:AU-KG.mining.incremental-object-centric-derivation — read-only by
+    CONCEPT:MERISTEM-KG.mining.incremental-object-centric-derivation — read-only by
     construction; commits nothing.
     """
     raise not_served(
@@ -1714,7 +1716,7 @@ def _ocel_mine(
 
     ``mine`` mode always materializes source truth AND discloses any
     case-notion flattening it derives from that same truth
-    (CONCEPT:AU-KG.mining.governed-perspective-flattening) — the perspective
+    (CONCEPT:MERISTEM-KG.mining.governed-perspective-flattening) — the perspective
     used for the trace projection is folded into the SAME committed slice as a
     real, versioned ``ProcessPerspective`` node, never a silent side channel.
     """
@@ -2042,7 +2044,7 @@ def _deep_writeback(
 ) -> list[str]:
     """Materialize a delegated result as typed KG nodes.
 
-    CONCEPT:AU-KG.mining.foldback-typed-nodes — each row-level node is linked
+    CONCEPT:MERISTEM-KG.mining.foldback-typed-nodes — each row-level node is linked
     DEEP_RESULT_OF its source node when a ``source`` was used; a forecast is
     linked FORECAST_OF its ``series_id`` node when one was given.
     """
@@ -2093,7 +2095,7 @@ def register_engine_surface_tools(
 
     Each tool is added to ``REGISTERED_TOOLS`` and mapped to a ``/graph/<name>``
     route in ``ACTION_TOOL_ROUTES`` (auto-mounted by the generic REST factory), so
-    MCP and REST stay in lockstep. CONCEPT:AU-KG.coordination.engine-message-broker.
+    MCP and REST stay in lockstep. CONCEPT:MERISTEM-KG.coordination.engine-message-broker.
     """
 
     # ══════════════════════════════════════════════════════════════════
@@ -2102,7 +2104,7 @@ def register_engine_surface_tools(
     @mcp.tool(
         name="graph_broker",
         description=(
-            "CONCEPT:AU-KG.coordination.engine-message-broker — the epistemic-graph engine message broker "
+            "CONCEPT:MERISTEM-KG.coordination.engine-message-broker — the epistemic-graph engine message broker "
             "(AMQP-style exchanges + queues + streams). Action-routed 1:1 over the engine broker "
             "surface: set 'action' to the broker method — e.g. 'declare_exchange' "
             "(exchange [+exchange_type]), 'declare_queue' (queue), 'bind' (queue + "
@@ -2135,7 +2137,7 @@ def register_engine_surface_tools(
             default="", description="Target graph (empty ⇒ deployment default)."
         ),
     ) -> str:
-        """Thin wrapper over the engine broker surface (CONCEPT:AU-KG.coordination.engine-message-broker)."""
+        """Thin wrapper over the engine broker surface (CONCEPT:MERISTEM-KG.coordination.engine-message-broker)."""
         if not action:
             return json.dumps({"surface": "broker", "error": "action is required"})
         try:
@@ -2166,13 +2168,13 @@ def register_engine_surface_tools(
     runtime.ACTION_TOOL_ROUTES["graph_broker"] = "/graph/broker"
 
     # ══════════════════════════════════════════════════════════════════
-    # graph_kvcache — shared content-addressed KV-cache (EG-187 / KG-2.306)
+    # graph_kvcache — shared content-addressed KV-cache (MEDULLA-187 / KG-2.306)
     # ══════════════════════════════════════════════════════════════════
     @mcp.tool(
         name="graph_kvcache",
         description=(
-            "CONCEPT:AU-KG.coordination.engine-message-broker — the engine's shared, content-addressed KV-cache over "
-            "the EG-187 HTTP surface, driven through the KG-2.306 "
+            "CONCEPT:MERISTEM-KG.coordination.engine-message-broker — the engine's shared, content-addressed KV-cache over "
+            "the MEDULLA-187 HTTP surface, driven through the KG-2.306 "
             "EpistemicGraphKVBackend connector. Actions: 'get' (key → base64 block "
             "bytes or miss), 'put' (key + value_b64 → stored bool), 'contains'/'exists' "
             "(key → bool), 'stats' (occupancy + dedup counters). The connector already "
@@ -2191,7 +2193,7 @@ def register_engine_surface_tools(
             default="", description="Base64-encoded block bytes to store (put)."
         ),
     ) -> str:
-        """Thin wrapper over the KG-2.306 KV-cache connector (CONCEPT:AU-KG.coordination.engine-message-broker)."""
+        """Thin wrapper over the KG-2.306 KV-cache connector (CONCEPT:MERISTEM-KG.coordination.engine-message-broker)."""
         try:
             backend = _kv_backend()
         except Exception as exc:  # noqa: BLE001 — mis-config degrades, never raises
@@ -2210,12 +2212,12 @@ def register_engine_surface_tools(
 
     # ══════════════════════════════════════════════════════════════════
     # graph_kv_checkpoint — KV-cache checkpoints as graph resources
-    # (CONCEPT:AU-KG.memory.kv-checkpoint-resource)
+    # (CONCEPT:MERISTEM-KG.memory.kv-checkpoint-resource)
     # ══════════════════════════════════════════════════════════════════
     @mcp.tool(
         name="graph_kv_checkpoint",
         description=(
-            "CONCEPT:AU-KG.memory.kv-checkpoint-resource — checkpoint a KV-cache at a point of "
+            "CONCEPT:MERISTEM-KG.memory.kv-checkpoint-resource — checkpoint a KV-cache at a point of "
             "ideal understanding, then initialise a new agent from it or reset a "
             "conversation back to it. The heavy KV blob lives behind the engine's "
             "content-addressed blob store; the response never inlines it — only "
@@ -2231,7 +2233,7 @@ def register_engine_surface_tools(
             "cold-start fallback instead of raising. A tenant mismatch or a stale "
             "policy_version is ALWAYS refused (cross-tenant checkpoint reuse is a "
             "security boundary, never bypassable). "
-            "CONCEPT:AU-KG.memory.checkpoint-worthiness-scoring adds the intelligence "
+            "CONCEPT:MERISTEM-KG.memory.checkpoint-worthiness-scoring adds the intelligence "
             "actions: 'recommend' (observation_json → a scored checkpoint-worthiness "
             "verdict with drivers, blockers and the scorers that had no evidence — "
             "advisory only, it takes no checkpoint); 'checkpoint_now' (data_b64 + the "
@@ -2240,8 +2242,8 @@ def register_engine_surface_tools(
             "promotion); 'explain' (checkpoint_id → why this checkpoint exists, why it "
             "is where it is, and the full authority derivation behind that); "
             "'ram_stats'. Durable persistence ALWAYS passes the "
-            "CONCEPT:AU-OS.governance.checkpoint-persistence-eligibility gate, which "
-            "(CONCEPT:AU-OS.governance.authority-derived-persistence-eligibility) "
+            "CONCEPT:MERISTEM-OS.governance.checkpoint-persistence-eligibility gate, which "
+            "(CONCEPT:MERISTEM-OS.governance.authority-derived-persistence-eligibility) "
             "DERIVES the verdict from YOUR verified session and delegation chain "
             "against the labels of every contributing source — most-restrictive "
             "composition, into your own tenancy only. There is no grant flag to set: an "
@@ -2353,9 +2355,9 @@ def register_engine_surface_tools(
             default="", description="Target graph (default engine graph)."
         ),
     ) -> str:
-        """Thin verb over :class:`~agent_utilities.kvcache.KVCheckpointStore` (CONCEPT:AU-KG.memory.kv-checkpoint-resource)
+        """Thin verb over :class:`~agent_utilities.kvcache.KVCheckpointStore` (CONCEPT:MERISTEM-KG.memory.kv-checkpoint-resource)
         and :class:`~agent_utilities.kvcache.TieredCheckpointManager`
-        (CONCEPT:AU-KG.memory.checkpoint-worthiness-scoring)."""
+        (CONCEPT:MERISTEM-KG.memory.checkpoint-worthiness-scoring)."""
         # ── the intelligence actions: worthiness, tiering, eligibility ──────
         # These route through TieredCheckpointManager (shared RAM tier) rather than
         # the durable store directly, because the RAM tier is the DEFAULT and disk is
@@ -2451,7 +2453,7 @@ def register_engine_surface_tools(
     @mcp.tool(
         name="graph_federated_search",
         description=(
-            "CONCEPT:AU-KG.coordination.engine-message-broker — federated search fanned across registered external "
+            "CONCEPT:MERISTEM-KG.coordination.engine-message-broker — federated search fanned across registered external "
             "graph references. Provide a natural-language / keyword 'query'; optionally "
             "scope to specific 'references' (comma-separated ExternalGraphReference ids) "
             "and cap with 'top_k'. Extra engine kwargs via params_json. Degrades cleanly "
@@ -2473,7 +2475,7 @@ def register_engine_surface_tools(
             default="", description="Target graph (empty ⇒ deployment default)."
         ),
     ) -> str:
-        """Thin wrapper over the engine federated-search surface (CONCEPT:AU-KG.coordination.engine-message-broker)."""
+        """Thin wrapper over the engine federated-search surface (CONCEPT:MERISTEM-KG.coordination.engine-message-broker)."""
         try:
             extra = json.loads(params_json) if params_json else {}
         except (TypeError, ValueError) as exc:
@@ -2509,7 +2511,7 @@ def register_engine_surface_tools(
     @mcp.tool(
         name="graph_promql",
         description=(
-            "CONCEPT:AU-KG.coordination.engine-message-broker — query the engine's observability metrics with PromQL. "
+            "CONCEPT:MERISTEM-KG.coordination.engine-message-broker — query the engine's observability metrics with PromQL. "
             "action='instant' (a single evaluation at 'time', default now) or 'range' "
             "(over start..end at 'step'). Extra engine kwargs via params_json. Degrades "
             "cleanly when the engine build has no metrics/PromQL surface."
@@ -2532,7 +2534,7 @@ def register_engine_surface_tools(
             default="", description="Target graph (empty ⇒ deployment default)."
         ),
     ) -> str:
-        """Thin wrapper over the engine PromQL surface (CONCEPT:AU-KG.coordination.engine-message-broker)."""
+        """Thin wrapper over the engine PromQL surface (CONCEPT:MERISTEM-KG.coordination.engine-message-broker)."""
         try:
             extra = json.loads(params_json) if params_json else {}
         except (TypeError, ValueError) as exc:
@@ -2568,7 +2570,7 @@ def register_engine_surface_tools(
     @mcp.tool(
         name="graph_traces",
         description=(
-            "CONCEPT:AU-KG.coordination.engine-message-broker — search or fetch distributed traces. "
+            "CONCEPT:MERISTEM-KG.coordination.engine-message-broker — search or fetch distributed traces. "
             "action='search' (filter by 'service'/'operation'/free-form 'query', capped by "
             "'limit'), 'get' (a single 'trace_id'), or 'waterfall' (a single 'trace_id''s full "
             "Span/Generation subgraph, flattened for the trace-waterfall MCP App). All three "
@@ -2599,7 +2601,7 @@ def register_engine_surface_tools(
             default="", description="Target graph (empty ⇒ deployment default)."
         ),
     ) -> str:
-        """Thin wrapper over the engine trace surface (CONCEPT:AU-KG.coordination.engine-message-broker)."""
+        """Thin wrapper over the engine trace surface (CONCEPT:MERISTEM-KG.coordination.engine-message-broker)."""
         extra, rejection = _decode_json_object(params_json, "traces")
         if rejection is not None:
             return rejection
@@ -2647,7 +2649,7 @@ def register_engine_surface_tools(
     @mcp.tool(
         name="graph_logs",
         description=(
-            "CONCEPT:AU-KG.coordination.engine-message-broker — query the engine's log stream. "
+            "CONCEPT:MERISTEM-KG.coordination.engine-message-broker — query the engine's log stream. "
             "action='query' (default): filter by 'stream'/free-form 'query' over "
             "start..end, capped by 'limit'. Extra engine kwargs via params_json. "
             "Degrades cleanly when the engine build has no log-query surface."
@@ -2668,7 +2670,7 @@ def register_engine_surface_tools(
             default="", description="Target graph (empty ⇒ deployment default)."
         ),
     ) -> str:
-        """Thin wrapper over the engine log-query surface (CONCEPT:AU-KG.coordination.engine-message-broker)."""
+        """Thin wrapper over the engine log-query surface (CONCEPT:MERISTEM-KG.coordination.engine-message-broker)."""
         try:
             extra = json.loads(params_json) if params_json else {}
         except (TypeError, ValueError) as exc:
@@ -2701,7 +2703,7 @@ def register_engine_surface_tools(
     @mcp.tool(
         name="graph_gis",
         description=(
-            "CONCEPT:AU-KG.coordination.engine-message-broker — the engine's GIS surface. Action-routed 1:1 over the "
+            "CONCEPT:MERISTEM-KG.coordination.engine-message-broker — the engine's GIS surface. Action-routed 1:1 over the "
             "engine geo methods: e.g. 'route' (from + to [+profile]), 'tile' (z/x/y), "
             "'nearest' (lat + lon [+limit]), 'geo_task' (a named geospatial job). All "
             'structured args go via params_json (e.g. {"from":[lat,lon],"to":[lat,'
@@ -2723,7 +2725,7 @@ def register_engine_surface_tools(
             default="", description="Target graph (empty ⇒ deployment default)."
         ),
     ) -> str:
-        """Thin wrapper over the engine GIS surface (CONCEPT:AU-KG.coordination.engine-message-broker)."""
+        """Thin wrapper over the engine GIS surface (CONCEPT:MERISTEM-KG.coordination.engine-message-broker)."""
         if not action:
             return json.dumps({"surface": "gis", "error": "action is required"})
         try:
@@ -2746,12 +2748,12 @@ def register_engine_surface_tools(
     runtime.ACTION_TOOL_ROUTES["graph_gis"] = "/graph/gis"
 
     # ══════════════════════════════════════════════════════════════════
-    # graph_memory — EG-318 memory / scene / trajectory engine ops
+    # graph_memory — MEDULLA-318 memory / scene / trajectory engine ops
     # ══════════════════════════════════════════════════════════════════
     @mcp.tool(
         name="graph_memory",
         description=(
-            "CONCEPT:AU-KG.coordination.engine-message-broker — the engine's EG-318 memory surface: episodic→semantic "
+            "CONCEPT:MERISTEM-KG.coordination.engine-message-broker — the engine's MEDULLA-318 memory surface: episodic→semantic "
             "memory, the spatial scene graph, and RL trajectories. Action-routed 1:1 "
             "over the engine memory methods (dashes normalize to underscores): "
             "'create_summary' (episodic nodes → a summary node — node_ids [+window]), "
@@ -2762,7 +2764,7 @@ def register_engine_surface_tools(
             "(trajectory_id + step {state,action,reward,...}), 'discounted_return' "
             "(trajectory_id [+gamma]). Read ops (e.g. 'get_summary', 'get_scene', "
             "'get_trajectory') route by action name too. UNIFIED memory-CRUD "
-            "(CONCEPT:AU-KG.memory.unified-memory-crud-core) — 'store' (agent_id + content [+memory_type,+tags]), "
+            "(CONCEPT:MERISTEM-KG.memory.unified-memory-crud-core) — 'store' (agent_id + content [+memory_type,+tags]), "
             "'recall' (query [+memory_type]), 'link' (source + target [+rel_type]) — "
             "route into the SAME graph_write memory core as the REST "
             "/graph/write/memory[/recall] twins and the harness kg_memory_recall/store "
@@ -2789,7 +2791,7 @@ def register_engine_surface_tools(
             default="", description="Target graph (empty ⇒ deployment default)."
         ),
     ) -> str:
-        """Thin wrapper over the engine EG-318 memory surface (CONCEPT:AU-KG.coordination.engine-message-broker)."""
+        """Thin wrapper over the engine MEDULLA-318 memory surface (CONCEPT:MERISTEM-KG.coordination.engine-message-broker)."""
         action = (action or "").strip().replace("-", "_")
         if not action:
             return json.dumps({"surface": "memory", "error": "action is required"})
@@ -2801,9 +2803,9 @@ def register_engine_surface_tools(
             return json.dumps(
                 {"surface": "memory", "error": "params_json must decode to an object"}
             )
-        # CONCEPT:AU-KG.memory.unified-memory-crud-core — unified memory-CRUD short-circuit: recall/store/link go
+        # CONCEPT:MERISTEM-KG.memory.unified-memory-crud-core — unified memory-CRUD short-circuit: recall/store/link go
         # to the shared graph_write memory core (same as REST + harness), not the
-        # engine EG-318 surface.
+        # engine MEDULLA-318 surface.
         if action in _MEMORY_CRUD_ACTIONS:
             return _memory_crud(action, params)
         candidates = _MEMORY_ACTION_CANDIDATES.get(
@@ -2822,7 +2824,7 @@ def register_engine_surface_tools(
     runtime.ACTION_TOOL_ROUTES["graph_memory"] = "/graph/memory"
 
     # ══════════════════════════════════════════════════════════════════
-    # graph_mine — data-mining surface (CONCEPT:EG-KG.mining.frequent-itemset-mining)
+    # graph_mine — data-mining surface (CONCEPT:MEDULLA-KG.mining.frequent-itemset-mining)
     # ══════════════════════════════════════════════════════════════════
     @conditional_tool_decorator(
         mcp,
@@ -2830,7 +2832,7 @@ def register_engine_surface_tools(
         excluded_names=frozenset({"graph_mine", "graph_mine_deep"}),
         include_excluded=include_unserved_mining,
         description=(
-            "CONCEPT:EG-KG.mining.frequent-itemset-mining — the unified data-mining surface "
+            "CONCEPT:MEDULLA-KG.mining.frequent-itemset-mining — the unified data-mining surface "
             "over the engine, compute-near-data (mining runs where the graph lives). "
             "Actions (18): 'associate' (association rules), 'cluster' (clustering), "
             "'anomaly' (outlier detection), 'classify_fit'/'classify_predict' "
@@ -3048,13 +3050,13 @@ def register_engine_surface_tools(
             default="", description="Target graph (empty ⇒ deployment default)."
         ),
     ) -> str:
-        """Thin action-router over the engine mining surface (CONCEPT:EG-KG.mining.frequent-itemset-mining)."""
+        """Thin action-router over the engine mining surface (CONCEPT:MEDULLA-KG.mining.frequent-itemset-mining)."""
         action = (action or "").strip().replace("-", "_") or "associate"
         action = _MINING_ACTION_ALIASES.get(action, action)
         params, rejection = _decode_json_object(params_json, "mining")
         if rejection is not None:
             return rejection
-        # CONCEPT:AU-KG.compute.engine-surface-manifest — an action that isn't one of the
+        # CONCEPT:MERISTEM-KG.compute.engine-surface-manifest — an action that isn't one of the
         # 18 real MiningClient methods is a NAME error (typo/guess), not "this engine
         # build lacks mining" — report it as such, with the introspected valid-action
         # list, instead of falling through to _invoke's generic degraded payload (which
@@ -3088,7 +3090,7 @@ def register_engine_surface_tools(
 
     # ══════════════════════════════════════════════════════════════════
     # graph_mine_deep — Phase-6 heavy-dep delegation to data-science-mcp
-    # (CONCEPT:AU-KG.mining.dsm-forecast-delegation)
+    # (CONCEPT:MERISTEM-KG.mining.dsm-forecast-delegation)
     # ══════════════════════════════════════════════════════════════════
     @conditional_tool_decorator(
         mcp,
@@ -3096,12 +3098,12 @@ def register_engine_surface_tools(
         excluded_names=frozenset({"graph_mine", "graph_mine_deep"}),
         include_excluded=include_unserved_mining,
         description=(
-            "CONCEPT:AU-KG.mining.dsm-forecast-delegation — the deep-learning / heavy-Python family the "
+            "CONCEPT:MERISTEM-KG.mining.dsm-forecast-delegation — the deep-learning / heavy-Python family the "
             "engine core deliberately does NOT implement (no torch/GPU in the "
             "pure-Rust engine): this tool DISPATCHES to agents/data-science-mcp over "
             "MCP (the fleet tool-call helper, same one 'fleet.write_record' "
             "uses) and folds the result back into the KG as typed nodes "
-            "(CONCEPT:AU-KG.mining.foldback-typed-nodes). Actions: 'deep_forecast' (LSTM sequence "
+            "(CONCEPT:MERISTEM-KG.mining.foldback-typed-nodes). Actions: 'deep_forecast' (LSTM sequence "
             "forecaster — the delegated Prophet/LSTM family; Prophet itself needs an "
             "unvendored Stan toolchain, ARIMA/Holt-Winters/STL in graph_mine remain "
             "the native classical default), 'deep_classify' (MLP deep classifier), "
@@ -3156,7 +3158,7 @@ def register_engine_surface_tools(
             default="", description="Target graph (empty ⇒ deployment default)."
         ),
     ) -> str:
-        """Thin delegation adapter: ship features to data-science-mcp, fold predictions back (CONCEPT:AU-KG.mining.dsm-forecast-delegation)."""
+        """Thin delegation adapter: ship features to data-science-mcp, fold predictions back (CONCEPT:MERISTEM-KG.mining.dsm-forecast-delegation)."""
         action, rejection = _deep_action_or_error(action)
         if rejection is not None:
             return rejection
@@ -3213,12 +3215,12 @@ def register_engine_surface_tools(
     )
 
     # ══════════════════════════════════════════════════════════════════
-    # graph_learn — graph-learning / neuro-symbolic surface (CONCEPT:EG-KG.graphlearn.link-predictor)
+    # graph_learn — graph-learning / neuro-symbolic surface (CONCEPT:MEDULLA-KG.graphlearn.link-predictor)
     # ══════════════════════════════════════════════════════════════════
     @mcp.tool(
         name="graph_learn",
         description=(
-            "CONCEPT:EG-KG.graphlearn.link-predictor — a pure-Rust KAN (Kolmogorov-"
+            "CONCEPT:MEDULLA-KG.graphlearn.link-predictor — a pure-Rust KAN (Kolmogorov-"
             "Arnold) link-predictor over the resident graph, whose learned per-feature "
             "edge functions are THEMSELVES queryable KG nodes (interpretability, not raw "
             "accuracy). Actions: 'fit' (learn a model) and 'predict' (score links). "
@@ -3268,7 +3270,7 @@ def register_engine_surface_tools(
             default="", description="Target graph (empty ⇒ deployment default)."
         ),
     ) -> str:
-        """Thin action-router over the engine graph-learning surface (CONCEPT:EG-KG.graphlearn.link-predictor)."""
+        """Thin action-router over the engine graph-learning surface (CONCEPT:MEDULLA-KG.graphlearn.link-predictor)."""
         action = (action or "").strip().replace("-", "_") or "fit"
         try:
             params = json.loads(params_json) if params_json else {}
@@ -3295,12 +3297,12 @@ def register_engine_surface_tools(
     runtime.ACTION_TOOL_ROUTES["graph_learn"] = "/graphlearn/fit"
 
     # ══════════════════════════════════════════════════════════════════
-    # graph_pipeline — composable ML pipeline surface (CONCEPT:EG-KG.mining.ml-pipeline)
+    # graph_pipeline — composable ML pipeline surface (CONCEPT:MEDULLA-KG.mining.ml-pipeline)
     # ══════════════════════════════════════════════════════════════════
     @mcp.tool(
         name="graph_pipeline",
         description=(
-            "CONCEPT:EG-KG.mining.ml-pipeline — a composable train→eval→serve→predict "
+            "CONCEPT:MEDULLA-KG.mining.ml-pipeline — a composable train→eval→serve→predict "
             "ML pipeline over a VERSIONED ':Model' artifact that GENERALIZES the KAN "
             "one-off: a spec of 'feature steps → split → a pluggable model family'. "
             "Families: 'classify' (node classification — gaussiannb/multinomialnb/knn/"
@@ -3358,7 +3360,7 @@ def register_engine_surface_tools(
             default="", description="Target graph (empty ⇒ deployment default)."
         ),
     ) -> str:
-        """Thin action-router over the engine ML-pipeline surface (CONCEPT:EG-KG.mining.ml-pipeline)."""
+        """Thin action-router over the engine ML-pipeline surface (CONCEPT:MEDULLA-KG.mining.ml-pipeline)."""
         # MCP verb → client method (the 'eval' alias maps to the client's evaluate()).
         method_by_action = {
             "train": "train",
@@ -3400,12 +3402,12 @@ def register_engine_surface_tools(
     runtime.ACTION_TOOL_ROUTES["graph_pipeline"] = "/pipeline/train"
 
     # ══════════════════════════════════════════════════════════════════
-    # graph_fork — warm-fork / KV-cache fan-out (CONCEPT:AU-KG.coordination.warm-fork-fanout)
+    # graph_fork — warm-fork / KV-cache fan-out (CONCEPT:MERISTEM-KG.coordination.warm-fork-fanout)
     # ══════════════════════════════════════════════════════════════════
     @mcp.tool(
         name="graph_fork",
         description=(
-            "CONCEPT:AU-KG.coordination.warm-fork-fanout — warm-fork fan-out over the ORCH-1.86..93 warm-fork "
+            "CONCEPT:MERISTEM-KG.coordination.warm-fork-fanout — warm-fork fan-out over the ORCH-1.86..93 warm-fork "
             "primitive (LMCache KV / copy-on-write sandboxes): pay warm-up ONCE for a "
             "parent context, then fork N copy-on-write branches to run per-branch "
             "computations concurrently and return each branch's result. Provide either "
@@ -3440,7 +3442,7 @@ def register_engine_surface_tools(
             description="Preferred warm-fork rung name (empty ⇒ cheapest available).",
         ),
     ) -> str:
-        """Thin verb over the warm-fork primitive (CONCEPT:AU-KG.coordination.warm-fork-fanout)."""
+        """Thin verb over the warm-fork primitive (CONCEPT:MERISTEM-KG.coordination.warm-fork-fanout)."""
         branches, rejection = _fork_branches(branches_json, code, n)
         if rejection is not None:
             return rejection
@@ -3487,7 +3489,7 @@ def register_engine_surface_tools(
     @mcp.tool(
         name="graph_viz",
         description=(
-            "CONCEPT:AU-KG.coordination.engine-message-broker — GOC-88/D-VZ-1 V5: render native "
+            "CONCEPT:MERISTEM-KG.coordination.engine-message-broker — GOC-88/D-VZ-1 V5: render native "
             "charts through the engine's LOD ColumnStore/export pipeline (Method::Viz) "
             "— no matplotlib, no per-view chart code. action='plot_from_query' (the "
             "common path: 'query' [+'mark','x_field','y_field',+'color_field',"
@@ -3569,7 +3571,7 @@ def register_engine_surface_tools(
             default="", description="Target graph (empty ⇒ deployment default)."
         ),
     ) -> str:
-        """Thin wrapper over the engine native-visualization surface (CONCEPT:AU-KG.coordination.engine-message-broker)."""
+        """Thin wrapper over the engine native-visualization surface (CONCEPT:MERISTEM-KG.coordination.engine-message-broker)."""
         surface = "viz"
         if action == "describe_chart":
             return _describe_chart(view_result_json, spec_json)

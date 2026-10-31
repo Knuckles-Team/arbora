@@ -194,7 +194,7 @@ class _ToolsPayload(TypedDict):
     FIX LANE (collapse-tool-endpoints): the original five list keys are
     UNCHANGED (same names, same per-item field names) — nothing that reads
     this route's JSON body needs to change. ``section_status`` is new and
-    purely additive (CONCEPT:AU-KG.ingest.fleet-catalog-relational-tables):
+    purely additive (CONCEPT:MERISTEM-KG.ingest.fleet-catalog-relational-tables):
     each of the five sections below now degrades independently on its own
     read failure (``"unavailable"``) instead of the whole request failing
     closed, and this map is how a caller tells "genuinely zero items" apart
@@ -654,7 +654,7 @@ def _get_extraction_manager(engine: Any) -> Any:
     return _EXTRACTION_MANAGER
 
 
-# ── CONCEPT:AU-KG.backend.multi-connection-registry — Named multi-connection graph registry ────────────────
+# ── CONCEPT:MERISTEM-KG.backend.multi-connection-registry — Named multi-connection graph registry ────────────────
 _CONNECTION_REGISTRY = None
 _REGISTRY_LOCK = threading.Lock()
 
@@ -767,7 +767,7 @@ def _resolve_read_engines(
 ) -> tuple[list[tuple[str, Any]], dict[str, str], bool]:
     """Resolve a READ tool's ``target`` into engines, unioning content graphs.
 
-    CONCEPT:AU-KG.ingest.unified-query-routing — preserve unified query under ingestion graph routing. When
+    CONCEPT:MERISTEM-KG.ingest.unified-query-routing — preserve unified query under ingestion graph routing. When
     routing is on and the caller did NOT pin an explicit target, content lives
     spread across per-source graphs (``code:*`` / ``src:*`` / …) that the single
     default engine cannot see. This resolver returns one engine per active content
@@ -785,8 +785,8 @@ def _resolve_read_engines(
 class GraphSelectionError(ValueError):
     """Base for an explicit ``graph`` selection that cannot be honored.
 
-    CONCEPT:AU-KG.backend.explicit-graph-selection — ``connection`` (a backend
-    alias, CONCEPT:AU-KG.backend.multi-connection-registry, resolved by
+    CONCEPT:MERISTEM-KG.backend.explicit-graph-selection — ``connection`` (a backend
+    alias, CONCEPT:MERISTEM-KG.backend.multi-connection-registry, resolved by
     :class:`~agent_utilities.knowledge_graph.core.connection_registry.ConnectionRegistry`)
     and ``graph`` (a physical engine graph, the thing ``engine_tenants(action="list")``/
     the engine's own ``ListGraphs`` returns) are two independent axes. Every raise
@@ -819,7 +819,7 @@ def resolve_explicit_graph(
 
     * a fan-out ``connection`` (``entries`` has more than one, or ``fanout`` is
       True) is rejected — an explicit graph requires exactly one connection,
-      never a union (CONCEPT:AU-KG.backend.explicit-graph-selection).
+      never a union (CONCEPT:MERISTEM-KG.backend.explicit-graph-selection).
     * a non-``"default"`` connection is rejected — only the native (epistemic-
       graph) connection has a multi-graph concept; naming a graph for e.g. an
       external Neo4j connection would otherwise be silently ignored (a silent
@@ -945,7 +945,7 @@ DEFAULT_FANOUT_TIMEOUT_S = 30.0
 
 #: Per-target wall-clock budget (seconds) for an IMPLICIT-default read fan-out —
 #: a ``graph_search``/``graph_query`` call with no explicit ``target`` that
-#: resolves (CONCEPT:AU-KG.ingest.unified-query-routing) to the routed
+#: resolves (CONCEPT:MERISTEM-KG.ingest.unified-query-routing) to the routed
 #: content-graph union: ``default`` + every active ``code:*``/``src:*`` graph,
 #: which can be dozens of per-repo connections and often includes idle/
 #: unreachable ones. Using the full ``DEFAULT_FANOUT_TIMEOUT_S`` there means one
@@ -981,7 +981,7 @@ def fanout_error_label(exc: BaseException) -> str:
 def fanout_execute(entries, fn, *, timeout=None):
     """Run ``fn(name, engine)`` for every fan-out target CONCURRENTLY under a shared
     per-target wall-clock timeout, so one slow/unreachable backend can't stall the
-    others (CONCEPT:AU-KG.backend.multi-connection-registry).
+    others (CONCEPT:MERISTEM-KG.backend.multi-connection-registry).
 
     Returns ``(results, errors)`` keyed by connection name. A target that exceeds the
     budget (or raises) lands in ``errors`` while the rest still return — the

@@ -5,7 +5,7 @@ from arbora.unique_records import create_record
 
 """Runtime-reliability signal recording — the EMIT stage of the detect→gap→heal loop.
 
-CONCEPT:AU-OS.observability.runtime-reliability-signal — the missing intake for a class
+CONCEPT:MERISTEM-OS.observability.runtime-reliability-signal — the missing intake for a class
 of RUNTIME failures the self-improvement stack never noticed. DSPy/Langfuse and the
 gap-flywheel key off AGENT-RUN QUALITY (reward, failure_analyzer) and LLM spans, so
 failures that never become a *run* were invisible: a messaging poller dying on a 409

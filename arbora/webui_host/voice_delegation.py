@@ -1,6 +1,6 @@
 """The host-injected voice-transcription delegation the WebUI backend delegates through.
 
-CONCEPT:AU-ECO.mcp.webui-voice-transcription-delegation
+CONCEPT:MERISTEM-ECO.mcp.webui-voice-transcription-delegation
 
 ``agent_webui.api_extensions``'s ``POST /voice/transcribe`` route never talks to a
 transcription backend itself. It calls one host-supplied workspace helper,

@@ -1,10 +1,10 @@
-"""Skills-over-MCP fleet discovery (CONCEPT:AU-ECO.mcp.skills-over-mcp-provider).
+"""Skills-over-MCP fleet discovery (CONCEPT:MERISTEM-ECO.mcp.skills-over-mcp-provider).
 
 Covers the client-side half of Skills-over-MCP: probing a fleet server's
 ``skill://{name}/SKILL.md`` Resources alongside its Tools, bounding that
 catalog the same way the tool catalog is bounded, and ranking skills and
 tools together in one ``find_tools`` result set — the unified capability
-space (CONCEPT:AU-KG.retrieval.unified-capability-contract).
+space (CONCEPT:MERISTEM-KG.retrieval.unified-capability-contract).
 """
 
 from __future__ import annotations
@@ -52,7 +52,7 @@ def _fake_session_with_resources(tools, resources, bodies=None):
     resources_result = MagicMock()
     resources_result.resources = resources
     sess.list_resources = AsyncMock(return_value=resources_result)
-    # CONCEPT:AU-ECO.mcp.cross-process-skill-harvest — a probe now also READS
+    # CONCEPT:MERISTEM-ECO.mcp.cross-process-skill-harvest — a probe now also READS
     # each ``skill://`` body, so a fake child must serve one.
     bodies = bodies or {}
 
@@ -164,7 +164,7 @@ async def test_probe_server_lists_skills_for_an_already_mounted_child(tmp_path):
 
     assert info["error"] is None
     assert info["tools"][0]["name"] == CNT_TOOL
-    # _probe_skills also reads each skill's body now (CONCEPT:AU-ECO.mcp.
+    # _probe_skills also reads each skill's body now (CONCEPT:MERISTEM-ECO.mcp.
     # cross-process-skill-harvest) and attaches it as "instructions"; the fake
     # session's default read produces "# <uri>\n\nbody" for an unmapped uri.
     assert info["skills"] == [

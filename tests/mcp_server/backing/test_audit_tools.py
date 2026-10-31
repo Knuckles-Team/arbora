@@ -1,6 +1,6 @@
 """Tests for the graph_audit MCP tool (G23, audit-trail closure).
 
-CONCEPT:AU-KG.audit.hash-chain-verify
+CONCEPT:MERISTEM-KG.audit.hash-chain-verify
 
 Mirrors the ``_CollectingMCP`` + ``runtime._get_engine`` monkeypatch pattern
 used across the other MCP tool-surface tests (e.g. ``test_ops_causal_tools.py``)

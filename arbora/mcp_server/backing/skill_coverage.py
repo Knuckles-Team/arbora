@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""CONCEPT:AU-ECO.mcp.kg-skill-verb-coverage — Arbora domain-skill coverage.
+"""CONCEPT:MERISTEM-ECO.mcp.kg-skill-verb-coverage — Arbora domain-skill coverage.
 
 The bundled skill suite is intentionally small: one workflow skill owns many
 related Arbora verbs. Coverage therefore cannot be inferred from a skill slug.
@@ -45,7 +45,7 @@ INTENTIONALLY_UNSKILLED: frozenset[str] = frozenset(
         # ``quant`` is the emerald-exchange finance domain tool, not part of the
         # generic arbora surface; it carries a pre-existing surface-parity waiver.
         "quant",
-        # AU-P0-6: ``engine_rbac``/``engine_admin`` are the two newly-exposed
+        # MERISTEM-P0-6: ``engine_rbac``/``engine_admin`` are the two newly-exposed
         # ADMIN-family low-level namespaces (RBAC policy administration; ops
         # backup/restore) — gated behind ``kg:admin`` (see
         # ``engine_tools.ADMIN_DOMAINS``/``_is_admin_domain``) BEFORE being
@@ -58,7 +58,7 @@ INTENTIONALLY_UNSKILLED: frozenset[str] = frozenset(
         # dedicated one) in the epistemic-graph repo.
         "engine_rbac",
         "engine_admin",
-        # Seam 8 (CONCEPT:AU-ECO.mcp.intent-surface-condensed-collapse) intent verbs — arbora's
+        # Seam 8 (CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse) intent verbs — arbora's
         # served MCP surface. They are not per-CAPABILITY
         # wrappers — they wrap the WHOLE resolver, and every granular tool they
         # route to already has its own `agents/arbora.yaml` coverage under a
@@ -131,7 +131,7 @@ class CoverageReport:
 def verb_universe(
     *, features: frozenset[str] = frozenset(), include_intent: bool = True
 ) -> set[str]:
-    """Return AU-local tools plus declared Arbora-owned external dependencies."""
+    """Return Meristem-local tools plus declared Arbora-owned external dependencies."""
     return set(
         canonical_tool_names(features=features, include_intent=include_intent)
     ) | set(EXTERNAL_ARBORA_TOOL_NAMES)
@@ -264,7 +264,7 @@ def _parse_external_claims(
             )
         if name in TOOL_SPECS_BY_NAME:
             errors.append(
-                f"claims.external dependency {name!r} is also an AU-local tool"
+                f"claims.external dependency {name!r} is also an Meristem-local tool"
             )
     return names, errors
 

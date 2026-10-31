@@ -1,8 +1,8 @@
 """Sanctioned reconciler for the shared uv-workspace virtualenv.
 
-CONCEPT:AU-OS.deployment.workspace-venv-reconciler
-CONCEPT:AU-OS.safety.destructive-sync-refusal
-CONCEPT:AU-OS.host.venv-drift-detector
+CONCEPT:MERISTEM-OS.deployment.workspace-venv-reconciler
+CONCEPT:MERISTEM-OS.safety.destructive-sync-refusal
+CONCEPT:MERISTEM-OS.host.venv-drift-detector
 
 Why this module exists
 ----------------------
@@ -97,7 +97,7 @@ logger = logging.getLogger(__name__)
 def redact_path_for_log(path: object) -> str:
     """Short, deterministic, non-reversible tag for a path in a log line.
 
-    CONCEPT:AU-OS.observability.log-location-privacy — a raw filesystem path in
+    CONCEPT:MERISTEM-OS.observability.log-location-privacy — a raw filesystem path in
     a log line leaks host layout to anyone with log read access. Stdlib-only
     (this module's own "must not import anything the venv provides" constraint
     rules out the shared ``arbora.security.log_redaction`` helper);
@@ -2245,7 +2245,7 @@ def _pending_intent_count(workspace: Workspace) -> int:
 def session_start_hint(workspace: Workspace) -> str | None:
     """A near-zero-cost drift check, safe to run on every agent session start.
 
-    CONCEPT:AU-OS.deployment.workspace-venv-reconciler (D-VS-6). ``detect_drift``
+    CONCEPT:MERISTEM-OS.deployment.workspace-venv-reconciler (D-VS-6). ``detect_drift``
     is the full picture, but two of its three checks (``lock_check``,
     ``plan_sync``) spawn a real ``uv`` subprocess each — ~10s combined, an
     operator-visible latency this lane declined to impose on every session

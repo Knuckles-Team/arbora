@@ -1,4 +1,4 @@
-"""``GraphSession`` — the one explicit currency threaded through KG entrypoints (AU-P0-1).
+"""``GraphSession`` — the one explicit currency threaded through KG entrypoints (MERISTEM-P0-1).
 
 Identity, policy, placement, and trace originate in distinct subsystems:
 
@@ -102,7 +102,7 @@ class GraphSession:
             ``{"kg:read", "kg:write"}``). Empty means "no explicit scopes
             recorded" — :meth:`require_scope` only enforces when the caller
             actually checks, so an empty ``scopes`` is not itself a denial.
-        graph: The target named graph/namespace (CONCEPT:AU-KG.sharding.tenant-partitioned-sharding-hrw
+        graph: The target named graph/namespace (CONCEPT:MERISTEM-KG.sharding.tenant-partitioned-sharding-hrw
             — e.g. ``tenant_graph_name(tenant)``). Empty string means "use the
             backend's configured default".
         endpoint: Optional explicit backend endpoint/shard this session is
@@ -321,7 +321,7 @@ class GraphSession:
         priority = current_priority()
         if priority is not None:
             context["priority"] = priority.value
-        # GOC-15 carrier contract (CONCEPT:AU-OS.identity.verified-carrier-contract,
+        # GOC-15 carrier contract (CONCEPT:MERISTEM-OS.identity.verified-carrier-contract,
         # docs/architecture/verified-identity-carrier-contract.md): this dict IS
         # the wire carrier every `eg2.` call sends. Self-check its shape against
         # the one canonical field set before it ever leaves this process — a
@@ -337,7 +337,7 @@ class GraphSession:
     def _apply_spawn_delegation(context: dict[str, Any], principal: str) -> None:
         """Stamp the per-agent on-behalf-of delegation chain onto the wire envelope.
 
-        CONCEPT:AU-OS.identity.per-agent-on-behalf-delegation (decision 2). When a spawn runs
+        CONCEPT:MERISTEM-OS.identity.per-agent-on-behalf-delegation (decision 2). When a spawn runs
         under an ENFORCED delegation (``ENABLE_DELEGATED_IDENTITY=on``), every engine call it
         makes carries ``delegation: [principal, …, agent:<name>:<run_id>]`` and
         ``agent_id`` = the per-run agent-instance identity — the wire field already validates

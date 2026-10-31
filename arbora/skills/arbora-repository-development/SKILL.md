@@ -216,7 +216,7 @@ separate, deliberate, tracked work. See `scripts/wiring/reachability.py` and
 
 ## Contract regeneration
 
-Generated artifacts (the EG-contract-bound operation catalog under
+Generated artifacts (the Medulla-contract-bound operation catalog under
 `arbora/api/registry/`, manifests with embedded digests, capability
 catalogs) are produced by their owning script from the pinned
 `epistemic-graph` wheel contract; never hand-edit a generated file. Re-run its

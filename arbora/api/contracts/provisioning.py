@@ -5,7 +5,7 @@ protocol.  The generated ``McpCatalogSnapshotBinding`` and
 ``AgentLibraryMutationContext`` remain owned by epistemic-graph and are direct
 runtime dependencies of this port.  AU contributes the verified session and
 the existing :class:`ActionPolicy` decision; Arbora contributes the two
-authoritative EG-bound values that AU cannot derive safely (the current
+authoritative Medulla-bound values that AU cannot derive safely (the current
 catalog binding and the EG owner principal).
 
 The returned callable matches agent-connector-sdk's

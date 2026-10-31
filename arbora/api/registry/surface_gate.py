@@ -5,7 +5,7 @@ registry's current public shape. Neither gate talks to a production
 registry directly -- callers project an `OpSpec` iterable (the production
 one, or a synthetic one in tests) into the small, stable view these gates
 care about, so the comparison logic stays legible and fully testable
-without standing up the EG-backed production registry.
+without standing up the Medulla-backed production registry.
 """
 
 from __future__ import annotations

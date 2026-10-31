@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """Typed authority contract for governed hierarchical scaling.
 
-CONCEPT:AU-OS.scaling.reactive-replica-autoscaling
+CONCEPT:MERISTEM-OS.scaling.reactive-replica-autoscaling
 
 This module owns the *shape and invariants* of scaling authority.  It does not
 collect metrics, write graph nodes, or actuate a runtime.  A metrics authority

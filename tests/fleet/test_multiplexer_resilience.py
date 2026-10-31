@@ -1,4 +1,4 @@
-"""Fleet-scale hardening of the MCP multiplexer (CONCEPT:AU-ECO.mcp.profile-differences-from-client).
+"""Fleet-scale hardening of the MCP multiplexer (CONCEPT:MERISTEM-ECO.mcp.profile-differences-from-client).
 
 Per-child concurrency limits with bounded queueing, HTTP session pools,
 cancellation-safe dispatch, restart-on-crash, and circuit breakers — all
@@ -957,7 +957,7 @@ async def test_metrics_are_noop_safe_without_prometheus():
 
 
 # ---------------------------------------------------------------------------
-# Session recycle before token expiry (CONCEPT:AU-OS.identity.so-jwt-protected-children)
+# Session recycle before token expiry (CONCEPT:MERISTEM-OS.identity.so-jwt-protected-children)
 # ---------------------------------------------------------------------------
 
 

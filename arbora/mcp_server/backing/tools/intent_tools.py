@@ -1,4 +1,4 @@
-"""The arbora intent surface (CONCEPT:AU-ECO.mcp.intent-surface-condensed-collapse).
+"""The arbora intent surface (CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse).
 
 Six intent verbs (``ask``/``find``/``write``/``act``/``manage``/``why``) are
 the default model-facing Arbora API. The packaged Capability Power Descriptor
@@ -97,7 +97,7 @@ _PRIMARY_TEXT_PARAM: dict[str, str] = {
 
 #: Safe universal fallback for ``ask`` when the top-ranked candidate needs
 #: structured params the caller didn't supply — the engine's own NL planner
-#: (CONCEPT:AU-KG.query.ask-gateway-rest-twin) always accepts raw text.
+#: (CONCEPT:MERISTEM-KG.query.ask-gateway-rest-twin) always accepts raw text.
 _ASK_FALLBACK_TOOL = "nl_query"
 
 _DISPATCH_VERBS = frozenset({"ask", "write", "act", "manage", "why"})
@@ -164,7 +164,7 @@ class CapabilityCandidate:
     doc: str
     score: float = 0.0
     matched_terms: list[str] = field(default_factory=list)
-    #: Structural signature of a capability-DELEGATION façade (CONCEPT:AU-ECO.mcp.
+    #: Structural signature of a capability-DELEGATION façade (CONCEPT:MERISTEM-ECO.mcp.
     #: intent-surface-delegation-shape): its CPD declares a ``skill_name`` input
     #: parameter. Derived from the packaged CPD's ``typed_io.input_params``, not
     #: from the tool's literal name — any future delegation façade that accepts
@@ -180,17 +180,17 @@ class CapabilityCandidate:
 _CANDIDATES_CACHE: list[CapabilityCandidate] | None = None
 _ACTIONS_BY_TOOL_CACHE: dict[str, list[str]] | None = None
 
-#: Bumped every time :func:`_build_candidates` actually rebuilds (CONCEPT:AU-ECO.mcp.intent-surface-resolution-cache)
+#: Bumped every time :func:`_build_candidates` actually rebuilds (CONCEPT:MERISTEM-ECO.mcp.intent-surface-resolution-cache)
 #: — the "CPD/policy version" half of the resolution-cache key below. Tests
 #: force a rebuild by resetting ``_CANDIDATES_CACHE`` to ``None``.
 _CANDIDATES_GENERATION: int = 0
 
-#: Bumped every time an outcome is recorded (CONCEPT:AU-ECO.mcp.intent-surface-outcome-learning) — the
+#: Bumped every time an outcome is recorded (CONCEPT:MERISTEM-ECO.mcp.intent-surface-outcome-learning) — the
 #: "policy just changed" half of the resolution-cache key: a fresh outcome
 #: invalidates cached rankings that could have used it, without a full flush.
 _REWARD_EPOCH: int = 0
 
-#: Bounded LRU of ranked (non-pinned) resolutions (CONCEPT:AU-ECO.mcp.intent-surface-resolution-cache) — see
+#: Bounded LRU of ranked (non-pinned) resolutions (CONCEPT:MERISTEM-ECO.mcp.intent-surface-resolution-cache) — see
 #: :func:`_cache_key`. A pinned (``hints={"tool": ...}``) resolution is O(1)
 #: already and is never cached.
 _RESOLUTION_CACHE: OrderedDict[tuple[Any, ...], list[CapabilityCandidate]] = (
@@ -214,7 +214,7 @@ _PREVIEW_PLAN_TTL_SECONDS = 600.0
 #: sinks with its real success rate under that verb.
 _LEARNED_REWARD_WEIGHT = 0.2
 
-#: Lazily constructed shared learner (CONCEPT:AU-ECO.mcp.intent-surface-outcome-learning).
+#: Lazily constructed shared learner (CONCEPT:MERISTEM-ECO.mcp.intent-surface-outcome-learning).
 _OUTCOME_ROUTER: Any = None
 
 
@@ -273,7 +273,7 @@ def _cache_key(
     top_k: int,
     outcome_scope_ref: str | None,
 ) -> tuple[Any, ...]:
-    """The resolution-cache key (CONCEPT:AU-ECO.mcp.intent-surface-resolution-cache).
+    """The resolution-cache key (CONCEPT:MERISTEM-ECO.mcp.intent-surface-resolution-cache).
 
     Intent and hints are represented by non-reversible references so the LRU
     never retains prompt text, credentials, personal data, endpoints, or local
@@ -333,14 +333,14 @@ def _actions_by_tool() -> dict[str, list[str]]:
 def _build_candidates(*, force: bool = False) -> list[CapabilityCandidate]:
     """Build one CPD-backed candidate per live granular tool.
 
-    CONCEPT:AU-ECO.mcp.intent-surface-cpd-ranking. The packaged CPD set is
+    CONCEPT:MERISTEM-ECO.mcp.intent-surface-cpd-ranking. The packaged CPD set is
     mandatory: a registered tool without a descriptor fails closed instead of
     inheriting a guessed verb or effect policy. Candidate text comes from its
     current ``one_line``/``examples``/``does`` descriptor fields.
 
     Cached process-wide (tool registration happens once at server build); pass
     ``force=True`` in tests after monkeypatching ``REGISTERED_TOOLS``. Bumps
-    :data:`_CANDIDATES_GENERATION` on every actual rebuild (CONCEPT:AU-ECO.mcp.intent-surface-resolution-cache).
+    :data:`_CANDIDATES_GENERATION` on every actual rebuild (CONCEPT:MERISTEM-ECO.mcp.intent-surface-resolution-cache).
     """
     global _CANDIDATES_CACHE, _CANDIDATES_GENERATION
     if _CANDIDATES_CACHE is not None and not force:
@@ -486,7 +486,7 @@ def _score(
 #: word "skill" — in either order, optionally introduced by "named"/"called"
 #: or a colon. This is a STRUCTURAL fingerprint of "the caller is naming a
 #: specific skill to delegate to", independent of what words make up the
-#: slug (CONCEPT:AU-ECO.mcp.intent-surface-delegation-shape / D-INT-4). It
+#: slug (CONCEPT:MERISTEM-ECO.mcp.intent-surface-delegation-shape / D-INT-4). It
 #: deliberately does NOT special-case any domain vocabulary ("incident",
 #: "servicenow", ...) — a slug about ANY domain matches the same way, which
 #: is exactly why naming the skill you want must stop working against you.
@@ -547,11 +547,11 @@ def resolve_intent(
     ranking ambiguity; it cannot elevate ``ask`` into a mutation policy.
 
     A ranked (non-pinned) resolution is served from the bounded resolution
-    cache (CONCEPT:AU-ECO.mcp.intent-surface-resolution-cache) when the SAME
+    cache (CONCEPT:MERISTEM-ECO.mcp.intent-surface-resolution-cache) when the SAME
     ``(verb, normalized intent, hints, top_k)`` was already resolved under the
     CURRENT routing policy (candidate-table generation + reward epoch
     unchanged); otherwise it re-ranks, blending each candidate's learned
-    outcome reward-EMA (CONCEPT:AU-ECO.mcp.intent-surface-outcome-learning) into its lexical score
+    outcome reward-EMA (CONCEPT:MERISTEM-ECO.mcp.intent-surface-outcome-learning) into its lexical score
     before caching the result.
     """
     if verb is not None and verb not in INTENT_VERBS:
@@ -1541,7 +1541,7 @@ def _should_fall_back_to_nl_planner(
     True when there are no structured hints AND the winning tool has no
     known free-text param: falling back to the NL planner is safer than
     dispatching a call known to be missing required args
-    (CONCEPT:AU-KG.query.ask-gateway-rest-twin). An explicit pin/action
+    (CONCEPT:MERISTEM-KG.query.ask-gateway-rest-twin). An explicit pin/action
     never falls back — that would silently replace the caller's declared
     route.
     """
@@ -1949,7 +1949,7 @@ async def dispatch_intent(
         ):
             # No structured hints AND the winning tool has no known free-text param:
             # fall back to the NL planner rather than dispatch a call we know is
-            # missing required args (CONCEPT:AU-KG.query.ask-gateway-rest-twin).
+            # missing required args (CONCEPT:MERISTEM-KG.query.ask-gateway-rest-twin).
             # An explicit pin/action never falls back because that would silently
             # replace the caller's declared route.
             fell_back = True
@@ -2783,7 +2783,7 @@ async def _dispatch_verb(
 
 
 def register_intent_tools(mcp: Any) -> list[str]:
-    """Register arbora's six intent tools (CONCEPT:AU-ECO.mcp.intent-surface-condensed-collapse).
+    """Register arbora's six intent tools (CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse).
 
     Each takes the ecosystem's condensed contract (``action`` + ``params`` +
     optional ``intent`` + ``execute``; :mod:`arbora.mcp_server.backing.intent_contract`)
@@ -2814,7 +2814,7 @@ def register_intent_tools(mcp: Any) -> list[str]:
         fn.__doc__ = _verb_description(verb)
         mcp.tool(name=verb, tags={"intent"}, description=_verb_description(verb))(fn)
         runtime.REGISTERED_TOOLS[verb] = fn
-        # REST twin (CONCEPT:AU-ECO.mcp.two-surfaces-mcp-rest) — the generic
+        # REST twin (CONCEPT:MERISTEM-ECO.mcp.two-surfaces-mcp-rest) — the generic
         # ACTION_TOOL_ROUTES loop in _mount_rest_routes wires this automatically.
         runtime.ACTION_TOOL_ROUTES[verb] = f"/intent/{verb}"
         registered.append(verb)

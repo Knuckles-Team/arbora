@@ -13,7 +13,7 @@ multiplexer can be deployed as either a **stdio** or **streamable-http** server.
 The proven child-server lifecycle, algorithmic collision-free prefixing, and
 enable/disable tool filtering are preserved (see :class:`MCPMultiplexer`).
 
-CONCEPT:AU-ECO.mcp.standardized-interfaces — MCP Standardized Interfaces
+CONCEPT:MERISTEM-ECO.mcp.standardized-interfaces — MCP Standardized Interfaces
 """
 
 from __future__ import annotations
@@ -143,13 +143,13 @@ _MAX_DISCOVERED_TOOLS = 2_048
 # contains hundreds of independently bounded JSON Schemas, so it gets its own
 # aggregate structural allowance while retaining the same byte/depth limits.
 _MAX_CATALOG_NODES = 131_072
-# Skills-over-MCP (CONCEPT:AU-ECO.mcp.skills-over-mcp-provider): a probed
+# Skills-over-MCP (CONCEPT:MERISTEM-ECO.mcp.skills-over-mcp-provider): a probed
 # server's Resources may include ``skill://{name}/SKILL.md`` entries. Bounded
 # the same way as the tool catalog so a hostile/misbehaving child cannot force
 # an unbounded resource listing into the KG.
 _MAX_DISCOVERED_SKILLS = 2_048
 _SKILL_RESOURCE_RE = re.compile(r"^skill://(?P<name>[^/]+)/SKILL\.md$")
-# CONCEPT:AU-ECO.mcp.cross-process-skill-harvest — a probed child's skill
+# CONCEPT:MERISTEM-ECO.mcp.cross-process-skill-harvest — a probed child's skill
 # *bodies* are read back over the SAME already-open probe session, so a fleet
 # skill becomes runnable in arbora without co-installing the child's package
 # (AGENTS.md "Dependency discipline"). Bounded per body and in aggregate: the
@@ -166,7 +166,7 @@ _SKILL_HARVEST_BUDGET_SEC = 120.0
 # failure (which would silently strand most of the corpus as un-runnable).
 _SKILL_HARVEST_MAX_ATTEMPTS = 5
 _SKILL_HARVEST_BACKOFF_SEC = 0.5
-# Prompts-over-MCP (CONCEPT:AU-ECO.mcp.cross-process-prompt-harvest — the
+# Prompts-over-MCP (CONCEPT:MERISTEM-ECO.mcp.cross-process-prompt-harvest — the
 # ``prompt://`` sibling of the skill harvest above): a probed server's
 # Resources may include ``prompt://{provider}/{name}`` entries served by
 # ``server_factory._register_prompt_providers``. Same bounding rationale and
@@ -241,7 +241,7 @@ def _harvest_deadline(probe_deadline: float | None, budget_sec: float) -> float:
 
 
 _SERVER_DISCOVERY_STOPWORDS = frozenset({"api", "mcp", "manager", "server", "service"})
-# Fleet-wide concurrent-probe ceiling (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog), shared
+# Fleet-wide concurrent-probe ceiling (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog), shared
 # across overlapping ``probe_catalog`` calls via ``MCPMultiplexer._probe_semaphore``
 # (one instance per multiplexer, NOT re-created per call — a per-call semaphore
 # would give every new call its own fresh 16 slots regardless of how many probes
@@ -331,7 +331,7 @@ def _tool_schema_compatible(
 def _sample_child_health_gauges() -> None:
     """Refresh every live multiplexer's child gauges for a ``/metrics`` scrape.
 
-    CONCEPT:AU-ECO.multiplexer.running-vs-dispatchable-metrics — child health is
+    CONCEPT:MERISTEM-ECO.multiplexer.running-vs-dispatchable-metrics — child health is
     live-object state, not an event stream, so it must be sampled at scrape time
     or the gauges only ever move when somebody happens to call
     ``multiplexer_status``. ``status_snapshot()`` publishes the gauges itself,
@@ -1021,7 +1021,7 @@ def _bounded_skill_catalog(raw_resources: _typing.Any) -> list[dict[str, _typing
 def _bounded_prompt_catalog(raw_resources: _typing.Any) -> list[dict[str, _typing.Any]]:
     """Project a probed child's Resources into its Prompts-over-MCP subset.
 
-    CONCEPT:AU-ECO.mcp.cross-process-prompt-harvest — the ``prompt://``
+    CONCEPT:MERISTEM-ECO.mcp.cross-process-prompt-harvest — the ``prompt://``
     sibling of :func:`_bounded_skill_catalog`.
     ``server_factory._register_prompt_providers`` exposes each of a server's
     own ``prompts/*.json`` files as ``prompt://{provider}/{name}``.
@@ -1051,7 +1051,7 @@ def _bounded_prompt_catalog(raw_resources: _typing.Any) -> list[dict[str, _typin
 def _resource_body_text(result: _typing.Any) -> str:
     """Extract the text payload of one ``resources/read`` result.
 
-    CONCEPT:AU-ECO.mcp.cross-process-skill-harvest — a fastmcp-4
+    CONCEPT:MERISTEM-ECO.mcp.cross-process-skill-harvest — a fastmcp-4
     ``SkillProvider`` serves ``skill://{name}/SKILL.md`` as ``text/markdown``,
     so the body arrives as a ``TextResourceContents``. A binary/blob payload is
     NOT a skill instruction body and is rejected rather than coerced, so a
@@ -1337,7 +1337,7 @@ def _child_timeout_admissible(cfg: dict) -> bool:
 
 
 def _child_pool_size(cfg: dict, is_remote: bool) -> int | None:
-    """Session-pool sizing (CONCEPT:AU-ECO.mcp.profile-differences-from-client).
+    """Session-pool sizing (CONCEPT:MERISTEM-ECO.mcp.profile-differences-from-client).
 
     Remote children may hold N independent connections for parallel in-flight
     calls; stdio children are single-pipe and always keep exactly one session.
@@ -1618,7 +1618,7 @@ def _instance_id_server_prefix(meaningful: list[str]) -> str | None:
 def auto_server_prefix(server_name: str) -> str:
     """Algorithmically derive a short, readable prefix for ANY MCP server name —
     no lookup table, so out-of-ecosystem / third-party servers are fully
-    supported (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog). Uniqueness across the fleet is guaranteed
+    supported (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog). Uniqueness across the fleet is guaranteed
     separately by the catalog-aware collision resolver.
 
     Rules (after dropping noise words mcp/server/agent/api/…):
@@ -2378,7 +2378,7 @@ class MCPMultiplexer:
         self._list_changed_tasks: set[_typing.Any] = set()
         self.exit_stack = contextlib.AsyncExitStack()
         self.sessions: dict[str, ClientSession] = {}
-        # Per-child hardening layer (CONCEPT:AU-ECO.mcp.profile-differences-from-client): concurrency limits and
+        # Per-child hardening layer (CONCEPT:MERISTEM-ECO.mcp.profile-differences-from-client): concurrency limits and
         # bounded queueing live on the _child_resilience.ChildRuntime, not the raw session.
         self.children: dict[str, _child_resilience.ChildRuntime] = {}
         # D-CDX-44: per-server singleflight for the first ``mount_child`` of
@@ -2420,7 +2420,7 @@ class MCPMultiplexer:
             str, tuple[str, str]
         ] = {}  # prefixed_name -> (server_name, original_name)
         self.aggregated_tools: list[MCPTool] = []
-        # CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog — dynamic tool gateway state. The catalog is the
+        # CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog — dynamic tool gateway state. The catalog is the
         # full set of mountable servers parsed from config WITHOUT spawning
         # them, so find_tools/load_tools know what exists before any child is
         # started. ``_exposed`` tracks prefixed tool names currently registered
@@ -2428,7 +2428,7 @@ class MCPMultiplexer:
         self._catalog: dict[str, dict] | None = None
         # ``_exposed`` tracks prefixed tools registered as live FastMCP tools
         # (process-global, so lazy mounts don't double-register). Visibility,
-        # however, is PER-SESSION on a shared HTTP server (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog,
+        # however, is PER-SESSION on a shared HTTP server (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog,
         # plan Phase 5): a forwarder is registered once but only listed/callable
         # for sessions that have ``load_tools``-ed it. ``_session_loaded`` maps a
         # session id -> the prefixed names that session has loaded; meta-tools and
@@ -2436,15 +2436,15 @@ class MCPMultiplexer:
         self._exposed: set[str] = set()
         self._session_loaded: dict[str, set[str]] = {}
         self._global_visible: set[str] = set()
-        # CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog — self-catalog: per-server {"tools": [...], "error": str|None}
+        # CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog — self-catalog: per-server {"tools": [...], "error": str|None}
         # learned by probing each child (connect → list_tools → release), cached so
         # find_tools ranks real fleet-wide tools without holding connections and
         # without depending on the (separately-flaky) KG live discovery. Every
         # entry carries ``probed_at`` (epoch seconds of the probe that produced
         # it) so a caller can compute truthful staleness instead of a fleet-wide
-        # figure silently being served as if it were live (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog).
+        # figure silently being served as if it were live (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog).
         self._probe_cache: dict[str, dict] = {}
-        # CONCEPT:AU-KG.retrieval.unified-capability-contract — the one local
+        # CONCEPT:MERISTEM-KG.retrieval.unified-capability-contract — the one local
         # skill entry (arbora.fleet.local_skill_catalog), built lazily and
         # cached like the probe cache above: every skill resolved from a
         # provider installed in THIS process (arbora's own, agent-utilities'
@@ -2504,13 +2504,13 @@ class MCPMultiplexer:
         # (:func:`attach_fleet_loader`); defaults to just "mcp-multiplexer" via
         # the ``getattr(..., None) or {...}`` fallback in ``load_catalog``.
         self._skip_servers: set[str] | None = None
-        # CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog — catalog-aware, collision-free prefix assignment,
+        # CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog — catalog-aware, collision-free prefix assignment,
         # computed deterministically over the whole server set so similarly
         # named servers (e.g. scholarx/searxng, both preferring "sx") never
         # share a namespace however the fleet scales. Built lazily from catalog.
         self._prefix_map: dict[str, str] | None = None
         self._prefix_reverse: dict[str, str] = {}
-        # CONCEPT:AU-ECO.mcp.intent-surface-condensed-collapse (Seam 8) — the HOST server's OWN
+        # CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse (Seam 8) — the HOST server's OWN
         # granular tools held back by ``MCP_TOOL_MODE=intent`` (seeded from
         # ``verbose_tools.gated_tool_names`` post-build). Unlike ``_exposed``
         # (fleet forwarders that must be MOUNTED) these are already registered
@@ -2518,7 +2518,7 @@ class MCPMultiplexer:
         # child process, no ``resolve_and_mount``. ``load_tools`` reveals them
         # the same way it reveals a fleet tool: add to ``_session_loaded``.
         self._local_gated: set[str] = set()
-        # CONCEPT:AU-ECO.mcp.intent-surface-tool-lifecycle (Seam 8) — session -> tool names
+        # CONCEPT:MERISTEM-ECO.mcp.intent-surface-tool-lifecycle (Seam 8) — session -> tool names
         # ``load_tools(..., auto_unload=True)`` marked for automatic retraction the
         # NEXT time they're called (one-shot: load -> use -> auto-unload), so a
         # long session's tool surface doesn't monotonically grow.
@@ -2527,7 +2527,7 @@ class MCPMultiplexer:
         # Serving composition replaces this no-op with the process singleton's
         # event-loop claim. Standalone multiplexers retain local-loop behavior.
         self._claim_serving_loop: _typing.Callable[[], None] = lambda: None
-        # CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog — the ONE bounded eager posture.
+        # CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog — the ONE bounded eager posture.
         # Catalog server names (``MCP_ALWAYS_LOAD``) and server-qualified or
         # prefixed tool names (``MCP_ALWAYS_LOAD_TOOLS``) that are mounted on a
         # session's FIRST contact instead of costing a ``find_tools`` round
@@ -2539,7 +2539,7 @@ class MCPMultiplexer:
         # once per session even when every entry failed — a fleet outage must
         # not turn every tools/list into a fresh round of doomed connections.
         self._always_load_done: dict[str, dict[str, _typing.Any]] = {}
-        # CONCEPT:AU-ECO.mcp.stable-dispatch-bounded-retry — `(server_name,
+        # CONCEPT:MERISTEM-ECO.mcp.stable-dispatch-bounded-retry — `(server_name,
         # child_connection_generation)` -> retries already spent on an
         # "unknown tool" relist-and-retry for that exact child incarnation
         # (`_retry_read_only_unknown`). A single `dispatch_catalog_tool` call
@@ -3828,13 +3828,13 @@ class MCPMultiplexer:
                 allowed_private_hosts=allowed_private_hosts,
             )
 
-        # A0 (CONCEPT:AU-OS.identity.so-jwt-protected-children): authenticate jwt-protected children with the
+        # A0 (CONCEPT:MERISTEM-OS.identity.so-jwt-protected-children): authenticate jwt-protected children with the
         # multiplexer's service-account bearer. Opt-in via
         # MCP_CLIENT_AUTH=oidc-client-credentials; never overrides a child's
         # own Authorization header; a mint failure aborts the connection.
         # Use a per-request httpx.Auth (not a frozen header): the child's
         # pooled session is long-lived, so a baked-in short-lived token would
-        # expire mid-session and wedge calls on a 401 (CONCEPT:AU-OS.identity.so-jwt-protected-children).
+        # expire mid-session and wedge calls on a 401 (CONCEPT:MERISTEM-OS.identity.so-jwt-protected-children).
         #
         # NE-008: an oauth-gated child's authorization model IS the
         # caller's own per-principal delegated grant (just placed into
@@ -4397,7 +4397,7 @@ class MCPMultiplexer:
 
     def load_catalog(self) -> dict[str, dict]:
         """Parse the config once into the mountable-server catalog WITHOUT
-        spawning any child (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog).
+        spawning any child (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog).
 
         Idempotent: the parsed ``{server_name: cfg}`` map is cached on
         ``self._catalog`` and reused. Self (``mcp-multiplexer``) and entries
@@ -4419,7 +4419,7 @@ class MCPMultiplexer:
         return clean.replace("-", "_").lower().strip("_")
 
     def _build_prefix_map(self) -> None:
-        """Assign every catalog server a unique prefix (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog).
+        """Assign every catalog server a unique prefix (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog).
 
         Each server starts from its preferred prefix (:func:`get_server_prefix`
         — config override or auto-derived). Collisions are resolved
@@ -4454,7 +4454,7 @@ class MCPMultiplexer:
         self._prefix_reverse = {p: n for n, p in assigned.items()}
 
     def server_prefix(self, server_name: str) -> str:
-        """The unique, collision-free prefix for a server (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog).
+        """The unique, collision-free prefix for a server (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog).
         Falls back to the bare derived prefix for names outside the catalog."""
         if self._prefix_map is None:
             self._build_prefix_map()
@@ -4806,7 +4806,7 @@ class MCPMultiplexer:
         Shared by eager :meth:`start_children` and lazy :meth:`mount_child` so
         the enable/disable filtering and prefixing logic lives in one place.
         """
-        # The per-child hardening runtime (CONCEPT:AU-ECO.mcp.profile-differences-from-client) carries the
+        # The per-child hardening runtime (CONCEPT:MERISTEM-ECO.mcp.profile-differences-from-client) carries the
         # session pool, concurrency limits, and restart supervisor. Plain
         # session payloads (externally owned connections) are wrapped in a
         # supervisor-less runtime: limits apply, auto-restart does not.
@@ -4828,7 +4828,7 @@ class MCPMultiplexer:
 
     async def _live_skills_for_server(self, server_name: str) -> list[dict]:
         """Live ``skill://`` resource listing for an already-mounted child
-        (CONCEPT:AU-ECO.mcp.skills-over-mcp-provider).
+        (CONCEPT:MERISTEM-ECO.mcp.skills-over-mcp-provider).
 
         Unlike tools, a mounted child's Skills-over-MCP resources are never
         cached into an aggregation map at mount time (:meth:`_register_child_result`
@@ -4846,7 +4846,7 @@ class MCPMultiplexer:
 
     async def _live_prompts_for_server(self, server_name: str) -> list[dict]:
         """Live ``prompt://`` resource listing for an already-mounted child
-        (CONCEPT:AU-ECO.mcp.cross-process-prompt-harvest — the ``prompt://``
+        (CONCEPT:MERISTEM-ECO.mcp.cross-process-prompt-harvest — the ``prompt://``
         sibling of :meth:`_live_skills_for_server`, same D-2.2-2.3-1 rationale:
         a mounted child's prompt resources are never cached at mount time, so
         this is the only place an already-mounted server's prompts are
@@ -4898,7 +4898,7 @@ class MCPMultiplexer:
 
     async def mount_child(self, server_name: str) -> list[MCPTool]:
         """Start ONE configured child on demand and register its tools
-        (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog).
+        (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog).
 
         Idempotent: if the child is already mounted, its already-registered
         prefixed tools are returned without re-spawning. Returns ``[]`` for an
@@ -5125,7 +5125,7 @@ class MCPMultiplexer:
             self._register_child_result(server_name, payload, tools, cfg)
 
     # ------------------------------------------------------------------
-    # Always-load (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog)
+    # Always-load (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog)
     # ------------------------------------------------------------------
 
     def always_load_tool_owner(self, spec: str) -> tuple[str | None, str | None]:
@@ -5170,7 +5170,7 @@ class MCPMultiplexer:
         return bool(self._always_load_servers or self._always_load_tool_specs)
 
     # ------------------------------------------------------------------
-    # Dynamic tool gateway (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog)
+    # Dynamic tool gateway (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog)
     # ------------------------------------------------------------------
 
     def _server_for_prefixed(self, prefixed_name: str) -> str | None:
@@ -5210,7 +5210,7 @@ class MCPMultiplexer:
         Every write to ``self._probe_cache`` goes through here so age/staleness
         can always be computed truthfully later — ``time.time() - probed_at`` —
         instead of a caller having to guess whether a served result is fresh
-        (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog).
+        (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog).
 
         NE-008 (GOC-85 Deliverable 3): an OAuth-gated server's probe result is
         NEVER written into this shared, server-name-only cache — the result is
@@ -5360,7 +5360,7 @@ class MCPMultiplexer:
         (``MCP_CATALOG_PROBE_TTL`` / ``AgentConfig.mcp_catalog_probe_ttl``).
         Local import, same reason every other read of ``config`` in this
         module is local (avoid a module-load-time circular import with
-        ``core.config``) (CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness)."""
+        ``core.config``) (CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness)."""
         from arbora.core.settings import runtime_config as agent_config
 
         return agent_config.mcp_catalog_probe_ttl
@@ -5373,7 +5373,7 @@ class MCPMultiplexer:
         entry may be served as-is, so :meth:`probe_server` (single-server
         short-circuit) and :meth:`probe_catalog` (whole-fleet re-probe
         targeting) can never disagree about what counts as fresh
-        (CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness).
+        (CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness).
 
         NE-008: always a miss for an OAuth-gated server (see
         :meth:`_cache_probe`) — there is never a cached entry to serve, so
@@ -5396,7 +5396,7 @@ class MCPMultiplexer:
         info: dict, now: float, ttl: float
     ) -> tuple[float, bool]:
         """Honest ``(age_s, is_stale)`` for a served probe-cache entry
-        (CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness), computed
+        (CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness), computed
         from wall-clock age against ``ttl`` — never a bare echo of the
         narrow ``stale`` flag :meth:`probe_catalog` sets only when a result
         is recycled mid-call (that flag stays ``False`` forever on a
@@ -5473,14 +5473,14 @@ class MCPMultiplexer:
         self, server_name: str, force: bool = False, timeout: float | None = None
     ) -> dict:
         """Probe ONE catalog server for its tool list: connect → list_tools →
-        release (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog). Returns (and caches) ``{"tools": [...],
+        release (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog). Returns (and caches) ``{"tools": [...],
         "error": str|None, "probed_at": float}``. An already-mounted child reuses
         its live tools instead of reconnecting; an unreachable server records its
         error string (so find_tools/load_tools can report *why* it is
         unavailable) rather than raising.
 
         A cache hit is honored only inside the TTL
-        (CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness,
+        (CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness,
         :meth:`_probe_cache_hit`) — an entry aged past
         ``mcp_catalog_probe_ttl`` is treated as a miss and re-probed here,
         same as ``force=True``, so a cache entry can never go stale forever."""
@@ -5721,7 +5721,7 @@ class MCPMultiplexer:
         probe_deadline: float | None = None,
     ) -> list[dict]:
         """Best-effort ``skill://`` resource enumeration for one probed session
-        (CONCEPT:AU-ECO.mcp.skills-over-mcp-provider).
+        (CONCEPT:MERISTEM-ECO.mcp.skills-over-mcp-provider).
 
         Skills-over-MCP is only a fastmcp-4 server capability (draft MCP
         SEP-2640) — a fastmcp-3 or pre-skills server has no ``skill://``
@@ -5889,7 +5889,7 @@ class MCPMultiplexer:
         probe_deadline: float | None = None,
     ) -> list[dict]:
         """Best-effort ``prompt://`` resource enumeration for one probed
-        session (CONCEPT:AU-ECO.mcp.cross-process-prompt-harvest).
+        session (CONCEPT:MERISTEM-ECO.mcp.cross-process-prompt-harvest).
 
         Prompts-over-MCP is served by every server built through
         ``server_factory.build_server`` (``_register_prompt_providers``), but
@@ -6031,7 +6031,7 @@ class MCPMultiplexer:
         """Which catalog servers this call must (re-)probe.
 
         A cached entry aged past ``mcp_catalog_probe_ttl`` is targeted exactly
-        like an uncached one (CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness).
+        like an uncached one (CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness).
         """
         candidates = (
             catalog if servers is None else (s for s in servers if s in catalog)
@@ -6087,7 +6087,7 @@ class MCPMultiplexer:
         """The honest answer for a server still probing when the budget expired.
 
         Reachable two ways: an explicit force re-probe, or a TTL-expired cache
-        entry (CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness)
+        entry (CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness)
         re-targeted by ``_probe_targets`` — either way, serve the last known
         answer rather than a bare "unavailable", labelled so the caller knows
         it is not this round's live result. With no prior answer at all, say
@@ -6134,7 +6134,7 @@ class MCPMultiplexer:
         honest, individual answer here: a prior (possibly ``stale``,
         age-labelled) result if one exists, or an explicit ``pending``
         marker on its first-ever attempt. Reachable servers are never
-        blocked by an unreachable one (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog).
+        blocked by an unreachable one (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog).
 
         A long-lived multiplexer (arbora's fleet loader) relies on
         :meth:`aclose` to cancel whatever is still in-flight at real
@@ -6157,7 +6157,7 @@ class MCPMultiplexer:
 
         A cached entry aged past ``mcp_catalog_probe_ttl`` is targeted for
         re-probe exactly like an uncached one
-        (CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness) — the fleet
+        (CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness) — the fleet
         cache never goes stale forever. The re-probe runs through the same
         ``_ensure_probing``/budget machinery as any other target, so it
         NEVER blocks this call past its own ``budget``: a caller that hits
@@ -6343,7 +6343,7 @@ class MCPMultiplexer:
         BACKGROUND_INGESTION (ORCH-1.98) so it yields shared-resource
         contention to interactive/orchestration work instead of competing with
         it, reusing the ONE existing priority gate rather than inventing a
-        second (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog).
+        second (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog).
         """
         loop = asyncio.get_running_loop()
         probe: dict = {}
@@ -6372,7 +6372,7 @@ class MCPMultiplexer:
         token-overlap backbone ranks alone. This is what makes find_tools
         understand intent ("send a message to a gitlab MR" → the gitlab tools)
         instead of only matching literal tokens.
-        (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog)
+        (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog)
         """
         semantic: dict[str, float] = {}
         remaining = deadline - asyncio.get_running_loop().time()
@@ -6487,11 +6487,11 @@ class MCPMultiplexer:
     ) -> list[dict]:
         """Every qualifying tool AND skill row for one probed server.
 
-        Truthful freshness for every surfaced tool/skill (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog):
+        Truthful freshness for every surfaced tool/skill (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog):
         a result served from a probe that ran seconds/minutes ago is still
         labelled with its real age, not presented as if it were just measured
         live. ``is_stale`` is computed from that age against the TTL
-        (CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness) — never a bare
+        (CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness) — never a bare
         echo of the narrow in-flight ``stale`` flag, which stays ``False``
         forever on a normally-settled cache entry no matter how old.
         """
@@ -6529,7 +6529,7 @@ class MCPMultiplexer:
         Fleet onboarding (``arbora/fleet/onboarding.py``) imports each
         admitted server's content pack — its tools included — into the EG
         catalog before any child is ever mounted
-        (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog). This reads that
+        (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog). This reads that
         already-imported ``kind == "tool"`` provenance straight off
         ``self._fleet_catalog`` (installed by :meth:`refresh_engine_catalog`)
         so a server whose live probe cannot answer in time still has
@@ -6568,7 +6568,7 @@ class MCPMultiplexer:
         resolve_skill_provider_dirs()`` resolves in THIS process — arbora's
         own skills, agent-utilities' own, and any sibling package installed
         alongside arbora that declares ``agent_connector_sdk.connector``
-        (CONCEPT:AU-KG.retrieval.unified-capability-contract). An
+        (CONCEPT:MERISTEM-KG.retrieval.unified-capability-contract). An
         individually unreadable/malformed skill, and a core-pack name no
         installed provider resolves, are reported loudly here (never fatal,
         never silent) the one time this cache is built.
@@ -6639,7 +6639,7 @@ class MCPMultiplexer:
         self, query: str, top_k: int | None = None, loaded: set[str] | None = None
     ) -> dict:
         """Rank candidate tools across the whole fleet for an NL ``query``
-        (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog), without exposing or holding any child.
+        (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog), without exposing or holding any child.
 
         Backbone is the self-catalog (:meth:`probe_catalog` — each server's real
         tools, learned by a cached connect→list→release probe), ranked by token
@@ -6671,7 +6671,7 @@ class MCPMultiplexer:
             "loaded": loaded if loaded is not None else self._exposed,
         }
 
-        # One ranked capability space (CONCEPT:AU-KG.retrieval.unified-capability-contract):
+        # One ranked capability space (CONCEPT:MERISTEM-KG.retrieval.unified-capability-contract):
         # fleet tools AND fleet-served skill:// resources are scored with the
         # SAME token-overlap+semantic backbone and merged into one ``ranked``
         # list, each item carrying a ``bind`` dict — the exact kwargs
@@ -6695,7 +6695,7 @@ class MCPMultiplexer:
                     continue
                 info = fallback
             ranked.extend(self._ranked_server_entries(server, info, rank, now, ttl))
-        # The server-level fallback (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog)
+        # The server-level fallback (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog)
         # answers "is any FLEET server mountable", so its trigger check uses
         # ``fleet_probe`` — never the merged ``probe`` — or the local-skill
         # pseudo-server's own always-``error: None`` entry would make every
@@ -6713,7 +6713,7 @@ class MCPMultiplexer:
                 "tool": t["name"],
                 "description": t.get("description", ""),
                 "enabled": self._tool_enabled(server, t["name"]),
-                # Session-scoped dispatch truth (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog):
+                # Session-scoped dispatch truth (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog):
                 # derived from the SAME predicate the dispatch gate
                 # (SessionVisibilityMiddleware) enforces, so this can
                 # never claim a tool is usable when a call would
@@ -6744,7 +6744,7 @@ class MCPMultiplexer:
             "available": info.get("error") is None,
             "error": info.get("error"),
             "age_s": age_s,
-            # CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness — a
+            # CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness — a
             # drill-down calls probe_server directly, whose own cache hit
             # is already TTL-gated, so this is normally fresh; still
             # reported honestly rather than assumed.
@@ -6761,7 +6761,7 @@ class MCPMultiplexer:
         lookup: bound it by the same interactive discovery budget as find_tools
         (a server that never answers must not hang this call indefinitely) and
         tag it BACKGROUND_INGESTION so it yields to interactive/orchestration
-        work (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog). A metadata-only
+        work (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog). A metadata-only
         listing never probes a child at all. The local-skill pseudo-server
         (:meth:`_local_skill_probe_info`) is always folded in, so a plain
         listing shows it without needing a ``find_tools`` query — the
@@ -6797,7 +6797,7 @@ class MCPMultiplexer:
     ) -> None:
         """Stamp honest probe freshness onto one fleet-listing entry.
 
-        CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness — staleness is
+        CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness — staleness is
         computed from age vs TTL, never a bare echo of the narrow in-flight
         ``stale`` flag. This is also the ``include_tools=False`` metadata-only
         path, which reads ``self._probe_cache`` directly and never goes through
@@ -6847,7 +6847,7 @@ class MCPMultiplexer:
             entry["tools"] = enabled_names
             if disabled_names:
                 entry["disabled_tools"] = disabled_names
-            # Session-scoped dispatch truth (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog):
+            # Session-scoped dispatch truth (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog):
             # the subset of `tools` the CALLING session could actually
             # invoke right now, derived from the same predicate the
             # dispatch gate enforces (MCPMultiplexer.tool_dispatchable).
@@ -6925,7 +6925,7 @@ class MCPMultiplexer:
     def _condensed_server_surface(self, mounted: list[str]) -> set[str]:
         """The prefixed names a SERVER-level load exposes.
 
-        CONCEPT:AU-ECO.multiplexer.condensed-server-load — only the condensed
+        CONCEPT:MERISTEM-ECO.multiplexer.condensed-server-load — only the condensed
         action surface; verbose 1:1 tools stay loadable by EXPLICIT name so
         ``load_tools(servers=[X])`` never floods a session's context with X's
         whole granular surface. Mirrors the always-on mount's verbose-hold.
@@ -7032,7 +7032,7 @@ class MCPMultiplexer:
     def is_serving(self) -> bool:
         """Whether this instance's catalog actually names at least one server.
 
-        CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog — checks truthiness
+        CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog — checks truthiness
         (non-empty), not merely ``self._catalog is not None``: calling
         :meth:`tool_dispatchable` on ANY instance — including a
         freshly-constructed, never-served one (what ``source_sync``/a fleet
@@ -7163,7 +7163,7 @@ class MCPMultiplexer:
     def status_snapshot(self) -> dict[str, _typing.Any]:
         """Fleet health surface: per-child state, limits, load, restarts.
 
-        CONCEPT:AU-ECO.multiplexer.running-vs-dispatchable-metrics — this is the
+        CONCEPT:MERISTEM-ECO.multiplexer.running-vs-dispatchable-metrics — this is the
         ONE producer of child health, rendered two ways: the
         ``multiplexer_status`` tool returns the dict, and the Prometheus child
         gauges are published from the very same dict on the way out, so the
@@ -7221,7 +7221,7 @@ class MCPMultiplexer:
     async def aclose(self) -> None:
         """Shut down every child runtime and direct stack registration."""
         self._closing = True
-        # Background catalog probes (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog) are
+        # Background catalog probes (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog) are
         # deliberately left running past an interactive call's own budget so a
         # later call can benefit from their result — but they must not outlive
         # the multiplexer itself. Cancel them here; each already carries its
@@ -7353,7 +7353,7 @@ def _tool_is_verbose(tool: MCPTool) -> bool:
     ``_meta``). Verbose 1:1 tools (e.g. arbora's granular per-action surface)
     are kept in the catalog but NOT auto-exposed by an always-on child — they
     load on demand via ``find_tools``/``load_tools`` to conserve context
-    (CONCEPT:AU-ECO.multiplexer.condensed-server-load)."""
+    (CONCEPT:MERISTEM-ECO.multiplexer.condensed-server-load)."""
     meta = getattr(tool, "meta", None)
     if not isinstance(meta, dict):
         return False
@@ -7408,7 +7408,7 @@ async def _notify_tools_changed(mcp) -> bool:
     server-only log line: a caller (``load_tools``/``unload_tools``) that
     reported success while even the local send failed is exactly the
     control-plane-truthfulness gap this exists to prevent
-    (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog). Callers surface this as
+    (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog). Callers surface this as
     ``notification_sent`` (never ``notified`` — that name is retired, see
     ``load_session_tools``) so the agent can tell "the server didn't even try
     to push" apart from "it tried; whether the client acted on it is unknown
@@ -7449,7 +7449,7 @@ _MAX_LOCAL_SESSION_ID_BYTES = 256
 def _explicit_local_session_key() -> str | None:
     """A caller-declared session id for a NON-HTTP (stdio/in-memory) request.
 
-    CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog — D-W2-6: for stdio/in-memory
+    CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog — D-W2-6: for stdio/in-memory
     transports the underlying MCP SDK (fastmcp 4.0.0b1 / mcp 2.0.0) gives NO
     stable per-connection identity at all: ``Context.session_id``, the
     low-level ``ServerSession``, and its ``Connection`` are all reconstructed
@@ -7602,7 +7602,7 @@ def attach_fleet_loader(
     :class:`~arbora.fleet.child_resilience.ChildRuntime`, with its own breaker +
     concurrency limit) only when a tool is actually called. Returns the
     :class:`MCPMultiplexer` for lifecycle — call ``await mux.aclose()`` on
-    shutdown. (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog)
+    shutdown. (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog)
 
     All wiring here is synchronous (catalog-state initialization + binding); no
     child is spawned at attach time, so it drops cleanly into arbora's
@@ -7656,7 +7656,7 @@ def attach_fleet_loader(
             logger.warning(
                 "native Tasks extension does not expose multiplexer route binding"
             )
-    # CONCEPT:AU-ECO.mcp.intent-surface-condensed-collapse — the fleet is reached
+    # CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse — the fleet is reached
     # through the host's intent tools (``find`` searches the catalog, ``act``
     # calls a fleet tool, ``manage`` mounts/releases), never as separately listed
     # MCP tools, so no meta-tool or per-session visibility layer is attached.

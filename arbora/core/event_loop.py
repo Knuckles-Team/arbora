@@ -140,7 +140,7 @@ def run_sync_isolated[T](fn: Callable[[], T]) -> T:
     reached from a thread that already has a loop running — there is no
     ``await`` available at those call sites to hand off to.
 
-    CONCEPT:AU-KG.query.ask-gateway-rest-twin — the worker-thread sibling of
+    CONCEPT:MERISTEM-KG.query.ask-gateway-rest-twin — the worker-thread sibling of
     :func:`allow_nested_run_sync`, for call sites where patching global asyncio
     state (``nest_asyncio``) is undesirable and a plain per-call escape hatch is
     enough. ``nl_planner.AuNlPlanner._default_run`` established this exact

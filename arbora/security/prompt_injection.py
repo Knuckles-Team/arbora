@@ -262,7 +262,7 @@ _INJECTION_PATTERNS: list[ThreatPattern] = [
     ),
 ]
 
-# -- Jailbreak attack patterns (SoK-derived, CONCEPT:AU-OS.safety.prompt-injection-scanner) ---------------
+# -- Jailbreak attack patterns (SoK-derived, CONCEPT:MERISTEM-OS.safety.prompt-injection-scanner) ---------------
 # Derived from: SoK: Robustness in LLMs against Jailbreak Attacks
 # (arXiv:2605.05058v1, Score 16.2)
 #
@@ -274,7 +274,7 @@ _INJECTION_PATTERNS: list[ThreatPattern] = [
 
 
 class JailbreakCategory(StrEnum):
-    """Jailbreak attack categories from SoK taxonomy (CONCEPT:AU-OS.safety.prompt-injection-scanner)."""
+    """Jailbreak attack categories from SoK taxonomy (CONCEPT:MERISTEM-OS.safety.prompt-injection-scanner)."""
 
     TEMPLATE_BASED = "template_based"
     OPTIMIZATION_BASED = "optimization_based"

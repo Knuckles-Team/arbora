@@ -11,8 +11,8 @@ Each ``--site`` is one count-pin site as ``name=location=declared_count``.
 
 This script does not yet hardcode the fleet's real count-pin sites.
 ``deploy/release/compatibility-matrix.yml`` and its check script are
-AU-owned (see ``arbora/deployment/doctor_certification.py``, which already
-notes "Production release/certification assets remain AU-owned"); the
+Meristem-owned (see ``arbora/deployment/doctor_certification.py``, which already
+notes "Production release/certification assets remain Meristem-owned"); the
 bundle-catalog schema, ``ontology.lock`` and the federated IRI do not exist
 anywhere in the fleet today; and the live connector count itself is only
 known to ``agent_connector_sdk`` / the cross-repo fleet registry, not to

@@ -8,13 +8,13 @@ all dispatch into. It owns:
   :class:`~arbora.messaging.registry.MessagingRegistry`),
 - governed outbound sends (every send passes the fail-closed ActionPolicy gate,
   ``orchestration/action_policy.py`` — ``kind="message.send"``),
-- the durable **last-active channel** routing state (CONCEPT:AU-ECO.messaging.last-active-channel-routing) — like OpenClaw,
+- the durable **last-active channel** routing state (CONCEPT:MERISTEM-ECO.messaging.last-active-channel-routing) — like OpenClaw,
   ``reach_user`` delivers to whatever channel the user last interacted on, falling back to
   a configured default so a fresh system still works,
 - auto-ingestion of every message into the KG as conversational memory (``kg_ingest``).
 
-CONCEPT:AU-ECO.messaging.messaging-reach-service-governed — Messaging reach service for governed outbound and channel routing
-CONCEPT:AU-ECO.messaging.last-active-channel-routing — Last-active channel routing state for the messaging reach service
+CONCEPT:MERISTEM-ECO.messaging.messaging-reach-service-governed — Messaging reach service for governed outbound and channel routing
+CONCEPT:MERISTEM-ECO.messaging.last-active-channel-routing — Last-active channel routing state for the messaging reach service
 
 See Also:
     - ``arbora/messaging/router.py`` for inbound transport that feeds ``record_inbound``.
@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Durable node id holding a user's most-recently-active channel (CONCEPT:AU-ECO.messaging.last-active-channel-routing).
+# Durable node id holding a user's most-recently-active channel (CONCEPT:MERISTEM-ECO.messaging.last-active-channel-routing).
 _PREF_NODE_PREFIX = "chanpref:"
 # Sentinel user id for "the operator" when an event carries no user id.
 _DEFAULT_USER = "operator"
@@ -55,7 +55,7 @@ _DEFAULT_USER = "operator"
 class MessagingService:
     """Connected-backend manager + governed outbound sender + channel router.
 
-    CONCEPT:AU-ECO.messaging.messaging-reach-service-governed
+    CONCEPT:MERISTEM-ECO.messaging.messaging-reach-service-governed
 
     Singleton: use :meth:`instance`. The same service object is shared by the MCP
     tool, the REST handler, the inbound router, and the loop so they all read/write
@@ -67,7 +67,7 @@ class MessagingService:
     def __init__(self, engine: Any = None) -> None:
         self._engine = engine
         self._backends: dict[str, MessagingBackend] = {}
-        # CONCEPT:AU-ECO.messaging.elicitation-loop-bridge — elicitation and loop bridge so a blocked loop reaches the user and resumes on reply
+        # CONCEPT:MERISTEM-ECO.messaging.elicitation-loop-bridge — elicitation and loop bridge so a blocked loop reaches the user and resumes on reply
         # Pending awaited replies keyed by "platform:channel_id":
         # reach_user_and_wait registers a future here; the inbound router resolves it
         # when the user replies on that channel. In-process (daemon) only.
@@ -210,7 +210,7 @@ class MessagingService:
     ) -> SendResult:
         """Send a message, gated by ActionPolicy and mirrored into KG memory.
 
-        CONCEPT:AU-ECO.messaging.messaging-reach-service-governed — every outbound send is a governed ``message.send`` fleet action.
+        CONCEPT:MERISTEM-ECO.messaging.messaging-reach-service-governed — every outbound send is a governed ``message.send`` fleet action.
         """
         engine = self._resolve_engine()
         decision = await run_action_policy(
@@ -315,7 +315,7 @@ class MessagingService:
         source: str = "manual",
         reason: str = "",
     ) -> SendResult:
-        """Deliver ``text`` to the user on their last-active channel (CONCEPT:AU-ECO.messaging.last-active-channel-routing).
+        """Deliver ``text`` to the user on their last-active channel (CONCEPT:MERISTEM-ECO.messaging.last-active-channel-routing).
 
         Resolution order: the user's recorded last-active channel → the configured default
         (``MESSAGING_DEFAULT_PLATFORM`` / ``MESSAGING_DEFAULT_CHANNEL``).
@@ -347,7 +347,7 @@ class MessagingService:
         channel_id = str(setting("MESSAGING_DEFAULT_CHANNEL", ""))
         return (platform, channel_id) if channel_id else ("", "")
 
-    # ── Last-active channel state (durable KG node, CONCEPT:AU-ECO.messaging.last-active-channel-routing) ─
+    # ── Last-active channel state (durable KG node, CONCEPT:MERISTEM-ECO.messaging.last-active-channel-routing) ─
     def record_inbound(self, event: InboundEvent) -> None:
         """Record the channel an inbound event arrived on as the user's last-active one."""
         user = event.user_id or _DEFAULT_USER
@@ -400,7 +400,7 @@ class MessagingService:
                 return str(platform), str(channel_id)
         return None
 
-    # ── Awaited replies (blocked-loop bridge, CONCEPT:AU-ECO.messaging.elicitation-loop-bridge) ──────
+    # ── Awaited replies (blocked-loop bridge, CONCEPT:MERISTEM-ECO.messaging.elicitation-loop-bridge) ──────
     async def reach_user_and_wait(
         self,
         text: str,
@@ -456,13 +456,13 @@ class MessagingService:
             return True
         return False
 
-    # ── Reactions: the messaging RENDERER of the core output (CONCEPT:AU-ECO.messaging.messaging-as-renderer) ──
+    # ── Reactions: the messaging RENDERER of the core output (CONCEPT:MERISTEM-ECO.messaging.messaging-as-renderer) ──
     async def render_reaction(
         self, platform: str, channel_id: str, reaction: Any
     ) -> bool:
         """Render a core :class:`AgentReaction` on ``platform`` (the renderer contract).
 
-        CONCEPT:AU-ECO.messaging.messaging-as-renderer — messaging is a RENDERER of the orchestrator's
+        CONCEPT:MERISTEM-ECO.messaging.messaging-as-renderer — messaging is a RENDERER of the orchestrator's
         ``AgentReaction``, not the owner of
         the reaction logic. This paints the core decision onto chat via the backend's
         ``send_reaction`` / ``setMessageReaction``. Returns True if rendered.
@@ -523,7 +523,7 @@ def _safe_set(future: asyncio.Future[str], text: str) -> None:
 def reach_user_sync(text: str, **kwargs: Any) -> SendResult:
     """Synchronous wrapper around :meth:`MessagingService.reach_user` for sync callers.
 
-    Used by the goal-loop (CONCEPT:AU-ECO.messaging.elicitation-loop-bridge) which runs outside an event loop.
+    Used by the goal-loop (CONCEPT:MERISTEM-ECO.messaging.elicitation-loop-bridge) which runs outside an event loop.
     """
     svc = MessagingService.instance()
     try:

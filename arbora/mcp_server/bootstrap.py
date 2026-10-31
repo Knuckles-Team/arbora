@@ -361,7 +361,7 @@ async def _keep_process_authority_current(session: Any) -> None:
 async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator[None]:
     """Renew a renewable session's authority for the duration of the wrapped call.
 
-    CONCEPT:AU-ORCH.execution.delegation-hot-path-authority — keep a long delegation authorized for its whole run, on every entrypoint, not just MCP dispatch.
+    CONCEPT:MERISTEM-ORCH.execution.delegation-hot-path-authority — keep a long delegation authorized for its whole run, on every entrypoint, not just MCP dispatch.
 
     Every delegation entrypoint — the MCP ``_execute_tool`` dispatch, the
     ``agent-webui``/REST gateway, the messaging router (Telegram/Mattermost), the

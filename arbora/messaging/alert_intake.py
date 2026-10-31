@@ -202,7 +202,7 @@ async def serve_alert_intake(engine: Any, port: int) -> None:
         site = web.TCPSite(runner, host, port)
         await site.start()
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.alert-intake] messaging alert-intake enabled on port %s",
+            "[CONCEPT:MERISTEM-ECO.messaging.alert-intake] messaging alert-intake enabled on port %s",
             port,
         )
         await asyncio.Event().wait()  # run until the task is cancelled

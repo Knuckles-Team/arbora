@@ -163,7 +163,7 @@ def main(argv: list[str] | None = None) -> int:
 
     hf = sub.add_parser(
         "harness-fence",
-        help="Write a governance-derived Claude Code permission fence (CONCEPT:AU-OS.deployment.governance-derived-claude-code).",
+        help="Write a governance-derived Claude Code permission fence (CONCEPT:MERISTEM-OS.deployment.governance-derived-claude-code).",
     )
     hf.add_argument(
         "--target",

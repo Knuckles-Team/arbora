@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from __future__ import annotations
 
-"""CONCEPT:AU-OS.observability.langfuse-exporter — Langfuse exporter for spans, token usage and traces.
+"""CONCEPT:MERISTEM-OS.observability.langfuse-exporter — Langfuse exporter for spans, token usage and traces.
 
 The orchestration engine already opens an OpenTelemetry span around every graph
 run (``orchestration/engine.py`` → ``tracer.start_as_current_span``) and the
@@ -78,7 +78,7 @@ def _validated_trace_evidence(evidence: dict[str, str] | None) -> dict[str, str]
 
 
 class LangfuseExporter:
-    """Optional Langfuse sink for graph-run traces + token usage. CONCEPT:AU-OS.observability.langfuse-exporter.
+    """Optional Langfuse sink for graph-run traces + token usage. CONCEPT:MERISTEM-OS.observability.langfuse-exporter.
 
     Parameters
     ----------
@@ -178,7 +178,7 @@ class LangfuseExporter:
         metadata: dict[str, Any] | None = None,
         evidence: dict[str, str] | None = None,
     ) -> bool:
-        """Export one graph run as a Langfuse trace. CONCEPT:AU-OS.observability.langfuse-exporter.
+        """Export one graph run as a Langfuse trace. CONCEPT:MERISTEM-OS.observability.langfuse-exporter.
 
         Emits a ``trace`` (the graph run) with a nested ``generation``
         observation carrying token usage when present. Returns ``True`` when a
@@ -234,7 +234,7 @@ class LangfuseExporter:
                         *status_privacy.detected_types,
                     }
                 )
-            # CONCEPT:AU-OS.observability.run-wide-correlation-id — stamp the run-wide correlation id so every agent's
+            # CONCEPT:MERISTEM-OS.observability.run-wide-correlation-id — stamp the run-wide correlation id so every agent's
             # trace in a multi-agent run is joinable ("which agents touched X?").
             try:
                 from arbora.observability.correlation import get_correlation_id

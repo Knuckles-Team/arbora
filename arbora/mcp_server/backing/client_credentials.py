@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""Outbound child-auth provider for the MCP multiplexer (CONCEPT:AU-OS.identity.so-jwt-protected-children).
+"""Outbound child-auth provider for the MCP multiplexer (CONCEPT:MERISTEM-OS.identity.so-jwt-protected-children).
 
 The multiplexer aggregates many child MCP servers. When a child enforces auth (JWT
 bearer, or a reverse proxy demanding HTTP Basic) the multiplexer must present a
@@ -19,7 +19,7 @@ selected by ``MCP_CLIENT_AUTH``:
     ``MCP_BASIC_AUTH_USERNAME`` and the referenced password (for a child, or an
     upstream proxy, that authenticates with HTTP Basic rather than a bearer token).
   * ``rotating-file-bearer`` — re-read ``Authorization: Bearer <token>`` from a
-    local file on EVERY outbound request (CONCEPT:AU-OS.identity.rotating-file-bearer,
+    local file on EVERY outbound request (CONCEPT:MERISTEM-OS.identity.rotating-file-bearer,
     BUG-051). For a remote MCP server whose bearer is minted by an OUT-OF-PROCESS
     refresh daemon (e.g. ``services/arbora-token-refresh/refresh-arbora-token.sh``,
     a cron-driven client-credentials mint this process has no control over), a
@@ -170,7 +170,7 @@ def _derive_token_url() -> str | None:
     explicit = _configured_text("OIDC_TOKEN_URL")
     if explicit:
         return explicit
-    # Provider-agnostic (CONCEPT:AU-OS.identity.resolve-token-endpoint-from):
+    # Provider-agnostic (CONCEPT:MERISTEM-OS.identity.resolve-token-endpoint-from):
     # resolve the token endpoint from the explicitly configured issuer's OIDC
     # discovery document instead of borrowing an inbound-verifier setting.
     # ``OIDC_ISSUER`` may be a comma-separated multi-realm trust list (same
@@ -338,7 +338,7 @@ def read_rotating_bearer_token(path: Path) -> str:
 class RotatingFileBearerAuth(httpx.Auth):
     """Per-request ``Authorization: Bearer`` sourced fresh from a local file.
 
-    CONCEPT:AU-OS.identity.rotating-file-bearer (BUG-051). The multiplexer
+    CONCEPT:MERISTEM-OS.identity.rotating-file-bearer (BUG-051). The multiplexer
     holds one pooled long-lived transport per child; baking a header in at
     construction time freezes whatever token was valid at CONNECT time. If the
     real refresh authority is an out-of-process daemon (cron-driven, this

@@ -1,6 +1,6 @@
-"""Native swarm supervisory plane (CONCEPT:AU-OS.safety.ontological-guardrail).
+"""Native swarm supervisory plane (CONCEPT:MERISTEM-OS.safety.ontological-guardrail).
 
-CONCEPT:AU-OS.state.fleet-supervisory-plane-at — Fleet supervisory plane at scale — SQL
+CONCEPT:MERISTEM-OS.state.fleet-supervisory-plane-at — Fleet supervisory plane at scale — SQL
 aggregation, paginated and filtered session queries, and desired-state pause and kill
 reconciliation across hosts
 
@@ -11,15 +11,15 @@ no separate supervisor service. Everything here surfaces state the ecosystem
 * **topology / health** — the durable session registry and goal registry in
   :mod:`agent_utilities.core.sessions` (per-host SQLite by default, the shared
   Postgres state store when ``state_db_uri`` is set —
-  CONCEPT:AU-OS.state.unified-durable-state-externalization).
+  CONCEPT:MERISTEM-OS.state.unified-durable-state-externalization).
   Aggregations run in SQL (``COUNT``/``GROUP BY``) and listings are paginated
   + status-filterable, so the handlers stay O(page), not O(fleet)
-  (CONCEPT:AU-OS.state.fleet-supervisory-plane-at).
+  (CONCEPT:MERISTEM-OS.state.fleet-supervisory-plane-at).
 * **pause / kill** — emergency containment as *desired-state writes*: targets
   local to this gateway are cancelled in-process (fast path) and finalized;
   sessions owned by another host get ``pause_requested``/``kill_requested``,
   which the owning host's goal loop reconciles on its next tick
-  (CONCEPT:AU-OS.state.fleet-supervisory-plane-at).
+  (CONCEPT:MERISTEM-OS.state.fleet-supervisory-plane-at).
 * **approvals** — pending mutation/risk approvals stored as ``ActionApproval`` nodes,
   read and decided through the parity-covered ``graph_query`` / ``graph_governance``
   tools.
@@ -86,7 +86,7 @@ def _tenant_sql(dialect: str) -> str:
 def _tenant_scope(dialect: str) -> tuple[str, list[Any]]:
     """Return an ``(sql_predicate, params)`` restricting rows to the caller's org.
 
-    The tenant-scoped supervisory plane (CONCEPT:AU-OS.safety.ontological-guardrail +
+    The tenant-scoped supervisory plane (CONCEPT:MERISTEM-OS.safety.ontological-guardrail +
     OS-5.14): an org's
     caller sees only its own sessions/agents; a verified platform admin sees
     the whole fleet. Missing or tenantless identity fails closed.
@@ -345,7 +345,7 @@ async def fleet_approvals(request: Request) -> JSONResponse:
     """List pending mutation/risk approvals.
 
     ``ActionApproval`` is immutable approval evidence filed by the operational
-    ActionPolicy gate (CONCEPT:AU-OS.deployment.fleet-lifecycle-control). A WorkItem is
+    ActionPolicy gate (CONCEPT:MERISTEM-OS.deployment.fleet-lifecycle-control). A WorkItem is
     created or
     released only after authorization; unclaimed operational work is never
     misrepresented as a pending human decision.
@@ -426,7 +426,7 @@ async def fleet_grant_approval(request: Request) -> JSONResponse:
 async def fleet_verify_action(request: Request) -> JSONResponse:
     """Pre-execution assurance check for a proposed ActionPolicy payload.
 
-    CONCEPT:AU-OS.governance.assurance-state-machine-verifier — the REST twin of the
+    CONCEPT:MERISTEM-OS.governance.assurance-state-machine-verifier — the REST twin of the
     ``graph_governance action=verify_action`` MCP tool; both dispatch into the same
     ``ActionPolicy.evaluate()`` core. POST body: ``{kind, target, params, source,
     reason, actor_id}``. Read-only — runs the same deterministic role/schema/
@@ -465,7 +465,7 @@ async def fleet_verify_action(request: Request) -> JSONResponse:
 
 async def fleet_trace(request: Request) -> JSONResponse:
     """Swarm-wide cross-agent correlation query
-    (CONCEPT:AU-OS.observability.run-wide-correlation-id).
+    (CONCEPT:MERISTEM-OS.observability.run-wide-correlation-id).
 
     ``GET /api/fleet/trace?correlation_id=<cid>`` returns every durable node
     stamped with that correlation id — fleet events, executed tasks, and any
@@ -503,7 +503,7 @@ async def fleet_trace(request: Request) -> JSONResponse:
 
 async def fleet_touched(request: Request) -> JSONResponse:
     """Blast-radius query: which agents/events touched a resource
-    (CONCEPT:AU-OS.observability.run-wide-correlation-id).
+    (CONCEPT:MERISTEM-OS.observability.run-wide-correlation-id).
 
     ``GET /api/fleet/touched?resource=<id>`` returns the fleet events whose
     subject is that resource, with their correlation ids and originating
@@ -547,7 +547,7 @@ async def fleet_touched(request: Request) -> JSONResponse:
 
 def mount_fleet_routes(app, prefix: str = "") -> None:
     """Mount the supervisory plane onto a Starlette/FastAPI ``app``."""
-    # Webhook ingress for monitoring events (CONCEPT:AU-OS.config.fleet-event-ingress) —
+    # Webhook ingress for monitoring events (CONCEPT:MERISTEM-OS.config.fleet-event-ingress) —
     # sibling module
     # so alert normalization/persistence stays out of the supervisory handlers.
     from arbora.gateway.fleet_events import fleet_events_receive

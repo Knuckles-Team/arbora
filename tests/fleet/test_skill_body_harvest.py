@@ -1,6 +1,6 @@
 """The multiplexer reads skill BODIES off an already-connected child.
 
-CONCEPT:AU-ECO.mcp.cross-process-skill-harvest — the discovery half of the
+CONCEPT:MERISTEM-ECO.mcp.cross-process-skill-harvest — the discovery half of the
 harvest. ``_probe_skills`` used to return names only, which is why a fleet
 skill could never be promoted to a runnable resource: there was no instruction
 body to promote. These tests pin the body read, its bounds, and the rule that a

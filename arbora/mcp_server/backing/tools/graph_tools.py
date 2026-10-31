@@ -1,7 +1,7 @@
 """Read-only SQL **catalog introspection** for the engine's SQL surface.
 
-CONCEPT:AU-KG.query.raw-python — SQL over the KG (read path)
-CONCEPT:AU-ECO.mcp.full-api-mcp-surface — one action core, two surfaces
+CONCEPT:MERISTEM-KG.query.raw-python — SQL over the KG (read path)
+CONCEPT:MERISTEM-ECO.mcp.full-api-mcp-surface — one action core, two surfaces
 
 The webui catalog browser (``agent-webui`` ``TableExplorerView``) needs the
 ``catalogs → tables/views → columns`` projection that ``psql``'s ``\\d`` shows.

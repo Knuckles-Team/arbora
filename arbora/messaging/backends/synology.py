@@ -1,7 +1,7 @@
-"""Synology Chat Backend (CONCEPT:AU-ECO.messaging.native-backend-abstraction). Webhook-based via httpx.
+"""Synology Chat Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction). Webhook-based via httpx.
 
 Install: ``pip install agent-utilities[messaging-synology]``
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ def _configured_webhook(config: MessagingConfig) -> str:
 
 
 class SynologyChatBackend(MessagingBackend):
-    """Synology Chat backend via incoming/outgoing webhooks. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+    """Synology Chat backend via incoming/outgoing webhooks. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
 
     def __init__(self, config: MessagingConfig | None = None) -> None:
         super().__init__(config)
@@ -55,7 +55,7 @@ class SynologyChatBackend(MessagingBackend):
         return CAPABILITY_MATRIX["synology"]
 
     async def connect(self) -> None:
-        """Connect to Synology Chat webhook. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Connect to Synology Chat webhook. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         webhook_url = _configured_webhook(self.config)
         if not webhook_url:
             raise ValueError("Configure a Synology webhook reference.")
@@ -64,7 +64,7 @@ class SynologyChatBackend(MessagingBackend):
         )
         self._connected = True
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Synology Chat backend connected."
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Synology Chat backend connected."
         )
 
     async def disconnect(self) -> None:

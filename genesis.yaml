@@ -156,8 +156,8 @@ preflight:
 engine:
   version: epistemic-graph[full]>=2.27.0,<3.0.0
   install: 'pip install agent-utilities[arbora] (GOC-73: opt-in extra, not a base dependency)'
-  authority: redb-authoritative durable by default (CONCEPT:AU-KG.backend.backend-modes)
-  resolver: CONCEPT:AU-OS.deployment.engine-resolver-auto-provision — remote -> share-running-local ->
+  authority: redb-authoritative durable by default (CONCEPT:MERISTEM-KG.backend.backend-modes)
+  resolver: CONCEPT:MERISTEM-OS.deployment.engine-resolver-auto-provision — remote -> share-running-local ->
     autostart the bundled full binary; refcounted (auto-stops idle) or persistent lifecycle
   wheel: one approved platform wheel containing the full server and folded ABI3 numeric kernel; runtime
     installation never compiles
@@ -235,7 +235,7 @@ servers:
   - technitium-dns-mcp
   - vector-mcp
 private_repos:
-  concept: AU-OS.deployment.standard-repo-templates
+  concept: MERISTEM-OS.deployment.standard-repo-templates
   purpose: Standard operator-owned PRIVATE repos genesis provisions per profile — abstract/templated;
     operator env lives only in XDG config + these repos, never in the public repo.
   repos:
@@ -292,7 +292,7 @@ private_repos:
     tiny: 0
     single-node-prod: 1
     enterprise: 2
-  step: arbora-deployment enterprise workflow (CONCEPT:AU-OS.deployment.concept-2)
+  step: arbora-deployment enterprise workflow (CONCEPT:MERISTEM-OS.deployment.concept-2)
   tokens:
   - GIT_NAMESPACE
   - DEFAULT_BRANCH
@@ -300,7 +300,7 @@ private_repos:
   - RUNNER_TAG
   - REGISTRY
 environment_profiles:
-  concept: AU-OS.deployment.genesis-environment-profiles
+  concept: MERISTEM-OS.deployment.genesis-environment-profiles
   design_doc: .specify/design/genesis-environment-profiles/design.md
   builtin_dir: deploy/environments
   extension_dir: ~/.config/arbora/environments (XDG config dir; agent_utilities.core.paths.config_dir()

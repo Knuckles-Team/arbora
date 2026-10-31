@@ -9,7 +9,7 @@ codebase is agent-utilities: it scans ``<root>/agent_utilities/`` and
 ``<root>/docs/concept_map.md`` for the 5-pillar (ORCH/KG/AHE/ECO/OS) CONCEPT
 taxonomy, so ``root`` must be an agent-utilities checkout.
 
-CONCEPT:AU-AHE.evaluation.continuous-evaluation — Continuous Evaluation Engine (code health diagnostic)
+CONCEPT:MERISTEM-AHE.evaluation.continuous-evaluation — Continuous Evaluation Engine (code health diagnostic)
 
 Usage:
     arbora-wiring-sweep /path/to/agent-utilities [--json] [--markdown]
@@ -177,7 +177,7 @@ class WiringSweep:
     """
 
     # Matches the current OKF-CIS concept-ID scheme (CONCEPT:<SLUG>-<PILLAR>.<domain>.<concept>,
-    # e.g. CONCEPT:AU-KG.retrieval.synthesized-cited-answer) — kept in sync with the
+    # e.g. CONCEPT:MERISTEM-KG.retrieval.synthesized-cited-answer) — kept in sync with the
     # canonical ``OKF_MARKER_RE`` in ``agent_utilities/governance/concept_hierarchy.py``.
     # The legacy numeric alternative (pillar-major "dot" minor, no domain segment) is
     # retained so a repo mid-migration (or one that never migrated) still scores correctly.
@@ -412,7 +412,7 @@ class WiringSweep:
                 continue
 
             # Match both the "CONCEPT:"-prefixed and bare forms of the current
-            # OKF-CIS scheme (AU-KG.domain.name) plus the legacy numeric one,
+            # OKF-CIS scheme (MERISTEM-KG.domain.name) plus the legacy numeric one,
             # in docs.
             concepts = re.findall(
                 r"(?:CONCEPT:)?("

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """Remote browser-OAuth MCP broker — provider-agnostic per-principal token custody.
 
-CONCEPT:AU-ECO.mcp.remote-oauth-broker
+CONCEPT:MERISTEM-ECO.mcp.remote-oauth-broker
 
 GOC-85 (U-11 / U-41 / U-43 / U-44 / U-45). Builds the credential class this repo has
 never had: a per-user, per-provider, per-remote-resource OAuth token, minted through a

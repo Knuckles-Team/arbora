@@ -6,9 +6,9 @@ decide how an adapter fetches data.  Content is represented only by bounded
 opaque artifact references and digests; the authoritative ingestion path stays
 outside this domain module.
 
-(CONCEPT:AU-KG.ingest.fleet-catalog-relational-tables,
-AU-OS.governance.fail-closed-degraded-read,
-AU-OS.governance.verified-write-state-advance)
+(CONCEPT:MERISTEM-KG.ingest.fleet-catalog-relational-tables,
+MERISTEM-OS.governance.fail-closed-degraded-read,
+MERISTEM-OS.governance.verified-write-state-advance)
 """
 
 from __future__ import annotations

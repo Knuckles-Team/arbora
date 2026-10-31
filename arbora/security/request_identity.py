@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from __future__ import annotations
 
-"""Server-minted request identity for the Knowledge Graph (CONCEPT:AU-OS.identity.authenticated-identity-enforcement).
+"""Server-minted request identity for the Knowledge Graph (CONCEPT:MERISTEM-OS.identity.authenticated-identity-enforcement).
 
 MCP/REST identity is minted **server-side** from a validated JWT, reusing the
 existing JWKS machinery in
@@ -158,7 +158,7 @@ UNAUTHENTICATED_PATHS: frozenset[str] = HEALTH_PATHS
 
 # Network MCP transports expose arbora to many clients at once. Serving them
 # without server-validated identity is the "security fails open" condition, so
-# the served profile is enforced for these transports (CONCEPT:AU-OS.identity.authenticated-identity-enforcement).
+# the served profile is enforced for these transports (CONCEPT:MERISTEM-OS.identity.authenticated-identity-enforcement).
 SERVED_TRANSPORTS: frozenset[str] = frozenset({"streamable-http", "sse"})
 
 # The only graph authorization scopes a served identity may project into a
@@ -387,7 +387,7 @@ def build_verified_request_authority(
 
 # The exact claim-key shape of the ONE live verified-identity carrier this
 # codebase ships (GOC-15 carrier contract,
-# CONCEPT:AU-OS.identity.verified-carrier-contract): the dict
+# CONCEPT:MERISTEM-OS.identity.verified-carrier-contract): the dict
 # `GraphSession.engine_verified_context()` produces and
 # `crates/eg-types/src/acl.rs::RequestContextClaims` deserializes
 # (`#[serde(deny_unknown_fields)]` on the Rust side — an unrecognized key is a
@@ -663,7 +663,7 @@ def apply_served_security_profile(
       the ``/mcp`` endpoint would silently accept every request unauthenticated
       while this function's own log line claims the opposite. Requiring the
       constructed provider closes that fail-open gap
-      (CONCEPT:AU-OS.identity.authenticated-identity-enforcement);
+      (CONCEPT:MERISTEM-OS.identity.authenticated-identity-enforcement);
     * verifies the audience/policy inputs required by mandatory tenant, ACL,
       session, and single-client enforcement.
 
@@ -693,7 +693,7 @@ def apply_served_security_profile(
             "cannot be validated. Set --auth-type/AUTH_TYPE to a real scheme "
             "(jwt, oidc-proxy, oauth-proxy, remote-oauth, or static) — having "
             "AUTH_JWT_JWKS_URI/OIDC_* set is not sufficient by itself. "
-            "(CONCEPT:AU-OS.identity.authenticated-identity-enforcement)"
+            "(CONCEPT:MERISTEM-OS.identity.authenticated-identity-enforcement)"
         )
 
     _require_served_profile_authority(transport, config)
@@ -702,7 +702,7 @@ def apply_served_security_profile(
         "arbora served profile ACTIVE over %s: verified identity/session, "
         "tenant scoping, ACL enforcement, and one graph client are mandatory. "
         "Unauthenticated requests are rejected. "
-        "(CONCEPT:AU-OS.identity.authenticated-identity-enforcement)",
+        "(CONCEPT:MERISTEM-OS.identity.authenticated-identity-enforcement)",
         transport,
     )
 
@@ -713,7 +713,7 @@ def actor_from_claims(claims: dict[str, Any]) -> ActorContext:
     Delegates claim parsing to the one IdP-agnostic normalizer
     (:func:`arbora.security.identity.normalize_identity`) so **Okta
     groups and Keycloak roles are first-class and interchangeable**
-    (CONCEPT:AU-OS.identity.idp-agnostic-role-inheritance):
+    (CONCEPT:MERISTEM-OS.identity.idp-agnostic-role-inheritance):
 
     * ``actor_id`` ← ``sub`` | ``client_id`` | ``azp``
     * ``roles`` ← the *base capability set* = role claims (``roles`` /
@@ -937,7 +937,7 @@ def _require_system_session_mode(session: GraphSession) -> None:
 def system_write_session(config: Any = None) -> GraphSession:
     """Resolve the verified authority for a background/system-triggered graph write.
 
-    BUG-033/BUG-039 (CONCEPT:AU-OS.identity.authenticated-identity-enforcement):
+    BUG-033/BUG-039 (CONCEPT:MERISTEM-OS.identity.authenticated-identity-enforcement):
     three write paths (chat persistence, multi-IDE conversation ingestion,
     messaging post-conversation enrichment) used to call the engine with
     whatever ambient actor happened to be bound -- often none, since a bare
@@ -1365,7 +1365,7 @@ async def _mint_request_session(actor: ActorContext, send: Any) -> GraphSession 
 class ActorIdentityMiddleware:
     """Pure-ASGI middleware that mints the request's ActorContext from a JWT.
 
-    CONCEPT:AU-OS.identity.authenticated-identity-enforcement — Authenticated Identity Enforcement.
+    CONCEPT:MERISTEM-OS.identity.authenticated-identity-enforcement — Authenticated Identity Enforcement.
 
     Behaviour matrix:
 

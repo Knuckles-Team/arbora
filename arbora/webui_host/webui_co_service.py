@@ -1,6 +1,6 @@
 """Serve agent-webui inside the arbora process as a supervised co-service.
 
-CONCEPT:AU-OS.deployment.webui-co-service — agent-webui as a arbora co-service
+CONCEPT:MERISTEM-OS.deployment.webui-co-service — agent-webui as a arbora co-service
 
 Why this exists
 ---------------

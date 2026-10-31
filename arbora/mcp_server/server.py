@@ -54,7 +54,7 @@ def _configure_arbora_otel() -> None:
 def _configure_telemetry_engine_otel() -> None:
     """Eagerly start the standard-env-var OTLP trace pipeline (X2).
 
-    CONCEPT:AU-OS.observability.telemetry-observability — independent of
+    CONCEPT:MERISTEM-OS.observability.telemetry-observability — independent of
     ``_configure_arbora_otel``'s ``ENABLE_OTEL``-gated Logfire/Langfuse
     pipeline: :func:`~arbora.observability.telemetry.configure_standard_otel`
     self-gates purely on the standard ``OTEL_EXPORTER_OTLP_ENDPOINT``/``OTEL_SERVICE_NAME``/
@@ -80,7 +80,7 @@ def _configure_telemetry_engine_otel() -> None:
 def _preflight_mcp_sdk_floor() -> None:
     """Fail startup loudly when the installed MCP SDK is below the declared floor.
 
-    CONCEPT:AU-ECO.mcp.protocol-compat-bridge — closes D-OB-18.
+    CONCEPT:MERISTEM-ECO.mcp.protocol-compat-bridge — closes D-OB-18.
 
     The category defect this exists for is that source-vs-installed divergence was
     INVISIBLE: arbora source targeting fastmcp 4 / mcp 2 ran for weeks on an image
@@ -286,7 +286,7 @@ def mcp_server(
     # so identity/auth is already applied. A failure here is NOT survivable: the
     # previous `except Exception: logger.error(...)` downgraded it to a log line
     # and served a silently wrong surface. Fail loud, preserving __cause__.
-    # CONCEPT:AU-ECO.mcp.fleet-meta-tools-always-on
+    # CONCEPT:MERISTEM-ECO.mcp.fleet-meta-tools-always-on
     # Inject arbora's own embedding model so fleet tool search ranks by
     # query↔description MEANING (semantic), not just literal token overlap.
     fleet_mux = _attach_fleet_runtime(mcp, fleet_catalog_reader)
@@ -328,7 +328,7 @@ def mcp_server(
         )
 
         # Network transports serve many clients at once: enforce server-validated
-        # identity + tenant scoping, or fail loud (CONCEPT:AU-OS.identity.authenticated-identity-enforcement). No-op for stdio.
+        # identity + tenant scoping, or fail loud (CONCEPT:MERISTEM-OS.identity.authenticated-identity-enforcement). No-op for stdio.
         apply_served_security_profile(
             transport,
             transport_auth_configured=(

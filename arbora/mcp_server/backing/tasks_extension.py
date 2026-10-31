@@ -1,6 +1,6 @@
 """Native Arbora ``io.modelcontextprotocol/tasks`` extension, backed by WorkItem.
 
-CONCEPT:AU-ECO.mcp.tasks-workitem-bridge
+CONCEPT:MERISTEM-ECO.mcp.tasks-workitem-bridge
 
 Serves the WorkItem-backed Tasks contract for a client connected directly to
 Arbora's own FastMCP 4 server, over whichever MCP protocol version that
@@ -17,7 +17,7 @@ Deliberately does **not** mount ``fastmcp_tasks.extension.TasksExtension``:
 that package's execution engine is hard-wired to a Docket/Redis backend
 (``fastmcp_tasks.handlers``/``creation.py``, ``pydocket`` dependency) -- a
 second, parallel job system this codebase's one ``WorkItem`` state machine
-(``AU-P1-1``) already forbids duplicating (``AGENTS.md``: extend before you
+(``MERISTEM-P1-1``) already forbids duplicating (``AGENTS.md``: extend before you
 add). This module only reuses the extension's *registration* mechanism
 (``fastmcp.server.extensions.ServerExtension``/``MethodBinding``) -- never
 its execution engine -- and backs every method with
@@ -60,7 +60,7 @@ from arbora.fleet.protocol_compat import mcp_protocol_exception
 # False for every exception once already. Errors this extension emits are built
 # through the same resolver, preserving the installed SDK's wire exception.
 
-# CONCEPT:AU-ECO.mcp.tasks-workitem-bridge -- the fleet is EXPLICITLY mixed
+# CONCEPT:MERISTEM-ECO.mcp.tasks-workitem-bridge -- the fleet is EXPLICITLY mixed
 # fastmcp-version (D-SH-3: child images still ship fastmcp 3.4.4 while the
 # canonical working tree, hostPath-mounted directly over each pod's
 # site-packages, targets fastmcp>=4.0.0b1 -- see docs/architecture/

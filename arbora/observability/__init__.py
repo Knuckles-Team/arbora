@@ -1,7 +1,7 @@
 """Arbora's own observability modules (ARBORA-HOST-R008).
 
 Hosts the gateway-health producer and the shared health-intelligence kernels
-moved from the agent runtime (CONCEPT:AU-OS.observability.unified-health-kernels,
+moved from the agent runtime (CONCEPT:MERISTEM-OS.observability.unified-health-kernels,
 ported verbatim). Metric-agnostic
 anomaly-detection reasoning (distill → baseline → detect → correlate) that any
 arbora telemetry producer (e.g. ``arbora.observability.gateway_health``)

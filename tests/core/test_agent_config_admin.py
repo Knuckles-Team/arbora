@@ -1,4 +1,4 @@
-"""``graph_config`` — governed AgentConfig admin (CONCEPT:AU-OS.config.two-surfaces-by-default).
+"""``graph_config`` — governed AgentConfig admin (CONCEPT:MERISTEM-OS.config.two-surfaces-by-default).
 
 The three properties that make this tool safe to ship, each pinned against the
 concrete way it would otherwise be unsafe:

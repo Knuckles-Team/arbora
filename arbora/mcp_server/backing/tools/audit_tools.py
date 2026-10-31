@@ -1,6 +1,6 @@
 """graph_audit — Tamper-evident audit-ledger MCP tool (G23, audit-trail closure).
 
-CONCEPT:AU-KG.audit.hash-chain-verify
+CONCEPT:MERISTEM-KG.audit.hash-chain-verify
 
 Exposes the engine's mature Rust hash-chained audit log
 (``epistemic-graph/src/audit.rs`` — every durable mutation already chains into a
@@ -71,7 +71,7 @@ def register_audit_tools(mcp: Any) -> None:
 
     runtime.REGISTERED_TOOLS["graph_audit"] = graph_audit
     # No bespoke endpoint needed — the generic REST-twin factory in
-    # runtime._build_server (CONCEPT:AU-KG.coordination.engine-message-broker) mounts
+    # runtime._build_server (CONCEPT:MERISTEM-KG.coordination.engine-message-broker) mounts
     # POST /audit for every ACTION_TOOL_ROUTES entry without a bespoke handler,
     # dispatching through the SAME _execute_tool core.
     runtime.ACTION_TOOL_ROUTES["graph_audit"] = "/audit"

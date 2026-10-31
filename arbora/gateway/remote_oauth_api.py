@@ -1,6 +1,6 @@
 """Gateway callback + authorize routes for the remote browser-OAuth broker.
 
-CONCEPT:AU-ECO.mcp.remote-oauth-broker — Deliverable 2 of NE-008 (GOC-85
+CONCEPT:MERISTEM-ECO.mcp.remote-oauth-broker — Deliverable 2 of NE-008 (GOC-85
 follow-through, closing U-11/U-41/U-43/U-44/U-45's gateway gap): before this
 module, :mod:`arbora.mcp_server.backing.remote_oauth_broker` shipped a complete,
 tested broker CORE with no HTTP surface reachable from a browser — no route

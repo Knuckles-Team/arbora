@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """JWT bearer authentication for HTTP and WebSocket boundaries.
 
-CONCEPT:AU-OS.config.secrets-authentication — Secrets & Authentication
+CONCEPT:MERISTEM-OS.config.secrets-authentication — Secrets & Authentication
 
 Validates bearer tokens against a configured JWKS endpoint. Compatible with
 OIDC providers including Azure AD, Okta, Keycloak, and Auth0. Loopback-only
@@ -149,7 +149,7 @@ def _decode_jwt(
 ) -> dict:
     """Decode and validate a JWT token using authlib.
 
-    CONCEPT:AU-OS.config.secrets-authentication — Secrets & Authentication
+    CONCEPT:MERISTEM-OS.config.secrets-authentication — Secrets & Authentication
 
     Args:
         token: The raw JWT string.

@@ -1,11 +1,11 @@
-"""graph_reach MCP tool — outbound messaging + last-active channel routing (CONCEPT:AU-ECO.mcp.graph-reach-mcp-tool).
+"""graph_reach MCP tool — outbound messaging + last-active channel routing (CONCEPT:MERISTEM-ECO.mcp.graph-reach-mcp-tool).
 
 Thin wrapper over :class:`arbora.messaging.service.MessagingService` (the one core).
 This is the surface Claude (and any MCP client) uses to message the operator over Telegram
 (or any configured backend) and to inspect routing state. The REST twin is ``/graph/reach``
 (``gateway/graph_api.py``); both dispatch into the same service so they never drift.
 
-CONCEPT:AU-ECO.mcp.graph-reach-mcp-tool — graph_reach MCP tool and REST twin for outbound user messaging
+CONCEPT:MERISTEM-ECO.mcp.graph-reach-mcp-tool — graph_reach MCP tool and REST twin for outbound user messaging
 """
 
 from __future__ import annotations
@@ -18,12 +18,12 @@ from arbora.mcp_server import runtime
 
 
 def register_reach_tools(mcp):
-    """Register the ``graph_reach`` tool onto the MCP server. CONCEPT:AU-ECO.mcp.graph-reach-mcp-tool"""
+    """Register the ``graph_reach`` tool onto the MCP server. CONCEPT:MERISTEM-ECO.mcp.graph-reach-mcp-tool"""
 
     @mcp.tool(
         name="graph_reach",
         description=(
-            "CONCEPT:AU-ECO.mcp.graph-reach-mcp-tool — reach the user over a messaging backend (Telegram, "
+            "CONCEPT:MERISTEM-ECO.mcp.graph-reach-mcp-tool — reach the user over a messaging backend (Telegram, "
             "Slack, Discord, ...). Actions: 'reach_user' (text [+user_id] → routed to the "
             "user's LAST-ACTIVE channel, else the configured default — OpenClaw-style), "
             "'send' (platform+channel_id+text for an explicit target), 'list_channels' "

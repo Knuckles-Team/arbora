@@ -1,6 +1,6 @@
 """Agent Manager Dashboard — single-pane governance view (ARBORA-HOST-R008).
 
-CONCEPT:AU-ECO.ui.agent-manager-dashboard — Agent Manager Dashboard
+CONCEPT:MERISTEM-ECO.ui.agent-manager-dashboard — Agent Manager Dashboard
 
 Provides a CLI and programmatic interface for the "agent manager" role —
 a hybrid PM/engineer function dedicated to managing the agent ecosystem.
@@ -131,7 +131,7 @@ class DashboardReport:
 class AgentManagerDashboard:
     """Single-pane governance dashboard for agent ecosystem management.
 
-    CONCEPT:AU-ECO.ui.agent-manager-dashboard — Agent Manager Dashboard
+    CONCEPT:MERISTEM-ECO.ui.agent-manager-dashboard — Agent Manager Dashboard
 
     Usage::
 
