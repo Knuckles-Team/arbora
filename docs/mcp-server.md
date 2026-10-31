@@ -7,7 +7,7 @@ registers them once and exposes the same core through MCP and REST.
 <ol class="site-flow" aria-label="MCP serving composition">
   <li class="site-flow__step"><span class="site-flow__title">Start</span><span class="site-flow__body">The <code>arbora</code> command starts the single serving lifecycle.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Compose</span><span class="site-flow__body">The server binds the shared tool and REST application runtime.</span></li>
-  <li class="site-flow__step"><span class="site-flow__title">Connect authority</span><span class="site-flow__body">Typed agent-utilities services and epistemic-graph clients supply domain behavior.</span></li>
+  <li class="site-flow__step"><span class="site-flow__title">Connect authority</span><span class="site-flow__body">Typed meristem services and epistemic-graph clients supply domain behavior.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Open the fleet</span><span class="site-flow__body">Lazy fleet meta-tools expose admitted connector services.</span></li>
   <li class="site-flow__step"><span class="site-flow__title">Host co-services</span><span class="site-flow__body">Overstory and messaging use the same composed process authority.</span></li>
 </ol>

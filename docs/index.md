@@ -78,7 +78,7 @@ explicitly.
   </li>
   <li class="site-flow__step">
     <span class="site-flow__title">Route to the owner</span>
-    <span class="site-flow__body">Agent work reaches agent-utilities; graph work reaches Medulla; source work reaches an admitted connector.</span>
+    <span class="site-flow__body">Agent work reaches meristem; graph work reaches Medulla; source work reaches an admitted connector.</span>
   </li>
   <li class="site-flow__step">
     <span class="site-flow__title">Return evidence</span>

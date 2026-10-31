@@ -4,7 +4,7 @@
 Each stage in ``docs/release-qualification-runbook.md`` names an automated
 check or script. This test proves, for every stage that cites a check this
 repository owns, that the named check still exists: a renamed or removed
-``agent-utilities-doctor`` check, console script, or test directory would
+``arbora-doctor`` check, console script, or test directory would
 fail this test rather than silently leaving the runbook stale.
 """
 
@@ -63,7 +63,7 @@ def test_runbook_cites_real_console_scripts() -> None:
     for script_name in (
         "arbora-release-canary",
         "arbora-production-ops",
-        "agent-utilities-doctor",
+        "arbora-doctor",
     ):
         assert script_name in text
         assert script_name in scripts, f"{script_name} is no longer a console script"

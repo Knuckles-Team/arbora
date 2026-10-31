@@ -293,7 +293,7 @@ so this adapter is not yet production-attached.
 MCP follows `arbora/api/mcp/serving.py::register_intent_surface` and the
 `/mcp` streamable-HTTP protocol route. Its JSON-RPC `tools/call` uses the
 registered `ask` tool with `arguments.op` and `arguments.params`. The current
-`arbora/mcp_server/server.py` still uses the legacy agent-utilities surface;
+`arbora/mcp_server/server.py` still uses the legacy meristem surface;
 the operation-backed Arbora MCP registration is not active. These are explicit missing attachment edges, not served evidence. Keep all nine operations unavailable until Arbora admits the provider port and authority contract.
 
 Add future served tests at `tests/mcp_server/test_data_market_reads_served.py`. The test-spec names each required function and route-level acceptance. Preserve FI-01 through FI-10 and parent paper-order acceptance. This definition adds no runtime or test result claim.

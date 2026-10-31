@@ -33,11 +33,11 @@ No new authorization service. No second policy engine. No new publication path.
 
 ## Interfaces
 
-- `graph_os.deployment.deploy_manifest` — the typed manifest model. It carries version,
+- `arbora.deployment.deploy_manifest` — the typed manifest model. It carries version,
   components, and pins.
 - `plan(manifest)` returns a `DeploymentDiff`. It is read-only. `apply(diff)` returns an
   `ApplyReceipt`. It is idempotent.
-- `graph_os.policy.bundle` — the typed policy bundle model. `compile(bundle)` returns scope
+- `arbora.policy.bundle` — the typed policy bundle model. `compile(bundle)` returns scope
   rules for the existing evaluator. `bind(bundle, scope)` is a governed operation.
 - Served surface: `GET /llms.txt`. MCP resources sit under the existing FastMCP bridge. The
   skill export command gains a `--digest-stamp` flag.

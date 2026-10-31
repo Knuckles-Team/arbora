@@ -24,7 +24,7 @@ _ENTRY_POINTS = {
     # Certify the native serving composition, not the removed informational
     # shell and never an AU compatibility alias.
     "arbora": "arbora.console:main",
-    "agent-utilities-doctor": "arbora.deployment.doctor:main",
+    "arbora-doctor": "arbora.deployment.doctor:main",
 }
 
 

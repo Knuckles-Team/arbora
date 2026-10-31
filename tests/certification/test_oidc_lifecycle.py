@@ -96,7 +96,7 @@ def test_lifecycle_authority_verifies_tls_renews_and_removes_private_work() -> N
             },
             model_private_hosts=["10.0.0.10"],
         )
-        profile = json.loads(environment["GRAPHOS_SKILL_CERT_OIDC_TLS_PROFILE"])
+        profile = json.loads(environment["ARBORA_SKILL_CERT_OIDC_TLS_PROFILE"])
         identity_oauth2 = json.loads(environment["KG_IDENTITY_OAUTH2"])
         assert profile["system_trust"] is False
         assert profile["trust_env"] is False
@@ -104,10 +104,10 @@ def test_lifecycle_authority_verifies_tls_renews_and_removes_private_work() -> N
         assert "verify" not in profile
         assert "allow_insecure" not in profile
         assert identity_oauth2["tls_profile_ref"] == (
-            "env://GRAPHOS_SKILL_CERT_OIDC_TLS_PROFILE"
+            "env://ARBORA_SKILL_CERT_OIDC_TLS_PROFILE"
         )
         assert environment["OIDC_TLS_PROFILE_REF"] == (
-            "env://GRAPHOS_SKILL_CERT_OIDC_TLS_PROFILE"
+            "env://ARBORA_SKILL_CERT_OIDC_TLS_PROFILE"
         )
         assert environment["OAUTH2_TOKEN_TLS_PROFILE"] == "model-token-authority"
         assert environment["OAUTH2_TOKEN_TLS_PROFILE_REF"] == (

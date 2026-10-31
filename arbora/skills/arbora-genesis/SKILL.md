@@ -36,7 +36,7 @@ Read [runtime-topology.md](references/runtime-topology.md) first. In one line:
   standard *unified* topology it runs in the same pod or container as arbora,
   as a native sidecar container (Kubernetes) or a supervised child process
   (Compose, Swarm, bare metal). Its store has exactly one writer.
-- **agent-utilities (AU)** is the agent-orchestration library arbora imports.
+- **meristem (AU)** is the agent-orchestration library arbora imports.
   It is not deployed as a service of its own.
 - **Connectors** are MCP servers built on agent-connector-sdk. arbora reaches
   them through its fleet multiplexer.

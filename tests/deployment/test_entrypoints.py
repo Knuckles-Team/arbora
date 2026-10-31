@@ -17,8 +17,8 @@ def _project_scripts() -> dict[str, str]:
 def test_host_deployment_scripts_point_to_arbora_modules() -> None:
     scripts = _project_scripts()
     assert scripts == {
-        "agent-utilities-doctor": "arbora.deployment.doctor:main",
-        "agent-utilities-venv": "arbora.deployment.venv_sync:main",
+        "arbora-doctor": "arbora.deployment.doctor:main",
+        "arbora-venv": "arbora.deployment.venv_sync:main",
         "arbora": "arbora.console:main",
         "arbora-acp": "arbora.acp.local_runtime:main",
         "arbora-production-ops": "arbora.deployment.production_ops:main",
@@ -35,7 +35,7 @@ def test_host_deployment_scripts_point_to_arbora_modules() -> None:
 def test_release_canary_checks_the_same_direct_entrypoints() -> None:
     assert release_canary._ENTRY_POINTS == {
         "arbora": "arbora.console:main",
-        "agent-utilities-doctor": "arbora.deployment.doctor:main",
+        "arbora-doctor": "arbora.deployment.doctor:main",
     }
 
 

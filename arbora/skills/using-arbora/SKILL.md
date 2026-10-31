@@ -89,7 +89,7 @@ kept current by ingestion, where a stale local checkout is not.
 `graph_orchestrate(task, agent_name="", skill_name="", tool_server="",
 execution_mode="auto", allowed_tools=..., ...)` resolves an ingested
 skill/workflow/agent for `task` and runs it on the governed delegation
-runtime (registered under that exact name in agent-utilities; dispatched from
+runtime (registered under that exact name in meristem; dispatched from
 arbora through `arbora/mcp_server/runtime.py`'s `_execute_tool`). Leave
 `agent_name`/`skill_name` empty to let the
 knowledge graph's own capability ranking pick the best skill, workflow, or

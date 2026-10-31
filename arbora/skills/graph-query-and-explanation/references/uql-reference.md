@@ -18,7 +18,7 @@ whatever dimensionality the engine's `SemanticStore` embeddings use** — the
 executor re-orders the candidate RowSet by **cosine similarity** between `query`
 and each candidate's stored embedding (`rank_op`, `exec.rs:611`). The `[1.0, 0.0,
 0.0, 0.0]` example that appears in the parser doctest, `docs/uql.md`, and the
-agent-utilities `nl_planner` system prompt is a **4-dimensional test/example
+meristem `nl_planner` system prompt is a **4-dimensional test/example
 fixture vector**, not a semantic schema — the dimensionality is whatever the bound
 `SemanticStore`'s vectors are (test fixtures in this codebase are commonly small
 for readability). If a caller wants relevance/recency/etc. blended, that is a

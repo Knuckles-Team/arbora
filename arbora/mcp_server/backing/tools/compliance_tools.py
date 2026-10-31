@@ -178,7 +178,7 @@ def _posture() -> dict[str, Any]:
     engine = runtime._get_engine()
 
     # X4: policy version + auth/secrets posture reuse the existing
-    # agent-utilities-doctor checks and need no KG engine at all — computed
+    # arbora-doctor checks and need no KG engine at all — computed
     # regardless of engine availability, so a deployment with no reachable
     # engine still gets SOME compliance signal instead of an all-or-nothing
     # rollup.
@@ -318,7 +318,7 @@ def register_compliance_tools(mcp: Any) -> None:
             "redaction logic). Actions: 'posture' (policy_version — the "
             "active ActionPolicy ruleset's version/default_tier/rule_count; "
             "auth_posture + secrets_posture — the SAME already-redacted "
-            "agent-utilities-doctor auth/outbound_auth/graph_authority/"
+            "arbora-doctor auth/outbound_auth/graph_authority/"
             "graph_identity/secrets/secrets_backend/mcp_fleet_secrets checks, "
             "sliced via run_doctor(only=[...]) — both reported even with no "
             "reachable engine; PLUS, when an engine is active: the "

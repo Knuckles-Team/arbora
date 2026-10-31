@@ -140,7 +140,7 @@ skill's `agents/arbora.yaml` sidecar. Run the coverage command after changing
 the tool surface or skill taxonomy:
 
 ```text
-# in agent-utilities (the coverage checker and its test both still live there):
+# in meristem (the coverage checker and its test both still live there):
 python -m arbora.mcp_server.backing.skill_coverage
 pytest tests/unit/test_gateway_mcp_parity.py -q      # tool <-> REST-route <-> skill legs
 ```

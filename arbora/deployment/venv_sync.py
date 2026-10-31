@@ -705,7 +705,7 @@ class LeaseActivityProbe:
     has paused between test commands but still needs a stable environment.  A
     lane can therefore declare a window explicitly::
 
-        agent-utilities-venv lease acquire --owner lane-x --ttl 3600
+        arbora-venv lease acquire --owner lane-x --ttl 3600
 
     Leases expire, so a crashed lane cannot wedge the reconciler forever.
     """
@@ -935,7 +935,7 @@ class LockConsistencyGuardrail:
             reason=(
                 "uv.lock is out of date with the workspace manifests; a sync "
                 "would install a resolution nobody reviewed. Run "
-                "`agent-utilities-venv relock` (backed up + verified) instead."
+                "`arbora-venv relock` (backed up + verified) instead."
             ),
             data={"detail": ctx.lock_check_detail},
         )
@@ -2273,9 +2273,9 @@ def session_start_hint(workspace: Workspace) -> str | None:
     names = ", ".join(sorted(s.member.name for s in stale)[:5])
     more = f" (+{len(stale) - 5} more)" if len(stale) > 5 else ""
     return (
-        f"agent-utilities-venv: {len(stale)} editable member(s) look stale in "
-        f"the shared venv ({names}{more}) — run `agent-utilities-venv status` "
-        "for the full report, `agent-utilities-venv sync` to reconcile."
+        f"arbora-venv: {len(stale)} editable member(s) look stale in "
+        f"the shared venv ({names}{more}) — run `arbora-venv status` "
+        "for the full report, `arbora-venv sync` to reconcile."
     )
 
 
@@ -2590,7 +2590,7 @@ def _print_human(payload: dict[str, Any], indent: int = 0) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="agent-utilities-venv",
+        prog="arbora-venv",
         description=(
             "The sanctioned entry point for the shared uv-workspace virtualenv. "
             "Every sync it runs uses `uv sync "
