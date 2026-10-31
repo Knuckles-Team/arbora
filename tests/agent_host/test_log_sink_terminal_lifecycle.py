@@ -12,6 +12,7 @@ from typing import Any
 import pytest
 
 from arbora.agent_host.log_access import HostLogAccess, HostLogBatch
+from arbora.agent_host import log_routes
 from arbora.agent_host.log_runtime import HostLogRuntime
 from arbora.agent_host.log_sink import WorkspaceLogSink
 from tests.agent_host.native_terminal import NativeTerminal
@@ -79,15 +80,14 @@ def assert_stopped(
     assert sum(kind == "bind" for kind, _ in calls) == 1
 
 
-# The route enforces a 1 s read deadline. The injected delay must leave most of
-# it for the real thread-offloaded read on a loaded runner; a 0.6 s delay left
-# 0.4 s and the deadline cancelled the read (503, "Host logs unavailable").
 @pytest.mark.asyncio
-@pytest.mark.parametrize("read_delay", [0, 0.2])
+@pytest.mark.parametrize("read_delay", [0, 0.6])
 @pytest.mark.usefixtures("unsynced_log_writes")
 async def test_production_sink_over_http_into_mounted_terminal(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, read_delay: float
 ) -> None:
+    # Measure slow-read behavior, not runner speed: the budget is not under test.
+    monkeypatch.setattr(log_routes, "HOST_LOG_REQUEST_BUDGET_SECONDS", 30.0)
     owners = ControlledOwners()
     runtime = runtime_for(owners, tmp_path, True)
     trace = NativeTransportTrace()

@@ -17,7 +17,7 @@ import httpx
 import pytest
 import uvicorn
 
-from arbora.agent_host import build_agent_host_app
+from arbora.agent_host import build_agent_host_app, log_routes
 from arbora.agent_host.log_access import (
     HostLogAccess,
     HostLogBatch,
@@ -392,8 +392,13 @@ def test_ambiguous_credentials_and_authority_params_refused(
         assert owners.calls == 0
 
 
-def test_read_timeout(setup: tuple[ControlledOwners, HostLogAccess]) -> None:
+def test_read_timeout(
+    setup: tuple[ControlledOwners, HostLogAccess], monkeypatch: pytest.MonkeyPatch
+) -> None:
     owners, access = setup
+    # A read slower than the budget refuses with 503; the budget is set well
+    # below the owner's fixed delay so the outcome never depends on runner speed.
+    monkeypatch.setattr(log_routes, "HOST_LOG_REQUEST_BUDGET_SECONDS", 0.05)
     owners.slow = True
     with serve(access) as client:
         response = read(client, reference(client))
