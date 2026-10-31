@@ -5,7 +5,7 @@ name: CI
 # `build`; docs and spec-only diffs skip both. The caller aggregate `CI required`
 # is the one required status check. A push to main and the nightly schedule call
 # the read-only checks.yml for the full gates, wheel build, six-platform install
-# smoke, the Python 3.12 backward leg and the advisory scanners. This workflow
+# smoke, the Python 3.12 backward leg. This workflow
 # never calls release.yml and holds no write permission: only a v* tag publishes.
 
 on:
@@ -19,7 +19,7 @@ on:
 
 concurrency:
   group: ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.workflow, github.event.pull_request.number) || format('main-{0}-{1}', github.workflow, github.ref) }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read

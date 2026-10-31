@@ -12,7 +12,7 @@ tracked as ARBORA-OPS-R022.2.
 
 Each handler scopes its call to ``context.caller.tenant`` -- the verified
 caller identity the shared invoke pipeline already resolved -- so a work
-item or offer is only ever visible to its bound principal's tenant; the
+item or offer is only ever visible to its bound principal within that tenant; the
 runner facade, not this module, holds the durable record.
 """
 
@@ -60,11 +60,16 @@ async def handle_work(
     if op.id == "work.items.list":
         result = await runner.list_items(
             tenant=context.caller.tenant,
+            principal=context.caller.principal,
             cursor=params.get("cursor"),
             limit=params["limit"],
         )
     elif op.id == "work.items.get":
-        result = await runner.get_item(params["item_id"], tenant=context.caller.tenant)
+        result = await runner.get_item(
+            params["item_id"],
+            tenant=context.caller.tenant,
+            principal=context.caller.principal,
+        )
         if result is None:
             raise LookupError("work item not found")
     elif op.id == "work.offers.create":
@@ -74,6 +79,7 @@ async def handle_work(
             params["item_id"],
             terms=dict(params["terms"]),
             tenant=context.caller.tenant,
+            principal=context.caller.principal,
             idempotency_key=context.idempotency_key,
         )
     else:

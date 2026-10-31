@@ -3,8 +3,7 @@
 # over every file, then the manual-stage hooks that need the provisioned
 # environment), so local and hosted runs execute the same gate code.
 #
-# Every repository-agnostic gate -- complexity, KISS, clones, secrets,
-# privacy, hygiene and code shape -- comes from the shared hook repository
+# The shared gates (`secrets`, `spec`) come from the hook repository
 # Knuckles-Team/pipelines at main; repository-specific inputs are
 # declared in pyproject.toml `[tool.pipelines_hooks]`. Hooks that need a
 # sibling checkout or a synced environment (scripts/local_hook.sh) print
@@ -91,78 +90,11 @@ repos:
 
 # ── Shared gates (Knuckles-Team/pipelines, main) ─────────────────────────────
 - repo: https://github.com/Knuckles-Team/pipelines
-  rev: main # sanctioned first-party exception; public-surface gate
+  rev: main # sanctioned first-party exception
   hooks:
-  # scanners (pinned versions; never installed by a hook)
-  - id: complexity-staged
-    stages: [pre-push, manual]
-  - id: kiss-staged
-    stages: [pre-push, manual]
-  - id: dupehound-changed
-    stages: [pre-push, manual]
-  - id: complexity-census
-    stages: [manual]
-  # Orphan modules are NOT covered here since kiss 0.4.11 (the check moved
-  # to the coverage-linked `kiss test`); arbora's Python orphan-module
-  # wiring gate is the check-orphan-modules local hook below.
-  - id: kiss-census
-    stages: [manual]
-  - id: jscpd-differential
-    stages: [manual]
-  - id: jscpd-census
-    stages: [manual]
-  - id: scanner-versions
-    stages: [manual]
-  # code shape
-  - id: no-stub
-    stages: [pre-push, manual]
-  - id: stubs
-    stages: [pre-push, manual]
-    exclude: ^tests/
-  - id: env-sprawl
-    stages: [pre-push, manual]
-  - id: stdout-writes
-    stages: [pre-push, manual]
-  - id: swallowed-errors
-    stages: [pre-push, manual]
-  - id: event-loop-blocking
-    stages: [pre-push, manual]
-  - id: import-cycles
-    stages: [pre-push, manual]
-  # public documentation
-  - id: public-surface
-    stages: [pre-commit, manual]
-  - id: ste-staged
-    stages: [pre-commit, manual]
-  - id: ste-staleness-staged
-    stages: [pre-push, manual]
-  # secrets, privacy, supply chain, hygiene
-  - id: supply-chain
-    stages: [pre-push, manual]
-  - id: secret-history
-    stages: [pre-push, manual]
-  - id: security-sanitizer
-    stages: [pre-push, manual]
-  - id: tracked-privacy
-    stages: [pre-push, manual]
-  - id: root-hygiene
-    stages: [pre-push, manual]
-  - id: gitignore-convergence
-    stages: [pre-push, manual]
-  - id: sprawl
-    stages: [pre-push, manual]
-  - id: mermaid
-    stages: [pre-push, manual]
-  - id: pre-commit-patch-safety
-    stages: [pre-push, manual]
-  # spec-status lifecycle (plans/refactor/reconciliation-20261006/SPEC-STATUS-LIFECYCLE.md)
-  - id: spec-status
-    stages: [pre-push, manual]
-  - id: spec-decomposition
-    stages: [pre-push, manual]
-  - id: spec-standard
-    stages: [pre-commit, manual]
-  - id: spec-trailers
+  - id: secrets
+    stages: [pre-commit, pre-push]
+  - id: spec
     stages: [pre-push, manual]
 
 - repo: local
@@ -201,8 +133,8 @@ repos:
 
 - repo: local
   hooks:
-  # arbora's Python orphan-module wiring gate (see .config/kiss.toml
-  # [global] and AGENTS.md "Orphan-module wiring gate (Python)"): a
+  # arbora's Python orphan-module wiring gate (see
+  # AGENTS.md "Orphan-module wiring gate (Python)"): a
   # arbora/ module with no production fan-in and no production fan-out
   # (on disk, tracked or not). Needs only the stdlib (ast, tomllib), so it
   # runs in a fresh clone with no synced environment.

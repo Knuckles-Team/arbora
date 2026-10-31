@@ -2308,6 +2308,13 @@
         "schema": {
           "additionalProperties": false,
           "properties": {
+            "provenance": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "title": "Provenance",
+              "type": "object"
+            },
             "value": {
               "additionalProperties": true,
               "title": "Value",
@@ -2315,7 +2322,8 @@
             }
           },
           "required": [
-            "value"
+            "value",
+            "provenance"
           ],
           "title": "DecideCommitResult",
           "type": "object"
@@ -3388,52 +3396,6 @@
       "stability": "stable",
       "subject": null,
       "summary": "Rebalance Plan",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "manage"
-    },
-    {
-      "audit": "event",
-      "binding": {
-        "kind": "eg",
-        "op": "RegisterForeignSource",
-        "service": "RegisterForeignSource"
-      },
-      "confirm": "console",
-      "effect": "admin",
-      "examples": [
-        "RegisterForeignSource cluster"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "eg.cluster.RegisterForeignSource",
-      "idempotency": "key_required",
-      "params": {
-        "eg_schema": "contract/schemas/method.request.json#/methods/RegisterForeignSource",
-        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
-        "schema_snapshot": {
-          "$ref": "schemas/method.request.json#/methods/RegisterForeignSource"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "eg_schema": "contract/schemas/result.cluster.json#/methods/RegisterForeignSource",
-        "schema_sha256": "7d75e3a07ab6066bfa18f65db62e9f11628684510b2517fb45cf1c44763b45af",
-        "schema_snapshot": {
-          "$ref": "schemas/result.cluster.json#/methods/RegisterForeignSource"
-        }
-      },
-      "scopes": [
-        "federation:admin"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "opaque prepared/committed control receipt; endpoint configuration is not duplicated in the ledger",
       "surfaces": [
         "a2a",
         "http",
@@ -19545,52 +19507,6 @@
       "audit": "none",
       "binding": {
         "kind": "eg",
-        "op": "QueryForeignColumns",
-        "service": "QueryForeignColumns"
-      },
-      "confirm": "none",
-      "effect": "read",
-      "examples": [
-        "QueryForeignColumns query"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "eg.query.QueryForeignColumns",
-      "idempotency": "natural",
-      "params": {
-        "eg_schema": "contract/schemas/method.request.json#/methods/QueryForeignColumns",
-        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
-        "schema_snapshot": {
-          "$ref": "schemas/method.request.json#/methods/QueryForeignColumns"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "eg_schema": "contract/schemas/result.query.json#/methods/QueryForeignColumns",
-        "schema_sha256": "70eabbe0ee224f1c9fe0617dafca5aba276326397052c5c1a1cbfdaa21ad75da",
-        "schema_snapshot": {
-          "$ref": "schemas/result.query.json#/methods/QueryForeignColumns"
-        }
-      },
-      "scopes": [
-        "federation:read"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "Verified owner-scoped mapped-column read with bounded source fetch and local predicate residual",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "ask"
-    },
-    {
-      "audit": "none",
-      "binding": {
-        "kind": "eg",
         "op": "RankByProvenance",
         "service": "RankByProvenance"
       },
@@ -19770,52 +19686,6 @@
         "mcp"
       ],
       "verb": "ask"
-    },
-    {
-      "audit": "event",
-      "binding": {
-        "kind": "eg",
-        "op": "Sql",
-        "service": "Sql"
-      },
-      "confirm": "none",
-      "effect": "write",
-      "examples": [
-        "Sql query"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "eg.query.Sql",
-      "idempotency": "key_required",
-      "params": {
-        "eg_schema": "contract/schemas/method.request.json#/methods/Sql",
-        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
-        "schema_snapshot": {
-          "$ref": "schemas/method.request.json#/methods/Sql"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "eg_schema": "contract/schemas/result.query.json#/methods/Sql",
-        "schema_sha256": "70eabbe0ee224f1c9fe0617dafca5aba276326397052c5c1a1cbfdaa21ad75da",
-        "schema_snapshot": {
-          "$ref": "schemas/result.query.json#/methods/Sql"
-        }
-      },
-      "scopes": [
-        "query:sql"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "runtime-conditional; graph DML uses staged graph state while table/catalog writes atomically commit SQL rows plus MutationBatch status/fence/idempotency/outbox",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "write"
     },
     {
       "audit": "none",
@@ -20140,52 +20010,6 @@
       "verb": "manage"
     },
     {
-      "audit": "none",
-      "binding": {
-        "kind": "eg",
-        "op": "GraphSchemaClasses",
-        "service": "GraphSchemaClasses"
-      },
-      "confirm": "none",
-      "effect": "read",
-      "examples": [
-        "GraphSchemaClasses reasoning"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "eg.reasoning.GraphSchemaClasses",
-      "idempotency": "natural",
-      "params": {
-        "eg_schema": "contract/schemas/method.request.json#/methods/GraphSchemaClasses",
-        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
-        "schema_snapshot": {
-          "$ref": "schemas/method.request.json#/methods/GraphSchemaClasses"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "eg_schema": "contract/schemas/result.reasoning.json#/methods/GraphSchemaClasses",
-        "schema_sha256": "162a39438e63bbd0cd1ac76856bf79845563dfaa8e8444af349632e37bc7dd2f",
-        "schema_snapshot": {
-          "$ref": "schemas/result.reasoning.json#/methods/GraphSchemaClasses"
-        }
-      },
-      "scopes": [
-        "owl:read"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "EH-389. One page of the classes and properties the request graph's composed schema declares, with the declaring source; the schema's own vocabulary, not graph rows and not the source documents, so an ordinary ontology read (owl:read) rather than GraphSchemaList's security:admin",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "ask"
-    },
-    {
       "audit": "event",
       "binding": {
         "kind": "eg",
@@ -20276,52 +20100,6 @@
         "mcp"
       ],
       "verb": "manage"
-    },
-    {
-      "audit": "none",
-      "binding": {
-        "kind": "eg",
-        "op": "OntologyInspect",
-        "service": "OntologyInspect"
-      },
-      "confirm": "none",
-      "effect": "read",
-      "examples": [
-        "OntologyInspect reasoning"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "eg.reasoning.OntologyInspect",
-      "idempotency": "natural",
-      "params": {
-        "eg_schema": "contract/schemas/method.request.json#/methods/OntologyInspect",
-        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
-        "schema_snapshot": {
-          "$ref": "schemas/method.request.json#/methods/OntologyInspect"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "eg_schema": "contract/schemas/result.reasoning.json#/methods/OntologyInspect",
-        "schema_sha256": "162a39438e63bbd0cd1ac76856bf79845563dfaa8e8444af349632e37bc7dd2f",
-        "schema_snapshot": {
-          "$ref": "schemas/result.reasoning.json#/methods/OntologyInspect"
-        }
-      },
-      "scopes": [
-        "validation:read"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "the vocabulary, SHACL targets and canonical digest of inline documents or the composed GraphSchema sources, so orchestration callers need no RDF parser; reads schema, never graph rows",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "ask"
     },
     {
       "audit": "none",
@@ -20506,98 +20284,6 @@
         "mcp"
       ],
       "verb": "write"
-    },
-    {
-      "audit": "none",
-      "binding": {
-        "kind": "eg",
-        "op": "ShaclValidate",
-        "service": "ShaclValidate"
-      },
-      "confirm": "none",
-      "effect": "read",
-      "examples": [
-        "ShaclValidate reasoning"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "eg.reasoning.ShaclValidate",
-      "idempotency": "natural",
-      "params": {
-        "eg_schema": "contract/schemas/method.request.json#/methods/ShaclValidate",
-        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
-        "schema_snapshot": {
-          "$ref": "schemas/method.request.json#/methods/ShaclValidate"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "eg_schema": "contract/schemas/result.reasoning.json#/methods/ShaclValidate",
-        "schema_sha256": "162a39438e63bbd0cd1ac76856bf79845563dfaa8e8444af349632e37bc7dd2f",
-        "schema_snapshot": {
-          "$ref": "schemas/result.reasoning.json#/methods/ShaclValidate"
-        }
-      },
-      "scopes": [
-        "validation:read"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "Shacl Validate",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "ask"
-    },
-    {
-      "audit": "none",
-      "binding": {
-        "kind": "eg",
-        "op": "Sparql",
-        "service": "Sparql"
-      },
-      "confirm": "none",
-      "effect": "read",
-      "examples": [
-        "Sparql reasoning"
-      ],
-      "executor": "caller",
-      "executor_scopes": [],
-      "http": null,
-      "id": "eg.reasoning.Sparql",
-      "idempotency": "natural",
-      "params": {
-        "eg_schema": "contract/schemas/method.request.json#/methods/Sparql",
-        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
-        "schema_snapshot": {
-          "$ref": "schemas/method.request.json#/methods/Sparql"
-        }
-      },
-      "principals": "any",
-      "remove_in": null,
-      "result": {
-        "eg_schema": "contract/schemas/result.reasoning.json#/methods/Sparql",
-        "schema_sha256": "162a39438e63bbd0cd1ac76856bf79845563dfaa8e8444af349632e37bc7dd2f",
-        "schema_snapshot": {
-          "$ref": "schemas/result.reasoning.json#/methods/Sparql"
-        }
-      },
-      "scopes": [
-        "sparql:read"
-      ],
-      "stability": "stable",
-      "subject": null,
-      "summary": "Sparql",
-      "surfaces": [
-        "a2a",
-        "http",
-        "mcp"
-      ],
-      "verb": "ask"
     },
     {
       "audit": "none",
@@ -24188,6 +23874,443 @@
       "verb": "write"
     },
     {
+      "audit": "none",
+      "binding": {
+        "kind": "eg",
+        "op": "QueryForeignColumns",
+        "service": "QueryForeignColumns"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "show the columns of this federated source"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "federation.sources.columns",
+      "idempotency": "none",
+      "params": {
+        "eg_schema": "contract/schemas/method.request.json#/methods/QueryForeignColumns/properties/params",
+        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
+        "schema_snapshot": {
+          "$ref": "schemas/method.request.json#/methods/QueryForeignColumns/properties/params"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "eg_schema": "contract/schemas/result.query.json#/methods/QueryForeignColumns",
+        "schema_sha256": "70eabbe0ee224f1c9fe0617dafca5aba276326397052c5c1a1cbfdaa21ad75da",
+        "schema_snapshot": {
+          "$ref": "schemas/result.query.json#/methods/QueryForeignColumns"
+        }
+      },
+      "scopes": [
+        "federation:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Read the columns of a registered foreign source",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.federation.handle_federation",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "show this federated source"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "federation.sources.get",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.federation.SourceRefParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "source_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source_id"
+          ],
+          "title": "SourceRefParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.federation.SourceResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "federation:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Get one visible federation source",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.federation.handle_federation",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "list my federated sources"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "federation.sources.list",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.federation.SourcesListParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {},
+          "title": "SourcesListParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.federation.SourceResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "federation:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "List the federation sources visible to the caller",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.federation.handle_federation",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "probe this federated source"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "federation.sources.probe",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.federation.SourceRefParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "source_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source_id"
+          ],
+          "title": "SourceRefParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.federation.SourceResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "federation:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Probe one visible federation source; credentials are redacted",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "kind": "eg",
+        "op": "RegisterForeignSource",
+        "service": "RegisterForeignSource"
+      },
+      "confirm": "console",
+      "effect": "admin",
+      "examples": [
+        "register a federated source"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "federation.sources.register",
+      "idempotency": "key_required",
+      "params": {
+        "eg_schema": "contract/schemas/method.request.json#/methods/RegisterForeignSource/properties/params",
+        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
+        "schema_snapshot": {
+          "$ref": "schemas/method.request.json#/methods/RegisterForeignSource/properties/params"
+        }
+      },
+      "principals": "human_undelegated",
+      "remove_in": null,
+      "result": {
+        "eg_schema": "contract/schemas/result.cluster.json#/methods/RegisterForeignSource",
+        "schema_sha256": "7d75e3a07ab6066bfa18f65db62e9f11628684510b2517fb45cf1c44763b45af",
+        "schema_snapshot": {
+          "$ref": "schemas/result.cluster.json#/methods/RegisterForeignSource"
+        }
+      },
+      "scopes": [
+        "federation:admin"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Register a foreign source with the engine (governed write)",
+      "surfaces": [
+        "a2a",
+        "console",
+        "http",
+        "mcp"
+      ],
+      "verb": "manage"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.federation.handle_federation",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "share this federated source"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "federation.sources.share",
+      "idempotency": "key_required",
+      "params": {
+        "model": "arbora.api.ops.federation.SourceGrantParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "grantee": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Grantee",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source_id",
+            "grantee"
+          ],
+          "title": "SourceGrantParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.federation.SourceResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "federation:admin"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Share an owned federation source with a grantee",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.federation.handle_federation",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "unshare this federated source"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "federation.sources.unshare",
+      "idempotency": "key_required",
+      "params": {
+        "model": "arbora.api.ops.federation.SourceGrantParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "grantee": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Grantee",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source_id",
+            "grantee"
+          ],
+          "title": "SourceGrantParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.federation.SourceResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "SourceResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "federation:admin"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Revoke a grantee's access to an owned federation source",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
       "audit": "event",
       "binding": {
         "handler": "arbora.api.ops.fleet.handle_fleet_call",
@@ -25134,6 +25257,662 @@
     {
       "audit": "none",
       "binding": {
+        "handler": "arbora.api.ops.ingest.get_drift",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "show this drift"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.drift.get",
+      "idempotency": "natural",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestDriftRefParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "drift_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Drift Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "drift_id"
+          ],
+          "title": "IngestDriftRefParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestValueResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestValueResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Show one drift record",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.list_drift",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "list source drift"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.drift.list",
+      "idempotency": "natural",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestDriftListParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "source_id": {
+              "anyOf": [
+                {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Source Id"
+            }
+          },
+          "title": "IngestDriftListParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestValueResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestValueResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "List detected source drift",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.approve_repair",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "approve this drift repair"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.drift.repair_approve",
+      "idempotency": "key_required",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestRepairApproveParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "approval_ref": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Approval Ref",
+              "type": "string"
+            },
+            "repair_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Repair Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "repair_id",
+            "approval_ref"
+          ],
+          "title": "IngestRepairApproveParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestValueResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestValueResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Apply a previewed drift repair against an approval reference",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.propose_repair",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "propose a repair for this drift"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.drift.repair_propose",
+      "idempotency": "key_required",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestDriftRefParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "drift_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Drift Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "drift_id"
+          ],
+          "title": "IngestDriftRefParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestValueResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestValueResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Propose a drift repair and record its preview without applying it",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.admit_embedding",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "admit this embedding model"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.embedding.admit",
+      "idempotency": "key_required",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestEmbeddingAdmitParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "dimensions": {
+              "maximum": 65536,
+              "minimum": 1,
+              "title": "Dimensions",
+              "type": "integer"
+            },
+            "model": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Model",
+              "type": "string"
+            }
+          },
+          "required": [
+            "model",
+            "dimensions"
+          ],
+          "title": "IngestEmbeddingAdmitParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestValueResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestValueResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Admit an embedding model for this tenant",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.reembed",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "re-embed this source"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.embedding.reembed",
+      "idempotency": "key_required",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestReembedParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "model": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Model",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source_id",
+            "model"
+          ],
+          "title": "IngestReembedParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestValueResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestValueResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Request a durable re-embedding of one source",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.cancel_job",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "cancel this ingestion job"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.jobs.cancel",
+      "idempotency": "natural",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestJobCancelParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "job_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "job_id"
+          ],
+          "title": "IngestJobCancelParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestJobControlResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestJobControlResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Cancel one pending ingestion job",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.list_jobs",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "list my ingestion jobs"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.jobs.list",
+      "idempotency": "none",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestJobsListParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "cursor": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Cursor"
+            },
+            "limit": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          "title": "IngestJobsListParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestJobsListResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestJobsListResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "List this tenant's durable ingestion jobs",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "find"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.prioritize_job",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "prioritize this ingestion job"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.jobs.prioritize",
+      "idempotency": "natural",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestJobPrioritizeParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "bucket": {
+              "maximum": 9,
+              "minimum": 0,
+              "title": "Bucket",
+              "type": "integer"
+            },
+            "job_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "job_id",
+            "bucket"
+          ],
+          "title": "IngestJobPrioritizeParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestJobControlResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": true,
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestJobControlResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Set the priority bucket of one ingestion job",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "none",
+      "binding": {
         "handler": "arbora.api.ops.ingest.get_job_status",
         "kind": "composite"
       },
@@ -25524,6 +26303,97 @@
       "stability": "stable",
       "subject": null,
       "summary": "Request a durable sync of one ingestion source",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "act"
+    },
+    {
+      "audit": "event",
+      "binding": {
+        "handler": "arbora.api.ops.ingest.submit_ingest",
+        "kind": "composite"
+      },
+      "confirm": "none",
+      "effect": "write",
+      "examples": [
+        "ingest this url",
+        "distill this document"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ingest.submissions.create",
+      "idempotency": "key_required",
+      "params": {
+        "model": "arbora.api.ops.ingest.IngestSubmitParams",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "ingest",
+                "ingest_url",
+                "ingest_knowledge_pack",
+                "fact_extract",
+                "distill"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "options": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "maxProperties": 8,
+              "title": "Options",
+              "type": "object"
+            },
+            "target": {
+              "maxLength": 2048,
+              "minLength": 1,
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "target"
+          ],
+          "title": "IngestSubmitParams",
+          "type": "object"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "model": "arbora.api.ops.ingest.IngestSubmitResult",
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "title": "Value",
+              "type": "object"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "title": "IngestSubmitResult",
+          "type": "object"
+        }
+      },
+      "scopes": [
+        "ingest:write"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Queue a durable ingest, URL, pack, fact-extract or distill job",
       "surfaces": [
         "a2a",
         "http",
@@ -26168,6 +27038,144 @@
       "verb": "act"
     },
     {
+      "audit": "none",
+      "binding": {
+        "kind": "eg",
+        "op": "OntologyInspect",
+        "service": "OntologyInspect"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "inspect this ontology"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ontology.inspect",
+      "idempotency": "none",
+      "params": {
+        "eg_schema": "contract/schemas/method.request.json#/methods/OntologyInspect/properties/params",
+        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
+        "schema_snapshot": {
+          "$ref": "schemas/method.request.json#/methods/OntologyInspect/properties/params"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "eg_schema": "contract/schemas/result.reasoning.json#/methods/OntologyInspect",
+        "schema_sha256": "162a39438e63bbd0cd1ac76856bf79845563dfaa8e8444af349632e37bc7dd2f",
+        "schema_snapshot": {
+          "$ref": "schemas/result.reasoning.json#/methods/OntologyInspect"
+        }
+      },
+      "scopes": [
+        "validation:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Inspect ontology documents or the graph's composed schema",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "kind": "eg",
+        "op": "GraphSchemaClasses",
+        "service": "GraphSchemaClasses"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "list the ontology classes"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ontology.schema.classes",
+      "idempotency": "none",
+      "params": {
+        "eg_schema": "contract/schemas/method.request.json#/methods/GraphSchemaClasses/properties/params",
+        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
+        "schema_snapshot": {
+          "$ref": "schemas/method.request.json#/methods/GraphSchemaClasses/properties/params"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "eg_schema": "contract/schemas/result.reasoning.json#/methods/GraphSchemaClasses",
+        "schema_sha256": "162a39438e63bbd0cd1ac76856bf79845563dfaa8e8444af349632e37bc7dd2f",
+        "schema_snapshot": {
+          "$ref": "schemas/result.reasoning.json#/methods/GraphSchemaClasses"
+        }
+      },
+      "scopes": [
+        "owl:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Page the classes and properties the graph's schema declares",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "kind": "eg",
+        "op": "ShaclValidate",
+        "service": "ShaclValidate"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "validate the graph against its shapes"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "ontology.validate",
+      "idempotency": "none",
+      "params": {
+        "eg_schema": "contract/schemas/method.request.json#/methods/ShaclValidate/properties/params",
+        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
+        "schema_snapshot": {
+          "$ref": "schemas/method.request.json#/methods/ShaclValidate/properties/params"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "eg_schema": "contract/schemas/result.reasoning.json#/methods/ShaclValidate",
+        "schema_sha256": "162a39438e63bbd0cd1ac76856bf79845563dfaa8e8444af349632e37bc7dd2f",
+        "schema_snapshot": {
+          "$ref": "schemas/result.reasoning.json#/methods/ShaclValidate"
+        }
+      },
+      "scopes": [
+        "validation:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Validate graph data against SHACL shapes",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
       "audit": "event",
       "binding": {
         "handler": "arbora.api.ops.ops.handle_ops_backup",
@@ -26202,7 +27210,7 @@
           "type": "object"
         }
       },
-      "principals": "any",
+      "principals": "human_undelegated",
       "remove_in": null,
       "result": {
         "model": "arbora.api.ops.ops.OpsBackupResult",
@@ -26255,6 +27263,7 @@
       "summary": "Reserve a durable backup scoped to the caller's own tenant",
       "surfaces": [
         "a2a",
+        "console",
         "http",
         "mcp"
       ],
@@ -26456,7 +27465,7 @@
           "type": "object"
         }
       },
-      "principals": "any",
+      "principals": "human_undelegated",
       "remove_in": null,
       "result": {
         "model": "arbora.api.ops.ops.OpsRestoreResult",
@@ -26509,6 +27518,7 @@
       "summary": "Restore a durable backup scoped to the caller's own tenant",
       "surfaces": [
         "a2a",
+        "console",
         "http",
         "mcp"
       ],
@@ -26850,6 +27860,98 @@
       "stability": "stable",
       "subject": null,
       "summary": "Query the caller's graph with the engine natural-language planner",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "kind": "eg",
+        "op": "Sparql",
+        "service": "Sparql"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "run a SPARQL query"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "query.sparql",
+      "idempotency": "none",
+      "params": {
+        "eg_schema": "contract/schemas/method.request.json#/methods/Sparql/properties/params",
+        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
+        "schema_snapshot": {
+          "$ref": "schemas/method.request.json#/methods/Sparql/properties/params"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "eg_schema": "contract/schemas/result.reasoning.json#/methods/Sparql",
+        "schema_sha256": "162a39438e63bbd0cd1ac76856bf79845563dfaa8e8444af349632e37bc7dd2f",
+        "schema_snapshot": {
+          "$ref": "schemas/result.reasoning.json#/methods/Sparql"
+        }
+      },
+      "scopes": [
+        "sparql:read"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Evaluate a SPARQL SELECT over the caller's graph",
+      "surfaces": [
+        "a2a",
+        "http",
+        "mcp"
+      ],
+      "verb": "ask"
+    },
+    {
+      "audit": "none",
+      "binding": {
+        "kind": "eg",
+        "op": "Sql",
+        "service": "Sql"
+      },
+      "confirm": "none",
+      "effect": "read",
+      "examples": [
+        "run a SQL query"
+      ],
+      "executor": "caller",
+      "executor_scopes": [],
+      "http": null,
+      "id": "query.sql",
+      "idempotency": "none",
+      "params": {
+        "eg_schema": "contract/schemas/method.request.json#/methods/Sql/properties/params",
+        "schema_sha256": "1a07cc25fb1217de8c6af0c320e7d39315e977fd103627fe06e229a3aa4081f8",
+        "schema_snapshot": {
+          "$ref": "schemas/method.request.json#/methods/Sql/properties/params"
+        }
+      },
+      "principals": "any",
+      "remove_in": null,
+      "result": {
+        "eg_schema": "contract/schemas/result.query.json#/methods/Sql",
+        "schema_sha256": "70eabbe0ee224f1c9fe0617dafca5aba276326397052c5c1a1cbfdaa21ad75da",
+        "schema_snapshot": {
+          "$ref": "schemas/result.query.json#/methods/Sql"
+        }
+      },
+      "scopes": [
+        "query:sql"
+      ],
+      "stability": "stable",
+      "subject": null,
+      "summary": "Run a parameterised SQL query over the caller's graph",
       "surfaces": [
         "a2a",
         "http",
@@ -28577,5 +29679,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "dbb0efa0dc47306b1207ab4bb490efb45265fb902e98e5480fba16122bd68a62"
+  "registry_digest": "6cda071f7f3bb609c198d367afd6a9fbccaae2e14a0077b29bf0f593ae1a04b7"
 }

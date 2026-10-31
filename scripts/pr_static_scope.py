@@ -38,6 +38,7 @@ STATIC_SCAN_TESTS: tuple[str, ...] = (
     "tests/identity/test_port_only_dependents.py",
     "tests/mcp_server/test_engine_wiring_gate.py",
     "tests/mcp_server/test_late_gateway_parity.py",
+    "tests/mcp_server/test_task_plan_receipts.py",
     "tests/test_component_registry_boundary_seeds.py",
     "tests/test_connector_pack_typed_publisher.py",
     "tests/test_package_layout.py",

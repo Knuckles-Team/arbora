@@ -262,17 +262,3 @@ markers = [
 # Inputs of the shared hooks (Knuckles-Team/pipelines .pre-commit-hooks.yaml).
 [tool.pipelines_hooks]
 packages = ["arbora"]
-
-[tool.pipelines_hooks.public_surface]
-repository = "Knuckles-Team/arbora"
-distribution = "arbora"
-pages_url = "https://knuckles-team.github.io/arbora/"
-mcp_server = true
-
-# The MCP server and gateway serve stdio/HTTP; stdout there is protocol output.
-[tool.pipelines_hooks.stdout_writes]
-served_paths = ["arbora/mcp_server", "arbora/gateway"]
-
-[tool.pipelines_hooks.ste]
-paths = ["README.md", "AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "CHANGELOG.md", "docs", "specs"]
-exempt = ["specs/_template/*"]

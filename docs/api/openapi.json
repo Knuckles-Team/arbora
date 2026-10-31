@@ -21,11 +21,31 @@
         },
         "required": true
       },
+      "Shared6b87c4ca17a843c1066c9df0cc58fc93dac44eb9f7f18c41876375cbfcfb4eaf": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schema928273eb92ca4deb90dafd92151aa2718f1f2f6286634f39a484881b51ed626f"
+            }
+          }
+        },
+        "required": true
+      },
       "Shared7a394c4291f70ad5cbb6f2016ce2f32d6808772d7a3c087f0f83a29babe1bc42": {
         "content": {
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Schema991a72458d5dec66602416512900e7eb0bad8d14ac50f0b0256a3cdc00fd53cb"
+            }
+          }
+        },
+        "required": true
+      },
+      "Shared98de1d4ed789b84b29633e850f2c015e660748bb5c044a0805647a7cdd754117": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schema0df999ba07ffbcfd6469c0b4f5c32815bb99563ee4f66ff9409c9707354430c9"
             }
           }
         },
@@ -50,9 +70,29 @@
           }
         },
         "required": true
+      },
+      "Sharedd8f9ffdbd7d4856bc93bb4f77caf440edd61c59b9596c2ec043fe8fc7c6d75f2": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schemab8d01b58872420b9215ac08c0053d02ea8aaf85a523efce7c138a3c36816290d"
+            }
+          }
+        },
+        "required": true
       }
     },
     "responses": {
+      "Shared01de2e1f0ba85b2d075606bc5b5184ec02b2ccb5e1e25960932bec78407a24e4": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schemab768484dfc426e5037a4cae4c9c8be87221acd9efd7596070b131049a09a3c05"
+            }
+          }
+        },
+        "description": "Operation result"
+      },
       "Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e": {
         "description": "Arbora error envelope"
       },
@@ -71,6 +111,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Schema8c6ee092ab6888335b7e1a23a6d71ebc4af1cde19fbf832d4d6e749fb6f3e2b9"
+            }
+          }
+        },
+        "description": "Operation result"
+      },
+      "Shared4e53ce36e5ffa1c2b799962b9c7a06c8067c48cce4a80315c16885f261ebac63": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schema127301f28dc43bb92c1d4ef75e554a51c58b977521196072d49dc36114a7f4fc"
             }
           }
         },
@@ -136,6 +186,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Schemada12d1c5bb85ee0c0d4f71d42c6d6b9ae1223fb4dea962299963a0d466db86a0"
+            }
+          }
+        },
+        "description": "Operation result"
+      },
+      "Sharedf6bc34ea32a522bd95e19dc3f465ffd10ad203bfc1a41e856ef4a37e4b53faca": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Schemab2cfdbaa45beacb98302dd56ec7ecba25af5383c368de5fbc5e726a76e974fc4"
             }
           }
         },
@@ -235,6 +295,12 @@
         ],
         "title": "FleetToolRef",
         "type": "object"
+      },
+      "Schema02f8da3294300e2c81308854227388623014ac63c977397b601bff9b8a0b2725": {
+        "maximum": 65536,
+        "minimum": 1,
+        "title": "Dimensions",
+        "type": "integer"
       },
       "Schema032dd68e5cf93a264b9f4bd4f241266fbaa7373550d738da313b55f8a1fd3cc7": {
         "maxLength": 128,
@@ -363,6 +429,12 @@
         "default": null,
         "title": "Message"
       },
+      "Schema09d81bc32a2bc3a0e133f08ab27b080bb69ce3e0280e6f71e7e76ef079e74a8f": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "SourcesListParams",
+        "type": "object"
+      },
       "Schema0afee644338ef96d72e5f00bbf0b44e61cd8f2402adb7b034d215113c06a86f9": {
         "additionalProperties": false,
         "properties": {
@@ -404,10 +476,52 @@
         "title": "UsageReadResult",
         "type": "object"
       },
+      "Schema0d4ecbd4c4810303fec166d7080e355e7b49ee42f03eeb15def2af2a432d40a0": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema3cdb2ff0de9162783534b259d476e06c70ae53dfc1601e1142e194ac1ea15598"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Cursor"
+      },
       "Schema0d597b9e947f06c3eea71bc63bd3f2d86f4f091c6f5039d1c94e3eab79430dd5": {
         "const": "arbora-execution-graph-v1",
         "title": "Schema Version",
         "type": "string"
+      },
+      "Schema0da43ab78b0f7615b615a265651482f8f2d69a1ca9a27bc828cacbd587fed811": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "$ref": "#/components/schemas/Schema0d4ecbd4c4810303fec166d7080e355e7b49ee42f03eeb15def2af2a432d40a0"
+          },
+          "limit": {
+            "$ref": "#/components/schemas/Schema76952d8e68e95459f7f755aff3c03b8aca5fd6f35ca6a7d995fa700520f5926d"
+          }
+        },
+        "title": "IngestJobsListParams",
+        "type": "object"
+      },
+      "Schema0df999ba07ffbcfd6469c0b4f5c32815bb99563ee4f66ff9409c9707354430c9": {
+        "additionalProperties": false,
+        "properties": {
+          "grantee": {
+            "$ref": "#/components/schemas/Schema6c9475299abab9f831e399e603faa837395297aa5dadcbcb1324616899b1a201"
+          },
+          "source_id": {
+            "$ref": "#/components/schemas/Schemab572adfb7ef8fe3f42d44eba8d08ff913bef1b0d7df962dfc76c20f19e80c183"
+          }
+        },
+        "required": [
+          "source_id",
+          "grantee"
+        ],
+        "title": "SourceGrantParams",
+        "type": "object"
       },
       "Schema0e3f6bda126de4f424f309e193b2600ad1f3e4571979abb86e4b07884de1b206": {
         "additionalProperties": false,
@@ -476,6 +590,19 @@
           "value"
         ],
         "title": "RetrievalSearchResult",
+        "type": "object"
+      },
+      "Schema127301f28dc43bb92c1d4ef75e554a51c58b977521196072d49dc36114a7f4fc": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "IngestValueResult",
         "type": "object"
       },
       "Schema12b7c55e6a42c328281788741d206767318cd3275e874e59df98fd5c07e6b9ef": {
@@ -649,6 +776,23 @@
         "default": null,
         "title": "Receiver"
       },
+      "Schema2635edbb3bc0705a28a57d4206152b129c79eeaa0925c901f519e57f5959ae19": {
+        "additionalProperties": false,
+        "properties": {
+          "approval_ref": {
+            "$ref": "#/components/schemas/Schema4a0e6218d6e5ee87d767e81e0abff7ef2380a111517339f26c22105f0210ff36"
+          },
+          "repair_id": {
+            "$ref": "#/components/schemas/Schema678c8ebc66ab8defdedb16059485f0686ce7bd331f58031c0ebf80479db96cb5"
+          }
+        },
+        "required": [
+          "repair_id",
+          "approval_ref"
+        ],
+        "title": "IngestRepairApproveParams",
+        "type": "object"
+      },
       "Schema27fd10f3083b3fe243fb903b0248aee255e0d2dc67b473e91b2ec4113b40884e": {
         "additionalProperties": false,
         "description": "Select a run; caller authority is never a request field.",
@@ -751,6 +895,19 @@
         "title": "SourceHistoryParams",
         "type": "object"
       },
+      "Schema2c726dca5463d0c63019250fcfdcdc2950392d3a6c8b01219609029bfce2812e": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schemacf39ffc76907695a68d495a9c1e411fd37da742cfa5f8b9f90231effff240e3c"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "IngestSubmitResult",
+        "type": "object"
+      },
       "Schema2db1e0b735a231257bc16ca3f2a2f7b503acca69ba97dc893290c4555197f853": {
         "anyOf": [
           {
@@ -823,6 +980,23 @@
         "default": false,
         "title": "Browse",
         "type": "boolean"
+      },
+      "Schema3101c791258b26b03735e3ed550ae7f7563992b15ab146ab61aec5e5cce84d57": {
+        "additionalProperties": false,
+        "properties": {
+          "provenance": {
+            "$ref": "#/components/schemas/Schema7674907c33a9ecf0fa0ffba068298e486727a53946cc9e2740c3fb945ef51329"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value",
+          "provenance"
+        ],
+        "title": "DecideCommitResult",
+        "type": "object"
       },
       "Schema32476afa85e2c25d4095f317c9aa89dee9a44d2a0939e2817dba4e2052e26aeb": {
         "const": "observed_prefix_only",
@@ -981,6 +1155,10 @@
         "title": "Query",
         "type": "string"
       },
+      "Schema3cdb2ff0de9162783534b259d476e06c70ae53dfc1601e1142e194ac1ea15598": {
+        "maxLength": 512,
+        "type": "string"
+      },
       "Schema3d707d2656317bd106cd45297754733e58e9cace5a039104cd95583004a3f58d": {
         "anyOf": [
           {
@@ -1085,6 +1263,12 @@
         "title": "Empty",
         "type": "object"
       },
+      "Schema4a0e6218d6e5ee87d767e81e0abff7ef2380a111517339f26c22105f0210ff36": {
+        "maxLength": 256,
+        "minLength": 1,
+        "title": "Approval Ref",
+        "type": "string"
+      },
       "Schema4b06686cebac59b81ffb7b8bbebfff9420f93953f430a58525b06c95ca2e841b": {
         "additionalProperties": false,
         "properties": {},
@@ -1149,6 +1333,17 @@
           "write"
         ],
         "title": "Action",
+        "type": "string"
+      },
+      "Schema4fa428a7bc7e9750272fa0eeefda418ee278966bb9a3215500dcdd5cf6b55def": {
+        "enum": [
+          "ingest",
+          "ingest_url",
+          "ingest_knowledge_pack",
+          "fact_extract",
+          "distill"
+        ],
+        "title": "Kind",
         "type": "string"
       },
       "Schema514d94bc4da230c9dc22e57272fc7b5ac4c76bc00ccce58c3d17e9d208e26d49": {
@@ -1280,6 +1475,23 @@
         "title": "Budget Used",
         "type": "object"
       },
+      "Schema5befb539f0797b4f0c395ea32e87662d594baa50350c15f617ec00d0f6061a1c": {
+        "additionalProperties": false,
+        "properties": {
+          "model": {
+            "$ref": "#/components/schemas/Schemaa55c8258d6e8dc281ec064bcce61de2c3a02f57aa71db79937f64a50384be226"
+          },
+          "source_id": {
+            "$ref": "#/components/schemas/Schemab572adfb7ef8fe3f42d44eba8d08ff913bef1b0d7df962dfc76c20f19e80c183"
+          }
+        },
+        "required": [
+          "source_id",
+          "model"
+        ],
+        "title": "IngestReembedParams",
+        "type": "object"
+      },
       "Schema5dd481c31e0652dfe7bc363300272c5454449f40ba75432cc6e2d6b4e9975387": {
         "items": {
           "$ref": "#/components/schemas/Definitione6adbae83b1ca820b7889d1e573716a265f0056909c7fc2ce9ee3aaeafa68f1c"
@@ -1381,6 +1593,12 @@
         "title": "WorkResult",
         "type": "object"
       },
+      "Schema678c8ebc66ab8defdedb16059485f0686ce7bd331f58031c0ebf80479db96cb5": {
+        "maxLength": 256,
+        "minLength": 1,
+        "title": "Repair Id",
+        "type": "string"
+      },
       "Schema67cc022e2b35466cf053b0573800fe50187597c0969eba4455b835aac6dc9d81": {
         "maximum": 1000,
         "minimum": 0,
@@ -1425,6 +1643,12 @@
         ],
         "title": "RunsCurrentPlanResult",
         "type": "object"
+      },
+      "Schema6c9475299abab9f831e399e603faa837395297aa5dadcbcb1324616899b1a201": {
+        "maxLength": 256,
+        "minLength": 1,
+        "title": "Grantee",
+        "type": "string"
       },
       "Schema6d52c56bffdc072fd3bc7e8ea87b1c6c8d9a90fdd5080fd4e52c34fc3aea72ba": {
         "anyOf": [
@@ -1564,6 +1788,13 @@
         "title": "Request Digest",
         "type": "string"
       },
+      "Schema7674907c33a9ecf0fa0ffba068298e486727a53946cc9e2740c3fb945ef51329": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "title": "Provenance",
+        "type": "object"
+      },
       "Schema76952d8e68e95459f7f755aff3c03b8aca5fd6f35ca6a7d995fa700520f5926d": {
         "default": 50,
         "maximum": 100,
@@ -1628,6 +1859,19 @@
           "justification"
         ],
         "title": "ElevationAsk",
+        "type": "object"
+      },
+      "Schema77c704f5198eb62dcec9d985d8809a2f450c7a16e032304a35698a711717fefd": {
+        "additionalProperties": false,
+        "properties": {
+          "job_id": {
+            "$ref": "#/components/schemas/Schemaf2c1064c292fcac6d09d4990528216f1245ef286458d7f8833db49e01d4177a7"
+          }
+        },
+        "required": [
+          "job_id"
+        ],
+        "title": "IngestJobCancelParams",
         "type": "object"
       },
       "Schema787a0c3560d38a50dc8470f5e7b807a8b061fa8ebe37bdd6509f96f3cc8a7e7e": {
@@ -2021,6 +2265,19 @@
         "title": "TenantPage",
         "type": "object"
       },
+      "Schema928273eb92ca4deb90dafd92151aa2718f1f2f6286634f39a484881b51ed626f": {
+        "additionalProperties": false,
+        "properties": {
+          "drift_id": {
+            "$ref": "#/components/schemas/Schema9aa6fe7dac88137cf98af9db59e703b79580408b73a12c4716f7912c38b0e967"
+          }
+        },
+        "required": [
+          "drift_id"
+        ],
+        "title": "IngestDriftRefParams",
+        "type": "object"
+      },
       "Schema92b00b40db403c3aefe1346945ce35e7bdd6d6415c51c8f399c5df8d296abf92": {
         "minimum": 1,
         "title": "Registration Generation",
@@ -2120,9 +2377,31 @@
         "default": null,
         "title": "Expected Version"
       },
+      "Schema953c4f01a65a007aebf81f31e08ab2b31cc9e4cbe59ab3b9767aa1b983fe1584": {
+        "additionalProperties": false,
+        "properties": {
+          "bucket": {
+            "$ref": "#/components/schemas/Schemaf98c23f3e1426042123c4e427de8421eb6e83fbc12f21c2144a4205e05b4f61e"
+          },
+          "job_id": {
+            "$ref": "#/components/schemas/Schemaf2c1064c292fcac6d09d4990528216f1245ef286458d7f8833db49e01d4177a7"
+          }
+        },
+        "required": [
+          "job_id",
+          "bucket"
+        ],
+        "title": "IngestJobPrioritizeParams",
+        "type": "object"
+      },
       "Schema9651beb0cda06d2616ad93118c2b167a41ca32c607fa07700b0579b6e42ce4d9": {
         "title": "Allowed",
         "type": "boolean"
+      },
+      "Schema97d85a5eaee82b974fb191d31d18a72016ca5f810b9304ce29d1bc08a7c55bc0": {
+        "maxLength": 256,
+        "minLength": 1,
+        "type": "string"
       },
       "Schema98006a51abee6257ae597d21388c798707513c128d6c11ee7b5741aadc43b1d9": {
         "maxLength": 512,
@@ -2147,19 +2426,6 @@
         "minimum": 0,
         "title": "Lease Epoch",
         "type": "integer"
-      },
-      "Schema98dc3299c790a50960c20713290429c4de3145295b6a16deda970a22fe9c49bc": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
-          }
-        },
-        "required": [
-          "value"
-        ],
-        "title": "DecideCommitResult",
-        "type": "object"
       },
       "Schema98e20a37770424c557c7afcf2e7cf2b9483ccbf22d8ab9bd1a7b19d8911073a6": {
         "additionalProperties": false,
@@ -2204,6 +2470,25 @@
           "value"
         ],
         "title": "OpsTenantsResult",
+        "type": "object"
+      },
+      "Schema9aa6fe7dac88137cf98af9db59e703b79580408b73a12c4716f7912c38b0e967": {
+        "maxLength": 256,
+        "minLength": 1,
+        "title": "Drift Id",
+        "type": "string"
+      },
+      "Schema9b6ecf3f1107d98ead48bd9ab0edfe062b3fb111e049a2d9b617918b80318f48": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "IngestJobsListResult",
         "type": "object"
       },
       "Schema9db2a7e151e69a0e0ae9739c5a0847202964c9b69c94c9344245fd7c77e9cbf8": {
@@ -2366,6 +2651,12 @@
         "pattern": "^lru$",
         "type": "string"
       },
+      "Schemaa55c8258d6e8dc281ec064bcce61de2c3a02f57aa71db79937f64a50384be226": {
+        "maxLength": 256,
+        "minLength": 1,
+        "title": "Model",
+        "type": "string"
+      },
       "Schemaa5af9fa380f11a11430012f77d4294c4d1d74f645cb0c41fcf6d80e977251297": {
         "maxLength": 2048,
         "type": "string"
@@ -2458,6 +2749,23 @@
         "title": "SourceBlobResult",
         "type": "object"
       },
+      "Schemaae37a9b2b0f583f44d2e964333143cfd7a7f33698bd1ef53b828588fd0524ea3": {
+        "additionalProperties": false,
+        "properties": {
+          "dimensions": {
+            "$ref": "#/components/schemas/Schema02f8da3294300e2c81308854227388623014ac63c977397b601bff9b8a0b2725"
+          },
+          "model": {
+            "$ref": "#/components/schemas/Schemaa55c8258d6e8dc281ec064bcce61de2c3a02f57aa71db79937f64a50384be226"
+          }
+        },
+        "required": [
+          "model",
+          "dimensions"
+        ],
+        "title": "IngestEmbeddingAdmitParams",
+        "type": "object"
+      },
       "Schemaae8bd329d0f3cbc513a787bb7e9fd3f0e82b9ae7eed745cc846349c13cb8ab77": {
         "maxLength": 512,
         "minLength": 1,
@@ -2528,6 +2836,19 @@
         "title": "Sources",
         "type": "array"
       },
+      "Schemab2cfdbaa45beacb98302dd56ec7ecba25af5383c368de5fbc5e726a76e974fc4": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "IngestJobControlResult",
+        "type": "object"
+      },
       "Schemab2e631b4636bd6bbe796db78f5f0efafe42402deb58b8bc7828ce6ee8e61274a": {
         "additionalProperties": false,
         "properties": {
@@ -2587,6 +2908,19 @@
         "additionalProperties": true,
         "type": "object"
       },
+      "Schemab768484dfc426e5037a4cae4c9c8be87221acd9efd7596070b131049a09a3c05": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/Schema4d16cc5a4efc7bf89a334a6012afb1127ab2c7ed9fcd04a5f2587c04ad68af83"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "SourceResult",
+        "type": "object"
+      },
       "Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb": {
         "type": "null"
       },
@@ -2607,6 +2941,19 @@
           "value"
         ],
         "title": "TelemetryReadResult",
+        "type": "object"
+      },
+      "Schemab8d01b58872420b9215ac08c0053d02ea8aaf85a523efce7c138a3c36816290d": {
+        "additionalProperties": false,
+        "properties": {
+          "source_id": {
+            "$ref": "#/components/schemas/Schemab572adfb7ef8fe3f42d44eba8d08ff913bef1b0d7df962dfc76c20f19e80c183"
+          }
+        },
+        "required": [
+          "source_id"
+        ],
+        "title": "SourceRefParams",
         "type": "object"
       },
       "Schemab995e29237d5571ae28320149c6163c88c44fd56cba14dba91cc32a9985b4c0e": {
@@ -2752,11 +3099,27 @@
         "title": "MessagingAlertParams",
         "type": "object"
       },
+      "Schemac4769bc52f9f3d885ab963af799256c4d579390b211731cec482ba4652031b6c": {
+        "additionalProperties": false,
+        "properties": {
+          "source_id": {
+            "$ref": "#/components/schemas/Schemadb9e38465554590c57f41d7b61daf9f7109b245dd04ef477d30d6cb32a2464d5"
+          }
+        },
+        "title": "IngestDriftListParams",
+        "type": "object"
+      },
       "Schemac5431461e4ddc283228014546f09a948ceab0646a9f9d49e05c50225e3a46df9": {
         "additionalProperties": {
           "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
         },
         "type": "object"
+      },
+      "Schemac77c32ae1fe2fa1e69153ebcef53e215f6dc2dca280f30c1bfd126063b74ae2d": {
+        "maxLength": 2048,
+        "minLength": 1,
+        "title": "Target",
+        "type": "string"
       },
       "Schemac8988ac0c133eee1d37a57c7873fc8e2d0d2270106728130e931394b807f0e53": {
         "anyOf": [
@@ -2780,6 +3143,14 @@
       "Schemacac9b06c3ec93a7fc8bde8feaeb94be496804f70091072f05fe0a117f04fb850": {
         "title": "Mode",
         "type": "string"
+      },
+      "Schemacc6fe20bda57203f610589d58c58fddb2597099c49ad747ce54b0d45eb7109ea": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Schemabf0b727f7b1c6d07c7312c6c7760fd34302744385611a86804210c77d80b0cc7"
+        },
+        "maxProperties": 8,
+        "title": "Options",
+        "type": "object"
       },
       "Schemaccaf437a4d2f3796fc8df7087e95f0521813d43a9f29cea0f760bc425fc1e9aa": {
         "description": "Where the alert went; never the channel credentials.",
@@ -2956,6 +3327,18 @@
         "minimum": 1,
         "title": "Limit",
         "type": "integer"
+      },
+      "Schemadb9e38465554590c57f41d7b61daf9f7109b245dd04ef477d30d6cb32a2464d5": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/Schema97d85a5eaee82b974fb191d31d18a72016ca5f810b9304ce29d1bc08a7c55bc0"
+          },
+          {
+            "$ref": "#/components/schemas/Schemab7c373d0981a5441c9dd775ad89a68ba691af04e4da70eaeaacaaf54549837fb"
+          }
+        ],
+        "default": null,
+        "title": "Source Id"
       },
       "Schemadbdad2e06ba1b9a1d3f68d5b15cb0a2224adcd31714bf255f1454e946cea3b30": {
         "additionalProperties": false,
@@ -3357,6 +3740,26 @@
         "title": "Job Id",
         "type": "string"
       },
+      "Schemaf35a6e00b6bea508892e856710104af70ad3e30ef17ef9e96c145f6409d756c5": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/Schema4fa428a7bc7e9750272fa0eeefda418ee278966bb9a3215500dcdd5cf6b55def"
+          },
+          "options": {
+            "$ref": "#/components/schemas/Schemacc6fe20bda57203f610589d58c58fddb2597099c49ad747ce54b0d45eb7109ea"
+          },
+          "target": {
+            "$ref": "#/components/schemas/Schemac77c32ae1fe2fa1e69153ebcef53e215f6dc2dca280f30c1bfd126063b74ae2d"
+          }
+        },
+        "required": [
+          "kind",
+          "target"
+        ],
+        "title": "IngestSubmitParams",
+        "type": "object"
+      },
       "Schemaf4304c500b7b9581c3b477077102e76b64359987bcd3faf2d51c25603695929e": {
         "maxLength": 2048,
         "minLength": 1,
@@ -3410,6 +3813,12 @@
         "default": "plan_step",
         "title": "Kind",
         "type": "string"
+      },
+      "Schemaf98c23f3e1426042123c4e427de8421eb6e83fbc12f21c2144a4205e05b4f61e": {
+        "maximum": 9,
+        "minimum": 0,
+        "title": "Bucket",
+        "type": "integer"
       },
       "Schemaf9dc517ae1de981c6ec75b9eeef87a8f7750cc487c591961e000cc918273c329": {
         "default": 0,
@@ -4186,7 +4595,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Schema98dc3299c790a50960c20713290429c4de3145295b6a16deda970a22fe9c49bc"
+                  "$ref": "#/components/schemas/Schema3101c791258b26b03735e3ed550ae7f7563992b15ab146ab61aec5e5cce84d57"
                 }
               }
             },
@@ -4979,40 +5388,6 @@
           }
         },
         "summary": "Rebalance Plan",
-        "tags": [
-          "eg"
-        ]
-      }
-    },
-    "/api/v1/ops/eg.cluster.RegisterForeignSource": {
-      "post": {
-        "operationId": "eg.cluster.RegisterForeignSource",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "schemas/method.request.json#/methods/RegisterForeignSource"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "schemas/result.cluster.json#/methods/RegisterForeignSource"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "opaque prepared/committed control receipt; endpoint configuration is not duplicated in the ledger",
         "tags": [
           "eg"
         ]
@@ -16918,40 +17293,6 @@
         ]
       }
     },
-    "/api/v1/ops/eg.query.QueryForeignColumns": {
-      "post": {
-        "operationId": "eg.query.QueryForeignColumns",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "schemas/method.request.json#/methods/QueryForeignColumns"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "schemas/result.query.json#/methods/QueryForeignColumns"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "Verified owner-scoped mapped-column read with bounded source fetch and local predicate residual",
-        "tags": [
-          "eg"
-        ]
-      }
-    },
     "/api/v1/ops/eg.query.RankByProvenance": {
       "post": {
         "operationId": "eg.query.RankByProvenance",
@@ -17083,40 +17424,6 @@
           }
         },
         "summary": "EG-DECISION-ENGINE-R802: deterministic web page selection over search candidates. It dedupes by canonical URL and digest against held Documents and enforces a budget. It commits nothing and runs no model",
-        "tags": [
-          "eg"
-        ]
-      }
-    },
-    "/api/v1/ops/eg.query.Sql": {
-      "post": {
-        "operationId": "eg.query.Sql",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "schemas/method.request.json#/methods/Sql"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "schemas/result.query.json#/methods/Sql"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "runtime-conditional; graph DML uses staged graph state while table/catalog writes atomically commit SQL rows plus MutationBatch status/fence/idempotency/outbox",
         "tags": [
           "eg"
         ]
@@ -17360,40 +17667,6 @@
         ]
       }
     },
-    "/api/v1/ops/eg.reasoning.GraphSchemaClasses": {
-      "post": {
-        "operationId": "eg.reasoning.GraphSchemaClasses",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "schemas/method.request.json#/methods/GraphSchemaClasses"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "schemas/result.reasoning.json#/methods/GraphSchemaClasses"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "EH-389. One page of the classes and properties the request graph's composed schema declares, with the declaring source; the schema's own vocabulary, not graph rows and not the source documents, so an ordinary ontology read (owl:read) rather than GraphSchemaList's security:admin",
-        "tags": [
-          "eg"
-        ]
-      }
-    },
     "/api/v1/ops/eg.reasoning.GraphSchemaList": {
       "post": {
         "operationId": "eg.reasoning.GraphSchemaList",
@@ -17457,40 +17730,6 @@
           }
         },
         "summary": "state-backed MutationBatch",
-        "tags": [
-          "eg"
-        ]
-      }
-    },
-    "/api/v1/ops/eg.reasoning.OntologyInspect": {
-      "post": {
-        "operationId": "eg.reasoning.OntologyInspect",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "schemas/method.request.json#/methods/OntologyInspect"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "schemas/result.reasoning.json#/methods/OntologyInspect"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "the vocabulary, SHACL targets and canonical digest of inline documents or the composed GraphSchema sources, so orchestration callers need no RDF parser; reads schema, never graph rows",
         "tags": [
           "eg"
         ]
@@ -17627,74 +17866,6 @@
           }
         },
         "summary": "state-backed MutationBatch commits inferred facts; operation-identity replay prevents duplicate materialization/audit/CDC",
-        "tags": [
-          "eg"
-        ]
-      }
-    },
-    "/api/v1/ops/eg.reasoning.ShaclValidate": {
-      "post": {
-        "operationId": "eg.reasoning.ShaclValidate",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "schemas/method.request.json#/methods/ShaclValidate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "schemas/result.reasoning.json#/methods/ShaclValidate"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "Shacl Validate",
-        "tags": [
-          "eg"
-        ]
-      }
-    },
-    "/api/v1/ops/eg.reasoning.Sparql": {
-      "post": {
-        "operationId": "eg.reasoning.Sparql",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "schemas/method.request.json#/methods/Sparql"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "schemas/result.reasoning.json#/methods/Sparql"
-                }
-              }
-            },
-            "description": "Operation result"
-          },
-          "default": {
-            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
-          }
-        },
-        "summary": "Sparql",
         "tags": [
           "eg"
         ]
@@ -20352,6 +20523,181 @@
         ]
       }
     },
+    "/api/v1/ops/federation.sources.columns": {
+      "post": {
+        "operationId": "federation.sources.columns",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/QueryForeignColumns/properties/params"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/QueryForeignColumns"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Read the columns of a registered foreign source",
+        "tags": [
+          "federation"
+        ]
+      }
+    },
+    "/api/v1/ops/federation.sources.get": {
+      "post": {
+        "operationId": "federation.sources.get",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Sharedd8f9ffdbd7d4856bc93bb4f77caf440edd61c59b9596c2ec043fe8fc7c6d75f2"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared01de2e1f0ba85b2d075606bc5b5184ec02b2ccb5e1e25960932bec78407a24e4"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Get one visible federation source",
+        "tags": [
+          "federation"
+        ]
+      }
+    },
+    "/api/v1/ops/federation.sources.list": {
+      "post": {
+        "operationId": "federation.sources.list",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema09d81bc32a2bc3a0e133f08ab27b080bb69ce3e0280e6f71e7e76ef079e74a8f"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared01de2e1f0ba85b2d075606bc5b5184ec02b2ccb5e1e25960932bec78407a24e4"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "List the federation sources visible to the caller",
+        "tags": [
+          "federation"
+        ]
+      }
+    },
+    "/api/v1/ops/federation.sources.probe": {
+      "post": {
+        "operationId": "federation.sources.probe",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Sharedd8f9ffdbd7d4856bc93bb4f77caf440edd61c59b9596c2ec043fe8fc7c6d75f2"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared01de2e1f0ba85b2d075606bc5b5184ec02b2ccb5e1e25960932bec78407a24e4"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Probe one visible federation source; credentials are redacted",
+        "tags": [
+          "federation"
+        ]
+      }
+    },
+    "/api/v1/ops/federation.sources.register": {
+      "post": {
+        "operationId": "federation.sources.register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/RegisterForeignSource/properties/params"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.cluster.json#/methods/RegisterForeignSource"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Register a foreign source with the engine (governed write)",
+        "tags": [
+          "federation"
+        ]
+      }
+    },
+    "/api/v1/ops/federation.sources.share": {
+      "post": {
+        "operationId": "federation.sources.share",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Shared98de1d4ed789b84b29633e850f2c015e660748bb5c044a0805647a7cdd754117"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared01de2e1f0ba85b2d075606bc5b5184ec02b2ccb5e1e25960932bec78407a24e4"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Share an owned federation source with a grantee",
+        "tags": [
+          "federation"
+        ]
+      }
+    },
+    "/api/v1/ops/federation.sources.unshare": {
+      "post": {
+        "operationId": "federation.sources.unshare",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Shared98de1d4ed789b84b29633e850f2c015e660748bb5c044a0805647a7cdd754117"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared01de2e1f0ba85b2d075606bc5b5184ec02b2ccb5e1e25960932bec78407a24e4"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Revoke a grantee's access to an owned federation source",
+        "tags": [
+          "federation"
+        ]
+      }
+    },
     "/api/v1/ops/fleet.catalog.list": {
       "post": {
         "operationId": "fleet.catalog.list",
@@ -20574,6 +20920,242 @@
         ]
       }
     },
+    "/api/v1/ops/ingest.drift.get": {
+      "post": {
+        "operationId": "ingest.drift.get",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Shared6b87c4ca17a843c1066c9df0cc58fc93dac44eb9f7f18c41876375cbfcfb4eaf"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared4e53ce36e5ffa1c2b799962b9c7a06c8067c48cce4a80315c16885f261ebac63"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Show one drift record",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
+    "/api/v1/ops/ingest.drift.list": {
+      "post": {
+        "operationId": "ingest.drift.list",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schemac4769bc52f9f3d885ab963af799256c4d579390b211731cec482ba4652031b6c"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared4e53ce36e5ffa1c2b799962b9c7a06c8067c48cce4a80315c16885f261ebac63"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "List detected source drift",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
+    "/api/v1/ops/ingest.drift.repair_approve": {
+      "post": {
+        "operationId": "ingest.drift.repair_approve",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema2635edbb3bc0705a28a57d4206152b129c79eeaa0925c901f519e57f5959ae19"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared4e53ce36e5ffa1c2b799962b9c7a06c8067c48cce4a80315c16885f261ebac63"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Apply a previewed drift repair against an approval reference",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
+    "/api/v1/ops/ingest.drift.repair_propose": {
+      "post": {
+        "operationId": "ingest.drift.repair_propose",
+        "requestBody": {
+          "$ref": "#/components/requestBodies/Shared6b87c4ca17a843c1066c9df0cc58fc93dac44eb9f7f18c41876375cbfcfb4eaf"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared4e53ce36e5ffa1c2b799962b9c7a06c8067c48cce4a80315c16885f261ebac63"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Propose a drift repair and record its preview without applying it",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
+    "/api/v1/ops/ingest.embedding.admit": {
+      "post": {
+        "operationId": "ingest.embedding.admit",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schemaae37a9b2b0f583f44d2e964333143cfd7a7f33698bd1ef53b828588fd0524ea3"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared4e53ce36e5ffa1c2b799962b9c7a06c8067c48cce4a80315c16885f261ebac63"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Admit an embedding model for this tenant",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
+    "/api/v1/ops/ingest.embedding.reembed": {
+      "post": {
+        "operationId": "ingest.embedding.reembed",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema5befb539f0797b4f0c395ea32e87662d594baa50350c15f617ec00d0f6061a1c"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Shared4e53ce36e5ffa1c2b799962b9c7a06c8067c48cce4a80315c16885f261ebac63"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Request a durable re-embedding of one source",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
+    "/api/v1/ops/ingest.jobs.cancel": {
+      "post": {
+        "operationId": "ingest.jobs.cancel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema77c704f5198eb62dcec9d985d8809a2f450c7a16e032304a35698a711717fefd"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharedf6bc34ea32a522bd95e19dc3f465ffd10ad203bfc1a41e856ef4a37e4b53faca"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Cancel one pending ingestion job",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
+    "/api/v1/ops/ingest.jobs.list": {
+      "post": {
+        "operationId": "ingest.jobs.list",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema0da43ab78b0f7615b615a265651482f8f2d69a1ca9a27bc828cacbd587fed811"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema9b6ecf3f1107d98ead48bd9ab0edfe062b3fb111e049a2d9b617918b80318f48"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "List this tenant's durable ingestion jobs",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
+    "/api/v1/ops/ingest.jobs.prioritize": {
+      "post": {
+        "operationId": "ingest.jobs.prioritize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schema953c4f01a65a007aebf81f31e08ab2b31cc9e4cbe59ab3b9767aa1b983fe1584"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Sharedf6bc34ea32a522bd95e19dc3f465ffd10ad203bfc1a41e856ef4a37e4b53faca"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Set the priority bucket of one ingestion job",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
     "/api/v1/ops/ingest.jobs.status": {
       "post": {
         "operationId": "ingest.jobs.status",
@@ -20778,6 +21360,40 @@
         ]
       }
     },
+    "/api/v1/ops/ingest.submissions.create": {
+      "post": {
+        "operationId": "ingest.submissions.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Schemaf35a6e00b6bea508892e856710104af70ad3e30ef17ef9e96c145f6409d756c5"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema2c726dca5463d0c63019250fcfdcdc2950392d3a6c8b01219609029bfce2812e"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Queue a durable ingest, URL, pack, fact-extract or distill job",
+        "tags": [
+          "ingest"
+        ]
+      }
+    },
     "/api/v1/ops/memory.delete": {
       "post": {
         "operationId": "memory.delete",
@@ -20869,6 +21485,108 @@
         "summary": "Remember one entry for the caller, optionally compare-and-set",
         "tags": [
           "memory"
+        ]
+      }
+    },
+    "/api/v1/ops/ontology.inspect": {
+      "post": {
+        "operationId": "ontology.inspect",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/OntologyInspect/properties/params"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.reasoning.json#/methods/OntologyInspect"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Inspect ontology documents or the graph's composed schema",
+        "tags": [
+          "ontology"
+        ]
+      }
+    },
+    "/api/v1/ops/ontology.schema.classes": {
+      "post": {
+        "operationId": "ontology.schema.classes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/GraphSchemaClasses/properties/params"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.reasoning.json#/methods/GraphSchemaClasses"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Page the classes and properties the graph's schema declares",
+        "tags": [
+          "ontology"
+        ]
+      }
+    },
+    "/api/v1/ops/ontology.validate": {
+      "post": {
+        "operationId": "ontology.validate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/ShaclValidate/properties/params"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.reasoning.json#/methods/ShaclValidate"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Validate graph data against SHACL shapes",
+        "tags": [
+          "ontology"
         ]
       }
     },
@@ -21138,6 +21856,74 @@
           }
         },
         "summary": "Query the caller's graph with the engine natural-language planner",
+        "tags": [
+          "query"
+        ]
+      }
+    },
+    "/api/v1/ops/query.sparql": {
+      "post": {
+        "operationId": "query.sparql",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/Sparql/properties/params"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.reasoning.json#/methods/Sparql"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Evaluate a SPARQL SELECT over the caller's graph",
+        "tags": [
+          "query"
+        ]
+      }
+    },
+    "/api/v1/ops/query.sql": {
+      "post": {
+        "operationId": "query.sql",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "schemas/method.request.json#/methods/Sql/properties/params"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "schemas/result.query.json#/methods/Sql"
+                }
+              }
+            },
+            "description": "Operation result"
+          },
+          "default": {
+            "$ref": "#/components/responses/Shared22d8c2b9ee682b1fe0aa6e663c8e3f5a33fca49c9b457c214e831e00c0a4007e"
+          }
+        },
+        "summary": "Run a parameterised SQL query over the caller's graph",
         "tags": [
           "query"
         ]
@@ -21792,5 +22578,5 @@
       }
     }
   },
-  "x-registry-digest": "dbb0efa0dc47306b1207ab4bb490efb45265fb902e98e5480fba16122bd68a62"
+  "x-registry-digest": "6cda071f7f3bb609c198d367afd6a9fbccaae2e14a0077b29bf0f593ae1a04b7"
 }
