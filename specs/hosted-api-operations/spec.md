@@ -1,8 +1,5 @@
 # ARBORA-OPS — Hosted API and intent operations
 
-## Status legend
-
-`DRAFT` means requirements still need decisions; `READY FOR IMPLEMENTATION` means a contributor can implement the stated contract; `BUILDING` means a branch exists but has not met acceptance; `SOURCE LANDED` means code is on the default branch; `ACCEPTED` means the exact default-branch revision passed the contract, quality, and served-path tests in [test-spec.md](test-spec.md). A spec document being complete never changes delivery state. Evidence must name a commit, test command, result, and public CI or release URL. Individual capabilities can advance separately in the [coverage table](#capability-coverage); this document makes no blanket claim that earlier foundation code is accepted.
 
 ## Purpose and user stories
 
@@ -26,23 +23,23 @@ As an authenticated operator, I can discover every Arbora capability through typ
 
 The historical IDs below are stable trace IDs only. Every requirement needed to build them is stated here and in the local design, test, and task files. Rows with an external owner describe Arbora's required interface and acceptance boundary, not that owner's implementation.
 
-| IDs | Arbora deliverable | Delivery |
-|---|---|---|
-| ARBORA-OPS-R005, ARBORA-OPS-R006 | Consume packaged engine `methods`, `errors`, `scopes`, schemas, and wire-callable flags; reject absent/inconsistent contracts | NOT ACCEPTED |
-| ARBORA-OPS-R007, ARBORA-OPS-R008 | Operation registry, digest, engine binding and explicit exclusions | NOT ACCEPTED |
-| ARBORA-OPS-R009, ARBORA-OPS-R010, ARBORA-OPS-R036 | Single invocation/authority/effect/audit path and typed error envelope | NOT ACCEPTED |
-| ARBORA-OPS-R011, ARBORA-OPS-R012 | Six MCP intent verbs, typed discovery, bounded resolver, preview-only natural-language mutation | NOT ACCEPTED |
-| ARBORA-OPS-R013 | Generated `/api/v1` HTTP projection and protocol-route inventory | NOT ACCEPTED |
-| ARBORA-OPS-R014, ARBORA-OPS-R015, ARBORA-OPS-R016, ARBORA-OPS-R017 | Identity/admin, access, capacity, finance and markets operation families | NOT ACCEPTED |
-| ARBORA-OPS-R018, ARBORA-OPS-R019, ARBORA-OPS-R020, ARBORA-OPS-R021 | Query/ontology/analytics, federation, ingestion, decision/retrieval/policy operation families | NOT ACCEPTED |
-| ARBORA-OPS-R022, ARBORA-OPS-R023, ARBORA-OPS-R024 | Work/evolution, agents/browser, telemetry/security/usage/memory/graph operation families | NOT ACCEPTED |
-| ARBORA-OPS-R025, ARBORA-OPS-R026, ARBORA-OPS-R027, ARBORA-OPS-R028 | Generated clients and artifacts; drift, scope, authority and compatibility tests | NOT ACCEPTED |
-| ARBORA-OPS-R029, ARBORA-OPS-R030 | Atomic serving cutover, accurate public API documentation, old-route retirement | NOT ACCEPTED |
-| ARBORA-OPS-R032 | Identity dependency inversion through public ports and one serving composition root | NOT ACCEPTED |
-| ARBORA-OPS-R033, ARBORA-OPS-R034, ARBORA-OPS-R035 | Multi-kind dynamic fleet, Eunomia enforcement, resident multiplexer cutover | NOT ACCEPTED |
-| ARBORA-OPS-R001, ARBORA-OPS-R002, ARBORA-OPS-R003, ARBORA-OPS-R004 | Native MCP/REST host, A2A and agent assembly interface, removal of harvest duplication, FastMCP 4 bridge | NOT ACCEPTED |
-| ARBORA-OPS-R031 | Arbora publishes a complete legacy-verb/tool-to-op or intentional-drop inventory for the agent owner. Removal of its former tool code is accepted separately by that repository | NOT ACCEPTED |
-| ARBORA-OPS-R037 | Final Arbora facade over public engine/agent/connector contracts | NOT ACCEPTED |
+| IDs | Arbora deliverable |
+|---|---|
+| ARBORA-OPS-R005, ARBORA-OPS-R006 | Consume packaged engine `methods`, `errors`, `scopes`, schemas, and wire-callable flags; reject absent/inconsistent contracts |
+| ARBORA-OPS-R007, ARBORA-OPS-R008 | Operation registry, digest, engine binding and explicit exclusions |
+| ARBORA-OPS-R009, ARBORA-OPS-R010, ARBORA-OPS-R036 | Single invocation/authority/effect/audit path and typed error envelope |
+| ARBORA-OPS-R011, ARBORA-OPS-R012 | Six MCP intent verbs, typed discovery, bounded resolver, preview-only natural-language mutation |
+| ARBORA-OPS-R013 | Generated `/api/v1` HTTP projection and protocol-route inventory |
+| ARBORA-OPS-R014, ARBORA-OPS-R015, ARBORA-OPS-R016, ARBORA-OPS-R017 | Identity/admin, access, capacity, finance and markets operation families |
+| ARBORA-OPS-R018, ARBORA-OPS-R019, ARBORA-OPS-R020, ARBORA-OPS-R021 | Query/ontology/analytics, federation, ingestion, decision/retrieval/policy operation families |
+| ARBORA-OPS-R022, ARBORA-OPS-R023, ARBORA-OPS-R024 | Work/evolution, agents/browser, telemetry/security/usage/memory/graph operation families |
+| ARBORA-OPS-R025, ARBORA-OPS-R026, ARBORA-OPS-R027, ARBORA-OPS-R028 | Generated clients and artifacts; drift, scope, authority and compatibility tests |
+| ARBORA-OPS-R029, ARBORA-OPS-R030 | Atomic serving cutover, accurate public API documentation, old-route retirement |
+| ARBORA-OPS-R032 | Identity dependency inversion through public ports and one serving composition root |
+| ARBORA-OPS-R033, ARBORA-OPS-R034, ARBORA-OPS-R035 | Multi-kind dynamic fleet, Eunomia enforcement, resident multiplexer cutover |
+| ARBORA-OPS-R001, ARBORA-OPS-R002, ARBORA-OPS-R003, ARBORA-OPS-R004 | Native MCP/REST host, A2A and agent assembly interface, removal of harvest duplication, FastMCP 4 bridge |
+| ARBORA-OPS-R031 | Arbora publishes a complete legacy-verb/tool-to-op or intentional-drop inventory for the agent owner. Removal of its former tool code is accepted separately by that repository |
+| ARBORA-OPS-R037 | Final Arbora facade over public engine/agent/connector contracts |
 
 ARBORA-A2A-R006 and ARBORA-A2A-R005 are specified in [A2A task projection](../a2a/spec.md). Browser and terminal client migrations are downstream consumer contracts. The server must publish a generated client and keep both surfaces equivalent.
 
@@ -84,7 +81,7 @@ The Arbora contribution includes a machine-readable former-tool inventory: each 
 3. The generated contract, package, and fresh-checkout gates pass at the exact default-branch commit. An ephemeral served call proves MCP and HTTP reach the same handler and durable owner.
 4. The scoped quality gates in [test-spec.md](test-spec.md) pass without suppressions, copied authority logic, or undisclosed private environment dependencies.
 
-Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
+Requirement IDs are defined in [requirements.md](requirements.md). The generator computes the state of each ID.
 
 ## Additional owner requirements
 
@@ -111,3 +108,59 @@ The bounded read-only graph and public node-record contracts are specified in
 `ARBORA-OPS-R021.4.8` and `ARBORA-OPS-R021.4.9`. They extend run replay without
 changing the accepted scope of `ARBORA-OPS-R021.4.7`. Nested lineage, transcript
 availability and child interaction are not implied by existing flat events.
+
+## User Scenarios & Testing
+
+### User Story 1 - Operate through one typed registry (Priority: P1)
+
+An authenticated operator discovers every Arbora capability through typed HTTP and the six MCP intent verbs. The operator invokes each capability under one policy and sees a stable error or a durable receipt.
+
+**Acceptance Scenarios**:
+
+1. **Given** an authenticated caller with the exact scope, **When** the caller invokes an operation on MCP or HTTP, **Then** both surfaces reach one handler and return the same allow or deny code.
+2. **Given** a denied, revoked or stale mutation, **When** the caller invokes it, **Then** the operation creates no effect.
+
+### User Story 2 - Add an operation in one place (Priority: P2)
+
+An external contributor adds an operation to the registry. The contributor proves it on every allowed surface without writing parallel authorization.
+
+**Acceptance Scenarios**:
+
+1. **Given** a new registry entry, **When** the generators run twice, **Then** the contract artifacts are identical and the drift gates pass.
+
+### User Story 3 - Drive graph-native development over MCP (Priority: P2)
+
+A coding harness asks the artifact graph for the next unblocked task, starts an orchestrated run and observes it. A reviewer lists and accepts proposals. Every change lands as a pull request.
+
+**Acceptance Scenarios**:
+
+1. **Given** a repository in mode `development`, **When** the harness starts a run, **Then** the engine picks the tasks and arbora returns the run ID.
+2. **Given** a repository in mode `reference`, **When** the harness starts a run, **Then** arbora refuses the run.
+3. **Given** a proposal, **When** the reviewer accepts it, **Then** the engine opens a pull request and arbora writes no file under `specs/`.
+
+### Edge Cases
+
+- A fleet child is unreachable. The operation returns the typed error `UNAVAILABLE` and is absent from usable discovery.
+- The audit outcome link fails after an effect. The caller receives `INDETERMINATE` and the reservation remains for one reconciliation.
+- A run ID or proposal ID of another tenant returns a non-disclosing refusal.
+- Promotion of a repository to mode `evolving` without operator approval leaves the mode unchanged.
+
+## Requirements
+
+- **FR-001**: The registry must hold one immutable operation set with a digest and exact bindings to engine methods. Rows: `ARBORA-OPS-R007`, `ARBORA-OPS-R006`.
+- **FR-002**: Every surface must reach one invocation path with one authority, effect, audit and error envelope. Rows: `ARBORA-OPS-R009`, `ARBORA-OPS-R010`.
+- **FR-003**: The six MCP intent verbs must discover and invoke operations without direct mutation from natural language. Rows: `ARBORA-OPS-R011`, `ARBORA-OPS-R012`.
+- **FR-004**: The artifact graph must be read through registered engine competency queries, with no per-question operation. Rows: `ARBORA-OPS-R896.1`.
+- **FR-005**: Project mode must change only through a served operation, and promotion to `evolving` must need operator approval. Rows: `ARBORA-OPS-R896.2`.
+- **FR-006**: An implementation run must start and be observed through served operations. Rows: `ARBORA-OPS-R896.3`, `ARBORA-OPS-R896.4`.
+- **FR-007**: Proposals must be listed and reviewed through served operations and must land only as pull requests. Rows: `ARBORA-OPS-R896.5`.
+
+## Success Criteria
+
+- **SC-001**: One operation returns identical allow and deny codes on MCP and HTTP. Rows: `ARBORA-OPS-R009`.
+- **SC-002**: A run driven by the artifact graph over MCP ends with one pull-request request and no write under `specs/`. Rows: `ARBORA-OPS-R896.6`.
+
+## Assumptions
+
+- The engine owns every artifact-graph fact, dispatch decision and proposal. Arbora serves, admits and audits them.
+- Cross-repository seams are named by row ID on both sides, in the medulla contracts `spec-artifact-graph.md` and `proposal-review.md`.
