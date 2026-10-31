@@ -1,6 +1,62 @@
 # Design — ARBORA-IDENTITY-ACCESS
 
-## Current seam and implementation boundary
+Governing spec: [spec.md](spec.md). Rows: [requirements.md](requirements.md).
+
+## Summary
+
+This plan serves the rows of `ARBORA-IDENTITY` in requirements.md. It keeps the earlier design record under Phase 1. The north star and the delivery phase of the spec close the plan.
+
+## Technical Context
+
+- **Language/Version**: Python 3.14 (floor 3.12)
+- **Primary Dependencies**: Named per row in requirements.md.
+- **Storage**: The medulla engine. Arbora holds no durable store of its own.
+- **Testing**: pytest. Each row names the test and the proof level that it needs.
+- **Target Platform**: Linux hosts and CI runners
+- **Project Type**: Service and command-line tools
+- **Performance Goals**: N/A. A row states its own budget when it has one.
+- **Constraints**: Public files stay neutral and portable. A row states any further limit.
+- **Scale/Scope**: The rows of requirements.md.
+
+## Constitution Check
+
+- **I. One owner per concept**: No departure is recorded in this plan; the rows carry the proof.
+- **II. Extend before you create**: No departure is recorded in this plan; the rows carry the proof.
+- **III. Specs describe the current state only**: No departure is recorded in this plan; the rows carry the proof.
+- **IV. Requirements are neutral and controlled**: No departure is recorded in this plan; the rows carry the proof.
+- **V. Hard cutover, no legacy path**: No departure is recorded in this plan; the rows carry the proof.
+- **VI. Names carry no version suffix**: No departure is recorded in this plan; the rows carry the proof.
+- **VII. One engine, no second database, no sync**: No departure is recorded in this plan; the rows carry the proof.
+- **VIII. Ask the graph, not a bespoke operation**: No departure is recorded in this plan; the rows carry the proof.
+- **IX. Connectors depend on the SDK and are called through arbora**: No departure is recorded in this plan; the rows carry the proof.
+- **X. Every ontology class rolls up to the core**: No departure is recorded in this plan; the rows carry the proof.
+- **XI. Code stays small, simple and unduplicated**: No departure is recorded in this plan; the rows carry the proof.
+- **XII. No ratchets and no suppressions**: No departure is recorded in this plan; the rows carry the proof.
+- **XIII. Zero flakes**: No departure is recorded in this plan; the rows carry the proof.
+- **XIV. Compile first, then review**: No departure is recorded in this plan; the rows carry the proof.
+- **XV. Python 3.14 standard, 3.12 floor**: No departure is recorded in this plan; the rows carry the proof.
+- **XVI. Install and deploy only from published releases**: No departure is recorded in this plan; the rows carry the proof.
+- **XVII. Publish the gate's tool before the gate**: No departure is recorded in this plan; the rows carry the proof.
+- **XVIII. Landed means reachable**: No departure is recorded in this plan; the rows carry the proof.
+- **XIX. A tag push publishes, with no manual approval**: No departure is recorded in this plan; the rows carry the proof.
+- **XX. Secrets are never traced or logged**: No departure is recorded in this plan; the rows carry the proof.
+- **XXI. Public files stay portable and neutral**: No departure is recorded in this plan; the rows carry the proof.
+
+## Project Structure
+
+```text
+specs/identity-access/        existing: spec.md, plan.md, requirements.md, tasks.md, test-spec.md
+```
+
+Code paths are named per row in requirements.md. This plan adds no path of its own.
+
+## Phase 0: Research
+
+No unknowns; no research.md.
+
+## Phase 1: Design
+
+### Current seam and implementation boundary
 
 This checkout's `arbora/mcp_server/server.py` and `runtime.py` compose the one FastMCP server and verified tool session; `bootstrap.py` keeps process authority alive. `arbora/gateway/graph_api.py` installs the existing actor identity middleware. `arbora/gateway/remote_oauth_api.py` already narrows delegated provider scopes. `arbora/deployment/cli.py`, `config_generator.py` and `doctor.py` own deployment commands and diagnostics. `arbora/webui_host/webui_co_service.py` hosts the browser co-service. `arbora/a2a/authority.py` is the A2A authority boundary. Reuse these. The proposed `arbora/identity/`, `arbora/access/`, and `arbora/api/ops/` packages are **not in this checkout**. Implementation must add them and wire them into the serving root before marking an operation available.
 
@@ -18,7 +74,7 @@ flowchart LR
     R --> C
 ```
 
-## Ports and composition
+### Ports and composition
 
 Define small protocols in `arbora.identity.ports`:
 
@@ -33,7 +89,7 @@ The adapter returns `UNAVAILABLE` when an engine method is absent. Where safe, i
 
 The authentication cutover is ordered: construct a signed local-issuer token at the serving root. Carry it through every engine client path, including bootstrap, REST, MCP, A2A, CLI and background service calls. Prove authorized and denied behavior with the engine verifier. Then remove the engine's unauthenticated opt-out. Arbora must never retry an unsigned envelope after a token error or denial. During rolling deployment, an old client that cannot supply a token fails closed and reports a readiness error. It does not silently switch transport or bypass verification.
 
-## Identity data and mode machine
+### Identity data and mode machine
 
 The engine's reserved identity catalog contains `identity_config` (`mode`, `local_fallback`, policy, `epoch`, active `kid`), users keyed by opaque principal ID, credential/session/refresh/one-time-token hashes, MFA credentials, API keys, roles, groups, provider configs, mapping rules, external identity links, throttle counters and hash-chained audit. Arbora receives redacted DTOs only. Principal IDs never change when a user adds or removes an authenticator. Each mode uses the same issuer, scope projection and engine decision path.
 
@@ -41,7 +97,7 @@ Allowed transitions: `none→local` requires an administrator with local credent
 
 In `none`, bootstrap principal is a normal engine principal with scoped admin grants but no approver/live-order membership. Every request still carries a valid signed token into engine RBAC. Network exposure requires an explicit acknowledgment, exact Host allowlist, and Origin check for cookie mutations. Show mode in session/status/MCP initialize and doctor. Local mode uses 256-bit opaque server-side session IDs stored only by hash. Use `__Host-arbora_session` with Secure/HttpOnly/SameSite=Lax/Path=/, CSRF token, fixation rotation, idle/absolute expiry and revocation. Access tokens live at most five minutes. Password candidates and recovery codes go only to engine verification methods; Arbora never logs them. Privileged console mutation requires `identity:admin`, operator-console origin, and MFA age at most 15 minutes. MFA enrollment itself is optional unless a group policy requires it.
 
-## Public interface contract
+### Public interface contract
 
 All REST mutations use JSON, an idempotency key where replay could create an object, and the current mode epoch or resource version. Errors use `{code,message,request_id}` with stable codes `UNAUTHENTICATED`, `FORBIDDEN`, `MFA_REQUIRED`, `CSRF_INVALID`, `CONFLICT`, `RATE_LIMITED`, `UNAVAILABLE`, `INVALID_INPUT`; a public error never confirms whether an account exists. Inputs have strict size limits, UUID/ID grammar, and no arbitrary engine method name.
 
@@ -57,15 +113,15 @@ All REST mutations use JSON, an idempotency key where replay could create an obj
 
 The MCP `identity.*` twin is read and low-risk self service only. Identity admin, scope grants, provider edits, mode changes, and approvals are console-only. An MCP catalog entry must state required exact scope. `fleet:*`, `mcp:*`, `ops:*`, and other registry names are not inferred from `admin` or `kg:admin`. Unknown native tools are denied and omitted. Agent delegation preserves the principal/tenant/scope ceiling and never adds approval authority.
 
-## External adapters
+### External adapters
 
 OIDC validates discovery metadata, issuer/audience/signature, `state`/`nonce`, PKCE S256 and callback binding. Ordered mappings union matching targets; no match grants only the base user role under JIT-create, or denies under JIT-deny. Source-tagged memberships are replaced on every login/sync while local grants remain. Link by verified email is off unless explicitly enabled per provider. Logout uses `id_token_hint` where supported. LDAP accepts LDAPS or StartTLS only, escapes RFC 4515 filters, bounds recursion and paging, and deprovisions disabled users. SCIM binds each token to one provider. SAML is brokered through an OIDC provider initially, so Arbora does not parse XML signatures. SMTP is optional; with no adapter, email-only routes and UI options are unavailable. All external adapters have deterministic local test doubles.
 
-## Decisions, failure modes, and observability
+### Decisions, failure modes, and observability
 
 One engine-backed authority eliminates local/engine disagreement. Unavailable engine or secrets store means login/identity mutation fail closed. Use distinct internal reason codes but safe public messages. Cover bad signing key, unknown `kid`, wrong tenant/audience, stale epoch, revoked credential, denied scope, and unavailable external IdP. Emit metrics for issuance, login failures, mode transitions, denied access and adapter availability. Those metrics carry no subject, token, password or raw IP labels. Audit all privileged identity/access changes and sampled denials through engine authority. No readiness gate needs an existing external provider; optional live-provider qualification is a separate deployment exercise.
 
-## Implementation order
+### Implementation order
 
 1. Freeze typed engine/Arbora DTOs and error codes; add local engine fixture and contract tests.
 2. Add ports and one serving composition root, then issuer and `none` path.
@@ -74,7 +130,7 @@ One engine-backed authority eliminates local/engine disagreement. Unavailable en
 5. Add OIDC/LDAP/SCIM/brokered SAML/optional SMTP adapters and CLI/doctor.
 6. Run the three-mode decision oracle, browser/MCP/CLI flows, scanner and release gates; record exact evidence.
 
-## Bounded producer implementation
+### Bounded producer implementation
 
 `identity.engine` parses and freezes the authoritative response shape;
 `identity.issuer` prepares consistent local claims and narrowed context. It
@@ -136,7 +192,7 @@ binding immediately, before the request context exits. The qualified EG
 adapter must uphold its live-resolution consistency contract.
 This ordering is not a distributed transaction. Final engine authorization remains required.
 
-## ARBORA-IDENTITY-R026 client attribution and segmentation
+### ARBORA-IDENTITY-R026 client attribution and segmentation
 
 Data flow: verified token → client session record → run record and audit event → caller-scoped listing.
 Attach the audit event at `arbora/api/invoke/audit.py`. The first child locates the session-open site.
@@ -144,7 +200,7 @@ Reused: the verified principal from `ARBORA-IDENTITY-R017.1`. Segmenting stored 
 Decision: attribute by verified principal only. Rejected alternative: a client-supplied client id, which a caller can forge.
 
 
-## Scoped credentials, bearer ingress and protocol grants
+### Scoped credentials, bearer ingress and protocol grants
 
 R023.1 through R023.6 extend native credentials with scoped broker reuse and inline authorization.
 R017.3 through R017.8 define stateless bearer verification and required tenant binding.
@@ -219,7 +275,7 @@ No runtime security or access configuration changes are authorized by this defin
 No external derivation is claimed; the inputs describe protocol and ownership requirements.
 
 
-## Connector-bound grants and provider token profiles
+### Connector-bound grants and provider token profiles
 
 This shared contract refines ARBORA-IDENTITY-R023 and SCION-CONNECTOR-CONTROL-R035/R046. Implementation still needs the required runtime wiring.
 The exact credential-use tuple includes tenant, owner principal, requesting principal/client, connector, provider, audience, scopes, resource and operation.
@@ -259,11 +315,11 @@ Opaque exchange metadata and host lease bounds remain distinct from signed JWT c
 Map profile errors to `invalid_token_profile` or `token_validation_failed`; required introspection failures use `introspection_unavailable` or `token_inactive`.
 These shared typed refusals stop persistence readiness and operation continuation; no token, code or raw introspection body enters public output.
 
-## Additional owner requirements
+### Additional owner requirements
 
 - `ARBORA-IDENTITY-R026.8`: Plan the owner work and dependencies defined in requirements.md.
 
-### Atomic session record consumption
+#### Atomic session record consumption
 
 ARBORA-IDENTITY-R005.1 consumes MEDULLA-TYPED-PACKS-R085.1 through the existing
 Session.Resolve operation. EG projects committed record identity, tenant and
@@ -276,7 +332,7 @@ qualify persisted native authority or live admitted host startup.
 ARBORA-IDENTITY-R005.2 retains the full account lifecycle and served/native
 acceptance. It remains pending independently of the bounded consumer tests.
 
-### Amendment 2026-10-20: process lease renewal containment
+#### Amendment 2026-10-20: process lease renewal containment
 
 ARBORA-IDENTITY-R027 keeps the existing process identity producer and shared lease.
 MCP and gateway renewal check current authority before acquisition and before commit.
@@ -291,13 +347,13 @@ These tests do not establish durable restart continuity or human session renewal
 SessionAuthority currently resolves human sessions but has no qualified renewal producer.
 Human action approvals remain separate, single-use and nonrenewable.
 
-## Delegated identity for connector calls (R028)
+### Delegated identity for connector calls (R028)
 
 Some connector tools act for a user, not for the platform. The fleet acceptance run of 2026-10-18 showed `keycloak-mcp` and `vector-mcp` refuse such calls with `IdentityRequiredError`. Arbora called them with its process credential only.
 
 R028 adds a delegated identity. The SDK marks each actor-required tool (SCION-CONNECTOR-CONTROL-R902). Arbora exchanges the verified caller token for an audience-bound token by RFC 8693 token exchange. The child binds that actor through the SDK transport. A call with no user caller refuses before any connector call.
 
-## Amendment: 2026-10-23 WebUI deployment identity composition
+### Amendment: 2026-10-23 WebUI deployment identity composition
 
 Extend ARBORA-IDENTITY-R004 and R003 with explicit operator-selected WebUI
 `none`, `eg` and `oidc` host composition. No-auth is a conscious loopback-only
@@ -307,7 +363,7 @@ Pass the selected mode and qualified session boundary through the WebUI public
 factory. Installed-package startup and full authenticated browser acceptance
 remain open until configured identity owners and compatible releases exist.
 
-### Remaining shared admission and invocation contract
+#### Remaining shared admission and invocation contract
 
 The host must expose a public request-admission port and an invocation fence.
 `request(scope)` owns one exact caller instance and its immutable mode/provenance
@@ -347,7 +403,7 @@ CAS or consume-once fences. Reuse `AmbientHTTPAuthenticator`,
 engine. Acceptance covers streaming lifetime, cancellation, duplicate calls,
 task hops and revocation/scope narrowing during verifier awaits.
 
-### Separate delivery slices
+#### Separate delivery slices
 
 1. Safety scaffold (R004.7/R004.4): explicit mode selection and refusal of unsupported composition. No deployed security changes.
 2. Dispatch seam (R004.5): `BoundBrowserHTTPAuthenticator` supplies both resolver and revalidation from one authority owner, with private scope/task/caller lifetime and one-use fencing at existing HTTP invocation and registry visibility. Keep the WebUI adapter disabled pending successful installed composition and independent security review. Streaming remains unavailable until its own lifetime contract is qualified.
@@ -357,13 +413,13 @@ Keep these slices separately reviewable. Regenerate status from actual committed
 
 The inactive `create_browser_api_application` composition primitive derives the resolver/fence owner and trusted origin from one `BrowserAdmission`. Mount routing must finish before admission snapshots the request: changing `root_path` afterward correctly invalidates the binding. Real ASGI source tests demonstrate mounted success with synthetic issuer facts and rejection when admission occurs outside the mount. This primitive does not install itself into WebUI, exempt any existing identity middleware, or make helper/executor task hops safe.
 
-### Guarded WebUI canonical-path candidate
+#### Guarded WebUI canonical-path candidate
 
 A host may explicitly supply a typed canonical operation application to the WebUI session boundary. Both must share the exact same BrowserAdmission. This candidate routes only the canonical `/api/v1` namespace through mount-local admission and shared invocation; `/auth` stays host-owned. Unmigrated dynamic WebUI routes remain unavailable, including direct filesystem/configuration routes and non-API endpoints. Only the existing static-shell decision and fixed GET/HEAD liveness paths continue through the original gate. The default boundary without that application still refuses. No existing deployment is switched to this path.
 
 Actual factory source tests cover a canonical synthetic read through the real invoke pipeline and parameter validation. They also cover host-auth routing, liveness, revocation and transport proof refusals. They do not qualify a real issuer, native effects, frontend route migration, streaming, or OIDC provider integration. Verify every applicable outer host/security/capacity control and obtain independent review before activation.
 
-### Canonical transport-control repairs
+#### Canonical transport-control repairs
 
 Canonical operation requests now validate framing and declared byte limits before issuance, and enforce a same-task streaming byte cap before buffering or invocation. They retain their own HTTP/validation privacy handlers because nested FastAPI handlers otherwise bypass WebUI masking. Unexpected post-invocation errors retain their outcome status rather than becoming authentication refusals; arbitrary exception details and headers are not reflected. Only the host-generated rate-limit exception may supply bounded retry metadata.
 
@@ -373,11 +429,11 @@ Body, privacy, rate and capacity equivalence remain activation gates until indep
 
 The WebUI boundary passes its already-resolved effective listener rate/burst into the canonical authenticator before serving. It must not reread Arbora's separate settings, which may still be zero when the WebUI selected non-loopback defaults. Reconfiguration after the first operation starts and nonfinite/negative policies refuse. The actual-factory remote-default case verifies this without starting a listener or changing deployed settings.
 
-### Source delivery boundaries
+#### Source delivery boundaries
 
 R004.7, R004.4 and R004.5 retain their full acceptance as rollups. Source delivery binds only R004.7.1, R004.4.1, R004.5.1 and R004.5.2. Their installed/provider/native siblings remain open. R004.6 remains wholly open; direct-handler refusal does not deliver anonymous effects. No source marker or delivery trailer claims an installed provider, native effect or activation.
 
-### 2026-10-22 amendment: true tokenless local mode (R004.1)
+#### 2026-10-22 amendment: true tokenless local mode (R004.1)
 
 R004.1 supersedes the earlier planned bootstrap-JWT behavior specifically for
 explicit local `none`: no login, signer, HMAC secret, or credential is generated.
@@ -395,7 +451,7 @@ Anonymous runtime contract:
 - Operation-policy admission accepts only the fully validated anonymous caller variant in explicit local mode. Exact scopes and principal-kind requirements still apply. An enabled embedded or remote policy decision can narrow or refuse anonymous operations and is never bypassed.
 - The backing EG must use its own explicit anonymous mode and a fresh, mode-marked local store. This is not a mechanism to open an existing authenticated store. Plan, policy, effect journaling, schema admission, and approval workflows remain enforced.
 
-### 2026-10-22 amendment: anonymous discovery parity (R004.3)
+#### 2026-10-22 amendment: anonymous discovery parity (R004.3)
 
 HTTP registry, operation descriptors and OpenAPI must expose the same admitted
 anonymous operations as MCP discovery and shared invocation. Registry filtering
@@ -405,7 +461,7 @@ remain refused. Exact scopes, human/service restrictions and policy narrowing
 continue to apply; clients never invoke an unadvertised operation as a fallback.
 
 
-### 2026-10-22 amendment: admission validation decomposition (R004.3)
+#### 2026-10-22 amendment: admission validation decomposition (R004.3)
 
 Anonymous startup, Host parsing, actor authority and caller projection checks
 remain fail closed when decomposed into focused validators. Regression coverage
@@ -413,7 +469,7 @@ includes exact Host cardinality, literal loopback peers and engine endpoints.
 It also covers refusal of roles, credential leases or altered local identity. Principal
 rules use their shared human/service predicates rather than duplicate anonymous
 branches. This refactoring adds no admission exceptions or scanner exemptions.
-### 2026-10-22 amendment: admission predicate decomposition (R004.1)
+#### 2026-10-22 amendment: admission predicate decomposition (R004.1)
 
 Keep session construction, MCP caller projection, service-child ownership and
 background authority mode checks behaviorally unchanged while separating their
@@ -423,14 +479,14 @@ regressions and per-function complexity measurements qualify this refactoring;
 they do not establish additional native transport acceptance.
 
 
-### 2026-10-22 amendment: discovery admission decomposition (R004.3)
+#### 2026-10-22 amendment: discovery admission decomposition (R004.3)
 
 Discovery keeps exact anonymous caller validation ahead of principal, scope and
 policy checks. A focused admission predicate preserves rejection of forged
 anonymous kinds and disabled mode without adding scanner exemptions.
 
 
-### 2026-10-22 amendment: endpoint fixture isolation (R004.3)
+#### 2026-10-22 amendment: endpoint fixture isolation (R004.3)
 
 Serving-root tests configure engine endpoints through the environment, not a
 mutable override of the live settings proxy. Verify that scoped configuration
@@ -440,7 +496,7 @@ refusal independently of suite ordering. Production admission is unchanged.
 
 The WebUI configuration requirement uses R004.7 so the existing tokenless local-serving R004.3 keeps its own meaning. Canonical browser invocation retains caller-session scope around the shared pipeline after same-owner use-time revalidation. Synthetic session fixtures run the existing GraphSession validation at that ambient boundary. This is source integration evidence; live Keycloak/Okta and installed EG acceptance remain open.
 
-### R004.6 local attended browser admission contract
+#### R004.6 local attended browser admission contract
 
 This is a proposed contract, not runtime qualification.
 The owner explicitly configures a local browser transport for anonymous mode.
@@ -466,7 +522,7 @@ These are deliberate refusal boundaries until the owner qualifies the separate b
 Use the existing `AnonymousCaller`, `PolicyGate.check_op`, `bind_plan` and effect journal.
 Policy receives the canonical operation; exact parameters and target need the existing binding and effect fences too.
 
-## Explicit anonymous task reads
+### Explicit anonymous task reads
 
 R004.8.1 adds a separate opt-in factory, not a fallback in the verified app. Its policy is empty by default. It uses the existing A2AService read path and a distinct caller. No GraphSession or authenticated claim is created. Source tests bind a synthetic native port and a concrete public-client adapter. It does not provision or start a service.
 
@@ -476,7 +532,7 @@ Message send, cancellation, tools, global budgets, provider enforcement and brow
 
 The concrete source adapter uses the public generated GetRunWorkItem sender and decoder. It supplies the trusted graph before the read, even if the client default differs. The engine binds that method to its server-created anonymous principal and immutable run owner. Context subject, agent and scopes remain provenance, not client authority. Full ingress-to-client tests use synthetic native responses; they are not live engine tests.
 
-## Local anonymous text send
+### Local anonymous text send
 
 The host composes explicit local admission with `MERISTEM-BOUNDARY-R043.13.1`, the received text-only execution constraint. EG owns run admission, idempotency, the exact lease and terminal state. The source slice stores a bounded terminal event with existing native node methods. It checks readback, then commits its opaque content reference. Replay reads that committed reference only after owner-bound run lookup. A usage receipt alone never becomes answer text. Installed proof and durable answer recovery remain separate open children. Native in-flight limits and finite per-run bounds do not claim a cumulative spending quota. No live security setting changes are part of this source work.
 
@@ -487,7 +543,7 @@ factories require an exact configured Origin. Host composition must reconcile
 those policies before serving them together; standalone tests do not prove that
 integration. Do not relax the general middleware or infer browser admission.
 
-### R004.6 local browser transport qualification
+#### R004.6 local browser transport qualification
 
 The first runtime component only validates the separate local browser transport.
 Explicit origin configuration is required while canonical anonymous mode is active.
@@ -496,7 +552,7 @@ Credentials, proxy headers and duplicate authority headers refuse.
 The component returns no binding, session grant or effect authority.
 Native lease liveness and the composed attended flow remain separate acceptance gates.
 
-### R004.6 configured policy source evidence
+#### R004.6 configured policy source evidence
 
 Arbora's existing ActionPolicy owns configured-source qualification.
 Its additive snapshot API normalizes the explicit file and effective graph overrides.
@@ -511,7 +567,7 @@ Parser, file, and override exceptions must not survive in its exception chain.
 This prevents malformed policy values from entering ordinary error tracebacks.
 Failure remains refusal; legacy policy evaluation is unchanged.
 
-### R004.6 same-loop source prerequisite
+#### R004.6 same-loop source prerequisite
 
 An additive async source read uses the same validators, rule order and normalizer.
 It captures the configured path, option, engine and caller before awaiting work.
@@ -522,7 +578,7 @@ This avoids loop switching on this path, not the shared pool's inherited limitat
 Concurrent legacy synchronous consumers and stalled file latency remain unqualified.
 This prerequisite adds no factory admission or operation authority.
 
-### R004.6 zero-effect socket owner prototype
+#### R004.6 zero-effect socket owner prototype
 
 An isolated owner prototype binds private membership to the exact live socket task.
 It reuses canonical async source reads and public native control leases.
@@ -532,7 +588,7 @@ Native retirement failures remain explicit unresolved outcomes, never restored a
 The prototype grants no operations and is not wired into the application factory.
 Actual WebUI handshake and effect admission remain separate acceptance gates.
 
-### R004.6 default-off local browser transport composition
+#### R004.6 default-off local browser transport composition
 
 The public WebUI factory may accept a distinct owner-issued local browser port.
 Only its fixed WebSocket route can reach the zero-effect owner in explicit none mode.
@@ -541,7 +597,7 @@ The port carries no policy, session, credential or serialized admission proof.
 Actual socket handshakes must preserve exact Origin, Host, peer and document scope.
 Bounded readiness and ping frames grant no operation or effect authority.
 
-### R005.1 / R004.4.1 typed session refusal amendment (2026-10-26)
+#### R005.1 / R004.4.1 typed session refusal amendment (2026-10-26)
 
 During generated `session.resolve`, the published client's typed
 `IDENTITY_NOT_FOUND` refusal means the presented session is absent, expired or
@@ -551,6 +607,26 @@ transport and malformed-response failures remain unavailable. Preserve all
 identity binding checks and refuse before effects. Consumer regressions and a
 synthetic login/logout replay cover this classification; the installed browser
 replay gate still requires HTTP 401 and remains unqualified until it passes.
+
+## Phase 2: Task approach
+
+tasks.md carries one numbered task line for each active row. Tasks run producer first. A task marked `[P]` may run in parallel with its neighbours.
+
+## Complexity Tracking
+
+none
+
+## Build contract
+
+Each row names its test. The repository pre-commit and pre-push hooks and the pull request gates apply. No row may use a suppression or a ratchet.
+
+## Production caller chain
+
+Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
+
+## Cross-repo seams
+
+The `Depends on` lines of requirements.md name each seam by the row ID that owns it in the other repository.
 
 ## North star
 
