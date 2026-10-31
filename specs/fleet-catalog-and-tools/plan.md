@@ -492,3 +492,13 @@ R027.7.1 is the bounded CLI stream repair. R027.7.2 retains the original onboard
 - `ARBORA-FLEET-R053`: Reuse the `fleet.catalog.search` schema and annotations to pick each probe and the served `fleet.call` op to run it. The first run was a manual census of every served connector through `fleet.call`. Schedule it as a k8s CronJob beside the arbora deployment and route transitions to the existing alerting path. No new store: rows go to the existing fleet health evidence (`ARBORA-FLEET-R024.750`).
 - `ARBORA-FLEET-R045`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-FLEET-R034.15`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+
+## North star
+
+Every connector that connects through arbora onboards itself. Its ontology extends the core ontology. Its prompts become system-prompt candidates. Its skills, tools and resources appear as virtual graph entries in the engine. The exit gate is competency questions. The ontology answers how to execute a task and produces cross-source reports from connector virtual graphs. One engine, medulla, holds all facts. There is no second database and no sync. External stores are virtual-graph sources reached through connectors.
+
+## Delivery phase
+
+Rows `ARBORA-FLEET-R041.19` to `.21` serve P3, the fleet boundary. Row `ARBORA-FLEET-R052` and its children serve the competency proofs that scenario `ARBORA-ACCEPTANCE-R006.7` calls in P5.
+
+Onboarding failure modes found in validation: a pack that commits but fails projection, a pass that outlives its graph authority, and a catalog attest key that ignores the published component state. Each is a typed, visible outcome. None may leave a connector silently absent from the catalog.
