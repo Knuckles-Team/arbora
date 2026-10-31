@@ -25,40 +25,34 @@ permissions:
   contents: read
 
 jobs:
+  # One classification per pull request (shared pipelines change-scope). A spec
+  # or docs only diff runs only the spec gate set on the touched files; build,
+  # Helm, type check, journeys and tests are not applicable and skip.
   changes:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      code: ${{ steps.scope.outputs.code }}
+      code: ${{ steps.scope.outputs.scope != 'spec' && 'true' || 'false' }}
+      scope: ${{ steps.scope.outputs.scope }}
+      skip-hooks: ${{ steps.scope.outputs.skip-hooks }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
-      # docs-only-paths: every changed file matches one of these bash patterns
-      # (`*` crosses `/`), so the code jobs are skipped and report as passed.
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: '0.13.1'
       - id: scope
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          DOCS_ONLY_PATHS: 'specs/* docs/* *.md plans/* LICENSE'
-        run: |
-          set -euo pipefail
-          code=false
-          while IFS= read -r file; do
-            matched=false
-            for pattern in $DOCS_ONLY_PATHS; do
-              # shellcheck disable=SC2254
-              case "$file" in $pattern) matched=true; break;; esac
-            done
-            [ "$matched" = true ] || { code=true; break; }
-          done < <(git diff --name-only "$BASE_SHA...HEAD")
-          echo "code=$code" >> "$GITHUB_OUTPUT"
+        run: uvx --from 'git+https://github.com/Knuckles-Team/pipelines@main' pipelines-hook change-scope --base-ref "$BASE_SHA" --config .pre-commit-config.yaml
 
   freeze-gate-source:
     name: freeze-gate-source
     needs: [changes]
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -98,12 +92,13 @@ jobs:
     # requires `CI required`. Diff-scoped: commit and push stages over the diff,
     # the locked type check and the affected-test subset.
     name: gates
-    needs: [freeze-gate-source]
+    needs: [changes, freeze-gate-source]
     timeout-minutes: 20
     # Homelab self-hosted runner for same-repo PRs; a fork PR lands on a hosted runner.
     runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && fromJSON('["self-hosted", "homelab"]') || 'ubuntu-latest' }}
     env:
       PIPELINES_REF: ${{ needs.freeze-gate-source.outputs.sha }}
+      CHANGE_SCOPE: ${{ needs.changes.outputs.scope }}
       # The homelab runner is an RKE2 pod; this is a CI checkout, not a deployed
       # arbora instance, so the live-mount guard is a false positive here.
       AGENT_UTILITIES_SKIP_LIVE_MOUNT_CHECK: "true"
@@ -123,6 +118,7 @@ jobs:
           save-cache: false
 
       - name: Provision pinned Helm for deployment render tests
+        if: needs.changes.outputs.scope != 'spec'
         env:
           HELM_VERSION: v4.3.1
           HELM_SHA256: 0403a88ae20913d11b10a2467b50087721fea7581736da6b9d3992f5357fe54b
@@ -187,9 +183,20 @@ jobs:
 
       # The prohibited-identity catalog is operator-owned and never committed;
       # a missing catalog makes the tracked-privacy hook fail closed.
+      - name: Report gates not applicable to this change
+        if: needs.changes.outputs.scope == 'spec'
+        env:
+          SCOPE_SKIP: ${{ needs.changes.outputs.skip-hooks }}
+        run: |
+          for gate in "Helm render" "type check" "released-native host log journeys" "tests" "build"; do
+            echo "$gate: not applicable: spec/docs-only change"
+          done
+          echo "skipped hooks: $SCOPE_SKIP"
+
       - name: Commit- and push-stage hooks (.pre-commit-config.yaml)
         env:
           PROHIBITED_IDENTITY_CATALOG: ${{ vars.PROHIBITED_IDENTITY_CATALOG }}
+          SCOPE_SKIP: ${{ needs.changes.outputs.skip-hooks }}
         run: |
           set -euo pipefail
           if [ -n "${PROHIBITED_IDENTITY_CATALOG:-}" ]; then
@@ -197,7 +204,7 @@ jobs:
             printf '%s' "$PROHIBITED_IDENTITY_CATALOG" > "$HOME/.config/arbora/governance/prohibited-identities.json"
           fi
           # ste-staged (prose lint) is advisory: the report-only step below runs it.
-          SKIP="${SKIP:+$SKIP,}ste-staged"
+          SKIP="${SKIP:+$SKIP,}ste-staged${SCOPE_SKIP:+,$SCOPE_SKIP}"
           export SKIP
           range="--from-ref $PRE_COMMIT_FROM_REF --to-ref HEAD"
           uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" $range --show-diff-on-failure
@@ -210,14 +217,17 @@ jobs:
           uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" ste-staged --from-ref "$PRE_COMMIT_FROM_REF" --to-ref HEAD
 
       - name: Sync test environment
+        if: needs.changes.outputs.scope != 'spec'
         run: |
           set -euo pipefail
           uv sync --frozen --extra test --extra webui
 
       - name: Locked-environment type check (manual-stage hook, always full)
+        if: needs.changes.outputs.scope != 'spec'
         run: uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" mypy-env --hook-stage manual --all-files
 
       - name: Required released-native host log journeys
+        if: needs.changes.outputs.scope != 'spec'
         env:
           HOST_LOG_RESULTS: ${{ runner.temp }}/native-host-log-results.xml
         run: |
@@ -229,6 +239,7 @@ jobs:
       # auto-merges within minutes. Main, nightly and tags run the full suite
       # through checks.yml.
       - name: Resolve pull-request test scope
+        if: needs.changes.outputs.scope != 'spec'
         id: pr-test-scope
         run: |
           set -euo pipefail
@@ -243,6 +254,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Test suite -- pull request fast subset
+        if: needs.changes.outputs.scope != 'spec'
         env:
           SCOPE: ${{ steps.pr-test-scope.outputs.scope }}
         run: |
