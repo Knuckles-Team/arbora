@@ -78,7 +78,7 @@ explicitly.
   </li>
   <li class="site-flow__step">
     <span class="site-flow__title">Route to the owner</span>
-    <span class="site-flow__body">Agent work reaches meristem; graph work reaches Medulla; source work reaches an admitted connector.</span>
+    <span class="site-flow__body">Agent work reaches Meristem; graph work reaches Medulla; source work reaches an admitted connector.</span>
   </li>
   <li class="site-flow__step">
     <span class="site-flow__title">Return evidence</span>
@@ -90,7 +90,7 @@ explicitly.
 
 | If the operator must… | Go to… |
 |---|---|
-| Run MCP, REST, A2A, WebUI, or fleet supervision | **Arbora** — the operator are here |
+| Run MCP, REST, A2A, WebUI, or fleet supervision | **Arbora** — the operator is here |
 | Build agents, workflows, evaluations, or skills | [Meristem](https://knuckles-team.github.io/meristem/) |
 | Store, query, reason over, or prove durable knowledge | [Medulla](https://knuckles-team.github.io/medulla/) |
 | Build and certify a source connector | [Scion SDK](https://knuckles-team.github.io/scion-sdk/) |
