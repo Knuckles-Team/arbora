@@ -19,3 +19,12 @@ Governing [spec](spec.md).
 
 MSG-T09–MSG-T12 have no results in this specification publication. The cases require implementation and real endpoint/consumer fixtures. This change claims no runtime or test evidence.
 Implementation acceptance covers uv run pytest tests/messaging and authenticated dashboard/configure integration cases. Ruff and mypy cover changed Python modules.
+
+## Memory webhooks
+
+| Test | Requirement | Setup and expected result |
+|---|---|---|
+| MSG-T13 | ARBORA-MESSAGING-R700.1 | Test: `tests/messaging/test_memory_webhooks.py::test_subscribe_list_unsubscribe_and_refusals` (served: HTTP and MCP). |
+| MSG-T14 | ARBORA-MESSAGING-R700.2 | Test: `tests/messaging/test_memory_webhooks.py::test_signature_retry_backoff_and_dead_letter` (module test with an injected transport and clock). |
+| MSG-T15 | ARBORA-MESSAGING-R700.3 | Test: `tests/messaging/test_memory_webhooks.py::test_pump_pulls_delivers_and_acks_once` (served: loopback engine and receiver). Test: `::test_crash_before_ack_redelivers_with_the_same_delivery_id`. |
+| MSG-T16 | ARBORA-MESSAGING-R700.4 | Test: `tests/messaging/test_memory_webhooks.py::test_turn_to_signed_webhook_journey` (served: HTTP and MCP with a loopback engine and receiver). Test: `::test_other_tenant_events_never_match`. |

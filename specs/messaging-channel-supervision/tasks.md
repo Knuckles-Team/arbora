@@ -13,3 +13,7 @@ See [design](plan.md) and [tests](test-spec.md). Generated delivery evidence is 
 - [ ] Prove the configured/disabled/unconfigured/unavailable state matrix, safe reason codes, and alert-eligibility rule through the real served health surface (MSG-T10, MSG-T11).
 - [ ] Gate component-health alerts on alert_eligible. Disabled credentials never cause alerts; enabled configuration failures remain eligible.
 - [ ] Run acceptance at a merged revision. Record actual test and consumer evidence in generated status.json.
+- [ ] `ARBORA-MESSAGING-R700.1`: Memory webhook subscription operations. Deliver as written in requirements.md.
+- [ ] `ARBORA-MESSAGING-R700.2`: Signed delivery with retries. Deliver as written in requirements.md.
+- [ ] `ARBORA-MESSAGING-R700.3`: Outbox pump from the engine. Deliver as written in requirements.md.
+- [ ] `ARBORA-MESSAGING-R700.4`: Refusal, evidence and hot-path proof. Deliver as written in requirements.md.
