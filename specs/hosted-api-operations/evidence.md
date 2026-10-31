@@ -65,7 +65,7 @@ consumer receipt:
 * `MERISTEM-HARNESS-R014.6` through `MERISTEM-HARNESS-R014.11` remain `SPECIFIED`. No AU
   producer run, model-request proof, or stored-history proof occurred.
 * `MEDULLA-DURABLE-KERNEL-R028.4.1` is already `VERIFIED` in medulla.
-  `MEDULLA-DURABLE-KERNEL-R028.5` and `.5.1`–`.5.3` remain Medulla-owned `SPECIFIED`
+  `MEDULLA-DURABLE-KERNEL-R028.5` and `.5.1`–`.5.3` remain EG-owned `SPECIFIED`
   rows. This is consumer evidence only. No EG source landing, restart proof,
   or `.5.4` benchmark is claimed.
 

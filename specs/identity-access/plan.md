@@ -384,7 +384,7 @@ or stay unavailable to anonymous callers. The current exact read-route policy
 is a deliberately restricted interim slice, not full no-auth acceptance.
 
 In `eg` and `oidc`, provider-specific login resolves into the same host-owned
-caller. OIDC mode must not accept an Medulla-only boundary merely because a callback
+caller. OIDC mode must not accept an EG-only boundary merely because a callback
 exists. WebSocket admission needs a separate handshake/message contract with
 bounded revalidation; relabeling a handshake as HTTP is forbidden. Existing
 BrowserAdmission HTTP bindings and WebUI's local RequestGrant are not yet a
