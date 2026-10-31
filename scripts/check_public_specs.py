@@ -9,7 +9,7 @@ from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-REQUIRED = ("spec.md", "plan.md", "test-spec.md", "tasks.md", "status.json")
+REQUIRED = ("spec.md", "plan.md", "test-spec.md", "tasks.md")
 DELIVERY_STATES = frozenset(
     {
         "UNKNOWN",
@@ -295,12 +295,13 @@ def _contract_errors(root: Path, paths: set[Path]) -> list[str]:
             if path not in paths:
                 errors.append(f"{path}: missing required owner contract")
                 continue
-            if filename == "status.json":
-                errors.extend(_status_errors(root, path))
-            else:
-                errors.extend(
-                    _document_errors(path, (root / path).read_text(encoding="utf-8"))
-                )
+            errors.extend(
+                _document_errors(path, (root / path).read_text(encoding="utf-8"))
+            )
+        # Status is computed at read time; check a local generated copy only if present.
+        status = Path("specs") / name / "status.json"
+        if (root / status).is_file():
+            errors.extend(_status_errors(root, status))
     return errors
 
 

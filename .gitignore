@@ -43,3 +43,6 @@ reports/
 scratch/
 sdist/
 target/
+
+# Spec status is computed at read time (pipelines-hook spec-status --write), never committed.
+specs/*/status.json
