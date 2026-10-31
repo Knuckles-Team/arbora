@@ -120,3 +120,24 @@ def test_missing_repo_root_is_a_setup_error(tmp_path: Path) -> None:
     result = _run("--repo-root", str(tmp_path / "does-not-exist"), str(skill))
 
     assert result.returncode == 2
+
+
+def test_a_leading_dot_path_keeps_its_dot(tmp_path):
+    import importlib.util
+    import pathlib
+
+    spec = importlib.util.spec_from_file_location(
+        "check_core_skills",
+        pathlib.Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "check_core_skills.py",
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    (tmp_path / ".specify" / "memory").mkdir(parents=True)
+    (tmp_path / ".specify" / "memory" / "constitution.md").write_text(
+        "x", encoding="utf-8"
+    )
+    skill = tmp_path / "SKILL.md"
+    skill.write_text("Read `.specify/memory/constitution.md`.", encoding="utf-8")
+    assert module.main(["--repo-root", str(tmp_path), str(skill)]) == 0

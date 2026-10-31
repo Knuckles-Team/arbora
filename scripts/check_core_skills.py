@@ -92,7 +92,7 @@ def _clean_token(raw: str) -> str | None:
     """Normalize one whitespace-split token, or ``None`` if it is not a
     plain literal (a URL, or one carrying a placeholder/quote/operator)."""
 
-    token = raw.strip().strip(".,;:")
+    token = raw.strip().rstrip(".,;:")
     if not token or token.startswith(("http://", "https://")):
         return None
     if any(ch in _DISALLOWED_CHARS for ch in token):
