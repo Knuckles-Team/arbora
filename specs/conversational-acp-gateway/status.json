@@ -122,7 +122,7 @@
       ],
       "verified_by": [
         "tests/acp/test_adapter.py:12",
-        "tests/acp/test_central_runtime.py:36",
+        "tests/acp/test_central_runtime.py:37",
         "tests/acp/test_http_transport.py:28",
         "tests/acp/test_local_history.py:13",
         "tests/acp/test_local_runtime.py:12"
@@ -176,7 +176,7 @@
         "df0d500bbd64"
       ],
       "verified_by": [
-        "tests/acp/test_central_runtime.py:36"
+        "tests/acp/test_central_runtime.py:37"
       ]
     }
   ]
