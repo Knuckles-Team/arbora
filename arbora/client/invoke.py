@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, Protocol
 
-from ._generated_models import REGISTRY_DIGEST, OperationId, schema_for
+from ._models import OperationId, registry_digest, schema_for
 
 
 class Transport(Protocol):
@@ -21,6 +21,9 @@ async def invoke(
     schema_for(op_id)
     response = await transport.invoke(op_id, params)
     meta = response.get("meta")
-    if not isinstance(meta, Mapping) or meta.get("registry_digest") != REGISTRY_DIGEST:
+    if (
+        not isinstance(meta, Mapping)
+        or meta.get("registry_digest") != registry_digest()
+    ):
         raise RuntimeError("Arbora registry digest mismatch")
     return response

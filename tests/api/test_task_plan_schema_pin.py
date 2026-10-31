@@ -101,10 +101,8 @@ def test_startup_rejects_body_drift_with_unchanged_declared_digest(
     else:
         damaged["body"]["schema_version"] += 1
     assert damaged["content_digest"] == pin["content_digest"]
-    path = tmp_path / "task_plan_schema.json"
-    path.write_text(json.dumps(damaged))
-    monkeypatch.setattr(pins_module, "generate_pin", lambda: pin)
-    assert pins_module.startup_pins(path) is None
+    monkeypatch.setattr(pins_module, "generate_pin", lambda: damaged)
+    assert pins_module.startup_pins() is None
     assert "body" in caplog.text and "digest" in caplog.text
     assert "UNAVAILABLE" in caplog.text
 
@@ -175,13 +173,12 @@ def test_startup_logs_the_reason_and_binds_nothing_on_mismatch(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    path = tmp_path / "task_plan_schema.json"
-    path.write_bytes(pins_module.pin_bytes(_pin()))
     monkeypatch.setattr(pins_module, "generate_pin", lambda: _pin())
-    assert pins_module.startup_pins(path) is not None
-    engine_export.TASK_PLAN_FEATURE_SCHEMA = _export(_body("other"))  # type: ignore[attr-defined]
-    assert pins_module.startup_pins(path) is None
-    assert "content_digest" in caplog.text and "UNAVAILABLE" in caplog.text
+    assert pins_module.startup_pins() is not None
+    missing = {**_pin(), "available": False}
+    monkeypatch.setattr(pins_module, "generate_pin", lambda: missing)
+    assert pins_module.startup_pins() is None
+    assert "no engine export" in caplog.text and "UNAVAILABLE" in caplog.text
 
 
 # spec: ARBORA-RELEASE-R003.4.4
@@ -314,9 +311,7 @@ def test_startup_publisher_preserves_released_export_and_returned_definition(
     tmp_path: Path,
 ) -> None:
     pin = _GENERATE()
-    path = tmp_path / "task_plan_schema.json"
-    path.write_bytes(pins_module.pin_bytes(pin))
-    pins = pins_module.startup_pins(path)
+    pins = pins_module.startup_pins()
     assert pins is not None
     engine = _Engine()
 
@@ -544,12 +539,3 @@ def test_startup_publishes_every_served_tenant_with_bounded_retry(
     assert published["definition_digest"] == DEFINITION + "tenant-a"
     assert pins.pin_for("tenant-c") is None
     assert "not published for tenant-c after 3 attempts" in caplog.text
-
-
-# spec: ARBORA-RELEASE-R003.4.4
-def test_committed_pin_matches_the_installed_engine() -> None:
-    committed = pins_module.load_pin()
-    installed = pins_module.generate_pin()
-    assert pins_module.drift(committed, installed) == []
-    assert committed["available"] == installed["available"]
-    assert pins_module.verify(committed, installed) is None

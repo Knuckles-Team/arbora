@@ -334,14 +334,13 @@
     },
     {
       "id": "ARBORA-HOST-R001.3",
-      "title": "Arbora ships the surface client as its generated client",
-      "delivery_state": "VERIFIED",
+      "title": "Arbora ships one registry-backed client",
+      "delivery_state": "LANDED",
       "landed_in": [
+        "90f91b084ff9",
         "9e7f6499d96f"
       ],
-      "verified_by": [
-        "tests/deployment/test_generated_client_wheel.py:16"
-      ]
+      "verified_by": []
     },
     {
       "id": "ARBORA-HOST-R001.4",

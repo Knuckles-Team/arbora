@@ -11,7 +11,7 @@ import pytest
 from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.registry import Effect, Registry
-from arbora.mcp_server import hosted_invocation, task_plan
+from arbora.mcp_server import task_plan
 from arbora.mcp_server.hosted_invocation import HostedInvocation
 from tests.api.test_invoke_contract import caller, operation, setup_services
 
@@ -57,9 +57,6 @@ def bridge(monkeypatch):
         asyncio.run(pins.publish_for(tenant, publish))
     runtime.schema_published = []
     runtime.bindings = {"task_plan_schema_pins": pins}
-    monkeypatch.setattr(
-        hosted_invocation, "validate_contract_admission", lambda _: None
-    )
     monkeypatch.setattr(
         task_plan, "_caller_dispatch_graph", AsyncMock(return_value="verified-graph")
     )
