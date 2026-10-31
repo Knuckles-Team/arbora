@@ -7,7 +7,7 @@
 # the always-offered set.
 using-arbora
 arbora-development
-epistemic-graph-development
+medulla-development
 agent-connector-sdk-development
 agent-webui-development
 repository-manager-development-lifecycle

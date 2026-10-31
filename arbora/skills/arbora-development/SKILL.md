@@ -70,7 +70,7 @@ Specs are already designed. The work is implementation, delivered in very small,
 - Valid outcomes are DELIVERED (with a bound test), SPLIT, BLOCKED and GAP (a "landed" row that is not really delivered). A half-delivery is not an outcome.
 
 **Where progress shows**
-- The repository's spec-delivery page is rebuilt from "specs/*/status.json" on each push to main. SPECIFIED is written, LANDED is on main, VERIFIED is on main with a bound test.
+- The repository's spec-delivery page computes each state at read time from rows, `Spec:` trailers and test bindings. SPECIFIED is written, LANDED is on main, VERIFIED is on main with a bound test.
 
 **Before every push**
 - Work in a real "git worktree add" from `origin/main`. Never edit a shared checkout, never "git stash", never "git add -A", never force-push.
@@ -93,6 +93,20 @@ Route the feature before any code. The [ecosystem boundaries standard](https://g
 2. Find the owner of each part in its repository table.
 3. Write each part as a row in its owner's `specs/`. Extend an existing row first.
 4. Write code for a part only in the repository that owns it.
+
+## Spec-driven flow
+
+Run this before any code. Full table and gates: the Spec-driven development section of `AGENTS.md` and the [spec standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/spec-standard.md).
+
+1. Read `.specify/memory/constitution.md`; create it from pipelines `specs/_template/constitution.md` if absent (`spec-generator`).
+2. Specify the feature: `spec-intake-wizard` gathers the inputs, `spec-generator` writes `specs/<stable-id>/spec.md` and `requirements.md`.
+3. Clarify: resolve every `[NEEDS CLARIFICATION: ...]` marker (`spec-generator`).
+4. Plan: `plan.md` from pipelines `specs/_template/plan.md`, including Build contract, Production caller chain and Cross-repo seams (`spec-generator`).
+5. Tasks: `tasks.md` lines `- [ ] T001 [P] [US1] <ROW-ID> ...` (`task-planner`).
+6. Analyze: fix the gaps and fill `checklists/requirements.md` (`spec-verifier`).
+7. Implement and land with the delivery contract in this skill (`feature-development-pipeline`); release through pipelines `releases/*.yml` bundles.
+
+Never write code for a row that is not SPECIFIED. Feature directories use the stable spec ID, never a numbered prefix. The state is computed from rows, `Spec:` trailers and test bindings; never write `status.json` or a `Status:` line.
 
 ## Ownership and reuse
 
