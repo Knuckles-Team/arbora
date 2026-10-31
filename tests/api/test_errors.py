@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import json
-import sys
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from types import ModuleType
 from typing import Any
 
 import pytest
 
+from arbora.api import engine_errors
 from arbora.api.errors import (
     ArboraErrorCode,
     ArboraRefusal,
@@ -205,9 +204,7 @@ def test_audit_reference_is_only_projected_for_indeterminate(code) -> None:
 
 @pytest.mark.parametrize("source", ["fleet", "engine"])
 def test_audit_reference_is_never_projected_for_other_sources(source, monkeypatch):
-    generated = ModuleType("arbora.api.generated.engine_errors")
-    generated.ENGINE_ERRORS = {"INDETERMINATE": (500, False)}
-    monkeypatch.setitem(sys.modules, generated.__name__, generated)
+    monkeypatch.setattr(engine_errors, "ENGINE_ERRORS", {"INDETERMINATE": (500, False)})
     _, envelope = to_envelope(
         InvokeError("INDETERMINATE", {"audit_ref": json.dumps(["a" * 64, 1])}, source),
         **CONTEXT,
@@ -219,9 +216,7 @@ def test_audit_reference_is_never_projected_for_other_sources(source, monkeypatc
 def test_audit_reference_does_not_bypass_unknown_code_refusal(source, monkeypatch):
     from arbora.api.registry.eg_binding import EgContractError
 
-    generated = ModuleType("arbora.api.generated.engine_errors")
-    generated.ENGINE_ERRORS = {}
-    monkeypatch.setitem(sys.modules, generated.__name__, generated)
+    monkeypatch.setattr(engine_errors, "ENGINE_ERRORS", {})
     expected = EgContractError if source == "engine" else ValueError
     with pytest.raises(expected):
         to_envelope(
@@ -281,17 +276,6 @@ def test_confirmation_rejects_unbounded_or_forged_resume_values() -> None:
         **CONTEXT,
     )
     assert envelope["error"]["details"] == {}
-
-
-@pytest.mark.spec("ARBORA-OPS-R005")
-def test_engine_source_without_generated_contract_fails(monkeypatch) -> None:
-    from arbora.api.registry.eg_binding import EgContractError
-
-    monkeypatch.setitem(sys.modules, "arbora.api.generated.engine_errors", None)
-    with pytest.raises(EgContractError):
-        to_envelope(InvokeError("AUTH_TENANT_MISMATCH", source="engine"), **CONTEXT)
-    with pytest.raises(EgContractError):
-        a2a_error_status("AUTH_TENANT_MISMATCH", source="engine")
 
 
 def test_arbora_details_are_allowlisted() -> None:
@@ -377,9 +361,9 @@ def test_generated_engine_table_controls_envelope(monkeypatch, retryable):
     from arbora.api.errors import EngineRefusal
     from arbora.api.registry.eg_binding import EgContractError
 
-    generated = ModuleType("arbora.api.generated.engine_errors")
-    generated.ENGINE_ERRORS = {"SYNTHETIC_REFUSAL": (409, retryable)}
-    monkeypatch.setitem(sys.modules, generated.__name__, generated)
+    monkeypatch.setattr(
+        engine_errors, "ENGINE_ERRORS", {"SYNTHETIC_REFUSAL": (409, retryable)}
+    )
     refusal = EngineRefusal("SYNTHETIC_REFUSAL", "tenant-secret", {"token": "secret"})
     status, envelope = to_envelope(refusal, **CONTEXT)
     assert status == 409

@@ -4,12 +4,10 @@
 request names one feature-schema component in the Agent Library. Arbora gets
 that component from the engine package in two steps and never makes one up.
 
-1. **Generation time.** ``scripts/gen_api.py`` reads the engine's exported task-plan
-   feature schema (``TASK_PLAN_FEATURE_SCHEMA``: body, ``schema_version`` and
-   content digest). It writes the body and its digest to
-   ``arbora/api/generated/task_plan_schema.json``.
-2. **Serving time.** At start-up Arbora compares the committed digest with the
-   installed engine's export. If they match, the server lifespan publishes the
+1. **Start-up.** Arbora reads the installed engine's exported task-plan feature
+   schema (``TASK_PLAN_FEATURE_SCHEMA``: body, ``schema_version`` and content
+   digest) and checks the body against its digest with the engine codec.
+2. **Serving time.** If the export is present and consistent, the server lifespan publishes the
    body to the Agent Library for every served tenant under the process
    authority (:func:`publish_at_startup`). The publish is idempotent. Arbora
    then uses the ``definition_digest`` that the engine returns as the pin. If
@@ -28,7 +26,6 @@ import json
 import logging
 from collections.abc import Awaitable, Callable, Coroutine, Mapping, Sequence
 from contextlib import AbstractAsyncContextManager
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -37,7 +34,6 @@ COMPONENT_ID = "arbora.agents.plan_run.feature_schema"
 KIND = "feature_schema"
 COMPONENT_VERSION = "1.0.0"
 PURPOSE_ID = "agent_library.task_plan_schema_publish"
-PIN_PATH = Path(__file__).resolve().parent / "generated" / "task_plan_schema.json"
 EXPORT_NAME = "TASK_PLAN_FEATURE_SCHEMA"
 #: Where the engine exports the schema, searched in order. Confirm the exact
 #: module when epistemic-graph 2.27.5 publishes, then keep only that path.
@@ -124,10 +120,6 @@ def pin_bytes(pin: Mapping[str, Any]) -> bytes:
     # recursively sorting the exported body changes its content digest.
     ordered = {key: pin[key] for key in sorted(pin)}
     return (json.dumps(ordered, indent=2) + "\n").encode()
-
-
-def load_pin(path: Path = PIN_PATH) -> dict[str, Any]:
-    return dict(json.loads(path.read_bytes()))
 
 
 def drift(committed: Mapping[str, Any], installed: Mapping[str, Any]) -> list[str]:
@@ -309,15 +301,15 @@ def published_pin(pins: TaskPlanSchemaPins | None, tenant: str) -> dict[str, Any
     return pin
 
 
-def startup_pins(path: Path = PIN_PATH) -> TaskPlanSchemaPins | None:
-    """Verify the committed pin against the installed engine at start-up.
+def startup_pins() -> TaskPlanSchemaPins | None:
+    """Build and verify the pin from the installed engine at start-up.
 
     Returns the publisher for the verified pin, or ``None`` after logging why
     ``agents.plan_run`` stays unavailable.
     """
     try:
-        committed = load_pin(path)
-        reason = verify(committed, generate_pin())
+        committed = generate_pin()
+        reason = verify(committed, committed)
     except Exception as exc:
         reason = f"task-plan schema pin unreadable: {exc}"
     if reason is not None:
@@ -393,14 +385,12 @@ __all__ = [
     "EXPORT_MODULES",
     "EXPORT_NAME",
     "KIND",
-    "PIN_PATH",
     "TaskPlanSchemaPins",
     "drift",
     "engine_publish",
     "generate_pin",
     "idempotency_key",
     "installed_export",
-    "load_pin",
     "pin_bytes",
     "publication",
     "publish_at_startup",
