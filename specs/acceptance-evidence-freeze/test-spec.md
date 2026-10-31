@@ -32,3 +32,4 @@ Run `python3 -m pytest tests/test_check_acceptance_evidence.py -q` from the repo
 | T-ARBORA-ACCEPTANCE-R006.2 | ARBORA-ACCEPTANCE-R006.2 | Test: `tests/scenarios/test_p2_reliable_loop.py::test_lineage_conflict_and_memory_lift`. |
 | T-ARBORA-ACCEPTANCE-R006.3 | ARBORA-ACCEPTANCE-R006.3 | Test: `tests/scenarios/test_p3_multi_agent_boundaries.py::test_shared_state_under_policy_with_contradiction`. |
 | T-ARBORA-ACCEPTANCE-R006.4 | ARBORA-ACCEPTANCE-R006.4 | Test: `tests/scenarios/test_p4_cross_modal_and_maintenance.py::test_one_plan_validation_and_decay`. |
+| T-ARBORA-ACCEPTANCE-R006.8 | ARBORA-ACCEPTANCE-R006.8 | Test: `tests/scenarios/test_p5_vision_questions.py::test_web_and_messaging_return_the_same_cited_answer`. |

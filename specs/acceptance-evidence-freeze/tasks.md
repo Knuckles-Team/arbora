@@ -25,3 +25,4 @@ Governing spec: [spec.md](spec.md). Design: [plan.md](plan.md).
 - [ ] T014 ARBORA-ACCEPTANCE-R006.5 Scenarios run in process on every pull request.
 - [ ] T015 ARBORA-ACCEPTANCE-R006.6 An ephemeral deployed stack validates the scenarios nightly.
 - [ ] T016 ARBORA-ACCEPTANCE-R006.7 P5 scenario: answers across connectors and across virtual graphs.
+- [ ] T017 [US2] ARBORA-ACCEPTANCE-R006.8 Final program scenario: vision questions are answered through the web UI and a messaging channel.

@@ -424,3 +424,162 @@ The failing real-boot assertion remains unchanged until the hosted serving path 
 - `ARBORA-OPS-R897.6`: Test: `tests/api/test_assistant_ops_served.py::test_profile_and_document_set_round_trip_and_run_reference` (served).
 - `ARBORA-OPS-R897.7`: Test: `tests/api/test_participant_registration.py::test_registry_lists_every_operation_and_scope_is_registered` (module test). Test: `tests/api/test_participant_registration.py::test_engine_codes_map_to_status` (module test).
 - `ARBORA-OPS-R897.8`: Test: `tests/api/test_participant_ops_served.py::test_participant_memory_journey` (served: HTTP and MCP).
+
+
+## Row proofs
+
+Each entry below names a row whose proof is the verification text of that row in [requirements.md](requirements.md).
+
+| Row | Proof |
+|---|---|
+| `ARBORA-OPS-R005` | A contract test fails closed when the packaged engine error contract is absent or mismatched against the generated bindings. |
+| `ARBORA-OPS-R017.2` | Test: `tests/api/test_finance_served.py::test_paper_action_requires_account_ownership` (L3) runs HTTP and MCP through `invoke`, with a loopback medulla engine. It asserts the owner succeeds once. It asserts another tenant gets `SUBJECT_ACCESS_DENIED` and a controlled provider records zero calls. |
+| `ARBORA-OPS-R018.1` | Test: `tests/api/test_query_ops.py::test_ontology_schema_graph_and_list_bind_engine_methods` (L1). Test: `tests/api/test_query_served.py::test_sparql_and_schema_routes_reach_engine` (L3) runs HTTP and MCP through `invoke`, with a loopback medulla engine. |
+| `ARBORA-OPS-R018.2.2` | Test: `tests/api/test_query_served.py::test_over_ceiling_budget_reaches_engine_unchanged` (L3) asserts the engine received the caller budget and the response shows the applied one. Test: `tests/api/test_query_served.py::test_unavailable_planner_refuses_without_fallback` (L3). |
+| `ARBORA-OPS-R019.1` | Test: `tests/api/test_federation_ops.py::test_adapter_calls_engine_and_redacts` (L1). Test: `tests/api/test_federation_served.py::test_register_list_get_probe_redact_credentials` (L3) runs HTTP and MCP through `invoke`, with a loopback medulla engine. |
+| `ARBORA-OPS-R019.2` | Test: `tests/api/test_federation_served.py::test_only_owner_shares_and_revocation_blocks_probe` (L3) runs HTTP and MCP through `invoke`, with a loopback medulla engine. It asserts the stranger never sees the source. |
+| `ARBORA-OPS-R020.4` | Test: `tests/api/test_ingest_drift_embedding_ops.py::test_drift_ops_call_runner_with_tenant` (L1). Test: `tests/api/test_ingest_served.py::test_drift_repair_previews_then_applies_with_approval` (L3) runs HTTP and MCP through `invoke`, with a loopback medulla engine. |
+| `ARBORA-OPS-R020.5` | Test: `tests/api/test_ingest_drift_embedding_ops.py::test_embedding_ops_call_runner_and_return_job_state` (L1). Test: `tests/api/test_ingest_served.py::test_reembed_creates_one_durable_job_per_key` (L3) runs HTTP and MCP through `invoke`, with a loopback medulla engine. |
+| `ARBORA-OPS-R021.1` | Test: `tests/api/test_decide_ops.py::test_commit_calls_engine_client_not_runner` (L1). Test: `tests/api/test_decide_served.py::test_human_cannot_commit_and_result_has_provenance` (L3) runs HTTP and MCP through `invoke`, with a loopback medulla engine. |
+| `ARBORA-OPS-R022.1` | A test confirms a work-item write requires the declared scope and that offers are visible only to their bound principal. |
+| `ARBORA-OPS-R022.2.1` | Test: `tests/api/test_evolution_ops.py::test_status_reaches_runner_with_tenant_and_declares_loops_read` (L1). It is verified by the root slice test `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause`. |
+| `ARBORA-OPS-R022.2.2` | Test: `tests/api/test_evolution_ops.py::test_schedules_list_reaches_runner_with_tenant_and_fails_closed` (L1). It is verified by the root slice test `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause`. |
+| `ARBORA-OPS-R022.2.3` | Test: `tests/api/test_evolution_ops.py::test_proposals_list_reaches_runner_with_tenant_and_fails_closed` (L1). It is verified by the root slice test `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause`. |
+| `ARBORA-OPS-R022.2.4` | Test: `tests/api/test_evolution_ops.py::test_run_requires_loops_control_and_key` (L1). Test: `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause` (L3) asserts one job for two calls with one key. |
+| `ARBORA-OPS-R022.2.5` | Test: `tests/api/test_evolution_ops.py::test_pause_requires_loops_control_and_is_idempotent` (L1). It is verified by the root slice test `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause`. |
+| `ARBORA-OPS-R024.3.1` | Test: `tests/api/test_usage_served.py::test_session_usage_forwards_caller_and_keeps_partial_coverage` (L3). It asserts forwarding, scope refusal, foreign-context refusal and preserved partial coverage. |
+| `ARBORA-OPS-R024.3.2` | Test: `tests/api/test_usage_served.py::test_timing_is_validated_and_correlated_to_turn_receipts` (L3). It asserts correlation, the range bounds, a missing receipt reference and absence of derived rate fields. |
+| `ARBORA-OPS-R024.5` | Test: `tests/api/test_ops_admin_ops.py::test_backup_restore_require_step_up_and_audit` (L3). It asserts the plain-confirmation refusal, the step-up success and the audit fields. |
+| `ARBORA-OPS-R032.2.2` | Test: `tests/mcp_server/test_browser_composition.py::test_mcp_server_refuses_eg_browser_without_factory` (L3). It asserts the startup refusal and that a factory-bearing start succeeds. |
+| `ARBORA-OPS-R032.2.3.2.2` | Test: `tests/mcp_server/test_browser_composition.py::test_start_call_receives_the_root_boundary` (L3). It asserts the object passed to the supervisor is the root's boundary. |
+| `ARBORA-OPS-R032.2.4` | Test: `tests/mcp_server/test_browser_composition.py::test_one_runtime_reaches_mcp_server_and_webui` (L3). |
+| `ARBORA-OPS-R035.2` | Test: `tests/api/test_resident_tool_surface.py::test_running_server_lists_exactly_the_resident_tools` (L3). It boots the server and lists tools over MCP, then asserts the middleware denies nothing. |
+| `ARBORA-OPS-R039.1` | Test: `tests/gateway/test_dashboard_route_census.py::test_dashboard_router_exposes_every_route` (L2). It fails when a pair is removed or added without editing the pinned set. |
+| `ARBORA-OPS-R039.2` | Test: `tests/gateway/test_dashboard_api.py::test_write_routes_refuse_read_only_callers` (L3). It asserts 403 on four routes for a read caller and success for an API-key caller. |
+| `ARBORA-OPS-R039.4` | Test: `tests/gateway/test_dashboard_api.py::test_malformed_source_is_422_and_unknown_service_is_404` (L3). It asserts both codes and zero engine calls on the 422. |
+| `ARBORA-OPS-R039.5` | Test: `tests/gateway/test_dashboard_api.py::test_daemon_status_key_sets_are_pinned` (L2). It fails when any of the five keys is dropped. |
+| `ARBORA-OPS-R039.6` | Test: `tests/gateway/test_dashboard_api.py::test_daemon_shards_reads_engine_snapshot_and_refuses_when_absent` (L3). It asserts the snapshot body, both refusals and no import of `knowledge_graph` modules. |
+| `ARBORA-OPS-R039.7` | Test: `tests/gateway/test_dashboard_api.py::test_hydration_routes_call_served_ingest_and_keep_refusal_codes` (L3). It asserts the job identifier, the three refusal codes and the status shape. |
+| `ARBORA-OPS-R039.9` | tests/gateway/test_dashboard_api.py: 403 cases unchanged; an import census shows no AU-internal import. |
+| `ARBORA-OPS-R040.1` | An meristem test imports each name from the public module. |
+| `ARBORA-OPS-R040.2` | Test: `tests/gateway/test_artifacts_api.py::test_create_request_rejects_empty_template_and_oversize_data` (L1). Verified by the route test `test_create_and_refusal_cases`. |
+| `ARBORA-OPS-R040.3` | Test: `tests/gateway/test_ports.py::test_artifact_ports_are_runtime_protocols` (L1). |
+| `ARBORA-OPS-R040.4` | Test: `tests/gateway/test_artifacts_api.py::test_create_returns_id_and_rendered_and_refuses_bounded_json_error` (L3). It asserts 201, 400 and 422. |
+| `ARBORA-OPS-R040.5` | Test: `tests/gateway/test_artifacts_api.py::test_get_returns_artifact_and_404_when_absent` (L3). |
+| `ARBORA-OPS-R040.6` | Test: `tests/gateway/test_artifacts_api.py::test_refresh_inline_resolver_404_and_failure_preserves_render` (L3). |
+| `ARBORA-OPS-R040.7` | Test: `tests/gateway/test_artifacts_route_mount.py::test_routes_mount_with_capability_dependencies` (L3). It asserts the three routes and the 403 cases. |
+| `ARBORA-OPS-R040.8` | Test: `tests/gateway/test_artifacts_api.py::test_refresh_uses_the_exported_resolver_and_defaults_to_preserve` (L3). It uses a fake resolver and the default. |
+| `ARBORA-OPS-R040.9` | The meristem row exists and ARBORA-OPS-R040.1 cites its ID. |
+| `ARBORA-OPS-R040.10` | Test: `tests/gateway/test_artifacts_route_mount.py::test_capability_matrix_on_artifact_routes` (L3). It asserts the 403 cases and the API-key pass. |
+| `ARBORA-OPS-R042.1` | Test: `tests/api/test_content_screening.py::test_closed_value_sets_and_opspec_origin` (L1). Verified by the root slice test. |
+| `ARBORA-OPS-R042.2` | Test: `tests/api/test_content_screening.py::test_each_attack_class_and_masked_secret` (L1). It plants one case per class and one secret per pattern. |
+| `ARBORA-OPS-R042.3` | Test: `tests/api/test_content_screening.py::test_invoke_calls_screen_then_redactor_in_order` (L3). It records call order through the served route. |
+| `ARBORA-OPS-R042.4` | Test: `tests/api/test_content_screening.py::test_quarantine_and_unscreened_memory_write_refuse_with_zero_effects` (L3). It asserts both codes and no memory write. |
+| `ARBORA-OPS-R042.5` | Test: `tests/api/test_content_screening.py::test_audit_holds_fields_and_no_secret_text` (L3). It asserts the four fields and the absence of the planted secret. |
+| `ARBORA-OPS-R042.6` | Test: `tests/gateway/test_content_screening_hot_path.py::test_served_route_quarantines_hidden_instructions_and_masks_secrets` (L3). |
+| `ARBORA-OPS-R050.1` | Test: `tests/api/test_policy_models.py::test_models_validate_fields_and_closed_change_set` (L1). Verified by the root slice test `tests/api/test_policy_plan_guard_served.py::test_policy_create_then_violating_plan_is_refused`. |
+| `ARBORA-OPS-R050.3` | Test: `tests/api/test_policy_wiring.py::test_served_policy_request_reaches_engine_port_and_absent_producer_refuses` (L3). It asserts the engine call and zero effects without a producer. |
+| `ARBORA-OPS-R050.4` | Test: `tests/api/test_policy_refusal.py::test_three_refusals_have_zero_effects` (L3). It asserts each code and no plan run or policy write. |
+| `ARBORA-OPS-R050.5` | Test: `tests/api/test_policy_evidence.py::test_audit_record_fields_for_change_and_refused_plan` (L3). |
+| `ARBORA-OPS-R050.6` | Test: `tests/api/test_policy_plan_guard_served.py::test_policy_create_then_violating_plan_is_refused` (L3). |
+| `ARBORA-OPS-R051.1` | Test: `tests/api/test_security_eval_models.py::test_models_validate_and_close_verdict_set` (L1). Verified by the root slice test. |
+| `ARBORA-OPS-R051.2` | Test: `tests/api/test_security_eval_select.py::test_only_declared_catalog_entries_are_selected_and_cap_applies` (L2). It asserts selection comes from the engine answer and the cap holds. |
+| `ARBORA-OPS-R051.3` | Test: `tests/api/test_security_eval_wiring.py::test_registry_lists_operation_and_binder_composes_ports` (L3). |
+| `ARBORA-OPS-R051.4` | Test: `tests/api/test_security_eval_refusal.py::test_refusals_start_zero_probes` (L3). It asserts zero runner calls for each refusal. |
+| `ARBORA-OPS-R051.5` | Test: `tests/api/test_security_eval_evidence.py::test_audit_record_fields` (L3). |
+| `ARBORA-OPS-R051.6` | Test: `tests/api/test_security_evaluate_served.py::test_in_scope_target_yields_findings_and_out_of_scope_refuses` (L3). |
+| `ARBORA-OPS-R052.1` | Test: `tests/api/test_projection_models.py::test_fields_are_validated_and_frozen` (L1). Verified by the root slice test. |
+| `ARBORA-OPS-R052.2` | Test: `tests/api/test_projection_scope.py::test_exact_cover_and_partial_cover` (L2). |
+| `ARBORA-OPS-R052.3` | Test: `tests/api/test_projection_wiring.py::test_registry_lists_operation_and_binder_composes_reader` (L3). |
+| `ARBORA-OPS-R052.5` | Test: `tests/api/test_projection_evidence.py::test_operator_reads_withheld_count_and_denied_caller_cannot` (L3). |
+| `ARBORA-OPS-R052.6` | Test: `tests/api/test_projection_scope_served.py::test_two_scopes_see_different_projection_sets` (L3). |
+| `ARBORA-OPS-R053.1` | Test: `tests/api/test_interaction_space_models.py::test_models_validate_fields` (L1). Verified by the root slice test. |
+| `ARBORA-OPS-R053.2` | Test: `tests/api/test_interaction_space_build.py::test_union_caps_and_directory_names` (L2). |
+| `ARBORA-OPS-R053.3` | Test: `tests/api/test_interaction_space_wiring.py::test_served_request_reaches_composed_retriever_and_missing_producer_refuses` (L3). |
+| `ARBORA-OPS-R053.4` | Test: `tests/api/test_interaction_space_refusal.py::test_three_refusals_run_zero_queries` (L3). |
+| `ARBORA-OPS-R053.5` | Test: `tests/api/test_interaction_space_evidence.py::test_audit_record_fields` (L3). |
+| `ARBORA-OPS-R053.6` | Test: `tests/api/test_retrieval_space_served.py::test_two_queries_yield_boundary_and_two_directories` (L3). |
+| `ARBORA-OPS-R009.5` | Test: `tests/api/test_connector_approval_forward.py::test_destructive_call_carries_approval_ref` (L3) through the registry `invoke` over HTTP and MCP. |
+| `ARBORA-OPS-R843.2` | Each module's disposition names an existing row or the harness; closes when the meristem importers are re-pointed. |
+| `ARBORA-OPS-R054.1` | Test: `tests/api/test_serving_technique_served.py::test_missing_mismatched_or_regressing_evidence_refuses` (L3). It asserts each code and no commit. |
+| `ARBORA-OPS-R054.2` | Test: `tests/api/test_serving_technique_served.py::test_activation_requires_technique_bound_evidence` (L3). It activates all five techniques and refuses one regressed receipt. |
+| `ARBORA-OPS-R055.1` | Test: `tests/api/test_ops_admin_ops.py::test_process_proposal_is_proposal_only` (L3). It asserts the verdicts and zero process effects. |
+| `ARBORA-OPS-R055.2` | Test: `tests/api/test_ops_admin_ops.py::test_process_remediation_requires_run_bound_approval` (L3). It asserts one application after approval and zero effects on mismatch. |
+| `ARBORA-OPS-R059.1` | Test: `tests/api/test_evolution_metrics_served.py::test_models_round_trip_rust_vectors` (L1). |
+| `ARBORA-OPS-R059.2` | Test: `tests/api/test_evolution_metrics_served.py::test_projection_forwards_caller_scope_and_keeps_partial_state` (L3). |
+| `ARBORA-OPS-R059.3` | Test: `tests/api/test_evolution_metrics_served.py::test_denied_or_incomplete_requests_read_nothing` (L3). It asserts zero engine calls on the first two refusals. |
+| `ARBORA-OPS-R059.4` | Test: `tests/api/test_evolution_metrics_served.py::test_dashboard_joins_proposal_to_trace_metrics` (L3). |
+| `ARBORA-OPS-R060.1` | Test: `tests/api/test_sessions_served.py::test_models_round_trip_rust_vectors_and_bound_page_size` (L1). |
+| `ARBORA-OPS-R060.2` | Test: `tests/api/test_sessions_served.py::test_manifest_and_discovery_status_name_every_declared_harness` (L3). |
+| `ARBORA-OPS-R060.3` | Test: `tests/api/test_sessions_served.py::test_denied_sources_are_partial_without_metadata` (L3). |
+| `ARBORA-OPS-R060.4` | Test: `tests/api/test_sessions_served.py::test_refusals_expose_no_cross_tenant_sessions` (L3). |
+| `ARBORA-OPS-R060.5` | Test: `tests/api/test_sessions_served.py::test_browser_discovers_browses_and_searches_every_harness` (L3). |
+| `ARBORA-OPS-R061.1` | Test: `tests/api/test_usage_index_served.py::test_models_round_trip_rust_vectors_and_unknown_stays_unknown` (L1). |
+| `ARBORA-OPS-R061.2` | Test: `tests/api/test_usage_index_served.py::test_projection_is_engine_aggregate_without_local_arithmetic` (L3). |
+| `ARBORA-OPS-R061.3` | Test: `tests/api/test_usage_index_served.py::test_registry_lists_operation_and_binder_composes_reader` (L3). |
+| `ARBORA-OPS-R061.4` | Test: `tests/api/test_usage_index_served.py::test_denied_stale_and_unproven_latency_expose_no_rows` (L3). |
+| `ARBORA-OPS-R061.5` | Test: `tests/api/test_usage_index_served.py::test_browser_query_reconciles_with_independent_ledger` (L3). It checks the four counters, rounding, minor units, watermark, cursor and unknown reasons. |
+| `ARBORA-OPS-R062.1` | Test: `tests/api/test_graph_changes_served.py::test_models_round_trip_rust_vectors` (L1). |
+| `ARBORA-OPS-R062.2` | Test: `tests/api/test_graph_changes_served.py::test_stream_orders_events_and_reauthorizes_on_reconnect` (L3). |
+| `ARBORA-OPS-R062.3` | Test: `tests/api/test_graph_changes_served.py::test_expired_cursor_returns_typed_recovery` (L3). |
+| `ARBORA-OPS-R062.4` | Test: `tests/api/test_graph_changes_served.py::test_revocation_stops_delivery_and_limit_is_measured` (L3). |
+| `ARBORA-OPS-R062.5` | Test: `tests/api/test_graph_changes_served.py::test_two_browsers_converge_under_gaps_reconnect_and_revocation` (L3). |
+| `ARBORA-OPS-R063.1` | Test: `tests/api/test_retrieval_evaluation_served.py::test_models_round_trip_rust_vectors` (L1). |
+| `ARBORA-OPS-R063.2` | Test: `tests/api/test_retrieval_evaluation_served.py::test_two_algorithms_match_independent_hits_at_k_ledger` (L3). |
+| `ARBORA-OPS-R063.3` | Test: `tests/api/test_retrieval_evaluation_served.py::test_context_spans_slice_original_bytes_with_unicode` (L3). It uses composed and decomposed Unicode and multibyte text. |
+| `ARBORA-OPS-R063.4` | Test: `tests/api/test_retrieval_evaluation_served.py::test_every_refusal_returns_before_any_result` (L3). |
+| `ARBORA-OPS-R063.5` | Test: `tests/api/test_retrieval_evaluation_served.py::test_two_algorithms_match_independent_hits_at_k_ledger` (L3). |
+| `ARBORA-OPS-R064.1` | Test: `tests/api/test_viewport_served.py::test_models_round_trip_rust_vectors` (L1). |
+| `ARBORA-OPS-R064.2` | Test: `tests/api/test_viewport_served.py::test_limits_are_enforced_before_dispatch` (L3). |
+| `ARBORA-OPS-R064.3` | Test: `tests/api/test_viewport_served.py::test_stale_tokens_and_bad_limits_return_no_usable_result` (L3). |
+| `ARBORA-OPS-R064.4` | Test: `tests/api/test_viewport_served.py::test_scatter_and_line_interaction_over_large_source` (L3). |
+| `ARBORA-OPS-R065.1` | Test: `tests/api/test_meetings_served.py::test_models_round_trip_vectors` (L1). |
+| `ARBORA-OPS-R065.2` | Test: `tests/api/test_meetings_served.py::test_corrections_gaps_and_finalization_are_ordered` (L3). |
+| `ARBORA-OPS-R065.3` | Test: `tests/api/test_meetings_served.py::test_each_local_and_hosted_route_records_provenance` (L3). |
+| `ARBORA-OPS-R065.4` | Test: `tests/api/test_meetings_served.py::test_denied_egress_and_stale_revision_make_zero_provider_calls` (L3). |
+| `ARBORA-OPS-R065.5` | Test: `tests/api/test_meetings_served.py::test_ordered_corrections_finalization_and_provider_routes` (L3). |
+| `ARBORA-OPS-R066.1` | Test: `tests/api/test_bookmarks_served.py::test_models_round_trip_and_schema_digests_are_stable` (L1). |
+| `ARBORA-OPS-R066.2` | Test: `tests/api/test_bookmarks_served.py::test_search_and_relationships_share_one_snapshot_scope` (L3). |
+| `ARBORA-OPS-R066.3` | Test: `tests/api/test_bookmarks_served.py::test_csv_escapes_formula_cells_and_json_preserves_unknown_metadata` (L2). |
+| `ARBORA-OPS-R066.4` | Test: `tests/api/test_bookmarks_served.py::test_refusals_return_before_any_data` (L3). |
+| `ARBORA-OPS-R066.5` | Test: `tests/api/test_bookmarks_served.py::test_ingest_to_browser_search_relationships_and_export` (L3). |
+| `ARBORA-OPS-R855.3.1` | `tests/api/test_trust_flag_notice.py::test_deprecation_event_notifies_reading_principals` (L3, loopback engine). |
+| `ARBORA-OPS-R862` | Test: `tests/api/test_recommendation_gate_served.py::test_pass_surfaces_withheld_and_absent_block` (served, HTTP and MCP). It asserts one surfaced record and two blocked records. |
+| `ARBORA-OPS-R863` | Test: `tests/api/test_decide_ops.py::test_approval_commits_once_and_scope_refusal_precedes_engine` (served). A reviewer outside scope makes zero engine calls. |
+| `ARBORA-OPS-R864` | Test: `tests/api/test_retrieval_ops.py::test_bound_provider_only_and_zero_alternate_calls_on_refusal` (served). It varies provider and reasoning model independently. |
+| `ARBORA-OPS-R865` | Test: `tests/api/test_write_back_served.py::test_approve_one_proposal_and_refuse_without_scope` (served). |
+| `ARBORA-OPS-R866` | Test: `tests/fleet/test_tool_search_served.py::test_order_equals_sealed_record` (served over MCP). It asserts search order equals the record order and `UNAVAILABLE` on engine failure. Disclosure gate: `tests/fleet/test_tool_disclosure_gate_served.py::test_disclosed_tool_runs_and_undisclosed_tool_refuses_before_call` (served). The positive case runs a disclosed tool. The negative case asserts a refusal before the tool call. |
+| `ARBORA-OPS-R867` | Test: `tests/test_autonomy_confirmation.py::test_irreversible_action_waits_for_approval` (served). The call is refused before approval and runs after it. |
+| `ARBORA-OPS-R868` | Test: `tests/api/test_retrieval_ops.py::test_listing_toc_digest_equals_read_span_digest` (served). It asserts digest equality and the pass-through refusal. |
+| `ARBORA-OPS-R869` | Test: `tests/api/test_generated_code_admission_gate.py::test_write_refuses_without_matching_admission` (served). It asserts both refusals and one admitted commit. |
+| `ARBORA-OPS-R870` | Test: `tests/api/test_changeset_review_op.py::test_op_calls_decide_and_returns_the_record_digest` (served). |
+| `ARBORA-OPS-R871` | Test: `tests/ops/test_playbook_step_requires_decision.py::test_action_refuses_without_a_committed_record` (served). It also runs one admitted step. |
+| `ARBORA-OPS-R872` | Test: `tests/api/test_certification_gate_served.py::test_each_attestation_case_refuses_without_effect` (served). The exact current attestation admits the run. |
+| `ARBORA-OPS-R873` | Test: `tests/control_plane/test_workflow_host_lazy_start.py::test_start_counter_zero_then_one` (served). Counter is 0 before first use, 1 after repeats, 0 after an unknown id. |
+| `ARBORA-OPS-R874` | Test: `tests/control_plane/test_workflow_match_identity.py::test_entry_resolves_registered_record_and_unknown_refuses` (served). |
+| `ARBORA-OPS-R875` | Test: `tests/api/test_skill_upgrade_gate_served.py::test_breaking_stops_and_compatible_and_migrated_dispatch` (served). |
+| `ARBORA-OPS-R876` | Test: `tests/api/test_loops_continuation_served.py::test_same_continuation_after_host_restart` (served). The host restarts between two reads. |
+| `ARBORA-OPS-R877` | Test: `tests/a2a/test_team_coordination_served.py::test_unavailable_starts_team_available_keeps_primary_and_status_survives_restart` (served). |
+| `ARBORA-OPS-R878` | Test: `tests/api/ops/test_models_list.py::test_lists_only_visible_profiles_over_http_and_mcp` (L3) runs through the registry `invoke` and asserts a cross-tenant profile is absent. |
+| `ARBORA-OPS-R879` | `tests/api/test_ops_hooks_served.py::test_hooks_install_uninstall_over_http_and_mcp` (L3). |
+| `ARBORA-OPS-R880` | Test: `tests/api/test_query_federation.py::test_cross_source_report_served` (served HTTP and MCP, recorded engine). |
+| `ARBORA-OPS-R881` | Test: `tests/api/test_artifact_ops_served.py::test_artifact_operations_serve_over_http_and_mcp` (L3). It creates, gets and refreshes an artifact and asserts each refusal. |
+| `ARBORA-OPS-R882` | Test: `tests/api/test_agent_bus_served.py::test_send_receive_dispatch_over_medulla` runs `invoke` over HTTP and MCP with a loopback medulla engine. |
+| `ARBORA-OPS-R883` | Test: `tests/api/test_retrieval_ops.py::test_agent_ref_is_taken_from_identity` calls the operations over HTTP and MCP against a recorded engine (served). |
+| `ARBORA-OPS-R884` | Test: `tests/api/test_meetings_ops.py::test_summary_create_admits_context_and_commit` (L3) runs through the registry `invoke` with a loopback medulla and a recorded harness receipt. It asserts the denied-provider refusal makes zero medulla calls. |
+| `ARBORA-OPS-R885` | A served test invokes the operation through the registry over HTTP and MCP with a loopback engine. It asserts the receipt digests. A self-approval refuses. |
+| `ARBORA-OPS-R886` | Test: a served test through the operation registry's `invoke` over HTTP and MCP with a recorded medulla engine (L3). |
+| `ARBORA-OPS-R887` | A served test calls the registry `invoke` over HTTP and MCP against a recorded medulla engine. It approves one proposal. It asserts the refusal passthrough for a missing approver. |
+| `ARBORA-OPS-R888` | Test: `tests/api/test_governance_ops.py::test_access_request_approval_needs_steward` (L3) runs through the registry `invoke` over HTTP and MCP against a loopback medulla engine. It asserts the grant after a steward approval and zero effects after a non-steward approval. |
+| `ARBORA-OPS-R889` | Test: `tests/api/test_lineage_route.py::test_run_event_reaches_engine_under_caller_tenant` posts one event and reads the edge through `ask`. |
+| `ARBORA-OPS-R890` | Test: `tests/agent_host/test_engine_decision_port_served.py::test_port_calls_registered_ops_under_the_run_principal` (L3). A loopback engine records the principal, tenant and operation id for each of the four calls. |
+| `ARBORA-OPS-R891` | Test: `tests/test_usage_forwarding.py::test_step_usage_events_append_once_per_run` (L3). A loopback engine records the principal, tenant and batches. It asserts the field set and the batch split. It also asserts that a refusal leaves the run result unchanged. |
+| `ARBORA-OPS-R893` | Test: `tests/gateway/test_credential_authority.py::test_exact_grant_only_and_refusals_write_receipts` (L3) over MCP through the multiplexer. |
+| `ARBORA-OPS-R894` | Test: `tests/agent_host/test_changeset_submitter_served.py::test_materialize_commit_land_and_conflict_through_invoke` (L3). A loopback engine returns one conflict then accepts the retry. |
+| `ARBORA-OPS-R895` | Test: `tests/api/test_meeting_summarize_served.py::test_summary_needs_final_receipt_and_admitted_provider` (L3). It asserts zero provider calls before finalization and for each admission refusal. |
+| `ARBORA-OPS-R896.1` | Test: `tests/api/test_development_surface_served.py::test_artifact_questions_reach_registered_queries` (L3: HTTP and MCP, loopback engine). It asserts one engine call per question and no new operation ID. |
+| `ARBORA-OPS-R896.2` | Test: `tests/api/test_development_surface_served.py::test_evolving_mode_needs_operator_approval` (L3: HTTP and MCP). It asserts that no approval leaves the mode unchanged. |
+| `ARBORA-OPS-R896.3` | Test: `tests/api/test_development_surface_served.py::test_run_start_returns_run_id_and_refuses_reference_mode` (L3: HTTP and MCP). |
+| `ARBORA-OPS-R896.4` | Test: `tests/api/test_development_surface_served.py::test_run_status_reports_evidence_and_hides_other_tenants` (L3). |
+| `ARBORA-OPS-R896.5` | Test: `tests/api/test_development_surface_served.py::test_accept_opens_a_pull_request_and_never_writes_specs` (L3: HTTP and MCP). |
+| `ARBORA-OPS-R896.6` | Test: `tests/api/test_development_surface_served.py::test_artifact_graph_drives_a_run_over_mcp` (L4). |
