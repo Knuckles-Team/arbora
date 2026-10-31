@@ -41,3 +41,13 @@ run is the CI gate minus provisioning. Wiring gate terms are in
 
 Report vulnerabilities through
 [GitHub Security Advisories](https://github.com/Knuckles-Team/arbora/security/advisories/new).
+
+## Spec-driven contributions
+
+Every change follows one process: constitution, route, specify, clarify, plan, tasks, analyze, implement, land, release.
+Each step names its skill and the files it writes, in the
+[organization contribution guide](https://github.com/Knuckles-Team/.github/blob/main/CONTRIBUTING.md).
+Read the [constitution](https://github.com/Knuckles-Team/pipelines/blob/main/.specify/memory/constitution.md),
+the [spec standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/spec-standard.md) and the
+[spec templates](https://github.com/Knuckles-Team/pipelines/tree/main/specs/_template), and pick an open row in
+[Canopy](https://knuckles-team.github.io/.github/architecture/). Commit with a `Spec: <ROW-ID>` trailer and a bound test.
