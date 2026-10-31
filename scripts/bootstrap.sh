@@ -2,9 +2,8 @@
 # One-command contributor setup from a fresh clone (local or Claude Code on the web).
 #
 #   scripts/bootstrap.sh              uv, pinned Python, locked PyPI deps, git hooks
-#   scripts/bootstrap.sh --scanners   also the pinned native scanners (cargo/npm, ~15 min cold)
 #   scripts/bootstrap.sh --siblings-only
-#                                     `uv sync` only; skips git hooks and scanners
+#                                     `uv sync` only; skips git hooks
 #                                     (the name is kept for existing lane scripts).
 #                                     Fresh worktree: `scripts/bootstrap.sh
 #                                     --siblings-only && uv run pytest tests/<file>`.
@@ -20,12 +19,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-scanners=0
 siblings_only=0
 for arg in "$@"; do
   case "$arg" in
     --kernel) ;;
-    --scanners) scanners=1 ;;
     --siblings-only) siblings_only=1 ;;
     -h | --help)
       sed -n '2,15p' "$0"
@@ -38,7 +35,6 @@ for arg in "$@"; do
   esac
 done
 if [[ "$siblings_only" == 1 ]]; then
-  scanners=0
 fi
 
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
@@ -69,14 +65,6 @@ if [[ "$siblings_only" == 1 ]]; then
 else
   echo "bootstrap: git hooks"
   uvx pre-commit install --hook-type pre-commit --hook-type pre-push
-fi
-
-if [[ "$scanners" == 1 ]]; then
-  echo "bootstrap: native scanners (cargo/npm builds; ~15 min cold)"
-  scanner_root="$HOME/.local/share/arbora-scanners"
-  bins="$(bash scripts/install_scanners.sh "$scanner_root")"
-  echo "bootstrap: add the scanners to PATH:"
-  echo "$bins" | sed 's/^/  export PATH="/; s/$/:$PATH"/'
 fi
 
 echo "bootstrap: done"

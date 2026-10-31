@@ -13,7 +13,6 @@ sibling source checkout is needed. Run:
 
 ```bash
 scripts/bootstrap.sh              # uv >= 0.9, pinned Python, locked PyPI deps, git hooks
-scripts/bootstrap.sh --scanners   # also the pinned native scanners (~15 min cold)
 ```
 
 Bootstrap is idempotent. A hook whose prerequisite is missing prints
@@ -29,7 +28,7 @@ uvx pre-commit run pytest --hook-stage manual --all-files
 ```
 
 The release workflow runs this same `.pre-commit-config.yaml`, so a green local
-run is the CI gate minus provisioning. Scanner acceptance terms are in
+run is the CI gate minus provisioning. Wiring gate terms are in
 [docs/quality-gate-terms.md](docs/quality-gate-terms.md).
 
 ## Branch and pull-request flow

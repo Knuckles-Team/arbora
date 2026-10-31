@@ -171,7 +171,7 @@ jobs:
       # boundary. Repository-manager's one readiness primitive checks the
       # package versions that this wheel declares before a tag can build.
       # It is gate tooling, not a dependency: scripts/local_hook.sh installs
-      # it with --no-sources, so its own agent-utilities requirement resolves
+      # it with --no-sources, so its own requirements resolve
       # from PyPI rather than from a sibling source path.
       - name: Checkout pinned release-readiness implementation
         if: startsWith(github.ref, 'refs/tags/v')
@@ -179,21 +179,21 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Knuckles-Team/repository-manager
-          ref: 0671b97250c7a2e87a1f63b43818e99eb90709a1
+          ref: 361d7eff5c65b4d014155a33273339399f422f76 # v3.5.1
           path: .uv-workspace-siblings/repository-manager
           persist-credentials: false
 
-      # Advisory (operator gate cut, 2026-10-17): the pinned repository-manager
-      # tool requires agent-utilities<3 and cannot install beside AU 3, and it
-      # reports wheel-only dependencies as partial publishes. The six-platform
-      # install-smoke matrix below proves every locked dependency installs
-      # from PyPI before publish.
+      # Advisory (operator gate cut, 2026-10-17). repository-manager v3.5.1
+      # depends on agent-connector-sdk, not agent-utilities, so it installs
+      # beside this wheel's dependencies. The repo's own hook runs the
+      # checked-out tool; the six-platform install-smoke matrix below still
+      # proves every locked dependency installs from PyPI before publish.
       - name: Release dependency readiness (advisory, report-only)
         if: startsWith(github.ref, 'refs/tags/v')
         continue-on-error: true
         run: |
           set -euo pipefail
-          uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" dependency-readiness --hook-stage manual --all-files
+          scripts/local_hook.sh dependency-readiness
 
       # Every dependency installs from PyPI exactly as uv.lock pins it, the
       # published epistemic-graph wheel (numeric kernel included) among them;
@@ -232,81 +232,6 @@ jobs:
 
       - name: Full test suite (main, nightly, release tag; manual-stage hook)
         run: uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" pytest --hook-stage manual --all-files
-
-  # Scanners (complexity, KISS, cccc, dupehound, jscpd) are advisory: they
-  # report on every run and never block a merge or a release (operator
-  # direction, 2026-10-17).
-  scanner-quality:
-    if: github.ref_type == 'branch'
-    timeout-minutes: 60
-    continue-on-error: true
-    name: Scanner quality (cccc, KISS, dupehound, jscpd)
-    needs: [freeze-gate-source]
-    runs-on: ubuntu-latest
-    env:
-      PIPELINES_REF: ${{ needs.freeze-gate-source.outputs.sha }}
-      CARGO_BUILD_JOBS: "4"
-      CARGO_PROFILE_RELEASE_DEBUG: "0"
-    steps:
-      - *release-checkout
-      - *release-uv
-
-      - uses: dtolnay/rust-toolchain@fa04a1451ff1842e2626ccb99004d0195b455a88 # master
-        with:
-          toolchain: stable
-
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: '22'
-
-      - name: Resolve scanner cache identity
-        id: scanner-cache-identity
-        env:
-          SCANNER_RECIPE: ${{ hashFiles('scripts/install_scanners.sh') }}
-        run: |
-          set -euo pipefail
-          rustc_identity="$(rustc -Vv)"
-          cargo_identity="$(cargo -V)"
-          identity="$(printf '%s\0' \
-            "$RUNNER_OS" "$RUNNER_ARCH" "${ImageOS:-}" "${ImageVersion:-}" \
-            "$SCANNER_RECIPE" "$rustc_identity" "$cargo_identity" \
-            "$CARGO_BUILD_JOBS" "$CARGO_PROFILE_RELEASE_DEBUG" \
-            "${RUSTFLAGS:-}" "${CARGO_ENCODED_RUSTFLAGS:-}" | sha256sum)"
-          printf 'key=arbora-scanners-v1-%s\n' "${identity%% *}" >> "$GITHUB_OUTPUT"
-
-      - name: Restore scanner toolchain
-        id: scanner-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ runner.temp }}/arbora-scanners
-          key: ${{ steps.scanner-cache-identity.outputs.key }}
-
-      # Each scanner is installed to its own runner-local prefix at the
-      # version the shared scanner-versions hook verifies (the same script
-      # scripts/bootstrap.sh --scanners runs locally). Always run the installer:
-      # a cache hit must still pass the provider's receipt and build probes.
-      - name: Provision pinned scanner toolchain
-        run: bash scripts/install_scanners.sh "$RUNNER_TEMP/arbora-scanners" >> "$GITHUB_PATH"
-
-      - *release-base
-
-      - name: Shared scanner hooks (versions, censuses, clone differentials)
-        env:
-          CX_DUP_BASE_REF: ${{ env.PRE_COMMIT_FROM_REF }}
-        run: |
-          set -euo pipefail
-          uvx --from "git+https://github.com/Knuckles-Team/pipelines@${PIPELINES_REF}" \
-            pipelines-hook scanner-versions cccc kiss dupehound jscpd
-          for hook in complexity-census kiss-census dupehound-changed jscpd-differential jscpd-census; do
-            uvx --from pre-commit==4.6.0 pre-commit run --config "$PINNED_PRECOMMIT" "$hook" --hook-stage manual --all-files
-          done
-
-      - name: Save verified scanner toolchain
-        if: success() && steps.scanner-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ${{ runner.temp }}/arbora-scanners
-          key: ${{ steps.scanner-cache-identity.outputs.key }}
 
   build:
     timeout-minutes: 60
