@@ -11,8 +11,8 @@ from typing import Any
 
 import pytest
 
-from arbora.agent_host.log_access import HostLogAccess, HostLogBatch
 from arbora.agent_host import log_routes
+from arbora.agent_host.log_access import HostLogAccess, HostLogBatch
 from arbora.agent_host.log_runtime import HostLogRuntime
 from arbora.agent_host.log_sink import WorkspaceLogSink
 from tests.agent_host.native_terminal import NativeTerminal
