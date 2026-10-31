@@ -33,7 +33,11 @@ def test_ci_triggers_and_caller_side_concurrency() -> None:
     assert triggers["pull_request"] == {"branches": ["main"]}
     assert triggers["push"] == {"branches": ["main"]}
     assert "schedule" in triggers and "workflow_dispatch" in triggers
-    assert workflow["concurrency"]["cancel-in-progress"] is True
+    # Only pull-request runs are cancelled by a newer push; main runs always finish.
+    assert (
+        workflow["concurrency"]["cancel-in-progress"]
+        == "${{ github.event_name == 'pull_request' }}"
+    )
 
 
 def test_no_skip_companion_and_no_merge_workflow() -> None:
