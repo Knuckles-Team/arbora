@@ -12,4 +12,4 @@ Governing spec: [spec.md](spec.md).
 
 ## Quality and release proof
 
-[List the exact focused, live path and package commands. Record revision, environment, output link, and pass/fail; a source test is not served acceptance.]
+[List the exact focused, live path, scanner and package commands. Record revision, environment, output link, and pass/fail; a source test is not served acceptance.]
