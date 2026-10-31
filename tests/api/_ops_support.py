@@ -15,12 +15,14 @@ from types import SimpleNamespace
 
 
 def service_context(
-    *, tenant: str | None = None, **services: object
+    *, tenant: str | None = None, principal: str | None = None, **services: object
 ) -> SimpleNamespace:
     """A session-scoped context bound to zero or more named services."""
     caller_kwargs: dict[str, object] = {"session": object()}
     if tenant is not None:
         caller_kwargs["tenant"] = tenant
+    if principal is not None:
+        caller_kwargs["principal"] = principal
     return SimpleNamespace(
         caller=SimpleNamespace(**caller_kwargs),
         client=object(),

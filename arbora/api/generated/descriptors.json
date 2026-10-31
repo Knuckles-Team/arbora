@@ -556,18 +556,6 @@
     {
       "domain": "eg",
       "examples": [
-        "RegisterForeignSource cluster"
-      ],
-      "id": "eg.cluster.RegisterForeignSource",
-      "summary": "opaque prepared/committed control receipt; endpoint configuration is not duplicated in the ledger",
-      "tags": [
-        "eg"
-      ],
-      "verb": "manage"
-    },
-    {
-      "domain": "eg",
-      "examples": [
         "RegisterServer cluster"
       ],
       "id": "eg.cluster.RegisterServer",
@@ -4768,18 +4756,6 @@
     {
       "domain": "eg",
       "examples": [
-        "QueryForeignColumns query"
-      ],
-      "id": "eg.query.QueryForeignColumns",
-      "summary": "Verified owner-scoped mapped-column read with bounded source fetch and local predicate residual",
-      "tags": [
-        "eg"
-      ],
-      "verb": "ask"
-    },
-    {
-      "domain": "eg",
-      "examples": [
         "RankByProvenance query"
       ],
       "id": "eg.query.RankByProvenance",
@@ -4824,18 +4800,6 @@
         "eg"
       ],
       "verb": "ask"
-    },
-    {
-      "domain": "eg",
-      "examples": [
-        "Sql query"
-      ],
-      "id": "eg.query.Sql",
-      "summary": "runtime-conditional; graph DML uses staged graph state while table/catalog writes atomically commit SQL rows plus MutationBatch status/fence/idempotency/outbox",
-      "tags": [
-        "eg"
-      ],
-      "verb": "write"
     },
     {
       "domain": "eg",
@@ -4924,18 +4888,6 @@
     {
       "domain": "eg",
       "examples": [
-        "GraphSchemaClasses reasoning"
-      ],
-      "id": "eg.reasoning.GraphSchemaClasses",
-      "summary": "EH-389. One page of the classes and properties the request graph's composed schema declares, with the declaring source; the schema's own vocabulary, not graph rows and not the source documents, so an ordinary ontology read (owl:read) rather than GraphSchemaList's security:admin",
-      "tags": [
-        "eg"
-      ],
-      "verb": "ask"
-    },
-    {
-      "domain": "eg",
-      "examples": [
         "GraphSchemaList reasoning"
       ],
       "id": "eg.reasoning.GraphSchemaList",
@@ -4956,18 +4908,6 @@
         "eg"
       ],
       "verb": "manage"
-    },
-    {
-      "domain": "eg",
-      "examples": [
-        "OntologyInspect reasoning"
-      ],
-      "id": "eg.reasoning.OntologyInspect",
-      "summary": "the vocabulary, SHACL targets and canonical digest of inline documents or the composed GraphSchema sources, so orchestration callers need no RDF parser; reads schema, never graph rows",
-      "tags": [
-        "eg"
-      ],
-      "verb": "ask"
     },
     {
       "domain": "eg",
@@ -5016,30 +4956,6 @@
         "eg"
       ],
       "verb": "write"
-    },
-    {
-      "domain": "eg",
-      "examples": [
-        "ShaclValidate reasoning"
-      ],
-      "id": "eg.reasoning.ShaclValidate",
-      "summary": "Shacl Validate",
-      "tags": [
-        "eg"
-      ],
-      "verb": "ask"
-    },
-    {
-      "domain": "eg",
-      "examples": [
-        "Sparql reasoning"
-      ],
-      "id": "eg.reasoning.Sparql",
-      "summary": "Sparql",
-      "tags": [
-        "eg"
-      ],
-      "verb": "ask"
     },
     {
       "domain": "eg",
@@ -5978,6 +5894,90 @@
       "verb": "write"
     },
     {
+      "domain": "federation",
+      "examples": [
+        "show the columns of this federated source"
+      ],
+      "id": "federation.sources.columns",
+      "summary": "Read the columns of a registered foreign source",
+      "tags": [
+        "federation"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "federation",
+      "examples": [
+        "show this federated source"
+      ],
+      "id": "federation.sources.get",
+      "summary": "Get one visible federation source",
+      "tags": [
+        "federation"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "federation",
+      "examples": [
+        "list my federated sources"
+      ],
+      "id": "federation.sources.list",
+      "summary": "List the federation sources visible to the caller",
+      "tags": [
+        "federation"
+      ],
+      "verb": "find"
+    },
+    {
+      "domain": "federation",
+      "examples": [
+        "probe this federated source"
+      ],
+      "id": "federation.sources.probe",
+      "summary": "Probe one visible federation source; credentials are redacted",
+      "tags": [
+        "federation"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "federation",
+      "examples": [
+        "register a federated source"
+      ],
+      "id": "federation.sources.register",
+      "summary": "Register a foreign source with the engine (governed write)",
+      "tags": [
+        "federation"
+      ],
+      "verb": "manage"
+    },
+    {
+      "domain": "federation",
+      "examples": [
+        "share this federated source"
+      ],
+      "id": "federation.sources.share",
+      "summary": "Share an owned federation source with a grantee",
+      "tags": [
+        "federation"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "federation",
+      "examples": [
+        "unshare this federated source"
+      ],
+      "id": "federation.sources.unshare",
+      "summary": "Revoke a grantee's access to an owned federation source",
+      "tags": [
+        "federation"
+      ],
+      "verb": "act"
+    },
+    {
       "domain": "fleet",
       "examples": [
         "call this fleet tool with these arguments"
@@ -6112,6 +6112,114 @@
     {
       "domain": "ingest",
       "examples": [
+        "show this drift"
+      ],
+      "id": "ingest.drift.get",
+      "summary": "Show one drift record",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "list source drift"
+      ],
+      "id": "ingest.drift.list",
+      "summary": "List detected source drift",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "find"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "approve this drift repair"
+      ],
+      "id": "ingest.drift.repair_approve",
+      "summary": "Apply a previewed drift repair against an approval reference",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "propose a repair for this drift"
+      ],
+      "id": "ingest.drift.repair_propose",
+      "summary": "Propose a drift repair and record its preview without applying it",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "admit this embedding model"
+      ],
+      "id": "ingest.embedding.admit",
+      "summary": "Admit an embedding model for this tenant",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "re-embed this source"
+      ],
+      "id": "ingest.embedding.reembed",
+      "summary": "Request a durable re-embedding of one source",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "cancel this ingestion job"
+      ],
+      "id": "ingest.jobs.cancel",
+      "summary": "Cancel one pending ingestion job",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "list my ingestion jobs"
+      ],
+      "id": "ingest.jobs.list",
+      "summary": "List this tenant's durable ingestion jobs",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "find"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
+        "prioritize this ingestion job"
+      ],
+      "id": "ingest.jobs.prioritize",
+      "summary": "Set the priority bucket of one ingestion job",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "act"
+    },
+    {
+      "domain": "ingest",
+      "examples": [
         "show the status of this ingestion job"
       ],
       "id": "ingest.jobs.status",
@@ -6182,6 +6290,19 @@
       "verb": "act"
     },
     {
+      "domain": "ingest",
+      "examples": [
+        "ingest this url",
+        "distill this document"
+      ],
+      "id": "ingest.submissions.create",
+      "summary": "Queue a durable ingest, URL, pack, fact-extract or distill job",
+      "tags": [
+        "ingest"
+      ],
+      "verb": "act"
+    },
+    {
       "domain": "memory",
       "examples": [
         "forget this memory",
@@ -6244,6 +6365,42 @@
         "messaging"
       ],
       "verb": "act"
+    },
+    {
+      "domain": "ontology",
+      "examples": [
+        "inspect this ontology"
+      ],
+      "id": "ontology.inspect",
+      "summary": "Inspect ontology documents or the graph's composed schema",
+      "tags": [
+        "ontology"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "ontology",
+      "examples": [
+        "list the ontology classes"
+      ],
+      "id": "ontology.schema.classes",
+      "summary": "Page the classes and properties the graph's schema declares",
+      "tags": [
+        "ontology"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "ontology",
+      "examples": [
+        "validate the graph against its shapes"
+      ],
+      "id": "ontology.validate",
+      "summary": "Validate graph data against SHACL shapes",
+      "tags": [
+        "ontology"
+      ],
+      "verb": "ask"
     },
     {
       "domain": "ops",
@@ -6324,6 +6481,30 @@
       ],
       "id": "query.nl",
       "summary": "Query the caller's graph with the engine natural-language planner",
+      "tags": [
+        "query"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "query",
+      "examples": [
+        "run a SPARQL query"
+      ],
+      "id": "query.sparql",
+      "summary": "Evaluate a SPARQL SELECT over the caller's graph",
+      "tags": [
+        "query"
+      ],
+      "verb": "ask"
+    },
+    {
+      "domain": "query",
+      "examples": [
+        "run a SQL query"
+      ],
+      "id": "query.sql",
+      "summary": "Run a parameterised SQL query over the caller's graph",
       "tags": [
         "query"
       ],
@@ -6570,5 +6751,5 @@
       "verb": "act"
     }
   ],
-  "registry_digest": "dbb0efa0dc47306b1207ab4bb490efb45265fb902e98e5480fba16122bd68a62"
+  "registry_digest": "6cda071f7f3bb609c198d367afd6a9fbccaae2e14a0077b29bf0f593ae1a04b7"
 }
