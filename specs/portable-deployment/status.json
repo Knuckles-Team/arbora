@@ -131,7 +131,7 @@
         "9d8a787b8495"
       ],
       "verified_by": [
-        "tests/deployment/test_mypy_hook_scope.py:13"
+        "tests/deployment/test_mypy_hook_scope.py:15"
       ]
     },
     {
