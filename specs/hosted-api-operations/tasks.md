@@ -335,3 +335,17 @@ See [design](plan.md) and [tests](test-spec.md).
 - [ ] `ARBORA-OPS-R071`: Deliver the requirement in requirements.md.
 - [ ] `ARBORA-OPS-R072`: Deliver the requirement in requirements.md.
 - [ ] `ARBORA-OPS-R073`: Deliver the requirement in requirements.md.
+- [ ] `ARBORA-OPS-R009.6`: Operator hook model and configuration. Deliver as written in requirements.md.
+- [ ] `ARBORA-OPS-R009.7`: Input hook runs before the input is admitted. Deliver as written in requirements.md.
+- [ ] `ARBORA-OPS-R009.8`: Output hook runs before a response leaves. Deliver as written in requirements.md.
+- [ ] `ARBORA-OPS-R009.9`: Hooks fail closed and record their decisions. Deliver as written in requirements.md.
+- [ ] `ARBORA-OPS-R024.6`: Derivation status read. Deliver as written in requirements.md.
+- [ ] `ARBORA-OPS-R897`: Participant memory, scopes, profiles and document sets are served operations (rollup). Deliver as written in requirements.md.
+- [ ] `ARBORA-OPS-R897.1`: Model and the shared engine send helper. Deliver as written in requirements.md.
+- [ ] `ARBORA-OPS-R897.2`: Participant and membership operations. Deliver as written in requirements.md.
+- [ ] `ARBORA-OPS-R897.3`: Scope and observation operations. Deliver as written in requirements.md.
+- [ ] `ARBORA-OPS-R897.4`: Turn append operation. Deliver as written in requirements.md.
+- [ ] `ARBORA-OPS-R897.5`: Ask and card operations. Deliver as written in requirements.md.
+- [ ] `ARBORA-OPS-R897.6`: Assistant profile and document set operations. Deliver as written in requirements.md.
+- [ ] `ARBORA-OPS-R897.7`: Registration and error mapping. Deliver as written in requirements.md.
+- [ ] `ARBORA-OPS-R897.8`: Hot-path proof. Deliver as written in requirements.md.

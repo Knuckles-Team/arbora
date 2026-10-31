@@ -1030,3 +1030,34 @@ expand the projection or qualify the parent requirement.
 - `ARBORA-OPS-R071`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-OPS-R072`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-OPS-R073`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
+
+## Build contract
+
+This section applies to `ARBORA-OPS-R009.6` to `ARBORA-OPS-R009.9`, `ARBORA-OPS-R024.6` and `ARBORA-OPS-R897` with its children. Each row must pass the pre-commit gates on the first commit.
+
+### Gates and values
+
+The values come from `.pre-commit-config.yaml` and `pyproject.toml`.
+
+- Ruff selects `E`, `F`, `I`, `UP` and `B` with line length 88 and Python 3.12. Imports must stay sorted. Ruff format runs on every staged file.
+- Mypy checks every new module. Params and result models are typed `pydantic` classes. A handler returns `dict[str, Any]` as the existing handlers do.
+- Vulture runs at confidence 95 and finds any new function with no caller. Each helper must have a production caller.
+- The wiring gate `scripts/check_wiring.py orphans` fails a module with no production fan-in and no fan-out. `hooks.py`, `participants.py`, `assistants.py`, `_engine.py`, `memory_subscriptions.py`, `webhook_delivery.py` and `memory_webhooks.py` each get their fan-in from the registration line named in their row.
+- The shared complexity gate caps new functions at cyclomatic 10 and cognitive 15, with at most 35 statements. Split a longer handler into named helpers.
+- The clone gate allows 0 new clone pairs among changed functions. The two modules `participants.py` and `assistants.py` share one builder table and one result mapper.
+- The surface gate `scripts/check_api_surface.py` expects the added operations in the registry. The scope gate expects the five new scopes in `arbora/security/scope_registry.py`.
+
+### Shapes
+
+- Dispatch on an operation is a table from operation id to engine method and op name. No handler branches on the operation id.
+- A request is one pydantic model or one dataclass. `HookRequest` and `DeliveryRequest` replace argument lists.
+- A function takes at most one boolean parameter. Use an enum such as `HookPoint` otherwise.
+- Each new concern has its own file under 900 lines. Hooks live in `arbora/api/invoke/hooks.py`. Participant operations live in `arbora/api/ops/participants.py`. Assistant operations live in `arbora/api/ops/assistants.py`. The engine send helper lives in `arbora/api/ops/_engine.py`.
+- Reuse these helpers and write no near-copy: `build_read_op`, `build_write_op`, `Params`, the span masker of `arbora/security/log_redaction.py`, `Registry.get`, `_typed_refusal` and the KV calls of `arbora/api/ops/memory.py`.
+- Register every module where the wiring gate sees it: `registry_factory.py` for operation modules and `InvokeServices` for the hook chain.
+
+### Design points
+
+- The engine owns every memory fact and refusal. Arbora forwards the caller's own session and adds no rule.
+- The input hook runs after `_resolve` and before `_confirmation_gate`. The call then has a verified caller, and no audit or effect reservation exists yet.
+- The output hook runs before `_record`, so the effect journal stores the hooked outcome and a replay returns it.
