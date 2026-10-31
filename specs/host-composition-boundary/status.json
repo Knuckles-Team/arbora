@@ -335,12 +335,14 @@
     {
       "id": "ARBORA-HOST-R001.3",
       "title": "Arbora ships one registry-backed client",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "90f91b084ff9",
+        "069f67e3f705",
         "9e7f6499d96f"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_client_http.py:16"
+      ]
     },
     {
       "id": "ARBORA-HOST-R001.4",

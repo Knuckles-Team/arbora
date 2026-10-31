@@ -1403,15 +1403,18 @@
     {
       "id": "ARBORA-OPS-R025",
       "title": "Registry in code is the API contract",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
+        "069f67e3f705",
         "144fd029bf2e",
         "43c5e4b631cb",
         "4b83c69e2b41",
-        "90f91b084ff9",
         "a247b168fa98"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/api/test_client_http.py:14",
+        "tests/api/test_client_http.py:15"
+      ],
       "rollup_of": [
         "ARBORA-OPS-R025.1",
         "ARBORA-OPS-R025.2"
@@ -1420,12 +1423,14 @@
     {
       "id": "ARBORA-OPS-R025.1",
       "title": "Python invocation boundary",
-      "delivery_state": "LANDED",
+      "delivery_state": "VERIFIED",
       "landed_in": [
-        "144fd029bf2e",
-        "90f91b084ff9"
+        "069f67e3f705",
+        "144fd029bf2e"
       ],
-      "verified_by": []
+      "verified_by": [
+        "tests/api/test_client_http.py:15"
+      ]
     },
     {
       "id": "ARBORA-OPS-R025.2",
@@ -1433,7 +1438,6 @@
       "delivery_state": "RETIRED",
       "landed_in": [
         "43c5e4b631cb",
-        "90f91b084ff9",
         "a247b168fa98"
       ],
       "verified_by": [],
@@ -2510,8 +2514,8 @@
         "5170b8a8edde"
       ],
       "verified_by": [
-        "tests/api/test_client_http.py:27",
-        "tests/api/test_client_http.py:46",
+        "tests/api/test_client_http.py:31",
+        "tests/api/test_client_http.py:50",
         "tests/api/test_research_ops.py:19",
         "tests/api/test_research_ops.py:59",
         "tests/api/test_research_ops.py:67"
