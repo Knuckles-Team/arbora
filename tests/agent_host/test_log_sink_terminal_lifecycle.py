@@ -130,7 +130,7 @@ async def test_restarted_source_metadata_and_rotation_gap_in_terminal(
 ) -> None:
     owners = ControlledOwners()
     owners.now = time.time()
-    expiry = int(owners.now * 1000) + 60_000
+    expiry = int(owners.now * 1000) + 600_000
     owners.states = {
         key: replace(value, expires_at_ms=expiry)
         for key, value in owners.states.items()
