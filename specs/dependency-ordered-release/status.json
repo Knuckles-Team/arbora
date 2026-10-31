@@ -44,8 +44,8 @@
         "8b0cb0d81469"
       ],
       "verified_by": [
-        "tests/deployment/test_release_workflow_sources.py:535",
-        "tests/deployment/test_release_workflow_sources.py:560"
+        "tests/deployment/test_release_workflow_sources.py:371",
+        "tests/deployment/test_release_workflow_sources.py:396"
       ],
       "rollup_of": [
         "ARBORA-RELEASE-R001.1"
@@ -63,8 +63,8 @@
         "8b0cb0d81469"
       ],
       "verified_by": [
-        "tests/deployment/test_release_workflow_sources.py:535",
-        "tests/deployment/test_release_workflow_sources.py:560"
+        "tests/deployment/test_release_workflow_sources.py:371",
+        "tests/deployment/test_release_workflow_sources.py:396"
       ]
     },
     {
@@ -73,7 +73,9 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "03ec8432da14",
+        "7226978c22cc",
         "b248775f941c",
+        "dd19748d491a",
         "f3f45f5e2d1b"
       ],
       "verified_by": [
@@ -195,10 +197,10 @@
       "delivery_state": "VERIFIED",
       "landed_in": [
         "07135d7c54a6",
+        "1f16b0e99c34",
         "3b2cfd78dc75",
         "46c93f5103b1",
-        "614795d10268",
-        "6d39a589385a"
+        "614795d10268"
       ],
       "verified_by": [
         "tests/api/test_task_plan_schema_pin.py:143",

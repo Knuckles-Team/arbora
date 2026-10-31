@@ -25,7 +25,7 @@ This follows a specify/plan/tasks flow with an explicit test contract. The track
 Each spec must name its stable ID and sole owner. Cross-repository work links the other owners'
 public specs by stable ID and GitHub URL; each repository documents the complete contracts and
 acceptance it owns. Designs must inventory existing code and reuse the legal
-owner and live wiring before proposing new components. Include CCCC, jscpd, dupehound, KISS,
+owner and live wiring before proposing new components. Include
 language-native and repo release gates where applicable, with exact pass evidence and a
 no-duplicate-authority check.
 

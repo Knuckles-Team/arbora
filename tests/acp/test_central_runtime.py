@@ -1,6 +1,7 @@
 """Actual governed ACP path; model and EG/effect owners are controlled test ports."""
 
 import asyncio
+import hashlib
 import time
 from dataclasses import replace
 from types import MethodType, SimpleNamespace
@@ -58,6 +59,16 @@ async def central(http_server, chain, monkeypatch):
 
     monkeypatch.setattr(central_runtime, "invoke", traced_invoke)
     host, publication, _ = chain
+    # The server lifespan publishes every served tenant's task-plan schema pin
+    # before requests run (ARBORA-RELEASE-R003.4.4); the JWT callers here use
+    # tenants "tenant" and "other", so publish theirs the same way.
+    pins = host.services.runtime.bindings["task_plan_schema_pins"]
+
+    async def publish_schema(tenant, pin):
+        return "sha256:" + hashlib.sha256(tenant.encode()).hexdigest()
+
+    for tenant in ("tenant", "other"):
+        await pins.publish_for(tenant, publish_schema)
     publication["run_callers"] = run_callers
     publication["token"] = app.state.test_token
     rows, commits, tool_calls = {}, [], []
