@@ -154,12 +154,14 @@ def test_cli_retains_diagnostics_on_stderr_and_one_json_report(
 
 
 def test_cli_stream_repair_keeps_remaining_fleet_acceptance_specified() -> None:
+    """Delivery state is computed at read time, so pin what is committed: the rows stay open."""
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[2]
-    status = json.loads(
-        (root / "specs/fleet-catalog-and-tools/status.json").read_text()
-    )
-    rows = {row["id"]: row for row in status["requirements"]}
+    text = (root / "specs/fleet-catalog-and-tools/requirements.md").read_text()
     for identifier in ("ARBORA-FLEET-R027.7", "ARBORA-FLEET-R027.7.2"):
-        assert rows[identifier]["delivery_state"] == "SPECIFIED"
+        row = next(
+            line for line in text.splitlines() if line.startswith(f"| `{identifier}`")
+        )
+        assert "RETIRED" not in row
+        assert "VERIFIED" not in row
