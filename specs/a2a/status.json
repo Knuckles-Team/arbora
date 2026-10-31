@@ -89,7 +89,8 @@
     "ARBORA-A2A-R001.6",
     "ARBORA-A2A-R001.5.1",
     "ARBORA-A2A-R001.5.2",
-    "ARBORA-A2A-R016.6"
+    "ARBORA-A2A-R016.6",
+    "ARBORA-A2A-R023"
   ],
   "requirements": [
     {
@@ -457,7 +458,7 @@
         "cdde0200a54a"
       ],
       "verified_by": [
-        "tests/a2a/test_operation_bridge.py:34"
+        "tests/a2a/test_operation_bridge.py:33"
       ],
       "rollup_of": [
         "ARBORA-A2A-R006.2.1",
@@ -502,7 +503,7 @@
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": [
-        "tests/mcp_server/test_hosted_invocation.py:25"
+        "tests/mcp_server/test_hosted_invocation.py:24"
       ]
     },
     {
@@ -985,6 +986,13 @@
     {
       "id": "ARBORA-A2A-R016.6",
       "title": "Caller model preference",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-A2A-R023",
+      "title": "Inbound A2A tasks route through medulla Decide",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []

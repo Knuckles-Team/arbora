@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-
 from arbora.api.invoke.steps import principal_rule
 from arbora.api.ops import decide
 from tests.api._ops_support import service_context
@@ -32,7 +30,6 @@ def test_decide_commit_allows_a_service_principal() -> None:
     assert principal_rule(op, service) is None
 
 
-@pytest.mark.spec("ARBORA-OPS-R021.1")
 def test_decide_commit_result_carries_provenance_and_is_service_only() -> None:
     op = _op()
     assert principal_rule(op, _caller(principal_kind="human")) is not None

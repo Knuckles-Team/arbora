@@ -287,7 +287,23 @@
     "ARBORA-OPS-R070",
     "ARBORA-OPS-R071",
     "ARBORA-OPS-R072",
-    "ARBORA-OPS-R073"
+    "ARBORA-OPS-R073",
+    "ARBORA-OPS-R862",
+    "ARBORA-OPS-R863",
+    "ARBORA-OPS-R864",
+    "ARBORA-OPS-R865",
+    "ARBORA-OPS-R866",
+    "ARBORA-OPS-R867",
+    "ARBORA-OPS-R868",
+    "ARBORA-OPS-R869",
+    "ARBORA-OPS-R870",
+    "ARBORA-OPS-R871",
+    "ARBORA-OPS-R872",
+    "ARBORA-OPS-R873",
+    "ARBORA-OPS-R874",
+    "ARBORA-OPS-R875",
+    "ARBORA-OPS-R876",
+    "ARBORA-OPS-R877"
   ],
   "requirements": [
     {
@@ -349,16 +365,12 @@
     {
       "id": "ARBORA-OPS-R005",
       "title": "Stable auth error codes from the engine contract",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "LANDED",
       "landed_in": [
         "100d015ca012",
         "b5bf4ba58902"
       ],
-      "verified_by": [
-        "tests/api/test_contract_admission.py:120",
-        "tests/api/test_contract_admission.py:70",
-        "tests/api/test_errors.py:286"
-      ]
+      "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R006",
@@ -449,7 +461,7 @@
         "f5c799c91830"
       ],
       "verified_by": [
-        "tests/api/test_errors.py:396"
+        "tests/api/test_errors.py:380"
       ]
     },
     {
@@ -928,14 +940,12 @@
     {
       "id": "ARBORA-OPS-R021.1",
       "title": "Decide operations (service-executed) — decide slice",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "LANDED",
       "landed_in": [
         "1ded59edd1a6",
         "4016e049e45e"
       ],
-      "verified_by": [
-        "tests/api/test_decide_ops.py:35"
-      ]
+      "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R021.2",
@@ -1050,8 +1060,8 @@
         "tests/a2a/test_native_run_publication.py:16",
         "tests/api/test_runs_ops.py:23",
         "tests/mcp_server/test_current_plan_reader.py:24",
-        "tests/mcp_server/test_task_plan.py:314",
-        "tests/mcp_server/test_task_plan.py:321"
+        "tests/mcp_server/test_task_plan.py:311",
+        "tests/mcp_server/test_task_plan.py:318"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1"
@@ -1072,8 +1082,8 @@
         "tests/a2a/test_native_run_publication.py:16",
         "tests/api/test_runs_ops.py:23",
         "tests/mcp_server/test_current_plan_reader.py:24",
-        "tests/mcp_server/test_task_plan.py:314",
-        "tests/mcp_server/test_task_plan.py:321"
+        "tests/mcp_server/test_task_plan.py:311",
+        "tests/mcp_server/test_task_plan.py:318"
       ],
       "rollup_of": [
         "ARBORA-OPS-R021.4.5.1.1",
@@ -1106,8 +1116,8 @@
       ],
       "verified_by": [
         "tests/a2a/test_native_run_publication.py:16",
-        "tests/mcp_server/test_task_plan.py:314",
-        "tests/mcp_server/test_task_plan.py:321",
+        "tests/mcp_server/test_task_plan.py:311",
+        "tests/mcp_server/test_task_plan.py:318",
         "tests/mcp_server/test_task_plan_runtime.py:626",
         "tests/mcp_server/test_task_plan_runtime.py:705"
       ]
@@ -1282,7 +1292,7 @@
         "94724be32c28"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:342"
+        "tests/api/test_registry_factory.py:375"
       ],
       "rollup_of": [
         "ARBORA-OPS-R024.4.1",
@@ -1377,38 +1387,31 @@
         "5f79be652726"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:342"
+        "tests/api/test_registry_factory.py:375"
       ]
     },
     {
       "id": "ARBORA-OPS-R024.5",
       "title": "Operational admin operations — admin slice",
-      "delivery_state": "VERIFIED",
+      "delivery_state": "LANDED",
       "landed_in": [
         "4016e049e45e",
         "8d1bc46ecbdb"
       ],
-      "verified_by": [
-        "tests/api/test_ops_admin_ops.py:202"
-      ]
+      "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R025",
-      "title": "Generated registry, OpenAPI, and client artifacts",
-      "delivery_state": "VERIFIED",
+      "title": "Registry in code is the API contract",
+      "delivery_state": "LANDED",
       "landed_in": [
         "144fd029bf2e",
         "43c5e4b631cb",
         "4b83c69e2b41",
+        "90f91b084ff9",
         "a247b168fa98"
       ],
-      "verified_by": [
-        "tests/api/test_gen_api.py:266",
-        "tests/api/test_gen_api.py:288",
-        "tests/api/test_gen_api.py:303",
-        "tests/api/test_gen_api.py:320",
-        "tests/api/test_gen_api.py:470"
-      ],
+      "verified_by": [],
       "rollup_of": [
         "ARBORA-OPS-R025.1",
         "ARBORA-OPS-R025.2"
@@ -1416,31 +1419,25 @@
     },
     {
       "id": "ARBORA-OPS-R025.1",
-      "title": "Generated Python invocation boundary",
-      "delivery_state": "VERIFIED",
+      "title": "Python invocation boundary",
+      "delivery_state": "LANDED",
       "landed_in": [
-        "144fd029bf2e"
+        "144fd029bf2e",
+        "90f91b084ff9"
       ],
-      "verified_by": [
-        "tests/api/test_gen_api.py:266",
-        "tests/api/test_gen_api.py:288",
-        "tests/api/test_gen_api.py:303"
-      ]
+      "verified_by": []
     },
     {
       "id": "ARBORA-OPS-R025.2",
-      "title": "Remaining generated artifact acceptance",
-      "delivery_state": "VERIFIED",
+      "title": "RETIRED: generated contract artifacts were removed; the in-code registry is the contract (ARBORA-OPS-R025)",
+      "delivery_state": "RETIRED",
       "landed_in": [
         "43c5e4b631cb",
+        "90f91b084ff9",
         "a247b168fa98"
       ],
-      "verified_by": [
-        "tests/api/test_gen_api.py:320",
-        "tests/api/test_gen_api.py:470",
-        "tests/deployment/test_generated_client_wheel.py:15",
-        "tests/deployment/test_generated_client_wheel.py:27"
-      ]
+      "verified_by": [],
+      "retired_reason": "generated contract artifacts were removed; the in-code registry is the contract (ARBORA-OPS-R025)"
     },
     {
       "id": "ARBORA-OPS-R026",
@@ -2630,7 +2627,7 @@
         "d673cd573c77"
       ],
       "verified_by": [
-        "tests/api/test_registry_factory.py:351"
+        "tests/api/test_registry_factory.py:384"
       ]
     },
     {
@@ -3202,6 +3199,118 @@
     {
       "id": "ARBORA-OPS-R073",
       "title": "Host resource-grant binding for incremental indexing",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R862",
+      "title": "Surface a recommendation only after a passing safety-bound verdict",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R863",
+      "title": "Issue a recommendation approval receipt bound to a record digest",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R864",
+      "title": "Execute only the bound retrieval provider",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R865",
+      "title": "Approve queued write-back proposals",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R866",
+      "title": "Serve tool search from the Medulla tool ranking",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R867",
+      "title": "Block an action until approval when medulla requires confirmation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R868",
+      "title": "Carry the table-of-contents identity in space directory listings",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R869",
+      "title": "Gate generated-code materialization on a committed admission record",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R870",
+      "title": "Serve authenticated changeset review and call medulla Decide",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R871",
+      "title": "Accept a playbook write step only with a committed Decide record",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R872",
+      "title": "Check the certification attestation before workflow invocation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R873",
+      "title": "Start the workflow engine lazily on first invocation",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R874",
+      "title": "Return registry identities from the host semantic workflow match",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R875",
+      "title": "Run the upgrade admission before the invoke certification step",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R876",
+      "title": "Report the loop continuation from the latest committed record",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "ARBORA-OPS-R877",
+      "title": "Write team records and apply the coordination decision",
       "delivery_state": "SPECIFIED",
       "landed_in": [],
       "verified_by": []
