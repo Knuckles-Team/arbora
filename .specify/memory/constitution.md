@@ -1,23 +1,43 @@
-# arbora constitution
+# Arbora constitution
 
-Status: PROPOSED. Drafted: 2026-09-28. Version: 0.1.0. Specification index: [specs/README.md](../../specs/README.md).
+This repository inherits the [organization constitution](https://github.com/Knuckles-Team/pipelines/blob/main/.specify/memory/constitution.md) version 1.0.0. Every article of that constitution applies here. This file adds only the rules and limits of this repository.
 
-## I. Single owner and reusable architecture
+**Inherits**: organization constitution v1.0.0 | **Version**: 1.0.0 | **Ratified**: 2026-10-31 | **Last amended**: 2026-10-31
 
-This repository owns serving composition, fleet, gateway, A2A, and deployment operations. A design must inventory existing public components and callers before adding code, name one legal owner, preserve dependency direction, and reuse the existing live wiring. Cross-repository capabilities cite the owner spec by stable ID; no second authority or dormant parallel implementation is accepted.
+## Organization standards
 
-## II. Complete specification before construction
+- [Spec standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/spec-standard.md): one owning spec per capability, computed states, `Spec:` trailers.
+- [Ecosystem boundaries](https://github.com/Knuckles-Team/pipelines/blob/main/reference/ecosystem-boundaries.md): which repository owns which requirement.
+- [Wording standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/ste.md): sentences of 20 words or fewer, with `must`, `should`, or `may`.
 
-A contribution records behavior and acceptance in `spec.md`, architecture/data/security/failure design in `plan.md`, exact positive and negative proof in `test-spec.md`, and sequenced work in `tasks.md`. Unresolved choices are explicit. The checked-in spec, not a local plan draft or generated report, is the contributor-facing build contract.
+## Repository articles
 
-## III. Observable integration and evidence
+### R-I. One door, no policy table
 
-Acceptance follows a real entrypoint through the intended owner and effect boundary. Tests cover refusal, authorization, idempotency and recovery where applicable. Evidence names the exact revision, command, environment and result; source-only success never claims served or release acceptance.
+Arbora serves every operation through its registry. It owns admission, auth, approvals, the MCP server, A2A serving and the platform configuration. It holds no policy table and no fact store.
 
-## IV. Quality and release discipline
+**Enforced by:** [Ecosystem boundaries](https://github.com/Knuckles-Team/pipelines/blob/main/reference/ecosystem-boundaries.md), arbora row and forbidden-import matrix.
 
-Apply this repository's CCCC, jscpd, dupehound, KISS, language-native, contract, package and release gates as relevant. Fix real complexity and duplication at the owner; do not suppress findings or split logic merely to satisfy a scanner. Update public docs and delete superseded paths after consumers move.
+**Plan check:** Does the change serve an operation from the registry, with every decision read from the engine?
 
-## V. Amendment and status
+### R-II. Every module is reachable from a production caller
 
-Amend this constitution in a reviewed change that states the reason and impact. Mark a spec `LANDED` only when its source is merged at an exact owning-repository revision. Mark it `ACCEPTED` only after the required consumer, runtime, quality and release receipts meet the checked-in spec's acceptance gates. Record both states separately.
+A module is imported by a served path. An orphan or unreachable module fails the gate.
+
+**Enforced by:** Pre-commit hooks `check-orphan-modules` and `check-unreachable-modules` (`scripts/check_wiring.py`).
+
+**Plan check:** Does a served entry point reach each new module?
+
+### R-III. Public specs and core skills are complete and self-contained
+
+Public specs hold no private reference. The core skills match the served operations.
+
+**Enforced by:** Pre-commit hooks `check-public-specs` (`scripts/check_public_specs.py`) and `check-core-skills` (`scripts/check_core_skills.py`).
+
+**Plan check:** Do the new specs and skills pass both checks?
+
+## Repository limits
+
+This repository sets no numeric limit of its own. It follows the organization limits table.
+
+Amend this file in a reviewed change. State the impact in the pull request. When the organization constitution changes its version, update the **Inherits** line in the same change.
