@@ -7,8 +7,8 @@ resolved from the ambient verified :class:`GraphSession` plus the
 process-owned broker's current exact OAuth-grant fingerprints, then embedded in
 the catalog SQL predicate before filtering, sorting, pagination, or counts.
 
-CONCEPT:AU-KG.ingest.fleet-catalog-relational-tables
-CONCEPT:AU-OS.state.unified-durable-state-externalization
+CONCEPT:MERISTEM-KG.ingest.fleet-catalog-relational-tables
+CONCEPT:MERISTEM-OS.state.unified-durable-state-externalization
 """
 
 from __future__ import annotations
@@ -439,7 +439,7 @@ async def _offload_catalog_call(
     the dispatch-isolation pattern already used for engine RPCs elsewhere in
     this system (``asyncio.wait_for(asyncio.to_thread(...))`` around
     ``arbora.mcp_server.runtime``'s tool dispatch,
-    CONCEPT:AU-ECO.mcp.gateway-dispatch-isolation): run the blocking call on
+    CONCEPT:MERISTEM-ECO.mcp.gateway-dispatch-isolation): run the blocking call on
     a worker thread so the loop stays schedulable, and bound it with a
     deadline so a hung engine call fails this one request cleanly instead of
     hanging indefinitely. A deadline breach surfaces as a plain

@@ -1,6 +1,6 @@
 """Reusable service-surface scale contracts and one fail-closed evaluator.
 
-CONCEPT:AU-OS.scaling.service-scale-units — one typed scale policy for ingestion,
+CONCEPT:MERISTEM-OS.scaling.service-scale-units — one typed scale policy for ingestion,
 dispatch, gateways, query readers, and connector/media/RLM worker pools.
 
 The module owns no controller or actuator.  It defines the facts a controller

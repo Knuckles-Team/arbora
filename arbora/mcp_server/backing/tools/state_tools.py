@@ -123,7 +123,7 @@ def _resolve_feed_urls(url: str, urls: str) -> list[str]:
 
 def _feeds_sync_action(engine: Any, url: str, mode: str) -> str:
     """``"sync"`` action of ``register_state_tools``'s ``graph_feeds``: enqueue
-    a ``feed_sweep`` task off the request path (CONCEPT:AU-KG.ingest.rss-feed-connector),
+    a ``feed_sweep`` task off the request path (CONCEPT:MERISTEM-KG.ingest.rss-feed-connector),
     or fall back to an inline ``sync_source`` call when the engine has no
     task queue.
 
@@ -204,7 +204,7 @@ def register_state_tools(mcp):
     @mcp.tool(
         name="graph_feeds",
         description=(
-            "Manage the unified RSS/Atom feed registry (CONCEPT:AU-KG.ingest.rss-feed-connector/2.122). "
+            "Manage the unified RSS/Atom feed registry (CONCEPT:MERISTEM-KG.ingest.rss-feed-connector/2.122). "
             "Native RSS feeds, the FreshRSS aggregator, and ScholarX arXiv are "
             "first-class :FeedSource nodes ingested through ONE world-model gate "
             "(research items → prioritized fetch, news → relevance+novelty). action "
@@ -233,12 +233,12 @@ def register_state_tools(mcp):
 
     # ══════════════════════════════════════════════════════════════════
     # Ontology System — Palantir Foundry parity (type/link/function layer)
-    #   property types  (CONCEPT:AU-KG.ontology.ontology-property-types)
-    #   value types     (CONCEPT:AU-KG.ontology.value-type-shacl-load)
-    #   interfaces      (CONCEPT:AU-KG.ontology.conformance-check)
-    #   links           (CONCEPT:AU-KG.domains.trade-journal-bias-auditor)
-    #   functions       (CONCEPT:AU-KG.ontology.default-runtime-bound-import)
-    #   derived props   (CONCEPT:AU-KG.ontology.derived-property-registry)
+    #   property types  (CONCEPT:MERISTEM-KG.ontology.ontology-property-types)
+    #   value types     (CONCEPT:MERISTEM-KG.ontology.value-type-shacl-load)
+    #   interfaces      (CONCEPT:MERISTEM-KG.ontology.conformance-check)
+    #   links           (CONCEPT:MERISTEM-KG.domains.trade-journal-bias-auditor)
+    #   functions       (CONCEPT:MERISTEM-KG.ontology.default-runtime-bound-import)
+    #   derived props   (CONCEPT:MERISTEM-KG.ontology.derived-property-registry)
     # All handlers are thin — they reach the live `KnowledgeGraph.ontology`
     # system (bound to the engine's backend) so Functions-on-Objects, derived
     # compute and interface targeting resolve against the real graph.

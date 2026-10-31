@@ -132,7 +132,7 @@ class ArboraConfig(BaseModel):
     agent_policies_path: str | None = Field(
         default=None,
         alias="AGENT_POLICIES_PATH",
-        description="Path to agent_policies.json for identity-based governance (CONCEPT:AU-OS.state.cognitive-scheduler-preemption).",
+        description="Path to agent_policies.json for identity-based governance (CONCEPT:MERISTEM-OS.state.cognitive-scheduler-preemption).",
     )
     allowed_hosts: str | None = Field(
         default=None,
@@ -376,7 +376,7 @@ class ArboraConfig(BaseModel):
     identity_group_capability_map: Any = Field(
         default=None,
         alias="IDENTITY_GROUP_CAPABILITY_MAP",
-        description='Optional IdP group/role → capability mapping for provider-agnostic role inheritance (CONCEPT:AU-OS.identity.idp-agnostic-role-inheritance). A JSON object, e.g. ``{"okta-group-id-0oa...": ["kg-admin"], "engineering": ["kg-write"]}``. Lets an opaque Okta group id (or a differently-named...',
+        description='Optional IdP group/role → capability mapping for provider-agnostic role inheritance (CONCEPT:MERISTEM-OS.identity.idp-agnostic-role-inheritance). A JSON object, e.g. ``{"okta-group-id-0oa...": ["kg-admin"], "engineering": ["kg-write"]}``. Lets an opaque Okta group id (or a differently-named...',
     )
     infra_inventory_path: str | None = Field(
         default=None, alias="INFRA_INVENTORY_PATH", description=""
@@ -394,12 +394,12 @@ class ArboraConfig(BaseModel):
     kg_connections: Any = Field(
         default=None,
         alias="KG_CONNECTIONS",
-        description='Declarative named graph connections (CONCEPT:AU-KG.backend.multi-connection-registry). A JSON list of backend specs, each ``{"name": <str>, "backend": <type>, ...}``. Any endpoint, database, identity, credential, TLS, or local-path field must be a runtime secret reference. These are...',
+        description='Declarative named graph connections (CONCEPT:MERISTEM-KG.backend.multi-connection-registry). A JSON list of backend specs, each ``{"name": <str>, "backend": <type>, ...}``. Any endpoint, database, identity, credential, TLS, or local-path field must be a runtime secret reference. These are...',
     )
     kg_engine_tool_pool_size: int = Field(
         default=16,
         alias="KG_ENGINE_TOOL_POOL_SIZE",
-        description="Max warm raw ``SyncEpistemicGraphClient`` wire connections kept resident by the low-level ``engine_<domain>`` MCP tools (AU-P0-6, ``mcp/tools/engine_tools.py``). Distinct from :attr:`kg_engine_pool_size` (which bounds the resident *compute-engine* pool, a different resource): this one bounds the...",
+        description="Max warm raw ``SyncEpistemicGraphClient`` wire connections kept resident by the low-level ``engine_<domain>`` MCP tools (MERISTEM-P0-6, ``mcp/tools/engine_tools.py``). Distinct from :attr:`kg_engine_pool_size` (which bounds the resident *compute-engine* pool, a different resource): this one bounds the...",
     )
     kg_failure_evolution: bool = Field(
         default=False, alias="KG_FAILURE_EVOLUTION", description=""
@@ -407,7 +407,7 @@ class ArboraConfig(BaseModel):
     kg_fuseki_endpoint: str = Field(
         default="",
         alias="KG_FUSEKI_ENDPOINT",
-        description="THE canonical Fuseki endpoint (CONCEPT:AU-KG.ontology.authoritative-tbox) — the single field every Fuseki reader resolves through: the ontology-publish tick (``engine_tasks._tick_fuseki_publish``) and ``publish_ontology_to_fuseki``'s endpoint fallback. (The ``jena_fuseki`` query backend and its...",
+        description="THE canonical Fuseki endpoint (CONCEPT:MERISTEM-KG.ontology.authoritative-tbox) — the single field every Fuseki reader resolves through: the ontology-publish tick (``engine_tasks._tick_fuseki_publish``) and ``publish_ontology_to_fuseki``'s endpoint fallback. (The ``jena_fuseki`` query backend and its...",
     )
     kg_identity_oauth2: Any = Field(
         default=None,
@@ -489,7 +489,7 @@ class ArboraConfig(BaseModel):
             "container-manager-mcp",
         ],
         alias="MCP_ALWAYS_LOAD",
-        description="Fleet servers mounted EAGERLY on a session's first contact with arbora, before any ``find_tools`` round trip (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog). Core operational capability should not cost a discovery hop. The motivating reason is concrete: semantic ``find_tools`` ranking...",
+        description="Fleet servers mounted EAGERLY on a session's first contact with arbora, before any ``find_tools`` round trip (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog). Core operational capability should not cost a discovery hop. The motivating reason is concrete: semantic ``find_tools`` ranking...",
     )
     mcp_always_load_tools: list[str] = Field(
         default_factory=lambda: [
@@ -499,7 +499,7 @@ class ArboraConfig(BaseModel):
             "gitlab-mcp:gitlab_merge_requests",
         ],
         alias="MCP_ALWAYS_LOAD_TOOLS",
-        description="INDIVIDUAL fleet tools mounted eagerly, for servers too large to mount whole (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog). ``MCP_ALWAYS_LOAD`` exposes a server's entire condensed surface. Some servers are far too large for that — ``github-mcp`` and ``gitlab-mcp`` carry dozens of tools, and...",
+        description="INDIVIDUAL fleet tools mounted eagerly, for servers too large to mount whole (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog). ``MCP_ALWAYS_LOAD`` exposes a server's entire condensed surface. Some servers are far too large for that — ``github-mcp`` and ``gitlab-mcp`` carry dozens of tools, and...",
     )
     mcp_basic_auth_password_ref: str | None = Field(
         default=None,
@@ -519,7 +519,7 @@ class ArboraConfig(BaseModel):
     mcp_catalog_probe_ttl: float = Field(
         default=300.0,
         alias="MCP_CATALOG_PROBE_TTL",
-        description="CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness — fleet catalog-probe cache TTL. How long a cached fleet-probe result (``Multiplexer._probe_cache``) is served as fresh before it is reported ``stale`` and re-queued for a background re-probe. There is no correct universal default here — a...",
+        description="CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness — fleet catalog-probe cache TTL. How long a cached fleet-probe result (``Multiplexer._probe_cache``) is served as fresh before it is reported ``stale`` and re-queued for a background re-probe. There is no correct universal default here — a...",
     )
     mcp_child_breaker_cooldown: float = Field(
         default=15.0,
@@ -704,7 +704,7 @@ class ArboraConfig(BaseModel):
     permissions_signing_key_ref: str | None = Field(
         default=None,
         alias="PERMISSIONS_SIGNING_KEY_REF",
-        description="Runtime secret reference for stable agent-identity HMAC authority (CONCEPT:AU-OS.state.cognitive-scheduler-preemption). Optional: when unset, governed execution self-provisions a durable, deployment- shared signing key into the engine's durable secret store (idempotent, atomic create-if-absent)....",
+        description="Runtime secret reference for stable agent-identity HMAC authority (CONCEPT:MERISTEM-OS.state.cognitive-scheduler-preemption). Optional: when unset, governed execution self-provisions a durable, deployment- shared signing key into the engine's durable secret store (idempotent, atomic create-if-absent)....",
     )
     port: int = Field(default=9000, alias="PORT", description="")
     provider_configs: Any = Field(
@@ -726,7 +726,7 @@ class ArboraConfig(BaseModel):
     role_routing: Any = Field(
         default_factory=lambda: {},
         alias="MODEL_ROLE_ROUTING",
-        description="CONCEPT:AU-ORCH.routing.optional-role-override — optional role→{tier,tags} overrides for planner/generator/ learner/judge model selection. Empty roles fall back to the built-in default map in `models/model_registry.py`. Merged into the active registry when no registry-level override is present.",
+        description="CONCEPT:MERISTEM-ORCH.routing.optional-role-override — optional role→{tier,tags} overrides for planner/generator/ learner/judge model selection. Empty roles fall back to the built-in default map in `models/model_registry.py`. Merged into the active registry when no registry-level override is present.",
     )
     sd35_url: str | None = Field(default=None, alias="SD35_URL", description="")
     secrets_backend: Literal["engine", "vault"] = Field(

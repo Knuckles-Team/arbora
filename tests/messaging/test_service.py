@@ -1,4 +1,4 @@
-"""Arbora messaging service governance and channel routing tests (CONCEPT:AU-ECO.messaging.messaging-reach-service-governed–4.52).
+"""Arbora messaging service governance and channel routing tests (CONCEPT:MERISTEM-ECO.messaging.messaging-reach-service-governed–4.52).
 
 Covers governed sends, last-active channel routing + default fallback, the awaited-reply
 bridge, and that the inbound planner handler is no longer the canned-acknowledgment stub.

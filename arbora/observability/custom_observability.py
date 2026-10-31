@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """Custom Observability Module.
 
-CONCEPT:AU-OS.config.secrets-authentication — Telemetry & Observability
+CONCEPT:MERISTEM-OS.config.secrets-authentication — Telemetry & Observability
 
 This module provides instrumentation for OpenTelemetry (OTel) tracing
 via Logfire, routing all telemetry to Langfuse's OTLP ingestion endpoint.
@@ -157,7 +157,7 @@ _SENSITIVE_ATTRIBUTE_TERMS = frozenset(
 def _generate_otlp_auth_header(public_key: str, secret_key: str) -> str:
     """Generate a Basic Auth header value from Langfuse public/secret key pair.
 
-    CONCEPT:AU-OS.config.secrets-authentication — OTel Authentication
+    CONCEPT:MERISTEM-OS.config.secrets-authentication — OTel Authentication
 
     Langfuse's OTLP endpoint expects HTTP Basic Auth where:
         username = public_key
@@ -410,7 +410,7 @@ def _parse_one_otlp_header(part: str, existing: dict[str, str]) -> tuple[str, st
 def parse_otlp_headers(headers: str) -> dict[str, str]:
     """Parse an OTLP headers string (``"key=value,key2=value2"``) into a dict.
 
-    CONCEPT:AU-OS.config.secrets-authentication — shared OTLP header parsing
+    CONCEPT:MERISTEM-OS.config.secrets-authentication — shared OTLP header parsing
 
     Extracted so every OTLP exporter constructed in this package (the Langfuse
     span processor below, and the
@@ -440,7 +440,7 @@ def _opaque_label(kind: str, value: Any) -> str:
 def _service_topology_label(value: Any) -> str:
     """Sanitize — but deliberately never hash — a service-topology identifier.
 
-    CONCEPT:AU-OS.observability.literal-service-topology-labels — D-OG-2:
+    CONCEPT:MERISTEM-OS.observability.literal-service-topology-labels — D-OG-2:
     ``service.name`` and a span's operation name describe *what code is
     running* (``arbora``, ``engine.GetNodeProperties``), not *what a user said*.
     Routing them through :func:`_opaque_label` made every exported span carry an
@@ -597,7 +597,7 @@ def _create_otlp_span_processor(
 ) -> Any | None:
     """Create an OTel BatchSpanProcessor with OTLPSpanExporter for Langfuse.
 
-    CONCEPT:AU-OS.config.secrets-authentication — OTLP Span Export Pipeline
+    CONCEPT:MERISTEM-OS.config.secrets-authentication — OTLP Span Export Pipeline
 
     This creates the actual export pipeline that sends spans from Logfire
     to Langfuse's OTLP ingestion endpoint. The ``BatchSpanProcessor``
@@ -871,7 +871,7 @@ def setup_otel(
 ):
     """Setup OpenTelemetry tracing via Logfire, exporting to Langfuse OTLP.
 
-    CONCEPT:AU-OS.config.secrets-authentication — Full OTel Pipeline Setup
+    CONCEPT:MERISTEM-OS.config.secrets-authentication — Full OTel Pipeline Setup
 
     This is the primary entry point for initializing the observability pipeline.
     It configures:
@@ -1051,7 +1051,7 @@ def _probe_langfuse_otel_health(endpoint: str, resolved_headers: str) -> dict[st
 def verify_otel_pipeline() -> dict[str, Any]:
     """Verify the OTel → Langfuse pipeline is operational.
 
-    CONCEPT:AU-OS.config.secrets-authentication — Pipeline Health Check
+    CONCEPT:MERISTEM-OS.config.secrets-authentication — Pipeline Health Check
 
     Tests connectivity to the Langfuse OTLP endpoint and returns
     a diagnostic report.
@@ -1080,7 +1080,7 @@ def verify_otel_pipeline() -> dict[str, Any]:
 def get_otel_status_summary() -> str:
     """Get a human-readable summary of the OTel pipeline status.
 
-    CONCEPT:AU-OS.config.secrets-authentication — Diagnostics
+    CONCEPT:MERISTEM-OS.config.secrets-authentication — Diagnostics
 
     Returns:
         Multi-line string summarizing the pipeline health.

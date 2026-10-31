@@ -11,7 +11,7 @@ claims convergence it cannot prove.
 
 See ``specs/mcp-resource-publication-reconciliation/spec.md``; the
 reconciliation receipt itself is produced on the epistemic-graph side per
-``EG-REPO-INGEST-001`` (``specs/repository-index-and-ingestion`` in
+``MEDULLA-REPO-INGEST-001`` (``specs/repository-index-and-ingestion`` in
 epistemic-graph).
 """
 

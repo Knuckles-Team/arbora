@@ -1,6 +1,6 @@
 """Python-tier Prometheus metrics for the API gateway.
 
-CONCEPT:AU-OS.observability.no-op-without-metrics — Gateway Middle-Tier Hardening (metrics, per-tenant rate
+CONCEPT:MERISTEM-OS.observability.no-op-without-metrics — Gateway Middle-Tier Hardening (metrics, per-tenant rate
 limiting, engine circuit breaker, multi-worker readiness).
 
 The Rust engine already exposes ``epistemic_graph_*`` Prometheus metrics; this
@@ -134,7 +134,7 @@ class _NoopMetricValue:
 
     A real Counter/Gauge exposes its current sample as ``._value`` (a
     ``ValueClass`` with ``.get()``/``.set()``/``.inc()``). Callers that assert
-    on recorded state (CONCEPT:AU-OS.observability.no-op-without-metrics —
+    on recorded state (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics —
     the business-logic contract must be testable, not merely non-crashing)
     need the same accessor when the ``metrics`` extra is absent.
     """
@@ -458,7 +458,7 @@ ENGINE_BREAKER_STATE = _gauge(
     "Engine circuit-breaker state per endpoint (0=closed, 1=half-open, 2=open).",
     ("endpoint",),
 )
-# Tenant-partitioned engine sharding visibility (CONCEPT:AU-KG.sharding.tenant-partitioned-sharding-hrw / OS-5.28):
+# Tenant-partitioned engine sharding visibility (CONCEPT:MERISTEM-KG.sharding.tenant-partitioned-sharding-hrw / OS-5.28):
 # one series per configured GRAPH_SERVICE_ENDPOINTS entry. The gauge is
 # refreshed on every real client connect attempt and by the daemon's
 # shard_topology_status probe; the counter splits the existing engine-call
@@ -475,7 +475,7 @@ ENGINE_SHARD_REQUESTS = _counter(
     "(ok | connection_error | error | short_circuited).",
     ("endpoint", "outcome"),
 )
-# Ingest scale-out backpressure visibility (CONCEPT:AU-KG.ingest.decoupled-kg-ingest-consumer): sampled by the
+# Ingest scale-out backpressure visibility (CONCEPT:MERISTEM-KG.ingest.decoupled-kg-ingest-consumer): sampled by the
 # KG maintenance scheduler on the leader host. Depth is uniform across queue
 # backends (sqlite/postgres row count, kafka = kg-ingest consumer-group lag);
 # the lag series exists separately so Kafka dashboards/alerts read naturally.
@@ -501,8 +501,8 @@ ENGINE_SHARD_REQUESTS = _counter(
     "Unix observation time for the paired KG ingest consumer-lag gauge.",
     ("topic", "group"),
 )
-# Unified scheduler + 8-lane task-queue observability (CONCEPT:AU-OS.state.unified-scheduling-one-intelligent /
-# CONCEPT:AU-ORCH.execution.two-level-fair-rotation): the one seam every recurring/background job
+# Unified scheduler + 8-lane task-queue observability (CONCEPT:MERISTEM-OS.state.unified-scheduling-one-intelligent /
+# CONCEPT:MERISTEM-ORCH.execution.two-level-fair-rotation): the one seam every recurring/background job
 # (schedule_engine.run_scheduler_tick -> the task_lanes.py queue) runs through, so a daemon leak
 # shows up as a counter/gauge query instead of a grep through N tick bodies. ``schedule`` is
 # bounded (~33 named :Schedule nodes); ``lane`` is bounded (the 8 functional lanes in
@@ -576,7 +576,7 @@ WORKITEM_IDLE_BACKOFF_SECONDS = _histogram(
     "agent_utilities_workitem_idle_backoff_seconds",
     "Sleep duration chosen by the idle-poll backoff (bounded exponential + jitter).",
 )
-# MCP multiplexer per-child resilience (CONCEPT:AU-ECO.mcp.profile-differences-from-client): one series per
+# MCP multiplexer per-child resilience (CONCEPT:MERISTEM-ECO.mcp.profile-differences-from-client): one series per
 # aggregated child server (~50, bounded by mcp_config.json). The multiplexer
 # runs standalone; like every metric here these degrade to no-ops when
 # prometheus_client (the optional ``metrics`` extra) is absent.
@@ -604,7 +604,7 @@ MCP_CHILD_QUEUE_DEPTH = _gauge(
 )
 
 # Running vs dispatchable — the ONE distinction these series exist to preserve
-# (CONCEPT:AU-ECO.multiplexer.running-vs-dispatchable-metrics). A child process
+# (CONCEPT:MERISTEM-ECO.multiplexer.running-vs-dispatchable-metrics). A child process
 # being up is NOT the same fact as its tools being callable: a mounted child
 # whose circuit breaker is open, or one whose tools were never registered as
 # live FastMCP forwarders, is `running` yet dispatches nothing. Conflating the
@@ -654,7 +654,7 @@ MCP_SERVERS_DISPATCHABLE = _gauge(
     "number; always <= agent_utilities_mcp_servers_running.",
 )
 
-# Runtime usage granularity (CONCEPT:AU-OS.observability.persist-this-graph-run): per-tool / per-skill / per-db
+# Runtime usage granularity (CONCEPT:MERISTEM-OS.observability.persist-this-graph-run): per-tool / per-skill / per-db
 # call counters, siblings of MCP_CHILD_CALLS. Emitted alongside the usage-store
 # rows so the same data is visible in both Prometheus and /api/observability.
 TOOL_CALLS = _counter(
@@ -673,7 +673,7 @@ DB_CALLS = _counter(
     ("store",),
 )
 
-# Repository-development provenance/metrics bridge (CONCEPT:AU-KG.audit.repository-job-provenance-bridge,
+# Repository-development provenance/metrics bridge (CONCEPT:MERISTEM-KG.audit.repository-job-provenance-bridge,
 # RMDD-19): bounded-cardinality instruments for repository job queue/capacity/
 # build-cache/validation/bisection/lane/worker/retry/landing/release-DAG
 # state, read by the engine's repository metrics and
@@ -753,7 +753,7 @@ REPOSITORY_RELEASE_DAG_STAGE_DURATION = _histogram(
 )
 
 # Per-tool instrumentation for STANDALONE MCP servers built by
-# ``create_mcp_server`` (CONCEPT:AU-OS.observability.no-op-without-metrics). One series per tool this server
+# ``create_mcp_server`` (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics). One series per tool this server
 # process exposes (bounded by the server's own tool set); Prometheus adds the
 # job/instance labels so the same tool name on different servers stays distinct.
 # These are the server-side siblings of MCP_CHILD_* (the multiplexer's view).
@@ -774,7 +774,7 @@ MCP_TOOL_IN_FLIGHT = _gauge(
     "MCP tool calls currently executing on this server.",
 )
 
-# Queue-driven agent dispatch visibility (CONCEPT:AU-ORCH.dispatch.queue-agent-dispatch): sampled by the
+# Queue-driven agent dispatch visibility (CONCEPT:MERISTEM-ORCH.dispatch.queue-agent-dispatch): sampled by the
 # dispatch workers on their heartbeat tick. Depth is uniform across queue
 # transports (kafka = agent-dispatch consumer-group lag, postgres/sqlite =
 # row count); the workers gauge counts fresh heartbeats in the fleet
@@ -801,7 +801,7 @@ DISPATCH_SESSION_LOCK_REGISTRY_SIZE = _gauge(
     "the bounded lock registry is leaking entries instead of draining them.",
 )
 
-# In-process delegation visibility (CONCEPT:AU-OS.observability.delegation-run-metrics).
+# In-process delegation visibility (CONCEPT:MERISTEM-OS.observability.delegation-run-metrics).
 # The DISPATCH_* family above measures the QUEUE-consumed path
 # (agent_dispatch_worker.execute_agent_turn); these measure the synchronous
 # ``Orchestrator.execute_agent``/``execute_workflow`` calls that
@@ -830,7 +830,7 @@ DELEGATION_IN_FLIGHT = _gauge(
     ("kind",),
 )
 
-# Agent-to-agent communication bus visibility (CONCEPT:AU-ECO.bus.operator-view-agentbus, the AgentBus of
+# Agent-to-agent communication bus visibility (CONCEPT:MERISTEM-ECO.bus.operator-view-agentbus, the AgentBus of
 # ECO-4.84). Participants are sampled by ``AgentBus.status``/``roster``; message and
 # dispatch counters are bumped on the send/dispatch path; send duration measures the
 # server-side bus write latency (the cross-host wire is durable-store polling on top).
@@ -855,8 +855,8 @@ BUS_DISPATCH = _counter(
     ("outcome",),
 )
 
-# ContextCompiler answer-path efficiency (CONCEPT:AU-KG.retrieval.context-compiler /
-# CONCEPT:AU-KG.retrieval.context-compiler-kv-seam — WS-4). The mature ContextCompiler
+# ContextCompiler answer-path efficiency (CONCEPT:MERISTEM-KG.retrieval.context-compiler /
+# CONCEPT:MERISTEM-KG.retrieval.context-compiler-kv-seam — WS-4). The mature ContextCompiler
 # + Seam-6 KV-cache wiring had no measurement of its claimed efficiency; these mirror
 # the existing gateway/MCP metric families (bounded, small label sets) rather than
 # standing up a new metrics system. Recorded by ``ContextCompiler.compile`` and
@@ -891,20 +891,20 @@ CONTEXT_COMPILER_TTFT = _histogram(
     "and by call-site population (path='bundle_chat_completion': background "
     "enrichment/extraction calls via context_compiler_serving.bundle_chat_completion; "
     "path='delegated_run': interactive execute_agent/execute_workflow model calls "
-    "via the mandatory contextual_model wrapper, CONCEPT:AU-KG.retrieval.context-compiler, W3.7) "
+    "via the mandatory contextual_model wrapper, CONCEPT:MERISTEM-KG.retrieval.context-compiler, W3.7) "
     "so the two latency populations are never averaged together.",
     ("kv_cache_hit", "path"),
 )
 KVCACHE_CLIENT_REQUESTS = _counter(
     "agent_utilities_kvcache_client_requests_total",
     "EpistemicGraphKVBackend.get() lookups by outcome (hit|miss|error) — the "
-    "client-side half of the EG-187 remote KV-cache contract; GET /kv/stats on "
+    "client-side half of the MEDULLA-187 remote KV-cache contract; GET /kv/stats on "
     "the engine exposes the aggregate server-side occupancy/dedup counters.",
     ("outcome",),
 )
 KVCACHE_FORK_EVENTS = _counter(
     "agent_utilities_kvcache_fork_events_total",
-    "Zero-copy KV-fork rung outcomes (CONCEPT:EG-KG.memory.zero-copy-snapshot-fork) by "
+    "Zero-copy KV-fork rung outcomes (CONCEPT:MEDULLA-KG.memory.zero-copy-snapshot-fork) by "
     "result and reason. result='forked' when the CoW snapshot/fork rung engaged for a "
     "branch fan-out; result='fallback' when it transparently degraded to the per-branch "
     "copy path (reason one of backend_unavailable|fork_unsupported|snapshot_failed|"
@@ -914,12 +914,12 @@ KVCACHE_FORK_EVENTS = _counter(
 KVCACHE_FORK_SHARED_BYTES = _gauge(
     "agent_utilities_kvcache_fork_shared_bytes",
     "Bytes shared (Arc'd across branches, not copied) as of the most recent KV-fork "
-    "rung engagement — the zero-copy proof (CONCEPT:EG-KG.memory.zero-copy-snapshot-fork) "
+    "rung engagement — the zero-copy proof (CONCEPT:MEDULLA-KG.memory.zero-copy-snapshot-fork) "
     "surfaced as a scrapeable gauge alongside GET /kv/fork/stats on the engine.",
 )
 KVCACHE_CHECKPOINT_OPS = _counter(
     "agent_utilities_kvcache_checkpoint_ops_total",
-    "KVCheckpoint operations (CONCEPT:AU-KG.memory.kv-checkpoint-resource) by op "
+    "KVCheckpoint operations (CONCEPT:MERISTEM-KG.memory.kv-checkpoint-resource) by op "
     "(create|instantiate_agent|restore_conversation) and outcome (ok|not_found|"
     "cross_tenant_denied|stale|cold_start_fallback) — the fail-closed/traced-fallback "
     "proof for checkpoint load.",
@@ -927,14 +927,14 @@ KVCACHE_CHECKPOINT_OPS = _counter(
 )
 KVCACHE_CHECKPOINT_RECOMMENDATIONS = _counter(
     "agent_utilities_kvcache_checkpoint_recommendations_total",
-    "Checkpoint-worthiness verdicts (CONCEPT:AU-KG.memory.checkpoint-worthiness-scoring) "
+    "Checkpoint-worthiness verdicts (CONCEPT:MERISTEM-KG.memory.checkpoint-worthiness-scoring) "
     "by recommended tier (none|ram|disk) — how often the scorer set thinks the current "
     "context is worth freezing, independent of whether anything acted on it.",
     ("tier",),
 )
 KVCACHE_CHECKPOINT_TIER_OPS = _counter(
     "agent_utilities_kvcache_checkpoint_tier_ops_total",
-    "Tiered-checkpoint actions (CONCEPT:AU-KG.memory.checkpoint-worthiness-scoring) by "
+    "Tiered-checkpoint actions (CONCEPT:MERISTEM-KG.memory.checkpoint-worthiness-scoring) by "
     "trigger (user|agent|system), tier (ram|disk) and outcome (taken|declined|"
     "eligibility_denied|error) — the proof of which of the three trigger paths actually "
     "took a checkpoint, and why a disk promotion was refused.",
@@ -942,7 +942,7 @@ KVCACHE_CHECKPOINT_TIER_OPS = _counter(
 )
 PROMPT_CACHE_OPS = _counter(
     "agent_utilities_prompt_cache_ops_total",
-    "Provider-native prompt-cache requests (CONCEPT:AU-ORCH.optimization.provider-prompt-cache — "
+    "Provider-native prompt-cache requests (CONCEPT:MERISTEM-ORCH.optimization.provider-prompt-cache — "
     "Anthropic cache_control / OpenAI prompt_cache_key) by op (fold|response) and outcome "
     "(anthropic|openai|other|hit|miss) — hit-rate = hit / (hit + miss) over 'response' events.",
     ("op", "outcome"),
@@ -950,13 +950,13 @@ PROMPT_CACHE_OPS = _counter(
 PROMPT_CACHE_TOKENS_SAVED = _counter(
     "agent_utilities_prompt_cache_tokens_saved_total",
     "Cumulative input tokens served from a provider prompt cache (RequestUsage.cache_read_tokens) "
-    "— the measurable savings signal for CONCEPT:AU-ORCH.optimization.provider-prompt-cache, labeled "
+    "— the measurable savings signal for CONCEPT:MERISTEM-ORCH.optimization.provider-prompt-cache, labeled "
     "by provider.",
     ("provider",),
 )
 SEMANTIC_CACHE_OPS = _counter(
     "agent_utilities_semantic_cache_ops_total",
-    "Semantic-cache operations (CONCEPT:AU-KG.memory.semantic-response-cache) by op "
+    "Semantic-cache operations (CONCEPT:MERISTEM-KG.memory.semantic-response-cache) by op "
     "(lookup|store|invalidate|evict) and outcome (hit|miss|disabled|refused_side_effect|"
     "refused_freshness|stale|below_threshold|embed_unavailable|error|stored|skipped) — "
     "default-OFF, opt-in per request/policy; hit-rate = hit / (hit + miss) over 'lookup' events.",
@@ -965,11 +965,11 @@ SEMANTIC_CACHE_OPS = _counter(
 SEMANTIC_CACHE_BYTES_SAVED = _counter(
     "agent_utilities_semantic_cache_bytes_saved_total",
     "Cumulative response bytes served from the semantic cache instead of a live model call "
-    "(CONCEPT:AU-KG.memory.semantic-response-cache) — the measurable savings signal.",
+    "(CONCEPT:MERISTEM-KG.memory.semantic-response-cache) — the measurable savings signal.",
 )
 SEMANTIC_CACHE_STALENESS_SECONDS = _histogram(
     "agent_utilities_semantic_cache_staleness_seconds",
-    "Age of the served entry at the moment of a semantic-cache HIT (CONCEPT:AU-KG.memory."
+    "Age of the served entry at the moment of a semantic-cache HIT (CONCEPT:MERISTEM-KG.memory."
     "semantic-response-cache) — the staleness distribution required to keep a stale-serving "
     "policy honest; entries older than the caller's freshness_tolerance_seconds never hit.",
     buckets=(1, 5, 15, 30, 60, 300, 900, 1800, 3600, 21600, 86400),
@@ -979,7 +979,7 @@ SEMANTIC_CACHE_STALENESS_SECONDS = _histogram(
 #    (reports/program/universal-ingestion.md, tracks 8/9) ───────────────────
 EMBEDDING_VERSION_MISMATCHES = _counter(
     "agent_utilities_embedding_version_mismatches_total",
-    "EmbeddingVersionMismatchError raisals (CONCEPT:AU-KG.retrieval.embedding-version-identity) "
+    "EmbeddingVersionMismatchError raisals (CONCEPT:MERISTEM-KG.retrieval.embedding-version-identity) "
     "by site (capability_index_add|capability_index_designate) — a vector from one embedding "
     "model was about to be compared against another's; each increment is a refused comparison, "
     "never a silently degraded ranking. Sustained non-zero indicates a mid-flight model swap "
@@ -989,7 +989,7 @@ EMBEDDING_VERSION_MISMATCHES = _counter(
 RETRIEVAL_ACL_ENFORCEMENT = _counter(
     "agent_utilities_retrieval_acl_enforcement_total",
     "Per-node ACL/owner-scope enforcement outcomes on vector/hybrid retrieval "
-    "(CONCEPT:AU-KG.retrieval.acl-aware-vector-retrieval, search_hybrid) by outcome "
+    "(CONCEPT:MERISTEM-KG.retrieval.acl-aware-vector-retrieval, search_hybrid) by outcome "
     "(admitted|denied|enforcement_failed) — 'denied' is a node the actor was not permitted to "
     "read being filtered out (fail-closed, not a silent empty result); 'enforcement_failed' is "
     "a PermissionError from the enforcement plumbing itself (fails closed, never falls back to "
@@ -998,7 +998,7 @@ RETRIEVAL_ACL_ENFORCEMENT = _counter(
 )
 RETRIEVAL_CITATION_RESOLUTION = _counter(
     "agent_utilities_retrieval_citation_resolution_total",
-    "Evidence-citation resolution outcomes (CONCEPT:AU-KG.retrieval.mandatory-evidence-citation) "
+    "Evidence-citation resolution outcomes (CONCEPT:MERISTEM-KG.retrieval.mandatory-evidence-citation) "
     "by status (current|moved|stale|lost) — see evidence_spine.citation_status. A retrieval "
     "result whose citation cannot be resolved to real evidence ('lost') is a defect, not a "
     "degraded result; sustained 'stale'/'lost' indicates the source drifted since the citing "
@@ -1039,7 +1039,7 @@ def _run_scrape_samplers() -> None:
 
 @contextlib.contextmanager
 def delegation_span(kind: str, target: str) -> Any:
-    """Record one in-process delegated run (CONCEPT:AU-OS.observability.delegation-run-metrics).
+    """Record one in-process delegated run (CONCEPT:MERISTEM-OS.observability.delegation-run-metrics).
 
     Wraps the body in the in-flight gauge, the duration histogram and the
     runs counter, classifying the outcome as ``ok``, ``cancelled``
@@ -1069,7 +1069,7 @@ def delegation_span(kind: str, target: str) -> Any:
 def publish_multiplexer_child_gauges(snapshot: dict[str, Any]) -> None:
     """Publish the running-vs-dispatchable child gauges from a status snapshot.
 
-    CONCEPT:AU-ECO.multiplexer.running-vs-dispatchable-metrics. Takes the exact
+    CONCEPT:MERISTEM-ECO.multiplexer.running-vs-dispatchable-metrics. Takes the exact
     dict ``MCPMultiplexer.status_snapshot()`` returns so the gauges and the
     ``multiplexer_status`` tool can never disagree — one producer, two
     renderings. A child is *running* when its runtime state is ``up``; it is
@@ -1102,7 +1102,7 @@ def publish_multiplexer_child_gauges(snapshot: dict[str, Any]) -> None:
 def _collection_registry() -> Any:
     """Resolve the registry a scrape must collect from.
 
-    CONCEPT:AU-OS.observability.multiprocess-registry-guard — the classic
+    CONCEPT:MERISTEM-OS.observability.multiprocess-registry-guard — the classic
     ``prometheus_client`` footgun. Every metric in this module is created in the
     default per-process ``REGISTRY``, which is the CORRECT mode for how we
     actually deploy: arbora is one FastMCP process per pod and the gateway
@@ -1144,7 +1144,7 @@ def _collection_registry() -> Any:
             "failed (exception_type=%s: %s); falling back to this worker's "
             "registry only — the scrape UNDER-REPORTS the other workers. "
             "Either make the directory writable and empty at boot or unset the "
-            "variable. (CONCEPT:AU-OS.observability.multiprocess-registry-guard)",
+            "variable. (CONCEPT:MERISTEM-OS.observability.multiprocess-registry-guard)",
             multiproc_dir,
             type(exc).__name__,
             exc,
@@ -1163,7 +1163,7 @@ def render_metrics() -> tuple[bytes, str]:
     if not PROMETHEUS_AVAILABLE:
         return (
             b"# agent-utilities gateway metrics unavailable: install the "
-            b"'metrics' extra (prometheus-client). (CONCEPT:AU-OS.observability.no-op-without-metrics)\n",
+            b"'metrics' extra (prometheus-client). (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics)\n",
             "text/plain; version=0.0.4; charset=utf-8",
         )
     from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
@@ -1180,7 +1180,7 @@ def render_metrics() -> tuple[bytes, str]:
 # lives on 127.0.0.1:9101/metrics inside the pod's network namespace. arbora
 # is the sole other process sharing that namespace, so it re-serves that
 # loopback exposition on its own HTTP surface — the same job the removed
-# metrics-proxy sidecar did. CONCEPT:AU-OS.observability.no-op-without-metrics.
+# metrics-proxy sidecar did. CONCEPT:MERISTEM-OS.observability.no-op-without-metrics.
 _ENGINE_METRICS_URL = "http://127.0.0.1:9101/metrics"
 _ENGINE_METRICS_TIMEOUT_SECS = 2.0
 
@@ -1227,7 +1227,7 @@ async def _fetch_engine_metrics() -> tuple[bytes, bool]:
 
 def _engine_metrics_status_line(ok: bool) -> bytes:
     """An explicit up/down gauge so a failed engine fetch is machine-visible,
-    not just a comment a human might miss (CONCEPT:AU-OS.observability.no-op-without-metrics)."""
+    not just a comment a human might miss (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics)."""
     return (
         b"# HELP arbora_engine_metrics_up Whether the last /metrics scrape "
         b"successfully fetched the embedded epistemic-graph engine's loopback "
@@ -1274,7 +1274,7 @@ def _route_template(scope: dict[str, Any], status: int) -> str:
 class GatewayMetricsMiddleware:
     """Pure-ASGI middleware recording request count/duration/in-flight metrics.
 
-    CONCEPT:AU-OS.observability.no-op-without-metrics. Mounted OUTERMOST by
+    CONCEPT:MERISTEM-OS.observability.no-op-without-metrics. Mounted OUTERMOST by
     :func:`arbora.gateway.graph_api.register_graph_routes` so auth
     rejections (401) and rate-limit rejections (429) are counted too. No
     heavy deps: with ``prometheus_client`` absent every record is a no-op.
@@ -1317,8 +1317,8 @@ class GatewayMetricsMiddleware:
 
                 # Same `duration` value the histogram above just consumed —
                 # feeds the shared health-trend/anomaly kernel (CONCEPT:
-                # AU-OS.observability.unified-health-kernels /
-                # AU-KG.identity.evidence-spine-convergence). Best-effort.
+                # MERISTEM-OS.observability.unified-health-kernels /
+                # MERISTEM-KG.identity.evidence-spine-convergence). Best-effort.
                 record_request_duration(duration)
             except Exception as e:  # noqa: BLE001 — feeds an in-memory trend sample only (record_request_duration is itself documented as must-never-affect-the-response-path); a dropped sample just thins one window's anomaly-detection density, the response and the histogram above are already recorded
                 logger.debug("gateway health sample failed: %s", e)

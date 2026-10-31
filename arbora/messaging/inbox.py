@@ -1,4 +1,4 @@
-"""Durable inbound-message inbox + retry — nothing goes unanswered (CONCEPT:AU-ECO.messaging.durable-inbound-pending).
+"""Durable inbound-message inbox + retry — nothing goes unanswered (CONCEPT:MERISTEM-ECO.messaging.durable-inbound-pending).
 
 An inbound chat turn is recorded as a durable ``:InboundMessage`` node BEFORE the reply is
 attempted, and marked ``answered`` only when a reply is actually delivered. A reaper in the
@@ -46,7 +46,7 @@ def record_inbound(
     content), so a failed/lost turn can be found + retried. Best-effort; returns the inbox id.
 
     ``status``/``received_at`` default to the live-intake shape (``pending`` / now). A
-    history backfill (CONCEPT:AU-ECO.messaging.conversational-history-backfill, BUG-041)
+    history backfill (CONCEPT:MERISTEM-ECO.messaging.conversational-history-backfill, BUG-041)
     passes ``status="backfilled"`` and the ORIGINAL platform timestamp so a reconstructed
     row never enters the live reply-retry reaper's ``pending`` scan (see
     :func:`pending_unanswered`) and preserves the fact it is historical, not a fresh turn.
@@ -156,7 +156,7 @@ async def retry_unanswered(
         else:
             # Re-pass the FULL record (not just the counter): the durable backend replaces a
             # node's property blob on upsert, so a bare {attempts} write would wipe the
-            # platform/channel/text the NEXT retry needs to re-send. (CONCEPT:AU-ECO.messaging.durable-inbound-pending)
+            # platform/channel/text the NEXT retry needs to re-send. (CONCEPT:MERISTEM-ECO.messaging.durable-inbound-pending)
             _set(
                 engine,
                 m["id"],
@@ -174,7 +174,7 @@ async def retry_unanswered(
             )
     if answered:
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.durable-inbound-pending] inbox reaper answered %d previously-unanswered turn(s).",
+            "[CONCEPT:MERISTEM-ECO.messaging.durable-inbound-pending] inbox reaper answered %d previously-unanswered turn(s).",
             answered,
         )
     return answered

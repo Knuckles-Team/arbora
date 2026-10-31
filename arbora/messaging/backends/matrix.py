@@ -1,10 +1,10 @@
-"""Matrix Messaging Backend (CONCEPT:AU-ECO.messaging.native-backend-abstraction).
+"""Matrix Messaging Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction).
 
 Uses ``matrix-nio`` for E2E encrypted Matrix protocol messaging.
 
 Install: ``pip install agent-utilities[messaging-matrix]``
 
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 class MatrixBackend(MessagingBackend):
-    """Matrix protocol backend via matrix-nio. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+    """Matrix protocol backend via matrix-nio. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
 
     def __init__(self, config: MessagingConfig | None = None) -> None:
         super().__init__(config)
@@ -49,7 +49,7 @@ class MatrixBackend(MessagingBackend):
         return CAP_MATRIX["matrix"]
 
     async def connect(self) -> None:
-        """Connect to Matrix homeserver. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Connect to Matrix homeserver. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         try:
             from nio import AsyncClient, RoomMessageText
         except ImportError:
@@ -92,7 +92,7 @@ class MatrixBackend(MessagingBackend):
         asyncio.create_task(self._client.sync_forever(timeout=30000))
         self._connected = True
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Matrix backend connected."
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Matrix backend connected."
         )
 
     async def disconnect(self) -> None:

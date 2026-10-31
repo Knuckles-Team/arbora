@@ -79,7 +79,7 @@ async def test_discover_tools_ranks_catalog_tools_when_the_live_probe_times_out(
     assert hit["server"] == CNT
     assert hit["description"] == "manage docker containers"
     # Sourced from the snapshot, not a live answer — reported as stale,
-    # never faked as a fresh probe result (CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness).
+    # never faked as a fresh probe result (CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness).
     assert hit["stale"] is True
 
 

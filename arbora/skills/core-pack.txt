@@ -1,4 +1,4 @@
-# The always-offered skill names (CONCEPT:AU-KG.retrieval.unified-capability-contract).
+# The always-offered skill names (CONCEPT:MERISTEM-KG.retrieval.unified-capability-contract).
 #
 # Every name below is served in Arbora's initial catalog listing without a
 # search -- see arbora.fleet.local_skill_catalog.core_pack_names() and

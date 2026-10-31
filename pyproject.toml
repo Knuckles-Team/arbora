@@ -114,7 +114,7 @@ webui = [
     "agent-webui>=2.8.3,<3.0.0",
     "uvicorn>=0.54.0",
 ]
-# Messaging channel adapters (CONCEPT:AU-ECO.messaging.native-backend-abstraction):
+# Messaging channel adapters (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction):
 # each chat platform SDK is its own extra so importing arbora.messaging never
 # requires every platform's client library to be installed. Further platforms
 # (Discord, Slack, WhatsApp, Teams, Google Chat/Meet, Matrix, IRC, Signal,

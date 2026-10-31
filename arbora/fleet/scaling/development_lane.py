@@ -21,7 +21,7 @@ already registers and services them (``crates/eg-capabilities/src/lib.rs``:
 written *against that future namespace* using the exact same
 capability-negotiation and strict-name-allowlist shape RMDD-27 already
 established, so it starts working the moment epistemic-graph adds
-``client.development_lanes`` with no further AU-side change. Today, against
+``client.development_lanes`` with no further Meristem-side change. Today, against
 the real generated client, construction fails closed with
 :class:`DevelopmentLaneAuthorityUnavailable` -- which is the accurate,
 honest state of the world, not a local approximation standing in for it.

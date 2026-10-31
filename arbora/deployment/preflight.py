@@ -63,7 +63,7 @@ COMPONENTS = ("agent-terminal-ui", "agent-webui", "geniusbot")
 
 def _os_family() -> str:
     """Coarse OS family for per-OS remediation hints: ``windows`` / ``macos`` /
-    ``linux`` / ``other`` (CONCEPT:AU-OS.deployment.cross-platform-locks-plus)."""
+    ``linux`` / ``other`` (CONCEPT:MERISTEM-OS.deployment.cross-platform-locks-plus)."""
     if sys.platform.startswith("win"):
         return "windows"
     if sys.platform == "darwin":

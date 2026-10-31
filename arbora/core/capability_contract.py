@@ -1,4 +1,4 @@
-"""Unified skill+tool capability contract (CONCEPT:AU-KG.retrieval.unified-capability-contract).
+"""Unified skill+tool capability contract (CONCEPT:MERISTEM-KG.retrieval.unified-capability-contract).
 
 A `skill://` resource and an MCP `Tool` are two different WIRE shapes, but the
 SAME thing to a caller ranking or binding a capability: a named, describable,

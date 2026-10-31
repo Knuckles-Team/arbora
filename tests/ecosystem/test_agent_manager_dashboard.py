@@ -1,4 +1,4 @@
-"""Tests for the Agent Manager Dashboard (CONCEPT:AU-ECO.ui.agent-manager-dashboard).
+"""Tests for the Agent Manager Dashboard (CONCEPT:MERISTEM-ECO.ui.agent-manager-dashboard).
 
 Ported from the agent runtime's
 ``tests/unit/ecosystem/test_agent_manager_dashboard.py`` (ARBORA-HOST-R008).

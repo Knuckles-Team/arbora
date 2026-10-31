@@ -238,7 +238,7 @@ def _is_secret(env_key: str) -> bool:
 
 #: Settings that only take effect on an engine/daemon rebuild — a live `set_config`
 #: persists + updates the value but cannot apply it to the running process; callers
-#: should restart the daemon (CONCEPT:AU-KG.backend.connection-registry).
+#: should restart the daemon (CONCEPT:MERISTEM-KG.backend.connection-registry).
 _RESTART_REQUIRED: frozenset[str] = frozenset(
     {
         "GRAPH_MIRROR_TARGETS",
@@ -260,7 +260,7 @@ def is_restart_required(env_key: str) -> bool:
 
     Engine/daemon-rebuild settings (backend, durable DSN, auth secret, sharding,
     queue backend) are wired at startup; everything else is read live via
-    ``config.setting`` / re-parsed fields (CONCEPT:AU-KG.backend.connection-registry)."""
+    ``config.setting`` / re-parsed fields (CONCEPT:MERISTEM-KG.backend.connection-registry)."""
     up = (env_key or "").upper()
     return up in _RESTART_REQUIRED or up.startswith(("AUTH_", "GRAPH_SERVICE_"))
 

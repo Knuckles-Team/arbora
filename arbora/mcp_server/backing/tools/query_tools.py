@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 def _parse_ranges(spec: str) -> list[tuple[int, int]]:
     """Parse a char-range spec like '96..208,300..420' into (lo, hi) pairs.
 
-    CONCEPT:AU-KG.retrieval.tree-navigation — the fetch half of map-then-fetch.
+    CONCEPT:MERISTEM-KG.retrieval.tree-navigation — the fetch half of map-then-fetch.
     """
     out: list[tuple[int, int]] = []
     for part in (spec or "").split(","):
@@ -55,7 +55,7 @@ def _persist_sections(
     nodes: list[dict[str, Any]],
     edges: list[dict[str, Any]],
 ) -> bool:
-    """Write section-tree nodes/edges through the engine's own API (CONCEPT:AU-KG.retrieval.section-tree).
+    """Write section-tree nodes/edges through the engine's own API (CONCEPT:MERISTEM-KG.retrieval.section-tree).
 
     Uses ``engine.add_node(id, type, props)`` / ``engine.add_edge(src, tgt, rel)``
     — the same convenience write path ``write_ingest_tools`` uses — so the tree
@@ -92,7 +92,7 @@ def _persist_section_edge(engine: Any, e: dict[str, Any]) -> bool:
 def _json_default(obj: Any) -> Any:
     """``json.dumps(default=...)`` helper that dataclass-serializes an
     :class:`~agent_utilities.knowledge_graph.core.epistemic_row.EpistemicRow`
-    (or any other dataclass instance) instead of stringifying it (CONCEPT:AU-KB-CURRENCY).
+    (or any other dataclass instance) instead of stringifying it (CONCEPT:MERISTEM-KB-CURRENCY).
 
     Used wherever a tool's result may carry ``include_epistemic=True`` rows —
     plain dicts pass through ``json.dumps`` untouched; only genuinely
@@ -107,12 +107,12 @@ def _json_default(obj: Any) -> Any:
     return str(obj)
 
 
-#: Code-symbol nav actions over the resolved graph (CONCEPT:AU-KG.backend.declared-columns-so-schema).
+#: Code-symbol nav actions over the resolved graph (CONCEPT:MERISTEM-KG.backend.declared-columns-so-schema).
 CODE_NAV_ACTIONS = frozenset(
     {"find_definition", "find_references", "trace_call_graph", "impact_of_change"}
 )
 
-#: Symbol→symbol path action (CONCEPT:EG-KG.compute.handled-outside-single-anchor) — handled outside the single-anchor
+#: Symbol→symbol path action (CONCEPT:MEDULLA-KG.compute.handled-outside-single-anchor) — handled outside the single-anchor
 #: Cypher template because it resolves TWO endpoints and runs a native path search.
 PATH_ACTIONS = frozenset({"connects"})
 
@@ -261,7 +261,7 @@ def code_connects(
     target_symbol: str = "",
     target_node_id: str = "",
 ) -> dict[str, Any]:
-    """CONCEPT:EG-KG.compute.handled-outside-single-anchor — "what connects A to B": the shortest path between two
+    """CONCEPT:MEDULLA-KG.compute.handled-outside-single-anchor — "what connects A to B": the shortest path between two
     :Code symbols, rendered hop-by-hop with the relation + confidence of each edge.
 
     Resolves both endpoints, runs the engine's native path search (BFS over the
@@ -331,7 +331,7 @@ def _run_graph_query_sql(
     graph: str,
     as_of: Any = "",
 ) -> str:
-    """``scope=='sql'`` branch of ``_run_graph_query`` (CONCEPT:AU-KG.query.read-only-sql-over).
+    """``scope=='sql'`` branch of ``_run_graph_query`` (CONCEPT:MERISTEM-KG.query.read-only-sql-over).
 
     Statement-shape gate (WD10-A-BACKEND security review) lives in this thin
     wrapper, in FRONT of the original implementation
@@ -432,7 +432,7 @@ def _run_graph_query_sql_engine(sql: str, connection: str, graph: str) -> str:
 
 
 def _run_graph_query_sparql(sparql: str, connection: str, graph: str) -> str:
-    """``scope=='sparql'`` branch of ``_run_graph_query`` (CONCEPT:AU-KG.ingest.mirror-inbound)."""
+    """``scope=='sparql'`` branch of ``_run_graph_query`` (CONCEPT:MERISTEM-KG.ingest.mirror-inbound)."""
     return _run_graph_query_engine(
         sparql,
         connection,
@@ -543,7 +543,7 @@ def _run_graph_query_normalize_for_scope(
         )
 
 
-# CONCEPT:AU-KG.query.au-engine-execution-path — the MCP graph-query boundary deliberately
+# CONCEPT:MERISTEM-KG.query.au-engine-execution-path — the MCP graph-query boundary deliberately
 # accepts only a bounded, read-only UQL *pipeline*.  The native UQL parser is
 # still the source of truth for the complete language; this small gate exists
 # before connection resolution so an obviously unbounded/statement-shaped
@@ -1054,10 +1054,10 @@ def _run_graph_query_local(
 ) -> str:
     """Resolve and execute the fall-through local Cypher query path.
 
-    CONCEPT:AU-KG.backend.multi-connection-registry — resolve the
-    connection(s). CONCEPT:AU-KG.ingest.unified-query-routing — with ingestion
+    CONCEPT:MERISTEM-KG.backend.multi-connection-registry — resolve the
+    connection(s). CONCEPT:MERISTEM-KG.ingest.unified-query-routing — with ingestion
     graph routing on, an implicit-default read fans across active content
-    graphs so split content remains queryable as one KG. CONCEPT:AU-KG.backend.
+    graphs so split content remains queryable as one KG. CONCEPT:MERISTEM-KG.backend.
     explicit-graph-selection — ``graph`` is a physical graph axis separate from
     ``connection`` and is rejected by the resolver when fan-out would make it
     ambiguous.
@@ -1073,7 +1073,7 @@ def _run_graph_query_local(
     # explicit ``connection='all'``/list keeps the per-target map.
     union_read = _run_graph_query_is_union_read(fanout, connection)
 
-    # CONCEPT:AU-KG.query.query-aggregation — an aggregation (count/sum/group-by) under the implicit
+    # CONCEPT:MERISTEM-KG.query.query-aggregation — an aggregation (count/sum/group-by) under the implicit
     # content-graph union CANNOT be fanned: aggregate rows carry no node id to
     # dedup on, so id-dedup leaves one copy of every group row PER
     # graph (for example, one aggregate row repeated per graph). Summing generically is
@@ -1111,7 +1111,7 @@ def _run_graph_query_union_aggregate(
     include_epistemic_flag: bool,
     graph: str,
 ) -> str:
-    """CONCEPT:AU-KG.query.query-aggregation — an aggregation under the implicit content-graph
+    """CONCEPT:MERISTEM-KG.query.query-aggregation — an aggregation under the implicit content-graph
     union runs against the canonical default graph only (see the caller for why).
     """
     engine = runtime._get_engine()
@@ -1248,7 +1248,7 @@ def _run_graph_query_fanout_targets(
         # timeout at the full budget so one slow backend can't stall the set.
         return engine_routing.fanout_execute(entries, fanout_query)
 
-    # CONCEPT:AU-KG.ingest.unified-query-routing — mirror `graph_search`'s
+    # CONCEPT:MERISTEM-KG.ingest.unified-query-routing — mirror `graph_search`'s
     # primary/supplementary split (see the `graph_search` implementation
     # above). Before this, an implicit-default `graph_query` shared ONE
     # `DEFAULT_FANOUT_TIMEOUT_S` (30s) budget across every resolved
@@ -1362,7 +1362,7 @@ def _run_graph_query_fanout(
         # every non-"default" leg with `PermissionError`, degrading the
         # union to per-target errors. Narrow the verified session to the
         # SAME graph via the sanctioned `bound_to_graph` primitive
-        # (CONCEPT:AU-KG.backend.explicit-graph-selection) so the request
+        # (CONCEPT:MERISTEM-KG.backend.explicit-graph-selection) so the request
         # is self-consistent instead of inventing a second mechanism.
         with engine_routing.bound_to_graph(name):
             return _fanout_query(name, engine)
@@ -1409,7 +1409,7 @@ def _graph_search_produce_results_extended(
     if mode == "chrono_ids":
         return engine.temporal_semantic_ids(query=query, top_k=top_k)
     if mode == "dci":
-        # search_dci is fail-closed (CONCEPT:AU-KG.retrieval.acl-aware-vector-retrieval):
+        # search_dci is fail-closed (CONCEPT:MERISTEM-KG.retrieval.acl-aware-vector-retrieval):
         # it always resolves a session and raises rather than returning an
         # unfiltered traversal, so this served path must pass the already-ambient
         # verified session (same pattern the hybrid/hyde/deep/concept/analogy
@@ -1479,7 +1479,7 @@ def _graph_search_hard_negatives(engine: Any, query: str) -> str:
 def _graph_search_compiled(
     engine: Any, query: str, *, top_k: int, as_of: str, token_budget: int
 ) -> str:
-    # CONCEPT:AU-KG.retrieval.context-compiler — policy-aware ContextCompiler bundle: reuses the
+    # CONCEPT:MERISTEM-KG.retrieval.context-compiler — policy-aware ContextCompiler bundle: reuses the
     # SAME engine ANN/hybrid retriever the other modes call, but additionally
     # MMR-diversifies, scores evidence-quality/freshness from the epistemic
     # columns (EPI-P3-1), fits a token budget, and runs every candidate through
@@ -1532,7 +1532,7 @@ def _graph_search_implicit_fanout(
     run_search: Callable[[Any], str],
     content_graph_search: Callable[[str, Any], str],
 ) -> tuple[dict[str, Any], dict[str, str]]:
-    """CONCEPT:AU-KG.ingest.unified-query-routing — an implicit-default connection
+    """CONCEPT:MERISTEM-KG.ingest.unified-query-routing — an implicit-default connection
     (no ``connection`` passed, or explicitly "default") fans across every active
     content graph, which can be dozens of ``code:<repo>``/``src:<repo>``
     connections, often idle/unreachable.
@@ -2039,7 +2039,7 @@ async def _catalog_graphs() -> dict[str, Any]:
     """Physical graphs — via the already-registered ``engine_tenants`` tool
     (CONCEPT reference: `engine_tenants(action='list')`, referenced by name
     in several docstrings across this codebase but never centralized behind
-    one discoverable call before this). ``tenants`` is an AU-P0-6
+    one discoverable call before this). ``tenants`` is an MERISTEM-P0-6
     ADMIN_DOMAINS entry (arbora/mcp_server/backing/tools/engine_tools/py) — a
     non-admin caller is correctly DENIED here, reported as ``denied`` rather
     than conflated with "not compiled in"."""
@@ -2062,7 +2062,7 @@ async def _catalog_graphs() -> dict[str, Any]:
         entry = _capability_entry(True, methods=methods)
         entry["denied"] = True
         entry["reason"] = (
-            "tenants is an ADMIN-scoped domain (AU-P0-6); caller lacks the "
+            "tenants is an ADMIN-scoped domain (MERISTEM-P0-6); caller lacks the "
             "required scope"
         )
         return entry
@@ -2250,7 +2250,7 @@ async def _graph_context_put(
                 "producer": runtime._SESSION_ID,
             },
         )
-        # CONCEPT:AU-ORCH.session.session-anchored-collections-native — session-anchored collection: upsert the id-addressable
+        # CONCEPT:MERISTEM-ORCH.session.session-anchored-collections-native — session-anchored collection: upsert the id-addressable
         # Session node and link it, so "list by session" is a reliable id-anchored
         # traversal (the engine has no property index; property scans are unreliable).
         with contextlib.suppress(Exception):
@@ -2294,7 +2294,7 @@ async def _graph_context_prune(engine: Any) -> str:
     import contextlib
     import time
 
-    # Delete expired ContextBlobs (CONCEPT:AU-ORCH.session.invoker-agent-handoff lifecycle).
+    # Delete expired ContextBlobs (CONCEPT:MERISTEM-ORCH.session.invoker-agent-handoff lifecycle).
     try:
 
         def _prune_expired() -> tuple[int, int]:
@@ -2322,7 +2322,7 @@ async def _graph_context_prune(engine: Any) -> str:
 
 async def _graph_context_list(engine: Any, session_id: str) -> str:
     try:
-        # CONCEPT:AU-ORCH.session.session-anchored-collections-native — id-anchored traversal from the Session node (the engine's
+        # CONCEPT:MERISTEM-ORCH.session.session-anchored-collections-native — id-anchored traversal from the Session node (the engine's
         # reliable, fast O(degree) path; the index-less backend can't serve property
         # scans). The traversal reader returns whole nodes (`RETURN c`), so project +
         # sort + limit client-side.
@@ -2366,9 +2366,9 @@ def register_query_tools(mcp):
             description=(
                 "'local' for the internal KG (Cypher), 'sql' to run read-only SQL over the "
                 "KG + user tables via the engine's DataFusion surface (e.g. SELECT ... FROM "
-                "nodes — CONCEPT:AU-KG.query.read-only-sql-over, same path as the pg-wire listener), 'sparql' to "
+                "nodes — CONCEPT:MERISTEM-KG.query.read-only-sql-over, same path as the pg-wire listener), 'sparql' to "
                 "run a SPARQL 1.1 SELECT/ASK over the engine's RDF projection of the graph "
-                "(CONCEPT:AU-KG.ingest.mirror-inbound), 'uql' to run a bounded, read-only "
+                "(CONCEPT:MERISTEM-KG.ingest.mirror-inbound), 'uql' to run a bounded, read-only "
                 "Unified Query Language pipeline through the governed engine surface, or "
                 "'federated' to query an external graph endpoint. For 'sql'/'sparql'/'uql' "
                 "the `query` arg carries the selected dialect's query string; UQL must "
@@ -2382,7 +2382,7 @@ def register_query_tools(mcp):
         as_of: str = Field(
             default="",
             description=(
-                "CONCEPT:AU-KG.query.as-of-instant-filter — optional ISO-8601 instant. When set, rows are filtered to "
+                "CONCEPT:MERISTEM-KG.query.as-of-instant-filter — optional ISO-8601 instant. When set, rows are filtered to "
                 "those whose bi-temporal validity (valid_from <= as_of < valid_to) holds, "
                 "answering 'what was true as of date T'. Not supported for scope='uql'; "
                 "put temporal semantics in the native UQL pipeline instead."
@@ -2391,7 +2391,7 @@ def register_query_tools(mcp):
         connection: str = Field(
             default="",
             description=(
-                "CONCEPT:AU-KG.backend.multi-connection-registry — named BACKEND connection to query "
+                "CONCEPT:MERISTEM-KG.backend.multi-connection-registry — named BACKEND connection to query "
                 "(default = primary). Use a registered connection name (e.g. "
                 "'prod-neo4j'), or 'all' (or a comma-separated list) to fan out the "
                 "same query to several backends and get per-connection labeled "
@@ -2402,7 +2402,7 @@ def register_query_tools(mcp):
         graph: str = Field(
             default="",
             description=(
-                "CONCEPT:AU-KG.backend.explicit-graph-selection — explicit PHYSICAL engine graph to query "
+                "CONCEPT:MERISTEM-KG.backend.explicit-graph-selection — explicit PHYSICAL engine graph to query "
                 "(one of the names `engine_tenants(action='list')`/the engine's own "
                 "ListGraphs returns), independent of `connection`. Empty = the "
                 "caller's own bound graph (unchanged default behavior). Requires "
@@ -2418,7 +2418,7 @@ def register_query_tools(mcp):
         include_epistemic: bool = Field(
             default=False,
             description=(
-                "CONCEPT:AU-KB-CURRENCY — opt-in for local Cypher or UQL "
+                "CONCEPT:MERISTEM-KB-CURRENCY — opt-in for local Cypher or UQL "
                 "(ignored on scope='sql'/'sparql'/'federated'). When true, each "
                 "result row is currency-upgraded via the "
                 "engine's `explain_provenance_by_ids` into a per-row epistemic "
@@ -2461,16 +2461,16 @@ def register_query_tools(mcp):
             )
 
         if scope == "sql":
-            # CONCEPT:AU-KG.query.read-only-sql-over — read-only SQL over the KG via the engine's
+            # CONCEPT:MERISTEM-KG.query.read-only-sql-over — read-only SQL over the KG via the engine's
             # DataFusion surface (the same path the pg-wire listener uses). The
             # `query` arg carries the SQL string. RLS-governed + read-path-first
             # (engine.sql refuses non-SELECT). Honors `connection` fan-out like
-            # Cypher; `graph` (CONCEPT:AU-KG.backend.explicit-graph-selection) selects a physical engine
+            # Cypher; `graph` (CONCEPT:MERISTEM-KG.backend.explicit-graph-selection) selects a physical engine
             # graph, independent of `connection` — see `resolve_explicit_graph`.
             return _run_graph_query_sql(query, connection, graph, as_of)
 
         if scope == "sparql":
-            # CONCEPT:AU-KG.ingest.mirror-inbound — SPARQL 1.1 (SELECT/ASK/CONSTRUCT/DESCRIBE) over the
+            # CONCEPT:MERISTEM-KG.ingest.mirror-inbound — SPARQL 1.1 (SELECT/ASK/CONSTRUCT/DESCRIBE) over the
             # engine's RDF projection of the live graph. The `query` arg carries the
             # SPARQL string. RLS-governed (engine.sparql visibility-filters rows) and
             # honors `connection` fan-out like Cypher/SQL; `graph` selects a physical
@@ -2537,7 +2537,7 @@ def register_query_tools(mcp):
         graph: str = Field(
             default="",
             description=(
-                "CONCEPT:AU-KG.backend.explicit-graph-selection — explicit physical engine graph (see "
+                "CONCEPT:MERISTEM-KG.backend.explicit-graph-selection — explicit physical engine graph (see "
                 "`engine_tenants(action='list')`), independent of `connection`. "
                 "Empty = the caller's own bound graph. Fail-closed: an unknown "
                 "graph or a `connection`/fan-out that has no physical-graph "
@@ -2583,12 +2583,12 @@ def register_query_tools(mcp):
     runtime.REGISTERED_TOOLS["tabular_query"] = tabular_query
 
     # ══════════════════════════════════════════════════════════════════
-    # 1a-bis. graph_ask — CONCEPT:AU-KG.ingest.mirror-inbound natural-language → query
+    # 1a-bis. graph_ask — CONCEPT:MERISTEM-KG.ingest.mirror-inbound natural-language → query
     # ══════════════════════════════════════════════════════════════════
     @mcp.tool(
         name="graph_ask",
         description=(
-            "CONCEPT:AU-KG.ingest.mirror-inbound — ask the Knowledge Graph in plain English. "
+            "CONCEPT:MERISTEM-KG.ingest.mirror-inbound — ask the Knowledge Graph in plain English. "
             "epistemic-graph's own NL planner (EG QueryClient.nl_query) turns the question "
             "into one UQL query and runs it on the engine's deterministic UQL pipeline; "
             "Arbora runs no local planner. Returns the result rows and citations (row ids). "
@@ -2611,7 +2611,7 @@ def register_query_tools(mcp):
         include_epistemic: bool = Field(
             default=False,
             description=(
-                "CONCEPT:AU-KB-CURRENCY — opt-in. Only takes effect when the "
+                "CONCEPT:MERISTEM-KB-CURRENCY — opt-in. Only takes effect when the "
                 "generated (or forced) query resolves to the 'cypher' dialect "
                 "(sql/sparql have no epistemic-envelope surface, so this is a "
                 "silent no-op for those). When true and honored, `results` holds "
@@ -2646,12 +2646,12 @@ def register_query_tools(mcp):
     runtime.REGISTERED_TOOLS["graph_ask"] = graph_ask
 
     # ══════════════════════════════════════════════════════════════════
-    # 1a-quater. nl_query — CONCEPT:AU-KG.query.ask-gateway-rest-twin AU-fleet-LLM as the engine's NL planner
+    # 1a-quater. nl_query — CONCEPT:MERISTEM-KG.query.ask-gateway-rest-twin Meristem-fleet-LLM as the engine's NL planner
     # ══════════════════════════════════════════════════════════════════
     @mcp.tool(
         name="nl_query",
         description=(
-            "CONCEPT:AU-KG.query.ask-gateway-rest-twin — ask the Knowledge Graph in plain "
+            "CONCEPT:MERISTEM-KG.query.ask-gateway-rest-twin — ask the Knowledge Graph in plain "
             "English through epistemic-graph's NL planner (EG QueryClient.nl_query, via the "
             "governed engine_query dispatch). The engine planner emits UQL and executes it on "
             "its deterministic UQL pipeline; Arbora runs no local planner. Returns the "
@@ -2700,16 +2700,16 @@ def register_query_tools(mcp):
             )
 
     runtime.REGISTERED_TOOLS["nl_query"] = nl_query
-    # CONCEPT:AU-KG.query.ask-gateway-rest-twin — gateway REST twin (W1 exposure; MCP⇄REST parity)
+    # CONCEPT:MERISTEM-KG.query.ask-gateway-rest-twin — gateway REST twin (W1 exposure; MCP⇄REST parity)
     runtime.ACTION_TOOL_ROUTES["nl_query"] = "/graph/nl-query"
 
     # ══════════════════════════════════════════════════════════════════
-    # 1a-quinquies. ask_data — CONCEPT:AU-KG.query.data-gateway-rest-twin DB-GPT-style data-analysis agent loop
+    # 1a-quinquies. ask_data — CONCEPT:MERISTEM-KG.query.data-gateway-rest-twin DB-GPT-style data-analysis agent loop
     # ══════════════════════════════════════════════════════════════════
     @mcp.tool(
         name="ask_data",
         description=(
-            "CONCEPT:AU-KG.query.data-gateway-rest-twin — answer a DATA question over the "
+            "CONCEPT:MERISTEM-KG.query.data-gateway-rest-twin — answer a DATA question over the "
             "Knowledge Graph through epistemic-graph's NL planner (EG QueryClient.nl_query): "
             "the engine plans one UQL query and executes it on its deterministic pipeline. "
             "Arbora runs no local planner or self-correction loop (corrections_used is "
@@ -2755,16 +2755,16 @@ def register_query_tools(mcp):
         )
 
     runtime.REGISTERED_TOOLS["ask_data"] = ask_data
-    # CONCEPT:AU-KG.query.data-gateway-rest-twin — gateway REST twin (W1 exposure; MCP⇄REST parity)
+    # CONCEPT:MERISTEM-KG.query.data-gateway-rest-twin — gateway REST twin (W1 exposure; MCP⇄REST parity)
     runtime.ACTION_TOOL_ROUTES["ask_data"] = "/graph/ask-data"
 
     # ══════════════════════════════════════════════════════════════════
-    # 1a-ter. graph_table — CONCEPT:AU-KG.ingest.mirror-inbound connector/ETL → native engine SQL tables
+    # 1a-ter. graph_table — CONCEPT:MERISTEM-KG.ingest.mirror-inbound connector/ETL → native engine SQL tables
     # ══════════════════════════════════════════════════════════════════
     @mcp.tool(
         name="graph_table",
         description=(
-            "CONCEPT:AU-KG.ingest.mirror-inbound — mirror data into native engine SQL tables (DataFusion + "
+            "CONCEPT:MERISTEM-KG.ingest.mirror-inbound — mirror data into native engine SQL tables (DataFusion + "
             "pg-wire) and manage them. Actions: 'ingest' (mirror a registered source "
             "connector's documents into a table via CREATE TABLE + bulk INSERT — "
             "source=<connector> e.g. rest/database/web/rss/filesystem/reader, "
@@ -2812,7 +2812,7 @@ def register_query_tools(mcp):
     runtime.REGISTERED_TOOLS["graph_table"] = graph_table
 
     # ══════════════════════════════════════════════════════════════════
-    # 1a-quater. graph_projection — CONCEPT:AU-KG.query.node-link-projection
+    # 1a-quater. graph_projection — CONCEPT:MERISTEM-KG.query.node-link-projection
     # (wD10 Atlas backend gap B): a stable {nodes, links} JSON shape for a
     # graph query result, so the agent-webui data explorer's 2D/3D renderers
     # never have to re-derive node/edge shape from raw per-dialect rows.
@@ -2820,7 +2820,7 @@ def register_query_tools(mcp):
     @mcp.tool(
         name="graph_projection",
         description=(
-            "CONCEPT:AU-KG.query.node-link-projection — run the SAME query `graph_query` would "
+            "CONCEPT:MERISTEM-KG.query.node-link-projection — run the SAME query `graph_query` would "
             "and project the result into a stable node-link JSON shape: "
             "{nodes:[{id,label,properties}], links:[{source,target,label,properties}]} — "
             "the D3/force-graph convention every 2D/3D graph renderer already speaks. "
@@ -2865,7 +2865,7 @@ def register_query_tools(mcp):
     runtime.ACTION_TOOL_ROUTES["graph_projection"] = "/graph/projection"
 
     # ══════════════════════════════════════════════════════════════════
-    # 1a-quinquies. graph_catalog — CONCEPT:AU-KG.query.unified-capability-catalog
+    # 1a-quinquies. graph_catalog — CONCEPT:MERISTEM-KG.query.unified-capability-catalog
     # (wD10 Atlas backend gap A): one capability-shaped call across every
     # modality instead of 4-6 protocol-specific ones. See the
     # `_build_graph_catalog` module docstring for the full design rationale.
@@ -2873,7 +2873,7 @@ def register_query_tools(mcp):
     @mcp.tool(
         name="graph_catalog",
         description=(
-            "CONCEPT:AU-KG.query.unified-capability-catalog — one capability-shaped call across "
+            "CONCEPT:MERISTEM-KG.query.unified-capability-catalog — one capability-shaped call across "
             "every KG modality (graphs, sql, kv, vector, ontology, timeseries, blob, "
             "broker, saved_queries) instead of making a separate protocol-specific "
             "introspection call per modality. Each entry reports "
@@ -2950,12 +2950,12 @@ def register_query_tools(mcp):
     runtime.ACTION_TOOL_ROUTES["graph_catalog"] = "/graph/catalog"
 
     # ══════════════════════════════════════════════════════════════════
-    # 1b. graph_context — CONCEPT:AU-ORCH.session.invoker-agent-handoff cross-process curated-context store
+    # 1b. graph_context — CONCEPT:MERISTEM-ORCH.session.invoker-agent-handoff cross-process curated-context store
     # ══════════════════════════════════════════════════════════════════
     @mcp.tool(
         name="graph_context",
         description=(
-            "CONCEPT:AU-ORCH.session.invoker-agent-handoff — store/fetch curated context for invoker→spawned-agent "
+            "CONCEPT:MERISTEM-ORCH.session.invoker-agent-handoff — store/fetch curated context for invoker→spawned-agent "
             "handoff, persisted in the epistemic-graph so a SEPARATELY-spawned agent can read "
             "it by id. Actions: 'put' (store content, returns context_id), 'get' (fetch by "
             "context_id), 'list' (by session_id). Pass the returned context_id to "
@@ -3007,21 +3007,21 @@ def register_query_tools(mcp):
         query: str = Field(description="Natural language search query or concept ID."),
         mode: str = Field(
             default="hybrid",
-            description="Search strategy:\n- 'hybrid': Semantic + keyword weighted search (default).\n- 'hyde': Memory-first HyDE multi-query plan + dual threshold (CONCEPT:AU-KG.retrieval.self-correcting-second-pass).\n- 'deep': Wide-recall single query at the 0.28 deep threshold.\n- 'concept': Look up a CONCEPT:ID (e.g. 'AU-KG.query.vendor-agnostic-traversal', 'AU-ORCH.execution.inject-signal-board-observations').\n- 'analogy': Find structurally similar concepts.\n- 'memory': Search tiered memory (episodic/semantic/procedural).\n- 'discover': Cross-reference query against all ingested content.\n- 'dci': Direct Corpus Interaction.\n- 'latent': Latent-topology hierarchical routing (CONCEPT:AU-KG.memory.auto-similarity-memory-graph).\n- 'sira': Single-shot SIRA sparsity-aligned context.\n- 'hard_negatives': Mine hard negatives for the query (CONCEPT:AU-KG.memory.auto-similarity-memory-graph).\n- 'rerank': Hybrid semantic+keyword re-scoring of candidates.\n- 'adore': Iterative query expansion with retrieval-grounded graded relevance feedback + training-free stopping (CONCEPT:AU-KG.query.adore-concept-expansion/2.87).\n- 'chrono_ids': Attach an explicit temporal semantic ID (+recency bucket) to each result for generative retrieval (CONCEPT:AU-KG.query.chronoid-fits-residual-quantization).\n- 'compiled': Policy-aware ``ContextCompiler`` bundle (CONCEPT:AU-KG.retrieval.context-compiler) — MMR-diversified, evidence/freshness-weighted, token-budgeted, policy-filtered context with citations + a proof graph, instead of the plain relevance-sorted text the other modes return.",
+            description="Search strategy:\n- 'hybrid': Semantic + keyword weighted search (default).\n- 'hyde': Memory-first HyDE multi-query plan + dual threshold (CONCEPT:MERISTEM-KG.retrieval.self-correcting-second-pass).\n- 'deep': Wide-recall single query at the 0.28 deep threshold.\n- 'concept': Look up a CONCEPT:ID (e.g. 'MERISTEM-KG.query.vendor-agnostic-traversal', 'MERISTEM-ORCH.execution.inject-signal-board-observations').\n- 'analogy': Find structurally similar concepts.\n- 'memory': Search tiered memory (episodic/semantic/procedural).\n- 'discover': Cross-reference query against all ingested content.\n- 'dci': Direct Corpus Interaction.\n- 'latent': Latent-topology hierarchical routing (CONCEPT:MERISTEM-KG.memory.auto-similarity-memory-graph).\n- 'sira': Single-shot SIRA sparsity-aligned context.\n- 'hard_negatives': Mine hard negatives for the query (CONCEPT:MERISTEM-KG.memory.auto-similarity-memory-graph).\n- 'rerank': Hybrid semantic+keyword re-scoring of candidates.\n- 'adore': Iterative query expansion with retrieval-grounded graded relevance feedback + training-free stopping (CONCEPT:MERISTEM-KG.query.adore-concept-expansion/2.87).\n- 'chrono_ids': Attach an explicit temporal semantic ID (+recency bucket) to each result for generative retrieval (CONCEPT:MERISTEM-KG.query.chronoid-fits-residual-quantization).\n- 'compiled': Policy-aware ``ContextCompiler`` bundle (CONCEPT:MERISTEM-KG.retrieval.context-compiler) — MMR-diversified, evidence/freshness-weighted, token-budgeted, policy-filtered context with citations + a proof graph, instead of the plain relevance-sorted text the other modes return.",
         ),
         top_k: int = Field(default=10, description="Maximum results to return."),
         self_correct: bool = Field(
             default=False,
-            description="CONCEPT:AU-KG.retrieval.self-correcting-second-pass — run a self-correcting second retrieval pass at the deep threshold when the quality gate fails.",
+            description="CONCEPT:MERISTEM-KG.retrieval.self-correcting-second-pass — run a self-correcting second retrieval pass at the deep threshold when the quality gate fails.",
         ),
         as_of: str = Field(
             default="",
-            description="Optional ISO-8601 instant. Pack-driven recency decay is measured relative to this time, enabling knowledge-state-as-of-date-D retrieval such as an academic literature state. Defaults to now (CONCEPT:EG-KG.compute.rust-native-training-loss).",
+            description="Optional ISO-8601 instant. Pack-driven recency decay is measured relative to this time, enabling knowledge-state-as-of-date-D retrieval such as an academic literature state. Defaults to now (CONCEPT:MEDULLA-KG.compute.rust-native-training-loss).",
         ),
         connection: str = Field(
             default="",
             description=(
-                "CONCEPT:AU-KG.backend.multi-connection-registry — named BACKEND connection to search "
+                "CONCEPT:MERISTEM-KG.backend.multi-connection-registry — named BACKEND connection to search "
                 "(default = primary). Use a registered connection name, or 'all' "
                 "(or a comma-separated list) to fan out and get per-connection "
                 "labeled results. Selects WHICH BACKEND, never which physical "
@@ -3031,7 +3031,7 @@ def register_query_tools(mcp):
         graph: str = Field(
             default="",
             description=(
-                "CONCEPT:AU-KG.backend.explicit-graph-selection — explicit physical engine graph, independent of "
+                "CONCEPT:MERISTEM-KG.backend.explicit-graph-selection — explicit physical engine graph, independent of "
                 "`connection`. Empty = the caller's own bound graph. Requires "
                 "exactly one resolved `connection`; fails closed (typed error, "
                 "never a silent default/union) on an unknown graph or a fan-out/"
@@ -3042,7 +3042,7 @@ def register_query_tools(mcp):
             default=0,
             description=(
                 "mode='compiled' only: token budget the assembled bundle must fit "
-                "inside (CONCEPT:AU-KG.retrieval.context-compiler). 0 uses the compiler's default budget."
+                "inside (CONCEPT:MERISTEM-KG.retrieval.context-compiler). 0 uses the compiler's default budget."
             ),
         ),
     ) -> str:
@@ -3081,7 +3081,7 @@ def register_query_tools(mcp):
                     return public_error_text(e)
 
             def _search_with_engine(engine: Any) -> str:
-                # CONCEPT:AU-KG.retrieval.acl-aware-vector-retrieval — every served
+                # CONCEPT:MERISTEM-KG.retrieval.acl-aware-vector-retrieval — every served
                 # `graph_search` call already runs inside the middleware-minted
                 # ambient GraphSession (`verified_tool_session_scope`). Passing it
                 # explicitly opts THIS served path into `search_hybrid`'s per-node
@@ -3122,10 +3122,10 @@ def register_query_tools(mcp):
                     return f"No results found for query: '{query}'"
                 return _graph_search_format_results(results)
 
-            # CONCEPT:AU-KG.backend.multi-connection-registry — resolve the connection(s). CONCEPT:AU-KG.ingest.unified-query-routing — an
+            # CONCEPT:MERISTEM-KG.backend.multi-connection-registry — resolve the connection(s). CONCEPT:MERISTEM-KG.ingest.unified-query-routing — an
             # implicit-default search fans across the active content-graph set so content
             # routed to ``code:*``/``src:*`` graphs stays findable as one KG.
-            # CONCEPT:AU-KG.backend.explicit-graph-selection — `graph` requires exactly one resolved
+            # CONCEPT:MERISTEM-KG.backend.explicit-graph-selection — `graph` requires exactly one resolved
             # connection, so it fails closed against any fan-out (explicit or the
             # implicit content-graph union) — never a silent ignore or union.
             targets = engine_routing.resolve_graph_targets(
@@ -3151,7 +3151,7 @@ def register_query_tools(mcp):
         description=(
             "Synthesize a shortcut-resistant deep-search task from the evidence graph, "
             "or diagnose realized search difficulty of solver trajectories "
-            "(CONCEPT:AU-KG.retrieval.evidence-graph-workspace/2.71/2.72, AHE-3.30; distills arXiv:2606.12087)."
+            "(CONCEPT:MERISTEM-KG.retrieval.evidence-graph-workspace/2.71/2.72, AHE-3.30; distills arXiv:2606.12087)."
         ),
         tags=["arbora", "search", "synthesis", "training-data"],
     )
@@ -3182,7 +3182,7 @@ def register_query_tools(mcp):
     runtime.REGISTERED_TOOLS["graph_search_synthesis"] = graph_search_synthesis
 
     # ══════════════════════════════════════════════════════════════════
-    # graph_code_nav — CONCEPT:AU-KG.backend.declared-columns-so-schema code-symbol navigation over the
+    # graph_code_nav — CONCEPT:MERISTEM-KG.backend.declared-columns-so-schema code-symbol navigation over the
     # RESOLVED graph (`:Code` + `calls`/`depends_on`/`IMPLEMENTS`). Templated
     # so agents (and Duo-style flows) get gkg's find-def / find-refs / trace /
     # impact as first-class tools instead of hand-written Cypher.
@@ -3190,13 +3190,13 @@ def register_query_tools(mcp):
     @mcp.tool(
         name="graph_code_nav",
         description=(
-            "Navigate the resolved code graph (CONCEPT:AU-KG.backend.declared-columns-so-schema). action: "
+            "Navigate the resolved code graph (CONCEPT:MERISTEM-KG.backend.declared-columns-so-schema). action: "
             "'find_definition' (locate a symbol's :Code node), 'find_references' "
             "(callers of a symbol), 'trace_call_graph' (transitive callees), "
             "'impact_of_change' (transitive callers = blast radius), 'connects' "
             "(shortest path between TWO symbols — set symbol/node_id AND "
             "target_symbol/target_node_id — rendered hop-by-hop with each edge's "
-            "relation + confidence, CONCEPT:EG-KG.compute.handled-outside-single-anchor). Start from a symbol name or "
+            "relation + confidence, CONCEPT:MEDULLA-KG.compute.handled-outside-single-anchor). Start from a symbol name or "
             "an exact node_id; optionally scope to a source_system "
             "(e.g. 'gitlab:gitlab.com')."
         ),
@@ -3370,7 +3370,7 @@ def register_query_tools(mcp):
         content_hash: str,
         kinds: str,
     ) -> str:
-        # ── evidence spine (CONCEPT:AU-KG.ingest.stable-fragment-address) ──
+        # ── evidence spine (CONCEPT:MERISTEM-KG.ingest.stable-fragment-address) ──
         # The citation surface: 'fragments' lists what can be cited, 'cite'
         # answers whether an existing citation still holds. Both reach the
         # same core the ingest path writes, so the REST twin
@@ -3391,8 +3391,8 @@ def register_query_tools(mcp):
         )
 
     # ══════════════════════════════════════════════════════════════════
-    # graph_document_tree — CONCEPT:AU-KG.retrieval.section-tree +
-    # CONCEPT:AU-KG.retrieval.tree-navigation. PageIndex-style map-then-fetch over
+    # graph_document_tree — CONCEPT:MERISTEM-KG.retrieval.section-tree +
+    # CONCEPT:MERISTEM-KG.retrieval.tree-navigation. PageIndex-style map-then-fetch over
     # a document's section tree: build the tree, view the text-free structure,
     # fetch cited char/page ranges, or navigate the tree by relevance. Complements
     # (does not replace) graph_search's vector/community retrieval — route long
@@ -3402,7 +3402,7 @@ def register_query_tools(mcp):
         name="graph_document_tree",
         description=(
             "Reasoning-tree (vectorless) document retrieval over a per-document "
-            "section tree (CONCEPT:AU-KG.retrieval.section-tree/tree-navigation; "
+            "section tree (CONCEPT:MERISTEM-KG.retrieval.section-tree/tree-navigation; "
             "distills PageIndex). action: 'build' (build + optionally persist the "
             "section tree from text or a stored document), 'structure' (return the "
             "text-free table-of-contents map = get_document_structure), 'content' "
@@ -3410,7 +3410,7 @@ def register_query_tools(mcp):
             "get_page_content), 'retrieve' (walk the tree by relevance and return "
             "sections with cited start..end ranges), 'fragments' (the addressable "
             "evidence spine — every citable Fragment of an artifact/document with "
-            "its stable address + content hash; CONCEPT:AU-KG.ingest.stable-fragment-address), "
+            "its stable address + content hash; CONCEPT:MERISTEM-KG.ingest.stable-fragment-address), "
             "'cite' (resolve a stored citation against the current artifact and "
             "report current | stale | moved | lost). Complements graph_search for "
             "long single documents where similar != relevant."

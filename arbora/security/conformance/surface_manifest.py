@@ -4,7 +4,7 @@ from __future__ import annotations
 """The reviewed disposition manifest — seed data, drift-checked, never
 authoritative on its own (GOC-62 D2).
 
-CONCEPT:AU-OS.identity.stack-wide-auth-conformance — see this package's
+CONCEPT:MERISTEM-OS.identity.stack-wide-auth-conformance — see this package's
 ``__init__.py``. Every entry here is a HUMAN-REVIEWED classification of one
 surface :mod:`surface_inventory` (or, for surfaces this skeleton does not yet
 live-introspect, the GOC-15 28-surface inventory in

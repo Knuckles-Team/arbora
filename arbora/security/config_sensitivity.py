@@ -1,6 +1,6 @@
 """The ONE classifier for "may this configuration value cross a tool surface?".
 
-CONCEPT:AU-OS.config.two-surfaces-by-default
+CONCEPT:MERISTEM-OS.config.two-surfaces-by-default
 
 Every surface that reports configuration — ``graph_config`` (get/describe/diff),
 ``graph_configure``'s ``get_config``/``list_config`` actions, and the durable MCP

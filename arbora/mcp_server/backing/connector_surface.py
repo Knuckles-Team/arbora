@@ -1,6 +1,6 @@
 """The intent contract for agent-utilities-built MCP servers (fleet connectors).
 
-CONCEPT:AU-ECO.mcp.intent-surface-condensed-collapse — the same single contract
+CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse — the same single contract
 arbora serves (:mod:`arbora.mcp_server.backing.intent_contract`), applied by the
 shared builder (:func:`arbora.mcp_server.backing.verbose_tools.register_tool_surface`)
 to every connector:

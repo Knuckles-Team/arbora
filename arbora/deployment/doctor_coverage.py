@@ -14,7 +14,7 @@ from .doctor_support import _result
 def _check_skills() -> dict[str, Any]:
     """Report whether the agent-utilities skill toolkit is installed in the XDG dir.
 
-    CONCEPT:AU-OS.deployment.agent-factory-autoload — the agent factory loads flat
+    CONCEPT:MERISTEM-OS.deployment.agent-factory-autoload — the agent factory loads flat
     operator-owned skills plus valid managed subtrees for current providers under
     ``core.paths.skills_dir()``. The thirteen AU workflow skills unlock the platform. If
     they are absent, point at the one command that installs them. Local discovery

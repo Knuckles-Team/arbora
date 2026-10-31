@@ -1,4 +1,4 @@
-"""The arbora MCP surface: intent tools only (CONCEPT:AU-ECO.mcp.intent-surface-condensed-collapse).
+"""The arbora MCP surface: intent tools only (CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse).
 
 arbora serves the ecosystem's one tool contract
 (:mod:`arbora.mcp_server.backing.intent_contract`): the intent tools ``ask``,

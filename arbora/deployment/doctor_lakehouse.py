@@ -7,7 +7,7 @@ from typing import Any
 
 from .doctor_support import _prescription, _result
 
-# ── optional lakehouse / data-plane services (CONCEPT:AU-OS.deployment.lakehouse-doctor) ──
+# ── optional lakehouse / data-plane services (CONCEPT:MERISTEM-OS.deployment.lakehouse-doctor) ──
 #
 # Every check below follows the same shape: absent (endpoint unconfigured) -> "skip",
 # never fatal on any profile -- none of these services is required by any documented

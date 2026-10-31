@@ -1,6 +1,6 @@
 """Config Manager — YAML service configuration with XDG auto-discovery.
 
-CONCEPT:AU-OS.config.gateway-service-dashboard — Gateway Service Dashboard
+CONCEPT:MERISTEM-OS.config.gateway-service-dashboard — Gateway Service Dashboard
 
 Loads dashboard layout from ``~/.config/arbora/services.yaml``
 and auto-discovers available services from ``mcp_config.json``.
@@ -585,7 +585,7 @@ class ConfigManager:
     def get_all_services(self) -> list[ServiceConfig]:
         """Flatten all services from the current layout.
 
-        Always re-loads from disk (CONCEPT:AU-OS.observability.no-op-without-metrics):
+        Always re-loads from disk (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics):
         the YAML file is the
         shared source of truth, so a ``save()`` from another gateway
         worker/replica is picked up on the next fetch instead of serving a

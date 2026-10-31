@@ -1,6 +1,6 @@
 """The multiplexer reads prompt BODIES off an already-connected child.
 
-CONCEPT:AU-ECO.mcp.cross-process-prompt-harvest — the ``prompt://`` sibling of
+CONCEPT:MERISTEM-ECO.mcp.cross-process-prompt-harvest — the ``prompt://`` sibling of
 ``test_skill_body_harvest.py``. ``_probe_prompts`` mirrors ``_probe_skills``:
 a fleet prompt is invisible to arbora's in-process
 ``resolve_prompt_provider_dirs()`` (the fleet package is deliberately not

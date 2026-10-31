@@ -1,4 +1,4 @@
-"""Durable inbound inbox + retry — nothing goes unanswered (CONCEPT:AU-ECO.messaging.durable-inbound-pending)."""
+"""Durable inbound inbox + retry — nothing goes unanswered (CONCEPT:MERISTEM-ECO.messaging.durable-inbound-pending)."""
 
 from __future__ import annotations
 

@@ -67,7 +67,7 @@ async def _serve(engine: Any, platforms: list[str], router_box: dict[str, Any]) 
         if backend is None:
             continue
         svc.register_connected(backend)
-        # Publish OUR universal command set (CONCEPT:AU-ECO.messaging.single-inbound-command-dispatcher) where the platform supports
+        # Publish OUR universal command set (CONCEPT:MERISTEM-ECO.messaging.single-inbound-command-dispatcher) where the platform supports
         # a runtime menu; a no-op elsewhere.
         try:
             await backend.register_commands(command_specs("messaging"))
@@ -79,7 +79,7 @@ async def _serve(engine: Any, platforms: list[str], router_box: dict[str, Any]) 
     )
     router.set_default_handler(await create_planner_handler(engine))
     logger.info(
-        "[CONCEPT:AU-ECO.messaging.inbound-messaging-router-runs] messaging serving backends %s",
+        "[CONCEPT:MERISTEM-ECO.messaging.inbound-messaging-router-runs] messaging serving backends %s",
         platforms,
     )
     await router.start()  # blocks on the per-backend listener tasks
@@ -128,7 +128,7 @@ def run_poll_loop(
                 if not task.done():
                     task.cancel()
                     logger.error(
-                        "[CONCEPT:AU-ECO.messaging.inbound-messaging-router-runs] "
+                        "[CONCEPT:MERISTEM-ECO.messaging.inbound-messaging-router-runs] "
                         "messaging dropped platform=%s from inbound routing "
                         "(lease lost); other platforms continue serving",
                         platform,
@@ -147,7 +147,7 @@ def run_poll_loop(
             await asyncio.sleep(0.25)
 
     tasks = [loop.create_task(_serve(engine, platforms, router_box))]
-    # Optional HTTP alert-intake (CONCEPT:AU-ECO.messaging.alert-intake): route external
+    # Optional HTTP alert-intake (CONCEPT:MERISTEM-ECO.messaging.alert-intake): route external
     # webhooks (uptime-kuma, Alertmanager, …) THROUGH the messaging stack so alerts inherit
     # the one unified Telegram/Mattermost/… delivery instead of each tool wiring its own
     # notifier. Opt-in via MESSAGING_ALERT_INTAKE_PORT; runs as an INDEPENDENT task so a
@@ -160,7 +160,7 @@ def run_poll_loop(
 
         tasks.append(loop.create_task(serve_alert_intake(engine, int(_intake_port))))
     logger.info(
-        "[CONCEPT:AU-ECO.messaging.inbound-messaging-router-runs] messaging serving started."
+        "[CONCEPT:MERISTEM-ECO.messaging.inbound-messaging-router-runs] messaging serving started."
     )
     try:
         loop.run_until_complete(_watch_intake())

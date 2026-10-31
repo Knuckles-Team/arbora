@@ -1,11 +1,11 @@
-"""Google Meet Messaging Backend (CONCEPT:AU-ECO.messaging.native-backend-abstraction).
+"""Google Meet Messaging Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction).
 
 Manages Google Meet conference creation, participant tracking, and meeting events.
 Voice/video platform — no text messaging, but supports call lifecycle events.
 
 Install: ``pip install agent-utilities[messaging-googlemeet]``
 
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class GoogleMeetBackend(MessagingBackend):
-    """Google Meet backend via Calendar/Meet API. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+    """Google Meet backend via Calendar/Meet API. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
 
     def __init__(self, config: MessagingConfig | None = None) -> None:
         super().__init__(config)
@@ -48,7 +48,7 @@ class GoogleMeetBackend(MessagingBackend):
         return CAPABILITY_MATRIX["googlemeet"]
 
     async def connect(self) -> None:
-        """Connect via Google service account. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Connect via Google service account. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         try:
             from google.oauth2 import service_account
             from googleapiclient.discovery import build
@@ -66,13 +66,13 @@ class GoogleMeetBackend(MessagingBackend):
         self._service = build("calendar", "v3", credentials=creds)
         self._connected = True
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Google Meet backend connected."
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Google Meet backend connected."
         )
 
     async def send_message(
         self, channel_id: str, text: str, **kwargs: Any
     ) -> SendResult:
-        """Not supported — Meet is voice/video only. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Not supported — Meet is voice/video only. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         return SendResult(
             success=False,
             platform=PlatformId.GOOGLEMEET,
@@ -82,7 +82,7 @@ class GoogleMeetBackend(MessagingBackend):
     async def create_meeting(
         self, title: str = "Agent Meeting", **kwargs: Any
     ) -> dict[str, Any]:
-        """Create a Google Meet conference. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Create a Google Meet conference. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         import datetime
 
         event_body = {
@@ -104,7 +104,7 @@ class GoogleMeetBackend(MessagingBackend):
         return {"event_id": result.get("id", ""), "meet_link": meet_link}
 
     async def listen(self) -> AsyncIterator[InboundEvent]:
-        """Yield meeting lifecycle events. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Yield meeting lifecycle events. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         while self._connected:
             try:
                 event = await asyncio.wait_for(self._event_queue.get(), timeout=1.0)

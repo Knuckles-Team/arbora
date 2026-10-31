@@ -22,7 +22,7 @@ server layer.  The downstream call uses a service-account credential,
 and the user's identity is logged for auditing.  Use
 :func:`get_user_identity` for this pattern.
 
-CONCEPT:AU-ECO.mcp.standardized-interfaces — MCP Standardized Interfaces
+CONCEPT:MERISTEM-ECO.mcp.standardized-interfaces — MCP Standardized Interfaces
 """
 
 from __future__ import annotations
@@ -308,7 +308,7 @@ def exchange_token_for_agent(
 ) -> str:
     """Exchange the caller's token for one acting on behalf of a spawned agent (RFC 8693).
 
-    CONCEPT:AU-OS.identity.per-agent-on-behalf-delegation — the *exchange* leg of the per-agent
+    CONCEPT:MERISTEM-OS.identity.per-agent-on-behalf-delegation — the *exchange* leg of the per-agent
     on-behalf-of pipeline. The caller's token (``subject_token``, or the ambient user token
     captured by ``UserTokenMiddleware``) is exchanged for a delegated access token whose logical
     actor (``act``) chain appends ``agent:<name>`` — the spawned agent (``agent_label``, e.g.

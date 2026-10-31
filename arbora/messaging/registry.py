@@ -13,7 +13,7 @@ Discovery Flow::
     4. ``registry.create_backend("telegram")`` loads the backend class
     5. Backend is instantiated with config and ready to connect
 
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 
 See Also:
     - ``graph/plugin_registry.py`` for the dynamic tool hydration pattern.
@@ -49,7 +49,7 @@ _ENV_PREFIX = "MESSAGING_"
 class MessagingRegistry:
     """Singleton registry for discovering and managing messaging backends.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 
     Discovers installed backends via ``importlib.metadata.entry_points``
     and provides factory methods to create configured instances.
@@ -105,7 +105,7 @@ class MessagingRegistry:
     def _discover(self) -> None:
         """Scan entry-points for installed messaging backends.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Reads the ``arbora.messaging`` entry-point group to find
         all installed backend classes. This is lazy — no backend code is
@@ -122,25 +122,25 @@ class MessagingRegistry:
             for ep in group_eps:
                 self._entry_points[ep.name] = ep
                 logger.debug(
-                    "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Discovered messaging backend: %s → %s",
+                    "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Discovered messaging backend: %s → %s",
                     ep.name,
                     ep.value,
                 )
         except Exception as e:  # entry-point scan is best-effort; downstream is_installed()/list_backends() correctly reflect only what was discovered
             logger.debug(
-                "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Entry-point discovery failed: %s",
+                "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Entry-point discovery failed: %s",
                 e,
             )
 
         if self._entry_points:
             logger.info(
-                "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Discovered %d messaging backends: %s",
+                "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Discovered %d messaging backends: %s",
                 len(self._entry_points),
                 ", ".join(sorted(self._entry_points)),
             )
         else:
             logger.debug(
-                "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] No messaging backends discovered. "
+                "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] No messaging backends discovered. "
                 "Install with: pip install arbora[messaging-discord]"
             )
 
@@ -170,7 +170,7 @@ class MessagingRegistry:
     ) -> Any:
         """Create a new backend instance.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Loads the backend class from the entry-point and instantiates it
         with the provided or auto-detected configuration.
@@ -213,7 +213,7 @@ class MessagingRegistry:
         self._instances[backend_id] = instance
 
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Created messaging backend: %s (%s)",
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Created messaging backend: %s (%s)",
             backend_id,
             backend_cls.__name__,
         )
@@ -237,7 +237,7 @@ class MessagingRegistry:
         environment — the SAME predicate :meth:`create_all_enabled` uses to decide
         whether to auto-create a backend, extracted so a health probe can ask
         "is this platform configured" without instantiating anything (CONCEPT:
-        AU-ECO.messaging.native-backend-abstraction).
+        MERISTEM-ECO.messaging.native-backend-abstraction).
         """
         cfg = config if config is not None else self._auto_config(backend_id)
         reference_configured = backend_id == "synology" and bool(
@@ -275,7 +275,7 @@ class MessagingRegistry:
     def create_all_enabled(self) -> dict[str, Any]:
         """Create backend instances for all platforms with env-var tokens.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Scans environment variables to find configured platforms and
         auto-creates backend instances for each. Every OTHER configured
@@ -336,7 +336,7 @@ class MessagingRegistry:
     def _auto_config(self, backend_id: str) -> MessagingConfig:
         """Build a MessagingConfig from environment variables.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Convention: ``MESSAGING_<PLATFORM>_TOKEN``, ``MESSAGING_<PLATFORM>_APP_ID``, etc.
         Also checks platform-native env vars (e.g., ``DISCORD_BOT_TOKEN``).

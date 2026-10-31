@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """Authenticated, bounded signal reads for the scaling authority.
 
-CONCEPT:AU-OS.scaling.reactive-replica-autoscaling
+CONCEPT:MERISTEM-OS.scaling.reactive-replica-autoscaling
 
 This module is the signal-side boundary for NE-165.  A metrics backend may
 collect high-rate samples, but the scaling authority accepts only an

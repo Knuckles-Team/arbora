@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """Live introspection of the ``graph_query`` dialect dispatcher.
 
-CONCEPT:AU-OS.identity.stack-wide-auth-conformance — see this package's
+CONCEPT:MERISTEM-OS.identity.stack-wide-auth-conformance — see this package's
 ``__init__.py`` and ``plans/arbora-completion-program/decisions/
 GOC-62-keycloak-auth-standard.md`` §D2.
 

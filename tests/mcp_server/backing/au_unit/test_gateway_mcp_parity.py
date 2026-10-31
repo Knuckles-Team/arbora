@@ -139,7 +139,7 @@ def test_retired_legacy_tool_fanout_is_not_mounted():
     )
 
 
-# ── Third leg: MCP verb ⇄ domain-skill coverage (CONCEPT:AU-ECO.mcp.kg-skill-verb-coverage) ──
+# ── Third leg: MCP verb ⇄ domain-skill coverage (CONCEPT:MERISTEM-ECO.mcp.kg-skill-verb-coverage) ──
 # Beyond REST⇄MCP parity, every Arbora verb must be claimed explicitly by a
 # retained workflow skill's ``agents/arbora.yaml`` sidecar. The contract lives
 # in ``arbora.mcp_server.backing.skill_coverage`` and has no slug inference or waivers.

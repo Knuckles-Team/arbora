@@ -1,4 +1,4 @@
-"""Burst-mode message coalescing (CONCEPT:AU-ECO.messaging.burst-mode-coalescing).
+"""Burst-mode message coalescing (CONCEPT:MERISTEM-ECO.messaging.burst-mode-coalescing).
 
 When the user fires several messages in quick succession, collapse them into a SINGLE
 agent turn — one holistic reply, one LLM call — instead of answering each individually.
@@ -8,7 +8,7 @@ or a hard cap (``max_wait_s``) elapses, the batch is flushed to one handler.
 This is a shared core primitive: agent-terminal-ui imports the same ``BurstCoalescer`` so
 burst behavior is identical across every chat surface.
 
-CONCEPT:AU-ECO.messaging.burst-mode-coalescing — Burst-mode message coalescing (one holistic reply per burst)
+CONCEPT:MERISTEM-ECO.messaging.burst-mode-coalescing — Burst-mode message coalescing (one holistic reply per burst)
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ Sleep = Callable[[float], Awaitable[None]]
 class BurstCoalescer:
     """Debounce per-key items into batches flushed to ``on_flush(key, items)``.
 
-    CONCEPT:AU-ECO.messaging.burst-mode-coalescing — keyed by conversation (e.g. ``"telegram:<chat>"``). Each ``submit``
+    CONCEPT:MERISTEM-ECO.messaging.burst-mode-coalescing — keyed by conversation (e.g. ``"telegram:<chat>"``). Each ``submit``
     restarts the quiet window; the batch flushes when the user pauses for ``window_s`` or
     ``max_wait_s`` elapses since the first message (so a continuous typer still gets a
     reply). ``window_s=0`` disables coalescing (flush each item immediately).
@@ -78,7 +78,7 @@ class BurstCoalescer:
         items = self._buffers.pop(key, [])
         self._first.pop(key, None)
         timer = self._timers.pop(key, None)
-        # CONCEPT:AU-ECO.messaging.debounce-timer-cancel — only cancel the debounce timer when flushing from a DIFFERENT
+        # CONCEPT:MERISTEM-ECO.messaging.debounce-timer-cancel — only cancel the debounce timer when flushing from a DIFFERENT
         # task (the hard-cap path in ``submit``). When ``_wait_and_flush`` (the timer task
         # itself) calls ``_flush``, cancelling ``timer`` would cancel THIS running task and
         # kill ``_on_flush`` (the whole reply) at its first ``await`` — the root cause of
@@ -95,7 +95,7 @@ class BurstCoalescer:
             await self._on_flush(key, items)
         except Exception as e:  # noqa: BLE001 — one bad batch must not kill the loop
             logger.error(
-                "[CONCEPT:AU-ECO.messaging.burst-mode-coalescing] burst flush failed for %s: %s",
+                "[CONCEPT:MERISTEM-ECO.messaging.burst-mode-coalescing] burst flush failed for %s: %s",
                 key,
                 e,
             )

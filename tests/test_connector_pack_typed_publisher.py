@@ -64,7 +64,7 @@ def test_semantic_content_status_request_is_the_engine_generated_type() -> None:
 
 @pytest.mark.spec("ARBORA-FLEET-R001")
 def test_fleet_catalog_port_reads_only_generated_agent_component_types() -> None:
-    """``GeneratedFleetCatalogPort`` must be built from EG-generated request/entry
+    """``GeneratedFleetCatalogPort`` must be built from Medulla-generated request/entry
     types, never a arbora-local placeholder standing in for them."""
     source = inspect.getsource(epistemic_adapter)
     assert "from epistemic_graph.generated.agent_component import" in source

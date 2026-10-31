@@ -242,7 +242,7 @@ def _execute_governance_action(
 def _policy_status() -> dict[str, Any]:
     """Live PermissionPolicy/context_policy + KG-native audit-sink status (PA-R1).
 
-    CONCEPT:AU-OS.identity.identity-policy-check / AU-KG.audit.kg-native-audit-sink.
+    CONCEPT:MERISTEM-OS.identity.identity-policy-check / MERISTEM-KG.audit.kg-native-audit-sink.
     Both are already default-on, native-by-default capabilities wired into every
     governed agent (``security/tool_guard.py``'s ``flag_mcp_tool_definitions`` /
     ``capabilities/composition.py``'s ``default_runtime_capabilities`` respectively)

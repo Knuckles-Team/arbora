@@ -968,7 +968,7 @@ async def _analysis_action_night_shift(
 def _analysis_recommend_candidate_items(engine, query, top_k):
     # extracted from 'recommend'._recommend (CX-AU-03: split for CCN) —
     # search_hybrid candidates -> (id, embedding) pairs.
-    # CONCEPT:AU-KG.retrieval.acl-aware-vector-retrieval — pass the served
+    # CONCEPT:MERISTEM-KG.retrieval.acl-aware-vector-retrieval — pass the served
     # call's ambient GraphSession so candidate nodes are ACL/owner-scope
     # filtered before they reach the recommender (see search_hybrid's
     # docstring — a no-op for callers that pass no session).
@@ -2561,7 +2561,7 @@ def register_analysis_tools(mcp):
         depth: int = Field(default=2, description="Traversal depth."),
         target: str = Field(default="", description="Analysis target."),
     ) -> EvidenceBundle:
-        # CONCEPT:AU-KG.memory.memory-weights-distillation-export — "distill_memory" is handled
+        # CONCEPT:MERISTEM-KG.memory.memory-weights-distillation-export — "distill_memory" is handled
         # by the shared action core (_run_analysis_action) below but was left out
         # of this tool's own allowlist when graph_analyze's other ~24 actions were
         # split into the focused graph_code/graph_research/graph_evaluate/

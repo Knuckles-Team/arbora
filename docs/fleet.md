@@ -53,7 +53,7 @@ application port, and binds the returned multiplexer through
 the same lifecycle, health, OAuth, and discovery state. Co-services use only
 the asynchronous submission API.
 
-The EG-backed catalog reader and durable resource/template reconciliation are
+The Medulla-backed catalog reader and durable resource/template reconciliation are
 explicit capability gates. Without their generated engine contracts, the
 affected refresh path returns a typed failure and does not fall back to a
 static catalog or process-local durability. See [Capability status](status.md).

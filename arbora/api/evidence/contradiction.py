@@ -266,7 +266,7 @@ def _severity_for(similarity: float) -> str:
 
 
 class ContradictionDetector:
-    """Explicit node↔node contradiction/friction surface (CONCEPT:AU-KG.research.explicit-node-node-contradiction).
+    """Explicit node↔node contradiction/friction surface (CONCEPT:MERISTEM-KG.research.explicit-node-node-contradiction).
 
     The night-shift Critic: given a candidate claim and the existing belief set,
     surface every existing belief that is topically similar yet opposes the

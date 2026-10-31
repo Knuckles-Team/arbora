@@ -16,7 +16,7 @@ from tests.mcp_server.backing._support import (
     register_graph_query as _register_graph_query,
 )
 
-pytestmark = pytest.mark.concept("AU-KG.query.au-engine-execution-path")
+pytestmark = pytest.mark.concept("MERISTEM-KG.query.au-engine-execution-path")
 
 
 class _FakeCompute:

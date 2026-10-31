@@ -7,7 +7,7 @@ from arbora.api.errors import not_served
 Handles CLI argument parsing for MCP servers, automated server initialization
 with middleware stacks, and the ``create_mcp_server`` convenience constructor.
 
-CONCEPT:AU-ECO.mcp.standardized-interfaces — MCP Standardized Interfaces
+CONCEPT:MERISTEM-ECO.mcp.standardized-interfaces — MCP Standardized Interfaces
 """
 
 
@@ -536,7 +536,7 @@ def _wrap_with_resource_metadata(
     verifier: Any, args: argparse.Namespace, issuer_values: list[str]
 ) -> Any:
     """Compose *verifier* with RFC 9728 protected-resource metadata when a public
-    base URL is configured (CONCEPT:AU-OS.identity.protected-resource-metadata).
+    base URL is configured (CONCEPT:MERISTEM-OS.identity.protected-resource-metadata).
 
     A bare ``TokenVerifier`` (what plain ``jwt`` auth builds) publishes zero OAuth
     routes and never appends ``resource_metadata`` to its 401 challenge, so an
@@ -1445,7 +1445,7 @@ def _maybe_discover_jwks(
     args: argparse.Namespace,
     issuer: str | None,
 ) -> str | None:
-    """CONCEPT:AU-OS.identity.resolve-token-endpoint-from -- IdP-agnostic:
+    """CONCEPT:MERISTEM-OS.identity.resolve-token-endpoint-from -- IdP-agnostic:
     with no explicit JWKS URI (and not a static key), resolve it from each
     issuer's OIDC discovery document, so config carries only the issuer
     (Keycloak, Okta, Auth0, Entra, ...) -- never a vendor-specific path.
@@ -1597,7 +1597,7 @@ def _configure_multi_realm_jwt(
     required_scopes: list[str] | None,
     args: argparse.Namespace,
 ) -> Any:
-    """CONCEPT:AU-OS.identity.native-multi-realm-jwt -- native multi-realm
+    """CONCEPT:MERISTEM-OS.identity.native-multi-realm-jwt -- native multi-realm
     JWT trust. FASTMCP_SERVER_AUTH_JWT_ISSUER and _JWKS_URI may each be a
     comma-separated, aligned-by-index list (one Keycloak realm per entry).
     FastMCP's JWTVerifier accepts an issuer list but only a SINGLE
@@ -1618,7 +1618,7 @@ def _configure_multi_realm_jwt(
     from fastmcp.server.auth import TokenVerifier
 
     class _MultiIssuerVerifier(TokenVerifier):
-        """Accept a JWT validated by ANY wrapped per-realm JWTVerifier (CONCEPT:AU-OS.identity.native-multi-realm-jwt)."""
+        """Accept a JWT validated by ANY wrapped per-realm JWTVerifier (CONCEPT:MERISTEM-OS.identity.native-multi-realm-jwt)."""
 
         def __init__(self, verifiers: list, *, required_scopes: Any = None) -> None:
             super().__init__(required_scopes=required_scopes)
@@ -1800,7 +1800,7 @@ def _append_optional_middlewares(
 
     # Scope every tool call to the caller's validated OIDC (Okta/Keycloak)
     # identity so servers can auto-load resources and inherit authz per-caller
-    # (CONCEPT:AU-OS.identity.idp-agnostic-role-inheritance). No-op when the
+    # (CONCEPT:MERISTEM-OS.identity.idp-agnostic-role-inheritance). No-op when the
     # request carries no validated token (loopback/stdio trust only) --
     # EXCEPT for arbora itself, which fails closed instead (BUG-036/GOC-15,
     # see ActorContextMiddleware/`_configure_middleware` docstrings).
@@ -1810,7 +1810,7 @@ def _append_optional_middlewares(
         )
 
     # Per-tool Prometheus metrics (count/latency/error) for this server, scraped
-    # from its own /metrics route (CONCEPT:AU-OS.observability.no-op-without-metrics). No-op without the metrics extra.
+    # from its own /metrics route (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics). No-op without the metrics extra.
     if ToolMetricsMiddleware is not None:
         middlewares.append(ToolMetricsMiddleware())
 
@@ -1930,7 +1930,7 @@ def _configure_middleware(
 # surface in the first place (there is no runtime net for code that runs BEFORE
 # ``mcp.run()`` claims the descriptor, e.g. engine bootstrap or a co-service
 # thread started moments earlier). That is enforced statically, in the fast
-# pre-commit tier, by ``scripts/check_no_stdout_writes.py`` (CONCEPT:AU-ECO.mcp.stdio-static-purity-gate) —
+# pre-commit tier, by ``scripts/check_no_stdout_writes.py`` (CONCEPT:MERISTEM-ECO.mcp.stdio-static-purity-gate) —
 # catching the offender at authoring time instead of corrupting a frame at 3am.
 # Diagnostics in served code route through the standard ``logging`` module
 # (stderr by default), never ``print``.
@@ -2057,7 +2057,7 @@ def mcp_network_run_kwargs(args: argparse.Namespace) -> dict[str, Any]:
     return {"middleware": middleware, "uvicorn_config": uvicorn_config}
 
 
-# ── Fleet server registry self-registration (CONCEPT:EG-KG.sharding.server-registry, W2.5) ──
+# ── Fleet server registry self-registration (CONCEPT:MEDULLA-KG.sharding.server-registry, W2.5) ──
 #
 # Every server built via ``create_mcp_server`` self-registers a REAL, queryable
 # ``:Server`` graph node with the engine at startup and renews its lease on a
@@ -2115,7 +2115,7 @@ def _fleet_registration_endpoint_reference(args: argparse.Namespace, name: str) 
 
 async def _register_and_heartbeat_forever(name: str, url: str, ttl_secs: int) -> None:
     """Self-register, then renew ``name``'s lease forever on a cadence well
-    inside ``ttl_secs`` (CONCEPT:EG-KG.sharding.server-registry, W2.5).
+    inside ``ttl_secs`` (CONCEPT:MEDULLA-KG.sharding.server-registry, W2.5).
 
     Best-effort: an unreachable engine (a ``tiny`` profile with no graph
     access yet, a dev/test process, a cold start racing the engine's own
@@ -2192,7 +2192,7 @@ def _fleet_registration_lifespan_factory(
     manage_engine_shutdown: bool = True,
 ):
     """Build the ``FastMCP(..., lifespan=...)`` ASGI lifespan that starts/stops
-    the self-registration heartbeat task (CONCEPT:EG-KG.sharding.server-registry, W2.5).
+    the self-registration heartbeat task (CONCEPT:MEDULLA-KG.sharding.server-registry, W2.5).
 
     A closure (not a bare module-level lifespan) so it captures THIS server's
     own ``args``/``name`` without stashing state on the app object. Opt out
@@ -2263,11 +2263,11 @@ def _resolve_metrics_token() -> str | None:
 
 
 def _mount_tasks_extension_if_available(mcp: Any, name: str) -> None:
-    # CONCEPT:AU-ECO.mcp.tasks-workitem-bridge -- mount the native WorkItem-backed
+    # CONCEPT:MERISTEM-ECO.mcp.tasks-workitem-bridge -- mount the native WorkItem-backed
     # Tasks extension (arbora/mcp_server/backing/tasks_extension/py), NOT
     # fastmcp_tasks.extension.TasksExtension: that package's engine is
     # hard-wired to Docket/Redis, a second job system this codebase's one
-    # WorkItem state machine (AU-P1-1) forbids duplicating. This makes the
+    # WorkItem state machine (MERISTEM-P1-1) forbids duplicating. This makes the
     # same WorkItem-backed contract available to any MCP protocol version
     # this server negotiates over its one `/mcp` endpoint, including
     # 2026-07-28 (BUG-069: the isolated mcp_v2_gateway sidecar that used to

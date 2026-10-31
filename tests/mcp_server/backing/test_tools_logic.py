@@ -1,6 +1,6 @@
 """Tests for MCP tool loading, parsing, and configuration.
 
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Agent Tool System
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Agent Tool System
 """
 
 import pytest

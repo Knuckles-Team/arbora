@@ -4,7 +4,7 @@ Only the atomic WorkItem creator may invoke messaging. Contact PII stays in
 the in-memory provider payload; graph state contains only HMAC references and
 an opaque receipt.
 
-CONCEPT:AU-ECO.messaging.messaging-reach-service-governed
+CONCEPT:MERISTEM-ECO.messaging.messaging-reach-service-governed
 """
 
 from __future__ import annotations

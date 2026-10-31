@@ -1,6 +1,6 @@
 """GATE — arbora serves ONE condensed intent contract (ECO-4.82).
 
-CONCEPT:AU-ECO.mcp.intent-surface-condensed-collapse
+CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse
 
 Pins the operator's tool-surface decision (MCP-TOOL-SURFACE-SPEC, 2026-10-07
 amendment):

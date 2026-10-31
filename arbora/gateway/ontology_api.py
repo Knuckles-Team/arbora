@@ -49,7 +49,7 @@ def _not_found_if_error(result: Any, detail: str) -> Any:
     return result
 
 
-# ── Value types (CONCEPT:AU-KG.ontology.value-type-shacl-load)
+# ── Value types (CONCEPT:MERISTEM-KG.ontology.value-type-shacl-load)
 # ───────────────────────────────────────────
 
 
@@ -66,7 +66,7 @@ async def get_value_type(name: str) -> OntologyEnvelope:
     return OntologyEnvelope(result=_not_found_if_error(res, f"value type {name!r}"))
 
 
-# ── Property types (CONCEPT:AU-KG.ontology.ontology-property-types)
+# ── Property types (CONCEPT:MERISTEM-KG.ontology.ontology-property-types)
 # ─────────────────────────────────────────
 
 
@@ -87,7 +87,7 @@ async def describe_property_type(type_ref: str) -> OntologyEnvelope:
     return OntologyEnvelope(result=_not_found_if_error(res, f"type {type_ref!r}"))
 
 
-# ── Interfaces (CONCEPT:AU-KG.ontology.conformance-check)
+# ── Interfaces (CONCEPT:MERISTEM-KG.ontology.conformance-check)
 # ─────────────────────────────────────────────
 
 
@@ -117,7 +117,7 @@ async def get_interface_implementers(
     )
 
 
-# ── Schema graph / summary / lint (CONCEPT:AU-KG.ontology.schema-graph-visualization)
+# ── Schema graph / summary / lint (CONCEPT:MERISTEM-KG.ontology.schema-graph-visualization)
 # ────
 
 
@@ -151,7 +151,7 @@ async def get_ontology_lint(
     )
 
 
-# ── From-scratch ontology generator (CONCEPT:AU-KG.ontology.standalone-generation,
+# ── From-scratch ontology generator (CONCEPT:MERISTEM-KG.ontology.standalone-generation,
 # coverage row #13) ────────
 
 
@@ -250,7 +250,7 @@ async def validate_ontology_candidate(
     )
 
 
-# ── Import / export (CONCEPT:AU-KG.ontology.import-export-rest-surface, coverage row
+# ── Import / export (CONCEPT:MERISTEM-KG.ontology.import-export-rest-surface, coverage row
 # #23) ───────────
 
 
@@ -329,7 +329,7 @@ async def export_ontology(
     )
 
 
-# ── Catalogue (CONCEPT:AU-KG.ontology.catalogue-browse, coverage row #4) ─────
+# ── Catalogue (CONCEPT:MERISTEM-KG.ontology.catalogue-browse, coverage row #4) ─────
 
 
 @ontology_router.get("/ontology/catalogue", response_model=OntologyEnvelope)
@@ -371,7 +371,7 @@ async def get_ontology_catalogue(
     )
 
 
-# ── Functions (CONCEPT:AU-KG.ontology.default-runtime-bound-import)
+# ── Functions (CONCEPT:MERISTEM-KG.ontology.default-runtime-bound-import)
 # ──────────────────────────────────────────────
 
 
@@ -393,7 +393,7 @@ async def get_function(name: str) -> OntologyEnvelope:
     return OntologyEnvelope(result=match)
 
 
-# ── Objects: read + edit history (CONCEPT:AU-KG.ontology.edit-ledger-writeback/2.45)
+# ── Objects: read + edit history (CONCEPT:MERISTEM-KG.ontology.edit-ledger-writeback/2.45)
 # ──────────────────────
 
 
@@ -421,7 +421,7 @@ async def get_object_as_of(
     ts: float = Query(..., description="Unix timestamp for the point-in-time view."),
 ) -> OntologyEnvelope:
     """Bitemporal as-of snapshot of an object
-    (CONCEPT:AU-KG.ontology.edit-ledger-writeback)."""
+    (CONCEPT:MERISTEM-KG.ontology.edit-ledger-writeback)."""
     return OntologyEnvelope(
         result=await _call("object_edits", action="as_of", object_id=object_id, ts=ts)
     )
@@ -432,14 +432,14 @@ async def get_object_as_of(
 )
 async def get_object_path(source_id: str, target_id: str) -> OntologyEnvelope:
     """Shortest path + hop-by-hop relationship chain between two objects
-    (CONCEPT:AU-KG.ontology.object-path-finder)."""
+    (CONCEPT:MERISTEM-KG.ontology.object-path-finder)."""
     res = await _call(
         "object_set", action="path", source_id=source_id, target_id=target_id
     )
     return OntologyEnvelope(result=_not_found_if_error(res, "no path found"))
 
 
-# ── LeanIX metamodel sync (CONCEPT:AU-KG.ingest.enterprise-source-extractor)
+# ── LeanIX metamodel sync (CONCEPT:MERISTEM-KG.ingest.enterprise-source-extractor)
 # ──────────────────────────────────
 
 

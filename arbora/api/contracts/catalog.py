@@ -32,7 +32,7 @@ class CatalogReadError(RuntimeError):
 
 @dataclass(frozen=True, slots=True)
 class WorkflowCatalogRecord:
-    """The AU-owned current workflow-definition projection.
+    """The Meristem-owned current workflow-definition projection.
 
     ``definition_digest`` projects the source ``WorkflowDefinition.content_hash``
     as a content-addressed ``sha256:...`` value.

@@ -1,6 +1,6 @@
 """Guardrail regression tests for the shared-venv reconciler.
 
-CONCEPT:AU-OS.safety.destructive-sync-refusal
+CONCEPT:MERISTEM-OS.safety.destructive-sync-refusal
 
 The two behaviours that matter are proved against *real* uv output, not a
 hand-written approximation: ``DESTRUCTIVE_PLAN`` below is the verbatim shape of
@@ -687,7 +687,7 @@ def test_detect_drift_surfaces_a_stuck_flip_queue(
 
 
 class TestProcessActivityProbeInheritedVirtualEnv:
-    """CONCEPT:AU-OS.deployment.workspace-venv-reconciler (D-VS-9).
+    """CONCEPT:MERISTEM-OS.deployment.workspace-venv-reconciler (D-VS-9).
 
     ``VIRTUAL_ENV`` is inherited by every descendant of an activated shell.
     Before the fix, ANY process with that variable set — including an

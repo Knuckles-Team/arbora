@@ -1,7 +1,7 @@
-"""Mattermost Messaging Backend (CONCEPT:AU-ECO.messaging.native-backend-abstraction, CONCEPT:AU-ECO.messaging.mattermost-backend).
+"""Mattermost Messaging Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction, CONCEPT:MERISTEM-ECO.messaging.mattermost-backend).
 
 A first-class, bidirectional Mattermost backend modelled exactly on the Telegram
-backend (CONCEPT:AU-ECO.messaging.messaging-reach-service-governed–4.54): the universal orchestrator is the ONE agent; this
+backend (CONCEPT:MERISTEM-ECO.messaging.messaging-reach-service-governed–4.54): the universal orchestrator is the ONE agent; this
 backend is a thin transport that only (1) receives Mattermost posts and normalizes them
 into the shared :class:`InboundEvent` the ``InboundRouter`` consumes, and (2) renders the
 orchestrator's reply back to a Mattermost channel/DM via a bot token. All capability
@@ -26,8 +26,8 @@ Operator provisioning (the bot account is created out-of-band):
     2. Copy the generated **token** → ``MATTERMOST_TOKEN`` (store in OpenBao ``apps/<svc>``).
     3. Add the bot to the teams/channels it should listen + post in (or DM it).
 
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
-CONCEPT:AU-ECO.messaging.mattermost-backend — Mattermost as a first-class bidirectional messaging platform
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+CONCEPT:MERISTEM-ECO.messaging.mattermost-backend — Mattermost as a first-class bidirectional messaging platform
 """
 
 from __future__ import annotations
@@ -78,7 +78,7 @@ def _parse_mattermost_url(url: str) -> tuple[str, str, int, str]:
 
 
 class MattermostBackend(MessagingBackend):
-    """Mattermost backend via mattermostdriver. CONCEPT:AU-ECO.messaging.native-backend-abstraction/4.90.
+    """Mattermost backend via mattermostdriver. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction/4.90.
 
     Outbound uses the bot REST API; inbound consumes the server WebSocket event stream
     (``posted`` events), normalized into the shared :class:`InboundEvent` so the universal
@@ -91,7 +91,7 @@ class MattermostBackend(MessagingBackend):
         self._event_queue: asyncio.Queue[InboundEvent] = asyncio.Queue()
         self._listening = False
         self._bot_user_id: str = ""
-        # Base ``.../api/v4`` URL for authenticated file downloads (CONCEPT:AU-ECO.messaging.voice-attachment-fallback);
+        # Base ``.../api/v4`` URL for authenticated file downloads (CONCEPT:MERISTEM-ECO.messaging.voice-attachment-fallback);
         # set in :meth:`connect` from the same parsed MATTERMOST_URL the driver uses.
         self._files_base_url: str = ""
 
@@ -104,7 +104,7 @@ class MattermostBackend(MessagingBackend):
         return CAPABILITY_MATRIX["mattermost"]
 
     async def connect(self) -> None:
-        """Connect to Mattermost — send-ready, no WebSocket. CONCEPT:AU-ECO.messaging.native-backend-abstraction/4.90.
+        """Connect to Mattermost — send-ready, no WebSocket. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction/4.90.
 
         Logs in the bot for the REST API and resolves the bot's own user id (used to drop
         the bot's own posts from the inbound stream, the Mattermost analogue of avoiding an
@@ -145,7 +145,7 @@ class MattermostBackend(MessagingBackend):
 
         self._connected = True
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.mattermost-backend] Mattermost backend connected (send-ready, bot=%s).",
+            "[CONCEPT:MERISTEM-ECO.messaging.mattermost-backend] Mattermost backend connected (send-ready, bot=%s).",
             self._bot_user_id or configured_bot or "?",
         )
 
@@ -156,7 +156,7 @@ class MattermostBackend(MessagingBackend):
             return str(me.get("id", ""))
         except Exception as exc:  # best-effort bot-id resolution; falls back to MATTERMOST_BOT_USER, connect() still succeeds
             logger.debug(
-                "[CONCEPT:AU-ECO.messaging.mattermost-backend] could not resolve bot user id: %s",
+                "[CONCEPT:MERISTEM-ECO.messaging.mattermost-backend] could not resolve bot user id: %s",
                 exc,
             )
             return configured_bot
@@ -168,7 +168,7 @@ class MattermostBackend(MessagingBackend):
                     self._driver.disconnect()  # closes the websocket loop
                 except Exception as exc:  # best-effort websocket teardown; logout() still runs after this
                     logger.debug(
-                        "[CONCEPT:AU-ECO.messaging.mattermost-backend] websocket disconnect: %s",
+                        "[CONCEPT:MERISTEM-ECO.messaging.mattermost-backend] websocket disconnect: %s",
                         exc,
                     )
                 self._listening = False
@@ -184,7 +184,7 @@ class MattermostBackend(MessagingBackend):
         reply_to_id: str = "",
         metadata: dict[str, Any] | None = None,
     ) -> SendResult:
-        """Send a Mattermost post (Markdown-native). CONCEPT:AU-ECO.messaging.native-backend-abstraction/4.90.
+        """Send a Mattermost post (Markdown-native). CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction/4.90.
 
         The universal agent replies in Markdown, which Mattermost renders directly — no
         per-platform conversion needed (unlike Telegram's HTML subset). A threaded reply
@@ -206,7 +206,7 @@ class MattermostBackend(MessagingBackend):
             )
         except Exception as e:
             logger.error(
-                "[CONCEPT:AU-ECO.messaging.mattermost-backend] Mattermost send failed: %s",
+                "[CONCEPT:MERISTEM-ECO.messaging.mattermost-backend] Mattermost send failed: %s",
                 e,
             )
             return SendResult(
@@ -221,7 +221,7 @@ class MattermostBackend(MessagingBackend):
         *,
         metadata: dict[str, Any] | None = None,
     ) -> SendResult:
-        """Edit a Mattermost post in place (Markdown-native). CONCEPT:AU-ORCH.execution.messaging-orchestration-transparency
+        """Edit a Mattermost post in place (Markdown-native). CONCEPT:MERISTEM-ORCH.execution.messaging-orchestration-transparency
 
         Uses the driver's post PATCH (``PUT /posts/{id}/patch``) so ONE status message can
         EVOLVE as a long delegation streams checkpoints, instead of N separate posts. The
@@ -241,7 +241,7 @@ class MattermostBackend(MessagingBackend):
             )
         except Exception as e:  # failure correctly surfaced via SendResult(success=False); caller falls back to a new post
             logger.debug(
-                "[CONCEPT:AU-ORCH.execution.messaging-orchestration-transparency] Mattermost edit failed: %s",
+                "[CONCEPT:MERISTEM-ORCH.execution.messaging-orchestration-transparency] Mattermost edit failed: %s",
                 e,
             )
             return SendResult(
@@ -249,7 +249,7 @@ class MattermostBackend(MessagingBackend):
             )
 
     async def send_reaction(self, channel_id: str, message_id: str, emoji: str) -> None:
-        """Add a reaction (CONCEPT:AU-ECO.messaging.messaging-renderer-core-reaction/4.81 — the messaging renderer of a core reaction)."""
+        """Add a reaction (CONCEPT:MERISTEM-ECO.messaging.messaging-renderer-core-reaction/4.81 — the messaging renderer of a core reaction)."""
         user_id = self._bot_user_id
         if not user_id:
             user = await asyncio.to_thread(self._driver.users.get_user, "me")
@@ -274,7 +274,7 @@ class MattermostBackend(MessagingBackend):
         )
 
     async def list_channels(self) -> list[Channel]:
-        """List Mattermost channels the bot can reach. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """List Mattermost channels the bot can reach. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         user = await asyncio.to_thread(self._driver.users.get_user, "me")
         teams = await asyncio.to_thread(self._driver.teams.get_user_teams, user["id"])
         channels = []
@@ -298,7 +298,7 @@ class MattermostBackend(MessagingBackend):
     def _post_attachments(self, post: dict[str, Any]) -> list[MediaAttachment]:
         """Turn a Mattermost post's ``metadata.files`` into :class:`MediaAttachment`\\s.
 
-        CONCEPT:AU-ECO.messaging.voice-attachment-fallback — the server populates
+        CONCEPT:MERISTEM-ECO.messaging.voice-attachment-fallback — the server populates
         ``metadata.files`` with the full ``FileInfo`` array on every ``posted`` WebSocket
         event (so this needs no extra REST round trip); previously unparsed here, so a
         voice-note/audio upload never reached the core transcription path
@@ -384,7 +384,7 @@ class MattermostBackend(MessagingBackend):
         )
 
     async def _start_intake(self) -> None:
-        """Start the inbound WebSocket consumer once (CONCEPT:AU-ECO.messaging.mattermost-backend).
+        """Start the inbound WebSocket consumer once (CONCEPT:MERISTEM-ECO.messaging.mattermost-backend).
 
         ``mattermostdriver``'s ``init_websocket(handler)`` blocks on its own event loop, so
         we run it on a worker thread and hand each frame back to THIS loop's queue via
@@ -419,18 +419,18 @@ class MattermostBackend(MessagingBackend):
                 self._driver.init_websocket(_on_event)
             except Exception as exc:  # surface, never crash the daemon
                 logger.error(
-                    "[CONCEPT:AU-ECO.messaging.mattermost-backend] Mattermost websocket stopped: %s",
+                    "[CONCEPT:MERISTEM-ECO.messaging.mattermost-backend] Mattermost websocket stopped: %s",
                     exc,
                 )
 
         asyncio.create_task(asyncio.to_thread(_run_ws))
         self._listening = True
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.mattermost-backend] Mattermost websocket inbound started."
+            "[CONCEPT:MERISTEM-ECO.messaging.mattermost-backend] Mattermost websocket inbound started."
         )
 
     async def listen(self) -> AsyncIterator[InboundEvent]:
-        """Yield inbound Mattermost events from the WebSocket stream. CONCEPT:AU-ECO.messaging.native-backend-abstraction/4.90."""
+        """Yield inbound Mattermost events from the WebSocket stream. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction/4.90."""
         await self._start_intake()
         while self._connected:
             try:

@@ -14,7 +14,7 @@ import pytest
 
 from arbora.security import oidc_discovery
 
-ISS = "https://idp.test/realms/homelab"  # non-loopback issuer requires HTTPS (AU-OS.identity)
+ISS = "https://idp.test/realms/homelab"  # non-loopback issuer requires HTTPS (MERISTEM-OS.identity)
 DOC = {
     "issuer": ISS,
     "jwks_uri": f"{ISS}/protocol/openid-connect/certs",

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """OAuth log-hygiene filter for the vendored MCP SDK's OAuth modules (U-54).
 
-CONCEPT:AU-ECO.mcp.oauth-log-hygiene
+CONCEPT:MERISTEM-ECO.mcp.oauth-log-hygiene
 
 The MCP SDK's browser-OAuth client code (``mcp.client.auth.oauth2``,
 ``fastmcp.client.auth.oauth``) logs at INFO/DEBUG/exception level, tuned for

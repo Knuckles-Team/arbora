@@ -1,6 +1,6 @@
 """Attack-rejection + lifecycle tests for the GOC-85 remote browser-OAuth broker.
 
-CONCEPT:AU-ECO.mcp.remote-oauth-broker
+CONCEPT:MERISTEM-ECO.mcp.remote-oauth-broker
 
 Every fail-closed control in ``agent_utilities/mcp/remote_oauth_broker.py`` is proven
 here against a KNOWN-BAD input, per the lane's own standing rule ("a security control

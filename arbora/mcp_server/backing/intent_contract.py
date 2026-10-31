@@ -1,4 +1,4 @@
-"""The single MCP tool contract of the ecosystem (CONCEPT:AU-ECO.mcp.intent-surface-condensed-collapse).
+"""The single MCP tool contract of the ecosystem (CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse).
 
 Every MCP server built on agent-utilities — arbora and every fleet connector —
 serves the same contract: a handful of **intent tools** (``ask``, ``find``,

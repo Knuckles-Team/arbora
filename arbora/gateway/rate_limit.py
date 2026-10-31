@@ -1,6 +1,6 @@
 """Per-tenant token-bucket rate limiting for the API gateway.
 
-CONCEPT:AU-OS.observability.no-op-without-metrics — Gateway Middle-Tier Hardening.
+CONCEPT:MERISTEM-OS.observability.no-op-without-metrics — Gateway Middle-Tier Hardening.
 
 Pure-ASGI middleware mounted by
 :func:`arbora.gateway.graph_api.register_graph_routes` INSIDE the
@@ -77,7 +77,7 @@ class _TokenBucket:
 
 class GatewayRateLimitMiddleware:
     """Pure-ASGI per-tenant token-bucket rate limiter
-    (CONCEPT:AU-OS.observability.no-op-without-metrics)."""
+    (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics)."""
 
     def __init__(
         self,

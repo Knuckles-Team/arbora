@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """GOC-62 conformance-suite skeleton (D2/D3(b)).
 
-CONCEPT:AU-OS.identity.stack-wide-auth-conformance — see
+CONCEPT:MERISTEM-OS.identity.stack-wide-auth-conformance — see
 ``plans/arbora-completion-program/decisions/GOC-62-keycloak-auth-standard.md``
 §D2 for the full design. Hosted here (ARBORA-HOST-R008, MERISTEM-BOUNDARY-R014's
 security/* seed group) because the surface it introspects —

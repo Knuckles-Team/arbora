@@ -11,7 +11,7 @@ autouse, so tests that specifically exercise the denied/unauthenticated path
 keep seeing that path.
 
 ``_empty_local_skill_catalog_by_default`` isolates every test in this
-directory from the local-skill source (CONCEPT:AU-KG.retrieval.unified-
+directory from the local-skill source (CONCEPT:MERISTEM-KG.retrieval.unified-
 capability-contract, ``arbora.fleet.local_skill_catalog``): the real
 ``build_local_skill_catalog`` resolves whatever is actually installed in
 THIS process (agent-utilities' own bundled skills, arbora's own, any

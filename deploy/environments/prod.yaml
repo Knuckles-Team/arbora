@@ -1,4 +1,4 @@
-# Named environment profile: prod — CONCEPT:AU-OS.deployment.genesis-environment-profiles
+# Named environment profile: prod — CONCEPT:MERISTEM-OS.deployment.genesis-environment-profiles
 #
 # Genesis k8s deployment inputs for the "prod" environment. Every value below is
 # explicit and complete; nothing here is inferred or filled in at apply time —

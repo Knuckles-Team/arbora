@@ -16,7 +16,7 @@ client via ``Depends``). Hand-written clients are ``**kwargs``, so each takes a
 single ``params_json`` argument; a normalized operation ``manifest`` (e.g.
 codegen'd from an OpenAPI spec) yields fully-typed operations instead.
 
-CONCEPT:AU-ECO.mcp.intent-surface-condensed-collapse — operations behind the one intent contract
+CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse — operations behind the one intent contract
 """
 
 from __future__ import annotations
@@ -523,7 +523,7 @@ def register_action_provider(mcp: Any, tool_name: str, actions: Any) -> None:
 
     Idempotent per ``(mcp, tool_name)`` — last write wins.
 
-    CONCEPT:AU-ECO.mcp.verbose-auto-wire — dynamic (runtime) actions become operations
+    CONCEPT:MERISTEM-ECO.mcp.verbose-auto-wire — dynamic (runtime) actions become operations
     """
     providers: dict[str, Any] = getattr(mcp, _ACTION_PROVIDERS_ATTR, {})
     providers[tool_name] = actions
@@ -775,7 +775,7 @@ def register_tool_surface(
     Returns the list of registered condensed tags (mirrors the fleet's
     ``registered_tags``).
 
-    CONCEPT:AU-ECO.mcp.intent-surface-condensed-collapse — one intent contract across the fleet
+    CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse — one intent contract across the fleet
     """
     from fastmcp import FastMCP
 

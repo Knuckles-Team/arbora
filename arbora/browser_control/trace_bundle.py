@@ -5,7 +5,7 @@ privacy-safe binding references, while the canonical trace ontology owns all
 content digests and event sequencing.  A missing native typed-batch authority is
 an error; safety-sensitive callers must never degrade to partial serial writes.
 
-CONCEPT:AU-KG.audit.trace-id-assigned-at-emission
+CONCEPT:MERISTEM-KG.audit.trace-id-assigned-at-emission
 """
 
 from __future__ import annotations

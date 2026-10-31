@@ -8,7 +8,7 @@ COHESIVE, intent-scoped tools, each with a short scannable description:
 * ``graph_research`` — assimilation / research pipeline
 * ``graph_evaluate`` — eval, harness gates, world-model, forecasting
 * ``graph_explain``  — the universal context plane (one cited answer per question)
-* ``graph_observe``  — KG-native observability/eval analytics (CONCEPT:AU-KG.ingest.observability-queries-opik-cannot)
+* ``graph_observe``  — KG-native observability/eval analytics (CONCEPT:MERISTEM-KG.ingest.observability-queries-opik-cannot)
 
 The code/research/evaluate/explain tools are thin facades: they carry only a focused
 description and delegate to the same action core without duplicating logic.
@@ -174,7 +174,7 @@ def register_analyze_suite_tools(
     @mcp.tool(
         name="graph_explain",
         description=(
-            "The UNIVERSAL context plane (CONCEPT:AU-KG.retrieval.route-question-its-domain): route a question to its domain "
+            "The UNIVERSAL context plane (CONCEPT:MERISTEM-KG.retrieval.route-question-its-domain): route a question to its domain "
             "provider and return ONE grounded, cited answer. action='explain' with "
             "target='domain:intent' (e.g. 'ops:why', 'code:usage', 'deploy:status', "
             "'entity:health') — or a bare intent with the domain inferred, or target='domains' "
@@ -184,7 +184,7 @@ def register_analyze_suite_tools(
             "entity/tickets/deploys/process (KG-2.139), capability (Capability Power "
             "Descriptor for a arbora tool by id, e.g. 'capability:graph_query', or "
             "'capability:list' for the browsable index — Seam 8 Phase 1, "
-            "CONCEPT:AU-KG.retrieval.capability-power-descriptor). "
+            "CONCEPT:MERISTEM-KG.retrieval.capability-power-descriptor). "
             "action='recommend' shares this tool's hybrid-retrieval substrate but returns "
             "RANKED items (not a single cited answer): a PauseRec implicit-reasoning "
             "generative recommender over query=intent/history — KG-2.93."

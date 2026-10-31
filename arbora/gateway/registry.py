@@ -1,6 +1,6 @@
 """Widget Registry — auto-discovers and manages service widgets.
 
-CONCEPT:AU-OS.config.gateway-service-dashboard — Gateway Service Dashboard
+CONCEPT:MERISTEM-OS.config.gateway-service-dashboard — Gateway Service Dashboard
 
 Mirrors Homepage's ``widgets.js`` / ``components.js`` registry pattern
 but uses Python's import mechanism for discovery. Now lives inside
@@ -105,7 +105,7 @@ class Registry:
 
     Provides lazy loading — widgets are only imported when first accessed.
     Connector packages are never imported; live availability comes from the
-    EG-backed fleet catalog when the widget delegates its MCP operation.
+    Medulla-backed fleet catalog when the widget delegates its MCP operation.
     """
 
     def __init__(self) -> None:

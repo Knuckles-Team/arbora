@@ -200,7 +200,7 @@ async def test_probe_server_reports_stdio_prohibited_as_stated_reason(
 
     Uses an ordinary fleet server name, not "arbora" -- that name is
     structurally excluded from the catalog (self, served natively) by the
-    EG-backed catalog source, so probing it would report "not in catalog"
+    Medulla-backed catalog source, so probing it would report "not in catalog"
     rather than exercising the stdio-prohibition path under test."""
     from arbora.core.settings import runtime_config as config
 

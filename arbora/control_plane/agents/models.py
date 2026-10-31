@@ -6,9 +6,9 @@ release pointers, approvals, policy ceilings, evaluation evidence, and
 privacy-safe read projections.  Runtime dispatch remains owned by the
 existing orchestration path.
 
-(CONCEPT:AU-AHE.harness.unified-artifact-lineage,
-AU-ORCH.dispatch.kg-governed-agent-swarm,
-AU-OS.config.desired-state-fleet-reconciler)
+(CONCEPT:MERISTEM-AHE.harness.unified-artifact-lineage,
+MERISTEM-ORCH.dispatch.kg-governed-agent-swarm,
+MERISTEM-OS.config.desired-state-fleet-reconciler)
 """
 
 from __future__ import annotations

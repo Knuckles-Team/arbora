@@ -39,7 +39,7 @@ PUBLIC_ERROR_MESSAGES = MappingProxyType(
         "engine_degraded": (
             "The knowledge graph engine is temporarily overloaded; retry shortly."
         ),
-        # CONCEPT:AU-KG.backend.explicit-graph-selection — an explicit `graph`
+        # CONCEPT:MERISTEM-KG.backend.explicit-graph-selection — an explicit `graph`
         # parameter (a physical engine graph, distinct from `connection`, a
         # backend alias) that cannot be honored. Fail-closed: never a fallback
         # to a default graph, never a union. Two distinct codes rather than
@@ -212,7 +212,7 @@ _DETAIL_STORE_MAX_ENTRIES = 512
 _detail_store: OrderedDict[str, dict[str, Any]] = OrderedDict()
 _detail_store_lock = threading.Lock()
 
-#: De-opinionated durability seam (CONCEPT:AU-KG.audit.error-detail-resolution):
+#: De-opinionated durability seam (CONCEPT:MERISTEM-KG.audit.error-detail-resolution):
 #: error_surface takes no position on the durable backend — a KG-provenance
 #: writer, a database, or nothing at all (the default, ``None``). When set,
 #: every recorded detail is ALSO handed to the sink, best-effort: a failing or
@@ -220,7 +220,7 @@ _detail_store_lock = threading.Lock()
 #: path (see :func:`_record_error_detail`). A sink that additionally exposes a
 #: ``resolve(correlation_id) -> dict | None`` method (duck-typed, not part of
 #: the required write contract) is also used as a read-back fallback by
-#: :func:`resolve_error_detail` (CONCEPT:AU-KG.audit.durable-error-detail).
+#: :func:`resolve_error_detail` (CONCEPT:MERISTEM-KG.audit.durable-error-detail).
 DetailPersistenceSink = Any  # Callable[[str, dict[str, Any]], None]
 _detail_persistence_sink: Any | None = None
 

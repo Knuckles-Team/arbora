@@ -6,8 +6,8 @@ release evidence; it deliberately does not contain request counters, health
 samples, raw configuration bodies, or secret values.  Secret/key fields are
 opaque references resolved by a later deployment boundary.
 
-(CONCEPT:AU-OS.identity.tenant-rbac-admission,
-AU-OS.governance.verified-write-state-advance)
+(CONCEPT:MERISTEM-OS.identity.tenant-rbac-admission,
+MERISTEM-OS.governance.verified-write-state-advance)
 """
 
 from __future__ import annotations

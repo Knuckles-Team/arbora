@@ -1,4 +1,4 @@
-"""Discord Messaging Backend (CONCEPT:AU-ECO.messaging.native-backend-abstraction).
+"""Discord Messaging Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction).
 
 Implements ``MessagingBackend`` for Discord using the ``discord.py`` library.
 Supports full bidirectional messaging with threads, reactions, embeds, typing
@@ -14,7 +14,7 @@ Configuration::
     # or
     MESSAGING_DISCORD_TOKEN=<your-bot-token>
 
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 
 from __future__ import annotations
@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 class DiscordBackend(MessagingBackend):
     """Discord messaging backend using ``discord.py``.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
     Features:
         - Full Gateway WebSocket connection for real-time events
@@ -85,7 +85,7 @@ class DiscordBackend(MessagingBackend):
     async def connect(self) -> None:
         """Connect to Discord Gateway.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Raises:
             ImportError: If ``discord.py`` is not installed.
@@ -138,7 +138,7 @@ class DiscordBackend(MessagingBackend):
                     direction=MessageDirection.INBOUND,
                     attachments=[
                         MediaAttachment(
-                            # CONCEPT:AU-ECO.messaging.voice-attachment-fallback — classify by
+                            # CONCEPT:MERISTEM-ECO.messaging.voice-attachment-fallback — classify by
                             # discord.py's own content_type so a voice-note/audio upload
                             # reaches the core transcription path; Discord's CDN attachment
                             # URL is already directly fetchable (no auth header needed).
@@ -177,7 +177,7 @@ class DiscordBackend(MessagingBackend):
         @self._client.event
         async def on_ready() -> None:
             logger.info(
-                "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] "
+                "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] "
                 "Discord connected"
             )
 
@@ -187,13 +187,13 @@ class DiscordBackend(MessagingBackend):
         await asyncio.sleep(2)
         self._connected = True
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Discord backend connected."
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Discord backend connected."
         )
 
     async def disconnect(self) -> None:
         """Disconnect from Discord Gateway.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
         """
         if self._client:
             await self._client.close()
@@ -212,7 +212,7 @@ class DiscordBackend(MessagingBackend):
     ) -> SendResult:
         """Send a message to a Discord channel.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Supports Discord embeds via ``metadata["embed"]``.
         """
@@ -245,7 +245,7 @@ class DiscordBackend(MessagingBackend):
             )
         except Exception as e:
             logger.error(
-                "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Discord send failed: %s",
+                "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Discord send failed: %s",
                 e,
             )
             return SendResult(
@@ -258,7 +258,7 @@ class DiscordBackend(MessagingBackend):
     async def send_reaction(self, channel_id: str, message_id: str, emoji: str) -> None:
         """Add a reaction to a Discord message.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
         """
         channel = self._client.get_channel(int(channel_id))
         if channel is None:
@@ -269,7 +269,7 @@ class DiscordBackend(MessagingBackend):
     async def send_typing(self, channel_id: str) -> None:
         """Send typing indicator in a Discord channel.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
         """
         channel = self._client.get_channel(int(channel_id))
         if channel:
@@ -280,7 +280,7 @@ class DiscordBackend(MessagingBackend):
     ) -> Thread:
         """Create a thread on a Discord message.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
         """
         channel = self._client.get_channel(int(channel_id))
         if channel is None:
@@ -297,7 +297,7 @@ class DiscordBackend(MessagingBackend):
     async def listen(self) -> AsyncIterator[InboundEvent]:
         """Listen for inbound Discord events.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Yields events from the internal queue populated by Gateway handlers.
         """
@@ -311,7 +311,7 @@ class DiscordBackend(MessagingBackend):
     async def list_channels(self) -> list[Channel]:
         """List accessible Discord channels.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
         """
         channels = []
         for guild in self._client.guilds:
@@ -333,7 +333,7 @@ class DiscordBackend(MessagingBackend):
     async def list_members(self, channel_id: str) -> list[dict[str, Any]]:
         """List members of a Discord channel.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
         """
         channel = self._client.get_channel(int(channel_id))
         if not channel or not hasattr(channel, "members"):

@@ -22,7 +22,7 @@ degrades every method to a no-op / empty read (safe to construct
 unconditionally), and every write is best-effort — a KG write failure here
 must never turn the CALLER's original exception into a second failure.
 
-Persisted shape (CONCEPT:AU-KG.audit.durable-error-detail, `:ErrorDetail` in
+Persisted shape (CONCEPT:MERISTEM-KG.audit.durable-error-detail, `:ErrorDetail` in
 ``ontology_orchestration.ttl``): one node per correlation id, holding the
 SAME sanitized ``error_class`` / ``failing_layer`` / ``traceback`` /
 ``tenant_id`` bundle already sanitized by

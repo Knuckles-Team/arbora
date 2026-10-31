@@ -1,6 +1,6 @@
 """Tests for named, explicitly-reviewable genesis k8s deployment-input profiles.
 
-CONCEPT:AU-OS.deployment.genesis-environment-profiles
+CONCEPT:MERISTEM-OS.deployment.genesis-environment-profiles
 
 Covers: the three shipped defaults (dev/test/prod) load and validate; the
 operator extension mechanism (a new profile name with zero code change);

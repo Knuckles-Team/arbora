@@ -49,7 +49,7 @@ class CapabilitySearchRequest(_StrictModel):
 
 
 class CapabilityCandidate(_StrictModel):
-    """One authorized candidate returned by the EG-backed search port."""
+    """One authorized candidate returned by the Medulla-backed search port."""
 
     kind: CapabilityKind
     name: str = Field(min_length=1, max_length=512)
@@ -141,7 +141,7 @@ class AgentExecutionRequest(_StrictModel):
 
 
 class AgentExecutionResult(_StrictModel):
-    """Typed result returned by the AU-owned agent execution port."""
+    """Typed result returned by the Meristem-owned agent execution port."""
 
     run_id: str = Field(min_length=1, max_length=512)
     output: str

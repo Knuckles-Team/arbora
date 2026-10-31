@@ -1,4 +1,4 @@
-"""Tests for native multi-realm JWT trust (CONCEPT:AU-OS.identity.native-multi-realm-jwt).
+"""Tests for native multi-realm JWT trust (CONCEPT:MERISTEM-OS.identity.native-multi-realm-jwt).
 
 A comma-separated FASTMCP_SERVER_AUTH_JWT_ISSUER + _JWKS_URI builds one JWTVerifier per
 realm; a token is accepted if ANY realm validates it. This enables a zero-downtime Keycloak
@@ -17,7 +17,7 @@ from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
 
 def _args(**kw: object) -> argparse.Namespace:
     # NOTE: fake issuer/JWKS URLs below use https:// — ``_secure_auth_url``
-    # requires HTTPS for any non-loopback hostname (AU-OS.identity hardening).
+    # requires HTTPS for any non-loopback hostname (MERISTEM-OS.identity hardening).
     base: dict[str, object] = {
         "token_jwks_uri": None,
         "token_issuer": None,
