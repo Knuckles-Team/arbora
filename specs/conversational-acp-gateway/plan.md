@@ -1,4 +1,6 @@
-# ARBORA-ACP — Design and implementation plan
+# ARBORA-ACP — Implementation plan
+
+Governing spec: [spec.md](spec.md). Rows: [requirements.md](requirements.md).
 
 ## Summary
 
@@ -39,52 +41,31 @@ No unknowns remain. The sections below record the earlier research and decisions
 
 The sections below hold the architecture, ownership, data flow and failure modes of this spec.
 
-## Phase 2: Task approach
+### Existing system and reuse
 
-tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
+Arbora already has one principal/tenant/scope resolution path consumed by REST and MCP ([ARBORA-IDENTITY-R001](../identity-access/spec.md)). ACP admission must call that same path rather than re-implement verification. `arbora.identity` is the existing owner of session and principal types. `arbora.gateway` is the existing owner of serving composition. No ACP session store exists yet; `R001.1` adds the smallest typed model and admission check, not a transport.
 
-## Complexity Tracking
-
-None. The constitution check passed.
-
-## Build contract
-
-The change must pass the repository pre-commit gates at both stages: `uvx pre-commit run --all-files` and `uvx pre-commit run --all-files --hook-stage pre-push`.
-The wiring gate (`scripts/check_wiring.py`) and the public-spec gate (`scripts/check_public_specs.py`) apply. A new module must have a production caller.
-
-## Production caller chain
-
-Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
-
-## Cross-repo seams
-
-None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
-
-## Existing system and reuse
-
-Arbora already has one principal/tenant/scope resolution path consumed by REST and MCP ([ARBORA-IDENTITY-001](../identity-access/spec.md)). ACP admission must call that same path rather than re-implement verification. `arbora.identity` is the existing owner of session and principal types. `arbora.gateway` is the existing owner of serving composition. No ACP session store exists yet; `R001.1` adds the smallest typed model and admission check, not a transport.
-
-## Admission and binding
+### Admission and binding
 
 A session-policy model records the configured idle and absolute limits and the current chat-adapter availability. An admission check takes the resolved principal (or its absence) and the adapter-availability flag, and returns one of: admitted (with an immutable principal/tenant/scope snapshot and both expiry timestamps computed at admission), a typed unauthenticated refusal, or the typed `chat_adapter_unavailable` refusal. No field of the admitted snapshot is mutable after admission; a later call must open a new session rather than widen an existing one.
 
-## Idle and expiry policy
+### Idle and expiry policy
 
 Idle expiry is `last_activity_at + idle_limit`; absolute expiry is `admitted_at + absolute_limit`. A touch/use call evaluates both against the current time before treating a session as usable and refuses with a distinct typed reason for each; it never resets the absolute limit and only advances `last_activity_at` on success.
 
-## Adapter-unavailable refusal
+### Adapter-unavailable refusal
 
 The admission check and the per-message check both consult the same adapter-availability input and return the identical typed refusal code when it is unavailable, before any session is admitted or any reply is attempted. This is the explicit, intentional behavior while meristem's chat adapter does not yet exist or is down — not an error path to be hidden.
 
-## Live integration path
+### Live integration path
 
 `R001.1` ships the typed model and admission check with no transport wiring. A later child slice wires it behind the actual ACP endpoint once meristem's adapter is reachable. Existing identity resolution and status/doctor reporting are the integration points. No new identity issuer or session cookie is introduced.
 
-## Quality and release gates
+### Quality and release gates
 
 Focused tests run via `uv run pytest` against the new module only. Applicable hooks are the repository's existing `complexity-staged`, `kiss-staged`, `dupehound-changed` and `jscpd-differential` fast-subset checks on the changed files. No duplicated identity-resolution or session-store implementation; reuse `arbora.identity` types where a shared shape already exists.
 
-## Coding session admission (R001.3 to R001.8)
+### Coding session admission (R001.3 to R001.8)
 
 Data flow: `session/new` → `register_acp_routes` handler (new, `arbora/acp/routes.py`) → principal from the existing identity path → `CodingSessionAdmission.admit` (extends `arbora/acp/session_policy.py:101`) → `WorkspaceGrant` recorded on the session → admitted snapshot returned. Later: agent capability request → `permission_rule` → `session/request_permission` when needed → forward to the connected client → result back to the agent.
 
@@ -100,12 +81,12 @@ Reachable today: no. No production caller constructs `AcpSessionAdmission`. No A
 
 Reused: session policy, expiry and the adapter-unavailable refusal from R001.1. New: workspace root, grants, capability forwarding and the route.
 
-Cross-repository: `MERISTEM-CONTROL` (`ClientCapabilityToolset`) issues the capability calls through this session; `TUIG-RUNTIME` (`CodingSessionView`) implements the client side.
+Cross-repository: `MERISTEM-RUN-R001.11` (client tools) issues the capability calls through this session; `TUIG-RUNTIME` (`CodingSessionView`) implements the client side.
 
 Decision: the client performs file and terminal actions as ACP client capabilities.
 Rejected: a Arbora service that mounts the host checkout. It copies data and needs host credentials on the cluster.
 
-## Amendment 2026-10-17: bounded coding admission producer
+### bounded coding admission producer
 
 Implement the frozen R001.3 types and a partial R001.4/R001.6 admission
 boundary in `arbora/acp/coding_session.py`. Reuse `AcpSessionAdmission` for
@@ -127,13 +108,13 @@ They establish no served acceptance. Permission forwarding, standing grant
 issuance, routes, traces and the hot path remain open under R001.4 through
 R001.8. No local file/process execution or alternative transport is introduced.
 
-## Amendment 2026-10-25: one harness, two host profiles
+### one harness, two host profiles
 
 Extend R001.5 and R001.9, not a second terminal agent. The default native
 `tuig` client connects to central Arbora. An optional local runtime uses the
 same Arbora admission and AU harness composition over ACP stdio; it must not
-start an AU listener or copy an agent loop into the UI. MERISTEM-BOUNDARY-R015 owns
-the host boundary, R043.11 owns client tools, and R043.9.1/R043.9.2 own
+start an AU listener or copy an agent loop into the UI. `MERISTEM-RUN-R001` owns
+the host boundary, `MERISTEM-RUN-R001.11` owns client tools, and `MERISTEM-RUN-R001.9.1` and `.9.2` own
 completed-history composition. The former MERISTEM-CONTROL links above are historical
 routing references, not proof that a served adapter exists.
 
@@ -169,7 +150,7 @@ Session reopening requires an admitted host-authorized history producer;
 transient connection IDs and Pydantic's in-memory session store are not durable
 recovery, effect replay, or restart-safe cursor evidence. No new store is added.
 
-### R001.5/R001.9 bounded protocol projection
+#### R001.5/R001.9 bounded protocol projection
 
 Use the ACP SDK's JSON-RPC codec and `Agent` interface with one Arbora-owned
 protocol projection over AU `iterate_client_run`. Do not use Pydantic's
@@ -191,7 +172,7 @@ connection teardown. Network registration remains a separate authenticated
 custom-transport slice; this projection alone does not enable a remote route.
 
 
-### Explicit lightweight local profile
+#### Explicit lightweight local profile
 
 `arbora-acp` is an internal subprocess backend for the one user-facing `tuig`
 CLI, not another terminal UI. It requires explicit local selection, model and
@@ -216,7 +197,7 @@ on both stdio and HTTP/SSE. Other unsupported unstable methods still refuse in
 the projection. This is not a durable session recovery or stable ACP extension
 promise; EOF/disconnect remains connection teardown.
 
-### Governed central final-answer projection
+#### Governed central final-answer projection
 
 Central ACP must invoke the existing `agents.run` operation/HostedInvocation and
 native owner/claim authority, preserving server tools and policies. The local
@@ -264,7 +245,7 @@ rotate; authorization changes refuse. Renewal does not extend absolute
 connection limits or revive a closed session. Changed authority still refuses.
 Central token streaming, continuation and installed-wheel acceptance remain open.
 
-### Released baseline qualification — 2026-10-25
+#### Released baseline qualification
 
 AU 3.2.0 is the released minimum for admitted requests, hosted observers and
 history composition. The consumer requires `>=3.2.0,<4.0.0` and resolves the
@@ -278,3 +259,25 @@ production native client. FunctionModel controls only model responses; local
 identity, planning, history, cancellation and cleanup retain their real owners.
 This local reuse of installed dependencies is not a complete frozen install.
 Hosted wheel-only gates and installed-client qualification remain required before merge.
+
+## Phase 2: Task approach
+
+tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
+
+## Complexity Tracking
+
+None. The constitution check passed.
+
+## Build contract
+
+The change must pass the repository pre-commit gates at both stages: `uvx pre-commit run --all-files` and `uvx pre-commit run --all-files --hook-stage pre-push`.
+Gates (`.pre-commit-config.yaml`): `ruff-check`, `ruff-format`, `vulture`, `bandit`, `mypy-env`, `pytest`, `check-orphan-modules`, `check-public-specs`, `spec`, `spec-templates`, `secrets`, `uv-lock`.
+The wiring gate (`scripts/check_wiring.py`) and the public-spec gate (`scripts/check_public_specs.py`) apply. A new module must have a production caller.
+
+## Production caller chain
+
+Served entry: `POST {prefix}/acp/connections` → `register_acp_routes` (`arbora/acp/http_transport.py:454`, called at `arbora/gateway/graph_api.py:323`) → `_Gateway.endpoint` → `HostedACPAgent` (`arbora/acp/adapter.py:86`). Stdio entry: `arbora/acp/local_runtime.py::main`. Central entry: `configure_central_acp` (`arbora/acp/central_runtime.py:262`). Each row also names its own chain. No obsolete path remains to delete.
+
+## Cross-repo seams
+
+None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
