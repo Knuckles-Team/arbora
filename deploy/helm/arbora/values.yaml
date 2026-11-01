@@ -157,9 +157,6 @@ engine:
   extraArgs: []
   config:
     EPISTEMIC_GRAPH_PERSIST_BACKEND: redb
-    EPISTEMIC_GRAPH_REQUIRE_VERIFIED_CONTEXT: "1"
-    EPISTEMIC_GRAPH_REQUIRE_SIGNED: "1"
-    EPISTEMIC_GRAPH_RLS_DEFAULT_DENY: "1"
   # Separate volume only for out-of-process-shared; unified uses arbora.persistence.
   persistence:
     size: 100Gi

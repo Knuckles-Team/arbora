@@ -153,7 +153,7 @@ _PROFILE_PRESETS: dict[str, dict[str, Any]] = {
         "EPISTEMIC_GRAPH_MAX_RESIDENT_GRAPHS": 1024,
         "EPISTEMIC_GRAPH_LAZY_OPEN_PAGE_SIZE": 4096,
         "EPISTEMIC_GRAPH_MAX_NODES_PER_GRAPH": 250000,
-        "EPISTEMIC_GRAPH_ENCRYPTION_KEY_REF": "env://ENGINE_DATA_KEY",
+        "MEDULLA_ENCRYPTION_KEY_REF": "env://ENGINE_DATA_KEY",
         "GATEWAY_METRICS": "1",
         "USAGE_CONTENT_RETENTION": "metadata",
         "LANGFUSE_CAPTURE_CONTENT": False,
@@ -212,7 +212,7 @@ _PROFILE_REQUIRED: dict[str, tuple[str, ...]] = {
     "tiny": (),
     "single-node-prod": (
         "GRAPH_DB_CONNECTION_PROFILE_REF",
-        "EPISTEMIC_GRAPH_ENCRYPTION_KEY_REF",
+        "MEDULLA_ENCRYPTION_KEY_REF",
         "AUTH_JWT_JWKS_URI",
         "AUTH_JWT_ISSUER",
         "AUTH_JWT_AUDIENCE",
@@ -246,8 +246,8 @@ _RESTART_REQUIRED: frozenset[str] = frozenset(
         "STATE_DB_URI",
         "GRAPH_SERVICE_ENDPOINTS",
         "GRAPH_SERVICE_AUTH_SECRET",
-        "EPISTEMIC_GRAPH_ENCRYPTION_KEY_REF",
-        "EPISTEMIC_GRAPH_STARTUP_TIMEOUT_SECS",
+        "MEDULLA_ENCRYPTION_KEY_REF",
+        "MEDULLA_STARTUP_TIMEOUT_SECS",
         "KG_DAEMON_ROLE",
         "TASK_QUEUE_BACKEND",
         "ARBORA_CONFIG_DIR",
@@ -409,13 +409,6 @@ def generate_engine_admission(
             "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON": (
                 "secret://arbora/EPISTEMIC_GRAPH_SIGNER_KEYS_JSON"
             ),
-            "EPISTEMIC_GRAPH_SIGNER_KEYS_SHAPE": {
-                principal: {
-                    "key": "<32-byte hex signer key>",
-                    "allowed_roles": [],
-                    "may_grant_system": True,
-                }
-            },
             "EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS": f"*={importer}",
         },
         "arbora_config": {
