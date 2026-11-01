@@ -217,7 +217,7 @@ Views must consume those fields without reading RDF names or guessing aliases.
 | `contextBudgetTokens`, `MEDULLA-ORCH-VOCAB-R009.3` | `context_budget_tokens` | Run context budget |
 | `costUsd`, `MEDULLA-ORCH-VOCAB-R009.8` | `cost_usd` | This run's cost in USD |
 | `appliedHarnessConfig`, `MEDULLA-ORCH-VOCAB-R009.9` | `harness_config_ref`, `harness_config` | Committed decision reference and authorized projection |
-| AU `PlanState`, `MERISTEM-BOUNDARY-R043.4.1` | `current_plan` | Separate run-state snapshot described below |
+| AU `PlanState` | `current_plan` | Separate run-state snapshot described below |
 
 The applied configuration must resolve the recorded decision edge under the same caller authority.
 `harness_config` projects `context_policy`, `plan_scaffold` and `action_space`; it must not recompute the current configuration.
@@ -249,7 +249,7 @@ Arbora must reject mismatched runs, malformed items and regressing revisions wit
 Unavailable, expired or inaccessible state must carry no items and must not appear current.
 The producer must define expiry and revision semantics before Arbora accepts a snapshot as current.
 
-`MERISTEM-BOUNDARY-R043.4.1` through `.5` own mutable scaffold state and injection outside stored history.
+The owning harness rows own mutable scaffold state and injection outside stored history.
 They specify no public snapshot export, authority binding, revision or expiry contract today.
 The AU owner must extend R014 with that public read contract before this projection becomes available.
 Arbora must not invent an AU method, persist the scaffold, or reconstruct it from stored messages.
