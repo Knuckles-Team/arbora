@@ -113,7 +113,7 @@ The retirement inventory is a checked artifact produced from the existing host r
 
 ### Gateway carry-over: dashboard, Live Artifacts, widget
 
-Cross-repo IDs: MERISTEM-BOUNDARY-R001.2, MERISTEM-BOUNDARY-R001.3, MERISTEM-BOUNDARY-R001.7 (meristem deletions); ARBORA-HOST-R005. Provenance: meristem commits 0eb67c99c (dashboard router), 902f906ca (Live Artifacts router), 7717d2e62 (genius_agent widget).
+Cross-repo ID: ARBORA-HOST-R005. The meristem deletions are recorded by the commits below. Provenance: meristem commits 0eb67c99c (dashboard router), 902f906ca (Live Artifacts router), 7717d2e62 (genius_agent widget).
 
 Deleted dashboard router: prefix `/api/dashboard`. Every route except `/health` requires read capability; mutations require write capability. Capabilities: gateway:read, gateway:write, gateway:admin, admin. API-key callers are unrestricted:
 - GET `/layout` and PUT `/layout`: read and persist the dashboard layout (shared YAML, reads always go back to disk).
@@ -187,7 +187,7 @@ Read `agent_utilities/knowledge_graph/live_artifacts/`. Public names: `LiveArtif
 
 Proposed meristem row (orchestrator adds it; new file `agent_utilities/api/live_artifacts.py`, re-exported from `agent_utilities/api/__init__.py`):
 
-> `MERISTEM-BOUNDARY-R013.<n>` **Export the Live Artifact store, models and refresh service.** Re-export `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `LiveArtifactStore`, `get_live_artifact_store`, `RefreshService`, `RefreshResult`, `DataSource` and `kg_source_resolver` from `agent_utilities.knowledge_graph.live_artifacts` through `agent_utilities.api.live_artifacts`; delete the dead `install_kg_artifact_source`. Verification: an meristem test imports each name from `agent_utilities.api` and the layout fence still passes.
+> **Export the Live Artifact store, models and refresh service.** Re-export `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `LiveArtifactStore`, `get_live_artifact_store`, `RefreshService`, `RefreshResult`, `DataSource` and `kg_source_resolver` from `agent_utilities.knowledge_graph.live_artifacts` through `agent_utilities.api.live_artifacts`; delete the dead `install_kg_artifact_source`. Verification: an meristem test imports each name from `agent_utilities.api` and the layout fence still passes.
 
 Because the AU resolver already re-runs `source_query`, ARBORA-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The arbora request model does not copy them.
 
@@ -201,7 +201,6 @@ Arbora must authenticate, route and project reads. It must not collect counters,
 
 [EG orchestration vocabulary](https://github.com/Knuckles-Team/medulla/tree/main/specs/orchestration-vocabulary) owns the trace and query contracts.
 [AU harness evolution](https://github.com/Knuckles-Team/agent-utilities/tree/main/specs/harness-evolution) owns run mechanisms.
-`MERISTEM-HARNESS-R017.3` collects counters. `MERISTEM-HARNESS-R017.4` forwards them through the ordered `_record_execution_trace` writer.
 `MEDULLA-ORCH-VOCAB-R009.15` through `.17` own validated ingestion and readback.
 Those rows prove graph readback; they do not promise a dedicated `get_run_summary` engine method.
 The adapter must use a published engine client contract. Missing client support blocks implementation, not the entire operation registry.
@@ -218,7 +217,7 @@ Views must consume those fields without reading RDF names or guessing aliases.
 | `contextBudgetTokens`, `MEDULLA-ORCH-VOCAB-R009.3` | `context_budget_tokens` | Run context budget |
 | `costUsd`, `MEDULLA-ORCH-VOCAB-R009.8` | `cost_usd` | This run's cost in USD |
 | `appliedHarnessConfig`, `MEDULLA-ORCH-VOCAB-R009.9` | `harness_config_ref`, `harness_config` | Committed decision reference and authorized projection |
-| AU `PlanState`, `MERISTEM-HARNESS-R014.1` | `current_plan` | Separate run-state snapshot described below |
+| AU `PlanState`, `MERISTEM-BOUNDARY-R043.4.1` | `current_plan` | Separate run-state snapshot described below |
 
 The applied configuration must resolve the recorded decision edge under the same caller authority.
 `harness_config` projects `context_policy`, `plan_scaffold` and `action_space`; it must not recompute the current configuration.
@@ -250,7 +249,7 @@ Arbora must reject mismatched runs, malformed items and regressing revisions wit
 Unavailable, expired or inaccessible state must carry no items and must not appear current.
 The producer must define expiry and revision semantics before Arbora accepts a snapshot as current.
 
-`MERISTEM-HARNESS-R014.1` through `.5` own mutable scaffold state and injection outside stored history.
+`MERISTEM-BOUNDARY-R043.4.1` through `.5` own mutable scaffold state and injection outside stored history.
 They specify no public snapshot export, authority binding, revision or expiry contract today.
 The AU owner must extend R014 with that public read contract before this projection becomes available.
 Arbora must not invent an AU method, persist the scaffold, or reconstruct it from stored messages.
@@ -429,7 +428,7 @@ Missing producer implementation must remain unavailable. Definitions and planned
 
 ### Owner-bound projections (ARBORA-OPS-R054–R058, R061, R063)
 
-- **R054:** Keep `rlm.benchmark` separate from serving-technique evidence. Add a projection through `arbora/api/ops/registry_factory.py:get_registry` and `arbora/api/invoke/pipeline.py:invoke` only after `MERISTEM-INTEGRATION-R014` publishes its producer and receipt.
+- **R054:** Keep `rlm.benchmark` separate from serving-technique evidence. Add a projection through `arbora/api/ops/registry_factory.py:get_registry` and `arbora/api/invoke/pipeline.py:invoke` only after the harness publishes its producer and receipt.
 - **R055:** Bind a read/proposal projection through the shared registry/invoke path only after AU publishes liveness and proposal contracts. No Arbora termination adapter exists.
 - **R056:** Keep `decide.commit` unchanged. Add a distinct review projection through the shared registry/invoke path. Wait until EG/AU publish the review operation and evidence contract.
 - **R057:** Add no repository-writeback attachment until EG `R094.2/.3/.5/.7` and SDK source-effect/receipt contracts publish. The current Arbora tree has no serializer or served handler.
@@ -547,7 +546,7 @@ Extend the composed operation declarations in `arbora/api/ops/memory.py:operatio
 Route provider effects through the existing invocation policy and receipt boundary, never through a read handler.
 SCION-SOURCE-INGEST-R014 owns ordered transcript transport and selected provider dispatch.
 MEDULLA-MEDIA-VOCAB-R001.101 specifies `Method::MeetingTranscriptRevision`, `MeetingSummaryContextV1`, and `CommitMeetingSummaryV1`.
-MERISTEM-SEMANTIC-R030 owns provider admission, retry/attempt accounting, and disabled-provider refusal.
+MERISTEM-HARNESS-CYCLE-R068 owns provider admission, retry/attempt accounting, and disabled-provider refusal.
 The SDK meeting operation and AU receipt contract remain unbound; single-shot dictation cannot satisfy them.
 Preserve segment sequence, correction and finalization revisions, transcript digest, and selected local/hosted provider identity.
 Summary context requires at most 128 spans, 16384 bytes per segment, and 8192 tokens under the EG limit policy.
@@ -639,7 +638,7 @@ Each row composes served `eg.<domain>.<Method>` operations (see `arbora/api/regi
 | `composed operation 816` | `prompts.library.read` | `eg.storage.AgentLibrary`, `eg.storage.AgentTemplate` | agent-webui prompt library and system prompt (`/prompts*`, `/system`) |
 | `composed operation 817` | `fleet.servers.manage` | `eg.cluster.RegisterServer`, `eg.cluster.ListRegisteredServers`, `eg.cluster.FleetCatalog`, `eg.cluster.CatalogAssign`, `eg.cluster.CatalogRemove` | agent-webui MCP server registry (`/mcp/servers*`, `/mcp/server-schema`) |
 | `composed operation 818` | `schedule.tasks.read` | `eg.coordination.ListWorkItems`, `eg.coordination.GetWorkItemOutcome`, `eg.storage.TsRange` | agent-webui scheduled tasks (`/cron/calendar`, `/cron/logs`) |
-| `composed operation 819` | `workflows.run`, `workflows.write` | `eg.storage.AgentGraph`, `eg.storage.AgentAssemble`, `eg.storage.AgentComponent`, `eg.coordination.SubmitWorkItem`, `eg.graph.GetSubgraph`, `eg.query.GetContentVersion`, `eg.transactions.BatchUpdate` | agent-webui workflows (`/workflows*`); CQ-ORCH-R006; process-model connectors |
+| `composed operation 819` | `workflows.run`, `workflows.write` | `eg.storage.AgentGraph`, `eg.storage.AgentAssemble`, `eg.storage.AgentComponent`, `eg.coordination.SubmitWorkItem`, `eg.graph.GetSubgraph`, `eg.query.GetContentVersion`, `eg.transactions.BatchUpdate` | agent-webui workflows (`/workflows*`); MEDULLA-CQ-ORCH-R006; process-model connectors |
 | `composed operation 820` | `ontology.objects.read`, `ontology.objects.write` | `eg.reasoning.GraphSchemaClasses`, `eg.reasoning.OntologyInspect`, `eg.reasoning.ShaclValidate`, `eg.graph.GetNodesByLabel`, `eg.graph.AddNode`, `eg.transactions.BatchUpdate` | agent-webui ontology explorer (`/ontology/*`) |
 | `composed operation 821` | `markets.signals.read` | `eg.compute.FinanceForensicReport`, `eg.compute.FinanceBrierScore`, `eg.compute.FinanceKellyFraction`, `eg.graph.GetNodesByLabel`, `eg.graph.GetNodes` | agent-webui markets app (`/api/apps/markets/*`) |
 | `composed operation 822` | `identity.verify` | `eg.security.GetIdentity`, `eg.security.CheckAccess`, `eg.security.Identity` | agent-webui identity gate (verifies tokens locally until this is served) |
@@ -652,7 +651,7 @@ Each row composes served `eg.<domain>.<Method>` operations (see `arbora/api/regi
 | `composed operation 829` | `incidents.record`, `incidents.read` | `eg.messaging.CepSubscribe`, `eg.messaging.CepPoll`, `eg.messaging.RegisterTrigger`, `eg.messaging.FiredTriggers`, `eg.graph.AddNode`, `eg.graph.CompareAndSetNodeFields`, `eg.compute.MineRootCause` | arbora incident routes; service-health goal |
 | `composed operation 830` | `access.graph_ownership.infer`, `access.graph_ownership.apply` | `eg.security.RbacAdmin`, `eg.security.GovernedChange`, `eg.security.CheckAccess`, `eg.security.GetIdentity`, `eg.reasoning.GraphSchemaList`, `eg.cluster.ListGraphs` | agent-webui graph admission; governance tools |
 | `composed operation 831` | `retrieval.search` | `eg.query.NlQuery`, `eg.ingestion.SemanticSearch`, `eg.ingestion.SemanticIndex`, `eg.graph.GetNeighborsBatch`, `eg.graph.GetSubgraph`, `eg.query.UnifiedQuery`, `eg.compute.CommunityDetection`, `eg.compute.ClusterHierarchyExpand`, `eg.graph.GetNodesByLabel`, `eg.reasoning.Sparql` | served `retrieval.search`; agent-webui `/graph/search`, `/graph/magma`; messaging recall |
-| `composed operation 832` | `query.uql` | `eg.reasoning.ShaclValidate`, `eg.query.Uql`, `eg.query.UnifiedQuery` | orchestration competency (CQ-ORCH-R004) |
+| `composed operation 832` | `query.uql` | `eg.reasoning.ShaclValidate`, `eg.query.Uql`, `eg.query.UnifiedQuery` | orchestration competency (MEDULLA-CQ-ORCH-R004) |
 | `composed operation 833` | `ingest.extraction.ground` | `eg.ingestion.ParseFile`, `eg.compute.MatchOntologyTerms`, `eg.transactions.ApplyChangeEnvelopeDrafts`, `eg.reasoning.ShaclValidate`, `eg.reasoning.OntologyInspect` | document and genealogy prose ingest; CQ-XSRC concept grounding |
 | `composed operation 834` | `traces.read` | `eg.query.ExplainProvenance`, `eg.query.ExplainProvenanceByIds`, `eg.query.Uql`, `eg.query.UnifiedQuery`, `eg.storage.TsRange`, `eg.storage.TsWindow`, `eg.graph.GetSubgraph` | dashboard trace views; orchestration run-trace review |
 | `composed operation 835` | `orchestration.questions.ask` | `eg.storage.AgentAssemble`, `eg.storage.AgentLibrary`, `eg.storage.CapabilityCoverage`, `eg.storage.GuardrailEntailment`, `eg.storage.AgentGraph`, `eg.query.Decide`, `eg.query.ExplainProvenance`, `eg.reasoning.ShaclValidate` | orchestration competency exit gate (questions Q1 to Q8) |
@@ -685,7 +684,7 @@ The consumer stays on the SDK 0.2 release line for this change. SDK 0.3 changes 
 The existing `FleetCaller` obtains an effect decision from `fleet_gateway`.
 The gateway resolves the admitted item again at call time. That decision path
 must require the EG evidence record. Its owner is
-[MEDULLA-TYPED-PACKS-R110](https://github.com/Knuckles-Team/medulla/blob/main/specs/typed-packs-and-catalog/requirements.md).
+[MEDULLA-TYPED-PACKS-R807](https://github.com/Knuckles-Team/medulla/blob/main/specs/typed-packs-and-catalog/requirements.md).
 No Arbora certification store or operator pass flag grants admission.
 
 The resolved record binds tenant, connector, package revision and pack digest.
@@ -787,7 +786,7 @@ inside arbora MCP. arbora serves the underlying `source.*` operations.
 R848 splits into `ARBORA-OPS-R848.1` (the source reads -- delivered),
 `ARBORA-OPS-R848.2` (the source writes -- pending the engine changeset
 substrate) and `ARBORA-OPS-R848.3` (the `source.diff` read --
-specified). `composed operation 849` and `ARBORA-OPS-R851` are unchanged.
+specified). `ARBORA-OPS-R849` and `ARBORA-OPS-R851` are unchanged.
 
 Op-to-tool mapping: arbora serves the `source.*` operations in its
 operation registry. The development surface inside arbora MCP exposes
