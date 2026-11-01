@@ -4,7 +4,17 @@ Governing spec: [spec.md](spec.md). Rows: [requirements.md](requirements.md).
 
 ## Summary
 
-This plan serves the rows of `ARBORA-ACCEPTANCE` in requirements.md. It keeps the earlier design record under Phase 1. The north star and the delivery phase of the spec close the plan.
+Delivery phase: P1
+
+Rows `R006.1` to `R006.4` serve P1 to P4. Row `R006.7` serves P5, the final validation. P5 runs only on the ephemeral stack, because it needs onboarded fixture connectors and their virtual graphs.
+
+This plan serves the rows of `ARBORA-ACCEPTANCE` in requirements.md. The live callers are the acceptance checker (`scripts/check_acceptance_evidence.py`, reusing the schema of `scripts/check_public_specs.py`) and the phase scenarios under `tests/scenarios/`, which enter through the public arbora boundary. The design record sits under Phase 1. The north star and the delivery phase of the spec close the plan.
+
+### Phase ordering
+
+P1 → P2 → P3 → P4 (falsification gate: a failing gate stops planner expansion) → P5.
+
+P1 comes first and is falsifiable: the scenario `ARBORA-ACCEPTANCE-R006.1` proves write, retrieve under policy and inject. Its children prove that the retrieval changes the next action against a control run (`R006.1.1`) and that the trace cites the claim that caused it (`R006.1.2`). No row of a later phase is delivered before those rows are VERIFIED (`R006.1.3`, `PIPE-RELEASE-R020`). P4 holds the falsification gate of the unified planner. If it fails, the planner stops expanding and cross-modal work runs through contracts. P5 holds scale and breadth and waits for P4.
 
 ## Technical Context
 
@@ -20,35 +30,38 @@ This plan serves the rows of `ARBORA-ACCEPTANCE` in requirements.md. It keeps th
 
 ## Constitution Check
 
-- **I. One owner per concept**: No departure is recorded in this plan; the rows carry the proof.
-- **II. Extend before you create**: No departure is recorded in this plan; the rows carry the proof.
-- **III. Specs describe the current state only**: No departure is recorded in this plan; the rows carry the proof.
-- **IV. Requirements are neutral and controlled**: No departure is recorded in this plan; the rows carry the proof.
-- **V. Hard cutover, no legacy path**: No departure is recorded in this plan; the rows carry the proof.
-- **VI. Names carry no version suffix**: No departure is recorded in this plan; the rows carry the proof.
-- **VII. One engine, no second database, no sync**: No departure is recorded in this plan; the rows carry the proof.
-- **VIII. Ask the graph, not a bespoke operation**: No departure is recorded in this plan; the rows carry the proof.
-- **IX. Connectors depend on the SDK and are called through arbora**: No departure is recorded in this plan; the rows carry the proof.
-- **X. Every ontology class rolls up to the core**: No departure is recorded in this plan; the rows carry the proof.
-- **XI. Code stays small, simple and unduplicated**: No departure is recorded in this plan; the rows carry the proof.
-- **XII. No ratchets and no suppressions**: No departure is recorded in this plan; the rows carry the proof.
-- **XIII. Zero flakes**: No departure is recorded in this plan; the rows carry the proof.
-- **XIV. Compile first, then review**: No departure is recorded in this plan; the rows carry the proof.
-- **XV. Python 3.14 standard, 3.12 floor**: No departure is recorded in this plan; the rows carry the proof.
-- **XVI. Install and deploy only from published releases**: No departure is recorded in this plan; the rows carry the proof.
-- **XVII. Publish the gate's tool before the gate**: No departure is recorded in this plan; the rows carry the proof.
-- **XVIII. Landed means reachable**: No departure is recorded in this plan; the rows carry the proof.
-- **XIX. A tag push publishes, with no manual approval**: No departure is recorded in this plan; the rows carry the proof.
-- **XX. Secrets are never traced or logged**: No departure is recorded in this plan; the rows carry the proof.
-- **XXI. Public files stay portable and neutral**: No departure is recorded in this plan; the rows carry the proof.
+- **I. One owner per concept**: Pass. No departure; the rows carry the proof.
+- **II. Extend before you create**: Pass. No departure; the rows carry the proof.
+- **III. Specs describe the current state only**: Pass. No departure; the rows carry the proof.
+- **IV. Requirements are neutral and controlled**: Pass. No departure; the rows carry the proof.
+- **V. Hard cutover, no legacy path**: Pass. No departure; the rows carry the proof.
+- **VI. Names carry no version suffix**: Pass. No departure; the rows carry the proof.
+- **VII. One engine, no second database, no sync**: Pass. No departure; the rows carry the proof.
+- **VIII. Ask the graph, not a bespoke operation**: Pass. No departure; the rows carry the proof.
+- **IX. Connectors depend on the SDK and are called through arbora**: Pass. No departure; the rows carry the proof.
+- **X. Every ontology class rolls up to the core**: Pass. No departure; the rows carry the proof.
+- **XI. Code stays small, simple and unduplicated**: Pass. No departure; the rows carry the proof.
+- **XII. No ratchets and no suppressions**: Pass. No departure; the rows carry the proof.
+- **XIII. Zero flakes**: Pass. No departure; the rows carry the proof.
+- **XIV. Compile first, then review**: Pass. No departure; the rows carry the proof.
+- **XV. Python 3.14 standard, 3.12 floor**: Pass. No departure; the rows carry the proof.
+- **XVI. Install and deploy only from published releases**: Pass. No departure; the rows carry the proof.
+- **XVII. Publish the gate's tool before the gate**: Pass. No departure; the rows carry the proof.
+- **XVIII. Landed means reachable**: Pass. No departure; the rows carry the proof.
+- **XIX. A tag push publishes, with no manual approval**: Pass. No departure; the rows carry the proof.
+- **XX. Secrets are never traced or logged**: Pass. No departure; the rows carry the proof.
+- **XXI. Public files stay portable and neutral**: Pass. No departure; the rows carry the proof.
 
 ## Project Structure
 
 ```text
 specs/acceptance-evidence-freeze/        existing: spec.md, plan.md, requirements.md, tasks.md, test-spec.md
+scripts/check_acceptance_evidence.py     existing: readiness checker
+tests/scenarios/test_p1_closed_loop.py   new: R006.1, R006.1.1, R006.1.2
+tests/scenarios/test_phase_gate.py       new: R006.1.3
 ```
 
-Code paths are named per row in requirements.md. This plan adds no path of its own.
+Other code paths are named per row in requirements.md.
 
 ## Phase 0: Research
 
@@ -135,15 +148,13 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 
 ## Cross-repo seams
 
-The `Depends on` lines of requirements.md name each seam by the row ID that owns it in the other repository.
+None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
 
 ## North star
 
 Delivery runs in phases P1 to P5. Concept-proof scenarios define each phase (`ARBORA-ACCEPTANCE-R006`). The exit gate is competency questions. The ontology answers how to execute a task and produces cross-source reports from connector virtual graphs. Deployment comes only from published package releases. Releases ship delivered cross-repository spec bundles.
 
-## Delivery phase
-
-Rows `R006.1` to `R006.4` serve P1 to P4. Row `R006.7` serves P5, the final validation. P5 runs only on the ephemeral stack, because it needs onboarded fixture connectors and their virtual graphs.
+## Phase placement notes
 
 P5 scenario design: the scenario asserts four answers through the served `ask` and `find` operations. They are a cross-connector join, a federated read over two virtual graphs and engine facts, an execution-plan answer, and refusals that name excluded sources in the coverage block. Arbora supplies the stack and the served operations. Medulla supplies the engine rows `MEDULLA-CQ-XSRC-R012`, `MEDULLA-CQ-CONN-R090` and `MEDULLA-CQ-ORCH-R012`. The release manifest and its scenario field are `PIPE-RELEASE-R023`. The earlier tracker checks for the live door (discovery, connector calls, data, agents, governance, terminal UI) map to P1 to P4. The one open tracker check, a cross-source query over at least two ingested sources, is closed by P5.
 

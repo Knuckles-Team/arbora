@@ -4,6 +4,10 @@ Governing spec: [spec.md](spec.md). Rows: [requirements.md](requirements.md).
 
 ## Summary
 
+Delivery phase: P1
+
+Rows `ARBORA-IDENTITY-R030.1` to `.3` serve P1, because a coding client and the terminal UI need a native sign-in before any scenario can enter through the public boundary.
+
 This plan serves the rows of `ARBORA-IDENTITY` in requirements.md. It keeps the earlier design record under Phase 1. The north star and the delivery phase of the spec close the plan.
 
 ## Technical Context
@@ -626,14 +630,12 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 
 ## Cross-repo seams
 
-The `Depends on` lines of requirements.md name each seam by the row ID that owns it in the other repository.
+None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
 
 ## North star
 
 Delivery runs in phases P1 to P5. Concept-proof scenarios define each phase (`ARBORA-ACCEPTANCE-R006`). The terminal UI replaces third-party coding front ends for daily development.
 
-## Delivery phase
-
-Rows `ARBORA-IDENTITY-R030.1` to `.3` serve P1, because a coding client and the terminal UI need a native sign-in before any scenario can enter through the public boundary.
+## Phase placement notes
 
 Native client authentication: the operator enrols a named client once. The client then fetches tokens itself or through a header helper. The served endpoint publishes protected-resource metadata, so clients with native OAuth need no bridge. This retires the token-refresh service and the stdio bridge.

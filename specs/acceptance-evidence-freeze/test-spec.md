@@ -29,6 +29,9 @@ Run `python3 -m pytest tests/test_check_acceptance_evidence.py -q` from the repo
 | Test ID | Requirement | Expected observation |
 |---|---|---|
 | T-ARBORA-ACCEPTANCE-R006.1 | ARBORA-ACCEPTANCE-R006.1 | Test: `tests/scenarios/test_p1_closed_loop.py::test_write_retrieve_under_policy_and_trace` runs arbora, a loopback medulla server and an in-process meristem run. |
+| T-ARBORA-ACCEPTANCE-R006.1.1 | ARBORA-ACCEPTANCE-R006.1.1 | Test: `tests/scenarios/test_p1_closed_loop.py::test_retrieved_claim_changes_the_next_action` asserts that the with-claim and without-claim actions differ, and that an equal pair fails with `SCENARIO_ACTION_UNCHANGED`. |
+| T-ARBORA-ACCEPTANCE-R006.1.2 | ARBORA-ACCEPTANCE-R006.1.2 | Test: `tests/scenarios/test_p1_closed_loop.py::test_trace_records_action_and_cites_claim` asserts the cited claim ID and a resolving decision record. |
+| T-ARBORA-ACCEPTANCE-R006.1.3 | ARBORA-ACCEPTANCE-R006.1.3 | Test: `tests/scenarios/test_phase_gate.py::test_later_phase_scenario_refuses_until_p1_verified` asserts `PHASE_PREREQUISITE_UNVERIFIED` while a P1 row is open. |
 | T-ARBORA-ACCEPTANCE-R006.2 | ARBORA-ACCEPTANCE-R006.2 | Test: `tests/scenarios/test_p2_reliable_loop.py::test_lineage_conflict_and_memory_lift`. |
 | T-ARBORA-ACCEPTANCE-R006.3 | ARBORA-ACCEPTANCE-R006.3 | Test: `tests/scenarios/test_p3_multi_agent_boundaries.py::test_shared_state_under_policy_with_contradiction`. |
 | T-ARBORA-ACCEPTANCE-R006.4 | ARBORA-ACCEPTANCE-R006.4 | Test: `tests/scenarios/test_p4_cross_modal_and_maintenance.py::test_one_plan_validation_and_decay`. |

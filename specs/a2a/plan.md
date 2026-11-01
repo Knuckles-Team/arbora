@@ -1,5 +1,65 @@
 # ARBORA-A2A — A2A projection, streaming, history and tool-subset admission — architecture
 
+## Summary
+
+Delivery phase: P3
+
+Its rows serve P3: the scenario `ARBORA-ACCEPTANCE-R006.3` writes through an A2A peer.
+
+This plan serves the rows of `ARBORA-A2A` in requirements.md. It covers a2A projection, streaming, history and tool-subset admission. The design record follows in the sections below.
+
+## Technical Context
+
+- **Language/Version**: Python 3.14, with a 3.12 floor
+- **Primary Dependencies**: the arbora served registry and the Medulla client adapter from the SDK
+- **Storage**: N/A, because the engine owns every fact
+- **Testing**: pytest with one bound test per row, at the proof level the row names
+- **Target Platform**: Linux service
+- **Project Type**: service
+- **Performance Goals**: N/A, because rows state their own limits
+- **Constraints**: one door, and the engine owns every decision
+- **Scale/Scope**: the rows of this spec only
+
+## Constitution Check
+
+- R-I One door, no policy table: pass. Every decision is read from the engine.
+- R-II Every module is reachable from a production caller: pass. Each row names its caller chain.
+- R-III Public specs and core skills are complete and self-contained: pass.
+
+## Project Structure
+
+- `specs/a2a/` (existing): spec, requirements, plan, tasks, test-spec and checklist.
+- Code paths: each row names its files in its `Shape:` sentence. This plan adds no other path.
+
+## Phase 0: Research
+
+No unknowns remain. The sections below record the earlier research and decisions.
+
+## Phase 1: Design
+
+The sections below hold the architecture, ownership, data flow and failure modes of this spec.
+
+## Phase 2: Task approach
+
+tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
+
+## Complexity Tracking
+
+None. The constitution check passed.
+
+## Build contract
+
+The change must pass the repository pre-commit gates at both stages: `uvx pre-commit run --all-files` and `uvx pre-commit run --all-files --hook-stage pre-push`.
+The wiring gate (`scripts/check_wiring.py`) and the public-spec gate (`scripts/check_public_specs.py`) apply. A new module must have a production caller.
+
+## Production caller chain
+
+Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
+
+## Cross-repo seams
+
+None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
+
 ## A2A task and approval projection
 
 ### Amendment 2026-10-17: unary caller refresh
@@ -11,7 +71,7 @@ Keep explicitly injected authenticators that own their binding compatible.
 Exercise the registered HTTP handlers with AU session minting and changed or
 revoked claims. This does not qualify signed approval or production issuers.
 
-Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spec](spec.md).
+Governing [spec](spec.md).
 
 ### Existing system and reuse
 
@@ -50,7 +110,7 @@ Pre-effect audit reservation and post-effect outcome linking use the shared host
 Use `uv sync --extra test`, focused `uv run pytest tests/a2a tests/api`, Ruff, mypy, repository pre-commit hooks and wheel build. The shared hooks include CCCC, KISS, jscpd and Dupehound; do not weaken their configured thresholds or add suppressions. Keep one application service and one method table; use typed adapters and small functions. CI fixtures should start an ephemeral local engine/agent stack with synthetic principals and no external secrets. A separate served test verifies restart/resume. Public docs must describe only observed capability at the accepted revision.
 
 ## A2A streaming, push notifications and transition-history projection
-Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `ARBORA-A2A-R009.1`, landed in this PR. Governing [spec](spec.md).
+Governing [spec](spec.md).
 
 ### Existing system and reuse
 
@@ -85,7 +145,7 @@ flowchart LR
 Use `uv sync --extra test`, focused `uv run pytest tests/a2a`, Ruff, mypy, repository pre-commit hooks. Keep one Agent Card capability seam (`from_wired_authorities`). No second ad hoc truthiness check elsewhere in the codebase. CI fixtures for steps 3–5 start an ephemeral local AU/EG fixture. This PR's `R001.1` slice needs no live stack since the model is pure.
 
 ## A2A context-budget tool-subset admission
-Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing [spec](spec.md).
+Governing [spec](spec.md).
 
 ### Existing system and reuse
 
