@@ -1,4 +1,4 @@
-# Architecture and implementation plan
+# ARBORA-HOST — Implementation plan
 
 ## Summary
 
@@ -39,28 +39,7 @@ No unknowns remain. The sections below record the earlier research and decisions
 
 The sections below hold the architecture, ownership, data flow and failure modes of this spec.
 
-## Phase 2: Task approach
-
-tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
-
-## Complexity Tracking
-
-None. The constitution check passed.
-
-## Build contract
-
-The change must pass the repository pre-commit gates at both stages: `uvx pre-commit run --all-files` and `uvx pre-commit run --all-files --hook-stage pre-push`.
-The wiring gate (`scripts/check_wiring.py`) and the public-spec gate (`scripts/check_public_specs.py`) apply. A new module must have a production caller.
-
-## Production caller chain
-
-Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
-
-## Cross-repo seams
-
-None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
-
-## Existing wiring to reuse
+### Existing wiring to reuse
 
 | Arbora module | Existing responsibility | Required change |
 |---|---|---|
@@ -73,7 +52,7 @@ None owned here. The `Depends on` lines of requirements.md name each dependency 
 
 `arbora.mcp_server.bootstrap` and `arbora.a2a.routing` currently contain dependency-internal imports. Treat them as migration inventory, not approved architecture. A port is a narrow protocol describing the methods Arbora actually calls; its adapter imports the dependency's supported public API. If a public method is missing, add it to the owning package. Pin a released version before deleting the old import. Do not mirror the private implementation in Arbora.
 
-## Request path
+### Request path
 
 ```mermaid
 flowchart LR
@@ -89,7 +68,7 @@ flowchart LR
 
 The transport adapter parses and bounds a payload, authenticates identity, applies origin/CSRF requirements where applicable, and constructs an immutable request. `action`, `tenant`, `resource`, `scopes`, `policy_version`, `idempotency_key` and `correlation_id` are typed; the trusted principal comes from transport admission. Policy runs before an effect or delegated call. The operation returns typed data or a typed error; transport adapters only encode them. Redacted structured logs carry the correlation and receipt identity, never secrets.
 
-## Migration sequence
+### Migration sequence
 
 1. Inventory each Arbora-to-AU import and each duplicate host/module. Label its owner and the public port it needs. Cover eager, lazy and type-only imports.
 2. Add missing public dependency ports in their owners and test them through installed wheels. Replace Arbora call sites by capability, beginning with identity/config, graph client and agent execution; no package-wide compatibility alias.
@@ -97,13 +76,13 @@ The transport adapter parses and bounds a payload, authenticates identity, appli
 4. Make owner-loop submission a single service and verify co-service lifecycle, reload and cancellation under concurrent sessions.
 5. Run the boundary census and served parity tests on a clean environment; record exact package versions and source hashes in `tasks.md`.
 
-## Design constraints
+### Design constraints
 
 New adapters remain small and cohesive. Before adding a class, inspect an existing `arbora.*` port and route; extend the owning module where its contract fits. Avoid duplicate decision trees, hand-maintained action catalogs, hidden fallback authority and broad `except` that turns denial into success. A dependency contract mismatch returns a typed unavailable error and an observable receipt. A temporary migration shim must have one caller, one removal task and a test preventing expansion.
 
 Cross-repository work is sequenced by public package release: engine/SDK/AU contract first, Arbora adapter second, client projection last. Public dependency versions in `pyproject.toml` and `uv.lock` express the minimum required API; no unpublished sibling path is a required test input.
 
-## Startup configuration design (ARBORA-HOST-R010)
+### Startup configuration design (ARBORA-HOST-R010)
 
 Existing code: `core/config_admin.py:51` reads four hosting variables and validates ports and profiles.
 `mcp_server/server.py:164` currently loads agent-runtime configuration before constructing the server.
@@ -125,7 +104,7 @@ Use seeded declaration ordering permutations to prove identical normalized manif
 Preservation: R010.1 retains the complete original ownership and schema acceptance.
 All original rows and acceptance remain binding; narrower startup children cannot replace their evidence.
 
-## Detected harness installation (ARBORA-HOST-R008)
+### Detected harness installation (ARBORA-HOST-R008)
 
 Existing code: `deployment/cli.py:67` registers one harness; `:77` delegates a fence installer to agent-runtime internals.
 `core/` currently contains the configuration owner, not a complete generic installer or harness detector.
@@ -144,9 +123,9 @@ An absent harness produces an observation without writes; unsupported requested 
 Supported-hook absence is reported as a capability limitation, never silently described as installed.
 R008.1 preserves the complete original module census and every named owner.
 
-## Terminal start and scoped logs (ARBORA-HOST-R009/R010)
+### Terminal start and scoped logs (ARBORA-HOST-R009/R010)
 
-### Owned shutdown prerequisite
+#### Owned shutdown prerequisite
 
 ARBORA-HOST-R009.4.1 adds targeted supervisor shutdown. Stop only the named
 service; preserve borrowed siblings. All-service shutdown uses one monotonic
@@ -206,7 +185,7 @@ The terminal consumer is specified by TUIG-RUNTIME-R002.2 through R002.6.
 Bind R009.5, R009.6 and R010.7 to the public adapters in the amendment below.
 Consumer definitions are available; their runtime exports and the authenticated host handoff remain implementation prerequisites.
 
-## Shared transport scaffold (ARBORA-HOST-R006/R023)
+### Shared transport scaffold (ARBORA-HOST-R006/R023)
 
 Existing code: `mcp_server/server.py:164` exposes standard transport arguments and a shared fleet lifecycle.
 `runtime._build_server:2208` still imports the agent-runtime server factory; existing R007 owns replacement of that private coupling.
@@ -216,13 +195,13 @@ Use typed arguments for transport, bind address, port and security; compare norm
 R006.1 retains all original module ownership; R023.1 retains every tool, ranking, fallback and invocation-policy clause.
 The new transport acceptance must use real wire clients, including unauthorized calls and stdout-purity probes.
 
-## Native desktop, visual state, and coding-agent handoff (ARBORA-HOST-R029–R031)
+### Native desktop, visual state, and coding-agent handoff (ARBORA-HOST-R029–R031)
 
 - **R029:** After the SDK publishes a typed grant-bound port and certified provider, bind it through `arbora/api/invoke/pipeline.py:invoke` and `arbora/api/invoke/executor.py:BoundOperationRuntime.dispatch` (line 273). `OperationRuntime.dispatch` is only a protocol.
 - **R030:** Bind observation and state through the same composed dispatch path. Do not add a local state store. Wait for SDK observation and EG state/context contracts.
 - **R031:** Use `arbora/mcp_server/server.py:mcp_server` for host/admission composition. Wait for EG selection, AU harness, and WebUI renderer contracts; do not advertise the complete flow before all ports exist.
 
-## Amendment: authenticated terminal log preference
+### Amendment: authenticated terminal log preference
 
 Extend ARBORA-HOST-R009.5, ARBORA-HOST-R009.6 and ARBORA-HOST-R010.7.
 The consumer contract is [TUIG-RUNTIME-R002.2 through R002.6](https://github.com/Knuckles-Team/agent-terminal-ui/blob/5ac5e3fec4d590f167d2c6bd694683dbd8950c26/specs/terminal-runtime/plan.md#tui-runtime-r002-consumer-boundary).
@@ -254,7 +233,7 @@ Retain all existing tenant isolation, bounded delivery, rotation gaps, shutdown 
 R009.6 proves this through the real host and public adapter together with TUIG-RUNTIME-R002.6.
 A controlled adapter can prove only the host handoff, not unified terminal rendering.
 
-## Additional owner requirements
+### Additional owner requirements
 
 - `ARBORA-HOST-R023.3`: Plan the owner work and dependencies defined in requirements.md.
 - `ARBORA-HOST-R008.6`: Plan the owner work and dependencies defined in requirements.md.
@@ -263,11 +242,11 @@ A controlled adapter can prove only the host handoff, not unified terminal rende
 - `ARBORA-HOST-R010.8`: Plan the owner work and dependencies defined in requirements.md.
 - `ARBORA-HOST-R032`: Plan the owner work and dependencies defined in requirements.md.
 
-### 2026-10-16 — Authorized natural-language fallback
+#### 2026-10-16 — Authorized natural-language fallback
 
 R023 fallback uses the registered `query.nl` operation and shared invocation pipeline under `query:nl`. Delete the synthetic descriptor and direct callback path. Absent or unauthorized query operations refuse before dispatch. Preserve all eight tools and ranking behavior.
 
-### 2026-10-17: Refuse unavailable interface requests before startup
+#### 2026-10-17: Refuse unavailable interface requests before startup
 
 R009.2 through R009.6 and R010.7 still lack a verified workspace/session start
 authority, authenticated HostLaunchReceipt and tenant-filtered HostLogReader.
@@ -280,7 +259,7 @@ Omitted, false and the existing optional web default preserve ordinary HTTP
 hosting. This validates refusal only; interface selection, scoped log delivery,
 rotation, reconnect and the served host/terminal acceptance remain pending.
 
-### 2026-10-17: Injected workspace log policy (R009.7)
+#### 2026-10-17: Injected workspace log policy (R009.7)
 
 No current EG contract represents host filesystem workspace grants.
 Reuse Arbora SessionAuthority for current owner-verified caller, session reference and expiry.
@@ -296,7 +275,7 @@ Controlled HTTP fixtures prove this composition contract, not deployed grants, f
 No persistent credential store, local grant issuer or production configuration is added.
 R009.2 through R009.6 and R010.7 retain their full served acceptance.
 
-### 2026-10-17: Required rotating sink and private projections (R009.8)
+#### 2026-10-17: Required rotating sink and private projections (R009.8)
 
 HostLogRuntime composes the existing session and grant owners with WorkspaceLogSink.
 The existing host builder attaches this optional runtime before dispatch.
@@ -309,18 +288,18 @@ Keep bounded tenant projections and opaque tenant-local cursors; never return sh
 This slice uses controlled identity grants with a real sink and HTTP server.
 It does not prove deployed policy, durable replay after restart, terminal rendering or full host lifecycle acceptance.
 
-### Source generation admission
+#### Source generation admission
 
 R009.8.1 extends WorkspaceGrantProvider decisions with explicit source generations. Caller session identity cannot establish generation entitlement. R009.8.2 retains durable replay and metadata acceptance.
 
-### Retained host-file replay
+#### Retained host-file replay
 
 Reuse the five bounded owner-only log files and current exclusive sink lock.
 A private integrity key binds resume positions; it grants no read authority.
 Require fresh authenticated workspace/source-generation admission on every restart.
 Keep version-one message projection separate from full metadata presentation.
 
-### Startup admission port
+#### Startup admission port
 
 R010.7.1 adds injected host.start policy and session-binding owners.
 The binding owner attests the exact GraphSession object and current SessionState.
@@ -334,7 +313,7 @@ The admission request binds a configuration digest to the policy decision only.
 This slice does not compute that digest from graph configuration or prove their agreement.
 R010.7.2 must compute the digest from the actual start configuration before any startup effect.
 
-### Actual declarative startup configuration (2026-10-17)
+#### Actual declarative startup configuration (2026-10-17)
 
 R010.7.2.1 binds explicit builder inputs, listener settings, workspace and host metadata before calling admission owners.
 Canonical JSON rejects unsupported values and nonfinite numbers. Mapping order does not change the digest.
@@ -343,7 +322,7 @@ This slice rejects provided runtime objects and unused hosting arguments when ca
 R010.7.2.2 retains owner-attested runtime configuration and actual terminal/WebUI factory integration.
 Existing unsupported interface refusals remain after successful admission. Controlled owner tests establish boundary behavior, not deployed grants or served clients.
 
-### 2026-10-17: Versioned retained-log presentation
+#### 2026-10-17: Versioned retained-log presentation
 
 R009.8.2.2 adds an explicit `version: 2` selector to the existing read request.
 The response contains version, records, cursor and gap. Each record carries the
@@ -354,9 +333,9 @@ Both clients require version two, render metadata literally and distinguish the
 exact HTTP 409 retention_gap response from refusal. A gap stops polling and
 clears protected content; it never resets a cursor or retries automatically.
 
-### 2026-10-17: Live admission qualification remains open
+#### 2026-10-17: Live admission qualification remains open
 
-R010.7.2.2 is not qualified by the metadata work. WebUI APIUI-06.1 is available
+R010.7.2.2 is not qualified by the metadata work. The WebUI API item 06.1 is available
 at merged revision 6a7df660e0048d7453dff2e294c50f7882a5cec8; version 2.7.0 alone
 does not establish that contract. Its engine provider returns a borrowed engine
 and grants no session authority.
@@ -371,7 +350,7 @@ borrowed-resource lifetime. No production access or
 weakened authentication is an acceptable substitute.
 
 
-### Runtime ownership admission (2026-10-17)
+#### Runtime ownership admission (2026-10-17)
 
 Extend the existing construction owner's session binding to cover exact borrowed graph, engine, execution configuration and callback resources.
 The owner attests its current configuration revision and the canonical declarative digest; callers cannot mint these facts.
@@ -384,7 +363,7 @@ Refresh the owner binding after final session resolution, so that await cannot h
 Accept increased idle expiry only when identity, session reference and MFA facts remain exact. Keep the original admission expiry ceiling.
 Shortened expiry or changed authority denies; construction-owner state snapshots follow the same rule.
 
-### Launcher bundle attachment
+#### Launcher bundle attachment
 
 ARBORA-HOST-R010.7.2.2.1 connects the existing runtime admission to
 create_agent_server through an explicit host_runtime argument. Legacy resource
@@ -394,13 +373,12 @@ closed by this attachment. ARBORA-HOST-R010.7.2.2.2 remains pending.
 Missing parts include host.start policy, construction owners, browser caller binding
 and authenticated client lifetime composition.
 
-## 2026-10-18 borrowed runtime lifespan
+### 2026-10-18 borrowed runtime lifespan
 
 R010.7.2.2.2.1 reuses the checked start and existing owner ports at ASGI startup.
 It adds no provider, policy or UI import. R010.7.2.2.2.2 retains live client acceptance.
 
-
-## 2026-10-18 R010.7.1 access-operation adapter assessment
+### 2026-10-18 R010.7.1 access-operation adapter assessment
 
 The existing operations cannot yet provide an authoritative HostStartGrant.
 `arbora/access/service.py:check_access` delegates graph access to CheckAccess
@@ -440,7 +418,7 @@ validation retains bootstrap principal, normal scopes/RBAC, Host/Origin checks
 and diagnostics independently of selected-interface grants.
 
 
-### Reviewed issuer privilege gap
+#### Reviewed issuer privilege gap
 
 Independent architecture review rejects a raw ControlLeaseView-to-HostStartGrant
 adapter. Generic lease:write can issue a caller-chosen kind; principals absent
@@ -457,7 +435,7 @@ The existing provider protocol now states fresh exact-read/provenance duties
 and requires lease identity plus revision for continuity. Adversarial fixtures reject generic lease maps even when every caller-provided field matches.
 ASGI lifespan fixtures reject changed grant revision, session, configuration or expiry before readiness. They do not qualify a production issuer or consumer adapter.
 
-### 2026-10-22: bounded valid RunEvent JSON
+#### 2026-10-22: bounded valid RunEvent JSON
 
 Under ARBORA-HOST-R001.2.1, the run-event sink preserves each complete event
 mapping in valid JSON with a shared 1 MiB serialized payload ceiling. It never
@@ -473,7 +451,7 @@ within that bound plus normal terminal metadata. Larger replies are unavailable
 as artifacts rather than silently shown as complete prefixes. This change does
 not add another event store or qualify streaming, terminal receipts or history.
 
-#### Explicit payload-error amendment
+##### Explicit payload-error amendment
 
 The 1 MiB bound does not discard an oversized or unserializable event. Persist a
 versioned `arbora-run-event-payload-error-v1` JSON representation with the original
@@ -485,7 +463,7 @@ nonempty bounded strings (run ID 512 characters, type 64); invalid identities
 refuse instead of being shortened. This marker records an observed event whose
 body is unavailable, not a replacement AU event or native terminal receipt.
 
-### 2026-10-22: Shared task graph evaluation
+#### 2026-10-22: Shared task graph evaluation
 
 `ARBORA-HOST-R001.2.1.1` adds an opt-in HostedInvocation evaluation boundary.
 It reuses operation admission and the configured caller client, with immutable
@@ -495,7 +473,7 @@ Arbora does not reinterpret a content digest as execution authority.
 accounting, AU translation and serving-start configuration as required work.
 
 
-### 2026-10-22: Executable-plan publication prerequisite
+#### 2026-10-22: Executable-plan publication prerequisite
 
 `ARBORA-HOST-R001.2.1.2` remains blocked. The served path is `agents.run` ->
 `WorkItemA2AAuthority._run` -> `AgentRunPort` -> AU `AgentRunExecutor` ->
@@ -522,7 +500,7 @@ The executable-plan extension must preserve these owners and transaction
 boundaries, not add an Arbora store or substitute the scaffold payload.
 
 
-### 2026-10-22: Shared planner consumption accounting
+#### 2026-10-22: Shared planner consumption accounting
 
 `ARBORA-HOST-R001.2.1.2` passes measured planner usage and elapsed time to
 AU RunPlan initial consumption, retaining the original host-bounded limits.
@@ -538,7 +516,7 @@ The complete native submit/retry/get/list/cancel proof has not passed.
 Initial publication uses EG's required empty revision zero. The controlled
 transport regression checks this boundary; native publication remains unproven.
 
-### 2026-10-22: preserve decision receipt wire aliases
+#### 2026-10-22: preserve decision receipt wire aliases
 
 ARBORA-HOST-R001.2.1.1 preserves generated-model wire aliases when passing
 decoded decisions to EG receipt verification. Nonempty premise records retain
@@ -552,14 +530,14 @@ owner unavailable`. No plan or child execution was admitted. WorkItem admission
 uses the control graph while publication selects the caller graph. Carry the owner graph through the private run context with existing checks.
 
 
-### 2026-10-22: Native owner graph binding
+#### 2026-10-22: Native owner graph binding
 
 `ARBORA-HOST-R001.2.1.2` binds the admitted WorkItem engine graph in the
 private native run scope. Current-plan reads and publication use that graph,
 not the caller session's possibly different default graph. Caller identity,
 policy revalidation and EG graph capabilities remain mandatory. Model input
 cannot select the graph; missing native graph bindings fail closed.
-### 2026-10-22: bounded run-event writer decomposition
+#### 2026-10-22: bounded run-event writer decomposition
 
 Under ARBORA-HOST-R001.2.1, extract the unchanged event identity validation and
 bounded JSON/error-marker encoding from the persistence dispatcher. Preserve
@@ -571,7 +549,7 @@ payload, agent-run and A2A read suites pass 84 tests; scoped Ruff checks pass.
 
 Scoped mypy (`--follow-imports=silent`) passes for both changed source files.
 
-## Amendment: temporary request-loop clients (2026-10-23)
+### Amendment: temporary request-loop clients (2026-10-23)
 
 ARBORA-HOST-R001.2.3 keeps serving-loop clients separate from temporary
 request-loop clients. The synchronous bridge owns each temporary client.
@@ -579,7 +557,7 @@ It closes that client on its own loop before the loop exits. Repeated calls,
 failed requests and cancellation must not displace a serving-loop reader.
 The lifecycle tests check reader completion and repeated close behavior.
 
-### 2026-10-20 — Dedicated managed-start provenance
+#### 2026-10-20 — Dedicated managed-start provenance
 
 R010.7.1 uses the native ControlLease owner through `IssueHostStartGrant`, guarded
 by `host:issue-start`. The engine records issuer provenance outside caller JSON.
@@ -602,7 +580,7 @@ Controlled tests do not qualify deployed issuance or atomic reservation across s
 They also do not qualify terminal or WebUI runtime handoff.
 Human renewal remains with the identity owner and cannot widen this grant.
 
-### 2026-10-20 — Owner-attested web application serving
+#### 2026-10-20 — Owner-attested web application serving
 
 R010.7.2.2.2.1 permits web-only foreground serving of an owner-attested ASGI application.
 The runtime binding includes exact application identity, authenticated request handling and engine/configuration binding.
@@ -619,13 +597,13 @@ The application owns its messages, cancellation and shutdown.
 Controlled ASGI tests establish this composition behavior only.
 They do not qualify deployed WebUI, native issuance or live identity.
 
-## Current-main native host-start reconciliation
+### Current-main native host-start reconciliation
 
 This source retains the dedicated native issuer adapter and admission checks without replacing current caller credentials or process refusals. The issuer prerequisite is EG694's exact-source host-start contract and fresh generated bindings. Older generated artifacts and controlled owner fixtures cannot qualify that dependency. Native issuer policy, installed consumer composition and actual host startup remain open. No credentials, grants or infrastructure starts are created by this source reconciliation.
 
 The separate web-only slice retains owner-attested borrowed ASGI resources and revalidates admission at lifespan startup. Its controlled application fixtures do not qualify a deployed WebUI factory or native issuer. R010.7.2.2.2.2 retains live client activation, terminal, combined interfaces and logs acceptance. No listener is started outside bounded local fixtures.
 
-## Unique action-decision audit refusal
+### Unique action-decision audit refusal
 
 For `ARBORA-HOST-R033`, a false atomic-create result means the unique ID already
 exists. The action-policy owner must not treat that ID as a new decision receipt.
@@ -633,7 +611,7 @@ Both a collision and a write exception leave the action without effect authority
 This bounded refusal repair does not qualify native audit persistence or the
 separate approval-grant flow.
 
-## 2026-10-26: Native terminal acceptance migration
+### 2026-10-26: Native terminal acceptance migration
 
 R009.8.2.2.1 replaces the retired Python/Textual test consumer with released
 Tuig 2.3.6, released from `4f53111e53f6179312995883f4f62c8bb584d502`.
@@ -653,7 +631,7 @@ before opening logs. A visible first-frame footer is not a completion signal.
 Opening logs during a pending sink write remains a separate fail-closed storage-contention
 case, not a passing lifecycle journey. Keep the busy-storage refusal tests unchanged.
 
-## Loopback skill-certification authority
+### Loopback skill-certification authority
 
 `ARBORA-HOST-R027` restores the lifecycle-owned certification issuer under
 `arbora.certification.oidc`. It reuses the former harness authority's bounded
@@ -664,7 +642,7 @@ and SIGTERM, and owns shutdown. The fixture and tests use the real TLS endpoint
 and verify the issued token with its served JWKS. This is an ephemeral
 certification tool, not a general identity provider or persistent credential store.
 
-### Host-owned configuration paths
+#### Host-owned configuration paths
 
 Gateway, fleet, certification and profile consumers use `arbora.core.settings`.
 The MCP path is `mcp_config.json` in the active Arbora configuration directory.
@@ -674,8 +652,29 @@ whitespace as part of the path. The agent data directory
 stays outside this cut. Tests cover the explicit and XDG paths and real reads.
 This slice does not establish the R008 package-layout census or all cutovers.
 
-## Amendments
+### Amendments
 
-### 2026-10-29 — R033.1–R033.3 persisted record shapes and data migrations
+#### 2026-10-29 — R033.1–R033.3 persisted record shapes and data migrations
 
 Root cause of the unreadable action-policy ledger: from `a3967b23` (0.1.0) the served engine wrote labelled nodes with `type` only. The released engine files a Cypher label from `node_type`. `ccce23e3` (0.1.8.dev5) added `node_type` to new writes. Rows written before it stayed type-only. `760ec853` then made accounting fail closed while such rows exist, as `ARBORA-FLEET-R015` requires. It shipped no repair, so production refused every rate-limited `connector_pack_import` while reporting "rate limit exceeded". The label change shipped without a data migration, which is the gap these rows close. `record_body` is the one label model. Migrations are recorded and run at start. The shape gate ties a writer change to its migration.
+
+## Phase 2: Task approach
+
+tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
+
+## Complexity Tracking
+
+None. The constitution check passed.
+
+## Build contract
+
+The change must pass the repository pre-commit gates at both stages: `uvx pre-commit run --all-files` and `uvx pre-commit run --all-files --hook-stage pre-push`.
+The wiring gate (`scripts/check_wiring.py`) and the public-spec gate (`scripts/check_public_specs.py`) apply. A new module must have a production caller.
+
+## Production caller chain
+
+Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
+
+## Cross-repo seams
+
+None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.

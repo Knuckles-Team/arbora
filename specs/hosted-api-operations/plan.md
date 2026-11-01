@@ -1,4 +1,4 @@
-# Hosted API and intent operations — architecture
+# ARBORA-OPS — Implementation plan
 
 ## Summary
 
@@ -43,7 +43,6 @@ This plan serves the rows of `ARBORA-OPS` in requirements.md. Arbora serves one 
 - **XIX. A tag push publishes, with no manual approval**: No departure is recorded in this plan; the rows carry the proof.
 - **XX. Secrets are never traced or logged**: No departure is recorded in this plan; the rows carry the proof.
 - **XXI. Public files stay portable and neutral**: No departure is recorded in this plan; the rows carry the proof.
-
 
 ## Project Structure
 
@@ -616,54 +615,54 @@ scanner acceptance without exclusions or reduced thresholds.
 Run the canonical hosted scanner for generator, generated artifact and scanner
 workflow changes in pull requests. Keep publication limited to release tags.
 
-### Parity composed operations (ARBORA-OPS-R801 to R842)
+### Parity composed operations (operations 801 to 842)
 
 Each row composes served `eg.<domain>.<Method>` operations (see `arbora/api/registry/eg_binding.py`) into one operation or skill for a named consumer. No row adds an engine method. Writes go through the governed change path and carry `Confirm.PLAN`.
 
 | Row | Operation | Engine methods | Consumer |
 |---|---|---|---|
-| `ARBORA-OPS-R801` | `graph.nodes.list` | `eg.graph.GetNodesByLabel`, `eg.graph.GetNodeProperties`, `eg.graph.GetEdgesPage`, `eg.graph.GetNeighbors` | agent-webui graph browser (`/graph/nodes`, `/graph/relationships`) |
-| `ARBORA-OPS-R802` | `graph.view.read` | `eg.graph.GetSubgraph`, `eg.graph.SummariesAtLevel`, `eg.graph.SummaryChildren`, `eg.compute.ClusterHierarchyClusters`, `eg.compute.ClusterHierarchyExpand`, `eg.ingestion.Viz` | agent-webui graph 3D and level-of-detail view (`/graph/graph3d*`, `/graph/viz/*`) |
-| `ARBORA-OPS-R803` | `graph.stats.read` | `eg.graph.NodeCount`, `eg.graph.EdgeCount`, `eg.graph.Metrics`, `eg.cluster.ListGraphs` | agent-webui graph statistics (`/graph/stats`) |
-| `ARBORA-OPS-R804` | `graph.schema.read` | `eg.reasoning.GraphSchema`, `eg.reasoning.GraphSchemaList`, `eg.reasoning.GraphSchemaClasses`, `eg.reasoning.OntologyInspect` | agent-webui graph schema (`/graph/node-types`) |
-| `ARBORA-OPS-R805` | `graph.edges.write` | `eg.graph.AddEdge`, `eg.graph.RemoveEdge`, `eg.graph.SupersedeEdge`, `eg.security.GovernedChange` | agent-webui graph links (`/graph/link`) |
-| `ARBORA-OPS-R806` | `graph.impact.read` | `eg.compute.GetBlastRadius`, `eg.compute.GetShortestPath`, `eg.graph.GetNeighbors`, `eg.compute.PageRank` | agent-webui impact analysis (`/graph/impact/{symbol}`) |
-| `ARBORA-OPS-R807` | `code.context.read` | `eg.query.UnifiedQuery`, `eg.query.Uql`, `eg.compute.GetBlastRadius`, `eg.graph.GetNeighbors`, `eg.graph.GetNodesByLabel` | agent-webui code navigation (`/code/nav`, `/code/instances`); workspace graph_code intent |
-| `ARBORA-OPS-R808` | `kb.articles.read`, `kb.articles.write` | `eg.graph.GetNodesByLabel`, `eg.graph.GetNodeProperties`, `eg.graph.AddNode`, `eg.graph.CompareAndSetNodeFields`, `eg.ingestion.SemanticSearch`, `eg.query.GetContentVersion` | agent-webui knowledge bases (`/kb/*`) |
-| `ARBORA-OPS-R809` | `sdd.documents.read`, `sdd.documents.write` | `eg.graph.GetNodesByLabel`, `eg.graph.GetNodeProperties`, `eg.graph.AddNode`, `eg.graph.CompareAndSetNodeFields`, `eg.query.GetContentVersion` | agent-webui spec-driven development (`/sdd/*`) |
-| `ARBORA-OPS-R810` | `agents.library.list`, `agents.library.write` | `eg.storage.AgentLibrary`, `eg.storage.AgentTemplate`, `eg.storage.AgentComponent`, `eg.storage.AgentGraph` | agent-webui agent library, resources, agent list and info (`/agent-library/*`, `/resources*`, `/agents`, `/info`) |
-| `ARBORA-OPS-R811` | `agents.reload` | `eg.storage.AgentLibrary`, `eg.cluster.FleetCatalog` | agent-webui agent reload (`/reload`) |
-| `ARBORA-OPS-R812` | `agents.goals.run` | `eg.coordination.SubmitWorkItem`, `eg.coordination.WorkOfferPut`, `eg.coordination.GetWorkItem`, `eg.coordination.CancelWorkItem`, `eg.query.Decide` | agent-webui autonomous goals (`/goals*`) |
-| `ARBORA-OPS-R813` | `ops.maintenance.run` | `eg.graph.Maintain`, `eg.graph.Consolidate`, `eg.graph.DecaySweep`, `eg.graph.PruneByLifecycle`, `eg.storage.Backup` | agent-webui graph maintenance (`/maintenance/*`) |
-| `ARBORA-OPS-R814` | `ingest.pipeline.run` | `eg.ingestion.SourceIngest`, `eg.ingestion.SourceIngestStatus`, `eg.ingestion.ParseFile`, `eg.ingestion.SemanticIndex` | agent-webui ingestion pipeline (`/pipeline/*`) |
-| `ARBORA-OPS-R815` | `prompts.graph.read`, `prompts.graph.write` | `eg.graph.GetNodesByLabel`, `eg.graph.GetNodeProperties`, `eg.graph.AddNode`, `eg.graph.CompareAndSetNodeFields`, `eg.query.GetContentVersion` | agent-webui graph prompts (`/prompts/graph*`) |
-| `ARBORA-OPS-R816` | `prompts.library.read` | `eg.storage.AgentLibrary`, `eg.storage.AgentTemplate` | agent-webui prompt library and system prompt (`/prompts*`, `/system`) |
-| `ARBORA-OPS-R817` | `fleet.servers.manage` | `eg.cluster.RegisterServer`, `eg.cluster.ListRegisteredServers`, `eg.cluster.FleetCatalog`, `eg.cluster.CatalogAssign`, `eg.cluster.CatalogRemove` | agent-webui MCP server registry (`/mcp/servers*`, `/mcp/server-schema`) |
-| `ARBORA-OPS-R818` | `schedule.tasks.read` | `eg.coordination.ListWorkItems`, `eg.coordination.GetWorkItemOutcome`, `eg.storage.TsRange` | agent-webui scheduled tasks (`/cron/calendar`, `/cron/logs`) |
-| `ARBORA-OPS-R819` | `workflows.run`, `workflows.write` | `eg.storage.AgentGraph`, `eg.storage.AgentAssemble`, `eg.storage.AgentComponent`, `eg.coordination.SubmitWorkItem`, `eg.graph.GetSubgraph`, `eg.query.GetContentVersion`, `eg.transactions.BatchUpdate` | agent-webui workflows (`/workflows*`); CQ-ORCH-R006; process-model connectors |
-| `ARBORA-OPS-R820` | `ontology.objects.read`, `ontology.objects.write` | `eg.reasoning.GraphSchemaClasses`, `eg.reasoning.OntologyInspect`, `eg.reasoning.ShaclValidate`, `eg.graph.GetNodesByLabel`, `eg.graph.AddNode`, `eg.transactions.BatchUpdate` | agent-webui ontology explorer (`/ontology/*`) |
-| `ARBORA-OPS-R821` | `markets.signals.read` | `eg.compute.FinanceForensicReport`, `eg.compute.FinanceBrierScore`, `eg.compute.FinanceKellyFraction`, `eg.graph.GetNodesByLabel`, `eg.graph.GetNodes` | agent-webui markets app (`/api/apps/markets/*`) |
-| `ARBORA-OPS-R822` | `identity.verify` | `eg.security.GetIdentity`, `eg.security.CheckAccess`, `eg.security.Identity` | agent-webui identity gate (verifies tokens locally until this is served) |
-| `ARBORA-OPS-R823` | `decide.claims.reconcile`, `decide.claims.explain` | `eg.graph.Reconcile`, `eg.query.ResolveConflict`, `eg.query.ExplainEvidence`, `eg.query.ExplainBelief`, `eg.query.EpistemicStatus`, `eg.coordination.GapUpsert`, `eg.coordination.GapTransition` | evolution flywheel (research-scanner, agent-utilities-evolution) |
-| `ARBORA-OPS-R824` | `decide.promotion.submit` | `eg.graph.PolicyEvolution`, `eg.security.GovernedChange`, `eg.storage.DecisionCommit`, `eg.query.Decide`, `eg.coordination.SubmitWorkItem` | evolution flywheel promotion gate; agent control plane |
-| `ARBORA-OPS-R825` | `feedback.corrections.record` | `eg.security.GovernedChange`, `eg.storage.DecisionCommit`, `eg.transactions.BatchUpdate`, `eg.graph.AddNode` | graph_feedback intent (workspace delegate-first loop) |
-| `ARBORA-OPS-R826` | `remediation.playbooks.route` | `eg.messaging.CepSubscribe`, `eg.messaging.CepPoll`, `eg.messaging.RegisterTrigger`, `eg.messaging.FiredTriggers`, `eg.query.Decide`, `eg.coordination.WorkOfferPut`, `eg.coordination.GapUpsert` | service-health goal; messaging-channel incident replies |
-| `ARBORA-OPS-R827` | `skill:comparative-analysis` | `eg.ingestion.SourceIngest`, `eg.compute.ResolveCandidates`, `eg.compute.Vf2SubgraphMatch`, `eg.compute.ComputeSimilarityEdges`, `eg.coordination.GapUpsert`, `eg.graph.AddNode`, `eg.ingestion.SemanticSearch` | comparative-analysis skill; research-scanner |
-| `ARBORA-OPS-R828` | `usage.read`, `usage.price_catalog.write` | `eg.storage.TsDefineSeries`, `eg.storage.TsAppend`, `eg.storage.TsRange`, `eg.storage.TsWindow`, `eg.graph.AddNode`, `eg.query.Uql` | dashboard usage and cost views; usage importers |
-| `ARBORA-OPS-R829` | `incidents.record`, `incidents.read` | `eg.messaging.CepSubscribe`, `eg.messaging.CepPoll`, `eg.messaging.RegisterTrigger`, `eg.messaging.FiredTriggers`, `eg.graph.AddNode`, `eg.graph.CompareAndSetNodeFields`, `eg.compute.MineRootCause` | arbora incident routes; service-health goal |
-| `ARBORA-OPS-R830` | `access.graph_ownership.infer`, `access.graph_ownership.apply` | `eg.security.RbacAdmin`, `eg.security.GovernedChange`, `eg.security.CheckAccess`, `eg.security.GetIdentity`, `eg.reasoning.GraphSchemaList`, `eg.cluster.ListGraphs` | agent-webui graph admission; governance tools |
-| `ARBORA-OPS-R831` | `retrieval.search` | `eg.query.NlQuery`, `eg.ingestion.SemanticSearch`, `eg.ingestion.SemanticIndex`, `eg.graph.GetNeighborsBatch`, `eg.graph.GetSubgraph`, `eg.query.UnifiedQuery`, `eg.compute.CommunityDetection`, `eg.compute.ClusterHierarchyExpand`, `eg.graph.GetNodesByLabel`, `eg.reasoning.Sparql` | served `retrieval.search`; agent-webui `/graph/search`, `/graph/magma`; messaging recall |
-| `ARBORA-OPS-R832` | `query.uql` | `eg.reasoning.ShaclValidate`, `eg.query.Uql`, `eg.query.UnifiedQuery` | orchestration competency (CQ-ORCH-R004) |
-| `ARBORA-OPS-R833` | `ingest.extraction.ground` | `eg.ingestion.ParseFile`, `eg.compute.MatchOntologyTerms`, `eg.transactions.ApplyChangeEnvelopeDrafts`, `eg.reasoning.ShaclValidate`, `eg.reasoning.OntologyInspect` | document and genealogy prose ingest; CQ-XSRC concept grounding |
-| `ARBORA-OPS-R834` | `traces.read` | `eg.query.ExplainProvenance`, `eg.query.ExplainProvenanceByIds`, `eg.query.Uql`, `eg.query.UnifiedQuery`, `eg.storage.TsRange`, `eg.storage.TsWindow`, `eg.graph.GetSubgraph` | dashboard trace views; orchestration run-trace review |
-| `ARBORA-OPS-R835` | `orchestration.questions.ask` | `eg.storage.AgentAssemble`, `eg.storage.AgentLibrary`, `eg.storage.CapabilityCoverage`, `eg.storage.GuardrailEntailment`, `eg.storage.AgentGraph`, `eg.query.Decide`, `eg.query.ExplainProvenance`, `eg.reasoning.ShaclValidate` | orchestration competency exit gate (questions Q1 to Q8) |
-| `ARBORA-OPS-R836` | `placement.plan.read`, `placement.plan.apply` | `eg.cluster.PlacementAdmin`, `eg.cluster.RebalancePlan`, `eg.cluster.RebalanceExecute`, `eg.coordination.UpdateResourceHost`, `eg.coordination.ResourceStatsPage`, `eg.cluster.ClusterMembers` | host placement during deployment and genesis |
-| `ARBORA-OPS-R837` | `ingest.repositories.link_owners` | `eg.ingestion.IndexRepository`, `eg.query.UnifiedQuery`, `eg.graph.AddEdge`, `eg.compute.ResolveCandidates` | service-ownership questions; cross-source grounding |
-| `ARBORA-OPS-R838` | `ingest.foreign_sources.register`, `ingest.foreign_sources.sync` | `eg.cluster.RegisterForeignSource`, `eg.query.QueryForeignColumns`, `eg.query.GraphQl`, `eg.query.CypherQuery`, `eg.ingestion.SourceIngest`, `eg.transactions.ApplyChangeEnvelopeDrafts`, `eg.messaging.CdcRead` | database, event-stream and document connectors |
-| `ARBORA-OPS-R839` | `code.health.sweep` | `eg.ingestion.IndexRepository`, `eg.compute.GetBlastRadius`, `eg.query.UnifiedQuery`, `eg.coordination.GapUpsert` | code-health sweep (dead pathway detection) |
-| `ARBORA-OPS-R840` | `ingest.sessions.sync` | `eg.ingestion.SourceIngest`, `eg.transactions.ApplyChangeEnvelopeDrafts`, `eg.ingestion.ParseFile`, `eg.graph.AddNode` | agent session transcript ingest; feed reader intake |
-| `ARBORA-OPS-R841` | `ingest.packs.validate` | `eg.storage.ConnectorPack`, `eg.reasoning.ShaclValidate`, `eg.reasoning.OntologyInspect`, `eg.graph.AddNode` | skill library ingest; universal-skills |
-| `ARBORA-OPS-R842` | `actions.run` | `eg.graph.ApplyMutation`, `eg.transactions.TxnPlanWriteback`, `eg.storage.WriteBack`, `eg.security.GovernedChange`, `eg.reasoning.ShaclValidate`, `eg.transactions.BeginTxn`, `eg.transactions.Commit` | agent-webui actions |
+| `composed operation 801` | `graph.nodes.list` | `eg.graph.GetNodesByLabel`, `eg.graph.GetNodeProperties`, `eg.graph.GetEdgesPage`, `eg.graph.GetNeighbors` | agent-webui graph browser (`/graph/nodes`, `/graph/relationships`) |
+| `composed operation 802` | `graph.view.read` | `eg.graph.GetSubgraph`, `eg.graph.SummariesAtLevel`, `eg.graph.SummaryChildren`, `eg.compute.ClusterHierarchyClusters`, `eg.compute.ClusterHierarchyExpand`, `eg.ingestion.Viz` | agent-webui graph 3D and level-of-detail view (`/graph/graph3d*`, `/graph/viz/*`) |
+| `composed operation 803` | `graph.stats.read` | `eg.graph.NodeCount`, `eg.graph.EdgeCount`, `eg.graph.Metrics`, `eg.cluster.ListGraphs` | agent-webui graph statistics (`/graph/stats`) |
+| `composed operation 804` | `graph.schema.read` | `eg.reasoning.GraphSchema`, `eg.reasoning.GraphSchemaList`, `eg.reasoning.GraphSchemaClasses`, `eg.reasoning.OntologyInspect` | agent-webui graph schema (`/graph/node-types`) |
+| `composed operation 805` | `graph.edges.write` | `eg.graph.AddEdge`, `eg.graph.RemoveEdge`, `eg.graph.SupersedeEdge`, `eg.security.GovernedChange` | agent-webui graph links (`/graph/link`) |
+| `composed operation 806` | `graph.impact.read` | `eg.compute.GetBlastRadius`, `eg.compute.GetShortestPath`, `eg.graph.GetNeighbors`, `eg.compute.PageRank` | agent-webui impact analysis (`/graph/impact/{symbol}`) |
+| `composed operation 807` | `code.context.read` | `eg.query.UnifiedQuery`, `eg.query.Uql`, `eg.compute.GetBlastRadius`, `eg.graph.GetNeighbors`, `eg.graph.GetNodesByLabel` | agent-webui code navigation (`/code/nav`, `/code/instances`); workspace graph_code intent |
+| `composed operation 808` | `kb.articles.read`, `kb.articles.write` | `eg.graph.GetNodesByLabel`, `eg.graph.GetNodeProperties`, `eg.graph.AddNode`, `eg.graph.CompareAndSetNodeFields`, `eg.ingestion.SemanticSearch`, `eg.query.GetContentVersion` | agent-webui knowledge bases (`/kb/*`) |
+| `composed operation 809` | `sdd.documents.read`, `sdd.documents.write` | `eg.graph.GetNodesByLabel`, `eg.graph.GetNodeProperties`, `eg.graph.AddNode`, `eg.graph.CompareAndSetNodeFields`, `eg.query.GetContentVersion` | agent-webui spec-driven development (`/sdd/*`) |
+| `composed operation 810` | `agents.library.list`, `agents.library.write` | `eg.storage.AgentLibrary`, `eg.storage.AgentTemplate`, `eg.storage.AgentComponent`, `eg.storage.AgentGraph` | agent-webui agent library, resources, agent list and info (`/agent-library/*`, `/resources*`, `/agents`, `/info`) |
+| `composed operation 811` | `agents.reload` | `eg.storage.AgentLibrary`, `eg.cluster.FleetCatalog` | agent-webui agent reload (`/reload`) |
+| `composed operation 812` | `agents.goals.run` | `eg.coordination.SubmitWorkItem`, `eg.coordination.WorkOfferPut`, `eg.coordination.GetWorkItem`, `eg.coordination.CancelWorkItem`, `eg.query.Decide` | agent-webui autonomous goals (`/goals*`) |
+| `composed operation 813` | `ops.maintenance.run` | `eg.graph.Maintain`, `eg.graph.Consolidate`, `eg.graph.DecaySweep`, `eg.graph.PruneByLifecycle`, `eg.storage.Backup` | agent-webui graph maintenance (`/maintenance/*`) |
+| `composed operation 814` | `ingest.pipeline.run` | `eg.ingestion.SourceIngest`, `eg.ingestion.SourceIngestStatus`, `eg.ingestion.ParseFile`, `eg.ingestion.SemanticIndex` | agent-webui ingestion pipeline (`/pipeline/*`) |
+| `composed operation 815` | `prompts.graph.read`, `prompts.graph.write` | `eg.graph.GetNodesByLabel`, `eg.graph.GetNodeProperties`, `eg.graph.AddNode`, `eg.graph.CompareAndSetNodeFields`, `eg.query.GetContentVersion` | agent-webui graph prompts (`/prompts/graph*`) |
+| `composed operation 816` | `prompts.library.read` | `eg.storage.AgentLibrary`, `eg.storage.AgentTemplate` | agent-webui prompt library and system prompt (`/prompts*`, `/system`) |
+| `composed operation 817` | `fleet.servers.manage` | `eg.cluster.RegisterServer`, `eg.cluster.ListRegisteredServers`, `eg.cluster.FleetCatalog`, `eg.cluster.CatalogAssign`, `eg.cluster.CatalogRemove` | agent-webui MCP server registry (`/mcp/servers*`, `/mcp/server-schema`) |
+| `composed operation 818` | `schedule.tasks.read` | `eg.coordination.ListWorkItems`, `eg.coordination.GetWorkItemOutcome`, `eg.storage.TsRange` | agent-webui scheduled tasks (`/cron/calendar`, `/cron/logs`) |
+| `composed operation 819` | `workflows.run`, `workflows.write` | `eg.storage.AgentGraph`, `eg.storage.AgentAssemble`, `eg.storage.AgentComponent`, `eg.coordination.SubmitWorkItem`, `eg.graph.GetSubgraph`, `eg.query.GetContentVersion`, `eg.transactions.BatchUpdate` | agent-webui workflows (`/workflows*`); CQ-ORCH-R006; process-model connectors |
+| `composed operation 820` | `ontology.objects.read`, `ontology.objects.write` | `eg.reasoning.GraphSchemaClasses`, `eg.reasoning.OntologyInspect`, `eg.reasoning.ShaclValidate`, `eg.graph.GetNodesByLabel`, `eg.graph.AddNode`, `eg.transactions.BatchUpdate` | agent-webui ontology explorer (`/ontology/*`) |
+| `composed operation 821` | `markets.signals.read` | `eg.compute.FinanceForensicReport`, `eg.compute.FinanceBrierScore`, `eg.compute.FinanceKellyFraction`, `eg.graph.GetNodesByLabel`, `eg.graph.GetNodes` | agent-webui markets app (`/api/apps/markets/*`) |
+| `composed operation 822` | `identity.verify` | `eg.security.GetIdentity`, `eg.security.CheckAccess`, `eg.security.Identity` | agent-webui identity gate (verifies tokens locally until this is served) |
+| `composed operation 823` | `decide.claims.reconcile`, `decide.claims.explain` | `eg.graph.Reconcile`, `eg.query.ResolveConflict`, `eg.query.ExplainEvidence`, `eg.query.ExplainBelief`, `eg.query.EpistemicStatus`, `eg.coordination.GapUpsert`, `eg.coordination.GapTransition` | evolution flywheel (research-scanner, agent-utilities-evolution) |
+| `composed operation 824` | `decide.promotion.submit` | `eg.graph.PolicyEvolution`, `eg.security.GovernedChange`, `eg.storage.DecisionCommit`, `eg.query.Decide`, `eg.coordination.SubmitWorkItem` | evolution flywheel promotion gate; agent control plane |
+| `composed operation 825` | `feedback.corrections.record` | `eg.security.GovernedChange`, `eg.storage.DecisionCommit`, `eg.transactions.BatchUpdate`, `eg.graph.AddNode` | graph_feedback intent (workspace delegate-first loop) |
+| `composed operation 826` | `remediation.playbooks.route` | `eg.messaging.CepSubscribe`, `eg.messaging.CepPoll`, `eg.messaging.RegisterTrigger`, `eg.messaging.FiredTriggers`, `eg.query.Decide`, `eg.coordination.WorkOfferPut`, `eg.coordination.GapUpsert` | service-health goal; messaging-channel incident replies |
+| `composed operation 827` | `skill:comparative-analysis` | `eg.ingestion.SourceIngest`, `eg.compute.ResolveCandidates`, `eg.compute.Vf2SubgraphMatch`, `eg.compute.ComputeSimilarityEdges`, `eg.coordination.GapUpsert`, `eg.graph.AddNode`, `eg.ingestion.SemanticSearch` | comparative-analysis skill; research-scanner |
+| `composed operation 828` | `usage.read`, `usage.price_catalog.write` | `eg.storage.TsDefineSeries`, `eg.storage.TsAppend`, `eg.storage.TsRange`, `eg.storage.TsWindow`, `eg.graph.AddNode`, `eg.query.Uql` | dashboard usage and cost views; usage importers |
+| `composed operation 829` | `incidents.record`, `incidents.read` | `eg.messaging.CepSubscribe`, `eg.messaging.CepPoll`, `eg.messaging.RegisterTrigger`, `eg.messaging.FiredTriggers`, `eg.graph.AddNode`, `eg.graph.CompareAndSetNodeFields`, `eg.compute.MineRootCause` | arbora incident routes; service-health goal |
+| `composed operation 830` | `access.graph_ownership.infer`, `access.graph_ownership.apply` | `eg.security.RbacAdmin`, `eg.security.GovernedChange`, `eg.security.CheckAccess`, `eg.security.GetIdentity`, `eg.reasoning.GraphSchemaList`, `eg.cluster.ListGraphs` | agent-webui graph admission; governance tools |
+| `composed operation 831` | `retrieval.search` | `eg.query.NlQuery`, `eg.ingestion.SemanticSearch`, `eg.ingestion.SemanticIndex`, `eg.graph.GetNeighborsBatch`, `eg.graph.GetSubgraph`, `eg.query.UnifiedQuery`, `eg.compute.CommunityDetection`, `eg.compute.ClusterHierarchyExpand`, `eg.graph.GetNodesByLabel`, `eg.reasoning.Sparql` | served `retrieval.search`; agent-webui `/graph/search`, `/graph/magma`; messaging recall |
+| `composed operation 832` | `query.uql` | `eg.reasoning.ShaclValidate`, `eg.query.Uql`, `eg.query.UnifiedQuery` | orchestration competency (CQ-ORCH-R004) |
+| `composed operation 833` | `ingest.extraction.ground` | `eg.ingestion.ParseFile`, `eg.compute.MatchOntologyTerms`, `eg.transactions.ApplyChangeEnvelopeDrafts`, `eg.reasoning.ShaclValidate`, `eg.reasoning.OntologyInspect` | document and genealogy prose ingest; CQ-XSRC concept grounding |
+| `composed operation 834` | `traces.read` | `eg.query.ExplainProvenance`, `eg.query.ExplainProvenanceByIds`, `eg.query.Uql`, `eg.query.UnifiedQuery`, `eg.storage.TsRange`, `eg.storage.TsWindow`, `eg.graph.GetSubgraph` | dashboard trace views; orchestration run-trace review |
+| `composed operation 835` | `orchestration.questions.ask` | `eg.storage.AgentAssemble`, `eg.storage.AgentLibrary`, `eg.storage.CapabilityCoverage`, `eg.storage.GuardrailEntailment`, `eg.storage.AgentGraph`, `eg.query.Decide`, `eg.query.ExplainProvenance`, `eg.reasoning.ShaclValidate` | orchestration competency exit gate (questions Q1 to Q8) |
+| `composed operation 836` | `placement.plan.read`, `placement.plan.apply` | `eg.cluster.PlacementAdmin`, `eg.cluster.RebalancePlan`, `eg.cluster.RebalanceExecute`, `eg.coordination.UpdateResourceHost`, `eg.coordination.ResourceStatsPage`, `eg.cluster.ClusterMembers` | host placement during deployment and genesis |
+| `composed operation 837` | `ingest.repositories.link_owners` | `eg.ingestion.IndexRepository`, `eg.query.UnifiedQuery`, `eg.graph.AddEdge`, `eg.compute.ResolveCandidates` | service-ownership questions; cross-source grounding |
+| `composed operation 838` | `ingest.foreign_sources.register`, `ingest.foreign_sources.sync` | `eg.cluster.RegisterForeignSource`, `eg.query.QueryForeignColumns`, `eg.query.GraphQl`, `eg.query.CypherQuery`, `eg.ingestion.SourceIngest`, `eg.transactions.ApplyChangeEnvelopeDrafts`, `eg.messaging.CdcRead` | database, event-stream and document connectors |
+| `composed operation 839` | `code.health.sweep` | `eg.ingestion.IndexRepository`, `eg.compute.GetBlastRadius`, `eg.query.UnifiedQuery`, `eg.coordination.GapUpsert` | code-health sweep (dead pathway detection) |
+| `composed operation 840` | `ingest.sessions.sync` | `eg.ingestion.SourceIngest`, `eg.transactions.ApplyChangeEnvelopeDrafts`, `eg.ingestion.ParseFile`, `eg.graph.AddNode` | agent session transcript ingest; feed reader intake |
+| `composed operation 841` | `ingest.packs.validate` | `eg.storage.ConnectorPack`, `eg.reasoning.ShaclValidate`, `eg.reasoning.OntologyInspect`, `eg.graph.AddNode` | skill library ingest; universal-skills |
+| `composed operation 842` | `actions.run` | `eg.graph.ApplyMutation`, `eg.transactions.TxnPlanWriteback`, `eg.storage.WriteBack`, `eg.security.GovernedChange`, `eg.reasoning.ShaclValidate`, `eg.transactions.BeginTxn`, `eg.transactions.Commit` | agent-webui actions |
 
 ### ARBORA-OPS-R843 — replaced tool wrappers
 
@@ -788,7 +787,7 @@ inside arbora MCP. arbora serves the underlying `source.*` operations.
 R848 splits into `ARBORA-OPS-R848.1` (the source reads -- delivered),
 `ARBORA-OPS-R848.2` (the source writes -- pending the engine changeset
 substrate) and `ARBORA-OPS-R848.3` (the `source.diff` read --
-specified). `ARBORA-OPS-R849` and `ARBORA-OPS-R851` are unchanged.
+specified). `composed operation 849` and `ARBORA-OPS-R851` are unchanged.
 
 Op-to-tool mapping: arbora serves the `source.*` operations in its
 operation registry. The development surface inside arbora MCP exposes
@@ -823,7 +822,7 @@ empty.
 
 `source.blob` exposes the manifest reference in `content_digest`, as in the
 existing source projection. It also returns `content_sha256`, the lowercase
-SHA-256 of the bytes returned by the admitted read. This separate value lets
+SHA 256 of the bytes returned by the admitted read. This separate value lets
 clients detect cached-byte corruption without confusing a manifest key with
 the digest of file content. The hash does not grant authority to reuse bytes.
 The client must bind cache use to the admitted caller and source revision.
