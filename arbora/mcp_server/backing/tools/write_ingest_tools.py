@@ -42,7 +42,7 @@ def _parse_source_specs(raw: str, spec_cls: Any) -> list[Any]:
     return [spec_cls.parse(tok) for tok in raw.split(",") if tok.strip()]
 
 
-# ── bulk_ingest (B-11, CONCEPT:AU-KG.ingest.envelope-atomic-transaction) ─────────────────────────
+# ── bulk_ingest (B-11, CONCEPT:MERISTEM-KG.ingest.envelope-atomic-transaction) ─────────────────────────
 #
 # Was: a Python `for` loop calling `engine.add_node()` once per element — nodes
 # only, non-atomic, no idempotency key, N round trips over the engine's
@@ -484,7 +484,7 @@ async def _ingest_action_ingest_url(engine, request: IngestRequest) -> str:
     if not target_path:
         return "Error: target_path (a URL) required for ingest_url"
     url = target_path.strip()
-    # Default ON (CONCEPT:AU-KG.ingest.chunk-overlap-stage): first-class embedded Chunk objects +
+    # Default ON (CONCEPT:MERISTEM-KG.ingest.chunk-overlap-stage): first-class embedded Chunk objects +
     # contextual-retrieval enrichment, at parity with connector ingestion
     # (KG-2.50) — makes this tool's documented "chunking + contextual
     # enrichment + embeddings" behavior real instead of only the plain
@@ -581,7 +581,7 @@ async def _ingest_action_jobs(engine, request: IngestRequest) -> str:
         for job in jobs[:20]:
             lines.append(f"{job['job_id']}: {status} ({job.get('target', 'unknown')})")
     # Per-category metrics breakdown (time/nodes/edges/failures) —
-    # the harness-style view, pollable over MCP (CONCEPT:EG-KG.storage.nonblocking-checkpoint).
+    # the harness-style view, pollable over MCP (CONCEPT:MEDULLA-KG.storage.nonblocking-checkpoint).
     breakdown = {}
     if hasattr(engine, "aggregate_ingest_metrics"):
         try:
@@ -1037,7 +1037,7 @@ def register_write_ingest_tools(mcp):
             default="[]",
             description=(
                 "JSON-encoded list of nodes or tags for bulk operations. For "
-                "action='bulk_ingest' (CONCEPT:AU-KG.ingest.envelope-atomic-transaction, B-11): a list of "
+                "action='bulk_ingest' (CONCEPT:MERISTEM-KG.ingest.envelope-atomic-transaction, B-11): a list of "
                 "node objects ({'id','type','properties'}, or {'kind':'node',...} "
                 "explicitly) and/or edge objects ({'kind':'edge','source_id',"
                 "'target_id','rel_type','properties'} — 'source_id'+'target_id' "
@@ -1052,7 +1052,7 @@ def register_write_ingest_tools(mcp):
             default="",
             description=(
                 "For action='bulk_ingest': a caller-owned idempotency key for this "
-                "exact batch (CONCEPT:AU-KG.ingest.envelope-atomic-transaction). Non-empty (or a "
+                "exact batch (CONCEPT:MERISTEM-KG.ingest.envelope-atomic-transaction). Non-empty (or a "
                 "non-empty 'evidence') routes the batch onto the engine's atomic "
                 "ApplyChangeEnvelopes path (durably idempotent, scoped by "
                 "(tenant, graph, idempotency_key) — a replay reports "
@@ -1066,7 +1066,7 @@ def register_write_ingest_tools(mcp):
             description=(
                 "For action='bulk_ingest': JSON list of evidence records "
                 "({'object_id','modality','locus','content_digest'}) attached to "
-                "the FIRST node in 'nodes' (CONCEPT:AU-KG.ingest.envelope-atomic-transaction). Non-empty "
+                "the FIRST node in 'nodes' (CONCEPT:MERISTEM-KG.ingest.envelope-atomic-transaction). Non-empty "
                 "routes the batch onto ApplyChangeEnvelopes (the only primitive "
                 "carrying evidence/policy/lineage) instead of the lighter BatchUpdate."
             ),
@@ -1075,7 +1075,7 @@ def register_write_ingest_tools(mcp):
             default=True,
             description=(
                 "For action='bulk_ingest' on the BatchUpdate (light) path: real "
-                "engine insert-or-merge semantics (CONCEPT:AU-KG.ingest.envelope-atomic-transaction). True "
+                "engine insert-or-merge semantics (CONCEPT:MERISTEM-KG.ingest.envelope-atomic-transaction). True "
                 "(default) MERGEs onto an existing id — idempotent re-application, "
                 "matching every prior add_node-loop caller's behavior. False INSERTs "
                 "(a repeated edge becomes an additional parallel edge rather than "
@@ -1085,7 +1085,7 @@ def register_write_ingest_tools(mcp):
         connection: str = Field(
             default="",
             description=(
-                "CONCEPT:AU-KG.backend.multi-connection-registry — named BACKEND connection to write to "
+                "CONCEPT:MERISTEM-KG.backend.multi-connection-registry — named BACKEND connection to write to "
                 "(default = primary). Use a registered connection name, or 'all' "
                 "(or a comma-separated list) to mirror the SAME write to several "
                 "backends. Fan-out requires an explicit multi-connection value; the "
@@ -1096,7 +1096,7 @@ def register_write_ingest_tools(mcp):
         graph: str = Field(
             default="",
             description=(
-                "CONCEPT:AU-KG.backend.explicit-graph-selection — explicit physical engine graph to write to "
+                "CONCEPT:MERISTEM-KG.backend.explicit-graph-selection — explicit physical engine graph to write to "
                 "(one of the names `engine_tenants(action='list')`/the engine's own "
                 "ListGraphs returns), independent of `connection`. Empty = the "
                 "caller's own bound graph (unchanged default behavior). Requires "
@@ -1130,7 +1130,7 @@ def register_write_ingest_tools(mcp):
         """Write nodes, relationships, or register external graphs. This is the primary mutation interface for the Knowledge Graph.
 
         The ``compare_and_set`` action is the atomic conditional-update primitive
-        (CONCEPT:AU-KG.ingest.atomic-compare-and-set): it merges ``updates`` into ``node_id`` only if every
+        (CONCEPT:MERISTEM-KG.ingest.atomic-compare-and-set): it merges ``updates`` into ``node_id`` only if every
         field in ``conditions`` still equals the node's current value (missing
         field ≡ null) — use it for optimistic concurrency, conditional state
         transitions, and atomic reservations so two agents mutating the same node
@@ -1255,7 +1255,7 @@ def register_write_ingest_tools(mcp):
                     )
 
                 def _do_compare_and_set() -> str:
-                    # CONCEPT:AU-KG.ingest.atomic-compare-and-set — atomic compare-and-set as a first-class
+                    # CONCEPT:MERISTEM-KG.ingest.atomic-compare-and-set — atomic compare-and-set as a first-class
                     # agent capability. Applies ``updates`` to the node
                     # ONLY if every field in ``conditions`` still equals its current
                     # value (missing field ≡ null), under the engine's write lock —
@@ -1302,7 +1302,7 @@ def register_write_ingest_tools(mcp):
                     return "\n".join(str(r) for r in res)
 
                 def _do_recall_media() -> str:
-                    # CONCEPT:AU-KG.identity.asset-occurrence — list durable media
+                    # CONCEPT:MERISTEM-KG.identity.asset-occurrence — list durable media
                     # occurrence records only. Content identity remains a property;
                     # it is never reused as occurrence identity.
                     # Returns metadata (occurrence_id + content_digest + media_type), NOT
@@ -1385,7 +1385,7 @@ def register_write_ingest_tools(mcp):
 
             def _echo_graph_selection(raw: str, name: str, requested_graph: str) -> str:
                 """Echo the resolved `connection`/`graph` so a caller can always
-                tell what was actually written (CONCEPT:AU-KG.backend.explicit-graph-selection). A JSON
+                tell what was actually written (CONCEPT:MERISTEM-KG.backend.explicit-graph-selection). A JSON
                 success payload gets the two keys merged in (never overriding an
                 existing key); a standardized error envelope (has an `error` key)
                 is left byte-for-byte alone; a plain-text outcome gets a bracketed
@@ -1424,10 +1424,10 @@ def register_write_ingest_tools(mcp):
                     )
                 return _echo_graph_selection(raw, name, graph)
 
-            # CONCEPT:AU-KG.backend.multi-connection-registry — resolve the connection(s). Writes only fan out on
+            # CONCEPT:MERISTEM-KG.backend.multi-connection-registry — resolve the connection(s). Writes only fan out on
             # an EXPLICIT multi-connection request ('all' or a list); the default
             # and a single named connection stay single-write to avoid accidental
-            # multi-store writes. CONCEPT:AU-KG.backend.explicit-graph-selection — `graph` (a physical engine
+            # multi-store writes. CONCEPT:MERISTEM-KG.backend.explicit-graph-selection — `graph` (a physical engine
             # graph) is a separate axis from `connection`; it requires exactly one
             # resolved connection, so it fails closed against any fan-out.
             targets = engine_routing.resolve_graph_targets(
@@ -1437,7 +1437,7 @@ def register_write_ingest_tools(mcp):
                 return targets
             entries, errors, fanout = targets
 
-            # CONCEPT:AU-KG.ingest.role-enforcement — role enforcement: a 'read' (data source) or 'mirror'
+            # CONCEPT:MERISTEM-KG.ingest.role-enforcement — role enforcement: a 'read' (data source) or 'mirror'
             # (fan-out replica) connection rejects direct connection= writes. Mirrors are
             # written only through the fan-out outbox, never here.
             registry = engine_routing.get_connection_registry()
@@ -1480,19 +1480,19 @@ def register_write_ingest_tools(mcp):
             "governance/voice/source rule consulted at retrieval time, 'eval' "
             "adds a regression case, 'reads_avoided' closes the code_context "
             "reads-avoided loop (target_id=capability_id, corrected_value=JSON "
-            "{reads_avoided,files_read,correct,query}) (CONCEPT:AU-AHE.evaluation.reads-avoided-feedback), "
+            "{reads_avoided,files_read,correct,query}) (CONCEPT:MERISTEM-AHE.evaluation.reads-avoided-feedback), "
             "'action_outcome' closes the loop on ANY autonomous action — a context "
             "answer, a deploy, a ticket close, a routing choice (target_id=action/"
             "capability id, corrected_value=JSON {success,reward?,expected?,observed?,"
             "query?}) so routing/playbooks prefer actions that achieve their goal "
-            "(CONCEPT:AU-AHE.evaluation.action-outcome-feedback), 'gotcha' pins a hard-won trap to a file/module "
+            "(CONCEPT:MERISTEM-AHE.evaluation.action-outcome-feedback), 'gotcha' pins a hard-won trap to a file/module "
             "(target_id=path, corrected_value=the note) so code_context surfaces it "
-            "when an agent next touches that area (CONCEPT:AU-KG.ingest.gotcha-feedback-capture), "
+            "when an agent next touches that area (CONCEPT:MERISTEM-KG.ingest.gotcha-feedback-capture), "
             "'selective_erasure' forgets the learned reward for superseded "
             "designations (target_id + optional corrected_value list of ids) so the "
             "router re-learns them instead of carrying stale utility across a "
-            "source/model regime change (CONCEPT:AU-KG.memory.generation-scoped-selective-reward). This is how "
-            "'this was wrong, here's the fix' becomes future behaviour (CONCEPT:EG-KG.storage.nonblocking-checkpoint)."
+            "source/model regime change (CONCEPT:MERISTEM-KG.memory.generation-scoped-selective-reward). This is how "
+            "'this was wrong, here's the fix' becomes future behaviour (CONCEPT:MEDULLA-KG.storage.nonblocking-checkpoint)."
         ),
         tags=["arbora", "feedback", "learning"],
     )
@@ -1604,7 +1604,7 @@ def register_write_ingest_tools(mcp):
         ),
         action: str = Field(
             default="ingest",
-            description="Action to perform (ingest, ingest_url, archivebox_sync, cdc_catchup, opensearch_reindex, skill_workflows, fact_extract, sync_second_brain, enrich_pending_documents, distill, import_pack, ingest_knowledge_pack, agent_toolkit, corpus, jobs, job_status, status, cancel, clear, prioritize, rebuild_indexes, observe, materialize, materialize_source, sync, reflect). 'enrich_pending_documents' sweeps :Document nodes a connector wrote via the native_ingest primitive (e.g. searxng-mcp results) from outside the hub process — raw text only, flagged needs_enrichment=true — and runs each through the SAME DocumentProcessor + central _enrich_text seam a direct ingest gets (chunk+contextual-enrich+concepts+facts+WorldView topic classification), clearing the flag. 'ingest_url' content-aware single-URL ingest (CONCEPT:AU-KG.research.skill-graph-distillation): target_path=URL → fetch via the unified resolver (ArchiveBox→crawl4ai→requests) into a Document, and for a research roundup (auto-detected, or forced with description='extract_papers' / disabled with 'no_papers') download the cited papers via scholarx and ingest them too, linking page→paper; runs inline. 'archivebox_sync' pulls preserved ArchiveBox snapshots into the KG (corpus_name='full' = pull ALL, else delta; base_path=JSON list of snapshot ids to select). 'cdc_catchup' (CONCEPT:AU-KG.ingest.debezium-changeenvelope, CA-21) runs one bounded on-demand catch-up poll of the Debezium `cdc.<db>.<schema>.<table>` consumer — drains whatever is currently available (up to a batch cap), maps each row through debezium_envelope.map_debezium_event, and commits through the same ingest_envelope atomic boundary every other connector uses; returns counts (succeeded/skipped/quarantined/failed) and the last committed LSN watermark; never blocks waiting for more messages. 'opensearch_reindex' (CONCEPT:AU-KG.retrieval.opensearch-cdc-indexer, CA-24, DEC-CA-09) rebuilds the OpenSearch search-tier index for one eg graph/tenant by replaying eg.cdc.<graph> from offset 0 (or base_path=from_seq) into a freshly-dropped index (the P3 recovery mechanism — a full rebuild is always a valid recovery path, not an exceptional one): corpus_name=eg graph/tenant id (required), target_path=optional object_type to scope the rebuild to one index (default: every index this tenant owns). 'skill_workflows' ingests the universal-skills workflow corpus (workflows/<domain>/<name>/SKILL.md) into the KG as dispatchable WorkflowDefinition DAGs (+WorkflowStep depends_on edges +USES_SKILL links) in the exact WorkflowStore shape execute_workflow reads, so graph_orchestrate execute_workflow can discover and fire them; ALSO sweeps the sibling atomic-skill corpus (skill_type: skill) into a CallableResource(AGENT_SKILL) each via the same reused ingest_runnable_skill primitive, so both legs of the corpus are classified by this one call; target_path optionally overrides the corpus root, default=installed universal_skills package; idempotent (content-addressed re-ingest is a no-op); runs as a BACKGROUND job (returns a job_id immediately — the full corpus takes ~150s, over the call ceiling — poll with action=job_status job_id=<id>). 'materialize_source' runs an enterprise source extractor (corpus_name=category, e.g. 'camunda'/'aris'/'egeria'; description=optional JSON extractor config), persists its BusinessProcess/BusinessTask/FLOWS_TO batch into the graph via an in-process vendor client, then runs one OWL reasoning cycle so the new process structure folds into the cross-vendor crosswalk. 'fact_extract' turns a document (description=raw text, or target_path=file) into atomic (subject)-[predicate]->(object) fact edges with confidence/evidence/tags, dedups them, persists to the graph, and returns the facts + JSONL. 'sync_second_brain' (CONCEPT:AU-KG.enrichment.second-brain-note-sync) is the one-call personal-notes sync: target_path=notes directory or file (a markdown folder, an Obsidian vault, or a synced Nextcloud/Paperless export — see the `second-brain-sync` skill), corpus_name=corpus name, base_path=optional 'since' cursor (epoch seconds or an ISO-8601 timestamp) to only process notes changed since then. Per note: runs 'fact_extract' (evidence-spanned facts), extracts entities/claims and PROPOSES each new claim into the governed ClaimFlywheel lifecycle (graph_claims reads the same state — never silently accepted), then scans each new claim against existing graph content and persists any contradiction as a propose-only :BeliefRevisionProposal (the same node loop_controller's belief-revision pass writes, so existing review tooling picks it up with no new UI). Content-hash idempotent: re-running over an unchanged corpus mints zero new facts/claims/proposals. 'extract_submit'/'extract_jobs'/'extract_status'/'extract_pause'/'extract_resume'/'extract_jsonl' run extraction as a GPU-slot-scheduled job (preempt/backfill/resume on the single GPU) addressed by job_id; max_depth sets rounds. 'distill' exports a KG subgraph to a portable skill-graph (target_path=out dir; corpus_name=seed node id OR description=query; max_depth=hop depth). 'import_pack' re-ingests a distilled skill-graph dir back into the KG (target_path=dir; corpus_name='dedup' to merge duplicates). 'build_skill_graph' runs the UNIFIED skill-graph pipeline (CONCEPT:AU-KG.research.skill-graph-distillation): acquire from ANY source kind into one standardized skill-graph (corpus_name=name; target_path=output parent dir; base_path=JSON list of sources [{kind,uri,options}] OR 'kind=uri,kind=uri' shorthand over web/pdf/office/dir/url_reader/rest/database/mcp_tool/generated/kg_query; description=optional human description) — always writes the offline corpus + a sources.json provenance/freshness manifest, and ALSO ingests into the KG when the daemon is reachable (degrades cleanly otherwise). 'skill_graph_status' reports freshness of an existing skill-graph (target_path=dir; corpus_name='quick' to skip network sources). 'rebuild_skill_graph' re-acquires from the recorded sources and bumps the version (target_path=dir). Queue control: 'cancel' (job_id), 'clear' (target_path=status filter pending|running|completed|failed|cancelled|zombie|all, default completed), 'prioritize' (job_id, priority_bucket=0..3 — no named priority aliases are accepted). Research evolution (CONCEPT:AU-KG.ingest.batch-research-cohort): 'cohort_create' (base_path=JSON list of paper URLs, target_path=JSON list of repo paths, description=goal) batch-ingests a cohort of papers+repos whose self-polling barrier synthesizes the comparative feature/innovation matrix (KG-2.173) when every member drains; 'cohort_status' (job_id=cohort_id) returns per-member progress + the matrix counts; 'profile' (corpus_name=lane|type|tkind, CONCEPT:AU-OS.observability.per-lane-latency-metrics) returns per-lane/stage latency percentiles + token/cost + the parallelism factor.",
+            description="Action to perform (ingest, ingest_url, archivebox_sync, cdc_catchup, opensearch_reindex, skill_workflows, fact_extract, sync_second_brain, enrich_pending_documents, distill, import_pack, ingest_knowledge_pack, agent_toolkit, corpus, jobs, job_status, status, cancel, clear, prioritize, rebuild_indexes, observe, materialize, materialize_source, sync, reflect). 'enrich_pending_documents' sweeps :Document nodes a connector wrote via the native_ingest primitive (e.g. searxng-mcp results) from outside the hub process — raw text only, flagged needs_enrichment=true — and runs each through the SAME DocumentProcessor + central _enrich_text seam a direct ingest gets (chunk+contextual-enrich+concepts+facts+WorldView topic classification), clearing the flag. 'ingest_url' content-aware single-URL ingest (CONCEPT:MERISTEM-KG.research.skill-graph-distillation): target_path=URL → fetch via the unified resolver (ArchiveBox→crawl4ai→requests) into a Document, and for a research roundup (auto-detected, or forced with description='extract_papers' / disabled with 'no_papers') download the cited papers via scholarx and ingest them too, linking page→paper; runs inline. 'archivebox_sync' pulls preserved ArchiveBox snapshots into the KG (corpus_name='full' = pull ALL, else delta; base_path=JSON list of snapshot ids to select). 'cdc_catchup' (CONCEPT:MERISTEM-KG.ingest.debezium-changeenvelope, CA-21) runs one bounded on-demand catch-up poll of the Debezium `cdc.<db>.<schema>.<table>` consumer — drains whatever is currently available (up to a batch cap), maps each row through debezium_envelope.map_debezium_event, and commits through the same ingest_envelope atomic boundary every other connector uses; returns counts (succeeded/skipped/quarantined/failed) and the last committed LSN watermark; never blocks waiting for more messages. 'opensearch_reindex' (CONCEPT:MERISTEM-KG.retrieval.opensearch-cdc-indexer, CA-24, DEC-CA-09) rebuilds the OpenSearch search-tier index for one eg graph/tenant by replaying eg.cdc.<graph> from offset 0 (or base_path=from_seq) into a freshly-dropped index (the P3 recovery mechanism — a full rebuild is always a valid recovery path, not an exceptional one): corpus_name=eg graph/tenant id (required), target_path=optional object_type to scope the rebuild to one index (default: every index this tenant owns). 'skill_workflows' ingests the universal-skills workflow corpus (workflows/<domain>/<name>/SKILL.md) into the KG as dispatchable WorkflowDefinition DAGs (+WorkflowStep depends_on edges +USES_SKILL links) in the exact WorkflowStore shape execute_workflow reads, so graph_orchestrate execute_workflow can discover and fire them; ALSO sweeps the sibling atomic-skill corpus (skill_type: skill) into a CallableResource(AGENT_SKILL) each via the same reused ingest_runnable_skill primitive, so both legs of the corpus are classified by this one call; target_path optionally overrides the corpus root, default=installed universal_skills package; idempotent (content-addressed re-ingest is a no-op); runs as a BACKGROUND job (returns a job_id immediately — the full corpus takes ~150s, over the call ceiling — poll with action=job_status job_id=<id>). 'materialize_source' runs an enterprise source extractor (corpus_name=category, e.g. 'camunda'/'aris'/'egeria'; description=optional JSON extractor config), persists its BusinessProcess/BusinessTask/FLOWS_TO batch into the graph via an in-process vendor client, then runs one OWL reasoning cycle so the new process structure folds into the cross-vendor crosswalk. 'fact_extract' turns a document (description=raw text, or target_path=file) into atomic (subject)-[predicate]->(object) fact edges with confidence/evidence/tags, dedups them, persists to the graph, and returns the facts + JSONL. 'sync_second_brain' (CONCEPT:MERISTEM-KG.enrichment.second-brain-note-sync) is the one-call personal-notes sync: target_path=notes directory or file (a markdown folder, an Obsidian vault, or a synced Nextcloud/Paperless export — see the `second-brain-sync` skill), corpus_name=corpus name, base_path=optional 'since' cursor (epoch seconds or an ISO-8601 timestamp) to only process notes changed since then. Per note: runs 'fact_extract' (evidence-spanned facts), extracts entities/claims and PROPOSES each new claim into the governed ClaimFlywheel lifecycle (graph_claims reads the same state — never silently accepted), then scans each new claim against existing graph content and persists any contradiction as a propose-only :BeliefRevisionProposal (the same node loop_controller's belief-revision pass writes, so existing review tooling picks it up with no new UI). Content-hash idempotent: re-running over an unchanged corpus mints zero new facts/claims/proposals. 'extract_submit'/'extract_jobs'/'extract_status'/'extract_pause'/'extract_resume'/'extract_jsonl' run extraction as a GPU-slot-scheduled job (preempt/backfill/resume on the single GPU) addressed by job_id; max_depth sets rounds. 'distill' exports a KG subgraph to a portable skill-graph (target_path=out dir; corpus_name=seed node id OR description=query; max_depth=hop depth). 'import_pack' re-ingests a distilled skill-graph dir back into the KG (target_path=dir; corpus_name='dedup' to merge duplicates). 'build_skill_graph' runs the UNIFIED skill-graph pipeline (CONCEPT:MERISTEM-KG.research.skill-graph-distillation): acquire from ANY source kind into one standardized skill-graph (corpus_name=name; target_path=output parent dir; base_path=JSON list of sources [{kind,uri,options}] OR 'kind=uri,kind=uri' shorthand over web/pdf/office/dir/url_reader/rest/database/mcp_tool/generated/kg_query; description=optional human description) — always writes the offline corpus + a sources.json provenance/freshness manifest, and ALSO ingests into the KG when the daemon is reachable (degrades cleanly otherwise). 'skill_graph_status' reports freshness of an existing skill-graph (target_path=dir; corpus_name='quick' to skip network sources). 'rebuild_skill_graph' re-acquires from the recorded sources and bumps the version (target_path=dir). Queue control: 'cancel' (job_id), 'clear' (target_path=status filter pending|running|completed|failed|cancelled|zombie|all, default completed), 'prioritize' (job_id, priority_bucket=0..3 — no named priority aliases are accepted). Research evolution (CONCEPT:MERISTEM-KG.ingest.batch-research-cohort): 'cohort_create' (base_path=JSON list of paper URLs, target_path=JSON list of repo paths, description=goal) batch-ingests a cohort of papers+repos whose self-polling barrier synthesizes the comparative feature/innovation matrix (KG-2.173) when every member drains; 'cohort_status' (job_id=cohort_id) returns per-member progress + the matrix counts; 'profile' (corpus_name=lane|type|tkind, CONCEPT:MERISTEM-OS.observability.per-lane-latency-metrics) returns per-lane/stage latency percentiles + token/cost + the parallelism factor.",
         ),
         job_id: str = Field(
             default="", description="ID of the job to check status for."
@@ -1627,7 +1627,7 @@ def register_write_ingest_tools(mcp):
         connection: str = Field(
             default="",
             description=(
-                "CONCEPT:AU-KG.backend.multi-connection-registry — for action='ingest' codebase/document "
+                "CONCEPT:MERISTEM-KG.backend.multi-connection-registry — for action='ingest' codebase/document "
                 "jobs: named BACKEND connection to submit to (default = primary). "
                 "Selects WHICH BACKEND, never which physical graph — see `graph`. "
                 "Fan-out ('all'/a list) is rejected: an ingest job always targets "
@@ -1637,7 +1637,7 @@ def register_write_ingest_tools(mcp):
         graph: str = Field(
             default="",
             description=(
-                "CONCEPT:AU-KG.backend.explicit-graph-selection — for action='ingest' codebase/document jobs: "
+                "CONCEPT:MERISTEM-KG.backend.explicit-graph-selection — for action='ingest' codebase/document jobs: "
                 "explicit physical engine graph to ingest INTO (one of the names "
                 "`engine_tenants(action='list')` returns), independent of "
                 "`connection`. Empty = the caller's own bound graph (unchanged "

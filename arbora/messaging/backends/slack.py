@@ -1,4 +1,4 @@
-"""Slack Messaging Backend (CONCEPT:AU-ECO.messaging.native-backend-abstraction).
+"""Slack Messaging Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction).
 
 Implements ``MessagingBackend`` for Slack using ``slack-bolt`` with Socket Mode
 for real-time inbound events. Supports Block Kit rich formatting, threads,
@@ -13,7 +13,7 @@ Configuration::
     SLACK_BOT_TOKEN=xoxb-...
     SLACK_APP_TOKEN=xapp-...   # Required for Socket Mode
 
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 
 from __future__ import annotations
@@ -51,7 +51,7 @@ def _slack_attachments(
 ) -> list[MediaAttachment]:
     """Turn a Slack message event's ``files`` array into :class:`MediaAttachment`\\s.
 
-    CONCEPT:AU-ECO.messaging.voice-attachment-fallback — Slack file uploads (including
+    CONCEPT:MERISTEM-ECO.messaging.voice-attachment-fallback — Slack file uploads (including
     voice-note/clip recordings, which Slack delivers as an ordinary audio file upload —
     there is no separate "voice message" object in the Events API) previously went
     entirely unparsed here, so a voice note sent over Slack never reached the core
@@ -92,7 +92,7 @@ def _slack_attachments(
 class SlackBackend(MessagingBackend):
     """Slack messaging backend using ``slack-bolt``.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
     """
 
     def __init__(self, config: MessagingConfig | None = None) -> None:
@@ -110,7 +110,7 @@ class SlackBackend(MessagingBackend):
         return CAPABILITY_MATRIX["slack"]
 
     async def connect(self) -> None:
-        """Connect to Slack via Socket Mode. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Connect to Slack via Socket Mode. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         try:
             from slack_bolt.adapter.socket_mode.async_handler import (
                 AsyncSocketModeHandler,
@@ -174,11 +174,11 @@ class SlackBackend(MessagingBackend):
 
         self._connected = True
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Slack backend connected."
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Slack backend connected."
         )
 
     async def disconnect(self) -> None:
-        """Disconnect from Slack. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Disconnect from Slack. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         await super().disconnect()
 
     async def send_message(
@@ -190,7 +190,7 @@ class SlackBackend(MessagingBackend):
         reply_to_id: str = "",
         metadata: dict[str, Any] | None = None,
     ) -> SendResult:
-        """Send a Slack message. Supports Block Kit via metadata['blocks']. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Send a Slack message. Supports Block Kit via metadata['blocks']. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         try:
             kwargs: dict[str, Any] = {"channel": channel_id, "text": text}
             if thread_id:
@@ -207,16 +207,16 @@ class SlackBackend(MessagingBackend):
             )
         except Exception as e:
             logger.error(
-                "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Slack send failed: %s",
+                "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Slack send failed: %s",
                 e,
             )
             return SendResult(success=False, platform=PlatformId.SLACK, error=str(e))
 
     async def send_typing(self, channel_id: str) -> None:
-        """Indicate typing. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Indicate typing. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         # Slack doesn't have a direct typing API for bots, so we log the trigger
         logger.debug(
-            f"[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Slack typing indicator triggered for channel {channel_id}"
+            f"[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Slack typing indicator triggered for channel {channel_id}"
         )
 
     # Unicode → Slack reaction names (Slack wants names, not the emoji char).
@@ -232,7 +232,7 @@ class SlackBackend(MessagingBackend):
     }
 
     async def send_reaction(self, channel_id: str, message_id: str, emoji: str) -> None:
-        """React to a message with an emoji (CONCEPT:AU-ECO.messaging.messaging-renderer-core-reaction) via reactions.add."""
+        """React to a message with an emoji (CONCEPT:MERISTEM-ECO.messaging.messaging-renderer-core-reaction) via reactions.add."""
         name = self._SLACK_EMOJI.get(emoji, emoji.strip(":"))
         await self._client.reactions_add(
             channel=channel_id, timestamp=message_id, name=name
@@ -241,7 +241,7 @@ class SlackBackend(MessagingBackend):
     async def create_thread(
         self, channel_id: str, message_id: str, title: str = ""
     ) -> Thread:
-        """Reply in thread to create it. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Reply in thread to create it. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         return Thread(
             id=message_id,
             parent_message_id=message_id,
@@ -250,7 +250,7 @@ class SlackBackend(MessagingBackend):
         )
 
     async def listen(self) -> AsyncIterator[InboundEvent]:
-        """Yield inbound Slack events. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Yield inbound Slack events. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         while self._connected:
             try:
                 event = await asyncio.wait_for(self._event_queue.get(), timeout=1.0)
@@ -259,7 +259,7 @@ class SlackBackend(MessagingBackend):
                 continue
 
     async def list_channels(self) -> list[Channel]:
-        """List Slack channels. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """List Slack channels. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         result = await self._client.conversations_list(
             types="public_channel,private_channel"
         )

@@ -29,11 +29,11 @@ EventHandler = Callable[[InboundEvent, "MessagingBackend"], Awaitable[None]]
 class InboundRouter:
     """Routes inbound messaging events to the planner graph agent.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 
     The router listens on all connected backends simultaneously and
     dispatches events to registered handlers. The default handler runs
-    each chat turn through the universal graph agent (CONCEPT:AU-ECO.messaging.universal-graph-agent),
+    each chat turn through the universal graph agent (CONCEPT:MERISTEM-ECO.messaging.universal-graph-agent),
     which:
 
     1. Recalls prior turns of this channel from the core memory (session-scoped mementos)
@@ -87,14 +87,14 @@ class InboundRouter:
         self._backends.append(backend)
         self._states[backend.id] = ChannelSupervisionState.STOPPED
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Registered backend '%s' for inbound routing.",
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Registered backend '%s' for inbound routing.",
             backend.id,
         )
 
     def on_event(self, event_type: EventType) -> Callable[[EventHandler], EventHandler]:
         """Decorator to register a handler for a specific event type.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Usage::
 
@@ -120,7 +120,7 @@ class InboundRouter:
     def set_default_handler(self, handler: EventHandler) -> None:
         """Set the default handler for events without a specific handler.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         The default handler is typically the planner graph agent
         dispatcher, which routes messages through the KG-aware
@@ -146,7 +146,7 @@ class InboundRouter:
         )
         if not backend.is_connected:
             logger.warning(
-                "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Backend '%s' is not connected, skipping.",
+                "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Backend '%s' is not connected, skipping.",
                 backend.id,
             )
             self._states[backend.id] = transition(
@@ -164,14 +164,14 @@ class InboundRouter:
     async def start(self) -> None:
         """Start listening on all registered backends.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Creates an async task for each backend's ``listen()`` method
         and dispatches events to registered handlers.
         """
         self._running = True
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Starting inbound router with %d backends.",
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Starting inbound router with %d backends.",
             len(self._backends),
         )
 
@@ -180,7 +180,7 @@ class InboundRouter:
             if task is not None:
                 self._tasks.append(task)
 
-        # CONCEPT:AU-ECO.messaging.durable-inbound-pending — durable-inbox reaper: re-answers inbound turns that were recorded
+        # CONCEPT:MERISTEM-ECO.messaging.durable-inbound-pending — durable-inbox reaper: re-answers inbound turns that were recorded
         # pending but never got a reply (engine down / crashed mid-flight), so nothing is lost.
         if self._backends:
             self._tasks.append(
@@ -193,7 +193,7 @@ class InboundRouter:
             await asyncio.gather(*self._tasks, return_exceptions=True)
 
     def _backend_for(self, platform: str) -> MessagingBackend | None:
-        """The connected backend for a platform id (CONCEPT:AU-ECO.messaging.durable-inbound-pending), for reaper retries."""
+        """The connected backend for a platform id (CONCEPT:MERISTEM-ECO.messaging.durable-inbound-pending), for reaper retries."""
         for b in self._backends:
             if platform and (
                 str(getattr(b, "id", "")) == platform
@@ -204,7 +204,7 @@ class InboundRouter:
 
     async def _inbox_reaper_loop(self) -> None:
         """Periodically re-attempt durably-recorded but still-unanswered inbound messages
-        (CONCEPT:AU-ECO.messaging.durable-inbound-pending). Uses this router's own backends + the universal reply path, so a
+        (CONCEPT:MERISTEM-ECO.messaging.durable-inbound-pending). Uses this router's own backends + the universal reply path, so a
         turn that failed while the engine was down is answered once the system recovers."""
         from arbora.core.settings import setting
         from arbora.messaging.inbox import retry_unanswered
@@ -236,14 +236,14 @@ class InboundRouter:
                 await retry_unanswered(engine, _reply_send)
             except Exception as e:  # the reaper must survive any single pass
                 logger.debug(
-                    "[CONCEPT:AU-ECO.messaging.durable-inbound-pending] inbox reaper pass failed: %s",
+                    "[CONCEPT:MERISTEM-ECO.messaging.durable-inbound-pending] inbox reaper pass failed: %s",
                     e,
                 )
 
     async def stop(self) -> None:
         """Stop all listener tasks gracefully.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
         """
         self._running = False
         # CONCEPT:ARBORA-MESSAGING-R004 — drain, don't abandon: mark every
@@ -260,7 +260,7 @@ class InboundRouter:
             only_from=ChannelSupervisionState.STOPPING,
         )
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Inbound router stopped."
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Inbound router stopped."
         )
 
     def _advance_states(
@@ -280,7 +280,7 @@ class InboundRouter:
     async def _supervise_backend(self, backend: MessagingBackend) -> None:
         """Keep a backend's listener ALIVE across recoverable failures (self-healing).
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Runs :meth:`_listen_loop` (one ``listen()`` attempt) inside a supervision loop.
         On an unexpected exception — anything that is NOT ``asyncio.CancelledError``
@@ -343,21 +343,21 @@ class InboundRouter:
         except asyncio.CancelledError:
             # Clean shutdown (router.stop cancelled us) — never restart; propagate.
             logger.debug(
-                "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Listener cancelled for '%s'.",
+                "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Listener cancelled for '%s'.",
                 backend.id,
             )
             raise
         except NotImplementedError:
             # The backend cannot listen (outbound-only) — giving up is correct.
             logger.warning(
-                "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Backend '%s' does not support "
+                "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Backend '%s' does not support "
                 "inbound listening — not restarting.",
                 backend.id,
             )
             return None
         except Exception as e:  # supervise: log + backed-off restart, never die
             logger.error(
-                "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Listener for '%s' failed: %s "
+                "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Listener for '%s' failed: %s "
                 "— restarting in %.1fs (self-healing supervisor).",
                 backend.id,
                 e,
@@ -372,7 +372,7 @@ class InboundRouter:
             if not self._running:
                 return None
             logger.warning(
-                "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Listener for '%s' ended "
+                "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Listener for '%s' ended "
                 "unexpectedly (stream closed without error) — restarting in %.1fs.",
                 backend.id,
                 delay,
@@ -382,7 +382,7 @@ class InboundRouter:
     def _record_listener_restart(
         self, backend_id: str, delay: float, ran_for: float
     ) -> None:
-        """CONCEPT:AU-AHE.harness.runtime-reliability-loop — record the self-heal
+        """CONCEPT:MERISTEM-AHE.harness.runtime-reliability-loop — record the self-heal
         so the runtime-reliability loop SEES it, from ``_supervise_backend``: a
         listener that keeps dying+restarting (e.g. the Telegram 409 race) is
         auto-healed there, but repeated restarts are a SOURCE_RUNTIME signal
@@ -409,7 +409,7 @@ class InboundRouter:
     async def _listen_loop(self, backend: MessagingBackend) -> None:
         """One ``listen()`` attempt for a single backend — consumes its event stream.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Consumes the backend's ``listen()`` async iterator and dispatches each event to
         the appropriate handler. Exceptions are deliberately NOT swallowed here (they
@@ -422,7 +422,7 @@ class InboundRouter:
             backend: The messaging backend to listen on.
         """
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Listening for events on '%s'...",
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Listening for events on '%s'...",
             backend.id,
         )
         async for event in backend.listen():
@@ -433,7 +433,7 @@ class InboundRouter:
     async def _dispatch(self, event: InboundEvent, backend: MessagingBackend) -> None:
         """Dispatch an event to registered handlers.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Priority:
         1. Specific event-type handlers (registered via ``on_event``)
@@ -452,7 +452,7 @@ class InboundRouter:
                     await handler(event, backend)
                 except Exception as e:
                     logger.error(
-                        "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Handler error for %s event: %s",
+                        "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Handler error for %s event: %s",
                         event.event_type,
                         e,
                         exc_info=True,
@@ -462,13 +462,13 @@ class InboundRouter:
                 await self._default_handler(event, backend)
             except Exception as e:
                 logger.error(
-                    "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Default handler error: %s",
+                    "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Default handler error: %s",
                     e,
                     exc_info=True,
                 )
         else:
             logger.debug(
-                "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] No handler for %s event from '%s'.",
+                "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] No handler for %s event from '%s'.",
                 event.event_type,
                 backend.id,
             )

@@ -1,4 +1,4 @@
-"""graph_epistemic — dedicated epistemic-answer MCP tool (CONCEPT:AU-KB-CURRENCY, Seam 1 follow-up).
+"""graph_epistemic — dedicated epistemic-answer MCP tool (CONCEPT:MERISTEM-KB-CURRENCY, Seam 1 follow-up).
 
 The epistemic read layer (`EpistemicRow`/`EvidenceSpan`, `include_epistemic` on
 `graph_query`/`graph_ask`/`KnowledgeGraph.query`) surfaces PER-ROW currency
@@ -110,7 +110,7 @@ def register_epistemic_tools(mcp: Any) -> None:
         name="graph_epistemic",
         description=(
             "Purpose-named epistemic-answer surface over the engine's belief/"
-            "provenance primitives (CONCEPT:AU-KB-CURRENCY) — 'why do we believe "
+            "provenance primitives (CONCEPT:MERISTEM-KB-CURRENCY) — 'why do we believe "
             "this', 'why NOT', 'what would change my mind', 'what changed between "
             "two points in time', 'resolve this contradiction'. Actions: 'status' "
             "(node_id -> acceptance capstone: believed? since when? on what "

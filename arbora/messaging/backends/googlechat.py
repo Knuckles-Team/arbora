@@ -1,10 +1,10 @@
-"""Google Chat Messaging Backend (CONCEPT:AU-ECO.messaging.native-backend-abstraction).
+"""Google Chat Messaging Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction).
 
 Uses ``google-api-python-client`` for Google Chat spaces/messages.
 
 Install: ``pip install agent-utilities[messaging-googlechat]``
 
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 class GoogleChatBackend(MessagingBackend):
-    """Google Chat backend via Workspace API. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+    """Google Chat backend via Workspace API. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
 
     def __init__(self, config: MessagingConfig | None = None) -> None:
         super().__init__(config)
@@ -52,7 +52,7 @@ class GoogleChatBackend(MessagingBackend):
         return CAPABILITY_MATRIX["googlechat"]
 
     async def connect(self) -> None:
-        """Connect via Google Workspace service account. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Connect via Google Workspace service account. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         try:
             from google.oauth2 import service_account
             from googleapiclient.discovery import build
@@ -70,7 +70,7 @@ class GoogleChatBackend(MessagingBackend):
         self._service = build("chat", "v1", credentials=creds)
         self._connected = True
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Google Chat backend connected."
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Google Chat backend connected."
         )
 
     async def send_message(
@@ -82,7 +82,7 @@ class GoogleChatBackend(MessagingBackend):
         reply_to_id: str = "",
         metadata: dict[str, Any] | None = None,
     ) -> SendResult:
-        """Send to Google Chat space. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Send to Google Chat space. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         try:
             body: dict[str, Any] = {"text": text}
             if thread_id:
@@ -109,7 +109,7 @@ class GoogleChatBackend(MessagingBackend):
     async def create_thread(
         self, channel_id: str, message_id: str, title: str = ""
     ) -> Thread:
-        """Google Chat threads. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Google Chat threads. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         return Thread(
             id=message_id,
             parent_message_id=message_id,
@@ -118,7 +118,7 @@ class GoogleChatBackend(MessagingBackend):
         )
 
     async def list_channels(self) -> list[Channel]:
-        """List spaces. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """List spaces. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         result = await asyncio.to_thread(self._service.spaces().list().execute)
         return [
             Channel(
@@ -130,7 +130,7 @@ class GoogleChatBackend(MessagingBackend):
         ]
 
     async def listen(self) -> AsyncIterator[InboundEvent]:
-        """Yield events (webhook-populated). CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Yield events (webhook-populated). CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         while self._connected:
             try:
                 event = await asyncio.wait_for(self._event_queue.get(), timeout=1.0)
@@ -139,7 +139,7 @@ class GoogleChatBackend(MessagingBackend):
                 continue
 
     async def process_webhook(self, body: dict[str, Any]) -> None:
-        """Process Google Chat webhook event. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Process Google Chat webhook event. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         msg = body.get("message", {})
         if msg:
             event = InboundEvent(

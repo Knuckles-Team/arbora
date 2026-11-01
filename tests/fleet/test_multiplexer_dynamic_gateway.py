@@ -1,4 +1,4 @@
-"""Tests for the dynamic tool gateway (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog).
+"""Tests for the dynamic tool gateway (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog).
 
 Covers the lazy-mount refactor, KG-backed discovery + (server, tool) mapping,
 the load/unload resolution logic, and the FastMCP meta-tool wiring. Children and
@@ -631,7 +631,7 @@ async def test_start_children_eager_unchanged(tmp_path):
     # "arbora" is structurally excluded from the catalog -- it is the self
     # identity (served natively, always on), never a mountable fleet child --
     # so this eager-start regression guard exercises two ordinary fleet
-    # members instead (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog).
+    # members instead (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog).
     mux = _mux_with_children(
         tmp_path,
         {CNT: [(CNT_TOOL, "containers")], "leanix-mcp": [("query", "query")]},
@@ -759,7 +759,7 @@ async def test_probe_catalog_returns_partial_results_within_budget(tmp_path):
 
     # Honest, per-server "still working" -- NOT the old fixed "budget
     # exceeded" claim stamped identically on every straggler regardless of
-    # its real state (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog).
+    # its real state (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog).
     assert result["slow-mcp"]["pending"] is True
     assert "still probing" in result["slow-mcp"]["error"]
     await mux.aclose()  # let the still-running background probe be cancelled cleanly
@@ -767,7 +767,7 @@ async def test_probe_catalog_returns_partial_results_within_budget(tmp_path):
 
 async def test_slow_server_degrades_alone_fast_servers_unaffected(tmp_path):
     """Requirement: one slow server must not blank the other 60 -- each
-    reports its own state with its own reason (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog)."""
+    reports its own state with its own reason (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog)."""
     mux = _mux_with_children(tmp_path, {CNT: [(CNT_TOOL, "c")], "slow-mcp": []})
 
     async def mixed_probe(server, **_kwargs):
@@ -797,7 +797,7 @@ async def test_discovery_succeeds_for_a_previously_timed_out_server(tmp_path):
     interactive budget must become available on a LATER call once its
     background probe finishes, via cache -- not be re-probed (and time out
     again) from scratch on every subsequent call forever
-    (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog)."""
+    (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog)."""
     mux = _mux_with_children(tmp_path, {"slow-mcp": []})
     release = asyncio.Event()
     calls = 0
@@ -860,7 +860,7 @@ async def test_cached_results_are_labelled_with_age(tmp_path, monkeypatch):
 
 
 async def test_probe_entry_past_ttl_is_reported_stale(tmp_path, monkeypatch):
-    """CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness — regression for
+    """CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness — regression for
     the 80-hour-old-cache incident: a normally-settled cache entry (never
     routed through the narrow ``stale`` in-flight flag) must be reported
     ``stale: true`` once its age exceeds the configured TTL. Before this fix,
@@ -902,7 +902,7 @@ async def test_probe_entry_past_ttl_is_reported_stale(tmp_path, monkeypatch):
 
 
 async def test_probe_catalog_retargets_ttl_expired_cache_entries(tmp_path, monkeypatch):
-    """CONCEPT:AU-ECO.multiplexer.catalog-probe-ttl-staleness — the other half
+    """CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness — the other half
     of the fix: a TTL-expired cache entry must actually be RE-PROBED, not
     merely relabelled, so it is refreshed rather than served forever. Before
     this fix ``probe_catalog`` only ever targeted a server completely absent
@@ -976,7 +976,7 @@ async def test_probe_catalog_retargets_ttl_expired_cache_entries(tmp_path, monke
 async def test_concurrent_probes_honor_their_own_per_server_deadline(tmp_path):
     """Two servers probed concurrently must each fail/succeed on THEIR OWN
     configured timeout, not a shared ceiling -- and truly concurrently, not
-    serialized (CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog)."""
+    serialized (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog)."""
     servers = {
         "quick-timeout-mcp": {
             "command": "python",
@@ -1453,7 +1453,7 @@ def test_prefix_sanity():
 
 
 # --------------------------------------------------------------------------- #
-# Verbose tools held in catalog (load on demand) — CONCEPT:AU-ECO.mcp.tool-mode-standardization
+# Verbose tools held in catalog (load on demand) — CONCEPT:MERISTEM-ECO.mcp.tool-mode-standardization
 # --------------------------------------------------------------------------- #
 def test_tool_is_verbose_tag_detection():
     assert _tool_is_verbose(_fake_tool("x", tags=["graph_write", "verbose"])) is True
@@ -1503,7 +1503,7 @@ async def test_always_on_holds_verbose_tools_in_catalog(tmp_path):
 
 
 async def test_server_load_holds_verbose(tmp_path):
-    """CONCEPT:AU-ECO.mcp.tool-mode-standardization — load_tools(servers=[X]) exposes only X's condensed tools; verbose
+    """CONCEPT:MERISTEM-ECO.mcp.tool-mode-standardization — load_tools(servers=[X]) exposes only X's condensed tools; verbose
     1:1 tools stay loadable only by EXPLICIT name, so a server-load never floods context."""
     servers = {"svc": {"command": "python", "args": ["-m", "svc"]}}
     mux = multiplexer_from_fixture(_write_config(tmp_path, servers))
@@ -1585,7 +1585,7 @@ def test_tool_dispatchable_false_for_unknown_name_on_a_serving_instance(
     reach an unregistered host tool the real dispatch middleware never
     actually admitted.
 
-    The EG-backed catalog source (``tests.fleet.catalog_fixture``) composes
+    The Medulla-backed catalog source (``tests.fleet.catalog_fixture``) composes
     the catalog synchronously at construction, unlike the retired static
     ``MCP_CONFIG`` path that deferred the first read to ``load_catalog()`` --
     so a freshly-built fixture with an admissible server is already serving."""

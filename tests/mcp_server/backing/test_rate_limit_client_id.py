@@ -1,6 +1,6 @@
 """Tests for the per-caller rate-limit bucket key (server_factory.py).
 
-CONCEPT:AU-OS.observability.no-op-without-metrics adjacent — this closes a
+CONCEPT:MERISTEM-OS.observability.no-op-without-metrics adjacent — this closes a
 real "empty tools/list" failure shape: ``RateLimitingMiddleware`` defaults
 every caller onto one shared literal ``"global"`` bucket
 (``fastmcp.server.middleware.rate_limiting.RateLimitingMiddleware
@@ -76,7 +76,7 @@ def test_rate_limit_client_id_never_leaks_raw_claims_into_the_key():
 
 
 async def test_configure_middleware_keys_rate_limiter_per_caller_not_one_shared_global_bucket():
-    """CONCEPT:AU-ECO.mcp — the regression this guards: an un-keyed
+    """CONCEPT:MERISTEM-ECO.mcp — the regression this guards: an un-keyed
     ``RateLimitingMiddleware`` buckets every caller under the single
     literal string "global", so a burst of legitimate concurrent MCP
     clients (multiple agent lanes, the harness, service-account bridges)

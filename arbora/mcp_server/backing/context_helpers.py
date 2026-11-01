@@ -7,7 +7,7 @@ in the agent-packages ecosystem should import these instead of hand-rolling
 ctx interactions. Read-only helpers are no-ops when *ctx* is ``None``;
 destructive confirmation fails closed.
 
-CONCEPT:AU-ECO.mcp.standardized-interfaces — MCP Standardized Interfaces
+CONCEPT:MERISTEM-ECO.mcp.standardized-interfaces — MCP Standardized Interfaces
 """
 
 

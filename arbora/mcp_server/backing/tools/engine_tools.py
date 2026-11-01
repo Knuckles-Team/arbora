@@ -21,7 +21,7 @@ Design (anti-sprawl, anti-drift):
   generic dispatcher that resolves the engine client and calls
   ``getattr(client.<domain>, action)(**params)``. The action set per domain is
   DISCOVERED by introspecting the client sub-client class — no hand-maintained
-  method list to rot (CONCEPT:AU-KG.compute.engine-surface-manifest).
+  method list to rot (CONCEPT:MERISTEM-KG.compute.engine-surface-manifest).
 - Every tool gets its REST twin registered into ``ACTION_TOOL_ROUTES`` in the SAME
   call, so the surface-parity gate stays green and ``_mount_rest_routes`` mounts
   ``POST /engine/<domain>`` automatically.
@@ -30,7 +30,7 @@ Design (anti-sprawl, anti-drift):
 - Every engine method is one operation of the generated action manifest
   (``scripts/gen_arbora_manifest.py``, from :data:`ENGINE_DOMAINS`), reached
   through the intent tools as ``action="engine_<domain>.<method>"``.
-- Per-action scope/policy (AU-P0-6): every domain is classified ADMIN or
+- Per-action scope/policy (MERISTEM-P0-6): every domain is classified ADMIN or
   normal (see :data:`ADMIN_DOMAINS`); ADMIN actions (tenant lifecycle, cluster
   resharding, zero-trust consensus/identity, RBAC policy administration,
   ops backup/restore) are denied to an acting identity that lacks the
@@ -41,8 +41,8 @@ Design (anti-sprawl, anti-drift):
   views over :class:`GraphComputeEngine`'s process authority. Views create no
   socket or event-loop thread and bind the verified GraphSession on every call.
 
-CONCEPT:AU-ECO.mcp.full-api-mcp-surface — Full engine API + MCP surface (REST + MCP in lockstep)
-CONCEPT:AU-KG.compute.engine-surface-manifest — Engine surface manifest (client-introspection source of truth)
+CONCEPT:MERISTEM-ECO.mcp.full-api-mcp-surface — Full engine API + MCP surface (REST + MCP in lockstep)
+CONCEPT:MERISTEM-KG.compute.engine-surface-manifest — Engine surface manifest (client-introspection source of truth)
 """
 
 from __future__ import annotations
@@ -89,7 +89,7 @@ _DOMAIN_CLASSES: dict[str, str] = {
     "rdf": "RdfClient",
     "streaming": "StreamingClient",
     "blob": "BlobClient",
-    # AU-P0-6: previously-missing namespaces (audited gap #3). Domain name ==
+    # MERISTEM-P0-6: previously-missing namespaces (audited gap #3). Domain name ==
     # the attribute on ``SyncEpistemicGraphClient`` (checked against the
     # installed ``epistemic_graph.client`` module — NOT a guess): the graph-
     # learning sub-client is exposed as ``.graphlearn`` (no underscore), so
@@ -192,11 +192,11 @@ def _discover_domains() -> dict[str, list[str]]:
 
 
 # The declarative engine-surface manifest (source of truth for the tools AND the
-# verbose action manifest generator). CONCEPT:AU-KG.compute.engine-surface-manifest.
+# verbose action manifest generator). CONCEPT:MERISTEM-KG.compute.engine-surface-manifest.
 ENGINE_DOMAINS: dict[str, list[str]] = _discover_domains()
 
 
-# ── Engine client resolution (bounded LRU pool, AU-P0-6) ─────────────────────
+# ── Engine client resolution (bounded LRU pool, MERISTEM-P0-6) ─────────────────────
 # Was: one synchronous client cached PER GRAPH forever in a plain ``dict`` —
 # connection/thread/socket count grew without bound as graph cardinality grew.
 # Now the LRU holds only graph-scoped wrappers (reusing the same primitive
@@ -278,11 +278,11 @@ def _json_default(obj: Any) -> Any:
     return str(obj)
 
 
-# ── Per-action scope/policy (AU-P0-6) ─────────────────────────────────────────
+# ── Per-action scope/policy (MERISTEM-P0-6) ─────────────────────────────────────────
 # Domains whose ENTIRE action surface is privileged/administrative — mirrors
 # the engine's own separation of tenant/cluster/identity/governance ops from
 # ordinary graph reads+writes, rather than inventing a parallel classification
-# (CONCEPT:AU-KG.compute.engine-surface-manifest). Every method under one of
+# (CONCEPT:MERISTEM-KG.compute.engine-surface-manifest). Every method under one of
 # these domains requires :data:`ENGINE_ADMIN_SCOPE`, with NO per-method
 # carve-out: even a read here (``tenants.list``, ``resharding.catalog_list``,
 # ``rbac.list``) discloses cluster/tenant/identity topology a normal actor
@@ -293,7 +293,7 @@ def _json_default(obj: Any) -> Any:
 # ``MultiTenantClient``/``ReshardingClient``/``ConsensusClient`` carry doc
 # comments only, no ``requires_role``/``is_admin``/capability descriptor), so
 # this is an explicit, hand-maintained map — called out here as such per
-# AU-P0-6's guidance.
+# MERISTEM-P0-6's guidance.
 ADMIN_DOMAINS: frozenset[str] = frozenset(
     {"tenants", "resharding", "placement", "consensus", "rbac", "admin"}
 )
@@ -347,7 +347,7 @@ _READ_VERB_PREFIXES: tuple[str, ...] = (
     # Native Unified Query Language is a governed read surface on
     # IntelligenceGraphEngine.uql(), not a write-capable operation.  Keep it
     # under the same query:unified / kg:read policy classification as SQL and
-    # SPARQL (CONCEPT:AU-KG.query.au-engine-execution-path).
+    # SPARQL (CONCEPT:MERISTEM-KG.query.au-engine-execution-path).
     "uql",
     # EG ``QueryClient.nl_query``: the engine's NL planner emits UQL that rides
     # the same read pipeline as ``uql`` (ARBORA-HOST-R001.8).
@@ -391,7 +391,7 @@ _READ_VERB_PREFIXES: tuple[str, ...] = (
 def _is_admin_domain(domain: str) -> bool:
     """Whether every action under ``domain`` requires :data:`ENGINE_ADMIN_SCOPE`.
 
-    Fail-closed (AU-P0-6 guardrail): a domain this map has not explicitly
+    Fail-closed (MERISTEM-P0-6 guardrail): a domain this map has not explicitly
     classified as normal — e.g. a future engine namespace added to
     ``_DOMAIN_CLASSES`` before this map is updated — is treated as ADMIN by
     default rather than silently open.
@@ -512,7 +512,7 @@ def _dispatch(
                 "actions": sorted(methods),
             }
         )
-    # AU-P0-6: fail-closed ADMIN gate — raises PermissionError (not returned as
+    # MERISTEM-P0-6: fail-closed ADMIN gate — raises PermissionError (not returned as
     # JSON error data) so a denial is unambiguous and cannot be masked by a
     # caller pattern-matching on ``{"error": ...}`` engine-degrade payloads.
     _enforce_action_scope(domain, action)
@@ -685,7 +685,7 @@ def register_engine_tools(mcp) -> None:
     per engine client sub-client, each with its ``/engine/<domain>`` REST twin.
 
     REGISTERED_TOOLS + ACTION_TOOL_ROUTES are populated in lockstep so the
-    surface-parity gate stays green. CONCEPT:AU-ECO.mcp.full-api-mcp-surface.
+    surface-parity gate stays green. CONCEPT:MERISTEM-ECO.mcp.full-api-mcp-surface.
     """
     for domain, methods in ENGINE_DOMAINS.items():
         tool_name = f"engine_{domain}"
@@ -694,7 +694,7 @@ def register_engine_tools(mcp) -> None:
         blurb = _DOMAIN_BLURB.get(domain, "")
         admin_note = (
             f" ADMIN domain — every action requires the {ENGINE_ADMIN_SCOPE!r} "
-            "scope/role (AU-P0-6); denied otherwise."
+            "scope/role (MERISTEM-P0-6); denied otherwise."
             if _is_admin_domain(domain)
             else ""
         )
@@ -705,7 +705,7 @@ def register_engine_tools(mcp) -> None:
             f"the method name and 'params_json' to its JSON kwargs. Actions: "
             f"{', '.join(sorted(methods))}."
             + admin_note
-            + " (CONCEPT:AU-ECO.mcp.full-api-mcp-surface)"
+            + " (CONCEPT:MERISTEM-ECO.mcp.full-api-mcp-surface)"
         )
         tags = ["arbora", "engine", domain]
         if _is_admin_domain(domain):

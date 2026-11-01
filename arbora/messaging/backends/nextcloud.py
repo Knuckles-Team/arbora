@@ -1,7 +1,7 @@
-"""Nextcloud Talk Backend (CONCEPT:AU-ECO.messaging.native-backend-abstraction). REST API via httpx.
+"""Nextcloud Talk Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction). REST API via httpx.
 
 Install: ``pip install agent-utilities[messaging-nextcloud]``
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 class NextcloudTalkBackend(MessagingBackend):
-    """Nextcloud Talk backend via OCS/Talk REST API. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+    """Nextcloud Talk backend via OCS/Talk REST API. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
 
     def __init__(self, config: MessagingConfig | None = None) -> None:
         super().__init__(config)
@@ -50,7 +50,7 @@ class NextcloudTalkBackend(MessagingBackend):
         return CAPABILITY_MATRIX["nextcloud"]
 
     async def connect(self) -> None:
-        """Connect to Nextcloud Talk API. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Connect to Nextcloud Talk API. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         self._base_url = self.config.extra.get(
             "url", setting("NEXTCLOUD_URL", "")
         ).rstrip("/")
@@ -66,7 +66,7 @@ class NextcloudTalkBackend(MessagingBackend):
         )
         self._connected = True
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Nextcloud Talk backend connected."
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Nextcloud Talk backend connected."
         )
 
     async def disconnect(self) -> None:
@@ -122,7 +122,7 @@ class NextcloudTalkBackend(MessagingBackend):
         ]
 
     async def listen(self) -> AsyncIterator[InboundEvent]:
-        """Poll for new messages (Nextcloud doesn't have native WebSocket). CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Poll for new messages (Nextcloud doesn't have native WebSocket). CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         last_known: dict[str, int] = {}
         while self._connected:
             try:
@@ -159,7 +159,7 @@ class NextcloudTalkBackend(MessagingBackend):
                 break
             except Exception as e:  # noqa: BLE001 — polling loop backoff-and-retry; last_known cursor only advances for messages actually yielded, so no message is skipped
                 logger.debug(
-                    "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Nextcloud poll error: %s",
+                    "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Nextcloud poll error: %s",
                     e,
                 )
                 await asyncio.sleep(10)

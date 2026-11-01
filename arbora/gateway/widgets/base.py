@@ -1,6 +1,6 @@
 """Base widget abstract class — all service widgets inherit from this.
 
-CONCEPT:AU-OS.config.gateway-service-dashboard — Gateway Service Dashboard
+CONCEPT:MERISTEM-OS.config.gateway-service-dashboard — Gateway Service Dashboard
 
 Mirrors Homepage's widget.js pattern: each widget defines its fields,
 environment variable prefix, and a ``fetch_data()`` method that returns
@@ -205,7 +205,7 @@ class BaseWidget(ABC):
     supports_websocket: bool = False
 
     def _fleet_client(self) -> FleetConnectorClient:
-        """Use the EG-catalogued connector behind the served multiplexer."""
+        """Use the Medulla-catalogued connector behind the served multiplexer."""
         return FleetConnectorClient(self.service_type)
 
     @staticmethod

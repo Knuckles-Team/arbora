@@ -6,7 +6,7 @@ FastMCP's serving loop. This module provides one async-only command path into
 that loop: callers await a concurrent future; they never synchronously wait on
 another loop and never construct a detached multiplexer or catalog cache.
 
-CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog
+CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog
 """
 
 from __future__ import annotations

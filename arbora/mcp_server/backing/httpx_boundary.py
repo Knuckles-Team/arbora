@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """Cross-boundary coercion for the httpx / httpx2 duality (D-MTT-1).
 
-CONCEPT:AU-ECO.mcp.protocol-compat-bridge
+CONCEPT:MERISTEM-ECO.mcp.protocol-compat-bridge
 
 This environment installs **two structurally-identical but distinct** HTTP
 client packages: ``httpx`` 0.28.1 (this repo's own base dependency, imported

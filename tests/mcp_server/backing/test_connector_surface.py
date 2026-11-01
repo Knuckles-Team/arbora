@@ -1,6 +1,6 @@
 """The shared MCP builder serves the one condensed intent contract (ECO-4.82).
 
-CONCEPT:AU-ECO.mcp.intent-surface-condensed-collapse — every fleet server built
+CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse — every fleet server built
 with :func:`arbora.mcp_server.backing.verbose_tools.register_tool_surface` lists only
 the intent tools ``find``/``ask``/``act``; each takes ``action`` + ``params``
 (+ optional ``intent``), and every backing operation stays reachable through

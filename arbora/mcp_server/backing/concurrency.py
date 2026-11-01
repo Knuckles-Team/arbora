@@ -13,7 +13,7 @@ Usage in a handler::
 
     response = await invoke_client_method(client.get_repositories, **kwargs)
 
-CONCEPT:AU-ECO.mcp.standardized-interfaces — MCP Standardized Interfaces
+CONCEPT:MERISTEM-ECO.mcp.standardized-interfaces — MCP Standardized Interfaces
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ def _wrap_data_kwargs[T](func: Callable[..., T], args: tuple, kwargs: dict) -> d
     supplied, and there are extra fields that don't match a named parameter,
     those extras are collected into that body param. It is a strict no-op for
     every method without such a param (the overwhelming majority), so it is safe
-    on the shared dispatch path. CONCEPT:AU-ECO.mcp.standardized-interfaces
+    on the shared dispatch path. CONCEPT:MERISTEM-ECO.mcp.standardized-interfaces
     """
     if args or not kwargs:
         return kwargs

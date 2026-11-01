@@ -1,6 +1,6 @@
 """Service dashboard REST and WebSocket surface (ARBORA-HOST-R019).
 
-CONCEPT:AU-OS.config.gateway-service-dashboard — Gateway Service Dashboard
+CONCEPT:MERISTEM-OS.config.gateway-service-dashboard — Gateway Service Dashboard
 
 agent-webui commit ``08ab4ea`` removed its own ``/api/dashboard`` mount and the
 ``/ws/dashboard`` stream so Arbora could own them through the application

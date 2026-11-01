@@ -1,4 +1,4 @@
-"""Fleet events webhook ingress (CONCEPT:AU-OS.config.fleet-event-ingress — Fleet Event
+"""Fleet events webhook ingress (CONCEPT:MERISTEM-OS.config.fleet-event-ingress — Fleet Event
 Ingress).
 
 Until now nothing could wake the orchestrator except its own timers and
@@ -238,7 +238,7 @@ def _get_engine() -> Any:
 
 def _correlation_stamp() -> dict[str, str]:
     """Correlation + identity to stamp on persisted effect nodes
-    (CONCEPT:AU-OS.observability.run-wide-correlation-id).
+    (CONCEPT:MERISTEM-OS.observability.run-wide-correlation-id).
 
     Stamping the originating ``correlation_id`` (+ actor/tenant) onto the durable
     node is what makes the swarm-wide ``/api/fleet/trace`` and ``/api/fleet/touched``
@@ -254,7 +254,7 @@ def _correlation_stamp() -> dict[str, str]:
     ``/api/fleet/touched`` (``e.get("actor_id")``). Hashing these into
     ``*_ref`` values (as the event's own free-text ``source``/``subject``/
     ``summary`` fields correctly are, just above) would silently break both
-    reads. See CONCEPT:AU-OS.observability.run-wide-correlation-id.
+    reads. See CONCEPT:MERISTEM-OS.observability.run-wide-correlation-id.
     """
     stamp: dict[str, str] = {}
     try:

@@ -1,7 +1,7 @@
-"""iMessage Backend (CONCEPT:AU-ECO.messaging.native-backend-abstraction). macOS-only via AppleScript bridge.
+"""iMessage Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction). macOS-only via AppleScript bridge.
 
 Install: ``pip install agent-utilities[messaging-imessage]``
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 class IMessageBackend(MessagingBackend):
-    """iMessage backend via AppleScript (macOS only). CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+    """iMessage backend via AppleScript (macOS only). CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
 
     def __init__(self, config: MessagingConfig | None = None) -> None:
         super().__init__(config)
@@ -47,7 +47,7 @@ class IMessageBackend(MessagingBackend):
             raise ConnectionError("iMessage backend requires macOS.")
         self._connected = True
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] iMessage backend connected (macOS)."
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] iMessage backend connected (macOS)."
         )
 
     async def send_message(

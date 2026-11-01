@@ -38,6 +38,6 @@ admission therefore remain at the connector/fleet boundary.
   <li class="site-flow__step"><span class="site-flow__title">Return</span><span class="site-flow__body">The response returns through the same multiplexer and projection.</span></li>
 </ol>
 
-A connector absent from the EG-backed catalog, an ambiguous operation, or a
+A connector absent from the Medulla-backed catalog, an ambiguous operation, or a
 child failure produces the widget's existing correlation-safe error shape.
 Arbora never falls back to package importability or direct vendor credentials.

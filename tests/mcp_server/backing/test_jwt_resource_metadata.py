@@ -1,5 +1,5 @@
 """Tests for RFC 9728 protected-resource metadata on the ``jwt`` auth path
-(CONCEPT:AU-OS.identity.protected-resource-metadata).
+(CONCEPT:MERISTEM-OS.identity.protected-resource-metadata).
 
 A bare ``JWTVerifier``/``TokenVerifier`` (what plain ``AUTH_TYPE=jwt`` builds)
 publishes zero OAuth routes and never appends ``resource_metadata`` to its 401
@@ -25,7 +25,7 @@ from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
 
 def _args(**kw: object) -> argparse.Namespace:
     # NOTE: fake issuer/JWKS URLs below use https:// — ``_secure_auth_url``
-    # requires HTTPS for any non-loopback hostname (AU-OS.identity hardening).
+    # requires HTTPS for any non-loopback hostname (MERISTEM-OS.identity hardening).
     base: dict[str, object] = {
         "token_jwks_uri": "https://kc.test/realms/master/protocol/openid-connect/certs",
         "token_issuer": "https://kc.test/realms/master",

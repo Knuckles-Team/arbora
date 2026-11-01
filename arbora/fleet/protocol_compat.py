@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """Compatibility boundary for the fastmcp-4 / MCP SDK v2 runtime.
 
-CONCEPT:AU-ECO.mcp.protocol-compat-bridge
+CONCEPT:MERISTEM-ECO.mcp.protocol-compat-bridge
 
 Arbora targets `fastmcp>=4.0.0b1` directly in `pyproject.toml`, which
 transitively uses the MCP Python SDK v2 line. Earlier
@@ -57,7 +57,7 @@ def mcp_protocol_error() -> type[BaseException]:
     A hard `from mcp.shared.exceptions import MCPError` therefore raises
     `ImportError` on every SDK v1 install — and because the multiplexer imports
     the child-resilience layer at module scope, that ImportError takes the whole
-    fleet loader down with it (CONCEPT:AU-ECO.mcp.protocol-compat-bridge).
+    fleet loader down with it (CONCEPT:MERISTEM-ECO.mcp.protocol-compat-bridge).
 
     This resolves the class by name instead. It is deliberately NOT a
     `try/except ImportError` that falls back to a benign default: binding the
@@ -107,7 +107,7 @@ def mcp_types_module() -> ModuleType:
     serves anything. Observed live: `aris-mcp` and `freshrss-mcp` crash-looped for
     9 days on exactly this, because their images ship `fastmcp 4.0.0a1` +
     MCP SDK v2 while the rest of the fleet is still on fastmcp 3.x / SDK v1
-    (CONCEPT:AU-ECO.mcp.protocol-compat-bridge).
+    (CONCEPT:MERISTEM-ECO.mcp.protocol-compat-bridge).
 
     This resolves the module by import path instead. Like `mcp_protocol_error()`
     it is deliberately NOT a `try/except ImportError` that falls back to a benign
@@ -234,7 +234,7 @@ def _read_mcp_field(value: Any, current_name: str, legacy_name: str) -> Any:
 
     MCP SDK v1 exposed camelCase model fields while SDK v2 moved them to
     snake_case. Pydantic-AI 2.29 handles this internally; this small fail-closed
-    resolver remains for AU-owned SDK-neutral resilience tests and callers that
+    resolver remains for Meristem-owned SDK-neutral resilience tests and callers that
     receive a model from either generation. It never installs a process-global
     alias that could hide a malformed response. If neither field exists, the
     connection is invalid and the resulting ``AttributeError`` remains visible.
@@ -324,7 +324,7 @@ def _declared_runtime_floor(distribution: str, package: str) -> Any | None:
 def _source_shadow_floor(package: str) -> tuple[Any | None, str | None]:
     """Return the ``package`` floor declared by the SOURCE tree actually imported.
 
-    CONCEPT:AU-ECO.mcp.protocol-compat-bridge
+    CONCEPT:MERISTEM-ECO.mcp.protocol-compat-bridge
 
     Closes the D-OB-18 blind spot in :func:`check_mcp_sdk_floor`. Installed
     ``.dist-info`` metadata is written once, at install time. Every arbora
@@ -426,7 +426,7 @@ def _source_floor_reconciliation(
 def check_mcp_sdk_floor(distribution: str = "arbora") -> dict[str, Any]:
     """Compare installed MCP packages against Arbora runtime requirements.
 
-    CONCEPT:AU-ECO.mcp.protocol-compat-bridge
+    CONCEPT:MERISTEM-ECO.mcp.protocol-compat-bridge
 
     Closes D-ISR-2: nothing previously asserted that the runtime's installed
     `mcp`/`fastmcp` matched `pyproject.toml`'s declared floor, so v2-targeted

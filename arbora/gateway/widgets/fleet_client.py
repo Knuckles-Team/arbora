@@ -1,7 +1,7 @@
 """Connector-widget calls through the one served MCP fleet authority.
 
 Widgets own display projection only.  Connector availability, credentials,
-transport policy, and execution stay behind the EG-backed fleet catalog and
+transport policy, and execution stay behind the Medulla-backed fleet catalog and
 the multiplexer that Arbora is already serving.
 """
 

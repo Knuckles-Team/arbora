@@ -1,4 +1,4 @@
-"""``find`` ranks fleet skills and fleet tools in one result set (CONCEPT:AU-KG.retrieval.unified-capability-contract).
+"""``find`` ranks fleet skills and fleet tools in one result set (CONCEPT:MERISTEM-KG.retrieval.unified-capability-contract).
 
 ``_find_capability`` (the ``find`` intent verb's handler) widens its local
 verb-candidate list with a fleet-wide probe via ``mcp._fleet_mux.discover_tools``.

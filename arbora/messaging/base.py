@@ -1,4 +1,4 @@
-"""Abstract Messaging Backend Protocol (CONCEPT:AU-ECO.messaging.native-backend-abstraction).
+"""Abstract Messaging Backend Protocol (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction).
 
 Defines the ``MessagingBackend`` ABC that all 17 platform backends must
 implement. This is the Python equivalent of OpenClaw's ``ChannelPlugin<T>``
@@ -11,7 +11,7 @@ Architecture follows the proven ``TraceBackend`` pattern from
 - Concrete methods provide sensible defaults
 - A factory function auto-detects the best backend
 
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 
 See Also:
     - OpenClaw ``src/channels/plugins/types.plugin.ts`` for the TypeScript
@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 class MessagingBackend(ABC):
     """Abstract base class for all messaging platform backends.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 
     Every messaging platform (Discord, Slack, Telegram, etc.) implements
     this interface to provide a unified messaging surface for agents.
@@ -146,7 +146,7 @@ class MessagingBackend(ABC):
         """
         self._connected = False
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] %s backend disconnected.",
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] %s backend disconnected.",
             self.id,
         )
 
@@ -177,7 +177,7 @@ class MessagingBackend(ABC):
     ) -> SendResult:
         """Send a text message to a channel.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Args:
             channel_id: Platform-specific channel/conversation identifier.
@@ -202,7 +202,7 @@ class MessagingBackend(ABC):
     ) -> SendResult:
         """Send a media attachment to a channel.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Default implementation sends the caption as text with the media
         URL appended. Override for native media upload support.
@@ -230,7 +230,7 @@ class MessagingBackend(ABC):
     ) -> None:
         """Add a reaction to a message.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Args:
             channel_id: Channel containing the message.
@@ -247,13 +247,13 @@ class MessagingBackend(ABC):
     async def send_typing(self, channel_id: str) -> None:
         """Send a typing indicator to a channel.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Args:
             channel_id: Channel to show typing in.
         """
         logger.debug(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] %s: typing indicator not supported.",
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] %s: typing indicator not supported.",
             self.id,
         )
 
@@ -265,7 +265,7 @@ class MessagingBackend(ABC):
         *,
         metadata: dict[str, Any] | None = None,
     ) -> SendResult:
-        """Edit an already-sent message IN PLACE (CONCEPT:AU-ORCH.execution.messaging-orchestration-transparency).
+        """Edit an already-sent message IN PLACE (CONCEPT:MERISTEM-ORCH.execution.messaging-orchestration-transparency).
 
         This is the capability that lets ONE status message EVOLVE — e.g. a live
         "working on it…" checklist a long delegation updates checkpoint-by-checkpoint —
@@ -303,7 +303,7 @@ class MessagingBackend(ABC):
     ) -> SendResult:
         """Reply to a specific message.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Default implementation calls ``send_message`` with ``reply_to_id``.
 
@@ -328,7 +328,7 @@ class MessagingBackend(ABC):
     ) -> Thread:
         """Create a new thread on a message.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Args:
             channel_id: Channel containing the root message.
@@ -350,7 +350,7 @@ class MessagingBackend(ABC):
     async def listen(self) -> AsyncIterator[InboundEvent]:
         """Listen for inbound events from the messaging platform.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         This is the core of bidirectional messaging — it yields
         ``InboundEvent`` objects as they arrive from the platform.
@@ -377,7 +377,7 @@ class MessagingBackend(ABC):
     async def list_channels(self) -> list[Channel]:
         """List available channels/conversations.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Returns:
             List of ``Channel`` objects accessible by the bot/agent.
@@ -387,7 +387,7 @@ class MessagingBackend(ABC):
     async def list_members(self, channel_id: str) -> list[dict[str, Any]]:
         """List members of a channel.
 
-        CONCEPT:AU-ECO.messaging.native-backend-abstraction
+        CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 
         Args:
             channel_id: Channel to list members of.
@@ -398,7 +398,7 @@ class MessagingBackend(ABC):
         return []
 
     async def register_commands(self, commands: list[dict[str, str]]) -> None:
-        """Register the universal command set on this platform (CONCEPT:AU-ECO.messaging.single-inbound-command-dispatcher).
+        """Register the universal command set on this platform (CONCEPT:MERISTEM-ECO.messaging.single-inbound-command-dispatcher).
 
         Each platform surfaces commands via its own mechanism (Telegram ``setMyCommands``,
         Slack/Mattermost slash commands). Default is a no-op for platforms without a native
@@ -409,7 +409,7 @@ class MessagingBackend(ABC):
                 :func:`arbora.messaging.commands.command_specs`.
         """
         logger.debug(
-            "[CONCEPT:AU-ECO.messaging.single-inbound-command-dispatcher] %s backend has no command-menu registration.",
+            "[CONCEPT:MERISTEM-ECO.messaging.single-inbound-command-dispatcher] %s backend has no command-menu registration.",
             self.id,
         )
 

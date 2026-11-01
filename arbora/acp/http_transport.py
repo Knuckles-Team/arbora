@@ -2,7 +2,7 @@
 
 This is not standardized ACP Streamable HTTP and provides no event replay.
 The shared gateway must install its existing identity middleware. Only a
-trusted application factory can compose the AU-backed agent.
+trusted application factory can compose the Meristem-backed agent.
 """
 
 from __future__ import annotations

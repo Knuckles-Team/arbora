@@ -18,7 +18,7 @@ logger = get_logger(name="TokenMiddleware")
 
 class ToolMetricsMiddleware(Middleware):
     """Record per-tool call count, latency and error outcome as Prometheus
-    metrics for a standalone MCP server (CONCEPT:AU-OS.observability.no-op-without-metrics).
+    metrics for a standalone MCP server (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics).
 
     Mounted by ``create_mcp_server`` on every server the factory builds, so the
     server's own ``GET /metrics`` route exposes per-tool request rate, p95
@@ -228,7 +228,7 @@ class ActorContextMiddleware(Middleware):
 class EntityLinkingMiddleware(Middleware):
     """Middleware for intercepting tool calls for cross-entity relationship resolution.
 
-    CONCEPT:AU-ECO.mcp.fastmcp-middleware - Assimilated from FastMCP 'cross-cutting concern interception layer'.
+    CONCEPT:MERISTEM-ECO.mcp.fastmcp-middleware - Assimilated from FastMCP 'cross-cutting concern interception layer'.
     """
 
     async def on_request(self, context: MiddlewareContext, call_next):

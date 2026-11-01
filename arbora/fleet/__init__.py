@@ -2,7 +2,7 @@
 
 Owns the in-process fleet loader that lazily fronts every `*-mcp` service
 (`find_tools` / `list_catalog` / `load_tools`). Child transport and session
-visibility are live here. The EG-backed catalog reader is capability-gated
+visibility are live here. The Medulla-backed catalog reader is capability-gated
 until the generated joined registry/component query is public; it refuses
 rather than substituting the served static declaration as durable authority.
 """

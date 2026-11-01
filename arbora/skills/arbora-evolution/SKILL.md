@@ -110,7 +110,7 @@ repeats Steps 1–5 below on its own cadence and logs each pass as an
 the live `EvolutionState` (stage, saturation, backlog) and `graph_loops
 (action="gaps")` for the open canonical `:Gap` backlog it feeds.
 
-## Graph-native assimilation engine (CONCEPT:AU-KG.query.vendor-agnostic-traversal)
+## Graph-native assimilation engine (CONCEPT:MERISTEM-KG.query.vendor-agnostic-traversal)
 
 The comparative-analysis → plan-generation work is a **graph-compute
 pipeline** (meristem's `knowledge_graph/assimilation/`), not per-source
@@ -148,7 +148,7 @@ excluded.
 (→ `Decision`) via `assimilation.ingest`, alongside papers, OSS libraries, and
 the agent-packages fleet — all into one graph.
 
-## Mining flywheel (CONCEPT:AU-KG.evolution.mining-flywheel)
+## Mining flywheel (CONCEPT:MERISTEM-KG.evolution.mining-flywheel)
 
 The loop controller (meristem's `knowledge_graph/research/
 loop_controller.py`, `LoopController.run_one_cycle`) runs a `mine_discovery`
@@ -464,7 +464,7 @@ concept traceability consistent.
 ### CONCEPT ID bridge strategy
 
 All agent-packages projects connect to meristem via
-`CONCEPT:AU-ECO.messaging.native-backend-abstraction` (Unified Toolkit
+`CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction` (Unified Toolkit
 Ingestion). Each project has:
 
 - A unique CONCEPT prefix (e.g. `PORT-` for portainer-agent, `SNOW-` for

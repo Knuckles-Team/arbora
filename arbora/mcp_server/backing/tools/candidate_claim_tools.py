@@ -1,8 +1,8 @@
 """graph_candidate_claims MCP tool — the universal-ingestion program's Track 4
 (schema-constrained candidate-claim extraction,
-CONCEPT:AU-KG.enrichment.candidate-claim-extraction) and Track 5
+CONCEPT:MERISTEM-KG.enrichment.candidate-claim-extraction) and Track 5
 (ambiguity-preserving entity-resolution candidates,
-CONCEPT:AU-KG.identity.entity-resolution-candidates), exposed as a standalone,
+CONCEPT:MERISTEM-KG.identity.entity-resolution-candidates), exposed as a standalone,
 directly-callable MCP/REST surface (D-CE-2).
 
 **Why this needed its OWN tool, not a new action on ``graph_claims``.**

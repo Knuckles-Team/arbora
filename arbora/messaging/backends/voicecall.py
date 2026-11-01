@@ -1,7 +1,7 @@
-"""Voice Call Backend (CONCEPT:AU-ECO.messaging.native-backend-abstraction). Uses Twilio for voice/SMS.
+"""Voice Call Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction). Uses Twilio for voice/SMS.
 
 Install: ``pip install agent-utilities[messaging-voicecall]``
-CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class VoiceCallBackend(MessagingBackend):
-    """Voice/SMS backend via Twilio. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+    """Voice/SMS backend via Twilio. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
 
     def __init__(self, config: MessagingConfig | None = None) -> None:
         super().__init__(config)
@@ -44,7 +44,7 @@ class VoiceCallBackend(MessagingBackend):
         return CAPABILITY_MATRIX["voicecall"]
 
     async def connect(self) -> None:
-        """Initialize Twilio client. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Initialize Twilio client. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         try:
             from twilio.rest import Client
         except ImportError:
@@ -59,7 +59,7 @@ class VoiceCallBackend(MessagingBackend):
         self._client = Client(sid, token)
         self._connected = True
         logger.info(
-            "[CONCEPT:AU-ECO.messaging.native-backend-abstraction] Voice call backend connected (Twilio)."
+            "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Voice call backend connected (Twilio)."
         )
 
     async def send_message(
@@ -71,7 +71,7 @@ class VoiceCallBackend(MessagingBackend):
         reply_to_id: str = "",
         metadata: dict[str, Any] | None = None,
     ) -> SendResult:
-        """Send SMS via Twilio. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Send SMS via Twilio. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         try:
             from_number = self.config.extra.get(
                 "from_number", setting("TWILIO_FROM_NUMBER", "")
@@ -96,7 +96,7 @@ class VoiceCallBackend(MessagingBackend):
     async def make_call(
         self, to: str, twiml: str = "", url: str = ""
     ) -> dict[str, Any]:
-        """Initiate a voice call. CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Initiate a voice call. CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
 
         from_number = self.config.extra.get(
             "from_number", setting("TWILIO_FROM_NUMBER", "")
@@ -112,7 +112,7 @@ class VoiceCallBackend(MessagingBackend):
         return {"call_sid": call.sid, "status": call.status}
 
     async def listen(self) -> AsyncIterator[InboundEvent]:
-        """Yield events (webhook-populated for inbound calls/SMS). CONCEPT:AU-ECO.messaging.native-backend-abstraction"""
+        """Yield events (webhook-populated for inbound calls/SMS). CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
         while self._connected:
             try:
                 event = await asyncio.wait_for(self._event_queue.get(), timeout=1.0)

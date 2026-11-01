@@ -1,7 +1,7 @@
 """Tests for the doctor's prescriptive lakehouse/data-plane checks and the
 `interactive_apply` confirmation gate.
 
-Covers CONCEPT:AU-OS.deployment.lakehouse-doctor: detection (absent / present-
+Covers CONCEPT:MERISTEM-OS.deployment.lakehouse-doctor: detection (absent / present-
 but-unhealthy / healthy) for kafka, fuseki, seaweedfs_s3, lakekeeper,
 lakekeeper_db, trino, spark_runner; the machine-readable `_prescription()`
 structure attached to non-ok results; and, safety-critical, that

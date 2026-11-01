@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """Agent Hook Installer.
 
-CONCEPT:AU-ECO.messaging.native-backend-abstraction -- Cross-Agent Memory Hook Installer
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction -- Cross-Agent Memory Hook Installer
 
 Writes startup/checkpoint hooks into external agent configurations so they
 call ``agent-utilities context`` at session start and ``agent-utilities observe``
@@ -55,7 +55,7 @@ _OBSERVE_CMD = "agent-utilities observe --source {agent}"
 _LINT_CMD = "agent-utilities lint-check --cwd $PWD"
 _REFLECTOR_CMD = "agent-utilities reflect --source {agent} --cwd $PWD"
 _STALENESS_CMD = "agent-utilities staleness-audit --cwd $PWD"
-# CONCEPT:AU-OS.deployment.workspace-venv-reconciler (D-VS-6) — the one piece of
+# CONCEPT:MERISTEM-OS.deployment.workspace-venv-reconciler (D-VS-6) — the one piece of
 # shared-venv drift detection cheap enough (no `uv` subprocess) to run on every
 # SessionStart. Silent when clean; `2>/dev/null || true` means a host where
 # `arbora-venv` is not on PATH (or the shared venv doesn't apply here)
@@ -80,7 +80,7 @@ _CLAUDE_HOOKS = {
         "PreCompact": [
             {"type": "command", "command": _OBSERVE_CMD.format(agent="claude")}
         ],
-        # CONCEPT:AU-OS.deployment.dynamic-two-fail-closed wires the PreToolUse gate here too, so installing
+        # CONCEPT:MERISTEM-OS.deployment.dynamic-two-fail-closed wires the PreToolUse gate here too, so installing
         # memory hooks also lays the fail-closed permission fence — an unattended
         # session is governed even before a full `setup-config harness-fence`
         # run. Command + matcher are the constants above.
@@ -203,7 +203,7 @@ AGENT_SURFACES: dict[str, dict[str, Any]] = {
 class HookInstaller:
     """Installs agent-utilities memory hooks into external agent configurations.
 
-    CONCEPT:AU-ECO.messaging.native-backend-abstraction -- Cross-Agent Memory Hook Installer
+    CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction -- Cross-Agent Memory Hook Installer
     """
 
     def __init__(self) -> None:

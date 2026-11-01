@@ -18,4 +18,4 @@ Or install all currently-shipped backends with::
     pip install arbora[messaging]
 """
 
-# CONCEPT:AU-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
+# CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction

@@ -28,7 +28,7 @@ _logger = logging.getLogger(__name__)
 
 
 class OperationRuntime(Protocol):
-    """Composition root supplies EG-bound contexts and an operation dispatcher."""
+    """Composition root supplies Medulla-bound contexts and an operation dispatcher."""
 
     service_scopes: frozenset[str]
 

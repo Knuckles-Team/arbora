@@ -1,4 +1,4 @@
-"""CONCEPT:AU-OS.identity.per-agent-on-behalf-delegation — Per-agent on-behalf-of identity.
+"""CONCEPT:MERISTEM-OS.identity.per-agent-on-behalf-delegation — Per-agent on-behalf-of identity.
 
 Connects the three previously-disconnected delegation primitives into ONE pipeline for a
 spawned agent instance, so a delegated/spawned agent stops running as one fixed service

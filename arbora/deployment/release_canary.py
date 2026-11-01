@@ -5,7 +5,7 @@ proves that the promoted Python environment exposes the current console entry
 points, the packaged server binary, and the folded native numeric kernel. The
 release promoter separately proves that no Arbora or engine process exists
 before or after this command. Fleet readiness is intentionally not reconstructed
-from a file here: Arbora startup reads and verifies the live EG-backed catalog
+from a file here: Arbora startup reads and verifies the live Medulla-backed catalog
 before serving.
 """
 

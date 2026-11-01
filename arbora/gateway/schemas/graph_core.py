@@ -17,7 +17,7 @@ permissiveness contract (``extra="allow"`` vs ``extra="forbid"``) proven
 against that handler's code, not assumed.
 
 The legacy ``/tools`` inventory routes are intentionally absent. Browser
-catalogs use the typed EG-backed enhanced catalog owned by Arbora.
+catalogs use the typed Medulla-backed enhanced catalog owned by Arbora.
 """
 
 from __future__ import annotations
@@ -448,7 +448,7 @@ class GraphConfigureSecretResponse(BaseModel):
 class GraphConfigureVaultSyncRequest(BaseModel):
     """Request body for ``POST /graph/configure/vault-sync`` — REST twin of
     ``graph_configure(action='vault_sync')`` (``graph_configure_vault_sync_endpoint``
-    in ``runtime.py``, CONCEPT:AU-OS.deployment.vault-first-routine-genesis).
+    in ``runtime.py``, CONCEPT:MERISTEM-OS.deployment.vault-first-routine-genesis).
 
     ``extra="allow"``: PROVEN the same way as :class:`GraphConfigureSecretRequest`
     — only `config_key`/`config_value` are read.
@@ -765,7 +765,8 @@ class SessionRecord(BaseModel):
         default="{}", description="JSON-encoded string of additional session metadata."
     )
     tenant_id: str = Field(
-        default="", description="Owning tenant id (AU-P0-5 row-level scoping column)."
+        default="",
+        description="Owning tenant id (MERISTEM-P0-5 row-level scoping column).",
     )
 
 

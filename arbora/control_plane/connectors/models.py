@@ -7,9 +7,9 @@ transport or repository cannot accidentally turn a failed probe into a state
 mutation.  No model contains provider credentials, command arguments, raw
 probe errors or private endpoints.
 
-(CONCEPT:AU-ECO.connector.factory-ingestion-adaptor,
-AU-OS.config.desired-state-fleet-reconciler,
-AU-KG.ingest.fleet-catalog-relational-tables)
+(CONCEPT:MERISTEM-ECO.connector.factory-ingestion-adaptor,
+MERISTEM-OS.config.desired-state-fleet-reconciler,
+MERISTEM-KG.ingest.fleet-catalog-relational-tables)
 """
 
 from __future__ import annotations

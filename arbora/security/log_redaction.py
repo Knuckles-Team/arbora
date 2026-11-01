@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """Redact runtime locations/endpoints/caller identifiers before they reach a log call.
 
-CONCEPT:AU-OS.observability.log-location-privacy — a raw filesystem path, network
+CONCEPT:MERISTEM-OS.observability.log-location-privacy — a raw filesystem path, network
 endpoint, or caller identifier in a log line leaks host/tenant topology to anyone
 with log read access (a log-aggregation operator, a compromised sidecar, a support
 bundle). ``tests/unit/security/test_log_location_privacy_static_gate.py`` statically

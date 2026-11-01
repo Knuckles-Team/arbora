@@ -1,7 +1,7 @@
 """MCP Apps: task-progress (`ui://arbora/task-progress.html`) and trace-waterfall
 (`ui://arbora/trace-waterfall.html`).
 
-CONCEPT:AU-ECO.ui.mcp-apps-host
+CONCEPT:MERISTEM-ECO.ui.mcp-apps-host
 
 Registers each app's entry-point tool (``graph_task_progress_app`` /
 ``graph_trace_waterfall_app``), declared via ``@mcp.tool(app=AppConfig(resource_uri=...))``,
@@ -28,7 +28,7 @@ host-side chokepoint that must forward this ``Tool.meta`` is the tool
 Of the original "apps worth shipping" list (trace waterfall, workflow viewer,
 evaluation scorecard, task progress, ontology diff, approval form), two now ship:
 task progress (first, because it needed nothing new on the server -- it polls the
-exact ``graph_jobs`` operation the Tasks↔WorkItem bridge (CONCEPT:AU-ECO.mcp.tasks-workitem-bridge)
+exact ``graph_jobs`` operation the Tasks↔WorkItem bridge (CONCEPT:MERISTEM-ECO.mcp.tasks-workitem-bridge)
 already exposes, through ``ask(action="graph_jobs.status")``) and trace waterfall (D-25-1 -- it polls the new
 ``graph_traces action='waterfall'`` action added alongside it, which flattens one
 trace's Span/Generation subgraph from the always-on KG-native

@@ -40,7 +40,7 @@ production is ALWAYS a literal `MATCH (:Label) [WHERE …]`** — `parse_query`
 first token: there is no branch that accepts any other keyword there. A UQL text
 query can **never** open with `REASON`/`FOREIGN`/`AS OF`/`TEXT`/`RANK BY`/etc. —
 each of those is confirmed live to fail with `parse error: expected keyword MATCH`
-when placed first. The separate **empty-set-becomes-source rule** (CONCEPT:EG-KG.query.empty-set-commutativity,
+when placed first. The separate **empty-set-becomes-source rule** (CONCEPT:MEDULLA-KG.query.empty-set-commutativity,
 `docs/uql.md:204-229`) is an *executor* property over the RowSet the parser has
 already built the pipeline for: when a stage — including the very first `|>` stage
 right after a `MATCH` that itself scanned zero rows — is fed an EMPTY RowSet, it

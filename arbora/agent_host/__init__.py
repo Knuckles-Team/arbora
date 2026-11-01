@@ -16,7 +16,7 @@ which remains the agent orchestration authority per both repositories'
 ``AGENTS.md``. Deliberately NOT ported in this increment, matching
 ARBORA-HOST-R009's own scope cut:
 
-- the EG-backed broker/durable task store AU's ``protocols/a2a_epistemic``
+- the Medulla-backed broker/durable task store AU's ``protocols/a2a_epistemic``
   implements (a second task store is not created here either -- a task is a
   single bounded run, not a durable resource);
 - the Agent Client Protocol adapter (stays with the agent runtime's harness
@@ -302,7 +302,7 @@ def create_agent_server(
     builder (that is agent-utilities' retained authority, not a duplicate
     host); only the uvicorn/FastAPI serving shell is Arbora's own.
 
-    ``**_unused_au_hosting_kwargs`` absorbs AU-hosting-only arguments a
+    ``**_unused_au_hosting_kwargs`` absorbs Meristem-hosting-only arguments a
     caller may still pass during migration (``debug``, ``enable_otel``,
     ``a2a_broker``, ...) that this first increment does not
     yet implement; see the migration recipe for current parity gaps. Notably

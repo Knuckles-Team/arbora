@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """Typed public-ingress identity profile model (ARBORA-INGRESS-R001.1).
 
-CONCEPT:AU-OS.deployment.public-ingress-identity — see
+CONCEPT:MERISTEM-OS.deployment.public-ingress-identity — see
 ``specs/public-ingress-identity/plan.md`` ("Profile and interface contract").
 This slice is the versioned public-origin, TLS-reference, exact-callback and
 trusted-proxy contract the plan calls for, as a closed-schema value object

@@ -1,4 +1,4 @@
-"""Mattermost backend live-path tests (CONCEPT:AU-ECO.mcp.verbose-auto-wire).
+"""Mattermost backend live-path tests (CONCEPT:MERISTEM-ECO.mcp.verbose-auto-wire).
 
 Mirrors the Telegram integration: prove a bidirectional Mattermost backend so an inbound
 Mattermost post reaches the universal ``InboundRouter`` and a reply renders back through the
@@ -6,7 +6,7 @@ Mattermost outbound API — with the ``mattermostdriver`` transport mocked. This
 LIVE-PATH test (it drives the real ``InboundRouter._dispatch`` → default handler), not just
 an API unit test.
 
-CONCEPT:AU-ECO.mcp.verbose-auto-wire — Mattermost as a first-class bidirectional messaging platform
+CONCEPT:MERISTEM-ECO.mcp.verbose-auto-wire — Mattermost as a first-class bidirectional messaging platform
 """
 
 from __future__ import annotations
@@ -160,7 +160,7 @@ def test_normalize_posted_frame() -> None:
 
 
 def test_normalize_posted_frame_with_audio_attachment() -> None:
-    """CONCEPT:AU-ECO.messaging.voice-attachment-fallback — a voice/audio upload's
+    """CONCEPT:MERISTEM-ECO.messaging.voice-attachment-fallback — a voice/audio upload's
     ``metadata.files`` FileInfo becomes a MediaAttachment the core transcription path
     (``router._transcribe_attachments``) can act on, with a bearer auth header since
     Mattermost serves file bytes from an authenticated endpoint."""

@@ -1,6 +1,6 @@
 """Heterogeneous resource-pool capability and placement authority.
 
-CONCEPT:AU-OS.resource-pool-authority — attested, capability-based placement
+CONCEPT:MERISTEM-OS.resource-pool-authority — attested, capability-based placement
 for heterogeneous CPU/GPU/storage/network pools.
 
 This module is a pure contract and decision seam.  It does not discover hosts,

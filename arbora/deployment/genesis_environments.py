@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """Named, explicitly-reviewable genesis k8s deployment-input profiles.
 
-CONCEPT:AU-OS.deployment.genesis-environment-profiles — see
+CONCEPT:MERISTEM-OS.deployment.genesis-environment-profiles — see
 ``.specify/design/genesis-environment-profiles/design.md`` for the full decision
 record. Summary:
 

@@ -1,6 +1,6 @@
 """graph_compliance — compliance posture + redacted bulk export MCP tool.
 
-CONCEPT:AU-KG.enrichment.compliance-posture-rollup
+CONCEPT:MERISTEM-KG.enrichment.compliance-posture-rollup
 
 ``reports/surpass-6mo/04-five-intersections.md`` (§2) found the primitives for
 an auditor-facing compliance view already deep and real — but scattered:
@@ -58,7 +58,7 @@ _POSTURE_LABELS: tuple[str, ...] = (
 )
 
 #: X4 — auth-posture / secrets-posture doctor checks folded into ``posture``
-#: (CONCEPT:AU-KG.enrichment.compliance-posture-rollup). Reuses
+#: (CONCEPT:MERISTEM-KG.enrichment.compliance-posture-rollup). Reuses
 #: ``arbora.deployment.doctor.run_doctor``'s EXISTING checks
 #: verbatim — every one of them is already defensive (never raises) and
 #: already redacted where it could carry anything sensitive (each check's
@@ -111,7 +111,7 @@ def _policy_version() -> dict[str, Any]:
     """The currently-loaded ``ActionPolicy`` ruleset's own ``version`` field
     (``deploy/action-policy.default.yml``'s ``version: 1``) — reuses
     ``ActionPolicy``'s existing file resolution + mtime-cached parse
-    (CONCEPT:AU-OS.governance.action-policy-decision-point) verbatim, never a
+    (CONCEPT:MERISTEM-OS.governance.action-policy-decision-point) verbatim, never a
     second YAML reader. No engine is constructed/contacted — this only reads
     which ruleset a NEW ``ActionPolicy()`` would load. Deliberately omits the
     policy file's own filesystem path from the result (could be
@@ -150,7 +150,7 @@ def _nodes_by_label(engine: Any, label: str) -> list[tuple[str, dict[str, Any]]]
 
 def _confidence_rollup(engine: Any, label: str) -> dict[str, Any] | None:
     """Bulk confidence/contested-rate rollup for ``label`` via ``Method::KnowledgeStream``
-    (CONCEPT:AU-KG.query.knowledge-stream-consumer, report §9 #3) —
+    (CONCEPT:MERISTEM-KG.query.knowledge-stream-consumer, report §9 #3) —
     :meth:`~agent_utilities.knowledge_graph.core.graph_compute.GraphComputeEngine.
     stream_graph_confidence`, an Arrow-columnar, cursor-resumable sweep that never
     materializes the whole label's result set in one round trip (unlike
@@ -219,7 +219,7 @@ def _posture() -> dict[str, Any]:
     result["audit_ledger"] = audit
     result["node_counts"] = node_counts
     result["status_breakdown"] = status_breakdown
-    # CONCEPT:AU-KG.query.knowledge-stream-consumer — additive; a build/transport without the
+    # CONCEPT:MERISTEM-KG.query.knowledge-stream-consumer — additive; a build/transport without the
     # streaming surface omits the key entirely rather than reporting an empty one.
     if confidence_rollup:
         result["confidence_rollup"] = confidence_rollup

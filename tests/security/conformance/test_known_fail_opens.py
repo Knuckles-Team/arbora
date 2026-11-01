@@ -1,6 +1,6 @@
 """The known fail-opens, wired into the GOC-62 conformance suite (D3(b)).
 
-CONCEPT:AU-OS.identity.stack-wide-auth-conformance
+CONCEPT:MERISTEM-OS.identity.stack-wide-auth-conformance
 
 This file does NOT re-implement the behavioral proofs — duplicating them here
 would be exactly the "second, independently-maintained copy of the same

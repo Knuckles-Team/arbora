@@ -17,7 +17,7 @@ the gateway application adapter, attaches the lazy fleet surface, starts the
 native WebUI host when configured, and then serves `stdio` or
 `streamable-http`. Optional WebUI imports remain lazy.
 
-The fleet loader uses Arbora's native multiplexer. Its EG-backed catalog read
+The fleet loader uses Arbora's native multiplexer. Its Medulla-backed catalog read
 is capability-gated on the generated kind-only `AgentComponent.Search` client
 contract. When that authority is unavailable, catalog refresh fails closed; it
 does not substitute a static reader. See [Capability status](status.md).

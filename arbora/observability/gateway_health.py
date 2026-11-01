@@ -1,7 +1,7 @@
 """Gateway self-telemetry → the shared health-intelligence kernels (ARBORA-HOST-R008).
 
-CONCEPT:AU-OS.observability.unified-health-kernels (gateway producer) /
-AU-KG.identity.evidence-spine-convergence (``MetricWindow`` locus).
+CONCEPT:MERISTEM-OS.observability.unified-health-kernels (gateway producer) /
+MERISTEM-KG.identity.evidence-spine-convergence (``MetricWindow`` locus).
 
 Wires two previously-dead pieces off ONE real, already-computed signal — the
 per-request latency the gateway's request middleware already measures for

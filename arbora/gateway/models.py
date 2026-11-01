@@ -1,6 +1,6 @@
 """Pydantic models for the service dashboard.
 
-CONCEPT:AU-OS.config.gateway-service-dashboard — Gateway Service Dashboard
+CONCEPT:MERISTEM-OS.config.gateway-service-dashboard — Gateway Service Dashboard
 
 These models define the data contract between the backend aggregator
 and all three frontends. Mirrors Homepage's widget/block/container pattern

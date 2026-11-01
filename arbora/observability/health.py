@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from __future__ import annotations
 
-"""Metric-agnostic health-intelligence kernels — CONCEPT:AU-OS.observability.unified-health-kernels.
+"""Metric-agnostic health-intelligence kernels — CONCEPT:MERISTEM-OS.observability.unified-health-kernels.
 
 Generalizes fan-manager's proven thermal-intelligence pattern
 (``fan_manager.kg_control`` / ``fan_manager.fan_manager._kg_record_thermal_sample``,

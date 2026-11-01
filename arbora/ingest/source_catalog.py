@@ -16,8 +16,8 @@ read path performed a probe.  Generic OpenCypher and PuppyGraph therefore stay
 catalogue never returns resolved endpoint, DSN, user, credential, or probe
 exception text.
 
-CONCEPT:AU-KG.backend.connection-registry
-CONCEPT:AU-ECO.connector.document-source-framework
+CONCEPT:MERISTEM-KG.backend.connection-registry
+CONCEPT:MERISTEM-ECO.connector.document-source-framework
 """
 
 from __future__ import annotations

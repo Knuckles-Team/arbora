@@ -62,7 +62,7 @@ class DurableReservation:
 
 
 class ServiceChildJournal(Protocol):
-    """EG-backed store must persist before dispatch and retain unknown outcomes."""
+    """Medulla-backed store must persist before dispatch and retain unknown outcomes."""
 
     async def reserve(
         self, record: ServiceChildRecord, caller: Any

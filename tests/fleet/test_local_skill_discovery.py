@@ -1,6 +1,6 @@
 """The local-skill pseudo-server ranks and precedes alongside fleet discovery.
 
-Covers the multiplexer-side half of CONCEPT:AU-KG.retrieval.unified-capability-
+Covers the multiplexer-side half of CONCEPT:MERISTEM-KG.retrieval.unified-capability-
 contract for :mod:`arbora.fleet.local_skill_catalog`: ``discover_tools``
 folds :meth:`MCPMultiplexer._local_skill_probe_info` into the SAME probe dict
 a fleet harvest populates, so a skill served from a package installed in this

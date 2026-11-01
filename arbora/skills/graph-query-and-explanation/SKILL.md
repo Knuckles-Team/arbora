@@ -68,7 +68,7 @@ A plain `graph_query`/`graph_ask` gives you rows. Four `engine_query` actions la
 engine's epistemic currency on top, progressively deeper and progressively more
 feature-gated (call directly, or through the `graph_epistemic` wrapper above):
 
-1. **`explain_provenance_by_ids`** (CONCEPT:AU-KG.memory.knowledge-currency / Seam 1) — take any
+1. **`explain_provenance_by_ids`** (CONCEPT:MERISTEM-KG.memory.knowledge-currency / Seam 1) — take any
    id list from a prior read and "upgrade" it to
    calibrated, cited, time-versioned rows (`confidence`, `valid_time`, `tx_time`,
    `source_refs`, `policy_labels`, `evidence_spans`). In the default `full` build already.

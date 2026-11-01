@@ -1,6 +1,6 @@
 """RF-ADR-009 gateway — REST host, dashboard, and service aggregation.
 
-CONCEPT:AU-OS.config.gateway-service-dashboard — Gateway Service Dashboard
+CONCEPT:MERISTEM-OS.config.gateway-service-dashboard — Gateway Service Dashboard
 
 Provides the widget registry, data aggregation, and API layer that all
 three frontends (agent-webui, agent-terminal-ui, geniusbot) use to render

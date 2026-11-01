@@ -173,7 +173,7 @@ def content_digest(value: Any) -> str:
 def trace_id(run_id: str) -> str:
     """Canonical trace node id; run identifiers are always opaque refs.
 
-    CONCEPT:AU-KG.audit.trace-id-assigned-at-emission (GOC-09) — a trace's identity is
+    CONCEPT:MERISTEM-KG.audit.trace-id-assigned-at-emission (GOC-09) — a trace's identity is
     the ``run_id`` minted where the work started (``orchestration.run_identity.new_run_id()``
     at ``run_agent``'s entry, or the equivalent session/root-span id in
     ``workflows.runner``/``harness.tracing``), never reconstructed here after the fact.
@@ -191,7 +191,7 @@ def trace_id(run_id: str) -> str:
         raise ValueError(
             "trace_id requires a non-empty run_id — a span/run emitted with no trace "
             "identity must be rejected, never silently assigned a fabricated one "
-            "(CONCEPT:AU-KG.audit.trace-id-assigned-at-emission)"
+            "(CONCEPT:MERISTEM-KG.audit.trace-id-assigned-at-emission)"
         )
     return f"trace:{persistence_reference('run', value, namespace='trace')}"
 
@@ -264,7 +264,7 @@ def trace_properties(
 ) -> dict[str, Any]:
     """Build the canonical, persistence-sanitized ``RunTrace`` properties.
 
-    ``grounding_status``/``grounding_reason`` (CONCEPT:AU-KG.retrieval.fail-closed-grounding-contract)
+    ``grounding_status``/``grounding_reason`` (CONCEPT:MERISTEM-KG.retrieval.fail-closed-grounding-contract)
     are the run-level outcome of the mandatory evidence-compilation contract
     (``core.contextual_model.grounding_snapshot``) — ``"grounded"`` when every model
     call in the run genuinely compiled evidence, ``"degraded"`` when at least one
@@ -273,7 +273,7 @@ def trace_properties(
     it raises and the run is recorded as ``status="failed"`` instead). Queryable
     after the fact so a degraded run is never indistinguishable from a normal one.
 
-    ``is_permanent`` (CONCEPT:AU-KG.audit.trace-retention-legal-hold, GOC-09) is the
+    ``is_permanent`` (CONCEPT:MERISTEM-KG.audit.trace-retention-legal-hold, GOC-09) is the
     established generic node-protection flag every node type already carries in the
     schema (``GraphMaintainer.prune_low_importance_nodes``'s own exemption clause) —
     reused here as the legal-hold marker rather than inventing a second field/concept.
@@ -373,7 +373,7 @@ def tool_call_properties(
     """Build canonical ToolCall properties without raw identity fields.
 
     ``is_permanent`` — see ``trace_properties``'s docstring; the same reused
-    retention/legal-hold exemption flag (CONCEPT:AU-KG.audit.trace-retention-legal-hold).
+    retention/legal-hold exemption flag (CONCEPT:MERISTEM-KG.audit.trace-retention-legal-hold).
     """
 
     seq = int(event_sequence or next_event_sequence())
@@ -422,7 +422,7 @@ def outcome_properties(
     """Build the one normalized outcome attached to a ``RunTrace``.
 
     ``is_permanent`` — see ``trace_properties``'s docstring; the same reused
-    retention/legal-hold exemption flag (CONCEPT:AU-KG.audit.trace-retention-legal-hold).
+    retention/legal-hold exemption flag (CONCEPT:MERISTEM-KG.audit.trace-retention-legal-hold).
     """
 
     normalized = str(status or "unknown").lower()

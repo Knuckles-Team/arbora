@@ -1,6 +1,6 @@
 """Per-child resilience runtime for the MCP multiplexer.
 
-CONCEPT:AU-ECO.mcp.profile-differences-from-client — Fleet-Scale MCP Multiplexer Hardening.
+CONCEPT:MERISTEM-ECO.mcp.profile-differences-from-client — Fleet-Scale MCP Multiplexer Hardening.
 
 The multiplexer aggregates ~50 child MCP servers behind one endpoint. Before
 this module, every child was a single shared ``ClientSession`` with no
@@ -517,7 +517,7 @@ class ChildRuntime:
         # Recycle this generation before its bearer expires (None = never): a
         # service-authenticated child session is authed once at connect and its
         # result stream then stays open, so it must reconnect before the token
-        # TTL elapses or in-flight calls wedge (CONCEPT:AU-OS.identity.so-jwt-protected-children).
+        # TTL elapses or in-flight calls wedge (CONCEPT:MERISTEM-OS.identity.so-jwt-protected-children).
         self.session_max_age = (
             None
             if session_max_age is None

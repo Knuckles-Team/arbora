@@ -3,7 +3,7 @@ from __future__ import annotations
 
 """Deterministic pre-execution assurance verifier for ActionPolicy.
 
-CONCEPT:AU-OS.governance.assurance-state-machine-verifier — Fast, deterministic
+CONCEPT:MERISTEM-OS.governance.assurance-state-machine-verifier — Fast, deterministic
 state-machine verifier that validates an :class:`ActionRequest` routing
 payload against declared invariants BEFORE the action is allowed to execute.
 This is the meritorious sliver of the "PureReason" formal-verification
@@ -14,7 +14,7 @@ blow the latency budget).
 
 Four invariants, checked in order (first failure short-circuits):
 
-1. **Role / allowed-set (RLS)** — CONCEPT:AU-OS.governance.assurance-state-machine-verifier.
+1. **Role / allowed-set (RLS)** — CONCEPT:MERISTEM-OS.governance.assurance-state-machine-verifier.
    ``request.source`` is the actor's declared role. :data:`ROLE_ALLOWED_KINDS`
    is a conservative allowlist per KNOWN role (built from every real call site
    in this repo — see the module docstring for the survey); an unrecognized
@@ -22,10 +22,10 @@ Four invariants, checked in order (first failure short-circuits):
    this in by default cannot regress any current caller. A *registered* role
    invoking a kind outside its declared set is denied — this is what makes the
    check meaningful (e.g. ``source="reconciler"`` cannot ``secret.delete``).
-2. **Argument shape/types (schema)** — CONCEPT:AU-OS.governance.precondition-invariants.
+2. **Argument shape/types (schema)** — CONCEPT:MERISTEM-OS.governance.precondition-invariants.
    :data:`INVARIANTS` declares ``required_params: {name: type}`` per action
    kind; a missing or mistyped argument is denied.
-3. **Preconditions (state machine)** — CONCEPT:AU-OS.governance.precondition-invariants.
+3. **Preconditions (state machine)** — CONCEPT:MERISTEM-OS.governance.precondition-invariants.
    Some kinds are lifecycle transitions (``run.select`` HELD→materialized,
    ``merge_promotion`` PROPOSED→active, ...). :data:`INVARIANTS` declares
    ``requires_state`` — the set of current states the payload may legally
@@ -39,7 +39,7 @@ Four invariants, checked in order (first failure short-circuits):
    still catches the case the invariant exists for — a caller/agent that
    asserts an illegal transition — without retrofitting every production
    call site in the same change.
-4. **Reference existence (anti-hallucination)** — CONCEPT:AU-OS.governance.fail-closed-claim-check.
+4. **Reference existence (anti-hallucination)** — CONCEPT:MERISTEM-OS.governance.fail-closed-claim-check.
    :data:`INVARIANTS` may declare ``ref_params`` (payload keys that must name
    a real tool/target). The check is a cheap set-membership test against a
    caller-supplied ``known_tools``/``known_targets`` registry — best-effort:

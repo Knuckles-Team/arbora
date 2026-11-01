@@ -187,7 +187,7 @@ def _merge_sdk_items(
 
 
 class CombinedFleetSource:
-    """Only EG-admitted live servers may contribute probed protocol rows.
+    """Only Medulla-admitted live servers may contribute probed protocol rows.
 
     EG owns component identity and body. A child probe may fill a tool schema
     or advertise a protocol family that EG does not model, but can never make

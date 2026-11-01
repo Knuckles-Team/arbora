@@ -1,4 +1,4 @@
-"""Focused contract tests for the EG-native fleet catalog reader."""
+"""Focused contract tests for the Medulla-native fleet catalog reader."""
 
 from __future__ import annotations
 

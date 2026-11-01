@@ -107,7 +107,7 @@ class ActorContext:
     # scopes ∪ group-derived capabilities) that ACL checks read; ``groups`` is
     # retained distinctly for identity propagation that needs the group names
     # themselves — notably k8s ``Impersonate-Group``
-    # (CONCEPT:AU-OS.identity.idp-agnostic-role-inheritance).
+    # (CONCEPT:MERISTEM-OS.identity.idp-agnostic-role-inheritance).
     groups: tuple[str, ...] = field(default_factory=tuple)
     # Absolute UNIX expiry from an already-validated bearer credential. It is
     # runtime-only authority state so a short-lived JWT cannot become an

@@ -1,6 +1,6 @@
 """Centralized Knowledge Graph REST surface for the API gateway.
 
-CONCEPT:AU-ECO.mcp.knowledge-graph-exposure — Knowledge Graph API Gateway
+CONCEPT:MERISTEM-ECO.mcp.knowledge-graph-exposure — Knowledge Graph API Gateway
 
 The full Knowledge Graph REST API (``/graph/*``, ``/sessions``, ``/goals``,
 ``/tools``) is now owned by this gateway rather than the ``arbora`` MCP server,
@@ -213,7 +213,7 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
     application.ensure_tools_registered()
 
     # Per-tenant token-bucket rate limiting
-    # (CONCEPT:AU-OS.observability.no-op-without-metrics). Added BEFORE
+    # (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics). Added BEFORE
     # the identity middleware so it sits INSIDE it (Starlette: last added =
     # outermost) — the server-minted ActorContext is already in scope when
     # the bucket key (tenant → actor → client IP) is resolved. Disabled by
@@ -226,7 +226,7 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
         app.add_middleware(GatewayRateLimitMiddleware)
 
     # Server-minted JWT identity
-    # (CONCEPT:AU-OS.identity.authenticated-identity-enforcement).
+    # (CONCEPT:MERISTEM-OS.identity.authenticated-identity-enforcement).
     # Validates ``Authorization: Bearer`` via
     # the existing JWKS machinery, scopes the request to an authenticated
     # ActorContext + GraphSession, and rejects unauthenticated requests with 401.
@@ -235,7 +235,7 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
     app.add_middleware(ActorIdentityMiddleware)
 
     # Python-tier Prometheus metrics
-    # (CONCEPT:AU-OS.observability.no-op-without-metrics). Added LAST so the
+    # (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics). Added LAST so the
     # metrics middleware is OUTERMOST — auth rejections (401) and rate-limit
     # rejections (429) are counted too. GET /metrics remains behind the
     # identity middleware when KG authentication is required. Both the gateway and
@@ -263,14 +263,14 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
 
     application.mount_rest_routes(app, prefix=prefix)
 
-    # Local SPARQL endpoint (CONCEPT:AU-KG.query.vendor-agnostic-traversal) — served
+    # Local SPARQL endpoint (CONCEPT:MERISTEM-KG.query.vendor-agnostic-traversal) — served
     # over the OWL/RDF bridge with
     # ZERO external dependencies (rdflib materialization of the live LPG + OWL
     # inferences); an external Fuseki/Stardog is optional enterprise scale-out, not
     # required. Works in the zero-dep tiny profile.
     _mount_sparql_route(app, prefix=prefix)
 
-    # Read-only SQL catalog introspection (CONCEPT:AU-KG.query.raw-python) — the
+    # Read-only SQL catalog introspection (CONCEPT:MERISTEM-KG.query.raw-python) — the
     # catalogs → tables/views → columns projection the agent-webui catalog
     # browser renders. Deliberately NOT a raw SQL passthrough: it takes no query
     # text, only an optional identifier-validated schema filter, and dispatches
@@ -278,7 +278,7 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
     # tool. See arbora/mcp_server/backing/tools/graph_tools/py.
     _mount_sql_schema_route(app, prefix=prefix)
 
-    # Native swarm supervisory plane (CONCEPT:AU-OS.safety.ontological-guardrail):
+    # Native swarm supervisory plane (CONCEPT:MERISTEM-OS.safety.ontological-guardrail):
     # /fleet/* + approvals.
     from arbora.gateway.fleet import mount_fleet_routes
 

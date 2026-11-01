@@ -1,6 +1,6 @@
 """``graph_config`` MCP tool — governed AgentConfig read/describe/diff/reload/set.
 
-CONCEPT:AU-OS.config.two-surfaces-by-default
+CONCEPT:MERISTEM-OS.config.two-surfaces-by-default
 
 Thin action router over :mod:`arbora.core.agent_config_admin` (the one core).
 No behaviour lives in this module: the tool body validates nothing, redacts
@@ -9,7 +9,7 @@ twin cannot drift.
 
 Why the tool exists at all: ``AgentConfig`` is the platform's entire behavioural
 contract — including the MCP always-load set (``MCP_ALWAYS_LOAD`` /
-``MCP_ALWAYS_LOAD_TOOLS``, CONCEPT:AU-ECO.multiplexer.tool-gateway-catalog) — and until now an
+``MCP_ALWAYS_LOAD_TOOLS``, CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog) — and until now an
 agent could neither discover what was settable nor change it without a human
 editing ``config.json`` and restarting.
 
@@ -38,7 +38,7 @@ def register_config_tools(mcp):
         name="graph_config",
         description=(
             "Inspect and govern this deployment's AgentConfig "
-            "(CONCEPT:AU-OS.config.two-surfaces-by-default). Actions: "
+            "(CONCEPT:MERISTEM-OS.config.two-surfaces-by-default). Actions: "
             "'describe' (key optional — a field's docstring, type, default, "
             "current value and env alias, all derived from the pydantic model, "
             "so you can discover what is settable without reading source; omit "

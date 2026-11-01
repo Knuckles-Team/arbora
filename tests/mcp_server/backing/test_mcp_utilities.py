@@ -1,6 +1,6 @@
 """
 
-CONCEPT:AU-ECO.messaging.native-backend-abstraction
+CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction
 Concept: building-mcp-servers
 
 Tests for MCP utilities.
@@ -43,7 +43,7 @@ def test_create_mcp_server_basic(mock_fastmcp):
         assert args == mock_args
         # ``create_mcp_server`` now always stamps the package version onto
         # the FastMCP instance (``version: str = __version__`` default), wires
-        # the fleet self-registration ``lifespan`` (CONCEPT:EG-KG.sharding.server-registry),
+        # the fleet self-registration ``lifespan`` (CONCEPT:MEDULLA-KG.sharding.server-registry),
         # and pins ``tasks=False`` (FastMCP 3.4.5 implements the superseded
         # 2025-11-25 task protocol, not the 2026-07-28 tasks extension — see
         # ``mcp/server_factory.py``'s ``create_mcp_server``). ``lifespan`` is a
@@ -93,7 +93,7 @@ def test_factory_lifespan_extension_unwinds_before_managed_engine(monkeypatch):
 
 def test_create_mcp_server_exposes_metrics_health_and_tool_middleware(monkeypatch):
     """A factory-built server mounts unauthenticated /metrics + /health routes
-    and the per-tool metrics middleware (CONCEPT:AU-OS.observability.no-op-without-metrics). Uses the real FastMCP
+    and the per-tool metrics middleware (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics). Uses the real FastMCP
     (no mock) so the registered HTTP routes can be inspected."""
     monkeypatch.setattr("sys.argv", ["test-mcp"])  # defaults: auth none, eunomia none
     args, mcp, middlewares = server_factory.create_mcp_server(
