@@ -13,7 +13,7 @@ reconciliation receipt model below.
 | Freshness | Receipt issued within `max_age_ms` of now | Receipt older than `max_age_ms` returns `reingestion-unreconciled`/`stale` |
 | Candidate match | Receipt's tenant, `catalog_generation`, and `snapshot_digest` match the candidate exactly | Any one mismatched field returns `reingestion-unreconciled`/`invalid` |
 | Family coverage | Receipt acknowledges exactly `{tools, prompts, resources, resource_templates}` | A receipt acknowledging a subset of the four families returns `reingestion-unreconciled`/`invalid` |
-| Publish wiring (R003, not built in this slice) | A `reconciled` result allows the generation swap | A `reingestion-unreconciled` result blocks the swap and the result is surfaced, not swallowed |
+| Publish wiring (`ARBORA-MCP-RESOURCES-R003.2`, not built in this slice) | A `reconciled` result allows the generation swap | A `reingestion-unreconciled` result blocks the swap and the result is surfaced, not swallowed |
 | Docs consistency (R004, not built in this slice) | `docs/status.md` / `docs/fleet.md` name the same status/reason vocabulary as the gate | A vocabulary change in the gate without a matching docs update fails review |
 
 ## This slice's test file
