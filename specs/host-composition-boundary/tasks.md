@@ -124,7 +124,7 @@ Status vocabulary is defined in [spec.md](spec.md). Check a task only after its 
 
 ## Owner-bound capabilities (ARBORA-HOST-R029–R031)
 
-- [ ] **R029:** Obtain the SDK native-desktop port/provider contract; bind verified grant, tenant, and no-capture behavior through composed dispatch.
+- [ ] `ARBORA-HOST-R029`: Obtain the SDK native-desktop port/provider contract; bind verified grant, tenant, and no-capture behavior through composed dispatch.
 - [ ] **R030:** Obtain the SDK observation producer and EG state/context contract; bind run/source state and stale/cross-tenant refusal through composed dispatch.
 - [ ] **R031:** Obtain the EG, AU, and WebUI owner ports; bind discovery/admission at the server composition boundary.
 
