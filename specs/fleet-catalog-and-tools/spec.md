@@ -15,6 +15,47 @@ A source commit, a green unit test, or a prior label does not establish complete
 Record evidence for each deliverable in the evidence table below.
 Record unresolved design decisions and any dependency, owner, and retry condition that prevents the next acceptance step.
 
+## User stories and acceptance
+
+### User Story 1 - Find and load only the tools I may use (Priority: P1)
+
+A caller asks `find` or `find_tools` for a capability, receives only items it is authorized to see, and loads them into its session with `load_tools`, within the session cap.
+
+**Given** an authenticated caller with the exact `mcp:discover` and `mcp:delegate` scopes, **When** the caller finds and loads a tool, **Then** a native forwarder with the child input schema is mounted and a list-change notification is sent.
+
+### User Story 2 - A connector onboards itself on connect (Priority: P1)
+
+A connector that connects through the fleet has its tools, prompts, skills, resources and ontology captured and imported by one idempotent pass, with no operator call.
+
+**Given** a new connector registered in the fleet configuration, **When** its handshake completes, **Then** one onboarding pass imports its pack and the catalog reports its surface counts and release.
+
+### User Story 3 - Catalog refresh never serves a partial generation (Priority: P2)
+
+An operator reloads the catalog and either the whole validated candidate is published or nothing changes.
+
+**Given** a candidate catalog with a digest mismatch, **When** `fleet.catalog.reload` runs, **Then** the reload refuses and the active generation is unchanged.
+
+### User Story 4 - Write-back and provisioning run under gates (Priority: P2)
+
+A write-back commit or an instance provisioning call is previewed, approved and replayed safely through the shared invoke pipeline.
+
+**Given** a confirmed plan bound to the commit operation, **When** the commit is replayed after a restart, **Then** the original receipt is returned and nothing is applied twice.
+
+## Edge Cases
+
+- A live registration without a current server component is an onboarding state, not tampering; the reader skips it and admits the others.
+- An empty unscoped catalog search is refused with `INVALID_ARGUMENT` before the gateway runs.
+- A child restart that loses the session id is treated as a dead session and the relay read retries once.
+- A capture or import failure never blocks serving the connector's tools.
+- A pack import that would withdraw more than half of a published surface needs the operator's mass-withdrawal approval.
+- A second capacity denial for the same run fails closed.
+
+## Assumptions
+
+- The engine owns facts, decisions and catalog storage; Arbora owns the registry, the intent tools, the fleet gateway and onboarding.
+- Connectors depend on the SDK only and publish their own declarations at connect time.
+- Rows marked planned in `test-spec.md` have no running test yet; their callers and shapes name where the code will be wired.
+
 ## Functional contract
 
 1. **One registry.** The operation registry owns stable IDs, typed input/output, effect, exact caller scopes, principal rules, executor, confirmation, audit class, permitted surfaces, and binding. Every wire-callable engine method is covered by exactly one generated or curated operation, or by a reviewed exclusion with a reason. A deterministic canonical registry digest identifies the active generation. No public tool, HTTP action, or A2A operation bypasses the registry.
