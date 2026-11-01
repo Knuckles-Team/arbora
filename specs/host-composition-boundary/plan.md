@@ -39,35 +39,7 @@ No unknowns remain. The sections below record the earlier research and decisions
 
 The sections below hold the architecture, ownership, data flow and failure modes of this spec.
 
-## Phase 2: Task approach
-
-tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
-
-## Complexity Tracking
-
-None. The constitution check passed.
-
-## Build contract
-
-The change must pass the repository pre-commit gates at both stages: `uvx pre-commit run --all-files` and `uvx pre-commit run --all-files --hook-stage pre-push`.
-The wiring gate (`scripts/check_wiring.py`) and the public-spec gate (`scripts/check_public_specs.py`) apply. A new module must have a production caller.
-
-## Production caller chain
-
-Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
-
-## Cross-repo seams
-
-| Seam | Contract | Counterpart |
-|---|---|---|
-| Composition owners (engine, connector SDK, harness, web UI) | [`contracts/composition-owners.md`](contracts/composition-owners.md) | `ARBORA-HOST-R001` |
-| Single gateway | [`contracts/single-gateway.md`](contracts/single-gateway.md) | `ARBORA-HOST-R004` |
-| Fleet multiplexer ownership | [`contracts/fleet-multiplexer.md`](contracts/fleet-multiplexer.md) | `ARBORA-HOST-R006` |
-| Harness host-facing module set (meristem) | [`contracts/harness-host-modules.md`](contracts/harness-host-modules.md) | `ARBORA-HOST-R007` |
-
-The `Depends on` lines of requirements.md name every other dependency by the row ID that owns it in the other repository.
-
-## Existing wiring to reuse
+### Existing wiring to reuse
 
 | Arbora module | Existing responsibility | Required change |
 |---|---|---|
@@ -705,4 +677,11 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 
 ## Cross-repo seams
 
-None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
+| Seam | Contract | Counterpart |
+|---|---|---|
+| Composition owners (engine, connector SDK, harness, web UI) | [`contracts/composition-owners.md`](contracts/composition-owners.md) | `ARBORA-HOST-R001` |
+| Single gateway | [`contracts/single-gateway.md`](contracts/single-gateway.md) | `ARBORA-HOST-R004` |
+| Fleet multiplexer ownership | [`contracts/fleet-multiplexer.md`](contracts/fleet-multiplexer.md) | `ARBORA-HOST-R006` |
+| Harness host-facing module set (meristem) | [`contracts/harness-host-modules.md`](contracts/harness-host-modules.md) | `ARBORA-HOST-R007` |
+
+The `Depends on` lines of requirements.md name every other dependency by the row ID that owns it in the other repository.
