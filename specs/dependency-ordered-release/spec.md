@@ -1,12 +1,63 @@
 # ARBORA-RELEASE — Dependency-ordered, digest-pinned Arbora rollout
 
-**Owner:** arbora. **Requirement ID:** ARBORA-RELEASE-R001 (Arbora deployment-consumer partition). **Delivery:** SPECIFIED. **Acceptance:** NOT_AUDITED.
+**Owner:** arbora. **Requirement ID:** ARBORA-RELEASE-R001 (Arbora deployment-consumer partition).
 
 ## Purpose and user stories
 
 An operator can promote a qualified Arbora release only after its engine, agent runtime, optional WebUI, and enabled connector dependencies have compatible immutable artifacts. A contributor can validate the ordering, digest and rollback contract with local fixtures; no cloud account or private cluster is required for ordinary PR checks.
 
 P0: A release operator supplies a candidate manifest with exact source revisions, image digests, package versions, dependency edges and profile digest. The Arbora deployment consumer verifies it before apply. P0: The operator observes each dependency's readiness and functional contract before advancing, and receives a bounded receipt or a rollback decision. P1: A failed later stage never silently marks the whole release accepted.
+
+## User Scenarios & Testing
+
+### User Story 1 - Promote a qualified release in dependency order (Priority: P1)
+
+A release operator supplies a candidate manifest of exact revisions and image digests, and Arbora promotes each component only after its predecessors are ready.
+
+**Acceptance Scenarios**:
+
+1. **Given** a manifest with a cycle, an unknown component or a mutable image tag, **When** the operator plans the release, **Then** the plan refuses and names the defect.
+2. **Given** a valid manifest, **When** the operator plans the release, **Then** the plan lists one deterministic order with every digest.
+
+### User Story 2 - Stop on a failed stage (Priority: P1)
+
+An operator observes each stage and receives a bounded receipt or a rollback decision.
+
+**Acceptance Scenarios**:
+
+1. **Given** a stale digest at one stage, **When** the stage is compared, **Then** dependents do not start and the failed edge is recorded.
+2. **Given** a failed later stage, **When** the run ends, **Then** the release is never marked accepted.
+
+### User Story 3 - Run served task plans with typed tool steps (Priority: P2)
+
+A caller runs a dependency plan whose steps call connector tools with bound arguments.
+
+**Acceptance Scenarios**:
+
+1. **Given** an engine that serves `TaskPlan`, **When** the caller invokes `agents.plan_run`, **Then** the harness runs each step and returns a record per step.
+2. **Given** an engine without `TaskPlan`, **When** the caller invokes `agents.plan_run`, **Then** the call refuses with `UNAVAILABLE`.
+
+### Edge Cases
+
+- A disabled optional component has no dependency edge.
+- A missing signature or trust root rejects the manifest before any apply.
+- A rollback that cannot restore the prior pair stays visibly pending and is never reported as success.
+
+## Requirements
+
+- **FR-001**: Arbora validates digest-pinned candidates and promotes them in dependency order. Rows: `ARBORA-RELEASE-R001`.
+- **FR-002**: Every push is gated on green local gates, and static architecture tests run on every pull request. Rows: `ARBORA-RELEASE-R002`.
+- **FR-003**: Served task plans refuse with `UNAVAILABLE` against an engine without `TaskPlan`. Rows: `ARBORA-RELEASE-R003.4.3`.
+
+## Success Criteria
+
+- **SC-001**: A candidate with a cycle, unknown component or mutable image is refused. Rows: `ARBORA-RELEASE-R001`.
+- **SC-002**: The pull-request workflow runs the static architecture tests when the mapped scope is empty. Rows: `ARBORA-RELEASE-R002`.
+
+## Assumptions
+
+- Each owner publishes the evidence for its own component.
+- Pull-request checks use published package fixtures and a disposable local engine.
 
 ## Functional requirements and acceptance
 
