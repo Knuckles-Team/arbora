@@ -1,6 +1,6 @@
-"""Serve agent-webui from the Arbora composition boundary.
+"""Serve overstory from the Arbora composition boundary.
 
-Arbora owns agent-webui as the product UI (RF-ADR-009 §2.4). The public host
+Arbora owns overstory as the product UI (RF-ADR-009 §2.4). The public host
 and application composer are exported here so composition code does not depend
 on the module's implementation path.
 """

@@ -1196,8 +1196,8 @@ async def _fetch_engine_metrics() -> tuple[bytes, bool]:
     # through this factory rather than a bare `httpx.AsyncClient()` so the
     # safety defaults (finite timeout, mandatory TLS verification) stay
     # uniform and auditable in one place, even for this loopback-only call.
-    from agent_connector_sdk.http.client import create_async_http_client
-    from agent_connector_sdk.http.options import HttpClientOptions
+    from scion_sdk.http.client import create_async_http_client
+    from scion_sdk.http.options import HttpClientOptions
 
     try:
         async with create_async_http_client(

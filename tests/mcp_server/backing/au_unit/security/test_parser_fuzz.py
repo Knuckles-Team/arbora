@@ -5,7 +5,7 @@ from __future__ import annotations
 import random
 import string
 
-from agent_connector_sdk.credentials.runtime_references import (
+from scion_sdk.credentials.runtime_references import (
     RuntimeSecretReferenceError,
     _validated_reference,
 )

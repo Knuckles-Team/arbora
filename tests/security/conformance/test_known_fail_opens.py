@@ -39,7 +39,7 @@ in an installed distribution -- so the checks below resolve AU's repo root
 best-effort (an editable-install convention this homelab's arbora
 deployment already relies on) and SKIP, rather than fail, when it is not
 found; this is the SAME pattern this file already used for the
-epistemic-graph/agent-webui sibling-repo checks, now extended to AU itself.
+epistemic-graph/overstory sibling-repo checks, now extended to AU itself.
 """
 
 from __future__ import annotations
@@ -61,7 +61,7 @@ def _discover_au_root() -> Path | None:
     (this homelab's arbora deployment convention, a full sibling checkout
     on disk); returns ``None`` under a non-editable install (e.g. a wheel,
     which never ships ``tests/``), in which case callers skip."""
-    spec = importlib.util.find_spec("agent_utilities")
+    spec = importlib.util.find_spec("meristem")
     if spec is None or spec.origin is None:
         return None
     # spec.origin: <au_root>/agent_utilities/__init__.py
@@ -71,7 +71,7 @@ def _discover_au_root() -> Path | None:
 
 _AU_ROOT = _discover_au_root()
 # The workspace root containing every sibling repo (agent-utilities,
-# epistemic-graph, agent-webui, arbora, ...) -- one level above AU's own
+# epistemic-graph, overstory, arbora, ...) -- one level above AU's own
 # repo root, exactly as it was one level above THIS file's repo root before
 # the move (``_REPO_ROOT.parent``).
 _WORKSPACE_ROOT = _AU_ROOT.parent if _AU_ROOT is not None else None
@@ -169,12 +169,12 @@ def test_eg_obs_ingest_fail_open_proof_exists_in_source() -> None:
 
 def test_websocket_dashboard_citation_does_not_regress_to_the_dead_module() -> None:
     """BUG-PE-038: this entry used to cite `gateway/ws.py:78-154` -- a module
-    that is unused dead code today (nothing imports it; agent-webui's own
+    that is unused dead code today (nothing imports it; overstory's own
     `/ws/dashboard` handler has a `Deliberately NOT
     arbora.gateway.ws.dashboard_ws_router` comment explaining why)
     and is removed outright on `fix/dead-routes-and-union-perf` (BUG-PE-006).
     The real enforcement this surface's `AUTHENTICATED_REQUIRED` disposition
-    describes is `WebUIAuthorizationMiddleware` in agent-webui's
+    describes is `WebUIAuthorizationMiddleware` in overstory's
     `server.py`. A citation drifting back to the dead module would be worse
     than no citation -- a false sense of where the proof actually lives (the
     same "citation to a deleted/renamed file" failure mode
@@ -193,12 +193,12 @@ def test_websocket_dashboard_citation_does_not_regress_to_the_dead_module() -> N
     assert "gateway/ws.py:78-154" not in entry.citation
     assert "server.py" in entry.citation
 
-    # When agent-webui is checked out as a sibling repo, the cited file+line
+    # When overstory is checked out as a sibling repo, the cited file+line
     # should actually exist -- best-effort, skipped rather than failed when
     # the sibling isn't present in this environment (matches this file's own
     # BUG-037 pattern for the epistemic-graph sibling above).
     candidates = (
-        [_WORKSPACE_ROOT / "agent-webui" / "agent" / "agent_webui" / "server.py"]
+        [_WORKSPACE_ROOT / "overstory" / "agent" / "overstory" / "server.py"]
         if _WORKSPACE_ROOT is not None
         else []
     )
@@ -207,7 +207,7 @@ def test_websocket_dashboard_citation_does_not_regress_to_the_dead_module() -> N
         import pytest
 
         pytest.skip(
-            "agent-webui sibling repo not present in this environment -- the "
+            "overstory sibling repo not present in this environment -- the "
             "cited server.py cannot be checked from here"
         )
     assert server_py is not None  # narrows for mypy; pytest.skip() above exits

@@ -77,7 +77,7 @@ async def test_real_local_backend_identity_and_failed_turn_without_replay(tmp_pa
 async def test_local_identity_renewal_keeps_same_binding(monkeypatch):
     import argparse
 
-    from agent_utilities import host_ports
+    from meristem import host_ports
 
     from arbora.acp.local_runtime import compose_local
     from arbora.api.contracts.session import GraphSession, SessionExpiredError

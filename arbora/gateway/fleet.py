@@ -25,7 +25,7 @@ no separate supervisor service. Everything here surfaces state the ecosystem
   tools.
 
 These handlers are plain Starlette callables mounted by the gateway; the
-``agent-webui`` Fleet Dashboard consumes them.
+``overstory`` Fleet Dashboard consumes them.
 """
 
 from __future__ import annotations

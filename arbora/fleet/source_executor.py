@@ -277,7 +277,7 @@ class FleetSourceExecutor:
         """
 
         try:
-            from agent_connector_sdk.adapters.foreign_read import (
+            from scion_sdk.adapters.foreign_read import (
                 ForeignReadClient,
                 NativeRequestResponseAdapter,
             )
@@ -382,7 +382,7 @@ class FleetSourceExecutor:
                 "the foreign-read SDK adapter is unavailable",
             )
         try:
-            from agent_connector_sdk.adapters.foreign_read import (
+            from scion_sdk.adapters.foreign_read import (
                 AbortRequest,
                 ChunkRequest,
                 CompleteRequest,

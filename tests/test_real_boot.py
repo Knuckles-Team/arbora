@@ -843,7 +843,7 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
     """
     from types import SimpleNamespace
 
-    from agent_connector_sdk.current_plan import PlanItem
+    from scion_sdk.current_plan import PlanItem
     from epistemic_graph import EpistemicGraphClient
 
     from arbora import current_plan_publication, work_items
@@ -1177,9 +1177,9 @@ def _post_op_keyed(stack: dict[str, Any], op_id: str, params: dict[str, Any]) ->
 
 async def _direct_submit(stack: dict[str, Any], connector: str) -> str:
     """Submit one record straight to the engine; return its refusal (diagnostics)."""
-    from agent_connector_sdk.ingest.model import ChangeSet, Entity, IngestBinding
-    from agent_connector_sdk.ingest.service import KnowledgeIngest
-    from agent_connector_sdk.ingest.transport import EpistemicGraphIngestTransport
+    from scion_sdk.ingest.model import ChangeSet, Entity, IngestBinding
+    from scion_sdk.ingest.service import KnowledgeIngest
+    from scion_sdk.ingest.transport import EpistemicGraphIngestTransport
     from epistemic_graph import EpistemicGraphClient
 
     client = await EpistemicGraphClient.connect(

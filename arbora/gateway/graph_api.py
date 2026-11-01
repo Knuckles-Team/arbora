@@ -239,7 +239,7 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
     # metrics middleware is OUTERMOST — auth rejections (401) and rate-limit
     # rejections (429) are counted too. GET /metrics remains behind the
     # identity middleware when KG authentication is required. Both the gateway and
-    # the agent-webui backend mount through here, so both get the same
+    # the overstory backend mount through here, so both get the same
     # instrumentation. With prometheus_client absent (optional ``metrics``
     # extra) everything degrades to a no-op.
     if config.gateway_metrics:
@@ -271,7 +271,7 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
     _mount_sparql_route(app, prefix=prefix)
 
     # Read-only SQL catalog introspection (CONCEPT:MERISTEM-KG.query.raw-python) — the
-    # catalogs → tables/views → columns projection the agent-webui catalog
+    # catalogs → tables/views → columns projection the overstory catalog
     # browser renders. Deliberately NOT a raw SQL passthrough: it takes no query
     # text, only an optional identifier-validated schema filter, and dispatches
     # through the same ``_execute_tool`` action core as the MCP ``graph_table``
@@ -313,7 +313,7 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
     register_remote_oauth_routes(app, prefix=prefix)
 
     # Service dashboard REST reads and the /ws/dashboard stream
-    # (ARBORA-HOST-R019). agent-webui composes these from Arbora.
+    # (ARBORA-HOST-R019). overstory composes these from Arbora.
     from arbora.gateway.dashboard_api import register_dashboard_routes
 
     register_dashboard_routes(app, prefix=prefix)

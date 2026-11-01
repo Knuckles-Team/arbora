@@ -14,7 +14,7 @@ import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-from agent_connector_sdk.identity import current_actor
+from scion_sdk.identity import current_actor
 
 __all__ = [
     "ACTOR_HEADER",

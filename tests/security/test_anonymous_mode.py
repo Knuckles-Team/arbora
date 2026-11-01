@@ -330,7 +330,7 @@ def test_old_provider_is_still_accepted_in_authenticated_mode(monkeypatch):
 @pytest.mark.asyncio
 async def test_real_fastmcp_outer_http_boundary_covers_public_routes(local_mode):
     import httpx
-    from agent_connector_sdk.mcp.network import build_network_serving_config
+    from scion_sdk.mcp.network import build_network_serving_config
     from fastmcp import FastMCP
     from starlette.responses import JSONResponse
 

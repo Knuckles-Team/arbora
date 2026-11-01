@@ -11,12 +11,12 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.mark.spec("ARBORA-HOST-R003")
-def test_webui_extra_source_and_release_checkout_reference_agent_webui() -> None:
+def test_webui_extra_source_and_release_checkout_reference_overstory() -> None:
     data = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    extra = data["project"]["optional-dependencies"]["webui"]
-    assert any(dep.startswith("agent-webui") for dep in extra)
+    extra = data["project"]["optional-dependencies"]["overstory"]
+    assert any(dep.startswith("overstory") for dep in extra)
     # The web UI resolves from the package index like every other dependency.
-    assert "agent-webui" not in data["tool"]["uv"]["sources"]
+    assert "overstory" not in data["tool"]["uv"]["sources"]
     workflow = (ROOT / ".github/workflows/checks.yml").read_text(encoding="utf-8")
     # The release installs it from PyPI; no web UI source is checked out.
-    assert "repository: Knuckles-Team/agent-webui" not in workflow
+    assert "repository: Knuckles-Team/overstory" not in workflow

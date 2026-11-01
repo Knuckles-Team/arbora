@@ -124,7 +124,7 @@ def client_credentials_token(oauth2: Any) -> str:
     ``oauth2`` carries ``token_url`` (or ``issuer``), ``client_id``, a
     ``client_secret`` reference, and optional ``scope`` and ``audience``.
     """
-    from agent_connector_sdk.auth.oidc import (
+    from scion_sdk.auth.oidc import (
         ClientCredentialsConfig,
         client_credentials_auth,
     )
@@ -1146,7 +1146,7 @@ def _resolve_process_identity_source(config: Any) -> tuple[str, Any]:
 def _fetch_process_identity_token(token_ref: str, oauth2: Any) -> str:
     try:
         if token_ref:
-            from agent_connector_sdk.credentials.runtime_references import (
+            from scion_sdk.credentials.runtime_references import (
                 resolve_runtime_secret_reference,
             )
 
@@ -1209,7 +1209,7 @@ def mint_actor_from_token_sync(token: str) -> ActorContext:
     (``RuntimeError: asyncio.run() cannot be called from a running event
     loop``), and this function's original form called it unconditionally.
 
-    That was not a theoretical gap. `agent-webui`'s `ensure_tenant_admission`
+    That was not a theoretical gap. `overstory`'s `ensure_tenant_admission`
     is `async`, and it calls the synchronous `_service_authority()`, which
     lands here — so every Keycloak sign-in raised, surfacing to the user as
     `{"detail": "Internal request failed", "error_id": ...}` with the real

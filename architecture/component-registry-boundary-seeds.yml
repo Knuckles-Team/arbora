@@ -42,7 +42,7 @@ seeds:
       - arbora.api
       - arbora.gateway
       - arbora.fleet
-  - owner_repository: agent-connector-sdk
+  - owner_repository: scion-sdk
     requirement_id: ARBORA-HOST-R012
     description: >-
       The connector SDK's transport and content-pack boundary that Arbora's
@@ -50,16 +50,16 @@ seeds:
       connector manifests, content-pack certification, governed HTTP and
       credentials, and write-back -- never a connector's internal module.
     owned_module_paths:
-      - agent_connector_sdk/mcp
-      - agent_connector_sdk/manifest
-      - agent_connector_sdk/certify
-      - agent_connector_sdk/http
-      - agent_connector_sdk/credentials
-      - agent_connector_sdk/discovery.py
-      - agent_connector_sdk/contracts.py
-      - agent_connector_sdk/config.py
+      - scion_sdk/mcp
+      - scion_sdk/manifest
+      - scion_sdk/certify
+      - scion_sdk/http
+      - scion_sdk/credentials
+      - scion_sdk/discovery.py
+      - scion_sdk/contracts.py
+      - scion_sdk/config.py
     public_import_surface:
-      - agent_connector_sdk.mcp
-      - agent_connector_sdk.manifest
-      - agent_connector_sdk.certify
-      - agent_connector_sdk.contracts
+      - scion_sdk.mcp
+      - scion_sdk.manifest
+      - scion_sdk.certify
+      - scion_sdk.contracts

@@ -12,7 +12,7 @@ class ConfiguredBrowserBroker:
     def __init__(
         self, reference: str, *, tenant: str, audience: str, process_claims: Any
     ):
-        from agent_connector_sdk.credentials.runtime_references import (
+        from scion_sdk.credentials.runtime_references import (
             validate_runtime_secret_reference,
         )
 
@@ -26,7 +26,7 @@ class ConfiguredBrowserBroker:
         self._process_claims = process_claims
 
     async def __call__(self) -> dict[str, Any]:
-        from agent_connector_sdk.credentials.runtime_references import (
+        from scion_sdk.credentials.runtime_references import (
             resolve_runtime_secret_reference,
         )
 

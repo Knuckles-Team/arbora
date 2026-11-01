@@ -1,9 +1,9 @@
 """Everything arbora serves as content, found through the connector SDK.
 
 Arbora's own package, the skills packages and every content-only connector
-declare themselves once under ``agent_connector_sdk.connector``;
+declare themselves once under ``scion_sdk.connector``;
 :func:`content_providers` turns each installed declaration into the SDK's
-:class:`~agent_connector_sdk.mcp.content.ConnectorContent`, and
+:class:`~scion_sdk.mcp.content.ConnectorContent`, and
 :func:`register_installed_content` serves them all with the SDK's own
 registration (``ARBORA-FLEET-R044``):
 
@@ -26,7 +26,7 @@ from importlib import resources
 from pathlib import Path
 from typing import Any
 
-from agent_connector_sdk.mcp.content import (
+from scion_sdk.mcp.content import (
     ConnectorContent,
     ContentRegistration,
     register_connector_content,

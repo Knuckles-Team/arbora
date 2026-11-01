@@ -1,6 +1,6 @@
 """Answer a connector's destructive-action confirmation with a confirmed plan.
 
-ARBORA-FLEET-R015.2 (gap G15). A connector built on agent-connector-sdk asks
+ARBORA-FLEET-R015.2 (gap G15). A connector built on scion-sdk asks
 for a live MCP confirmation (``elicitation/create``) before a destructive tool
 runs, and fails closed without one. Arbora is the MCP client of its children,
 so it answers that request itself, from authority it already holds:

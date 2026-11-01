@@ -198,7 +198,7 @@ def _api_key(reference: str | None) -> str | None:
     """Resolve the PDP API key from a runtime secret reference, never a value."""
     if not reference:
         return None
-    from agent_connector_sdk.credentials.resolution import resolve_secret_reference
+    from scion_sdk.credentials.resolution import resolve_secret_reference
 
     try:
         value = resolve_secret_reference(reference)
@@ -231,7 +231,7 @@ class RemotePolicy:
     async def _post(
         self, chunk: Sequence[schemas.CheckRequest]
     ) -> list[schemas.CheckResponse]:
-        from agent_connector_sdk.source_connectors.http_safety import (
+        from scion_sdk.source_connectors.http_safety import (
             safe_post_json_async,
         )
 

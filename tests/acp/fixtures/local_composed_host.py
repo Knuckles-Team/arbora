@@ -3,7 +3,7 @@
 import asyncio
 import json
 
-from agent_utilities import host_ports
+from meristem import host_ports
 from pydantic_ai.models.function import FunctionModel
 
 from arbora.acp.local_runtime import main

@@ -91,7 +91,7 @@ async def test_foreign_loop_dispatch_preserves_verified_session(
                 "issue_lease",
                 {
                     "document_ref": "document_" + "a" * 64,
-                    "tool_ids": ["agent-webui.get-page-context"],
+                    "tool_ids": ["overstory.get-page-context"],
                     "attended": True,
                 },
             )
@@ -120,7 +120,7 @@ async def test_runtime_refuses_replacement_and_unbound_caller(
                 "issue_lease",
                 {
                     "document_ref": "document_" + "a" * 64,
-                    "tool_ids": ["agent-webui.get-page-context"],
+                    "tool_ids": ["overstory.get-page-context"],
                     "attended": True,
                 },
             )
@@ -140,7 +140,7 @@ async def test_runtime_requires_write_scope(session: GraphSession) -> None:
                 "issue_lease",
                 {
                     "document_ref": "document_" + "a" * 64,
-                    "tool_ids": ["agent-webui.get-page-context"],
+                    "tool_ids": ["overstory.get-page-context"],
                     "attended": True,
                 },
             )

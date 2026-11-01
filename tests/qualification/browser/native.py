@@ -48,9 +48,9 @@ def require_installed() -> dict[str, str]:
         ("arbora", "arbora", None),
         ("medulla", "epistemic_graph", "2.27.10"),
         ("medulla-stem", "epistemic_graph_server", "2.27.10"),
-        ("meristem", "agent_utilities", "4.2.0"),
-        ("scion-sdk", "agent_connector_sdk", "0.5.9"),
-        ("agent-webui", "agent_webui", None),
+        ("meristem", "meristem", "5.0.0"),
+        ("scion-sdk", "scion_sdk", "0.6.5"),
+        ("overstory", "overstory", None),
     ):
         loaded = importlib.import_module(module)
         location = loaded.__file__
@@ -60,9 +60,9 @@ def require_installed() -> dict[str, str]:
         if expected is not None and version != expected:
             raise RuntimeError("Qualification dependency version mismatch")
         versions[package] = version
-    import agent_webui
+    import overstory
 
-    assets = Path(agent_webui.__file__).resolve().parent / "dist"
+    assets = Path(overstory.__file__).resolve().parent / "dist"
     if not (assets / "index.html").is_file() or not (assets / "assets").is_dir():
         raise RuntimeError("Installed browser assets are incomplete")
     from epistemic_graph.server_binary import resolve_server_binary
@@ -384,7 +384,7 @@ async def seed_owned_run(
     """
     from types import SimpleNamespace
 
-    from agent_connector_sdk.current_plan import PlanItem
+    from scion_sdk.current_plan import PlanItem
 
     from arbora import current_plan_publication, work_items
     from arbora.a2a.authority import WorkItemA2AAuthority

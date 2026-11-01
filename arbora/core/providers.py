@@ -1,9 +1,9 @@
 """Installed-content discovery over the connector SDK (``ARBORA-HOST-R001.10``).
 
 Every package that carries content declares itself once, as the single entry
-point of the ``agent_connector_sdk.connector`` group: the skills packages and
+point of the ``scion_sdk.connector`` group: the skills packages and
 any content-only connector are found by
-``agent_connector_sdk.connector.installed_connectors()``. Arbora's own package
+``scion_sdk.connector.installed_connectors()``. Arbora's own package
 is the host, not a served connector, so its content directories come from the
 SDK's own ``content_dirs("arbora")`` convention. Content is found by convention
 under each package (``skills/``, ``prompts/``, ``ontology/``). There are no
@@ -19,7 +19,7 @@ import logging
 import re
 from pathlib import Path
 
-from agent_connector_sdk.connector import (
+from scion_sdk.connector import (
     Connector,
     ResolvedConnector,
     content_dirs,

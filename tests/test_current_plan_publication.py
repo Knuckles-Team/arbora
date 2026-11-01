@@ -12,8 +12,8 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from agent_utilities import host_ports
-from agent_utilities.harness.plan import PlanItem, PlanState
+from meristem import host_ports
+from meristem.harness.plan import PlanItem, PlanState
 
 from arbora import current_plan_publication as publication
 from arbora.deployment.semantic_provisioning import CONTROL_GRAPH

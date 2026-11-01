@@ -13,9 +13,9 @@ from uuid import uuid4
 
 import acp
 from acp import schema
-from agent_utilities.harness.hosted_run import iterate_client_run
-from agent_utilities.host_ports import ClientCapabilityRefused
-from agent_utilities.runtime import RunRequest
+from meristem.harness.hosted_run import iterate_client_run
+from meristem.host_ports import ClientCapabilityRefused
+from meristem.runtime import RunRequest
 from pydantic_ai.messages import (
     PartDeltaEvent,
     PartStartEvent,

@@ -16,8 +16,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import pytest
-from agent_utilities import host_ports
-from agent_utilities.graph import default_run_plan
+from meristem import host_ports
+from meristem.graph import default_run_plan
 from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart
 from pydantic_ai.models.function import FunctionModel
 

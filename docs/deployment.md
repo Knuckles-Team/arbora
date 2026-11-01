@@ -16,7 +16,7 @@ Add the optional Overstory host integration when the same process will serve
 the UI:
 
 ```bash
-python -m pip install "arbora[webui]"
+python -m pip install "arbora[overstory]"
 ```
 
 ## Generate configuration

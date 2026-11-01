@@ -11,7 +11,7 @@ Scope of this first increment (the MERISTEM-BOUNDARY-R015 pilot slice): Arbora
 owns the HTTP shell -- health, agent-card discovery, and a bounded A2A
 ``message/send`` exchange. Agent/model construction stays with
 agent-utilities' public API (``agent_utilities.create_graph_agent`` /
-``initialize_graph_from_workspace`` and ``agent_utilities.graph.execute_graph``),
+``initialize_graph_from_workspace`` and ``meristem.graph.execute_graph``),
 which remains the agent orchestration authority per both repositories'
 ``AGENTS.md``. Deliberately NOT ported in this increment, matching
 ARBORA-HOST-R009's own scope cut:
@@ -69,7 +69,7 @@ def _default_executor(graph: Any, graph_config: dict, query: str) -> dict:
     """Run one query through agent-utilities' public execution port."""
     import asyncio
 
-    from agent_utilities.graph import execute_graph
+    from meristem.graph import execute_graph
 
     return asyncio.run(execute_graph(graph, graph_config, query))
 
@@ -389,7 +389,7 @@ def create_agent_server(
         raise HostInterfaceUnavailable("client_unavailable")
 
     if graph is None or graph_config is None:
-        from agent_utilities.graph import (
+        from meristem.graph import (
             create_graph_agent,
             initialize_graph_from_workspace,
         )

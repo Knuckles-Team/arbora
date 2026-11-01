@@ -77,7 +77,7 @@ def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> N
 
     start_composed_services(object(), object())
 
-    assert started[0][0] == "agent-webui"
+    assert started[0][0] == "overstory"
     assert started[0][1].__module__ == "arbora.webui_host.webui_co_service"
 
 
@@ -183,7 +183,7 @@ def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
     else: 29 prompts, and one runtime shapes resource.
     """
     import anyio
-    from agent_connector_sdk.mcp.content import (
+    from scion_sdk.mcp.content import (
         ConnectorContent,
         register_connector_content,
     )

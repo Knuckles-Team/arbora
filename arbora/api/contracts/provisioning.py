@@ -8,7 +8,7 @@ the existing :class:`ActionPolicy` decision; Arbora contributes the two
 authoritative Medulla-bound values that AU cannot derive safely (the current
 catalog binding and the EG owner principal).
 
-The returned callable matches agent-connector-sdk's
+The returned callable matches scion-sdk's
 ``PackImportAuthorityResolver`` contract::
 
     async def resolver(connector: str) -> tuple[binding, context]

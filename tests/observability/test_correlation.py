@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from agent_connector_sdk.identity import ActorContext, ActorType, use_actor
+from scion_sdk.identity import ActorContext, ActorType, use_actor
 
 from arbora.observability import correlation as c
 

@@ -11,10 +11,10 @@ import logging
 from typing import Any
 
 import httpx
-from agent_connector_sdk.credentials.references import SecretReferenceError
-from agent_connector_sdk.credentials.resolution import resolve_secret_reference
-from agent_connector_sdk.credentials.resolver import CredentialUnavailableError
-from agent_connector_sdk.tls.resolve import resolve_tls_profile
+from scion_sdk.credentials.references import SecretReferenceError
+from scion_sdk.credentials.resolution import resolve_secret_reference
+from scion_sdk.credentials.resolver import CredentialUnavailableError
+from scion_sdk.tls.resolve import resolve_tls_profile
 
 __all__ = ["channel_http_client", "resolve_secret"]
 

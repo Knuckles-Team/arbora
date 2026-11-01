@@ -64,8 +64,8 @@ jobs:
           set -euo pipefail
           uv venv --python 3.14 "$RUNNER_TEMP/browser-env"
           py="$RUNNER_TEMP/browser-env/bin/python"
-          uv export --frozen --no-emit-project --no-emit-package agent-webui --no-dev \
-            --extra webui --extra test --extra acp --extra vault \
+          uv export --frozen --no-emit-project --no-emit-package overstory --no-dev \
+            --extra overstory --extra test --extra acp --extra vault \
             --format requirements.txt --output-file "$RUNNER_TEMP/browser-locked.txt"
           uv pip install --no-config --python "$py" --require-hashes --no-deps --only-binary :all: \
             --index-url https://pypi.org/simple -r "$RUNNER_TEMP/browser-locked.txt"
@@ -90,7 +90,7 @@ jobs:
           cp tests/qualification/browser/browser_login.mjs candidate-overstory/browser_login.mjs
           cp tests/qualification/browser/browser_cdp.mjs candidate-overstory/browser_cdp.mjs
           cp tests/qualification/browser/browser_csrf.mjs candidate-overstory/browser_csrf.mjs
-          "$py" -I -c 'import arbora,agent_webui,epistemic_graph,sys; from pathlib import Path; root=Path(sys.prefix).resolve(); assert all(root in Path(m.__file__).resolve().parents for m in (arbora,agent_webui,epistemic_graph)); dist=Path(agent_webui.__file__).parent/"dist"; assert (dist/"index.html").is_file() and list((dist/"assets").glob("*.js"))'
+          "$py" -I -c 'import arbora,overstory,epistemic_graph,sys; from pathlib import Path; root=Path(sys.prefix).resolve(); assert all(root in Path(m.__file__).resolve().parents for m in (arbora,overstory,epistemic_graph)); dist=Path(overstory.__file__).parent/"dist"; assert (dist/"index.html").is_file() and list((dist/"assets").glob("*.js"))'
       - name: Fetch checksum-pinned disposable Vault tool
         shell: bash
         run: |

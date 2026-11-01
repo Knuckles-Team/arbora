@@ -25,8 +25,8 @@ import re
 import time
 from typing import Any
 
-from agent_connector_sdk.privacy import PersistencePrivacyGuard
-from agent_connector_sdk.privacy_reference import persistence_reference
+from scion_sdk.privacy import PersistencePrivacyGuard
+from scion_sdk.privacy_reference import persistence_reference
 
 from arbora.core.settings import setting
 from arbora.observability.langfuse_trust import (
@@ -190,7 +190,7 @@ class LangfuseExporter:
             return False
         try:
             try:
-                from agent_connector_sdk.identity import current_actor
+                from scion_sdk.identity import current_actor
 
                 tenant_id = current_actor().tenant_id
             except Exception:  # noqa: BLE001 — empty namespace is dev-safe

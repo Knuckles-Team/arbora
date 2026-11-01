@@ -5,7 +5,7 @@ Docker Swarm, or Kubernetes through the chart in ``deploy/helm/arbora``) and
 hands off to ``arbora-deployment``, which installs, configures and verifies
 the Arbora runtime. ``arbora-development`` documents how to develop a
 feature in this or a sibling ecosystem repository. Discovered through arbora's
-``agent_connector_sdk.connector`` declaration (``skills/`` by convention).
+``scion_sdk.connector`` declaration (``skills/`` by convention).
 """
 
 from __future__ import annotations

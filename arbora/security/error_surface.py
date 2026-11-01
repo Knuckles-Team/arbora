@@ -19,7 +19,7 @@ from importlib.resources import files
 from types import MappingProxyType
 from typing import Any
 
-from agent_connector_sdk.privacy import sanitize_for_persistence
+from scion_sdk.privacy import sanitize_for_persistence
 
 from arbora.security.actor_context import ActorContext, current_actor
 from arbora.security.operation_result import OperationError, OperationResult
@@ -191,7 +191,7 @@ _FAILING_LAYER_PREFIXES: tuple[tuple[str, str], ...] = (
     ("arbora.api", "api"),
     ("arbora.observability", "observability"),
     ("arbora", "arbora"),
-    ("agent_connector_sdk", "sdk"),
+    ("scion_sdk", "sdk"),
     ("epistemic_graph", "engine"),
 )
 
@@ -303,7 +303,7 @@ def _record_error_detail(
     The full exception chain (``__cause__``/``__context__``) is rendered via
     :func:`traceback.format_exception` — so a wrapped/re-raised failure keeps
     its real origin — then sanitized through the SAME persistence privacy gate
-    (:mod:`agent_connector_sdk.privacy`) used for any other
+    (:mod:`scion_sdk.privacy`) used for any other
     payload crossing a persistence/telemetry boundary, before it ever enters
     this process-local store. The recording actor's ``tenant_id`` is captured
     alongside it so :func:`resolve_error_detail_for_actor` can enforce that

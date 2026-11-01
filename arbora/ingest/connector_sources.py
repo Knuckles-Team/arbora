@@ -5,7 +5,7 @@ sources. It lists each fleet server's declared sources through that server's
 ``connector://resources`` resource (the fleet catalog plus the
 connector's own declaration, no engine listing method), and syncs one source
 as one engine WorkItem: submit, claim, run
-:class:`~agent_connector_sdk.ingest.source_sync.SourceSyncRunner` with every
+:class:`~scion_sdk.ingest.source_sync.SourceSyncRunner` with every
 tool call admitted through the governed fleet gateway, then commit the outcome.
 Status comes from the shared engine KV checkpoint the SDK runner writes.
 """
@@ -21,14 +21,14 @@ from collections.abc import Awaitable, Callable, Iterator, Mapping
 from contextlib import contextmanager
 from typing import Any, cast
 
-from agent_connector_sdk.ingest.service import KnowledgeIngest
-from agent_connector_sdk.ingest.source_sync import (
+from scion_sdk.ingest.service import KnowledgeIngest
+from scion_sdk.ingest.source_sync import (
     KvSourceCheckpoints,
     SourceSyncError,
     SourceSyncRunner,
 )
-from agent_connector_sdk.ingest.sources import IngestSourceDeclaration
-from agent_connector_sdk.ingest.transport import EpistemicGraphIngestTransport
+from scion_sdk.ingest.sources import IngestSourceDeclaration
+from scion_sdk.ingest.transport import EpistemicGraphIngestTransport
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.fleet.declarations import RESOURCES_URI, parse_declaration

@@ -8,7 +8,7 @@ import os
 import sys
 from typing import Any
 
-from agent_connector_sdk.mcp.network import build_network_serving_config
+from scion_sdk.mcp.network import build_network_serving_config
 
 from arbora.content import register_installed_content
 from arbora.core.settings import setting
@@ -436,7 +436,7 @@ def mcp_server(
             # exists. Credentials keep outbound sending available, but the explicit
             # MESSAGING_INTAKE_ENABLED deployment intent (false by default) is the
             # only way this request container may enter the shared native lease
-            # boundary. When ENABLE_WEB_UI is true, the packaged agent-webui is
+            # boundary. When ENABLE_WEB_UI is true, the packaged overstory is
             # started in-process by this same supervisor as a separately bound,
             # independently restartable co-service.
             co_service_supervisor = start_composed_services(

@@ -234,7 +234,7 @@ jobs:
         if: needs.changes.outputs.scope != 'spec'
         run: |
           set -euo pipefail
-          uv sync --frozen --extra test --extra webui
+          uv sync --frozen --extra test --extra overstory
 
       - name: Locked-environment type check (manual-stage hook, always full)
         if: needs.changes.outputs.scope != 'spec'

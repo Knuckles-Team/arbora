@@ -2,9 +2,9 @@
 
 RF-ADR-009 (`plans/refactor/RF-ADR-009-connector-sdk-and-arbora.md`) §2 assigns
 this repository phase 5: **the deployable composition** — the MCP server, REST
-gateway, control plane, fleet gateway, agent-webui hosting, and deployment
+gateway, control plane, fleet gateway, overstory hosting, and deployment
 tooling. It must never own business logic that belongs to
-epistemic-graph, agent-connector-sdk, or the agent-utilities agent plane.
+epistemic-graph, scion-sdk, or the agent-utilities agent plane.
 
 The live package layout is:
 
@@ -12,7 +12,7 @@ The live package layout is:
 - `arbora.fleet` — in-process MCP fleet gateway and child lifecycle.
 - `arbora.gateway` — REST gateway and dashboard projections.
 - `arbora.control_plane` — reconciliation and action policy.
-- `arbora.webui_host` — optional Agent WebUI co-service hosting.
+- `arbora.webui_host` — optional Overstory co-service hosting.
 - `arbora.deployment` — configuration, diagnostics, canaries, and operations.
 
 The ``arbora`` console command serves

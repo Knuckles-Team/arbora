@@ -1659,7 +1659,7 @@ class CleanPlanProbe:
 #: the module whose silent ``ImportError`` under a stale ``fastmcp`` stopped an
 #: entire test module from collecting and hid thirteen defects for ten days.
 DEFAULT_IMPORT_PROBE_MODULES: tuple[str, ...] = (
-    "agent_utilities",
+    "meristem",
     "arbora.fleet.child_resilience",
 )
 

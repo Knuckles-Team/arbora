@@ -20,7 +20,7 @@ from typing import Any
 
 import httpx
 import pytest
-from agent_utilities import host_ports
+from meristem import host_ports
 from fastapi import FastAPI
 
 from arbora import agent_runs

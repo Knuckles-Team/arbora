@@ -379,7 +379,7 @@ async def test_invalid_proposal_audit_attributes_never_reach_storage(
             session=session,
             run_id="test-run",
             agent_name="browser-control",
-            tool_name="agent-webui.get-page-context",
+            tool_name="overstory.get-page-context",
             arguments={},
             result=None,
             error=None,

@@ -6,8 +6,8 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from agent_utilities import host_ports
-from agent_utilities.graph import RunPlanFailure, RunRequest, run
+from meristem import host_ports
+from meristem.graph import RunPlanFailure, RunRequest, run
 
 from arbora import agent_runs
 from arbora.mcp_server import task_plan_runtime
@@ -160,7 +160,7 @@ async def test_provider_failure_does_not_borrow_stale_owner_ledger(chain, monkey
 
 
 def test_missing_failure_contract_refuses_before_planning(monkeypatch):
-    import agent_utilities.graph as au
+    import meristem.graph as au
 
     monkeypatch.delattr(au, "RunPlanFailure")
     with pytest.raises(task_plan_runtime.OperationRefused, match="UPGRADE_REQUIRED"):

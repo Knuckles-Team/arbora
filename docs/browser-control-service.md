@@ -108,7 +108,7 @@ is fabricated.
 
 Arbora keeps its server-side request and durable receipt contracts under
 `arbora.browser_control`. The host injects the resulting service through
-agent-webui's existing `BrowserControlPort`; it does not define a second WebUI
+overstory's existing `BrowserControlPort`; it does not define a second WebUI
 transport or ask AU to host the authority. `browser_control_factory_kwargs`
 injects `browser_control=None` unless the WebUI factory supports that port, an
 async IdP backchannel revalidator is provided, and the active engine exposes
@@ -133,7 +133,7 @@ there is no compatibility facade or AU runtime copy.
 | Modules | Single responsibility |
 | --- | --- |
 | `browser_control_common`, `descriptor`, `api`, `attendance_api` | Canonical JSON/digests, one tool descriptor, Arbora requests/receipts, and internal validated attendance state |
-| `browser_control_client`, `server`, `port` | Inbound and outbound trust validation plus the connection protocol; the product port is agent-webui's `BrowserControlPort` |
+| `browser_control_client`, `server`, `port` | Inbound and outbound trust validation plus the connection protocol; the product port is overstory's `BrowserControlPort` |
 | `browser_control_binding`, `attended`, `attendance` | Privacy-safe exact binding, one-use durable authority, and server-facing attendance lifecycle |
 | `browser_control_registration`, `durability` | Catalog/document authority and lease/WorkItem persistence |
 | `browser_control_state`, `validation`, `runtime` | Volatile handles, shared fail-closed validation, and the same-instance cross-loop caller binding |

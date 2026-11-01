@@ -9,8 +9,8 @@ package. This module gives those reference sites a typed shape so a
 mismatch (a stale pre-rename name) is refused rather than silently
 tolerated.
 
-Current main's names (as of the ``agent-webui`` rename): the published
-distribution is ``agent-webui``, imported as the ``agent_webui`` module.
+Current main's names (as of the ``overstory`` rename): the published
+distribution is ``overstory``, imported as the ``overstory`` module.
 """
 
 from __future__ import annotations
@@ -19,10 +19,10 @@ from dataclasses import dataclass
 from enum import Enum
 
 #: The renamed web UI package's published distribution name.
-RENAMED_WEB_UI_DISTRIBUTION = "agent-webui"
+RENAMED_WEB_UI_DISTRIBUTION = "overstory"
 
 #: The renamed web UI package's importable module name.
-RENAMED_WEB_UI_MODULE = "agent_webui"
+RENAMED_WEB_UI_MODULE = "overstory"
 
 _ALLOWED_NAMES = (RENAMED_WEB_UI_DISTRIBUTION, RENAMED_WEB_UI_MODULE)
 
@@ -80,12 +80,12 @@ def current_web_ui_references() -> tuple[WebUiPackageReference, ...]:
         ),
         WebUiPackageReference(
             WebUiReferenceKind.PACKAGE_SOURCE,
-            "pyproject.toml:[tool.uv.sources].agent-webui",
+            "pyproject.toml:[tool.uv.sources].overstory",
             RENAMED_WEB_UI_DISTRIBUTION,
         ),
         WebUiPackageReference(
             WebUiReferenceKind.RELEASE_CHECKOUT_STEP,
-            ".github/workflows/release.yml:Checkout pinned agent-webui source",
+            ".github/workflows/release.yml:Checkout pinned overstory source",
             RENAMED_WEB_UI_DISTRIBUTION,
         ),
         WebUiPackageReference(

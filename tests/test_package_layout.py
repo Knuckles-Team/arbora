@@ -42,7 +42,7 @@ def test_mcp_network_listener_uses_sdk_hardened_serving_contract() -> None:
     ).read_text(encoding="utf-8")
 
     assert (
-        "from agent_connector_sdk.mcp.network import build_network_serving_config"
+        "from scion_sdk.mcp.network import build_network_serving_config"
         in server
     )
     assert "network_serving.fastmcp_run_kwargs()" in server

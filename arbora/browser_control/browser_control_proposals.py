@@ -10,7 +10,7 @@ import secrets
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from agent_connector_sdk.privacy import persistence_reference
+from scion_sdk.privacy import persistence_reference
 
 from arbora.api.contracts.session import resolve_session
 from arbora.browser_control.browser_control_api import (

@@ -191,7 +191,7 @@ class WiringSweep:
 
     def __init__(self, project_root: str | Path):
         self.root = Path(project_root).resolve()
-        self.src_dir = self.root / "agent_utilities"
+        self.src_dir = self.root / "meristem"
         self.test_dir = self.root / "tests"
         self.docs_dir = self.root / "docs"
 
@@ -481,7 +481,7 @@ class WiringSweep:
         for rel_path, data in self.modules.items():
             for imp in data["imports"]:
                 # Normalize to project-relative
-                if imp.startswith("agent_utilities"):
+                if imp.startswith("meristem"):
                     target = imp.replace(".", "/") + ".py"
                     # Check if it's a package
                     pkg_init = imp.replace(".", "/") + "/__init__.py"

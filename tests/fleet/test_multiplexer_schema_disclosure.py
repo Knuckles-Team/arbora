@@ -50,7 +50,7 @@ class SchemaSession:
 def disclosure_fixture(
     alias: str = ALIAS,
 ) -> tuple[Any, Any, dict[str, Any], dict[str, str]]:
-    from agent_connector_sdk.mcp.schema_disclosure import (
+    from scion_sdk.mcp.schema_disclosure import (
         build_schema_disclosure,
         read_schema_fragment,
     )
