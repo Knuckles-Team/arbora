@@ -146,7 +146,7 @@ async def deny_subject_access(
 
 
 def _eg_method_id(binding: EgMethod) -> str:
-    from epistemic_graph.generated import METHOD_IDS
+    from medulla.generated import METHOD_IDS
 
     if (
         not isinstance(binding, EgMethod)
@@ -200,7 +200,7 @@ async def dispatch_eg_method(
     use the caller's verified claims, but must not follow the caller's content
     graph or expose a graph selector in the request.
     """
-    from epistemic_graph.generated import send_by_id
+    from medulla.generated import send_by_id
 
     method = _eg_method_id(binding)
     graph = await _caller_dispatch_graph(context)

@@ -49,9 +49,9 @@ def admin_claims(scope: str) -> dict[str, Any]:
 
 
 async def connect(context: dict[str, Any], scope: str) -> Any:
-    from epistemic_graph import EpistemicGraphClient
+    from medulla import MedullaClient
 
-    return await EpistemicGraphClient.connect(
+    return await MedullaClient.connect(
         socket_path=context["socket_path"],
         auth_secret=context["secret"],
         graph_name="__control__",
@@ -99,7 +99,7 @@ async def observed_client(
 async def prepare(
     context: dict[str, Any], backend: Any, credentials: dict, denied: dict
 ) -> dict[str, str]:
-    from epistemic_graph import EpistemicGraphClient
+    from medulla import MedullaClient
 
     from arbora.core.settings import runtime_config
     from arbora.epistemic import EpistemicClient, EpistemicClientPool
@@ -133,7 +133,7 @@ async def prepare(
         # Same explicit SDK-to-port binding used by process_engine_pool.
         return cast(
             EpistemicClient,
-            await observed_client(context, EpistemicGraphClient.connect, **kwargs),
+            await observed_client(context, MedullaClient.connect, **kwargs),
         )
 
     pool = EpistemicClientPool(

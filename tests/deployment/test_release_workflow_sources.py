@@ -176,7 +176,7 @@ def test_every_manual_hook_ci_names_is_defined() -> None:
 def test_engine_installs_from_the_locked_wheel_not_a_source_overlay() -> None:
     steps = _gate_steps()
     sync = steps[_step_index(steps, "uv sync --frozen")]["run"]
-    verify = steps[_step_index(steps, "epistemic_graph.numeric")]["run"]
+    verify = steps[_step_index(steps, "medulla.numeric")]["run"]
     commands = "\n".join(step.get("run", "") for step in steps)
 
     assert "--no-install-package" not in sync
@@ -185,7 +185,7 @@ def test_engine_installs_from_the_locked_wheel_not_a_source_overlay() -> None:
     assert not any("Swatinem/rust-cache@" in step.get("uses", "") for step in steps)
     assert 'read_text("direct_url.json")' in verify
     assert _step_index(steps, "uv sync --frozen") < steps.index(
-        steps[_step_index(steps, "epistemic_graph.numeric")]
+        steps[_step_index(steps, "medulla.numeric")]
     )
 
 

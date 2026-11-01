@@ -239,8 +239,8 @@ jobs:
           set -euo pipefail
           uv run --no-sync python -I -c '
           import importlib.metadata as md
-          import epistemic_graph.numeric
-          from epistemic_graph.generated import connector_pack, source_ingestion, storage
+          import medulla.numeric
+          from medulla.generated import connector_pack, source_ingestion, storage
           assert connector_pack.ConnectorPackStatusRequest
           assert source_ingestion.SourceCheckpoint
           assert storage.send_agent_component_content
@@ -363,7 +363,7 @@ jobs:
           "$SMOKE_PYTHON" -I -c '
           import importlib.metadata as md
           import arbora, agent_utilities, agent_connector_sdk, agent_webui
-          import epistemic_graph.numeric
+          import medulla.numeric
           from arbora.deployment import cli
           for name in ("medulla", "medulla-stem", "meristem", "scion-sdk", "agent-webui"):
               assert md.distribution(name).read_text("direct_url.json") is None, name

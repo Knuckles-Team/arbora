@@ -149,13 +149,13 @@ def test_native_executable_must_match_wheel_record(controller, tmp_path, fault):
             controller.native.verify_server_record(binary, distribution)
 
 
-@pytest.mark.parametrize("version", ["2.27.10", "2.27.9", None])
+@pytest.mark.parametrize("version", ["3.0.0", "2.27.9", None])
 def test_native_runtime_version_is_exact(controller, version):
     async def health():
         return {"version": version}
 
     client = SimpleNamespace(health=health)
-    if version == "2.27.10":
+    if version == "3.0.0":
         assert asyncio.run(controller.native.require_native_version(client)) == version
     else:
         with pytest.raises(RuntimeError, match="Native runtime version"):
@@ -238,7 +238,7 @@ def test_runtime_attestation_uses_separate_exact_capability(
         calls.append("health")
         if refuse:
             raise RuntimeError("synthetic refusal")
-        return {"version": "2.27.10"}
+        return {"version": "3.0.0"}
 
     async def close():
         calls.append("close")
@@ -252,7 +252,7 @@ def test_runtime_attestation_uses_separate_exact_capability(
         with pytest.raises(RuntimeError):
             asyncio.run(controller.verify_runtime({}))
     else:
-        assert asyncio.run(controller.verify_runtime({})) == "2.27.10"
+        assert asyncio.run(controller.verify_runtime({})) == "3.0.0"
     assert calls == ["service:control", "health", "close"]
 
 

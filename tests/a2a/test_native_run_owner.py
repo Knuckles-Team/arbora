@@ -104,7 +104,7 @@ async def test_submit_retry_get_list_cancel_use_returned_engine_id(
 
 
 def test_old_client_refuses_native_owner_before_submit(monkeypatch):
-    from epistemic_graph.generated.models import SubmitWorkItemRequest
+    from medulla.generated.models import SubmitWorkItemRequest
 
     from arbora.api.invoke.pipeline import OperationRefused
 
@@ -212,7 +212,7 @@ def test_native_admission_conflict_translates_at_a2a_boundary(monkeypatch, code)
 
 @pytest.mark.asyncio
 async def test_native_access_denied_is_unavailable_to_foreign_owner(monkeypatch):
-    from epistemic_graph import EngineResponseError
+    from medulla import EngineResponseError
 
     from arbora.a2a.authority import A2ATaskNotCancelable
 
@@ -230,7 +230,7 @@ async def test_native_access_denied_is_unavailable_to_foreign_owner(monkeypatch)
 
 
 def test_owner_lookup_does_not_hide_other_native_failures(monkeypatch):
-    from epistemic_graph import EngineResponseError
+    from medulla import EngineResponseError
 
     authority = WorkItemA2AAuthority(lambda: object())
     monkeypatch.setattr(authority, "_session", lambda scope: SESSION)

@@ -3,14 +3,14 @@
 Repository Manager owns the ``LaneAuthority`` lifecycle mapping (allocate,
 transition, heartbeat, list, get -- see ``repository_manager.lane_registry``).
 AU only exposes a typed transport over the generated
-``SyncEpistemicGraphClient``; it never invents owner/fence/quota defaults,
+``SyncMedullaClient``; it never invents owner/fence/quota defaults,
 performs a local read-then-CAS, or memoizes a transient admission refusal.
 This mirrors ``arbora.fleet.scaling.resource_reservation`` (RMDD-27)
 field-for-field on purpose: RMDD-28 is explicitly specified as reusing that
 transaction/auth/time/Raft/ReadIndex pattern for the development-lane domain.
 
 Residual, disclosed rather than papered over: as of this lane's landing, the
-epistemic-graph generated client (``epistemic_graph.client``) exposes named
+epistemic-graph generated client (``medulla.client``) exposes named
 per-operation methods for RMDD-27's ``work_items`` resource-reservation verbs
 but does not yet expose an equivalent ``development_lanes`` namespace for the
 eight RMDD-28 ``DevelopmentLane*`` methods, even though the Rust engine
@@ -71,7 +71,7 @@ class EngineNativeDevelopmentLaneTransport:
     """Low-level sync/async-client-neutral native development-lane transport.
 
     The generated client is expected to perform the full request/result
-    schema validation (see ``epistemic_graph.generated.models`` for the strict
+    schema validation (see ``medulla.generated.models`` for the strict
     ``DevelopmentLane*`` DTOs this transport's callers must build requests
     from and parse results into). This wrapper adds only
     capability negotiation and transport-shape checks; every lifecycle

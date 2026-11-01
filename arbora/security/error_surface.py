@@ -74,7 +74,7 @@ _ENGINE_DEGRADED_TYPE_NAMES = frozenset(
 def _engine_error_codes() -> frozenset[str]:
     """Read the installed engine's generated refusal vocabulary, never a copy."""
     contract = json.loads(
-        files("epistemic_graph.contract").joinpath("errors.json").read_text("utf-8")
+        files("medulla.contract").joinpath("errors.json").read_text("utf-8")
     )
     return frozenset(
         item["code"] for item in contract["errors"] if isinstance(item["code"], str)
@@ -192,7 +192,7 @@ _FAILING_LAYER_PREFIXES: tuple[tuple[str, str], ...] = (
     ("arbora.observability", "observability"),
     ("arbora", "arbora"),
     ("agent_connector_sdk", "sdk"),
-    ("epistemic_graph", "engine"),
+    ("medulla", "engine"),
 )
 
 #: Bounded, process-local, in-memory store of sanitized failure detail keyed by

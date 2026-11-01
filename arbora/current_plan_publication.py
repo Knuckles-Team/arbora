@@ -87,7 +87,7 @@ class _Binding:
             }
         # Retain the exact request before dispatch: an uncertain write is not retried
         # with a new observation time or extended expiry.
-        from epistemic_graph.generated.coordination import (
+        from medulla.generated.coordination import (
             decode_publish_current_plan,
             send_publish_current_plan,
         )
@@ -231,7 +231,7 @@ async def _initialize(binding: _Binding) -> None:
     We advance by exactly one, never silently reread/rebase a failed write.
     Scaffold-only updates retain the executable attachment in native storage.
     """
-    from epistemic_graph.generated.coordination import (
+    from medulla.generated.coordination import (
         decode_get_current_plan,
         send_get_current_plan,
     )

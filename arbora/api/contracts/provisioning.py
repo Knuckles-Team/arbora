@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     # itself -- `from __future__ import annotations` already makes every
     # annotation below a lazy string, so only the `isinstance`/construction
     # uses inside the function body need the real names.
-    from epistemic_graph.generated.connector_pack import (
+    from medulla.generated.connector_pack import (
         AgentLibraryMutationContext,
         McpCatalogSnapshotBinding,
     )
@@ -187,7 +187,7 @@ def pack_import_authority(
     async def resolve(
         connector: str,
     ) -> tuple[McpCatalogSnapshotBinding, AgentLibraryMutationContext]:
-        from epistemic_graph.generated.connector_pack import (
+        from medulla.generated.connector_pack import (
             AgentLibraryMutationContext,
             McpCatalogSnapshotBinding,
         )

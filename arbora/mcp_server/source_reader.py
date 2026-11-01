@@ -66,8 +66,8 @@ def _decode_properties(payload: Any) -> dict[str, Any] | None:
 
 async def _send(context: Any, graph: str, method: str, params: dict[str, Any]) -> Any:
     """One admitted engine read with the matching caller transport authority."""
-    from epistemic_graph import EngineResponseError
-    from epistemic_graph.generated import send_by_id
+    from medulla import EngineResponseError
+    from medulla.generated import send_by_id
 
     from arbora.api.errors import EngineRefusal
 

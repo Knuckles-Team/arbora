@@ -416,7 +416,7 @@ def generate_engine_admission(
                     "may_grant_system": True,
                 }
             },
-            "EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS": f"*={importer}",
+            "MEDULLA_CONNECTOR_PACK_IMPORTERS": f"*={importer}",
         },
         "arbora_config": {
             "AUTH_JWT_AUDIENCE": audience,

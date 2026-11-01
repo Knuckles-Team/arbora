@@ -46,8 +46,8 @@ def require_installed() -> dict[str, str]:
     versions = {}
     for package, module, expected in (
         ("arbora", "arbora", None),
-        ("medulla", "epistemic_graph", "2.27.10"),
-        ("medulla-stem", "epistemic_graph_server", "2.27.10"),
+        ("medulla", "medulla", "3.0.0"),
+        ("medulla-stem", "medulla_server", "3.0.0"),
         ("meristem", "agent_utilities", "4.2.0"),
         ("scion-sdk", "agent_connector_sdk", "0.5.9"),
         ("agent-webui", "agent_webui", None),
@@ -65,7 +65,7 @@ def require_installed() -> dict[str, str]:
     assets = Path(agent_webui.__file__).resolve().parent / "dist"
     if not (assets / "index.html").is_file() or not (assets / "assets").is_dir():
         raise RuntimeError("Installed browser assets are incomplete")
-    from epistemic_graph.server_binary import resolve_server_binary
+    from medulla.server_binary import resolve_server_binary
 
     binary = Path(resolve_server_binary()).resolve()
     if prefix not in binary.parents:
@@ -82,7 +82,7 @@ async def require_native_version(client: Any) -> str:
     """Attest the running executable before creating fixture identities."""
     async with asyncio.timeout(15):
         health = await client.health()
-    if not isinstance(health, dict) or health.get("version") != "2.27.10":
+    if not isinstance(health, dict) or health.get("version") != "3.0.0":
         raise RuntimeError("Native runtime version verification failed")
     return health["version"]
 
@@ -91,7 +91,7 @@ async def identity_operation(
     client: Any, graph: str, operation: dict[str, Any], expected_kind: str
 ) -> Any:
     """Send through the generated native contract; never forge a reply."""
-    from epistemic_graph.generated.security import decode_identity, send_identity
+    from medulla.generated.security import decode_identity, send_identity
 
     async with asyncio.timeout(15):
         response = await send_identity(client, {"op": operation}, graph)

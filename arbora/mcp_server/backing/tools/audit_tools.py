@@ -5,7 +5,7 @@ CONCEPT:MERISTEM-KG.audit.hash-chain-verify
 Exposes the engine's mature Rust hash-chained audit log
 (``epistemic-graph/src/audit.rs`` — every durable mutation already chains into a
 per-graph SHA-256 hash chain, redb ``AUDIT`` table) to Python/MCP for the first
-time (the ``epistemic_graph`` client package does not yet wrap
+time (the ``medulla`` client package does not yet wrap
 ``Method::AuditVerify`` as a typed ``LedgerClient`` method, so
 :meth:`~agent_utilities.knowledge_graph.core.graph_compute.GraphComputeEngine.
 audit_verify` reaches it via the existing raw wire escape hatch — no Rust

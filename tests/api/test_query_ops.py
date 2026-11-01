@@ -8,7 +8,7 @@ from importlib import resources
 from typing import Any
 
 import pytest
-from epistemic_graph import EngineResponseError
+from medulla import EngineResponseError
 from pydantic import ValidationError
 
 from arbora.api.invoke.bootstrap import dispatch_eg_method
@@ -61,7 +61,7 @@ pytestmark = pytest.mark.spec("ARBORA-OPS-R018.2.1")
 
 def test_query_bindings_match_actual_provider_authority_and_inner_schema() -> None:
     ops = operations()
-    contract = resources.files("epistemic_graph").joinpath("contract")
+    contract = resources.files("medulla").joinpath("contract")
     methods = json.loads(contract.joinpath("methods.json").read_text())["methods"]
     for op in ops:
         binding = op.binding
@@ -81,7 +81,7 @@ def test_query_bindings_match_actual_provider_authority_and_inner_schema() -> No
     ref = ops[0].params
     assert isinstance(ref, EgSchemaRef)
     document = json.loads(
-        resources.files("epistemic_graph")
+        resources.files("medulla")
         .joinpath("contract/schemas/method.request.json")
         .read_text()
     )

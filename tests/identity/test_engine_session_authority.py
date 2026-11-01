@@ -90,7 +90,7 @@ class Client:
 def controlled_decoder(monkeypatch):
     # Existing send_identity still validates the real generated request and calls
     # the transport. Only the not-yet-generated response schema is a fixture.
-    from epistemic_graph.generated import security
+    from medulla.generated import security
 
     def decode(result):
         return SimpleNamespace(model_dump=lambda **_: result.payload)
@@ -159,7 +159,7 @@ async def test_invalid_credential_never_calls_transport(credential):
 
 
 async def test_real_generated_legacy_reply_has_no_session_authority():
-    from epistemic_graph.generated.security import decode_identity, send_identity
+    from medulla.generated.security import decode_identity, send_identity
 
     reply = {"kind": "resolution", "value": resolution_value()}
     client = Client(reply)
@@ -190,7 +190,7 @@ async def test_original_wire_types_are_not_normalized(controlled_decoder):
 
 
 async def test_real_generated_atomic_record_when_producer_available():
-    from epistemic_graph.generated import models
+    from medulla.generated import models
 
     if "session_record" not in models.PrincipalResolution.model_fields:
         pytest.skip("MEDULLA-TYPED-PACKS-R085.1 generated producer is not installed")
@@ -253,7 +253,7 @@ async def test_consumer_drives_existing_host_start_admission(
 def test_typed_session_absence_is_a_credential_refusal(refresh, entrypoint):
     import asyncio
 
-    from epistemic_graph.client import EngineResponseError
+    from medulla.client import EngineResponseError
 
     from arbora.identity.engine_ports import EngineSessionAuthority
 
@@ -282,7 +282,7 @@ def test_typed_session_absence_is_a_credential_refusal(refresh, entrypoint):
 def test_other_engine_codes_do_not_become_credential_refusals(code):
     import asyncio
 
-    from epistemic_graph.client import EngineResponseError
+    from medulla.client import EngineResponseError
 
     from arbora.identity.engine_ports import EngineSessionAuthority
 

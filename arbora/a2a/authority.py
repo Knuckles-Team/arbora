@@ -766,7 +766,7 @@ class WorkItemA2AAuthority:
 
         session = self._session(scope)
         _engine, work_engine = self._engine()
-        from epistemic_graph import EngineResponseError
+        from medulla import EngineResponseError
 
         try:
             item = work_items.get_work_item(work_engine, self._work_item_id(task_id))

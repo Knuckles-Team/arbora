@@ -156,7 +156,7 @@ def test_matching_native_lease_never_admits_another_owner(native_engine, tmp_pat
 
 def test_native_issuance_collision_is_not_adopted(native_engine, tmp_path, monkeypatch):
     engine, session = native_engine
-    from epistemic_graph.client import EngineResponseError
+    from medulla.client import EngineResponseError
 
     first, second = _owner(engine, tmp_path), _owner(engine, tmp_path)
     monkeypatch.setattr(

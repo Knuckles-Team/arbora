@@ -26,7 +26,7 @@ from arbora.mcp_server.routes import mount_rest_routes
 # (``feature=None``) in the distribution-owned ``ToolSpec`` manifest -- a real
 # deployment always ships them (they are not deployment-configurable like the
 # ``quant``/``finance`` optional feature). They are registered at runtime only
-# when the real ``epistemic_graph`` client package is importable
+# when the real ``medulla`` client package is importable
 # (``engine_tools.ENGINE_DOMAINS``, via ``engine_tools._discover_domains``).
 # In the lean CI `gates` lane (`uv sync --no-install-package epistemic-graph`,
 # documented in tests/conftest.py's ``_is_engine_unreachable_error``) that
@@ -37,7 +37,7 @@ from arbora.mcp_server.routes import mount_rest_routes
 _NEEDS_ENGINE_DOMAINS = pytest.mark.skipif(
     not engine_tools.ENGINE_DOMAINS,
     reason=(
-        "epistemic_graph package not installed in this environment -- the "
+        "medulla package not installed in this environment -- the "
         "required engine_<domain> tool families cannot be registered, so "
         "REGISTERED_TOOLS vs. the canonical ToolSpec universe legitimately "
         "diverge by exactly those families."

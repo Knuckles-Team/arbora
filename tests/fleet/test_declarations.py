@@ -71,7 +71,7 @@ def _pack(body: object) -> Any:
 @pytest.mark.spec("ARBORA-FLEET-R041.15")
 def test_sdk_pack_declaration_is_read_from_its_archive_section() -> None:
     """G1: an SDK 0.5 pack's entry body is a PackSection, not bytes."""
-    from epistemic_graph.generated.connector_pack import PackSection
+    from medulla.generated.connector_pack import PackSection
 
     declared = {"schema_mappings": {"Document": {}}, "sources": []}
     pack = _pack(declared)

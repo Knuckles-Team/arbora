@@ -114,7 +114,7 @@ def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Pat
         )
     )
     scope_path.write_text(json.dumps(document))
-    source = resources.files("epistemic_graph").joinpath("contract")
+    source = resources.files("medulla").joinpath("contract")
     methods_path = contract / "methods.json"
     methods = json.loads(methods_path.read_text())
     actual = json.loads(source.joinpath("methods.json").read_text())
@@ -389,7 +389,7 @@ def test_harness_operations_unregistered_until_engine_senders() -> None:
 
     from arbora.api.ops.registry_factory import get_registry
 
-    module = importlib.util.find_spec("epistemic_graph.generated.orchestration")
+    module = importlib.util.find_spec("medulla.generated.orchestration")
     senders = (
         "send_list_harness_components",
         "send_current_harness_component",
@@ -397,7 +397,7 @@ def test_harness_operations_unregistered_until_engine_senders() -> None:
         "send_harness_evolution_report",
     )
     published = module is not None and all(
-        hasattr(importlib.import_module("epistemic_graph.generated.orchestration"), s)
+        hasattr(importlib.import_module("medulla.generated.orchestration"), s)
         for s in senders
     )
     served = {op.id for op in get_registry() if op.id.startswith("harness.")}

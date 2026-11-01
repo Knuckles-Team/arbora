@@ -23,11 +23,11 @@ class _Entry:
 
 def _Pack(entries: tuple[_Entry, ...] = ()) -> types.SimpleNamespace:  # noqa: N802
     """A real SDK 0.5 captured pack: bodies live in the archive, by section."""
-    from epistemic_graph.connector_pack import (
+    from medulla.connector_pack import (
         ConnectorPackArchiveBuilder,
         ConnectorPackEntryContent,
     )
-    from epistemic_graph.generated.connector_pack import PackEntryKind
+    from medulla.generated.connector_pack import PackEntryKind
 
     def content(
         kind: PackEntryKind, uri: str, body: bytes

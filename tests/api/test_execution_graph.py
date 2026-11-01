@@ -383,7 +383,7 @@ async def test_http_and_mcp_share_native_owner_checked_projection(monkeypatch, a
 
 
 def test_installed_native_contract_can_decode_the_topology_without_a_service():
-    from epistemic_graph.generated import models
+    from medulla.generated import models
 
     raw = native_plan()
     raw["task_plan"].update(

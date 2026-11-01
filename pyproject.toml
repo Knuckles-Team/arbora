@@ -50,8 +50,8 @@ dependencies = [
     # surface directly; AU's transitive requirement is not enough for this
     # package's own imports. The root source override below aligns AU and SDK
     # on the Arbora-compatible revision without changing the published floor.
-    "medulla>=2.27.10,<3.0.0",
-    "medulla-stem>=2.27.10,<3.0.0",
+    "medulla>=3.0.0,<4.0.0",
+    "medulla-stem>=3.0.0,<4.0.0",
     "fastapi>=0.143.3",
     "filelock>=4.2.0",
     # The served source reads (arbora.mcp_server.source_reader) decode the

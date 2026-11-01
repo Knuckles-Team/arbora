@@ -45,8 +45,8 @@ class EngineSessionAuthority:
         ):
             raise PermissionError("invalid session credential")
         try:
-            from epistemic_graph.client import EngineResponseError
-            from epistemic_graph.generated.security import (
+            from medulla.client import EngineResponseError
+            from medulla.generated.security import (
                 decode_identity,
                 send_identity,
             )

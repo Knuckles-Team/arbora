@@ -204,7 +204,7 @@ async def test_unavailable_and_malformed_native_values_are_indistinguishable(
 
 
 async def test_absent_published_method_is_unavailable(monkeypatch):
-    from epistemic_graph.generated import coordination
+    from medulla.generated import coordination
 
     monkeypatch.delattr(coordination, "send_get_current_plan", raising=False)
     result = await read_current_plan(context(), "run-a", clock=lambda: NOW)
@@ -249,7 +249,7 @@ def test_actual_serving_root_composes_stateless_reader(monkeypatch):
 
 @pytest.mark.parametrize("outcome", ["snapshot", "null", "malformed"])
 async def test_generated_adapter_maps_decoded_result(monkeypatch, outcome):
-    from epistemic_graph.generated import ContractViolation, coordination
+    from medulla.generated import ContractViolation, coordination
 
     captured = []
 
@@ -277,8 +277,8 @@ async def test_generated_adapter_maps_decoded_result(monkeypatch, outcome):
 
 
 async def test_native_authorization_refusal_is_not_hidden_as_missing_plan(monkeypatch):
-    from epistemic_graph import EngineResponseError
-    from epistemic_graph.generated import coordination
+    from medulla import EngineResponseError
+    from medulla.generated import coordination
 
     from arbora.api.errors import EngineRefusal
 
@@ -318,7 +318,7 @@ def test_private_executable_plan_is_not_projected():
     "field", ["missing", "malformed", "run", "tenant", "owner", "graph", "caller-id"]
 )
 async def test_unowned_admission_never_reads_plan_payload(monkeypatch, field):
-    from epistemic_graph.generated import OpaqueResult, coordination
+    from medulla.generated import OpaqueResult, coordination
 
     value = admission_view()
     value["admission"]["run_id"] = "run-a"
@@ -355,8 +355,8 @@ async def test_unowned_admission_never_reads_plan_payload(monkeypatch, field):
 
 
 async def test_native_owner_refusal_preserves_code_and_restores_claims(monkeypatch):
-    from epistemic_graph import EngineResponseError
-    from epistemic_graph.generated import coordination
+    from medulla import EngineResponseError
+    from medulla.generated import coordination
 
     from arbora.api.errors import EngineRefusal
 
@@ -404,7 +404,7 @@ async def test_identity_drift_after_owner_lookup_blocks_payload(monkeypatch):
 
 
 async def test_mutable_metadata_cannot_redirect_owner_graph(monkeypatch):
-    from epistemic_graph.generated import OpaqueResult, coordination
+    from medulla.generated import OpaqueResult, coordination
 
     value = admission_view()
     value["admission"]["run_id"] = "run-a"

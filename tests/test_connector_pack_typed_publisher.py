@@ -2,7 +2,7 @@
 
 arbora's fleet content-pack path must never construct a placeholder record
 in place of the engine's own generated connector-pack contract: every status,
-import and verification call is built from ``epistemic_graph.generated.
+import and verification call is built from ``medulla.generated.
 connector_pack``/``storage`` types, so SQL and market-data connector items (or
 any future pack) carry real typed schemas the moment they are added to the
 catalog, not a stand-in shape arbora invented itself.
@@ -51,10 +51,10 @@ def test_no_placeholder_content_pack_type_is_defined_anywhere() -> None:
 @pytest.mark.spec("ARBORA-FLEET-R001")
 def test_semantic_content_status_request_is_the_engine_generated_type() -> None:
     """``verify_semantic_content`` must build the real EG ``ConnectorPackStatusRequest``."""
-    from epistemic_graph.generated.connector_pack import ConnectorPackStatusRequest
+    from medulla.generated.connector_pack import ConnectorPackStatusRequest
 
     source = inspect.getsource(semantic_content)
-    assert "from epistemic_graph.generated.connector_pack import" in source
+    assert "from medulla.generated.connector_pack import" in source
     assert "ConnectorPackStatusRequest" in source
     # And it is genuinely importable/constructible — not merely referenced in
     # a comment or an unreachable branch.
@@ -67,5 +67,5 @@ def test_fleet_catalog_port_reads_only_generated_agent_component_types() -> None
     """``GeneratedFleetCatalogPort`` must be built from Medulla-generated request/entry
     types, never a arbora-local placeholder standing in for them."""
     source = inspect.getsource(epistemic_adapter)
-    assert "from epistemic_graph.generated.agent_component import" in source
-    assert "from epistemic_graph.generated.storage import" in source
+    assert "from medulla.generated.agent_component import" in source
+    assert "from medulla.generated.storage import" in source

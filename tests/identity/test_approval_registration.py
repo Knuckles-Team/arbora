@@ -117,7 +117,7 @@ async def test_published_contract_sends_non_touch_resolve_and_fails_closed():
 @pytest.mark.asyncio
 @pytest.mark.parametrize("refresh", [True, False])
 async def test_explicit_non_touch_preserves_default_request(refresh, monkeypatch):
-    from epistemic_graph.generated import security
+    from medulla.generated import security
 
     from arbora.identity.engine_ports import EngineSessionAuthority
 

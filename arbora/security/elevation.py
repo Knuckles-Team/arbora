@@ -221,7 +221,7 @@ class ElevationService:
         self._clock_ms = clock_ms
 
     async def _send(self, op: dict[str, Any]) -> Any:
-        from epistemic_graph.generated.security import send_rbac_elevation
+        from medulla.generated.security import send_rbac_elevation
 
         result = await send_rbac_elevation(self._client, {"op": op})
         return _decoded(result.payload)

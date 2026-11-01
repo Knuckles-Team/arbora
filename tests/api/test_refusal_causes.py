@@ -79,7 +79,7 @@ async def test_engine_refusal_detail_is_logged(
 ) -> None:
     from types import SimpleNamespace
 
-    from epistemic_graph import EngineResponseError
+    from medulla import EngineResponseError
 
     from arbora.api.errors import EngineRefusal
     from arbora.api.invoke.executor import BoundOperationRuntime

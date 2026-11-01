@@ -85,7 +85,7 @@ def catalog_content_digest(pack: Any) -> str:
 def _shell_context(tenant_id: str, key: str) -> Any:
     """A request-body context shell; EG re-binds every field from the session."""
 
-    from epistemic_graph.generated.connector_pack import AgentLibraryMutationContext
+    from medulla.generated.connector_pack import AgentLibraryMutationContext
 
     return AgentLibraryMutationContext(
         request_id=secrets.randbits(63),
@@ -110,7 +110,7 @@ async def ensure_tenant_graph(
 ) -> bool:
     """Create the graph when absent; return whether it was created."""
 
-    from epistemic_graph.generated.cluster import (
+    from medulla.generated.cluster import (
         decode_list_graphs,
         send_create_graph,
         send_list_graphs,
@@ -153,7 +153,7 @@ async def ensure_base_graphs(
 
 
 async def _registry_page(commons: Any) -> Any:
-    from epistemic_graph.generated.cluster import send_list_registered_servers
+    from medulla.generated.cluster import send_list_registered_servers
 
     return await send_list_registered_servers(commons, {"request": {}}, COMMONS_GRAPH)
 
@@ -178,7 +178,7 @@ async def ensure_server_registrations(
     key, and every other (re)registration gets a fresh one.
     """
 
-    from epistemic_graph.generated.cluster import send_register_server
+    from medulla.generated.cluster import send_register_server
 
     now = int(time.time() * 1000) if now_ms is None else now_ms
     leases = {
@@ -241,11 +241,11 @@ async def attest_self_served_catalog(
 ) -> Any:
     """Ask EG for the binding of ``pack``'s catalog, fenced by the last generation."""
 
-    from epistemic_graph.generated.connector_pack import (
+    from medulla.generated.connector_pack import (
         McpCatalogAuthorityStatusRequest,
         McpSelfServedCatalogAttestRequest,
     )
-    from epistemic_graph.generated.storage import (
+    from medulla.generated.storage import (
         send_connector_pack_attest_self_served_catalog,
         send_connector_pack_catalog_authority_status,
     )
@@ -293,7 +293,7 @@ async def attest_self_served_catalog(
 async def _owner_principal(
     client: Any, *, tenant_id: str, graph: str, connector: str
 ) -> str:
-    from epistemic_graph.generated.connector_pack import (
+    from medulla.generated.connector_pack import (
         ConnectorPackOpCatalogRequestOwnerPrincipal,
         McpCatalogAuthorityStatusRequest,
     )
@@ -388,8 +388,8 @@ _PROJECTION_POLL_SECS = 1.0
 async def _projection_state(
     client: Any, *, tenant_id: str, graph: str, connector: str
 ) -> str:
-    from epistemic_graph.generated.connector_pack import ConnectorPackStatusRequest
-    from epistemic_graph.generated.storage import send_connector_pack_status
+    from medulla.generated.connector_pack import ConnectorPackStatusRequest
+    from medulla.generated.storage import send_connector_pack_status
 
     status = await send_connector_pack_status(
         client,
@@ -451,7 +451,7 @@ async def _project_and_attach(
 ) -> Any:
     """Let the import's projection apply, re-project only if it did not, attach."""
 
-    from epistemic_graph.generated.reasoning import send_graph_schema
+    from medulla.generated.reasoning import send_graph_schema
 
     state = await _await_projection(
         client, tenant_id=tenant_id, graph=graph, connector=connector

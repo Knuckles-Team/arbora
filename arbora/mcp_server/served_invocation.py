@@ -45,7 +45,7 @@ PLAN_LEASE_KIND = "arbora.plan"
 
 @cache
 def _contract_document(filename: str) -> dict[str, Any]:
-    root = Path(str(importlib.resources.files("epistemic_graph") / "contract"))
+    root = Path(str(importlib.resources.files("medulla") / "contract"))
     relative = Path(filename.removeprefix("contract/"))
     if ".." in relative.parts:
         raise ValueError("invalid EG schema reference")
@@ -356,8 +356,8 @@ def _with_nl_federation_planner(
     if "nl_federation_planner" in bindings:
         return bindings
     try:
-        from epistemic_graph.generated import METHOD_IDS
-        from epistemic_graph.generated import query as generated_query
+        from medulla.generated import METHOD_IDS
+        from medulla.generated import query as generated_query
     except (ImportError, ModuleNotFoundError):
         return bindings
     if "NlQueryPlan" not in METHOD_IDS:

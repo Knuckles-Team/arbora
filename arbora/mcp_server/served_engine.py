@@ -320,7 +320,7 @@ class ServedEngine:
     ) -> str:
         """Write one labelled node on the session graph through EG ``AddNode``."""
         import msgpack
-        from epistemic_graph.generated.graph import send_add_node
+        from medulla.generated.graph import send_add_node
 
         client = self._session_client()
         body = record_body(label, properties)
@@ -354,7 +354,7 @@ class ServedEngine:
         this call created the node.
         """
         import msgpack
-        from epistemic_graph.generated.graph import send_create_node_if_absent
+        from medulla.generated.graph import send_create_node_if_absent
 
         client = self._session_client()
         body = record_body(label, properties)
@@ -388,7 +388,7 @@ class ServedEngine:
         field changes. Returns whether the merge applied.
         """
         import msgpack
-        from epistemic_graph.generated.graph import send_compare_and_set_node_fields
+        from medulla.generated.graph import send_compare_and_set_node_fields
 
         client = self._session_client()
         params = {
@@ -417,7 +417,7 @@ def process_engine_pool() -> Any:
     global _POOL
     with _LOCK:
         if _POOL is None:
-            from epistemic_graph import EpistemicGraphClient
+            from medulla import MedullaClient
 
             from arbora.core.settings import runtime_config
             from arbora.epistemic import ConnectClient, EpistemicClientPool
@@ -430,7 +430,7 @@ def process_engine_pool() -> Any:
                     "GRAPH_SERVICE_ENDPOINTS to the engine endpoint"
                 )
             _POOL = EpistemicClientPool(
-                cast(ConnectClient, EpistemicGraphClient.connect),
+                cast(ConnectClient, MedullaClient.connect),
                 **engine_endpoint(endpoints),
             )
         return _POOL

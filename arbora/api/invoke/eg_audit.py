@@ -31,7 +31,7 @@ class EgAuditAdapter:
     @staticmethod
     def require_contract() -> None:
         try:
-            from epistemic_graph.client import AdminClient
+            from medulla.client import AdminClient
         except ImportError as exc:
             raise ValueError("EG audit contract is unavailable") from exc
         method = getattr(AdminClient, "audit_append", None)

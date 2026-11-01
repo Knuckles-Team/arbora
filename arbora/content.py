@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 ContentProvider = Callable[[], ConnectorContent]
 
 #: The package and directory in which the engine wheel ships its core ontology.
-EG_PACKAGE = "epistemic_graph"
+EG_PACKAGE = "medulla"
 EG_ONTOLOGY_DIR = "ontology"
 EG_CONNECTOR = "epistemic-graph"
 _SHAPES_SUFFIX = ".shapes.ttl"

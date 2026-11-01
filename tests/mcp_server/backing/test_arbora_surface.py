@@ -111,7 +111,7 @@ def test_every_manifest_family_has_exactly_one_routing_group():
 def _engine_client_absent_families(registry) -> set[str]:
     """``engine_<domain>`` families that cannot register without the engine client.
 
-    ``engine_tools`` discovers its domains from the ``epistemic_graph`` client.
+    ``engine_tools`` discovers its domains from the ``medulla`` client.
     A test environment without that wheel registers none of them.
     """
     if engine_tools.ENGINE_DOMAINS:

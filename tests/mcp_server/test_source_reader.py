@@ -19,7 +19,7 @@ from types import SimpleNamespace
 
 import msgpack
 import pytest
-from epistemic_graph import EngineResponseError
+from medulla import EngineResponseError
 
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.executor import ExecutionContext
@@ -239,13 +239,13 @@ class Engine:
 
 
 def _patch_engine(monkeypatch, engine) -> None:
-    import epistemic_graph.generated as generated
+    import medulla.generated as generated
 
     monkeypatch.setattr(generated, "send_by_id", engine.send_by_id)
 
 
 def _forbidden_engine(monkeypatch) -> None:
-    import epistemic_graph.generated as generated
+    import medulla.generated as generated
 
     async def forbidden(*args, **kwargs):
         pytest.fail("invalid authority reached engine")
@@ -414,7 +414,7 @@ async def test_blob_fetch_end_released_on_chunk_refusal(monkeypatch):
             raise EngineResponseError("ACCESS_DENIED", "private backend detail")
         return await engine.send_by_id(client, method, params, graph, **_kwargs)
 
-    import epistemic_graph.generated as generated
+    import medulla.generated as generated
 
     monkeypatch.setattr(generated, "send_by_id", send_by_id)
     reader = NativeSourceReader()
@@ -498,7 +498,7 @@ async def test_branch_scan_limit_refuses_instead_of_answering_empty(monkeypatch)
 
 
 async def test_malformed_engine_result_refuses(monkeypatch):
-    import epistemic_graph.generated as generated
+    import medulla.generated as generated
 
     async def junk(client, method, params=None, graph=None, **_kwargs):
         return {"not": "a list"}

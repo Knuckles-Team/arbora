@@ -9,7 +9,7 @@ import httpx
 import msgpack
 import pytest
 from agent_utilities.runtime import RunBudget, RunPlan, StopRule
-from epistemic_graph.client import EngineResponseError, EpistemicGraphClient
+from medulla.client import EngineResponseError, MedullaClient
 from openai import AsyncOpenAI
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
@@ -34,7 +34,7 @@ class Writer:
 
 class Engine:
     def __init__(self):
-        self.client = EpistemicGraphClient(
+        self.client = MedullaClient(
             asyncio.StreamReader(), Writer(), None, "wrong-default", auth_mode="none"
         )
         self.client._send = self.send

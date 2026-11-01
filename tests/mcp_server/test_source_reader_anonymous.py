@@ -53,7 +53,7 @@ def anonymous_context():
 
 @pytest.fixture
 def reads(monkeypatch):
-    import epistemic_graph.generated as generated
+    import medulla.generated as generated
 
     calls = []
 

@@ -349,7 +349,7 @@ class GraphSession:
         Decision 5 (W2.1-1): when the ambient :class:`SpawnDelegation` also carries an
         RFC 8693 exchanged ``oidc_token``, forward it onto the envelope's ``oidc_token``
         claim (the eg client now carries it as an optional claim, mirroring ``node``/
-        ``priority`` — see ``epistemic_graph.client.RequestContextClaims``). The engine
+        ``priority`` — see ``medulla.client.RequestContextClaims``). The engine
         independently RSA/JWKS-verifies it and cross-checks its subject/tenant against
         this SAME context (``server::auth::bind_verified_identity``); it is deliberately
         NOT MAC-covered on the wire (its own signature is the trust anchor — see

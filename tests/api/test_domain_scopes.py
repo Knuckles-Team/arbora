@@ -7,7 +7,7 @@ separately maintained list. This asserts every scope Arbora declares in
 class when they agree, and that a declaration drifting from the registry
 (wrong class, or a name the registry no longer carries) is caught rather
 than silently accepted. The fixture mirrors ``tests/api/test_eg_binding.py``
-rather than reading the installed ``epistemic_graph`` wheel directly: that
+rather than reading the installed ``medulla`` wheel directly: that
 wheel's packaged ``contract/`` resource is not guaranteed to carry the full
 ``methods.json``/``scopes.json``/``schemas`` set in every test environment,
 only the pinned production build does, so every other contract test in this

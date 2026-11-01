@@ -6,7 +6,7 @@ from collections.abc import Callable, Mapping
 from contextlib import AbstractContextManager
 from typing import Any, cast
 
-from epistemic_graph.generated.agent_component import (
+from medulla.generated.agent_component import (
     AgentComponentContentRequest,
     AgentComponentEntry,
     AgentComponentKind,
@@ -14,8 +14,8 @@ from epistemic_graph.generated.agent_component import (
     AgentComponentSearchRequest,
     ComponentProvenanceMcpServer,
 )
-from epistemic_graph.generated.cluster import send_list_registered_servers
-from epistemic_graph.generated.storage import (
+from medulla.generated.cluster import send_list_registered_servers
+from medulla.generated.storage import (
     send_agent_component_content,
     send_agent_component_current,
     send_agent_component_search,

@@ -51,11 +51,11 @@ def _contract_root(contract_root: Path | None) -> Path:
     if contract_root is not None:
         return Path(contract_root)
     try:
-        root = resources.files("epistemic_graph").joinpath("contract")
+        root = resources.files("medulla").joinpath("contract")
         return Path(str(root))
     except (ModuleNotFoundError, TypeError) as exc:
         raise EgContractError(
-            "the pinned epistemic_graph wheel is unavailable"
+            "the pinned medulla wheel is unavailable"
         ) from exc
 
 

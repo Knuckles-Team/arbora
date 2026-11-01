@@ -233,7 +233,7 @@ class StrictFakeEngine(FakeEngine):
     """Apply the released engine DTO at the real invocation boundary."""
 
     def build_request(self, tenant, question_id, proposal, feature_schema):
-        from epistemic_graph.decision_client import task_plan_request
+        from medulla.decision_client import task_plan_request
 
         return task_plan_request(tenant, question_id, proposal, feature_schema)
 
@@ -824,7 +824,7 @@ def test_native_plan_claim_requires_item_expiry_and_fence(changes):
 
 # spec: ARBORA-RELEASE-R003.4.1
 def test_engine_without_task_plan_refuses_unavailable(monkeypatch):
-    import epistemic_graph.decision_client as facade
+    import medulla.decision_client as facade
 
     monkeypatch.delattr(facade, "task_plan_request", raising=False)
     with pytest.raises(OperationRefused) as refused:

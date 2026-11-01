@@ -13,7 +13,7 @@ import pytest
 if TYPE_CHECKING:
     # Only for type hints below (lazy under `from __future__ import
     # annotations`, so this import never actually executes). The no-engine
-    # CI job installs no epistemic_graph package at all; a module-level
+    # CI job installs no medulla package at all; a module-level
     # runtime import here previously made the WHOLE FILE skip at collection,
     # hiding the several tests below (scope/signature checks) that exercise
     # arbora.api.contracts.provisioning's OWN logic and need no engine package
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     # `@pytest.mark.engine` below) so only THOSE genuinely fail closed -- via
     # the real `ModuleNotFoundError` tests/conftest.py's engine-unreachable
     # detection already recognizes -- when the package is absent.
-    from epistemic_graph.generated.connector_pack import (
+    from medulla.generated.connector_pack import (
         AgentLibraryMutationContext,
         McpCatalogSnapshotBinding,
     )
@@ -109,7 +109,7 @@ def _install_policy(monkeypatch: pytest.MonkeyPatch, policy: Any) -> None:
 
 
 def _binding() -> Any:
-    from epistemic_graph.generated.connector_pack import McpCatalogSnapshotBinding
+    from medulla.generated.connector_pack import McpCatalogSnapshotBinding
 
     digest = "ab" * 32
     return McpCatalogSnapshotBinding(
@@ -250,7 +250,7 @@ def test_resolver_refuses_malformed_authoritative_principal(
 def test_resolver_refuses_a_non_generated_binding(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from epistemic_graph.generated.connector_pack import McpCatalogSnapshotBinding
+    from medulla.generated.connector_pack import McpCatalogSnapshotBinding
 
     session = _session()
     _install_policy(monkeypatch, _Policy(allow=True))
