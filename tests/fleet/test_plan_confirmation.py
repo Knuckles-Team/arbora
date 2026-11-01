@@ -26,7 +26,7 @@ TOOL = "servicenow_delete_table_record"
 _CHILD = """
 import sys
 from fastmcp import Context, FastMCP
-from agent_connector_sdk.mcp.confirmation import ctx_confirm_destructive
+from scion_sdk.mcp.confirmation import ctx_confirm_destructive
 
 deleted = []
 mcp = FastMCP("sn-child")

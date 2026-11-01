@@ -1,6 +1,6 @@
 """ARBORA-HOST-R019: Arbora serves the dashboard REST reads and stream.
 
-agent-webui composes its ``/api`` surface from Arbora. These tests prove the
+overstory composes its ``/api`` surface from Arbora. These tests prove the
 routes the frontend calls are mounted, answer with the aggregator's data, and
 that ``/ws/dashboard`` accepts a handshake and streams snapshot/update frames.
 No live engine or services: the aggregator and daemon are replaced by fakes.
@@ -78,7 +78,7 @@ def test_registration_is_idempotent_for_the_websocket_route() -> None:
 
 
 def test_graph_routes_compose_the_dashboard_surface() -> None:
-    """register_graph_routes is the composer agent-webui calls."""
+    """register_graph_routes is the composer overstory calls."""
     import inspect
 
     from arbora.gateway import graph_api

@@ -1,24 +1,24 @@
-"""Serve agent-webui inside the arbora process as a supervised co-service.
+"""Serve overstory inside the arbora process as a supervised co-service.
 
-CONCEPT:MERISTEM-OS.deployment.webui-co-service — agent-webui as a arbora co-service
+CONCEPT:MERISTEM-OS.deployment.webui-co-service — overstory as a arbora co-service
 
 Why this exists
 ---------------
 Every piece of this was already built and only the last wire was missing:
 
-* ``agent-utilities[ag-ui]`` already declares ``agent-webui`` as an optional
+* ``agent-utilities[ag-ui]`` already declares ``overstory`` as an optional
   dependency, so the package is installable alongside arbora with no new
   distribution work.
 * Arbora owns the gateway routers the dashboard fronts and injects them through
-  agent-webui's public application-composer seam, so the frontend has no
+  overstory's public application-composer seam, so the frontend has no
   reverse dependency on Arbora and no duplicate route implementation.
 * ``ENABLE_WEB_UI`` is already real config, and
   :func:`arbora.mcp_server.composition.detect_composition` already
   reports it as part of the composition plan.
 
 What was missing is the branch that actually starts it. That branch previously
-declined on the premise that agent-webui is "a separate Node/Vite frontend,
-not a Python asyncio task". That premise is stale: agent-webui ships a FastAPI
+declined on the premise that overstory is "a separate Node/Vite frontend,
+not a Python asyncio task". That premise is stale: overstory ships a FastAPI
 application factory and *serves* its built Vite bundle as SPA static files, so
 it runs in-process like any other ASGI app.
 
@@ -31,7 +31,7 @@ request handled here can sign engine admission **as itself**
 (the engine's admission authority, MEDULLA-IDENTITY-R950)
 — which is the only pairing the engine accepts
 (``verify_register_identity_signature`` requires ``signer == principal``). Run
-as a separate deployment, agent-webui holds no signer entry at all, which is
+as a separate deployment, overstory holds no signer entry at all, which is
 why tenant admission failed for every sign-in.
 """
 
@@ -57,15 +57,15 @@ WEB_UI_PORT_ENV = "ARBORA_WEBUI_PORT"
 DEFAULT_WEB_UI_PORT = 8080
 DEFAULT_WEB_UI_HOST = "127.0.0.1"
 
-#: agent-webui refuses a non-loopback listener until the raw-query logging
-#: decision is explicit. Mirrors ``agent_webui.server._ACCESS_LOG_POLICY_ENV``.
-ACCESS_LOG_POLICY_ENV = "AGENT_WEBUI_ACCESS_LOG_POLICY"
+#: overstory refuses a non-loopback listener until the raw-query logging
+#: decision is explicit. Mirrors ``overstory.server._ACCESS_LOG_POLICY_ENV``.
+ACCESS_LOG_POLICY_ENV = "OVERSTORY_ACCESS_LOG_POLICY"
 
 
 def compose_web_application(app: Any) -> None:
-    """Mount Arbora-owned REST routes into an Agent WebUI application.
+    """Mount Arbora-owned REST routes into an Overstory application.
 
-    Agent WebUI owns browser/session presentation while Arbora owns the
+    Overstory owns browser/session presentation while Arbora owns the
     gateway routes it exposes. The WebUI factory invokes this composer before
     installing its SPA catch-all and security middleware, so Arbora does not
     import or modify WebUI internals and WebUI has no reverse dependency on
@@ -157,7 +157,7 @@ def run_web_ui(
     # logging decision explicitly: a non-loopback listener refuses to start
     # without one (`_resolve_access_log_policy`). We pass `access_log=False` to
     # uvicorn below, so `disabled` is the declaration that matches what this
-    # server actually does -- the same choice agent-webui's own entrypoint
+    # server actually does -- the same choice overstory's own entrypoint
     # makes. `setdefault`, so an operator may select `redacted` instead and
     # supply a redacting access logger.
     os.environ.setdefault(ACCESS_LOG_POLICY_ENV, "disabled")
@@ -165,18 +165,18 @@ def run_web_ui(
     # Import here, not at module import: arbora must start normally when the
     # `ag-ui` extra is absent, and only a deployment that asked for the WebUI
     # should ever pay this import.
-    from agent_webui.api_extensions import (
+    from overstory.api_extensions import (
         get_engine_bounded,
         invoke_governed_helper,
     )
-    from agent_webui.browser_control import (
+    from overstory.browser_control import (
         BrowserControlPort,
         revalidate_browser_control_session,
     )
-    from agent_webui.orchestrator_model import build_orchestrator_model
-    from agent_webui.server import create_agent_web_app
+    from overstory.orchestrator_model import build_orchestrator_model
+    from overstory.server import create_agent_web_app
 
-    # Assemble exactly what agent-webui's own entrypoint assembles.
+    # Assemble exactly what overstory's own entrypoint assembles.
     #
     # NOT `server.app.build_agent_app`: that constructs au's ENTIRE server
     # application -- skills, ontology, A2A, embedding writes -- and mounts the
@@ -240,7 +240,7 @@ def run_web_ui(
     )
 
     # Uvicorn access records include the raw query string, which can carry user
-    # searches and graph symbols — same redaction posture as agent-webui's own
+    # searches and graph symbols — same redaction posture as overstory's own
     # standalone entrypoint.
     server = uvicorn.Server(
         uvicorn.Config(app, host=bind_host, port=bind_port, access_log=False)
@@ -255,7 +255,7 @@ def run_web_ui(
     )
 
     logger.info(
-        "agent-webui co-service serving in-process on %s:%s", bind_host, bind_port
+        "overstory co-service serving in-process on %s:%s", bind_host, bind_port
     )
     asyncio.run(
         _serve_until_stopped(

@@ -285,7 +285,7 @@ async def test_query_source_count_concurrency_and_deadline_caps_are_enforced() -
 async def test_foreign_read_maps_contract_columns_and_correlates_after_complete() -> (
     None
 ):
-    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+    models = pytest.importorskip("scion_sdk.adapters.foreign_read")
     gateway, caller = ForeignGateway(), object()
     foreign = RecordingForeignClient(models)
     executor = FleetSourceExecutor(gateway, caller, foreign_client=foreign)
@@ -324,7 +324,7 @@ async def test_foreign_read_maps_contract_columns_and_correlates_after_complete(
 async def test_incomplete_foreign_read_aborts_before_query(
     limits: dict[str, int],
 ) -> None:
-    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+    models = pytest.importorskip("scion_sdk.adapters.foreign_read")
     foreign = RecordingForeignClient(models)
     original = _foreign_request()
     request = ForeignReadSourceRequest(**{**original.__dict__, **limits})
@@ -348,7 +348,7 @@ async def test_incomplete_foreign_read_aborts_before_query(
 async def test_read_approved_requires_catalog_projection_and_owner_source_name() -> (
     None
 ):
-    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+    models = pytest.importorskip("scion_sdk.adapters.foreign_read")
     gateway, caller = ForeignGateway(), object()
     foreign = RecordingForeignClient(models)
     request = _foreign_request()
@@ -391,7 +391,7 @@ async def test_read_approved_requires_catalog_projection_and_owner_source_name()
 @pytest.mark.spec("ARBORA-FLEET-R043.7")
 @pytest.mark.asyncio
 async def test_read_approved_refuses_receipt_resource_or_owner_name_mismatch() -> None:
-    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+    models = pytest.importorskip("scion_sdk.adapters.foreign_read")
     gateway, caller = ForeignGateway(), object()
     foreign = RecordingForeignClient(models)
     request = _foreign_request()
@@ -443,7 +443,7 @@ async def test_read_approved_refuses_receipt_resource_or_owner_name_mismatch() -
 
 @pytest.mark.spec("ARBORA-FLEET-R043.7")
 def test_from_engine_composes_the_graph_scoped_sdk_adapter() -> None:
-    foreign_read = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+    foreign_read = pytest.importorskip("scion_sdk.adapters.foreign_read")
     seen: list[str] = []
     client = object()
 
@@ -522,7 +522,7 @@ async def test_approved_source_binding_builds_request_from_catalog_identity() ->
 @pytest.mark.spec("ARBORA-FLEET-R043.7")
 @pytest.mark.asyncio
 async def test_foreign_read_aborts_on_bad_source_row_without_leaking_payload() -> None:
-    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+    models = pytest.importorskip("scion_sdk.adapters.foreign_read")
 
     class BadGateway(ForeignGateway):
         async def call(self, *args, **kwargs):
@@ -548,7 +548,7 @@ async def test_foreign_read_aborts_on_bad_source_row_without_leaking_payload() -
 @pytest.mark.spec("ARBORA-FLEET-R043.7")
 @pytest.mark.asyncio
 async def test_foreign_read_timeout_covers_open_and_aborts_after_open() -> None:
-    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+    models = pytest.importorskip("scion_sdk.adapters.foreign_read")
 
     class SlowOpen(RecordingForeignClient):
         async def open(self, request):
@@ -596,7 +596,7 @@ def _foreign_request_for_timeout() -> ForeignReadSourceRequest:
 @pytest.mark.spec("ARBORA-FLEET-R043.7")
 @pytest.mark.asyncio
 async def test_foreign_read_cancellation_sends_remote_abort_before_reraising() -> None:
-    models = pytest.importorskip("agent_connector_sdk.adapters.foreign_read")
+    models = pytest.importorskip("scion_sdk.adapters.foreign_read")
 
     class BlockingChunk(RecordingForeignClient):
         def __init__(self, models):

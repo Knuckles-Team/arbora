@@ -28,7 +28,7 @@ SPLIT_PACKAGES = (
     "meristem",
     "scion-sdk",
     "medulla",
-    "agent-webui",
+    "overstory",
 )
 
 

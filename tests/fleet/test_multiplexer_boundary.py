@@ -38,7 +38,7 @@ def test_fleet_runtime_alias_prefers_direct_projection(monkeypatch) -> None:
         raising=False,
     )
     monkeypatch.setattr(
-        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
+        "scion_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _reference: (_ for _ in ()).throw(AssertionError("fallback used")),
     )
     assert (
@@ -66,7 +66,7 @@ def test_fleet_runtime_alias_uses_configured_ref_only_after_direct_miss(
         return "mapped-runtime-material"
 
     monkeypatch.setattr(
-        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
+        "scion_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         resolve,
     )
 

@@ -37,7 +37,7 @@ _owner_loop: asyncio.AbstractEventLoop | None = None
 
 
 def register_browser_control_service(service: Any) -> None:
-    """Register the exact service injected into agent-webui."""
+    """Register the exact service injected into overstory."""
 
     global _owner_loop, _service
     with _binding_lock:
@@ -61,7 +61,7 @@ def unregister_browser_control_service(service: Any) -> None:
 
 
 def bind_browser_control_owner(service: Any) -> None:
-    """Bind a registered service to agent-webui's current event loop."""
+    """Bind a registered service to overstory's current event loop."""
 
     global _owner_loop
     loop = asyncio.get_running_loop()

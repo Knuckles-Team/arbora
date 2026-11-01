@@ -46,7 +46,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from agent_connector_sdk.privacy import persistence_reference
+from scion_sdk.privacy import persistence_reference
 from pydantic import BaseModel
 
 from arbora.api.errors import not_served

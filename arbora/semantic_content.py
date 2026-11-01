@@ -6,9 +6,9 @@ from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, cast
 
-from agent_connector_sdk.mcp.content import ConnectorContent
-from agent_connector_sdk.ports.sink import Sink
-from agent_connector_sdk.runner.provisioning import (
+from scion_sdk.mcp.content import ConnectorContent
+from scion_sdk.ports.sink import Sink
+from scion_sdk.runner.provisioning import (
     ProvisionOutcome,
     provision_connector_content,
 )

@@ -1,7 +1,7 @@
 """Arbora's own domain scopes, kept consistent with the generated registry.
 
 Arbora advertises a handful of scopes it owns itself (fleet event delivery,
-Agent WebUI console roles). ARBORA-IDENTITY-R002 requires that these use the
+Overstory console roles). ARBORA-IDENTITY-R002 requires that these use the
 engine's shared scope classes and stay consistent with the single generated
 scope registry (``epistemic_graph``'s pinned ``contract/scopes.json``) rather
 than a separately maintained list. This module is the one place Arbora

@@ -289,7 +289,7 @@ def test_permission_governance_doctor_verifies_authority(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
+        "scion_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _reference: "doctor-signing-authority-material-32b",
     )
 
@@ -377,7 +377,7 @@ def test_graph_identity_doctor_validates_token_ref_without_exposing_it(monkeypat
     )
     monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
     monkeypatch.setattr(
-        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
+        "scion_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _ref: "opaque-runtime-token",
     )
 
@@ -828,7 +828,7 @@ def test_mcp_fleet_secret_doctor_reports_only_aggregate_readiness(monkeypatch):
         lambda alias: direct_material if alias == "DIRECT_ALIAS" else None,
     )
     monkeypatch.setattr(
-        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
+        "scion_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _reference: mapped_material,
     )
 
@@ -859,7 +859,7 @@ def test_mcp_fleet_secret_doctor_fails_closed_and_redacted(monkeypatch):
     )
     monkeypatch.setattr("arbora.core.settings.setting", lambda _alias: None)
     monkeypatch.setattr(
-        "agent_connector_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
+        "scion_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _reference: (_ for _ in ()).throw(RuntimeError("private detail")),
     )
 

@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-from agent_utilities import host_ports
+from meristem import host_ports
 
 from arbora import agent_runs, work_items
 from arbora.a2a.authority import WorkItemA2AAuthority

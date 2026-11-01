@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from agent_connector_sdk.privacy import persistence_reference
+from scion_sdk.privacy import persistence_reference
 
 from arbora.access.action_policy import ActionRequest
 from arbora.browser_control.browser_control_api import (

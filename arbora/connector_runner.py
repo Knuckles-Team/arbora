@@ -1,4 +1,4 @@
-"""Authenticated composition of agent-connector-sdk runners.
+"""Authenticated composition of scion-sdk runners.
 
 Arbora owns deployment identity and the epistemic-graph transport.  The SDK
 owns connector/source behavior and runner construction.  This module joins
@@ -14,14 +14,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from agent_connector_sdk.credentials.references import parse_secret_reference
-from agent_connector_sdk.credentials.resolution import resolve_secret_reference
-from agent_connector_sdk.credentials.resolver import CredentialResolver
-from agent_connector_sdk.discovery import ActivationPolicy
-from agent_connector_sdk.runner.composition import default_services
-from agent_connector_sdk.runner.descriptors import RunnerSettings
-from agent_connector_sdk.runner.services import RunnerServices
-from agent_connector_sdk.sinks.epistemic_graph import PackImportAuthorityResolver
+from scion_sdk.credentials.references import parse_secret_reference
+from scion_sdk.credentials.resolution import resolve_secret_reference
+from scion_sdk.credentials.resolver import CredentialResolver
+from scion_sdk.discovery import ActivationPolicy
+from scion_sdk.runner.composition import default_services
+from scion_sdk.runner.descriptors import RunnerSettings
+from scion_sdk.runner.services import RunnerServices
+from scion_sdk.sinks.epistemic_graph import PackImportAuthorityResolver
 from epistemic_graph import (
     EpistemicGraphClient,
     RequestContextClaims,

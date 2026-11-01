@@ -435,7 +435,7 @@ class AgentControlPlane:
             return self._failed_result(request, exc)
 
     async def _execute(self, request: GraphRlmRequest) -> GraphRlmResult:
-        from agent_utilities.rlm import run_rlm
+        from meristem.rlm import run_rlm
 
         outcome = await run_rlm(request.task, request.input_text)
         if outcome.get("ok"):

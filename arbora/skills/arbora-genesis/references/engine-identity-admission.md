@@ -50,7 +50,7 @@ Every admission bridge — tenant (`tenant_admission_cli`), Tier-2
 ## Who holds one
 
 **arbora.** It is the process that talks to the engine on the platform's behalf, and
-it serves the agent-webui dashboard in-process as a supervised co-service
+it serves the overstory dashboard in-process as a supervised co-service
 (`arbora.webui_host.webui_co_service`, wired by
 `arbora.mcp_server.backing.co_service_supervisor`, enabled by `ENABLE_WEB_UI`). A co-service
 runs on `_authorized_background_thread`, inheriting arbora's verified actor and

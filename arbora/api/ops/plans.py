@@ -261,7 +261,7 @@ def _validated_publish_receipt(receipt: Any, lease: WorkItemLease) -> dict[str, 
 
 def run_plan_for(plan: Mapping[str, Any], model: Any, toolsets: tuple = ()) -> Any:
     """The harness ``RunPlan`` for an engine plan: same tasks, edges and limits."""
-    from agent_utilities.graph import (
+    from meristem.graph import (
         DependencyPlan,
         RunBudget,
         RunPlan,
@@ -475,7 +475,7 @@ async def execute_task_plan(
     fleet: FleetStepTools | None = None,
 ) -> dict[str, Any]:
     """Run the plan in the harness and collect every task's terminal result."""
-    from agent_utilities.graph import RunRequest, iterate_run
+    from meristem.graph import RunRequest, iterate_run
 
     request = RunRequest(task=plan["output_task_id"], run_id=run_id)
     tasks: dict[str, dict[str, Any]] = {}
@@ -761,7 +761,7 @@ async def _commit_native_plan_run(
     error: bool = False,
 ) -> str:
     """Commit exactly one native terminal outcome under the returned fence."""
-    from agent_connector_sdk.privacy import persistence_reference
+    from scion_sdk.privacy import persistence_reference
 
     import arbora.work_items as work_items
     from arbora.api.contracts.session import use_session

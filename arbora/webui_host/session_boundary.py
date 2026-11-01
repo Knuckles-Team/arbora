@@ -54,7 +54,7 @@ class WebUISessionBoundary:
             raise IdentityUnavailable(
                 "WebUI shared caller and invocation fence are not qualified"
             )
-        from agent_webui.host import config
+        from overstory.host import config
 
         # The WebUI factory has already resolved non-loopback defaults. Do not
         # reread Arbora's separate settings and accidentally disable its limit.
@@ -99,7 +99,7 @@ class CanonicalWebUIBoundaryMiddleware:
         if path == "/api/v1" or path.startswith("/api/v1/"):
             await self._dispatch(self.operations, scope, receive, send)
             return
-        from agent_webui.public_shell import public_shell_of
+        from overstory.public_shell import public_shell_of
 
         shell = public_shell_of(scope)
         health = {"/health", "/health/ready", "/healthz", "/api/health", "/api/healthz"}

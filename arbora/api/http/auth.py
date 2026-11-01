@@ -243,7 +243,7 @@ class BoundBrowserVerifier:
         self._console_origin = console_origin
 
     async def __call__(self, request: Request, session: Any) -> int | None:
-        from agent_webui.oidc_session import verify_browser_session
+        from overstory.oidc_session import verify_browser_session
 
         # The same producer that exports evidence must own this exact session.
         # Equal subject/tenant values cannot prove a cookie-to-caller pairing.

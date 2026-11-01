@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from agent_connector_sdk.privacy_pii import PiiSanitizer
+from scion_sdk.privacy_pii import PiiSanitizer
 
 from arbora.security.prompt_injection import PromptInjectionScanner
 

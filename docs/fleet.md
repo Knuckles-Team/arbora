@@ -43,7 +43,7 @@ trace read through the child MCP tool. The release canary independently checks
 the catalog declaration, launcher, and advertised tool; none of these paths
 imports a connector package. Langfuse reads do not trigger a Arbora-owned
 knowledge-graph ingestion side effect: durable source ingestion belongs to
-agent-connector-sdk and the epistemic-graph contract.
+scion-sdk and the epistemic-graph contract.
 
 ## Composition invariants
 

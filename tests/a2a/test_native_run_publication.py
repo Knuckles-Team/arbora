@@ -3,8 +3,8 @@
 from types import SimpleNamespace
 
 import pytest
-from agent_utilities import host_ports
-from agent_utilities.harness.plan import PlanState
+from meristem import host_ports
+from meristem.harness.plan import PlanState
 
 from arbora import agent_runs
 from arbora.a2a.authority import WorkItemA2AAuthority

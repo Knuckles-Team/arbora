@@ -134,8 +134,8 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         voice_delegation,
     )
 
-    webui = _package("agent_webui")
-    webui_api = types.ModuleType("agent_webui.api_extensions")
+    webui = _package("overstory")
+    webui_api = types.ModuleType("overstory.api_extensions")
     _export(webui_api, "get_engine_bounded", "bounded-engine")
     _export(
         webui_api,
@@ -143,10 +143,10 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         lambda operation, *, deadline: (operation, deadline),
     )
     _export(
-        webui, "orchestrator_model", types.ModuleType("agent_webui.orchestrator_model")
+        webui, "orchestrator_model", types.ModuleType("overstory.orchestrator_model")
     )
-    _export(webui, "server", types.ModuleType("agent_webui.server"))
-    browser_control = types.ModuleType("agent_webui.browser_control")
+    _export(webui, "server", types.ModuleType("overstory.server"))
+    browser_control = types.ModuleType("overstory.browser_control")
 
     async def revalidate_browser_control_session(_binding: object) -> bool:
         return True
@@ -157,9 +157,9 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         revalidate_browser_control_session,
     )
     _export(browser_control, "BrowserControlPort", object)
-    monkeypatch.setitem(sys.modules, "agent_webui", webui)
-    monkeypatch.setitem(sys.modules, "agent_webui.api_extensions", webui_api)
-    monkeypatch.setitem(sys.modules, "agent_webui.browser_control", browser_control)
+    monkeypatch.setitem(sys.modules, "overstory", webui)
+    monkeypatch.setitem(sys.modules, "overstory.api_extensions", webui_api)
+    monkeypatch.setitem(sys.modules, "overstory.browser_control", browser_control)
 
     orchestrator = cast(types.ModuleType, vars(webui)["orchestrator_model"])
 
@@ -168,7 +168,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         return "orchestrator-model"
 
     _export(orchestrator, "build_orchestrator_model", build_orchestrator_model)
-    monkeypatch.setitem(sys.modules, "agent_webui.orchestrator_model", orchestrator)
+    monkeypatch.setitem(sys.modules, "overstory.orchestrator_model", orchestrator)
 
     server_module = cast(types.ModuleType, vars(webui)["server"])
 
@@ -196,7 +196,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         return "webui-app"
 
     _export(server_module, "create_agent_web_app", create_agent_web_app)
-    monkeypatch.setitem(sys.modules, "agent_webui.server", server_module)
+    monkeypatch.setitem(sys.modules, "overstory.server", server_module)
 
     service = object()
     from arbora.browser_control import browser_control_service

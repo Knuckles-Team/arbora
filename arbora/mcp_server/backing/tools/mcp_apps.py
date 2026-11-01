@@ -35,14 +35,14 @@ trace's Span/Generation subgraph from the always-on KG-native
 ``harness.tracing.get_kg_trace_sink()`` sink). The remaining three (workflow viewer,
 evaluation scorecard, ontology diff, approval form) are still deferred (see the
 deferred-work ledger) -- the framework here (this module's ``AppConfig`` usage plus
-the host-side bridge in ``agent-webui``) is the reusable part; each additional app is
+the host-side bridge in ``overstory``) is the reusable part; each additional app is
 just another tool + resource pair following this same shape.
 
 The HTML never calls a tool directly: it only ever *asks its host* to make a
 call, over a small postMessage JSON-RPC bridge (``mcpapp/ready`` ->
 ``mcpapp/init`` -> ``mcpapp/tool-call`` -> ``mcpapp/tool-result`` |
 ``mcpapp/tool-error``), documented at the top of the HTML and mirrored by the
-host-side bridge (``agent-webui/src/lib/mcp-apps/bridge.ts``). The host is
+host-side bridge (``overstory/src/lib/mcp-apps/bridge.ts``). The host is
 what actually authorizes and executes ``tools/call`` -- this module makes NO
 claim about what the host trusts; see that module's own docstring for the
 "never trust a server-declared annotation without policy verification" gate.
@@ -56,7 +56,7 @@ from pydantic import Field
 
 # The iframe <-> host MCP-app bridge both views share; ``%PROP%`` is the init
 # prop the host hands the view and ``%ON_INIT%`` the view's own init handler.
-_BRIDGE_SCRIPT = """  // Bridge protocol (see mcp_apps.py / agent-webui bridge.ts docstrings):
+_BRIDGE_SCRIPT = """  // Bridge protocol (see mcp_apps.py / overstory bridge.ts docstrings):
   //   iframe -> host: {type: "mcpapp/ready"}
   //   host -> iframe: {type: "mcpapp/init", props: {%PROP%}}
   //   iframe -> host: {type: "mcpapp/tool-call", id, name, arguments}

@@ -6,7 +6,7 @@ import contextlib
 from types import SimpleNamespace
 
 import pytest
-from agent_utilities import host_ports as host
+from meristem import host_ports as host
 
 from arbora.mcp_server import harness_host, runtime
 

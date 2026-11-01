@@ -16,7 +16,7 @@ pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.5.2")
 
 @pytest.fixture
 def broker_fixture(monkeypatch, synthetic_signing_key):
-    from agent_connector_sdk.credentials import runtime_references
+    from scion_sdk.credentials import runtime_references
     from joserfc import jwt
     from joserfc.jwk import RSAKey
 
@@ -134,7 +134,7 @@ def test_invalid_reference_is_not_resolved_or_exposed(reference):
 
 
 def test_secret_resolver_failure_is_redacted(monkeypatch, broker_fixture):
-    from agent_connector_sdk.credentials import runtime_references
+    from scion_sdk.credentials import runtime_references
 
     def fail(reference):
         raise ValueError("private-token-and-reference")

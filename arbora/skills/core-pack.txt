@@ -8,8 +8,8 @@
 using-arbora
 arbora-development
 medulla-development
-agent-connector-sdk-development
-agent-webui-development
+scion-sdk-development
+overstory-development
 repository-manager-development-lifecycle
 gates-and-code-placement
 git-in-shared-repos

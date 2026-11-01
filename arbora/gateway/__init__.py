@@ -3,7 +3,7 @@
 CONCEPT:MERISTEM-OS.config.gateway-service-dashboard — Gateway Service Dashboard
 
 Provides the widget registry, data aggregation, and API layer that all
-three frontends (agent-webui, agent-terminal-ui, geniusbot) use to render
+three frontends (overstory, agent-terminal-ui, geniusbot) use to render
 Homepage-style service dashboards.
 
 Replaces the former standalone ``service-dashboard-core`` package by folding

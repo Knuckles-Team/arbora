@@ -3,7 +3,7 @@ AU's own fleet loader, or records a precise, surfaced refusal when it cannot.
 
 Before this fix, any process whose *only* build path was
 ``ensure_tools_registered()`` (a gateway-only process, e.g. standalone
-agent-webui) got a ``mcp`` with no fleet multiplexer ever attached, so every
+overstory) got a ``mcp`` with no fleet multiplexer ever attached, so every
 ``find``/``act`` fleet call raised a generic "embedded/headless build"
 error forever — even though AU already owns a complete, working fleet-attach
 implementation (:func:`arbora.fleet.multiplexer.attach_fleet_loader`),

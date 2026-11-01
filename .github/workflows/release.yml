@@ -79,7 +79,7 @@ jobs:
             echo "PyPI: [\`arbora\` $version](https://pypi.org/project/arbora/$version/)"
             echo
             echo '```bash'
-            echo "pip install \"arbora[webui]==$version\""
+            echo "pip install \"arbora[overstory]==$version\""
             echo '```'
             echo
             echo "Installs from PyPI on Linux (x86_64, aarch64), macOS (arm64) and"

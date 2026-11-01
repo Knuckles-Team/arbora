@@ -15,7 +15,7 @@ Meristem-owned (see ``arbora/deployment/doctor_certification.py``, which already
 notes "Production release/certification assets remain Meristem-owned"); the
 bundle-catalog schema, ``ontology.lock`` and the federated IRI do not exist
 anywhere in the fleet today; and the live connector count itself is only
-known to ``agent_connector_sdk`` / the cross-repo fleet registry, not to
+known to ``scion_sdk`` / the cross-repo fleet registry, not to
 arbora in isolation. Wiring real sites in is cross-repo follow-up tracked
 under ``ARBORA-FLEET-R023``.
 """

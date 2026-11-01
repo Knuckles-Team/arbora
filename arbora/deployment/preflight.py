@@ -18,7 +18,7 @@ Design notes that shaped the checks:
 * **Profile-scoped.** Compose needs Docker; Kubernetes chart deployments need
   kubectl and Helm client tools. These probes do not establish cluster access or
   first-boot acceptance. Named environments use the existing profile validator.
-* **Component-scoped.** Node+pnpm are only checked when ``agent-webui`` is selected;
+* **Component-scoped.** Node+pnpm are only checked when ``overstory`` is selected;
   Qt system libs + a display only when ``geniusbot`` is selected. The core deploy
   never drags those in.
 
@@ -39,11 +39,11 @@ from typing import Any
 
 from arbora.core.settings import setting
 from arbora.webui_host.package_layout_expectation import (
-    AGENT_WEBUI_DISTRIBUTION,
+    OVERSTORY_DISTRIBUTION,
     EXPECTED_TOP_LEVEL_MODULES,
-    AgentWebUiLayoutError,
+    OverstoryLayoutError,
     InstalledPackageFixture,
-    validate_agent_webui_layout,
+    validate_overstory_layout,
 )
 
 from .doctor import _RANK, _result
@@ -58,7 +58,7 @@ _PROFILE_TARGETS = {
     "enterprise": "kubernetes",
 }
 PROFILES = tuple(_PROFILE_TARGETS)
-COMPONENTS = ("agent-terminal-ui", "agent-webui", "geniusbot")
+COMPONENTS = ("agent-terminal-ui", "overstory", "geniusbot")
 
 
 def _os_family() -> str:
@@ -278,7 +278,7 @@ def _node_version() -> tuple[int, ...] | None:
         return ()
 
 
-def _agent_webui_module_is_installed(module: str) -> bool:
+def _overstory_module_is_installed(module: str) -> bool:
     if module in sys.modules:
         return True
     try:
@@ -293,7 +293,7 @@ def _check_webui_reference_model() -> dict[str, Any] | None:
         current_web_ui_references()
     except StaleWebUiReferenceError as exc:
         return _result(
-            "agent-webui",
+            "overstory",
             "fail",
             f"web UI package reference model is stale: {exc}",
             remediation="fix the reference to name the renamed web UI package",
@@ -302,25 +302,25 @@ def _check_webui_reference_model() -> dict[str, Any] | None:
 
 
 def _check_installed_webui_layout() -> dict[str, Any] | None:
-    """R013: an installed agent-webui has every module Arbora imports."""
-    if not _agent_webui_module_is_installed("agent_webui"):
+    """R013: an installed overstory has every module Arbora imports."""
+    if not _overstory_module_is_installed("overstory"):
         return None
     fixture = InstalledPackageFixture(
-        distribution=AGENT_WEBUI_DISTRIBUTION,
+        distribution=OVERSTORY_DISTRIBUTION,
         top_level_modules=tuple(
             module
             for module in EXPECTED_TOP_LEVEL_MODULES
-            if _agent_webui_module_is_installed(module)
+            if _overstory_module_is_installed(module)
         ),
     )
     try:
-        validate_agent_webui_layout(fixture)
-    except AgentWebUiLayoutError as exc:
+        validate_overstory_layout(fixture)
+    except OverstoryLayoutError as exc:
         return _result(
-            "agent-webui",
+            "overstory",
             "warn",
-            f"installed agent-webui package layout is incomplete: {exc}",
-            remediation="reinstall the agent-webui extra (`uv sync --extra webui`)",
+            f"installed overstory package layout is incomplete: {exc}",
+            remediation="reinstall the overstory extra (`uv sync --extra overstory`)",
         )
     return None
 
@@ -330,22 +330,22 @@ def _check_webui_node_toolchain() -> dict[str, Any]:
     pnpm = shutil.which("pnpm")
     if ver is None:
         return _result(
-            "agent-webui",
+            "overstory",
             "fail",
-            "Node.js not found (agent-webui builds with Vite on Node)",
+            "Node.js not found (overstory builds with Vite on Node)",
             remediation="install Node.js >=18 and `corepack enable` / `npm i -g pnpm`",
         )
     node_ok = (not ver) or ver[0] >= 18
     if node_ok and pnpm:
         vtxt = ".".join(map(str, ver)) if ver else "present"
-        return _result("agent-webui", "ok", f"Node {vtxt} + pnpm present")
+        return _result("overstory", "ok", f"Node {vtxt} + pnpm present")
     missing = []
     if not node_ok:
         missing.append(f"Node>=18 (have {'.'.join(map(str, ver))})")
     if not pnpm:
         missing.append("pnpm (the project's package manager)")
     return _result(
-        "agent-webui",
+        "overstory",
         "warn",
         "Node present but " + ", ".join(missing),
         remediation="install Node>=18 and pnpm 10.x (`corepack enable`)",
@@ -384,7 +384,7 @@ def _check_geniusbot() -> dict[str, Any]:
             "no X11/Wayland display ($DISPLAY/$WAYLAND_DISPLAY unset) — geniusbot is a desktop app",
             remediation=(
                 "run on a desktop session, or skip geniusbot for headless hosts "
-                "(use agent-webui/agent-terminal-ui instead)"
+                "(use overstory/agent-terminal-ui instead)"
             ),
         )
     if libgl is False:
@@ -405,7 +405,7 @@ def _check_terminal_ui() -> dict[str, Any]:
 
 
 _COMPONENT_CHECKS: dict[str, Callable[[], dict[str, Any]]] = {
-    "agent-webui": _check_webui,
+    "overstory": _check_webui,
     "geniusbot": _check_geniusbot,
     "agent-terminal-ui": _check_terminal_ui,
 }
@@ -420,7 +420,7 @@ def run_preflight(
     Args:
         profile: a current deployment profile or validated named environment.
             Kubernetes selects the chart toolchain, not a live cluster probe.
-        components: any of ``agent-webui`` / ``geniusbot`` / ``agent-terminal-ui``.
+        components: any of ``overstory`` / ``geniusbot`` / ``agent-terminal-ui``.
     """
     components = components or []
     results: list[dict[str, Any]] = [

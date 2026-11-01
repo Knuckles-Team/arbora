@@ -8,7 +8,7 @@ pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.6")
 
 
 def test_actual_factory_exposes_distinct_local_boundary():
-    from agent_webui.server import create_agent_web_app
+    from overstory.server import create_agent_web_app
 
     assert (
         "local_browser_boundary" in inspect.signature(create_agent_web_app).parameters
@@ -20,9 +20,9 @@ from tests.test_served_engine_native_labels import native_engine as native_engin
 
 
 def _app(monkeypatch, boundary=None):
-    from agent_webui import oidc_session
-    from agent_webui.host import config
-    from agent_webui.server import create_agent_web_app
+    from overstory import oidc_session
+    from overstory.host import config
+    from overstory.server import create_agent_web_app
     from pydantic_ai import Agent
     from pydantic_ai.models.test import TestModel
 
@@ -30,7 +30,7 @@ def _app(monkeypatch, boundary=None):
         monkeypatch.setattr(config, field, None, raising=False)
     monkeypatch.setattr(config, "allowed_hosts", "127.0.0.1", raising=False)
     monkeypatch.setattr(oidc_session, "load_settings", lambda: None)
-    monkeypatch.setenv("AGENT_WEBUI_ACCESS_LOG_POLICY", "disabled")
+    monkeypatch.setenv("OVERSTORY_ACCESS_LOG_POLICY", "disabled")
     return create_agent_web_app(
         Agent(TestModel()),
         {"get_path": lambda value: value},

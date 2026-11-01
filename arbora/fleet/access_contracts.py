@@ -6,7 +6,7 @@ Onboarding registers one ``SourceConnection`` per source and one unapproved
 ``VirtualMapping`` per contract. The virtual catalog serves a mapping only
 after approval, so registration exposes no data.
 
-The SDK parser ships in ``agent_connector_sdk.access_contract``. Without that
+The SDK parser ships in ``scion_sdk.access_contract``. Without that
 module, onboarding skips contracts and logs at debug level.
 """
 
@@ -40,7 +40,7 @@ SOURCE_KIND_BY_ACCESS = {
 }
 #: Markers that show an ontology body declares an access contract.
 CONTRACT_MARKERS = (
-    "https://knuckles-team.github.io/agent-connector-sdk/access#",
+    "https://knuckles-team.github.io/scion-sdk/access#",
     "AccessContract",
 )
 _CATALOG: list[Any] = []
@@ -358,7 +358,7 @@ def declares_contracts(text: str) -> bool:
 
 def _parser() -> Any:
     try:
-        from agent_connector_sdk.access_contract import parse_access_contracts
+        from scion_sdk.access_contract import parse_access_contracts
     except ImportError:
         logger.debug("connector SDK has no access_contract module; skipping")
         return None

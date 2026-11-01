@@ -176,7 +176,7 @@ class _PackResourceSession:
         self._session = session
 
     async def list_resources(self) -> list[Any]:
-        from agent_connector_sdk.artifacts.resources import _RESOURCE_SCHEMES
+        from scion_sdk.artifacts.resources import _RESOURCE_SCHEMES
 
         listed = await self._session.list_resources()
         kept = [
@@ -245,10 +245,10 @@ class _PacedSession:
 
 
 def _capture_kinds() -> tuple[Any, ...]:
-    from agent_connector_sdk.artifacts.prompts import PromptArtifactKind
-    from agent_connector_sdk.artifacts.resources import ResourceArtifactKind
-    from agent_connector_sdk.artifacts.skills import SkillArtifactKind
-    from agent_connector_sdk.artifacts.tools import ToolArtifactKind
+    from scion_sdk.artifacts.prompts import PromptArtifactKind
+    from scion_sdk.artifacts.resources import ResourceArtifactKind
+    from scion_sdk.artifacts.skills import SkillArtifactKind
+    from scion_sdk.artifacts.tools import ToolArtifactKind
 
     class PackResourceKind(ResourceArtifactKind):
         async def list_entries(self, session: Any, server: Any) -> Any:
@@ -290,9 +290,9 @@ def _child_auth() -> Any:
 async def capture_server_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
     """Capture one live fleet server's catalog as a ConnectorPack."""
 
-    from agent_connector_sdk.artifacts.pack import build_content_pack
-    from agent_connector_sdk.ports.session import TransportEndpoint
-    from agent_connector_sdk.transports.mcp import McpTransport
+    from scion_sdk.artifacts.pack import build_content_pack
+    from scion_sdk.ports.session import TransportEndpoint
+    from scion_sdk.transports.mcp import McpTransport
 
     transport_endpoint = TransportEndpoint(
         url=endpoint.url, timeout_seconds=CAPTURE_TIMEOUT_S, auth=auth

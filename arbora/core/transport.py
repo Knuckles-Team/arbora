@@ -4,7 +4,7 @@ Every outbound client Arbora builds comes from this module. A client sends a
 Arbora ``User-Agent``, ignores proxy variables from the environment, refuses
 disabled certificate verification and an unbounded timeout, and, when asked,
 checks each destination against the SDK egress policy before it sends.
-TLS profiles resolve through :func:`agent_connector_sdk.tls.resolve_tls_profile`.
+TLS profiles resolve through :func:`scion_sdk.tls.resolve_tls_profile`.
 """
 
 from __future__ import annotations
@@ -17,8 +17,8 @@ from typing import Any
 from urllib.parse import urlsplit
 
 import httpx
-from agent_connector_sdk.http.egress import EgressOptions, check_egress_destination
-from agent_connector_sdk.tls.resolve import (
+from scion_sdk.http.egress import EgressOptions, check_egress_destination
+from scion_sdk.tls.resolve import (
     resolve_tls_profile as _sdk_resolve_tls_profile,
 )
 

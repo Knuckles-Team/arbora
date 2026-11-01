@@ -2,7 +2,7 @@
 
 A registry-completeness check: the architecture component registry boundary
 seed manifest this repository publishes names both arbora and
-agent-connector-sdk, and each entry declares a nonempty set of owning module
+scion-sdk, and each entry declares a nonempty set of owning module
 paths and a nonempty public import surface -- no coverage gap.
 """
 
@@ -20,7 +20,7 @@ _SEEDS_PATH = (
     Path(__file__).parents[1] / "architecture" / "component-registry-boundary-seeds.yml"
 )
 
-_REQUIRED_OWNERS = {"arbora", "agent-connector-sdk"}
+_REQUIRED_OWNERS = {"arbora", "scion-sdk"}
 
 
 def _load_seeds() -> dict[str, Any]:

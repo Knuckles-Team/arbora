@@ -1,7 +1,7 @@
 """The SDK A2A application, served behind Arbora admission.
 
 Arbora builds the A2A protocol application with the SDK factory
-(``agent_connector_sdk.a2a.create_a2a_app``) and serves it behind a guard. The
+(``scion_sdk.a2a.create_a2a_app``) and serves it behind a guard. The
 guard verifies the caller before any request reaches the application. A read
 (``GET`` or ``HEAD``) needs the read scope. Any other method needs the write
 scope. A refused or unverified caller gets HTTP 401 with a JSON body, and the
@@ -20,7 +20,7 @@ from collections.abc import Callable
 from contextlib import AbstractContextManager, nullcontext
 from typing import Any, Protocol
 
-from agent_connector_sdk.a2a.models import AgentSkill
+from scion_sdk.a2a.models import AgentSkill
 
 __all__ = ["AdmittedA2AApp", "CallerAuthenticator", "create_admitted_a2a_app"]
 
@@ -109,7 +109,7 @@ def create_admitted_a2a_app(
     bind_caller: CallerBinding | None = None,
 ) -> AdmittedA2AApp:
     """Build the SDK A2A application for ``agent`` and wrap it in the guard."""
-    from agent_connector_sdk.a2a import create_a2a_app
+    from scion_sdk.a2a import create_a2a_app
 
     app = create_a2a_app(
         agent,

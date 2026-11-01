@@ -7,12 +7,12 @@ import time
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlsplit
 
-from agent_connector_sdk.http.client import (
+from scion_sdk.http.client import (
     create_async_http_client,
     create_http_client,
 )
-from agent_connector_sdk.http.options import HttpClientOptions
-from agent_connector_sdk.tls.resolve import resolve_tls_profile
+from scion_sdk.http.options import HttpClientOptions
+from scion_sdk.tls.resolve import resolve_tls_profile
 
 if TYPE_CHECKING:
     import httpx

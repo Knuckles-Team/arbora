@@ -16,7 +16,7 @@ from collections.abc import Coroutine
 from pathlib import Path
 from typing import Any
 
-from agent_connector_sdk.config import setting
+from scion_sdk.config import setting
 
 __all__ = ["FleetToolCallError", "call_fleet_tool", "run_coroutine"]
 
@@ -26,7 +26,7 @@ class FleetToolCallError(RuntimeError):
 
 
 def _server_entry(server: str) -> dict[str, Any]:
-    from agent_connector_sdk.paths import get_mcp_config_path
+    from scion_sdk.paths import get_mcp_config_path
 
     path = str(setting("MCP_CONFIG", "") or "").strip() or get_mcp_config_path()
     if not path:
@@ -63,7 +63,7 @@ async def call_fleet_tool(
     ``client`` replaces the FastMCP client (tests). The call fails with
     :class:`FleetToolCallError` and never echoes the arguments.
     """
-    from agent_connector_sdk.transports.mcp_session import decode_tool_result
+    from scion_sdk.transports.mcp_session import decode_tool_result
 
     if client is None:
         from fastmcp import Client

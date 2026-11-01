@@ -494,7 +494,7 @@ Ingestion). Each project has:
 | `SYS` | systems-manager | | `STIRLINGPDF` | stirlingpdf-agent |
 | `TUI` | agent-terminal-ui | | `TUN` | tunnel-manager |
 | `UKA` | uptime-kuma-agent | | `VEC` | vector-mcp |
-| `WEBUI` | agent-webui | | `WGER` | wger-agent |
+| `WEBUI` | overstory | | `WGER` | wger-agent |
 | `ANSIBLE` | ansible-tower-mcp | | | |
 
 ### Cross-project synergy mapping

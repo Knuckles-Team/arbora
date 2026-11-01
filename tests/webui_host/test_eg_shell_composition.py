@@ -22,8 +22,8 @@ def test_real_composed_eg_shell_has_one_protected_route_owner(
     monkeypatch, tmp_path, legacy_composer
 ):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
-    from agent_webui import server as webui
-    from agent_webui.host import config
+    from overstory import server as webui
+    from overstory.host import config
     from fastapi.responses import JSONResponse
     from pydantic_ai import Agent
     from pydantic_ai.models.test import TestModel
@@ -53,8 +53,8 @@ def test_real_composed_eg_shell_has_one_protected_route_owner(
     monkeypatch.setattr(runtime_config, "gateway_rate_limit", 0)
     monkeypatch.setattr(runtime_config, "gateway_metrics", False)
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
-    monkeypatch.setenv("AGENT_WEBUI_ACCESS_LOG_POLICY", "disabled")
-    package = tmp_path / "agent_webui"
+    monkeypatch.setenv("OVERSTORY_ACCESS_LOG_POLICY", "disabled")
+    package = tmp_path / "overstory"
     dist = package / "dist"
     (dist / "assets").mkdir(parents=True)
     (dist / "index.html").write_text("<html><body>public-shell-fixture</body></html>")

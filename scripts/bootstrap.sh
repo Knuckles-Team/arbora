@@ -58,7 +58,7 @@ uv python install "$python_version"
 # Every dependency, the epistemic-graph engine and its numeric kernel
 # included, installs from PyPI at the version uv.lock pins.
 echo "bootstrap: locked dependencies (PyPI)"
-uv sync --frozen --python "$python_version" --extra test --extra webui
+uv sync --frozen --python "$python_version" --extra test --extra overstory
 
 if [[ "$siblings_only" == 1 ]]; then
   echo "bootstrap: --siblings-only, skipping git hooks (shared .git/hooks across worktrees)"

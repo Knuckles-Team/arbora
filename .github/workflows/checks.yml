@@ -215,7 +215,7 @@ jobs:
           persist-credentials: false
 
       # Advisory (operator gate cut, 2026-10-17). repository-manager v3.5.1
-      # depends on agent-connector-sdk, not agent-utilities, so it installs
+      # depends on scion-sdk, not agent-utilities, so it installs
       # beside this wheel's dependencies. The repo's own hook runs the
       # checked-out tool; the six-platform install-smoke matrix below still
       # proves every locked dependency installs from PyPI before publish.
@@ -232,7 +232,7 @@ jobs:
       - name: Sync test environment
         run: |
           set -euo pipefail
-          uv sync --frozen --extra test --extra webui
+          uv sync --frozen --extra test --extra overstory
 
       - name: Verify the engine client is the published wheel
         run: |
@@ -244,7 +244,7 @@ jobs:
           assert connector_pack.ConnectorPackStatusRequest
           assert source_ingestion.SourceCheckpoint
           assert storage.send_agent_component_content
-          for name in ("medulla", "medulla-stem", "meristem", "scion-sdk", "agent-webui"):
+          for name in ("medulla", "medulla-stem", "meristem", "scion-sdk", "overstory"):
               direct = md.distribution(name).read_text("direct_url.json")
               assert direct is None, f"{name} is not an index install: {direct}"
               print(name, md.version(name))
@@ -343,7 +343,7 @@ jobs:
       - name: Install the locked PyPI dependencies, then the wheel
         run: |
           set -euo pipefail
-          uv export --frozen --no-emit-project --no-dev --extra webui \
+          uv export --frozen --no-emit-project --no-dev --extra overstory \
             --format requirements.txt --output-file "$RUNNER_TEMP/locked.txt"
           uv venv --python 3.14 "$RUNNER_TEMP/smoke"
           py="$RUNNER_TEMP/smoke/bin/python"
@@ -362,10 +362,10 @@ jobs:
           set -euo pipefail
           "$SMOKE_PYTHON" -I -c '
           import importlib.metadata as md
-          import arbora, agent_utilities, agent_connector_sdk, agent_webui
+          import arbora, meristem, scion_sdk, overstory
           import epistemic_graph.numeric
           from arbora.deployment import cli
-          for name in ("medulla", "medulla-stem", "meristem", "scion-sdk", "agent-webui"):
+          for name in ("medulla", "medulla-stem", "meristem", "scion-sdk", "overstory"):
               assert md.distribution(name).read_text("direct_url.json") is None, name
               print(name, md.version(name))
           print("arbora", md.version("arbora"))
@@ -392,7 +392,7 @@ jobs:
         if: matrix.name == 'linux-x86_64'
         run: |
           set -euo pipefail
-          uv export --frozen --no-emit-project --no-dev --extra webui --extra test --extra acp \
+          uv export --frozen --no-emit-project --no-dev --extra overstory --extra test --extra acp \
             --format requirements.txt --output-file "$RUNNER_TEMP/locked-test.txt"
           uv pip install --no-config --python "$SMOKE_PYTHON" --require-hashes --no-deps \
             --index-url https://pypi.org/simple -r "$RUNNER_TEMP/locked-test.txt"
@@ -431,9 +431,9 @@ jobs:
             '    spec: binds a test to a spec requirement ID' > "$boot/pytest.ini"
           cd "$boot"
           "$SMOKE_PYTHON" -I -c '
-          import acp, arbora, agent_utilities, sys
+          import acp, arbora, meristem, sys
           from pathlib import Path
-          for module in (acp, arbora, agent_utilities):
+          for module in (acp, arbora, meristem):
               path = Path(module.__file__).resolve()
               assert Path(sys.prefix).resolve() in path.parents, path
               print(module.__name__, path)
@@ -465,6 +465,6 @@ jobs:
       - name: Install and import on the 3.12 floor
         run: |
           set -euo pipefail
-          uv sync --frozen --python 3.12 --extra test --extra webui
+          uv sync --frozen --python 3.12 --extra test --extra overstory
           uv run --frozen --no-sync python -c 'import sys, arbora; from arbora.deployment import cli; print(sys.version)'
           uv run --frozen --no-sync pytest -q tests/fleet

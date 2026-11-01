@@ -3,7 +3,7 @@
 CONCEPT:ARBORA-HOST.harness.host-bindings
 
 The harness (``agent_utilities``) never serves tools or parses the fleet
-catalog. Its thin client host (``agent_utilities.host_ports``) fails
+catalog. Its thin client host (``meristem.host_ports``) fails
 closed until arbora installs these bindings:
 
 * a **native toolset provider** that binds a caller-granted subset of
@@ -62,7 +62,7 @@ def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:
     server under and its resolved (non-secret) client URL. A server whose
     entry cannot be rendered is left out rather than invented.
     """
-    from agent_utilities.host_ports import FleetServer
+    from meristem.host_ports import FleetServer
 
     def view() -> dict[str, FleetServer]:
         from arbora.fleet.multiplexer import _resolve_runtime_value
@@ -93,7 +93,7 @@ def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:
 
 def register_harness_host(multiplexer: Any | None = None) -> None:
     """Install arbora's native, remote, client, catalog and keepalive bindings."""
-    from agent_utilities import host_ports as host
+    from meristem import host_ports as host
 
     from arbora.fleet import client_toolsets
 
@@ -112,7 +112,7 @@ def register_harness_host(multiplexer: Any | None = None) -> None:
 
 def unregister_harness_host() -> None:
     """Clear every binding arbora installed."""
-    from agent_utilities import host_ports as host
+    from meristem import host_ports as host
 
     host.register_native_toolset_provider(None)
     host.register_fleet_catalog_provider(None)

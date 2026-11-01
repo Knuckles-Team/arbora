@@ -15,17 +15,17 @@ PYPROJECT = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
 
 @pytest.mark.spec("ARBORA-DEPLOY-R005")
-def test_web_ui_keeps_agent_webui_package_name() -> None:
+def test_web_ui_keeps_overstory_package_name() -> None:
     extra = [
-        Requirement(r) for r in PYPROJECT["project"]["optional-dependencies"]["webui"]
+        Requirement(r) for r in PYPROJECT["project"]["optional-dependencies"]["overstory"]
     ]
-    assert "agent-webui" in {r.name for r in extra}
+    assert "overstory" in {r.name for r in extra}
     # The web UI resolves from the package index like every other dependency.
-    assert "agent-webui" not in PYPROJECT["tool"]["uv"]["sources"]
+    assert "overstory" not in PYPROJECT["tool"]["uv"]["sources"]
     workflow = (ROOT / ".github/workflows/checks.yml").read_text(encoding="utf-8")
     # The release installs it from PyPI; no web UI source is checked out.
-    assert "repository: Knuckles-Team/agent-webui" not in workflow
-    assert importlib.util.find_spec("agent_webui") is not None
+    assert "repository: Knuckles-Team/overstory" not in workflow
+    assert importlib.util.find_spec("overstory") is not None
 
 
 # Exclusivity (agent-utilities no longer registering these) is verified against
