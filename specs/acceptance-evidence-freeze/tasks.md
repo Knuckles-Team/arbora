@@ -19,6 +19,9 @@ Governing spec: [spec.md](spec.md). Design: [plan.md](plan.md).
 - [ ] T008 ARBORA-ACCEPTANCE-R001 Typed acceptance-evidence model and freeze-gap checker.
 - [ ] T009 ARBORA-ACCEPTANCE-R006 Concept-proof scenarios define done for each delivery phase (rollup).
 - [ ] T010 ARBORA-ACCEPTANCE-R006.1 P1 scenario: the minimal closed loop on one node.
+- [ ] T018 ARBORA-ACCEPTANCE-R006.1.1 P1 counterfactual control: the retrieved claim changes the next action.
+- [ ] T019 ARBORA-ACCEPTANCE-R006.1.2 P1 decision provenance: the run trace records the action and the claim that caused it.
+- [ ] T020 ARBORA-ACCEPTANCE-R006.1.3 P1 is the gate: no later phase is delivered before P1 is VERIFIED.
 - [ ] T011 ARBORA-ACCEPTANCE-R006.2 P2 scenario: the loop is reliable and inspectable.
 - [ ] T012 ARBORA-ACCEPTANCE-R006.3 P3 scenario: boundaries hold with several agents.
 - [ ] T013 ARBORA-ACCEPTANCE-R006.4 P4 scenario: the cross-modal bet and memory maintenance.

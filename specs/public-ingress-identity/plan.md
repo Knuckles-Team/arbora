@@ -1,5 +1,65 @@
 # ARBORA-INGRESS — Design and implementation plan
 
+## Summary
+
+Delivery phase: P1
+
+Its rows serve P1: the scenario `ARBORA-ACCEPTANCE-R006.1` enters through the public ingress that this spec defines.
+
+This plan serves the rows of `ARBORA-INGRESS` in requirements.md. It covers portable public ingress and identity cutover. The design record follows in the sections below.
+
+## Technical Context
+
+- **Language/Version**: Python 3.14, with a 3.12 floor
+- **Primary Dependencies**: the arbora served registry and the Medulla client adapter from the SDK
+- **Storage**: N/A, because the engine owns every fact
+- **Testing**: pytest with one bound test per row, at the proof level the row names
+- **Target Platform**: Linux service
+- **Project Type**: service
+- **Performance Goals**: N/A, because rows state their own limits
+- **Constraints**: one door, and the engine owns every decision
+- **Scale/Scope**: the rows of this spec only
+
+## Constitution Check
+
+- R-I One door, no policy table: pass. Every decision is read from the engine.
+- R-II Every module is reachable from a production caller: pass. Each row names its caller chain.
+- R-III Public specs and core skills are complete and self-contained: pass.
+
+## Project Structure
+
+- `specs/public-ingress-identity/` (existing): spec, requirements, plan, tasks, test-spec and checklist.
+- Code paths: each row names its files in its `Shape:` sentence. This plan adds no other path.
+
+## Phase 0: Research
+
+No unknowns remain. The sections below record the earlier research and decisions.
+
+## Phase 1: Design
+
+The sections below hold the architecture, ownership, data flow and failure modes of this spec.
+
+## Phase 2: Task approach
+
+tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
+
+## Complexity Tracking
+
+None. The constitution check passed.
+
+## Build contract
+
+The change must pass the repository pre-commit gates at both stages: `uvx pre-commit run --all-files` and `uvx pre-commit run --all-files --hook-stage pre-push`.
+The wiring gate (`scripts/check_wiring.py`) and the public-spec gate (`scripts/check_public_specs.py`) apply. A new module must have a production caller.
+
+## Production caller chain
+
+Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
+
+## Cross-repo seams
+
+None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
+
 ## Existing system and reuse
 
 `arbora.deployment.genesis_environments.EnvironmentProfile` already has closed `network`, `identity`, `secrets`, `configuration`, `validation`, and `release` sections. `network.ingress_host`, `identity.idp`, `identity.client_secret_ref`, and `secrets.required` are existing entry fields. `arbora.deployment.config_generator` resolves runtime configuration; `doctor._execution_security_listener` already rejects a non-loopback REST listener without JWKS and exact Host allowlist. `arbora.gateway.graph_api` installs `ActorIdentityMiddleware` for the served REST path. `arbora.mcp_server.server` owns the MCP transport path. Extend these components and their existing tests; the remaining gap is an explicit public origin/proxy/callback contract and an integrated served cutover proof.

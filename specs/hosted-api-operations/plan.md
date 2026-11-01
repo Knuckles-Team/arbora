@@ -2,6 +2,10 @@
 
 ## Summary
 
+Delivery phase: P1
+
+Its rows serve P1: the scenario `ARBORA-ACCEPTANCE-R006.1` calls the served operations that this spec registers.
+
 This plan serves the rows of `ARBORA-OPS` in requirements.md. Arbora serves one typed operation registry over MCP and HTTP. The graph-native development rows `ARBORA-OPS-R896.1` to `.6` add artifact-graph reads, project mode, run start and observation, and proposal review. The engine owns every fact and decision. The earlier design record stays under Phase 1.
 
 ## Technical Context
@@ -1137,4 +1141,3 @@ Each row names its entry point and caller chain in its own text. The development
 - `MEDULLA-SDLC-R012.8` provides the project mode that `ARBORA-OPS-R896.2` serves.
 - `MEDULLA-SDLC-R015` provides the dispatch decision that `ARBORA-OPS-R896.3` and `.4` start and observe. `MERISTEM-SCM` holds the task-run row.
 - `MEDULLA-SDLC-R017` provides the proposals that `ARBORA-OPS-R896.5` lists and reviews. The medulla contract is `specs/development-lifecycle/contracts/proposal-review.md`.
-- The `Depends on` lines of requirements.md name every other seam by the row ID that owns it in the other repository.

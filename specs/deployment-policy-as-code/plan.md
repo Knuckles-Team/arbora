@@ -1,5 +1,65 @@
 # ARBORA-DEPLOY-POLICY plan
 
+## Summary
+
+Delivery phase: P5
+
+No scenario of P1 to P4 exercises these rows, so they serve P5. They wait for the P4 gate (`ARBORA-ACCEPTANCE-R006.4`).
+
+This plan serves the rows of `ARBORA-DEPLOY-POLICY` in requirements.md. It covers deployment and Policy as Code, with a Served Agent Surface. The design record follows in the sections below.
+
+## Technical Context
+
+- **Language/Version**: Python 3.14, with a 3.12 floor
+- **Primary Dependencies**: the arbora served registry and the Medulla client adapter from the SDK
+- **Storage**: N/A, because the engine owns every fact
+- **Testing**: pytest with one bound test per row, at the proof level the row names
+- **Target Platform**: Linux service
+- **Project Type**: service
+- **Performance Goals**: N/A, because rows state their own limits
+- **Constraints**: one door, and the engine owns every decision
+- **Scale/Scope**: the rows of this spec only
+
+## Constitution Check
+
+- R-I One door, no policy table: pass. Every decision is read from the engine.
+- R-II Every module is reachable from a production caller: pass. Each row names its caller chain.
+- R-III Public specs and core skills are complete and self-contained: pass.
+
+## Project Structure
+
+- `specs/deployment-policy-as-code/` (existing): spec, requirements, plan, tasks, test-spec and checklist.
+- Code paths: each row names its files in its `Shape:` sentence. This plan adds no other path.
+
+## Phase 0: Research
+
+No unknowns remain. The sections below record the earlier research and decisions.
+
+## Phase 1: Design
+
+The sections below hold the architecture, ownership, data flow and failure modes of this spec.
+
+## Phase 2: Task approach
+
+tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
+
+## Complexity Tracking
+
+None. The constitution check passed.
+
+## Build contract
+
+The change must pass the repository pre-commit gates at both stages: `uvx pre-commit run --all-files` and `uvx pre-commit run --all-files --hook-stage pre-push`.
+The wiring gate (`scripts/check_wiring.py`) and the public-spec gate (`scripts/check_public_specs.py`) apply. A new module must have a production caller.
+
+## Production caller chain
+
+Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
+
+## Cross-repo seams
+
+None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
+
 ## Architecture
 
 Three declarative surfaces. One convergence engine.

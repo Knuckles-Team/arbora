@@ -1,5 +1,65 @@
 # Architecture and implementation plan
 
+## Summary
+
+Delivery phase: P1
+
+Its rows serve P1: the scenario `ARBORA-ACCEPTANCE-R006.1` enters through the host that this spec composes.
+
+This plan serves the rows of `ARBORA-HOST` in requirements.md. It covers arbora host composition and ownership boundary. The design record follows in the sections below.
+
+## Technical Context
+
+- **Language/Version**: Python 3.14, with a 3.12 floor
+- **Primary Dependencies**: the arbora served registry and the Medulla client adapter from the SDK
+- **Storage**: N/A, because the engine owns every fact
+- **Testing**: pytest with one bound test per row, at the proof level the row names
+- **Target Platform**: Linux service
+- **Project Type**: service
+- **Performance Goals**: N/A, because rows state their own limits
+- **Constraints**: one door, and the engine owns every decision
+- **Scale/Scope**: the rows of this spec only
+
+## Constitution Check
+
+- R-I One door, no policy table: pass. Every decision is read from the engine.
+- R-II Every module is reachable from a production caller: pass. Each row names its caller chain.
+- R-III Public specs and core skills are complete and self-contained: pass.
+
+## Project Structure
+
+- `specs/host-composition-boundary/` (existing): spec, requirements, plan, tasks, test-spec and checklist.
+- Code paths: each row names its files in its `Shape:` sentence. This plan adds no other path.
+
+## Phase 0: Research
+
+No unknowns remain. The sections below record the earlier research and decisions.
+
+## Phase 1: Design
+
+The sections below hold the architecture, ownership, data flow and failure modes of this spec.
+
+## Phase 2: Task approach
+
+tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
+
+## Complexity Tracking
+
+None. The constitution check passed.
+
+## Build contract
+
+The change must pass the repository pre-commit gates at both stages: `uvx pre-commit run --all-files` and `uvx pre-commit run --all-files --hook-stage pre-push`.
+The wiring gate (`scripts/check_wiring.py`) and the public-spec gate (`scripts/check_public_specs.py`) apply. A new module must have a production caller.
+
+## Production caller chain
+
+Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
+
+## Cross-repo seams
+
+None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
+
 ## Existing wiring to reuse
 
 | Arbora module | Existing responsibility | Required change |
