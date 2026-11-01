@@ -14,11 +14,52 @@ Arbora owns authentication ceremonies, local issuer, session and API composition
 
 ## User stories and acceptance
 
-1. **Bootstrap safely (P0).** A fresh tiny install on loopback can act as `usr:bootstrap` via a real signed engine session. A production profile requires local setup unless an explicit exposure acknowledgment is supplied. A network or DNS-rebinding attempt without that acknowledgment fails before a token is minted.
-2. **Move between modes without losing ownership (P0).** An administrator can claim, link, and transition among `none`, `local`, and `external`. Principal IDs, owned objects, roles, and grants survive a reversible round trip. Every transition rotates credentials and revokes prior browser sessions as specified below.
-3. **Administer identities and access (P0).** A fresh-MFA console administrator can manage users, sessions, keys, roles, groups, providers, and policies. Review audit events. Request/approve/deny/revoke elevation. And explain effective access. A delegated agent, stale MFA session, or service token cannot perform a console-only mutation.
-4. **Use local or external login (P1).** Local password, TOTP, WebAuthn, recovery code, OIDC, LDAP, SCIM, and SAML flows produce the same stable principal and narrowed effective scopes. A revoked session, key, or group membership loses access on the next relevant check.
-5. **Develop in isolation (P0).** A contributor runs contract tests with a local engine fixture and mock IdP/LDAP/SMTP adapters. No public PR gate needs a pre-existing host service, private realm, inventory, or secret.
+### User Story 1 - Bootstrap safely (Priority: P1)
+
+A fresh tiny install on loopback can act as `usr:bootstrap` via a real signed engine session. A production profile requires local setup unless an explicit exposure acknowledgment is supplied. A network or DNS-rebinding attempt without that acknowledgment fails before a token is minted.
+
+### User Story 2 - Move between modes without losing ownership (Priority: P1)
+
+An administrator can claim, link, and transition among `none`, `local`, and `external`. Principal IDs, owned objects, roles, and grants survive a reversible round trip. Every transition rotates credentials and revokes prior browser sessions as specified below.
+
+### User Story 3 - Administer identities and access (Priority: P1)
+
+A fresh-MFA console administrator can manage users, sessions, keys, roles, groups, providers, and policies. Review audit events. Request/approve/deny/revoke elevation. And explain effective access. A delegated agent, stale MFA session, or service token cannot perform a console-only mutation.
+
+### User Story 4 - Use local or external login (Priority: P2)
+
+Local password, TOTP, WebAuthn, recovery code, OIDC, LDAP, SCIM, and SAML flows produce the same stable principal and narrowed effective scopes. A revoked session, key, or group membership loses access on the next relevant check.
+
+### User Story 5 - Develop in isolation (Priority: P1)
+
+A contributor runs contract tests with a local engine fixture and mock IdP/LDAP/SMTP adapters. No public PR gate needs a pre-existing host service, private realm, inventory, or secret.
+
+### Acceptance scenarios
+
+1. **Given** a fresh install on a loopback bind in `none` mode, **When** a client calls the served MCP or HTTP surface, **Then** the request acts as `usr:bootstrap` through a signed engine session and the unsecured-mode notice is shown.
+2. **Given** a non-loopback bind without the exact exposure acknowledgment, **When** the host starts, **Then** startup refuses before any token is minted.
+3. **Given** an administrator who claimed the local administrator account, **When** a mode transition completes, **Then** principal IDs, owned objects, roles and grants are unchanged and prior browser sessions are revoked.
+4. **Given** a console administrator whose MFA is older than the configured age, **When** the administrator calls a mutating `identity.*` operation, **Then** the call refuses with `MFA_STALE` and nothing is written.
+5. **Given** a revoked session, key or group membership, **When** the next request arrives, **Then** access is denied at that check.
+6. **Given** a contributor with only a local engine fixture and mock IdP, LDAP and SMTP adapters, **When** the portable test suite runs, **Then** every gate passes without a host service, private realm or secret.
+
+## Edge Cases
+
+- A wrong username and a wrong password return the same 401 body, and a throttled login returns that body too.
+- A cookie that is malformed, ambiguous, revoked or expired refuses; it never falls back to the bootstrap principal.
+- A served scope whose name is registered with a different class refuses onboarding of that server.
+- A directory sync plan that would deprovision more than the configured fraction of users refuses and keeps the prior state.
+- A SAML assertion that is unsigned, wrongly signed, signature-wrapped, expired, replayed or addressed to another audience refuses.
+- A SCIM token scoped to another provider is refused; deactivation never deletes owned data.
+- A delegated agent, a stale-MFA session or a service token cannot perform a console-only mutation.
+- A bearer without a signed tenant claim is refused before any handler runs.
+
+## Assumptions
+
+- The engine owns durable identity records, RBAC, grant and lease decisions and audit; Arbora holds ceremonies, the local issuer, serving policy, the CLI and diagnostics.
+- The signing key is held as a secret reference and never as inline material.
+- SMTP is optional; without it the administrator-issued reset and recovery-code paths remain.
+- Rows marked planned in `test-spec.md` have no running test yet; their callers and shapes name where the code will be wired.
 
 ## Functional requirements
 
