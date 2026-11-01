@@ -50,3 +50,9 @@ def test_replaced_wrapper_methods_are_served(served: dict, module: str) -> None:
             assert served[method].effect is Effect.READ, f"{module}: {method} mutates"
         else:
             assert served[method].effect is not None
+
+
+@pytest.mark.spec("ARBORA-OPS-R843.2")
+def test_media_transcription_is_served_by_the_engine_asr_method(served: dict) -> None:
+    """The media_tools transcription disposition names a method that is a generated operation."""
+    assert "eg.ingestion.Asr" in served
