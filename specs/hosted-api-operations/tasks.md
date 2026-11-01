@@ -442,3 +442,10 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T369 [US3] ARBORA-OPS-R896.4 An implementation run is observed through a served ask operation.
 - [ ] T370 [US3] ARBORA-OPS-R896.5 Proposals are listed and reviewed through served operations and land only as pull requests.
 - [ ] T371 [US3] ARBORA-OPS-R896.6 Hot-path proof: the artifact graph drives a run over MCP.
+- [ ] T372 [US4] ARBORA-OPS-R896.7 Autonomous deliveries are listed, read and steered through served operations.
+- [ ] T373 [US4] ARBORA-OPS-R896.8 Code-host events reach the engine as delivery feedback.
+- [ ] T374 [US4] ARBORA-OPS-R896.9 Feedback admission stamps the acting principal.
+- [ ] T375 [US4] ARBORA-OPS-R896.10 Merge arming runs only on an owner approval of the head commit.
+- [ ] T376 [US4] ARBORA-OPS-R896.11 Delivery writes to the code host are governed effects.
+- [ ] T377 [US4] ARBORA-OPS-R896.12 A delivery assignment starts on a reserved development lane.
+- [ ] T378 [US4] ARBORA-OPS-R896.13 Hot-path proof: a delivery runs from slice to merge over MCP.

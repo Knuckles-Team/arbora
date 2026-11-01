@@ -536,3 +536,10 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R896.4` | Test: `tests/api/test_development_surface_served.py::test_run_status_reports_evidence_and_hides_other_tenants` (L3). |
 | `ARBORA-OPS-R896.5` | Test: `tests/api/test_development_surface_served.py::test_accept_opens_a_pull_request_and_never_writes_specs` (L3: HTTP and MCP). |
 | `ARBORA-OPS-R896.6` | Test: `tests/api/test_development_surface_served.py::test_artifact_graph_drives_a_run_over_mcp` (L4). |
+| `ARBORA-OPS-R896.7` | Test: `tests/api/test_delivery_ops_served.py::test_delivery_ops_read_and_steer_without_local_state` (L3: HTTP and MCP). |
+| `ARBORA-OPS-R896.8` | Test: `tests/development/test_scm_intake_served.py::test_signed_event_reaches_delivery_feedback_and_bad_signature_refuses` (L3). |
+| `ARBORA-OPS-R896.9` | Test: `tests/development/test_scm_intake_served.py::test_only_principals_with_source_write_are_stamped` (L3). |
+| `ARBORA-OPS-R896.10` | Test: `tests/api/test_delivery_ops_served.py::test_arm_needs_owner_receipt_on_head_and_platform_never_merges` (L3: HTTP and MCP). |
+| `ARBORA-OPS-R896.11` | Test: `tests/api/test_delivery_ops_served.py::test_delivery_writes_are_idempotent_and_uncertain_effects_reconcile` (L3). |
+| `ARBORA-OPS-R896.12` | Test: `tests/development/test_assignments_served.py::test_assignments_reserve_lanes_and_keep_a_person_slot` (L3). |
+| `ARBORA-OPS-R896.13` | Test: `tests/api/test_delivery_surface_served.py::test_delivery_runs_from_slice_to_merge_over_mcp` (L4). |

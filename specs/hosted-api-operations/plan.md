@@ -1117,6 +1117,10 @@ The values come from `.pre-commit-config.yaml` and `pyproject.toml`.
 - The input hook runs after `_resolve` and before `_confirmation_gate`. The call then has a verified caller, and no audit or effect reservation exists yet.
 - The output hook runs before `_record`, so the effect journal stores the hooked outcome and a replay returns it.
 
+### Autonomous delivery
+
+Rows `ARBORA-OPS-R896.7` to `ARBORA-OPS-R896.13` serve the delivery of open rows as pull requests. The engine holds every delivery record and every decision. Arbora admits, carries and executes. It verifies code-host webhook signatures and stamps a principal on a person's event. It starts each assignment on a reserved development lane and keeps one slot for a person's input. It writes to the code host only through governed effects with receipts. It calls an arm tool only after an `arm` verdict and an owner receipt bound to the head commit. The registry denies every merge tool to the platform principal.
+
 ## Phase 2: Task approach
 
 tasks.md carries one numbered task line for each active row. Tasks run producer first. A task marked `[P]` may run in parallel with its neighbours. The development rows `R896.1` to `R896.5` run after the engine rows they cite.
@@ -1133,9 +1137,16 @@ Each row names its test. The repository pre-commit and pre-push hooks and the pu
 
 Each row names its entry point and caller chain in its own text. The development rows enter at the MCP intent tools, pass `invoke`, and reach `arbora/api/ops/development.py`. That module calls the engine and holds no decision.
 
+The delivery rows add two entry points. Code-host webhooks enter at `POST /api/v1/development/scm-events/{connector}` and reach `arbora/development/scm_intake.py::handle_scm_event`. Pending assignments reach `arbora/development/assignments.py::start_assignment`. Both call the engine and hold no decision. Arming calls a connector tool only after the engine verdict and an owner receipt on the head commit.
+
 ## Cross-repo seams
 
 - `MEDULLA-SDLC-R014.6` and `MEDULLA-SDLC-R014.7` provide the competency queries that `ARBORA-OPS-R896.1` runs. The medulla contract is `specs/development-lifecycle/contracts/spec-artifact-graph.md`.
 - `MEDULLA-SDLC-R012.8` provides the project mode that `ARBORA-OPS-R896.2` serves.
 - `MEDULLA-SDLC-R015` provides the dispatch decision that `ARBORA-OPS-R896.3` and `.4` start and observe. `MERISTEM-SCM` holds the task-run row.
 - `MEDULLA-SDLC-R017` provides the proposals that `ARBORA-OPS-R896.5` lists and reviews. The medulla contract is `specs/development-lifecycle/contracts/proposal-review.md`.
+- `ARBORA-OPS-R896.7` serves the delivery methods that the medulla lifecycle spec adds beside `MEDULLA-SDLC-R015`. Contract: `contracts/autonomous-delivery.md`.
+- `ARBORA-OPS-R896.8` takes change-proposal events that the scion-sdk SCM contract (`SCION-SCM-R001` family) normalizes. Contract: `contracts/scm-event-intake.md`.
+- `ARBORA-OPS-R896.10` calls the arm and disarm tools of the code-host connectors. Contract: `contracts/merge-arming.md`.
+- `ARBORA-OPS-R896.11` writes through governed write-back (`SCION-GOVERNED-WRITEBACK-R004.11`). Contract: `contracts/governed-delivery-effects.md`.
+- `ARBORA-OPS-R896.12` starts the meristem run that applies one delivery assignment beside `MERISTEM-SCM-R011`. Contract: `contracts/delivery-assignment.md`.
