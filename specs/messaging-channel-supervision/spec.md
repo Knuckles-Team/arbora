@@ -10,6 +10,34 @@ As the Arbora process, I supervise every registered messaging channel process (t
 
 This specification expands the broader Arbora messaging-host ownership in [ARBORA-HOST-R011](../host-composition-boundary/requirements.md) with lifecycle and health-reporting contracts. The host-composition requirement remains authoritative for Arbora's broader messaging and routing responsibilities.
 
+## User Scenarios & Testing
+
+### User Story 1 - Supervised channel lifecycle (Priority: P1)
+
+An operator runs Arbora with several messaging channels and expects each to start, restart with bounded backoff and stop cleanly.
+
+**Acceptance Scenarios**:
+
+1. **Given** a registered backend that reports connected, **When** the router starts, **Then** the backend reaches the running state.
+2. **Given** a recoverable listener failure, **When** supervision restarts it, **Then** delays grow to the cap and reset after a healthy period.
+3. **Given** a stop request, **When** the router stops, **Then** every backend drains through the stopping state before it is reported stopped.
+
+### User Story 2 - A missing adapter degrades one channel only (Priority: P1)
+
+**Acceptance Scenarios**:
+
+1. **Given** one configured adapter fails to import, **When** the registry creates the enabled channels, **Then** that channel is recorded as degraded with a typed reason and the others still start.
+
+### Edge Cases
+
+- A cancellation arrives during a backoff wait: the backend still ends in the stopped state.
+- A disabled channel without credentials never raises a component-health alert.
+- An illegal state transition is refused with a typed error.
+
+## Assumptions
+
+- Channel adapters and inbound message models stay Meristem-owned; Arbora only supervises them.
+
 ## Ownership boundary
 
 Arbora supervises channel processes through InboundRouter, MessagingRegistry, and MessagingService. These modules own start, stop, health, backoff, and degraded detection. They never persist a second durable message store.
@@ -24,7 +52,7 @@ Agent-utilities owns messaging adapters and inbound message models, including Me
 - **MSG-04 Stop drains, it does not abandon.** `InboundRouter.stop()` moves every supervised backend to `STOPPING` before cancellation, cancels listener and inbox-reaper tasks, awaits their completion (`return_exceptions=True`), and only then reports `STOPPED`. A cancellation observed during a backoff wait is treated as clean shutdown and never triggers a further restart.
 - **MSG-05 Typed degraded adapter state and configuration-aware health.** Arbora records a configured channel whose adapter cannot be created as DEGRADED with a typed reason, while continuing other configured channels. The full behavior is the rollup of ARBORA-MESSAGING-R005.1.
 - **MSG-05.1 Typed adapter degradation and configuration-aware health.** Preserve the configured missing/import-failed adapter record as DEGRADED. Record AdapterMissing or AdapterImportFailed. Continue creating other configured channels. Expose components.messaging_intake through authenticated GET /api/dashboard/health and graph_configure(action="health"). Return stable enabled, configured, state, alert_eligible, and backends fields. Set enabled only when MESSAGING_INTAKE_ENABLED is explicitly true and KG_DAEMON_ROLE=host. Credentials alone never enable intake. Set configured when at least one supported backend has credential material. Never return credential values. Set component state to disabled when intake is off. Use not_configured when intake is enabled without a backend. Use degraded when an enabled configured backend is unavailable. Use healthy only when every configured backend connects. Set alert_eligible true exactly when enabled and state is not_configured or degraded. Build backend rows from configured IDs and typed degraded-record IDs. Sort rows by ID. Each row contains id, configured, state, and nullable reason_code. Use not_configured when credentials are absent. Use disabled when intake is off. Use connected only when enabled and is_connected=true. Otherwise mark configured backends unavailable. Map AdapterMissing to adapter_missing. Map AdapterImportFailed to adapter_import_failed. Map false is_connected to backend_not_connected. Omit credentials and raw exception text. Alert evaluators may emit only when alert_eligible=true. Health reads never send messages. Keep unauthenticated /health and /health/ready detail-free.
-- **MSG-06 Boundary: Arbora supervises, meristem owns adapters.** Arbora's supervision types depend only on `agent_utilities.messaging.base.MessagingBackend`'s public adapter contract and `agent_utilities.messaging.models`. Arbora never implements a channel adapter, and meristem never implements process supervision, health gating, or backoff. `MERISTEM-INTEGRATION-R002`'s `messaging_intake_enabled` threading and `MERISTEM-INTEGRATION-R019`'s direct-reply budget are AU-owned inputs this state machine observes but does not re-implement.
+- **MSG-06 Boundary: Arbora supervises, meristem owns adapters.** Arbora's supervision types depend only on `agent_utilities.messaging.base.MessagingBackend`'s public adapter contract and `agent_utilities.messaging.models`. Arbora never implements a channel adapter, and meristem never implements process supervision, health gating, or backoff. `MERISTEM-INTEGRATION-R002`'s `messaging_intake_enabled` threading and `MERISTEM-INTEGRATION-R019`'s direct-reply budget are Meristem-owned inputs this state machine observes but does not re-implement.
 
 ## Requirement map
 
@@ -35,7 +63,7 @@ Agent-utilities owns messaging adapters and inbound message models, including Me
 | ARBORA-MESSAGING-R003 | Bounded exponential restart backoff with healthy-run reset |
 | ARBORA-MESSAGING-R004 | Graceful stop with task drain and no restart after cancellation |
 | ARBORA-MESSAGING-R005, ARBORA-MESSAGING-R005.1 | Typed adapter degradation, configuration-aware health projection, and enabled-only alert eligibility |
-| ARBORA-MESSAGING-R006 | Supervision/adapter ownership boundary against AU-INTEGRATION-001 |
+| ARBORA-MESSAGING-R006 | Supervision/adapter ownership boundary against MERISTEM-INTEGRATION-001 |
 | ARBORA-MESSAGING-R007 | Served channel gateway: intake in the served host, fail-closed sender admission |
 | ARBORA-MESSAGING-R007.1 | Per-sender identity: inbound turns run under the sender's exchanged principal session |
 | ARBORA-MESSAGING-R008 | Alert intake operation over the served API, delivered through the adapter or the mattermost connector |
