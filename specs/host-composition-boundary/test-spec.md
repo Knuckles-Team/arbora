@@ -213,3 +213,7 @@ For `ARBORA-HOST-R033`, the schema receipt tests force a fixed audit ID collisio
 and a write exception through the real action-policy owner. Neither may produce
 an effect-authorizing receipt or call the schema publisher. The audit backend
 records fixture operations only; no native persistence acceptance is claimed.
+
+## Declared-module import fence
+
+- `ARBORA-HOST-R007.2.69`: `tests/test_package_layout.py::test_arbora_imports_only_meristem_public_modules` parses every `.py` under `arbora/` and `tests/` and fails on any `agent_utilities` import or any `meristem` import outside `meristem.PUBLIC_HOST_MODULES`. `::test_fence_detects_planted_violation` proves it fails on a temporary module. Neither test exists yet and neither has run.
