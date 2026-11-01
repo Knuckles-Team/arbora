@@ -399,7 +399,7 @@ class ArboraConfig(BaseModel):
     kg_engine_tool_pool_size: int = Field(
         default=16,
         alias="KG_ENGINE_TOOL_POOL_SIZE",
-        description="Max warm raw ``SyncEpistemicGraphClient`` wire connections kept resident by the low-level ``engine_<domain>`` MCP tools (MERISTEM-P0-6, ``mcp/tools/engine_tools.py``). Distinct from :attr:`kg_engine_pool_size` (which bounds the resident *compute-engine* pool, a different resource): this one bounds the...",
+        description="Max warm raw ``SyncMedullaClient`` wire connections kept resident by the low-level ``engine_<domain>`` MCP tools (MERISTEM-P0-6, ``mcp/tools/engine_tools.py``). Distinct from :attr:`kg_engine_pool_size` (which bounds the resident *compute-engine* pool, a different resource): this one bounds the...",
     )
     kg_failure_evolution: bool = Field(
         default=False, alias="KG_FAILURE_EVOLUTION", description=""

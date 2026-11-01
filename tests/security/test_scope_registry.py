@@ -25,7 +25,7 @@ def _generator():
 
 @pytest.mark.spec("ARBORA-IDENTITY-R002.1")
 def test_the_generated_module_is_the_installed_eg_registry():
-    pytest.importorskip("epistemic_graph")
+    pytest.importorskip("medulla")
     gen = _generator()
     assert (ROOT / "arbora" / "security" / "scope_registry.py").read_text(
         encoding="utf-8"

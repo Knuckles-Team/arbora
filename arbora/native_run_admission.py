@@ -12,7 +12,7 @@ def require_lookup(namespace: Any) -> Any:
 
     lookup = getattr(namespace, "get_run", None)
     try:
-        from epistemic_graph.generated.models import RunWorkItemView
+        from medulla.generated.models import RunWorkItemView
     except ImportError as exc:
         raise OperationRefused(
             "UPGRADE_REQUIRED", {"capability": "native_run_admission"}
@@ -35,7 +35,7 @@ def _identity(request: dict[str, Any]) -> str:
 
 def recover(lookup: Any, request: dict[str, Any]) -> tuple[str, bool] | None:
     """The lookup is taken directly from the configured engine namespace."""
-    from epistemic_graph.generated.models import RunWorkItemView, SubmitWorkItemRequest
+    from medulla.generated.models import RunWorkItemView, SubmitWorkItemRequest
 
     from arbora.api.invoke.pipeline import OperationRefused
 

@@ -188,7 +188,7 @@ class FleetCatalog:
 class FleetCatalogReadPort(Protocol):
     """One long-lived EG client adapter used by ``FleetCatalogReader``.
 
-    The eventual adapter owns one ``EpistemicGraphClient`` instance. Its
+    The eventual adapter owns one ``MedullaClient`` instance. Its
     server method queries only ``__commons__`` ``:Server`` rows written by
     ``RegisterServer``; the others map 1:1 to AgentComponent operations.
     """

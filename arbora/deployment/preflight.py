@@ -11,7 +11,7 @@ Design notes that shaped the checks:
 
 * **No Rust by default.** ``epistemic-graph`` ships as a prebuilt ``maturin``
   ``bindings="bin"`` wheel, so ``pip install agent-utilities`` drops the
-  ``epistemic-graph-server`` binary straight into ``$VENV/bin``. Rust is only a
+  ``medulla-server`` binary straight into ``$VENV/bin``. Rust is only a
   *fallback* — needed when no prebuilt wheel exists for the host arch/libc, or in
   an air-gapped install. The engine check reflects that: missing binary → "install
   the wheel"; ``cargo`` presence is reported as informational, never required.
@@ -131,10 +131,10 @@ def _check_installer() -> dict[str, Any]:
 
 
 def _engine_binary_path() -> str | None:
-    candidate = Path(sys.executable).parent / "epistemic-graph-server"
+    candidate = Path(sys.executable).parent / "medulla-server"
     if candidate.exists():
         return str(candidate)
-    return shutil.which("epistemic-graph-server")
+    return shutil.which("medulla-server")
 
 
 def _engine_binary_contract(server_path: str) -> str:
@@ -168,13 +168,13 @@ def _check_engine() -> dict[str, Any]:
             return _result(
                 "engine_binary",
                 "fail",
-                "epistemic-graph-server does not satisfy the current launch contract",
+                "medulla-server does not satisfy the current launch contract",
                 remediation="install an approved current agent-utilities artifact",
             )
         return _result(
             "engine_binary",
             "ok",
-            "epistemic-graph-server present; current launch contract verified; no Rust needed",
+            "medulla-server present; current launch contract verified; no Rust needed",
         )
     # Not installed yet — that's expected pre-install. The wheel provides it.
     cargo_note = (
@@ -185,7 +185,7 @@ def _check_engine() -> dict[str, Any]:
     return _result(
         "engine_binary",
         "warn",
-        "epistemic-graph-server not found yet (provided by the agent-utilities wheel)",
+        "medulla-server not found yet (provided by the medulla-stem wheel)",
         remediation=(
             "install the prebuilt wheel: `pip install agent-utilities` (or `uv tool install "
             f"agent-utilities`). {cargo_note}."

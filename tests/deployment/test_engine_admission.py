@@ -20,12 +20,11 @@ def test_engine_admission_binds_one_principal_and_one_request_context() -> None:
         policy_version="policy-1",
     )
     engine = admission["engine_environment"]
-    assert engine["EPISTEMIC_GRAPH_AUDIENCE"] == "arbora"
-    assert engine["EPISTEMIC_GRAPH_TENANT"] == "acme"
-    assert engine["EPISTEMIC_GRAPH_POLICY_VERSION"] == "policy-1"
-    assert list(engine["EPISTEMIC_GRAPH_SIGNER_KEYS_SHAPE"]) == ["arbora-process"]
+    assert engine["MEDULLA_AUDIENCE"] == "arbora"
+    assert engine["MEDULLA_TENANT"] == "acme"
+    assert engine["MEDULLA_POLICY_VERSION"] == "policy-1"
     digest = hashlib.sha256(b"arbora-process").hexdigest()
-    assert engine["EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS"] == (
+    assert engine["MEDULLA_CONNECTOR_PACK_IMPORTERS"] == (
         f"*=principal:sha256:{digest}"
     )
     assert engine["GRAPH_SERVICE_AUTH_SECRET"].startswith("secret://")

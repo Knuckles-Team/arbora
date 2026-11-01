@@ -38,7 +38,7 @@ def _entry_points_ready() -> bool:
 
 
 def _engine_binary_ready() -> bool:
-    candidate = Path(sys.executable).with_name("epistemic-graph-server")
+    candidate = Path(sys.executable).with_name("medulla-server")
     try:
         metadata = candidate.lstat()
     except OSError:

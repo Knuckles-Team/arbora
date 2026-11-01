@@ -82,7 +82,7 @@ def test_served_engine_writes_build_their_body_from_the_label_model(monkeypatch)
         sent.append(msgpack.unpackb(params["properties_msgpack"]))
         return True
 
-    import epistemic_graph.generated.graph as generated
+    import medulla.generated.graph as generated
 
     monkeypatch.setattr(generated, "send_create_node_if_absent", capture)
     monkeypatch.setattr(generated, "send_add_node", capture)

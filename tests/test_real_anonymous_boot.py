@@ -114,7 +114,7 @@ def anonymous_stack(tmp_path_factory):
             ],
             {
                 **base_env,
-                "EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS": "arbora=principal:sha256:"
+                "MEDULLA_CONNECTOR_PACK_IMPORTERS": "arbora=principal:sha256:"
                 + hashlib.sha256(b"anonymous").hexdigest(),
             },
         )
@@ -287,12 +287,12 @@ def test_real_effect_journal_and_provenance_binding(anonymous_stack):
 
 @pytest.mark.asyncio
 async def test_semantic_projection_matches_committed_pack(anonymous_stack):
-    from epistemic_graph import EpistemicGraphClient
-    from epistemic_graph.generated.connector_pack import ConnectorPackStatusRequest
-    from epistemic_graph.generated.reasoning import send_graph_schema_list
-    from epistemic_graph.generated.storage import send_connector_pack_status
+    from medulla import MedullaClient
+    from medulla.generated.connector_pack import ConnectorPackStatusRequest
+    from medulla.generated.reasoning import send_graph_schema_list
+    from medulla.generated.storage import send_connector_pack_status
 
-    client = await EpistemicGraphClient.connect(
+    client = await MedullaClient.connect(
         auth_mode="none",
         tcp_addr=anonymous_stack["engine_addr"],
         graph_name="tenant__local",
@@ -406,9 +406,9 @@ def test_native_bounded_reply_events(anonymous_stack, reply_case):
     assert any(row["nonce"] == nonce and row["reply"] == expected for row in receipts)
 
     async def persisted_event():
-        from epistemic_graph import EpistemicGraphClient
+        from medulla import MedullaClient
 
-        graph = await EpistemicGraphClient.connect(
+        graph = await MedullaClient.connect(
             auth_mode="none",
             tcp_addr=anonymous_stack["engine_addr"],
             graph_name="tenant__local",

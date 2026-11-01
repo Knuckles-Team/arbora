@@ -239,8 +239,8 @@ jobs:
           set -euo pipefail
           uv run --no-sync python -I -c '
           import importlib.metadata as md
-          import epistemic_graph.numeric
-          from epistemic_graph.generated import connector_pack, source_ingestion, storage
+          import medulla.numeric
+          from medulla.generated import connector_pack, source_ingestion, storage
           assert connector_pack.ConnectorPackStatusRequest
           assert source_ingestion.SourceCheckpoint
           assert storage.send_agent_component_content
@@ -363,7 +363,7 @@ jobs:
           "$SMOKE_PYTHON" -I -c '
           import importlib.metadata as md
           import arbora, agent_utilities, agent_connector_sdk, agent_webui
-          import epistemic_graph.numeric
+          import medulla.numeric
           from arbora.deployment import cli
           for name in ("medulla", "medulla-stem", "meristem", "scion-sdk", "agent-webui"):
               assert md.distribution(name).read_text("direct_url.json") is None, name
@@ -386,7 +386,7 @@ jobs:
           "$SMOKE_PYTHON" -I wheel_boot_check.py runtime
 
       # Linux x64 also boots a real arbora process against the
-      # epistemic-graph-server binary from the installed engine wheel, with
+      # medulla-server binary from the installed engine wheel, with
       # arbora imported from the installed wheel. A skip fails the gate.
       - name: Real boot of the installed wheel (linux x86_64)
         if: matrix.name == 'linux-x86_64'

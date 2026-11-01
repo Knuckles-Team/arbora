@@ -122,7 +122,7 @@ def _typed_request_context(
 def _require_native_submission(run_id: str | None, work_item_id: str | None) -> None:
     """Refuse native ownership before admission unless the contract supports it."""
     if run_id is not None:
-        from epistemic_graph.generated.models import SubmitWorkItemRequest
+        from medulla.generated.models import SubmitWorkItemRequest
 
         from arbora.api.invoke.pipeline import OperationRefused
 
@@ -300,7 +300,7 @@ def commit_result(
     """
     completion = {}
     if run_completion is not None:
-        from epistemic_graph.generated.models import RunCompletionInput
+        from medulla.generated.models import RunCompletionInput
 
         completion["run_completion"] = RunCompletionInput.model_validate_json(
             json.dumps(dict(run_completion)), strict=True

@@ -17,12 +17,12 @@ from arbora.deployment import doctor as doctor_module
 
 
 def test_bug013_engine_domains_doctor_fails_closed_on_production_profile(monkeypatch):
-    """BUG-013: a required capability module (the `epistemic_graph` client,
+    """BUG-013: a required capability module (the `medulla` client,
     which populates the 21 REQUIRED `engine_<domain>` tool families) silently
     absent must FAIL readiness on a real deployment profile, not warn/skip
     past it. Reproduces the exact live shape: `engine_tools.ENGINE_DOMAINS`
     degrades to `{}` (its own documented graceful-but-loud fallback) when the
-    `epistemic_graph` package is not importable."""
+    `medulla` package is not importable."""
     from arbora.mcp_server.backing.tools import engine_tools
 
     cfg = SimpleNamespace(deployment_profile="single-node-prod")

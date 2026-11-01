@@ -7,7 +7,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
-from epistemic_graph import EngineResponseError
+from medulla import EngineResponseError
 
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.api.contracts import use_session

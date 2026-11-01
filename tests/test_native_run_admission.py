@@ -174,7 +174,7 @@ def test_race_mismatch_refuses() -> None:
 
 
 def test_legacy_unavailable_propagates_without_submit() -> None:
-    from epistemic_graph.client import EngineResponseError
+    from medulla.client import EngineResponseError
 
     error = EngineResponseError("RUN_ADMISSION_UNAVAILABLE")
     namespace = Namespace([error])
@@ -251,7 +251,7 @@ def test_placement_epoch_change_refuses() -> None:
 
 
 def test_nonambiguous_refusal_is_not_retried() -> None:
-    from epistemic_graph.client import EngineResponseError
+    from medulla.client import EngineResponseError
 
     error = EngineResponseError("FORBIDDEN")
     namespace = Namespace([None], error)

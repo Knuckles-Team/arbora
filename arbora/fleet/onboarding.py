@@ -468,9 +468,9 @@ class FleetOnboarding:
         caller proceeds to a real attest and import.
         """
 
-        from epistemic_graph.connector_pack import pack_digest
-        from epistemic_graph.generated.connector_pack import ConnectorPackStatusRequest
-        from epistemic_graph.generated.storage import send_connector_pack_status
+        from medulla.connector_pack import pack_digest
+        from medulla.generated.connector_pack import ConnectorPackStatusRequest
+        from medulla.generated.storage import send_connector_pack_status
 
         from arbora.deployment.semantic_provisioning import _bind_session_graph
 
@@ -561,9 +561,9 @@ class FleetOnboarding:
         try:
             from importlib import import_module
 
-            connector_pack = import_module("epistemic_graph.generated.connector_pack")
-            models = import_module("epistemic_graph.generated.models")
-            storage = import_module("epistemic_graph.generated.storage")
+            connector_pack = import_module("medulla.generated.connector_pack")
+            models = import_module("medulla.generated.models")
+            storage = import_module("medulla.generated.storage")
             ConnectorPackOpApproveSource = connector_pack.__dict__[
                 "ConnectorPackOpApproveSource"
             ]

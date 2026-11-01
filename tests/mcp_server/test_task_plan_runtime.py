@@ -246,7 +246,7 @@ async def test_native_plan_helper_wires_real_publication_and_owner_scopes(
     monkeypatch.setattr(
         plans,
         "import_module",
-        lambda name: eg if name == "epistemic_graph.generated.coordination" else None,
+        lambda name: eg if name == "medulla.generated.coordination" else None,
     )
     published, run = await plans._publish_and_execute_native_plan(
         context, admission, plan, PROPOSAL, parsed

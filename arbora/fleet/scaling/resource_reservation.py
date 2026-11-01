@@ -1,7 +1,7 @@
 """Narrow transport for the engine-native WorkItem reservation protocol.
 
 Repository Manager owns the ``WorkItemReservationPort`` lifecycle mapping.  AU
-only exposes a typed transport over the generated ``SyncEpistemicGraphClient``;
+only exposes a typed transport over the generated ``SyncMedullaClient``;
 it never invents owner/fence/profile defaults, performs a local read-then-CAS,
 or memoizes transient admission refusals.
 """

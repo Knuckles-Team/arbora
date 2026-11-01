@@ -18,8 +18,8 @@ from typing import Any
 
 import pytest
 
-pytest.importorskip("epistemic_graph.decision_stat")
-from epistemic_graph import decision_stat as ds  # noqa: E402
+pytest.importorskip("medulla.decision_stat")
+from medulla import decision_stat as ds  # noqa: E402
 
 from arbora.api import task_plan_schema as pins_module  # noqa: E402
 from arbora.api.invoke.pipeline import OperationRefused  # noqa: E402
@@ -339,7 +339,7 @@ def test_startup_publisher_preserves_released_export_and_returned_definition(
 def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
     engine_export: ModuleType, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    pytest.importorskip("epistemic_graph.generated.storage")
+    pytest.importorskip("medulla.generated.storage")
     pin = _pin()
     engine = _Engine()
 
@@ -368,7 +368,7 @@ def test_engine_publish_sends_a_valid_request_and_reuses_a_current_entry(
     async def reuse_client(_tenant: str) -> Any:
         return reuse
 
-    from epistemic_graph.generated import storage
+    from medulla.generated import storage
 
     async def current(client: Any, request: Any, graph: Any = None, **_: Any) -> Any:
         return client.current

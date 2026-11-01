@@ -72,7 +72,7 @@ def _session(actor: ActorContext, graph: str, *scopes: str) -> GraphSession:
 
 
 def _observing_client():
-    """A fake ``SyncEpistemicGraphClient`` recording the AMBIENT session's
+    """A fake ``SyncMedullaClient`` recording the AMBIENT session's
     ``.graph`` at the moment each sub-client method actually runs -- proves
     the session was already narrowed by the time the client is used, not
     merely by the time it's constructed."""

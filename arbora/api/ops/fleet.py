@@ -116,7 +116,7 @@ async def handle_pack_status(
     variant, sent as a read. The tenant is the verified caller's, never a
     request field.
     """
-    from epistemic_graph import EngineResponseError
+    from medulla import EngineResponseError
 
     from arbora.api.errors import EngineRefusal
     from arbora.api.invoke.bootstrap import dispatch_eg_method

@@ -58,7 +58,7 @@ def _configure_telemetry_engine_otel() -> None:
     ``_configure_arbora_otel``'s ``ENABLE_OTEL``-gated Logfire/Langfuse
     pipeline: :func:`~arbora.observability.telemetry.configure_standard_otel`
     self-gates purely on the standard ``OTEL_EXPORTER_OTLP_ENDPOINT``/``OTEL_SERVICE_NAME``/
-    ``OTEL_TRACES_EXPORTER`` vars (falling back to ``EPISTEMIC_GRAPH_OBS_ADDR``),
+    ``OTEL_TRACES_EXPORTER`` vars (falling back to ``MEDULLA_OBS_ADDR``),
     so no new env var is introduced here. This is the ONE process-bootstrap
     call site that activates it for the arbora MCP server — never per-request.
     """

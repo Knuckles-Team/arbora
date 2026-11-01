@@ -40,7 +40,7 @@ source** of the epistemic-graph engine instead of a mirror — the engine
 registering a tenant-scoped foreign source and planning queries across it,
 without Arbora copying its graph in. Once it ships, the engine refuses
 federation to internal addresses unless they are listed in its federation
-allowlist (`EPISTEMIC_GRAPH_FEDERATION_ALLOW`): record every internal SQL/HTTP
+allowlist (`MEDULLA_FEDERATION_ALLOW`): record every internal SQL/HTTP
 host the plan selects so `arbora-deployment` can allow it, and stop selecting
 new mirror targets.
 

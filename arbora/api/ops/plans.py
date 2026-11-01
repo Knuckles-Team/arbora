@@ -143,8 +143,8 @@ def engine_task_plan(client: Any, graph: str | None = None) -> TaskPlanEngine:
     try:
         # Resolved by name: the pinned engine floor predates TaskPlan until
         # ARBORA-RELEASE-R003.4.3 raises it, and this is the refusal point.
-        facade = importlib.import_module("epistemic_graph.decision_client")
-        senders = importlib.import_module("epistemic_graph.generated.coordination")
+        facade = importlib.import_module("medulla.decision_client")
+        senders = importlib.import_module("medulla.generated.coordination")
         DecisionClient = facade.DecisionClient
         task_plan_request = facade.task_plan_request
         verify_task_plan_receipt = facade.verify_task_plan_receipt
@@ -848,7 +848,7 @@ async def _publish_and_execute_native_plan(
     from arbora.mcp_server import task_plan_runtime
 
     try:
-        eg = import_module("epistemic_graph.generated.coordination")
+        eg = import_module("medulla.generated.coordination")
     except (ImportError, AttributeError) as exc:
         raise OperationRefused(
             "UPGRADE_REQUIRED", {"capability": "admitted_task_plan_runtime"}

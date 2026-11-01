@@ -28,11 +28,11 @@ leaving them reachable only through the generic ``engine_<domain>`` 1:1 surface
 Design (matches the rest of ``arbora/mcp_server/backing/tools``):
 
 * **Reuse the existing engine transport** — every client-backed tool resolves the
-  same :class:`~epistemic_graph.client.SyncEpistemicGraphClient` that
+  same :class:`~medulla.client.SyncMedullaClient` that
   ``engine_tools`` uses (via :func:`engine_tools._client_for`); the KV-cache tool
   reuses the KG-2.306 HTTP connector. No new transport is invented.
 * **Additive + gated / graceful degradation** — the v2.2.0 surfaces may not be
-  present in the connected engine build (or wired into the ``epistemic_graph``
+  present in the connected engine build (or wired into the ``medulla``
   client yet). Each tool probes a small set of candidate ``client.<sub>.<method>``
   paths and, when none resolve, returns a clean ``degraded`` payload instead of
   raising — so the fleet can call these today and they light up automatically once
@@ -168,7 +168,7 @@ def _mining_actions() -> frozenset[str]:
     granular ``engine_mining`` 1:1 tool — as the one source of truth, so this
     surface can never drift out of sync with the real client again
     (CONCEPT:MERISTEM-KG.compute.engine-surface-manifest). Empty only when the
-    ``epistemic_graph`` client itself can't be imported (an environment/build
+    ``medulla`` client itself can't be imported (an environment/build
     issue unrelated to action naming); callers then skip the allow-list check
     below and fall through to the normal dispatch/degrade path.
     """
@@ -191,7 +191,7 @@ _MINING_ACTION_ALIASES: dict[str, str] = {
 
 # ── Transport resolution (reuse the one engine client; injectable for tests) ──
 def _client(graph: str) -> Any:
-    """Resolve the shared ``SyncEpistemicGraphClient`` for ``graph``.
+    """Resolve the shared ``SyncMedullaClient`` for ``graph``.
 
     Delegates to :func:`engine_tools._client_for` so these tools ride the exact
     same connect path (CONCEPT:MERISTEM-OS.deployment.engine-resolver-auto-provision resolver, connection caching) as the
@@ -838,7 +838,7 @@ def _plot_spec(
 ) -> dict[str, Any]:
     """Build a minimal ``eg_viz_core::ViewSpec`` (as JSON) for one mark over
     ``data_ref``'s x/y[/color][/size] encodings. Mirrors the field-name/shape
-    convention ``epistemic_graph.client.VizClient.render`` documents."""
+    convention ``medulla.client.VizClient.render`` documents."""
     encodings: dict[str, Any] = {
         "x": {"field": x_field},
         "y": {"field": y_field},
@@ -1376,7 +1376,7 @@ def _fork_fanout(branches: list[Any], seed_vars: dict[str, Any], preferred: str)
                 ),
                 "followup": (
                     "spike: surface a first-class engine warm-fork/KV-cache-fork op "
-                    "on the epistemic_graph client (LMCacheMPConnector snapshot → "
+                    "on the medulla client (LMCacheMPConnector snapshot → "
                     "branch), then route graph_fork to that governed primitive"
                 ),
                 "branch_count": len(branches),
@@ -2642,7 +2642,7 @@ def register_engine_surface_tools(
     # a REAL POST route (the 405 -> a normal 200 that degrades to
     # ``{"surface": "logs", ...}`` when the engine build has no log-query
     # surface yet -- see ``_LOGS_QUERY_CANDIDATES`` above). The engine's own
-    # log surface (``EPISTEMIC_GRAPH_OBS_ADDR``) today only ever INGESTS
+    # log surface (``MEDULLA_OBS_ADDR``) today only ever INGESTS
     # (``POST /v1/logs``); no query RPC exists on the wire client yet, so this
     # degrades cleanly like graph_promql/graph_traces already do for a build
     # without their surface -- never fabricates a log line.
@@ -3459,7 +3459,7 @@ def register_engine_surface_tools(
     # ══════════════════════════════════════════════════════════════════
     # The engine ships a working render surface (`Method::Viz`, D-VZ-1 V0/V1/
     # V3a/V4-lite/V6-lite: eg-viz-core/eg-viz-columnstore/eg-viz-export, the
-    # ColumnStore/LOD pipeline, and `epistemic_graph.client.VizClient` on the
+    # ColumnStore/LOD pipeline, and `medulla.client.VizClient` on the
     # Python side) but NO agent-facing tool called it — this is that tool.
     # Action-routed exactly like `graph_promql`/`graph_gis` above (one MCP
     # tool + its REST twin from one core, per `graph_analyze`'s convention):

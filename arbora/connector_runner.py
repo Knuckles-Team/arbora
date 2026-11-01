@@ -22,8 +22,8 @@ from agent_connector_sdk.runner.composition import default_services
 from agent_connector_sdk.runner.descriptors import RunnerSettings
 from agent_connector_sdk.runner.services import RunnerServices
 from agent_connector_sdk.sinks.epistemic_graph import PackImportAuthorityResolver
-from epistemic_graph import (
-    EpistemicGraphClient,
+from medulla import (
+    MedullaClient,
     RequestContextClaims,
     validate_request_context,
 )
@@ -76,7 +76,7 @@ class ConnectorRunnerConfig:
 
 
 ServicesFactory = Callable[..., RunnerServices]
-_DEFAULT_CONNECT = cast(ConnectClient, EpistemicGraphClient.connect)
+_DEFAULT_CONNECT = cast(ConnectClient, MedullaClient.connect)
 
 
 class ConnectorRunnerComposition:

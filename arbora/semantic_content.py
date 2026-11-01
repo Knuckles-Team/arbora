@@ -56,11 +56,11 @@ def _semantic_readers(
     schema_reader: Callable[..., Awaitable[Any]] | None,
 ) -> tuple[Callable[..., Awaitable[Any]], Callable[..., Awaitable[Any]]]:
     if schema_reader is None:
-        from epistemic_graph.generated import reasoning
+        from medulla.generated import reasoning
 
         schema_reader = cast(Any, reasoning).send_graph_schema_list
     if status_reader is None:
-        from epistemic_graph.generated.storage import send_connector_pack_status
+        from medulla.generated.storage import send_connector_pack_status
 
         status_reader = send_connector_pack_status
     return status_reader, schema_reader
@@ -84,7 +84,7 @@ async def _verify_semantic_connector(
     attached: dict[str, Any],
     status_reader: Callable[..., Awaitable[Any]],
 ) -> None:
-    from epistemic_graph.generated.connector_pack import ConnectorPackStatusRequest
+    from medulla.generated.connector_pack import ConnectorPackStatusRequest
 
     status = await status_reader(
         client,

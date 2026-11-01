@@ -27,7 +27,7 @@ def _check_engine_domains() -> dict[str, Any]:
     (``feature=None``) in the canonical ``ToolSpec`` manifest — a real
     deployment always ships them (unlike the deployment-configurable
     ``quant``/``finance`` optional features). They are populated at runtime
-    only when the ``epistemic_graph`` client package is importable
+    only when the ``medulla`` client package is importable
     (``engine_tools._discover_domains``); when it is not, that function
     already degrades gracefully rather than crashing the whole MCP process
     (so a ``tiny`` pre-bootstrap profile can still start) and logs a loud
@@ -75,7 +75,7 @@ def _check_engine_domains() -> dict[str, Any]:
         "engine_domains",
         status,
         f"no engine_<domain> tool families registered for profile {profile!r} "
-        "-- the 'epistemic_graph' client package is not importable",
+        "-- the 'medulla' client package is not importable",
         remediation=(
             "install the engine client (`pip install 'epistemic-graph[server]'`, a arbora runtime "
             "dependency) so the "

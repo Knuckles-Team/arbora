@@ -75,7 +75,7 @@ def test_census_fails_on_an_internal_runtime_import(tmp_path: Path) -> None:
     (pkg / "ok.py").write_text(
         "from agent_utilities.api import x\n"
         "import arbora.fleet\n"
-        "import epistemic_graph\n",
+        "import medulla\n",
         encoding="utf-8",
     )
     assert _webui_runtime_violations(pkg) == []

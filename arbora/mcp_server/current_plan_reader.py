@@ -25,14 +25,14 @@ from arbora.security.anonymous import client_scope
 async def _native_read(client: Any, *, run_id: str, tenant: str, graph: str) -> Any:
     # Older published EG distributions cannot provide this projection yet.
     try:
-        from epistemic_graph.generated.coordination import (
+        from medulla.generated.coordination import (
             decode_get_current_plan,
             send_get_current_plan,
         )
     except ImportError:
         return None
-    from epistemic_graph import EngineResponseError
-    from epistemic_graph.generated import ContractViolation
+    from medulla import EngineResponseError
+    from medulla.generated import ContractViolation
 
     from arbora.api.errors import EngineRefusal
 
@@ -53,14 +53,14 @@ async def _native_owner_graph(
     client: Any, *, run_id: str, tenant: str, principal: str
 ) -> str | None:
     """Resolve only the caller-owned native admission on the host's WorkItem graph."""
-    from epistemic_graph import EngineResponseError
-    from epistemic_graph.generated import ContractViolation
+    from medulla import EngineResponseError
+    from medulla.generated import ContractViolation
 
     from arbora.api.errors import EngineRefusal
     from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 
     try:
-        from epistemic_graph.generated.coordination import (
+        from medulla.generated.coordination import (
             decode_get_run_work_item,
             send_get_run_work_item,
         )

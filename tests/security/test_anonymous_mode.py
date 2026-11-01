@@ -22,7 +22,7 @@ def local_mode(monkeypatch):
         "KG_AUTH_TOKEN_REF",
         "KG_IDENTITY_OAUTH2",
         "GRAPH_SERVICE_AUTH_SECRET",
-        "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON",
+        "MEDULLA_SIGNER_KEYS_JSON",
     ):
         monkeypatch.delenv(key, raising=False)
     anonymous.validate_startup(Namespace(host="127.0.0.1", auth_type="none"))
@@ -420,7 +420,7 @@ async def test_anonymous_policy_preserves_authority_and_narrowing(
 
 
 @pytest.mark.parametrize(
-    "name", ["GRAPH_SERVICE_AUTH_SECRET", "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON"]
+    "name", ["GRAPH_SERVICE_AUTH_SECRET", "MEDULLA_SIGNER_KEYS_JSON"]
 )
 @pytest.mark.parametrize("value", ["", "configured-test-placeholder"])
 def test_engine_credentials_checked_through_settings(

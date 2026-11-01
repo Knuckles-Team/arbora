@@ -206,7 +206,7 @@ def test_pinned_contract_serves_every_wire_callable_method_as_generated_op() -> 
     """The packaged engine contract yields one ``eg.<domain>.<Method>`` op per callable method."""
     from importlib import resources
 
-    root = resources.files("epistemic_graph").joinpath("contract")
+    root = resources.files("medulla").joinpath("contract")
     rows = json.loads(root.joinpath("methods.json").read_text())["methods"]
     expected = {
         f"eg.{row['domain']}.{row['id']}" for row in rows if row["is_wire_callable"]

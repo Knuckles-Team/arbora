@@ -46,7 +46,7 @@ def _eg_schema(model: EgSchemaRef, contract_root: Path | None) -> dict[str, str]
     ):
         raise ValueError(f"invalid EG schema reference: {model.path!r}")
     root = contract_root or Path(
-        str(importlib.resources.files("epistemic_graph") / "contract")
+        str(importlib.resources.files("medulla") / "contract")
     )
     document, digest = _contract_document(str(root / relative))
     selected: Any = document

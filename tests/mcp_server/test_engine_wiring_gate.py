@@ -12,9 +12,9 @@ from typing import Any
 
 import pytest
 
-pytest.importorskip("epistemic_graph")
+pytest.importorskip("medulla")
 
-from epistemic_graph import client as eg_client  # noqa: E402
+from medulla import client as eg_client  # noqa: E402
 
 from arbora.mcp_server.backing.tools import engine_tools, query_tools  # noqa: E402
 

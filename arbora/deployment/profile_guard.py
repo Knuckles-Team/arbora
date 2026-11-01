@@ -397,24 +397,24 @@ def _check_kafka(config: AgentConfig) -> list[str]:
 
 def _check_graph_resource_limits(config: AgentConfig) -> list[str]:
     offending: list[str] = []
-    resident_limit = int(getattr(config, "epistemic_graph_max_resident_graphs", 0) or 0)
+    resident_limit = int(getattr(config, "medulla_max_resident_graphs", 0) or 0)
     if resident_limit <= 0:
         offending.append(
-            "epistemic_graph_max_resident_graphs must be positive in production; "
+            "medulla_max_resident_graphs must be positive in production; "
             "0 leaves the resident graph cache unbounded."
         )
 
-    page_size = int(getattr(config, "epistemic_graph_lazy_open_page_size", 0) or 0)
+    page_size = int(getattr(config, "medulla_lazy_open_page_size", 0) or 0)
     if page_size <= 0:
         offending.append(
-            "epistemic_graph_lazy_open_page_size must be positive in production; "
+            "medulla_lazy_open_page_size must be positive in production; "
             "0 performs an unbounded all-at-once lazy open."
         )
 
-    node_limit = int(getattr(config, "epistemic_graph_max_nodes_per_graph", 0) or 0)
+    node_limit = int(getattr(config, "medulla_max_nodes_per_graph", 0) or 0)
     if node_limit <= 0:
         offending.append(
-            "epistemic_graph_max_nodes_per_graph must be positive in production; "
+            "medulla_max_nodes_per_graph must be positive in production; "
             "0 leaves one graph's resident node set unbounded."
         )
     return offending
@@ -432,11 +432,11 @@ def _check_local_engine_encryption(config: AgentConfig) -> list[str]:
     if (
         local_engine_managed
         and not str(
-            getattr(config, "epistemic_graph_encryption_key_ref", "") or ""
+            getattr(config, "medulla_encryption_key_ref", "") or ""
         ).strip()
     ):
         offending.append(
-            "epistemic_graph_encryption_key_ref is required for a packaged local "
+            "medulla_encryption_key_ref is required for a packaged local "
             "production engine."
         )
     return offending

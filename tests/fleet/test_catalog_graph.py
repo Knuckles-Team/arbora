@@ -141,7 +141,7 @@ async def test_onboarding_writes_the_catalog_and_never_fails_on_a_refusal(
     async def add_triples(client: Any, params: dict[str, Any], graph: str) -> None:
         sent.append((client, params, graph))
 
-    monkeypatch.setattr("epistemic_graph.generated.graph.send_add_triples", add_triples)
+    monkeypatch.setattr("medulla.generated.graph.send_add_triples", add_triples)
     monkeypatch.setattr(
         "arbora.deployment.semantic_provisioning._bind_session_graph",
         lambda _graph: contextlib.nullcontext(),

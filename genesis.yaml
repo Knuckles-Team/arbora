@@ -170,7 +170,7 @@ engine:
       the EFFECTIVE process boundary: use a true in-process engine only when the deployed build proves
       it; otherwise the bundled supervised engine is an operational unit but remains out of process.'
     out-of-process-shared: HYPERSCALING shape (enterprise default) — arbora talks to a shared, independently-scaled
-      engine over UDS/TCP (epistemic_graph.client, GIL-free); build the engine with the eg `cluster` cargo
+      engine over UDS/TCP (medulla.client, GIL-free); build the engine with the eg `cluster` cargo
       feature (raft, multi-Raft sharding) and run N arbora client pods behind the gateway, scaled via
       k8s HPA independently of the engine.
     rule: both shapes keep engine calls BATCHED (one call = one batch op over graph-resident data, never
@@ -178,7 +178,7 @@ engine:
   secret_store:
     graph: __secrets__
     label: Secret
-    encryption_key_env: EPISTEMIC_GRAPH_ENCRYPTION_KEY
+    encryption_key_env: MEDULLA_ENCRYPTION_KEY
     note: default embedded secret store (OS-5.66) in the full engine. Local SQLite caches (registry graph,
       card cache, time-series) also route to the engine — no SQLite fallback.
 components:

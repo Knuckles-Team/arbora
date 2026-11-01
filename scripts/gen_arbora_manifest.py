@@ -629,7 +629,7 @@ def build_manifest() -> list[dict]:
 
     if not ENGINE_DOMAINS:
         # ENGINE_DOMAINS is populated by introspecting the installed
-        # `epistemic_graph` client (see engine_tools._discover_domains); an
+        # `medulla` client (see engine_tools._discover_domains); an
         # empty dict here means that import failed and EVERY engine_<domain>
         # tool — and every engine_<domain>_<method> verbose op derived from it
         # — will be silently absent from this run's manifest. This is the

@@ -1,6 +1,6 @@
 """Epistemic-graph client context, pooling, and topology composition.
 
-RF-ADR-009 keeps graph behavior in :mod:`epistemic_graph`.  This module owns
+RF-ADR-009 keeps graph behavior in :mod:`medulla`.  This module owns
 only arbora process concerns: translating verified actor authority into the
 client's request-context shape, keeping one transport client per named graph,
 and translating the engine-authored placement/topology responses used for

@@ -7,7 +7,7 @@ the engine's *low-level* capability surface so no engine method is reachable onl
 from a Python import.
 
 The engine speaks length-prefixed MessagePack over UDS/TCP; the pure-Python
-``epistemic_graph`` client wraps every wire ``Method`` (``crates/eg-types/src/
+``medulla`` client wraps every wire ``Method`` (``crates/eg-types/src/
 protocol.rs``) as a method on one of its sub-clients (``.nodes``, ``.edges``,
 ``.graph``, ``.analytics``, ``.lifecycle``, ``.reasoning``, ``.ledger``,
 ``.channels``, ``.tenants``, ``.resharding``, ``.consensus``, ``.finance``,
@@ -65,7 +65,7 @@ from arbora.security.error_surface import public_error_json
 logger = logging.getLogger(__name__)
 
 # ── Domain → client sub-client class map ─────────────────────────────────────
-# domain name == the attribute on ``SyncEpistemicGraphClient`` == the REST sub-path.
+# domain name == the attribute on ``SyncMedullaClient`` == the REST sub-path.
 # The class is introspected (below) for its public async methods = the actions.
 _DOMAIN_CLASSES: dict[str, str] = {
     "nodes": "NodeClient",
@@ -90,8 +90,8 @@ _DOMAIN_CLASSES: dict[str, str] = {
     "streaming": "StreamingClient",
     "blob": "BlobClient",
     # MERISTEM-P0-6: previously-missing namespaces (audited gap #3). Domain name ==
-    # the attribute on ``SyncEpistemicGraphClient`` (checked against the
-    # installed ``epistemic_graph.client`` module — NOT a guess): the graph-
+    # the attribute on ``SyncMedullaClient`` (checked against the
+    # installed ``medulla.client`` module — NOT a guess): the graph-
     # learning sub-client is exposed as ``.graphlearn`` (no underscore), so
     # the domain/tool/REST-path name below is ``graphlearn`` to match it.
     # rbac/admin are ADMIN_DOMAINS (see below) — gated BEFORE being newly
@@ -150,13 +150,13 @@ _DOMAIN_BLURB: dict[str, str] = {
 def _discover_domains() -> dict[str, list[str]]:
     """Introspect the engine client sub-client classes → ``{domain: [methods]}``.
 
-    The ``epistemic_graph`` client mirrors the wire protocol 1:1, so its public
+    The ``medulla`` client mirrors the wire protocol 1:1, so its public
     async methods ARE the engine's invocable capability surface. Discovering them
     (instead of hand-listing 200+ methods) keeps this surface drift-free: a new
     engine method shows up automatically once the client wraps it.
     """
     try:
-        from epistemic_graph import client as _client_mod
+        from medulla import client as _client_mod
     except Exception as exc:  # noqa: BLE001 — engine client absent ⇒ register nothing
         # Degrade gracefully (a deployment with no engine client bound yet — e.g.
         # `tiny` pre-bootstrap — must not crash the whole MCP process just
@@ -164,10 +164,10 @@ def _discover_domains() -> dict[str, list[str]]:
         # `{}` here previously dropped every engine_<domain> tool (and every
         # engine_<domain>_<method> verbose op scripts/gen_arbora_manifest.py
         # derives from this dict) with zero visible signal, which is exactly
-        # what let a manifest regen on a box missing the `epistemic_graph`
+        # what let a manifest regen on a box missing the `medulla`
         # wheel/kernel silently ship a manifest with hundreds fewer entries.
         logger.warning(
-            "engine surface discovery: 'epistemic_graph' client unavailable — "
+            "engine surface discovery: 'medulla' client unavailable — "
             "ALL engine_<domain> tools (and their verbose/manifest ops) will be "
             "absent this run (exception_type=%s). Install the engine with "
             "`pip install agent-utilities[arbora]` (or `[serving]`/`[all]`, both "
@@ -438,7 +438,7 @@ def _enforce_action_scope(domain: str, action: str) -> None:
 # ``engine_analytics(action="pagerank", params_json="{}")`` — an unbounded global
 # PageRank over the live ~139k-node graph — OOM-killed the epistemic-graph engine
 # (exitCode 137). ``AnalyticsClient.pagerank``/``betweenness_centrality``/
-# ``degree_centrality_all`` (``epistemic_graph.client``) take NO kwarg that scopes
+# ``degree_centrality_all`` (``medulla.client``) take NO kwarg that scopes
 # them to anything smaller than the whole graph, so every call to one of them is
 # unbounded by construction; ``personalized_pagerank`` is bounded ONLY when it
 # carries a non-empty ``seed_nodes`` frontier. Rather than let the engine OOM
@@ -594,9 +594,9 @@ def _dispatch(
     if "graph" not in params:
         try:
             # BUG-4 follow-up: ``fn`` itself is USELESS for this check.
-            # ``SyncEpistemicGraphClient`` wraps every async namespace method
+            # ``SyncMedullaClient`` wraps every async namespace method
             # in a generic ``sync_wrapper(*args, **kwargs)`` closure (see
-            # ``epistemic_graph.client.SyncEpistemicGraphClient._SyncWrapper.
+            # ``medulla.client.SyncMedullaClient._SyncWrapper.
             # __getattr__``) that erases the real parameter names —
             # ``inspect.signature(fn)`` on that closure always comes back as
             # ``(*args, **kwargs)``, so ``"graph" in sig.parameters`` never
@@ -701,7 +701,7 @@ def register_engine_tools(mcp) -> None:
         description = (
             f"Low-level epistemic-graph engine surface for the '{domain}' domain"
             + (f" ({blurb})" if blurb else "")
-            + ". Action-routed 1:1 over the epistemic_graph client: set 'action' to "
+            + ". Action-routed 1:1 over the medulla client: set 'action' to "
             f"the method name and 'params_json' to its JSON kwargs. Actions: "
             f"{', '.join(sorted(methods))}."
             + admin_note

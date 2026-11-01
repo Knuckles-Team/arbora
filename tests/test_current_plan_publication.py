@@ -56,7 +56,7 @@ def register_publication_fixture() -> None:
 
 @pytest.fixture
 def transport(monkeypatch: pytest.MonkeyPatch) -> Any:
-    from epistemic_graph.generated import coordination
+    from medulla.generated import coordination
 
     calls: list[Any] = []
 
@@ -278,7 +278,7 @@ async def test_existing_task_plan_revision_is_preserved_or_conflicts(
     transport, monkeypatch, concurrent
 ):
     """Controlled native rules qualify routing, not native atomicity itself."""
-    from epistemic_graph.generated import coordination
+    from medulla.generated import coordination
 
     stored = {"run_id": "run", "revision": 0, "task_plan": {"plan_digest": "original"}}
     attempted = []
@@ -326,7 +326,7 @@ async def test_existing_task_plan_revision_is_preserved_or_conflicts(
 
 @pytest.mark.asyncio
 async def test_uncertain_write_retries_exact_mapped_payload(transport, monkeypatch):
-    from epistemic_graph.generated import coordination
+    from medulla.generated import coordination
 
     attempts = []
 
@@ -362,8 +362,8 @@ async def test_uncertain_write_retries_exact_mapped_payload(transport, monkeypat
 async def test_valid_publish_receipt_must_match_bound_request(
     transport, monkeypatch, field
 ):
-    from epistemic_graph.generated import coordination
-    from epistemic_graph.generated.models import CurrentPlanPublished
+    from medulla.generated import coordination
+    from medulla.generated.models import CurrentPlanPublished
 
     def mismatched(result):
         request = result["request"]
@@ -508,7 +508,7 @@ async def test_host_operation_policy_is_rechecked_around_native_awaits(
 async def test_concurrent_scope_initialization_reads_baseline_once(
     transport, monkeypatch
 ):
-    from epistemic_graph.generated import coordination
+    from medulla.generated import coordination
 
     reads = []
 
@@ -570,7 +570,7 @@ async def test_served_client_view_binds_real_transport_not_view(
 ):
     from contextlib import contextmanager
 
-    from epistemic_graph.generated import coordination
+    from medulla.generated import coordination
 
     from arbora.api.contracts.session import current_session
     from arbora.mcp_server.served_engine import SessionRoutedClient

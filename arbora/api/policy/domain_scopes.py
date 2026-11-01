@@ -3,7 +3,7 @@
 Arbora advertises a handful of scopes it owns itself (fleet event delivery,
 Agent WebUI console roles). ARBORA-IDENTITY-R002 requires that these use the
 engine's shared scope classes and stay consistent with the single generated
-scope registry (``epistemic_graph``'s pinned ``contract/scopes.json``) rather
+scope registry (``medulla``'s pinned ``contract/scopes.json``) rather
 than a separately maintained list. This module is the one place Arbora
 declares them; ``tests/api/test_domain_scopes.py`` is the registry property
 test that checks every entry here still matches that generated registry's

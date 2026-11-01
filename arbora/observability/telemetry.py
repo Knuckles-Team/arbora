@@ -1,7 +1,7 @@
 """The standard OTLP trace pipeline of the Arbora process.
 
 The pipeline is opt-in. It starts only when a collector endpoint is set
-(``EPISTEMIC_GRAPH_OBS_ADDR``, then ``OTEL_EXPORTER_OTLP_ENDPOINT``), the trace
+(``MEDULLA_OBS_ADDR``, then ``OTEL_EXPORTER_OTLP_ENDPOINT``), the trace
 exporter is not ``none``, and the OpenTelemetry SDK is installed. Every span is
 exported through the metadata-only exporter, so no prompt or payload leaves the
 process. The process bootstrap calls :func:`configure_standard_otel` once.
@@ -27,7 +27,7 @@ def otel_endpoint() -> str:
     """Return the configured collector endpoint, or ``""`` when none is set."""
     if str(setting("OTEL_TRACES_EXPORTER", "") or "").strip().lower() == "none":
         return ""
-    for name in ("EPISTEMIC_GRAPH_OBS_ADDR", "OTEL_EXPORTER_OTLP_ENDPOINT"):
+    for name in ("MEDULLA_OBS_ADDR", "OTEL_EXPORTER_OTLP_ENDPOINT"):
         value = str(setting(name, "") or "").strip()
         if value:
             return value if "://" in value else f"http://{value}"

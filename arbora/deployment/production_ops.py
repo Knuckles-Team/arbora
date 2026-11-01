@@ -199,7 +199,7 @@ def _recovery_manifest(bundle: Path) -> dict[str, int]:
 
 
 async def _backup(archive_root: Path) -> dict[str, Any]:
-    from epistemic_graph import EpistemicGraphClient
+    from medulla import MedullaClient
 
     archive_root.mkdir(parents=True, exist_ok=True)
     archive_root = archive_root.resolve()
@@ -208,7 +208,7 @@ async def _backup(archive_root: Path) -> dict[str, Any]:
         archive_root / f"bundle-{int(time.time())}-{secrets.token_hex(6)}",
     )
     transport = _coordinator_transport()
-    client = await EpistemicGraphClient.connect(
+    client = await MedullaClient.connect(
         auth_secret=_required_env("GRAPH_SERVICE_AUTH_SECRET"),
         verified_context=_verified_context(),
         **transport,
@@ -287,9 +287,9 @@ def _wait_for_port(
 
 
 async def _probe_restored_engine(port: int) -> None:
-    from epistemic_graph import EpistemicGraphClient
+    from medulla import MedullaClient
 
-    client = await EpistemicGraphClient.connect(
+    client = await MedullaClient.connect(
         tcp_addr=f"127.0.0.1:{port}",
         auth_secret=_required_env("GRAPH_SERVICE_AUTH_SECRET"),
         verified_context=_verified_context(),
@@ -313,8 +313,8 @@ async def _restore_validate(archive_root: Path, scratch_root: Path) -> dict[str,
         scratch_root / f"restore-{int(time.time())}-{secrets.token_hex(6)}",
     )
     destination.mkdir(mode=0o700)
-    restore_bin = str(setting("EPISTEMIC_GRAPH_RESTORE_BIN", "restore"))
-    server_bin = str(setting("EPISTEMIC_GRAPH_SERVER_BIN", "epistemic-graph-server"))
+    restore_bin = str(setting("MEDULLA_RESTORE_BIN", "restore"))
+    server_bin = str(setting("MEDULLA_BIN", "medulla-server"))
     port = int(setting("RESTORE_VALIDATION_PORT", 19_100))
     if not 1024 <= port <= 65535:
         raise ProductionOperationError("RESTORE_VALIDATION_PORT is outside 1024..65535")

@@ -5,7 +5,7 @@ background scheduler chief among them — authenticate to the engine as themselv
 role on the engine's own independent RBAC store. It is unrelated to a human/OIDC login
 and unrelated to artifact/release signing (see the note at the end of this document).
 Read this before seeding, rotating, or reasoning about
-`EPISTEMIC_GRAPH_SIGNER_KEYS_JSON`.
+`MEDULLA_SIGNER_KEYS_JSON`.
 
 ## The one rule that shapes everything else
 
@@ -81,12 +81,12 @@ environment and the engine's. Both read the same variable name.
    principal so a compromise elsewhere does not become identity-plane authority here.
 
 3. **Write it once, to the shared store.** Merge `{"<principal>": "<hex-key>"}` into
-   the `EPISTEMIC_GRAPH_SIGNER_KEYS_JSON` map at the secret-store entry the plan
+   the `MEDULLA_SIGNER_KEYS_JSON` map at the secret-store entry the plan
    names for engine deployment secrets. Merge — do not overwrite — or you will revoke
    every other signer in the map.
 
 4. **Deliver it to both sides.** The engine reads
-   `EPISTEMIC_GRAPH_SIGNER_KEYS_JSON` to verify signatures; the admitting process reads
+   `MEDULLA_SIGNER_KEYS_JSON` to verify signatures; the admitting process reads
    the same variable to produce them. Deliver both from that one store entry (an
    ExternalSecret, CSI mount or equivalent), so there is one authoritative copy and no drift between verifier
    and signer.
@@ -103,7 +103,7 @@ live behind the authorization it grants.
 Run these in order, and do not assume an earlier step passing implies a later one does.
 
 1. **The registry reached the process.** Confirm the admitting process's environment
-   carries `EPISTEMIC_GRAPH_SIGNER_KEYS_JSON` and that its own principal is a key in
+   carries `MEDULLA_SIGNER_KEYS_JSON` and that its own principal is a key in
    that map. A process holding a registry that does not name *itself* cannot sign
    anything, and this is the single most common misconfiguration.
 2. **The registry reached the engine**, and the engine restarted *after* it did.
@@ -153,7 +153,7 @@ path with no way to tell one holder's calls from another's after the fact.
 
 ### 3. No rotation path
 
-The engine reads `EPISTEMIC_GRAPH_SIGNER_KEYS_JSON` once at process start
+The engine reads `MEDULLA_SIGNER_KEYS_JSON` once at process start
 (`OnceLock`), so changing a key requires re-writing the store entry, waiting for the
 secret delivery to refresh (not immediate), and **restarting every engine pod that verifies
 signatures**. Because it is a flat `{signer_id: key}` map, there is no overlap window
@@ -185,7 +185,7 @@ not as a maintenance-window item.
 
 | Symptom | Root cause | What to check |
 |---|---|---|
-| `AdmissionAuthorityError: this process holds no signer key for verified principal '<id>'` | The process authenticates fine but its registry does not name its own principal — so it cannot sign | Confirm `EPISTEMIC_GRAPH_SIGNER_KEYS_JSON` reached this process AND contains a `<id>` key. A process serving a UI it did not expect to admit for is the usual cause |
+| `AdmissionAuthorityError: this process holds no signer key for verified principal '<id>'` | The process authenticates fine but its registry does not name its own principal — so it cannot sign | Confirm `MEDULLA_SIGNER_KEYS_JSON` reached this process AND contains a `<id>` key. A process serving a UI it did not expect to admit for is the usual cause |
 | `register_identity` fails with `SIGNER_TRUST_DENIED` | The signature verified, but against a signer that is not the calling principal | Never pair a signer with another identity. If a caller supplies `signer_id` explicitly, it must equal the verified principal — `AdmissionAuthority` refuses the mismatch locally so this never reaches the wire |
 | `register_identity` fails with `"signature uses untrusted signer '<id>'"` | `<id>` is absent from the engine's current registry — never added, or the engine has not restarted since | Confirm the store entry, that secret delivery refreshed, and that the engine pod restarted *after* that refresh |
 | Scheduler logs `CypherEngineError(PermissionError)` on every tick, 0 successes | The scheduler's principal has never been registered/granted `control:system` — admission has not run, or failed before "Verifying it works" was applied | Run "Verifying it works" steps 1-3 in order |
@@ -196,10 +196,10 @@ not as a maintenance-window item.
 
 - **Unified, `child` placement:** arbora starts the engine itself, generates a
   per-install bootstrap signer key and injects it into that child. No operator
-  step; `EPISTEMIC_GRAPH_SIGNER_KEYS_JSON` is normally absent.
+  step; `MEDULLA_SIGNER_KEYS_JSON` is normally absent.
 - **Unified, `sidecar` placement:** the engine is a separate container that
   arbora only connects to, so arbora admits as a remote client. Put
-  `EPISTEMIC_GRAPH_SIGNER_KEYS_JSON` (naming arbora's principal) in the one
+  `MEDULLA_SIGNER_KEYS_JSON` (naming arbora's principal) in the one
   runtime Secret both containers read — one copy, no verifier/signer drift.
 - **Shared topology, and connectors admitting to an engine they did not
   start:** the full operator-provisioned chain above.

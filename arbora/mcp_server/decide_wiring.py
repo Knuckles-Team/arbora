@@ -83,8 +83,8 @@ async def _search_agent_cards(eg_client: Any, session: Any) -> Any:
     """Search the session's graph for registered A2A agent cards through EG."""
     import importlib
 
-    component = importlib.import_module("epistemic_graph.generated.agent_component")
-    storage = importlib.import_module("epistemic_graph.generated.storage")
+    component = importlib.import_module("medulla.generated.agent_component")
+    storage = importlib.import_module("medulla.generated.storage")
     graph = str(getattr(session, "graph", "") or "").strip()
     if not graph:
         raise LookupError("the verified session is not bound to a graph")

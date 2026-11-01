@@ -1,7 +1,7 @@
 """Boot a real ``arbora`` process against a real EG server (the deploy gate).
 
 The unit suite builds the server without running its startup, so it cannot see
-a process that refuses to serve. This test starts the ``epistemic-graph-server``
+a process that refuses to serve. This test starts the ``medulla-server``
 binary from the installed wheel on a temporary store, then the ``arbora``
 console entry point as a subprocess configured through a temporary
 ``ARBORA_CONFIG_DIR``, and drives both served surfaces with a real bearer
@@ -43,7 +43,7 @@ pytestmark = [
     pytest.mark.real_boot,
     pytest.mark.skipif(
         not (sys.platform == "linux" and platform.machine() in {"x86_64", "AMD64"}),
-        reason="the epistemic-graph-server wheel ships linux x86_64 only",
+        reason="the medulla-server wheel ships linux x86_64 only",
     ),
 ]
 
@@ -91,7 +91,7 @@ _INHERITED_ENV_PREFIXES = ("LC_", "PYTHON", "UV_", "COVERAGE_")
 
 
 def _server_binary() -> str:
-    from epistemic_graph.server_binary import (
+    from medulla.server_binary import (
         ServerBinaryNotFoundError,
         resolve_server_binary,
     )
@@ -193,9 +193,9 @@ class _Issuer:
 async def _admit_process_identity(
     socket_path: Path, secret: str, signer_key: str
 ) -> None:
-    from epistemic_graph import EpistemicGraphClient
+    from medulla import MedullaClient
 
-    client = await EpistemicGraphClient.connect(
+    client = await MedullaClient.connect(
         socket_path=str(socket_path),
         auth_secret=secret,
         graph_name="__commons__",
@@ -294,15 +294,15 @@ def _booted_stack(
         eg_env = {
             **base_env,
             "GRAPH_SERVICE_AUTH_SECRET": secret,
-            "EPISTEMIC_GRAPH_AUDIENCE": AUDIENCE,
-            "EPISTEMIC_GRAPH_TENANT": TENANT,
-            "EPISTEMIC_GRAPH_POLICY_VERSION": POLICY_VERSION,
-            "EPISTEMIC_GRAPH_REQUIRE_OIDC": "false",
-            "EPISTEMIC_GRAPH_SECURITY_STATE_DIR": str(root / "security"),
+            "MEDULLA_AUDIENCE": AUDIENCE,
+            "MEDULLA_TENANT": TENANT,
+            "MEDULLA_POLICY_VERSION": POLICY_VERSION,
+            "MEDULLA_REQUIRE_OIDC": "false",
+            "MEDULLA_SECURITY_STATE_DIR": str(root / "security"),
             # Arbora imports its own semantic packs as its process principal.
-            "EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS": "*=principal:sha256:"
+            "MEDULLA_CONNECTOR_PACK_IMPORTERS": "*=principal:sha256:"
             + hashlib.sha256(PROCESS_SUBJECT.encode()).hexdigest(),
-            "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON": json.dumps(
+            "MEDULLA_SIGNER_KEYS_JSON": json.dumps(
                 {
                     PROCESS_SUBJECT: {
                         "key": signer_key,
@@ -330,7 +330,7 @@ def _booted_stack(
         def eg_up() -> bool:
             if processes[0].poll() is not None:
                 raise AssertionError(
-                    "epistemic-graph-server exited during startup\n"
+                    "medulla-server exited during startup\n"
                     + (root / "eg.log").read_text(errors="replace")[-4000:]
                 )
             return socket_path.exists()
@@ -776,9 +776,9 @@ async def test_mcp_find_returns_the_connector_tool(stack: dict[str, Any]) -> Non
 
 async def _effect_items(stack: dict[str, Any]) -> list[dict[str, Any]]:
     """The governed effects EG holds on the control graph, read from EG itself."""
-    from epistemic_graph import EpistemicGraphClient
+    from medulla import MedullaClient
 
-    client = await EpistemicGraphClient.connect(
+    client = await MedullaClient.connect(
         socket_path=stack["socket_path"],
         auth_secret=stack["secret"],
         graph_name="__control__",
@@ -844,7 +844,7 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
     from types import SimpleNamespace
 
     from agent_connector_sdk.current_plan import PlanItem
-    from epistemic_graph import EpistemicGraphClient
+    from medulla import MedullaClient
 
     from arbora import current_plan_publication, work_items
     from arbora.a2a.authority import WorkItemA2AAuthority
@@ -879,7 +879,7 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
         actor = asyncio.run(actor_from_bearer_token(stack["token"]))
         session = mint_graph_session(actor).with_graph(CONTROL_GRAPH)
         pool = EpistemicClientPool(
-            cast(ConnectClient, EpistemicGraphClient.connect),
+            cast(ConnectClient, MedullaClient.connect),
             socket_path=stack["socket_path"],
             auth_secret=stack["secret"],
         )
@@ -1180,9 +1180,9 @@ async def _direct_submit(stack: dict[str, Any], connector: str) -> str:
     from agent_connector_sdk.ingest.model import ChangeSet, Entity, IngestBinding
     from agent_connector_sdk.ingest.service import KnowledgeIngest
     from agent_connector_sdk.ingest.transport import EpistemicGraphIngestTransport
-    from epistemic_graph import EpistemicGraphClient
+    from medulla import MedullaClient
 
-    client = await EpistemicGraphClient.connect(
+    client = await MedullaClient.connect(
         socket_path=stack["socket_path"],
         auth_secret=stack["secret"],
         graph_name=TENANT_GRAPH,
@@ -1211,11 +1211,11 @@ async def _direct_submit(stack: dict[str, Any], connector: str) -> str:
 
 async def _pack_status(stack: dict[str, Any], connector: str) -> Any:
     """The engine's ConnectorPack status for ``connector`` (diagnostics)."""
-    from epistemic_graph import EpistemicGraphClient
-    from epistemic_graph.generated.connector_pack import ConnectorPackStatusRequest
-    from epistemic_graph.generated.storage import send_connector_pack_status
+    from medulla import MedullaClient
+    from medulla.generated.connector_pack import ConnectorPackStatusRequest
+    from medulla.generated.storage import send_connector_pack_status
 
-    client = await EpistemicGraphClient.connect(
+    client = await MedullaClient.connect(
         socket_path=stack["socket_path"],
         auth_secret=stack["secret"],
         graph_name=TENANT_GRAPH,

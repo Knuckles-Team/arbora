@@ -33,7 +33,7 @@ runtimeSecret:
   # Created/synchronized outside this chart (External Secrets, a CSI driver, or
   # an operator-run `kubectl create secret`). No secret values belong in values.
   # Both arbora and the engine read it: GRAPH_SERVICE_AUTH_SECRET (the shared
-  # envelope HMAC), EPISTEMIC_GRAPH_* engine secrets, and optional
+  # envelope HMAC), MEDULLA_* engine secrets, and optional
   # ARBORA_SETUP_CODE.
   name: arbora-runtime
   optional: false
@@ -139,7 +139,7 @@ engine:
   # unified-in-process only: sidecar | child.
   placement: sidecar
   # Empty repository = reuse arbora.image (the unified image carries the
-  # epistemic-graph-server binary). The shared StatefulSet needs its own value.
+  # medulla-server binary). The shared StatefulSet needs its own value.
   image:
     repository: ""
     tag: ""
@@ -156,10 +156,7 @@ engine:
     secretName: ""
   extraArgs: []
   config:
-    EPISTEMIC_GRAPH_PERSIST_BACKEND: redb
-    EPISTEMIC_GRAPH_REQUIRE_VERIFIED_CONTEXT: "1"
-    EPISTEMIC_GRAPH_REQUIRE_SIGNED: "1"
-    EPISTEMIC_GRAPH_RLS_DEFAULT_DENY: "1"
+    MEDULLA_PERSIST_BACKEND: redb
   # Separate volume only for out-of-process-shared; unified uses arbora.persistence.
   persistence:
     size: 100Gi

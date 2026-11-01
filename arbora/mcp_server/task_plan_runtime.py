@@ -38,8 +38,8 @@ def _contracts() -> tuple[Any, Any]:
         au = import_module("agent_utilities.runtime")
         runtime = import_module("agent_utilities.runtime")
         _failure_type = runtime.RunFailed
-        eg = import_module("epistemic_graph.generated.coordination")
-        models = import_module("epistemic_graph.generated.models")
+        eg = import_module("medulla.generated.coordination")
+        models = import_module("medulla.generated.models")
         if not all(
             hasattr(au, name)
             for name in ("DependencyPlan", "RunTask", "RunPlanFailure", "RunFailed")

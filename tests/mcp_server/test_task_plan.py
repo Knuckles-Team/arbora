@@ -227,7 +227,7 @@ async def test_eunomia_denial_never_reaches_engine(bridge):
 
 
 def test_missing_eg_contract_requires_upgrade(monkeypatch):
-    import epistemic_graph.decision_client as contract
+    import medulla.decision_client as contract
 
     monkeypatch.delattr(contract, "task_plan_request", raising=False)
     with pytest.raises(OperationRefused, match="UPGRADE_REQUIRED"):
@@ -263,11 +263,11 @@ async def test_native_typed_receipt_preserves_premise_wire_aliases(bridge, monke
     import json
     from pathlib import Path
 
-    from epistemic_graph.decision_client import (
+    from medulla.decision_client import (
         task_plan_request,
         verify_task_plan_receipt,
     )
-    from epistemic_graph.generated.models import DecisionBatch
+    from medulla.generated.models import DecisionBatch
 
     host, principal, _, _, send, _ = bridge
     batch = DecisionBatch.model_validate_json(

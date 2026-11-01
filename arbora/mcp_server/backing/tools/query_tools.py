@@ -1985,7 +1985,7 @@ def _project_node_link(rows: list[Any]) -> dict[str, Any]:
 #
 # Capability detection reuses `engine_tools.ENGINE_DOMAINS`
 # (arbora/mcp_server/backing/tools/engine_tools/py, unowned this wave) — the SAME
-# live introspection of the installed `epistemic_graph` client's sub-client
+# live introspection of the installed `medulla` client's sub-client
 # classes every `engine_<domain>` tool is generated from (see that module's
 # `_discover_domains()` docstring) — rather than re-deriving "what's
 # compiled in" by hand. A domain absent from `ENGINE_DOMAINS` (its client

@@ -73,9 +73,9 @@ def _validate_budgets(
 
 def _contract() -> tuple[Any, Any, Any, Any]:
     try:
-        client = import_module("epistemic_graph.decision_client")
-        models = import_module("epistemic_graph.generated.models")
-        query = import_module("epistemic_graph.generated.query")
+        client = import_module("medulla.decision_client")
+        models = import_module("medulla.generated.models")
+        query = import_module("medulla.generated.query")
         members = (
             getattr(client, "task_plan_request", None),
             getattr(client, "verify_task_plan_receipt", None),
@@ -186,11 +186,11 @@ def configured_task_plan() -> TaskPlanConfig | None:
     raw.setdefault("feature_schema", {})
     config = TaskPlanConfig(**raw)
     _contract()
-    from epistemic_graph.generated.models import ComponentDependency, DecisionPolicyRef
+    from medulla.generated.models import ComponentDependency, DecisionPolicyRef
 
     if config.feature_schema:
         installed = import_module(
-            "epistemic_graph.decision_client"
+            "medulla.decision_client"
         ).TASK_PLAN_FEATURE_SCHEMA
         if config.feature_schema.get("definition_digest") == installed.get(
             "content_digest"
