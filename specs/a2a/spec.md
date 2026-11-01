@@ -52,7 +52,7 @@ An A2A caller needs to know, truthfully, whether this Arbora deployment can stre
 
 Depends on [`ARBORA-A2A`](spec.md) (the context-budget subset of the A2A task projection) landing first: this spec's streaming and push projections reuse the same bounded event-cursor and context-budget machinery ARBORA-A2A introduces, rather than inventing a second one.
 
-Arbora owns the transport, authenticated Agent Card projection and typed refusal. [meristem](https://github.com/Knuckles-Team/agent-utilities) owns the harness-facing task-event producer. Its exact durable task/tenant reader requirement and public export remain unassigned. The required events cover launch, step, tool, usage, artifact, receipt and terminal outcomes. [medulla](https://github.com/Knuckles-Team/medulla) (`MEDULLA-DURABLE-KERNEL`) owns the durable, append-only transition-history ledger this spec projects as `tasks/get` history. Arbora must not persist a second WorkItem event log, a second transition-history ledger, or synthesize history from in-process state when the durable authority is unavailable.
+Arbora owns the transport, authenticated Agent Card projection and typed refusal. [meristem](https://github.com/Knuckles-Team/meristem) owns the harness-facing task-event producer. Its exact durable task/tenant reader requirement and public export remain unassigned. The required events cover launch, step, tool, usage, artifact, receipt and terminal outcomes. [medulla](https://github.com/Knuckles-Team/medulla) (`MEDULLA-DURABLE-KERNEL`) owns the durable, append-only transition-history ledger this spec projects as `tasks/get` history. Arbora must not persist a second WorkItem event log, a second transition-history ledger, or synthesize history from in-process state when the durable authority is unavailable.
 
 ### Requirements
 
@@ -93,7 +93,7 @@ An authenticated A2A caller submits a task whose execution needs more than the t
 Two other owners' public contracts are load-bearing and are linked here by stable ID, never copied:
 
 - **medulla** owns agent/tool assembly and the `AgentAssemble` operation that derives a legal tool subset for a capability-constrained agent graph: [`MEDULLA-DECISION-ENGINE-001`](https://github.com/Knuckles-Team/medulla/blob/main/specs/decision-engine/spec.md), requirement `MEDULLA-DECISION-ENGINE-R036`.
-- **meristem** owns the signed dispatch carrier that must cryptographically bind and let a harness enforce the admitted subset: [`MERISTEM-CONTROL-R035`](https://github.com/Knuckles-Team/agent-utilities/blob/50c313ab01871ff7e10aee2a9d0254fa55d71f07/specs/agent-control-plane/spec.md).
+- **meristem** owns the signed dispatch carrier that must cryptographically bind and let a harness enforce the admitted subset: the meristem signed-envelope row (id unassigned).
 
 Arbora owns admission, refusal, and provenance at the door: given a request naming a selected agent graph and a context budget, it returns either an admitted tool subset grounded in a committed EG assembly answer and carried in a signed AU envelope, or a typed, provenanced refusal. Today both upstream seams are incomplete — EG's `AgentAssemble` returns unavailable and AU's `AgentTurnEnvelope` has no allowed-tool-subset field (`MERISTEM-CONTROL-R035`, opened by this spec) — so this door must fail closed rather than approximate, cache, or silently widen the exposed tool surface.
 
@@ -142,3 +142,45 @@ The synthetic session probe proves compatibility only; it is not deployed accept
 R005.2 still requires the full signed human approval chain.
 R001 and R010 still require a durable task-event producer and streaming implementation.
 Host receipt and log projections remain separately governed by the host spec.
+
+## Scenarios, edge cases and assumptions
+
+### User Story 1 - Submit and follow a task over A2A (Priority: P1)
+
+An authenticated caller discovers the permitted skills on the Agent Card, submits a task with `message/send`, and reads or cancels it with `tasks/get` and `tasks/cancel`.
+
+**Acceptance scenarios**:
+
+1. Given an authenticated caller with the task scope, When the caller sends `message/send`, Then one engine-backed WorkItem exists and the reply names its task id.
+2. Given a task in a non-terminal state, When the caller sends `tasks/cancel`, Then the WorkItem moves to the canceled state exactly once.
+
+### User Story 2 - Approve a tool effect once (Priority: P1)
+
+A human approves a pending tool effect through `arbora.plan/confirm`; the effect runs once across a pause, restart or replica change.
+
+**Acceptance scenarios**:
+
+1. Given a task in `input-required` with a pending plan, When the original eligible human sends a signed `arbora.plan/confirm`, Then the effect runs exactly once and the audit record links the approval to the outcome.
+2. Given the same confirmation delivered twice or by a different principal, When it is processed, Then no second effect occurs and the refusal is typed.
+
+### User Story 3 - Truthful capability advertisement (Priority: P2)
+
+A caller reads the Agent Card and relies on streaming, push notification and transition-history flags only when a durable authority backs them.
+
+**Acceptance scenarios**:
+
+1. Given no wired authority, When the card is served, Then each of those flags is `false`.
+2. Given a wired authority, When the card is served, Then the matching flag is `true` and the matching method works.
+
+### Edge Cases
+
+- A caller without the required scope, an idempotency conflict, an unavailable assembly, a stale or mismatched plan, and an unknown method each return a typed, privacy-safe error and cause no effect.
+- A tool call outside the admitted tool subset is refused before any connector is reached.
+- A restart between request and approval, a duplicate delivery and a crash after an effect all keep the effect count at most one.
+- A push target that is private or not HTTPS is refused at registration.
+
+### Assumptions
+
+- The durable WorkItem, grant and fence state is owned by the public engine; Arbora holds no second task store.
+- The harness-facing task-event reader and the signed dispatch envelope are meristem-owned; rows that depend on them stay SPECIFIED until the owner publishes them.
+- Contract and integration tests run from a fresh public checkout with published packages and local fixtures.
