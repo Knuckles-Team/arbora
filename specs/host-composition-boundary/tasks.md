@@ -107,3 +107,14 @@
 - [ ] T105 ARBORA-HOST-R009.8 Record authenticated requests through the production sink.
 - [ ] T106 ARBORA-HOST-R009.8.2.2.1 Qualify all four real native terminal cases against the pinned released wheel.
 - [ ] T107 ARBORA-HOST-R009.8.2.2.2 Qualify retained metadata and gap clearing in installed Overstory.
+- [x] T108 ARBORA-HOST-R004 Keep one gateway package. Evidence: `tests/architecture/test_single_gateway_implementation.py::test_single_gateway_and_retired_script_and_extra_absent`.
+- [ ] T109 ARBORA-HOST-R007.2.69 Add the declared-module fence test `tests/test_package_layout.py::test_arbora_imports_only_meristem_public_modules` and its planted-violation proof.
+- [x] T110 ARBORA-HOST-R012 Publish the Arbora and connector SDK boundary seeds. Evidence: `tests/test_component_registry_boundary_seeds.py`.
+- [x] T111 ARBORA-HOST-R007.2.1 Keep `arbora/a2a/authority.py` free of `agent_utilities` imports. Evidence: `tests/a2a/test_authority.py::test_selected_tool_subset_is_refused_before_durable_admission`.
+- [x] T112 ARBORA-HOST-R007.2.2 Keep `arbora/a2a/routing.py` free of `agent_utilities` imports. Evidence: `tests/a2a/test_authority.py::test_router_routes_to_the_named_or_the_default_agent`.
+- [ ] T113 ARBORA-HOST-R007.2.3 Prove `arbora/access/service.py` imports no agent runtime module with `tests/access/test_service_imports.py`.
+- [x] T114 ARBORA-HOST-R007.2.55 Keep `arbora/mcp_server/server.py` free of `agent_utilities` imports. Evidence: `tests/mcp_server/test_browser_composition.py::test_packaged_console_injects_exact_identity_factory`.
+- [x] T115 ARBORA-HOST-R007.2.68 Keep `arbora/webui_host/webui_co_service.py` free of `agent_utilities` imports. Evidence: `tests/mcp_server/test_composition.py::test_webui_co_service_uses_arbora_host`.
+- [ ] T116 ARBORA-HOST-R007.2.70 Rename the remaining harness imports from `agent_utilities` to `meristem` across `arbora/` and `tests/`.
+- [ ] T117 ARBORA-HOST-R005.2.9 Resolve legacy actions at the MCP dispatch with `resolve_legacy_action` and delete the unwired validator.
+- [x] T118 ARBORA-HOST-R008.1006 Keep the hosted observability, ecosystem and deployment modules free of the harness import. Evidence: `tests/ecosystem/test_hook_installer.py::test_install_merges_existing_settings_and_uninstall_removes_the_hooks`.
