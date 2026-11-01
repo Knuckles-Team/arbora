@@ -17,3 +17,4 @@
 - [ ] T010 ARBORA-CAPACITY-R003 - Deliver every requirement in requirements.md.
 - [ ] T011 ARBORA-CAPACITY-R004 - Bind the AU driver and implement the served load profile, complete report, and threshold refusals in plan.md.
 - [ ] T012 ARBORA-CAPACITY-R001.3 - Deliver every requirement in requirements.md.
+- [ ] T013 ARBORA-CAPACITY-R001.4 - Add the outcome recorder and the controller loop that calls `decide` and stores the decision, as requirements.md defines.

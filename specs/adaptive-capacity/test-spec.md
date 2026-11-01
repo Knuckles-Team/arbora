@@ -21,3 +21,4 @@ Property tests should generate outcome sequences and assert `floor <= effective 
 - `ARBORA-CAPACITY-R003`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-CAPACITY-R004`: Planned tests in `tests/api/test_agent_load_served.py` cover terminal latency, failures, and threshold boundaries. `test_agent_run_profile_measures_terminal_latency_and_failures` enters the served agent route. `test_agent_run_profile_rejects_missing_samples_and_exceeded_limits` rejects invalid or incomplete qualification. No execution is claimed.
 - `ARBORA-CAPACITY-R001.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-CAPACITY-R001.4`: Future tests in `tests/fleet/test_throttle_controller_served.py` cover breach, bounded recovery, idempotent replay and partition isolation as requirements.md defines. Tests have not run.
