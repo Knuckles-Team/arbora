@@ -25,7 +25,7 @@ On a supported Python version, clone this repository, run `uv sync --extra test`
 | Missing/expired principal, wrong tenant or scope, stale policy version | Deny before downstream effect; same error class on every surface. |
 | Dependency public contract absent or wrong generation | Typed unavailable/mismatch result; no private-import fallback. |
 | Duplicate server construction or co-service teardown race | No second authority; bounded shutdown and explicit failure. |
-| Plant a forbidden `agent_utilities.knowledge_graph` or other private import | Package-layout check fails, including lazy import. |
+| Plant a forbidden a retired harness-package module or other private import | Package-layout check fails, including lazy import. |
 | A route reimplements a stored task or graph operation | Architecture test detects a second persistence client/schema or unmatched action registration. |
 
 ## Quality and evidence
@@ -216,7 +216,7 @@ records fixture operations only; no native persistence acceptance is claimed.
 
 ## Declared-module import fence
 
-- `ARBORA-HOST-R007.2.69`: `tests/test_package_layout.py::test_arbora_imports_only_meristem_public_modules` parses every `.py` under `arbora/` and `tests/` and fails on any `agent_utilities` import or any `meristem` import outside `meristem.PUBLIC_HOST_MODULES`. `::test_fence_detects_planted_violation` proves it fails on a temporary module. Neither test exists yet and neither has run.
+- `ARBORA-HOST-R007.2.69`: `tests/test_package_layout.py::test_arbora_imports_only_meristem_public_modules` parses every `.py` under `arbora/` and `tests/` and fails on any retired harness-package import or any `meristem` import outside `meristem.PUBLIC_HOST_MODULES`. `::test_fence_detects_planted_violation` proves it fails on a temporary module. Neither test exists yet and neither has run.
 
 ## Planned and unbound tests
 
@@ -251,7 +251,7 @@ Each row below has no test bound by a `spec` marker. `Existing` names a test in 
 | `ARBORA-HOST-R007.2.3` | `tests/access/test_service_imports.py::test_service_imports_no_agent_runtime_module` | Planned, not yet written |
 | `ARBORA-HOST-R007.2.55` | `tests/mcp_server/test_browser_composition.py::test_packaged_console_injects_exact_identity_factory` | Existing, not yet bound |
 | `ARBORA-HOST-R007.2.68` | `tests/mcp_server/test_composition.py::test_webui_co_service_uses_arbora_host` | Existing, not yet bound |
-| `ARBORA-HOST-R007.2.70` | `tests/test_package_layout.py::test_no_agent_utilities_import_remains` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.70` | `tests/test_package_layout.py::test_no_retired_harness_import_remains` | Planned, not yet written |
 | `ARBORA-HOST-R008.2` | `tests/ecosystem/test_harness_install.py::test_detect_mixed_present_absent_malformed` | Planned, not yet written |
 | `ARBORA-HOST-R008.3` | `tests/ecosystem/test_harness_install.py::test_prepare_changes_parses_three_artifacts` | Planned, not yet written |
 | `ARBORA-HOST-R008.4` | `tests/ecosystem/test_harness_install.py::test_apply_preserves_unrelated_and_is_idempotent` | Planned, not yet written |
@@ -272,3 +272,55 @@ Each row below has no test bound by a `spec` marker. `Existing` names a test in 
 | `ARBORA-HOST-R026.4` | `tests/deployment/test_doctor_a2a.py::test_a2a_persistence_pass_and_both_failures` | Planned, not yet written |
 | `ARBORA-HOST-R028` | `tests/test_dependency_manifest.py::test_meristem_api_export_modules_import` | Planned, not yet written |
 | `ARBORA-HOST-R030` | `tests/api/test_agent_browser_ops.py::test_visual_state_is_run_source_and_tenant_bound` | Planned, not yet written |
+
+## Row-to-test bindings
+
+Each row below has no bound `Spec:` trailer yet; the table names the proving test. A test marked planned does not exist yet.
+
+| Row | Test | State |
+|---|---|---|
+| `ARBORA-HOST-R001.9.2` | `tests/deployment/test_tiny_profile_served_graph.py::test_tiny_profile_writes_and_reads_one_node` | Planned, not yet written |
+| `ARBORA-HOST-R002` | `tests/architecture/test_engine_client_surface.py::test_every_imported_client_symbol_exists` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.4` | `arbora/agent_host/__init__.py::start_agent_server` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.4` | `tests/agent_host/test_start_admission.py::test_start_admits_and_runs_graph` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.24` | `tests/deployment/test_doctor.py::test_python_env_reports_meristem_version` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.24` | `tests/deployment/test_doctor.py::test_python_env_fails_when_meristem_absent` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.35` | `arbora/fleet/multiplexer.py::MCPMultiplexer` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.35` | `tests/fleet/test_child_policy_group.py::test_policies_load_from_arbora_group` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.38` | `arbora/gateway/config.py::layout_path` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.38` | `tests/core/test_settings_data_dir.py::test_data_dir_env_override_and_default` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.38` | `tests/gateway/test_config.py::test_layout_path_under_data_dir` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.39` | `tests/gateway/test_daemon.py::test_daemon_has_no_local_task_queue_purge` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.54` | `arbora/mcp_server/runtime.py::_emit_native_intent_event` | Exists |
+| `ARBORA-HOST-R007.2.54` | `tests/mcp_server/test_arbora_015_served_fixes.py::test_native_intent_event_emitted` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.63` | `arbora/messaging/registry.py::discover_backends` | Planned, not yet written |
+| `ARBORA-HOST-R007.2.63` | `tests/messaging/test_registry.py::test_backends_discovered_from_arbora_group` | Planned, not yet written |
+| `ARBORA-HOST-R009.4.2` | `arbora/agent_host/__init__.py::create_agent_server` | Exists |
+| `ARBORA-HOST-R009.4.2` | `tests/agent_host/test_log_sink_terminal_lifecycle.py::test_terminal_exit_stops_owned_thread_and_keeps_reused_services` | Planned, not yet written |
+| `ARBORA-HOST-R008.1000` | `arbora/mcp_server/server.py::mcp_server` | Exists |
+| `ARBORA-HOST-R008.1000` | `arbora/host_bindings.py::bind_messaging_ports` | Exists |
+| `ARBORA-HOST-R008.1000` | `tests/test_host_bindings.py::test_bind_messaging_ports_binds_all_four_ports` | Exists |
+| `ARBORA-HOST-R008.1001` | `arbora/host_bindings.py::SendDecision` | Planned, not yet written |
+| `ARBORA-HOST-R008.1001` | `tests/test_host_bindings.py::test_send_gate_admits_only_a_session_with_a_send_scope` | Exists |
+| `ARBORA-HOST-R008.1002` | `arbora/unique_records.py::create_record` | Exists |
+| `ARBORA-HOST-R008.1002` | `tests/test_host_bindings.py::test_outbound_mirror_records_one_node_per_message` | Exists |
+| `ARBORA-HOST-R008.1003` | `arbora/mcp_server/server.py::mcp_server` | Exists |
+| `ARBORA-HOST-R008.1003` | `tests/test_host_bindings.py::test_bind_messaging_ports_binds_all_four_ports` | Exists |
+| `ARBORA-HOST-R008.1004` | `tests/observability/test_runtime_health.py::test_unbound_mandatory_probes_make_the_process_not_ready` | Exists |
+| `ARBORA-HOST-R008.1004` | `tests/test_host_bindings.py::test_a2a_without_authority_returns_401` | Planned, not yet written |
+| `ARBORA-HOST-R008.1007` | `tests/observability/test_runtime_health.py::test_a_failing_probe_is_unhealthy_with_its_reason` | Exists |
+| `ARBORA-HOST-R008.1008` | `tests/deployment/test_guards.py::test_json_reader_rejects_duplicate_keys` | Exists |
+| `ARBORA-HOST-R001.2.5` | `arbora/agent_runs.py::bind_run_ports` | Exists |
+| `ARBORA-HOST-R001.2.5` | `tests/test_agent_runs_engine_port.py::test_bound_port_invokes_registry_with_run_principal` | Planned, not yet written |
+| `ARBORA-HOST-R007.3` | `tests/observability/test_gateway_metrics.py::test_no_series_uses_the_retired_prefix` | Planned, not yet written |
+| `ARBORA-HOST-R007.3` | `tests/gateway/test_rate_limit.py::test_rate_limit_counter_renamed` | Planned, not yet written |
+| `ARBORA-HOST-R031.1` | `arbora/control_plane/runs/admission.py::NativeWorkItemAdmissionProtocol` | Planned, not yet written |
+| `ARBORA-HOST-R031.1` | `tests/control_plane/test_sandbox_admission_served.py::test_agents_run_admits_and_records_allocation` | Planned, not yet written |
+| `ARBORA-HOST-R034` | `arbora/host/specialists.py::install_package` | Planned, not yet written |
+| `ARBORA-HOST-R034` | `tests/host/test_specialist_install.py::test_install_swaps_marker_atomically_and_registers_nodes` | Planned, not yet written |
+| `ARBORA-HOST-R035` | `arbora/agent_runs.py::bind_run_ports` | Exists |
+| `ARBORA-HOST-R035` | `tests/test_harness_cycle_host.py::test_completed_run_drives_one_tick_and_probes_drive_none` | Planned, not yet written |
+| `ARBORA-HOST-R036` | `arbora/agent_runs.py::AgentRunPort` | Planned, not yet written |
+| `ARBORA-HOST-R036` | `tests/test_run_receipt_commit.py::test_terminal_commit_carries_run_trace_nodes` | Planned, not yet written |
+| `ARBORA-HOST-R037` | `arbora/connector_runner.py::ConnectorRunnerComposition` | Planned, not yet written |
+| `ARBORA-HOST-R037` | `tests/test_connector_runner.py::test_missing_release_lock_fails_bootstrap` | Planned, not yet written |
