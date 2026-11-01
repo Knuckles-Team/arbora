@@ -35,6 +35,14 @@ Governing [spec](spec.md).
 | HO-T27 | ARBORA-OPS-R021.4.6 | Run `tests/api/test_runs_ops.py::test_runs_ops_registered_with_existing_scopes`; it must pass and bind to this row. |
 | HO-T28 | ARBORA-OPS-R061 | Planned test path: `tests/api/test_usage_indexed_served.py::test_indexed_usage_projection`. It remains unexecuted. See the R061 served-acceptance cases below. |
 | HO-T29 | ARBORA-OPS-R063 | Planned test path: `tests/api/test_retrieval_evaluation_served.py::test_evaluation_and_original_utf8_context`. It remains unexecuted. See the R063 served-acceptance cases below. |
+| HO-T30 | ARBORA-OPS-R003 | Planned test path: `tests/fleet/test_harvest_removed.py::test_multiplexer_has_no_skill_prompt_harvest_path`. Assert arbora.fleet.multiplexer defines none of the harvest functions and no module in the package imports them. It remains unexecuted. |
+| HO-T31 | ARBORA-OPS-R025.1 | Planned test path: `tests/api/test_client_invoke.py::test_unknown_operation_makes_zero_calls_and_digest_mismatch_is_refused`. Assert an unknown op id raises before any transport call and a mismatched meta registry digest raises. It remains unexecuted. |
+| HO-T32 | ARBORA-OPS-R040.1 | Planned test path: `tests/api/test_public_artifact_exports.py::test_public_module_exports_artifact_names`. A meristem-side test importing each of the four names from the public api module (path relative to the meristem repo). It remains unexecuted. |
+| HO-T33 | ARBORA-OPS-R040.9 | Planned test path: `tests/spec/test_boundary_row_cited.py::test_r040_1_cites_the_meristem_boundary_row`. A spec-gate check that ARBORA-OPS-R040.1 cites an existing meristem boundary row ID. It remains unexecuted. |
+| HO-T34 | ARBORA-OPS-R024.1.1 | Planned test path: `tests/api/test_telemetry_export_ops.py::test_export_formats_backend_opt_in_and_refused_cases`. Served test of telemetry export formats, opt-in backend selection and refusals over HTTP and MCP. It remains unexecuted. |
+| HO-T35 | ARBORA-OPS-R014.1 | Planned test path: `tests/api/test_host_service_ops.py::test_service_and_log_operations_parity_and_refusal`. Served test of the shared service/log operations across the supported OS adapter fakes, including the refusal for an unsupported OS. It remains unexecuted. |
+| HO-T36 | ARBORA-OPS-R022.4 | Planned test path: `tests/api/test_loop_feedback_ops.py::test_loop_status_run_pause_fail_closed_until_bound`. Served test that the loop facade exposes status, run and pause, and refuses an unscoped or replayed call. It remains unexecuted. |
+| HO-T37 | ARBORA-OPS-R885 | Planned test path: `tests/api/test_policy_review_served.py::test_policy_review_returns_bound_receipt_and_refuses_self_approval`. Served over HTTP and MCP with a loopback engine: asserts the receipt digests and that an author self-approval refuses. It remains unexecuted. |
 
 ## Drift and scanner acceptance
 
