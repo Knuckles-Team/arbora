@@ -193,6 +193,20 @@ jobs:
           done
           echo "skipped hooks: $SCOPE_SKIP"
 
+      # plan-conformance resolves foreign row IDs against the cross-repo index
+      # and exits 2 without it. Build it only when the change touches a plan,
+      # as the shared gates pipeline does.
+      - name: Build the cross-repo spec ID index
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! git diff --name-only "$PRE_COMMIT_FROM_REF" HEAD | grep -qE '^specs/[^/]+/plan\.md$'; then
+            echo "no plan changed; index not needed"; exit 0
+          fi
+          uvx --from "git+https://github.com/Knuckles-Team/pipelines@${PIPELINES_REF}" pipelines-hook spec-id-index --out "$RUNNER_TEMP/spec-id-index.json"
+          echo "PIPELINES_SPEC_ID_INDEX=$RUNNER_TEMP/spec-id-index.json" >> "$GITHUB_ENV"
+
       - name: Commit- and push-stage hooks (.pre-commit-config.yaml)
         env:
           PROHIBITED_IDENTITY_CATALOG: ${{ vars.PROHIBITED_IDENTITY_CATALOG }}
