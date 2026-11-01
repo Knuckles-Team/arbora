@@ -138,12 +138,25 @@ A coding harness asks the artifact graph for the next unblocked task, starts an 
 2. **Given** a repository in mode `reference`, **When** the harness starts a run, **Then** arbora refuses the run.
 3. **Given** a proposal, **When** the reviewer accepts it, **Then** the engine opens a pull request and arbora writes no file under `specs/`.
 
+### User Story 4 - Steer autonomous deliveries over MCP (Priority: P2)
+
+An owner lets the platform deliver open rows as pull requests. Arbora carries code-host events to the engine and serves the delivery operations. The owner approves the head commit before any merge arming.
+
+**Acceptance Scenarios**:
+
+1. **Given** a signed check event on a followed proposal, **When** arbora receives it, **Then** the engine receives one `DeliveryFeedback` call.
+2. **Given** an event with a bad signature, **When** arbora receives it, **Then** arbora refuses it and forwards nothing.
+3. **Given** an `arm` verdict without an owner receipt on the head, **When** the platform asks to arm, **Then** arbora refuses with `MERGE_APPROVAL_REQUIRED`.
+4. **Given** a full set of slots, **When** a person answers a delivery question, **Then** the answer still reaches the run.
+
 ### Edge Cases
 
 - A fleet child is unreachable. The operation returns the typed error `UNAVAILABLE` and is absent from usable discovery.
 - The audit outcome link fails after an effect. The caller receives `INDETERMINATE` and the reservation remains for one reconciliation.
 - A run ID or proposal ID of another tenant returns a non-disclosing refusal.
 - Promotion of a repository to mode `evolving` without operator approval leaves the mode unchanged.
+- The platform principal asks a connector to merge. The registry refuses with `MERGE_BY_PLATFORM_REFUSED`.
+- A restart leaves a pull-request comment without a receipt. Arbora reconciles it before any retry.
 
 ## Requirements
 
@@ -154,11 +167,14 @@ A coding harness asks the artifact graph for the next unblocked task, starts an 
 - **FR-005**: Project mode must change only through a served operation, and promotion to `evolving` must need operator approval. Rows: `ARBORA-OPS-R896.2`.
 - **FR-006**: An implementation run must start and be observed through served operations. Rows: `ARBORA-OPS-R896.3`, `ARBORA-OPS-R896.4`.
 - **FR-007**: Proposals must be listed and reviewed through served operations and must land only as pull requests. Rows: `ARBORA-OPS-R896.5`.
+- **FR-008**: Autonomous deliveries must be read and steered through served operations, and code-host events must reach the engine. Rows: `ARBORA-OPS-R896.7`, `ARBORA-OPS-R896.8`, `ARBORA-OPS-R896.9`, `ARBORA-OPS-R896.12`.
+- **FR-009**: Merge arming must need an owner receipt on the head commit, and every delivery write must be a governed effect. Rows: `ARBORA-OPS-R896.10`, `ARBORA-OPS-R896.11`.
 
 ## Success Criteria
 
 - **SC-001**: One operation returns identical allow and deny codes on MCP and HTTP. Rows: `ARBORA-OPS-R009`.
 - **SC-002**: A run driven by the artifact graph over MCP ends with one pull-request request and no write under `specs/`. Rows: `ARBORA-OPS-R896.6`.
+- **SC-003**: A delivery journey over MCP ends merged with zero merge calls by the platform principal. Rows: `ARBORA-OPS-R896.13`.
 
 ## Assumptions
 
