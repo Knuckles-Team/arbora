@@ -17,8 +17,8 @@ from typing import Any
 
 import pytest
 
-pytest.importorskip("agent_utilities.graph", reason="agent-utilities run loop")
-from agent_utilities.graph import DependencyPlan  # noqa: E402
+pytest.importorskip("meristem.graph", reason="agent-utilities run loop")
+from meristem.graph import DependencyPlan  # noqa: E402
 from pydantic_ai.messages import ModelResponse, TextPart  # noqa: E402
 from pydantic_ai.models.function import FunctionModel  # noqa: E402
 

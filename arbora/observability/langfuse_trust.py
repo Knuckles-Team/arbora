@@ -24,8 +24,8 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
-from agent_connector_sdk.config import AgentConfig
-from agent_connector_sdk.tls.profile import ResolvedTLSProfile
+from scion_sdk.config import AgentConfig
+from scion_sdk.tls.profile import ResolvedTLSProfile
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric import (
@@ -301,7 +301,7 @@ def _resolve_secret_reference(
         return environ.get(target)
     if resolver is not None:
         return resolver(reference)
-    from agent_connector_sdk.credentials.resolution import resolve_secret_reference
+    from scion_sdk.credentials.resolution import resolve_secret_reference
 
     return resolve_secret_reference(reference)
 
@@ -691,8 +691,8 @@ def _resolve_tls_profile_for_trust(
 
     Returns ``(trust, None)`` on success, or ``(None, status)`` on failure.
     """
-    from agent_connector_sdk.tls.errors import TransportSecurityError
-    from agent_connector_sdk.tls.resolve import resolve_tls_profile
+    from scion_sdk.tls.errors import TransportSecurityError
+    from scion_sdk.tls.resolve import resolve_tls_profile
 
     try:
         trust = resolve_tls_profile(

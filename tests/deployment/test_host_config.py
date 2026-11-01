@@ -37,7 +37,7 @@ def test_module_does_not_import_agent_utilities_config_internals() -> None:
         for node in ast.walk(tree)
         if isinstance(node, ast.ImportFrom) and node.module
     }
-    assert not any(m.startswith("agent_utilities") for m in imported)
+    assert not any(m.startswith("meristem") for m in imported)
 
 
 @pytest.mark.spec("ARBORA-HOST-R010")

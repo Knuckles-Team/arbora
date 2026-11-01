@@ -464,7 +464,7 @@ def _emit_native_intent_event(
 ) -> None:
     params = kwargs.get("params")
     params = params if isinstance(params, dict) else {}
-    from agent_utilities import host_ports
+    from meristem import host_ports
 
     error = payload.get("error") if isinstance(payload, dict) else None
     host_ports.emit_run_event(

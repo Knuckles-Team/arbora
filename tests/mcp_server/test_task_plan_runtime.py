@@ -6,8 +6,8 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from agent_utilities import host_ports
-from agent_utilities.graph import RunRequest
+from meristem import host_ports
+from meristem.graph import RunRequest
 from pydantic_ai.messages import ModelResponse, TextPart
 from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.usage import RequestUsage
@@ -109,7 +109,7 @@ def chain(bridge, monkeypatch):
         send_get_current_plan=read,
         decode_get_current_plan=lambda x: x,
     )
-    import agent_utilities.graph as au
+    import meristem.graph as au
 
     monkeypatch.setattr(task_plan_runtime, "_contracts", lambda: (au, eg))
     host_ports.register_run_decision_provider(agent_runs.decide_run)
@@ -707,7 +707,7 @@ async def test_trusted_scaffold_option_reaches_actual_au_callback(
 async def test_only_operator_scaffold_field_changes_base_harness(
     chain, setting, untrusted
 ):
-    from agent_utilities.runtime import default_run_plan
+    from meristem.runtime import default_run_plan
 
     host, _, _ = chain
     host = replace(

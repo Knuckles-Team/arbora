@@ -11,7 +11,7 @@ Arbora supports Python 3.12 through 3.14. Install the runtime and the optional
 WebUI host with `uv`:
 
 ```bash
-uv tool install "arbora[webui]"
+uv tool install "arbora[overstory]"
 ```
 
 ## Create the local profile

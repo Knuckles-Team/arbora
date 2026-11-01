@@ -3,8 +3,8 @@
 import json
 
 import pytest
-from agent_utilities.harness.conversation_history import decode_completed_history
-from agent_utilities.runtime import RunRequest
+from meristem.harness.conversation_history import decode_completed_history
+from meristem.runtime import RunRequest
 from pydantic_ai_harness.experimental.acp import InMemorySessionStore
 
 from arbora.acp.local_history import LocalConversationHistory

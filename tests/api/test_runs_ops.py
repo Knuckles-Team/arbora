@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
-from agent_connector_sdk.current_plan import (
+from scion_sdk.current_plan import (
     CurrentPlanRead,
     CurrentPlanRequest,
     CurrentPlanSnapshot,

@@ -343,7 +343,7 @@ async def import_attested_pack(
     requires ``admin:connector-pack``.
     """
 
-    from agent_connector_sdk.sinks.epistemic_graph import EpistemicGraphSink
+    from scion_sdk.sinks.epistemic_graph import EpistemicGraphSink
 
     from arbora.api.contracts import pack_import_authority
 
@@ -489,7 +489,7 @@ async def provision_semantic_content(
 ) -> dict[str, Any]:
     """Run every provisioning step; raise unless the semantic content verifies."""
 
-    from agent_connector_sdk.artifacts.pack import build_connector_content_pack
+    from scion_sdk.artifacts.pack import build_connector_content_pack
 
     tenant_id = str(session_context(session)["tenant"])
     graph = str(session.graph)

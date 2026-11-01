@@ -26,7 +26,7 @@ dependencies = [
     # server/ or api/ packages. arbora owns the MCP/REST serving surface
     # (arbora/mcp_server/backing, arbora/api/contracts), so the former
     # `[mcp]` extra's requirements are declared directly below.
-    "meristem>=4.2.0,<5.0.0",
+    "meristem>=5.0.0,<6.0.0",
     "eunomia-core>=0.3.10",
     "httpx>=0.28.1",
     "pyjwt>=2.15.1",
@@ -37,7 +37,7 @@ dependencies = [
     # SDK owns source transport and runner construction; Arbora supplies its
     # authenticated epistemic-graph client through the SDK's public injection
     # seam and never imports connector implementations.
-    "scion-sdk[a2a,mcp]>=0.5.9,<0.6.0",
+    "scion-sdk[a2a,mcp]>=0.6.5,<0.7.0",
     # The messaging channel layer's HTTP alert intake (arbora/messaging/alert_intake.py)
     # imports aiohttp.web directly for its small webhook listener; platform-agnostic,
     # so unlike the chat-platform SDKs below this is not conditioned on a messaging extra.
@@ -60,7 +60,7 @@ dependencies = [
     # floor is the same.
     "msgpack>=1.2.1",
     "prometheus-client>=0.26.0",
-    # Matches the agent-connector-sdk floor (agent-utilities allows the 2.14 line).
+    # Matches the scion-sdk floor (meristem allows the 2.14 line).
     "pydantic>=2.14.1,<3.0.0",
     "PyYAML>=6.0.3",
     "starlette>=1.8.0",
@@ -68,7 +68,7 @@ dependencies = [
     "mcp>=2.3.0,<3.0.0",
     "opentelemetry-api>=1.45.1",
     "pydantic-ai-slim[openai]==2.63.0",
-    # Installed so its ``agent_connector_sdk.connector`` declaration (a
+    # Installed so its ``scion_sdk.connector`` declaration (a
     # content-only connector) resolves in THIS process through
     # ``installed_connectors()`` — see arbora/core/providers.py. The floor
     # moves to the first release that declares it once that release ships.
@@ -110,8 +110,8 @@ test = [
     # requirement).
     "setuptools>=84.0.0",
 ]
-webui = [
-    "agent-webui>=2.8.3,<3.0.0",
+overstory = [
+    "overstory>=3.0.0,<4.0.0",
     "uvicorn>=0.54.0",
 ]
 # Messaging channel adapters (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction):
@@ -157,7 +157,7 @@ arbora-check-import-boundaries = "arbora.architecture.boundary_census:main"
 arbora-hosting-config = "arbora.deployment.host_config:main"
 arbora-capability-layers = "arbora.architecture.capability_layers:main"
 
-[project.entry-points."agent_utilities.messaging"]
+[project.entry-points."arbora.messaging"]
 telegram = "arbora.messaging.backends.telegram:TelegramBackend"
 mattermost = "arbora.messaging.backends.mattermost:MattermostBackend"
 discord = "arbora.messaging.backends.discord:DiscordBackend"
@@ -176,7 +176,7 @@ synology = "arbora.messaging.backends.synology:SynologyChatBackend"
 voicecall = "arbora.messaging.backends.voicecall:VoiceCallBackend"
 nextcloud = "arbora.messaging.backends.nextcloud:NextcloudTalkBackend"
 
-[project.entry-points."agent_utilities.messaging.reach"]
+[project.entry-points."arbora.messaging.reach"]
 notify_sync = "arbora.messaging.reach:notify_sync"
 service = "arbora.messaging.reach:service_port"
 

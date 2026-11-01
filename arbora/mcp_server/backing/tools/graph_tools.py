@@ -3,7 +3,7 @@
 CONCEPT:MERISTEM-KG.query.raw-python — SQL over the KG (read path)
 CONCEPT:MERISTEM-ECO.mcp.full-api-mcp-surface — one action core, two surfaces
 
-The webui catalog browser (``agent-webui`` ``TableExplorerView``) needs the
+The webui catalog browser (``overstory`` ``TableExplorerView``) needs the
 ``catalogs → tables/views → columns`` projection that ``psql``'s ``\\d`` shows.
 Until now the browser could reach *no* route that touches ``information_schema``
 at all, so it rendered its "capability not yet activated" state forever

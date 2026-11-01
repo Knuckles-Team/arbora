@@ -20,14 +20,14 @@ The listed run must be the one built from the commit this release pins.
 Re-run it directly with `gh run rerun <run-id> -R Knuckles-Team/epistemic-graph`
 if it needs re-proving.
 
-## 2. Connector SDK (`agent-connector-sdk`)
+## 2. Connector SDK (`scion-sdk`)
 
 ```bash
-gh run list --workflow=release.yml -R Knuckles-Team/agent-connector-sdk --branch main --limit 1
+gh run list --workflow=release.yml -R Knuckles-Team/scion-sdk --branch main --limit 1
 ```
 
 Same proof shape as stage 1, against the revision this release's
-`agent-connector-sdk` dependency pins.
+`scion-sdk` dependency pins.
 
 ## 3. Agent runtime (`meristem`)
 
@@ -74,14 +74,14 @@ a declared console entry point, the packaged engine binary, the folded
 numeric kernel, or the served FastMCP major is missing or mismatched — see
 `arbora/deployment/release_canary.py`.
 
-## 5. Web UI (`agent-webui`, pending an in-flight package rename)
+## 5. Web UI (`overstory`, pending an in-flight package rename)
 
 ```bash
-gh run list --workflow=release.yml -R Knuckles-Team/agent-webui --branch main --limit 1
+gh run list --workflow=release.yml -R Knuckles-Team/overstory --branch main --limit 1
 ```
 
 Same proof shape as stage 1. The optional `webui` extra's package name
-changes once that in-flight rename lands in both `agent-webui` and here;
+changes once that in-flight rename lands in both `overstory` and here;
 this stage's check does not depend on that name.
 
 ## 6. Connector package fleet

@@ -57,7 +57,7 @@ def candidate():
 
     path = BUILTIN_ENVIRONMENTS_DIR / "prod.yaml"
     image = yaml.safe_load(path.read_bytes())["release"]["revision"]
-    ids = ("epistemic-graph", "arbora", "agent-webui", "connector.optional")
+    ids = ("epistemic-graph", "arbora", "overstory", "connector.optional")
     artifacts = [
         {
             "component_id": key,
@@ -74,7 +74,7 @@ def candidate():
         }
         for key in ids
     ]
-    predecessors = {"arbora": ["epistemic-graph"], "agent-webui": ["arbora"]}
+    predecessors = {"arbora": ["epistemic-graph"], "overstory": ["arbora"]}
     stages = [
         {
             "component_id": key,
@@ -128,7 +128,7 @@ def test_signed_candidate_order_and_immutable_reader(tmp_path, candidate, author
     with pytest.raises(ValidationError):
         parsed.candidate_id = "changed"
     plan = _plan(tmp_path, candidate)
-    assert plan["order"] == ["epistemic-graph", "arbora", "agent-webui"]
+    assert plan["order"] == ["epistemic-graph", "arbora", "overstory"]
     assert plan["manifest_digest"] == digest
     assert plan["executed"] is False
     assert set(authority) == {"CERT_EVIDENCE_VERIFIER_COMMAND"}
@@ -140,7 +140,7 @@ def test_deterministic_optional_order(tmp_path, candidate, authority):
     candidate["stages"].reverse()
     candidate["artifacts"].reverse()
     assert _plan(tmp_path, candidate)["order"] == first
-    assert first == ["connector.optional", "epistemic-graph", "arbora", "agent-webui"]
+    assert first == ["connector.optional", "epistemic-graph", "arbora", "overstory"]
 
 
 @pytest.mark.parametrize("sign", [False, True])
@@ -311,7 +311,7 @@ def test_missing_or_disabled_predecessor(tmp_path, candidate, authority, predece
 
 def test_cycle_and_compatibility(tmp_path, candidate, authority):
     candidate["stages"][0]["predecessors"] = [
-        {"component_id": "agent-webui", "api": "api/v1", "schema": "schema/v1"}
+        {"component_id": "overstory", "api": "api/v1", "schema": "schema/v1"}
     ]
     with pytest.raises(CandidateError, match="candidate_cycle"):
         _plan(tmp_path, candidate)

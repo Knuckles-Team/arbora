@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import sys
 
-from agent_connector_sdk.ingest.live_declaration import (
+from scion_sdk.ingest.live_declaration import (
     register_live_declaration,
     source_meta,
 )

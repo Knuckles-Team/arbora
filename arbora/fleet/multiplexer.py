@@ -216,7 +216,7 @@ _PROMPT_HARVEST_SPEC = _ResourceHarvestSpec(
 # deadline and DISCARDING the 14 tools ``list_tools`` had already returned
 # 16 seconds earlier. Six servers failed that way on every single sweep, and
 # because ``write_fleet_catalog`` only writes a discovery row for a probe that
-# bound an authority, they showed up in agent-webui as "0 tools" rather than as
+# bound an authority, they showed up in overstory as "0 tools" rather than as
 # unreachable. Half of what is left, taken fresh at each harvest, keeps the
 # tools/skills already in hand: skills can never spend more than half the
 # remaining probe, and prompts never more than half of what skills left.
@@ -268,7 +268,7 @@ _SERVER_DISCOVERY_STOPWORDS = frozenset({"api", "mcp", "manager", "server", "ser
 # 32 probes inside their deadlines. 8 completes the fleet in ~55s, inside the
 # connectors lane's 108s fleet-probe budget, with room to spare.
 _PROBE_CONCURRENCY = 8
-_RUNTIME_CHILD_POLICY_GROUP = "agent_utilities.mcp_child_policies"
+_RUNTIME_CHILD_POLICY_GROUP = "arbora.mcp_child_policies"
 _RUNTIME_CHILD_POLICY_RE = re.compile(r"^[a-z][a-z0-9-]{1,62}$")
 _RUNTIME_CHILD_POLICY_TRANSPORT_KEYS = frozenset(
     {
@@ -445,7 +445,7 @@ def _resolve_fleet_runtime_reference(reference: str) -> str:
     elif _STORE_RUNTIME_REF_RE.fullmatch(reference) is None:
         raise RuntimeError("MCP child runtime reference is invalid")
 
-    from agent_connector_sdk.credentials.runtime_references import (
+    from scion_sdk.credentials.runtime_references import (
         resolve_runtime_secret_reference,
     )
 
@@ -2449,7 +2449,7 @@ class MCPMultiplexer:
         # cached like the probe cache above: every skill resolved from a
         # provider installed in THIS process (arbora's own, agent-utilities'
         # own, and any sibling package declaring the same
-        # ``agent_connector_sdk.connector`` declaration), filed under the
+        # ``scion_sdk.connector`` declaration), filed under the
         # pseudo-server ``LOCAL_SKILLS_SERVER`` so it rides the SAME
         # find_tools/list_catalog path as a fleet-harvested skill.
         self._local_skill_probe_cache: dict[str, _typing.Any] | None = None
@@ -2661,7 +2661,7 @@ class MCPMultiplexer:
                 )
             return None
         try:
-            from agent_connector_sdk.mcp.schema_disclosure import SchemaManifest
+            from scion_sdk.mcp.schema_disclosure import SchemaManifest
         except ImportError:
             raise _fastmcp_exceptions.ToolError(
                 "OpenAPI schema disclosure contract is unavailable"
@@ -2719,7 +2719,7 @@ class MCPMultiplexer:
         before_read: _typing.Callable[[], None],
     ) -> None:
         """Fetch and reconstruct the selected schema through this child session."""
-        from agent_connector_sdk.mcp.schema_disclosure import reconstruct_schema
+        from scion_sdk.mcp.schema_disclosure import reconstruct_schema
 
         before_read()
         manifest_result = await session.read_resource(manifest.manifest_uri)
@@ -6567,7 +6567,7 @@ class MCPMultiplexer:
         "Local" means every skill ``arbora.core.providers.
         resolve_skill_provider_dirs()`` resolves in THIS process — arbora's
         own skills, agent-utilities' own, and any sibling package installed
-        alongside arbora that declares ``agent_connector_sdk.connector``
+        alongside arbora that declares ``scion_sdk.connector``
         (CONCEPT:MERISTEM-KG.retrieval.unified-capability-contract). An
         individually unreadable/malformed skill, and a core-pack name no
         installed provider resolves, are reported loudly here (never fatal,

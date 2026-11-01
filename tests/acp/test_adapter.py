@@ -151,7 +151,7 @@ async def test_real_stdio_refuses_effects_recovery_and_unknown_session(connected
 def admitted_agent():
     from datetime import timedelta
 
-    from agent_utilities.runtime import RunRequest
+    from meristem.runtime import RunRequest
 
     from arbora.acp.adapter import HostedACPAgent
     from arbora.acp.session_policy import AcpSessionPolicy, PrincipalContext
@@ -363,8 +363,8 @@ async def test_authority_loss_stops_updates_and_completion(when):
     from dataclasses import replace
     from datetime import timedelta
 
-    from agent_utilities import host_ports
-    from agent_utilities.runtime import RunPlan, RunRequest
+    from meristem import host_ports
+    from meristem.runtime import RunPlan, RunRequest
     from pydantic_ai.models.function import FunctionModel
 
     from arbora.acp.adapter import HostedACPAgent

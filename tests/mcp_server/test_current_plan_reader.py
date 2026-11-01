@@ -379,7 +379,7 @@ async def test_native_owner_refusal_preserves_code_and_restores_claims(monkeypat
     "field", ["graph", "owner_graph", "tenant", "principal", "scopes"]
 )
 def test_request_cannot_choose_native_owner_routing(field):
-    from agent_connector_sdk.current_plan import CurrentPlanRequest
+    from scion_sdk.current_plan import CurrentPlanRequest
     from pydantic import ValidationError
 
     with pytest.raises(ValidationError):

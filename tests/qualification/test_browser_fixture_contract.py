@@ -628,8 +628,8 @@ def test_startup_facts_never_copy_private_log_content(
         controller.boot, "_listening", lambda port: False, raising=False
     )
     (tmp_path / "arbora.log").write_text(
-        "private-prefix co-service agent-webui started\n"
-        "private-prefix co-service agent-webui crashed\n"
+        "private-prefix co-service overstory started\n"
+        "private-prefix co-service overstory crashed\n"
         "ImportError: private-credential-and-path\n"
         "PrivateException: private-credential-and-path\n"
     )

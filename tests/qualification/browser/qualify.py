@@ -400,10 +400,10 @@ def webui_startup_facts(context: dict[str, Any], upstream: int) -> dict[str, Any
         return observed
     observed["log_available"] = True
     for name, marker in {
-        "thread_started": "co-service agent-webui started",
-        "crashed": "co-service agent-webui crashed",
-        "restart_bound": "co-service agent-webui exceeded its restart bound",
-        "listener_announced": "agent-webui co-service serving in-process on",
+        "thread_started": "co-service overstory started",
+        "crashed": "co-service overstory crashed",
+        "restart_bound": "co-service overstory exceeded its restart bound",
+        "listener_announced": "overstory co-service serving in-process on",
     }.items():
         observed[name] = marker in tail
     allowed = {

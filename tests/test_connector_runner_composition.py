@@ -8,9 +8,9 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-from agent_connector_sdk.credentials.references import SecretReference
-from agent_connector_sdk.runner.descriptors import RunnerSettings
-from agent_connector_sdk.sinks.epistemic_graph import PackImportAuthorityResolver
+from scion_sdk.credentials.references import SecretReference
+from scion_sdk.runner.descriptors import RunnerSettings
+from scion_sdk.sinks.epistemic_graph import PackImportAuthorityResolver
 
 from arbora.connector_runner import (
     ConnectorRunnerComposition,

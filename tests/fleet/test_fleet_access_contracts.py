@@ -87,9 +87,9 @@ def fake_sdk(monkeypatch):
         seen.append(text)
         return (_Contract("urn:ac:1"), _Contract("urn:ac:2", entity="ticket"))
 
-    module = types.ModuleType("agent_connector_sdk.access_contract")
+    module = types.ModuleType("scion_sdk.access_contract")
     module.parse_access_contracts = parse
-    monkeypatch.setitem(sys.modules, "agent_connector_sdk.access_contract", module)
+    monkeypatch.setitem(sys.modules, "scion_sdk.access_contract", module)
     return seen
 
 
@@ -319,7 +319,7 @@ def test_policy_approval_does_not_select_a_mapping_without_engine_receipt(
         },
     )
     monkeypatch.setattr(
-        sys.modules["agent_connector_sdk.access_contract"],
+        sys.modules["scion_sdk.access_contract"],
         "parse_access_contracts",
         lambda _text: (contract,),
     )
@@ -356,12 +356,12 @@ def test_unknown_operation_effect_is_held_before_engine_approval() -> None:
 
 def test_missing_sdk_module_skips(monkeypatch) -> None:
     monkeypatch.delitem(
-        sys.modules, "agent_connector_sdk.access_contract", raising=False
+        sys.modules, "scion_sdk.access_contract", raising=False
     )
     real = builtins.__import__
 
     def blocked(name, *args, **kwargs):
-        if name == "agent_connector_sdk.access_contract":
+        if name == "scion_sdk.access_contract":
             raise ImportError(name)
         return real(name, *args, **kwargs)
 
@@ -426,7 +426,7 @@ def test_onboarding_registers_after_import(fake_sdk, monkeypatch) -> None:
     assert not any(m.approved for m in catalog.mappings)
 
 
-AC_NS = "https://knuckles-team.github.io/agent-connector-sdk/access#"
+AC_NS = "https://knuckles-team.github.io/scion-sdk/access#"
 DOMAIN_TTL = (
     "@prefix ex: <https://example.org/onto#> .\n"
     'ex:Ticket ex:comment """A ticket.\nSpans lines.""" .\n'
@@ -434,7 +434,7 @@ DOMAIN_TTL = (
 
 
 def _real_parser():
-    return pytest.importorskip("agent_connector_sdk.access_contract")
+    return pytest.importorskip("scion_sdk.access_contract")
 
 
 def test_only_contract_bodies_reach_parser(fake_sdk) -> None:
@@ -453,9 +453,9 @@ def test_malformed_contracts_file_is_skipped(monkeypatch, caplog) -> None:
     def parse(text: str):
         raise ValueError("bad turtle")
 
-    module = types.ModuleType("agent_connector_sdk.access_contract")
+    module = types.ModuleType("scion_sdk.access_contract")
     monkeypatch.setattr(module, "parse_access_contracts", parse, raising=False)
-    monkeypatch.setitem(sys.modules, "agent_connector_sdk.access_contract", module)
+    monkeypatch.setitem(sys.modules, "scion_sdk.access_contract", module)
     pack = _Pack(entries=(_Entry("ontology://broken", TTL.encode()),))
     catalog = VirtualCatalog()
     with caplog.at_level("WARNING"):

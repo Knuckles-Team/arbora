@@ -158,7 +158,7 @@ def wired(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         lambda _engine: AllowPolicy(),
     )
     monkeypatch.setattr(
-        "agent_connector_sdk.sinks.epistemic_graph.EpistemicGraphSink", _Sink
+        "scion_sdk.sinks.epistemic_graph.EpistemicGraphSink", _Sink
     )
 
     async def verify(**kwargs: Any) -> None:

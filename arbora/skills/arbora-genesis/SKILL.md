@@ -38,7 +38,7 @@ Read [runtime-topology.md](references/runtime-topology.md) first. In one line:
   (Compose, Swarm, bare metal). Its store has exactly one writer.
 - **meristem (AU)** is the agent-orchestration library arbora imports.
   It is not deployed as a service of its own.
-- **Connectors** are MCP servers built on agent-connector-sdk. arbora reaches
+- **Connectors** are MCP servers built on scion-sdk. arbora reaches
   them through its fleet multiplexer.
 
 Capabilities this skill describes that are not on `main` yet are collected in

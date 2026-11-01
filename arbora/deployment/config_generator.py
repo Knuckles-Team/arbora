@@ -31,7 +31,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from agent_connector_sdk.utilities import to_boolean
+from scion_sdk.utilities import to_boolean
 
 if TYPE_CHECKING:
     from arbora.core.config_admin import HostingDeploymentSettings

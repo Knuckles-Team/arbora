@@ -111,7 +111,7 @@ def bound_fixture_parts():
 
 
 def test_actual_webui_export_and_same_caller_instance_then_cleanup():
-    from agent_webui.oidc_session import BrowserSessionEvidence, verify_browser_session
+    from overstory.oidc_session import BrowserSessionEvidence, verify_browser_session
 
     async def scenario():
         backend, owner, scope, session = bound_fixture_parts()

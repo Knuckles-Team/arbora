@@ -32,7 +32,7 @@ Never write code for a row that is not SPECIFIED in this repository's `specs/`. 
 
 Arbora is the deployable composition layer for the Knuckles agent platform:
 MCP/REST composition, MCP fleet supervision, control-plane policy, optional
-Agent WebUI hosting, unary A2A, governed browser control, and deployment
+Overstory hosting, unary A2A, governed browser control, and deployment
 operations under `arbora/`. Public operator documentation lives at
 <https://knuckles-team.github.io/arbora/>.
 
@@ -44,8 +44,8 @@ fabricated receipt to make it appear complete.
 ## Boundaries
 
 - **Owns:** the one door. That covers admission, auth, approvals, served operations and the tool and operation registry. It also covers the MCP server and multiplexer, A2A serving and routing, config at `~/.config/arbora`, and the EG methods served as `eg.*`.
-- **Never builds:** facts, stores, policy tables or decisions (route them to epistemic-graph). Protocol libraries and connector contracts go to agent-connector-sdk. The run loop goes to agent-utilities.
-- **Allowed dependencies:** epistemic-graph and agent-connector-sdk. From meristem, only `host_ports`, `harness`, `runtime` and `core.paths`. Every package installs from PyPI.
+- **Never builds:** facts, stores, policy tables or decisions (route them to epistemic-graph). Protocol libraries and connector contracts go to scion-sdk. The run loop goes to agent-utilities.
+- **Allowed dependencies:** epistemic-graph and scion-sdk. From meristem, only `host_ports`, `harness`, `runtime` and `core.paths`. Every package installs from PyPI.
 
 Route every feature with the [ecosystem boundaries standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/ecosystem-boundaries.md) before any code. A part this repository does not own goes to its owner's specs.
 
@@ -61,7 +61,7 @@ Route every feature with the [ecosystem boundaries standard](https://github.com/
 ## Non-negotiables
 
 - Module ownership and dependency boundaries (what belongs to `epistemic-graph`,
-  `meristem`, `agent-connector-sdk`, `agent-webui` vs. Arbora itself):
+  `meristem`, `scion-sdk`, `overstory` vs. Arbora itself):
   see [`arbora/skills/arbora-repository-development/SKILL.md`](arbora/skills/arbora-repository-development/SKILL.md).
 - MCP and REST routes share the same application service and authorization
   decision.

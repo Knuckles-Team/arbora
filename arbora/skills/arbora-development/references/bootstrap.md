@@ -12,14 +12,14 @@ Run from a new directory of your choice:
 ```bash
 mkdir arbora-src
 cd arbora-src
-for repo in epistemic-graph agent-connector-sdk meristem arbora agent-webui; do
+for repo in epistemic-graph scion-sdk meristem arbora overstory; do
   git clone "https://github.com/Knuckles-Team/${repo}.git"
 done
 
-mkdir -p meristem/.uv-workspace-siblings agent-webui/.uv-workspace-siblings
+mkdir -p meristem/.uv-workspace-siblings overstory/.uv-workspace-siblings
 ln -s ../../epistemic-graph meristem/.uv-workspace-siblings/epistemic-graph
-ln -s ../../agent-connector-sdk meristem/.uv-workspace-siblings/agent-connector-sdk
-ln -s ../../agent-utilities agent-webui/.uv-workspace-siblings/agent-utilities
+ln -s ../../scion-sdk meristem/.uv-workspace-siblings/scion-sdk
+ln -s ../../agent-utilities overstory/.uv-workspace-siblings/agent-utilities
 ```
 
 For repository-manager work, also run:
@@ -63,7 +63,7 @@ Arbora's test setup follows `.github/workflows/release.yml`: from
 environment and installs the git hooks; the equivalent manual commands are:
 
 ```bash
-uv sync --frozen --extra test --extra webui
+uv sync --frozen --extra test --extra overstory
 uv run --no-sync pytest
 ```
 

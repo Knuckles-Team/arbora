@@ -433,8 +433,8 @@ async def test_installed_au_runtime_events_match_flat_projection(monkeypatch, ou
     """Exercise the public runtime with a controlled local model, not event fixtures."""
     import asyncio
 
-    from agent_utilities import host_ports
-    from agent_utilities.runtime import (
+    from meristem import host_ports
+    from meristem.runtime import (
         AgentRunExecutor,
         DependencyPlan,
         RunFailed,

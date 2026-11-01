@@ -8,7 +8,7 @@ from dataclasses import replace
 import httpx
 import msgpack
 import pytest
-from agent_utilities.runtime import RunBudget, RunPlan, StopRule
+from meristem.runtime import RunBudget, RunPlan, StopRule
 from epistemic_graph.client import EngineResponseError, EpistemicGraphClient
 from openai import AsyncOpenAI
 from pydantic_ai.models.openai import OpenAIChatModel

@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock
 import acp
 import httpx
 import pytest
-from agent_utilities import host_ports
+from meristem import host_ports
 from pydantic_ai.messages import ModelResponse, TextPart, ThinkingPart, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.toolsets import FunctionToolset

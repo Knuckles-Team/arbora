@@ -376,7 +376,7 @@ async def _fetch_web_source(
 
     The argument is ``{"request": WebFetchRequest}``; the answer is a
     ``WebPageResult`` (``kind: page``) or a ``WebFetchRefusal`` (``kind:
-    refusal``) of ``agent_connector_sdk.ports.web_source``.
+    refusal``) of ``scion_sdk.ports.web_source``.
     """
     if timeout_s <= 0:
         raise FetchFailed(backend, "timeout")
@@ -481,13 +481,13 @@ class SourceIngestWriter:
     client: Any
 
     async def commit(self, documents: Sequence[IngestedDocument]) -> dict[str, Any]:
-        from agent_connector_sdk.ingest import (
+        from scion_sdk.ingest import (
             ChangeSet,
             Document,
             IngestBinding,
             KnowledgeIngest,
         )
-        from agent_connector_sdk.ingest.transport import (
+        from scion_sdk.ingest.transport import (
             EpistemicGraphIngestTransport,
         )
 
@@ -620,7 +620,7 @@ def _embedder(context: Any) -> tuple[Embedder | None, str]:
     if bound is not None:
         return bound, ""
     try:
-        from agent_connector_sdk.embeddings import create_embedding_model
+        from scion_sdk.embeddings import create_embedding_model
 
         return EngineEmbedder(context.client, create_embedding_model()), ""
     except ValueError as exc:

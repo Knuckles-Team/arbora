@@ -156,9 +156,9 @@ def _session() -> GraphSession:
 async def _served_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
     """Capture a child catalog from an in-process server via the real SDK."""
 
-    from agent_connector_sdk.artifacts.pack import build_content_pack
-    from agent_connector_sdk.ports.session import TransportEndpoint
-    from agent_connector_sdk.transports.mcp import McpTransport
+    from scion_sdk.artifacts.pack import build_content_pack
+    from scion_sdk.ports.session import TransportEndpoint
+    from scion_sdk.transports.mcp import McpTransport
     from fastmcp import FastMCP
 
     server: FastMCP[object] = FastMCP(endpoint.name, version="1.0.0")
@@ -182,7 +182,7 @@ def eg(monkeypatch: pytest.MonkeyPatch) -> _Registry:
         lambda _engine: AllowPolicy(),
     )
     monkeypatch.setattr(
-        "agent_connector_sdk.sinks.epistemic_graph.EpistemicGraphSink",
+        "scion_sdk.sinks.epistemic_graph.EpistemicGraphSink",
         _RecordingSink,
     )
     monkeypatch.setattr(onboarding, "_child_auth", lambda: None)

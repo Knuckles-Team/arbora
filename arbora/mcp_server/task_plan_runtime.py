@@ -35,8 +35,8 @@ class Proposal(BaseModel):
 
 def _contracts() -> tuple[Any, Any]:
     try:
-        au = import_module("agent_utilities.runtime")
-        runtime = import_module("agent_utilities.runtime")
+        au = import_module("meristem.runtime")
+        runtime = import_module("meristem.runtime")
         _failure_type = runtime.RunFailed
         eg = import_module("epistemic_graph.generated.coordination")
         models = import_module("epistemic_graph.generated.models")

@@ -1980,7 +1980,7 @@ def _project_node_link(rows: list[Any]) -> dict[str, Any]:
 # capability-shaped response: every modality entry says whether it is
 # available, and an ABSENT backend (a modality compiled out of this engine
 # build) yields {"available": false, "reason": ...} rather than an error —
-# matching the agent-webui `src/lib/gateway.ts` {ok, data, unavailable,
+# matching the overstory `src/lib/gateway.ts` {ok, data, unavailable,
 # error} envelope convention one layer up.
 #
 # Capability detection reuses `engine_tools.ENGINE_DOMAINS`
@@ -2814,7 +2814,7 @@ def register_query_tools(mcp):
     # ══════════════════════════════════════════════════════════════════
     # 1a-quater. graph_projection — CONCEPT:MERISTEM-KG.query.node-link-projection
     # (wD10 Atlas backend gap B): a stable {nodes, links} JSON shape for a
-    # graph query result, so the agent-webui data explorer's 2D/3D renderers
+    # graph query result, so the overstory data explorer's 2D/3D renderers
     # never have to re-derive node/edge shape from raw per-dialect rows.
     # ══════════════════════════════════════════════════════════════════
     @mcp.tool(

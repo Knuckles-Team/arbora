@@ -11,7 +11,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any, Protocol, cast, runtime_checkable
 
-from agent_connector_sdk.privacy import persistence_reference
+from scion_sdk.privacy import persistence_reference
 
 from .models import (
     A2AArtifact,

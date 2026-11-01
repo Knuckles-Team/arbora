@@ -18,7 +18,7 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 import msgpack
-from agent_utilities.runtime import AgentRunExecutor, RunPlan, RunRequest
+from meristem.runtime import AgentRunExecutor, RunPlan, RunRequest
 from epistemic_graph.client import EngineResponseError, EpistemicGraphClient
 from epistemic_graph.generated import coordination as native
 from epistemic_graph.generated import graph as native_graph

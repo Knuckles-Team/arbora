@@ -569,7 +569,7 @@ def _source_connector_types() -> tuple[str, ...]:
     """Use the executable source registry as the sync-adapter authority."""
 
     try:
-        from agent_connector_sdk.source_connectors.registry import (
+        from scion_sdk.source_connectors.registry import (
             list_sources,
         )
 

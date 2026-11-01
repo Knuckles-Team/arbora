@@ -119,7 +119,7 @@ def test_packaged_console_injects_exact_identity_factory(monkeypatch):
 def test_console_static_answers_do_not_compose_identity(monkeypatch, capsys, flag):
     import sys
 
-    from agent_connector_sdk.credentials import runtime_references
+    from scion_sdk.credentials import runtime_references
 
     from arbora.console import main
     from arbora.core import settings

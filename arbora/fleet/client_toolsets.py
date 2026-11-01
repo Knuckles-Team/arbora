@@ -5,7 +5,7 @@ CONCEPT:ARBORA-HOST.harness.host-bindings
 agent-utilities carries no MCP client. When it needs a toolset bound to one
 fleet endpoint, the toolsets a client configuration file declares, or one
 ``list_tools``/``call_tool`` session, it asks the host port
-(``agent_utilities.host_ports``); arbora answers through these builders,
+(``meristem.host_ports``); arbora answers through these builders,
 attaching its own outbound service credential and TLS policy.
 """
 
@@ -125,7 +125,7 @@ class _HostToolClient:
     async def call_tool(
         self, name: str, arguments: dict[str, Any] | None = None, **kwargs: Any
     ) -> Any:
-        from agent_utilities.host_ports import HostToolError
+        from meristem.host_ports import HostToolError
         from fastmcp.exceptions import ToolError
 
         try:
@@ -159,7 +159,7 @@ async def open_tool_client(
 
 def remote_toolset_provider() -> Any:
     """The ``RemoteToolsetProvider`` arbora registers with the harness."""
-    from agent_utilities.host_ports import RemoteToolsetProvider
+    from meristem.host_ports import RemoteToolsetProvider
 
     return RemoteToolsetProvider(
         build_url_toolset=build_url_toolset,

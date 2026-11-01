@@ -97,8 +97,8 @@ def test_release_builds_from_this_repository_and_pypi_only() -> None:
     text = (ROOT / ".github" / "workflows" / "checks.yml").read_text(encoding="utf-8")
     for retired in (
         "agent-utilities",
-        "agent-connector-sdk",
-        "agent-webui",
+        "scion-sdk",
+        "overstory",
         "epistemic-graph",
     ):
         assert f"repository: Knuckles-Team/{retired}" not in text
@@ -291,7 +291,7 @@ def test_github_release_links_the_published_pypi_version() -> None:
         step for step in release["steps"] if step["name"] == "Write release notes"
     )
     assert "https://pypi.org/project/arbora/$version/" in notes["run"]
-    assert 'pip install \\"arbora[webui]==$version\\"' in notes["run"]
+    assert 'pip install \\"arbora[overstory]==$version\\"' in notes["run"]
 
 
 def test_release_eg_resolves_from_the_package_index_as_wheels() -> None:
@@ -311,7 +311,7 @@ def test_installed_sdk_contains_schema_disclosure_contract() -> None:
     import ast
     import importlib.util
 
-    spec = importlib.util.find_spec("agent_connector_sdk.mcp.schema_disclosure")
+    spec = importlib.util.find_spec("scion_sdk.mcp.schema_disclosure")
     assert spec is not None and spec.origin is not None
     source = Path(spec.origin).read_text(encoding="utf-8")
     names = {

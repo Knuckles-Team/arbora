@@ -6,7 +6,7 @@ confirming every row resolves to a *passing* automated test. The seven
 obligation rows named in ``specs/dependency-ordered-release/requirements.md``
 span multiple repositories (ingestion receipts and SPARQL/natural-language
 query proofs live in epistemic-graph; the multi-agent orchestration graph in
-agent-utilities; connector certification in agent-connector-sdk; and so on),
+agent-utilities; connector certification in scion-sdk; and so on),
 so wiring every row to a currently-passing test is cross-repo work tracked
 separately as ``ARBORA-RELEASE-R003.2`` and is not claimed here.
 

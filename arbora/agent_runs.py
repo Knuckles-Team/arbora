@@ -2,11 +2,11 @@
 
 The agent-utilities harness owns the run loop (plan, model, tools, steps,
 budgets, stop rules). It asks its host for every decision through
-``agent_utilities.host_ports``. This module supplies those answers:
+``meristem.host_ports``. This module supplies those answers:
 
 * :func:`decide_run` is the run decision provider. The engine serves no run-plan
   decision method today, so it returns the harness's documented default plan
-  (``agent_utilities.runtime.default_run_plan``) over the Arbora model registry.
+  (``meristem.runtime.default_run_plan``) over the Arbora model registry.
 * :func:`resolve_model` is the model provider. It builds an OpenAI-compatible
   model for a model id that the Arbora model registry names. Any other id
   passes through, so pydantic-ai resolves it itself.
@@ -372,7 +372,7 @@ def decide_run(request: Any) -> Any:
     The engine serves no run-plan decision method, so this returns the
     harness's documented default plan. A run without a model fails closed.
     """
-    from agent_utilities.runtime import default_run_plan
+    from meristem.runtime import default_run_plan
 
     owner = current_native_run(request)
     plan = default_run_plan(request, run_config())
@@ -555,7 +555,7 @@ def record_run_event(event: Mapping[str, Any]) -> None:
 
 def failed_run_usage(error: Exception, run_id: str) -> dict[str, int] | None:
     """Project only AU's validated failed receipt, never exception-shaped data."""
-    from agent_utilities import runtime
+    from meristem import runtime
 
     failure_type = getattr(runtime, "RunFailed", None)
     if failure_type is None or type(error) is not failure_type:
@@ -578,7 +578,7 @@ class AgentRunPort:
 
     def __init__(self, executor: Any = None) -> None:
         if executor is None:
-            from agent_utilities.runtime import AgentRunExecutor
+            from meristem.runtime import AgentRunExecutor
 
             executor = AgentRunExecutor(run_config())
         self._executor = executor
@@ -612,7 +612,7 @@ class AgentRunPort:
 
 def bind_run_ports() -> None:
     """Register the run decision, model and run event providers with the harness."""
-    from agent_utilities import host_ports
+    from meristem import host_ports
 
     host_ports.register_run_decision_provider(decide_run)
     host_ports.register_model_provider(resolve_model)

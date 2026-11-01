@@ -51,7 +51,7 @@ FLEET_TOOLS = ("find", "act")
 #: The fleet's default agent: an A2A message or ``agents.run`` that names no
 #: ``metadata.agent_name`` runs on it.
 FLEET_AGENT_NAME = "arbora"
-#: The default profile requested by agent-webui's orchestrator model.
+#: The default profile requested by overstory's orchestrator model.
 WEBUI_AGENT_NAME = "webui-assistant"
 
 

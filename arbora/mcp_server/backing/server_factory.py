@@ -23,12 +23,12 @@ from collections.abc import Callable
 from typing import Any, cast
 from urllib.parse import urlsplit
 
-from agent_connector_sdk.credentials.runtime_references import (
+from scion_sdk.credentials.runtime_references import (
     RuntimeSecretReferenceAction,
     RuntimeSecretReferenceError,
     resolve_runtime_secret_reference,
 )
-from agent_connector_sdk.utilities import to_boolean
+from scion_sdk.utilities import to_boolean
 
 from arbora._version import __version__
 from arbora.core.settings import setting

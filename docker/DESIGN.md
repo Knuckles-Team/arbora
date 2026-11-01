@@ -13,8 +13,8 @@ runtime still lives in agent-utilities.
 
 An eventual image definition here must:
 
-- install exact released Arbora, epistemic-graph, agent-connector-sdk,
-  meristem, and optional agent-webui artifacts;
+- install exact released Arbora, epistemic-graph, scion-sdk,
+  meristem, and optional overstory artifacts;
 - run the public `arbora` entrypoint rather than an meristem alias;
 - resolve endpoints and credentials from deployment configuration and secret
   references, never from values embedded in the image;

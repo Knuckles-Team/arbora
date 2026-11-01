@@ -45,7 +45,7 @@ __all__ = [
 
 def _locate_query_tools_module() -> Path | None:
     """Resolve ``arbora/mcp_server/backing/tools/query_tools/py`` via the installed
-    ``agent_utilities`` package rather than a path relative to this file (this
+    ``arbora`` package rather than a path relative to this file (this
     file no longer lives inside the same repository as its target). Returns
     ``None`` when the distribution cannot be located at all (e.g. a stub or
     namespace-only install) — the caller still fails loudly, just one level
@@ -56,7 +56,7 @@ def _locate_query_tools_module() -> Path | None:
     return Path(spec.origin).resolve()
 
 
-#: Resolved through the installed ``agent_utilities`` distribution (see
+#: Resolved through the installed ``arbora`` distribution (see
 #: :func:`_locate_query_tools_module`) so the introspection travels correctly
 #: regardless of where arbora and agent-utilities are each checked out.
 QUERY_TOOLS_MODULE = _locate_query_tools_module()
@@ -150,7 +150,7 @@ def enumerate_query_dialect_surfaces(
     drift test in ``test_surface_enumeration_drift.py`` vacuously pass,
     exactly the "gate that reports more coverage than it has" failure mode
     this design is built to avoid). This now also covers the cross-repo case
-    (``agent_utilities`` not installed / not locatable at all), surfaced
+    (``arbora`` not installed / not locatable at all), surfaced
     through the SAME exception so callers need only one failure mode.
     """
 

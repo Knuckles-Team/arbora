@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from agent_connector_sdk.current_plan import (
+from scion_sdk.current_plan import (
     CurrentPlanRead,
     CurrentPlanSnapshot,
     PlanItem,

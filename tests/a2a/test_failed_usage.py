@@ -4,8 +4,8 @@ import asyncio
 from unittest.mock import AsyncMock
 
 import pytest
-from agent_utilities import host_ports
-from agent_utilities.graph import RunFailed, RunResult
+from meristem import host_ports
+from meristem.graph import RunFailed, RunResult
 
 from arbora import agent_runs, work_items
 from arbora.a2a.authority import WorkItemA2AAuthority, task_output_artifacts
@@ -161,7 +161,7 @@ def test_readonly_counters_are_copied():
 
 
 def test_missing_public_failure_contract(monkeypatch):
-    import agent_utilities.graph as au
+    import meristem.graph as au
 
     from arbora.mcp_server import task_plan_runtime
 

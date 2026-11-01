@@ -60,7 +60,7 @@ operations.
 | `arbora.fleet` | MCP child lifecycle, catalog discovery, OAuth admission, health, and per-session tool loading |
 | `arbora.gateway` | REST routes, dashboard aggregation, widget projection, and the host daemon |
 | `arbora.control_plane` | Fleet reconciliation and action-policy enforcement |
-| `arbora.webui_host` | Optional Agent WebUI co-service lifecycle |
+| `arbora.webui_host` | Optional Overstory co-service lifecycle |
 | `arbora.a2a` | Authenticated Agent Card and unary A2A projection |
 | `arbora.browser_control` | Governed browser catalog, lease, dispatch, and outcome orchestration |
 | `arbora.deployment` | Configuration, diagnostics, canaries, environment plans, and production operations |
@@ -68,8 +68,8 @@ operations.
 Arbora authenticates, composes, routes, supervises, and projects. Durable
 graph state and RDF/OWL/SHACL semantics belong to `epistemic-graph`; agent
 decisions and workflows belong to `meristem`; source-specific transport
-and effects belong to `agent-connector-sdk` and connector services; browser
-presentation belongs to `agent-webui`.
+and effects belong to `scion-sdk` and connector services; browser
+presentation belongs to `overstory`.
 
 ```mermaid
 flowchart LR
@@ -150,7 +150,7 @@ uv run --no-sync mypy arbora tests
 `.pre-commit-config.yaml` is the single definition of the gates. The release
 workflow runs it directly: the commit stage over every file, the push stage
 over the pushed range, then the manual-stage `mypy-env` and `pytest` hooks
-after `uv sync --frozen --extra test --extra webui` installs the locked PyPI
+after `uv sync --frozen --extra test --extra overstory` installs the locked PyPI
 dependencies. No sibling source or overlay participates in release qualification.
 Local paired-source diagnostics can investigate upstream contracts, but cannot
 replace these wheel-only gates. Run the same locally:

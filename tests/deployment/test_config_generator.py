@@ -585,7 +585,7 @@ def test_generated_config_is_accepted_by_the_runtime_loader(
     """setup-config generate writes only what load_config projects."""
     from unittest import mock
 
-    import agent_connector_sdk.config as sdk_config
+    import scion_sdk.config as sdk_config
 
     out = tmp_path / "config.json"
     write_config(profile, out)

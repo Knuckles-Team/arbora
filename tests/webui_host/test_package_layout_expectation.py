@@ -1,37 +1,37 @@
-"""Tests for the R013 agent-webui package layout expectation."""
+"""Tests for the R013 overstory package layout expectation."""
 
 from __future__ import annotations
 
 import pytest
 
 from arbora.webui_host.package_layout_expectation import (
-    AGENT_WEBUI_DISTRIBUTION,
+    OVERSTORY_DISTRIBUTION,
     EXPECTED_TOP_LEVEL_MODULES,
-    AgentWebUiLayoutError,
+    OverstoryLayoutError,
     InstalledPackageFixture,
-    validate_agent_webui_layout,
+    validate_overstory_layout,
 )
 
 
 def test_fixture_with_every_expected_module_passes() -> None:
     fixture = InstalledPackageFixture(
-        distribution=AGENT_WEBUI_DISTRIBUTION,
+        distribution=OVERSTORY_DISTRIBUTION,
         top_level_modules=EXPECTED_TOP_LEVEL_MODULES,
     )
-    validate_agent_webui_layout(fixture)
+    validate_overstory_layout(fixture)
 
 
 def test_fixture_missing_a_module_is_refused() -> None:
     fixture = InstalledPackageFixture(
-        distribution=AGENT_WEBUI_DISTRIBUTION,
+        distribution=OVERSTORY_DISTRIBUTION,
         top_level_modules=tuple(
             module
             for module in EXPECTED_TOP_LEVEL_MODULES
-            if module != "agent_webui.oidc_session"
+            if module != "overstory.oidc_session"
         ),
     )
-    with pytest.raises(AgentWebUiLayoutError):
-        validate_agent_webui_layout(fixture)
+    with pytest.raises(OverstoryLayoutError):
+        validate_overstory_layout(fixture)
 
 
 def test_fixture_for_the_wrong_distribution_is_refused() -> None:
@@ -39,5 +39,5 @@ def test_fixture_for_the_wrong_distribution_is_refused() -> None:
         distribution="agent-web-ui",
         top_level_modules=EXPECTED_TOP_LEVEL_MODULES,
     )
-    with pytest.raises(AgentWebUiLayoutError):
-        validate_agent_webui_layout(fixture)
+    with pytest.raises(OverstoryLayoutError):
+        validate_overstory_layout(fixture)

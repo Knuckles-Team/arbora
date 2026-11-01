@@ -173,7 +173,7 @@ class RegistryKindResult(BaseModel):
     ``status="unavailable"`` (with ``reason`` set) means THIS kind's catalog
     read failed; it is never conflated with "zero items", which is a
     genuine, successful empty page (``status="ok"``, ``items=[]``). Mirrors
-    ``agent_webui.api_extensions._read_fleet_catalog``'s own per-kind
+    ``overstory.api_extensions._read_fleet_catalog``'s own per-kind
     ``None``-on-failure contract, translated into this route's typed
     envelope shape instead of a raw ``None``.
     """
@@ -697,7 +697,7 @@ def _redact_text(value: Any) -> Any:
         # them and the route can return an explicit unavailable response.
         return value
     try:
-        from agent_connector_sdk.privacy import PersistencePrivacyGuard
+        from scion_sdk.privacy import PersistencePrivacyGuard
 
         safe, _ = PersistencePrivacyGuard().sanitize_text(value)
         return safe
@@ -1416,7 +1416,7 @@ async def _get_kind(
 # keyed by name — ``("mcp_server", name)``; skills, keyed by the skill's
 # frontmatter name, which is the same value as this catalog's ``name``
 # column — ``("skill", name)``) and
-# ``agent_webui.api_extensions``'s per-tool inventory enrichment (tools,
+# ``overstory.api_extensions``'s per-tool inventory enrichment (tools,
 # keyed by ``f"{server_name}:{tool_name}"`` — ``("mcp_tool",
 # f"{server_name}:{name}")"``). ``discoveries``/``prompts``/``resources``
 # have no evidenced toggle convention and no ``enabled`` field on their
@@ -1500,7 +1500,7 @@ async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
 
     One kind's catalog failure never discards another's success: a failing
     kind reports ``RegistryKindResult(status="unavailable", reason=...)``,
-    matching ``agent_webui.api_extensions._read_fleet_catalog``'s own
+    matching ``overstory.api_extensions._read_fleet_catalog``'s own
     per-kind degrade contract. The top-level ``status`` stays ``"ok"``
     whenever ANY per-kind read was attempted; only a total authority failure
     (no verified session/scope at all) 403s the whole request, before any
