@@ -1,7 +1,6 @@
 # ARBORA-A2A — test contract
 
 ## A2A task and approval projection
-Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing spec: [ARBORA-A2A](spec.md).
 
 | Test | Requirement | Setup and expected result |
 |---|---|---|
@@ -18,7 +17,6 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing spec
 Run `uv run pytest tests/a2a tests/api`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy arbora`, `uvx --from pre-commit==4.6.0 pre-commit run --all-files`, and `uv build --wheel --out-dir dist`. CCCC and KISS remain within configured limits, jscpd records zero new pairs, and Dupehound records no new clones. Capture exact commit, command, versions, result and public CI link in a local `evidence.md` before changing delivery to `ACCEPTED`.
 
 ## A2A streaming, push notifications and transition-history projection
-Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `ARBORA-A2A-R009.1`. Governing [spec](spec.md).
 
 | Test | Requirement | Setup and expected result |
 |---|---|---|
@@ -35,7 +33,6 @@ Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `ARBORA-
 Run `uv run pytest tests/a2a`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy arbora`, and `uvx --from pre-commit==4.6.0 pre-commit run --files <changed>` for this PR's `ARBORA-A2A-R009.1` slice (A2A-HT01–HT03). The remaining rows (A2A-HT04–HT09) require `ARBORA-A2A` and live AU/EG fixtures and stay open until implemented. Capture exact commit, command, versions and result in a local `evidence.md` before changing delivery to `ACCEPTED`.
 
 ## A2A context-budget tool-subset admission
-Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. Governing spec: [ARBORA-A2A-002](spec.md).
 
 | Test | Requirement | Setup and expected result |
 |---|---|---|
@@ -186,3 +183,30 @@ fixtures. Native producer, durable CAS, installed consumer and served signed
 approval acceptance remain open until exact-source evidence is available.
 
 `ARBORA-A2A-R005.2.5` owns the remaining full-chain acceptance, not the snapshot or registration fixtures. Run the actual installed native and served path from pending call through signed approval to one effect. Include restart and concurrent replay, changed parameters, foreign human or tenant, expiry, revocation and intervening authority changes. No test in this increment supplies that proof. The row remains open and confirmation stays refused.
+
+## Planned test entries
+
+Rows below name tests that are planned or only partly built. Each entry restates the planned test and its observation; the row's own verification cell holds the same test name.
+
+| Test | Requirement | Planned test and expected observation |
+|---|---|---|
+| A2A-PL01 | ARBORA-A2A-R002.2.1 | No arbora-side test is possible against the current AU carrier contract. Verified by the fail-closed tests bound to `ARBORA-A2A-R002.1` continuing to refuse rather than silently drop the filter. Tracked as the explicit cross-repo dependency recorded in `tasks.md`. Test: `tests/a2a/test_authority.py::test_selected_tool_subset_is_refused_before_durable_admission`. |
+| A2A-PL02 | ARBORA-A2A-R005.2.1 | Test: `tests/a2a/test_grant_store.py::test_concurrent_consume_succeeds_once` (L2) runs 8 concurrent consumes against a loopback engine and asserts one success. `::test_expired_and_revoked_grants_refuse` asserts the refusal codes. Served proof is `ARBORA-A2A-R005.2.5`. |
+| A2A-PL03 | ARBORA-A2A-R011 | Test: `tests/a2a/test_transition_history.py::test_history_matches_engine_ledger_exactly` (L3) runs `tasks/get` against a loopback engine and asserts the entries equal the ledger, plus a foreign-tenant refusal. |
+| A2A-PL04 | ARBORA-A2A-R012.3 | Test: `tests/a2a/test_transition_history.py::test_get_task_raises_typed_refusal_without_authority` (L2) covers the absent and the raising authority. |
+| A2A-PL05 | ARBORA-A2A-R015 | Test: `tests/a2a/test_agent_card.py::test_served_card_matches_wired_authorities` (L3) compares the advertised set with the exercised set. |
+| A2A-PL06 | ARBORA-A2A-R001.3 | Test: `tests/a2a/test_served_agent.py::test_context_survives_restart_and_list_is_caller_scoped` (served). It restarts between two turns, lists only the caller's contexts and refuses a foreign `contextId`. |
+| A2A-PL07 | ARBORA-A2A-R001.4.1 | Test: `tests/a2a/test_served_agent.py::test_stream_emits_delta_tool_call_result_final_in_order` (served). A resubscribe from a cursor replays the tail. |
+| A2A-PL08 | ARBORA-A2A-R001.5.2 | Test: `tests/a2a/test_served_agent.py::test_capable_model_accepts_png_and_unknown_stale_oversize_create_no_task` (served). |
+| A2A-PL09 | ARBORA-A2A-R001.7 | Test: `tests/a2a/test_peer_registry_served.py::test_register_refresh_list_delete_through_invoke` (served, HTTP and MCP) registers, refreshes, lists and removes a peer. It asserts both refusals and the revision history. It runs one cross-tenant negative case. |
+| A2A-PL10 | ARBORA-A2A-R002.2.3.3 | Test: `tests/a2a/test_tool_task_served.py::test_revoked_caller_makes_no_effect_and_is_acknowledged` (served). |
+| A2A-PL11 | ARBORA-A2A-R002.2.3.4 | Test: `tests/a2a/test_tool_task_served.py::test_crash_after_effect_reconciles_without_repeat` (served). The connector fake counts one execution. |
+| A2A-PL12 | ARBORA-A2A-R002.2.3.5 | Test: `tests/a2a/test_tool_task_served.py::test_duplicate_delivery_executes_once` (served). |
+| A2A-PL13 | ARBORA-A2A-R013.1 | Test: `tests/a2a/test_push_delivery.py::test_registration_refuses_private_and_non_https_targets` (L2) and a cross-tenant refusal (L3). |
+| A2A-PL14 | ARBORA-A2A-R013.2 | Test: `tests/a2a/test_push_delivery.py::test_failed_delivery_defers_then_dead_letters` (L2) asserts the delays and the dead-letter commit against a fake target. |
+| A2A-PL15 | ARBORA-A2A-R013.3 | Test: `tests/a2a/test_agent_card.py::test_push_capability_follows_wired_worker` (L2). |
+| A2A-PL16 | ARBORA-A2A-R013.4 | Test: `tests/a2a/test_push_delivery_served.py::test_push_survives_restart_and_dead_letters` (L3) against a real engine binary, with a cross-tenant refusal. |
+| A2A-PL17 | ARBORA-A2A-R016.6 | Test: `tests/a2a/test_model_profile_boundary.py::test_preference_allowed_disallowed_absent` (L3) covers the three cases against a loopback engine. |
+| A2A-PL18 | ARBORA-A2A-R023 | Test: `tests/a2a/test_routing.py::test_task_routes_through_a2a_route_decision` (L3) submits to a known graph and an unknown graph. It asserts dispatch and refusal against a loopback engine. |
+| A2A-PL19 | ARBORA-A2A-R024 | Test: `tests/a2a/test_hub_federation_served.py::test_forward_respects_peer_scope` runs the A2A server against a loopback peer and a recorded medulla engine. |
+| A2A-PL20 | ARBORA-A2A-R025 | Test: `tests/a2a/test_anonymous_send.py::test_text_only_plan_admitted_and_limited` (served HTTP). |
