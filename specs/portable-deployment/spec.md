@@ -44,3 +44,34 @@ The new target and no-effect reuse scenarios have not been run.
 - `ARBORA-DEPLOY-R009.3`: Owner scope and complete acceptance are defined in requirements.md.
 - `ARBORA-DEPLOY-R013.7`: Owner scope and complete acceptance are defined in requirements.md.
 - `ARBORA-DEPLOY-R010.4`: Owner scope and complete acceptance are defined in requirements.md.
+
+## User Scenarios & Testing
+
+### User Story 1 - A contributor installs and tests from a clean clone (Priority: P1)
+
+An external contributor clones only this repository and runs the documented gates without any private environment.
+
+**Acceptance Scenarios**:
+
+1. **Given** a fresh clone on a supported Python version, **When** the contributor runs `uv sync --extra test` and `uv run pytest tests/deployment`, **Then** the deployment tests pass with no sibling checkout.
+2. **Given** an installed wheel in a new environment, **When** the contributor runs `arbora-release-canary --json`, **Then** the canary reports the console entry points resolved to Arbora and exits 0.
+
+### User Story 2 - A maintainer applies a profile (Priority: P2)
+
+A maintainer applies a reviewed profile to a single-host container environment or to Kubernetes.
+
+**Acceptance Scenarios**:
+
+1. **Given** a profile with digest-pinned images and reference-only secrets, **When** the maintainer runs `setup-config environments validate <name>`, **Then** the profile loads and validates.
+2. **Given** a profile with a tagged image or an unknown key, **When** the same command runs, **Then** it refuses with the section and key and applies nothing.
+
+### Edge Cases
+
+- A missing secret reference, an unwritable runtime path or an unsafe identity mode stops apply before any process launches.
+- A second host process on the same engine endpoint attaches and never starts a second engine.
+- A pre-push shim whose configuration path was relocated fails loudly instead of passing.
+
+## Assumptions
+
+- The graph engine is the only durable authority; no profile implies a second store.
+- Optional components (web UI, connectors, external identity) are selected explicitly and are absent from the core path.
