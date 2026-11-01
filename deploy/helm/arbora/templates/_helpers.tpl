@@ -123,7 +123,7 @@ envFrom:
 
 {{/* Engine argv shared by the sidecar and the shared StatefulSet. */}}
 {{- define "arbora.engineArgs" -}}
-- epistemic-graph-server
+- medulla-server
 - --persist-dir
 - {{ if include "arbora.unified" . }}/var/lib/arbora/engine{{ else }}/var/lib/epistemic-graph/data{{ end }}
 {{- if include "arbora.unified" . }}

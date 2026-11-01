@@ -4,7 +4,7 @@ companion to :mod:`host_lock`. The host-lock elects ONE
 *daemon* owner; this elects ONE *engine* process per socket path.
 
 Engine autostart (``graph_compute`` connect → ``subprocess.Popen`` of
-``epistemic-graph-server``) was previously unguarded: any process that found the
+``medulla-server``) was previously unguarded: any process that found the
 engine down would spawn one, with no mutual exclusion. Two spawners racing — or a
 client spawning while a displaced-but-alive engine still held an unlinked socket —
 produced a **split-brain**: two engines bound to the same socket path,

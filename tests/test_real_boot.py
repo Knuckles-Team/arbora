@@ -1,7 +1,7 @@
 """Boot a real ``arbora`` process against a real EG server (the deploy gate).
 
 The unit suite builds the server without running its startup, so it cannot see
-a process that refuses to serve. This test starts the ``epistemic-graph-server``
+a process that refuses to serve. This test starts the ``medulla-server``
 binary from the installed wheel on a temporary store, then the ``arbora``
 console entry point as a subprocess configured through a temporary
 ``ARBORA_CONFIG_DIR``, and drives both served surfaces with a real bearer
@@ -43,7 +43,7 @@ pytestmark = [
     pytest.mark.real_boot,
     pytest.mark.skipif(
         not (sys.platform == "linux" and platform.machine() in {"x86_64", "AMD64"}),
-        reason="the epistemic-graph-server wheel ships linux x86_64 only",
+        reason="the medulla-server wheel ships linux x86_64 only",
     ),
 ]
 
@@ -294,15 +294,15 @@ def _booted_stack(
         eg_env = {
             **base_env,
             "GRAPH_SERVICE_AUTH_SECRET": secret,
-            "EPISTEMIC_GRAPH_AUDIENCE": AUDIENCE,
-            "EPISTEMIC_GRAPH_TENANT": TENANT,
-            "EPISTEMIC_GRAPH_POLICY_VERSION": POLICY_VERSION,
-            "EPISTEMIC_GRAPH_REQUIRE_OIDC": "false",
-            "EPISTEMIC_GRAPH_SECURITY_STATE_DIR": str(root / "security"),
+            "MEDULLA_AUDIENCE": AUDIENCE,
+            "MEDULLA_TENANT": TENANT,
+            "MEDULLA_POLICY_VERSION": POLICY_VERSION,
+            "MEDULLA_REQUIRE_OIDC": "false",
+            "MEDULLA_SECURITY_STATE_DIR": str(root / "security"),
             # Arbora imports its own semantic packs as its process principal.
             "MEDULLA_CONNECTOR_PACK_IMPORTERS": "*=principal:sha256:"
             + hashlib.sha256(PROCESS_SUBJECT.encode()).hexdigest(),
-            "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON": json.dumps(
+            "MEDULLA_SIGNER_KEYS_JSON": json.dumps(
                 {
                     PROCESS_SUBJECT: {
                         "key": signer_key,
@@ -330,7 +330,7 @@ def _booted_stack(
         def eg_up() -> bool:
             if processes[0].poll() is not None:
                 raise AssertionError(
-                    "epistemic-graph-server exited during startup\n"
+                    "medulla-server exited during startup\n"
                     + (root / "eg.log").read_text(errors="replace")[-4000:]
                 )
             return socket_path.exists()

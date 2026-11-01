@@ -57,7 +57,7 @@ than Arbora copying its graph into a mirror:
 - register/list/probe/share operations through the control plane, with
   credentials as secret references;
 - each internal SQL/HTTP host allowed in the engine's federation allowlist
-  (`EPISTEMIC_GRAPH_FEDERATION_ALLOW`), which refuses internal addresses by
+  (`MEDULLA_FEDERATION_ALLOW`), which refuses internal addresses by
   default to prevent server-side request forgery;
 - the federation API operations that expose register/list/probe/share over
   MCP/API/A2A.

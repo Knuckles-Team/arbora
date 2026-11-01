@@ -64,7 +64,7 @@ Acceptance requires every functional rule above, the positive/negative matrix in
 
 - `fleet.catalog.reload` is the public control ID and its request/result fields are specified above. Dry-run validates and reports a candidate without swapping the active pointer.
 - Use the engine's generated durable event contract for catalog delta receipts and replay. Arbora supplies a local fixture adapter for contributor tests. Event keys include tenant, generation, sequence, and item ID to make replays idempotent.
-- Arbora observes each child catalog over MCP, as the multiplexer does. EG issues the binding through `ConnectorPack.attest_self_served_catalog`. Arbora must be the bound importer of each fleet connector. The deployment binds it through `EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS` or `ConnectorPack.bind`. Arbora never binds itself.
+- Arbora observes each child catalog over MCP, as the multiplexer does. EG issues the binding through `ConnectorPack.attest_self_served_catalog`. Arbora must be the bound importer of each fleet connector. The deployment binds it through `MEDULLA_CONNECTOR_PACK_IMPORTERS` or `ConnectorPack.bind`. Arbora never binds itself.
 - Ship a local embedded policy and allow/deny fixtures in this repository so a fresh checkout exercises policy without a remote PDP.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.

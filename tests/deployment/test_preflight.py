@@ -68,7 +68,7 @@ def test_engine_is_wheel_first_rust_only_fallback(monkeypatch):
 
 def test_engine_present_means_no_rust(monkeypatch):
     monkeypatch.setattr(
-        P, "_engine_binary_path", lambda: "/venv/bin/epistemic-graph-server"
+        P, "_engine_binary_path", lambda: "/venv/bin/medulla-server"
     )
     # _check_engine also verifies the binary satisfies the current launch
     # contract (--idle-shutdown-secs) via a real subprocess call — legitimate

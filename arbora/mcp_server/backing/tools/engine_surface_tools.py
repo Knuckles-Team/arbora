@@ -2642,7 +2642,7 @@ def register_engine_surface_tools(
     # a REAL POST route (the 405 -> a normal 200 that degrades to
     # ``{"surface": "logs", ...}`` when the engine build has no log-query
     # surface yet -- see ``_LOGS_QUERY_CANDIDATES`` above). The engine's own
-    # log surface (``EPISTEMIC_GRAPH_OBS_ADDR``) today only ever INGESTS
+    # log surface (``MEDULLA_OBS_ADDR``) today only ever INGESTS
     # (``POST /v1/logs``); no query RPC exists on the wire client yet, so this
     # degrades cleanly like graph_promql/graph_traces already do for a build
     # without their surface -- never fabricates a log line.

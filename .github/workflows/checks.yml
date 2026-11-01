@@ -386,7 +386,7 @@ jobs:
           "$SMOKE_PYTHON" -I wheel_boot_check.py runtime
 
       # Linux x64 also boots a real arbora process against the
-      # epistemic-graph-server binary from the installed engine wheel, with
+      # medulla-server binary from the installed engine wheel, with
       # arbora imported from the installed wheel. A skip fails the gate.
       - name: Real boot of the installed wheel (linux x86_64)
         if: matrix.name == 'linux-x86_64'

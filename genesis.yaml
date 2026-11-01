@@ -178,7 +178,7 @@ engine:
   secret_store:
     graph: __secrets__
     label: Secret
-    encryption_key_env: EPISTEMIC_GRAPH_ENCRYPTION_KEY
+    encryption_key_env: MEDULLA_ENCRYPTION_KEY
     note: default embedded secret store (OS-5.66) in the full engine. Local SQLite caches (registry graph,
       card cache, time-series) also route to the engine — no SQLite fallback.
 components:

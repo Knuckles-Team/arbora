@@ -53,9 +53,9 @@ def test_generate_config_profile_presets():
         assert production["AUTH_JWT_ISSUER"] == ""
         assert production["AUTH_JWT_AUDIENCE"] == ""
         assert production["KG_POLICY_VERSION"] == "baseline-v1"
-        assert production["EPISTEMIC_GRAPH_MAX_RESIDENT_GRAPHS"] == 1024
-        assert production["EPISTEMIC_GRAPH_LAZY_OPEN_PAGE_SIZE"] == 4096
-        assert production["EPISTEMIC_GRAPH_MAX_NODES_PER_GRAPH"] == 250000
+        assert production["MEDULLA_MAX_RESIDENT_GRAPHS"] == 1024
+        assert production["MEDULLA_LAZY_OPEN_PAGE_SIZE"] == 4096
+        assert production["MEDULLA_MAX_NODES_PER_GRAPH"] == 250000
         assert production["ENABLE_OTEL"] is True
         assert production["LANGFUSE_MCP_ENABLED"] is True
         assert production["TRACE_EXPORT_ENABLED"] is True

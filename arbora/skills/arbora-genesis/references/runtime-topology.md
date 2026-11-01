@@ -66,7 +66,7 @@ genuinely required.
 
 The Compose file and the chart consume an operator-supplied **unified image**:
 arbora, meristem, agent-connector-sdk, the web UI extra, and the
-`epistemic-graph-server` binary at a matching release. arbora does not
+`medulla-server` binary at a matching release. arbora does not
 publish an authoritative image of its own; the deploying organization builds
 it from released artifacts and pins it by digest. Check the CPU baseline of
 the engine binary against every node it can run on.

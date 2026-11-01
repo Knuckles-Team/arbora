@@ -88,7 +88,7 @@ def start_daemon_metrics_listener() -> bool:
       names, lane names, queue depths) — never a secret, a tool-call
       payload, or PII.
     * A strictly loopback (``127.0.0.1``) bind — the posture the bundled
-      ``epistemic-graph-server`` engine itself uses for its own native
+      ``medulla-server`` engine itself uses for its own native
       metrics listener — would be UNREACHABLE from Prometheus, which scrapes
       via the Pod IP (the shared pod network's routable interface), not via
       a process that merely shares the pod's network namespace. Pod-local

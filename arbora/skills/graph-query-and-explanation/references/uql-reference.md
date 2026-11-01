@@ -386,7 +386,7 @@ that feature — an ungated build returns a clear "`<CLAUSE>` requires … not
 available in this build" error (one fallback function per clause, e.g.
 `parser.rs:556-570` for `REASON`). A cross-seam test against a slim/Pi build
 should expect that message, not a crash or a silently-empty result — confirm
-which features the target deployment's `epistemic-graph-server` was actually
+which features the target deployment's `medulla-server` was actually
 built with before treating a "not in this build" response as a bug.
 
 ---

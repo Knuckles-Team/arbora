@@ -91,10 +91,10 @@ The engine needs these settings:
 | Engine setting | Value |
 |---|---|
 | `GRAPH_SERVICE_AUTH_SECRET` | The shared HMAC secret; Arbora reads the same value |
-| `EPISTEMIC_GRAPH_AUDIENCE` | Equal to the Arbora `AUTH_JWT_AUDIENCE` |
-| `EPISTEMIC_GRAPH_TENANT` | The tenant of the Arbora process token |
-| `EPISTEMIC_GRAPH_POLICY_VERSION` | Equal to the Arbora `KG_POLICY_VERSION` |
-| `EPISTEMIC_GRAPH_SIGNER_KEYS_JSON` | One signer: the Arbora process principal, with `may_grant_system` true |
+| `MEDULLA_AUDIENCE` | Equal to the Arbora `AUTH_JWT_AUDIENCE` |
+| `MEDULLA_TENANT` | The tenant of the Arbora process token |
+| `MEDULLA_POLICY_VERSION` | Equal to the Arbora `KG_POLICY_VERSION` |
+| `MEDULLA_SIGNER_KEYS_JSON` | One signer: the Arbora process principal, with `may_grant_system` true |
 | `MEDULLA_CONNECTOR_PACK_IMPORTERS` | `*=principal:sha256:<SHA-256 of the process principal>` |
 
 The Arbora process token must carry these roles: `kg:admin`,
@@ -147,7 +147,7 @@ not permission to bypass its policy or schema verification.
 # In separate terminals, using the same isolated configuration and loopback:
 # Explicitly admit only Arbora's own content pack, not unrelated connectors.
 export MEDULLA_CONNECTOR_PACK_IMPORTERS="arbora=principal:sha256:2f183a4e64493af3f377f745eda502363cd3e7ef6e4d266d444758de0a85fcc8"
-epistemic-graph-server --auth-mode none --tcp-only \
+medulla-server --auth-mode none --tcp-only \
   --tcp-addr 127.0.0.1:19100 --persist-dir ./anonymous-store
 
 export ARBORA_AUTH_MODE=none
