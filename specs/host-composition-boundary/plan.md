@@ -58,7 +58,14 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 
 ## Cross-repo seams
 
-None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
+| Seam | Contract | Counterpart |
+|---|---|---|
+| Composition owners (engine, connector SDK, harness, web UI) | [`contracts/composition-owners.md`](contracts/composition-owners.md) | `ARBORA-HOST-R001` |
+| Single gateway | [`contracts/single-gateway.md`](contracts/single-gateway.md) | `ARBORA-HOST-R004` |
+| Fleet multiplexer ownership | [`contracts/fleet-multiplexer.md`](contracts/fleet-multiplexer.md) | `ARBORA-HOST-R006` |
+| Harness host-facing module set (meristem) | [meristem `specs/run/contracts/arbora.md`](https://github.com/Knuckles-Team/meristem/blob/main/specs/run/contracts/arbora.md) | `ARBORA-HOST-R007` |
+
+The `Depends on` lines of requirements.md name every other dependency by the row ID that owns it in the other repository.
 
 ## Existing wiring to reuse
 
