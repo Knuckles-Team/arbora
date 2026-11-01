@@ -16,6 +16,8 @@ from arbora.deployment.public_ingress_identity import (
     public_ingress_profile_from_mapping,
 )
 
+pytestmark = pytest.mark.spec("ARBORA-INGRESS-R001.1")
+
 _VALID = {
     "version": 1,
     "public_origin": "https://arbora.example.com",
