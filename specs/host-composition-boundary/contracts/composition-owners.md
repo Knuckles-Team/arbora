@@ -12,7 +12,7 @@ Consumer: arbora ARBORA-HOST-R001
 | Owner | Owns | Arbora reaches it through |
 |---|---|---|
 | medulla | Ontology, SHACL, durable records, decisions | The generated engine client and served `eg.*` operations |
-| scion-sdk | Connector transport, manifests, certification, governed HTTP and credentials | `agent_connector_sdk.mcp`, `.manifest`, `.certify`, `.contracts` |
+| scion-sdk | Connector transport, manifests, certification, governed HTTP and credentials | `scion_sdk.mcp`, `.manifest`, `.certify`, `.contracts` |
 | meristem | The in-run harness | `meristem.PUBLIC_HOST_MODULES` (`MERISTEM-RUN-R008`) and the host ports |
 | overstory (web UI) | Browser presentation | Arbora hosts it in `arbora/webui_host/` and consumes no internal package |
 

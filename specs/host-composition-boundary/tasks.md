@@ -4,12 +4,12 @@
 - [x] T002 ARBORA-HOST-R001.1 Move the MCP, API and WebUI server code into `arbora/mcp_server/backing/`, `arbora/api/contracts/` and `arbora/webui_host/`; require `meristem>=3.0.0,<4.0.0`. Evidence: `tests/test_package_layout.py::test_arbora_imports_no_au_serving_packages`.
 - [x] T003 ARBORA-HOST-R001.2 Prove fail-closed before registration, bound tools/fleet/keepalive after, and cleared bindings after shutdown. Evidence: `tests/mcp_server/test_harness_host.py`.
 - [x] T004 ARBORA-HOST-R001.3 Pass the gateway client tests against `arbora.gateway.client_sdk`. Evidence: `tests/gateway/test_gateway_client.py`.
-- [x] T005 ARBORA-HOST-R001.4 Assert the `agent_connector_sdk.skill_providers` entry-point group in `pyproject.toml`. Evidence: `tests/deployment/test_arbora_deploy_artifacts.py`.
+- [x] T005 ARBORA-HOST-R001.4 Assert the `scion_sdk.skill_providers` entry-point group in `pyproject.toml`. Evidence: `tests/deployment/test_arbora_deploy_artifacts.py`.
 - [x] T006 ARBORA-HOST-R001.5 Pass the moved test files on FastMCP 4.x with `medulla[server]==2.27.1`.
 - [x] T007 ARBORA-HOST-R001.6 Prove the packaged operation document is current, names exactly the served operations and loads through the harness reader. Evidence: `tests/mcp_server/test_operation_registry.py`.
 - [x] T008 ARBORA-HOST-R001.8 Pass the engine wiring gate against the installed medulla. Evidence: `tests/mcp_server/test_engine_wiring_gate.py`.
 - [x] T009 ARBORA-HOST-R001.9 Serve the knowledge graph over the gateway with zero containers. Evidence: `tests/integration/profiles/test_profile_tiny_zero_dep.py::test_tiny_profile_serves_kg_over_gateway_with_zero_containers`.
-- [x] T010 ARBORA-HOST-R001.10 Port provider discovery into `arbora/core/providers.py` over the `agent_connector_sdk.*_providers` groups and repoint every Arbora caller. Evidence: `tests/core/test_providers.py`.
+- [x] T010 ARBORA-HOST-R001.10 Port provider discovery into `arbora/core/providers.py` over the `scion_sdk.*_providers` groups and repoint every Arbora caller. Evidence: `tests/core/test_providers.py`.
 - [ ] T011 ARBORA-HOST-R007.1 Inventory all dependency-internal imports and duplicate host scripts; attach a machine-readable owner/port map and the initial forbidden-import count.
 - [ ] T012 ARBORA-HOST-R007 Add missing public engine, SDK and AU ports in their owner packages and release/install them.
 - [ ] T013 ARBORA-HOST-R007.2 Rollup; deliver `ARBORA-HOST-R007.2.1` to `ARBORA-HOST-R007.2.68` (one rewiring per violating module) and then the fence test `ARBORA-HOST-R007.2.69`.
@@ -20,7 +20,7 @@
 - [ ] T018 ARBORA-HOST-R001 Run clean-checkout contract/full/quality gates and a wheel install smoke; link exact commit, CI run and wheel hash.
 - [ ] T019 ARBORA-HOST-R001 Run served authorization and receipt parity against an isolated release environment; attach redacted evidence.
 - [x] T020 ARBORA-HOST-R019 Mount `/api/dashboard/*` and `/ws/dashboard` from `arbora.gateway.dashboard_api`. Evidence: `tests/gateway/test_dashboard_api.py`.
-- [x] T021 ARBORA-HOST-R014 Pin `meristem`, `agent-connector-sdk`, `medulla` and `agent-webui` as plain PEP 508 version ranges; `[tool.uv.sources]` stays a local-dev editable override. Evidence: `tests/test_dependency_manifest.py`.
+- [x] T021 ARBORA-HOST-R014 Pin `meristem`, `scion-sdk`, `medulla` and the web UI package as plain PEP 508 version ranges; `[tool.uv.sources]` stays a local-dev editable override. Evidence: `tests/test_dependency_manifest.py`.
 - [x] T022 ARBORA-HOST-R020 Install the decide consumers at serving start. Evidence: `tests/mcp_server/test_decide_wiring.py`.
 - [x] T023 ARBORA-HOST-R021 Bind Arbora commit and publish providers to the assembler; install the topology asker over the published reference templates. Evidence: `tests/mcp_server/test_decide_wiring.py`.
 - [x] T024 ARBORA-HOST-R022 Bind capability-search, guardrail and workflow lookups to the task planner. Evidence: `tests/mcp_server/test_decide_wiring.py`.
@@ -64,7 +64,6 @@
 - [ ] T062 ARBORA-HOST-R027.1 Add the loopback OIDC authority owner module for skill certification.
 - [ ] T063 ARBORA-HOST-R027.2 Add the loopback OIDC authority test fixture.
 - [ ] T064 ARBORA-HOST-R027.3 Add the loopback OIDC authority script.
-- [ ] T065 ARBORA-HOST-R028 Bump the pinned meristem source for the new `agent_utilities.api.*` export modules.
 - [ ] T066 ARBORA-HOST-R010.1 Define and prove preserve configuration ownership through the owning production entrypoint.
 - [ ] T067 ARBORA-HOST-R010.2 Define and prove declare every consumed environment name through the owning production entrypoint.
 - [ ] T068 ARBORA-HOST-R010.3 Define and prove validate before any service starts through the owning production entrypoint.
@@ -110,11 +109,54 @@
 - [x] T108 ARBORA-HOST-R004 Keep one gateway package. Evidence: `tests/architecture/test_single_gateway_implementation.py::test_single_gateway_and_retired_script_and_extra_absent`.
 - [ ] T109 ARBORA-HOST-R007.2.69 Add the declared-module fence test `tests/test_package_layout.py::test_arbora_imports_only_meristem_public_modules` and its planted-violation proof.
 - [x] T110 ARBORA-HOST-R012 Publish the Arbora and connector SDK boundary seeds. Evidence: `tests/test_component_registry_boundary_seeds.py`.
-- [x] T111 ARBORA-HOST-R007.2.1 Keep `arbora/a2a/authority.py` free of `agent_utilities` imports. Evidence: `tests/a2a/test_authority.py::test_selected_tool_subset_is_refused_before_durable_admission`.
-- [x] T112 ARBORA-HOST-R007.2.2 Keep `arbora/a2a/routing.py` free of `agent_utilities` imports. Evidence: `tests/a2a/test_authority.py::test_router_routes_to_the_named_or_the_default_agent`.
+- [x] T111 ARBORA-HOST-R007.2.1 Keep `arbora/a2a/authority.py` free of imports of the retired harness package name. Evidence: `tests/a2a/test_authority.py::test_selected_tool_subset_is_refused_before_durable_admission`.
+- [x] T112 ARBORA-HOST-R007.2.2 Keep `arbora/a2a/routing.py` free of imports of the retired harness package name. Evidence: `tests/a2a/test_authority.py::test_router_routes_to_the_named_or_the_default_agent`.
 - [ ] T113 ARBORA-HOST-R007.2.3 Prove `arbora/access/service.py` imports no agent runtime module with `tests/access/test_service_imports.py`.
-- [x] T114 ARBORA-HOST-R007.2.55 Keep `arbora/mcp_server/server.py` free of `agent_utilities` imports. Evidence: `tests/mcp_server/test_browser_composition.py::test_packaged_console_injects_exact_identity_factory`.
-- [x] T115 ARBORA-HOST-R007.2.68 Keep `arbora/webui_host/webui_co_service.py` free of `agent_utilities` imports. Evidence: `tests/mcp_server/test_composition.py::test_webui_co_service_uses_arbora_host`.
-- [ ] T116 ARBORA-HOST-R007.2.70 Rename the remaining harness imports from `agent_utilities` to `meristem` across `arbora/` and `tests/`.
+- [x] T114 ARBORA-HOST-R007.2.55 Keep `arbora/mcp_server/server.py` free of imports of the retired harness package name. Evidence: `tests/mcp_server/test_browser_composition.py::test_packaged_console_injects_exact_identity_factory`.
+- [x] T115 ARBORA-HOST-R007.2.68 Keep `arbora/webui_host/webui_co_service.py` free of imports of the retired harness package name. Evidence: `tests/mcp_server/test_composition.py::test_webui_co_service_uses_arbora_host`.
+- [ ] T116 ARBORA-HOST-R007.2.70 Rename the remaining harness imports from retired harness-package to `meristem` across `arbora/` and `tests/`.
 - [ ] T117 ARBORA-HOST-R005.2.9 Resolve legacy actions at the MCP dispatch with `resolve_legacy_action` and delete the unwired validator.
 - [x] T118 ARBORA-HOST-R008.1006 Keep the hosted observability, ecosystem and deployment modules free of the harness import. Evidence: `tests/ecosystem/test_hook_installer.py::test_install_merges_existing_settings_and_uninstall_removes_the_hooks`.
+- [ ] T119 ARBORA-HOST-R001.2.2 A served agents.run call runs end to end.
+- [ ] T120 ARBORA-HOST-R001.2.3 The served process mounts the operation-invoke API.
+- [ ] T121 ARBORA-HOST-R001.2.4 Tool-call RunEvents are queryable provenance.
+- [ ] T122 ARBORA-HOST-R001.9.1 The served surface imports no external-service driver.
+- [ ] T123 ARBORA-HOST-R001.9.2 The tiny profile cold-boots and serves graph reads and writes.
+- [ ] T124 ARBORA-HOST-R002 The installed engine client exposes every symbol that Arbora imports.
+- [ ] T126 ARBORA-HOST-R007.2.4 Rewire `arbora/agent_host/__init__.py` to `meristem.graph`.
+- [ ] T129 ARBORA-HOST-R007.2.35 Rename the child-policy entry-point group to `arbora.mcp_child_policies`.
+- [ ] T130 ARBORA-HOST-R007.2.38 Own `data_dir` in `arbora.core.settings`.
+- [ ] T131 ARBORA-HOST-R007.2.39 Delete `drain_task_queue` from the gateway daemon.
+- [ ] T132 ARBORA-HOST-R007.2.54 Emit run events through `meristem.host_ports`.
+- [ ] T133 ARBORA-HOST-R007.2.63 Rename the messaging entry-point groups to `arbora.messaging`.
+- [ ] T134 ARBORA-HOST-R011 Arbora serves the messaging channel and routing layer.
+- [ ] T136 ARBORA-HOST-R015 Layered agent capability model with a harness abstraction.
+- [ ] T137 ARBORA-HOST-R017 Browser inventory lists native Arbora tools.
+- [ ] T138 ARBORA-HOST-R018 Browser catalog reads run under the process authority.
+- [ ] T139 ARBORA-HOST-R024 Serve the Arbora intent surface from serving start through the Arbora registration path.
+- [ ] T140 ARBORA-HOST-R010.7.1 Check injected startup admission.
+- [ ] T141 ARBORA-HOST-R010.7.2.1 Bind actual declarative startup inputs.
+- [ ] T142 ARBORA-HOST-R009.4.1 Bound owned supervisor shutdown.
+- [ ] T143 ARBORA-HOST-R009.4.2 Integrate delivery and terminal shutdown.
+- [ ] T144 ARBORA-HOST-R009.8.1 Admit exact source generations.
+- [ ] T145 ARBORA-HOST-R009.8.2.1 Replay retained host files after restart.
+- [ ] T146 ARBORA-HOST-R008.1000 Startup bindings for messaging, A2A and readiness.
+- [ ] T147 ARBORA-HOST-R008.1001 Model of the send decision and the fleet agent.
+- [ ] T148 ARBORA-HOST-R008.1002 Behaviour of the turn handler and send gate.
+- [ ] T149 ARBORA-HOST-R008.1003 Wiring of messaging, readiness and A2A mounting.
+- [ ] T150 ARBORA-HOST-R008.1004 Refusals of send, A2A and readiness.
+- [ ] T151 ARBORA-HOST-R008.1005 Evidence.
+- [ ] T152 ARBORA-HOST-R008.1007 Behaviour of correlation and probes.
+- [ ] T153 ARBORA-HOST-R008.1008 Refusals of trace export and asset reading.
+- [ ] T154 ARBORA-HOST-R010.7.2.2.1 Attest runtime ownership.
+- [ ] T155 ARBORA-HOST-R010.7.2.2.2.1 Revalidate borrowed runtime at ASGI startup.
+- [ ] T156 ARBORA-HOST-R001.2.1.1 Shared TaskPlan evaluation admission.
+- [ ] T157 ARBORA-HOST-R001.2.1.2 Durable TaskPlan execution bridge.
+- [ ] T158 ARBORA-HOST-R001.2.5 Arbora binds the engine read and write methods to the decision port.
+- [ ] T159 ARBORA-HOST-R007.3 Use the `arbora_` prefix for every gateway metric series.
+- [ ] T160 ARBORA-HOST-R031.1 Admit and read back sandbox allocations.
+- [ ] T161 ARBORA-HOST-R034 Specialist package install is transactional per provider root and registers catalog nodes.
+- [ ] T162 ARBORA-HOST-R035 Host registers the harness cycle providers and drives one tick per completed run.
+- [ ] T163 ARBORA-HOST-R036 Attach run receipt nodes to the terminal commit.
+- [ ] T164 ARBORA-HOST-R037 Connector runner composes the release lock.
+- [ ] T165 ARBORA-HOST-R007.2.24 Make the doctor check the `meristem` distribution.
