@@ -74,7 +74,7 @@ The proposed served scenarios have not been run and establish no runtime deliver
 
 - `tests/api/test_agent_browser_ops.py::test_native_desktop_actions_require_verified_grant_without_focus_capture`: exercise composed `pipeline.invoke` and `BoundOperationRuntime.dispatch`. Assert grant/tenant admission. Assert the returned outcome retains the request id. Assert no cursor capture or focus change. Missing, revoked, or cross-tenant grants must cause zero provider calls.
 - `tests/api/test_agent_browser_ops.py::test_visual_state_is_run_source_and_tenant_bound`: exercise composed dispatch across multiple steps. Assert the same run carries source/frame/revision identity. Assert expiry or source change invalidates the state. Stale or cross-tenant state must be refused before dispatch.
-- `tests/mcp_server/test_composition.py::test_coding_agent_flow_uses_owner_ports_and_sandbox`: exercise selected executable discovery, AU delivery of the EG-selected transformation, sandboxed WebUI rendering, and refusal if an owner port is missing. These tests are proposed; none has run.
+- `tests/mcp_server/test_composition.py::test_coding_agent_flow_uses_owner_ports_and_sandbox`: exercise selected executable discovery, AU delivery of the Medulla-selected transformation, sandboxed WebUI rendering, and refusal if an owner port is missing. These tests are proposed; none has run.
 
 ## Planned authenticated terminal log acceptance
 

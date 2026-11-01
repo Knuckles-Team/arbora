@@ -1,4 +1,4 @@
-# Design — ARBORA-IDENTITY-ACCESS
+# ARBORA-IDENTITY — Implementation plan
 
 Governing spec: [spec.md](spec.md). Rows: [requirements.md](requirements.md).
 
@@ -388,7 +388,7 @@ or stay unavailable to anonymous callers. The current exact read-route policy
 is a deliberately restricted interim slice, not full no-auth acceptance.
 
 In `eg` and `oidc`, provider-specific login resolves into the same host-owned
-caller. OIDC mode must not accept an EG-only boundary merely because a callback
+caller. OIDC mode must not accept an Medulla-only boundary merely because a callback
 exists. WebSocket admission needs a separate handshake/message contract with
 bounded revalidation; relabeling a handshake as HTTP is forbidden. Existing
 BrowserAdmission HTTP bindings and WebUI's local RequestGrant are not yet a
@@ -612,6 +612,14 @@ identity binding checks and refuse before effects. Consumer regressions and a
 synthetic login/logout replay cover this classification; the installed browser
 replay gate still requires HTTP 401 and remains unqualified until it passes.
 
+### North star
+
+Delivery runs in phases P1 to P5. Concept-proof scenarios define each phase (`ARBORA-ACCEPTANCE-R006`). The terminal UI replaces third-party coding front ends for daily development.
+
+### Phase placement notes
+
+Native client authentication: the operator enrols a named client once. The client then fetches tokens itself or through a header helper. The served endpoint publishes protected-resource metadata, so clients with native OAuth need no bridge. This retires the token-refresh service and the stdio bridge.
+
 ## Phase 2: Task approach
 
 tasks.md carries one numbered task line for each active row. Tasks run producer first. A task marked `[P]` may run in parallel with its neighbours.
@@ -631,11 +639,3 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 ## Cross-repo seams
 
 None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
-
-## North star
-
-Delivery runs in phases P1 to P5. Concept-proof scenarios define each phase (`ARBORA-ACCEPTANCE-R006`). The terminal UI replaces third-party coding front ends for daily development.
-
-## Phase placement notes
-
-Native client authentication: the operator enrols a named client once. The client then fetches tokens itself or through a header helper. The served endpoint publishes protected-resource metadata, so clients with native OAuth need no bridge. This retires the token-refresh service and the stdio bridge.
