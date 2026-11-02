@@ -1,158 +1,82 @@
-# ARBORA-A2A — tasks
+# ARBORA-A2A — Implementation tasks
 
-## A2A task and approval projection
-Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](plan.md) and [tests](test-spec.md).
+Governing spec: [spec.md](spec.md). Design: [plan.md](plan.md). Rows: [requirements.md](requirements.md).
 
-- [ ] Inventory published A2A/WorkItem/assembly/grant/plan/audit contracts and existing Arbora composition; record unavailable dependencies.
-- [ ] Extend the existing A2A method table for durable stream/resubscribe and hosted-operation invoke; keep one task authority.
-- [ ] Implement parent-child WorkItem and pending-call projection with bounded event cursors and restart-safe `input-required` state.
-- [ ] Bind signed original-human grant and atomic plan fence to the pending call; keep confirmation disabled until served proof.
-- [ ] Wire all operations and loaded fleet tools through hosted `invoke`, its exact scopes/policy and audit reservation.
-- [ ] Execute all positive, negative, replay, cross-tenant, cancellation, policy-change and restart tests in [test-spec.md](test-spec.md).
-- [ ] Run clean-checkout language, scanner, package and ephemeral served gates; record exact revision evidence and only then enable approval/mark accepted.
-- [x] Register `tasks/resubscribe` on the A2A method table as a typed,
-  validated, explicitly fail-closed stub (ARBORA-A2A-R001.1, split from
-  ARBORA-A2A-R001): `A2AStreamingUnavailable` is raised and returned as a
-  distinct JSON-RPC error (`-32010`, HTTP 501) rather than "method not
-  found", proven by
-  `tests/a2a/test_application.py::test_json_rpc_refuses_resubscribe_until_streaming_is_implemented`.
-  The bounded, restart-safe event-cursor backing for real durable streaming
-  remains open under the parent requirement.
-- [x] Prove no duplicate skill/prompt harvest path (ARBORA-A2A-R003): a
-  static source-level absence check confirms arbora never imports
-  meristem's legacy `agent_utilities.mcp.multiplexer` /
-  `shared_multiplexer`, and that the skill/prompt body-harvest functions
-  are defined in exactly one module, `arbora/fleet/multiplexer.py`.
-- [ ] **Prerequisite for ARBORA-A2A-R002** (owner repo: meristem):
-  `WorkItemA2AAuthority._enqueue`/`dispatch` in `arbora/a2a/authority.py`
-  refuse every request carrying `decision.selected_tools` because AU's
-  dispatch carrier (`agent_utilities.orchestration.agent_dispatch.
-  AgentTurnEnvelope` / `enqueue_agent_turn`) has no field or mechanism to
-  carry and enforce a caller-filtered tool allowlist at execution time. AU
-  must add that carried, enforced tool-subset field before R002's
-  caller-filtered exposure can be implemented here.
-- [x] Add a release-canary check proving the promoted environment serves the
-  FastMCP major it declares (ARBORA-A2A-R004). Semantic/composition proof
-  that FastMCP 4 runs end to end remains open.
+Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task number and the row ID are required. Order is producer first; a checked box means the row's bound test exists in the tree.
 
-### Decomposition children (tracked)
-
-- [ ] **ARBORA-A2A-R002.1:** Fail-closed refusal when assembly selects a tool subset
-- [ ] **ARBORA-A2A-R002.2:** Caller-filtered tool-subset enforcement at dispatch
-- [ ] **ARBORA-A2A-R002.2.1:** Remaining scope of ARBORA-A2A-R002.2 (slice .1): Caller-filtered tool-subset enforcement at dispatch
-- [ ] **ARBORA-A2A-R005:** Durable, fail-closed A2A approval exchange for tool calls
-- [ ] **ARBORA-A2A-R005.1:** Fail-closed `arbora.plan/confirm` stub on the A2A method table
-- [ ] **ARBORA-A2A-R005.2:** Full signed human approval chain and input-required task emission
-- [ ] **ARBORA-A2A-R005.2.1:** Remaining scope of ARBORA-A2A-R005.2 (slice .1): Full signed human approval chain and input-required task emission
-- [ ] **ARBORA-A2A-R006:** Operation invoke and plan-confirm methods for A2A
-- [ ] **ARBORA-A2A-R006.1:** Register `arbora.op/invoke` and `arbora.plan/confirm`, fail-closed
-- [ ] **ARBORA-A2A-R006.2:** Bridge `arbora.op/invoke` to the shared hosted-operation registry
-- [x] **ARBORA-A2A-R002.1:** Fail-closed refusal when assembly selects a tool subset
-- [ ] **ARBORA-A2A-R002.2:** Caller-filtered tool-subset enforcement at dispatch
-- [ ] **ARBORA-A2A-R002.2.1:** Remaining scope of ARBORA-A2A-R002.2 (slice .1): Caller-filtered tool-subset enforcement at dispatch
-- [ ] **ARBORA-A2A-R005:** Durable, fail-closed A2A approval exchange for tool calls
-- [x] **ARBORA-A2A-R005.1:** Fail-closed arbora.plan/confirm stub on the A2A method table
-- [ ] **ARBORA-A2A-R005.2:** Full signed human approval chain and input-required task emission
-- [ ] **ARBORA-A2A-R005.2.1:** Remaining scope of ARBORA-A2A-R005.2 (slice .1): Full signed human approval chain and input-required task emission
-- [ ] **ARBORA-A2A-R006:** Operation invoke and plan-confirm methods for A2A
-- [x] **ARBORA-A2A-R006.1:** Register arbora.op/invoke and arbora.plan/confirm, fail-closed
-- [ ] **ARBORA-A2A-R006.2:** Bridge arbora.op/invoke to the shared hosted-operation registry
-- [ ] **ARBORA-A2A-R006.2.1:** Retain and refresh the request-bound authenticated caller in Arbora; prove credential, tenant and actor refusals.
-
-## A2A streaming, push notifications and transition-history projection
-Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED** except `ARBORA-A2A-R009.1`. See [design](plan.md) and [tests](test-spec.md).
-
-- [x] Define `A2AAgentCapabilities.from_wired_authorities` plus `A2AStreamingAuthority`/`A2APushNotificationAuthority`/`A2ATransitionHistoryAuthority` runtime-checkable protocols in `arbora/a2a/models.py` (`ARBORA-A2A-R009`, `ARBORA-A2A-R009.1`). Default capabilities stay all-false; a non-conforming authority object raises `TypeError` instead of being silently accepted. Proven by `tests/a2a/test_models.py`.
-- [ ] Wait for `ARBORA-A2A` (context-budget subset) to land; do not implement the streaming cursor or push-trigger machinery ahead of it (`ARBORA-A2A-R014`).
-- [ ] Implement `message/stream` reading AU's task-event reader through its public port; the owner requirement and export remain unassigned; no local event-log copy (`ARBORA-A2A-R010`).
-- [ ] Implement `tasks/get` history read-through to medulla's durable kernel (`MEDULLA-DURABLE-KERNEL`) (`ARBORA-A2A-R011`).
-- [ ] Add the `A2ATransitionHistoryUnavailable` typed refusal for an absent/unreachable history authority (`ARBORA-A2A-R012`).
-  - [x] `ARBORA-A2A-R012.1`: landed inventory only — the protocol exists, the error type does not. Proven by `tests/a2a/test_models.py`.
-  - [ ] `ARBORA-A2A-R012.2`: add the `A2ATransitionHistoryUnavailable` error type to `arbora/a2a/authority.py`.
-  - [ ] `ARBORA-A2A-R012.3`: wire `tasks/get`'s refusal (`A2A-HT06`); blocked on `ARBORA-A2A` (`ARBORA-A2A-R014`).
-- [ ] Implement push-notification delivery over medulla's durable outbox with dead-letter reporting (`ARBORA-A2A-R013`).
-- [ ] Wire real authorities into composition only after each path is proven. Run all test-spec rows. Record exact revision evidence before flipping any capability field `true` and marking its requirement accepted (`ARBORA-A2A-R015`).
-
-## A2A context-budget tool-subset admission
-Status: **READY FOR IMPLEMENTATION**. Delivery: **NOT ACCEPTED**. See [design](plan.md) and [tests](test-spec.md).
-
-- [x] Open this spec, linking EG's `AgentAssemble` owner (`MEDULLA-DECISION-ENGINE-001`/`MEDULLA-DECISION-ENGINE-R036`) and AU's signed envelope owner (`MERISTEM-CONTROL-R035`) by stable ID.
-- [x] Open the AU owner row this door depends on: `MERISTEM-CONTROL-R035`, the signed `AgentTurnEnvelope`'s missing allowed-tool-subset field (meristem PR #135, merged).
-- [x] Add the typed `ToolSubsetAdmissionRequest`/`ToolSubsetAdmissionDecision` models (`arbora/a2a/admission.py`), reusing the existing `_WireModel` base and `A2AContextBudget` (`ARBORA-A2A-R016`).
-- [x] Add `admit_tool_subset`, returning today's exact fail-closed `EG_ASSEMBLE_UNAVAILABLE` refusal (`ARBORA-A2A-R016.1`).
-- [x] Add the refusal unit test (`tests/a2a/test_admission.py`) proving the exact fields of that result (`ARBORA-A2A-R016.1`, `ARBORA-A2A-R019`).
-- [ ] **Prerequisite (owner repo: medulla):** `AgentAssemble` must stop returning unavailable before `admit_tool_subset` can derive a real subset (`ARBORA-A2A-R017`).
-- [ ] **Prerequisite (owner repo: meristem, opened as `MERISTEM-CONTROL-R035`):** the signed `AgentTurnEnvelope` must carry and let a harness enforce an allowed-tool-subset field before an admitted decision can be cryptographically carried (`ARBORA-A2A-R018`).
-- [ ] Once both prerequisites land: wire `admit_tool_subset` to the real EG assembly client and the signed envelope, add the admitted-path and partial/stale-refusal tests in [test-spec.md](test-spec.md), and replace `OrchestratorA2ARouter`'s and `WorkItemA2AAuthority`'s inline `A2AAssemblyUnavailable` raises with a call to this one admission authority.
-- [ ] **ARBORA-A2A-R016.2:** Admission request carries model profile and task class. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R016.3:** Admission decision carries the committed harness answer. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R016.4:** Refusal enum gains the harness reasons. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R016.5:** Routing decision carries model profile and task class. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R017.1:** Engine decision port for HarnessConfig. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R017.2:** Admission is async and calls the decider once. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R017.3:** Priority comes from the principal class. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R017.4:** Missing budget refuses. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R017.5:** Wire admission into the send path. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R017.6:** End-to-end admitted task. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R018.1:** Envelope carries harness_config. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R018.2:** Envelope without the field refuses. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R020.1:** Abstention refuses and records the named default. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R020.2:** Unavailable, stale, or partial answers refuse. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R019.1:** Provenance names the harness decision. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R014.1:** Card advertises no harness capability before it works. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R005.3:** Model. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R005.4:** Behavior. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R005.5:** Wiring. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R005.6:** Refusal. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R005.7:** Evidence. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R005.8:** Hot-path proof. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R006.3:** Model. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R006.4:** Behavior. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R006.5:** Wiring. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R006.6:** Refusal. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R006.7:** Evidence. Touches the file named in the requirement row.
-- [ ] **ARBORA-A2A-R006.8:** Hot-path proof. Touches the file named in the requirement row.
-
-## Critique-gated output release (ARBORA-A2A-R022)
-
-- [ ] Bind the AU checklist/critique producer and EG exact-output verdict contract. Preserve R006.2.1 and R006.5 caller/signed-authority prerequisites. Keep routing separate from critique acceptance; then add the proposed release tests.
-
-## Additional owner requirements
-
-- [ ] `ARBORA-A2A-R001.2`: Deliver every requirement in requirements.md.
-
-- [ ] Complete R006.2 by composing shared InvokeServices into the A2A facade and proving operation-specific authorization parity.
-- [ ] Bind R001/R010 to an owner-published durable task/tenant event-reader contract before implementing stream and resubscribe.
-
-- [ ] **ARBORA-A2A-R006.2.1.1:** Wire request-bound caller retention and refresh, then pass its HTTP acceptance and refusal matrix.
-- [ ] **ARBORA-A2A-R006.2.2:** Compose shared InvokeServices through the production A2A entry point and prove operation-specific parity.
-
-- [x] **ARBORA-A2A-R005.2.2:** Validate detached signatures against server-owned pending-call evidence. Keep confirmation refused until the live issuer, durable pending binding and atomic grant/plan consumption are qualified.
-
-- [ ] ARBORA-A2A-R010.1 — Wire the opt-in terminal read through shared task service and current session; validate producer bindings and explicit unavailable results.
-
-- [ ] **ARBORA-A2A-R001.3:** Back the served agent with the durable task store and serve caller-filtered `tasks/list`. Consumer: `TUIG-RUNTIME-R012.3`.
-- [ ] **ARBORA-A2A-R001.4:** Refuse `message/stream` by type on the served agent, then serve turn events. Consumer: `TUIG-RUNTIME-R012.1`.
-- [ ] **ARBORA-A2A-R001.5:** Accept bounded file parts on the served agent. Consumer: `TUIG-RUNTIME-R012.5`.
-- [x] **ARBORA-A2A-R001.6:** Serve non-blocking `message/send` with `configuration.blocking: false`; follow the task with `tasks/get`.
-- [ ] **ARBORA-A2A-R016.6:** Honour an allowed caller model preference and serve `models.list`. Consumer: `TUIG-RUNTIME-R012.2`.
-
-- [ ] **ARBORA-A2A-R001.5.1:** Serve bounded inline UTF-8 text files.
-- [ ] **ARBORA-A2A-R001.5.2:** Bind binary input to selected-model capabilities and atomic admission.
-
-## Tool-task delivery remainder
-
-- `ARBORA-A2A-R002.2.2.1`: retain the single-invocation worker contract tests.
-- `ARBORA-A2A-R002.2.2.2`: exercise native fence transitions and refusal boundaries.
-- [ ] `ARBORA-A2A-R002.2.3`: wire the queue consumer and durable request and caller resolvers.
-- [ ] Prove restart and uncertain-effect reconciliation without repeated execution or premature acknowledgment.
-
-- [x] `ARBORA-A2A-R002.2.3.1`: bind canonical request bytes and native WorkItem locators; pass refusal tests and same-store native engine restart reads.
-
-- [ ] `ARBORA-A2A-R002.2.3.2`: compose and qualify the served queue, original-caller authority recovery and uncertain-effect reconciliation.
-
-- `ARBORA-A2A-R005.2.3`: define and test the supplied-owner snapshot evaluator. Keep real key/reference producers and full signed confirmation pending.
-
-- R005.2.4: implement generated native facts adapters and explicit registration proof verification. Qualify native producer compatibility separately before claiming served acceptance.
-
-- [ ] **ARBORA-A2A-R005.2.5:** Qualify the installed native producers and full served signed-approval effect chain. Preserve atomic grant and plan consumption, restart, concurrency and the parent refusal matrix. Keep confirmation unavailable until complete.
+- [x] T001 ARBORA-A2A-R001.1 Fail-closed `tasks/resubscribe` stub on the A2A method table
+- [x] T002 ARBORA-A2A-R002.1 Fail-closed refusal when assembly selects a tool subset
+- [x] T003 ARBORA-A2A-R002.2.1 Owner-blocked: AU carried, enforced tool-subset field
+- [x] T004 ARBORA-A2A-R002.2.2.1 Single-invocation worker contract
+- [x] T005 ARBORA-A2A-R002.2.2.2 Native WorkItem fence binding
+- [x] T006 ARBORA-A2A-R002.2.3.1 Immutable native request transport
+- [ ] T007 ARBORA-A2A-R002.2.3.2 Served consumer and original-caller recovery
+- [x] T008 ARBORA-A2A-R003 No duplicate skill or prompt harvesting in the multiplexer
+- [x] T009 ARBORA-A2A-R004 Served MCP bridge runs FastMCP 4, matching its declared version
+- [x] T010 ARBORA-A2A-R005.1 Fail-closed `arbora.plan/confirm` stub on the A2A method table
+- [ ] T011 ARBORA-A2A-R005.2.1 Human-grant store over the engine pending-call lease with atomic consume-once
+- [x] T012 ARBORA-A2A-R005.2.2 Validate detached pending-call signatures without authorizing execution
+- [x] T013 ARBORA-A2A-R005.2.3 Human authority snapshot evaluation
+- [x] T014 ARBORA-A2A-R005.2.4 Native facts adapters and registration proof
+- [ ] T015 ARBORA-A2A-R005.2.5 Served full-chain qualification of the signed approval
+- [ ] T016 ARBORA-A2A-R005.3 Model: tool-action admission request and approval
+- [ ] T017 ARBORA-A2A-R005.4 Behavior: one engine round trip returns the verdict unchanged
+- [ ] T018 ARBORA-A2A-R005.5 Wiring
+- [ ] T019 ARBORA-A2A-R005.6 Refusal: a refusal never reads as approval
+- [ ] T020 ARBORA-A2A-R005.7 Evidence: audit entry names the decision without values
+- [ ] T021 ARBORA-A2A-R005.8 Hot-path proof: confirm returns the engine verdict with one audit entry
+- [x] T022 ARBORA-A2A-R006.1 Register `arbora.op/invoke` and `arbora.plan/confirm`, fail-closed
+- [ ] T023 ARBORA-A2A-R006.2.1.1 Wire request-bound caller retention and refresh
+- [x] T024 ARBORA-A2A-R006.2.2 Compose shared invocation into the served A2A routes
+- [ ] T025 ARBORA-A2A-R006.3 Model: held-item admission request and verdict
+- [ ] T026 ARBORA-A2A-R006.4 Behavior: the engine verdict on a held item returns unchanged
+- [ ] T027 ARBORA-A2A-R006.5 Wiring: the held_item branch of the confirm dispatcher
+- [ ] T028 ARBORA-A2A-R006.6 Refusal: a refusal leaves the item held
+- [ ] T029 ARBORA-A2A-R006.7 Evidence: audit entry names the verdict and the item
+- [ ] T030 ARBORA-A2A-R006.8 Hot-path proof: confirm admits or rejects a held item
+- [x] T031 ARBORA-A2A-R007 Pre-effect audit reservation for every governed write
+- [x] T032 ARBORA-A2A-R008 First-party A2A facade, not a vendored wrapper
+- [x] T033 ARBORA-A2A-R009.1 Typed Agent Card capability-advertisement model
+- [ ] T034 ARBORA-A2A-R011 Transition history reads through to the engine WorkItem ledger
+- [x] T035 ARBORA-A2A-R012.1 Landed: the protocol exists, the error does not
+- [x] T036 ARBORA-A2A-R012.2 Add the `A2ATransitionHistoryUnavailable` error type
+- [ ] T037 ARBORA-A2A-R012.3 Wire `tasks/get` to raise the typed history refusal
+- [ ] T038 ARBORA-A2A-R014.1 The card carries no harness field until admission works end to end
+- [ ] T039 ARBORA-A2A-R015 The served card equals the capabilities the integration fixture exercises
+- [x] T040 ARBORA-A2A-R016.1 Fail-closed admission function proven against today's unavailable upstreams
+- [ ] T041 ARBORA-A2A-R016.2 Admission request carries the model profile and task class
+- [ ] T042 ARBORA-A2A-R016.3 Admission decision carries the committed harness answer
+- [ ] T043 ARBORA-A2A-R016.4 Refusal reasons for admission form one closed set
+- [ ] T044 ARBORA-A2A-R016.5 Routing decision carries the model profile and task class
+- [ ] T045 ARBORA-A2A-R017.1 Engine decision port for the harness configuration
+- [ ] T046 ARBORA-A2A-R017.2 Admission is async and calls the decider once
+- [ ] T047 ARBORA-A2A-R017.3 Priority comes from the principal class
+- [ ] T048 ARBORA-A2A-R017.4 A missing budget refuses before the engine call
+- [ ] T049 ARBORA-A2A-R017.5 Admission runs on the send path
+- [ ] T050 ARBORA-A2A-R017.6 End-to-end admitted task
+- [ ] T051 ARBORA-A2A-R018.1 The dispatch request carries the harness decision reference
+- [ ] T052 ARBORA-A2A-R018.2 A dispatch contract without the field refuses
+- [ ] T053 ARBORA-A2A-R019.1 Provenance names the harness decision record
+- [ ] T054 ARBORA-A2A-R020.1 Abstention refuses and records the named default
+- [ ] T055 ARBORA-A2A-R020.2 Unavailable, stale or partial answers refuse
+- [ ] T056 ARBORA-A2A-R021 Fresh checkout runs the admission tests
+- [ ] T057 ARBORA-A2A-R022 Critique-gated output release
+- [ ] T058 ARBORA-A2A-R001.2 Run checkpoint and event-cursor binding
+- [x] T059 ARBORA-A2A-R010.1 Opt-in committed terminal point read
+- [ ] T060 ARBORA-A2A-R001.3 Served agent keeps and lists caller conversations
+- [ ] T061 ARBORA-A2A-R001.4.1 Served agent streams turn events
+- [x] T062 ARBORA-A2A-R001.6 Non-blocking `message/send`
+- [ ] T063 ARBORA-A2A-R001.5.1 Bounded inline text input
+- [ ] T064 ARBORA-A2A-R001.5.2 Selected-model binary input
+- [ ] T065 ARBORA-A2A-R001.7 Outbound A2A peer registry served as operations
+- [ ] T066 ARBORA-A2A-R002.2.3.3 Original-caller authority resolver
+- [ ] T067 ARBORA-A2A-R002.2.3.4 Uncertain-effect reconciliation
+- [ ] T068 ARBORA-A2A-R002.2.3.5 Duplicate delivery is idempotent
+- [ ] T069 ARBORA-A2A-R013.1 Model and registration of a push target
+- [ ] T070 ARBORA-A2A-R013.2 Delivery worker with bounded retry and dead letter
+- [ ] T071 ARBORA-A2A-R013.3 Advertise push only when the worker runs
+- [ ] T072 ARBORA-A2A-R013.4 Hot-path proof: pending pushes survive a restart
+- [ ] T073 ARBORA-A2A-R016.6 Caller model preference is a request the engine decides
+- [ ] T074 ARBORA-A2A-R023 Inbound A2A tasks route through the medulla `A2aRoute` decision
+- [ ] T075 ARBORA-A2A-R024 Hub federation forwards topic messages to a registered peer
+- [ ] T076 ARBORA-A2A-R025 Admit anonymous chat under the text-only constraint
