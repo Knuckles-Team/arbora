@@ -10,14 +10,51 @@ Ready to build means the contract and tests are specified. Implemented means sou
 
 Arbora protects each admitted child/service and tenant from an error cascade by observing a bounded error budget and adjusting request concurrency with additive increase and multiplicative decrease (AIMD). Automatic control may only narrow an engine-declared `CapacityCell` limit; increasing above the engine limit or changing a durable lease requires an authorized capacity operation. A caller can inspect controller status and select observe or enforce mode with `capacity:admin`, but cannot inject measurements or bypass the policy through another surface.
 
+## User Scenarios & Testing
+
+### User Story 1 - A failing child is throttled, healthy children are not (Priority: P1)
+
+An operator wants one failing child service to stop causing an error cascade, while other children and tenants keep their full capacity.
+
+**Acceptance Scenarios**:
+
+1. **Given** a child that returns retryable failures above its error budget, **When** the controller closes a window, **Then** the allowed concurrency decreases multiplicatively to no lower than the floor.
+2. **Given** healthy windows after a breach, **When** the controller closes each window, **Then** the limit grows by a bounded step and never exceeds the engine ceiling.
+3. **Given** a second tenant or child, **When** the first one is throttled, **Then** the second keeps its own window, limit and status.
+
+### User Story 2 - An administrator selects observe or enforce mode (Priority: P2)
+
+An administrator wants to watch decisions before they affect traffic.
+
+**Acceptance Scenarios**:
+
+1. **Given** observe mode, **When** a window breaches, **Then** a decision receipt exists and admission stays at the base limit.
+2. **Given** a caller without `capacity:admin`, **When** it sets the mode, **Then** the call is refused and the mode is unchanged.
+
+### Edge Cases
+
+- Caller errors and policy denials never count against the child error budget.
+- Missing telemetry or an expired engine premise yields a degraded status and a conservative refusal, never a manufactured success.
+- A replay of the same window returns the stored decision and adds no second transition.
+
 ## Requirements
 
-1. Partition state by tenant, child identity, operation class and policy revision. The canonical maximum and current capacity lease come from the installed graph-engine client. A stale, missing or unauthorized capacity premise fails closed for new governed work; existing in-flight work is not silently terminated.
-2. The controller consumes bounded windows of real outcome classes: success, retryable service error, timeout, permanent caller error and policy denial. Only eligible service failures consume the child error budget. Caller errors and authorization refusals never teach the controller that the child is unhealthy.
-3. On budget breach, multiplicatively reduce the allowed concurrency or rate to a configurable floor, never above the current engine cell/lease. On a healthy completed window, add a bounded increment up to that same ceiling. Persist a deterministic decision receipt with input window digest, old/new limits, mode, reason and policy version. A retry of the same window is idempotent.
-4. Observe mode computes and records decisions but does not enforce them. Enforce mode applies the narrower limit at the Arbora admission boundary before delegated fleet calls. Mode changes require a verified administrator, audit reservation and a policy recheck; `capacity:read` permits status only. Disabled/unavailable policy cannot turn a refusal into an automatic allow.
-5. Disconnected children, missing telemetry and expired premises are distinguishable. The controller does not manufacture success from silence. Recovery uses conservative bounded probing with jitter and a circuit state visible in status, not a burst to the old ceiling.
-6. MCP and HTTP capacity operations use the same registry, identity, service and error envelope as other [hosted operations](../hosted-api-operations/spec.md). No separate administrator endpoint or state authority is introduced.
+- **FR-001**: Partition state by tenant, child identity, operation class and policy revision. The canonical maximum and current capacity lease come from the installed graph-engine client. A stale, missing or unauthorized capacity premise fails closed for new governed work; existing in-flight work is not silently terminated. Rows: `ARBORA-CAPACITY-R001.4`.
+- **FR-002**: The controller consumes bounded windows of real outcome classes: success, retryable service error, timeout, permanent caller error and policy denial. Only eligible service failures consume the child error budget. Caller errors and authorization refusals never teach the controller that the child is unhealthy. Rows: `ARBORA-CAPACITY-R001.1`.
+- **FR-003**: On budget breach, multiplicatively reduce the allowed concurrency or rate to a configurable floor, never above the current engine cell/lease. On a healthy completed window, add a bounded increment up to that same ceiling. Persist a deterministic decision receipt with input window digest, old/new limits, mode, reason and policy version. A retry of the same window is idempotent. Rows: `ARBORA-CAPACITY-R001.1`, `ARBORA-CAPACITY-R001.5`.
+- **FR-004**: Observe mode computes and records decisions but does not enforce them. Enforce mode applies the narrower limit at the Arbora admission boundary before delegated fleet calls. Mode changes require a verified administrator, audit reservation and a policy recheck; `capacity:read` permits status only. Disabled/unavailable policy cannot turn a refusal into an automatic allow. Rows: `ARBORA-CAPACITY-R002`, `ARBORA-CAPACITY-R001.5`.
+- **FR-005**: Disconnected children, missing telemetry and expired premises are distinguishable. The controller does not manufacture success from silence. Recovery uses conservative bounded probing with jitter and a circuit state visible in status, not a burst to the old ceiling. Rows: `ARBORA-CAPACITY-R001.4`.
+- **FR-006**: MCP and HTTP capacity operations use the same registry, identity, service and error envelope as other [hosted operations](../hosted-api-operations/spec.md). No separate administrator endpoint or state authority is introduced. Rows: `ARBORA-CAPACITY-R002`.
+
+## Success Criteria
+
+- **SC-001**: A clean-checkout deterministic fixture shows decrease, gradual recovery, floor and ceiling bounds and tenant isolation. Rows: `ARBORA-CAPACITY-R001.1`.
+- **SC-002**: A served fault-injection test throttles one child while another tenant is unaffected. Rows: `ARBORA-CAPACITY-R001.4`, `ARBORA-CAPACITY-R001.5`.
+
+## Assumptions
+
+- The engine declares the capacity cell ceiling and lease; Arbora only narrows and gives back.
+- The window length, step sizes and floor are versioned configuration, not constants.
 
 ## Acceptance
 
