@@ -27,3 +27,5 @@ Test command: `pytest tests/fleet/test_pinned_loads_served.py::test_pin_survives
 3. Read the refusal. It names each connector that is missing or serves zero tools.
 
 Test command: `pytest tests/fleet/test_fleet_coverage_served.py::test_missing_and_empty_connectors_fail_status`.
+
+Test command: `pytest tests/fleet/test_group_load_unload.py::test_group_load_and_unload_by_namespace`.

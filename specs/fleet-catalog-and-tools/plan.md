@@ -591,6 +591,12 @@ Budget: `FLEET_PINNED_CAP` starts at 32 per principal, range 1..128. Pinned item
 
 Policy: a pin never widens authority. Restore re-checks scopes and policy on every session start, and a failed check suspends the pin without deleting it.
 
+### ARBORA-FLEET-R061 — connector group load
+
+Call path: `load_tools` and `unload_tools` (`arbora/api/ops/fleet.py:143`) -> `MultiplexerOps` -> `SessionLoads` (`arbora/fleet/session_loads.py`). The group comes from the tool metadata key `scion/upstream`, which the connector SDK sets for each proxied tool (`SCION-CONNECTOR-CONTROL-R914.5`).
+
+Gap check, 2026-11: `ARBORA-FLEET-R059` pins items and `ARBORA-FLEET-R060` covers every registered connector, so a facade that proxies eleven applications registers once and passes the coverage gate. Neither row lets a caller load or unload one application of that facade. An unload by server would drop the whole facade. This row closes that gap with a group selector and adds no new store.
+
 ### ARBORA-FLEET-R060 — fleet coverage gate
 
 Call path: `fleet.status` (`arbora/api/ops/fleet.py:143`) -> `MultiplexerOps.status` (`arbora/fleet/multiplexer_ops.py:215`) -> `check_fleet_coverage` (`arbora/fleet/coverage.py`). The operator command `arbora-production-ops check-fleet-coverage` (`arbora/deployment/production_ops.py:480`) runs the same function.
