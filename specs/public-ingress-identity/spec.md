@@ -1,6 +1,6 @@
 # ARBORA-INGRESS — Portable public ingress and identity cutover
 
-**Owner:** arbora. **Requirement ID:** ARBORA-INGRESS-R001 (Arbora deployment-consumer partition). **Delivery:** SPECIFIED. **Acceptance:** NOT_AUDITED.
+**Owner:** arbora. **Requirement ID:** ARBORA-INGRESS-R001 (Arbora deployment-consumer partition).
 
 ## Purpose and user stories
 
@@ -18,6 +18,60 @@ P0: A deployment operator supplies a public origin, TLS material by reference, a
 | IN-04 | A host cutover requires explicit old and new origins, time-bounded redirect policy, both IdP callback registrations, certificate coverage, and a rollback plan. Redirect only safe browser navigation; never redirect credentials or API mutation requests. | Browser navigation reaches the new origin; old API POST and out-of-window redirect fail without leaking credentials. |
 | IN-05 | An independent contributor can use a local OIDC fixture and loopback TLS/ingress fixture for required PR checks. A real provider and DNS certificate are optional release acceptance evidence. | CI runs deterministic positive and negative contract tests without a private cluster, domain or secret store. |
 | IN-06 | The deployment doctor and post-apply probe report a redacted profile digest, ingress reachability, TLS hostname match, IdP discovery/callback agreement, authenticated MCP `tools/list`, and a denied request. | One exact-revision receipt distinguishes source checks, rendered checks and served checks; secrets and raw tokens are absent. |
+
+## User Scenarios & Testing
+
+### User Story 1 - Expose an instance at my own domain (Priority: P1)
+
+A deployment operator supplies a public origin, TLS material by reference, an IdP issuer and a client registration, then reviews the rendered contract before apply.
+
+**Acceptance Scenarios**:
+
+1. **Given** a complete generic profile, **When** the operator renders it, **Then** the output shows the origin, callback, secret references and a profile digest, and no secret value.
+2. **Given** a profile with a missing TLS reference or an HTTP non-loopback origin, **When** the operator loads it, **Then** the load refuses and names the key at fault.
+
+### User Story 2 - Sign in through the public origin (Priority: P1)
+
+A user completes the login redirect and reaches an authorized Arbora API.
+
+**Acceptance Scenarios**:
+
+1. **Given** a valid token, exact Host and same-origin request, **When** the user calls the API, **Then** the engine sees the verified principal and tenant scope.
+2. **Given** a wrong Host, origin, token, tenant or callback, **When** the request arrives, **Then** it fails closed before any effect.
+
+### User Story 3 - Move to a new hostname (Priority: P2)
+
+A cutover redirects the old public origin to the new one for a bounded window.
+
+**Acceptance Scenarios**:
+
+1. **Given** both origins and both IdP callbacks are authorized, **When** a browser navigates to the old origin inside the window, **Then** it reaches the new origin.
+2. **Given** an old-origin API POST or an expired window, **When** the request arrives, **Then** no redirect happens and no credential leaks.
+
+### Edge Cases
+
+- Forged forwarded host or scheme from an untrusted peer: the transport Host stays authoritative or the request is rejected.
+- A redirect window longer than 90 days: the render refuses with `LEGACY_REDIRECT_TOO_LONG`.
+- A dry run never reads a credential.
+
+## Requirements
+
+- **FR-001**: A profile declares one canonical HTTPS origin, TLS reference, callback and trusted proxy, and refuses any missing or malformed key. Rows: `ARBORA-INGRESS-R001.1`.
+- **FR-002**: The environment render emits the origin, callback and proxy values that the browser boundary and the OIDC callbacks read. Rows: `ARBORA-INGRESS-R001.2`.
+- **FR-003**: A legacy hostname redirects only safe navigation and only until its expiry date. Rows: `ARBORA-INGRESS-R001.3`.
+- **FR-004**: A served probe proves sign-in and both endpoints under the new hostname. Rows: `ARBORA-INGRESS-R001.4`.
+
+## Success Criteria
+
+- **SC-001**: Every defect in the T-IN-02 fixture set is refused with a key-naming diagnostic and no secret value. Rows: `ARBORA-INGRESS-R001.1`.
+- **SC-002**: The rendered output of a complete profile contains the exact origin, callback and proxy values. Rows: `ARBORA-INGRESS-R001.2`.
+- **SC-003**: A render with a redirect date beyond 90 days refuses. Rows: `ARBORA-INGRESS-R001.3`.
+- **SC-004**: The probe exits 0 after sign-in and both endpoint answers under the new origin. Rows: `ARBORA-INGRESS-R001.4`.
+
+## Assumptions
+
+- The operator supplies the TLS ingress, DNS and OIDC provider; this spec validates and renders their inputs only.
+- Secrets arrive as references and never as values.
 
 ## Architecture, interface, and boundaries
 

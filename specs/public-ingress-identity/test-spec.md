@@ -13,6 +13,15 @@
 | T-IN-09 | IN-05 | CI | Clean checkout, disposable loopback proxy and fake OIDC issuer | Required tests pass with no network host, private domain or live secret store. |
 | T-IN-10 | IN-06 | Served | Exact image digest, generic test domain, local IdP, authenticated MCP and denied request | Receipt records TLS/issuer/callback, `tools/list`, denial, revision and no token/secret. |
 
+## Row coverage
+
+| Row | Test | State |
+|---|---|---|
+| `ARBORA-INGRESS-R001.1` | `tests/deployment/test_public_ingress_identity.py::test_valid_mapping_renders_deterministic_redacted_profile` and `tests/deployment/test_public_ingress_identity.py::test_unknown_field_refuses` (T-IN-01, T-IN-02) | Written |
+| `ARBORA-INGRESS-R001.2` | `tests/deployment/test_public_ingress_identity.py::test_profile_renders_origin_callback_and_proxy` (T-IN-03, T-IN-04) | Planned |
+| `ARBORA-INGRESS-R001.3` | `tests/deployment/test_public_ingress_identity.py::test_legacy_redirect_is_bounded` (T-IN-07, T-IN-08) | Planned |
+| `ARBORA-INGRESS-R001.4` | `tests/qualification/identity/test_cutover_probe.py::test_cutover_probe_signs_in_on_new_hostname` (T-IN-10) | Planned |
+
 ## Release proof
 
 Record the exact commit, CI URL, `uv run pytest` result, `uv build --wheel` artifact digest, cccc/KISS/Dupehound/jscpd scanner results and hosted probe receipt separately. A source test cannot establish DNS, TLS, callback or served acceptance. Negative tests must inspect both HTTP result and absence of downstream engine effect. If a test is skipped, record its unmet fixture and keep acceptance open.
