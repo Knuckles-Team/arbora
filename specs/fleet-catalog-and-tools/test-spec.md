@@ -577,3 +577,4 @@ Each test below is named by its requirement row, has no running implementation y
 | PT-141 | ARBORA-FLEET-R060.3 | `tests/fleet/test_fleet_coverage_served.py::test_status_reports_coverage_and_strict_mode_refuses` (planned) | The result the row states holds. | Each refusal the row states is returned. |
 | PT-142 | ARBORA-FLEET-R060.4 | `tests/fleet/test_fleet_coverage_served.py::test_each_offender_reason_is_named` (planned) | The result the row states holds. | Each refusal the row states is returned. |
 | PT-143 | ARBORA-FLEET-R060.5 | `tests/fleet/test_fleet_coverage_served.py::test_missing_and_empty_connectors_fail_status` (planned) | The result the row states holds. | Each refusal the row states is returned. |
+| PT-144 | ARBORA-FLEET-R061 | `tests/fleet/test_group_load_unload.py::test_group_load_and_unload_by_namespace` (planned) | The result the row states holds. | Each refusal the row states is returned. |

@@ -178,6 +178,7 @@ An operator checks that every registered connector is multiplexed and serves too
 
 - **FR-001**: A caller pins and unpins tools through `manage`, with durable per-principal storage and a separate cap. Rows: `ARBORA-FLEET-R059`.
 - **FR-002**: Every registered connector is mounted and serves tools, and a served check names each one that does not. Rows: `ARBORA-FLEET-R060`.
+- **FR-003**: A caller loads and unloads the tools of one connector group. Rows: `ARBORA-FLEET-R061`.
 
 ## Success Criteria
 
