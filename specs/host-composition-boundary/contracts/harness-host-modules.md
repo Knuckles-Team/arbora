@@ -7,7 +7,7 @@ Consumer: arbora ARBORA-HOST-R007
 
 ## Decision
 
-The harness package `meristem` declares the modules a host may import in `meristem.PUBLIC_HOST_MODULES`. Arbora imports only those modules or their submodules and imports nothing from the retired `agent_utilities` name. The harness side of the seam is the `arbora.md` contract under `specs/run/contracts/` in the meristem repository.
+The harness package `meristem` declares the modules a host may import in `meristem.PUBLIC_HOST_MODULES`. Arbora imports only those modules or their submodules and imports nothing from the retired retired harness-package name. The harness side of the seam is the `arbora.md` contract under `specs/run/contracts/` in the meristem repository.
 
 ## Wire shape
 
@@ -15,7 +15,7 @@ No runtime record crosses this seam. The surface is the module list: `meristem.h
 
 ## Refusal codes
 
-None. An import of a module outside the list, or of `agent_utilities`, fails the fence test described by `ARBORA-HOST-R007.2.69`.
+None. An import of a module outside the list, or of retired harness-package, fails the fence test described by `ARBORA-HOST-R007.2.69`.
 
 ## Authoritative types
 
