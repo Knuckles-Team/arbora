@@ -119,7 +119,7 @@ def _try_acquire() -> bool:
         "pid": os.getpid(),
         "host": _socket.gethostname(),
         "started_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        "socket": setting("EPISTEMIC_GRAPH_SOCKET", "/tmp/epistemic-graph.sock"),  # nosec B108 — default UDS path, overridable via env
+        "socket": setting("MEDULLA_SOCKET", "/tmp/epistemic-graph.sock"),  # nosec B108 — default UDS path, overridable via env
         "role": setting("KG_DAEMON_ROLE", "auto"),
     }
     with contextlib.suppress(Exception):
