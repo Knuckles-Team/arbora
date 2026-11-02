@@ -1,4 +1,4 @@
-# Architecture and implementation plan
+# ARBORA-FLEET — Implementation plan
 
 Governing spec: [spec.md](spec.md). Rows: [requirements.md](requirements.md).
 
@@ -85,7 +85,7 @@ verified principal + policy revision
     -> delegated child or engine under verified caller
 ```
 
-Use frozen typed models for `OpSpec`, `CatalogItem`, `CatalogGeneration`, `ReloadReceipt`, `SessionLoad`, and `OpError`. `OpSpec` includes ID, verb, summary/examples, params/result schema, binding, caller and executor scopes, subject and effect. It also includes principal rule, confirmation, surfaces, idempotency, stability and audit class. Canonicalize sorted IDs and normalized schemas, then SHA-256 the serialized form. Version and digest must appear in MCP instructions, HTTP registry response, and A2A card. A curated alias suppresses the generated engine op so one engine method has one public identity.
+Use frozen typed models for `OpSpec`, `CatalogItem`, `CatalogGeneration`, `ReloadReceipt`, `SessionLoad`, and `OpError`. `OpSpec` includes ID, verb, summary/examples, params/result schema, binding, caller and executor scopes, subject and effect. It also includes principal rule, confirmation, surfaces, idempotency, stability and audit class. Canonicalize sorted IDs and normalized schemas, then SHA256 the serialized form. Version and digest must appear in MCP instructions, HTTP registry response, and A2A card. A curated alias suppresses the generated engine op so one engine method has one public identity.
 
 The catalog join uses the verified **runtime MCP server name** from the child session, plus its tenant and source identity. Package ID and transport key remain separate metadata. Reject duplicate runtime names or an ambiguous alias. A connector schema pin is the canonical digest of its real `tools/list` schema. A failed or empty probe cannot silently certify it. Validate body digests for skills, prompts, resources, and templates before a candidate generation is eligible.
 
@@ -573,10 +573,28 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 
 None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
 
-## North star
+### North star
 
 Every connector that connects through arbora onboards itself. Its ontology extends the core ontology. Its prompts become system-prompt candidates. Its skills, tools and resources appear as virtual graph entries in the engine. The exit gate is competency questions. The ontology answers how to execute a task and produces cross-source reports from connector virtual graphs. One engine, medulla, holds all facts. There is no second database and no sync. External stores are virtual-graph sources reached through connectors.
 
-## Phase placement notes
+### Phase placement notes
 
 Onboarding failure modes found in validation: a pack that commits but fails projection, a pass that outlives its graph authority, and a catalog attest key that ignores the published component state. Each is a typed, visible outcome. None may leave a connector silently absent from the catalog.
+
+### ARBORA-FLEET-R059 — pinned loads
+
+Call path: `manage` verb (`arbora/api/mcp/verbs.py:317`) -> `fleet.tools.pin` (`arbora/api/ops/fleet.py:143`) -> `MultiplexerOps.pin` -> `SessionLoads.pin` (`arbora/fleet/session_loads.py:46`) and `PinStore.put`. At session start, `visible_names` (`arbora/api/mcp/registration.py:111`) -> `MultiplexerOps.restore_pins` -> `PinStore.list` -> `_resolve_loadable_items` -> `SessionLoads.load`.
+
+Storage decision: the session key is `tenant:principal` (`arbora/mcp_server/fleet_composition.py:135`), so session state is already per principal but lives in process memory. Control leases expire and the WebUI repository is in memory. Pins therefore use the medulla store through the engine client of `arbora/mcp_server/served_invocation.py:678`, with a new medulla-owned per-principal record kind. That record kind needs a row in the medulla specs before `ARBORA-FLEET-R059.3` can land.
+
+Budget: `FLEET_PINNED_CAP` starts at 32 per principal, range 1..128. Pinned items also count toward the session cap of 64. A measurement on this platform replaces the starting value.
+
+Policy: a pin never widens authority. Restore re-checks scopes and policy on every session start, and a failed check suspends the pin without deleting it.
+
+### ARBORA-FLEET-R060 — fleet coverage gate
+
+Call path: `fleet.status` (`arbora/api/ops/fleet.py:143`) -> `MultiplexerOps.status` (`arbora/fleet/multiplexer_ops.py:215`) -> `check_fleet_coverage` (`arbora/fleet/coverage.py`). The operator command `arbora-production-ops check-fleet-coverage` (`arbora/deployment/production_ops.py:480`) runs the same function.
+
+Registry decision: the org registry is the `connectors` group of `workspace.yml`, read through `platform_config_file("workspace.yml")` (`arbora/core/settings.py:64`). The deployed MCP config says what arbora mounts. The manifest says what must be mounted. The gate compares the two. Some repo names differ from their MCP server keys, so each such registry entry needs an `mcp_server` field. The registry owner adds those fields before the gate can pass.
+
+Tool counts come from admitted catalog items, not from mounted tools, because the dynamic multiplexer mounts children on demand.
