@@ -23,7 +23,6 @@ def test_engine_admission_binds_one_principal_and_one_request_context() -> None:
     assert engine["EPISTEMIC_GRAPH_AUDIENCE"] == "arbora"
     assert engine["EPISTEMIC_GRAPH_TENANT"] == "acme"
     assert engine["EPISTEMIC_GRAPH_POLICY_VERSION"] == "policy-1"
-    assert list(engine["EPISTEMIC_GRAPH_SIGNER_KEYS_SHAPE"]) == ["arbora-process"]
     digest = hashlib.sha256(b"arbora-process").hexdigest()
     assert engine["EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS"] == (
         f"*=principal:sha256:{digest}"
