@@ -1,14 +1,5 @@
 # ARBORA-DATA-MARKET — Schema context, source admission, and finance projection
 
-## Status legend
-
-`DRAFT` needs design decisions; `READY TO BUILD` has a complete contract;
-`BUILDING` has an active implementation; `LANDED` means code merged to this
-repository's default branch; `ACCEPTED` means the tests and served behavior in
-`test-spec.md` passed against the merged revision. The delivery and acceptance
-states are independent. Evidence must name a revision and the exact command or
-served observation. This spec claims no implementation or acceptance evidence.
-
 ## Outcome and scope
 
 A caller can inspect a relational schema, see source ownership and change impact,
@@ -26,61 +17,98 @@ or MariaDB test fixture, a local graph engine, and a mock market provider. It
 must not assume a particular private network, inventory, source application,
 broker, or notification channel.
 
-## User stories and functional requirements
+## User Scenarios & Testing
+
+### User Story 1 - Ask for schema context (Priority: P1)
+
+An authorized caller asks what a source object means, how it joins and what depends on it.
+
+**Acceptance Scenarios**:
+
+1. **Given** an approved catalog snapshot, **When** the caller asks `schema_context` over REST or MCP, **Then** the response carries stable IDs, provenance and labels unverified joins as proposals.
+2. **Given** a caller from another tenant, **When** it asks for the same source, **Then** the response equals the response for an absent object and no engine call occurs.
+
+### User Story 2 - Admit one application at a time (Priority: P1)
+
+An operator moves one application onto the shared data plane and can roll back.
+
+**Acceptance Scenarios**:
+
+1. **Given** an unapproved mapping, **When** the operator dry-runs admission, **Then** the plan lists the blocker and no source call occurs.
+2. **Given** a failure during a probe, **When** admission runs, **Then** the run rolls back and the old connector stays active.
+
+### User Story 3 - Governed finance reads, schedules and alerts (Priority: P2)
+
+A tenant user reads market data and receives one alert per event without any path to an order.
+
+**Acceptance Scenarios**:
+
+1. **Given** a tenant-bound account and the `finance:read` grant, **When** the caller reads markets over REST or MCP, **Then** both return the same projection with source and as-of fields.
+2. **Given** a redelivered finance event after a restart, **When** the consumer runs, **Then** the subscriber sees one alert.
+
+### Edge Cases
+
+- A missing account binding returns `UNAVAILABLE` before any provider call.
+- A scheduled wall time that DST skips or repeats runs once.
+- An unsupported engine capability returns `UNAVAILABLE` and never an empty fabricated graph.
+
+## Requirements
+
+### Functional requirements
 
 ### Schema context (ARBORA-DATA-MARKET-R005)
 
-- **FR-01:** Authenticated REST and MCP callers can ask `schema_context` with
+- **FR-01** (rows `ARBORA-DATA-MARKET-R005`): Authenticated REST and MCP callers can ask `schema_context` with
   `source_id`, `schema`, `object`, and `intent` (`definition`, `joins`, `ontology`,
   `owner`, or `impact`). A response includes stable object IDs, catalog revision,
   typed relationships, evidence for inferred joins, mapping approval state,
   cited provenance, and `as_of` time. `impact` includes dependent views, mappings,
   and consumers with bounded traversal. Undeclared or unverified relationships
   are labelled as proposals, never as approved facts.
-- **FR-02:** Arbora authorizes the tenant and source before requesting any
+- **FR-02** (rows `ARBORA-DATA-MARKET-R005`): Arbora authorizes the tenant and source before requesting any
   schema context. The request is bounded (`depth`, `limit`, timeout, response
   bytes); invalid scope returns a typed client error and inaccessible objects
   have the same nonrevealing response as nonexistent objects.
-- **FR-03:** If the graph engine has not published a schema-context capability
+- **FR-03** (rows `ARBORA-DATA-MARKET-R005`): If the graph engine has not published a schema-context capability
   or the source has no approved catalog snapshot, Arbora returns typed
   `UNAVAILABLE` with no fabricated empty graph or ontology match.
 
 ### Application admission (ARBORA-DATA-MARKET-R004)
 
-- **FR-04:** An authorized operator can dry-run admission of a named application
+- **FR-04** (rows `ARBORA-DATA-MARKET-R004`): An authorized operator can dry-run admission of a named application
   and source into a shared data plane. The plan lists source dialect and version,
   read-only credentials scope, catalog and mapping readiness, query conformance,
   connector overlap, tenant boundaries, expected cutover behavior, and rollback
   steps. Dry run causes no source mutation or connector retirement.
-- **FR-05:** Admission is one application at a time with an idempotency key,
+- **FR-05** (rows `ARBORA-DATA-MARKET-R004`): Admission is one application at a time with an idempotency key,
   persisted state machine, explicit operator approval, health and parity probes,
   and a rollback fence. A connector is retired only after the admitted source is
   healthy, parity checks pass, and an operator approves the retirement. Failed
   admission retains the old read path and reports exact recovery action.
-- **FR-06:** An application cannot be admitted if source grants are broader than
+- **FR-06** (rows `ARBORA-DATA-MARKET-R004`): An application cannot be admitted if source grants are broader than
   the tenant, its mapping is unapproved, conformance is missing, or rollback is
   unproven. No migration of application-owned tables is implied by admission.
 
 ### Finance projection and scheduling (ARBORA-DATA-MARKET-R001 / ARBORA-DATA-MARKET-R002 / ARBORA-DATA-MARKET-R003 / ARBORA-DATA-MARKET-R006)
 
-- **FR-07:** Arbora exposes tenant-scoped market reads through one application service shared by REST and MCP. Each price, trend, portfolio, and position field includes source identity, as-of time, currency or unit, session, freshness, and provenance. Arbora performs bounded server-side pagination and decimation after authoritative calculations. Reads require `finance:read`. Missing tenant/account binding fails closed before touching a process-global provider account. The nine list/search/get contracts in R003.1–R003.6 use closed, versioned projections and preserve source metadata without host synthesis.
-- **FR-08:** Use the existing scheduler and agent workflow contract for backfill,
+- **FR-07** (rows `ARBORA-DATA-MARKET-R003.1`, `ARBORA-DATA-MARKET-R003.2`, `ARBORA-DATA-MARKET-R003.3`, `ARBORA-DATA-MARKET-R003.4`, `ARBORA-DATA-MARKET-R003.5`, `ARBORA-DATA-MARKET-R003.6`): Arbora exposes tenant-scoped market reads through one application service shared by REST and MCP. Each price, trend, portfolio, and position field includes source identity, as-of time, currency or unit, session, freshness, and provenance. Arbora performs bounded server-side pagination and decimation after authoritative calculations. Reads require `finance:read`. Missing tenant/account binding fails closed before touching a process-global provider account. The nine list/search/get contracts in R003.1–R003.6 use closed, versioned projections and preserve source metadata without host synthesis.
+- **FR-08** (rows `ARBORA-DATA-MARKET-R002`): Use the existing scheduler and agent workflow contract for backfill,
   scan, DCA-due, and flip-explainer jobs. A schedule records tenant, owner,
   authorized action, timezone, trigger, idempotency key, and last run. DST and
   replay cannot produce duplicate effects. A model explanation cites the exact
   calculation inputs and is informational only.
-- **FR-09:** Arbora subscribes durably to the finance event topic family,
+- **FR-09** (rows `ARBORA-DATA-MARKET-R001`): Arbora subscribes durably to the finance event topic family,
   dispatches through configured notification channels, and deduplicates by
   tenant, event ID, and subscriber. Redelivery after restart has at-least-once
   transport with idempotent user-visible delivery. An alert never authorizes
   an order, changes a portfolio, or advances an approval lease.
-- **FR-10:** Paper order submission, if exposed, requires a tenant-bound account,
+- **FR-10** (rows `ARBORA-DATA-MARKET-R003.7`): Paper order submission, if exposed, requires a tenant-bound account,
   explicit `finance:paper-trade` grant, durable lease and idempotency receipt.
   Unverified account binding returns typed `UNAVAILABLE` before any provider
   call. Live order execution belongs to the connector's governed write-back
   contract; Arbora can submit only a separately approved, tenant-bound request
   through that published contract.
-- **FR-11:** A recurring DCA plan stores its owner, tenant, symbol or asset ID,
+- **FR-11** (rows `ARBORA-DATA-MARKET-R006`): A recurring DCA plan stores its owner, tenant, symbol or asset ID,
   account binding, amount and currency as decimal values, IANA timezone,
   recurrence rule, start/end bounds, pause state, and paper/live mode. Each due
   time produces a durable proposal with a deterministic key derived from plan
@@ -92,6 +120,14 @@ broker, or notification channel.
   symbol, mode, policy or quote after approval invalidates that lease. A paused
   or revoked plan emits no order request. Every proposal and effect links the
   source quote, as-of time, account, approval and reconciliation receipt.
+
+## Success Criteria
+
+- **SC-01** (row `ARBORA-DATA-MARKET-R005`): the request model rejects unknown intents, oversized limits and extra fields with zero engine calls.
+- **SC-02** (row `ARBORA-DATA-MARKET-R005`): declared joins, inferred proposals, ontology class, owner and impact return with stable IDs and a bounded `truncated` flag.
+- **SC-03** (row `ARBORA-DATA-MARKET-R005`): a request for another tenant's source gives the same response as an absent object, with zero engine dispatch.
+- **SC-04** (row `ARBORA-DATA-MARKET-R005`): a missing engine capability or approved catalog returns typed `UNAVAILABLE`.
+- **SC-05** (row `ARBORA-DATA-MARKET-R005`): MCP and REST requests on one fixture return an equivalent normalized response.
 
 ## Acceptance criteria
 
@@ -115,6 +151,16 @@ broker, or notification channel.
 | FR-01–03 | `plan.md` schema context | SC-01–05 | PENDING |
 | FR-04–06 | `plan.md` admission | AD-01–06 | PENDING |
 | FR-07–11 | `plan.md` finance | FI-01–10 | PENDING |
+
+## Assumptions
+
+- A contributor runs the local graph engine, a disposable PostgreSQL or MariaDB fixture and a mock market provider.
+- The graph engine publishes the schema-context, finance and durable-queue methods that the rows name.
+- Delivery guarantees are at-least-once transport with idempotent user-visible delivery.
+
+## Why a new spec
+
+Searched `git grep -n "schema_context\|admission\|finance" -- specs` in this repository. The specs `hosted-api-operations`, `fleet-catalog-and-tools` and `host-composition-boundary` own the registry, fleet calls and host composition that these rows attach to. None owns the data-plane schema context, application admission or finance projection capability.
 
 ## Open decisions
 

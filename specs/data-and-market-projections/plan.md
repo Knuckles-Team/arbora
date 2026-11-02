@@ -1,4 +1,6 @@
-# ARBORA-DATA-MARKET — architecture and implementation design
+# ARBORA-DATA-MARKET — Implementation plan
+
+Governing spec: [spec.md](spec.md). Rows: [requirements.md](requirements.md).
 
 ## Summary
 
@@ -50,17 +52,17 @@ None. The constitution check passed.
 ## Build contract
 
 The change must pass the repository pre-commit gates at both stages: `uvx pre-commit run --all-files` and `uvx pre-commit run --all-files --hook-stage pre-push`.
-The wiring gate (`scripts/check_wiring.py`) and the public-spec gate (`scripts/check_public_specs.py`) apply. A new module must have a production caller.
+The gates that apply are `ruff-check`, `ruff-format`, `vulture`, `bandit`, `mypy-env`, `pytest`, `check-orphan-modules`, `check-unreachable-modules`, `check-public-specs`, `spec` and `spec-templates`. Each new module must have a production caller, or `check-orphan-modules` fails.
 
 ## Production caller chain
 
-Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
+Each row names its entry point and caller chain in its `Caller chain:` sentence. This plan adds no separate chain.
 
 ## Cross-repo seams
 
 None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
 
-## Ownership and reuse inventory
+### Ownership and reuse inventory
 
 Arbora is the composition root. Keep one live request path:
 
@@ -83,7 +85,7 @@ dispatch. It does **not** establish that schema context, finance ops, or durable
 finance subscriptions are implemented. All three remain pending until code and
 served tests provide evidence.
 
-## Schema context
+### Schema context
 
 Define a strict request model in `arbora.gateway.schemas.graph_core` (or a
 small adjacent schema module) with `source_id`, `schema`, `object`, `intent`,
@@ -103,7 +105,7 @@ incompatible version yields `UNAVAILABLE`; malformed input yields
 existence. Engine timeout yields retryable `UNAVAILABLE`. Structured errors
 carry a correlation ID and no secret source DSN.
 
-## Application admission
+### Application admission
 
 Introduce an `ApplicationAdmission` aggregate in the existing control-plane
 repository style with stable `(tenant_id, application_id, source_id)` identity
@@ -126,7 +128,7 @@ the admission in a reconcilable state rather than claiming successful rollback.
 Use local PostgreSQL and MariaDB fixtures; application identity is configurable
 and examples use generic `sample_app` tables.
 
-## Finance read, schedule, and event bridge
+### Finance read, schedule, and event bridge
 
 Build one finance application service exposed by REST and MCP. Arbora receives
 an authenticated tenant and resolves an explicit account binding before any
@@ -169,7 +171,7 @@ Unknown external effects enter reconciliation; Arbora must not retry them as
 new orders. Pause, revocation, policy change or changed preview data cancels
 the pending dispatch without claiming to reverse an earlier effect.
 
-## Cross repository contract and dependency order
+### Cross repository contract and dependency order
 
 1. The graph engine publishes versioned schema-context, catalog revision,
    mapping status, finance record, and event APIs. Arbora consumes public
@@ -187,20 +189,19 @@ contracts. A mock proves Arbora wiring, while final acceptance additionally
 requires a served graph-engine fixture and a local database fixture. A missing
 dependency is a typed `UNAVAILABLE`, never a compatibility alias.
 
-## Quality and maintainability
+### Quality and maintainability
 
 Keep each behavior in one owning service and route both transports through it.
-Run CCCC against changed Python modules, jscpd for duplicated code, dupehound
-for semantic duplicates, KISS review for unnecessary abstraction, Ruff, mypy,
-pytest, and the repository's release workflow. Any scanner finding requires a
+Run `ruff check`, `ruff format --check`, `vulture`, `bandit`, `mypy`, `pytest`, the orphan-module
+and unreachable-module checks, and the repository's release workflow. Any scanner finding requires a
 real fix or compare it with a documented existing baseline. Never suppress a
 finding to make a gate pass. Record exact commands, revisions, and results in
 the spec evidence before marking `ACCEPTED`.
 
-## Confirmed order and position changes (ARBORA-DATA-MARKET-R007)
+### Confirmed order and position changes (ARBORA-DATA-MARKET-R007)
 
 Data flow: authenticated REST/MCP call -> plan confirmation -> admitted connector -> SDK proof verification and governed apply -> durable effect receipt.
-Existing code: `_effect` at arbora/api/invoke/pipeline.py:218 binds the plan at line 230.
+Existing code: `_effect` at arbora/api/invoke/pipeline.py:258 binds the plan at line 270.
 The shared invocation path reserves durable audit and effect identity before dispatch.
 Reachable today: no order or wallet operation exists. Signature verification and its trust resolver are new SDK producer wiring.
 
@@ -221,7 +222,7 @@ Decision: reuse the shared plan/confirm and governed effect path. Reject a finan
 Cross-repository rows: SCION-GOVERNED-WRITEBACK-R001.1 through R001.6 and R004; ARBORA-DATA-MARKET-R003; ARBORA-OPS-R017.2.
 
 
-## Immutable intent and separate execution proof
+### Immutable intent and separate execution proof
 
 This contract is shared by SCION-GOVERNED-WRITEBACK-R001 and ARBORA-DATA-MARKET-R007. All new wiring remains SPECIFIED.
 `WalletBusinessIntent` is a closed JSON object with these exact required keys:
@@ -238,7 +239,7 @@ Nested JSON allows strings, booleans, null, arrays, objects and exactly represen
 No normalization or mutation occurs after preparation. A changed default or schema requires a new plan and confirmation.
 
 The complete immutable binding projection is exactly `P = {"intent": WalletBusinessIntent}`.
-`plan_digest` is the lowercase hexadecimal SHA-256 of UTF-8 serialization of P.
+`plan_digest` is the lowercase hexadecimal sha256 digest of UTF-8 serialization of P.
 Serialization is exactly `json.dumps(P, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)`.
 P contains plain JSON values, so Arbora `claim_values(P)` preserves them.
 This equals existing `arbora/api/invoke/plan.py:24` `params_digest(P)`; it is not the signature payload digest.
@@ -269,7 +270,7 @@ MCP `arbora/api/mcp/verbs.py:26` PARAMETERS and `_invoke_and_render` at line 258
 The MCP `params` property must carry the same P as HTTP; duplicate or conflicting metadata refuses.
 The shared Invoke contract must carry typed envelope metadata separately through confirmation and connector dispatch.
 This is an explicit shared transport dependency, not an existing side channel or handler-level field removal.
-`pipeline._effect` at line 218, `bind_plan` at line 230 and `EgPlanStore.validate` at plan.py:160 must use P unchanged.
+`pipeline._effect` at line 258, `bind_plan` at line 270 and `EgPlanStore.validate` at plan.py:160 must use P unchanged.
 `audit_event` at audit.py:28 and `_journal_binding` must use that same business projection and preserve all existing authority bindings.
 Proof evidence joins by digest/reference separately; raw signatures must not enter logs or create a different business-effect identity.
 Shared envelope validation must precede plan consumption; current `_effect` consumes a matching lease and lacks this proof-aware lifecycle.
@@ -280,7 +281,7 @@ Until envelope parsing, durable association and lifecycle wiring exist for both 
 SDK maps unavailable binding to `verification_unavailable`; mismatched intent or proof bindings cannot become verification success.
 
 <!-- spec-definition-patch:eg66-reads -->
-## Structured marketplace reads (ARBORA-DATA-MARKET-R003.1–R003.6)
+### Structured marketplace reads (ARBORA-DATA-MARKET-R003.1–R003.6)
 
 The registry IDs are `markets.list`, `markets.search`, `markets.get`,
 `events.list`, `events.search`, `events.get`, `orders.list`, `orders.search`,
@@ -356,5 +357,5 @@ registered `ask` tool with `arguments.op` and `arguments.params`. The current
 `arbora/mcp_server/server.py` still uses the legacy meristem surface;
 the operation-backed Arbora MCP registration is not active. These are explicit missing attachment edges, not served evidence. Keep all nine operations unavailable until Arbora admits the provider port and authority contract.
 
-Add future served tests at `tests/mcp_server/test_data_market_reads_served.py`. The test-spec names each required function and route-level acceptance. Preserve FI-01 through FI-10 and parent paper-order acceptance. This definition adds no runtime or test result claim.
+Add future served tests at `tests/mcp_server/test_data_market_reads_served.py`. The test-spec names each required function and route-level acceptance. Preserve the finance tests of that file and parent paper-order acceptance. This definition adds no runtime or test result claim.
 <!-- /spec-definition-patch -->
