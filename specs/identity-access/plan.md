@@ -265,7 +265,7 @@ Unmapped identity, absent grant and unavailable decision authority all deny acce
 This future contract covers all four protocol boundaries. It does not establish existing adapters or network ingress.
 
 Production reuse: `arbora/gateway/remote_oauth_api.py:245` authorize and :280 `oauth_callback` expose the existing broker begin/callback flow.
-Their current broker import is `agent_utilities.mcp.remote_oauth_broker`; that import does not establish the new ownership-bound reuse contract.
+Their current broker import is `arbora.mcp_server.backing.remote_oauth_broker`; that import does not establish the new ownership-bound reuse contract.
 `arbora/identity/composition.py:48` `build_identity_ports` remains the composition boundary; qualified owner facts are required before activation.
 `arbora/api/http/auth.py:127` `verify_local_bearer_request` obtains verified token evidence but explicitly lacks current policy/delegation authority.
 `arbora/api/mcp/caller.py:12` `caller_from_session` and :117 `caller_for_request` bind that authority for served requests.

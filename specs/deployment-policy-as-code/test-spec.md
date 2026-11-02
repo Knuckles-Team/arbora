@@ -59,3 +59,12 @@ homes now. The spec-trailers gate resolves the spec PR's trailer. No delivery is
 - `# spec: ARBORA-DEPLOY-POLICY-R004` — `tests/policy/test_policy_bundle.py`
 - `# spec: ARBORA-DEPLOY-POLICY-R005` — `tests/policy/test_epistemic_conditions.py`
 - `# spec: ARBORA-DEPLOY-POLICY-R006` — `tests/fleet/test_served_agent_surface.py`
+
+## Row coverage
+
+Every test below is planned; none exists yet.
+
+| Row | Test |
+|---|---|
+| `ARBORA-DEPLOY-POLICY-R001` | `tests/api/test_deploy_manifest_served.py::test_plan_returns_typed_diff_and_makes_no_write_call` and `tests/deployment/test_manifest.py::test_unknown_key_duplicate_key_and_floating_image_are_rejected` |
+| `ARBORA-DEPLOY-POLICY-R007` | `tests/api/test_deploy_manifest_served.py::test_rollout_records_one_deployment_and_none_on_failure` |
