@@ -1,45 +1,34 @@
-# ARBORA-DATA-MARKET — implementation tasks
+# ARBORA-DATA-MARKET — Implementation tasks
 
-Each task has an observable done condition. Dependencies are ordered so that
-Arbora does not claim a capability before its published downstream contract
-exists. Current status for every task: **WAITING**.
+Governing [spec](spec.md) and [plan](plan.md). One task per row, producer first. Rows that depend on a downstream contract wait for it; tasks of independent rows run in parallel.
 
-- [ ] **GDM-01:** Pin graph-engine schema-context and finance API versions and the connector account-binding contract. Done when public client schemas and compatibility errors are recorded and SC-04/FI-02 fixtures compile.
-- [ ] **GDM-02:** Add strict schema-context request/response models and one application service. Done when SC-01–04 pass and the service consumes the public graph-engine client with provenance.
-  - [x] Models (`arbora/gateway/schemas/schema_context.py`) and the
-    capability-gated service (`arbora/gateway/schema_context_service.py`)
-    land SC-01 (strict rejection) and SC-04 (typed `UNAVAILABLE`, zero
-    engine dispatch) for ARBORA-DATA-MARKET-R005.
-  - [ ] SC-02/SC-03 wait on medulla publishing a `schema_context`
-    client; no such capability exists yet to dispatch against.
-- [ ] **GDM-03:** Wire MCP and REST schema-context routes through that service. Done when SC-05 served parity proves identical authorization and bounded errors.
-- [ ] **GDM-04:** Add a durable application-admission aggregate and dry run with source, mapping, conformance and rollback checks. Done when AD-01/03/06 pass and dry run has no effects.
-- [ ] **GDM-05:** Implement approved attach, verify, activate, reconciliation and rollback, with connector retirement as a separate authorized step. Done when AD-02/04/05 pass on local PostgreSQL and MariaDB fixtures.
-- [ ] **GDM-06:** Add a tenant-scoped finance application service and read models, resolving account binding before dispatch. Done when FI-01–03/09 pass, including two-tenant zero-delegation denial.
-- [ ] **GDM-07:** Bind backfill, scan, DCA-due and explanation actions to the existing scheduler/workflow contract. Done when FI-04/05 pass across DST and replay cases.
-- [ ] **GDM-07a:** Persist recurring DCA plans and one proposal per plan revision/occurrence. Gate paper and live dispatch on distinct grants, exact preview and connector write-back lease. Done when FI-10 passes across replay, pause, revocation, approval invalidation and uncertain external outcome.
-- [ ] **GDM-08:** Add durable finance outbox subscription, delivery dedupe, channel routing and restart reconciliation. Done when FI-06/07 pass and alerts have no order route.
-- [ ] **GDM-09:** Gate paper submit on account binding, grant, lease and idempotency; retain typed unavailability until all contracts are served. Done when FI-08 passes with zero effects on every failed prerequisite.
-- [ ] **GDM-10:** Run full test, type, lint, scanner and served fixture acceptance; update public status and this spec's evidence. Done when exact merged revision and results support `LANDED` and `ACCEPTED` independently.
+Before a pull request, run `uvx pre-commit run --all-files` at both stages. Follow the repository gate and use local fixtures, never private services.
 
-Before proposing a PR, compare changed modules against existing implementations
-for CCCC complexity, jscpd syntax duplication, dupehound semantic duplication,
-and KISS simplicity. Follow the repository's normal gate; do not substitute
-private live services for local fixtures or silently downgrade a failing test.
-- [ ] **ARBORA-DATA-MARKET-R007:** Confirmed order and position changes.
-- [ ] **ARBORA-DATA-MARKET-R007.1:** Model.
-- [ ] **ARBORA-DATA-MARKET-R007.2:** Behavior.
-- [ ] **ARBORA-DATA-MARKET-R007.3:** Wiring.
-- [ ] **ARBORA-DATA-MARKET-R007.4:** Refusal.
-- [ ] **ARBORA-DATA-MARKET-R007.5:** Evidence.
-- [ ] **ARBORA-DATA-MARKET-R007.6:** Hot-path proof.
-
-<!-- spec-definition-patch:eg66-reads -->
-- [ ] **GDM-11:** Define `FinanceReadPortV1` in `arbora/finance/markets.py` for the nine typed market/event/order reads. The existing `MarketProvider.market_read` covers one symbol only. Keep the operations unavailable until an admitted provider and the EG `finance:read` scope exist. Paper submission is not a read.
-- [ ] **GDM-12:** Define closed v1 request and result models. Specify resource
-  filters, ID/query grammar, fixed ordering, cursors, and metadata projection.
-  Cover all nine reads. Bind them to one tenant-scoped finance service. FI-11–
-  FI-14 must pass through the named REST and MCP routes.
-- [ ] **GDM-13:** Register reads with `finance:read` only after EG adds that scope. Resolve tenant/account binding before provider dispatch. Keep paper submission behind separate `finance:paper-trade`, lease, idempotency, and R017.2 ownership. FI-15–FI-17 must pass. Refusals must cause zero calls or effects. These tasks await implementation and upstream capability.
-- [ ] **GDM-14:** Attach the finance operations to `get_registry`, `NativeGatewayApplication.mount_rest_routes`, and the operation-backed MCP `/mcp` surface after contract admission. Done when the named served tests prove both real entrypoints use the same provider and no read reaches paper effects. The current API/MCP composition is not active.
-<!-- /spec-definition-patch -->
+- [ ] T001 [P] [US3] ARBORA-DATA-MARKET-R001.1 Durable finance receipt store.
+- [ ] T002 [US3] ARBORA-DATA-MARKET-R002 Scheduled finance backfill, scan, and explanation jobs.
+- [ ] T003 [P] [US3] ARBORA-DATA-MARKET-R003.1 Market list/search/get.
+- [ ] T004 [P] [US3] ARBORA-DATA-MARKET-R003.2 Event list/search/get.
+- [ ] T005 [P] [US3] ARBORA-DATA-MARKET-R003.3 Order list/search/get.
+- [ ] T006 [P] [US3] ARBORA-DATA-MARKET-R003.4 Stable JSON projections.
+- [ ] T007 [P] [US3] ARBORA-DATA-MARKET-R003.5 Authority before provider calls.
+- [ ] T008 [P] [US3] ARBORA-DATA-MARKET-R003.6 Producer port, registration, and read/effect separation.
+- [ ] T009 [P] [US3] ARBORA-DATA-MARKET-R003.7 Paper order submission.
+- [ ] T010 [P] [US3] ARBORA-DATA-MARKET-R003.8 Market signal compute operations.
+- [ ] T011 [P] [US3] ARBORA-DATA-MARKET-R003.9 Served market.size operation over RegimeSizingInput.
+- [ ] T012 [P] [US3] ARBORA-DATA-MARKET-R003.10 Served market.evaluate operation over medulla NumericEvaluate.
+- [ ] T013 [P] [US3] ARBORA-DATA-MARKET-R003.11 Served market.positions operation over FinanceAccountProject.
+- [ ] T014 [P] [US3] ARBORA-DATA-MARKET-R003.12 Research kernel compute operations.
+- [ ] T015 [P] [US3] ARBORA-DATA-MARKET-R003.13 Market compute port and sizing operations.
+- [ ] T016 [P] [US3] ARBORA-DATA-MARKET-R003.14 Banking compute operations.
+- [ ] T017 [P] [US3] ARBORA-DATA-MARKET-R003.15 Finance guide projection.
+- [ ] T018 [P] [US2] ARBORA-DATA-MARKET-R004 One-at-a-time application admission with rollback.
+- [ ] T019 [P] [US1] ARBORA-DATA-MARKET-R005 schema_context query surface for tables and ontology mappings.
+- [ ] T020 [P] [US3] ARBORA-DATA-MARKET-R006 Recurring DCA plans with deterministic, non-duplicating proposals.
+- [ ] T021 [P] [US3] ARBORA-DATA-MARKET-R007.1 Model.
+- [ ] T022 [P] [US3] ARBORA-DATA-MARKET-R007.2 Behavior.
+- [ ] T023 [P] [US3] ARBORA-DATA-MARKET-R007.3 Wiring.
+- [ ] T024 [P] [US3] ARBORA-DATA-MARKET-R007.4 Refusal.
+- [ ] T025 [P] [US3] ARBORA-DATA-MARKET-R007.5 Evidence.
+- [ ] T026 [P] [US3] ARBORA-DATA-MARKET-R007.6 Hot-path proof.
+- [ ] T027 [P] [US3] ARBORA-DATA-MARKET-R007.7 Order stage and confirm operations call the proposal door.
+- [ ] T028 [P] [US3] ARBORA-DATA-MARKET-R008 Served forecast operation `market.forecast.sample`.
