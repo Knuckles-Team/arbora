@@ -13,7 +13,7 @@ One Arbora process authenticates, authorizes, composes, routes, supervises and p
 ### Requirements
 
 1. **Single host authority.** `arbora.mcp_server` owns the FastMCP loop and multiplexer instance. Gateway, A2A and UI co-services submit work to that owner loop. Startup, shutdown, reload and cancellation are idempotent, bounded and observable; no `Future.result()` blocks another event loop.
-2. **Public dependency ports.** Arbora imports the agent runtime only through `agent_utilities.api`, graph records through the installed `medulla` client, and connector lifecycle through the installed SDK's public interfaces. No direct import of a dependency's `knowledge_graph`, private `mcp`, `security`, `core.config`, or server implementation packages remains. The package-layout test enforces this at every Arbora source import site, including lazy imports.
+2. **Public dependency ports.** Arbora imports the agent runtime only through a declared `meristem` public module, graph records through the installed `medulla` client, and connector lifecycle through the installed SDK's public interfaces. No direct import of a dependency's `knowledge_graph`, private `mcp`, `security`, `core.config`, or server implementation packages remains. The package-layout test enforces this at every Arbora source import site, including lazy imports.
 3. **One business path.** MCP, REST, A2A, messaging and optional UI routes adapt a typed request into the same application operation. The request contains verified principal, tenant, scopes, action, target, policy version, idempotency key and correlation ID. A caller-provided field cannot replace the verified boundary principal. The service emits the same result/error class and governed receipt regardless of entrypoint.
 4. **One state owner.** Durable task/event/artifact/run, graph and policy records are kept by the graph engine. Agent planning and execution by the agent runtime. Connector effects by the SDK. Arbora may hold ephemeral connection/session/cache state with generation and expiry. It cannot create a parallel task store, ontology writer, source connector or uncorrelated execution path.
 5. **Safe source migration.** Existing Arbora copies under `gateway`, `fleet`, `deployment`, `a2a`, `webui_host` and `control_plane` are reconciled against their former AU duplicates. Missing behavior is ported to the owning Arbora package or explicitly retired with a public compatibility decision. There is no second live host, dual script, duplicate route registration or fallback reader left behind.
@@ -32,7 +32,7 @@ One Arbora process authenticates, authorizes, composes, routes, supervises and p
 
 ## Public dependencies
 
-This contract uses the published `medulla`, `agent-connector-sdk` and `meristem` package APIs. Their own specifications explain implementation of the durable engine, connector effects and agent runtime. The Arbora request, composition and parity obligations above are complete here.
+This contract uses the published `medulla`, `scion-sdk` and `meristem` package APIs. Their own specifications explain implementation of the durable engine, connector effects and agent runtime. The Arbora request, composition and parity obligations above are complete here.
 
 Requirement IDs are defined in [requirements.md](requirements.md); delivery state per ID is in `status.json`.
 
@@ -62,3 +62,32 @@ ARBORA-HOST-R009.5, R009.6 and R010.7 bind the effective strict web_logs boolean
 - `ARBORA-HOST-R022.1`: Owner scope and complete acceptance are defined in requirements.md.
 - `ARBORA-HOST-R010.8`: Owner scope and complete acceptance are defined in requirements.md.
 - `ARBORA-HOST-R032`: Owner scope and complete acceptance are defined in requirements.md.
+
+## User Scenarios & Testing
+
+### User Story 1 - One host serves every entrypoint (Priority: P1)
+
+An operator starts one Arbora process and calls the same operation through MCP, REST and A2A. Every entrypoint reaches one application path with the verified principal, so the result and the receipt agree.
+
+**Acceptance Scenarios**:
+
+1. **Given** a started host with a verified principal, **When** the same governed write is sent through two entrypoints with one idempotency key, **Then** exactly one effect and one receipt exist and both calls return the same outcome.
+
+### User Story 2 - Arbora imports only declared public modules (Priority: P2)
+
+A maintainer upgrades the harness, engine or connector SDK package. Arbora fails its import fence on any module outside the declared public set instead of breaking at runtime.
+
+**Acceptance Scenarios**:
+
+1. **Given** a planted import of an undeclared module under `arbora/`, **When** the package-layout test runs, **Then** it fails and names the file.
+
+### Edge Cases
+
+- An optional dependency is absent: the feature reports an actionable unavailable error and core serving stays up.
+- A caller supplies its own principal field: the verified boundary principal wins and the call is refused on mismatch.
+- A co-service stops while a sibling is borrowed: only the named service stops and the sibling keeps serving.
+
+## Assumptions
+
+- The engine, connector SDK and harness publish the public contracts that the rows cite; a missing contract keeps the dependent row SPECIFIED.
+- Presentation clients are separate packages and reach Arbora only through its served operations.

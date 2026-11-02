@@ -204,7 +204,7 @@ The new transport acceptance must use real wire clients, including unauthorized 
 ### Amendment: authenticated terminal log preference
 
 Extend ARBORA-HOST-R009.5, ARBORA-HOST-R009.6 and ARBORA-HOST-R010.7.
-The consumer contract is [TUIG-RUNTIME-R002.2 through R002.6](https://github.com/Knuckles-Team/agent-terminal-ui/blob/5ac5e3fec4d590f167d2c6bd694683dbd8950c26/specs/terminal-runtime/plan.md#tui-runtime-r002-consumer-boundary).
+The consumer contract is [TUIG-RUNTIME-R002.2 through R002.6](https://github.com/Knuckles-Team/tuig/blob/main/specs/terminal-runtime/plan.md).
 This amendment provides definitions only. Keep these host rows SPECIFIED with empty acceptance receipts.
 
 The proposed HostLaunchReceipt version 1 must include required `web_logs: bool`.
@@ -218,8 +218,8 @@ The current runtime has no receipt field or served handoff proving this binding.
 Do not fill this gap with an unsigned preference, client-selected scope or filesystem path.
 
 R010.7 resolves terminal, web or both before startup and passes the authenticated effective preference to R009.5.
-R009.5 provides `agent_terminal_ui.app.run_host_terminal(receipt: HostLaunchReceipt, *, client: AgentClient, log_reader: HostLogReader | None) -> None`.
-Inject the existing authenticated client and the Tuig-defined `agent_terminal_ui.client.HostLogReader` implementation.
+R009.5 provides `run_host_terminal(receipt: HostLaunchReceipt, *, client: AgentClient, log_reader: HostLogReader | None) -> None`.
+Inject the existing authenticated client and the Tuig-defined `HostLogReader` implementation.
 Its asynchronous method is `read(log_ref: str, *, cursor: str | None, limit: int) -> HostLogBatch`.
 Arbora implements the authorized producer side under R009.3 and R009.4; TUI owns rendering, subscription and cancellation under R002.3 through R002.5.
 The reader uses only the opaque reference and reauthorizes each read and reconnect. No new route or file reader is implied.
