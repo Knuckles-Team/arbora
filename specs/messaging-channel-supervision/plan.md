@@ -1,4 +1,6 @@
-# Messaging channel supervision lifecycle — architecture
+# ARBORA-MESSAGING — Implementation plan
+
+Governing spec: [spec.md](spec.md). Rows: [requirements.md](requirements.md).
 
 ## Summary
 
@@ -39,29 +41,12 @@ No unknowns remain. The sections below record the earlier research and decisions
 
 The sections below hold the architecture, ownership, data flow and failure modes of this spec.
 
-## Phase 2: Task approach
 
-tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
-
-## Complexity Tracking
-
-None. The constitution check passed.
-
-## Production caller chain
-
-Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
-
-## Cross-repo seams
-
-None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
-
-This plan describes the messaging supervision architecture and its health-reporting attachment points.
-
-## Existing system and reuse
+### Existing system and reuse
 
 The typed supervision model and registry failure records remain the single state authority. The health projection below adds configuration and operator-enable context without a second supervision loop.
 
-## Architecture
+### Architecture
 
 ```mermaid
 stateDiagram-v2
@@ -80,7 +65,7 @@ stateDiagram-v2
 
 ARBORA-MESSAGING-R001.1 defines the pure typed model and illegal-transition refusal. ARBORA-MESSAGING-R001 and R002/R004 own router wiring and lifecycle behavior; ARBORA-MESSAGING-R005.1 adds the configuration-aware health projection to the existing registry and host-health read paths.
 
-## Configuration-aware health projection
+### Configuration-aware health projection
 
 CompositionPlan.messaging_intake_enabled is true only when the operator explicitly enables intake and KG_DAEMON_ROLE is host. Backend credentials describe configuration, not operator intent; credential presence alone never starts intake or makes a disabled component alert-eligible.
 
@@ -93,9 +78,17 @@ It omits credential values and raw exception text.
 
 Authenticated GET /api/dashboard/health and graph_configure(action="health") expose the same projection alongside the existing shared runtime report. Unauthenticated /health liveness and /health/ready readiness remain detail-free. Any component-health alert evaluator consumes alert_eligible; health reads do not emit notifications.
 
-## Quality and environment
+### Quality and environment
 
 At implementation, run the focused messaging tests and served health acceptance cases in test-spec.md, then the repository's standard spec and lifecycle gates. This spec publication adds no runtime code and claims no execution of the newly defined served health cases.
+
+## Phase 2: Task approach
+
+tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
+
+## Complexity Tracking
+
+None. The constitution check passed.
 
 ## Build contract
 
@@ -116,3 +109,11 @@ The values come from `.pre-commit-config.yaml` and `pyproject.toml`. They match 
 - A function takes at most one boolean parameter.
 - Each concern has its own file: `memory_subscriptions.py`, `webhook_delivery.py` and `memory_webhooks.py`.
 - Engine calls go through `send_engine` of `arbora/api/ops/_engine.py` (`ARBORA-OPS-R897.1`).
+
+## Production caller chain
+
+Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
+
+## Cross-repo seams
+
+None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
