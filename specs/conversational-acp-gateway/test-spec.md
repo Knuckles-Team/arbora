@@ -121,3 +121,13 @@ renew between authority-watch checks.
 Renewal tests refuse changed groups, roles, actor kind, policy, audience, issuer,
 JWKS location and configured algorithms. Rotated expiry with unchanged verified
 authorization remains supported. Active execution retains its admitted authority.
+
+## Row coverage
+
+| Row | Test |
+|---|---|
+| `ARBORA-ACP-R001.4` | `tests/acp/test_coding_session_behavior.py::test_trusted_root_read_write_and_standing_grant` (planned; T-ACP-11) |
+| `ARBORA-ACP-R001.5` | `tests/acp/test_acp_routes_wiring.py::test_effect_path_reaches_decide_effect` (planned; T-ACP-12) |
+| `ARBORA-ACP-R001.6` | `tests/acp/test_coding_session_refusal.py::test_each_reason_is_typed_and_forwards_nothing` (planned; T-ACP-13) |
+| `ARBORA-ACP-R001.7` | `tests/acp/test_coding_session_evidence.py::test_record_fields_without_content` (planned; T-ACP-14) |
+| `ARBORA-ACP-R001.8` | `tests/acp/test_coding_session_hot_path.py::test_read_passes_write_waits_untrusted_root_refused` (planned; T-ACP-15) |

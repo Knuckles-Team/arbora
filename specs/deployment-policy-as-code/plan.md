@@ -1,4 +1,6 @@
-# ARBORA-DEPLOY-POLICY plan
+# ARBORA-DEPLOY-POLICY — Implementation plan
+
+Governing spec: [spec.md](spec.md). Rows: [requirements.md](requirements.md).
 
 ## Summary
 
@@ -39,33 +41,12 @@ No unknowns remain. The sections below record the earlier research and decisions
 
 The sections below hold the architecture, ownership, data flow and failure modes of this spec.
 
-## Phase 2: Task approach
-
-tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
-
-## Complexity Tracking
-
-None. The constitution check passed.
-
-## Build contract
-
-The change must pass the repository pre-commit gates at both stages: `uvx pre-commit run --all-files` and `uvx pre-commit run --all-files --hook-stage pre-push`.
-The wiring gate (`scripts/check_wiring.py`) and the public-spec gate (`scripts/check_public_specs.py`) apply. A new module must have a production caller.
-
-## Production caller chain
-
-Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
-
-## Cross-repo seams
-
-None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
-
-## Architecture
+### Architecture
 
 Three declarative surfaces. One convergence engine.
 
 1. **Deployment manifest** — a versioned `deploy.yaml` describes the fleet. It lists engine
-   shards (each a `portable-deployment` profile instance), the GraphOS gateway, connector fleet
+   shards (each a `portable-deployment` profile instance), the Arbora gateway, connector fleet
    items, and the optional web UI. Every image is digest-pinned. This extends the existing
    digest-pinned worker-topology rule (ARBORA-DEPLOY-R001). The manifest is data. `plan` reads
    it plus live state. It returns a typed diff. `apply` drives that diff idempotently.
@@ -77,7 +58,7 @@ Three declarative surfaces. One convergence engine.
    generated artifacts of the deployed version. The existing reconciliation-receipt publication
    gate (ARBORA-MCP-RESOURCES-R001) guards them.
 
-## Reuse (inventory before new components)
+### Reuse (inventory before new components)
 
 | Need | Existing owner |
 |---|---|
@@ -91,34 +72,56 @@ Three declarative surfaces. One convergence engine.
 
 No new authorization service. No second policy engine. No new publication path.
 
-## Interfaces
+### Interfaces
 
-- `arbora.deployment.deploy_manifest` — the typed manifest model. It carries version,
+- `arbora.deployment.manifest` — the typed manifest model. It carries version,
   components, and pins.
 - `plan(manifest)` returns a `DeploymentDiff`. It is read-only. `apply(diff)` returns an
   `ApplyReceipt`. It is idempotent.
-- `arbora.policy.bundle` — the typed policy bundle model. `compile(bundle)` returns scope
+- `arbora.deployment.policy_bundle` — the typed policy bundle model. `compile(bundle)` returns scope
   rules for the existing evaluator. `bind(bundle, scope)` is a governed operation.
 - Served surface: `GET /llms.txt`. MCP resources sit under the existing FastMCP bridge. The
   skill export command gains a `--digest-stamp` flag.
 
-## Live wiring
+### Live wiring
 
 `plan` and `apply` sit under the existing deployment doctor entry points. Policy binding
 attaches to the existing policy administration surface. That surface is the admin console and
 the A2A authority boundary (ARBORA-IDENTITY-R001). The served agent surface generates from the
 existing fleet-catalog publication step. The reconciliation gate guards it.
 
-## Decisions
+### Decisions
 
-- **The manifest describes components, not infrastructure primitives.** GraphOS already owns the
+- **The manifest describes components, not infrastructure primitives.** Arbora already owns the
   profiles. The manifest composes them. One deployment story replaces two.
 - **Approval reuse, not a new approval system.** Destructive changes consume the existing
   elevation and approval receipts.
 - **Epistemic conditions evaluate through the engine access service.** The policy layer never
   re-derives evidence. It only asks.
 
-## Quality gates
+### Quality gates
 
 Standard repo gates apply. Pytest, mypy, ruff, vulture, dependency-order, public-specs. The
 policy compiler passes the no-duplicate-authority check against the existing RBAC evaluator.
+
+## Phase 2: Task approach
+
+tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
+
+## Complexity Tracking
+
+None. The constitution check passed.
+
+## Build contract
+
+The change must pass the repository pre-commit gates at both stages: `uvx pre-commit run --all-files` and `uvx pre-commit run --all-files --hook-stage pre-push`.
+The wiring gate (`scripts/check_wiring.py`) and the public-spec gate (`scripts/check_public_specs.py`) apply. A new module must have a production caller.
+Gates (`.pre-commit-config.yaml`): `ruff-check`, `ruff-format`, `vulture`, `bandit`, `mypy-env`, `pytest`, `check-orphan-modules`, `check-public-specs`, `spec`, `spec-templates`, `secrets`, `uv-lock`. The policy compiler must not duplicate the engine evaluator.
+
+## Production caller chain
+
+Served entry: a registered op (`deploy.manifest.plan`, `deploy.manifest.apply`, `policy.bundle.validate`, `policy.bundle.bind`) → the registry built by `arbora/api/ops/registry_factory.py` → the handler in `arbora/api/ops/deploy.py` or `arbora/api/ops/policy.py`. HTTP entry: `GET /llms.txt` through `arbora/api/http/protocol_routes.py`. Each row also names its own chain. No obsolete path remains to delete.
+
+## Cross-repo seams
+
+None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.

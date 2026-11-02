@@ -313,8 +313,8 @@ async def _restore_validate(archive_root: Path, scratch_root: Path) -> dict[str,
         scratch_root / f"restore-{int(time.time())}-{secrets.token_hex(6)}",
     )
     destination.mkdir(mode=0o700)
-    restore_bin = str(setting("EPISTEMIC_GRAPH_RESTORE_BIN", "restore"))
-    server_bin = str(setting("EPISTEMIC_GRAPH_SERVER_BIN", "epistemic-graph-server"))
+    restore_bin = str(setting("MEDULLA_RESTORE_BIN", "restore"))
+    server_bin = str(setting("MEDULLA_BIN", "epistemic-graph-server"))
     port = int(setting("RESTORE_VALIDATION_PORT", 19_100))
     if not 1024 <= port <= 65535:
         raise ProductionOperationError("RESTORE_VALIDATION_PORT is outside 1024..65535")

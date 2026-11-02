@@ -1,4 +1,4 @@
-# ARBORA-ACCEPTANCE — Design and implementation plan
+# ARBORA-ACCEPTANCE — Implementation plan
 
 Governing spec: [spec.md](spec.md). Rows: [requirements.md](requirements.md).
 
@@ -130,6 +130,16 @@ Delivery follows five phases. Each phase closes a larger loop. A family joins th
 
 P5 work starts only after P4 passes. Each phase has a scenario; P1 is `R006.1`, P2 `R006.2`, P3 `R006.3`, P4 `R006.4` and P5 `R006.7`. If the P4 falsification gate fails, the unified planner stops expanding. Medulla then serves as the durable evidence store, and cross-modal work runs through contracts.
 
+### North star
+
+Delivery runs in phases P1 to P5. Concept-proof scenarios define each phase (`ARBORA-ACCEPTANCE-R006`). The exit gate is competency questions. The ontology answers how to execute a task and produces cross-source reports from connector virtual graphs. Deployment comes only from published package releases. Releases ship delivered cross-repository spec bundles.
+
+### Phase placement notes
+
+P5 scenario design: the scenario asserts four answers through the served `ask` and `find` operations. They are a cross-connector join, a federated read over two virtual graphs and engine facts, an execution-plan answer, and refusals that name excluded sources in the coverage block. Arbora supplies the stack and the served operations. Medulla supplies the engine rows `MEDULLA-CQ-XSRC-R012`, `MEDULLA-CQ-CONN-R090` and `MEDULLA-CQ-ORCH-R012`. The release manifest and its scenario field are `PIPE-RELEASE-R023`. The earlier tracker checks for the live door (discovery, connector calls, data, agents, governance, terminal UI) map to P1 to P4. The one open tracker check, a cross-source query over at least two ingested sources, is closed by P5.
+
+The program final gate has four parts. All specs land. Connectors reach zero open rows with service health green. Deployment comes from published releases on `main`. The vision questions are answered through the web UI and a messaging channel. Row `ARBORA-ACCEPTANCE-R006.8` is the last part and closes P5 together with `R006.7`. `PIPE-RELEASE-R023` and the pipelines section "Program exit gates" list the other parts.
+
 ## Phase 2: Task approach
 
 tasks.md carries one numbered task line for each active row. Tasks run producer first. A task marked `[P]` may run in parallel with its neighbours.
@@ -140,22 +150,12 @@ none
 
 ## Build contract
 
-Each row names its test. The repository pre-commit and pre-push hooks and the pull request gates apply. No row may use a suppression or a ratchet.
+Each row names its test. Gates (`.pre-commit-config.yaml`): `ruff-check`, `ruff-format`, `vulture`, `bandit`, `mypy-env`, `pytest`, `check-orphan-modules`, `check-public-specs`, `spec`, `spec-templates`, `secrets`, `uv-lock`. No row may use a suppression or a ratchet.
 
 ## Production caller chain
 
-Each row names its entry point and caller chain in its own text. This plan adds no separate chain.
+Checker entry: `python3 scripts/check_acceptance_evidence.py` → `main` (`scripts/check_acceptance_evidence.py:195`) → `load_status` → `gaps_for_status`. Scenario entry: the pull-request and nightly CI jobs of `.github/workflows/ci.yml` → pytest over `tests/scenarios/`. Each row also names its own chain. No obsolete path remains to delete.
 
 ## Cross-repo seams
 
 None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
-
-## North star
-
-Delivery runs in phases P1 to P5. Concept-proof scenarios define each phase (`ARBORA-ACCEPTANCE-R006`). The exit gate is competency questions. The ontology answers how to execute a task and produces cross-source reports from connector virtual graphs. Deployment comes only from published package releases. Releases ship delivered cross-repository spec bundles.
-
-## Phase placement notes
-
-P5 scenario design: the scenario asserts four answers through the served `ask` and `find` operations. They are a cross-connector join, a federated read over two virtual graphs and engine facts, an execution-plan answer, and refusals that name excluded sources in the coverage block. Arbora supplies the stack and the served operations. Medulla supplies the engine rows `MEDULLA-CQ-XSRC-R012`, `MEDULLA-CQ-CONN-R090` and `MEDULLA-CQ-ORCH-R012`. The release manifest and its scenario field are `PIPE-RELEASE-R023`. The earlier tracker checks for the live door (discovery, connector calls, data, agents, governance, terminal UI) map to P1 to P4. The one open tracker check, a cross-source query over at least two ingested sources, is closed by P5.
-
-The program final gate has four parts. All specs land. Connectors reach zero open rows with service health green. Deployment comes from published releases on `main`. The vision questions are answered through the web UI and a messaging channel. Row `ARBORA-ACCEPTANCE-R006.8` is the last part and closes P5 together with `R006.7`. `PIPE-RELEASE-R023` and the pipelines section "Program exit gates" list the other parts.
