@@ -20,6 +20,15 @@ Governing [spec](spec.md). Evidence remains PENDING.
 | T-RL-14 | ARBORA-RELEASE-R003.4.8 | Served | Four step outcomes and a secret argument | Each step lists arguments, result, outcome, key and audit reference. The secret is masked. |
 | T-RL-15 | ARBORA-RELEASE-R003.4.9 | Integration | `handle_plan_run` over the registry | The governed caller is bound to the invoke pipeline. No direct gateway call happens. |
 | T-RL-16 | ARBORA-RELEASE-R003.4.10 | Served | Prompt step, then two tool steps on two fixture connectors, bound by path | Data passes by binding. A missing path fails the step with no model retry. |
+| T-RL-17 | ARBORA-RELEASE-R003.4.12 | Served (planned) | `tests/api/test_child_message_served.py::test_retry_delivers_at_most_once`: active child, duplicate key, conflicting content, stale revision | One safe-boundary delivery, one receipt, no new root run. |
+| T-RL-18 | ARBORA-RELEASE-R003.4.13 | Served (planned) | `tests/api/test_child_continuation_served.py::test_retry_starts_one_continuation`: completed child, repeated tuple, changed history | One new run, same receipt on replay, conflict on changed history. |
+| T-RL-19 | ARBORA-RELEASE-R003.2 | Integration (planned) | `tests/release/test_exit_ingestion_receipts.py::test_sync_receipt_reads_back_through_ask` and `tests/deployment/test_exit_criteria.py::test_shipped_matrix_has_seven_rows_that_resolve_to_collected_tests` | Sync receipt reads back; each of the seven matrix rows resolves to a collected test. |
+| T-RL-20 | ARBORA-RELEASE-R003.3 | Served (planned) | `tests/release/test_exit_query_proofs.py::test_uql_and_nl_questions_answer_from_ingested_facts` over HTTP and MCP | Answers carry provenance; an unsupported question returns the engine abstention unchanged. |
+| T-RL-21 | ARBORA-RELEASE-R003.5 | Served (planned) | `tests/release/test_exit_connector_certification.py::test_certified_connector_onboards_and_the_engine_holds_its_pack` | A certified fixture connector onboards and `fleet.packs.status` shows its pack; an uncertified one is refused. |
+| T-RL-22 | ARBORA-RELEASE-R003.6 | Served (planned) | `tests/release/test_exit_write_back_receipt.py::test_confirmed_commit_returns_the_engine_journal_receipt` | Preview, confirm and commit give one journal receipt; a repeated key runs no second effect. |
+| T-RL-23 | ARBORA-RELEASE-R003.7 | Served (planned) | `tests/release/test_exit_login_probe.py::test_browser_login_through_the_issuer_reaches_a_verified_session` with the loopback issuer | Login reaches a verified session. |
+| T-RL-24 | ARBORA-RELEASE-R003.8 | Served (planned) | `tests/release/test_exit_typed_abstention.py::test_capability_question_with_no_agent_returns_typed_abstention` | The reply carries `uncovered_capability` unchanged. |
+| T-RL-25 | ARBORA-RELEASE-R003.10 | Integration (planned) | `tests/deployment/test_exit_criteria_served.py::test_release_plan_refuses_unmet_obligation` through the real CLI with a junit file | Exit 1 with `EXIT_CRITERIA_UNMET` and the missing obligation id; skipped tests count as missing. |
 
 ## Verification record
 
@@ -51,3 +60,9 @@ fresh decision holds or denies the request. Check the audit ID and disposition.
 
 - `ARBORA-RELEASE-R003.4.12`: exercise the served invoke path with exact child targeting, duplicate keys, conflicting content, stale lifecycle, completion/cancellation race and queued-versus-applied receipts. Observe one safe-boundary delivery, no new root, no authority widening and no budget reset.
 - `ARBORA-RELEASE-R003.4.13`: continue a completed grandchild through installed owner history and AU; assert one new run, explicit predecessor, correct child-only history, fresh turn counters and enclosing ceilings. A fake context ID, foreign child, failed/cancelled state, unsupported checkpoint or mismatched history revision produces no model/tool effect.
+
+## Row coverage
+
+| Row | Test |
+|---|---|
+| `ARBORA-RELEASE-R003.4.3` | `tests/architecture/test_dependency_manifest_pins_published_packages.py::test_manifest_declares_each_split_repository_package` and `tests/api/test_plan_run_ops.py::test_engine_without_task_plan_refuses_unavailable` |
