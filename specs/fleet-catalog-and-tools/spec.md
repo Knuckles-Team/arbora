@@ -142,3 +142,49 @@ The current Arbora preview helpers do not perform this served journey. The requi
 - `ARBORA-FLEET-R002.9`: Owner scope and complete acceptance are defined in requirements.md.
 - `ARBORA-FLEET-R034.13`: Owner scope and complete acceptance are defined in requirements.md.
 - `ARBORA-FLEET-R034.14`: Owner scope and complete acceptance are defined in requirements.md.
+
+## Pinned loads and full connector coverage
+
+R059 lets a caller pin tools so they stay loaded across sessions and arbora restarts, through the `manage` intent tool. Pins are durable per principal, exempt from eviction and idle expiry, and capped separately.
+R060 requires every connector in the org registry to be mounted and to serve tools in the catalog, and a served status check fails and names any that do not.
+Both extend the session loading of R018 and the intent surface of R029. Neither adds a resident tool.
+
+## User Scenarios & Testing
+
+### User Story 1 - Keep my tools loaded (Priority: P1)
+
+A caller pins the tools it uses every day. The tools stay loaded across sessions and arbora restarts without a repeat load.
+
+**Acceptance Scenarios**:
+
+1. **Given** a caller with 2 pinned tools and a full session, **When** it loads 70 more tools with eviction, **Then** both pinned tools stay loaded.
+2. **Given** a restarted arbora, **When** the same caller starts a session, **Then** its pinned tools are loaded again under its current scopes.
+
+### User Story 2 - See every connector in the catalog (Priority: P1)
+
+An operator checks that every registered connector is multiplexed and serves tools.
+
+**Acceptance Scenarios**:
+
+1. **Given** a registered connector with no admitted tools, **When** the operator asks for a strict status, **Then** the call refuses and names that connector.
+
+### Edge Cases
+
+- A pin above the pinned cap of 32 refuses with `LOAD_CAP_EXCEEDED`.
+- A pin whose scope was revoked stays stored, loads nothing and shows as suspended.
+- A connector registered under a different server key reports missing until the registry maps it.
+
+## Requirements
+
+- **FR-001**: A caller pins and unpins tools through `manage`, with durable per-principal storage and a separate cap. Rows: `ARBORA-FLEET-R059`.
+- **FR-002**: Every registered connector is mounted and serves tools, and a served check names each one that does not. Rows: `ARBORA-FLEET-R060`.
+
+## Success Criteria
+
+- **SC-001**: A pinned tool survives eviction, idle expiry and a restart in one served test. Rows: `ARBORA-FLEET-R059.9`.
+- **SC-002**: A missing or empty connector fails the strict status in one served test. Rows: `ARBORA-FLEET-R060.5`.
+
+## Assumptions
+
+- The medulla store accepts a per-principal pin record kind. A medulla row must define it before the store row lands.
+- The registry owner adds an `mcp_server` field to each connector entry whose server key differs from its repository name.
