@@ -271,8 +271,8 @@ Absent producer compatibility contracts return PRODUCER_UNAVAILABLE. Host parsin
 |---|---|---|
 | [EG typed packs](https://github.com/Knuckles-Team/medulla/tree/main/specs/typed-packs-and-catalog) | Attested skill/prompt identity and versioned content | R002/R027/R034 need version compatibility and certification binding |
 | [EG specs](https://github.com/Knuckles-Team/medulla/tree/main/specs) | Distribution and aggregation. | R024 requires generated operation ID/version and result receipt schema before implementation. |
-| [SDK connector control](https://github.com/Knuckles-Team/agent-connector-sdk/tree/main/specs/SCION-CONNECTOR-CONTROL) | Certified tool schema, governed effects and provider transport | R002/R024 require compatibility evidence and typed allocation/reconciliation producer contracts |
-| [AU specs](https://github.com/Knuckles-Team/agent-utilities/tree/main/specs) | Approved orchestration, local model call and returned-result path | R024/R034 require producer wiring to certification and EG aggregation; no host replacement |
+| [SDK connector control](https://github.com/Knuckles-Team/scion-sdk/tree/main/specs/SCION-CONNECTOR-CONTROL) | Certified tool schema, governed effects and provider transport | R002/R024 require compatibility evidence and typed allocation/reconciliation producer contracts |
+| [AU specs](https://github.com/Knuckles-Team/meristem/tree/main/specs) | Approved orchestration, local model call and returned-result path | R024/R034 require producer wiring to certification and EG aggregation; no host replacement |
 
 These dependencies are not implementation claims. Host definitions do not close missing producer clauses.
 The integration fixture starts Arbora, the published EG service, an SDK connector, a provisioner and the configured local model.
@@ -301,7 +301,7 @@ The coverage matrix in test-spec.md maps every original clause to its residual c
 
 #### Producer and original acceptance
 
-Consume the [SDK governed write-back definition](https://github.com/Knuckles-Team/agent-connector-sdk/tree/0c6c53dd63fe2a8f9b2ac3568b6d0e8f2c602734/specs/SCION-GOVERNED-WRITEBACK).
+Consume the [SDK governed write-back definition](https://github.com/Knuckles-Team/scion-sdk/tree/0c6c53dd63fe2a8f9b2ac3568b6d0e8f2c602734/specs/SCION-GOVERNED-WRITEBACK).
 SCION-GOVERNED-WRITEBACK-R004.1 through R004.4 retain generic approval, replay, audit reservation and business-rule API obligations.
 SDK R004.5 through R004.12 define RepositorySourceEffectIntent, RepositorySourceEffectRequest, RepositorySourceEffectReceipt and the real producer journey.
 Reuse their schemas and digest functions when exported; do not copy the SDK implementation or change its approved field projection.
@@ -453,7 +453,7 @@ The source validation environment resolves MCP >=2.3,<3 with the landed SDK. The
 
 ### ARBORA-FLEET-R036 — connect-time contract handshake
 
-References: [MEDULLA-TYPED-PACKS-R103](https://github.com/Knuckles-Team/medulla/blob/main/specs/typed-packs-and-catalog/spec.md), [MEDULLA-TYPED-PACKS-R104](https://github.com/Knuckles-Team/medulla/blob/main/specs/typed-packs-and-catalog/spec.md), [SCION-CONNECTOR-CONTROL-R068](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/SCION-CONNECTOR-CONTROL/spec.md)
+References: [MEDULLA-TYPED-PACKS-R103](https://github.com/Knuckles-Team/medulla/blob/main/specs/typed-packs-and-catalog/spec.md), [MEDULLA-TYPED-PACKS-R104](https://github.com/Knuckles-Team/medulla/blob/main/specs/typed-packs-and-catalog/spec.md), [SCION-CONNECTOR-CONTROL-R068](https://github.com/Knuckles-Team/scion-sdk/blob/main/specs/SCION-CONNECTOR-CONTROL/spec.md)
 
 Call path: multiplexer client connect or `list_changed` -> `onboard` (`arbora/fleet/onboarding.py:236`) -> `capture` (line 254) -> digest compare -> engine `ImportOntology` and seed import -> existing `import_attested_pack` for the pack head.
 
