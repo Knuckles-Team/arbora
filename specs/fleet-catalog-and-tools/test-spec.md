@@ -427,3 +427,19 @@ ARBORA-FLEET-R027.7.2 remains planned: qualify the complete original onboarding 
 | T-ARBORA-FLEET-R056 | ARBORA-FLEET-R056 | Test: `tests/fleet/test_job_downtime_plan_intent.py::test_five_questions_through_intent_surface` (L5) connects two fixture connectors and asks all five questions through `find`. |
 | T-ARBORA-FLEET-R057 | ARBORA-FLEET-R057 | Test: `tests/fleet/test_source_executor_access_check.py::test_timeout_denies_every_record` runs the executor against a loopback connector (served). |
 | T-ARBORA-FLEET-R058 | ARBORA-FLEET-R058 | Test: `tests/fleet/test_data_prep_bootstrap.py::test_bootstrap_declares_each_capability_once` (L3) uses a recorded engine and asserts one call per capability. |
+| T-ARBORA-FLEET-R059 | ARBORA-FLEET-R059 | Test: `tests/fleet/test_pinned_loads_served.py::test_pin_survives_restart_and_eviction` (L4) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R059.1 | ARBORA-FLEET-R059.1 | Test: `tests/fleet/test_pin_store.py::test_pin_record_round_trips_and_cap_range` (L1) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R059.2 | ARBORA-FLEET-R059.2 | Test: `tests/fleet/test_pinned_session_loads.py::test_pinned_skip_lru_and_idle_expiry` (L2) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R059.3 | ARBORA-FLEET-R059.3 | Test: `tests/fleet/test_pin_store.py::test_eg_pin_store_survives_a_new_client` (L3) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R059.4 | ARBORA-FLEET-R059.4 | Test: `tests/fleet/test_pinned_loads_wiring.py::test_pin_op_is_a_manage_op_and_adds_no_resident_tool` (L3) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R059.5 | ARBORA-FLEET-R059.5 | Test: `tests/fleet/test_pinned_loads_authority.py::test_pin_needs_load_authority_and_call_uses_caller_credential` (L3) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R059.6 | ARBORA-FLEET-R059.6 | Test: `tests/fleet/test_pinned_loads_authority.py::test_pin_refusals_carry_stable_codes` (L3) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R059.7 | ARBORA-FLEET-R059.7 | Test: `tests/fleet/test_pinned_loads_status.py::test_find_and_status_flag_pinned_items` (L3) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R059.8 | ARBORA-FLEET-R059.8 | Test: `tests/fleet/test_pinned_loads_admin.py::test_pin_audit_and_tenant_scoped_admin_view` (L3) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R059.9 | ARBORA-FLEET-R059.9 | Test: `tests/fleet/test_pinned_loads_served.py::test_pin_survives_restart_and_eviction` (L4) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R060 | ARBORA-FLEET-R060 | Test: `tests/fleet/test_fleet_coverage_served.py::test_missing_and_empty_connectors_fail_status` (L3) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R060.1 | ARBORA-FLEET-R060.1 | Test: `tests/fleet/test_fleet_coverage.py::test_registry_maps_repo_to_server_key` (L1) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R060.2 | ARBORA-FLEET-R060.2 | Test: `tests/fleet/test_fleet_coverage.py::test_missing_and_zero_tool_servers_are_reported` (L2) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R060.3 | ARBORA-FLEET-R060.3 | Test: `tests/fleet/test_fleet_coverage_served.py::test_status_reports_coverage_and_strict_mode_refuses` (L3) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R060.4 | ARBORA-FLEET-R060.4 | Test: `tests/fleet/test_fleet_coverage_served.py::test_each_offender_reason_is_named` (L3) planned. See the row for the exact premise. |
+| T-ARBORA-FLEET-R060.5 | ARBORA-FLEET-R060.5 | Test: `tests/fleet/test_fleet_coverage_served.py::test_missing_and_empty_connectors_fail_status` (L3) planned. See the row for the exact premise. |
