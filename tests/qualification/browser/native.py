@@ -78,11 +78,17 @@ def require_installed() -> dict[str, str]:
     return versions
 
 
-async def require_native_version(client: Any) -> str:
-    """Attest the running executable before creating fixture identities."""
+async def require_native_version(client: Any, expected: str | None = None) -> str:
+    """Attest the running executable before creating fixture identities.
+
+    The running server must report exactly the installed ``medulla-stem`` version,
+    the wheel ``require_installed`` already pinned and whose binary was verified.
+    """
+    if expected is None:
+        expected = importlib.metadata.version("medulla-stem")
     async with asyncio.timeout(15):
         health = await client.health()
-    if not isinstance(health, dict) or health.get("version") != "3.0.0":
+    if not isinstance(health, dict) or health.get("version") != expected:
         raise RuntimeError("Native runtime version verification failed")
     return health["version"]
 
