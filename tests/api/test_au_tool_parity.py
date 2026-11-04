@@ -6,6 +6,7 @@ import pytest
 
 from arbora.api.registry.eg_binding import load_eg_bindings
 from arbora.api.registry.spec import Effect
+from tests.api._catalog import catalog, method_row, scope_row
 
 # Each replaced wrapper module maps to the engine methods that deliver its
 # behaviour, and to the subset that must stay read-only for the read tools.
@@ -53,6 +54,15 @@ def test_replaced_wrapper_methods_are_served(served: dict, module: str) -> None:
 
 
 @pytest.mark.spec("ARBORA-OPS-R843.2")
-def test_media_transcription_is_served_by_the_engine_asr_method(served: dict) -> None:
-    """The media_tools transcription disposition names a method that is a generated operation."""
-    assert "eg.ingestion.Asr" in served
+def test_media_transcription_is_served_by_the_engine_asr_method() -> None:
+    """An engine whose catalog lists ``Asr`` serves it as ``eg.ingestion.Asr``.
+
+    The default engine build omits the transcription feature, so its catalog
+    carries no ``Asr`` row; the disposition binds whenever the catalog does.
+    """
+    document = catalog(
+        (method_row("Asr", "asr:transcribe", domain="ingestion", idempotent=False),),
+        (scope_row("asr:transcribe", "user"),),
+    )
+    served = {op.id: op for op in load_eg_bindings(catalog=document)}
+    assert served["eg.ingestion.Asr"].effect is not None
