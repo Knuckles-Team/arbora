@@ -6,17 +6,13 @@ separately maintained list. This asserts every scope Arbora declares in
 ``arbora.api.policy.domain_scopes`` matches a fixture contract's name and
 class when they agree, and that a declaration drifting from the registry
 (wrong class, or a name the registry no longer carries) is caught rather
-than silently accepted. The fixture mirrors ``tests/api/test_eg_binding.py``
-rather than reading the installed ``epistemic_graph`` wheel directly: that
-wheel's packaged ``contract/`` resource is not guaranteed to carry the full
-``methods.json``/``scopes.json``/``schemas`` set in every test environment,
-only the pinned production build does, so every other contract test in this
-suite is already fixture-based for the same reason.
+than silently accepted. The fixture is a small in-memory method catalog in
+the shape ``medulla.engine.method_catalog()`` serves, mirroring
+``tests/api/test_eg_binding.py``.
 """
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
@@ -28,6 +24,7 @@ from arbora.api.policy.domain_scopes import (
     generated_registry_mismatches,
     scopes_by_name,
 )
+from tests.api._catalog import scope_row
 from tests.api.test_eg_binding import _fixture
 
 
@@ -49,28 +46,21 @@ def test_scopes_by_name_indexes_every_declared_scope() -> None:
 
 @pytest.mark.spec("ARBORA-IDENTITY-R002")
 def test_declared_scopes_match_a_consistent_registry(tmp_path: Path) -> None:
-    contract, _exclusions = _fixture(tmp_path)
-    scope_path = contract / "scopes.json"
-    document = json.loads(scope_path.read_text())
+    document, _exclusions = _fixture(tmp_path)
     document["scopes"].extend(
-        {"scope": scope.name, "class": scope.scope_class}
-        for scope in ARBORA_DOMAIN_SCOPES
+        scope_row(scope.name, scope.scope_class) for scope in ARBORA_DOMAIN_SCOPES
     )
-    scope_path.write_text(json.dumps(document))
 
-    mismatches = generated_registry_mismatches(contract_root=contract)
+    mismatches = generated_registry_mismatches(catalog=document)
 
     assert mismatches == {}
 
 
 def test_a_class_drift_from_the_registry_is_reported(tmp_path: Path) -> None:
-    contract, _exclusions = _fixture(tmp_path)
-    scope_path = contract / "scopes.json"
-    document = json.loads(scope_path.read_text())
-    document["scopes"].append({"scope": "fleet:events", "class": "admin"})
-    scope_path.write_text(json.dumps(document))
+    document, _exclusions = _fixture(tmp_path)
+    document["scopes"].append(scope_row("fleet:events", "admin"))
 
-    mismatches = generated_registry_mismatches(contract_root=contract)
+    mismatches = generated_registry_mismatches(catalog=document)
 
     assert "fleet:events" in mismatches
     assert "service-only" in mismatches["fleet:events"]
@@ -78,9 +68,9 @@ def test_a_class_drift_from_the_registry_is_reported(tmp_path: Path) -> None:
 
 
 def test_a_scope_missing_from_the_registry_is_reported(tmp_path: Path) -> None:
-    contract, _exclusions = _fixture(tmp_path)
+    document, _exclusions = _fixture(tmp_path)
 
-    mismatches = generated_registry_mismatches(contract_root=contract)
+    mismatches = generated_registry_mismatches(catalog=document)
 
     assert mismatches == {
         scope.name: "missing from the generated scope registry"

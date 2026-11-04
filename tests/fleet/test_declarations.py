@@ -41,10 +41,10 @@ def test_capture_lists_the_declaration_and_not_a_manifest() -> None:
 
 async def _capture(declaration: object) -> Any:
     """Capture a live in-process MCP server through the real SDK 0.5 pack path."""
-    from agent_connector_sdk.artifacts.pack import build_content_pack
-    from agent_connector_sdk.ports.session import TransportEndpoint
-    from agent_connector_sdk.transports.mcp import McpTransport
     from fastmcp import FastMCP
+    from scion_sdk.artifacts.pack import build_content_pack
+    from scion_sdk.ports.session import TransportEndpoint
+    from scion_sdk.transports.mcp import McpTransport
 
     from arbora.fleet.onboarding import _capture_kinds, _PacedSession
 
@@ -71,7 +71,7 @@ def _pack(body: object) -> Any:
 @pytest.mark.spec("ARBORA-FLEET-R041.15")
 def test_sdk_pack_declaration_is_read_from_its_archive_section() -> None:
     """G1: an SDK 0.5 pack's entry body is a PackSection, not bytes."""
-    from epistemic_graph.generated.connector_pack import PackSection
+    from medulla.generated.connector_pack import PackSection
 
     declared = {"schema_mappings": {"Document": {}}, "sources": []}
     pack = _pack(declared)

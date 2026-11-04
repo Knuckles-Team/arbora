@@ -41,22 +41,22 @@ def _envelope(result):
     return envelope["error"]
 
 
-def test_direct_uql_with_the_wrong_field_names_both_fields() -> None:
-    """G14: ``{"query": ...}`` is refused naming ``query`` and ``text``."""
+def test_an_engine_input_that_is_not_json_names_the_field_not_the_value() -> None:
+    """The engine validates request shape; Arbora admits only a JSON object."""
     services, runtime = _served()
-    secret_text = "MATCH (n:Incident) |> LIMIT 3"
+    secret = object()
     result = run(
         services,
         supplied=caller(effective_scopes=frozenset({"query:unified"})),
         op_id="query.uql",
-        params={"query": secret_text},
+        params={"text": "MATCH (n) |> LIMIT 1", "params": secret},
         surface=Surface.MCP,
     )
     assert result.code == "INVALID_ARGUMENT" and runtime.calls == []
     error = _envelope(result)
-    assert error["details"]["unexpected"] == ["query"]
-    assert error["details"]["missing"] == ["text"]
-    assert secret_text not in str(error)
+    assert error["details"]["invalid"] == ["params (json)"]
+    assert repr(secret) not in str(error)
+    assert "MATCH" not in str(error)
 
 
 def test_a_typed_model_refusal_names_its_fields() -> None:

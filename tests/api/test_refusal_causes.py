@@ -64,7 +64,7 @@ def test_provider_schema_refusal_cause_is_logged(
     def assert_tenant(_model: Any, params: Any) -> Any:
         return {"nested": {"tenant": "other"}}
 
-    model = EgSchemaRef(path="method.request.json#/methods/SourceIngest")
+    model = EgSchemaRef(path="medulla:method/SourceIngest#request")
     with caplog.at_level(logging.WARNING, logger="arbora.api.invoke.steps"):
         refused = _validate_provider(model, {}, refuse)
     assert getattr(refused, "code", None) == "INVALID_ARGUMENT"
@@ -79,7 +79,7 @@ async def test_engine_refusal_detail_is_logged(
 ) -> None:
     from types import SimpleNamespace
 
-    from epistemic_graph import EngineResponseError
+    from medulla import EngineResponseError
 
     from arbora.api.errors import EngineRefusal
     from arbora.api.invoke.executor import BoundOperationRuntime

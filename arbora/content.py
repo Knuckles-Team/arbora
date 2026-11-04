@@ -1,9 +1,9 @@
 """Everything arbora serves as content, found through the connector SDK.
 
 Arbora's own package, the skills packages and every content-only connector
-declare themselves once under ``agent_connector_sdk.connector``;
+declare themselves once under ``scion_sdk.connector``;
 :func:`content_providers` turns each installed declaration into the SDK's
-:class:`~agent_connector_sdk.mcp.content.ConnectorContent`, and
+:class:`~scion_sdk.mcp.content.ConnectorContent`, and
 :func:`register_installed_content` serves them all with the SDK's own
 registration (``ARBORA-FLEET-R044``):
 
@@ -14,7 +14,7 @@ registration (``ARBORA-FLEET-R044``):
   ``shapes://`` resources.
 
 The engine's core ontology and shapes are served from the installed
-epistemic-graph package data under the fleet name ``epistemic-graph``.
+medulla package data under the fleet name ``medulla``.
 """
 
 from __future__ import annotations
@@ -26,13 +26,13 @@ from importlib import resources
 from pathlib import Path
 from typing import Any
 
-from agent_connector_sdk.mcp.content import (
+from fastmcp.resources import FileResource
+from pydantic import AnyUrl
+from scion_sdk.mcp.content import (
     ConnectorContent,
     ContentRegistration,
     register_connector_content,
 )
-from fastmcp.resources import FileResource
-from pydantic import AnyUrl
 
 from arbora.core.providers import content_connectors
 
@@ -41,9 +41,9 @@ logger = logging.getLogger(__name__)
 ContentProvider = Callable[[], ConnectorContent]
 
 #: The package and directory in which the engine wheel ships its core ontology.
-EG_PACKAGE = "epistemic_graph"
+EG_PACKAGE = "medulla"
 EG_ONTOLOGY_DIR = "ontology"
-EG_CONNECTOR = "epistemic-graph"
+EG_CONNECTOR = "medulla"
 _SHAPES_SUFFIX = ".shapes.ttl"
 
 
@@ -64,7 +64,7 @@ def eg_core_ontology_resources(
 ) -> list[FileResource]:
     """The engine's core ontology and shapes, read from its package data.
 
-    ``<dir>/*.ttl`` become ``ontology://epistemic-graph/<file>``; files named
+    ``<dir>/*.ttl`` become ``ontology://medulla/<file>``; files named
     ``*.shapes.ttl`` and files under ``<dir>/shapes/`` become ``shapes://``.
     An engine wheel that ships no ontology data yields no resources and the
     absence is logged by name.

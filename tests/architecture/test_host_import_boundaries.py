@@ -57,7 +57,7 @@ def _webui_runtime_violations(root: Path) -> list[str]:
     for path in sorted(root.rglob("*.py")):
         for module in _imported_modules(path):
             top = module.split(".", 1)[0]
-            if top == "agent_utilities" and not _is_allowed_runtime_import(module):
+            if top == "meristem" and not _is_allowed_runtime_import(module):
                 violations.append(f"{path.relative_to(root.parent)}: {module}")
     return sorted(set(violations))
 
@@ -73,18 +73,16 @@ def test_census_fails_on_an_internal_runtime_import(tmp_path: Path) -> None:
     pkg = tmp_path / "webui_host"
     pkg.mkdir()
     (pkg / "ok.py").write_text(
-        "from agent_utilities.api import x\n"
-        "import arbora.fleet\n"
-        "import epistemic_graph\n",
+        "from agent_utilities.api import x\nimport arbora.fleet\nimport medulla\n",
         encoding="utf-8",
     )
     assert _webui_runtime_violations(pkg) == []
     (pkg / "bad.py").write_text(
-        "from agent_utilities.core.paths import data_dir\n", encoding="utf-8"
+        "from meristem.core.paths import data_dir\n", encoding="utf-8"
     )
     assert _webui_runtime_violations(pkg) == [
-        "webui_host/bad.py: agent_utilities.core.paths",
-        "webui_host/bad.py: agent_utilities.core.paths.data_dir",
+        "webui_host/bad.py: meristem.core.paths",
+        "webui_host/bad.py: meristem.core.paths.data_dir",
     ]
 
 

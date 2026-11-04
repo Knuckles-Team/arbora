@@ -36,7 +36,7 @@ FULL_SCOPES = frozenset({"node:read", "edge:read", "blob:read"})
 caller = make_verified_caller("node:read")
 
 #: The exact engine reads each operation makes; scopes are the authz actions
-#: of the pinned engine contract (``contract/methods.json``).
+#: of the engine's run-time method catalog (``medulla.engine.method_catalog()``).
 EXPECTED_SCOPES = {
     "source.tree": frozenset({"node:read", "edge:read"}),
     "source.blob": FULL_SCOPES,

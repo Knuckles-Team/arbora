@@ -9,7 +9,8 @@ the parts that already exist:
   (``arbora.api.invoke.bootstrap``) over one :class:`EpistemicClientPool`;
 * the EG control-lease plan store;
 * the policy gate in the configured Eunomia mode;
-* a provider schema validator over the EG contract schemas;
+* a provider input check for engine-bound operations (the engine validates
+  the request shape itself);
 * the fleet-call effect of the governed fleet gateway, when the served root
   supplies one.
 
@@ -19,12 +20,9 @@ at call time, so a renewed process credential applies without a rebuild.
 
 from __future__ import annotations
 
-import importlib.resources
 import json
 from collections.abc import AsyncIterator, Callable, Coroutine, Mapping
 from contextlib import asynccontextmanager
-from functools import cache
-from pathlib import Path
 from typing import Any
 
 from arbora.api.registry import EgSchemaRef
@@ -43,150 +41,56 @@ __all__ = [
 PLAN_LEASE_KIND = "arbora.plan"
 
 
-@cache
-def _contract_document(filename: str) -> dict[str, Any]:
-    root = Path(str(importlib.resources.files("epistemic_graph") / "contract"))
-    relative = Path(filename.removeprefix("contract/"))
-    if ".." in relative.parts:
-        raise ValueError("invalid EG schema reference")
-    document = json.loads((root / relative).read_bytes())
-    if not isinstance(document, dict):
-        raise ValueError("EG contract schema document is not an object")
-    return document
-
-
 def validate_provider_schema(
     model: EgSchemaRef, params: Mapping[str, Any]
 ) -> Mapping[str, Any]:
-    """Validate ``params`` against the EG contract schema ``model`` names.
+    """Admit ``params`` as the input of the engine method ``model`` names.
 
-    Raises :class:`ValueError` for a non-conforming input; the invoke pipeline
-    maps that to ``INVALID_ARGUMENT``.
+    The engine's run-time method catalog carries no request schemas; the
+    engine validates the request shape itself. Arbora admits a JSON object:
+    a mapping with string keys whose values serialize as JSON. Anything else
+    raises :class:`SchemaMismatch` naming the fields, never their values; the
+    invoke pipeline maps it to ``INVALID_ARGUMENT``.
     """
-    from jsonschema import Draft202012Validator
-    from referencing import Registry, Resource
-    from referencing.jsonschema import DRAFT202012
-
-    filename, separator, pointer = model.path.partition("#")
-    if not separator or not filename.startswith("contract/schemas/"):
+    if not isinstance(model, EgSchemaRef):
         raise ValueError("invalid EG schema reference")
-    document = _contract_document(filename)
-    if _is_request_envelope(document, pointer):
-        # A generated method binding names the whole wire request; the
-        # operation input is its ``params`` member.
-        pointer = f"{pointer}/properties/params"
-    elif _is_parameterless_envelope(document, pointer):
-        # A method without ``params`` (``NodeCount``) takes an empty input;
-        # its envelope requires only ``method``, which no caller sends.
-        if params:
-            raise ValueError("operation input does not match its EG schema")
-        return {}
-    uri = f"urn:arbora:eg-contract:{filename}"
-    resource = Resource.from_contents(document, default_specification=DRAFT202012)
-    validator = Draft202012Validator(
-        {"$ref": f"{uri}#{pointer}"},
-        registry=Registry().with_resource(uri, resource),
-    )
-    errors = sorted(
-        validator.iter_errors(dict(params)), key=lambda error: list(error.path)
-    )
-    if errors:
-        raise SchemaMismatch(_mismatch_details(errors)) from errors[0]
+    if not isinstance(params, Mapping):
+        raise SchemaMismatch(
+            {"reason": "input is not an object", "invalid": ["$ (type)"]}
+        )
+    if any(not isinstance(key, str) for key in params):
+        raise SchemaMismatch(
+            {"reason": "input field names must be strings", "invalid": ["$ (keys)"]}
+        )
+    invalid = sorted(key for key, value in params.items() if not _is_json(value))
+    if invalid:
+        raise SchemaMismatch(
+            {
+                "reason": "input does not serialize as JSON",
+                "invalid": [f"{key} (json)" for key in invalid][:16],
+            }
+        )
     return dict(params)
+
+
+def _is_json(value: Any) -> bool:
+    try:
+        json.dumps(value, allow_nan=False)
+    except (TypeError, ValueError):
+        return False
+    return True
 
 
 class SchemaMismatch(ValueError):
     """An input that does not match its EG schema, named by field only.
 
-    ARBORA-OPS-R009.4: ``details`` names the unexpected, missing and invalid
-    fields and the schema keyword each failed. It never carries an input value.
+    ARBORA-OPS-R009.4: ``details`` names the invalid fields and the check each
+    failed. It never carries an input value.
     """
 
     def __init__(self, details: Mapping[str, Any]) -> None:
         super().__init__("operation input does not match its EG schema")
         self.details = dict(details)
-
-
-def _field(path: Any, name: str | None = None) -> str:
-    parts = [str(part) for part in path]
-    if name is not None:
-        parts.append(name)
-    return ".".join(parts) or "$"
-
-
-def _unexpected(error: Any) -> list[str]:
-    allowed = set((error.schema.get("properties") or {}).keys())
-    return [
-        _field(error.path, str(key)) for key in error.instance if key not in allowed
-    ]
-
-
-def _missing(error: Any) -> list[str]:
-    return [
-        _field(error.path, str(key))
-        for key in error.validator_value
-        if key not in error.instance
-    ]
-
-
-#: Schema keyword -> (details key, the field names it reports).
-_NAMED_ERRORS = {
-    "additionalProperties": ("unexpected", _unexpected),
-    "required": ("missing", _missing),
-}
-
-
-def _classified(error: Any) -> tuple[str, list[str]]:
-    named = _NAMED_ERRORS.get(error.validator)
-    if named is not None and isinstance(error.instance, Mapping):
-        key, names = named
-        return key, names(error)
-    return "invalid", [f"{_field(error.path)} ({error.validator})"]
-
-
-def _mismatch_details(errors: list[Any]) -> dict[str, Any]:
-    found: dict[str, set[str]] = {}
-    for error in errors:
-        key, names = _classified(error)
-        found.setdefault(key, set()).update(names)
-    details: dict[str, Any] = {"reason": "input does not match the operation schema"}
-    for key in ("unexpected", "missing", "invalid"):
-        if found.get(key):
-            details[key] = sorted(found[key])[:16]
-    return details
-
-
-def _selected(document: Mapping[str, Any], pointer: str) -> Any:
-    selected: Any = document
-    for segment in pointer.lstrip("/").split("/"):
-        if not isinstance(selected, Mapping) or segment not in selected:
-            return None
-        selected = selected[segment]
-    return selected
-
-
-def _is_parameterless_envelope(document: Mapping[str, Any], pointer: str) -> bool:
-    selected = _selected(document, pointer)
-    if not isinstance(selected, Mapping):
-        return False
-    properties = selected.get("properties")
-    return (
-        selected.get("required") == ["method"]
-        and isinstance(properties, Mapping)
-        and set(properties) == {"method"}
-    )
-
-
-def _is_request_envelope(document: Mapping[str, Any], pointer: str) -> bool:
-    selected = _selected(document, pointer)
-    required = selected.get("required") if isinstance(selected, Mapping) else None
-    properties = selected.get("properties") if isinstance(selected, Mapping) else None
-    return (
-        isinstance(required, list)
-        and {"method", "params"} <= set(required)
-        and isinstance(properties, Mapping)
-        and "params" in properties
-    )
 
 
 class PoolLeases:
@@ -356,8 +260,8 @@ def _with_nl_federation_planner(
     if "nl_federation_planner" in bindings:
         return bindings
     try:
-        from epistemic_graph.generated import METHOD_IDS
-        from epistemic_graph.generated import query as generated_query
+        from medulla.generated import METHOD_IDS
+        from medulla.generated import query as generated_query
     except (ImportError, ModuleNotFoundError):
         return bindings
     if "NlQueryPlan" not in METHOD_IDS:

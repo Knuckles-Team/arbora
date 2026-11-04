@@ -6,7 +6,7 @@ from pydantic import Field
 
 from arbora.api.ops._common import Params
 from arbora.api.ops.query_federation import NaturalLanguageResult
-from arbora.api.registry import EgMethod, EgSchemaRef, OpSpec, Verb
+from arbora.api.registry import EgMethod, OpSpec, Verb, eg_method_ref
 
 
 class NaturalLanguageParams(Params):
@@ -22,10 +22,8 @@ def operations() -> tuple[OpSpec, ...]:
             verb=Verb.ASK,
             summary="Execute a deterministic UQL query",
             examples=("execute a UQL query",),
-            params=EgSchemaRef(
-                path="contract/schemas/method.request.json#/methods/Uql/properties/params"
-            ),
-            result=EgSchemaRef(path="contract/schemas/result.query.json#/methods/Uql"),
+            params=eg_method_ref("Uql", "request"),
+            result=eg_method_ref("Uql", "result"),
             binding=EgMethod(service="Uql", op="Uql"),
             scopes=frozenset({"query:unified"}),
         ),

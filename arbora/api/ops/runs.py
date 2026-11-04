@@ -13,8 +13,8 @@ from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
 
-from agent_connector_sdk.current_plan import CurrentPlanRead, CurrentPlanRequest
 from pydantic import ValidationError
+from scion_sdk.current_plan import CurrentPlanRead, CurrentPlanRequest
 
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.ops._common import Params, build_read_op

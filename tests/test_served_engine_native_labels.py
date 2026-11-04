@@ -24,7 +24,7 @@ pytestmark = pytest.mark.spec("ARBORA-FLEET-R015")
 
 @pytest.fixture
 def native_engine(tmp_path, local_mode):
-    from epistemic_graph import EpistemicGraphClient
+    from medulla import MedullaClient
 
     binary = os.environ.get("ARBORA_NOAUTH_TEST_ENGINE_BINARY")
     if not binary:
@@ -47,9 +47,7 @@ def native_engine(tmp_path, local_mode):
             stdout=log,
             stderr=subprocess.STDOUT,
         )
-        pool = EpistemicClientPool(
-            EpistemicGraphClient.connect, tcp_addr=f"127.0.0.1:{port}"
-        )
+        pool = EpistemicClientPool(MedullaClient.connect, tcp_addr=f"127.0.0.1:{port}")
         try:
             _wait(
                 lambda: process.poll() is None and _listening(port),

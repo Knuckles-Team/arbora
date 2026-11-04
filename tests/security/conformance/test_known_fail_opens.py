@@ -23,9 +23,9 @@ agree:
    real, executed proof's behavior.
 
 2. **BUG-037 (EG observability ingest)** — proof is new in this pass:
-   `epistemic-graph/src/server/obs/mod.rs`'s
+   `medulla/src/server/obs/mod.rs`'s
    `tests::bug_037_obs_ingest_post_bypasses_the_deny_gate`, committed on the
-   `goc/goc-62-keycloak-auth-standard` branch in the `epistemic-graph`
+   `goc/goc-62-keycloak-auth-standard` branch in the `medulla`
    worktree (a Rust test — this Python suite cannot execute it directly, but
    asserts its existence in source so an accidental deletion is caught). Still
    open (owned by `OWNER-EG-OBS`, a different repository); unaffected by the
@@ -39,7 +39,7 @@ in an installed distribution -- so the checks below resolve AU's repo root
 best-effort (an editable-install convention this homelab's arbora
 deployment already relies on) and SKIP, rather than fail, when it is not
 found; this is the SAME pattern this file already used for the
-epistemic-graph/agent-webui sibling-repo checks, now extended to AU itself.
+medulla/overstory sibling-repo checks, now extended to AU itself.
 """
 
 from __future__ import annotations
@@ -61,17 +61,18 @@ def _discover_au_root() -> Path | None:
     (this homelab's arbora deployment convention, a full sibling checkout
     on disk); returns ``None`` under a non-editable install (e.g. a wheel,
     which never ships ``tests/``), in which case callers skip."""
-    spec = importlib.util.find_spec("agent_utilities")
+    spec = importlib.util.find_spec("meristem")
     if spec is None or spec.origin is None:
         return None
-    # spec.origin: <au_root>/agent_utilities/__init__.py
+    # spec.origin: <au_root>/meristem/__init__.py
     candidate = Path(spec.origin).resolve().parent.parent
-    return candidate if (candidate / "tests").is_dir() else None
+    is_checkout = (candidate / "pyproject.toml").is_file()
+    return candidate if is_checkout and (candidate / "tests").is_dir() else None
 
 
 _AU_ROOT = _discover_au_root()
 # The workspace root containing every sibling repo (agent-utilities,
-# epistemic-graph, agent-webui, arbora, ...) -- one level above AU's own
+# medulla, overstory, arbora, ...) -- one level above AU's own
 # repo root, exactly as it was one level above THIS file's repo root before
 # the move (``_REPO_ROOT.parent``).
 _WORKSPACE_ROOT = _AU_ROOT.parent if _AU_ROOT is not None else None
@@ -80,7 +81,7 @@ _EG_SIBLING_WORKTREE = (
     / ".local"
     / "state"
     / "repository-worktrees"
-    / "epistemic-graph"
+    / "medulla"
     / "goc-62-auth"
 )
 
@@ -135,7 +136,7 @@ def test_federation_reader_proof_file_exists_and_names_the_right_assertion() -> 
 
 
 def test_eg_obs_ingest_fail_open_proof_exists_in_source() -> None:
-    """BUG-037's proof lives in the epistemic-graph repo (Rust), committed on
+    """BUG-037's proof lives in the medulla repo (Rust), committed on
     this same GOC-62 branch in its own worktree. This Python suite cannot
     execute a Rust test, so it asserts the proof exists in source -- an
     accidental deletion of the test (in either repo's worktree) is caught
@@ -144,16 +145,16 @@ def test_eg_obs_ingest_fail_open_proof_exists_in_source() -> None:
     candidates = [_EG_SIBLING_WORKTREE / "src" / "server" / "obs" / "mod.rs"]
     if _WORKSPACE_ROOT is not None:
         candidates.append(
-            _WORKSPACE_ROOT / "epistemic-graph" / "src" / "server" / "obs" / "mod.rs"
+            _WORKSPACE_ROOT / "medulla" / "src" / "server" / "obs" / "mod.rs"
         )
     obs_mod = next((c for c in candidates if c.is_file()), None)
     if obs_mod is None:
         import pytest
 
         pytest.skip(
-            "epistemic-graph worktree not present at any known sibling path in "
+            "medulla worktree not present at any known sibling path in "
             "this environment -- the Rust proof's existence cannot be checked "
-            "from here; see epistemic-graph src/server/obs/mod.rs::tests::"
+            "from here; see medulla src/server/obs/mod.rs::tests::"
             "bug_037_obs_ingest_post_bypasses_the_deny_gate directly"
         )
     assert obs_mod is not None  # narrows for mypy; pytest.skip() above exits
@@ -169,12 +170,12 @@ def test_eg_obs_ingest_fail_open_proof_exists_in_source() -> None:
 
 def test_websocket_dashboard_citation_does_not_regress_to_the_dead_module() -> None:
     """BUG-PE-038: this entry used to cite `gateway/ws.py:78-154` -- a module
-    that is unused dead code today (nothing imports it; agent-webui's own
+    that is unused dead code today (nothing imports it; overstory's own
     `/ws/dashboard` handler has a `Deliberately NOT
     arbora.gateway.ws.dashboard_ws_router` comment explaining why)
     and is removed outright on `fix/dead-routes-and-union-perf` (BUG-PE-006).
     The real enforcement this surface's `AUTHENTICATED_REQUIRED` disposition
-    describes is `WebUIAuthorizationMiddleware` in agent-webui's
+    describes is `WebUIAuthorizationMiddleware` in overstory's
     `server.py`. A citation drifting back to the dead module would be worse
     than no citation -- a false sense of where the proof actually lives (the
     same "citation to a deleted/renamed file" failure mode
@@ -193,12 +194,12 @@ def test_websocket_dashboard_citation_does_not_regress_to_the_dead_module() -> N
     assert "gateway/ws.py:78-154" not in entry.citation
     assert "server.py" in entry.citation
 
-    # When agent-webui is checked out as a sibling repo, the cited file+line
+    # When overstory is checked out as a sibling repo, the cited file+line
     # should actually exist -- best-effort, skipped rather than failed when
     # the sibling isn't present in this environment (matches this file's own
-    # BUG-037 pattern for the epistemic-graph sibling above).
+    # BUG-037 pattern for the medulla sibling above).
     candidates = (
-        [_WORKSPACE_ROOT / "agent-webui" / "agent" / "agent_webui" / "server.py"]
+        [_WORKSPACE_ROOT / "overstory" / "agent" / "overstory" / "server.py"]
         if _WORKSPACE_ROOT is not None
         else []
     )
@@ -207,7 +208,7 @@ def test_websocket_dashboard_citation_does_not_regress_to_the_dead_module() -> N
         import pytest
 
         pytest.skip(
-            "agent-webui sibling repo not present in this environment -- the "
+            "overstory sibling repo not present in this environment -- the "
             "cited server.py cannot be checked from here"
         )
     assert server_py is not None  # narrows for mypy; pytest.skip() above exits

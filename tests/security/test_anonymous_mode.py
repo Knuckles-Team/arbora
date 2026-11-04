@@ -22,7 +22,7 @@ def local_mode(monkeypatch):
         "KG_AUTH_TOKEN_REF",
         "KG_IDENTITY_OAUTH2",
         "GRAPH_SERVICE_AUTH_SECRET",
-        "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON",
+        "MEDULLA_SIGNER_KEYS_JSON",
     ):
         monkeypatch.delenv(key, raising=False)
     anonymous.validate_startup(Namespace(host="127.0.0.1", auth_type="none"))
@@ -238,7 +238,7 @@ def test_effect_journal_records_honest_anonymous_provenance(local_mode):
         claims, SimpleNamespace(graph_name="__control__"), "local-key"
     )
     assert context["authentication_method"] == "none"
-    assert context["audience"] == "epistemic-graph"
+    assert context["audience"] == "medulla"
     assert context["tenant_id"] == "local"
     assert context["subject_id"] == "anonymous"
 
@@ -330,8 +330,8 @@ def test_old_provider_is_still_accepted_in_authenticated_mode(monkeypatch):
 @pytest.mark.asyncio
 async def test_real_fastmcp_outer_http_boundary_covers_public_routes(local_mode):
     import httpx
-    from agent_connector_sdk.mcp.network import build_network_serving_config
     from fastmcp import FastMCP
+    from scion_sdk.mcp.network import build_network_serving_config
     from starlette.responses import JSONResponse
 
     mcp = FastMCP("anonymous boundary proof")
@@ -420,7 +420,7 @@ async def test_anonymous_policy_preserves_authority_and_narrowing(
 
 
 @pytest.mark.parametrize(
-    "name", ["GRAPH_SERVICE_AUTH_SECRET", "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON"]
+    "name", ["GRAPH_SERVICE_AUTH_SECRET", "MEDULLA_SIGNER_KEYS_JSON"]
 )
 @pytest.mark.parametrize("value", ["", "configured-test-placeholder"])
 def test_engine_credentials_checked_through_settings(

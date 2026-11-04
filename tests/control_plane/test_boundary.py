@@ -58,12 +58,10 @@ def _imported_agent_utilities_modules(source_path: Path) -> set[str]:
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             imported_modules.update(
-                alias.name
-                for alias in node.names
-                if alias.name.startswith("agent_utilities")
+                alias.name for alias in node.names if alias.name.startswith("meristem")
             )
         elif isinstance(node, ast.ImportFrom) and node.module:
-            if node.module.startswith("agent_utilities"):
+            if node.module.startswith("meristem"):
                 imported_modules.add(node.module)
     return imported_modules
 
