@@ -46,10 +46,10 @@ def require_installed() -> dict[str, str]:
     versions = {}
     for package, module, expected in (
         ("arbora", "arbora", None),
-        ("medulla", "medulla", "3.0.0"),
-        ("medulla-stem", "medulla_server", "3.0.0"),
+        ("medulla", "medulla", "3.1.0"),
+        ("medulla-stem", "medulla_server", "3.1.0"),
         ("meristem", "meristem", "5.0.0"),
-        ("scion-sdk", "scion_sdk", "0.7.0"),
+        ("scion-sdk", "scion_sdk", "0.7.1"),
         ("overstory", "overstory", None),
     ):
         loaded = importlib.import_module(module)

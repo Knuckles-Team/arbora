@@ -37,7 +37,7 @@ dependencies = [
     # SDK owns source transport and runner construction; Arbora supplies its
     # authenticated medulla client through the SDK's public injection
     # seam and never imports connector implementations.
-    "scion-sdk[a2a,mcp]>=0.7.0,<0.8.0",
+    "scion-sdk[a2a,mcp]>=0.7.1,<0.8.0",
     # The messaging channel layer's HTTP alert intake (arbora/messaging/alert_intake.py)
     # imports aiohttp.web directly for its small webhook listener; platform-agnostic,
     # so unlike the chat-platform SDKs below this is not conditioned on a messaging extra.
@@ -50,8 +50,8 @@ dependencies = [
     # surface directly; AU's transitive requirement is not enough for this
     # package's own imports. The root source override below aligns AU and SDK
     # on the Arbora-compatible revision without changing the published floor.
-    "medulla>=3.0.0,<4.0.0",
-    "medulla-stem>=3.0.0,<4.0.0",
+    "medulla>=3.1.0,<4.0.0",
+    "medulla-stem>=3.1.0,<4.0.0",
     "fastapi>=0.143.3",
     "filelock>=4.2.0",
     # The served source reads (arbora.mcp_server.source_reader) decode the
