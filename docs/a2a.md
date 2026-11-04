@@ -71,7 +71,7 @@ covers the selected agent graph within the caller's context budget. This is not
 treated as an advisory list: execution must cryptographically carry and enforce
 the exact selection.
 
-The current epistemic-graph `AgentAssemble` operation returns unavailable, and
+The current medulla `AgentAssemble` operation returns unavailable, and
 the signed AU `AgentTurnEnvelope` has no allowed-tool-subset field.
 Therefore a request containing `contextBudgetTokens`, or any route decision with
 a non-empty selected-tool set, fails closed before durable admission. Ordinary

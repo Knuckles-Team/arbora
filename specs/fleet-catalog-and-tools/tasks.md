@@ -319,7 +319,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T052 ARBORA-FLEET-R007.3 The served bridge exercises native prompts, resources and templates end to end.
 - [ ] T053 ARBORA-FLEET-R011 Registry core computes a canonical digest and authorized find.
 - [ ] T054 ARBORA-FLEET-R012 Medulla-direct binding generator with reviewed exclusions.
-- [ ] T055 ARBORA-FLEET-R012.1 Engine operations come from the engine's served descriptors, not a contract file.
+- [ ] T055 ARBORA-FLEET-R012.1 Engine operations come from the engine's run-time method catalog, not a contract file.
 - [ ] T056 ARBORA-FLEET-R013 MCP projection exposes the six verbs with typed schemas.
 - [ ] T057 ARBORA-FLEET-R014 Resolver ranks catalog items with partitioned feedback.
 - [ ] T058 ARBORA-FLEET-R014.1 Deliver `ask` does not route a plain question to an op it cannot run.

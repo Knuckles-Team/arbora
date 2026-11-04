@@ -16,7 +16,7 @@ Scope note: this intentionally calls ``_build_server()`` directly rather than
 the ``mcp_server()`` CLI entrypoint, so it exercises the transport/auth
 surface without also depending on ``_mint_process_session``'s *outbound*
 engine bootstrap (a separate, unrelated concern gated by the compiled
-``epistemic-graph[full]`` kernel, unavailable in this sandbox — see
+``medulla[full]`` kernel, unavailable in this sandbox — see
 ``tests/_test_engine.py`` / the ``tiny_engine`` fixture, which every other
 engine-backed test in this suite already gates the same way). Everything this
 test asserts — the wire handshake, the tool catalog, and the auth
@@ -358,7 +358,7 @@ def test_streamable_http_serves_real_mcp_and_rejects_unauthenticated(
         # verified identity — i.e. it must NOT be an auth/permission rejection
         # (that would mean the identity bridge never ran). It is allowed to
         # fail with an engine-backend error in this sandbox, which has no
-        # compiled epistemic-graph[full] kernel (see module docstring) — the
+        # compiled medulla[full] kernel (see module docstring) — the
         # same, pre-existing environment gap every engine-backed test in this
         # repository skips around via the `tiny_engine` fixture.
         rendered = json.dumps(call_payload).lower()
@@ -390,7 +390,7 @@ def test_streamable_http_serves_real_mcp_and_rejects_unauthenticated(
         # scoping for every network tool call. The FIXED middleware mints the
         # session BEFORE the tool body runs, so the ``_e2e_identity_probe``
         # tool body below either (a) observes a real, caller-scoped session —
-        # in an environment with the compiled epistemic-graph[full] kernel —
+        # in an environment with the compiled medulla[full] kernel —
         # or (b) never runs at all because minting failed first, surfacing
         # the kernel's own error instead of a silent success. Case (b) is
         # this sandbox (see module docstring); either outcome proves the
@@ -428,10 +428,7 @@ def test_streamable_http_serves_real_mcp_and_rejects_unauthenticated(
             # failure must be the middleware's own session-mint attempt
             # hitting the environment's known, pre-existing kernel gap.
             rendered_probe = json.dumps(probe_payload).lower()
-            assert (
-                "epistemic-graph" in rendered_probe
-                or "epistemic_graph" in rendered_probe
-            ), (
+            assert "medulla" in rendered_probe or "medulla" in rendered_probe, (
                 "the identity probe failed WITHOUT going through the "
                 "session-minting path — this means ActorContextMiddleware "
                 "skipped minting a GraphSession for the call (the exact "

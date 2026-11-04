@@ -1,9 +1,9 @@
 """Arbora's own domain scopes, kept consistent with the generated registry.
 
 Arbora advertises a handful of scopes it owns itself (fleet event delivery,
-Agent WebUI console roles). ARBORA-IDENTITY-R002 requires that these use the
+Overstory console roles). ARBORA-IDENTITY-R002 requires that these use the
 engine's shared scope classes and stay consistent with the single generated
-scope registry (``epistemic_graph``'s pinned ``contract/scopes.json``) rather
+scope registry (the scopes of ``medulla``'s run-time method catalog) rather
 than a separately maintained list. This module is the one place Arbora
 declares them; ``tests/api/test_domain_scopes.py`` is the registry property
 test that checks every entry here still matches that generated registry's
@@ -18,8 +18,9 @@ upstream entries) and is not papered over here.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from pathlib import Path
+from typing import Any
 
 from arbora.api.registry.eg_binding import load_generated_scopes
 from arbora.security import scope_registry
@@ -61,17 +62,17 @@ def scopes_by_name() -> dict[str, DomainScope]:
 
 
 def generated_registry_mismatches(
-    contract_root: Path | None = None,
+    catalog: Mapping[str, Any] | None = None,
 ) -> dict[str, str]:
     """Return a problem description per scope that drifted from the registry.
 
     An empty mapping means every scope declared in ``ARBORA_DOMAIN_SCOPES``
-    still has the same name and class as the pinned EG contract's generated
-    registry. ``contract_root`` is for fixture and wheel integration tests;
-    production checks the pinned wheel.
+    still has the same name and class as the engine catalog's scope registry.
+    ``catalog`` is for fixtures; production reads the installed engine's
+    run-time method catalog.
     """
 
-    generated = load_generated_scopes(contract_root)
+    generated = load_generated_scopes(catalog)
     problems: dict[str, str] = {}
     for scope in ARBORA_DOMAIN_SCOPES:
         generated_class = generated.get(scope.name)

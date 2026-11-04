@@ -376,7 +376,7 @@ async def _fetch_web_source(
 
     The argument is ``{"request": WebFetchRequest}``; the answer is a
     ``WebPageResult`` (``kind: page``) or a ``WebFetchRefusal`` (``kind:
-    refusal``) of ``agent_connector_sdk.ports.web_source``.
+    refusal``) of ``scion_sdk.ports.web_source``.
     """
     if timeout_s <= 0:
         raise FetchFailed(backend, "timeout")
@@ -481,17 +481,17 @@ class SourceIngestWriter:
     client: Any
 
     async def commit(self, documents: Sequence[IngestedDocument]) -> dict[str, Any]:
-        from agent_connector_sdk.ingest import (
+        from scion_sdk.ingest import (
             ChangeSet,
             Document,
             IngestBinding,
             KnowledgeIngest,
         )
-        from agent_connector_sdk.ingest.transport import (
-            EpistemicGraphIngestTransport,
+        from scion_sdk.ingest.transport import (
+            MedullaIngestTransport,
         )
 
-        ingest = KnowledgeIngest(EpistemicGraphIngestTransport(self.client))
+        ingest = KnowledgeIngest(MedullaIngestTransport(self.client))
         affected = relationships = 0
         for backend in sorted({doc.page.backend for doc in documents}):
             batch = [doc for doc in documents if doc.page.backend == backend]
@@ -620,7 +620,7 @@ def _embedder(context: Any) -> tuple[Embedder | None, str]:
     if bound is not None:
         return bound, ""
     try:
-        from agent_connector_sdk.embeddings import create_embedding_model
+        from scion_sdk.embeddings import create_embedding_model
 
         return EngineEmbedder(context.client, create_embedding_model()), ""
     except ValueError as exc:
@@ -651,7 +651,7 @@ class InterimEnrich:
     TODO(R067.1): replace ``select`` with the engine page-selection decision
     (MEDULLA-DECISION-ENGINE-R802) and honour ``freshness_window_s`` there.
     TODO(R651.7): replace ``chunk`` with the engine enrichment pipeline
-    (MEDULLA-UNIFIED-DATA-PLANE-R651.7) once epistemic-graph 2.27.4 serves it.
+    (MEDULLA-UNIFIED-DATA-PLANE-R651.7) once medulla 2.27.4 serves it.
     """
 
     async def select(
@@ -794,7 +794,7 @@ async def handle_research_web(
 #: every page and chunk record has a deterministic id (from its canonical URL)
 #: under its connector and stream, so a replayed call upserts the same records.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "research.web": "epistemic_graph:SourceIngest",
+    "research.web": "medulla:SourceIngest",
 }
 
 

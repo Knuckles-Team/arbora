@@ -1,7 +1,7 @@
 """Deploy-time provisioning of Arbora's own semantic content packs.
 
 Arbora serves the ``arbora`` and ``agent-utilities`` ConnectorContent packs
-in process, so it is a *self-served* catalog producer: epistemic-graph issues
+in process, so it is a *self-served* catalog producer: medulla issues
 the catalog binding for each pack through ``attest_self_served_catalog``,
 pinned to the exact server entry the import then carries. Every step runs under
 Arbora's own verified process session and is idempotent, so this command is
@@ -85,7 +85,7 @@ def catalog_content_digest(pack: Any) -> str:
 def _shell_context(tenant_id: str, key: str) -> Any:
     """A request-body context shell; EG re-binds every field from the session."""
 
-    from epistemic_graph.generated.connector_pack import AgentLibraryMutationContext
+    from medulla.generated.connector_pack import AgentLibraryMutationContext
 
     return AgentLibraryMutationContext(
         request_id=secrets.randbits(63),
@@ -110,7 +110,7 @@ async def ensure_tenant_graph(
 ) -> bool:
     """Create the graph when absent; return whether it was created."""
 
-    from epistemic_graph.generated.cluster import (
+    from medulla.generated.cluster import (
         decode_list_graphs,
         send_create_graph,
         send_list_graphs,
@@ -153,7 +153,7 @@ async def ensure_base_graphs(
 
 
 async def _registry_page(commons: Any) -> Any:
-    from epistemic_graph.generated.cluster import send_list_registered_servers
+    from medulla.generated.cluster import send_list_registered_servers
 
     return await send_list_registered_servers(commons, {"request": {}}, COMMONS_GRAPH)
 
@@ -178,7 +178,7 @@ async def ensure_server_registrations(
     key, and every other (re)registration gets a fresh one.
     """
 
-    from epistemic_graph.generated.cluster import send_register_server
+    from medulla.generated.cluster import send_register_server
 
     now = int(time.time() * 1000) if now_ms is None else now_ms
     leases = {
@@ -241,11 +241,11 @@ async def attest_self_served_catalog(
 ) -> Any:
     """Ask EG for the binding of ``pack``'s catalog, fenced by the last generation."""
 
-    from epistemic_graph.generated.connector_pack import (
+    from medulla.generated.connector_pack import (
         McpCatalogAuthorityStatusRequest,
         McpSelfServedCatalogAttestRequest,
     )
-    from epistemic_graph.generated.storage import (
+    from medulla.generated.storage import (
         send_connector_pack_attest_self_served_catalog,
         send_connector_pack_catalog_authority_status,
     )
@@ -293,7 +293,7 @@ async def attest_self_served_catalog(
 async def _owner_principal(
     client: Any, *, tenant_id: str, graph: str, connector: str
 ) -> str:
-    from epistemic_graph.generated.connector_pack import (
+    from medulla.generated.connector_pack import (
         ConnectorPackOpCatalogRequestOwnerPrincipal,
         McpCatalogAuthorityStatusRequest,
     )
@@ -343,7 +343,7 @@ async def import_attested_pack(
     requires ``admin:connector-pack``.
     """
 
-    from agent_connector_sdk.sinks.epistemic_graph import EpistemicGraphSink
+    from scion_sdk.sinks.medulla import MedullaSink
 
     from arbora.api.contracts import pack_import_authority
 
@@ -361,7 +361,7 @@ async def import_attested_pack(
         owner = await _owner_principal(
             client, tenant_id=tenant_id, graph=graph, connector=pack.connector
         )
-        sink = EpistemicGraphSink(
+        sink = MedullaSink(
             client,
             pack_import_authority(
                 engine,
@@ -388,8 +388,8 @@ _PROJECTION_POLL_SECS = 1.0
 async def _projection_state(
     client: Any, *, tenant_id: str, graph: str, connector: str
 ) -> str:
-    from epistemic_graph.generated.connector_pack import ConnectorPackStatusRequest
-    from epistemic_graph.generated.storage import send_connector_pack_status
+    from medulla.generated.connector_pack import ConnectorPackStatusRequest
+    from medulla.generated.storage import send_connector_pack_status
 
     status = await send_connector_pack_status(
         client,
@@ -451,7 +451,7 @@ async def _project_and_attach(
 ) -> Any:
     """Let the import's projection apply, re-project only if it did not, attach."""
 
-    from epistemic_graph.generated.reasoning import send_graph_schema
+    from medulla.generated.reasoning import send_graph_schema
 
     state = await _await_projection(
         client, tenant_id=tenant_id, graph=graph, connector=connector
@@ -489,7 +489,7 @@ async def provision_semantic_content(
 ) -> dict[str, Any]:
     """Run every provisioning step; raise unless the semantic content verifies."""
 
-    from agent_connector_sdk.artifacts.pack import build_connector_content_pack
+    from scion_sdk.artifacts.pack import build_connector_content_pack
 
     tenant_id = str(session_context(session)["tenant"])
     graph = str(session.graph)

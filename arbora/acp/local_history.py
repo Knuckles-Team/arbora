@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
-from agent_utilities.runtime import RunRequest
+from meristem.runtime import RunRequest
 from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, UserPromptPart
 from pydantic_ai_harness.experimental.acp import InMemorySessionStore, StoredSession
 

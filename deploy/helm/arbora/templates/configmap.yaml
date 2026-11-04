@@ -49,12 +49,12 @@ data:
   XDG_DATA_HOME: /var/lib/arbora/data
   XDG_STATE_HOME: /var/lib/arbora/state
   XDG_CACHE_HOME: /tmp/cache
-  XDG_RUNTIME_DIR: /run/epistemic-graph
+  XDG_RUNTIME_DIR: /run/medulla
   {{- if not (include "arbora.unified" .) }}
   GRAPH_SERVICE_ENDPOINTS: {{ printf "tls://%s-engine:%v" (include "arbora.fullname" .) .Values.engine.port | quote }}
   KG_DAEMON_ROLE: "client"
   {{- else if include "arbora.sidecar" . }}
-  GRAPH_SERVICE_ENDPOINTS: "unix:///run/epistemic-graph/epistemic-graph.sock"
+  GRAPH_SERVICE_ENDPOINTS: "unix:///run/medulla/medulla.sock"
   {{- /* ARBORA-DEPLOY-R016: the serving container is the one host-role
          process; there is no separate daemon container. */}}
   KG_DAEMON_ROLE: "host"

@@ -1,7 +1,7 @@
 """Arbora serves all installed content through the connector SDK.
 
 Spec: ARBORA-FLEET-R044 (and ARBORA-HOST-R001.10 discovery). A fixture package
-declares itself content-only under ``agent_connector_sdk.connector``; nothing
+declares itself content-only under ``scion_sdk.connector``; nothing
 here reads a provider entry-point group.
 """
 
@@ -62,7 +62,7 @@ def _install(root: Path, package: str, fleet_name: str, *, skills=(), ontology=F
         f"Metadata-Version: 2.1\nName: {package}\nVersion: 1.2.3\n"
     )
     (dist / "entry_points.txt").write_text(
-        f"[agent_connector_sdk.connector]\n{fleet_name} = {package}\n"
+        f"[scion_sdk.connector]\n{fleet_name} = {package}\n"
     )
 
 

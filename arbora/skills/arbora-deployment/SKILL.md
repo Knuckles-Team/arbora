@@ -3,7 +3,7 @@ name: arbora-deployment
 skill_type: skill
 description: >-
   Plan, install, configure, verify, upgrade, migrate or recover a Arbora
-  runtime (arbora with its epistemic-graph engine, the connector fleet and
+  runtime (arbora with its medulla engine, the connector fleet and
   the web UI) from a tiny single-host profile to a Kubernetes production
   profile. Use when the deployment profile, identity mode, policy, secrets
   backend, federation sources, connectors, telemetry or installation state may

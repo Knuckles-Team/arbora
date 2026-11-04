@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Skills served from THIS process's own installed packages.
 
-Every installed package that declares ``agent_connector_sdk.connector`` (arbora
+Every installed package that declares ``scion_sdk.connector`` (arbora
 itself, the skills packages and any content-only connector) is found by
 ``arbora.core.providers.resolve_skill_provider_dirs()`` and served as
 ``skill://{name}/SKILL.md`` by ``arbora.content.register_installed_content``.

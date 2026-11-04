@@ -97,9 +97,9 @@ def test_release_builds_from_this_repository_and_pypi_only() -> None:
     text = (ROOT / ".github" / "workflows" / "checks.yml").read_text(encoding="utf-8")
     for retired in (
         "agent-utilities",
-        "agent-connector-sdk",
-        "agent-webui",
-        "epistemic-graph",
+        "scion-sdk",
+        "overstory",
+        "medulla",
     ):
         assert f"repository: Knuckles-Team/{retired}" not in text
     assert _declared_paths() == set()
@@ -176,7 +176,7 @@ def test_every_manual_hook_ci_names_is_defined() -> None:
 def test_engine_installs_from_the_locked_wheel_not_a_source_overlay() -> None:
     steps = _gate_steps()
     sync = steps[_step_index(steps, "uv sync --frozen")]["run"]
-    verify = steps[_step_index(steps, "epistemic_graph.numeric")]["run"]
+    verify = steps[_step_index(steps, "medulla.numeric")]["run"]
     commands = "\n".join(step.get("run", "") for step in steps)
 
     assert "--no-install-package" not in sync
@@ -185,7 +185,7 @@ def test_engine_installs_from_the_locked_wheel_not_a_source_overlay() -> None:
     assert not any("Swatinem/rust-cache@" in step.get("uses", "") for step in steps)
     assert 'read_text("direct_url.json")' in verify
     assert _step_index(steps, "uv sync --frozen") < steps.index(
-        steps[_step_index(steps, "epistemic_graph.numeric")]
+        steps[_step_index(steps, "medulla.numeric")]
     )
 
 
@@ -236,7 +236,7 @@ _SMOKE_PLATFORMS = {
     "windows-x86_64",
     "windows-aarch64",
 }
-# The platforms the epistemic-graph engine publishes wheels for gate the
+# The platforms the medulla engine publishes wheels for gate the
 # release; the other legs run and report but cannot pass until it does.
 _REQUIRED_SMOKE_PLATFORMS = {
     "linux-x86_64",
@@ -291,7 +291,7 @@ def test_github_release_links_the_published_pypi_version() -> None:
         step for step in release["steps"] if step["name"] == "Write release notes"
     )
     assert "https://pypi.org/project/arbora/$version/" in notes["run"]
-    assert 'pip install \\"arbora[webui]==$version\\"' in notes["run"]
+    assert 'pip install \\"arbora[overstory]==$version\\"' in notes["run"]
 
 
 def test_release_eg_resolves_from_the_package_index_as_wheels() -> None:
@@ -311,7 +311,7 @@ def test_installed_sdk_contains_schema_disclosure_contract() -> None:
     import ast
     import importlib.util
 
-    spec = importlib.util.find_spec("agent_connector_sdk.mcp.schema_disclosure")
+    spec = importlib.util.find_spec("scion_sdk.mcp.schema_disclosure")
     assert spec is not None and spec.origin is not None
     source = Path(spec.origin).read_text(encoding="utf-8")
     names = {

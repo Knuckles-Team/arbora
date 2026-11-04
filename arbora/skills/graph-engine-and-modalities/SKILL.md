@@ -2,7 +2,7 @@
 name: graph-engine-and-modalities
 skill_type: skill
 description: >-
-  Use low-level native epistemic-graph engine primitives for storage,
+  Use low-level native medulla engine primitives for storage,
   transactions, SQL, SPARQL/RDF, analytics, reasoning, time series, streams, blobs,
   channels, ledger, finance, mining, tenancy, consensus, resharding, RBAC, and
   administration. Use when work explicitly belongs on the engine data, compute,
@@ -44,7 +44,7 @@ dependency DAG via `graph_workflows`.
 ## Action reference
 
 Every modality tool below shares ONE shape: action-routed 1:1 over the corresponding
-`epistemic_graph` client (`NodeClient`, `BlobClient`, `FinanceClient`, …), so its action
+`medulla` client (`NodeClient`, `BlobClient`, `FinanceClient`, …), so its action
 set is discovered from the live client and never drifts in this doc — call any of them
 with an empty `action` to list what the connected engine build actually exposes.
 Common invocation: `find(action="describe", params={"action": "engine_<domain>"})`

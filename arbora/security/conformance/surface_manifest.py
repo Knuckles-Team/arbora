@@ -165,9 +165,9 @@ GOC15_SURFACE_MANIFEST: tuple[SurfaceEntry, ...] = (
     SurfaceEntry(
         surface_id="eg:observability-ingest",
         disposition=Disposition.KNOWN_FAIL_OPEN,
-        citation="epistemic-graph/src/server/obs/mod.rs:854-1038",
+        citation="medulla/src/server/obs/mod.rs:854-1038",
         owning_bug="BUG-037",
-        proof="epistemic-graph src/server/obs/mod.rs::tests::bug_037_obs_ingest_post_bypasses_the_deny_gate",
+        proof="medulla src/server/obs/mod.rs::tests::bug_037_obs_ingest_post_bypasses_the_deny_gate",
     ),
     SurfaceEntry(
         surface_id="au:actor-context-middleware",
@@ -202,37 +202,37 @@ GOC15_SURFACE_MANIFEST: tuple[SurfaceEntry, ...] = (
     SurfaceEntry(
         surface_id="eg:ros2-bridge-outbound",
         disposition=Disposition.AUTHENTICATED_REQUIRED,
-        citation="epistemic-graph/src/server/ros2_bridge.rs:239-255 -- conditional on RLS being configured",
+        citation="medulla/src/server/ros2_bridge.rs:239-255 -- conditional on RLS being configured",
     ),
     SurfaceEntry(
         surface_id="eg:iceberg-rest-catalog",
         disposition=Disposition.ALWAYS_DENY_NO_CREDENTIAL_MECHANISM,
-        citation="epistemic-graph/src/server/lake/rest.rs:63-73",
+        citation="medulla/src/server/lake/rest.rs:63-73",
     ),
     SurfaceEntry(
         surface_id="eg:observability-reads",
         disposition=Disposition.ALWAYS_DENY_NO_CREDENTIAL_MECHANISM,
-        citation="epistemic-graph/src/server/obs/mod.rs:854-908",
+        citation="medulla/src/server/obs/mod.rs:854-908",
     ),
     SurfaceEntry(
         surface_id="eg:federation-sparql-service",
         disposition=Disposition.ALWAYS_DENY_NO_CREDENTIAL_MECHANISM,
-        citation="epistemic-graph/src/server/federation/mod.rs:974-998",
+        citation="medulla/src/server/federation/mod.rs:974-998",
     ),
     SurfaceEntry(
         surface_id="eg:sparql-read",
         disposition=Disposition.ALWAYS_DENY_NO_CREDENTIAL_MECHANISM,
-        citation="epistemic-graph/src/server/sparql_http.rs:415-475",
+        citation="medulla/src/server/sparql_http.rs:415-475",
     ),
     SurfaceEntry(
         surface_id="eg:sparql-graph-store-read",
         disposition=Disposition.ALWAYS_DENY_NO_CREDENTIAL_MECHANISM,
-        citation="epistemic-graph/src/server/sparql_http.rs:900-921",
+        citation="medulla/src/server/sparql_http.rs:900-921",
     ),
     SurfaceEntry(
         surface_id="eg:nl-facade",
         disposition=Disposition.ALWAYS_DENY_NO_CREDENTIAL_MECHANISM,
-        citation="epistemic-graph/src/server/sparql_http.rs:356-379",
+        citation="medulla/src/server/sparql_http.rs:356-379",
     ),
     SurfaceEntry(
         surface_id="au:fastapi-app-all-routers",
@@ -257,11 +257,11 @@ GOC15_SURFACE_MANIFEST: tuple[SurfaceEntry, ...] = (
         surface_id="au:websocket-dashboard",
         disposition=Disposition.AUTHENTICATED_REQUIRED,
         citation=(
-            "agent-webui/agent/agent_webui/server.py:1822 _dashboard_ws -- "
+            "overstory/agent/overstory/server.py:1822 _dashboard_ws -- "
             "WebUIAuthorizationMiddleware enforces kg:admin on /ws/dashboard "
             "(BUG-PE-038: arbora/gateway/ws/py's dashboard_ws_router, "
             "this entry's prior citation, is unused dead code -- never mounted "
-            "by agent-webui, which deliberately does not use it because its "
+            "by overstory, which deliberately does not use it because its "
             "OLDER gateway:read/write/admin capability namespace never maps "
             "kg:admin -> gateway:admin -- and is removed on "
             "fix/dead-routes-and-union-perf, BUG-PE-006)"
@@ -285,27 +285,27 @@ GOC15_SURFACE_MANIFEST: tuple[SurfaceEntry, ...] = (
     SurfaceEntry(
         surface_id="eg:sparql-write",
         disposition=Disposition.AUTHENTICATED_REQUIRED,
-        citation="epistemic-graph/src/server/sparql_http.rs:211-232 -- genuine per-caller eg2. envelope tunnel",
+        citation="medulla/src/server/sparql_http.rs:211-232 -- genuine per-caller eg2. envelope tunnel",
     ),
     SurfaceEntry(
         surface_id="eg:kvcache-http",
         disposition=Disposition.AUTHENTICATED_REQUIRED,
-        citation="epistemic-graph/src/server/kvcache_http/mod.rs:521-545 -- fixed shared service identity",
+        citation="medulla/src/server/kvcache_http/mod.rs:521-545 -- fixed shared service identity",
     ),
     SurfaceEntry(
         surface_id="eg:s3-rest",
         disposition=Disposition.AUTHENTICATED_REQUIRED,
-        citation="epistemic-graph/src/server/s3/mod.rs:910-925 -- SigV4",
+        citation="medulla/src/server/s3/mod.rs:910-925 -- SigV4",
     ),
     SurfaceEntry(
         surface_id="eg:graphql-subscriptions",
         disposition=Disposition.AUTHENTICATED_REQUIRED,
-        citation="epistemic-graph/src/server/graphql_sub.rs:190",
+        citation="medulla/src/server/graphql_sub.rs:190",
     ),
     SurfaceEntry(
         surface_id="eg:ros2-bridge-inbound",
         disposition=Disposition.AUTHENTICATED_REQUIRED,
-        citation="epistemic-graph/src/server/ros2_bridge.rs:220-231 -- routes through dispatch()'s real chokepoint",
+        citation="medulla/src/server/ros2_bridge.rs:220-231 -- routes through dispatch()'s real chokepoint",
     ),
     # ── CA-29 W1-end fleet transcription (DEC-CA-08) ───────────────────────
     #

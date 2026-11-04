@@ -383,7 +383,7 @@ async def test_http_and_mcp_share_native_owner_checked_projection(monkeypatch, a
 
 
 def test_installed_native_contract_can_decode_the_topology_without_a_service():
-    from epistemic_graph.generated import models
+    from medulla.generated import models
 
     raw = native_plan()
     raw["task_plan"].update(
@@ -433,8 +433,8 @@ async def test_installed_au_runtime_events_match_flat_projection(monkeypatch, ou
     """Exercise the public runtime with a controlled local model, not event fixtures."""
     import asyncio
 
-    from agent_utilities import host_ports
-    from agent_utilities.runtime import (
+    from meristem import host_ports
+    from meristem.runtime import (
         AgentRunExecutor,
         DependencyPlan,
         RunFailed,

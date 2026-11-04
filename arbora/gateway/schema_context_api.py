@@ -5,7 +5,7 @@ same :func:`arbora.gateway.schema_context_service.get_schema_context` a
 future MCP ``graph_schema`` action will call (SC-05: the two surfaces must
 never drift because they share one service, not because their response
 shapes happen to match). The service still refuses every request with
-``UNAVAILABLE`` until epistemic-graph publishes a ``schema_context`` client
+``UNAVAILABLE`` until medulla publishes a ``schema_context`` client
 (see that module's own docstring); this route makes that refusal — and,
 once the capability exists, the answer — reachable over REST.
 """

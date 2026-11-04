@@ -693,7 +693,7 @@ def _refuse_nl_option(message: str, operation: str) -> EvidenceBundle:
 
 
 def _engine_nl_query(text: str, *, limit: int, operation: str) -> EvidenceBundle:
-    """Answer ``text`` through epistemic-graph's NL planner, never a local one.
+    """Answer ``text`` through medulla's NL planner, never a local one.
 
     Arbora has no natural-language planner of its own: the request goes
     through the governed ``engine_query`` dispatch to EG
@@ -706,7 +706,7 @@ def _engine_nl_query(text: str, *, limit: int, operation: str) -> EvidenceBundle
     if "nl_query" not in methods:
         return EvidenceBundle.from_payload(
             public_error_json(
-                RuntimeError("the installed epistemic-graph has no nl_query planner"),
+                RuntimeError("the installed medulla has no nl_query planner"),
                 code="dependency_unavailable",
             ),
             operation=operation,
@@ -722,7 +722,7 @@ def _engine_nl_query(text: str, *, limit: int, operation: str) -> EvidenceBundle
     return EvidenceBundle.from_nl_query(
         {
             "request": str(text),
-            "planner": "epistemic-graph",
+            "planner": "medulla",
             "dialect": "uql",
             "results": bounded,
             "row_count": len(bounded),
@@ -1980,12 +1980,12 @@ def _project_node_link(rows: list[Any]) -> dict[str, Any]:
 # capability-shaped response: every modality entry says whether it is
 # available, and an ABSENT backend (a modality compiled out of this engine
 # build) yields {"available": false, "reason": ...} rather than an error —
-# matching the agent-webui `src/lib/gateway.ts` {ok, data, unavailable,
+# matching the overstory `src/lib/gateway.ts` {ok, data, unavailable,
 # error} envelope convention one layer up.
 #
 # Capability detection reuses `engine_tools.ENGINE_DOMAINS`
 # (arbora/mcp_server/backing/tools/engine_tools/py, unowned this wave) — the SAME
-# live introspection of the installed `epistemic_graph` client's sub-client
+# live introspection of the installed `medulla` client's sub-client
 # classes every `engine_<domain>` tool is generated from (see that module's
 # `_discover_domains()` docstring) — rather than re-deriving "what's
 # compiled in" by hand. A domain absent from `ENGINE_DOMAINS` (its client
@@ -2589,7 +2589,7 @@ def register_query_tools(mcp):
         name="graph_ask",
         description=(
             "CONCEPT:MERISTEM-KG.ingest.mirror-inbound — ask the Knowledge Graph in plain English. "
-            "epistemic-graph's own NL planner (EG QueryClient.nl_query) turns the question "
+            "medulla's own NL planner (EG QueryClient.nl_query) turns the question "
             "into one UQL query and runs it on the engine's deterministic UQL pipeline; "
             "Arbora runs no local planner. Returns the result rows and citations (row ids). "
             "dialect must be 'auto'; execute=false and include_epistemic=true are refused "
@@ -2652,7 +2652,7 @@ def register_query_tools(mcp):
         name="nl_query",
         description=(
             "CONCEPT:MERISTEM-KG.query.ask-gateway-rest-twin — ask the Knowledge Graph in plain "
-            "English through epistemic-graph's NL planner (EG QueryClient.nl_query, via the "
+            "English through medulla's NL planner (EG QueryClient.nl_query, via the "
             "governed engine_query dispatch). The engine planner emits UQL and executes it on "
             "its deterministic UQL pipeline; Arbora runs no local planner. Returns the "
             "result rows and citations. dialect must be 'auto' or 'uql'; execute=false and a "
@@ -2710,7 +2710,7 @@ def register_query_tools(mcp):
         name="ask_data",
         description=(
             "CONCEPT:MERISTEM-KG.query.data-gateway-rest-twin — answer a DATA question over the "
-            "Knowledge Graph through epistemic-graph's NL planner (EG QueryClient.nl_query): "
+            "Knowledge Graph through medulla's NL planner (EG QueryClient.nl_query): "
             "the engine plans one UQL query and executes it on its deterministic pipeline. "
             "Arbora runs no local planner or self-correction loop (corrections_used is "
             "always 0). Returns the evidence bundle with rows and citations."
@@ -2745,7 +2745,7 @@ def register_query_tools(mcp):
         return json.dumps(
             {
                 "question": str(question),
-                "planner": "epistemic-graph",
+                "planner": "medulla",
                 "dialect": "uql",
                 "max_corrections": int(max_corrections),
                 "corrections_used": 0,
@@ -2814,7 +2814,7 @@ def register_query_tools(mcp):
     # ══════════════════════════════════════════════════════════════════
     # 1a-quater. graph_projection — CONCEPT:MERISTEM-KG.query.node-link-projection
     # (wD10 Atlas backend gap B): a stable {nodes, links} JSON shape for a
-    # graph query result, so the agent-webui data explorer's 2D/3D renderers
+    # graph query result, so the overstory data explorer's 2D/3D renderers
     # never have to re-derive node/edge shape from raw per-dialect rows.
     # ══════════════════════════════════════════════════════════════════
     @mcp.tool(
@@ -2888,7 +2888,7 @@ def register_query_tools(mcp):
             "generic listing method — never a guessed/fabricated item list. "
             "The 'sources' entry is Atlas's governed provider catalogue: it "
             "classifies PostgreSQL/database, registered Neo4j/AGE/Ladybug/"
-            "Epistemic Graph backends, generic OpenCypher and "
+            "medulla backends, generic OpenCypher and "
             "PuppyGraph, GraphQL, virtual graphs, Spark (compute-only), "
             "Iceberg/Trino, S3/object stores, and unsupported Teradata. It "
             "returns only neutral connection/profile references and truthful "
@@ -2956,7 +2956,7 @@ def register_query_tools(mcp):
         name="graph_context",
         description=(
             "CONCEPT:MERISTEM-ORCH.session.invoker-agent-handoff — store/fetch curated context for invoker→spawned-agent "
-            "handoff, persisted in the epistemic-graph so a SEPARATELY-spawned agent can read "
+            "handoff, persisted in the medulla so a SEPARATELY-spawned agent can read "
             "it by id. Actions: 'put' (store content, returns context_id), 'get' (fetch by "
             "context_id), 'list' (by session_id). Pass the returned context_id to "
             "graph_orchestrate(context_ref=...)."

@@ -7,14 +7,14 @@ from inspect import iscoroutinefunction
 from arbora.api.registry import Composite, OpSpec, Registry
 from arbora.api.registry.eg_binding import (
     EgContractError,
-    _contract_root,
-    _load_scopes,
+    load_catalog,
     load_eg_bindings,
+    load_generated_scopes,
 )
 
 
 def get_registry() -> Registry:
-    """Compose supported declarations and the complete installed provider contract.
+    """Compose supported declarations and the engine's complete method catalog.
 
     This requires no live session or service bindings, so canonical generation
     can use the same registry as serving. Bootstrap must separately validate
@@ -84,13 +84,13 @@ def get_registry() -> Registry:
                         f"{op.id}: unsupported or unbound handler {op.binding.handler}"
                     )
             curated.append(op)
-    root = _contract_root(None)
-    scopes = _load_scopes(root)
+    catalog = load_catalog()
+    scopes = load_generated_scopes(catalog)
     for op in curated:
         missing = (op.scopes | op.executor_scopes) - scopes.keys()
         if missing:
             raise EgContractError(
                 f"{op.id}: unregistered curated EG scopes: {', '.join(sorted(missing))}"
             )
-    generated = load_eg_bindings(contract_root=root, curated_ops=curated)
-    return Registry((*curated, *generated))
+    generated = load_eg_bindings(catalog=catalog, curated_ops=curated)
+    return Registry((*curated, *generated), catalog=catalog)

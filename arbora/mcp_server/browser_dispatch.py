@@ -82,12 +82,21 @@ async def _on_owner(
         )
 
     def done(task: Any) -> None:
+        # Release the slot before completing: the awaiting loop may resume the
+        # moment `completion` is set, and must never observe a held slot.
         try:
-            completion.set_result(task.result())
+            result = task.result()
         except BaseException as exc:
-            completion.set_exception(exc)
-        finally:
+            try:
+                release()
+            finally:
+                completion.set_exception(exc)
+                finished.set_result(None)
+            return
+        try:
             release()
+        finally:
+            completion.set_result(result)
             finished.set_result(None)
 
     def submit() -> None:
@@ -98,10 +107,13 @@ async def _on_owner(
         except BaseException as exc:
             if asyncio.iscoroutine(operation):
                 operation.close()
-            # No task owns the slot when construction itself fails.
-            completion.set_exception(exc)
-            release()
-            finished.set_result(None)
+            # No task owns the slot when construction itself fails; release it
+            # before completing so the caller never observes it held.
+            try:
+                release()
+            finally:
+                completion.set_exception(exc)
+                finished.set_result(None)
             return
         tasks.append(task)
         task.add_done_callback(done)

@@ -115,7 +115,7 @@ knowledge. Dependency records remain reified evidence nodes, and documents use
 the native retrieval-index handoff.
 
 For registered Neo4j/openCypher, Apache AGE, LadybugDB/Kuzu, remote
-epistemic-graph, or generic GraphQL sources, use
+medulla, or generic GraphQL sources, use
 `graph-runtime-and-governance` to run the universal connection sequence:
 `graph_configure(action="discover_connection_schema")` →
 `graph_configure(action="propose_connection_mapping")` →

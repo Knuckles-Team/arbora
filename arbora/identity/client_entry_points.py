@@ -5,10 +5,10 @@ and background service calls -- and records whether that path carries a
 verified local-issuer or permitted service token on every call to the
 engine. This registry is the arbora-side half of
 ARBORA-IDENTITY-R017: it is the audited precondition the engine
-opt-out removal (ARBORA-IDENTITY-R017.2, pinned to the epistemic-graph
+opt-out removal (ARBORA-IDENTITY-R017.2, pinned to the medulla
 >=2.28 engine release) will be checked against. It does not itself
 change engine enforcement -- that flip happens once Arbora depends on
-an epistemic-graph release that removes the unauthenticated opt-out.
+an medulla release that removes the unauthenticated opt-out.
 """
 
 from __future__ import annotations

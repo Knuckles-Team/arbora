@@ -16,7 +16,7 @@ from arbora.observability import telemetry
         ({"OTEL_EXPORTER_OTLP_ENDPOINT": "collector:4318"}, "http://collector:4318"),
         (
             {
-                "EPISTEMIC_GRAPH_OBS_ADDR": "https://obs",
+                "MEDULLA_OBS_ADDR": "https://obs",
                 "OTEL_EXPORTER_OTLP_ENDPOINT": "x",
             },
             "https://obs",
@@ -33,7 +33,7 @@ from arbora.observability import telemetry
 def test_otel_endpoint_follows_the_standard_variables(monkeypatch, env, expected):
     for name in (
         "OTEL_EXPORTER_OTLP_ENDPOINT",
-        "EPISTEMIC_GRAPH_OBS_ADDR",
+        "MEDULLA_OBS_ADDR",
         "OTEL_TRACES_EXPORTER",
     ):
         monkeypatch.delenv(name, raising=False)

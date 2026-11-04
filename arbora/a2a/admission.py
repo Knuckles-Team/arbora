@@ -3,7 +3,7 @@
 Owned by ``ARBORA-A2A-002``: admission, refusal, and provenance for the
 smallest authorized tool subset that covers a selected agent graph within a
 caller's context budget (see ``docs/a2a.md``, "Tool-subset assembly
-status"). This fails closed today because epistemic-graph's
+status"). This fails closed today because medulla's
 ``AgentAssemble`` operation returns unavailable and the signed AU
 ``AgentTurnEnvelope`` carries no allowed-tool-subset field
 (agent-utilities ``MERISTEM-CONTROL-R035``). Neither upstream gap is bridged with a
@@ -56,7 +56,7 @@ def admit_tool_subset(
 ) -> ToolSubsetAdmissionDecision:
     """Admit the request, or fail closed with a typed, provenanced refusal.
 
-    ``ARBORA-A2A-R017.1``: epistemic-graph's ``AgentAssemble`` operation
+    ``ARBORA-A2A-R017.1``: medulla's ``AgentAssemble`` operation
     returns unavailable today, so no context-budget-bound tool subset can be
     derived or cryptographically carried. This refuses closed rather than
     returning an advisory, cached, or partial subset.

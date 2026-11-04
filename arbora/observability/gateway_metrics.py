@@ -3,7 +3,7 @@
 CONCEPT:MERISTEM-OS.observability.no-op-without-metrics — Gateway Middle-Tier Hardening (metrics, per-tenant rate
 limiting, engine circuit breaker, multi-worker readiness).
 
-The Rust engine already exposes ``epistemic_graph_*`` Prometheus metrics; this
+The Rust engine already exposes ``medulla_*`` Prometheus metrics; this
 module mirrors that naming style for the Python tier with an
 ``agent_utilities_gateway_*`` prefix so dashboards read coherently:
 
@@ -440,13 +440,13 @@ GATEWAY_RATE_LIMITED = _counter(
 )
 ENGINE_REQUESTS = _counter(
     "agent_utilities_gateway_engine_requests_total",
-    "epistemic-graph engine client calls by operation and outcome "
+    "medulla engine client calls by operation and outcome "
     "(ok | connection_error | error | short_circuited).",
     ("op", "outcome"),
 )
 ENGINE_REQUEST_LATENCY = _histogram(
     "agent_utilities_gateway_engine_request_latency_seconds",
-    "epistemic-graph engine client call latency (seconds) by operation. The "
+    "medulla engine client call latency (seconds) by operation. The "
     "per-op round-trip time — so a contended engine (slow point-reads like "
     "GetNodeProperties) or one heavy op dominating the shared connection is "
     "visible at a glance without a profiler. Pairs with a slow-call WARN log in "
@@ -897,7 +897,7 @@ CONTEXT_COMPILER_TTFT = _histogram(
 )
 KVCACHE_CLIENT_REQUESTS = _counter(
     "agent_utilities_kvcache_client_requests_total",
-    "EpistemicGraphKVBackend.get() lookups by outcome (hit|miss|error) — the "
+    "MedullaKVBackend.get() lookups by outcome (hit|miss|error) — the "
     "client-side half of the MEDULLA-187 remote KV-cache contract; GET /kv/stats on "
     "the engine exposes the aggregate server-side occupancy/dedup counters.",
     ("outcome",),
@@ -1173,9 +1173,9 @@ def render_metrics() -> tuple[bytes, str]:
 
 
 # The collapsed single-container arbora pod (2026-08-25 unified cutover)
-# runs the epistemic-graph engine as an in-process child via KG_DAEMON_ROLE=host
+# runs the medulla engine as an in-process child via KG_DAEMON_ROLE=host
 # autostart. The engine refuses to bind any non-loopback auxiliary listener
-# (epistemic-graph src/main.rs::resolve_listener_addr — "refusing non-loopback
+# (medulla src/main.rs::resolve_listener_addr — "refusing non-loopback
 # auxiliary listener", no escape hatch), so its Prometheus exposition only ever
 # lives on 127.0.0.1:9101/metrics inside the pod's network namespace. arbora
 # is the sole other process sharing that namespace, so it re-serves that
@@ -1196,8 +1196,8 @@ async def _fetch_engine_metrics() -> tuple[bytes, bool]:
     # through this factory rather than a bare `httpx.AsyncClient()` so the
     # safety defaults (finite timeout, mandatory TLS verification) stay
     # uniform and auditable in one place, even for this loopback-only call.
-    from agent_connector_sdk.http.client import create_async_http_client
-    from agent_connector_sdk.http.options import HttpClientOptions
+    from scion_sdk.http.client import create_async_http_client
+    from scion_sdk.http.options import HttpClientOptions
 
     try:
         async with create_async_http_client(
@@ -1230,7 +1230,7 @@ def _engine_metrics_status_line(ok: bool) -> bytes:
     not just a comment a human might miss (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics)."""
     return (
         b"# HELP arbora_engine_metrics_up Whether the last /metrics scrape "
-        b"successfully fetched the embedded epistemic-graph engine's loopback "
+        b"successfully fetched the embedded medulla engine's loopback "
         b"Prometheus endpoint (127.0.0.1:9101).\n"
         b"# TYPE arbora_engine_metrics_up gauge\n"
         b"arbora_engine_metrics_up " + (b"1" if ok else b"0") + b"\n"

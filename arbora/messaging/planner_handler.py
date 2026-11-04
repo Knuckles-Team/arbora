@@ -38,7 +38,7 @@ def sender_admitted(event: InboundEvent) -> bool:
     admits no one: a channel bot is reachable by anyone who finds it, and an
     admitted message runs a turn under Arbora's verified process session.
     """
-    from agent_connector_sdk.config import csv_values
+    from scion_sdk.config import csv_values
 
     allowed = set(csv_values(setting("MESSAGING_ALLOWED_SENDERS", "")))
     return bool(event.user_id) and f"{event.platform}:{event.user_id}" in allowed

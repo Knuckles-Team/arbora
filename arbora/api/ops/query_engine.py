@@ -1,10 +1,10 @@
 """Engine-method passthrough operations for SPARQL, SQL, ontology and federation.
 
 ARBORA-OPS-R018.1 / R019.1: Medulla owns every fact, schema and query
-language, so these operations are thin curated names over the installed engine
-contract.  Each binds one wire method through the registry's engine-method
-passthrough and takes its scope, effect and parameter/result schemas from that
-method; Arbora keeps no local ontology store and builds no SQL strings.
+language, so these operations are thin curated names over the engine's
+run-time method catalog. Each binds one wire method through the registry's
+engine-method passthrough and takes its scope and effect from that method;
+Arbora keeps no local ontology store and builds no SQL strings.
 """
 
 from __future__ import annotations
@@ -13,28 +13,23 @@ from arbora.api.registry import (
     AuditClass,
     Effect,
     EgMethod,
-    EgSchemaRef,
     Idempotency,
     OpSpec,
     PrincipalRule,
     Surface,
     Verb,
+    eg_method_ref,
 )
 
-_REQUEST = "contract/schemas/method.request.json#/methods/{method}/properties/params"
-_RESULT = "contract/schemas/result.{domain}.json#/methods/{method}"
 
-
-def _read(
-    op_id: str, method: str, domain: str, scope: str, summary: str, example: str
-) -> OpSpec:
+def _read(op_id: str, method: str, scope: str, summary: str, example: str) -> OpSpec:
     return OpSpec(
         id=op_id,
         verb=Verb.ASK,
         summary=summary,
         examples=(example,),
-        params=EgSchemaRef(path=_REQUEST.format(method=method)),
-        result=EgSchemaRef(path=_RESULT.format(domain=domain, method=method)),
+        params=eg_method_ref(method, "request"),
+        result=eg_method_ref(method, "result"),
         binding=EgMethod(service=method, op=method),
         scopes=frozenset({scope}),
     )
@@ -45,7 +40,6 @@ def operations() -> tuple[OpSpec, ...]:
         _read(
             "query.sparql",
             "Sparql",
-            "reasoning",
             "sparql:read",
             "Evaluate a SPARQL SELECT over the caller's graph",
             "run a SPARQL query",
@@ -53,7 +47,6 @@ def operations() -> tuple[OpSpec, ...]:
         _read(
             "query.sql",
             "Sql",
-            "query",
             "query:sql",
             "Run a parameterised SQL query over the caller's graph",
             "run a SQL query",
@@ -61,7 +54,6 @@ def operations() -> tuple[OpSpec, ...]:
         _read(
             "ontology.inspect",
             "OntologyInspect",
-            "reasoning",
             "validation:read",
             "Inspect ontology documents or the graph's composed schema",
             "inspect this ontology",
@@ -69,7 +61,6 @@ def operations() -> tuple[OpSpec, ...]:
         _read(
             "ontology.schema.classes",
             "GraphSchemaClasses",
-            "reasoning",
             "owl:read",
             "Page the classes and properties the graph's schema declares",
             "list the ontology classes",
@@ -77,7 +68,6 @@ def operations() -> tuple[OpSpec, ...]:
         _read(
             "ontology.validate",
             "ShaclValidate",
-            "reasoning",
             "validation:read",
             "Validate graph data against SHACL shapes",
             "validate the graph against its shapes",
@@ -85,7 +75,6 @@ def operations() -> tuple[OpSpec, ...]:
         _read(
             "federation.sources.columns",
             "QueryForeignColumns",
-            "query",
             "federation:read",
             "Read the columns of a registered foreign source",
             "show the columns of this federated source",
@@ -95,10 +84,8 @@ def operations() -> tuple[OpSpec, ...]:
             verb=Verb.MANAGE,
             summary="Register a foreign source with the engine (governed write)",
             examples=("register a federated source",),
-            params=EgSchemaRef(path=_REQUEST.format(method="RegisterForeignSource")),
-            result=EgSchemaRef(
-                path=_RESULT.format(domain="cluster", method="RegisterForeignSource")
-            ),
+            params=eg_method_ref("RegisterForeignSource", "request"),
+            result=eg_method_ref("RegisterForeignSource", "result"),
             binding=EgMethod(
                 service="RegisterForeignSource", op="RegisterForeignSource"
             ),

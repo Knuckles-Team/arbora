@@ -11,8 +11,8 @@ import re
 from collections.abc import Callable
 from typing import Any
 
-from agent_connector_sdk.privacy import persistence_reference
 from pydantic import Field
+from scion_sdk.privacy import persistence_reference
 
 from arbora.api.errors import not_served
 from arbora.core.event_loop import run_blocking_ordered
@@ -865,9 +865,7 @@ async def _ingest_action_enrich_pending_documents(
     engine, request: IngestRequest
 ) -> str:
     # action(s): 'enrich_pending_documents'
-    raise not_served(
-        "knowledge_graph.memory.native_ingest", "SDK", owner="agent-connector-sdk"
-    )
+    raise not_served("knowledge_graph.memory.native_ingest", "SDK", owner="scion-sdk")
 
 
 async def _ingest_extract_submit_text(target_path, description):

@@ -138,7 +138,7 @@ def test_malformed_canonical_context_does_not_read(
 
 
 def test_fixture_matches_published_eg_caller_view() -> None:
-    from epistemic_graph.client import _work_item_view
+    from medulla.client import _work_item_view
 
     assert _work_item_view(row()) == row()
 

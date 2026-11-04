@@ -149,13 +149,19 @@ def test_native_executable_must_match_wheel_record(controller, tmp_path, fault):
             controller.native.verify_server_record(binary, distribution)
 
 
-@pytest.mark.parametrize("version", ["2.27.10", "2.27.9", None])
-def test_native_runtime_version_is_exact(controller, version):
+@pytest.mark.parametrize("version", ["3.1.0", "3.0.0", None])
+def test_native_runtime_version_is_exact(controller, monkeypatch, version):
     async def health():
         return {"version": version}
 
+    # The expected version is the installed medulla-stem wheel's, never a literal.
+    monkeypatch.setattr(
+        controller.native.importlib.metadata,
+        "version",
+        lambda name: "3.1.0" if name == "medulla-stem" else "0",
+    )
     client = SimpleNamespace(health=health)
-    if version == "2.27.10":
+    if version == "3.1.0":
         assert asyncio.run(controller.native.require_native_version(client)) == version
     else:
         with pytest.raises(RuntimeError, match="Native runtime version"):
@@ -238,7 +244,7 @@ def test_runtime_attestation_uses_separate_exact_capability(
         calls.append("health")
         if refuse:
             raise RuntimeError("synthetic refusal")
-        return {"version": "2.27.10"}
+        return {"version": "3.1.0"}
 
     async def close():
         calls.append("close")
@@ -248,11 +254,14 @@ def test_runtime_attestation_uses_separate_exact_capability(
         return SimpleNamespace(health=health, close=close)
 
     monkeypatch.setattr(controller, "connect", connect)
+    monkeypatch.setattr(
+        controller.native.importlib.metadata, "version", lambda name: "3.1.0"
+    )
     if refuse:
         with pytest.raises(RuntimeError):
             asyncio.run(controller.verify_runtime({}))
     else:
-        assert asyncio.run(controller.verify_runtime({})) == "2.27.10"
+        assert asyncio.run(controller.verify_runtime({})) == "3.1.0"
     assert calls == ["service:control", "health", "close"]
 
 
@@ -628,8 +637,8 @@ def test_startup_facts_never_copy_private_log_content(
         controller.boot, "_listening", lambda port: False, raising=False
     )
     (tmp_path / "arbora.log").write_text(
-        "private-prefix co-service agent-webui started\n"
-        "private-prefix co-service agent-webui crashed\n"
+        "private-prefix co-service overstory started\n"
+        "private-prefix co-service overstory crashed\n"
         "ImportError: private-credential-and-path\n"
         "PrivateException: private-credential-and-path\n"
     )

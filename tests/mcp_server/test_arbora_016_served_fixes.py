@@ -40,7 +40,7 @@ def test_run_events_are_created_not_upserted(monkeypatch) -> None:
 def test_the_served_engine_creates_through_create_node_if_absent(monkeypatch) -> None:
     """The served engine's create path sends EG ``CreateNodeIfAbsent``."""
     import msgpack
-    from epistemic_graph.generated import graph as generated
+    from medulla.generated import graph as generated
 
     from arbora.mcp_server import served_engine as served
 
@@ -138,13 +138,13 @@ def test_an_unscoped_empty_query_still_needs_browse() -> None:
 def test_served_cypher_uses_public_row_decoder(monkeypatch) -> None:
     """Native rows are MessagePack blobs, not already named dictionaries."""
     import msgpack
-    from epistemic_graph.client import EpistemicGraphClient, QueryClient
+    from medulla.client import MedullaClient, QueryClient
 
     from arbora.mcp_server import served_engine as served
 
     calls: list[tuple[str, dict[str, Any], str | None]] = []
 
-    class Client(EpistemicGraphClient):
+    class Client(MedullaClient):
         def __init__(self) -> None:
             # The query decoder needs only the transport below, not a socket.
             self._graph_name = "tenant__local"

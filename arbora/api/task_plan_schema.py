@@ -36,11 +36,11 @@ COMPONENT_VERSION = "1.0.0"
 PURPOSE_ID = "agent_library.task_plan_schema_publish"
 EXPORT_NAME = "TASK_PLAN_FEATURE_SCHEMA"
 #: Where the engine exports the schema, searched in order. Confirm the exact
-#: module when epistemic-graph 2.27.5 publishes, then keep only that path.
+#: module when medulla 2.27.5 publishes, then keep only that path.
 EXPORT_MODULES = (
-    "epistemic_graph.decision_client",
-    "epistemic_graph.decision_stat",
-    "epistemic_graph",
+    "medulla.decision_client",
+    "medulla.decision_stat",
+    "medulla",
 )
 #: The fields whose drift keeps the op unavailable. ``engine_version`` is
 #: informational: a newer engine that exports the same body keeps the pin.
@@ -51,7 +51,7 @@ BindClient = Callable[[str], AbstractAsyncContextManager[Any]]
 
 
 def _stat() -> Any:
-    return importlib.import_module("epistemic_graph.decision_stat")
+    return importlib.import_module("medulla.decision_stat")
 
 
 def installed_export(
@@ -177,7 +177,7 @@ def publication(
         "actor_scope": context["actor_scope"],
         "purpose_id": context["purpose_id"],
         "policy_digest": context["policy_digest"],
-        "source_revision": f"epistemic-graph-{pin['engine_version']}",
+        "source_revision": f"medulla-{pin['engine_version']}",
         "source_revision_digest": pin["content_digest"],
     }
     return {
@@ -336,8 +336,8 @@ def engine_publish(
     """
 
     async def _publish(client: Any, tenant: str, pin: Mapping[str, Any]) -> str:
-        from epistemic_graph.generated.agent_component import AgentComponentOpCurrent
-        from epistemic_graph.generated.storage import (
+        from medulla.generated.agent_component import AgentComponentOpCurrent
+        from medulla.generated.storage import (
             send_agent_component,
             send_agent_component_current,
         )

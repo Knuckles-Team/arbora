@@ -1,4 +1,4 @@
-"""Arbora-native MCP helpers injected into the colocated Agent WebUI.
+"""Arbora-native MCP helpers injected into the colocated Overstory.
 
 Every operation is submitted asynchronously to the served multiplexer's
 owner loop. The WebUI never imports AU's server adapters, opens a second MCP
@@ -25,7 +25,7 @@ from arbora.fleet.shared_multiplexer import run_on_served_multiplexer
 
 
 class WebUiMcpDelegation(TypedDict):
-    """Workspace-helper contract consumed by ``agent_webui``."""
+    """Workspace-helper contract consumed by ``overstory``."""
 
     list_mcp_server_tools: Callable[..., Awaitable[list[dict[str, Any]]]]
     call_mcp_tool: Callable[..., Awaitable[Any]]

@@ -6,9 +6,9 @@ from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from typing import Any, cast
 
-from agent_connector_sdk.mcp.content import ConnectorContent
-from agent_connector_sdk.ports.sink import Sink
-from agent_connector_sdk.runner.provisioning import (
+from scion_sdk.mcp.content import ConnectorContent
+from scion_sdk.ports.sink import Sink
+from scion_sdk.runner.provisioning import (
     ProvisionOutcome,
     provision_connector_content,
 )
@@ -56,11 +56,11 @@ def _semantic_readers(
     schema_reader: Callable[..., Awaitable[Any]] | None,
 ) -> tuple[Callable[..., Awaitable[Any]], Callable[..., Awaitable[Any]]]:
     if schema_reader is None:
-        from epistemic_graph.generated import reasoning
+        from medulla.generated import reasoning
 
         schema_reader = cast(Any, reasoning).send_graph_schema_list
     if status_reader is None:
-        from epistemic_graph.generated.storage import send_connector_pack_status
+        from medulla.generated.storage import send_connector_pack_status
 
         status_reader = send_connector_pack_status
     return status_reader, schema_reader
@@ -84,7 +84,7 @@ async def _verify_semantic_connector(
     attached: dict[str, Any],
     status_reader: Callable[..., Awaitable[Any]],
 ) -> None:
-    from epistemic_graph.generated.connector_pack import ConnectorPackStatusRequest
+    from medulla.generated.connector_pack import ConnectorPackStatusRequest
 
     status = await status_reader(
         client,
@@ -162,7 +162,7 @@ async def provision_semantic_content[ReprojectReceiptT, AttachReceiptT](
 ) -> tuple[SemanticProvisionReceipt[ReprojectReceiptT, AttachReceiptT], ...]:
     """Import and attach each provider under its own connector identity.
 
-    ``sink`` is the already-authenticated SDK EpistemicGraph sink and
+    ``sink`` is the already-authenticated SDK Medulla sink and
     ``attach_pack`` is the GraphSchema application port. This function owns no
     credentials, mutation context, pack DTO, or SHACL interpretation.
     """

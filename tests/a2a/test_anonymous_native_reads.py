@@ -4,7 +4,7 @@ import asyncio
 import copy
 
 import pytest
-from epistemic_graph.client import EpistemicGraphClient
+from medulla.client import MedullaClient
 
 from arbora.a2a.anonymous import AnonymousCaller
 from arbora.a2a.anonymous_native import EgAnonymousTaskReadPort
@@ -73,7 +73,7 @@ def response():
 
 
 def setup(value):
-    client = EpistemicGraphClient(
+    client = MedullaClient(
         asyncio.StreamReader(),
         LocalWriter(),
         None,

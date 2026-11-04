@@ -13,7 +13,7 @@ import threading
 from collections.abc import Mapping
 from typing import Any
 
-from agent_connector_sdk.artifacts.resource_descriptor import RESOURCES_URI
+from scion_sdk.artifacts.resource_descriptor import RESOURCES_URI
 
 __all__ = [
     "RESOURCES_URI",
@@ -31,7 +31,7 @@ _DECLARATIONS: dict[str, Mapping[str, Any]] = {}
 def entry_bytes(archive: Any, entry: Any) -> bytes:
     """The bytes of one captured pack entry's body, read from its archive.
 
-    A captured ConnectorPack (agent-connector-sdk 0.5) holds every body in one
+    A captured ConnectorPack (scion-sdk 0.5) holds every body in one
     archive blob; ``entry.body`` is the ``PackSection`` (offset, length,
     sha256) that locates it. A section outside the archive or whose bytes do
     not hash to its digest is refused, never read as content.

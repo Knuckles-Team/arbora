@@ -203,7 +203,7 @@ def test_old_installed_factory_refuses_explicit_modes_without_downgrade():
 @pytest.mark.parametrize("mode", ["none", "eg", "oidc"])
 @pytest.mark.spec("ARBORA-IDENTITY-R004.7.1")
 def test_installed_factory_explicit_mode_contract(mode):
-    from agent_webui.server import create_agent_web_app
+    from overstory.server import create_agent_web_app
 
     from arbora.webui_host.session_boundary import WebUISessionBoundary
 

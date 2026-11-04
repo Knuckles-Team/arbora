@@ -1,6 +1,6 @@
-"""Authenticated composition of agent-connector-sdk runners.
+"""Authenticated composition of scion-sdk runners.
 
-Arbora owns deployment identity and the epistemic-graph transport.  The SDK
+Arbora owns deployment identity and the medulla transport.  The SDK
 owns connector/source behavior and runner construction.  This module joins
 those public contracts without manufacturing identity, copying an EG DTO, or
 letting the SDK discover credentials from ambient process state.
@@ -14,19 +14,19 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from agent_connector_sdk.credentials.references import parse_secret_reference
-from agent_connector_sdk.credentials.resolution import resolve_secret_reference
-from agent_connector_sdk.credentials.resolver import CredentialResolver
-from agent_connector_sdk.discovery import ActivationPolicy
-from agent_connector_sdk.runner.composition import default_services
-from agent_connector_sdk.runner.descriptors import RunnerSettings
-from agent_connector_sdk.runner.services import RunnerServices
-from agent_connector_sdk.sinks.epistemic_graph import PackImportAuthorityResolver
-from epistemic_graph import (
-    EpistemicGraphClient,
+from medulla import (
+    MedullaClient,
     RequestContextClaims,
     validate_request_context,
 )
+from scion_sdk.credentials.references import parse_secret_reference
+from scion_sdk.credentials.resolution import resolve_secret_reference
+from scion_sdk.credentials.resolver import CredentialResolver
+from scion_sdk.discovery import ActivationPolicy
+from scion_sdk.runner.composition import default_services
+from scion_sdk.runner.descriptors import RunnerSettings
+from scion_sdk.runner.services import RunnerServices
+from scion_sdk.sinks.medulla import PackImportAuthorityResolver
 
 from arbora.epistemic import ClientContext, ConnectClient, EpistemicClientPool
 
@@ -65,9 +65,7 @@ class ConnectorRunnerConfig:
         if not isinstance(self.state_dir, Path):
             raise TypeError("connector runner state_dir must be a Path")
         if bool(self.socket_path) == bool(self.tcp_addr):
-            raise ValueError(
-                "connector runner requires exactly one epistemic-graph endpoint"
-            )
+            raise ValueError("connector runner requires exactly one medulla endpoint")
         for name in ("socket_path", "tcp_addr"):
             value = getattr(self, name)
             if value is not None and (not isinstance(value, str) or not value.strip()):
@@ -76,7 +74,7 @@ class ConnectorRunnerConfig:
 
 
 ServicesFactory = Callable[..., RunnerServices]
-_DEFAULT_CONNECT = cast(ConnectClient, EpistemicGraphClient.connect)
+_DEFAULT_CONNECT = cast(ConnectClient, MedullaClient.connect)
 
 
 class ConnectorRunnerComposition:
@@ -106,7 +104,7 @@ class ConnectorRunnerComposition:
         )
         if not auth_secret:
             raise ConnectorRunnerNotReadyError(
-                "epistemic-graph authentication secret resolved empty"
+                "medulla authentication secret resolved empty"
             )
         self._config = config
         self._pack_import_authority = pack_import_authority
@@ -149,14 +147,14 @@ class ConnectorRunnerComposition:
             services = self._services_factory(
                 settings,
                 state_dir=self._config.state_dir,
-                sink_name="epistemic_graph",
+                sink_name="medulla",
                 sink_client=client,
                 pack_import_authority=self._pack_import_authority,
                 policy=policy,
             )
             readiness = await services.sink.readiness()
             if not readiness.ready:
-                reason = readiness.reason or "epistemic-graph sink is not ready"
+                reason = readiness.reason or "medulla sink is not ready"
                 raise ConnectorRunnerNotReadyError(reason)
             yield services
 

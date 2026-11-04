@@ -86,7 +86,7 @@ def test_bad_json_never_silently_disables_feature(monkeypatch, raw):
 
 
 def test_content_digest_pin_refuses_before_process_authority(monkeypatch):
-    from epistemic_graph.decision_client import TASK_PLAN_FEATURE_SCHEMA
+    from medulla.decision_client import TASK_PLAN_FEATURE_SCHEMA
 
     from arbora.mcp_server import server
 

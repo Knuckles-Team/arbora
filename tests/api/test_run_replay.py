@@ -340,7 +340,7 @@ async def test_native_refusals_preserved_on_http_and_mcp(
     from dataclasses import replace
 
     import httpx
-    from epistemic_graph import EngineResponseError
+    from medulla import EngineResponseError
 
     from arbora.api.http.app import create_run_compatibility_application
     from arbora.api.http.auth import AmbientHTTPAuthenticator

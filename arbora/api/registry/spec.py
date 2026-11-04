@@ -74,11 +74,33 @@ class SubjectSource(StrEnum):
     CALLER_TENANT = "caller_tenant"
 
 
+#: ``medulla:method/<Method>#request`` or ``#result``: one side of one method
+#: in the engine's run-time method catalog.
+EG_METHOD_REF = re.compile(r"^medulla:method/([A-Za-z][A-Za-z0-9_]*)#(request|result)$")
+
+
 class EgSchemaRef(BaseModel):
-    """A schema shipped in the epistemic-graph contract wheel."""
+    """The request or result of one method in medulla's run-time catalog.
+
+    The catalog carries no request/result schemas; the engine validates the
+    request shape itself. The reference names the method and side so the
+    registry digest and the dispatch seam bind to the catalog row.
+    """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
-    path: str = Field(min_length=1)
+    path: str = Field(pattern=EG_METHOD_REF.pattern)
+
+    @property
+    def method(self) -> str:
+        match = EG_METHOD_REF.fullmatch(self.path)
+        assert match is not None  # guaranteed by the field pattern
+        return match.group(1)
+
+
+def eg_method_ref(method: str, side: Literal["request", "result"]) -> EgSchemaRef:
+    """The reference to ``method``'s request or result in the method catalog."""
+
+    return EgSchemaRef(path=f"medulla:method/{method}#{side}")
 
 
 class EgMethod(BaseModel):

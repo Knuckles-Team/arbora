@@ -1,7 +1,7 @@
 # Arbora on Docker Swarm (one stack, one writer).
 #
 # Derived from deploy/compose/compose.yaml: one arbora service that starts and
-# supervises its epistemic-graph engine as a child process inside the same task
+# supervises its medulla engine as a child process inside the same task
 # (Swarm has no pod sidecar). The engine store has exactly ONE writer:
 #   - replicas: 1, update order stop-first (the old task exits and releases the
 #     store lock before the new one starts);
@@ -58,7 +58,7 @@ services:
       XDG_DATA_HOME: /var/lib/arbora/data
       XDG_STATE_HOME: /var/lib/arbora/state
       XDG_CACHE_HOME: /tmp/cache
-      XDG_RUNTIME_DIR: /run/epistemic-graph
+      XDG_RUNTIME_DIR: /run/medulla
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
       RUM_OTLP_METRICS_ENDPOINT: ${RUM_OTLP_METRICS_ENDPOINT:-}
     secrets:
@@ -77,7 +77,7 @@ services:
     volumes:
       - arbora-data:/var/lib/arbora
       - type: tmpfs
-        target: /run/epistemic-graph
+        target: /run/medulla
       - type: tmpfs
         target: /tmp
     read_only: true

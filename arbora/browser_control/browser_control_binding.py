@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, fields
 from typing import Any
 
-from agent_connector_sdk.privacy import persistence_reference
+from scion_sdk.privacy import persistence_reference
 
 from arbora.browser_control.browser_control_api import BrowserChannelBinding
 from arbora.browser_control.browser_control_common import content_sha256

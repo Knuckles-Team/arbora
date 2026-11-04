@@ -17,7 +17,7 @@ from typing import Any
 
 import pytest
 
-pytest.importorskip("epistemic_graph.decision_stat")
+pytest.importorskip("medulla.decision_stat")
 
 from arbora.access import action_policy  # noqa: E402
 from arbora.api import task_plan_schema  # noqa: E402
@@ -429,7 +429,7 @@ def test_default_schema_action_stays_held(
 def test_matching_component_reuse_needs_no_new_write_receipt(
     fixture: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from epistemic_graph.generated import storage
+    from medulla.generated import storage
 
     async def current(*_: Any, **__: Any) -> Any:
         return SimpleNamespace(

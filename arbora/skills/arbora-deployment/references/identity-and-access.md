@@ -104,7 +104,7 @@ with it off.
 `capacity:admin`, `capacity:lease`, `capacity:read`, `node:read`, `node:write`,
 `fleet:events`, `identity:authenticate`, and `lease:read`/`lease:write`
 restricted by the engine's principal-scoped lease-kind allowlist
-(`EPISTEMIC_GRAPH_CONTROL_LEASE_KIND_POLICY_JSON`; any other kind refused).
+(`MEDULLA_CONTROL_LEASE_KIND_POLICY_JSON`; any other kind refused).
 None of these scopes or the allowlist exist on `main` today. Never grant it
 `kg:admin` or an approver scope once they do.
 

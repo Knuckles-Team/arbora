@@ -60,22 +60,22 @@ operations.
 | `arbora.fleet` | MCP child lifecycle, catalog discovery, OAuth admission, health, and per-session tool loading |
 | `arbora.gateway` | REST routes, dashboard aggregation, widget projection, and the host daemon |
 | `arbora.control_plane` | Fleet reconciliation and action-policy enforcement |
-| `arbora.webui_host` | Optional Agent WebUI co-service lifecycle |
+| `arbora.webui_host` | Optional Overstory co-service lifecycle |
 | `arbora.a2a` | Authenticated Agent Card and unary A2A projection |
 | `arbora.browser_control` | Governed browser catalog, lease, dispatch, and outcome orchestration |
 | `arbora.deployment` | Configuration, diagnostics, canaries, environment plans, and production operations |
 
 Arbora authenticates, composes, routes, supervises, and projects. Durable
-graph state and RDF/OWL/SHACL semantics belong to `epistemic-graph`; agent
+graph state and RDF/OWL/SHACL semantics belong to `medulla`; agent
 decisions and workflows belong to `meristem`; source-specific transport
-and effects belong to `agent-connector-sdk` and connector services; browser
-presentation belongs to `agent-webui`.
+and effects belong to `scion-sdk` and connector services; browser
+presentation belongs to `overstory`.
 
 ```mermaid
 flowchart LR
     Clients["MCP, REST, A2A, WebUI"] --> Arbora["Arbora"]
     Arbora --> Agents["meristem"]
-    Arbora --> EG["epistemic-graph client"]
+    Arbora --> EG["medulla client"]
     Arbora --> Fleet["MCP fleet"]
     Fleet --> Sources["connector services"]
 ```
@@ -112,7 +112,7 @@ scripts/bootstrap.sh              # uv >= 0.9, pinned Python, locked PyPI deps, 
 scripts/bootstrap.sh --scanners   # also the pinned cccc/kiss/dupehound/jscpd scanners (~15 min cold)
 ```
 
-Bootstrap is idempotent. Every dependency, the epistemic-graph engine wheels
+Bootstrap is idempotent. Every dependency, the medulla engine wheels
 included, installs from PyPI at the version `uv.lock` pins; no sibling source
 is linked. It then installs the pre-commit and pre-push hooks. A hook whose
 prerequisite is missing (the synced environment) prints `SKIPPED (<gate>): <reason>` and exits 0
@@ -120,7 +120,7 @@ locally; under CI (`$CI` set) it exits 2 with `CANNOT RUN`, so hosted CI never
 passes a gate that did not run.
 
 This repository runs its own gates and tests on ordinary hosted CI and
-developer hardware; it does not need the heavy per-worktree `epistemic-graph`
+developer hardware; it does not need the heavy per-worktree `medulla`
 Rust build host that an EG lane requires — never submit a arbora-only
 change to that build queue.
 
@@ -150,7 +150,7 @@ uv run --no-sync mypy arbora tests
 `.pre-commit-config.yaml` is the single definition of the gates. The release
 workflow runs it directly: the commit stage over every file, the push stage
 over the pushed range, then the manual-stage `mypy-env` and `pytest` hooks
-after `uv sync --frozen --extra test --extra webui` installs the locked PyPI
+after `uv sync --frozen --extra test --extra overstory` installs the locked PyPI
 dependencies. No sibling source or overlay participates in release qualification.
 Local paired-source diagnostics can investigate upstream contracts, but cannot
 replace these wheel-only gates. Run the same locally:
@@ -218,8 +218,8 @@ separate, deliberate, tracked work. See `scripts/wiring/reachability.py` and
 
 Generated artifacts (the Medulla-contract-bound operation catalog under
 `arbora/api/registry/`, manifests with embedded digests, capability
-catalogs) are produced by their owning script from the pinned
-`epistemic-graph` wheel contract; never hand-edit a generated file. Re-run its
+catalogs) are produced by their owning script from the installed
+`medulla` engine's run-time method catalog; never hand-edit a generated file. Re-run its
 generator and commit the regenerated output in the same change as whatever
 made it stale. A curated `arbora/api/ops/<module>.py` operation whose
 required scope is not yet published by the installed EG contract stays

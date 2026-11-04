@@ -5,13 +5,13 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
-from agent_connector_sdk.current_plan import (
+from pydantic import ValidationError
+from scion_sdk.current_plan import (
     CurrentPlanRead,
     CurrentPlanRequest,
     CurrentPlanSnapshot,
     PlanItem,
 )
-from pydantic import ValidationError
 
 from arbora.api.ops import runs
 from arbora.api.ops.runs import (

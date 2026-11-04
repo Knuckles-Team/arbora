@@ -280,7 +280,7 @@ def persist_runtime_signals(engine: Any, signals: list[dict[str, Any]]) -> int:
 
     That single RPC is the point. The per-signal ``engine.add_node`` loop this replaces
     issued ONE RPC PER NODE, and each ``add_node`` is itself a one-operation
-    ``BatchUpdate`` round-trip (``EpistemicGraphBackend.add_node``). At the engine's ~1s
+    ``BatchUpdate`` round-trip (``MedullaBackend.add_node``). At the engine's ~1s
     fixed per-call overhead and a 512-deep drain buffer, one tick could cost ~512s of
     engine time on a tick scheduled every 180s — a background task capable of
     monopolizing the writer it is supposed to be observing. The batched form is O(1) RPCs
@@ -401,7 +401,7 @@ def _statement_executor(engine: Any) -> Any:
     """The engine surface that can run a ``:RuntimeSignal`` retention statement.
 
     ``engine.backend.execute`` FIRST, and that ordering is the entire bug fix.
-    ``EpistemicGraphBackend.execute`` classifies the statement and dispatches a write to
+    ``MedullaBackend.execute`` classifies the statement and dispatches a write to
     the engine's ``cypher_write`` wire mode; ``engine.query_cypher`` is a READ chokepoint
     that always calls ``execute_read`` (``kg:read`` scope, wire ``mode="read"``). The
     engine re-parses every statement and rejects a mode mismatch before execution

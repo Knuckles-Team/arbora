@@ -3,7 +3,7 @@
 Every ``*-mcp`` / ``agent-utilities-messaging`` Deployment in the ``apps``
 namespace hostPath-mounts this package's live source tree over its own
 ``/usr/local/lib/pythonX.Y/site-packages/agent_utilities`` -- the same
-editable-install pattern used for ``epistemic_graph`` and the per-service
+editable-install pattern used for ``medulla`` and the per-service
 ``<app>_mcp`` package (see ``services/*/k8s/manifests.yaml``). The mount
 target hardcodes ``pythonX.Y``. If the image's actual interpreter version
 ever drifts from the version encoded in that mount path, the mount lands on

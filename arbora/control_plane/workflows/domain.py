@@ -4,7 +4,7 @@ The workflow control plane is intentionally narrower than an execution
 runtime.  It owns stable identities, immutable DAG definitions, exact
 capability bindings, bounded budgets, and privacy-safe resolution summaries.
 It does *not* own claim, lease, retry, result, or completion state; those
-mutations belong to the native epistemic-graph ``WorkItem`` protocol.
+mutations belong to the native medulla ``WorkItem`` protocol.
 
 The models in this module are frozen and reject unknown fields.  Payloads,
 secrets, prompts, tool arguments, and results are not part of the contract:

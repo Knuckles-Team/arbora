@@ -48,7 +48,7 @@ class CompositionPlan:
         if self.messaging_intake_configured:
             names.append("messaging")
         if self.web_ui_enabled:
-            names.append("agent-webui")
+            names.append("overstory")
         return tuple(names)
 
 
@@ -81,7 +81,7 @@ def detect_composition(
     with the explicit flag it may enter intake, and the engine's per-channel
     WorkItem lease still admits exactly one poller per channel identity.
     """
-    from agent_connector_sdk.config import csv_values
+    from scion_sdk.config import csv_values
 
     from arbora.core.settings import runtime_config as config
     from arbora.core.settings import setting
@@ -323,5 +323,5 @@ def start_composed_services(
             if session_boundary is not None
             else run_web_ui
         )
-        supervisor.start_service("agent-webui", runner, session)
+        supervisor.start_service("overstory", runner, session)
     return supervisor

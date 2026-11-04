@@ -757,7 +757,7 @@ async def _analysis_action_process_writeback(
     raise not_served(
         "knowledge_graph.enrichment.writeback",
         "SCION-SOURCE-INGEST-R600",
-        owner="agent-connector-sdk",
+        owner="scion-sdk",
     )
 
 
@@ -864,7 +864,7 @@ async def _analysis_action_check_constraints(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'check_constraints'
-    from agent_utilities.harness.constraint_engine import (
+    from meristem.harness.constraint_engine import (
         ConstraintEngine,
     )
 
@@ -1062,7 +1062,7 @@ async def _analysis_action_epistemic_sync(
     # action(s): 'epistemic_sync'
     # The legacy Stardog-backed sync workflow this action drove was retired
     # along with the rest of the legacy SPARQL backend; external SPARQL
-    # federation is now owned by the epistemic-graph engine. The action name
+    # federation is now owned by the medulla engine. The action name
     # stays reachable/discoverable and answers with a typed, unambiguous
     # refusal instead of an import error.
     raise not_served("knowledge_graph.backends", "MEDULLA-PLACEMENT-R611")
@@ -1072,7 +1072,7 @@ async def _analysis_action_quant_banking(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'quant_banking'
-    raise not_served("domains.finance.banking", "SDK", owner="agent-connector-sdk")
+    raise not_served("domains.finance.banking", "SDK", owner="scion-sdk")
 
 
 async def _analysis_action_quant_arb(
@@ -1088,9 +1088,7 @@ async def _analysis_action_quant_crypto(
     engine, action, query, top_k, node_id, depth, target
 ):
     # action(s): 'quant_crypto'
-    raise not_served(
-        "domains.finance.crypto_connector", "SDK", owner="agent-connector-sdk"
-    )
+    raise not_served("domains.finance.crypto_connector", "SDK", owner="scion-sdk")
 
 
 async def _analysis_action_quant_microstructure(

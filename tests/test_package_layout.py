@@ -41,10 +41,7 @@ def test_mcp_network_listener_uses_sdk_hardened_serving_contract() -> None:
         Path(__file__).parents[1] / "arbora" / "mcp_server" / "server.py"
     ).read_text(encoding="utf-8")
 
-    assert (
-        "from agent_connector_sdk.mcp.network import build_network_serving_config"
-        in server
-    )
+    assert "from scion_sdk.mcp.network import build_network_serving_config" in server
     assert "network_serving.fastmcp_run_kwargs()" in server
     assert "mcp_network_run_kwargs" not in server
 

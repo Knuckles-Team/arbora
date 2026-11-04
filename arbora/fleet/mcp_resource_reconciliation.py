@@ -2,7 +2,7 @@
 
 ARBORA-MCP-RESOURCES-001 (R001.1): arbora does not maintain a second,
 process-local durability store for MCP tools/prompts/resources/resource
-templates. It only claims publication once epistemic-graph hands back a
+templates. It only claims publication once medulla hands back a
 ``ReconciliationReceipt`` acknowledging the exact candidate generation and
 digest for all four families. Until that receipt exists, is stale, or does
 not match the candidate, the gate returns the typed ``reingestion-unreconciled``
@@ -10,9 +10,9 @@ result documented in ``docs/status.md`` / ``docs/fleet.md`` — arbora never
 claims convergence it cannot prove.
 
 See ``specs/mcp-resource-publication-reconciliation/spec.md``; the
-reconciliation receipt itself is produced on the epistemic-graph side per
+reconciliation receipt itself is produced on the medulla side per
 ``MEDULLA-REPO-INGEST-001`` (``specs/repository-index-and-ingestion`` in
-epistemic-graph).
+medulla).
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ UnreconciledReason = Literal["missing", "stale", "invalid"]
 
 @dataclass(frozen=True, slots=True)
 class ReconciliationReceipt:
-    """The durable acknowledgement epistemic-graph hands back for one candidate.
+    """The durable acknowledgement medulla hands back for one candidate.
 
     ``acknowledged_families`` must cover exactly ``MCP_RESOURCE_FAMILIES``; a
     receipt that only covers a subset cannot certify the whole four-family set.

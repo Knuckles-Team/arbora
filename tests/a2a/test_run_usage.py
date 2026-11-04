@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from epistemic_graph.generated.models import RunWorkItemView
+from medulla.generated.models import RunWorkItemView
 
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.run_usage import project_run_usage

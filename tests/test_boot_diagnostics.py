@@ -23,7 +23,8 @@ def test_snapshot_is_bounded_and_excludes_process_payloads(monkeypatch, tmp_path
     recorder = diagnostics.BootDiagnostics(tmp_path, [child] * 100)
     result = recorder.snapshot()
     encoded = json.dumps(result)
-    assert private not in encoded and "123" not in encoded
+    # The pid must not be recorded; host disk counters may contain "123".
+    assert private not in encoded and "123" not in json.dumps(result["children"])
     assert len(result["children"]) == 5
     assert result["children"][0]["memory_kib"] == {"VmRSS": 42, "VmHWM": 99}
     assert result["children"][0]["state"] == "S"
@@ -142,6 +143,6 @@ def test_socket_wait_keeps_deadline_and_samples_before_unwind(monkeypatch, tmp_p
     monkeypatch.setattr(recorder, "snapshot", lambda: calls.append("snapshot") or {})
     with pytest.raises(AssertionError, match="timed out waiting") as caught:
         with recorder.phase("engine_socket"):
-            boot._wait(lambda: False, timeout=60, what="the epistemic-graph socket")
+            boot._wait(lambda: False, timeout=60, what="the medulla socket")
     assert calls == ["snapshot"]
     assert '"elapsed_ms":61000' in caught.value.__notes__[0]

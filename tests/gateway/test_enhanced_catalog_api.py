@@ -158,7 +158,7 @@ def test_tools_contract_joins_exact_authorities_and_counts(monkeypatch: Any) -> 
 
     assert response.status_code == 200
     body = response.json()
-    assert body["source"] == "epistemic_graph"
+    assert body["source"] == "medulla"
     assert body["counts"] == {
         "servers": 1,
         "tools": 1,
@@ -284,7 +284,7 @@ def test_route_module_has_no_webui_or_au_gateway_fallback() -> None:
     source = api.__file__
     assert source is not None
     text = __import__("pathlib").Path(source).read_text(encoding="utf-8")
-    assert "agent_webui" not in text
+    assert "overstory" not in text
     assert "agent_utilities.gateway" not in text
 
 

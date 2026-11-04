@@ -47,7 +47,7 @@ spec:
           resources:
             {{- toYaml .Values.engine.resources | nindent 12 }}
           volumeMounts:
-            - {name: engine-data, mountPath: /var/lib/epistemic-graph/data}
+            - {name: engine-data, mountPath: /var/lib/medulla/data}
             - {name: engine-tls, mountPath: /etc/arbora/engine-tls, readOnly: true}
             - {name: tmp, mountPath: /tmp}
       volumes:

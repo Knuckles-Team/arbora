@@ -2,7 +2,7 @@
 
 Arbora owns transport registration, routing, and its public action manifest. This
 module owns the RLM behavior and requires the caller to bind it to an injected,
-session-scoped epistemic-graph client before any operation can run.
+session-scoped medulla client before any operation can run.
 """
 
 from __future__ import annotations
@@ -123,12 +123,12 @@ class AgentControlPlane:
         signed_dispatch: SignedAgentDispatchPort | None = None,
     ) -> None:
         if eg_client is None:
-            raise ValueError("a session-routed epistemic-graph client is required")
+            raise ValueError("a session-routed medulla client is required")
         if not isinstance(session, GraphSession):
             raise TypeError("a verified GraphSession is required")
         use_verified_context = getattr(eg_client, "use_verified_context", None)
         if not callable(use_verified_context):
-            raise TypeError("the epistemic-graph client must support verified context")
+            raise TypeError("the medulla client must support verified context")
 
         self._eg_client = eg_client
         self._session = session
@@ -435,7 +435,7 @@ class AgentControlPlane:
             return self._failed_result(request, exc)
 
     async def _execute(self, request: GraphRlmRequest) -> GraphRlmResult:
-        from agent_utilities.rlm import run_rlm
+        from meristem.rlm import run_rlm
 
         outcome = await run_rlm(request.task, request.input_text)
         if outcome.get("ok"):

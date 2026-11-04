@@ -52,10 +52,10 @@ INTENTIONALLY_UNSKILLED: frozenset[str] = frozenset(
         # newly exposed, per the audit's explicit ordering. Their natural
         # wrapper is ``kg-modality-consensus`` (already wraps the sibling ADMIN
         # domains ``engine_consensus``/``engine_resharding``/``engine_tenants``),
-        # which ships from the ``epistemic-graph`` package/repo — out of this
+        # which ships from the ``medulla`` package/repo — out of this
         # worktree's scope to edit. Waived here rather than left silently
         # uncovered; follow-up: extend that skill's `wraps:` (or add a
-        # dedicated one) in the epistemic-graph repo.
+        # dedicated one) in the medulla repo.
         "engine_rbac",
         "engine_admin",
         # Seam 8 (CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse) intent verbs — arbora's

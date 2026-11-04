@@ -5,7 +5,7 @@ spawned agent instance, so a delegated/spawned agent stops running as one fixed 
 account and instead carries its real caller chain end to end:
 
 1. **Exchange** — RFC 8693 token exchange of the caller's token
-   (:func:`agent_utilities.host_ports.exchange_token_for_agent`, arbora-provided) → a delegated token
+   (:func:`meristem.host_ports.exchange_token_for_agent`, arbora-provided) → a delegated token
    whose logical actor chain appends ``agent:<name>``.
 2. **Envelope chain** — the engine envelope's *validated* ``delegation`` chain
    (``[principal, …, agent:<name>:<run_id>]``, principal-first / agent-last / len≥2), emitted

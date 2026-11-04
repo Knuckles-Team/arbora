@@ -297,7 +297,7 @@ class BrowserAuthApplication:
             _clear_cookie(response)
             return response
         try:
-            from agent_webui.rbac import resolve_webui_role
+            from overstory.rbac import resolve_webui_role
         except ImportError:
             raise IdentityUnavailable(
                 "WebUI presentation role contract unavailable"

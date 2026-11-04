@@ -18,11 +18,11 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 import msgpack
-from agent_utilities.runtime import AgentRunExecutor, RunPlan, RunRequest
-from epistemic_graph.client import EngineResponseError, EpistemicGraphClient
-from epistemic_graph.generated import coordination as native
-from epistemic_graph.generated import graph as native_graph
 from fastapi import FastAPI, Request
+from medulla.client import EngineResponseError, MedullaClient
+from medulla.generated import coordination as native
+from medulla.generated import graph as native_graph
+from meristem.runtime import AgentRunExecutor, RunPlan, RunRequest
 
 from .anonymous import AnonymousReadPolicy, AnonymousTaskReadOwner, _unique_object
 
@@ -65,12 +65,12 @@ class AnonymousTextService:
         *,
         mode: str,
         policy: AnonymousTextPolicy,
-        client: EpistemicGraphClient,
+        client: MedullaClient,
         plan: RunPlan,
     ) -> None:
         if mode != "none" or type(policy) is not AnonymousTextPolicy:
             raise ValueError("Explicit none mode required")
-        if type(client) is not EpistemicGraphClient or type(plan) is not RunPlan:
+        if type(client) is not MedullaClient or type(plan) is not RunPlan:
             raise ValueError("Exact native client and run plan required")
         if (
             plan.execution_constraint != "text-only"
@@ -313,7 +313,7 @@ class AnonymousTextService:
                 "subject_id": "anonymous",
                 "agent_id": "anonymous",
                 "tenant_id": "local",
-                "audience": "epistemic-graph",
+                "audience": "medulla",
                 "authentication_method": "none",
                 "policy_version": "no-auth",
                 "scopes": [],

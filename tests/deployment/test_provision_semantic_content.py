@@ -157,9 +157,7 @@ def wired(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
         "arbora.api.contracts.provisioning.get_action_policy",
         lambda _engine: AllowPolicy(),
     )
-    monkeypatch.setattr(
-        "agent_connector_sdk.sinks.epistemic_graph.EpistemicGraphSink", _Sink
-    )
+    monkeypatch.setattr("scion_sdk.sinks.medulla.MedullaSink", _Sink)
 
     async def verify(**kwargs: Any) -> None:
         from arbora.semantic_content import SemanticContentNotReadyError

@@ -1,4 +1,4 @@
-"""Focused contract tests for Arbora's direct epistemic-graph adapter."""
+"""Focused contract tests for Arbora's direct medulla adapter."""
 
 from __future__ import annotations
 
@@ -82,7 +82,7 @@ def context(*scopes: str, actor: Actor | None = None):
     return adapter.ClientContext.from_actor(
         actor or Actor(),
         tenant="tenant:a",
-        audience="epistemic-graph",
+        audience="medulla",
         scopes=scopes,
         policy_version="policy:1",
     )
@@ -95,7 +95,7 @@ def test_actor_translation_fails_closed() -> None:
         adapter.ClientContext.from_actor(
             Actor(),
             tenant="tenant:b",
-            audience="epistemic-graph",
+            audience="medulla",
             scopes=("graph:read",),
             policy_version="policy:1",
         )
@@ -114,7 +114,7 @@ def test_pool_reuses_one_client_per_graph_and_rebinds_context() -> None:
         second = adapter.ClientContext(
             principal="service:worker",
             tenant="tenant:a",
-            audience="epistemic-graph",
+            audience="medulla",
             agent_id="service:worker",
             roles=("worker",),
             scopes=("graph:read",),
@@ -145,7 +145,7 @@ def test_pool_rejects_cross_tenant_graph_reuse() -> None:
         other = adapter.ClientContext(
             principal="service:other",
             tenant="tenant:b",
-            audience="epistemic-graph",
+            audience="medulla",
             agent_id="service:other",
             roles=(),
             scopes=("graph:read",),

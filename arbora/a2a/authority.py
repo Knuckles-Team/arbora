@@ -11,7 +11,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any, Protocol, cast, runtime_checkable
 
-from agent_connector_sdk.privacy import persistence_reference
+from scion_sdk.privacy import persistence_reference
 
 from .models import (
     A2AArtifact,
@@ -766,7 +766,7 @@ class WorkItemA2AAuthority:
 
         session = self._session(scope)
         _engine, work_engine = self._engine()
-        from epistemic_graph import EngineResponseError
+        from medulla import EngineResponseError
 
         try:
             item = work_items.get_work_item(work_engine, self._work_item_id(task_id))
