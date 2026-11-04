@@ -284,7 +284,7 @@ class BoundOperationRuntime:
     ) -> Any:
         binding = op.binding
         if getattr(binding, "kind", None) == "eg":
-            from epistemic_graph import EngineResponseError
+            from medulla import EngineResponseError
 
             from arbora.api.errors import EngineRefusal
 

@@ -47,8 +47,8 @@ def compose_local(args: argparse.Namespace) -> Any:
     Completed text turns use bounded process-local Pydantic history. No disk
     history, engine, fleet or listener is started.
     """
-    from agent_utilities import host_ports
-    from agent_utilities.runtime import RunRequest, default_run_plan
+    from meristem import host_ports
+    from meristem.runtime import RunRequest, default_run_plan
 
     from arbora.api.contracts.session import SessionExpiredError
     from arbora.security.request_identity import mint_local_process_session

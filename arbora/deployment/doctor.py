@@ -305,15 +305,15 @@ def _check_python_env() -> dict[str, Any]:
     import sys
 
     try:
-        import agent_utilities
+        import meristem
 
-        ver = getattr(agent_utilities, "__version__", "unknown")
+        ver = getattr(meristem, "__version__", "unknown")
     except Exception as exc:  # noqa: BLE001
         return _result(
             "python_env",
             "fail",
-            f"agent_utilities not importable ({type(exc).__name__})",
-            remediation="pip install agent-utilities[all]",
+            f"meristem not importable ({type(exc).__name__})",
+            remediation="pip install meristem",
         )
     optional = _optional_extras_present()
     py_ok = sys.version_info >= (3, 10)
@@ -632,7 +632,7 @@ def _check_permission_governance() -> dict[str, Any]:
                 data=data,
             )
 
-        from agent_connector_sdk.credentials.runtime_references import (
+        from scion_sdk.credentials.runtime_references import (
             resolve_runtime_secret_reference,
         )
 
@@ -682,7 +682,7 @@ def _resolve_tls_profile_data() -> tuple[Any, Any, Any, dict[str, Any]]:
     resolver = None
     secrets_client = None
     if needs_resolver:
-        from agent_connector_sdk.credentials.runtime_references import (
+        from scion_sdk.credentials.runtime_references import (
             resolve_runtime_secret_reference,
         )
 
@@ -917,7 +917,7 @@ def _egress_tls_data(cfg: Any) -> tuple[dict[str, Any], bool]:
 def _check_source_egress() -> dict[str, Any]:
     """Report the shared SSRF/redirect/body boundary without exposing hosts."""
     try:
-        from agent_connector_sdk.source_connectors.http_safety import (
+        from scion_sdk.source_connectors.http_safety import (
             normalize_allowed_hosts,
         )
 
@@ -1008,7 +1008,7 @@ def _eunomia_require_bounded_endpoint(cfg: Any, private_hosts: Any) -> None:
     """Raise unless the remote PDP endpoint is present, allowlisted, and HTTPS."""
     from urllib.parse import urlsplit
 
-    from agent_connector_sdk.source_connectors.http_safety import (
+    from scion_sdk.source_connectors.http_safety import (
         require_safe_source_url,
     )
 
@@ -1080,7 +1080,7 @@ def _eunomia_remote_result(cfg: Any, private_hosts: Any) -> dict[str, Any]:
 def _check_eunomia() -> dict[str, Any]:
     """Validate the native policy-decision-point configuration without I/O."""
     try:
-        from agent_connector_sdk.source_connectors.http_safety import (
+        from scion_sdk.source_connectors.http_safety import (
             normalize_allowed_hosts,
         )
 
@@ -1583,7 +1583,7 @@ def _graph_identity_readiness(token_ref: str, oauth2: Any) -> tuple[str, bool]:
     Only the *reference* is resolved -- no token is minted and no resolved value
     ever leaves this function.
     """
-    from agent_connector_sdk.credentials.runtime_references import (
+    from scion_sdk.credentials.runtime_references import (
         resolve_runtime_secret_reference,
     )
 
@@ -1725,7 +1725,7 @@ def _fleet_alias_kind(alias: str, reference: Any) -> str:
     Any failure -- a missing projection, an unavailable reference, or control
     characters in either -- is ``unresolved``: the alias never counts as ready.
     """
-    from agent_connector_sdk.credentials.runtime_references import (
+    from scion_sdk.credentials.runtime_references import (
         resolve_runtime_secret_reference,
     )
 
@@ -2342,7 +2342,7 @@ def _doctor_arg_parser() -> Any:
         dest="components",
         action="append",
         default=None,
-        help="UI component to preflight (repeatable): agent-webui | geniusbot | agent-terminal-ui.",
+        help="UI component to preflight (repeatable): overstory | geniusbot | agent-terminal-ui.",
     )
     parser.add_argument(
         "--interactive",

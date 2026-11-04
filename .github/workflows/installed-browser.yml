@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: Knuckles-Team/overstory
-          ref: f9a1b6b2bb46d558aac3ebf5420f11d07945f9b8
+          ref: bb3314275c429212328d7ac19cb5619a0b3c610f
           path: candidate-overstory
           persist-credentials: false
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
@@ -64,8 +64,8 @@ jobs:
           set -euo pipefail
           uv venv --python 3.14 "$RUNNER_TEMP/browser-env"
           py="$RUNNER_TEMP/browser-env/bin/python"
-          uv export --frozen --no-emit-project --no-emit-package agent-webui --no-dev \
-            --extra webui --extra test --extra acp --extra vault \
+          uv export --frozen --no-emit-project --no-emit-package overstory --no-dev \
+            --extra overstory --extra test --extra acp --extra vault \
             --format requirements.txt --output-file "$RUNNER_TEMP/browser-locked.txt"
           uv pip install --no-config --python "$py" --require-hashes --no-deps --only-binary :all: \
             --index-url https://pypi.org/simple -r "$RUNNER_TEMP/browser-locked.txt"
@@ -90,7 +90,7 @@ jobs:
           cp tests/qualification/browser/browser_login.mjs candidate-overstory/browser_login.mjs
           cp tests/qualification/browser/browser_cdp.mjs candidate-overstory/browser_cdp.mjs
           cp tests/qualification/browser/browser_csrf.mjs candidate-overstory/browser_csrf.mjs
-          "$py" -I -c 'import arbora,agent_webui,epistemic_graph,sys; from pathlib import Path; root=Path(sys.prefix).resolve(); assert all(root in Path(m.__file__).resolve().parents for m in (arbora,agent_webui,epistemic_graph)); dist=Path(agent_webui.__file__).parent/"dist"; assert (dist/"index.html").is_file() and list((dist/"assets").glob("*.js"))'
+          "$py" -I -c 'import arbora,overstory,medulla,sys; from pathlib import Path; root=Path(sys.prefix).resolve(); assert all(root in Path(m.__file__).resolve().parents for m in (arbora,overstory,medulla)); dist=Path(overstory.__file__).parent/"dist"; assert (dist/"index.html").is_file() and list((dist/"assets").glob("*.js"))'
       - name: Fetch checksum-pinned disposable Vault tool
         shell: bash
         run: |
@@ -108,7 +108,7 @@ jobs:
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
           PYTEST_ADDOPTS: ''
           QUALIFICATION_ARBORA_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
-          QUALIFICATION_OVERSTORY_COMMIT: f9a1b6b2bb46d558aac3ebf5420f11d07945f9b8
+          QUALIFICATION_OVERSTORY_COMMIT: bb3314275c429212328d7ac19cb5619a0b3c610f
           QUALIFICATION_VAULT_BINARY: ${{ runner.temp }}/browser-bin/vault
           QUALIFICATION_BROWSER_SCRIPT: ${{ github.workspace }}/candidate-overstory/browser-qualification.mjs
           QUALIFICATION_OUTPUT: ${{ runner.temp }}/browser-public

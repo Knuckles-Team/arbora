@@ -278,7 +278,7 @@ def _correlation_stamp() -> dict[str, str]:
 
 def persist_event(engine: Any, event: FleetEvent) -> str:
     """Write the event as a ``FleetEvent`` KG node; returns the node id."""
-    from agent_connector_sdk.privacy import persistence_reference
+    from scion_sdk.privacy import persistence_reference
 
     event_id = f"fleet_event:{uuid.uuid4().hex}"
     source_type = _source_type(event.source)

@@ -160,8 +160,8 @@ class ArdFederationRelay:
 
     def _post(self, url: str, body: dict) -> list[dict]:
         try:
-            from agent_connector_sdk.http.client import create_http_client
-            from agent_connector_sdk.http.options import HttpClientOptions
+            from scion_sdk.http.client import create_http_client
+            from scion_sdk.http.options import HttpClientOptions
 
             options = HttpClientOptions(base_url=url, timeout=_PEER_TIMEOUT_S)
             with create_http_client(options) as client:

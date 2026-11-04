@@ -21,8 +21,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from agent_connector_sdk.privacy import PersistencePrivacyGuard
-from agent_connector_sdk.privacy_reference import persistence_reference
+from scion_sdk.privacy import PersistencePrivacyGuard
+from scion_sdk.privacy_reference import persistence_reference
 
 from arbora.unique_records import create_record
 

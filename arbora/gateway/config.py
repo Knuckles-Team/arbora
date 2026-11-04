@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from agent_utilities.core.paths import data_dir
+from meristem.core.paths import data_dir
 
 from arbora.core.settings import config_dir, mcp_config_path, setting
 from arbora.gateway.models import (

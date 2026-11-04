@@ -57,7 +57,7 @@ from arbora.api.registry import (
 
 #: The engine release that serves ``TaskPlan``. Arbora's floor moves to it once
 #: it is on PyPI (ARBORA-RELEASE-R003.4.3).
-TASK_PLAN_ENGINE_RELEASE = "epistemic-graph>=2.27.5"
+TASK_PLAN_ENGINE_RELEASE = "medulla>=2.27.5"
 TASK_PLAN_QUESTION_ID = "arbora.agents.plan_run"
 #: How long a published plan snapshot stays current.
 PLAN_SNAPSHOT_TTL_MS = 3_600_000
@@ -143,8 +143,8 @@ def engine_task_plan(client: Any, graph: str | None = None) -> TaskPlanEngine:
     try:
         # Resolved by name: the pinned engine floor predates TaskPlan until
         # ARBORA-RELEASE-R003.4.3 raises it, and this is the refusal point.
-        facade = importlib.import_module("epistemic_graph.decision_client")
-        senders = importlib.import_module("epistemic_graph.generated.coordination")
+        facade = importlib.import_module("medulla.decision_client")
+        senders = importlib.import_module("medulla.generated.coordination")
         DecisionClient = facade.DecisionClient
         task_plan_request = facade.task_plan_request
         verify_task_plan_receipt = facade.verify_task_plan_receipt
@@ -261,7 +261,7 @@ def _validated_publish_receipt(receipt: Any, lease: WorkItemLease) -> dict[str, 
 
 def run_plan_for(plan: Mapping[str, Any], model: Any, toolsets: tuple = ()) -> Any:
     """The harness ``RunPlan`` for an engine plan: same tasks, edges and limits."""
-    from agent_utilities.graph import (
+    from meristem.graph import (
         DependencyPlan,
         RunBudget,
         RunPlan,
@@ -475,7 +475,7 @@ async def execute_task_plan(
     fleet: FleetStepTools | None = None,
 ) -> dict[str, Any]:
     """Run the plan in the harness and collect every task's terminal result."""
-    from agent_utilities.graph import RunRequest, iterate_run
+    from meristem.graph import RunRequest, iterate_run
 
     request = RunRequest(task=plan["output_task_id"], run_id=run_id)
     tasks: dict[str, dict[str, Any]] = {}
@@ -761,7 +761,7 @@ async def _commit_native_plan_run(
     error: bool = False,
 ) -> str:
     """Commit exactly one native terminal outcome under the returned fence."""
-    from agent_connector_sdk.privacy import persistence_reference
+    from scion_sdk.privacy import persistence_reference
 
     import arbora.work_items as work_items
     from arbora.api.contracts.session import use_session
@@ -848,7 +848,7 @@ async def _publish_and_execute_native_plan(
     from arbora.mcp_server import task_plan_runtime
 
     try:
-        eg = import_module("epistemic_graph.generated.coordination")
+        eg = import_module("medulla.generated.coordination")
     except (ImportError, AttributeError) as exc:
         raise OperationRefused(
             "UPGRADE_REQUIRED", {"capability": "admitted_task_plan_runtime"}

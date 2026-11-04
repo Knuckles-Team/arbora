@@ -227,7 +227,7 @@ class A2APushNotificationAuthority(Protocol):
 class A2ATransitionHistoryAuthority(Protocol):
     """Durable, append-only WorkItem transition-history authority.
 
-    Owned by epistemic-graph, not Arbora; see ARBORA-A2A-R011.
+    Owned by medulla, not Arbora; see ARBORA-A2A-R011.
     """
 
     def transition_history(self, task_id: str) -> Any: ...

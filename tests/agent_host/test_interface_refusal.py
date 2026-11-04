@@ -30,7 +30,7 @@ def test_unavailable_interfaces_refuse_before_build_or_listen(
     serve = Mock(side_effect=AssertionError("listener must not start"))
     monkeypatch.setattr(host, "build_agent_host_app", build)
     monkeypatch.setattr(uvicorn, "run", serve)
-    runtime = ModuleType("agent_utilities.graph")
+    runtime = ModuleType("meristem.graph")
     constructors = {}
     for name in ("create_graph_agent", "initialize_graph_from_workspace"):
         constructor = Mock(
@@ -38,7 +38,7 @@ def test_unavailable_interfaces_refuse_before_build_or_listen(
         )
         setattr(runtime, name, constructor)
         constructors[name] = constructor
-    monkeypatch.setitem(sys.modules, "agent_utilities.graph", runtime)
+    monkeypatch.setitem(sys.modules, "meristem.graph", runtime)
     construction_args: dict[str, dict[str, Any]] = {
         "provided": {"graph": object(), "graph_config": {}},
         "workspace": {"workspace": "untrusted-workspace"},

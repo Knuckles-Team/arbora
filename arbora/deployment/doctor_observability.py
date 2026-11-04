@@ -16,7 +16,7 @@ def _require_observability_imports() -> None:
     dependency before deciding anything: a broken install must still report
     ``error``, never a ``skip``/``fail`` derived from half a stack.
     """
-    from agent_connector_sdk.credentials.runtime_references import (  # noqa: F401
+    from scion_sdk.credentials.runtime_references import (  # noqa: F401
         resolve_runtime_secret_reference,
     )
 
@@ -96,7 +96,7 @@ def _otel_data(cfg: Any, posture: SimpleNamespace, metrics: Any) -> dict[str, An
 
 def _otel_prove_credentials(cfg: Any, posture: SimpleNamespace) -> None:
     """Resolve the reference tier actually in use; raises when it is unavailable."""
-    from agent_connector_sdk.credentials.runtime_references import (
+    from scion_sdk.credentials.runtime_references import (
         resolve_runtime_secret_reference,
     )
 

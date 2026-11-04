@@ -368,7 +368,7 @@ class RotatingFileBearerAuth(httpx.Auth):
                 # This module's logger is fastmcp.MultiplexerClientAuth, OUTSIDE
                 # the agent_utilities.* privacy boundary installed by
                 # agent_utilities/core/log_privacy.py (only loggers named
-                # "agent_utilities"/"agent_utilities.*" get their record
+                # "meristem"/"agent_utilities.*" get their record
                 # sanitized) — so the path and exception text are redacted by
                 # hand here, matching the established convention at
                 # arbora/fleet/child_resilience/py.

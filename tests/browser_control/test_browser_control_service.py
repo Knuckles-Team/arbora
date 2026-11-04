@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-from agent_connector_sdk.privacy import persistence_reference
+from scion_sdk.privacy import persistence_reference
 
 from arbora.api.contracts.session import GraphSession, use_session
 from arbora.browser_control.browser_control_api import (
@@ -341,7 +341,7 @@ def _tool(
         else object_output
     )
     return BrowserToolDescriptor(
-        tool_id="agent-webui.navigate" if mutation else "agent-webui.get-page-context",
+        tool_id="overstory.navigate" if mutation else "overstory.get-page-context",
         version="1.0.0",
         input_schema=input_schema,
         output_schema=output_schema,
@@ -353,7 +353,7 @@ def _tool(
         if mutation
         else ConfirmationPolicy.NONE,
         required_roles=("user",),
-        source_ref="agent-webui:src/lib/webmcp/tools.ts",
+        source_ref="overstory:src/lib/webmcp/tools.ts",
     )
 
 
@@ -428,7 +428,7 @@ async def _setup(
 
 
 def test_factory_implements_the_real_webui_port_protocol() -> None:
-    from agent_webui.browser_control import browser_control_port_enabled
+    from overstory.browser_control import browser_control_port_enabled
 
     def app_factory(*, browser_control: Any = None) -> Any:
         return browser_control

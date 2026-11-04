@@ -3,7 +3,7 @@
 CONCEPT:MERISTEM-KG.query.raw-python — SQL over the KG (read path)
 CONCEPT:MERISTEM-ECO.mcp.full-api-mcp-surface — one action core, two surfaces
 
-The webui catalog browser (``agent-webui`` ``TableExplorerView``) needs the
+The webui catalog browser (``overstory`` ``TableExplorerView``) needs the
 ``catalogs → tables/views → columns`` projection that ``psql``'s ``\\d`` shows.
 Until now the browser could reach *no* route that touches ``information_schema``
 at all, so it rendered its "capability not yet activated" state forever
@@ -30,7 +30,7 @@ action — so the REST route added in :mod:`arbora.gateway.graph_api` and
 the MCP surface execute the same code, under the same session/RLS enforcement,
 with no second implementation to drift.
 
-Engine fidelity (verified against ``epistemic-graph``
+Engine fidelity (verified against ``medulla``
 ``crates/eg-query/src/sql/catalog.rs``, read 2026-08-27) — reported honestly in
 the response's ``capabilities`` block rather than fabricated:
 

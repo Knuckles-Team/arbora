@@ -1,8 +1,8 @@
-"""Gate G-26 (arbora): the MCP surface arbora serves is wired to epistemic-graph.
+"""Gate G-26 (arbora): the MCP surface arbora serves is wired to medulla.
 
 Formerly an agent-utilities certification gate; arbora serves the MCP intent
 and engine surfaces, so it proves here that what it serves resolves to the
-methods the installed epistemic-graph client actually exposes.
+methods the installed medulla client actually exposes.
 """
 
 from __future__ import annotations
@@ -12,9 +12,9 @@ from typing import Any
 
 import pytest
 
-pytest.importorskip("epistemic_graph")
+pytest.importorskip("medulla")
 
-from epistemic_graph import client as eg_client  # noqa: E402
+from medulla import client as eg_client  # noqa: E402
 
 from arbora.mcp_server.backing.tools import engine_tools, query_tools  # noqa: E402
 
@@ -37,7 +37,7 @@ def test_every_served_engine_method_is_an_eg_coroutine():
         cls = getattr(eg_client, engine_tools._DOMAIN_CLASSES[domain])
         for method in methods:
             assert inspect.iscoroutinefunction(getattr(cls, method)), (
-                f"engine_{domain}.{method} is not served by epistemic-graph"
+                f"engine_{domain}.{method} is not served by medulla"
             )
 
 
@@ -54,7 +54,7 @@ def test_query_uql_dispatches_to_the_engine_uql_method():
         callable(getattr(getattr(eg_client, name), "uql", None))
         for name in dir(eg_client)
         if name.endswith("Client") and inspect.isclass(getattr(eg_client, name))
-    ), "installed epistemic-graph exposes no Uql method"
+    ), "installed medulla exposes no Uql method"
     rows = query_tools._run_graph_query_uql_rows(
         "MATCH (n) RETURN n LIMIT 1", _Engine()
     )

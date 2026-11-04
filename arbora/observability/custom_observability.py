@@ -58,7 +58,7 @@ from importlib.util import find_spec
 from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlparse
 
-from agent_connector_sdk.privacy_reference import persistence_reference
+from scion_sdk.privacy_reference import persistence_reference
 
 from arbora.core.settings import setting
 from arbora.observability.langfuse_trust import resolve_langfuse_host
@@ -294,7 +294,7 @@ def _resolve_otel_auth_value(
     secret_key: str | None,
 ) -> str:
     """Resolve the auth header value from the (validated) explicit sources, in priority order."""
-    from agent_connector_sdk.credentials.runtime_references import (
+    from scion_sdk.credentials.runtime_references import (
         resolve_runtime_secret_reference,
     )
 
@@ -368,7 +368,7 @@ def _resolve_otel_headers(
 def _resolve_otel_transport(endpoint: str) -> Any:
     """Resolve the purpose-specific TLS profile for the selected collector."""
 
-    from agent_connector_sdk.tls.resolve import resolve_tls_profile
+    from scion_sdk.tls.resolve import resolve_tls_profile
 
     same_langfuse_origin = _same_origin(endpoint, resolve_langfuse_host())
     profile_name = str(setting("OTEL_TLS_PROFILE", "") or "")

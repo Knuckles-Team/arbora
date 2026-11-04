@@ -2,13 +2,13 @@
 
 CONCEPT:MERISTEM-OS.config.gateway-service-dashboard — Gateway Service Dashboard
 
-agent-webui commit ``08ab4ea`` removed its own ``/api/dashboard`` mount and the
+overstory commit ``08ab4ea`` removed its own ``/api/dashboard`` mount and the
 ``/ws/dashboard`` stream so Arbora could own them through the application
 composer. Arbora never registered them, so the browser received 404 for the
 REST reads and a bare 403 for the unmatched WebSocket handshake.
 
 This module ports the agent-utilities ``gateway/api.py`` dashboard router and
-the agent-webui WebSocket handler onto Arbora's own gateway aggregator,
+the overstory WebSocket handler onto Arbora's own gateway aggregator,
 registry and daemon. :func:`register_dashboard_routes` mounts both from
 :func:`arbora.gateway.graph_api.register_graph_routes`, so the routes share
 the identity middleware and the WebUI authorization middleware that guard

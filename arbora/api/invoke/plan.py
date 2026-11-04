@@ -1,4 +1,4 @@
-"""Ten-minute, single-use confirmation leases held by epistemic-graph."""
+"""Ten-minute, single-use confirmation leases held by medulla."""
 
 from __future__ import annotations
 

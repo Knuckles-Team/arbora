@@ -972,7 +972,7 @@ class EvidenceBundle(BaseModel):
         return cls(**fields)
 
     # ------------------------------------------------------------------
-    # Engine wire (the epistemic-graph engine's KnowledgeSet/EvidenceBundle, D11)
+    # Engine wire (the medulla engine's KnowledgeSet/EvidenceBundle, D11)
     # ------------------------------------------------------------------
     @classmethod
     def from_engine_wire(cls, ws: dict[str, Any]) -> EvidenceBundle:

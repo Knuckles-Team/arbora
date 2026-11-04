@@ -1,4 +1,4 @@
-"""Internal connection contract behind agent-webui's BrowserControlPort."""
+"""Internal connection contract behind overstory's BrowserControlPort."""
 
 from __future__ import annotations
 

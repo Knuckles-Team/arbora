@@ -1,10 +1,10 @@
-"""Single-instance spawn guard for the local epistemic-graph engine.
+"""Single-instance spawn guard for the local medulla engine.
 
 companion to :mod:`host_lock`. The host-lock elects ONE
 *daemon* owner; this elects ONE *engine* process per socket path.
 
 Engine autostart (``graph_compute`` connect → ``subprocess.Popen`` of
-``epistemic-graph-server``) was previously unguarded: any process that found the
+``medulla-server``) was previously unguarded: any process that found the
 engine down would spawn one, with no mutual exclusion. Two spawners racing — or a
 client spawning while a displaced-but-alive engine still held an unlinked socket —
 produced a **split-brain**: two engines bound to the same socket path,
@@ -48,7 +48,7 @@ from arbora.deployment.file_lock import (
 logger = logging.getLogger(__name__)
 
 # Default socket if a caller passes None (matches host_lock's default).
-_DEFAULT_SOCKET = "/tmp/epistemic-graph.sock"  # nosec B108 — default UDS path, overridable
+_DEFAULT_SOCKET = "/tmp/medulla.sock"  # nosec B108 — default UDS path, overridable
 
 # How long to wait for the spawn guard before giving up and proceeding without it
 # (a slow peer spawn should never wedge a connect forever).

@@ -6,8 +6,8 @@ import sys
 from dataclasses import replace
 from datetime import timedelta
 
-from agent_utilities import host_ports
-from agent_utilities.runtime import RunPlan
+from meristem import host_ports
+from meristem.runtime import RunPlan
 from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 
 from arbora.acp import HostedACPAgent, serve_acp_stdio

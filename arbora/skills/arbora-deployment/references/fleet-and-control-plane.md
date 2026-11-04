@@ -76,7 +76,7 @@ insufficient-scope identities; caches must key on tenant and policy version.
 - arbora's service identity holding the four capacity scopes
   (`capacity:throttle|admin|lease|read`, exact, no wildcard);
 - a principal-scoped lease-kind allowlist
-  (`EPISTEMIC_GRAPH_CONTROL_LEASE_KIND_POLICY_JSON`) restricting which lease
+  (`MEDULLA_CONTROL_LEASE_KIND_POLICY_JSON`) restricting which lease
   kinds arbora's own identity may write; today arbora's lease writes are
   not kind-restricted.
 

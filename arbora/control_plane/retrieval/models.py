@@ -2,7 +2,7 @@
 
 The retrieval control plane deliberately stores identities, digests, and
 authority references only.  Source content is held by an artifact authority;
-vectors are held by the epistemic-graph engine.  This module never accepts
+vectors are held by the medulla engine.  This module never accepts
 inline document text, query text, vectors, prompts, secrets, or results.
 """
 

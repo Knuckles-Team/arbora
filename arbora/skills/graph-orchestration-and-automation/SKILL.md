@@ -40,7 +40,7 @@ avoid expressing its acceptance criteria.
 | `graph_broker` | `declare_exchange` (+`exchange_type`), `declare_queue`, `bind` (`queue`+`exchange`[+`routing_key`]), `publish` (`exchange`+`routing_key`+`payload`), `consume` (+`max_messages`/`ack` via `params_json`), `stats`/`list_queues`/`list_exchanges` | the engine's AMQP-style message broker (exchanges + queues + streams), distinct from the agent-to-agent bus and from the modality-tier `engine_broker` |
 | `graph_reach` | `reach_user` (`text`[+`user_id`] → the user's last-active channel, else the configured default), `send` (explicit `platform`+`channel_id`+`text`), `list_channels` (`platform`), `last_channel` ([`user_id`]), `status` | outbound messages to the human user; every send is governed by the ActionPolicy gate and mirrored into conversational memory |
 | `graph_a2a` | `card`, `send` (`message`[+`idempotency_key`]), `get` (`task_id`), `list` (`cursor`, `limit`), `cancel` (`task_id`) | governed unary A2A tasks; streaming and push are not supported |
-| `browser_control` | `issue_lease`, `execute_call`, `cancel_call`, `reconcile_call`, `revoke_lease` (each with its exact `payload`) | drive an attended agent-webui document under a arbora lease |
+| `browser_control` | `issue_lease`, `execute_call`, `cancel_call`, `reconcile_call`, `revoke_lease` (each with its exact `payload`) | drive an attended overstory document under a arbora lease |
 
 ### Cold-start delegation (KG-driven router)
 
@@ -53,7 +53,7 @@ auto-hydrate before delegating rather than failing:
 2. **Hydrate** (only if cold): ingest every discoverable `mcp_config*.json` (scan known IDE
    paths — Antigravity, XDG meristem, Windsurf, Claude Code, Devin — dedupe
    by `command`+`args`) and the skill directories via `graph_ingest(action="agent_toolkit",
-   target_path='["<path1>", ...]')`. The epistemic-graph backend MERGE-deduplicates
+   target_path='["<path1>", ...]')`. The medulla backend MERGE-deduplicates
    `Server` ids natively, so re-hydration is idempotent.
 3. **Delegate** via `graph_orchestrate` in one of three modes: **`execute_agent`**
    (single-server, prompt-based — the default), **`execute_workflow`** (a pre-compiled

@@ -19,7 +19,7 @@ from importlib.resources import files
 from types import MappingProxyType
 from typing import Any
 
-from agent_connector_sdk.privacy import sanitize_for_persistence
+from scion_sdk.privacy import sanitize_for_persistence
 
 from arbora.security.actor_context import ActorContext, current_actor
 from arbora.security.operation_result import OperationError, OperationResult
@@ -74,7 +74,7 @@ _ENGINE_DEGRADED_TYPE_NAMES = frozenset(
 def _engine_error_codes() -> frozenset[str]:
     """Read the installed engine's generated refusal vocabulary, never a copy."""
     contract = json.loads(
-        files("epistemic_graph.contract").joinpath("errors.json").read_text("utf-8")
+        files("medulla.contract").joinpath("errors.json").read_text("utf-8")
     )
     return frozenset(
         item["code"] for item in contract["errors"] if isinstance(item["code"], str)
@@ -111,7 +111,7 @@ def _is_engine_degraded(exc: BaseException) -> bool:
        vocabulary (:mod:`agent_utilities.knowledge_graph.core.engine_breaker`)
        — anything that trips the breaker is, by definition, this condition.
     2. The native-Cypher sanitization boundary's ``CypherEngineError``
-       (:mod:`agent_utilities.knowledge_graph.backends.epistemic_graph_backend`),
+       (:mod:`agent_utilities.knowledge_graph.backends.medulla_backend`),
        which wraps ``from None`` — deliberately discarding
        ``__cause__``/``__context__`` so the original query/connection detail
        never crosses the boundary — but preserves the ORIGINAL exception's
@@ -191,8 +191,8 @@ _FAILING_LAYER_PREFIXES: tuple[tuple[str, str], ...] = (
     ("arbora.api", "api"),
     ("arbora.observability", "observability"),
     ("arbora", "arbora"),
-    ("agent_connector_sdk", "sdk"),
-    ("epistemic_graph", "engine"),
+    ("scion_sdk", "sdk"),
+    ("medulla", "engine"),
 )
 
 #: Bounded, process-local, in-memory store of sanitized failure detail keyed by
@@ -303,7 +303,7 @@ def _record_error_detail(
     The full exception chain (``__cause__``/``__context__``) is rendered via
     :func:`traceback.format_exception` — so a wrapped/re-raised failure keeps
     its real origin — then sanitized through the SAME persistence privacy gate
-    (:mod:`agent_connector_sdk.privacy`) used for any other
+    (:mod:`scion_sdk.privacy`) used for any other
     payload crossing a persistence/telemetry boundary, before it ever enters
     this process-local store. The recording actor's ``tenant_id`` is captured
     alongside it so :func:`resolve_error_detail_for_actor` can enforce that

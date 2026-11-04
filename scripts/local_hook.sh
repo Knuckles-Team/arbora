@@ -41,9 +41,9 @@ case "$gate" in
     ;;
   pytest)
     require_synced_env
-    # The published epistemic-graph wheel carries the numeric kernel.
-    .venv/bin/python -c "import epistemic_graph.numeric" 2>/dev/null \
-      || unavailable "the locked epistemic-graph wheel is not installed"
+    # The published medulla wheel carries the numeric kernel.
+    .venv/bin/python -c "import medulla.numeric" 2>/dev/null \
+      || unavailable "the locked medulla wheel is not installed"
     # The full suite (no explicit paths) runs on six xdist workers: about 3.5
     # minutes instead of 14 on a ten-core runner, inside the pull-request cap.
     if [ "$#" -eq 0 ]; then

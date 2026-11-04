@@ -100,7 +100,7 @@ Requires Python 3.12–3.14 and [`uv`](https://docs.astral.sh/uv/). Install the
 bundled runtime and generate the local profile:
 
 ```bash
-uv tool install "arbora[webui]"
+uv tool install "arbora[overstory]"
 setup-config generate --profile tiny
 setup-config doctor --profile tiny
 ```

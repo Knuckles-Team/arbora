@@ -4,7 +4,7 @@
 
 ### Removed
 - `AGENT_UTILITIES_TOKEN_SECRET` and `AGENT_UTILITIES_MCP_TASK_CHANNEL_SECRET` are no longer read. Set `ARBORA_TOKEN_SECRET` and `ARBORA_MCP_TASK_CHANNEL_SECRET` instead; the secret values are unchanged.
-- The Codex registration test that imported the removed `agent_connector_sdk` is deleted.
+- The Codex registration test that imported the removed `scion_sdk` is deleted.
 
 ### Changed
 - Genesis environments and fleet child processes set `ARBORA_DATA_DIR` and `ARBORA_CACHE_DIR` in place of `AGENT_UTILITIES_DATA_DIR` and `AGENT_UTILITIES_CACHE_DIR`, matching meristem's `ARBORA_*_DIR` directory overrides.
@@ -23,7 +23,7 @@
 ## [0.1.8.dev6] - 2026-10-29
 
 - Fleet catalog engine reads run under the Arbora process authority, so operator callers see the admitted fleet and `fleet.call` resolves its tools (ARBORA-FLEET-R026.2).
-- Depends on medulla, meristem and scion-sdk 0.5.9 in place of epistemic-graph, agent-utilities and agent-connector-sdk.
+- Depends on medulla, meristem and scion-sdk 0.5.9 in place of medulla, agent-utilities and scion-sdk.
 
 ## [0.1.8.dev5] - 2026-10-25
 
@@ -31,7 +31,7 @@
 
 Fixes the gaps found by the 0.1.8.dev3 validation run.
 
-- Requires agent-connector-sdk 0.5.5, which declares edges on declared sources (ARBORA-FLEET-R041.15).
+- Requires scion-sdk 0.5.5, which declares edges on declared sources (ARBORA-FLEET-R041.15).
 - A destructive `fleet.call` under a confirmed plan answers the connector's confirmation request, so the delete runs. An unconfirmed call still fails closed (ARBORA-FLEET-R015.2).
 - `agents.plan_run` has a replay owner and reaches dispatch. Its step keys `plan-step:<record>:<task>:<idx>` derive from the run's own idempotency key, so a replay repeats no step effect (ARBORA-RELEASE-R003.4.11).
 - `fleet.packs.status` reads a connector's engine pack status as a read (ARBORA-FLEET-R041.16).
@@ -45,10 +45,10 @@ Fixes the gaps found by the 0.1.8.dev3 validation run.
 
 Pre-release for the validation deploy.
 
-- Requires epistemic-graph 2.27.6 (and its server 2.27.6), agent-connector-sdk 0.5.4 and, for the `webui` extra, agent-webui 2.8.2.
+- Requires medulla 2.27.6 (and its server 2.27.6), scion-sdk 0.5.4 and, for the `webui` extra, agent-webui 2.8.2.
 - `agents.plan_run` steps call named governed fleet tools through the invoke pipeline, with the idempotency key `plan-step:<record>:<task>:<idx>` (ARBORA-RELEASE-R003.4.5).
 - The version configuration parses `.devN` pre-release versions, so the documented bump command works on a pre-release.
-- Requires the agent-connector-sdk connector resources cutover. Onboarding reads the connector resources declaration over MCP. Change detection uses content digests and `list_changed`. No manifest file is read (ARBORA-FLEET-R041.11, ARBORA-FLEET-R041.13, ARBORA-FLEET-R041.14).
+- Requires the scion-sdk connector resources cutover. Onboarding reads the connector resources declaration over MCP. Change detection uses content digests and `list_changed`. No manifest file is read (ARBORA-FLEET-R041.11, ARBORA-FLEET-R041.13, ARBORA-FLEET-R041.14).
 
 ## [0.1.8.dev2] - 2026-10-23
 
@@ -60,7 +60,7 @@ Pre-release for the validation deploy.
 
 Pre-release for acceptance on the fresh-store `platform/arbora-prerelease` Deployment.
 
-- Requires epistemic-graph 2.27.5. Connector sources declared by a connector list, sync through the SDK sync runner as a WorkItem, and land in EG (ARBORA-OPS-R020.6).
+- Requires medulla 2.27.5. Connector sources declared by a connector list, sync through the SDK sync runner as a WorkItem, and land in EG (ARBORA-OPS-R020.6).
 - `ask` no longer routes a plain question to an operation that needs a missing parameter. It falls back to the engine natural-language planner (ARBORA-FLEET-R014.1).
 - Catalog, lineage and source questions route through `ask` to the engine planner, and a governed source executor serves virtual-graph reads (#432).
 - A connector onboards when its MCP handshake completes (#433).
@@ -156,7 +156,7 @@ Pre-release for acceptance on the fresh-store `platform/arbora-prerelease` Deplo
   installs the wheel into a clean venv outside the source tree. There it builds
   the full operation registry and runs `arbora --help` and `--version`. The Linux x64 leg
   also runs `tests/test_real_boot.py` against the installed wheel and the
-  `epistemic-graph-server` binary.
+  `medulla-server` binary.
 - `ArboraConfig()` accepts JSON-encoded list and mapping text from the
   environment and `config.json`. List settings still accept comma-separated
   text. Empty text is an unset setting.

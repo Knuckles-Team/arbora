@@ -179,7 +179,7 @@ def _graph_writeback_proposals() -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
         "SCION-SOURCE-INGEST-R600",
-        owner="agent-connector-sdk",
+        owner="scion-sdk",
     )
 
 
@@ -187,7 +187,7 @@ def _graph_writeback_approve(proposal_id: str, ctx: _WritebackCtx) -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
         "SCION-SOURCE-INGEST-R600",
-        owner="agent-connector-sdk",
+        owner="scion-sdk",
     )
 
 
@@ -195,7 +195,7 @@ def _graph_writeback_asset_mirror(ctx: _WritebackCtx) -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
         "SCION-SOURCE-INGEST-R600",
-        owner="agent-connector-sdk",
+        owner="scion-sdk",
     )
 
 
@@ -203,7 +203,7 @@ def _graph_writeback_inventory(ctx: _WritebackCtx) -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
         "SCION-SOURCE-INGEST-R600",
-        owner="agent-connector-sdk",
+        owner="scion-sdk",
     )
 
 
@@ -211,7 +211,7 @@ def _graph_writeback_findings(ctx: _WritebackCtx, creations_json: str) -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
         "SCION-SOURCE-INGEST-R600",
-        owner="agent-connector-sdk",
+        owner="scion-sdk",
     )
 
 
@@ -226,7 +226,7 @@ def _graph_writeback_default(
     raise not_served(
         "knowledge_graph.enrichment.writeback",
         "SCION-SOURCE-INGEST-R600",
-        owner="agent-connector-sdk",
+        owner="scion-sdk",
     )
 
 
@@ -244,7 +244,7 @@ def _spec_ticket_pull(target: str, user: str, project_id: str) -> str:
     raise not_served(
         "knowledge_graph.enrichment.writeback",
         "SCION-SOURCE-INGEST-R600",
-        owner="agent-connector-sdk",
+        owner="scion-sdk",
     )
 
 
@@ -260,7 +260,7 @@ def _spec_ticket_link(
     raise not_served(
         "knowledge_graph.enrichment.writeback",
         "SCION-SOURCE-INGEST-R600",
-        owner="agent-connector-sdk",
+        owner="scion-sdk",
     )
 
 
@@ -321,7 +321,7 @@ def _graph_etl_resolve_sink_backend(sink: str) -> Any:
     # Write-back sinks + the native SQL-table sink need none — run_etl routes
     # sink='table' itself (KG-2.266).
     raise not_served(
-        "knowledge_graph.enrichment.writeback.core", "SDK", owner="agent-connector-sdk"
+        "knowledge_graph.enrichment.writeback.core", "SDK", owner="scion-sdk"
     )
 
 
@@ -793,7 +793,7 @@ def register_ontology_tools(mcp):
         raise not_served(
             "knowledge_graph.ontology.leanix_metamodel",
             "SDK",
-            owner="agent-connector-sdk",
+            owner="scion-sdk",
         )
 
     runtime.REGISTERED_TOOLS["ontology_leanix_sync"] = ontology_leanix_sync

@@ -30,31 +30,6 @@ wheels = [
 ]
 
 [[package]]
-name = "agent-webui"
-version = "2.8.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "joserfc" },
-    { name = "langfuse" },
-    { name = "logfire", extra = ["fastapi", "starlette"] },
-    { name = "meristem" },
-    { name = "msgpack" },
-    { name = "pydantic-ai-slim", extra = ["ui"] },
-    { name = "python-multipart" },
-    { name = "scion-sdk" },
-    { name = "sse-starlette" },
-    { name = "starlette" },
-    { name = "uvicorn" },
-    { name = "watchfiles" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/32/2a/9625364e49c56c544f08a1833379162ba8fb510348ecc447dc1fe012d3d8/agent_webui-2.8.3.tar.gz", hash = "sha256:14fd25c7130d2d91ca9455cd5563d123cc1dedac7dfb243d6a56596d5f5305ab", size = 2929578, upload-time = "2026-10-29T16:26:41.189Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1d/2b/f9c07dae91a4b343c65c0ec5da334deac3c864e6cd4fafd4ff33e09e6fe4/agent_webui-2.8.3-py3-none-any.whl", hash = "sha256:76f85b9db37f51ebe3719d8f60283209923e307dd9f74c0c7bdce4a9cdb9d502", size = 3018925, upload-time = "2026-10-29T16:26:37.789Z" },
-]
-
-[[package]]
 name = "aiofile"
 version = "3.12.3"
 source = { registry = "https://pypi.org/simple" }
@@ -394,6 +369,10 @@ messaging-whatsapp = [
     { name = "httpx" },
     { name = "neonize" },
 ]
+overstory = [
+    { name = "overstory" },
+    { name = "uvicorn" },
+]
 test = [
     { name = "agent-client-protocol" },
     { name = "mypy" },
@@ -412,16 +391,11 @@ test = [
 vault = [
     { name = "hvac" },
 ]
-webui = [
-    { name = "agent-webui" },
-    { name = "uvicorn" },
-]
 
 [package.metadata]
 requires-dist = [
     { name = "agent-client-protocol", marker = "extra == 'acp'", specifier = "==0.11.0" },
     { name = "agent-client-protocol", marker = "extra == 'test'", specifier = "==0.11.0" },
-    { name = "agent-webui", marker = "extra == 'webui'", specifier = ">=2.8.3,<3.0.0" },
     { name = "aiohttp", specifier = ">=3.14.5" },
     { name = "anyio", specifier = ">=4.15.1" },
     { name = "arbora", extras = ["messaging-discord", "messaging-googlechat", "messaging-googlemeet", "messaging-irc", "messaging-line", "messaging-matrix", "messaging-mattermost", "messaging-nextcloud", "messaging-signal", "messaging-slack", "messaging-synology", "messaging-teams", "messaging-telegram", "messaging-twitch", "messaging-voicecall", "messaging-whatsapp"], marker = "extra == 'messaging'" },
@@ -447,13 +421,14 @@ requires-dist = [
     { name = "matrix-nio", marker = "extra == 'messaging-matrix'", specifier = ">=0.26.0" },
     { name = "mattermostdriver", marker = "extra == 'messaging-mattermost'", specifier = ">=7.3.2" },
     { name = "mcp", specifier = ">=2.3.0,<3.0.0" },
-    { name = "medulla", specifier = ">=2.27.10,<3.0.0", index = "https://pypi.org/simple" },
-    { name = "medulla-stem", specifier = ">=2.27.10,<3.0.0", index = "https://pypi.org/simple" },
-    { name = "meristem", specifier = ">=4.2.0,<5.0.0" },
+    { name = "medulla", specifier = ">=3.0.0,<4.0.0", index = "https://pypi.org/simple" },
+    { name = "medulla-stem", specifier = ">=3.0.0,<4.0.0", index = "https://pypi.org/simple" },
+    { name = "meristem", specifier = ">=5.0.0,<6.0.0" },
     { name = "msgpack", specifier = ">=1.2.1" },
     { name = "mypy", marker = "extra == 'test'", specifier = ">=2.4.0" },
     { name = "neonize", marker = "extra == 'messaging-whatsapp'", specifier = ">=0.5.2" },
     { name = "opentelemetry-api", specifier = ">=1.45.1" },
+    { name = "overstory", marker = "extra == 'overstory'", specifier = ">=3.0.0,<4.0.0" },
     { name = "prometheus-client", specifier = ">=0.26.0" },
     { name = "pydantic", specifier = ">=2.14.1,<3.0.0" },
     { name = "pydantic-ai-harness", extras = ["acp"], marker = "extra == 'acp'", specifier = "==0.63.0" },
@@ -470,7 +445,7 @@ requires-dist = [
     { name = "python-telegram-bot", marker = "extra == 'test'", specifier = ">=22.8" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "ruff", marker = "extra == 'test'", specifier = "==0.17.1" },
-    { name = "scion-sdk", extras = ["a2a", "mcp"], specifier = ">=0.5.9,<0.6.0" },
+    { name = "scion-sdk", extras = ["a2a", "mcp"], specifier = ">=0.7.0,<0.8.0" },
     { name = "setuptools", marker = "extra == 'test'", specifier = ">=84.0.0" },
     { name = "slack-bolt", marker = "extra == 'messaging-slack'", specifier = ">=1.30.0" },
     { name = "starlette", specifier = ">=1.8.0" },
@@ -479,9 +454,9 @@ requires-dist = [
     { name = "twitchio", marker = "extra == 'messaging-twitch'", specifier = ">=3.3.2" },
     { name = "types-pyyaml", marker = "extra == 'test'", specifier = ">=6.0.12.20260906" },
     { name = "universal-skills", specifier = ">=1.3.11,<2.0.0" },
-    { name = "uvicorn", marker = "extra == 'webui'", specifier = ">=0.54.0" },
+    { name = "uvicorn", marker = "extra == 'overstory'", specifier = ">=0.54.0" },
 ]
-provides-extras = ["acp", "test", "webui", "vault", "messaging-telegram", "messaging-mattermost", "messaging-discord", "messaging-slack", "messaging-whatsapp", "messaging-teams", "messaging-googlechat", "messaging-googlemeet", "messaging-matrix", "messaging-irc", "messaging-signal", "messaging-imessage", "messaging-line", "messaging-twitch", "messaging-synology", "messaging-voicecall", "messaging-nextcloud", "messaging"]
+provides-extras = ["acp", "test", "overstory", "vault", "messaging-telegram", "messaging-mattermost", "messaging-discord", "messaging-slack", "messaging-whatsapp", "messaging-teams", "messaging-googlechat", "messaging-googlemeet", "messaging-matrix", "messaging-irc", "messaging-signal", "messaging-imessage", "messaging-line", "messaging-twitch", "messaging-synology", "messaging-voicecall", "messaging-nextcloud", "messaging"]
 
 [[package]]
 name = "asgiref"
@@ -2355,7 +2330,7 @@ wheels = [
 
 [[package]]
 name = "medulla"
-version = "2.27.10"
+version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -2363,29 +2338,27 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyoxigraph" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9b/85/c0970a7dbbcf4decbe5f4f5e423e585879d795459b06a72eb44c3c286156/medulla-2.27.10.tar.gz", hash = "sha256:f2aa04d9368c519434a985bb1de7906cc32de2746867db024efdab6b67f4e484", size = 8218986, upload-time = "2026-10-29T14:02:59.299Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ee/15/828796ca369d0b8f872f3664c504084e360d372357268646cade2adbb333/medulla-3.0.0.tar.gz", hash = "sha256:428179672beb269985431544b8a467020c04fe0ebc532b28caf21481e341c9d7", size = 11468830, upload-time = "2026-11-03T19:22:47.652Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/66/ca/9de892de59063ba17d100a429b7aed900b1a51cb0406df2136fdafb9a557/medulla-2.27.10-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:6a2464440aa022b096f4c5e2cff529f6bca32853d933b87d18e4902b943f88c1", size = 8248210, upload-time = "2026-10-29T14:49:57.797Z" },
-    { url = "https://files.pythonhosted.org/packages/46/22/8791361946604899c2b2af09771ab3912586f7e8f6c352bf3290dae37ad3/medulla-2.27.10-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:4ae475226934aa1f5449c82cf1983d99a9ea7943f8fa2d2e22c6ef364e2e1391", size = 8441428, upload-time = "2026-10-29T14:31:51.914Z" },
-    { url = "https://files.pythonhosted.org/packages/f1/12/38d3ee0babbc94cdd18b90db6a7f6fc0e54b360317fb3bbf14f2bde8b4dd/medulla-2.27.10-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:d6b82ad4d94a4813d24c34cb312408a1587d484fafc35e5665f36c26a5d82090", size = 9107200, upload-time = "2026-10-29T14:52:48.323Z" },
-    { url = "https://files.pythonhosted.org/packages/0e/d5/edfa00325c0efaae3d711e42785205fc8a004d1cdcaf1b0d923383a4d7bd/medulla-2.27.10-cp39-abi3-win_amd64.whl", hash = "sha256:01200899b0ab872fb7ccb9b1cab7035de851a5dc961ad17b38842769482a9e43", size = 9945068, upload-time = "2026-10-29T14:30:57.179Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/19/05f3381add5cf17d9eb0e66235f538dd38af5c74012fc0ab7b65c2bca9e5/medulla-3.0.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:90e90bb572b05aad3fc0ebd94bf09b3e896574f9e75a8a7cbb5fd51acf211f88", size = 7488185, upload-time = "2026-11-03T19:57:54.059Z" },
+    { url = "https://files.pythonhosted.org/packages/03/7e/8e67a077836cced524febe3ee66c3cd9b1e95f5bc7a8e18b6632d28326d5/medulla-3.0.0-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:13d453dc34784495a94fe558d785d703a42b93c98b52dd8a6e0f422a78c6ddba", size = 7695666, upload-time = "2026-11-03T19:57:33.936Z" },
+    { url = "https://files.pythonhosted.org/packages/ee/5f/660df9a52084f9ecd55aacce4d932f4a97bf1b44e2d091880bd680bc9564/medulla-3.0.0-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:c364f21c77878836e245568531da32059a750e9b99febdc5f87e2679020986b9", size = 8354204, upload-time = "2026-11-03T22:38:29.982Z" },
+    { url = "https://files.pythonhosted.org/packages/59/bd/1330d3dee66269d13c7a240087592c828b7a42dafffcf38ebd2794a56baa/medulla-3.0.0-cp39-abi3-win_amd64.whl", hash = "sha256:84a510acc15bd77babd146057a1243a3097cd37b2b46f6562ad1a1b6bbfc95f0", size = 9205619, upload-time = "2026-11-03T19:54:23.768Z" },
 ]
 
 [[package]]
 name = "medulla-stem"
-version = "2.27.10"
+version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/1e/0b/413e6d19ca34eeaf853a01b2a161ab85f88549387452599f2932b23f9af7/medulla_stem-2.27.10.tar.gz", hash = "sha256:54f7cfbc40dbffc6c37d9eb59c133c1d3b39bd75d8c885e10c1f3af2db6ca51c", size = 25770919, upload-time = "2026-10-29T15:15:22.384Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/77/ec/d5248ea4f296df20655a4366360679078ad52da4dbb1a67a97d9bf5f390d/medulla_stem-3.0.0.tar.gz", hash = "sha256:885b31c26b2e812a8ee5e57345b872fe34ad7f855119703277bee913352e52f9", size = 24073540, upload-time = "2026-11-03T20:30:56.69Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e4/46/75feefb757f147b44198d608db9fb7978f20ed192047b939e843e9096b07/medulla_stem-2.27.10-py3-none-macosx_11_0_arm64.whl", hash = "sha256:cf8d842b3b7a83b63595e88fe48e0054432d7e5c2dab0ea856989a7cbd0ee0cc", size = 72664853, upload-time = "2026-10-29T14:59:45.568Z" },
-    { url = "https://files.pythonhosted.org/packages/1c/54/532b45cf19b839ec37eabeb88efd6f6edda635a9f45376ee3383a5c42736/medulla_stem-2.27.10-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:a51a1c26ebc9ab5af3cd26df14c20413b3c555768934120009f9ae362c9f0179", size = 66889527, upload-time = "2026-10-29T15:13:57.228Z" },
-    { url = "https://files.pythonhosted.org/packages/1f/87/9eb674e3a8b7044a107fe25e4a06ec49b951c1ff02ceb054f7cc58e77289/medulla_stem-2.27.10-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:4abaf0f3351606becffba4b88f98e2cf931ce94619d35249dc4b1f35c297ed71", size = 63997926, upload-time = "2026-10-29T14:44:04.882Z" },
-    { url = "https://files.pythonhosted.org/packages/e2/1b/1b286bfe180d8317e94a2993684f9fb122c47617f94dc3754d8682539f5a/medulla_stem-2.27.10-py3-none-win_amd64.whl", hash = "sha256:12151dd1e01de27bdf9eaaa69a15c444589c6a136148e5e39086a27c547d300b", size = 67484875, upload-time = "2026-10-29T16:05:23.692Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/0a/9cca86ef8c25636a1c72c055935120fecbb7d163d5162d0808b746c3c320/medulla_stem-3.0.0-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:762cd60ebaa6ab31ed991e4fb79ecd0f450b5f036dcbb55dddd8c411962f9d68", size = 75695122, upload-time = "2026-11-03T20:42:56.783Z" },
+    { url = "https://files.pythonhosted.org/packages/cb/a8/2b913e5c09439ecb45d0bd21e64eb8914f9e869fed8170579ebc683c064a/medulla_stem-3.0.0-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:43a51f777edcfed62fdc90e1895b371a7ae2c721ecadb9b4e66fb7c3d57c57f9", size = 66370607, upload-time = "2026-11-03T20:04:26.722Z" },
 ]
 
 [[package]]
 name = "meristem"
-version = "4.2.0"
+version = "5.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "platformdirs" },
@@ -2394,9 +2367,9 @@ dependencies = [
     { name = "pydantic-ai-slim" },
     { name = "pydantic-graph" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/80/19e1b250442131d34d11c90de495f613898f05a18524a13170561cffce28/meristem-4.2.0.tar.gz", hash = "sha256:d52d8a2a7850ca0361262963db4a202a5f6ec0ecdae0857c7142ddcde5da5ae0", size = 169244, upload-time = "2026-10-30T01:14:10.419Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/03/a3/1ce5188f979fffd015ead58684c71e181d1cbd863064eaa5c98aba6447ef/meristem-5.0.0.tar.gz", hash = "sha256:59cfa268437c9418ace2eb454542a19a5d350744e7bdc789272f1696b2ac22b1", size = 174786, upload-time = "2026-10-30T15:57:26.197Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c0/1e/a414a5d2a88e19d6c629a8cb4a08556392b1a96695df95f2e06d95ddbc79/meristem-4.2.0-py3-none-any.whl", hash = "sha256:83ff3783994d941e6754906534fe84a0da71b6903146e34059fb68967ba8cecf", size = 117970, upload-time = "2026-10-30T01:14:09.346Z" },
+    { url = "https://files.pythonhosted.org/packages/39/5b/74a3ac75999e57a6c458a818f49ea446f01a542c53f8bb5816ae65d5a635/meristem-5.0.0-py3-none-any.whl", hash = "sha256:fc8989ce65e363e741cf2015673194639fa9799a93da21c94ccc7e79e540c645", size = 122341, upload-time = "2026-10-30T15:57:24.85Z" },
 ]
 
 [[package]]
@@ -2964,6 +2937,31 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/7c/b5/df4b61da899f6ebdffdbdf0c8b0f3189ee57151694ccd5b7d50ee2906241/opentelemetry_util_http-0.66b1.tar.gz", hash = "sha256:047dea1a628031f857a5a32261dc0e955bc162d39993ed1cffb8f2cff5ba8a62", size = 11586, upload-time = "2026-10-06T17:36:46.572Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/eb/9b/c77ecaea79ba0de1a11e7f06a7f5eea7043ec23f1860dcf5f03536698e4c/opentelemetry_util_http-0.66b1-py3-none-any.whl", hash = "sha256:8f443d7abcaf29c4a07b373bbd31b5b39132c0ed3c27d015a59dc0323d5b1c58", size = 8387, upload-time = "2026-10-06T17:36:06.984Z" },
+]
+
+[[package]]
+name = "overstory"
+version = "3.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "joserfc" },
+    { name = "langfuse" },
+    { name = "logfire", extra = ["fastapi", "starlette"] },
+    { name = "meristem" },
+    { name = "msgpack" },
+    { name = "pydantic-ai-slim", extra = ["ui"] },
+    { name = "python-multipart" },
+    { name = "scion-sdk" },
+    { name = "sse-starlette" },
+    { name = "starlette" },
+    { name = "uvicorn" },
+    { name = "watchfiles" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d3/5e/f1b15372c1dd4ef785177735166ebebcab13232d25eb5e3af500c1799084/overstory-3.0.0.tar.gz", hash = "sha256:44901bdbd72fc7d7ca644384a3bd117d6b4916e0d6a9217b01116045e837a996", size = 2932700, upload-time = "2026-11-02T16:28:47.358Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/48/56/134f10200d80a8b2a48d0ed8451ab9da5ed98c536c1796d957ab45d3a29e/overstory-3.0.0-py3-none-any.whl", hash = "sha256:6822907bf36ce342faad0179d84227507f46b3b1372353b99ae8905a7a504aa6", size = 3018843, upload-time = "2026-11-02T16:28:33.963Z" },
 ]
 
 [[package]]
@@ -4140,7 +4138,7 @@ wheels = [
 
 [[package]]
 name = "scion-sdk"
-version = "0.5.9"
+version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -4153,9 +4151,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/da/33/974f6fd4df64f31008739f5c964d9588b01e06717df9bdd9a1614c690db5/scion_sdk-0.5.9.tar.gz", hash = "sha256:ba040fcc0f1320abffbf752ec8e52937c56004335fea3c0e8e87347c099d76ac", size = 1084120, upload-time = "2026-10-29T19:25:52.763Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5a/94/872f94b88bd9a94ecb252becfa4a5ec82cf06940f6dd699800834e93ef09/scion_sdk-0.7.0.tar.gz", hash = "sha256:d634e02158ed854e0724391c14b06b5a0394a1ce212b2106225fcf2b82c86802", size = 1157671, upload-time = "2026-11-03T23:57:47.279Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/dd/b0/c0b0ca2390fe8843e22b09baafb623934abca3030b948f3d68b0dcc64ba1/scion_sdk-0.5.9-py3-none-any.whl", hash = "sha256:6b5548b1cc499eba3cb6560d30abce70e761491a12b61b578c7c78dc05a0d898", size = 988008, upload-time = "2026-10-29T19:25:54.334Z" },
+    { url = "https://files.pythonhosted.org/packages/36/fb/2f3e579efdef6d3d567a77eee2db4f4d23113f1159111a37477e5bd97dd2/scion_sdk-0.7.0-py3-none-any.whl", hash = "sha256:191b834676c975d80934ac7f340764c737001d7b28070539c8575f643a3a19c1", size = 1107757, upload-time = "2026-11-03T23:57:48.87Z" },
 ]
 
 [package.optional-dependencies]

@@ -16,7 +16,7 @@ def isolated_webui_data(tmp_path, monkeypatch):
 
 
 def test_actual_served_engine_installs_browser_authority():
-    from agent_webui.server import create_agent_web_app as factory
+    from overstory.server import create_agent_web_app as factory
 
     async def sync_runner(call):
         return call()
@@ -124,8 +124,8 @@ def test_browser_state_rechecks_authority_after_pool_await(native_engine, monkey
 def test_released_native_actual_webui_factory_composition(native_engine):
     import asyncio
 
-    from agent_webui.browser_control import revalidate_browser_control_session
-    from agent_webui.server import create_agent_web_app
+    from overstory.browser_control import revalidate_browser_control_session
+    from overstory.server import create_agent_web_app
 
     engine, _session = native_engine
     configured = browser_control_factory_kwargs(

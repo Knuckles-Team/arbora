@@ -105,8 +105,8 @@ def test_content_is_found_by_convention_and_packaged() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
     # Arbora's own skills/, prompts/ and ontology/ are found by convention
-    # (agent_connector_sdk.connector.content_dirs); no provider group remains.
-    assert "agent_connector_sdk.skill_providers" not in pyproject
+    # (scion_sdk.connector.content_dirs); no provider group remains.
+    assert "scion_sdk.skill_providers" not in pyproject
     # Package data is one extension glob per data type across the whole
     # package, so every skill asset and every runtime-loaded file (EG
     # exclusions, the default policy, generated contracts) ships. The release

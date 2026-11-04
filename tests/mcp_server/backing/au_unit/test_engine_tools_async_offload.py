@@ -48,9 +48,9 @@ import pytest
 
 # See the identical rationale in test_engine_tools_scope_policy.py /
 # test_engine_tools_streaming_graph.py: `engine_tenants` only exists as a
-# registered MCP tool when `epistemic_graph.client` was importable at
+# registered MCP tool when `medulla.client` was importable at
 # `engine_tools` module-import time.
-pytest.importorskip("epistemic_graph.client")
+pytest.importorskip("medulla.client")
 
 
 from arbora.api.contracts.session import GraphSession, use_session
@@ -86,7 +86,7 @@ def _fresh_client_pool(monkeypatch):
 
 
 class _BlockingTenants:
-    """Mirrors ``epistemic_graph.client.MultiTenantClient.create`` -- a plain
+    """Mirrors ``medulla.client.MultiTenantClient.create`` -- a plain
     synchronous call from ``_dispatch``'s point of view -- but blocks on a
     real ``threading.Event`` until released, standing in for a slow native
     ``CreateGraph`` RPC."""

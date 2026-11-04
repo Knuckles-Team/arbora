@@ -272,7 +272,7 @@ class ArboraBrowserAuthority:
             if state.session_ref != record.session_ref:
                 raise PermissionError("browser session rotated")
             try:
-                from agent_webui.oidc_session import BrowserSessionEvidence
+                from overstory.oidc_session import BrowserSessionEvidence
             except ImportError:
                 raise IdentityUnavailable(
                     "reviewed WebUI browser evidence export unavailable"

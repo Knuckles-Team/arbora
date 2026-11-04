@@ -27,7 +27,7 @@ class FakeSession:
         return {
             "principal": self.actor.actor_id,
             "tenant": self.tenant,
-            "audience": "epistemic-graph",
+            "audience": "medulla",
             "agent_id": self.actor.actor_id,
             "roles": list(self.actor.roles),
             "scopes": ["example:ask"],
@@ -111,7 +111,7 @@ def test_build_client_factory_reuses_the_pooled_client() -> None:
         connect_context=lambda tenant: epistemic.ClientContext.from_actor(
             Actor(),
             tenant=tenant,
-            audience="epistemic-graph",
+            audience="medulla",
             scopes=("graph:read",),
             policy_version="policy:1",
         ),
@@ -127,7 +127,7 @@ def test_build_client_factory_reuses_the_pooled_client() -> None:
 
 def test_build_service_claims_mints_exact_requested_scopes() -> None:
     claims_fn = bootstrap.build_service_claims(
-        lambda: Actor(), audience="epistemic-graph", policy_version="policy:1"
+        lambda: Actor(), audience="medulla", policy_version="policy:1"
     )
 
     async def _claims() -> Mapping[str, Any]:
@@ -141,7 +141,7 @@ def test_build_service_claims_mints_exact_requested_scopes() -> None:
 
 def test_build_service_claims_refuses_a_mismatched_tenant() -> None:
     claims_fn = bootstrap.build_service_claims(
-        lambda: Actor(), audience="epistemic-graph", policy_version="policy:1"
+        lambda: Actor(), audience="medulla", policy_version="policy:1"
     )
 
     async def _claims() -> Mapping[str, Any]:

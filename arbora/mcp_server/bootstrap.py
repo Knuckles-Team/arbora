@@ -364,7 +364,7 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
     CONCEPT:MERISTEM-ORCH.execution.delegation-hot-path-authority — keep a long delegation authorized for its whole run, on every entrypoint, not just MCP dispatch.
 
     Every delegation entrypoint — the MCP ``_execute_tool`` dispatch, the
-    ``agent-webui``/REST gateway, the messaging router (Telegram/Mattermost), the
+    ``overstory``/REST gateway, the messaging router (Telegram/Mattermost), the
     autonomous ``agent_dispatch_worker``, ``org_runtime``, a governed dynamic
     workflow, and the parallel engine — converges on the single function
     :meth:`agent_utilities.orchestration.manager.Orchestrator.execute_agent`.
@@ -875,7 +875,7 @@ def _start_engine_bootstrap(session: Any) -> None:
         except (ConnectionError, OSError, TimeoutError) as exc:
             if time.monotonic() >= deadline:
                 raise RuntimeError(
-                    "epistemic-graph did not answer before serving start"
+                    "medulla did not answer before serving start"
                 ) from exc
             if _PROCESS_AUTHORITY_STOP.wait(1.0):
                 raise InterruptedError("shutdown cancelled engine bootstrap") from exc

@@ -142,6 +142,6 @@ def test_socket_wait_keeps_deadline_and_samples_before_unwind(monkeypatch, tmp_p
     monkeypatch.setattr(recorder, "snapshot", lambda: calls.append("snapshot") or {})
     with pytest.raises(AssertionError, match="timed out waiting") as caught:
         with recorder.phase("engine_socket"):
-            boot._wait(lambda: False, timeout=60, what="the epistemic-graph socket")
+            boot._wait(lambda: False, timeout=60, what="the medulla socket")
     assert calls == ["snapshot"]
     assert '"elapsed_ms":61000' in caught.value.__notes__[0]

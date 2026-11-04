@@ -1,6 +1,6 @@
-"""Epistemic-graph client context, pooling, and topology composition.
+"""Medulla client context, pooling, and topology composition.
 
-RF-ADR-009 keeps graph behavior in :mod:`epistemic_graph`.  This module owns
+RF-ADR-009 keeps graph behavior in :mod:`medulla`.  This module owns
 only arbora process concerns: translating verified actor authority into the
 client's request-context shape, keeping one transport client per named graph,
 and translating the engine-authored placement/topology responses used for
@@ -363,7 +363,7 @@ class EpistemicClientPool:
                 for parameter in parameters
             ):
                 raise AnonymousClientUnavailableError(
-                    "Explicit anonymous serving requires an epistemic-graph client "
+                    "Explicit anonymous serving requires an medulla client "
                     "with connect(auth_mode='none') support; upgrade the matching "
                     "client and server before selecting ARBORA_AUTH_MODE=none"
                 )

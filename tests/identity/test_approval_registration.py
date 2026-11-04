@@ -91,7 +91,7 @@ class _FailingTransport:
 
 @pytest.mark.asyncio
 async def test_published_contract_sends_reference_inspection_and_fails_closed():
-    # epistemic-graph 2.27.5 publishes session.inspect_reference (EG #695), so
+    # medulla 2.27.5 publishes session.inspect_reference (EG #695), so
     # the request reaches the transport; a failed call still refuses.
     transport = _FailingTransport()
     resolver = EngineOriginalSessionResolver(
@@ -106,7 +106,7 @@ async def test_published_contract_sends_reference_inspection_and_fails_closed():
 async def test_published_contract_sends_non_touch_resolve_and_fails_closed():
     from arbora.identity.engine_ports import EngineSessionAuthority
 
-    # epistemic-graph 2.27.5 publishes the non-touch (refresh=false) resolve.
+    # medulla 2.27.5 publishes the non-touch (refresh=false) resolve.
     transport = _FailingTransport()
     authority = EngineSessionAuthority(transport, graph="identity", refresh=False)
     with pytest.raises(IdentityUnavailable):
@@ -117,7 +117,7 @@ async def test_published_contract_sends_non_touch_resolve_and_fails_closed():
 @pytest.mark.asyncio
 @pytest.mark.parametrize("refresh", [True, False])
 async def test_explicit_non_touch_preserves_default_request(refresh, monkeypatch):
-    from epistemic_graph.generated import security
+    from medulla.generated import security
 
     from arbora.identity.engine_ports import EngineSessionAuthority
 

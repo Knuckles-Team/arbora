@@ -148,13 +148,13 @@ preflight:
   always:
   - python>=3.11,<3.15
   - uv-or-pip
-  - 'epistemic-graph[full]>=2.27.0,<3.0.0 — pulled in via the `agent-utilities[arbora]` extra (GOC-73:
+  - 'medulla[full]>=2.27.0,<3.0.0 — pulled in via the `agent-utilities[arbora]` extra (GOC-73:
     opt-in, not a base dependency), required for every genesis profile since this deploy flow stands up
     arbora itself; install the approved platform wheel with its bundled server and folded numeric kernel.
     Runtime installation never compiles.'
   docker_when: profile != tiny
 engine:
-  version: epistemic-graph[full]>=2.27.0,<3.0.0
+  version: medulla[full]>=2.27.0,<3.0.0
   install: 'pip install agent-utilities[arbora] (GOC-73: opt-in extra, not a base dependency)'
   authority: redb-authoritative durable by default (CONCEPT:MERISTEM-KG.backend.backend-modes)
   resolver: CONCEPT:MERISTEM-OS.deployment.engine-resolver-auto-provision — remote -> share-running-local ->
@@ -170,7 +170,7 @@ engine:
       the EFFECTIVE process boundary: use a true in-process engine only when the deployed build proves
       it; otherwise the bundled supervised engine is an operational unit but remains out of process.'
     out-of-process-shared: HYPERSCALING shape (enterprise default) — arbora talks to a shared, independently-scaled
-      engine over UDS/TCP (epistemic_graph.client, GIL-free); build the engine with the eg `cluster` cargo
+      engine over UDS/TCP (medulla.client, GIL-free); build the engine with the eg `cluster` cargo
       feature (raft, multi-Raft sharding) and run N arbora client pods behind the gateway, scaled via
       k8s HPA independently of the engine.
     rule: both shapes keep engine calls BATCHED (one call = one batch op over graph-resident data, never
@@ -178,7 +178,7 @@ engine:
   secret_store:
     graph: __secrets__
     label: Secret
-    encryption_key_env: EPISTEMIC_GRAPH_ENCRYPTION_KEY
+    encryption_key_env: MEDULLA_ENCRYPTION_KEY
     note: default embedded secret store (OS-5.66) in the full engine. Local SQLite caches (registry graph,
       card cache, time-series) also route to the engine — no SQLite fallback.
 components:
@@ -188,7 +188,7 @@ components:
     - python>=3.11
     container: true
     note: thin Textual TUI over the gateway; many fit on a Pi-class node
-  agent-webui:
+  overstory:
     connect: http
     deps:
     - node>=18
