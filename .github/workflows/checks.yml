@@ -123,18 +123,19 @@ jobs:
           test "$("$tool_dir/linux-amd64/helm" version --template '{{.Version}}')" = "$HELM_VERSION"
           printf '%s\n' "$tool_dir/linux-amd64" >> "$GITHUB_PATH"
 
-      # The base the differential hooks compare against: the pull request base
-      # or the previous push, else the root commit (a first push scans all of
-      # it). An unavailable object is never an invented empty baseline.
+      # The base the differential hooks compare against: the previous push,
+      # only when it is a real commit present in this checkout. A run with no
+      # previous push (schedule, manual dispatch, tag push) sets no base, so
+      # each shared range hook resolves its own published range instead of
+      # rescanning the whole history from the root commit.
       - &release-base
         name: Resolve the published base
         run: |
           set -euo pipefail
           BASE="${{ github.event.before }}"
-          if [ -z "${BASE:-}" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
-            BASE="$(git rev-list --max-parents=0 HEAD)"
+          if [ -n "${BASE:-}" ] && [ "$BASE" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$BASE" 2>/dev/null; then
+            echo "PRE_COMMIT_FROM_REF=$BASE" >> "$GITHUB_ENV"
           fi
-          echo "PRE_COMMIT_FROM_REF=$BASE" >> "$GITHUB_ENV"
           # Every gate below uses the shared gate source frozen for this run.
           echo "PINNED_PRECOMMIT=$(bash scripts/pin_gate_source.sh "$PIPELINES_REF" "$RUNNER_TEMP/pre-commit-pinned.yaml")" >> "$GITHUB_ENV"
 
