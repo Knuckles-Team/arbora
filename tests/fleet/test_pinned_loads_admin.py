@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.api.invoke import invoke
+from arbora.api.invoke import OpResult, invoke
 from arbora.api.registry import Surface
 from tests.fleet._pin_harness import caller_for, harness, pin
 
@@ -60,6 +60,7 @@ async def test_pin_audit_and_tenant_scoped_admin_view() -> None:
         "fleet.pins.list", {}, admin, Surface.MCP, services=state.services
     )
     assert outcome.code == "OK"
+    assert isinstance(outcome, OpResult)
     view = outcome.value["value"]
     rows = {row["item_id"]: row for row in view["items"]}
     assert set(rows) == {"fleet:tool:s/read"}
@@ -98,6 +99,8 @@ async def test_pin_audit_and_tenant_scoped_admin_view() -> None:
         Surface.MCP,
         services=state.services,
     )
+    assert outcome.code == "OK"
+    assert isinstance(outcome, OpResult)
     page = outcome.value["value"]
     assert [row["principal"] for row in page["items"]] == ["bob"]
     assert page["next_cursor"] is not None
@@ -108,6 +111,8 @@ async def test_pin_audit_and_tenant_scoped_admin_view() -> None:
         Surface.MCP,
         services=state.services,
     )
+    assert outcome.code == "OK"
+    assert isinstance(outcome, OpResult)
     suspended_row = outcome.value["value"]["items"][0]
     assert suspended_row["principal"] == "carol"
     assert suspended_row["suspended"] is True
@@ -126,4 +131,6 @@ async def test_pin_audit_and_tenant_scoped_admin_view() -> None:
         Surface.MCP,
         services=state.services,
     )
+    assert outcome.code == "OK"
+    assert isinstance(outcome, OpResult)
     assert outcome.value["value"]["items"] == []

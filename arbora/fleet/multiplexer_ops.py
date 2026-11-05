@@ -319,7 +319,9 @@ class MultiplexerOps:
             "zero_tools": list(report.zero_tools),
         }
 
-    async def _suspended_pins(self, caller: Any, key: str) -> list[dict[str, str]]:
+    async def _suspended_pins(
+        self, caller: Any, key: str
+    ) -> builtins.list[dict[str, str]]:
         """Stored pins failing the current re-check, or passing but not loaded.
 
         A suspended pin stays stored and unloaded; the entry is
@@ -336,6 +338,7 @@ class MultiplexerOps:
         suspended: list[dict[str, str]] = []
         for record in records:
             item = await self.catalog.get(record.item_id, caller)
+            code: str | None = None
             if item is None or item_binding(item) != record.binding:
                 code = "NOT_FOUND"
             else:
@@ -357,7 +360,7 @@ class MultiplexerOps:
     async def status(self, caller: Any, servers: Iterable[str] = ()) -> dict[str, Any]:
         _require_discover_scope(caller)
         key = self._session_key_for(caller)
-        snapshot = (
+        snapshot: dict[str, Any] = (
             self.multiplexer_status(key)
             if key
             else {
@@ -506,7 +509,7 @@ class MultiplexerOps:
         await self._mount(item, self._forwarder(item) if item.kind == "tool" else None)
 
     async def _group_tool_ids(
-        self, caller: Any, groups: builtins.iter[str]
+        self, caller: Any, groups: Iterable[str]
     ) -> builtins.list[str]:
         """The admitted tool ids of the named groups this caller may load.
 
@@ -800,6 +803,7 @@ class MultiplexerOps:
             if item is None or item_binding(item) != record.binding:
                 suspended.append({"item_id": record.item_id, "code": "NOT_FOUND"})
                 continue
+            code: str | None
             try:
                 loadable = await self._loadable(item, caller)
             except Exception:
@@ -808,6 +812,7 @@ class MultiplexerOps:
             else:
                 code = None if loadable else "POLICY_DENIED"
             if not loadable:
+                assert code is not None
                 suspended.append({"item_id": record.item_id, "code": code})
                 continue
             try:

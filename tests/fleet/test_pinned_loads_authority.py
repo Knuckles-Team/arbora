@@ -13,7 +13,7 @@ import dataclasses
 import pytest
 
 from arbora.api.errors import _ARBORA_STATUS, ArboraErrorCode
-from arbora.api.invoke import invoke
+from arbora.api.invoke import OpResult, invoke
 from arbora.api.registry import Effect, Surface
 from tests.fleet._pin_harness import harness, pin
 
@@ -148,6 +148,7 @@ async def test_unpin_reports_not_pinned_items() -> None:
         idempotency_key="unpin:one",
     )
     assert outcome.code == "OK"
+    assert isinstance(outcome, OpResult)
     assert outcome.value["value"] == {
         "unpinned": [],
         "not_pinned": ["fleet:tool:s/ghost", "fleet:tool:s/read"],

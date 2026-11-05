@@ -40,7 +40,7 @@ async def test_pin_record_round_trips_and_cap_range() -> None:
 
     # the record is frozen and every field round-trips
     with pytest.raises(AttributeError):
-        record.item_id = "fleet:tool:s/write"
+        record.item_id = "fleet:tool:s/write"  # type: ignore[misc]
     assert (
         record.tenant,
         record.principal,

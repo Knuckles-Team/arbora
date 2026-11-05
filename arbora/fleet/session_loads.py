@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
+from typing import Any
 
 
 class LoadCapExceeded(ValueError):
@@ -138,7 +139,7 @@ class SessionLoads:
         evict: str | None = None,
         auto_unload: bool = False,
         bindings: Mapping[str, tuple[str, ...]] | None = None,
-    ) -> dict[str, object]:
+    ) -> dict[str, Any]:
         requested = list(dict.fromkeys(items))
         _require_complete_bindings(requested, bindings)
         session = self._session(key)

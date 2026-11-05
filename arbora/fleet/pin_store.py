@@ -159,7 +159,7 @@ class EgPinStore:
             rows = page.get("leases")
             if not isinstance(rows, list):
                 raise RuntimeError("engine pin list page is malformed")
-            leases.extend(row for row in rows if isinstance(row, Mapping))
+            leases.extend(row for row in rows if isinstance(row, dict))
             cursor = page.get("next_cursor")
             if cursor is None:
                 return leases

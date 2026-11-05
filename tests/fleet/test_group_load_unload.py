@@ -152,6 +152,7 @@ async def test_group_load_and_unload_by_namespace() -> None:
     from arbora.api.registry import Registry
 
     op = Registry(operations()).get("fleet.tools.load")
+    assert op is not None
     context = SimpleNamespace(
         caller=caller, services={"fleet_gateway": SimpleNamespace()}
     )

@@ -45,19 +45,22 @@ async def _harness(
     path = tmp_path / "workspace.yml"
     path.write_text(yaml.safe_dump(_manifest(connectors)), encoding="utf-8")
 
-    rows = []
+    items: list[CatalogItem] = []
     for server, count in tools_per_server.items():
-        rows.extend(
+        items.extend(
             CatalogItem(f"fleet:tool:{server}/t{i}", "tool", f"t{i}", server=server)
             for i in range(count)
         )
-    rows = (*rows, *extra_rows)
+    rows = (*items, *extra_rows)
 
     async def source():
         return rows
 
-    async def allowed(_item, _caller):
+    async def allowed(_item, _caller, _extra=None):
         return True
+
+    async def no_delegate(_op, _target, _params, _current):
+        raise AssertionError("this test does not delegate")
 
     async def mount(item, call):
         return None
@@ -89,7 +92,7 @@ async def _harness(
     gateway = FleetGateway(
         tool_for=tool_for_multiplexer_ops(ops),
         policy_check=allowed,
-        delegated_call=None,
+        delegated_call=no_delegate,
         catalog_ops=ops,
     )
 

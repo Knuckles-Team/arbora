@@ -9,6 +9,8 @@ without admitting anything.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 import yaml
 
@@ -21,7 +23,7 @@ from arbora.fleet.coverage import (
 )
 
 
-def _write_manifest(tmp_path, document) -> None:
+def _write_manifest(tmp_path, document) -> Path:
     path = tmp_path / "workspace.yml"
     path.write_text(yaml.safe_dump(document), encoding="utf-8")
     return path
