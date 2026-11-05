@@ -85,6 +85,16 @@ Specs are already designed. The work is implementation, delivered in very small,
 
 **Report**: at most 8 lines: PR URL, requirement IDs, test result, and any `ID:<main sha>` proof for rows already on main.
 
+## Bulk delivery
+
+High-rate delivery follows the [bulk delivery standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/bulk-delivery.md).
+
+- Four separate stages, run by different workers: writing, batched validation, fixing red results only, and automatic merge on green.
+- Writers implement one served-method slice of at most 8 rows, push the branch, and never build, test or wait on CI. They format only and run both hook stages.
+- Validation workers build branches in batches and record green as a commit status on the exact head SHA.
+- A writer never makes an open design choice. It records the question; the decision is written into the owning spec row first, then the row is implemented.
+- Only rows implemented completely, with their bound test, go in the `Spec:` trailer. Remainders are re-queued.
+
 ## Step 0: route the feature
 
 Route the feature before any code. The [ecosystem boundaries standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/ecosystem-boundaries.md) is the one ownership table.
