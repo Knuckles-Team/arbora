@@ -168,7 +168,11 @@ async def test_restarted_source_metadata_and_rotation_gap_in_terminal(
                     async with asyncio.timeout(3):
                         while sink._pending:
                             await asyncio.sleep(0.01)
-                    for index in range(30):
+                    # Five rotated files are retained and each record fills one, so
+                    # six records age the first out. The reader's own request deadline
+                    # keeps running while it is stopped: more records would hold it
+                    # stopped past that deadline under slow writes and refuse the read.
+                    for index in range(6):
                         await sink.emit(
                             tenant="tenant-a", request_id=str(index), message="x" * 400
                         )
