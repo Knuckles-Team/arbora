@@ -1,5 +1,8 @@
 # ARBORA-A2A — A2A projection, streaming, history and tool-subset admission
 
+Depends-on: [MERISTEM-RUN-R017.2](https://github.com/Knuckles-Team/meristem/blob/main/specs/run/requirements.md), [MERISTEM-RUN-R017.5](https://github.com/Knuckles-Team/meristem/blob/main/specs/run/requirements.md)
+References: [TUIG-RUNTIME-R012.5.2](https://github.com/Knuckles-Team/tuig/blob/main/specs/terminal-runtime/requirements.md)
+
 ## A2A task and approval projection
 ### Status legend
 

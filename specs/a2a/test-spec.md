@@ -198,6 +198,12 @@ Rows below name tests that are planned or only partly built. Each entry restates
 | A2A-PL06 | ARBORA-A2A-R001.3 | Test: `tests/a2a/test_served_agent.py::test_context_survives_restart_and_list_is_caller_scoped` (served). It restarts between two turns, lists only the caller's contexts and refuses a foreign `contextId`. |
 | A2A-PL07 | ARBORA-A2A-R001.4.1 | Test: `tests/a2a/test_served_agent.py::test_stream_emits_delta_tool_call_result_final_in_order` (served). A resubscribe from a cursor replays the tail. |
 | A2A-PL08 | ARBORA-A2A-R001.5.2 | Test: `tests/a2a/test_served_agent.py::test_capable_model_accepts_png_and_unknown_stale_oversize_create_no_task` (served). |
+| A2A-PL09 | ARBORA-A2A-R001.5.3 | Test: `tests/a2a/test_media_admission.py::test_mismatched_signature_is_refused_with_zero_tasks` (served). |
+| A2A-PL10 | ARBORA-A2A-R001.5.4 | Test: `tests/a2a/test_media_admission.py::test_request_byte_and_image_count_limits_refuse_with_reasons` (served). |
+| A2A-PL11 | ARBORA-A2A-R001.5.5 | Test: `tests/a2a/test_media_admission.py::test_upload_reference_resolves_for_owner_and_refuses_foreign_expired_unknown` (served). |
+| A2A-PL12 | ARBORA-A2A-R001.5.6 | Test: `tests/a2a/test_media_admission.py::test_card_media_limits_equal_enforced_limits` (served). |
+| A2A-PL13 | ARBORA-A2A-R001.5.7 | Test: `tests/a2a/test_media_admission.py::test_run_request_carries_attachments_capability_and_fallback_mode` (served). |
+| A2A-PL14 | ARBORA-A2A-R001.5.8 | Test: `tests/a2a/test_media_admission.py::test_png_message_send_reaches_run_request_end_to_end` (served). |
 | A2A-PL09 | ARBORA-A2A-R001.7 | Test: `tests/a2a/test_peer_registry_served.py::test_register_refresh_list_delete_through_invoke` (served, HTTP and MCP) registers, refreshes, lists and removes a peer. It asserts both refusals and the revision history. It runs one cross-tenant negative case. |
 | A2A-PL10 | ARBORA-A2A-R002.2.3.3 | Test: `tests/a2a/test_tool_task_served.py::test_revoked_caller_makes_no_effect_and_is_acknowledged` (served). |
 | A2A-PL11 | ARBORA-A2A-R002.2.3.4 | Test: `tests/a2a/test_tool_task_served.py::test_crash_after_effect_reconciles_without_repeat` (served). The connector fake counts one execution. |
