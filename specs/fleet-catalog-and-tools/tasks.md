@@ -492,3 +492,4 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T225 ARBORA-FLEET-R060.5 Prove a missing or empty connector fails the served status.
 - [x] T226 ARBORA-FLEET-R060 Every registered connector is multiplexed, and a coverage gate enforces it (rollup).
 - [x] T227 ARBORA-FLEET-R061 A caller loads and unloads the tools of one connector group.
+- [ ] T228 ARBORA-FLEET-R015.4 A Medulla `Mcp` foreign source is read through the existing source executor.
