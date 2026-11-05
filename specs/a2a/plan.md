@@ -634,3 +634,17 @@ For R005.2.4, use generated identity validation for session-reference and key re
 Align the draft adapter with the unpublished native key contract. Use purpose `signed_approval` and attestation `broker_verified_ed25519`. Keep the signature domain, length encoding, field order and verification unchanged. No deployed key format or credential is migrated. Native durable and served qualification remain pending.
 
 R005.2.5 retains the full native and served effect-chain obligation after the snapshot and registration source slices land. It requires atomic grant and plan consumption with actual installed producers. Keep it open until the complete request-to-effect and refusal matrix passes; do not infer it from a passing source fixture.
+
+### Image admission, transport and hand-off (ARBORA-A2A-R001.5.3 to R001.5.8)
+
+Terminal image input needs more than the file-part rules in R001.5. This section adds content verification, request-level limits, an upload reference for large images, served limits and the hand-off to the run. It extends R001.5 and does not start a second admission path.
+
+Call path. `POST /a2a` `message/send` reaches `_send_message` and `A2AService.send_message` (`arbora/a2a/service.py:37`). Admission runs `admit_file_parts` (`arbora/a2a/parts.py`, new in R001.5) before any task exists. Order of checks: type list, signature match (R001.5.3), per-part size, count and request limits (R001.5.4), reference resolution (R001.5.5), model capability (R001.5.2). Any refusal creates zero tasks. Admitted images then pass as run attachments with the capability and fallback mode (R001.5.7).
+
+Typed refusals. The reasons are `file_part_type_unsupported`, `file_part_too_large`, `file_part_count`, `file_part_type_mismatch`, `request_media_too_large`, `image_part_count`, `media_ref_unknown`, `media_ref_expired`, `media_ref_forbidden`, `media_capability_unknown` and `media_capability_stale`. Each is JSON-RPC `-32602` except the two capability reasons that R001.5.2 defines.
+
+Byte transport. Small images travel inline as base64. Large images travel as an upload reference `media:sha256:<hex>`. The served operation `a2a.media.upload` stores the bytes by digest. Arbora holds no store of its own, so the storage belongs to Medulla.
+
+Open questions for the owner. Which Medulla row stores content-addressed bytes (R001.5.5). Where the Medulla decision carries `media_fallback` (R001.5.7). The limit defaults are starting values.
+
+Cross-repo rows. The children of TUIG-RUNTIME-R012.5.2 consume the served limits and send the parts. The image rows beside MERISTEM-RUN-R001.1 consume the attachments, capability and fallback mode.
