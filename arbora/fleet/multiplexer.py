@@ -847,6 +847,11 @@ def _bounded_tool_entry(tool: _typing.Any) -> dict[str, _typing.Any]:
         "description": description,
         **_bounded_tool_schemas(tool),
     }
+    # The same ``meta`` pass-through the live entry keeps: the catalog reads
+    # the connector group from ``scion/upstream`` (ARBORA-FLEET-R061).
+    meta = getattr(tool, "meta", None)
+    if meta:
+        item["meta"] = meta
     if annotations is not None:
         item["annotations"] = annotations
     return item

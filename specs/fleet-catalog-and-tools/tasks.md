@@ -491,4 +491,4 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T224 ARBORA-FLEET-R060.4 Refuse with a named reason for each uncovered connector.
 - [x] T225 ARBORA-FLEET-R060.5 Prove a missing or empty connector fails the served status.
 - [x] T226 ARBORA-FLEET-R060 Every registered connector is multiplexed, and a coverage gate enforces it (rollup).
-- [ ] T227 ARBORA-FLEET-R061 A caller loads and unloads the tools of one connector group.
+- [x] T227 ARBORA-FLEET-R061 A caller loads and unloads the tools of one connector group.

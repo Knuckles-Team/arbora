@@ -522,6 +522,7 @@ class FleetGateway:
                 params.get("items"),
                 params.get("servers"),
                 params.get("kinds"),
+                params.get("groups"),
                 params.get("all_items"),
             )
         ):

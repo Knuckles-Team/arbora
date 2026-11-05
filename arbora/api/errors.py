@@ -30,6 +30,7 @@ class ArboraErrorCode(StrEnum):
     POLICY_DENIED = "POLICY_DENIED"
     POLICY_UNAVAILABLE = "POLICY_UNAVAILABLE"
     LOAD_CAP_EXCEEDED = "LOAD_CAP_EXCEEDED"
+    FLEET_GROUP_INVALID = "FLEET_GROUP_INVALID"
     UNKNOWN_TOOL = "UNKNOWN_TOOL"
     NOT_FOUND = "NOT_FOUND"
     UNAVAILABLE = "UNAVAILABLE"
@@ -57,6 +58,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.POLICY_DENIED: 403,
     ArboraErrorCode.POLICY_UNAVAILABLE: 503,
     ArboraErrorCode.LOAD_CAP_EXCEEDED: 409,
+    ArboraErrorCode.FLEET_GROUP_INVALID: 400,
     ArboraErrorCode.UNKNOWN_TOOL: 404,
     ArboraErrorCode.NOT_FOUND: 404,
     ArboraErrorCode.UNAVAILABLE: 503,
@@ -289,6 +291,8 @@ def _public_details(
         return _indeterminate_details(details)
     if code == ArboraErrorCode.INVALID_ARGUMENT:
         return _argument_details(details)
+    if code == ArboraErrorCode.FLEET_GROUP_INVALID:
+        return _group_details(details)
     if code == ArboraErrorCode.LOAD_CAP_EXCEEDED:
         return _load_cap_details(details)
     if code == ArboraErrorCode.UNAVAILABLE:
@@ -302,6 +306,14 @@ def _public_details(
     if any(not isinstance(item, str) or len(item) > 128 for item in values):
         return {}
     return {key: list(values)}
+
+
+def _group_details(details: Mapping[str, Any]) -> dict[str, Any]:
+    """The offending group name a group refusal carries, never a free text."""
+    group = details.get("group")
+    if not isinstance(group, str) or len(group) > 128:
+        return {}
+    return {"group": group}
 
 
 def _load_cap_details(details: Mapping[str, Any]) -> dict[str, Any]:
@@ -511,6 +523,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.POLICY_DENIED: -32003,
     ArboraErrorCode.POLICY_UNAVAILABLE: -32050,
     ArboraErrorCode.LOAD_CAP_EXCEEDED: -32009,
+    ArboraErrorCode.FLEET_GROUP_INVALID: -32602,
     ArboraErrorCode.UNKNOWN_TOOL: -32601,
     ArboraErrorCode.NOT_FOUND: -32002,
     ArboraErrorCode.UNAVAILABLE: -32050,

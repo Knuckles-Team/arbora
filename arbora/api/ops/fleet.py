@@ -46,6 +46,7 @@ class FleetCatalogParams(_Params):
     query: str = Field(default="", max_length=4_096)
     kinds: tuple[str, ...] = ()
     servers: tuple[str, ...] = ()
+    groups: tuple[str, ...] = ()
     browse: bool = False
     cursor: str | None = Field(default=None, max_length=1_024)
     limit: int = Field(default=50, ge=1, le=100)
@@ -76,7 +77,8 @@ class FleetStatusParams(_Params):
 
 
 class FleetLoadParams(_Params):
-    items: tuple[str, ...] = Field(min_length=1, max_length=256)
+    items: tuple[str, ...] = Field(default=(), max_length=256)
+    groups: tuple[str, ...] = ()
     auto_unload: bool = False
     evict: str | None = Field(default=None, pattern="^lru$")
 
@@ -85,6 +87,7 @@ class FleetUnloadParams(_Params):
     items: tuple[str, ...] = ()
     servers: tuple[str, ...] = ()
     kinds: tuple[str, ...] = ()
+    groups: tuple[str, ...] = ()
     all_items: bool = False
     include_pinned: bool = False
 
@@ -167,7 +170,7 @@ async def handle_fleet_operation(
         # ARBORA-FLEET-R029.1: an unscoped search with no query is a caller
         # error (HTTP 400), refused before the gateway runs.
         if not params.get("query") and not params.get("browse"):
-            if not params.get("servers"):
+            if not (params.get("servers") or params.get("groups")):
                 from arbora.api.invoke.pipeline import OperationRefused
 
                 raise OperationRefused("INVALID_ARGUMENT", {"field": "query"})
@@ -175,6 +178,12 @@ async def handle_fleet_operation(
     elif op.id == "fleet.catalog.list":
         result = await gateway.list(caller, **params)
     elif op.id == "fleet.tools.load":
+        if not params.get("items") and not params.get("groups"):
+            from arbora.api.invoke.pipeline import OperationRefused
+
+            raise OperationRefused(
+                "INVALID_ARGUMENT", {"reason": "a load needs items or groups"}
+            )
         result = await gateway.load(caller, **params)
     elif op.id == "fleet.tools.unload":
         result = await gateway.unload(caller, **params)

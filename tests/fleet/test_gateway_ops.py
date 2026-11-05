@@ -116,7 +116,7 @@ async def test_load_cap_lru_and_forwarder_invokes_governed_fleet_call() -> None:
         )
     ]
     # The session cap overflow is the stable refusal, not the raw state
-    # machine error (ARBORA-FLEET-R059.6).
+    # machine error (ARBORA-FLEET-R059.6 / R061).
     from arbora.api.invoke.pipeline import OperationRefused
 
     with pytest.raises(OperationRefused) as cap_exc:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import builtins
+import re
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from typing import Any, cast
 
@@ -29,6 +30,24 @@ UnadmittedServers = Callable[[], list[str]]
 _MAX_PRIMED_SERVERS = 8
 #: One pin or unpin request names at most this many items (ARBORA-FLEET-R059.4).
 _MAX_PINNED_ITEMS = 32
+#: A connector group: a lowercase word of 2 to 24 letters and digits
+#: (ARBORA-FLEET-R061).
+_GROUP = re.compile(r"[a-z0-9]{2,24}")
+
+
+def _require_valid_groups(groups: Iterable[str]) -> None:
+    """Refuse a group name the caller could not have loaded by."""
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    for group in groups:
+        if not isinstance(group, str) or _GROUP.fullmatch(group) is None:
+            raise OperationRefused(
+                "FLEET_GROUP_INVALID",
+                {
+                    "group": str(group),
+                    "reason": "groups are 2..24 lowercase letters and digits",
+                },
+            )
 
 
 def _loaded_ids(loaded: Any) -> list[str]:
@@ -250,6 +269,7 @@ class MultiplexerOps:
         items: Iterable[str],
         auto_unload: bool = False,
         evict: str | None = None,
+        groups: Iterable[str] = (),
     ) -> dict[str, Any]:
         _require_delegate_scope(caller)
         return await self.load_tools(
@@ -258,11 +278,12 @@ class MultiplexerOps:
             items,
             auto_unload=auto_unload,
             evict=evict,
+            groups=groups,
         )
 
     async def unload(self, caller: Any, **params: Any) -> dict[str, Any]:
         """Forward to ``unload_tools``; see it for the accepted
-        ``items``/``servers``/``kinds``/``all_items`` keywords."""
+        ``items``/``servers``/``kinds``/``groups``/``all_items`` keywords."""
         _require_delegate_scope(caller)
         return await self.unload_tools(caller, self._session_key(caller), **params)
 
@@ -357,7 +378,7 @@ class MultiplexerOps:
 
     async def find_tools(self, caller: Any, **params: Any) -> dict[str, Any]:
         """Forward to the one typed catalog search; see ``FleetCatalog.search``
-        for the accepted ``query``/``kinds``/``servers``/``browse``/
+        for the accepted ``query``/``kinds``/``servers``/``groups``/``browse``/
         ``cursor``/``limit``/``context_budget_tokens`` keywords and their
         validation.
 
@@ -441,6 +462,19 @@ class MultiplexerOps:
     def _check_session_cap(
         self, session_key: str, ids: builtins.list[str], evict: str | None
     ) -> None:
+        from arbora.api.invoke.pipeline import OperationRefused
+
+        if len(ids) > self.sessions.cap:
+            # One request wider than the cap — a whole connector group
+            # (ARBORA-FLEET-R061) — refuses like an overflow, never as an
+            # internal error. Nothing is loaded: the load is atomic.
+            raise OperationRefused(
+                "LOAD_CAP_EXCEEDED",
+                {
+                    "cap": "session",
+                    "loaded_items": sorted(self.sessions.loaded(session_key)),
+                },
+            )
         if (
             len(set(ids) | self.sessions.loaded(session_key)) > self.sessions.cap
             and evict != "lru"
@@ -471,6 +505,23 @@ class MultiplexerOps:
             raise RuntimeError("governed fleet read adapter is unavailable")
         await self._mount(item, self._forwarder(item) if item.kind == "tool" else None)
 
+    async def _group_tool_ids(
+        self, caller: Any, groups: builtins.iter[str]
+    ) -> builtins.list[str]:
+        """The admitted tool ids of the named groups this caller may load.
+
+        An unknown group yields no ids, never an error: the load then follows
+        the ordinary item path with whatever the group named (ARBORA-FLEET-R061)."""
+        _require_valid_groups(groups)
+        if not any(True for _ in groups):
+            return []
+        matched = await self.catalog.group_items(caller, tuple(groups))
+        ids: builtins.list[str] = []
+        for item in matched:
+            if await self._loadable(item, caller):
+                ids.append(item.id)
+        return ids
+
     async def load_tools(
         self,
         caller: Any,
@@ -479,11 +530,29 @@ class MultiplexerOps:
         *,
         auto_unload: bool = False,
         evict: str | None = None,
+        groups: Iterable[str] = (),
     ) -> dict[str, Any]:
-        ids = list(dict.fromkeys(items))
-        if not ids or len(ids) > 256:
-            raise ValueError("load expects 1..256 item ids")
         _require_delegate_scope(caller)
+        _require_valid_groups(groups)
+        groups = tuple(groups)
+        ids = list(dict.fromkeys(items))
+        if not ids and not groups:
+            raise ValueError("load expects 1..256 item ids")
+        group_ids = await self._group_tool_ids(caller, groups)
+        if group_ids:
+            ids = list(dict.fromkeys([*ids, *group_ids]))
+        if not ids:
+            # An unknown group yields an empty result, never an error
+            # (ARBORA-FLEET-R061).
+            return {
+                "items": [],
+                "loaded": [],
+                "evicted": [],
+                "session_total": len(self.sessions.loaded(session_key)),
+                "notification_sent": True,
+            }
+        if len(ids) > 256:
+            raise ValueError("load expects 1..256 item ids")
         resolved = await self._resolve_loadable_items(ids, caller)
         self._check_session_cap(session_key, ids, evict)
         for item in resolved:
@@ -515,18 +584,20 @@ class MultiplexerOps:
         items: Iterable[str] = (),
         servers: Iterable[str] = (),
         kinds: Iterable[ItemKind] = (),
+        groups: Iterable[str] = (),
         all_items: bool = False,
         include_pinned: bool = False,
     ) -> dict[str, Any]:
         _require_delegate_scope(caller)
+        _require_valid_groups(groups)
         pinned = self.sessions.pinned_items(session_key)
         loaded = self.sessions.retractable(session_key)
         explicit = set(items)
         # An explicit item always unloads, pin included (R059.2).
         targets = explicit & (loaded | pinned)
-        server_filter, kind_filter = set(servers), set(kinds)
+        server_filter, kind_filter, group_filter = set(servers), set(kinds), set(groups)
         skipped_pinned: set[str] = set()
-        if all_items or server_filter or kind_filter:
+        if all_items or server_filter or kind_filter or group_filter:
             # The selectors cover the loaded items, and the pinned ones
             # always appear as candidates so the pin can name what it
             # withholds.
@@ -539,6 +610,7 @@ class MultiplexerOps:
                     all_items
                     or item.server in server_filter
                     or item.kind in kind_filter
+                    or (group_filter and item.group in group_filter)
                 ):
                     continue
                 if item_id in pinned and not include_pinned and item_id not in explicit:
