@@ -30,7 +30,12 @@ def _endpoint(name: str) -> Any:
 
 
 def _manifest(connectors: list[Any]) -> dict[str, Any]:
-    return {"connectors": connectors}
+    """The nested ``workspace.yml`` shape: the connectors group under subdirectories."""
+    return {
+        "subdirectories": {
+            "arbora": {"subdirectories": {"connectors": {"repositories": connectors}}}
+        }
+    }
 
 
 async def _harness(
@@ -116,10 +121,10 @@ async def _status(state, **params) -> Any:
 
 
 CONNECTORS = [
-    {"repo": "knuckles-team/alpha", "mcp_server": "alpha"},
-    {"repo": "knuckles-team/beta", "mcp_server": "beta"},
-    {"repo": "knuckles-team/gamma", "mcp_server": "gamma"},
-    {"repo": "knuckles-team/delta", "mcp_server": "delta"},
+    {"url": "https://github.com/Knuckles-Team/alpha.git", "mcp_server": "alpha"},
+    {"url": "https://github.com/Knuckles-Team/beta.git", "mcp_server": "beta"},
+    {"url": "https://github.com/Knuckles-Team/gamma.git", "mcp_server": "gamma"},
+    {"url": "https://github.com/Knuckles-Team/delta.git", "mcp_server": "delta"},
 ]
 HEALTHY_TOOLS = {"alpha": 2, "beta": 1, "gamma": 3}
 

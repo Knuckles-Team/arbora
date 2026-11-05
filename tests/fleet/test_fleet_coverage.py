@@ -1,7 +1,7 @@
 """The coverage gate: registry reader and the pure comparison.
 
 ARBORA-FLEET-R060.1 and R060.2: the org registry is the ``connectors``
-group of ``workspace.yml`` (a repo maps to its ``mcp_server`` key, else its
+group of the nested ``workspace.yml`` (a repo maps to its ``mcp_server`` key, else its
 own name; self-served connectors are excluded), and the pure check reports
 ``no_endpoint``/``not_admitted`` missing servers and ``zero_tools`` servers
 without admitting anything.
@@ -29,18 +29,36 @@ def _write_manifest(tmp_path, document) -> Path:
     return path
 
 
+def _nested(entries) -> dict:
+    """The real manifest shape: the connectors group nests under subdirectories."""
+    return {
+        "name": "workspace",
+        "subdirectories": {
+            "agent-packages": {"repositories": []},
+            "arbora": {
+                "subdirectories": {
+                    "connectors": {"description": "d", "repositories": entries}
+                }
+            },
+        },
+    }
+
+
+def _url(name: str) -> str:
+    return f"https://github.com/Knuckles-Team/{name}.git"
+
+
 @pytest.mark.spec("ARBORA-FLEET-R060.1")
 def test_registry_maps_repo_to_server_key(tmp_path) -> None:
     path = _write_manifest(
         tmp_path,
-        {
-            "connectors": [
-                "knuckles-team/gitlab-connector",
-                {"repo": "knuckles-team/github-connector", "mcp_server": "github"},
-                {"repo": "arbora/own-connector"},
+        _nested(
+            [
+                {"url": _url("gitlab-connector"), "description": "x"},
+                {"url": _url("github-connector"), "mcp_server": "github"},
                 42,
             ]
-        },
+        ),
         # the bad entry last: the reader is fail-closed before it
     )
     with pytest.raises(FleetCoverageError):
@@ -48,52 +66,58 @@ def test_registry_maps_repo_to_server_key(tmp_path) -> None:
 
     path = _write_manifest(
         tmp_path,
-        {
-            "connectors": [
-                "knuckles-team/gitlab-connector",
-                {"repo": "knuckles-team/github-connector", "mcp_server": "github"},
+        _nested(
+            [
+                {"url": _url("gitlab-connector")},
+                {"url": _url("github-connector"), "mcp_server": "github"},
             ]
-        },
+        ),
     )
     registered = registered_connectors(path)
     assert registered == (
-        RegisteredConnector(repo="knuckles-team/github-connector", server="github"),
-        RegisteredConnector(
-            repo="knuckles-team/gitlab-connector",
-            server="knuckles-team/gitlab-connector",
-        ),
+        RegisteredConnector(repo="github-connector", server="github"),
+        RegisteredConnector(repo="gitlab-connector", server="gitlab-connector"),
     )
 
     # self-served connectors are excluded by repo or server key
     path = _write_manifest(
         tmp_path,
-        {
-            "connectors": [
-                "knuckles-team/gitlab-connector",
-                {"repo": "arbora/self", "mcp_server": "arbora"},
+        _nested(
+            [
+                {"url": _url("gitlab-connector")},
+                {"url": _url("arbora-self"), "mcp_server": "arbora"},
             ]
-        },
-    )
-    assert registered_connectors(path, exclude=("arbora",)) == (
-        RegisteredConnector(
-            repo="knuckles-team/gitlab-connector",
-            server="knuckles-team/gitlab-connector",
         ),
     )
+    assert registered_connectors(path, exclude=("arbora",)) == (
+        RegisteredConnector(repo="gitlab-connector", server="gitlab-connector"),
+    )
 
-    # a missing or unparsable manifest is a refusal; an absent group is empty
+    # a missing or unparsable manifest, or one with no connectors group, is a
+    # refusal: an empty registry would pass the gate vacuously
     with pytest.raises(FleetCoverageError):
         registered_connectors(tmp_path / "absent.yml")
     with pytest.raises(FleetCoverageError):
         registered_connectors(_write_manifest(tmp_path, [1, 2]))
-    assert registered_connectors(_write_manifest(tmp_path, {})) == ()
-    assert registered_connectors(_write_manifest(tmp_path, {"connectors": None})) == ()
+    with pytest.raises(FleetCoverageError):
+        registered_connectors(_write_manifest(tmp_path, {}))
+    with pytest.raises(FleetCoverageError):
+        registered_connectors(_write_manifest(tmp_path, {"connectors": ["a/repo"]}))
+    with pytest.raises(FleetCoverageError):
+        registered_connectors(
+            _write_manifest(tmp_path, {"subdirectories": {"connectors": {}}})
+        )
     # duplicate server keys are unparsable
     with pytest.raises(FleetCoverageError):
         registered_connectors(
             _write_manifest(
                 tmp_path,
-                {"connectors": ["a/repo", {"repo": "b/other", "mcp_server": "a/repo"}]},
+                _nested(
+                    [
+                        {"url": _url("a-repo")},
+                        {"url": _url("b-other"), "mcp_server": "a-repo"},
+                    ]
+                ),
             )
         )
 

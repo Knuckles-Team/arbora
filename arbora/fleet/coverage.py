@@ -1,6 +1,7 @@
 """The fleet coverage gate: every registered connector is multiplexed.
 
-ARBORA-FLEET-R060: the org registry is the ``connectors`` group of
+ARBORA-FLEET-R060: the org registry is the ``connectors`` group (its
+``repositories`` list, found in the nested ``subdirectories`` tree) of
 ``workspace.yml`` — the human-edited manifest that outranks the deployed MCP
 config. The gate compares the registry against the enabled fleet endpoints
 and the admitted catalog's tool counts: a registered connector with no
@@ -48,23 +49,26 @@ class CoverageReport:
     ok: bool
 
 
+def _repo_from_url(url: str) -> str:
+    """The repository name of a clone URL: its last path segment, no ``.git``."""
+    name = url.strip().rstrip("/").rsplit("/", 1)[-1]
+    return name.removesuffix(".git")
+
+
 def _entry_repo_server(entry: Any) -> tuple[str, str] | None:
-    """One ``connectors`` entry: a repo string, or a mapping with ``repo``.
+    """One ``connectors`` repository entry: a mapping with a clone ``url``.
 
     The MCP server key is the entry's ``mcp_server`` field, else the repo
     name; the registry owner adds the field where they differ."""
-    repo: Any
-    server: Any = None
-    if isinstance(entry, str):
-        repo = entry
-    elif isinstance(entry, Mapping):
-        repo = entry.get("repo")
-        server = entry.get("mcp_server")
-    else:
+    if not isinstance(entry, Mapping):
         return None
-    if not isinstance(repo, str) or not _REPO.fullmatch(repo.strip()):
+    url = entry.get("url")
+    server = entry.get("mcp_server")
+    if not isinstance(url, str):
         return None
-    repo = repo.strip()
+    repo = _repo_from_url(url)
+    if not _REPO.fullmatch(repo):
+        return None
     if server is not None:
         if not isinstance(server, str) or not _SERVER.fullmatch(server.strip()):
             return None
@@ -74,14 +78,31 @@ def _entry_repo_server(entry: Any) -> tuple[str, str] | None:
     return repo, server
 
 
+def _connectors_group(node: Any) -> Mapping[str, Any] | None:
+    """The group named ``connectors`` in the manifest's ``subdirectories`` tree."""
+    if not isinstance(node, Mapping):
+        return None
+    children = node.get("subdirectories")
+    if not isinstance(children, Mapping):
+        return None
+    group = children.get("connectors")
+    if isinstance(group, Mapping):
+        return group
+    for child in children.values():
+        found = _connectors_group(child)
+        if found is not None:
+            return found
+    return None
+
+
 def registered_connectors(
     path: Path | None = None, exclude: Iterable[str] | None = None
 ) -> tuple[RegisteredConnector, ...]:
     """Read the ``connectors`` repositories of ``workspace.yml``.
 
     Self-served connectors (Arbora's own in-process servers) are excluded.
-    A missing or unparsable file raises :class:`FleetCoverageError`; a
-    parsable manifest without a ``connectors`` group registers nothing."""
+    A missing or unparsable file, or a manifest without a ``connectors``
+    group, raises :class:`FleetCoverageError` (the gate fails closed)."""
     import yaml
 
     from arbora.core.settings import platform_config_file
@@ -99,9 +120,11 @@ def registered_connectors(
         document = {}
     if not isinstance(document, Mapping):
         raise FleetCoverageError("workspace.yml is missing or unparsable")
-    entries = document.get("connectors")
-    if entries is None:
-        entries = ()
+    group = _connectors_group(document)
+    if group is None:
+        # An absent group would register nothing and pass the gate vacuously.
+        raise FleetCoverageError("workspace.yml has no connectors group")
+    entries = group.get("repositories")
     if not isinstance(entries, (list, tuple)):
         raise FleetCoverageError("workspace.yml is missing or unparsable")
     excluded = {name for name in (exclude or ()) if isinstance(name, str)}
