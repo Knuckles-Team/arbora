@@ -399,3 +399,20 @@ def test_prerelease_tag_is_never_the_latest_github_release() -> None:
     run = next(s["run"] for s in steps if "gh release create" in s.get("run", ""))
     assert "*dev*" in run and "--prerelease" in run
     assert "--latest \\" not in run
+
+
+# spec: ARBORA-RELEASE-R001.2
+def test_published_base_is_set_only_from_a_real_previous_push() -> None:
+    step = next(
+        step
+        for step in _gate_steps()
+        if step.get("name") == "Resolve the published base"
+    )
+    run = step["run"]
+    assert "rev-list --max-parents=0" not in run, "no root-commit fallback"
+    guard, _, rest = run.partition('echo "PRE_COMMIT_FROM_REF=$BASE"')
+    assert rest, "the step still exports the base from a real previous push"
+    assert 'if [ -n "${BASE:-}" ]' in guard
+    assert "0000000000000000000000000000000000000000" in guard
+    assert 'git cat-file -e "$BASE"' in guard
+    assert run.count("PRE_COMMIT_FROM_REF=") == 1
