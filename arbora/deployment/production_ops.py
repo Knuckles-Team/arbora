@@ -571,12 +571,15 @@ def _parser() -> argparse.ArgumentParser:
             " half of the published surface (repeatable, or comma-separated)."
         ),
     )
-    subparsers.add_parser(
-        "check-fleet-coverage",
-        help=(
-            "Verify every registered connector is multiplexed (workspace.yml "
-            "versus the deployed MCP config and the admitted catalog)."
+    _served_url_argument(
+        subparsers.add_parser(
+            "check-fleet-coverage",
+            help=(
+                "Verify every registered connector is multiplexed (workspace.yml "
+                "versus the deployed MCP config and the admitted catalog)."
+            ),
         ),
+        "Local MCP URL Arbora serves at; the anonymous-mode startup check reads it.",
     )
     return parser
 
