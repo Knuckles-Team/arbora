@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import builtins
+import logging
 import re
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from typing import Any, cast
@@ -10,6 +11,8 @@ from typing import Any, cast
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog, ItemKind
 from arbora.fleet.pin_store import PinRecord, PinStore, pinned_now_ms
 from arbora.fleet.session_loads import LoadCapExceeded, SessionLoads
+
+_LOG = logging.getLogger(__name__)
 
 Loadable = Callable[[CatalogItem, Any], Awaitable[bool]]
 Mount = Callable[[CatalogItem, Callable[..., Awaitable[Any]] | None], Awaitable[None]]
@@ -332,6 +335,7 @@ class MultiplexerOps:
         try:
             records = await store.list(caller.tenant, caller.principal)
         except Exception:
+            _LOG.warning("pin store unavailable; suspended pins cannot be listed")
             return []
         loaded = self.sessions.loaded(key)
         pinned = self.sessions.pinned_items(key)
@@ -711,6 +715,7 @@ class MultiplexerOps:
             raise _load_cap_refusal(exc) from exc
         except ValueError as exc:
             raise OperationRefused("INVALID_ARGUMENT", {"reason": str(exc)}) from exc
+        written: builtins.list[str] = []
         try:
             for item in resolved:
                 await store.put(
@@ -722,7 +727,17 @@ class MultiplexerOps:
                         pinned_at_ms=pinned_now_ms(),
                     )
                 )
+                written.append(item.id)
         except Exception:
+            _LOG.warning("pin store write failed; rolling back this request")
+            # A store failure pins nothing (R059.6): drop what this request
+            # already stored, best effort, so no partial pin set survives.
+            for item_id in written:
+                if item_id in new_pins:
+                    try:
+                        await store.delete(caller.tenant, caller.principal, item_id)
+                    except Exception:
+                        _LOG.warning("pin store rollback failed")
             self.sessions.unpin(key, new_pins)
             self.sessions.unload(key, newly_loaded)
             raise OperationRefused(
@@ -795,6 +810,7 @@ class MultiplexerOps:
         try:
             records = await store.list(caller.tenant, caller.principal)
         except Exception:
+            _LOG.warning("pin store unavailable; no pins restored")
             return {"restored": [], "suspended": [], "store_unavailable": True}
         restored: builtins.list[str] = []
         suspended: builtins.list[dict[str, str]] = []
@@ -815,6 +831,12 @@ class MultiplexerOps:
                 assert code is not None
                 suspended.append({"item_id": record.item_id, "code": code})
                 continue
+            if item.id in self.sessions.pinned_items(
+                key
+            ) and item.id in self.sessions.loaded(key):
+                # Already restored in this session: nothing to reload, and no
+                # list_changed on every request.
+                continue
             try:
                 await self._mount_item_for_load(item)
                 self.sessions.load(
@@ -825,6 +847,10 @@ class MultiplexerOps:
                 suspended.append(
                     {"item_id": record.item_id, "code": "LOAD_CAP_EXCEEDED"}
                 )
+                continue
+            except (PermissionError, RuntimeError):
+                # The mount is refused: the pin stays stored and suspended.
+                suspended.append({"item_id": record.item_id, "code": "UNAVAILABLE"})
                 continue
             restored.append(item.id)
         if restored:

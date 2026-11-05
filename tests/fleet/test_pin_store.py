@@ -205,7 +205,14 @@ async def test_eg_pin_store_survives_a_new_client() -> None:
     # delete drops the pin for a fresh client too
     await second.delete("t", "alice", "fleet:tool:s/read")
     assert await EgPinStore(_LeaseClient(engine)).list("t", "alice") == ()
-    # and a tenant-wide page never crosses tenants
+    # and a tenant-wide page never crosses tenants; a fresh pin is a fresh stamp
+    changed = PinRecord(
+        tenant="t",
+        principal="alice",
+        item_id="fleet:tool:s/read",
+        binding=changed.binding,
+        pinned_at_ms=10,
+    )
     await second.put(changed)
     other = PinRecord(
         tenant="other",
@@ -218,3 +225,42 @@ async def test_eg_pin_store_survives_a_new_client() -> None:
     page, next_cursor = await second.list_tenant("t", None, 100)
     assert [record.item_id for record in page] == ["fleet:tool:s/read"]
     assert next_cursor is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-FLEET-R059.3")
+async def test_served_composition_hands_pins_the_engine_lease_client() -> None:
+    """The store the served bind composes writes through the plan store's client.
+
+    The served client is the real per-call ``PoolLeases`` proxy (it answers any
+    attribute name), so only the real classes catch a mis-wired store.
+    """
+    from types import SimpleNamespace
+
+    from arbora.api.invoke.plan import EgPlanStore
+    from arbora.mcp_server.fleet_composition import _pin_store
+    from arbora.mcp_server.served_invocation import PoolLeases, _LeaseClient
+
+    engine = _LeaseEngine()
+
+    async def service_client() -> Any:
+        return SimpleNamespace(control_leases=engine)
+
+    plans = _LeaseClient(PoolLeases(service_client)).store(
+        EgPlanStore, lease_kind="arbora.plan", seal_key=None
+    )
+    store = _pin_store(SimpleNamespace(plans=plans))
+    assert isinstance(store, EgPinStore)
+    record = PinRecord(
+        tenant="t",
+        principal="alice",
+        item_id="fleet:tool:s/read",
+        binding=("fleet:tool:s/read", "tool", "s", "read"),
+        pinned_at_ms=7,
+    )
+    await store.put(record)
+    assert await store.list("t", "alice") == (record,)
+    assert len(engine.leases) == 1
+    await store.delete("t", "alice", record.item_id)
+    assert await store.list("t", "alice") == ()
+    assert _pin_store(SimpleNamespace(plans=None)) is None

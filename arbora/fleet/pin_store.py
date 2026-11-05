@@ -12,7 +12,7 @@ a far-future expiry.
 
 from __future__ import annotations
 
-import secrets
+import hashlib
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -129,6 +129,21 @@ class InMemoryPinStore:
         return tuple(record for record, _mark in page), next_cursor
 
 
+def _lease_id(record: PinRecord) -> str:
+    """One lease id per exact record, so a retried put replays, never duplicates."""
+    digest = hashlib.sha256(
+        "\x1f".join(
+            (record.principal, record.item_id, str(record.pinned_at_ms), *record.binding)
+        ).encode()
+    ).hexdigest()[:32]
+    return f"fleet-pin:{digest}"
+
+
+def _revoke_key(lease: Mapping[str, Any]) -> str:
+    """A revoke is idempotent per lease and revision, so a retry replays."""
+    return f"pin-revoke:{lease.get('lease_id')}:{lease.get('revision', 1)}"
+
+
 class EgPinStore:
     """Carry per-principal pins in the engine's control leases.
 
@@ -219,11 +234,11 @@ class EgPinStore:
                 lease_id=str(lease.get("lease_id")),
                 expected_revision=int(lease.get("revision", 1)),
                 to="revoked",
-                idempotency_key=f"pin-revoke:{lease.get('lease_id')}:{secrets.token_hex(8)}",
+                idempotency_key=_revoke_key(lease),
             )
             if answer.get("outcome") not in {"applied", "not_found"}:
                 raise RuntimeError("engine did not revoke the prior pin lease")
-        lease_id = f"fleet-pin:{principal}:{item_id}:{secrets.token_hex(8)}"
+        lease_id = _lease_id(record)
         answer = await self._leases.issue(
             tenant=tenant,
             lease_id=lease_id,
@@ -255,7 +270,7 @@ class EgPinStore:
                 lease_id=str(lease.get("lease_id")),
                 expected_revision=int(lease.get("revision", 1)),
                 to="revoked",
-                idempotency_key=f"pin-revoke:{lease.get('lease_id')}:{secrets.token_hex(8)}",
+                idempotency_key=_revoke_key(lease),
             )
             if answer.get("outcome") not in {"applied", "not_found"}:
                 raise RuntimeError("engine did not revoke the pin lease")
