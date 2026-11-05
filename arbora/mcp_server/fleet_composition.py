@@ -160,12 +160,17 @@ def _pin_store(services: Any) -> Any:
     adds no second database (ARBORA-FLEET-R059.3). Without it the pin
     operations refuse ``UNAVAILABLE`` (fail closed)."""
     plans = getattr(services, "plans", None)
-    lease_client = getattr(plans, "_leases", None)
-    if lease_client is None or not hasattr(lease_client, "control_leases"):
+    # ``EgPlanStore._leases`` already is the client's ``control_leases``; the
+    # served one is a per-call proxy that answers any attribute, so it is
+    # handed over as ``control_leases`` rather than probed for the name.
+    leases = getattr(plans, "_leases", None)
+    if leases is None:
         return None
+    from types import SimpleNamespace
+
     from arbora.fleet.pin_store import EgPinStore
 
-    return EgPinStore(lease_client)
+    return EgPinStore(SimpleNamespace(control_leases=leases))
 
 
 def bind_fleet_gateway(
