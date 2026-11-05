@@ -75,7 +75,10 @@ def _validate_search_request(
 
 
 def _passes_filters(
-    item: CatalogItem, kind_filter: set[ItemKind], server_filter: set[str], query: str
+    item: CatalogItem,
+    kind_filter: set[ItemKind],
+    server_filter: set[str],
+    query: str,
 ) -> bool:
     if kind_filter and item.kind not in kind_filter:
         return False
@@ -160,6 +163,25 @@ class FleetCatalog:
             "next_cursor": next_cursor,
             "servers": await self._server_surfaces(caller, matched, servers, page),
         }
+
+    async def tool_counts(self) -> dict[str, int]:
+        """Admitted ``tool`` items per catalog server.
+
+        Every server holding at least one admitted item appears, with zero for
+        a server whose catalog carries no tool; a server with no admitted
+        entry is absent, which is how the coverage gate tells ``not_admitted``
+        from ``zero_tools`` (ARBORA-FLEET-R060.2). Reads the sources only: no
+        priming, no child started, no caller."""
+        counts: dict[str, int] = {}
+        for source in self._sources:
+            for item in await source():
+                if item.server is None:
+                    continue
+                if item.server not in counts:
+                    counts[item.server] = 0
+                if item.kind == "tool":
+                    counts[item.server] += 1
+        return counts
 
     async def _server_surfaces(
         self,

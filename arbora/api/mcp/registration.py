@@ -111,6 +111,9 @@ class FleetMCPBinding:
 
     async def visible_names(self) -> frozenset[str]:
         caller, key = self.request_context()
+        # Stored pins re-check under the current scopes and policy and reload
+        # what passes, before invisible grants are revoked (R059.4).
+        await self.ops.restore_pins(caller, key)
         await self.ops.revoke_invisible(caller, key)
         await self.ops.redeliver_pending(key)
         return frozenset(self.ops.sessions.loaded(key))
