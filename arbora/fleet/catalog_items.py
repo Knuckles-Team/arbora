@@ -346,18 +346,17 @@ _GROUP = re.compile(r"[a-z0-9]{2,24}")
 def _upstream_group(row: Mapping[str, Any]) -> str | None:
     """The connector group a probe row marks, or ``None`` when unmarked.
 
-    The namespace arrives under the tool ``meta`` key ``scion/upstream``; a
-    legacy ``metadata`` key or the row itself is read the same way. Anything
-    that is not a strict namespace string leaves the item ungrouped."""
-    for candidate in (row.get("meta"), row.get("metadata"), row):
-        if not isinstance(candidate, Mapping):
-            continue
-        upstream = candidate.get(_UPSTREAM_META_KEY)
-        if not isinstance(upstream, Mapping):
-            continue
-        namespace = upstream.get("namespace")
-        if isinstance(namespace, str) and _GROUP.fullmatch(namespace):
-            return namespace
+    The namespace arrives under the tool ``meta`` key ``scion/upstream``.
+    Anything that is not a strict namespace string leaves the item ungrouped."""
+    meta = row.get("meta")
+    if not isinstance(meta, Mapping):
+        return None
+    upstream = meta.get(_UPSTREAM_META_KEY)
+    if not isinstance(upstream, Mapping):
+        return None
+    namespace = upstream.get("namespace")
+    if isinstance(namespace, str) and _GROUP.fullmatch(namespace):
+        return namespace
     return None
 
 
