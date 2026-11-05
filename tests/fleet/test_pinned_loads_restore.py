@@ -29,7 +29,9 @@ class _FailsOnSecondPut(InMemoryPinStore):
 @pytest.mark.spec("ARBORA-FLEET-R059.6")
 async def test_store_failure_midway_leaves_no_partial_pin() -> None:
     state = await harness(pin_store=_FailsOnSecondPut())
-    outcome = await pin(state, state.alice, ("fleet:tool:s/read", "fleet:tool:s/secret"))
+    outcome = await pin(
+        state, state.alice, ("fleet:tool:s/read", "fleet:tool:s/secret")
+    )
     assert outcome.code == "UNAVAILABLE"
     # the first record this request wrote is dropped, and the session is unchanged
     assert await state.store.list("tenant", "alice") == ()
