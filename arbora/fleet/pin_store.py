@@ -133,7 +133,12 @@ def _lease_id(record: PinRecord) -> str:
     """One lease id per exact record, so a retried put replays, never duplicates."""
     digest = hashlib.sha256(
         "\x1f".join(
-            (record.principal, record.item_id, str(record.pinned_at_ms), *record.binding)
+            (
+                record.principal,
+                record.item_id,
+                str(record.pinned_at_ms),
+                *record.binding,
+            )
         ).encode()
     ).hexdigest()[:32]
     return f"fleet-pin:{digest}"
