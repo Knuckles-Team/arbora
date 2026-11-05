@@ -501,6 +501,11 @@ class ArboraConfig(BaseModel):
         alias="MCP_ALWAYS_LOAD_TOOLS",
         description="INDIVIDUAL fleet tools mounted eagerly, for servers too large to mount whole (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog). ``MCP_ALWAYS_LOAD`` exposes a server's entire condensed surface. Some servers are far too large for that — ``github-mcp`` and ``gitlab-mcp`` carry dozens of tools, and...",
     )
+    fleet_pinned_cap: int = Field(
+        default=32,
+        alias="FLEET_PINNED_CAP",
+        description="Maximum items one principal may keep pinned in a multiplexer session (ARBORA-FLEET-R059.1). The pinned cap is separate from the session cap of 64; pinned items count toward both. Validated 1..128 by the session state machine.",
+    )
     mcp_basic_auth_password_ref: str | None = Field(
         default=None,
         alias="MCP_BASIC_AUTH_PASSWORD_REF",
