@@ -514,7 +514,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R868` | Test: `tests/api/test_retrieval_ops.py::test_listing_toc_digest_equals_read_span_digest` (served). It asserts digest equality and the pass-through refusal. |
 | `ARBORA-OPS-R869` | Test: `tests/api/test_generated_code_admission_gate.py::test_write_refuses_without_matching_admission` (served). It asserts both refusals and one admitted commit. |
 | `ARBORA-OPS-R870` | Test: `tests/api/test_changeset_review_op.py::test_op_calls_decide_and_returns_the_record_digest` (served). |
-| `ARBORA-OPS-R871` | Test: `tests/ops/test_playbook_step_requires_decision.py::test_action_refuses_without_a_committed_record` (served). It also runs one admitted step. |
+| `ARBORA-OPS-R871` | Test: `tests/api/test_playbook_step_requires_decision.py::test_action_refuses_without_a_committed_record` (served). It also runs one admitted step. |
 | `ARBORA-OPS-R872` | Test: `tests/api/test_certification_gate_served.py::test_each_attestation_case_refuses_without_effect` (served). The exact current attestation admits the run. |
 | `ARBORA-OPS-R873` | Test: `tests/control_plane/test_workflow_host_lazy_start.py::test_start_counter_zero_then_one` (served). Counter is 0 before first use, 1 after repeats, 0 after an unknown id. |
 | `ARBORA-OPS-R874` | Test: `tests/control_plane/test_workflow_match_identity.py::test_entry_resolves_registered_record_and_unknown_refuses` (served). |
@@ -529,7 +529,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R883` | Test: `tests/api/test_retrieval_ops.py::test_agent_ref_is_taken_from_identity` calls the operations over HTTP and MCP against a recorded engine (served). |
 | `ARBORA-OPS-R884` | Test: `tests/api/test_meetings_ops.py::test_summary_create_admits_context_and_commit` (L3) runs through the registry `invoke` with a loopback medulla and a recorded harness receipt. It asserts the denied-provider refusal makes zero medulla calls. |
 | `ARBORA-OPS-R885` | A served test invokes the operation through the registry over HTTP and MCP with a loopback engine. It asserts the receipt digests. A self-approval refuses. |
-| `ARBORA-OPS-R886` | Test: a served test through the operation registry's `invoke` over HTTP and MCP with a recorded medulla engine (L3). |
+| `ARBORA-OPS-R886` | Test: `tests/api/test_ingest_maintenance_served.py::test_maintenance_run_refuses_without_authorization_and_applies_admitted_actions` (L3, through the operation registry's `invoke` over HTTP and MCP with a recorded medulla engine). |
 | `ARBORA-OPS-R887` | A served test calls the registry `invoke` over HTTP and MCP against a recorded medulla engine. It approves one proposal. It asserts the refusal passthrough for a missing approver. |
 | `ARBORA-OPS-R888` | Test: `tests/api/test_governance_ops.py::test_access_request_approval_needs_steward` (L3) runs through the registry `invoke` over HTTP and MCP against a loopback medulla engine. It asserts the grant after a steward approval and zero effects after a non-steward approval. |
 | `ARBORA-OPS-R889` | Test: `tests/api/test_lineage_route.py::test_run_event_reaches_engine_under_caller_tenant` posts one event and reads the edge through `ask`. |
