@@ -80,9 +80,9 @@ The proposed served scenarios have not been run and establish no runtime deliver
 
 These cases extend ARBORA-HOST-R009.5, R009.6 and R010.7 with TUIG-RUNTIME-R002.2 through R002.6. These cases have not been run.
 
-- `tests/host/test_terminal_host_served.py::test_effective_log_preference_is_authenticated`: start the real host and enter run_host_terminal. Check the strict effective web_logs value and host, workspace, tenant, principal, session, generation and expiry bindings. Change each binding independently. Missing, altered or expired bindings yield zero HostLogReader.read calls and zero delivered records.
-- `tests/host/test_terminal_host_served.py::test_terminal_log_mode_preference_matrix`: use terminal, web and both with true and false preferences. Only terminal/both with true show a correlated HTTP log during agent interaction. False, absent preference, missing reader and all web cases produce zero TUI reads. Check HTTP serving, the required redacted sink and agent interaction remain available where their interfaces are selected.
-- `tests/host/test_terminal_host_served.py::test_terminal_log_handoff_preserves_scope_and_lifecycle`: two tenants share a workspace. Use the production adapter and reader to prove tenant-local records, rotation gaps, reconnect authorization, denial clearing and bounded cancellation. Preserve existing single-engine, single-multiplexer and owned-thread shutdown assertions.
+- `tests/agent_host/test_terminal_host_served.py::test_effective_log_preference_is_authenticated`: start the real host and enter run_host_terminal. Check the strict effective web_logs value and host, workspace, tenant, principal, session, generation and expiry bindings. Change each binding independently. Missing, altered or expired bindings yield zero HostLogReader.read calls and zero delivered records.
+- `tests/agent_host/test_terminal_host_served.py::test_terminal_log_mode_preference_matrix`: use terminal, web and both with true and false preferences. Only terminal/both with true show a correlated HTTP log during agent interaction. False, absent preference, missing reader and all web cases produce zero TUI reads. Check HTTP serving, the required redacted sink and agent interaction remain available where their interfaces are selected.
+- `tests/agent_host/test_terminal_host_served.py::test_terminal_log_handoff_preserves_scope_and_lifecycle`: two tenants share a workspace. Use the production adapter and reader to prove tenant-local records, rotation gaps, reconnect authorization, denial clearing and bounded cancellation. Preserve existing single-engine, single-multiplexer and owned-thread shutdown assertions.
 
 Missing receipt fields or public consumer exports block positive served acceptance. Helper success or a log file alone cannot satisfy it. Record both revisions and the authenticated handoff identity; never credentials.
 
@@ -261,13 +261,13 @@ Each row below has no test bound by a `spec` marker. `Existing` names a test in 
 | `ARBORA-HOST-R008.1006` | `tests/ingest/test_source_catalog.py::test_catalogue_without_registry_lists_providers_as_unavailable` | Existing, not yet bound |
 | `ARBORA-HOST-R009.2` | `tests/agent_host/test_create_agent_server.py::test_terminal_mode_serves_http_in_distinct_thread` | Planned, not yet written |
 | `ARBORA-HOST-R009.3` | `tests/agent_host/test_log_access.py::test_two_tenants_in_one_workspace_see_only_their_records` | Planned, not yet written |
-| `ARBORA-HOST-R009.6` | `tests/host/test_terminal_host_served.py::test_combined_mode_serves_http_and_scoped_logs` | Planned, not yet written |
-| `ARBORA-HOST-R009.8.2.2.2` | `tests/host/test_overstory_logs_served.py::test_retention_gap_clears_protected_content` | Planned, not yet written |
+| `ARBORA-HOST-R009.6` | `tests/agent_host/test_terminal_host_served.py::test_combined_mode_serves_http_and_scoped_logs` | Planned, not yet written |
+| `ARBORA-HOST-R009.8.2.2.2` | `tests/agent_host/test_overstory_logs_served.py::test_retention_gap_clears_protected_content` | Planned, not yet written |
 | `ARBORA-HOST-R010.2` | `tests/test_environment_manifest.py::test_census_matches_declarations_and_dynamic_read_refuses` | Planned, not yet written |
-| `ARBORA-HOST-R010.3` | `tests/host/test_launch_configuration_served.py::test_refusals_start_nothing` | Planned, not yet written |
+| `ARBORA-HOST-R010.3` | `tests/mcp_server/test_launch_configuration_served.py::test_refusals_start_nothing` | Planned, not yet written |
 | `ARBORA-HOST-R010.4` | `tests/test_environment_manifest.py::test_disabled_component_needs_no_credential` | Planned, not yet written |
 | `ARBORA-HOST-R010.5` | `tests/test_environment_manifest.py::test_documented_examples_cover_manifest` | Planned, not yet written |
-| `ARBORA-HOST-R010.6` | `tests/host/test_launch_configuration_served.py::test_valid_and_invalid_launch_after_restart` | Planned, not yet written |
+| `ARBORA-HOST-R010.6` | `tests/mcp_server/test_launch_configuration_served.py::test_valid_and_invalid_launch_after_restart` | Planned, not yet written |
 | `ARBORA-HOST-R023.2` | `tests/api/test_mcp_parity.py::test_transport_parity_and_unauthorized_refusal` | Planned, not yet written |
 | `ARBORA-HOST-R026.4` | `tests/deployment/test_doctor_a2a.py::test_a2a_persistence_pass_and_both_failures` | Planned, not yet written |
 | `ARBORA-HOST-R028` | `tests/test_dependency_manifest.py::test_meristem_api_export_modules_import` | Planned, not yet written |
@@ -317,7 +317,7 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 | `ARBORA-HOST-R031.1` | `arbora/control_plane/runs/admission.py::NativeWorkItemAdmissionProtocol` | Planned, not yet written |
 | `ARBORA-HOST-R031.1` | `tests/control_plane/test_sandbox_admission_served.py::test_agents_run_admits_and_records_allocation` | Planned, not yet written |
 | `ARBORA-HOST-R034` | `arbora/host/specialists.py::install_package` | Planned, not yet written |
-| `ARBORA-HOST-R034` | `tests/host/test_specialist_install.py::test_install_swaps_marker_atomically_and_registers_nodes` | Planned, not yet written |
+| `ARBORA-HOST-R034` | `tests/mcp_server/test_specialist_install.py::test_install_swaps_marker_atomically_and_registers_nodes` | Planned, not yet written |
 | `ARBORA-HOST-R035` | `arbora/agent_runs.py::bind_run_ports` | Exists |
 | `ARBORA-HOST-R035` | `tests/test_harness_cycle_host.py::test_completed_run_drives_one_tick_and_probes_drive_none` | Planned, not yet written |
 | `ARBORA-HOST-R036` | `arbora/agent_runs.py::AgentRunPort` | Planned, not yet written |
