@@ -47,7 +47,13 @@ async def test_pin_record_round_trips_and_cap_range() -> None:
         record.item_id,
         record.binding,
         record.pinned_at_ms,
-    ) == ("t", "alice", "fleet:tool:s/read", ("fleet:tool:s/read", "tool", "s", "read"), 17)
+    ) == (
+        "t",
+        "alice",
+        "fleet:tool:s/read",
+        ("fleet:tool:s/read", "tool", "s", "read"),
+        17,
+    )
 
     # the knob: the FLEET_PINNED_CAP setting beside mcp_always_load_tools
     assert ArboraConfig().fleet_pinned_cap == 32
@@ -193,7 +199,9 @@ async def test_eg_pin_store_survives_a_new_client() -> None:
     )
     await second.put(changed)
     assert await second.list("t", "alice") == (changed,)
-    assert sum(1 for lease in engine.leases.values() if lease["status"] == "active") == 1
+    assert (
+        sum(1 for lease in engine.leases.values() if lease["status"] == "active") == 1
+    )
     # delete drops the pin for a fresh client too
     await second.delete("t", "alice", "fleet:tool:s/read")
     assert await EgPinStore(_LeaseClient(engine)).list("t", "alice") == ()

@@ -36,9 +36,13 @@ async def test_pinned_skip_lru_and_idle_expiry() -> None:
     loaded = loads.loaded("s")
     assert len(loaded) == 64
     assert set(pinned) <= loaded
-    assert loaded == (
-        set(ids) - {"item:3", "item:4", "item:5", "item:6", "item:7"}
-    ) | {"e0", "e1", "e2", "e3", "e4"}
+    assert loaded == (set(ids) - {"item:3", "item:4", "item:5", "item:6", "item:7"}) | {
+        "e0",
+        "e1",
+        "e2",
+        "e3",
+        "e4",
+    }
     # selector retraction never reaches a pinned item
     assert loads.retractable("s") == loaded - set(pinned)
 

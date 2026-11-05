@@ -174,7 +174,7 @@ class EgPinStore:
             or not isinstance(grant.get("item_id"), str)
             or not isinstance(binding, list)
             or not all(isinstance(part, str) for part in binding)
-            or not type(grant.get("pinned_at_ms")) is int
+            or type(grant.get("pinned_at_ms")) is not int
         ):
             raise ValueError("pin lease grant is malformed")
         return PinRecord(
@@ -191,9 +191,7 @@ class EgPinStore:
             for lease in await self._active(tenant, {"principal": principal})
         ]
         return tuple(
-            sorted(
-                records, key=lambda record: (record.pinned_at_ms, record.item_id)
-            )
+            sorted(records, key=lambda record: (record.pinned_at_ms, record.item_id))
         )
 
     async def put(self, record: PinRecord) -> None:
@@ -277,8 +275,6 @@ class EgPinStore:
         if not isinstance(rows, list):
             raise RuntimeError("engine pin list page is malformed")
         records = tuple(
-            self._record(lease, tenant)
-            for lease in rows
-            if isinstance(lease, Mapping)
+            self._record(lease, tenant) for lease in rows if isinstance(lease, Mapping)
         )
         return records, page.get("next_cursor")
