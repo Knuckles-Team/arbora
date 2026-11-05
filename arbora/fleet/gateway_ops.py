@@ -506,6 +506,9 @@ class FleetGateway:
             )
 
     async def status(self, caller: Any, **params: Any) -> Any:
+        # require_full_coverage is the handler's strict-mode flag, not an
+        # ops parameter.
+        params.pop("require_full_coverage", None)
         return await self._catalog(caller, "mcp:discover").status(caller, **params)
 
     async def load(self, caller: Any, **params: Any) -> Any:
@@ -519,6 +522,7 @@ class FleetGateway:
                 params.get("items"),
                 params.get("servers"),
                 params.get("kinds"),
+                params.get("groups"),
                 params.get("all_items"),
             )
         ):
@@ -526,6 +530,25 @@ class FleetGateway:
         return await self._catalog(
             caller, "mcp:delegate", session_required=True
         ).unload(caller, **params)
+
+    async def pin(self, caller: Any, **params: Any) -> Any:
+        return await self._catalog(caller, "mcp:delegate", session_required=True).pin(
+            caller, items=params.get("items", ())
+        )
+
+    async def unpin(self, caller: Any, **params: Any) -> Any:
+        return await self._catalog(caller, "mcp:delegate", session_required=True).unpin(
+            caller, items=params.get("items", ())
+        )
+
+    async def pins_list(self, caller: Any, **params: Any) -> Any:
+        # The op's own scopes (fleet:control, mcp:admin) gate the pipeline;
+        # the tenant-wide read needs no session of the caller's.
+        return await self._catalog(caller, "fleet:control").pins_list(
+            caller,
+            cursor=params.get("cursor"),
+            limit=params.get("limit", 50),
+        )
 
     async def effect(
         self, _op: Any, params: Mapping[str, Any], caller: Any

@@ -85,6 +85,18 @@ class LateFleetGateway:
         with _caller_session(caller):
             return await self._bound().unload(caller, **params)
 
+    async def pin(self, caller: Any, **params: Any) -> Any:
+        with _caller_session(caller):
+            return await self._bound().pin(caller, **params)
+
+    async def unpin(self, caller: Any, **params: Any) -> Any:
+        with _caller_session(caller):
+            return await self._bound().unpin(caller, **params)
+
+    async def pins_list(self, caller: Any, **params: Any) -> Any:
+        with _caller_session(caller):
+            return await self._bound().pins_list(caller, **params)
+
     async def prompts_list(self, caller: Any, **params: Any) -> Any:
         with _caller_session(caller):
             return await self._bound().prompts_list(caller, **params)
@@ -140,6 +152,22 @@ def _session_key(caller: Any) -> str | None:
     return f"{tenant}:{principal}"
 
 
+def _pin_store(services: Any) -> Any:
+    """The engine-backed pin store over the plan store's lease wiring.
+
+    The served invocation composes one service-authorized control-lease
+    client for ``EgPlanStore``; the pin store reuses that exact wiring and
+    adds no second database (ARBORA-FLEET-R059.3). Without it the pin
+    operations refuse ``UNAVAILABLE`` (fail closed)."""
+    plans = getattr(services, "plans", None)
+    lease_client = getattr(plans, "_leases", None)
+    if lease_client is None or not hasattr(lease_client, "control_leases"):
+        return None
+    from arbora.fleet.pin_store import EgPinStore
+
+    return EgPinStore(lease_client)
+
+
 def bind_fleet_gateway(
     late: LateFleetGateway,
     *,
@@ -185,6 +213,7 @@ def bind_fleet_gateway(
         notify=no_notify,
         invoke=bound_invoke,
         session_key_for=_session_key,
+        pin_store=_pin_store(services),
     )
 
     async def policy_check(server: str, tool: str, caller: Any) -> bool:

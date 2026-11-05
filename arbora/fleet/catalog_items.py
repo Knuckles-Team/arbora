@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -37,6 +38,9 @@ class CatalogItem:
     credential_mode: CredentialMode = field(default="delegated", repr=False)
     executor_scopes: frozenset[str] = field(default=frozenset(), repr=False)
     subject_id: str | None = field(default=None, repr=False)
+    #: The upstream application a proxying connector marks the tool with
+    #: (``scion/upstream`` namespace); one connector group to load by.
+    group: str | None = field(default=None, repr=False)
 
     def public(self) -> dict[str, Any]:
         result: dict[str, Any] = {
@@ -47,6 +51,8 @@ class CatalogItem:
         }
         if self.server is not None:
             result["server"] = self.server
+        if self.group is not None:
+            result["group"] = self.group
         if self.schema:
             result["input_schema"] = dict(self.schema)
         if self.schema_fingerprint is not None:
@@ -75,11 +81,17 @@ def _validate_search_request(
 
 
 def _passes_filters(
-    item: CatalogItem, kind_filter: set[ItemKind], server_filter: set[str], query: str
+    item: CatalogItem,
+    kind_filter: set[ItemKind],
+    server_filter: set[str],
+    group_filter: set[str],
+    query: str,
 ) -> bool:
     if kind_filter and item.kind not in kind_filter:
         return False
     if server_filter and item.server not in server_filter:
+        return False
+    if group_filter and item.group not in group_filter:
         return False
     return not (query and _rank(item, query) == 0)
 
@@ -138,17 +150,19 @@ class FleetCatalog:
         query: str = "",
         kinds: Iterable[ItemKind] = (),
         servers: Iterable[str] = (),
+        groups: Iterable[str] = (),
         browse: bool = False,
         cursor: str | None = None,
         limit: int = 20,
         context_budget_tokens: int | None = None,
     ) -> dict[str, Any]:
         servers = tuple(servers)
-        # An empty query scoped to named servers lists those servers' items:
+        groups = tuple(groups)
+        # An empty query scoped to named servers or groups lists those items:
         # it is a browse, not a malformed search.
-        browse = browse or (not query and bool(servers))
+        browse = browse or (not query and bool(servers or groups))
         _validate_search_request(query, browse, limit, context_budget_tokens)
-        matched = await self._matching_items(caller, query, kinds, servers)
+        matched = await self._matching_items(caller, query, kinds, servers, groups)
         items = sorted(
             matched.values(), key=lambda item: (-_rank(item, query), item.id)
         )
@@ -160,6 +174,48 @@ class FleetCatalog:
             "next_cursor": next_cursor,
             "servers": await self._server_surfaces(caller, matched, servers, page),
         }
+
+    async def group_items(
+        self, caller: Any, groups: Iterable[str]
+    ) -> tuple[CatalogItem, ...]:
+        """The caller-visible tool items of the named groups; no paging.
+
+        An unknown group yields nothing, never an error (ARBORA-FLEET-R061)."""
+        group_filter = set(groups)
+        matched: dict[str, CatalogItem] = {}
+        for source in self._sources:
+            for item in await source():
+                if (
+                    item.kind != "tool"
+                    or not item.group
+                    or item.group not in group_filter
+                    or not await self._authorized(item, caller)
+                ):
+                    continue
+                previous = matched.get(item.id)
+                if previous is not None and previous != item:
+                    raise ValueError(f"conflicting fleet descriptor: {item.id}")
+                matched[item.id] = item
+        return tuple(sorted(matched.values(), key=lambda item: item.id))
+
+    async def tool_counts(self) -> dict[str, int]:
+        """Admitted ``tool`` items per catalog server.
+
+        Every server holding at least one admitted item appears, with zero for
+        a server whose catalog carries no tool; a server with no admitted
+        entry is absent, which is how the coverage gate tells ``not_admitted``
+        from ``zero_tools`` (ARBORA-FLEET-R060.2). Reads the sources only: no
+        priming, no child started, no caller."""
+        counts: dict[str, int] = {}
+        for source in self._sources:
+            for item in await source():
+                if item.server is None:
+                    continue
+                if item.server not in counts:
+                    counts[item.server] = 0
+                if item.kind == "tool":
+                    counts[item.server] += 1
+        return counts
 
     async def _server_surfaces(
         self,
@@ -201,12 +257,15 @@ class FleetCatalog:
         query: str,
         kinds: Iterable[ItemKind],
         servers: Iterable[str],
+        groups: Iterable[str] = (),
     ) -> dict[str, CatalogItem]:
-        kind_filter, server_filter = set(kinds), set(servers)
+        kind_filter, server_filter, group_filter = set(kinds), set(servers), set(groups)
         matched: dict[str, CatalogItem] = {}
         for source in self._sources:
             for item in await source():
-                if not _passes_filters(item, kind_filter, server_filter, query):
+                if not _passes_filters(
+                    item, kind_filter, server_filter, group_filter, query
+                ):
                     continue
                 if await self._authorized(item, caller):
                     previous = matched.get(item.id)
@@ -277,6 +336,31 @@ def _is_skill_resource(row: Mapping[str, Any]) -> bool:
     return uri.startswith(_SKILL_SCHEME) and uri.endswith(_SKILL_MAIN)
 
 
+#: The probe-row key a proxying connector marks each upstream tool with
+#: (SCION-CONNECTOR-CONTROL-R914.5).
+_UPSTREAM_META_KEY = "scion/upstream"
+#: A connector group name: 2 to 24 lowercase letters and digits.
+_GROUP = re.compile(r"[a-z0-9]{2,24}")
+
+
+def _upstream_group(row: Mapping[str, Any]) -> str | None:
+    """The connector group a probe row marks, or ``None`` when unmarked.
+
+    The namespace arrives under the tool ``meta`` key ``scion/upstream``; a
+    legacy ``metadata`` key or the row itself is read the same way. Anything
+    that is not a strict namespace string leaves the item ungrouped."""
+    for candidate in (row.get("meta"), row.get("metadata"), row):
+        if not isinstance(candidate, Mapping):
+            continue
+        upstream = candidate.get(_UPSTREAM_META_KEY)
+        if not isinstance(upstream, Mapping):
+            continue
+        namespace = upstream.get("namespace")
+        if isinstance(namespace, str) and _GROUP.fullmatch(namespace):
+            return namespace
+    return None
+
+
 def _probed_item(
     server: str, kind: ItemKind, row: Mapping[str, Any]
 ) -> CatalogItem | None:
@@ -302,6 +386,7 @@ def _probed_item(
             if isinstance(row.get("annotations"), Mapping)
             else None
         ),
+        group=_upstream_group(row),
     )
 
 

@@ -11,6 +11,8 @@ from typing import Any, Protocol
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
 from arbora.fleet.catalog_sources import CombinedFleetSource, SdkRead
 from arbora.fleet.multiplexer_ops import (
+    CoverageEndpoints,
+    CoverageRegistry,
     Invoke,
     Loadable,
     Mount,
@@ -19,7 +21,9 @@ from arbora.fleet.multiplexer_ops import (
     Notify,
     ReadItem,
     SessionKeyFor,
+    UnadmittedServers,
 )
+from arbora.fleet.pin_store import PinStore
 from arbora.fleet.session_loads import SessionLoads
 
 logger = logging.getLogger(__name__)
@@ -123,7 +127,12 @@ def compose_multiplexer_ops(
     native_name: NativeName | None = None,
     read_item: ReadItem | None = None,
     cap: int = 64,
+    pinned_cap: int | None = None,
     idle_ttl_seconds: int = 3600,
+    pin_store: PinStore | None = None,
+    coverage_registry: CoverageRegistry | None = None,
+    coverage_endpoints: CoverageEndpoints | None = None,
+    unadmitted_servers: UnadmittedServers | None = None,
 ) -> MultiplexerOps:
     """Build one operation service without claiming the MCP cutover is wired.
 
@@ -132,7 +141,9 @@ def compose_multiplexer_ops(
     discovery/load-authorization policy owns ``visible``/``loadable``, and
     the native MCP tool registration and list-changed notification path owns
     the ``mount``/``notify`` hooks; supplying neither cannot silently widen
-    authority.
+    authority. ``pinned_cap`` defaults to the ``FLEET_PINNED_CAP`` setting;
+    ``pin_store`` is the durable per-principal pin store (without one the pin
+    operations refuse ``UNAVAILABLE``).
     """
 
     async def live() -> Mapping[str, Mapping[str, Any]]:
@@ -145,9 +156,20 @@ def compose_multiplexer_ops(
     def health() -> Mapping[str, Any]:
         return mux.status_snapshot().get("children", {})
 
+    if pinned_cap is None:
+        from arbora.core.settings import runtime_config
+
+        pinned_cap = runtime_config.fleet_pinned_cap
+    if unadmitted_servers is None:
+
+        def unadmitted_servers():
+            return list(mux.status_snapshot().get("unadmitted_servers", ()))
+
     return MultiplexerOps(
         catalog=catalog,
-        sessions=SessionLoads(cap=cap, idle_ttl_seconds=idle_ttl_seconds),
+        sessions=SessionLoads(
+            cap=cap, pinned_cap=pinned_cap, idle_ttl_seconds=idle_ttl_seconds
+        ),
         loadable=loadable,
         callable_item=callable_item,
         mount=mount,
@@ -158,4 +180,8 @@ def compose_multiplexer_ops(
         native_name=native_name,
         read_item=read_item,
         prime=prime,
+        pin_store=pin_store,
+        coverage_registry=coverage_registry,
+        coverage_endpoints=coverage_endpoints,
+        unadmitted_servers=unadmitted_servers,
     )

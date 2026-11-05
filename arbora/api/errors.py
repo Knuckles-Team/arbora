@@ -30,6 +30,7 @@ class ArboraErrorCode(StrEnum):
     POLICY_DENIED = "POLICY_DENIED"
     POLICY_UNAVAILABLE = "POLICY_UNAVAILABLE"
     LOAD_CAP_EXCEEDED = "LOAD_CAP_EXCEEDED"
+    FLEET_GROUP_INVALID = "FLEET_GROUP_INVALID"
     UNKNOWN_TOOL = "UNKNOWN_TOOL"
     NOT_FOUND = "NOT_FOUND"
     UNAVAILABLE = "UNAVAILABLE"
@@ -57,6 +58,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.POLICY_DENIED: 403,
     ArboraErrorCode.POLICY_UNAVAILABLE: 503,
     ArboraErrorCode.LOAD_CAP_EXCEEDED: 409,
+    ArboraErrorCode.FLEET_GROUP_INVALID: 400,
     ArboraErrorCode.UNKNOWN_TOOL: 404,
     ArboraErrorCode.NOT_FOUND: 404,
     ArboraErrorCode.UNAVAILABLE: 503,
@@ -289,11 +291,13 @@ def _public_details(
         return _indeterminate_details(details)
     if code == ArboraErrorCode.INVALID_ARGUMENT:
         return _argument_details(details)
-    allowed = {
-        ArboraErrorCode.SCOPE_REQUIRED: "missing_scopes",
-        ArboraErrorCode.LOAD_CAP_EXCEEDED: "loaded_items",
-    }
-    key = allowed.get(code)
+    if code == ArboraErrorCode.FLEET_GROUP_INVALID:
+        return _group_details(details)
+    if code == ArboraErrorCode.LOAD_CAP_EXCEEDED:
+        return _load_cap_details(details)
+    if code == ArboraErrorCode.UNAVAILABLE:
+        return _coverage_details(details)
+    key = {ArboraErrorCode.SCOPE_REQUIRED: "missing_scopes"}.get(code)
     if key is None:
         return {}
     values = details.get(key)
@@ -302,6 +306,66 @@ def _public_details(
     if any(not isinstance(item, str) or len(item) > 128 for item in values):
         return {}
     return {key: list(values)}
+
+
+def _group_details(details: Mapping[str, Any]) -> dict[str, Any]:
+    """The offending group name a group refusal carries, never a free text."""
+    group = details.get("group")
+    if not isinstance(group, str) or len(group) > 128:
+        return {}
+    return {"group": group}
+
+
+def _load_cap_details(details: Mapping[str, Any]) -> dict[str, Any]:
+    """Which cap overflowed plus the bounded id lists it names.
+
+    A pinned-cap refusal names ``cap: pinned`` and the pinned list; a
+    session-cap refusal names the loaded items (ARBORA-FLEET-R059.6)."""
+    projected: dict[str, Any] = {}
+    cap = details.get("cap")
+    if cap in {"pinned", "session"}:
+        projected["cap"] = cap
+    for key in ("loaded_items", "pinned"):
+        names = _short_names(details.get(key))
+        if names is not None:
+            projected[key] = names
+    return projected
+
+
+#: The closed reason vocabulary a coverage offender may carry.
+_COVERAGE_REASONS = frozenset({"no_endpoint", "not_admitted"})
+
+
+def _coverage_details(details: Mapping[str, Any]) -> dict[str, Any]:
+    """Only the named offenders a strict coverage refusal carries.
+
+    Healthy servers are never listed: ``missing`` holds ``{server, reason}``
+    pairs over the closed reason vocabulary, ``zero_tools`` the zero-tool
+    server names (ARBORA-FLEET-R060.4)."""
+    projected: dict[str, Any] = {}
+    missing = details.get("missing")
+    if isinstance(missing, (list, tuple)) and missing and len(missing) <= 64:
+        offenders: list[dict[str, str] | str] = []
+        for item in missing:
+            if isinstance(item, Mapping):
+                server = item.get("server")
+                reason = item.get("reason")
+                if (
+                    not isinstance(server, str)
+                    or len(server) > 128
+                    or reason not in _COVERAGE_REASONS
+                ):
+                    return {}
+                offenders.append({"server": server, "reason": reason})
+            elif isinstance(item, str) and 0 < len(item) <= 128:
+                offenders.append(item)
+            else:
+                return {}
+        projected["missing"] = offenders
+    zero_tools = _short_names(details.get("zero_tools"))
+    if zero_tools is not None:
+        projected["zero_tools"] = zero_tools
+    return projected
 
 
 def _indeterminate_details(details: Mapping[str, Any]) -> dict[str, Any]:
@@ -459,6 +523,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.POLICY_DENIED: -32003,
     ArboraErrorCode.POLICY_UNAVAILABLE: -32050,
     ArboraErrorCode.LOAD_CAP_EXCEEDED: -32009,
+    ArboraErrorCode.FLEET_GROUP_INVALID: -32602,
     ArboraErrorCode.UNKNOWN_TOOL: -32601,
     ArboraErrorCode.NOT_FOUND: -32002,
     ArboraErrorCode.UNAVAILABLE: -32050,

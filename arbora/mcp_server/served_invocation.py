@@ -666,9 +666,18 @@ def compose_served_invocation(
         # at most once per idempotency key (ARBORA-MESSAGING-R008).
         # Awaited attended proposals share that owner; replay never sends a
         # second browser prompt or repeats a human-approved execution.
+        # The served pin and unpin writes (ARBORA-FLEET-R059.4) share the
+        # owner as well: one session load and one durable record per
+        # idempotency key.
         changes["external_effect_operations"] = frozenset(
             op_id
-            for op_id in ("fleet.call", "messaging.alert", "browser.request_call")
+            for op_id in (
+                "fleet.call",
+                "fleet.tools.pin",
+                "fleet.tools.unpin",
+                "messaging.alert",
+                "browser.request_call",
+            )
             if registry.get(op_id) is not None
         )
     services = build_invoke_services(

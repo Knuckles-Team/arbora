@@ -475,20 +475,20 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T208 ARBORA-FLEET-R056 Intent surface answers the job, downtime and plan questions.
 - [ ] T209 ARBORA-FLEET-R057 Source executor relays read-time access checks.
 - [ ] T210 ARBORA-FLEET-R058 Host bootstrap declares data-prep fields to the engine.
-- [ ] T211 ARBORA-FLEET-R059.1 Add the PinRecord model, the PinStore protocol and the pinned cap knob.
-- [ ] T212 ARBORA-FLEET-R059.3 Store pins durably per principal in the medulla store.
-- [ ] T213 ARBORA-FLEET-R059.2 Exempt pinned items from LRU eviction and idle expiry.
-- [ ] T214 ARBORA-FLEET-R059.4 Wire the pin and unpin manage operations and the session restore.
-- [ ] T215 ARBORA-FLEET-R059.5 Authorize a pin by load authority and keep the caller credential on every call.
-- [ ] T216 ARBORA-FLEET-R059.6 Refuse a pin with the stable codes.
-- [ ] T217 ARBORA-FLEET-R059.7 Show pinned tools in find and status.
-- [ ] T218 ARBORA-FLEET-R059.8 Audit each pin and add the tenant admin view.
-- [ ] T219 ARBORA-FLEET-R059.9 Prove pins survive eviction, expiry and restart through the served manage tool.
-- [ ] T220 ARBORA-FLEET-R059 A caller pins tools so they stay loaded across sessions and restarts (rollup).
-- [ ] T221 ARBORA-FLEET-R060.1 Add the coverage model and the registry source reader.
-- [ ] T222 ARBORA-FLEET-R060.2 Compare the registry with the catalog tool counts.
-- [ ] T223 ARBORA-FLEET-R060.3 Wire coverage into the served status and the operator command.
-- [ ] T224 ARBORA-FLEET-R060.4 Refuse with a named reason for each uncovered connector.
-- [ ] T225 ARBORA-FLEET-R060.5 Prove a missing or empty connector fails the served status.
-- [ ] T226 ARBORA-FLEET-R060 Every registered connector is multiplexed, and a coverage gate enforces it (rollup).
-- [ ] T227 ARBORA-FLEET-R061 A caller loads and unloads the tools of one connector group.
+- [x] T211 ARBORA-FLEET-R059.1 Add the PinRecord model, the PinStore protocol and the pinned cap knob.
+- [x] T212 ARBORA-FLEET-R059.3 Store pins durably per principal in the medulla store.
+- [x] T213 ARBORA-FLEET-R059.2 Exempt pinned items from LRU eviction and idle expiry.
+- [x] T214 ARBORA-FLEET-R059.4 Wire the pin and unpin manage operations and the session restore.
+- [x] T215 ARBORA-FLEET-R059.5 Authorize a pin by load authority and keep the caller credential on every call.
+- [x] T216 ARBORA-FLEET-R059.6 Refuse a pin with the stable codes.
+- [x] T217 ARBORA-FLEET-R059.7 Show pinned tools in find and status.
+- [x] T218 ARBORA-FLEET-R059.8 Audit each pin and add the tenant admin view.
+- [x] T219 ARBORA-FLEET-R059.9 Prove pins survive eviction, expiry and restart through the served manage tool.
+- [x] T220 ARBORA-FLEET-R059 A caller pins tools so they stay loaded across sessions and restarts (rollup).
+- [x] T221 ARBORA-FLEET-R060.1 Add the coverage model and the registry source reader.
+- [x] T222 ARBORA-FLEET-R060.2 Compare the registry with the catalog tool counts.
+- [x] T223 ARBORA-FLEET-R060.3 Wire coverage into the served status and the operator command.
+- [x] T224 ARBORA-FLEET-R060.4 Refuse with a named reason for each uncovered connector.
+- [x] T225 ARBORA-FLEET-R060.5 Prove a missing or empty connector fails the served status.
+- [x] T226 ARBORA-FLEET-R060 Every registered connector is multiplexed, and a coverage gate enforces it (rollup).
+- [x] T227 ARBORA-FLEET-R061 A caller loads and unloads the tools of one connector group.
