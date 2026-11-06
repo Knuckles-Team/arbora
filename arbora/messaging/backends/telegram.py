@@ -48,7 +48,11 @@ async def _attachment_from(
     """Resolve one Telegram file handle into a shared :class:`MediaAttachment`."""
     file = await source.get_file()
     return MediaAttachment(
-        media_type=media_type, url=file.file_path or "", filename=filename
+        media_type=media_type,
+        url=file.file_path or "",
+        filename=filename,
+        mime_type=str(getattr(source, "mime_type", "") or ""),
+        size_bytes=int(getattr(source, "file_size", 0) or 0),
     )
 
 

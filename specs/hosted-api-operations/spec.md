@@ -179,6 +179,7 @@ As an operator, I run a stored process workflow through one served operation. A 
 - **FR-008**: Autonomous deliveries must be read and steered through served operations, and code-host events must reach the engine. Rows: `ARBORA-OPS-R896.7`, `ARBORA-OPS-R896.8`, `ARBORA-OPS-R896.9`, `ARBORA-OPS-R896.12`.
 - **FR-009**: Merge arming must need an owner receipt on the head commit, and every delivery write must be a governed effect. Rows: `ARBORA-OPS-R896.10`, `ARBORA-OPS-R896.11`.
 - **FR-010**: A stored process workflow must run as one admitted agent DAG with served approvals and engine-decided branches. Rows: `ARBORA-OPS-R898`.
+- **FR-011**: Every prompt entry point must accept audio and other media parts, turn them into text through one modality seam (audio through the fleet's speech-to-text capability), keep the original as an attachment linked to its derived text, and refuse with a typed code when no capability is reachable or a limit is exceeded. Rows: `ARBORA-OPS-R899`.
 
 ## Success Criteria
 

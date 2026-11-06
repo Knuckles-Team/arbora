@@ -12,6 +12,9 @@ root binds one implementation for each port at startup:
   ``None`` when authorization is unavailable. No bound gate refuses the send.
 * ``outbound_mirror``: records a sent message in the knowledge graph.
 * ``runtime_signal``: records a runtime-reliability signal.
+* ``prompt_normalizer``: the modality seam (:mod:`arbora.modality`) that turns
+  a message's attachments into prompt text. Unbound, a message carrying audio
+  is refused ``TRANSCRIPTION_UNAVAILABLE`` and other attachments are ignored.
 
 An unbound optional port is a no-op. An unbound gate fails closed.
 """
@@ -40,6 +43,7 @@ class MessagingHostPorts:
     action_gate: ActionGate | None = None
     outbound_mirror: OutboundMirror | None = None
     runtime_signal: RuntimeSignal | None = None
+    prompt_normalizer: Any = None
 
 
 _ports = MessagingHostPorts()

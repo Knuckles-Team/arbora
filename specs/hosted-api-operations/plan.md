@@ -1142,6 +1142,27 @@ sequenceDiagram
   E-->>M: taken arms
 ```
 
+### Multimodal prompts through one modality seam (R899)
+
+The package `arbora/modality/` holds the seam. Entry points build `MediaPart`s and call `ModalityNormalizer.normalize`. Handlers are registered per modality. The audio handler finds the fleet's `speech-to-text` tool by its input contract and calls it through the in-process `find` and `act` verbs, so the call takes the governed `fleet.call` path. Provenance records link each transcript to its audio by digest. Image and document handlers plug into the same registry later; until then such parts are kept and named in the prompt text.
+
+```mermaid
+sequenceDiagram
+  participant U as Chat, A2A, MCP or HTTP caller
+  participant A as Arbora entry point
+  participant N as ModalityNormalizer
+  participant F as fleet.call
+  participant T as speech-to-text tool
+  participant H as Harness
+  U->>A: prompt with an audio part
+  A->>N: normalize(text, parts)
+  N->>F: find speech-to-text, then call
+  F->>T: transcribe_speech(artifact_b64, digest, media_type)
+  T-->>N: speech-transcript/1
+  N-->>A: text, attachment, transcript link
+  A->>H: run on the text
+```
+
 ## Phase 2: Task approach
 
 tasks.md carries one numbered task line for each active row. Tasks run producer first. A task marked `[P]` may run in parallel with its neighbours. The development rows `R896.1` to `R896.5` run after the engine rows they cite.
@@ -1171,4 +1192,5 @@ The delivery rows add two entry points. Code-host webhooks enter at `POST /api/v
 - `ARBORA-OPS-R896.10` calls the arm and disarm tools of the code-host connectors. Contract: `contracts/merge-arming.md`.
 - `ARBORA-OPS-R896.11` writes through governed write-back (`SCION-GOVERNED-WRITEBACK-R004.11`). Contract: `contracts/governed-delivery-effects.md`.
 - `ARBORA-OPS-R896.12` starts the meristem run that applies one delivery assignment beside `MERISTEM-SCM-R011`. Contract: `contracts/delivery-assignment.md`.
+- `ARBORA-OPS-R899` calls the audio-transcriber `transcribe_speech` tool of `TRANSCRIBE-R002` through `fleet.call`; any connector serving the same `speech-transcript/1` contract qualifies.
 - `ARBORA-OPS-R898` serves the medulla process plan (`Decide` `ProcessPlan`) and binds the branch and table verdicts (`BranchSelect`, `DecisionTableEval`). The meristem run loop applies the control steps. Contract: `contracts/process-plan-run.md`, which names the provider rows.
