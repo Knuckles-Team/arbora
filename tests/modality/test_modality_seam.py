@@ -41,6 +41,7 @@ def _normalizer(fleet: FakeFleet, **kwargs) -> ModalityNormalizer:
     )
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.2")
 async def test_audio_is_transcribed_by_the_capability_found_by_contract() -> None:
     fleet = FakeFleet()
     recorded: list = []
@@ -61,6 +62,7 @@ async def test_audio_is_transcribed_by_the_capability_found_by_contract() -> Non
     assert recorded == [prompt]
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.2")
 async def test_capability_discovery_is_by_contract_not_server_name() -> None:
     assert is_speech_tool(TYPED) and not is_speech_tool(ROUTED)
     renamed = {**TYPED, "server": "anything-else", "name": "stt"}
@@ -69,6 +71,7 @@ async def test_capability_discovery_is_by_contract_not_server_name() -> None:
     assert not is_speech_tool(no_fields)
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.1")
 async def test_text_and_audio_compose_and_the_provider_is_cached() -> None:
     fleet = FakeFleet()
     normalizer = _normalizer(fleet)
@@ -99,6 +102,7 @@ async def test_text_and_audio_compose_and_the_provider_is_cached() -> None:
         (FakeFleet(result=transcript(duration_s=600.0)), "MEDIA_TOO_LONG"),
     ],
 )
+@pytest.mark.spec("ARBORA-OPS-R899.3")
 async def test_unreachable_or_refusing_capability_is_a_typed_refusal(
     fleet, code
 ) -> None:
@@ -110,6 +114,7 @@ async def test_unreachable_or_refusing_capability_is_a_typed_refusal(
     assert recorded == []
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.3")
 async def test_size_and_duration_limits_refuse_before_any_fleet_call() -> None:
     fleet = FakeFleet()
     with pytest.raises(ModalityRefused) as too_big:
@@ -138,6 +143,7 @@ class _Vision:
         )
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.1")
 async def test_other_modalities_plug_into_the_same_seam() -> None:
     fleet = FakeFleet()
     normalizer = _normalizer(fleet)
@@ -167,6 +173,7 @@ async def test_other_modalities_plug_into_the_same_seam() -> None:
     assert "[transcribed from an audio attachment" in prompt.text
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.6")
 async def test_provenance_links_the_transcript_to_its_audio() -> None:
     prompt = await _normalizer(FakeFleet()).normalize("", [_audio()])
     records = {
@@ -191,6 +198,7 @@ async def test_provenance_links_the_transcript_to_its_audio() -> None:
     assert {label for _, label in created} == {"MediaAttachment", "Transcript"}
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.2")
 async def test_native_fleet_uses_the_governed_find_and_act_verbs() -> None:
     seen: list[tuple[str, dict]] = []
 

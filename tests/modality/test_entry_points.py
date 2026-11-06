@@ -54,6 +54,7 @@ def _audio_message(text: str | None = "answer briefly") -> dict:
     return {"role": "user", "parts": parts, "messageId": "msg-1"}
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.5")
 async def test_a2a_audio_part_runs_the_harness_on_the_transcript() -> None:
     from arbora.a2a.service import A2AService
 
@@ -80,6 +81,7 @@ async def test_a2a_audio_part_runs_the_harness_on_the_transcript() -> None:
     assert "bytes" not in kept
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.5")
 async def test_a2a_audio_without_a_capability_refuses_typed_before_dispatch() -> None:
     from arbora.a2a.service import A2AService
 
@@ -93,6 +95,7 @@ async def test_a2a_audio_without_a_capability_refuses_typed_before_dispatch() ->
     assert authority.messages == []
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.3")
 async def test_a2a_jsonrpc_error_names_the_modality_refusal() -> None:
     import json
 
@@ -108,6 +111,7 @@ async def test_a2a_jsonrpc_error_names_the_modality_refusal() -> None:
     assert too_big.status_code == 422
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.3")
 async def test_agents_run_maps_a_modality_refusal_to_a_typed_operation_refusal(
     monkeypatch,
 ) -> None:
@@ -135,6 +139,7 @@ async def test_agents_run_maps_a_modality_refusal_to_a_typed_operation_refusal(
     assert caught.value.details["modality_refusal"] == "MEDIA_TOO_LONG"
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.5")
 async def test_a2a_message_model_keeps_text_bounds_and_takes_media() -> None:
     from pydantic import ValidationError
 
@@ -167,6 +172,7 @@ async def test_a2a_message_model_keeps_text_bounds_and_takes_media() -> None:
 # ── SDK A2A app for the fleet agent ───────────────────────────────────────
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.5")
 async def test_fleet_agent_history_media_becomes_transcript_text() -> None:
     from pydantic_ai import BinaryContent
     from pydantic_ai.messages import ModelRequest, UserPromptPart
@@ -204,6 +210,7 @@ async def test_fleet_agent_history_media_becomes_transcript_text() -> None:
 # ── WebUI dictation ───────────────────────────────────────────────────────
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.7")
 async def test_webui_dictation_transcribes_through_the_seam_without_provenance(
     monkeypatch,
 ) -> None:
@@ -227,6 +234,7 @@ async def test_webui_dictation_transcribes_through_the_seam_without_provenance(
     assert recorded == []
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.5")
 async def test_a2a_refuses_a_part_no_handler_reads() -> None:
     from arbora.a2a.service import A2AService
 
