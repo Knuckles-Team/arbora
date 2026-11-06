@@ -498,3 +498,4 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T231 ARBORA-FLEET-R064 A fleet onboarding refusal names its engine operation and refusal code.
 - [ ] T232 ARBORA-FLEET-R065 Engine, discovery and fleet report health on their own.
 - [ ] T233 ARBORA-FLEET-R066 Parallel find and act calls do not hang under load.
+- [x] T234 ARBORA-FLEET-R067 A shielded, shared verified fleet read caches even when every caller deadline is shorter; stale-while-refresh.

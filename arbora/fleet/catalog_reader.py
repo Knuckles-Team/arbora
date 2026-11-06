@@ -13,6 +13,7 @@ composition-root adapter.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import threading
 import time
@@ -222,6 +223,19 @@ _MAX_CACHED_SNAPSHOTS: Final = 64
 _MAX_CACHED_CONTENTS: Final = 50_000
 
 
+#: A snapshot older than its TTL is still served, while one refresh runs, up
+#: to this many TTLs old; past that a caller waits for the fresh read.
+_STALE_SERVE_FACTOR: Final = 3.0
+
+
+def _log_refresh_failure(task: asyncio.Task[Any]) -> None:
+    if task.cancelled():
+        return
+    exc = task.exception()
+    if exc is not None:
+        logger.warning("fleet catalog refresh failed: %s", type(exc).__name__)
+
+
 class FleetCatalogReader:
     """Read and verify one complete Medulla-native fleet catalog snapshot."""
 
@@ -254,6 +268,10 @@ class FleetCatalogReader:
         self._cache_lock = threading.Lock()
         self._snapshots: dict[tuple[Any, ...], tuple[float, FleetCatalog]] = {}
         self._contents: dict[tuple[Any, ...], ComponentContent] = {}
+        # One full read per key at a time, owned by the reader and shielded
+        # from its callers (ARBORA-FLEET-R067): a caller whose own deadline
+        # passes never cancels the read, so the snapshot always lands.
+        self._inflight: dict[tuple[Any, ...], asyncio.Task[FleetCatalog]] = {}
 
     async def read(
         self,
@@ -265,23 +283,65 @@ class FleetCatalogReader:
         context = await self._port.read_context()
         self._validate_context(context)
         key = (context, selected_kinds)
-        if self._snapshot_ttl_s > 0:
-            with self._cache_lock:
-                cached = self._snapshots.get(key)
-            if (
-                cached is not None
-                and time.monotonic() - cached[0] < self._snapshot_ttl_s
-            ):
-                return cached[1]
+        if self._snapshot_ttl_s <= 0:
+            return await self._read_full(context, selected_kinds)
+        with self._cache_lock:
+            cached = self._snapshots.get(key)
+        age = None if cached is None else time.monotonic() - cached[0]
+        if cached is not None and age is not None and age < self._snapshot_ttl_s:
+            return cached[1]
+        refresh = self._refresh(key, context, selected_kinds)
+        if (
+            cached is not None
+            and age is not None
+            and age < self._snapshot_ttl_s * _STALE_SERVE_FACTOR
+        ):
+            # Serve the last verified snapshot while one refresh runs: a full
+            # read outlasts every interactive deadline on a real fleet.
+            return cached[1]
+        return await asyncio.shield(refresh)
+
+    def _refresh(
+        self,
+        key: tuple[Any, ...],
+        context: ReadContext,
+        kinds: tuple[ComponentKind, ...],
+    ) -> asyncio.Task[FleetCatalog]:
+        """Start (or join) the one full read for ``key``; it caches on success."""
+
+        task = self._inflight.get(key)
+        if (
+            task is not None
+            and not task.done()
+            and task.get_loop() is asyncio.get_running_loop()
+        ):
+            return task
+
+        async def run() -> FleetCatalog:
+            try:
+                catalog = await self._read_full(context, kinds)
+                with self._cache_lock:
+                    if len(self._snapshots) >= _MAX_CACHED_SNAPSHOTS:
+                        self._snapshots.clear()
+                    self._snapshots[key] = (time.monotonic(), catalog)
+                return catalog
+            finally:
+                if self._inflight.get(key) is task_ref[0]:
+                    self._inflight.pop(key, None)
+
+        task_ref: list[asyncio.Task[FleetCatalog]] = []
+        task = asyncio.get_running_loop().create_task(run())
+        task_ref.append(task)
+        task.add_done_callback(_log_refresh_failure)
+        self._inflight[key] = task
+        return task
+
+    async def _read_full(
+        self, context: ReadContext, kinds: tuple[ComponentKind, ...]
+    ) -> FleetCatalog:
         registrations = await self._read_servers(context)
-        components = await self._read_components(context, selected_kinds)
-        catalog = await self._join(context, registrations, components)
-        if self._snapshot_ttl_s > 0:
-            with self._cache_lock:
-                if len(self._snapshots) >= _MAX_CACHED_SNAPSHOTS:
-                    self._snapshots.clear()
-                self._snapshots[key] = (time.monotonic(), catalog)
-        return catalog
+        components = await self._read_components(context, kinds)
+        return await self._join(context, registrations, components)
 
     @staticmethod
     def _validated_kinds(kinds: Sequence[ComponentKind]) -> tuple[ComponentKind, ...]:
