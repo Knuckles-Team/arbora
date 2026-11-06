@@ -818,6 +818,18 @@ def _build_server(
     async def health_check(request: Request) -> JSONResponse:  # noqa: ARG001
         return JSONResponse({"status": "ok"}, headers={"Cache-Control": "no-store"})
 
+    @mcp.custom_route("/health/subsystems", methods=["GET"])
+    async def subsystems_check(request: Request) -> JSONResponse:  # noqa: ARG001
+        # Engine, discovery and fleet each reported on its own (ARBORA-FLEET-R065).
+        from arbora.observability.subsystem_health import snapshot
+
+        body = snapshot()
+        return JSONResponse(
+            body,
+            status_code=200 if body["status"] == "ok" else 503,
+            headers={"Cache-Control": "no-store"},
+        )
+
     @mcp.custom_route("/health/ready", methods=["GET"])
     async def readiness_check(request: Request) -> JSONResponse:  # noqa: ARG001
         from arbora.observability.runtime_health import (

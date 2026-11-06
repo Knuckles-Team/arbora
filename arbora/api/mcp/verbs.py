@@ -333,6 +333,37 @@ async def dispatch_verb(
     execute: bool = True,
     idempotency_key: str | None = None,
 ) -> dict[str, Any]:
+    """Route one verb, recorded against its subsystem (ARBORA-FLEET-R065)."""
+
+    from arbora.observability.subsystem_health import classify, track
+
+    with track(classify(verb, op)) as outcome:
+        result = await _dispatch_verb(
+            verb,
+            projection,
+            op=op,
+            intent=intent,
+            params=params,
+            plan_ref=plan_ref,
+            execute=execute,
+            idempotency_key=idempotency_key,
+        )
+        if isinstance(result, dict) and result.get("ok") is False:
+            outcome["ok"] = False
+        return result
+
+
+async def _dispatch_verb(
+    verb: str,
+    projection: MCPProjection,
+    *,
+    op: str | None = None,
+    intent: str | None = None,
+    params: Mapping[str, Any] | None = None,
+    plan_ref: str | None = None,
+    execute: bool = True,
+    idempotency_key: str | None = None,
+) -> dict[str, Any]:
     """Route one verb without granting authority through a client hint."""
 
     caller, arguments, refusal = _authenticated_arguments(verb, projection, op, params)

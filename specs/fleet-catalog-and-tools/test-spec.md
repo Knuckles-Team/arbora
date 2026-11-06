@@ -582,3 +582,5 @@ Each test below is named by its requirement row, has no running implementation y
 | PT-145 | ARBORA-FLEET-R062 | `tests/fleet/test_fleet_readiness_discovery.py::test_find_returns_partial_when_fleet_search_times_out` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-146 | ARBORA-FLEET-R063 | `tests/fleet/test_fleet_readiness_discovery.py::test_find_catalog_op_serves_list_catalog` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-147 | ARBORA-FLEET-R064 | `tests/fleet/test_fleet_readiness_discovery.py::test_onboarding_failure_names_step_and_engine_code` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-148 | ARBORA-FLEET-R065 | `tests/fleet/test_subsystem_health.py::test_wedged_subsystem_is_reported_alone` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-149 | ARBORA-FLEET-R066 | `tests/fleet/test_subsystem_health.py::test_load_summary_verdict` | The result the row states holds. | Each refusal the row states is returned. |
