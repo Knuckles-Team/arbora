@@ -41,6 +41,10 @@ class CatalogItem:
     #: The upstream application a proxying connector marks the tool with
     #: (``scion/upstream`` namespace); one connector group to load by.
     group: str | None = field(default=None, repr=False)
+    #: A prompt's ``title``, declared ``arguments`` and ``_meta`` (its role,
+    #: goal, topic, tone, style, version and agent definition), as the
+    #: connector lists them (ARBORA-FLEET-R076).
+    details: Mapping[str, Any] | None = field(default=None, repr=False)
 
     def public(self) -> dict[str, Any]:
         result: dict[str, Any] = {
@@ -60,6 +64,8 @@ class CatalogItem:
         if self.op is not None:
             result["op"] = self.op
             result["params"] = dict(self.params)
+        if self.details:
+            result.update(self.details)
         return result
 
 
@@ -390,6 +396,37 @@ def _upstream_group(row: Mapping[str, Any]) -> str | None:
     return None
 
 
+#: The ``prompts/list`` fields a prompt item carries whole (ARBORA-FLEET-R076).
+PROMPT_DETAIL_FIELDS = ("title", "arguments", "_meta")
+
+
+def prompt_details(row: Mapping[str, Any]) -> dict[str, Any] | None:
+    """A listed prompt's title, arguments and ``_meta``; ``None`` when absent."""
+    details = {key: row[key] for key in PROMPT_DETAIL_FIELDS if row.get(key)}
+    return details or None
+
+
+def prompt_argument_schema(arguments: Any) -> dict[str, Any]:
+    """The object schema of a prompt's declared string arguments."""
+    properties: dict[str, Any] = {}
+    required: list[str] = []
+    for argument in arguments or ():
+        name = argument.get("name") if isinstance(argument, Mapping) else None
+        if not isinstance(name, str) or not name:
+            continue
+        description = argument.get("description")
+        properties[name] = {"type": "string"} | (
+            {"description": description} if isinstance(description, str) else {}
+        )
+        if argument.get("required") is True:
+            required.append(name)
+    if not properties:
+        return {}
+    return {"type": "object", "properties": properties} | (
+        {"required": required} if required else {}
+    )
+
+
 def _probed_item(
     server: str, kind: ItemKind, row: Mapping[str, Any]
 ) -> CatalogItem | None:
@@ -400,6 +437,9 @@ def _probed_item(
     if not isinstance(name, str) or not name:
         return None
     schema = row.get("inputSchema") or {}
+    details = prompt_details(row) if kind == "prompt" else None
+    if details is not None:
+        schema = prompt_argument_schema(details.get("arguments"))
     return CatalogItem(
         id=f"fleet:{kind}:{server}/{name}",
         kind=kind,
@@ -416,6 +456,7 @@ def _probed_item(
             else None
         ),
         group=_upstream_group(row),
+        details=details,
     )
 
 
