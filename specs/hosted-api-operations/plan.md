@@ -1171,4 +1171,4 @@ The delivery rows add two entry points. Code-host webhooks enter at `POST /api/v
 - `ARBORA-OPS-R896.10` calls the arm and disarm tools of the code-host connectors. Contract: `contracts/merge-arming.md`.
 - `ARBORA-OPS-R896.11` writes through governed write-back (`SCION-GOVERNED-WRITEBACK-R004.11`). Contract: `contracts/governed-delivery-effects.md`.
 - `ARBORA-OPS-R896.12` starts the meristem run that applies one delivery assignment beside `MERISTEM-SCM-R011`. Contract: `contracts/delivery-assignment.md`.
-- `MEDULLA-CQ-ORCH-R704.5` provides the process plan and `MEDULLA-DECISION-ENGINE-R180.4` the branch and table verdicts that `ARBORA-OPS-R898` serves and binds. `MERISTEM-RUN-R018` applies the control steps. Contract: `contracts/process-plan-run.md`.
+- `ARBORA-OPS-R898` serves the medulla process plan (`Decide` `ProcessPlan`) and binds the branch and table verdicts (`BranchSelect`, `DecisionTableEval`). The meristem run loop applies the control steps. Contract: `contracts/process-plan-run.md`, which names the provider rows.
