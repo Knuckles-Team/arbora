@@ -1121,6 +1121,27 @@ The values come from `.pre-commit-config.yaml` and `pyproject.toml`.
 
 Rows `ARBORA-OPS-R896.7` to `ARBORA-OPS-R896.13` serve the delivery of open rows as pull requests. The engine holds every delivery record and every decision. Arbora admits, carries and executes. It verifies code-host webhook signatures and stamps a principal on a person's event. It starts each assignment on a reserved development lane and keeps one slot for a person's input. It writes to the code host only through governed effects with receipts. It calls an arm tool only after an `arm` verdict and an owner receipt bound to the head commit. The registry denies every merge tool to the platform principal.
 
+### Process models as governed agent DAGs (R898)
+
+Arbora serves four operations in the new module `arbora/api/ops/processes.py`. `process.plan` reads the engine decision `Decide` `ProcessPlan` and returns it unchanged. `process.run` maps the plan to a meristem `RunPlan`, admits it and starts it through `execute_task_plan`. Agent steps take their prompt text from the bound prompt; arbora builds the agent from it and chooses nothing. Tool steps keep their governed calls. Branch, decision and approval steps pass to the run loop, which asks the bound decision port for each verdict. `ApprovalBroker` implements the approval waiter port; `process.approval.decide` is a human, plan-confirmed, idempotent operation with the step's approver role. The BPMN, DMN and ArchiMate exchange and sync methods of the engine are generated `eg.*` operations.
+
+```mermaid
+sequenceDiagram
+  participant C as Caller
+  participant A as Arbora
+  participant E as Medulla
+  participant M as Meristem
+  C->>A: process.run
+  A->>E: Decide ProcessPlan
+  E-->>A: sealed plan and bindings
+  A->>M: iterate_run with bound ports
+  M->>A: approval wait
+  C->>A: process.approval.decide
+  A-->>M: approved
+  M->>E: Decide BranchSelect (through the decision port)
+  E-->>M: taken arms
+```
+
 ## Phase 2: Task approach
 
 tasks.md carries one numbered task line for each active row. Tasks run producer first. A task marked `[P]` may run in parallel with its neighbours. The development rows `R896.1` to `R896.5` run after the engine rows they cite.
@@ -1150,3 +1171,4 @@ The delivery rows add two entry points. Code-host webhooks enter at `POST /api/v
 - `ARBORA-OPS-R896.10` calls the arm and disarm tools of the code-host connectors. Contract: `contracts/merge-arming.md`.
 - `ARBORA-OPS-R896.11` writes through governed write-back (`SCION-GOVERNED-WRITEBACK-R004.11`). Contract: `contracts/governed-delivery-effects.md`.
 - `ARBORA-OPS-R896.12` starts the meristem run that applies one delivery assignment beside `MERISTEM-SCM-R011`. Contract: `contracts/delivery-assignment.md`.
+- `MEDULLA-CQ-ORCH-R704.5` provides the process plan and `MEDULLA-DECISION-ENGINE-R180.4` the branch and table verdicts that `ARBORA-OPS-R898` serves and binds. `MERISTEM-RUN-R018` applies the control steps. Contract: `contracts/process-plan-run.md`.

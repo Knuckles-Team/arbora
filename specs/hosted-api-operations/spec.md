@@ -149,6 +149,15 @@ An owner lets the platform deliver open rows as pull requests. Arbora carries co
 3. **Given** an `arm` verdict without an owner receipt on the head, **When** the platform asks to arm, **Then** arbora refuses with `MERGE_APPROVAL_REQUIRED`.
 4. **Given** a full set of slots, **When** a person answers a delivery question, **Then** the answer still reaches the run.
 
+### User Story 5 - Run a process model as a governed agent DAG (Priority: P2)
+
+As an operator, I run a stored process workflow through one served operation. A human task waits for my approval, and a gateway follows the engine's branch verdict.
+
+**Acceptance Scenarios**:
+
+1. **Given** a workflow with a tool task, an approval task and an exclusive gateway, **When** I call `process.run` and approve, **Then** the run resumes and takes one arm.
+2. **Given** the same run, **When** I reject the approval, **Then** the run ends as rejected and skips the dependents.
+
 ### Edge Cases
 
 - A fleet child is unreachable. The operation returns the typed error `UNAVAILABLE` and is absent from usable discovery.
@@ -169,6 +178,7 @@ An owner lets the platform deliver open rows as pull requests. Arbora carries co
 - **FR-007**: Proposals must be listed and reviewed through served operations and must land only as pull requests. Rows: `ARBORA-OPS-R896.5`.
 - **FR-008**: Autonomous deliveries must be read and steered through served operations, and code-host events must reach the engine. Rows: `ARBORA-OPS-R896.7`, `ARBORA-OPS-R896.8`, `ARBORA-OPS-R896.9`, `ARBORA-OPS-R896.12`.
 - **FR-009**: Merge arming must need an owner receipt on the head commit, and every delivery write must be a governed effect. Rows: `ARBORA-OPS-R896.10`, `ARBORA-OPS-R896.11`.
+- **FR-010**: A stored process workflow must run as one admitted agent DAG with served approvals and engine-decided branches. Rows: `ARBORA-OPS-R898`.
 
 ## Success Criteria
 

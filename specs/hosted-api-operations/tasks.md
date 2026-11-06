@@ -454,3 +454,12 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T381 [US4] ARBORA-OPS-R022.2.8 schedules.pause and schedules.resume ops.
 - [ ] T382 [US4] ARBORA-OPS-R022.2.9 schedules.runs read op.
 - [ ] T383 [US4] ARBORA-OPS-R022.2.10 Wiring and hot-path proof: a scheduled agent run over MCP.
+- [ ] T384 [US5] ARBORA-OPS-R898 Process models run as governed agent DAGs (rollup).
+- [ ] T385 [US5] ARBORA-OPS-R898.1 Process operation models.
+- [ ] T386 [US5] ARBORA-OPS-R898.2 process.plan reads the engine decision.
+- [ ] T387 [US5] ARBORA-OPS-R898.3 Build agent steps from bound prompts.
+- [ ] T388 [US5] ARBORA-OPS-R898.4 Approval waiter and approval operations.
+- [ ] T389 [US5] ARBORA-OPS-R898.5 process.run wiring.
+- [ ] T390 [US5] ARBORA-OPS-R898.6 Process operation refusals.
+- [ ] T391 [US5] ARBORA-OPS-R898.7 Process run evidence.
+- [ ] T392 [US5] ARBORA-OPS-R898.8 Process run hot-path proof.
