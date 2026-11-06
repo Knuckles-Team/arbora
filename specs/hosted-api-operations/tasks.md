@@ -463,3 +463,11 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T390 [US5] ARBORA-OPS-R898.6 Process operation refusals.
 - [ ] T391 [US5] ARBORA-OPS-R898.7 Process run evidence.
 - [ ] T392 [US5] ARBORA-OPS-R898.8 Process run hot-path proof.
+- [ ] T393 [US5] ARBORA-OPS-R899 Audio and other media prompt the harness through one modality seam (rollup).
+- [ ] T394 [US5] ARBORA-OPS-R899.1 One seam, many modalities.
+- [ ] T395 [US5] ARBORA-OPS-R899.2 Audio goes to the fleet's speech-to-text capability, found by contract.
+- [ ] T396 [US5] ARBORA-OPS-R899.3 Typed refusals and size and duration limits.
+- [ ] T397 [US5] ARBORA-OPS-R899.4 Chat voice notes and audio attachments.
+- [ ] T398 [US5] ARBORA-OPS-R899.5 A2A, agents.run and the fleet agent accept media parts.
+- [ ] T399 [US5] ARBORA-OPS-R899.6 The transcript links to its audio.
+- [ ] T400 [US5] ARBORA-OPS-R899.7 WebUI dictation transcribes through the seam.

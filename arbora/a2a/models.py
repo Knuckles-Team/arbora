@@ -65,13 +65,50 @@ class A2AInlineTextFile(_WireModel):
         return base64.b64decode(self.bytes, validate=True)
 
 
+#: An inline media file's decoded size bound; the modality seam's own
+#: ``ARBORA_MEDIA_MAX_BYTES`` and ``MAX_UPLOAD_SIZE`` bound it further.
+MEDIA_FILE_MAX_BYTES = 25 * 1024 * 1024
+
+
+class A2AInlineMediaFile(_WireModel):
+    """An inline audio, image, video or document file (ARBORA-OPS-R899.5).
+
+    The modality seam turns it into prompt text (audio: a transcript); the
+    harness never receives the raw bytes.
+    """
+
+    bytes: str = Field(min_length=4, max_length=(MEDIA_FILE_MAX_BYTES * 4) // 3 + 4)
+    mime_type: str = Field(
+        pattern=r"^(audio|image|video|application)/[A-Za-z0-9.+-]{1,96}$"
+    )
+    name: str | None = Field(default=None, max_length=256)
+
+    @field_validator("bytes")
+    @classmethod
+    def _valid_base64(cls, value: str) -> str:
+        try:
+            decoded = base64.b64decode(value, validate=True)
+        except (ValueError, binascii.Error) as exc:
+            raise ValueError("file must contain base64 bytes") from exc
+        if not decoded:
+            raise ValueError("file is empty")
+        return value
+
+    def decoded_bytes(self) -> builtins.bytes:
+        return base64.b64decode(self.bytes, validate=True)
+
+
 class A2AFilePart(_WireModel):
     kind: Literal["file"]
-    file: A2AInlineTextFile
+    file: A2AInlineTextFile | A2AInlineMediaFile
 
 
 class A2AMessage(_WireModel):
-    """Text and bounded inline text files advertised as text/plain."""
+    """Text, bounded inline text files, and inline media files.
+
+    Media files (audio, image, video, documents) never reach the harness as
+    bytes: the A2A service normalises them to text first (ARBORA-OPS-R899.5).
+    """
 
     role: Literal["user"]
     parts: list[A2ATextPart | A2AFilePart] = Field(min_length=1, max_length=32)
@@ -90,7 +127,12 @@ class A2AMessage(_WireModel):
     @model_validator(mode="after")
     def _bounded_files(self) -> A2AMessage:
         files = [part.file for part in self.parts if isinstance(part, A2AFilePart)]
-        if len(files) > 8 or self.attachment_size() > 65_536:
+        text_size = sum(
+            len(file.decoded_bytes())
+            for file in files
+            if isinstance(file, A2AInlineTextFile)
+        )
+        if len(files) > 8 or text_size > 65_536:
             raise ValueError("message exceeds inline file bounds")
         if len(self.task_text()) > 100_000:
             raise ValueError("message exceeds the execution task size bound")
@@ -109,6 +151,35 @@ class A2AMessage(_WireModel):
             if isinstance(part, A2ATextPart)
             else part.file.decoded_bytes().decode("utf-8")
             for part in self.parts
+            if not self._is_media(part)
+        )
+
+    @staticmethod
+    def _is_media(part: A2ATextPart | A2AFilePart) -> bool:
+        return isinstance(part, A2AFilePart) and isinstance(
+            part.file, A2AInlineMediaFile
+        )
+
+    def media_files(self) -> list[tuple[int, A2AInlineMediaFile]]:
+        """The inline media files with their part index."""
+        return [
+            (index, part.file)
+            for index, part in enumerate(self.parts)
+            if isinstance(part, A2AFilePart)
+            and isinstance(part.file, A2AInlineMediaFile)
+        ]
+
+    def with_normalized_text(
+        self, text: str, attachments: list[dict[str, Any]]
+    ) -> A2AMessage:
+        """This message with every part replaced by the one normalised text part.
+
+        The kept originals are named in ``metadata.arboraAttachments`` (digest,
+        type, size and the derived transcript id); their bytes are not carried on.
+        """
+        metadata = {**self.metadata, "arboraAttachments": attachments}
+        return self.model_copy(
+            update={"parts": [A2ATextPart(text=text)], "metadata": metadata}
         )
 
 

@@ -33,6 +33,8 @@ class A2AService:
     authority: A2ATaskAuthority
     router: A2ARouter
     card_metadata: A2ACardMetadata = A2ACardMetadata()
+    #: The modality seam; ``None`` uses the process default normaliser.
+    modality: Any = None
 
     async def send_message(
         self,
@@ -52,6 +54,8 @@ class A2AService:
             limit = runtime_config.max_upload_size
             if type(limit) is not int or limit < 1 or attachment_size > limit:
                 raise ValueError("attachments exceed configured upload size")
+        if parsed.media_files():
+            parsed = await self._normalize_media(parsed)
         if "arboraModelProfile" in parsed.metadata:
             preference = ModelProfilePreference(
                 preferred_profile_ref=parsed.metadata["arboraModelProfile"]
@@ -67,6 +71,45 @@ class A2AService:
             decision=decision,
             blocking=blocking,
         )
+
+    async def _normalize_media(self, message: A2AMessage) -> A2AMessage:
+        """Route media parts through the modality seam (ARBORA-OPS-R899.5).
+
+        Raises:
+            ModalityRefused: no transcription capability is reachable, or a
+                part is too large, too long or unreadable.
+        """
+        from arbora.modality import MediaPart, default_normalizer
+
+        normalizer = self.modality or default_normalizer()
+        parts = [
+            MediaPart(
+                media_type=file.mime_type,
+                data=file.decoded_bytes(),
+                filename=file.name or "",
+                source=f"a2a:{message.message_id}#{index}",
+            )
+            for index, file in message.media_files()
+        ]
+        # A machine caller gets a typed refusal for a part no handler reads,
+        # never a silently ignored attachment.
+        prompt = await normalizer.normalize(
+            message.task_text(), parts, on_unsupported="refuse"
+        )
+        links = {d.derived_from: d.derivation_id for d in prompt.derivations}
+        attachments = [
+            {
+                "id": attachment.attachment_id,
+                "digest": f"sha256:{attachment.digest}",
+                "mediaType": attachment.media_type,
+                "sizeBytes": attachment.size_bytes,
+                "name": attachment.filename,
+                "source": attachment.source,
+                "derivation": links.get(attachment.attachment_id, ""),
+            }
+            for attachment in prompt.attachments
+        ]
+        return message.with_normalized_text(prompt.text, attachments)
 
     async def get_task(
         self, task_id: str, *, include_committed_event: bool = False
@@ -104,7 +147,7 @@ class A2AService:
                         "manage its durable WorkItem lifecycle."
                     ),
                     tags=["orchestration", "knowledge-graph", "unary"],
-                    input_modes=["text/plain"],
+                    input_modes=["text/plain", "audio/*"],
                     output_modes=["text/plain"],
                 )
             ],

@@ -55,11 +55,19 @@ async def handle_agent(
         if op.id == "agents.run":
             if not context.idempotency_key:
                 raise ValueError("Idempotency-Key is required")
-            result = await service.send_message(
-                message=params["message"],
-                idempotency_key=context.idempotency_key,
-                context_budget_tokens=params.get("context_budget_tokens"),
-            )
+            from arbora.modality.models import ModalityRefused
+
+            try:
+                result = await service.send_message(
+                    message=params["message"],
+                    idempotency_key=context.idempotency_key,
+                    context_budget_tokens=params.get("context_budget_tokens"),
+                )
+            except ModalityRefused as refusal:
+                # ARBORA-OPS-R899.3: a typed refusal on MCP, HTTP and A2A alike.
+                from arbora.api.invoke.pipeline import OperationRefused
+
+                raise OperationRefused(refusal.arbora_code, refusal.details()) from None
         elif op.id == "agents.tasks.get":
             result = await service.get_task(params["task_id"])
             if result is None:

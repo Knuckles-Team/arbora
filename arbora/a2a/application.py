@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from arbora.api.http.auth import HTTPAuthenticationError
+from arbora.modality.models import ModalityRefused
 
 from .authority import (
     A2AContextUnavailable,
@@ -303,6 +304,11 @@ def _application_error(request_id: Any, error: Exception) -> JSONResponse:
 
     if isinstance(error, OperationRefused) and error.code == "UPGRADE_REQUIRED":
         return _error(request_id, -32013, "UPGRADE_REQUIRED: native run ownership", 501)
+    if isinstance(error, ModalityRefused):
+        # ARBORA-OPS-R899.3: the typed modality refusal; its text names the
+        # code and a fixed reason, never caller input.
+        unavailable = error.arbora_code == "UNAVAILABLE"
+        return _error(request_id, -32015, str(error), 503 if unavailable else 422)
     mapped = _ERROR_CODES.get(type(error))
     if mapped is not None:
         code, status = mapped
@@ -442,6 +448,7 @@ async def _unary_request(
         A2AStreamingUnavailable,
         A2ATransitionHistoryUnavailable,
         A2ATaskNotCancelable,
+        ModalityRefused,
         ValidationError,
         TypeError,
         ValueError,
