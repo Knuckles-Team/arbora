@@ -4,7 +4,7 @@ name: CI
 # runs the diff-scoped `gates` job (Python 3.14, affected tests) and a real wheel
 # `build`; docs and spec-only diffs skip both. The caller aggregate `CI required`
 # is the one required status check. A push to main and the nightly schedule call
-# the read-only checks.yml for the full gates, wheel build, six-platform install
+# the read-only checks.yml for the full gates, wheel build, install
 # smoke, the Python 3.12 backward leg. This workflow
 # never calls release.yml and holds no write permission: only a v* tag publishes.
 
@@ -297,7 +297,7 @@ jobs:
           fi
 
   build:
-    # A real wheel build and data-file check; the six-platform install smoke
+    # A real wheel build and data-file check; the install smoke
     # runs on main and nightly through checks.yml.
     name: build
     needs: [changes]
