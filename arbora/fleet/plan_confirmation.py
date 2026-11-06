@@ -34,7 +34,7 @@ from typing import Any
 
 from mcp import types
 
-__all__ = ["answer_elicitation", "armed", "confirmed_plan_call"]
+__all__ = ["answer_elicitation", "armed", "confirmed_plan_call", "plan_confirmed"]
 
 #: The child tool a consumed plan confirmed for the current dispatch.
 _CONFIRMED_TOOL: ContextVar[str | None] = ContextVar(
@@ -61,6 +61,11 @@ def confirmed_plan_call(tool: str) -> Iterator[None]:
         yield
     finally:
         _CONFIRMED_TOOL.reset(token)
+
+
+def plan_confirmed(tool: str) -> bool:
+    """Whether this dispatch is the call a consumed plan confirmed for ``tool``."""
+    return _CONFIRMED_TOOL.get() == tool
 
 
 @contextlib.asynccontextmanager

@@ -240,7 +240,7 @@ def _ops(**kwargs: Any) -> MultiplexerOps:
     return MultiplexerOps(
         catalog=kwargs.pop("catalog", None),
         sessions=SimpleNamespace(),  # type: ignore[arg-type]
-        loadable=None,  # type: ignore[arg-type]
+        loadable=kwargs.pop("loadable", None),
         mount=None,  # type: ignore[arg-type]
         notify=None,  # type: ignore[arg-type]
         invoke=None,  # type: ignore[arg-type]
@@ -546,3 +546,194 @@ def test_the_operator_call_timeout_reaches_the_child(monkeypatch, tmp_path) -> N
     assert mux_module._operator_call_timeouts() == {"egeria-mcp": 240}
     config.write_text("{not json")
     assert mux_module._operator_call_timeouts() == {}
+
+
+# ── R076: connector prompts and skills come through complete ─────────────────
+
+_ROLE_META = {
+    "team.knuckles/prompt": {
+        "role": "Nextcloud File Steward",
+        "goal": "Keep files safe",
+    },
+    "team.knuckles/prompt-pack": {"role": "system", "serves": "FileSteward"},
+}
+
+
+@pytest.mark.spec("ARBORA-FLEET-R076")
+def test_a_listed_prompt_keeps_its_title_arguments_and_role_meta() -> None:
+    from arbora.fleet.catalog_items import items_from_child_probe
+
+    info = {
+        "error": None,
+        "native_prompts": [
+            {
+                "name": "file_steward",
+                "title": "Nextcloud File Steward",
+                "description": "Keep the file tree organized",
+                "arguments": [{"name": "folder", "required": True}],
+                "_meta": _ROLE_META,
+            }
+        ],
+    }
+    (item,) = items_from_child_probe("nextcloud-mcp", info)
+    public = item.public()
+    assert public["title"] == "Nextcloud File Steward"
+    assert public["_meta"] == _ROLE_META
+    assert public["arguments"] == [{"name": "folder", "required": True}]
+    assert item.schema["required"] == ["folder"]
+
+
+@pytest.mark.spec("ARBORA-FLEET-R076")
+def test_a_rendered_prompt_keeps_every_content_block_and_the_role_meta() -> None:
+    import mcp.types as types
+
+    from arbora.fleet.gateway_ops import _with_listed_details
+    from arbora.fleet.multiplexer import _json_dump, _relayed_prompt_message
+
+    text = types.PromptMessage(
+        role="user", content=types.TextContent(type="text", text="You are...")
+    )
+    link = types.PromptMessage(
+        role="user",
+        content=types.ResourceLink(
+            type="resource_link", uri="skill://nextcloud-files/SKILL.md", name="files"
+        ),
+    )
+    messages = [_relayed_prompt_message(m) for m in (text, link)]
+    assert messages[0]["text"] == "You are..."
+    assert messages[1]["content"]["uri"] == "skill://nextcloud-files/SKILL.md"
+    rendered = {"name": "file_steward", "messages": messages}
+    merged = _with_listed_details(
+        rendered, {"title": "Nextcloud File Steward", "_meta": _ROLE_META}
+    )
+    assert merged["title"] == "Nextcloud File Steward"
+    assert merged["_meta"]["team.knuckles/prompt"]["role"] == "Nextcloud File Steward"
+    assert merged["messages"] == messages
+    assert _json_dump(None) is None
+
+
+@pytest.mark.spec("ARBORA-FLEET-R076.1")
+@pytest.mark.parametrize(
+    ("template", "uri", "expected"),
+    [
+        (
+            "skill://nextcloud-files/{path*}",
+            "skill://nextcloud-files/references/a.md",
+            True,
+        ),
+        ("skill://nextcloud-files/{path*}", "skill://nextcloud-talk/SKILL.md", False),
+        ("connector://capability/{capability}", "connector://capability/files", True),
+        ("connector://capability/{capability}", "connector://capability/a/b", False),
+        ("connector://status", "connector://status", False),
+    ],
+)
+def test_a_skill_file_uri_reads_under_its_template(template, uri, expected) -> None:
+    from arbora.fleet.multiplexer_ops import template_matches
+
+    assert template_matches(template, uri) is expected
+
+
+@pytest.mark.spec("ARBORA-FLEET-R076.1")
+def test_a_templated_skill_file_is_admitted_and_traversal_is_not() -> None:
+
+    template = CatalogItem(
+        id="fleet:resource_template:nc/skill://nextcloud-files/{path*}",
+        kind="resource_template",
+        name="skill://nextcloud-files/{path*}",
+        server="nc",
+    )
+
+    class _Templates:
+        async def get(self, item_id: str, caller: Any) -> CatalogItem | None:
+            return template if item_id == template.id else None
+
+        async def search(self, caller: Any, **_params: Any) -> dict[str, Any]:
+            return {"items": [template.public()]}
+
+    async def loadable(_item: Any, _caller: Any) -> bool:
+        return True
+
+    ops = _ops(catalog=_Templates(), loadable=loadable)
+    caller = SimpleNamespace(effective_scopes=frozenset({"mcp:delegate"}))
+    item = asyncio.run(
+        ops.admitted_surface_item(
+            caller, "resources", "nc", "skill://nextcloud-files/references/a.md"
+        )
+    )
+    assert item is template
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    with pytest.raises(OperationRefused):
+        asyncio.run(
+            ops.admitted_surface_item(
+                caller, "resources", "nc", "skill://nextcloud-files/../secrets"
+            )
+        )
+
+
+# ── R077: confirmed destructive calls are confirmed; cancelled is never ok ───
+
+
+@pytest.mark.spec("ARBORA-FLEET-R077")
+@pytest.mark.parametrize(
+    "result",
+    [
+        {"cancelled": True},
+        {"structuredContent": {"cancelled": True}},
+        {"content": [{"type": "text", "text": '{"cancelled": true}'}]},
+    ],
+)
+def test_a_cancelled_child_result_is_a_typed_confirmation_refusal(result) -> None:
+    from arbora.api.errors import FleetRefusal
+    from arbora.fleet import gateway_ops
+
+    with pytest.raises(FleetRefusal) as caught:
+        gateway_ops._refuse_cancelled(result, "jena-mcp", "jena_delete_dataset")
+    assert caught.value.code == "CONFIRMATION_REQUIRED"
+    assert "plan_ref" in (caught.value.detail or "")
+    # The tool is planned from now on.
+    assert ("jena-mcp", "jena_delete_dataset") in gateway_ops._CONFIRMING_TOOLS
+    gateway_ops._CONFIRMING_TOOLS.discard(("jena-mcp", "jena_delete_dataset"))
+    ok = {"structuredContent": {"deleted": True}}
+    assert gateway_ops._refuse_cancelled(ok, "jena-mcp", "t") is ok
+
+
+@pytest.mark.spec("ARBORA-FLEET-R077")
+def test_a_confirm_argument_tool_is_planned_and_confirmed_under_its_plan() -> None:
+    from arbora.api.registry import Effect
+    from arbora.fleet.gateway_ops import (
+        AdmittedTool,
+        _confirmed_arguments,
+        _declares_confirm,
+        annotation_effect,
+    )
+    from arbora.fleet.plan_confirmation import confirmed_plan_call
+
+    schema = {"type": "object", "properties": {"confirm": {"type": "boolean"}}}
+    assert _declares_confirm(schema)
+    descriptor = AdmittedTool(
+        annotations=None,
+        effect_override=None,
+        required_scopes=frozenset(),
+        credential_mode="delegated",
+        confirm_argument=True,
+    )
+    assert annotation_effect(None, confirming=True)[0] == Effect.DESTRUCTIVE
+    assert _confirmed_arguments("lgtm_delete_silence", descriptor, {"id": "s"}) == {
+        "id": "s"
+    }
+    with confirmed_plan_call("lgtm_delete_silence"):
+        assert _confirmed_arguments("lgtm_delete_silence", descriptor, {"id": "s"}) == {
+            "id": "s",
+            "confirm": True,
+        }
+
+
+@pytest.mark.spec("ARBORA-FLEET-R077")
+def test_the_ephemeral_call_path_arms_its_session() -> None:
+    import inspect
+
+    from arbora.fleet.multiplexer import MCPMultiplexer
+
+    source = inspect.getsource(MCPMultiplexer._invoke_oauth_tool)
+    assert "async with armed(session, original_name):" in source
