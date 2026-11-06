@@ -17,7 +17,7 @@ import asyncio
 import logging
 import threading
 import time
-from collections.abc import AsyncIterator, Sequence
+from collections.abc import AsyncIterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Final, Literal, Protocol
 
@@ -113,6 +113,10 @@ class ComponentRecord:
     content_digest: str
     lifecycle: str
     provenance_server: ComponentPin | None
+    #: A tool's MCP behaviour hints as the engine records them in its tool
+    #: facts (``readOnlyHint`` and so on); ``None`` for other kinds
+    #: (ARBORA-FLEET-R072).
+    tool_hints: Mapping[str, bool] | None = None
 
 
 @dataclass(frozen=True, slots=True)

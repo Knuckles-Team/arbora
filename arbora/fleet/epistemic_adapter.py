@@ -233,10 +233,37 @@ class GeneratedFleetCatalogPort:
             content_digest=entry.content_digest,
             lifecycle=entry.lifecycle.value,
             provenance_server=pin,
+            tool_hints=_tool_hints(getattr(entry, "facts", None)),
         )
 
 
 __all__ = ["GeneratedFleetCatalogPort"]
+
+
+#: Engine tool-fact fields and the MCP annotation names they project to.
+_TOOL_HINTS = (
+    ("read_only_hint", "readOnlyHint"),
+    ("destructive_hint", "destructiveHint"),
+    ("idempotent_hint", "idempotentHint"),
+    ("open_world_hint", "openWorldHint"),
+)
+
+
+def _tool_hints(facts: Any) -> dict[str, bool] | None:
+    """A tool component's recorded behaviour hints (ARBORA-FLEET-R072).
+
+    The engine keeps the hints the connector pack declared in the entry's tool
+    facts, so a tool's effect is classified from the graph, not only from a
+    live probe. Facts of any other kind yield ``None``.
+    """
+    if getattr(facts, "facts", None) != "tool":
+        return None
+    hints = {
+        name: value
+        for field_name, name in _TOOL_HINTS
+        if isinstance(value := getattr(facts, field_name, None), bool)
+    }
+    return hints or None
 
 
 def _qualified_digest(value: str) -> str:
