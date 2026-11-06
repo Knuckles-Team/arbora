@@ -86,6 +86,8 @@ def fetched(monkeypatch) -> list[tuple[str, dict, int]]:
     return seen
 
 
+@pytest.mark.spec("ARBORA-OPS-R899")
+@pytest.mark.spec("ARBORA-OPS-R899.4")
 async def test_voice_note_turn_runs_on_the_transcript(
     monkeypatch, timer, fetched
 ) -> None:
@@ -110,6 +112,7 @@ async def test_voice_note_turn_runs_on_the_transcript(
     ]
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.4")
 async def test_voice_note_without_a_transcriber_gets_a_typed_reply(
     monkeypatch, timer, fetched
 ) -> None:
@@ -138,6 +141,7 @@ async def test_voice_note_without_a_transcriber_gets_a_typed_reply(
     assert fetched == []
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.4")
 async def test_declared_size_over_the_limit_refuses_before_download(fetched) -> None:
     normalizer = _normalizer(FakeFleet())
     with pytest.raises(ModalityRefused) as caught:
@@ -145,6 +149,7 @@ async def test_declared_size_over_the_limit_refuses_before_download(fetched) -> 
     assert caught.value.code == "MEDIA_TOO_LARGE" and fetched == []
 
 
+@pytest.mark.spec("ARBORA-OPS-R899.4")
 async def test_unlisted_sender_audio_is_never_downloaded(
     monkeypatch, timer, fetched
 ) -> None:
