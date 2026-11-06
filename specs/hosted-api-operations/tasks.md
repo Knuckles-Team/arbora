@@ -449,3 +449,8 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T376 [US4] ARBORA-OPS-R896.11 Delivery writes to the code host are governed effects.
 - [ ] T377 [US4] ARBORA-OPS-R896.12 A delivery assignment starts on a reserved development lane.
 - [ ] T378 [US4] ARBORA-OPS-R896.13 Hot-path proof: a delivery runs from slice to merge over MCP.
+- [ ] T379 [US4] ARBORA-OPS-R022.2.6 schedules.create and schedules.update ops.
+- [ ] T380 [US4] ARBORA-OPS-R022.2.7 schedules.delete op.
+- [ ] T381 [US4] ARBORA-OPS-R022.2.8 schedules.pause and schedules.resume ops.
+- [ ] T382 [US4] ARBORA-OPS-R022.2.9 schedules.runs read op.
+- [ ] T383 [US4] ARBORA-OPS-R022.2.10 Wiring and hot-path proof: a scheduled agent run over MCP.
