@@ -315,3 +315,4 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T155 ARBORA-IDENTITY-R027.4 Typed refusal of illegal lease transitions.
 - [ ] T156 ARBORA-IDENTITY-R027.5 Derive readiness from the lease state; delete the failure global.
 - [ ] T157 ARBORA-IDENTITY-R027.6 Describe the lease machine in the ontology.
+- [ ] T158 ARBORA-IDENTITY-R027.7 Wire the supervisor, loop and readiness to the lease machine; hot-path proof.
