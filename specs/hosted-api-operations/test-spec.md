@@ -551,3 +551,8 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R896.11` | Test: `tests/api/test_delivery_ops_served.py::test_delivery_writes_are_idempotent_and_uncertain_effects_reconcile` (L3). |
 | `ARBORA-OPS-R896.12` | Test: `tests/development/test_assignments_served.py::test_assignments_reserve_lanes_and_keep_a_person_slot` (L3). |
 | `ARBORA-OPS-R896.13` | Test: `tests/api/test_delivery_surface_served.py::test_delivery_runs_from_slice_to_merge_over_mcp` (L4). |
+| `ARBORA-OPS-R022.2.6` | Test: `tests/api/test_schedule_ops.py::test_create_requires_loops_control_key_and_forwards_owner` (L1). |
+| `ARBORA-OPS-R022.2.7` | Test: `tests/api/test_schedule_ops.py::test_delete_requires_step_up_and_owner` (L1). |
+| `ARBORA-OPS-R022.2.8` | Test: `tests/api/test_schedule_ops.py::test_pause_and_resume_are_scoped_and_idempotent` (L1). |
+| `ARBORA-OPS-R022.2.9` | Test: `tests/api/test_schedule_ops.py::test_runs_returns_engine_tick_history_unchanged` (L1). |
+| `ARBORA-OPS-R022.2.10` | Test: `tests/api/test_schedule_served.py::test_scheduled_agent_run_fires_pauses_and_reports_over_mcp` (L4). |
