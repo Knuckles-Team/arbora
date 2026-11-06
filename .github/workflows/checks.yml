@@ -318,7 +318,7 @@ jobs:
           - name: linux-aarch64
             runner: ubuntu-24.04-arm
           - name: macos-aarch64
-            runner: macos-14
+            runner: macos-15
           - name: windows-x86_64
             runner: windows-latest
     defaults:
