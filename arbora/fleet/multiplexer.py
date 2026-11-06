@@ -117,6 +117,7 @@ _ENGINE_CONFIG_FIELDS = frozenset(
         "tls_profile",
         "allowed_private_hosts",
         "timeout",
+        "call_timeout",
         "max_concurrency",
         "queue_timeout",
         "pool_size",
@@ -1456,12 +1457,24 @@ def _child_launch_shape(cfg: dict) -> tuple[bool, int] | None:
     return is_remote, pool_size
 
 
+#: A child call's deadline when neither the call nor the server declares one
+#: (ARBORA-FLEET-R075); the same default the pooled ``ChildRuntime`` uses.
+_DEFAULT_CHILD_CALL_TIMEOUT_S = 300.0
+
+
 def _child_call_timeout(cfg: dict, timeout: float | None) -> float:
     """One ephemeral child call's deadline in seconds; ``0.0`` when the
-    declaration is unusable (the caller rejects anything outside its boundary)."""
+    declaration is unusable (the caller rejects anything outside its boundary).
 
+    ARBORA-FLEET-R075: the call's own deadline, else the server's declared
+    ``call_timeout``, else the default. The server's ``timeout`` is its
+    connect/handshake budget and never caps a call: a tool that legitimately
+    takes a minute must not fail at a 15 s handshake budget.
+    """
+
+    value = timeout if timeout is not None else cfg.get("call_timeout")
     try:
-        return float(timeout if timeout is not None else cfg.get("timeout", 30.0))
+        return float(_DEFAULT_CHILD_CALL_TIMEOUT_S if value is None else value)
     except (TypeError, ValueError):
         return 0.0
 
@@ -2423,6 +2436,29 @@ class _EmbeddingTargets(_typing.TypedDict):
     pending_key: list[str]
 
 
+def _operator_call_timeouts() -> dict[str, _typing.Any]:
+    """Per-server ``call_timeout`` from the operator's fleet config (R075).
+
+    The engine owns each server's identity and endpoint; the call deadline is
+    operator policy, so a ``call_timeout`` in the deployment's MCP config
+    overrides the one the connector declared. An unreadable config yields
+    none; an out-of-range value is refused at call time, never clamped.
+    """
+    from arbora.core.settings import mcp_config_path
+    from arbora.gateway.config import _parse_mcp_servers
+
+    path = mcp_config_path()
+    try:
+        servers = _parse_mcp_servers(path.read_bytes()) if path.is_file() else {}
+    except (OSError, ValueError):
+        return {}
+    return {
+        name: spec["call_timeout"]
+        for name, spec in servers.items()
+        if isinstance(spec, dict) and spec.get("call_timeout") is not None
+    }
+
+
 def _decode_engine_server_config(body: bytes) -> dict[str, _typing.Any]:
     """Decode bounded, non-secret transport metadata from one EG component."""
     if len(body) > _CONFIG_MAX_BYTES:
@@ -2685,6 +2721,9 @@ class MCPMultiplexer:
         self._fleet_catalog = catalog
         self._fleet_catalog_loaded_at = time.time()
         raw_catalog = self._catalog_from_engine(catalog)
+        for server_name, call_timeout in _operator_call_timeouts().items():
+            if server_name in raw_catalog:
+                raw_catalog[server_name]["call_timeout"] = call_timeout
         skip = getattr(self, "_skip_servers", None) or {"mcp-multiplexer"}
         self._catalog = {}
         for server_name, config in raw_catalog.items():

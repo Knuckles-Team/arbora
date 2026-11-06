@@ -496,3 +496,53 @@ def test_find_ranks_the_named_system_and_object_first_in_a_large_catalog() -> No
         catalog, key=lambda row: -MCPMultiplexer._relevance(query, f"{row[0]} {row[1]}")
     )
     assert plain[0][0] != "seerr_get_requests"
+
+
+# ── R075: a slow tool's call deadline is not the connect budget ──────────────
+
+
+@pytest.mark.spec("ARBORA-FLEET-R075")
+def test_the_call_deadline_ignores_the_connect_budget() -> None:
+    from arbora.fleet.child_resilience import ChildRuntime
+    from arbora.fleet.multiplexer import _child_call_timeout
+
+    assert _child_call_timeout({"timeout": 15}, None) == 300.0
+    assert _child_call_timeout({"timeout": 15, "call_timeout": 120}, None) == 120.0
+    assert _child_call_timeout({"call_timeout": 120}, 5.0) == 5.0
+    assert ChildRuntime("slow", {"timeout": 15}).call_timeout == 300.0
+
+
+@pytest.mark.spec("ARBORA-FLEET-R075")
+def test_a_call_slower_than_the_connect_budget_completes(monkeypatch) -> None:
+    from arbora.fleet import multiplexer as mux_module
+
+    mux = mux_module.MCPMultiplexer.__new__(mux_module.MCPMultiplexer)
+    mux._catalog_epoch = 0
+    monkeypatch.setattr(mux_module, "_require_fleet_capability", lambda *a, **k: None)
+    monkeypatch.setattr(
+        type(mux), "load_catalog", lambda self: {"egeria": {"timeout": 0.05}}
+    )
+
+    async def slow(*_args: Any) -> str:
+        await asyncio.sleep(0.2)
+        return "200 glossary terms"
+
+    monkeypatch.setattr(mux, "_call_ephemeral_child_session", slow)
+    result = asyncio.run(mux._call_service_child_once("egeria", "t", {}, timeout=None))
+    assert result == "200 glossary terms"
+
+
+@pytest.mark.spec("ARBORA-FLEET-R075")
+def test_the_operator_call_timeout_reaches_the_child(monkeypatch, tmp_path) -> None:
+    import json
+
+    from arbora.fleet import multiplexer as mux_module
+
+    config = tmp_path / "mcp_config.json"
+    config.write_text(
+        json.dumps({"mcpServers": {"egeria-mcp": {"url": "x", "call_timeout": 240}}})
+    )
+    monkeypatch.setattr("arbora.core.settings.mcp_config_path", lambda: config)
+    assert mux_module._operator_call_timeouts() == {"egeria-mcp": 240}
+    config.write_text("{not json")
+    assert mux_module._operator_call_timeouts() == {}
