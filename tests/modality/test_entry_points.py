@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -61,7 +61,9 @@ async def test_a2a_audio_part_runs_the_harness_on_the_transcript() -> None:
     fleet = FakeFleet()
     authority = _Authority()
     service = A2AService(
-        authority=authority, router=_Router(), modality=_normalizer(fleet)
+        authority=cast(Any, authority),
+        router=cast(Any, _Router()),
+        modality=_normalizer(fleet),
     )
     assert (
         await service.send_message(message=_audio_message(), idempotency_key="k")
@@ -87,7 +89,9 @@ async def test_a2a_audio_without_a_capability_refuses_typed_before_dispatch() ->
 
     authority = _Authority()
     service = A2AService(
-        authority=authority, router=_Router(), modality=_normalizer(FakeFleet(items=[]))
+        authority=cast(Any, authority),
+        router=cast(Any, _Router()),
+        modality=_normalizer(FakeFleet(items=[])),
     )
     with pytest.raises(ModalityRefused) as caught:
         await service.send_message(message=_audio_message(None), idempotency_key="k")
@@ -104,7 +108,7 @@ async def test_a2a_jsonrpc_error_names_the_modality_refusal() -> None:
     response = _application_error(
         7, ModalityRefused("TRANSCRIPTION_UNAVAILABLE", "no reachable fleet tool")
     )
-    body = json.loads(response.body)
+    body = json.loads(bytes(response.body))
     assert response.status_code == 503 and body["error"]["code"] == -32015
     assert body["error"]["message"].startswith("TRANSCRIPTION_UNAVAILABLE")
     too_big = _application_error(7, ModalityRefused("MEDIA_TOO_LARGE", "limit"))
@@ -134,7 +138,7 @@ async def test_agents_run_maps_a_modality_refusal_to_a_typed_operation_refusal(
     )
     op = SimpleNamespace(id="agents.run")
     with pytest.raises(OperationRefused) as caught:
-        await agents.handle_agent(context, {"message": _audio_message()}, op)
+        await agents.handle_agent(context, {"message": _audio_message()}, cast(Any, op))
     assert caught.value.code == "INVALID_ARGUMENT"
     assert caught.value.details["modality_refusal"] == "MEDIA_TOO_LONG"
 
@@ -239,7 +243,11 @@ async def test_a2a_refuses_a_part_no_handler_reads() -> None:
     from arbora.a2a.service import A2AService
 
     authority = _Authority()
-    service = A2AService(authority=authority, router=_Router(), modality=_normalizer())
+    service = A2AService(
+        authority=cast(Any, authority),
+        router=cast(Any, _Router()),
+        modality=_normalizer(),
+    )
     message = _audio_message()
     message["parts"][1]["file"]["mimeType"] = "image/png"
     with pytest.raises(ModalityRefused) as caught:
