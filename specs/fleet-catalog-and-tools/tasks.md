@@ -505,3 +505,6 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T238 ARBORA-FLEET-R071 Re-read a server once before refusing a fleet.call tool the cached catalog lacks.
 - [x] T239 ARBORA-FLEET-R072 Serve each tool's schema and behaviour hints from the engine catalog.
 - [ ] T240 ARBORA-FLEET-R073 Keep only digests in process; read tool pages from the engine by server and name.
+- [x] T241 ARBORA-FLEET-R068.1 Page resources, resource templates and prompts like tools.
+- [x] T242 ARBORA-FLEET-R070.1 Drop tools, prompts and skills a good probe no longer lists.
+- [x] T243 ARBORA-FLEET-R074 Rank fleet discovery by rarity-weighted, stopword-free, plural-folded terms.
