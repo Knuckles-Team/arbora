@@ -457,6 +457,16 @@ class FleetGateway:
     async def list(self, caller: Any, **params: Any) -> Any:
         return await self._catalog(caller, "mcp:discover").list(caller, **params)
 
+    async def catalog(
+        self, caller: Any, *, server: str = "", include_tools: bool = True
+    ) -> Any:
+        """One server's catalog from the multiplexer's ``list_catalog`` (R063)."""
+        if "mcp:discover" not in caller.effective_scopes:
+            raise PermissionError("mcp:discover is required")
+        return await self._relay_mux().list_catalog(
+            server=server, include_tools=include_tools
+        )
+
     async def prompts_list(self, caller: Any, **params: Any) -> Any:
         return await self._catalog(caller, "mcp:discover").relay_list(
             caller, "prompts", **params

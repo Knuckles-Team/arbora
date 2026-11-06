@@ -8,6 +8,37 @@ from typing import Any
 from pydantic import BaseModel
 
 FleetSearch = Callable[..., Awaitable[Sequence[Mapping[str, Any]]]]
+FleetCatalog = Callable[..., Awaitable[Mapping[str, Any]]]
+
+#: Retry hint for a caller refused while the fleet comes up (ARBORA-FLEET-R062).
+FLEET_RETRY_AFTER_S = 5
+
+
+def not_ready_detail() -> dict[str, Any]:
+    """The typed refusal detail while the fleet gateway is not bound."""
+
+    return {
+        "reason": "fleet gateway is not ready",
+        "retry_after_s": FLEET_RETRY_AFTER_S,
+    }
+
+
+#: The find op that browses one fleet server's catalog (ARBORA-FLEET-R063).
+CATALOG_OP = "catalog"
+
+
+def discovery_budget_s() -> float:
+    """The interactive fleet discovery budget (``MCP_DYNAMIC_DISCOVERY_TIMEOUT``)."""
+
+    from arbora.core.settings import runtime_config
+
+    return float(getattr(runtime_config, "mcp_dynamic_discovery_timeout", 5.0))
+
+
+def _fleet_not_ready(exc: BaseException) -> bool:
+    """True for the late gateway's refusal before the fleet is bound."""
+
+    return getattr(exc, "code", None) == "UNAVAILABLE"
 
 
 async def visible_ops(
@@ -93,14 +124,39 @@ async def _fleet_entries(
     intent: str | None,
     params: Mapping[str, Any] | None,
 ) -> list[dict[str, Any]]:
-    """Run the caller-filtered fleet catalog search for unmatched discovery."""
+    """Run the caller-filtered fleet catalog search for unmatched discovery.
 
-    fleet = await fleet_search(
-        caller=caller,
-        query=intent or "",
-        context_budget_tokens=(params or {}).get("context_budget_tokens"),
-    )
+    Bounded by the discovery budget (ARBORA-FLEET-R062): a slow or unbound
+    fleet raises :class:`FleetPartial` so the caller keeps its registry
+    results and flags the fleet half partial.
+    """
+
+    import asyncio
+
+    try:
+        fleet = await asyncio.wait_for(
+            fleet_search(
+                caller=caller,
+                query=intent or "",
+                context_budget_tokens=(params or {}).get("context_budget_tokens"),
+            ),
+            timeout=discovery_budget_s(),
+        )
+    except TimeoutError as exc:
+        raise FleetPartial("timeout") from exc
+    except Exception as exc:
+        if _fleet_not_ready(exc):
+            raise FleetPartial("not_ready") from exc
+        raise
     return [_fleet_descriptor(item) for item in fleet]
+
+
+class FleetPartial(Exception):
+    """The fleet half of discovery did not answer; ``reason`` says why."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
 
 
 def _ranked_entries(
@@ -135,6 +191,7 @@ async def find_visible(
     policy_gate: Any,
     resolver: Any,
     fleet_search: FleetSearch | None,
+    fleet_catalog: FleetCatalog | None = None,
     intent: str | None = None,
     op: str | None = None,
     params: Mapping[str, Any] | None = None,
@@ -146,21 +203,51 @@ async def find_visible(
     unchecked child catalog rows are never accepted by this API.
     """
 
+    if op == CATALOG_OP and registry.get(op) is None:
+        return await _fleet_catalog(fleet_catalog, caller, params, registry)
     visible = await visible_ops(registry, caller, policy_gate)
     selected = _matching_ops(visible, op, (params or {}).get("domain"))
     entries = [describe_op(item) for item in selected]
+    partial: str | None = None
     if op is None and fleet_search is not None:
-        entries.extend(
-            await _fleet_entries(
-                fleet_search, caller=caller, intent=intent, params=params
+        try:
+            entries.extend(
+                await _fleet_entries(
+                    fleet_search, caller=caller, intent=intent, params=params
+                )
             )
-        )
+        except FleetPartial as exc:
+            partial = exc.reason
     if intent and op is None:
         entries = _ranked_entries(
             entries, resolver=resolver, intent=intent, scope_ref=scope_ref
         )
-    return {
+    found: dict[str, Any] = {
         "items": entries[: _bounded_limit(params)],
         "registry_digest": registry.digest,
         "next_cursor": None,
     }
+    if partial is not None:
+        found["fleet_partial"] = True
+        found["fleet"] = partial
+    return found
+
+
+async def _fleet_catalog(
+    fleet_catalog: FleetCatalog | None,
+    caller: Any,
+    params: Mapping[str, Any] | None,
+    registry: Any,
+) -> dict[str, Any]:
+    """``find(op="catalog")``: one server's catalog from the multiplexer handler."""
+
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    if fleet_catalog is None:
+        raise OperationRefused("UNAVAILABLE", not_ready_detail())
+    server = str((params or {}).get("server") or "")[:128]
+    include_tools = bool((params or {}).get("include_tools", True))
+    catalog = await fleet_catalog(
+        caller=caller, server=server, include_tools=include_tools
+    )
+    return {"catalog": dict(catalog), "registry_digest": registry.digest}

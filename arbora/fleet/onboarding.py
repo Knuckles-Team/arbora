@@ -23,6 +23,7 @@ share it.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
 import json
 import logging
@@ -383,25 +384,30 @@ class FleetOnboarding:
         if trigger is not None:
             logger.info("%s: onboarding pass (%s)", endpoint.name, trigger.reason)
         capture = self.capture or capture_server_pack
-        pack = await capture(endpoint, auth=auth)
+        with onboarding_step("capture"):
+            pack = await capture(endpoint, auth=auth)
         self.surfaces[endpoint.name] = pack_surface_report(pack)
         _remember_declaration(endpoint.name, pack)
-        changed = not await self.pack_unchanged(endpoint, pack)
+        with onboarding_step("ConnectorPackStatus"):
+            changed = not await self.pack_unchanged(endpoint, pack)
         if changed:
-            await import_attested_pack(
-                self.engine,
-                self.session,
-                client=self.tenant_client,
-                commons=self.commons_client,
-                pack=pack,
-                allow_mass_withdrawal=endpoint.name in self.allow_mass_withdrawal,
-            )
+            with onboarding_step("ConnectorPackImport"):
+                await import_attested_pack(
+                    self.engine,
+                    self.session,
+                    client=self.tenant_client,
+                    commons=self.commons_client,
+                    pack=pack,
+                    allow_mass_withdrawal=endpoint.name in self.allow_mass_withdrawal,
+                )
         else:
-            await self.renew({endpoint.name: endpoint.url})
+            with onboarding_step("renew"):
+                await self.renew({endpoint.name: endpoint.url})
         # Keep the hook-compatible ``None`` return accepted for lightweight
         # callers that override the pre-approval registration step.
-        decisions = self.register_contracts(endpoint, pack) or ()
-        await self.approve_contracts(endpoint, pack, decisions)
+        with onboarding_step("contracts"):
+            decisions = self.register_contracts(endpoint, pack) or ()
+            await self.approve_contracts(endpoint, pack, decisions)
         await self.write_catalog(endpoint, pack)
         return changed
 
@@ -763,6 +769,43 @@ class FleetOnboarding:
 
 def _failure(exc: BaseException) -> str:
     return f"{type(exc).__name__}: {exc}"[:512]
+
+
+#: The engine's own detail when it could not classify a refusal.
+_UNCLASSIFIED = "unclassified engine refusal"
+
+
+class OnboardingStepRefused(Exception):
+    """One onboarding step's refusal, with the engine refusal code (R064)."""
+
+    def __init__(self, step: str, code: str, detail: str) -> None:
+        self.step = step
+        self.code = code
+        self.detail = detail
+        hint = " (engine-side classification gap)" if _UNCLASSIFIED in detail else ""
+        super().__init__(f"{step} refused {code}: {detail}{hint}")
+
+
+@contextlib.contextmanager
+def onboarding_step(step: str) -> Iterator[None]:
+    """Label an engine refusal with the onboarding step that met it.
+
+    The engine refusal code (``EngineResponseError.code``) is kept as is,
+    never folded into a generic message (ARBORA-FLEET-R064).
+    """
+
+    try:
+        yield
+    except OnboardingStepRefused:
+        raise
+    except Exception as exc:
+        code = getattr(exc, "code", None)
+        if not isinstance(code, str) or not code:
+            raise
+        detail = str(getattr(exc, "detail", None) or getattr(exc, "message", "") or "")
+        if not detail:
+            detail = str(exc).removeprefix(f"{code}: ")
+        raise OnboardingStepRefused(step, code, detail[:400]) from exc
 
 
 async def _renew_all(

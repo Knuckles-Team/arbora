@@ -493,3 +493,6 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T226 ARBORA-FLEET-R060 Every registered connector is multiplexed, and a coverage gate enforces it (rollup).
 - [x] T227 ARBORA-FLEET-R061 A caller loads and unloads the tools of one connector group.
 - [ ] T228 ARBORA-FLEET-R015.4 A Medulla `Mcp` foreign source is read through the existing source executor.
+- [ ] T229 ARBORA-FLEET-R062 Fleet discovery and fleet calls never hang while the fleet comes up.
+- [ ] T230 ARBORA-FLEET-R063 The find catalog op lists one server's tools with their schemas.
+- [ ] T231 ARBORA-FLEET-R064 A fleet onboarding refusal names its engine operation and refusal code.

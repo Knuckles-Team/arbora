@@ -850,8 +850,11 @@ def _engine_bootstrap_is_client(engine: Any, fallback_role: str) -> bool:
     return "client" in {requested_role, effective_role}
 
 
-#: How long serving start waits for the engine endpoint to answer.
-_ENGINE_READY_TIMEOUT_SECONDS = 120.0
+def _engine_ready_timeout_seconds() -> float:
+    """How long serving start waits for the engine (``ARBORA_ENGINE_READY_TIMEOUT``)."""
+    from arbora.core.settings import runtime_config
+
+    return float(getattr(runtime_config, "arbora_engine_ready_timeout", 1500.0))
 
 
 def _start_engine_bootstrap(session: Any) -> None:
@@ -867,7 +870,7 @@ def _start_engine_bootstrap(session: Any) -> None:
 
     engine = _get_engine()
     graph = str(session.graph)
-    deadline = time.monotonic() + _ENGINE_READY_TIMEOUT_SECONDS
+    deadline = time.monotonic() + _engine_ready_timeout_seconds()
     while True:
         try:
             with use_session(session):
@@ -877,6 +880,7 @@ def _start_engine_bootstrap(session: Any) -> None:
                 raise RuntimeError(
                     "epistemic-graph did not answer before serving start"
                 ) from exc
+            logger.info("waiting for the engine to answer: %s", type(exc).__name__)
             if _PROCESS_AUTHORITY_STOP.wait(1.0):
                 raise InterruptedError("shutdown cancelled engine bootstrap") from exc
             continue

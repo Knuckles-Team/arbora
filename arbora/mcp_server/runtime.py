@@ -984,6 +984,9 @@ def _register_served_intent_surface(mcp: Any, invocation: Any) -> Any:
         fleet_search=getattr(
             services.runtime.bindings.get("fleet_gateway"), "fleet_search", None
         ),
+        fleet_catalog=getattr(
+            services.runtime.bindings.get("fleet_gateway"), "fleet_catalog", None
+        ),
     )
 
 

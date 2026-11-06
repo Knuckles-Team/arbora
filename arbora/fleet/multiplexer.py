@@ -6717,6 +6717,7 @@ class MCPMultiplexer:
                 "prefixed_name": prefixed_name,
                 "tool": t["name"],
                 "description": t.get("description", ""),
+                "input_schema": t.get("inputSchema") or t.get("input_schema") or {},
                 "enabled": self._tool_enabled(server, t["name"]),
                 # Session-scoped dispatch truth (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog):
                 # derived from the SAME predicate the dispatch gate
