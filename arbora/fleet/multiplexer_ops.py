@@ -24,6 +24,10 @@ NativeName = Callable[[CatalogItem], str]
 ReadItem = Callable[[CatalogItem, Mapping[str, Any], Any], Awaitable[Any]]
 #: Fill the live protocol rows (input schema, annotations) of named servers.
 Prime = Callable[[Iterable[str]], Awaitable[None]]
+#: Re-probe named servers now; answers each server's tool count and error.
+Refresh = Callable[[Iterable[str]], Awaitable[Mapping[str, Any]]]
+#: The most servers one explicit catalog refresh names.
+MAX_REFRESH_SERVERS = 32
 #: The coverage registry reader and endpoint lister for ``status``.
 CoverageRegistry = Callable[[], tuple[Any, ...]]
 CoverageEndpoints = Callable[[], tuple[Any, ...]]
@@ -157,6 +161,7 @@ class MultiplexerOps:
         native_name: NativeName | None = None,
         read_item: ReadItem | None = None,
         prime: Prime | None = None,
+        refresh: Refresh | None = None,
         pin_store: PinStore | None = None,
         coverage_registry: CoverageRegistry | None = None,
         coverage_endpoints: CoverageEndpoints | None = None,
@@ -164,6 +169,7 @@ class MultiplexerOps:
     ) -> None:
         self.catalog = catalog
         self._prime = prime or _no_prime
+        self._refresh = refresh
         self.sessions = sessions
         self._loadable = loadable
         self._mount = mount
@@ -190,13 +196,14 @@ class MultiplexerOps:
         # target's live probe does. Without it a read-only tool resolves as
         # a write, and the caller never learns the tool's parameters.
         await self._prime((server,))
-        item = await self.catalog._raw_get(f"fleet:tool:{server}/{tool}")
-        if (
-            item is None
-            or item.kind != "tool"
-            or item.server != server
-            or item.name != tool
-        ):
+        item = await self._tool_item(server, tool)
+        if item is None and self._refresh is not None:
+            # ARBORA-FLEET-R071: authority is the current catalog. A tool the
+            # cached catalog does not hold is re-read from its server once
+            # (throttled per server) before the call is refused.
+            await self._refresh((server,))
+            item = await self._tool_item(server, tool)
+        if item is None:
             raise PermissionError("fleet tool is unavailable")
         if not item.required_scopes.issubset(caller.effective_scopes):
             raise PermissionError("child scopes are required")
@@ -206,6 +213,40 @@ class MultiplexerOps:
         ):
             raise PermissionError("fleet call denied by policy")
         return item
+
+    async def _tool_item(self, server: str, tool: str) -> CatalogItem | None:
+        item = await self.catalog._raw_get(f"fleet:tool:{server}/{tool}")
+        if (
+            item is None
+            or item.kind != "tool"
+            or item.server != server
+            or item.name != tool
+        ):
+            return None
+        return item
+
+    async def refresh_catalog(
+        self, caller: Any, *, servers: Iterable[str] = ()
+    ) -> dict[str, Any]:
+        """Re-read the named servers' catalogs now, without a restart.
+
+        ARBORA-FLEET-R070: the explicit refresh. Each server answers its tool
+        count and probe error; a changed catalog is re-onboarded into the
+        engine through the handshake. The op's own scopes gate the caller.
+        """
+        from arbora.api.invoke.pipeline import OperationRefused
+
+        named = tuple(dict.fromkeys(servers))
+        if not 1 <= len(named) <= MAX_REFRESH_SERVERS:
+            raise OperationRefused(
+                "INVALID_ARGUMENT",
+                {"reason": f"name 1..{MAX_REFRESH_SERVERS} servers"},
+            )
+        if self._refresh is None:
+            raise OperationRefused(
+                "UNAVAILABLE", {"reason": "the catalog refresh is unavailable"}
+            )
+        return {"servers": dict(await self._refresh(named))}
 
     async def admitted_surface_item(
         self, caller: Any, family: str, server: str, ident: str

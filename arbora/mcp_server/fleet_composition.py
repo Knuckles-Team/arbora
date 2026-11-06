@@ -95,6 +95,10 @@ class LateFleetGateway:
         with _caller_session(caller):
             return await self._bound().unpin(caller, **params)
 
+    async def catalog_refresh(self, caller: Any, **params: Any) -> Any:
+        with _caller_session(caller):
+            return await self._bound().catalog_refresh(caller, **params)
+
     async def pins_list(self, caller: Any, **params: Any) -> Any:
         with _caller_session(caller):
             return await self._bound().pins_list(caller, **params)

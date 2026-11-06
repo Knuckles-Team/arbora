@@ -499,3 +499,8 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T232 ARBORA-FLEET-R065 Engine, discovery and fleet report health on their own.
 - [ ] T233 ARBORA-FLEET-R066 Parallel find and act calls do not hang under load.
 - [x] T234 ARBORA-FLEET-R067 A shielded, shared verified fleet read caches even when every caller deadline is shorter; stale-while-refresh.
+- [x] T235 ARBORA-FLEET-R068 Follow a child's tools/list pagination cursors to the last page.
+- [x] T236 ARBORA-FLEET-R069 Remove the per-connector tool cap; bound each descriptor on its own.
+- [x] T237 ARBORA-FLEET-R070 Refresh a connector's catalog on list_changed, on probe TTL and by an explicit op, without a restart.
+- [x] T238 ARBORA-FLEET-R071 Re-read a server once before refusing a fleet.call tool the cached catalog lacks.
+- [ ] T239 ARBORA-FLEET-R072 Stream probed tool pages into the engine catalog; keep only digests in process.
