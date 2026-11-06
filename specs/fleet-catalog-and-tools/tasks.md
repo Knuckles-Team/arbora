@@ -513,3 +513,14 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T246 ARBORA-FLEET-R076.1 Read a skill supporting file under its resource template.
 - [x] T247 ARBORA-FLEET-R077 Arm per-call sessions, plan confirm-declaring tools, refuse a cancelled result typed.
 - [x] T248 ARBORA-FLEET-R078 Compose the catalog off boot with retries; refuse retryably while it warms.
+- [ ] T249 ARBORA-FLEET-R080 Onboarding handshake explicit machine (rollup).
+- [ ] T250 ARBORA-FLEET-R080.1 Onboarding state model, transition function and typed held refusal.
+- [ ] T251 ARBORA-FLEET-R080.2 Retry after the process authority recovers.
+- [ ] T252 ARBORA-FLEET-R080.3 Describe the onboarding machine in the ontology.
+- [ ] T253 ARBORA-FLEET-R081 Catalog serving state machine (rollup).
+- [ ] T254 ARBORA-FLEET-R081.1 Catalog state model and transition function.
+- [ ] T255 ARBORA-FLEET-R081.2 Derive readiness flags from the catalog state.
+- [ ] T256 ARBORA-FLEET-R081.3 Describe the catalog machine in the ontology.
+- [ ] T257 ARBORA-FLEET-R082 Connector desired status machine; authorization projection (rollup).
+- [ ] T258 ARBORA-FLEET-R082.1 Desired-status machine with typed refusal.
+- [ ] T259 ARBORA-FLEET-R082.2 Project the authorization outcome from the medulla decision.
