@@ -496,3 +496,5 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T229 ARBORA-FLEET-R062 Fleet discovery and fleet calls never hang while the fleet comes up.
 - [ ] T230 ARBORA-FLEET-R063 The find catalog op lists one server's tools with their schemas.
 - [ ] T231 ARBORA-FLEET-R064 A fleet onboarding refusal names its engine operation and refusal code.
+- [ ] T232 ARBORA-FLEET-R065 Engine, discovery and fleet report health on their own.
+- [ ] T233 ARBORA-FLEET-R066 Parallel find and act calls do not hang under load.
