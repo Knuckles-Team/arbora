@@ -160,6 +160,13 @@ def _merge_probed_item(
             subject_id=subject_id,
             effect_override=policy.fleet_effects.get(item.name),
         )
+    elif item.kind == "prompt":
+        # The listed prompt's role details and arguments (ARBORA-FLEET-R076).
+        merged[item.id] = replace(
+            previous,
+            schema=item.schema or previous.schema,
+            details=item.details or previous.details,
+        )
     elif item.kind == "tool":
         # A live probe refines the engine's tool contract (ARBORA-FLEET-R072);
         # a field the probe lacks keeps the engine's value.

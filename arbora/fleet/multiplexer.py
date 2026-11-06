@@ -95,7 +95,7 @@ from arbora.fleet.local_skill_catalog import (
     build_local_skill_catalog,
     missing_core_pack_names,
 )
-from arbora.fleet.plan_confirmation import answer_elicitation
+from arbora.fleet.plan_confirmation import answer_elicitation, armed
 from arbora.fleet.session_notifications import SessionCatalogNotifications
 from arbora.security.error_surface import public_error_text
 from arbora.security.log_redaction import redact_for_log
@@ -2459,6 +2459,32 @@ def _operator_call_timeouts() -> dict[str, _typing.Any]:
     }
 
 
+def _json_dump(value: _typing.Any) -> _typing.Any:
+    """One decoded MCP value as plain JSON (aliases kept, nulls dropped)."""
+    dump = getattr(value, "model_dump", None)
+    if callable(dump):
+        return dump(mode="json", by_alias=True, exclude_none=True)
+    return value
+
+
+def _relayed_prompt_message(message: _typing.Any) -> dict[str, _typing.Any]:
+    """One rendered prompt message, every content block whole (R076).
+
+    A text block also keeps the flat ``text`` key relay readers use; an
+    embedded resource, resource link or image is relayed as the child sent it,
+    never dropped.
+    """
+    content = _json_dump(getattr(message, "content", None))
+    relayed: dict[str, _typing.Any] = {
+        "role": str(getattr(message, "role", "")),
+        "content": content,
+    }
+    text = content.get("text") if isinstance(content, dict) else None
+    if isinstance(text, str):
+        relayed["text"] = text
+    return relayed
+
+
 def _decode_engine_server_config(body: bytes) -> dict[str, _typing.Any]:
     """Decode bounded, non-secret transport metadata from one EG component."""
     if len(body) > _CONFIG_MAX_BYTES:
@@ -3439,7 +3465,10 @@ class MCPMultiplexer:
                 before_oauth_provider_call,
             )
         before_oauth_provider_call()
-        return await session.call_tool(original_name, arguments)
+        # ARBORA-FLEET-R077: a plan-confirmed call arms this dedicated session
+        # to accept the connector's confirmation, as the pooled path does.
+        async with armed(session, original_name):
+            return await session.call_tool(original_name, arguments)
 
     @staticmethod
     def _tasks_child_capable(initialization: _typing.Any) -> bool:
@@ -5232,21 +5261,24 @@ class MCPMultiplexer:
         result = await self._relay_read(
             server_name, lambda session: session.get_prompt(name, arguments), timeout
         )
-        messages: list[dict[str, str]] = []
-        for message in getattr(result, "messages", ()) or ():
-            content = getattr(message, "content", None)
-            text = getattr(content, "text", None)
-            if isinstance(text, str):
-                messages.append({"role": str(message.role), "text": text})
-        if sum(len(m["text"].encode("utf-8")) for m in messages) > (
-            _MAX_DELEGATED_VALUE_BYTES
-        ):
-            raise _fastmcp_exceptions.ToolError("MCP prompt exceeds the size boundary")
-        return {
+        rendered: dict[str, _typing.Any] = {
             "name": name,
             "description": str(getattr(result, "description", "") or ""),
-            "messages": messages,
+            "messages": [
+                _relayed_prompt_message(message)
+                for message in getattr(result, "messages", ()) or ()
+            ],
         }
+        meta = _json_dump(getattr(result, "meta", None))
+        if meta:
+            rendered["_meta"] = meta
+        try:
+            _assert_bounded_json_value(rendered, max_nodes=_MAX_DELEGATED_NODES)
+        except _fastmcp_exceptions.ToolError:
+            raise _fastmcp_exceptions.ToolError(
+                "MCP prompt exceeds the size boundary"
+            ) from None
+        return rendered
 
     def prefixed_tools_for_server(self, server_name: str) -> list[MCPTool]:
         """All aggregated prefixed tools currently owned by ``server_name``."""

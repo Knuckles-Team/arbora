@@ -129,6 +129,27 @@ def resource_uri(kind: str, name: str) -> str:
     return name
 
 
+_TEMPLATE_VARIABLE = re.compile(r"\{([A-Za-z0-9_]+)(\*?)\}")
+
+
+def template_matches(template: str, uri: str) -> bool:
+    """Whether ``uri`` is one expansion of an RFC 6570 level-1 template.
+
+    ``{name}`` matches one path segment; ``{name*}`` matches the rest of the
+    path. A template without variables matches nothing (it is a resource).
+    """
+    parts: list[str] = []
+    position = 0
+    for match in _TEMPLATE_VARIABLE.finditer(template):
+        parts.append(re.escape(template[position : match.start()]))
+        parts.append(".+" if match.group(2) else "[^/]+")
+        position = match.end()
+    if not parts:
+        return False
+    parts.append(re.escape(template[position:]))
+    return re.fullmatch("".join(parts), uri) is not None
+
+
 def _surface_item_id(family: str, server: str, ident: str) -> str:
     if family == "prompts":
         return f"fleet:prompt:{server}/{ident}"
@@ -261,10 +282,13 @@ class MultiplexerOps:
         _require_delegate_scope(caller)
         await self._prime((server,))
         item = await self.catalog.get(_surface_item_id(family, server, ident), caller)
+        if item is not None and item.kind == "resource_template":
+            item = None
+        if item is None and family == "resources":
+            item = await self._template_for(caller, server, ident)
         if (
             item is None
             or item.kind not in RELAY_KINDS[family]
-            or item.kind == "resource_template"
             or item.server != server
             or not item.required_scopes.issubset(caller.effective_scopes)
             or not await self._loadable(item, caller)
@@ -273,6 +297,30 @@ class MultiplexerOps:
 
             raise OperationRefused("NOT_FOUND", {"reason": "fleet item is unavailable"})
         return item
+
+    async def _template_for(
+        self, caller: Any, server: str, uri: str
+    ) -> CatalogItem | None:
+        """The server's admitted resource template that ``uri`` expands.
+
+        ARBORA-FLEET-R076.1: a connector serves a skill's supporting files
+        through a ``skill://<name>/{path*}`` template (fastmcp's skills
+        provider), so a concrete file URI is read under that template's
+        admission. A ``..`` path segment never matches.
+        """
+        if "/../" in f"{uri}/" or "/./" in f"{uri}/":
+            return None
+        result = await self.catalog.search(
+            caller,
+            kinds=("resource_template",),
+            servers=(server,),
+            browse=True,
+            limit=100,
+        )
+        for row in result.get("items", ()):
+            if template_matches(str(row.get("name") or ""), uri):
+                return await self.catalog.get(str(row["id"]), caller)
+        return None
 
     async def relay_list(
         self, caller: Any, family: str, **params: Any
