@@ -60,3 +60,6 @@ Implementation acceptance covers uv run pytest tests/messaging and authenticated
 | `ARBORA-MESSAGING-R800.3` | `tests/messaging/test_channel_adapters.py::test_connect_names_the_extra_when_the_sdk_is_missing` (written) |
 | `ARBORA-MESSAGING-R800.6` | `tests/messaging/test_primitives.py::test_render_inline_forms` (written) ; `tests/messaging/bench_render_dispatch.py::test_ten_thousand_messages` (planned) |
 | `ARBORA-MESSAGING-R800.1000` | `tests/messaging/test_lease.py::test_two_contenders_cannot_both_own_intake` (written) ; `tests/messaging/test_lease.py::test_lost_renewal_stops_intake_and_releases_the_lease` (written) |
+| `ARBORA-MESSAGING-R800.1003` | `tests/messaging/test_lease.py::test_every_edge_and_every_refusal` (planned) |
+| `ARBORA-MESSAGING-R800.1004` | `tests/messaging/test_lease.py::test_one_heartbeat_error_keeps_polling_and_a_lost_lease_reacquires` (planned) |
+| `ARBORA-MESSAGING-R800.1005` | `tests/ontology/test_intake_lease_description.py::test_classes_roll_up_to_the_core_classes` (planned) |

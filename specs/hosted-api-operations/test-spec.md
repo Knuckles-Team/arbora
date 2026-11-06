@@ -573,3 +573,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R899.5` | Test: `tests/modality/test_entry_points.py::test_a2a_audio_part_runs_the_harness_on_the_transcript` (L2), `tests/modality/test_entry_points.py::test_a2a_audio_without_a_capability_refuses_typed_before_dispatch` (L2), `tests/modality/test_entry_points.py::test_a2a_message_model_keeps_text_bounds_and_takes_media` (L1), `tests/modality/test_entry_points.py::test_a2a_refuses_a_part_no_handler_reads` (L2), `tests/modality/test_entry_points.py::test_fleet_agent_history_media_becomes_transcript_text` (L2). |
 | `ARBORA-OPS-R899.6` | Test: `tests/modality/test_modality_seam.py::test_provenance_links_the_transcript_to_its_audio` (L1). |
 | `ARBORA-OPS-R899.7` | Test: `tests/modality/test_entry_points.py::test_webui_dictation_transcribes_through_the_seam_without_provenance` (L2). |
+| `ARBORA-OPS-R900` | Test: `tests/agent_runs/test_run_status_canonical.py::test_status_comes_from_the_canonical_state_and_unknown_is_refused` (L1 or L2, planned). |
+| `ARBORA-OPS-R901` | Test: `tests/api/test_plan_lease_machine.py::test_every_edge_and_every_refusal` (L1 or L2, planned). |
+| `ARBORA-OPS-R902` | Test: `tests/work_items/test_commit_refusal.py::test_illegal_commit_surfaces_the_typed_refusal` (L1 or L2, planned). |
+| `ARBORA-OPS-R903` | Test: `tests/ontology/test_plan_lease_description.py::test_classes_roll_up_to_the_core_classes` (L1 or L2, planned). |

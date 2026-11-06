@@ -309,3 +309,9 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T149 ARBORA-IDENTITY-R030.1 Deliver `arbora clients enroll` creates one machine client.
 - [ ] T150 ARBORA-IDENTITY-R030.2 Deliver `arbora token` prints a fresh bearer token for a header helper.
 - [ ] T151 ARBORA-IDENTITY-R030.3 The served endpoint publishes protected-resource metadata.
+- [ ] T152 ARBORA-IDENTITY-R027.1 Lease state enum, event enum and the one `transition` function.
+- [ ] T153 ARBORA-IDENTITY-R027.2 Renew at 50% of the lifetime; `Degraded` with jittered exponential backoff.
+- [ ] T154 ARBORA-IDENTITY-R027.3 Recovery edge `Degraded` and `Expired` to `Live`, guarded by unchanged identity.
+- [ ] T155 ARBORA-IDENTITY-R027.4 Typed refusal of illegal lease transitions.
+- [ ] T156 ARBORA-IDENTITY-R027.5 Derive readiness from the lease state; delete the failure global.
+- [ ] T157 ARBORA-IDENTITY-R027.6 Describe the lease machine in the ontology.

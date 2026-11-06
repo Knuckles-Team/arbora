@@ -26,3 +26,5 @@ Frozen pydantic model in `arbora/ingest/service.py`. It is one ingestion source'
 | `sync_state`, `sync_reason`, `sync_engine_code` | Outcome of the last sync. |
 
 `ConnectorIngestRunner` in `arbora/ingest/connector_sources.py` produces these records for connector sources.
+
+Planned: `PlanState`, `PlanEvent` and `IllegalPlanTransition` in `arbora/api/invoke/plan.py` carry the plan lease machine.

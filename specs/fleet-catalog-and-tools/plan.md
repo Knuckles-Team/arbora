@@ -604,3 +604,13 @@ Call path: `fleet.status` (`arbora/api/ops/fleet.py:143`) -> `MultiplexerOps.sta
 Registry decision: the org registry is the `connectors` group of `workspace.yml`, read through `platform_config_file("workspace.yml")` (`arbora/core/settings.py:64`). The deployed MCP config says what arbora mounts. The manifest says what must be mounted. The gate compares the two. Some repo names differ from their MCP server keys, so each such registry entry needs an `mcp_server` field. The registry owner adds those fields before the gate can pass.
 
 Tool counts come from admitted catalog items, not from mounted tools, because the dynamic multiplexer mounts children on demand.
+
+### Explicit state machines (ARBORA-FLEET-R080 to R082)
+
+Article XXXI requires each lifecycle to be a closed machine with one transition function. Three fleet lifecycles were implicit.
+
+- Onboarding (`R080`) was a dict of strings. One failed pass after `max_attempts` ended in a terminal `failed`, and it depended on the process credential lease. `ARBORA-IDENTITY-R027.3` adds the recovery edge. Onboarding then retries once the lease is `Live`.
+- Catalog serving (`R081`) was inferred from `None` checks and two booleans that were always equal. The state is now one field and the flags are derived.
+- Connector control plane (`R082`) validates a record but has no transition function. `DesiredStatus` becomes a machine. `AuthorizationOutcome` becomes a projection of the medulla decision. Arbora keeps no second authorization machine.
+
+The ontology children wait for the medulla core state-machine vocabulary row. The behaviour children do not.

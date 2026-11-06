@@ -15,3 +15,5 @@ Defined in `arbora/fleet/pin_store.py`. Fields: `tenant`, `principal`, `item_id`
 ## CoverageReport
 
 Defined in `arbora/fleet/coverage.py`. Fields: `registered`, `covered`, `missing`, `zero_tools`, `ok`. Each `missing` entry holds a `server` and a `reason`.
+
+Planned state machine types: `OnboardingState` (`arbora/fleet/onboarding_machine.py`), `CatalogState` (`arbora/fleet/catalog_machine.py`) and `DesiredStatus` (`arbora/control_plane/connectors/machine.py`). Each holds one state field. Each has an event enum, a `transition` function and a typed illegal-transition error.

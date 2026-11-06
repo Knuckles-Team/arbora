@@ -639,3 +639,9 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 ## Cross-repo seams
 
 None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
+
+### Process credential lease state machine (ARBORA-IDENTITY-R027.1 to R027.6)
+
+The 2026-11-06 outage showed that the lease had no recovery edge. The loop renewed only at 30 seconds or less of lifetime. After an identity provider outage longer than that, the lease expired. The renewal guard then raised before any provider call, and `CredentialLease.renew` refused the expired lease. Only a restart recovered.
+
+Decision: one explicit machine under Article XXXI. `CredentialLease` stores one `state` field and `transition` is the only writer. The existing `CredentialLease` type is extended, not replaced, so every captured worker session keeps its reference. The readiness global is deleted and `/health/ready` reads the lease. The behaviour rows `.1` to `.5` need no medulla row. Row `.6` waits for the medulla core state-machine vocabulary row.

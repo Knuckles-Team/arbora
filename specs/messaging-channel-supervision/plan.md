@@ -117,3 +117,7 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 ## Cross-repo seams
 
 None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
+
+### Intake lease state machine (ARBORA-MESSAGING-R800.1003 to R800.1005)
+
+The intake lease treated one heartbeat exception as a lost lease. Polling for the platform then stopped until a restart. The lease becomes an explicit machine under Article XXXI, in the style of `ChannelSupervisionState`. `Suspect` absorbs transient errors. Only a fence or epoch refusal, or a TTL lapse, ends ownership. The ontology row waits for the medulla core state-machine vocabulary row.
