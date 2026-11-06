@@ -512,3 +512,4 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T245 ARBORA-FLEET-R076 Keep prompt title, arguments, _meta and every content block through the relay.
 - [x] T246 ARBORA-FLEET-R076.1 Read a skill supporting file under its resource template.
 - [x] T247 ARBORA-FLEET-R077 Arm per-call sessions, plan confirm-declaring tools, refuse a cancelled result typed.
+- [x] T248 ARBORA-FLEET-R078 Compose the catalog off boot with retries; refuse retryably while it warms.

@@ -271,10 +271,15 @@ def test_reader_rejects_cyclic_cursor_without_unbounded_io() -> None:
 
 
 def test_deferred_reader_has_no_static_or_uninstalled_fallback() -> None:
+    from arbora.api.invoke.pipeline import OperationRefused
+
     deferred = DeferredFleetCatalogReader()
 
-    with pytest.raises(RuntimeError, match="not installed"):
+    # Fails closed while the catalog warms, with the typed retryable refusal
+    # (ARBORA-FLEET-R078), never a static fallback.
+    with pytest.raises(OperationRefused) as warming:
         asyncio.run(deferred.read())
+    assert warming.value.code == "UNAVAILABLE"
 
     reader = FleetCatalogReader(FakeFleetCatalogPort())
     deferred.install(reader)

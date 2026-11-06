@@ -855,6 +855,17 @@ def _build_server(
         if not_served:
             # Names only: authorities this release does not serve (not applicable).
             body["not_served"] = not_served
+        from arbora.mcp_server.catalog_warmup import catalog_state
+
+        catalog = catalog_state()
+        if catalog is not None:
+            # Reported, never gating (ARBORA-FLEET-R078): arbora serves while
+            # the catalog warms; requests that need it refuse retryably.
+            body["catalog"] = {
+                key: catalog[key]
+                for key in ("status", "attempts", "last_error")
+                if key in catalog
+            }
         return JSONResponse(
             body,
             status_code=200 if ready else 503,

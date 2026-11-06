@@ -597,3 +597,4 @@ Each test below is named by its requirement row, has no running implementation y
 | PT-160 | ARBORA-FLEET-R076 | `tests/fleet/test_large_tool_catalogs.py::test_a_rendered_prompt_keeps_every_content_block_and_the_role_meta` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-161 | ARBORA-FLEET-R076.1 | `tests/fleet/test_large_tool_catalogs.py::test_a_templated_skill_file_is_admitted_and_traversal_is_not` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-162 | ARBORA-FLEET-R077 | `tests/fleet/test_large_tool_catalogs.py::test_a_cancelled_child_result_is_a_typed_confirmation_refusal` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-163 | ARBORA-FLEET-R078 | `tests/mcp_server/test_catalog_warmup.py::test_boot_returns_while_the_catalog_composition_is_still_running` | The result the row states holds. | Each refusal the row states is returned. |
