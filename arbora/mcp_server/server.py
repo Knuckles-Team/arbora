@@ -205,6 +205,45 @@ def _bind_served_fleet(
         )
 
 
+def _start_catalog_warmup(
+    engine: Any, session: Any, reader: Any, fleet_mux: Any
+) -> Any:
+    """Compose the catalog authorities, then onboard the fleet, off boot.
+
+    Both run under the process session on the warm-up thread, which does not
+    inherit the boot thread's context (ARBORA-FLEET-R078).
+    """
+    from arbora.api.contracts.session import use_session
+    from arbora.mcp_server.catalog_composition import compose_catalog_authorities
+    from arbora.mcp_server.catalog_warmup import start_catalog_warmup
+    from arbora.security.actor_context import use_actor
+
+    async def compose() -> None:
+        with use_actor(session.actor), use_session(session):
+            await compose_catalog_authorities(
+                engine=engine,
+                session=session,
+                deferred_fleet=reader,
+                multiplexer=fleet_mux,
+            )
+
+    def onboard() -> None:
+        # Register, attest and import each child catalog, then renew leases.
+        # A fault logs and retries; it never blocks or stops serving.
+        from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
+        from arbora.fleet.onboarding import start_fleet_onboarding
+
+        with use_actor(session.actor), use_session(session):
+            start_fleet_onboarding(
+                engine=engine,
+                session=session,
+                multiplexer=fleet_mux,
+                virtual_catalog=bootstrap_fleet_virtual_catalog(),
+            )
+
+    return start_catalog_warmup(compose, after=onboard)
+
+
 def mcp_server(
     *,
     invocation: HostedInvocation | None = None,
@@ -320,6 +359,7 @@ def mcp_server(
     readiness_authority_owner = runtime._set_readiness_authority(bootstrap_session)
 
     co_service_supervisor = None
+    catalog_warmup = None
     try:
         logger.info("Starting arbora MCP server (transport=%s)", transport)
 
@@ -376,30 +416,15 @@ def mcp_server(
 
             run_data_migrations(runtime._get_engine())
 
-            from arbora.mcp_server.catalog_composition import (
-                compose_catalog_authorities,
-            )
-
-            asyncio.run(
-                compose_catalog_authorities(
-                    engine=runtime._get_engine(),
-                    session=bootstrap_session,
-                    deferred_fleet=fleet_catalog_reader,
-                    multiplexer=fleet_mux,
-                )
-            )
-
-            # Onboard the configured fleet in the background: register, attest
-            # and import each child catalog, then renew leases. A fault logs
-            # and retries; it never blocks or stops serving.
-            from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
-            from arbora.fleet.onboarding import start_fleet_onboarding
-
-            start_fleet_onboarding(
-                engine=runtime._get_engine(),
-                session=bootstrap_session,
-                multiplexer=fleet_mux,
-                virtual_catalog=bootstrap_fleet_virtual_catalog(),
+            # ARBORA-FLEET-R078: the catalog authorities compose on a
+            # background thread, so arbora binds and serves at once; a slow or
+            # failing engine call is retried there and never exits the process.
+            # Fleet onboarding starts once the catalog is ready.
+            catalog_warmup = _start_catalog_warmup(
+                runtime._get_engine(),
+                bootstrap_session,
+                fleet_catalog_reader,
+                fleet_mux,
             )
 
             from arbora.mcp_server.agent_control import register_graph_rlm
@@ -463,6 +488,8 @@ def mcp_server(
         else:
             raise ValueError("arbora transport must be 'stdio' or 'streamable-http'")
     finally:
+        if catalog_warmup is not None:
+            catalog_warmup.stop()
         unregister_harness_host()
         if co_service_supervisor is not None:
             co_service_supervisor.stop_all()

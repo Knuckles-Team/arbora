@@ -726,6 +726,10 @@ class DeferredFleetCatalogReader:
     def __init__(self) -> None:
         self._reader: FleetCatalogReader | None = None
 
+    @property
+    def installed(self) -> bool:
+        return self._reader is not None
+
     def install(self, reader: FleetCatalogReader) -> None:
         if self._reader is not None:
             raise RuntimeError("fleet catalog authority is already installed")
@@ -737,5 +741,12 @@ class DeferredFleetCatalogReader:
         kinds: Sequence[ComponentKind] = FLEET_COMPONENT_KINDS,
     ) -> FleetCatalog:
         if self._reader is None:
-            raise RuntimeError("fleet catalog authority is not installed")
+            # The typed, retryable refusal while the catalog warms (R078).
+            from arbora.api.invoke.pipeline import OperationRefused
+            from arbora.api.mcp.discovery import FLEET_RETRY_AFTER_S
+
+            raise OperationRefused(
+                "UNAVAILABLE",
+                {"reason": "catalog warming", "retry_after_s": FLEET_RETRY_AFTER_S},
+            )
         return await self._reader.read(kinds=kinds)

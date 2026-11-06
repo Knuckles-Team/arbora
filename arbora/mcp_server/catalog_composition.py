@@ -137,7 +137,9 @@ async def compose_catalog_authorities(
             connectors=required_content_connectors(),
         )
     workflows, agents = catalog_ports_factory(engine, session)
-    deferred_fleet.install(reader)
+    if not deferred_fleet.installed:
+        # A retried warm-up keeps the reader its first attempt installed.
+        deferred_fleet.install(reader)
     configure_enhanced_catalog(
         EnhancedCatalogAuthority(
             fleet=reader,
