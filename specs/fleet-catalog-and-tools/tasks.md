@@ -508,3 +508,4 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T241 ARBORA-FLEET-R068.1 Page resources, resource templates and prompts like tools.
 - [x] T242 ARBORA-FLEET-R070.1 Drop tools, prompts and skills a good probe no longer lists.
 - [x] T243 ARBORA-FLEET-R074 Rank fleet discovery by rarity-weighted, stopword-free, plural-folded terms.
+- [x] T244 ARBORA-FLEET-R075 Take a call deadline from call_timeout (call, server, operator), never the connect budget.
