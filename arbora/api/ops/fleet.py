@@ -105,6 +105,10 @@ class FleetPinsListParams(_Params):
     limit: int = Field(default=50, ge=1, le=100)
 
 
+class FleetCatalogRefreshParams(_Params):
+    servers: tuple[str, ...] = Field(min_length=1, max_length=32)
+
+
 class FleetCallParams(_Params):
     server: str = Field(min_length=1, max_length=128)
     tool: str = Field(min_length=1, max_length=128)
@@ -191,6 +195,8 @@ async def handle_fleet_operation(
         result = await gateway.pin(caller, **params)
     elif op.id == "fleet.tools.unpin":
         result = await gateway.unpin(caller, **params)
+    elif op.id == "fleet.catalog.refresh":
+        result = await gateway.catalog_refresh(caller, **params)
     elif op.id == "fleet.pins.list":
         result = await gateway.pins_list(caller, **params)
     elif op.id == "fleet.prompts.list":
@@ -360,6 +366,18 @@ def operations() -> tuple[OpSpec, ...]:
             )
         ),
         OpSpec(
+            id="fleet.catalog.refresh",
+            verb=Verb.MANAGE,
+            summary="Re-read connector tool catalogs now, without an arbora restart",
+            examples=("refresh the tool catalog of craft-suite-api",),
+            params=FleetCatalogRefreshParams,
+            result=FleetResult,
+            binding=Composite(handler="arbora.api.ops.fleet.handle_fleet_operation"),
+            scopes=frozenset({"fleet:control"}),
+            effect=Effect.WRITE,
+            audit=AuditClass.EVENT,
+        ),
+        OpSpec(
             id="fleet.pins.list",
             verb=Verb.ASK,
             summary="List every pin in the caller's tenant with its suspended state",
@@ -462,6 +480,7 @@ specs = operations
 __all__ = [
     "FleetCallParams",
     "FleetCatalogParams",
+    "FleetCatalogRefreshParams",
     "FleetLoadParams",
     "FleetPackStatusParams",
     "FleetPinParams",

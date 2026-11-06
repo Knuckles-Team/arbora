@@ -252,6 +252,7 @@ def test_fleet_ops_are_distinct_and_loading_is_mcp_only() -> None:
         "fleet.call",
         "fleet.catalog.search",
         "fleet.catalog.list",
+        "fleet.catalog.refresh",
         "fleet.tools.load",
         "fleet.tools.unload",
         "fleet.tools.pin",
@@ -267,6 +268,7 @@ def test_fleet_ops_are_distinct_and_loading_is_mcp_only() -> None:
     assert registry["fleet.catalog.search"].scopes == frozenset({"mcp:discover"})
     assert registry["fleet.tools.load"].surfaces == frozenset({Surface.MCP})
     assert registry["fleet.call"].scopes == frozenset({"mcp:delegate"})
+    assert registry["fleet.catalog.refresh"].scopes == frozenset({"fleet:control"})
 
 
 @pytest.mark.asyncio

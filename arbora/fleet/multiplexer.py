@@ -138,10 +138,12 @@ _MAX_DELEGATED_VALUE_BYTES = 4 * 1024 * 1024
 _MAX_CHILD_SSE_EVENT_BYTES = 2 * _MAX_DELEGATED_VALUE_BYTES
 _MAX_DELEGATED_NODES = 16_384
 _MAX_DELEGATED_DEPTH = 32
-_MAX_DISCOVERED_TOOLS = 2_048
-# A child catalog is metadata, not a single tool invocation.  It legitimately
-# contains hundreds of independently bounded JSON Schemas, so it gets its own
-# aggregate structural allowance while retaining the same byte/depth limits.
+#: Resource and prompt listings keep a fixed per-child count bound. A tool
+#: catalog has no count bound at all (ARBORA-FLEET-R069): a connector that
+#: serves one tool per upstream operation is admitted whole.
+_MAX_DISCOVERED_DESCRIPTORS = 2_048
+#: One child tool descriptor's structural allowance. Each descriptor is
+#: bounded on its own; a large catalog is never truncated (ARBORA-FLEET-R069).
 _MAX_CATALOG_NODES = 131_072
 # Skills-over-MCP (CONCEPT:MERISTEM-ECO.mcp.skills-over-mcp-provider): a probed
 # server's Resources may include ``skill://{name}/SKILL.md`` entries. Bounded
@@ -857,28 +859,77 @@ def _bounded_tool_entry(tool: _typing.Any) -> dict[str, _typing.Any]:
     return item
 
 
+class FleetCatalogPageError(RuntimeError):
+    """One page of a child's ``tools/list`` could not be read.
+
+    Typed (ARBORA-FLEET-R068): the listing is refused whole, never served
+    partial, so a connector can never silently lose tools. The probe records
+    it as the server's error and the primer retries; the last good catalog
+    keeps serving meanwhile.
+    """
+
+
 def _bounded_tool_catalog(raw_tools: _typing.Any) -> list[dict[str, _typing.Any]]:
     """Project one child catalog into a bounded, JSON-compatible shape.
 
     The MCP SDK decodes remote responses before returning them to us.  This
     boundary prevents a child from turning that decoded value into an
-    unbounded in-memory/KG catalog: tool count, aggregate bytes, nesting,
-    collection size, names, descriptions, schemas, and annotations are all
-    validated before any caller can cache or register them.
+    unbounded in-memory/KG catalog: names, descriptions, schemas, and
+    annotations are validated per descriptor before any caller can cache or
+    register them. The tool count has no bound (ARBORA-FLEET-R069).
     """
 
-    if (
-        not isinstance(raw_tools, list | tuple)
-        or len(raw_tools) > _MAX_DISCOVERED_TOOLS
-    ):
+    if not isinstance(raw_tools, list | tuple):
         raise RuntimeError("MCP child tool catalog exceeded its boundary")
     tools: list[dict[str, _typing.Any]] = [
         _bounded_tool_entry(tool) for tool in raw_tools
     ]
     try:
-        _assert_bounded_json_value(tools, max_nodes=_MAX_CATALOG_NODES)
+        for entry in tools:
+            _assert_bounded_json_value(entry, max_nodes=_MAX_CATALOG_NODES)
     except _fastmcp_exceptions.ToolError:
         raise RuntimeError("MCP child tool catalog exceeded its boundary") from None
+    return tools
+
+
+def _next_cursor(result: _typing.Any) -> str | None:
+    """A ``tools/list`` page's continuation cursor, or ``None`` on the last."""
+    cursor = getattr(result, "next_cursor", None)
+    return cursor if isinstance(cursor, str) and cursor else None
+
+
+async def _list_page(session: _typing.Any, cursor: str | None) -> _typing.Any:
+    try:
+        if cursor is None:
+            return await session.list_tools()
+        return await session.list_tools(
+            params=mcp_types.PaginatedRequestParams(cursor=cursor)
+        )
+    except Exception as exc:
+        raise FleetCatalogPageError(
+            f"MCP child tools/list page failed ({type(exc).__name__})"
+        ) from exc
+
+
+async def _list_all_tools(session: _typing.Any) -> list[_typing.Any]:
+    """Every tool a child serves: ``tools/list`` followed to its last page.
+
+    ARBORA-FLEET-R068: a child that paginates is read cursor by cursor until
+    it returns no ``nextCursor``. A failed page or a repeated cursor refuses
+    the listing whole with :class:`FleetCatalogPageError`; a partial catalog
+    is never returned.
+    """
+    result = await _list_page(session, None)
+    tools = list(result.tools)
+    seen: set[str] = set()
+    cursor = _next_cursor(result)
+    while cursor is not None:
+        if cursor in seen:
+            raise FleetCatalogPageError("MCP child tools/list cursor repeated")
+        seen.add(cursor)
+        result = await _list_page(session, cursor)
+        tools.extend(result.tools)
+        cursor = _next_cursor(result)
     return tools
 
 
@@ -913,7 +964,7 @@ def _assert_bounded_resource_list(raw_resources: _typing.Any) -> None:
 
     if not isinstance(raw_resources, list | tuple):
         raise RuntimeError("MCP child resource catalog is invalid")
-    if len(raw_resources) > _MAX_DISCOVERED_TOOLS:
+    if len(raw_resources) > _MAX_DISCOVERED_DESCRIPTORS:
         raise RuntimeError("MCP child resource catalog exceeded its boundary")
 
 
@@ -921,7 +972,10 @@ def _bounded_descriptor_catalog(
     values: _typing.Any, *, key: str, family: str
 ) -> list[dict[str, _typing.Any]]:
     """Project one native MCP descriptor family through the shared boundary."""
-    if not isinstance(values, list | tuple) or len(values) > _MAX_DISCOVERED_TOOLS:
+    if (
+        not isinstance(values, list | tuple)
+        or len(values) > _MAX_DISCOVERED_DESCRIPTORS
+    ):
         raise RuntimeError(f"MCP child {family} catalog exceeded its boundary")
     projected: list[dict[str, _typing.Any]] = []
     for value in values:
@@ -3165,8 +3219,7 @@ class MCPMultiplexer:
         ``record_state=False``: an ephemeral per-principal session must never
         write into the process-wide admitted-tool map.
         """
-        tools_result = await session.list_tools()
-        tools = list(tools_result.tools)
+        tools = await _list_all_tools(session)
         admitted = self._oauth_admitted_tools(
             server_name, original_name, runtime_policy, tools
         )
@@ -4134,7 +4187,8 @@ class MCPMultiplexer:
             if session is None:
                 return
             try:
-                tools = list((await session.list_tools()).tools)
+                tools = await _list_all_tools(session)
+                _bounded_tool_catalog(tools)
             except Exception as exc:
                 logger.warning(
                     "list_changed refresh of %s failed: %s",
@@ -4142,6 +4196,10 @@ class MCPMultiplexer:
                     redact_for_log(exc),
                 )
                 return
+            # ARBORA-FLEET-R070: the new list replaces the served one now,
+            # without a restart; the next catalog read re-probes the child.
+            self._probe_cache.pop(server_name, None)
+            await self._publish_live_tools(server_name, tools)
             await self._announce_handshake(server_name, session, tools, "list_changed")
 
         async def handler(message: IncomingMessage) -> None:
@@ -4272,9 +4330,8 @@ class MCPMultiplexer:
             sessions = [
                 await _connect_one(stack, generation_secret) for _ in range(pool_size)
             ]
-            tools_result = await sessions[0].list_tools()
-            _bounded_tool_catalog(tools_result.tools)
-            tools = list(tools_result.tools)
+            tools = await _list_all_tools(sessions[0])
+            _bounded_tool_catalog(tools)
             await self._announce_handshake(server_name, sessions[0], tools)
             if runtime_policy is not None:
                 tools = self._admit_runtime_policy_tools(
@@ -4764,6 +4821,35 @@ class MCPMultiplexer:
 
         self._retract_removed_from_sessions(stale_names - set(refreshed_by_name))
         return refreshed, True
+
+    async def _publish_live_tools(
+        self, server_name: str, tools: list[_typing.Any]
+    ) -> None:
+        """Serve a mounted child's re-listed tools (ARBORA-FLEET-R070).
+
+        The same policy admission and schema refresh a new child generation
+        gets; a child that is not mounted has nothing to publish.
+        """
+        runtime = self.children.get(server_name)
+        if runtime is None:
+            return
+        cfg = self.load_catalog().get(server_name)
+        if cfg is None:
+            return
+        policy = self._child_runtime_policies.get(server_name)
+        if policy is not None:
+            tools = self._admit_runtime_policy_tools(server_name, policy, tools)
+        await self._refresh_child_tools(
+            server_name, runtime, cfg, self._catalog_epoch, tools
+        )
+
+    async def _relist_live_child(self, server_name: str) -> None:
+        """Re-read a mounted child's whole tool list on its live session."""
+        session = self._live_primary_session(server_name)
+        tools = await _list_all_tools(session)
+        _bounded_tool_catalog(tools)
+        await self._publish_live_tools(server_name, tools)
+        await self._announce_handshake(server_name, session, tools)
 
     async def _refresh_child_tools(
         self,
@@ -5495,6 +5581,8 @@ class MCPMultiplexer:
                 return cached
 
         if server_name in self.children:
+            if force:
+                await self._relist_live_child(server_name)
             return await self._live_child_probe(server_name)
 
         cfg = self.load_catalog().get(server_name)
@@ -5536,9 +5624,12 @@ class MCPMultiplexer:
                     session = await self._open_one_session(
                         server_name, runtime_cfg, stack
                     )
-                    result = await session.list_tools()
-                    _bounded_tool_catalog(result.tools)
-                    tools = list(result.tools)
+                    tools = await _list_all_tools(session)
+                    _bounded_tool_catalog(tools)
+                    if force:
+                        # An explicit refresh also re-onboards a changed
+                        # catalog into the engine (ARBORA-FLEET-R070).
+                        await self._announce_handshake(server_name, session, tools)
                     if runtime_policy is not None:
                         tools = self._admit_runtime_policy_tools(
                             server_name,

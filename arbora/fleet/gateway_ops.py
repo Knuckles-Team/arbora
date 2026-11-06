@@ -551,6 +551,12 @@ class FleetGateway:
             caller, items=params.get("items", ())
         )
 
+    async def catalog_refresh(self, caller: Any, **params: Any) -> Any:
+        # The op's own scopes (fleet:control) gate the pipeline.
+        return await self._catalog(caller, "fleet:control").refresh_catalog(
+            caller, servers=params.get("servers", ())
+        )
+
     async def pins_list(self, caller: Any, **params: Any) -> Any:
         # The op's own scopes (fleet:control, mcp:admin) gate the pipeline;
         # the tenant-wide read needs no session of the caller's.

@@ -584,3 +584,8 @@ Each test below is named by its requirement row, has no running implementation y
 | PT-147 | ARBORA-FLEET-R064 | `tests/fleet/test_fleet_readiness_discovery.py::test_onboarding_failure_names_step_and_engine_code` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-148 | ARBORA-FLEET-R065 | `tests/fleet/test_subsystem_health.py::test_wedged_subsystem_is_reported_alone` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-149 | ARBORA-FLEET-R066 | `tests/fleet/test_subsystem_health.py::test_load_summary_verdict` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-150 | ARBORA-FLEET-R068 | `tests/fleet/test_large_tool_catalogs.py::test_a_real_paginating_server_is_read_over_the_wire` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-151 | ARBORA-FLEET-R069 | `tests/fleet/test_large_tool_catalogs.py::test_a_paged_catalog_of_twenty_thousand_tools_is_admitted_whole` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-152 | ARBORA-FLEET-R070 | `tests/fleet/test_large_tool_catalogs.py::test_the_explicit_refresh_reprobes_now_and_is_throttled` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-153 | ARBORA-FLEET-R071 | `tests/fleet/test_large_tool_catalogs.py::test_a_tool_new_since_the_cached_probe_is_callable_without_restart` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-154 | ARBORA-FLEET-R072 | `tests/fleet/test_large_tool_catalogs.py::test_probe_memory_is_flat_in_catalog_size` (planned) | The result the row states holds. | Each refusal the row states is returned. |
