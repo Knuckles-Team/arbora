@@ -9,7 +9,7 @@ from typing import Any
 
 from arbora.modality.fleet_port import FleetCallFailed
 
-SPEECH_SCHEMA = {
+SPEECH_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
         "artifact_b64": {"type": "string"},
@@ -20,7 +20,7 @@ SPEECH_SCHEMA = {
 }
 
 #: An action-routed tool carrying the same fields: not the contract.
-ROUTED = {
+ROUTED: dict[str, Any] = {
     "name": "transcribe_media",
     "server": "audio-transcriber-mcp",
     "description": "speech-to-text sidecar",
@@ -29,7 +29,7 @@ ROUTED = {
     },
 }
 #: The typed contract tool, on a server whose name the seam never hard-codes.
-TYPED = {
+TYPED: dict[str, Any] = {
     "name": "transcribe_speech",
     "server": "some-speech-connector",
     "description": "Capability: speech-to-text. Transcribe one payload.",
