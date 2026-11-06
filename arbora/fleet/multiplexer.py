@@ -898,39 +898,64 @@ def _next_cursor(result: _typing.Any) -> str | None:
     return cursor if isinstance(cursor, str) and cursor else None
 
 
-async def _list_page(session: _typing.Any, cursor: str | None) -> _typing.Any:
+async def _list_page(
+    session: _typing.Any, method: str, cursor: str | None
+) -> _typing.Any:
+    """One page of a child ``*/list``; a continuation page failure is typed.
+
+    The first page raises unchanged, so an optional family a child does not
+    implement still reads as "method not found".
+    """
+    call = getattr(session, method)
+    if cursor is None:
+        return await call()
     try:
-        if cursor is None:
-            return await session.list_tools()
-        return await session.list_tools(
-            params=mcp_types.PaginatedRequestParams(cursor=cursor)
-        )
+        return await call(params=mcp_types.PaginatedRequestParams(cursor=cursor))
     except Exception as exc:
         raise FleetCatalogPageError(
-            f"MCP child tools/list page failed ({type(exc).__name__})"
+            f"MCP child {method} page failed ({type(exc).__name__})"
         ) from exc
 
 
-async def _list_all_tools(session: _typing.Any) -> list[_typing.Any]:
-    """Every tool a child serves: ``tools/list`` followed to its last page.
+async def _list_all(session: _typing.Any, method: str, field: str) -> list[_typing.Any]:
+    """Every entry of one child list family, followed to its last page.
 
-    ARBORA-FLEET-R068: a child that paginates is read cursor by cursor until
-    it returns no ``nextCursor``. A failed page or a repeated cursor refuses
-    the listing whole with :class:`FleetCatalogPageError`; a partial catalog
-    is never returned.
+    ARBORA-FLEET-R068/R068.1: tools, resources, resource templates and prompts
+    are read cursor by cursor until a page has no ``nextCursor``. A failed
+    continuation page or a repeated cursor refuses the listing whole with
+    :class:`FleetCatalogPageError`; a partial list is never returned.
     """
-    result = await _list_page(session, None)
-    tools = list(result.tools)
+    result = await _list_page(session, method, None)
+    entries = list(getattr(result, field))
     seen: set[str] = set()
     cursor = _next_cursor(result)
     while cursor is not None:
         if cursor in seen:
-            raise FleetCatalogPageError("MCP child tools/list cursor repeated")
+            raise FleetCatalogPageError(f"MCP child {method} cursor repeated")
         seen.add(cursor)
-        result = await _list_page(session, cursor)
-        tools.extend(result.tools)
+        result = await _list_page(session, method, cursor)
+        entries.extend(getattr(result, field))
         cursor = _next_cursor(result)
-    return tools
+    return entries
+
+
+async def _list_all_tools(session: _typing.Any) -> list[_typing.Any]:
+    """Every tool a child serves (ARBORA-FLEET-R068)."""
+    return await _list_all(session, "list_tools", "tools")
+
+
+def _discovery_ranker(query: str, sources: list[tuple[str, dict]]) -> _typing.Any:
+    """One ranker over every tool and skill row this discovery call scores."""
+    from arbora.fleet.discovery_ranking import LexicalRanker
+
+    documents = (
+        f"{entry.get('name', '')} {entry.get('description', '')}"
+        for _server, info in sources
+        for family in ("tools", "skills")
+        for entry in info.get(family) or ()
+        if isinstance(entry, dict)
+    )
+    return LexicalRanker(query, documents)
 
 
 def _tool_catalog_digest(tools: list[MCPTool]) -> str:
@@ -2381,6 +2406,8 @@ class _DiscoveryRanking(_typing.TypedDict):
     semantic: dict[str, float]
     catalog: dict[str, dict]
     loaded: set[str]
+    #: The query's lexical ranker over this call's candidates (R074).
+    lexical: _typing.NotRequired[_typing.Any]
 
 
 class _EmbeddingTargets(_typing.TypedDict):
@@ -5698,8 +5725,7 @@ class MCPMultiplexer:
         """Read all native discovery families once from one child generation."""
         errors: dict[str, str] = {}
         try:
-            resource_result = await session.list_resources()
-            raw_resources = resource_result.resources
+            raw_resources = await _list_all(session, "list_resources", "resources")
         except Exception as exc:  # noqa: BLE001 - optional protocol method
             if not self._optional_method_missing(exc):
                 errors["resources"] = type(exc).__name__
@@ -5715,9 +5741,11 @@ class MCPMultiplexer:
             resources, skills, prompt_resources = [], [], []
 
         try:
-            template_result = await session.list_resource_templates()
+            raw_templates = await _list_all(
+                session, "list_resource_templates", "resource_templates"
+            )
             templates = _bounded_descriptor_catalog(
-                template_result.resource_templates,
+                raw_templates,
                 key="uriTemplate",
                 family="resource-template",
             )
@@ -5727,9 +5755,10 @@ class MCPMultiplexer:
             templates = []
 
         try:
-            prompt_result = await session.list_prompts()
             native_prompts = _bounded_descriptor_catalog(
-                prompt_result.prompts, key="name", family="prompt"
+                await _list_all(session, "list_prompts", "prompts"),
+                key="name",
+                family="prompt",
             )
         except Exception as exc:  # noqa: BLE001 - optional protocol method
             if not self._optional_method_missing(exc):
@@ -5773,7 +5802,7 @@ class MCPMultiplexer:
         over the wire (``_resolve_via_local_catalog_or_harvest``).
         """
         try:
-            result = await session.list_resources()
+            resources = await _list_all(session, "list_resources", "resources")
         except Exception as exc:  # noqa: BLE001 - resources/list is an OPTIONAL
             # MCP method; a server that doesn't implement it must still
             # contribute the tools/skills its probe already returned. The
@@ -5787,7 +5816,7 @@ class MCPMultiplexer:
             )
             return []
         try:
-            entries = catalog_builder(result.resources)
+            entries = catalog_builder(resources)
         except Exception as exc:  # noqa: BLE001 - a malformed catalog from one
             # server must not fail the tool probe that already succeeded.
             # The cause IS logged.
@@ -6294,6 +6323,15 @@ class MCPMultiplexer:
         t_tokens = set(re.findall(r"[a-z0-9]+", text.lower()))
         return len(q_tokens & t_tokens) / len(q_tokens)
 
+    def _lexical_score(
+        self, rank: _DiscoveryRanking, name: str, description: str
+    ) -> float:
+        """The lexical backbone: rarity-weighted when the call built a ranker."""
+        ranker = rank.get("lexical")
+        if ranker is None:
+            return self._relevance(rank["query"], f"{name} {description}")
+        return ranker.score(name, description)
+
     def _server_level_fallback(self) -> list[dict]:
         """When the KG yields no tool-level index (cold/absent KG), still let
         the caller act: surface mountable servers so they can ``load_tools`` by
@@ -6501,9 +6539,7 @@ class MCPMultiplexer:
         if not self._tool_enabled(server, tool):
             return None
         desc = entry.get("description", "")
-        score = rank["semantic"].get(tool, 0.0) + self._relevance(
-            rank["query"], f"{tool} {desc}"
-        )
+        score = rank["semantic"].get(tool, 0.0) + self._lexical_score(rank, tool, desc)
         if score <= 0:
             return None
         prefixed = clean_tool_name(self.server_prefix(server), server, tool)
@@ -6545,8 +6581,8 @@ class MCPMultiplexer:
         if not skill:
             return None
         desc = entry.get("description", "")
-        score = rank["semantic"].get(skill, 0.0) + self._relevance(
-            rank["query"], f"{skill} {desc}"
+        score = rank["semantic"].get(skill, 0.0) + self._lexical_score(
+            rank, skill, desc
         )
         if score <= 0:
             return None
@@ -6783,6 +6819,7 @@ class MCPMultiplexer:
         # the fallback source, so ``find`` still surfaces its real tools,
         # honestly marked stale, instead of only its skills or nothing at all.
         catalog_fallback = self._catalog_tool_probe_info()
+        sources: list[tuple[str, dict]] = []
         for server, info in probe.items():
             if info.get("error"):
                 unavailable[server] = info["error"]
@@ -6790,6 +6827,9 @@ class MCPMultiplexer:
                 if fallback is None:
                     continue
                 info = fallback
+            sources.append((server, info))
+        rank["lexical"] = _discovery_ranker(query, sources)
+        for server, info in sources:
             ranked.extend(self._ranked_server_entries(server, info, rank, now, ttl))
         # The server-level fallback (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog)
         # answers "is any FLEET server mountable", so its trigger check uses

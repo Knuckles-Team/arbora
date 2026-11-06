@@ -367,3 +367,132 @@ def test_a_probe_without_hints_keeps_the_engine_contract() -> None:
     _merge_probed_item(merged, probed, policy=policy, subject_id=None)
     assert merged[engine.id].schema == engine.schema
     assert merged[engine.id].annotations == {"readOnlyHint": True}
+
+
+# ── R068.1: every list family pages ──────────────────────────────────────────
+
+
+class _PagedPrompts:
+    def __init__(self, count: int, page: int) -> None:
+        self._count, self._page = count, page
+
+    async def list_prompts(self, *, params: Any = None) -> SimpleNamespace:
+        start = 0 if params is None else int(params.cursor)
+        end = min(start + self._page, self._count)
+        prompts = [SimpleNamespace(name=f"p{i}") for i in range(start, end)]
+        return SimpleNamespace(
+            prompts=prompts, next_cursor=str(end) if end < self._count else None
+        )
+
+
+@pytest.mark.spec("ARBORA-FLEET-R068.1")
+def test_prompts_resources_and_templates_page_like_tools() -> None:
+    from arbora.fleet.multiplexer import _list_all
+
+    prompts = asyncio.run(_list_all(_PagedPrompts(25, 10), "list_prompts", "prompts"))
+    assert [p.name for p in prompts] == [f"p{i}" for i in range(25)]
+
+
+# ── R070.1: a refresh drops what the server stopped serving ──────────────────
+
+
+def _merge(info: dict[str, Any], held: list[CatalogItem]) -> dict[str, CatalogItem]:
+    from arbora.fleet.catalog_sources import _merge_probed_items, _ServerPolicy
+
+    merged = {item.id: item for item in held}
+    policy = _ServerPolicy(frozenset({"mcp:delegate"}), frozenset(), "delegated", {})
+    _merge_probed_items(merged, {"arr": policy}, {"arr": None}, {"arr": info})
+    return merged
+
+
+def _held(kind: Any, name: str) -> CatalogItem:
+    return CatalogItem(
+        id=f"fleet:{kind}:arr/{name}", kind=kind, name=name, server="arr"
+    )
+
+
+@pytest.mark.spec("ARBORA-FLEET-R070.1")
+def test_a_refresh_drops_tools_prompts_and_skills_the_server_no_longer_serves() -> None:
+    held = [
+        _held("tool", "kept"),
+        _held("tool", "removed"),
+        _held("prompt", "old_prompt"),
+        _held("skill", "old_skill"),
+        _held("resource", "arr-contracts"),
+    ]
+    info = {
+        "error": None,
+        "tools": [{"name": "kept"}, {"name": "bazarr_get_system_status"}],
+        "native_prompts": [{"name": "new_prompt"}],
+        "skills": [{"name": "new_skill"}],
+        "resources": [],
+    }
+    merged = _merge(info, held)
+    assert sorted(merged) == [
+        "fleet:prompt:arr/new_prompt",
+        "fleet:resource:arr/arr-contracts",
+        "fleet:skill:arr/new_skill",
+        "fleet:tool:arr/bazarr_get_system_status",
+        "fleet:tool:arr/kept",
+    ]
+
+
+@pytest.mark.spec("ARBORA-FLEET-R070.1")
+def test_a_failed_family_or_probe_drops_nothing() -> None:
+    held = [_held("tool", "removed"), _held("prompt", "old_prompt")]
+    failed_family: dict[str, Any] = {
+        "error": None,
+        "tools": [],
+        "native_prompts": [],
+        "catalog_family_errors": {"prompts": "FleetCatalogPageError"},
+    }
+    assert "fleet:prompt:arr/old_prompt" in _merge(failed_family, held)
+    assert "fleet:tool:arr/removed" not in _merge(failed_family, held)
+    failed = {"error": "child down", "tools": []}
+    assert sorted(_merge(failed, held)) == sorted(item.id for item in held)
+
+
+# ── R074: find ranks large catalogs by discriminating terms ──────────────────
+
+
+def _arr_like_catalog() -> list[tuple[str, str]]:
+    apps = ["radarr", "sonarr", "lidarr", "readarr", "prowlarr", "bazarr"]
+    verbs = ["list", "get", "update", "delete"]
+    objects = [f"thing{i}" for i in range(60)]
+    rows = [
+        (f"{app}_{verb}_{obj}", f"{verb.capitalize()} {obj} in {app}")
+        for app in apps
+        for verb in verbs
+        for obj in objects
+    ]
+    # The arr queue tools describe themselves with the request's common words.
+    rows += [
+        (f"{app}_list_queue", f"List pending media in the {app} download queue")
+        for app in apps
+    ]
+    rows += [
+        ("seerr_get_requests", "Get media requests, filtered by status"),
+        ("seerr_get_request_count", "Count requests by status"),
+        ("seerr_get_user", "Get one user"),
+    ]
+    return rows
+
+
+@pytest.mark.spec("ARBORA-FLEET-R074")
+def test_find_ranks_the_named_system_and_object_first_in_a_large_catalog() -> None:
+    from arbora.fleet.discovery_ranking import LexicalRanker
+    from arbora.fleet.multiplexer import MCPMultiplexer
+
+    catalog = _arr_like_catalog()
+    query = "list pending media requests in seerr"
+    ranker = LexicalRanker(query, (f"{n} {d}" for n, d in catalog))
+    ranked = sorted(catalog, key=lambda row: -ranker.score(*row))
+    assert [name for name, _ in ranked[:2]] == [
+        "seerr_get_requests",
+        "seerr_get_request_count",
+    ]
+    # The plain overlap ratio ties the seerr tools with generic "list media" rows.
+    plain = sorted(
+        catalog, key=lambda row: -MCPMultiplexer._relevance(query, f"{row[0]} {row[1]}")
+    )
+    assert plain[0][0] != "seerr_get_requests"
