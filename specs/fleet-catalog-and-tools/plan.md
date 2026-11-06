@@ -614,3 +614,11 @@ Article XXXI requires each lifecycle to be a closed machine with one transition 
 - Connector control plane (`R082`) validates a record but has no transition function. `DesiredStatus` becomes a machine. `AuthorizationOutcome` becomes a projection of the medulla decision. Arbora keeps no second authorization machine.
 
 The ontology children wait for the medulla core state-machine vocabulary row. The behaviour children do not.
+
+Machine contracts (R080 to R082). Each row `.1` holds the closed state set, the terminals, the full transition table, the guards, the persisted field with file and line, and the typed refusal with its `machine`, `from_state` and `event` fields. Design paths:
+
+- Onboarding: multiplexer handshake -> `HandshakeOnboardingScheduler` schedule (`arbora/fleet/onboarding.py:1107`) -> `FleetOnboardingService.run_pass` (`:914`) -> `onboard_fleet` (`:849`) -> `FleetOnboarding._record` (`:1223`) -> `transition` in `onboarding_machine.py`. The state sits in `FleetOnboarding.handshake` (`:327`). No terminal state exists. Wiring and hot-path proof: `ARBORA-FLEET-R080.4`.
+- Catalog serving: `MCPMultiplexer` load and warm paths (`arbora/fleet/multiplexer.py:2508`) -> `transition` in `catalog_machine.py` -> `arbora/fleet/health.py:451` readiness flags. The state sits in `MCPMultiplexer._catalog_state`. `Closing` is terminal. Wiring and hot-path proof: `ARBORA-FLEET-R081.4`.
+- Connector desired state: `ConnectorControlService.set_desired` (`arbora/control_plane/connectors/service.py:202`) -> `transition` in `machine.py` -> `desired_status` (`models.py:348`). No terminal state exists. Authorization is a projection of the medulla decision (the medulla elevation row and its `ElevationStatus`; pending: medulla branch only). Wiring and hot-path proof: `ARBORA-FLEET-R082.3`.
+
+Ontology: the pack file `arbora/ontology/state_machines.ttl` declares the classes of rows `R080.3`, `R081.3` and `R082.3`. Each extends the core classes of the medulla core state-machine vocabulary row (pending: medulla branch only), with no `owl:imports`. Tests: one parameter id per legal edge, plus all illegal pairs, in each row's Verification cell.
