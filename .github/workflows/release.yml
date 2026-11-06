@@ -83,7 +83,7 @@ jobs:
             echo '```'
             echo
             echo "Installs from PyPI on Linux (x86_64, aarch64), macOS (arm64) and"
-            echo "Windows (x86_64); macOS x86_64 and Windows arm64 await engine wheels."
+            echo "Windows (x86_64), the platforms the engine publishes wheels for."
             echo
             echo "Commit: $SHA"
           } > "$RUNNER_TEMP/notes.md"

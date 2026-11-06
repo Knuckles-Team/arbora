@@ -228,24 +228,6 @@ def test_checks_leave_concurrency_to_the_caller_and_a_publish_is_never_cancelled
     assert concurrency["cancel-in-progress"] is False
 
 
-_SMOKE_PLATFORMS = {
-    "linux-x86_64",
-    "linux-aarch64",
-    "macos-aarch64",
-    "macos-x86_64",
-    "windows-x86_64",
-    "windows-aarch64",
-}
-# The platforms the epistemic-graph engine publishes wheels for gate the
-# release; the other legs run and report but cannot pass until it does.
-_REQUIRED_SMOKE_PLATFORMS = {
-    "linux-x86_64",
-    "linux-aarch64",
-    "macos-aarch64",
-    "windows-x86_64",
-}
-
-
 def _locked_wheel_platforms(package: str) -> set[str]:
     locked = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
     entry = next(item for item in locked["package"] if item["name"] == package)
@@ -261,17 +243,25 @@ def _locked_wheel_platforms(package: str) -> set[str]:
     return platforms
 
 
-def test_install_smoke_covers_every_os_and_architecture_before_publish() -> None:
+# spec: ARBORA-RELEASE-R001.3
+def test_install_smoke_covers_exactly_the_engine_wheel_platforms() -> None:
     jobs = _workflow()["jobs"]
     smoke = jobs["install-smoke"]
     legs = smoke["strategy"]["matrix"]["include"]
 
-    assert {leg["name"] for leg in legs} == _SMOKE_PLATFORMS
-    required = {leg["name"] for leg in legs if not leg.get("optional")}
-    assert required == _REQUIRED_SMOKE_PLATFORMS
-    # A leg is optional only while the engine publishes no wheel for it.
-    for package in ("medulla", "medulla-stem"):
-        assert _locked_wheel_platforms(package) == _REQUIRED_SMOKE_PLATFORMS
+    # The legs are derived from the pinned engine's published wheels: every
+    # platform both medulla and medulla-stem ship a wheel for has a leg, and
+    # no leg needs a wheel that does not exist.
+    shipped = _locked_wheel_platforms("medulla") & _locked_wheel_platforms(
+        "medulla-stem"
+    )
+    assert shipped, "uv.lock must pin engine wheels"
+    names = [leg["name"] for leg in legs]
+    assert len(names) == len(set(names))
+    assert set(names) == shipped
+    # Every leg gates the release: none is optional or allowed to fail.
+    assert "continue-on-error" not in smoke
+    assert not any("optional" in leg for leg in legs)
     assert smoke["strategy"]["fail-fast"] is False
     assert smoke["needs"] == ["build"]
     assert _release()["jobs"]["publish-pypi"]["needs"] == ["checks"]
