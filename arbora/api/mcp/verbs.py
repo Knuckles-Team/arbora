@@ -9,6 +9,7 @@ from typing import Any
 
 from arbora.api.invoke.steps import surface_caller_admitted
 from arbora.api.mcp.discovery import (
+    FleetCatalog,
     FleetSearch,
     describe_op,
     find_visible,
@@ -42,6 +43,7 @@ class MCPProjection:
     policy_gate: Any
     invoke: Invoke
     fleet_search: FleetSearch | None = None
+    fleet_catalog: FleetCatalog | None = None
 
 
 def _envelope(
@@ -134,6 +136,7 @@ async def _try_find_discovery(
     five verbs; discovery and exact schema previews stay read-only.
     """
 
+    from arbora.api.invoke.pipeline import OperationRefused
     from arbora.api.policy import PolicyUnavailable
 
     selected = projection.registry.get(op) if op and verb == "find" else None
@@ -147,6 +150,7 @@ async def _try_find_discovery(
             policy_gate=projection.policy_gate,
             resolver=projection.resolver,
             fleet_search=projection.fleet_search,
+            fleet_catalog=projection.fleet_catalog,
             intent=intent,
             op=op,
             params=arguments,
@@ -154,6 +158,10 @@ async def _try_find_discovery(
         )
     except PolicyUnavailable:
         return _refusal("POLICY_UNAVAILABLE", projection, caller, op or verb)
+    except OperationRefused as exc:
+        return _refusal(exc.code, projection, caller, op or verb, exc.details)
+    except PermissionError:
+        return _refusal("SCOPE_REQUIRED", projection, caller, op or verb)
     return _envelope(found, projection.registry)
 
 

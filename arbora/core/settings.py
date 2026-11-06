@@ -569,6 +569,11 @@ class ArboraConfig(BaseModel):
         description="Outbound MCP child-auth mode. Enabled modes fail closed when incomplete. ``rotating-file-bearer`` (BUG-051) re-reads ``MCP_BEARER_TOKEN_FILE`` fresh on every outbound request instead of caching a bearer at connect time — for a token an out-of-process refresh daemon rotates on its own schedule.",
     )
     mcp_config: str | None = Field(default=None, alias="MCP_CONFIG", description="")
+    arbora_engine_ready_timeout: float = Field(
+        default=1500.0,
+        alias="ARBORA_ENGINE_READY_TIMEOUT",
+        description="Seconds serving start waits for the engine ``Health`` answer before it gives up (ARBORA-FLEET-R062). A slow engine delays readiness instead of exiting the process; keep it inside the deployment startup-probe budget.",
+    )
     mcp_dynamic_discovery_timeout: float = Field(
         default=5.0,
         alias="MCP_DYNAMIC_DISCOVERY_TIMEOUT",

@@ -329,8 +329,22 @@ async def _effective_op(
         return op, None
     if services.fleet_effect is None:
         return OpError("UNAVAILABLE", {"reason": "fleet effect authority unavailable"})
+    import asyncio
+
+    from arbora.api.mcp.discovery import discovery_budget_s, not_ready_detail
+
     try:
-        resolved = await services.fleet_effect(op, params, caller)
+        resolved = await asyncio.wait_for(
+            services.fleet_effect(op, params, caller), timeout=discovery_budget_s()
+        )
+    except TimeoutError:
+        # A fleet still coming up answers fast and typed (ARBORA-FLEET-R062).
+        return OpError("UNAVAILABLE", not_ready_detail())
+    except OperationRefused as exc:
+        if exc.code == "UNAVAILABLE":
+            return OpError("UNAVAILABLE", {**not_ready_detail(), **exc.details})
+        _logger.warning("fleet effect authority refused fleet.call: %s", exc.code)
+        return OpError("UNAVAILABLE", {"reason": "fleet effect authority unavailable"})
     except Exception as exc:  # noqa: BLE001 - refused closed; the cause is logged
         _logger.warning(
             "fleet effect authority refused fleet.call: %s: %s",
