@@ -293,3 +293,77 @@ def test_an_unknown_tool_is_refused_after_one_throttled_refresh() -> None:
         with pytest.raises(PermissionError, match="fleet tool is unavailable"):
             asyncio.run(ops.admitted_tool(caller, "craft", "missing"))
     assert mux.calls == [("craft", False), ("craft", True)]
+
+
+# ── R072: the engine catalog carries each tool's contract ────────────────────
+
+
+def _engine_snapshot(*, hints: dict[str, bool] | None) -> SimpleNamespace:
+    import json
+
+    body = json.dumps(
+        {
+            "name": "photocraft_cmd_info",
+            "description": "read one document",
+            "input_schema": {
+                "type": "object",
+                "properties": {"id": {"type": "string"}},
+                "required": ["id"],
+            },
+            "output_schema": None,
+        }
+    ).encode()
+    entry = SimpleNamespace(
+        kind="tool",
+        server_name="craft",
+        upstream_name="photocraft_cmd_info",
+        summary="read one document",
+        tool_hints=hints,
+    )
+    provided = SimpleNamespace(entry=entry, content=SimpleNamespace(body=body))
+    return SimpleNamespace(servers=[SimpleNamespace(provides=[provided])])
+
+
+@pytest.mark.spec("ARBORA-FLEET-R072")
+def test_engine_tool_facts_project_to_mcp_hints() -> None:
+    from epistemic_graph.generated._shared import AgentComponentFactsTool, ToolEffect
+
+    from arbora.fleet.epistemic_adapter import _tool_hints
+
+    facts = AgentComponentFactsTool(
+        facts="tool",
+        effect=ToolEffect.READ,
+        required_scopes=[],
+        read_only_hint=True,
+        destructive_hint=False,
+    )
+    assert _tool_hints(facts) == {"readOnlyHint": True, "destructiveHint": False}
+    assert _tool_hints(None) is None
+
+
+@pytest.mark.spec("ARBORA-FLEET-R072")
+def test_an_engine_tool_item_has_its_schema_and_read_effect_without_a_probe() -> None:
+    from arbora.api.registry import Effect
+    from arbora.fleet.catalog_items import items_from_eg_catalog
+    from arbora.fleet.gateway_ops import annotation_effect
+
+    (item,) = items_from_eg_catalog(_engine_snapshot(hints={"readOnlyHint": True}))
+    assert item.schema["required"] == ["id"]
+    assert item.schema_fingerprint is not None
+    assert annotation_effect(item.annotations)[0] == Effect.READ
+
+
+@pytest.mark.spec("ARBORA-FLEET-R072")
+def test_a_probe_without_hints_keeps_the_engine_contract() -> None:
+    from arbora.fleet.catalog_items import CatalogItem, items_from_eg_catalog
+    from arbora.fleet.catalog_sources import _merge_probed_item, _ServerPolicy
+
+    (engine,) = items_from_eg_catalog(_engine_snapshot(hints={"readOnlyHint": True}))
+    merged = {engine.id: engine}
+    probed = CatalogItem(
+        id=engine.id, kind="tool", name=engine.name, server="craft", schema={}
+    )
+    policy = _ServerPolicy(frozenset({"mcp:delegate"}), frozenset(), "delegated", {})
+    _merge_probed_item(merged, probed, policy=policy, subject_id=None)
+    assert merged[engine.id].schema == engine.schema
+    assert merged[engine.id].annotations == {"readOnlyHint": True}

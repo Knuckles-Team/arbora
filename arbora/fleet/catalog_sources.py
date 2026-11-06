@@ -161,8 +161,17 @@ def _merge_probed_item(
             effect_override=policy.fleet_effects.get(item.name),
         )
     elif item.kind == "tool":
+        # A live probe refines the engine's tool contract (ARBORA-FLEET-R072);
+        # a field the probe lacks keeps the engine's value.
         merged[item.id] = replace(
-            previous, schema=item.schema, annotations=item.annotations
+            previous,
+            schema=item.schema or previous.schema,
+            schema_fingerprint=item.schema_fingerprint or previous.schema_fingerprint,
+            annotations=(
+                item.annotations
+                if item.annotations is not None
+                else previous.annotations
+            ),
         )
 
 

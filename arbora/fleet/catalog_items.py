@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 from collections.abc import Awaitable, Callable, Iterable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Literal
 
 from arbora.fleet.surfaces import count_items, surface_report
@@ -295,17 +295,47 @@ def items_from_eg_catalog(snapshot: Any) -> tuple[CatalogItem, ...]:
                 if kind in {"skill", "prompt"}
                 else None
             )
+            item = CatalogItem(
+                id=f"fleet:{kind}:{entry.server_name}/{entry.upstream_name}",
+                kind=kind,
+                name=entry.upstream_name,
+                description=entry.summary,
+                server=entry.server_name,
+                body=body,
+            )
             items.append(
-                CatalogItem(
-                    id=f"fleet:{kind}:{entry.server_name}/{entry.upstream_name}",
-                    kind=kind,
-                    name=entry.upstream_name,
-                    description=entry.summary,
-                    server=entry.server_name,
-                    body=body,
-                )
+                _with_engine_tool_contract(item, provided) if kind == "tool" else item
             )
     return tuple(items)
+
+
+def _engine_input_schema(body: bytes) -> dict[str, Any]:
+    """The input schema an engine tool body records, or ``{}``."""
+    try:
+        document = json.loads(body)
+    except (ValueError, UnicodeDecodeError):
+        return {}
+    schema = document.get("input_schema") if isinstance(document, dict) else None
+    return schema if isinstance(schema, dict) else {}
+
+
+def _with_engine_tool_contract(item: CatalogItem, provided: Any) -> CatalogItem:
+    """Fill a tool item's schema and hints from the engine (ARBORA-FLEET-R072).
+
+    The engine holds the whole imported pack: each tool's content body carries
+    its input schema and its entry carries the declared behaviour hints. The
+    served catalog therefore needs no process-resident copy of a connector's
+    tool list to know a tool's parameters or that it is read-only. A live
+    probe of the same tool still wins (``_merge_probed_item``).
+    """
+    schema = _engine_input_schema(provided.content.body)
+    hints = getattr(provided.entry, "tool_hints", None)
+    return replace(
+        item,
+        schema=schema,
+        schema_fingerprint=compute_schema_fingerprint(schema) if schema else None,
+        annotations=dict(hints) if hints else None,
+    )
 
 
 def compute_schema_fingerprint(schema: Mapping[str, Any]) -> str:

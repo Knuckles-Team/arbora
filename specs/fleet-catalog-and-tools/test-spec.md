@@ -588,4 +588,5 @@ Each test below is named by its requirement row, has no running implementation y
 | PT-151 | ARBORA-FLEET-R069 | `tests/fleet/test_large_tool_catalogs.py::test_a_paged_catalog_of_twenty_thousand_tools_is_admitted_whole` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-152 | ARBORA-FLEET-R070 | `tests/fleet/test_large_tool_catalogs.py::test_the_explicit_refresh_reprobes_now_and_is_throttled` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-153 | ARBORA-FLEET-R071 | `tests/fleet/test_large_tool_catalogs.py::test_a_tool_new_since_the_cached_probe_is_callable_without_restart` | The result the row states holds. | Each refusal the row states is returned. |
-| PT-154 | ARBORA-FLEET-R072 | `tests/fleet/test_large_tool_catalogs.py::test_probe_memory_is_flat_in_catalog_size` (planned) | The result the row states holds. | Each refusal the row states is returned. |
+| PT-154 | ARBORA-FLEET-R072 | `tests/fleet/test_large_tool_catalogs.py::test_an_engine_tool_item_has_its_schema_and_read_effect_without_a_probe` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-155 | ARBORA-FLEET-R073 | `tests/fleet/test_large_tool_catalogs.py::test_probe_memory_is_flat_in_catalog_size` (planned) | The result the row states holds. | Each refusal the row states is returned. |
