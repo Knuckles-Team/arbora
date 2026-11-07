@@ -42,7 +42,7 @@ class CallerFixture:
         self.context = dict(resolution.request_context)
 
     def __post_init__(self):
-        from arbora.api.contracts.session import GraphSession
+        from arbora.security.session import GraphSession
 
         GraphSession.__post_init__(self)
 

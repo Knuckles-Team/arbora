@@ -37,9 +37,9 @@ from arbora.api.contracts.agent_control_contracts import (
     WorkItemSubmission,
     WorkItemSubmissionResult,
 )
-from arbora.api.contracts.session import GraphSession, resolve_session
 from arbora.security.anonymous import client_scope, session_context
 from arbora.security.error_surface import public_error_payload
+from arbora.security.session import GraphSession, resolve_session
 
 type _RequiredScope = Literal["kg:read", "kg:write"]
 type _OperationSpec = tuple[

@@ -199,11 +199,11 @@ def verified_tool_session_scope():
     dispatch. The error surface deliberately omits principal, tenant, token,
     endpoint, and policy values.
     """
-    from arbora.api.contracts.session import (
+    from arbora.security.actor_context import use_actor
+    from arbora.security.session import (
         current_session,
         use_session,
     )
-    from arbora.security.actor_context import use_actor
 
     ambient = current_session()
     session = ambient or _PROCESS_SESSION
@@ -341,7 +341,7 @@ async def _execute_tool(tool_name: str, **kwargs) -> Any:
     # reserved read lane ahead of a saturating background-ingestion write storm. Tag ONLY
     # when the context is UNTAGGED: a re-entrant call from a delegated agent (ORCHESTRATION)
     # or a background task (BACKGROUND_INGESTION) keeps its own, lower class — never upgraded.
-    from arbora.access.priority import (
+    from arbora.core.priority import (
         PriorityClass,
         current_priority,
         priority_scope,
@@ -978,14 +978,14 @@ def _served_caller_session() -> Any:
     ``_PROCESS_SESSION`` is bound only on the stdio transport, so a network
     request without its own verified session resolves no caller.
     """
-    from arbora.api.contracts.session import current_session
+    from arbora.security.session import current_session
 
     return current_session() or _PROCESS_SESSION
 
 
 def _served_credential_kind() -> str:
-    from arbora.api.contracts.session import current_session
     from arbora.security.anonymous import admitted_actor
+    from arbora.security.session import current_session
 
     session = current_session() or _PROCESS_SESSION
     if session is not None and admitted_actor(session.actor):

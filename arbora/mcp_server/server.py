@@ -213,10 +213,10 @@ def _start_catalog_warmup(
     Both run under the process session on the warm-up thread, which does not
     inherit the boot thread's context (ARBORA-FLEET-R078).
     """
-    from arbora.api.contracts.session import use_session
     from arbora.mcp_server.catalog_composition import compose_catalog_authorities
     from arbora.mcp_server.catalog_warmup import start_catalog_warmup
     from arbora.security.actor_context import use_actor
+    from arbora.security.session import use_session
 
     async def compose() -> None:
         with use_actor(session.actor), use_session(session):
@@ -396,9 +396,9 @@ def mcp_server(
         # authority before engine bootstrap. An explicit client role remains a
         # hard serving-plane boundary; this entrypoint never promotes itself to
         # the host that owns maintenance, workers, or autonomous loops.
-        from arbora.api.contracts.session import use_session
         from arbora.core.settings import runtime_config as config
         from arbora.security.actor_context import use_actor
+        from arbora.security.session import use_session
 
         with use_actor(bootstrap_session.actor), use_session(bootstrap_session):
             runtime._start_engine_bootstrap(bootstrap_session)

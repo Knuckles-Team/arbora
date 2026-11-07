@@ -184,7 +184,7 @@ class WorkItemA2AAuthority:
 
     @staticmethod
     def _session(scope: str) -> Any:
-        from arbora.api.contracts.session import resolve_session
+        from arbora.security.session import resolve_session
 
         return resolve_session(required_scope=scope)
 

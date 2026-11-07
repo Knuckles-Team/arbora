@@ -22,8 +22,8 @@ from starlette.datastructures import Headers
 from arbora.acp.adapter import HostedACPAgent
 from arbora.acp.http_transport import AcpHttpLimits, register_acp_routes
 from arbora.acp.session_policy import AcpSessionPolicy
-from arbora.api.contracts.session import GraphSession, use_session
 from arbora.security.actor_context import ActorContext
+from arbora.security.session import GraphSession, use_session
 
 pytestmark = pytest.mark.spec("ARBORA-ACP-R001.9.2")
 

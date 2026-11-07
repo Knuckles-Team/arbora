@@ -8,7 +8,7 @@ import pytest
 
 from arbora import agent_runs
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
-from arbora.api.contracts.session import ActorContext, GraphSession, use_session
+from arbora.security.session import ActorContext, GraphSession, use_session
 
 pytestmark = pytest.mark.spec("ARBORA-ACP-R001.9.1")
 

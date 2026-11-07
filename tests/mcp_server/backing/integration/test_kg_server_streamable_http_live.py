@@ -182,8 +182,8 @@ def _live_streamable_http_server(
     @mcp.tool(name="_e2e_identity_probe")
     def _e2e_identity_probe() -> str:
 
-        from arbora.api.contracts.session import current_session
         from arbora.security.actor_context import current_actor
+        from arbora.security.session import current_session
 
         actor = current_actor()
         session = current_session()

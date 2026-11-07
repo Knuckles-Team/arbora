@@ -17,7 +17,7 @@ from arbora.identity.ports import SessionAuthority, SessionState
 from arbora.security.anonymous import session_context
 
 if TYPE_CHECKING:
-    from arbora.api.contracts.session import GraphSession
+    from arbora.security.session import GraphSession
 
 
 def _same_session(initial: SessionState, refreshed: SessionState) -> bool:
@@ -214,7 +214,7 @@ class HostStartAdmission:
         configuration: HostStartConfiguration | None = None,
         runtime: HostRuntimeResources | None = None,
     ) -> AdmittedHostStart:
-        from arbora.api.contracts.session import GraphSession
+        from arbora.security.session import GraphSession
 
         self._check_configuration(request, configuration, runtime)
         self._check_credential(credential)

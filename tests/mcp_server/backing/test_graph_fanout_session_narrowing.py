@@ -42,14 +42,14 @@ from __future__ import annotations
 
 import asyncio
 
-from arbora.api.contracts.session import (
+from arbora.mcp_server import runtime
+from arbora.mcp_server.backing import engine_routing
+from arbora.security.actor_context import ActorContext, ActorType, use_actor
+from arbora.security.session import (
     GraphSession,
     current_session,
     use_session,
 )
-from arbora.mcp_server import runtime
-from arbora.mcp_server.backing import engine_routing
-from arbora.security.actor_context import ActorContext, ActorType, use_actor
 
 
 def _register_query_tools():
