@@ -503,7 +503,13 @@ def test_supervisor_drives_the_lease_through_an_outage_and_ready_follows(
             if state not in observed or (
                 state is LeaseState.LIVE and clock.now > provider.recovers_at
             ):
-                observed[state] = client.get("/health/ready").json()
+                body = client.get("/health/ready").json()
+                # Only the keys this row owns; catalog state is process-shared.
+                observed[state] = {
+                    key: body[key]
+                    for key in ("status", "failing", "reason")
+                    if key in body
+                }
             if state is LeaseState.LIVE and clock.now > provider.recovers_at:
                 stop.set()
                 stop.resume.put(None)

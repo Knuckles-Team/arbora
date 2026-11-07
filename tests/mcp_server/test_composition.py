@@ -180,7 +180,9 @@ def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
     ``arbora-genesis`` skills ship under ``arbora/skills`` (package data
     found by the SDK directory convention), so the SDK
     registers exactly one skills-directory provider rooted there and nothing
-    else: 29 prompts, and one runtime shapes resource.
+    else: 29 prompts, the runtime shapes resource and the state-machine ontology
+    (ARBORA-IDENTITY-R027.6), which also makes the SDK serve the live
+    ``connector://resources`` declaration.
     """
     import anyio
     from agent_connector_sdk.mcp.content import (
@@ -210,6 +212,15 @@ def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
         def add_prompt(self, prompt: Any) -> None:
             self.prompts = [*getattr(self, "prompts", []), prompt]
 
+        def resource(self, uri: str, **_meta: Any) -> Any:
+            # The SDK serves the live ``connector://resources`` declaration of
+            # a package that ships ontology files.
+            def register(function: Any) -> Any:
+                self.live = [*getattr(self, "live", []), uri]
+                return function
+
+            return register
+
     mcp = Mcp2()
     own = own_content()
     registration = register_connector_content(
@@ -222,11 +233,19 @@ def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
     assert (registration.skills, registration.prompts, registration.resources) == (
         15,
         29,
-        1,
+        2,
     )
-    assert len(mcp.providers) == 1
-    (provider,) = mcp.providers
-    assert type(provider) is SkillsDirectoryProvider
+    assert sorted(str(r.uri) for r in mcp.resources) == [
+        f"ontology://{own.name}/state_machines.ttl",
+        f"shapes://{own.name}/runtime.shapes.ttl",
+    ]
+    assert mcp.live == ["connector://resources"]
+    # The skills directory, plus the SDK data-resource provider that every
+    # package shipping ontology files gets.
+    skill_providers = [p for p in mcp.providers if type(p) is SkillsDirectoryProvider]
+    assert len(skill_providers) == 1 and len(mcp.providers) == 2
+    assert type(mcp.providers[1]).__name__ == "_DataResourceProvider"
+    (provider,) = skill_providers
     skills_root = Path(arbora.skills.__file__).resolve().parent
     assert sorted(path.parent.name for path in skills_root.glob("*/SKILL.md")) == [
         "agent-utilities-source-integration",
@@ -281,8 +300,7 @@ def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
         "skill://using-arbora/_manifest",
     ]
 
-    assert len(mcp.resources) == 1
-    resource = mcp.resources[0]
+    (resource,) = [r for r in mcp.resources if str(r.uri).startswith("shapes://")]
     body = Path(resource.path).read_bytes()
     assert str(resource.uri) == "shapes://arbora/runtime.shapes.ttl"
     assert resource.name == "shapes://arbora/runtime.shapes.ttl"
