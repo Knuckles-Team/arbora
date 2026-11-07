@@ -79,7 +79,7 @@ def scan(package: Path, layers: list[tuple[str, tuple[str, ...]]]) -> list[Findi
     units = package_units(package)
     rank: dict[str, int] = {}
     findings: list[Finding] = []
-    for index, (name, members) in enumerate(layers):
+    for index, (_layer, members) in enumerate(layers):
         for unit in members:
             if unit in rank:
                 findings.append(
