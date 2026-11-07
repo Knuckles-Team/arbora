@@ -90,3 +90,4 @@ The search `git grep -n -i -E "plugin|marketplace|harness bundle" -- specs` foun
 - The release proof and the marketplace publication rule. `PIPE-RELEASE-R028` owns them.
 - The terminal client. `TUIG-RUNTIME-R013` makes it a workstream peer.
 - A selection of skills per task. The engine owns selection; the bundle carries only a declared set.
+- Public exposure of the door or the identity provider. The hosted profile (R010) uses only an endpoint and a redirect the deployment configures (decision D8).
