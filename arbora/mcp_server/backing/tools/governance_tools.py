@@ -8,12 +8,13 @@ from typing import Any
 
 from pydantic import Field
 
+from arbora.access.approval import ApprovalDecisions
 from arbora.core.event_loop import run_blocking_ordered
 from arbora.mcp_server import runtime
 from arbora.security.error_surface import public_error_text
 
 
-def register_governance_tools(mcp: Any) -> None:
+def register_governance_tools(mcp: Any, approvals: ApprovalDecisions) -> None:
     """Register approval decisions, risk vetoes, and ActionPolicy verification."""
 
     @mcp.tool(
@@ -122,6 +123,7 @@ def register_governance_tools(mcp: Any) -> None:
         return await run_blocking_ordered(
             _execute_governance_action,
             engine,
+            approvals=approvals,
             action=action,
             approval_id=approval_id,
             decision=decision,
@@ -145,6 +147,7 @@ def register_governance_tools(mcp: Any) -> None:
 def _execute_governance_action(
     engine: Any,
     *,
+    approvals: ApprovalDecisions,
     action: str,
     approval_id: str,
     decision: str,
@@ -162,10 +165,8 @@ def _execute_governance_action(
 ) -> str:
     try:
         if action == "grant_approval":
-            from arbora.access.approval import decide_action_approval
-
             return json.dumps(
-                decide_action_approval(engine, approval_id, decision),
+                approvals.decide(engine, approval_id, decision),
                 default=str,
             )
 

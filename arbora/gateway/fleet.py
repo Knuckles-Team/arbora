@@ -391,11 +391,9 @@ async def fleet_grant_approval(request: Request) -> JSONResponse:
         )
     if str(job_id).startswith("action_approval:"):
         try:
-            from arbora.access.approval import decide_action_approval
             from arbora.gateway.ports import gateway_application
 
-            engine = gateway_application().engine()
-            result = decide_action_approval(engine, str(job_id), str(decision))
+            result = gateway_application().decide_approval(str(job_id), str(decision))
             return JSONResponse(
                 {
                     "status": "success",

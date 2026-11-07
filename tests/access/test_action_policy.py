@@ -15,9 +15,7 @@ from arbora.access import approval
 def _fresh_policy(monkeypatch):
     monkeypatch.delenv("ACTION_POLICY_PATH", raising=False)
     monkeypatch.delenv("ACTION_IRREVERSIBILITY_AVERSION", raising=False)
-    approval.bind_approval_session(None)
     yield
-    approval.bind_approval_session(None)
 
 
 def _request(kind: str, target: str = "svc", actor: str = ""):
@@ -101,7 +99,7 @@ class _Graph:
         return self.applied
 
 
-def _bind(graph: _Graph) -> list[str]:
+def _bind(graph: _Graph) -> tuple[approval.ApprovalDecisions, list[str]]:
     scopes: list[str] = []
 
     @contextmanager
@@ -109,8 +107,7 @@ def _bind(graph: _Graph) -> list[str]:
         scopes.append(required)
         yield graph
 
-    approval.bind_approval_session(scope)
-    return scopes
+    return approval.ApprovalDecisions(scope), scopes
 
 
 @pytest.mark.parametrize(
@@ -119,8 +116,8 @@ def _bind(graph: _Graph) -> list[str]:
 )
 def test_approval_decision_writes_through_the_session(decision, status) -> None:
     graph = _Graph(applied=True)
-    scopes = _bind(graph)
-    result = approval.decide_action_approval(None, "action_approval:1", decision)
+    decisions, scopes = _bind(graph)
+    result = decisions.decide(None, "action_approval:1", decision)
     assert result == {"approval_id": "action_approval:1", "decision": status}
     assert scopes == ["kg:write"]
     assert graph.calls[0][1] == {"status": "pending"}
@@ -136,7 +133,8 @@ def test_approval_decision_writes_through_the_session(decision, status) -> None:
     ],
 )
 def test_approval_decision_refusals(approval_id, decision, bound, applied, error):
-    if bound:
-        _bind(_Graph(applied=applied))
+    decisions = (
+        _bind(_Graph(applied=applied))[0] if bound else approval.ApprovalDecisions()
+    )
     with pytest.raises(error):
-        approval.decide_action_approval(None, approval_id, decision)
+        decisions.decide(None, approval_id, decision)

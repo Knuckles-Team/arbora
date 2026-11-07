@@ -315,7 +315,9 @@ def mcp_server(
             if browser_boundary_factory is not None
             else _served_invocation(host=host_context)
         )
-    install_gateway_application(invocation, fleet=host_context.fleet)
+    install_gateway_application(
+        invocation, fleet=host_context.fleet, approvals=host_context.policy.approvals
+    )
     from arbora.host_bindings import (
         bind_health_probes,
         bind_messaging_ports,

@@ -964,6 +964,7 @@ def _register_graph_tool_surface(
         backing = register_arbora_surface(
             mcp,
             action_policies=host.policy.action_policies,
+            approvals=host.policy.approvals,
             canonical=canonical,
             intent_tools=False,
         )
@@ -971,7 +972,10 @@ def _register_graph_tool_surface(
         invocation.mount_on_mcp(mcp)
     else:
         backing = register_arbora_surface(
-            mcp, action_policies=host.policy.action_policies, canonical=canonical
+            mcp,
+            action_policies=host.policy.action_policies,
+            approvals=host.policy.approvals,
+            canonical=canonical,
         )
     register_browser_control_tools(backing)
     if invocation is None:
