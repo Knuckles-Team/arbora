@@ -43,7 +43,7 @@ def _caller_session(caller: Any) -> Iterator[None]:
     if session is None:
         yield
         return
-    from arbora.api.contracts.session import use_session
+    from arbora.security.session import use_session
 
     with use_session(session):
         yield

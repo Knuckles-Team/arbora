@@ -69,9 +69,9 @@ def test_a_catalog_read_before_install_is_a_retryable_refusal() -> None:
 def test_boot_returns_while_the_catalog_composition_is_still_running(
     monkeypatch,
 ) -> None:
-    import arbora.api.contracts.session as session_module
     import arbora.mcp_server.catalog_composition as composition
     import arbora.security.actor_context as actor_module
+    import arbora.security.session as session_module
     from arbora.mcp_server import catalog_warmup, server
 
     async def slow_compose(**_kwargs: Any) -> None:

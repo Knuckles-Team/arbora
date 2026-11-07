@@ -375,9 +375,9 @@ def test_missing_sdk_module_skips(monkeypatch) -> None:
 def test_onboarding_registers_after_import(fake_sdk, monkeypatch) -> None:
     import asyncio
 
-    from arbora.api.contracts.session import use_session
     from arbora.deployment import semantic_provisioning
     from arbora.fleet.onboarding import FleetEndpoint, FleetOnboarding
+    from arbora.security.session import use_session
     from tests._eg_fakes import service_session
 
     async def fake_import(*args, **kwargs):
@@ -487,10 +487,10 @@ def test_onboarding_passes_the_operator_mass_withdrawal_decision(
     """Only a server the operator named may withdraw most of its pack surface."""
     import asyncio
 
-    from arbora.api.contracts.session import use_session
     from arbora.deployment import semantic_provisioning
     from arbora.deployment.production_ops import _parser, _server_names
     from arbora.fleet.onboarding import FleetEndpoint, FleetOnboarding
+    from arbora.security.session import use_session
     from tests._eg_fakes import service_session
 
     seen: list[bool] = []

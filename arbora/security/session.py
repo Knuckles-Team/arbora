@@ -37,7 +37,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from typing import Any
 
-from arbora.access.priority import current_priority
+from arbora.core.priority import current_priority
 from arbora.security.actor_context import (
     ActorContext,
     CredentialExpiredError,
@@ -260,8 +260,8 @@ class GraphSession:
         applicable: ``node`` (ADR-3 / W1.9 node-bound envelopes; normally
         supplied by the connection layer, not this method) and ``priority``
         (W2.4 engine-native QoS lanes — stamped here from the ambient
-        :class:`~arbora.access.priority.PriorityClass`
-        contextvar via :func:`~arbora.access.priority.current_priority`
+        :class:`~arbora.core.priority.PriorityClass`
+        contextvar via :func:`~arbora.core.priority.current_priority`
         when the calling context is tagged; omitted entirely when untagged, so
         an unclassified caller is unaffected). Both optional claims are
         MAC-covered exactly like every other claim. Trace correlation remains

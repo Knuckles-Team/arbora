@@ -18,7 +18,6 @@ from fastapi import FastAPI, HTTPException
 from arbora.a2a import mcp as a2a_mcp
 from arbora.a2a.application import AmbientA2AAuthenticator
 from arbora.a2a.service import A2AService
-from arbora.api.contracts.session import current_session, use_session
 from arbora.api.registry import Surface
 from arbora.core.settings import runtime_config as config
 from arbora.mcp_server import runtime as mcp_runtime
@@ -29,6 +28,7 @@ from arbora.security.actor_context import (
     current_actor,
     use_actor,
 )
+from arbora.security.session import current_session, use_session
 from tests.a2a._support import authenticated_operation_app
 from tests.a2a.test_application import Authority, Router
 from tests.a2a.test_mcp import _Mcp

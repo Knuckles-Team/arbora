@@ -54,7 +54,7 @@ class SemanticProvisioningError(RuntimeError):
 def _bind_session_graph(graph: str) -> AbstractContextManager[object]:
     """Run one engine call under the verified session narrowed to ``graph``."""
 
-    from arbora.api.contracts.session import resolve_session, use_session
+    from arbora.security.session import resolve_session, use_session
 
     return use_session(resolve_session().with_graph(graph))
 

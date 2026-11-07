@@ -5,10 +5,10 @@ import asyncio
 import pytest
 
 from arbora.access.action_policy import ActionPolicy
-from arbora.api.contracts.session import use_session
 from arbora.local_browser_channel import LocalBrowserChannelOwner
 from arbora.mcp_server.served_engine import ServedEngine
 from arbora.security import anonymous
+from arbora.security.session import use_session
 from tests.browser_control.test_local_browser_channel import _socket
 from tests.browser_control.test_local_browser_transport import _transport
 from tests.security.test_anonymous_mode import local_mode as local_mode

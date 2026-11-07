@@ -21,7 +21,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol, runtime_checkable
 
-from arbora.api.contracts.session import GraphSession, resolve_session
+from arbora.security.session import GraphSession, resolve_session
 
 CatalogStatus = Literal["active", "retired", "withdrawn"]
 

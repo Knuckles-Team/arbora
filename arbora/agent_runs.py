@@ -37,7 +37,7 @@ from arbora.api.contracts.agent_control_contracts import (
     AgentExecutionRequest,
     AgentExecutionResult,
 )
-from arbora.api.contracts.session import GraphSession
+from arbora.security.session import GraphSession
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +127,7 @@ def native_stream_scope(
     The protocol projection must filter thinking and tool secrets. Copied
     contexts share revocation; this scope cannot outlive its awaiting host.
     """
-    from arbora.api.contracts.session import resolve_session
+    from arbora.security.session import resolve_session
 
     if _NATIVE_STREAM.get() is not None:
         raise RuntimeError("native stream scope cannot be nested")

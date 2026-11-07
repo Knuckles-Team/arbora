@@ -10,13 +10,13 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 from arbora.access.action_policy import ActionPolicy
-from arbora.api.contracts.session import GraphSession, resolve_session
 from arbora.browser_control.browser_control_common import canonical_json
 from arbora.browser_control.browser_control_descriptor import BrowserToolDescriptor
 from arbora.browser_control.browser_control_validation import validated_catalog_digests
 from arbora.identity.browser import _header_digests
 from arbora.identity.local_browser import LocalBrowserTransport
 from arbora.mcp_server.served_engine import ServedEngine
+from arbora.security.session import GraphSession, resolve_session
 
 _CHANNEL_LIFETIME_SECONDS = 60
 

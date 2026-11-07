@@ -44,7 +44,7 @@ async def handle_agent(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Use the serving A2A authority, which owns task and idempotency state."""
-    from arbora.api.contracts import use_session
+    from arbora.security.session import use_session
 
     if context.caller.session is None:
         raise RuntimeError("agent operation requires a verified session")

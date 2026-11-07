@@ -10,9 +10,9 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 
-from arbora.api.contracts.session import current_session
 from arbora.api.http.routes import make_endpoint
 from arbora.security.actor_context import current_actor
+from arbora.security.session import current_session
 
 
 class _Actor(SimpleNamespace):
