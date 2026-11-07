@@ -911,9 +911,9 @@ def bound_to_graph(graph: str) -> Any:
     session-retargeting primitive already used by
     ``agent_utilities.knowledge_graph.pipeline`` and
     ``arbora.access.approval`` —
-    :meth:`~arbora.api.contracts.session.GraphSession.with_graph`
+    :meth:`~arbora.security.session.GraphSession.with_graph`
     scoped for the call's duration via
-    :func:`~arbora.api.contracts.session.use_session`. This
+    :func:`~arbora.security.session.use_session`. This
     introduces no new authority: the engine's own RBAC/RLS
     (``crates/eg-core/src/isolation.rs::check_access``) evaluates
     ``(agent_id, graph, action)`` on every RPC issued while bound, independent
@@ -924,7 +924,7 @@ def bound_to_graph(graph: str) -> Any:
     if not graph:
         yield
         return
-    from arbora.api.contracts.session import (
+    from arbora.security.session import (
         current_session,
         use_session,
     )

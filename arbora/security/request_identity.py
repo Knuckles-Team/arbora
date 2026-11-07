@@ -143,7 +143,7 @@ def client_credentials_token(oauth2: Any) -> str:
 
 
 if TYPE_CHECKING:
-    from arbora.api.contracts.session import GraphSession
+    from arbora.security.session import GraphSession
 
 logger = logging.getLogger(__name__)
 
@@ -320,7 +320,7 @@ class VerifiedLocalBearer:
     were cryptographically verified, plus the issuer/audience they were
     checked against. It has no policy revision, delegation chain, or engine
     session, and must never be projected into a
-    :class:`~arbora.api.contracts.session.GraphSession`
+    :class:`~arbora.security.session.GraphSession`
     directly. A qualified owner holding current policy/delegation/engine
     authority must combine this with that authority before producing one.
     """
@@ -610,7 +610,7 @@ def _mint_graph_session(
         policy_version=policy_version,
     )
 
-    from arbora.api.contracts.session import GraphSession
+    from arbora.security.session import GraphSession
 
     scopes = authority.scopes
     tenant = authority.tenant
@@ -1004,12 +1004,12 @@ def system_write_session(config: Any = None) -> GraphSession:
     ``KG_IDENTITY_OAUTH2`` configured outside the ``tiny`` profile --
     propagates loudly instead of returning a degraded identity).
     """
-    from arbora.api.contracts.session import (
+    from arbora.security.anonymous import enabled
+    from arbora.security.anonymous import session as anonymous_session
+    from arbora.security.session import (
         GraphSession,
         SessionRequiredError,
     )
-    from arbora.security.anonymous import enabled
-    from arbora.security.anonymous import session as anonymous_session
 
     try:
         ambient = GraphSession.from_ambient()
@@ -1357,7 +1357,7 @@ async def _mint_request_session(actor: ActorContext, send: Any) -> GraphSession 
     under ``-O``, which on this authenticated dispatch path would have let a
     ``None`` session reach the route; making the check load-bearing removes that.
     """
-    from arbora.api.contracts.session import SessionExpiredError
+    from arbora.security.session import SessionExpiredError
 
     try:
         return mint_graph_session(actor)
@@ -1405,7 +1405,7 @@ class ActorIdentityMiddleware:
         # explicit non-authoritative actor and suppress any GraphSession
         # inherited from a parent task so health handlers cannot observe or
         # accidentally reuse process/request authority.
-        from arbora.api.contracts.session import suspend_session
+        from arbora.security.session import suspend_session
 
         with (
             use_actor(
@@ -1431,7 +1431,7 @@ class ActorIdentityMiddleware:
         unwind them — degrading a credential/session expiry to 401 only if
         no response has been sent yet (a started response cannot be
         rewritten, so it must re-raise instead)."""
-        from arbora.api.contracts.session import (
+        from arbora.security.session import (
             SessionExpiredError,
             reset_session,
             set_session,

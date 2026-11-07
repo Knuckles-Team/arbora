@@ -466,7 +466,7 @@ def _require_catalog_authority(
 ) -> tuple[str, str, tuple[str, ...]]:
     """Require verified session/scope and return tenant, principal, grants."""
 
-    from arbora.api.contracts.session import resolve_session
+    from arbora.security.session import resolve_session
 
     session = resolve_session(required_scope="kg:read")
     actor = session.actor
@@ -849,8 +849,8 @@ def _catalog_service_session() -> Any:
     own), so an unguarded call would just hand back the caller's own session
     and fix nothing.
     """
-    from arbora.api.contracts.session import suspend_session
     from arbora.security.request_identity import system_write_session
+    from arbora.security.session import suspend_session
 
     with suspend_session():
         return system_write_session()
@@ -895,7 +895,7 @@ def _require_sql_exec(engine: Any) -> Callable[[str], Any]:
         raise CatalogUnavailable("authoritative catalog SQL is unavailable")
 
     def _run_as_catalog_service(statement: str) -> Any:
-        from arbora.api.contracts.session import use_session
+        from arbora.security.session import use_session
 
         with use_session(_catalog_service_session()):
             return sql_exec(statement)

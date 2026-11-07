@@ -48,7 +48,7 @@ def _mount_sparql_route(app, prefix: str = "/api") -> None:
     """Mount ``{prefix}/sparql`` — a local, zero-dependency SPARQL endpoint."""
 
     async def sparql_endpoint(request: Request) -> JSONResponse:
-        from arbora.api.contracts.session import (
+        from arbora.security.session import (
             resolve_session,
         )
 
@@ -131,11 +131,11 @@ SQL_SCHEMA_DESCRIPTION = (
 
 async def _sql_schema_endpoint(request: Request) -> JSONResponse:
     """Serve ``POST /graph/sql-schema`` — the read-only catalog projection."""
-    from arbora.api.contracts.session import resolve_session
     from arbora.mcp_server.backing.tools.graph_tools import (
         SqlSchemaUnavailable,
         sql_schema,
     )
+    from arbora.security.session import resolve_session
 
     try:
         resolve_session(required_scope="kg:read")

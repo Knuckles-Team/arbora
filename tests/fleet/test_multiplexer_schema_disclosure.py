@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from arbora.fleet.child_resilience import ChildRuntime
+from arbora.fleet.plan_confirmation import PlanConfirmations
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
 pytestmark = pytest.mark.spec("ARBORA-FLEET-R035")
@@ -109,7 +110,7 @@ def setup_mux(tmp_path: Any, runtime: ChildRuntime, descriptor: Any) -> Any:
 
 def connect_schema_session(tmp_path: Any, session: SchemaSession) -> Any:
     """Attach the supplied schema session through the ordinary child runtime."""
-    runtime = ChildRuntime("markets", {})
+    runtime = ChildRuntime("markets", {}, confirmations=PlanConfirmations())
     runtime.adopt_sessions([session])
     return setup_mux(tmp_path, runtime, session.descriptor)
 

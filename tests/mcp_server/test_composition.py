@@ -9,6 +9,8 @@ from typing import Any, cast
 
 import pytest
 
+from arbora.fleet.oauth_brokers import RemoteOAuthBrokers
+from arbora.fleet.state import FleetState
 from arbora.gateway.ports import gateway_application
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import (
@@ -49,7 +51,7 @@ async def test_installed_gateway_port_dispatches_native_runtime(
         return {"ok": True}
 
     monkeypatch.setattr(runtime, "_execute_tool", execute)
-    application = install_gateway_application()
+    application = install_gateway_application(fleet=FleetState())
 
     assert gateway_application() is application
     assert await gateway_application().execute_tool("graph_query", query="MATCH") == {
@@ -152,7 +154,9 @@ def test_messaging_intake_requires_gateway_daemon_role(
 def test_gateway_adapter_satisfies_runtime_protocol() -> None:
     from arbora.gateway.ports import GatewayApplicationPort
 
-    assert isinstance(NativeGatewayApplication(), GatewayApplicationPort)
+    assert isinstance(
+        NativeGatewayApplication(fleet=FleetState()), GatewayApplicationPort
+    )
 
 
 def test_gateway_adapter_uses_native_oauth_binding_source(
@@ -161,11 +165,13 @@ def test_gateway_adapter_uses_native_oauth_binding_source(
     actor = object()
     expected = (object(),)
     monkeypatch.setattr(
-        "arbora.fleet.multiplexer.current_remote_oauth_grant_bindings",
-        lambda value: expected if value is actor else (),
+        RemoteOAuthBrokers,
+        "grant_bindings",
+        lambda _brokers, value: expected if value is actor else (),
     )
 
-    assert NativeGatewayApplication().remote_oauth_grant_bindings(actor) is expected
+    application = NativeGatewayApplication(fleet=FleetState())
+    assert application.remote_oauth_grant_bindings(actor) is expected
 
 
 def test_console_script_targets_native_serving_entrypoint() -> None:

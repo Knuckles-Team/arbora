@@ -9,7 +9,6 @@ from typing import Any
 
 import pytest
 
-from arbora.api.contracts.session import GraphSession, use_session
 from arbora.browser_control.browser_control_api import BrowserProposalRequest
 from arbora.browser_control.browser_control_client import (
     ControlConfirmMessage,
@@ -27,6 +26,7 @@ from arbora.run_origin import (
     native_call_origin_scope,
     require_native_call_origin,
 )
+from arbora.security.session import GraphSession, use_session
 from tests.browser_control.test_browser_control_service import (
     _binding,
     _setup,

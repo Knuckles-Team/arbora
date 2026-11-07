@@ -211,9 +211,9 @@ async def test_served_intent_inventory_and_call_preserve_caller_session(
     from fastmcp import FastMCP
     from fastmcp.exceptions import ToolError
 
-    from arbora.api.contracts.session import GraphSession, current_session, use_session
     from arbora.mcp_server import runtime
     from arbora.security.actor_context import ActorContext, ActorType, use_actor
+    from arbora.security.session import GraphSession, current_session, use_session
 
     host = FastMCP("served-intent-regression")
 

@@ -19,7 +19,7 @@ class _RecordingGateway:
         self.seen: list[Any] = []
 
     def _record(self) -> Any:
-        from arbora.api.contracts.session import current_session
+        from arbora.security.session import current_session
 
         self.seen.append(current_session())
         return {"items": []}
@@ -40,7 +40,7 @@ def test_http_fleet_ports_run_under_the_callers_own_session(monkeypatch) -> None
     0.1.3: fleet.catalog.search answered INTERNAL and fleet.call UNAVAILABLE on
     the HTTP operation API because the catalog read raised SessionRequiredError.
     """
-    import arbora.api.contracts.session as session_mod
+    import arbora.security.session as session_mod
 
     bound: list[Any] = []
 

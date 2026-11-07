@@ -23,6 +23,7 @@ from arbora.fleet.multiplexer import (
     _list_all_tools,
 )
 from arbora.fleet.multiplexer_ops import MultiplexerOps
+from arbora.fleet.plan_confirmation import PlanConfirmations
 
 # ── R068: tools/list pagination ──────────────────────────────────────────────
 
@@ -509,7 +510,12 @@ def test_the_call_deadline_ignores_the_connect_budget() -> None:
     assert _child_call_timeout({"timeout": 15}, None) == 300.0
     assert _child_call_timeout({"timeout": 15, "call_timeout": 120}, None) == 120.0
     assert _child_call_timeout({"call_timeout": 120}, 5.0) == 5.0
-    assert ChildRuntime("slow", {"timeout": 15}).call_timeout == 300.0
+    assert (
+        ChildRuntime(
+            "slow", {"timeout": 15}, confirmations=PlanConfirmations()
+        ).call_timeout
+        == 300.0
+    )
 
 
 @pytest.mark.spec("ARBORA-FLEET-R075")
@@ -736,4 +742,6 @@ def test_the_ephemeral_call_path_arms_its_session() -> None:
     from arbora.fleet.multiplexer import MCPMultiplexer
 
     source = inspect.getsource(MCPMultiplexer._invoke_oauth_tool)
-    assert "async with armed(session, original_name):" in source
+    assert (
+        "async with self._fleet.confirmations.armed(session, original_name):" in source
+    )

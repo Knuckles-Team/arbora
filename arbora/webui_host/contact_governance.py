@@ -12,7 +12,7 @@ from typing import Any
 
 from scion_sdk.privacy import persistence_reference
 
-from arbora.api.contracts.session import resolve_session
+from arbora.security.session import resolve_session
 
 _ACTOR_REFERENCE = re.compile(r"^[0-9a-f]{64}$")
 _IDEMPOTENCY_KEY = re.compile(r"^contactreq_[0-9a-f]{32}$")

@@ -260,3 +260,33 @@ markers = [
 # Inputs of the shared hooks (Knuckles-Team/pipelines .pre-commit-hooks.yaml).
 [tool.pipelines_hooks]
 packages = ["arbora"]
+
+# Unit layers (ARBORA-HOST-R038), most stable first: a unit (a top-level
+# module or package of a declared package) imports only its own layer or an
+# earlier one, units of one layer form no cycle, and no unit imports a
+# leading-underscore module or name of another unit. Every unit is named once;
+# there is no allowance list. Read by the coupling gate (PIPE-GATES-R088) and,
+# until that ships, by tests/architecture/test_unit_layers.py.
+[[tool.pipelines_hooks.coupling.layers]]
+name = "foundation"
+units = ["architecture", "content", "core", "semantic_content", "skills", "unique_records", "version"]
+
+[[tool.pipelines_hooks.coupling.layers]]
+name = "security"
+units = ["access", "security"]
+
+[[tool.pipelines_hooks.coupling.layers]]
+name = "services"
+units = ["data_migrations", "ecosystem", "epistemic", "identity", "messaging", "modality", "observability", "run_origin"]
+
+[[tool.pipelines_hooks.coupling.layers]]
+name = "operations"
+units = ["agent_runs", "api", "current_plan_publication", "native_run_admission", "work_items"]
+
+[[tool.pipelines_hooks.coupling.layers]]
+name = "subsystems"
+units = ["a2a", "acp", "agent_host", "browser_control", "certification", "connector_runner", "control_plane", "deployment", "evolution", "finance", "fleet", "fleet_tool_call", "gateway", "ingest"]
+
+[[tool.pipelines_hooks.coupling.layers]]
+name = "host"
+units = ["__init__", "client", "console", "host_bindings", "local_browser_boundary", "local_browser_channel", "mcp_server", "webui_host"]

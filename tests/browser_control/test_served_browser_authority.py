@@ -86,8 +86,8 @@ def test_native_typed_browser_bundle_is_atomic_and_labeled(native_engine):
 
 
 def test_browser_state_never_uses_process_session_fallback(native_engine, monkeypatch):
-    from arbora.api.contracts.session import SessionRequiredError, suspend_session
     from arbora.mcp_server import bootstrap
+    from arbora.security.session import SessionRequiredError, suspend_session
 
     engine, session = native_engine
     monkeypatch.setattr(bootstrap, "_process_session", lambda: session)
@@ -96,8 +96,8 @@ def test_browser_state_never_uses_process_session_fallback(native_engine, monkey
 
 
 def test_browser_state_rechecks_authority_after_pool_await(native_engine, monkeypatch):
-    from arbora.api.contracts.session import SessionExpiredError
     from arbora.security import anonymous
+    from arbora.security.session import SessionExpiredError
 
     engine, _session = native_engine
     connect = engine.pool.connected_client
@@ -146,7 +146,7 @@ def test_released_native_actual_webui_factory_composition(native_engine):
 def test_browser_state_requires_current_write_scope(native_engine):
     from dataclasses import replace
 
-    from arbora.api.contracts.session import use_session
+    from arbora.security.session import use_session
 
     engine, session = native_engine
     with (
@@ -165,7 +165,7 @@ def test_browser_state_requires_current_write_scope(native_engine):
 def test_browser_batch_refuses_foreign_session_graph(native_engine):
     from dataclasses import replace
 
-    from arbora.api.contracts.session import SessionRequiredError
+    from arbora.security.session import SessionRequiredError
 
     engine, session = native_engine
     with pytest.raises(SessionRequiredError):

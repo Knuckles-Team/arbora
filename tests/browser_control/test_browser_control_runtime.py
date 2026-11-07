@@ -10,11 +10,6 @@ from typing import Any
 
 import pytest
 
-from arbora.api.contracts.session import (
-    GraphSession,
-    current_session,
-    use_session,
-)
 from arbora.browser_control.browser_control_api import BrowserLeaseReceipt
 from arbora.browser_control.browser_control_runtime import (
     bind_browser_control_owner,
@@ -23,6 +18,11 @@ from arbora.browser_control.browser_control_runtime import (
     unregister_browser_control_service,
 )
 from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.session import (
+    GraphSession,
+    current_session,
+    use_session,
+)
 
 
 class _Service:

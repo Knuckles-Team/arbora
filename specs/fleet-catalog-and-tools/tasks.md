@@ -424,6 +424,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T157 ARBORA-FLEET-R040 arbora serves and reports the prompts, skills and resources of each connector.
 - [ ] T158 ARBORA-FLEET-R040.1 The served gateway forwards the relay ops.
 - [ ] T159 ARBORA-FLEET-R040.2 A relay read survives a child restart.
+- [ ] T270 ARBORA-FLEET-R040.3 One paged fleet census, and the per-server read agrees with it.
 - [ ] T160 ARBORA-FLEET-R041 Registering a connector imports its full pack with no manual step (rollup).
 - [ ] T161 ARBORA-FLEET-R041.1 Model.
 - [ ] T162 ARBORA-FLEET-R041.2 Behavior.
@@ -527,3 +528,9 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T258 ARBORA-FLEET-R082.1 Desired-status machine with typed refusal.
 - [ ] T259 ARBORA-FLEET-R082.2 Project the authorization outcome from the medulla decision.
 - [ ] T262 ARBORA-FLEET-R082.3 Describe the desired-status machine in the ontology; hot-path proof.
+- [ ] T263 [US1] ARBORA-FLEET-R083 Tool, skill and operation ranking asks medulla; the lexical floor is the received fallback (rollup). Size: L, 5 PRs, 1 day.
+- [ ] T264 [US1] ARBORA-FLEET-R083.1 The ranking port and the single lexical floor. Size: M, 1 PR, 5 hours.
+- [ ] T265 [US1] ARBORA-FLEET-R083.2 Intent tools and the intent resolver ask the port. Size: M, 1 PR, 4 hours.
+- [ ] T266 [US1] ARBORA-FLEET-R083.3 Fleet discovery, catalog items and connector operations ask the port. Size: M, 1 PR, 4 hours.
+- [ ] T267 [US1] ARBORA-FLEET-R083.4 Delete the other scorers. Size: S, 1 PR, 2 hours.
+- [ ] T268 [US1] ARBORA-FLEET-R083.5 Ranking served proof and degradation evidence. Size: S, 1 PR, 3 hours.

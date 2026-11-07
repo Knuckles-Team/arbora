@@ -11,7 +11,6 @@ from typing import Any, cast
 import pytest
 from scion_sdk.privacy import persistence_reference
 
-from arbora.api.contracts.session import GraphSession, use_session
 from arbora.browser_control.browser_control_api import (
     BrowserCallRequest,
     BrowserChannelBinding,
@@ -51,6 +50,7 @@ from arbora.browser_control.browser_control_service import (
     browser_control_factory_kwargs,
 )
 from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.session import GraphSession, use_session
 
 
 def _negative_claim() -> dict[str, Any]:
@@ -2100,12 +2100,12 @@ async def test_discovery_withdraws_channel_retired_during_verification(
 async def test_disconnect_reports_terminal_retirement_authority_loss(
     session: GraphSession, monkeypatch: pytest.MonkeyPatch, authority_error: str
 ) -> None:
-    from arbora.api.contracts.session import (
+    from arbora.browser_control import browser_control_channel as channel_module
+    from arbora.security.session import (
         ScopeError,
         SessionExpiredError,
         SessionRequiredError,
     )
-    from arbora.browser_control import browser_control_channel as channel_module
 
     error_type = {
         "expired": SessionExpiredError,

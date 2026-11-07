@@ -172,7 +172,7 @@ def _execute_governance_action(
         if action == "submit_risk_veto":
             if not target_id:
                 raise ValueError("target_id is required for submit_risk_veto")
-            from arbora.api.contracts.session import resolve_session
+            from arbora.security.session import resolve_session
 
             session = resolve_session(required_scope="kg:write")
             veto_id = f"risk_veto:{uuid.uuid4().hex}"

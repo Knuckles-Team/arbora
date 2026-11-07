@@ -59,7 +59,7 @@ def _catalog_snapshot_ttl_s() -> float:
 def _use_process_session(session: Any) -> AbstractContextManager[object]:
     """Bind the Arbora process session for one browser catalog read."""
 
-    from arbora.api.contracts.session import use_session
+    from arbora.security.session import use_session
 
     return use_session(session)
 
@@ -75,7 +75,7 @@ def _process_graph_binder(session: Any) -> GraphBinder:
     saw no live server and served an empty catalog.
     """
 
-    from arbora.api.contracts.session import use_session
+    from arbora.security.session import use_session
 
     def bind(graph: str) -> AbstractContextManager[object]:
         return use_session(session.with_graph(graph))

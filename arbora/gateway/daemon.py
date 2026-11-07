@@ -189,12 +189,12 @@ def refresh_process_identity(session: Any) -> Any:
     actor type must remain byte-for-byte equivalent to the authority captured
     by the background worker threads.
     """
-    from arbora.api.contracts.session import SessionExpiredError
     from arbora.core.settings import runtime_config as config
     from arbora.security.request_identity import (
         acquire_process_identity_token,
         mint_actor_from_token_sync,
     )
+    from arbora.security.session import SessionExpiredError
 
     session.ensure_authority_current()
     try:

@@ -20,7 +20,7 @@ import anyio
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
-from arbora.api.contracts.session import GraphSession, ScopeError, resolve_session
+from arbora.security.session import GraphSession, ScopeError, resolve_session
 
 from .session_policy import PrincipalContext
 

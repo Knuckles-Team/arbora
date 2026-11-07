@@ -1163,6 +1163,20 @@ sequenceDiagram
   A->>H: run on the text
 ```
 
+### Operations the web interface still needs (ARBORA-OPS-R904 to R914)
+
+Pre-untangled design for these rows, one line per answer.
+
+- Owner. Arbora owns the door: each operation, its scope and its refusals. Medulla owns the facts and the query constructs (the aggregate, order and edge-source query rows). Overstory owns only the screen and the UQL text of each view.
+- Cohesion. Operations that change together share a module: documents, settings and models, ontology objects, chats, workspace files, Atlas, agent library and prompts, fleet administration, ecosystem widgets.
+- Dependency direction. Handlers call ports declared in `arbora/api/ops/ports.py` (`ARBORA-HOST-R038.1`); they import no subsystem.
+- Interface depth. Each operation is one id with a closed request and result shape. A handler under 60 lines delegates to an engine binding, UQL or a connector call.
+- Special cases. None. A route family takes a mapped operation or a new one; no route keeps a host-local answer except the allowed browser-local set (`info`, `agent-icon`, `download`, `editor-context`, `sessions`, `mcp tools and apps`).
+- State. Connection, mapping, change, goal and workflow states belong to the machines of their owners. No handler holds a status flag.
+- Environment. The workspace root and the specification repository are settings of the features that read them.
+
+Order. R904 and R907 first (the memory and link routes need only the existing masking row, extended by the node-write child R844.2), then R906, R909, R910, then R908, R911, R912, R913 and R914. Each row is one to four PRs of one handler module each.
+
 ## Phase 2: Task approach
 
 tasks.md carries one numbered task line for each active row. Tasks run producer first. A task marked `[P]` may run in parallel with its neighbours. The development rows `R896.1` to `R896.5` run after the engine rows they cite.

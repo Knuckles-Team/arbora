@@ -319,7 +319,7 @@ def _session_bound_tenant(declared: str) -> str:
     is refused regardless, because the eligibility gate has no authority to read.
     """
     try:
-        from arbora.api.contracts.session import current_session
+        from arbora.security.session import current_session
 
         session = current_session()
     except Exception:  # noqa: BLE001 — no bound session is a legitimate RAM-only case

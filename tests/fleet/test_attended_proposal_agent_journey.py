@@ -24,7 +24,6 @@ from pydantic_ai.models.function import FunctionModel
 from arbora import host_bindings
 from arbora.agent_runs import AgentRunPort
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
-from arbora.api.contracts.session import use_session
 from arbora.browser_control import browser_control_runtime
 from arbora.browser_control.browser_control_client import (
     ControlConfirmMessage,
@@ -34,6 +33,7 @@ from arbora.browser_control.browser_control_runtime import dispatch_browser_oper
 from arbora.core.settings import runtime_config
 from arbora.fleet import shared_multiplexer
 from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
+from arbora.fleet.state import FleetState
 from arbora.gateway import ports
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import install_gateway_application
@@ -49,6 +49,7 @@ from arbora.mcp_server.server import _attach_fleet_runtime
 from arbora.run_origin import RunOriginRegistry
 from arbora.security import request_identity
 from arbora.security.actor_context import use_actor
+from arbora.security.session import use_session
 from arbora.webui_host.mcp_delegation import webui_mcp_delegation_helpers
 from tests.browser_control.test_browser_control_service import _setup
 from tests.browser_control.test_browser_proposals import (
@@ -118,13 +119,14 @@ async def _served(
         bindings={"browser_control": dispatch_browser_operation},
         fleet_effect=refused_fleet_effect,
     )
-    install_gateway_application(invocation)
+    fleet = FleetState()
+    install_gateway_application(invocation, fleet=fleet)
     _args, mcp, middlewares = runtime._build_server(
         bootstrap=False, invocation=invocation
     )
     for middleware in middlewares:
         mcp.add_middleware(middleware)
-    mux = _attach_fleet_runtime(mcp, DeferredFleetCatalogReader())
+    mux = _attach_fleet_runtime(mcp, DeferredFleetCatalogReader(), fleet)
     register_harness_host(mux)
     events: list[Any] = []
     host_ports.register_run_decision_provider(

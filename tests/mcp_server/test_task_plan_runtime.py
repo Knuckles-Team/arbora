@@ -16,11 +16,11 @@ from pydantic_ai.usage import RequestUsage
 
 from arbora import agent_runs
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
-from arbora.api.contracts.session import GraphSession
 from arbora.api.ops import plans
 from arbora.api.registry import Effect, Registry
 from arbora.mcp_server import task_plan, task_plan_runtime
 from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.session import GraphSession
 from tests.api.test_invoke_contract import operation
 from tests.mcp_server import test_task_plan as fixtures
 from tests.test_native_run_scope import CLAIM, SESSION

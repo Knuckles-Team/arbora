@@ -391,12 +391,12 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
     uses, so every EG call carries exactly the authority Arbora serves with.
     """
 
-    from arbora.api.contracts.session import use_session
     from arbora.deployment.semantic_provisioning import provision_semantic_content
 
     # ``runtime`` binds bootstrap's host slots on import; import it first.
     from arbora.mcp_server import bootstrap, runtime
     from arbora.security.actor_context import use_actor
+    from arbora.security.session import use_session
 
     session = runtime._mint_process_session("http")
     with use_actor(session.actor), use_session(session):
@@ -417,7 +417,6 @@ async def _onboard_fleet(
     approved to withdraw more than half of the published pack surface.
     """
 
-    from arbora.api.contracts.session import use_session
     from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
     from arbora.fleet.onboarding import (
         FleetOnboarding,
@@ -427,6 +426,7 @@ async def _onboard_fleet(
     )
     from arbora.mcp_server import bootstrap, runtime
     from arbora.security.actor_context import use_actor
+    from arbora.security.session import use_session
 
     session = runtime._mint_process_session("http")
     with use_actor(session.actor), use_session(session):
@@ -459,7 +459,6 @@ async def _check_fleet_coverage() -> dict[str, Any]:
     session. The report is the gate's own verdict: it exits non-zero when
     ``ok`` is false (ARBORA-FLEET-R060.3).
     """
-    from arbora.api.contracts.session import use_session
     from arbora.fleet.catalog_reader import FleetCatalogReader, ReadContext
     from arbora.fleet.coverage import check_fleet_coverage, registered_connectors
     from arbora.fleet.epistemic_adapter import GeneratedFleetCatalogPort
@@ -470,6 +469,7 @@ async def _check_fleet_coverage() -> dict[str, Any]:
     from arbora.mcp_server import bootstrap, runtime
     from arbora.security.actor_context import use_actor
     from arbora.security.anonymous import session_context
+    from arbora.security.session import use_session
 
     exclude = self_served_connectors()
     registered = registered_connectors(exclude=exclude)

@@ -34,10 +34,8 @@ import re
 import secrets
 import sys
 import tempfile
-import threading
 import time
 import typing as _typing
-import weakref
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -85,7 +83,7 @@ ToolResult = _fastmcp_tools.ToolResult
 from mcp.client.sse import sse_client
 from mcp.client.streamable_http import streamable_http_client
 
-import arbora.access.priority as _resource_priority
+import arbora.core.priority as _resource_priority
 import arbora.fleet.catalog_reader as _catalog_reader
 import arbora.fleet.child_resilience as _child_resilience
 from arbora.core.capability_contract import Capability
@@ -95,8 +93,9 @@ from arbora.fleet.local_skill_catalog import (
     build_local_skill_catalog,
     missing_core_pack_names,
 )
-from arbora.fleet.plan_confirmation import answer_elicitation, armed
+from arbora.fleet.oauth_brokers import oauth_gated
 from arbora.fleet.session_notifications import SessionCatalogNotifications
+from arbora.fleet.state import FleetState, LiveMultiplexers
 from arbora.security.error_surface import public_error_text
 from arbora.security.log_redaction import redact_for_log
 
@@ -287,7 +286,6 @@ _RUNTIME_CHILD_POLICY_TRANSPORT_KEYS = frozenset(
     }
 )
 _RUNTIME_CHILD_POLICY_INTERNAL_KEY = "_runtime_child_policy"
-_LIVE_MULTIPLEXERS: weakref.WeakSet[_typing.Any] = weakref.WeakSet()
 
 
 class _ProbeOnlyCatalogReader:
@@ -331,27 +329,14 @@ def _tool_schema_compatible(
     return expected == actual
 
 
-def _sample_child_health_gauges() -> None:
-    """Refresh every live multiplexer's child gauges for a ``/metrics`` scrape.
-
-    CONCEPT:MERISTEM-ECO.multiplexer.running-vs-dispatchable-metrics — child health is
-    live-object state, not an event stream, so it must be sampled at scrape time
-    or the gauges only ever move when somebody happens to call
-    ``multiplexer_status``. ``status_snapshot()`` publishes the gauges itself,
-    so calling it IS the sample.
-    """
-    for multiplexer in tuple(_LIVE_MULTIPLEXERS):
-        multiplexer.status_snapshot()
-
-
-def _register_child_health_sampler() -> None:
-    """Hook :func:`_sample_child_health_gauges` into the metrics scrape path."""
+def _register_child_health_sampler(live: LiveMultiplexers) -> None:
+    """Hook the fleet's child-gauge sampler into the metrics scrape path."""
     try:
         from arbora.observability.gateway_metrics import (
             register_scrape_sampler,
         )
 
-        register_scrape_sampler(_sample_child_health_gauges)
+        register_scrape_sampler(live.sample_child_health_gauges)
     except Exception as exc:
         logger.warning(
             "Could not register the multiplexer child-health metrics sampler "
@@ -1613,8 +1598,8 @@ def _request_capabilities() -> frozenset[str]:
     Either path (stdio or HTTP) must resolve to a concrete, authenticated
     capability set: there is no longer a transport that bypasses this check.
     """
-    from arbora.api.contracts.session import current_session
     from arbora.security.anonymous import admitted_actor
+    from arbora.security.session import current_session
 
     session = current_session()
     if session is not None and admitted_actor(session.actor):
@@ -2002,22 +1987,9 @@ def _swap_local_provider_components(
 # reached the ONE shared session-per-server pool every other caller also
 # uses, which this wiring never does.
 # ---------------------------------------------------------------------------
-_REMOTE_OAUTH_BROKERS: dict[str, _typing.Any] = {}
-_REMOTE_OAUTH_BROKERS_LOCK = threading.Lock()
 _CURRENT_DISCOVERY_BINDING: contextvars.ContextVar[_typing.Any | None] = (
     contextvars.ContextVar("current_discovery_binding", default=None)
 )
-
-
-def _oauth_gated(cfg: _collections_abc.Mapping[str, _typing.Any]) -> bool:
-    """True when a remote MCP child catalog entry declares a per-principal
-    OAuth provider (``oauth_provider``, a ``ProviderDescriptor``-shaped dict).
-    ``False`` (including for any malformed value) leaves the existing
-    service-credential/static-header path completely unchanged -- validation
-    of a truthy value happens in :func:`_remote_oauth_broker_for`, which
-    fails closed on a bad admin config rather than silently ignoring it."""
-    provider_cfg = cfg.get("oauth_provider")
-    return isinstance(provider_cfg, dict) and bool(provider_cfg)
 
 
 def _tenant_local_discovery_binding() -> _typing.Any | None:
@@ -2029,10 +2001,10 @@ def _tenant_local_discovery_binding() -> _typing.Any | None:
     not derive an OAuth-like digest from roles/scopes or accept catalog fields.
     """
     try:
-        from arbora.api.contracts.session import current_session
         from arbora.fleet.discovery_authority import (
             TenantLocalDiscoveryBinding,
         )
+        from arbora.security.session import current_session
 
         session = current_session()
         if session is None or not getattr(session.actor, "authenticated", False):
@@ -2043,124 +2015,6 @@ def _tenant_local_discovery_binding() -> _typing.Any | None:
         return TenantLocalDiscoveryBinding(tenant_id=tenant)
     except (ImportError, PermissionError, TypeError, ValueError):
         return None
-
-
-def _remote_oauth_broker_for(
-    provider_cfg: _collections_abc.Mapping[str, _typing.Any],
-) -> tuple[_typing.Any, _typing.Any]:
-    """Return ``(RemoteOAuthBroker, ProviderDescriptor)`` for one admin-declared
-    provider block, reusing ONE broker instance per ``provider_id`` so its
-    encrypted token store and DCR registration cache persist across calls
-    instead of being rebuilt (and, for DCR, re-registered) on every request."""
-    from arbora.fleet.remote_oauth_broker import (
-        ProviderDescriptor,
-        ProviderRegistry,
-        RemoteOAuthBroker,
-    )
-
-    descriptor = ProviderDescriptor(**provider_cfg)
-    with _REMOTE_OAUTH_BROKERS_LOCK:
-        broker = _REMOTE_OAUTH_BROKERS.get(descriptor.provider_id)
-        if broker is None:
-            registry = ProviderRegistry()
-            registry.register(descriptor)
-            broker = RemoteOAuthBroker(registry=registry)
-            _REMOTE_OAUTH_BROKERS[descriptor.provider_id] = broker
-        else:
-            # Keep the registered descriptor current across a hot catalog
-            # reload (e.g. a scope/enabled-flag change) without discarding the
-            # broker's token store / DCR cache.
-            broker.registry.register(descriptor)
-    return broker, descriptor
-
-
-def _resolve_remote_oauth_bearer(
-    cfg: _collections_abc.Mapping[str, _typing.Any], url: str
-) -> dict[str, str] | None:
-    """Per-principal bearer resolution for an OAuth-gated remote MCP child.
-
-    Returns ``None`` when the child is not OAuth-gated (the existing
-    service-credential/static-header path proceeds completely unchanged).
-    When gated, resolves the VERIFIED current actor
-    (:func:`arbora.security.actor_context.current_actor` -- the same
-    server-minted identity every other authorization decision in this gateway
-    uses, never a caller-supplied string) and mints a bearer bound to the
-    EXACT registered resource endpoint via
-    :meth:`~arbora.fleet.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`.
-    A missing, expired, or revoked grant raises -- fail closed, no fallback to
-    any shared/service credential (U-44/U-45).
-
-    Synchronous (secrets-backend I/O, no coroutine) -- callers run this via
-    ``asyncio.to_thread`` so it never blocks the event loop.
-    """
-    if not _oauth_gated(cfg):
-        return None
-    from arbora.security.actor_context import current_actor
-
-    actor = current_actor()  # IdentityRequiredError (PermissionError) -> fail closed
-    broker, descriptor = _remote_oauth_broker_for(cfg["oauth_provider"])
-    return broker.bearer_headers_for(
-        actor=actor, provider_id=descriptor.provider_id, resource_url=url
-    )
-
-
-def _resolve_remote_oauth_grant(
-    cfg: _collections_abc.Mapping[str, _typing.Any], url: str
-) -> tuple[dict[str, str], _typing.Any] | None:
-    """Resolve one bearer plus the broker-owned, non-secret grant binding."""
-
-    if not _oauth_gated(cfg):
-        return None
-    from arbora.security.actor_context import current_actor
-
-    actor = current_actor()
-    broker, descriptor = _remote_oauth_broker_for(cfg["oauth_provider"])
-    return broker.bearer_headers_and_grant_binding(
-        actor=actor, provider_id=descriptor.provider_id, resource_url=url
-    )
-
-
-def current_remote_oauth_grant_bindings(actor: _typing.Any) -> tuple[_typing.Any, ...]:
-    """Return current broker-resolved grants for a verified actor.
-
-    The registry uses this process-owned broker inventory for its SQL predicate;
-    it never accepts provider/resource/audience/grant identity from a request.
-    Missing, expired, revoked, or legacy token records are omitted so reads fail
-    closed when no exact grant remains.
-    """
-
-    from arbora.fleet.discovery_authority import (
-        OAuthGrantBinding,
-    )
-    from arbora.fleet.remote_oauth_broker import (
-        OAuthProviderError,
-        OAuthScopeError,
-        OAuthTokenAbsentError,
-        OAuthTokenStore,
-    )
-
-    OAuthTokenStore._require_verified(actor)
-    with _REMOTE_OAUTH_BROKERS_LOCK:
-        brokers = tuple(_REMOTE_OAUTH_BROKERS.values())
-    bindings: list[OAuthGrantBinding] = []
-    for broker in brokers:
-        for provider in broker.registry.enabled_providers():
-            try:
-                binding = broker.grant_binding_for(
-                    actor=actor,
-                    provider_id=provider.provider_id,
-                    resource_url=provider.resource_url,
-                )
-            except (
-                OAuthTokenAbsentError,
-                OAuthProviderError,
-                OAuthScopeError,
-                PermissionError,
-            ):
-                continue
-            if isinstance(binding, OAuthGrantBinding):
-                bindings.append(binding)
-    return tuple(sorted(bindings, key=lambda binding: binding.fingerprint))
 
 
 #: The three native Tasks methods this gateway will route at all, and the
@@ -2511,7 +2365,10 @@ class MCPMultiplexer:
     def __init__(
         self,
         catalog_reader: _catalog_reader.FleetCatalogSource,
+        *,
+        fleet: FleetState,
     ):
+        self._fleet = fleet
         self._fleet_catalog_reader = catalog_reader
         self._fleet_catalog: _catalog_reader.FleetCatalog | None = None
         # Wall-clock epoch of the installed snapshot above (ARBORA-FLEET-R031):
@@ -2696,8 +2553,8 @@ class MCPMultiplexer:
         # reporting the same tool unknown — this budget makes the total
         # retries per child generation finite instead of relying on caller
         # good behavior.
-        _LIVE_MULTIPLEXERS.add(self)
-        _register_child_health_sampler()
+        fleet.multiplexers.add(self)
+        _register_child_health_sampler(fleet.multiplexers)
 
     @staticmethod
     def _catalog_config_from_server(
@@ -3189,7 +3046,7 @@ class MCPMultiplexer:
         pipeline; the child capability is re-checked here.
         """
         cfg = self.load_catalog().get(server_name)
-        if cfg is not None and _oauth_gated(cfg):
+        if cfg is not None and oauth_gated(cfg):
             return await self.call_oauth_gated_tool(
                 server_name, original_name, arguments, timeout=timeout
             )
@@ -3214,7 +3071,7 @@ class MCPMultiplexer:
             return _classified_child_error(
                 "UNAVAILABLE", "child is not mountable in the current catalog"
             )
-        if _oauth_gated(cfg):
+        if oauth_gated(cfg):
             raise _fastmcp_exceptions.ToolError(
                 "Server is not a configured service-credential MCP child"
             )
@@ -3254,7 +3111,7 @@ class MCPMultiplexer:
         it), precisely because that sharing is unsafe for a per-user grant.
         This method is its call path instead: open a dedicated, ephemeral
         session bound to the CURRENT caller's own delegated grant
-        (:func:`_resolve_remote_oauth_bearer`, inside
+        (:meth:`RemoteOAuthBrokers.bearer`, inside
         :meth:`_open_one_session`), make exactly one tool call over it, and
         tear the session down — never joining the shared pool, never caching
         anything keyed only by server name. A caller without a valid grant for
@@ -3275,7 +3132,7 @@ class MCPMultiplexer:
         """
         require_fleet_capability("delegate")
         cfg = self.load_catalog().get(server_name)
-        if cfg is None or not _oauth_gated(cfg):
+        if cfg is None or not oauth_gated(cfg):
             raise _fastmcp_exceptions.ToolError(
                 "Server is not a configured OAuth-gated remote MCP child"
             )
@@ -3467,7 +3324,7 @@ class MCPMultiplexer:
         before_oauth_provider_call()
         # ARBORA-FLEET-R077: a plan-confirmed call arms this dedicated session
         # to accept the connector's confirmation, as the pooled path does.
-        async with armed(session, original_name):
+        async with self._fleet.confirmations.armed(session, original_name):
             return await session.call_tool(original_name, arguments)
 
     @staticmethod
@@ -3911,9 +3768,8 @@ class MCPMultiplexer:
             )
         return validated_headers
 
-    @staticmethod
     async def _apply_remote_child_oauth_grant(
-        cfg: dict, url: str, headers: dict[str, str] | None
+        self, cfg: dict, url: str, headers: dict[str, str] | None
     ) -> tuple[dict[str, str] | None, dict[str, str] | None]:
         # NE-008 (GOC-85 Deliverable 3): per-principal remote-OAuth bearer,
         # for a child catalog entry that declares ``oauth_provider``.
@@ -3922,7 +3778,7 @@ class MCPMultiplexer:
         # (missing/expired/revoked grant) rather than falling back to any
         # shared/service credential; the caller sees that failure as this
         # session never opening, exactly like any other connect failure.
-        oauth_grant = await asyncio.to_thread(_resolve_remote_oauth_grant, cfg, url)
+        oauth_grant = await asyncio.to_thread(self._fleet.oauth_brokers.grant, cfg, url)
         if oauth_grant is not None:
             oauth_bearer_headers, discovery_binding = oauth_grant
             _CURRENT_DISCOVERY_BINDING.set(discovery_binding)
@@ -4349,7 +4205,7 @@ class MCPMultiplexer:
                 write_stream,
                 message_handler=self._child_message_handler(server_name, holder),
                 # ARBORA-FLEET-R015.2: confirm only a plan-confirmed armed call.
-                elicitation_callback=answer_elicitation,
+                elicitation_callback=self._fleet.confirmations.answer_elicitation,
             )
         )
         holder.append(session)
@@ -4377,7 +4233,7 @@ class MCPMultiplexer:
         # per-request session path (``probe_server`` for discovery,
         # :meth:`call_oauth_gated_tool` for calls) -- both call
         # :meth:`_open_one_session` directly and never reach here.
-        if _oauth_gated(cfg):
+        if oauth_gated(cfg):
             logger.info(
                 "MCP child is OAuth-gated (oauth_provider); never pool-mounted, "
                 "served only via ephemeral per-principal sessions"
@@ -4464,6 +4320,7 @@ class MCPMultiplexer:
             connect=_connect,
             session_max_age=session_max_age,
             on_generation=_on_generation,
+            confirmations=self._fleet.confirmations,
         )
         try:
             tools = await runtime.start()
@@ -5000,7 +4857,9 @@ class MCPMultiplexer:
             runtime = payload
         else:
             sessions = list(payload) if isinstance(payload, list | tuple) else [payload]
-            runtime = _child_resilience.ChildRuntime(server_name, cfg)
+            runtime = _child_resilience.ChildRuntime(
+                server_name, cfg, confirmations=self._fleet.confirmations
+            )
             runtime.adopt_sessions(sessions)
         self.children[server_name] = runtime
         # `primary_session` is `None` only for a runtime with no adopted
@@ -5414,7 +5273,7 @@ class MCPMultiplexer:
         self._drop_discovery_bindings_for_server(server_name)
         info["probed_at"] = time.time()
         cfg = self.load_catalog().get(server_name)
-        if cfg is not None and _oauth_gated(cfg):
+        if cfg is not None and oauth_gated(cfg):
             return info
         self._probe_cache[server_name] = info
         return info
@@ -5535,7 +5394,7 @@ class MCPMultiplexer:
             if (
                 cached is info
                 and isinstance(cfg, _collections_abc.Mapping)
-                and not _oauth_gated(cfg)
+                and not oauth_gated(cfg)
                 and isinstance(info, dict)
                 and info.get("error") is None
             ):
@@ -5569,7 +5428,7 @@ class MCPMultiplexer:
         every call for one of these servers re-probes live, bound to
         whichever principal is asking THIS time."""
         cfg = self.load_catalog().get(server_name)
-        if cfg is not None and _oauth_gated(cfg):
+        if cfg is not None and oauth_gated(cfg):
             return None
         info = self._probe_cache.get(server_name)
         if info is None:
@@ -6118,6 +5977,7 @@ class MCPMultiplexer:
         declaration: dict[str, _typing.Any],
         *,
         timeout: float,
+        fleet: FleetState,
     ) -> dict[str, _typing.Any]:
         """Probe one in-memory declaration through the canonical child boundary.
 
@@ -6138,7 +5998,7 @@ class MCPMultiplexer:
         materialized = _runtime_materialized(declaration)
         if not materialized:
             _validate_externalized_child_secrets(declaration)
-        multiplexer = cls(_ProbeOnlyCatalogReader())
+        multiplexer = cls(_ProbeOnlyCatalogReader(), fleet=fleet)
         multiplexer._catalog = {server_name: dict(declaration)}
         try:
             return await multiplexer.probe_server(
@@ -6197,7 +6057,7 @@ class MCPMultiplexer:
         Deliverable 3 rules out. Never registered into ``_probe_inflight``
         either, so there is nothing for a later call to join."""
         cfg = self.load_catalog().get(server)
-        oauth_gated_target = cfg is not None and _oauth_gated(cfg)
+        oauth_gated_target = cfg is not None and oauth_gated(cfg)
         if not force and not oauth_gated_target:
             existing = self._probe_inflight.get(server)
             if existing is not None and not existing.done():
@@ -7794,6 +7654,7 @@ def attach_fleet_loader(
     mcp,
     *,
     catalog_reader: _catalog_reader.FleetCatalogSource,
+    fleet: FleetState,
     self_server: str = "arbora",
     embed_fn=None,
     authority_scope=None,
@@ -7830,9 +7691,11 @@ def attach_fleet_loader(
     ``catalog_reader`` is the mandatory arbora/medulla read port. The
     returned multiplexer starts empty and the composition root must await
     ``refresh_engine_catalog()`` before starting children.
+
+    ``fleet`` is the host context's fleet state (ARBORA-HOST-R039.2).
     """
     logger.info("arbora fleet loader initializing")
-    mux = MCPMultiplexer(catalog_reader)
+    mux = MCPMultiplexer(catalog_reader, fleet=fleet)
     # Keep the host solely for lifecycle replacement of mux-owned forwarding
     # schemas after a child generation recovers.  Standalone mux/probe paths
     # deliberately leave this unset.

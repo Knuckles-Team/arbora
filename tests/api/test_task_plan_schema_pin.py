@@ -284,7 +284,7 @@ class _ScopedEngine(_Engine):
         idempotency_key: Any = None,
     ) -> Any:
         if self.context is None:
-            from arbora.api.contracts.session import SessionRequiredError
+            from arbora.security.session import SessionRequiredError
 
             raise SessionRequiredError("a verified client context is required")
         self.seen_contexts.append(dict(self.context))

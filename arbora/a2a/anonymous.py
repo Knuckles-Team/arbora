@@ -335,8 +335,8 @@ class AnonymousTaskReadOwner:
         if binding.used or task_id != binding.caller.task_id:
             raise PermissionError("Anonymous read binding changed")
         binding.used = True
-        from arbora.api.contracts.session import suspend_session
         from arbora.security.actor_context import suspend_actor
+        from arbora.security.session import suspend_session
 
         # Stay on the admitting task. Cancellation holds capacity until the
         # provider has actually unwound; no detached thread retains authority.

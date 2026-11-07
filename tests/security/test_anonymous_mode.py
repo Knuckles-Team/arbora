@@ -29,9 +29,9 @@ def local_mode(monkeypatch):
 
 
 def test_anonymous_provenance_is_not_verified(local_mode):
-    from arbora.api.contracts.session import SessionRequiredError
     from arbora.api.invoke.steps import AnonymousCaller, authenticate
     from arbora.api.mcp.caller import caller_from_session
+    from arbora.security.session import SessionRequiredError
 
     session = anonymous.session()
     assert session.actor.authenticated is False
@@ -560,10 +560,10 @@ async def test_new_surface_relays_refuse_anonymous_before_child(local_mode, surf
 
 @pytest.mark.parametrize("fail", [False, True])
 def test_delegation_restores_context_on_success_and_error(local_mode, fail):
-    from arbora.api.contracts.session import current_session, use_session
     from arbora.api.mcp.caller import caller_from_session
     from arbora.fleet.gateway_ops import _verified_delegation
     from arbora.security.actor_context import current_actor, use_actor
+    from arbora.security.session import current_session, use_session
 
     prior = anonymous.session()
     caller = caller_from_session(anonymous.session(), credential_kind="none")

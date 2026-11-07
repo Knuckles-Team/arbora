@@ -10,9 +10,10 @@ so it answers that request itself, from authority it already holds:
   ``plan_ref`` is refused before dispatch.
 * :func:`confirmed_plan_call` marks that one dispatch: the tool the plan
   confirmed, in the caller's context.
-* :func:`armed` holds the mark on the exact child session for exactly the
-  duration of that tool call, one armed call per session at a time.
-* :func:`answer_elicitation` accepts a confirmation only on an armed session,
+* :meth:`PlanConfirmations.armed` holds the mark on the exact child session
+  for exactly the duration of that tool call, one armed call per session at a
+  time.
+* :meth:`PlanConfirmations.answer_elicitation` accepts a confirmation only on an armed session,
   only once per armed call, only for the boolean ``confirmed`` form the SDK
   asks, and only when the request names the armed tool. Everything else is
   declined, so an unconfirmed call keeps failing closed.
@@ -34,7 +35,7 @@ from typing import Any
 
 from mcp import types
 
-__all__ = ["answer_elicitation", "armed", "confirmed_plan_call", "plan_confirmed"]
+__all__ = ["PlanConfirmations", "confirmed_plan_call", "plan_confirmed"]
 
 #: The child tool a consumed plan confirmed for the current dispatch.
 _CONFIRMED_TOOL: ContextVar[str | None] = ContextVar(
@@ -47,10 +48,6 @@ _ACTION = re.compile(r"^Are you sure you want to (?P<action>[A-Za-z0-9_.:-]{1,25
 class _Armed:
     tool: str
     used: bool = False
-
-
-_ARMED: weakref.WeakKeyDictionary[Any, _Armed] = weakref.WeakKeyDictionary()
-_LOCKS: weakref.WeakKeyDictionary[Any, asyncio.Lock] = weakref.WeakKeyDictionary()
 
 
 @contextlib.contextmanager
@@ -66,21 +63,6 @@ def confirmed_plan_call(tool: str) -> Iterator[None]:
 def plan_confirmed(tool: str) -> bool:
     """Whether this dispatch is the call a consumed plan confirmed for ``tool``."""
     return _CONFIRMED_TOOL.get() == tool
-
-
-@contextlib.asynccontextmanager
-async def armed(session: Any, tool: str) -> AsyncIterator[None]:
-    """Arm ``session`` for one confirmation while the confirmed ``tool`` runs."""
-    if _CONFIRMED_TOOL.get() != tool:
-        yield
-        return
-    lock = _LOCKS.setdefault(session, asyncio.Lock())
-    async with lock:
-        _ARMED[session] = _Armed(tool)
-        try:
-            yield
-        finally:
-            _ARMED.pop(session, None)
 
 
 def _asks_boolean_confirmation(params: Any) -> bool:
@@ -99,15 +81,42 @@ def _names_tool(message: Any, tool: str) -> bool:
     return action == tool or tool.endswith("_" + action)
 
 
-async def answer_elicitation(context: Any, params: Any) -> types.ElicitResult:
-    """The child session's elicitation callback: confirm an armed call, else decline."""
-    current = _ARMED.get(getattr(context, "session", None))
-    if (
-        current is None
-        or current.used
-        or not _asks_boolean_confirmation(params)
-        or not _names_tool(getattr(params, "message", None), current.tool)
-    ):
-        return types.ElicitResult(action="decline")
-    current.used = True
-    return types.ElicitResult(action="accept", content={"confirmed": True})
+class PlanConfirmations:
+    """The armed child sessions of one fleet; one armed call per session at a time."""
+
+    __slots__ = ("_armed", "_locks")
+
+    def __init__(self) -> None:
+        self._armed: weakref.WeakKeyDictionary[Any, _Armed] = (
+            weakref.WeakKeyDictionary()
+        )
+        self._locks: weakref.WeakKeyDictionary[Any, asyncio.Lock] = (
+            weakref.WeakKeyDictionary()
+        )
+
+    @contextlib.asynccontextmanager
+    async def armed(self, session: Any, tool: str) -> AsyncIterator[None]:
+        """Arm ``session`` for one confirmation while the confirmed ``tool`` runs."""
+        if _CONFIRMED_TOOL.get() != tool:
+            yield
+            return
+        lock = self._locks.setdefault(session, asyncio.Lock())
+        async with lock:
+            self._armed[session] = _Armed(tool)
+            try:
+                yield
+            finally:
+                self._armed.pop(session, None)
+
+    async def answer_elicitation(self, context: Any, params: Any) -> types.ElicitResult:
+        """The child session's elicitation callback: confirm an armed call, else decline."""
+        current = self._armed.get(getattr(context, "session", None))
+        if (
+            current is None
+            or current.used
+            or not _asks_boolean_confirmation(params)
+            or not _names_tool(getattr(params, "message", None), current.tool)
+        ):
+            return types.ElicitResult(action="decline")
+        current.used = True
+        return types.ElicitResult(action="accept", content={"confirmed": True})

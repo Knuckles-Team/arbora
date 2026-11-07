@@ -324,7 +324,37 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 | `ARBORA-HOST-R036` | `tests/test_run_receipt_commit.py::test_terminal_commit_carries_run_trace_nodes` | Planned, not yet written |
 | `ARBORA-HOST-R037` | `arbora/connector_runner.py::ConnectorRunnerComposition` | Planned, not yet written |
 | `ARBORA-HOST-R037` | `tests/test_connector_runner.py::test_missing_release_lock_fails_bootstrap` | Planned, not yet written |
-| ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_unit_imports_follow_layers_and_no_cycle_remains`  | Package units form a layered, acyclic import graph. |
-| ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_every_unit_is_named_in_exactly_one_layer` | `arbora/layers.toml` names every unit once and nothing else. |
+| ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_unit_imports_follow_layers_and_no_cycle_remains` (planned) | Package units form a layered, acyclic import graph. |
+| ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_every_unit_is_named_in_exactly_one_layer` | The coupling policy's layer table in `pyproject.toml` names every unit once and nothing else. |
 | ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_scan_reports_each_rule_with_its_location` | The scanner reports an upward import, a private reach, an unlayered unit and a cycle with their location, and passes a downward import. |
 | ARBORA-HOST-R039 | `tests/mcp_server/test_host_context.py::test_two_host_contexts_share_no_module_state` | Runtime state is created at the composition root. |
+| ARBORA-HOST-R038.1 | `tests/architecture/test_unit_layers.py::test_api_ops_import_no_subsystem` and `tests/api/test_operation_ports.py::test_registry_builds_from_fake_ports_and_serves_each_op_family` (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.2 | `tests/architecture/test_unit_layers.py::test_fleet_gateway_deployment_do_not_import_mcp_server` and `tests/fleet/test_multiplexer_arguments.py::test_multiplexer_uses_only_the_engine_it_was_given` (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.3 | `tests/architecture/test_unit_layers.py::test_a2a_browser_modality_do_not_import_mcp_server` and `tests/a2a/test_authority_uses_the_given_run_port.py::test_authority_never_default_constructs_a_run_port` (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.4 | `tests/architecture/test_unit_layers.py::test_runs_plans_work_items_and_services_import_no_host_or_subsystem` (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.5 | `tests/architecture/test_unit_layers.py::test_api_and_identity_import_no_subsystem_or_host` and `tests/api/test_mcp_surface_registration.py::test_six_verbs_register_from_mcp_server` (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.6 | `tests/core/test_task_plan_config.py::test_core_settings_load_without_importing_api_or_mcp_server` (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.7 | `tests/architecture/test_unit_layers.py::test_no_cycle_remains_between_units_of_one_layer` (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.8 | `tests/architecture/test_unit_layers.py::test_no_unit_imports_another_units_private_name` (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.9 | `tests/architecture/test_module_size.py::test_no_module_exceeds_the_line_bound` and `tests/fleet/test_multiplexer_collaborators.py::test_each_collaborator_is_built_without_a_multiplexer` (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.10 | `tests/architecture/test_module_size.py::test_no_module_exceeds_the_line_bound` (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.11 | `tests/architecture/test_module_size.py::test_no_module_exceeds_the_line_bound` (L2). | The named conditions hold. |
+| ARBORA-HOST-R038.12 | `tests/architecture/test_unit_layers.py::test_unit_imports_follow_layers_and_no_cycle_remains` (L2). | The named conditions hold. |
+| ARBORA-HOST-R039.1 | `tests/mcp_server/test_host_context.py::test_two_host_contexts_share_no_module_state` (L2). | The named conditions hold. |
+| ARBORA-HOST-R039.2 | `tests/fleet/test_fleet_state.py::test_two_fleet_states_share_no_registry` (L2). | The named conditions hold. |
+| ARBORA-HOST-R039.3 | `tests/access/test_policy_state.py::test_two_policy_states_do_not_share_a_cache` (L2). | The named conditions hold. |
+| ARBORA-HOST-R039.4 | `tests/observability/test_observability_state.py::test_two_instances_keep_separate_health_windows_and_buffers` (L2). | The named conditions hold. |
+| ARBORA-HOST-R039.5 | `tests/mcp_server/test_host_caches.py::test_two_host_caches_register_independent_tool_tables` (L2). | The named conditions hold. |
+| ARBORA-HOST-R039.6 | `tests/browser_control/test_browser_state.py::test_two_browser_states_own_separate_owner_loops` (L2). | The named conditions hold. |
+| ARBORA-HOST-R039.7 | `tests/gateway/test_gateway_state.py::test_importing_the_gateway_creates_no_router_or_registry` (L2). | The named conditions hold. |
+| ARBORA-HOST-R039.8 | `tests/mcp_server/test_engine_handles.py::test_two_engine_handles_hold_separate_pools` (L2). | The named conditions hold. |
+| ARBORA-HOST-R039.9 | `tests/security/test_process_authority.py::test_two_authorities_hold_separate_sessions_and_stop_events` (L2). | The named conditions hold. |
+| ARBORA-HOST-R039.10 | `tests/architecture/test_no_orphan_modules.py::test_no_host_lock_module` (L2). | The named conditions hold. |
+| ARBORA-HOST-R039.11 | `tests/core/test_runtime_config.py::test_two_runtime_configs_do_not_share_state` (L2). | The named conditions hold. |
+| ARBORA-HOST-R039.12 | `tests/architecture/test_no_suppressions.py::test_no_noqa_ble001_type_ignore_or_pragma_no_cover_remains` (L2). | The named conditions hold. |
+| ARBORA-HOST-R039.13 | `tests/mcp_server/test_host_context.py::test_import_of_every_unit_creates_no_mutable_module_state` (L2). | The named conditions hold. |
+| ARBORA-HOST-R040 | Rollup closes when `.1` to `.4` pass. Root test: `tests/test_dependency_floors.py::test_pins_match_the_adopted_releases` (L2). | The named conditions hold. |
+| ARBORA-HOST-R040.1 | `tests/test_dependency_floors.py::test_no_agent_utilities_reference_remains` and `tests/test_dependency_floors.py::test_pins_match_the_adopted_releases` (L2). | The named conditions hold. |
+| ARBORA-HOST-R040.2 | `tests/mcp_server/test_harness_ports.py::test_every_run_entry_point_receives_the_host_ports` and `tests/mcp_server/test_harness_ports.py::test_no_register_call_remains` (L2). | The named conditions hold. |
+| ARBORA-HOST-R040.3 | `tests/test_dependency_floors.py::test_every_scion_sdk_import_resolves_on_the_pinned_release` (L2). | The named conditions hold. |
+| ARBORA-HOST-R040.4 | `scripts/wheel_boot_check.py::main` through `tests/test_wheel_boot_check.py::test_boot_check_calls_doctor_find_and_status` (L3). | The named conditions hold. |

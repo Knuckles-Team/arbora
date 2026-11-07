@@ -19,6 +19,7 @@ from arbora.api.ops import (
     ingest,
     memory,
     messaging,
+    models,
     ops,
     plans,
     policy,
@@ -90,6 +91,7 @@ _CURATED_SCOPES = (
     "agent:pack-control",
     "fleet:control",
     "mcp:admin",
+    "registry:read",
 )
 
 _ENGINE_METHODS = {
@@ -148,6 +150,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *ingest.operations(),
         *memory.operations(),
         *messaging.operations(),
+        *models.operations(),
         *security.operations(),
         *telemetry.operations(),
         *usage.operations(),

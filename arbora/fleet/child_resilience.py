@@ -65,7 +65,7 @@ from typing import Any
 
 import anyio
 
-from arbora.fleet.plan_confirmation import armed
+from arbora.fleet.plan_confirmation import PlanConfirmations
 from arbora.fleet.protocol_compat import mcp_protocol_error
 from arbora.observability.gateway_metrics import (
     MCP_CHILD_BREAKER_STATE,
@@ -402,10 +402,13 @@ class ChildRuntime:
         restart_backoff_cap: float = RESTART_BACKOFF_CAP,
         session_max_age: float | None = None,
         on_generation: GenerationCallback | None = None,
+        confirmations: PlanConfirmations,
     ) -> None:
         from arbora.core.settings import runtime_config as config
 
         self.name = name
+        # ARBORA-HOST-R039.2: the fleet's armed plan confirmations.
+        self._confirmations = confirmations
         self.cfg = dict(cfg or {})
 
         self.max_concurrency = _bounded_int(
@@ -1238,7 +1241,7 @@ class ChildRuntime:
             )
             # ARBORA-FLEET-R015.2: a plan-confirmed destructive call arms this
             # session to answer the connector's confirmation request.
-            async with armed(session, original_name):
+            async with self._confirmations.armed(session, original_name):
                 return await session.call_tool(original_name, arguments)
 
         inner = asyncio.ensure_future(invoke())

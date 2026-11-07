@@ -260,7 +260,7 @@ def _resolve_graph_name(graph: str) -> str:
     string. Mirrors the same resolution :func:`_client_factory` already uses
     for the graph view, so the call argument and the view scope
     always agree."""
-    from arbora.api.contracts.session import resolve_session
+    from arbora.security.session import resolve_session
 
     session = resolve_session()
     if graph and graph != session.graph:
@@ -331,7 +331,7 @@ _NORMAL_DOMAINS: frozenset[str] = frozenset(
 
 #: Scope an acting identity must carry — as this literal scope string in the
 #: active, verified
-#: :class:`~arbora.api.contracts.session.GraphSession` — to
+#: :class:`~arbora.security.session.GraphSession` — to
 #: invoke an ADMIN-domain action. A generic ``admin`` role never substitutes;
 #: only an explicit or identity-mapped ``kg:admin`` grant qualifies.
 ENGINE_ADMIN_SCOPE = "kg:admin"
@@ -429,7 +429,7 @@ def action_policy(domain: str, action: str) -> dict[str, Any]:
 
 def _enforce_action_scope(domain: str, action: str) -> None:
     """Require the immutable session's read/write/admin scope."""
-    from arbora.api.contracts.session import resolve_session
+    from arbora.security.session import resolve_session
 
     resolve_session(required_scope=action_policy(domain, action)["scope"])
 
@@ -539,7 +539,7 @@ def _dispatch(
     # on the very next entry) and this branch is skipped, so recursion
     # terminates after exactly one narrowing; it is structurally incapable
     # of recursing a second time.
-    from arbora.api.contracts.session import current_session
+    from arbora.security.session import current_session
 
     session = current_session()
     if graph and session is not None and session.graph != graph:

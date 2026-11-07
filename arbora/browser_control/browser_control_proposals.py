@@ -12,7 +12,6 @@ from dataclasses import dataclass
 
 from scion_sdk.privacy import persistence_reference
 
-from arbora.api.contracts.session import resolve_session
 from arbora.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserCallRequest,
@@ -32,6 +31,7 @@ from arbora.browser_control.browser_control_state import (
 )
 from arbora.browser_control.browser_control_validation import validate_json_schema
 from arbora.run_origin import NativeCallOrigin, require_native_call_origin
+from arbora.security.session import resolve_session
 
 logger = logging.getLogger(__name__)
 

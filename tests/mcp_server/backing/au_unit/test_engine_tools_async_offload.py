@@ -53,10 +53,10 @@ import pytest
 pytest.importorskip("medulla.client")
 
 
-from arbora.api.contracts.session import GraphSession, use_session
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools import engine_tools
 from arbora.security.actor_context import ActorContext, ActorType, use_actor
+from arbora.security.session import GraphSession, use_session
 
 ADMIN_ACTOR = ActorContext(
     actor_id="principal:ops",

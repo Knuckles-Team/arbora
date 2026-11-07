@@ -10,6 +10,7 @@ import time
 from collections.abc import Callable, Sequence
 from typing import Any
 
+from arbora.fleet.state import FleetState
 from arbora.gateway.ports import configure_gateway_application
 from arbora.mcp_server import runtime
 from arbora.mcp_server.hosted_invocation import HostedInvocation
@@ -223,8 +224,11 @@ class CoServiceSupervisor:
 class NativeGatewayApplication:
     """Concrete application behavior behind the gateway transport port."""
 
-    def __init__(self, invocation: HostedInvocation | None = None) -> None:
+    def __init__(
+        self, invocation: HostedInvocation | None = None, *, fleet: FleetState
+    ) -> None:
         self._invocation = invocation
+        self._fleet = fleet
 
     async def execute_tool(self, tool: str, /, **kwargs: Any) -> Any:
         return await runtime._execute_tool(tool, **kwargs)
@@ -278,19 +282,17 @@ class NativeGatewayApplication:
         app.mount((prefix.rstrip("/") or "/api") + "/v1", child)
 
     def remote_oauth_grant_bindings(self, actor: Any) -> Sequence[Any]:
-        from arbora.fleet.multiplexer import (
-            current_remote_oauth_grant_bindings,
-        )
-
-        return current_remote_oauth_grant_bindings(actor)
+        return self._fleet.oauth_brokers.grant_bindings(actor)
 
 
 def install_gateway_application(
     invocation: HostedInvocation | None = None,
+    *,
+    fleet: FleetState,
 ) -> NativeGatewayApplication:
     """Install the native application adapter at the process composition root."""
 
-    application = NativeGatewayApplication(invocation)
+    application = NativeGatewayApplication(invocation, fleet=fleet)
     configure_gateway_application(application)
     return application
 

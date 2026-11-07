@@ -621,7 +621,7 @@ async def _admit_native_plan_run(
     """
     import arbora.work_items as work_items
     from arbora.a2a import authority as a2a_authority
-    from arbora.api.contracts.session import use_session
+    from arbora.security.session import use_session
 
     engine = context.services.get("task_plan_work_engine")
     if engine is None:
@@ -764,7 +764,7 @@ async def _commit_native_plan_run(
     from scion_sdk.privacy import persistence_reference
 
     import arbora.work_items as work_items
-    from arbora.api.contracts.session import use_session
+    from arbora.security.session import use_session
 
     if admission.claim is None:
         raise RuntimeError("native plan terminal commit has no claim")
@@ -843,9 +843,9 @@ async def _publish_and_execute_native_plan(
     """Run native plans through the existing publication/owner scopes."""
     import arbora.work_items as work_items
     from arbora import agent_runs
-    from arbora.api.contracts.session import use_session
     from arbora.current_plan_publication import bind_admitted_claim
     from arbora.mcp_server import task_plan_runtime
+    from arbora.security.session import use_session
 
     try:
         eg = import_module("medulla.generated.coordination")

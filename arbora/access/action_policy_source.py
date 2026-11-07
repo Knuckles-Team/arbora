@@ -192,7 +192,7 @@ async def qualified_policy_source_async(policy: Any) -> _QualifiedPolicySource:
     A stalled file worker therefore denies capacity rather than accumulating
     detached workers. File latency and parsing CPU are not wall-clock bounded.
     """
-    from arbora.api.contracts.session import resolve_session
+    from arbora.security.session import resolve_session
 
     try:
         engine, path = policy.engine, policy.policy_path

@@ -484,8 +484,8 @@ class AnonymousTextService:
             binding[2] - asyncio.get_running_loop().time()
         )
         plan = replace(template, steps=(text,), initial_elapsed_seconds=max(0, elapsed))
-        from arbora.api.contracts.session import suspend_session
         from arbora.security.actor_context import suspend_actor
+        from arbora.security.session import suspend_session
 
         with suspend_session(), suspend_actor():
             result = await AgentRunExecutor().execute_text_only(

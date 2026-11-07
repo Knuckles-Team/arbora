@@ -199,11 +199,11 @@ def verified_tool_session_scope():
     dispatch. The error surface deliberately omits principal, tenant, token,
     endpoint, and policy values.
     """
-    from arbora.api.contracts.session import (
+    from arbora.security.actor_context import use_actor
+    from arbora.security.session import (
         current_session,
         use_session,
     )
-    from arbora.security.actor_context import use_actor
 
     ambient = current_session()
     session = ambient or _PROCESS_SESSION
@@ -341,7 +341,7 @@ async def _execute_tool(tool_name: str, **kwargs) -> Any:
     # reserved read lane ahead of a saturating background-ingestion write storm. Tag ONLY
     # when the context is UNTAGGED: a re-entrant call from a delegated agent (ORCHESTRATION)
     # or a background task (BACKGROUND_INGESTION) keeps its own, lower class — never upgraded.
-    from arbora.access.priority import (
+    from arbora.core.priority import (
         PriorityClass,
         current_priority,
         priority_scope,
@@ -988,14 +988,14 @@ def _served_caller_session() -> Any:
     ``_PROCESS_SESSION`` is bound only on the stdio transport, so a network
     request without its own verified session resolves no caller.
     """
-    from arbora.api.contracts.session import current_session
+    from arbora.security.session import current_session
 
     return current_session() or _PROCESS_SESSION
 
 
 def _served_credential_kind() -> str:
-    from arbora.api.contracts.session import current_session
     from arbora.security.anonymous import admitted_actor
+    from arbora.security.session import current_session
 
     session = current_session() or _PROCESS_SESSION
     if session is not None and admitted_actor(session.actor):
@@ -1032,7 +1032,7 @@ def _register_served_intent_surface(mcp: Any, invocation: Any) -> Any:
     )
 
 
-def _attach_headless_fleet_loader(mcp: Any) -> None:
+def _attach_headless_fleet_loader(mcp: Any, fleet: Any) -> None:
     """Attach the fleet loader (MERISTEM-CONTROL-R031) to a headless build.
 
     The served process attaches the fleet in :mod:`arbora.mcp_server.server`;
@@ -1050,6 +1050,7 @@ def _attach_headless_fleet_loader(mcp: Any) -> None:
         attach_fleet_loader(
             mcp,
             catalog_reader=DeferredFleetCatalogReader(),
+            fleet=fleet,
             authority_scope=verified_tool_session_scope,
         )
     except Exception as exc:  # noqa: BLE001 - cause recorded verbatim below, never swallowed
@@ -1077,5 +1078,9 @@ def ensure_tools_registered() -> None:
     """
     if _FULL_TOOL_NAMES and _FULL_TOOL_NAMES <= REGISTERED_TOOLS.keys():
         return
-    _args, mcp, _middlewares = _build_server(bootstrap=False)
-    _attach_headless_fleet_loader(mcp)
+    from arbora.mcp_server.host_context import build_host_context
+
+    # A headless build (no served process) owns a context of its own.
+    host = build_host_context(_get_engine)
+    _args, mcp, _middlewares = _build_server(bootstrap=False, host=host)
+    _attach_headless_fleet_loader(mcp, host.fleet)

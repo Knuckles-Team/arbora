@@ -8,7 +8,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
-from arbora.api.contracts.session import resolve_session
 from arbora.browser_control.browser_control_api import (
     BrowserCallRequest,
     BrowserDiscoveryReceipt,
@@ -19,6 +18,7 @@ from arbora.browser_control.browser_control_api import (
     ReconcileCallRequest,
     RevokeLeaseRequest,
 )
+from arbora.security.session import resolve_session
 
 BrowserControlAction = Literal[
     "discover",

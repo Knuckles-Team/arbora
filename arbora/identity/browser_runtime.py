@@ -25,8 +25,8 @@ class BrowserCallerResolver:
         self.authority, self.verify_token, self.graph = authority, verify_token, graph
 
     async def __call__(self, token: str, credential: str) -> Any:
-        from arbora.api.contracts.session import GraphSession
         from arbora.security.actor_context import ActorContext, ActorType
+        from arbora.security.session import GraphSession
 
         verified = await self.verify_token(token)
         # Resolve after verification's possible JWKS await. No user lookup or

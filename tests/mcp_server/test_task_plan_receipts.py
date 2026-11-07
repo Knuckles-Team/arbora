@@ -21,19 +21,19 @@ pytest.importorskip("medulla.decision_stat")
 
 from arbora.access import action_policy  # noqa: E402
 from arbora.api import task_plan_schema  # noqa: E402
-from arbora.api.contracts.session import (  # noqa: E402
-    GraphSession,
-    SessionExpiredError,
-    current_session,
-    resolve_session,
-    use_session,
-)
 from arbora.epistemic import ClientContext  # noqa: E402
 from arbora.mcp_server import served_engine, served_invocation  # noqa: E402
 from arbora.security.actor_context import (  # noqa: E402
     ActorContext,
     ActorType,
     CredentialLease,
+)
+from arbora.security.session import (  # noqa: E402
+    GraphSession,
+    SessionExpiredError,
+    current_session,
+    resolve_session,
+    use_session,
 )
 
 

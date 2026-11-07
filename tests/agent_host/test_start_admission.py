@@ -23,10 +23,10 @@ from arbora.agent_host.start_configuration import (
     HostRuntimeResources,
     HostStartConfiguration,
 )
-from arbora.api.contracts.session import GraphSession
 from arbora.identity.engine import Resolution
 from arbora.identity.ports import SessionState
 from arbora.security.actor_context import ActorContext
+from arbora.security.session import GraphSession
 
 
 class Owners:

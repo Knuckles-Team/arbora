@@ -452,7 +452,7 @@ def _run_graph_query_federated(
         # registry.  Federation repeats this guard at its lower boundary, but
         # the composition root must not even initialize/read registry state for
         # an unauthenticated request.
-        from arbora.api.contracts.session import resolve_session
+        from arbora.security.session import resolve_session
 
         resolve_session(required_scope="kg:read")
         engine = runtime._get_engine()
@@ -2113,8 +2113,8 @@ async def _catalog_sources() -> dict[str, Any]:
     ensures one malformed optional profile degrades only the ``sources`` leg.
     """
 
-    from arbora.api.contracts.session import resolve_session
     from arbora.ingest.source_catalog import build_source_catalog
+    from arbora.security.session import resolve_session
 
     # ``graph_catalog`` verifies this at its public boundary; retain the same
     # check here for direct in-process calls before touching the registry.
@@ -2932,7 +2932,7 @@ def register_query_tools(mcp):
             # ``_execute_tool`` already scopes served calls, but this explicit
             # check protects direct MCP-function invocation and documents the
             # metadata boundary: profile/connection status is a governed read.
-            from arbora.api.contracts.session import resolve_session
+            from arbora.security.session import resolve_session
 
             resolve_session(required_scope="kg:read")
         except Exception as e:  # noqa: BLE001
@@ -3090,7 +3090,7 @@ def register_query_tools(mcp):
                 # closing the gap where vector/hybrid results reached an external
                 # caller completely unfiltered, unlike the guarded `graph_query`
                 # Cypher path.
-                from arbora.api.contracts.session import (
+                from arbora.security.session import (
                     current_session,
                 )
 

@@ -48,7 +48,7 @@ from arbora.access.action_policy import (
     ActionRequest,
     get_action_policy,
 )
-from arbora.api.contracts.session import GraphSession, resolve_session
+from arbora.security.session import GraphSession, resolve_session
 
 __all__ = [
     "PackImportAuthorityResolver",

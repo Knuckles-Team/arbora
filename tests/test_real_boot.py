@@ -848,7 +848,6 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
 
     from arbora import current_plan_publication, work_items
     from arbora.a2a.authority import WorkItemA2AAuthority
-    from arbora.api.contracts.session import use_session
     from arbora.api.invoke.pipeline import invoke
     from arbora.api.invoke.steps import OpResult
     from arbora.api.mcp.caller import caller_from_session
@@ -866,6 +865,7 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
         actor_from_bearer_token,
         mint_graph_session,
     )
+    from arbora.security.session import use_session
 
     with _booted_stack(
         extra_token_roles=("work:read", "work:write"),

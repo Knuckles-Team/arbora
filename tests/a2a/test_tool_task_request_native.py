@@ -10,9 +10,9 @@ from medulla import MedullaClient
 
 from arbora.a2a.tool_task import ToolTaskRequest
 from arbora.a2a.tool_task_requests import EgToolTaskRequestStore
-from arbora.api.contracts.session import use_session
 from arbora.epistemic import ConnectClient, EpistemicClientPool
 from arbora.mcp_server.served_engine import ServedEngine
+from arbora.security.session import use_session
 from tests.a2a.test_tool_task_native import _session
 from tests.test_real_boot import PROCESS_SUBJECT, TENANT, _booted_stack
 

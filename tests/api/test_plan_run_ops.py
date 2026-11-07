@@ -22,10 +22,10 @@ from meristem.graph import DependencyPlan  # noqa: E402
 from pydantic_ai.messages import ModelResponse, TextPart  # noqa: E402
 from pydantic_ai.models.function import FunctionModel  # noqa: E402
 
-from arbora.api.contracts.session import GraphSession  # noqa: E402
 from arbora.api.invoke.pipeline import OperationRefused  # noqa: E402
 from arbora.api.ops import plans  # noqa: E402
 from arbora.security.actor_context import ActorContext, ActorType  # noqa: E402
+from arbora.security.session import GraphSession  # noqa: E402
 
 PRINCIPAL = "user:alice"
 TENANT = "tenant-a"
