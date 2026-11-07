@@ -59,14 +59,21 @@ This file records the extension points of each target harness, read on 2026-11-0
 - No repository holds a plugin or marketplace file of the ecosystem today.
 - The `universal-installer` skill of the catalog links skills into harness skill directories and patches harness MCP config. It holds a per-target frontmatter contract table. `US-CONTENT-R007.4` stops it from wiring the four bundle profiles, so one door exists per harness. `US-CONTENT-R007.1` makes every skill pass the strictest contract as written, so the renderers copy skills unchanged.
 
-## Open owner decisions
+## Owner decisions (resolved 2026-11-07)
 
-| ID | Decision | Default in these rows |
+The owner took the default of every decision. The rows above are written to these answers.
+
+| ID | Decision | Resolution |
 |---|---|---|
-| D1 | Where the public marketplace catalog lives, if any. Options: no public catalog, a catalog file in the arbora repository, or a separate catalog repository. | No public catalog. Install writes a local marketplace file. |
-| D2 | Whether the `opencode` module ships as a template in the arbora wheel or as a package on the public registry. | Template in the wheel. |
+| D1 | Where the public marketplace catalog lives, if any. | No public catalog. Install writes a local marketplace file. |
+| D2 | How the `opencode` module ships. | A template in the arbora wheel. |
 | D3 | Whether hooks may write to arbora without a preview. | Yes, only the workstream operations, only on the caller's own session, with `Confirm.NONE`. |
-| D4 | Whether the bundle skill set is a declared list or an engine selection per profile. | Declared list, empty by default, plus the door skills. |
-| D5 | Whether the workspace digest uses the root path or the origin remote and branch. | Root path, hashed with the principal by arbora. Two worktrees are two workstreams. |
-| D6 | Whether install may remove a hand-written door entry itself. | No. Install refuses and prints the step. |
-| D7 | Whether the catalog installer keeps its other harness targets or is removed whole. | It keeps the other targets; only the four bundle profiles move. |
+| D4 | Declared skill list or engine selection per profile. | A declared list, empty by default, plus the two door skills. |
+| D5 | What the workspace digest hashes. | The root path, hashed with the principal by arbora. Two worktrees are two workstreams. |
+| D6 | Whether install may remove a hand-written door entry itself. | No. Install refuses `DUPLICATE_DOOR` and prints each removal step. |
+| D7 | Whether the catalog installer keeps its other harness targets. | It keeps them; only the four bundle profiles move. |
+
+## Verified on a live harness (2026-11-07)
+
+- `opencode` 2.2.5 loads `Plugin.define` modules from `<config>/opencode/plugins/<name>/`. Its plugin context holds `mcp` with `list`, `transform` and `reload` only, so a hook cannot call a tool of a connected MCP server. R006.3 uses the hook runner.
+- `claude-code` `mcp_tool` hooks substitute `${path}` in string values of `input` and never start an OAuth flow.
