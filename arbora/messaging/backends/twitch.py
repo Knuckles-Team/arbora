@@ -64,6 +64,8 @@ class TwitchBackend(MessagingBackend):
         if not token:
             raise ValueError("Set TWITCH_OAUTH_TOKEN.")
 
+        queue = self._event_queue
+
         class AgentBot(commands.Bot):
             def __init__(self, **kwargs: Any) -> None:
                 super().__init__(**kwargs)
@@ -86,7 +88,7 @@ class TwitchBackend(MessagingBackend):
                         direction=MessageDirection.INBOUND,
                     ),
                 )
-                await self._event_queue.put(ev)
+                await queue.put(ev)
 
         self._bot = AgentBot(
             token=token,
