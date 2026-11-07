@@ -47,7 +47,7 @@ deliberately deferred:
 8. Gateway callback + authorize routes (NE-008) —
    :mod:`arbora.gateway.remote_oauth_api`, mountable by one call.            DONE
 9. Per-principal remote MCP path (U-44) + per-call authorization (U-44/U-45 wiring,
-   NE-008) — :func:`arbora.fleet.multiplexer._resolve_remote_oauth_bearer`,
+   NE-008) — :meth:`arbora.fleet.oauth_brokers.RemoteOAuthBrokers.bearer`,
    invoked from ``_open_one_session`` ONLY for a catalog entry explicitly opted in via
    an admin-configured ``oauth_provider`` block, and ONLY ever over an ephemeral,
    per-request session — such a server is never pool-mounted (``_start_child`` skips
@@ -1501,7 +1501,7 @@ class RemoteOAuthBroker:
 
         This is the seam a per-principal multiplexer child (Deliverable 3, GOC-85
         W06/W08) calls per outbound request, via
-        :func:`arbora.fleet.multiplexer._resolve_remote_oauth_bearer`.
+        :meth:`arbora.fleet.oauth_brokers.RemoteOAuthBrokers.bearer`.
         ``resource_url`` must equal the provider's registered exact resource URL,
         or this raises rather than forwarding a token to a different endpoint
         (rejects cross-provider forwarding, and — because the caller passes the

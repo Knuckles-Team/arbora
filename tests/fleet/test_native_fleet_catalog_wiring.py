@@ -19,6 +19,7 @@ from arbora.fleet.catalog_reader import (
 )
 from arbora.fleet.multiplexer import MCPMultiplexer
 from arbora.fleet.session_notifications import SessionCatalogNotifications
+from arbora.fleet.state import FleetState
 
 CONTEXT = ReadContext(
     tenant_id="tenant-a",
@@ -92,7 +93,7 @@ def test_reader_is_the_only_catalog_authority() -> None:
         context=CONTEXT,
         servers=(_server("remote-child", "https://engine.example/mcp", {}),),
     )
-    mux = MCPMultiplexer(Reader(snapshot))
+    mux = MCPMultiplexer(Reader(snapshot), fleet=FleetState())
 
     assert mux.load_catalog() == {}
     catalog = asyncio.run(mux.refresh_engine_catalog())
@@ -121,7 +122,7 @@ def test_engine_component_transport_policy_is_preserved() -> None:
             ),
         ),
     )
-    mux = MCPMultiplexer(Reader(snapshot))
+    mux = MCPMultiplexer(Reader(snapshot), fleet=FleetState())
 
     catalog = asyncio.run(mux.refresh_engine_catalog())
 

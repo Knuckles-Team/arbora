@@ -23,6 +23,7 @@ from arbora.fleet.child_resilience import (
     MCPChildUnavailableError,
     MCPError,
 )
+from arbora.fleet.plan_confirmation import PlanConfirmations
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
 
@@ -75,7 +76,11 @@ class EchoSession:
 
 async def test_concurrency_limit_enforced_and_excess_call_gets_busy_error():
     session = GatedSession()
-    runtime = ChildRuntime("limited", {"max_concurrency": 2, "queue_timeout": 0.05})
+    runtime = ChildRuntime(
+        "limited",
+        {"max_concurrency": 2, "queue_timeout": 0.05},
+        confirmations=PlanConfirmations(),
+    )
     runtime.adopt_sessions([session])
 
     first = asyncio.create_task(runtime.call_tool("t", {}))
@@ -98,7 +103,11 @@ async def test_concurrency_limit_enforced_and_excess_call_gets_busy_error():
 
 async def test_queued_call_proceeds_when_slot_frees_within_timeout():
     session = GatedSession()
-    runtime = ChildRuntime("queued", {"max_concurrency": 1, "queue_timeout": 5.0})
+    runtime = ChildRuntime(
+        "queued",
+        {"max_concurrency": 1, "queue_timeout": 5.0},
+        confirmations=PlanConfirmations(),
+    )
     runtime.adopt_sessions([session])
 
     first = asyncio.create_task(runtime.call_tool("t", {}))
@@ -115,18 +124,22 @@ async def test_queued_call_proceeds_when_slot_frees_within_timeout():
 
 
 async def test_per_server_max_concurrency_override_beats_global_default():
-    runtime = ChildRuntime("custom", {"max_concurrency": 3})
+    runtime = ChildRuntime(
+        "custom", {"max_concurrency": 3}, confirmations=PlanConfirmations()
+    )
     assert runtime.max_concurrency == 3
 
     from arbora.core.settings import runtime_config as config
 
-    runtime_default = ChildRuntime("default", {})
+    runtime_default = ChildRuntime("default", {}, confirmations=PlanConfirmations())
     assert runtime_default.max_concurrency == config.mcp_child_max_concurrency
 
 
 async def test_zero_max_concurrency_is_rejected():
     with pytest.raises(ValueError, match="max_concurrency"):
-        ChildRuntime("unlimited", {"max_concurrency": 0})
+        ChildRuntime(
+            "unlimited", {"max_concurrency": 0}, confirmations=PlanConfirmations()
+        )
 
 
 @pytest.mark.usefixtures("stdio_fleet_authority")
@@ -138,7 +151,11 @@ async def test_multiplexer_surfaces_busy_error_as_typed_tool_result(tmp_path):
     # "child" as a live, configured server.
     mux._catalog = {"child": {}}
     session = GatedSession()
-    runtime = ChildRuntime("child", {"max_concurrency": 1, "queue_timeout": 0.05})
+    runtime = ChildRuntime(
+        "child",
+        {"max_concurrency": 1, "queue_timeout": 0.05},
+        confirmations=PlanConfirmations(),
+    )
     runtime.adopt_sessions([session])
     mux.children["child"] = runtime
     mux.tool_to_server["ch__tool"] = ("child", "tool")
@@ -166,7 +183,9 @@ async def test_multiplexer_surfaces_busy_error_as_typed_tool_result(tmp_path):
 
 async def test_session_pool_round_robins_parallel_calls_across_connections():
     pool = [GatedSession(), GatedSession()]
-    runtime = ChildRuntime("pooled", {"max_concurrency": 4})
+    runtime = ChildRuntime(
+        "pooled", {"max_concurrency": 4}, confirmations=PlanConfirmations()
+    )
     runtime.adopt_sessions(pool)
 
     tasks = [asyncio.create_task(runtime.call_tool("t", {})) for _ in range(4)]
@@ -288,7 +307,11 @@ async def test_stdio_child_ignores_pool_size_and_keeps_one_pipe(tmp_path, monkey
 
 async def test_call_timeout_detaches_cleanly_and_keeps_session_usable():
     session = GatedSession()
-    runtime = ChildRuntime("slowpoke", {"max_concurrency": 2, "call_timeout": 0.05})
+    runtime = ChildRuntime(
+        "slowpoke",
+        {"max_concurrency": 2, "call_timeout": 0.05},
+        confirmations=PlanConfirmations(),
+    )
     runtime.adopt_sessions([session])
 
     with pytest.raises(MCPChildCallTimeoutError) as exc:
@@ -310,7 +333,9 @@ async def test_call_timeout_detaches_cleanly_and_keeps_session_usable():
 
 async def test_caller_cancellation_does_not_cancel_the_child_side_call():
     session = GatedSession()
-    runtime = ChildRuntime("cancelled", {"max_concurrency": 2})
+    runtime = ChildRuntime(
+        "cancelled", {"max_concurrency": 2}, confirmations=PlanConfirmations()
+    )
     runtime.adopt_sessions([session])
 
     caller = asyncio.create_task(runtime.call_tool("t", {}))
@@ -332,6 +357,7 @@ async def test_detached_timeouts_apply_backpressure_until_child_recovers():
     runtime = ChildRuntime(
         "wedged",
         {"max_concurrency": 1, "call_timeout": 0.05, "queue_timeout": 0.05},
+        confirmations=PlanConfirmations(),
     )
     runtime.adopt_sessions([session])
 
@@ -403,6 +429,7 @@ async def test_mux_does_not_replay_unannotated_proxied_call_after_transport_loss
         connect=connector,
         restart_backoff_base=0.01,
         restart_backoff_cap=0.02,
+        confirmations=PlanConfirmations(),
     )
     await runtime.start()
     mux = multiplexer_from_fixture(tmp_path / "catalog.json")
@@ -433,6 +460,7 @@ async def test_mux_retries_explicitly_read_only_call_on_unchanged_recovered_sche
         connect=connector,
         restart_backoff_base=0.01,
         restart_backoff_cap=0.02,
+        confirmations=PlanConfirmations(),
     )
     await runtime.start()
     mux = multiplexer_from_fixture(tmp_path / "catalog.json")
@@ -461,6 +489,7 @@ async def test_mux_rechecks_catalog_epoch_after_child_queue_wait(tmp_path):
     runtime = ChildRuntime(
         "child",
         {"max_concurrency": 1, "queue_timeout": 0.5},
+        confirmations=PlanConfirmations(),
     )
     runtime.adopt_sessions([session])
     mux.children["child"] = runtime
@@ -483,7 +512,7 @@ async def test_mux_rechecks_catalog_epoch_after_child_queue_wait(tmp_path):
 async def test_call_tool_rejects_stale_generation_before_session_invocation():
     retired = EchoSession("retired")
     current = EchoSession("current")
-    runtime = ChildRuntime("generation-bound", {})
+    runtime = ChildRuntime("generation-bound", {}, confirmations=PlanConfirmations())
     runtime.adopt_sessions([retired])
     admitted_generation = runtime.generation
     runtime.adopt_sessions([current])
@@ -515,6 +544,7 @@ async def test_crash_triggers_restart_and_child_recovers():
         connect=connector,
         restart_backoff_base=0.01,
         restart_backoff_cap=0.02,
+        confirmations=PlanConfirmations(),
     )
     tools = await runtime.start()
     assert tools == ["tool_a"]
@@ -559,6 +589,7 @@ async def test_generation_callback_gates_calls_until_recovered_catalog_is_publis
         restart_backoff_base=0.005,
         restart_backoff_cap=0.005,
         on_generation=on_generation,
+        confirmations=PlanConfirmations(),
     )
     await runtime.start()
 
@@ -593,6 +624,7 @@ async def test_generation_callback_failure_does_not_strand_recovered_child(caplo
         restart_backoff_base=0.005,
         restart_backoff_cap=0.005,
         on_generation=on_generation,
+        confirmations=PlanConfirmations(),
     )
     await runtime.start()
 
@@ -641,6 +673,7 @@ async def test_terminated_session_auto_reconnects_and_retries(monkeypatch):
         connect=connector,
         restart_backoff_base=0.01,
         restart_backoff_cap=0.02,
+        confirmations=PlanConfirmations(),
     )
     await runtime.start()
     assert runtime.state == "up"
@@ -664,6 +697,7 @@ async def test_terminated_session_surfaces_if_reconnect_also_dead():
         connect=connector,
         restart_backoff_base=0.01,
         restart_backoff_cap=0.02,
+        confirmations=PlanConfirmations(),
     )
     await runtime.start()
     with pytest.raises(MCPError):
@@ -679,6 +713,7 @@ async def test_calls_during_restart_fail_fast_with_typed_error():
         connect=connector,
         restart_backoff_base=0.01,
         restart_backoff_cap=0.02,
+        confirmations=PlanConfirmations(),
     )
     await runtime.start()
 
@@ -710,6 +745,7 @@ async def test_restart_budget_exhaustion_parks_child_as_failed():
         connect=connector,
         restart_backoff_base=0.01,
         restart_backoff_cap=0.02,
+        confirmations=PlanConfirmations(),
     )
     await runtime.start()
     runtime.request_restart(reason="test crash")
@@ -732,6 +768,7 @@ async def test_zero_max_restarts_disables_auto_restart():
         {"max_concurrency": 2, "max_restarts": 0, "queue_timeout": 0.05},
         connect=connector,
         restart_backoff_base=0.01,
+        confirmations=PlanConfirmations(),
     )
     await runtime.start()
     # With no restart budget the transient death parks the child FAILED
@@ -749,7 +786,9 @@ async def test_zero_max_restarts_disables_auto_restart():
 
 async def test_boot_connect_failure_raises_and_does_not_retry():
     connector = GenerationConnector([ConnectionRefusedError("nobody home")])
-    runtime = ChildRuntime("stillborn", {}, connect=connector)
+    runtime = ChildRuntime(
+        "stillborn", {}, connect=connector, confirmations=PlanConfirmations()
+    )
     with pytest.raises(ConnectionRefusedError):
         await runtime.start()
     assert connector.connects == 1
@@ -758,7 +797,9 @@ async def test_boot_connect_failure_raises_and_does_not_retry():
 
 async def test_multiplexer_status_snapshot_reports_every_child(tmp_path):
     mux = multiplexer_from_fixture(tmp_path / "c.json")
-    up = ChildRuntime("alive", {"max_concurrency": 4})
+    up = ChildRuntime(
+        "alive", {"max_concurrency": 4}, confirmations=PlanConfirmations()
+    )
     up.adopt_sessions([EchoSession()])
     mux.children["alive"] = up
 
@@ -795,7 +836,11 @@ class FlakySession:
 
 async def test_breaker_opens_after_consecutive_transport_failures_then_recovers():
     session = FlakySession(failures=2)
-    runtime = ChildRuntime("breaky", {"breaker_threshold": 2, "breaker_cooldown": 0.05})
+    runtime = ChildRuntime(
+        "breaky",
+        {"breaker_threshold": 2, "breaker_cooldown": 0.05},
+        confirmations=PlanConfirmations(),
+    )
     runtime.adopt_sessions([session])
 
     # ChildRuntime.call_tool retries once on a transient child death, so a
@@ -835,7 +880,9 @@ async def test_failed_half_open_probe_reopens_the_circuit(monkeypatch):
     )
     session = FlakySession(failures=10)
     runtime = ChildRuntime(
-        "relapse", {"breaker_threshold": 1, "breaker_cooldown": 0.05}
+        "relapse",
+        {"breaker_threshold": 1, "breaker_cooldown": 0.05},
+        confirmations=PlanConfirmations(),
     )
     runtime.adopt_sessions([session])
 
@@ -861,7 +908,9 @@ async def test_failed_half_open_probe_reopens_the_circuit(monkeypatch):
 
 async def test_zero_breaker_threshold_disables_short_circuiting():
     session = FlakySession(failures=10)
-    runtime = ChildRuntime("unbroken", {"breaker_threshold": 0})
+    runtime = ChildRuntime(
+        "unbroken", {"breaker_threshold": 0}, confirmations=PlanConfirmations()
+    )
     runtime.adopt_sessions([session])
 
     for _ in range(4):
@@ -879,7 +928,9 @@ async def test_application_errors_do_not_trip_the_breaker():
         async def call_tool(self, name: str, arguments: dict[str, Any]) -> Any:
             raise ValueError("bad arguments for this tool")
 
-    runtime = ChildRuntime("chatty", {"breaker_threshold": 2})
+    runtime = ChildRuntime(
+        "chatty", {"breaker_threshold": 2}, confirmations=PlanConfirmations()
+    )
     runtime.adopt_sessions([AppErrorSession()])
 
     for _ in range(5):
@@ -894,6 +945,7 @@ async def test_busy_rejections_do_not_count_as_breaker_failures():
     runtime = ChildRuntime(
         "swamped",
         {"max_concurrency": 1, "queue_timeout": 0.02, "breaker_threshold": 2},
+        confirmations=PlanConfirmations(),
     )
     runtime.adopt_sessions([session])
 
@@ -916,7 +968,11 @@ async def test_multiplexer_surfaces_circuit_open_as_typed_tool_result(tmp_path):
     # truthfulness check, not something a test may route around — sees
     # "fused" as a live, configured server.
     mux._catalog = {"fused": {}}
-    runtime = ChildRuntime("fused", {"breaker_threshold": 1, "breaker_cooldown": 60.0})
+    runtime = ChildRuntime(
+        "fused",
+        {"breaker_threshold": 1, "breaker_cooldown": 60.0},
+        confirmations=PlanConfirmations(),
+    )
     runtime.adopt_sessions([FlakySession(failures=1)])
     mux.children["fused"] = runtime
     mux.tool_to_server["fu__tool"] = ("fused", "tool")
@@ -973,6 +1029,7 @@ async def test_session_recycled_before_token_ttl_not_counted_as_restart():
         session_max_age=0.05,
         restart_backoff_base=0.01,
         restart_backoff_cap=0.02,
+        confirmations=PlanConfirmations(),
     )
     await runtime.start()
     assert connector.connects == 1 and runtime.state == "up"
@@ -994,7 +1051,9 @@ async def test_session_recycled_before_token_ttl_not_counted_as_restart():
 async def test_no_recycle_without_session_max_age():
     """Children with no token to manage (session_max_age=None) never recycle."""
     connector = GenerationConnector([EchoSession("only"), EchoSession("unused")])
-    runtime = ChildRuntime("static", {}, connect=connector)
+    runtime = ChildRuntime(
+        "static", {}, connect=connector, confirmations=PlanConfirmations()
+    )
     await runtime.start()
     await asyncio.sleep(0.05)
     await runtime.call_tool("foo", {})
@@ -1005,7 +1064,9 @@ async def test_no_recycle_without_session_max_age():
 
 async def test_runtime_status_reports_limits_and_load():
     session = GatedSession()
-    runtime = ChildRuntime("statusy", {"max_concurrency": 2})
+    runtime = ChildRuntime(
+        "statusy", {"max_concurrency": 2}, confirmations=PlanConfirmations()
+    )
     runtime.adopt_sessions([session])
 
     task = asyncio.create_task(runtime.call_tool("t", {}))
@@ -1029,7 +1090,11 @@ async def test_half_open_preflight_termination_releases_probe(monkeypatch, outco
         SimpleNamespace(monotonic=lambda: clock.now),
     )
     session = EchoSession("healthy")
-    runtime = ChildRuntime("probe", {"breaker_threshold": 1, "breaker_cooldown": 1})
+    runtime = ChildRuntime(
+        "probe",
+        {"breaker_threshold": 1, "breaker_cooldown": 1},
+        confirmations=PlanConfirmations(),
+    )
     runtime.adopt_sessions([session])
     runtime.breaker.record_failure()
     clock.now += 2
@@ -1068,7 +1133,7 @@ async def test_half_open_preflight_termination_releases_probe(monkeypatch, outco
 
 async def test_preflight_release_then_cancellation_never_dispatches():
     session = EchoSession("healthy")
-    runtime = ChildRuntime("cancel-race", {})
+    runtime = ChildRuntime("cancel-race", {}, confirmations=PlanConfirmations())
     runtime.adopt_sessions([session])
     started, release = asyncio.Event(), asyncio.Event()
 
@@ -1104,6 +1169,7 @@ async def test_expired_preflight_deadline_keeps_healthy_generation(
         "expired-preflight",
         {"call_timeout": 60, "breaker_threshold": 1, "breaker_cooldown": 1},
         connect=connector,
+        confirmations=PlanConfirmations(),
     )
     await runtime.start()
     try:

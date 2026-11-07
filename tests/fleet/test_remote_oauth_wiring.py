@@ -1,7 +1,7 @@
 """Multiplexer wiring for the remote-OAuth broker (NE-008 Deliverable 3).
 
 Proves the per-principal path added to
-``arbora.fleet.multiplexer`` -- ``_resolve_remote_oauth_bearer``
+``arbora.fleet.multiplexer`` -- ``RemoteOAuthBrokers.bearer``
 (the seam invoked from ``_open_one_session``), the pool-exclusion guard in
 ``_start_child``, and the probe-cache exclusion in ``_cache_probe``/
 ``_probe_cache_hit`` -- without re-deriving the attack matrix already proven
@@ -33,6 +33,7 @@ from arbora.fleet.discovery_authority import (
     OAuthGrantBinding,
     TenantLocalDiscoveryBinding,
 )
+from arbora.fleet.oauth_brokers import RemoteOAuthBrokers
 from arbora.fleet.remote_oauth_broker import (
     OAuthProviderError,
     OAuthTokenAbsentError,
@@ -124,28 +125,21 @@ def _broker_with_stored_token(
     return broker
 
 
-@pytest.fixture(autouse=True)
-def _clean_broker_singleton_cache():
-    """``_REMOTE_OAUTH_BROKERS`` is a module-level, provider_id-keyed cache --
-    isolate every test from whatever another test (or another provider_id
-    reuse) left behind."""
-    mod._REMOTE_OAUTH_BROKERS.clear()
-    yield
-    mod._REMOTE_OAUTH_BROKERS.clear()
+@pytest.fixture
+def brokers() -> RemoteOAuthBrokers:
+    """A fleet's own provider-keyed broker cache, fresh for every test."""
+    return RemoteOAuthBrokers()
 
 
 # ---------------------------------------------------------------------------
-# _resolve_remote_oauth_bearer — the seam, unit-level
+# RemoteOAuthBrokers.bearer — the seam, unit-level
 # ---------------------------------------------------------------------------
-def test_non_gated_config_returns_none():
-    assert (
-        mod._resolve_remote_oauth_bearer({"headers": {"X-Foo": "bar"}}, RESOURCE_URL)
-        is None
-    )
-    assert mod._resolve_remote_oauth_bearer({}, RESOURCE_URL) is None
+def test_non_gated_config_returns_none(brokers):
+    assert brokers.bearer({"headers": {"X-Foo": "bar"}}, RESOURCE_URL) is None
+    assert brokers.bearer({}, RESOURCE_URL) is None
 
 
-def test_fails_closed_for_unauthenticated_actor(monkeypatch):
+def test_fails_closed_for_unauthenticated_actor(brokers, monkeypatch):
     unauth = ActorContext(actor_id="anon", tenant_id="tenant-1", authenticated=False)
     # Pre-seed a fake-secrets-backed broker (like every other test here) so
     # this exercises the actor-authenticated check itself, not whatever the
@@ -156,55 +150,57 @@ def test_fails_closed_for_unauthenticated_actor(monkeypatch):
     fake_broker = RemoteOAuthBroker(
         registry=registry, secrets_client=SecretsClient(backend=FakeSecretsBackend())
     )
-    mod._REMOTE_OAUTH_BROKERS["acme"] = fake_broker
+    brokers._brokers["acme"] = fake_broker
     cfg = {"oauth_provider": _provider_cfg()}
     with use_actor(unauth):
         with pytest.raises(PermissionError):
-            mod._resolve_remote_oauth_bearer(cfg, RESOURCE_URL)
+            brokers.bearer(cfg, RESOURCE_URL)
 
 
-def test_fails_closed_without_any_stored_grant(monkeypatch):
+def test_fails_closed_without_any_stored_grant(brokers, monkeypatch):
     actor = verified_actor()
     registry = ProviderRegistry()
     registry.register(ProviderDescriptor(**_provider_cfg()))
     empty_broker = RemoteOAuthBroker(
         registry=registry, secrets_client=SecretsClient(backend=FakeSecretsBackend())
     )
-    mod._REMOTE_OAUTH_BROKERS["acme"] = empty_broker
+    brokers._brokers["acme"] = empty_broker
     cfg = {"oauth_provider": _provider_cfg()}
     with use_actor(actor):
         with pytest.raises(OAuthTokenAbsentError):
-            mod._resolve_remote_oauth_bearer(cfg, RESOURCE_URL)
+            brokers.bearer(cfg, RESOURCE_URL)
 
 
-def test_fails_closed_on_expired_grant():
+def test_fails_closed_on_expired_grant(brokers):
     actor = verified_actor()
     broker = _broker_with_stored_token(actor=actor, expires_in=-10.0)  # already expired
-    mod._REMOTE_OAUTH_BROKERS["acme"] = broker
+    brokers._brokers["acme"] = broker
     cfg = {"oauth_provider": _provider_cfg()}
     with use_actor(actor):
         with pytest.raises(OAuthTokenAbsentError):
-            mod._resolve_remote_oauth_bearer(cfg, RESOURCE_URL)
+            brokers.bearer(cfg, RESOURCE_URL)
 
 
-def test_happy_path_returns_bound_bearer():
+def test_happy_path_returns_bound_bearer(brokers):
     actor = verified_actor()
     broker = _broker_with_stored_token(actor=actor)
-    mod._REMOTE_OAUTH_BROKERS["acme"] = broker
+    brokers._brokers["acme"] = broker
     cfg = {"oauth_provider": _provider_cfg()}
     with use_actor(actor):
-        headers = mod._resolve_remote_oauth_bearer(cfg, RESOURCE_URL)
+        headers = brokers.bearer(cfg, RESOURCE_URL)
     assert headers == {"Authorization": f"Bearer {ACCESS_TOKEN}"}
 
 
-def test_grant_resolution_returns_process_owned_binding_without_bearer_persistence():
+def test_grant_resolution_returns_process_owned_binding_without_bearer_persistence(
+    brokers,
+):
     actor = verified_actor()
     broker = _broker_with_stored_token(actor=actor)
-    mod._REMOTE_OAUTH_BROKERS["acme"] = broker
+    brokers._brokers["acme"] = broker
     cfg = {"oauth_provider": _provider_cfg()}
     with use_actor(actor):
-        resolved = mod._resolve_remote_oauth_grant(cfg, RESOURCE_URL)
-        current = mod.current_remote_oauth_grant_bindings(actor)
+        resolved = brokers.grant(cfg, RESOURCE_URL)
+        current = brokers.grant_bindings(actor)
     assert resolved is not None
     headers, binding = resolved
     assert isinstance(binding, OAuthGrantBinding)
@@ -214,46 +210,46 @@ def test_grant_resolution_returns_process_owned_binding_without_bearer_persisten
     assert all(secret not in repr(binding) for secret in (ACCESS_TOKEN,))
 
 
-def test_rejects_rebound_endpoint():
+def test_rejects_rebound_endpoint(brokers):
     """A token minted for RESOURCE_URL must never be released for a
     DIFFERENT URL -- even one on the same provider's catalog entry (e.g. a
     rebound/redirected connect target). This is the exact non-negotiable
     property: "never forward to a rebound endpoint"."""
     actor = verified_actor()
     broker = _broker_with_stored_token(actor=actor)
-    mod._REMOTE_OAUTH_BROKERS["acme"] = broker
+    brokers._brokers["acme"] = broker
     cfg = {"oauth_provider": _provider_cfg()}
     with use_actor(actor):
         with pytest.raises(OAuthProviderError):
-            mod._resolve_remote_oauth_bearer(cfg, REBOUND_URL)
+            brokers.bearer(cfg, REBOUND_URL)
         # The correctly-bound URL still works with the SAME stored grant --
         # proves the rejection above is endpoint-specific, not a broken token.
-        headers = mod._resolve_remote_oauth_bearer(cfg, RESOURCE_URL)
+        headers = brokers.bearer(cfg, RESOURCE_URL)
     assert headers == {"Authorization": f"Bearer {ACCESS_TOKEN}"}
 
 
-def test_cross_principal_reuse_rejected():
+def test_cross_principal_reuse_rejected(brokers):
     """A grant stored for user-a must never be usable by user-b, even against
     the SAME provider/resource and the SAME broker instance."""
     owner = verified_actor(actor_id="user-a")
     attacker = verified_actor(actor_id="user-b")
     broker = _broker_with_stored_token(actor=owner)
-    mod._REMOTE_OAUTH_BROKERS["acme"] = broker
+    brokers._brokers["acme"] = broker
     cfg = {"oauth_provider": _provider_cfg()}
     with use_actor(attacker):
         with pytest.raises(OAuthTokenAbsentError):
-            mod._resolve_remote_oauth_bearer(cfg, RESOURCE_URL)
+            brokers.bearer(cfg, RESOURCE_URL)
 
 
-def test_cross_tenant_reuse_rejected():
+def test_cross_tenant_reuse_rejected(brokers):
     owner = verified_actor(actor_id="user-a", tenant_id="tenant-1")
     other_tenant = verified_actor(actor_id="user-a", tenant_id="tenant-2")
     broker = _broker_with_stored_token(actor=owner)
-    mod._REMOTE_OAUTH_BROKERS["acme"] = broker
+    brokers._brokers["acme"] = broker
     cfg = {"oauth_provider": _provider_cfg()}
     with use_actor(other_tenant):
         with pytest.raises(OAuthTokenAbsentError):
-            mod._resolve_remote_oauth_bearer(cfg, RESOURCE_URL)
+            brokers.bearer(cfg, RESOURCE_URL)
 
 
 # ---------------------------------------------------------------------------
@@ -385,8 +381,8 @@ async def test_probe_server_with_grant_forwards_bearer_bound_to_the_endpoint(
 ):
     actor = verified_actor()
     broker = _broker_with_stored_token(actor=actor)
-    mod._REMOTE_OAUTH_BROKERS["acme"] = broker
     mux = multiplexer_from_fixture(tmp_path / "c.json")
+    mux._fleet.oauth_brokers._brokers["acme"] = broker
     cfg = {"url": RESOURCE_URL, "oauth_provider": _provider_cfg()}
     mux._catalog = {"acme-remote": cfg}
     with use_actor(actor):
@@ -517,8 +513,8 @@ async def test_probe_server_result_never_cached_across_principals(
     owner = verified_actor(actor_id="user-a")
     stranger = verified_actor(actor_id="user-b")
     broker = _broker_with_stored_token(actor=owner)
-    mod._REMOTE_OAUTH_BROKERS["acme"] = broker
     mux = multiplexer_from_fixture(tmp_path / "c.json")
+    mux._fleet.oauth_brokers._brokers["acme"] = broker
     cfg = {"url": RESOURCE_URL, "oauth_provider": _provider_cfg()}
     mux._catalog = {"acme-remote": cfg}
 
@@ -545,8 +541,8 @@ async def test_probe_catalog_returns_plain_oauth_snapshot_and_private_binding(
 ):
     actor = verified_actor()
     broker = _broker_with_stored_token(actor=actor)
-    mod._REMOTE_OAUTH_BROKERS["acme"] = broker
     mux = multiplexer_from_fixture(tmp_path / "c.json")
+    mux._fleet.oauth_brokers._brokers["acme"] = broker
     mux._catalog = {
         "acme-remote": {"url": RESOURCE_URL, "oauth_provider": _provider_cfg()}
     }

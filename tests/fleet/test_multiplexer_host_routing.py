@@ -7,6 +7,7 @@ from arbora.fleet.multiplexer import (
     clean_tool_name,
     get_server_prefix,
 )
+from arbora.fleet.state import FleetState
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
 
@@ -140,7 +141,7 @@ async def test_multiplexer_start_child_timeout():
     # Configure a server with a timeout
     cfg = {"command": "python", "args": ["-m", "slow"], "timeout": 0.05}
 
-    multiplexer = MCPMultiplexer(MagicMock())
+    multiplexer = MCPMultiplexer(MagicMock(), fleet=FleetState())
 
     # Mock stdio_client to simulate a long connection/handshake delay
     import contextlib

@@ -28,6 +28,7 @@ from arbora.fleet.catalog_reader import (
     ServerPage,
     ServerRegistration,
 )
+from arbora.fleet.state import FleetState
 
 CONTEXT = ReadContext(
     tenant_id="tenant-a",
@@ -323,7 +324,7 @@ def test_multiplexer_status_reports_unadmitted_servers_and_onboarding() -> None:
             server_page(SERVER, replace(SERVER, server_id="srv:b-mcp", name="b-mcp"))
         ]
     )
-    mux = MCPMultiplexer(FleetCatalogReader(port))
+    mux = MCPMultiplexer(FleetCatalogReader(port), fleet=FleetState())
     assert mux.status_snapshot()["unadmitted_servers"] == []
 
     asyncio.run(mux.refresh_engine_catalog())
