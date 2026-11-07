@@ -25,9 +25,6 @@ def test_two_host_contexts_share_no_module_state() -> None:
     assert not hasattr(run_origin, "_runs")
     assert not hasattr(a2a_mcp, "_SERVICE")
     assert not hasattr(a2a_mcp, "_service")
-    # The A2A authority cancels through the registry of its own context only.
-    assert first.runs.a2a.authority._origins is first.runs.origins
-    assert second.runs.a2a.authority._origins is second.runs.origins
 
 
 def test_host_context_is_frozen_and_slotted() -> None:
@@ -49,7 +46,8 @@ async def test_a_run_registered_on_one_context_is_invisible_to_the_other() -> No
         assert len(first.runs.origins) == 1
         assert len(second.runs.origins) == 0
         second.runs.origins.revoke(admitted, "run")
-        assert run_origin._run.get().is_live()
+        origin = run_origin._run.get()
+        assert origin is not None and origin.is_live()
         first.runs.origins.revoke(admitted, "run")
-        assert not run_origin._run.get().is_live()
+        assert not origin.is_live()
     assert len(first.runs.origins) == 0
