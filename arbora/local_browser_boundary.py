@@ -5,7 +5,6 @@ import json
 import logging
 from typing import Any
 
-from arbora.api.contracts.session import use_session
 from arbora.client.browser_boundary import (
     LOCAL_BROWSER_PATH,
     LocalBrowserBoundary,
@@ -13,6 +12,7 @@ from arbora.client.browser_boundary import (
 )
 from arbora.local_browser_channel import LocalBrowserChannelOwner
 from arbora.security import anonymous
+from arbora.security.session import use_session
 
 _LOG = logging.getLogger(__name__)
 

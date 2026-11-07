@@ -556,6 +556,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R022.2.8` | Test: `tests/api/test_schedule_ops.py::test_pause_and_resume_are_scoped_and_idempotent` (L1). |
 | `ARBORA-OPS-R022.2.9` | Test: `tests/api/test_schedule_ops.py::test_runs_returns_engine_tick_history_unchanged` (L1). |
 | `ARBORA-OPS-R022.2.10` | Test: `tests/api/test_schedule_served.py::test_scheduled_agent_run_fires_pauses_and_reports_over_mcp` (L4). |
+| `ARBORA-OPS-R022.2.11` | Test: `tests/api/test_schedule_ops.py::test_exclusion_group_and_spacing_are_forwarded_and_engine_refusal_is_typed` (L1). |
 | `ARBORA-OPS-R898` | Rollup closes when `.1` to `.8` are verified. Root test: `tests/api/test_process_ops_served.py::test_process_run_waits_for_approval_and_follows_branch` (L4). |
 | `ARBORA-OPS-R898.1` | Test: `tests/api/test_process_ops.py::test_models_round_trip_engine_vectors` (L1). |
 | `ARBORA-OPS-R898.2` | Test: `tests/api/test_process_ops.py::test_plan_returns_engine_plan_unchanged` (L1). |

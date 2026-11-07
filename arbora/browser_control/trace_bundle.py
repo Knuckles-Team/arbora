@@ -17,7 +17,6 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from arbora.api.contracts.session import GraphSession
 from arbora.observability.trace_ontology import (
     OUTCOME_NODE_LABEL,
     TOOL_CALL_NODE_LABEL,
@@ -30,6 +29,7 @@ from arbora.observability.trace_ontology import (
     trace_id,
     trace_properties,
 )
+from arbora.security.session import GraphSession
 
 _ATTRIBUTE_NAME = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
 _ALLOWED_ATTRIBUTES = frozenset(

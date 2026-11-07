@@ -10,7 +10,6 @@ from typing import Any
 from epistemic_graph import EngineResponseError
 
 from arbora.a2a.authority import WorkItemA2AAuthority
-from arbora.api.contracts import use_session
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.executor import ExecutionContext
@@ -35,6 +34,7 @@ from arbora.api.ops.run_replay import (
 from arbora.api.ops.runs import project_current_plan
 from arbora.mcp_server.current_plan_reader import _project, read_native_snapshot
 from arbora.run_origin import RunOriginRegistry
+from arbora.security.session import use_session
 
 _RUN_STATUS = {
     "submitted": "pending",

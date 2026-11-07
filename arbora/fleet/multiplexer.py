@@ -83,7 +83,7 @@ ToolResult = _fastmcp_tools.ToolResult
 from mcp.client.sse import sse_client
 from mcp.client.streamable_http import streamable_http_client
 
-import arbora.access.priority as _resource_priority
+import arbora.core.priority as _resource_priority
 import arbora.fleet.catalog_reader as _catalog_reader
 import arbora.fleet.child_resilience as _child_resilience
 from arbora.core.capability_contract import Capability
@@ -1598,8 +1598,8 @@ def _request_capabilities() -> frozenset[str]:
     Either path (stdio or HTTP) must resolve to a concrete, authenticated
     capability set: there is no longer a transport that bypasses this check.
     """
-    from arbora.api.contracts.session import current_session
     from arbora.security.anonymous import admitted_actor
+    from arbora.security.session import current_session
 
     session = current_session()
     if session is not None and admitted_actor(session.actor):
@@ -2001,10 +2001,10 @@ def _tenant_local_discovery_binding() -> _typing.Any | None:
     not derive an OAuth-like digest from roles/scopes or accept catalog fields.
     """
     try:
-        from arbora.api.contracts.session import current_session
         from arbora.fleet.discovery_authority import (
             TenantLocalDiscoveryBinding,
         )
+        from arbora.security.session import current_session
 
         session = current_session()
         if session is None or not getattr(session.actor, "authenticated", False):

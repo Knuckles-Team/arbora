@@ -252,8 +252,8 @@ def test_changed_native_revision_is_not_same_owner_snapshot(
 def test_expiry_and_owner_mode_change_leave_no_private_binding(
     native_engine, tmp_path, monkeypatch
 ):
-    from arbora.api.contracts.session import SessionExpiredError
     from arbora.security import anonymous
+    from arbora.security.session import SessionExpiredError
 
     engine, session = native_engine
     owner, scope = _owner(engine, tmp_path), _socket()

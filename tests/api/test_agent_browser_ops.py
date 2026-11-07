@@ -40,10 +40,10 @@ def test_agent_and_browser_ops_have_unique_ids_and_surface_limits() -> None:
 async def test_agent_run_uses_the_existing_a2a_service(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import arbora.api.contracts
+    import arbora.security.session
 
     monkeypatch.setattr(
-        arbora.api.contracts, "use_session", lambda _session: nullcontext()
+        arbora.security.session, "use_session", lambda _session: nullcontext()
     )
     calls: list[dict[str, object]] = []
 
@@ -73,10 +73,10 @@ async def test_agent_run_uses_the_existing_a2a_service(
 async def test_browser_op_uses_the_registered_authority(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import arbora.api.contracts
+    import arbora.security.session
 
     monkeypatch.setattr(
-        arbora.api.contracts, "use_session", lambda _session: nullcontext()
+        arbora.security.session, "use_session", lambda _session: nullcontext()
     )
     called: list[tuple[str, dict[str, object]]] = []
 

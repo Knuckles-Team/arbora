@@ -108,7 +108,7 @@ class SendDecision:
 
 
 def _current_session() -> Any:
-    from arbora.api.contracts.session import current_session
+    from arbora.security.session import current_session
 
     return current_session()
 
@@ -283,7 +283,7 @@ def _engine_probe(session: Any) -> dict[str, Any]:
     engine = runtime._get_engine()
     if engine is None:
         return {"status": "unhealthy", "reason": "no engine is bound"}
-    from arbora.api.contracts.session import use_session
+    from arbora.security.session import use_session
 
     if session is None:
         engine.query_cypher(ENGINE_PROBE_QUERY, {})
@@ -294,9 +294,9 @@ def _engine_probe(session: Any) -> dict[str, Any]:
 
 
 def _fleet_probe(session: Any) -> dict[str, Any]:
-    from arbora.api.contracts.session import use_session
     from arbora.fleet.health import collect_fleet_health
     from arbora.gateway import fleet as fleet_api
+    from arbora.security.session import use_session
 
     def _collect() -> Any:
         return collect_fleet_health(

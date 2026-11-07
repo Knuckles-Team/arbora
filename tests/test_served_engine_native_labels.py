@@ -12,10 +12,10 @@ from dataclasses import replace
 import pytest
 
 from arbora.access.action_policy import ActionPolicy, ActionRequest
-from arbora.api.contracts.session import use_session
 from arbora.epistemic import EpistemicClientPool
 from arbora.mcp_server.served_engine import ServedEngine
 from arbora.security import anonymous
+from arbora.security.session import use_session
 from tests.security.test_anonymous_mode import local_mode as local_mode
 from tests.test_real_boot import _free_port, _listening, _terminate, _wait
 

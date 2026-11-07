@@ -9,7 +9,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from arbora import work_items
-from arbora.api.contracts.session import resolve_session
+from arbora.security.session import resolve_session
 
 from .tool_task import WorkItemLeaseLost
 

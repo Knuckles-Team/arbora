@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 from typing import Any, cast
 
-from arbora.api.contracts.session import ScopeError, SessionRequiredError
 from arbora.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserChannelBinding,
@@ -57,6 +56,7 @@ from arbora.browser_control.browser_control_validation import (
 from arbora.browser_control.browser_control_validation import (
     validated_catalog_digests as _validated_catalog_digests,
 )
+from arbora.security.session import ScopeError, SessionRequiredError
 
 _AUTHORITY_RETRY_SECONDS = 1.0
 _MAX_AUTHORITY_RETRY_SECONDS = 30.0

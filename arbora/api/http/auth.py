@@ -14,9 +14,9 @@ from arbora.api.mcp.caller import caller_from_session
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from arbora.api.contracts.session import GraphSession
     from arbora.api.invoke import RequestCaller
     from arbora.security.request_identity import VerifiedLocalBearer
+    from arbora.security.session import GraphSession
 
 
 class HTTPAuthenticationError(PermissionError):

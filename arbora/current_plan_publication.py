@@ -12,9 +12,9 @@ from collections.abc import AsyncIterator, Iterator, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-from arbora.api.contracts.session import use_session
 from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 from arbora.security.anonymous import client_scope, session_context
+from arbora.security.session import use_session
 
 
 @dataclass

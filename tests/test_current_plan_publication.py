@@ -572,9 +572,9 @@ async def test_served_client_view_binds_real_transport_not_view(
 
     from epistemic_graph.generated import coordination
 
-    from arbora.api.contracts.session import current_session
     from arbora.mcp_server.served_engine import SessionRoutedClient
     from arbora.security import anonymous
+    from arbora.security.session import current_session
 
     monkeypatch.setattr(
         anonymous, "_ACTIVE_MODE", "none" if anonymous_mode else "authenticated"

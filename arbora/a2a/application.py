@@ -98,8 +98,8 @@ def caller_session_scope(caller: RequestCaller | None) -> Iterator[None]:
         # Explicit injected authenticators already own their admission/binding.
         yield
         return
-    from arbora.api.contracts.session import use_session
     from arbora.security.actor_context import use_actor
+    from arbora.security.session import use_session
 
     with use_actor(caller.session.actor), use_session(caller.session):
         yield

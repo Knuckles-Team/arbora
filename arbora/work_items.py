@@ -38,7 +38,7 @@ class NativeWorkItemRequired(WorkItemBackendUnavailable):
 
 
 def _session() -> Any:
-    from arbora.api.contracts.session import current_session
+    from arbora.security.session import current_session
 
     session = current_session()
     if session is None:

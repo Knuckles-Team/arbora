@@ -399,7 +399,7 @@ def _schema_action(session: Any, graph: str, pin: Mapping[str, Any]) -> Any:
 
 
 def _schema_session(session: Callable[[], Any], tenant: str, graph: str) -> Any:
-    from arbora.api.contracts.session import ScopeError, resolve_session
+    from arbora.security.session import ScopeError, resolve_session
 
     verified = resolve_session(session(), graph=graph)
     try:
@@ -481,9 +481,9 @@ def _task_plan_schema_publisher(
     session: Callable[[], Any],
 ) -> Callable[[str, Mapping[str, Any]], Coroutine[Any, Any, str]]:
     """The process-lifecycle publisher; it installs the process authority."""
-    from arbora.api.contracts.session import resolve_session, use_session
     from arbora.api.task_plan_schema import engine_publish
     from arbora.mcp_server.served_engine import ServedEngine
+    from arbora.security.session import resolve_session, use_session
 
     async def client_for(tenant: str) -> Any:
         return await pool.connected_client(connect_context(tenant), graph)

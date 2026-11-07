@@ -1,4 +1,7 @@
-"""The arbora package units follow the layer order in ``arbora/layers.toml``.
+"""The arbora package units follow the layer order of the coupling policy.
+
+The order is ``[[tool.pipelines_hooks.coupling.layers]]`` in ``pyproject.toml``,
+the policy the pipelines ``coupling`` gate reads (PIPE-GATES-R088).
 
 ARBORA-HOST-R038: a unit (a top-level module or package under ``arbora/``)
 imports only its own layer or an earlier one, the unit import graph has no
@@ -18,7 +21,9 @@ import pytest
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R038")
 
-PACKAGE = Path(__file__).resolve().parents[2] / "arbora"
+ROOT = Path(__file__).resolve().parents[2]
+PACKAGE = ROOT / "arbora"
+POLICY = "pyproject.toml [tool.pipelines_hooks.coupling.layers]"
 
 
 @dataclass(frozen=True)
@@ -28,9 +33,10 @@ class Finding:
     detail: str
 
 
-def load_layers(path: Path) -> list[tuple[str, tuple[str, ...]]]:
-    data = tomllib.loads(path.read_text(encoding="utf-8"))
-    return [(layer["name"], tuple(layer["units"])) for layer in data["layer"]]
+def load_layers(pyproject: Path) -> list[tuple[str, tuple[str, ...]]]:
+    data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    layers = data["tool"]["pipelines_hooks"]["coupling"]["layers"]
+    return [(layer["name"], tuple(layer["units"])) for layer in layers]
 
 
 def package_units(package: Path) -> set[str]:
@@ -85,7 +91,7 @@ def scan(package: Path, layers: list[tuple[str, tuple[str, ...]]]) -> list[Findi
                 findings.append(
                     Finding(
                         "duplicate-unit",
-                        "arbora/layers.toml",
+                        POLICY,
                         f"{unit} is in two layers",
                     )
                 )
@@ -98,7 +104,7 @@ def scan(package: Path, layers: list[tuple[str, tuple[str, ...]]]) -> list[Findi
         findings.append(
             Finding(
                 "unknown-unit",
-                "arbora/layers.toml",
+                POLICY,
                 f"{unit} is not a unit of the package",
             )
         )
@@ -178,7 +184,7 @@ def _cycles(edges: dict[str, set[str]]) -> Iterator[Finding]:
 
 
 def test_every_unit_is_named_in_exactly_one_layer() -> None:
-    findings = scan(PACKAGE, load_layers(PACKAGE / "layers.toml"))
+    findings = scan(PACKAGE, load_layers(ROOT / "pyproject.toml"))
     misnamed = [
         f
         for f in findings
