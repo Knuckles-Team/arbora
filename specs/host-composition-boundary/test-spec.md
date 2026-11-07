@@ -324,3 +324,5 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 | `ARBORA-HOST-R036` | `tests/test_run_receipt_commit.py::test_terminal_commit_carries_run_trace_nodes` | Planned, not yet written |
 | `ARBORA-HOST-R037` | `arbora/connector_runner.py::ConnectorRunnerComposition` | Planned, not yet written |
 | `ARBORA-HOST-R037` | `tests/test_connector_runner.py::test_missing_release_lock_fails_bootstrap` | Planned, not yet written |
+| ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_unit_imports_follow_layers_and_no_cycle_remains` (planned) | Package units form a layered, acyclic import graph. |
+| ARBORA-HOST-R039 | `tests/mcp_server/test_host_context.py::test_two_host_contexts_share_no_module_state` (planned) | Runtime state is created at the composition root. |
