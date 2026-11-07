@@ -30,6 +30,7 @@ from functools import cache
 from types import MappingProxyType
 from typing import Any
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.mcp_server.backing._arbora_action_manifest import ARBORA_ACTIONS
 from arbora.mcp_server.backing.intent_contract import operation_id
 from arbora.mcp_server.backing.tool_specs import INTENT_VERBS
@@ -220,8 +221,12 @@ def host_operations(mcp: Any) -> Mapping[str, tuple[str, str | None]]:
     return MappingProxyType(table)
 
 
-def arbora_registrars() -> list[Any]:
-    """The action-routed registrars that populate the dispatch core."""
+def arbora_registrars(action_policies: ActionPolicies) -> list[Any]:
+    """The action-routed registrars that populate the dispatch core.
+
+    The governed families (secret, config) gate through the host's
+    ``action_policies``.
+    """
     from arbora.mcp_server.backing import tools as au_tools
 
     return [
@@ -233,8 +238,16 @@ def arbora_registrars() -> list[Any]:
         au_tools.register_ontology_tools,
         au_tools.register_reach_tools,
         au_tools.register_candidate_claim_tools,
-        au_tools.register_secret_tools,
-        au_tools.register_config_tools,
+        (
+            "secret",
+            "SECRETTOOL",
+            lambda server: au_tools.register_secret_tools(server, action_policies),
+        ),
+        (
+            "config",
+            "CONFIGTOOL",
+            lambda server: au_tools.register_config_tools(server, action_policies),
+        ),
         au_tools.register_engine_tools,
         lambda server: au_tools.register_engine_surface_tools(
             server, include_unserved_mining=False
@@ -248,7 +261,11 @@ def arbora_registrars() -> list[Any]:
 
 
 def register_arbora_surface(
-    mcp: Any, *, canonical: bool = False, intent_tools: bool = True
+    mcp: Any,
+    *,
+    action_policies: ActionPolicies,
+    canonical: bool = False,
+    intent_tools: bool = True,
 ) -> Any:
     """Register arbora's intent tools on ``mcp``; return the backing server.
 
@@ -268,7 +285,7 @@ def register_arbora_surface(
     backing = FastMCP("arbora-backing")
     register_backing_tools(
         backing,
-        registrars=arbora_registrars(),
+        registrars=arbora_registrars(action_policies),
         force_registration=canonical,
     )
     mcp._arbora_backing = backing

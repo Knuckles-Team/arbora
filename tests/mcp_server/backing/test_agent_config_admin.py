@@ -20,6 +20,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.mcp_server.backing import agent_config_admin as config_admin
 
 
@@ -177,7 +178,9 @@ def test_set_refuses_an_unknown_key_before_writing(monkeypatch):
         lambda k, v: written.append((k, v)),
     )
     with pytest.raises(config_admin.ConfigAdminError) as exc:
-        config_admin.set_value("NOT_A_REAL_SETTING", "x")
+        config_admin.set_value(
+            "NOT_A_REAL_SETTING", "x", action_policies=ActionPolicies()
+        )
 
     assert exc.value.code == "unknown_key"
     assert written == []
@@ -191,7 +194,11 @@ def test_set_refuses_a_value_the_model_rejects_before_writing(monkeypatch):
     )
     # mcp_dynamic_discovery_timeout is a bounded float; a string is not one.
     with pytest.raises(config_admin.ConfigAdminError) as exc:
-        config_admin.set_value("MCP_DYNAMIC_DISCOVERY_TIMEOUT", "not-a-number")
+        config_admin.set_value(
+            "MCP_DYNAMIC_DISCOVERY_TIMEOUT",
+            "not-a-number",
+            action_policies=ActionPolicies(),
+        )
 
     assert exc.value.code == "validation_failed"
     assert written == []
@@ -204,7 +211,11 @@ def test_set_refuses_an_inline_secret(monkeypatch):
         lambda k, v: written.append((k, v)),
     )
     with pytest.raises(config_admin.ConfigAdminError) as exc:
-        config_admin.set_value("OIDC_CLIENT_SECRET_REF", "aVeryRealClientSecret")
+        config_admin.set_value(
+            "OIDC_CLIENT_SECRET_REF",
+            "aVeryRealClientSecret",
+            action_policies=ActionPolicies(),
+        )
 
     assert exc.value.code == "inline_secret_refused"
     assert written == []
@@ -219,9 +230,14 @@ def test_set_denies_when_the_policy_gate_denies(monkeypatch):
     monkeypatch.setattr(
         config_admin,
         "_gate",
-        lambda key, reason: (False, {"decision": "denied", "reason": "needs approval"}),
+        lambda key, reason, _policies: (
+            False,
+            {"decision": "denied", "reason": "needs approval"},
+        ),
     )
-    result = config_admin.set_value("MCP_ALWAYS_LOAD", '["a-mcp"]')
+    result = config_admin.set_value(
+        "MCP_ALWAYS_LOAD", '["a-mcp"]', action_policies=ActionPolicies()
+    )
 
     assert result["applied"] is False
     assert result["error"] == "policy_denied"
@@ -233,11 +249,13 @@ def test_set_denies_when_the_policy_gate_itself_is_unavailable(monkeypatch):
     import arbora.access.action_policy as policy
 
     monkeypatch.setattr(
-        policy,
-        "get_action_policy",
+        policy.ActionPolicies,
+        "for_engine",
         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("engine down")),
     )
-    allowed, info = config_admin._gate("MCP_ALWAYS_LOAD", "why")
+    allowed, info = config_admin._gate(
+        "MCP_ALWAYS_LOAD", "why", policy.ActionPolicies()
+    )
 
     assert allowed is False
     assert info["decision"] == "denied"
@@ -251,7 +269,9 @@ def _allow_and_record_writes(monkeypatch) -> list:
         lambda k, v: written.append((k, v)),
     )
     monkeypatch.setattr(
-        config_admin, "_gate", lambda key, reason: (True, {"decision": "allow"})
+        config_admin,
+        "_gate",
+        lambda key, reason, _policies: (True, {"decision": "allow"}),
     )
     return written
 
@@ -265,7 +285,10 @@ def test_set_writes_through_the_standard_precedence_and_records_provenance(monke
         lambda key, **kw: provenance.append((key, kw)) or "configchange:1",
     )
     result = config_admin.set_value(
-        "MCP_ALWAYS_LOAD", '["tunnel-manager-mcp"]', reason="pin one server"
+        "MCP_ALWAYS_LOAD",
+        '["tunnel-manager-mcp"]',
+        reason="pin one server",
+        action_policies=ActionPolicies(),
     )
 
     assert result["applied"] is True
@@ -287,14 +310,18 @@ def test_bug065_set_reports_process_scoped_field_not_fleet_wide_applied_live(
     process-scoped) is unchanged."""
     monkeypatch.setattr("arbora.core.settings.save_config_item", lambda k, v: None)
     monkeypatch.setattr(
-        config_admin, "_gate", lambda key, reason: (True, {"decision": "allow"})
+        config_admin,
+        "_gate",
+        lambda key, reason, _policies: (True, {"decision": "allow"}),
     )
     monkeypatch.setattr(config_admin, "_record_provenance", lambda key, **kw: None)
     monkeypatch.setattr(
         "arbora.deployment.config_generator.is_restart_required", lambda key: False
     )
 
-    result = config_admin.set_value("MCP_ALWAYS_LOAD", '["tunnel-manager-mcp"]')
+    result = config_admin.set_value(
+        "MCP_ALWAYS_LOAD", '["tunnel-manager-mcp"]', action_policies=ActionPolicies()
+    )
 
     assert "applied_live" not in result
     assert result["applied_in_this_process"] is True
@@ -310,11 +337,17 @@ def test_set_can_change_the_always_load_declaration(monkeypatch):
         lambda k, v: written.__setitem__(k, v),
     )
     monkeypatch.setattr(
-        config_admin, "_gate", lambda key, reason: (True, {"decision": "allow"})
+        config_admin,
+        "_gate",
+        lambda key, reason, _policies: (True, {"decision": "allow"}),
     )
     monkeypatch.setattr(config_admin, "_record_provenance", lambda key, **kw: None)
 
-    config_admin.set_value("MCP_ALWAYS_LOAD_TOOLS", '["github-mcp:github_issues"]')
+    config_admin.set_value(
+        "MCP_ALWAYS_LOAD_TOOLS",
+        '["github-mcp:github_issues"]',
+        action_policies=ActionPolicies(),
+    )
 
     assert written["MCP_ALWAYS_LOAD_TOOLS"] == ["github-mcp:github_issues"]
 
@@ -323,7 +356,9 @@ def test_a_failed_provenance_write_does_not_undo_an_applied_change(monkeypatch):
     """Provenance is best-effort by design: a downed backend must not roll back
     a change the operator was authorised to make and which is already durable."""
     written = _allow_and_record_writes(monkeypatch)
-    result = config_admin.set_value("MCP_ALWAYS_LOAD", '["a-mcp"]')
+    result = config_admin.set_value(
+        "MCP_ALWAYS_LOAD", '["a-mcp"]', action_policies=ActionPolicies()
+    )
 
     assert result["applied"] is True
     assert written == [("MCP_ALWAYS_LOAD", ["a-mcp"])]
@@ -350,7 +385,9 @@ def test_reload_names_the_fields_that_still_need_a_restart(monkeypatch):
 
 async def test_dispatch_refuses_an_unknown_action():
     with pytest.raises(config_admin.ConfigAdminError) as exc:
-        await config_admin.dispatch("delete_everything")
+        await config_admin.dispatch(
+            "delete_everything", action_policies=ActionPolicies()
+        )
     assert exc.value.code == "unknown_action"
 
 
@@ -370,7 +407,7 @@ async def test_dispatch_reload_notifies_the_served_catalog_authority(monkeypatch
 
     monkeypatch.setattr(shared_multiplexer, "run_on_served_multiplexer", run_on)
 
-    result = await config_admin.dispatch("reload")
+    result = await config_admin.dispatch("reload", action_policies=ActionPolicies())
 
     assert result["catalog"] == {
         "request_id": "graph-config-reload",
@@ -392,7 +429,7 @@ async def test_dispatch_reload_reports_no_reconcile_without_a_served_authority(
     )
     shared_multiplexer._reset_served_multiplexer_for_tests()
 
-    result = await config_admin.dispatch("reload")
+    result = await config_admin.dispatch("reload", action_policies=ActionPolicies())
 
     assert result["catalog"]["reconciled"] is False
 

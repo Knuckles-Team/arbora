@@ -10,6 +10,7 @@ from typing import Any
 
 from agent_connector_sdk.mcp.network import build_network_serving_config
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.content import register_installed_content
 from arbora.core.settings import setting
 from arbora.fleet.state import FleetState
@@ -178,6 +179,7 @@ def _served_invocation(
     fleet = LateFleetGateway()
     invocation = served_invocation_from_settings(
         process_session=lambda: session,
+        action_policies=host.policy.action_policies,
         bindings={
             "a2a": host.runs.a2a,
             "run_origins": host.runs.origins,
@@ -216,7 +218,11 @@ def _bind_served_fleet(
 
 
 def _start_catalog_warmup(
-    engine: Any, session: Any, reader: Any, fleet_mux: Any
+    engine: Any,
+    session: Any,
+    reader: Any,
+    fleet_mux: Any,
+    action_policies: ActionPolicies,
 ) -> Any:
     """Compose the catalog authorities, then onboard the fleet, off boot.
 
@@ -255,6 +261,7 @@ def _start_catalog_warmup(
                 multiplexer=fleet_mux,
                 virtual_catalog=fleet_mux.fleet.virtual_catalog,
                 declarations=fleet_mux.fleet.declarations,
+                action_policies=action_policies,
             )
 
     return start_catalog_warmup(compose, after=onboard)
@@ -449,6 +456,7 @@ def mcp_server(
                 bootstrap_session,
                 fleet_catalog_reader,
                 fleet_mux,
+                host_context.policy.action_policies,
             )
 
             from arbora.mcp_server.agent_control import register_graph_rlm
@@ -492,6 +500,7 @@ def mcp_server(
             co_service_supervisor = start_composed_services(
                 bootstrap_session,
                 runtime._get_engine(),
+                action_policies=host_context.policy.action_policies,
                 messaging_intake_enabled=config.messaging_intake_enabled,
                 served_network=transport == "streamable-http",
                 session_boundary=invocation.browser_boundary if invocation else None,

@@ -9,7 +9,7 @@ from collections import OrderedDict
 from collections.abc import Awaitable, Callable
 from typing import Any, Literal, cast
 
-from arbora.access.action_policy import get_action_policy
+from arbora.access.action_policy import ActionPolicy
 from arbora.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserChannelBinding,
@@ -63,7 +63,7 @@ class BrowserControlService(
         *,
         sync_runner: SyncRunner,
         session_revalidator: SessionRevalidator,
-        action_policy: Any | None = None,
+        action_policy: ActionPolicy,
         langfuse_exporter: Any | None = None,
         clock: Callable[[], float] = time.time,
     ) -> None:
@@ -77,7 +77,7 @@ class BrowserControlService(
         self._authority = cast(Any, control_authority(engine))
         self._sync_runner = sync_runner
         self._session_revalidator = session_revalidator
-        self._policy = action_policy or get_action_policy(engine)
+        self._policy = action_policy
         self._langfuse = (
             langfuse_exporter
             if langfuse_exporter is not None
@@ -157,6 +157,8 @@ def browser_control_factory_kwargs(
     app_factory: Callable[..., Any],
     engine: Any,
     sync_runner: SyncRunner,
+    *,
+    action_policy: ActionPolicy,
     session_revalidator: SessionRevalidator | None = None,
 ) -> dict[str, Any]:
     """Inject the Arbora port only into a contract-bearing WebUI factory.
@@ -185,6 +187,7 @@ def browser_control_factory_kwargs(
             engine,
             sync_runner=sync_runner,
             session_revalidator=session_revalidator,
+            action_policy=action_policy,
         )
     except (ImportError, RuntimeError, TypeError, ValueError):
         service = None

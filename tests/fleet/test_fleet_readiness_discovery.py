@@ -14,6 +14,7 @@ from typing import Any
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.api.mcp.discovery import find_visible
 from arbora.api.policy import PolicyGate
 from arbora.fleet.declarations import Declarations
@@ -190,7 +191,11 @@ def test_onboarding_failure_names_step_and_engine_code(caplog) -> None:
         raise EngineResponseError("INTERNAL", "unclassified engine refusal")
 
     onboarding = FleetOnboarding(
-        engine=None, session=None, capture=capture, declarations=Declarations()
+        engine=None,
+        session=None,
+        capture=capture,
+        declarations=Declarations(),
+        action_policies=ActionPolicies(),
     )
     endpoint = FleetEndpoint(name="webarchiver-mcp", url="http://example.test/mcp")
     report = OnboardingReport()

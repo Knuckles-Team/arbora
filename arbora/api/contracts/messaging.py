@@ -26,7 +26,6 @@ from arbora.access.action_policy import (
     ActionRule,
     PolicyDisposition,
     PolicyReceipt,
-    get_action_policy,
     in_maintenance_window,
 )
 
@@ -37,6 +36,5 @@ __all__ = [
     "ActionRule",
     "PolicyDisposition",
     "PolicyReceipt",
-    "get_action_policy",
     "in_maintenance_window",
 ]

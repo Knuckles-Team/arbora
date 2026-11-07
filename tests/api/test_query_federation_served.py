@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 from fastapi import FastAPI
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.api.mcp.discovery import describe_op
 from arbora.api.ops.query import operations
 from arbora.api.ops.query_federation import (
@@ -125,6 +126,7 @@ def _served_app(monkeypatch: pytest.MonkeyPatch) -> tuple[FastAPI, _FederatedCli
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,
+        action_policies=ActionPolicies(),
         bindings={
             "nl_federation_planner": _Planner(),
             "fleet_source_binding": lambda *_args, **_kwargs: _Binding(),
@@ -160,6 +162,7 @@ def _served_native_app(
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,
+        action_policies=ActionPolicies(),
         bindings={},
         fleet_effect=refused_fleet_effect,
     )

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.fleet import access_contracts as ac
 from arbora.fleet.declarations import Declarations
 from arbora.fleet.state import FleetState
@@ -420,6 +421,7 @@ def test_onboarding_registers_after_import(fake_sdk, monkeypatch) -> None:
         capture=capture,
         virtual_catalog=catalog,
         declarations=Declarations(),
+        action_policies=ActionPolicies(),
     )
     with use_session(session):
         asyncio.run(
@@ -534,6 +536,7 @@ def test_onboarding_passes_the_operator_mass_withdrawal_decision(
         virtual_catalog=VirtualCatalog(),
         allow_mass_withdrawal=approved,
         declarations=Declarations(),
+        action_policies=ActionPolicies(),
     )
     with use_session(session):
         asyncio.run(

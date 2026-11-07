@@ -127,7 +127,7 @@ def fixture(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
         )
     )
     monkeypatch.setenv("ACTION_POLICY_PATH", str(policy_file))
-    action_policy.reset_action_policy_cache_for_tests()
+    policies = action_policy.ActionPolicies()
     audit, pool = _Audit(), _Pool()
     sessions = [_session()]
     reads: list[GraphSession] = []
@@ -150,13 +150,13 @@ def fixture(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
         )
 
     bindings, startup = served_invocation._with_task_plan_schema(
-        {}, pool, "tenant-a", connect_context, process_session
+        {}, pool, "tenant-a", connect_context, process_session, policies
     )
     assert bindings is not None and startup is not None
     pins = bindings["task_plan_schema_pins"]
     yield SimpleNamespace(
         publish=served_invocation._task_plan_schema_publisher(
-            pool, "tenant-a", connect_context, process_session
+            pool, "tenant-a", connect_context, process_session, policies
         ),
         startup=startup,
         bindings=bindings,
@@ -166,8 +166,8 @@ def fixture(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
         audit=audit,
         pool=pool,
         sessions=sessions,
+        policies=policies,
     )
-    action_policy.reset_action_policy_cache_for_tests()
 
 
 def _publish(fixture: Any) -> str:
@@ -216,7 +216,7 @@ def test_schema_publication_uses_native_opaque_principal_shape(
 
 def test_schema_policy_override_is_exact_kind_and_target(fixture: Any) -> None:
     """The deployment opt-in cannot widen to neighboring publication targets."""
-    policy = action_policy.get_action_policy(fixture.audit)
+    policy = fixture.policies.for_engine(fixture.audit)
     intent = served_invocation._schema_action(
         fixture.sessions[0], "tenant-a", fixture.pin
     )
@@ -274,7 +274,7 @@ def test_schema_publication_rejects_expired_process_authority(fixture: Any) -> N
 def test_schema_refuses_wrong_receipt_before_publication(
     fixture: Any, monkeypatch: pytest.MonkeyPatch, defect: str
 ) -> None:
-    policy = action_policy.get_action_policy(fixture.audit)
+    policy = fixture.policies.for_engine(fixture.audit)
     decide = policy.decide
 
     def corrupted(request: Any) -> Any:
@@ -309,7 +309,7 @@ def test_schema_refuses_wrong_receipt_before_publication(
 def test_schema_refuses_an_older_same_intent_receipt(
     fixture: Any, monkeypatch: pytest.MonkeyPatch, fresh: str
 ) -> None:
-    policy = action_policy.get_action_policy(fixture.audit)
+    policy = fixture.policies.for_engine(fixture.audit)
     request = served_invocation._schema_action(
         fixture.sessions[0], "tenant-a", fixture.pin
     )
@@ -341,7 +341,7 @@ def test_schema_refuses_an_older_same_intent_receipt(
 def test_schema_revalidates_exact_intent_after_policy(
     fixture: Any, monkeypatch: pytest.MonkeyPatch, defect: str
 ) -> None:
-    policy = action_policy.get_action_policy(fixture.audit)
+    policy = fixture.policies.for_engine(fixture.audit)
     decide = policy.decide
 
     def changed(request: Any) -> Any:
@@ -390,7 +390,7 @@ def test_schema_failed_audit_has_no_authorizing_receipt_or_publication(
         monkeypatch.setattr(
             action_policy.uuid, "uuid4", lambda: SimpleNamespace(hex="collision")
         )
-    policy = action_policy.get_action_policy(fixture.audit)
+    policy = fixture.policies.for_engine(fixture.audit)
     decide = policy.decide
     decisions = []
 
@@ -415,7 +415,7 @@ def test_default_schema_action_stays_held(
     fixture: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.delenv("ACTION_POLICY_PATH")
-    action_policy.reset_action_policy_cache_for_tests()
+    fixture.policies.invalidate()
     with pytest.raises(PermissionError, match="exact effect-authorizing receipt"):
         _publish(fixture)
     assert fixture.pool.sent == []

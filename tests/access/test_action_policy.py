@@ -15,12 +15,8 @@ from arbora.access import approval
 def _fresh_policy(monkeypatch):
     monkeypatch.delenv("ACTION_POLICY_PATH", raising=False)
     monkeypatch.delenv("ACTION_IRREVERSIBILITY_AVERSION", raising=False)
-    ap.reset_action_policy_cache_for_tests()
-    ap.bind_action_policy_ports()
     approval.bind_approval_session(None)
     yield
-    ap.reset_action_policy_cache_for_tests()
-    ap.bind_action_policy_ports()
     approval.bind_approval_session(None)
 
 
@@ -38,7 +34,7 @@ def _request(kind: str, target: str = "svc", actor: str = ""):
     ],
 )
 def test_embedded_default_policy_tiers(kind: str, tier: str) -> None:
-    assert ap.get_action_policy().classify(_request(kind)) == tier
+    assert ap.ActionPolicies().for_engine().classify(_request(kind)) == tier
 
 
 def test_policy_file_rule_wins(tmp_path, monkeypatch) -> None:
@@ -48,8 +44,7 @@ def test_policy_file_rule_wins(tmp_path, monkeypatch) -> None:
         "rules:\n  - {kind: restart_service, target: '*', tier: forbidden}\n"
     )
     monkeypatch.setenv("ACTION_POLICY_PATH", str(policy))
-    ap.reset_action_policy_cache_for_tests()
-    assert ap.get_action_policy().classify(_request("restart_service")) == (
+    assert ap.ActionPolicies().for_engine().classify(_request("restart_service")) == (
         ap.TIER_FORBIDDEN
     )
 
@@ -71,27 +66,29 @@ def test_maintenance_window(window: str | None, hour: int, inside: bool) -> None
 
 
 def test_unbound_trust_ramp_never_widens_scope() -> None:
-    policy = ap.get_action_policy()
+    policy = ap.ActionPolicies().for_engine()
     assert policy._graduates(_request("restart_service", actor="a")) is False
 
 
 def test_notifier_receives_message_and_failure_is_contained() -> None:
     seen: list[str] = []
-    ap.bind_action_policy_ports(notifier=seen.append)
-    ap.get_action_policy()._notify("hello")
+    ports = ap.ActionPolicyPorts(notifier=seen.append)
+    ap.ActionPolicies(ports).for_engine()._notify("hello")
     assert seen == ["hello"]
 
     def broken(_message: str) -> None:
         raise RuntimeError("down")
 
-    ap.bind_action_policy_ports(notifier=broken)
-    ap.get_action_policy()._notify("still fine")
+    ap.ActionPolicies(ap.ActionPolicyPorts(notifier=broken)).for_engine()._notify(
+        "still fine"
+    )
 
 
 def test_policy_cache_is_per_engine() -> None:
     engine = object()
-    assert ap.get_action_policy(engine) is ap.get_action_policy(engine)
-    assert ap.get_action_policy(engine) is not ap.get_action_policy(object())
+    policies = ap.ActionPolicies()
+    assert policies.for_engine(engine) is policies.for_engine(engine)
+    assert policies.for_engine(engine) is not policies.for_engine(object())
 
 
 class _Graph:

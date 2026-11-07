@@ -11,6 +11,8 @@ from typing import Any, cast
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
+
 
 def _package(name: str) -> types.ModuleType:
     package = types.ModuleType(name)
@@ -206,8 +208,11 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         app_factory: object,
         engine: object,
         sync_runner: object,
+        *,
+        action_policy: object,
         session_revalidator: object,
     ) -> dict[str, object]:
+        calls["browser_policy"] = action_policy
         calls["browser_factory"] = app_factory
         calls["browser_engine"] = engine
         calls["browser_runner"] = sync_runner
@@ -234,7 +239,14 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     # This startup seam captures arguments only; the real factory/boundary
     # route tests separately exercise admission and operation ownership.
     boundary = object.__new__(WebUISessionBoundary) if auth_mode == "eg" else None
-    module.run_web_ui(stop_event, host="0.0.0.0", port=8181, session_boundary=boundary)
+    policies = ActionPolicies()
+    module.run_web_ui(
+        stop_event,
+        action_policies=policies,
+        host="0.0.0.0",
+        port=8181,
+        session_boundary=boundary,
+    )
 
     assert os.environ[module.ACCESS_LOG_POLICY_ENV] == "disabled"
     assert calls["engine_getter"] == "bounded-engine"
@@ -258,6 +270,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     assert callable(calls["contact_runner"])
     assert calls["browser_factory"] is create_agent_web_app
     assert calls["browser_engine"] == "arbora-engine"
+    assert calls["browser_policy"] is policies.for_engine("arbora-engine")
     assert callable(calls["browser_runner"])
     assert calls["browser_revalidator"] is revalidate_browser_control_session
     assert calls["uvicorn_config"] == {
