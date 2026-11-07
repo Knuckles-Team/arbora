@@ -39,6 +39,20 @@ No unknowns remain. The sections below record the earlier research and decisions
 
 The sections below hold the architecture, ownership, data flow and failure modes of this spec.
 
+### Deployment scripts become published commands (ARBORA-DEPLOY-R602.1 to R602.6)
+
+Pre-untangled design for these rows, one line per answer.
+
+- Owner. Arbora owns the commands and the config schemas. The deployment repository owns only values: topology, deploy file, acceptance file, identity file and scenario files.
+- Cohesion. Each former script becomes the module that changes for its reason: render, provision, acceptance runner, scenario interpreter, secret diagnostics, deploy run.
+- Dependency direction. `deploy run` calls `render` and `provision`; they call `arbora/deployment` and `core`. Nothing in `deployment` imports `mcp_server`.
+- Interface depth. Four command groups (`deploy`, `acceptance`, `secrets`, `identity`) with a config file each; internals are private.
+- Special cases. None. A host name, a domain or a registry address is a config field, never a branch or a literal.
+- State. The deploy sequence is the explicit machine `DeployRun` of R602.5; the file `deploy-run.json` holds its one persisted field.
+- Environment. The environment holds data files only. `PIPE-GATES-R089` checks it.
+
+Order. R602.4 (small, independent), then R602.1, R602.2, R602.3 in parallel, then R602.5, release, then R602.6. Part of R602 is already done: `arbora deploy source` (deployed-source manager) and `arbora identity reconcile`.
+
 ## Phase 2: Task approach
 
 tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.

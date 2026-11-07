@@ -527,3 +527,9 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T258 ARBORA-FLEET-R082.1 Desired-status machine with typed refusal.
 - [ ] T259 ARBORA-FLEET-R082.2 Project the authorization outcome from the medulla decision.
 - [ ] T262 ARBORA-FLEET-R082.3 Describe the desired-status machine in the ontology; hot-path proof.
+- [ ] T263 [US1] ARBORA-FLEET-R083 Tool, skill and operation ranking asks medulla; the lexical floor is the received fallback (rollup). Size: L, 5 PRs, 1 day.
+- [ ] T264 [US1] ARBORA-FLEET-R083.1 The ranking port and the single lexical floor. Size: M, 1 PR, 5 hours.
+- [ ] T265 [US1] ARBORA-FLEET-R083.2 Intent tools and the intent resolver ask the port. Size: M, 1 PR, 4 hours.
+- [ ] T266 [US1] ARBORA-FLEET-R083.3 Fleet discovery, catalog items and connector operations ask the port. Size: M, 1 PR, 4 hours.
+- [ ] T267 [US1] ARBORA-FLEET-R083.4 Delete the other scorers. Size: S, 1 PR, 2 hours.
+- [ ] T268 [US1] ARBORA-FLEET-R083.5 Ranking served proof and degradation evidence. Size: S, 1 PR, 3 hours.
