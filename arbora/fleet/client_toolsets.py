@@ -20,7 +20,7 @@ DEFAULT_MCP_TIMEOUT = 60.0
 
 
 def _service_auth() -> Any:
-    from arbora.mcp_server.backing.client_credentials import child_auth
+    from arbora.security.client_credentials import child_auth
 
     return child_auth(None)
 
@@ -75,9 +75,9 @@ def build_url_toolset(
     """
     from pydantic_ai.mcp import MCPToolset, SSETransport, StreamableHttpTransport
 
+    from arbora.core.httpx_boundary import coerce_httpx2_auth
     from arbora.core.transport import resolve_configured_tls_profile
     from arbora.fleet.protocol_compat import force_legacy_protocol_mode
-    from arbora.mcp_server.backing.httpx_boundary import coerce_httpx2_auth
 
     trust = resolve_configured_tls_profile("mcp")
     try:
@@ -150,7 +150,7 @@ async def open_tool_client(
 
     auth = None
     if isinstance(target, str) and target.startswith(("http://", "https://")):
-        from arbora.mcp_server.backing.httpx_boundary import coerce_httpx2_auth
+        from arbora.core.httpx_boundary import coerce_httpx2_auth
 
         auth = coerce_httpx2_auth(_service_auth())
     async with Client(target, timeout=timeout, auth=auth) as client:

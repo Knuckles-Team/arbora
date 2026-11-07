@@ -139,6 +139,16 @@ jobs:
           # Every gate below uses the shared gate source frozen for this run.
           echo "PINNED_PRECOMMIT=$(bash scripts/pin_gate_source.sh "$PIPELINES_REF" "$RUNNER_TEMP/pre-commit-pinned.yaml")" >> "$GITHUB_ENV"
 
+      # plan-conformance resolves foreign row IDs against the cross-repo ID
+      # index (PIPE-GATES-R046.1); without it the spec hook cannot run.
+      - name: Build the cross-repo spec ID index
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          uvx --from "git+https://github.com/Knuckles-Team/pipelines@$PIPELINES_REF" pipelines-hook spec-id-index --out "$RUNNER_TEMP/spec-id-index.json"
+          echo "PIPELINES_SPEC_ID_INDEX=$RUNNER_TEMP/spec-id-index.json" >> "$GITHUB_ENV"
+
       # Same hook-environment cache as the PR gates job (ci.yml). Pull requests
       # can only restore caches saved on main, so main must save it.
       - name: Restore pre-commit environments

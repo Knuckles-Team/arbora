@@ -91,3 +91,42 @@ def test_boot_returns_while_the_catalog_composition_is_still_running(
     assert state is not None
     assert state["status"] == "warming"
     warmup.stop()
+
+
+@pytest.mark.spec("ARBORA-FLEET-R078")
+def test_the_warmup_composes_inside_its_own_client_scope(monkeypatch) -> None:
+    """The warm-up loop never claims the serving loop's pooled engine clients.
+
+    Without a temporary client scope the warm-up thread's loop and the
+    serving loop share one pooled client, which refuses "live client belongs
+    to another event loop" once the server is serving.
+    """
+    import arbora.api.contracts.session as session_module
+    import arbora.mcp_server.catalog_composition as composition
+    import arbora.security.actor_context as actor_module
+    from arbora import epistemic
+    from arbora.mcp_server import server
+
+    scoped: list[bool] = []
+
+    async def compose(**_kwargs: Any) -> None:
+        scoped.append(epistemic._temporary_clients.get() is not None)
+
+    monkeypatch.setattr(composition, "compose_catalog_authorities", compose)
+    monkeypatch.setattr(actor_module, "use_actor", lambda _a: contextlib.nullcontext())
+    monkeypatch.setattr(
+        session_module, "use_session", lambda _s: contextlib.nullcontext()
+    )
+    monkeypatch.setattr(
+        "arbora.fleet.onboarding.start_fleet_onboarding", lambda **_k: None
+    )
+    monkeypatch.setattr(
+        "arbora.fleet.access_contracts.bootstrap_fleet_virtual_catalog", lambda: None
+    )
+    warmup = server._start_catalog_warmup(
+        object(), SimpleNamespace(actor=None), object(), object()
+    )
+    deadline = time.monotonic() + 5
+    while warmup.state()["status"] != "ready" and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert scoped == [True]

@@ -33,9 +33,9 @@ import json
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
-from arbora.mcp_server.backing.concurrency import (
-    _wrap_data_kwargs,
+from arbora.core.concurrency import (
     invoke_client_method,
+    wrap_data_kwargs,
 )
 from arbora.mcp_server.backing.context_helpers import ctx_confirm_destructive
 
@@ -214,7 +214,7 @@ def dispatch(
     # fold an LLM's flat fields into the method's single body param
     # (data/payload/body) so getattr-dynamic create/update dispatch doesn't crash
     # on `unexpected keyword argument`. No-op for methods without a body param.
-    call_kwargs = _wrap_data_kwargs(method, (), dict(kwargs) if kwargs else {})
+    call_kwargs = wrap_data_kwargs(method, (), dict(kwargs) if kwargs else {})
     result = method(**call_kwargs)
     if result_coercer is not None:
         return result_coercer(result)
