@@ -178,7 +178,7 @@ def _require_server_context(scope: Mapping[str, Any]) -> tuple[str, int] | None:
     return tuple(server)
 
 
-def _header_digests(scope: Mapping[str, Any], key: bytes) -> tuple[bytes, ...]:
+def header_digests(scope: Mapping[str, Any], key: bytes) -> tuple[bytes, ...]:
     """Digest exact security headers without ever retaining their secrets."""
     digests = []
     for name in (b"host", b"origin", b"cookie", b"authorization", b"x-csrf-token"):
@@ -195,7 +195,7 @@ def _snapshot(scope: Mapping[str, Any], key: bytes) -> tuple[Any, ...]:
     values = _require_routing_fields(scope)
     root_path, raw_path, query, scheme = _require_routing_context(scope)
     server = _require_server_context(scope)
-    digests = _header_digests(scope, key)
+    digests = header_digests(scope, key)
     return (*values, root_path, raw_path, query, scheme, server, *digests)
 
 

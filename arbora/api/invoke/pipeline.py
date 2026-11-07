@@ -455,7 +455,7 @@ async def _refresh(
     return current
 
 
-async def _authorize(
+async def authorize(
     op: Any,
     params: Mapping[str, Any],
     caller: RequestCaller,
@@ -485,7 +485,7 @@ async def _recheck(
     decision: FleetCallDecision | None,
 ) -> OpError | None:
     """Invalidate checks if awaited authority/client/metadata work changed facts."""
-    refused = await _authorize(op, params, caller, services, decision)
+    refused = await authorize(op, params, caller, services, decision)
     if refused is not None:
         return refused
     if decision is not None:
@@ -670,7 +670,7 @@ async def _resolve(
     if isinstance(effective, OpError):
         return effective
     effective_op, decision = effective
-    refused = await _authorize(effective_op, arguments, refreshed, services, decision)
+    refused = await authorize(effective_op, arguments, refreshed, services, decision)
     if refused is not None:
         return refused
     return effective_op, refreshed, decision

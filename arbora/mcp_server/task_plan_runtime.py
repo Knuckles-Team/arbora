@@ -13,9 +13,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic_ai import Agent
 from pydantic_ai.usage import RunUsage, UsageLimits
 
-from arbora.api.invoke.bootstrap import _caller_dispatch_graph
+from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.executor import execution_context
-from arbora.api.invoke.pipeline import OperationRefused, _authorize
+from arbora.api.invoke.pipeline import OperationRefused, authorize
 from arbora.api.invoke.steps import OpError, claim_values
 from arbora.api.mcp.caller import caller_from_session
 
@@ -74,7 +74,7 @@ async def _admit(host: Any, caller: Any, op_id: str) -> Any:
     op = host.services.registry.get(op_id)
     if op is None:
         raise OperationRefused("UPGRADE_REQUIRED", {"operation": op_id})
-    verdict = await _authorize(op, {}, caller, host.services, None)
+    verdict = await authorize(op, {}, caller, host.services, None)
     if isinstance(verdict, OpError):
         raise OperationRefused(verdict.code, verdict.details)
     return op
@@ -122,7 +122,7 @@ async def _publish(
     async with execution_context(op, caller, host.services.runtime) as context:
         # Revalidate the same caller, but route to the graph that admitted the
         # native owner. The EG client retains all caller graph capability checks.
-        await _caller_dispatch_graph(context)
+        await caller_dispatch_graph(context)
         graph = owner.owner_graph
         if not isinstance(graph, str) or not graph or graph != graph.strip():
             raise OperationRefused("UNAVAILABLE", {"capability": "native_owner_graph"})

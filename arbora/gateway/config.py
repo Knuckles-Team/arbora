@@ -355,7 +355,7 @@ def dashboard_layout_path() -> Path:
     return data_dir() / "layout.yaml"
 
 
-def _parse_mcp_servers(raw: bytes) -> dict[Any, Any]:
+def parse_mcp_servers(raw: bytes) -> dict[Any, Any]:
     """Parse and validate the bounded MCP server catalog payload."""
     if len(raw) > _MAX_CONFIG_BYTES:
         raise ValueError("MCP catalog exceeds its size boundary")
@@ -572,7 +572,7 @@ class ConfigManager:
             logger.info("No MCP catalog configured for dashboard discovery")
             return DashboardLayout()
 
-        servers = _parse_mcp_servers(mcp_path.read_bytes())
+        servers = parse_mcp_servers(mcp_path.read_bytes())
         groups = _build_discovered_groups(servers)
 
         layout = DashboardLayout(groups=groups)

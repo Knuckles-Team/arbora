@@ -104,7 +104,7 @@ async def _resolve_provider[T](provider: ProvisioningProvider[T], *, label: str)
     return value
 
 
-def _opaque_principal(actor_id: str) -> str:
+def opaque_principal(actor_id: str) -> str:
     """Match EG's verified-request persistence principal derivation."""
 
     normalized = actor_id.strip()
@@ -219,7 +219,7 @@ def pack_import_authority(
                 "serving principal is not an opaque epistemic-graph principal"
             )
 
-        caller_principal = _opaque_principal(str(verified.actor.actor_id))
+        caller_principal = opaque_principal(str(verified.actor.actor_id))
         policy_revision = str(verified.policy_version).strip()
         if not policy_revision:
             raise ProvisioningAuthorityError(
