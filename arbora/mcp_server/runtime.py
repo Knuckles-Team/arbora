@@ -51,13 +51,13 @@ import uuid
 from types import MappingProxyType
 from typing import Any, cast
 
-from arbora._version import __version__
 from arbora.core.settings import setting
 from arbora.mcp_server.legacy_action_mapping import (
     APPROVED_ACTION_MAPPING,
     validate_served_actions,
 )
 from arbora.security.anonymous import session_context
+from arbora.version import __version__
 
 logger = logging.getLogger(__name__)
 

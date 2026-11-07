@@ -18,7 +18,6 @@ Usage::
     from arbora.gateway.registry import get_registry
 """
 
-from arbora._version import __version__ as __version__
 from arbora.gateway.models import (
     DashboardLayout,
     ServiceCategory,
@@ -29,6 +28,7 @@ from arbora.gateway.models import (
     WidgetRegistration,
 )
 from arbora.gateway.registry import Registry, get_registry
+from arbora.version import __version__ as __version__
 
 __all__ = [
     "Aggregator",
