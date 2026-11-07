@@ -44,6 +44,4 @@ def build_host_context(engine_provider: Callable[[], Any]) -> HostContext:
         authority=WorkItemA2AAuthority(engine_provider, origins=origins),
         router=OrchestratorA2ARouter(engine_provider),
     )
-    return HostContext(
-        runs=RunState(origins=origins, a2a=a2a), fleet=FleetState()
-    )
+    return HostContext(runs=RunState(origins=origins, a2a=a2a), fleet=FleetState())

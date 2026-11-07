@@ -182,6 +182,7 @@ def _served_invocation(
             "a2a": host.runs.a2a,
             "run_origins": host.runs.origins,
             "fleet_gateway": fleet,
+            "fleet_virtual_catalog": host.fleet.virtual_catalog,
             "browser_control": dispatch_browser_operation,
             "current_plan_reader": NativeCurrentPlanReader(),
             "source_reader": NativeSourceReader(),
@@ -244,7 +245,6 @@ def _start_catalog_warmup(
     def onboard() -> None:
         # Register, attest and import each child catalog, then renew leases.
         # A fault logs and retries; it never blocks or stops serving.
-        from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
         from arbora.fleet.onboarding import start_fleet_onboarding
 
         with use_actor(session.actor), use_session(session):
@@ -252,7 +252,7 @@ def _start_catalog_warmup(
                 engine=engine,
                 session=session,
                 multiplexer=fleet_mux,
-                virtual_catalog=bootstrap_fleet_virtual_catalog(),
+                virtual_catalog=fleet_mux.fleet.virtual_catalog,
             )
 
     return start_catalog_warmup(compose, after=onboard)

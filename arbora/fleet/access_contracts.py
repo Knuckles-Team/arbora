@@ -18,14 +18,12 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from typing import Any, Literal
 
-from arbora.api.errors import not_served
 from arbora.fleet.declarations import entry_bytes
 from arbora.fleet.virtual_catalog import (
     DiscoveredEntity,
     MetadataContract,
     OperationAdapter,
     SourceConnection,
-    VirtualCatalog,
     VirtualMapping,
 )
 
@@ -43,7 +41,6 @@ CONTRACT_MARKERS = (
     "https://knuckles-team.github.io/agent-connector-sdk/access#",
     "AccessContract",
 )
-_CATALOG: list[Any] = []
 
 _CREDENTIAL_REFERENCE_PREFIXES = ("env://", "openbao://")
 
@@ -196,26 +193,6 @@ def approved_source_id(receipt: Any) -> str | None:
     return value if isinstance(value, str) and value else None
 
 
-def bootstrap_fleet_virtual_catalog(catalog: Any = None) -> Any:
-    """Install the one process-owned Arbora ``VirtualCatalog``.
-
-    The catalog is a metadata/selection projection; it is not an authority.
-    New mappings are held until an EG approval receipt is projected through
-    :func:`bind_approved_mapping`.  Keeping the process singleton explicit
-    prevents onboarding from silently creating a second, disconnected catalog
-    and makes a tenant-mixing replacement fail closed.
-    """
-
-    if catalog is None:
-        catalog = VirtualCatalog()
-    if _CATALOG:
-        if _CATALOG[0] is not catalog:
-            raise RuntimeError("fleet virtual catalog is already bound")
-        return _CATALOG[0]
-    _CATALOG.append(catalog)
-    return catalog
-
-
 def _credential_reference(value: Any) -> bool:
     return isinstance(value, str) and any(
         value.startswith(prefix) and len(value) > len(prefix)
@@ -318,16 +295,6 @@ def pack_contract_resources(pack: Any) -> tuple[tuple[Any, str, str], ...]:
                 (contract, uri, hashlib.sha256(text.encode("utf-8")).hexdigest())
             )
     return tuple(found)
-
-
-def fleet_virtual_catalog() -> Any:
-    """The process virtual catalog that fleet onboarding registers into."""
-
-    if not _CATALOG:
-        raise not_served(
-            "arbora.fleet.virtual_catalog", "MEDULLA-UNIFIED-DATA-PLANE-R037"
-        )
-    return _CATALOG[0]
 
 
 def pack_ontology_resources(pack: Any) -> tuple[tuple[str, str], ...]:
@@ -622,7 +589,7 @@ def register_access_contracts(
     pack: Any,
     *,
     connector: str,
-    catalog: Any = None,
+    catalog: Any,
     admitted: bool = False,
     decisions: list[SourceApprovalDecision] | None = None,
 ) -> int:
@@ -642,7 +609,7 @@ def register_access_contracts(
             source_approval_policy(contract, connector=connector, admitted=admitted)
             for contract in contracts
         )
-    target = catalog if catalog is not None else fleet_virtual_catalog()
+    target = catalog
     added = 0
     for source_id, items in _by_source(contracts).items():
         _register_source(target, connector, source_id, items)
@@ -657,13 +624,11 @@ __all__ = [
     "approved_source_id",
     "bind_approved_mapping",
     "declares_contracts",
-    "fleet_virtual_catalog",
     "pack_ontologies",
     "pack_ontology_resources",
     "pack_contract_resources",
     "parse_pack_contracts",
     "register_access_contracts",
-    "bootstrap_fleet_virtual_catalog",
     "source_approval_policy",
     "source_approval_decision",
 ]

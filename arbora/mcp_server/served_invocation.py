@@ -312,12 +312,14 @@ def _with_fleet_source_executor(
         is returned; no request field can select another tenant projection.
         """
 
-        from arbora.fleet.access_contracts import fleet_virtual_catalog
+        from arbora.api.errors import not_served
         from arbora.fleet.source_executor import FleetSourceBinding
 
         catalog = bindings.get("fleet_virtual_catalog")
         if catalog is None:
-            catalog = fleet_virtual_catalog()
+            raise not_served(
+                "arbora.fleet.virtual_catalog", "MEDULLA-UNIFIED-DATA-PLANE-R037"
+            )
         tenant = getattr(caller, "tenant", None)
         session = getattr(caller, "session", None)
         caller_graph = getattr(session, "graph", None)

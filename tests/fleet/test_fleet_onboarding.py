@@ -33,6 +33,7 @@ from arbora.fleet.onboarding import (
     refresh_serving_catalog,
     start_fleet_onboarding,
 )
+from arbora.fleet.virtual_catalog import VirtualCatalog
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
 
 TENANT = "tenant-a"
@@ -601,7 +602,10 @@ def test_a_failing_pass_never_escapes_the_boot_thread(
 
 def test_boot_without_an_engine_starts_no_thread() -> None:
     started = start_fleet_onboarding(
-        engine=SimpleNamespace(), session=_session(), multiplexer=_Mux({})
+        engine=SimpleNamespace(),
+        session=_session(),
+        multiplexer=_Mux({}),
+        virtual_catalog=VirtualCatalog(),
     )
 
     assert started is None
@@ -610,10 +614,7 @@ def test_boot_without_an_engine_starts_no_thread() -> None:
 def test_bootstrap_passes_the_process_virtual_catalog_to_onboarding(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from arbora.fleet import access_contracts
-    from arbora.fleet.virtual_catalog import VirtualCatalog
-
-    monkeypatch.setattr(access_contracts, "_CATALOG", [])
+    catalog = VirtualCatalog()
     seen: list[object] = []
 
     def start(self: FleetOnboardingService) -> object:
@@ -625,13 +626,12 @@ def test_bootstrap_passes_the_process_virtual_catalog_to_onboarding(
         engine=SimpleNamespace(graph_compute=object()),
         session=_session(),
         multiplexer=_Mux({}),
+        virtual_catalog=catalog,
     )
 
     assert started is not None
-    assert len(seen) == 1
-    assert isinstance(seen[0], VirtualCatalog)
-    assert access_contracts.fleet_virtual_catalog() is seen[0]
-    assert seen[0].scope == (TENANT, GRAPH)
+    assert seen == [catalog]
+    assert catalog.scope == (TENANT, GRAPH)
 
 
 @pytest.mark.asyncio

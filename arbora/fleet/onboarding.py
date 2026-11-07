@@ -1258,8 +1258,8 @@ def start_fleet_onboarding(
     engine: Any,
     session: Any,
     multiplexer: Any,
+    virtual_catalog: Any,
     served_url: str | None = None,
-    virtual_catalog: Any = None,
 ) -> threading.Thread | None:
     """Start the background onboarding service; never raise into boot.
 
@@ -1270,10 +1270,6 @@ def start_fleet_onboarding(
     if getattr(engine, "graph_compute", None) is None or multiplexer is None:
         logger.warning("fleet onboarding disabled: no engine or multiplexer")
         return None
-    if virtual_catalog is None:
-        from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
-
-        virtual_catalog = bootstrap_fleet_virtual_catalog()
     bind_scope = getattr(virtual_catalog, "bind_scope", None)
     if callable(bind_scope):
         bind_scope(str(session.tenant), str(session.graph))

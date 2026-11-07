@@ -418,13 +418,13 @@ async def _onboard_fleet(
     """
 
     from arbora.api.contracts.session import use_session
-    from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
     from arbora.fleet.onboarding import (
         FleetOnboarding,
         configured_fleet_endpoints,
         onboard_fleet,
         self_served_connectors,
     )
+    from arbora.fleet.virtual_catalog import VirtualCatalog
     from arbora.mcp_server import bootstrap, runtime
     from arbora.security.actor_context import use_actor
 
@@ -436,7 +436,8 @@ async def _onboard_fleet(
             FleetOnboarding(
                 engine=engine,
                 session=session,
-                virtual_catalog=bootstrap_fleet_virtual_catalog(),
+                # This one-shot process owns its own projection.
+                virtual_catalog=VirtualCatalog(),
                 allow_mass_withdrawal=allow_mass_withdrawal,
             ),
             configured_fleet_endpoints(exclude=self_served_connectors()),
