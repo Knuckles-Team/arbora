@@ -35,19 +35,192 @@ class CredentialExpiredError(PermissionError):
     """Raised when an authenticated actor's validated credential has expired."""
 
 
-class CredentialLease:
-    """Thread-safe in-memory expiry shared by one renewable process identity.
+class LeaseState(StrEnum):
+    """The closed states of a credential lease (ARBORA-IDENTITY-R027.1)."""
 
-    The lease contains no token or identity material. Long-lived worker threads
-    retain the same verified :class:`ActorContext` and consult this mutable
-    expiry at every graph boundary, so a successful OAuth/token rotation renews
-    all of them atomically while a failed rotation remains fail-closed.
+    LIVE = "live"
+    RENEW_DUE = "renew_due"
+    RENEWING = "renewing"
+    DEGRADED = "degraded"
+    EXPIRED = "expired"
+    REVOKED = "revoked"
+    STOPPED = "stopped"
+
+
+class LeaseEvent(StrEnum):
+    """The closed events a credential lease accepts (ARBORA-IDENTITY-R027.1)."""
+
+    TICK = "tick"
+    RENEW_START = "renew_start"
+    IDP_OK = "idp_ok"
+    IDP_ERR = "idp_err"
+    IDENTITY_CHANGED = "identity_changed"
+    REVOKE = "revoke"
+    STOP = "stop"
+
+
+class LeaseGuard(StrEnum):
+    """The closed guards of the credential lease machine."""
+
+    AT_HALF_LIFETIME = "at_half_lifetime"
+    BEFORE_EXPIRY = "before_expiry"
+    AT_EXPIRY = "at_expiry"
+    IDENTITY_UNCHANGED = "identity_unchanged"
+
+
+#: States no event leaves.
+TERMINAL_LEASE_STATES = frozenset({LeaseState.REVOKED, LeaseState.STOPPED})
+
+#: The wire code of :class:`IllegalLeaseTransition`.
+LEASE_TRANSITION_ILLEGAL = "LEASE_TRANSITION_ILLEGAL"
+LEASE_MACHINE = "credential_lease"
+
+
+@dataclass(frozen=True, slots=True)
+class LeaseEdge:
+    """One legal edge: ``source`` moves to ``target`` on ``event`` if ``guard``."""
+
+    source: LeaseState
+    event: LeaseEvent
+    target: LeaseState
+    guard: LeaseGuard | None = None
+
+    @property
+    def edge_id(self) -> str:
+        """``<from>-<event>-<to>``, the id the bound tests use."""
+        return "-".join((_short(self.source), str(self.event), _short(self.target)))
+
+
+def _short(state: LeaseState) -> str:
+    return state.value.replace("_", "")
+
+
+_S = LeaseState
+_E = LeaseEvent
+_G = LeaseGuard
+_RENEWABLE = (_S.LIVE, _S.RENEW_DUE, _S.RENEWING, _S.DEGRADED, _S.EXPIRED)
+
+#: The 26 legal edges of ARBORA-IDENTITY-R027.1, in table order. Where one
+#: (state, event) pair has several edges, the first edge whose guard holds wins.
+LEASE_EDGES: tuple[LeaseEdge, ...] = (
+    # (10) before (1): an expired Live lease skips RenewDue.
+    LeaseEdge(_S.LIVE, _E.TICK, _S.EXPIRED, _G.AT_EXPIRY),
+    LeaseEdge(_S.LIVE, _E.TICK, _S.RENEW_DUE, _G.AT_HALF_LIFETIME),
+    LeaseEdge(_S.RENEW_DUE, _E.RENEW_START, _S.RENEWING),
+    LeaseEdge(_S.RENEWING, _E.IDP_OK, _S.LIVE, _G.IDENTITY_UNCHANGED),
+    LeaseEdge(_S.RENEWING, _E.IDP_ERR, _S.DEGRADED, _G.BEFORE_EXPIRY),
+    LeaseEdge(_S.RENEWING, _E.IDP_ERR, _S.EXPIRED, _G.AT_EXPIRY),
+    LeaseEdge(_S.DEGRADED, _E.IDP_ERR, _S.DEGRADED),
+    LeaseEdge(_S.DEGRADED, _E.IDP_OK, _S.LIVE, _G.IDENTITY_UNCHANGED),
+    LeaseEdge(_S.EXPIRED, _E.IDP_ERR, _S.EXPIRED),
+    LeaseEdge(_S.EXPIRED, _E.IDP_OK, _S.LIVE, _G.IDENTITY_UNCHANGED),
+    LeaseEdge(_S.RENEW_DUE, _E.TICK, _S.EXPIRED, _G.AT_EXPIRY),
+    LeaseEdge(_S.RENEWING, _E.TICK, _S.EXPIRED, _G.AT_EXPIRY),
+    LeaseEdge(_S.DEGRADED, _E.TICK, _S.EXPIRED, _G.AT_EXPIRY),
+    *(
+        LeaseEdge(state, _E.IDENTITY_CHANGED, _S.REVOKED)
+        for state in (_S.RENEWING, _S.DEGRADED, _S.EXPIRED)
+    ),
+    *(LeaseEdge(state, _E.REVOKE, _S.REVOKED) for state in _RENEWABLE),
+    *(LeaseEdge(state, _E.STOP, _S.STOPPED) for state in _RENEWABLE),
+)
+
+_EDGES_BY_PAIR: dict[tuple[LeaseState, LeaseEvent], tuple[LeaseEdge, ...]] = {}
+for _edge in LEASE_EDGES:
+    _EDGES_BY_PAIR[(_edge.source, _edge.event)] = (
+        *_EDGES_BY_PAIR.get((_edge.source, _edge.event), ()),
+        _edge,
+    )
+del _edge
+
+
+class IllegalLeaseTransition(CredentialExpiredError):
+    """A credential lease refused an event (``LEASE_TRANSITION_ILLEGAL``).
+
+    It subclasses :class:`CredentialExpiredError` so every caller that already
+    fails closed on an unusable credential keeps failing closed.
     """
 
-    def __init__(self, expires_at: int) -> None:
-        self._lock = threading.Lock()
+    code = LEASE_TRANSITION_ILLEGAL
+    machine = LEASE_MACHINE
+
+    def __init__(self, from_state: LeaseState, event: LeaseEvent) -> None:
+        super().__init__(
+            f"credential lease refuses {event.value!r} in state {from_state.value!r}"
+        )
+        self.from_state = from_state
+        self.event = event
+
+
+@dataclass(frozen=True, slots=True)
+class LeaseFacts:
+    """What the guards read: the lease window and the minted identity verdict."""
+
+    issued_at: float
+    expires_at: float
+    renew_due_at: float
+    identity_unchanged: bool = True
+
+    def holds(self, guard: LeaseGuard | None, now: float) -> bool:
+        if guard is None:
+            return True
+        if guard is LeaseGuard.AT_HALF_LIFETIME:
+            return now >= self.renew_due_at
+        if guard is LeaseGuard.BEFORE_EXPIRY:
+            return now < self.expires_at
+        if guard is LeaseGuard.AT_EXPIRY:
+            return now >= self.expires_at
+        return self.identity_unchanged
+
+
+def transition(
+    lease_state: LeaseState, event: LeaseEvent, now: float, *, facts: LeaseFacts
+) -> LeaseState:
+    """The one transition function of the credential lease machine.
+
+    Returns the next state, or raises :class:`IllegalLeaseTransition` for a
+    pair outside :data:`LEASE_EDGES` or a legal pair whose guards all fail.
+    """
+    for edge in _EDGES_BY_PAIR.get((lease_state, event), ()):
+        if facts.holds(edge.guard, now):
+            return edge.target
+    raise IllegalLeaseTransition(lease_state, event)
+
+
+class CredentialLease:
+    """Thread-safe in-memory credential lease shared by one renewable identity.
+
+    The lease contains no token or identity material. Long-lived worker threads
+    retain the same verified :class:`ActorContext` and consult this lease at
+    every graph boundary, so a successful OAuth/token rotation renews all of
+    them atomically while a failed rotation remains fail-closed.
+
+    The lease is an explicit state machine (ARBORA-IDENTITY-R027.1): ``state``
+    is its only state field and :meth:`apply` (through :func:`transition`) is
+    its only writer. The expiry, attempt count, failure code and revocation
+    reason are data. The lease lives in memory, so a restart begins at ``Live``.
+    """
+
+    def __init__(self, expires_at: int, *, issued_at: float | None = None) -> None:
+        self._lock = threading.RLock()
+        self.state: LeaseState = LeaseState.LIVE
+        self._issued_at = float(time.time() if issued_at is None else issued_at)
         self._expires_at = int(expires_at)
+        self._attempts = 0
+        self._failure_code: str | None = None
         self._revocation_reason: str | None = None
+
+    def _renew_due_at(self, issued_at: float, expires_at: float) -> float:
+        """Half of the token lifetime (the ``at_half_lifetime`` guard)."""
+        return issued_at + max(0.0, expires_at - issued_at) / 2.0
+
+    def _facts(self, identity_unchanged: bool) -> LeaseFacts:
+        return LeaseFacts(
+            issued_at=self._issued_at,
+            expires_at=float(self._expires_at),
+            renew_due_at=self._renew_due_at(self._issued_at, self._expires_at),
+            identity_unchanged=identity_unchanged,
+        )
 
     @property
     def expires_at(self) -> int:
@@ -55,31 +228,110 @@ class CredentialLease:
             return self._expires_at
 
     @property
+    def renew_due_at(self) -> float:
+        with self._lock:
+            return self._renew_due_at(self._issued_at, self._expires_at)
+
+    @property
+    def attempts(self) -> int:
+        with self._lock:
+            return self._attempts
+
+    @property
+    def failure_code(self) -> str | None:
+        with self._lock:
+            return self._failure_code
+
+    @property
     def revocation_reason(self) -> str | None:
         with self._lock:
             return self._revocation_reason
 
+    def apply(
+        self,
+        event: LeaseEvent,
+        now: float | None = None,
+        *,
+        identity_unchanged: bool = True,
+        expires_at: int | None = None,
+        code: str | None = None,
+    ) -> LeaseState:
+        """Apply one event; the only path that changes ``state``.
+
+        ``expires_at`` is the minted expiry an ``idp_ok`` carries; ``code`` is
+        the failure code of ``idp_err`` or the reason of ``identity_changed``
+        and ``revoke``. A refusal raises and leaves the lease unchanged.
+        """
+        with self._lock:
+            moment = time.time() if now is None else float(now)
+            if event is LeaseEvent.IDP_OK and expires_at is None:
+                raise ValueError("idp_ok carries the minted expiry")
+            target = transition(
+                self.state, event, moment, facts=self._facts(identity_unchanged)
+            )
+            if event is LeaseEvent.IDP_OK:
+                self._issued_at = moment
+                self._expires_at = int(expires_at or 0)
+                self._attempts = 0
+                self._failure_code = None
+            elif event is LeaseEvent.IDP_ERR:
+                self._attempts += 1
+                self._failure_code = code or "renewal_failed"
+            elif target is LeaseState.REVOKED:
+                self._revocation_reason = code or str(event)
+            self.state = target
+            return target
+
+    def tick(self, now: float | None = None) -> LeaseState:
+        """Send ``tick`` when one of its guards holds; otherwise change nothing."""
+        with self._lock:
+            moment = time.time() if now is None else float(now)
+            edges = _EDGES_BY_PAIR.get((self.state, LeaseEvent.TICK), ())
+            facts = self._facts(True)
+            if any(facts.holds(edge.guard, moment) for edge in edges):
+                return self.apply(LeaseEvent.TICK, moment)
+            return self.state
+
     def revoke(self, reason: str) -> None:
         """Permanently close this lease after verified authority loss."""
         with self._lock:
-            if self._revocation_reason is None:
-                self._revocation_reason = reason
+            if self.state not in TERMINAL_LEASE_STATES:
+                self.apply(LeaseEvent.REVOKE, code=reason)
 
-    def _ensure_current_locked(self) -> None:
-        if self._revocation_reason is not None:
-            raise CredentialExpiredError("Verified actor credential was revoked")
-        if int(time.time()) >= self._expires_at:
-            raise CredentialExpiredError("Verified actor credential has expired")
+    def stop(self) -> None:
+        """Close this lease when its owner stops; a terminal lease is left as is."""
+        with self._lock:
+            if self.state not in TERMINAL_LEASE_STATES:
+                self.apply(LeaseEvent.STOP)
 
     def ensure_current(self) -> None:
+        """Fail closed unless the lease is usable now (request-time check)."""
         with self._lock:
-            self._ensure_current_locked()
+            if self.state is LeaseState.REVOKED:
+                raise CredentialExpiredError("Verified actor credential was revoked")
+            if self.state is LeaseState.STOPPED:
+                raise CredentialExpiredError("Verified actor credential is closed")
+            self.tick()
+            if self.state is LeaseState.EXPIRED:
+                raise CredentialExpiredError("Verified actor credential has expired")
 
-    def renew(self, expires_at: int) -> None:
-        """Update a still-live lease atomically; never resurrect old authority."""
+    def renew(self, expires_at: int, now: float | None = None) -> None:
+        """Commit a freshly minted, identity-checked expiry through the machine.
+
+        A ``Live`` or ``RenewDue`` lease passes through ``RenewDue`` and
+        ``Renewing``; a ``Degraded`` or ``Expired`` lease recovers directly
+        (ARBORA-IDENTITY-R027.3). ``Revoked`` and ``Stopped`` refuse.
+        """
         with self._lock:
-            self._ensure_current_locked()
-            self._expires_at = int(expires_at)
+            moment = time.time() if now is None else float(now)
+            if int(expires_at) <= moment:
+                raise CredentialExpiredError("A renewed credential must outlive now")
+            self.tick(moment)
+            if self.state is LeaseState.LIVE:
+                self.apply(LeaseEvent.TICK, moment)
+            if self.state is LeaseState.RENEW_DUE:
+                self.apply(LeaseEvent.RENEW_START, moment)
+            self.apply(LeaseEvent.IDP_OK, moment, expires_at=int(expires_at))
 
 
 @dataclass(frozen=True)

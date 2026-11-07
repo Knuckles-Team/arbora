@@ -309,10 +309,10 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T149 ARBORA-IDENTITY-R030.1 Deliver `arbora clients enroll` creates one machine client.
 - [ ] T150 ARBORA-IDENTITY-R030.2 Deliver `arbora token` prints a fresh bearer token for a header helper.
 - [ ] T151 ARBORA-IDENTITY-R030.3 The served endpoint publishes protected-resource metadata.
-- [ ] T152 ARBORA-IDENTITY-R027.1 Lease state enum, event enum and the one `transition` function.
-- [ ] T153 ARBORA-IDENTITY-R027.2 Renew at 50% of the lifetime; `Degraded` with jittered exponential backoff.
-- [ ] T154 ARBORA-IDENTITY-R027.3 Recovery edge `Degraded` and `Expired` to `Live`, guarded by unchanged identity.
-- [ ] T155 ARBORA-IDENTITY-R027.4 Typed refusal of illegal lease transitions.
-- [ ] T156 ARBORA-IDENTITY-R027.5 Derive readiness from the lease state; delete the failure global.
-- [ ] T157 ARBORA-IDENTITY-R027.6 Describe the lease machine in the ontology.
-- [ ] T158 ARBORA-IDENTITY-R027.7 Wire the supervisor, loop and readiness to the lease machine; hot-path proof.
+- [x] T152 ARBORA-IDENTITY-R027.1 Lease state enum, event enum and the one `transition` function. Evidence: `tests/security/test_credential_lease_machine.py::test_legal_edge`.
+- [x] T153 ARBORA-IDENTITY-R027.2 Renew at 50% of the lifetime; `Degraded` with jittered exponential backoff. Evidence: `tests/mcp_server/test_process_authority_renewal.py::test_renewal_starts_at_half_lifetime_and_backs_off_with_jitter`.
+- [x] T154 ARBORA-IDENTITY-R027.3 Recovery edge `Degraded` and `Expired` to `Live`, guarded by unchanged identity. Evidence: `tests/mcp_server/test_process_authority_renewal.py::test_outage_longer_than_ttl_recovers_without_restart`.
+- [x] T155 ARBORA-IDENTITY-R027.4 Typed refusal of illegal lease transitions. Evidence: `tests/security/test_credential_lease_machine.py::test_every_illegal_pair_is_refused_and_state_is_unchanged`.
+- [x] T156 ARBORA-IDENTITY-R027.5 Derive readiness from the lease state; delete the failure global. Evidence: `tests/observability/test_runtime_health.py::test_readiness_reason_follows_lease_state_with_no_separate_global`.
+- [x] T157 ARBORA-IDENTITY-R027.6 Describe the lease machine in the ontology. Evidence: `tests/ontology/test_credential_lease_machine_description.py::test_every_state_and_transition_rolls_up_to_the_core_classes`.
+- [x] T158 ARBORA-IDENTITY-R027.7 Wire the supervisor, loop and readiness to the lease machine; hot-path proof. Evidence: `tests/mcp_server/test_process_authority_renewal.py::test_supervisor_drives_the_lease_through_an_outage_and_ready_follows`.

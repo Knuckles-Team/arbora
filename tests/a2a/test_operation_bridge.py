@@ -25,7 +25,12 @@ from arbora.api.invoke.bootstrap import verify_current_from_session
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import Confirm, Surface
 from arbora.mcp_server import runtime as mcp_runtime
-from arbora.security.actor_context import ActorContext, ActorType, CredentialLease
+from arbora.security.actor_context import (
+    ActorContext,
+    ActorType,
+    CredentialLease,
+    LeaseEvent,
+)
 from tests.a2a.test_application import Authenticator, Authority, Router
 from tests.a2a.test_mcp import _Mcp
 from tests.api.test_invoke_contract import FixtureRuntime, operation, setup_services
@@ -181,7 +186,8 @@ def test_denied_authority_has_zero_effects(failure: str) -> None:
     app, _services, runtime, audit, journal, _requests = fixture(bound, **changes)
     if failure == "expired":
         assert bound.actor.credential_lease is not None
-        bound.actor.credential_lease.renew(1)
+        lease = bound.actor.credential_lease
+        lease.apply(LeaseEvent.TICK, now=lease.expires_at)
     if failure == "mismatched":
         runtime.change_caller = True
     response = post(

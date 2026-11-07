@@ -495,7 +495,7 @@ def mcp_server(
             co_service_supervisor.stop_all()
         runtime._PROCESS_SESSION = None
         runtime.set_process_session(None)
-        runtime._stop_process_authority_supervisor()
+        runtime._stop_process_authority_supervisor(close_lease=True)
         runtime._release_readiness_authority(readiness_authority_owner)
         # Best-effort teardown of any lazily-mounted fleet children.
         if fleet_mux is not None:
