@@ -185,7 +185,7 @@ def _check_engine() -> dict[str, Any]:
     return _result(
         "engine_binary",
         "warn",
-        "medulla-server not found yet (provided by the medulla-stem wheel)",
+        "medulla-server not found yet (provided by the medulla wheel)",
         remediation=(
             "install the prebuilt wheel: `pip install agent-utilities` (or `uv tool install "
             f"agent-utilities`). {cargo_note}."

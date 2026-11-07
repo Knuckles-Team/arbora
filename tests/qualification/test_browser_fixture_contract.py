@@ -149,19 +149,19 @@ def test_native_executable_must_match_wheel_record(controller, tmp_path, fault):
             controller.native.verify_server_record(binary, distribution)
 
 
-@pytest.mark.parametrize("version", ["3.1.0", "3.0.0", None])
+@pytest.mark.parametrize("version", ["3.2.0", "3.1.0", None])
 def test_native_runtime_version_is_exact(controller, monkeypatch, version):
     async def health():
         return {"version": version}
 
-    # The expected version is the installed medulla-stem wheel's, never a literal.
+    # The expected version is the installed medulla wheel's, never a literal.
     monkeypatch.setattr(
         controller.native.importlib.metadata,
         "version",
-        lambda name: "3.1.0" if name == "medulla-stem" else "0",
+        lambda name: "3.2.0" if name == "medulla" else "0",
     )
     client = SimpleNamespace(health=health)
-    if version == "3.1.0":
+    if version == "3.2.0":
         assert asyncio.run(controller.native.require_native_version(client)) == version
     else:
         with pytest.raises(RuntimeError, match="Native runtime version"):

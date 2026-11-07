@@ -77,7 +77,7 @@ def _check_engine_domains() -> dict[str, Any]:
         f"no engine_<domain> tool families registered for profile {profile!r} "
         "-- the 'medulla' client package is not importable",
         remediation=(
-            "install the engine client (`pip install 'medulla[server]'`, a arbora runtime "
+            "install the engine client (`pip install medulla`, a arbora runtime "
             "dependency) so the "
             "required engine_<domain> tool families and their REST twins are "
             "actually served"

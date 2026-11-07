@@ -270,7 +270,7 @@ def test_install_smoke_covers_every_os_and_architecture_before_publish() -> None
     required = {leg["name"] for leg in legs if not leg.get("optional")}
     assert required == _REQUIRED_SMOKE_PLATFORMS
     # A leg is optional only while the engine publishes no wheel for it.
-    for package in ("medulla", "medulla-stem"):
+    for package in ("medulla",):
         assert _locked_wheel_platforms(package) == _REQUIRED_SMOKE_PLATFORMS
     assert smoke["strategy"]["fail-fast"] is False
     assert smoke["needs"] == ["build"]
@@ -303,7 +303,7 @@ def test_release_eg_resolves_from_the_package_index_as_wheels() -> None:
     # builds the engine from source.
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     no_build = set(project["tool"]["uv"].get("no-build-package", ()))
-    assert {"medulla", "medulla-stem"} <= no_build
+    assert "medulla" in no_build
 
 
 def test_installed_sdk_contains_schema_disclosure_contract() -> None:

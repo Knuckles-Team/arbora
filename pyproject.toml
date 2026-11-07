@@ -50,8 +50,7 @@ dependencies = [
     # surface directly; AU's transitive requirement is not enough for this
     # package's own imports. The root source override below aligns AU and SDK
     # on the Arbora-compatible revision without changing the published floor.
-    "medulla>=3.1.0,<4.0.0",
-    "medulla-stem>=3.1.0,<4.0.0",
+    "medulla>=3.2.0,<4.0.0",
     "fastapi>=0.143.3",
     "filelock>=4.2.0",
     # The served source reads (arbora.mcp_server.source_reader) decode the
@@ -183,13 +182,12 @@ service = "arbora.messaging.reach:service_port"
 [tool.uv]
 # The engine installs from its published wheels only; its sdist (a Rust
 # build) is never a candidate.
-no-build-package = ["medulla", "medulla-stem"]
+no-build-package = ["medulla"]
 
 [tool.uv.sources]
 # The engine always resolves from the package index, never from a git or
 # path source declared by a dependency.
 medulla = { index = "pypi" }
-medulla-stem = { index = "pypi" }
 
 [[tool.uv.index]]
 name = "pypi"

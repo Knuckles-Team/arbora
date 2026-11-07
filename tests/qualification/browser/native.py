@@ -46,8 +46,7 @@ def require_installed() -> dict[str, str]:
     versions = {}
     for package, module, expected in (
         ("arbora", "arbora", None),
-        ("medulla", "medulla", "3.1.0"),
-        ("medulla-stem", "medulla_server", "3.1.0"),
+        ("medulla", "medulla", "3.2.0"),
         ("meristem", "meristem", "5.0.0"),
         ("scion-sdk", "scion_sdk", "0.7.1"),
         ("overstory", "overstory", None),
@@ -73,7 +72,7 @@ def require_installed() -> dict[str, str]:
     # The engine does not implement --version. Verify the actual executable
     # against the exact installed wheel's RECORD, not an unsupported CLI flag.
     versions["native-server-sha256"] = verify_server_record(
-        binary, importlib.metadata.distribution("medulla-stem")
+        binary, importlib.metadata.distribution("medulla")
     )
     return versions
 
@@ -81,11 +80,11 @@ def require_installed() -> dict[str, str]:
 async def require_native_version(client: Any, expected: str | None = None) -> str:
     """Attest the running executable before creating fixture identities.
 
-    The running server must report exactly the installed ``medulla-stem`` version,
+    The running server must report exactly the installed ``medulla`` version,
     the wheel ``require_installed`` already pinned and whose binary was verified.
     """
     if expected is None:
-        expected = importlib.metadata.version("medulla-stem")
+        expected = importlib.metadata.version("medulla")
     async with asyncio.timeout(15):
         health = await client.health()
     if not isinstance(health, dict) or health.get("version") != expected:
