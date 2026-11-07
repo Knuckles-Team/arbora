@@ -1,3 +1,5 @@
+from arbora.run_origin import RunOriginRegistry
+
 """Committed terminal point-read consumer boundaries (injected producer)."""
 
 from copy import deepcopy
@@ -117,7 +119,8 @@ def test_missing_and_legacy_producers_are_explicitly_unavailable() -> None:
 @pytest.fixture
 def authority(monkeypatch: pytest.MonkeyPatch) -> WorkItemA2AAuthority:
     instance = WorkItemA2AAuthority(
-        lambda: SimpleNamespace(work_item_graph="__control__")
+        lambda: SimpleNamespace(work_item_graph="__control__"),
+        origins=RunOriginRegistry(),
     )
     item = {
         "status": "succeeded",

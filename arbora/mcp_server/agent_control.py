@@ -12,7 +12,7 @@ from arbora.api.contracts import (
 )
 from arbora.mcp_server import runtime
 
-ControlPlaneFactory = Callable[[Any, Any], AgentControlPlane]
+ControlPlaneFactory = Callable[..., AgentControlPlane]
 ClientForSession = Callable[[Any], Any]
 
 
@@ -24,6 +24,7 @@ def register_graph_rlm(
     mcp: ToolRegistrar,
     *,
     client_for_session: ClientForSession,
+    origins: Any,
     factory: ControlPlaneFactory = compose_agent_control_plane,
 ) -> None:
     """Register the sole retained AU operation from verified injected inputs."""
@@ -37,7 +38,9 @@ def register_graph_rlm(
     )
     async def graph_rlm(request: GraphRlmRequest) -> str:
         with runtime.verified_tool_session_scope() as session:
-            control_plane = factory(client_for_session(session), session)
+            control_plane = factory(
+                client_for_session(session), session, origins=origins
+            )
             result = await control_plane.graph_rlm(request)
         return result.model_dump_json()
 

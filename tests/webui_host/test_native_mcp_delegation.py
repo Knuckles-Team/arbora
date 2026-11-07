@@ -41,7 +41,7 @@ def mux(monkeypatch: pytest.MonkeyPatch) -> _FakeMux:
         "unregistered_leak": SimpleNamespace(description="hidden", parameters={}),
     }
     monkeypatch.setattr(mcp_delegation, "run_on_served_multiplexer", run_on_served)
-    monkeypatch.setattr(mcp_delegation, "_require_fleet_capability", lambda kind: None)
+    monkeypatch.setattr(mcp_delegation, "require_fleet_capability", lambda kind: None)
     monkeypatch.setattr(mcp_delegation, "_provider_tools", lambda host: host_tools)
     monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {"find": object()})
     monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {"graph_registered": object()})

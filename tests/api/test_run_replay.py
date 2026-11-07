@@ -1,3 +1,5 @@
+from arbora.run_origin import RunOriginRegistry
+
 """Public replay contract, without external models or credentials."""
 
 import json
@@ -97,7 +99,7 @@ async def test_owner_checked_before_event_query(monkeypatch):
 
     calls = []
     engine = SimpleNamespace(query_cypher=lambda *args: calls.append(args))
-    reader = NativeRunReader(lambda: engine)
+    reader = NativeRunReader(lambda: engine, origins=RunOriginRegistry())
     monkeypatch.setattr(reader._authority, "_authorized_item", lambda *args: None)
     result = await reader.events(
         context=reader_context(), request=RunEventsParams(run_id="run-one")
@@ -111,7 +113,7 @@ async def test_native_reader_cursor_anchor_and_restart_safe_projection(monkeypat
 
     engine = replay_engine(event(1), event(2, type="graph_complete"))
     for _ in range(2):
-        reader = NativeRunReader(lambda: engine)
+        reader = NativeRunReader(lambda: engine, origins=RunOriginRegistry())
         monkeypatch.setattr(
             reader._authority, "_authorized_item", lambda *args: {"status": "succeeded"}
         )
@@ -152,7 +154,7 @@ async def test_terminal_cursor_stays_terminal_or_refuses_later_events(
     engine = replay_engine(
         event(1), event(2, type="graph_complete"), *([event(3)] if extra else [])
     )
-    reader = NativeRunReader(lambda: engine)
+    reader = NativeRunReader(lambda: engine, origins=RunOriginRegistry())
     monkeypatch.setattr(
         reader._authority, "_authorized_item", lambda *args: {"status": "succeeded"}
     )
@@ -167,7 +169,7 @@ async def test_terminal_cursor_stays_terminal_or_refuses_later_events(
 async def test_permission_denial_is_not_unavailable(monkeypatch):
     from arbora.mcp_server.run_reader import NativeRunReader
 
-    reader = NativeRunReader(lambda: None)
+    reader = NativeRunReader(lambda: None, origins=RunOriginRegistry())
 
     def deny(*args):
         raise PermissionError("denied")
@@ -186,7 +188,7 @@ async def test_permission_denial_is_not_unavailable(monkeypatch):
 async def test_get_maps_canonical_status(monkeypatch, status, expected):
     from arbora.mcp_server.run_reader import NativeRunReader
 
-    reader = NativeRunReader(lambda: None)
+    reader = NativeRunReader(lambda: None, origins=RunOriginRegistry())
     monkeypatch.setattr(
         reader._authority, "_authorized_item", lambda *args: {"status": status}
     )
@@ -311,7 +313,9 @@ def replay_engine(*events):
 async def test_cursor_cannot_bypass_invalid_earlier_history(monkeypatch, history):
     from arbora.mcp_server.run_reader import NativeRunReader
 
-    reader = NativeRunReader(lambda: replay_engine(*history))
+    reader = NativeRunReader(
+        lambda: replay_engine(*history), origins=RunOriginRegistry()
+    )
     monkeypatch.setattr(
         reader._authority, "_authorized_item", lambda *args: {"status": "running"}
     )
@@ -361,7 +365,9 @@ async def test_native_refusals_preserved_on_http_and_mcp(
             raise EngineResponseError("ACCESS_DENIED", "private backend detail")
         return good.query_cypher(query, params)
 
-    reader = NativeRunReader(lambda: SimpleNamespace(query_cypher=query))
+    reader = NativeRunReader(
+        lambda: SimpleNamespace(query_cypher=query), origins=RunOriginRegistry()
+    )
 
     def owned(*args):
         if failure_stage == "owner":
@@ -430,7 +436,9 @@ async def test_root_task_run_pair_is_bound_before_payload(
         queries.append(args)
         return engine.query_cypher(*args)
 
-    reader = NativeRunReader(lambda: SimpleNamespace(query_cypher=query))
+    reader = NativeRunReader(
+        lambda: SimpleNamespace(query_cypher=query), origins=RunOriginRegistry()
+    )
     admissions = []
 
     def owned(identity, scope):
@@ -459,7 +467,7 @@ async def test_foreign_root_is_unavailable_before_payload(monkeypatch, foreign):
     from arbora.mcp_server.run_reader import NativeRunReader
 
     context = reader_context()
-    reader = NativeRunReader(lambda: None)
+    reader = NativeRunReader(lambda: None, origins=RunOriginRegistry())
     owner = reader._authority._owner_ref(context.caller.session)
     item = {
         "kind": "orchestrator_task",
@@ -494,7 +502,9 @@ async def test_raw_payload_budget_stops_before_next_batch(monkeypatch):
         calls.append(params)
         return engine.query_cypher(statement, params)
 
-    reader = NativeRunReader(lambda: SimpleNamespace(query_cypher=query))
+    reader = NativeRunReader(
+        lambda: SimpleNamespace(query_cypher=query), origins=RunOriginRegistry()
+    )
     monkeypatch.setattr(
         reader._authority, "_authorized_item", lambda *args: {"status": "running"}
     )

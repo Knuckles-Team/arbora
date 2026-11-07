@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 
 from arbora.a2a.authority import WorkItemA2AAuthority
+from arbora.run_origin import RunOriginRegistry
 from tests.a2a.test_context_continuation import SESSION, row
 
 pytestmark = pytest.mark.spec("ARBORA-A2A-R001")
@@ -27,7 +28,7 @@ def fixture(monkeypatch: Any, pages: list[Any]) -> tuple[Any, list[Any]]:
         return pages.pop(0)
 
     engine = SimpleNamespace(work_items=SimpleNamespace(list=read))
-    authority = WorkItemA2AAuthority(lambda: engine)
+    authority = WorkItemA2AAuthority(lambda: engine, origins=RunOriginRegistry())
     monkeypatch.setattr(authority, "_session", lambda scope: SESSION)
     monkeypatch.setattr(authority, "_owner_ref", lambda session: "owner")
     return authority, calls
@@ -114,7 +115,7 @@ async def test_get_reads_durable_reply_on_fresh_authority(monkeypatch: Any) -> N
 
     engine = SimpleNamespace(query_cypher=query_cypher)
     for _ in range(2):
-        authority = WorkItemA2AAuthority(lambda: engine)
+        authority = WorkItemA2AAuthority(lambda: engine, origins=RunOriginRegistry())
         monkeypatch.setattr(authority, "_session", lambda scope: SESSION)
         monkeypatch.setattr(authority, "_authorized_item", lambda *args: record())
         task = await authority.get(TASK)
@@ -135,7 +136,8 @@ async def test_get_reads_durable_reply_on_fresh_authority(monkeypatch: Any) -> N
 )
 def test_invalid_persisted_reply_is_not_reconstructed(rows: Any) -> None:
     authority = WorkItemA2AAuthority(
-        lambda: SimpleNamespace(query_cypher=lambda *args: rows)
+        lambda: SimpleNamespace(query_cypher=lambda *args: rows),
+        origins=RunOriginRegistry(),
     )
     with pytest.raises(RuntimeError, match="reply is unavailable"):
         authority._persisted_artifacts(TASK, item=record())
@@ -143,7 +145,9 @@ def test_invalid_persisted_reply_is_not_reconstructed(rows: Any) -> None:
 
 @pytest.mark.asyncio
 async def test_foreign_task_never_reads_run_events(monkeypatch: Any) -> None:
-    authority = WorkItemA2AAuthority(lambda: pytest.fail("engine accessed"))
+    authority = WorkItemA2AAuthority(
+        lambda: pytest.fail("engine accessed"), origins=RunOriginRegistry()
+    )
     monkeypatch.setattr(authority, "_session", lambda scope: SESSION)
     monkeypatch.setattr(authority, "_authorized_item", lambda *args: None)
     assert await authority.get(TASK) is None
@@ -167,7 +171,8 @@ def test_missing_run_event_does_not_use_process_cache() -> None:
 
     remember_task_output(TASK, "not durable evidence")
     authority = WorkItemA2AAuthority(
-        lambda: SimpleNamespace(query_cypher=lambda *args: [])
+        lambda: SimpleNamespace(query_cypher=lambda *args: []),
+        origins=RunOriginRegistry(),
     )
     assert authority._persisted_artifacts(TASK, item=record()) is None
 

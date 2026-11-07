@@ -84,7 +84,7 @@ def test_unknown_cause_stays_opaque_but_logs_leaf_class(caplog):
 
 async def test_unmountable_child_answers_unavailable_without_dispatch(monkeypatch):
     mux = mux_module.MCPMultiplexer.__new__(mux_module.MCPMultiplexer)
-    monkeypatch.setattr(mux_module, "_require_fleet_capability", lambda *a, **k: None)
+    monkeypatch.setattr(mux_module, "require_fleet_capability", lambda *a, **k: None)
     monkeypatch.setattr(type(mux), "load_catalog", lambda self: {})
 
     result = await mux._call_service_child_once(
@@ -174,7 +174,7 @@ async def test_caller_cancellation_is_not_classified(monkeypatch):
 
     mux = mux_module.MCPMultiplexer.__new__(mux_module.MCPMultiplexer)
     mux._catalog_epoch = 0
-    monkeypatch.setattr(mux_module, "_require_fleet_capability", lambda *a, **k: None)
+    monkeypatch.setattr(mux_module, "require_fleet_capability", lambda *a, **k: None)
     monkeypatch.setattr(type(mux), "load_catalog", lambda self: {"s": {}})
 
     async def cancelled(*args):
@@ -214,7 +214,7 @@ async def test_governed_call_hands_children_plain_json_for_nested_objects(
 
     class Mux:
         async def call_admitted_child_once(self, server, tool, arguments):
-            mux_module._assert_bounded_delegated_value(arguments)
+            mux_module.assert_bounded_delegated_value(arguments)
             seen["arguments"] = arguments
             return mcp.types.CallToolResult(content=[], isError=False)
 
@@ -256,7 +256,7 @@ async def test_governed_call_hands_children_plain_json_for_nested_objects(
 def test_delegated_bound_check_rejects_frozen_mapping():
     """The child-argument bound is for plain JSON; frozen arguments need thawing."""
     with pytest.raises(ToolError):
-        mux_module._assert_bounded_delegated_value(_frozen_nested_arguments())
+        mux_module.assert_bounded_delegated_value(_frozen_nested_arguments())
 
 
 def test_indeterminate_message_states_unknown_outcome():
