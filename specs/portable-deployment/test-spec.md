@@ -134,3 +134,5 @@ Each row below has no spec marker on a test yet. The listed test is the proof to
 | ARBORA-DEPLOY-R017.21 | `arbora/deployment/assembly.py::run_confirmed_steps` (planned); `tests/deployment/test_run_confirmed_steps.py::test_nodes_run_in_engine_order_once_per_key` (planned) | Run the confirmed step graph through governed fleet calls. |
 | ARBORA-DEPLOY-R018.9 | `tests/deployment/test_engine_lifecycle_served.py::test_unset_endpoints_start_one_loopback_engine_and_serve_a_call` (planned) | Engine pool wires the local lifecycle. |
 | ARBORA-DEPLOY-R601 | `tests/deployment/test_deploy_templates.py::test_templates_published_and_assemble_solved` (planned) | Publish deployment templates and tool components. |
+| ARBORA-DEPLOY-R602 | `tests/deployment/test_deploy_commands.py::test_each_script_function_is_a_command_with_a_config_input` (planned) | The deployment configuration repository holds configuration only. |
+| ARBORA-DEPLOY-R603 | `tests/deployment/test_identity_reconcile.py::test_reconcile_is_idempotent_and_reports_drift` (planned) | Identity and application SSO provisioning is one declarative reconcile. |

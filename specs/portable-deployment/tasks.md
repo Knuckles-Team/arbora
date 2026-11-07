@@ -306,3 +306,5 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T069 ARBORA-DEPLOY-R017.21 Run the confirmed step graph through governed fleet calls.
 - [ ] T070 ARBORA-DEPLOY-R018.9 Engine pool wires the local lifecycle.
 - [ ] T071 ARBORA-DEPLOY-R601 Publish deployment templates and tool components.
+- [ ] T072 [US1] ARBORA-DEPLOY-R602 The deployment configuration repository holds configuration only.
+- [ ] T073 [US1] ARBORA-DEPLOY-R603 Identity and application SSO provisioning is one declarative reconcile.
