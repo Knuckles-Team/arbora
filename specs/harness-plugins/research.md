@@ -59,6 +59,20 @@ This file records the extension points of each target harness, read on 2026-11-0
 - No repository holds a plugin or marketplace file of the ecosystem today.
 - The `universal-installer` skill of the catalog links skills into harness skill directories and patches harness MCP config. It holds a per-target frontmatter contract table. `US-CONTENT-R007.4` stops it from wiring the four bundle profiles, so one door exists per harness. `US-CONTENT-R007.1` makes every skill pass the strictest contract as written, so the renderers copy skills unchanged.
 
+## `devin`
+
+- **Hosting.** A hosted agent. It runs on vendor machines and reaches remote MCP servers over the public internet, configured in the vendor web settings. Nothing is installed on the developer's machine, and no hook runs.
+- **MCP.** Remote servers over streamable HTTP, with OAuth or a static header. The OAuth redirect is a fixed vendor callback, not a loopback port.
+- **Context.** Playbooks and knowledge entries carry reusable instructions; the door skills become one playbook text.
+- **Gap.** The door and the identity provider are not reachable from the public internet today. R010 waits for owner decision D8.
+
+## Open owner decisions
+
+| ID | Decision | Default in these rows |
+|---|---|---|
+| D8 | Whether the door and the identity provider are exposed on the public internet for hosted agents, and behind which edge controls. | Pending owner sign-off. R010 stays planned until it is resolved. |
+| D9 | Whether a local workspace root also maps to its repository remote and branch, so a hosted session and a local session share one workstream. | No mapping: hosted sessions share a workstream only with other hosted sessions on the same repository and branch. |
+
 ## Owner decisions (resolved 2026-11-07)
 
 The owner took the default of every decision. The rows above are written to these answers.

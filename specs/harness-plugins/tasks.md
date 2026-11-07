@@ -44,3 +44,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Tasks run p
 - [x] T038 [US4] ARBORA-HARNESS-PLUGINS-R007 Command hook runner.
 - [x] T039 [US4] ARBORA-HARNESS-PLUGINS-R008 The codex renderer.
 - [x] T040 [US4] ARBORA-HARNESS-PLUGINS-R009 The grok renderer.
+- [ ] T041 [US4] ARBORA-HARNESS-PLUGINS-R010.1 The hosted profile renders a connection sheet.
+- [ ] T042 [US4] ARBORA-HARNESS-PLUGINS-R010.2 A hosted client with the vendor redirect.
+- [ ] T043 [US4] ARBORA-HARNESS-PLUGINS-R010.3 The playbook attaches and checkpoints.
+- [ ] T044 [US4] ARBORA-HARNESS-PLUGINS-R010 A hosted coding agent reaches the door (rollup).
