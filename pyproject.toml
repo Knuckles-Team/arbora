@@ -217,6 +217,7 @@ arbora = [
     "**/*.ttl",
     "**/*.md",
     "**/*.txt",
+    "**/*.ts",
 ]
 
 [tool.ruff]
@@ -287,7 +288,7 @@ units = ["agent_runs", "api", "current_plan_publication", "native_run_admission"
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "subsystems"
-units = ["a2a", "acp", "agent_host", "browser_control", "certification", "connector_runner", "control_plane", "deployment", "evolution", "finance", "fleet", "fleet_tool_call", "gateway", "ingest"]
+units = ["a2a", "acp", "agent_host", "browser_control", "certification", "connector_runner", "control_plane", "deployment", "evolution", "finance", "fleet", "fleet_tool_call", "gateway", "harness_plugins", "ingest"]
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "host"

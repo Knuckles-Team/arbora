@@ -180,7 +180,7 @@ The attach context holds the last checkpoint, the open run IDs of `development.r
 ### Decisions
 
 - The bundle is generated at the point of use. No repository commits a generated bundle.
-- Hooks write only to the caller's own workstream. The operations declare `Confirm.NONE`. This needs owner approval; see research.md, open decision D3.
+- Hooks write only to the caller's own workstream. The operations declare `Confirm.NONE` (owner decision D3, resolved 2026-11-07).
 - The default skill set is the door skills only. A selection of skills per task stays an engine decision.
 - The `opencode` module is a template in the arbora wheel. No separate package registry entry exists.
 
