@@ -22,6 +22,7 @@ from arbora.api.invoke.executor import (
     prepare_executor,
 )
 from arbora.api.invoke.plan import PlanBinding, PlanStore, bind_plan, params_digest
+from arbora.api.invoke.privacy import mask_persisted_arguments
 from arbora.api.invoke.steps import (
     OpError,
     OpResult,
@@ -641,12 +642,16 @@ def _arguments(
     validated = validate_params(op, params, services.schema_validate)
     if isinstance(validated, OpError):
         return validated
+    plain = (
+        validated.model_dump(mode="json")
+        if isinstance(validated, BaseModel)
+        else validated
+    )
+    masked = mask_persisted_arguments(op.id, plain)
+    if masked is None:
+        return OpError("INVALID_ARGUMENT")
     try:
-        arguments = freeze_claims(
-            validated.model_dump(mode="json")
-            if isinstance(validated, BaseModel)
-            else validated
-        )
+        arguments = freeze_claims(masked)
         params_digest(arguments)
     except (TypeError, ValueError):
         return OpError("INVALID_ARGUMENT")
