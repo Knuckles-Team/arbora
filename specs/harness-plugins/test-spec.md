@@ -44,6 +44,10 @@ Governing spec: [spec.md](spec.md).
 | T-038 | `ARBORA-HARNESS-PLUGINS-R007` | `tests/harness_plugins/test_hook_runner.py::test_runner_maps_events_and_always_exits_zero` | The test observes the rule of the row: command hook runner. |
 | T-039 | `ARBORA-HARNESS-PLUGINS-R008` | `tests/harness_plugins/test_render_codex.py::test_layout_hooks_and_mcp_entry` | The test observes the rule of the row: the codex renderer. |
 | T-040 | `ARBORA-HARNESS-PLUGINS-R009` | `tests/harness_plugins/test_render_grok.py::test_layout_reuses_the_shared_parts` | The test observes the rule of the row: the grok renderer. |
+| T-041 | `ARBORA-HARNESS-PLUGINS-R010` | Every child row. | See each child. |
+| T-042 | `ARBORA-HARNESS-PLUGINS-R010.1` | `tests/harness_plugins/test_render_devin.py::test_connection_sheet_and_playbook_only` | The tree holds only the connection sheet and the playbook; install refuses `HOSTED_HARNESS`. (planned) |
+| T-043 | `ARBORA-HARNESS-PLUGINS-R010.2` | `tests/identity/test_client_contract.py::test_hosted_client_has_vendor_redirect_and_no_loopback` | The hosted client carries the vendor redirect and the workstream scopes, and no loopback URI. (planned) |
+| T-044 | `ARBORA-HARNESS-PLUGINS-R010.3` | `tests/harness_plugins/test_render_devin.py::test_playbook_attaches_and_checkpoints` | The playbook names attach at start and checkpoint before finish, with the repository workspace key. (planned) |
 
 ## Quality and release proof
 
