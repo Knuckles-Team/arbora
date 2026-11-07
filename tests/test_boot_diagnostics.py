@@ -20,6 +20,10 @@ def test_snapshot_is_bounded_and_excludes_process_payloads(monkeypatch, tmp_path
         f"private: {private}\n"
     )
     monkeypatch.setattr(diagnostics, "_read", lambda path: text)
+    # The disk reading is the one live number left; pin it, or a free-space
+    # count that happens to contain "123" reads as a leaked pid.
+    free = SimpleNamespace(f_bavail=8, f_frsize=4096, f_favail=9)
+    monkeypatch.setattr(diagnostics.os, "statvfs", lambda _root: free)
     recorder = diagnostics.BootDiagnostics(tmp_path, [child] * 100)
     result = recorder.snapshot()
     encoded = json.dumps(result)
@@ -34,6 +38,7 @@ def test_snapshot_is_bounded_and_excludes_process_payloads(monkeypatch, tmp_path
         "some_avg300": 3,
         "some_total": 40,
     }
+    assert result["disk"] == {"available_bytes": 32768, "available_inodes": 9}
     assert len(encoded) < 4096
 
 

@@ -84,6 +84,7 @@ bootstrap skill, together with the [SDD full lifecycle](https://github.com/Knuck
 - [`ARBORA-DATA-MARKET`](data-and-market-projections/spec.md) — Schema context, source admission, and finance projection
 - [`ARBORA-RELEASE`](dependency-ordered-release/spec.md) — Dependency-ordered, digest-pinned GraphOS rollout
 - [`ARBORA-FLEET`](fleet-catalog-and-tools/spec.md) — Fleet catalog, intent tools, and policy safe reload
+- [`ARBORA-HARNESS-PLUGINS`](harness-plugins/spec.md) — Coding harness plugins generated from the registry
 - [`ARBORA-HOST`](host-composition-boundary/spec.md) — GraphOS host composition and ownership boundary
 - [`ARBORA-OPS`](hosted-api-operations/spec.md) — Hosted API and intent operations
 - [`ARBORA-IDENTITY`](identity-access/spec.md) — ACCESS — identity, authorization, and access operations

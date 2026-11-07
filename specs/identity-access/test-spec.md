@@ -271,6 +271,7 @@ No fixture or native lease JSON establishes factory or operation authority.
 | T-ARBORA-IDENTITY-R030.4.4 | ARBORA-IDENTITY-R030.4.4 | Test: `tests/identity/test_client_contract_served.py::test_degraded_contract_keeps_registration_in_metadata` (L3). |
 | T-ARBORA-IDENTITY-R030.4.5 | ARBORA-IDENTITY-R030.4.5 | Test: `tests/ontology/test_client_contract_machine_description.py::test_classes_roll_up_to_the_core_classes` (L2). |
 | T-ARBORA-IDENTITY-R030.4.6 | ARBORA-IDENTITY-R030.4.6 | Test: `tests/identity/test_client_contract.py::test_reconcile_command_prints_state_and_exit_code` (L2). |
+| T-ARBORA-IDENTITY-R030.4.7 | ARBORA-IDENTITY-R030.4.7 | Test: `tests/identity/test_client_contract.py::test_native_redirects_and_scopes_follow_the_profile_table` (L2). (planned) |
 
 ## Entries added for rows without a prior entry
 
