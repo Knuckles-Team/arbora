@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass, replace
@@ -253,6 +254,30 @@ def _merge_sdk_items(
         merged[item.id] = item
 
 
+def _server_record_digests(snapshot: Any) -> dict[str, str]:
+    """One digest per server over its verified engine entries and bodies.
+
+    A connector redeploy republishes its pack, which changes this digest
+    (ARBORA-FLEET-R040.3)."""
+    digests: dict[str, str] = {}
+    for server in getattr(snapshot, "servers", ()):
+        name = server.component.server_name
+        hasher = hashlib.sha256()
+        rows = sorted(
+            (
+                str(provided.entry.kind),
+                str(provided.entry.upstream_name),
+                bytes(getattr(getattr(provided, "content", None), "body", b"") or b""),
+            )
+            for provided in server.provides
+        )
+        for kind, upstream, body in rows:
+            hasher.update(kind.encode() + b"\0" + upstream.encode() + b"\0")
+            hasher.update(hashlib.sha256(body).digest())
+        digests[name] = hasher.hexdigest()
+    return digests
+
+
 class CombinedFleetSource:
     """Only Medulla-admitted live servers may contribute probed protocol rows.
 
@@ -262,10 +287,37 @@ class CombinedFleetSource:
     typed adapter; the caller supplies its verified pack reader.
     """
 
-    def __init__(self, *, verified: VerifiedRead, live: LiveRead, sdk: SdkRead):
+    def __init__(
+        self,
+        *,
+        verified: VerifiedRead,
+        live: LiveRead,
+        sdk: SdkRead,
+        on_redeploy: Callable[[str], None] | None = None,
+    ):
         self._verified = verified
         self._live = live
         self._sdk = sdk
+        self._on_redeploy = on_redeploy
+        self._digests: dict[str, str] = {}
+
+    def _redeployed(self, snapshot: Any) -> set[str]:
+        """Servers whose verified record changed since the previous read.
+
+        Their cached live probe predates the redeploy: it is dropped through
+        ``on_redeploy`` and left out of this merge, so the engine's current
+        record is served until a fresh probe answers (ARBORA-FLEET-R040.3)."""
+        digests = _server_record_digests(snapshot)
+        changed = {
+            name
+            for name, digest in digests.items()
+            if name in self._digests and self._digests[name] != digest
+        }
+        self._digests = digests
+        for name in sorted(changed):
+            if self._on_redeploy is not None:
+                self._on_redeploy(name)
+        return changed
 
     async def __call__(self) -> tuple[CatalogItem, ...]:
         snapshot = await self._verified()
@@ -273,7 +325,10 @@ class CombinedFleetSource:
         subjects = _admitted_subjects(snapshot)
         _require_service_subjects(admitted, subjects)
         merged = _eg_merged_items(snapshot, admitted, subjects)
+        redeployed = self._redeployed(snapshot)
         probe = await self._live()
+        if redeployed:
+            probe = {k: v for k, v in probe.items() if k not in redeployed}
         _merge_probed_items(merged, admitted, subjects, probe)
         _merge_sdk_items(merged, await self._sdk())
         return tuple(merged[name] for name in sorted(merged))

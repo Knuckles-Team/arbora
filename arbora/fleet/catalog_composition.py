@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from collections.abc import Awaitable, Callable, Iterable, Mapping
+from collections.abc import Awaitable, Callable, Iterable, Mapping, MutableMapping
 from typing import Any, Protocol, cast
 
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
@@ -34,7 +34,7 @@ class VerifiedReader(Protocol):
 
 
 class CachedProbe(Protocol):
-    _probe_cache: Mapping[str, Mapping[str, Any]]
+    _probe_cache: MutableMapping[str, Mapping[str, Any]]
 
     def status_snapshot(self) -> Mapping[str, Any]: ...
 
@@ -239,7 +239,14 @@ def compose_multiplexer_ops(
         return await _cached_protocol(mux)
 
     prime = probe_primer(mux)
-    source = CombinedFleetSource(verified=reader.read, live=live, sdk=sdk_entries)
+
+    def drop_probe(server: str) -> None:
+        # ARBORA-FLEET-R040.3: a redeployed connector's cached probe is stale.
+        mux._probe_cache.pop(server, None)
+
+    source = CombinedFleetSource(
+        verified=reader.read, live=live, sdk=sdk_entries, on_redeploy=drop_probe
+    )
     catalog = FleetCatalog((source,), visible)
 
     def health() -> Mapping[str, Any]:

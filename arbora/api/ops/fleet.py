@@ -48,6 +48,9 @@ class FleetCatalogParams(_Params):
     servers: tuple[str, ...] = ()
     groups: tuple[str, ...] = ()
     browse: bool = False
+    #: ``fleet.catalog.list`` only: page the fleet census by server name
+    #: instead of items (ARBORA-FLEET-R040.3).
+    summary: bool = False
     cursor: str | None = Field(default=None, max_length=1_024)
     limit: int = Field(default=50, ge=1, le=100)
     context_budget_tokens: int | None = Field(default=None, ge=256, le=1_000_000)
@@ -171,6 +174,15 @@ async def handle_fleet_operation(
         raise RuntimeError("fleet gateway is not bound")
     caller = context.caller
     if op.id == "fleet.catalog.search":
+        summary = params.get("summary")
+        params = {key: value for key, value in params.items() if key != "summary"}
+        if summary:
+            from arbora.api.invoke.pipeline import OperationRefused
+
+            # ARBORA-FLEET-R040.3: the census is a list, never a search.
+            raise OperationRefused(
+                "INVALID_ARGUMENT", {"field": "summary", "reason": "list only"}
+            )
         # ARBORA-FLEET-R029.1: an unscoped search with no query is a caller
         # error (HTTP 400), refused before the gateway runs.
         if not params.get("query") and not params.get("browse"):
