@@ -28,8 +28,8 @@ def caller_session_scope(caller: Any) -> Iterator[None]:
     if session is None:
         yield None
         return
-    from arbora.api.contracts.session import use_session
     from arbora.security.actor_context import use_actor
+    from arbora.security.session import use_session
 
     with use_actor(session.actor), use_session(session):
         yield None

@@ -424,6 +424,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T157 ARBORA-FLEET-R040 arbora serves and reports the prompts, skills and resources of each connector.
 - [ ] T158 ARBORA-FLEET-R040.1 The served gateway forwards the relay ops.
 - [ ] T159 ARBORA-FLEET-R040.2 A relay read survives a child restart.
+- [ ] T270 ARBORA-FLEET-R040.3 One paged fleet census, and the per-server read agrees with it.
 - [ ] T160 ARBORA-FLEET-R041 Registering a connector imports its full pack with no manual step (rollup).
 - [ ] T161 ARBORA-FLEET-R041.1 Model.
 - [ ] T162 ARBORA-FLEET-R041.2 Behavior.

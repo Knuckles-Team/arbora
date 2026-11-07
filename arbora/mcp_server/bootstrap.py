@@ -225,10 +225,10 @@ def _refresh_process_authority(session: Any, *, from_request: bool = False) -> A
     ``Expired`` lease: the request fails closed with ``SessionExpiredError``
     and the supervisor loop alone re-acquires, with backoff.
     """
-    from arbora.api.contracts.session import SessionExpiredError
     from arbora.core.settings import runtime_config as config
     from arbora.security.actor_context import LeaseEvent, LeaseState
     from arbora.security.run_authority import RunCredentialLease
+    from arbora.security.session import SessionExpiredError
 
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
     if lease is None or isinstance(lease, RunCredentialLease):
@@ -292,11 +292,11 @@ async def _ensure_process_authority_current() -> Any:
     the dispatch-entry check only; :func:`_keep_process_authority_current`
     covers the rest of a long-running dispatch.
     """
-    from arbora.api.contracts.session import (
+    from arbora.security.run_authority import RunCredentialLease
+    from arbora.security.session import (
         SessionExpiredError,
         current_session,
     )
-    from arbora.security.run_authority import RunCredentialLease
 
     ambient = current_session()
     if ambient is not None:
@@ -355,7 +355,7 @@ async def _keep_process_authority_current(session: Any) -> None:
     is open (started and cancelled there) — never a free-running background
     task.
     """
-    from arbora.api.contracts.session import SessionExpiredError
+    from arbora.security.session import SessionExpiredError
 
     lease = session.actor.credential_lease
     try:
@@ -418,7 +418,7 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
       object is replaced and the expiry check itself is never weakened or
       lengthened.
     * ``session`` defaults to the ambient :func:`GraphSession
-      <arbora.api.contracts.session.current_session>` (falling
+      <arbora.security.session.current_session>` (falling
       back to the stdio ``_PROCESS_SESSION``, same as ``verified_tool_session_scope``)
       resolved WITHOUT raising when neither is set — this helper only ever adds
       renewal; it must never introduce a new precondition. A caller with no
@@ -436,7 +436,7 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
         return
 
     if session is None:
-        from arbora.api.contracts.session import current_session
+        from arbora.security.session import current_session
 
         session = current_session() or _process_session()
     if session is None:
@@ -474,7 +474,6 @@ async def _caller_run_authority_scope(session: Any) -> AsyncIterator[None]:
     cancellation) stops renewal and revokes the lease at once. No token is
     read, held, logged or forwarded.
     """
-    from arbora.api.contracts.session import use_session
     from arbora.security.actor_context import CredentialExpiredError
     from arbora.security.run_authority import (
         CALLER_REVOCATIONS,
@@ -485,6 +484,7 @@ async def _caller_run_authority_scope(session: Any) -> AsyncIterator[None]:
         open_run_lease,
         run_renewal_policy,
     )
+    from arbora.security.session import use_session
 
     actor = getattr(session, "actor", None)
     if actor is None or not caller_run_renewable(actor):
@@ -939,7 +939,7 @@ def _start_engine_bootstrap(session: Any) -> None:
     process session, retrying until the endpoint answers or the bounded
     deadline passes, so an unreachable engine stops startup with its cause.
     """
-    from arbora.api.contracts.session import use_session
+    from arbora.security.session import use_session
 
     engine = _get_engine()
     graph = str(session.graph)

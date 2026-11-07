@@ -13,7 +13,6 @@ from typing import Any
 
 import pytest
 
-from arbora.api.contracts.session import GraphSession, SessionExpiredError
 from arbora.mcp_server import bootstrap
 from arbora.observability import runtime_health
 from arbora.security.actor_context import (
@@ -22,6 +21,7 @@ from arbora.security.actor_context import (
     CredentialLease,
     LeaseState,
 )
+from arbora.security.session import GraphSession, SessionExpiredError
 
 ROLES = ("kg:admin", "mcp:discover", "query:unified")
 

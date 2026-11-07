@@ -237,7 +237,7 @@ def _outcome_scope_ref() -> str | None:
     available at the neutral prior, but no outcome may be learned.
     """
 
-    from arbora.api.contracts.session import current_session
+    from arbora.security.session import current_session
 
     session = current_session()
     if session is None:

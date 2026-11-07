@@ -146,7 +146,7 @@ class BrowserControlService(
     def _validate_ambient_binding(binding: BrowserChannelBinding) -> None:
         """Reject a foreign caller without disturbing the legitimate channel."""
 
-        from arbora.api.contracts.session import resolve_session
+        from arbora.security.session import resolve_session
 
         resolve_session(binding.session, required_scope="kg:write")
         if str(getattr(binding.session.actor, "actor_type", "")) != "human":

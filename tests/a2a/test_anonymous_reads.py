@@ -15,9 +15,9 @@ from arbora.a2a.anonymous import (
 )
 from arbora.a2a.authority import remember_task_output
 from arbora.a2a.service import A2AService
-from arbora.api.contracts.session import current_session
 from arbora.api.invoke.steps import authenticate
 from arbora.security.actor_context import IdentityRequiredError, current_actor
+from arbora.security.session import current_session
 
 pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.8.1")
 TASK = "a2a-" + "a" * 64

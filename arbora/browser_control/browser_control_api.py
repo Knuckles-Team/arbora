@@ -8,7 +8,6 @@ from typing import Annotated, Any, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validator
 
-from arbora.api.contracts.session import GraphSession
 from arbora.browser_control.browser_control_common import (
     _DIGEST,
     _ERROR_CODE,
@@ -23,6 +22,7 @@ from arbora.browser_control.browser_control_common import (
     _timestamps_are_finite,
     _trusted_issuer,
 )
+from arbora.security.session import GraphSession
 
 _Identifier = Annotated[str, AfterValidator(_identifier)]
 _OpaqueReference = Annotated[str, AfterValidator(_opaque_ref)]

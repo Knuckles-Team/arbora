@@ -133,9 +133,9 @@ async def handle_messaging_alert(
             delivered=True, platform=platform, channel_id=channel, message_id=message_id
         ).model_dump()
 
-    from arbora.api.contracts.session import use_session
     from arbora.messaging.service import MessagingService
     from arbora.security.actor_context import use_actor
+    from arbora.security.session import use_session
 
     session = getattr(context.caller, "session", None)
     if session is None:
