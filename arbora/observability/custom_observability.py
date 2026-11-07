@@ -183,7 +183,7 @@ def _generate_otlp_auth_header(public_key: str, secret_key: str) -> str:
     return f"Authorization=Basic {auth_encoded}"
 
 
-def _same_origin(left: str, right: str) -> bool:
+def same_origin(left: str, right: str) -> bool:
     """Compare origins after applying the canonical secure-transport policy."""
 
     try:
@@ -237,7 +237,7 @@ def _resolve_otel_endpoint(
 def _is_langfuse_otel_endpoint(endpoint: str, host: str) -> bool:
     """Return whether ``endpoint`` is the canonical Langfuse trace collector."""
 
-    if not _same_origin(endpoint, host):
+    if not same_origin(endpoint, host):
         return False
     normalized = endpoint.rstrip("/")
     if normalized.endswith("/v1/traces"):
@@ -322,7 +322,7 @@ def _resolve_otel_langfuse_reuse(endpoint: str) -> tuple[str, bool]:
     if not langfuse_credentials_configured():
         return "", False
     langfuse_host = resolve_langfuse_host()
-    if not _same_origin(endpoint, langfuse_host):
+    if not same_origin(endpoint, langfuse_host):
         return "", False
     langfuse_public, langfuse_secret = resolve_langfuse_credentials()
     return _generate_otlp_auth_header(langfuse_public, langfuse_secret), True
@@ -370,7 +370,7 @@ def _resolve_otel_transport(endpoint: str) -> Any:
 
     from agent_connector_sdk.tls.resolve import resolve_tls_profile
 
-    same_langfuse_origin = _same_origin(endpoint, resolve_langfuse_host())
+    same_langfuse_origin = same_origin(endpoint, resolve_langfuse_host())
     profile_name = str(setting("OTEL_TLS_PROFILE", "") or "")
     profile_ref = str(setting("OTEL_TLS_PROFILE_REF", "") or "")
     if same_langfuse_origin and not (profile_name or profile_ref):

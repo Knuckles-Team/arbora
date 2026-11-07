@@ -72,7 +72,7 @@ def chain(bridge, monkeypatch):
         task_plan_runtime, "caller_from_session", lambda *a, **k: principal
     )
     monkeypatch.setattr(
-        task_plan_runtime, "_caller_dispatch_graph", AsyncMock(return_value="graph")
+        task_plan_runtime, "caller_dispatch_graph", AsyncMock(return_value="graph")
     )
     model_calls = []
 

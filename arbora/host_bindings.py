@@ -247,7 +247,7 @@ def mount_sdk_a2a(mcp: Any) -> Any:
     from arbora import __version__
     from arbora.a2a.application import (
         AmbientA2AAuthenticator,
-        _caller_session_scope,
+        caller_session_scope,
     )
     from arbora.a2a.sdk_app import create_admitted_a2a_app
 
@@ -257,7 +257,7 @@ def mount_sdk_a2a(mcp: Any) -> Any:
     admitted = create_admitted_a2a_app(
         agent=MediaNormalizingAgent(fleet_agent(), prompt_normalizer()),
         authenticator=AmbientA2AAuthenticator(),
-        bind_caller=_caller_session_scope,
+        bind_caller=caller_session_scope,
         name="arbora",
         url=f"{base}{A2A_PATH}",
         version=__version__,

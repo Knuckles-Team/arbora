@@ -58,7 +58,7 @@ def bridge(monkeypatch):
     runtime.schema_published = []
     runtime.bindings = {"task_plan_schema_pins": pins}
     monkeypatch.setattr(
-        task_plan, "_caller_dispatch_graph", AsyncMock(return_value="verified-graph")
+        task_plan, "caller_dispatch_graph", AsyncMock(return_value="verified-graph")
     )
     built = []
 

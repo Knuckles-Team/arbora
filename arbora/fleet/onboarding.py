@@ -127,11 +127,9 @@ def fleet_endpoints(
 ) -> tuple[FleetEndpoint, ...]:
     """Return every enabled streamable-HTTP server in an MCP config payload."""
 
-    from arbora.gateway.config import _parse_mcp_servers
+    from arbora.gateway.config import parse_mcp_servers
 
-    endpoints = (
-        _endpoint(name, spec) for name, spec in _parse_mcp_servers(raw).items()
-    )
+    endpoints = (_endpoint(name, spec) for name, spec in parse_mcp_servers(raw).items())
     return tuple(
         sorted(
             (item for item in endpoints if item and item.name not in exclude),
@@ -346,11 +344,11 @@ class FleetOnboarding:
 
         from arbora.deployment.semantic_provisioning import (
             COMMONS_GRAPH,
-            _bind_session_graph,
+            bind_session_graph,
             ensure_server_registrations,
         )
 
-        with _bind_session_graph(COMMONS_GRAPH):
+        with bind_session_graph(COMMONS_GRAPH):
             return await ensure_server_registrations(
                 self.commons_client,
                 endpoints,
@@ -420,13 +418,13 @@ class FleetOnboarding:
         as a ``catalog`` surface gap.
         """
 
-        from arbora.deployment.semantic_provisioning import _bind_session_graph
+        from arbora.deployment.semantic_provisioning import bind_session_graph
         from arbora.fleet.catalog_graph import write_catalog
 
         report = self.surfaces.setdefault(endpoint.name, {})
         try:
             graph = str(self.session.graph)
-            with _bind_session_graph(graph):
+            with bind_session_graph(graph):
                 count = await write_catalog(
                     self.tenant_client, graph, endpoint.name, pack
                 )
@@ -478,11 +476,11 @@ class FleetOnboarding:
         from epistemic_graph.generated.connector_pack import ConnectorPackStatusRequest
         from epistemic_graph.generated.storage import send_connector_pack_status
 
-        from arbora.deployment.semantic_provisioning import _bind_session_graph
+        from arbora.deployment.semantic_provisioning import bind_session_graph
 
         tenant_id = str(session_context(self.session)["tenant"])
         graph = str(self.session.graph)
-        with _bind_session_graph(graph):
+        with bind_session_graph(graph):
             status = await send_connector_pack_status(
                 self.tenant_client,
                 ConnectorPackStatusRequest(
@@ -596,14 +594,14 @@ class FleetOnboarding:
 
         from arbora.api.errors import ArboraRefusal
         from arbora.deployment.semantic_provisioning import (
-            _bind_session_graph,
-            _shell_context,
+            bind_session_graph,
+            shell_context,
         )
 
         tenant_id = str(session_context(self.session)["tenant"])
         graph = str(self.session.graph)
         try:
-            with _bind_session_graph(graph):
+            with bind_session_graph(graph):
                 status = await send_connector_pack_status(
                     self.tenant_client,
                     ConnectorPackStatusRequest(
@@ -646,7 +644,7 @@ class FleetOnboarding:
                 f"{head.binding_revision}:{contract_digest}"
             )
             try:
-                context = _shell_context(tenant_id, key)
+                context = shell_context(tenant_id, key)
                 request = ConnectorPackSourceApprovalRequest(
                     connector=endpoint.name,
                     context=context,
@@ -658,7 +656,7 @@ class FleetOnboarding:
                 operation = ConnectorPackOpApproveSource(
                     op="approve_source", request=request
                 )
-                with _bind_session_graph(graph):
+                with bind_session_graph(graph):
                     payload = await self.tenant_client._send(
                         "ConnectorPack",
                         {"op": operation.model_dump(mode="json")},
@@ -756,12 +754,12 @@ class FleetOnboarding:
 
         from arbora.deployment.semantic_provisioning import (
             COMMONS_GRAPH,
-            _bind_session_graph,
-            _registry_page,
+            bind_session_graph,
+            registry_page,
         )
 
-        with _bind_session_graph(COMMONS_GRAPH):
-            page = await _registry_page(self.commons_client)
+        with bind_session_graph(COMMONS_GRAPH):
+            page = await registry_page(self.commons_client)
         live = {entry.name: entry.url for entry in page.entries}
         urls = {name: served_url or live.get(name, "") for name in connectors}
         return {name: url for name, url in urls.items() if url}

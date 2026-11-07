@@ -143,7 +143,7 @@ async def test_onboarding_writes_the_catalog_and_never_fails_on_a_refusal(
 
     monkeypatch.setattr("epistemic_graph.generated.graph.send_add_triples", add_triples)
     monkeypatch.setattr(
-        "arbora.deployment.semantic_provisioning._bind_session_graph",
+        "arbora.deployment.semantic_provisioning.bind_session_graph",
         lambda _graph: contextlib.nullcontext(),
     )
     fleet = SimpleNamespace(

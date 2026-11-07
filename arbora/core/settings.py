@@ -79,7 +79,7 @@ _CREDENTIAL_SUFFIXES = (
 )
 
 
-def _credential_shaped(key: str) -> bool:
+def credential_shaped(key: str) -> bool:
     """True for a key named as a credential, bare (``PASSWORD``) or suffixed."""
     name = key.upper()
     return name.endswith(_CREDENTIAL_SUFFIXES) or any(
@@ -1117,7 +1117,7 @@ def plaintext_secret_keys(document: dict[str, Any]) -> list[str]:
     return sorted(
         str(key)
         for key, value in document.items()
-        if _credential_shaped(str(key))
+        if credential_shaped(str(key))
         and value not in (None, "")
         and not (isinstance(value, str) and value.startswith(_REFERENCE_SCHEMES))
     )
