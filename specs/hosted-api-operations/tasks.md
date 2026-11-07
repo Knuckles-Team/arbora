@@ -476,4 +476,17 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T403 ARBORA-OPS-R902 Work item commit uses the medulla enum and typed refusal.
 - [ ] T404 ARBORA-OPS-R903 Describe the plan lease machine in the ontology.
 - [ ] T405 ARBORA-OPS-R844.1 Persistence privacy masking on the served write path.
-- [ ] T406 ARBORA-OPS-R024.5.1 Model list read for ordinary users.
+- [ ] T419 [US1] ARBORA-OPS-R844.2 Node writes join the persisted-field table. Size: S, 1 PR, 2 hours.
+- [ ] T406 [US1] ARBORA-OPS-R904 Browser graph reads use existing engine-bound operations and query.uql; there is no graph.query and no Cypher text (rollup). Size: L, 4 PRs, 1 day.
+- [ ] T407 [US1] ARBORA-OPS-R904.1 Graph reads: result shape and degraded graphs. Size: M, 1 PR, 4 hours.
+- [ ] T408 [US1] ARBORA-OPS-R904.2 UQL equivalents of the three Cypher callers. Size: M, 1 PR, 4 hours.
+- [ ] T410 [US1] ARBORA-OPS-R906 Specification documents and knowledge-base articles are read operations. Size: M, 2 PRs, 5 hours.
+- [ ] T411 [US1] ARBORA-OPS-R907 Settings write, model lists and configuration views. Size: M, 2 PRs, 5 hours.
+- [ ] T412 [US1] ARBORA-OPS-R908 Ontology object sets, actions and edits are served operations. Size: L, 4 PRs, 1.5 days.
+- [ ] T413 [US1] ARBORA-OPS-R909 Chat history operations scoped to the caller. Size: M, 1 PR, 5 hours.
+- [ ] T414 [US1] ARBORA-OPS-R910 Workspace file operations with path-escape refusal. Size: M, 1 PR, 5 hours.
+- [ ] T415 [US1] ARBORA-OPS-R911 Atlas source connections and mapping operations. Size: M, 2 PRs, 6 hours.
+- [ ] T416 [US1] ARBORA-OPS-R912 Agent library, prompts and goal operations. Size: L, 3 PRs, 1 day.
+- [ ] T417 [US1] ARBORA-OPS-R913 Fleet management, schedule, maintenance, workflow, code, command and resource operations. Size: L, 4 PRs, 1.5 days.
+- [ ] T418 [US1] ARBORA-OPS-R914 Ecosystem widgets and media transcription. Size: M, 2 PRs, 5 hours.
+- [ ] T420 ARBORA-OPS-R024.5.1 Model list read for ordinary users.
