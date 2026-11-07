@@ -435,3 +435,254 @@ arbora:ClientContractMachine_C09 a owl:Class ;
     :fromState arbora:ContractDegraded ;
     :toState arbora:ContractStopped ;
     :firedBy arbora:ClientContractMachine_Event_stop .
+
+# ---------------------------------------------------------------------------
+# Harness plugin install (ARBORA-HARNESS-PLUGINS-R002.1).
+# Python: InstallState, InstallEvent, INSTALL_EDGES in arbora/harness_plugins/install.py.
+# ---------------------------------------------------------------------------
+
+arbora:PluginInstallMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Harness plugin install" ;
+    rdfs:comment "The install lifecycle of one generated harness plugin bundle on a developer machine. Drift between the recorded digest and a fresh composition marks the install stale; install refreshes it." ;
+    :initialState arbora:PluginInstallAbsent ;
+    :hasState arbora:PluginInstallAbsent ,
+        arbora:PluginInstallGenerated ,
+        arbora:PluginInstallInstalled ,
+        arbora:PluginInstallStale ,
+        arbora:PluginInstallRemoved .
+
+arbora:PluginInstallState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Harness plugin install state" .
+
+arbora:PluginInstallTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Harness plugin install transition" .
+
+arbora:PluginInstallEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Harness plugin install event" .
+
+arbora:PluginInstallTransitionRefused a owl:Class ;
+    rdfs:subClassOf :TransitionRefused ;
+    rdfs:label "Harness plugin install transition refused" ;
+    rdfs:comment "IllegalInstallTransition, code INSTALL_TRANSITION_ILLEGAL, fields machine (plugin_install), from_state and event. The install state does not change." .
+
+arbora:PluginInstallAbsent a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallState ;
+    :storedForm "absent" .
+
+arbora:PluginInstallGenerated a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallState ;
+    :storedForm "generated" .
+
+arbora:PluginInstallInstalled a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallState ;
+    :storedForm "installed" .
+
+arbora:PluginInstallStale a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallState ;
+    :storedForm "stale" .
+
+arbora:PluginInstallRemoved a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallState ;
+    :storedForm "removed" .
+
+arbora:PluginInstallMachine_Event_generate a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallEvent ;
+    :storedForm "generate" .
+
+arbora:PluginInstallMachine_Event_install a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallEvent ;
+    :storedForm "install" .
+
+arbora:PluginInstallMachine_Event_drift a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallEvent ;
+    :storedForm "drift" .
+
+arbora:PluginInstallMachine_Event_remove a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallEvent ;
+    :storedForm "remove" .
+
+arbora:PluginInstallMachine_absent-generate-generated a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallTransition ;
+    :fromState arbora:PluginInstallAbsent ;
+    :toState arbora:PluginInstallGenerated ;
+    :firedBy arbora:PluginInstallMachine_Event_generate .
+
+arbora:PluginInstallMachine_generated-install-installed a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallTransition ;
+    :fromState arbora:PluginInstallGenerated ;
+    :toState arbora:PluginInstallInstalled ;
+    :firedBy arbora:PluginInstallMachine_Event_install .
+
+arbora:PluginInstallMachine_installed-drift-stale a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallTransition ;
+    :fromState arbora:PluginInstallInstalled ;
+    :toState arbora:PluginInstallStale ;
+    :firedBy arbora:PluginInstallMachine_Event_drift .
+
+arbora:PluginInstallMachine_stale-install-installed a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallTransition ;
+    :fromState arbora:PluginInstallStale ;
+    :toState arbora:PluginInstallInstalled ;
+    :firedBy arbora:PluginInstallMachine_Event_install .
+
+arbora:PluginInstallMachine_installed-remove-removed a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallTransition ;
+    :fromState arbora:PluginInstallInstalled ;
+    :toState arbora:PluginInstallRemoved ;
+    :firedBy arbora:PluginInstallMachine_Event_remove .
+
+arbora:PluginInstallMachine_stale-remove-removed a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallTransition ;
+    :fromState arbora:PluginInstallStale ;
+    :toState arbora:PluginInstallRemoved ;
+    :firedBy arbora:PluginInstallMachine_Event_remove .
+
+arbora:PluginInstallMachine_removed-generate-generated a owl:Class ;
+    rdfs:subClassOf arbora:PluginInstallTransition ;
+    :fromState arbora:PluginInstallRemoved ;
+    :toState arbora:PluginInstallGenerated ;
+    :firedBy arbora:PluginInstallMachine_Event_generate .
+
+# ---------------------------------------------------------------------------
+# Harness hook credential (ARBORA-HARNESS-PLUGINS-R003.3).
+# Python: CredentialState, CredentialEvent, CREDENTIAL_EDGES in arbora/harness_plugins/login.py.
+# ---------------------------------------------------------------------------
+
+arbora:HarnessCredentialMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Harness hook credential" ;
+    rdfs:comment "The caller credential of the command hook runner, obtained by arbora plugin login. Expired and revoked credentials recover only through a new authorization." ;
+    :initialState arbora:HarnessCredentialUnauthenticated ;
+    :hasState arbora:HarnessCredentialUnauthenticated ,
+        arbora:HarnessCredentialAuthorizing ,
+        arbora:HarnessCredentialAuthorized ,
+        arbora:HarnessCredentialRefreshing ,
+        arbora:HarnessCredentialExpired ,
+        arbora:HarnessCredentialRevoked .
+
+arbora:HarnessCredentialState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Harness hook credential state" .
+
+arbora:HarnessCredentialTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Harness hook credential transition" .
+
+arbora:HarnessCredentialEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Harness hook credential event" .
+
+arbora:HarnessCredentialTransitionRefused a owl:Class ;
+    rdfs:subClassOf :TransitionRefused ;
+    rdfs:label "Harness hook credential transition refused" ;
+    rdfs:comment "IllegalCredentialTransition, code CREDENTIAL_TRANSITION_ILLEGAL, fields machine (harness_credential), from_state and event. The credential state does not change." .
+
+arbora:HarnessCredentialUnauthenticated a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialState ;
+    :storedForm "unauthenticated" .
+
+arbora:HarnessCredentialAuthorizing a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialState ;
+    :storedForm "authorizing" .
+
+arbora:HarnessCredentialAuthorized a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialState ;
+    :storedForm "authorized" .
+
+arbora:HarnessCredentialRefreshing a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialState ;
+    :storedForm "refreshing" .
+
+arbora:HarnessCredentialExpired a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialState ;
+    :storedForm "expired" .
+
+arbora:HarnessCredentialRevoked a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialState ;
+    :storedForm "revoked" .
+
+arbora:HarnessCredentialMachine_Event_begin a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialEvent ;
+    :storedForm "begin" .
+
+arbora:HarnessCredentialMachine_Event_grant a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialEvent ;
+    :storedForm "grant" .
+
+arbora:HarnessCredentialMachine_Event_deny a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialEvent ;
+    :storedForm "deny" .
+
+arbora:HarnessCredentialMachine_Event_refresh_due a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialEvent ;
+    :storedForm "refresh_due" .
+
+arbora:HarnessCredentialMachine_Event_refresh_ok a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialEvent ;
+    :storedForm "refresh_ok" .
+
+arbora:HarnessCredentialMachine_Event_refresh_fail a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialEvent ;
+    :storedForm "refresh_fail" .
+
+arbora:HarnessCredentialMachine_Event_revoke a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialEvent ;
+    :storedForm "revoke" .
+
+arbora:HarnessCredentialMachine_unauthenticated-begin-authorizing a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialTransition ;
+    :fromState arbora:HarnessCredentialUnauthenticated ;
+    :toState arbora:HarnessCredentialAuthorizing ;
+    :firedBy arbora:HarnessCredentialMachine_Event_begin .
+
+arbora:HarnessCredentialMachine_authorizing-grant-authorized a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialTransition ;
+    :fromState arbora:HarnessCredentialAuthorizing ;
+    :toState arbora:HarnessCredentialAuthorized ;
+    :firedBy arbora:HarnessCredentialMachine_Event_grant .
+
+arbora:HarnessCredentialMachine_authorizing-deny-unauthenticated a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialTransition ;
+    :fromState arbora:HarnessCredentialAuthorizing ;
+    :toState arbora:HarnessCredentialUnauthenticated ;
+    :firedBy arbora:HarnessCredentialMachine_Event_deny .
+
+arbora:HarnessCredentialMachine_authorized-refresh_due-refreshing a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialTransition ;
+    :fromState arbora:HarnessCredentialAuthorized ;
+    :toState arbora:HarnessCredentialRefreshing ;
+    :firedBy arbora:HarnessCredentialMachine_Event_refresh_due .
+
+arbora:HarnessCredentialMachine_refreshing-refresh_ok-authorized a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialTransition ;
+    :fromState arbora:HarnessCredentialRefreshing ;
+    :toState arbora:HarnessCredentialAuthorized ;
+    :firedBy arbora:HarnessCredentialMachine_Event_refresh_ok .
+
+arbora:HarnessCredentialMachine_refreshing-refresh_fail-expired a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialTransition ;
+    :fromState arbora:HarnessCredentialRefreshing ;
+    :toState arbora:HarnessCredentialExpired ;
+    :firedBy arbora:HarnessCredentialMachine_Event_refresh_fail .
+
+arbora:HarnessCredentialMachine_authorized-revoke-revoked a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialTransition ;
+    :fromState arbora:HarnessCredentialAuthorized ;
+    :toState arbora:HarnessCredentialRevoked ;
+    :firedBy arbora:HarnessCredentialMachine_Event_revoke .
+
+arbora:HarnessCredentialMachine_expired-begin-authorizing a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialTransition ;
+    :fromState arbora:HarnessCredentialExpired ;
+    :toState arbora:HarnessCredentialAuthorizing ;
+    :firedBy arbora:HarnessCredentialMachine_Event_begin .
+
+arbora:HarnessCredentialMachine_revoked-begin-authorizing a owl:Class ;
+    rdfs:subClassOf arbora:HarnessCredentialTransition ;
+    :fromState arbora:HarnessCredentialRevoked ;
+    :toState arbora:HarnessCredentialAuthorizing ;
+    :firedBy arbora:HarnessCredentialMachine_Event_begin .
