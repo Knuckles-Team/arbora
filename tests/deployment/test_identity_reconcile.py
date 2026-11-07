@@ -57,6 +57,7 @@ FILE: dict[str, Any] = {
             "kind": "public",
             "name": "Native MCP clients",
             "redirectUris": ["http://localhost:33418/callback"],
+            "postLogoutRedirectUris": ["+"],
             "default_scopes": ["agent-services", "groups"],
         },
         {

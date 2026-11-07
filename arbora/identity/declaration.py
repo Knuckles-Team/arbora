@@ -145,10 +145,12 @@ class ClientDecl:
     name: str
     description: str = ""
     root_url: str = ""
+    base_url: str = ""
+    direct_access: bool = False
     redirect_uris: tuple[str, ...] = ()
     web_origins: tuple[str, ...] = ()
     pkce: str = ""
-    post_logout_redirect_uris: tuple[str, ...] = ("+",)
+    post_logout_redirect_uris: tuple[str, ...] = ()
     default_scopes: tuple[str, ...] = ()
     mappers: tuple[Mapping[str, Any], ...] = ()
     service_account: ServiceAccountDecl | None = None
@@ -311,7 +313,8 @@ def _client(item: Any) -> ClientDecl:
     raw = _mapping(item, "clients")
     _only(
         raw,
-        ("clientId", "kind", "name", "description", "rootUrl", "redirectUris",
+        ("clientId", "kind", "name", "description", "rootUrl", "baseUrl",
+         "direct_access", "redirectUris",
          "webOrigins", "pkce", "postLogoutRedirectUris", "default_scopes",
          "mappers", "service_account", "secret_target"),
         "clients",
@@ -353,19 +356,20 @@ def _client(item: Any) -> ClientDecl:
             _text(tr, "id_key", where),
             _text(tr, "secret_key", where),
         )
-    logout = _texts(raw, "postLogoutRedirectUris", where) or ("+",)
+    logout = _texts(raw, "postLogoutRedirectUris", where)
     if kind == "public" and not _texts(raw, "redirectUris", where):
         raise DeclarationError(f"{where}: a public client needs redirectUris")
     return ClientDecl(
         client_id=cid,
         kind=kind,
-        name=_text(raw, "name", where, required=False) or cid,
+        name=_text(raw, "name", where, required=False),
         description=_text(raw, "description", where, required=False),
         root_url=_text(raw, "rootUrl", where, required=False),
+        base_url=_text(raw, "baseUrl", where, required=False),
+        direct_access=bool(raw.get("direct_access", False)),
         redirect_uris=_texts(raw, "redirectUris", where),
         web_origins=_texts(raw, "webOrigins", where),
-        pkce=_text(raw, "pkce", where, required=False)
-        or ("S256" if kind == "public" else ""),
+        pkce=_pkce(_text(raw, "pkce", where, required=False), kind),
         post_logout_redirect_uris=logout,
         default_scopes=_texts(raw, "default_scopes", where)
         or (NATIVE_DEFAULT_SCOPES if kind == "public" else ()),
@@ -373,6 +377,13 @@ def _client(item: Any) -> ClientDecl:
         service_account=account,
         secret_target=target,
     )
+
+
+def _pkce(value: str, kind: str) -> str:
+    """``S256`` is the public default; ``none`` declares that PKCE is not required."""
+    if value == "none":
+        return ""
+    return value or ("S256" if kind == "public" else "")
 
 
 def _user(item: Any) -> UserDecl:
@@ -437,41 +448,42 @@ def client_wanted(client: ClientDecl) -> dict[str, Any]:
     """
     if client.kind == "public":
         spec = ClientSpec(
-            client.client_id, client.name, client.redirect_uris, client.default_scopes
+            client.client_id,
+            client.name or client.client_id,
+            client.redirect_uris,
+            client.default_scopes,
         )
         wanted = client_representation(spec)
-        wanted["attributes"]["post.logout.redirect.uris"] = "##".join(
-            client.post_logout_redirect_uris
-        )
         wanted["attributes"]["pkce.code.challenge.method"] = client.pkce
+        wanted["attributes"].pop("post.logout.redirect.uris")
+        wanted["directAccessGrantsEnabled"] = client.direct_access
         wanted["webOrigins"] = list(client.web_origins)
     else:
         service = client.kind == "service"
         wanted = {
             "clientId": client.client_id,
-            "name": client.name,
             "enabled": True,
             "protocol": "openid-connect",
             "publicClient": False,
             "clientAuthenticatorType": "client-secret",
             "standardFlowEnabled": not service,
             "implicitFlowEnabled": False,
-            "directAccessGrantsEnabled": False,
+            "directAccessGrantsEnabled": client.direct_access,
             "serviceAccountsEnabled": service,
             "redirectUris": list(client.redirect_uris),
             "webOrigins": list(client.web_origins),
-            "attributes": {
-                "post.logout.redirect.uris": "##".join(
-                    client.post_logout_redirect_uris
-                ),
-                "pkce.code.challenge.method": client.pkce,
-            },
+            "attributes": {"pkce.code.challenge.method": client.pkce},
         }
-        if client.root_url:
-            wanted["rootUrl"] = client.root_url
-            wanted["baseUrl"] = client.root_url
+    if client.post_logout_redirect_uris:
+        wanted["attributes"]["post.logout.redirect.uris"] = "##".join(
+            client.post_logout_redirect_uris
+        )
+    if client.kind != "public" and client.name:
+        wanted["name"] = client.name
     if client.description:
         wanted["description"] = client.description
-    if client.kind == "public" and client.root_url:
+    if client.root_url:
         wanted["rootUrl"] = client.root_url
+    if client.base_url:
+        wanted["baseUrl"] = client.base_url
     return wanted
