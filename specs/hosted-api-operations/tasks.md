@@ -490,3 +490,4 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T416 [US1] ARBORA-OPS-R912 Agent library, prompts and goal operations. Size: L, 3 PRs, 1 day.
 - [ ] T417 [US1] ARBORA-OPS-R913 Fleet management, schedule, maintenance, workflow, code, command and resource operations. Size: L, 4 PRs, 1.5 days.
 - [ ] T418 [US1] ARBORA-OPS-R914 Ecosystem widgets and media transcription. Size: M, 2 PRs, 5 hours.
+- [ ] T420 ARBORA-OPS-R024.5.1 Model list read for ordinary users.

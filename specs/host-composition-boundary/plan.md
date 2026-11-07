@@ -39,6 +39,14 @@ No unknowns remain. The sections below record the earlier research and decisions
 
 The sections below hold the architecture, ownership, data flow and failure modes of this spec.
 
+- **Owner.** arbora, the host units: `mcp_server` is the composition root that builds `HostContext`; each field's object lives in the unit that owns the state it replaces (`fleet/state.py`, `run_origin.py`, and so on).
+- **Cohesion.** A registry, its lock and the methods that change it live in one class in the owning unit; the composition root only builds and passes the objects; layer order lives in the coupling policy in `pyproject.toml`, apart from the code it constrains.
+- **Dependency direction.** Units import their own or an earlier layer (foundation, security, services, operations, subsystems, host); the host composition root depends on every field type, and no field type imports `mcp_server`. An upward call goes through a port the lower unit declares.
+- **Interface depth.** `HostContext` and `build_host_context` are the only new surface at the root; each field is one class with a few methods (for example `RemoteOAuthBrokers` reached from `arbora/fleet/multiplexer.py` and `arbora/mcp_server/composition.py`), and its dict, set and lock stay private.
+- **Special cases.** None: every module-level registry follows the same move (a class owning its lock, built once, passed by argument), and headless builds use the same `build_host_context` as the served process instead of a fallback path.
+- **State.** No new lifecycle: the fields hold registries whose own state machines are specified by their owning rows; `HostContext` is frozen and its fields are never reassigned.
+- **Environment.** None: nothing here is deployment-specific; deployments still vary only the existing configuration.
+
 ### Existing wiring to reuse
 
 | Arbora module | Existing responsibility | Required change |
