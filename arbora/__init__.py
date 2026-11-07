@@ -22,7 +22,7 @@ contracts are documented in ``docs/status.md`` and fail closed; no legacy
 fallback is implied by this package description.
 """
 
-from arbora._version import __version__
+from arbora.version import __version__
 
 from . import epistemic
 

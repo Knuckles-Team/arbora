@@ -24,7 +24,6 @@ from agent_utilities import host_ports
 from fastapi import FastAPI
 
 from arbora import agent_runs
-from arbora.a2a import mcp as a2a_mcp
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
@@ -36,6 +35,7 @@ from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
 )
+from arbora.run_origin import RunOriginRegistry
 from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
 from tests.test_agents_run_end_to_end import FakeEngine
@@ -158,10 +158,9 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     agent_runs.bind_run_ports()
     process = request_identity.mint_graph_session(_actor())
     a2a = A2AService(
-        authority=WorkItemA2AAuthority(lambda: client),
+        authority=WorkItemA2AAuthority(lambda: client, origins=RunOriginRegistry()),
         router=OrchestratorA2ARouter(lambda: client),
     )
-    monkeypatch.setattr(a2a_mcp, "_SERVICE", a2a)
     invocation = compose_served_invocation(
         pool=FakePool(client),
         graph=process.graph,

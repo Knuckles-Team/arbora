@@ -125,7 +125,7 @@ RevocationCheck = Callable[[ActorContext], Awaitable[str | None]]
 AuditSink = Callable[[dict[str, Any]], None]
 
 
-def _log_audit(record: dict[str, Any]) -> None:
+def log_audit(record: dict[str, Any]) -> None:
     audit_logger.info(
         "run_authority event=%s principal=%s tenant=%s run=%s expires_at=%s "
         "renewals=%s reason=%s",
@@ -269,7 +269,7 @@ async def keep_run_authority_current(
     *,
     policy: RunRenewalPolicy,
     revocation_check: RevocationCheck = CALLER_REVOCATIONS,
-    audit: AuditSink = _log_audit,
+    audit: AuditSink = log_audit,
     clock: Callable[[], float] | None = None,
     sleep: Callable[[float], Awaitable[Any]] = asyncio.sleep,
 ) -> int:

@@ -26,7 +26,7 @@ from agent_connector_sdk.connector import (
     installed_connectors,
 )
 
-from arbora._version import __version__
+from arbora.version import __version__
 
 logger = logging.getLogger(__name__)
 

@@ -6,6 +6,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from arbora.run_origin import RunOriginRegistry
+
 from .application import A2AAuthenticator, create_a2a_application
 from .authority import WorkItemA2AAuthority
 from .routing import OrchestratorA2ARouter
@@ -23,6 +25,7 @@ class A2AComposition:
 def compose_a2a(
     *,
     engine_provider: Callable[[], Any],
+    origins: RunOriginRegistry,
     authenticator: A2AAuthenticator,
     card_metadata: A2ACardMetadata | None = None,
     task_plan_config: Any = None,
@@ -32,6 +35,7 @@ def compose_a2a(
     service = A2AService(
         authority=WorkItemA2AAuthority(
             engine_provider,
+            origins=origins,
             task_plan_config=task_plan_config,
             hosted_invocation=hosted_invocation,
         ),

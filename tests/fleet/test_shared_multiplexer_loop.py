@@ -163,7 +163,7 @@ async def test_native_delegation_uses_served_probe_child_pool_and_bounds(
     config.write_text('{"mcpServers": {}}', encoding="utf-8")
     mux = multiplexer_from_fixture(config)
     monkeypatch.setattr(
-        "arbora.fleet.multiplexer._require_fleet_capability", lambda *_args: None
+        "arbora.fleet.multiplexer.require_fleet_capability", lambda *_args: None
     )
     mux.probe_server = AsyncMock(  # type: ignore[method-assign]
         return_value={"tools": [{"name": "search", "inputSchema": {}}], "error": None}

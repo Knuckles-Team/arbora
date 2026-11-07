@@ -22,7 +22,6 @@ from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolRetu
 from pydantic_ai.models.function import FunctionModel
 
 from arbora import host_bindings
-from arbora.a2a import mcp as a2a_mcp
 from arbora.agent_runs import AgentRunPort
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 from arbora.api.contracts.session import use_session
@@ -47,6 +46,7 @@ from arbora.mcp_server.served_invocation import (
     refused_fleet_effect,
 )
 from arbora.mcp_server.server import _attach_fleet_runtime
+from arbora.run_origin import RunOriginRegistry
 from arbora.security import request_identity
 from arbora.security.actor_context import use_actor
 from arbora.webui_host.mcp_delegation import webui_mcp_delegation_helpers
@@ -84,7 +84,6 @@ def _isolate_registration(monkeypatch: pytest.MonkeyPatch, client: Any) -> None:
     monkeypatch.setattr(browser_control_runtime, "_service", None)
     monkeypatch.setattr(browser_control_runtime, "_owner_loop", None)
     monkeypatch.setattr(host_bindings, "_agent", None)
-    monkeypatch.setattr(a2a_mcp, "_SERVICE", None)
     monkeypatch.setattr(ports, "_application", ports._application)
     monkeypatch.setenv("MCP_FLEET_REGISTRATION", "false")
 
@@ -179,7 +178,7 @@ class _Model:
 
 
 async def _run(session: Any, run_id: str) -> Any:
-    return await AgentRunPort().execute_agent(
+    return await AgentRunPort(origins=RunOriginRegistry()).execute_agent(
         AgentExecutionRequest(
             agent_name="webui-assistant",
             task="request synthetic attended browser action",

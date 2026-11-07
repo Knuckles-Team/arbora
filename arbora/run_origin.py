@@ -73,35 +73,59 @@ _run: ContextVar[NativeCallOrigin | None] = ContextVar(
 _call: ContextVar[NativeCallOrigin | None] = ContextVar(
     "arbora_call_origin", default=None
 )
-_registry_lock = threading.RLock()
-_runs: set[NativeCallOrigin] = set()
 
 
-@contextmanager
-def agent_run_origin_scope(
-    session: GraphSession, agent_name: str, run_id: str | None
-) -> Iterator[None]:
-    """Bind explicit host run identity; unsupported sessions carry no origin."""
-    origin = None
-    if run_id:
-        try:
-            admitted = resolve_session(session)
-        except PermissionError:
-            pass
-        else:
-            origin = NativeCallOrigin(admitted, agent_name, run_id)
-    token = _run.set(origin)
-    if origin is not None:
-        with _registry_lock:
-            _runs.add(origin)
-    try:
-        yield
-    finally:
+class RunOriginRegistry:
+    """The live agent-run origins of one host; the host's ``runs`` field owns it."""
+
+    def __init__(self) -> None:
+        self._lock = threading.RLock()
+        self._runs: set[NativeCallOrigin] = set()
+
+    @contextmanager
+    def agent_run_origin_scope(
+        self, session: GraphSession, agent_name: str, run_id: str | None
+    ) -> Iterator[None]:
+        """Bind explicit host run identity; unsupported sessions carry no origin."""
+        origin = None
+        if run_id:
+            try:
+                admitted = resolve_session(session)
+            except PermissionError:
+                pass
+            else:
+                origin = NativeCallOrigin(admitted, agent_name, run_id)
+        token = _run.set(origin)
         if origin is not None:
+            with self._lock:
+                self._runs.add(origin)
+        try:
+            yield
+        finally:
+            if origin is not None:
+                origin.close()
+                with self._lock:
+                    self._runs.discard(origin)
+            _run.reset(token)
+
+    def revoke(self, session: GraphSession, run_id: str) -> None:
+        """Withdraw same-owner run proposals after successful durable cancellation."""
+        admitted = resolve_session(session)
+        with self._lock:
+            matches = [
+                origin
+                for origin in self._runs
+                if origin.run_id == run_id
+                and origin.session.tenant == admitted.tenant
+                and origin.session.graph == admitted.graph
+                and origin.session.actor.actor_id == admitted.actor.actor_id
+            ]
+        for origin in matches:
             origin.close()
-            with _registry_lock:
-                _runs.discard(origin)
-        _run.reset(token)
+
+    def __len__(self) -> int:
+        with self._lock:
+            return len(self._runs)
 
 
 @contextmanager
@@ -136,22 +160,6 @@ def require_native_call_origin() -> NativeCallOrigin:
         raise PermissionError("live native agent call origin is unavailable")
     resolve_session(origin.session)
     return origin
-
-
-def revoke_run_origins(session: GraphSession, run_id: str) -> None:
-    """Withdraw same-owner run proposals after successful durable cancellation."""
-    admitted = resolve_session(session)
-    with _registry_lock:
-        matches = [
-            origin
-            for origin in _runs
-            if origin.run_id == run_id
-            and origin.session.tenant == admitted.tenant
-            and origin.session.graph == admitted.graph
-            and origin.session.actor.actor_id == admitted.actor.actor_id
-        ]
-    for origin in matches:
-        origin.close()
 
 
 def browser_request_origin_binding(session: GraphSession | None) -> str:

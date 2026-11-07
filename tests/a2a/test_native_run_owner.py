@@ -1,3 +1,5 @@
+from arbora.run_origin import RunOriginRegistry
+
 """Native owner admission uses engine identities without a durable alias map."""
 
 import asyncio
@@ -58,7 +60,9 @@ async def test_submit_retry_get_list_cancel_use_returned_engine_id(
     monkeypatch.setattr(work_items, "get_work_item", lambda engine, key: rows.get(key))
     monkeypatch.setattr(work_items, "cancel_work_item", cancel)
     authority = WorkItemA2AAuthority(
-        lambda: engine, task_plan_config=TaskPlanConfig({}, {}, 1, 2)
+        lambda: engine,
+        task_plan_config=TaskPlanConfig({}, {}, 1, 2),
+        origins=RunOriginRegistry(),
     )
     admitted = graph_session(frozenset({"kg:read", "kg:write"}))
     monkeypatch.setattr(authority, "_session", lambda scope: admitted)
@@ -172,7 +176,9 @@ def test_durable_reply_uses_native_run_not_public_work_item(payload_run):
             }
         ]
 
-    authority = WorkItemA2AAuthority(lambda: SimpleNamespace(query_cypher=query))
+    authority = WorkItemA2AAuthority(
+        lambda: SimpleNamespace(query_cypher=query), origins=RunOriginRegistry()
+    )
     item = {"status": "succeeded", "metadata": {"a2a_run_id": "native-run"}}
     if payload_run == "native-run":
         artifacts = authority._persisted_artifacts("public-work-item", item=item)
@@ -194,7 +200,9 @@ def test_native_admission_conflict_translates_at_a2a_boundary(monkeypatch, code)
 
     monkeypatch.setattr(work_items, "submit_work_item_atomic", refuse)
     authority = WorkItemA2AAuthority(
-        lambda: object(), task_plan_config=TaskPlanConfig({}, {}, 1, 2)
+        lambda: object(),
+        task_plan_config=TaskPlanConfig({}, {}, 1, 2),
+        origins=RunOriginRegistry(),
     )
     expected = (
         A2AIdempotencyConflict if code == "IDEMPOTENCY_CONFLICT" else OperationRefused
@@ -216,7 +224,7 @@ async def test_native_access_denied_is_unavailable_to_foreign_owner(monkeypatch)
 
     from arbora.a2a.authority import A2ATaskNotCancelable
 
-    authority = WorkItemA2AAuthority(lambda: object())
+    authority = WorkItemA2AAuthority(lambda: object(), origins=RunOriginRegistry())
     monkeypatch.setattr(authority, "_session", lambda scope: SESSION)
     monkeypatch.setattr(authority, "_engine", lambda: (object(), object()))
 
@@ -232,7 +240,7 @@ async def test_native_access_denied_is_unavailable_to_foreign_owner(monkeypatch)
 def test_owner_lookup_does_not_hide_other_native_failures(monkeypatch):
     from epistemic_graph import EngineResponseError
 
-    authority = WorkItemA2AAuthority(lambda: object())
+    authority = WorkItemA2AAuthority(lambda: object(), origins=RunOriginRegistry())
     monkeypatch.setattr(authority, "_session", lambda scope: SESSION)
     monkeypatch.setattr(authority, "_engine", lambda: (object(), object()))
 
