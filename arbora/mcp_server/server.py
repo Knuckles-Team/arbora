@@ -219,13 +219,19 @@ def _start_catalog_warmup(
     from arbora.security.session import use_session
 
     async def compose() -> None:
+        from arbora.epistemic import temporary_client_scope
+
+        # The warm-up loop runs beside the serving loop. Its engine
+        # transports are scoped to it, so they never claim the serving loop's
+        # pool clients (the onboarding thread does the same, R041.18).
         with use_actor(session.actor), use_session(session):
-            await compose_catalog_authorities(
-                engine=engine,
-                session=session,
-                deferred_fleet=reader,
-                multiplexer=fleet_mux,
-            )
+            async with temporary_client_scope():
+                await compose_catalog_authorities(
+                    engine=engine,
+                    session=session,
+                    deferred_fleet=reader,
+                    multiplexer=fleet_mux,
+                )
 
     def onboard() -> None:
         # Register, attest and import each child catalog, then renew leases.
