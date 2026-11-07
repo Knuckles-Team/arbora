@@ -1,3 +1,5 @@
+from arbora.run_origin import RunOriginRegistry
+
 """Controlled A2A commit transport with the real AU executor and planner."""
 
 import asyncio
@@ -28,7 +30,7 @@ async def invoke(monkeypatch, execute, *, commit_error=False):
             raise RuntimeError("native commit failed")
 
     monkeypatch.setattr(work_items, "commit_result", commit)
-    authority = WorkItemA2AAuthority(lambda: None)
+    authority = WorkItemA2AAuthority(lambda: None, origins=RunOriginRegistry())
     monkeypatch.setattr(authority, "_execute_claimed_run", execute)
     usage = await authority._run(
         object(),
@@ -72,7 +74,9 @@ async def test_real_executor_failure_receipt(chain, monkeypatch, phase):
 
     async def execute(*args, **kwargs):
         with scope(host):
-            return await agent_runs.AgentRunPort().execute_agent(
+            return await agent_runs.AgentRunPort(
+                origins=RunOriginRegistry()
+            ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
                 ),
@@ -139,7 +143,7 @@ async def test_cancel_does_not_commit(monkeypatch):
     monkeypatch.setattr(
         work_items, "commit_result", lambda *a, **k: pytest.fail("commit")
     )
-    authority = WorkItemA2AAuthority(lambda: None)
+    authority = WorkItemA2AAuthority(lambda: None, origins=RunOriginRegistry())
     monkeypatch.setattr(
         authority, "_execute_claimed_run", AsyncMock(side_effect=asyncio.CancelledError)
     )

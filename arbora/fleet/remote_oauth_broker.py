@@ -119,7 +119,7 @@ from arbora.fleet.discovery_authority import OAuthGrantBinding
 from arbora.security.actor_context import ActorContext
 
 logger = logging.getLogger(__name__)
-_audit_logger = logging.getLogger("arbora.mcp_server.backing.remote_oauth_broker.audit")
+_audit_logger = logging.getLogger("arbora.fleet.remote_oauth_broker.audit")
 
 __all__ = [
     "AuthorizationServerMetadata",

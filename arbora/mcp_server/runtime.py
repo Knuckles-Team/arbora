@@ -51,13 +51,13 @@ import uuid
 from types import MappingProxyType
 from typing import Any, cast
 
-from arbora._version import __version__
 from arbora.core.settings import setting
 from arbora.mcp_server.legacy_action_mapping import (
     APPROVED_ACTION_MAPPING,
     validate_served_actions,
 )
 from arbora.security.anonymous import session_context
+from arbora.version import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -758,7 +758,11 @@ _LEGACY_INSTRUCTIONS = (
 
 
 def _build_server(
-    bootstrap: bool = True, *, canonical_surface: bool = False, invocation: Any = None
+    bootstrap: bool = True,
+    *,
+    canonical_surface: bool = False,
+    invocation: Any = None,
+    host: Any = None,
 ):
     """Build the KG MCP server with all tools registered.
 
@@ -818,6 +822,18 @@ def _build_server(
     async def health_check(request: Request) -> JSONResponse:  # noqa: ARG001
         return JSONResponse({"status": "ok"}, headers={"Cache-Control": "no-store"})
 
+    @mcp.custom_route("/health/subsystems", methods=["GET"])
+    async def subsystems_check(request: Request) -> JSONResponse:  # noqa: ARG001
+        # Engine, discovery and fleet each reported on its own (ARBORA-FLEET-R065).
+        from arbora.observability.subsystem_health import snapshot
+
+        body = snapshot()
+        return JSONResponse(
+            body,
+            status_code=200 if body["status"] == "ok" else 503,
+            headers={"Cache-Control": "no-store"},
+        )
+
     @mcp.custom_route("/health/ready", methods=["GET"])
     async def readiness_check(request: Request) -> JSONResponse:  # noqa: ARG001
         from arbora.observability.runtime_health import (
@@ -836,13 +852,33 @@ def _build_server(
             # Names and closed-vocabulary codes only: the route is
             # unauthenticated for kubelet.
             body["failing"] = failing
-            reason = readiness_reason()
-            if reason is not None:
-                body["reason"] = reason
+        # Derived from the process lease state (ARBORA-IDENTITY-R027.5); it is
+        # reported while the lease is Degraded, Expired or Revoked, even
+        # before a Degraded lease expires and the engine check fails.
+        reason = readiness_reason()
+        if reason is not None:
+            body["reason"] = reason
         not_served = not_served_authorities(report)
         if not_served:
             # Names only: authorities this release does not serve (not applicable).
             body["not_served"] = not_served
+        from arbora.observability.runtime_health import identity_readiness
+
+        identity = identity_readiness()
+        if identity is not None:
+            # Reported, never gating (ARBORA-IDENTITY-R030.4.3).
+            body["identity"] = identity
+        from arbora.mcp_server.catalog_warmup import catalog_state
+
+        catalog = catalog_state()
+        if catalog is not None:
+            # Reported, never gating (ARBORA-FLEET-R078): arbora serves while
+            # the catalog warms; requests that need it refuse retryably.
+            body["catalog"] = {
+                key: catalog[key]
+                for key in ("status", "attempts", "last_error")
+                if key in catalog
+            }
         return JSONResponse(
             body,
             status_code=200 if ready else 503,
@@ -880,8 +916,13 @@ def _build_server(
         )
         return JSONResponse(result)
 
+    if host is None:
+        # A headless build (no served process) owns a context of its own.
+        from arbora.mcp_server.host_context import build_host_context
+
+        host = build_host_context(_get_engine)
     _register_graph_tool_surface(
-        mcp, canonical=canonical_surface, invocation=invocation
+        mcp, canonical=canonical_surface, invocation=invocation, host=host
     )
 
     global _FULL_TOOL_NAMES
@@ -890,7 +931,7 @@ def _build_server(
 
 
 def _register_graph_tool_surface(
-    mcp: Any, *, canonical: bool = False, invocation: Any = None
+    mcp: Any, *, host: Any, canonical: bool = False, invocation: Any = None
 ) -> None:
     """Mount arbora's one MCP tool contract.
 
@@ -927,10 +968,11 @@ def _register_graph_tool_surface(
         backing = register_arbora_surface(mcp, canonical=canonical)
     register_browser_control_tools(backing)
     if invocation is None:
-        register_a2a_tools(mcp, tools=backing)
+        register_a2a_tools(mcp, service=host.runs.a2a, tools=backing)
     else:
         register_a2a_tools(
             mcp,
+            service=host.runs.a2a,
             tools=backing,
             operation_services=invocation.services,
             operation_authenticator=invocation.authenticator,
@@ -983,6 +1025,9 @@ def _register_served_intent_surface(mcp: Any, invocation: Any) -> Any:
         invoke=invoke,
         fleet_search=getattr(
             services.runtime.bindings.get("fleet_gateway"), "fleet_search", None
+        ),
+        fleet_catalog=getattr(
+            services.runtime.bindings.get("fleet_gateway"), "fleet_catalog", None
         ),
     )
 

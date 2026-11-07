@@ -7,6 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 from arbora.core.settings import ArboraConfig, runtime_config
+from arbora.mcp_server.host_context import build_host_context
 from arbora.mcp_server.task_plan import configured_task_plan
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R001.2.1.2")
@@ -106,5 +107,5 @@ def test_content_digest_pin_refuses_before_process_authority(monkeypatch):
     mint = Mock(side_effect=AssertionError("must not mint"))
     monkeypatch.setattr(server.runtime, "_mint_process_session", mint)
     with pytest.raises(ValueError, match="content digest"):
-        server._served_invocation()
+        server._served_invocation(host=build_host_context(lambda: None))
     mint.assert_not_called()

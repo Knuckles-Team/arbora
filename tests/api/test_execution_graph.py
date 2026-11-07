@@ -22,6 +22,7 @@ from arbora.api.ops.run_replay import RunEventsParams, project_page
 from arbora.api.ops.runs import handle_runs_execution_graph, operations
 from arbora.mcp_server import run_reader
 from arbora.mcp_server.run_reader import NativeRunReader
+from arbora.run_origin import RunOriginRegistry
 from tests.api.test_run_replay import event, reader_context, replay_engine, rows
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R021.4.8.1")
@@ -216,7 +217,9 @@ def test_schema_negotiation_and_authority_fields_refuse(change):
 
 
 def installed_reader(monkeypatch, events, *, owner=True):
-    reader = NativeRunReader(lambda: replay_engine(*events))
+    reader = NativeRunReader(
+        lambda: replay_engine(*events), origins=RunOriginRegistry()
+    )
     calls = []
 
     def owned(task_id, scope):

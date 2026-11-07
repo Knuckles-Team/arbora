@@ -22,6 +22,7 @@ from arbora.api.invoke.executor import (
     prepare_executor,
 )
 from arbora.api.invoke.plan import PlanBinding, PlanStore, bind_plan, params_digest
+from arbora.api.invoke.privacy import mask_persisted_arguments
 from arbora.api.invoke.steps import (
     OpError,
     OpResult,
@@ -329,8 +330,22 @@ async def _effective_op(
         return op, None
     if services.fleet_effect is None:
         return OpError("UNAVAILABLE", {"reason": "fleet effect authority unavailable"})
+    import asyncio
+
+    from arbora.api.mcp.discovery import discovery_budget_s, not_ready_detail
+
     try:
-        resolved = await services.fleet_effect(op, params, caller)
+        resolved = await asyncio.wait_for(
+            services.fleet_effect(op, params, caller), timeout=discovery_budget_s()
+        )
+    except TimeoutError:
+        # A fleet still coming up answers fast and typed (ARBORA-FLEET-R062).
+        return OpError("UNAVAILABLE", not_ready_detail())
+    except OperationRefused as exc:
+        if exc.code == "UNAVAILABLE":
+            return OpError("UNAVAILABLE", {**not_ready_detail(), **exc.details})
+        _logger.warning("fleet effect authority refused fleet.call: %s", exc.code)
+        return OpError("UNAVAILABLE", {"reason": "fleet effect authority unavailable"})
     except Exception as exc:  # noqa: BLE001 - refused closed; the cause is logged
         _logger.warning(
             "fleet effect authority refused fleet.call: %s: %s",
@@ -441,7 +456,7 @@ async def _refresh(
     return current
 
 
-async def _authorize(
+async def authorize(
     op: Any,
     params: Mapping[str, Any],
     caller: RequestCaller,
@@ -471,7 +486,7 @@ async def _recheck(
     decision: FleetCallDecision | None,
 ) -> OpError | None:
     """Invalidate checks if awaited authority/client/metadata work changed facts."""
-    refused = await _authorize(op, params, caller, services, decision)
+    refused = await authorize(op, params, caller, services, decision)
     if refused is not None:
         return refused
     if decision is not None:
@@ -627,12 +642,16 @@ def _arguments(
     validated = validate_params(op, params, services.schema_validate)
     if isinstance(validated, OpError):
         return validated
+    plain = (
+        validated.model_dump(mode="json")
+        if isinstance(validated, BaseModel)
+        else validated
+    )
+    masked = mask_persisted_arguments(op.id, plain)
+    if masked is None:
+        return OpError("INVALID_ARGUMENT")
     try:
-        arguments = freeze_claims(
-            validated.model_dump(mode="json")
-            if isinstance(validated, BaseModel)
-            else validated
-        )
+        arguments = freeze_claims(masked)
         params_digest(arguments)
     except (TypeError, ValueError):
         return OpError("INVALID_ARGUMENT")
@@ -656,7 +675,7 @@ async def _resolve(
     if isinstance(effective, OpError):
         return effective
     effective_op, decision = effective
-    refused = await _authorize(effective_op, arguments, refreshed, services, decision)
+    refused = await authorize(effective_op, arguments, refreshed, services, decision)
     if refused is not None:
         return refused
     return effective_op, refreshed, decision

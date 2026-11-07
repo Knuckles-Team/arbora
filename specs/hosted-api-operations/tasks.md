@@ -449,3 +449,30 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T376 [US4] ARBORA-OPS-R896.11 Delivery writes to the code host are governed effects.
 - [ ] T377 [US4] ARBORA-OPS-R896.12 A delivery assignment starts on a reserved development lane.
 - [ ] T378 [US4] ARBORA-OPS-R896.13 Hot-path proof: a delivery runs from slice to merge over MCP.
+- [ ] T379 [US4] ARBORA-OPS-R022.2.6 schedules.create and schedules.update ops.
+- [ ] T380 [US4] ARBORA-OPS-R022.2.7 schedules.delete op.
+- [ ] T381 [US4] ARBORA-OPS-R022.2.8 schedules.pause and schedules.resume ops.
+- [ ] T382 [US4] ARBORA-OPS-R022.2.9 schedules.runs read op.
+- [ ] T383 [US4] ARBORA-OPS-R022.2.10 Wiring and hot-path proof: a scheduled agent run over MCP.
+- [ ] T384 [US5] ARBORA-OPS-R898 Process models run as governed agent DAGs (rollup).
+- [ ] T385 [US5] ARBORA-OPS-R898.1 Process operation models.
+- [ ] T386 [US5] ARBORA-OPS-R898.2 process.plan reads the engine decision.
+- [ ] T387 [US5] ARBORA-OPS-R898.3 Build agent steps from bound prompts.
+- [ ] T388 [US5] ARBORA-OPS-R898.4 Approval waiter and approval operations.
+- [ ] T389 [US5] ARBORA-OPS-R898.5 process.run wiring.
+- [ ] T390 [US5] ARBORA-OPS-R898.6 Process operation refusals.
+- [ ] T391 [US5] ARBORA-OPS-R898.7 Process run evidence.
+- [ ] T392 [US5] ARBORA-OPS-R898.8 Process run hot-path proof.
+- [ ] T393 [US5] ARBORA-OPS-R899 Audio and other media prompt the harness through one modality seam (rollup).
+- [ ] T394 [US5] ARBORA-OPS-R899.1 One seam, many modalities.
+- [ ] T395 [US5] ARBORA-OPS-R899.2 Audio goes to the fleet's speech-to-text capability, found by contract.
+- [ ] T396 [US5] ARBORA-OPS-R899.3 Typed refusals and size and duration limits.
+- [ ] T397 [US5] ARBORA-OPS-R899.4 Chat voice notes and audio attachments.
+- [ ] T398 [US5] ARBORA-OPS-R899.5 A2A, agents.run and the fleet agent accept media parts.
+- [ ] T399 [US5] ARBORA-OPS-R899.6 The transcript links to its audio.
+- [ ] T400 [US5] ARBORA-OPS-R899.7 WebUI dictation transcribes through the seam.
+- [ ] T401 ARBORA-OPS-R900 Agent run status reads the canonical run state.
+- [ ] T402 ARBORA-OPS-R901 Plan lease machine with distinct consumed and expired refusals.
+- [ ] T403 ARBORA-OPS-R902 Work item commit uses the medulla enum and typed refusal.
+- [ ] T404 ARBORA-OPS-R903 Describe the plan lease machine in the ontology.
+- [ ] T405 ARBORA-OPS-R844.1 Persistence privacy masking on the served write path.

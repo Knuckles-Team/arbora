@@ -88,6 +88,8 @@ _CURATED_SCOPES = (
     "edge:read",
     "blob:read",
     "agent:pack-control",
+    "fleet:control",
+    "mcp:admin",
 )
 
 _ENGINE_METHODS = {

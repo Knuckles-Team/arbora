@@ -1,3 +1,5 @@
+from arbora.run_origin import RunOriginRegistry
+
 """Native A2A lease authority stays inside the host during AU execution."""
 
 from contextvars import copy_context
@@ -84,7 +86,9 @@ async def test_real_a2a_run_exposes_claim_only_to_host_planning(
     host_ports.register_run_decision_provider(decide)
     host_ports.register_run_event_sink(events.append)
     try:
-        result = await WorkItemA2AAuthority(lambda: object())._run(
+        result = await WorkItemA2AAuthority(
+            lambda: object(), origins=RunOriginRegistry()
+        )._run(
             object(),
             item_id="work",
             session=SESSION,
@@ -212,6 +216,7 @@ async def test_a2a_binds_actual_engine_graph_not_caller_default(
         lambda: None,
         task_plan_config=TaskPlanConfig({}, {}, 1, 2),
         hosted_invocation=object(),
+        origins=RunOriginRegistry(),
     )
     monkeypatch.setattr(
         authority, "_agent_executor", lambda: SimpleNamespace(execute_agent=execute)

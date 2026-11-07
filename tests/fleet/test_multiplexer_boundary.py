@@ -7,19 +7,19 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 from arbora.fleet.multiplexer import (
-    _assert_bounded_delegated_value,
     _bounded_tool_catalog,
-    _resolve_runtime_value,
     _runtime_materialized,
     _selected_child_provider_profile,
+    assert_bounded_delegated_value,
     attest_runtime_child_config,
+    resolve_runtime_value,
 )
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
 
 def test_noncredential_field_cannot_expand_secret_environment_name() -> None:
     with pytest.raises(RuntimeError, match="credential field"):
-        _resolve_runtime_value("${API_TOKEN}", sensitive=False)
+        resolve_runtime_value("${API_TOKEN}", sensitive=False)
 
 
 def test_fleet_runtime_alias_prefers_direct_projection(monkeypatch) -> None:
@@ -42,7 +42,7 @@ def test_fleet_runtime_alias_prefers_direct_projection(monkeypatch) -> None:
         lambda _reference: (_ for _ in ()).throw(AssertionError("fallback used")),
     )
     assert (
-        _resolve_runtime_value("env://CHILD_TOKEN_ALIAS", sensitive=True)
+        resolve_runtime_value("env://CHILD_TOKEN_ALIAS", sensitive=True)
         == "direct-runtime-material"
     )
 
@@ -71,7 +71,7 @@ def test_fleet_runtime_alias_uses_configured_ref_only_after_direct_miss(
     )
 
     assert (
-        _resolve_runtime_value("env://CHILD_TOKEN_ALIAS", sensitive=True)
+        resolve_runtime_value("env://CHILD_TOKEN_ALIAS", sensitive=True)
         == "mapped-runtime-material"
     )
     assert resolved_refs == ["secret://fleet/child/token"]
@@ -86,9 +86,9 @@ def test_fleet_runtime_alias_fails_closed_without_direct_or_mapped_value(
     monkeypatch.setattr(config, "mcp_fleet_secret_refs", {}, raising=False)
 
     with pytest.raises(RuntimeError, match="unavailable"):
-        _resolve_runtime_value("env://CHILD_TOKEN_ALIAS", sensitive=True)
+        resolve_runtime_value("env://CHILD_TOKEN_ALIAS", sensitive=True)
     with pytest.raises(RuntimeError, match="invalid"):
-        _resolve_runtime_value("env://lowercase_alias", sensitive=True)
+        resolve_runtime_value("env://lowercase_alias", sensitive=True)
 
 
 def test_delegated_arguments_have_depth_and_size_boundaries() -> None:
@@ -96,9 +96,9 @@ def test_delegated_arguments_have_depth_and_size_boundaries() -> None:
     for _ in range(40):
         nested = {"next": nested}
     with pytest.raises(ToolError, match="structural boundary"):
-        _assert_bounded_delegated_value(nested)
+        assert_bounded_delegated_value(nested)
     with pytest.raises(ToolError, match="size boundary"):
-        _assert_bounded_delegated_value({"value": "x" * (4 * 1024 * 1024 + 1)})
+        assert_bounded_delegated_value({"value": "x" * (4 * 1024 * 1024 + 1)})
 
 
 def test_large_but_bounded_child_catalog_is_admitted() -> None:

@@ -169,7 +169,7 @@ def test_missing_native_issue_cannot_fall_back_to_generic_lease(tmp_path: Path):
 
 @pytest.mark.parametrize("failure", ["disconnect", "revoked", "bad-result"])
 def test_uncertain_issue_never_retries_or_claims_admission(tmp_path: Path, failure):
-    from arbora.access.host_start import HostStartIssueUnconfirmed
+    from arbora.agent_host.host_start import HostStartIssueUnconfirmed
 
     owner, _, _, issue, client = issuer_fixture(tmp_path)
 

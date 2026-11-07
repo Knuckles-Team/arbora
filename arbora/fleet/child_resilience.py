@@ -426,11 +426,11 @@ class ChildRuntime:
             minimum=0.001,
             maximum=300.0,
         )
-        # Per-call ceiling: reuses the server entry's existing ``timeout`` key
-        # (historically the connect/handshake budget) unless a dedicated
-        # ``call_timeout`` is given. <=0 disables the ceiling.
+        # Per-call ceiling: the server's ``call_timeout``, else 300 s. The
+        # ``timeout`` key is the connect/handshake budget and never caps a
+        # call (ARBORA-FLEET-R075). <=0 disables the ceiling.
         self.call_timeout = _bounded_float(
-            _cfg_value(self.cfg, "call_timeout", self.cfg.get("timeout", 300.0)),
+            _cfg_value(self.cfg, "call_timeout", 300.0),
             field="call_timeout",
             minimum=0.001,
             maximum=3_600.0,

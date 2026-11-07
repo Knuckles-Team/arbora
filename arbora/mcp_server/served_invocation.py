@@ -334,7 +334,7 @@ async def _schema_publish_context(
     import asyncio
 
     from arbora.api.contracts import PolicyDisposition, PolicyReceipt, get_action_policy
-    from arbora.api.contracts.provisioning import _opaque_principal
+    from arbora.api.contracts.provisioning import opaque_principal
     from arbora.api.task_plan_schema import PURPOSE_ID
     from arbora.mcp_server.decide_wiring import _mutation_context
 
@@ -365,11 +365,11 @@ async def _schema_publish_context(
     # Use the same canonical opaque principal derivation as connector-pack
     # provisioning; the native binder still authenticates and replaces the
     # authoritative carrier, tenant, and policy values.
-    opaque_principal = _opaque_principal(str(verified.actor.actor_id))
+    opaque_caller = opaque_principal(str(verified.actor.actor_id))
     context.update(
-        principal=opaque_principal,
-        caller_principal=opaque_principal,
-        actor_scope=opaque_principal,
+        principal=opaque_caller,
+        caller_principal=opaque_caller,
+        actor_scope=opaque_caller,
     )
     return {
         **context,
@@ -570,9 +570,18 @@ def compose_served_invocation(
         # at most once per idempotency key (ARBORA-MESSAGING-R008).
         # Awaited attended proposals share that owner; replay never sends a
         # second browser prompt or repeats a human-approved execution.
+        # The served pin and unpin writes (ARBORA-FLEET-R059.4) share the
+        # owner as well: one session load and one durable record per
+        # idempotency key.
         changes["external_effect_operations"] = frozenset(
             op_id
-            for op_id in ("fleet.call", "messaging.alert", "browser.request_call")
+            for op_id in (
+                "fleet.call",
+                "fleet.tools.pin",
+                "fleet.tools.unpin",
+                "messaging.alert",
+                "browser.request_call",
+            )
             if registry.get(op_id) is not None
         )
     services = build_invoke_services(

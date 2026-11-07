@@ -2,7 +2,10 @@
 
 For each inbound message the handler does these steps in order:
 
-1. It ignores events that are not messages, and messages with no text.
+1. It ignores events that are not messages, and messages with neither text
+   nor attachments. An admitted message's attachments go through the bound
+   prompt normaliser (voice notes and audio become a transcript, ARBORA-OPS-R899.4);
+   a typed modality refusal is answered in the channel and runs no turn.
 2. It gives the text to a waiting goal loop when that loop asked the question.
 3. It answers a built-in command at once.
 4. It collects a burst of messages from one channel into one turn. It gives
@@ -108,7 +111,8 @@ async def create_planner_handler(
         if event.event_type != EventType.MESSAGE:
             return
         content = event.content or (event.message.content if event.message else "")
-        if not content:
+        has_attachments = bool(event.message and event.message.attachments)
+        if not content and not has_attachments:
             return
         if not sender_admitted(event):
             logger.warning(
@@ -116,6 +120,20 @@ async def create_planner_handler(
                 event.platform,
             )
             return
+        if has_attachments:
+            from arbora.messaging.media import normalize_inbound
+            from arbora.modality.models import ModalityRefused
+
+            try:
+                content = await normalize_inbound(
+                    event, host_ports().prompt_normalizer, content
+                )
+            except ModalityRefused as refusal:
+                logger.warning("messaging: attachment refused: %s", refusal.code)
+                await _send(backend, event, refusal.user_message())
+                return
+            if not content:
+                return
         if service.deliver_reply(str(event.platform), event.channel_id, content):
             return
         command_reply = await handle_command(content, service=service)

@@ -265,7 +265,7 @@ Unmapped identity, absent grant and unavailable decision authority all deny acce
 This future contract covers all four protocol boundaries. It does not establish existing adapters or network ingress.
 
 Production reuse: `arbora/gateway/remote_oauth_api.py:245` authorize and :280 `oauth_callback` expose the existing broker begin/callback flow.
-Their current broker import is `arbora.mcp_server.backing.remote_oauth_broker`; that import does not establish the new ownership-bound reuse contract.
+Their current broker import is `arbora.fleet.remote_oauth_broker`; that import does not establish the new ownership-bound reuse contract.
 `arbora/identity/composition.py:48` `build_identity_ports` remains the composition boundary; qualified owner facts are required before activation.
 `arbora/api/http/auth.py:127` `verify_local_bearer_request` obtains verified token evidence but explicitly lacks current policy/delegation authority.
 `arbora/api/mcp/caller.py:12` `caller_from_session` and :117 `caller_for_request` bind that authority for served requests.
@@ -639,3 +639,27 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 ## Cross-repo seams
 
 None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
+
+### OAuth client contract owned by arbora (ARBORA-IDENTITY-R030.4)
+
+Amendment 2026-11-06: the static native MCP client that coding clients sign in with was provisioned out of band. A cleanup deleted it, and every native sign-in then failed with "client not found". Nothing in arbora noticed or repaired it.
+
+Decision: arbora declares the clients and scopes that its sign-in needs (`.1`) and reconciles them at start and every 300 seconds through the identity provider admin interface, with its own scoped admin credential (`.2`). The reconciler only creates and updates the items it declares, so it cannot remove anything another owner provisions. A failure is the `Degraded` state with backoff, never a crash or a gate. Readiness reports `identity: degraded` without gating (`.3`), because issued tokens stay valid and dynamic client registration stays available (`.4`). The environment supplies configuration only (`ARBORA_IDENTITY_CLIENT_CONTRACT`), and a deployment job that needs a pass on demand runs `arbora identity reconcile` (`.6`) instead of a provisioning script of its own, so there is one source of truth. The machine follows the same shape as the process lease (`R027.1`): one state field, one `transition`, a closed edge table C01 to C09, a typed refusal, and an ontology description in `arbora/ontology/state_machines.ttl` (`.5`). The admin credential must be scoped to client and client-scope management of the served realm; a token with the realm role `admin` or `create-realm` is refused (`admin_too_broad`).
+
+### Process credential lease state machine (ARBORA-IDENTITY-R027.1 to R027.6)
+
+The 2026-11-06 outage showed that the lease had no recovery edge. The loop renewed only at 30 seconds or less of lifetime. After an identity provider outage longer than that, the lease expired. The renewal guard then raised before any provider call, and `CredentialLease.renew` refused the expired lease. Only a restart recovered.
+
+Decision: one explicit machine under Article XXXI. `CredentialLease` stores one `state` field and `transition` is the only writer. The existing `CredentialLease` type is extended, not replaced, so every captured worker session keeps its reference. The readiness global is deleted and `/health/ready` reads the lease. The behaviour rows `.1` to `.5` need no medulla row. Row `.6` waits for the medulla core state-machine vocabulary row.
+
+Machine contract. States and terminals: `Live`, `RenewDue`, `Renewing`, `Degraded`, `Expired`, `Revoked` (terminal), `Stopped` (terminal). The 26-edge transition table, the guards and the refusal `IllegalLeaseTransition` (fields `machine`, `from_state`, `event`) are in rows `.1` and `.4`. The persisted field is `CredentialLease.state` (`arbora/security/actor_context.py:38`). `transition` in the same file is the only writer. Design path: `_start_process_authority_supervisor` (`arbora/mcp_server/bootstrap.py:522`) -> `register_process_lease` (`arbora/observability/runtime_health.py:783`) -> `_process_authority_refresh_loop` (`bootstrap.py:495`) -> `_refresh_process_authority` (`:199`) -> `CredentialLease.apply` -> `transition`; the attach point of readiness is `readiness_reason` (`runtime_health.py:793`). Ontology: the pack file `arbora/ontology/state_machines.ttl` declares classes that extend the core classes `StateMachine`, `State`, `Transition`, `TransitionEvent`, `TransitionGuard` and `TransitionRefused` of the medulla core state-machine vocabulary row (pending: medulla branch only). It uses no `owl:imports`. Wiring and hot-path proof: row `.7`. Tests: one parameter id per legal edge in `test_legal_edge`, all illegal pairs in `test_every_illegal_pair_is_refused_and_state_is_unchanged`, and the regression `test_outage_longer_than_ttl_recovers_without_restart`.
+
+Amendment 2026-11-06 (delivery of `.1` to `.7`):
+
+- The 26 edges cover 24 distinct (state, event) pairs, so 25 of the 49 pairs are illegal, not 23. `renewing-idp_err-late` is not a refusal: `before_expiry` and `at_expiry` are complements, so a late `idp_err` takes the `Expired` edge.
+- `IllegalLeaseTransition` subclasses `CredentialExpiredError`. Every existing caller that fails closed on an unusable credential keeps failing closed.
+- `transition(lease_state, event, now, *, facts)` takes the guard inputs as a frozen `LeaseFacts` (issued time, expiry, renew-due time, identity verdict), so the function stays pure.
+- A request-path refresh (dispatch entry and keepalive) never recovers an `Expired` lease. It fails closed with `SessionExpiredError`, and only the supervisor loop calls the identity provider with backoff. During an outage, requests therefore do not each hit the provider.
+- `/health/ready` reports `reason` whenever the lease state has one, including a `Degraded` lease that is still valid and therefore still `ready`.
+- Process shutdown sends `stop` to the registered lease (`Stopped`). A supervisor restart for the same session leaves the lease as it is.
+- A run lease (`RunCredentialLease`, `ARBORA-IDENTITY-R029`) uses the same machine, but its renew-due point is the moment it is seeded, because the run does not know when the caller's token was issued. Its renewer keeps deciding the timing by policy.

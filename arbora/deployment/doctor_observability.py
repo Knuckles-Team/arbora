@@ -24,7 +24,7 @@ def _require_observability_imports() -> None:
         resolve_configured_tls_profile,
     )
     from arbora.observability.custom_observability import (  # noqa: F401
-        _same_origin,
+        same_origin,
     )
     from arbora.observability.langfuse_trust import (  # noqa: F401
         resolve_langfuse_credentials,
@@ -45,13 +45,13 @@ def _otel_endpoint(cfg: Any, langfuse_pair: bool) -> tuple[str, bool]:
 
 def _otel_transport_posture(cfg: Any) -> SimpleNamespace:
     """Which OTLP endpoint applies and which authentication tier backs it."""
-    from arbora.observability.custom_observability import _same_origin
+    from arbora.observability.custom_observability import same_origin
     from arbora.observability.langfuse_trust import resolve_langfuse_host
 
     langfuse_pair = bool(cfg.langfuse_public_key_ref and cfg.langfuse_secret_key_ref)
     endpoint, endpoint_derived = _otel_endpoint(cfg, langfuse_pair)
     langfuse_auth = bool(
-        langfuse_pair and endpoint and _same_origin(endpoint, resolve_langfuse_host(""))
+        langfuse_pair and endpoint and same_origin(endpoint, resolve_langfuse_host(""))
     )
     header_auth = bool(cfg.otel_exporter_otlp_headers_ref)
     key_auth = bool(

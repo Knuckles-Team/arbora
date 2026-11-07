@@ -514,7 +514,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R868` | Test: `tests/api/test_retrieval_ops.py::test_listing_toc_digest_equals_read_span_digest` (served). It asserts digest equality and the pass-through refusal. |
 | `ARBORA-OPS-R869` | Test: `tests/api/test_generated_code_admission_gate.py::test_write_refuses_without_matching_admission` (served). It asserts both refusals and one admitted commit. |
 | `ARBORA-OPS-R870` | Test: `tests/api/test_changeset_review_op.py::test_op_calls_decide_and_returns_the_record_digest` (served). |
-| `ARBORA-OPS-R871` | Test: `tests/ops/test_playbook_step_requires_decision.py::test_action_refuses_without_a_committed_record` (served). It also runs one admitted step. |
+| `ARBORA-OPS-R871` | Test: `tests/api/test_playbook_step_requires_decision.py::test_action_refuses_without_a_committed_record` (served). It also runs one admitted step. |
 | `ARBORA-OPS-R872` | Test: `tests/api/test_certification_gate_served.py::test_each_attestation_case_refuses_without_effect` (served). The exact current attestation admits the run. |
 | `ARBORA-OPS-R873` | Test: `tests/control_plane/test_workflow_host_lazy_start.py::test_start_counter_zero_then_one` (served). Counter is 0 before first use, 1 after repeats, 0 after an unknown id. |
 | `ARBORA-OPS-R874` | Test: `tests/control_plane/test_workflow_match_identity.py::test_entry_resolves_registered_record_and_unknown_refuses` (served). |
@@ -529,7 +529,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R883` | Test: `tests/api/test_retrieval_ops.py::test_agent_ref_is_taken_from_identity` calls the operations over HTTP and MCP against a recorded engine (served). |
 | `ARBORA-OPS-R884` | Test: `tests/api/test_meetings_ops.py::test_summary_create_admits_context_and_commit` (L3) runs through the registry `invoke` with a loopback medulla and a recorded harness receipt. It asserts the denied-provider refusal makes zero medulla calls. |
 | `ARBORA-OPS-R885` | A served test invokes the operation through the registry over HTTP and MCP with a loopback engine. It asserts the receipt digests. A self-approval refuses. |
-| `ARBORA-OPS-R886` | Test: a served test through the operation registry's `invoke` over HTTP and MCP with a recorded medulla engine (L3). |
+| `ARBORA-OPS-R886` | Test: `tests/api/test_ingest_maintenance_served.py::test_maintenance_run_refuses_without_authorization_and_applies_admitted_actions` (L3, through the operation registry's `invoke` over HTTP and MCP with a recorded medulla engine). |
 | `ARBORA-OPS-R887` | A served test calls the registry `invoke` over HTTP and MCP against a recorded medulla engine. It approves one proposal. It asserts the refusal passthrough for a missing approver. |
 | `ARBORA-OPS-R888` | Test: `tests/api/test_governance_ops.py::test_access_request_approval_needs_steward` (L3) runs through the registry `invoke` over HTTP and MCP against a loopback medulla engine. It asserts the grant after a steward approval and zero effects after a non-steward approval. |
 | `ARBORA-OPS-R889` | Test: `tests/api/test_lineage_route.py::test_run_event_reaches_engine_under_caller_tenant` posts one event and reads the edge through `ask`. |
@@ -551,3 +551,29 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R896.11` | Test: `tests/api/test_delivery_ops_served.py::test_delivery_writes_are_idempotent_and_uncertain_effects_reconcile` (L3). |
 | `ARBORA-OPS-R896.12` | Test: `tests/development/test_assignments_served.py::test_assignments_reserve_lanes_and_keep_a_person_slot` (L3). |
 | `ARBORA-OPS-R896.13` | Test: `tests/api/test_delivery_surface_served.py::test_delivery_runs_from_slice_to_merge_over_mcp` (L4). |
+| `ARBORA-OPS-R022.2.6` | Test: `tests/api/test_schedule_ops.py::test_create_requires_loops_control_key_and_forwards_owner` (L1). |
+| `ARBORA-OPS-R022.2.7` | Test: `tests/api/test_schedule_ops.py::test_delete_requires_step_up_and_owner` (L1). |
+| `ARBORA-OPS-R022.2.8` | Test: `tests/api/test_schedule_ops.py::test_pause_and_resume_are_scoped_and_idempotent` (L1). |
+| `ARBORA-OPS-R022.2.9` | Test: `tests/api/test_schedule_ops.py::test_runs_returns_engine_tick_history_unchanged` (L1). |
+| `ARBORA-OPS-R022.2.10` | Test: `tests/api/test_schedule_served.py::test_scheduled_agent_run_fires_pauses_and_reports_over_mcp` (L4). |
+| `ARBORA-OPS-R898` | Rollup closes when `.1` to `.8` are verified. Root test: `tests/api/test_process_ops_served.py::test_process_run_waits_for_approval_and_follows_branch` (L4). |
+| `ARBORA-OPS-R898.1` | Test: `tests/api/test_process_ops.py::test_models_round_trip_engine_vectors` (L1). |
+| `ARBORA-OPS-R898.2` | Test: `tests/api/test_process_ops.py::test_plan_returns_engine_plan_unchanged` (L1). |
+| `ARBORA-OPS-R898.3` | Test: `tests/processes/test_run_plan.py::test_agent_steps_take_bound_prompt_text` (L1). |
+| `ARBORA-OPS-R898.4` | Test: `tests/processes/test_approvals.py::test_decide_resolves_one_pending_wait_once` (L1). |
+| `ARBORA-OPS-R898.5` | Test: `tests/api/test_process_ops.py::test_run_binds_ports_and_starts_admitted_plan` (L2). |
+| `ARBORA-OPS-R898.6` | Test: `tests/api/test_process_ops.py::test_refusals_map_to_stable_codes` (L1). |
+| `ARBORA-OPS-R898.7` | Test: `tests/processes/test_approvals.py::test_journal_cites_plan_verdicts_and_approver` (L1). |
+| `ARBORA-OPS-R898.8` | Test: `tests/api/test_process_ops_served.py::test_process_run_waits_for_approval_and_follows_branch` (L4). |
+| `ARBORA-OPS-R899` | Root test: `tests/messaging/test_voice_prompts.py::test_voice_note_turn_runs_on_the_transcript` (L2), and every child binds its test. |
+| `ARBORA-OPS-R899.1` | Test: `tests/modality/test_modality_seam.py::test_other_modalities_plug_into_the_same_seam` (L1), `tests/modality/test_modality_seam.py::test_text_and_audio_compose_and_the_provider_is_cached` (L1). |
+| `ARBORA-OPS-R899.2` | Test: `tests/modality/test_modality_seam.py::test_audio_is_transcribed_by_the_capability_found_by_contract` (L1), `tests/modality/test_modality_seam.py::test_capability_discovery_is_by_contract_not_server_name` (L1), `tests/modality/test_modality_seam.py::test_native_fleet_uses_the_governed_find_and_act_verbs` (L2). |
+| `ARBORA-OPS-R899.3` | Test: `tests/modality/test_modality_seam.py::test_unreachable_or_refusing_capability_is_a_typed_refusal` (L1), `tests/modality/test_modality_seam.py::test_size_and_duration_limits_refuse_before_any_fleet_call` (L1), `tests/modality/test_entry_points.py::test_a2a_jsonrpc_error_names_the_modality_refusal` (L1), `tests/modality/test_entry_points.py::test_agents_run_maps_a_modality_refusal_to_a_typed_operation_refusal` (L1). |
+| `ARBORA-OPS-R899.4` | Test: `tests/messaging/test_voice_prompts.py::test_voice_note_turn_runs_on_the_transcript` (L2), `tests/messaging/test_voice_prompts.py::test_voice_note_without_a_transcriber_gets_a_typed_reply` (L2), `tests/messaging/test_voice_prompts.py::test_declared_size_over_the_limit_refuses_before_download` (L1), `tests/messaging/test_voice_prompts.py::test_unlisted_sender_audio_is_never_downloaded` (L2). |
+| `ARBORA-OPS-R899.5` | Test: `tests/modality/test_entry_points.py::test_a2a_audio_part_runs_the_harness_on_the_transcript` (L2), `tests/modality/test_entry_points.py::test_a2a_audio_without_a_capability_refuses_typed_before_dispatch` (L2), `tests/modality/test_entry_points.py::test_a2a_message_model_keeps_text_bounds_and_takes_media` (L1), `tests/modality/test_entry_points.py::test_a2a_refuses_a_part_no_handler_reads` (L2), `tests/modality/test_entry_points.py::test_fleet_agent_history_media_becomes_transcript_text` (L2). |
+| `ARBORA-OPS-R899.6` | Test: `tests/modality/test_modality_seam.py::test_provenance_links_the_transcript_to_its_audio` (L1). |
+| `ARBORA-OPS-R899.7` | Test: `tests/modality/test_entry_points.py::test_webui_dictation_transcribes_through_the_seam_without_provenance` (L2). |
+| `ARBORA-OPS-R900` | Test: `tests/agent_runs/test_run_status_canonical.py::test_status_comes_from_the_canonical_state_and_unknown_is_refused`, `::test_each_canonical_status_is_accepted`, `::test_no_literal_status_tuple_remains` (L1 or L2, planned). |
+| `ARBORA-OPS-R901` | Test: `tests/api/test_plan_lease_machine.py::test_legal_edge` (one id per edge), `::test_every_illegal_pair_is_refused`, `::test_second_confirm_is_plan_consumed_and_late_confirm_is_plan_expired`, `::test_served_preview_confirm_runs_through_the_machine` (L1 to L3, planned). |
+| `ARBORA-OPS-R902` | Test: `tests/work_items/test_commit_refusal.py::test_illegal_commit_surfaces_the_typed_refusal`, `::test_commit_outcome_maps_to_the_enum`, `::test_terminal_item_commit_is_noop_derived_from_refusal` (L1 or L2, planned). |
+| `ARBORA-OPS-R903` | Test: `tests/ontology/test_plan_lease_description.py::test_classes_roll_up_to_the_core_classes` (L1 or L2, planned). |

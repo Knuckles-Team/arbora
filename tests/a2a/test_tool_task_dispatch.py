@@ -14,7 +14,7 @@ from arbora.a2a import tool_task_dispatch
 from arbora.a2a.tool_task import WorkItemLeaseLost
 from arbora.a2a.tool_task_dispatch import EgWorkItemFence
 from arbora.api.contracts.session import use_session
-from arbora.security.actor_context import CredentialLease
+from arbora.security.actor_context import CredentialLease, LeaseEvent
 from tests._eg_fakes import service_session
 from tests.test_work_items import FakeEngine
 
@@ -157,7 +157,7 @@ def test_current_session_refuses_before_native_read(refusal: str) -> None:
     )
     with use_session(session):
         if refusal == "expired":
-            lease.renew(0)
+            lease.apply(LeaseEvent.TICK, now=lease.expires_at)
             with pytest.raises(PermissionError):
                 fence.get("item-a")
         else:

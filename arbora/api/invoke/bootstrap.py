@@ -157,7 +157,7 @@ def _eg_method_id(binding: EgMethod) -> str:
     return binding.service
 
 
-async def _caller_dispatch_graph(context: ExecutionContext) -> str:
+async def caller_dispatch_graph(context: ExecutionContext) -> str:
     caller = context.caller
     if context.service_identity:
         raise OperationRefused("PRINCIPAL_NOT_ALLOWED")
@@ -203,7 +203,7 @@ async def dispatch_eg_method(
     from medulla.generated import send_by_id
 
     method = _eg_method_id(binding)
-    graph = await _caller_dispatch_graph(context)
+    graph = await caller_dispatch_graph(context)
     payload = claim_values(params)
     if method == "GetRunWorkItem":
         # EG's stable owner-read wire contract requires ``tenant``.  Treat it
@@ -235,7 +235,7 @@ async def dispatch_eg_method(
                 # the same session immediately before the correlated native
                 # query so an expiry/revocation during that wait cannot reuse
                 # the initial admission.
-                if await _caller_dispatch_graph(context) != graph:
+                if await caller_dispatch_graph(context) != graph:
                     raise OperationRefused("UNAUTHENTICATED")
                 with client_scope(
                     context.client, claim_values(context.caller.engine_claims)

@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import Field
 
-from arbora.api.ops._common import Params
+from arbora.api.ops._common import Params, bound_service
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -55,11 +55,19 @@ async def handle_agent(
         if op.id == "agents.run":
             if not context.idempotency_key:
                 raise ValueError("Idempotency-Key is required")
-            result = await service.send_message(
-                message=params["message"],
-                idempotency_key=context.idempotency_key,
-                context_budget_tokens=params.get("context_budget_tokens"),
-            )
+            from arbora.modality.models import ModalityRefused
+
+            try:
+                result = await service.send_message(
+                    message=params["message"],
+                    idempotency_key=context.idempotency_key,
+                    context_budget_tokens=params.get("context_budget_tokens"),
+                )
+            except ModalityRefused as refusal:
+                # ARBORA-OPS-R899.3: a typed refusal on MCP, HTTP and A2A alike.
+                from arbora.api.invoke.pipeline import OperationRefused
+
+                raise OperationRefused(refusal.arbora_code, refusal.details()) from None
         elif op.id == "agents.tasks.get":
             result = await service.get_task(params["task_id"])
             if result is None:
@@ -89,7 +97,13 @@ async def handle_rlm(
     action = op.id.rsplit(".", 1)[-1]
     if request.action != action:
         raise ValueError("RLM action does not match operation")
-    control_plane = compose_agent_control_plane(context.client, context.caller.session)
+    control_plane = compose_agent_control_plane(
+        context.client,
+        context.caller.session,
+        origins=bound_service(
+            context, "run_origins", reason="run origin registry is not composed"
+        ),
+    )
     result = await control_plane.graph_rlm(request)
     return {"value": result.model_dump(mode="json")}
 

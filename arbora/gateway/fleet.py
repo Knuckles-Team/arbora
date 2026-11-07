@@ -41,8 +41,8 @@ from arbora.api.errors import not_served
 from arbora.fleet.health import (
     AuthorityNotServed,
     FleetAuthorities,
-    _domain_sql,
     collect_fleet_health,
+    domain_sql,
     health_payload,
     mark_dependency_failure,
 )
@@ -121,7 +121,7 @@ def _fetch_sessions(
     """Read a filtered, paginated page of sessions tagged with their domain."""
     conn = _connect()
     try:
-        dom = _domain_sql(conn.dialect)
+        dom = domain_sql(conn.dialect)
         where: list[str] = []
         params: list[Any] = []
         if status:

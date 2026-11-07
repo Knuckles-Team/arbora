@@ -66,3 +66,45 @@ def test_readiness_authority_has_one_owner():
         assert not rh.release_readiness_authority(object())
     finally:
         assert rh.release_readiness_authority(owner)
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R027.5")
+def test_readiness_reason_follows_lease_state_with_no_separate_global():
+    from arbora.observability import runtime_health
+    from arbora.security.actor_context import CredentialLease, LeaseEvent, LeaseState
+
+    assert not hasattr(runtime_health, "_PROCESS_AUTHORITY_FAILURE")
+    assert not hasattr(runtime_health, "record_process_authority_failure")
+
+    issued = 1_800_000_000.0
+    lease = CredentialLease(int(issued) + 300, issued_at=issued)
+    runtime_health.register_process_lease(lease)
+    try:
+        seen = {lease.state: runtime_health.readiness_reason()}
+        steps = [
+            (LeaseEvent.TICK, issued + 150, {}),
+            (LeaseEvent.RENEW_START, issued + 150, {}),
+            (LeaseEvent.IDP_ERR, issued + 151, {"code": "acquisition_failed"}),
+            (LeaseEvent.TICK, issued + 300, {}),
+        ]
+        for event, now, extra in steps:
+            lease.apply(event, now, **extra)
+            seen[lease.state] = runtime_health.readiness_reason()
+        assert seen == {
+            LeaseState.LIVE: None,
+            LeaseState.RENEW_DUE: None,
+            LeaseState.RENEWING: None,
+            LeaseState.DEGRADED: "process_authority_acquisition_failed",
+            LeaseState.EXPIRED: "process_authority_acquisition_failed",
+        }
+        lease.apply(LeaseEvent.IDENTITY_CHANGED, issued + 301, code="roles_revoked")
+        assert runtime_health.readiness_reason() == "process_authority_roles_revoked"
+
+        # A code outside the closed vocabulary never reaches the route.
+        other = CredentialLease(int(issued) + 300, issued_at=issued)
+        other.revoke("free text from somewhere")
+        runtime_health.register_process_lease(other)
+        assert runtime_health.readiness_reason() == "process_authority_renewal_failed"
+    finally:
+        runtime_health.register_process_lease(None)
+    assert runtime_health.readiness_reason() is None

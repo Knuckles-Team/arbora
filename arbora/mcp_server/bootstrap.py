@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import random
 import re
 import threading
 import time
@@ -188,25 +189,45 @@ def _renewed_process_actor(config: Any) -> Any:
 
 
 def _ensure_renewable_process_session(session: Any, lease: Any) -> None:
-    """Require live authority and preserve a confirmed revocation reason."""
-    if lease.revocation_reason is not None:
+    """Refuse only a terminal lease; an expired lease still calls the provider.
+
+    ARBORA-IDENTITY-R027.3: ``Degraded`` and ``Expired`` recover through the
+    client-credentials flow, so this check no longer asks the session whether
+    its authority is current. A ``Revoked`` lease keeps its confirmed reason.
+    """
+    del session
+    from arbora.security.actor_context import LeaseState
+
+    if lease.state is LeaseState.REVOKED:
         raise ProcessAuthorityRenewalError(
-            lease.revocation_reason, "Graph process authority changed during renewal"
+            lease.revocation_reason or "renewal_failed",
+            "Graph process authority changed during renewal",
         )
-    session.ensure_authority_current()
+    if lease.state is LeaseState.STOPPED:
+        raise ProcessAuthorityRenewalError(
+            "not_renewable", "Graph process authority is stopped"
+        )
 
 
-def _refresh_process_authority(session: Any) -> Any:
-    """Renew one process lease without replacing captured sessions.
+def _refresh_process_authority(session: Any, *, from_request: bool = False) -> Any:
+    """Drive one renewal of the process lease without replacing captured sessions.
 
     External identities reacquire and validate their configured token. Tiny
     packaged-local stdio remints its in-memory asymmetric proof instead; it
-    never falls through to an external-token lookup it cannot satisfy. After
-    validation, only the bounded expiry is copied into the shared in-memory
-    lease. Identity, roles, tenant, route, and policy may not change.
+    never falls through to an external-token lookup it cannot satisfy. Every
+    state change goes through :meth:`CredentialLease.apply`: a ``Live`` lease
+    that is not yet due returns at once; ``RenewDue`` sends ``renew_start``;
+    the provider's answer is ``idp_ok``, ``idp_err`` or ``identity_changed``.
+    After validation only the bounded expiry is copied into the shared lease.
+    Identity, roles, tenant, route, and policy may not change.
+
+    ``from_request`` (a dispatch-entry or keepalive refresh) never recovers an
+    ``Expired`` lease: the request fails closed with ``SessionExpiredError``
+    and the supervisor loop alone re-acquires, with backoff.
     """
     from arbora.api.contracts.session import SessionExpiredError
     from arbora.core.settings import runtime_config as config
+    from arbora.security.actor_context import LeaseEvent, LeaseState
     from arbora.security.run_authority import RunCredentialLease
 
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
@@ -217,22 +238,26 @@ def _refresh_process_authority(session: Any) -> Any:
             "not_renewable", "Graph process authority is not renewable"
         )
     with _PROCESS_SESSION_REFRESH_LOCK:
-        # Headroom exhaustion permits refresh; expired authority never does.
         _ensure_renewable_process_session(session, lease)
-        try:
-            session.ensure_authority_current(minimum_ttl_seconds=30)
+        lease.tick()
+        if lease.state is LeaseState.LIVE:
             return session
-        except SessionExpiredError:  # noqa: BLE001 — expected: falls through to the renewal path below
-            pass
+        if from_request and lease.state is LeaseState.EXPIRED:
+            raise SessionExpiredError("Verified graph authority has expired")
+        if lease.state is LeaseState.RENEW_DUE:
+            lease.apply(LeaseEvent.RENEW_START)
         try:
             renewed_actor = _renewed_process_actor(config)
         except Exception as exc:
+            lease.tick()
+            lease.apply(LeaseEvent.IDP_ERR, code="acquisition_failed")
             raise ProcessAuthorityRenewalError(
                 "acquisition_failed", "Graph process identity could not be renewed"
             ) from exc
+        lease.tick()
         change = _process_authority_change(session.actor, renewed_actor)
         if change is not None:
-            lease.revoke(change)
+            lease.apply(LeaseEvent.IDENTITY_CHANGED, code=change)
             raise ProcessAuthorityRenewalError(
                 change, "Graph process authority changed during renewal"
             )
@@ -248,12 +273,11 @@ def _refresh_process_authority(session: Any) -> Any:
             )
         expires_at = getattr(renewed_actor, "credential_expires_at", None)
         if expires_at is None or int(expires_at) <= int(time.time()) + 30:
+            lease.apply(LeaseEvent.IDP_ERR, code="too_short_lived")
             raise ProcessAuthorityRenewalError(
                 "too_short_lived", "Graph process authority renewal is too short-lived"
             )
-        session.ensure_authority_current()
-        lease.renew(int(expires_at))
-        session.ensure_authority_current(minimum_ttl_seconds=30)
+        lease.apply(LeaseEvent.IDP_OK, expires_at=int(expires_at))
         return session
 
 
@@ -288,7 +312,9 @@ async def _ensure_process_authority_current() -> Any:
         try:
             ambient.ensure_authority_current(minimum_ttl_seconds=30)
         except SessionExpiredError:
-            ambient = await asyncio.to_thread(_refresh_process_authority, ambient)
+            ambient = await asyncio.to_thread(
+                _refresh_process_authority, ambient, from_request=True
+            )
         if ambient is None:
             # `_refresh_process_authority` is typed `Any` (it renews in place and
             # returns the same session), so this should be unreachable in
@@ -304,7 +330,9 @@ async def _ensure_process_authority_current() -> Any:
     try:
         session.ensure_authority_current(minimum_ttl_seconds=30)
     except SessionExpiredError:
-        session = await asyncio.to_thread(_refresh_process_authority, session)
+        session = await asyncio.to_thread(
+            _refresh_process_authority, session, from_request=True
+        )
     session.ensure_authority_current(minimum_ttl_seconds=30)
     return session
 
@@ -335,7 +363,9 @@ async def _keep_process_authority_current(session: Any) -> None:
             seconds_left = lease.expires_at - int(time.time())
             await asyncio.sleep(max(1.0, min(30.0, seconds_left - 30.0)))
             try:
-                await asyncio.to_thread(_refresh_process_authority, session)
+                await asyncio.to_thread(
+                    _refresh_process_authority, session, from_request=True
+                )
             except SessionExpiredError:
                 # Fail-closed: the next real authority check (the deep engine
                 # call already in flight, or the next one) raises for real.
@@ -448,10 +478,10 @@ async def _caller_run_authority_scope(session: Any) -> AsyncIterator[None]:
     from arbora.security.actor_context import CredentialExpiredError
     from arbora.security.run_authority import (
         CALLER_REVOCATIONS,
-        _log_audit,
         audit_record,
         caller_run_renewable,
         keep_run_authority_current,
+        log_audit,
         open_run_lease,
         run_renewal_policy,
     )
@@ -470,7 +500,7 @@ async def _caller_run_authority_scope(session: Any) -> AsyncIterator[None]:
     run_actor = replace(actor, credential_lease=lease)
     run_session = session.with_actor(run_actor)
     CALLER_REVOCATIONS.register(run_actor, lease)
-    _log_audit(audit_record("started", run_actor, lease))
+    log_audit(audit_record("started", run_actor, lease))
     guard_token = _AUTHORITY_KEEPALIVE_ACTIVE.set(True)
     renewer = asyncio.ensure_future(
         keep_run_authority_current(run_actor, lease, policy=policy)
@@ -488,44 +518,73 @@ async def _caller_run_authority_scope(session: Any) -> AsyncIterator[None]:
             await renewer
         lease.revoke(ended)
         CALLER_REVOCATIONS.unregister(run_actor, lease)
-        _log_audit(audit_record(ended, run_actor, lease))
+        log_audit(audit_record(ended, run_actor, lease))
         _AUTHORITY_KEEPALIVE_ACTIVE.reset(guard_token)
 
 
-def _process_authority_refresh_loop(session: Any) -> None:
+#: Backoff of a failing process-lease renewal (ARBORA-IDENTITY-R027.2): the
+#: delay before attempt ``n + 1`` is ``min(cap, 2 ** (n - 1))`` seconds times a
+#: jitter factor drawn from ``[low, high]``.
+PROCESS_RENEWAL_BACKOFF_CAP_SECONDS = 30.0
+PROCESS_RENEWAL_JITTER_LOW = 0.5
+PROCESS_RENEWAL_JITTER_HIGH = 1.0
+#: The longest a ``Live`` lease sleeps before it looks at its window again.
+PROCESS_RENEWAL_MAX_IDLE_SECONDS = 60.0
+
+
+def next_delay(attempt: int, rng: Any) -> float:
+    """The jittered exponential delay after ``attempt`` failed renewals."""
+    base = min(PROCESS_RENEWAL_BACKOFF_CAP_SECONDS, 2.0 ** (max(1, int(attempt)) - 1))
+    return base * rng.uniform(PROCESS_RENEWAL_JITTER_LOW, PROCESS_RENEWAL_JITTER_HIGH)
+
+
+def _process_authority_refresh_loop(session: Any, rng: Any = None) -> None:
     """Keep a renewable process lease current for all captured worker sessions.
 
-    The loop runs for the life of the process: every lease is renewed before
-    it expires, and a failed renewal is retried every five seconds while
-    readiness reports its code (``process_authority_<code>``).
+    The loop runs for the life of the process. A ``Live`` lease sleeps until
+    half of its lifetime has passed; then the lease renews. A failed renewal
+    leaves it ``Degraded`` (or ``Expired`` once the expiry passes) and is
+    retried with jittered exponential backoff, never exiting, until the
+    provider answers and the lease is ``Live`` again (ARBORA-IDENTITY-R027.2,
+    R027.3). Only a terminal lease (``Revoked``, ``Stopped``) ends the loop.
+    Readiness reads the lease state directly (R027.5).
     """
-    from arbora.observability.runtime_health import record_process_authority_failure
+    from arbora.security.actor_context import TERMINAL_LEASE_STATES, LeaseState
 
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
     if lease is None:
         return
+    rng = rng or random.Random()  # nosec B311 - backoff jitter, not crypto
     while not _PROCESS_AUTHORITY_STOP.is_set():
-        seconds_left = lease.expires_at - int(time.time())
-        if seconds_left > 30:
-            _PROCESS_AUTHORITY_STOP.wait(min(60.0, max(1.0, seconds_left - 30.0)))
+        lease.tick()
+        if lease.state in TERMINAL_LEASE_STATES:
+            return
+        if lease.state is LeaseState.LIVE:
+            idle = lease.renew_due_at - time.time()
+            _PROCESS_AUTHORITY_STOP.wait(
+                min(PROCESS_RENEWAL_MAX_IDLE_SECONDS, max(1.0, idle))
+            )
             continue
         try:
             _refresh_process_authority(session)
         except Exception as exc:  # noqa: BLE001 - retry; expiry remains fail-closed
             _log_renewal_failure("Graph process authority", exc)
-            record_process_authority_failure(getattr(exc, "code", "renewal_failed"))
-            _PROCESS_AUTHORITY_STOP.wait(5.0)
-        else:
-            record_process_authority_failure(None)
+            if lease.state in TERMINAL_LEASE_STATES:
+                return
+            _PROCESS_AUTHORITY_STOP.wait(next_delay(lease.attempts, rng))
 
 
 def _start_process_authority_supervisor(session: Any) -> None:
     """Start the sole external-authority renewal supervisor when required."""
     global _PROCESS_AUTHORITY_THREAD
+    from arbora.observability.runtime_health import register_process_lease
+
     _stop_process_authority_supervisor()
     _PROCESS_AUTHORITY_STOP.clear()
-    if getattr(getattr(session, "actor", None), "credential_lease", None) is None:
+    lease = getattr(getattr(session, "actor", None), "credential_lease", None)
+    if lease is None:
         return
+    register_process_lease(lease)
     thread = threading.Thread(
         target=_process_authority_refresh_loop,
         args=(session,),
@@ -536,14 +595,28 @@ def _start_process_authority_supervisor(session: Any) -> None:
     thread.start()
 
 
-def _stop_process_authority_supervisor() -> None:
-    """Stop and forget the process-authority supervisor."""
+def _stop_process_authority_supervisor(*, close_lease: bool = False) -> None:
+    """Stop and forget the process-authority supervisor.
+
+    ``close_lease`` (process shutdown) also sends ``stop`` to the registered
+    lease, so a captured session can no longer be used. A restart of the
+    supervisor for the same session leaves the lease as it is.
+    """
     global _PROCESS_AUTHORITY_THREAD
+    from arbora.observability.runtime_health import (
+        process_lease,
+        register_process_lease,
+    )
+
     _PROCESS_AUTHORITY_STOP.set()
     thread = _PROCESS_AUTHORITY_THREAD
     if thread is not None and thread is not threading.current_thread():
         thread.join(timeout=2.0)
     _PROCESS_AUTHORITY_THREAD = None
+    lease = process_lease()
+    if close_lease and lease is not None:
+        lease.stop()
+    register_process_lease(None)
 
 
 _BUNDLED_SKILL_READINESS: dict[str, Any] = {}
@@ -850,8 +923,11 @@ def _engine_bootstrap_is_client(engine: Any, fallback_role: str) -> bool:
     return "client" in {requested_role, effective_role}
 
 
-#: How long serving start waits for the engine endpoint to answer.
-_ENGINE_READY_TIMEOUT_SECONDS = 120.0
+def _engine_ready_timeout_seconds() -> float:
+    """How long serving start waits for the engine (``ARBORA_ENGINE_READY_TIMEOUT``)."""
+    from arbora.core.settings import runtime_config
+
+    return float(getattr(runtime_config, "arbora_engine_ready_timeout", 1500.0))
 
 
 def _start_engine_bootstrap(session: Any) -> None:
@@ -867,7 +943,7 @@ def _start_engine_bootstrap(session: Any) -> None:
 
     engine = _get_engine()
     graph = str(session.graph)
-    deadline = time.monotonic() + _ENGINE_READY_TIMEOUT_SECONDS
+    deadline = time.monotonic() + _engine_ready_timeout_seconds()
     while True:
         try:
             with use_session(session):
@@ -877,6 +953,7 @@ def _start_engine_bootstrap(session: Any) -> None:
                 raise RuntimeError(
                     "medulla did not answer before serving start"
                 ) from exc
+            logger.info("waiting for the engine to answer: %s", type(exc).__name__)
             if _PROCESS_AUTHORITY_STOP.wait(1.0):
                 raise InterruptedError("shutdown cancelled engine bootstrap") from exc
             continue

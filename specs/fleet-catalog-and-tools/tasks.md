@@ -475,20 +475,55 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T208 ARBORA-FLEET-R056 Intent surface answers the job, downtime and plan questions.
 - [ ] T209 ARBORA-FLEET-R057 Source executor relays read-time access checks.
 - [ ] T210 ARBORA-FLEET-R058 Host bootstrap declares data-prep fields to the engine.
-- [ ] T211 ARBORA-FLEET-R059.1 Add the PinRecord model, the PinStore protocol and the pinned cap knob.
-- [ ] T212 ARBORA-FLEET-R059.3 Store pins durably per principal in the medulla store.
-- [ ] T213 ARBORA-FLEET-R059.2 Exempt pinned items from LRU eviction and idle expiry.
-- [ ] T214 ARBORA-FLEET-R059.4 Wire the pin and unpin manage operations and the session restore.
-- [ ] T215 ARBORA-FLEET-R059.5 Authorize a pin by load authority and keep the caller credential on every call.
-- [ ] T216 ARBORA-FLEET-R059.6 Refuse a pin with the stable codes.
-- [ ] T217 ARBORA-FLEET-R059.7 Show pinned tools in find and status.
-- [ ] T218 ARBORA-FLEET-R059.8 Audit each pin and add the tenant admin view.
-- [ ] T219 ARBORA-FLEET-R059.9 Prove pins survive eviction, expiry and restart through the served manage tool.
-- [ ] T220 ARBORA-FLEET-R059 A caller pins tools so they stay loaded across sessions and restarts (rollup).
-- [ ] T221 ARBORA-FLEET-R060.1 Add the coverage model and the registry source reader.
-- [ ] T222 ARBORA-FLEET-R060.2 Compare the registry with the catalog tool counts.
-- [ ] T223 ARBORA-FLEET-R060.3 Wire coverage into the served status and the operator command.
-- [ ] T224 ARBORA-FLEET-R060.4 Refuse with a named reason for each uncovered connector.
-- [ ] T225 ARBORA-FLEET-R060.5 Prove a missing or empty connector fails the served status.
-- [ ] T226 ARBORA-FLEET-R060 Every registered connector is multiplexed, and a coverage gate enforces it (rollup).
-- [ ] T227 ARBORA-FLEET-R061 A caller loads and unloads the tools of one connector group.
+- [x] T211 ARBORA-FLEET-R059.1 Add the PinRecord model, the PinStore protocol and the pinned cap knob.
+- [x] T212 ARBORA-FLEET-R059.3 Store pins durably per principal in the medulla store.
+- [x] T213 ARBORA-FLEET-R059.2 Exempt pinned items from LRU eviction and idle expiry.
+- [x] T214 ARBORA-FLEET-R059.4 Wire the pin and unpin manage operations and the session restore.
+- [x] T215 ARBORA-FLEET-R059.5 Authorize a pin by load authority and keep the caller credential on every call.
+- [x] T216 ARBORA-FLEET-R059.6 Refuse a pin with the stable codes.
+- [x] T217 ARBORA-FLEET-R059.7 Show pinned tools in find and status.
+- [x] T218 ARBORA-FLEET-R059.8 Audit each pin and add the tenant admin view.
+- [x] T219 ARBORA-FLEET-R059.9 Prove pins survive eviction, expiry and restart through the served manage tool.
+- [x] T220 ARBORA-FLEET-R059 A caller pins tools so they stay loaded across sessions and restarts (rollup).
+- [x] T221 ARBORA-FLEET-R060.1 Add the coverage model and the registry source reader.
+- [x] T222 ARBORA-FLEET-R060.2 Compare the registry with the catalog tool counts.
+- [x] T223 ARBORA-FLEET-R060.3 Wire coverage into the served status and the operator command.
+- [x] T224 ARBORA-FLEET-R060.4 Refuse with a named reason for each uncovered connector.
+- [x] T225 ARBORA-FLEET-R060.5 Prove a missing or empty connector fails the served status.
+- [x] T226 ARBORA-FLEET-R060 Every registered connector is multiplexed, and a coverage gate enforces it (rollup).
+- [x] T227 ARBORA-FLEET-R061 A caller loads and unloads the tools of one connector group.
+- [ ] T228 ARBORA-FLEET-R015.4 A Medulla `Mcp` foreign source is read through the existing source executor.
+- [ ] T229 ARBORA-FLEET-R062 Fleet discovery and fleet calls never hang while the fleet comes up.
+- [ ] T230 ARBORA-FLEET-R063 The find catalog op lists one server's tools with their schemas.
+- [ ] T231 ARBORA-FLEET-R064 A fleet onboarding refusal names its engine operation and refusal code.
+- [ ] T232 ARBORA-FLEET-R065 Engine, discovery and fleet report health on their own.
+- [ ] T233 ARBORA-FLEET-R066 Parallel find and act calls do not hang under load.
+- [x] T234 ARBORA-FLEET-R067 A shielded, shared verified fleet read caches even when every caller deadline is shorter; stale-while-refresh.
+- [x] T235 ARBORA-FLEET-R068 Follow a child's tools/list pagination cursors to the last page.
+- [x] T236 ARBORA-FLEET-R069 Remove the per-connector tool cap; bound each descriptor on its own.
+- [x] T237 ARBORA-FLEET-R070 Refresh a connector's catalog on list_changed, on probe TTL and by an explicit op, without a restart.
+- [x] T238 ARBORA-FLEET-R071 Re-read a server once before refusing a fleet.call tool the cached catalog lacks.
+- [x] T239 ARBORA-FLEET-R072 Serve each tool's schema and behaviour hints from the engine catalog.
+- [ ] T240 ARBORA-FLEET-R073 Keep only digests in process; read tool pages from the engine by server and name.
+- [x] T241 ARBORA-FLEET-R068.1 Page resources, resource templates and prompts like tools.
+- [x] T242 ARBORA-FLEET-R070.1 Drop tools, prompts and skills a good probe no longer lists.
+- [x] T243 ARBORA-FLEET-R074 Rank fleet discovery by rarity-weighted, stopword-free, plural-folded terms.
+- [x] T244 ARBORA-FLEET-R075 Take a call deadline from call_timeout (call, server, operator), never the connect budget.
+- [x] T245 ARBORA-FLEET-R076 Keep prompt title, arguments, _meta and every content block through the relay.
+- [x] T246 ARBORA-FLEET-R076.1 Read a skill supporting file under its resource template.
+- [x] T247 ARBORA-FLEET-R077 Arm per-call sessions, plan confirm-declaring tools, refuse a cancelled result typed.
+- [x] T248 ARBORA-FLEET-R078 Compose the catalog off boot with retries; refuse retryably while it warms.
+- [ ] T249 ARBORA-FLEET-R080 Onboarding handshake explicit machine (rollup).
+- [ ] T250 ARBORA-FLEET-R080.1 Onboarding state model, transition function and typed held refusal.
+- [ ] T251 ARBORA-FLEET-R080.2 Retry after the process authority recovers.
+- [ ] T252 ARBORA-FLEET-R080.3 Describe the onboarding machine in the ontology.
+- [ ] T260 ARBORA-FLEET-R080.4 Wire the onboarding machine; hot-path proof.
+- [ ] T253 ARBORA-FLEET-R081 Catalog serving state machine (rollup).
+- [ ] T254 ARBORA-FLEET-R081.1 Catalog state model and transition function.
+- [ ] T255 ARBORA-FLEET-R081.2 Derive readiness flags from the catalog state.
+- [ ] T256 ARBORA-FLEET-R081.3 Describe the catalog machine in the ontology.
+- [ ] T261 ARBORA-FLEET-R081.4 Wire the catalog machine; hot-path proof.
+- [ ] T257 ARBORA-FLEET-R082 Connector desired status machine; authorization projection (rollup).
+- [ ] T258 ARBORA-FLEET-R082.1 Desired-status machine with typed refusal.
+- [ ] T259 ARBORA-FLEET-R082.2 Project the authorization outcome from the medulla decision.
+- [ ] T262 ARBORA-FLEET-R082.3 Describe the desired-status machine in the ontology; hot-path proof.

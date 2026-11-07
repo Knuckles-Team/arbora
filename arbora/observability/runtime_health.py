@@ -780,20 +780,63 @@ PROCESS_AUTHORITY_FAILURE_CODES = frozenset(
         "too_short_lived",
     }
 )
-_PROCESS_AUTHORITY_FAILURE: list[str | None] = [None]
+_PROCESS_LEASE: list[Any] = [None]
 
 
-def record_process_authority_failure(code: str | None) -> None:
-    """Record the current process-authority renewal failure (``None`` clears it)."""
-    if code is not None and code not in PROCESS_AUTHORITY_FAILURE_CODES:
-        code = "renewal_failed"
-    _PROCESS_AUTHORITY_FAILURE[0] = code
+def register_process_lease(lease: Any) -> None:
+    """Register the process credential lease readiness reads (``None`` clears).
+
+    The supervisor registers its lease at start and clears it on stop
+    (ARBORA-IDENTITY-R027.5); readiness has no failure state of its own.
+    """
+    _PROCESS_LEASE[0] = lease
+
+
+def process_lease() -> Any:
+    """The registered process credential lease, or ``None``."""
+    return _PROCESS_LEASE[0]
 
 
 def readiness_reason() -> str | None:
-    """``process_authority_<code>`` while process-authority renewal is failing."""
-    code = _PROCESS_AUTHORITY_FAILURE[0]
-    return None if code is None else f"process_authority_{code}"
+    """``process_authority_<code>`` while the process lease is not usable for renewal.
+
+    Derived from the registered lease's state: ``Live``, ``RenewDue`` and
+    ``Renewing`` report no reason; ``Degraded``, ``Expired`` and ``Revoked``
+    report a code from :data:`PROCESS_AUTHORITY_FAILURE_CODES`.
+    """
+    from arbora.security.actor_context import LeaseState
+
+    lease = _PROCESS_LEASE[0]
+    if lease is None:
+        return None
+    state = lease.state
+    if state is LeaseState.REVOKED:
+        code = lease.revocation_reason
+    elif state in (LeaseState.DEGRADED, LeaseState.EXPIRED):
+        code = lease.failure_code
+    else:
+        return None
+    if code not in PROCESS_AUTHORITY_FAILURE_CODES:
+        code = "renewal_failed"
+    return f"process_authority_{code}"
+
+
+_IDENTITY_CONTRACT: list[Any] = [None]
+
+
+def register_identity_contract(reconciler: Any) -> None:
+    """Register the OAuth client contract reconciler (``None`` clears; R030.4.3)."""
+    _IDENTITY_CONTRACT[0] = reconciler
+
+
+def identity_readiness() -> dict[str, Any] | None:
+    """``identity`` readiness from the contract state, or ``None`` when not configured.
+
+    Reported, never gating: issued tokens stay valid and dynamic client
+    registration stays available while the contract is degraded.
+    """
+    reconciler = _IDENTITY_CONTRACT[0]
+    return None if reconciler is None else dict(reconciler.readiness())
 
 
 def failing_checks(report: Mapping[str, Any]) -> list[str]:

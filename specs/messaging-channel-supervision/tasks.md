@@ -52,3 +52,6 @@ See [design](plan.md) and [tests](test-spec.md). Generated delivery evidence is 
 - [ ] T048 ARBORA-MESSAGING-R800.1000 Intake lease on the engine WorkItem methods.
 - [ ] T049 ARBORA-MESSAGING-R800.1001 Behavior.
 - [ ] T050 ARBORA-MESSAGING-R800.1002 Refusal.
+- [ ] T051 ARBORA-MESSAGING-R800.1003 Intake lease state machine with `Suspect`.
+- [ ] T052 ARBORA-MESSAGING-R800.1004 One failed heartbeat does not stop polling; a lost lease re-acquires.
+- [ ] T053 ARBORA-MESSAGING-R800.1005 Describe the intake lease machine in the ontology.

@@ -10,7 +10,7 @@ import pytest
 
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog, connector_items
 from arbora.fleet.multiplexer_ops import MultiplexerOps
-from arbora.fleet.session_loads import LoadCapExceeded, SessionLoads
+from arbora.fleet.session_loads import SessionLoads
 
 
 @pytest.mark.asyncio
@@ -115,8 +115,14 @@ async def test_load_cap_lru_and_forwarder_invokes_governed_fleet_call() -> None:
             "mcp",
         )
     ]
-    with pytest.raises(LoadCapExceeded):
+    # The session cap overflow is the stable refusal, not the raw state
+    # machine error (ARBORA-FLEET-R059.6 / R061).
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    with pytest.raises(OperationRefused) as cap_exc:
         await ops.load_tools(caller, "a", [rows[1].id])
+    assert cap_exc.value.code == "LOAD_CAP_EXCEEDED"
+    assert cap_exc.value.details == {"cap": "session", "loaded_items": [rows[0].id]}
     clock[0] = 20.0
     second = await ops.load_tools(caller, "a", [rows[1].id], evict="lru")
     assert second["evicted"] == [rows[0].id]

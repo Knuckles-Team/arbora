@@ -26,6 +26,7 @@ from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import VerifiedCaller
 from arbora.mcp_server import source_reader as reader_module
+from arbora.mcp_server.host_context import build_host_context
 from arbora.mcp_server.source_reader import NativeSourceReader
 from tests._support import Actor
 
@@ -572,7 +573,6 @@ async def test_invalid_authority_never_reaches_engine(monkeypatch, case):
 
 
 def test_actual_serving_root_composes_stateless_source_reader(monkeypatch):
-    from arbora.a2a import mcp as a2a_mcp
     from arbora.mcp_server import served_invocation, server
     from arbora.mcp_server.backing import server_factory
 
@@ -585,14 +585,15 @@ def test_actual_serving_root_composes_stateless_source_reader(monkeypatch):
     monkeypatch.setattr(
         server.runtime, "_mint_process_session", lambda transport: object()
     )
-    monkeypatch.setattr(a2a_mcp, "_service", lambda: object())
 
     def compose(**kwargs):
         captured.update(kwargs)
         return object()
 
     monkeypatch.setattr(served_invocation, "served_invocation_from_settings", compose)
-    invocation, session = server._served_invocation()
+    invocation, session = server._served_invocation(
+        host=build_host_context(lambda: None)
+    )
     assert invocation is not None and session is not None
     assert isinstance(captured["bindings"]["source_reader"], NativeSourceReader)
     assert vars(captured["bindings"]["source_reader"]) == {}

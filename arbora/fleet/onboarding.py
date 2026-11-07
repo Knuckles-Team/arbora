@@ -23,6 +23,7 @@ share it.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
 import json
 import logging
@@ -126,11 +127,9 @@ def fleet_endpoints(
 ) -> tuple[FleetEndpoint, ...]:
     """Return every enabled streamable-HTTP server in an MCP config payload."""
 
-    from arbora.gateway.config import _parse_mcp_servers
+    from arbora.fleet.mcp_catalog import parse_mcp_servers
 
-    endpoints = (
-        _endpoint(name, spec) for name, spec in _parse_mcp_servers(raw).items()
-    )
+    endpoints = (_endpoint(name, spec) for name, spec in parse_mcp_servers(raw).items())
     return tuple(
         sorted(
             (item for item in endpoints if item and item.name not in exclude),
@@ -281,8 +280,8 @@ def _remember_declaration(connector: str, pack: Any) -> None:
 def _child_auth() -> Any:
     """Arbora's service credential for a child, as the multiplexer sends it."""
 
-    from arbora.mcp_server.backing.client_credentials import child_auth
-    from arbora.mcp_server.backing.httpx_boundary import coerce_httpx2_auth
+    from arbora.core.httpx_boundary import coerce_httpx2_auth
+    from arbora.security.client_credentials import child_auth
 
     return coerce_httpx2_auth(child_auth(None))
 
@@ -345,11 +344,11 @@ class FleetOnboarding:
 
         from arbora.deployment.semantic_provisioning import (
             COMMONS_GRAPH,
-            _bind_session_graph,
+            bind_session_graph,
             ensure_server_registrations,
         )
 
-        with _bind_session_graph(COMMONS_GRAPH):
+        with bind_session_graph(COMMONS_GRAPH):
             return await ensure_server_registrations(
                 self.commons_client,
                 endpoints,
@@ -383,25 +382,30 @@ class FleetOnboarding:
         if trigger is not None:
             logger.info("%s: onboarding pass (%s)", endpoint.name, trigger.reason)
         capture = self.capture or capture_server_pack
-        pack = await capture(endpoint, auth=auth)
+        with onboarding_step("capture"):
+            pack = await capture(endpoint, auth=auth)
         self.surfaces[endpoint.name] = pack_surface_report(pack)
         _remember_declaration(endpoint.name, pack)
-        changed = not await self.pack_unchanged(endpoint, pack)
+        with onboarding_step("ConnectorPackStatus"):
+            changed = not await self.pack_unchanged(endpoint, pack)
         if changed:
-            await import_attested_pack(
-                self.engine,
-                self.session,
-                client=self.tenant_client,
-                commons=self.commons_client,
-                pack=pack,
-                allow_mass_withdrawal=endpoint.name in self.allow_mass_withdrawal,
-            )
+            with onboarding_step("ConnectorPackImport"):
+                await import_attested_pack(
+                    self.engine,
+                    self.session,
+                    client=self.tenant_client,
+                    commons=self.commons_client,
+                    pack=pack,
+                    allow_mass_withdrawal=endpoint.name in self.allow_mass_withdrawal,
+                )
         else:
-            await self.renew({endpoint.name: endpoint.url})
+            with onboarding_step("renew"):
+                await self.renew({endpoint.name: endpoint.url})
         # Keep the hook-compatible ``None`` return accepted for lightweight
         # callers that override the pre-approval registration step.
-        decisions = self.register_contracts(endpoint, pack) or ()
-        await self.approve_contracts(endpoint, pack, decisions)
+        with onboarding_step("contracts"):
+            decisions = self.register_contracts(endpoint, pack) or ()
+            await self.approve_contracts(endpoint, pack, decisions)
         await self.write_catalog(endpoint, pack)
         return changed
 
@@ -414,13 +418,13 @@ class FleetOnboarding:
         as a ``catalog`` surface gap.
         """
 
-        from arbora.deployment.semantic_provisioning import _bind_session_graph
+        from arbora.deployment.semantic_provisioning import bind_session_graph
         from arbora.fleet.catalog_graph import write_catalog
 
         report = self.surfaces.setdefault(endpoint.name, {})
         try:
             graph = str(self.session.graph)
-            with _bind_session_graph(graph):
+            with bind_session_graph(graph):
                 count = await write_catalog(
                     self.tenant_client, graph, endpoint.name, pack
                 )
@@ -472,11 +476,11 @@ class FleetOnboarding:
         from medulla.generated.connector_pack import ConnectorPackStatusRequest
         from medulla.generated.storage import send_connector_pack_status
 
-        from arbora.deployment.semantic_provisioning import _bind_session_graph
+        from arbora.deployment.semantic_provisioning import bind_session_graph
 
         tenant_id = str(session_context(self.session)["tenant"])
         graph = str(self.session.graph)
-        with _bind_session_graph(graph):
+        with bind_session_graph(graph):
             status = await send_connector_pack_status(
                 self.tenant_client,
                 ConnectorPackStatusRequest(
@@ -590,14 +594,14 @@ class FleetOnboarding:
 
         from arbora.api.errors import ArboraRefusal
         from arbora.deployment.semantic_provisioning import (
-            _bind_session_graph,
-            _shell_context,
+            bind_session_graph,
+            shell_context,
         )
 
         tenant_id = str(session_context(self.session)["tenant"])
         graph = str(self.session.graph)
         try:
-            with _bind_session_graph(graph):
+            with bind_session_graph(graph):
                 status = await send_connector_pack_status(
                     self.tenant_client,
                     ConnectorPackStatusRequest(
@@ -640,7 +644,7 @@ class FleetOnboarding:
                 f"{head.binding_revision}:{contract_digest}"
             )
             try:
-                context = _shell_context(tenant_id, key)
+                context = shell_context(tenant_id, key)
                 request = ConnectorPackSourceApprovalRequest(
                     connector=endpoint.name,
                     context=context,
@@ -652,7 +656,7 @@ class FleetOnboarding:
                 operation = ConnectorPackOpApproveSource(
                     op="approve_source", request=request
                 )
-                with _bind_session_graph(graph):
+                with bind_session_graph(graph):
                     payload = await self.tenant_client._send(
                         "ConnectorPack",
                         {"op": operation.model_dump(mode="json")},
@@ -750,12 +754,12 @@ class FleetOnboarding:
 
         from arbora.deployment.semantic_provisioning import (
             COMMONS_GRAPH,
-            _bind_session_graph,
-            _registry_page,
+            bind_session_graph,
+            registry_page,
         )
 
-        with _bind_session_graph(COMMONS_GRAPH):
-            page = await _registry_page(self.commons_client)
+        with bind_session_graph(COMMONS_GRAPH):
+            page = await registry_page(self.commons_client)
         live = {entry.name: entry.url for entry in page.entries}
         urls = {name: served_url or live.get(name, "") for name in connectors}
         return {name: url for name, url in urls.items() if url}
@@ -763,6 +767,43 @@ class FleetOnboarding:
 
 def _failure(exc: BaseException) -> str:
     return f"{type(exc).__name__}: {exc}"[:512]
+
+
+#: The engine's own detail when it could not classify a refusal.
+_UNCLASSIFIED = "unclassified engine refusal"
+
+
+class OnboardingStepRefused(Exception):
+    """One onboarding step's refusal, with the engine refusal code (R064)."""
+
+    def __init__(self, step: str, code: str, detail: str) -> None:
+        self.step = step
+        self.code = code
+        self.detail = detail
+        hint = " (engine-side classification gap)" if _UNCLASSIFIED in detail else ""
+        super().__init__(f"{step} refused {code}: {detail}{hint}")
+
+
+@contextlib.contextmanager
+def onboarding_step(step: str) -> Iterator[None]:
+    """Label an engine refusal with the onboarding step that met it.
+
+    The engine refusal code (``EngineResponseError.code``) is kept as is,
+    never folded into a generic message (ARBORA-FLEET-R064).
+    """
+
+    try:
+        yield
+    except OnboardingStepRefused:
+        raise
+    except Exception as exc:
+        code = getattr(exc, "code", None)
+        if not isinstance(code, str) or not code:
+            raise
+        detail = str(getattr(exc, "detail", None) or getattr(exc, "message", "") or "")
+        if not detail:
+            detail = str(exc).removeprefix(f"{code}: ")
+        raise OnboardingStepRefused(step, code, detail[:400]) from exc
 
 
 async def _renew_all(

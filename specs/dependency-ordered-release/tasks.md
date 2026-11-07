@@ -3,6 +3,8 @@
 Governing [spec](spec.md) and [plan](plan.md). One task per row, producer first.
 
 - [x] T001 [US1] ARBORA-RELEASE-R001.1 A version tag publishes the wheel and the sdist to PyPI with no manual approval.
+- [x] T024 [US1] ARBORA-RELEASE-R001.2 Export the published base only from a real previous push; schedule, dispatch and tag runs set none.
+- [x] T025 [US1] ARBORA-RELEASE-R001.3 Derive the install-smoke legs from the platforms the pinned engine publishes wheels for; no optional leg.
 - [x] T002 [US1] ARBORA-RELEASE-R002 Gate every push on green local gates and run the static architecture tests on every pull request (`gate_release`, `scripts/pr_static_scope.py`); wire `gate_release` into `release-plan`.
 - [x] T003 [US2] ARBORA-RELEASE-R003.1 Typed `ExitCriterionRow` and `ExitCriteriaMatrix` with `read_exit_criteria_matrix` and `audit_exit_criteria`, with refusal tests.
 - [ ] T004 [US2] ARBORA-RELEASE-R003.2 Create `deploy/release/exit-criteria.json` with seven rows and the ingestion-receipts served test.

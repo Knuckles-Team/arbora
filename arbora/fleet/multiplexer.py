@@ -95,7 +95,7 @@ from arbora.fleet.local_skill_catalog import (
     build_local_skill_catalog,
     missing_core_pack_names,
 )
-from arbora.fleet.plan_confirmation import answer_elicitation
+from arbora.fleet.plan_confirmation import answer_elicitation, armed
 from arbora.fleet.session_notifications import SessionCatalogNotifications
 from arbora.security.error_surface import public_error_text
 from arbora.security.log_redaction import redact_for_log
@@ -117,6 +117,7 @@ _ENGINE_CONFIG_FIELDS = frozenset(
         "tls_profile",
         "allowed_private_hosts",
         "timeout",
+        "call_timeout",
         "max_concurrency",
         "queue_timeout",
         "pool_size",
@@ -138,10 +139,12 @@ _MAX_DELEGATED_VALUE_BYTES = 4 * 1024 * 1024
 _MAX_CHILD_SSE_EVENT_BYTES = 2 * _MAX_DELEGATED_VALUE_BYTES
 _MAX_DELEGATED_NODES = 16_384
 _MAX_DELEGATED_DEPTH = 32
-_MAX_DISCOVERED_TOOLS = 2_048
-# A child catalog is metadata, not a single tool invocation.  It legitimately
-# contains hundreds of independently bounded JSON Schemas, so it gets its own
-# aggregate structural allowance while retaining the same byte/depth limits.
+#: Resource and prompt listings keep a fixed per-child count bound. A tool
+#: catalog has no count bound at all (ARBORA-FLEET-R069): a connector that
+#: serves one tool per upstream operation is admitted whole.
+_MAX_DISCOVERED_DESCRIPTORS = 2_048
+#: One child tool descriptor's structural allowance. Each descriptor is
+#: bounded on its own; a large catalog is never truncated (ARBORA-FLEET-R069).
 _MAX_CATALOG_NODES = 131_072
 # Skills-over-MCP (CONCEPT:MERISTEM-ECO.mcp.skills-over-mcp-provider): a probed
 # server's Resources may include ``skill://{name}/SKILL.md`` entries. Bounded
@@ -455,7 +458,7 @@ def _resolve_fleet_runtime_reference(reference: str) -> str:
         raise RuntimeError("MCP child runtime reference is unavailable") from None
 
 
-def _resolve_runtime_value(
+def resolve_runtime_value(
     value: _typing.Any,
     *,
     sensitive: bool,
@@ -573,7 +576,7 @@ def _assert_bounded_json_value(value: _typing.Any, *, max_nodes: int) -> None:
             )
 
 
-def _assert_bounded_delegated_value(value: _typing.Any) -> None:
+def assert_bounded_delegated_value(value: _typing.Any) -> None:
     """Reject oversized or excessively nested MCP tool arguments."""
 
     _assert_bounded_json_value(value, max_nodes=_MAX_DELEGATED_NODES)
@@ -619,13 +622,13 @@ def _child_text_payload(result: _typing.Any) -> _typing.Any:
     return json.loads(rendered)
 
 
-def _child_result_payload(result: _typing.Any) -> _typing.Any:
+def child_result_payload(result: _typing.Any) -> _typing.Any:
     """Decode one bounded child result without retaining or logging its body."""
 
     value = _child_structured_payload(result)
     if value is _ABSENT:
         value = _child_text_payload(result)
-    _assert_bounded_delegated_value(value)
+    assert_bounded_delegated_value(value)
     return value
 
 
@@ -847,9 +850,24 @@ def _bounded_tool_entry(tool: _typing.Any) -> dict[str, _typing.Any]:
         "description": description,
         **_bounded_tool_schemas(tool),
     }
+    # The same ``meta`` pass-through the live entry keeps: the catalog reads
+    # the connector group from ``scion/upstream`` (ARBORA-FLEET-R061).
+    meta = getattr(tool, "meta", None)
+    if meta:
+        item["meta"] = meta
     if annotations is not None:
         item["annotations"] = annotations
     return item
+
+
+class FleetCatalogPageError(RuntimeError):
+    """One page of a child's ``tools/list`` could not be read.
+
+    Typed (ARBORA-FLEET-R068): the listing is refused whole, never served
+    partial, so a connector can never silently lose tools. The probe records
+    it as the server's error and the primer retries; the last good catalog
+    keeps serving meanwhile.
+    """
 
 
 def _bounded_tool_catalog(raw_tools: _typing.Any) -> list[dict[str, _typing.Any]]:
@@ -857,24 +875,88 @@ def _bounded_tool_catalog(raw_tools: _typing.Any) -> list[dict[str, _typing.Any]
 
     The MCP SDK decodes remote responses before returning them to us.  This
     boundary prevents a child from turning that decoded value into an
-    unbounded in-memory/KG catalog: tool count, aggregate bytes, nesting,
-    collection size, names, descriptions, schemas, and annotations are all
-    validated before any caller can cache or register them.
+    unbounded in-memory/KG catalog: names, descriptions, schemas, and
+    annotations are validated per descriptor before any caller can cache or
+    register them. The tool count has no bound (ARBORA-FLEET-R069).
     """
 
-    if (
-        not isinstance(raw_tools, list | tuple)
-        or len(raw_tools) > _MAX_DISCOVERED_TOOLS
-    ):
+    if not isinstance(raw_tools, list | tuple):
         raise RuntimeError("MCP child tool catalog exceeded its boundary")
     tools: list[dict[str, _typing.Any]] = [
         _bounded_tool_entry(tool) for tool in raw_tools
     ]
     try:
-        _assert_bounded_json_value(tools, max_nodes=_MAX_CATALOG_NODES)
+        for entry in tools:
+            _assert_bounded_json_value(entry, max_nodes=_MAX_CATALOG_NODES)
     except _fastmcp_exceptions.ToolError:
         raise RuntimeError("MCP child tool catalog exceeded its boundary") from None
     return tools
+
+
+def _next_cursor(result: _typing.Any) -> str | None:
+    """A ``tools/list`` page's continuation cursor, or ``None`` on the last."""
+    cursor = getattr(result, "next_cursor", None)
+    return cursor if isinstance(cursor, str) and cursor else None
+
+
+async def _list_page(
+    session: _typing.Any, method: str, cursor: str | None
+) -> _typing.Any:
+    """One page of a child ``*/list``; a continuation page failure is typed.
+
+    The first page raises unchanged, so an optional family a child does not
+    implement still reads as "method not found".
+    """
+    call = getattr(session, method)
+    if cursor is None:
+        return await call()
+    try:
+        return await call(params=mcp_types.PaginatedRequestParams(cursor=cursor))
+    except Exception as exc:
+        raise FleetCatalogPageError(
+            f"MCP child {method} page failed ({type(exc).__name__})"
+        ) from exc
+
+
+async def _list_all(session: _typing.Any, method: str, field: str) -> list[_typing.Any]:
+    """Every entry of one child list family, followed to its last page.
+
+    ARBORA-FLEET-R068/R068.1: tools, resources, resource templates and prompts
+    are read cursor by cursor until a page has no ``nextCursor``. A failed
+    continuation page or a repeated cursor refuses the listing whole with
+    :class:`FleetCatalogPageError`; a partial list is never returned.
+    """
+    result = await _list_page(session, method, None)
+    entries = list(getattr(result, field))
+    seen: set[str] = set()
+    cursor = _next_cursor(result)
+    while cursor is not None:
+        if cursor in seen:
+            raise FleetCatalogPageError(f"MCP child {method} cursor repeated")
+        seen.add(cursor)
+        result = await _list_page(session, method, cursor)
+        entries.extend(getattr(result, field))
+        cursor = _next_cursor(result)
+    return entries
+
+
+async def _list_all_tools(session: _typing.Any) -> list[_typing.Any]:
+    """Every tool a child serves (ARBORA-FLEET-R068)."""
+    return await _list_all(session, "list_tools", "tools")
+
+
+def _discovery_ranker(query: str, sources: list[tuple[str, dict]]) -> _typing.Any:
+    """One ranker over every tool and skill row this discovery call scores."""
+    from arbora.fleet.discovery_ranking import LexicalRanker
+
+    documents = (
+        f"{entry.get('name', '')} {entry.get('description', '')}"
+        for _server, info in sources
+        for family in ("tools", "skills")
+        for entry in info.get(family) or ()
+        if isinstance(entry, dict)
+    )
+    return LexicalRanker(query, documents)
 
 
 def _tool_catalog_digest(tools: list[MCPTool]) -> str:
@@ -908,7 +990,7 @@ def _assert_bounded_resource_list(raw_resources: _typing.Any) -> None:
 
     if not isinstance(raw_resources, list | tuple):
         raise RuntimeError("MCP child resource catalog is invalid")
-    if len(raw_resources) > _MAX_DISCOVERED_TOOLS:
+    if len(raw_resources) > _MAX_DISCOVERED_DESCRIPTORS:
         raise RuntimeError("MCP child resource catalog exceeded its boundary")
 
 
@@ -916,7 +998,10 @@ def _bounded_descriptor_catalog(
     values: _typing.Any, *, key: str, family: str
 ) -> list[dict[str, _typing.Any]]:
     """Project one native MCP descriptor family through the shared boundary."""
-    if not isinstance(values, list | tuple) or len(values) > _MAX_DISCOVERED_TOOLS:
+    if (
+        not isinstance(values, list | tuple)
+        or len(values) > _MAX_DISCOVERED_DESCRIPTORS
+    ):
         raise RuntimeError(f"MCP child {family} catalog exceeded its boundary")
     projected: list[dict[str, _typing.Any]] = []
     for value in values:
@@ -1292,7 +1377,7 @@ def _child_transport_values(
     cfg: dict, command: _typing.Any
 ) -> tuple[_typing.Any, str, str, bool | None]:
     """Resolve child transport fields; ``None`` marks an invalid declaration."""
-    url = _resolve_runtime_value(cfg.get("url", ""), sensitive=False)
+    url = resolve_runtime_value(cfg.get("url", ""), sensitive=False)
     explicit_transport = str(cfg.get("transport", "")).lower()
     invalid = (
         explicit_transport not in {"", "streamable-http", "sse"}
@@ -1372,12 +1457,24 @@ def _child_launch_shape(cfg: dict) -> tuple[bool, int] | None:
     return is_remote, pool_size
 
 
+#: A child call's deadline when neither the call nor the server declares one
+#: (ARBORA-FLEET-R075); the same default the pooled ``ChildRuntime`` uses.
+_DEFAULT_CHILD_CALL_TIMEOUT_S = 300.0
+
+
 def _child_call_timeout(cfg: dict, timeout: float | None) -> float:
     """One ephemeral child call's deadline in seconds; ``0.0`` when the
-    declaration is unusable (the caller rejects anything outside its boundary)."""
+    declaration is unusable (the caller rejects anything outside its boundary).
 
+    ARBORA-FLEET-R075: the call's own deadline, else the server's declared
+    ``call_timeout``, else the default. The server's ``timeout`` is its
+    connect/handshake budget and never caps a call: a tool that legitimately
+    takes a minute must not fail at a 15 s handshake budget.
+    """
+
+    value = timeout if timeout is not None else cfg.get("call_timeout")
     try:
-        return float(timeout if timeout is not None else cfg.get("timeout", 30.0))
+        return float(_DEFAULT_CHILD_CALL_TIMEOUT_S if value is None else value)
     except (TypeError, ValueError):
         return 0.0
 
@@ -1556,7 +1653,7 @@ def _fleet_required_capabilities(kind: str) -> set[str]:
     }.get(kind, {"mcp:delegate"})
 
 
-def _require_fleet_capability(kind: str, extra_scopes: list[str] | None = None) -> None:
+def require_fleet_capability(kind: str, extra_scopes: list[str] | None = None) -> None:
     """Authorize fleet discovery/delegation for every transport, local stdio
     included: the exact same capability check applies regardless of how the
     caller connected."""
@@ -1886,7 +1983,7 @@ def _swap_local_provider_components(
 #
 # A catalog entry opts into per-user delegated authorization by declaring an
 # admin-configured ``oauth_provider`` block (the exact shape
-# ``arbora.mcp_server.backing.remote_oauth_broker.ProviderDescriptor`` accepts) on
+# ``arbora.fleet.remote_oauth_broker.ProviderDescriptor`` accepts) on
 # its config -- the SAME "administrator-populated, never caller-supplied"
 # catalog these config dicts already are (headers/env/tls_profile/
 # allowed_private_hosts all come from here today). Such a server is
@@ -1955,7 +2052,7 @@ def _remote_oauth_broker_for(
     provider block, reusing ONE broker instance per ``provider_id`` so its
     encrypted token store and DCR registration cache persist across calls
     instead of being rebuilt (and, for DCR, re-registered) on every request."""
-    from arbora.mcp_server.backing.remote_oauth_broker import (
+    from arbora.fleet.remote_oauth_broker import (
         ProviderDescriptor,
         ProviderRegistry,
         RemoteOAuthBroker,
@@ -1989,7 +2086,7 @@ def _resolve_remote_oauth_bearer(
     server-minted identity every other authorization decision in this gateway
     uses, never a caller-supplied string) and mints a bearer bound to the
     EXACT registered resource endpoint via
-    :meth:`~arbora.mcp_server.backing.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`.
+    :meth:`~arbora.fleet.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`.
     A missing, expired, or revoked grant raises -- fail closed, no fallback to
     any shared/service credential (U-44/U-45).
 
@@ -2035,7 +2132,7 @@ def current_remote_oauth_grant_bindings(actor: _typing.Any) -> tuple[_typing.Any
     from arbora.fleet.discovery_authority import (
         OAuthGrantBinding,
     )
-    from arbora.mcp_server.backing.remote_oauth_broker import (
+    from arbora.fleet.remote_oauth_broker import (
         OAuthProviderError,
         OAuthScopeError,
         OAuthTokenAbsentError,
@@ -2322,6 +2419,8 @@ class _DiscoveryRanking(_typing.TypedDict):
     semantic: dict[str, float]
     catalog: dict[str, dict]
     loaded: set[str]
+    #: The query's lexical ranker over this call's candidates (R074).
+    lexical: _typing.NotRequired[_typing.Any]
 
 
 class _EmbeddingTargets(_typing.TypedDict):
@@ -2335,6 +2434,55 @@ class _EmbeddingTargets(_typing.TypedDict):
     names: list[tuple[str, str]]
     pending_text: list[str]
     pending_key: list[str]
+
+
+def _operator_call_timeouts() -> dict[str, _typing.Any]:
+    """Per-server ``call_timeout`` from the operator's fleet config (R075).
+
+    The engine owns each server's identity and endpoint; the call deadline is
+    operator policy, so a ``call_timeout`` in the deployment's MCP config
+    overrides the one the connector declared. An unreadable config yields
+    none; an out-of-range value is refused at call time, never clamped.
+    """
+    from arbora.core.settings import mcp_config_path
+    from arbora.fleet.mcp_catalog import parse_mcp_servers
+
+    path = mcp_config_path()
+    try:
+        servers = parse_mcp_servers(path.read_bytes()) if path.is_file() else {}
+    except (OSError, ValueError):
+        return {}
+    return {
+        name: spec["call_timeout"]
+        for name, spec in servers.items()
+        if isinstance(spec, dict) and spec.get("call_timeout") is not None
+    }
+
+
+def _json_dump(value: _typing.Any) -> _typing.Any:
+    """One decoded MCP value as plain JSON (aliases kept, nulls dropped)."""
+    dump = getattr(value, "model_dump", None)
+    if callable(dump):
+        return dump(mode="json", by_alias=True, exclude_none=True)
+    return value
+
+
+def _relayed_prompt_message(message: _typing.Any) -> dict[str, _typing.Any]:
+    """One rendered prompt message, every content block whole (R076).
+
+    A text block also keeps the flat ``text`` key relay readers use; an
+    embedded resource, resource link or image is relayed as the child sent it,
+    never dropped.
+    """
+    content = _json_dump(getattr(message, "content", None))
+    relayed: dict[str, _typing.Any] = {
+        "role": str(getattr(message, "role", "")),
+        "content": content,
+    }
+    text = content.get("text") if isinstance(content, dict) else None
+    if isinstance(text, str):
+        relayed["text"] = text
+    return relayed
 
 
 def _decode_engine_server_config(body: bytes) -> dict[str, _typing.Any]:
@@ -2599,6 +2747,9 @@ class MCPMultiplexer:
         self._fleet_catalog = catalog
         self._fleet_catalog_loaded_at = time.time()
         raw_catalog = self._catalog_from_engine(catalog)
+        for server_name, call_timeout in _operator_call_timeouts().items():
+            if server_name in raw_catalog:
+                raw_catalog[server_name]["call_timeout"] = call_timeout
         skip = getattr(self, "_skip_servers", None) or {"mcp-multiplexer"}
         self._catalog = {}
         for server_name, config in raw_catalog.items():
@@ -2628,7 +2779,7 @@ class MCPMultiplexer:
         child_config = self.load_catalog().get(server_name)
         if child_config is None:
             raise _fastmcp_exceptions.ToolError("MCP child is no longer enabled")
-        _require_fleet_capability("delegate", _child_required_scopes(child_config))
+        require_fleet_capability("delegate", _child_required_scopes(child_config))
         runtime = self.children.get(server_name)
         if runtime is None:
             raise RuntimeError("MCP child session is not active")
@@ -2877,7 +3028,7 @@ class MCPMultiplexer:
         """Capture generation and authorization checks for queue and preflight waits."""
 
         def recheck(current_generation: int, _secret: str | None) -> None:
-            _require_fleet_capability("delegate", _child_required_scopes(child_config))
+            require_fleet_capability("delegate", _child_required_scopes(child_config))
             if runtime.generation != current_generation or (
                 schema_bound and runtime.generation != generation
             ):
@@ -2984,10 +3135,10 @@ class MCPMultiplexer:
         :meth:`start_children` and forwards the call to that child's live
         ``ClientSession``. Raises if the tool/server is unknown or inactive.
         """
-        _require_fleet_capability("delegate")
+        require_fleet_capability("delegate")
         logger.info("Calling delegated MCP tool")
         call_arguments = arguments or {}
-        _assert_bounded_delegated_value(call_arguments)
+        assert_bounded_delegated_value(call_arguments)
         server_name, original_name, child_config, runtime = self._admit_proxied_call(
             prefixed_name
         )
@@ -3054,7 +3205,7 @@ class MCPMultiplexer:
         *,
         timeout: float | None,
     ) -> MCPCallToolResult:
-        _require_fleet_capability("delegate")
+        require_fleet_capability("delegate")
         cfg = self.load_catalog().get(server_name)
         if cfg is None:
             # Nothing was sent to the child, so the outcome is certain: the
@@ -3067,10 +3218,10 @@ class MCPMultiplexer:
             raise _fastmcp_exceptions.ToolError(
                 "Server is not a configured service-credential MCP child"
             )
-        _require_fleet_capability("delegate", _child_required_scopes(cfg))
+        require_fleet_capability("delegate", _child_required_scopes(cfg))
         catalog_epoch = self._catalog_epoch
         call_arguments = arguments or {}
-        _assert_bounded_delegated_value(call_arguments)
+        assert_bounded_delegated_value(call_arguments)
         call_timeout = _child_call_timeout(cfg, timeout)
         if not 0.001 <= call_timeout <= 300.0:
             raise _fastmcp_exceptions.ToolError("Invalid call timeout")
@@ -3109,7 +3260,7 @@ class MCPMultiplexer:
         anything keyed only by server name. A caller without a valid grant for
         this provider gets a fail-closed error before any tool call is
         attempted (the connect step inside :meth:`_open_one_session` raises,
-        because :meth:`~arbora.mcp_server.backing.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`
+        because :meth:`~arbora.fleet.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`
         does).
 
         Fleet-global discoverability (this call reachable through
@@ -3122,16 +3273,16 @@ class MCPMultiplexer:
         :meth:`probe_server` call, which DOES run live and per-principal for
         an OAuth-gated server) can call this directly today.
         """
-        _require_fleet_capability("delegate")
+        require_fleet_capability("delegate")
         cfg = self.load_catalog().get(server_name)
         if cfg is None or not _oauth_gated(cfg):
             raise _fastmcp_exceptions.ToolError(
                 "Server is not a configured OAuth-gated remote MCP child"
             )
-        _require_fleet_capability("delegate", _child_required_scopes(cfg))
+        require_fleet_capability("delegate", _child_required_scopes(cfg))
         catalog_epoch = self._catalog_epoch
         call_arguments = arguments or {}
-        _assert_bounded_delegated_value(call_arguments)
+        assert_bounded_delegated_value(call_arguments)
         call_timeout = _child_call_timeout(cfg, timeout)
         if not 0.001 <= call_timeout <= 300.0:
             raise _fastmcp_exceptions.ToolError("Invalid call timeout")
@@ -3160,8 +3311,7 @@ class MCPMultiplexer:
         ``record_state=False``: an ephemeral per-principal session must never
         write into the process-wide admitted-tool map.
         """
-        tools_result = await session.list_tools()
-        tools = list(tools_result.tools)
+        tools = await _list_all_tools(session)
         admitted = self._oauth_admitted_tools(
             server_name, original_name, runtime_policy, tools
         )
@@ -3195,7 +3345,7 @@ class MCPMultiplexer:
 
     def _assert_oauth_catalog(self, server_name: str, cfg: dict, epoch: int) -> None:
         """Reauthorize the principal and refuse a changed child configuration."""
-        _require_fleet_capability("delegate", _child_required_scopes(cfg))
+        require_fleet_capability("delegate", _child_required_scopes(cfg))
         if (
             self._catalog_epoch != epoch
             or self._catalog is None
@@ -3315,7 +3465,10 @@ class MCPMultiplexer:
                 before_oauth_provider_call,
             )
         before_oauth_provider_call()
-        return await session.call_tool(original_name, arguments)
+        # ARBORA-FLEET-R077: a plan-confirmed call arms this dedicated session
+        # to accept the connector's confirmation, as the pooled path does.
+        async with armed(session, original_name):
+            return await session.call_tool(original_name, arguments)
 
     @staticmethod
     def _tasks_child_capable(initialization: _typing.Any) -> bool:
@@ -3386,8 +3539,8 @@ class MCPMultiplexer:
             )
         # Apply the same fleet/delegation authorization used by tool
         # forwarding before a task poll can lazily spawn a child.
-        _require_fleet_capability("delegate")
-        _require_fleet_capability(
+        require_fleet_capability("delegate")
+        require_fleet_capability(
             "delegate", _child_required_scopes(catalog[server_name])
         )
 
@@ -3724,7 +3877,7 @@ class MCPMultiplexer:
             "upgrade",
         }:
             raise RuntimeError("Remote MCP child headers are invalid")
-        rendered = _resolve_runtime_value(
+        rendered = resolve_runtime_value(
             value,
             sensitive=_sensitive_config_key(name),
             materialized=name in materialized,
@@ -3845,7 +3998,7 @@ class MCPMultiplexer:
         if oauth_bearer_headers is not None:
             _svc_auth = None
         else:
-            from arbora.mcp_server.backing.client_credentials import child_auth
+            from arbora.security.client_credentials import child_auth
 
             _svc_auth = child_auth(headers)
         use_sse = explicit_transport == "sse" or url.rstrip("/").endswith("/sse")
@@ -3854,10 +4007,10 @@ class MCPMultiplexer:
             # `child_auth`'s docstring); `sse_client`'s `auth` param is
             # typed `httpx2.Auth | None` (fastmcp's vendored SDK v2 HTTP
             # client, a distinct package from this repo's own `httpx` —
-            # see `arbora/mcp_server/backing/httpx_boundary/py`). Coerce at
+            # see `arbora/core/httpx_boundary/py`). Coerce at
             # this boundary rather than passing the foreign-typed object
             # straight through.
-            from arbora.mcp_server.backing.httpx_boundary import coerce_httpx2_auth
+            from arbora.core.httpx_boundary import coerce_httpx2_auth
 
             transport = sse_client(
                 url,
@@ -3937,10 +4090,10 @@ class MCPMultiplexer:
         # `command` or `is_remote` is truthy, and this is the `not is_remote`
         # branch.
         assert command, "unreachable: non-remote server must have a 'command'"
-        command = _resolve_runtime_value(command, sensitive=False)
+        command = resolve_runtime_value(command, sensitive=False)
         raw_args = cfg.get("args", [])
         args = (
-            [_resolve_runtime_value(value, sensitive=False) for value in raw_args]
+            [resolve_runtime_value(value, sensitive=False) for value in raw_args]
             if isinstance(raw_args, list)
             else raw_args
         )
@@ -3966,7 +4119,7 @@ class MCPMultiplexer:
             | {_TASK_DELEGATION_CHANNEL_ENV}
         ):
             raise RuntimeError("MCP child provider environment is parent-controlled")
-        value = _resolve_runtime_value(
+        value = resolve_runtime_value(
             raw_value,
             sensitive=_sensitive_config_key(key),
             materialized=key in materialized,
@@ -4129,7 +4282,8 @@ class MCPMultiplexer:
             if session is None:
                 return
             try:
-                tools = list((await session.list_tools()).tools)
+                tools = await _list_all_tools(session)
+                _bounded_tool_catalog(tools)
             except Exception as exc:
                 logger.warning(
                     "list_changed refresh of %s failed: %s",
@@ -4137,6 +4291,10 @@ class MCPMultiplexer:
                     redact_for_log(exc),
                 )
                 return
+            # ARBORA-FLEET-R070: the new list replaces the served one now,
+            # without a restart; the next catalog read re-probes the child.
+            self._probe_cache.pop(server_name, None)
+            await self._publish_live_tools(server_name, tools)
             await self._announce_handshake(server_name, session, tools, "list_changed")
 
         async def handler(message: IncomingMessage) -> None:
@@ -4267,9 +4425,8 @@ class MCPMultiplexer:
             sessions = [
                 await _connect_one(stack, generation_secret) for _ in range(pool_size)
             ]
-            tools_result = await sessions[0].list_tools()
-            _bounded_tool_catalog(tools_result.tools)
-            tools = list(tools_result.tools)
+            tools = await _list_all_tools(sessions[0])
+            _bounded_tool_catalog(tools)
             await self._announce_handshake(server_name, sessions[0], tools)
             if runtime_policy is not None:
                 tools = self._admit_runtime_policy_tools(
@@ -4285,7 +4442,7 @@ class MCPMultiplexer:
         # and then wedges on expiry); derive that lifetime from the token TTL.
         session_max_age: float | None = None
         if is_remote:
-            from arbora.mcp_server.backing.client_credentials import (
+            from arbora.security.client_credentials import (
                 service_session_max_age,
             )
 
@@ -4760,6 +4917,35 @@ class MCPMultiplexer:
         self._retract_removed_from_sessions(stale_names - set(refreshed_by_name))
         return refreshed, True
 
+    async def _publish_live_tools(
+        self, server_name: str, tools: list[_typing.Any]
+    ) -> None:
+        """Serve a mounted child's re-listed tools (ARBORA-FLEET-R070).
+
+        The same policy admission and schema refresh a new child generation
+        gets; a child that is not mounted has nothing to publish.
+        """
+        runtime = self.children.get(server_name)
+        if runtime is None:
+            return
+        cfg = self.load_catalog().get(server_name)
+        if cfg is None:
+            return
+        policy = self._child_runtime_policies.get(server_name)
+        if policy is not None:
+            tools = self._admit_runtime_policy_tools(server_name, policy, tools)
+        await self._refresh_child_tools(
+            server_name, runtime, cfg, self._catalog_epoch, tools
+        )
+
+    async def _relist_live_child(self, server_name: str) -> None:
+        """Re-read a mounted child's whole tool list on its live session."""
+        session = self._live_primary_session(server_name)
+        tools = await _list_all_tools(session)
+        _bounded_tool_catalog(tools)
+        await self._publish_live_tools(server_name, tools)
+        await self._announce_handshake(server_name, session, tools)
+
     async def _refresh_child_tools(
         self,
         server_name: str,
@@ -5000,7 +5186,7 @@ class MCPMultiplexer:
         self, server_name: str
     ) -> list[dict[str, _typing.Any]]:
         """Return one child's bounded tools through the served probe cache."""
-        _require_fleet_capability("discover")
+        require_fleet_capability("discover")
         info = await self.probe_server(server_name)
         if info.get("error"):
             raise RuntimeError("MCP server probe failed")
@@ -5015,8 +5201,8 @@ class MCPMultiplexer:
         timeout: float,
     ) -> _typing.Any:
         """Invoke one original child tool through this served child pool."""
-        _require_fleet_capability("delegate")
-        _assert_bounded_delegated_value(arguments)
+        require_fleet_capability("delegate")
+        assert_bounded_delegated_value(arguments)
         await self.mount_child(server_name)
         public_name = next(
             (
@@ -5031,13 +5217,13 @@ class MCPMultiplexer:
         result = await asyncio.wait_for(
             self.call_proxied_tool(public_name, arguments), timeout=timeout
         )
-        return _child_result_payload(result)
+        return child_result_payload(result)
 
     async def read_server_resource(
         self, *, server_name: str, uri: str, timeout: float
     ) -> dict[str, str]:
         """Read one text resource through this served child connection."""
-        _require_fleet_capability("delegate")
+        require_fleet_capability("delegate")
         if not uri or len(uri.encode("utf-8")) > 8_192:
             raise _fastmcp_exceptions.ToolError("MCP resource URI is invalid")
         await self.mount_child(server_name)
@@ -5067,29 +5253,32 @@ class MCPMultiplexer:
         timeout: float,
     ) -> dict[str, _typing.Any]:
         """Render one child prompt through this served child connection."""
-        _require_fleet_capability("delegate")
+        require_fleet_capability("delegate")
         if not name or len(name.encode("utf-8")) > 1_024:
             raise _fastmcp_exceptions.ToolError("MCP prompt name is invalid")
-        _assert_bounded_delegated_value(arguments)
+        assert_bounded_delegated_value(arguments)
         await self.mount_child(server_name)
         result = await self._relay_read(
             server_name, lambda session: session.get_prompt(name, arguments), timeout
         )
-        messages: list[dict[str, str]] = []
-        for message in getattr(result, "messages", ()) or ():
-            content = getattr(message, "content", None)
-            text = getattr(content, "text", None)
-            if isinstance(text, str):
-                messages.append({"role": str(message.role), "text": text})
-        if sum(len(m["text"].encode("utf-8")) for m in messages) > (
-            _MAX_DELEGATED_VALUE_BYTES
-        ):
-            raise _fastmcp_exceptions.ToolError("MCP prompt exceeds the size boundary")
-        return {
+        rendered: dict[str, _typing.Any] = {
             "name": name,
             "description": str(getattr(result, "description", "") or ""),
-            "messages": messages,
+            "messages": [
+                _relayed_prompt_message(message)
+                for message in getattr(result, "messages", ()) or ()
+            ],
         }
+        meta = _json_dump(getattr(result, "meta", None))
+        if meta:
+            rendered["_meta"] = meta
+        try:
+            _assert_bounded_json_value(rendered, max_nodes=_MAX_DELEGATED_NODES)
+        except _fastmcp_exceptions.ToolError:
+            raise _fastmcp_exceptions.ToolError(
+                "MCP prompt exceeds the size boundary"
+            ) from None
+        return rendered
 
     def prefixed_tools_for_server(self, server_name: str) -> list[MCPTool]:
         """All aggregated prefixed tools currently owned by ``server_name``."""
@@ -5490,6 +5679,8 @@ class MCPMultiplexer:
                 return cached
 
         if server_name in self.children:
+            if force:
+                await self._relist_live_child(server_name)
             return await self._live_child_probe(server_name)
 
         cfg = self.load_catalog().get(server_name)
@@ -5531,9 +5722,12 @@ class MCPMultiplexer:
                     session = await self._open_one_session(
                         server_name, runtime_cfg, stack
                     )
-                    result = await session.list_tools()
-                    _bounded_tool_catalog(result.tools)
-                    tools = list(result.tools)
+                    tools = await _list_all_tools(session)
+                    _bounded_tool_catalog(tools)
+                    if force:
+                        # An explicit refresh also re-onboards a changed
+                        # catalog into the engine (ARBORA-FLEET-R070).
+                        await self._announce_handshake(server_name, session, tools)
                     if runtime_policy is not None:
                         tools = self._admit_runtime_policy_tools(
                             server_name,
@@ -5602,8 +5796,7 @@ class MCPMultiplexer:
         """Read all native discovery families once from one child generation."""
         errors: dict[str, str] = {}
         try:
-            resource_result = await session.list_resources()
-            raw_resources = resource_result.resources
+            raw_resources = await _list_all(session, "list_resources", "resources")
         except Exception as exc:  # noqa: BLE001 - optional protocol method
             if not self._optional_method_missing(exc):
                 errors["resources"] = type(exc).__name__
@@ -5619,9 +5812,11 @@ class MCPMultiplexer:
             resources, skills, prompt_resources = [], [], []
 
         try:
-            template_result = await session.list_resource_templates()
+            raw_templates = await _list_all(
+                session, "list_resource_templates", "resource_templates"
+            )
             templates = _bounded_descriptor_catalog(
-                template_result.resource_templates,
+                raw_templates,
                 key="uriTemplate",
                 family="resource-template",
             )
@@ -5631,9 +5826,10 @@ class MCPMultiplexer:
             templates = []
 
         try:
-            prompt_result = await session.list_prompts()
             native_prompts = _bounded_descriptor_catalog(
-                prompt_result.prompts, key="name", family="prompt"
+                await _list_all(session, "list_prompts", "prompts"),
+                key="name",
+                family="prompt",
             )
         except Exception as exc:  # noqa: BLE001 - optional protocol method
             if not self._optional_method_missing(exc):
@@ -5677,7 +5873,7 @@ class MCPMultiplexer:
         over the wire (``_resolve_via_local_catalog_or_harvest``).
         """
         try:
-            result = await session.list_resources()
+            resources = await _list_all(session, "list_resources", "resources")
         except Exception as exc:  # noqa: BLE001 - resources/list is an OPTIONAL
             # MCP method; a server that doesn't implement it must still
             # contribute the tools/skills its probe already returned. The
@@ -5691,7 +5887,7 @@ class MCPMultiplexer:
             )
             return []
         try:
-            entries = catalog_builder(result.resources)
+            entries = catalog_builder(resources)
         except Exception as exc:  # noqa: BLE001 - a malformed catalog from one
             # server must not fail the tool probe that already succeeded.
             # The cause IS logged.
@@ -6198,6 +6394,15 @@ class MCPMultiplexer:
         t_tokens = set(re.findall(r"[a-z0-9]+", text.lower()))
         return len(q_tokens & t_tokens) / len(q_tokens)
 
+    def _lexical_score(
+        self, rank: _DiscoveryRanking, name: str, description: str
+    ) -> float:
+        """The lexical backbone: rarity-weighted when the call built a ranker."""
+        ranker = rank.get("lexical")
+        if ranker is None:
+            return self._relevance(rank["query"], f"{name} {description}")
+        return ranker.score(name, description)
+
     def _server_level_fallback(self) -> list[dict]:
         """When the KG yields no tool-level index (cold/absent KG), still let
         the caller act: surface mountable servers so they can ``load_tools`` by
@@ -6405,9 +6610,7 @@ class MCPMultiplexer:
         if not self._tool_enabled(server, tool):
             return None
         desc = entry.get("description", "")
-        score = rank["semantic"].get(tool, 0.0) + self._relevance(
-            rank["query"], f"{tool} {desc}"
-        )
+        score = rank["semantic"].get(tool, 0.0) + self._lexical_score(rank, tool, desc)
         if score <= 0:
             return None
         prefixed = clean_tool_name(self.server_prefix(server), server, tool)
@@ -6449,8 +6652,8 @@ class MCPMultiplexer:
         if not skill:
             return None
         desc = entry.get("description", "")
-        score = rank["semantic"].get(skill, 0.0) + self._relevance(
-            rank["query"], f"{skill} {desc}"
+        score = rank["semantic"].get(skill, 0.0) + self._lexical_score(
+            rank, skill, desc
         )
         if score <= 0:
             return None
@@ -6687,6 +6890,7 @@ class MCPMultiplexer:
         # the fallback source, so ``find`` still surfaces its real tools,
         # honestly marked stale, instead of only its skills or nothing at all.
         catalog_fallback = self._catalog_tool_probe_info()
+        sources: list[tuple[str, dict]] = []
         for server, info in probe.items():
             if info.get("error"):
                 unavailable[server] = info["error"]
@@ -6694,6 +6898,9 @@ class MCPMultiplexer:
                 if fallback is None:
                     continue
                 info = fallback
+            sources.append((server, info))
+        rank["lexical"] = _discovery_ranker(query, sources)
+        for server, info in sources:
             ranked.extend(self._ranked_server_entries(server, info, rank, now, ttl))
         # The server-level fallback (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog)
         # answers "is any FLEET server mountable", so its trigger check uses
@@ -6712,6 +6919,7 @@ class MCPMultiplexer:
                 "prefixed_name": prefixed_name,
                 "tool": t["name"],
                 "description": t.get("description", ""),
+                "input_schema": t.get("inputSchema") or t.get("input_schema") or {},
                 "enabled": self._tool_enabled(server, t["name"]),
                 # Session-scoped dispatch truth (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog):
                 # derived from the SAME predicate the dispatch gate
@@ -7023,7 +7231,7 @@ class MCPMultiplexer:
         """Authorize one fleet operation kind (``discover``/``delegate``) for the
         current caller — the check the intent tools apply before they search
         or call the fleet."""
-        _require_fleet_capability(kind)
+        require_fleet_capability(kind)
 
     def session_loaded(self, session_key: str) -> set[str]:
         """The set of prefixed tools loaded (visible) for one session."""

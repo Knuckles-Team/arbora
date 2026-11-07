@@ -65,7 +65,7 @@ def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:
     from meristem.host_ports import FleetServer
 
     def view() -> dict[str, FleetServer]:
-        from arbora.fleet.multiplexer import _resolve_runtime_value
+        from arbora.fleet.multiplexer import resolve_runtime_value
 
         servers: dict[str, FleetServer] = {}
         for name, config in dict(multiplexer.load_catalog()).items():
@@ -75,7 +75,7 @@ def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:
             if isinstance(config, dict) and config.get("url"):
                 try:
                     url = str(
-                        _resolve_runtime_value(config.get("url", ""), sensitive=False)
+                        resolve_runtime_value(config.get("url", ""), sensitive=False)
                     )
                 except Exception as exc:  # noqa: BLE001 - omit an unresolvable URL
                     logger.debug(

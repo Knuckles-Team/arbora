@@ -30,8 +30,8 @@ from scion_sdk.credentials.runtime_references import (
 )
 from scion_sdk.utilities import to_boolean
 
-from arbora._version import __version__
 from arbora.core.settings import setting
+from arbora.version import __version__
 
 logger = logging.getLogger(__name__)
 

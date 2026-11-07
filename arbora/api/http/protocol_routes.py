@@ -28,6 +28,7 @@ PROTOCOL_ROUTES = (
     ProtocolRoute("/fleet/events", "arbora.fleet", "Signed child webhook ingress"),
     ProtocolRoute("/health", "arbora.deployment", "Liveness probe"),
     ProtocolRoute("/health/ready", "arbora.deployment", "Readiness probe"),
+    ProtocolRoute("/health/subsystems", "arbora.deployment", "Per-subsystem health"),
     ProtocolRoute("/metrics", "arbora.gateway", "Authenticated metrics"),
     ProtocolRoute("/mcp", "arbora.mcp_server", "MCP transport"),
     ProtocolRoute("/search", "arbora.gateway", "Agentic RAG transport"),

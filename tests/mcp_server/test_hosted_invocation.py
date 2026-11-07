@@ -4,19 +4,20 @@ These tests do not qualify a deployed credential issuer or durable provider.
 """
 
 import asyncio
+from types import SimpleNamespace
 
 import httpx
 import pytest
 from fastapi import FastAPI
 from fastmcp import FastMCP
 
-from arbora.a2a import mcp as a2a_mcp
 from arbora.a2a.service import A2AService
 from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.registry import Surface
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import NativeGatewayApplication
 from arbora.mcp_server.hosted_invocation import HostedInvocation
+from arbora.security.actor_context import LeaseEvent
 from tests.a2a.test_application import Authority, Router
 from tests.a2a.test_operation_bridge import fixture, post, session
 from tests.api.test_invoke_contract import operation
@@ -51,11 +52,14 @@ def mount_a2a(monkeypatch, value):
         arbora_surface, "register_arbora_surface", lambda _mcp, **_kwargs: served
     )
     monkeypatch.setattr(browser_mcp, "register_browser_control_tools", lambda _: None)
-    monkeypatch.setattr(
-        a2a_mcp, "_service", lambda: A2AService(authority=Authority(), router=Router())
-    )
     monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
-    runtime._register_graph_tool_surface(served, invocation=value)
+    runtime._register_graph_tool_surface(
+        served,
+        invocation=value,
+        host=SimpleNamespace(
+            runs=SimpleNamespace(a2a=A2AService(authority=Authority(), router=Router()))
+        ),
+    )
     return served.http_app()
 
 
@@ -120,7 +124,8 @@ def test_native_registration_refuses_stale_or_unverified_caller(monkeypatch, fai
             }
         )
         caller = asyncio.run(value.authenticator.authenticate(request))
-        caller.session.actor.credential_lease.renew(1)
+        lease = caller.session.actor.credential_lease
+        lease.apply(LeaseEvent.TICK, now=lease.expires_at)
     response = post(
         app,
         token="unverified"  # sanitizer:ignore - synthetic ASGI credential
@@ -149,7 +154,7 @@ def test_native_entry_hands_same_bundle_to_both_compositions(monkeypatch):
     class BoundaryReached(Exception):
         pass
 
-    def build(*, invocation):
+    def build(*, invocation, host):
         assert invocation is value
         raise BoundaryReached
 

@@ -85,6 +85,16 @@ Specs are already designed. The work is implementation, delivered in very small,
 
 **Report**: at most 8 lines: PR URL, requirement IDs, test result, and any `ID:<main sha>` proof for rows already on main.
 
+## Bulk delivery
+
+High-rate delivery follows the [bulk delivery standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/bulk-delivery.md).
+
+- Four separate stages, run by different workers: writing, batched validation, fixing red results only, and automatic merge on green.
+- Writers implement one served-method slice of at most 8 rows, push the branch, and never build, test or wait on CI. They format only and run both hook stages.
+- Validation workers build branches in batches and record green as a commit status on the exact head SHA.
+- A writer never makes an open design choice. It records the question; the decision is written into the owning spec row first, then the row is implemented.
+- Only rows implemented completely, with their bound test, go in the `Spec:` trailer. Remainders are re-queued.
+
 ## Step 0: route the feature
 
 Route the feature before any code. The [ecosystem boundaries standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/ecosystem-boundaries.md) is the one ownership table.
@@ -160,7 +170,7 @@ tool or unsupported local stage. Do not invent a pass or a threshold.
 
 Bump the version before tagging. A tag on a commit with the old version rebuilds the old version, and PyPI refuses it.
 
-1. Bump first on a topic branch: `uv run bump-my-version bump --new-version X.Y.Z --no-commit --no-tag`. It edits `arbora/_version.py` and `CHANGELOG.md`. `uv.lock` holds no arbora version and no fixture embeds one. Confirm with `git grep -n "<old version>"`.
+1. Bump first on a topic branch: `uv run bump-my-version bump --new-version X.Y.Z --no-commit --no-tag`. It edits `arbora/version.py` and `CHANGELOG.md`. `uv.lock` holds no arbora version and no fixture embeds one. Confirm with `git grep -n "<old version>"`.
 2. Open a PR and rebase-merge the bump with `gh pr merge --rebase` after the `release.yml` gates pass.
 3. On the merged `origin/main` commit, check that `__version__` and the bumpversion `current_version` both equal `X.Y.Z`. Check that PyPI lacks it: run `python3 -I <pipelines>/.github/actions/verify-release-version/verify_release_version.py --root . --ref refs/tags/vX.Y.Z` from Knuckles-Team/pipelines main. Or request `https://pypi.org/pypi/arbora/X.Y.Z/json` and expect HTTP 404.
 4. Only then tag that commit and push the tag: `git tag vX.Y.Z <sha> && git push origin vX.Y.Z`.

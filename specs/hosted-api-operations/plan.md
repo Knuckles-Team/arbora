@@ -1121,6 +1121,48 @@ The values come from `.pre-commit-config.yaml` and `pyproject.toml`.
 
 Rows `ARBORA-OPS-R896.7` to `ARBORA-OPS-R896.13` serve the delivery of open rows as pull requests. The engine holds every delivery record and every decision. Arbora admits, carries and executes. It verifies code-host webhook signatures and stamps a principal on a person's event. It starts each assignment on a reserved development lane and keeps one slot for a person's input. It writes to the code host only through governed effects with receipts. It calls an arm tool only after an `arm` verdict and an owner receipt bound to the head commit. The registry denies every merge tool to the platform principal.
 
+### Process models as governed agent DAGs (R898)
+
+Arbora serves four operations in the new module `arbora/api/ops/processes.py`. `process.plan` reads the engine decision `Decide` `ProcessPlan` and returns it unchanged. `process.run` maps the plan to a meristem `RunPlan`, admits it and starts it through `execute_task_plan`. Agent steps take their prompt text from the bound prompt; arbora builds the agent from it and chooses nothing. Tool steps keep their governed calls. Branch, decision and approval steps pass to the run loop, which asks the bound decision port for each verdict. `ApprovalBroker` implements the approval waiter port; `process.approval.decide` is a human, plan-confirmed, idempotent operation with the step's approver role. The BPMN, DMN and ArchiMate exchange and sync methods of the engine are generated `eg.*` operations.
+
+```mermaid
+sequenceDiagram
+  participant C as Caller
+  participant A as Arbora
+  participant E as Medulla
+  participant M as Meristem
+  C->>A: process.run
+  A->>E: Decide ProcessPlan
+  E-->>A: sealed plan and bindings
+  A->>M: iterate_run with bound ports
+  M->>A: approval wait
+  C->>A: process.approval.decide
+  A-->>M: approved
+  M->>E: Decide BranchSelect (through the decision port)
+  E-->>M: taken arms
+```
+
+### Multimodal prompts through one modality seam (R899)
+
+The package `arbora/modality/` holds the seam. Entry points build `MediaPart`s and call `ModalityNormalizer.normalize`. Handlers are registered per modality. The audio handler finds the fleet's `speech-to-text` tool by its input contract and calls it through the in-process `find` and `act` verbs, so the call takes the governed `fleet.call` path. Provenance records link each transcript to its audio by digest. Image and document handlers plug into the same registry later; until then such parts are kept and named in the prompt text.
+
+```mermaid
+sequenceDiagram
+  participant U as Chat, A2A, MCP or HTTP caller
+  participant A as Arbora entry point
+  participant N as ModalityNormalizer
+  participant F as fleet.call
+  participant T as speech-to-text tool
+  participant H as Harness
+  U->>A: prompt with an audio part
+  A->>N: normalize(text, parts)
+  N->>F: find speech-to-text, then call
+  F->>T: transcribe_speech(artifact_b64, digest, media_type)
+  T-->>N: speech-transcript/1
+  N-->>A: text, attachment, transcript link
+  A->>H: run on the text
+```
+
 ## Phase 2: Task approach
 
 tasks.md carries one numbered task line for each active row. Tasks run producer first. A task marked `[P]` may run in parallel with its neighbours. The development rows `R896.1` to `R896.5` run after the engine rows they cite.
@@ -1150,3 +1192,11 @@ The delivery rows add two entry points. Code-host webhooks enter at `POST /api/v
 - `ARBORA-OPS-R896.10` calls the arm and disarm tools of the code-host connectors. Contract: `contracts/merge-arming.md`.
 - `ARBORA-OPS-R896.11` writes through governed write-back (`SCION-GOVERNED-WRITEBACK-R004.11`). Contract: `contracts/governed-delivery-effects.md`.
 - `ARBORA-OPS-R896.12` starts the meristem run that applies one delivery assignment beside `MERISTEM-SCM-R011`. Contract: `contracts/delivery-assignment.md`.
+- `ARBORA-OPS-R899` calls the audio-transcriber `transcribe_speech` tool of `TRANSCRIBE-R002` through `fleet.call`; any connector serving the same `speech-transcript/1` contract qualifies.
+- `ARBORA-OPS-R898` serves the medulla process plan (`Decide` `ProcessPlan`) and binds the branch and table verdicts (`BranchSelect`, `DecisionTableEval`). The meristem run loop applies the control steps. Contract: `contracts/process-plan-run.md`, which names the provider rows.
+
+### Explicit state machines (ARBORA-OPS-R900 to R903)
+
+Medulla owns the persisted run and work item vocabulary. Arbora owns only the plan lease, which is an in-process preview and confirm record. `R900` deletes a hand-copied run status tuple. `R902` uses the medulla work item enum and its typed refusal. `R901` makes the plan lease one machine and gives a consumed plan its own refusal code. These behaviour rows depend on the medulla vocabulary row the medulla core state-machine vocabulary row.
+
+Machine contracts. Plan lease (`R901`): states `Issued`, `Consumed`, `Executing`, `Done`, `Failed`, `Expired`; terminals `Done`, `Failed`, `Expired`. The 6-edge table, the refusals `PLAN_CONSUMED`, `PLAN_EXPIRED` and `IllegalPlanTransition` are in the row. Design path: `arbora/api/invoke/plan.py` consume (`:186`) -> `_live_lease_refusal` (`:194`) -> `transition` -> `answer_elicitation` (`arbora/fleet/plan_confirmation.py:101`). Hot-path proof: `test_served_preview_confirm_runs_through_the_machine`. Ontology: `R903` classes in `arbora/ontology/state_machines.ttl` extend the core classes of the medulla core state-machine vocabulary row (pending: medulla branch only). Run status (`R900`) and work item commit (`R902`) are consumers: arbora owns no state set, transition function or ontology class for them. The owners are the meristem run status row (`meristem/graph/state.py::transition`) and the medulla work item row (`WorkItemStatus::apply`, pending: medulla branch only). Design path for `R900`: event handling in `arbora/agent_runs.py:442` -> canonical status type. Design path for `R902`: `commit_result` (`arbora/work_items.py:285`) -> engine commit -> typed `TransitionRefused`. Both rows depend on the pending medulla vocabulary rows; record the vocabulary row ID in this prose once plan-conformance accepts it.

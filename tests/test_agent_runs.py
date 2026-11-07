@@ -14,6 +14,7 @@ from arbora import agent_runs
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 from arbora.core.settings import runtime_config
 from arbora.mcp_server import runtime
+from arbora.run_origin import RunOriginRegistry
 
 
 class _Engine:
@@ -44,7 +45,7 @@ def bound(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Engine]:
 async def test_agent_run_executes_through_the_harness_with_bound_providers(
     bound: _Engine,
 ) -> None:
-    result = await agent_runs.AgentRunPort().execute_agent(
+    result = await agent_runs.AgentRunPort(origins=RunOriginRegistry()).execute_agent(
         AgentExecutionRequest(agent_name="helper", task="say hello"),
         session=cast(Any, object()),
     )
@@ -86,7 +87,7 @@ async def test_a_run_without_a_model_fails_closed(
     agent_runs.bind_run_ports()
     try:
         with pytest.raises(RuntimeError, match="no model"):
-            await agent_runs.AgentRunPort().execute_agent(
+            await agent_runs.AgentRunPort(origins=RunOriginRegistry()).execute_agent(
                 AgentExecutionRequest(agent_name="helper", task="say hello"),
                 session=cast(Any, object()),
             )

@@ -13,6 +13,7 @@ from arbora.a2a.authority import (
 )
 from arbora.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
 from arbora.a2a.routing import A2AAssemblyUnavailable, OrchestratorA2ARouter
+from arbora.run_origin import RunOriginRegistry
 
 
 def _message(text: str = "do work") -> A2AMessage:
@@ -26,7 +27,9 @@ def _message(text: str = "do work") -> A2AMessage:
 @pytest.mark.spec("ARBORA-A2A-R002.1")
 @pytest.mark.asyncio
 async def test_selected_tool_subset_is_refused_before_durable_admission() -> None:
-    authority = WorkItemA2AAuthority(lambda: pytest.fail("engine was accessed"))
+    authority = WorkItemA2AAuthority(
+        lambda: pytest.fail("engine was accessed"), origins=RunOriginRegistry()
+    )
     with pytest.raises(A2AAssemblyUnavailable, match="cannot yet enforce"):
         await authority.dispatch(
             message=_message(),

@@ -9,24 +9,16 @@ contract — see ``overstory``'s ``tests/test_destubbed_endpoints.py::
 test_voice_transcribe_honest_without_whisper``). This module is that host side,
 mirroring :mod:`~arbora.webui_host.mcp_delegation`'s shape.
 
-It delegates through the SAME governed audio sidecar
-(``audio-transcriber-mcp``, :func:`agent_utilities.media.sidecar_delegate.delegate_extract`)
-that ``graph_media_sidecar action=ingest_audio`` uses — but calls only the
-transcription primitive, never the heavier
-:func:`~agent_utilities.media.audio_sidecar.ingest_audio_via_sidecar` ingest
-pipeline. That distinction is deliberate: ``ingest_audio_via_sidecar`` stores
-the raw audio as a permanent ``:AssetOccurrence`` blob and writes
-``AudioSegment`` evidence loci for every call — right for a genuine media
-ingestion, wrong for an ephemeral mic-dictation clip, which should become
-text in a chat box, not permanent KG evidence on every utterance.
+It delegates through the modality seam (:mod:`arbora.modality`), which finds
+the fleet's ``speech-to-text`` tool by contract and calls it through the
+governed ``fleet.call`` path. A mic-dictation clip becomes text in a chat box,
+not permanent graph evidence, so this call records no provenance.
 """
 
 from __future__ import annotations
 
 import logging
 from typing import Any, Protocol, TypedDict
-
-from arbora.api.errors import not_served
 
 logger = logging.getLogger(__name__)
 
@@ -50,23 +42,31 @@ class WebUiVoiceDelegation(TypedDict):
 
 
 async def _transcribe_voice(*, content: bytes, content_type: str) -> dict[str, str]:
-    """Transcribe one bounded audio clip via the governed audio sidecar.
+    """Transcribe one bounded dictation clip through the modality seam.
 
-    Computes the clip's own SHA-256 digest (this call never persists the
-    clip, so there is no stored blob to derive one from) and hands it
-    straight to :func:`~agent_utilities.media.sidecar_delegate.delegate_extract`
-    for modality ``"audio"`` — the SAME sidecar
-    (``audio-transcriber-mcp``'s ``transcribe_media`` tool,
-    action=``transcribe_segments``) ``ingest_audio_via_sidecar`` calls, minus
-    its blob-store + ``AudioSegment`` write-back (see the module docstring).
+    ARBORA-OPS-R899.7: the clip goes to the fleet's speech-to-text capability
+    through the same normaliser every prompt entry point uses, so its size and
+    duration limits and its typed refusals apply here too. A dictation clip
+    becomes text in a chat box, so no provenance record is written
+    (``record=False``); the prompt the user then sends is ordinary text.
 
-    Raises on any failure (sidecar unreachable, no capability, empty
-    transcript-bearing segments) rather than fabricating a transcript —
-    ``api_extensions.transcribe_voice_chunk`` catches this and answers a
-    genuine 500, never inventing text. Never returns a canned/placeholder
-    string.
+    Raises:
+        ModalityRefused: no transcription capability is reachable, or the clip
+            is too large, too long or unreadable. Never returns placeholder text.
     """
-    raise not_served("media.sidecar_delegate", "MEDULLA-REPO-INGEST-R800")
+    from arbora.host_bindings import prompt_normalizer
+    from arbora.modality import MediaPart
+
+    part = MediaPart(
+        media_type=content_type or "audio/webm", data=content, source="webui:voice"
+    )
+    prompt = await prompt_normalizer().normalize("", [part], record=False)
+    derivation = prompt.derivations[0]
+    return {
+        "text": derivation.text,
+        "language": derivation.language or "",
+        "transcript_id": derivation.derivation_id,
+    }
 
 
 def webui_voice_delegation_helpers() -> WebUiVoiceDelegation:

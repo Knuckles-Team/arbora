@@ -5,12 +5,20 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
+from typing import Any
 
 
 class LoadCapExceeded(ValueError):
-    def __init__(self, loaded: list[dict[str, str | float]]):
+    def __init__(
+        self,
+        loaded: list[dict[str, str | float]],
+        *,
+        cap: str = "session",
+    ):
         super().__init__("LOAD_CAP_EXCEEDED")
         self.loaded = loaded
+        #: Which bounded cap the request exceeded: ``session`` or ``pinned``.
+        self.cap = cap
 
 
 @dataclass(slots=True)
@@ -23,6 +31,7 @@ class _Session:
     generations: dict[str, object] = field(default_factory=dict)
     bindings: dict[str, tuple[str, ...]] = field(default_factory=dict)
     claims: dict[str, object] = field(default_factory=dict)
+    pinned: set[str] = field(default_factory=set)
 
 
 @dataclass(slots=True)
@@ -48,25 +57,38 @@ class SessionLoads:
         self,
         *,
         cap: int = 64,
+        pinned_cap: int = 32,
         idle_ttl_seconds: int = 3600,
         clock: Callable[[], float] = time.monotonic,
     ):
         if not 1 <= cap <= 256:
             raise ValueError("session cap must be in 1..256")
+        if not 1 <= pinned_cap <= 128:
+            raise ValueError("pinned cap must be in 1..128")
         if idle_ttl_seconds < 1:
             raise ValueError("idle TTL must be positive")
         self.cap = cap
+        self.pinned_cap = pinned_cap
         self.idle_ttl_seconds = idle_ttl_seconds
         self._clock = clock
         self._sessions: dict[str, _Session] = {}
 
     def _session(self, key: str) -> _Session:
         now = self._clock()
-        session = self._sessions.get(key)
-        if session is None or now - session.last_access >= self.idle_ttl_seconds:
-            session = _Session(last_access=now)
-            self._sessions[key] = session
-        session.last_access = now
+        current = self._sessions.get(key)
+        if current is not None and now - current.last_access < self.idle_ttl_seconds:
+            current.last_access = now
+            return current
+        session = _Session(last_access=now)
+        if current is not None:
+            # The idle expiry rebuilds the session; every pinned item stays
+            # loaded with its old binding (ARBORA-FLEET-R059.2).
+            for name in current.pinned:
+                _mark_loaded(
+                    session, name, now, current.bindings.get(name, (name,)), False
+                )
+            session.pinned = set(current.pinned)
+        self._sessions[key] = session
         return session
 
     def loaded(self, key: str) -> frozenset[str]:
@@ -95,7 +117,13 @@ class SessionLoads:
             raise LoadCapExceeded(_session_snapshot(session))
         if evict not in {None, "lru"}:
             raise ValueError("evict must be lru")
-        candidates = (name for name in session.items if name not in requested)
+        # Pinned items still occupy session capacity, so they count in the
+        # overflow math, but they are never LRU victims (ARBORA-FLEET-R059.2).
+        candidates = (
+            name
+            for name in session.items
+            if name not in requested and name not in session.pinned
+        )
         victims = sorted(candidates, key=lambda name: (session.items[name], name))[
             :overflow
         ]
@@ -111,7 +139,7 @@ class SessionLoads:
         evict: str | None = None,
         auto_unload: bool = False,
         bindings: Mapping[str, tuple[str, ...]] | None = None,
-    ) -> dict[str, object]:
+    ) -> dict[str, Any]:
         requested = list(dict.fromkeys(items))
         _require_complete_bindings(requested, bindings)
         session = self._session(key)
@@ -149,13 +177,44 @@ class SessionLoads:
         session.generations.pop(item, None)
         session.bindings.pop(item, None)
         session.claims.pop(item, None)
+        # An item that leaves the session (explicit unload, consumed one-shot)
+        # takes its pin with it (ARBORA-FLEET-R059.2).
+        session.pinned.discard(item)
 
     def binding(self, key: str, item: str) -> tuple[str, ...] | None:
         return self._session(key).bindings.get(item)
 
     def retractable(self, key: str) -> frozenset[str]:
-        """Include a consumed one-shot still waiting at its transport boundary."""
-        return frozenset(self._session(key).generations)
+        """Include a consumed one-shot still waiting at its transport boundary.
+
+        Pinned items are exempt: server/kind/``all_items`` unloads and policy
+        revision invalidation skip them (ARBORA-FLEET-R059.2)."""
+        session = self._session(key)
+        return frozenset(session.generations) - session.pinned
+
+    def pinned_items(self, key: str) -> frozenset[str]:
+        """The ids pinned in this session's principal scope."""
+        return frozenset(self._session(key).pinned)
+
+    def pin(self, key: str, items: Iterable[str]) -> list[str]:
+        """Mark loaded items pinned; a pin is never wider than the pinned cap."""
+        session = self._session(key)
+        pinned_now: list[str] = []
+        for name in dict.fromkeys(items):
+            if name in session.pinned:
+                continue
+            if len(session.pinned) >= self.pinned_cap:
+                raise LoadCapExceeded(_session_snapshot(session), cap="pinned")
+            session.pinned.add(name)
+            pinned_now.append(name)
+        return pinned_now
+
+    def unpin(self, key: str, items: Iterable[str]) -> list[str]:
+        """Drop pins without unloading; an unpinned id is reported, not refused."""
+        session = self._session(key)
+        removed = [name for name in dict.fromkeys(items) if name in session.pinned]
+        session.pinned.difference_update(removed)
+        return removed
 
     def acquire(self, key: str, item: str) -> LoadGrant | None:
         """Atomically reserve a one-shot; ordinary calls share a revocable generation."""
@@ -235,6 +294,9 @@ class SessionLoads:
         session = self._session(key)
         return {
             "cap": self.cap,
+            "pinned_cap": self.pinned_cap,
+            "pinned_used": len(session.pinned),
+            "pinned": sorted(session.pinned),
             "used": len(session.items),
             "loaded": [
                 {"id": name, "last_use": stamp}

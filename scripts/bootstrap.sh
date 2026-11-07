@@ -35,6 +35,7 @@ for arg in "$@"; do
   esac
 done
 if [[ "$siblings_only" == 1 ]]; then
+  scanners=0
 fi
 
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"

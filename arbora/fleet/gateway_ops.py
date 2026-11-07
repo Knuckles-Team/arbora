@@ -8,6 +8,7 @@ confirm the effect before any child can be reached.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from collections.abc import Awaitable, Callable, Iterator, Mapping
 from contextlib import contextmanager
@@ -61,6 +62,22 @@ def _require_prompt_arguments(item: Any, supplied: Mapping[str, Any]) -> None:
             "INVALID_ARGUMENT",
             {"reason": "the prompt needs these arguments", "missing": missing},
         )
+
+
+def _with_listed_details(rendered: Any, details: Mapping[str, Any] | None) -> Any:
+    """Add the prompt's listed title, arguments and role ``_meta`` (R076).
+
+    A connector carries a prompt's role, goal, topic, tone, style and agent
+    definition in its ``prompts/list`` ``_meta``; the rendered result alone
+    holds only the directive. Rendered ``_meta`` keys win over listed ones.
+    """
+    if not isinstance(rendered, dict) or not details:
+        return rendered
+    merged = {**{k: v for k, v in details.items() if k != "_meta"}, **rendered}
+    listed_meta = details.get("_meta")
+    if isinstance(listed_meta, Mapping):
+        merged["_meta"] = {**listed_meta, **(rendered.get("_meta") or {})}
+    return merged
 
 
 def _prompt_refusal(exc: Exception, server: str, name: str) -> Exception:
@@ -166,7 +183,7 @@ def _hint(annotations: Any, snake: str, camel: str) -> bool | None:
 
 
 def annotation_effect(
-    annotations: Any, *, override: str | None = None
+    annotations: Any, *, override: str | None = None, confirming: bool = False
 ) -> tuple[Effect, Confirm, PrincipalRule]:
     """Classify a child call conservatively, before invoke's effect gate.
 
@@ -177,7 +194,10 @@ def annotation_effect(
         if override not in {"read", "write", "destructive", "admin"}:
             raise ValueError("invalid fleet effect override")
         effect = Effect(override)
-    elif _hint(annotations, "destructive_hint", "destructiveHint") is True:
+    elif (
+        confirming or _hint(annotations, "destructive_hint", "destructiveHint") is True
+    ):
+        # A tool that asks for confirmation is planned (ARBORA-FLEET-R077).
         effect = Effect.DESTRUCTIVE
     elif _hint(annotations, "read_only_hint", "readOnlyHint") is True:
         effect = Effect.READ
@@ -208,6 +228,8 @@ class AdmittedTool:
     credential_mode: str
     executor_scopes: frozenset[str] = frozenset()
     subject_id: str | None = None
+    #: The tool's input schema declares a boolean ``confirm`` argument.
+    confirm_argument: bool = False
 
 
 ToolFor = Callable[[str, str, Any], Awaitable[AdmittedTool]]
@@ -297,9 +319,83 @@ def tool_for_multiplexer_ops(ops: Any) -> ToolFor:
             # Catalog component identity also exists for delegated children;
             # it is not a service-executor subject grant.
             subject_id=subject_id if mode == "service" else None,
+            confirm_argument=_declares_confirm(getattr(item, "schema", None)),
         )
 
     return tool_for
+
+
+#: Most (server, tool) pairs remembered as asking for a confirmation.
+_MAX_CONFIRMING_TOOLS = 4_096
+#: Tools whose child cancelled an unconfirmed call (ARBORA-FLEET-R077). Their
+#: next call is classified destructive, so it is planned and confirmed.
+_CONFIRMING_TOOLS: set[tuple[str, str]] = set()
+
+
+def _declares_confirm(schema: Any) -> bool:
+    """Whether a tool's input schema declares a boolean ``confirm`` argument."""
+    properties = schema.get("properties") if isinstance(schema, Mapping) else None
+    confirm = properties.get("confirm") if isinstance(properties, Mapping) else None
+    return isinstance(confirm, Mapping) and confirm.get("type") == "boolean"
+
+
+def _needs_confirmation(server: str, tool: str, descriptor: AdmittedTool) -> bool:
+    declared = getattr(descriptor, "confirm_argument", False) is True
+    return declared or (server, tool) in _CONFIRMING_TOOLS
+
+
+def _child_cancelled(result: Any) -> bool:
+    """Whether a child answered ``{"cancelled": true}`` (declined confirmation)."""
+    if not isinstance(result, Mapping):
+        return False
+    if result.get("cancelled") is True:
+        return True
+    structured = result.get("structuredContent", result.get("structured_content"))
+    if isinstance(structured, Mapping) and structured.get("cancelled") is True:
+        return True
+    for block in result.get("content") or ():
+        text = block.get("text") if isinstance(block, Mapping) else None
+        if isinstance(text, str) and '"cancelled"' in text:
+            try:
+                decoded = json.loads(text)
+            except ValueError:
+                continue
+            if isinstance(decoded, Mapping) and decoded.get("cancelled") is True:
+                return True
+    return False
+
+
+def _refuse_cancelled(result: Any, server: str, tool: str) -> Any:
+    """Never report a cancelled child call as ok (ARBORA-FLEET-R077)."""
+    if not _child_cancelled(result):
+        return result
+    if len(_CONFIRMING_TOOLS) < _MAX_CONFIRMING_TOOLS:
+        _CONFIRMING_TOOLS.add((server, tool))
+    raise FleetRefusal(
+        "CONFIRMATION_REQUIRED",
+        server,
+        tool,
+        detail=(
+            "the child cancelled the call because it was not confirmed; call "
+            "act(op='fleet.call') again without execute to get a plan_ref, then "
+            "resubmit it with plan_ref and execute=true"
+        ),
+    )
+
+
+def _confirmed_arguments(
+    tool: str, descriptor: AdmittedTool, arguments: Mapping[str, Any]
+) -> Mapping[str, Any]:
+    """Pass ``confirm=true`` to a declaring tool under a consumed plan."""
+    from arbora.fleet.plan_confirmation import plan_confirmed
+
+    if (
+        getattr(descriptor, "confirm_argument", False) is True
+        and plan_confirmed(tool)
+        and "confirm" not in arguments
+    ):
+        return {**arguments, "confirm": True}
+    return arguments
 
 
 #: One relayed prompt get or resource read may take at most this long.
@@ -457,6 +553,16 @@ class FleetGateway:
     async def list(self, caller: Any, **params: Any) -> Any:
         return await self._catalog(caller, "mcp:discover").list(caller, **params)
 
+    async def catalog(
+        self, caller: Any, *, server: str = "", include_tools: bool = True
+    ) -> Any:
+        """One server's catalog from the multiplexer's ``list_catalog`` (R063)."""
+        if "mcp:discover" not in caller.effective_scopes:
+            raise PermissionError("mcp:discover is required")
+        return await self._relay_mux().list_catalog(
+            server=server, include_tools=include_tools
+        )
+
     async def prompts_list(self, caller: Any, **params: Any) -> Any:
         return await self._catalog(caller, "mcp:discover").relay_list(
             caller, "prompts", **params
@@ -487,7 +593,7 @@ class FleetGateway:
         _require_prompt_arguments(item, supplied)
         with _verified_delegation(caller):
             try:
-                return await mux.get_server_prompt(
+                rendered = await mux.get_server_prompt(
                     server_name=server,
                     name=name,
                     arguments=supplied,
@@ -495,6 +601,7 @@ class FleetGateway:
                 )
             except Exception as exc:
                 raise _prompt_refusal(exc, server, name) from exc
+        return _with_listed_details(rendered, getattr(item, "details", None))
 
     async def resources_read(self, caller: Any, *, server: str, uri: str) -> Any:
         ops = self._catalog(caller, "mcp:delegate")
@@ -506,6 +613,9 @@ class FleetGateway:
             )
 
     async def status(self, caller: Any, **params: Any) -> Any:
+        # require_full_coverage is the handler's strict-mode flag, not an
+        # ops parameter.
+        params.pop("require_full_coverage", None)
         return await self._catalog(caller, "mcp:discover").status(caller, **params)
 
     async def load(self, caller: Any, **params: Any) -> Any:
@@ -519,6 +629,7 @@ class FleetGateway:
                 params.get("items"),
                 params.get("servers"),
                 params.get("kinds"),
+                params.get("groups"),
                 params.get("all_items"),
             )
         ):
@@ -526,6 +637,31 @@ class FleetGateway:
         return await self._catalog(
             caller, "mcp:delegate", session_required=True
         ).unload(caller, **params)
+
+    async def pin(self, caller: Any, **params: Any) -> Any:
+        return await self._catalog(caller, "mcp:delegate", session_required=True).pin(
+            caller, items=params.get("items", ())
+        )
+
+    async def unpin(self, caller: Any, **params: Any) -> Any:
+        return await self._catalog(caller, "mcp:delegate", session_required=True).unpin(
+            caller, items=params.get("items", ())
+        )
+
+    async def catalog_refresh(self, caller: Any, **params: Any) -> Any:
+        # The op's own scopes (fleet:control) gate the pipeline.
+        return await self._catalog(caller, "fleet:control").refresh_catalog(
+            caller, servers=params.get("servers", ())
+        )
+
+    async def pins_list(self, caller: Any, **params: Any) -> Any:
+        # The op's own scopes (fleet:control, mcp:admin) gate the pipeline;
+        # the tenant-wide read needs no session of the caller's.
+        return await self._catalog(caller, "fleet:control").pins_list(
+            caller,
+            cursor=params.get("cursor"),
+            limit=params.get("limit", 50),
+        )
 
     async def effect(
         self, _op: Any, params: Mapping[str, Any], caller: Any
@@ -535,7 +671,11 @@ class FleetGateway:
 
         descriptor = await self._admitted_tool(caller, params["server"], params["tool"])
         effect, confirm, principal = annotation_effect(
-            descriptor.annotations, override=descriptor.effect_override
+            descriptor.annotations,
+            override=descriptor.effect_override,
+            confirming=_needs_confirmation(
+                params["server"], params["tool"], descriptor
+            ),
         )
         service = descriptor.credential_mode == "service"
         if service and self._service_call is None:
@@ -587,10 +727,13 @@ class FleetGateway:
         except RuntimeError as exc:
             raise PermissionError("fleet authority changed before dispatch") from exc
         current_effect, _, _ = annotation_effect(
-            descriptor.annotations, override=descriptor.effect_override
+            descriptor.annotations,
+            override=descriptor.effect_override,
+            confirming=_needs_confirmation(server, tool, descriptor),
         )
         if current_effect is not expected_effect:
             raise RuntimeError("fleet effect changed before dispatch")
+        arguments = _confirmed_arguments(tool, descriptor, arguments)
         if descriptor.credential_mode == "service":
             if self._service_call is None:
                 raise PermissionError("service child authority changed before dispatch")
@@ -604,13 +747,24 @@ class FleetGateway:
                 registry_digest=registry_digest,
             )
             commit_native_dispatch(server, tool, caller)
-            return await self._service_call(
-                server, tool, arguments, caller, validated_owner_ref, registry_digest
+            return _refuse_cancelled(
+                await self._service_call(
+                    server,
+                    tool,
+                    arguments,
+                    caller,
+                    validated_owner_ref,
+                    registry_digest,
+                ),
+                server,
+                tool,
             )
         if service_identity is True:
             raise PermissionError("delegated child cannot use service identity")
         commit_native_dispatch(server, tool, caller)
-        return await self._delegated_call(server, tool, arguments, caller)
+        return _refuse_cancelled(
+            await self._delegated_call(server, tool, arguments, caller), server, tool
+        )
 
 
 def compose_fleet_gateway(

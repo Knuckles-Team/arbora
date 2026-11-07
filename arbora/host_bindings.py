@@ -43,6 +43,7 @@ __all__ = [
     "fleet_agent",
     "mount_sdk_a2a",
     "outbound_mirror",
+    "prompt_normalizer",
     "turn_handler",
 ]
 
@@ -148,8 +149,22 @@ async def outbound_mirror(message: Any, engine: Any) -> None:
     )
 
 
+def prompt_normalizer() -> Any:
+    """The process modality seam, recording provenance in the served engine.
+
+    ARBORA-OPS-R899: audio parts go to the fleet's speech-to-text capability
+    through the governed ``find``/``act`` verbs; each kept original and its
+    transcript link are written as ``MediaAttachment``/``Transcript`` records.
+    """
+    from arbora.mcp_server.served_engine import served_engine
+    from arbora.modality import default_normalizer
+    from arbora.modality.provenance import engine_recorder
+
+    return default_normalizer(recorder=engine_recorder(served_engine))
+
+
 def bind_messaging_ports() -> None:
-    """Bind the four messaging host ports at startup."""
+    """Bind the messaging host ports at startup."""
     from arbora.messaging.host_ports import bind_host_ports
     from arbora.observability.runtime_signals import record_runtime_signal
 
@@ -161,6 +176,7 @@ def bind_messaging_ports() -> None:
         action_gate=action_gate,
         outbound_mirror=outbound_mirror,
         runtime_signal=runtime_signal,
+        prompt_normalizer=prompt_normalizer(),
     )
 
 
@@ -231,15 +247,17 @@ def mount_sdk_a2a(mcp: Any) -> Any:
     from arbora import __version__
     from arbora.a2a.application import (
         AmbientA2AAuthenticator,
-        _caller_session_scope,
+        caller_session_scope,
     )
     from arbora.a2a.sdk_app import create_admitted_a2a_app
 
     base = str(setting("ARBORA_PUBLIC_URL", "") or "").rstrip("/")
+    from arbora.modality.agent_input import MediaNormalizingAgent
+
     admitted = create_admitted_a2a_app(
-        agent=fleet_agent(),
+        agent=MediaNormalizingAgent(fleet_agent(), prompt_normalizer()),
         authenticator=AmbientA2AAuthenticator(),
-        bind_caller=_caller_session_scope,
+        bind_caller=caller_session_scope,
         name="arbora",
         url=f"{base}{A2A_PATH}",
         version=__version__,

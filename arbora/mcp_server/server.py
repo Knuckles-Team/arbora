@@ -12,12 +12,13 @@ from scion_sdk.mcp.network import build_network_serving_config
 
 from arbora.content import register_installed_content
 from arbora.core.settings import setting
-from arbora.identity.ports import BrowserBoundaryFactory
+from arbora.identity.ports import BrowserBoundaryFactory, IdentityLifecycle
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import (
     install_gateway_application,
     start_composed_services,
 )
+from arbora.mcp_server.host_context import HostContext
 from arbora.mcp_server.hosted_invocation import HostedInvocation
 from arbora.semantic_content import default_content_providers
 
@@ -140,6 +141,7 @@ def _attach_fleet_runtime(mcp: Any, fleet_catalog_reader: Any) -> Any:
 
 def _served_invocation(
     *,
+    host: HostContext,
     browser_boundary_factory: BrowserBoundaryFactory | None = None,
 ) -> tuple[HostedInvocation | None, Any]:
     """Compose the operation-invoke API when an engine endpoint is configured.
@@ -156,7 +158,6 @@ def _served_invocation(
         if task_plan_config is not None:
             raise ValueError("task planning requires graph service endpoints")
         return None, None
-    from arbora.a2a import mcp as a2a_mcp
     from arbora.mcp_server.backing.server_factory import create_mcp_parser
     from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
     from arbora.mcp_server.fleet_composition import LateFleetGateway
@@ -174,12 +175,15 @@ def _served_invocation(
     invocation = served_invocation_from_settings(
         process_session=lambda: session,
         bindings={
-            "a2a": a2a_mcp._service(),
+            "a2a": host.runs.a2a,
+            "run_origins": host.runs.origins,
             "fleet_gateway": fleet,
             "browser_control": dispatch_browser_operation,
             "current_plan_reader": NativeCurrentPlanReader(),
             "source_reader": NativeSourceReader(),
-            "run_trace_reader": NativeRunReader(runtime._get_engine),
+            "run_trace_reader": NativeRunReader(
+                runtime._get_engine, origins=host.runs.origins
+            ),
         },
         fleet_effect=fleet.effect,
         browser_boundary_factory=browser_boundary_factory,
@@ -205,10 +209,56 @@ def _bind_served_fleet(
         )
 
 
+def _start_catalog_warmup(
+    engine: Any, session: Any, reader: Any, fleet_mux: Any
+) -> Any:
+    """Compose the catalog authorities, then onboard the fleet, off boot.
+
+    Both run under the process session on the warm-up thread, which does not
+    inherit the boot thread's context (ARBORA-FLEET-R078).
+    """
+    from arbora.api.contracts.session import use_session
+    from arbora.mcp_server.catalog_composition import compose_catalog_authorities
+    from arbora.mcp_server.catalog_warmup import start_catalog_warmup
+    from arbora.security.actor_context import use_actor
+
+    async def compose() -> None:
+        from arbora.epistemic import temporary_client_scope
+
+        # The warm-up loop runs beside the serving loop. Its engine
+        # transports are scoped to it, so they never claim the serving loop's
+        # pool clients (the onboarding thread does the same, R041.18).
+        with use_actor(session.actor), use_session(session):
+            async with temporary_client_scope():
+                await compose_catalog_authorities(
+                    engine=engine,
+                    session=session,
+                    deferred_fleet=reader,
+                    multiplexer=fleet_mux,
+                )
+
+    def onboard() -> None:
+        # Register, attest and import each child catalog, then renew leases.
+        # A fault logs and retries; it never blocks or stops serving.
+        from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
+        from arbora.fleet.onboarding import start_fleet_onboarding
+
+        with use_actor(session.actor), use_session(session):
+            start_fleet_onboarding(
+                engine=engine,
+                session=session,
+                multiplexer=fleet_mux,
+                virtual_catalog=bootstrap_fleet_virtual_catalog(),
+            )
+
+    return start_catalog_warmup(compose, after=onboard)
+
+
 def mcp_server(
     *,
     invocation: HostedInvocation | None = None,
     browser_boundary_factory: BrowserBoundaryFactory | None = None,
+    identity_lifecycle: IdentityLifecycle | None = None,
 ) -> None:
     """``arbora`` MCP server entry point (registered as console_scripts).
 
@@ -241,11 +291,16 @@ def mcp_server(
     startup_args, _unknown = create_mcp_parser().parse_known_args()
     validate_startup(startup_args)
     early_session = None
+    from arbora.mcp_server.host_context import build_host_context
+
+    host_context = build_host_context(runtime._get_engine)
     if invocation is None:
         invocation, early_session = (
-            _served_invocation(browser_boundary_factory=browser_boundary_factory)
+            _served_invocation(
+                host=host_context, browser_boundary_factory=browser_boundary_factory
+            )
             if browser_boundary_factory is not None
-            else _served_invocation()
+            else _served_invocation(host=host_context)
         )
     if invocation is None:
         install_gateway_application()
@@ -265,9 +320,11 @@ def mcp_server(
     _configure_telemetry_engine_otel()
     os.environ["IS_KG_SERVER"] = "true"
     if invocation is None:
-        args, mcp, middlewares = runtime._build_server()
+        args, mcp, middlewares = runtime._build_server(host=host_context)
     else:
-        args, mcp, middlewares = runtime._build_server(invocation=invocation)
+        args, mcp, middlewares = runtime._build_server(
+            invocation=invocation, host=host_context
+        )
     from arbora.security.anonymous import validate_startup
 
     validate_startup(args)
@@ -309,6 +366,9 @@ def mcp_server(
     runtime._PROCESS_SESSION = bootstrap_session if transport == "stdio" else None
     runtime.set_process_session(runtime._PROCESS_SESSION)
     runtime._start_process_authority_supervisor(bootstrap_session)
+    if identity_lifecycle is not None:
+        # ARBORA-IDENTITY-R030.4: arbora reconciles its own OAuth clients.
+        identity_lifecycle.start()
     # Readiness probes the live fleet/goal authority, which is a real graph read
     # and therefore needs a bound session. `runtime._PROCESS_SESSION` is deliberately
     # None on network transports (it is a stdio fallback, and must not become a
@@ -320,6 +380,7 @@ def mcp_server(
     readiness_authority_owner = runtime._set_readiness_authority(bootstrap_session)
 
     co_service_supervisor = None
+    catalog_warmup = None
     try:
         logger.info("Starting arbora MCP server (transport=%s)", transport)
 
@@ -376,30 +437,15 @@ def mcp_server(
 
             run_data_migrations(runtime._get_engine())
 
-            from arbora.mcp_server.catalog_composition import (
-                compose_catalog_authorities,
-            )
-
-            asyncio.run(
-                compose_catalog_authorities(
-                    engine=runtime._get_engine(),
-                    session=bootstrap_session,
-                    deferred_fleet=fleet_catalog_reader,
-                    multiplexer=fleet_mux,
-                )
-            )
-
-            # Onboard the configured fleet in the background: register, attest
-            # and import each child catalog, then renew leases. A fault logs
-            # and retries; it never blocks or stops serving.
-            from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
-            from arbora.fleet.onboarding import start_fleet_onboarding
-
-            start_fleet_onboarding(
-                engine=runtime._get_engine(),
-                session=bootstrap_session,
-                multiplexer=fleet_mux,
-                virtual_catalog=bootstrap_fleet_virtual_catalog(),
+            # ARBORA-FLEET-R078: the catalog authorities compose on a
+            # background thread, so arbora binds and serves at once; a slow or
+            # failing engine call is retried there and never exits the process.
+            # Fleet onboarding starts once the catalog is ready.
+            catalog_warmup = _start_catalog_warmup(
+                runtime._get_engine(),
+                bootstrap_session,
+                fleet_catalog_reader,
+                fleet_mux,
             )
 
             from arbora.mcp_server.agent_control import register_graph_rlm
@@ -430,6 +476,7 @@ def mcp_server(
             register_graph_rlm(
                 backing_server(mcp),
                 client_for_session=client_for_session,
+                origins=host_context.runs.origins,
             )
 
             # Self-composing co-services, phase 2: messaging now that a real engine
@@ -463,12 +510,16 @@ def mcp_server(
         else:
             raise ValueError("arbora transport must be 'stdio' or 'streamable-http'")
     finally:
+        if catalog_warmup is not None:
+            catalog_warmup.stop()
         unregister_harness_host()
         if co_service_supervisor is not None:
             co_service_supervisor.stop_all()
         runtime._PROCESS_SESSION = None
         runtime.set_process_session(None)
-        runtime._stop_process_authority_supervisor()
+        runtime._stop_process_authority_supervisor(close_lease=True)
+        if identity_lifecycle is not None:
+            identity_lifecycle.stop()
         runtime._release_readiness_authority(readiness_authority_owner)
         # Best-effort teardown of any lazily-mounted fleet children.
         if fleet_mux is not None:

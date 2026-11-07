@@ -1,7 +1,7 @@
 name: Checks
 
 # The read-only pre-publish checks, one definition for every caller: gates
-# (full gates and full suite), wheel build, six-platform install smoke, the
+# (full gates and full suite), wheel build, install smoke, the
 # Python 3.12 backward leg and the advisory scanner quality. ci.yml calls this
 # on a push to main and nightly (check only, never publishes); release.yml
 # calls it on a v* tag or manual dispatch before its publish jobs. It holds no
@@ -123,11 +123,11 @@ jobs:
           test "$("$tool_dir/linux-amd64/helm" version --template '{{.Version}}')" = "$HELM_VERSION"
           printf '%s\n' "$tool_dir/linux-amd64" >> "$GITHUB_PATH"
 
-      # The base the differential hooks compare against: the previous push.
-      # A run with no previous push (schedule, manual dispatch, tag push) sets
-      # no base, so each shared range hook resolves its own published range
-      # (HEAD for schedule/dispatch, the origin/main fork point for a tag)
-      # instead of rescanning the whole history.
+      # The base the differential hooks compare against: the previous push,
+      # only when it is a real commit present in this checkout. A run with no
+      # previous push (schedule, manual dispatch, tag push) sets no base, so
+      # each shared range hook resolves its own published range instead of
+      # rescanning the whole history from the root commit.
       - &release-base
         name: Resolve the published base
         run: |
@@ -138,6 +138,16 @@ jobs:
           fi
           # Every gate below uses the shared gate source frozen for this run.
           echo "PINNED_PRECOMMIT=$(bash scripts/pin_gate_source.sh "$PIPELINES_REF" "$RUNNER_TEMP/pre-commit-pinned.yaml")" >> "$GITHUB_ENV"
+
+      # plan-conformance resolves foreign row IDs against the cross-repo ID
+      # index (PIPE-GATES-R046.1); without it the spec hook cannot run.
+      - name: Build the cross-repo spec ID index
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          uvx --from "git+https://github.com/Knuckles-Team/pipelines@$PIPELINES_REF" pipelines-hook spec-id-index --out "$RUNNER_TEMP/spec-id-index.json"
+          echo "PIPELINES_SPEC_ID_INDEX=$RUNNER_TEMP/spec-id-index.json" >> "$GITHUB_ENV"
 
       # Same hook-environment cache as the PR gates job (ci.yml). Pull requests
       # can only restore caches saved on main, so main must save it.
@@ -218,7 +228,7 @@ jobs:
       # Advisory (operator gate cut, 2026-10-17). repository-manager v3.5.1
       # depends on scion-sdk, not agent-utilities, so it installs
       # beside this wheel's dependencies. The repo's own hook runs the
-      # checked-out tool; the six-platform install-smoke matrix below still
+      # checked-out tool; the install-smoke matrix below still
       # proves every locked dependency installs from PyPI before publish.
       - name: Release dependency readiness (advisory, report-only)
         if: startsWith(github.ref, 'refs/tags/v')
@@ -299,18 +309,16 @@ jobs:
   # per platform is whether the locked PyPI dependency set installs and
   # imports there. Each leg installs uv.lock's exact, hash-checked
   # requirements from PyPI, then the built wheel with no dependency
-  # resolution of its own, and imports the composition root. Linux and
-  # Windows x64, Linux arm64 and macOS arm64 are the platforms the
-  # medulla engine publishes wheels for and gate the release. macOS
-  # x64 and Windows arm64 run and report on every release; they are
-  # non-blocking only because no engine wheel exists for them yet, so a red
-  # leg there names that gap instead of hiding it.
+  # resolution of its own, and imports the composition root. The legs are
+  # exactly the platforms the pinned medulla and medulla-stem releases publish
+  # wheels for in uv.lock (ARBORA-RELEASE-R001.3): a leg never needs an engine
+  # wheel that does not exist, and every leg gates the release. Add a leg in
+  # the same change that locks an engine release with a wheel for it.
   install-smoke:
     name: install ${{ matrix.name }}
     needs: [build]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
-    continue-on-error: ${{ matrix.optional || false }}
     strategy:
       fail-fast: false
       matrix:
@@ -319,16 +327,8 @@ jobs:
             runner: ubuntu-24.04
           - name: linux-aarch64
             runner: ubuntu-24.04-arm
-          - name: macos-aarch64
-            runner: macos-14
-          - name: macos-x86_64
-            runner: macos-15-intel
-            optional: true
           - name: windows-x86_64
             runner: windows-latest
-          - name: windows-aarch64
-            runner: windows-11-arm
-            optional: true
     defaults:
       run:
         shell: bash

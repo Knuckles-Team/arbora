@@ -73,7 +73,7 @@ _ERROR_STATUSES = ("failed", "error", "cancelled")
 _ACTIVE_STATUSES = ("active", "running")
 
 
-def _domain_sql(dialect: str) -> str:
+def domain_sql(dialect: str) -> str:
     """Derive a session domain using the state store's SQL dialect."""
 
     if dialect == "postgres":
@@ -284,7 +284,7 @@ def _read_control_store(
             # These values are intentionally the same SQL aggregates used by
             # the historical supervisory handler.  The live state store, not
             # this module, remains the sole authority for the rows.
-            dom = _domain_sql(conn.dialect)
+            dom = domain_sql(conn.dialect)
             cur.execute(
                 f"""
                 SELECT {dom} AS domain,
@@ -574,7 +574,7 @@ __all__ = [
     "FleetHealthEvidence",
     "FleetHealthState",
     "FleetHealthSnapshot",
-    "_domain_sql",
+    "domain_sql",
     "_sql_in",
     "collect_fleet_health",
     "health_payload",

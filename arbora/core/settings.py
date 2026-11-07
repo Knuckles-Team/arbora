@@ -79,7 +79,7 @@ _CREDENTIAL_SUFFIXES = (
 )
 
 
-def _credential_shaped(key: str) -> bool:
+def credential_shaped(key: str) -> bool:
     """True for a key named as a credential, bare (``PASSWORD``) or suffixed."""
     name = key.upper()
     return name.endswith(_CREDENTIAL_SUFFIXES) or any(
@@ -501,6 +501,11 @@ class ArboraConfig(BaseModel):
         alias="MCP_ALWAYS_LOAD_TOOLS",
         description="INDIVIDUAL fleet tools mounted eagerly, for servers too large to mount whole (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog). ``MCP_ALWAYS_LOAD`` exposes a server's entire condensed surface. Some servers are far too large for that — ``github-mcp`` and ``gitlab-mcp`` carry dozens of tools, and...",
     )
+    fleet_pinned_cap: int = Field(
+        default=32,
+        alias="FLEET_PINNED_CAP",
+        description="Maximum items one principal may keep pinned in a multiplexer session (ARBORA-FLEET-R059.1). The pinned cap is separate from the session cap of 64; pinned items count toward both. Validated 1..128 by the session state machine.",
+    )
     mcp_basic_auth_password_ref: str | None = Field(
         default=None,
         alias="MCP_BASIC_AUTH_PASSWORD_REF",
@@ -564,6 +569,11 @@ class ArboraConfig(BaseModel):
         description="Outbound MCP child-auth mode. Enabled modes fail closed when incomplete. ``rotating-file-bearer`` (BUG-051) re-reads ``MCP_BEARER_TOKEN_FILE`` fresh on every outbound request instead of caching a bearer at connect time — for a token an out-of-process refresh daemon rotates on its own schedule.",
     )
     mcp_config: str | None = Field(default=None, alias="MCP_CONFIG", description="")
+    arbora_engine_ready_timeout: float = Field(
+        default=1500.0,
+        alias="ARBORA_ENGINE_READY_TIMEOUT",
+        description="Seconds serving start waits for the engine ``Health`` answer before it gives up (ARBORA-FLEET-R062). A slow engine delays readiness instead of exiting the process; keep it inside the deployment startup-probe budget.",
+    )
     mcp_dynamic_discovery_timeout: float = Field(
         default=5.0,
         alias="MCP_DYNAMIC_DISCOVERY_TIMEOUT",
@@ -1107,7 +1117,7 @@ def plaintext_secret_keys(document: dict[str, Any]) -> list[str]:
     return sorted(
         str(key)
         for key, value in document.items()
-        if _credential_shaped(str(key))
+        if credential_shaped(str(key))
         and value not in (None, "")
         and not (isinstance(value, str) and value.startswith(_REFERENCE_SCHEMES))
     )

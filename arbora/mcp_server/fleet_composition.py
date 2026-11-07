@@ -18,13 +18,15 @@ from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from typing import Any
 
+from arbora.api.mcp.discovery import not_ready_detail
+
 __all__ = ["LateFleetGateway", "bind_fleet_gateway"]
 
 
 def _unavailable() -> Exception:
     from arbora.api.invoke.pipeline import OperationRefused
 
-    return OperationRefused("UNAVAILABLE", {"reason": "fleet gateway is not bound"})
+    return OperationRefused("UNAVAILABLE", not_ready_detail())
 
 
 @contextmanager
@@ -85,6 +87,22 @@ class LateFleetGateway:
         with _caller_session(caller):
             return await self._bound().unload(caller, **params)
 
+    async def pin(self, caller: Any, **params: Any) -> Any:
+        with _caller_session(caller):
+            return await self._bound().pin(caller, **params)
+
+    async def unpin(self, caller: Any, **params: Any) -> Any:
+        with _caller_session(caller):
+            return await self._bound().unpin(caller, **params)
+
+    async def catalog_refresh(self, caller: Any, **params: Any) -> Any:
+        with _caller_session(caller):
+            return await self._bound().catalog_refresh(caller, **params)
+
+    async def pins_list(self, caller: Any, **params: Any) -> Any:
+        with _caller_session(caller):
+            return await self._bound().pins_list(caller, **params)
+
     async def prompts_list(self, caller: Any, **params: Any) -> Any:
         with _caller_session(caller):
             return await self._bound().prompts_list(caller, **params)
@@ -109,6 +127,20 @@ class LateFleetGateway:
         with _caller_session(caller):
             return await self._bound().call(caller, *args, **kwargs)
 
+    @property
+    def ready(self) -> bool:
+        """Whether the multiplexer is attached and the gateway bound."""
+        return self._gateway is not None
+
+    async def fleet_catalog(
+        self, *, caller: Any, server: str = "", include_tools: bool = True
+    ) -> Mapping[str, Any]:
+        """``find(op="catalog")``: the multiplexer's one catalog handler (R063)."""
+        with _caller_session(caller):
+            return await self._bound().catalog(
+                caller, server=server, include_tools=include_tools
+            )
+
     async def fleet_search(
         self,
         *,
@@ -117,8 +149,10 @@ class LateFleetGateway:
         context_budget_tokens: int | None = None,
     ) -> Sequence[Mapping[str, Any]]:
         """The intent surface's fleet discovery: the caller's authorized tools."""
-        if self._gateway is None or "mcp:discover" not in caller.effective_scopes:
+        if "mcp:discover" not in caller.effective_scopes:
             return ()
+        if self._gateway is None:
+            raise _unavailable()
         params: dict[str, Any] = {"query": query, "kinds": ("tool",)}
         if context_budget_tokens is not None:
             params["context_budget_tokens"] = context_budget_tokens
@@ -138,6 +172,27 @@ def _session_key(caller: Any) -> str | None:
     if not principal or not tenant:
         return None
     return f"{tenant}:{principal}"
+
+
+def _pin_store(services: Any) -> Any:
+    """The engine-backed pin store over the plan store's lease wiring.
+
+    The served invocation composes one service-authorized control-lease
+    client for ``EgPlanStore``; the pin store reuses that exact wiring and
+    adds no second database (ARBORA-FLEET-R059.3). Without it the pin
+    operations refuse ``UNAVAILABLE`` (fail closed)."""
+    plans = getattr(services, "plans", None)
+    # ``EgPlanStore._leases`` already is the client's ``control_leases``; the
+    # served one is a per-call proxy that answers any attribute, so it is
+    # handed over as ``control_leases`` rather than probed for the name.
+    leases = getattr(plans, "_leases", None)
+    if leases is None:
+        return None
+    from types import SimpleNamespace
+
+    from arbora.fleet.pin_store import EgPinStore
+
+    return EgPinStore(SimpleNamespace(control_leases=leases))
 
 
 def bind_fleet_gateway(
@@ -185,6 +240,7 @@ def bind_fleet_gateway(
         notify=no_notify,
         invoke=bound_invoke,
         session_key_for=_session_key,
+        pin_store=_pin_store(services),
     )
 
     async def policy_check(server: str, tool: str, caller: Any) -> bool:

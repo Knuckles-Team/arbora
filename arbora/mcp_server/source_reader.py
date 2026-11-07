@@ -20,7 +20,7 @@ from typing import Any
 
 import msgpack
 
-from arbora.api.invoke.bootstrap import _caller_dispatch_graph
+from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import claim_values
@@ -367,7 +367,7 @@ class NativeSourceReader:
         the membership edge's last-touch revision.
         """
         _require_scopes(context, TREE_SCOPES)
-        graph = await _caller_dispatch_graph(context)
+        graph = await caller_dispatch_graph(context)
         tenant = context.caller.tenant
         branches = await _branch_nodes(context, graph, repository=repository, ref=ref)
         if not branches:
@@ -409,7 +409,7 @@ class NativeSourceReader:
     ) -> SourceBlobOutcome:
         """One file's content on one ref, fetched chunk by chunk from the CAS."""
         _require_scopes(context, BLOB_SCOPES)
-        graph = await _caller_dispatch_graph(context)
+        graph = await caller_dispatch_graph(context)
         tenant = context.caller.tenant
         branches = await _branch_nodes(context, graph, repository=repository, ref=ref)
         if not branches:
@@ -464,7 +464,7 @@ class NativeSourceReader:
         is not served here.
         """
         _require_scopes(context, TREE_SCOPES)
-        graph = await _caller_dispatch_graph(context)
+        graph = await caller_dispatch_graph(context)
         tenant = context.caller.tenant
         branches = await _branch_nodes(context, graph, repository=repository)
         entries: list[SourceHistoryEntry] = []
@@ -495,7 +495,7 @@ class NativeSourceReader:
         says so instead of implying more.
         """
         _require_scopes(context, TREE_SCOPES)
-        graph = await _caller_dispatch_graph(context)
+        graph = await caller_dispatch_graph(context)
         tenant = context.caller.tenant
         branches = await _branch_nodes(context, graph, repository=repository, ref=ref)
         if not branches:

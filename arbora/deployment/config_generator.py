@@ -451,12 +451,12 @@ def _flat_config_document(data: Mapping[str, Any]) -> dict[str, Any]:
     credential-shaped one is omitted, because the loader admits only a secret
     reference under such a key.
     """
-    from arbora.core.settings import _credential_shaped
+    from arbora.core.settings import credential_shaped
 
     flat: dict[str, Any] = {}
     for key, value in data.items():
         if value is None:
-            if not _credential_shaped(key):
+            if not credential_shaped(key):
                 flat[key] = ""
             continue
         if isinstance(value, list | tuple | dict):

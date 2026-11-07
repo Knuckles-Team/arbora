@@ -149,7 +149,14 @@ logger = logging.getLogger(__name__)
 
 # Paths that must stay reachable without credentials (container/LB probes).
 HEALTH_PATHS: frozenset[str] = frozenset(
-    {"/health", "/health/ready", "/healthz", "/api/health", "/api/healthz"}
+    {
+        "/health",
+        "/health/ready",
+        "/health/subsystems",
+        "/healthz",
+        "/api/health",
+        "/api/healthz",
+    }
 )
 
 # Only non-fingerprinting liveness/readiness routes bypass the identity boundary.

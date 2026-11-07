@@ -265,9 +265,14 @@ def test_list_changed_notification_recaptures_through_the_one_pass() -> None:
     mux = SimpleNamespace(
         _handshake_listener=lambda name, **kw: seen.append({"name": name, **kw}),
         _list_changed_tasks=set(),
+        _probe_cache={"alpha-mcp": {"tools": [], "error": None}},
+        children={},
     )
     mux._announce_handshake = functools.partial(
         MCPMultiplexer._announce_handshake, cast(Any, mux)
+    )
+    mux._publish_live_tools = functools.partial(
+        MCPMultiplexer._publish_live_tools, cast(Any, mux)
     )
     session = _Session(prompts=[])
     handler = MCPMultiplexer._child_message_handler(
@@ -284,6 +289,8 @@ def test_list_changed_notification_recaptures_through_the_one_pass() -> None:
     asyncio.run(drive())
     assert [item["reason"] for item in seen] == ["list_changed"]
     assert seen[0]["name"] == "alpha-mcp"
+    # ARBORA-FLEET-R070: the changed child is re-probed on the next read.
+    assert "alpha-mcp" not in mux._probe_cache
 
 
 # spec: ARBORA-FLEET-R041.8

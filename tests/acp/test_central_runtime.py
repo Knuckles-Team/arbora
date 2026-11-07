@@ -1,3 +1,5 @@
+from arbora.run_origin import RunOriginRegistry
+
 """Actual governed ACP path; model and EG/effect owners are controlled test ports."""
 
 import asyncio
@@ -85,7 +87,9 @@ async def central(http_server, chain, monkeypatch):
         ),
     )
     authority = WorkItemA2AAuthority(
-        lambda: engine, task_plan_config=host.task_plan_config
+        lambda: engine,
+        task_plan_config=host.task_plan_config,
+        origins=RunOriginRegistry(),
     )
     service = A2AService(authority, OrchestratorA2ARouter(lambda: engine))
     runtime = SessionRuntime()

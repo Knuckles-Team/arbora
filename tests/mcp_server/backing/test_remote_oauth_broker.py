@@ -28,7 +28,7 @@ import httpx
 import pytest
 
 from arbora.fleet.discovery_authority import OAuthGrantBinding
-from arbora.mcp_server.backing.remote_oauth_broker import (
+from arbora.fleet.remote_oauth_broker import (
     OAuthBindingError,
     OAuthDiscoveryError,
     OAuthProviderError,
@@ -337,7 +337,7 @@ class TestProviderRegistration:
 # ---------------------------------------------------------------------------
 class TestDynamicClientRegistration:
     def test_registrar_requires_pkce_s256(self):
-        from arbora.mcp_server.backing.remote_oauth_broker import (
+        from arbora.fleet.remote_oauth_broker import (
             AuthorizationServerMetadata,
             Rfc7591DynamicClientRegistrar,
         )
@@ -355,7 +355,7 @@ class TestDynamicClientRegistration:
             registrar.register(dcr_provider(), as_meta)
 
     def test_registrar_requires_registration_endpoint(self):
-        from arbora.mcp_server.backing.remote_oauth_broker import (
+        from arbora.fleet.remote_oauth_broker import (
             AuthorizationServerMetadata,
             OAuthProviderError,
             Rfc7591DynamicClientRegistrar,

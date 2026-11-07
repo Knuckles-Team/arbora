@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### Added
+- Audio prompts the harness: chat voice notes and audio attachments, A2A and `agents.run` audio file parts, the fleet agent's A2A application and WebUI dictation all go through one modality seam (`arbora/modality/`). Audio goes to the fleet's `speech-to-text` capability through `fleet.call`, found by contract; the harness runs on the transcript; the original is kept as a `MediaAttachment` record and the `Transcript` record links to it. Typed refusals (`TRANSCRIPTION_UNAVAILABLE`, `MEDIA_TOO_LARGE`, `MEDIA_TOO_LONG`, …) and limits `ARBORA_MEDIA_MAX_BYTES` and `ARBORA_AUDIO_MAX_DURATION_S`. Image and document handlers plug into the same seam.
+
+## [0.1.8.dev13] - 2026-11-06
+
+## [0.1.8.dev12] - 2026-11-06
+
+## [0.1.8.dev11] - 2026-11-05
+
+## [0.1.8.dev10] - 2026-11-05
+
+## [0.1.8.dev9] - 2026-11-05
+
+## [0.1.8.dev8] - 2026-11-05
+
 ### Removed
 - `AGENT_UTILITIES_TOKEN_SECRET` and `AGENT_UTILITIES_MCP_TASK_CHANNEL_SECRET` are no longer read. Set `ARBORA_TOKEN_SECRET` and `ARBORA_MCP_TASK_CHANNEL_SECRET` instead; the secret values are unchanged.
 - The Codex registration test that imported the removed `scion_sdk` is deleted.

@@ -450,6 +450,86 @@ async def _onboard_fleet(
     }
 
 
+async def _check_fleet_coverage() -> dict[str, Any]:
+    """Run the fleet coverage gate as an operator command.
+
+    The org registry (``workspace.yml``) and the deployed endpoints
+    (``mcp_config.json``) are read locally; admission and the per-server
+    admitted tool counts come from the verified EG catalog under the process
+    session. The report is the gate's own verdict: it exits non-zero when
+    ``ok`` is false (ARBORA-FLEET-R060.3).
+    """
+    from arbora.api.contracts.session import use_session
+    from arbora.fleet.catalog_reader import FleetCatalogReader, ReadContext
+    from arbora.fleet.coverage import check_fleet_coverage, registered_connectors
+    from arbora.fleet.epistemic_adapter import GeneratedFleetCatalogPort
+    from arbora.fleet.onboarding import (
+        configured_fleet_endpoints,
+        self_served_connectors,
+    )
+    from arbora.mcp_server import bootstrap, runtime
+    from arbora.security.actor_context import use_actor
+    from arbora.security.anonymous import session_context
+
+    exclude = self_served_connectors()
+    registered = registered_connectors(exclude=exclude)
+    endpoints = configured_fleet_endpoints(exclude=exclude)
+
+    session = runtime._mint_process_session("http")
+    with use_actor(session.actor), use_session(session):
+        engine = runtime._get_engine()
+        bootstrap._wait_for_engine_materialization(engine)
+        claims = session_context(session)
+        context = ReadContext(
+            tenant_id=str(claims["tenant"]),
+            principal_id=str(claims["principal"]),
+            agent_id=str(claims["agent_id"]),
+            audience=str(claims["audience"]),
+            policy_version=str(claims["policy_version"]),
+        )
+        tenant_graph = str(session.graph)
+        compute = engine.graph_compute
+        reader = FleetCatalogReader(
+            GeneratedFleetCatalogPort(
+                tenant_client=compute.for_graph(tenant_graph).async_client,
+                commons_client=compute.for_graph("__commons__").async_client,
+                context=context,
+                tenant_graph=tenant_graph,
+                bind_graph=lambda graph: use_session(session.with_graph(graph)),
+            )
+        )
+        with use_session(session.with_graph(tenant_graph)):
+            snapshot = await reader.read()
+
+    # Every admitted server appears, with zero for one holding no tool item;
+    # a server with no admitted component is absent, so the gate reads it as
+    # ``not_admitted`` rather than ``zero_tools``.
+    tool_counts: dict[str, int] = {}
+    for server in snapshot.servers:
+        name = server.component.server_name
+        if not name:
+            continue
+        if name not in tool_counts:
+            tool_counts[name] = 0
+        for provided in server.provides:
+            if provided.entry.kind == "tool":
+                tool_counts[name] += 1
+    report = check_fleet_coverage(
+        registered,
+        endpoints,
+        tool_counts,
+        unadmitted=snapshot.unadmitted,
+    )
+    return {
+        "operation": "check_fleet_coverage",
+        "ok": report.ok,
+        "registered": list(report.registered),
+        "covered": list(report.covered),
+        "missing": [dict(offender) for offender in report.missing],
+        "zero_tools": list(report.zero_tools),
+    }
+
+
 def _server_names(values: list[str]) -> frozenset[str]:
     """Repeatable, comma-separated server names as one set."""
     return frozenset(
@@ -491,6 +571,16 @@ def _parser() -> argparse.ArgumentParser:
             " half of the published surface (repeatable, or comma-separated)."
         ),
     )
+    _served_url_argument(
+        subparsers.add_parser(
+            "check-fleet-coverage",
+            help=(
+                "Verify every registered connector is multiplexed (workspace.yml "
+                "versus the deployed MCP config and the admitted catalog)."
+            ),
+        ),
+        "Local MCP URL Arbora serves at; the anonymous-mode startup check reads it.",
+    )
     return parser
 
 
@@ -511,6 +601,7 @@ _OPERATIONS: dict[str, Any] = {
     "onboard-fleet": lambda args: asyncio.run(
         _onboard_fleet(args.served_url, _server_names(args.allow_mass_withdrawal))
     ),
+    "check-fleet-coverage": lambda args: asyncio.run(_check_fleet_coverage()),
 }
 
 

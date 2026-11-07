@@ -14,7 +14,7 @@ from scion_sdk.current_plan import (
     PlanItem,
 )
 
-from arbora.api.invoke.bootstrap import _caller_dispatch_graph
+from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import claim_values
@@ -138,7 +138,7 @@ def _project(raw: Any) -> CurrentPlanRead:
 
 async def read_native_snapshot(context: ExecutionContext, run_id: str) -> Any:
     """Read the native snapshot without widening the current caller's authority."""
-    await _caller_dispatch_graph(context)
+    await caller_dispatch_graph(context)
     if "kg:read" not in context.caller.effective_scopes:
         raise OperationRefused("SCOPE_REQUIRED", {"missing_scopes": ["kg:read"]})
     with client_scope(context.client, claim_values(context.caller.engine_claims)):
@@ -153,7 +153,7 @@ async def read_native_snapshot(context: ExecutionContext, run_id: str) -> Any:
         )
         if graph is None:
             return None
-        await _caller_dispatch_graph(context)
+        await caller_dispatch_graph(context)
         return await _native_read(
             context.client, run_id=run_id, tenant=context.caller.tenant, graph=graph
         )

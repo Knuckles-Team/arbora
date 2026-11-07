@@ -102,7 +102,14 @@ class CanonicalWebUIBoundaryMiddleware:
         from overstory.public_shell import public_shell_of
 
         shell = public_shell_of(scope)
-        health = {"/health", "/health/ready", "/healthz", "/api/health", "/api/healthz"}
+        health = {
+            "/health",
+            "/health/ready",
+            "/health/subsystems",
+            "/healthz",
+            "/api/health",
+            "/api/healthz",
+        }
         if (
             kind == "http"
             and scope.get("method") in {"GET", "HEAD"}

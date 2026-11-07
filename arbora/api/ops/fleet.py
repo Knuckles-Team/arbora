@@ -46,6 +46,7 @@ class FleetCatalogParams(_Params):
     query: str = Field(default="", max_length=4_096)
     kinds: tuple[str, ...] = ()
     servers: tuple[str, ...] = ()
+    groups: tuple[str, ...] = ()
     browse: bool = False
     cursor: str | None = Field(default=None, max_length=1_024)
     limit: int = Field(default=50, ge=1, le=100)
@@ -72,10 +73,12 @@ class FleetResourceReadParams(_Params):
 
 class FleetStatusParams(_Params):
     servers: tuple[str, ...] = ()
+    require_full_coverage: bool = False
 
 
 class FleetLoadParams(_Params):
-    items: tuple[str, ...] = Field(min_length=1, max_length=256)
+    items: tuple[str, ...] = Field(default=(), max_length=256)
+    groups: tuple[str, ...] = ()
     auto_unload: bool = False
     evict: str | None = Field(default=None, pattern="^lru$")
 
@@ -84,7 +87,26 @@ class FleetUnloadParams(_Params):
     items: tuple[str, ...] = ()
     servers: tuple[str, ...] = ()
     kinds: tuple[str, ...] = ()
+    groups: tuple[str, ...] = ()
     all_items: bool = False
+    include_pinned: bool = False
+
+
+class FleetPinParams(_Params):
+    items: tuple[str, ...] = Field(min_length=1, max_length=32)
+
+
+class FleetPinsListParams(_Params):
+    # No ``principal`` filter: the invoke pipeline rejects caller-asserted
+    # identity fields (FORBIDDEN_AUTHORITY) before dispatch, and the tenant's
+    # admins page per principal with cursor instead (R059.8 deviation, filed
+    # in the wave PR).
+    cursor: str | None = Field(default=None, max_length=1_024)
+    limit: int = Field(default=50, ge=1, le=100)
+
+
+class FleetCatalogRefreshParams(_Params):
+    servers: tuple[str, ...] = Field(min_length=1, max_length=32)
 
 
 class FleetCallParams(_Params):
@@ -152,7 +174,7 @@ async def handle_fleet_operation(
         # ARBORA-FLEET-R029.1: an unscoped search with no query is a caller
         # error (HTTP 400), refused before the gateway runs.
         if not params.get("query") and not params.get("browse"):
-            if not params.get("servers"):
+            if not (params.get("servers") or params.get("groups")):
                 from arbora.api.invoke.pipeline import OperationRefused
 
                 raise OperationRefused("INVALID_ARGUMENT", {"field": "query"})
@@ -160,9 +182,23 @@ async def handle_fleet_operation(
     elif op.id == "fleet.catalog.list":
         result = await gateway.list(caller, **params)
     elif op.id == "fleet.tools.load":
+        if not params.get("items") and not params.get("groups"):
+            from arbora.api.invoke.pipeline import OperationRefused
+
+            raise OperationRefused(
+                "INVALID_ARGUMENT", {"reason": "a load needs items or groups"}
+            )
         result = await gateway.load(caller, **params)
     elif op.id == "fleet.tools.unload":
         result = await gateway.unload(caller, **params)
+    elif op.id == "fleet.tools.pin":
+        result = await gateway.pin(caller, **params)
+    elif op.id == "fleet.tools.unpin":
+        result = await gateway.unpin(caller, **params)
+    elif op.id == "fleet.catalog.refresh":
+        result = await gateway.catalog_refresh(caller, **params)
+    elif op.id == "fleet.pins.list":
+        result = await gateway.pins_list(caller, **params)
     elif op.id == "fleet.prompts.list":
         result = await gateway.prompts_list(caller, **params)
     elif op.id == "fleet.prompts.get":
@@ -173,6 +209,17 @@ async def handle_fleet_operation(
         result = await gateway.resources_read(caller, **params)
     elif op.id == "fleet.status":
         result = await gateway.status(caller, **params)
+        if params.get("require_full_coverage"):
+            coverage = result.get("coverage")
+            if not isinstance(coverage, Mapping) or coverage.get("ok") is not True:
+                from arbora.api.invoke.pipeline import OperationRefused
+
+                coverage = coverage if isinstance(coverage, Mapping) else {}
+                details: dict[str, Any] = {
+                    "missing": list(coverage.get("missing", ())),
+                    "zero_tools": list(coverage.get("zero_tools", ())),
+                }
+                raise OperationRefused("UNAVAILABLE", details)
     else:
         raise ValueError("unknown fleet operation")
     return {"value": result}
@@ -304,7 +351,43 @@ def operations() -> tuple[OpSpec, ...]:
                     "Unload fleet items from this MCP session",
                     "unload my session tools",
                 ),
+                (
+                    "pin",
+                    FleetPinParams,
+                    "Pin loaded fleet items so they stay loaded across sessions and restarts",
+                    "pin these tools for my session",
+                ),
+                (
+                    "unpin",
+                    FleetPinParams,
+                    "Unpin fleet items so they may be evicted again",
+                    "unpin these tools",
+                ),
             )
+        ),
+        OpSpec(
+            id="fleet.catalog.refresh",
+            verb=Verb.MANAGE,
+            summary="Re-read connector tool catalogs now, without an arbora restart",
+            examples=("refresh the tool catalog of craft-suite-api",),
+            params=FleetCatalogRefreshParams,
+            result=FleetResult,
+            binding=Composite(handler="arbora.api.ops.fleet.handle_fleet_operation"),
+            scopes=frozenset({"fleet:control"}),
+            effect=Effect.WRITE,
+            audit=AuditClass.EVENT,
+        ),
+        OpSpec(
+            id="fleet.pins.list",
+            verb=Verb.ASK,
+            summary="List every pin in the caller's tenant with its suspended state",
+            examples=("list the pinned fleet tools in this tenant",),
+            params=FleetPinsListParams,
+            result=FleetResult,
+            binding=Composite(handler="arbora.api.ops.fleet.handle_fleet_operation"),
+            scopes=frozenset({"fleet:control", "mcp:admin"}),
+            effect=Effect.READ,
+            audit=AuditClass.NONE,
         ),
         *(
             OpSpec(
@@ -397,8 +480,11 @@ specs = operations
 __all__ = [
     "FleetCallParams",
     "FleetCatalogParams",
+    "FleetCatalogRefreshParams",
     "FleetLoadParams",
     "FleetPackStatusParams",
+    "FleetPinParams",
+    "FleetPinsListParams",
     "FleetPromptGetParams",
     "FleetResourceReadParams",
     "FleetResult",

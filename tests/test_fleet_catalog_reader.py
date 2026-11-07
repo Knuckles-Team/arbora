@@ -271,10 +271,15 @@ def test_reader_rejects_cyclic_cursor_without_unbounded_io() -> None:
 
 
 def test_deferred_reader_has_no_static_or_uninstalled_fallback() -> None:
+    from arbora.api.invoke.pipeline import OperationRefused
+
     deferred = DeferredFleetCatalogReader()
 
-    with pytest.raises(RuntimeError, match="not installed"):
+    # Fails closed while the catalog warms, with the typed retryable refusal
+    # (ARBORA-FLEET-R078), never a static fallback.
+    with pytest.raises(OperationRefused) as warming:
         asyncio.run(deferred.read())
+    assert warming.value.code == "UNAVAILABLE"
 
     reader = FleetCatalogReader(FakeFleetCatalogPort())
     deferred.install(reader)
@@ -340,6 +345,70 @@ def test_reader_reuses_a_verified_snapshot_within_its_ttl() -> None:
     assert second is first
     assert len(port.server_calls) == 1
     assert len(port.search_calls) == 1
+
+
+class GatedPort(FakeFleetCatalogPort):
+    """A port whose server read waits on a gate: a slow full fleet read."""
+
+    def __init__(self, **kwargs: object) -> None:
+        super().__init__(**kwargs)  # type: ignore[arg-type]
+        self.gate = asyncio.Event()
+
+    async def query_registered_servers(
+        self, graph: str, limit: int, cursor: str | None, /
+    ) -> ServerPage:
+        await self.gate.wait()
+        return await super().query_registered_servers(graph, limit, cursor)
+
+
+@pytest.mark.spec("ARBORA-FLEET-R067")
+def test_a_caller_deadline_never_cancels_the_shared_snapshot_read() -> None:
+    """A read longer than the caller's budget still lands in the cache."""
+    port = GatedPort()
+    reader = FleetCatalogReader(port, snapshot_ttl_s=60.0)
+
+    async def scenario() -> tuple[object, object]:
+        with pytest.raises(TimeoutError):
+            await asyncio.wait_for(reader.read(), timeout=0.01)
+        joined = asyncio.create_task(reader.read())
+        await asyncio.sleep(0)
+        port.gate.set()
+        first = await joined
+        return first, await reader.read()
+
+    first, second = asyncio.run(scenario())
+    assert second is first
+    assert len(port.server_calls) == 1
+
+
+@pytest.mark.spec("ARBORA-FLEET-R067")
+def test_a_stale_snapshot_is_served_while_one_refresh_runs() -> None:
+    port = GatedPort(
+        server_pages=[server_page(SERVER), server_page(SERVER)],
+        component_pages=[
+            component_page(SERVER_COMPONENT, TOOL_COMPONENT),
+            component_page(SERVER_COMPONENT, TOOL_COMPONENT),
+        ],
+    )
+    reader = FleetCatalogReader(port, snapshot_ttl_s=60.0)
+
+    async def scenario() -> None:
+        port.gate.set()
+        first = await reader.read()
+        key = next(iter(reader._snapshots))
+        stamp, snap = reader._snapshots[key]
+        reader._snapshots[key] = (stamp - 61.0, snap)
+        port.gate.clear()
+        stale = await asyncio.wait_for(reader.read(), timeout=1.0)
+        assert stale is first
+        assert await asyncio.wait_for(reader.read(), timeout=1.0) is first
+        port.gate.set()
+        await reader._inflight[key]
+        fresh = await reader.read()
+        assert fresh is not first
+
+    asyncio.run(scenario())
+    assert len(port.server_calls) == 2
 
 
 def test_reader_without_a_ttl_reads_eg_every_time() -> None:

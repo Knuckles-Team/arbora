@@ -75,6 +75,16 @@ class RunCredentialLease(CredentialLease):
         self.run_ref = run_ref
         self.renewals = 0
 
+    def _renew_due_at(self, issued_at: float, expires_at: float) -> float:
+        """A run lease is renewable from seeding: its renewer decides by policy.
+
+        The run does not know when the caller's token was issued, so the half
+        lifetime of the inherited window is unknown; :func:`keep_run_authority_current`
+        renews ``headroom_seconds`` before expiry (ARBORA-IDENTITY-R029).
+        """
+        del expires_at
+        return issued_at
+
 
 @dataclass(frozen=True, slots=True)
 class RunRenewalPolicy:
@@ -115,7 +125,7 @@ RevocationCheck = Callable[[ActorContext], Awaitable[str | None]]
 AuditSink = Callable[[dict[str, Any]], None]
 
 
-def _log_audit(record: dict[str, Any]) -> None:
+def log_audit(record: dict[str, Any]) -> None:
     audit_logger.info(
         "run_authority event=%s principal=%s tenant=%s run=%s expires_at=%s "
         "renewals=%s reason=%s",
@@ -259,7 +269,7 @@ async def keep_run_authority_current(
     *,
     policy: RunRenewalPolicy,
     revocation_check: RevocationCheck = CALLER_REVOCATIONS,
-    audit: AuditSink = _log_audit,
+    audit: AuditSink = log_audit,
     clock: Callable[[], float] | None = None,
     sleep: Callable[[float], Awaitable[Any]] = asyncio.sleep,
 ) -> int:
