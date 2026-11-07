@@ -12,7 +12,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 
-from arbora.api.contracts.session import GraphSession, resolve_session
+from arbora.security.session import GraphSession, resolve_session
 
 
 class NativeCallOrigin:

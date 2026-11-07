@@ -18,7 +18,6 @@ from typing import Any
 
 import pytest
 
-from arbora.api.contracts.session import GraphSession
 from arbora.deployment import production_ops
 from arbora.deployment.semantic_provisioning import ensure_server_registrations
 from arbora.fleet import onboarding
@@ -35,6 +34,7 @@ from arbora.fleet.onboarding import (
     start_fleet_onboarding,
 )
 from arbora.fleet.virtual_catalog import VirtualCatalog
+from arbora.security.session import GraphSession
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
 
 TENANT = "tenant-a"
@@ -205,7 +205,7 @@ def _onboarding(registry: _Registry, capture: Any = _served_pack) -> FleetOnboar
 
 
 def _run_in_session(coro: Any) -> Any:
-    from arbora.api.contracts.session import use_session
+    from arbora.security.session import use_session
 
     session = _session()
     with use_session(session):

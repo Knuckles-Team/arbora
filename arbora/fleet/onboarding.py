@@ -937,8 +937,8 @@ class FleetOnboardingService:
             yield
 
     def run_forever(self) -> None:
-        from arbora.api.contracts.session import use_session
         from arbora.security.actor_context import use_actor
+        from arbora.security.session import use_session
 
         session = self.onboarding.session
         with use_actor(session.actor), use_session(session):
@@ -1186,8 +1186,8 @@ class HandshakeOnboarder:
     def _attempt(self, endpoint: FleetEndpoint, info: _Handshake) -> tuple[str, str]:
         """Run one pass; return ``("ok", outcome)``, ``("held", e)`` or ``("error", e)``."""
 
-        from arbora.api.contracts.session import use_session
         from arbora.security.actor_context import use_actor
+        from arbora.security.session import use_session
 
         session = self.onboarding.session
         trigger = OnboardingTrigger(endpoint.name, info.reason, info.digest)

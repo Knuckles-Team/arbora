@@ -324,8 +324,8 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 | `ARBORA-HOST-R036` | `tests/test_run_receipt_commit.py::test_terminal_commit_carries_run_trace_nodes` | Planned, not yet written |
 | `ARBORA-HOST-R037` | `arbora/connector_runner.py::ConnectorRunnerComposition` | Planned, not yet written |
 | `ARBORA-HOST-R037` | `tests/test_connector_runner.py::test_missing_release_lock_fails_bootstrap` | Planned, not yet written |
-| ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_unit_imports_follow_layers_and_no_cycle_remains`  | Package units form a layered, acyclic import graph. |
-| ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_every_unit_is_named_in_exactly_one_layer` | `arbora/layers.toml` names every unit once and nothing else. |
+| ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_unit_imports_follow_layers_and_no_cycle_remains` (planned) | Package units form a layered, acyclic import graph. |
+| ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_every_unit_is_named_in_exactly_one_layer` | The coupling policy's layer table in `pyproject.toml` names every unit once and nothing else. |
 | ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_scan_reports_each_rule_with_its_location` | The scanner reports an upward import, a private reach, an unlayered unit and a cycle with their location, and passes a downward import. |
 | ARBORA-HOST-R039 | `tests/mcp_server/test_host_context.py::test_two_host_contexts_share_no_module_state` | Runtime state is created at the composition root. |
 | ARBORA-HOST-R038.1 | `tests/architecture/test_unit_layers.py::test_api_ops_import_no_subsystem` and `tests/api/test_operation_ports.py::test_registry_builds_from_fake_ports_and_serves_each_op_family` (L2). | The named conditions hold. |

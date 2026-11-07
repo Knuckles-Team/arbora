@@ -9,7 +9,7 @@ decide consumers, co-services) share it.
 
 Startup code addresses the engine as ``engine.graph_compute.for_graph(graph)
 .async_client``. That client is a *view*: every request it sends resolves the
-ambient verified :class:`~arbora.api.contracts.session.GraphSession` at call
+ambient verified :class:`~arbora.security.session.GraphSession` at call
 time and binds that session's engine claims to the pooled transport for that
 one request. The view never caches or widens authority, and it holds no graph
 behavior of its own; EG owns every fact and every method.
@@ -63,8 +63,8 @@ def _session_context(session: Any) -> Any:
 
 def _ambient_session() -> Any:
     """The request's verified session, else the stdio process session."""
-    from arbora.api.contracts.session import SessionRequiredError, current_session
     from arbora.mcp_server.bootstrap import _process_session
+    from arbora.security.session import SessionRequiredError, current_session
 
     session = current_session() or _process_session()
     if session is None:
@@ -300,7 +300,7 @@ class ServedEngine:
         session: Any = None,
     ) -> list[Any]:
         """Read through the public client on this loop under one exact caller."""
-        from arbora.api.contracts.session import resolve_session
+        from arbora.security.session import resolve_session
 
         caller = resolve_session(session, required_scope="kg:read")
         bound = _bind_parameters(query, params)

@@ -11,12 +11,6 @@ from typing import Any
 
 import pytest
 
-from arbora.api.contracts.session import (
-    GraphSession,
-    SessionExpiredError,
-    current_session,
-    use_session,
-)
 from arbora.mcp_server import bootstrap
 from arbora.security import run_authority
 from arbora.security.actor_context import ActorContext, ActorType
@@ -26,6 +20,12 @@ from arbora.security.run_authority import (
     RunRenewalPolicy,
     keep_run_authority_current,
     open_run_lease,
+)
+from arbora.security.session import (
+    GraphSession,
+    SessionExpiredError,
+    current_session,
+    use_session,
 )
 
 TTL = 300

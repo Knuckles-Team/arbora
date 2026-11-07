@@ -3,8 +3,8 @@
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from arbora.api.contracts.session import GraphSession, resolve_session
 from arbora.security.anonymous import client_scope
+from arbora.security.session import GraphSession, resolve_session
 
 
 class ServedBrowserState:

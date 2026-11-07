@@ -388,9 +388,9 @@ async def seed_owned_run(
 
     from arbora import current_plan_publication, work_items
     from arbora.a2a.authority import WorkItemA2AAuthority
-    from arbora.api.contracts.session import use_session
     from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
     from arbora.security.actor_context import ActorType
+    from arbora.security.session import use_session
 
     if session.actor.actor_type != ActorType.HUMAN:
         raise RuntimeError("Native seed must belong to the authenticated human")

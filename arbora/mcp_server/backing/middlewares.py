@@ -147,7 +147,7 @@ class ActorContextMiddleware(Middleware):
       (``verified_tool_session_scope``). In this mode a call with no validated
       token is refused — never silently proceeds — UNLESS a verified authority
       is *already* bound some other legitimate way:
-      (a) an ambient :class:`~arbora.api.contracts.session.GraphSession`
+      (a) an ambient :class:`~arbora.security.session.GraphSession`
       is already set (a nested call under an already-authenticated caller), or
       (b) the tiny-profile local stdio process authority
       (:func:`~arbora.security.request_identity.mint_local_process_session`,
@@ -155,7 +155,7 @@ class ActorContextMiddleware(Middleware):
       stdio has no per-call bearer token by protocol, so that process-lifetime,
       already-verified authority IS this transport's carrier, not an absence
       of one. Every other case raises
-      :class:`~arbora.api.contracts.session.SessionRequiredError`
+      :class:`~arbora.security.session.SessionRequiredError`
       (GOC-15/GOC-62: "a surface that cannot mint a caller must refuse, never
       proceed").
     """
@@ -179,16 +179,16 @@ class ActorContextMiddleware(Middleware):
         return dict(claims) if claims else None
 
     async def on_call_tool(self, context: MiddlewareContext, call_next):
-        from arbora.api.contracts.session import (
-            SessionRequiredError,
-            current_session,
-            reset_session,
-            set_session,
-        )
         from arbora.security.actor_context import reset_actor, set_actor
         from arbora.security.request_identity import (
             actor_from_claims,
             mint_graph_session,
+        )
+        from arbora.security.session import (
+            SessionRequiredError,
+            current_session,
+            reset_session,
+            set_session,
         )
 
         claims = self._claims(context)

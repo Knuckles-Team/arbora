@@ -7,7 +7,6 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-from arbora.api.contracts.session import GraphSession
 from arbora.browser_control.browser_control_common import (
     _DIGEST,
     _TRUST_EVIDENCE,
@@ -17,6 +16,7 @@ from arbora.browser_control.browser_control_common import (
     _timestamps_are_finite,
     _trusted_issuer,
 )
+from arbora.security.session import GraphSession
 
 
 def _validate_recent_auth_references(grant: RecentAuthGrant) -> None:

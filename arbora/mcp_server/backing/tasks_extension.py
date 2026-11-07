@@ -750,7 +750,7 @@ class WorkItemTasksExtension(ServerExtension):
         closed; this never accepts tenant/owner from task params.
         """
 
-        from arbora.api.contracts.session import (
+        from arbora.security.session import (
             SessionRequiredError,
             resolve_session,
         )

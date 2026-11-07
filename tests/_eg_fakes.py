@@ -15,8 +15,8 @@ from arbora.access.action_policy import (
     PolicyDisposition,
     PolicyReceipt,
 )
-from arbora.api.contracts.session import GraphSession
 from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.session import GraphSession
 
 
 class FakeEgEngine:
