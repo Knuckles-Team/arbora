@@ -22,7 +22,7 @@ from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
 )
-from arbora.run_origin import agent_run_origin_scope, native_call_origin_scope
+from arbora.run_origin import RunOriginRegistry, native_call_origin_scope
 from arbora.security import request_identity
 from arbora.security.actor_context import use_actor
 from tests.browser_control.test_browser_control_service import _setup
@@ -32,6 +32,8 @@ from tests.browser_control.test_browser_proposals import (
     _response,
 )
 from tests.test_served_operation_api import FakeClient, FakePool
+
+_ORIGINS = RunOriginRegistry()
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.spec("ARBORA-FLEET-R015")]
 
@@ -170,7 +172,9 @@ async def test_served_proposal_replay_and_cancellation_do_not_redispatch(
         payload = {"payload": _request(session, tool).model_dump(mode="json")}
 
         async def call() -> Any:
-            with agent_run_origin_scope(session, "webui-assistant", "run-effect"):
+            with _ORIGINS.agent_run_origin_scope(
+                session, "webui-assistant", "run-effect"
+            ):
                 with native_call_origin_scope("run-effect"):
                     return await invoke(
                         "browser.request_call",
@@ -237,7 +241,9 @@ async def test_completed_browser_replay_requires_same_live_run_and_session(
         )
 
         async def initial() -> Any:
-            with agent_run_origin_scope(session, "webui-assistant", "original-run"):
+            with _ORIGINS.agent_run_origin_scope(
+                session, "webui-assistant", "original-run"
+            ):
                 with native_call_origin_scope("original-run"):
                     return await invoke(
                         "browser.request_call",
@@ -272,7 +278,7 @@ async def test_completed_browser_replay_requires_same_live_run_and_session(
             with use_session(replay_session), ExitStack() as stack:
                 if change != "absent":
                     stack.enter_context(
-                        agent_run_origin_scope(
+                        _ORIGINS.agent_run_origin_scope(
                             replay_session, "webui-assistant", run_id
                         )
                     )

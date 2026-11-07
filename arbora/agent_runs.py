@@ -38,6 +38,7 @@ from arbora.api.contracts.agent_control_contracts import (
     AgentExecutionResult,
 )
 from arbora.api.contracts.session import GraphSession
+from arbora.run_origin import RunOriginRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -576,7 +577,8 @@ def failed_run_usage(error: Exception, run_id: str) -> dict[str, int] | None:
 class AgentRunPort:
     """``AgentExecutionPort`` over the harness ``AgentRunExecutor``."""
 
-    def __init__(self, executor: Any = None) -> None:
+    def __init__(self, executor: Any = None, *, origins: RunOriginRegistry) -> None:
+        self._origins = origins
         if executor is None:
             from agent_utilities.runtime import AgentRunExecutor
 
@@ -586,8 +588,6 @@ class AgentRunPort:
     async def execute_agent(
         self, request: AgentExecutionRequest, *, session: GraphSession
     ) -> AgentExecutionResult:
-        from arbora.run_origin import agent_run_origin_scope
-
         ownership = current_native_run(request)
         if ownership is not None and ownership.session != session:
             raise RuntimeError("native run session does not match the host scope")
@@ -600,7 +600,9 @@ class AgentRunPort:
             ):
                 raise RuntimeError("UPGRADE_REQUIRED: native run stream observer")
             kwargs["stream_observer"] = observer
-        with agent_run_origin_scope(session, request.agent_name, request.run_id):
+        with self._origins.agent_run_origin_scope(
+            session, request.agent_name, request.run_id
+        ):
             result = await self._executor.execute_agent(request, **kwargs)
         return AgentExecutionResult(
             run_id=result.run_id,

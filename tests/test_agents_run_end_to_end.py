@@ -29,6 +29,7 @@ from arbora.api.ops import agents
 from arbora.api.registry import Registry, Surface
 from arbora.core.settings import runtime_config
 from arbora.mcp_server import runtime as mcp_runtime
+from arbora.run_origin import RunOriginRegistry
 from tests.a2a.test_operation_bridge import session
 from tests.api._support import make_verified_caller
 from tests.api.test_invoke_contract import FixtureRuntime, setup_services
@@ -131,7 +132,7 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
     engine: FakeEngine,
 ) -> None:
     service = A2AService(
-        authority=WorkItemA2AAuthority(lambda: engine),
+        authority=WorkItemA2AAuthority(lambda: engine, origins=RunOriginRegistry()),
         router=OrchestratorA2ARouter(lambda: engine),
     )
     runtime = ServedRuntime(service)
@@ -198,7 +199,6 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
     """Boot the served factory the ``arbora`` entry point runs, then POST A2A."""
     import httpx
 
-    import arbora.a2a.mcp as a2a_mcp
     from arbora.security import request_identity
     from arbora.security.actor_context import ActorContext, ActorType
 
@@ -270,7 +270,6 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
         )
         parts.extend({"kind": "file", "file": file} for _ in range(count))
 
-    monkeypatch.setattr(a2a_mcp, "_SERVICE", None)
     _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False)
     app = mcp.http_app()
 
@@ -340,7 +339,7 @@ async def test_turn_usage_is_correlated_and_not_reconstructed_on_replay(
     from arbora.a2a.models import A2AMessage
     from arbora.api.contracts.session import use_session
 
-    authority = WorkItemA2AAuthority(lambda: engine)
+    authority = WorkItemA2AAuthority(lambda: engine, origins=RunOriginRegistry())
     service = A2AService(
         authority=authority, router=OrchestratorA2ARouter(lambda: engine)
     )
@@ -394,7 +393,9 @@ async def test_foreign_run_result_never_projects_usage(
     monkeypatch.setattr(
         work_items, "commit_result", lambda *a, **k: outcomes.append(k["outcome"])
     )
-    authority = WorkItemA2AAuthority(lambda: None, executor=ForeignExecutor())
+    authority = WorkItemA2AAuthority(
+        lambda: None, executor=ForeignExecutor(), origins=RunOriginRegistry()
+    )
     usage = await authority._run(
         object(),
         item_id="native-item",

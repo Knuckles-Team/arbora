@@ -6,36 +6,21 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from .application import AmbientA2AAuthenticator, create_a2a_handlers
 from .authority import WorkItemA2AAuthority
-from .routing import OrchestratorA2ARouter
 from .service import A2AService
 
 if TYPE_CHECKING:
     from arbora.api.http.auth import AmbientHTTPAuthenticator
     from arbora.api.invoke.pipeline import InvokeServices
 
-_SERVICE: A2AService | None = None
-
-
-def _service() -> A2AService:
-    global _SERVICE
-    if _SERVICE is None:
-        from arbora.mcp_server import runtime
-
-        provider = runtime._get_engine
-        _SERVICE = A2AService(
-            authority=WorkItemA2AAuthority(provider),
-            router=OrchestratorA2ARouter(provider),
-        )
-    return _SERVICE
-
 
 def _admitted_handlers(
+    service: A2AService,
     operation_services: InvokeServices | None,
     operation_authenticator: AmbientHTTPAuthenticator | None,
 ) -> tuple[Any, Any]:
     """Validate composition and provider admission before exposing routes."""
     handlers = create_a2a_handlers(
-        service=_service(),
+        service=service,
         authenticator=AmbientA2AAuthenticator(),
         operation_services=operation_services,
         operation_authenticator=operation_authenticator,
@@ -46,6 +31,7 @@ def _admitted_handlers(
 def register_a2a_tools(
     mcp: Any,
     *,
+    service: A2AService,
     tools: Any = None,
     operation_services: InvokeServices | None = None,
     operation_authenticator: AmbientHTTPAuthenticator | None = None,
@@ -57,12 +43,12 @@ def register_a2a_tools(
     The ``graph_a2a`` operation registers on ``tools`` (arbora's backing
     server, reached through ``act``) and the HTTP routes on the served ``mcp``.
     """
-    authority = _service().authority
+    authority = service.authority
     if isinstance(authority, WorkItemA2AAuthority):
         authority.task_plan_config = task_plan_config
         authority.hosted_invocation = hosted_invocation
     card_handler, rpc_handler = _admitted_handlers(
-        operation_services, operation_authenticator
+        service, operation_services, operation_authenticator
     )
     registrar = tools if tools is not None else mcp
 
@@ -85,7 +71,6 @@ def register_a2a_tools(
         endpoint_url: str = "/a2a",
         include_committed_event: bool = False,
     ) -> str:
-        service = _service()
         if action == "card":
             result: Any = service.agent_card(endpoint_url)
         elif action == "send":

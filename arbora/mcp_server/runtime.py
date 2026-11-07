@@ -758,7 +758,11 @@ _LEGACY_INSTRUCTIONS = (
 
 
 def _build_server(
-    bootstrap: bool = True, *, canonical_surface: bool = False, invocation: Any = None
+    bootstrap: bool = True,
+    *,
+    canonical_surface: bool = False,
+    invocation: Any = None,
+    host: Any = None,
 ):
     """Build the KG MCP server with all tools registered.
 
@@ -912,8 +916,13 @@ def _build_server(
         )
         return JSONResponse(result)
 
+    if host is None:
+        # A headless build (no served process) owns a context of its own.
+        from arbora.mcp_server.host_context import build_host_context
+
+        host = build_host_context(_get_engine)
     _register_graph_tool_surface(
-        mcp, canonical=canonical_surface, invocation=invocation
+        mcp, canonical=canonical_surface, invocation=invocation, host=host
     )
 
     global _FULL_TOOL_NAMES
@@ -922,7 +931,7 @@ def _build_server(
 
 
 def _register_graph_tool_surface(
-    mcp: Any, *, canonical: bool = False, invocation: Any = None
+    mcp: Any, *, host: Any, canonical: bool = False, invocation: Any = None
 ) -> None:
     """Mount arbora's one MCP tool contract.
 
@@ -959,10 +968,11 @@ def _register_graph_tool_surface(
         backing = register_arbora_surface(mcp, canonical=canonical)
     register_browser_control_tools(backing)
     if invocation is None:
-        register_a2a_tools(mcp, tools=backing)
+        register_a2a_tools(mcp, service=host.runs.a2a, tools=backing)
     else:
         register_a2a_tools(
             mcp,
+            service=host.runs.a2a,
             tools=backing,
             operation_services=invocation.services,
             operation_authenticator=invocation.authenticator,

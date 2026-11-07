@@ -13,6 +13,8 @@ from typing import Any, Protocol, cast, runtime_checkable
 
 from agent_connector_sdk.privacy import persistence_reference
 
+from arbora.run_origin import RunOriginRegistry
+
 from .models import (
     A2AArtifact,
     A2AMessage,
@@ -170,12 +172,14 @@ class WorkItemA2AAuthority:
         self,
         engine_provider: Callable[[], Any],
         *,
+        origins: RunOriginRegistry,
         executor: Any = None,
         task_plan_config: Any = None,
         hosted_invocation: Any = None,
     ) -> None:
         self._engine_provider = engine_provider
         self._executor = executor
+        self._origins = origins
         # Runs admitted by a non-blocking send (ARBORA-A2A-R001.6). The set
         # holds a reference so a running turn is never garbage collected.
         self._detached: set[asyncio.Task[Any]] = set()
@@ -407,7 +411,7 @@ class WorkItemA2AAuthority:
         if self._executor is None:
             from arbora.agent_runs import AgentRunPort
 
-            self._executor = AgentRunPort()
+            self._executor = AgentRunPort(origins=self._origins)
         return self._executor
 
     async def _execute_claimed_run(
@@ -1138,15 +1142,13 @@ class WorkItemA2AAuthority:
         return tasks, next_cursor
 
     async def cancel(self, task_id: str) -> A2ATask:
-        from arbora.run_origin import revoke_run_origins
-
         cancellation_session = self._session("kg:write")
         item = await asyncio.to_thread(self._authorized_item, task_id, "kg:write")
         if item is None:
             raise A2ATaskNotCancelable("A2A task is not cancelable")
         run_id = str(item["metadata"].get("a2a_run_id") or task_id)
         if item.get("status") == "cancelled":
-            revoke_run_origins(cancellation_session, run_id)
+            self._origins.revoke(cancellation_session, run_id)
             return self._project(item, task_id=task_id)
         if item.get("status") in _TERMINAL:
             raise A2ATaskNotCancelable("A2A task is not cancelable")
@@ -1158,7 +1160,7 @@ class WorkItemA2AAuthority:
             work_items.cancel_work_item, work_engine, item_id
         ):
             raise A2ATaskNotCancelable("A2A task is not cancelable")
-        revoke_run_origins(cancellation_session, run_id)
+        self._origins.revoke(cancellation_session, run_id)
         current = await asyncio.to_thread(
             work_items.get_work_item, work_engine, item_id
         )
