@@ -57,6 +57,14 @@ The unknowns and their resolution are in [research.md](research.md). Open unknow
 
 ## Phase 1: Design
 
+- **Owner:** arbora owns the bundle, install, login and the workstream operations. medulla owns the workstream record (`MEDULLA-IDENTITY-R723`). universal-skills owns the skill text (`US-CONTENT-R007`).
+- **Cohesion:** One package, `arbora/harness_plugins/`, holds every harness fact and file writer. One module, `arbora/api/ops/workstreams.py`, holds the served operations.
+- **Dependency direction:** The renderers depend on `BundleSpec` and the profile table only. The composer depends on the registry and the content convention. Nothing in the registry or the engine depends on a harness.
+- **Interface depth:** `compose_bundle` and `render` are the two entry points; each renderer is a plain function. The first callers are `arbora/harness_plugins/cli.py` and `tests/harness_plugins/test_bundle_served.py`.
+- **Special cases:** A harness with no MCP-tool hook uses the command runner. A harness with no session end event sends no detach. Each case is a field of the profile table, not a branch per harness name.
+- **State:** Three machines hold state: install (`~/.config/arbora/plugins.json`), credential (the platform credential store) and attachment (the engine). Arbora keeps no other state.
+- **Environment:** The endpoint comes from arbora config at generation time. No template holds a host, domain or path. The bundle holds no credential.
+
 ### Architecture
 
 ```mermaid
