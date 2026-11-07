@@ -640,6 +640,12 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 
 None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
 
+### OAuth client contract owned by arbora (ARBORA-IDENTITY-R030.4)
+
+Amendment 2026-11-06: the static native MCP client that coding clients sign in with was provisioned out of band. A cleanup deleted it, and every native sign-in then failed with "client not found". Nothing in arbora noticed or repaired it.
+
+Decision: arbora declares the clients and scopes that its sign-in needs (`.1`) and reconciles them at start and every 300 seconds through the identity provider admin interface, with its own scoped admin credential (`.2`). The reconciler only creates and updates the items it declares, so it cannot remove anything another owner provisions. A failure is the `Degraded` state with backoff, never a crash or a gate. Readiness reports `identity: degraded` without gating (`.3`), because issued tokens stay valid and dynamic client registration stays available (`.4`). The environment supplies configuration only (`ARBORA_IDENTITY_CLIENT_CONTRACT`), and a deployment job that needs a pass on demand runs `arbora identity reconcile` (`.6`) instead of a provisioning script of its own, so there is one source of truth. The machine follows the same shape as the process lease (`R027.1`): one state field, one `transition`, a closed edge table C01 to C09, a typed refusal, and an ontology description in `arbora/ontology/state_machines.ttl` (`.5`). The admin credential must be scoped to client and client-scope management of the served realm; a token with the realm role `admin` or `create-realm` is refused (`admin_too_broad`).
+
 ### Process credential lease state machine (ARBORA-IDENTITY-R027.1 to R027.6)
 
 The 2026-11-06 outage showed that the lease had no recovery edge. The loop renewed only at 30 seconds or less of lifetime. After an identity provider outage longer than that, the lease expired. The renewal guard then raised before any provider call, and `CredentialLease.renew` refused the expired lease. Only a restart recovered.

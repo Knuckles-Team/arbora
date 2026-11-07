@@ -35,14 +35,27 @@ def main() -> None:
 
     if print_usage_or_version(sys.argv[1:]):
         return
+    if sys.argv[1:3] == ["identity", "reconcile"]:
+        from arbora.identity.client_contract import reconcile_command
+
+        raise SystemExit(reconcile_command(sys.argv[3:]))
     from functools import partial
 
     from arbora.identity.browser_composition import configured_browser_boundary
+    from arbora.identity.client_contract import (
+        start_client_contract_supervisor,
+        stop_client_contract_supervisor,
+    )
+    from arbora.identity.ports import IdentityLifecycle
     from arbora.mcp_server.browser_dispatch import dispatch_browser_request
     from arbora.mcp_server.server import mcp_server
 
     mcp_server(
         browser_boundary_factory=partial(
             configured_browser_boundary, request_dispatch=dispatch_browser_request
-        )
+        ),
+        identity_lifecycle=IdentityLifecycle(
+            start=start_client_contract_supervisor,
+            stop=stop_client_contract_supervisor,
+        ),
     )

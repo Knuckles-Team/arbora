@@ -291,3 +291,147 @@ arbora:CredentialLeaseMachine_expired-stop-stopped a owl:Class ;
     :fromState arbora:LeaseExpired ;
     :toState arbora:LeaseStopped ;
     :firedBy arbora:CredentialLeaseMachine_Event_stop .
+
+# ---------------------------------------------------------------------------
+# OAuth client contract reconciler (ARBORA-IDENTITY-R030.4.5).
+# Python: ContractState, ContractEvent, CONTRACT_EDGES in arbora/identity/client_contract.py.
+# ---------------------------------------------------------------------------
+
+arbora:ClientContractMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "OAuth client contract reconciler" ;
+    rdfs:comment "Reconciles the OAuth clients and client scopes arbora declares in the identity provider, at start and on an interval; Degraded retries with backoff and readiness reports identity: degraded." ;
+    :initialState arbora:ContractUnchecked ;
+    :hasState arbora:ContractUnchecked ,
+        arbora:ContractReconciling ,
+        arbora:ContractConverged ,
+        arbora:ContractDegraded ,
+        arbora:ContractStopped .
+
+arbora:ContractState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Client contract state" .
+
+arbora:ContractTerminalState a owl:Class ;
+    rdfs:subClassOf arbora:ContractState, :TerminalState ;
+    rdfs:label "Client contract terminal state" .
+
+arbora:ContractTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Client contract transition" .
+
+arbora:ContractEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Client contract event" .
+
+arbora:ContractGuard a owl:Class ;
+    rdfs:subClassOf :TransitionGuard ;
+    rdfs:label "Client contract guard" .
+
+arbora:ContractTransitionRefused a owl:Class ;
+    rdfs:subClassOf :TransitionRefused ;
+    rdfs:label "Client contract transition refused" ;
+    rdfs:comment "IllegalContractTransition, code CLIENT_CONTRACT_TRANSITION_ILLEGAL, fields machine (client_contract), from_state and event. The state does not change." .
+
+arbora:ContractUnchecked a owl:Class ;
+    rdfs:subClassOf arbora:ContractState ;
+    :storedForm "unchecked" .
+
+arbora:ContractReconciling a owl:Class ;
+    rdfs:subClassOf arbora:ContractState ;
+    :storedForm "reconciling" .
+
+arbora:ContractConverged a owl:Class ;
+    rdfs:subClassOf arbora:ContractState ;
+    :storedForm "converged" .
+
+arbora:ContractDegraded a owl:Class ;
+    rdfs:subClassOf arbora:ContractState ;
+    :storedForm "degraded" .
+
+arbora:ContractStopped a owl:Class ;
+    rdfs:subClassOf arbora:ContractTerminalState ;
+    :storedForm "stopped" .
+
+arbora:ClientContractMachine_Event_reconcile_start a owl:Class ;
+    rdfs:subClassOf arbora:ContractEvent ;
+    :storedForm "reconcile_start" .
+
+arbora:ClientContractMachine_Event_reconcile_ok a owl:Class ;
+    rdfs:subClassOf arbora:ContractEvent ;
+    :storedForm "reconcile_ok" .
+
+arbora:ClientContractMachine_Event_reconcile_err a owl:Class ;
+    rdfs:subClassOf arbora:ContractEvent ;
+    :storedForm "reconcile_err" .
+
+arbora:ClientContractMachine_Event_interval_elapsed a owl:Class ;
+    rdfs:subClassOf arbora:ContractEvent ;
+    :storedForm "interval_elapsed" .
+
+arbora:ClientContractMachine_Event_retry_elapsed a owl:Class ;
+    rdfs:subClassOf arbora:ContractEvent ;
+    :storedForm "retry_elapsed" .
+
+arbora:ClientContractMachine_Event_stop a owl:Class ;
+    rdfs:subClassOf arbora:ContractEvent ;
+    :storedForm "stop" .
+
+arbora:ContractMatches a owl:Class ;
+    rdfs:subClassOf arbora:ContractGuard ;
+    :storedForm "contract_matches" .
+
+arbora:ClientContractMachine_C01 a owl:Class ;
+    rdfs:subClassOf arbora:ContractTransition ;
+    :fromState arbora:ContractUnchecked ;
+    :toState arbora:ContractReconciling ;
+    :firedBy arbora:ClientContractMachine_Event_reconcile_start .
+
+arbora:ClientContractMachine_C02 a owl:Class ;
+    rdfs:subClassOf arbora:ContractTransition ;
+    :fromState arbora:ContractReconciling ;
+    :toState arbora:ContractConverged ;
+    :firedBy arbora:ClientContractMachine_Event_reconcile_ok ;
+    :guardedBy arbora:ContractMatches .
+
+arbora:ClientContractMachine_C03 a owl:Class ;
+    rdfs:subClassOf arbora:ContractTransition ;
+    :fromState arbora:ContractReconciling ;
+    :toState arbora:ContractDegraded ;
+    :firedBy arbora:ClientContractMachine_Event_reconcile_err .
+
+arbora:ClientContractMachine_C04 a owl:Class ;
+    rdfs:subClassOf arbora:ContractTransition ;
+    :fromState arbora:ContractConverged ;
+    :toState arbora:ContractReconciling ;
+    :firedBy arbora:ClientContractMachine_Event_interval_elapsed .
+
+arbora:ClientContractMachine_C05 a owl:Class ;
+    rdfs:subClassOf arbora:ContractTransition ;
+    :fromState arbora:ContractDegraded ;
+    :toState arbora:ContractReconciling ;
+    :firedBy arbora:ClientContractMachine_Event_retry_elapsed .
+
+arbora:ClientContractMachine_C06 a owl:Class ;
+    rdfs:subClassOf arbora:ContractTransition ;
+    :fromState arbora:ContractUnchecked ;
+    :toState arbora:ContractStopped ;
+    :firedBy arbora:ClientContractMachine_Event_stop .
+
+arbora:ClientContractMachine_C07 a owl:Class ;
+    rdfs:subClassOf arbora:ContractTransition ;
+    :fromState arbora:ContractReconciling ;
+    :toState arbora:ContractStopped ;
+    :firedBy arbora:ClientContractMachine_Event_stop .
+
+arbora:ClientContractMachine_C08 a owl:Class ;
+    rdfs:subClassOf arbora:ContractTransition ;
+    :fromState arbora:ContractConverged ;
+    :toState arbora:ContractStopped ;
+    :firedBy arbora:ClientContractMachine_Event_stop .
+
+arbora:ClientContractMachine_C09 a owl:Class ;
+    rdfs:subClassOf arbora:ContractTransition ;
+    :fromState arbora:ContractDegraded ;
+    :toState arbora:ContractStopped ;
+    :firedBy arbora:ClientContractMachine_Event_stop .

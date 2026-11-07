@@ -12,7 +12,7 @@ from agent_connector_sdk.mcp.network import build_network_serving_config
 
 from arbora.content import register_installed_content
 from arbora.core.settings import setting
-from arbora.identity.ports import BrowserBoundaryFactory
+from arbora.identity.ports import BrowserBoundaryFactory, IdentityLifecycle
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import (
     install_gateway_application,
@@ -248,6 +248,7 @@ def mcp_server(
     *,
     invocation: HostedInvocation | None = None,
     browser_boundary_factory: BrowserBoundaryFactory | None = None,
+    identity_lifecycle: IdentityLifecycle | None = None,
 ) -> None:
     """``arbora`` MCP server entry point (registered as console_scripts).
 
@@ -348,6 +349,9 @@ def mcp_server(
     runtime._PROCESS_SESSION = bootstrap_session if transport == "stdio" else None
     runtime.set_process_session(runtime._PROCESS_SESSION)
     runtime._start_process_authority_supervisor(bootstrap_session)
+    if identity_lifecycle is not None:
+        # ARBORA-IDENTITY-R030.4: arbora reconciles its own OAuth clients.
+        identity_lifecycle.start()
     # Readiness probes the live fleet/goal authority, which is a real graph read
     # and therefore needs a bound session. `runtime._PROCESS_SESSION` is deliberately
     # None on network transports (it is a stdio fallback, and must not become a
@@ -496,6 +500,8 @@ def mcp_server(
         runtime._PROCESS_SESSION = None
         runtime.set_process_session(None)
         runtime._stop_process_authority_supervisor(close_lease=True)
+        if identity_lifecycle is not None:
+            identity_lifecycle.stop()
         runtime._release_readiness_authority(readiness_authority_owner)
         # Best-effort teardown of any lazily-mounted fleet children.
         if fleet_mux is not None:

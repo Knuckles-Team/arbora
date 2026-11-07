@@ -264,6 +264,13 @@ No fixture or native lease JSON establishes factory or operation authority.
 | T-ARBORA-IDENTITY-R030.1 | ARBORA-IDENTITY-R030.1 | Test: `tests/identity/test_clients_enroll.py::test_enroll_stores_secret_in_vault_and_prints_none` and `::test_existing_name_refuses_without_change`. |
 | T-ARBORA-IDENTITY-R030.2 | ARBORA-IDENTITY-R030.2 | Test: `tests/identity/test_arbora_token.py::test_token_is_cached_until_near_expiry_and_stderr_is_clean`. |
 | T-ARBORA-IDENTITY-R030.3 | ARBORA-IDENTITY-R030.3 | Test: `tests/identity/test_protected_resource_metadata.py::test_unauthenticated_request_points_at_metadata`. |
+| T-ARBORA-IDENTITY-R030.4 | ARBORA-IDENTITY-R030.4 | Test: `tests/identity/test_client_contract_served.py::test_deleted_native_client_is_recreated_and_readiness_follows`. A fake identity provider admin interface loses the native client. The next interval recreates it with the declared redirect URIs and default scopes. `/health/ready` reports `identity: degraded` until it does, then `identity: ready`. |
+| T-ARBORA-IDENTITY-R030.4.1 | ARBORA-IDENTITY-R030.4.1 | Test: `tests/identity/test_client_contract.py::test_native_client_is_public_pkce_with_declared_scopes` and `::test_render_is_idempotent_and_touches_only_declared_items` (L1). |
+| T-ARBORA-IDENTITY-R030.4.2 | ARBORA-IDENTITY-R030.4.2 | Test: `tests/identity/test_client_contract_machine.py::test_legal_edge` (L1), one parameter id per edge `c01` to `c09`. `::test_every_illegal_pair_is_refused` (L1) covers the 21 pairs and the failed `contract_matches` guard, and asserts the code and the three fields. `::test_backoff_from_degraded_and_interval_from_converged` (L2) uses a fake clock and a seeded generator. |
+| T-ARBORA-IDENTITY-R030.4.3 | ARBORA-IDENTITY-R030.4.3 | Test: `tests/observability/test_identity_contract_readiness.py::test_identity_check_follows_contract_state` (L2). |
+| T-ARBORA-IDENTITY-R030.4.4 | ARBORA-IDENTITY-R030.4.4 | Test: `tests/identity/test_client_contract_served.py::test_degraded_contract_keeps_registration_in_metadata` (L3). |
+| T-ARBORA-IDENTITY-R030.4.5 | ARBORA-IDENTITY-R030.4.5 | Test: `tests/ontology/test_client_contract_machine_description.py::test_classes_roll_up_to_the_core_classes` (L2). |
+| T-ARBORA-IDENTITY-R030.4.6 | ARBORA-IDENTITY-R030.4.6 | Test: `tests/identity/test_client_contract.py::test_reconcile_command_prints_state_and_exit_code` (L2). |
 
 ## Entries added for rows without a prior entry
 
@@ -422,3 +429,10 @@ Each test below is named by its requirement row, has no running implementation y
 | PT-093 | ARBORA-IDENTITY-R027.5 | `tests/observability/test_runtime_health.py::test_readiness_reason_follows_lease_state_with_no_separate_global` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-094 | ARBORA-IDENTITY-R027.6 | `tests/ontology/test_credential_lease_machine_description.py::test_every_state_and_transition_rolls_up_to_the_core_classes` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-095 | ARBORA-IDENTITY-R027.7 | `tests/mcp_server/test_process_authority_renewal.py::test_supervisor_drives_the_lease_through_an_outage_and_ready_follows` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-096 | ARBORA-IDENTITY-R030.4 | `tests/identity/test_client_contract_served.py::test_deleted_native_client_is_recreated_and_readiness_follows` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-097 | ARBORA-IDENTITY-R030.4.1 | `tests/identity/test_client_contract.py::test_native_client_is_public_pkce_with_declared_scopes` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-098 | ARBORA-IDENTITY-R030.4.2 | `tests/identity/test_client_contract_machine.py::test_legal_edge`, one parameter id per edge `c01` to `c09` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-099 | ARBORA-IDENTITY-R030.4.3 | `tests/observability/test_identity_contract_readiness.py::test_identity_check_follows_contract_state` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-100 | ARBORA-IDENTITY-R030.4.4 | `tests/identity/test_client_contract_served.py::test_degraded_contract_keeps_registration_in_metadata` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-101 | ARBORA-IDENTITY-R030.4.5 | `tests/ontology/test_client_contract_machine_description.py::test_classes_roll_up_to_the_core_classes` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-102 | ARBORA-IDENTITY-R030.4.6 | `tests/identity/test_client_contract.py::test_reconcile_command_prints_state_and_exit_code` | The result the row states holds. | Each refusal the row states is returned. |
