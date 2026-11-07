@@ -27,7 +27,7 @@ def test_layout_reuses_the_shared_parts(skill_root: Path, tmp_path: Path) -> Non
     grok = _tree("grok", skill_root, tmp_path)
     claude = _tree("claude-code", skill_root, tmp_path)
     for rel in (
-        "skills/arbora-door/SKILL.md",
+        "skills/canopy/SKILL.md",
         "commands/handoff.md",
         "commands/resume.md",
     ):

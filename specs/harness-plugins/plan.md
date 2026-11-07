@@ -91,7 +91,7 @@ flowchart LR
 
 `BundleSpec` is pure data. It holds the door MCP entry, the skill set, the agent set, the command set and the hook intents. A hook intent is an abstract pair: a lifecycle point and a workstream operation. The renderer maps each lifecycle point to the event name of its harness. The core never names a harness file.
 
-The skill set is the door skills of `US-CONTENT-R007`, `arbora-door` and `session-handoff`, plus the declared list `harness_plugins.skills`. The default list is empty. The developer reaches every other skill through `find` and the served skill resources. This keeps the harness context small.
+The skill set is the door skills of `US-CONTENT-R007`, `canopy` and `session-handoff`, plus the declared list `harness_plugins.skills`. The default list is empty. The developer reaches every other skill through `find` and the served skill resources. This keeps the harness context small.
 
 The agent set holds one definition per registered agent profile that the caller may run. Each definition delegates through `act` with `agents.run`. The bundle copies no MCP prompt. Each harness lists the served prompts of the door itself.
 

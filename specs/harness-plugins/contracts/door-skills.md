@@ -7,7 +7,7 @@ Consumer: arbora ARBORA-HARNESS-PLUGINS-R001.2
 
 ## Wire shape
 
-The content package holds `skills/arbora-door/SKILL.md` and `skills/session-handoff/SKILL.md`. Each frontmatter carries `name` equal to the folder name, at most 64 characters of lowercase letters, digits and hyphens. Each carries a one-line `description` of at most 1024 characters. Harness-specific keys appear only under `metadata`. The composer reads the folders through the SDK content convention and copies them unchanged. Every frontmatter passes the strictest agent contract as written, so no renderer transforms it.
+The content package holds `skills/canopy/SKILL.md` and `skills/session-handoff/SKILL.md`. Each frontmatter carries `name` equal to the folder name, at most 64 characters of lowercase letters, digits and hyphens. Each carries a one-line `description` of at most 1024 characters. Harness-specific keys appear only under `metadata`. The composer reads the folders through the SDK content convention and copies them unchanged. Every frontmatter passes the strictest agent contract as written, so no renderer transforms it.
 
 ## Refusal codes
 

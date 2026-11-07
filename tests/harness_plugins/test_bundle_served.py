@@ -64,7 +64,7 @@ def test_install_change_status_remove(home: Path, skill_root: Path) -> None:
             "plugin", "install", "--harness", harness, "--endpoint", ENDPOINT, env=env
         )
         assert done.returncode == 0, done.stderr
-    write_skill(skill_root, "arbora-door", "The door skill changed.")
+    write_skill(skill_root, "canopy", "The door skill changed.")
     status = arbora(
         "plugin", "status", "--harness", "claude-code", "--harness", "opencode", env=env
     )

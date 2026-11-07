@@ -41,7 +41,7 @@ def test_layout_matches_the_profile(skill_root: Path, tmp_path: Path) -> None:
         "commands/handoff.md",
         "commands/resume.md",
         "hooks/hooks.json",
-        "skills/arbora-door/SKILL.md",
+        "skills/canopy/SKILL.md",
         "skills/session-handoff/SKILL.md",
     ]
     manifest = json.loads((tree / ".claude-plugin/plugin.json").read_text())
