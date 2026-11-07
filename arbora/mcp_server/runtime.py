@@ -848,9 +848,12 @@ def _build_server(
             # Names and closed-vocabulary codes only: the route is
             # unauthenticated for kubelet.
             body["failing"] = failing
-            reason = readiness_reason()
-            if reason is not None:
-                body["reason"] = reason
+        # Derived from the process lease state (ARBORA-IDENTITY-R027.5); it is
+        # reported while the lease is Degraded, Expired or Revoked, even
+        # before a Degraded lease expires and the engine check fails.
+        reason = readiness_reason()
+        if reason is not None:
+            body["reason"] = reason
         not_served = not_served_authorities(report)
         if not_served:
             # Names only: authorities this release does not serve (not applicable).

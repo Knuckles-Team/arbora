@@ -17,6 +17,7 @@ from arbora.api.registry import Surface
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import NativeGatewayApplication
 from arbora.mcp_server.hosted_invocation import HostedInvocation
+from arbora.security.actor_context import LeaseEvent
 from tests.a2a.test_application import Authority, Router
 from tests.a2a.test_operation_bridge import fixture, post, session
 from tests.api.test_invoke_contract import operation
@@ -120,7 +121,8 @@ def test_native_registration_refuses_stale_or_unverified_caller(monkeypatch, fai
             }
         )
         caller = asyncio.run(value.authenticator.authenticate(request))
-        caller.session.actor.credential_lease.renew(1)
+        lease = caller.session.actor.credential_lease
+        lease.apply(LeaseEvent.TICK, now=lease.expires_at)
     response = post(
         app,
         token="unverified"  # sanitizer:ignore - synthetic ASGI credential

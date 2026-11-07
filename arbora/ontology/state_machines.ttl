@@ -1,0 +1,293 @@
+# Explicit state machines served by arbora (organization constitution Article XXXI).
+#
+# Every class rolls up to the medulla core state-machine vocabulary
+# (MEDULLA-ORCH-VOCAB-R811) by rdfs:subClassOf only; this file has no
+# owl:imports. IRIs follow the core scheme: a machine is <Name>Machine, an
+# event <Name>Machine_Event_<event>, a transition <Name>Machine_<edge id>.
+# tests/ontology/ compares each machine here with its Python enums and edge table.
+
+@prefix : <http://knuckles.team/kg#> .
+@prefix arbora: <http://knuckles.team/kg/arbora#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# ---------------------------------------------------------------------------
+# Process credential lease (ARBORA-IDENTITY-R027.6).
+# Python: LeaseState, LeaseEvent, LEASE_EDGES in arbora/security/actor_context.py.
+# ---------------------------------------------------------------------------
+
+arbora:CredentialLeaseMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Process credential lease" ;
+    rdfs:comment "The lease over the served process's client-credentials authority. Renewal starts at half the token lifetime; a failed renewal degrades with backoff; an expired lease recovers to Live when the identity provider answers with an unchanged identity." ;
+    :initialState arbora:LeaseLive ;
+    :hasState arbora:LeaseLive ,
+        arbora:LeaseRenewDue ,
+        arbora:LeaseRenewing ,
+        arbora:LeaseDegraded ,
+        arbora:LeaseExpired ,
+        arbora:LeaseRevoked ,
+        arbora:LeaseStopped .
+
+arbora:LeaseState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Credential lease state" .
+
+arbora:LeaseTerminalState a owl:Class ;
+    rdfs:subClassOf arbora:LeaseState, :TerminalState ;
+    rdfs:label "Credential lease terminal state" .
+
+arbora:LeaseTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Credential lease transition" .
+
+arbora:LeaseEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Credential lease event" .
+
+arbora:LeaseGuard a owl:Class ;
+    rdfs:subClassOf :TransitionGuard ;
+    rdfs:label "Credential lease guard" .
+
+arbora:LeaseTransitionRefused a owl:Class ;
+    rdfs:subClassOf :TransitionRefused ;
+    rdfs:label "Credential lease transition refused" ;
+    rdfs:comment "IllegalLeaseTransition, code LEASE_TRANSITION_ILLEGAL, fields machine (credential_lease), from_state and event. The lease state does not change." .
+
+arbora:LeaseLive a owl:Class ;
+    rdfs:subClassOf arbora:LeaseState ;
+    :storedForm "live" .
+
+arbora:LeaseRenewDue a owl:Class ;
+    rdfs:subClassOf arbora:LeaseState ;
+    :storedForm "renew_due" .
+
+arbora:LeaseRenewing a owl:Class ;
+    rdfs:subClassOf arbora:LeaseState ;
+    :storedForm "renewing" .
+
+arbora:LeaseDegraded a owl:Class ;
+    rdfs:subClassOf arbora:LeaseState ;
+    :storedForm "degraded" .
+
+arbora:LeaseExpired a owl:Class ;
+    rdfs:subClassOf arbora:LeaseState ;
+    :storedForm "expired" .
+
+arbora:LeaseRevoked a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTerminalState ;
+    :storedForm "revoked" .
+
+arbora:LeaseStopped a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTerminalState ;
+    :storedForm "stopped" .
+
+arbora:CredentialLeaseMachine_Event_tick a owl:Class ;
+    rdfs:subClassOf arbora:LeaseEvent ;
+    :storedForm "tick" .
+
+arbora:CredentialLeaseMachine_Event_renew_start a owl:Class ;
+    rdfs:subClassOf arbora:LeaseEvent ;
+    :storedForm "renew_start" .
+
+arbora:CredentialLeaseMachine_Event_idp_ok a owl:Class ;
+    rdfs:subClassOf arbora:LeaseEvent ;
+    :storedForm "idp_ok" .
+
+arbora:CredentialLeaseMachine_Event_idp_err a owl:Class ;
+    rdfs:subClassOf arbora:LeaseEvent ;
+    :storedForm "idp_err" .
+
+arbora:CredentialLeaseMachine_Event_identity_changed a owl:Class ;
+    rdfs:subClassOf arbora:LeaseEvent ;
+    :storedForm "identity_changed" .
+
+arbora:CredentialLeaseMachine_Event_revoke a owl:Class ;
+    rdfs:subClassOf arbora:LeaseEvent ;
+    :storedForm "revoke" .
+
+arbora:CredentialLeaseMachine_Event_stop a owl:Class ;
+    rdfs:subClassOf arbora:LeaseEvent ;
+    :storedForm "stop" .
+
+arbora:AtHalfLifetime a owl:Class ;
+    rdfs:subClassOf arbora:LeaseGuard ;
+    :storedForm "at_half_lifetime" .
+
+arbora:BeforeExpiry a owl:Class ;
+    rdfs:subClassOf arbora:LeaseGuard ;
+    :storedForm "before_expiry" .
+
+arbora:AtExpiry a owl:Class ;
+    rdfs:subClassOf arbora:LeaseGuard ;
+    :storedForm "at_expiry" .
+
+arbora:IdentityUnchanged a owl:Class ;
+    rdfs:subClassOf arbora:LeaseGuard ;
+    :storedForm "identity_unchanged" .
+
+arbora:CredentialLeaseMachine_live-tick-expired a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseLive ;
+    :toState arbora:LeaseExpired ;
+    :firedBy arbora:CredentialLeaseMachine_Event_tick ;
+    :guardedBy arbora:AtExpiry .
+
+arbora:CredentialLeaseMachine_live-tick-renewdue a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseLive ;
+    :toState arbora:LeaseRenewDue ;
+    :firedBy arbora:CredentialLeaseMachine_Event_tick ;
+    :guardedBy arbora:AtHalfLifetime .
+
+arbora:CredentialLeaseMachine_renewdue-renew_start-renewing a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseRenewDue ;
+    :toState arbora:LeaseRenewing ;
+    :firedBy arbora:CredentialLeaseMachine_Event_renew_start .
+
+arbora:CredentialLeaseMachine_renewing-idp_ok-live a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseRenewing ;
+    :toState arbora:LeaseLive ;
+    :firedBy arbora:CredentialLeaseMachine_Event_idp_ok ;
+    :guardedBy arbora:IdentityUnchanged .
+
+arbora:CredentialLeaseMachine_renewing-idp_err-degraded a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseRenewing ;
+    :toState arbora:LeaseDegraded ;
+    :firedBy arbora:CredentialLeaseMachine_Event_idp_err ;
+    :guardedBy arbora:BeforeExpiry .
+
+arbora:CredentialLeaseMachine_renewing-idp_err-expired a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseRenewing ;
+    :toState arbora:LeaseExpired ;
+    :firedBy arbora:CredentialLeaseMachine_Event_idp_err ;
+    :guardedBy arbora:AtExpiry .
+
+arbora:CredentialLeaseMachine_degraded-idp_err-degraded a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseDegraded ;
+    :toState arbora:LeaseDegraded ;
+    :firedBy arbora:CredentialLeaseMachine_Event_idp_err .
+
+arbora:CredentialLeaseMachine_degraded-idp_ok-live a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseDegraded ;
+    :toState arbora:LeaseLive ;
+    :firedBy arbora:CredentialLeaseMachine_Event_idp_ok ;
+    :guardedBy arbora:IdentityUnchanged .
+
+arbora:CredentialLeaseMachine_expired-idp_err-expired a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseExpired ;
+    :toState arbora:LeaseExpired ;
+    :firedBy arbora:CredentialLeaseMachine_Event_idp_err .
+
+arbora:CredentialLeaseMachine_expired-idp_ok-live a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseExpired ;
+    :toState arbora:LeaseLive ;
+    :firedBy arbora:CredentialLeaseMachine_Event_idp_ok ;
+    :guardedBy arbora:IdentityUnchanged .
+
+arbora:CredentialLeaseMachine_renewdue-tick-expired a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseRenewDue ;
+    :toState arbora:LeaseExpired ;
+    :firedBy arbora:CredentialLeaseMachine_Event_tick ;
+    :guardedBy arbora:AtExpiry .
+
+arbora:CredentialLeaseMachine_renewing-tick-expired a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseRenewing ;
+    :toState arbora:LeaseExpired ;
+    :firedBy arbora:CredentialLeaseMachine_Event_tick ;
+    :guardedBy arbora:AtExpiry .
+
+arbora:CredentialLeaseMachine_degraded-tick-expired a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseDegraded ;
+    :toState arbora:LeaseExpired ;
+    :firedBy arbora:CredentialLeaseMachine_Event_tick ;
+    :guardedBy arbora:AtExpiry .
+
+arbora:CredentialLeaseMachine_renewing-identity_changed-revoked a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseRenewing ;
+    :toState arbora:LeaseRevoked ;
+    :firedBy arbora:CredentialLeaseMachine_Event_identity_changed .
+
+arbora:CredentialLeaseMachine_degraded-identity_changed-revoked a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseDegraded ;
+    :toState arbora:LeaseRevoked ;
+    :firedBy arbora:CredentialLeaseMachine_Event_identity_changed .
+
+arbora:CredentialLeaseMachine_expired-identity_changed-revoked a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseExpired ;
+    :toState arbora:LeaseRevoked ;
+    :firedBy arbora:CredentialLeaseMachine_Event_identity_changed .
+
+arbora:CredentialLeaseMachine_live-revoke-revoked a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseLive ;
+    :toState arbora:LeaseRevoked ;
+    :firedBy arbora:CredentialLeaseMachine_Event_revoke .
+
+arbora:CredentialLeaseMachine_renewdue-revoke-revoked a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseRenewDue ;
+    :toState arbora:LeaseRevoked ;
+    :firedBy arbora:CredentialLeaseMachine_Event_revoke .
+
+arbora:CredentialLeaseMachine_renewing-revoke-revoked a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseRenewing ;
+    :toState arbora:LeaseRevoked ;
+    :firedBy arbora:CredentialLeaseMachine_Event_revoke .
+
+arbora:CredentialLeaseMachine_degraded-revoke-revoked a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseDegraded ;
+    :toState arbora:LeaseRevoked ;
+    :firedBy arbora:CredentialLeaseMachine_Event_revoke .
+
+arbora:CredentialLeaseMachine_expired-revoke-revoked a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseExpired ;
+    :toState arbora:LeaseRevoked ;
+    :firedBy arbora:CredentialLeaseMachine_Event_revoke .
+
+arbora:CredentialLeaseMachine_live-stop-stopped a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseLive ;
+    :toState arbora:LeaseStopped ;
+    :firedBy arbora:CredentialLeaseMachine_Event_stop .
+
+arbora:CredentialLeaseMachine_renewdue-stop-stopped a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseRenewDue ;
+    :toState arbora:LeaseStopped ;
+    :firedBy arbora:CredentialLeaseMachine_Event_stop .
+
+arbora:CredentialLeaseMachine_renewing-stop-stopped a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseRenewing ;
+    :toState arbora:LeaseStopped ;
+    :firedBy arbora:CredentialLeaseMachine_Event_stop .
+
+arbora:CredentialLeaseMachine_degraded-stop-stopped a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseDegraded ;
+    :toState arbora:LeaseStopped ;
+    :firedBy arbora:CredentialLeaseMachine_Event_stop .
+
+arbora:CredentialLeaseMachine_expired-stop-stopped a owl:Class ;
+    rdfs:subClassOf arbora:LeaseTransition ;
+    :fromState arbora:LeaseExpired ;
+    :toState arbora:LeaseStopped ;
+    :firedBy arbora:CredentialLeaseMachine_Event_stop .
