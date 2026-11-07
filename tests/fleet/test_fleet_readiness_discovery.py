@@ -16,6 +16,7 @@ import pytest
 
 from arbora.api.mcp.discovery import find_visible
 from arbora.api.policy import PolicyGate
+from arbora.fleet.declarations import Declarations
 from arbora.mcp_server.fleet_composition import LateFleetGateway
 
 
@@ -188,7 +189,9 @@ def test_onboarding_failure_names_step_and_engine_code(caplog) -> None:
     async def refused(self: Any, endpoint: Any, pack: Any) -> bool:
         raise EngineResponseError("INTERNAL", "unclassified engine refusal")
 
-    onboarding = FleetOnboarding(engine=None, session=None, capture=capture)
+    onboarding = FleetOnboarding(
+        engine=None, session=None, capture=capture, declarations=Declarations()
+    )
     endpoint = FleetEndpoint(name="webarchiver-mcp", url="http://example.test/mcp")
     report = OnboardingReport()
 
@@ -199,7 +202,7 @@ def test_onboarding_failure_names_step_and_engine_code(caplog) -> None:
     module_surface = module.pack_surface_report
     module.pack_surface_report = lambda pack: {}
     module_remember = module._remember_declaration
-    module._remember_declaration = lambda name, pack: None  # type: ignore[assignment]
+    module._remember_declaration = lambda declarations, name, pack: None  # type: ignore[assignment]
     module_auth = module._child_auth
     module._child_auth = lambda: None
     try:

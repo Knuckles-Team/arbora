@@ -12,6 +12,7 @@ import pytest
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.research import _require_declared_mappings
 from arbora.fleet import declarations
+from arbora.fleet.declarations import Declarations
 from arbora.fleet.onboarding import _PackResourceSession, _remember_declaration
 
 
@@ -79,10 +80,11 @@ def test_sdk_pack_declaration_is_read_from_its_archive_section() -> None:
         e for e in pack.archive.entries if str(e.uri) == "connector://resources"
     ]
     assert isinstance(entry.body, PackSection)
-    declarations.remember("web-mcp", None)
-    _remember_declaration("web-mcp", pack)
-    assert declarations.declaration_of("web-mcp") == declared
-    declarations.remember("web-mcp", None)
+    held = Declarations()
+    _remember_declaration(held, "web-mcp", pack)
+    assert held.declaration_of("web-mcp") == declared
+    held.remember("web-mcp", None)
+    assert held.declaration_of("web-mcp") is None
 
 
 @pytest.mark.spec("ARBORA-FLEET-R041.15")
@@ -98,16 +100,18 @@ def test_a_section_that_does_not_match_its_digest_is_refused() -> None:
 
 @pytest.mark.spec("ARBORA-FLEET-R041.13")
 def test_research_mappings_resolve_from_the_captured_declaration() -> None:
+    held = Declarations()
     _remember_declaration(
-        "web-mcp", _pack({"schema_mappings": {"Document": {}, "Chunk": {}}})
+        held, "web-mcp", _pack({"schema_mappings": {"Document": {}, "Chunk": {}}})
     )
-    _require_declared_mappings("web-mcp")  # both declared
-    _remember_declaration("web-mcp", _pack({"schema_mappings": {"Document": {}}}))
+    _require_declared_mappings(held, "web-mcp")  # both declared
+    _remember_declaration(held, "web-mcp", _pack({"schema_mappings": {"Document": {}}}))
     with pytest.raises(OperationRefused):
-        _require_declared_mappings("web-mcp")
-    declarations.remember("web-mcp", None)
-    _require_declared_mappings("web-mcp")  # not captured: the engine decides
-    assert declarations.declared_mapping("web-mcp", "Document") is None
+        _require_declared_mappings(held, "web-mcp")
+    held.remember("web-mcp", None)
+    _require_declared_mappings(held, "web-mcp")  # not captured: the engine decides
+    _require_declared_mappings(None, "web-mcp")  # no fleet: the engine decides
+    assert held.declared_mapping("web-mcp", "Document") is None
 
 
 @pytest.mark.spec("ARBORA-FLEET-R041.15")

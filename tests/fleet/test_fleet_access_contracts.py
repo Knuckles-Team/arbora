@@ -10,6 +10,8 @@ from dataclasses import dataclass
 import pytest
 
 from arbora.fleet import access_contracts as ac
+from arbora.fleet.declarations import Declarations
+from arbora.fleet.state import FleetState
 from arbora.fleet.virtual_catalog import VirtualCatalog
 
 CLS = "https://example.org/onto#Ticket"
@@ -240,14 +242,14 @@ def test_repeat_pass_adds_no_duplicate(fake_sdk) -> None:
     assert len(catalog.mappings) == 2
 
 
-def test_process_catalog_bootstrap_is_explicit_and_singleton(monkeypatch) -> None:
-    catalog = VirtualCatalog()
-    monkeypatch.setattr(ac, "_CATALOG", [])
+def test_each_fleet_state_owns_one_virtual_catalog() -> None:
+    """The catalog is a FleetState field (ARBORA-HOST-R039.2), not a module slot."""
+    first, second = FleetState(), FleetState()
 
-    assert ac.bootstrap_fleet_virtual_catalog(catalog) is catalog
-    assert ac.fleet_virtual_catalog() is catalog
-    with pytest.raises(RuntimeError, match="already bound"):
-        ac.bootstrap_fleet_virtual_catalog(VirtualCatalog())
+    assert isinstance(first.virtual_catalog, VirtualCatalog)
+    assert first.virtual_catalog is not second.virtual_catalog
+    assert not hasattr(ac, "_CATALOG")
+    assert not hasattr(ac, "bootstrap_fleet_virtual_catalog")
 
 
 def test_source_policy_requires_admitted_read_reference() -> None:
@@ -417,6 +419,7 @@ def test_onboarding_registers_after_import(fake_sdk, monkeypatch) -> None:
         session=session,
         capture=capture,
         virtual_catalog=catalog,
+        declarations=Declarations(),
     )
     with use_session(session):
         asyncio.run(
@@ -530,6 +533,7 @@ def test_onboarding_passes_the_operator_mass_withdrawal_decision(
         capture=capture,
         virtual_catalog=VirtualCatalog(),
         allow_mass_withdrawal=approved,
+        declarations=Declarations(),
     )
     with use_session(session):
         asyncio.run(

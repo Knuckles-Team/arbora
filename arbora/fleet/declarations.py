@@ -17,15 +17,10 @@ from agent_connector_sdk.artifacts.resource_descriptor import RESOURCES_URI
 
 __all__ = [
     "RESOURCES_URI",
-    "declaration_of",
-    "declared_mapping",
+    "Declarations",
     "entry_bytes",
     "parse_declaration",
-    "remember",
 ]
-
-_LOCK = threading.Lock()
-_DECLARATIONS: dict[str, Mapping[str, Any]] = {}
 
 
 def entry_bytes(archive: Any, entry: Any) -> bytes:
@@ -57,27 +52,36 @@ def parse_declaration(body: str | bytes) -> Mapping[str, Any]:
     return value
 
 
-def remember(connector: str, declaration: Mapping[str, Any] | None) -> None:
-    """Keep the latest captured declaration; ``None`` forgets it."""
-    with _LOCK:
-        if declaration is None:
-            _DECLARATIONS.pop(connector, None)
-        else:
-            _DECLARATIONS[connector] = declaration
+class Declarations:
+    """The latest captured declaration per connector, for one fleet (ARBORA-HOST-R039.2)."""
 
+    __slots__ = ("_declarations", "_lock")
 
-def declaration_of(connector: str) -> Mapping[str, Any] | None:
-    with _LOCK:
-        return _DECLARATIONS.get(connector)
+    def __init__(self) -> None:
+        self._declarations: dict[str, Mapping[str, Any]] = {}
+        self._lock = threading.Lock()
 
+    def remember(self, connector: str, declaration: Mapping[str, Any] | None) -> None:
+        """Keep the latest captured declaration; ``None`` forgets it."""
+        with self._lock:
+            if declaration is None:
+                self._declarations.pop(connector, None)
+            else:
+                self._declarations[connector] = declaration
 
-def declared_mapping(connector: str, record_type: str) -> Mapping[str, Any] | None:
-    """The ontology mapping the connector declares for ``record_type``.
+    def declaration_of(self, connector: str) -> Mapping[str, Any] | None:
+        with self._lock:
+            return self._declarations.get(connector)
 
-    Returns ``None`` when the connector declares no such mapping. Callers
-    distinguish "not captured yet" with :func:`declaration_of`.
-    """
-    declaration = declaration_of(connector)
-    mappings = (declaration or {}).get("schema_mappings") or {}
-    found = mappings.get(record_type)
-    return found if isinstance(found, Mapping) else None
+    def declared_mapping(
+        self, connector: str, record_type: str
+    ) -> Mapping[str, Any] | None:
+        """The ontology mapping the connector declares for ``record_type``.
+
+        Returns ``None`` when the connector declares no such mapping. Callers
+        distinguish "not captured yet" with :meth:`declaration_of`.
+        """
+        declaration = self.declaration_of(connector)
+        mappings = (declaration or {}).get("schema_mappings") or {}
+        found = mappings.get(record_type)
+        return found if isinstance(found, Mapping) else None

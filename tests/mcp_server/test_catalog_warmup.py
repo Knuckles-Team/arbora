@@ -10,6 +10,7 @@ from typing import Any
 
 import pytest
 
+from arbora.fleet.state import FleetState
 from arbora.mcp_server.catalog_warmup import CatalogWarmup
 
 
@@ -84,7 +85,10 @@ def test_boot_returns_while_the_catalog_composition_is_still_running(
     )
     began = time.monotonic()
     warmup = server._start_catalog_warmup(
-        object(), SimpleNamespace(actor=None), object(), object()
+        object(),
+        SimpleNamespace(actor=None),
+        object(),
+        SimpleNamespace(fleet=FleetState()),
     )
     assert time.monotonic() - began < 1.0
     state = catalog_warmup.catalog_state()
@@ -120,11 +124,11 @@ def test_the_warmup_composes_inside_its_own_client_scope(monkeypatch) -> None:
     monkeypatch.setattr(
         "arbora.fleet.onboarding.start_fleet_onboarding", lambda **_k: None
     )
-    monkeypatch.setattr(
-        "arbora.fleet.access_contracts.bootstrap_fleet_virtual_catalog", lambda: None
-    )
     warmup = server._start_catalog_warmup(
-        object(), SimpleNamespace(actor=None), object(), object()
+        object(),
+        SimpleNamespace(actor=None),
+        object(),
+        SimpleNamespace(fleet=FleetState()),
     )
     deadline = time.monotonic() + 5
     while warmup.state()["status"] != "ready" and time.monotonic() < deadline:
