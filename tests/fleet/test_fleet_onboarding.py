@@ -22,6 +22,7 @@ from arbora.api.contracts.session import GraphSession
 from arbora.deployment import production_ops
 from arbora.deployment.semantic_provisioning import ensure_server_registrations
 from arbora.fleet import onboarding
+from arbora.fleet.declarations import Declarations
 from arbora.fleet.onboarding import (
     RENEW_MARGIN_MS,
     FleetEndpoint,
@@ -195,7 +196,12 @@ def eg(monkeypatch: pytest.MonkeyPatch) -> _Registry:
 
 
 def _onboarding(registry: _Registry, capture: Any = _served_pack) -> FleetOnboarding:
-    return FleetOnboarding(engine=registry, session=_session(), capture=capture)
+    return FleetOnboarding(
+        engine=registry,
+        session=_session(),
+        capture=capture,
+        declarations=Declarations(),
+    )
 
 
 def _run_in_session(coro: Any) -> Any:
@@ -606,6 +612,7 @@ def test_boot_without_an_engine_starts_no_thread() -> None:
         session=_session(),
         multiplexer=_Mux({}),
         virtual_catalog=VirtualCatalog(),
+        declarations=Declarations(),
     )
 
     assert started is None
@@ -627,6 +634,7 @@ def test_bootstrap_passes_the_process_virtual_catalog_to_onboarding(
         session=_session(),
         multiplexer=_Mux({}),
         virtual_catalog=catalog,
+        declarations=Declarations(),
     )
 
     assert started is not None
@@ -651,6 +659,7 @@ async def test_native_source_approval_missing_stays_pending(
         engine=None,
         session=None,
         surfaces={"tickets-mcp": {}},
+        declarations=Declarations(),
     )
     decision = SourceApprovalDecision(
         connector="tickets-mcp",

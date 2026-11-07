@@ -11,6 +11,7 @@ import weakref
 from dataclasses import dataclass, field
 from typing import Any
 
+from arbora.fleet.declarations import Declarations
 from arbora.fleet.gateway_ops import ConfirmingTools
 from arbora.fleet.oauth_brokers import RemoteOAuthBrokers
 from arbora.fleet.plan_confirmation import PlanConfirmations
@@ -52,3 +53,4 @@ class FleetState:
     confirmations: PlanConfirmations = field(default_factory=PlanConfirmations)
     confirming_tools: ConfirmingTools = field(default_factory=ConfirmingTools)
     virtual_catalog: VirtualCatalog = field(default_factory=VirtualCatalog)
+    declarations: Declarations = field(default_factory=Declarations)

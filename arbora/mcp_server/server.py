@@ -183,6 +183,7 @@ def _served_invocation(
             "run_origins": host.runs.origins,
             "fleet_gateway": fleet,
             "fleet_virtual_catalog": host.fleet.virtual_catalog,
+            "fleet_declarations": host.fleet.declarations,
             "browser_control": dispatch_browser_operation,
             "current_plan_reader": NativeCurrentPlanReader(),
             "source_reader": NativeSourceReader(),
@@ -253,6 +254,7 @@ def _start_catalog_warmup(
                 session=session,
                 multiplexer=fleet_mux,
                 virtual_catalog=fleet_mux.fleet.virtual_catalog,
+                declarations=fleet_mux.fleet.declarations,
             )
 
     return start_catalog_warmup(compose, after=onboard)

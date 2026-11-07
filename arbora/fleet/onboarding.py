@@ -36,9 +36,9 @@ from typing import Any, Literal, cast
 
 from arbora.fleet.declarations import (
     RESOURCES_URI,
+    Declarations,
     entry_bytes,
     parse_declaration,
-    remember,
 )
 from arbora.fleet.surfaces import pack_surface_report
 from arbora.security.anonymous import session_context
@@ -263,7 +263,9 @@ def _capture_kinds() -> tuple[Any, ...]:
     )
 
 
-def _remember_declaration(connector: str, pack: Any) -> None:
+def _remember_declaration(
+    declarations: Declarations, connector: str, pack: Any
+) -> None:
     """Keep the pack's ``connector://resources`` declaration; absent clears it."""
 
     declaration = None
@@ -274,7 +276,7 @@ def _remember_declaration(connector: str, pack: Any) -> None:
             except (ValueError, TypeError) as exc:
                 logger.warning("%s: unreadable %s: %s", connector, RESOURCES_URI, exc)
             break
-    remember(connector, declaration)
+    declarations.remember(connector, declaration)
 
 
 def _child_auth() -> Any:
@@ -310,6 +312,8 @@ class FleetOnboarding:
 
     engine: Any
     session: Any
+    #: The fleet's captured ``connector://resources`` declarations.
+    declarations: Declarations
     #: Replaces :func:`capture_server_pack`, for example in tests.
     capture: Any = None
     #: The virtual catalog that access contracts register into.
@@ -385,7 +389,7 @@ class FleetOnboarding:
         with onboarding_step("capture"):
             pack = await capture(endpoint, auth=auth)
         self.surfaces[endpoint.name] = pack_surface_report(pack)
-        _remember_declaration(endpoint.name, pack)
+        _remember_declaration(self.declarations, endpoint.name, pack)
         with onboarding_step("ConnectorPackStatus"):
             changed = not await self.pack_unchanged(endpoint, pack)
         if changed:
@@ -1259,6 +1263,7 @@ def start_fleet_onboarding(
     session: Any,
     multiplexer: Any,
     virtual_catalog: Any,
+    declarations: Declarations,
     served_url: str | None = None,
 ) -> threading.Thread | None:
     """Start the background onboarding service; never raise into boot.
@@ -1275,7 +1280,10 @@ def start_fleet_onboarding(
         bind_scope(str(session.tenant), str(session.graph))
     service = FleetOnboardingService(
         onboarding=FleetOnboarding(
-            engine=engine, session=session, virtual_catalog=virtual_catalog
+            engine=engine,
+            session=session,
+            declarations=declarations,
+            virtual_catalog=virtual_catalog,
         ),
         multiplexer=multiplexer,
         served_url=configured_served_url() if served_url is None else served_url,

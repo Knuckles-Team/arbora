@@ -10,6 +10,7 @@ from dataclasses import dataclass
 import pytest
 
 from arbora.fleet import access_contracts as ac
+from arbora.fleet.declarations import Declarations
 from arbora.fleet.state import FleetState
 from arbora.fleet.virtual_catalog import VirtualCatalog
 
@@ -418,6 +419,7 @@ def test_onboarding_registers_after_import(fake_sdk, monkeypatch) -> None:
         session=session,
         capture=capture,
         virtual_catalog=catalog,
+        declarations=Declarations(),
     )
     with use_session(session):
         asyncio.run(
@@ -531,6 +533,7 @@ def test_onboarding_passes_the_operator_mass_withdrawal_decision(
         capture=capture,
         virtual_catalog=VirtualCatalog(),
         allow_mass_withdrawal=approved,
+        declarations=Declarations(),
     )
     with use_session(session):
         asyncio.run(

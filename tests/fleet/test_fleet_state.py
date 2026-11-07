@@ -10,6 +10,7 @@ import pytest
 from arbora.fleet import (
     access_contracts,
     child_resilience,
+    declarations,
     gateway_ops,
     multiplexer,
     plan_confirmation,
@@ -45,6 +46,7 @@ async def test_two_fleet_states_share_no_registry(tmp_path) -> None:
     assert first.confirmations is not second.confirmations
     assert first.confirming_tools is not second.confirming_tools
     assert first.virtual_catalog is not second.virtual_catalog
+    assert first.declarations is not second.declarations
     # The registries moved off the modules: no fleet global remains.
     for module, name in (
         (multiplexer, "_LIVE_MULTIPLEXERS"),
@@ -54,6 +56,7 @@ async def test_two_fleet_states_share_no_registry(tmp_path) -> None:
         (plan_confirmation, "_LOCKS"),
         (gateway_ops, "_CONFIRMING_TOOLS"),
         (access_contracts, "_CATALOG"),
+        (declarations, "_DECLARATIONS"),
     ):
         assert not hasattr(module, name), name
     assert not hasattr(child_resilience, "armed")
