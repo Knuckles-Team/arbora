@@ -192,3 +192,4 @@
 - [ ] T195 [US1] ARBORA-HOST-R040.2 One HostPorts record replaces the register calls. Size: M, 1 PR, 5 hours.
 - [ ] T196 [US1] ARBORA-HOST-R040.3 HTTP client and proxy builders use the collapsed functions. Size: S, 1 PR, 3 hours.
 - [ ] T197 [US1] ARBORA-HOST-R040.4 Fresh-install boot proof. Size: S, 1 PR, 2 hours.
+- [ ] T198 [US1] ARBORA-HOST-R041 The shared state-machine census runs in staged mode. Size: S, 1 PR, 1 h

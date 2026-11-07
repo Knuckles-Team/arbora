@@ -126,21 +126,6 @@ The emitted-client fixture is not this acceptance.
 
 | HO-QUERY-01 | ARBORA-OPS-R018.2.1 | `tests/api/test_query_ops.py`, `tests/api/test_registry_factory.py`, and `tests/api/test_resolve.py` prove provider method, scope and inner schema compatibility. They prove authorized fallback, verified caller graph binding and provider error propagation. Tests record the final transport; they do not qualify a live NL planner or compose the production schema validator. |
 
-## ARBORA-OPS-R025.2: Packaged generated artifacts
-
-Run the canonical generator twice with the pinned packaged EG contract and
-require `scripts/gen_api.py --check` to pass. Build the distribution from the
-real generated source. `tests/deployment/test_generated_client_wheel.py` installs
-that wheel without dependencies into an isolated target and imports its client
-from outside the checkout. It verifies registry resources, operation membership
-and matching response digests. Fixture-only generation cannot satisfy this test.
-
-Reference acceptance resolves every generated provider snapshot and OpenAPI
-reference. It compares resolved provider snapshots with the pinned source schema.
-Negative cases reject missing schema files, invalid pointers, traversal and remote
-references. Installed-wheel tests run outside the source tree without provider
-packages and exercise both schema lookup and invocation.
-
 ## ARBORA-OPS-R843 acceptance
 
 | Case | Row | Proving test and observation |
@@ -319,11 +304,6 @@ Record disabled-mode results separately; revision zero alone does not prove scaf
 
 R021.4.8.2 retains the installed root-child-grandchild and snapshot/update
 reconciliation matrix above. No test in the flat slice claims this acceptance.
-
-R026.2 tests in `tests/api/test_gen_api.py` cover boolean input narrowing and
-result widening, empty-schema equivalence and nested properties. They preserve
-the dictionary comparison policy and provider-digest review. An installed
-provider regression compares its unconstrained PlanMatViewGet result with itself.
 
 The R021.4.8.1 transition matrix covers all six step states against five task events.
 It checks each allowed transition and exact refusal through the public projection.
@@ -589,5 +569,5 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R911` | Test: `tests/api/test_atlas_ops.py::test_mapping_approve_needs_current_digest_and_plan_confirmation`, `tests/api/test_atlas_ops.py::test_credentials_are_references_only` and `tests/api/test_atlas_ops.py::test_discover_returns_a_job_id` (L2). |
 | `ARBORA-OPS-R912` | Test: `tests/api/test_agent_library_ops.py::test_create_update_delete_with_revision_conflict`, `tests/api/test_prompt_ops.py::test_rollback_appends_a_version_and_diff_matches` and `tests/api/test_goal_ops.py::test_cancel_goal_uses_the_run_machine` (L2). |
 | `ARBORA-OPS-R913` | Test: `tests/api/test_fleet_admin_ops.py::test_register_server_needs_plan_confirmation_and_hides_secret_values`, `tests/api/test_command_ops.py::test_commands_are_exactly_the_served_operations` and `tests/api/test_workflow_ops.py::test_run_returns_a_run_id_in_the_run_machine` (L2). |
-| `ARBORA-OPS-R914` | Test: `tests/api/test_ecosystem_widget_ops.py::test_each_widget_projects_rows_from_its_connector_call`, `tests/api/test_ecosystem_widget_ops.py::test_down_connector_gives_degraded_cached_rows` and `tests/api/test_media_transcribe.py::test_blob_ref_goes_to_asr` (L2). |
+| `ARBORA-OPS-R914` | Test: `tests/api/test_ecosystem_widget_ops.py::test_each_widget_projects_rows_from_its_connector_call`, `tests/api/test_ecosystem_widget_ops.py::test_down_connector_gives_degraded_cached_rows` and `tests/api/test_media_transcribe.py::test_blob_ref_goes_to_asr` (L2). (planned: the named test file does not exist yet) |
 | `ARBORA-OPS-R844.2` | Test: `tests/test_served_operation_api.py::test_node_and_batch_writes_mask_secret_bearing_properties` (L2). |
