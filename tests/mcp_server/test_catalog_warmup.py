@@ -10,6 +10,7 @@ from typing import Any
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.fleet.state import FleetState
 from arbora.mcp_server.catalog_warmup import CatalogWarmup
 
@@ -89,6 +90,7 @@ def test_boot_returns_while_the_catalog_composition_is_still_running(
         SimpleNamespace(actor=None),
         object(),
         SimpleNamespace(fleet=FleetState()),
+        ActionPolicies(),
     )
     assert time.monotonic() - began < 1.0
     state = catalog_warmup.catalog_state()
@@ -129,6 +131,7 @@ def test_the_warmup_composes_inside_its_own_client_scope(monkeypatch) -> None:
         SimpleNamespace(actor=None),
         object(),
         SimpleNamespace(fleet=FleetState()),
+        ActionPolicies(),
     )
     deadline = time.monotonic() + 5
     while warmup.state()["status"] != "ready" and time.monotonic() < deadline:

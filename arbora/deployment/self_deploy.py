@@ -21,6 +21,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from arbora.access.action_policy import ActionPolicies
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_SERVICE = "arbora"
@@ -51,6 +53,7 @@ def plan_redeploy(service: str = DEFAULT_SERVICE) -> dict[str, Any]:
 def execute_redeploy(
     service: str = DEFAULT_SERVICE,
     *,
+    action_policies: ActionPolicies,
     confirm: bool = False,
     engine: Any = None,
     restart_fn: Any = None,
@@ -70,12 +73,9 @@ def execute_redeploy(
 
     # 1. Governance gate (fail-closed).
     try:
-        from arbora.access.action_policy import (
-            ActionRequest,
-            get_action_policy,
-        )
+        from arbora.access.action_policy import ActionRequest
 
-        decision = get_action_policy(engine).decide(
+        decision = action_policies.for_engine(engine).decide(
             ActionRequest(
                 kind="restart_service",
                 target=service,

@@ -9,6 +9,7 @@ from typing import Any
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.api.invoke import invoke
 from arbora.api.invoke.steps import OpError, OpResult
 from arbora.api.mcp.caller import caller_from_session
@@ -151,6 +152,7 @@ def _composed_authority(
         pool=FakePool(client),
         graph=session.graph,
         process_session=lambda: session,
+        action_policies=ActionPolicies(),
         bindings={"browser_control": dispatch_browser_operation},
         fleet_effect=refused_fleet_effect,
     )

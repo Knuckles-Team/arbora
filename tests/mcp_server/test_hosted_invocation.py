@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from fastmcp import FastMCP
 
 from arbora.a2a.service import A2AService
+from arbora.access.policy_state import PolicyState
 from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.registry import Surface
 from arbora.fleet.state import FleetState
@@ -58,7 +59,10 @@ def mount_a2a(monkeypatch, value):
         served,
         invocation=value,
         host=SimpleNamespace(
-            runs=SimpleNamespace(a2a=A2AService(authority=Authority(), router=Router()))
+            runs=SimpleNamespace(
+                a2a=A2AService(authority=Authority(), router=Router())
+            ),
+            policy=PolicyState(),
         ),
     )
     return served.http_app()

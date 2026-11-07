@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.core.settings import ArboraConfig, runtime_config
 from arbora.mcp_server.host_context import build_host_context
 from arbora.mcp_server.task_plan import configured_task_plan
@@ -46,6 +47,7 @@ def test_config_json_setting_reaches_trusted_composition(monkeypatch, extra, exp
     monkeypatch.setattr(served_invocation, "compose_served_invocation", compose)
     served_invocation.served_invocation_from_settings(
         process_session=lambda: SimpleNamespace(graph="fixture"),
+        action_policies=ActionPolicies(),
         bindings={},
         fleet_effect=None,
     )

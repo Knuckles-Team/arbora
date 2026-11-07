@@ -39,6 +39,7 @@ import typing
 from functools import lru_cache
 from typing import Any
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.security.config_sensitivity import (
     configuration_key_is_sensitive,
     runtime_reference,
@@ -379,7 +380,9 @@ def _record_provenance(
         return None
 
 
-def _gate(env_key: str, reason: str) -> tuple[bool, dict[str, Any]]:
+def _gate(
+    env_key: str, reason: str, action_policies: ActionPolicies
+) -> tuple[bool, dict[str, Any]]:
     """ActionPolicy decision for a ``config.set``.
 
     Uses the same gate every other governed mutation goes through rather than
@@ -387,13 +390,10 @@ def _gate(env_key: str, reason: str) -> tuple[bool, dict[str, Any]]:
     an unavailable policy engine must never read as permission.
     """
     try:
-        from arbora.access.action_policy import (
-            ActionRequest,
-            get_action_policy,
-        )
+        from arbora.access.action_policy import ActionRequest
         from arbora.mcp_server import runtime
 
-        decision = get_action_policy(runtime._get_engine()).decide(
+        decision = action_policies.for_engine(runtime._get_engine()).decide(
             ActionRequest(
                 kind="config.set",
                 target=env_key,
@@ -419,7 +419,9 @@ def _gate(env_key: str, reason: str) -> tuple[bool, dict[str, Any]]:
     }
 
 
-def set_value(key: str, value: Any, *, reason: str = "") -> dict[str, Any]:
+def set_value(
+    key: str, value: Any, *, action_policies: ActionPolicies, reason: str = ""
+) -> dict[str, Any]:
     """Governed write of one ``AgentConfig`` field.
 
     Order matters and is not negotiable: resolve the key against the model →
@@ -448,7 +450,7 @@ def set_value(key: str, value: Any, *, reason: str = "") -> dict[str, Any]:
 
     validated = _validate_against_model(field_name, parsed)
 
-    allowed, decision = _gate(env_key, reason)
+    allowed, decision = _gate(env_key, reason, action_policies)
     if not allowed:
         return {
             "action": "set",
@@ -495,7 +497,12 @@ def set_value(key: str, value: Any, *, reason: str = "") -> dict[str, Any]:
 
 
 async def _dispatch_mutation(
-    action: str, *, key: str, value: Any, reason: str
+    action: str,
+    *,
+    key: str,
+    value: Any,
+    reason: str,
+    action_policies: ActionPolicies,
 ) -> dict[str, Any]:
     """Run one awaited configuration mutation and catalog reconciliation."""
     import asyncio
@@ -504,7 +511,9 @@ async def _dispatch_mutation(
         result = await asyncio.to_thread(reload)
         request_id = "graph-config-reload"
     else:
-        result = await asyncio.to_thread(set_value, key, value, reason=reason)
+        result = await asyncio.to_thread(
+            set_value, key, value, action_policies=action_policies, reason=reason
+        )
         if not result.get("applied"):
             return result
         request_id = f"graph-config:{result['key']}"
@@ -541,7 +550,13 @@ async def _reconcile_served_catalog(request_id: str) -> dict[str, Any]:
 
 
 async def dispatch(
-    action: str, *, key: str = "", value: Any = "", reason: str = "", contains: str = ""
+    action: str,
+    *,
+    action_policies: ActionPolicies,
+    key: str = "",
+    value: Any = "",
+    reason: str = "",
+    contains: str = "",
 ) -> dict[str, Any]:
     """Route one ``graph_config`` action. Unknown actions are refused."""
     if action == "describe":
@@ -555,4 +570,10 @@ async def dispatch(
             "unknown_action",
             f"unknown action {action!r}; expected one of {', '.join(ACTIONS)}",
         )
-    return await _dispatch_mutation(action, key=key, value=value, reason=reason)
+    return await _dispatch_mutation(
+        action,
+        key=key,
+        value=value,
+        reason=reason,
+        action_policies=action_policies,
+    )

@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.identity.browser_composition import configured_browser_boundary
 from arbora.identity.engine import IdentityUnavailable
 
@@ -58,8 +59,13 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
     monkeypatch.setattr(
         composition, "run_web_ui", lambda stop, **kwargs: calls.append((stop, kwargs))
     )
-    composition.start_composed_services(object(), object(), session_boundary=boundary)
-    assert calls == [("fixture-stop", {"session_boundary": boundary})]
+    policies = ActionPolicies()
+    composition.start_composed_services(
+        object(), object(), action_policies=policies, session_boundary=boundary
+    )
+    assert calls == [
+        ("fixture-stop", {"action_policies": policies, "session_boundary": boundary})
+    ]
 
 
 @pytest.mark.parametrize(
@@ -167,6 +173,7 @@ def test_settings_composition_forwards_factory_without_constructing_it(monkeypat
     )
     served_invocation.served_invocation_from_settings(
         process_session=lambda: SimpleNamespace(graph="fixture-graph"),
+        action_policies=ActionPolicies(),
         bindings={},
         fleet_effect=None,
         browser_boundary_factory=factory,

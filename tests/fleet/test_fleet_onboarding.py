@@ -18,6 +18,7 @@ from typing import Any
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.deployment import production_ops
 from arbora.deployment.semantic_provisioning import ensure_server_registrations
 from arbora.fleet import onboarding
@@ -180,8 +181,8 @@ async def _served_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
 def eg(monkeypatch: pytest.MonkeyPatch) -> _Registry:
     registry = _Registry()
     monkeypatch.setattr(
-        "arbora.api.contracts.provisioning.get_action_policy",
-        lambda _engine: AllowPolicy(),
+        "arbora.access.action_policy.ActionPolicies.for_engine",
+        lambda _self, _engine=None: AllowPolicy(),
     )
     monkeypatch.setattr(
         "agent_connector_sdk.sinks.epistemic_graph.EpistemicGraphSink",
@@ -201,6 +202,7 @@ def _onboarding(registry: _Registry, capture: Any = _served_pack) -> FleetOnboar
         session=_session(),
         capture=capture,
         declarations=Declarations(),
+        action_policies=ActionPolicies(),
     )
 
 
@@ -613,6 +615,7 @@ def test_boot_without_an_engine_starts_no_thread() -> None:
         multiplexer=_Mux({}),
         virtual_catalog=VirtualCatalog(),
         declarations=Declarations(),
+        action_policies=ActionPolicies(),
     )
 
     assert started is None
@@ -635,6 +638,7 @@ def test_bootstrap_passes_the_process_virtual_catalog_to_onboarding(
         multiplexer=_Mux({}),
         virtual_catalog=catalog,
         declarations=Declarations(),
+        action_policies=ActionPolicies(),
     )
 
     assert started is not None
@@ -660,6 +664,7 @@ async def test_native_source_approval_missing_stays_pending(
         session=None,
         surfaces={"tickets-mcp": {}},
         declarations=Declarations(),
+        action_policies=ActionPolicies(),
     )
     decision = SourceApprovalDecision(
         connector="tickets-mcp",

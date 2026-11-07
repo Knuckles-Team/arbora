@@ -22,6 +22,7 @@ from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolRetu
 from pydantic_ai.models.function import FunctionModel
 
 from arbora import host_bindings
+from arbora.access.action_policy import ActionPolicies
 from arbora.agent_runs import AgentRunPort
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 from arbora.browser_control import browser_control_runtime
@@ -116,6 +117,7 @@ async def _served(
         pool=FakePool(client),
         graph=session.graph,
         process_session=lambda: session,
+        action_policies=ActionPolicies(),
         bindings={"browser_control": dispatch_browser_operation},
         fleet_effect=refused_fleet_effect,
     )

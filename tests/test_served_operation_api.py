@@ -27,6 +27,7 @@ from arbora import agent_runs
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
+from arbora.access.action_policy import ActionPolicies
 from arbora.api.invoke.privacy import mask_persisted_arguments
 from arbora.core.settings import runtime_config
 from arbora.fleet.state import FleetState
@@ -174,6 +175,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,
+        action_policies=ActionPolicies(),
         bindings={"a2a": a2a},
         fleet_effect=refused_fleet_effect,
     )

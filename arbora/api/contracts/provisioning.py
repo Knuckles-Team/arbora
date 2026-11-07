@@ -45,8 +45,8 @@ if TYPE_CHECKING:
     )
 
 from arbora.access.action_policy import (
+    ActionPolicies,
     ActionRequest,
-    get_action_policy,
 )
 from arbora.security.session import GraphSession, resolve_session
 
@@ -159,6 +159,7 @@ def pack_import_authority(
     engine: Any,
     session: GraphSession,
     *,
+    action_policies: ActionPolicies,
     catalog_binding: ProvisioningProvider[McpCatalogSnapshotBinding],
     serving_principal: ProvisioningProvider[str],
 ) -> PackImportAuthorityResolver:
@@ -169,9 +170,9 @@ def pack_import_authority(
     opaque EG owner principal from the authenticated EG authority.  Neither
     value is accepted from a request payload or synthesized by AU.  Both
     providers are called only after the verified session and AU policy gate
-    authorize the exact connector target.  The gate is resolved from AU's
-    existing ``get_action_policy(engine)`` authority and cannot be supplied by
-    the caller.
+    authorize the exact connector target.  The gate is resolved for
+    ``engine`` from the host's own :class:`ActionPolicies`; a caller cannot
+    supply a gate of its own.
 
     The resolver revalidates the ambient session for every invocation because
     a long-lived SDK runner may outlive the session under which it was built.
@@ -181,8 +182,10 @@ def pack_import_authority(
         raise TypeError(
             "catalog_binding and serving_principal must be authoritative providers"
         )
+    if not isinstance(action_policies, ActionPolicies):
+        raise TypeError("action_policies must be the host's ActionPolicies")
     bound = resolve_session(session, required_scope=_REQUIRED_SCOPE)
-    policy_gate: _Policy = get_action_policy(engine)
+    policy_gate: _Policy = action_policies.for_engine(engine)
 
     async def resolve(
         connector: str,

@@ -36,6 +36,7 @@ from typing import Any, cast
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.deployment.config_generator import PROCESS_IDENTITY_ROLES
 from tests._boot_diagnostics import BootDiagnostics
 
@@ -888,6 +889,7 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
             pool=pool,
             graph=CONTROL_GRAPH,
             process_session=lambda: session,
+            action_policies=ActionPolicies(),
             bindings={"current_plan_reader": NativeCurrentPlanReader()},
             fleet_effect=refused_fleet_effect,
         )

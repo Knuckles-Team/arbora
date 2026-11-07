@@ -34,6 +34,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Literal, cast
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.fleet.declarations import (
     RESOURCES_URI,
     Declarations,
@@ -314,6 +315,8 @@ class FleetOnboarding:
     session: Any
     #: The fleet's captured ``connector://resources`` declarations.
     declarations: Declarations
+    #: The host's policy gates; the pack import is gated through them.
+    action_policies: ActionPolicies
     #: Replaces :func:`capture_server_pack`, for example in tests.
     capture: Any = None
     #: The virtual catalog that access contracts register into.
@@ -400,6 +403,7 @@ class FleetOnboarding:
                     client=self.tenant_client,
                     commons=self.commons_client,
                     pack=pack,
+                    action_policies=self.action_policies,
                     allow_mass_withdrawal=endpoint.name in self.allow_mass_withdrawal,
                 )
         else:
@@ -1264,6 +1268,7 @@ def start_fleet_onboarding(
     multiplexer: Any,
     virtual_catalog: Any,
     declarations: Declarations,
+    action_policies: ActionPolicies,
     served_url: str | None = None,
 ) -> threading.Thread | None:
     """Start the background onboarding service; never raise into boot.
@@ -1283,6 +1288,7 @@ def start_fleet_onboarding(
             engine=engine,
             session=session,
             declarations=declarations,
+            action_policies=action_policies,
             virtual_catalog=virtual_catalog,
         ),
         multiplexer=multiplexer,

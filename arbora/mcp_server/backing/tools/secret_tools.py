@@ -22,17 +22,17 @@ import json
 
 from pydantic import Field
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.mcp_server import runtime
 
 
-def _gate(kind: str, target: str, reason: str) -> tuple[bool, dict]:
+def _gate(
+    kind: str, target: str, reason: str, action_policies: ActionPolicies
+) -> tuple[bool, dict]:
     """Run the ActionPolicy gate for a secret mutation. CONCEPT:MERISTEM-OS.identity.encrypted-secret-store."""
-    from arbora.access.action_policy import (
-        ActionRequest,
-        get_action_policy,
-    )
+    from arbora.access.action_policy import ActionRequest
 
-    decision = get_action_policy(runtime._get_engine()).decide(
+    decision = action_policies.for_engine(runtime._get_engine()).decide(
         ActionRequest(
             kind=kind,
             target=target,
@@ -49,7 +49,7 @@ def _gate(kind: str, target: str, reason: str) -> tuple[bool, dict]:
     return decision.allowed, info
 
 
-def register_secret_tools(mcp):
+def register_secret_tools(mcp, action_policies: ActionPolicies):
     """Register the ``graph_secret`` tool onto the MCP server. CONCEPT:MERISTEM-OS.identity.encrypted-secret-store"""
 
     @mcp.tool(
@@ -87,7 +87,7 @@ def register_secret_tools(mcp):
         if action == "set":
             if not key:
                 return json.dumps({"error": "set requires key"})
-            allowed, info = _gate("secret.set", key, reason)
+            allowed, info = _gate("secret.set", key, reason, action_policies)
             if not allowed:
                 return json.dumps({"error": "policy_denied", **info})
             client.set(key, value, **(metadata or {}))
@@ -101,7 +101,7 @@ def register_secret_tools(mcp):
         if action == "delete":
             if not key:
                 return json.dumps({"error": "delete requires key"})
-            allowed, info = _gate("secret.delete", key, reason)
+            allowed, info = _gate("secret.delete", key, reason, action_policies)
             if not allowed:
                 return json.dumps({"error": "policy_denied", **info})
             return json.dumps({"deleted": client.delete(key), "key": key, **info})

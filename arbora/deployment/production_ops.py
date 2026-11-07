@@ -25,6 +25,7 @@ from typing import Any
 
 from filelock import FileLock
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.core.settings import ArboraConfig as AgentConfig
 from arbora.core.settings import setting
 
@@ -403,7 +404,11 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
         engine = runtime._get_engine()
         bootstrap._wait_for_engine_materialization(engine)
         report = await provision_semantic_content(
-            engine=engine, session=session, served_url=served_url
+            engine=engine,
+            session=session,
+            served_url=served_url,
+            # This one-shot process owns its own policy gates.
+            action_policies=ActionPolicies(),
         )
     return {"operation": "provision-semantic-content", "ok": True, **report}
 
@@ -440,6 +445,7 @@ async def _onboard_fleet(
                 # This one-shot process owns its own projection.
                 virtual_catalog=VirtualCatalog(),
                 declarations=Declarations(),
+                action_policies=ActionPolicies(),
                 allow_mass_withdrawal=allow_mass_withdrawal,
             ),
             configured_fleet_endpoints(exclude=self_served_connectors()),

@@ -961,11 +961,18 @@ def _register_graph_tool_surface(
         # operation (``eg.*`` included) is discoverable and callable through
         # find/ask/act. The backing server still holds host tools reached by
         # the harness and the REST twins.
-        backing = register_arbora_surface(mcp, canonical=canonical, intent_tools=False)
+        backing = register_arbora_surface(
+            mcp,
+            action_policies=host.policy.action_policies,
+            canonical=canonical,
+            intent_tools=False,
+        )
         _register_served_intent_surface(mcp, invocation)
         invocation.mount_on_mcp(mcp)
     else:
-        backing = register_arbora_surface(mcp, canonical=canonical)
+        backing = register_arbora_surface(
+            mcp, action_policies=host.policy.action_policies, canonical=canonical
+        )
     register_browser_control_tools(backing)
     if invocation is None:
         register_a2a_tools(mcp, service=host.runs.a2a, tools=backing)
