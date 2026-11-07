@@ -166,14 +166,7 @@ stateDiagram-v2
 
 The attach context holds the last checkpoint, the open run IDs of `development.run.status` and the other attached sessions. It is 4096 bytes or fewer. The tuig terminal client attaches the same way under `TUIG-RUNTIME-R013`.
 
-## Production caller chain
-
-- Bundle: `arbora` console script → `arbora/console.py:main` → `arbora/harness_plugins/cli.py::bundle_command` → `compose_bundle` → `gate_mcp_resource_publication` → `render`.
-- Install: `arbora/console.py:main` → `cli.py::install_command` → `install.py::transition` → `render` → place.
-- Attach over MCP: harness hook → MCP `write` verb at `arbora/api/mcp/verbs.py` → `invoke` at `arbora/api/invoke/pipeline.py` → `workstreams.py::handle_attach` → the engine send helper of `ARBORA-OPS-R897.1`.
-- Attach from the runner: harness command hook → `cli.py::hook_command` → `hook_runner.py::run` → `arbora.client` HTTP `POST /api/v1/ops/workstream.attach` → the same `invoke`.
-
-## Reuse inventory
+### Reuse inventory
 
 | Need | Reused part |
 |---|---|
@@ -184,26 +177,16 @@ The attach context holds the last checkpoint, the open run IDs of `development.r
 | Skill files | SDK content convention, `skills/<name>/SKILL.md` |
 | State machine ontology | `arbora/ontology/state_machines.ttl` |
 
-## Cross-repo seams
-
-| Row | Owner | Seam |
-|---|---|---|
-| `MEDULLA-IDENTITY-R723` | medulla | Workstream label and the `attachedTo` link |
-| `MEDULLA-CQ-ORCH-R820` | medulla | Competency questions that the workstream and bundle rows serve |
-| `US-CONTENT-R007` | universal-skills | Door skills and portable frontmatter |
-| `PIPE-RELEASE-R028` | pipelines | Release proof with the harness validators; no committed bundle |
-| `TUIG-RUNTIME-R013` | tuig | Terminal client as a workstream peer |
-
-## Phase 2: Task approach
-
-Tasks run producer first: the profile table, the composer, the renderers, then install and login. The workstream operations wait for `MEDULLA-IDENTITY-R723`. The `claude-code` and `opencode` renderers come before `codex` and `grok`.
-
-## Decisions
+### Decisions
 
 - The bundle is generated at the point of use. No repository commits a generated bundle.
 - Hooks write only to the caller's own workstream. The operations declare `Confirm.NONE`. This needs owner approval; see research.md, open decision D3.
 - The default skill set is the door skills only. A selection of skills per task stays an engine decision.
 - The `opencode` module is a template in the arbora wheel. No separate package registry entry exists.
+
+## Phase 2: Task approach
+
+Tasks run producer first: the profile table, the composer, the renderers, then install and login. The workstream operations wait for `MEDULLA-IDENTITY-R723`. The `claude-code` and `opencode` renderers come before `codex` and `grok`.
 
 ## Complexity Tracking
 
@@ -217,3 +200,20 @@ None.
 - The renderers share `hook_entries` and `tree_digest`. No renderer copies another renderer's code.
 - The `opencode` template holds no host, domain or path. The renderer fills the endpoint from config.
 - Tests: `uv run pytest tests/harness_plugins tests/api/ops/test_workstreams.py tests/api/ops/test_workstreams_served.py -q`.
+
+## Production caller chain
+
+- Bundle: `arbora` console script → `arbora/console.py:main` → `arbora/harness_plugins/cli.py::bundle_command` → `compose_bundle` → `gate_mcp_resource_publication` → `render`.
+- Install: `arbora/console.py:main` → `cli.py::install_command` → `install.py::transition` → `render` → place.
+- Attach over MCP: harness hook → MCP `write` verb at `arbora/api/mcp/verbs.py` → `invoke` at `arbora/api/invoke/pipeline.py` → `workstreams.py::handle_attach` → the engine send helper of `ARBORA-OPS-R897.1`.
+- Attach from the runner: harness command hook → `cli.py::hook_command` → `hook_runner.py::run` → `arbora.client` HTTP `POST /api/v1/ops/workstream.attach` → the same `invoke`.
+
+## Cross-repo seams
+
+| Row | Owner | Seam |
+|---|---|---|
+| `MEDULLA-IDENTITY-R723` | medulla | Workstream label and the `attachedTo` link |
+| `MEDULLA-CQ-ORCH-R820` | medulla | Competency questions that the workstream and bundle rows serve |
+| `US-CONTENT-R007` | universal-skills | Door skills and portable frontmatter |
+| `PIPE-RELEASE-R028` | pipelines | Release proof with the harness validators; no committed bundle |
+| `TUIG-RUNTIME-R013` | tuig | Terminal client as a workstream peer |
