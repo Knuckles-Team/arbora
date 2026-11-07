@@ -208,10 +208,18 @@ def test_pinned_contract_serves_every_wire_callable_method_as_generated_op() -> 
 
     root = resources.files("epistemic_graph").joinpath("contract")
     rows = json.loads(root.joinpath("methods.json").read_text())["methods"]
+    from arbora.api.ops import query
+    from arbora.api.registry.eg_binding import _EXCLUSIONS, _load_exclusions
+
+    excluded = set(_load_exclusions(_EXCLUSIONS))
+    curated = query.operations()
+    bound = {op.binding.service for op in curated if isinstance(op.binding, EgMethod)}
     expected = {
-        f"eg.{row['domain']}.{row['id']}" for row in rows if row["is_wire_callable"]
+        f"eg.{row['domain']}.{row['id']}"
+        for row in rows
+        if row["is_wire_callable"] and row["id"] not in excluded | bound
     }
-    ops = load_eg_bindings()
+    ops = load_eg_bindings(curated_ops=curated)
     ids = [op.id for op in ops]
     assert expected
     assert len(ids) == len(set(ids))
