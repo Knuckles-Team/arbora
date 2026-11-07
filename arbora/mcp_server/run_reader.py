@@ -34,6 +34,7 @@ from arbora.api.ops.run_replay import (
 )
 from arbora.api.ops.runs import project_current_plan
 from arbora.mcp_server.current_plan_reader import _project, read_native_snapshot
+from arbora.run_origin import RunOriginRegistry
 
 _RUN_STATUS = {
     "submitted": "pending",
@@ -50,8 +51,10 @@ _RUN_STATUS = {
 class NativeRunReader:
     """Stateless host adapter; EG owns events and WorkItems, AU their ordering."""
 
-    def __init__(self, engine_provider: Callable[[], Any]) -> None:
-        self._authority = WorkItemA2AAuthority(engine_provider)
+    def __init__(
+        self, engine_provider: Callable[[], Any], *, origins: RunOriginRegistry
+    ) -> None:
+        self._authority = WorkItemA2AAuthority(engine_provider, origins=origins)
 
     async def _owned(
         self, context: ExecutionContext, run_id: str, task_id: str | None = None

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
@@ -40,6 +40,9 @@ from arbora.api.contracts.agent_control_contracts import (
 from arbora.api.contracts.session import GraphSession, resolve_session
 from arbora.security.anonymous import client_scope, session_context
 from arbora.security.error_surface import public_error_payload
+
+if TYPE_CHECKING:
+    from arbora.run_origin import RunOriginRegistry
 
 type _RequiredScope = Literal["kg:read", "kg:write"]
 type _OperationSpec = tuple[
@@ -486,6 +489,7 @@ def compose_agent_control_plane(
     eg_client: Any,
     session: GraphSession,
     *,
+    origins: RunOriginRegistry,
     capability_search: CapabilitySearchPort | None = None,
     agent_executor: AgentExecutionPort | None = None,
     work_item_store: WorkItemStorePort | None = None,
@@ -495,7 +499,7 @@ def compose_agent_control_plane(
     if agent_executor is None:
         from arbora.agent_runs import AgentRunPort
 
-        agent_executor = AgentRunPort()
+        agent_executor = AgentRunPort(origins=origins)
     return AgentControlPlane(
         eg_client,
         session,

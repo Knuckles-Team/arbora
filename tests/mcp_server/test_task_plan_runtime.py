@@ -1,3 +1,5 @@
+from arbora.run_origin import RunOriginRegistry
+
 """Invoked AU chain with a real model adapter and controlled EG transport."""
 
 import json
@@ -134,7 +136,9 @@ async def test_registered_provider_executes_only_durable_plan(chain):
         owner_graph="owner-graph",
         hosted_invocation=host,
     ):
-        result = await agent_runs.AgentRunPort().execute_agent(
+        result = await agent_runs.AgentRunPort(
+            origins=RunOriginRegistry()
+        ).execute_agent(
             AgentExecutionRequest(
                 agent_name="helper", task="actual user question", run_id="run"
             ),
@@ -350,7 +354,7 @@ async def test_failed_publication_starts_no_dependency_task(chain, monkeypatch):
         hosted_invocation=host,
     ):
         with pytest.raises(RuntimeError, match="stale fence"):
-            await agent_runs.AgentRunPort().execute_agent(
+            await agent_runs.AgentRunPort(origins=RunOriginRegistry()).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
                 ),
@@ -385,7 +389,7 @@ async def test_readback_mismatch_starts_no_dependency_task(chain):
         hosted_invocation=host,
     ):
         with pytest.raises(RuntimeError, match="INVALID_TASK_PLAN_RECEIPT"):
-            await agent_runs.AgentRunPort().execute_agent(
+            await agent_runs.AgentRunPort(origins=RunOriginRegistry()).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
                 ),
@@ -419,7 +423,7 @@ async def test_publication_receipt_for_another_run_is_refused(chain):
         hosted_invocation=host,
     ):
         with pytest.raises(RuntimeError, match="INVALID_TASK_PLAN_RECEIPT"):
-            await agent_runs.AgentRunPort().execute_agent(
+            await agent_runs.AgentRunPort(origins=RunOriginRegistry()).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
                 ),
@@ -451,7 +455,7 @@ async def test_publication_receipt_for_another_revision_is_refused(chain):
         hosted_invocation=host,
     ):
         with pytest.raises(RuntimeError, match="INVALID_TASK_PLAN_RECEIPT"):
-            await agent_runs.AgentRunPort().execute_agent(
+            await agent_runs.AgentRunPort(origins=RunOriginRegistry()).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
                 ),
@@ -597,7 +601,9 @@ async def test_cancellation_revokes_scope_without_dispatching_children(chain, ph
             hosted_invocation=host,
         ):
             contexts.append(copy_context())
-            return await agent_runs.AgentRunPort().execute_agent(
+            return await agent_runs.AgentRunPort(
+                origins=RunOriginRegistry()
+            ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
                 ),
@@ -684,7 +690,9 @@ async def test_trusted_scaffold_option_reaches_actual_au_callback(
             owner_graph="owner-graph",
             hosted_invocation=host,
         ):
-            result = await agent_runs.AgentRunPort().execute_agent(
+            result = await agent_runs.AgentRunPort(
+                origins=RunOriginRegistry()
+            ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
                 ),

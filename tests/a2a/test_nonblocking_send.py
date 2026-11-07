@@ -22,7 +22,6 @@ def _served_app(monkeypatch: pytest.MonkeyPatch, run_seconds: float) -> Any:
     from pydantic_ai.messages import ModelResponse, TextPart
     from pydantic_ai.models.function import FunctionModel
 
-    import arbora.a2a.mcp as a2a_mcp
     from arbora.security import request_identity
     from arbora.security.actor_context import ActorContext, ActorType
 
@@ -51,7 +50,6 @@ def _served_app(monkeypatch: pytest.MonkeyPatch, run_seconds: float) -> Any:
         return ModelResponse(parts=[TextPart("long turn done")])
 
     host_ports.register_model_provider(lambda _id: FunctionModel(slow_model))
-    monkeypatch.setattr(a2a_mcp, "_SERVICE", None)
     _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False)
     return mcp.http_app()
 

@@ -18,6 +18,7 @@ from arbora.api.ops.runs import read_current_plan
 from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 from arbora.mcp_server import current_plan_reader as reader_module
 from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
+from arbora.mcp_server.host_context import build_host_context
 from tests._support import Actor
 from tests.test_native_run_admission import view as admission_view
 
@@ -213,7 +214,6 @@ async def test_absent_published_method_is_unavailable(monkeypatch):
 
 @pytest.mark.spec("ARBORA-IDENTITY-R004.3")
 def test_actual_serving_root_composes_stateless_reader(monkeypatch):
-    from arbora.a2a import mcp as a2a_mcp
     from arbora.core.settings import runtime_config
     from arbora.mcp_server import served_invocation, server
     from arbora.mcp_server.backing import server_factory
@@ -226,7 +226,6 @@ def test_actual_serving_root_composes_stateless_reader(monkeypatch):
     monkeypatch.setattr(
         server.runtime, "_mint_process_session", lambda transport: object()
     )
-    monkeypatch.setattr(a2a_mcp, "_service", lambda: object())
 
     def compose(**kwargs):
         captured.update(kwargs)
@@ -237,7 +236,9 @@ def test_actual_serving_root_composes_stateless_reader(monkeypatch):
     # Use the real configuration input and verify later reads remain live.
     with monkeypatch.context() as config_patch:
         config_patch.setenv("GRAPH_SERVICE_ENDPOINTS", "unix:///test-only")
-        invocation, session = server._served_invocation()
+        invocation, session = server._served_invocation(
+            host=build_host_context(lambda: None)
+        )
     monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", "tcp://192.0.2.1:80")
     assert runtime_config.graph_service_endpoints == ["tcp://192.0.2.1:80"]
     assert invocation is not None and session is not None

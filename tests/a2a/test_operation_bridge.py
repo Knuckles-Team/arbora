@@ -285,11 +285,9 @@ def test_registered_mcp_route_reaches_request_auth_and_shared_pipeline(
         return bound
 
     monkeypatch.setattr(mcp_runtime, "REGISTERED_TOOLS", {})
-    monkeypatch.setattr(
-        a2a_mcp, "_service", lambda: A2AService(authority=Authority(), router=Router())
-    )
     a2a_mcp.register_a2a_tools(
         registrar,
+        service=A2AService(authority=Authority(), router=Router()),
         operation_services=services,
         operation_authenticator=AmbientHTTPAuthenticator(session_for_request=resolve),
     )
