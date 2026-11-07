@@ -415,3 +415,32 @@ def test_served_writes_mask_secret_bearing_payloads(served: Any) -> None:
         mask_persisted_arguments("eg.graph.AddEdge", {"properties_msgpack": [193]})
         is None
     )
+
+
+@pytest.mark.spec("ARBORA-OPS-R844.2")
+def test_node_and_batch_writes_mask_secret_bearing_properties() -> None:
+    """eg.graph.AddNode and eg.graph.ApplyMutation persist masked content only."""
+    import msgpack
+
+    packed = msgpack.packb({"note": f"token {_SECRET}"})
+    node = mask_persisted_arguments(
+        "eg.graph.AddNode", {"node_id": "node:one", "properties_msgpack": list(packed)}
+    )
+    assert node is not None
+    assert _SECRET.encode() not in bytes(node["properties_msgpack"])
+    decoded = msgpack.unpackb(bytes(node["properties_msgpack"]), raw=False)
+    assert "REDACTED" in decoded["note"]
+    assert node["node_id"] == "node:one"
+    assert (
+        mask_persisted_arguments("eg.graph.AddNode", {"properties_msgpack": [193]})
+        is None
+    )
+
+    batch = mask_persisted_arguments(
+        "eg.graph.ApplyMutation",
+        {"event_type": "upsert", "query": f"SET n.note = 'token {_SECRET}'"},
+    )
+    assert batch is not None
+    assert _SECRET not in batch["query"]
+    assert "REDACTED" in batch["query"]
+    assert batch["event_type"] == "upsert"
