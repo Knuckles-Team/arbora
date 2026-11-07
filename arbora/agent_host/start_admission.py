@@ -163,7 +163,7 @@ class HostStartAdmission:
         This does not issue a grant, change fleet policy, or select a default
         session/construction authority when either owner is unavailable.
         """
-        from arbora.access.host_start import NativeHostStartGrants
+        from arbora.agent_host.host_start import NativeHostStartGrants
 
         return cls(
             sessions,
@@ -192,7 +192,7 @@ class HostStartAdmission:
         grant, and never retries an uncertain issue. Returned admission retains
         all construction/session checks at the actual launch boundary.
         """
-        from arbora.access.host_start import NativeHostStartIssuer
+        from arbora.agent_host.host_start import NativeHostStartIssuer
 
         await NativeHostStartIssuer(client, sessions, issuer_ref=issuer_ref).issue(
             credential,
