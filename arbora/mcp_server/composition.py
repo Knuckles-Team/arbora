@@ -10,6 +10,7 @@ import time
 from collections.abc import Callable, Sequence
 from typing import Any
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.fleet.state import FleetState
 from arbora.gateway.ports import configure_gateway_application
 from arbora.mcp_server import runtime
@@ -301,6 +302,7 @@ def start_composed_services(
     session: Any,
     engine: Any,
     *,
+    action_policies: ActionPolicies,
     messaging_intake_enabled: bool | None = None,
     served_network: bool = False,
     session_boundary: Any = None,
@@ -321,9 +323,13 @@ def start_composed_services(
         from functools import partial
 
         runner = (
-            partial(run_web_ui, session_boundary=session_boundary)
+            partial(
+                run_web_ui,
+                action_policies=action_policies,
+                session_boundary=session_boundary,
+            )
             if session_boundary is not None
-            else run_web_ui
+            else partial(run_web_ui, action_policies=action_policies)
         )
         supervisor.start_service("overstory", runner, session)
     return supervisor

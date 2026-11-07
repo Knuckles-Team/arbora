@@ -2556,6 +2556,11 @@ class MCPMultiplexer:
         fleet.multiplexers.add(self)
         _register_child_health_sampler(fleet.multiplexers)
 
+    @property
+    def fleet(self) -> FleetState:
+        """The host context's fleet state this multiplexer was built with."""
+        return self._fleet
+
     @staticmethod
     def _catalog_config_from_server(
         server: _catalog_reader.CatalogServer,

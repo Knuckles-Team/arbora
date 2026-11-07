@@ -101,6 +101,7 @@ async def prepare(
 ) -> dict[str, str]:
     from medulla import MedullaClient
 
+    from arbora.access.action_policy import ActionPolicies
     from arbora.core.settings import runtime_config
     from arbora.epistemic import EpistemicClient, EpistemicClientPool
     from arbora.identity.browser_broker import ConfiguredBrowserBroker
@@ -228,6 +229,7 @@ async def prepare(
             pool=pool,
             graph="__control__",
             process_session=lambda: session,
+            action_policies=ActionPolicies(),
             bindings={"current_plan_reader": NativeCurrentPlanReader()},
             fleet_effect=refused_fleet_effect,
         )

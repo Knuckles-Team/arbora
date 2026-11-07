@@ -14,13 +14,16 @@ from types import MappingProxyType
 from typing import Any
 
 import msgpack
-from agent_connector_sdk.privacy import sanitize_for_persistence
+from scion_sdk.privacy import sanitize_for_persistence
 
 #: Operation id -> (argument name, wire encoding of that argument).
 PERSISTED_FIELDS: Mapping[str, tuple[str, str]] = MappingProxyType(
     {
         "memory.write": ("value", "json"),
         "eg.graph.AddEdge": ("properties_msgpack", "msgpack"),
+        # ARBORA-OPS-R844.2: node writes and mutation batches from the web UI.
+        "eg.graph.AddNode": ("properties_msgpack", "msgpack"),
+        "eg.graph.ApplyMutation": ("query", "json"),
     }
 )
 

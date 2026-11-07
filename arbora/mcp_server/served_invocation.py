@@ -25,6 +25,7 @@ from collections.abc import AsyncIterator, Callable, Coroutine, Mapping
 from contextlib import asynccontextmanager
 from typing import Any
 
+from arbora.access.action_policy import ActionPolicies, ActionPolicy
 from arbora.api.registry import EgSchemaRef
 from arbora.identity.ports import BrowserBoundaryFactory
 
@@ -216,12 +217,14 @@ def _with_fleet_source_executor(
         is returned; no request field can select another tenant projection.
         """
 
-        from arbora.fleet.access_contracts import fleet_virtual_catalog
+        from arbora.api.errors import not_served
         from arbora.fleet.source_executor import FleetSourceBinding
 
         catalog = bindings.get("fleet_virtual_catalog")
         if catalog is None:
-            catalog = fleet_virtual_catalog()
+            raise not_served(
+                "arbora.fleet.virtual_catalog", "MEDULLA-UNIFIED-DATA-PLANE-R037"
+            )
         tenant = getattr(caller, "tenant", None)
         session = getattr(caller, "session", None)
         caller_graph = getattr(session, "graph", None)
@@ -324,7 +327,7 @@ def _schema_session(session: Callable[[], Any], tenant: str, graph: str) -> Any:
 
 
 async def _schema_publish_context(
-    engine: Any,
+    policy: ActionPolicy,
     session: Callable[[], Any],
     graph: str,
     tenant: str,
@@ -333,14 +336,14 @@ async def _schema_publish_context(
     """Require a new durable receipt; default policy still holds this action."""
     import asyncio
 
-    from arbora.api.contracts import PolicyDisposition, PolicyReceipt, get_action_policy
+    from arbora.api.contracts import PolicyDisposition, PolicyReceipt
     from arbora.api.contracts.provisioning import opaque_principal
     from arbora.api.task_plan_schema import PURPOSE_ID
     from arbora.mcp_server.decide_wiring import _mutation_context
 
     request = _schema_action(_schema_session(session, tenant, graph), graph, pin)
     digest = request.digest()
-    decision = await asyncio.to_thread(get_action_policy(engine).decide, request)
+    decision = await asyncio.to_thread(policy.decide, request)
     verified = _schema_session(session, tenant, graph)
     if _schema_action(verified, graph, pin).digest() != digest:
         raise PermissionError(
@@ -383,6 +386,7 @@ def _task_plan_schema_publisher(
     graph: str,
     connect_context: Callable[[str], Any],
     session: Callable[[], Any],
+    action_policies: ActionPolicies,
 ) -> Callable[[str, Mapping[str, Any]], Coroutine[Any, Any, str]]:
     """The process-lifecycle publisher; it installs the process authority."""
     from arbora.api.task_plan_schema import engine_publish
@@ -395,7 +399,8 @@ def _task_plan_schema_publisher(
     engine = ServedEngine(pool)
 
     async def context_for(tenant: str, pin: Mapping[str, Any]) -> dict[str, Any]:
-        return await _schema_publish_context(engine, session, graph, tenant, pin)
+        policy = action_policies.for_engine(engine)
+        return await _schema_publish_context(policy, session, graph, tenant, pin)
 
     @asynccontextmanager
     async def bind_client(tenant: str) -> AsyncIterator[Any]:
@@ -424,6 +429,7 @@ def _with_task_plan_schema(
     graph: str,
     connect_context: Callable[[str], Any],
     session: Callable[[], Any],
+    action_policies: ActionPolicies,
 ) -> tuple[Mapping[str, Any] | None, Callable[[], Coroutine[Any, Any, Any]] | None]:
     """Bind the verified task-plan schema pin (ARBORA-RELEASE-R003.4.4).
 
@@ -441,7 +447,9 @@ def _with_task_plan_schema(
     pins = startup_pins()
     if pins is None:
         return bindings, None
-    publish = _task_plan_schema_publisher(pool, graph, connect_context, session)
+    publish = _task_plan_schema_publisher(
+        pool, graph, connect_context, session, action_policies
+    )
 
     async def publish_served_tenants() -> dict[str, bool]:
         # Arbora serves the process tenant's graph only: the engine pool binds
@@ -456,6 +464,7 @@ def compose_served_invocation(
     pool: Any,
     graph: str,
     process_session: Callable[[], Any],
+    action_policies: ActionPolicies,
     policy_mode: str = "none",
     plan_seal_key: bytes | None = None,
     bindings: Mapping[str, Any] | None = None,
@@ -500,7 +509,7 @@ def compose_served_invocation(
     bindings = _with_fleet_source_executor(bindings, pool, graph)
     bindings = _with_nl_federation_planner(bindings)
     bindings, process_startup = _with_task_plan_schema(
-        bindings, pool, graph, connect_context, session
+        bindings, pool, graph, connect_context, session, action_policies
     )
     if (
         bindings is not None
@@ -642,6 +651,7 @@ class _LeaseClient:
 def served_invocation_from_settings(
     *,
     process_session: Callable[[], Any],
+    action_policies: ActionPolicies,
     bindings: Mapping[str, Any],
     fleet_effect: Any,
     browser_boundary_factory: BrowserBoundaryFactory | None = None,
@@ -670,6 +680,7 @@ def served_invocation_from_settings(
         graph=str(setting("ARBORA_GRAPH", "") or "").strip()
         or str(process_session().graph),
         process_session=process_session,
+        action_policies=action_policies,
         policy_mode=str(setting("EUNOMIA_MODE", "none") or "none"),
         plan_seal_key=bytes.fromhex(raw_key) if raw_key else None,
         bindings=bindings,

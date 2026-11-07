@@ -9,6 +9,7 @@ from typing import Any, cast
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.fleet.oauth_brokers import RemoteOAuthBrokers
 from arbora.fleet.state import FleetState
 from arbora.gateway.ports import gateway_application
@@ -77,10 +78,12 @@ def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> N
     )
     monkeypatch.setattr("arbora.mcp_server.composition.CoServiceSupervisor", Supervisor)
 
-    start_composed_services(object(), object())
+    policies = ActionPolicies()
+    start_composed_services(object(), object(), action_policies=policies)
 
     assert started[0][0] == "overstory"
-    assert started[0][1].__module__ == "arbora.webui_host.webui_co_service"
+    assert started[0][1].func.__module__ == "arbora.webui_host.webui_co_service"
+    assert started[0][1].keywords == {"action_policies": policies}
 
 
 # spec: ARBORA-HOST-R011
@@ -114,7 +117,7 @@ def test_messaging_co_service_reaches_arbora_owned_intake(
 
     engine = object()
     session = object()
-    start_composed_services(session, engine)
+    start_composed_services(session, engine, action_policies=ActionPolicies())
 
     assert calls == [(engine, session, ("telegram",))]
 

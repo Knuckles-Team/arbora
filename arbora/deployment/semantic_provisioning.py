@@ -26,6 +26,7 @@ from collections.abc import Callable, Mapping, Sequence
 from contextlib import AbstractContextManager
 from typing import Any
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.security.anonymous import session_context
 from arbora.semantic_content import (
     ContentProvider,
@@ -331,6 +332,7 @@ async def import_attested_pack(
     client: Any,
     commons: Any,
     pack: Any,
+    action_policies: ActionPolicies,
     bind_graph: GraphBinder = bind_session_graph,
     allow_mass_withdrawal: bool = False,
 ) -> Any:
@@ -366,6 +368,7 @@ async def import_attested_pack(
             pack_import_authority(
                 engine,
                 session.with_graph(graph),
+                action_policies=action_policies,
                 catalog_binding=lambda: binding,
                 serving_principal=lambda: owner,
             ),
@@ -484,6 +487,7 @@ async def provision_semantic_content(
     engine: Any,
     session: Any,
     served_url: str,
+    action_policies: ActionPolicies,
     providers: Sequence[ContentProvider] | None = None,
     bind_graph: GraphBinder = bind_session_graph,
 ) -> dict[str, Any]:
@@ -515,6 +519,7 @@ async def provision_semantic_content(
             client=client,
             commons=commons,
             pack=pack,
+            action_policies=action_policies,
             bind_graph=bind_graph,
         )
         with bind_graph(graph):

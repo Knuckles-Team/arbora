@@ -13,7 +13,7 @@ flip (see ``docs/architecture/fleet_autonomy.md``).
 
 One call decides everything::
 
-    decision = get_action_policy(engine).decide(
+    decision = policies.for_engine(engine).decide(
         ActionRequest(kind="restart_service", target="caddy-mcp", source="reconciler")
     )
 
@@ -87,7 +87,7 @@ def is_irreversible(action_kind: str) -> bool:
     return any(tok in kind for tok in _IRREVERSIBLE_TOKENS)
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class ActionPolicyPorts:
     """Readers the composition root binds; an unbound reader never widens scope.
 
@@ -98,19 +98,6 @@ class ActionPolicyPorts:
 
     trust_ramp: Callable[[Any, str, str], bool] | None = None
     notifier: Callable[[str], None] | None = None
-
-
-_ports = ActionPolicyPorts()
-
-
-def bind_action_policy_ports(
-    *,
-    trust_ramp: Callable[[Any, str, str], bool] | None = None,
-    notifier: Callable[[str], None] | None = None,
-) -> None:
-    """Bind (or with ``None`` clear) the trust-ramp reader and the notifier."""
-    _ports.trust_ramp = trust_ramp
-    _ports.notifier = notifier
 
 
 # Tiers (what a rule allows) and decisions (what the gate answers).
@@ -134,6 +121,12 @@ _LEDGER_SCAN_LIMIT = 500
 #: ``ActionDecision.denial`` codes of the rate/blast pre-checks.
 DENIAL_RATE_LIMITED = "rate_limited"
 DENIAL_LEDGER_UNREADABLE = "ledger_unreadable"
+# The policy allowed the action but its ActionDecision audit row could not be
+# written, so no receipt exists and the gate fails closed (ARBORA-FLEET-R015.5).
+DENIAL_AUDIT_UNRECORDED = "audit_unrecorded"
+REASON_AUDIT_UNRECORDED = (
+    "policy allowed but the decision could not be recorded (audit write failed)"
+)
 
 #: The persisted label of every policy decision (also the rate/blast ledger).
 ACTION_DECISION_LABEL = "ActionDecision"
@@ -524,7 +517,8 @@ class ActionDecision:
     invariant: str = ""
     verify_ms: float = 0.0
     # Why the safety pre-checks denied: ``DENIAL_RATE_LIMITED`` (the budget is
-    # spent) or ``DENIAL_LEDGER_UNREADABLE`` (the budget cannot be read, so the
+    # spent), ``DENIAL_AUDIT_UNRECORDED`` (allowed, but the audit row failed) or
+    # ``DENIAL_LEDGER_UNREADABLE`` (the budget cannot be read, so the
     # gate fails closed). Empty for every other outcome.
     denial: str = ""
 
@@ -669,8 +663,15 @@ class ActionPolicy:
     audit ledger in the KG, so N processes share one budget.
     """
 
-    def __init__(self, engine: Any = None, policy_path: str | Path | None = None):
+    def __init__(
+        self,
+        engine: Any = None,
+        policy_path: str | Path | None = None,
+        *,
+        ports: ActionPolicyPorts | None = None,
+    ):
         self.engine = engine
+        self._ports = ports if ports is not None else ActionPolicyPorts()
         if policy_path is None:
             policy_path = str(setting("ACTION_POLICY_PATH", "") or "") or None
         self.policy_path = resolve_policy_path(
@@ -990,7 +991,7 @@ class ActionPolicy:
             eligible = policy.get("ramp_eligible") or []
             if not any(fnmatch.fnmatch(request.kind, pat) for pat in eligible):
                 return False
-            reader = _ports.trust_ramp
+            reader = self._ports.trust_ramp
             if reader is None:
                 return False
             return bool(reader(self.engine, request.actor_id, request.kind))
@@ -1120,12 +1121,20 @@ class ActionPolicy:
         decision.receipt = _policy_receipt(decision)
         if decision.disposition is not PolicyDisposition.APPROVE or decision.receipt:
             return decision
+        # An allowed decision whose audit write failed is refused with that
+        # cause, never with a policy-deny reason: the policy allowed it.
+        unrecorded = self.engine is not None and decision.audit_id is None
         unavailable = ActionDecision(
             decision=DECISION_UNAVAILABLE,
             tier=TIER_FORBIDDEN,
             request=decision.request,
-            reason="policy receipt unavailable (fail closed)",
+            reason=(
+                REASON_AUDIT_UNRECORDED
+                if unrecorded
+                else "policy receipt unavailable (fail closed)"
+            ),
             rule_origin="unavailable",
+            denial=DENIAL_AUDIT_UNRECORDED if unrecorded else "",
         )
         unavailable.audit_id = self._audit(unavailable)
         unavailable.receipt = _policy_receipt(unavailable)
@@ -1352,13 +1361,28 @@ class ActionPolicy:
                 action_decision_record(decision),
             )
         except Exception as e:  # noqa: BLE001 — missing audit evidence cannot authorize
-            logger.debug("action_policy: audit write failed: %s", e)
+            # WARNING, not DEBUG: without this row the decision has no receipt
+            # and is refused. Class, kind and target only; never params.
+            logger.warning(
+                "action_policy: audit write failed (%s) for kind=%s target=%s",
+                type(e).__name__,
+                decision.request.kind,
+                decision.request.target,
+            )
             return None
-        return audit_id if created else None
+        if not created:
+            logger.warning(
+                "action_policy: audit row %s already existed for kind=%s target=%s",
+                audit_id,
+                decision.request.kind,
+                decision.request.target,
+            )
+            return None
+        return audit_id
 
     def _notify(self, message: str) -> None:
         """Send ``message`` to the bound operator notifier, else log it."""
-        notifier = _ports.notifier
+        notifier = self._ports.notifier
         if notifier is None:
             logger.info("action_policy notification: %s", message)
             return
@@ -1370,11 +1394,11 @@ class ActionPolicy:
             )
 
 
-# CONCEPT:MERISTEM-OS.governance.action-policy-decision-point — process-wide
-# ``ActionPolicy`` instance cache keyed by ``id(engine)``. SCALE-P2-1 soak
+# CONCEPT:MERISTEM-OS.governance.action-policy-decision-point — one host's
+# ``ActionPolicy`` instance cache (``ActionPolicies``) keyed by ``id(engine)``. SCALE-P2-1 soak
 # finding (``scripts/scale/loadgen.py`` MAX_MESSAGE_EVENTS comment): every
 # ``AgentBus.send``/``MessagingService.send`` call — and every other
-# ``get_action_policy(engine).decide(...)`` call site — went through this
+# ``policies.for_engine(engine).decide(...)`` call site — went through this
 # factory, and it used to build a BRAND-NEW ``ActionPolicy()`` on every single
 # call. ``ActionPolicy`` docstring already promised "stateless apart from an
 # mtime-cached parse of the policy file", but that cache lives on
@@ -1394,62 +1418,50 @@ class ActionPolicy:
 # rate-limit/blast-radius ledger reads still hit the engine on every
 # ``decide()`` call (unchanged — those must reflect live mutable state); only
 # the immutable, disk-backed default/file policy is now built once and reused.
-_policy_cache_lock = threading.Lock()
-_POLICY_CACHE: dict[int, tuple[Any, ActionPolicy]] = {}
-#: Bound so a long process (or a test session that spins up many short-lived
-#: fake engines) can't grow this cache without limit — oldest entry evicted
-#: first (dict preserves insertion order). Production has effectively 1-2
-#: distinct engines for the life of the process, so this cap is never hit
-#: there; it only guards pathological test/bench usage.
-_POLICY_CACHE_MAX_SIZE = 64
-_NO_ENGINE_POLICY: ActionPolicy | None = None
+class ActionPolicies:
+    """One host's policy gates, one per distinct engine identity (ARBORA-HOST-R039.3).
 
-
-def get_action_policy(engine: Any = None) -> ActionPolicy:
-    """Return the process-wide cached policy gate for ``engine``.
-
-    One ``ActionPolicy`` instance per distinct engine identity (or a single
-    shared instance when ``engine`` is ``None``) so its mtime-cached file
-    parse is actually reused across calls instead of being rebuilt from
-    scratch every time (see the module-level comment above for the SCALE-P2-1
-    perf finding this fixes). Call :func:`reset_action_policy_cache_for_tests`
-    to force re-construction (e.g. after swapping ``policy_path`` out from
-    under a long-lived engine in a test).
+    The host builds one and passes it down; it owns its lock and the ports
+    every gate it builds reads. The cache is bounded so a long process (or a
+    test session spinning up many short-lived fake engines) cannot grow it
+    without limit; the oldest entry is evicted first. Production has one or
+    two engines for the life of the process, so the bound is never hit there.
     """
-    global _NO_ENGINE_POLICY
-    if engine is None:
-        if _NO_ENGINE_POLICY is None:
-            with _policy_cache_lock:
-                if _NO_ENGINE_POLICY is None:
-                    _NO_ENGINE_POLICY = ActionPolicy(engine=None)
-        return _NO_ENGINE_POLICY
 
-    key = id(engine)
-    with _policy_cache_lock:
-        cached = _POLICY_CACHE.get(key)
-        # ``cached[0] is engine`` guards against an ``id()`` being reused by an
-        # unrelated, later object once the original engine was garbage
-        # collected — a stale hit would silently hand back the WRONG engine's
-        # policy gate.
-        if cached is not None and cached[0] is engine:
-            return cached[1]
-        policy = ActionPolicy(engine=engine)
-        if len(_POLICY_CACHE) >= _POLICY_CACHE_MAX_SIZE and key not in _POLICY_CACHE:
-            _POLICY_CACHE.pop(next(iter(_POLICY_CACHE)))
-        _POLICY_CACHE[key] = (engine, policy)
-        return policy
+    max_size = 64
 
+    def __init__(self, ports: ActionPolicyPorts | None = None) -> None:
+        self._ports = ports if ports is not None else ActionPolicyPorts()
+        self._lock = threading.Lock()
+        self._by_engine: dict[int, tuple[Any, ActionPolicy]] = {}
+        self._no_engine: ActionPolicy | None = None
 
-def reset_action_policy_cache_for_tests() -> None:
-    """Force re-construction of every cached policy gate (test-isolation seam).
+    @property
+    def ports(self) -> ActionPolicyPorts:
+        return self._ports
 
-    Mirrors ``AgentBus.reset_log_backend_cache_for_tests`` — call this when a
-    test mutates something ``ActionPolicy.__init__`` reads once (e.g. the
-    ``ACTION_IRREVERSIBILITY_AVERSION`` env flag) and needs the NEXT
-    ``get_action_policy(engine)`` call to pick the change up rather than reuse
-    an already-cached instance.
-    """
-    global _NO_ENGINE_POLICY
-    with _policy_cache_lock:
-        _POLICY_CACHE.clear()
-        _NO_ENGINE_POLICY = None
+    def for_engine(self, engine: Any = None) -> ActionPolicy:
+        """The cached gate for ``engine`` (one shared gate when ``None``)."""
+        with self._lock:
+            if engine is None:
+                if self._no_engine is None:
+                    self._no_engine = ActionPolicy(engine=None, ports=self._ports)
+                return self._no_engine
+            key = id(engine)
+            cached = self._by_engine.get(key)
+            # ``cached[0] is engine`` guards against an ``id()`` reused by a
+            # later object once the original engine was collected: a stale
+            # hit would hand back the wrong engine's gate.
+            if cached is not None and cached[0] is engine:
+                return cached[1]
+            policy = ActionPolicy(engine=engine, ports=self._ports)
+            if len(self._by_engine) >= self.max_size and key not in self._by_engine:
+                self._by_engine.pop(next(iter(self._by_engine)))
+            self._by_engine[key] = (engine, policy)
+            return policy
+
+    def invalidate(self) -> None:
+        """Drop every cached gate so the next call re-reads its settings."""
+        with self._lock:
+            self._by_engine.clear()
+            self._no_engine = None

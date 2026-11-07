@@ -2,6 +2,7 @@
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.browser_control.browser_control_service import (
     browser_control_factory_kwargs,
 )
@@ -25,7 +26,11 @@ def test_actual_served_engine_installs_browser_authority():
         return False
 
     configured = browser_control_factory_kwargs(
-        factory, ServedEngine(None), sync_runner, session_revalidator=refuse
+        factory,
+        ServedEngine(None),
+        sync_runner,
+        action_policy=ActionPolicies().for_engine(),
+        session_revalidator=refuse,
     )
     assert configured["browser_control"] is not None
 
@@ -132,6 +137,7 @@ def test_released_native_actual_webui_factory_composition(native_engine):
         create_agent_web_app,
         engine,
         asyncio.to_thread,
+        action_policy=ActionPolicies().for_engine(engine),
         session_revalidator=revalidate_browser_control_session,
     )
     assert configured["browser_control"] is not None

@@ -7,10 +7,12 @@ from typing import Any
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.fleet import onboarding as onboarding_module
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
-from arbora.fleet.gateway_ops import FleetGateway
+from arbora.fleet.declarations import Declarations
+from arbora.fleet.gateway_ops import ConfirmingTools, FleetGateway
 from arbora.fleet.multiplexer_ops import MultiplexerOps
 from arbora.fleet.onboarding import (
     FleetEndpoint,
@@ -117,6 +119,7 @@ def _gateway(*, hidden: frozenset[str] = frozenset()) -> tuple[FleetGateway, _Mu
         delegated_call=unused,
         catalog_ops=ops,
         surface_mux=mux,
+        confirming_tools=ConfirmingTools(),
     )
     return gateway, mux
 
@@ -208,7 +211,13 @@ async def test_onboarding_record_carries_surfaces_for_changed_and_unchanged(
         def register_contracts(self, *_args: Any) -> None:
             return None
 
-    onboarding = Onboarding(engine=None, session=None, capture=capture)
+    onboarding = Onboarding(
+        engine=None,
+        session=None,
+        declarations=Declarations(),
+        action_policies=ActionPolicies(),
+        capture=capture,
+    )
     report = OnboardingReport()
     monkeypatch.setattr(onboarding_module, "_child_auth", lambda: None)
     endpoint = FleetEndpoint(BARE, "http://bare/mcp")

@@ -154,8 +154,8 @@ def wired(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
     monkeypatch.setattr(bootstrap, "_wait_for_engine_materialization", lambda e: None)
     monkeypatch.setattr(
-        "arbora.api.contracts.provisioning.get_action_policy",
-        lambda _engine: AllowPolicy(),
+        "arbora.access.action_policy.ActionPolicies.for_engine",
+        lambda _self, _engine=None: AllowPolicy(),
     )
     monkeypatch.setattr("scion_sdk.sinks.medulla.MedullaSink", _Sink)
 

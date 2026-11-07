@@ -222,6 +222,7 @@ async def test_governed_call_hands_children_plain_json_for_nested_objects(
     gateway = object.__new__(gateway_ops.FleetGateway)
     gateway._delegated_call = delegated
     gateway._service_call = None
+    gateway._confirming_tools = gateway_ops.ConfirmingTools()
 
     async def admitted(_caller, _server, _tool):
         from types import SimpleNamespace

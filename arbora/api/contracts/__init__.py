@@ -53,7 +53,6 @@ from arbora.api.contracts.messaging import (
     ActionRule,
     PolicyDisposition,
     PolicyReceipt,
-    get_action_policy,
     in_maintenance_window,
 )
 from arbora.api.contracts.provisioning import (
@@ -111,7 +110,6 @@ __all__ = [
     "WorkItemSubmissionResult",
     "catalog_read_ports",
     "compose_agent_control_plane",
-    "get_action_policy",
     "in_maintenance_window",
     "pack_import_authority",
 ]

@@ -479,6 +479,8 @@ class SourceIngestWriter:
     """Commits pages and their chunks through the SDK's SourceIngest facade."""
 
     client: Any
+    #: The fleet's captured declarations (the ``fleet_declarations`` binding).
+    declarations: Any = None
 
     async def commit(self, documents: Sequence[IngestedDocument]) -> dict[str, Any]:
         from scion_sdk.ingest import (
@@ -496,7 +498,7 @@ class SourceIngestWriter:
         for backend in sorted({doc.page.backend for doc in documents}):
             batch = [doc for doc in documents if doc.page.backend == backend]
             connector = BACKEND_SERVERS[backend]
-            _require_declared_mappings(connector)
+            _require_declared_mappings(self.declarations, connector)
             for binding, records in (
                 (
                     IngestBinding(connector=connector, stream=PAGE_STREAM),
@@ -523,21 +525,20 @@ class SourceIngestWriter:
         return {"affected": affected, "relationships": relationships}
 
 
-def _require_declared_mappings(connector: str) -> None:
+def _require_declared_mappings(declarations: Any, connector: str) -> None:
     """Refuse when a captured declaration lacks the Document or Chunk mapping.
 
     The mapping comes from the connector's own ``connector://resources``
-    declaration. A connector whose declaration was not captured yet is left to
+    declaration, held by the fleet's ``Declarations``. A connector whose
+    declaration was not captured yet (or a process with no fleet) is left to
     the engine, which refuses an unknown mapping itself.
     """
-    from arbora.fleet.declarations import declaration_of, declared_mapping
-
-    if declaration_of(connector) is None:
+    if declarations is None or declarations.declaration_of(connector) is None:
         return
     missing = [
         record_type
         for record_type in ("Document", "Chunk")
-        if declared_mapping(connector, record_type) is None
+        if declarations.declared_mapping(connector, record_type) is None
     ]
     if missing:
         raise OperationRefused(
@@ -742,7 +743,7 @@ async def handle_research_web(
     embedding_note = ""
     if documents:
         writer: WebIngest = context.services.get("web_ingest") or SourceIngestWriter(
-            context.client
+            context.client, context.services.get("fleet_declarations")
         )
         receipt = await writer.commit(documents)
         embedder, embedding_note = _embedder(context)

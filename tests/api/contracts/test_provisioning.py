@@ -30,6 +30,7 @@ if TYPE_CHECKING:
 
 from arbora.access.action_policy import (
     ActionDecision,
+    ActionPolicies,
     ActionRequest,
     PolicyDisposition,
     PolicyReceipt,
@@ -103,8 +104,7 @@ class _AllowWithoutReceipt:
 
 def _install_policy(monkeypatch: pytest.MonkeyPatch, policy: Any) -> None:
     monkeypatch.setattr(
-        "arbora.api.contracts.provisioning.get_action_policy",
-        lambda _engine: policy,
+        ActionPolicies, "for_engine", lambda _self, _engine=None: policy
     )
 
 
@@ -148,6 +148,7 @@ def _assert_policy_refuses_before_binding_load(
         resolver = pack_import_authority(
             object(),
             session,
+            action_policies=ActionPolicies(),
             catalog_binding=binding,
             serving_principal=lambda: "principal:sha256:" + ("ab" * 32),
         )
@@ -169,6 +170,7 @@ def test_policy_issued_resolver_returns_generated_contracts(
         resolver = pack_import_authority(
             object(),
             session,
+            action_policies=ActionPolicies(),
             catalog_binding=lambda: binding,
             serving_principal=lambda: owner,
         )
@@ -201,6 +203,7 @@ def test_resolver_requires_pack_control_scope_before_providers() -> None:
         pack_import_authority(
             object(),
             session,
+            action_policies=ActionPolicies(),
             catalog_binding=binding,
             serving_principal=lambda: "principal:sha256:" + ("ab" * 32),
         )
@@ -239,6 +242,7 @@ def test_resolver_refuses_malformed_authoritative_principal(
         resolver = pack_import_authority(
             object(),
             session,
+            action_policies=ActionPolicies(),
             catalog_binding=lambda: _binding(),
             serving_principal=lambda: "service:arbora",
         )
@@ -258,6 +262,7 @@ def test_resolver_refuses_a_non_generated_binding(
         resolver = pack_import_authority(
             object(),
             session,
+            action_policies=ActionPolicies(),
             catalog_binding=lambda: cast(McpCatalogSnapshotBinding, object()),
             serving_principal=lambda: "principal:sha256:" + ("ab" * 32),
         )

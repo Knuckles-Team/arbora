@@ -25,6 +25,7 @@ from typing import Any
 
 from filelock import FileLock
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.core.settings import ArboraConfig as AgentConfig
 from arbora.core.settings import setting
 
@@ -403,7 +404,11 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
         engine = runtime._get_engine()
         bootstrap._wait_for_engine_materialization(engine)
         report = await provision_semantic_content(
-            engine=engine, session=session, served_url=served_url
+            engine=engine,
+            session=session,
+            served_url=served_url,
+            # This one-shot process owns its own policy gates.
+            action_policies=ActionPolicies(),
         )
     return {"operation": "provision-semantic-content", "ok": True, **report}
 
@@ -417,13 +422,14 @@ async def _onboard_fleet(
     approved to withdraw more than half of the published pack surface.
     """
 
-    from arbora.fleet.access_contracts import bootstrap_fleet_virtual_catalog
+    from arbora.fleet.declarations import Declarations
     from arbora.fleet.onboarding import (
         FleetOnboarding,
         configured_fleet_endpoints,
         onboard_fleet,
         self_served_connectors,
     )
+    from arbora.fleet.virtual_catalog import VirtualCatalog
     from arbora.mcp_server import bootstrap, runtime
     from arbora.security.actor_context import use_actor
     from arbora.security.session import use_session
@@ -436,7 +442,10 @@ async def _onboard_fleet(
             FleetOnboarding(
                 engine=engine,
                 session=session,
-                virtual_catalog=bootstrap_fleet_virtual_catalog(),
+                # This one-shot process owns its own projection.
+                virtual_catalog=VirtualCatalog(),
+                declarations=Declarations(),
+                action_policies=ActionPolicies(),
                 allow_mass_withdrawal=allow_mass_withdrawal,
             ),
             configured_fleet_endpoints(exclude=self_served_connectors()),

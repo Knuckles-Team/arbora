@@ -39,7 +39,10 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:
+    from arbora.access.action_policy import ActionPolicies
 
 __all__ = ["compose_web_application", "run_web_ui"]
 
@@ -109,6 +112,7 @@ async def _serve_until_stopped(
 def run_web_ui(
     stop_event: threading.Event,
     *,
+    action_policies: ActionPolicies,
     host: str | None = None,
     port: int | None = None,
     session_boundary: Any = None,
@@ -213,10 +217,12 @@ def run_web_ui(
         create_agent_web_app,
         lambda operation: invoke_governed_helper(operation, deadline=10.0),
     )
+    engine = mcp_runtime._get_engine()
     browser_control_kwargs = browser_control_factory_kwargs(
         create_agent_web_app,
-        mcp_runtime._get_engine(),
+        engine,
         lambda operation: invoke_governed_helper(operation, deadline=10.0),
+        action_policy=action_policies.for_engine(engine),
         session_revalidator=revalidate_browser_control_session,
     )
     from arbora.webui_host.session_boundary import identity_factory_kwargs

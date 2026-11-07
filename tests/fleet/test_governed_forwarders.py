@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from arbora.fleet.gateway_ops import ConfirmingTools
 from arbora.fleet.session_loads import LoadCapExceeded, SessionLoads
 
 
@@ -66,7 +67,10 @@ def test_gateway_effect_returns_only_canonical_authoritative_decisions() -> None
         pytest.fail("classification must never dispatch a child")
 
     gateway = FleetGateway(
-        tool_for=tool_for, policy_check=allowed, delegated_call=forbidden
+        tool_for=tool_for,
+        policy_check=allowed,
+        delegated_call=forbidden,
+        confirming_tools=ConfirmingTools(),
     )
     caller = SimpleNamespace(
         effective_scopes=frozenset({"mcp:delegate", "data:read"}), session=object()
@@ -135,7 +139,10 @@ def test_delegated_catalog_subject_is_not_service_executor_authority() -> None:
 
     adapter = tool_for_multiplexer_ops(SimpleNamespace(admitted_tool=admitted))
     gateway = FleetGateway(
-        tool_for=adapter, policy_check=allowed, delegated_call=forbidden
+        tool_for=adapter,
+        policy_check=allowed,
+        delegated_call=forbidden,
+        confirming_tools=ConfirmingTools(),
     )
     caller = SimpleNamespace(
         effective_scopes=frozenset({"mcp:delegate", "data:read"}), session=object()

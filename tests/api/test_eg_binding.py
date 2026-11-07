@@ -210,10 +210,18 @@ def test_method_not_marked_wire_callable_is_not_bound(tmp_path: Path) -> None:
 def test_engine_catalog_serves_every_wire_callable_method_as_generated_op() -> None:
     """The engine's run-time catalog yields one ``eg.<domain>.<Method>`` op per callable method."""
     rows = load_catalog()["methods"]
+    from arbora.api.ops import query
+    from arbora.api.registry.eg_binding import _EXCLUSIONS, _load_exclusions
+
+    excluded = set(_load_exclusions(_EXCLUSIONS))
+    curated = query.operations()
+    bound = {op.binding.service for op in curated if isinstance(op.binding, EgMethod)}
     expected = {
-        f"eg.{row['domain']}.{row['id']}" for row in rows if row["is_wire_callable"]
+        f"eg.{row['domain']}.{row['id']}"
+        for row in rows
+        if row["is_wire_callable"] and row["id"] not in excluded | bound
     }
-    ops = load_eg_bindings()
+    ops = load_eg_bindings(curated_ops=curated)
     ids = [op.id for op in ops]
     assert expected
     assert len(ids) == len(set(ids))

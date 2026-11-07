@@ -12,9 +12,12 @@ import logging
 import secrets
 import time
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from arbora.api.errors import not_served
+
+if TYPE_CHECKING:
+    from arbora.access.action_policy import ActionPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -123,15 +126,10 @@ def _capability_search(eg_client: Any, session: Any) -> Callable[[Sequence[str]]
     return lookup
 
 
-def _guardrail_source(engine: Any) -> Callable[[Sequence[str]], Any]:
+def _guardrail_source(policy: ActionPolicy) -> Callable[[Sequence[str]], Any]:
     """The planner's policy rules: one side-effect-free AU action-policy
     verdict per task (never raises; fails closed -- MERISTEM-CONTROL-R017)."""
-    from arbora.access.action_policy import (
-        ActionRequest,
-        get_action_policy,
-    )
-
-    policy = get_action_policy(engine)
+    from arbora.access.action_policy import ActionRequest
 
     async def lookup(tasks: Sequence[str]) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []

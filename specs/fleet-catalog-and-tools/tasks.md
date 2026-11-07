@@ -63,6 +63,7 @@ Check a task only after its linked code and tests land. A checked source task is
 - **ARBORA-FLEET-R029.1:** Refuse an empty unscoped `fleet.catalog.search` as `INVALID_ARGUMENT` (HTTP 400), not an internal error.
 - **ARBORA-FLEET-R015.1:** Classify a failed `fleet.call` by the cause inside the task group. Log that cause. Keep a remote tracing-service child in the catalog without keys.
 - **ARBORA-FLEET-R015.3:** Deny an unreadable policy ledger as `ledger_unreadable` with its cause, never as a spent rate budget.
+- **ARBORA-FLEET-R015.5:** Refuse an allowed decision whose audit write failed with that cause, and log the failure at WARNING.
 - T15 (ARBORA-FLEET-R026): Skip a registration without a component, log it, and report it in `multiplexer_status`.
 - T16 (ARBORA-FLEET-R027): Add `arbora/fleet/onboarding.py`, the `onboard-fleet` command and the background boot pass.
 - T17 (ARBORA-FLEET-R028): Renew fleet and self-served leases each pass with windowed idempotency keys; refresh the catalog after admission.
@@ -534,3 +535,4 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T266 [US1] ARBORA-FLEET-R083.3 Fleet discovery, catalog items and connector operations ask the port. Size: M, 1 PR, 4 hours.
 - [ ] T267 [US1] ARBORA-FLEET-R083.4 Delete the other scorers. Size: S, 1 PR, 2 hours.
 - [ ] T268 [US1] ARBORA-FLEET-R083.5 Ranking served proof and degradation evidence. Size: S, 1 PR, 3 hours.
+- [ ] T269 [US1] ARBORA-FLEET-R015.5 An allowed decision whose audit write failed is refused with that cause. Size: XS, 1 PR, 1 hour.

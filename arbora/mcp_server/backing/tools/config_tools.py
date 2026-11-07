@@ -28,10 +28,11 @@ from typing import Literal
 
 from pydantic import Field
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.mcp_server import runtime
 
 
-def register_config_tools(mcp):
+def register_config_tools(mcp, action_policies: ActionPolicies):
     """Register the ``graph_config`` tool onto the MCP server."""
 
     @mcp.tool(
@@ -96,6 +97,7 @@ def register_config_tools(mcp):
             return json.dumps(
                 await dispatch(
                     action,
+                    action_policies=action_policies,
                     key=key,
                     value=value,
                     reason=reason,

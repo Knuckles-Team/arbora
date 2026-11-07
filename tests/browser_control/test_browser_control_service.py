@@ -437,6 +437,7 @@ def test_factory_implements_the_real_webui_port_protocol() -> None:
         app_factory,
         _Engine(),
         _runner,
+        action_policy=_Policy(),
         session_revalidator=_live_session,
     )
 

@@ -18,9 +18,11 @@ from typing import Any
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.deployment import production_ops
 from arbora.deployment.semantic_provisioning import ensure_server_registrations
 from arbora.fleet import onboarding
+from arbora.fleet.declarations import Declarations
 from arbora.fleet.onboarding import (
     RENEW_MARGIN_MS,
     FleetEndpoint,
@@ -32,6 +34,7 @@ from arbora.fleet.onboarding import (
     refresh_serving_catalog,
     start_fleet_onboarding,
 )
+from arbora.fleet.virtual_catalog import VirtualCatalog
 from arbora.security.session import GraphSession
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
 
@@ -178,8 +181,8 @@ async def _served_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
 def eg(monkeypatch: pytest.MonkeyPatch) -> _Registry:
     registry = _Registry()
     monkeypatch.setattr(
-        "arbora.api.contracts.provisioning.get_action_policy",
-        lambda _engine: AllowPolicy(),
+        "arbora.access.action_policy.ActionPolicies.for_engine",
+        lambda _self, _engine=None: AllowPolicy(),
     )
     monkeypatch.setattr(
         "scion_sdk.sinks.medulla.MedullaSink",
@@ -194,7 +197,13 @@ def eg(monkeypatch: pytest.MonkeyPatch) -> _Registry:
 
 
 def _onboarding(registry: _Registry, capture: Any = _served_pack) -> FleetOnboarding:
-    return FleetOnboarding(engine=registry, session=_session(), capture=capture)
+    return FleetOnboarding(
+        engine=registry,
+        session=_session(),
+        capture=capture,
+        declarations=Declarations(),
+        action_policies=ActionPolicies(),
+    )
 
 
 def _run_in_session(coro: Any) -> Any:
@@ -601,7 +610,12 @@ def test_a_failing_pass_never_escapes_the_boot_thread(
 
 def test_boot_without_an_engine_starts_no_thread() -> None:
     started = start_fleet_onboarding(
-        engine=SimpleNamespace(), session=_session(), multiplexer=_Mux({})
+        engine=SimpleNamespace(),
+        session=_session(),
+        multiplexer=_Mux({}),
+        virtual_catalog=VirtualCatalog(),
+        declarations=Declarations(),
+        action_policies=ActionPolicies(),
     )
 
     assert started is None
@@ -610,10 +624,7 @@ def test_boot_without_an_engine_starts_no_thread() -> None:
 def test_bootstrap_passes_the_process_virtual_catalog_to_onboarding(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from arbora.fleet import access_contracts
-    from arbora.fleet.virtual_catalog import VirtualCatalog
-
-    monkeypatch.setattr(access_contracts, "_CATALOG", [])
+    catalog = VirtualCatalog()
     seen: list[object] = []
 
     def start(self: FleetOnboardingService) -> object:
@@ -625,13 +636,14 @@ def test_bootstrap_passes_the_process_virtual_catalog_to_onboarding(
         engine=SimpleNamespace(graph_compute=object()),
         session=_session(),
         multiplexer=_Mux({}),
+        virtual_catalog=catalog,
+        declarations=Declarations(),
+        action_policies=ActionPolicies(),
     )
 
     assert started is not None
-    assert len(seen) == 1
-    assert isinstance(seen[0], VirtualCatalog)
-    assert access_contracts.fleet_virtual_catalog() is seen[0]
-    assert seen[0].scope == (TENANT, GRAPH)
+    assert seen == [catalog]
+    assert catalog.scope == (TENANT, GRAPH)
 
 
 @pytest.mark.asyncio
@@ -651,6 +663,8 @@ async def test_native_source_approval_missing_stays_pending(
         engine=None,
         session=None,
         surfaces={"tickets-mcp": {}},
+        declarations=Declarations(),
+        action_policies=ActionPolicies(),
     )
     decision = SourceApprovalDecision(
         connector="tickets-mcp",

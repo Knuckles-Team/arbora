@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from arbora.fleet.gateway_ops import ConfirmingTools
 from arbora.security import anonymous
 
 pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.3")
@@ -547,6 +548,7 @@ async def test_new_surface_relays_refuse_anonymous_before_child(local_mode, surf
         surface_mux=SimpleNamespace(
             get_server_prompt=forbidden, read_server_resource=forbidden
         ),
+        confirming_tools=ConfirmingTools(),
     )
     caller = caller_from_session(anonymous.session(), credential_kind="none")
     with pytest.raises(PermissionError, match="does not match"):
