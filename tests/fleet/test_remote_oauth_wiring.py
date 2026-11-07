@@ -38,7 +38,7 @@ from arbora.fleet.discovery_authority import (
     OAuthGrantBinding,
     TenantLocalDiscoveryBinding,
 )
-from arbora.mcp_server.backing.remote_oauth_broker import (
+from arbora.fleet.remote_oauth_broker import (
     OAuthProviderError,
     OAuthTokenAbsentError,
     OAuthTokenStore,

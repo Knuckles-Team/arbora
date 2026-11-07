@@ -100,7 +100,7 @@ def coerce_httpx2_auth(value: Any) -> Any:
     of fastmcp-native provider shapes handled entirely inside fastmcp's own
     ``_set_auth``). This package builds its outbound child/service auth with
     the LOCAL ``httpx`` package instead —
-    :func:`arbora.mcp_server.backing.client_credentials.child_auth` returns an
+    :func:`arbora.security.client_credentials.child_auth` returns an
     ``httpx.Auth`` (either a plain ``httpx.BasicAuth`` or the self-refreshing
     ``ClientCredentialsAuth``) — because that object is *also* used to
     authenticate this package's own ``httpx.AsyncClient``-based transports

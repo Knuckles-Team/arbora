@@ -1983,7 +1983,7 @@ def _swap_local_provider_components(
 #
 # A catalog entry opts into per-user delegated authorization by declaring an
 # admin-configured ``oauth_provider`` block (the exact shape
-# ``arbora.mcp_server.backing.remote_oauth_broker.ProviderDescriptor`` accepts) on
+# ``arbora.fleet.remote_oauth_broker.ProviderDescriptor`` accepts) on
 # its config -- the SAME "administrator-populated, never caller-supplied"
 # catalog these config dicts already are (headers/env/tls_profile/
 # allowed_private_hosts all come from here today). Such a server is
@@ -2052,7 +2052,7 @@ def _remote_oauth_broker_for(
     provider block, reusing ONE broker instance per ``provider_id`` so its
     encrypted token store and DCR registration cache persist across calls
     instead of being rebuilt (and, for DCR, re-registered) on every request."""
-    from arbora.mcp_server.backing.remote_oauth_broker import (
+    from arbora.fleet.remote_oauth_broker import (
         ProviderDescriptor,
         ProviderRegistry,
         RemoteOAuthBroker,
@@ -2086,7 +2086,7 @@ def _resolve_remote_oauth_bearer(
     server-minted identity every other authorization decision in this gateway
     uses, never a caller-supplied string) and mints a bearer bound to the
     EXACT registered resource endpoint via
-    :meth:`~arbora.mcp_server.backing.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`.
+    :meth:`~arbora.fleet.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`.
     A missing, expired, or revoked grant raises -- fail closed, no fallback to
     any shared/service credential (U-44/U-45).
 
@@ -2132,7 +2132,7 @@ def current_remote_oauth_grant_bindings(actor: _typing.Any) -> tuple[_typing.Any
     from arbora.fleet.discovery_authority import (
         OAuthGrantBinding,
     )
-    from arbora.mcp_server.backing.remote_oauth_broker import (
+    from arbora.fleet.remote_oauth_broker import (
         OAuthProviderError,
         OAuthScopeError,
         OAuthTokenAbsentError,
@@ -3260,7 +3260,7 @@ class MCPMultiplexer:
         anything keyed only by server name. A caller without a valid grant for
         this provider gets a fail-closed error before any tool call is
         attempted (the connect step inside :meth:`_open_one_session` raises,
-        because :meth:`~arbora.mcp_server.backing.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`
+        because :meth:`~arbora.fleet.remote_oauth_broker.RemoteOAuthBroker.bearer_headers_for`
         does).
 
         Fleet-global discoverability (this call reachable through
@@ -3998,7 +3998,7 @@ class MCPMultiplexer:
         if oauth_bearer_headers is not None:
             _svc_auth = None
         else:
-            from arbora.mcp_server.backing.client_credentials import child_auth
+            from arbora.security.client_credentials import child_auth
 
             _svc_auth = child_auth(headers)
         use_sse = explicit_transport == "sse" or url.rstrip("/").endswith("/sse")
@@ -4007,10 +4007,10 @@ class MCPMultiplexer:
             # `child_auth`'s docstring); `sse_client`'s `auth` param is
             # typed `httpx2.Auth | None` (fastmcp's vendored SDK v2 HTTP
             # client, a distinct package from this repo's own `httpx` —
-            # see `arbora/mcp_server/backing/httpx_boundary/py`). Coerce at
+            # see `arbora/core/httpx_boundary/py`). Coerce at
             # this boundary rather than passing the foreign-typed object
             # straight through.
-            from arbora.mcp_server.backing.httpx_boundary import coerce_httpx2_auth
+            from arbora.core.httpx_boundary import coerce_httpx2_auth
 
             transport = sse_client(
                 url,
@@ -4442,7 +4442,7 @@ class MCPMultiplexer:
         # and then wedges on expiry); derive that lifetime from the token TTL.
         session_max_age: float | None = None
         if is_remote:
-            from arbora.mcp_server.backing.client_credentials import (
+            from arbora.security.client_credentials import (
                 service_session_max_age,
             )
 

@@ -282,8 +282,8 @@ def _remember_declaration(connector: str, pack: Any) -> None:
 def _child_auth() -> Any:
     """Arbora's service credential for a child, as the multiplexer sends it."""
 
-    from arbora.mcp_server.backing.client_credentials import child_auth
-    from arbora.mcp_server.backing.httpx_boundary import coerce_httpx2_auth
+    from arbora.core.httpx_boundary import coerce_httpx2_auth
+    from arbora.security.client_credentials import child_auth
 
     return coerce_httpx2_auth(child_auth(None))
 
