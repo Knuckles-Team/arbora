@@ -691,17 +691,17 @@ def test_a_templated_skill_file_is_admitted_and_traversal_is_not() -> None:
 )
 def test_a_cancelled_child_result_is_a_typed_confirmation_refusal(result) -> None:
     from arbora.api.errors import FleetRefusal
-    from arbora.fleet import gateway_ops
+    from arbora.fleet.gateway_ops import ConfirmingTools
 
+    confirming = ConfirmingTools()
     with pytest.raises(FleetRefusal) as caught:
-        gateway_ops._refuse_cancelled(result, "jena-mcp", "jena_delete_dataset")
+        confirming.refuse_cancelled(result, "jena-mcp", "jena_delete_dataset")
     assert caught.value.code == "CONFIRMATION_REQUIRED"
     assert "plan_ref" in (caught.value.detail or "")
     # The tool is planned from now on.
-    assert ("jena-mcp", "jena_delete_dataset") in gateway_ops._CONFIRMING_TOOLS
-    gateway_ops._CONFIRMING_TOOLS.discard(("jena-mcp", "jena_delete_dataset"))
+    assert ("jena-mcp", "jena_delete_dataset") in confirming
     ok = {"structuredContent": {"deleted": True}}
-    assert gateway_ops._refuse_cancelled(ok, "jena-mcp", "t") is ok
+    assert confirming.refuse_cancelled(ok, "jena-mcp", "t") is ok
 
 
 @pytest.mark.spec("ARBORA-FLEET-R077")
