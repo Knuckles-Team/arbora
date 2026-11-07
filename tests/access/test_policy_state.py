@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 import arbora.access.action_policy as ap
+import arbora.access.approval as approval
 from arbora.access.policy_state import PolicyState
 from arbora.mcp_server.host_context import build_host_context
 
@@ -63,3 +64,82 @@ def test_no_module_policy_global_remains() -> None:
         "reset_action_policy_cache_for_tests",
     ):
         assert not hasattr(ap, name), name
+    for name in ("_session_scope", "bind_approval_session", "decide_action_approval"):
+        assert not hasattr(approval, name), name
+
+
+class _ApprovalEngine:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, dict, dict, str]] = []
+
+    def compare_and_set_node_fields(
+        self, node_id, conditions, updates, *, idempotency_key
+    ):
+        self.calls.append((node_id, dict(conditions), dict(updates), idempotency_key))
+        return True
+
+
+def _verified_session():
+    from arbora.security.actor_context import ActorContext, ActorType
+    from arbora.security.session import GraphSession
+
+    return GraphSession(
+        actor=ActorContext(
+            actor_id="owner",
+            actor_type=ActorType.HUMAN,
+            tenant_id="test",
+            authenticated=True,
+            roles=("kg:read", "kg:write"),
+        ),
+        tenant="test",
+        scopes=frozenset({"kg:read", "kg:write"}),
+    )
+
+
+@pytest.mark.asyncio
+async def test_served_approval_decides_only_under_a_verified_session(
+    monkeypatch,
+) -> None:
+    import httpx
+    from starlette.applications import Starlette
+    from starlette.routing import Route
+
+    from arbora.gateway.fleet import fleet_grant_approval
+    from arbora.mcp_server import runtime
+    from arbora.mcp_server.composition import install_gateway_application
+    from arbora.security.session import use_session
+
+    engine = _ApprovalEngine()
+    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
+    host = build_host_context(lambda: engine)
+    install_gateway_application(fleet=host.fleet, approvals=host.policy.approvals)
+    app = Starlette(
+        routes=[Route("/fleet/approvals/grant", fleet_grant_approval, methods=["POST"])]
+    )
+    body = {"job_id": "action_approval:7", "decision": "approve"}
+
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://host"
+    ) as client:
+        refused = await client.post("/fleet/approvals/grant", json=body)
+        assert refused.json()["status"] != "success"
+        assert engine.calls == []
+
+        with use_session(_verified_session()):
+            decided = await client.post("/fleet/approvals/grant", json=body)
+
+    assert decided.json() == {
+        "status": "success",
+        "result": {"approval_id": "action_approval:7", "decision": "approved"},
+    }
+    node_id, conditions, updates, _key = engine.calls[0]
+    assert (node_id, conditions, updates["status"]) == (
+        "action_approval:7",
+        {"status": "pending"},
+        "approved",
+    )
+
+
+def test_a_policy_state_without_a_session_scope_refuses_approvals() -> None:
+    with pytest.raises(PermissionError):
+        PolicyState().approvals.decide(object(), "action_approval:1", "approve")

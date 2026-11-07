@@ -28,6 +28,7 @@ from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
 from arbora.access.action_policy import ActionPolicies
+from arbora.access.approval import ApprovalDecisions
 from arbora.api.invoke.privacy import mask_persisted_arguments
 from arbora.core.settings import runtime_config
 from arbora.fleet.state import FleetState
@@ -179,13 +180,15 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         bindings={"a2a": a2a},
         fleet_effect=refused_fleet_effect,
     )
-    install_gateway_application(invocation, fleet=FleetState())
+    install_gateway_application(
+        invocation, fleet=FleetState(), approvals=ApprovalDecisions()
+    )
     from arbora.gateway.graph_api import register_graph_routes
 
     app = FastAPI()
     register_graph_routes(app)
     yield app, client
-    install_gateway_application(fleet=FleetState())
+    install_gateway_application(fleet=FleetState(), approvals=ApprovalDecisions())
     host_ports.register_run_decision_provider(None)
     host_ports.register_model_provider(None)
     host_ports.register_run_event_sink(None)

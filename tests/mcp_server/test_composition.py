@@ -10,6 +10,7 @@ from typing import Any, cast
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.access.approval import ApprovalDecisions
 from arbora.fleet.oauth_brokers import RemoteOAuthBrokers
 from arbora.fleet.state import FleetState
 from arbora.gateway.ports import gateway_application
@@ -52,7 +53,9 @@ async def test_installed_gateway_port_dispatches_native_runtime(
         return {"ok": True}
 
     monkeypatch.setattr(runtime, "_execute_tool", execute)
-    application = install_gateway_application(fleet=FleetState())
+    application = install_gateway_application(
+        fleet=FleetState(), approvals=ApprovalDecisions()
+    )
 
     assert gateway_application() is application
     assert await gateway_application().execute_tool("graph_query", query="MATCH") == {
@@ -158,7 +161,8 @@ def test_gateway_adapter_satisfies_runtime_protocol() -> None:
     from arbora.gateway.ports import GatewayApplicationPort
 
     assert isinstance(
-        NativeGatewayApplication(fleet=FleetState()), GatewayApplicationPort
+        NativeGatewayApplication(fleet=FleetState(), approvals=ApprovalDecisions()),
+        GatewayApplicationPort,
     )
 
 
@@ -173,7 +177,9 @@ def test_gateway_adapter_uses_native_oauth_binding_source(
         lambda _brokers, value: expected if value is actor else (),
     )
 
-    application = NativeGatewayApplication(fleet=FleetState())
+    application = NativeGatewayApplication(
+        fleet=FleetState(), approvals=ApprovalDecisions()
+    )
     assert application.remote_oauth_grant_bindings(actor) is expected
 
 

@@ -11,6 +11,7 @@ from collections.abc import Callable, Sequence
 from typing import Any
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.access.approval import ApprovalDecisions
 from arbora.fleet.state import FleetState
 from arbora.gateway.ports import configure_gateway_application
 from arbora.mcp_server import runtime
@@ -226,16 +227,24 @@ class NativeGatewayApplication:
     """Concrete application behavior behind the gateway transport port."""
 
     def __init__(
-        self, invocation: HostedInvocation | None = None, *, fleet: FleetState
+        self,
+        invocation: HostedInvocation | None = None,
+        *,
+        fleet: FleetState,
+        approvals: ApprovalDecisions,
     ) -> None:
         self._invocation = invocation
         self._fleet = fleet
+        self._approvals = approvals
 
     async def execute_tool(self, tool: str, /, **kwargs: Any) -> Any:
         return await runtime._execute_tool(tool, **kwargs)
 
     def engine(self) -> Any:
         return runtime._get_engine()
+
+    def decide_approval(self, approval_id: str, decision: str) -> dict[str, str]:
+        return self._approvals.decide(self.engine(), approval_id, decision)
 
     def ensure_tools_registered(self) -> None:
         runtime.ensure_tools_registered()
@@ -290,10 +299,11 @@ def install_gateway_application(
     invocation: HostedInvocation | None = None,
     *,
     fleet: FleetState,
+    approvals: ApprovalDecisions,
 ) -> NativeGatewayApplication:
     """Install the native application adapter at the process composition root."""
 
-    application = NativeGatewayApplication(invocation, fleet=fleet)
+    application = NativeGatewayApplication(invocation, fleet=fleet, approvals=approvals)
     configure_gateway_application(application)
     return application
 
