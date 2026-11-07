@@ -134,6 +134,12 @@ _LEDGER_SCAN_LIMIT = 500
 #: ``ActionDecision.denial`` codes of the rate/blast pre-checks.
 DENIAL_RATE_LIMITED = "rate_limited"
 DENIAL_LEDGER_UNREADABLE = "ledger_unreadable"
+# The policy allowed the action but its ActionDecision audit row could not be
+# written, so no receipt exists and the gate fails closed (ARBORA-FLEET-R015.5).
+DENIAL_AUDIT_UNRECORDED = "audit_unrecorded"
+REASON_AUDIT_UNRECORDED = (
+    "policy allowed but the decision could not be recorded (audit write failed)"
+)
 
 #: The persisted label of every policy decision (also the rate/blast ledger).
 ACTION_DECISION_LABEL = "ActionDecision"
@@ -524,7 +530,8 @@ class ActionDecision:
     invariant: str = ""
     verify_ms: float = 0.0
     # Why the safety pre-checks denied: ``DENIAL_RATE_LIMITED`` (the budget is
-    # spent) or ``DENIAL_LEDGER_UNREADABLE`` (the budget cannot be read, so the
+    # spent), ``DENIAL_AUDIT_UNRECORDED`` (allowed, but the audit row failed) or
+    # ``DENIAL_LEDGER_UNREADABLE`` (the budget cannot be read, so the
     # gate fails closed). Empty for every other outcome.
     denial: str = ""
 
@@ -1120,12 +1127,20 @@ class ActionPolicy:
         decision.receipt = _policy_receipt(decision)
         if decision.disposition is not PolicyDisposition.APPROVE or decision.receipt:
             return decision
+        # An allowed decision whose audit write failed is refused with that
+        # cause, never with a policy-deny reason: the policy allowed it.
+        unrecorded = self.engine is not None and decision.audit_id is None
         unavailable = ActionDecision(
             decision=DECISION_UNAVAILABLE,
             tier=TIER_FORBIDDEN,
             request=decision.request,
-            reason="policy receipt unavailable (fail closed)",
+            reason=(
+                REASON_AUDIT_UNRECORDED
+                if unrecorded
+                else "policy receipt unavailable (fail closed)"
+            ),
             rule_origin="unavailable",
+            denial=DENIAL_AUDIT_UNRECORDED if unrecorded else "",
         )
         unavailable.audit_id = self._audit(unavailable)
         unavailable.receipt = _policy_receipt(unavailable)
@@ -1352,9 +1367,24 @@ class ActionPolicy:
                 action_decision_record(decision),
             )
         except Exception as e:  # noqa: BLE001 — missing audit evidence cannot authorize
-            logger.debug("action_policy: audit write failed: %s", e)
+            # WARNING, not DEBUG: without this row the decision has no receipt
+            # and is refused. Class, kind and target only; never params.
+            logger.warning(
+                "action_policy: audit write failed (%s) for kind=%s target=%s",
+                type(e).__name__,
+                decision.request.kind,
+                decision.request.target,
+            )
             return None
-        return audit_id if created else None
+        if not created:
+            logger.warning(
+                "action_policy: audit row %s already existed for kind=%s target=%s",
+                audit_id,
+                decision.request.kind,
+                decision.request.target,
+            )
+            return None
+        return audit_id
 
     def _notify(self, message: str) -> None:
         """Send ``message`` to the bound operator notifier, else log it."""
