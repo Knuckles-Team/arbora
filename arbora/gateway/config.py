@@ -11,7 +11,6 @@ Uses Arbora's configuration owner for host configuration paths.
 from __future__ import annotations
 
 import contextlib
-import json
 import logging
 import os
 import tempfile
@@ -22,6 +21,7 @@ import yaml
 from agent_utilities.core.paths import data_dir
 
 from arbora.core.settings import config_dir, mcp_config_path, setting
+from arbora.fleet.mcp_catalog import parse_mcp_servers
 from arbora.gateway.models import (
     DashboardLayout,
     ServiceCategory,
@@ -32,7 +32,6 @@ from arbora.gateway.models import (
 logger = logging.getLogger(__name__)
 
 _MAX_CONFIG_BYTES = 4 * 1024 * 1024
-_MAX_MCP_SERVERS = 512
 _INLINE_CREDENTIAL_FIELDS = frozenset(
     {
         "api_key",
@@ -353,20 +352,6 @@ def services_config_path() -> Path:
 def dashboard_layout_path() -> Path:
     """Return the XDG-managed persisted dashboard layout path."""
     return data_dir() / "layout.yaml"
-
-
-def parse_mcp_servers(raw: bytes) -> dict[Any, Any]:
-    """Parse and validate the bounded MCP server catalog payload."""
-    if len(raw) > _MAX_CONFIG_BYTES:
-        raise ValueError("MCP catalog exceeds its size boundary")
-    mcp_config = json.loads(raw.decode("utf-8"))
-    if not isinstance(mcp_config, dict):
-        raise ValueError("MCP catalog must be an object")
-
-    servers = mcp_config.get("mcpServers", mcp_config.get("servers", {}))
-    if not isinstance(servers, dict) or len(servers) > _MAX_MCP_SERVERS:
-        raise ValueError("MCP server catalog has an invalid shape or size")
-    return servers
 
 
 def _resolve_discovered_url(env_vars: object, env_prefix: str) -> str:
