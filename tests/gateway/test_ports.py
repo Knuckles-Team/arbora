@@ -28,6 +28,9 @@ class _Application:
     def ensure_tools_registered(self) -> None:
         return None
 
+    def decide_approval(self, approval_id: str, decision: str) -> dict[str, str]:
+        return {"approval_id": approval_id, "decision": decision}
+
     def mount_rest_routes(self, app: Any, *, prefix: str) -> None:
         app.append(prefix)
 
