@@ -2445,7 +2445,7 @@ def _operator_call_timeouts() -> dict[str, _typing.Any]:
     none; an out-of-range value is refused at call time, never clamped.
     """
     from arbora.core.settings import mcp_config_path
-    from arbora.gateway.config import parse_mcp_servers
+    from arbora.fleet.mcp_catalog import parse_mcp_servers
 
     path = mcp_config_path()
     try:

@@ -127,7 +127,7 @@ def fleet_endpoints(
 ) -> tuple[FleetEndpoint, ...]:
     """Return every enabled streamable-HTTP server in an MCP config payload."""
 
-    from arbora.gateway.config import parse_mcp_servers
+    from arbora.fleet.mcp_catalog import parse_mcp_servers
 
     endpoints = (_endpoint(name, spec) for name, spec in parse_mcp_servers(raw).items())
     return tuple(
