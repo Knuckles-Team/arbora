@@ -102,6 +102,7 @@ def test_the_warmup_composes_inside_its_own_client_scope(monkeypatch) -> None:
     to another event loop" once the server is serving.
     """
     import arbora.api.contracts.session as session_module
+
     import arbora.mcp_server.catalog_composition as composition
     import arbora.security.actor_context as actor_module
     from arbora import epistemic
