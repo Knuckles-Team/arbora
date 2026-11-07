@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+from arbora.api.ops import query
+from arbora.api.registry import EgMethod
 from arbora.api.registry.eg_binding import load_eg_bindings
 from arbora.api.registry.spec import Effect
 
@@ -36,7 +38,18 @@ _DELIVERED = {
 
 @pytest.fixture(scope="module")
 def served() -> dict:
-    return {op.id: op for op in load_eg_bindings()}
+    # Curated query ops bind their engine methods, so the method is served
+    # under its curated id; key it by the engine method id here.
+    curated = query.operations()
+    served = {op.id: op for op in load_eg_bindings(curated_ops=curated)}
+    served.update(
+        {
+            f"eg.query.{op.binding.service}": op
+            for op in curated
+            if isinstance(op.binding, EgMethod)
+        }
+    )
+    return served
 
 
 @pytest.mark.spec("ARBORA-OPS-R843.1")
