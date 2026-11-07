@@ -92,6 +92,10 @@ repos:
 - repo: https://github.com/Knuckles-Team/pipelines
   rev: main # sanctioned first-party exception
   hooks:
+  - id: state-machine-shape
+    stages: [pre-commit, pre-push]
+  - id: state-machine-census
+    stages: [manual]
   - id: secrets
     stages: [pre-commit, pre-push]
   - id: spec
