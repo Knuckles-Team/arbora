@@ -308,3 +308,9 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T071 ARBORA-DEPLOY-R601 Publish deployment templates and tool components.
 - [ ] T072 [US1] ARBORA-DEPLOY-R602 The deployment configuration repository holds configuration only.
 - [ ] T073 [US1] ARBORA-DEPLOY-R603 Identity and application SSO provisioning is one declarative reconcile.
+- [ ] T074 [US1] ARBORA-DEPLOY-R602.1 Manifest renderer becomes `arbora deploy render`. Size: M, 2 PRs, 5 hours.
+- [ ] T075 [US1] ARBORA-DEPLOY-R602.2 Provisioning helpers become `arbora deploy provision`. Size: M, 2 PRs, 6 hours.
+- [ ] T076 [US1] ARBORA-DEPLOY-R602.3 Acceptance runner becomes `arbora acceptance run` with declarative scenarios. Size: L, 4 PRs, 1.5 days.
+- [ ] T077 [US1] ARBORA-DEPLOY-R602.4 Secret diagnostics becomes `arbora secrets diagnose`. Size: S, 1 PR, 3 hours.
+- [ ] T078 [US1] ARBORA-DEPLOY-R602.5 The deploy script becomes `arbora deploy run`, an explicit state machine. Size: L, 4 PRs, 1.5 days.
+- [ ] T079 [US1] ARBORA-DEPLOY-R602.6 The deployment repository drops its code. Size: M, 2 PRs, 4 hours.
