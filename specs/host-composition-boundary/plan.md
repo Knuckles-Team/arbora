@@ -701,7 +701,7 @@ Measured on origin/main `81d4d1e0`: 123 module-level mutable objects and `global
 |---|---|---|
 | `runs` | `RunState` | `run_origin._runs` and its lock (landed: `RunOriginRegistry`), `a2a.mcp._SERVICE` (landed: `RunState.a2a`), `host_bindings._agent`, `a2a.authority._OUTPUTS`, `modality.normalizer._default` |
 | `browser` | `BrowserState` | `browser_control_runtime._owner_loop`, `_service` and the binding lock; `browser_dispatch._capacity` |
-| `fleet` | `FleetState` | `multiplexer._LIVE_MULTIPLEXERS`, `_REMOTE_OAUTH_BROKERS` and lock, `shared_multiplexer._served`, `declarations._DECLARATIONS`, `plan_confirmation._ARMED` and `_LOCKS`, `access_contracts._CATALOG`, `gateway_ops._CONFIRMING_TOOLS`, `remote_oauth_broker._TOKEN_LOCKS` |
+| `fleet` | `FleetState` (`arbora/fleet/state.py`) | `multiplexer._LIVE_MULTIPLEXERS` (landed: `FleetState.multiplexers`), `_REMOTE_OAUTH_BROKERS` and lock (landed: `FleetState.oauth_brokers`, `fleet/oauth_brokers.py`), `plan_confirmation._ARMED` and `_LOCKS` (landed: `FleetState.confirmations`), `shared_multiplexer._served`, `declarations._DECLARATIONS`, `access_contracts._CATALOG`, `gateway_ops._CONFIRMING_TOOLS`, `remote_oauth_broker._TOKEN_LOCKS` (shared with the gateway broker, so it moves with `remote_oauth_api._BROKER` or receives the fleet's instance) |
 | `policy` | `PolicyState` | `action_policy._ports`, `_POLICY_CACHE`, `_NO_ENGINE_POLICY`, `external_policy_sync._DIRTY_TENANTS`, `approval._session_scope`, `anonymous._ACTIVE_MODE`, `messaging.host_ports._ports` |
 | `observability` | `Observability` | `telemetry._provider`, `langfuse_exporter._EXPORTER`, `trace_ontology` sequence and cursor, `subsystem_health` windows, `runtime_health` readiness authority, host probes, process lease and identity contract, `readiness._PROBES`, `runtime_signals` buffer, `gateway_health` history, buffer, evidence store and tasks, `gateway_metrics._SCRAPE_SAMPLERS`, `custom_observability` flags, `error_surface` detail store and sink, `client_contract._SUPERVISOR` |
 | `caches` | `HostCaches` | `runtime.REGISTERED_TOOLS` (the tool table the REST twins dispatch through, 112 references), `security.auth._jwks_cache`, `oidc_discovery._cache`, the six `intent_tools` caches and `_APPROVALS`, `catalog_warmup._CURRENT`, `bootstrap._BUNDLED_SKILL_READINESS`, `runtime._FULL_TOOL_NAMES`, `engine_surface_tools._RAM_CHECKPOINT_STORE`, `analysis_tools._analysis_core_handler` |
@@ -718,6 +718,22 @@ Measured on origin/main `81d4d1e0`: 123 module-level mutable objects and `global
 **Suppressions.** A suppression goes with the cause it hid, never with a reworded suppression. `noqa: PLW0603`-style and `type: ignore` comments on optional globals go with their global. The 339 `noqa: BLE001` broad catches are narrowed to the exceptions the call can raise (an outbound call catches the transport and protocol errors of its client; a supervisor loop that must survive any failure keeps `except Exception`, re-raises it or logs it with its traceback, which `BLE001` accepts without a comment). `pragma: no cover` lines get a test or are deleted as unreachable. The bound test asserts the count is zero after the last PR.
 
 **Order.** One PR per field, smallest and least shared first, so each PR is reviewable and lands while other work is in flight: `runs` (introduces `HostContext`, `build_host_context` and the bound test with its first field), `fleet`, `policy`, `observability`, `caches`, `browser`, `gateway`, `engine`, `authority` (deletes the `bootstrap.__dict__` injection in `runtime.py`), `host_lock`, then `config`, which every unit reads and so moves last. Suppressions are removed in the PR that moves their cause, and the remaining broad catches by unit after that. `browser` follows `caches`: the browser tool closure lives in `REGISTERED_TOOLS`, and `ensure_tools_registered` rebuilds that table from callers that hold no context (`intent_tools`, `gateway.graph_api`), so a browser binding passed by argument before the table is a field would be rebuilt over an empty binding.
+
+#### 2026-11-07 — R038 and R039 execution order and R040 adoption
+
+Pre-untangled design for the rows R038.1 to R038.12, R039.1 to R039.13 and R040 to R040.4, one line per answer.
+
+- Owner. Arbora, units `api`, `mcp_server`, `fleet`, `gateway`, `security`, `observability`, `core`. The harness and the SDK own only the released paths named in R040.
+- Cohesion. A collaborator that changes for one reason (spawn, forwarding, mounts, calls, probe, discovery) is its own module. State that is built together (the engine pool and its lock) is one object.
+- Dependency direction. The layer order of R038 holds: `mcp_server` builds the context and passes fields down; no lower unit imports a higher one. A call upward goes through a protocol declared in the lower unit.
+- Interface depth. A unit exposes its package `__init__` and named public modules. The scanner finds no private reach.
+- Special cases. None added. Every global takes the same route (a field plus an argument), and every host-reaching import takes the same fix.
+- State. Run origin, lease, readiness and plan state machines are specified in their own rows; this work does not add a flag.
+- Environment. None. The boot proof of R040.4 uses the wheel gate that already exists.
+
+**Order.** The sequence has three tracks that run in parallel, because they touch different files. Track A (ports and moves): R038.6, R038.5, R038.8, then R038.1. Track B (state): R039.1 first, then R039.2, R039.3, R039.4, R039.5, R039.6, R039.7, R039.8, R039.9, R039.11, then R039.12 by unit. Track C (adoption): R040.1, then R040.2 (needs R039.1), R040.3, R040.4. The host-reaching rows R038.2 to R038.4 follow the field they need. Module splits R038.9 to R038.11 run last, one PR per module, because they move code that the earlier PRs edit. R038.12 and R039.13 close the two bounds. A PR touches one unit family and stays under the five-minute lane limit; a row marked L is a list of such PRs, named in the row.
+
+**Open owner call recorded.** The `HostPorts` record is a field of `runs`, not a separate `HostContext` field, because the harness reads it only on a run request.
 
 ## Phase 2: Task approach
 

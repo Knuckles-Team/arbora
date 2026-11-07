@@ -553,6 +553,20 @@ R027.7.1 is the bounded CLI stream repair. R027.7.2 retains the original onboard
 - `ARBORA-FLEET-R045`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 - `ARBORA-FLEET-R034.15`: Plan the Arbora-owned part and its link to the Medulla row in requirements.md.
 
+### Ranking is asked of medulla (ARBORA-FLEET-R083)
+
+Pre-untangled design for these rows, one line per answer.
+
+- Owner. Medulla owns the order (a choice). Arbora owns the port, the fallback floor and the call sites. The SDK owns the client call.
+- Cohesion. Every scorer that ranks a capability sits in one floor module; call sites differ only by the question id.
+- Dependency direction. Call sites depend on `arbora/fleet/ranking.py`, which depends on the SDK client. Nothing in `core` imports it.
+- Interface depth. One method, `rank(question_id, query, candidates)`. The floor and the medulla call are hidden behind it.
+- Special cases. None. A tool, a skill, an action and an operation take the same call with a different question id.
+- State. A ranking call has no lifecycle. Availability is the answer source (`medulla` or `floor`), reported per response.
+- Environment. None. The knob `fleet.rank.max_candidates` is configuration of this feature.
+
+Question ids (medulla catalog entries of kind `Rank`): `catalog.tool_rank`, `catalog.skill_rank`, `catalog.operation_rank`, `catalog.catalog_item_rank`, `catalog.intent_action_rank`. The request never carries a score, a rank or a threshold.
+
 ## Phase 2: Task approach
 
 tasks.md carries one numbered task line for each active row. Tasks run producer first. A task marked `[P]` may run in parallel with its neighbours.

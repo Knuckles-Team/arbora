@@ -162,3 +162,33 @@
 - [ ] T165 ARBORA-HOST-R007.2.24 Make the doctor check the `meristem` distribution.
 - [ ] T166 [US1] ARBORA-HOST-R038 Package units form a layered, acyclic import graph.
 - [ ] T167 [US1] ARBORA-HOST-R039 Runtime state is created at the composition root.
+- [ ] T168 [US1] ARBORA-HOST-R038.1 Operation handlers reach subsystems through ports. Size: M, 2 PRs, 4 hours.
+- [ ] T169 [US1] ARBORA-HOST-R038.2 Fleet, gateway and deployment take host objects as arguments. Size: M, 3 PRs, 5 hours.
+- [ ] T170 [US1] ARBORA-HOST-R038.3 A2A, browser control and modality take host objects as arguments. Size: M, 2 PRs, 4 hours.
+- [ ] T171 [US1] ARBORA-HOST-R038.4 Agent runs, plan publication and work items take host objects as arguments. Size: S, 1 PR, 3 hours.
+- [ ] T172 [US1] ARBORA-HOST-R038.5 Composition modules move from api and identity to mcp_server. Size: S, 1 PR, 3 hours.
+- [ ] T173 [US1] ARBORA-HOST-R038.6 Task-plan configuration shape lives in core settings. Size: S, 1 PR, 2 hours.
+- [ ] T174 [US1] ARBORA-HOST-R038.7 Cycles inside layers get one direction each. Size: M, 3 PRs, 5 hours.
+- [ ] T175 [US1] ARBORA-HOST-R038.8 Remaining private reaches become public names or move. Size: S, 2 PRs, 3 hours.
+- [ ] T176 [US1] ARBORA-HOST-R038.9 The multiplexer splits into six collaborators. Size: L, 6 PRs, 2 days.
+- [ ] T177 [US1] ARBORA-HOST-R038.10 Six modules over 2500 lines split by tool family. Size: L, 6 PRs, 2 days.
+- [ ] T178 [US1] ARBORA-HOST-R038.11 Nine modules between 1500 and 2500 lines split. Size: L, 9 PRs, 2 days.
+- [ ] T179 [US1] ARBORA-HOST-R038.12 The unit-layer bound test lands and the local scanner goes. Size: S, 1 PR, 2 hours.
+- [ ] T180 [US1] ARBORA-HOST-R039.1 The runs field of the host context. Size: S, 1 PR, 5 hours.
+- [ ] T181 [US1] ARBORA-HOST-R039.2 The fleet field of the host context. Size: M, 1 PR, 5 hours.
+- [ ] T182 [US1] ARBORA-HOST-R039.3 The policy field of the host context. Size: M, 1 PR, 5 hours.
+- [ ] T183 [US1] ARBORA-HOST-R039.4 The observability field of the host context. Size: L, 3 PRs, 1 day.
+- [ ] T184 [US1] ARBORA-HOST-R039.5 The caches field of the host context. Size: L, 3 PRs, 1 day.
+- [ ] T185 [US1] ARBORA-HOST-R039.6 The browser field of the host context. Size: S, 1 PR, 3 hours.
+- [ ] T186 [US1] ARBORA-HOST-R039.7 The gateway field of the host context. Size: L, 3 PRs, 1 day.
+- [ ] T187 [US1] ARBORA-HOST-R039.8 The engine field of the host context. Size: M, 2 PRs, 6 hours.
+- [ ] T188 [US1] ARBORA-HOST-R039.9 The authority field of the host context. Size: M, 1 PR, 5 hours.
+- [ ] T189 [US1] ARBORA-HOST-R039.10 The host_lock field of the host context. Size: S, 1 PR, 1 hour.
+- [ ] T190 [US1] ARBORA-HOST-R039.11 The config field of the host context. Size: L, 3 PRs, 1 day.
+- [ ] T191 [US1] ARBORA-HOST-R039.12 Broad catches narrow to the exceptions the call raises. Size: L, 8 PRs by unit, 2 days.
+- [ ] T192 [US1] ARBORA-HOST-R039.13 No import has a side effect: the final bound test. Size: S, 1 PR, 3 hours.
+- [ ] T193 [US1] ARBORA-HOST-R040 Arbora adopts the released harness and SDK paths (rollup). Size: L, 4 PRs, 2 days.
+- [ ] T194 [US1] ARBORA-HOST-R040.1 Pins and the package rename. Size: M, 1 PR, 4 hours.
+- [ ] T195 [US1] ARBORA-HOST-R040.2 One HostPorts record replaces the register calls. Size: M, 1 PR, 5 hours.
+- [ ] T196 [US1] ARBORA-HOST-R040.3 HTTP client and proxy builders use the collapsed functions. Size: S, 1 PR, 3 hours.
+- [ ] T197 [US1] ARBORA-HOST-R040.4 Fresh-install boot proof. Size: S, 1 PR, 2 hours.
