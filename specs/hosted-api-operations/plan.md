@@ -60,7 +60,7 @@ No unknowns; no research.md.
 
 ### Existing wiring to reuse
 
-`arbora.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `arbora.gateway.graph_api.register_graph_routes` composes the REST host. `arbora.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `arbora.a2a` already has authenticated unary task methods. `arbora.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `medulla`. Decisions, context, traces and durable WorkItems belong to `medulla`. `meristem` is the agent harness that applies engine decisions. Connector ingestion belongs to `scion-sdk` (SCION-CONNECTOR-CONTROL-R005). Connector effects belong to the SDK and fleet. Arbora authenticates, composes, supervises, routes and projects.
+`arbora.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `arbora.gateway.graph_api.register_graph_routes` composes the REST host. `arbora.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `arbora.a2a` already has authenticated unary task methods. `arbora.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `medulla`. Decisions, context, traces and durable WorkItems belong to `medulla`. `meristem` is the agent harness that applies engine decisions. Connector ingestion belongs to `agent-connector-sdk` (SCION-CONNECTOR-CONTROL-R005). Connector effects belong to the SDK and fleet. Arbora authenticates, composes, supervises, routes and projects.
 
 ### Component and data flow
 
@@ -574,7 +574,7 @@ All named proofs in this section are planned and have not run.
 They require the corresponding owner contracts and real authenticated HTTP, MCP, and browser consumer paths.
 This section grants no delivery or runtime evidence.
 
-References: [EG orchestration](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/orchestration-vocabulary/spec.md), [EG durable kernel](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/durable-graph-kernel/spec.md), [EG query](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/federated-query-and-reasoning/spec.md), [EG media](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/media-and-personal-vocabulary/spec.md), [SDK ingest](https://github.com/Knuckles-Team/scion-sdk/blob/a0f78fefbb486e4c7d97e608462cf5847a46bc7d/specs/SCION-SOURCE-INGEST/spec.md).
+References: [EG orchestration](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/orchestration-vocabulary/spec.md), [EG durable kernel](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/durable-graph-kernel/spec.md), [EG query](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/federated-query-and-reasoning/spec.md), [EG media](https://github.com/Knuckles-Team/medulla/blob/88572345d7aa8bcc7cad40904f35e2411c701243/specs/media-and-personal-vocabulary/spec.md), [SDK ingest](https://github.com/Knuckles-Team/agent-connector-sdk/blob/a0f78fefbb486e4c7d97e608462cf5847a46bc7d/specs/SCION-SOURCE-INGEST/spec.md).
 
 #### 2026-10-16: Generated Python invocation boundary
 
@@ -713,7 +713,7 @@ Budget: 5 pages and a 60 s deadline by default, with at most 32 pages and 300 s.
 
 ### Connector sources through the SDK sync runner (ARBORA-OPS-R020.6)
 
-Depends-on: [SDK source sync runner](https://github.com/Knuckles-Team/scion-sdk/blob/main/specs/SCION-SOURCE-INGEST/spec.md)
+Depends-on: [SDK source sync runner](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/SCION-SOURCE-INGEST/spec.md)
 
 Arbora serves connector sources. It owns admission, scopes and the durable job. The SDK owns the declarations and the runner. The engine owns `SourceIngest`, KV and WorkItems. No engine change is needed.
 
