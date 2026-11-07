@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 import httpx
 import pytest
@@ -16,11 +18,13 @@ from tests.harness_plugins.conftest import ENDPOINT
 
 class Door:
     def __init__(self, status: int = 200, context: str = "last checkpoint") -> None:
-        self.calls: list[tuple[str, dict, dict]] = []
+        self.calls: list[tuple[str, dict[str, Any], dict[str, str]]] = []
         self.status = status
         self.context = context
 
-    def __call__(self, url: str, body: dict, headers: dict) -> httpx.Response:
+    def __call__(
+        self, url: str, body: Mapping[str, Any], headers: Mapping[str, str]
+    ) -> httpx.Response:
         self.calls.append((url, dict(body), dict(headers)))
         payload = {
             "ok": True,

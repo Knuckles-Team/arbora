@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 import time
+from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
@@ -83,8 +84,13 @@ def test_hooks_are_mcp_tool_calls_to_the_door(skill_root: Path, tmp_path: Path) 
 @pytest.mark.spec("ARBORA-HARNESS-PLUGINS-R005.3")
 def test_marketplace_entry_uses_the_bundle_command(home: Path) -> None:
     calls: list[list[str]] = []
+
+    def run(argv: Sequence[str]) -> int:
+        calls.append(list(argv))
+        return 0
+
     record = inst.InstallRecord("claude-code", "d", "", inst.InstallState.GENERATED)
-    files = inst.place_claude_code(record, lambda argv: calls.append(list(argv)) or 0)
+    files = inst.place_claude_code(record, run)
     doc = json.loads(Path(files[0]).read_text())
     (entry,) = doc["plugins"]
     assert doc["name"] == "arbora-local" and entry["name"] == "arbora"

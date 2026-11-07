@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from pathlib import Path
 
 import pyoxigraph as ox
@@ -34,9 +35,12 @@ def described_edges(machine_class: str) -> set[tuple[str, str, str]]:
 @pytest.fixture
 def no_harness_cli(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
     calls: list[list[str]] = []
-    monkeypatch.setattr(
-        inst, "run_harness_cli", lambda argv: calls.append(list(argv)) or 0
-    )
+
+    def run(argv: Sequence[str]) -> int:
+        calls.append(list(argv))
+        return 0
+
+    monkeypatch.setattr(inst, "run_harness_cli", run)
     return calls
 
 
