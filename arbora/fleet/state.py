@@ -11,6 +11,7 @@ import weakref
 from dataclasses import dataclass, field
 from typing import Any
 
+from arbora.fleet.gateway_ops import ConfirmingTools
 from arbora.fleet.oauth_brokers import RemoteOAuthBrokers
 from arbora.fleet.plan_confirmation import PlanConfirmations
 
@@ -48,3 +49,4 @@ class FleetState:
     multiplexers: LiveMultiplexers = field(default_factory=LiveMultiplexers)
     oauth_brokers: RemoteOAuthBrokers = field(default_factory=RemoteOAuthBrokers)
     confirmations: PlanConfirmations = field(default_factory=PlanConfirmations)
+    confirming_tools: ConfirmingTools = field(default_factory=ConfirmingTools)

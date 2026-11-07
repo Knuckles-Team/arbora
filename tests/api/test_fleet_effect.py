@@ -23,6 +23,7 @@ from arbora.api.registry import (
 )
 from arbora.fleet.gateway_ops import (
     AdmittedTool,
+    ConfirmingTools,
     DelegatedCall,
     FleetGateway,
     PolicyCheck,
@@ -45,7 +46,10 @@ def _gateway_and_caller(
     principal: str | None = "alice",
 ) -> tuple[FleetGateway, SimpleNamespace]:
     gateway = FleetGateway(
-        tool_for=tool_for, policy_check=policy, delegated_call=delegate
+        tool_for=tool_for,
+        policy_check=policy,
+        delegated_call=delegate,
+        confirming_tools=ConfirmingTools(),
     )
     fields: dict[str, object] = {
         "effective_scopes": frozenset({"mcp:delegate"}),
@@ -291,6 +295,7 @@ async def test_fleet_catalog_binding_requires_exact_scope() -> None:
         policy_check=policy,
         delegated_call=delegate,
         catalog_ops=Ops(),
+        confirming_tools=ConfirmingTools(),
     )
     caller = SimpleNamespace(effective_scopes=frozenset(), session=object())
     with pytest.raises(PermissionError, match="mcp:discover"):
@@ -492,6 +497,7 @@ async def test_service_child_requires_resolved_decision_and_owner(
         policy_check=policy,
         delegated_call=delegated,
         service_call=service,
+        confirming_tools=ConfirmingTools(),
     )
     caller = SimpleNamespace(
         effective_scopes=frozenset({"mcp:delegate", "finance:read"}),

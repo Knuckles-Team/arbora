@@ -327,9 +327,6 @@ def tool_for_multiplexer_ops(ops: Any) -> ToolFor:
 
 #: Most (server, tool) pairs remembered as asking for a confirmation.
 _MAX_CONFIRMING_TOOLS = 4_096
-#: Tools whose child cancelled an unconfirmed call (ARBORA-FLEET-R077). Their
-#: next call is classified destructive, so it is planned and confirmed.
-_CONFIRMING_TOOLS: set[tuple[str, str]] = set()
 
 
 def _declares_confirm(schema: Any) -> bool:
@@ -337,11 +334,6 @@ def _declares_confirm(schema: Any) -> bool:
     properties = schema.get("properties") if isinstance(schema, Mapping) else None
     confirm = properties.get("confirm") if isinstance(properties, Mapping) else None
     return isinstance(confirm, Mapping) and confirm.get("type") == "boolean"
-
-
-def _needs_confirmation(server: str, tool: str, descriptor: AdmittedTool) -> bool:
-    declared = getattr(descriptor, "confirm_argument", False) is True
-    return declared or (server, tool) in _CONFIRMING_TOOLS
 
 
 def _child_cancelled(result: Any) -> bool:
@@ -365,22 +357,44 @@ def _child_cancelled(result: Any) -> bool:
     return False
 
 
-def _refuse_cancelled(result: Any, server: str, tool: str) -> Any:
-    """Never report a cancelled child call as ok (ARBORA-FLEET-R077)."""
-    if not _child_cancelled(result):
-        return result
-    if len(_CONFIRMING_TOOLS) < _MAX_CONFIRMING_TOOLS:
-        _CONFIRMING_TOOLS.add((server, tool))
-    raise FleetRefusal(
-        "CONFIRMATION_REQUIRED",
-        server,
-        tool,
-        detail=(
-            "the child cancelled the call because it was not confirmed; call "
-            "act(op='fleet.call') again without execute to get a plan_ref, then "
-            "resubmit it with plan_ref and execute=true"
-        ),
-    )
+class ConfirmingTools:
+    """Tools whose child cancelled an unconfirmed call (ARBORA-FLEET-R077).
+
+    Their next call is classified destructive, so it is planned and confirmed.
+    One instance per fleet (ARBORA-HOST-R039.2); bounded at
+    ``_MAX_CONFIRMING_TOOLS`` pairs.
+    """
+
+    __slots__ = ("_tools",)
+
+    def __init__(self) -> None:
+        self._tools: set[tuple[str, str]] = set()
+
+    def __contains__(self, pair: object) -> bool:
+        return pair in self._tools
+
+    def needs_confirmation(
+        self, server: str, tool: str, descriptor: AdmittedTool
+    ) -> bool:
+        declared = getattr(descriptor, "confirm_argument", False) is True
+        return declared or (server, tool) in self._tools
+
+    def refuse_cancelled(self, result: Any, server: str, tool: str) -> Any:
+        """Never report a cancelled child call as ok (ARBORA-FLEET-R077)."""
+        if not _child_cancelled(result):
+            return result
+        if len(self._tools) < _MAX_CONFIRMING_TOOLS:
+            self._tools.add((server, tool))
+        raise FleetRefusal(
+            "CONFIRMATION_REQUIRED",
+            server,
+            tool,
+            detail=(
+                "the child cancelled the call because it was not confirmed; call "
+                "act(op='fleet.call') again without execute to get a plan_ref, then "
+                "resubmit it with plan_ref and execute=true"
+            ),
+        )
 
 
 def _confirmed_arguments(
@@ -525,10 +539,12 @@ class FleetGateway:
         tool_for: ToolFor,
         policy_check: PolicyCheck,
         delegated_call: DelegatedCall,
+        confirming_tools: ConfirmingTools,
         catalog_ops: Any | None = None,
         service_call: ServiceCall | None = None,
         surface_mux: Any | None = None,
     ) -> None:
+        self._confirming_tools = confirming_tools
         self._surface_mux = surface_mux
         self._tool_for = tool_for
         self._policy_check = policy_check
@@ -673,7 +689,7 @@ class FleetGateway:
         effect, confirm, principal = annotation_effect(
             descriptor.annotations,
             override=descriptor.effect_override,
-            confirming=_needs_confirmation(
+            confirming=self._confirming_tools.needs_confirmation(
                 params["server"], params["tool"], descriptor
             ),
         )
@@ -729,7 +745,9 @@ class FleetGateway:
         current_effect, _, _ = annotation_effect(
             descriptor.annotations,
             override=descriptor.effect_override,
-            confirming=_needs_confirmation(server, tool, descriptor),
+            confirming=self._confirming_tools.needs_confirmation(
+                server, tool, descriptor
+            ),
         )
         if current_effect is not expected_effect:
             raise RuntimeError("fleet effect changed before dispatch")
@@ -747,7 +765,7 @@ class FleetGateway:
                 registry_digest=registry_digest,
             )
             commit_native_dispatch(server, tool, caller)
-            return _refuse_cancelled(
+            return self._confirming_tools.refuse_cancelled(
                 await self._service_call(
                     server,
                     tool,
@@ -762,7 +780,7 @@ class FleetGateway:
         if service_identity is True:
             raise PermissionError("delegated child cannot use service identity")
         commit_native_dispatch(server, tool, caller)
-        return _refuse_cancelled(
+        return self._confirming_tools.refuse_cancelled(
             await self._delegated_call(server, tool, arguments, caller), server, tool
         )
 
@@ -786,6 +804,7 @@ def compose_fleet_gateway(
         tool_for=tool_for_multiplexer_ops(ops),
         policy_check=policy_check,
         delegated_call=oauth_delegated_call_for_mux(mux),
+        confirming_tools=mux.fleet.confirming_tools,
         catalog_ops=ops,
         # Static child credentials stay unavailable until an owner-stamped,
         # typed service-child adapter is explicitly supplied.
