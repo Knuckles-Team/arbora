@@ -7,9 +7,9 @@ import inspect
 import time
 from collections import OrderedDict
 from collections.abc import Awaitable, Callable
-from typing import Any, Literal, cast
+from typing import Any, Literal, Protocol, cast
 
-from arbora.access.action_policy import ActionPolicy
+from arbora.access.action_policy import ActionDecision, ActionRequest
 from arbora.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserChannelBinding,
@@ -34,6 +34,12 @@ from arbora.observability.langfuse_exporter import get_langfuse_exporter
 
 SyncRunner = Callable[[Callable[[], Any]], Awaitable[Any]]
 SessionRevalidator = Callable[[BrowserChannelBinding], Awaitable[bool]]
+
+
+class PolicyGate(Protocol):
+    """The one call the service makes on its action-policy gate."""
+
+    def decide(self, request: ActionRequest) -> ActionDecision: ...
 
 
 class BrowserControlService(
@@ -63,7 +69,7 @@ class BrowserControlService(
         *,
         sync_runner: SyncRunner,
         session_revalidator: SessionRevalidator,
-        action_policy: ActionPolicy,
+        action_policy: PolicyGate,
         langfuse_exporter: Any | None = None,
         clock: Callable[[], float] = time.time,
     ) -> None:
@@ -158,7 +164,7 @@ def browser_control_factory_kwargs(
     engine: Any,
     sync_runner: SyncRunner,
     *,
-    action_policy: ActionPolicy,
+    action_policy: PolicyGate,
     session_revalidator: SessionRevalidator | None = None,
 ) -> dict[str, Any]:
     """Inject the Arbora port only into a contract-bearing WebUI factory.

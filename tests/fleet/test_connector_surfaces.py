@@ -7,6 +7,7 @@ from typing import Any
 
 import pytest
 
+from arbora.access.action_policy import ActionPolicies
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.fleet import onboarding as onboarding_module
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
@@ -211,7 +212,11 @@ async def test_onboarding_record_carries_surfaces_for_changed_and_unchanged(
             return None
 
     onboarding = Onboarding(
-        engine=None, session=None, declarations=Declarations(), capture=capture
+        engine=None,
+        session=None,
+        declarations=Declarations(),
+        action_policies=ActionPolicies(),
+        capture=capture,
     )
     report = OnboardingReport()
     monkeypatch.setattr(onboarding_module, "_child_auth", lambda: None)
