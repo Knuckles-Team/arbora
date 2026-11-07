@@ -666,7 +666,7 @@ Measured on origin/main `81d4d1e0` with `tests/architecture/test_unit_layers.py:
 
 | # | Layer | Units | Owns |
 |---|---|---|---|
-| 1 | foundation | `_version`, `architecture`, `content`, `core`, `semantic_content`, `skills`, `unique_records` | settings, transports, providers, record identity; imports nothing above |
+| 1 | foundation | `architecture`, `content`, `core`, `semantic_content`, `skills`, `unique_records`, `version` | settings, transports, providers, record identity; imports nothing above |
 | 2 | security | `security`, `access` | actor and session identity, authentication, action policy |
 | 3 | services | `identity`, `observability`, `epistemic`, `run_origin`, `modality`, `messaging`, `ecosystem`, `data_migrations` | single-purpose host services used by every subsystem |
 | 4 | operations | `api`, `work_items`, `native_run_admission`, `current_plan_publication`, `agent_runs` | the served operation registry and its contracts |
