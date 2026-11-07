@@ -33,15 +33,15 @@ import json
 
 import pytest
 
-from arbora.api.contracts.session import (
-    GraphSession,
-    current_session,
-    use_session,
-)
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing import engine_routing
 from arbora.mcp_server.backing.tools import engine_tools
 from arbora.security.actor_context import ActorContext, ActorType, use_actor
+from arbora.security.session import (
+    GraphSession,
+    current_session,
+    use_session,
+)
 
 ADMIN_ACTOR = ActorContext(
     actor_id="principal:ops",
@@ -356,7 +356,7 @@ def test_narrowing_behaves_identically_under_stdio_process_session(monkeypatch):
     ``session = ambient or _PROCESS_SESSION``). Narrowing must work
     identically there -- no auth-posture-conditional branch anywhere in
     ``_dispatch``."""
-    from arbora.api.contracts.session import suspend_session
+    from arbora.security.session import suspend_session
 
     runtime.ensure_tools_registered()
     client, observed = _observing_client()

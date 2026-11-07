@@ -15,13 +15,13 @@ from arbora.api.contracts.catalog import (
     WorkflowCatalogRecord,
     catalog_read_ports,
 )
-from arbora.api.contracts.session import (
+from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.session import (
     GraphSession,
     ScopeError,
     SessionRequiredError,
     use_session,
 )
-from arbora.security.actor_context import ActorContext, ActorType
 
 
 def _session() -> GraphSession:
@@ -178,7 +178,7 @@ def test_reads_require_verified_ambient_session_and_never_fallback_to_empty() ->
     engine = _Engine([], [])
     authority = CatalogReadAuthority(engine)
 
-    from arbora.api.contracts.session import suspend_session
+    from arbora.security.session import suspend_session
 
     with suspend_session(), pytest.raises(SessionRequiredError):
         authority.list_authorized_agents_sync()

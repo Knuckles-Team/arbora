@@ -8,9 +8,8 @@ import pytest
 
 from arbora import run_origin
 from arbora.a2a import mcp as a2a_mcp
-from arbora.api.contracts import use_session
-from arbora.api.contracts.session import GraphSession
 from arbora.mcp_server.host_context import HostContext, build_host_context
+from arbora.security.session import GraphSession, use_session
 from tests.test_run_origin import session
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R039")

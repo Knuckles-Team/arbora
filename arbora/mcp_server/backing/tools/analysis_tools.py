@@ -972,7 +972,7 @@ def _analysis_recommend_candidate_items(engine, query, top_k):
     # call's ambient GraphSession so candidate nodes are ACL/owner-scope
     # filtered before they reach the recommender (see search_hybrid's
     # docstring — a no-op for callers that pass no session).
-    from arbora.api.contracts.session import current_session
+    from arbora.security.session import current_session
 
     candidates = (
         engine.search_hybrid(query, top_k=max(top_k * 4, 20), session=current_session())
@@ -1624,7 +1624,7 @@ def _configure_mapping_status_lookup(config_key, config_value, registry, store):
 
 def _configure_approval_actor():
     # extracted from 'approve_connection_mapping' (CX-AU-03: split for CCN)
-    from arbora.api.contracts.session import resolve_session
+    from arbora.security.session import resolve_session
 
     approval_session = resolve_session(required_scope="kg:admin")
     if approval_session.actor is not None:
@@ -2062,7 +2062,7 @@ def _configure_propose_semantic_enricher(
     # Returns (semantic_enricher, semantic_context_session).
     if not bool(connector_config.get("semantic_mapping", False)):
         return None, None
-    from arbora.api.contracts.session import resolve_session
+    from arbora.security.session import resolve_session
 
     semantic_context_session = resolve_session(required_scope="kg:read")
     return governed_semantic_mapping_enricher, semantic_context_session

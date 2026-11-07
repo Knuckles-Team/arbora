@@ -19,7 +19,6 @@ from fastapi import FastAPI
 from arbora.a2a import mcp as a2a_mcp
 from arbora.a2a.application import create_a2a_application
 from arbora.a2a.service import A2AService
-from arbora.api.contracts.session import GraphSession, use_session
 from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.invoke.bootstrap import verify_current_from_session
 from arbora.api.policy.eunomia import PolicyGate
@@ -31,6 +30,7 @@ from arbora.security.actor_context import (
     CredentialLease,
     LeaseEvent,
 )
+from arbora.security.session import GraphSession, use_session
 from tests.a2a.test_application import Authenticator, Authority, Router
 from tests.a2a.test_mcp import _Mcp
 from tests.api.test_invoke_contract import FixtureRuntime, operation, setup_services

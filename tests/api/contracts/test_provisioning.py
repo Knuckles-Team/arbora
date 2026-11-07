@@ -39,12 +39,12 @@ from arbora.api.contracts.provisioning import (
     ProvisioningAuthorityError,
     pack_import_authority,
 )
-from arbora.api.contracts.session import (
+from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.session import (
     GraphSession,
     ScopeError,
     use_session,
 )
-from arbora.security.actor_context import ActorContext, ActorType
 
 # No file-level `engine` mark: test_resolver_requires_pack_control_scope_before_providers
 # and test_resolver_does_not_accept_a_caller_supplied_policy below exercise

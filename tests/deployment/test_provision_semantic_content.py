@@ -12,8 +12,8 @@ from typing import Any
 
 import pytest
 
-from arbora.api.contracts.session import GraphSession
 from arbora.deployment import production_ops, semantic_provisioning
+from arbora.security.session import GraphSession
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
 
 TENANT = "tenant-a"

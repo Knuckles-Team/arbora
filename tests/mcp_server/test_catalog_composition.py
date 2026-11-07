@@ -171,7 +171,7 @@ async def test_fleet_catalog_reads_bind_the_process_session_not_the_caller(
     A caller's own session cannot see the process-owned registry rows, so the
     default binder must never resolve the ambient (caller) session.
     """
-    from arbora.api.contracts import session as session_module
+    from arbora.security import session as session_module
 
     process = RetargetableSession()
     bound: list[tuple[Any, str]] = []

@@ -407,8 +407,8 @@ def _verified_delegation(
     caller: Any, *, allow_admitted_anonymous: bool = False
 ) -> Iterator[None]:
     """Bind the caller's verified actor and session for one child request."""
-    from arbora.api.contracts import use_session
     from arbora.security.actor_context import use_actor
+    from arbora.security.session import use_session
 
     session = caller.session
     if session is None:
