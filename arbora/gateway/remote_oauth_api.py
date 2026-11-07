@@ -2,7 +2,7 @@
 
 CONCEPT:MERISTEM-ECO.mcp.remote-oauth-broker — Deliverable 2 of NE-008 (GOC-85
 follow-through, closing U-11/U-41/U-43/U-44/U-45's gateway gap): before this
-module, :mod:`arbora.mcp_server.backing.remote_oauth_broker` shipped a complete,
+module, :mod:`arbora.fleet.remote_oauth_broker` shipped a complete,
 tested broker CORE with no HTTP surface reachable from a browser — no route
 could ever call ``begin()``/``callback()``. This module is that surface.
 
@@ -84,7 +84,7 @@ def _default_provider_registry() -> Any:
     configuration disables the registry with a bounded diagnostic — never a
     silently-accepted malformed provider.
     """
-    from arbora.mcp_server.backing.remote_oauth_broker import (
+    from arbora.fleet.remote_oauth_broker import (
         ProviderDescriptor,
         ProviderRegistry,
     )
@@ -117,7 +117,7 @@ def _default_provider_registry() -> Any:
 
 
 def _build_default_broker() -> Any:
-    from arbora.mcp_server.backing.remote_oauth_broker import RemoteOAuthBroker
+    from arbora.fleet.remote_oauth_broker import RemoteOAuthBroker
 
     return RemoteOAuthBroker(registry=_default_provider_registry())
 
@@ -215,7 +215,7 @@ def _oauth_error_response(
     still server-logged for correlation. None of this module's own exception
     messages ever interpolate ``code``/``state``/a token value in the first
     place (checked against every raise site in
-    :mod:`arbora.mcp_server.backing.remote_oauth_broker`), so this is defense in
+    :mod:`arbora.fleet.remote_oauth_broker`), so this is defense in
     depth, not the only thing standing between a secret and a response body.
     """
     from arbora.security.error_surface import public_error_payload
@@ -247,7 +247,7 @@ async def authorize(provider_id: str, body: AuthorizeRequest) -> AuthorizeRespon
     authorization URL to send their browser to."""
     import asyncio
 
-    from arbora.mcp_server.backing.remote_oauth_broker import (
+    from arbora.fleet.remote_oauth_broker import (
         OAuthBindingError,
         OAuthDiscoveryError,
         OAuthProviderError,
@@ -290,7 +290,7 @@ async def oauth_callback(code: str, state: str, browser_session_id: str) -> Any:
 
     from starlette.responses import JSONResponse, RedirectResponse
 
-    from arbora.mcp_server.backing.remote_oauth_broker import (
+    from arbora.fleet.remote_oauth_broker import (
         OAuthBindingError,
         OAuthDiscoveryError,
         OAuthRevokedError,
@@ -332,7 +332,7 @@ async def _revoke(provider_id: str) -> Any:
 
     from starlette.responses import Response
 
-    from arbora.mcp_server.backing.remote_oauth_broker import OAuthProviderError
+    from arbora.fleet.remote_oauth_broker import OAuthProviderError
 
     actor = _resolve_verified_actor()
     broker = _get_broker()

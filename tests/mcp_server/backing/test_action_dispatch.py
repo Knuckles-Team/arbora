@@ -259,10 +259,10 @@ def test_dispatch_async_denies_headless_destructive_invocation():
     ],
 )
 def test_body_normalization_characterization(target, args, kwargs, expected):
-    from arbora.mcp_server.backing.concurrency import _wrap_data_kwargs
+    from arbora.core.concurrency import wrap_data_kwargs
 
     original = kwargs.copy()
-    result = _wrap_data_kwargs(target, args, kwargs)
+    result = wrap_data_kwargs(target, args, kwargs)
     assert kwargs == original
     if expected is None:
         assert result is kwargs
@@ -273,27 +273,27 @@ def test_body_normalization_characterization(target, args, kwargs, expected):
 
 @pytest.mark.parametrize("error", [TypeError, ValueError])
 def test_body_normalization_uninspectable_callable_is_noop(monkeypatch, error):
-    from arbora.mcp_server.backing import concurrency
+    from arbora.core import concurrency
 
     def unavailable(_):
         raise error("uninspectable")
 
     monkeypatch.setattr(concurrency.inspect, "signature", unavailable)
     kwargs = {"field": object()}
-    assert concurrency._wrap_data_kwargs(object(), (), kwargs) is kwargs
+    assert concurrency.wrap_data_kwargs(object(), (), kwargs) is kwargs
 
 
 def test_body_normalization_short_circuits_before_signature(monkeypatch):
-    from arbora.mcp_server.backing import concurrency
+    from arbora.core import concurrency
 
     def unexpected(_):
         raise AssertionError("signature inspected before positional/empty guard")
 
     monkeypatch.setattr(concurrency.inspect, "signature", unexpected)
     kwargs = {"field": object()}
-    assert concurrency._wrap_data_kwargs(object(), (1,), kwargs) is kwargs
+    assert concurrency.wrap_data_kwargs(object(), (1,), kwargs) is kwargs
     empty = {}
-    assert concurrency._wrap_data_kwargs(object(), (), empty) is empty
+    assert concurrency.wrap_data_kwargs(object(), (), empty) is empty
 
 
 @pytest.mark.parametrize("native_async", [False, True])
