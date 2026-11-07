@@ -18,6 +18,7 @@ from arbora.mcp_server.composition import (
     install_gateway_application,
     start_composed_services,
 )
+from arbora.mcp_server.host_context import HostContext
 from arbora.mcp_server.hosted_invocation import HostedInvocation
 from arbora.semantic_content import default_content_providers
 
@@ -140,6 +141,7 @@ def _attach_fleet_runtime(mcp: Any, fleet_catalog_reader: Any) -> Any:
 
 def _served_invocation(
     *,
+    host: HostContext,
     browser_boundary_factory: BrowserBoundaryFactory | None = None,
 ) -> tuple[HostedInvocation | None, Any]:
     """Compose the operation-invoke API when an engine endpoint is configured.
@@ -156,7 +158,6 @@ def _served_invocation(
         if task_plan_config is not None:
             raise ValueError("task planning requires graph service endpoints")
         return None, None
-    from arbora.a2a import mcp as a2a_mcp
     from arbora.mcp_server.backing.server_factory import create_mcp_parser
     from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
     from arbora.mcp_server.fleet_composition import LateFleetGateway
@@ -174,12 +175,15 @@ def _served_invocation(
     invocation = served_invocation_from_settings(
         process_session=lambda: session,
         bindings={
-            "a2a": a2a_mcp._service(),
+            "a2a": host.runs.a2a,
+            "run_origins": host.runs.origins,
             "fleet_gateway": fleet,
             "browser_control": dispatch_browser_operation,
             "current_plan_reader": NativeCurrentPlanReader(),
             "source_reader": NativeSourceReader(),
-            "run_trace_reader": NativeRunReader(runtime._get_engine),
+            "run_trace_reader": NativeRunReader(
+                runtime._get_engine, origins=host.runs.origins
+            ),
         },
         fleet_effect=fleet.effect,
         browser_boundary_factory=browser_boundary_factory,
@@ -287,11 +291,16 @@ def mcp_server(
     startup_args, _unknown = create_mcp_parser().parse_known_args()
     validate_startup(startup_args)
     early_session = None
+    from arbora.mcp_server.host_context import build_host_context
+
+    host_context = build_host_context(runtime._get_engine)
     if invocation is None:
         invocation, early_session = (
-            _served_invocation(browser_boundary_factory=browser_boundary_factory)
+            _served_invocation(
+                host=host_context, browser_boundary_factory=browser_boundary_factory
+            )
             if browser_boundary_factory is not None
-            else _served_invocation()
+            else _served_invocation(host=host_context)
         )
     if invocation is None:
         install_gateway_application()
@@ -311,9 +320,11 @@ def mcp_server(
     _configure_telemetry_engine_otel()
     os.environ["IS_KG_SERVER"] = "true"
     if invocation is None:
-        args, mcp, middlewares = runtime._build_server()
+        args, mcp, middlewares = runtime._build_server(host=host_context)
     else:
-        args, mcp, middlewares = runtime._build_server(invocation=invocation)
+        args, mcp, middlewares = runtime._build_server(
+            invocation=invocation, host=host_context
+        )
     from arbora.security.anonymous import validate_startup
 
     validate_startup(args)
@@ -465,6 +476,7 @@ def mcp_server(
             register_graph_rlm(
                 backing_server(mcp),
                 client_for_session=client_for_session,
+                origins=host_context.runs.origins,
             )
 
             # Self-composing co-services, phase 2: messaging now that a real engine

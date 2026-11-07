@@ -458,7 +458,7 @@ def _resolve_fleet_runtime_reference(reference: str) -> str:
         raise RuntimeError("MCP child runtime reference is unavailable") from None
 
 
-def _resolve_runtime_value(
+def resolve_runtime_value(
     value: _typing.Any,
     *,
     sensitive: bool,
@@ -576,7 +576,7 @@ def _assert_bounded_json_value(value: _typing.Any, *, max_nodes: int) -> None:
             )
 
 
-def _assert_bounded_delegated_value(value: _typing.Any) -> None:
+def assert_bounded_delegated_value(value: _typing.Any) -> None:
     """Reject oversized or excessively nested MCP tool arguments."""
 
     _assert_bounded_json_value(value, max_nodes=_MAX_DELEGATED_NODES)
@@ -622,13 +622,13 @@ def _child_text_payload(result: _typing.Any) -> _typing.Any:
     return json.loads(rendered)
 
 
-def _child_result_payload(result: _typing.Any) -> _typing.Any:
+def child_result_payload(result: _typing.Any) -> _typing.Any:
     """Decode one bounded child result without retaining or logging its body."""
 
     value = _child_structured_payload(result)
     if value is _ABSENT:
         value = _child_text_payload(result)
-    _assert_bounded_delegated_value(value)
+    assert_bounded_delegated_value(value)
     return value
 
 
@@ -1377,7 +1377,7 @@ def _child_transport_values(
     cfg: dict, command: _typing.Any
 ) -> tuple[_typing.Any, str, str, bool | None]:
     """Resolve child transport fields; ``None`` marks an invalid declaration."""
-    url = _resolve_runtime_value(cfg.get("url", ""), sensitive=False)
+    url = resolve_runtime_value(cfg.get("url", ""), sensitive=False)
     explicit_transport = str(cfg.get("transport", "")).lower()
     invalid = (
         explicit_transport not in {"", "streamable-http", "sse"}
@@ -1653,7 +1653,7 @@ def _fleet_required_capabilities(kind: str) -> set[str]:
     }.get(kind, {"mcp:delegate"})
 
 
-def _require_fleet_capability(kind: str, extra_scopes: list[str] | None = None) -> None:
+def require_fleet_capability(kind: str, extra_scopes: list[str] | None = None) -> None:
     """Authorize fleet discovery/delegation for every transport, local stdio
     included: the exact same capability check applies regardless of how the
     caller connected."""
@@ -2445,11 +2445,11 @@ def _operator_call_timeouts() -> dict[str, _typing.Any]:
     none; an out-of-range value is refused at call time, never clamped.
     """
     from arbora.core.settings import mcp_config_path
-    from arbora.gateway.config import _parse_mcp_servers
+    from arbora.fleet.mcp_catalog import parse_mcp_servers
 
     path = mcp_config_path()
     try:
-        servers = _parse_mcp_servers(path.read_bytes()) if path.is_file() else {}
+        servers = parse_mcp_servers(path.read_bytes()) if path.is_file() else {}
     except (OSError, ValueError):
         return {}
     return {
@@ -2779,7 +2779,7 @@ class MCPMultiplexer:
         child_config = self.load_catalog().get(server_name)
         if child_config is None:
             raise _fastmcp_exceptions.ToolError("MCP child is no longer enabled")
-        _require_fleet_capability("delegate", _child_required_scopes(child_config))
+        require_fleet_capability("delegate", _child_required_scopes(child_config))
         runtime = self.children.get(server_name)
         if runtime is None:
             raise RuntimeError("MCP child session is not active")
@@ -3028,7 +3028,7 @@ class MCPMultiplexer:
         """Capture generation and authorization checks for queue and preflight waits."""
 
         def recheck(current_generation: int, _secret: str | None) -> None:
-            _require_fleet_capability("delegate", _child_required_scopes(child_config))
+            require_fleet_capability("delegate", _child_required_scopes(child_config))
             if runtime.generation != current_generation or (
                 schema_bound and runtime.generation != generation
             ):
@@ -3135,10 +3135,10 @@ class MCPMultiplexer:
         :meth:`start_children` and forwards the call to that child's live
         ``ClientSession``. Raises if the tool/server is unknown or inactive.
         """
-        _require_fleet_capability("delegate")
+        require_fleet_capability("delegate")
         logger.info("Calling delegated MCP tool")
         call_arguments = arguments or {}
-        _assert_bounded_delegated_value(call_arguments)
+        assert_bounded_delegated_value(call_arguments)
         server_name, original_name, child_config, runtime = self._admit_proxied_call(
             prefixed_name
         )
@@ -3205,7 +3205,7 @@ class MCPMultiplexer:
         *,
         timeout: float | None,
     ) -> MCPCallToolResult:
-        _require_fleet_capability("delegate")
+        require_fleet_capability("delegate")
         cfg = self.load_catalog().get(server_name)
         if cfg is None:
             # Nothing was sent to the child, so the outcome is certain: the
@@ -3218,10 +3218,10 @@ class MCPMultiplexer:
             raise _fastmcp_exceptions.ToolError(
                 "Server is not a configured service-credential MCP child"
             )
-        _require_fleet_capability("delegate", _child_required_scopes(cfg))
+        require_fleet_capability("delegate", _child_required_scopes(cfg))
         catalog_epoch = self._catalog_epoch
         call_arguments = arguments or {}
-        _assert_bounded_delegated_value(call_arguments)
+        assert_bounded_delegated_value(call_arguments)
         call_timeout = _child_call_timeout(cfg, timeout)
         if not 0.001 <= call_timeout <= 300.0:
             raise _fastmcp_exceptions.ToolError("Invalid call timeout")
@@ -3273,16 +3273,16 @@ class MCPMultiplexer:
         :meth:`probe_server` call, which DOES run live and per-principal for
         an OAuth-gated server) can call this directly today.
         """
-        _require_fleet_capability("delegate")
+        require_fleet_capability("delegate")
         cfg = self.load_catalog().get(server_name)
         if cfg is None or not _oauth_gated(cfg):
             raise _fastmcp_exceptions.ToolError(
                 "Server is not a configured OAuth-gated remote MCP child"
             )
-        _require_fleet_capability("delegate", _child_required_scopes(cfg))
+        require_fleet_capability("delegate", _child_required_scopes(cfg))
         catalog_epoch = self._catalog_epoch
         call_arguments = arguments or {}
-        _assert_bounded_delegated_value(call_arguments)
+        assert_bounded_delegated_value(call_arguments)
         call_timeout = _child_call_timeout(cfg, timeout)
         if not 0.001 <= call_timeout <= 300.0:
             raise _fastmcp_exceptions.ToolError("Invalid call timeout")
@@ -3345,7 +3345,7 @@ class MCPMultiplexer:
 
     def _assert_oauth_catalog(self, server_name: str, cfg: dict, epoch: int) -> None:
         """Reauthorize the principal and refuse a changed child configuration."""
-        _require_fleet_capability("delegate", _child_required_scopes(cfg))
+        require_fleet_capability("delegate", _child_required_scopes(cfg))
         if (
             self._catalog_epoch != epoch
             or self._catalog is None
@@ -3539,8 +3539,8 @@ class MCPMultiplexer:
             )
         # Apply the same fleet/delegation authorization used by tool
         # forwarding before a task poll can lazily spawn a child.
-        _require_fleet_capability("delegate")
-        _require_fleet_capability(
+        require_fleet_capability("delegate")
+        require_fleet_capability(
             "delegate", _child_required_scopes(catalog[server_name])
         )
 
@@ -3877,7 +3877,7 @@ class MCPMultiplexer:
             "upgrade",
         }:
             raise RuntimeError("Remote MCP child headers are invalid")
-        rendered = _resolve_runtime_value(
+        rendered = resolve_runtime_value(
             value,
             sensitive=_sensitive_config_key(name),
             materialized=name in materialized,
@@ -4090,10 +4090,10 @@ class MCPMultiplexer:
         # `command` or `is_remote` is truthy, and this is the `not is_remote`
         # branch.
         assert command, "unreachable: non-remote server must have a 'command'"
-        command = _resolve_runtime_value(command, sensitive=False)
+        command = resolve_runtime_value(command, sensitive=False)
         raw_args = cfg.get("args", [])
         args = (
-            [_resolve_runtime_value(value, sensitive=False) for value in raw_args]
+            [resolve_runtime_value(value, sensitive=False) for value in raw_args]
             if isinstance(raw_args, list)
             else raw_args
         )
@@ -4119,7 +4119,7 @@ class MCPMultiplexer:
             | {_TASK_DELEGATION_CHANNEL_ENV}
         ):
             raise RuntimeError("MCP child provider environment is parent-controlled")
-        value = _resolve_runtime_value(
+        value = resolve_runtime_value(
             raw_value,
             sensitive=_sensitive_config_key(key),
             materialized=key in materialized,
@@ -5186,7 +5186,7 @@ class MCPMultiplexer:
         self, server_name: str
     ) -> list[dict[str, _typing.Any]]:
         """Return one child's bounded tools through the served probe cache."""
-        _require_fleet_capability("discover")
+        require_fleet_capability("discover")
         info = await self.probe_server(server_name)
         if info.get("error"):
             raise RuntimeError("MCP server probe failed")
@@ -5201,8 +5201,8 @@ class MCPMultiplexer:
         timeout: float,
     ) -> _typing.Any:
         """Invoke one original child tool through this served child pool."""
-        _require_fleet_capability("delegate")
-        _assert_bounded_delegated_value(arguments)
+        require_fleet_capability("delegate")
+        assert_bounded_delegated_value(arguments)
         await self.mount_child(server_name)
         public_name = next(
             (
@@ -5217,13 +5217,13 @@ class MCPMultiplexer:
         result = await asyncio.wait_for(
             self.call_proxied_tool(public_name, arguments), timeout=timeout
         )
-        return _child_result_payload(result)
+        return child_result_payload(result)
 
     async def read_server_resource(
         self, *, server_name: str, uri: str, timeout: float
     ) -> dict[str, str]:
         """Read one text resource through this served child connection."""
-        _require_fleet_capability("delegate")
+        require_fleet_capability("delegate")
         if not uri or len(uri.encode("utf-8")) > 8_192:
             raise _fastmcp_exceptions.ToolError("MCP resource URI is invalid")
         await self.mount_child(server_name)
@@ -5253,10 +5253,10 @@ class MCPMultiplexer:
         timeout: float,
     ) -> dict[str, _typing.Any]:
         """Render one child prompt through this served child connection."""
-        _require_fleet_capability("delegate")
+        require_fleet_capability("delegate")
         if not name or len(name.encode("utf-8")) > 1_024:
             raise _fastmcp_exceptions.ToolError("MCP prompt name is invalid")
-        _assert_bounded_delegated_value(arguments)
+        assert_bounded_delegated_value(arguments)
         await self.mount_child(server_name)
         result = await self._relay_read(
             server_name, lambda session: session.get_prompt(name, arguments), timeout
@@ -7231,7 +7231,7 @@ class MCPMultiplexer:
         """Authorize one fleet operation kind (``discover``/``delegate``) for the
         current caller — the check the intent tools apply before they search
         or call the fleet."""
-        _require_fleet_capability(kind)
+        require_fleet_capability(kind)
 
     def session_loaded(self, session_key: str) -> set[str]:
         """The set of prefixed tools loaded (visible) for one session."""

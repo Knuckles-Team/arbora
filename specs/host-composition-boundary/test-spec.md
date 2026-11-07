@@ -327,4 +327,4 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 | ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_unit_imports_follow_layers_and_no_cycle_remains` (planned) | Package units form a layered, acyclic import graph. |
 | ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_every_unit_is_named_in_exactly_one_layer` | The coupling policy's layer table in `pyproject.toml` names every unit once and nothing else. |
 | ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_scan_reports_each_rule_with_its_location` | The scanner reports an upward import, a private reach, an unlayered unit and a cycle with their location, and passes a downward import. |
-| ARBORA-HOST-R039 | `tests/mcp_server/test_host_context.py::test_two_host_contexts_share_no_module_state` (planned) | Runtime state is created at the composition root. |
+| ARBORA-HOST-R039 | `tests/mcp_server/test_host_context.py::test_two_host_contexts_share_no_module_state` | Runtime state is created at the composition root. |

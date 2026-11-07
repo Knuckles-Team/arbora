@@ -1,3 +1,5 @@
+from arbora.run_origin import RunOriginRegistry
+
 """Canonical context identity uses the existing durable WorkItem reader."""
 
 from types import SimpleNamespace
@@ -45,7 +47,7 @@ def reader(monkeypatch: pytest.MonkeyPatch, pages: list[Any]) -> tuple[Any, list
         return pages.pop(0)
 
     engine = SimpleNamespace(work_items=SimpleNamespace(list=read))
-    authority = WorkItemA2AAuthority(lambda: engine)
+    authority = WorkItemA2AAuthority(lambda: engine, origins=RunOriginRegistry())
     monkeypatch.setattr(authority, "_session", lambda scope: SESSION)
     return authority, calls
 

@@ -272,12 +272,11 @@ def registered_unary(monkeypatch: pytest.MonkeyPatch, failure: str = "") -> Any:
             return await super().cancel(task_id)
 
     authority = RecordingAuthority()
-    monkeypatch.setattr(
-        a2a_mcp, "_service", lambda: A2AService(authority=authority, router=Router())
-    )
     monkeypatch.setattr(mcp_runtime, "REGISTERED_TOOLS", {})
     registrar = _Mcp()
-    a2a_mcp.register_a2a_tools(registrar)
+    a2a_mcp.register_a2a_tools(
+        registrar, service=A2AService(authority=authority, router=Router())
+    )
     app = FastAPI()
     for (path, methods), handler in registrar.routes.items():
         app.add_api_route(path, handler, methods=list(methods))

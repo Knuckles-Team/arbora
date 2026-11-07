@@ -12,9 +12,9 @@ from dataclasses import dataclass, field
 from importlib import import_module
 from typing import Any, Literal
 
-from arbora.api.invoke.bootstrap import _caller_dispatch_graph
+from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.executor import execution_context
-from arbora.api.invoke.pipeline import InvokeServices, OperationRefused, _authorize
+from arbora.api.invoke.pipeline import InvokeServices, OperationRefused, authorize
 from arbora.api.invoke.steps import OpError, RequestCaller, claim_values, freeze_claims
 
 
@@ -99,7 +99,7 @@ async def _admit(services: InvokeServices, caller: RequestCaller) -> Any:
         op = services.registry.get(op_id)
         if op is None:
             raise OperationRefused("UNAVAILABLE", {"operation": op_id})
-        refused = await _authorize(op, {}, caller, services, None)
+        refused = await authorize(op, {}, caller, services, None)
         if isinstance(refused, OpError):
             raise OperationRefused(refused.code, refused.details)
         selected = op
@@ -153,7 +153,7 @@ async def evaluate_task_plan(
     except (TypeError, ValueError) as exc:
         raise OperationRefused("INVALID_ARGUMENT", {"field": "task_plan"}) from exc
     async with execution_context(op, caller, services.runtime) as context:
-        graph = await _caller_dispatch_graph(context)
+        graph = await caller_dispatch_graph(context)
         await _admit(services, caller)
         response = await send(context.client, {"request": request}, graph)
         await _admit(services, caller)
