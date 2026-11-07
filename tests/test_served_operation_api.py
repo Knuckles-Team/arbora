@@ -40,7 +40,15 @@ from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
 from tests.test_agents_run_end_to_end import FakeEngine
 
-SCOPES = ("kg:read", "kg:write", "kv:read", "kv:write", "node:read", "query:unified")
+SCOPES = (
+    "kg:read",
+    "kg:write",
+    "kv:read",
+    "kv:write",
+    "node:read",
+    "query:unified",
+    "registry:read",
+)
 
 
 class FakeAudit:
@@ -330,6 +338,40 @@ async def test_served_mcp_surface_lists_the_intent_verbs_and_finds(
     assert {"find", "ask", "act"} <= listed
     text = "".join(getattr(part, "text", "") for part in found.content)
     assert text and '"error"' not in text, text
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.5.1")
+def test_models_list_serves_identity_rows_without_the_admin_scope(
+    served: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An ordinary user (no ops:read) lists models; endpoints and key refs stay out."""
+    assert "ops:read" not in SCOPES
+    monkeypatch.setattr(
+        runtime_config,
+        "chat_models",
+        [
+            {
+                "id": "chat-a",
+                "provider": "openai",
+                "model": "m-a",
+                "base_url": "https://llm.invalid/v1",
+                "api_key_ref": "env://SECRET_REF",
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        runtime_config, "embedding_models", [{"id": "embed-a", "name": "Embed"}]
+    )
+    app, _client = served
+    chat = _value(_call(app, "models.list", {}))
+    assert chat == {
+        "kind": "chat",
+        "models": [{"id": "chat-a", "provider": "openai", "model": "m-a"}],
+    }
+    embedding = _value(_call(app, "models.list", {"kind": "embedding"}))
+    assert embedding["models"] == [{"id": "embed-a", "name": "Embed"}]
+    denied = _call(app, "ops.config", {})
+    assert denied.status_code == 403
 
 
 _SECRET = (
