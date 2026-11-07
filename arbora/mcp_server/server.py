@@ -12,6 +12,7 @@ from agent_connector_sdk.mcp.network import build_network_serving_config
 
 from arbora.content import register_installed_content
 from arbora.core.settings import setting
+from arbora.fleet.state import FleetState
 from arbora.identity.ports import BrowserBoundaryFactory, IdentityLifecycle
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import (
@@ -120,7 +121,9 @@ def _preflight_mcp_sdk_floor() -> None:
     raise RuntimeError(message)
 
 
-def _attach_fleet_runtime(mcp: Any, fleet_catalog_reader: Any) -> Any:
+def _attach_fleet_runtime(
+    mcp: Any, fleet_catalog_reader: Any, fleet: FleetState
+) -> Any:
     """Attach the mandatory fleet surface or fail before serving."""
 
     try:
@@ -129,6 +132,7 @@ def _attach_fleet_runtime(mcp: Any, fleet_catalog_reader: Any) -> Any:
         return attach_fleet_loader(
             mcp,
             catalog_reader=fleet_catalog_reader,
+            fleet=fleet,
             authority_scope=runtime.verified_tool_session_scope,
         )
     except Exception as exc:
@@ -302,10 +306,7 @@ def mcp_server(
             if browser_boundary_factory is not None
             else _served_invocation(host=host_context)
         )
-    if invocation is None:
-        install_gateway_application()
-    else:
-        install_gateway_application(invocation)
+    install_gateway_application(invocation, fleet=host_context.fleet)
     from arbora.host_bindings import (
         bind_health_probes,
         bind_messaging_ports,
@@ -346,7 +347,7 @@ def mcp_server(
     # CONCEPT:MERISTEM-ECO.mcp.fleet-meta-tools-always-on
     # Inject arbora's own embedding model so fleet tool search ranks by
     # query↔description MEANING (semantic), not just literal token overlap.
-    fleet_mux = _attach_fleet_runtime(mcp, fleet_catalog_reader)
+    fleet_mux = _attach_fleet_runtime(mcp, fleet_catalog_reader, host_context.fleet)
     # The harness's thin client host fails closed until arbora registers
     # its native toolset, fleet catalog and session keepalive bindings.
     from arbora.mcp_server.harness_host import (

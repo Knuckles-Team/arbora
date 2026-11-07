@@ -13,6 +13,7 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 from arbora.fleet.multiplexer import MCPMultiplexer, attach_fleet_loader
+from arbora.fleet.state import FleetState
 
 
 class _NeverRead:
@@ -42,11 +43,14 @@ def _install(mux: MCPMultiplexer, path: Path) -> MCPMultiplexer:
 
 
 def multiplexer_from_fixture(path: Path) -> MCPMultiplexer:
-    return _install(MCPMultiplexer(_NeverRead()), path)
+    return _install(MCPMultiplexer(_NeverRead(), fleet=FleetState()), path)
 
 
 def attach_multiplexer_from_fixture(host: Any, path: Path) -> MCPMultiplexer:
-    return _install(attach_fleet_loader(host, catalog_reader=_NeverRead()), path)
+    return _install(
+        attach_fleet_loader(host, catalog_reader=_NeverRead(), fleet=FleetState()),
+        path,
+    )
 
 
 async def bind_governed_forwarder_fixture(mux: MCPMultiplexer, result: Any) -> Any:

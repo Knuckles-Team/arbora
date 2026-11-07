@@ -15,6 +15,7 @@ from typing import Any
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
+from arbora.fleet.state import FleetState
 from arbora.run_origin import RunOriginRegistry
 
 __all__ = ["HostContext", "RunState", "build_host_context"]
@@ -33,6 +34,7 @@ class HostContext:
     """Every owned run-time object of one host process."""
 
     runs: RunState
+    fleet: FleetState
 
 
 def build_host_context(engine_provider: Callable[[], Any]) -> HostContext:
@@ -42,4 +44,6 @@ def build_host_context(engine_provider: Callable[[], Any]) -> HostContext:
         authority=WorkItemA2AAuthority(engine_provider, origins=origins),
         router=OrchestratorA2ARouter(engine_provider),
     )
-    return HostContext(runs=RunState(origins=origins, a2a=a2a))
+    return HostContext(
+        runs=RunState(origins=origins, a2a=a2a), fleet=FleetState()
+    )

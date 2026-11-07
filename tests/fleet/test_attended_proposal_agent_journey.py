@@ -34,6 +34,7 @@ from arbora.browser_control.browser_control_runtime import dispatch_browser_oper
 from arbora.core.settings import runtime_config
 from arbora.fleet import shared_multiplexer
 from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
+from arbora.fleet.state import FleetState
 from arbora.gateway import ports
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import install_gateway_application
@@ -118,13 +119,14 @@ async def _served(
         bindings={"browser_control": dispatch_browser_operation},
         fleet_effect=refused_fleet_effect,
     )
-    install_gateway_application(invocation)
+    fleet = FleetState()
+    install_gateway_application(invocation, fleet=fleet)
     _args, mcp, middlewares = runtime._build_server(
         bootstrap=False, invocation=invocation
     )
     for middleware in middlewares:
         mcp.add_middleware(middleware)
-    mux = _attach_fleet_runtime(mcp, DeferredFleetCatalogReader())
+    mux = _attach_fleet_runtime(mcp, DeferredFleetCatalogReader(), fleet)
     register_harness_host(mux)
     events: list[Any] = []
     host_ports.register_run_decision_provider(
