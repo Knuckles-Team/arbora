@@ -59,7 +59,7 @@ def test_otlp_headers_parse_and_reject_malformed_input():
     ],
 )
 def test_same_origin(left, right, same):
-    assert co._same_origin(left, right) is same
+    assert co.same_origin(left, right) is same
 
 
 @pytest.mark.parametrize(

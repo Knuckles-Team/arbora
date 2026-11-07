@@ -51,7 +51,7 @@ class SemanticProvisioningError(RuntimeError):
     """A provisioning step was refused or answered inconsistently."""
 
 
-def _bind_session_graph(graph: str) -> AbstractContextManager[object]:
+def bind_session_graph(graph: str) -> AbstractContextManager[object]:
     """Run one engine call under the verified session narrowed to ``graph``."""
 
     from arbora.api.contracts.session import resolve_session, use_session
@@ -82,7 +82,7 @@ def catalog_content_digest(pack: Any) -> str:
     return _sha256_json(entries)
 
 
-def _shell_context(tenant_id: str, key: str) -> Any:
+def shell_context(tenant_id: str, key: str) -> Any:
     """A request-body context shell; EG re-binds every field from the session."""
 
     from epistemic_graph.generated.connector_pack import AgentLibraryMutationContext
@@ -139,7 +139,7 @@ async def ensure_base_graphs(
     compute = getattr(engine, "graph_compute", None)
     if compute is None:  # lightweight/non-native engines own no graphs
         return {}
-    bind = bind_graph or _bind_session_graph
+    bind = bind_graph or bind_session_graph
     created: dict[str, bool] = {}
     for graph, graph_type in (
         (str(session.graph), TENANT_GRAPH_TYPE),
@@ -152,7 +152,7 @@ async def ensure_base_graphs(
     return created
 
 
-async def _registry_page(commons: Any) -> Any:
+async def registry_page(commons: Any) -> Any:
     from epistemic_graph.generated.cluster import send_list_registered_servers
 
     return await send_list_registered_servers(commons, {"request": {}}, COMMONS_GRAPH)
@@ -183,7 +183,7 @@ async def ensure_server_registrations(
     now = int(time.time() * 1000) if now_ms is None else now_ms
     leases = {
         entry.name: int(entry.lease_expires_at_ms)
-        for entry in (await _registry_page(commons)).entries
+        for entry in (await registry_page(commons)).entries
     }
     registered: list[str] = []
     for name, url in endpoints.items():
@@ -252,7 +252,7 @@ async def attest_self_served_catalog(
 
     connector = pack.connector
     with bind_graph(COMMONS_GRAPH):
-        page = await _registry_page(commons)
+        page = await registry_page(commons)
     view = next((entry for entry in page.entries if entry.name == connector), None)
     if view is None:
         raise SemanticProvisioningError(
@@ -282,7 +282,7 @@ async def attest_self_served_catalog(
     }
     key = f"mcp-catalog:self-served:{connector}:{_sha256_json(observed)[:32]}"
     request = McpSelfServedCatalogAttestRequest(
-        context=_shell_context(tenant_id, key), **observed
+        context=shell_context(tenant_id, key), **observed
     )
     with bind_graph(graph):
         return await send_connector_pack_attest_self_served_catalog(
@@ -331,7 +331,7 @@ async def import_attested_pack(
     client: Any,
     commons: Any,
     pack: Any,
-    bind_graph: GraphBinder = _bind_session_graph,
+    bind_graph: GraphBinder = bind_session_graph,
     allow_mass_withdrawal: bool = False,
 ) -> Any:
     """Attest ``pack``'s catalog with EG, then import it under EG's binding.
@@ -415,7 +415,7 @@ async def _await_projection(
 
 
 async def _reproject(client: Any, *, tenant_id: str, graph: str, connector: str) -> Any:
-    context = _shell_context(tenant_id, f"connector-pack:{connector}:reproject")
+    context = shell_context(tenant_id, f"connector-pack:{connector}:reproject")
     return await client._send(
         "ConnectorPack",
         {
@@ -485,7 +485,7 @@ async def provision_semantic_content(
     session: Any,
     served_url: str,
     providers: Sequence[ContentProvider] | None = None,
-    bind_graph: GraphBinder = _bind_session_graph,
+    bind_graph: GraphBinder = bind_session_graph,
 ) -> dict[str, Any]:
     """Run every provisioning step; raise unless the semantic content verifies."""
 

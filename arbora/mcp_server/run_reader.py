@@ -12,7 +12,7 @@ from epistemic_graph import EngineResponseError
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.api.contracts import use_session
 from arbora.api.errors import EngineRefusal
-from arbora.api.invoke.bootstrap import _caller_dispatch_graph
+from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.run_graph import (
@@ -56,7 +56,7 @@ class NativeRunReader:
     async def _owned(
         self, context: ExecutionContext, run_id: str, task_id: str | None = None
     ) -> Any:
-        await _caller_dispatch_graph(context)
+        await caller_dispatch_graph(context)
         if "kg:read" not in context.caller.effective_scopes:
             raise OperationRefused("SCOPE_REQUIRED", {"missing_scopes": ["kg:read"]})
         with use_session(context.caller.session):
