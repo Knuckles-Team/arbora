@@ -24,10 +24,10 @@ from agent_utilities import host_ports
 from fastapi import FastAPI
 
 from arbora import agent_runs
-from arbora.a2a import mcp as a2a_mcp
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
+from arbora.api.invoke.privacy import mask_persisted_arguments
 from arbora.core.settings import runtime_config
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.mcp_server.composition import install_gateway_application
@@ -35,6 +35,7 @@ from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
 )
+from arbora.run_origin import RunOriginRegistry
 from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
 from tests.test_agents_run_end_to_end import FakeEngine
@@ -157,10 +158,9 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     agent_runs.bind_run_ports()
     process = request_identity.mint_graph_session(_actor())
     a2a = A2AService(
-        authority=WorkItemA2AAuthority(lambda: client),
+        authority=WorkItemA2AAuthority(lambda: client, origins=RunOriginRegistry()),
         router=OrchestratorA2ARouter(lambda: client),
     )
-    monkeypatch.setattr(a2a_mcp, "_SERVICE", a2a)
     invocation = compose_served_invocation(
         pool=FakePool(client),
         graph=process.graph,
@@ -330,3 +330,45 @@ async def test_served_mcp_surface_lists_the_intent_verbs_and_finds(
     assert {"find", "ask", "act"} <= listed
     text = "".join(getattr(part, "text", "") for part in found.content)
     assert text and '"error"' not in text, text
+
+
+_SECRET = (
+    "ghp_" + "a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8"
+)  # sanitizer:ignore - synthetic
+
+
+@pytest.mark.spec("ARBORA-OPS-R844.1")
+def test_served_writes_mask_secret_bearing_payloads(served: Any) -> None:
+    """memory.write and eg.graph.AddEdge store the masked payload, never the secret."""
+    import msgpack
+
+    app, _client = served
+    written = _call(
+        app,
+        "memory.write",
+        {"key": "note-secret", "value": {"text": f"token {_SECRET}"}},
+        **{"Idempotency-Key": "mask-1"},
+    )
+    assert written.status_code == 200, written.text
+    stored = _value(_call(app, "memory.read", {"key": "note-secret"}))
+    assert _SECRET not in json.dumps(stored)
+    assert "REDACTED" in json.dumps(stored["value"])
+
+    packed = msgpack.packb({"note": f"token {_SECRET}"})
+    masked = mask_persisted_arguments(
+        "eg.graph.AddEdge",
+        {
+            "source_id": "node:one",
+            "target_id": "node:two",
+            "properties_msgpack": list(packed),
+        },
+    )
+    assert masked is not None
+    assert _SECRET.encode() not in bytes(masked["properties_msgpack"])
+    decoded = msgpack.unpackb(bytes(masked["properties_msgpack"]), raw=False)
+    assert "REDACTED" in decoded["note"]
+    assert masked["source_id"] == "node:one"
+    assert (
+        mask_persisted_arguments("eg.graph.AddEdge", {"properties_msgpack": [193]})
+        is None
+    )

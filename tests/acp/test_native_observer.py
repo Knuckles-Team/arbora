@@ -1,3 +1,5 @@
+from arbora.run_origin import RunOriginRegistry
+
 """Trusted observation never creates native execution authority."""
 
 import asyncio
@@ -58,7 +60,7 @@ class Executor:
 
 async def test_concurrent_observers_keep_exact_native_request_and_identity():
     executor = Executor()
-    port = agent_runs.AgentRunPort(executor)
+    port = agent_runs.AgentRunPort(executor, origins=RunOriginRegistry())
     seen = {"alice": [], "bob": []}
 
     async def run(name):
@@ -88,7 +90,7 @@ async def test_concurrent_observers_keep_exact_native_request_and_identity():
 @pytest.mark.parametrize("case", ["unadmitted", "foreign", "reused"])
 async def test_observer_cannot_supply_or_reuse_admission(case):
     executor = Executor()
-    port = agent_runs.AgentRunPort(executor)
+    port = agent_runs.AgentRunPort(executor, origins=RunOriginRegistry())
     session = identity("alice")
     request = AgentExecutionRequest(agent_name="helper", task="prompt", run_id="run")
 
@@ -121,7 +123,9 @@ async def test_observer_error_is_not_swallowed_or_fabricated_as_success():
     with use_session(session), agent_runs.native_stream_scope(session, observe):
         with admitted(session, "run"):
             with pytest.raises(ValueError, match="closed receiver"):
-                await agent_runs.AgentRunPort(executor).execute_agent(
+                await agent_runs.AgentRunPort(
+                    executor, origins=RunOriginRegistry()
+                ).execute_agent(
                     AgentExecutionRequest(
                         agent_name="helper", task="prompt", run_id="run"
                     ),
@@ -144,7 +148,9 @@ async def test_cancellation_drains_observer_without_success():
     with use_session(session), agent_runs.native_stream_scope(session, observe):
         with admitted(session, "run"):
             task = asyncio.create_task(
-                agent_runs.AgentRunPort(Executor()).execute_agent(
+                agent_runs.AgentRunPort(
+                    Executor(), origins=RunOriginRegistry()
+                ).execute_agent(
                     AgentExecutionRequest(
                         agent_name="helper", task="prompt", run_id="run"
                     ),
@@ -172,7 +178,9 @@ async def test_unupgraded_executor_refuses_before_execution():
     with use_session(session), agent_runs.native_stream_scope(session, observe):
         with admitted(session, "run"):
             with pytest.raises(RuntimeError, match="UPGRADE_REQUIRED"):
-                await agent_runs.AgentRunPort(OldExecutor()).execute_agent(
+                await agent_runs.AgentRunPort(
+                    OldExecutor(), origins=RunOriginRegistry()
+                ).execute_agent(
                     AgentExecutionRequest(
                         agent_name="helper", task="prompt", run_id="run"
                     ),
@@ -209,7 +217,7 @@ async def test_separately_admitted_child_run_does_not_inherit_parent_observer():
                 request, session=session, stream_observer=stream_observer
             )
 
-    port = agent_runs.AgentRunPort(NestedExecutor())
+    port = agent_runs.AgentRunPort(NestedExecutor(), origins=RunOriginRegistry())
     with use_session(session), agent_runs.native_stream_scope(session, observe):
         with admitted(session, "parent"):
             await port.execute_agent(
@@ -249,7 +257,9 @@ async def test_admission_callback_receives_owner_id_before_execution(
     context_id = "a2a-context-" + "c" * 64
     rows, receipts, started = {}, [], []
     authority = WorkItemA2AAuthority(
-        lambda: object(), task_plan_config=TaskPlanConfig({}, {}, 1, 2)
+        lambda: object(),
+        task_plan_config=TaskPlanConfig({}, {}, 1, 2),
+        origins=RunOriginRegistry(),
     )
 
     def submit(engine, **kwargs):

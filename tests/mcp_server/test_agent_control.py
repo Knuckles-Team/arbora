@@ -77,7 +77,7 @@ async def test_graph_rlm_is_composed_from_injected_authorities() -> None:
             calls.append(request)
             return SimpleNamespace(model_dump_json=lambda: '{"action":"run","ok":true}')
 
-    def factory(actual_client: Any, actual_session: Any):
+    def factory(actual_client: Any, actual_session: Any, *, origins: Any):
         assert actual_client is client
         assert actual_session is session
         assert resolve_session(actual_session) is session
@@ -93,6 +93,7 @@ async def test_graph_rlm_is_composed_from_injected_authorities() -> None:
             client_for_session=lambda actual_session: (
                 client if actual_session is session else None
             ),
+            origins=object(),
             factory=factory,
         )
         request = GraphRlmRunRequest(task="inspect", input_text="state")
@@ -124,7 +125,9 @@ async def test_graph_rlm_call_has_no_unverified_fallback() -> None:
     original_scope = runtime.verified_tool_session_scope
     runtime.verified_tool_session_scope = missing_scope
     try:
-        register_graph_rlm(mcp, client_for_session=lambda session: object())
+        register_graph_rlm(
+            mcp, client_for_session=lambda session: object(), origins=object()
+        )
         with pytest.raises(PermissionError, match="verified authorities required"):
             await mcp.tools["graph_rlm"](
                 GraphRlmRunRequest(task="inspect", input_text="state")
@@ -145,7 +148,9 @@ async def test_graph_rlm_rejects_mismatched_ambient_session() -> None:
     original_scope = runtime.verified_tool_session_scope
     runtime.verified_tool_session_scope = mismatched_scope
     try:
-        register_graph_rlm(mcp, client_for_session=lambda session: object())
+        register_graph_rlm(
+            mcp, client_for_session=lambda session: object(), origins=object()
+        )
         with pytest.raises(PermissionError, match="authority differ"):
             await mcp.tools["graph_rlm"](
                 GraphRlmRunRequest(task="inspect", input_text="state")

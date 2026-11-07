@@ -14,10 +14,13 @@ from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.agent_runs import AgentRunPort
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 from arbora.mcp_server.runtime import _call_native_intent
+from arbora.run_origin import RunOriginRegistry
 from arbora.security.actor_context import ActorContext, ActorType
 from arbora.security.session import GraphSession, use_session
 
 pytestmark = pytest.mark.spec("ARBORA-FLEET-R015")
+
+registry = RunOriginRegistry()
 
 
 def session(owner: str = "owner", tenant: str = "test") -> GraphSession:
@@ -46,7 +49,7 @@ async def test_copied_context_does_not_extend_call_lifetime() -> None:
 
     with (
         use_session(admitted),
-        run_origin.agent_run_origin_scope(admitted, "web", "run"),
+        registry.agent_run_origin_scope(admitted, "web", "run"),
     ):
         with run_origin.native_call_origin_scope("run"):
             origin = run_origin.require_native_call_origin()
@@ -54,7 +57,7 @@ async def test_copied_context_does_not_extend_call_lifetime() -> None:
         assert not origin.is_live()
         release.set()
         await task
-    assert not run_origin._runs
+    assert not len(registry)
 
 
 @pytest.mark.asyncio
@@ -64,7 +67,7 @@ async def test_origin_refuses_missing_foreign_and_narrowed_authority() -> None:
         with run_origin.native_call_origin_scope("run"):
             with pytest.raises(PermissionError):
                 run_origin.require_native_call_origin()
-        with run_origin.agent_run_origin_scope(admitted, "web", "run"):
+        with registry.agent_run_origin_scope(admitted, "web", "run"):
             with run_origin.native_call_origin_scope("different"):
                 with pytest.raises(PermissionError):
                     run_origin.require_native_call_origin()
@@ -83,16 +86,16 @@ async def test_revoke_is_owner_scoped_immediate_and_cross_thread_safe() -> None:
     closed = asyncio.Event()
     with (
         use_session(admitted),
-        run_origin.agent_run_origin_scope(admitted, "web", "run"),
+        registry.agent_run_origin_scope(admitted, "web", "run"),
     ):
         with run_origin.native_call_origin_scope("run"):
             origin = run_origin.require_native_call_origin()
             origin.subscribe_close(closed.set)
             for other in (session("foreign"), session(tenant="other")):
                 with use_session(other):
-                    run_origin.revoke_run_origins(other, "run")
+                    registry.revoke(other, "run")
                 assert origin.is_live()
-            await asyncio.to_thread(run_origin.revoke_run_origins, admitted, "run")
+            await asyncio.to_thread(registry.revoke, admitted, "run")
             assert not origin.is_live()
             await asyncio.wait_for(closed.wait(), 1)
 
@@ -110,7 +113,7 @@ async def test_native_call_cancel_closes_origin_and_unsubscribes() -> None:
 
     with (
         use_session(admitted),
-        run_origin.agent_run_origin_scope(admitted, "web", "run"),
+        registry.agent_run_origin_scope(admitted, "web", "run"),
     ):
         parent = run_origin._run.get()
         task = asyncio.create_task(_call_native_intent("act", verb, "run", {}))
@@ -134,7 +137,7 @@ async def test_a2a_durable_cancel_revokes_real_pending_native_call(
     ready = asyncio.Event()
     captured = []
     durable = {"status": status}
-    authority = WorkItemA2AAuthority(lambda: object())
+    authority = WorkItemA2AAuthority(lambda: object(), origins=registry)
     item: dict[str, Any] = {
         "kind": "orchestrator_task",
         "metadata": {
@@ -177,7 +180,7 @@ async def test_a2a_durable_cancel_revokes_real_pending_native_call(
 
     with use_session(admitted):
         pending = asyncio.create_task(
-            AgentRunPort(Executor()).execute_agent(
+            AgentRunPort(Executor(), origins=registry).execute_agent(
                 AgentExecutionRequest(agent_name="web", task="navigate", run_id=run_id),
                 session=admitted,
             )
@@ -188,7 +191,7 @@ async def test_a2a_durable_cancel_revokes_real_pending_native_call(
         with pytest.raises(asyncio.CancelledError):
             await asyncio.wait_for(pending, 2)
     assert not captured[0].is_live()
-    assert not run_origin._runs
+    assert not len(registry)
 
 
 @pytest.mark.asyncio
@@ -207,7 +210,7 @@ async def test_run_without_explicit_identity_does_not_fabricate_origin() -> None
             )
 
     with use_session(admitted):
-        await AgentRunPort(Executor()).execute_agent(
+        await AgentRunPort(Executor(), origins=registry).execute_agent(
             AgentExecutionRequest(agent_name="web", task="navigate"),
             session=admitted,
         )
@@ -222,7 +225,7 @@ async def test_refused_a2a_cancel_does_not_revoke_origin(
 
     admitted = session()
     task_id = "a2a-" + "b" * 64
-    authority = WorkItemA2AAuthority(lambda: object())
+    authority = WorkItemA2AAuthority(lambda: object(), origins=registry)
     item: dict[str, Any] = {
         "kind": "orchestrator_task",
         "status": "running",
@@ -237,7 +240,7 @@ async def test_refused_a2a_cancel_does_not_revoke_origin(
     monkeypatch.setattr(work_items, "cancel_work_item", lambda *_: committed)
     with (
         use_session(admitted),
-        run_origin.agent_run_origin_scope(admitted, "web", task_id),
+        registry.agent_run_origin_scope(admitted, "web", task_id),
     ):
         with run_origin.native_call_origin_scope(task_id):
             origin = run_origin.require_native_call_origin()

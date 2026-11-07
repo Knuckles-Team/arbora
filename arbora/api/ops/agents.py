@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import Field
 
-from arbora.api.ops._common import Params
+from arbora.api.ops._common import Params, bound_service
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -97,7 +97,13 @@ async def handle_rlm(
     action = op.id.rsplit(".", 1)[-1]
     if request.action != action:
         raise ValueError("RLM action does not match operation")
-    control_plane = compose_agent_control_plane(context.client, context.caller.session)
+    control_plane = compose_agent_control_plane(
+        context.client,
+        context.caller.session,
+        origins=bound_service(
+            context, "run_origins", reason="run origin registry is not composed"
+        ),
+    )
     result = await control_plane.graph_rlm(request)
     return {"value": result.model_dump(mode="json")}
 

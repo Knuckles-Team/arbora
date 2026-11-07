@@ -16,10 +16,10 @@ from fastmcp.exceptions import ToolError
 
 from arbora.fleet.multiplexer import (
     MCPMultiplexer,
-    _assert_bounded_delegated_value,
-    _child_result_payload,
     _provider_tools,
-    _require_fleet_capability,
+    assert_bounded_delegated_value,
+    child_result_payload,
+    require_fleet_capability,
 )
 from arbora.fleet.shared_multiplexer import run_on_served_multiplexer
 
@@ -40,7 +40,7 @@ async def _native_server_tools(mux: MCPMultiplexer) -> list[dict[str, Any]]:
     """List the registered native tools that ``_call_native_tool`` admits."""
     from arbora.mcp_server import runtime
 
-    _require_fleet_capability("discover")
+    require_fleet_capability("discover")
     host = mux._host_mcp
     if host is None:
         raise ToolError("Native Arbora tool surface is unavailable")
@@ -81,8 +81,8 @@ async def _call_native_tool(
     from arbora.mcp_server import runtime
     from arbora.security.session import current_session
 
-    _require_fleet_capability("delegate")
-    _assert_bounded_delegated_value(arguments)
+    require_fleet_capability("delegate")
+    assert_bounded_delegated_value(arguments)
     if current_session() is None:
         raise ToolError("Verified caller session required")
     host = mux._host_mcp
@@ -94,7 +94,7 @@ async def _call_native_tool(
         result = await asyncio.wait_for(
             host.call_tool(tool_name, arguments, run_middleware=True), timeout=timeout
         )
-    return _child_result_payload(result)
+    return child_result_payload(result)
 
 
 async def _call_mcp_tool(

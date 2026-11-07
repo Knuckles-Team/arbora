@@ -48,11 +48,10 @@ async def test_registration_exposes_exact_mcp_rest_and_native_subset(
             return task if task_id == task.id else None
 
     service = A2AService(authority=Authority(), router=object())  # type: ignore[arg-type]
-    monkeypatch.setattr(a2a_mcp, "_service", lambda: service)
     mcp = _Mcp()
     prior = runtime.REGISTERED_TOOLS.get("graph_a2a")
     try:
-        a2a_mcp.register_a2a_tools(mcp)
+        a2a_mcp.register_a2a_tools(mcp, service=service)
         assert runtime.REGISTERED_TOOLS["graph_a2a"] is mcp.tools["graph_a2a"]
         assert runtime.ACTION_TOOL_ROUTES["graph_a2a"] == "/graph/a2a"
         assert set(mcp.routes) == {

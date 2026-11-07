@@ -22,7 +22,7 @@ from arbora.browser_control.browser_control_runtime import (
     unregister_browser_control_service,
 )
 from arbora.run_origin import (
-    agent_run_origin_scope,
+    RunOriginRegistry,
     native_call_origin_scope,
     require_native_call_origin,
 )
@@ -33,6 +33,8 @@ from tests.browser_control.test_browser_control_service import (
     _wait_for_messages,
 )
 from tests.browser_control.test_browser_control_service import session as session
+
+_ORIGINS = RunOriginRegistry()
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.spec("ARBORA-FLEET-R015")]
 
@@ -56,7 +58,7 @@ async def _propose(
     *,
     routed: bool = False,
 ) -> Any:
-    with agent_run_origin_scope(session, "web", "test-run"):
+    with _ORIGINS.agent_run_origin_scope(session, "web", "test-run"):
         with native_call_origin_scope("test-run"):
             if origins is not None:
                 origins.append(require_native_call_origin())

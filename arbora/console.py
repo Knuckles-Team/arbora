@@ -14,7 +14,7 @@ from __future__ import annotations
 def print_usage_or_version(argv: list[str]) -> bool:
     """Print usage or the version for ``argv`` and return whether it did."""
     if "--version" in argv:
-        from arbora._version import __version__
+        from arbora.version import __version__
 
         print(f"arbora {__version__}")
         return True

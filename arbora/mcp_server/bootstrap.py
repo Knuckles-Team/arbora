@@ -477,10 +477,10 @@ async def _caller_run_authority_scope(session: Any) -> AsyncIterator[None]:
     from arbora.security.actor_context import CredentialExpiredError
     from arbora.security.run_authority import (
         CALLER_REVOCATIONS,
-        _log_audit,
         audit_record,
         caller_run_renewable,
         keep_run_authority_current,
+        log_audit,
         open_run_lease,
         run_renewal_policy,
     )
@@ -500,7 +500,7 @@ async def _caller_run_authority_scope(session: Any) -> AsyncIterator[None]:
     run_actor = replace(actor, credential_lease=lease)
     run_session = session.with_actor(run_actor)
     CALLER_REVOCATIONS.register(run_actor, lease)
-    _log_audit(audit_record("started", run_actor, lease))
+    log_audit(audit_record("started", run_actor, lease))
     guard_token = _AUTHORITY_KEEPALIVE_ACTIVE.set(True)
     renewer = asyncio.ensure_future(
         keep_run_authority_current(run_actor, lease, policy=policy)
@@ -518,7 +518,7 @@ async def _caller_run_authority_scope(session: Any) -> AsyncIterator[None]:
             await renewer
         lease.revoke(ended)
         CALLER_REVOCATIONS.unregister(run_actor, lease)
-        _log_audit(audit_record(ended, run_actor, lease))
+        log_audit(audit_record(ended, run_actor, lease))
         _AUTHORITY_KEEPALIVE_ACTIVE.reset(guard_token)
 
 

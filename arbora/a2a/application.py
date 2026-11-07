@@ -92,7 +92,7 @@ async def _refresh_unary_caller(caller: RequestCaller | None) -> None:
 
 
 @contextmanager
-def _caller_session_scope(caller: RequestCaller | None) -> Iterator[None]:
+def caller_session_scope(caller: RequestCaller | None) -> Iterator[None]:
     """Bind a returned caller through legacy dispatch; never resolve a fallback."""
     if caller is None:
         # Explicit injected authenticators already own their admission/binding.
@@ -433,7 +433,7 @@ async def _unary_request(
     try:
         caller = await authenticator.authenticate(request, scope=scope)
         await _refresh_unary_caller(caller)
-        with _caller_session_scope(caller):
+        with caller_session_scope(caller):
             result = await _invoke_method(
                 service, request, method, raw_params, request_id
             )

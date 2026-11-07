@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from arbora.mcp_server import runtime
+from arbora.mcp_server.host_context import build_host_context
 
 
 def test_surface_serves_intent_contract_and_registers_host_operations(
@@ -34,7 +35,7 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
     monkeypatch.setattr(
         a2a_mcp,
         "register_a2a_tools",
-        lambda mcp, *, tools=None: calls.append(("a2a", mcp, tools)),
+        lambda mcp, *, service, tools=None: calls.append(("a2a", mcp, tools)),
     )
     from arbora import host_bindings
 
@@ -45,7 +46,7 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
     )
     monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
 
-    runtime._register_graph_tool_surface(served)
+    runtime._register_graph_tool_surface(served, host=build_host_context(lambda: None))
 
     assert calls == [
         ("surface", served, None),

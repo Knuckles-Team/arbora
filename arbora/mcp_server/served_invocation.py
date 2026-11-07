@@ -430,7 +430,7 @@ async def _schema_publish_context(
     import asyncio
 
     from arbora.api.contracts import PolicyDisposition, PolicyReceipt, get_action_policy
-    from arbora.api.contracts.provisioning import _opaque_principal
+    from arbora.api.contracts.provisioning import opaque_principal
     from arbora.api.task_plan_schema import PURPOSE_ID
     from arbora.mcp_server.decide_wiring import _mutation_context
 
@@ -461,11 +461,11 @@ async def _schema_publish_context(
     # Use the same canonical opaque principal derivation as connector-pack
     # provisioning; the native binder still authenticates and replaces the
     # authoritative carrier, tenant, and policy values.
-    opaque_principal = _opaque_principal(str(verified.actor.actor_id))
+    opaque_caller = opaque_principal(str(verified.actor.actor_id))
     context.update(
-        principal=opaque_principal,
-        caller_principal=opaque_principal,
-        actor_scope=opaque_principal,
+        principal=opaque_caller,
+        caller_principal=opaque_caller,
+        actor_scope=opaque_caller,
     )
     return {
         **context,

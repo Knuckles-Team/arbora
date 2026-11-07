@@ -101,10 +101,9 @@ def test_the_warmup_composes_inside_its_own_client_scope(monkeypatch) -> None:
     serving loop share one pooled client, which refuses "live client belongs
     to another event loop" once the server is serving.
     """
-    import arbora.api.contracts.session as session_module
-
     import arbora.mcp_server.catalog_composition as composition
     import arbora.security.actor_context as actor_module
+    import arbora.security.session as session_module
     from arbora import epistemic
     from arbora.mcp_server import server
 

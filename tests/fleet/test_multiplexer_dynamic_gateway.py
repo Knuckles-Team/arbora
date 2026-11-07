@@ -26,11 +26,11 @@ from arbora.fleet.multiplexer import (
     _fleet_required_capabilities,
     _make_forwarder,
     _register_forwarder,
-    _require_fleet_capability,
     _session_key,
     _tenant_local_discovery_binding,
     _tool_is_verbose,
     get_server_prefix,
+    require_fleet_capability,
 )
 from tests.fleet.catalog_fixture import (
     bind_governed_forwarder_fixture,
@@ -1792,14 +1792,14 @@ def test_require_fleet_capability_denies_admin_only_caller_for_discover(monkeypa
     scope the requested action declares."""
     _mock_authenticated_http_caller(monkeypatch, scopes=["admin"])
     with pytest.raises(ToolError, match="MCP fleet discover capability required"):
-        _require_fleet_capability("discover")
+        require_fleet_capability("discover")
 
 
 def test_require_fleet_capability_allows_exact_scope_caller_for_discover(monkeypatch):
     """The correctly scoped path, still allowed: a caller holding the fleet's
     own ``mcp:discover`` scope passes with no administrative grant at all."""
     _mock_authenticated_http_caller(monkeypatch, scopes=["mcp:discover"])
-    _require_fleet_capability("discover")  # must not raise
+    require_fleet_capability("discover")  # must not raise
 
 
 def test_require_fleet_capability_enforces_extra_scopes_even_for_admin_caller(
@@ -1810,14 +1810,14 @@ def test_require_fleet_capability_enforces_extra_scopes_even_for_admin_caller(
     admin no longer bypasses a declared child capability-scope requirement."""
     _mock_authenticated_http_caller(monkeypatch, scopes=["mcp:delegate", "admin"])
     with pytest.raises(ToolError, match="Child MCP capability scope required"):
-        _require_fleet_capability("delegate", extra_scopes=["child:special"])
+        require_fleet_capability("delegate", extra_scopes=["child:special"])
 
 
 def test_require_fleet_capability_allows_caller_holding_the_extra_scope(monkeypatch):
     _mock_authenticated_http_caller(
         monkeypatch, scopes=["mcp:delegate", "child:special"]
     )
-    _require_fleet_capability("delegate", extra_scopes=["child:special"])  # no raise
+    require_fleet_capability("delegate", extra_scopes=["child:special"])  # no raise
 
 
 def test_require_fleet_capability_denies_stdio_caller_with_no_verified_actor():
@@ -1826,7 +1826,7 @@ def test_require_fleet_capability_denies_stdio_caller_with_no_verified_actor():
     applies and the call is refused, exactly as an unauthenticated remote
     caller would be."""
     with pytest.raises(ToolError, match="Authenticated local process context"):
-        _require_fleet_capability("discover")
+        require_fleet_capability("discover")
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R022")
@@ -1844,7 +1844,7 @@ def test_require_fleet_capability_denies_stdio_caller_missing_the_exact_scope():
     )
     with use_actor(actor):
         with pytest.raises(ToolError, match="MCP fleet discover capability required"):
-            _require_fleet_capability("discover")
+            require_fleet_capability("discover")
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R022")
@@ -1862,7 +1862,7 @@ def test_require_fleet_capability_allows_stdio_caller_with_exact_scope():
         authenticated=True,
     )
     with use_actor(actor):
-        _require_fleet_capability("discover")  # must not raise
+        require_fleet_capability("discover")  # must not raise
 
 
 @pytest.mark.spec("ARBORA-FLEET-R035")
