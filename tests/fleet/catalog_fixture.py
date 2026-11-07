@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock
 
+from arbora.fleet.gateway_ops import ConfirmingTools
 from arbora.fleet.multiplexer import MCPMultiplexer, attach_fleet_loader
 from arbora.fleet.state import FleetState
 
@@ -150,6 +151,7 @@ async def bind_governed_forwarder_fixture(mux: MCPMultiplexer, result: Any) -> A
         policy_check=allowed,
         delegated_call=delegated,
         catalog_ops=ops,
+        confirming_tools=ConfirmingTools(),
     )
 
     state.gateway = gateway

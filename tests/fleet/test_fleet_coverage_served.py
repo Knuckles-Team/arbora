@@ -20,7 +20,11 @@ from arbora.api.ops.fleet import handle_fleet_operation, operations
 from arbora.api.registry import Registry
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
 from arbora.fleet.coverage import registered_connectors
-from arbora.fleet.gateway_ops import FleetGateway, tool_for_multiplexer_ops
+from arbora.fleet.gateway_ops import (
+    ConfirmingTools,
+    FleetGateway,
+    tool_for_multiplexer_ops,
+)
 from arbora.fleet.multiplexer_ops import MultiplexerOps
 from arbora.fleet.session_loads import SessionLoads
 
@@ -99,6 +103,7 @@ async def _harness(
         policy_check=allowed,
         delegated_call=no_delegate,
         catalog_ops=ops,
+        confirming_tools=ConfirmingTools(),
     )
 
     def caller():

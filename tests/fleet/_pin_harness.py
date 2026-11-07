@@ -18,7 +18,11 @@ from arbora.api.ops.fleet import handle_fleet_operation, operations
 from arbora.api.policy import PolicyGate
 from arbora.api.registry import Registry, Surface
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
-from arbora.fleet.gateway_ops import FleetGateway, tool_for_multiplexer_ops
+from arbora.fleet.gateway_ops import (
+    ConfirmingTools,
+    FleetGateway,
+    tool_for_multiplexer_ops,
+)
 from arbora.fleet.multiplexer_ops import MultiplexerOps
 from arbora.fleet.pin_store import InMemoryPinStore
 from arbora.fleet.session_loads import SessionLoads
@@ -135,6 +139,7 @@ async def harness(
         policy_check=policy,
         delegated_call=delegated,
         catalog_ops=ops,
+        confirming_tools=ConfirmingTools(),
     )
 
     async def verify_current(supplied):
