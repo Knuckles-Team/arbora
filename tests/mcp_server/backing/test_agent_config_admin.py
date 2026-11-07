@@ -20,7 +20,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from arbora.core import agent_config_admin as config_admin
+from arbora.mcp_server.backing import agent_config_admin as config_admin
 
 
 @pytest.fixture(autouse=True)
@@ -403,7 +403,7 @@ def test_graph_config_tool_routes_to_the_arbora_core():
     from arbora.mcp_server.backing.tools import config_tools
 
     source = inspect.getsource(config_tools)
-    assert "arbora.core.agent_config_admin" in source
+    assert "arbora.mcp_server.backing.agent_config_admin" in source
     assert "agent_utilities.core.config_admin" not in source
 
 

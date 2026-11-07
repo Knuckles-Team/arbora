@@ -9,7 +9,7 @@ SDK methods and offloads synchronous SDK methods to a worker thread.
 
 Usage in a handler::
 
-    from arbora.mcp_server.backing.concurrency import invoke_client_method
+    from arbora.core.concurrency import invoke_client_method
 
     response = await invoke_client_method(client.get_repositories, **kwargs)
 
@@ -35,7 +35,7 @@ T = TypeVar("T")
 _BODY_PARAM_NAMES = ("data", "payload", "body")
 
 
-def _wrap_data_kwargs[T](func: Callable[..., T], args: tuple, kwargs: dict) -> dict:
+def wrap_data_kwargs[T](func: Callable[..., T], args: tuple, kwargs: dict) -> dict:
     """Fold stray keyword fields into the target's REST-body param when it has one.
 
     Action-routed MCP tools pass the LLM's free-form ``params_json`` fields as
@@ -102,7 +102,7 @@ async def run_blocking[T](func: Callable[..., T], /, *args, **kwargs) -> T:
     positional-only so ``func``'s own ``*args``/``**kwargs`` pass through cleanly.
 
     Stray keyword fields are folded into a ``data`` dict when ``func`` expects
-    one (see :func:`_wrap_data_kwargs`) so LLM-driven create/update dispatch is
+    one (see :func:`wrap_data_kwargs`) so LLM-driven create/update dispatch is
     self-healing; it is a no-op for any callable without a ``data`` parameter.
     """
     if inspect.iscoroutinefunction(func):
@@ -110,7 +110,7 @@ async def run_blocking[T](func: Callable[..., T], /, *args, **kwargs) -> T:
             "run_blocking requires a synchronous callable; "
             "use invoke_client_method for provider SDK methods"
         )
-    kwargs = _wrap_data_kwargs(func, args, kwargs)
+    kwargs = wrap_data_kwargs(func, args, kwargs)
     result = await anyio.to_thread.run_sync(functools.partial(func, *args, **kwargs))
     if inspect.isawaitable(result):
         if inspect.iscoroutine(result):
@@ -132,7 +132,7 @@ async def invoke_client_method[T](
     an asynchronous return type are also handled by awaiting the returned value.
     The shared REST-body normalization is applied before either execution path.
     """
-    kwargs = _wrap_data_kwargs(func, args, kwargs)
+    kwargs = wrap_data_kwargs(func, args, kwargs)
     if inspect.iscoroutinefunction(func):
         return await func(*args, **kwargs)
 

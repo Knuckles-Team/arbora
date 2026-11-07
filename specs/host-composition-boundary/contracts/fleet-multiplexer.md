@@ -7,7 +7,7 @@ Consumer: meristem MERISTEM-RUN-R016
 
 ## Decision
 
-`arbora/fleet/` holds the only multiplexer (`arbora/fleet/multiplexer.py::MCPMultiplexer`). Host bootstrap `arbora/mcp_server/server.py::mcp_server` builds it and mounts the hosted modules. The OAuth broker (`arbora/mcp_server/backing/remote_oauth_broker.py`), task extension, principal, harness host (`arbora/mcp_server/harness_host.py`), middleware and skill coverage stay in `arbora/mcp_server/backing/`. Meristem defines no multiplexer and arbora imports none from it.
+`arbora/fleet/` holds the only multiplexer (`arbora/fleet/multiplexer.py::MCPMultiplexer`). Host bootstrap `arbora/mcp_server/server.py::mcp_server` builds it and mounts the hosted modules. The OAuth broker (`arbora/fleet/remote_oauth_broker.py`), task extension, principal, harness host (`arbora/mcp_server/harness_host.py`), middleware and skill coverage stay in `arbora/mcp_server/backing/`. Meristem defines no multiplexer and arbora imports none from it.
 
 ## Wire shape
 

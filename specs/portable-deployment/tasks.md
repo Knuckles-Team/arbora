@@ -167,7 +167,7 @@ non-test importer (or, for `agent_utilities.deployment.cli`, a direct test impor
 - Open: **ARBORA-DEPLOY-R009:** Arbora owns hosting/deployment configuration settings
 - Open: **ARBORA-DEPLOY-R009.1:** Remaining scope of ARBORA-DEPLOY-R009 (slice .1): Arbora owns hosting/deployment configuration settings
 - Done: **ARBORA-DEPLOY-R009.2.1:** Small-profile import footprint. Evidence: `tests/deployment/test_small_profile_footprint.py::test_cold_import_of_the_served_surface_loads_no_external_driver`.
-- Done: **ARBORA-DEPLOY-R009.4:** graph_config operation core in Arbora. Evidence: `tests/core/test_agent_config_admin.py`.
+- Done: **ARBORA-DEPLOY-R009.4:** graph_config operation core in Arbora. Evidence: `tests/mcp_server/backing/test_agent_config_admin.py`.
 
 ## ARBORA-DEPLOY-R017 engine-routed deployment placement and assembly
 
