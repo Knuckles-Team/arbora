@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-from arbora._version import __version__
 from arbora.mcp_server import server
+from arbora.version import __version__
 
 
 @pytest.fixture
