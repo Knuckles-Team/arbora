@@ -164,7 +164,7 @@ stateDiagram-v2
   attached --> detached: detach
 ```
 
-The attach context holds the last checkpoint, the open run IDs of `development.run.status` and the other attached sessions. It is 4096 bytes or fewer. The tuig terminal client attaches the same way under `TUIG-RUNTIME-R013`.
+The attach context holds the last checkpoint, the open run IDs of `development.run.status` and the other attached sessions. It is 4096 bytes or fewer. The terminal client attaches the same way; its own spec documents that consumer seam.
 
 ### Reuse inventory
 
@@ -216,4 +216,3 @@ None.
 | `MEDULLA-CQ-ORCH-R820` | medulla | Competency questions that the workstream and bundle rows serve |
 | `US-CONTENT-R007` | universal-skills | Door skills and portable frontmatter |
 | `PIPE-RELEASE-R028` | pipelines | Release proof with the harness validators; no committed bundle |
-| `TUIG-RUNTIME-R013` | tuig | Terminal client as a workstream peer |
