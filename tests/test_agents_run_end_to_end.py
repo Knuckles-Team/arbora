@@ -337,7 +337,7 @@ async def test_turn_usage_is_correlated_and_not_reconstructed_on_replay(
     from dataclasses import replace
 
     from arbora.a2a.models import A2AMessage
-    from arbora.api.contracts.session import use_session
+    from arbora.security.session import use_session
 
     authority = WorkItemA2AAuthority(lambda: engine, origins=RunOriginRegistry())
     service = A2AService(

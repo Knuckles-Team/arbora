@@ -186,9 +186,9 @@ def validate_session(value: Any) -> None:
 def session() -> Any:
     if not enabled():
         raise PermissionError("Anonymous mode is not configured")
-    from arbora.api.contracts.session import GraphSession
     from arbora.security.actor_context import ActorContext, ActorType
     from arbora.security.scope_registry import SCOPE_CLASSES
+    from arbora.security.session import GraphSession
 
     scopes = frozenset(
         name for name, kind in SCOPE_CLASSES.items() if kind != "approver"

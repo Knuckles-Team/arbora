@@ -13,7 +13,7 @@ from typing import Annotated, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 
-from arbora.api.contracts.session import GraphSession
+from arbora.security.session import GraphSession
 
 CapabilityKind = Literal["agent", "skill", "workflow"]
 WorkItemStatus = Literal[

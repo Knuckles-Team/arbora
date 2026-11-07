@@ -13,10 +13,10 @@ from arbora import run_origin, work_items
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.agent_runs import AgentRunPort
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
-from arbora.api.contracts.session import GraphSession, use_session
 from arbora.mcp_server.runtime import _call_native_intent
 from arbora.run_origin import RunOriginRegistry
 from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.session import GraphSession, use_session
 
 pytestmark = pytest.mark.spec("ARBORA-FLEET-R015")
 

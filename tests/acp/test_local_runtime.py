@@ -80,8 +80,8 @@ async def test_local_identity_renewal_keeps_same_binding(monkeypatch):
     from agent_utilities import host_ports
 
     from arbora.acp.local_runtime import compose_local
-    from arbora.api.contracts.session import GraphSession, SessionExpiredError
     from arbora.security import request_identity
+    from arbora.security.session import GraphSession, SessionExpiredError
 
     issued = []
     expired = [False]

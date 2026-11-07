@@ -15,9 +15,9 @@ from pydantic_ai.messages import PartStartEvent, TextPart
 
 from arbora.a2a.models import A2ATask
 from arbora.agent_runs import native_stream_scope
-from arbora.api.contracts.session import use_session
 from arbora.api.invoke import OpError, invoke
 from arbora.api.registry import Surface
+from arbora.security.session import use_session
 
 from .adapter import HostedACPAgent
 from .session_policy import AcpSessionPolicy, PrincipalContext

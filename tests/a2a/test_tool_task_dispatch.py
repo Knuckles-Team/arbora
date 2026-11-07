@@ -13,8 +13,8 @@ import pytest
 from arbora.a2a import tool_task_dispatch
 from arbora.a2a.tool_task import WorkItemLeaseLost
 from arbora.a2a.tool_task_dispatch import EgWorkItemFence
-from arbora.api.contracts.session import use_session
 from arbora.security.actor_context import CredentialLease, LeaseEvent
+from arbora.security.session import use_session
 from tests._eg_fakes import service_session
 from tests.test_work_items import FakeEngine
 

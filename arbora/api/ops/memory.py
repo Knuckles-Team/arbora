@@ -117,9 +117,9 @@ def _payload(result: Any) -> Any:
 
 async def _send(context: Any, method: str, params: dict[str, Any], key: str | None):
     """Send one KV method under the caller's own verified session."""
-    from arbora.api.contracts.session import use_session
     from arbora.api.invoke.pipeline import OperationRefused
     from arbora.mcp_server import runtime
+    from arbora.security.session import use_session
 
     engine = runtime._get_engine() if callable(runtime._get_engine) else None
     if engine is None:

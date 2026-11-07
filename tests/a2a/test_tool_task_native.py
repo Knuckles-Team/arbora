@@ -18,11 +18,11 @@ from arbora.a2a.tool_task import (
     tool_task_work_item_id,
 )
 from arbora.a2a.tool_task_dispatch import EgWorkItemFence
-from arbora.api.contracts.session import GraphSession, use_session
 from arbora.epistemic import ConnectClient, EpistemicClientPool
 from arbora.mcp_server.served_engine import ServedEngine
 from arbora.security.actor_context import ActorContext, ActorType, CredentialLease
 from arbora.security.request_identity import _resolve_authenticated_scopes
+from arbora.security.session import GraphSession, use_session
 from tests.test_real_boot import (
     AUDIENCE,
     POLICY_VERSION,

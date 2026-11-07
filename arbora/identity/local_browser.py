@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import SplitResult, urlsplit
 
-from arbora.api.contracts.session import GraphSession
 from arbora.security import anonymous
+from arbora.security.session import GraphSession
 
 
 def _local_origin_authority(parsed: SplitResult) -> bool:

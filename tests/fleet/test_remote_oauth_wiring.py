@@ -28,11 +28,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from arbora.api.contracts.session import (
-    GraphSession,
-    suspend_session,
-    use_session,
-)
 from arbora.fleet import multiplexer as mod
 from arbora.fleet.discovery_authority import (
     OAuthGrantBinding,
@@ -49,6 +44,11 @@ from arbora.fleet.remote_oauth_broker import (
 )
 from arbora.security.actor_context import ActorContext, ActorType, use_actor
 from arbora.security.secrets import SecretsClient
+from arbora.security.session import (
+    GraphSession,
+    suspend_session,
+    use_session,
+)
 from tests._support import FakeSecretsBackend
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 

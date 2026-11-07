@@ -24,7 +24,6 @@ from pydantic_ai.models.function import FunctionModel
 from arbora import host_bindings
 from arbora.agent_runs import AgentRunPort
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
-from arbora.api.contracts.session import use_session
 from arbora.browser_control import browser_control_runtime
 from arbora.browser_control.browser_control_client import (
     ControlConfirmMessage,
@@ -49,6 +48,7 @@ from arbora.mcp_server.server import _attach_fleet_runtime
 from arbora.run_origin import RunOriginRegistry
 from arbora.security import request_identity
 from arbora.security.actor_context import use_actor
+from arbora.security.session import use_session
 from arbora.webui_host.mcp_delegation import webui_mcp_delegation_helpers
 from tests.browser_control.test_browser_control_service import _setup
 from tests.browser_control.test_browser_proposals import (

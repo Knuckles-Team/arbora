@@ -10,10 +10,10 @@ from typing import Any
 import pytest
 
 from arbora.api.contracts.agent_control_plane import GraphRlmRunRequest
-from arbora.api.contracts.session import GraphSession, resolve_session
 from arbora.mcp_server import runtime
 from arbora.mcp_server.agent_control import register_graph_rlm
 from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.session import GraphSession, resolve_session
 
 
 class Mcp:

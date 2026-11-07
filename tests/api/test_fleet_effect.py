@@ -85,11 +85,11 @@ def test_child_refusal_uses_structured_code_only() -> None:
 async def test_delegated_child_refusal_keeps_bounded_structured_code(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    api = ModuleType("arbora.api.contracts")
+    api = ModuleType("arbora.security.session")
     vars(api).update(use_session=lambda _session: nullcontext())
     brain = ModuleType("arbora.security.actor_context")
     vars(brain).update(use_actor=lambda _actor: nullcontext())
-    monkeypatch.setitem(sys.modules, "arbora.api.contracts", api)
+    monkeypatch.setitem(sys.modules, "arbora.security.session", api)
     monkeypatch.setitem(sys.modules, "arbora.security.actor_context", brain)
 
     class Mux:
@@ -124,11 +124,11 @@ async def test_delegated_child_refusal_keeps_bounded_structured_code(
 async def test_delegated_child_refusal_detail_falls_back_to_text_content(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    api = ModuleType("arbora.api.contracts")
+    api = ModuleType("arbora.security.session")
     vars(api).update(use_session=lambda _session: nullcontext())
     brain = ModuleType("arbora.security.actor_context")
     vars(brain).update(use_actor=lambda _actor: nullcontext())
-    monkeypatch.setitem(sys.modules, "arbora.api.contracts", api)
+    monkeypatch.setitem(sys.modules, "arbora.security.session", api)
     monkeypatch.setitem(sys.modules, "arbora.security.actor_context", brain)
 
     class Mux:
@@ -363,8 +363,8 @@ async def test_uncertain_service_child_propagates_for_the_invoke_surface_to_map(
 async def test_oauth_callback_uses_matching_verified_actor(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import arbora.api.contracts
     import arbora.security.actor_context as brain_context
+    import arbora.security.session
 
     bound: list[object] = []
 
@@ -376,7 +376,7 @@ async def test_oauth_callback_uses_matching_verified_actor(
         bound.append(actor)
         return nullcontext()
 
-    monkeypatch.setattr(arbora.api.contracts, "use_session", fake_use_session)
+    monkeypatch.setattr(arbora.security.session, "use_session", fake_use_session)
     monkeypatch.setattr(brain_context, "use_actor", fake_use_actor)
 
     class Mux:

@@ -121,11 +121,13 @@ async def test_agents_run_maps_a_modality_refusal_to_a_typed_operation_refusal(
 ) -> None:
     import contextlib
 
-    from arbora.api import contracts
     from arbora.api.invoke.pipeline import OperationRefused
     from arbora.api.ops import agents
+    from arbora.security import session as security_session
 
-    monkeypatch.setattr(contracts, "use_session", lambda _s: contextlib.nullcontext())
+    monkeypatch.setattr(
+        security_session, "use_session", lambda _s: contextlib.nullcontext()
+    )
 
     class _Service:
         async def send_message(self, **_: Any) -> Any:

@@ -50,8 +50,8 @@ def compose_local(args: argparse.Namespace) -> Any:
     from agent_utilities import host_ports
     from agent_utilities.runtime import RunRequest, default_run_plan
 
-    from arbora.api.contracts.session import SessionExpiredError
     from arbora.security.request_identity import mint_local_process_session
+    from arbora.security.session import SessionExpiredError
 
     from .adapter import HostedACPAgent
     from .local_history import LocalConversationHistory
