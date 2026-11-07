@@ -117,3 +117,17 @@ class BrowserBoundaryFactory(Protocol):
         tenant: str,
         broker_claims: Callable[[], Mapping[str, Any]],
     ) -> Any: ...
+
+
+@dataclass(frozen=True, slots=True)
+class IdentityLifecycle:
+    """Process-lifetime identity work that the composition root injects.
+
+    ``start`` runs after the process authority is minted and ``stop`` at
+    shutdown. The served process uses it to reconcile arbora's own OAuth
+    client contract (ARBORA-IDENTITY-R030.4) without importing the concrete
+    identity runtime.
+    """
+
+    start: Callable[[], object]
+    stop: Callable[[], None]

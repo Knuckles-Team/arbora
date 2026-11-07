@@ -821,6 +821,24 @@ def readiness_reason() -> str | None:
     return f"process_authority_{code}"
 
 
+_IDENTITY_CONTRACT: list[Any] = [None]
+
+
+def register_identity_contract(reconciler: Any) -> None:
+    """Register the OAuth client contract reconciler (``None`` clears; R030.4.3)."""
+    _IDENTITY_CONTRACT[0] = reconciler
+
+
+def identity_readiness() -> dict[str, Any] | None:
+    """``identity`` readiness from the contract state, or ``None`` when not configured.
+
+    Reported, never gating: issued tokens stay valid and dynamic client
+    registration stays available while the contract is degraded.
+    """
+    reconciler = _IDENTITY_CONTRACT[0]
+    return None if reconciler is None else dict(reconciler.readiness())
+
+
 def failing_checks(report: Mapping[str, Any]) -> list[str]:
     """Names of the essential checks holding readiness down (``unhealthy``)."""
 

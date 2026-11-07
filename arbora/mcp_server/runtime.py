@@ -858,6 +858,12 @@ def _build_server(
         if not_served:
             # Names only: authorities this release does not serve (not applicable).
             body["not_served"] = not_served
+        from arbora.observability.runtime_health import identity_readiness
+
+        identity = identity_readiness()
+        if identity is not None:
+            # Reported, never gating (ARBORA-IDENTITY-R030.4.3).
+            body["identity"] = identity
         from arbora.mcp_server.catalog_warmup import catalog_state
 
         catalog = catalog_state()

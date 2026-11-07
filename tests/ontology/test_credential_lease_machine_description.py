@@ -90,11 +90,12 @@ def test_every_state_and_transition_rolls_up_to_the_core_classes(
         "IdentityUnchanged",
     }
     assert _rolls_up(store, f"{ARBORA}LeaseTransitionRefused", "TransitionRefused")
+    assert _rolls_up(store, f"{ARBORA}LeaseTransition", "Transition")
 
     rows = _select(
         store,
         """SELECT ?t ?from ?event ?to ?guard WHERE {
-            ?t rdfs:subClassOf+ :Transition ;
+            ?t rdfs:subClassOf+ arbora:LeaseTransition ;
                :fromState ?from ; :firedBy ?event ; :toState ?to .
             OPTIONAL { ?t :guardedBy ?guard }
         }""",
@@ -125,7 +126,7 @@ def test_the_next_legal_events_of_a_lease_state_are_a_graph_question(
     rows = _select(
         store,
         """SELECT DISTINCT ?form WHERE {
-            ?t rdfs:subClassOf+ :Transition ;
+            ?t rdfs:subClassOf+ arbora:LeaseTransition ;
                :fromState arbora:LeaseExpired ; :firedBy ?event .
             ?event :storedForm ?form .
         }""",
