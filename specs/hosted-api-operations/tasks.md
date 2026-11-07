@@ -475,3 +475,4 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T402 ARBORA-OPS-R901 Plan lease machine with distinct consumed and expired refusals.
 - [ ] T403 ARBORA-OPS-R902 Work item commit uses the medulla enum and typed refusal.
 - [ ] T404 ARBORA-OPS-R903 Describe the plan lease machine in the ontology.
+- [ ] T405 ARBORA-OPS-R024.5.1 Model list read for ordinary users.
