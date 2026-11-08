@@ -15,6 +15,7 @@ from typing import Any
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
+from arbora.access.approval import ApprovalDecisions, verified_approval_session
 from arbora.access.policy_state import PolicyState
 from arbora.fleet.state import FleetState
 from arbora.run_origin import RunOriginRegistry
@@ -49,5 +50,7 @@ def build_host_context(engine_provider: Callable[[], Any]) -> HostContext:
     return HostContext(
         runs=RunState(origins=origins, a2a=a2a),
         fleet=FleetState(),
-        policy=PolicyState(),
+        policy=PolicyState(
+            approvals=ApprovalDecisions(verified_approval_session),
+        ),
     )

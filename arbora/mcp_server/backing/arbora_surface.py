@@ -31,6 +31,7 @@ from types import MappingProxyType
 from typing import Any
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.access.approval import ApprovalDecisions
 from arbora.mcp_server.backing._arbora_action_manifest import ARBORA_ACTIONS
 from arbora.mcp_server.backing.intent_contract import operation_id
 from arbora.mcp_server.backing.tool_specs import INTENT_VERBS
@@ -221,11 +222,13 @@ def host_operations(mcp: Any) -> Mapping[str, tuple[str, str | None]]:
     return MappingProxyType(table)
 
 
-def arbora_registrars(action_policies: ActionPolicies) -> list[Any]:
+def arbora_registrars(
+    action_policies: ActionPolicies, approvals: ApprovalDecisions
+) -> list[Any]:
     """The action-routed registrars that populate the dispatch core.
 
     The governed families (secret, config) gate through the host's
-    ``action_policies``.
+    ``action_policies``; approval decisions go through the host's ``approvals``.
     """
     from arbora.mcp_server.backing import tools as au_tools
 
@@ -253,7 +256,7 @@ def arbora_registrars(action_policies: ActionPolicies) -> list[Any]:
             server, include_unserved_mining=False
         ),
         au_tools.register_domain_ops_tools,
-        au_tools.register_governance_tools,
+        lambda server: au_tools.register_governance_tools(server, approvals),
         au_tools.register_audit_tools,
         au_tools.register_epistemic_tools,
         au_tools.register_compliance_tools,
@@ -264,6 +267,7 @@ def register_arbora_surface(
     mcp: Any,
     *,
     action_policies: ActionPolicies,
+    approvals: ApprovalDecisions,
     canonical: bool = False,
     intent_tools: bool = True,
 ) -> Any:
@@ -285,7 +289,7 @@ def register_arbora_surface(
     backing = FastMCP("arbora-backing")
     register_backing_tools(
         backing,
-        registrars=arbora_registrars(action_policies),
+        registrars=arbora_registrars(action_policies, approvals),
         force_registration=canonical,
     )
     mcp._arbora_backing = backing

@@ -23,6 +23,7 @@ from pydantic_ai.models.function import FunctionModel
 
 from arbora import host_bindings
 from arbora.access.action_policy import ActionPolicies
+from arbora.access.approval import ApprovalDecisions
 from arbora.agent_runs import AgentRunPort
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 from arbora.browser_control import browser_control_runtime
@@ -122,7 +123,7 @@ async def _served(
         fleet_effect=refused_fleet_effect,
     )
     fleet = FleetState()
-    install_gateway_application(invocation, fleet=fleet)
+    install_gateway_application(invocation, fleet=fleet, approvals=ApprovalDecisions())
     _args, mcp, middlewares = runtime._build_server(
         bootstrap=False, invocation=invocation
     )

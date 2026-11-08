@@ -71,6 +71,7 @@ def _discover_au_root() -> Path | None:
 
 
 _AU_ROOT = _discover_au_root()
+_REPO_ROOT = Path(__file__).resolve().parents[3]
 # The workspace root containing every sibling repo (agent-utilities,
 # medulla, overstory, arbora, ...) -- one level above AU's own
 # repo root, exactly as it was one level above THIS file's repo root before
@@ -104,32 +105,22 @@ def test_federation_reader_is_disposed_as_authenticated_required_post_fix() -> N
 
 
 def test_federation_reader_proof_file_exists_and_names_the_right_assertion() -> None:
-    """The manifest's citation for BUG-036 must point at a REAL file+test that
-    actually exists — a citation to a deleted/renamed file would be worse than
-    no citation (a false sense of coverage). This regression test must keep
-    proving SessionRequiredError is raised even now that the bug is fixed."""
-    if _AU_ROOT is None:
-        import pytest
-
-        pytest.skip(
-            "agent-utilities not resolvable as an editable sibling checkout "
-            "in this environment -- its tests/ tree (never shipped in an "
-            "installed distribution) cannot be checked from here"
-        )
-    assert _AU_ROOT is not None  # narrows for mypy; pytest.skip() above exits
-
+    """The manifest's citation for BUG-036 must point at a REAL file+test in
+    this repository -- a citation to a deleted/renamed file would be worse than
+    no citation (a false sense of coverage). The cited test must keep proving
+    the federated query is refused UNAUTHENTICATED without a verified session."""
     entry = lookup_query_dialect("query_dialect:federated")
     assert entry is not None and entry.proof is not None
     proof_path_str, _, test_name = entry.proof.partition("::")
-    proof_path = _AU_ROOT / proof_path_str
+    proof_path = _REPO_ROOT / proof_path_str
     assert proof_path.is_file(), f"BUG-036 proof file missing: {proof_path}"
     source = proof_path.read_text(encoding="utf-8")
-    assert test_name in source, (
+    assert f"def {test_name}(" in source, (
         f"BUG-036 proof file {proof_path} no longer contains "
         f"{test_name!r} -- the manifest citation is stale"
     )
-    assert "SessionRequiredError" in source, (
-        "the BUG-036 proof must assert SessionRequiredError is raised -- "
+    assert '"UNAUTHENTICATED"' in source, (
+        "the BUG-036 proof must assert the unauthenticated refusal -- "
         "the exact fail-open this manifest entry claimed is now closed, and "
         "must stay closed"
     )

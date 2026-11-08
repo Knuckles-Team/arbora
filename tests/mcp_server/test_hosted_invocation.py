@@ -12,6 +12,7 @@ from fastapi import FastAPI
 from fastmcp import FastMCP
 
 from arbora.a2a.service import A2AService
+from arbora.access.approval import ApprovalDecisions
 from arbora.access.policy_state import PolicyState
 from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.registry import Surface
@@ -94,9 +95,9 @@ def test_native_a2a_and_gateway_share_authority_and_effect_boundary(
     )
     a2a = post(mount_a2a(monkeypatch, value))
     http = FastAPI()
-    NativeGatewayApplication(value, fleet=FleetState()).mount_rest_routes(
-        http, prefix="/api"
-    )
+    NativeGatewayApplication(
+        value, fleet=FleetState(), approvals=ApprovalDecisions()
+    ).mount_rest_routes(http, prefix="/api")
     response = http_post(http)
     assert a2a.status_code == response.status_code == (200 if allowed else 403)
     assert len(effect.calls) == (2 if allowed else 0)
@@ -110,9 +111,9 @@ def test_composed_gateway_refuses_dependency_replacement(monkeypatch):
     value, *_ = composed(monkeypatch)
     app = FastAPI()
     with pytest.raises(ValueError, match="cannot replace"):
-        NativeGatewayApplication(value, fleet=FleetState()).mount_rest_routes(
-            app, prefix="/api", services=value.services
-        )
+        NativeGatewayApplication(
+            value, fleet=FleetState(), approvals=ApprovalDecisions()
+        ).mount_rest_routes(app, prefix="/api", services=value.services)
     assert not any(route.path.startswith("/api") for route in app.routes)
 
 
@@ -153,7 +154,7 @@ def test_native_entry_hands_same_bundle_to_both_compositions(monkeypatch):
     monkeypatch.setattr(
         server,
         "install_gateway_application",
-        lambda invocation, *, fleet: installed.append(invocation),
+        lambda invocation, *, fleet, approvals: installed.append(invocation),
     )
     for name in (
         "_preflight_mcp_sdk_floor",

@@ -223,6 +223,15 @@ class FleetCatalog:
                     counts[item.server] += 1
         return counts
 
+    async def server_surfaces(
+        self, caller: Any, servers: Iterable[str]
+    ) -> dict[str, Any]:
+        """Surface counts of each named server, over every caller-visible item.
+
+        A named server with no visible item reads every surface ``not served``
+        (ARBORA-FLEET-R040.3)."""
+        return await self._server_surfaces(caller, {}, servers, ())
+
     async def _server_surfaces(
         self,
         caller: Any,

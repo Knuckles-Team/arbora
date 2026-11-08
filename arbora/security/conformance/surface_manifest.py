@@ -102,17 +102,16 @@ QUERY_DIALECT_MANIFEST: tuple[SurfaceEntry, ...] = (
         surface_id="query_dialect:federated",
         disposition=Disposition.AUTHENTICATED_REQUIRED,
         citation=(
-            "FIXED (BUG-036): mcp/tools/query_tools.py:417-429 -> "
-            "engine_federation.py FederationMixin.execute_federated_query/"
-            "_execute_federated_connection now call "
-            "resolve_session(required_scope='kg:read') before touching any "
-            "backend -- matching the cypher/sql/sparql dialects above. "
-            "ActorContextMiddleware (au:actor-context-middleware, below) is "
-            "also now fail-closed for arbora, so this holds even for a "
-            "caller that reaches the MCP-native dispatch path directly."
+            "FIXED (BUG-036): the federation operations (federation.sources.*, "
+            "arbora/api/ops/query_engine.py and arbora/api/ops/federation.py) "
+            "are served only through the invoke pipeline "
+            "(arbora/api/invoke/pipeline.py), which verifies the caller's "
+            "session and the federation:read scope before any backend call; "
+            "an unauthenticated caller is refused UNAUTHENTICATED with no "
+            "effect and no audit event."
         ),
         owning_bug="BUG-036",
-        proof="tests/unit/knowledge_graph/test_federation_carrier_authority.py::test_federated_query_denies_without_a_verified_session",
+        proof="tests/security/conformance/test_federated_query_session.py::test_federated_query_denies_without_a_verified_session",
     ),
 )
 

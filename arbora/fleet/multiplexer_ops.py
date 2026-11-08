@@ -108,6 +108,24 @@ def _require_delegate_scope(caller: Any) -> None:
         raise PermissionError("mcp:delegate is required")
 
 
+class FleetServerNotFound(LookupError):
+    """A per-server catalog read for a server the snapshot holds nothing for.
+
+    Carries the server's pack status so the caller answers ``NOT_FOUND``
+    with it, never an empty catalog (ARBORA-FLEET-R040.3)."""
+
+    def __init__(self, server: str, pack_status: str) -> None:
+        super().__init__(server)
+        self.server = server
+        self.pack_status = pack_status
+
+
+#: The pack status vocabulary of the fleet census (ARBORA-FLEET-R040.3).
+PACK_SERVED = "served"
+PACK_REGISTERED_UNPUBLISHED = "registered_unpublished"
+PACK_NOT_IN_FLEET = "not_in_fleet"
+
+
 def _require_discover_scope(caller: Any) -> None:
     if "mcp:discover" not in caller.effective_scopes:
         raise PermissionError("mcp:discover is required")
@@ -352,8 +370,120 @@ class MultiplexerOps:
         return await self.find_tools(caller, **params)
 
     async def list(self, caller: Any, **params: Any) -> dict[str, Any]:
-        """Registry browse projection over the same filtered catalog."""
+        """Registry browse projection over the same filtered catalog.
+
+        With ``summary`` set, the answer is the paged fleet census instead
+        (ARBORA-FLEET-R040.3)."""
+        if params.pop("summary", False):
+            return await self.census(
+                caller, cursor=params.get("cursor"), limit=params.get("limit", 50)
+            )
         return await self.search(caller, **{**params, "browse": True})
+
+    def _fleet_names(self) -> tuple[set[str], set[str]]:
+        """(registered connectors, configured endpoints), each by server name.
+
+        An unreadable registry contributes no name rather than failing the
+        census; ``fleet.status`` coverage reports that state."""
+        from arbora.fleet.coverage import FleetCoverageError
+
+        try:
+            registered = {entry.server for entry in self._coverage_registry()}
+        except FleetCoverageError:
+            registered = set()
+        endpoints = {str(endpoint.name) for endpoint in self._coverage_endpoints()}
+        return registered, endpoints
+
+    async def _pack_statuses(self) -> tuple[builtins.list[str], dict[str, str]]:
+        """Every fleet server name, sorted, and its pack status."""
+        registered, endpoints = self._fleet_names()
+        admitted = await self.catalog.tool_counts()
+        unadmitted = set(self._unadmitted_servers())
+        names = sorted(registered | endpoints | set(admitted))
+        statuses: dict[str, str] = {}
+        for name in names:
+            if name in admitted and name not in unadmitted:
+                statuses[name] = PACK_SERVED
+            elif name in registered or name in endpoints:
+                statuses[name] = PACK_REGISTERED_UNPUBLISHED
+            else:
+                statuses[name] = PACK_NOT_IN_FLEET
+        return names, statuses
+
+    def _probe_error(self, server: str) -> str | None:
+        child = self._health().get(server)
+        if not isinstance(child, Mapping):
+            return None
+        error = child.get("catalog_refresh_error") or child.get("error")
+        return str(error) if error else None
+
+    async def census(
+        self, caller: Any, *, cursor: str | None = None, limit: int = 50
+    ) -> dict[str, Any]:
+        """One page of the fleet census, by server name (ARBORA-FLEET-R040.3).
+
+        Every registered connector appears, served or not, whatever surfaces
+        it serves: a server with no prompts (or no items at all) is listed
+        with those surfaces ``not served``. No items are returned."""
+        _require_discover_scope(caller)
+        if not 1 <= limit <= 100:
+            raise ValueError("limit must be in 1..100")
+        names, statuses = await self._pack_statuses()
+        start = 0
+        if cursor is not None:
+            if cursor not in names:
+                raise ValueError("catalog cursor expired")
+            start = names.index(cursor) + 1
+        page = names[start : start + limit]
+        surfaces = await self.catalog.server_surfaces(caller, page)
+        rows: builtins.list[dict[str, Any]] = []
+        for name in page:
+            row: dict[str, Any] = {
+                "server": name,
+                **surfaces[name],
+                "pack_status": statuses[name],
+            }
+            error = self._probe_error(name)
+            if error is not None:
+                row["probe_error"] = error
+            rows.append(row)
+        more = start + limit < len(names) and bool(page)
+        return {
+            "items": [],
+            "servers": rows,
+            "next_cursor": page[-1] if more else None,
+        }
+
+    async def server_catalog(self, caller: Any, server: str) -> dict[str, Any]:
+        """One server's catalog, read from the same snapshot as the census.
+
+        Raises :class:`FleetServerNotFound` with the pack status when the
+        snapshot holds no caller-visible item for the server
+        (ARBORA-FLEET-R040.3)."""
+        _require_discover_scope(caller)
+        await self._prime((server,))
+        items: builtins.list[dict[str, Any]] = []
+        cursor: str | None = None
+        while True:
+            page = await self.catalog.search(
+                caller, servers=(server,), browse=True, cursor=cursor, limit=100
+            )
+            items.extend(page["items"])
+            cursor = page["next_cursor"]
+            if cursor is None:
+                break
+        if not items:
+            _names, statuses = await self._pack_statuses()
+            raise FleetServerNotFound(server, statuses.get(server, PACK_NOT_IN_FLEET))
+        surfaces = await self.catalog.server_surfaces(caller, (server,))
+        _names, statuses = await self._pack_statuses()
+        return {
+            "server": server,
+            "tools": [row for row in items if row.get("kind") == "tool"],
+            "items": items,
+            **surfaces[server],
+            "pack_status": statuses.get(server, PACK_SERVED),
+        }
 
     async def load(
         self,
