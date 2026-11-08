@@ -1,4 +1,4 @@
-"""Generated epistemic-graph fleet-catalog adapter contract."""
+"""Generated medulla fleet-catalog adapter contract."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ CONTEXT = ReadContext(
     tenant_id="tenant-a",
     principal_id="principal-a",
     agent_id="agent-a",
-    audience="epistemic-graph",
+    audience="medulla",
     policy_version="policy-a",
 )
 

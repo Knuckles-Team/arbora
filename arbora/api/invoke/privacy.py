@@ -14,7 +14,7 @@ from types import MappingProxyType
 from typing import Any
 
 import msgpack
-from agent_connector_sdk.privacy import sanitize_for_persistence
+from scion_sdk.privacy import sanitize_for_persistence
 
 #: Operation id -> (argument name, wire encoding of that argument).
 PERSISTED_FIELDS: Mapping[str, tuple[str, str]] = MappingProxyType(

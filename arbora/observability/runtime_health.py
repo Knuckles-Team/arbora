@@ -36,7 +36,7 @@ Four-state semantics per check (CONCEPT:MERISTEM-OS.observability.co-service-vis
 * ``degraded``        — configured and PARTIALLY impaired in a way that is, by
   design, never part of the mandatory contract — e.g. an optional read-only
   kg_connections mirror (neo4j/falkordb/ladybug/...) that failed to construct.
-  The epistemic-graph engine authority is independent of these by
+  The medulla engine authority is independent of these by
   construction, so readiness must not pull arbora out of Service routing
   over one; ``degraded`` carries a ``reason``/``detail`` like ``unhealthy``
   does, but — same as ``not_configured`` — never fails the overall rollup.

@@ -9,9 +9,9 @@ administrator-issued reset and recovery-code path.
 
 The SMTP/listmonk transport itself, and its wiring into the password
 reset / verification / invitation send pipeline, is
-ARBORA-IDENTITY-R016.2 -- pinned to the epistemic-graph >=2.28 engine
+ARBORA-IDENTITY-R016.2 -- pinned to the medulla >=2.28 engine
 release, which this repository does not yet depend on (current pin is
-``epistemic-graph>=2.27.0,<3.0.0`` in ``pyproject.toml``).
+``medulla>=2.27.0,<3.0.0`` in ``pyproject.toml``).
 """
 
 from __future__ import annotations

@@ -234,7 +234,7 @@ def to_ntriples(triples: Iterable[Triple]) -> str:
 
 async def write_catalog(client: Any, graph: str, connector: str, pack: Any) -> int:
     """Write ``pack``'s catalog into ``graph`` with one ``AddTriples``; return the count."""
-    from epistemic_graph.generated.graph import send_add_triples
+    from medulla.generated.graph import send_add_triples
 
     triples = catalog_triples(connector, pack)
     await send_add_triples(client, {"ntriples": to_ntriples(triples)}, graph)

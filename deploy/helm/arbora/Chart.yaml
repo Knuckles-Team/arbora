@@ -1,7 +1,7 @@
 apiVersion: v2
 name: arbora
 description: >-
-  Arbora runtime with its epistemic-graph engine in the same pod (unified
+  Arbora runtime with its medulla engine in the same pod (unified
   topology) or against a shared engine service, plus optional fleet connectors.
 type: application
 version: 0.2.0

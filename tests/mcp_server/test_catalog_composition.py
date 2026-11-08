@@ -30,7 +30,7 @@ class Session:
             "tenant": "tenant-a",
             "principal": "principal-a",
             "agent_id": "agent-a",
-            "audience": "epistemic-graph",
+            "audience": "medulla",
             "policy_version": "policy-a",
         }
 

@@ -9,8 +9,8 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
-from epistemic_graph.client import EpistemicGraphClient
-from epistemic_graph.generated.coordination import (
+from medulla.client import MedullaClient
+from medulla.generated.coordination import (
     decode_get_run_work_item,
     send_get_run_work_item,
 )
@@ -21,9 +21,9 @@ from .anonymous import AnonymousCaller, AnonymousNativeReadPort, AnonymousTaskSt
 class EgAnonymousTaskReadPort(AnonymousNativeReadPort):
     """Use GetRunWorkItem on an already-configured local no-auth client only."""
 
-    def __init__(self, client: EpistemicGraphClient, *, graph: str) -> None:
+    def __init__(self, client: MedullaClient, *, graph: str) -> None:
         if (
-            type(client) is not EpistemicGraphClient
+            type(client) is not MedullaClient
             or type(graph) is not str
             or not graph
             or len(graph) > 128

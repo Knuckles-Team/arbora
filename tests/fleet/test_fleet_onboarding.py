@@ -159,10 +159,10 @@ def _session() -> GraphSession:
 async def _served_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
     """Capture a child catalog from an in-process server via the real SDK."""
 
-    from agent_connector_sdk.artifacts.pack import build_content_pack
-    from agent_connector_sdk.ports.session import TransportEndpoint
-    from agent_connector_sdk.transports.mcp import McpTransport
     from fastmcp import FastMCP
+    from scion_sdk.artifacts.pack import build_content_pack
+    from scion_sdk.ports.session import TransportEndpoint
+    from scion_sdk.transports.mcp import McpTransport
 
     server: FastMCP[object] = FastMCP(endpoint.name, version="1.0.0")
 
@@ -185,7 +185,7 @@ def eg(monkeypatch: pytest.MonkeyPatch) -> _Registry:
         lambda _self, _engine=None: AllowPolicy(),
     )
     monkeypatch.setattr(
-        "agent_connector_sdk.sinks.epistemic_graph.EpistemicGraphSink",
+        "scion_sdk.sinks.medulla.MedullaSink",
         _RecordingSink,
     )
     monkeypatch.setattr(onboarding, "_child_auth", lambda: None)
@@ -396,8 +396,8 @@ _FAR_FUTURE_LEASE_MS = int(time.time() * 1000) + 30 * 86_400_000
 async def _head_digest(endpoint: FleetEndpoint, catalog: dict[str, Any]) -> str:
     """The pack digest EG would already store for ``endpoint``'s served pack."""
 
-    from epistemic_graph.connector_pack import pack_digest
-    from epistemic_graph.generated.connector_pack import McpCatalogSnapshotBinding
+    from medulla.connector_pack import pack_digest
+    from medulla.generated.connector_pack import McpCatalogSnapshotBinding
 
     pack = await _served_pack(endpoint)
     binding = McpCatalogSnapshotBinding(**catalog)
@@ -651,9 +651,9 @@ async def test_native_source_approval_missing_stays_pending(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     for name in (
-        "epistemic_graph.generated.connector_pack",
-        "epistemic_graph.generated.models",
-        "epistemic_graph.generated.storage",
+        "medulla.generated.connector_pack",
+        "medulla.generated.models",
+        "medulla.generated.storage",
     ):
         monkeypatch.setitem(sys.modules, name, types.ModuleType(name))
 

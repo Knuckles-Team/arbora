@@ -1,7 +1,7 @@
 # Arbora on one host (laptop, workstation or a small durable server).
 #
 # One service: the arbora process serves MCP + REST/A2A on 8000 and the web UI
-# on 8080, and starts/supervises its epistemic-graph engine as a child process
+# on 8080, and starts/supervises its medulla engine as a child process
 # inside the same container (the unified topology; the engine binary ships in the
 # unified image). The engine store lives on the `arbora-data` volume and has
 # exactly one writer: never scale this service.
@@ -60,7 +60,7 @@ services:
       - "127.0.0.1:${ARBORA_UI_PORT:-8080}:8080"
     volumes:
       - arbora-data:/var/lib/arbora
-      - arbora-run:/run/epistemic-graph
+      - arbora-run:/run/medulla
     tmpfs:
       - /tmp
     read_only: true

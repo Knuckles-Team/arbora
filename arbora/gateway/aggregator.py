@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 # ARBORA-FLEET-R032: the service authority the aggregator binds around
 # every widget fetch, lazily minted and cached process-wide (same shape as
-# agent_webui.graph_admission's `_SERVICE_SESSION` cache). Guarded by
+# overstory.graph_admission's `_SERVICE_SESSION` cache). Guarded by
 # `_SERVICE_SESSION_LOCK`, a plain non-reentrant lock held only for the
 # short check-or-mint decision, never across the fetch itself.
 _SERVICE_SESSION: Any | None = None

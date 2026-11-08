@@ -62,3 +62,12 @@ def test_split_repository_dependencies_use_version_specifiers_not_paths() -> Non
             assert re.search(r"[<>=!~]=?\s*\d", dep), (
                 f"{package} dependency string must pin a version floor: {dep!r}"
             )
+
+
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.3")
+def test_engine_and_runtime_floors_match_the_release_row() -> None:
+    """The release row's floors: meristem 5.x and exactly medulla 3.3.0."""
+    pyproject = tomllib.loads(PYPROJECT_PATH.read_text(encoding="utf-8"))
+    deps = set(_all_dependency_strings(pyproject))
+    assert "medulla==3.3.0" in deps
+    assert "meristem>=5.0.0,<6.0.0" in deps

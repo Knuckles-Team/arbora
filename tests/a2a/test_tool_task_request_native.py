@@ -6,7 +6,7 @@ import asyncio
 from typing import cast
 
 import pytest
-from epistemic_graph import EpistemicGraphClient
+from medulla import MedullaClient
 
 from arbora.a2a.tool_task import ToolTaskRequest
 from arbora.a2a.tool_task_requests import EgToolTaskRequestStore
@@ -38,7 +38,7 @@ def test_native_request_survives_durable_engine_reopen() -> None:
             if index == 1:
                 stack["restart_engine"]()
             pool = EpistemicClientPool(
-                cast(ConnectClient, EpistemicGraphClient.connect),
+                cast(ConnectClient, MedullaClient.connect),
                 socket_path=stack["socket_path"],
                 auth_secret=stack["secret"],
             )

@@ -26,6 +26,7 @@ from .spec import (
     SubjectSource,
     Surface,
     Verb,
+    eg_method_ref,
 )
 from .surface_gate import (
     CompatBreak,
@@ -68,6 +69,7 @@ __all__ = [
     "canonical_registry",
     "diff_backward_compat",
     "diff_public_surface",
+    "eg_method_ref",
     "public_surface",
     "registry_digest",
 ]

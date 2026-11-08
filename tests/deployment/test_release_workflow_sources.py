@@ -97,9 +97,9 @@ def test_release_builds_from_this_repository_and_pypi_only() -> None:
     text = (ROOT / ".github" / "workflows" / "checks.yml").read_text(encoding="utf-8")
     for retired in (
         "agent-utilities",
-        "agent-connector-sdk",
-        "agent-webui",
-        "epistemic-graph",
+        "scion-sdk",
+        "overstory",
+        "medulla",
     ):
         assert f"repository: Knuckles-Team/{retired}" not in text
     assert _declared_paths() == set()
@@ -176,7 +176,7 @@ def test_every_manual_hook_ci_names_is_defined() -> None:
 def test_engine_installs_from_the_locked_wheel_not_a_source_overlay() -> None:
     steps = _gate_steps()
     sync = steps[_step_index(steps, "uv sync --frozen")]["run"]
-    verify = steps[_step_index(steps, "epistemic_graph.numeric")]["run"]
+    verify = steps[_step_index(steps, "medulla.numeric")]["run"]
     commands = "\n".join(step.get("run", "") for step in steps)
 
     assert "--no-install-package" not in sync
@@ -185,7 +185,7 @@ def test_engine_installs_from_the_locked_wheel_not_a_source_overlay() -> None:
     assert not any("Swatinem/rust-cache@" in step.get("uses", "") for step in steps)
     assert 'read_text("direct_url.json")' in verify
     assert _step_index(steps, "uv sync --frozen") < steps.index(
-        steps[_step_index(steps, "epistemic_graph.numeric")]
+        steps[_step_index(steps, "medulla.numeric")]
     )
 
 
@@ -250,11 +250,9 @@ def test_install_smoke_covers_exactly_the_engine_wheel_platforms() -> None:
     legs = smoke["strategy"]["matrix"]["include"]
 
     # The legs are derived from the pinned engine's published wheels: every
-    # platform both medulla and medulla-stem ship a wheel for has a leg, and
+    # platform medulla ships a wheel for has a leg, and
     # no leg needs a wheel that does not exist.
-    shipped = _locked_wheel_platforms("medulla") & _locked_wheel_platforms(
-        "medulla-stem"
-    )
+    shipped = _locked_wheel_platforms("medulla")
     assert shipped, "uv.lock must pin engine wheels"
     names = [leg["name"] for leg in legs]
     assert len(names) == len(set(names))
@@ -281,7 +279,7 @@ def test_github_release_links_the_published_pypi_version() -> None:
         step for step in release["steps"] if step["name"] == "Write release notes"
     )
     assert "https://pypi.org/project/arbora/$version/" in notes["run"]
-    assert 'pip install \\"arbora[webui]==$version\\"' in notes["run"]
+    assert 'pip install \\"arbora[overstory]==$version\\"' in notes["run"]
 
 
 def test_release_eg_resolves_from_the_package_index_as_wheels() -> None:
@@ -293,7 +291,7 @@ def test_release_eg_resolves_from_the_package_index_as_wheels() -> None:
     # builds the engine from source.
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     no_build = set(project["tool"]["uv"].get("no-build-package", ()))
-    assert {"medulla", "medulla-stem"} <= no_build
+    assert "medulla" in no_build
 
 
 def test_installed_sdk_contains_schema_disclosure_contract() -> None:
@@ -301,7 +299,7 @@ def test_installed_sdk_contains_schema_disclosure_contract() -> None:
     import ast
     import importlib.util
 
-    spec = importlib.util.find_spec("agent_connector_sdk.mcp.schema_disclosure")
+    spec = importlib.util.find_spec("scion_sdk.mcp.schema_disclosure")
     assert spec is not None and spec.origin is not None
     source = Path(spec.origin).read_text(encoding="utf-8")
     names = {

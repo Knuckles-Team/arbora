@@ -8,7 +8,7 @@ from typing import Any
 
 import httpx
 import pytest
-from agent_utilities import host_ports
+from meristem import host_ports
 
 from arbora.core.settings import runtime_config
 from arbora.mcp_server import runtime as mcp_runtime

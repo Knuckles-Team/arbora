@@ -11,9 +11,8 @@ and the resulting console step-up before either handler runs, so a reader
 can never flip enforcement through this operation.
 
 Updating the engine's own ``CapacityCell`` ceiling is not implemented here:
-the pinned engine contract does not yet publish a capacity method
-(confirmed empty in ``epistemic_graph``'s ``contract/methods.json`` at the
-time of writing), and ``specs/adaptive-capacity/plan.md`` requires that
+the engine's run-time method catalog does not yet publish a capacity
+method, and ``specs/adaptive-capacity/plan.md`` requires that
 exact method and schema to be pinned before this feature advertises it.
 Until then, a caller sees the Arbora-owned throttle state only; this
 operation never fabricates an engine ceiling.

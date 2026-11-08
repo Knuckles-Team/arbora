@@ -32,13 +32,13 @@ Read [runtime-topology.md](references/runtime-topology.md) first. In one line:
 - **arbora** is the runtime: one process serving MCP, the REST/A2A control
   plane and the web UI, multiplexing the fleet of MCP connectors, and hosting
   identity and policy.
-- **epistemic-graph (EG)** is the engine and sole durable authority. In the
+- **medulla (EG)** is the engine and sole durable authority. In the
   standard *unified* topology it runs in the same pod or container as arbora,
   as a native sidecar container (Kubernetes) or a supervised child process
   (Compose, Swarm, bare metal). Its store has exactly one writer.
 - **meristem (AU)** is the agent-orchestration library arbora imports.
   It is not deployed as a service of its own.
-- **Connectors** are MCP servers built on agent-connector-sdk. arbora reaches
+- **Connectors** are MCP servers built on scion-sdk. arbora reaches
   them through its fleet multiplexer.
 
 Capabilities this skill describes that are not on `main` yet are collected in

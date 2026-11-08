@@ -11,7 +11,7 @@ async def identity_value(
     client: Any, graph: str, operation: dict[str, Any], kind: str
 ) -> Any:
     """Use the owning generated validator, preserving raw response field types."""
-    from epistemic_graph.generated.security import decode_identity, send_identity
+    from medulla.generated.security import decode_identity, send_identity
 
     try:
         async with asyncio.timeout(1):

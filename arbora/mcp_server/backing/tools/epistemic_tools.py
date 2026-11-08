@@ -12,7 +12,7 @@ invalidate" had no dedicated action at all — only as fields buried inside
 above was a purpose-named tool.
 
 This module is a THIN, purpose-named wrapper over four existing
-``client.query.*`` methods on the connected epistemic-graph engine (discovered
+``client.query.*`` methods on the connected medulla engine (discovered
 the same way ``engine_tools.py`` discovers every ``engine_<domain>`` action —
 this module reuses that SAME generic dispatcher, ``engine_tools._dispatch``,
 rather than re-implementing client resolution / connection pooling / the
@@ -37,7 +37,7 @@ Two more actions, ``why_not`` and ``what_would_invalidate``, are also
 purpose-named entry points — but NOT a fifth/sixth ``client.query`` method.
 ``why_not``/``what_would_invalidate`` (``eg_epistemic::query``) have no
 standalone wire ``Method``: grepping ``crates/eg-types/src/protocol.rs`` and
-``src/server/handlers/query.rs`` in the epistemic-graph engine repo shows they
+``src/server/handlers/query.rs`` in the medulla engine repo shows they
 are only reachable as the ``why_not``/``what_would_invalidate`` FIELDS of
 ``Method::EpistemicStatus``'s response (``EpistemicStatusResult.status``,
 already the same call ``status`` makes). So these two actions call

@@ -62,7 +62,7 @@ filesystem:
         exception the concurrent readOnlyRootFilesystem hardening on
         services/arbora/k8s/arbora.deployment.yaml is adding.
       size_limit: 1Gi
-    - mount_path: /run/epistemic-graph
+    - mount_path: /run/medulla
       medium: emptyDir
       reason: Unix-domain-socket directory shared between the engine and its clients.
       size_limit: null
@@ -113,8 +113,8 @@ secrets:
       keys:
         - OIDC_CLIENT_SECRET
         - ENGINE_HMAC_KEY
-    - name: epistemic-graph-secrets
-      ref: k8s-secret://platform/epistemic-graph-secrets
+    - name: medulla-secrets
+      ref: k8s-secret://platform/medulla-secrets
       keys:
         - PERSISTENCE_IDENTITY_HMAC_KEY
     - name: langfuse-otel

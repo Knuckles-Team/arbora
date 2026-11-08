@@ -616,7 +616,7 @@ AdminFactory = Callable[[ContractConfig], RealmAdmin]
 
 def default_admin_factory(config: ContractConfig) -> RealmAdmin:
     """Resolve the admin credential reference and open the admin transport."""
-    from agent_connector_sdk.credentials.runtime_references import (
+    from scion_sdk.credentials.runtime_references import (
         resolve_runtime_secret_reference,
     )
 

@@ -2,7 +2,7 @@
 
 The repository stores immutable definitions and CAS-fenced channel pointers.
 It intentionally has no claim, lease, retry, result, or completion methods:
-execution is delegated to the native epistemic-graph ``WorkItem`` authority.
+execution is delegated to the native medulla ``WorkItem`` authority.
 
 ``InMemoryWorkflowRepository`` is a deterministic reference implementation for
 unit tests and local composition.  A durable graph-backed adapter can satisfy

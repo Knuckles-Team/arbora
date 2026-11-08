@@ -5,7 +5,7 @@ from __future__ import annotations
 
 Generalizes fan-manager's proven thermal-intelligence pattern
 (``fan_manager.kg_control`` / ``fan_manager.fan_manager._kg_record_thermal_sample``,
-see ``reports/epistemic-graph-fan-control-plan.md``) from °C to **any named numeric
+see ``reports/medulla-fan-control-plan.md``) from °C to **any named numeric
 signal** a telemetry-producing agent emits — CPU%, disk%, load average, latency,
 restart-count, and so on (``reports/unified-infra-intelligence-plan.md``).
 

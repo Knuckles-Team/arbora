@@ -13,8 +13,8 @@ import httpx
 import pytest
 import uvicorn
 from acp import schema
-from agent_utilities import host_ports
-from agent_utilities.runtime import RunPlan, RunRequest
+from meristem import host_ports
+from meristem.runtime import RunPlan, RunRequest
 from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 from starlette.applications import Starlette
 from starlette.datastructures import Headers

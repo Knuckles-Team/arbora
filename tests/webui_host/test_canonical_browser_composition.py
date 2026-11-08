@@ -51,9 +51,9 @@ from tests.identity.test_modes_and_browser import ORIGIN, request_scope
 def test_actual_webui_factory_dispatches_only_canonical_bound_operations(
     monkeypatch, transition, auth_mode
 ):
-    from agent_webui import oidc_session
-    from agent_webui.host import config
-    from agent_webui.server import create_agent_web_app
+    from overstory import oidc_session
+    from overstory.host import config
+    from overstory.server import create_agent_web_app
     from pydantic_ai import Agent
     from pydantic_ai.models.test import TestModel
 
@@ -63,7 +63,7 @@ def test_actual_webui_factory_dispatches_only_canonical_bound_operations(
     monkeypatch.setattr(oidc_session, "load_settings", lambda: None)
     monkeypatch.setenv("KG_AUTH_REQUIRED", "1")
     monkeypatch.setenv("KG_BRAIN_ENFORCE", "1")
-    monkeypatch.setenv("AGENT_WEBUI_ACCESS_LOG_POLICY", "disabled")
+    monkeypatch.setenv("OVERSTORY_ACCESS_LOG_POLICY", "disabled")
     monkeypatch.setattr(
         config, "gateway_rate_limit", 0.001 if transition == "rate" else 0
     )
@@ -118,7 +118,7 @@ def test_actual_webui_factory_dispatches_only_canonical_bound_operations(
             return True
 
         async def invoke(*args, **kwargs):
-            from agent_webui.host import current_grant
+            from overstory.host import current_grant
 
             assert current_grant() is None
             calls.append(args)

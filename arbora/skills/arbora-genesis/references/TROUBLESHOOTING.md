@@ -32,7 +32,7 @@ Start from the failed exit gate and preserve the trace/evidence bundle.
 | A new object-store deploy is being planned around MinIO | whether MinIO community edition is still receiving images | MinIO CE is archived (no images since ~Oct 2025 as of this writing) — do not select it for a new deploy; use the operator-approved replacement |
 
 For runtime-only arbora incidents after a healthy deployment, use the
-`graph-runtime-and-governance` or `epistemic-graph-troubleshooting` skill. Use genesis
+`graph-runtime-and-governance` or `medulla-troubleshooting` skill. Use genesis
 only when the fix changes the substrate contract.
 
 Always retain: plan digest, source revision, rendered artifacts, runtime events,

@@ -8,9 +8,9 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-from agent_connector_sdk.credentials.references import SecretReference
-from agent_connector_sdk.runner.descriptors import RunnerSettings
-from agent_connector_sdk.sinks.epistemic_graph import PackImportAuthorityResolver
+from scion_sdk.credentials.references import SecretReference
+from scion_sdk.runner.descriptors import RunnerSettings
+from scion_sdk.sinks.medulla import PackImportAuthorityResolver
 
 from arbora.connector_runner import (
     ConnectorRunnerComposition,
@@ -57,7 +57,7 @@ def config(tmp_path: Path, **overrides: object) -> ConnectorRunnerConfig:
         "graph": "tenant-a:connectors",
         "state_dir": tmp_path,
         "auth_secret_ref": "env://GRAPH_SERVICE_AUTH_SECRET",
-        "socket_path": "/run/epistemic-graph.sock",
+        "socket_path": "/run/medulla.sock",
     }
     values.update(overrides)
     return ConnectorRunnerConfig(**values)  # type: ignore[arg-type]
@@ -67,7 +67,7 @@ def context(*, scopes: tuple[str, ...] = ("source:ingest",)) -> ClientContext:
     return ClientContext(
         principal="service:arbora",
         tenant="tenant-a",
-        audience="epistemic-graph",
+        audience="medulla",
         agent_id="service:arbora",
         roles=("connector-runner",),
         scopes=scopes,
@@ -143,7 +143,7 @@ async def test_injects_exact_authenticated_client_and_verified_context(
         {
             "graph_name": "tenant-a:connectors",
             "verified_context": verified.to_claims(),
-            "socket_path": "/run/epistemic-graph.sock",
+            "socket_path": "/run/medulla.sock",
             "tcp_addr": None,
             "auth_secret": "engine-secret",
         }
@@ -153,7 +153,7 @@ async def test_injects_exact_authenticated_client_and_verified_context(
         {
             "settings": settings,
             "state_dir": tmp_path,
-            "sink_name": "epistemic_graph",
+            "sink_name": "medulla",
             "sink_client": client,
             "pack_import_authority": PACK_AUTHORITY,
             "policy": None,
@@ -240,7 +240,7 @@ async def test_tenant_graph_binding_is_not_reused_across_tenants(
     other = ClientContext(
         principal="service:arbora",
         tenant="tenant-b",
-        audience="epistemic-graph",
+        audience="medulla",
         agent_id="service:arbora",
         roles=("connector-runner",),
         scopes=("source:ingest",),

@@ -8,7 +8,7 @@ import time
 from typing import cast
 
 import pytest
-from epistemic_graph import EpistemicGraphClient
+from medulla import MedullaClient
 
 from arbora import work_items
 from arbora.a2a.tool_task import (
@@ -122,7 +122,7 @@ def _exercise_native_fence(engine: ServedEngine) -> None:
 def test_native_tool_task_fence_uses_served_engine_methods() -> None:
     with _booted_stack() as stack:
         pool = EpistemicClientPool(
-            cast(ConnectClient, EpistemicGraphClient.connect),
+            cast(ConnectClient, MedullaClient.connect),
             socket_path=stack["socket_path"],
             auth_secret=stack["secret"],
         )

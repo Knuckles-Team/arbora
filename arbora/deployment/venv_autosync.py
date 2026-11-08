@@ -371,7 +371,7 @@ def write_trigger_script(workspace: Workspace) -> Path:
     checkout = Path(__file__).resolve().parents[2]
     launcher = checkout / "scripts" / "venvctl"
     # Prefer the launcher: it falls back to loading the reconciler standalone
-    # when `agent_utilities` is not importable, which is precisely the state a
+    # when `meristem` is not importable, which is precisely the state a
     # broken shared venv leaves the machine in.  `-m` cannot do that, because
     # it executes the package __init__ chain first.
     if launcher.is_file():

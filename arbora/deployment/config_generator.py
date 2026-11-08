@@ -31,7 +31,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from agent_connector_sdk.utilities import to_boolean
+from scion_sdk.utilities import to_boolean
 
 if TYPE_CHECKING:
     from arbora.core.config_admin import HostingDeploymentSettings
@@ -129,7 +129,7 @@ _ENGINE_TOPOLOGY_DEFAULTS: dict[str, str] = {
 _PROFILE_PRESETS: dict[str, dict[str, Any]] = {
     "tiny": {
         # Zero-infra: with no GRAPH_SERVICE_ENDPOINTS, the authoritative packaged
-        # epistemic-graph engine is provisioned locally on first use.
+        # medulla engine is provisioned locally on first use.
         "APP_PROFILE": "dev",
         "DEPLOYMENT_PROFILE": "tiny",
         "SECRETS_BACKEND": "vault",
@@ -150,9 +150,9 @@ _PROFILE_PRESETS: dict[str, dict[str, Any]] = {
         "AUTH_JWT_ISSUER": None,
         "AUTH_JWT_AUDIENCE": None,
         "KG_POLICY_VERSION": "baseline-v1",
-        "EPISTEMIC_GRAPH_MAX_RESIDENT_GRAPHS": 1024,
-        "EPISTEMIC_GRAPH_LAZY_OPEN_PAGE_SIZE": 4096,
-        "EPISTEMIC_GRAPH_MAX_NODES_PER_GRAPH": 250000,
+        "MEDULLA_MAX_RESIDENT_GRAPHS": 1024,
+        "MEDULLA_LAZY_OPEN_PAGE_SIZE": 4096,
+        "MEDULLA_MAX_NODES_PER_GRAPH": 250000,
         "MEDULLA_ENCRYPTION_KEY_REF": "env://ENGINE_DATA_KEY",
         "GATEWAY_METRICS": "1",
         "USAGE_CONTENT_RETENTION": "metadata",
@@ -178,9 +178,9 @@ _PROFILE_PRESETS: dict[str, dict[str, Any]] = {
         "GRAPH_DB_CONNECTION_PROFILE_REF": None,
         "GRAPH_MIRROR_TARGETS": ["age"],
         "GRAPH_SERVICE_ENDPOINTS": [],
-        "EPISTEMIC_GRAPH_MAX_RESIDENT_GRAPHS": 1024,
-        "EPISTEMIC_GRAPH_LAZY_OPEN_PAGE_SIZE": 4096,
-        "EPISTEMIC_GRAPH_MAX_NODES_PER_GRAPH": 250000,
+        "MEDULLA_MAX_RESIDENT_GRAPHS": 1024,
+        "MEDULLA_LAZY_OPEN_PAGE_SIZE": 4096,
+        "MEDULLA_MAX_NODES_PER_GRAPH": 250000,
         "STATE_DB_URI": "",
         "TASK_QUEUE_BACKEND": "kafka",
         "KAFKA_BOOTSTRAP_SERVERS": "redpanda:9092",
@@ -403,13 +403,11 @@ def generate_engine_admission(
     return {
         "engine_environment": {
             "GRAPH_SERVICE_AUTH_SECRET": "secret://arbora/GRAPH_SERVICE_AUTH_SECRET",  # nosec B105 - a reference
-            "EPISTEMIC_GRAPH_AUDIENCE": audience,
-            "EPISTEMIC_GRAPH_TENANT": tenant,
-            "EPISTEMIC_GRAPH_POLICY_VERSION": policy_version,
-            "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON": (
-                "secret://arbora/EPISTEMIC_GRAPH_SIGNER_KEYS_JSON"
-            ),
-            "EPISTEMIC_GRAPH_CONNECTOR_PACK_IMPORTERS": f"*={importer}",
+            "MEDULLA_AUDIENCE": audience,
+            "MEDULLA_TENANT": tenant,
+            "MEDULLA_POLICY_VERSION": policy_version,
+            "MEDULLA_SIGNER_KEYS_JSON": ("secret://arbora/MEDULLA_SIGNER_KEYS_JSON"),
+            "MEDULLA_CONNECTOR_PACK_IMPORTERS": f"*={importer}",
         },
         "arbora_config": {
             "AUTH_JWT_AUDIENCE": audience,

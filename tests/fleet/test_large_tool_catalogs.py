@@ -327,7 +327,7 @@ def _engine_snapshot(*, hints: dict[str, bool] | None) -> SimpleNamespace:
 
 @pytest.mark.spec("ARBORA-FLEET-R072")
 def test_engine_tool_facts_project_to_mcp_hints() -> None:
-    from epistemic_graph.generated._shared import AgentComponentFactsTool, ToolEffect
+    from medulla.generated._shared import AgentComponentFactsTool, ToolEffect
 
     from arbora.fleet.epistemic_adapter import _tool_hints
 

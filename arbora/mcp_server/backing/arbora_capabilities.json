@@ -122,7 +122,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -249,7 +249,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -385,7 +385,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -393,7 +393,7 @@
     {
       "id": "browser_control",
       "title": "browser control",
-      "one_line": "drive an attended agent-webui document through arbora authority (leases and governed calls).",
+      "one_line": "drive an attended overstory document through arbora authority (leases and governed calls).",
       "intent_verbs": [
         "act"
       ],
@@ -609,7 +609,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -617,7 +617,7 @@
     {
       "id": "engine_admin",
       "title": "engine admin",
-      "one_line": "Low-level epistemic-graph engine surface for the 'admin' domain (ops/maintenance: online backup + restore (ADMIN)).",
+      "one_line": "Low-level medulla engine surface for the 'admin' domain (ops/maintenance: online backup + restore (ADMIN)).",
       "intent_verbs": [
         "manage"
       ],
@@ -783,13 +783,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_admin: Low-level epistemic-graph engine surface for the 'admin' domain",
+        "engine_admin: Low-level medulla engine surface for the 'admin' domain",
         "engine_admin action=audit_append",
         "engine_admin action=audit_prove_inclusion",
         "engine_admin action=audit_read_event"
@@ -812,7 +812,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -820,7 +820,7 @@
     {
       "id": "engine_analytics",
       "title": "engine analytics",
-      "one_line": "Low-level epistemic-graph engine surface for the 'analytics' domain (centrality + (personalized) PageRank).",
+      "one_line": "Low-level medulla engine surface for the 'analytics' domain (centrality + (personalized) PageRank).",
       "intent_verbs": [
         "ask"
       ],
@@ -965,13 +965,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_analytics: Low-level epistemic-graph engine surface for the 'analytics' domain (centrality",
+        "engine_analytics: Low-level medulla engine surface for the 'analytics' domain (centrality",
         "engine_analytics action=betweenness_centrality",
         "engine_analytics action=degree_centrality",
         "engine_analytics action=degree_centrality_all"
@@ -994,7 +994,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -1002,7 +1002,7 @@
     {
       "id": "engine_blob",
       "title": "engine blob",
-      "one_line": "Low-level epistemic-graph engine surface for the 'blob' domain (streamed content-addressed media blobs).",
+      "one_line": "Low-level medulla engine surface for the 'blob' domain (streamed content-addressed media blobs).",
       "intent_verbs": [
         "write"
       ],
@@ -1257,13 +1257,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_blob: Low-level epistemic-graph engine surface for the 'blob' domain (streamed",
+        "engine_blob: Low-level medulla engine surface for the 'blob' domain (streamed",
         "engine_blob action=begin",
         "engine_blob action=chunk_get",
         "engine_blob action=chunk_put"
@@ -1286,7 +1286,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -1294,7 +1294,7 @@
     {
       "id": "engine_broker",
       "title": "engine broker",
-      "one_line": "Low-level epistemic-graph engine surface for the 'broker' domain (native message broker: exchange/queue/stream admin + routed publish/consume).",
+      "one_line": "Low-level medulla engine surface for the 'broker' domain (native message broker: exchange/queue/stream admin + routed publish/consume).",
       "intent_verbs": [
         "act",
         "manage",
@@ -1750,13 +1750,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_broker: Low-level epistemic-graph engine surface for the 'broker' domain (native",
+        "engine_broker: Low-level medulla engine surface for the 'broker' domain (native",
         "engine_broker action=ack",
         "engine_broker action=ack_tag",
         "engine_broker action=bind_queue"
@@ -1779,7 +1779,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -1787,7 +1787,7 @@
     {
       "id": "engine_channels",
       "title": "engine channels",
-      "one_line": "Low-level epistemic-graph engine surface for the 'channels' domain (dynamic agent communication channels).",
+      "one_line": "Low-level medulla engine surface for the 'channels' domain (dynamic agent communication channels).",
       "intent_verbs": [
         "act"
       ],
@@ -2013,13 +2013,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_channels: Low-level epistemic-graph engine surface for the 'channels' domain (dynamic",
+        "engine_channels: Low-level medulla engine surface for the 'channels' domain (dynamic",
         "engine_channels action=close",
         "engine_channels action=create",
         "engine_channels action=get_members"
@@ -2042,7 +2042,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -2050,7 +2050,7 @@
     {
       "id": "engine_consensus",
       "title": "engine consensus",
-      "one_line": "Low-level epistemic-graph engine surface for the 'consensus' domain (zero-trust identity + multisig mutation).",
+      "one_line": "Low-level medulla engine surface for the 'consensus' domain (zero-trust identity + multisig mutation).",
       "intent_verbs": [
         "act"
       ],
@@ -2215,13 +2215,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_consensus: Low-level epistemic-graph engine surface for the 'consensus' domain (zero-trust",
+        "engine_consensus: Low-level medulla engine surface for the 'consensus' domain (zero-trust",
         "engine_consensus action=apply_multisig_mutation",
         "engine_consensus action=bootstrap_system_identity",
         "engine_consensus action=check_access"
@@ -2245,7 +2245,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -2253,7 +2253,7 @@
     {
       "id": "engine_datascience",
       "title": "engine datascience",
-      "one_line": "Low-level epistemic-graph engine surface for the 'datascience' domain (estimators + primitives + training kernels).",
+      "one_line": "Low-level medulla engine surface for the 'datascience' domain (estimators + primitives + training kernels).",
       "intent_verbs": [
         "ask"
       ],
@@ -2409,13 +2409,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_datascience: Low-level epistemic-graph engine surface for the 'datascience' domain",
+        "engine_datascience: Low-level medulla engine surface for the 'datascience' domain",
         "engine_datascience action=adam_step",
         "engine_datascience action=compute_stats",
         "engine_datascience action=cross_entropy"
@@ -2438,7 +2438,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -2446,7 +2446,7 @@
     {
       "id": "engine_edges",
       "title": "engine edges",
-      "one_line": "Low-level epistemic-graph engine surface for the 'edges' domain (edge CRUD, temporal invalidate/supersede, batch reads).",
+      "one_line": "Low-level medulla engine surface for the 'edges' domain (edge CRUD, temporal invalidate/supersede, batch reads).",
       "intent_verbs": [
         "write"
       ],
@@ -2686,13 +2686,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_edges: Low-level epistemic-graph engine surface for the 'edges' domain (edge CRUD,",
+        "engine_edges: Low-level medulla engine surface for the 'edges' domain (edge CRUD,",
         "engine_edges action=add",
         "engine_edges action=count",
         "engine_edges action=has"
@@ -2715,7 +2715,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -2723,7 +2723,7 @@
     {
       "id": "engine_finance",
       "title": "engine finance",
-      "one_line": "Low-level epistemic-graph engine surface for the 'finance' domain (quantitative finance (optimize/risk/regime/signals/HFT/derivatives)).",
+      "one_line": "Low-level medulla engine surface for the 'finance' domain (quantitative finance (optimize/risk/regime/signals/HFT/derivatives)).",
       "intent_verbs": [
         "ask",
         "act"
@@ -3955,13 +3955,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_finance: Low-level epistemic-graph engine surface for the 'finance' domain (quantitative",
+        "engine_finance: Low-level medulla engine surface for the 'finance' domain (quantitative",
         "engine_finance action=adf_test",
         "engine_finance action=alpha_combination_engine",
         "engine_finance action=avellaneda_stoikov"
@@ -3984,7 +3984,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -3992,7 +3992,7 @@
     {
       "id": "engine_graph",
       "title": "engine graph",
-      "one_line": "Low-level epistemic-graph engine surface for the 'graph' domain (graph algorithms, AST parse/index, semantic+embedding compute).",
+      "one_line": "Low-level medulla engine surface for the 'graph' domain (graph algorithms, AST parse/index, semantic+embedding compute).",
       "intent_verbs": [
         "ask",
         "write"
@@ -4510,13 +4510,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_graph: Low-level epistemic-graph engine surface for the 'graph' domain (graph",
+        "engine_graph: Low-level medulla engine surface for the 'graph' domain (graph",
         "engine_graph action=add_embedding",
         "engine_graph action=batch_l2_normalize",
         "engine_graph action=blast_radius"
@@ -4539,7 +4539,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -4547,7 +4547,7 @@
     {
       "id": "engine_graphlearn",
       "title": "engine graphlearn",
-      "one_line": "Low-level epistemic-graph engine surface for the 'graphlearn' domain (KAN graph-learning: fit/predict a learned per-feature edge-function link predictor).",
+      "one_line": "Low-level medulla engine surface for the 'graphlearn' domain (KAN graph-learning: fit/predict a learned per-feature edge-function link predictor).",
       "intent_verbs": [
         "act",
         "ask"
@@ -4671,13 +4671,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_graphlearn: Low-level epistemic-graph engine surface for the 'graphlearn' domain (KAN",
+        "engine_graphlearn: Low-level medulla engine surface for the 'graphlearn' domain (KAN",
         "engine_graphlearn action=fit",
         "engine_graphlearn action=predict"
       ],
@@ -4699,7 +4699,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -4707,7 +4707,7 @@
     {
       "id": "engine_ledger",
       "title": "engine ledger",
-      "one_line": "Low-level epistemic-graph engine surface for the 'ledger' domain (audit ledger get/clear/apply).",
+      "one_line": "Low-level medulla engine surface for the 'ledger' domain (audit ledger get/clear/apply).",
       "intent_verbs": [
         "write",
         "act"
@@ -4865,13 +4865,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_ledger: Low-level epistemic-graph engine surface for the 'ledger' domain (audit ledger",
+        "engine_ledger: Low-level medulla engine surface for the 'ledger' domain (audit ledger",
         "engine_ledger action=apply",
         "engine_ledger action=clear",
         "engine_ledger action=get"
@@ -4894,7 +4894,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -4902,7 +4902,7 @@
     {
       "id": "engine_lifecycle",
       "title": "engine lifecycle",
-      "one_line": "Low-level epistemic-graph engine surface for the 'lifecycle' domain (prune/decay/evict, batch_update, context view, (de)serialize).",
+      "one_line": "Low-level medulla engine surface for the 'lifecycle' domain (prune/decay/evict, batch_update, context view, (de)serialize).",
       "intent_verbs": [
         "manage",
         "act"
@@ -5163,13 +5163,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_lifecycle: Low-level epistemic-graph engine surface for the 'lifecycle' domain",
+        "engine_lifecycle: Low-level medulla engine surface for the 'lifecycle' domain",
         "engine_lifecycle action=batch_update",
         "engine_lifecycle action=decay_sweep",
         "engine_lifecycle action=evict_lru"
@@ -5192,7 +5192,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -5200,7 +5200,7 @@
     {
       "id": "engine_mining",
       "title": "engine mining",
-      "one_line": "Low-level epistemic-graph engine surface for the 'mining' domain (association-rule mining (Apriori/FP-Growth/Eclat: support/confidence/lift)).",
+      "one_line": "Low-level medulla engine surface for the 'mining' domain (association-rule mining (Apriori/FP-Growth/Eclat: support/confidence/lift)).",
       "intent_verbs": [
         "ask"
       ],
@@ -5604,13 +5604,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_mining: Low-level epistemic-graph engine surface for the 'mining' domain",
+        "engine_mining: Low-level medulla engine surface for the 'mining' domain",
         "engine_mining action=anomaly",
         "engine_mining action=associate",
         "engine_mining action=causal_impact"
@@ -5633,7 +5633,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -5641,7 +5641,7 @@
     {
       "id": "engine_modalities",
       "title": "engine modalities",
-      "one_line": "Low-level epistemic-graph engine surface for the 'modalities' domain (native document/image/audio/video ingest, typed region/window query, lifecycle (cold/restore/delete/tombstone), and events (B-12)).",
+      "one_line": "Low-level medulla engine surface for the 'modalities' domain (native document/image/audio/video ingest, typed region/window query, lifecycle (cold/restore/delete/tombstone), and events (B-12)).",
       "intent_verbs": [
         "write",
         "ask"
@@ -5820,13 +5820,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_modalities: Low-level epistemic-graph engine surface for the 'modalities' domain (native",
+        "engine_modalities: Low-level medulla engine surface for the 'modalities' domain (native",
         "engine_modalities action=authority",
         "engine_modalities action=capabilities",
         "engine_modalities action=collect_tombstones"
@@ -5849,7 +5849,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -5857,7 +5857,7 @@
     {
       "id": "engine_nodes",
       "title": "engine nodes",
-      "one_line": "Low-level epistemic-graph engine surface for the 'nodes' domain (node CRUD, batch/union reads, degree/neighbour queries).",
+      "one_line": "Low-level medulla engine surface for the 'nodes' domain (node CRUD, batch/union reads, degree/neighbour queries).",
       "intent_verbs": [
         "write",
         "ask"
@@ -6266,12 +6266,12 @@
           "eg_method": "AddNode",
           "p50_ms": 0.187,
           "p99_ms": 0.223,
-          "source": "epistemic-graph/docs/benchmarks.md#results (2026-06-01, UDS, in-memory graph)",
+          "source": "medulla/docs/benchmarks.md#results (2026-06-01, UDS, in-memory graph)",
           "kind": "measured"
         },
         "claim_next": {
           "eg_method": "ClaimNext",
-          "source": "epistemic-graph/docs/benchmarks-soak.md (queue/claim primitive is measured in the same soak run; approximates AgentBus queue latency per that doc's own caveat — see the doc for the current number, not duplicated here to avoid a second copy drifting from the source)",
+          "source": "medulla/docs/benchmarks-soak.md (queue/claim primitive is measured in the same soak run; approximates AgentBus queue latency per that doc's own caveat — see the doc for the current number, not duplicated here to avoid a second copy drifting from the source)",
           "kind": "measured"
         },
         "compare_and_set": {
@@ -6279,14 +6279,14 @@
           "p50_ms": 14.17,
           "p95_ms": 43.72,
           "p99_ms": 57.24,
-          "source": "epistemic-graph/docs/benchmarks-soak.md#phase-a (2026-07-11 soak run, shared/contended box — upper bound per source doc)",
+          "source": "medulla/docs/benchmarks-soak.md#phase-a (2026-07-11 soak run, shared/contended box — upper bound per source doc)",
           "kind": "measured"
         },
         "properties": {
           "eg_method": "GetNodeProperties",
           "p50_ms": 0.179,
           "p99_ms": 0.21,
-          "source": "epistemic-graph/docs/benchmarks.md#results (2026-06-01, UDS, in-memory graph)",
+          "source": "medulla/docs/benchmarks.md#results (2026-06-01, UDS, in-memory graph)",
           "kind": "measured"
         }
       },
@@ -6295,13 +6295,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_nodes: Low-level epistemic-graph engine surface for the 'nodes' domain (node CRUD,",
+        "engine_nodes: Low-level medulla engine surface for the 'nodes' domain (node CRUD,",
         "engine_nodes action=add",
         "engine_nodes action=claim_next",
         "engine_nodes action=compare_and_set"
@@ -6324,7 +6324,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -6332,7 +6332,7 @@
     {
       "id": "engine_placement",
       "title": "engine placement",
-      "one_line": "Low-level epistemic-graph engine surface for the 'placement' domain (DIST-P2-1 raft PlacementCatalog: route (read) + assign/move/abort_move admin (raft/cluster only)).",
+      "one_line": "Low-level medulla engine surface for the 'placement' domain (DIST-P2-1 raft PlacementCatalog: route (read) + assign/move/abort_move admin (raft/cluster only)).",
       "intent_verbs": [
         "manage",
         "ask"
@@ -6453,13 +6453,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_placement: Low-level epistemic-graph engine surface for the 'placement' domain (DIST-P2-1",
+        "engine_placement: Low-level medulla engine surface for the 'placement' domain (DIST-P2-1",
         "engine_placement action=abort_move",
         "engine_placement action=assign",
         "engine_placement action=move"
@@ -6483,7 +6483,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -6491,7 +6491,7 @@
     {
       "id": "engine_query",
       "title": "engine query",
-      "one_line": "Low-level epistemic-graph engine surface for the 'query' domain (SQL / Cypher / GraphQL / UQL / unified cross-modal query / federation).",
+      "one_line": "Low-level medulla engine surface for the 'query' domain (SQL / Cypher / GraphQL / UQL / unified cross-modal query / federation).",
       "intent_verbs": [
         "ask"
       ],
@@ -7003,13 +7003,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_query: Low-level epistemic-graph engine surface for the 'query' domain (SQL / Cypher /",
+        "engine_query: Low-level medulla engine surface for the 'query' domain (SQL / Cypher /",
         "engine_query action=causal_counterfactual",
         "engine_query action=causal_estimate",
         "engine_query action=cypher_read"
@@ -7032,7 +7032,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -7040,7 +7040,7 @@
     {
       "id": "engine_rbac",
       "title": "engine rbac",
-      "one_line": "Low-level epistemic-graph engine surface for the 'rbac' domain (RBAC policy administration: roles + resource/action grants (ADMIN)).",
+      "one_line": "Low-level medulla engine surface for the 'rbac' domain (RBAC policy administration: roles + resource/action grants (ADMIN)).",
       "intent_verbs": [
         "manage"
       ],
@@ -7147,13 +7147,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_rbac: Low-level epistemic-graph engine surface for the 'rbac' domain (RBAC policy",
+        "engine_rbac: Low-level medulla engine surface for the 'rbac' domain (RBAC policy",
         "engine_rbac action=add_grant",
         "engine_rbac action=add_role",
         "engine_rbac action=list"
@@ -7177,7 +7177,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -7185,7 +7185,7 @@
     {
       "id": "engine_rdf",
       "title": "engine rdf",
-      "one_line": "Low-level epistemic-graph engine surface for the 'rdf' domain (RDF triples + SPARQL + OWL reasoning).",
+      "one_line": "Low-level medulla engine surface for the 'rdf' domain (RDF triples + SPARQL + OWL reasoning).",
       "intent_verbs": [
         "write",
         "ask"
@@ -7480,13 +7480,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_rdf: Low-level epistemic-graph engine surface for the 'rdf' domain (RDF triples +",
+        "engine_rdf: Low-level medulla engine surface for the 'rdf' domain (RDF triples +",
         "engine_rdf action=add_triples",
         "engine_rdf action=drop_named_graph",
         "engine_rdf action=explain"
@@ -7509,7 +7509,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -7517,7 +7517,7 @@
     {
       "id": "engine_reasoning",
       "title": "engine reasoning",
-      "one_line": "Low-level epistemic-graph engine surface for the 'reasoning' domain (forward-chaining OWL/RDFS Datalog closure).",
+      "one_line": "Low-level medulla engine surface for the 'reasoning' domain (forward-chaining OWL/RDFS Datalog closure).",
       "intent_verbs": [
         "why"
       ],
@@ -7603,13 +7603,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_reasoning: Low-level epistemic-graph engine surface for the 'reasoning' domain",
+        "engine_reasoning: Low-level medulla engine surface for the 'reasoning' domain",
         "engine_reasoning action=reason"
       ],
       "eligibility_predicates": {
@@ -7630,7 +7630,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -7638,7 +7638,7 @@
     {
       "id": "engine_resharding",
       "title": "engine resharding",
-      "one_line": "Low-level epistemic-graph engine surface for the 'resharding' domain (M3 catalog/reshard/rebalance admin (redb)).",
+      "one_line": "Low-level medulla engine surface for the 'resharding' domain (M3 catalog/reshard/rebalance admin (redb)).",
       "intent_verbs": [
         "manage"
       ],
@@ -7845,13 +7845,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_resharding: Low-level epistemic-graph engine surface for the 'resharding' domain (M3",
+        "engine_resharding: Low-level medulla engine surface for the 'resharding' domain (M3",
         "engine_resharding action=catalog_assign",
         "engine_resharding action=catalog_list",
         "engine_resharding action=catalog_reassign"
@@ -7875,7 +7875,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -7883,7 +7883,7 @@
     {
       "id": "engine_streaming",
       "title": "engine streaming",
-      "one_line": "Low-level epistemic-graph engine surface for the 'streaming' domain (CDC / continuous queries / watch / triggers).",
+      "one_line": "Low-level medulla engine surface for the 'streaming' domain (CDC / continuous queries / watch / triggers).",
       "intent_verbs": [
         "act"
       ],
@@ -8193,13 +8193,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_streaming: Low-level epistemic-graph engine surface for the 'streaming' domain (CDC /",
+        "engine_streaming: Low-level medulla engine surface for the 'streaming' domain (CDC /",
         "engine_streaming action=cdc_read",
         "engine_streaming action=cdc_read_with_watermark",
         "engine_streaming action=cep_poll"
@@ -8222,7 +8222,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -8230,7 +8230,7 @@
     {
       "id": "engine_tenants",
       "title": "engine tenants",
-      "one_line": "Low-level epistemic-graph engine surface for the 'tenants' domain (multi-tenant graph create/delete/list).",
+      "one_line": "Low-level medulla engine surface for the 'tenants' domain (multi-tenant graph create/delete/list).",
       "intent_verbs": [
         "manage"
       ],
@@ -8357,13 +8357,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_tenants: Low-level epistemic-graph engine surface for the 'tenants' domain (multi-tenant",
+        "engine_tenants: Low-level medulla engine surface for the 'tenants' domain (multi-tenant",
         "engine_tenants action=create",
         "engine_tenants action=delete",
         "engine_tenants action=list"
@@ -8387,7 +8387,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -8395,7 +8395,7 @@
     {
       "id": "engine_timeseries",
       "title": "engine timeseries",
-      "one_line": "Low-level epistemic-graph engine surface for the 'timeseries' domain (native TSDB append/range/window/asof/gapfill).",
+      "one_line": "Low-level medulla engine surface for the 'timeseries' domain (native TSDB append/range/window/asof/gapfill).",
       "intent_verbs": [
         "write",
         "ask"
@@ -8527,13 +8527,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_timeseries: Low-level epistemic-graph engine surface for the 'timeseries' domain (native",
+        "engine_timeseries: Low-level medulla engine surface for the 'timeseries' domain (native",
         "engine_timeseries action=append",
         "engine_timeseries action=asof_join",
         "engine_timeseries action=define_series"
@@ -8556,7 +8556,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -8564,7 +8564,7 @@
     {
       "id": "engine_txn",
       "title": "engine txn",
-      "one_line": "Low-level epistemic-graph engine surface for the 'txn' domain (server-side OCC ACID transactions).",
+      "one_line": "Low-level medulla engine surface for the 'txn' domain (server-side OCC ACID transactions).",
       "intent_verbs": [
         "act"
       ],
@@ -8948,7 +8948,7 @@
           "eg_method": "AddNode",
           "p50_ms": 0.187,
           "p99_ms": 0.223,
-          "source": "epistemic-graph/docs/benchmarks.md#results (2026-06-01, UDS, in-memory graph)",
+          "source": "medulla/docs/benchmarks.md#results (2026-06-01, UDS, in-memory graph)",
           "kind": "measured"
         }
       },
@@ -8957,13 +8957,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_txn: Low-level epistemic-graph engine surface for the 'txn' domain (server-side OCC",
+        "engine_txn: Low-level medulla engine surface for the 'txn' domain (server-side OCC",
         "engine_txn action=add_edge",
         "engine_txn action=add_embedding",
         "engine_txn action=add_measurement"
@@ -8986,7 +8986,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -8994,7 +8994,7 @@
     {
       "id": "engine_viz",
       "title": "engine viz",
-      "one_line": "Low-level epistemic-graph engine surface for the 'viz' domain (D-VZ-1 native visualization: render/capability_matrix over the eg-viz LOD ColumnStore/export pipeline).",
+      "one_line": "Low-level medulla engine surface for the 'viz' domain (D-VZ-1 native visualization: render/capability_matrix over the eg-viz LOD ColumnStore/export pipeline).",
       "intent_verbs": [
         "act",
         "ask"
@@ -9086,13 +9086,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "engine_viz: Low-level epistemic-graph engine surface for the 'viz' domain (D-VZ-1 native",
+        "engine_viz: Low-level medulla engine surface for the 'viz' domain (D-VZ-1 native",
         "engine_viz action=capability_matrix",
         "engine_viz action=render"
       ],
@@ -9114,7 +9114,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -9265,7 +9265,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": "FindCycle",
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -9573,7 +9573,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -9719,7 +9719,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -9727,7 +9727,7 @@
     {
       "id": "graph_audit",
       "title": "graph audit",
-      "one_line": "Tamper-evident audit ledger (G23): verifies the engine's hash-chained durable-mutation audit log (Rust `epistemic-graph/src/audit.rs`, SHA-256 per (graph, seq)) and reconstructs 'what happened to entity X' from the KG's own :ToolCall provenance.",
+      "one_line": "Tamper-evident audit ledger (G23): verifies the engine's hash-chained durable-mutation audit log (Rust `medulla/src/audit.rs`, SHA-256 per (graph, seq)) and reconstructs 'what happened to entity X' from the KG's own :ToolCall provenance.",
       "intent_verbs": [
         "why",
         "ask"
@@ -9896,7 +9896,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -9904,7 +9904,7 @@
     {
       "id": "graph_broker",
       "title": "graph broker",
-      "one_line": "the epistemic-graph engine message broker (AMQP-style exchanges + queues + streams), distinct from the agent-to-agent 'graph_bus'.",
+      "one_line": "the medulla engine message broker (AMQP-style exchanges + queues + streams), distinct from the agent-to-agent 'graph_bus'.",
       "intent_verbs": [
         "act"
       ],
@@ -10068,13 +10068,13 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
       ],
       "examples": [
-        "graph_broker: the epistemic-graph engine message broker (AMQP-style exchanges + queues +",
+        "graph_broker: the medulla engine message broker (AMQP-style exchanges + queues +",
         "graph_broker action=graph_broker"
       ],
       "eligibility_predicates": {
@@ -10097,7 +10097,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": "BrokerAck",
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -10303,7 +10303,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -10488,7 +10488,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -10727,7 +10727,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -10910,7 +10910,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -11078,7 +11078,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -11253,7 +11253,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -11614,7 +11614,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -11622,7 +11622,7 @@
     {
       "id": "graph_context",
       "title": "graph context",
-      "one_line": "store/fetch curated context for invoker→spawned-agent handoff, persisted in the epistemic-graph so a SEPARATELY-spawned agent can read it by id.",
+      "one_line": "store/fetch curated context for invoker→spawned-agent handoff, persisted in the medulla so a SEPARATELY-spawned agent can read it by id.",
       "intent_verbs": [
         "ask"
       ],
@@ -11807,7 +11807,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -12094,7 +12094,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -12356,7 +12356,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -12574,7 +12574,7 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
@@ -12605,7 +12605,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -12806,7 +12806,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -13070,7 +13070,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -13266,7 +13266,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -13388,7 +13388,7 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
@@ -13416,7 +13416,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -13589,7 +13589,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -13740,7 +13740,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -13902,7 +13902,7 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
@@ -13931,7 +13931,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": "Fork",
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -14027,7 +14027,7 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
@@ -14056,7 +14056,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -14344,7 +14344,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -14788,7 +14788,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -15202,7 +15202,7 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
@@ -15234,7 +15234,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -15242,7 +15242,7 @@
     {
       "id": "graph_kvcache",
       "title": "graph kvcache",
-      "one_line": "the engine's shared, content-addressed KV-cache over the MEDULLA-187 HTTP surface, driven through the KG-2.306 EpistemicGraphKVBackend connector.",
+      "one_line": "the engine's shared, content-addressed KV-cache over the MEDULLA-187 HTTP surface, driven through the KG-2.306 MedullaKVBackend connector.",
       "intent_verbs": [
         "manage"
       ],
@@ -15349,7 +15349,7 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
@@ -15379,7 +15379,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -15515,7 +15515,7 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
@@ -15547,7 +15547,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -15703,7 +15703,7 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
@@ -15732,7 +15732,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -15840,7 +15840,7 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
@@ -15872,7 +15872,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -16041,7 +16041,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -16140,7 +16140,7 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
@@ -16171,7 +16171,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -16269,7 +16269,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -16432,7 +16432,7 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
@@ -16462,7 +16462,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -16659,7 +16659,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": "CypherQuery",
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -16879,7 +16879,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -17077,7 +17077,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": "SemanticSearch",
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -17268,7 +17268,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -17438,7 +17438,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -17646,7 +17646,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -17824,7 +17824,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -18047,7 +18047,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -18214,7 +18214,7 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
@@ -18245,7 +18245,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -18550,7 +18550,7 @@
         "a reachable arbora engine (IntelligenceGraphEngine) with the required backend"
       ],
       "when_to_use": [
-        "You need the raw, low-level engine primitive directly (1:1 over the epistemic-graph wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
+        "You need the raw, low-level engine primitive directly (1:1 over the medulla wire protocol) — precise control, or the condensed `graph_*` tool doesn't expose the operation you need."
       ],
       "when_not": [
         "A condensed `graph_*` tool already covers your intent — prefer it first; the `engine_*` surface is the escape hatch, not the default."
@@ -18582,7 +18582,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -18974,7 +18974,7 @@
           "eg_method": "AddNode",
           "p50_ms": 0.187,
           "p99_ms": 0.223,
-          "source": "epistemic-graph/docs/benchmarks.md#results (2026-06-01, UDS, in-memory graph)",
+          "source": "medulla/docs/benchmarks.md#results (2026-06-01, UDS, in-memory graph)",
           "kind": "measured"
         }
       },
@@ -19013,7 +19013,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -19242,7 +19242,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -19369,7 +19369,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -19532,7 +19532,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": "NlQuery",
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -19752,7 +19752,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -19872,7 +19872,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -20039,7 +20039,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -20326,7 +20326,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -20680,7 +20680,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -20823,7 +20823,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -20973,7 +20973,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -21190,7 +21190,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -21284,7 +21284,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -21427,7 +21427,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -21564,7 +21564,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -21774,7 +21774,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -21911,7 +21911,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -22221,7 +22221,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -22333,7 +22333,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -22499,7 +22499,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -22608,7 +22608,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -22752,7 +22752,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -22960,7 +22960,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -23058,7 +23058,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -23185,7 +23185,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }
@@ -23312,7 +23312,7 @@
         "source_repo_au": "agent-utilities",
         "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
-        "eg_ledger_path": "repo://epistemic-graph/docs/capabilities.generated.md",
+        "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
         "generated_at": "2026-10-16T21:33:52Z"
       }

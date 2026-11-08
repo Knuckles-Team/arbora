@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 PRINCIPAL = "anonymous"
 TENANT = "local"
 POLICY = "no-auth"
-AUDIENCE = "epistemic-graph"
+AUDIENCE = "medulla"
 _ACTIVE_MODE: str | None = None
 
 
@@ -95,7 +95,7 @@ def _validate_credentials(config: Any) -> None:
     if any(getattr(config, field, None) for field in fields):
         raise ValueError("Anonymous mode conflicts with credential configuration")
     if setting("GRAPH_SERVICE_AUTH_SECRET", "") or setting(
-        "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON", ""
+        "MEDULLA_SIGNER_KEYS_JSON", ""
     ):
         raise ValueError("Anonymous mode must not configure engine secrets")
 

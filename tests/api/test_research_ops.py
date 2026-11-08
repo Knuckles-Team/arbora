@@ -92,4 +92,4 @@ def test_research_web_declares_its_replay_owner() -> None:
     """A governed write needs a replay owner, or invoke refuses it UNAVAILABLE."""
     from arbora.api.invoke.pipeline import _declared_owners
 
-    assert _declared_owners()["research.web"] == "epistemic_graph:SourceIngest"
+    assert _declared_owners()["research.web"] == "medulla:SourceIngest"

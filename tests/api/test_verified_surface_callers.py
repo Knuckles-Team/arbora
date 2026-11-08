@@ -552,7 +552,7 @@ def test_http_local_bearer_bridge_rejects_ambiguous_credentials(monkeypatch):
 def test_bound_browser_verifier_calls_actual_webui_exporter(monkeypatch):
     import asyncio
 
-    from agent_webui.oidc_session import BrowserSessionEvidence
+    from overstory.oidc_session import BrowserSessionEvidence
 
     from arbora.api.http.auth import BoundBrowserVerifier
 
@@ -576,7 +576,7 @@ def test_bound_browser_verifier_calls_actual_webui_exporter(monkeypatch):
                 mfa_at_ms=NOW_MS,
             )
 
-    monkeypatch.setattr("agent_webui.oidc_session.time.time", lambda: NOW_MS / 1000)
+    monkeypatch.setattr("overstory.oidc_session.time.time", lambda: NOW_MS / 1000)
     verifier = BoundBrowserVerifier(authority=AuthorityFixture(), console_origin=ORIGIN)
     assert asyncio.run(verifier(req, session)) == NOW_MS
     assert len(calls) == 1 and calls[0] is req.scope

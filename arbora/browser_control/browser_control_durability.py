@@ -7,7 +7,7 @@ import secrets
 from dataclasses import dataclass
 from typing import Any, cast
 
-from agent_connector_sdk.privacy import persistence_reference
+from scion_sdk.privacy import persistence_reference
 
 from arbora.browser_control.browser_control_binding import (
     BINDING_PROPERTY_NAMES,

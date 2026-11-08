@@ -1,6 +1,6 @@
 """Contract of the engine-identity admission procedure shipped with arbora-genesis.
 
-The admission credential (``EPISTEMIC_GRAPH_SIGNER_KEYS_JSON``) is easy to
+The admission credential (``MEDULLA_SIGNER_KEYS_JSON``) is easy to
 misprovision and fails invisibly, so the procedure must name the real chain,
 never contain a credential-shaped value, and be reachable from the skill's
 cross-cutting phase and exit gates — a document nobody is routed to is dead.
@@ -30,7 +30,7 @@ def test_reference_doc_exists_and_is_substantial() -> None:
 @pytest.mark.parametrize(
     "must_contain",
     [
-        "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON",
+        "MEDULLA_SIGNER_KEYS_JSON",
         "control:system",
         "__control__",
         "CypherEngineError",

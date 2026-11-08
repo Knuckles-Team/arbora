@@ -24,7 +24,7 @@ def test_does_not_import_agent_runtime_configuration_internals() -> None:
         if line.strip().startswith(("import ", "from "))
     ]
     assert import_lines, "expected at least one import statement"
-    assert not any("agent_utilities" in line for line in import_lines)
+    assert not any("meristem" in line for line in import_lines)
 
 
 @pytest.mark.spec("ARBORA-DEPLOY-R009.1")

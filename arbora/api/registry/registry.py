@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Awaitable, Callable, Iterable, Iterator
-from pathlib import Path
+from collections.abc import Awaitable, Callable, Iterable, Iterator, Mapping
 from typing import Any, Protocol
 
 from .digest import canonical_registry
@@ -78,7 +77,7 @@ class Registry:
         ops: Iterable[OpSpec],
         *,
         api_version: str = "1",
-        contract_root: Path | None = None,
+        catalog: Mapping[str, Any] | None = None,
     ) -> None:
         index: dict[str, OpSpec] = {}
         for op in ops:
@@ -88,7 +87,7 @@ class Registry:
         self._ops = index
         self.api_version = api_version
         self.canonical = canonical_registry(
-            index.values(), api_version=api_version, contract_root=contract_root
+            index.values(), api_version=api_version, catalog=catalog
         )
         self.digest = hashlib.sha256(self.canonical).hexdigest()
 

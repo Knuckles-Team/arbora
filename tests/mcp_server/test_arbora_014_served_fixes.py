@@ -76,10 +76,14 @@ def test_a_parameterless_eg_method_accepts_an_empty_input() -> None:
     from arbora.api.registry import EgSchemaRef
     from arbora.mcp_server.served_invocation import validate_provider_schema
 
-    ref = EgSchemaRef(path="contract/schemas/method.request.json#/methods/NodeCount")
+    ref = EgSchemaRef(path="medulla:method/NodeCount#request")
     assert validate_provider_schema(ref, {}) == {}
+    # The engine validates the request shape; Arbora admits any JSON object.
+    assert validate_provider_schema(ref, {"graph": "__commons__"}) == {
+        "graph": "__commons__"
+    }
     with pytest.raises(ValueError):
-        validate_provider_schema(ref, {"graph": "__commons__"})
+        validate_provider_schema(ref, {1: "x"})  # type: ignore[dict-item]
 
 
 def test_a2a_message_without_agent_name_runs_on_the_fleet_default_agent() -> None:

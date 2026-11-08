@@ -89,7 +89,7 @@ def test_a_refused_create_keeps_the_engine_refusal() -> None:
 
 @pytest.mark.spec("ARBORA-HOST-R033")
 def test_the_served_engine_create_sends_create_node_if_absent(monkeypatch) -> None:
-    from epistemic_graph.generated import graph as generated
+    from medulla.generated import graph as generated
 
     from arbora.mcp_server import served_engine as served
 

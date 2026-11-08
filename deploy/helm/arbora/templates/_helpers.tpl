@@ -117,18 +117,18 @@ envFrom:
      socket, and the unified data volume. */}}
 {{- define "arbora.sharedVolumeMounts" -}}
 - {name: tmp, mountPath: /tmp}
-- {name: engine-socket, mountPath: /run/epistemic-graph}
+- {name: engine-socket, mountPath: /run/medulla}
 - {name: arbora-data, mountPath: /var/lib/arbora}
 {{- end }}
 
 {{/* Engine argv shared by the sidecar and the shared StatefulSet. */}}
 {{- define "arbora.engineArgs" -}}
-- epistemic-graph-server
+- medulla-server
 - --persist-dir
-- {{ if include "arbora.unified" . }}/var/lib/arbora/engine{{ else }}/var/lib/epistemic-graph/data{{ end }}
+- {{ if include "arbora.unified" . }}/var/lib/arbora/engine{{ else }}/var/lib/medulla/data{{ end }}
 {{- if include "arbora.unified" . }}
 - --socket-path
-- /run/epistemic-graph/epistemic-graph.sock
+- /run/medulla/medulla.sock
 {{- end }}
 {{- if include "arbora.engineTcp" . }}
 - --tcp-addr

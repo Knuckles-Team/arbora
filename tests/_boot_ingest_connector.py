@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import sys
 
-from agent_connector_sdk.ingest.live_declaration import (
+from fastmcp import FastMCP
+from scion_sdk.ingest.live_declaration import (
     register_live_declaration,
     source_meta,
 )
-from fastmcp import FastMCP
 
 CONNECTOR = "boot-ingest"
 connector = FastMCP(CONNECTOR)

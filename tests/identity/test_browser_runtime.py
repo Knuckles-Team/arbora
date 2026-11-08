@@ -364,9 +364,9 @@ def test_generated_contract_login_session_logout_with_ephemeral_signing_key(
     synthetic_signing_key,
 ):
     """Real decoder/signature/owners; synthetic wire, NOT a native EG deployment."""
-    from epistemic_graph.client import EngineResponseError
     from joserfc import jwt
     from joserfc.jwk import RSAKey
+    from medulla.client import EngineResponseError
 
     from arbora.identity.engine_ports import EngineSessionAuthority
     from arbora.identity.issuer import LocalIssuer

@@ -18,7 +18,7 @@ def project_run_usage(
     owner_graph: str,
 ) -> dict[str, Any]:
     """Validate native admission and terminal binding before exposing counters."""
-    from epistemic_graph.generated.models import RunWorkItemView
+    from medulla.generated.models import RunWorkItemView
 
     unavailable = {"status": "unavailable", "reason": "producer_unavailable"}
     if value is None:

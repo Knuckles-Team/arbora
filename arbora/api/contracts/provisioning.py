@@ -2,13 +2,13 @@
 
 This module is an AU application adapter, not a second connector-pack
 protocol.  The generated ``McpCatalogSnapshotBinding`` and
-``AgentLibraryMutationContext`` remain owned by epistemic-graph and are direct
+``AgentLibraryMutationContext`` remain owned by medulla and are direct
 runtime dependencies of this port.  AU contributes the verified session and
 the existing :class:`ActionPolicy` decision; Arbora contributes the two
 authoritative Medulla-bound values that AU cannot derive safely (the current
 catalog binding and the EG owner principal).
 
-The returned callable matches agent-connector-sdk's
+The returned callable matches scion-sdk's
 ``PackImportAuthorityResolver`` contract::
 
     async def resolver(connector: str) -> tuple[binding, context]
@@ -32,14 +32,14 @@ from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 if TYPE_CHECKING:
     # Deferred to a runtime import inside `resolve()` below: this module must
-    # stay importable on a profile with no epistemic-graph installed (the
+    # stay importable on a profile with no medulla installed (the
     # no-engine CI job collects every test that imports `arbora.api.contracts`
     # transitively, without ever calling this provisioning resolver). The
     # generated contract is still a hard runtime dependency of `resolve()`
     # itself -- `from __future__ import annotations` already makes every
     # annotation below a lazy string, so only the `isinstance`/construction
     # uses inside the function body need the real names.
-    from epistemic_graph.generated.connector_pack import (
+    from medulla.generated.connector_pack import (
         AgentLibraryMutationContext,
         McpCatalogSnapshotBinding,
     )
@@ -190,7 +190,7 @@ def pack_import_authority(
     async def resolve(
         connector: str,
     ) -> tuple[McpCatalogSnapshotBinding, AgentLibraryMutationContext]:
-        from epistemic_graph.generated.connector_pack import (
+        from medulla.generated.connector_pack import (
             AgentLibraryMutationContext,
             McpCatalogSnapshotBinding,
         )
@@ -213,13 +213,13 @@ def pack_import_authority(
         )
         if not isinstance(binding, McpCatalogSnapshotBinding):
             raise ProvisioningAuthorityError(
-                "catalog binding is not the generated epistemic-graph contract"
+                "catalog binding is not the generated medulla contract"
             )
         if not isinstance(owner_principal, str) or not _OPAQUE_PRINCIPAL.fullmatch(
             owner_principal.strip()
         ):
             raise ProvisioningAuthorityError(
-                "serving principal is not an opaque epistemic-graph principal"
+                "serving principal is not an opaque medulla principal"
             )
 
         caller_principal = opaque_principal(str(verified.actor.actor_id))
@@ -250,7 +250,7 @@ def pack_import_authority(
             )
         except Exception as exc:  # noqa: BLE001 - generated validation denies
             raise ProvisioningAuthorityError(
-                "generated epistemic-graph mutation context is invalid"
+                "generated medulla mutation context is invalid"
             ) from exc
         return binding, context
 

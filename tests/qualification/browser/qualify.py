@@ -49,9 +49,9 @@ def admin_claims(scope: str) -> dict[str, Any]:
 
 
 async def connect(context: dict[str, Any], scope: str) -> Any:
-    from epistemic_graph import EpistemicGraphClient
+    from medulla import MedullaClient
 
-    return await EpistemicGraphClient.connect(
+    return await MedullaClient.connect(
         socket_path=context["socket_path"],
         auth_secret=context["secret"],
         graph_name="__control__",
@@ -99,7 +99,7 @@ async def observed_client(
 async def prepare(
     context: dict[str, Any], backend: Any, credentials: dict, denied: dict
 ) -> dict[str, str]:
-    from epistemic_graph import EpistemicGraphClient
+    from medulla import MedullaClient
 
     from arbora.access.action_policy import ActionPolicies
     from arbora.core.settings import runtime_config
@@ -134,7 +134,7 @@ async def prepare(
         # Same explicit SDK-to-port binding used by process_engine_pool.
         return cast(
             EpistemicClient,
-            await observed_client(context, EpistemicGraphClient.connect, **kwargs),
+            await observed_client(context, MedullaClient.connect, **kwargs),
         )
 
     pool = EpistemicClientPool(
@@ -402,10 +402,10 @@ def webui_startup_facts(context: dict[str, Any], upstream: int) -> dict[str, Any
         return observed
     observed["log_available"] = True
     for name, marker in {
-        "thread_started": "co-service agent-webui started",
-        "crashed": "co-service agent-webui crashed",
-        "restart_bound": "co-service agent-webui exceeded its restart bound",
-        "listener_announced": "agent-webui co-service serving in-process on",
+        "thread_started": "co-service overstory started",
+        "crashed": "co-service overstory crashed",
+        "restart_bound": "co-service overstory exceeded its restart bound",
+        "listener_announced": "overstory co-service serving in-process on",
     }.items():
         observed[name] = marker in tail
     allowed = {

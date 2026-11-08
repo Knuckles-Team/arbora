@@ -36,8 +36,8 @@ Scope = Literal["principal", "shared"]
 #: EG replays each KV write by its idempotency key (``OperationIdentity``),
 #: so the engine owns these operations' replay.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "memory.write": "epistemic_graph:KvPut/KvCas",
-    "memory.delete": "epistemic_graph:KvDelete",
+    "memory.write": "medulla:KvPut/KvCas",
+    "memory.delete": "medulla:KvDelete",
 }
 
 

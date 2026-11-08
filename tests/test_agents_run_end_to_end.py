@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from agent_utilities import host_ports
+from meristem import host_ports
 
 from arbora import agent_runs
 from arbora.a2a.authority import WorkItemA2AAuthority

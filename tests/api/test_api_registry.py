@@ -2,7 +2,6 @@
 
 import json
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -24,7 +23,9 @@ from arbora.api.registry import (
     Surface,
     Verb,
     canonical_registry,
+    eg_method_ref,
 )
+from tests.api._catalog import catalog, method_row, scope_row
 from tests.api._support import identity_disable_op_values
 
 
@@ -79,24 +80,42 @@ def test_registry_digest_is_order_independent_and_covers_contract() -> None:
     assert canonical_registry([first, second]) == left.canonical
 
 
-def test_eg_schema_content_changes_registry_digest(tmp_path: Path) -> None:
-    schemas = tmp_path / "schemas"
-    schemas.mkdir()
-    source = schemas / "method.request.json"
-    doc = {
-        "methods": {"Foo": {"$ref": "#/$defs/Value"}},
-        "$defs": {"Value": {"type": "string"}},
-    }
-    source.write_text(json.dumps(doc))
-    op = make_op(
-        params=EgSchemaRef(path="contract/schemas/method.request.json#/methods/Foo")
+def test_eg_method_ref_digests_with_the_catalog_digest() -> None:
+    document = catalog(
+        (method_row("Foo", "query:read"),), (scope_row("query:read", "domain"),)
     )
-    first = Registry([op], contract_root=tmp_path)
-    doc["$defs"]["Value"]["type"] = "integer"
-    source.write_text(json.dumps(doc))
-    second = Registry([op], contract_root=tmp_path)
+    op = make_op(params=eg_method_ref("Foo", "request"))
+    first = Registry([op], catalog=document)
+    assert json.loads(first.canonical)["ops"][0]["params"] == {
+        "eg_schema": "medulla:method/Foo#request",
+        "catalog_digest": document["catalog_digest"],
+    }
+    document["catalog_digest"] = "e" * 64
+    second = Registry([op], catalog=document)
     assert first.digest != second.digest
     assert first.canonical != second.canonical
+
+
+def test_eg_method_ref_absent_from_the_catalog_is_rejected() -> None:
+    document = catalog(
+        (method_row("Foo", "query:read"),), (scope_row("query:read", "domain"),)
+    )
+    with pytest.raises(ValueError, match="absent from the catalog"):
+        Registry([make_op(params=eg_method_ref("Bar", "request"))], catalog=document)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "contract/schemas/method.request.json#/methods/Foo",
+        "medulla:method/Foo",
+        "medulla:method/Foo#params",
+        "medulla:method/../Foo#request",
+    ],
+)
+def test_eg_schema_ref_accepts_only_catalog_method_refs(path: str) -> None:
+    with pytest.raises(ValueError):
+        EgSchemaRef(path=path)
 
 
 def test_registry_rejects_duplicate_wire_identity() -> None:

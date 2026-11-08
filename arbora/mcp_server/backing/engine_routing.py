@@ -213,7 +213,7 @@ class _ToolsPayload(TypedDict):
 # via registry_api's own keyset-paginated ``_authorized_page`` (100 rows per
 # page, see ``registry_api._MAX_LIMIT``) before giving up on that section for
 # this request. Mirrors the same defensive drain-cap idea
-# ``agent_webui.api_extensions._read_fleet_catalog`` already applies to the
+# ``overstory.api_extensions._read_fleet_catalog`` already applies to the
 # identical read path (its own comment there measured ~9 pages to drain 841
 # ``skills`` rows) — 25 pages is headroom above that observed size without
 # letting one pathological catalog hang this request forever.
@@ -225,7 +225,7 @@ def _read_catalog_kind_sync(
 ) -> list[dict[str, Any]]:
     """Drain one fleet-catalog ``kind`` through registry_api's OWN
     tenant/principal-scoped, fail-closed authorized-read path — the exact
-    same private functions ``agent_webui.api_extensions._read_fleet_catalog``
+    same private functions ``overstory.api_extensions._read_fleet_catalog``
     already reuses in-process for ``/api/enhanced/tools`` (see that
     function's docstring). This never re-derives tenant scoping, redaction,
     or SQL construction; it is a thin synchronous drain loop on top of
@@ -598,7 +598,7 @@ _TABULAR_QUERY_SERVICE_LOCK = threading.Lock()
 def _trino_principal_ref() -> str:
     """Resolve the current verified caller's opaque persistence reference."""
 
-    from agent_connector_sdk.privacy import persistence_reference
+    from scion_sdk.privacy import persistence_reference
 
     from arbora.security.actor_context import current_actor
 

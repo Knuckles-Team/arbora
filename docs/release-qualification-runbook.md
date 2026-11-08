@@ -10,24 +10,24 @@ A failing stage stops qualification of this release candidate at that
 stage. Record the exact revision, command, and result for each stage.
 Do not qualify a later stage from an earlier revision.
 
-## 1. Graph engine (`epistemic-graph`)
+## 1. Graph engine (`medulla`)
 
 ```bash
-gh run list --workflow=release.yml -R Knuckles-Team/epistemic-graph --branch main --limit 1
+gh run list --workflow=release.yml -R Knuckles-Team/medulla --branch main --limit 1
 ```
 
 The listed run must be the one built from the commit this release pins.
-Re-run it directly with `gh run rerun <run-id> -R Knuckles-Team/epistemic-graph`
+Re-run it directly with `gh run rerun <run-id> -R Knuckles-Team/medulla`
 if it needs re-proving.
 
-## 2. Connector SDK (`agent-connector-sdk`)
+## 2. Connector SDK (`scion-sdk`)
 
 ```bash
-gh run list --workflow=release.yml -R Knuckles-Team/agent-connector-sdk --branch main --limit 1
+gh run list --workflow=release.yml -R Knuckles-Team/scion-sdk --branch main --limit 1
 ```
 
 Same proof shape as stage 1, against the revision this release's
-`agent-connector-sdk` dependency pins.
+`scion-sdk` dependency pins.
 
 ## 3. Agent runtime (`meristem`)
 
@@ -51,7 +51,7 @@ uv build --wheel --out-dir dist
 ```
 
 The release builds from this repository alone. Every dependency installs from
-PyPI at the version `uv.lock` pins. That includes the epistemic-graph engine
+PyPI at the version `uv.lock` pins. That includes the medulla engine
 wheels, so the release compiles nothing. Before a tag publishes,
 `install-smoke` installs the built wheel and the locked PyPI dependencies.
 It checks every hash and runs on Linux x64, Linux arm64, macOS arm64 and
@@ -74,14 +74,14 @@ a declared console entry point, the packaged engine binary, the folded
 numeric kernel, or the served FastMCP major is missing or mismatched — see
 `arbora/deployment/release_canary.py`.
 
-## 5. Web UI (`agent-webui`, pending an in-flight package rename)
+## 5. Web UI (`overstory`, pending an in-flight package rename)
 
 ```bash
-gh run list --workflow=release.yml -R Knuckles-Team/agent-webui --branch main --limit 1
+gh run list --workflow=release.yml -R Knuckles-Team/overstory --branch main --limit 1
 ```
 
 Same proof shape as stage 1. The optional `webui` extra's package name
-changes once that in-flight rename lands in both `agent-webui` and here;
+changes once that in-flight rename lands in both `overstory` and here;
 this stage's check does not depend on that name.
 
 ## 6. Connector package fleet

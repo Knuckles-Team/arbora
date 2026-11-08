@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-import json
-from importlib import resources
 from typing import Any
 
 import pytest
-from epistemic_graph import EngineResponseError
+from medulla import EngineResponseError
 from pydantic import ValidationError
 
 from arbora.api.invoke.bootstrap import dispatch_eg_method
@@ -16,7 +14,8 @@ from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.query import NaturalLanguageParams, operations
 from arbora.api.ops.query_federation import NaturalLanguageResult
-from arbora.api.registry import EgMethod, EgSchemaRef
+from arbora.api.registry import EgMethod, eg_method_ref
+from arbora.api.registry.eg_binding import load_catalog
 from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 from tests._support import Actor
 from tests.api.test_invoke_bootstrap import FakeSession, _caller
@@ -59,10 +58,9 @@ def context(client: RecordingClient) -> ExecutionContext:
 pytestmark = pytest.mark.spec("ARBORA-OPS-R018.2.1")
 
 
-def test_query_bindings_match_actual_provider_authority_and_inner_schema() -> None:
+def test_query_bindings_match_the_engine_catalog_authority() -> None:
     ops = operations()
-    contract = resources.files("epistemic_graph").joinpath("contract")
-    methods = json.loads(contract.joinpath("methods.json").read_text())["methods"]
+    methods = load_catalog()["methods"]
     for op in ops:
         binding = op.binding
         assert isinstance(binding, EgMethod)
@@ -78,25 +76,8 @@ def test_query_bindings_match_actual_provider_authority_and_inner_schema() -> No
             EgMethod(service="NlQuery", op="NlQuery"),
         ),
     ]
-    ref = ops[0].params
-    assert isinstance(ref, EgSchemaRef)
-    document = json.loads(
-        resources.files("epistemic_graph")
-        .joinpath("contract/schemas/method.request.json")
-        .read_text()
-    )
-    selected: Any = document
-    for key in ref.path.split("#/")[1].split("/"):
-        selected = selected[key]
-    assert selected["required"] == ["text"]
-    # Engine 2.27.10 adds prepare and foreign_execution to the request.
-    assert set(selected["properties"]) == {
-        "text",
-        "params",
-        "prepare",
-        "foreign_execution",
-    }
-    assert selected["additionalProperties"] is False
+    assert ops[0].params == eg_method_ref("Uql", "request")
+    assert ops[0].result == eg_method_ref("Uql", "result")
     nl = next(op for op in ops if op.id == "query.nl")
     assert nl.result is NaturalLanguageResult
 

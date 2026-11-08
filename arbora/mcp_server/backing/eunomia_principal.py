@@ -364,7 +364,7 @@ class _RemotePolicyBridge:
         return {"WAY-API-KEY": self._api_key} if self._api_key else {}
 
     async def _post(self, url: str, payload: Any) -> Any:
-        from agent_connector_sdk.source_connectors.http_safety import (
+        from scion_sdk.source_connectors.http_safety import (
             safe_post_json_async,
         )
 

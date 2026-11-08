@@ -7,7 +7,7 @@ import sys
 import uuid
 from types import SimpleNamespace
 
-from epistemic_graph import EpistemicGraphClient
+from medulla import MedullaClient
 
 from arbora.api.invoke.steps import OpResult
 from arbora.core.settings import load_config
@@ -19,7 +19,7 @@ async def main():
     load_config()
     validate_startup(SimpleNamespace(host="127.0.0.1", auth_type="none"))
     claims = session_context(session())
-    client = await EpistemicGraphClient.connect(
+    client = await MedullaClient.connect(
         auth_mode="none", tcp_addr=sys.argv[1], graph_name="tenant__local"
     )
 

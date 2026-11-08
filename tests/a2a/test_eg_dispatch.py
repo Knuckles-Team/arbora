@@ -13,7 +13,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from epistemic_graph import EngineResponseError
+from medulla import EngineResponseError
 from pydantic import BaseModel, ConfigDict, RootModel
 
 from arbora.api.errors import EngineRefusal

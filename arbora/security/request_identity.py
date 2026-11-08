@@ -36,7 +36,7 @@ the data lives**. :func:`_mint_graph_session` used to end with a live
 *engine cluster-admin authority a precondition for authenticating any request
 on every agent-utilities served surface*: the engine's capability ledger
 declares ``PlacementRoute`` with ``authz_action = "admin:cluster-read"``
-(``epistemic-graph/crates/eg-capabilities/src/lib.rs:2274``) and
+(``medulla/crates/eg-capabilities/src/lib.rs:2274``) and
 ``src/server/dispatch.rs`` enforces it twice — once against the caller's token
 scopes (``dispatch.rs:2185``) and again against the engine's own
 ``IsolationLayer`` via ``require_admin_capability`` (``dispatch.rs:2199`` →
@@ -124,7 +124,7 @@ def client_credentials_token(oauth2: Any) -> str:
     ``oauth2`` carries ``token_url`` (or ``issuer``), ``client_id``, a
     ``client_secret`` reference, and optional ``scope`` and ``audience``.
     """
-    from agent_connector_sdk.auth.oidc import (
+    from scion_sdk.auth.oidc import (
         ClientCredentialsConfig,
         client_credentials_auth,
     )
@@ -169,7 +169,7 @@ UNAUTHENTICATED_PATHS: frozenset[str] = HEALTH_PATHS
 SERVED_TRANSPORTS: frozenset[str] = frozenset({"streamable-http", "sse"})
 
 # The only graph authorization scopes a served identity may project into a
-# GraphSession: exactly the scopes epistemic-graph registers (MERISTEM-SEC-R008),
+# GraphSession: exactly the scopes medulla registers (MERISTEM-SEC-R008),
 # GENERATED from EG's scope registry into ``scope_registry.py`` -- never a
 # hand-maintained list. They come from validated JWT capabilities
 # (``ActorContext.roles``), never from request JSON/headers; EG re-checks
@@ -1153,7 +1153,7 @@ def _resolve_process_identity_source(config: Any) -> tuple[str, Any]:
 def _fetch_process_identity_token(token_ref: str, oauth2: Any) -> str:
     try:
         if token_ref:
-            from agent_connector_sdk.credentials.runtime_references import (
+            from scion_sdk.credentials.runtime_references import (
                 resolve_runtime_secret_reference,
             )
 
@@ -1216,7 +1216,7 @@ def mint_actor_from_token_sync(token: str) -> ActorContext:
     (``RuntimeError: asyncio.run() cannot be called from a running event
     loop``), and this function's original form called it unconditionally.
 
-    That was not a theoretical gap. `agent-webui`'s `ensure_tenant_admission`
+    That was not a theoretical gap. `overstory`'s `ensure_tenant_admission`
     is `async`, and it calls the synchronous `_service_authority()`, which
     lands here — so every Keycloak sign-in raised, surfacing to the user as
     `{"detail": "Internal request failed", "error_id": ...}` with the real

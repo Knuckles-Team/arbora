@@ -240,13 +240,13 @@ _DEFINITIONS: tuple[_ProviderDefinition, ...] = (
         frozenset({"ladybug"}),
     ),
     _ProviderDefinition(
-        "epistemic_graph",
-        "Epistemic Graph",
+        "medulla",
+        "Medulla",
         "graph",
         "cypher",
-        ("epistemic_graph", "cypher", "uql"),
+        ("medulla", "cypher", "uql"),
         ("query", "schema_discovery", "read_only", "external_graph"),
-        frozenset({"epistemic_graph"}),
+        frozenset({"medulla"}),
     ),
     _ProviderDefinition(
         "opencypher",
@@ -569,7 +569,7 @@ def _source_connector_types() -> tuple[str, ...]:
     """Use the executable source registry as the sync-adapter authority."""
 
     try:
-        from agent_connector_sdk.source_connectors.registry import (
+        from scion_sdk.source_connectors.registry import (
             list_sources,
         )
 

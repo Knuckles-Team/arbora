@@ -349,7 +349,7 @@ class GraphSession:
         Decision 5 (W2.1-1): when the ambient :class:`SpawnDelegation` also carries an
         RFC 8693 exchanged ``oidc_token``, forward it onto the envelope's ``oidc_token``
         claim (the eg client now carries it as an optional claim, mirroring ``node``/
-        ``priority`` — see ``epistemic_graph.client.RequestContextClaims``). The engine
+        ``priority`` — see ``medulla.client.RequestContextClaims``). The engine
         independently RSA/JWKS-verifies it and cross-checks its subject/tenant against
         this SAME context (``server::auth::bind_verified_identity``); it is deliberately
         NOT MAC-covered on the wire (its own signature is the trust anchor — see
@@ -557,7 +557,7 @@ def control_session_scope(backend: Any) -> Iterator[None]:
     graph for the duration of one control-plane read/write, then restore the
     caller's original scope.
 
-    A *graph-scoped view* (e.g. ``EpistemicGraphBackend.for_graph(...)``)
+    A *graph-scoped view* (e.g. ``MedullaBackend.for_graph(...)``)
     pins its RPCs to a fixed graph. The ambient session a caller is running
     under is bound to whatever graph it actually operates on (a tenant graph,
     a codebase-ingest graph, ...) — not necessarily the fixed graph the view

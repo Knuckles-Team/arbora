@@ -25,7 +25,6 @@ from arbora.api.registry import (
     Composite,
     Effect,
     EgMethod,
-    EgSchemaRef,
     Executor,
     Idempotency,
     OpSpec,
@@ -34,7 +33,9 @@ from arbora.api.registry import (
     SubjectRef,
     Surface,
     Verb,
+    eg_method_ref,
 )
+from tests.api._catalog import catalog, method_row, scope_row
 from tests.api._support import make_verified_caller
 
 
@@ -326,12 +327,13 @@ def test_missing_required_authority_fails_construction(port):
         setup_services(**{port: None})
 
 
-def test_provider_schema_requires_authority_and_validation(tmp_path):
-    schema_dir = tmp_path / "schemas"
-    schema_dir.mkdir()
-    (schema_dir / "fixture.json").write_text('{"Fixture": {"type": "object"}}')
-    op = operation(params=EgSchemaRef(path="contract/schemas/fixture.json#/Fixture"))
-    registry = Registry([op], contract_root=tmp_path)
+def test_provider_schema_requires_authority_and_validation():
+    document = catalog(
+        (method_row("Fixture", "example:write"),),
+        (scope_row("example:write", "domain"),),
+    )
+    op = operation(params=eg_method_ref("Fixture", "request"))
+    registry = Registry([op], catalog=document)
     with pytest.raises(ValueError, match="schema authority"):
         setup_services(op, registry=registry)
 
@@ -358,9 +360,7 @@ def test_native_owner_read_accepts_eg_wire_tenant_after_contract_validation():
     op = operation(
         id="eg.coordination.GetRunWorkItem",
         verb=Verb.ASK,
-        params=EgSchemaRef(
-            path="contract/schemas/method.request.json#/methods/GetRunWorkItem"
-        ),
+        params=eg_method_ref("GetRunWorkItem", "request"),
         binding=EgMethod(service="GetRunWorkItem", op="GetRunWorkItem"),
         scopes=frozenset({"work:read"}),
         effect=Effect.READ,
@@ -372,8 +372,16 @@ def test_native_owner_read_accepts_eg_wire_tenant_after_contract_validation():
         assert set(params) == {"tenant", "run_id"}
         return params
 
+    registry = Registry(
+        [op],
+        catalog=catalog(
+            (method_row("GetRunWorkItem", "work:read", domain="coordination"),),
+            (scope_row("work:read", "user"),),
+        ),
+    )
     services, runtime, _audit, _journal, _leases = setup_services(
         op,
+        registry=registry,
         schema_validate=validate,
     )
 

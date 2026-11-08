@@ -39,7 +39,7 @@ def test_classes_roll_up_to_the_core_classes(store: ox.Store) -> None:
     assert set(events) == {event.value for event in ContractEvent}
     assert all(_rolls_up(store, cls, "TransitionEvent") for cls in events.values())
     assert _rolls_up(store, f"{ARBORA}ContractMatches", "TransitionGuard")
-    assert _rolls_up(store, f"{ARBORA}ContractTransitionRefused", "TransitionRefused")
+    assert _rolls_up(store, f"{ARBORA}ContractTransitionRefused", "Concept")
 
     rows = _select(
         store,

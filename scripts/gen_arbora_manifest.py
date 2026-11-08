@@ -629,16 +629,16 @@ def build_manifest() -> list[dict]:
 
     if not ENGINE_DOMAINS:
         # ENGINE_DOMAINS is populated by introspecting the installed
-        # `epistemic_graph` client (see engine_tools._discover_domains); an
+        # `medulla` client (see engine_tools._discover_domains); an
         # empty dict here means that import failed and EVERY engine_<domain>
         # tool — and every engine_<domain>_<method> verbose op derived from it
         # — will be silently absent from this run's manifest. This is the
         # dominant known cause of a badly shrunken regen (a box missing the
-        # epistemic-graph wheel/numeric-kernel extra); `main()` treats a net
+        # medulla wheel/numeric-kernel extra); `main()` treats a net
         # entry-count regression as fatal, but this loud print fires even when
         # some other addition happens to offset the loss in the final count.
         raise RuntimeError(
-            "ENGINE_DOMAINS is empty: the epistemic-graph client surface is "
+            "ENGINE_DOMAINS is empty: the medulla client surface is "
             "unavailable, so authoritative manifest generation cannot proceed"
         )
 

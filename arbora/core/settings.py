@@ -17,8 +17,8 @@ from functools import cache
 from pathlib import Path
 from typing import Any, Literal
 
-from agent_connector_sdk.config import csv_values, setting
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
+from scion_sdk.config import csv_values, setting
 
 __all__ = [
     "CONFIG_DIR_SETTING",
@@ -399,7 +399,7 @@ class ArboraConfig(BaseModel):
     kg_engine_tool_pool_size: int = Field(
         default=16,
         alias="KG_ENGINE_TOOL_POOL_SIZE",
-        description="Max warm raw ``SyncEpistemicGraphClient`` wire connections kept resident by the low-level ``engine_<domain>`` MCP tools (MERISTEM-P0-6, ``mcp/tools/engine_tools.py``). Distinct from :attr:`kg_engine_pool_size` (which bounds the resident *compute-engine* pool, a different resource): this one bounds the...",
+        description="Max warm raw ``SyncMedullaClient`` wire connections kept resident by the low-level ``engine_<domain>`` MCP tools (MERISTEM-P0-6, ``mcp/tools/engine_tools.py``). Distinct from :attr:`kg_engine_pool_size` (which bounds the resident *compute-engine* pool, a different resource): this one bounds the...",
     )
     kg_failure_evolution: bool = Field(
         default=False, alias="KG_FAILURE_EVOLUTION", description=""
@@ -1032,7 +1032,7 @@ def _config_file() -> Path:
 
 def load_config(*, reload: bool = False) -> Path | None:
     """Project ``config.json`` into the process environment (set values win)."""
-    from agent_connector_sdk.config import load_config as _sdk_load
+    from scion_sdk.config import load_config as _sdk_load
 
     target = platform_config_file(_CONFIG_FILE)
     return _sdk_load(target, reload=reload) if target.is_file() else None
@@ -1047,7 +1047,7 @@ def read_config_document(path: Path) -> dict[str, str]:
     reference).
     """
     # The SDK's one document reader; load_config applies the same function.
-    from agent_connector_sdk.config import _read_document
+    from scion_sdk.config import _read_document
 
     return _read_document(Path(path))
 

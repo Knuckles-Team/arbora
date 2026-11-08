@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import inspect
-import json
-from importlib import resources
 from pathlib import Path
 
 import pytest
@@ -41,12 +39,61 @@ from arbora.api.ops import (
 from arbora.api.registry import (
     Composite,
     EgMethod,
+    EgSchemaRef,
     Executor,
     SubjectRef,
     SubjectSource,
+    Verb,
 )
 from arbora.api.registry.eg_binding import EgContractError
+from tests.api._catalog import method_row, scope_row
 from tests.api.test_eg_binding import _curated, _fixture
+
+_CURATED_SCOPES = (
+    "query:unified",
+    "query:nl",
+    "kg:read",
+    "kg:write",
+    "mcp:discover",
+    "mcp:delegate",
+    "rbac:elevation",
+    "rbac:elevation-read",
+    "rbac:approve-elevation",
+    "lease:read",
+    "security:check",
+    "security:read",
+    "explain:read",
+    "capacity:read",
+    "capacity:admin",
+    "ingest:write",
+    "federation:read",
+    "sparql:read",
+    "query:sql",
+    "validation:read",
+    "owl:read",
+    "federation:admin",
+    "kv:read",
+    "kv:write",
+    "ingest:read",
+    "decide:commit",
+    "telemetry:read",
+    "policy:read",
+    "usage:read",
+    "swarm:read",
+    "memory:read",
+    "memory:write",
+    "work:read",
+    "work:write",
+    "ops:read",
+    "ops:admin",
+    "node:read",
+    "edge:read",
+    "blob:read",
+    "agent:pack-control",
+    "fleet:control",
+    "mcp:admin",
+    "registry:read",
+)
 
 _ENGINE_METHODS = {
     "Uql",
@@ -62,97 +109,31 @@ _ENGINE_METHODS = {
 
 
 @pytest.fixture
-def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path]:
-    """Supply packaged contract resources without importing a live engine client."""
+def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[dict, Path]:
+    """Serve an in-memory method catalog in place of the installed engine's."""
     from arbora.api.registry import eg_binding
 
-    contract, exclusions = _fixture(tmp_path)
+    document, exclusions = _fixture(tmp_path)
     # Synthetic approved scope evidence; production classifications are provider-owned.
-    scope_path = contract / "scopes.json"
-    document = json.loads(scope_path.read_text())
-    document["scopes"].extend(
-        {"scope": scope, "class": "user"}
-        for scope in (
-            "query:unified",
-            "query:nl",
-            "kg:read",
-            "kg:write",
-            "mcp:discover",
-            "mcp:delegate",
-            "rbac:elevation",
-            "rbac:elevation-read",
-            "rbac:approve-elevation",
-            "lease:read",
-            "security:check",
-            "security:read",
-            "explain:read",
-            "capacity:read",
-            "capacity:admin",
-            "ingest:write",
-            "federation:read",
-            "sparql:read",
-            "query:sql",
-            "validation:read",
-            "owl:read",
-            "federation:admin",
-            "kv:read",
-            "kv:write",
-            "ingest:read",
-            "decide:commit",
-            "telemetry:read",
-            "policy:read",
-            "usage:read",
-            "swarm:read",
-            "memory:read",
-            "memory:write",
-            "work:read",
-            "work:write",
-            "ops:read",
-            "registry:read",
-            "ops:admin",
-            "node:read",
-            "edge:read",
-            "blob:read",
-            "agent:pack-control",
-            "fleet:control",
-            "mcp:admin",
-        )
-    )
-    scope_path.write_text(json.dumps(document))
-    source = resources.files("epistemic_graph").joinpath("contract")
-    methods_path = contract / "methods.json"
-    methods = json.loads(methods_path.read_text())
-    actual = json.loads(source.joinpath("methods.json").read_text())
-    methods["methods"].extend(
-        row for row in actual["methods"] if row["id"] in _ENGINE_METHODS
-    )
-    methods_path.write_text(json.dumps(methods))
-    for filename in (
-        "method.request.json",
-        "result.query.json",
-        "result.reasoning.json",
-        "result.cluster.json",
-    ):
-        path = contract / "schemas" / filename
-        synthetic = json.loads(path.read_text()) if path.exists() else {"methods": {}}
-        actual_schema = json.loads(source.joinpath("schemas", filename).read_text())
-        synthetic["methods"].update(
-            {
-                key: value
-                for key, value in actual_schema["methods"].items()
-                if key in _ENGINE_METHODS
-            }
-        )
-        synthetic["$defs"] = actual_schema.get("$defs", {})
-        path.write_text(json.dumps(synthetic))
-
-    monkeypatch.setattr("importlib.resources.files", lambda package: contract.parent)
+    document["scopes"].extend(scope_row(scope, "user") for scope in _CURATED_SCOPES)
+    # The engine methods curated operations bind, with the curated scope.
+    for module in (query, query_engine):
+        for op in module.operations():
+            if isinstance(op.binding, EgMethod):
+                document["methods"].append(
+                    method_row(
+                        op.binding.service,
+                        next(iter(op.scopes)),
+                        mutates=op.verb is not Verb.ASK,
+                    )
+                )
+    monkeypatch.setattr(eg_binding, "_installed_catalog", lambda: document)
     monkeypatch.setattr(eg_binding, "_EXCLUSIONS", exclusions)
-    return contract, exclusions
+    return document, exclusions
 
 
 def test_no_argument_factory_is_deterministic_and_complete(
-    provider: tuple[Path, Path],
+    provider: tuple[dict, Path],
 ) -> None:
     assert not inspect.signature(get_registry).parameters
     first, second = get_registry(), get_registry()
@@ -196,7 +177,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
 
 
 def test_only_exact_curated_method_is_suppressed(
-    provider: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
+    provider: tuple[dict, Path], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(agents, "operations", lambda: (_curated("Read", "query.read"),))
     registry = get_registry()
@@ -215,7 +196,7 @@ def test_only_exact_curated_method_is_suppressed(
 
 
 def test_duplicate_curated_ids_are_rejected(
-    provider: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
+    provider: tuple[dict, Path], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     operations = agents.operations()
     monkeypatch.setattr(agents, "operations", lambda: (*operations, operations[0]))
@@ -233,7 +214,7 @@ def test_duplicate_curated_ids_are_rejected(
     ],
 )
 def test_unsupported_or_unbound_handler_is_rejected(
-    provider: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch, handler: str
+    provider: tuple[dict, Path], monkeypatch: pytest.MonkeyPatch, handler: str
 ) -> None:
     op = agents.operations()[0].model_copy(
         update={"binding": Composite(handler=handler)}
@@ -244,26 +225,23 @@ def test_unsupported_or_unbound_handler_is_rejected(
 
 
 def test_missing_provider_contract_never_returns_partial_registry(
-    provider: tuple[Path, Path],
+    provider: tuple[dict, Path],
 ) -> None:
-    contract, _ = provider
-    (contract / "methods.json").unlink()
-    with pytest.raises(EgContractError, match="cannot read EG contract"):
+    document, _ = provider
+    document["methods"] = []
+    with pytest.raises(EgContractError, match="requires nonempty methods"):
         get_registry()
 
 
-def test_unapproved_provider_scope_is_not_inferred(provider: tuple[Path, Path]) -> None:
-    contract, _ = provider
-    path = contract / "methods.json"
-    document = json.loads(path.read_text())
+def test_unapproved_provider_scope_is_not_inferred(provider: tuple[dict, Path]) -> None:
+    document, _ = provider
     document["methods"][0]["policy"]["authz_action"] = "pending:classification"
-    path.write_text(json.dumps(document))
     with pytest.raises(EgContractError, match="unregistered EG scope"):
         get_registry()
 
 
 def test_reviewed_exclusion_is_used_and_rot_rejected(
-    provider: tuple[Path, Path],
+    provider: tuple[dict, Path],
 ) -> None:
     _, exclusions = provider
     exclusions.write_text(
@@ -280,25 +258,31 @@ def test_reviewed_exclusion_is_used_and_rot_rejected(
 
 
 def test_stale_curated_binding_is_rejected(
-    provider: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
+    provider: tuple[dict, Path], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(agents, "operations", lambda: (_curated("Gone", "query.read"),))
     with pytest.raises(EgContractError, match="stale EG binding"):
         get_registry()
 
 
-def test_provider_order_does_not_change_digest(provider: tuple[Path, Path]) -> None:
-    contract, _ = provider
+def test_provider_order_does_not_change_digest(provider: tuple[dict, Path]) -> None:
+    document, _ = provider
     before = get_registry()
-    path = contract / "methods.json"
-    document = json.loads(path.read_text())
     document["methods"].reverse()
-    path.write_text(json.dumps(document))
     assert get_registry().canonical == before.canonical
 
 
+def test_catalog_digest_change_moves_the_registry_digest(
+    provider: tuple[dict, Path],
+) -> None:
+    document, _ = provider
+    before = get_registry()
+    document["catalog_digest"] = "d" * 64
+    assert get_registry().digest != before.digest
+
+
 def test_duplicate_provider_ownership_is_rejected(
-    provider: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
+    provider: tuple[dict, Path], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(
         agents,
@@ -310,7 +294,7 @@ def test_duplicate_provider_ownership_is_rejected(
 
 
 def test_curated_and_generated_id_collision_is_rejected(
-    provider: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
+    provider: tuple[dict, Path], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     op = agents.operations()[0].model_copy(update={"id": "eg.query.Read"})
     monkeypatch.setattr(agents, "operations", lambda: (op,))
@@ -322,15 +306,12 @@ def test_curated_and_generated_id_collision_is_rejected(
     "scope", ["kg:read", "kg:write", "mcp:discover", "mcp:delegate"]
 )
 def test_missing_composite_caller_scope_fails_before_canonicalization(
-    provider: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch, scope: str
+    provider: tuple[dict, Path], monkeypatch: pytest.MonkeyPatch, scope: str
 ) -> None:
     from arbora.api.ops import registry_factory
 
-    contract, _ = provider
-    path = contract / "scopes.json"
-    document = json.loads(path.read_text())
+    document, _ = provider
     document["scopes"] = [row for row in document["scopes"] if row["scope"] != scope]
-    path.write_text(json.dumps(document))
 
     def unexpected_registry(*args: object, **kwargs: object) -> None:
         pytest.fail("unregistered scope reached canonical registry construction")
@@ -343,7 +324,7 @@ def test_missing_composite_caller_scope_fails_before_canonicalization(
 
 
 def test_composite_executor_scope_requires_provider_evidence(
-    provider: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
+    provider: tuple[dict, Path], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     op = agents.operations()[0].model_copy(
         update={
@@ -357,24 +338,18 @@ def test_composite_executor_scope_requires_provider_evidence(
         EgContractError, match="unregistered curated EG scopes: fixture:executor"
     ):
         get_registry()
-    contract, _ = provider
-    path = contract / "scopes.json"
-    document = json.loads(path.read_text())
-    document["scopes"].append({"scope": "fixture:executor", "class": "service-only"})
-    path.write_text(json.dumps(document))
+    document, _ = provider
+    document["scopes"].append(scope_row("fixture:executor", "service-only"))
     assert get_registry()[op.id] == op
 
 
 def test_curated_scope_evidence_uses_provider_class_validation(
-    provider: tuple[Path, Path],
+    provider: tuple[dict, Path],
 ) -> None:
-    contract, _ = provider
-    path = contract / "scopes.json"
-    document = json.loads(path.read_text())
+    document, _ = provider
     for row in document["scopes"]:
         if row["scope"] == "mcp:delegate":
             row["class"] = "unapproved"
-    path.write_text(json.dumps(document))
     with pytest.raises(EgContractError, match="invalid EG scope class"):
         get_registry()
 
@@ -396,7 +371,7 @@ def test_harness_operations_unregistered_until_engine_senders() -> None:
 
     from arbora.api.ops.registry_factory import get_registry
 
-    module = importlib.util.find_spec("epistemic_graph.generated.orchestration")
+    module = importlib.util.find_spec("medulla.generated.orchestration")
     senders = (
         "send_list_harness_components",
         "send_current_harness_component",
@@ -404,8 +379,26 @@ def test_harness_operations_unregistered_until_engine_senders() -> None:
         "send_harness_evolution_report",
     )
     published = module is not None and all(
-        hasattr(importlib.import_module("epistemic_graph.generated.orchestration"), s)
+        hasattr(importlib.import_module("medulla.generated.orchestration"), s)
         for s in senders
     )
     served = {op.id for op in get_registry() if op.id.startswith("harness.")}
     assert published or not served
+
+
+@pytest.mark.spec("ARBORA-FLEET-R012.1")
+def test_engine_operations_come_from_served_descriptors(
+    provider: tuple[dict, Path],
+) -> None:
+    """The registry is built from the run-time catalog; no contract file is read."""
+    document, _ = provider
+    registry = get_registry()
+    params = registry["eg.query.Read"].params
+    assert isinstance(params, EgSchemaRef)
+    assert params.path == "medulla:method/Read#request"
+    before = registry.digest
+    document["catalog_digest"] = "f" * 64
+    assert get_registry().digest != before
+    document.pop("catalog_digest")
+    with pytest.raises(EgContractError, match="catalog_digest"):
+        get_registry()

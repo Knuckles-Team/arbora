@@ -86,9 +86,7 @@ class ArboraRefusal(Exception):
     details: Mapping[str, Any] = field(default_factory=dict)
 
 
-def not_served(
-    capability: str, spec_row: str, owner: str = "epistemic-graph"
-) -> ArboraRefusal:
+def not_served(capability: str, spec_row: str, owner: str = "medulla") -> ArboraRefusal:
     """Refuse an operation whose capability its owner does not serve yet.
 
     ``capability`` names the deleted in-process module the operation used.

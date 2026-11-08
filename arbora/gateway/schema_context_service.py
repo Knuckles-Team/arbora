@@ -4,7 +4,7 @@ One owning service between a validated :class:`SchemaContextRequest` and a
 published graph-engine schema-context answer. Arbora composes and projects;
 it never derives a catalog fact, join, or ontology mapping itself.
 
-epistemic-graph has not published a schema-context capability yet
+medulla has not published a schema-context capability yet
 (``specs/data-and-market-projections/plan.md``, "Schema context" section).
 Arbora fails closed rather than inventing one: :func:`get_schema_context`
 refuses every request with ``UNAVAILABLE`` until a real engine client

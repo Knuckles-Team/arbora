@@ -2,7 +2,7 @@
 
 This module deliberately tracks only notifications owed to currently served
 sessions.  Fleet identity, catalog generations, and reconciliation receipts
-belong to epistemic-graph's RegisterServer, ConnectorPack, and AgentComponent
+belong to medulla's RegisterServer, ConnectorPack, and AgentComponent
 contracts and must never be reconstructed here.
 """
 

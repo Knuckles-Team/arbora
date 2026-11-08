@@ -28,7 +28,7 @@ def local_mode(monkeypatch):
         "KG_AUTH_TOKEN_REF",
         "KG_IDENTITY_OAUTH2",
         "GRAPH_SERVICE_AUTH_SECRET",
-        "EPISTEMIC_GRAPH_SIGNER_KEYS_JSON",
+        "MEDULLA_SIGNER_KEYS_JSON",
     ):
         monkeypatch.delenv(key, raising=False)
     anonymous.validate_startup(Namespace(host="127.0.0.1", auth_type="none"))
@@ -53,7 +53,7 @@ def anonymous_context():
 
 @pytest.fixture
 def reads(monkeypatch):
-    import epistemic_graph.generated as generated
+    import medulla.generated as generated
 
     calls = []
 

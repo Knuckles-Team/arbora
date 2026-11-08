@@ -34,7 +34,7 @@ def _write_skill(
 def test_entry_point_style_provider_lists_its_two_fixture_skills(
     tmp_path: Path,
 ) -> None:
-    """A provider resolved the way an ``agent_connector_sdk.skill_providers``
+    """A provider resolved the way an ``scion_sdk.skill_providers``
     entry point is (one ``(provider, skill_root)`` pair per skill) is listed."""
     one = _write_skill(tmp_path, "fixture-one", description="first fixture skill")
     two = _write_skill(tmp_path, "fixture-two", description="second fixture skill")

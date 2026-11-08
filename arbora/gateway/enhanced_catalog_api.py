@@ -76,7 +76,7 @@ class CatalogCounts(BaseModel):
 class EnhancedCatalog(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    source: Literal["epistemic_graph"] = "epistemic_graph"
+    source: Literal["medulla"] = "medulla"
     servers: tuple[CatalogServer, ...]
     components: tuple[CatalogEntry, ...]
     counts: CatalogCounts

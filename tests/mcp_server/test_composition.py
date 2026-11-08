@@ -84,7 +84,7 @@ def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> N
     policies = ActionPolicies()
     start_composed_services(object(), object(), action_policies=policies)
 
-    assert started[0][0] == "agent-webui"
+    assert started[0][0] == "overstory"
     assert started[0][1].func.__module__ == "arbora.webui_host.webui_co_service"
     assert started[0][1].keywords == {"action_policies": policies}
 
@@ -200,11 +200,11 @@ def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
     ``connector://resources`` declaration.
     """
     import anyio
-    from agent_connector_sdk.mcp.content import (
+    from fastmcp.server.providers.skills import SkillsDirectoryProvider
+    from scion_sdk.mcp.content import (
         ConnectorContent,
         register_connector_content,
     )
-    from fastmcp.server.providers.skills import SkillsDirectoryProvider
 
     import arbora.skills
     from arbora.core.providers import own_content

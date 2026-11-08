@@ -8,7 +8,7 @@
 #                                     Fresh worktree: `scripts/bootstrap.sh
 #                                     --siblings-only && uv run pytest tests/<file>`.
 #   scripts/bootstrap.sh --kernel     accepted and ignored: the published
-#                                     epistemic-graph wheel carries the kernel.
+#                                     medulla wheel carries the kernel.
 #
 # Idempotent and non-interactive. Every dependency installs from PyPI; no
 # sibling source checkout is linked or cloned.
@@ -56,10 +56,10 @@ python_version="$(tr -d '[:space:]' < .python-version)"
 echo "bootstrap: Python $python_version"
 uv python install "$python_version"
 
-# Every dependency, the epistemic-graph engine and its numeric kernel
+# Every dependency, the medulla engine and its numeric kernel
 # included, installs from PyPI at the version uv.lock pins.
 echo "bootstrap: locked dependencies (PyPI)"
-uv sync --frozen --python "$python_version" --extra test --extra webui
+uv sync --frozen --python "$python_version" --extra test --extra overstory
 
 if [[ "$siblings_only" == 1 ]]; then
   echo "bootstrap: --siblings-only, skipping git hooks (shared .git/hooks across worktrees)"

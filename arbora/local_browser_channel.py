@@ -325,7 +325,7 @@ class LocalBrowserChannelOwner:
                     cancelled = cancelled or error
         except (Exception, asyncio.CancelledError) as error:
             primary = cancelled or error
-            from epistemic_graph.client import EngineResponseError
+            from medulla.client import EngineResponseError
 
             # A native idempotency conflict is a definite refusal, not our lease.
             if (

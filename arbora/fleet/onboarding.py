@@ -1,4 +1,4 @@
-"""Onboard the configured fleet MCP servers into epistemic-graph's catalog.
+"""Onboard the configured fleet MCP servers into medulla's catalog.
 
 The fleet catalog joins live ``RegisterServer`` rows with current
 ``mcp_server`` components. A registration alone admits nothing. Onboarding
@@ -176,7 +176,7 @@ class _PackResourceSession:
         self._session = session
 
     async def list_resources(self) -> list[Any]:
-        from agent_connector_sdk.artifacts.resources import _RESOURCE_SCHEMES
+        from scion_sdk.artifacts.resources import _RESOURCE_SCHEMES
 
         listed = await self._session.list_resources()
         kept = [
@@ -245,10 +245,10 @@ class _PacedSession:
 
 
 def _capture_kinds() -> tuple[Any, ...]:
-    from agent_connector_sdk.artifacts.prompts import PromptArtifactKind
-    from agent_connector_sdk.artifacts.resources import ResourceArtifactKind
-    from agent_connector_sdk.artifacts.skills import SkillArtifactKind
-    from agent_connector_sdk.artifacts.tools import ToolArtifactKind
+    from scion_sdk.artifacts.prompts import PromptArtifactKind
+    from scion_sdk.artifacts.resources import ResourceArtifactKind
+    from scion_sdk.artifacts.skills import SkillArtifactKind
+    from scion_sdk.artifacts.tools import ToolArtifactKind
 
     class PackResourceKind(ResourceArtifactKind):
         async def list_entries(self, session: Any, server: Any) -> Any:
@@ -292,9 +292,9 @@ def _child_auth() -> Any:
 async def capture_server_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
     """Capture one live fleet server's catalog as a ConnectorPack."""
 
-    from agent_connector_sdk.artifacts.pack import build_content_pack
-    from agent_connector_sdk.ports.session import TransportEndpoint
-    from agent_connector_sdk.transports.mcp import McpTransport
+    from scion_sdk.artifacts.pack import build_content_pack
+    from scion_sdk.ports.session import TransportEndpoint
+    from scion_sdk.transports.mcp import McpTransport
 
     transport_endpoint = TransportEndpoint(
         url=endpoint.url, timeout_seconds=CAPTURE_TIMEOUT_S, auth=auth
@@ -480,9 +480,9 @@ class FleetOnboarding:
         caller proceeds to a real attest and import.
         """
 
-        from epistemic_graph.connector_pack import pack_digest
-        from epistemic_graph.generated.connector_pack import ConnectorPackStatusRequest
-        from epistemic_graph.generated.storage import send_connector_pack_status
+        from medulla.connector_pack import pack_digest
+        from medulla.generated.connector_pack import ConnectorPackStatusRequest
+        from medulla.generated.storage import send_connector_pack_status
 
         from arbora.deployment.semantic_provisioning import bind_session_graph
 
@@ -573,9 +573,9 @@ class FleetOnboarding:
         try:
             from importlib import import_module
 
-            connector_pack = import_module("epistemic_graph.generated.connector_pack")
-            models = import_module("epistemic_graph.generated.models")
-            storage = import_module("epistemic_graph.generated.storage")
+            connector_pack = import_module("medulla.generated.connector_pack")
+            models = import_module("medulla.generated.models")
+            storage = import_module("medulla.generated.storage")
             ConnectorPackOpApproveSource = connector_pack.__dict__[
                 "ConnectorPackOpApproveSource"
             ]
@@ -591,7 +591,7 @@ class FleetOnboarding:
             ]
             send_connector_pack_status = storage.__dict__["send_connector_pack_status"]
         except (ImportError, KeyError):
-            reason = "epistemic-graph does not serve ConnectorPack.approve_source yet"
+            reason = "medulla does not serve ConnectorPack.approve_source yet"
             self._record_source_approvals(
                 endpoint.name,
                 decisions,

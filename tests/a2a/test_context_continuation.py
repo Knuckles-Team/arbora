@@ -31,6 +31,7 @@ def row() -> dict[str, Any]:
         "version": 1,
         "updated_at_ms": 1,
         "kind": "orchestrator_task",
+        "effect_phase": "unstarted",
         "metadata": {
             "a2a_schema": "arbora-a2a-unary-v1",
             "a2a_owner_ref": "owner",
@@ -140,7 +141,7 @@ def test_malformed_canonical_context_does_not_read(
 
 
 def test_fixture_matches_published_eg_caller_view() -> None:
-    from epistemic_graph.client import _work_item_view
+    from medulla.client import _work_item_view
 
     assert _work_item_view(row()) == row()
 

@@ -1,6 +1,6 @@
 """Bounded, privacy-safe canary for an exact local Arbora release.
 
-The canary deliberately does not start Arbora or the Epistemic Graph server.  It
+The canary deliberately does not start Arbora or the medulla server.  It
 proves that the promoted Python environment exposes the current console entry
 points, the packaged server binary, and the folded native numeric kernel. The
 release promoter separately proves that no Arbora or engine process exists
@@ -38,7 +38,7 @@ def _entry_points_ready() -> bool:
 
 
 def _engine_binary_ready() -> bool:
-    candidate = Path(sys.executable).with_name("epistemic-graph-server")
+    candidate = Path(sys.executable).with_name("medulla-server")
     try:
         metadata = candidate.lstat()
     except OSError:

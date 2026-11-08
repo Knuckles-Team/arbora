@@ -5,9 +5,9 @@
 | Part | Role | Deployed as |
 |---|---|---|
 | arbora | The runtime: MCP server (intent verbs + fleet multiplexer meta-tools), REST/A2A control plane, web UI, identity broker, policy (Eunomia), fleet gateway, background daemons | the main process/container |
-| epistemic-graph (EG) | The engine and sole durable authority: graph, SQL catalog, RBAC, identity store, secrets graph, federation, audit | same pod/container as arbora (unified) or a separate service (shared) |
+| medulla (EG) | The engine and sole durable authority: graph, SQL catalog, RBAC, identity store, secrets graph, federation, audit | same pod/container as arbora (unified) or a separate service (shared) |
 | meristem (AU) | Agent-orchestration library (agents, harness, workflows) imported by arbora | a Python dependency only; no service, no port |
-| connectors | MCP servers built on agent-connector-sdk | separate processes/pods reached through the fleet multiplexer |
+| connectors | MCP servers built on scion-sdk | separate processes/pods reached through the fleet multiplexer |
 
 arbora is the only public surface. Nothing else should be exposed to users.
 
@@ -20,7 +20,7 @@ one identity, one lifecycle and one hostname set.
   native sidecar container (`initContainers` entry with
   `restartPolicy: Always`) in the arbora pod, started from the same unified
   image. arbora connects over a Unix socket on a shared `emptyDir`
-  (`GRAPH_SERVICE_ENDPOINTS=unix:///run/epistemic-graph/epistemic-graph.sock`).
+  (`GRAPH_SERVICE_ENDPOINTS=unix:///run/medulla/medulla.sock`).
   The engine has its own resources, restarts and logs, and starts before
   arbora. arbora admits to it as a client, so the engine signer key for
   arbora's principal goes in the runtime Secret both containers read (see
@@ -65,8 +65,8 @@ genuinely required.
 ## Images
 
 The Compose file and the chart consume an operator-supplied **unified image**:
-arbora, meristem, agent-connector-sdk, the web UI extra, and the
-`epistemic-graph-server` binary at a matching release. arbora does not
+arbora, meristem, scion-sdk, the web UI extra, and the
+`medulla-server` binary at a matching release. arbora does not
 publish an authoritative image of its own; the deploying organization builds
 it from released artifacts and pins it by digest. Check the CPU baseline of
 the engine binary against every node it can run on.

@@ -18,7 +18,7 @@ def register_browser_control_tools(mcp: Any) -> None:
     @mcp.tool(
         name="browser_control",
         description=(
-            "Drive an attended agent-webui document through Arbora authority. "
+            "Drive an attended overstory document through Arbora authority. "
             "Actions: issue_lease, execute_call, cancel_call, reconcile_call, "
             "revoke_lease."
         ),

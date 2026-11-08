@@ -1,13 +1,13 @@
-"""Typed epistemic-graph fleet-catalog read and join seam.
+"""Typed medulla fleet-catalog read and join seam.
 
 ``RegisterServer``-backed ``:Server`` rows in ``__commons__`` answer which
 servers are live. ``AgentComponent.Search`` / ``Current`` / ``Content`` answer
 what those servers provide. This module joins those two authorities without
 an SQL, change-envelope, static-file, or live-probe fallback.
 
-The protocol is Arbora's narrow application boundary over epistemic-graph's
+The protocol is Arbora's narrow application boundary over medulla's
 generated ``AgentComponent`` and registered-server read contracts.  Concrete
-wire DTOs remain owned by epistemic-graph and are translated only by the
+wire DTOs remain owned by medulla and are translated only by the
 composition-root adapter.
 """
 
@@ -193,7 +193,7 @@ class FleetCatalog:
 class FleetCatalogReadPort(Protocol):
     """One long-lived EG client adapter used by ``FleetCatalogReader``.
 
-    The eventual adapter owns one ``EpistemicGraphClient`` instance. Its
+    The eventual adapter owns one ``MedullaClient`` instance. Its
     server method queries only ``__commons__`` ``:Server`` rows written by
     ``RegisterServer``; the others map 1:1 to AgentComponent operations.
     """

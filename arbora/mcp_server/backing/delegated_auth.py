@@ -152,7 +152,7 @@ def get_user_identity() -> dict[str, Any]:
     subject = claims.get("sub") or claims.get("client_id") or claims.get("azp")
     if not subject:
         return {"identity_ref": "", "has_claims": bool(claims)}
-    from agent_connector_sdk.privacy import persistence_reference
+    from scion_sdk.privacy import persistence_reference
 
     return {
         "identity_ref": persistence_reference("delegated_actor", subject),

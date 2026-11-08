@@ -1,15 +1,19 @@
-"""Generate caller-bound operations from the installed EG wheel contract.
+"""Generate caller-bound operations from medulla's run-time method catalog.
 
-There is intentionally no source-tree fallback: a missing or incomplete pinned
-wheel contract must stop API generation rather than silently omit operations.
+The engine serves its method catalog (methods, scopes and the catalog digest)
+at run time through ``medulla.engine.method_catalog()``; its descriptor rows
+are the one source of truth. There is no file source and no fallback: a missing
+or malformed catalog stops API generation rather than silently omitting
+operations.
 """
 
 from __future__ import annotations
 
+import functools
+import importlib
 import json
 import re
-from collections.abc import Iterable
-from importlib import resources
+from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -19,44 +23,72 @@ from .spec import (
     AuditClass,
     Effect,
     EgMethod,
-    EgSchemaRef,
     Executor,
     Idempotency,
     OpSpec,
     PrincipalRule,
     Stability,
     Verb,
+    eg_method_ref,
 )
 
 _EXCLUSIONS = Path(__file__).with_name("eg_exclusions.yaml")
-_SCHEMA_PREFIX = "contract/"
 _VALID_CLASSES = {"user", "domain", "service-only", "approver", "admin"}
+#: Descriptor stability -> arbora operation stability. A deprecated engine
+#: method carries no removal release, so it maps to the closest non-stable
+#: value; ``internal`` methods are never wire-callable and never generated.
+_STABILITY = {"stable": Stability.STABLE, "deprecated": Stability.EXPERIMENTAL}
 
 
 class EgContractError(ValueError):
-    """The pinned EG contract cannot safely define a complete API."""
+    """The engine's method catalog cannot safely define a complete API."""
 
 
-def _read_json(path: Path) -> dict[str, Any]:
+@functools.cache
+def _installed_catalog() -> Mapping[str, Any]:
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise EgContractError(f"cannot read EG contract {path}: {exc}") from exc
-    if not isinstance(value, dict):
-        raise EgContractError(f"EG contract {path} must be an object")
+        engine = importlib.import_module("medulla.engine")
+    except ImportError as exc:
+        raise EgContractError("the medulla engine is unavailable") from exc
+    serve = getattr(engine, "method_catalog", None)
+    if not callable(serve):
+        raise EgContractError("the installed medulla serves no method catalog")
+    try:
+        value = json.loads(serve())
+    except (TypeError, ValueError) as exc:
+        raise EgContractError(f"cannot read the medulla method catalog: {exc}") from exc
+    return _checked_catalog(value)
+
+
+def _checked_catalog(value: object) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise EgContractError("the medulla method catalog must be an object")
+    digest = value.get("catalog_digest")
+    if not isinstance(digest, str) or not digest:
+        raise EgContractError("the medulla method catalog requires a catalog_digest")
+    for key in ("methods", "scopes"):
+        rows = value.get(key)
+        if not isinstance(rows, list) or not rows:
+            raise EgContractError(f"the medulla method catalog requires nonempty {key}")
     return value
 
 
-def _contract_root(contract_root: Path | None) -> Path:
-    if contract_root is not None:
-        return Path(contract_root)
-    try:
-        root = resources.files("epistemic_graph").joinpath("contract")
-        return Path(str(root))
-    except (ModuleNotFoundError, TypeError) as exc:
-        raise EgContractError(
-            "the pinned epistemic_graph wheel is unavailable"
-        ) from exc
+def load_catalog(catalog: Mapping[str, Any] | None = None) -> Mapping[str, Any]:
+    """Return a checked method catalog: ``catalog`` or the installed engine's.
+
+    ``None`` reads ``medulla.engine.method_catalog()`` once per process.
+    A supplied mapping (fixtures, tests) is shape-checked the same way.
+    """
+
+    if catalog is None:
+        return _installed_catalog()
+    return _checked_catalog(catalog)
+
+
+def catalog_digest(catalog: Mapping[str, Any] | None = None) -> str:
+    """The catalog digest the engine binds replay identities to."""
+
+    return str(load_catalog(catalog)["catalog_digest"])
 
 
 _SUPERSEDED_REASON = re.compile(
@@ -99,14 +131,10 @@ def _load_exclusions(path: Path) -> dict[str, str]:
     return result
 
 
-def _load_scopes(root: Path) -> dict[str, str]:
-    document = _read_json(root / "scopes.json")
-    rows = document.get("scopes")
-    if not isinstance(rows, list) or not rows:
-        raise EgContractError("EG scopes.json requires a nonempty scopes list")
+def _load_scopes(catalog: Mapping[str, Any]) -> dict[str, str]:
     scopes: dict[str, str] = {}
-    for row in rows:
-        if not isinstance(row, dict):
+    for row in catalog["scopes"]:
+        if not isinstance(row, Mapping):
             raise EgContractError("EG scope row must be an object")
         scope, scope_class = row.get("scope"), row.get("class")
         if not isinstance(scope, str) or not scope or scope in scopes:
@@ -117,69 +145,18 @@ def _load_scopes(root: Path) -> dict[str, str]:
     return scopes
 
 
-def load_generated_scopes(contract_root: Path | None = None) -> dict[str, str]:
-    """Return the pinned EG contract's scope name -> scope class mapping.
+def load_generated_scopes(
+    catalog: Mapping[str, Any] | None = None,
+) -> dict[str, str]:
+    """Return the engine catalog's scope name -> scope class mapping.
 
     This is the single generated scope registry: every scope Arbora itself
     advertises must match a name and class recorded here rather than a
-    separately maintained list (ARBORA-IDENTITY-R002). ``contract_root`` is
-    for fixture and wheel integration tests; production uses the pinned wheel.
+    separately maintained list (ARBORA-IDENTITY-R002). ``catalog`` is for
+    fixtures; production reads the installed engine's run-time catalog.
     """
 
-    return _load_scopes(_contract_root(contract_root))
-
-
-def _schema_descriptor_ref(descriptor: Any, method_id: str) -> str:
-    if not isinstance(descriptor, dict) or not isinstance(
-        descriptor.get("schema"), str
-    ):
-        raise EgContractError(f"{method_id}: missing schema reference")
-    return descriptor["schema"]
-
-
-def _schema_relative_path(ref: str, method_id: str) -> tuple[Path, str]:
-    path_text, marker, pointer = ref.partition("#")
-    if (
-        not marker
-        or not path_text.startswith(_SCHEMA_PREFIX)
-        or not pointer.startswith("/")
-    ):
-        raise EgContractError(f"{method_id}: invalid schema reference {ref!r}")
-    relative = Path(path_text.removeprefix(_SCHEMA_PREFIX))
-    if (
-        not relative.parts
-        or relative.is_absolute()
-        or ".." in relative.parts
-        or relative.parts[0] != "schemas"
-    ):
-        raise EgContractError(f"{method_id}: schema leaves wheel contract")
-    return relative, pointer
-
-
-def _resolve_schema_pointer(
-    document: dict[str, Any], pointer: str, ref: str, method_id: str
-) -> None:
-    value: Any = document
-    for segment in pointer.lstrip("/").split("/"):
-        segment = segment.replace("~1", "/").replace("~0", "~")
-        if not isinstance(value, dict) or segment not in value:
-            raise EgContractError(f"{method_id}: missing schema pointer {ref!r}")
-        value = value[segment]
-
-
-def _schema_ref(
-    root: Path,
-    descriptor: Any,
-    method_id: str,
-    schema_documents: dict[Path, dict[str, Any]],
-) -> EgSchemaRef:
-    ref = _schema_descriptor_ref(descriptor, method_id)
-    relative, pointer = _schema_relative_path(ref, method_id)
-    schema_path = root / relative
-    if schema_path not in schema_documents:
-        schema_documents[schema_path] = _read_json(schema_path)
-    _resolve_schema_pointer(schema_documents[schema_path], pointer, ref, method_id)
-    return EgSchemaRef(path=ref)
+    return _load_scopes(load_catalog(catalog))
 
 
 def _method_identity(row: dict[str, Any]) -> tuple[str, str]:
@@ -244,18 +221,15 @@ def _method_summary(row: dict[str, Any], method_id: str) -> str:
 
 
 def _method_stability(row: dict[str, Any], method_id: str) -> Stability:
-    stability = row.get("stability")
-    if stability not in {"stable", "beta", "experimental"}:
-        raise EgContractError(f"{method_id}: unsupported wire stability {stability!r}")
-    return Stability(stability)
+    stability = _STABILITY.get(row.get("stability"))  # type: ignore[arg-type]
+    if stability is None:
+        raise EgContractError(
+            f"{method_id}: unsupported wire stability {row.get('stability')!r}"
+        )
+    return stability
 
 
-def _method_op(
-    row: dict[str, Any],
-    root: Path,
-    scopes: dict[str, str],
-    schema_documents: dict[Path, dict[str, Any]],
-) -> OpSpec:
+def _method_op(row: dict[str, Any], scopes: dict[str, str]) -> OpSpec:
     method_id, domain = _method_identity(row)
     scope, policy = _method_policy(row, method_id, scopes)
     scope_class = scopes[scope]
@@ -268,10 +242,8 @@ def _method_op(
         verb=Verb.MANAGE if is_admin else Verb.WRITE if policy["mutates"] else Verb.ASK,
         summary=summary,
         examples=(f"{method_id} {domain}",),
-        params=_schema_ref(
-            root, row.get("request_schema"), method_id, schema_documents
-        ),
-        result=_schema_ref(root, row.get("result_schema"), method_id, schema_documents),
+        params=eg_method_ref(method_id, "request"),
+        result=eg_method_ref(method_id, "result"),
         binding=EgMethod(service=method_id, op=method_id),
         executor=Executor.CALLER,
         scopes=frozenset({scope}),
@@ -290,14 +262,14 @@ def _method_op(
 def _index_methods(rows: list[Any]) -> dict[str, dict[str, Any]]:
     methods: dict[str, dict[str, Any]] = {}
     for row in rows:
-        if not isinstance(row, dict) or not isinstance(row.get("id"), str):
+        if not isinstance(row, Mapping) or not isinstance(row.get("id"), str):
             raise EgContractError("EG method row needs an ID")
         method_id = row["id"]
         if method_id in methods:
             raise EgContractError(f"duplicate EG method: {method_id}")
         if not isinstance(row.get("is_wire_callable"), bool):
             raise EgContractError(f"{method_id}: missing is_wire_callable")
-        methods[method_id] = row
+        methods[method_id] = dict(row)
     return methods
 
 
@@ -369,31 +341,26 @@ def _check_coverage(
 
 def load_eg_bindings(
     *,
-    contract_root: Path | None = None,
+    catalog: Mapping[str, Any] | None = None,
     curated_ops: Iterable[OpSpec] = (),
     exclusions_path: Path | None = None,
 ) -> tuple[OpSpec, ...]:
     """Return one op per wire-callable EG method not covered by a curated op.
 
-    Exact method coverage, exclusion rot, scope registration and schema refs are
-    checked before returning. ``contract_root`` and ``exclusions_path`` are for
-    fixture and wheel integration tests; production uses the pinned wheel.
+    Exact method coverage, exclusion rot, scope registration and the curated
+    bindings are checked before returning. ``catalog`` and ``exclusions_path``
+    are for fixtures; production reads the installed engine's run-time catalog.
     """
 
-    root = _contract_root(contract_root)
-    document = _read_json(root / "methods.json")
-    rows = document.get("methods")
-    if not isinstance(rows, list) or not rows:
-        raise EgContractError("EG methods.json requires a nonempty methods list")
-    scopes = _load_scopes(root)
+    checked = load_catalog(catalog)
+    scopes = _load_scopes(checked)
     exclusions = _load_exclusions(exclusions_path or _EXCLUSIONS)
-    methods = _index_methods(rows)
+    methods = _index_methods(checked["methods"])
     curated = tuple(curated_ops)
     _check_exclusion_rot(exclusions, methods, curated)
     direct = _bind_curated(curated, methods, exclusions, scopes)
-    schema_documents: dict[Path, dict[str, Any]] = {}
     generated = tuple(
-        _method_op(row, root, scopes, schema_documents)
+        _method_op(row, scopes)
         for method_id, row in sorted(methods.items())
         if row["is_wire_callable"]
         and method_id not in exclusions

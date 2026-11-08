@@ -1,6 +1,6 @@
 """Just-in-time RBAC elevation: the one client every surface shares (MERISTEM-SEC-R006).
 
-epistemic-graph owns the authority (MERISTEM-SEC-R006): an elevation is a time-boxed
+medulla owns the authority (MERISTEM-SEC-R006): an elevation is a time-boxed
 ``rbac.elevation`` lease the graph-access chokepoint consults, approved by a
 second identity, hard-expiring, never extended and audited on every use. This
 module is the typed client over EG's ``RbacElevation`` method that the served
@@ -221,7 +221,7 @@ class ElevationService:
         self._clock_ms = clock_ms
 
     async def _send(self, op: dict[str, Any]) -> Any:
-        from epistemic_graph.generated.security import send_rbac_elevation
+        from medulla.generated.security import send_rbac_elevation
 
         result = await send_rbac_elevation(self._client, {"op": op})
         return _decoded(result.payload)

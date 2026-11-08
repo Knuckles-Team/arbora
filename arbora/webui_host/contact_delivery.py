@@ -1,4 +1,4 @@
-"""Governed agent-webui contact delivery through native AU authorities.
+"""Governed overstory contact delivery through native AU authorities.
 
 Only the atomic WorkItem creator may invoke messaging. Contact PII stays in
 the in-memory provider payload; graph state contains only HMAC references and
@@ -15,7 +15,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from agent_connector_sdk.privacy import persistence_reference
+from scion_sdk.privacy import persistence_reference
 
 from arbora.messaging.service import MessagingService
 from arbora.webui_host.contact_governance import (
@@ -35,7 +35,7 @@ from arbora.work_items import (
 )
 
 if TYPE_CHECKING:
-    from agent_webui.contact_delivery import (
+    from overstory.contact_delivery import (
         ContactDeliveryRequest,
         ContactDeliveryResult,
     )
@@ -54,11 +54,11 @@ class _Admission:
 def _result(
     receipt: str | None = None, *, error: BaseException | None = None
 ) -> ContactDeliveryResult:
-    from agent_webui.contact_delivery import ContactDeliveryResult
+    from overstory.contact_delivery import ContactDeliveryResult
 
     if error is not None:
         logger.warning(
-            "agent-webui contact delivery outcome unknown (%s)",
+            "overstory contact delivery outcome unknown (%s)",
             type(error).__name__,
         )
     return ContactDeliveryResult(success=receipt is not None, receipt=receipt)
@@ -72,7 +72,7 @@ def _replay_admission(
 
 
 class WebUIContactDelivery:
-    """Host adapter satisfying agent-webui's governed contact port."""
+    """Host adapter satisfying overstory's governed contact port."""
 
     def __init__(
         self,
@@ -187,7 +187,7 @@ class WebUIContactDelivery:
     ) -> ContactDeliveryResult:
         submission = request.submission
         text = (
-            "New agent-webui contact submission\n"
+            "New overstory contact submission\n"
             f"Name: {submission.name}\nEmail: {submission.email}\n"
             f"Subject: {submission.subject}\n\n{submission.message}"
         )
@@ -245,7 +245,7 @@ def build_webui_contact_delivery(
     """Build only with an engine client and a delivery-only contact policy."""
     if engine is None:
         return None
-    from agent_webui.contact_delivery import load_contact_delivery_config
+    from overstory.contact_delivery import load_contact_delivery_config
 
     config = load_contact_delivery_config()
     if (

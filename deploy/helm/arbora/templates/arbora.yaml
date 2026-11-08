@@ -43,7 +43,7 @@ spec:
           {{- end }}
           startupProbe:
             exec:
-              command: ["/bin/sh", "-c", "test -S /run/epistemic-graph/epistemic-graph.sock"]
+              command: ["/bin/sh", "-c", "test -S /run/medulla/medulla.sock"]
             # A large store recovers for minutes on a cold start.
             failureThreshold: 360
             periodSeconds: 5

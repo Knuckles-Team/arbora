@@ -23,12 +23,12 @@ from collections.abc import Callable
 from typing import Any, cast
 from urllib.parse import urlsplit
 
-from agent_connector_sdk.credentials.runtime_references import (
+from scion_sdk.credentials.runtime_references import (
     RuntimeSecretReferenceAction,
     RuntimeSecretReferenceError,
     resolve_runtime_secret_reference,
 )
-from agent_connector_sdk.utilities import to_boolean
+from scion_sdk.utilities import to_boolean
 
 from arbora.core.settings import setting
 from arbora.version import __version__
@@ -2065,7 +2065,7 @@ def mcp_network_run_kwargs(args: argparse.Namespace) -> dict[str, Any]:
 # factory ~62 fleet MCP servers already call), not per-server, so it is native
 # by default with zero per-server opt-in. Killing the process simply stops the
 # heartbeats; the engine's own stale-lease reaper expires the row once the
-# lease lapses (`epistemic-graph` `src/server/registry_reaper.rs`).
+# lease lapses (`medulla` `src/server/registry_reaper.rs`).
 #
 # The au config-file sync (`knowledge_graph.core.engine_ingestion.
 # ingest_mcp_server`) remains a RECONCILER over the SAME `:Server` shape — it
@@ -2304,7 +2304,7 @@ def _register_operational_routes(
     custom_route still produce a working server."""
     try:
         # render_metrics_with_engine() merges the Python gateway's own
-        # Prometheus exposition with the embedded epistemic-graph engine's
+        # Prometheus exposition with the embedded medulla engine's
         # (fetched from its loopback-only listener — the engine refuses any
         # non-loopback auxiliary listener outright, so this process is the
         # only thing that CAN re-serve it). This is the live /metrics path

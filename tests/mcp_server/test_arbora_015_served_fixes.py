@@ -243,7 +243,7 @@ def test_the_fleet_agent_toolset_binds_the_served_intent_verbs(monkeypatch) -> N
         raise AssertionError("legacy tool called")
 
     monkeypatch.setitem(runtime.REGISTERED_TOOLS, "act", legacy_act)
-    from agent_utilities import host_ports
+    from meristem import host_ports
 
     monkeypatch.setattr(host_ports, "emit_run_event", events.append)
     toolset = runtime.build_native_arbora_toolset(
