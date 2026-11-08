@@ -8,11 +8,12 @@ the class rules they carry are enforced by the EG identity store.
 from __future__ import annotations
 
 EG_SCOPE_REGISTRY_SHA256 = (
-    "0df247f19923722805761fd3d8a35202023aac3247c790cfd16f015ef3bd0216"
+    "a3c24f7a4b889d0b6a7edf52627230a6b43d85f2ddaa23e282b79f35d834cc87"
 )
 
 #: scope -> class (user | domain | service-only | approver | admin).
 SCOPE_CLASSES: dict[str, str] = {
+    "actions:write": "user",
     "admin:backup": "admin",
     "admin:cluster": "admin",
     "admin:cluster-read": "service-only",
@@ -25,6 +26,8 @@ SCOPE_CLASSES: dict[str, str] = {
     "admin:policy-evolution-store": "admin",
     "admin:sqlite-file": "admin",
     "agent:assemble-read": "user",
+    "agent:claim-read": "user",
+    "agent:claim-write": "user",
     "agent:component-read": "user",
     "agent:component-write": "user",
     "agent:decision-evaluate": "user",
@@ -42,6 +45,7 @@ SCOPE_CLASSES: dict[str, str] = {
     "approvals:decide": "approver",
     "approvals:read": "approver",
     "asr:transcribe": "user",
+    "audit:operator": "admin",
     "blob:admin": "admin",
     "blob:read": "user",
     "blob:write": "user",
@@ -49,10 +53,15 @@ SCOPE_CLASSES: dict[str, str] = {
     "broker:admin": "service-only",
     "broker:consume": "service-only",
     "broker:publish": "service-only",
+    "bus:read": "user",
+    "bus:write": "user",
     "capacity:admin": "service-only",
     "capacity:lease": "service-only",
     "capacity:read": "service-only",
     "capacity:throttle": "service-only",
+    "catalog:access-decide": "domain",
+    "catalog:access-request": "user",
+    "catalog:data-product": "domain",
     "cdc:admin": "admin",
     "cdc:read": "user",
     "cep:admin": "admin",
@@ -60,11 +69,13 @@ SCOPE_CLASSES: dict[str, str] = {
     "channel:admin": "admin",
     "channel:read": "user",
     "channel:write": "user",
+    "chats:own": "user",
     "cluster:placement-read": "user",
     "cluster:topology-read": "user",
     "compute:datascience": "service-only",
     "compute:finance": "service-only",
     "compute:graph-algo": "service-only",
+    "compute:graph-read": "user",
     "compute:parse": "service-only",
     "compute:semantic": "service-only",
     "compute:solve": "service-only",
@@ -83,6 +94,7 @@ SCOPE_CLASSES: dict[str, str] = {
     "finance:backfill": "domain",
     "finance:propose-order": "domain",
     "finance:read": "domain",
+    "finance:records": "domain",
     "finance:track": "domain",
     "fleet:control": "admin",
     "fleet:events": "service-only",
@@ -96,6 +108,7 @@ SCOPE_CLASSES: dict[str, str] = {
     "graph:admin": "admin",
     "graph:read": "user",
     "graph:write": "user",
+    "graphlearn:read": "user",
     "graphlearn:write": "user",
     "host:issue-start": "service-only",
     "identity:admin": "admin",
@@ -103,6 +116,8 @@ SCOPE_CLASSES: dict[str, str] = {
     "identity:provision": "service-only",
     "identity:read": "admin",
     "identity:self": "user",
+    "incident:read": "user",
+    "incident:write": "user",
     "ingest:read": "user",
     "ingest:write": "user",
     "jobs:write": "user",
@@ -147,9 +162,11 @@ SCOPE_CLASSES: dict[str, str] = {
     "query:decide": "user",
     "query:graphql": "user",
     "query:nl": "user",
+    "query:read": "user",
     "query:sql": "user",
     "query:stream": "user",
     "query:unified": "user",
+    "query:write": "user",
     "rbac:approve-elevation": "approver",
     "rbac:elevation": "user",
     "rbac:elevation-read": "user",
@@ -165,6 +182,8 @@ SCOPE_CLASSES: dict[str, str] = {
     "resource:reserve": "service-only",
     "scene:read": "user",
     "scene:write": "user",
+    "scheduler:read": "user",
+    "schema:projections": "user",
     "security:admin": "admin",
     "security:audit": "admin",
     "security:audit-write": "service-only",
@@ -211,6 +230,11 @@ SCOPE_CLASSES: dict[str, str] = {
     "work:read": "user",
     "work:submit": "user",
     "work:write": "user",
+    "workflow:registry": "user",
+    "workspace:read": "user",
+    "workspace:write": "user",
+    "workstream:read": "user",
+    "workstream:write": "user",
 }
 
 #: approver-class scope -> the one built-in group that confers it.

@@ -89,7 +89,7 @@ def test_every_state_and_transition_rolls_up_to_the_core_classes(
         "AtExpiry",
         "IdentityUnchanged",
     }
-    assert _rolls_up(store, f"{ARBORA}LeaseTransitionRefused", "TransitionRefused")
+    assert _rolls_up(store, f"{ARBORA}LeaseTransitionRefused", "Concept")
     assert _rolls_up(store, f"{ARBORA}LeaseTransition", "Transition")
 
     rows = _select(

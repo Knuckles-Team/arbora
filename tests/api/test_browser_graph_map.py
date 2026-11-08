@@ -28,14 +28,14 @@ BROWSER_GRAPH_MAP: dict[str, tuple[tuple[str, str], ...]] = {
         ("eg.graph.Metrics", "service:control"),
     ),
     "GET /graph/graph3d/clusters": (
-        ("eg.compute.ClusterHierarchyClusters", "compute:graph-algo"),
+        ("eg.compute.ClusterHierarchyClusters", "compute:graph-read"),
     ),
     "GET /graph/graph3d/expand": (
-        ("eg.compute.ClusterHierarchyExpand", "compute:graph-algo"),
+        ("eg.compute.ClusterHierarchyExpand", "compute:graph-read"),
     ),
     "GET /graph/graph3d": (("eg.graph.GetSubgraph", "node:read"),),
     "GET /graph/impact/{symbol}": (
-        ("eg.compute.GetBlastRadius", "compute:graph-algo"),
+        ("eg.compute.GetBlastRadius", "compute:graph-read"),
     ),
     "GET /graph/node-types": (("query.uql", "query:unified"),),
     "GET /graph/search": (("retrieval.search", "memory:read"),),
@@ -44,15 +44,13 @@ BROWSER_GRAPH_MAP: dict[str, tuple[tuple[str, str], ...]] = {
 }
 
 # Engine methods whose scope class is service-only in the pinned engine
-# contract, so a browser session cannot call them.  The fix is an engine
-# scope-class change (a medulla row), never an arbora shim.
-ENGINE_SCOPE_GAPS = frozenset(
-    {
-        "eg.compute.ClusterHierarchyClusters",
-        "eg.compute.ClusterHierarchyExpand",
-        "eg.compute.GetBlastRadius",
-    }
-)
+# contract, so a browser session cannot call them.  The pinned engine (3.3.0)
+# serves every mapped method to a browser session, so the list is empty.
+ENGINE_SCOPE_GAPS: frozenset[str] = frozenset()
+
+# Methods the default engine build omits (a cargo feature); the route binds
+# whenever the installed engine's catalog carries them.
+FEATURE_GATED = frozenset({"eg.ingestion.Viz"})
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R904")
 
@@ -63,6 +61,8 @@ def test_every_mapped_operation_exists_in_the_registry_with_the_scope_named() ->
     assert "graph.query" not in ids
     for route, targets in BROWSER_GRAPH_MAP.items():
         for op_id, scope in targets:
+            if op_id in FEATURE_GATED and op_id not in ids:
+                continue
             assert op_id in ids, f"{route}: {op_id} is not served"
             op = registry[op_id]
             assert op.scopes == frozenset({scope}), f"{route}: {op_id} scope"

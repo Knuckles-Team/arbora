@@ -67,7 +67,7 @@ def test_replaced_wrapper_methods_are_served(served: dict, module: str) -> None:
 
 
 @pytest.mark.spec("ARBORA-OPS-R843.2")
-def test_media_transcription_is_served_by_the_engine_asr_method() -> None:
+def test_media_transcription_is_served_by_the_engine_asr_method(tmp_path) -> None:
     """An engine whose catalog lists ``Asr`` serves it as ``eg.ingestion.Asr``.
 
     The default engine build omits the transcription feature, so its catalog
@@ -77,5 +77,11 @@ def test_media_transcription_is_served_by_the_engine_asr_method() -> None:
         (method_row("Asr", "asr:transcribe", domain="ingestion", idempotent=False),),
         (scope_row("asr:transcribe", "user"),),
     )
-    served = {op.id: op for op in load_eg_bindings(catalog=document)}
+    # The fixture catalog carries only Asr, so the production exclusions would rot.
+    no_exclusions = tmp_path / "exclusions.yaml"
+    no_exclusions.write_text("exclusions: []\n", encoding="utf-8")
+    served = {
+        op.id: op
+        for op in load_eg_bindings(catalog=document, exclusions_path=no_exclusions)
+    }
     assert served["eg.ingestion.Asr"].effect is not None

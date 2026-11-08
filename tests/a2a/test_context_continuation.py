@@ -31,6 +31,7 @@ def row() -> dict[str, Any]:
         "version": 1,
         "updated_at_ms": 1,
         "kind": "orchestrator_task",
+        "effect_phase": "unstarted",
         "metadata": {
             "a2a_schema": "arbora-a2a-unary-v1",
             "a2a_owner_ref": "owner",

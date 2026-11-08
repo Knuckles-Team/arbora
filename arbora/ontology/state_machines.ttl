@@ -49,8 +49,13 @@ arbora:LeaseGuard a owl:Class ;
     rdfs:subClassOf :TransitionGuard ;
     rdfs:label "Credential lease guard" .
 
+arbora:TransitionRefused a owl:Class ;
+    rdfs:subClassOf :Concept ;
+    rdfs:label "Transition refused" ;
+    rdfs:comment "The root of this pack's illegal-transition refusals. The core vocabulary defines no refusal class, so the root extends the core :Concept." .
+
 arbora:LeaseTransitionRefused a owl:Class ;
-    rdfs:subClassOf :TransitionRefused ;
+    rdfs:subClassOf arbora:TransitionRefused ;
     rdfs:label "Credential lease transition refused" ;
     rdfs:comment "IllegalLeaseTransition, code LEASE_TRANSITION_ILLEGAL, fields machine (credential_lease), from_state and event. The lease state does not change." .
 
@@ -329,7 +334,7 @@ arbora:ContractGuard a owl:Class ;
     rdfs:label "Client contract guard" .
 
 arbora:ContractTransitionRefused a owl:Class ;
-    rdfs:subClassOf :TransitionRefused ;
+    rdfs:subClassOf arbora:TransitionRefused ;
     rdfs:label "Client contract transition refused" ;
     rdfs:comment "IllegalContractTransition, code CLIENT_CONTRACT_TRANSITION_ILLEGAL, fields machine (client_contract), from_state and event. The state does not change." .
 
@@ -465,7 +470,7 @@ arbora:PluginInstallEvent a owl:Class ;
     rdfs:label "Harness plugin install event" .
 
 arbora:PluginInstallTransitionRefused a owl:Class ;
-    rdfs:subClassOf :TransitionRefused ;
+    rdfs:subClassOf arbora:TransitionRefused ;
     rdfs:label "Harness plugin install transition refused" ;
     rdfs:comment "IllegalInstallTransition, code INSTALL_TRANSITION_ILLEGAL, fields machine (plugin_install), from_state and event. The install state does not change." .
 
@@ -577,7 +582,7 @@ arbora:HarnessCredentialEvent a owl:Class ;
     rdfs:label "Harness hook credential event" .
 
 arbora:HarnessCredentialTransitionRefused a owl:Class ;
-    rdfs:subClassOf :TransitionRefused ;
+    rdfs:subClassOf arbora:TransitionRefused ;
     rdfs:label "Harness hook credential transition refused" ;
     rdfs:comment "IllegalCredentialTransition, code CREDENTIAL_TRANSITION_ILLEGAL, fields machine (harness_credential), from_state and event. The credential state does not change." .
 
