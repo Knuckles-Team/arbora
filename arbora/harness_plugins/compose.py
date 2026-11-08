@@ -17,7 +17,7 @@ from pathlib import Path
 from arbora.harness_plugins.profiles import HarnessProfile, Lifecycle
 
 #: The skills every bundle carries (``US-CONTENT-R007``).
-DOOR_SKILLS: tuple[str, ...] = ("arbora-door", "session-handoff")
+DOOR_SKILLS: tuple[str, ...] = ("canopy", "session-handoff")
 #: The native public client of ``ARBORA-IDENTITY-R030.4``.
 NATIVE_CLIENT_ID = "arbora-native-mcp"
 MCP_PATH = "/mcp"

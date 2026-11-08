@@ -23,7 +23,7 @@ def test_two_renders_give_one_digest(skill_root: Path, tmp_path: Path) -> None:
         assert first == tree_digest(tmp_path / prof.id / "a", exclude=(prof.manifest,))
         manifest = (tmp_path / prof.id / "a" / prof.manifest).read_text()
         assert first[:12] in manifest
-    write_skill(skill_root, "arbora-door", "Changed text.")
+    write_skill(skill_root, "canopy", "Changed text.")
     changed = render(
         compose_bundle(
             profile("claude-code"), base_url=ENDPOINT, skill_roots=[skill_root]
@@ -49,7 +49,7 @@ def test_bundle_holds_no_secret_and_no_escaping_path(
     check_tree(tree, allowed_urls=(ENDPOINT + "/mcp",))
     text = "".join(p.read_text() for p in tree.rglob("*") if p.is_file())
     assert "token" not in text.lower().replace("refresh token", "")
-    write_skill(skill_root, "arbora-door", 'key "client_secret": "abc"')
+    write_skill(skill_root, "canopy", 'key "client_secret": "abc"')
     with pytest.raises(TreeRefused, match="SECRET_IN_BUNDLE"):
         render(
             compose_bundle(
@@ -57,7 +57,7 @@ def test_bundle_holds_no_secret_and_no_escaping_path(
             ),
             tmp_path / "s",
         )
-    write_skill(skill_root, "arbora-door", "Read /opt/elsewhere/notes.txt first.")
+    write_skill(skill_root, "canopy", "Read /opt/elsewhere/notes.txt first.")
     with pytest.raises(TreeRefused, match="PATH_ESCAPES_TREE"):
         render(
             compose_bundle(
@@ -65,10 +65,10 @@ def test_bundle_holds_no_secret_and_no_escaping_path(
             ),
             tmp_path / "p",
         )
-    write_skill(skill_root, "arbora-door")
+    write_skill(skill_root, "canopy")
     outside = tmp_path / "outside.md"
     outside.write_text("outside")
-    os.symlink(outside, skill_root / "arbora-door" / "linked.md")
+    os.symlink(outside, skill_root / "canopy" / "linked.md")
     with pytest.raises(TreeRefused, match="PATH_ESCAPES_TREE"):
         render(
             compose_bundle(

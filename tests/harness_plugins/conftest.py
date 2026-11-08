@@ -19,7 +19,7 @@ def write_skill(root: Path, name: str, body: str = "Use the door.") -> Path:
 @pytest.fixture
 def skill_root(tmp_path: Path) -> Path:
     root = tmp_path / "content" / "skills"
-    for name in ("arbora-door", "session-handoff", "extra-skill"):
+    for name in ("canopy", "session-handoff", "extra-skill"):
         write_skill(root, name)
     return root
 
