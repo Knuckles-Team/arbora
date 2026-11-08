@@ -572,9 +572,16 @@ class FleetGateway:
     async def catalog(
         self, caller: Any, *, server: str = "", include_tools: bool = True
     ) -> Any:
-        """One server's catalog from the multiplexer's ``list_catalog`` (R063)."""
+        """One server's catalog (R063).
+
+        A named server reads the same catalog snapshot as
+        ``fleet.catalog.list`` (ARBORA-FLEET-R040.3); the unnamed fleet
+        listing stays the multiplexer's ``list_catalog``."""
         if "mcp:discover" not in caller.effective_scopes:
             raise PermissionError("mcp:discover is required")
+        ops = getattr(self, "_catalog_ops", None)
+        if server and ops is not None:
+            return await ops.server_catalog(caller, server)
         return await self._relay_mux().list_catalog(
             server=server, include_tools=include_tools
         )
