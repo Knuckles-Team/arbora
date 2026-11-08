@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-11-08
+
+- Requires medulla 3.3.0 and the scion-sdk 0.9 line; the connector, identity and state-machine contracts follow the 3.3.0 engine.
+
 ### Added
 - Audio prompts the harness: chat voice notes and audio attachments, A2A and `agents.run` audio file parts, the fleet agent's A2A application and WebUI dictation all go through one modality seam (`arbora/modality/`). Audio goes to the fleet's `speech-to-text` capability through `fleet.call`, found by contract; the harness runs on the transcript; the original is kept as a `MediaAttachment` record and the `Transcript` record links to it. Typed refusals (`TRANSCRIPTION_UNAVAILABLE`, `MEDIA_TOO_LARGE`, `MEDIA_TOO_LONG`, …) and limits `ARBORA_MEDIA_MAX_BYTES` and `ARBORA_AUDIO_MAX_DURATION_S`. Image and document handlers plug into the same seam.
 
