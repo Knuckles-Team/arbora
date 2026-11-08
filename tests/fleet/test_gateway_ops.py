@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping
 from types import SimpleNamespace
 from typing import Any
 
@@ -297,7 +297,7 @@ async def test_composition_binds_verified_reader_without_starting_probe() -> Non
     class Mux:
         """A fake structurally satisfying ``catalog_composition.CachedProbe``."""
 
-        _probe_cache: Mapping[str, Mapping[str, Any]] = {
+        _probe_cache: MutableMapping[str, Mapping[str, Any]] = {
             "unregistered": {"tools": [{"name": "leak"}]}
         }
 
