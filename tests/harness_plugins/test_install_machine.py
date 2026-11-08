@@ -94,7 +94,7 @@ def test_duplicate_door_refuses_and_edits_nothing(
             {"mcpServers": {"arbora": {"type": "http", "url": ENDPOINT + "/mcp"}}}
         )
     )
-    link = home / ".claude/skills/arbora-door"
+    link = home / ".claude/skills/canopy"
     link.parent.mkdir(parents=True)
     link.symlink_to(home)
     jsonc = home / ".config/opencode/opencode.jsonc"
@@ -103,7 +103,7 @@ def test_duplicate_door_refuses_and_edits_nothing(
     jsonc.write_text('{\n  // door\n  "mcp": {' + door + "},\n}\n")
     before = {p: p.read_bytes() for p in (claude, jsonc)}
     doors = inst.find_duplicate_doors(profile("claude-code"), home, ENDPOINT)
-    assert {d.entry for d in doors} == {"mcpServers.arbora", "skill arbora-door"}
+    assert {d.entry for d in doors} == {"mcpServers.arbora", "skill canopy"}
     assert all(d.removal for d in doors)
     assert (
         cli.main(["install", "--harness", "claude-code", "--endpoint", ENDPOINT]) == 2

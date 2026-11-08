@@ -73,7 +73,7 @@ def test_layout_matches_the_profile(skill_root: Path, tmp_path: Path) -> None:
         "bundle.json",
         "package.json",
         "server.ts",
-        "skills/arbora-door/SKILL.md",
+        "skills/canopy/SKILL.md",
         "skills/session-handoff/SKILL.md",
     ]
     package = json.loads((tree / "package.json").read_text())
@@ -101,7 +101,7 @@ def test_setup_registers_door_skills_and_commands(
             },
         }
     }
-    assert [s["id"] for s in record["skills"]] == ["arbora-door", "session-handoff"]
+    assert [s["id"] for s in record["skills"]] == ["canopy", "session-handoff"]
     assert all(s["hasContent"] and s["description"] for s in record["skills"])
     assert [c["name"] for c in record["commands"]] == ["handoff", "resume"]
 
