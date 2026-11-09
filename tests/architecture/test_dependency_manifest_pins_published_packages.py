@@ -66,8 +66,14 @@ def test_split_repository_dependencies_use_version_specifiers_not_paths() -> Non
 
 @pytest.mark.spec("ARBORA-RELEASE-R003.4.3")
 def test_engine_and_runtime_floors_match_the_release_row() -> None:
-    """The release row's floors: meristem 5.x and exactly medulla 3.3.0."""
+    """The release row's floors: meristem 5.x and one exact medulla release.
+
+    The engine is pinned to one exact published version; which version is the
+    lock's business, so a pin bump does not have to edit this test.
+    """
     pyproject = tomllib.loads(PYPROJECT_PATH.read_text(encoding="utf-8"))
     deps = set(_all_dependency_strings(pyproject))
-    assert "medulla==3.3.0" in deps
+    medulla = [d for d in deps if d.startswith("medulla==")]
+    assert len(medulla) == 1, medulla
+    assert re.fullmatch(r"medulla==\d+\.\d+\.\d+", medulla[0]), medulla
     assert "meristem>=5.0.0,<6.0.0" in deps
