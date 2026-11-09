@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-11-09
+
+### Changed
+
+- Pins medulla 3.3.3, which opens stores written by medulla 2.27.10, so a deployment upgrades its existing store in place.
+
 ## [0.1.8] - 2026-11-08
 
 - Requires medulla 3.3.0 and the scion-sdk 0.9 line; the connector, identity and state-machine contracts follow the 3.3.0 engine.
