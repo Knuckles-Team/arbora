@@ -18,6 +18,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from typing import Any, Literal
 
+from scion_sdk.ontology_namespaces import ACCESS_NAMESPACE
+
 from arbora.fleet.declarations import entry_bytes
 from arbora.fleet.virtual_catalog import (
     DiscoveredEntity,
@@ -38,7 +40,7 @@ SOURCE_KIND_BY_ACCESS = {
 }
 #: Markers that show an ontology body declares an access contract.
 CONTRACT_MARKERS = (
-    "https://knuckles-team.github.io/ontology/access#",
+    ACCESS_NAMESPACE,
     "AccessContract",
 )
 
