@@ -38,7 +38,7 @@ SOURCE_KIND_BY_ACCESS = {
 }
 #: Markers that show an ontology body declares an access contract.
 CONTRACT_MARKERS = (
-    "https://knuckles-team.github.io/scion-sdk/access#",
+    "https://knuckles-team.github.io/ontology/access#",
     "AccessContract",
 )
 

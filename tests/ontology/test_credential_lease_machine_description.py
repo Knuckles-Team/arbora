@@ -16,8 +16,8 @@ from arbora.security.actor_context import (
 )
 
 PACK = Path(__file__).resolve().parents[2] / "arbora/ontology/state_machines.ttl"
-CORE = "http://knuckles.team/kg#"
-ARBORA = "http://knuckles.team/kg/arbora#"
+CORE = "https://knuckles-team.github.io/ontology/core#"
+ARBORA = "https://knuckles-team.github.io/ontology/admission#"
 MACHINE = f"{ARBORA}CredentialLeaseMachine"
 PREFIXES = f"""
 PREFIX : <{CORE}>
