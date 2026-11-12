@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-11-12
+
+### Changed
+
+- Requires scion-sdk 0.10.1 or later in the 0.10 line and uses its relocated modules and single HTTP client factory, so a fresh install imports and every test module collects.
+
 ## [0.1.9] - 2026-11-09
 
 ### Changed
