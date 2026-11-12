@@ -25,9 +25,9 @@ from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
 
-KG = "http://knuckles.team/kg#"
-CAT = "http://knuckles.team/kg/catalog#"
-CP = "http://knuckles.team/kg/connector-pack#"
+KG = "https://knuckles-team.github.io/ontology/core#"
+CAT = "https://knuckles-team.github.io/ontology/catalog#"
+CP = "https://knuckles-team.github.io/ontology/connector-pack#"
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 RDFS_LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
 RDFS_COMMENT = "http://www.w3.org/2000/01/rdf-schema#comment"

@@ -21,8 +21,8 @@ def described_edges(machine_class: str) -> set[tuple[str, str, str]]:
     store = ox.Store()
     store.load(path=str(PACK), format=ox.RdfFormat.TURTLE)
     rows = store.query(
-        f"""PREFIX : <http://knuckles.team/kg#>
-        PREFIX arbora: <http://knuckles.team/kg/arbora#>
+        f"""PREFIX : <https://knuckles-team.github.io/ontology/core#>
+        PREFIX arbora: <https://knuckles-team.github.io/ontology/admission#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         SELECT ?f ?e ?t WHERE {{
           ?x rdfs:subClassOf+ arbora:{machine_class} ; :fromState ?fs ; :firedBy ?ev ; :toState ?ts .
