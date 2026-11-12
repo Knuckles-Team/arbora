@@ -335,10 +335,10 @@ def test_fresh_store_pass_registers_attests_and_imports_each_server(
     assert report.failed == {}
     assert sorted(report.onboarded) == ["alpha-mcp", "beta-mcp"]
     assert sorted(report.renewed) == [
-        "meristem",
         "alpha-mcp",
         "arbora",
         "beta-mcp",
+        "meristem",
     ]
     registered = {params["name"]: params["url"] for params, _key in eg.registers}
     assert registered["alpha-mcp"] == ALPHA.url
