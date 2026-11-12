@@ -59,8 +59,8 @@ def _secret() -> bytes:
         raise RunTokenSecretUnavailable(
             "ARBORA_TOKEN_SECRET must resolve from the secrets backend when "
             "ENABLE_DELEGATED_IDENTITY=on; the PID-derived fallback secret was removed as a "
-            "forgeable-secret risk. Configure the secret reference (e.g. OpenBao "
-            "apps/meristem/*) before enabling delegated identity."
+            "forgeable-secret risk. Configure the secret reference (e.g. a vault "
+            "KV path) before enabling delegated identity."
         )
 
     global _EPHEMERAL
