@@ -19,7 +19,7 @@ import pytest
 from arbora.fleet.plan_confirmation import confirmed_plan_call
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
-pytestmark = pytest.mark.spec("ARBORA-FLEET-R015.2")
+pytestmark = pytest.mark.spec("ARBORA-FLEET-R015.2", "ARBORA-FLEET-R015.6")
 
 TOOL = "servicenow_delete_table_record"
 
@@ -211,3 +211,33 @@ def test_a_non_destructive_or_keyed_call_is_never_marked() -> None:
     assert not _plan_confirmed(SimpleNamespace(idempotency_key="plan:x"), write)
     assert not _plan_confirmed(SimpleNamespace(idempotency_key="k"), destructive)
     assert _plan_confirmed(SimpleNamespace(idempotency_key="plan:x"), destructive)
+
+
+@pytest.mark.parametrize("flag", ["confirm", "allow_destructive"])
+def test_a_declared_destructive_tool_needs_a_plan_whatever_its_arguments_say(
+    flag: str,
+) -> None:
+    services, marked, _ = _pipeline()
+    params = {
+        "server": "sn-child",
+        "tool": TOOL,
+        "arguments": {"sys_id": "abc", flag: True},
+    }
+    result = _call(services, params=params)
+    assert result.code == "CONFIRMATION_REQUIRED"
+    assert marked == []
+
+
+def test_the_declared_destructive_hint_alone_classifies_the_call() -> None:
+    from mcp.types import ToolAnnotations
+
+    from arbora.api.registry import Confirm, Effect
+    from arbora.fleet.gateway_ops import annotation_effect
+
+    declared = ToolAnnotations(destructive_hint=True, read_only_hint=False)
+    effect, confirm, _ = annotation_effect(declared)
+    assert (effect, confirm) == (Effect.DESTRUCTIVE, Confirm.PLAN)
+    effect, confirm, _ = annotation_effect(
+        ToolAnnotations(destructive_hint=False, read_only_hint=True)
+    )
+    assert (effect, confirm) == (Effect.READ, Confirm.NONE)
