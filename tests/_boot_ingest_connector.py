@@ -10,10 +10,8 @@ from __future__ import annotations
 import sys
 
 from fastmcp import FastMCP
-from scion_sdk.ingest.live_declaration import (
-    register_live_declaration,
-    source_meta,
-)
+from scion_sdk.ingest.live_declaration import source_meta
+from scion_sdk.mcp.declaration_resource import register_live_declaration
 
 CONNECTOR = "boot-ingest"
 connector = FastMCP(CONNECTOR)

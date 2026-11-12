@@ -27,8 +27,8 @@ from scion_sdk.ingest.source_sync import (
     SourceSyncError,
     SourceSyncRunner,
 )
-from scion_sdk.ingest.sources import IngestSourceDeclaration
 from scion_sdk.ingest.transport import MedullaIngestTransport
+from scion_sdk.manifest.sources import IngestSourceDeclaration
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.fleet.declarations import RESOURCES_URI, parse_declaration
