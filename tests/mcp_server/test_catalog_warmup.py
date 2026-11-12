@@ -137,3 +137,46 @@ def test_the_warmup_composes_inside_its_own_client_scope(monkeypatch) -> None:
     while warmup.state()["status"] != "ready" and time.monotonic() < deadline:
         time.sleep(0.01)
     assert scoped == [True]
+
+
+@pytest.mark.spec("ARBORA-FLEET-R078")
+def test_an_expired_engine_session_is_reestablished_and_composition_repeats() -> None:
+    """A session that expired during a long warm-up is renewed, not retried stale."""
+    from arbora.security.session import SessionExpiredError
+
+    renewed: list[int] = []
+    composed: list[bool] = []
+
+    async def compose() -> None:
+        # Fails with the expired session until the hook has renewed it.
+        composed.append(bool(renewed))
+        if not renewed:
+            raise SessionExpiredError("Verified graph authority has expired")
+
+    warmup = CatalogWarmup(
+        compose, reestablish=lambda: renewed.append(1), retry_base_s=30.0
+    )
+    warmup.run()
+    state = warmup.state()
+    assert state["status"] == "ready"
+    # One attempt: the renewal and the repeat happen inside it, with no backoff.
+    assert state["attempts"] == 1
+    assert composed == [False, True]
+    assert renewed == [1]
+
+
+@pytest.mark.spec("ARBORA-FLEET-R078")
+def test_an_expired_session_without_a_renewal_hook_is_still_a_retried_failure() -> None:
+    from arbora.security.session import SessionExpiredError
+
+    async def compose() -> None:
+        raise SessionExpiredError("Verified graph authority has expired")
+
+    warmup = CatalogWarmup(compose, retry_base_s=30.0)
+    thread = warmup.start()
+    deadline = time.monotonic() + 5
+    while warmup.state()["status"] != "retrying" and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert warmup.state()["last_error"] == "SessionExpiredError"
+    warmup.stop()
+    thread.join(timeout=5)

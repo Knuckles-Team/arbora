@@ -39,12 +39,14 @@ class CatalogWarmup:
         compose: Callable[[], Coroutine[Any, Any, Any]],
         *,
         after: Callable[[], None] | None = None,
+        reestablish: Callable[[], None] | None = None,
         retry_base_s: float = RETRY_BASE_S,
         retry_cap_s: float = RETRY_CAP_S,
         clock: Callable[[], float] = time.time,
     ) -> None:
         self._compose = compose
         self._after = after
+        self._reestablish = reestablish
         self._retry_base_s = retry_base_s
         self._retry_cap_s = retry_cap_s
         self._clock = clock
@@ -69,7 +71,7 @@ class CatalogWarmup:
         attempts = self.state()["attempts"] + 1
         self._set(attempts=attempts)
         try:
-            asyncio.run(self._compose())
+            self._compose_once()
         except Exception as exc:  # noqa: BLE001 - every failure is retried
             # A class name only: the readiness route is unauthenticated.
             self._set(status="retrying", last_error=type(exc).__name__)
@@ -83,6 +85,25 @@ class CatalogWarmup:
         self._set(status="ready", ready_at=self._clock(), last_error=None)
         logger.info("catalog authorities ready after %d attempt(s)", attempts)
         return True
+
+    def _compose_once(self) -> None:
+        """Compose once; re-establish an expired session and compose again.
+
+        A warm-up outlives the credential it started with (the backoff alone
+        reaches minutes). An expired session is not a catalog fault, so it is
+        renewed and the composition repeats at once instead of failing every
+        later attempt with the same expired session.
+        """
+        from arbora.security.session import SessionExpiredError
+
+        try:
+            asyncio.run(self._compose())
+        except SessionExpiredError:
+            if self._reestablish is None:
+                raise
+            logger.info("catalog warm-up: engine session expired; re-establishing")
+            self._reestablish()
+            asyncio.run(self._compose())
 
     def _run_after(self) -> None:
         if self._after is None:
@@ -126,9 +147,10 @@ def start_catalog_warmup(
     compose: Callable[[], Coroutine[Any, Any, Any]],
     *,
     after: Callable[[], None] | None = None,
+    reestablish: Callable[[], None] | None = None,
 ) -> CatalogWarmup:
     """Start the one process warm-up and make it the reported state."""
-    warmup = CatalogWarmup(compose, after=after)
+    warmup = CatalogWarmup(compose, after=after, reestablish=reestablish)
     _CURRENT[0] = warmup
     warmup.start()
     return warmup

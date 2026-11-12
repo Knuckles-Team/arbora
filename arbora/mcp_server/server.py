@@ -264,7 +264,14 @@ def _start_catalog_warmup(
                 action_policies=action_policies,
             )
 
-    return start_catalog_warmup(compose, after=onboard)
+    def reestablish() -> None:
+        # Renew the process lease in place (the captured session is kept), so
+        # the repeated composition runs under a live engine session.
+        from arbora.mcp_server.bootstrap import _refresh_process_authority
+
+        _refresh_process_authority(session)
+
+    return start_catalog_warmup(compose, after=onboard, reestablish=reestablish)
 
 
 def mcp_server(
