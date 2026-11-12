@@ -95,7 +95,7 @@ class AcpSessionSnapshot:
 class AcpSessionAdmission:
     """Admits and re-checks ACP sessions against identity and policy state.
 
-    ``chat_adapter_available`` is a caller-supplied probe of meristem'
+    ``chat_adapter_available`` is a caller-supplied probe of meristem's
     chat adapter reachability; Arbora consults it before admitting a session
     and before accepting any message, and never substitutes a local reply or
     a REST fallback when it reports unavailable.
