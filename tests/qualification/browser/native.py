@@ -48,7 +48,7 @@ def require_installed() -> dict[str, str]:
         ("arbora", "arbora", None),
         ("medulla", "medulla", "3.3.0"),
         ("meristem", "meristem", "5.0.0"),
-        ("scion-sdk", "scion_sdk", "0.9.1"),
+        ("scion-sdk", "scion_sdk", "0.10.1"),
         ("overstory", "overstory", None),
     ):
         loaded = importlib.import_module(module)

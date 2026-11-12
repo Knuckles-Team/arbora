@@ -37,7 +37,7 @@ dependencies = [
     # SDK owns source transport and runner construction; Arbora supplies its
     # authenticated medulla client through the SDK's public injection
     # seam and never imports connector implementations.
-    "scion-sdk[a2a,mcp]>=0.9.1,<0.10.0",
+    "scion-sdk[a2a,mcp]>=0.10.1,<0.11",
     # The messaging channel layer's HTTP alert intake (arbora/messaging/alert_intake.py)
     # imports aiohttp.web directly for its small webhook listener; platform-agnostic,
     # so unlike the chat-platform SDKs below this is not conditioned on a messaging extra.

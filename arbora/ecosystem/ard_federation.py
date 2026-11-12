@@ -160,11 +160,11 @@ class ArdFederationRelay:
 
     def _post(self, url: str, body: dict) -> list[dict]:
         try:
-            from scion_sdk.http.client import create_http_client
+            from scion_sdk.http.client import build_http_client
             from scion_sdk.http.options import HttpClientOptions
 
             options = HttpClientOptions(base_url=url, timeout=_PEER_TIMEOUT_S)
-            with create_http_client(options) as client:
+            with build_http_client(options) as client:
                 resp = client.post(
                     f"{url.rstrip('/')}/search", json=body, timeout=_PEER_TIMEOUT_S
                 )

@@ -13,7 +13,7 @@ import threading
 from collections.abc import Mapping
 from typing import Any
 
-from scion_sdk.artifacts.resource_descriptor import RESOURCES_URI
+from scion_sdk.manifest.resource_descriptor import RESOURCES_URI
 
 __all__ = [
     "RESOURCES_URI",

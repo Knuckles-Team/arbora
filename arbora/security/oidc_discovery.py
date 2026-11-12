@@ -7,10 +7,7 @@ import time
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlsplit
 
-from scion_sdk.http.client import (
-    create_async_http_client,
-    create_http_client,
-)
+from scion_sdk.http.client import build_http_client
 from scion_sdk.http.options import HttpClientOptions
 from scion_sdk.tls.resolve import resolve_tls_profile
 
@@ -76,12 +73,12 @@ def _options(timeout: float) -> HttpClientOptions:
 
 def oidc_http_client(*, timeout: float = 15.0) -> httpx.Client:
     """Build the canonical synchronous OIDC/JWKS/token client."""
-    return create_http_client(_options(timeout))
+    return build_http_client(_options(timeout))
 
 
 def oidc_async_http_client(*, timeout: float = 15.0) -> httpx.AsyncClient:
     """Build the canonical asynchronous OIDC/JWKS/token client."""
-    return create_async_http_client(_options(timeout))
+    return build_http_client(_options(timeout), async_=True)
 
 
 def _read_bounded(response: httpx.Response, limit: int) -> bytes:
