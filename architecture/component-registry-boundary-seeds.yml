@@ -6,9 +6,9 @@ source_spec: specs/host-composition-boundary/requirements.md
 # ARBORA-HOST-R012 boundary seeds: this repository's own entry and the
 # connector SDK's entry in the architecture component registry (RF-021),
 # each naming its owning module paths and its public import surface. This
-# mirrors agent-utilities' own
+# mirrors meristem's own
 # architecture/component-registry-boundary-seeds.yml (which records the
-# modules moving FROM agent-utilities TO arbora); this file is the
+# modules moving FROM meristem TO arbora); this file is the
 # receiving side, published from arbora, and is independent of
 # architecture/component-registry.yml's cryptographically signed, generated
 # component schema -- that registry is a digest-verified artifact for a

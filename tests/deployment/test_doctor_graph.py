@@ -1,6 +1,6 @@
 """arbora doctor: engine served-tool-family and graph-connection checks.
 
-Moved from agent-utilities (tests/unit/deployment/test_doctor.py BUG-013 rows
+Moved from meristem (tests/unit/deployment/test_doctor.py BUG-013 rows
 and tests/unit/deployment/test_doctor_graph_connections.py) when the harness
 was cut; arbora serves the engine families and owns the connection registry.
 """

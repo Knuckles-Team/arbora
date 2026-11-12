@@ -5,7 +5,7 @@ Supports Adaptive Cards, threads, reactions, and Bot Framework webhook events.
 
 Install::
 
-    pip install agent-utilities[messaging-teams]
+    pip install arbora[messaging-teams]
 
 Configuration::
 
@@ -68,7 +68,7 @@ class TeamsBackend(MessagingBackend):
             from botbuilder.core import BotFrameworkAdapter, BotFrameworkAdapterSettings
         except ImportError:
             raise ImportError(
-                "botbuilder-core is required. Install: pip install agent-utilities[messaging-teams]"
+                "botbuilder-core is required. Install: pip install arbora[messaging-teams]"
             ) from None
 
         if not self.config.app_id or not self.config.app_secret:

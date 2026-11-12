@@ -9,7 +9,7 @@ CONCEPT:MERISTEM-OS.identity.stack-wide-auth-conformance — see
 security/* seed group) because the surface it introspects —
 ``mcp/tools/query_tools.py``'s ``graph_query`` dialect dispatcher — is itself
 seeded to arbora (MERISTEM-BOUNDARY-R003); this package's enumeration crosses
-into agent-utilities for now via :data:`surface_inventory.QUERY_TOOLS_MODULE`
+into meristem for now via :data:`surface_inventory.QUERY_TOOLS_MODULE`
 (resolved through the installed package, not a same-repo relative path).
 
 This package is the first, working instance of the enumeration methodology

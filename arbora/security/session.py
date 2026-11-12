@@ -24,7 +24,7 @@ entire graph call. Callers cannot construct authority from request fields.
 MCP/REST dispatch and in-process graph operations require the immutable session
 minted by authentication middleware or the configured stdio process identity.
 There is no development bypass, implicit actor, or authority-widening helper.
-Arbora owns this admission contract; it moved here when agent-utilities was
+Arbora owns this admission contract; it moved here when meristem was
 cut to the in-run harness.
 """
 
@@ -273,7 +273,7 @@ class GraphSession:
         that has not yet deployed W2.4 rejects the ENTIRE request the moment
         ``priority`` is present, not just the new field. Every engine this
         session can route to MUST be upgraded to a W2.4-carrying build before
-        an agent-utilities build that sets this claim is deployed against it.
+        a meristem build that sets this claim is deployed against it.
         """
         self.ensure_authority_current()
         if not getattr(self.actor, "authenticated", False):

@@ -99,7 +99,7 @@ async def handle_command(content: str, *, service: Any) -> str | None:
         return None
 
     if name == "help":
-        lines = ["I'm your agent-utilities assistant. Commands:"]
+        lines = ["I'm your meristem assistant. Commands:"]
         lines += [f"/{c.name} — {c.description}" for c in COMMANDS]
         lines.append(
             "Or just message me normally — I use the Knowledge Graph and skills to help."
@@ -129,7 +129,7 @@ def _capability_summary(service: Any) -> str:
     query = getattr(engine, "query_cypher", None)
     if not callable(query):
         return (
-            "I'm a full agent-utilities agent: universal tools (Knowledge Graph search, "
+            "I'm a full meristem agent: universal tools (Knowledge Graph search, "
             "reach_user, …), the skill library, and the MCP server fleet — loaded on "
             "demand. Ask in plain language and I'll use what fits."
         )

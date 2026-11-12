@@ -37,10 +37,10 @@ logger = logging.getLogger(__name__)
 _MAX_TOKEN_RESPONSE_BYTES = 1024 * 1024
 
 _user_token_ctx: ContextVar[str | None] = ContextVar(
-    "agent_utilities_delegated_user_token", default=None
+    "meristem_delegated_user_token", default=None
 )
 _user_claims_ctx: ContextVar[dict[str, Any] | None] = ContextVar(
-    "agent_utilities_delegated_user_claims", default=None
+    "meristem_delegated_user_claims", default=None
 )
 
 

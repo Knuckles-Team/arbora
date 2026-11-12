@@ -10,7 +10,7 @@ they touch anything.
 Design notes that shaped the checks:
 
 * **No Rust by default.** ``medulla`` ships as a prebuilt ``maturin``
-  ``bindings="bin"`` wheel, so ``pip install agent-utilities`` drops the
+  ``bindings="bin"`` wheel, so ``pip install medulla`` drops the
   ``medulla-server`` binary straight into ``$VENV/bin``. Rust is only a
   *fallback* — needed when no prebuilt wheel exists for the host arch/libc, or in
   an air-gapped install. The engine check reflects that: missing binary → "install
@@ -169,7 +169,7 @@ def _check_engine() -> dict[str, Any]:
                 "engine_binary",
                 "fail",
                 "medulla-server does not satisfy the current launch contract",
-                remediation="install an approved current agent-utilities artifact",
+                remediation="install an approved current meristem artifact",
             )
         return _result(
             "engine_binary",
@@ -187,8 +187,8 @@ def _check_engine() -> dict[str, Any]:
         "warn",
         "medulla-server not found yet (provided by the medulla wheel)",
         remediation=(
-            "install the prebuilt wheel: `pip install agent-utilities` (or `uv tool install "
-            f"agent-utilities`). {cargo_note}."
+            "install the prebuilt wheel: `pip install medulla` (or `uv tool install "
+            f"medulla`). {cargo_note}."
         ),
     )
 

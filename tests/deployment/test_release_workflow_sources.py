@@ -96,7 +96,7 @@ def test_release_builds_from_this_repository_and_pypi_only() -> None:
     assert product_checkouts == []
     text = (ROOT / ".github" / "workflows" / "checks.yml").read_text(encoding="utf-8")
     for retired in (
-        "agent-utilities",
+        "meristem",
         "scion-sdk",
         "overstory",
         "medulla",

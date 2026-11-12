@@ -1,7 +1,7 @@
 """Pure deploy-watch verdict decision (ARBORA-FLEET-R024.1).
 
 Arbora-owned parity port of the verdict rule previously computed inside
-agent-utilities' ``agent_utilities.orchestration.deploy_watch.run_deploy_watch``,
+meristem's ``agent_utilities.orchestration.deploy_watch.run_deploy_watch``,
 which sat beside the agent runner in that package's ``orchestration/``
 directory (ARBORA-FLEET-R024). That function's probe loop polls a fleet
 observer on a timer and then reduces the probes it collected to one of three

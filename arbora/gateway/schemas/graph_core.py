@@ -536,8 +536,8 @@ class HookDoctorEntry(BaseModel):
         "when the surface has no on-disk config (e.g. an integrated surface)."
     )
     status: Literal["healthy", "stale", "not_installed", "integrated", "n/a"] = Field(
-        description="'healthy' (contains 'agent-utilities'), 'stale' (config "
-        "exists but doesn't reference agent-utilities), 'not_installed' (no "
+        description="'healthy' (contains 'meristem'), 'stale' (config "
+        "exists but doesn't reference meristem), 'not_installed' (no "
         "file yet), 'integrated' (agent-terminal-ui, no separate config "
         "file), or 'n/a'."
     )
@@ -574,7 +574,7 @@ class GoalRecord(BaseModel):
     """One autonomous goal-loop record, as returned by both `GET /goals`
     (a flat list of these) and `GET /goals/{goal_id}/iterations` (one of
     these, or a 404 error body — not modeled here). Sourced from
-    ``agent_utilities/core/sessions.py``'s in-memory `active_goals` entries
+    ``meristem/core/sessions.py``'s in-memory `active_goals` entries
     AND the KG-Loop-node fallback (`_goal_row_to_entry`) — the two shapes
     are IDENTICAL except `created_at`, which the KG-derived fallback never
     populates (hence optional here, not required).
@@ -629,7 +629,7 @@ class GoalRecord(BaseModel):
 
 class CreateGoalRequest(BaseModel):
     """Request body for ``POST /goals`` — launches a new backgrounded
-    autonomous goal-loop (``create_goal`` in ``agent_utilities/core/sessions.py``).
+    autonomous goal-loop (``create_goal`` in ``meristem/core/sessions.py``).
 
     ``extra="allow"``: PROVEN — the handler reads exactly `objective`,
     `max_iterations`, `validation_cmd`, and `constraints` via `body.get(...)`;
@@ -699,7 +699,7 @@ class ListGoalsResponse(BaseModel):
 
 class CancelGoalResponse(BaseModel):
     """Response body for ``POST /goals/{goal_id}/cancel``
-    (``cancel_goal`` in ``agent_utilities/core/sessions.py``). A goal-not-found
+    (``cancel_goal`` in ``meristem/core/sessions.py``). A goal-not-found
     404 returns `{"error": "Active goal run not found"}` instead — not
     modeled here (error shape, not the success contract).
     """
@@ -721,7 +721,7 @@ class CancelGoalResponse(BaseModel):
 
 class SessionRecord(BaseModel):
     """One durable agent-session row, as returned in the flat list from
-    ``GET /sessions`` (``get_all_sessions`` in ``agent_utilities/core/sessions.py``).
+    ``GET /sessions`` (``get_all_sessions`` in ``meristem/core/sessions.py``).
     Field set matches the `sessions` table schema exactly (see
     `_connect_db`'s `CREATE TABLE` statement in that module) plus the two
     boolean coercions the handler applies (`background`/`needs_input` are

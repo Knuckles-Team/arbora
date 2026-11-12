@@ -5,14 +5,14 @@ limiting, engine circuit breaker, multi-worker readiness).
 
 The Rust engine already exposes ``medulla_*`` Prometheus metrics; this
 module mirrors that naming style for the Python tier with an
-``agent_utilities_gateway_*`` prefix so dashboards read coherently:
+``meristem_gateway_*`` prefix so dashboards read coherently:
 
-* ``agent_utilities_gateway_requests_total{route,method,status}``
-* ``agent_utilities_gateway_request_duration_seconds{route}`` (histogram)
-* ``agent_utilities_gateway_in_flight_requests`` (gauge)
-* ``agent_utilities_gateway_rate_limited_total{tenant}``
-* ``agent_utilities_gateway_engine_requests_total{op,outcome}``
-* ``agent_utilities_gateway_engine_breaker_state{endpoint}`` (0=closed,
+* ``meristem_gateway_requests_total{route,method,status}``
+* ``meristem_gateway_request_duration_seconds{route}`` (histogram)
+* ``meristem_gateway_in_flight_requests`` (gauge)
+* ``meristem_gateway_rate_limited_total{tenant}``
+* ``meristem_gateway_engine_requests_total{op,outcome}``
+* ``meristem_gateway_engine_breaker_state{endpoint}`` (0=closed,
   1=half-open, 2=open)
 
 ``prometheus_client`` is an OPTIONAL dependency (the ``metrics`` extra). When
@@ -420,32 +420,32 @@ class _PairedMetricFacade:
 
 
 GATEWAY_REQUESTS = _counter(
-    "agent_utilities_gateway_requests_total",
+    "meristem_gateway_requests_total",
     "Gateway HTTP requests by route template, method and status code.",
     ("route", "method", "status"),
 )
 GATEWAY_REQUEST_DURATION = _histogram(
-    "agent_utilities_gateway_request_duration_seconds",
+    "meristem_gateway_request_duration_seconds",
     "Gateway HTTP request duration by route template.",
     ("route",),
 )
 GATEWAY_IN_FLIGHT = _gauge(
-    "agent_utilities_gateway_in_flight_requests",
+    "meristem_gateway_in_flight_requests",
     "Gateway HTTP requests currently being handled by this process.",
 )
 GATEWAY_RATE_LIMITED = _counter(
-    "agent_utilities_gateway_rate_limited_total",
+    "meristem_gateway_rate_limited_total",
     "Requests rejected (429) by the per-tenant token-bucket rate limiter.",
     ("tenant",),
 )
 ENGINE_REQUESTS = _counter(
-    "agent_utilities_gateway_engine_requests_total",
+    "meristem_gateway_engine_requests_total",
     "medulla engine client calls by operation and outcome "
     "(ok | connection_error | error | short_circuited).",
     ("op", "outcome"),
 )
 ENGINE_REQUEST_LATENCY = _histogram(
-    "agent_utilities_gateway_engine_request_latency_seconds",
+    "meristem_gateway_engine_request_latency_seconds",
     "medulla engine client call latency (seconds) by operation. The "
     "per-op round-trip time — so a contended engine (slow point-reads like "
     "GetNodeProperties) or one heavy op dominating the shared connection is "
@@ -454,7 +454,7 @@ ENGINE_REQUEST_LATENCY = _histogram(
     ("op",),
 )
 ENGINE_BREAKER_STATE = _gauge(
-    "agent_utilities_gateway_engine_breaker_state",
+    "meristem_gateway_engine_breaker_state",
     "Engine circuit-breaker state per endpoint (0=closed, 1=half-open, 2=open).",
     ("endpoint",),
 )
@@ -465,12 +465,12 @@ ENGINE_BREAKER_STATE = _gauge(
 # outcomes per shard so a hot or failing shard is visible at a glance.
 # Cardinality is bounded by the configured endpoint list (a handful).
 ENGINE_SHARD_UP = _gauge(
-    "agent_utilities_engine_shard_up",
+    "meristem_engine_shard_up",
     "Per-shard engine reachability by endpoint (1=reachable, 0=unreachable).",
     ("endpoint",),
 )
 ENGINE_SHARD_REQUESTS = _counter(
-    "agent_utilities_engine_shard_requests_total",
+    "meristem_engine_shard_requests_total",
     "Engine client calls per shard endpoint and outcome "
     "(ok | connection_error | error | short_circuited).",
     ("endpoint", "outcome"),
@@ -484,9 +484,9 @@ ENGINE_SHARD_REQUESTS = _counter(
     KG_INGEST_QUEUE_DEPTH_OBSERVED_AT,
     record_kg_ingest_queue_observation,
 ) = _paired_gauges(
-    "agent_utilities_kg_ingest_queue_depth",
+    "meristem_kg_ingest_queue_depth",
     "Pending KG ingest tasks in the selected durable task queue.",
-    "agent_utilities_kg_ingest_queue_depth_observed_at",
+    "meristem_kg_ingest_queue_depth_observed_at",
     "Unix observation time for the paired KG ingest queue-depth gauge.",
     ("backend",),
 )
@@ -495,9 +495,9 @@ ENGINE_SHARD_REQUESTS = _counter(
     KG_INGEST_CONSUMER_LAG_OBSERVED_AT,
     record_kg_ingest_consumer_lag_observation,
 ) = _paired_gauges(
-    "agent_utilities_kg_ingest_consumer_lag",
+    "meristem_kg_ingest_consumer_lag",
     "Total kg-ingest consumer-group lag (unconsumed messages) per topic.",
-    "agent_utilities_kg_ingest_consumer_lag_observed_at",
+    "meristem_kg_ingest_consumer_lag_observed_at",
     "Unix observation time for the paired KG ingest consumer-lag gauge.",
     ("topic", "group"),
 )
@@ -508,22 +508,22 @@ ENGINE_SHARD_REQUESTS = _counter(
 # bounded (~33 named :Schedule nodes); ``lane`` is bounded (the 8 functional lanes in
 # task_lanes.TASK_LANES) — both safe cardinalities.
 SCHEDULED_JOB_RUNS = _counter(
-    "agent_utilities_scheduled_job_runs_total",
+    "meristem_scheduled_job_runs_total",
     "Scheduled/recurring job runs by schedule name and outcome (ok|failed|skipped).",
     ("schedule", "outcome"),
 )
 SCHEDULED_JOB_DURATION = _histogram(
-    "agent_utilities_scheduled_job_duration_seconds",
+    "meristem_scheduled_job_duration_seconds",
     "Scheduled/recurring job execution duration by schedule name.",
     ("schedule",),
 )
 LANE_QUEUE_DEPTH = _gauge(
-    "agent_utilities_lane_queue_depth",
+    "meristem_lane_queue_depth",
     "Pending KG task-queue depth by functional lane (task_lanes.TASK_LANES).",
     ("lane",),
 )
 LANE_IN_FLIGHT = _gauge(
-    "agent_utilities_lane_in_flight",
+    "meristem_lane_in_flight",
     "In-flight (currently claimed/running) KG tasks by functional lane.",
     ("lane",),
 )
@@ -543,7 +543,7 @@ LANE_IN_FLIGHT = _gauge(
 # claim/admission gate, whereas "empty" means the native claim call ran and
 # genuinely found nothing to claim.
 WORKITEM_CLAIMS = _counter(
-    "agent_utilities_workitem_claims_total",
+    "meristem_workitem_claims_total",
     "Native WorkItem claim-poll attempts by queue and outcome "
     "(claimed|empty|gate_skipped) — an 'empty' outcome is a normal idle "
     "poll, not an error; 'gate_skipped' means the process-local claim/"
@@ -554,26 +554,26 @@ WORKITEM_CLAIMS = _counter(
     ("queue", "outcome"),
 )
 WORKITEM_ADMISSION_DEFERRALS = _counter(
-    "agent_utilities_workitem_admission_deferrals_total",
+    "meristem_workitem_admission_deferrals_total",
     "Claims that succeeded natively but were released again by the "
     "reserved-worker AdmissionPolicy (lane/heavy-type/coverage fairness) "
     "before starting — the task remains claimable by a later poll.",
     ("task_type",),
 )
 WORKITEM_ACTIVE_WORKERS = _gauge(
-    "agent_utilities_workitem_active_workers",
+    "meristem_workitem_active_workers",
     "Ingest task workers started by this process (compute_ingest_worker_count()).",
 )
 WORKITEM_CLAIM_IN_FLIGHT = _gauge(
-    "agent_utilities_workitem_claim_in_flight",
+    "meristem_workitem_claim_in_flight",
     "1 while a worker holds the process-local claim/admission gate, else 0.",
 )
 WORKITEM_CLAIM_LATENCY = _histogram(
-    "agent_utilities_workitem_claim_latency_seconds",
+    "meristem_workitem_claim_latency_seconds",
     "Wall time of one native claim_next + admission-decide round trip.",
 )
 WORKITEM_IDLE_BACKOFF_SECONDS = _histogram(
-    "agent_utilities_workitem_idle_backoff_seconds",
+    "meristem_workitem_idle_backoff_seconds",
     "Sleep duration chosen by the idle-poll backoff (bounded exponential + jitter).",
 )
 # MCP multiplexer per-child resilience (CONCEPT:MERISTEM-ECO.mcp.profile-differences-from-client): one series per
@@ -581,24 +581,24 @@ WORKITEM_IDLE_BACKOFF_SECONDS = _histogram(
 # runs standalone; like every metric here these degrade to no-ops when
 # prometheus_client (the optional ``metrics`` extra) is absent.
 MCP_CHILD_CALLS = _counter(
-    "agent_utilities_mcp_child_calls_total",
+    "meristem_mcp_child_calls_total",
     "Multiplexer tool calls per child server and outcome "
     "(ok | error | transport_error | timeout | busy | unavailable | "
     "short_circuited).",
     ("server", "outcome"),
 )
 MCP_CHILD_BREAKER_STATE = _gauge(
-    "agent_utilities_mcp_child_breaker_state",
+    "meristem_mcp_child_breaker_state",
     "Per-child circuit-breaker state (0=closed, 1=half-open, 2=open).",
     ("server",),
 )
 MCP_CHILD_RESTARTS = _counter(
-    "agent_utilities_mcp_child_restarts_total",
+    "meristem_mcp_child_restarts_total",
     "Automatic restarts of crashed multiplexer child servers.",
     ("server",),
 )
 MCP_CHILD_QUEUE_DEPTH = _gauge(
-    "agent_utilities_mcp_child_queue_depth",
+    "meristem_mcp_child_queue_depth",
     "Tool calls queued behind a child's concurrency limit right now.",
     ("server",),
 )
@@ -621,54 +621,54 @@ MCP_CHILD_QUEUE_DEPTH = _gauge(
 # the ``multiplexer_status`` tool — so the gauge and the tool can never drift.
 # ``server`` is bounded by mcp_config.json (~50 children).
 MCP_CHILD_PROCESS_RUNNING = _gauge(
-    "agent_utilities_mcp_child_process_running",
+    "meristem_mcp_child_process_running",
     "Per-child PROCESS liveness only (1 = the child runtime reports state 'up', "
     "0 = starting/restarting/failed). This is NOT dispatchability — see "
-    "agent_utilities_mcp_child_tools_dispatchable.",
+    "meristem_mcp_child_tools_dispatchable.",
     ("server",),
 )
 MCP_CHILD_TOOLS_MOUNTED = _gauge(
-    "agent_utilities_mcp_child_tools_mounted",
+    "meristem_mcp_child_tools_mounted",
     "Per-child tools currently registered as live forwarding tools on this "
     "multiplexer (dynamic mode mounts on demand, so this is <= the child's "
     "aggregated catalog size).",
     ("server",),
 )
 MCP_CHILD_TOOLS_DISPATCHABLE = _gauge(
-    "agent_utilities_mcp_child_tools_dispatchable",
+    "meristem_mcp_child_tools_dispatchable",
     "Per-child mounted tools that a call could actually be dispatched to right "
     "now (child process up AND its circuit breaker not open). Always <= "
-    "agent_utilities_mcp_child_tools_mounted; the gap is the degraded set.",
+    "meristem_mcp_child_tools_mounted; the gap is the degraded set.",
     ("server",),
 )
 MCP_SERVERS_RUNNING = _gauge(
-    "agent_utilities_mcp_servers_running",
+    "meristem_mcp_servers_running",
     "Child servers whose PROCESS is up. Fleet-level twin of "
-    "agent_utilities_mcp_child_process_running — a process-liveness count, "
+    "meristem_mcp_child_process_running — a process-liveness count, "
     "never a dispatchability claim.",
 )
 MCP_SERVERS_DISPATCHABLE = _gauge(
-    "agent_utilities_mcp_servers_dispatchable",
+    "meristem_mcp_servers_dispatchable",
     "Child servers that can serve a tool call right now (process up, breaker "
     "not open, at least one tool mounted). The truthful fleet-capability "
-    "number; always <= agent_utilities_mcp_servers_running.",
+    "number; always <= meristem_mcp_servers_running.",
 )
 
 # Runtime usage granularity (CONCEPT:MERISTEM-OS.observability.persist-this-graph-run): per-tool / per-skill / per-db
 # call counters, siblings of MCP_CHILD_CALLS. Emitted alongside the usage-store
 # rows so the same data is visible in both Prometheus and /api/observability.
 TOOL_CALLS = _counter(
-    "agent_utilities_tool_calls_total",
+    "meristem_tool_calls_total",
     "Tool invocations by coarse category (read|edit|bash|search|mcp|tool|db).",
     ("category",),
 )
 SKILL_CALLS = _counter(
-    "agent_utilities_skill_calls_total",
+    "meristem_skill_calls_total",
     "Skill invocations by skill name.",
     ("skill",),
 )
 DB_CALLS = _counter(
-    "agent_utilities_db_calls_total",
+    "meristem_db_calls_total",
     "Database/graph-engine calls by store (usage|kg|state).",
     ("store",),
 )
@@ -684,70 +684,70 @@ DB_CALLS = _counter(
 # job id, filesystem path, or credential, matching the cardinality discipline
 # every other block in this module already follows.
 REPOSITORY_JOB_QUEUE_DEPTH = _gauge(
-    "agent_utilities_repository_job_queue_depth",
+    "meristem_repository_job_queue_depth",
     "Pending repository jobs by repository alias and priority class.",
     ("repo", "priority_class"),
 )
 REPOSITORY_JOB_QUEUE_AGE = _histogram(
-    "agent_utilities_repository_job_queue_age_seconds",
+    "meristem_repository_job_queue_age_seconds",
     "Age of a repository job at the moment it leaves the queue, by repository alias.",
     ("repo",),
 )
 REPOSITORY_CAPACITY_RESERVATIONS = _gauge(
-    "agent_utilities_repository_capacity_reservations",
+    "meristem_repository_capacity_reservations",
     "Active resource reservations by resource class and host alias.",
     ("resource_class", "host_alias"),
 )
 REPOSITORY_BUILD_CACHE_OPS = _counter(
-    "agent_utilities_repository_build_cache_ops_total",
+    "meristem_repository_build_cache_ops_total",
     "Build-cache operations by repository alias and outcome (C-05: "
     "hit|waited_hit|produced_miss|degraded_uncacheable|corrupted_entry|"
     "refused|failed).",
     ("repo", "outcome"),
 )
 REPOSITORY_VALIDATION_DURATION = _histogram(
-    "agent_utilities_repository_validation_duration_seconds",
+    "meristem_repository_validation_duration_seconds",
     "Validation gate duration by repository alias and stage (C-06: "
     "feedback|integration|certification|smoke|release).",
     ("repo", "stage"),
 )
 REPOSITORY_BISECTION_RUNS = _counter(
-    "agent_utilities_repository_bisection_runs_total",
+    "meristem_repository_bisection_runs_total",
     "Generation failure-bisection runs by repository alias and outcome.",
     ("repo", "outcome"),
 )
 REPOSITORY_LANE_COUNT = _gauge(
-    "agent_utilities_repository_lane_count",
+    "meristem_repository_lane_count",
     "Active development lanes by repository alias.",
     ("repo",),
 )
 REPOSITORY_LANE_DISK_BYTES = _gauge(
-    "agent_utilities_repository_lane_disk_bytes",
+    "meristem_repository_lane_disk_bytes",
     "Observed lane worktree disk usage (bytes) by repository alias.",
     ("repo",),
 )
 REPOSITORY_LANE_AGE = _histogram(
-    "agent_utilities_repository_lane_age_seconds",
+    "meristem_repository_lane_age_seconds",
     "Lane age at close/reclaim time by repository alias.",
     ("repo",),
 )
 REPOSITORY_WORKER_HEALTH = _gauge(
-    "agent_utilities_repository_worker_health",
+    "meristem_repository_worker_health",
     "Repository worker health by host inventory alias (1=healthy, 0=unhealthy).",
     ("host_alias",),
 )
 REPOSITORY_JOB_RETRIES = _counter(
-    "agent_utilities_repository_job_retries_total",
+    "meristem_repository_job_retries_total",
     "Repository job retry/dead-letter transitions by repository alias and retry class.",
     ("repo", "retry_class"),
 )
 REPOSITORY_LANDING_DRIFT = _counter(
-    "agent_utilities_repository_landing_drift_total",
+    "meristem_repository_landing_drift_total",
     "Landing base-moved / re-target events by repository alias and drift kind.",
     ("repo", "drift_kind"),
 )
 REPOSITORY_RELEASE_DAG_STAGE_DURATION = _histogram(
-    "agent_utilities_repository_release_dag_stage_duration_seconds",
+    "meristem_repository_release_dag_stage_duration_seconds",
     "Workspace release-DAG stage duration by repository alias and stage.",
     ("repo", "stage"),
 )
@@ -760,17 +760,17 @@ REPOSITORY_RELEASE_DAG_STAGE_DURATION = _histogram(
 # Recorded by ``ToolMetricsMiddleware`` and scraped from the server's own
 # ``GET /metrics`` route; no-ops when the optional ``metrics`` extra is absent.
 MCP_TOOL_CALLS = _counter(
-    "agent_utilities_mcp_tool_calls_total",
+    "meristem_mcp_tool_calls_total",
     "MCP tool invocations on this server by tool name and outcome (ok|error).",
     ("tool", "outcome"),
 )
 MCP_TOOL_DURATION = _histogram(
-    "agent_utilities_mcp_tool_duration_seconds",
+    "meristem_mcp_tool_duration_seconds",
     "MCP tool execution duration on this server by tool name.",
     ("tool",),
 )
 MCP_TOOL_IN_FLIGHT = _gauge(
-    "agent_utilities_mcp_tool_in_flight",
+    "meristem_mcp_tool_in_flight",
     "MCP tool calls currently executing on this server.",
 )
 
@@ -781,21 +781,21 @@ MCP_TOOL_IN_FLIGHT = _gauge(
 # registry; the turns counter splits processed turns by outcome
 # (completed | failed | skipped | expired).
 DISPATCH_QUEUE_DEPTH = _gauge(
-    "agent_utilities_dispatch_queue_depth",
+    "meristem_dispatch_queue_depth",
     "Unclaimed dispatched agent turns in the agent_turns queue.",
     ("backend",),
 )
 DISPATCH_TURNS = _counter(
-    "agent_utilities_dispatch_turns_total",
+    "meristem_dispatch_turns_total",
     "Dispatched agent turns processed by this worker process, by outcome.",
     ("outcome",),
 )
 DISPATCH_WORKERS = _gauge(
-    "agent_utilities_dispatch_workers",
+    "meristem_dispatch_workers",
     "Live agent-dispatch workers (fresh heartbeats in the fleet registry).",
 )
 DISPATCH_SESSION_LOCK_REGISTRY_SIZE = _gauge(
-    "agent_utilities_dispatch_session_lock_registry_size",
+    "meristem_dispatch_session_lock_registry_size",
     "Process-local agent-dispatch session-lock entries currently held "
     "(agent_dispatch.session_lock_registry_size); a sustained rise signals "
     "the bounded lock registry is leaking entries instead of draining them.",
@@ -812,20 +812,20 @@ DISPATCH_SESSION_LOCK_REGISTRY_SIZE = _gauge(
 # separates the two entry points so an agent named like a workflow cannot
 # merge series.
 DELEGATION_RUNS = _counter(
-    "agent_utilities_delegation_runs_total",
+    "meristem_delegation_runs_total",
     "In-process delegated runs by kind (agent|workflow), target name and "
     "outcome (ok|error|cancelled).",
     ("kind", "target", "outcome"),
 )
 DELEGATION_DURATION = _histogram(
-    "agent_utilities_delegation_duration_seconds",
+    "meristem_delegation_duration_seconds",
     "Wall-clock duration of one in-process delegated run "
     "(Orchestrator.execute_agent / execute_workflow), by kind and target.",
     ("kind", "target"),
     buckets=(0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0, 600.0, 1800.0),
 )
 DELEGATION_IN_FLIGHT = _gauge(
-    "agent_utilities_delegation_in_flight",
+    "meristem_delegation_in_flight",
     "Delegated runs currently executing in this process, by kind.",
     ("kind",),
 )
@@ -836,21 +836,21 @@ DELEGATION_IN_FLIGHT = _gauge(
 # server-side bus write latency (the cross-host wire is durable-store polling on top).
 # Labels are bounded (status/kind/outcome are small enums) so cardinality stays flat.
 BUS_PARTICIPANTS = _gauge(
-    "agent_utilities_bus_participants",
+    "meristem_bus_participants",
     "Registered bus participants by computed presence (online|offline).",
     ("status",),
 )
 BUS_MESSAGES = _counter(
-    "agent_utilities_bus_messages_total",
+    "meristem_bus_messages_total",
     "Bus messages by kind (direct|topic) and outcome (delivered|denied|no_recipient).",
     ("kind", "outcome"),
 )
 BUS_SEND_DURATION = _histogram(
-    "agent_utilities_bus_send_seconds",
+    "meristem_bus_send_seconds",
     "Server-side latency of one AgentBus.send (gate + per-recipient durable write).",
 )
 BUS_DISPATCH = _counter(
-    "agent_utilities_bus_dispatch_total",
+    "meristem_bus_dispatch_total",
     "Bus message->fleet-work dispatches by outcome (submitted|denied|failed).",
     ("outcome",),
 )
@@ -863,13 +863,13 @@ BUS_DISPATCH = _counter(
 # ``context_compiler_serving.bundle_chat_completion`` — no-op wherever the ``metrics``
 # extra (prometheus-client) is absent, same as every metric above.
 CONTEXT_COMPILER_ITEMS = _counter(
-    "agent_utilities_context_compiler_items_total",
+    "meristem_context_compiler_items_total",
     "ContextCompiler candidate items per compile() call by outcome "
     "(selected|dropped_policy|dropped_redundant|dropped_budget).",
     ("outcome",),
 )
 CONTEXT_COMPILER_TOKENS = _histogram(
-    "agent_utilities_context_compiler_tokens",
+    "meristem_context_compiler_tokens",
     "ContextCompiler per-compile() token counts by kind: 'in' is the MMR-selected "
     "pool handed to the token-budget fit, 'selected' is tokens actually kept "
     "(ContextBundle.tokens_used) — the selection-efficiency ratio is selected/in.",
@@ -877,13 +877,13 @@ CONTEXT_COMPILER_TOKENS = _histogram(
     buckets=(16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384),
 )
 CONTEXT_COMPILER_KV_CACHE = _counter(
-    "agent_utilities_context_compiler_kv_cache_requests_total",
+    "meristem_context_compiler_kv_cache_requests_total",
     "ContextCompiler Seam-6 bundle-level KV-cache lookups (compile(kv_backend=...)) "
     "by outcome (hit|miss) — hit-rate = hit / (hit + miss).",
     ("outcome",),
 )
 CONTEXT_COMPILER_TTFT = _histogram(
-    "agent_utilities_context_compiler_ttft_seconds",
+    "meristem_context_compiler_ttft_seconds",
     "Wall-clock latency of a governed model call using a compiled ContextCompiler "
     "bundle — a time-to-first-token PROXY (see scripts/measure_bundle_kv_reuse.py "
     "for the token-level vLLM prefix-cache signal this approximates), split by "
@@ -896,14 +896,14 @@ CONTEXT_COMPILER_TTFT = _histogram(
     ("kv_cache_hit", "path"),
 )
 KVCACHE_CLIENT_REQUESTS = _counter(
-    "agent_utilities_kvcache_client_requests_total",
+    "meristem_kvcache_client_requests_total",
     "MedullaKVBackend.get() lookups by outcome (hit|miss|error) — the "
     "client-side half of the MEDULLA-187 remote KV-cache contract; GET /kv/stats on "
     "the engine exposes the aggregate server-side occupancy/dedup counters.",
     ("outcome",),
 )
 KVCACHE_FORK_EVENTS = _counter(
-    "agent_utilities_kvcache_fork_events_total",
+    "meristem_kvcache_fork_events_total",
     "Zero-copy KV-fork rung outcomes (CONCEPT:MEDULLA-KG.memory.zero-copy-snapshot-fork) by "
     "result and reason. result='forked' when the CoW snapshot/fork rung engaged for a "
     "branch fan-out; result='fallback' when it transparently degraded to the per-branch "
@@ -912,13 +912,13 @@ KVCACHE_FORK_EVENTS = _counter(
     ("result", "reason"),
 )
 KVCACHE_FORK_SHARED_BYTES = _gauge(
-    "agent_utilities_kvcache_fork_shared_bytes",
+    "meristem_kvcache_fork_shared_bytes",
     "Bytes shared (Arc'd across branches, not copied) as of the most recent KV-fork "
     "rung engagement — the zero-copy proof (CONCEPT:MEDULLA-KG.memory.zero-copy-snapshot-fork) "
     "surfaced as a scrapeable gauge alongside GET /kv/fork/stats on the engine.",
 )
 KVCACHE_CHECKPOINT_OPS = _counter(
-    "agent_utilities_kvcache_checkpoint_ops_total",
+    "meristem_kvcache_checkpoint_ops_total",
     "KVCheckpoint operations (CONCEPT:MERISTEM-KG.memory.kv-checkpoint-resource) by op "
     "(create|instantiate_agent|restore_conversation) and outcome (ok|not_found|"
     "cross_tenant_denied|stale|cold_start_fallback) — the fail-closed/traced-fallback "
@@ -926,14 +926,14 @@ KVCACHE_CHECKPOINT_OPS = _counter(
     ("op", "outcome"),
 )
 KVCACHE_CHECKPOINT_RECOMMENDATIONS = _counter(
-    "agent_utilities_kvcache_checkpoint_recommendations_total",
+    "meristem_kvcache_checkpoint_recommendations_total",
     "Checkpoint-worthiness verdicts (CONCEPT:MERISTEM-KG.memory.checkpoint-worthiness-scoring) "
     "by recommended tier (none|ram|disk) — how often the scorer set thinks the current "
     "context is worth freezing, independent of whether anything acted on it.",
     ("tier",),
 )
 KVCACHE_CHECKPOINT_TIER_OPS = _counter(
-    "agent_utilities_kvcache_checkpoint_tier_ops_total",
+    "meristem_kvcache_checkpoint_tier_ops_total",
     "Tiered-checkpoint actions (CONCEPT:MERISTEM-KG.memory.checkpoint-worthiness-scoring) by "
     "trigger (user|agent|system), tier (ram|disk) and outcome (taken|declined|"
     "eligibility_denied|error) — the proof of which of the three trigger paths actually "
@@ -941,21 +941,21 @@ KVCACHE_CHECKPOINT_TIER_OPS = _counter(
     ("trigger", "tier", "outcome"),
 )
 PROMPT_CACHE_OPS = _counter(
-    "agent_utilities_prompt_cache_ops_total",
+    "meristem_prompt_cache_ops_total",
     "Provider-native prompt-cache requests (CONCEPT:MERISTEM-ORCH.optimization.provider-prompt-cache — "
     "Anthropic cache_control / OpenAI prompt_cache_key) by op (fold|response) and outcome "
     "(anthropic|openai|other|hit|miss) — hit-rate = hit / (hit + miss) over 'response' events.",
     ("op", "outcome"),
 )
 PROMPT_CACHE_TOKENS_SAVED = _counter(
-    "agent_utilities_prompt_cache_tokens_saved_total",
+    "meristem_prompt_cache_tokens_saved_total",
     "Cumulative input tokens served from a provider prompt cache (RequestUsage.cache_read_tokens) "
     "— the measurable savings signal for CONCEPT:MERISTEM-ORCH.optimization.provider-prompt-cache, labeled "
     "by provider.",
     ("provider",),
 )
 SEMANTIC_CACHE_OPS = _counter(
-    "agent_utilities_semantic_cache_ops_total",
+    "meristem_semantic_cache_ops_total",
     "Semantic-cache operations (CONCEPT:MERISTEM-KG.memory.semantic-response-cache) by op "
     "(lookup|store|invalidate|evict) and outcome (hit|miss|disabled|refused_side_effect|"
     "refused_freshness|stale|below_threshold|embed_unavailable|error|stored|skipped) — "
@@ -963,12 +963,12 @@ SEMANTIC_CACHE_OPS = _counter(
     ("op", "outcome"),
 )
 SEMANTIC_CACHE_BYTES_SAVED = _counter(
-    "agent_utilities_semantic_cache_bytes_saved_total",
+    "meristem_semantic_cache_bytes_saved_total",
     "Cumulative response bytes served from the semantic cache instead of a live model call "
     "(CONCEPT:MERISTEM-KG.memory.semantic-response-cache) — the measurable savings signal.",
 )
 SEMANTIC_CACHE_STALENESS_SECONDS = _histogram(
-    "agent_utilities_semantic_cache_staleness_seconds",
+    "meristem_semantic_cache_staleness_seconds",
     "Age of the served entry at the moment of a semantic-cache HIT (CONCEPT:MERISTEM-KG.memory."
     "semantic-response-cache) — the staleness distribution required to keep a stale-serving "
     "policy honest; entries older than the caller's freshness_tolerance_seconds never hit.",
@@ -978,7 +978,7 @@ SEMANTIC_CACHE_STALENESS_SECONDS = _histogram(
 # ── Universal-ingestion program: embedding/retrieval policy + evaluation
 #    (reports/program/universal-ingestion.md, tracks 8/9) ───────────────────
 EMBEDDING_VERSION_MISMATCHES = _counter(
-    "agent_utilities_embedding_version_mismatches_total",
+    "meristem_embedding_version_mismatches_total",
     "EmbeddingVersionMismatchError raisals (CONCEPT:MERISTEM-KG.retrieval.embedding-version-identity) "
     "by site (capability_index_add|capability_index_designate) — a vector from one embedding "
     "model was about to be compared against another's; each increment is a refused comparison, "
@@ -987,7 +987,7 @@ EMBEDDING_VERSION_MISMATCHES = _counter(
     ("site",),
 )
 RETRIEVAL_ACL_ENFORCEMENT = _counter(
-    "agent_utilities_retrieval_acl_enforcement_total",
+    "meristem_retrieval_acl_enforcement_total",
     "Per-node ACL/owner-scope enforcement outcomes on vector/hybrid retrieval "
     "(CONCEPT:MERISTEM-KG.retrieval.acl-aware-vector-retrieval, search_hybrid) by outcome "
     "(admitted|denied|enforcement_failed) — 'denied' is a node the actor was not permitted to "
@@ -997,7 +997,7 @@ RETRIEVAL_ACL_ENFORCEMENT = _counter(
     ("outcome",),
 )
 RETRIEVAL_CITATION_RESOLUTION = _counter(
-    "agent_utilities_retrieval_citation_resolution_total",
+    "meristem_retrieval_citation_resolution_total",
     "Evidence-citation resolution outcomes (CONCEPT:MERISTEM-KG.retrieval.mandatory-evidence-citation) "
     "by status (current|moved|stale|lost) — see evidence_spine.citation_status. A retrieval "
     "result whose citation cannot be resolved to real evidence ('lost') is a defect, not a "
@@ -1162,7 +1162,7 @@ def render_metrics() -> tuple[bytes, str]:
     """
     if not PROMETHEUS_AVAILABLE:
         return (
-            b"# agent-utilities gateway metrics unavailable: install the "
+            b"# meristem gateway metrics unavailable: install the "
             b"'metrics' extra (prometheus-client). (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics)\n",
             "text/plain; version=0.0.4; charset=utf-8",
         )

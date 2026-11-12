@@ -45,22 +45,22 @@ async def test_provisioning_imports_and_attaches_each_provider_once(
     )
 
     receipts = await provision_semantic_content(
-        (provider("arbora"), provider("agent-utilities")),
+        (provider("arbora"), provider("meristem")),
         sink=cast(Any, "verified-sink"),
         reproject_pack=reproject,
         attach_pack=attach,
     )
 
-    assert imported == ["arbora", "agent-utilities"]
+    assert imported == ["arbora", "meristem"]
     assert reprojected == imported
     assert attached == imported
     assert [receipt.import_outcome.pack_digest for receipt in receipts] == [
         "sha256:arbora",
-        "sha256:agent-utilities",
+        "sha256:meristem",
     ]
     assert [receipt.reproject_receipt for receipt in receipts] == [
         "reproject:arbora",
-        "reproject:agent-utilities",
+        "reproject:meristem",
     ]
 
 
@@ -105,7 +105,7 @@ async def test_readiness_requires_current_projected_attached_pack_heads() -> Non
             head=SimpleNamespace(record_id=f"record:{connector}"),
             projection=SimpleNamespace(projection="applied", graph="pack__" + "d" * 64),
         )
-        for connector in ("arbora", "agent-utilities")
+        for connector in ("arbora", "meristem")
     }
     sources = tuple(
         SimpleNamespace(
@@ -128,7 +128,7 @@ async def test_readiness_requires_current_projected_attached_pack_heads() -> Non
         client=object(),
         tenant_id="tenant-a",
         graph="tenant-a",
-        connectors=("arbora", "agent-utilities"),
+        connectors=("arbora", "meristem"),
         schema_reader=list_schema,
         status_reader=status,
     )

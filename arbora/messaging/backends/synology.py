@@ -1,6 +1,6 @@
 """Synology Chat Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction). Webhook-based via httpx.
 
-Install: ``pip install agent-utilities[messaging-synology]``
+Install: ``pip install arbora[messaging-synology]``
 CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 

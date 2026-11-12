@@ -139,7 +139,7 @@ class SpawnDelegation:
 
 
 _current: contextvars.ContextVar[SpawnDelegation | None] = contextvars.ContextVar(
-    "agent_utilities_spawn_delegation", default=None
+    "meristem_spawn_delegation", default=None
 )
 
 

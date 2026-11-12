@@ -1,4 +1,4 @@
-"""Served engine operations that replace the in-run agent-utilities tool wrappers."""
+"""Served engine operations that replace the in-run meristem tool wrappers."""
 
 from __future__ import annotations
 

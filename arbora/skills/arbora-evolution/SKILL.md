@@ -11,7 +11,7 @@ description: >-
   requirements baked into every generated plan. Also runs an AST-based
   wiring sweep for concept traceability, dead-code detection, and import
   graph analysis. For a concrete approved repository change or diff review,
-  hand off to agent-utilities-development. Triggers on "evolve
+  hand off to meristem-development. Triggers on "evolve
   meristem", "run evolution pipeline", "find and implement research",
   "research-driven development", "auto-evolve", "evolution scan", "wiring
   sweep", "concept audit", "dead code analysis", "traceability check", "code
@@ -27,7 +27,7 @@ tailored to meristem's 5-pillar, KG-driven architecture (ORCH, KG, AHE,
 ECO, OS).
 
 Keep evidence triage, proposal, and evaluation ownership here; hand concrete
-approved implementation and diff review to `agent-utilities-development`.
+approved implementation and diff review to `meristem-development`.
 
 ## Overview
 
@@ -54,7 +54,7 @@ This skill orchestrates **7 capabilities** into one evolution pipeline:
 7. **Architecture review** — C4 compliance, pillar concept coverage, and
    hot-path integration audit tailored to the 5-pillar architecture.
 
-### Code-enhancer domains (agent-utilities-specific)
+### Code-enhancer domains (meristem-specific)
 
 The following analysis domains from the `code-enhancer` skill are natively
 integrated, tailored to meristem's 5-pillar architecture:
@@ -372,7 +372,7 @@ per-graph RBAC-ownership disposition pass — the live mutating grant apply
 itself stays a separate, human-gated CLI, never this or any other network
 surface.
 
-Implement approved changes with `agent-utilities-development`. Keep skill,
+Implement approved changes with `meristem-development`. Keep skill,
 prompt, routing, and extraction optimizations tied to a held-out evaluation
 or clear regression test. Report what changed, evidence supporting it, tests
 and evaluations run, uncertainty, and any blocked follow-up. Promotion,
@@ -382,7 +382,7 @@ review boundary.
 ## Wiring sweep — AST-based codebase analysis
 
 A standalone AST-based analysis tool for detecting dead code, concept
-traceability gaps, and import graph anomalies in agent-utilities. It ships
+traceability gaps, and import graph anomalies in meristem. It ships
 as arbora's own `arbora-wiring-sweep` console script (source at
 `arbora/evolution/wiring_sweep.py`, reachable from this skill but not
 itself skill content, so it stays an importable module rather than a
@@ -392,17 +392,17 @@ bundled asset).
 
 ```bash
 # Full sweep with markdown report
-arbora-wiring-sweep /path/to/agent-utilities
+arbora-wiring-sweep /path/to/meristem
 
 # JSON output for CI integration
-arbora-wiring-sweep /path/to/agent-utilities --json
+arbora-wiring-sweep /path/to/meristem --json
 
 # Write report to file
-arbora-wiring-sweep /path/to/agent-utilities --output report.md
+arbora-wiring-sweep /path/to/meristem --output report.md
 ```
 
-`root` must be an meristem checkout: the tool always scans
-`<root>/agent_utilities/` and `<root>/docs/concept_map.md`.
+`root` must be a meristem checkout: the tool always scans
+`<root>/meristem/` and `<root>/docs/concept_map.md`.
 
 ### What it analyzes
 
@@ -507,7 +507,7 @@ synergies are automatically detected and mapped:
 2. **ORCH-1.2 → All agents**: Confidence-gated routing applies to all MCP
    tool domains.
 3. **OS-5.* → All agents**: Security, scheduling, and guardrails are
-   inherited from agent-utilities.
+   inherited from meristem.
 4. **KG-2.* → All agents**: Knowledge graph concepts bridge all codebase
    ingestion.
 

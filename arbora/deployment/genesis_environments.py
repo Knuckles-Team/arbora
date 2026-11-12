@@ -78,7 +78,7 @@ _WRITABLE_MEDIA = frozenset({"emptyDir", "hostPath", "pvc"})
 #: exact set BUG-ROFS-1 needed spelled out instead of rediscovered by reading
 #: `/etc/passwd` in a live container: the process's home directory, the three
 #: XDG dirs it actually writes under, the state/log dir, and the
-#: agent-utilities data root. Closed (not open-ended) for the same reason every
+#: meristem data root. Closed (not open-ended) for the same reason every
 #: other section here is closed — a typo'd or forgotten env var should be a
 #: load-time error, not a runtime `PermissionError` discovered empirically.
 RUNTIME_PATH_ENV_VARS = frozenset(

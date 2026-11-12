@@ -1,4 +1,4 @@
-"""arbora registers its harness host bindings with agent-utilities' thin client."""
+"""arbora registers its harness host bindings with meristem's thin client."""
 
 from __future__ import annotations
 

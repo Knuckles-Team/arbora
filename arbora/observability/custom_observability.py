@@ -529,7 +529,7 @@ class _MetadataOnlySpanExporter:
 
     def __init__(self, inner: Any, *, service_ref: str) -> None:
         self._inner = inner
-        self._service_ref = service_ref or "agent-utilities"
+        self._service_ref = service_ref or "meristem"
 
     @staticmethod
     def _context(value: Any) -> Any:
@@ -593,7 +593,7 @@ def _create_otlp_span_processor(
     headers: str,
     protocol: str = "http/protobuf",
     transport_security: Any | None = None,
-    service_ref: str = "agent-utilities",
+    service_ref: str = "meristem",
 ) -> Any | None:
     """Create an OTel BatchSpanProcessor with OTLPSpanExporter for Langfuse.
 
@@ -736,7 +736,7 @@ def _resolve_setup_otel_context(
         logger.warning("OTLP setup skipped: unsupported protocol")
         return None
     target_service_name = _service_topology_label(
-        service_name or retrieve_package_name() or "agent-utilities"
+        service_name or retrieve_package_name() or "meristem"
     )
     return _SetupOtelContext(
         target_endpoint=target_endpoint,
@@ -888,7 +888,7 @@ def setup_otel(
 
     Args:
         service_name: Service name for OTel resource attribution.
-            Defaults to the package name (e.g. ``agent-utilities``).
+            Defaults to the package name (e.g. ``meristem``).
         endpoint: Secure OTLP exporter endpoint URL. HTTPS is required except for
             canonical loopback HTTP. When omitted it is read from runtime
             configuration or derived from the configured Langfuse host.

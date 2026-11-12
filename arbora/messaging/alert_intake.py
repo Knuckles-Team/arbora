@@ -1,7 +1,7 @@
 """Arbora HTTP alert intake for governed messaging delivery.
 
 Lets external monitoring — uptime-kuma, Alertmanager, any webhook source — route
-notifications THROUGH agent-utilities messaging instead of each tool configuring its own
+notifications THROUGH meristem messaging instead of each tool configuring its own
 Telegram/Mattermost notifier. POST a webhook here and it is delivered on the configured
 default platform/channel via the SAME connected backend the daemon already runs, so alerts
 inherit the one unified messaging stack (Universal-capability: built once in messaging, every

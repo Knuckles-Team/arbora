@@ -120,7 +120,7 @@ def test_arbora_imports_no_au_serving_packages() -> None:
     import re
 
     package_root = Path(__file__).parents[1]
-    pattern = re.compile(r"agent_utilities[./](mcp|gateway|server|api)\b")
+    pattern = re.compile(r"meristem[./](mcp|gateway|server|api)\b")
     offenders = [
         path.relative_to(package_root).as_posix()
         for path in (package_root / "arbora").rglob("*.py")

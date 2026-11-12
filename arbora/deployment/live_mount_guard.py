@@ -1,8 +1,8 @@
 """Runtime self-check for the D-EGK-1 dead-mount defect class.
 
-Every ``*-mcp`` / ``agent-utilities-messaging`` Deployment in the ``apps``
+Every ``*-mcp`` / ``meristem-messaging`` Deployment in the ``apps``
 namespace hostPath-mounts this package's live source tree over its own
-``/usr/local/lib/pythonX.Y/site-packages/agent_utilities`` -- the same
+``/usr/local/lib/pythonX.Y/site-packages/meristem`` -- the same
 editable-install pattern used for ``medulla`` and the per-service
 ``<app>_mcp`` package (see ``services/*/k8s/manifests.yaml``). The mount
 target hardcodes ``pythonX.Y``. If the image's actual interpreter version
@@ -46,8 +46,8 @@ U-26/BUG-172 -- a THIRD deployment shape broke the guard's founding premise.
 The docstring above says "every consumer live-mounts" -- that was true of the
 apps-namespace ``*-mcp`` fleet this module was written for, but the
 self-contained ``docker/arbora-unified.Dockerfile`` image installs
-``agent_utilities`` EDITABLE from local source *at build time*
-(``pip install -e /opt/agent-utilities``) and ships with no hostPath/source
+``meristem`` EDITABLE from local source *at build time*
+(``pip install -e /opt/meristem``) and ships with no hostPath/source
 volume at all by design -- "editable" here only means a deployer MAY choose to
 bind-mount fresher source over it later, not that one is expected. Naively
 applying the old rule ("no active mount ⇒ CRITICAL stale-code drift") to that
@@ -55,7 +55,7 @@ pod is a false positive: the exact code that was reviewed, built, and shipped
 IS what is running: there is no live mount to have drifted FROM. The fix is
 provenance, not mount topology -- ``docker/arbora-unified.Dockerfile`` writes
 a ``SOURCE_REVISION`` build ARG into a non-secret
-``agent_utilities/.source-revision`` marker file (see
+``meristem/.source-revision`` marker file (see
 :func:`_installed_source_revision`) beside this package at build time. Its
 PRESENCE is what distinguishes "an image that was deliberately built without
 an intended live mount" from "a mount that was intended but missed" -- the
@@ -135,7 +135,7 @@ class LiveMountDetail(TypedDict, total=False):
 #: this package from a plain pip/wheel install inside a pod (none exist in
 #: this fleet today; every apps-namespace consumer live-mounts). Escape
 #: hatch kept cheap rather than omitted, per feedback-abstraction-first.
-_SKIP_ENV_VAR = "AGENT_UTILITIES_SKIP_LIVE_MOUNT_CHECK"
+_SKIP_ENV_VAR = "MERISTEM_SKIP_LIVE_MOUNT_CHECK"
 
 #: Only ever meaningful inside a pod. Kubernetes injects this for every
 #: container in every pod unconditionally, so its absence is a reliable

@@ -128,7 +128,7 @@ def _local_skill_entry(provider: str, skill_root: Path) -> dict[str, str]:
 
 def _default_provider_dirs() -> list[tuple[str, Path]]:
     """Lazy-imported default resolver, so importing this module never requires
-    ``agent_utilities`` to be installed (only calling it, unpatched, does)."""
+    ``meristem`` to be installed (only calling it, unpatched, does)."""
     from arbora.core.providers import resolve_skill_provider_dirs
 
     return resolve_skill_provider_dirs()
@@ -141,7 +141,7 @@ def build_local_skill_catalog(
 
     ``provider_dirs`` defaults to :func:`_default_provider_dirs` (arbora's
     ``resolve_skill_provider_dirs``); a test injects a fixture
-    resolver instead, so this stays hermetic without agent-utilities installed.
+    resolver instead, so this stays hermetic without meristem installed.
 
     Returns ``(entries, problems)``: ``entries`` in the exact shape
     ``arbora.fleet.multiplexer._bounded_skill_catalog`` produces for a

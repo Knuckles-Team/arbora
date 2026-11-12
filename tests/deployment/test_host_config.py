@@ -15,7 +15,7 @@ MODULE_PATH = (
 
 # Loaded by file path rather than ``from arbora.deployment.host_config import
 # ...`` because importing the ``arbora.deployment`` package also executes
-# sibling submodules that import ``agent_utilities`` -- a dependency this
+# sibling submodules that import ``meristem`` -- a dependency this
 # development environment does not have installed, and one this module is
 # written specifically not to need.
 _spec = importlib.util.spec_from_file_location("host_config_under_test", MODULE_PATH)
@@ -30,7 +30,7 @@ load_hosting_deployment_settings = host_config.load_hosting_deployment_settings
 
 
 @pytest.mark.spec("ARBORA-HOST-R010")
-def test_module_does_not_import_agent_utilities_config_internals() -> None:
+def test_module_does_not_import_meristem_config_internals() -> None:
     tree = ast.parse(MODULE_PATH.read_text(encoding="utf-8"), filename=str(MODULE_PATH))
     imported = {
         node.module

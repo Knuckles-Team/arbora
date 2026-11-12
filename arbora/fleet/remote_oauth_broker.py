@@ -574,9 +574,9 @@ class Rfc7591DynamicClientRegistrar:
                 "registration endpoint"
             )
         request_body = {
-            "client_name": (
-                f"agent-utilities-remote-oauth-broker:{provider.provider_id}"
-            )[:_MAX_CLIENT_NAME_LEN],
+            "client_name": (f"meristem-remote-oauth-broker:{provider.provider_id}")[
+                :_MAX_CLIENT_NAME_LEN
+            ],
             "redirect_uris": [provider.redirect_uri],
             "grant_types": ["authorization_code", "refresh_token"],
             "response_types": ["code"],

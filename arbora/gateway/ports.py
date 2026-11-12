@@ -2,7 +2,7 @@
 
 The gateway owns HTTP and host composition.  Tool execution, engine access,
 fleet discovery, and the canonical action routes are supplied by the arbora
-MCP/fleet composition (G2); they are not imported from agent-utilities
+MCP/fleet composition (G2); they are not imported from meristem
 implementations by transport modules.
 """
 

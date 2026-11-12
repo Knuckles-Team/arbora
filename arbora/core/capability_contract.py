@@ -45,7 +45,7 @@ __all__ = [
 #: single tool (``allowed_tools=[tool]`` + ``tool_server=<server>``). Kept here,
 #: not imported from ``orchestration.manager``, to avoid a core -> orchestration
 #: import cycle; ``manager._DEFAULT_DELEGATE`` aliases this so the two cannot drift.
-DEFAULT_TOOL_DELEGATE = "agent-utilities-expert"
+DEFAULT_TOOL_DELEGATE = "meristem-expert"
 
 
 @dataclass(frozen=True)

@@ -28,9 +28,7 @@ class Router:
     async def route(self, message: Any, *, context_budget_tokens: int | None) -> Any:
         assert message.task_text() == "do work"
         assert context_budget_tokens is None
-        return A2ARouteDecision(
-            agent_name="agent-utilities-expert", selection_mode="test"
-        )
+        return A2ARouteDecision(agent_name="meristem-expert", selection_mode="test")
 
 
 class Authority:

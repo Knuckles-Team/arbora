@@ -4,7 +4,7 @@ CONCEPT:MERISTEM-OS.config.gateway-service-dashboard — Gateway Service Dashboa
 
 Mirrors Homepage's ``widgets.js`` / ``components.js`` registry pattern
 but uses Python's import mechanism for discovery. Now lives inside
-``agent-utilities`` rather than the former standalone package.
+``meristem`` rather than the former standalone package.
 """
 
 from __future__ import annotations

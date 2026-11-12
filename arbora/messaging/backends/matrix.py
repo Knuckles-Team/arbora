@@ -2,7 +2,7 @@
 
 Uses ``matrix-nio`` for E2E encrypted Matrix protocol messaging.
 
-Install: ``pip install agent-utilities[messaging-matrix]``
+Install: ``pip install arbora[messaging-matrix]``
 
 CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
@@ -53,9 +53,7 @@ class MatrixBackend(MessagingBackend):
         try:
             from nio import AsyncClient, RoomMessageText
         except ImportError:
-            raise ImportError(
-                "Install: pip install agent-utilities[messaging-matrix]"
-            ) from None
+            raise ImportError("Install: pip install arbora[messaging-matrix]") from None
 
         homeserver = self.config.extra.get(
             "homeserver", setting("MATRIX_HOMESERVER", "")

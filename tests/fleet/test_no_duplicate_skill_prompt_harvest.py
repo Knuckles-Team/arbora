@@ -1,7 +1,7 @@
 """ARBORA-A2A-R003: the deployed arbora package harvests fleet skills
 and prompts through exactly one owner.
 
-agent-utilities ships its own legacy MCP multiplexer
+meristem ships its own legacy MCP multiplexer
 (``agent_utilities.mcp.multiplexer`` / ``agent_utilities.mcp.shared_multiplexer``)
 with its own skill/prompt body-harvest path. arbora owns fleet composition
 and discovery (``arbora-repository-development`` skill, "arbora.fleet |
@@ -72,7 +72,7 @@ def test_no_source_file_imports_the_legacy_au_multiplexer() -> None:
         if hits:
             offenders[path.relative_to(_package_root()).as_posix()] = hits
     assert not offenders, (
-        "arbora source imports agent-utilities' legacy MCP multiplexer, "
+        "arbora source imports meristem's legacy MCP multiplexer, "
         f"duplicating the skill/prompt harvest path: {offenders}"
     )
 

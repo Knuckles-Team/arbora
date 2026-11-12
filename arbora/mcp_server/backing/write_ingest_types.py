@@ -1,6 +1,6 @@
 """Typed request value object for ``write_ingest_tools``'s ``_ingest_action_*`` handlers.
 
-Leaf module — imports NOTHING from ``agent_utilities`` (CX wD10-R-ARITY / BUG-CX-004 §9b,
+Leaf module — imports NOTHING from ``meristem`` (CX wD10-R-ARITY / BUG-CX-004 §9b,
 same rationale as ``arbora.mcp_server.backing.ontology_types`` /
 ``arbora.mcp_server.backing.engine_surface_types``: ``arbora.mcp_server.backing.tools`` is the highest-
 leverage node in au's import SCC because its ``__init__.py`` eagerly imports all 35

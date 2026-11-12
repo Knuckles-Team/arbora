@@ -3,7 +3,7 @@
 Covers only Arbora's session-admission and policy partition of the
 conversational ACP gateway: admitting a session for a verified principal,
 binding it immutably, enforcing idle/absolute expiry, and refusing while the
-agent-utilities chat adapter is unavailable. The chat adapter's own behavior
+meristem chat adapter is unavailable. The chat adapter's own behavior
 and the terminal client's rendering are each owned elsewhere; see
 ``specs/conversational-acp-gateway/spec.md``.
 
@@ -95,7 +95,7 @@ class AcpSessionSnapshot:
 class AcpSessionAdmission:
     """Admits and re-checks ACP sessions against identity and policy state.
 
-    ``chat_adapter_available`` is a caller-supplied probe of agent-utilities'
+    ``chat_adapter_available`` is a caller-supplied probe of meristem'
     chat adapter reachability; Arbora consults it before admitting a session
     and before accepting any message, and never substitutes a local reply or
     a REST fallback when it reports unavailable.

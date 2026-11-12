@@ -49,7 +49,7 @@ def test_widget_url_resolves_process_configuration(monkeypatch):
 
 
 def test_widget_modules_contain_no_environment_specific_url_fallbacks():
-    widgets = Path(__file__).parents[2] / "agent_utilities" / "gateway" / "widgets"
+    widgets = Path(__file__).parents[2] / "meristem" / "gateway" / "widgets"
     forbidden = "local" + ".example.com"
     retired_default = "default" + "_url"
     sources = [path.read_text() for path in widgets.glob("*.py")]
@@ -137,7 +137,7 @@ def test_dashboard_discovers_from_active_arbora_config(tmp_path, monkeypatch):
         )
     )
     monkeypatch.setenv("ARBORA_CONFIG_DIR", str(active))
-    monkeypatch.setenv("AGENT_UTILITIES_CONFIG_DIR", str(tmp_path / "legacy"))
+    monkeypatch.setenv("MERISTEM_CONFIG_DIR", str(tmp_path / "legacy"))
 
     layout = ConfigManager().load()
 

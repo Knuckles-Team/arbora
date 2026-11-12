@@ -4,7 +4,7 @@ RF-ADR-009 (`plans/refactor/RF-ADR-009-connector-sdk-and-arbora.md`) §2 assigns
 this repository phase 5: **the deployable composition** — the MCP server, REST
 gateway, control plane, fleet gateway, overstory hosting, and deployment
 tooling. It must never own business logic that belongs to
-medulla, scion-sdk, or the agent-utilities agent plane.
+medulla, scion-sdk, or the meristem agent plane.
 
 The live package layout is:
 

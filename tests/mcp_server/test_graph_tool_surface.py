@@ -1,4 +1,4 @@
-"""arbora serves the agent-utilities intent contract and adds its own operations."""
+"""arbora serves the meristem intent contract and adds its own operations."""
 
 from __future__ import annotations
 

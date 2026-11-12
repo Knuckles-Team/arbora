@@ -52,7 +52,7 @@ def test_attach_headless_fleet_loader_records_the_exact_failure_cause(
     records why, rather than a degraded or empty multiplexer.
 
     The exact cause (the exception's own message) reaches the server-side
-    log -- an ``agent_utilities.*`` logger, sanitized by the process-wide
+    log -- an ``meristem.*`` logger, sanitized by the process-wide
     log-privacy boundary before it leaves the process -- but the value
     stored on ``mcp`` is read verbatim by a served caller
     (``intent_tools._fleet_mux``), so it carries only the exception's CLASS

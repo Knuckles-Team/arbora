@@ -8,8 +8,8 @@ import pytest
 
 from arbora.core import settings
 
-RETIRED_DIR_SETTINGS = ("GRAPH_OS_CONFIG_DIR", "AGENT_UTILITIES_CONFIG_DIR")
-RETIRED_APP_DIRS = ("graph-os", "agent-utilities")
+RETIRED_DIR_SETTINGS = ("GRAPH_OS_CONFIG_DIR", "MERISTEM_CONFIG_DIR")
+RETIRED_APP_DIRS = ("graph-os", "meristem")
 
 
 @pytest.fixture

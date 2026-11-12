@@ -29,7 +29,7 @@ selected by ``MCP_CLIENT_AUTH``:
     renews the credential IN-BAND, inside the SAME long-lived session, with no
     reconnect: the daemon's next scheduled write is picked up by the very next
     call. This module makes it a first-class, tested primitive any
-    agent-utilities-built MCP client can select via config.
+    meristem-built MCP client can select via config.
 
 Either way the credential is never applied over a child's explicit ``Authorization``
 header. Once a service-auth mode is selected, incomplete configuration or a mint
@@ -366,9 +366,9 @@ class RotatingFileBearerAuth(httpx.Auth):
                 fresh = read_rotating_bearer_token(self._token_path)
             except Exception as exc:  # pragma: no cover - degrade to the 401
                 # This module's logger is fastmcp.MultiplexerClientAuth, OUTSIDE
-                # the agent_utilities.* privacy boundary installed by
-                # agent_utilities/core/log_privacy.py (only loggers named
-                # "meristem"/"agent_utilities.*" get their record
+                # the meristem.* privacy boundary installed by
+                # meristem/core/log_privacy.py (only loggers named
+                # "meristem"/"meristem.*" get their record
                 # sanitized) — so the path and exception text are redacted by
                 # hand here, matching the established convention at
                 # arbora/fleet/child_resilience/py.
@@ -402,7 +402,7 @@ class RotatingFileBearerAuth(httpx.Auth):
                 )
             except Exception as exc:  # pragma: no cover - degrade to the 401
                 # See the sync _flow() branch above: this logger sits outside
-                # the agent_utilities.* privacy boundary, so redact by hand.
+                # the meristem.* privacy boundary, so redact by hand.
                 logger.warning(
                     "rotating bearer token re-read failed after a 401 for %s; "
                     "degrading to the original 401 response (%s: %s)",

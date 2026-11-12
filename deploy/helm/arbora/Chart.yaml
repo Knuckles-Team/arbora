@@ -11,4 +11,4 @@ kubeVersion: ">=1.29.0-0"
 annotations:
   artifacthub.io/changes: |
     - kind: changed
-      description: Moved from the agent-utilities agent-os-genesis skill into arbora; engine sidecar placement, identity/Eunomia/secrets/telemetry values, split API and web UI ingress.
+      description: Moved from the meristem agent-os-genesis skill into arbora; engine sidecar placement, identity/Eunomia/secrets/telemetry values, split API and web UI ingress.

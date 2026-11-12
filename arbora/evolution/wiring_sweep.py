@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""AST-based Wiring Sweep for agent-utilities.
+"""AST-based Wiring Sweep for meristem.
 
 Backs the ``arbora-wiring-sweep`` console script and the
 ``arbora-evolution`` skill's wiring-sweep capability. Provides a
 comprehensive codebase analysis for concept traceability, dead code
 detection, import graph analysis, and wiring gap identification. The target
-codebase is agent-utilities: it scans ``<root>/agent_utilities/`` and
+codebase is meristem: it scans ``<root>/meristem/`` and
 ``<root>/docs/concept_map.md`` for the 5-pillar (ORCH/KG/AHE/ECO/OS) CONCEPT
-taxonomy, so ``root`` must be an agent-utilities checkout.
+taxonomy, so ``root`` must be a meristem checkout.
 
 CONCEPT:MERISTEM-AHE.evaluation.continuous-evaluation — Continuous Evaluation Engine (code health diagnostic)
 
 Usage:
-    arbora-wiring-sweep /path/to/agent-utilities [--json] [--markdown]
-    arbora-wiring-sweep /path/to/agent-utilities --output report.md
-    arbora-wiring-sweep /path/to/agent-utilities --json --output report.json
+    arbora-wiring-sweep /path/to/meristem [--json] [--markdown]
+    arbora-wiring-sweep /path/to/meristem --output report.md
+    arbora-wiring-sweep /path/to/meristem --json --output report.json
 
 Reports:
     - Concept coverage: Code → Tests → Docs 1:1:1 traceability
@@ -319,7 +319,7 @@ class WiringSweep:
         return len(functions), len(classes)
 
     def _scan_source_files(self) -> None:
-        """Parse all .py files in agent_utilities/."""
+        """Parse all .py files in meristem/."""
         if not self.src_dir.exists():
             self.results["error"] = f"Source directory not found: {self.src_dir}"
             return
@@ -865,7 +865,7 @@ class WiringSweep:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="AST-based wiring sweep for agent-utilities",
+        description="AST-based wiring sweep for meristem",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -873,7 +873,7 @@ def main() -> int:
         "project_root",
         nargs="?",
         default=".",
-        help="Path to the agent-utilities project root",
+        help="Path to the meristem project root",
     )
     parser.add_argument(
         "--json",

@@ -32,7 +32,7 @@ agree:
    BUG-036 fix above.
 
 ARBORA-HOST-R008 NOTE: this file's proof citations (``tests/unit/...``) name
-paths inside the agent-utilities REPOSITORY, not arbora's own. This module
+paths inside the meristem REPOSITORY, not arbora's own. This module
 moved here with the surface it audits (``mcp/tools/query_tools.py``'s
 dispatcher), but AU's ``tests/`` tree is dev-checkout content, never shipped
 in an installed distribution -- so the checks below resolve AU's repo root
@@ -55,9 +55,9 @@ from arbora.security.conformance.surface_manifest import (
 
 
 def _discover_au_root() -> Path | None:
-    """Locate the agent-utilities checkout's repo root -- the one true
+    """Locate the meristem checkout's repo root -- the one true
     source of the proof files this manifest cites -- via its installed
-    package location. Works when agent-utilities is installed editable
+    package location. Works when meristem is installed editable
     (this homelab's arbora deployment convention, a full sibling checkout
     on disk); returns ``None`` under a non-editable install (e.g. a wheel,
     which never ships ``tests/``), in which case callers skip."""
@@ -72,7 +72,7 @@ def _discover_au_root() -> Path | None:
 
 _AU_ROOT = _discover_au_root()
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-# The workspace root containing every sibling repo (agent-utilities,
+# The workspace root containing every sibling repo (meristem,
 # medulla, overstory, arbora, ...) -- one level above AU's own
 # repo root, exactly as it was one level above THIS file's repo root before
 # the move (``_REPO_ROOT.parent``).

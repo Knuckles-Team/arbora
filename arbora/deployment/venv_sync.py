@@ -27,14 +27,14 @@ are actively dangerous and both were paid for in production time:
    (``fastmcp`` 3.4.4 / ``mcp`` 1.28.1 against a lock wanting 4.0.0b1 / 2.0.0).
    An entire test module stopped collecting because one import failed, hiding
    thirteen real defects.  Nothing checked, so nobody knew.  :func:`detect_drift`
-   is the check, and it is wired into ``agent-utilities doctor`` so it runs
+   is the check, and it is wired into ``arbora-doctor`` so it runs
    without anyone remembering to run it.
 
 Design constraints this module honours
 --------------------------------------
 * **Stdlib only.**  This is the tool you reach for when the venv is broken, so
   it must not import anything the venv provides — including the rest of
-  ``agent_utilities``.  Optional third-party helpers (``packaging``) are probed
+  ``meristem``.  Optional third-party helpers (``packaging``) are probed
   lazily and always have a stdlib fallback.
 * **The workspace root is not a git repository.**  Discovery walks up looking
   for a ``pyproject.toml`` carrying ``[tool.uv.workspace]``; it never shells
@@ -2194,7 +2194,7 @@ def detect_drift(workspace: Workspace, *, include_floor: bool = True) -> DriftRe
     """Answer "is the shared venv still what the lock says it should be?".
 
     Runs read-only.  This is the check whose absence let the environment rot for
-    ten days, so it is wired into ``agent-utilities doctor`` and into the merge
+    ten days, so it is wired into ``arbora-doctor`` and into the merge
     reconciler rather than left as a command somebody has to remember.
     """
 

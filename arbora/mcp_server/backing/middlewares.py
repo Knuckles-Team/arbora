@@ -113,7 +113,7 @@ class ActorContextMiddleware(Middleware):
     """Bridge a validated JWT into the ambient actor and ``GraphSession``.
 
     ``create_mcp_server`` already validates inbound JWTs (multi-realm), but
-    nothing carried that identity into the agent-utilities execution plane — so
+    nothing carried that identity into the meristem execution plane — so
     no server could scope resources or authorization to *who is calling*. This
     middleware is the fleet-wide identity bridge:
     it mints the actor once per tool call from the already-validated claims

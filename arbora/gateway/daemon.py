@@ -37,7 +37,7 @@ _metrics_started = False
 
 
 def start_daemon_metrics_listener() -> bool:
-    """Expose this daemon's ``agent_utilities_*`` Prometheus registry over HTTP.
+    """Expose this daemon's ``meristem_*`` Prometheus registry over HTTP.
 
     CONCEPT:MERISTEM-OS.observability.daemon-metrics-listener (D-OG-4). The
     consolidated KG host daemon this module runs records the

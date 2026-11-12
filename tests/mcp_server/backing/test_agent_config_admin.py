@@ -441,7 +441,7 @@ def test_graph_config_tool_routes_to_the_arbora_core():
 
     source = inspect.getsource(config_tools)
     assert "arbora.mcp_server.backing.agent_config_admin" in source
-    assert "agent_utilities.core.config_admin" not in source
+    assert "meristem.core.config_admin" not in source
 
 
 def test_graph_config_is_registered_on_the_arbora_surface():

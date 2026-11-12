@@ -1,4 +1,4 @@
-"""The intent contract for agent-utilities-built MCP servers (fleet connectors).
+"""The intent contract for meristem-built MCP servers (fleet connectors).
 
 CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse — the same single contract
 arbora serves (:mod:`arbora.mcp_server.backing.intent_contract`), applied by the

@@ -8,7 +8,7 @@ server-definition validator — must agree on which keys are sensitive. When tha
 predicate exists in more than one place the surfaces drift, and a drift here is
 a credential disclosure, not a cosmetic inconsistency.
 
-It lives in its own small module (no ``agent_utilities`` imports beyond the
+It lives in its own small module (no ``meristem`` imports beyond the
 standard library) so both the heavy MCP tool modules and the lightweight config
 admin core can share it without an import cycle.
 

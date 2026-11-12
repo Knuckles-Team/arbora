@@ -11,9 +11,9 @@ through ``R005``) wires the router and registry to call :func:`transition`
 instead of mutating ad hoc booleans.
 
 Org boundary (ARBORA-MESSAGING-R006): Arbora owns this supervision model.
-agent-utilities owns the adapter contract (``arbora.messaging.base
+meristem owns the adapter contract (``arbora.messaging.base
 .MessagingBackend``) this model supervises; this module imports nothing from
-agent-utilities.
+meristem.
 """
 
 from __future__ import annotations

@@ -2,12 +2,12 @@
 #
 # Genesis k8s deployment inputs for the "test" environment. Every value below is
 # explicit and complete; nothing here is inferred or filled in at apply time —
-# see agent_utilities/deployment/genesis_environments.py and
+# see arbora/deployment/genesis_environments.py and
 # .specify/design/genesis-environment-profiles/design.md.
 #
 # Secrets are REFERENCES only (env://, vault://, secret://, k8s-secret://ns/name) —
 # never a value. Load with:
-#   from agent_utilities.deployment.genesis_environments import load_environment_profile
+#   from arbora.deployment.genesis_environments import load_environment_profile
 #   load_environment_profile("test")
 # or: setup-config environments show test
 

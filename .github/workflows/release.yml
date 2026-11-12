@@ -35,7 +35,7 @@ jobs:
     needs: [checks]
     if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
     runs-on: ubuntu-latest
-    # D-ORC-10-style gate (see agent-utilities release.yml): publishing is
+    # D-ORC-10-style gate (see meristem release.yml): publishing is
     # irreversible, so it must never be a side effect of an ordinary green
     # push to main. Configure required-reviewer protection once on this
     # environment in Settings > Environments > pypi-publish.

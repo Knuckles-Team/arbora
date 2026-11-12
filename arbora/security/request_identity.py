@@ -34,7 +34,7 @@ Minting a session establishes **who the caller is**; it never resolves **where
 the data lives**. :func:`_mint_graph_session` used to end with a live
 ``placement_catalog.resolve_placement`` round-trip to the engine, which made
 *engine cluster-admin authority a precondition for authenticating any request
-on every agent-utilities served surface*: the engine's capability ledger
+on every meristem served surface*: the engine's capability ledger
 declares ``PlacementRoute`` with ``authz_action = "admin:cluster-read"``
 (``medulla/crates/eg-capabilities/src/lib.rs:2274``) and
 ``src/server/dispatch.rs`` enforces it twice — once against the caller's token
@@ -315,7 +315,7 @@ class VerifiedLocalBearer:
     """Verified claims from one locally-issued bearer JWT -- never an authority.
 
     Returned by :func:`verify_local_bearer_token` (ARBORA-IDENTITY-R003's
-    agent-utilities consumer side). This is deliberately NOT a session or a
+    meristem consumer side). This is deliberately NOT a session or a
     :class:`VerifiedRequestAuthority`: it carries exactly the JWT claims that
     were cryptographically verified, plus the issuer/audience they were
     checked against. It has no policy revision, delegation chain, or engine
@@ -476,7 +476,7 @@ def validate_carrier_claims(claims: dict[str, Any]) -> None:
     _validate_carrier_list_fields(claims)
 
 
-_LOCAL_PROCESS_ISSUER = "urn:agent-utilities:arbora:local-process"
+_LOCAL_PROCESS_ISSUER = "urn:meristem:arbora:local-process"
 _LOCAL_PROCESS_AUDIENCE = "arbora-local"
 _LOCAL_PROCESS_POLICY_VERSION = "local-ephemeral-v1"
 _LOCAL_PROCESS_SUBJECT = "arbora:local-process"
@@ -959,7 +959,7 @@ def system_write_session(config: Any = None) -> GraphSession:
     co-service thread whose event loop inherited its daemon's bound session)
     is correctly attributed to that real caller, not a generic system actor:
 
-    1. Prefer the already-verified ambient :class:`~agent_utilities.
+    1. Prefer the already-verified ambient :class:`~meristem.
        knowledge_graph.core.session.GraphSession` (:meth:`GraphSession.
        from_ambient`).
     2. Else mint -- then cache for as long as the minted credential stays

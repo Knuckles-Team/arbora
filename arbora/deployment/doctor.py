@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""``agent-utilities doctor`` — one holistic health sweep of a deployment.
+"""``arbora-doctor`` — one holistic health sweep of a deployment.
 
 Like ``brew doctor`` / ``flutter doctor``: runs a battery of independent checks
 across every subsystem, each reporting ok / warn / fail / skip with a concrete
@@ -293,7 +293,7 @@ def _python_env_detail(ver: str, optional: dict[str, bool]) -> str:
     present = [k for k, v in optional.items() if v]
     missing = [k for k, v in optional.items() if not v]
     detail = (
-        f"Python {platform.python_version()}, agent-utilities {ver}; "
+        f"Python {platform.python_version()}, meristem {ver}; "
         f"optional extras present: {present or 'none'}"
     )
     if missing:
@@ -321,7 +321,7 @@ def _check_python_env() -> dict[str, Any]:
         "python_env",
         "ok" if py_ok else "warn",
         _python_env_detail(str(ver), optional),
-        remediation=None if py_ok else "agent-utilities needs Python 3.10+",
+        remediation=None if py_ok else "meristem needs Python 3.10+",
         data=optional,
     )
 
@@ -1910,7 +1910,7 @@ def _check_venv_drift() -> dict[str, Any]:
     ten days behind its own lock: one import failed, an entire test module
     stopped collecting, and thirteen real defects were invisible until somebody
     happened to look.  Nothing was checking, so nothing was known.  Running it
-    here means every ``agent-utilities doctor`` answers the question.
+    here means every ``arbora-doctor`` answers the question.
 
     Deployments have no uv workspace above them (the runtime image installs
     wheels), so an absent workspace is a ``skip``, not a failure.
@@ -2310,7 +2310,7 @@ def _doctor_arg_parser() -> Any:
 
     parser = argparse.ArgumentParser(
         prog="arbora-doctor",
-        description="Holistic health sweep of an agent-utilities deployment.",
+        description="Holistic health sweep of a meristem deployment.",
     )
     parser.add_argument("--only", nargs="*", choices=list(CHECKS), default=None)
     parser.add_argument(
@@ -2367,7 +2367,7 @@ def _run_preflight_cli(args: Any) -> int:
     if args.json:
         print(json.dumps(report, indent=2, default=str))
     else:
-        _print_human(report, title="agent-utilities preflight")
+        _print_human(report, title="meristem preflight")
     return 0 if report["status"] != "blocked" else 1
 
 
@@ -2413,7 +2413,7 @@ def main(argv: list[str] | None = None) -> int:
     return 0 if report["status"] != "unhealthy" else 1
 
 
-def _print_human(report: dict[str, Any], title: str = "agent-utilities doctor") -> None:
+def _print_human(report: dict[str, Any], title: str = "arbora-doctor") -> None:
     glyph = {"ok": "✓", "warn": "!", "fail": "✗", "error": "✗", "skip": "·"}
     print(f"{title} — {report['status'].upper()}\n")
     for r in report["checks"]:

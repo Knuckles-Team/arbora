@@ -54,7 +54,7 @@ def test_entry_point_style_provider_lists_its_two_fixture_skills(
 def test_universal_skills_style_nested_path_source_is_listed(tmp_path: Path) -> None:
     """universal-skills resolves skills several directories deep
     (``<category>/<name>/SKILL.md``); this module only needs the final
-    ``(provider, skill_root)`` pair agent-utilities' own resolver already
+    ``(provider, skill_root)`` pair meristem's own resolver already
     produces, so a nested root is no different from a flat one."""
     nested_root = tmp_path / "finance-workflows" / "alpha-discovery"
     nested_root.mkdir(parents=True)

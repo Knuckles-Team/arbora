@@ -2,7 +2,7 @@
 
 Uses ``twitchio`` for Twitch IRC chat and EventSub.
 
-Install: ``pip install agent-utilities[messaging-twitch]``
+Install: ``pip install arbora[messaging-twitch]``
 CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 
@@ -53,9 +53,7 @@ class TwitchBackend(MessagingBackend):
         try:
             from twitchio.ext import commands
         except ImportError:
-            raise ImportError(
-                "Install: pip install agent-utilities[messaging-twitch]"
-            ) from None
+            raise ImportError("Install: pip install arbora[messaging-twitch]") from None
 
         token = self.config.token or setting("TWITCH_OAUTH_TOKEN", "")
         channels = self.config.extra.get(

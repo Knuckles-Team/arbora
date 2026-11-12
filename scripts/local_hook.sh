@@ -60,7 +60,7 @@ case "$gate" in
       fi
     done
     [ -n "$source" ] || unavailable "no repository-manager checkout at .uv-workspace-siblings/repository-manager or ../repository-manager"
-    # --no-sources: the readiness tool's own agent-utilities requirement
+    # --no-sources: the readiness tool's own meristem requirement
     # resolves from PyPI, never from a sibling source path it declares.
     exec uv run --no-project --no-sources --python 3.14 --prerelease=allow --with "$source" \
       python -m repository_manager.dependency_readiness .

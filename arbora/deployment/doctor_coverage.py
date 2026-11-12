@@ -12,7 +12,7 @@ from .doctor_support import _result
 
 
 def _check_skills() -> dict[str, Any]:
-    """Report whether the agent-utilities skill toolkit is installed in the XDG dir.
+    """Report whether the meristem skill toolkit is installed in the XDG dir.
 
     CONCEPT:MERISTEM-OS.deployment.agent-factory-autoload — the agent factory loads flat
     operator-owned skills plus valid managed subtrees for current providers under
@@ -25,7 +25,7 @@ def _check_skills() -> dict[str, Any]:
         "skills",
         "fail",
         f"current skill resolution failed ({type(exc).__name__})",
-        remediation="reconcile provider registrations and run `agent-utilities install`",
+        remediation="reconcile provider registrations and run `meristem install`",
         skill="arbora-deployment",
         data={"ready": False, "redacted": True},
     )
@@ -212,7 +212,7 @@ def _unified_install_result(
             "warn",
             f"unified provider materialization needs reconciliation ({issues} issue(s))",
             remediation=(
-                "`agent-utilities install` (materializes current providers, marks "
+                "`meristem install` (materializes current providers, marks "
                 "ownership, and prunes removed managed providers)"
             ),
             skill="arbora-deployment",

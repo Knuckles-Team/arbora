@@ -1,6 +1,6 @@
 """Voice Call Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction). Uses Twilio for voice/SMS.
 
-Install: ``pip install agent-utilities[messaging-voicecall]``
+Install: ``pip install arbora[messaging-voicecall]``
 CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 
@@ -49,7 +49,7 @@ class VoiceCallBackend(MessagingBackend):
             from twilio.rest import Client
         except ImportError:
             raise ImportError(
-                "Install: pip install agent-utilities[messaging-voicecall]"
+                "Install: pip install arbora[messaging-voicecall]"
             ) from None
 
         sid = self.config.app_id or setting("TWILIO_ACCOUNT_SID", "")

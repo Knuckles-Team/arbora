@@ -1,6 +1,6 @@
 """Typed request value objects for the ``graph_ontology`` action dispatcher.
 
-Leaf module — imports NOTHING from ``agent_utilities`` (CX wD10-R-ARITY / BUG-CX-004 §9b,
+Leaf module — imports NOTHING from ``meristem`` (CX wD10-R-ARITY / BUG-CX-004 §9b,
 same rationale as the other typed leaf modules: ``arbora.mcp_server.backing.tools`` is the
 highest-leverage node in au's import SCC because its ``__init__.py`` eagerly imports all 35
 tool-registration modules, so anything defined *inside* that package pulls the whole cluster

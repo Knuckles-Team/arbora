@@ -32,7 +32,7 @@ Same proof shape as stage 1, against the revision this release's
 ## 3. Agent runtime (`meristem`)
 
 ```bash
-gh run list --workflow=release.yml -R Knuckles-Team/agent-utilities --branch main --limit 1
+gh run list --workflow=release.yml -R Knuckles-Team/meristem --branch main --limit 1
 ```
 
 Same proof shape as stage 1, against the revision this release's

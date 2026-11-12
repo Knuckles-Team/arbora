@@ -343,7 +343,7 @@ DEFAULT_POLICY: dict[str, Any] = {
         },
         {
             "kind": "connector_pack_import",
-            "target": "agent-utilities",
+            "target": "meristem",
             "tier": TIER_AUTO_NOTIFY,
         },
         # Insight Engine closed loop (CONCEPT:MERISTEM-KG.evolution.insight-engine-closed-loop,

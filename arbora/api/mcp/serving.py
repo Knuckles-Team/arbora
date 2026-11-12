@@ -3,7 +3,7 @@
 Arbora serves its eight-tool MCP contract itself: the six intent verbs
 (``ask``, ``find``, ``why``, ``write``, ``act``, ``manage``) over its own
 operation registry and invocation pipeline, plus the two MCP Apps launcher
-tools (task progress, trace waterfall). The agent runtime (agent-utilities)
+tools (task progress, trace waterfall). The agent runtime (meristem)
 serves no MCP tools of its own; it only supplies the reusable registrar
 function this module calls for the two launcher tools, exactly like any
 other library dependency.

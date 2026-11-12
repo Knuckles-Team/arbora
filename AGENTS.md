@@ -44,7 +44,7 @@ fabricated receipt to make it appear complete.
 ## Boundaries
 
 - **Owns:** the one door. That covers admission, auth, approvals, served operations and the tool and operation registry. It also covers the MCP server and multiplexer, A2A serving and routing, config at `~/.config/arbora`, and the EG methods served as `eg.*`.
-- **Never builds:** facts, stores, policy tables or decisions (route them to medulla). Protocol libraries and connector contracts go to scion-sdk. The run loop goes to agent-utilities.
+- **Never builds:** facts, stores, policy tables or decisions (route them to medulla). Protocol libraries and connector contracts go to scion-sdk. The run loop goes to meristem.
 - **Allowed dependencies:** medulla and scion-sdk. From meristem, only `host_ports`, `harness`, `runtime` and `core.paths`. Every package installs from PyPI.
 
 Route every feature with the [ecosystem boundaries standard](https://github.com/Knuckles-Team/pipelines/blob/main/reference/ecosystem-boundaries.md) before any code. A part this repository does not own goes to its owner's specs.

@@ -9,7 +9,7 @@ no separate supervisor service. Everything here surfaces state the ecosystem
 *already* maintains:
 
 * **topology / health** — the durable session registry and goal registry in
-  :mod:`agent_utilities.core.sessions` (per-host SQLite by default, the shared
+  :mod:`meristem.core.sessions` (per-host SQLite by default, the shared
   Postgres state store when ``state_db_uri`` is set —
   CONCEPT:MERISTEM-OS.state.unified-durable-state-externalization).
   Aggregations run in SQL (``COUNT``/``GROUP BY``) and listings are paginated

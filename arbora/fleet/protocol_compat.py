@@ -182,7 +182,7 @@ def _install_pydantic_ai_v2_read_bridge() -> None:
 
     if installed_version != _PATCHED_PYDANTIC_AI_VERSION:
         raise RuntimeError(
-            "agent-utilities: the Pydantic-AI MCP contract requires "
+            "meristem: the Pydantic-AI MCP contract requires "
             f"pydantic-ai-slim=={_PYDANTIC_AI_CONTRACT_VERSION}, but "
             f"{installed_version} is installed. Refusing to construct MCP "
             "toolsets with an unverified compatibility surface; re-lock the AU "
@@ -434,7 +434,7 @@ def check_mcp_sdk_floor(distribution: str = "arbora") -> dict[str, Any]:
     time in production — the exact failure `child_resilience.py` hit when a
     deployed pod resolved `mcp` 1.29.0 against `fastmcp>=4.0.0b1`-targeted
     code. This makes that mismatch fail loudly here (wired into
-    `agent-utilities doctor` and a CI regression test) instead of surfacing
+    `arbora-doctor` and a CI regression test) instead of surfacing
     only as a swallowed `ImportError` deep in a child transport.
 
     The `fastmcp` floor is read from `distribution`'s base runtime metadata;

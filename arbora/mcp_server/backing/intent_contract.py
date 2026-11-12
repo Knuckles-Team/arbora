@@ -1,6 +1,6 @@
 """The single MCP tool contract of the ecosystem (CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse).
 
-Every MCP server built on agent-utilities — arbora and every fleet connector —
+Every MCP server built on meristem — arbora and every fleet connector —
 serves the same contract: a handful of **intent tools** (``ask``, ``find``,
 ``act``, …), each with a condensed input schema:
 

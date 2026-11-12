@@ -5,9 +5,9 @@ CONCEPT:MERISTEM-OS.deployment.standard-repo-templates / CONCEPT:MERISTEM-OS.dep
 Every genesis deployment (``tiny`` | ``single-node-prod`` | ``enterprise``) should
 end up with a *consistent, abstract* set of operator-owned **private** git repos that
 hold the operator's environment — inventory, networks, secrets convention, the
-deployment manifests, the resolved agent-utilities config — plus (for the larger
+deployment manifests, the resolved meristem config — plus (for the larger
 profiles) a reusable GitLab CI/runner layout. The whole point is that **this
-operator's environment is never encoded in the public agent-utilities repo**: the
+operator's environment is never encoded in the public meristem repo**: the
 public repo carries only ABSTRACT, TEMPLATED skeletons (placeholder tokens like
 ``${GIT_NAMESPACE}`` / ``<host>``); the concrete values live ONLY in the operator's
 XDG config (``~/.config/arbora/inventory.yaml`` + ``workspace.yml``) and the
@@ -78,7 +78,7 @@ _INVENTORY_YAML = """\
 # Operator host inventory — the SOURCE OF TRUTH for this deployment.
 # Genesis seeds this from ~/.config/arbora/inventory.yaml at deploy time.
 # This skeleton is ABSTRACT: replace the <placeholders> with your real hosts.
-# Ansible-style; consumed by agent-utilities (engine_infra.ingest_hosts_from_inventory).
+# Ansible-style; consumed by meristem (engine_infra.ingest_hosts_from_inventory).
 all:
   children:
     managed_hosts:
@@ -95,7 +95,7 @@ all:
 _INVENTORY_README = """\
 # inventory
 
-Operator-owned **private** host inventory for this agent-utilities deployment — the
+Operator-owned **private** host inventory for this meristem deployment — the
 single source of truth for hosts, roles and SSH access. Mirrors
 `~/.config/arbora/inventory.yaml`.
 
@@ -106,7 +106,7 @@ single source of truth for hosts, roles and SSH access. Mirrors
 _CONFIG_README = """\
 # config
 
-Operator-owned **private** agent-utilities configuration for this deployment:
+Operator-owned **private** meristem configuration for this deployment:
 
 - `workspace.yml` — the workspace/service manifest (mirrors `~/.config/arbora/workspace.yml`).
 - `config.json.example` — the resolved, **secret-redacted** profile config (real
@@ -333,7 +333,7 @@ STANDARD_REPOS: tuple[RepoTemplate, ...] = (
     ),
     RepoTemplate(
         key="config",
-        purpose="Resolved agent-utilities config: workspace.yml + redacted config/mcp examples.",
+        purpose="Resolved meristem config: workspace.yml + redacted config/mcp examples.",
         seed_from="~/.config/arbora/{workspace.yml,config.json,mcp_config.json}",
         skeleton={
             "workspace.yml": _WORKSPACE_YML,
@@ -525,7 +525,7 @@ def provision_plan(
         "note": (
             "ABSTRACT plan. Concrete inventory/workspace/secrets are read from the"
             " operator's XDG config at deploy time and committed into these PRIVATE"
-            " repos — never into the public agent-utilities repo."
+            " repos — never into the public meristem repo."
         ),
     }
 

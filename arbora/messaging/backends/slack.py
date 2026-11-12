@@ -6,7 +6,7 @@ reactions, and typing indicators.
 
 Install::
 
-    pip install agent-utilities[messaging-slack]
+    pip install arbora[messaging-slack]
 
 Configuration::
 
@@ -118,7 +118,7 @@ class SlackBackend(MessagingBackend):
             from slack_bolt.async_app import AsyncApp
         except ImportError:
             raise ImportError(
-                "slack-bolt is required. Install: pip install agent-utilities[messaging-slack]"
+                "slack-bolt is required. Install: pip install arbora[messaging-slack]"
             ) from None
 
         if not self.config.token:

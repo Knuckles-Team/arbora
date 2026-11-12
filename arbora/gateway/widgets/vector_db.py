@@ -31,7 +31,7 @@ class Widget(BaseWidget):
         ]
 
     def fetch_data(self, config: ServiceConfig) -> WidgetData:
-        # RF-ADR-009: agent-utilities (workspace phase 4) must not import a
+        # RF-ADR-009: meristem (workspace phase 4) must not import a
         # sibling connector package (the vector-database connector is phase
         # 7) — no in-process package import here, ever again. Reach it over
         # its MCP server instead, the same fleet transport every mcp_tool source

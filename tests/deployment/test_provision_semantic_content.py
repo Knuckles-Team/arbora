@@ -192,7 +192,7 @@ def test_cli_provisions_both_packs_under_eg_issued_bindings(
     # A fresh store also lacks the WorkItem control graph (leases, queues).
     assert report["control_graph_created"] is True
     assert "__control__" in engine.graphs
-    # The cut agent-utilities harness ships no semantic content pack.
+    # The cut meristem harness ships no semantic content pack.
     assert sorted(report["registered"]) == ["arbora"]
     assert sorted(attest["connector"] for attest in engine.attests) == ["arbora"]
     for attest in engine.attests:
@@ -214,7 +214,7 @@ def test_rerun_registers_and_creates_nothing(
     wired: dict[str, Any], capsys: pytest.CaptureFixture[str]
 ) -> None:
     engine: _Engine = wired["engine"]
-    engine.registered.update({"arbora", "agent-utilities"})
+    engine.registered.update({"arbora", "meristem"})
     engine.graphs.update({GRAPH, "__control__"})
 
     assert production_ops.main(["provision-semantic-content", "--served-url", URL]) == 0

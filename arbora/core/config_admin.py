@@ -1,6 +1,6 @@
 """Arbora-owned hosting/deployment configuration settings (ARBORA-DEPLOY-R009.1).
 
-The former agent runtime's monolithic configuration module (``agent_utilities.
+The former agent runtime's monolithic configuration module (``meristem.
 core.config``) mixed hosting/deployment settings in with connector-base and
 agent/model settings. This module is Arbora's own home for the
 hosting/deployment slice — it resolves those settings from the environment
@@ -55,7 +55,7 @@ def load_hosting_deployment_settings(
 
     Reads ``ARBORA_HOST``, ``ARBORA_PORT``, ``ARBORA_DEPLOY_PROFILE`` and
     ``ARBORA_DATA_DIR``, falling back to Arbora-owned defaults. This never
-    imports ``agent_utilities.core.config`` (or any agent-runtime
+    imports ``meristem.core.config`` (or any agent-runtime
     configuration internals) — the hosting/deployment slice is owned here,
     split out of that former monolithic module per ``ARBORA-DEPLOY-R009``.
 
