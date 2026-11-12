@@ -3,7 +3,7 @@
 Manages Google Meet conference creation, participant tracking, and meeting events.
 Voice/video platform — no text messaging, but supports call lifecycle events.
 
-Install: ``pip install agent-utilities[messaging-googlemeet]``
+Install: ``pip install arbora[messaging-googlemeet]``
 
 CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
@@ -54,7 +54,7 @@ class GoogleMeetBackend(MessagingBackend):
             from googleapiclient.discovery import build
         except ImportError:
             raise ImportError(
-                "Install: pip install agent-utilities[messaging-googlemeet]"
+                "Install: pip install arbora[messaging-googlemeet]"
             ) from None
 
         creds_path = self.config.token or setting("GOOGLE_MEET_SERVICE_ACCOUNT", "")

@@ -2452,7 +2452,7 @@ class MCPMultiplexer:
         # CONCEPT:MERISTEM-KG.retrieval.unified-capability-contract — the one local
         # skill entry (arbora.fleet.local_skill_catalog), built lazily and
         # cached like the probe cache above: every skill resolved from a
-        # provider installed in THIS process (arbora's own, agent-utilities'
+        # provider installed in THIS process (arbora's own, meristem's
         # own, and any sibling package declaring the same
         # ``scion_sdk.connector`` declaration), filed under the
         # pseudo-server ``LOCAL_SKILLS_SERVER`` so it rides the SAME
@@ -6634,7 +6634,7 @@ class MCPMultiplexer:
 
         "Local" means every skill ``arbora.core.providers.
         resolve_skill_provider_dirs()`` resolves in THIS process — arbora's
-        own skills, agent-utilities' own, and any sibling package installed
+        own skills, meristem's own, and any sibling package installed
         alongside arbora that declares ``scion_sdk.connector``
         (CONCEPT:MERISTEM-KG.retrieval.unified-capability-contract). An
         individually unreadable/malformed skill, and a core-pack name no

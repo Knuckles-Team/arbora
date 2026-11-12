@@ -244,7 +244,7 @@ async def test_discover_tools_ranks_skills_and_tools_in_one_result_set(tmp_path)
     assert tool_hit["bind"] == {
         "tool_server": CNT,
         "allowed_tools": [CNT_TOOL],
-        "skill_name": "agent-utilities-expert",
+        "skill_name": "meristem-expert",
     }
     assert skill_hit["bind"] == {
         "tool_server": CNT,

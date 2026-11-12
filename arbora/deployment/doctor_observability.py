@@ -507,8 +507,7 @@ def _langfuse_ready_result(
             "fail",
             "Langfuse MCP is enabled but its current child contract is unavailable",
             remediation=(
-                "Install the current agent-utilities[serving] artifact in the "
-                "Arbora runtime environment."
+                "Install the current arbora artifact in the Arbora runtime environment."
             ),
             data=data,
         )

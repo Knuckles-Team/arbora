@@ -10,7 +10,7 @@ external registries (ECO-4.96).
 
 Custody mirrors the run-token secret (:mod:`security.run_token`): the private key is
 **only** ever read from ``setting("ARD_SIGNING_PRIVATE_KEY")`` — injected from OpenBao
-(``apps/agent-utilities/ard``) into the served stack env at deploy, never committed and
+(``apps/meristem/ard``) into the served stack env at deploy, never committed and
 never logged. With no key configured (dev/tests) a stable per-process ephemeral key is
 synthesized so sign/verify round-trips, and the manifest advertises ``signed: false``.
 

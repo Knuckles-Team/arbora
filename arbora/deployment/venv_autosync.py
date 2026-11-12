@@ -100,8 +100,8 @@ __all__ = [
 ]
 
 HOOK_EVENTS: tuple[str, ...] = ("post-merge", "post-checkout", "post-rewrite")
-_BLOCK_START = "# >>> agent-utilities venv autosync (managed) >>>"
-_BLOCK_END = "# <<< agent-utilities venv autosync (managed) <<<"
+_BLOCK_START = "# >>> meristem venv autosync (managed) >>>"
+_BLOCK_END = "# <<< meristem venv autosync (managed) <<<"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -398,7 +398,7 @@ for PY in {" ".join(shlex.quote(i) for i in interpreters)}; do
         exit 0
     fi
 done
-echo "agent-utilities venv autosync: no usable interpreter; see $LOG" >&2
+echo "meristem venv autosync: no usable interpreter; see $LOG" >&2
 exit 0
 """
     path.write_text(body, encoding="utf-8")
@@ -418,8 +418,7 @@ def _hook_block(workspace: Workspace, event: str) -> str:
             f"if [ -x {shlex.quote(str(script))} ]; then",
             f"    {shlex.quote(str(script))} trigger --event {shlex.quote(event)} "
             '--repo "$(git rev-parse --show-toplevel)" || \\',
-            f'        echo "agent-utilities venv autosync trigger failed; see '
-            f'{log}" >&2',
+            f'        echo "meristem venv autosync trigger failed; see {log}" >&2',
             "fi",
             _BLOCK_END,
             "",
@@ -451,7 +450,7 @@ class GitHookTrigger:
             elif existing.strip():
                 body = existing.rstrip("\n") + "\n\n" + block
             else:
-                body = "#!/bin/sh\n# agent-utilities venv autosync\n\n" + block
+                body = "#!/bin/sh\n# meristem venv autosync\n\n" + block
             path.write_text(body, encoding="utf-8")
             path.chmod(0o755)
             written.append(str(path))
@@ -471,7 +470,7 @@ class GitHookTrigger:
             if remainder.strip() in (
                 "",
                 "#!/bin/sh",
-                "#!/bin/sh\n# agent-utilities venv autosync",
+                "#!/bin/sh\n# meristem venv autosync",
             ):
                 path.unlink()
             else:

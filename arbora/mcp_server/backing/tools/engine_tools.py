@@ -1,6 +1,6 @@
 """Full low-level medulla engine surface as MCP tools + REST routes.
 
-agent-utilities IS the native API/MCP layer for the medulla engine. The
+meristem IS the native API/MCP layer for the medulla engine. The
 curated high-level ``graph_*`` / ``ontology_*`` / ``object_*`` tools cover the
 synthesised, agent-facing operations; this module ADDS complete 1:1 coverage of
 the engine's *low-level* capability surface so no engine method is reachable only
@@ -170,8 +170,7 @@ def _discover_domains() -> dict[str, list[str]]:
             "engine surface discovery: 'medulla' client unavailable — "
             "ALL engine_<domain> tools (and their verbose/manifest ops) will be "
             "absent this run (exception_type=%s). Install the engine with "
-            "`pip install agent-utilities[arbora]` (or `[serving]`/`[all]`, both "
-            "of which pull it) if this MCP process is meant to serve engine tools.",
+            "`pip install medulla` if this MCP process is meant to serve engine tools.",
             type(exc).__name__,
         )
         return {}

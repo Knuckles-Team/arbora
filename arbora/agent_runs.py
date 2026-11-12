@@ -1,6 +1,6 @@
-"""Arbora bindings for the agent-utilities run loop.
+"""Arbora bindings for the meristem run loop.
 
-The agent-utilities harness owns the run loop (plan, model, tools, steps,
+The meristem harness owns the run loop (plan, model, tools, steps,
 budgets, stop rules). It asks its host for every decision through
 ``meristem.host_ports``. This module supplies those answers:
 

@@ -2,7 +2,7 @@
 
 Uses ``line-bot-sdk`` for LINE Messaging API.
 
-Install: ``pip install agent-utilities[messaging-line]``
+Install: ``pip install arbora[messaging-line]``
 
 CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
@@ -54,9 +54,7 @@ class LINEBackend(MessagingBackend):
         try:
             from linebot.v3.messaging import ApiClient, Configuration, MessagingApi
         except ImportError:
-            raise ImportError(
-                "Install: pip install agent-utilities[messaging-line]"
-            ) from None
+            raise ImportError("Install: pip install arbora[messaging-line]") from None
 
         token = self.config.token or setting("LINE_CHANNEL_ACCESS_TOKEN", "")
         if not token:

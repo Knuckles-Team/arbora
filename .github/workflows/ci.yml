@@ -101,7 +101,7 @@ jobs:
       CHANGE_SCOPE: ${{ needs.changes.outputs.scope }}
       # The homelab runner is an RKE2 pod; this is a CI checkout, not a deployed
       # arbora instance, so the live-mount guard is a false positive here.
-      AGENT_UTILITIES_SKIP_LIVE_MOUNT_CHECK: "true"
+      MERISTEM_SKIP_LIVE_MOUNT_CHECK: "true"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

@@ -1,6 +1,6 @@
 """Deploy-time provisioning of Arbora's own semantic content packs.
 
-Arbora serves the ``arbora`` and ``agent-utilities`` ConnectorContent packs
+Arbora serves the ``arbora`` and ``meristem`` ConnectorContent packs
 in process, so it is a *self-served* catalog producer: medulla issues
 the catalog binding for each pack through ``attest_self_served_catalog``,
 pinned to the exact server entry the import then carries. Every step runs under

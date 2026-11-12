@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""Complete config generation + validation for full agent-utilities deployments.
+"""Complete config generation + validation for full meristem deployments.
 
 The framework has ~261 :class:`AgentConfig` fields. Operators (and Claude setting
 itself up) shouldn't hand-copy a template or reason about each flag. This module:
@@ -472,7 +472,7 @@ def write_config(
 ) -> dict[str, Any]:
     """Generate and write a complete ``config.json`` for ``profile`` to ``path``.
 
-    ``path`` defaults to the XDG config location agent-utilities loads at startup.
+    ``path`` defaults to the XDG config location meristem loads at startup.
     """
     cfg = generate_config(profile)
     out = Path(path) if path else _default_config_path()

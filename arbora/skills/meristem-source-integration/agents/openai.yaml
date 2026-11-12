@@ -1,0 +1,4 @@
+interface:
+  display_name: "Meristem Source Integration"
+  short_description: "Connect and sync an external source into the KG"
+  default_prompt: "Use $meristem-source-integration to configure, discover, mirror, and sync the named external source into the Knowledge Graph."

@@ -1,6 +1,6 @@
 """iMessage Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction). macOS-only via AppleScript bridge.
 
-Install: ``pip install agent-utilities[messaging-imessage]``
+Install: ``pip install arbora[messaging-imessage]``
 CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 

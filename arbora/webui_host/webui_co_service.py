@@ -6,7 +6,7 @@ Why this exists
 ---------------
 Every piece of this was already built and only the last wire was missing:
 
-* ``agent-utilities[ag-ui]`` already declares ``overstory`` as an optional
+* ``arbora[overstory]`` already declares ``overstory`` as an optional
   dependency, so the package is installable alongside arbora with no new
   distribution work.
 * Arbora owns the gateway routers the dashboard fronts and injects them through

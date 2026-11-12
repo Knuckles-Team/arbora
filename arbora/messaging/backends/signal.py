@@ -2,7 +2,7 @@
 
 Uses ``semaphore-bot`` (signal-cli bridge) for Signal messaging.
 
-Install: ``pip install agent-utilities[messaging-signal]``
+Install: ``pip install arbora[messaging-signal]``
 
 CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
@@ -54,9 +54,7 @@ class SignalBackend(MessagingBackend):
         try:
             from semaphore import Bot
         except ImportError:
-            raise ImportError(
-                "Install: pip install agent-utilities[messaging-signal]"
-            ) from None
+            raise ImportError("Install: pip install arbora[messaging-signal]") from None
 
         phone = self.config.token or setting("SIGNAL_PHONE_NUMBER", "")
         if not phone:

@@ -74,7 +74,7 @@ async def test_startup_injects_generated_clients_and_public_catalog_ports(
     monkeypatch.setattr(
         composition,
         "required_content_connectors",
-        lambda: ("arbora", "agent-utilities"),
+        lambda: ("arbora", "meristem"),
     )
 
     bound: list[str] = []
@@ -105,7 +105,7 @@ async def test_startup_injects_generated_clients_and_public_catalog_ports(
             "client": SimpleNamespace(graph=Session.graph),
             "tenant_id": "tenant-a",
             "graph": Session.graph,
-            "connectors": ("arbora", "agent-utilities"),
+            "connectors": ("arbora", "meristem"),
         }
     ]
     authority, authority_scope = installed[0]

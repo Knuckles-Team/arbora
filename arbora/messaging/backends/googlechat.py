@@ -2,7 +2,7 @@
 
 Uses ``google-api-python-client`` for Google Chat spaces/messages.
 
-Install: ``pip install agent-utilities[messaging-googlechat]``
+Install: ``pip install arbora[messaging-googlechat]``
 
 CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
@@ -58,7 +58,7 @@ class GoogleChatBackend(MessagingBackend):
             from googleapiclient.discovery import build
         except ImportError:
             raise ImportError(
-                "Install: pip install agent-utilities[messaging-googlechat]"
+                "Install: pip install arbora[messaging-googlechat]"
             ) from None
 
         creds_path = self.config.token or setting("GOOGLE_CHAT_SERVICE_ACCOUNT", "")

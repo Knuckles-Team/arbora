@@ -14,7 +14,7 @@ keep seeing that path.
 directory from the local-skill source (CONCEPT:MERISTEM-KG.retrieval.unified-
 capability-contract, ``arbora.fleet.local_skill_catalog``): the real
 ``build_local_skill_catalog`` resolves whatever is actually installed in
-THIS process (agent-utilities' own bundled skills, arbora's own, any
+THIS process (meristem's own bundled skills, arbora's own, any
 sibling package declaring the same entry point, …), which would otherwise
 leak into every ``discover_tools``/``_catalog_fleet_probe`` call
 non-deterministically and couple this suite's results to the synced

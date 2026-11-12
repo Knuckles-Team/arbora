@@ -2,7 +2,7 @@
 
 CONCEPT:ARBORA-HOST.harness.host-bindings
 
-agent-utilities carries no MCP client. When it needs a toolset bound to one
+meristem carries no MCP client. When it needs a toolset bound to one
 fleet endpoint, the toolsets a client configuration file declares, or one
 ``list_tools``/``call_tool`` session, it asks the host port
 (``meristem.host_ports``); arbora answers through these builders,

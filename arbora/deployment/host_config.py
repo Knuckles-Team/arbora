@@ -2,13 +2,13 @@
 
 A typed, validated model for the hosting and deployment settings that
 Arbora owns in its own right -- split out of the agent runtime's
-monolithic ``agent_utilities.core.config`` module. Connector base settings
+monolithic ``meristem.core.config`` module. Connector base settings
 belong to the connector SDK's own configuration module; agent/model
 settings remain with the agent runtime. This module resolves without
-importing ``agent_utilities.core.config`` internals.
+importing ``meristem.core.config`` internals.
 
 Existing call sites across ``arbora/gateway`` and ``arbora/messaging``
-still read settings through ``agent_utilities.core.config`` directly; this
+still read settings through ``meristem.core.config`` directly; this
 is the typed model for the first slice of the migration (ARBORA-HOST-R010
 ``.1``). Routing each call site onto this module is follow-up work.
 """
@@ -53,7 +53,7 @@ def load_hosting_deployment_settings(
     env: dict[str, str] | None = None,
 ) -> HostingDeploymentSettings:
     """Resolve hosting/deployment settings from Arbora's own environment
-    variables only -- never from ``agent_utilities.core.config`` internals."""
+    variables only -- never from ``meristem.core.config`` internals."""
     source = env if env is not None else os.environ
     return HostingDeploymentSettings(
         bind_host=source.get("ARBORA_BIND_HOST", "127.0.0.1"),

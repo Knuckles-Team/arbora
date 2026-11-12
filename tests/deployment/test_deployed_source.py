@@ -89,7 +89,7 @@ class DeployedSourceManagerTest(unittest.TestCase):
     def test_init_promote_and_rollback_follow_only_merged_history(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             source, initial, promoted = self._new_source(Path(temporary))
-            worktree = Path(temporary) / "deployed" / "agent-utilities"
+            worktree = Path(temporary) / "deployed" / "meristem"
 
             before = _run_manager(source, worktree, "status")
             self.assertEqual(before["state"], "undecoupled")
@@ -132,7 +132,7 @@ class DeployedSourceManagerTest(unittest.TestCase):
     def test_init_requires_an_ancestor_of_main(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             source, _initial, _promoted = self._new_source(Path(temporary))
-            worktree = Path(temporary) / "deployed" / "agent-utilities"
+            worktree = Path(temporary) / "deployed" / "meristem"
             orphan = Path(temporary) / "orphan"
             orphan.mkdir()
             _run_git(orphan, "init", "-b", "other")
@@ -167,7 +167,7 @@ class DeployedSourceManagerTest(unittest.TestCase):
     def test_ensure_repairs_a_registered_but_missing_checkout(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             source, initial, _promoted = self._new_source(Path(temporary))
-            worktree = Path(temporary) / "deployed" / "agent-utilities"
+            worktree = Path(temporary) / "deployed" / "meristem"
             _run_manager(source, worktree, "init", "--initial-sha", initial)
 
             # Removing the directory leaves Git's linked-worktree admin record
@@ -189,7 +189,7 @@ class DeployedSourceManagerTest(unittest.TestCase):
     def test_unrelated_clone_is_rejected_by_git_common_dir_identity(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             source, initial, _promoted = self._new_source(Path(temporary))
-            linked = Path(temporary) / "deployed" / "agent-utilities"
+            linked = Path(temporary) / "deployed" / "meristem"
             _run_manager(source, linked, "init", "--initial-sha", initial)
             unrelated = Path(temporary) / "unrelated"
             _run_git(source, "clone", str(source), str(unrelated))
@@ -211,7 +211,7 @@ class DeployedSourceManagerTest(unittest.TestCase):
     ) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             source, initial, _promoted = self._new_source(Path(temporary))
-            worktree = Path(temporary) / "deployed" / "agent-utilities"
+            worktree = Path(temporary) / "deployed" / "meristem"
             _run_manager(source, worktree, "init", "--initial-sha", initial)
             _run_git(worktree, "checkout", "-b", "unrelated-branch")
 
@@ -238,7 +238,7 @@ class DeployedSourceManagerTest(unittest.TestCase):
     def test_failed_init_removes_new_ref_and_worktree_registration(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             source, initial, _promoted = self._new_source(Path(temporary))
-            worktree = Path(temporary) / "deployed" / "agent-utilities"
+            worktree = Path(temporary) / "deployed" / "meristem"
 
             with mock.patch.object(
                 source_manager,
@@ -259,7 +259,7 @@ class DeployedSourceManagerTest(unittest.TestCase):
     def test_failed_init_never_deletes_same_sha_created_after_preflight(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             source, initial, _promoted = self._new_source(Path(temporary))
-            worktree = Path(temporary) / "deployed" / "agent-utilities"
+            worktree = Path(temporary) / "deployed" / "meristem"
 
             def create_competing_ref(
                 _source: Path, _target: str, *, label: str
@@ -298,7 +298,7 @@ class DeployedSourceManagerTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             source, initial, _promoted = self._new_source(root)
-            worktree = root / "deployed" / "agent-utilities"
+            worktree = root / "deployed" / "meristem"
             competitor = root / "competitor"
             real_ensure_parent = source_manager._ensure_parent
 

@@ -52,7 +52,7 @@ def test_subpackage_exports_are_reachable_from_arbora(package_name: str) -> None
         assert hasattr(module, symbol), f"{module.__name__}.{symbol} is not wired"
 
 
-def _imported_agent_utilities_modules(source_path: Path) -> set[str]:
+def _imported_meristem_modules(source_path: Path) -> set[str]:
     tree = ast.parse(source_path.read_text(encoding="utf-8"))
     imported_modules: set[str] = set()
     for node in ast.walk(tree):
@@ -66,17 +66,15 @@ def _imported_agent_utilities_modules(source_path: Path) -> set[str]:
     return imported_modules
 
 
-def test_extraction_has_no_agent_utilities_dependency() -> None:
+def test_extraction_has_no_meristem_dependency() -> None:
     """G1 control-plane code must not reach back into AU internals."""
     package_root = Path(control_plane.__file__).parent
-    imported_agent_utilities_modules: set[str] = set()
+    imported_meristem_modules: set[str] = set()
 
     for source_path in package_root.rglob("*.py"):
-        imported_agent_utilities_modules.update(
-            _imported_agent_utilities_modules(source_path)
-        )
+        imported_meristem_modules.update(_imported_meristem_modules(source_path))
 
-    assert imported_agent_utilities_modules == set()
+    assert imported_meristem_modules == set()
 
 
 def test_repository_protocols_keep_keyword_contract_names() -> None:

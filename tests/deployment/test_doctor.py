@@ -1,4 +1,4 @@
-"""Tests for the holistic `agent-utilities doctor` health sweep.
+"""Tests for the holistic `arbora-doctor` health sweep.
 
 The doctor is an aggregator of existing checks; tests assert the contract (report
 shape, status precedence, fix routing, defensiveness) with the underlying checks

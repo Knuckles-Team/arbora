@@ -99,7 +99,7 @@ def _verify() -> dict[str, Any]:
                 "(part of the default `full` build) AND a durable redb "
                 "persist dir configured — otherwise this is a "
                 "corresponding medulla-side gap, not an "
-                "agent-utilities one."
+                "meristem one."
             ),
             **public_error_payload(exc, code="dependency_unavailable"),
         }

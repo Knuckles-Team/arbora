@@ -7,7 +7,7 @@ CONCEPT:MERISTEM-OS.observability.log-location-privacy — a raw filesystem path
 endpoint, or caller identifier in a log line leaks host/tenant topology to anyone
 with log read access (a log-aggregation operator, a compromised sidecar, a support
 bundle). ``tests/unit/security/test_log_location_privacy_static_gate.py`` statically
-walks every ``agent_utilities`` module for a log call (``logger.info``/``warning``/
+walks every ``meristem`` module for a log call (``logger.info``/``warning``/
 etc.) that passes a variable/attribute NAMED like one of these (``path``,
 ``endpoint``, ``host``, ``file_path``, ...) and fails the build if it finds one —
 the AST match is a proxy for "a sensitive runtime value flows into a log record",

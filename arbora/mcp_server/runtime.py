@@ -935,13 +935,13 @@ def _register_graph_tool_surface(
 ) -> None:
     """Mount arbora's one MCP tool contract.
 
-    agent-utilities owns the contract (``register_arbora_surface``): the
+    meristem owns the contract (``register_arbora_surface``): the
     intent tools are served on ``mcp`` and route ``action`` + ``params`` to
     the action-routed ``graph_*``/``engine_*`` operations registered on a
     private backing server. arbora's own operations — browser control and
     A2A here, the RLM control plane at serve time — register on that same
     backing server and are reached through ``act``. Every operation
-    dispatches through agent-utilities' ``_execute_tool`` core, and this
+    dispatches through meristem's ``_execute_tool`` core, and this
     process's ``REGISTERED_TOOLS`` mirrors the same functions so the REST
     gateway reaches exactly what the intent tools route to.
     """

@@ -1,6 +1,6 @@
 """Arbora inbound channel router and listener supervision.
 
-Agent Utilities supplies the planner handler; Arbora owns channel receive,
+Meristem supplies the planner handler; Arbora owns channel receive,
 backend supervision, dispatch, and durable inbox retry orchestration.
 """
 

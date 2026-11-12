@@ -780,7 +780,7 @@ async def _analysis_action_evaluate(
         ),
         "evolve_model": (
             "the data-science-mcp model-training/evolution surface "
-            "(heavy ML training does not belong in agent-utilities)"
+            "(heavy ML training does not belong in meristem)"
         ),
         "forecast": (
             "engine_timeseries (native TSDB) or "

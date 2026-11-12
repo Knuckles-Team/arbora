@@ -7,7 +7,7 @@ skill/connector certification implementations remain Meristem-owned product tool
 the doctor consumes those checks without extracting them.
 
 The public console scripts are registered in ``pyproject.toml`` and point here
-directly.  There are no compatibility aliases back to ``agent_utilities``.
+directly.  There are no compatibility aliases back to ``meristem``.
 """
 
 from __future__ import annotations

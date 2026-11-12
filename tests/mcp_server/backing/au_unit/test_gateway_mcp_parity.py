@@ -145,14 +145,14 @@ def test_retired_legacy_tool_fanout_is_not_mounted():
 # in ``arbora.mcp_server.backing.skill_coverage`` and has no slug inference or waivers.
 #
 # Every domain-tier skill (the ones that claimed verb coverage) moved to
-# arbora on 2026-10-03; agent-utilities now bundles only the platform-tier
-# agent-utilities-development skill. Full fleet-wide coverage completeness
+# arbora on 2026-10-03; meristem now bundles only the platform-tier
+# meristem-development skill. Full fleet-wide coverage completeness
 # can only be verified where the covering skills actually live -- arbora's
-# own test suite, which bundles them and depends on agent-utilities (the
+# own test suite, which bundles them and depends on meristem (the
 # reverse is not true) -- so the exact completeness assertion that used to
 # run here moved there. ``test_domain_skill_sidecars_are_valid_and_have_no_orphans``
 # stays: it is still meaningful (vacuously or not) for whatever domain skill
-# agent-utilities bundles in the future.
+# meristem bundles in the future.
 
 
 def test_domain_skill_sidecars_are_valid_and_have_no_orphans():

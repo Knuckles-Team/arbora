@@ -50,7 +50,7 @@ def test_mcp_registration_rejects_sensitive_literals(field: str, value: str) -> 
 def test_mcp_registration_accepts_runtime_references() -> None:
     definition = {
         "command": "uvx",
-        "args": ["--from", "agent-utilities", "arbora"],
+        "args": ["--from", "meristem", "arbora"],
         "url": "${ARBORA_URL}",
         "env": {
             "AGENT_ID": "${ARBORA_AGENT_ID}",
@@ -89,7 +89,7 @@ def test_register_mcp_writes_atomically_with_private_mode(
         json.dumps(
             {
                 "command": "uvx",
-                "args": ["--from", "agent-utilities", "arbora"],
+                "args": ["--from", "meristem", "arbora"],
                 "env": {"AUTH_TOKEN": "${ARBORA_TOKEN}"},
             }
         ),

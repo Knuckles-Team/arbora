@@ -108,7 +108,7 @@ _RETENTION_MAX_BATCHES = 1_000
 #: Why it ships disarmed: retention has been structurally broken since it was written
 #: (see :func:`prune_old_runtime_signals`), so the first armed sweep on a live graph is a
 #: bulk deletion of a large accumulated backlog, not the incremental trim the 2-hour TTL
-#: implies. Merging to ``agent-utilities`` ``main`` IS a production deployment, so that
+#: implies. Merging to ``meristem`` ``main`` IS a production deployment, so that
 #: deletion is the owner's decision to make explicitly, not a side effect of a bug fix.
 RETENTION_DELETE_ENABLED = False
 

@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-MANAGED_PROVIDER_MARKER = ".agent-utilities-managed.json"
+MANAGED_PROVIDER_MARKER = ".meristem-managed.json"
 MANAGED_PROVIDER_GENERATIONS = ".generations"
 MANAGED_PROVIDER_SCHEMA_VERSION = 2
 MANAGED_PROVIDER_LEGS: frozenset[str] = frozenset({"skills", "prompts", "ontologies"})
@@ -158,7 +158,7 @@ def registration_digest(payload: dict[str, str]) -> str:
 
 
 def _empty_manifest_digest() -> str:
-    return hashlib.sha256(b"agent-utilities-provider-manifest-v2\0").hexdigest()
+    return hashlib.sha256(b"meristem-provider-manifest-v2\0").hexdigest()
 
 
 EMPTY_MANIFEST_DIGEST = _empty_manifest_digest()
@@ -436,7 +436,7 @@ def _read_regular_file(path: Path, *, maximum: int) -> tuple[bytes, os.stat_resu
 
 
 def _manifest_digest(entries: Iterable[ManifestEntry]) -> str:
-    digest = hashlib.sha256(b"agent-utilities-provider-manifest-v2\0")
+    digest = hashlib.sha256(b"meristem-provider-manifest-v2\0")
     for entry in entries:
         digest.update(entry.relative_path.encode("utf-8"))
         digest.update(b"\0")

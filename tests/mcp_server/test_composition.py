@@ -263,7 +263,6 @@ def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
     (provider,) = skill_providers
     skills_root = Path(arbora.skills.__file__).resolve().parent
     assert sorted(path.parent.name for path in skills_root.glob("*/SKILL.md")) == [
-        "agent-utilities-source-integration",
         "arbora-deployment",
         "arbora-development",
         "arbora-evolution",
@@ -277,14 +276,13 @@ def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
         "graph-query-and-explanation",
         "graph-research-and-analysis",
         "graph-runtime-and-governance",
+        "meristem-source-integration",
         "using-arbora",
     ]
     skill_uris = sorted(
         str(resource.uri) for resource in anyio.run(provider.list_resources)
     )
     assert skill_uris == [
-        "skill://agent-utilities-source-integration/SKILL.md",
-        "skill://agent-utilities-source-integration/_manifest",
         "skill://arbora-deployment/SKILL.md",
         "skill://arbora-deployment/_manifest",
         "skill://arbora-development/SKILL.md",
@@ -311,6 +309,8 @@ def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
         "skill://graph-research-and-analysis/_manifest",
         "skill://graph-runtime-and-governance/SKILL.md",
         "skill://graph-runtime-and-governance/_manifest",
+        "skill://meristem-source-integration/SKILL.md",
+        "skill://meristem-source-integration/_manifest",
         "skill://using-arbora/SKILL.md",
         "skill://using-arbora/_manifest",
     ]

@@ -1,4 +1,4 @@
-"""MCP (Model Context Protocol) subsystem for agent-utilities.
+"""MCP (Model Context Protocol) subsystem for meristem.
 
 CONCEPT:MERISTEM-ECO.mcp.standardized-interfaces — MCP Standardized Interfaces
 

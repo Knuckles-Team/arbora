@@ -29,8 +29,8 @@ def test_web_ui_keeps_overstory_package_name() -> None:
     assert importlib.util.find_spec("overstory") is not None
 
 
-# Exclusivity (agent-utilities no longer registering these) is verified against
-# agent-utilities main; a stale installed agent-utilities dist-info in a shared
+# Exclusivity (meristem no longer registering these) is verified against
+# meristem main; a stale installed meristem dist-info in a shared
 # venv may still list them, so only arbora ownership is asserted here.
 def _declarers(script: str) -> list[tuple[str, str]]:
     found = []
@@ -41,7 +41,7 @@ def _declarers(script: str) -> list[tuple[str, str]]:
 
 
 @pytest.mark.spec("ARBORA-DEPLOY-R007.1")
-def test_agent_utilities_doctor_declared_only_by_arbora() -> None:
+def test_meristem_doctor_declared_only_by_arbora() -> None:
     scripts = PYPROJECT["project"]["scripts"]
     assert scripts["arbora-doctor"] == "arbora.deployment.doctor:main"
     assert "arbora.deployment.doctor:main" in {

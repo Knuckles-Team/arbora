@@ -6,7 +6,7 @@ indicators, and real-time inbound event streaming via Discord Gateway.
 
 Install::
 
-    pip install agent-utilities[messaging-discord]
+    pip install arbora[messaging-discord]
 
 Configuration::
 
@@ -97,7 +97,7 @@ class DiscordBackend(MessagingBackend):
         except ImportError:
             raise ImportError(
                 "discord.py is required for the Discord backend. "
-                "Install with: pip install agent-utilities[messaging-discord]"
+                "Install with: pip install arbora[messaging-discord]"
             ) from None
 
         if not self.config.token:

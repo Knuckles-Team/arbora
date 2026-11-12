@@ -127,7 +127,7 @@ _COMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="setup-config",
-        description="Generate, validate, and document the full agent-utilities config.",
+        description="Generate, validate, and document the full meristem config.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 

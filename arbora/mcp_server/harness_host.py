@@ -2,7 +2,7 @@
 
 CONCEPT:ARBORA-HOST.harness.host-bindings
 
-The harness (``agent_utilities``) never serves tools or parses the fleet
+The harness (``meristem``) never serves tools or parses the fleet
 catalog. Its thin client host (``meristem.host_ports``) fails
 closed until arbora installs these bindings:
 

@@ -1,7 +1,7 @@
 """Deploy-watch verdict operation (ARBORA-FLEET-R024.1).
 
 Arbora-owned typed operation reproducing the deploy-watch verdict decision
-that previously sat beside the agent runner in agent-utilities'
+that previously sat beside the agent runner in meristem's
 ``orchestration/`` package (ARBORA-FLEET-R024). It runs behind the same
 caller verification and policy filter as every other fleet operation: the
 registry's :func:`arbora.api.registry.authorized` chokepoint enforces the

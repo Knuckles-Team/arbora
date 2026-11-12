@@ -2,15 +2,15 @@
 
 A fleet connector's ``agent_server.py`` previously called
 ``agent_utilities.create_agent_server(...)`` to start a standalone HTTP/A2A
-listener for its pydantic-graph agent -- the last ``agent_utilities`` import
+listener for its pydantic-graph agent -- the last ``meristem`` import
 in about 60 connectors. This module gives Arbora the same call signature so
-a connector can depend on Arbora (already downstream of agent-utilities in
-the composition order) instead of importing agent-utilities directly.
+a connector can depend on Arbora (already downstream of meristem in
+the composition order) instead of importing meristem directly.
 
 Scope of this first increment (the MERISTEM-BOUNDARY-R015 pilot slice): Arbora
 owns the HTTP shell -- health, agent-card discovery, and a bounded A2A
 ``message/send`` exchange. Agent/model construction stays with
-agent-utilities' public API (``agent_utilities.create_graph_agent`` /
+meristem's public API (``agent_utilities.create_graph_agent`` /
 ``initialize_graph_from_workspace`` and ``meristem.graph.execute_graph``),
 which remains the agent orchestration authority per both repositories'
 ``AGENTS.md``. Deliberately NOT ported in this increment, matching
@@ -60,13 +60,13 @@ class HostInterfaceUnavailable(RuntimeError):
 
 
 #: ``(graph, graph_config, query) -> result dict`` -- the default calls the
-#: agent-utilities protocol-agnostic execution port; tests inject a stub so
+#: meristem protocol-agnostic execution port; tests inject a stub so
 #: they do not require a live model or MCP transport.
 AgentExecutor = Callable[[Any, dict, str], dict]
 
 
 def _default_executor(graph: Any, graph_config: dict, query: str) -> dict:
-    """Run one query through agent-utilities' public execution port."""
+    """Run one query through meristem's public execution port."""
     import asyncio
 
     from meristem.graph import execute_graph
@@ -299,7 +299,7 @@ def create_agent_server(
     ``agent_server.py`` passes the same keyword arguments it already builds
     from ``create_agent_parser()``. Agent construction, when no ``graph``/
     ``graph_config`` bundle is supplied, still goes through AU's public graph
-    builder (that is agent-utilities' retained authority, not a duplicate
+    builder (that is meristem's retained authority, not a duplicate
     host); only the uvicorn/FastAPI serving shell is Arbora's own.
 
     ``**_unused_au_hosting_kwargs`` absorbs Meristem-hosting-only arguments a

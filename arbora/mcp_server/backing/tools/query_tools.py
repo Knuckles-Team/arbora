@@ -2134,7 +2134,7 @@ async def _build_graph_catalog() -> dict[str, Any]:
         "sources": await _safe_catalog_entry(_catalog_sources()),
         # KV namespaces and vector indexes have NO listing surface anywhere in
         # this codebase today (verified: no domain class in ENGINE_DOMAINS,
-        # no `list_*` helper in agent_utilities) — reported honestly rather
+        # no `list_*` helper in meristem) — reported honestly rather
         # than fabricated, per the WD10-A-BACKEND brief's explicit
         # instruction not to claim a compiled-out modality is live.
         "kv": _capability_entry(

@@ -40,7 +40,7 @@ which triggers the restart cycle (no idle polling of ~50 children).
 Metrics land on the OS-5.23 registry (``observability.gateway_metrics``) and
 degrade to no-ops when ``prometheus_client`` (the optional ``metrics`` extra)
 is absent — the multiplexer runs standalone, so this stays import-light:
-``agent_utilities_mcp_child_calls_total{server,outcome}``,
+``meristem_mcp_child_calls_total{server,outcome}``,
 ``..._mcp_child_breaker_state{server}``, ``..._mcp_child_restarts_total{server}``,
 ``..._mcp_child_queue_depth{server}``.
 

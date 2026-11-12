@@ -6,7 +6,7 @@ Dual-mode WhatsApp backend supporting both:
 
 Install::
 
-    pip install agent-utilities[messaging-whatsapp]
+    pip install arbora[messaging-whatsapp]
 
 Configuration::
 
@@ -106,7 +106,7 @@ class WhatsAppBackend(MessagingBackend):
         except ImportError:
             raise ImportError(
                 "neonize is required for WhatsApp bridge mode. "
-                "Install: pip install agent-utilities[messaging-whatsapp]"
+                "Install: pip install arbora[messaging-whatsapp]"
             ) from None
 
         # neonize client initialization

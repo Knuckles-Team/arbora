@@ -7,7 +7,7 @@ name: Checks
 # calls it on a v* tag or manual dispatch before its publish jobs. It holds no
 # write permission and no secret. The caller owns concurrency.
 #
-# Modeled on the agent-utilities / medulla release workflows. Shared
+# Modeled on the meristem / medulla release workflows. Shared
 # gates come from Knuckles-Team/pipelines at `main`. The package is pure Python
 # and builds from this repository alone; every dependency installs from PyPI at
 # the version uv.lock pins. `scanner-quality` provisions the pinned
@@ -75,13 +75,13 @@ jobs:
     env:
       PIPELINES_REF: ${{ needs.freeze-gate-source.outputs.sha }}
       # The homelab self-hosted runner is itself an RKE2 pod, so Kubernetes
-      # injects KUBERNETES_SERVICE_HOST -- agent_utilities.core.live_mount_guard
+      # injects KUBERNETES_SERVICE_HOST -- meristem.core.live_mount_guard
       # (D-EGK-1) reads that as "running inside a pod" and asserts a hostPath
       # live-mount or a build-time .source-revision provenance marker, neither
       # of which this job's plain checkout has or needs. This is a CI
       # checkout, not a deployed arbora instance, so the check is a false
       # positive here; skip it explicitly rather than fabricating a marker.
-      AGENT_UTILITIES_SKIP_LIVE_MOUNT_CHECK: "true"
+      MERISTEM_SKIP_LIVE_MOUNT_CHECK: "true"
     steps:
       # YAML anchors, reused by `scanner-quality` and `build`: jscpd's
       # differential gate flags a copy-pasted preamble as a new same-file
@@ -226,7 +226,7 @@ jobs:
           persist-credentials: false
 
       # Advisory (operator gate cut, 2026-10-17). repository-manager v3.5.1
-      # depends on scion-sdk, not agent-utilities, so it installs
+      # depends on scion-sdk, not meristem, so it installs
       # beside this wheel's dependencies. The repo's own hook runs the
       # checked-out tool; the install-smoke matrix below still
       # proves every locked dependency installs from PyPI before publish.

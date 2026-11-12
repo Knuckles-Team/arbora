@@ -25,7 +25,7 @@ surface this function could fail to find.
 ARBORA-HOST-R008 NOTE: this module now lives in arbora, but the surface it
 introspects (``arbora/mcp_server/backing/tools/query_tools/py``) has not moved yet
 (MERISTEM-BOUNDARY-R003, a different seed group). ``QUERY_TOOLS_MODULE`` is
-therefore resolved through agent-utilities' INSTALLED package location
+therefore resolved through meristem's INSTALLED package location
 (``importlib.util.find_spec``) rather than a same-repo relative path — the
 one necessary adaptation for a cross-repo port, not a behavior change: it
 still parses the real source on disk, never a hand-maintained list.
@@ -58,7 +58,7 @@ def _locate_query_tools_module() -> Path | None:
 
 #: Resolved through the installed ``arbora`` distribution (see
 #: :func:`_locate_query_tools_module`) so the introspection travels correctly
-#: regardless of where arbora and agent-utilities are each checked out.
+#: regardless of where arbora and meristem are each checked out.
 QUERY_TOOLS_MODULE = _locate_query_tools_module()
 
 #: The one dialect with no explicit ``if scope == ...`` branch — the

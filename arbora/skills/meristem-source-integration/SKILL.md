@@ -1,5 +1,5 @@
 ---
-name: agent-utilities-source-integration
+name: meristem-source-integration
 skill_type: skill
 description: >
   One standardized, config-complete path to connect ANY external source to the
@@ -174,7 +174,7 @@ For per-source depth and architecture, follow the matrix's deep-doc links.
 ## Notes & guardrails
 
 - Connection creds for connector-backed sources (Camunda/ARIS/ServiceNow/…) are
-  **connector** config in their own packages; only the agent-utilities-side gates
+  **connector** config in their own packages; only the meristem-side gates
   (`LEANIX_ENABLE_WRITE`, `KG_PROCESS_WRITEBACK`, `ARIS_ENABLE_WRITE`) are meristem flags.
 - Ingest/delta never write upstream; backfeed is always gated + dry-run-first.
 - New source? Register it in the hydration `CAPABILITY_REGISTRY` (or add a delta handler

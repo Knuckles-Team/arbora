@@ -62,7 +62,7 @@ def test_engine_is_wheel_first_rust_only_fallback(monkeypatch):
     monkeypatch.setattr(P.shutil, "which", lambda name: None)
     res = P._check_engine()
     assert res["status"] == "warn"
-    assert "pip install agent-utilities" in res["remediation"]
+    assert "pip install medulla" in res["remediation"]
     assert "only needed if no prebuilt wheel" in res["remediation"].lower()
 
 

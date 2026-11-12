@@ -6,7 +6,7 @@ from __future__ import annotations
 CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction -- Cross-Agent Memory Hook Installer
 
 Writes startup/checkpoint hooks into external agent configurations so they
-call ``agent-utilities context`` at session start and ``agent-utilities observe``
+call ``meristem context`` at session start and ``meristem observe``
 at session end.  Supports 9 agent surfaces with platform-aware pathing.
 
 Supported Agents:
@@ -24,7 +24,7 @@ from arbora.core.settings import setting
 
 # The pre-tool gate command and the tools whose calls it inspects (mutations
 # and shell). Read is excluded so a normal session pays no hook round trip.
-GATE_HOOK_COMMAND = "agent-utilities harness-gate"
+GATE_HOOK_COMMAND = "meristem harness-gate"
 GATE_MATCHER = "Bash|Edit|Write|MultiEdit"
 
 logger = logging.getLogger(__name__)
@@ -50,11 +50,11 @@ def _localappdata() -> Path:
 
 # -- Hook Config Templates --
 
-_CONTEXT_CMD = "agent-utilities context --for {agent} --cwd $PWD"
-_OBSERVE_CMD = "agent-utilities observe --source {agent}"
-_LINT_CMD = "agent-utilities lint-check --cwd $PWD"
-_REFLECTOR_CMD = "agent-utilities reflect --source {agent} --cwd $PWD"
-_STALENESS_CMD = "agent-utilities staleness-audit --cwd $PWD"
+_CONTEXT_CMD = "meristem context --for {agent} --cwd $PWD"
+_OBSERVE_CMD = "meristem observe --source {agent}"
+_LINT_CMD = "meristem lint-check --cwd $PWD"
+_REFLECTOR_CMD = "meristem reflect --source {agent} --cwd $PWD"
+_STALENESS_CMD = "meristem staleness-audit --cwd $PWD"
 # CONCEPT:MERISTEM-OS.deployment.workspace-venv-reconciler (D-VS-6) — the one piece of
 # shared-venv drift detection cheap enough (no `uv` subprocess) to run on every
 # SessionStart. Silent when clean; `2>/dev/null || true` means a host where
@@ -107,7 +107,7 @@ def _session_hooks(agent: str) -> dict[str, Any]:
 
 
 _GROK_HOOKS = {
-    "name": "agent-utilities-memory",
+    "name": "meristem-memory",
     "version": "1.0.0",
     "hooks": {
         "SessionStart": {
@@ -132,9 +132,7 @@ AGENT_SURFACES: dict[str, dict[str, Any]] = {
     },
     "grok": {
         "name": "Grok Build",
-        "config_path": lambda: (
-            _home() / ".grok" / "hooks" / "agent-utilities-memory.json"
-        ),
+        "config_path": lambda: _home() / ".grok" / "hooks" / "meristem-memory.json",
         "hook_data": _GROK_HOOKS,
         "merge_key": None,
     },
@@ -180,7 +178,7 @@ AGENT_SURFACES: dict[str, dict[str, Any]] = {
             / "Application Support"
             / "Claude"
             / "local-agent-mode-plugins"
-            / "agent-utilities-memory.json"
+            / "meristem-memory.json"
             if platform.system() == "Darwin"
             else None
         ),
@@ -192,7 +190,7 @@ AGENT_SURFACES: dict[str, dict[str, Any]] = {
         "config_path": lambda: (
             Path(setting("HERMES_HOME", _home() / ".hermes"))
             / "plugins"
-            / "agent-utilities-memory.json"
+            / "meristem-memory.json"
         ),
         "hook_data": _CLAUDE_HOOKS,
         "merge_key": "hooks",
@@ -201,7 +199,7 @@ AGENT_SURFACES: dict[str, dict[str, Any]] = {
 
 
 class HookInstaller:
-    """Installs agent-utilities memory hooks into external agent configurations.
+    """Installs meristem memory hooks into external agent configurations.
 
     CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction -- Cross-Agent Memory Hook Installer
     """
@@ -302,7 +300,7 @@ class HookInstaller:
                 entry["status"] = "not_installed"
             else:
                 content = config_path.read_text(encoding="utf-8")
-                entry["status"] = "healthy" if "agent-utilities" in content else "stale"
+                entry["status"] = "healthy" if "meristem" in content else "stale"
                 entry["size_bytes"] = config_path.stat().st_size
             report[agent_key] = entry
         return report
@@ -328,7 +326,7 @@ class HookInstaller:
             )
 
     def _remove_merged_hook(self, path: Path, surface: dict[str, Any]) -> None:
-        """Remove agent-utilities hooks from a merged config file."""
+        """Remove meristem hooks from a merged config file."""
         try:
             existing = json.loads(path.read_text(encoding="utf-8"))
             merge_key = surface.get("merge_key")
@@ -337,7 +335,7 @@ class HookInstaller:
                 keys_to_remove = [
                     k
                     for k, v in hooks.items()
-                    if isinstance(v, list | dict | str) and "agent-utilities" in str(v)
+                    if isinstance(v, list | dict | str) and "meristem" in str(v)
                 ]
                 for k in keys_to_remove:
                     del hooks[k]

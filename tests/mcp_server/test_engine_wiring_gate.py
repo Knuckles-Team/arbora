@@ -1,6 +1,6 @@
 """Gate G-26 (arbora): the MCP surface arbora serves is wired to medulla.
 
-Formerly an agent-utilities certification gate; arbora serves the MCP intent
+Formerly a meristem certification gate; arbora serves the MCP intent
 and engine surfaces, so it proves here that what it serves resolves to the
 methods the installed medulla client actually exposes.
 """

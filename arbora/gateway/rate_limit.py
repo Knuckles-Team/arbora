@@ -19,7 +19,7 @@ labels, logs, or response fields.
 Disabled by default (``GATEWAY_RATE_LIMIT=0``). The configured rate is the
 sustained requests/second; ``GATEWAY_RATE_BURST`` is the bucket capacity
 (default 2× rate). Rejections are ``429`` with a ``Retry-After`` header and
-are counted on ``agent_utilities_gateway_rate_limited_total{tenant}``.
+are counted on ``meristem_gateway_rate_limited_total{tenant}``.
 
 Scope note (documented, deliberate): buckets are in-memory and PER-PROCESS.
 With ``GATEWAY_WORKERS=N`` or N replicas the effective limit is N× the

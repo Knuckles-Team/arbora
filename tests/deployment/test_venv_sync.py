@@ -56,7 +56,7 @@ Resolved 726 packages in 64ms
 Would uninstall 5 packages
  - aenum==3.1.15
  - agent-terminal-ui==2.0.0 (from file:///ws/agent-packages/agent-terminal-ui)
- - agent-utilities==2.1.1 (from file:///ws/agent-packages/agent-utilities)
+ - meristem==2.1.1 (from file:///ws/agent-packages/meristem)
  - aiofile==3.11.1
  - anyio==4.14.2
 """
@@ -191,9 +191,9 @@ def test_plan_parses_uninstalls_with_local_sources() -> None:
     assert len(plan.uninstalls) == 5
     assert not plan.installs
     names = {d.name for d in plan.uninstalls}
-    assert {"agent-utilities", "agent-terminal-ui"} <= names
+    assert {"meristem", "agent-terminal-ui"} <= names
     local = [d for d in plan.uninstalls if d.is_local]
-    assert {d.name for d in local} == {"agent-utilities", "agent-terminal-ui"}
+    assert {d.name for d in local} == {"meristem", "agent-terminal-ui"}
 
 
 def test_plan_parses_clean_and_behind_states() -> None:
@@ -255,7 +255,7 @@ def test_member_uninstall_guardrail_refuses_the_real_destructive_plan(
 ) -> None:
     plan = SyncPlan.parse(
         DESTRUCTIVE_PLAN.replace("agent-terminal-ui", "alpha").replace(
-            "agent-utilities", "beta"
+            "meristem", "beta"
         )
     )
     verdict = evaluate_plan(
@@ -305,7 +305,7 @@ def test_activity_defers_but_a_destructive_plan_still_refuses(
     )
     assert evaluate_plan(SyncPlan.parse(CLEAN_PLAN), busy).decision == DEFER
 
-    destructive = SyncPlan.parse(DESTRUCTIVE_PLAN.replace("agent-utilities", "alpha"))
+    destructive = SyncPlan.parse(DESTRUCTIVE_PLAN.replace("meristem", "alpha"))
     assert evaluate_plan(destructive, busy).decision == REFUSE
 
 

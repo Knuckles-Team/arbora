@@ -2,7 +2,7 @@
 
 CONCEPT:MERISTEM-ECO.boundary.public-api-widening — MERISTEM-BOUNDARY-R013
 
-``arbora`` and other out-of-process callers must reach Agent Utilities only
+``arbora`` and other out-of-process callers must reach Meristem only
 through ``arbora.api.contracts`` (MERISTEM-BOUNDARY-R013); they may not import
 ``arbora.access.action_policy`` directly. This module is that
 sanctioned port for the one piece of ``messaging``-adjacent authority AU keeps

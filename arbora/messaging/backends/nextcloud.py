@@ -1,6 +1,6 @@
 """Nextcloud Talk Backend (CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction). REST API via httpx.
 
-Install: ``pip install agent-utilities[messaging-nextcloud]``
+Install: ``pip install arbora[messaging-nextcloud]``
 CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction — Native Messaging Backend Abstraction
 """
 

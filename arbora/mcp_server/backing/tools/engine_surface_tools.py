@@ -1,6 +1,6 @@
 """New engine-surface MCP tools — CONCEPT:MERISTEM-KG.coordination.engine-message-broker.
 
-medulla v2.2.0 grew several engine capabilities that agent-utilities
+medulla v2.2.0 grew several engine capabilities that meristem
 should expose to the fleet as first-class, purpose-shaped MCP tools rather than
 leaving them reachable only through the generic ``engine_<domain>`` 1:1 surface
 (``engine_tools.py``). This module ADDS those ergonomic wrappers:
@@ -1386,7 +1386,7 @@ def _fork_fanout(branches: list[Any], seed_vars: dict[str, Any], preferred: str)
     raise not_served(
         "rlm.sandboxes.base",
         "Meristem-harness (deleted from AU)",
-        owner="agent-utilities",
+        owner="meristem",
     )
 
 

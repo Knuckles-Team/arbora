@@ -63,7 +63,7 @@ def publisher() -> dict[str, str]:
     domain = str(setting("ARD_PUBLISHER_DOMAIN", default=socket.gethostname()))
     return {
         "domain": domain,
-        "name": ident.get("name", "agent-utilities"),
+        "name": ident.get("name", "meristem"),
         "description": ident.get("description", "")[:280],
     }
 
@@ -226,7 +226,7 @@ def build_ai_catalog(*, multiplexer: Any = None, engine: Any = None) -> dict:
         "publisher": pub,
         "publisherKey": pub_key,
         "signed": bool(pub_key and ard_signing.is_configured()),
-        "generatedFrom": "agent-utilities",
+        "generatedFrom": "meristem",
         "resourceCount": len(resources),
         "resources": resources,
     }

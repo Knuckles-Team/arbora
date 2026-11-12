@@ -3,7 +3,7 @@
 Arbora's split repositories -- the connector SDK, Arbora itself, and the
 graph engine -- each publish an installable package. Arbora's own
 ``pyproject.toml`` must declare its dependency on each of them (and on the
-former monolithic agent runtime, ``agent-utilities``) through a PEP 508
+former monolithic agent runtime, ``meristem``) through a PEP 508
 version specifier, never a ``path``/``file://`` reference into the former
 combined source tree. ``[tool.uv.sources]`` is a separate, local-development
 override and is intentionally excluded from this check.

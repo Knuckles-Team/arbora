@@ -190,7 +190,7 @@ def eg(monkeypatch: pytest.MonkeyPatch) -> _Registry:
     )
     monkeypatch.setattr(onboarding, "_child_auth", lambda: None)
     monkeypatch.setattr(
-        onboarding, "self_served_connectors", lambda: ("arbora", "agent-utilities")
+        onboarding, "self_served_connectors", lambda: ("arbora", "meristem")
     )
     _RecordingSink.imported = []
     return registry
@@ -246,7 +246,7 @@ def test_configured_fleet_reads_the_active_arbora_directory(
         json.dumps({"mcpServers": {"alpha-mcp": {"url": "https://alpha/mcp"}}})
     )
     monkeypatch.setenv("ARBORA_CONFIG_DIR", f"  {active}  ")
-    monkeypatch.setenv("AGENT_UTILITIES_CONFIG_DIR", str(tmp_path / "legacy"))
+    monkeypatch.setenv("MERISTEM_CONFIG_DIR", str(tmp_path / "legacy"))
 
     assert onboarding.configured_fleet_endpoints() == (
         FleetEndpoint("alpha-mcp", "https://alpha/mcp"),
@@ -335,10 +335,10 @@ def test_fresh_store_pass_registers_attests_and_imports_each_server(
     assert report.failed == {}
     assert sorted(report.onboarded) == ["alpha-mcp", "beta-mcp"]
     assert sorted(report.renewed) == [
-        "agent-utilities",
         "alpha-mcp",
         "arbora",
         "beta-mcp",
+        "meristem",
     ]
     registered = {params["name"]: params["url"] for params, _key in eg.registers}
     assert registered["alpha-mcp"] == ALPHA.url

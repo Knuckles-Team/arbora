@@ -19,7 +19,7 @@ done
 mkdir -p meristem/.uv-workspace-siblings overstory/.uv-workspace-siblings
 ln -s ../../medulla meristem/.uv-workspace-siblings/medulla
 ln -s ../../scion-sdk meristem/.uv-workspace-siblings/scion-sdk
-ln -s ../../agent-utilities overstory/.uv-workspace-siblings/agent-utilities
+ln -s ../../meristem overstory/.uv-workspace-siblings/meristem
 ```
 
 For repository-manager work, also run:
@@ -27,7 +27,7 @@ For repository-manager work, also run:
 ```bash
 git clone https://github.com/Knuckles-Team/repository-manager.git
 mkdir -p repository-manager/.uv-workspace-siblings
-ln -s ../../agent-utilities repository-manager/.uv-workspace-siblings/agent-utilities
+ln -s ../../meristem repository-manager/.uv-workspace-siblings/meristem
 ```
 
 For work in `pipelines`, `agent-terminal-ui`, `emerald-exchange`,

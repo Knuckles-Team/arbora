@@ -64,7 +64,7 @@ def _mount_sparql_route(app, prefix: str = "/api") -> None:
                 {
                     "status": "error",
                     "message": (
-                        "SPARQL layer unavailable (install agent-utilities[owl])"
+                        "SPARQL layer unavailable (install the medulla package)"
                     ),
                 },
                 status_code=503,

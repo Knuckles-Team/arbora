@@ -9,13 +9,13 @@ This directory does not currently publish an authoritative Dockerfile or
 Compose manifest. Fleet image construction and workload deployment remain in
 the deployment repositories that own those environments. That separation is a
 packaging boundary, not an indication that Arbora is a scaffold or that its
-runtime still lives in agent-utilities.
+runtime still lives in meristem.
 
 An eventual image definition here must:
 
 - install exact released Arbora, medulla, scion-sdk,
   meristem, and optional overstory artifacts;
-- run the public `arbora` entrypoint rather than an meristem alias;
+- run the public `arbora` entrypoint rather than a meristem alias;
 - resolve endpoints and credentials from deployment configuration and secret
   references, never from values embedded in the image;
 - retain the same fail-closed capability checks documented in
