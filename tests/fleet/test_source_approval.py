@@ -102,17 +102,10 @@ class _Engine:
                     return engine.approve(op["request"])
                 return {}
 
-        self.client = _Client()
-
-    class graph_compute:  # noqa: N801 - mirrors the engine attribute
-        pass
-
-    def bind(self) -> _Engine:
-        client = self.client
-        self.graph_compute = types.SimpleNamespace(  # type: ignore[misc]
+        client = _Client()
+        self.graph_compute = types.SimpleNamespace(
             for_graph=lambda _name: types.SimpleNamespace(async_client=client)
         )
-        return self
 
     @staticmethod
     def status() -> dict[str, Any]:
@@ -188,7 +181,7 @@ def _onboard(monkeypatch, engine: _Engine, catalog: VirtualCatalog) -> Any:
     monkeypatch.setattr(FleetOnboarding, "pack_unchanged", changed)
     session = service_session("t", "g")
     onboarding = FleetOnboarding(
-        engine=engine.bind(),
+        engine=engine,
         session=session,
         capture=capture,
         virtual_catalog=catalog,
@@ -298,7 +291,8 @@ def test_secret_unknown_kind_write_and_outage_hold_the_mapping(
     onboarding = _onboard(monkeypatch, down, outage)
     assert onboarding.surfaces[CONNECTOR]["sources_pending"]
     assert not any(m.approved for m in outage.mappings)
-    assert outage.source_approval_report(CONNECTOR)["held"] == 1
+    report = outage.source_approval_report(CONNECTOR)
+    assert report is not None and report["held"] == 1
 
 
 @pytest.mark.spec("ARBORA-FLEET-R042.5")
