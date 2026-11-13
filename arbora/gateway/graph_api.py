@@ -19,93 +19,11 @@ the single gateway composition entry point.
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from arbora.api.errors import not_served
-
 logger = logging.getLogger(__name__)
-
-# Cached OWL/RDF bridge for the local SPARQL endpoint (built lazily from the
-# active engine + a local owlready2 backend). Its rdflib materialization is
-# cache-invalidated on LPG changes, so a single instance is safe to reuse.
-_SPARQL_BRIDGE: Any = None
-
-
-def _get_sparql_bridge() -> Any:
-    """Return a cached OWLBridge for SPARQL, or ``None`` if unavailable."""
-    global _SPARQL_BRIDGE
-    if _SPARQL_BRIDGE is not None:
-        return _SPARQL_BRIDGE
-    exc = not_served("knowledge_graph.backends.owl", "MEDULLA-PLACEMENT-R611")
-    logger.warning("Local SPARQL bridge unavailable (%s)", exc)
-    return None
-
-
-def _mount_sparql_route(app, prefix: str = "/api") -> None:
-    """Mount ``{prefix}/sparql`` — a local, zero-dependency SPARQL endpoint."""
-
-    async def sparql_endpoint(request: Request) -> JSONResponse:
-        from arbora.security.session import (
-            resolve_session,
-        )
-
-        resolve_session(required_scope="kg:read")
-        query = await _sparql_query(request)
-        if not query:
-            return JSONResponse(
-                {"status": "error", "message": "missing 'query'"}, status_code=400
-            )
-        bridge = _get_sparql_bridge()
-        if bridge is None:
-            return JSONResponse(
-                {
-                    "status": "error",
-                    "message": (
-                        "SPARQL layer unavailable (install the medulla package)"
-                    ),
-                },
-                status_code=503,
-            )
-
-        return JSONResponse(
-            {"status": "error", "message": "SPARQL query failed"},
-            status_code=500,
-        )
-
-    path = f"{prefix}/sparql"
-    # Starlette-style add_route (works on FastAPI too): raw Request→Response with
-    # no FastAPI body/param validation, matching the other runtime endpoints.
-    app.add_route(path, sparql_endpoint, methods=["GET", "POST"])
-    logger.info("Mounted local SPARQL endpoint")
-
-
-async def _sparql_query(request: Request) -> str | None:
-    query = request.query_params.get("query")
-    if query or request.method != "POST":
-        return query
-    try:
-        body = await request.json()
-        return body.get("query") if isinstance(body, dict) else None
-    except Exception as exc:
-        logger.warning("SPARQL JSON body unavailable; reading raw body: %s", exc)
-        return (await request.body()).decode("utf-8", "replace") or None
-
-
-def _query_accessible_graphs(
-    bridge: Any, query: str, session: Any, accessible_graphs: Any, use_session: Any
-) -> list[dict[str, Any]]:
-    bindings: list[dict[str, Any]] = []
-    for graph_name in accessible_graphs(session.actor):
-        try:
-            with use_session(session.with_graph(graph_name)):
-                bindings.extend(bridge.query_sparql(query))
-        except Exception as exc:
-            logger.warning("sparql union graph %s unavailable: %s", graph_name, exc)
-    return bindings
-
 
 SQL_SCHEMA_PATH = "/graph/sql-schema"
 
@@ -262,13 +180,6 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
                 app.add_route("/metrics", metrics_asgi_endpoint, methods=["GET"])
 
     application.mount_rest_routes(app, prefix=prefix)
-
-    # Local SPARQL endpoint (CONCEPT:MERISTEM-KG.query.vendor-agnostic-traversal) — served
-    # over the OWL/RDF bridge with
-    # ZERO external dependencies (rdflib materialization of the live LPG + OWL
-    # inferences); an external Fuseki/Stardog is optional enterprise scale-out, not
-    # required. Works in the zero-dep tiny profile.
-    _mount_sparql_route(app, prefix=prefix)
 
     # Read-only SQL catalog introspection (CONCEPT:MERISTEM-KG.query.raw-python) — the
     # catalogs → tables/views → columns projection the overstory catalog

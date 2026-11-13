@@ -17,6 +17,7 @@ from .auth import HTTPAuthenticationError
 from .checkout import make_checkout_endpoint
 from .openapi import document
 from .routes import _error, make_endpoint
+from .sparql import mount_sparql_protocol
 
 Visibility = Callable[[Any, Any], Awaitable[bool]]
 
@@ -264,6 +265,16 @@ def create_api_application(
         ),
         methods=["GET"],
         include_in_schema=False,
+    )
+    # The SPARQL 1.1 Protocol and Graph Store endpoints drive query.sparql
+    # and eg.graph.ApplyMutation through the same invoke chokepoint
+    # (ARBORA-OPS-R857.1).
+    mount_sparql_protocol(
+        app,
+        services=services,
+        authenticate=authenticate,
+        invoke=invoke,
+        is_console_request=auth.is_console_request,
     )
     return app
 

@@ -244,9 +244,9 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T191 ARBORA-OPS-R856 Quality and lineage operations (rollup).
 - [ ] T192 ARBORA-OPS-R856.1 Wiring.
 - [ ] T193 ARBORA-OPS-R856.2 Hot-path proof.
-- [ ] T194 ARBORA-OPS-R857 SPARQL 1.1 protocol endpoint (rollup).
-- [ ] T195 ARBORA-OPS-R857.1 Wiring.
-- [ ] T196 ARBORA-OPS-R857.2 Hot-path proof.
+- [x] T194 ARBORA-OPS-R857 SPARQL 1.1 protocol endpoint (rollup).
+- [x] T195 ARBORA-OPS-R857.1 Wiring.
+- [x] T196 ARBORA-OPS-R857.2 Hot-path proof.
 - [ ] T197 ARBORA-OPS-R858 Outside SQL client identities for the engine wire front end (rollup).
 - [ ] T198 ARBORA-OPS-R858.1 Wiring.
 - [ ] T199 ARBORA-OPS-R858.2 Hot-path proof.

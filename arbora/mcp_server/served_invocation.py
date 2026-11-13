@@ -581,7 +581,9 @@ def compose_served_invocation(
         # second browser prompt or repeats a human-approved execution.
         # The served pin and unpin writes (ARBORA-FLEET-R059.4) share the
         # owner as well: one session load and one durable record per
-        # idempotency key.
+        # idempotency key. A SPARQL update or graph-store write from the
+        # protocol endpoint (ARBORA-OPS-R857.1) is one engine mutation batch,
+        # held at most once per key by the same journal.
         changes["external_effect_operations"] = frozenset(
             op_id
             for op_id in (
@@ -590,6 +592,7 @@ def compose_served_invocation(
                 "fleet.tools.unpin",
                 "messaging.alert",
                 "browser.request_call",
+                "eg.graph.ApplyMutation",
             )
             if registry.get(op_id) is not None
         )
