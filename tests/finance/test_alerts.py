@@ -5,14 +5,28 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 import pytest
 from pydantic import ValidationError
 
 from arbora.finance.alerts import (
     FlipAlertDelivery,
-    InMemoryAlertDeliveryStore,
     record_alert_delivery,
 )
+from arbora.finance.receipt_store import FinanceReceiptStore
+from arbora.security.session import use_session
+from tests.finance._receipt_engine import ReceiptEngine, receipt_store, tenant_session
+
+
+@pytest.fixture(autouse=True)
+def _caller() -> Iterator[None]:
+    with use_session(tenant_session("tenant-a")):
+        yield
+
+
+def _store() -> FinanceReceiptStore:
+    return receipt_store(ReceiptEngine())
 
 
 def _delivery(**overrides: object) -> FlipAlertDelivery:
@@ -27,7 +41,7 @@ def _delivery(**overrides: object) -> FlipAlertDelivery:
 
 
 def test_first_delivery_is_delivered() -> None:
-    store = InMemoryAlertDeliveryStore()
+    store = _store()
 
     outcome = record_alert_delivery(store, _delivery())
 
@@ -39,7 +53,7 @@ def test_redelivery_of_the_same_event_is_a_duplicate() -> None:
     the same (tenant, event, subscriber) triple never causes a second
     user-visible delivery."""
 
-    store = InMemoryAlertDeliveryStore()
+    store = _store()
     record_alert_delivery(store, _delivery())
 
     second = record_alert_delivery(store, _delivery())
@@ -48,7 +62,7 @@ def test_redelivery_of_the_same_event_is_a_duplicate() -> None:
 
 
 def test_different_subscribers_both_receive_the_same_event() -> None:
-    store = InMemoryAlertDeliveryStore()
+    store = _store()
 
     first = record_alert_delivery(store, _delivery(subscriber_id="user-1"))
     second = record_alert_delivery(store, _delivery(subscriber_id="user-2"))
@@ -58,7 +72,7 @@ def test_different_subscribers_both_receive_the_same_event() -> None:
 
 
 def test_repeated_redelivery_stays_duplicate() -> None:
-    store = InMemoryAlertDeliveryStore()
+    store = _store()
     delivery = _delivery()
     record_alert_delivery(store, delivery)
 

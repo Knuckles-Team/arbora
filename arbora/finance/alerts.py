@@ -13,15 +13,13 @@ notification channels is GDM-08 follow-on work.
 
 from __future__ import annotations
 
-from typing import Protocol
-
 from pydantic import BaseModel, ConfigDict, Field
+
+from arbora.finance.receipt_store import FinanceReceiptStore
 
 __all__ = [
     "DeliveryOutcome",
     "FlipAlertDelivery",
-    "InMemoryAlertDeliveryStore",
-    "AlertDeliveryStore",
     "record_alert_delivery",
 ]
 
@@ -39,31 +37,8 @@ class FlipAlertDelivery(BaseModel):
     channel: str = Field(min_length=1, max_length=128)
 
 
-class AlertDeliveryStore(Protocol):
-    """Durable (tenant_id, event_id, subscriber_id) membership."""
-
-    def seen(self, tenant_id: str, event_id: str, subscriber_id: str) -> bool:
-        """True when this subscriber already received this event."""
-
-    def record(self, tenant_id: str, event_id: str, subscriber_id: str) -> None:
-        """Durably record that this subscriber received this event."""
-
-
-class InMemoryAlertDeliveryStore:
-    """Reference ``AlertDeliveryStore`` for tests and a single-process default."""
-
-    def __init__(self) -> None:
-        self._seen: set[tuple[str, str, str]] = set()
-
-    def seen(self, tenant_id: str, event_id: str, subscriber_id: str) -> bool:
-        return (tenant_id, event_id, subscriber_id) in self._seen
-
-    def record(self, tenant_id: str, event_id: str, subscriber_id: str) -> None:
-        self._seen.add((tenant_id, event_id, subscriber_id))
-
-
 def record_alert_delivery(
-    store: AlertDeliveryStore, entry: FlipAlertDelivery
+    store: FinanceReceiptStore, entry: FlipAlertDelivery
 ) -> DeliveryOutcome:
     """Deliver one alert exactly once per ``(tenant, event, subscriber)``.
 
@@ -73,7 +48,8 @@ def record_alert_delivery(
     user-visible delivery and no order or portfolio effect either way.
     """
 
-    if store.seen(entry.tenant_id, entry.event_id, entry.subscriber_id):
+    key = f"{entry.event_id}:{entry.subscriber_id}"
+    if not store.claim(entry.tenant_id, "alert_delivery", key):
         return "duplicate"
-    store.record(entry.tenant_id, entry.event_id, entry.subscriber_id)
+    store.complete(entry.tenant_id, "alert_delivery", key)
     return "delivered"

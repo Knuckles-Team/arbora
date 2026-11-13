@@ -15,15 +15,15 @@ module owns only the plan model and the proposal dedupe record.
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Literal, Protocol
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from arbora.finance.receipt_store import FinanceReceiptStore
 
 __all__ = [
     "DCAPlan",
     "DCAProposalOutcome",
-    "DCAProposalStore",
-    "InMemoryDCAProposalStore",
     "PlanMode",
     "build_dca_proposal_key",
     "record_dca_proposal",
@@ -64,31 +64,8 @@ def build_dca_proposal_key(plan: DCAPlan, occurrence: str) -> str:
     return f"{plan.plan_id}:{plan.revision}:{occurrence}"
 
 
-class DCAProposalStore(Protocol):
-    """Durable (tenant_id, proposal_key) membership."""
-
-    def seen(self, tenant_id: str, proposal_key: str) -> bool:
-        """True when this tenant already recorded this proposal key."""
-
-    def record(self, tenant_id: str, proposal_key: str) -> None:
-        """Durably record that this tenant proposed this occurrence."""
-
-
-class InMemoryDCAProposalStore:
-    """Reference ``DCAProposalStore`` for tests and a single-process default."""
-
-    def __init__(self) -> None:
-        self._seen: set[tuple[str, str]] = set()
-
-    def seen(self, tenant_id: str, proposal_key: str) -> bool:
-        return (tenant_id, proposal_key) in self._seen
-
-    def record(self, tenant_id: str, proposal_key: str) -> None:
-        self._seen.add((tenant_id, proposal_key))
-
-
 def record_dca_proposal(
-    store: DCAProposalStore, plan: DCAPlan, occurrence: str
+    store: FinanceReceiptStore, plan: DCAPlan, occurrence: str
 ) -> DCAProposalOutcome:
     """Propose one DCA occurrence exactly once per plan revision.
 
@@ -98,7 +75,7 @@ def record_dca_proposal(
     """
 
     key = build_dca_proposal_key(plan, occurrence)
-    if store.seen(plan.tenant_id, key):
+    if not store.claim(plan.tenant_id, "dca_proposal", key):
         return "duplicate"
-    store.record(plan.tenant_id, key)
+    store.complete(plan.tenant_id, "dca_proposal", key)
     return "proposed"
