@@ -4,7 +4,7 @@ Governing [spec](spec.md) and [plan](plan.md). One task per row, producer first.
 
 Before a pull request, run `uvx pre-commit run --all-files` at both stages. Follow the repository gate and use local fixtures, never private services.
 
-- [ ] T001 [P] [US3] ARBORA-DATA-MARKET-R001.1 Durable finance receipt store.
+- [x] T001 [P] [US3] ARBORA-DATA-MARKET-R001.1 Durable finance receipt store.
 - [ ] T002 [US3] ARBORA-DATA-MARKET-R002 Scheduled finance backfill, scan, and explanation jobs.
 - [ ] T003 [P] [US3] ARBORA-DATA-MARKET-R003.1 Market list/search/get.
 - [ ] T004 [P] [US3] ARBORA-DATA-MARKET-R003.2 Event list/search/get.

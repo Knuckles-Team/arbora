@@ -14,16 +14,16 @@ follow-on work; this module owns only the dedupe record.
 
 from __future__ import annotations
 
-from typing import Literal, Protocol
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from arbora.finance.receipt_store import FinanceReceiptStore
+
 __all__ = [
     "FinanceScheduleEntry",
-    "InMemoryScheduleRunStore",
     "RunOutcome",
     "ScheduleAction",
-    "ScheduleRunStore",
     "record_schedule_run",
 ]
 
@@ -44,31 +44,8 @@ class FinanceScheduleEntry(BaseModel):
     idempotency_key: str = Field(min_length=1, max_length=256)
 
 
-class ScheduleRunStore(Protocol):
-    """Durable (tenant_id, idempotency_key) membership, supplied by the caller."""
-
-    def seen(self, tenant_id: str, idempotency_key: str) -> bool:
-        """True when this tenant already recorded this idempotency key."""
-
-    def record(self, tenant_id: str, idempotency_key: str) -> None:
-        """Durably record that this tenant ran this idempotency key."""
-
-
-class InMemoryScheduleRunStore:
-    """Reference ``ScheduleRunStore`` for tests and a single-process default."""
-
-    def __init__(self) -> None:
-        self._seen: set[tuple[str, str]] = set()
-
-    def seen(self, tenant_id: str, idempotency_key: str) -> bool:
-        return (tenant_id, idempotency_key) in self._seen
-
-    def record(self, tenant_id: str, idempotency_key: str) -> None:
-        self._seen.add((tenant_id, idempotency_key))
-
-
 def record_schedule_run(
-    store: ScheduleRunStore, entry: FinanceScheduleEntry
+    store: FinanceReceiptStore, entry: FinanceScheduleEntry
 ) -> RunOutcome:
     """Record one schedule occurrence; a replayed key never re-executes.
 
@@ -78,7 +55,7 @@ def record_schedule_run(
     every subsequent call, with no write beyond the first ``record``.
     """
 
-    if store.seen(entry.tenant_id, entry.idempotency_key):
+    if not store.claim(entry.tenant_id, "schedule_run", entry.idempotency_key):
         return "duplicate"
-    store.record(entry.tenant_id, entry.idempotency_key)
+    store.complete(entry.tenant_id, "schedule_run", entry.idempotency_key)
     return "executed"
