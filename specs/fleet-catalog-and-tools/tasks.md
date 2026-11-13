@@ -449,11 +449,11 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T180 ARBORA-FLEET-R041.20 A long onboarding pass renews its graph authority between imports.
 - [ ] T181 ARBORA-FLEET-R041.21 The catalog attest key covers the published component state.
 - [ ] T182 ARBORA-FLEET-R042 arbora registers connector data resources as virtual-graph sources by policy (rollup).
-- [ ] T183 ARBORA-FLEET-R042.1 Model.
-- [ ] T184 ARBORA-FLEET-R042.2 Behavior.
-- [ ] T185 ARBORA-FLEET-R042.3 Wiring.
-- [ ] T186 ARBORA-FLEET-R042.4 Refusal.
-- [ ] T187 ARBORA-FLEET-R042.5 Evidence.
+- [x] T183 ARBORA-FLEET-R042.1 Model.
+- [x] T184 ARBORA-FLEET-R042.2 Behavior.
+- [x] T185 ARBORA-FLEET-R042.3 Wiring.
+- [x] T186 ARBORA-FLEET-R042.4 Refusal.
+- [x] T187 ARBORA-FLEET-R042.5 Evidence.
 - [ ] T188 ARBORA-FLEET-R042.6 Hot-path proof.
 - [ ] T189 ARBORA-FLEET-R043 arbora serves virtual-graph queries over connector data through the one door (rollup).
 - [ ] T190 ARBORA-FLEET-R043.1 Model.

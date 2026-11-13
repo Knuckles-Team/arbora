@@ -609,9 +609,16 @@ def register_access_contracts(
             source_approval_policy(contract, connector=connector, admitted=admitted)
             for contract in contracts
         )
+    # An unknown access kind is held by the policy above and registers
+    # nothing: no source, no mapping (ARBORA-FLEET-R042.4).
+    known = tuple(
+        contract
+        for contract in contracts
+        if getattr(contract, "access_kind", None) in SOURCE_KIND_BY_ACCESS
+    )
     target = catalog
     added = 0
-    for source_id, items in _by_source(contracts).items():
+    for source_id, items in _by_source(known).items():
         _register_source(target, connector, source_id, items)
         added += _add_mappings(target, items)
     return added

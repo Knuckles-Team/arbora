@@ -247,7 +247,12 @@ def compose_multiplexer_ops(
     source = CombinedFleetSource(
         verified=reader.read, live=live, sdk=sdk_entries, on_redeploy=drop_probe
     )
-    catalog = FleetCatalog((source,), visible)
+    virtual = getattr(getattr(mux, "fleet", None), "virtual_catalog", None)
+    catalog = FleetCatalog(
+        (source,),
+        visible,
+        source_approvals=getattr(virtual, "source_approval_report", None),
+    )
 
     def health() -> Mapping[str, Any]:
         return mux.status_snapshot().get("children", {})

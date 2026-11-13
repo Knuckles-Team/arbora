@@ -153,6 +153,9 @@ class VirtualCatalog:
     adapters: dict[str, Any] = field(default_factory=dict)
     mappings: list[VirtualMapping] = field(default_factory=list)
     approved_sources: dict[str, ApprovedSourceBinding] = field(default_factory=dict)
+    #: The last onboarding pass's source-approval decisions per connector
+    #: (ARBORA-FLEET-R042.5).  Evidence only: read authority stays the receipt.
+    source_decisions: dict[str, tuple[Any, ...]] = field(default_factory=dict)
     #: The process catalog is projected for one admitted tenant graph only.
     scope: tuple[str, str] | None = None
 
@@ -184,6 +187,42 @@ class VirtualCatalog:
             raise ValueError(f"unregistered source {mapping.source_id!r}")
         check_mapping(mapping, contract)
         self.mappings.append(mapping)
+
+    def record_source_decisions(self, connector: str, decisions: Sequence[Any]) -> None:
+        """Keep one connector's latest source-approval decisions as evidence."""
+
+        self.source_decisions[connector] = tuple(decisions)
+
+    def source_approval_report(self, connector: str) -> dict[str, Any] | None:
+        """Approved and held counts for one connector, each held one with its reason.
+
+        A mapping counts as approved only when the policy approved it *and* the
+        engine returned a receipt for it; a policy approval still waiting on
+        the receipt is held and says so (ARBORA-FLEET-R042.5).
+        """
+
+        decisions = self.source_decisions.get(connector)
+        if decisions is None:
+            return None
+        approved = 0
+        held: list[dict[str, Any]] = []
+        for decision in decisions:
+            receipt = getattr(decision, "receipt", None)
+            if getattr(decision, "outcome", None) == "approved" and receipt is not None:
+                approved += 1
+                continue
+            reason = str(getattr(decision, "reason", ""))
+            if getattr(decision, "outcome", None) == "approved":
+                reason = "awaiting the engine source-approval receipt"
+            held.append(
+                {
+                    "contract_iri": str(getattr(decision, "contract_iri", "")),
+                    "policy_id": str(getattr(decision, "policy_id", "")),
+                    "contract_digest": getattr(decision, "contract_digest", None),
+                    "reason": reason,
+                }
+            )
+        return {"approved": approved, "held": len(held), "held_mappings": held}
 
     def invalidate_binding(self, mapping_id: str) -> None:
         """Drop a receipt projection when its contract shape changes."""

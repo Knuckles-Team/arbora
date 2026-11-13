@@ -740,6 +740,9 @@ class FleetOnboarding:
         pending: str | None = None,
     ) -> None:
         self.source_receipts[connector] = tuple(receipts)
+        record = getattr(self.virtual_catalog, "record_source_decisions", None)
+        if callable(record):
+            record(connector, decisions)
         report = self.surfaces.setdefault(connector, {})
         if not isinstance(report, dict):
             return
