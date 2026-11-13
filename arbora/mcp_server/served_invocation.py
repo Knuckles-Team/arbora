@@ -423,6 +423,22 @@ def _task_plan_schema_publisher(
     return publish
 
 
+def _with_projection_reader(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the engine schema-projection reader (ARBORA-OPS-R052.3).
+
+    The reader sends the engine list variant under the verified caller's own
+    session; a process without bindings leaves it unbound and
+    ``query.projections`` refuses ``UNAVAILABLE``.
+    """
+    if bindings is None or "projection_reader" in bindings:
+        return bindings
+    from arbora.api.ops.projections import EngineProjectionReader
+
+    return {**bindings, "projection_reader": EngineProjectionReader()}
+
+
 def _with_task_plan_schema(
     bindings: Mapping[str, Any] | None,
     pool: Any,
@@ -508,6 +524,7 @@ def compose_served_invocation(
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
     bindings = _with_fleet_source_executor(bindings, pool, graph)
     bindings = _with_nl_federation_planner(bindings)
+    bindings = _with_projection_reader(bindings)
     bindings, process_startup = _with_task_plan_schema(
         bindings, pool, graph, connect_context, session, action_policies
     )

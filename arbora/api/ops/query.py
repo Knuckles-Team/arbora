@@ -4,9 +4,16 @@ from __future__ import annotations
 
 from pydantic import Field
 
-from arbora.api.ops._common import Params
+from arbora.api.ops._common import Params, build_read_op
+from arbora.api.ops.projections import (
+    ProjectionsParams,
+    ProjectionsResult,
+    handle_query_projections,
+)
 from arbora.api.ops.query_federation import NaturalLanguageResult
 from arbora.api.registry import EgMethod, OpSpec, Verb, eg_method_ref
+
+__all__ = ["NaturalLanguageParams", "handle_query_projections", "operations"]
 
 
 class NaturalLanguageParams(Params):
@@ -40,5 +47,14 @@ def operations() -> tuple[OpSpec, ...]:
             result=NaturalLanguageResult,
             binding=EgMethod(service="NlQuery", op="NlQuery"),
             scopes=frozenset({"query:nl"}),
+        ),
+        build_read_op(
+            op_id="query.projections",
+            summary="List the schema projections the caller's verified scopes cover",
+            examples=("which tables can I query",),
+            params=ProjectionsParams,
+            result=ProjectionsResult,
+            handler="arbora.api.ops.query.handle_query_projections",
+            scope="query:read",
         ),
     )
