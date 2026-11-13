@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from decimal import Decimal
 
 import pytest
@@ -12,10 +13,22 @@ from pydantic import ValidationError
 
 from arbora.finance.dca import (
     DCAPlan,
-    InMemoryDCAProposalStore,
     build_dca_proposal_key,
     record_dca_proposal,
 )
+from arbora.finance.receipt_store import FinanceReceiptStore
+from arbora.security.session import use_session
+from tests.finance._receipt_engine import ReceiptEngine, receipt_store, tenant_session
+
+
+@pytest.fixture(autouse=True)
+def _caller() -> Iterator[None]:
+    with use_session(tenant_session("tenant-a")):
+        yield
+
+
+def _store() -> FinanceReceiptStore:
+    return receipt_store(ReceiptEngine())
 
 
 def _plan(**overrides: object) -> DCAPlan:
@@ -36,7 +49,7 @@ def _plan(**overrides: object) -> DCAPlan:
 
 
 def test_first_proposal_for_an_occurrence_is_proposed() -> None:
-    store = InMemoryDCAProposalStore()
+    store = _store()
 
     outcome = record_dca_proposal(store, _plan(), "2026-11-01")
 
@@ -48,7 +61,7 @@ def test_clock_drift_replay_of_the_same_occurrence_is_a_duplicate() -> None:
     revision -- from clock drift or a retried trigger -- never produces a
     second proposal."""
 
-    store = InMemoryDCAProposalStore()
+    store = _store()
     plan = _plan()
     record_dca_proposal(store, plan, "2026-11-01")
 
@@ -62,7 +75,7 @@ def test_a_later_revision_proposes_independently_of_an_earlier_one() -> None:
     plan's proposals never collide with its earlier revision's proposals
     for the same nominal occurrence."""
 
-    store = InMemoryDCAProposalStore()
+    store = _store()
     revision_0 = _plan(revision=0)
     revision_1 = _plan(revision=1)
 
