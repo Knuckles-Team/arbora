@@ -241,7 +241,10 @@ GOC15_SURFACE_MANIFEST: tuple[SurfaceEntry, ...] = (
     SurfaceEntry(
         surface_id="au:canonical-sparql-endpoint",
         disposition=Disposition.AUTHENTICATED_REQUIRED,
-        citation="gateway/graph_api.py:60-111 -- explicit resolve_session(required_scope='kg:read')",
+        citation=(
+            "api/http/sparql.py mount_sparql_protocol -- shared HTTP authenticator, "
+            "then query.sparql / eg.graph.ApplyMutation through invoke"
+        ),
     ),
     SurfaceEntry(
         surface_id="au:nl-query-ask",

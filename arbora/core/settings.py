@@ -870,6 +870,13 @@ class ArboraConfig(BaseModel):
     source_http_max_response_bytes: int = Field(
         default=10485760, alias="SOURCE_HTTP_MAX_RESPONSE_BYTES", description=""
     )
+    sparql_max_result_bytes: int = Field(
+        default=67108864,
+        ge=65536,
+        le=1073741824,
+        alias="SPARQL_MAX_RESULT_BYTES",
+        description="Largest serialized answer of the SPARQL 1.1 Protocol endpoint (ARBORA-OPS-R857.1); a larger answer is refused, never truncated.",
+    )
     spark_runner_endpoint: str = Field(
         default="",
         alias="SPARK_RUNNER_ENDPOINT",
