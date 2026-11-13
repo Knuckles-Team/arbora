@@ -123,9 +123,12 @@ class FleetCatalog:
         self,
         sources: Iterable[Callable[[], Awaitable[Iterable[CatalogItem]]]],
         visible: Visible,
+        source_approvals: Callable[[str], Mapping[str, Any] | None] | None = None,
     ):
         self._sources = tuple(sources)
         self._visible = visible
+        #: Per-connector source-approval evidence (ARBORA-FLEET-R042.5).
+        self._source_approvals = source_approvals
 
     async def _authorized(self, item: CatalogItem, caller: Any) -> bool:
         scopes = caller.effective_scopes
@@ -261,10 +264,14 @@ class FleetCatalog:
         by_server: dict[str, list[tuple[str, str]]] = {name: [] for name in wanted}
         for item in visible.values():
             by_server[str(item.server)].append((item.kind, item.name))
-        return {
-            name: surface_report(count_items(pairs))
-            for name, pairs in sorted(by_server.items())
-        }
+        report: dict[str, Any] = {}
+        for name, pairs in sorted(by_server.items()):
+            entry = surface_report(count_items(pairs))
+            approvals = self._source_approvals(name) if self._source_approvals else None
+            if approvals is not None:
+                entry["source_approvals"] = dict(approvals)
+            report[name] = entry
+        return report
 
     async def _matching_items(
         self,
