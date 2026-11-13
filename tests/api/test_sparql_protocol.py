@@ -67,7 +67,9 @@ class _RecordingEngine(FakeClient):
 
     def __init__(self) -> None:
         super().__init__()
-        self.work_items = _EffectItems()
+        self.journal = _EffectItems()
+        # The effect journal awaits its work-item calls.
+        self.work_items = self.journal  # type: ignore[assignment]
 
     async def _send(
         self, method: str, params: Any, graph: str | None, **kwargs: Any
@@ -255,7 +257,7 @@ def test_protocol_query_and_update(monkeypatch: pytest.MonkeyPatch) -> None:
     assert calls[1][1]["query"] == "INSERT DATA { <urn:a> <urn:p> 'one' }"
     assert calls[2][1]["query"].startswith("CLEAR DEFAULT; INSERT DATA {")
     # Each write is held once in the engine's effect journal.
-    assert sorted(row["status"] for row in client.work_items.rows.values()) == [
+    assert sorted(row["status"] for row in client.journal.rows.values()) == [
         "succeeded",
         "succeeded",
     ]
