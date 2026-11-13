@@ -105,7 +105,7 @@ class FinanceReceiptStore:
                     "UNAVAILABLE: finance receipt read failed"
                 ) from error
             if isinstance(rows, list) and rows:
-                return state  # type: ignore[return-value]
+                return state
         return None
 
     def _write(self, tenant: str, kind: str, key: str, state: str) -> bool:
