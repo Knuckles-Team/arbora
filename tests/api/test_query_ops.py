@@ -63,6 +63,7 @@ def test_query_bindings_match_actual_provider_authority_and_inner_schema() -> No
     methods = load_catalog()["methods"]
     for op in ops:
         binding = op.binding
+        assert isinstance(binding, EgMethod)
         method = next(row for row in methods if row["id"] == binding.service)
         assert op.scopes == frozenset({method["policy"]["authz_action"]})
         assert method["is_wire_callable"] is True
