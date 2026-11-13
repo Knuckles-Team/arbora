@@ -28,13 +28,12 @@ async def test_registry_lists_operation_and_binder_composes_reader(
     assert "SchemaProjections" in METHOD_IDS
 
     composed = _with_projection_reader({"other": object()})
+    assert composed is not None
     assert isinstance(composed["projection_reader"], EngineProjectionReader)
     assert _with_projection_reader(None) is None
     bound = object()
-    assert (
-        _with_projection_reader({"projection_reader": bound})["projection_reader"]
-        is bound
-    )
+    kept = _with_projection_reader({"projection_reader": bound})
+    assert kept is not None and kept["projection_reader"] is bound
 
     sent: list[tuple[Any, Any, Any]] = []
     entries = {
