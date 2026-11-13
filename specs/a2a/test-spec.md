@@ -195,7 +195,7 @@ Rows below name tests that are planned or only partly built. Each entry restates
 | A2A-PL03 | ARBORA-A2A-R011 | Test: `tests/a2a/test_transition_history.py::test_history_matches_engine_ledger_exactly` (L3) runs `tasks/get` against a loopback engine and asserts the entries equal the ledger, plus a foreign-tenant refusal. |
 | A2A-PL04 | ARBORA-A2A-R012.3 | Test: `tests/a2a/test_transition_history.py::test_get_task_raises_typed_refusal_without_authority` (L2) covers the absent and the raising authority. |
 | A2A-PL05 | ARBORA-A2A-R015 | Test: `tests/a2a/test_agent_card.py::test_served_card_matches_wired_authorities` (L3) compares the advertised set with the exercised set. |
-| A2A-PL06 | ARBORA-A2A-R001.3 | Test: `tests/a2a/test_served_agent.py::test_context_survives_restart_and_list_is_caller_scoped` (served). It restarts between two turns, lists only the caller's contexts and refuses a foreign `contextId`. |
+| A2A-PL06 | ARBORA-A2A-R001.3 | Test: (planned) `tests/a2a/test_served_agent.py::test_context_survives_restart_and_list_is_caller_scoped` (served). It restarts between two turns, lists only the caller's contexts and refuses a foreign `contextId`. |
 | A2A-PL07 | ARBORA-A2A-R001.4.1 | Test: `tests/a2a/test_served_agent.py::test_stream_emits_delta_tool_call_result_final_in_order` (served). A resubscribe from a cursor replays the tail. |
 | A2A-PL08 | ARBORA-A2A-R001.5.2 | Test: `tests/a2a/test_served_agent.py::test_capable_model_accepts_png_and_unknown_stale_oversize_create_no_task` (served). |
 | A2A-PL09 | ARBORA-A2A-R001.5.3 | Test: `tests/a2a/test_media_admission.py::test_mismatched_signature_is_refused_with_zero_tasks` (served). |
