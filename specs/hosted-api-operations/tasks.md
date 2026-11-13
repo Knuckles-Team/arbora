@@ -125,9 +125,9 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T102 ARBORA-OPS-R051.5 Evidence.
 - [ ] T103 ARBORA-OPS-R051.6 Hot-path proof.
 - [ ] T104 ARBORA-OPS-R052 Authorization-segmented virtual schema projections.
-- [ ] T105 ARBORA-OPS-R052.1 Model.
-- [ ] T106 ARBORA-OPS-R052.2 Behavior.
-- [ ] T107 ARBORA-OPS-R052.3 Wiring.
+- [x] T105 ARBORA-OPS-R052.1 Model.
+- [x] T106 ARBORA-OPS-R052.2 Behavior.
+- [x] T107 ARBORA-OPS-R052.3 Wiring.
 - [ ] T108 ARBORA-OPS-R052.4 Refusal.
 - [ ] T109 ARBORA-OPS-R052.5 Evidence.
 - [ ] T110 ARBORA-OPS-R052.6 Hot-path proof.
@@ -184,7 +184,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 
 - [ ] T147 ARBORA-OPS-R025.2 Complete deterministic artifact generation and installed-wheel acceptance from the pinned engine contract.
 
-- [ ] T148 ARBORA-OPS-R018.2.1 Distinct query declaration, resolver and caller dispatch contracts; live provider planner validation deferred.
+- [x] T148 ARBORA-OPS-R018.2.1 Distinct query declaration, resolver and caller dispatch contracts; live provider planner validation deferred.
 - [ ] T149 ARBORA-OPS-R018.2.2 Remaining served query, SQL, search, indexes and analytics acceptance.
 
 

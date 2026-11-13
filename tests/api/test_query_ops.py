@@ -58,8 +58,8 @@ def context(client: RecordingClient) -> ExecutionContext:
 pytestmark = pytest.mark.spec("ARBORA-OPS-R018.2.1")
 
 
-def test_query_bindings_match_the_engine_catalog_authority() -> None:
-    ops = operations()
+def test_query_bindings_match_actual_provider_authority_and_inner_schema() -> None:
+    ops = tuple(op for op in operations() if isinstance(op.binding, EgMethod))
     methods = load_catalog()["methods"]
     for op in ops:
         binding = op.binding
