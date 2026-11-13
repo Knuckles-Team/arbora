@@ -22,10 +22,10 @@ import csv
 import io
 import json
 import re
+from html import escape
 from secrets import token_hex
 from typing import Any
 from urllib.parse import parse_qs
-from xml.sax.saxutils import escape
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
