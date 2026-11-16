@@ -167,12 +167,11 @@ jobs:
         id: hook-install
         run: uvx --from pre-commit==4.6.0 pre-commit install-hooks --config "$PINNED_PRECOMMIT"
 
-      - name: Save pre-commit environments
-        if: success() && steps.hook-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.pre-commit-config.yaml') }}-${{ env.PIPELINES_REF }}
+      # No full save here: a cache saved by a pull request is visible only to
+      # that pull request's re-runs, and uploading about 1.6 GB from the
+      # self-hosted runners took longer than this job's cap. The main-branch
+      # checks (60-minute cap, nightly and on every merge) seed the shared
+      # cache that every pull request restores.
 
       - name: Save partly installed pre-commit environments
         if: (failure() || cancelled()) && steps.hook-install.outcome != 'success'
