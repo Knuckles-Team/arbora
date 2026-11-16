@@ -541,7 +541,7 @@ def openbao_sink_factory(decl: Declaration) -> SecretSink | None:
     if store is None:
         return None
     import httpx
-    from agent_connector_sdk.credentials.runtime_references import (
+    from scion_sdk.credentials.runtime_references import (
         resolve_runtime_secret_reference,
     )
 
@@ -600,7 +600,7 @@ def _declared_admin_factory(decl: Declaration) -> AdminFactory:
         return default_admin_factory
 
     def broad(config: Any) -> RealmAdmin:
-        from agent_connector_sdk.credentials.runtime_references import (
+        from scion_sdk.credentials.runtime_references import (
             resolve_runtime_secret_reference,
         )
 

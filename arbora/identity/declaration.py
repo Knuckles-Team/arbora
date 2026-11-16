@@ -29,6 +29,26 @@ from arbora.identity.client_contract import (
 
 SCHEMA_VERSION = 1
 CLIENT_KINDS = ("public", "confidential", "service")
+#: Realm keys ``settings`` never writes. Sign-in is not declared here: a flow
+#: binding (any ``*Flow`` key), an authentication flow or an identity provider
+#: would let the file rebind or bypass how people sign in. The collections the
+#: schema declares itself (roles, groups, scopes, clients, users) are refused so
+#: ``settings`` cannot route around their validation.
+RESERVED_SETTINGS = frozenset(
+    {
+        "authenticationFlows",
+        "authenticatorConfig",
+        "clientScopes",
+        "clients",
+        "components",
+        "groups",
+        "identityProviderMappers",
+        "identityProviders",
+        "requiredActions",
+        "roles",
+        "users",
+    }
+)
 
 
 class DeclarationError(ValueError):
@@ -223,7 +243,7 @@ def parse_declaration(raw: Any) -> Declaration:
         realm=realm,
         admin=_admin(top),
         secret_store=_secret_store(top),
-        settings=dict(_mapping(top.get("settings") or {}, "settings")),
+        settings=_settings(top),
         roles=tuple(_role(r) for r in top.get("roles") or ()),
         groups=_texts(top, "groups", "identity file"),
         scopes=tuple(_scope(s) for s in top.get("scopes") or ()),
@@ -233,6 +253,19 @@ def parse_declaration(raw: Any) -> Declaration:
     )
     _cross_check(declared)
     return declared
+
+
+def _settings(top: Mapping[str, Any]) -> dict[str, Any]:
+    raw = dict(_mapping(top.get("settings") or {}, "settings"))
+    reserved = sorted(
+        key for key in raw if key in RESERVED_SETTINGS or key.endswith("Flow")
+    )
+    if reserved:
+        raise DeclarationError(
+            f"settings: sign-in and declared collections are not realm settings: "
+            f"{', '.join(reserved)}"
+        )
+    return raw
 
 
 def _admin(top: Mapping[str, Any]) -> AdminDecl:

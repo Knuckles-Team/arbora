@@ -433,6 +433,11 @@ def test_forbidden_role_and_duplicate_email_are_refused() -> None:
         ({"clients": [{"clientId": "p", "kind": "public"}]}, "redirectUris"),
         ({"clients": [{"clientId": "c", "kind": "weird"}]}, "kind"),
         ({"dcr": {"trusted_hosts": []}}, "trusted_hosts"),
+        ({"settings": {"browserFlow": "direct grant"}}, "browserFlow"),
+        ({"settings": {"firstBrokerLoginFlow": "x"}}, "firstBrokerLoginFlow"),
+        ({"settings": {"identityProviders": []}}, "identityProviders"),
+        ({"settings": {"authenticationFlows": []}}, "authenticationFlows"),
+        ({"settings": {"users": []}}, "users"),
     ],
 )
 def test_schema_is_closed(patch: dict[str, Any], message: str) -> None:
