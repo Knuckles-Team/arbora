@@ -5,11 +5,27 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
+import pytest
+
+from arbora.finance.receipt_store import FinanceReceiptStore
 from arbora.finance.schedule import (
     FinanceScheduleEntry,
-    InMemoryScheduleRunStore,
     record_schedule_run,
 )
+from arbora.security.session import use_session
+from tests.finance._receipt_engine import ReceiptEngine, receipt_store, tenant_session
+
+
+@pytest.fixture(autouse=True)
+def _caller() -> Iterator[None]:
+    with use_session(tenant_session("tenant-a")):
+        yield
+
+
+def _store() -> FinanceReceiptStore:
+    return receipt_store(ReceiptEngine())
 
 
 def _entry(**overrides: object) -> FinanceScheduleEntry:
@@ -26,7 +42,7 @@ def _entry(**overrides: object) -> FinanceScheduleEntry:
 
 
 def test_first_run_executes() -> None:
-    store = InMemoryScheduleRunStore()
+    store = _store()
 
     outcome = record_schedule_run(store, _entry())
 
@@ -38,7 +54,7 @@ def test_replay_with_the_same_key_is_a_duplicate() -> None:
     re-execute; the idempotency key is caller-supplied, not derived from
     wall-clock time, so a duplicated trigger timestamp changes nothing."""
 
-    store = InMemoryScheduleRunStore()
+    store = _store()
     record_schedule_run(store, _entry())
 
     second = record_schedule_run(store, _entry(trigger="2026-11-01T06:00:00-06:00"))
@@ -49,17 +65,18 @@ def test_replay_with_the_same_key_is_a_duplicate() -> None:
 def test_different_tenants_with_the_same_key_both_execute() -> None:
     """Idempotency is scoped per tenant; two tenants never share dedupe state."""
 
-    store = InMemoryScheduleRunStore()
+    store = _store()
 
     first = record_schedule_run(store, _entry(tenant_id="tenant-a"))
-    second = record_schedule_run(store, _entry(tenant_id="tenant-b"))
+    with use_session(tenant_session("tenant-b")):
+        second = record_schedule_run(store, _entry(tenant_id="tenant-b"))
 
     assert first == "executed"
     assert second == "executed"
 
 
 def test_different_actions_with_the_same_key_are_independent() -> None:
-    store = InMemoryScheduleRunStore()
+    store = _store()
     key = "shared-key"
 
     backfill = record_schedule_run(
@@ -74,7 +91,7 @@ def test_different_actions_with_the_same_key_are_independent() -> None:
 
 
 def test_repeated_replay_stays_duplicate() -> None:
-    store = InMemoryScheduleRunStore()
+    store = _store()
     entry = _entry()
     record_schedule_run(store, entry)
 
