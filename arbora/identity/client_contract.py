@@ -442,8 +442,14 @@ class RealmAdmin:
         return payload
 
 
-def http_transport(config: ContractConfig, secret: str) -> AdminTransport:
-    """An httpx transport that mints a scoped admin token and refuses a broad one."""
+def http_transport(
+    config: ContractConfig, secret: str, *, allow_broad: bool = False
+) -> AdminTransport:
+    """An httpx transport that mints a scoped admin token and refuses a broad one.
+
+    ``allow_broad`` is for the declared identity file (R603), which writes roles,
+    users and realm settings and so cannot run under the narrow client credential.
+    """
     import httpx
 
     verify: Any = config.ca_bundle or True
@@ -465,7 +471,7 @@ def http_transport(config: ContractConfig, secret: str) -> AdminTransport:
         client.close()
         raise ContractFailure("admin_refused")
     token = str(response.json().get("access_token") or "")
-    if _token_is_too_broad(token):
+    if not allow_broad and _token_is_too_broad(token):
         client.close()
         raise ContractFailure("admin_too_broad")
     headers = {"Authorization": f"Bearer {token}"}
@@ -749,8 +755,15 @@ def stop_client_contract_supervisor() -> None:
 
 
 def reconcile_command(argv: Sequence[str]) -> int:
-    """``arbora identity reconcile``: one pass; prints the state; 0 when converged."""
-    del argv
+    """``arbora identity reconcile``: one pass; prints the state; 0 when converged.
+
+    ``--file F`` reconciles a declared identity file instead (R603), with
+    ``--plan`` to print the difference and ``--check`` to fail on drift.
+    """
+    if "--file" in argv:
+        from arbora.identity.declaration_reconcile import declared_command
+
+        return declared_command(list(argv))
     config = configured_contract_config()
     if config is None:
         print(json.dumps({"status": "not_configured", "config": CONFIG_KEY}))
