@@ -122,7 +122,7 @@ class FakeIdp:
         self.users: dict[str, dict[str, Any]] = {}
         self.user_groups: dict[str, set[str]] = {}
         self.user_roles: dict[str, set[str]] = {}
-        self.components = {
+        self.components: dict[str, dict[str, Any]] = {
             "c1": {
                 "id": "c1",
                 "providerId": "trusted-hosts",
