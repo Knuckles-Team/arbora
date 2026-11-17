@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import json
+from dataclasses import dataclass
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
@@ -20,6 +21,14 @@ CONFIG = cc.ContractConfig(
     audience="agent-services",
 )
 BUILTIN_SCOPES = ("roles", "offline_access", "profile", "email")
+
+
+@dataclass(frozen=True)
+class SignIn:
+    """The scope and refresh token type of one fake sign-in."""
+
+    scope: str
+    refresh_type: str
 
 
 class FakeRealm:
@@ -90,6 +99,19 @@ class FakeRealm:
         return next(
             c for c in self.clients.values() if c["clientId"] == CONFIG.native_client_id
         )
+
+    def sign_in(self, client_id: str, requested_scope: str) -> SignIn:
+        """The provider rule that this suite relies on, as one pure function.
+
+        Default client scopes enter the token. A refresh token is an offline
+        token only when ``offline_access`` is both requested in ``scope`` and
+        attached to the client; otherwise it is an ordinary session token.
+        """
+        attached = self.defaults[client_id]
+        requested = set(requested_scope.split())
+        granted = (attached - {"offline_access"}) | (requested & attached)
+        refresh_type = "Offline" if "offline_access" in granted else "Refresh"
+        return SignIn(" ".join(sorted(granted)), refresh_type)
 
     def delete_native(self) -> None:
         cid = self.native()["id"]

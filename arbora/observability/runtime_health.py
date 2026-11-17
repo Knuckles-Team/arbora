@@ -822,6 +822,7 @@ def readiness_reason() -> str | None:
 
 
 _IDENTITY_CONTRACT: list[Any] = [None]
+_IDENTITY_CONFIG_INVALID: list[bool] = [False]
 
 
 def register_identity_contract(reconciler: Any) -> None:
@@ -829,14 +830,30 @@ def register_identity_contract(reconciler: Any) -> None:
     _IDENTITY_CONTRACT[0] = reconciler
 
 
-def identity_readiness() -> dict[str, Any] | None:
-    """``identity`` readiness from the contract state, or ``None`` when not configured.
+def register_identity_config_invalid(invalid: bool) -> None:
+    """Record that ``ARBORA_IDENTITY_CLIENT_CONTRACT`` is set but unusable (R030.4.8)."""
+    _IDENTITY_CONFIG_INVALID[0] = bool(invalid)
 
-    Reported, never gating: issued tokens stay valid and dynamic client
-    registration stays available while the contract is degraded.
+
+def identity_readiness() -> dict[str, Any]:
+    """``identity`` readiness from the contract state (R030.4.3, R030.4.8).
+
+    ``ready``, ``checking``, ``degraded`` (with ``reason: identity_<code>``) and
+    ``stopped`` follow the reconciler. ``unconfigured`` means that
+    ``ARBORA_IDENTITY_CLIENT_CONTRACT`` is absent. A set but invalid value is
+    ``degraded`` with ``reason: identity_config_invalid``. Codes only, never a
+    name or a secret. Reported, never gating: issued tokens stay valid and
+    dynamic client registration stays available while the contract is degraded.
     """
     reconciler = _IDENTITY_CONTRACT[0]
-    return None if reconciler is None else dict(reconciler.readiness())
+    if reconciler is not None:
+        return dict(reconciler.readiness())
+    if _IDENTITY_CONFIG_INVALID[0]:
+        return {"status": "degraded", "reason": "identity_config_invalid"}
+    from arbora.identity.client_contract import CONFIG_KEY
+    from arbora.security.settings import setting
+
+    return {"status": "checking" if setting(CONFIG_KEY, "") else "unconfigured"}
 
 
 def failing_checks(report: Mapping[str, Any]) -> list[str]:

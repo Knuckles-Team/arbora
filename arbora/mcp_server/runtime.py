@@ -864,10 +864,8 @@ def _build_server(
             body["not_served"] = not_served
         from arbora.observability.runtime_health import identity_readiness
 
-        identity = identity_readiness()
-        if identity is not None:
-            # Reported, never gating (ARBORA-IDENTITY-R030.4.3).
-            body["identity"] = identity
+        # Always reported, never gating (ARBORA-IDENTITY-R030.4.3, .8).
+        body["identity"] = identity_readiness()
         from arbora.mcp_server.catalog_warmup import catalog_state
 
         catalog = catalog_state()
