@@ -532,7 +532,7 @@ def _validated_redirect_uris(value: str | None) -> list[str] | None:
     return [_secure_auth_url(uri, field="redirect URI") for uri in uris]
 
 
-def _signin_scope_advertisement() -> dict[str, list[str]]:
+def _signin_scopes() -> list[str]:
     """Scopes that a client should request at sign-in (ARBORA-IDENTITY-R030.4.8).
 
     The list is the native client's sign-in scopes from the one declared client
@@ -544,8 +544,7 @@ def _signin_scope_advertisement() -> dict[str, list[str]]:
     """
     from arbora.identity.ports import native_signin_scopes
 
-    scopes = native_signin_scopes()
-    return {"scopes_supported": list(scopes), "challenge_scopes": list(scopes)}
+    return list(native_signin_scopes())
 
 
 def _wrap_with_resource_metadata(
@@ -584,7 +583,8 @@ def _wrap_with_resource_metadata(
         token_verifier=verifier,
         authorization_servers=[AnyHttpUrl(u) for u in issuer_values],
         base_url=base_url,
-        **_signin_scope_advertisement(),
+        scopes_supported=_signin_scopes(),
+        challenge_scopes=_signin_scopes(),
     )
 
 
@@ -1391,7 +1391,8 @@ def _configure_remote_oauth_auth(args: argparse.Namespace) -> Any:
         token_verifier=token_verifier,
         authorization_servers=[AnyHttpUrl(u) for u in auth_servers],
         base_url=remote_base_url,
-        **_signin_scope_advertisement(),
+        scopes_supported=_signin_scopes(),
+        challenge_scopes=_signin_scopes(),
     )
 
 
