@@ -324,3 +324,5 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [x] T164 ARBORA-IDENTITY-R030.4.5 Describe the client contract machine in the ontology. Evidence: `tests/ontology/test_client_contract_machine_description.py::test_classes_roll_up_to_the_core_classes`.
 - [x] T165 ARBORA-IDENTITY-R030.4.6 The command `arbora identity reconcile` runs one pass. Evidence: `tests/identity/test_client_contract.py::test_reconcile_command_prints_state_and_exit_code`.
 - [ ] T166 ARBORA-IDENTITY-R030.4.7 Derive the native redirect URIs and default scopes from the harness profile table.
+- [x] T167 ARBORA-IDENTITY-R030.4.8 Advertise the native sign-in scopes in the protected-resource metadata and the challenge. Evidence: `tests/identity/test_native_signin_scopes.py::test_metadata_scopes_supported_equal_the_native_contract_scopes`.
+- [x] T168 ARBORA-IDENTITY-R030.4.9 Report every identity contract state in readiness. Evidence: `tests/identity/test_native_signin_scopes.py::test_readiness_reports_each_identity_state`.

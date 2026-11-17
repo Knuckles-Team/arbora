@@ -14,6 +14,18 @@ from typing import Any, Protocol
 from .engine import IdentityUnavailable, Resolution
 
 
+def native_signin_scopes() -> list[str]:
+    """The sign-in scopes of the native MCP client (ARBORA-IDENTITY-R030.4.8).
+
+    Served packages read the one declared client contract through this port,
+    so the scopes that the protected-resource metadata advertises are never a
+    second copy of the contract.
+    """
+    from .client_contract import NATIVE_DEFAULT_SCOPES
+
+    return list(NATIVE_DEFAULT_SCOPES)
+
+
 @dataclass(frozen=True, slots=True, repr=False)
 class CredentialState:
     """Exact credential's current owner response, supplied by an injected port."""

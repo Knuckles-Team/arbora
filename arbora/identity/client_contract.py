@@ -735,11 +735,15 @@ _SUPERVISOR: list[ClientContractSupervisor | None] = [None]
 
 def start_client_contract_supervisor() -> ClientContractSupervisor | None:
     """Start the supervisor when the contract is configured; never raise into boot."""
+    from arbora.observability.runtime_health import register_identity_config_invalid
+
     try:
         config = configured_contract_config()
     except ValueError as exc:
         logger.error("identity client contract not started: %s", exc)
+        register_identity_config_invalid(True)
         return None
+    register_identity_config_invalid(False)
     if config is None:
         return None
     supervisor = ClientContractSupervisor(config)
