@@ -60,6 +60,16 @@ No unknowns; no research.md.
 
 ## Phase 1: Design
 
+The sections below hold the design of this spec. The answers here apply to every row. A section adds its own where a row differs.
+
+- **Owner.** Arbora owns admission, sign-in advertisement, the process credential lease and its own OAuth client contract. The identity provider owns the tokens that it issues. The engine owns the durable identity and access records.
+- **Cohesion.** Each declaration lives once, and each state machine has one writer: the client contract in `arbora/identity/client_contract.py`, the lease `transition` in `arbora/security/actor_context.py`.
+- **Dependency direction.** Served packages (`mcp_server`, `fleet`, `webui_host`) import identity only through `arbora/identity/ports.py` and `engine_ports.py`. `arbora/identity` imports no served package.
+- **Interface depth.** A served package calls a small port function or a protocol. The reconciler, the lease and the contract keep their state private.
+- **Special cases.** None at the spec level. A row that has one states it in its own section.
+- **State.** The lease and the client contract reconciler are explicit state machines. Other rows hold no process state.
+- **Environment.** Configuration comes from named settings, such as `ARBORA_IDENTITY_CLIENT_CONTRACT`. No row reads an undeclared variable.
+
 ### Current seam and implementation boundary
 
 This checkout's `arbora/mcp_server/server.py` and `runtime.py` compose the one FastMCP server and verified tool session; `bootstrap.py` keeps process authority alive. `arbora/gateway/graph_api.py` installs the existing actor identity middleware. `arbora/gateway/remote_oauth_api.py` already narrows delegated provider scopes. `arbora/deployment/cli.py`, `config_generator.py` and `doctor.py` own deployment commands and diagnostics. `arbora/webui_host/webui_co_service.py` hosts the browser co-service. `arbora/a2a/authority.py` is the A2A authority boundary. Reuse these. The proposed `arbora/identity/`, `arbora/access/`, and `arbora/api/ops/` packages are **not in this checkout**. Implementation must add them and wire them into the serving root before marking an operation available.
@@ -646,9 +656,21 @@ Amendment 2026-11-06: the static native MCP client that coding clients sign in w
 
 Decision: arbora declares the clients and scopes that its sign-in needs (`.1`) and reconciles them at start and every 300 seconds through the identity provider admin interface, with its own scoped admin credential (`.2`). The reconciler only creates and updates the items it declares, so it cannot remove anything another owner provisions. A failure is the `Degraded` state with backoff, never a crash or a gate. Readiness reports `identity: degraded` without gating (`.3`), because issued tokens stay valid and dynamic client registration stays available (`.4`). The environment supplies configuration only (`ARBORA_IDENTITY_CLIENT_CONTRACT`), and a deployment job that needs a pass on demand runs `arbora identity reconcile` (`.6`) instead of a provisioning script of its own, so there is one source of truth. The machine follows the same shape as the process lease (`R027.1`): one state field, one `transition`, a closed edge table C01 to C09, a typed refusal, and an ontology description in `arbora/ontology/state_machines.ttl` (`.5`). The admin credential must be scoped to client and client-scope management of the served realm; a token with the realm role `admin` or `create-realm` is refused (`admin_too_broad`).
 
+### Offline sign-in scopes are advertised (ARBORA-IDENTITY-R030.4.8, R030.4.9)
+
 Amendment 2026-11-17 (`.8`, `.9`): a native sign-in received a session refresh token, not an offline token. The contract attaches `offline_access` as a default client scope, but the identity provider issues an offline token only when the sign-in requests the scope. Arbora advertised no scope: the metadata `scopes_supported` was empty and the 401 challenge had no `scope`, so MCP clients requested none. A session refresh token dies when the session idles and at the maximum session age.
 
 Decision: advertise the native client scopes from the one contract, through the supported `scopes_supported` and `challenge_scopes` parameters of `RemoteAuthProvider`. The list is read through `native_signin_scopes` in `arbora/identity/ports.py`, because served packages may import only identity ports. It is advertising only, so `required_scopes` is unchanged and tokens without `offline_access` still pass. The realm session timeouts stay as they are: they are realm-wide and would lengthen every browser sign-in. Readiness always reports `identity` and adds `unconfigured` and `degraded` with `identity_config_invalid`, so an operator can tell a deployment with no contract from one whose contract has not converged. A challenge built for an explicit per-call scope override keeps that override.
+
+Pre-untangled design for these rows, one line per answer.
+
+- Owner. Arbora owns the advertisement and the readiness report. The identity provider owns the token type that it issues.
+- Cohesion. The sign-in scope list lives once, in `NATIVE_DEFAULT_SCOPES` of `arbora/identity/client_contract.py`. The metadata and the challenge read it and hold no copy.
+- Dependency direction. The server factory depends on `arbora/identity/ports.py`, which reads the contract. The contract never imports a served package.
+- Interface depth. One function, `native_signin_scopes()`, hides the contract. One function, `identity_readiness()`, hides the reconciler and the configuration check.
+- Special cases. None. Every challenge and every metadata document carries the same list.
+- State. The advertisement has no state. Readiness reads the reconciler state of `.2` and one flag for an unusable configuration.
+- Environment. `ARBORA_IDENTITY_CLIENT_CONTRACT` only. Its absence is the `unconfigured` state.
 
 ### Process credential lease state machine (ARBORA-IDENTITY-R027.1 to R027.6)
 
