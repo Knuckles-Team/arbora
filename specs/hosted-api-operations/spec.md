@@ -180,6 +180,8 @@ As an operator, I run a stored process workflow through one served operation. A 
 - **FR-009**: Merge arming must need an owner receipt on the head commit, and every delivery write must be a governed effect. Rows: `ARBORA-OPS-R896.10`, `ARBORA-OPS-R896.11`.
 - **FR-010**: A stored process workflow must run as one admitted agent DAG with served approvals and engine-decided branches. Rows: `ARBORA-OPS-R898`.
 - **FR-011**: Every prompt entry point must accept audio and other media parts, turn them into text through one modality seam (audio through the fleet's speech-to-text capability), keep the original as an attachment linked to its derived text, and refuse with a typed code when no capability is reachable or a limit is exceeded. Rows: `ARBORA-OPS-R899`.
+- **FR-012**: Agent presence is served on one channel with an explicit snapshot interval and a bounded update rate; per-frame movement is never durable. Rows: `ARBORA-OPS-R915`.
+- **FR-013**: The activity stream is served from run-trace provenance; arbora invents no activity. Rows: `ARBORA-OPS-R916`.
 
 ## Success Criteria
 
