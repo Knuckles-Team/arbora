@@ -272,6 +272,8 @@ No fixture or native lease JSON establishes factory or operation authority.
 | T-ARBORA-IDENTITY-R030.4.5 | ARBORA-IDENTITY-R030.4.5 | Test: `tests/ontology/test_client_contract_machine_description.py::test_classes_roll_up_to_the_core_classes` (L2). |
 | T-ARBORA-IDENTITY-R030.4.6 | ARBORA-IDENTITY-R030.4.6 | Test: `tests/identity/test_client_contract.py::test_reconcile_command_prints_state_and_exit_code` (L2). |
 | T-ARBORA-IDENTITY-R030.4.7 | ARBORA-IDENTITY-R030.4.7 | Test: `tests/identity/test_client_contract.py::test_native_redirects_and_scopes_follow_the_profile_table` (L2). (planned) |
+| T-ARBORA-IDENTITY-R030.4.8 | ARBORA-IDENTITY-R030.4.8 | Test: `tests/identity/test_native_signin_scopes.py::test_metadata_scopes_supported_equal_the_native_contract_scopes`, `::test_challenge_carries_the_same_scope_list` and `::test_advertising_scopes_does_not_require_them` (L1). `::test_served_sign_in_that_follows_the_advertised_scopes_gets_an_offline_token` (L3). |
+| T-ARBORA-IDENTITY-R030.4.9 | ARBORA-IDENTITY-R030.4.9 | Test: `tests/identity/test_native_signin_scopes.py::test_readiness_reports_each_identity_state` (L1). |
 
 ## Entries added for rows without a prior entry
 
@@ -437,3 +439,5 @@ Each test below is named by its requirement row, has no running implementation y
 | PT-100 | ARBORA-IDENTITY-R030.4.4 | `tests/identity/test_client_contract_served.py::test_degraded_contract_keeps_registration_in_metadata` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-101 | ARBORA-IDENTITY-R030.4.5 | `tests/ontology/test_client_contract_machine_description.py::test_classes_roll_up_to_the_core_classes` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-102 | ARBORA-IDENTITY-R030.4.6 | `tests/identity/test_client_contract.py::test_reconcile_command_prints_state_and_exit_code` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-103 | ARBORA-IDENTITY-R030.4.8 | `tests/identity/test_native_signin_scopes.py::test_metadata_scopes_supported_equal_the_native_contract_scopes`, `::test_challenge_carries_the_same_scope_list`, `::test_advertising_scopes_does_not_require_them`, `::test_served_sign_in_that_follows_the_advertised_scopes_gets_an_offline_token` | The result the row states holds. | Each refusal the row states is returned. |
+| PT-104 | ARBORA-IDENTITY-R030.4.9 | `tests/identity/test_native_signin_scopes.py::test_readiness_reports_each_identity_state` | The result the row states holds. | Each refusal the row states is returned. |

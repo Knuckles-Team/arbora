@@ -14,7 +14,7 @@ from arbora.observability import runtime_health
 
 @pytest.mark.spec("ARBORA-IDENTITY-R030.4.3")
 def test_identity_check_follows_contract_state() -> None:
-    assert runtime_health.identity_readiness() is None  # not configured
+    assert runtime_health.identity_readiness() == {"status": "unconfigured"}
     machine = ClientContractReconciler()
     runtime_health.register_identity_contract(machine)
     try:

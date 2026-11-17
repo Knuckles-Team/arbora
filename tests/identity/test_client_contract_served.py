@@ -86,7 +86,7 @@ def test_deleted_native_client_is_recreated_and_readiness_follows(
     assert realm.defaults[native["id"]] == set(cc.NATIVE_DEFAULT_SCOPES)
     assert not any(method == "DELETE" for method, _ in realm.calls)
     assert supervisor.reconciler.state is ContractState.STOPPED
-    assert runtime_health.identity_readiness() is None
+    assert runtime_health.identity_readiness() == {"status": "unconfigured"}
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R030.4.4")
