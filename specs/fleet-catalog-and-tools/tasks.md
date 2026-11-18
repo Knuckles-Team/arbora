@@ -537,3 +537,4 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T268 [US1] ARBORA-FLEET-R083.5 Ranking served proof and degradation evidence. Size: S, 1 PR, 3 hours.
 - [ ] T269 [US1] ARBORA-FLEET-R015.5 An allowed decision whose audit write failed is refused with that cause. Size: XS, 1 PR, 1 hour.
 - [ ] T271 [US1] ARBORA-FLEET-R015.6 A connector's destructive declaration decides at the door; no argument lifts the plan requirement. Size: XS, 1 PR, 1 hour.
+- [ ] T272 [US1] ARBORA-FLEET-R084 The fleet serves the city layout read from the engine world view. Size: S, 1 PR, 2 hours.
