@@ -314,3 +314,12 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T077 [US1] ARBORA-DEPLOY-R602.4 Secret diagnostics becomes `arbora secrets diagnose`. Size: S, 1 PR, 3 hours.
 - [ ] T078 [US1] ARBORA-DEPLOY-R602.5 The deploy script becomes `arbora deploy run`, an explicit state machine. Size: L, 4 PRs, 1.5 days.
 - [ ] T079 [US1] ARBORA-DEPLOY-R602.6 The deployment repository drops its code. Size: M, 2 PRs, 4 hours.
+- [ ] T080 [US1] ARBORA-DEPLOY-R019 One command starts a local no-auth sandbox, and one command stops it (rollup). Size: L, 2 PRs, 1 day.
+- [ ] T081 [US1] ARBORA-DEPLOY-R019.1 The local deployment page documents the sandbox. Size: S, 1 PR, 2 hours.
+- [ ] T082 [US1] ARBORA-DEPLOY-R019.2 The sandbox engine is the version the lock pins. Size: S, 1 PR, 2 hours.
+- [ ] T083 [US1] ARBORA-DEPLOY-R019.3 The provisioning limit is stated, and a fresh store resets it. Size: S, 1 PR, 2 hours.
+- [ ] T084 [US1] ARBORA-DEPLOY-R019.4 A refusal shows its error code and message. Size: S, 1 PR, 2 hours.
+- [ ] T085 [US1] ARBORA-DEPLOY-R020 Content that Arbora provisions passes the pinned engine's admission (rollup). Size: L, 2 PRs, 1 day.
+- [ ] T086 [US1] ARBORA-DEPLOY-R020.1 Every pack class extends an engine core class. Size: M, 1 PR, 4 hours.
+- [ ] T087 [US1] ARBORA-DEPLOY-R020.2 Every prompt passes the engine blueprint validation. Size: M, 1 PR, 4 hours.
+- [ ] T088 [US1] ARBORA-DEPLOY-R020.3 CI proves provisioning into a fresh store on the pinned engine. Size: M, 1 PR, 4 hours.

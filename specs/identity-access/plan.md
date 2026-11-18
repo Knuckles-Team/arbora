@@ -630,6 +630,20 @@ Delivery runs in phases P1 to P5. Concept-proof scenarios define each phase (`AR
 
 Native client authentication: the operator enrols a named client once. The client then fetches tokens itself or through a header helper. The served endpoint publishes protected-resource metadata, so clients with native OAuth need no bridge. This retires the token-refresh service and the stdio bridge.
 
+### Local no-auth sandbox (ARBORA-IDENTITY-R004.7.3, R004.10)
+
+The web UI co-service calls `create_agent_web_app` without an anonymous read policy today. In explicit no-auth mode every web UI API route therefore answers 403. The web UI package declares the exact read routes for a trusted host. `identity_factory_kwargs` passes that declaration in mode `none` only, on a loopback listener. Arbora keeps no route list of its own. Write routes run as the optional sandbox principal or refuse.
+
+The sandbox principal is minted by the sandbox command only, in a throwaway store, with one declared role. No other profile reaches the mint function. The cross-repository prerequisite is a web UI row that declares the read routes for a trusted host. File that row before implementation.
+
+- **Owner.** Arbora owns the route composition and the sandbox principal. The web UI package owns the route declaration. The engine owns principal admission.
+- **Cohesion.** One function selects the read policy by mode. One module mints the principal.
+- **Dependency direction.** The co-service calls `identity_factory_kwargs`. The sandbox command calls the mint function. Neither imports the other.
+- **Interface depth.** One factory argument and one mint function. Internals stay private.
+- **Special cases.** None. Every mode except `none` passes an empty policy.
+- **State.** The principal exists for one sandbox run. `down` deletes it with the store.
+- **Environment.** The sandbox profile alone enables the mint. Production profiles refuse it.
+
 ## Phase 2: Task approach
 
 tasks.md carries one numbered task line for each active row. Tasks run producer first. A task marked `[P]` may run in parallel with its neighbours.
