@@ -53,6 +53,20 @@ Pre-untangled design for these rows, one line per answer.
 
 Order. R602.4 (small, independent), then R602.1, R602.2, R602.3 in parallel, then R602.5, release, then R602.6. Part of R602 is already done: `arbora deploy source` (deployed-source manager) and `arbora identity reconcile`.
 
+### Local no-auth sandbox (ARBORA-DEPLOY-R019, R020)
+
+`arbora-sandbox up` starts the lock-pinned engine, Arbora and the web UI in explicit no-auth mode on loopback with a fresh store. It provisions content, onboards the sandbox fleet and prints the local addresses. `down` stops the processes and deletes the store. UI tests and reviews use this real stack, never mocked identity responses.
+
+Released engine 3.3.4 refuses Arbora's provisioned content. It reports `ONTOLOGY_ORPHAN` for 128 classes and `PROMPT_BLUEPRINT_INVALID` for about 29 prompts. R020 fixes the content and proves provisioning into a fresh store in CI. The provisioning limit of 3 runs per hour for each target is stated in `docs/deployment.md`. A fresh store resets it.
+
+- **Owner.** Arbora owns the sandbox command, its documentation and its provisioned content. The engine owns admission and the provisioning counter.
+- **Cohesion.** One module starts and stops the sandbox. Content fixes stay in the pack and prompt files.
+- **Dependency direction.** `sandbox.py` calls `production_ops.py` and the engine lifecycle. Nothing in `deployment` imports `mcp_server`.
+- **Interface depth.** Two subcommands, `up` and `down`. Internals stay private.
+- **Special cases.** None. A port or version is a config field, never a literal branch.
+- **State.** `up` creates a fresh store. `down` deletes it. No state survives a restart.
+- **Environment.** The sandbox sets its own variables for one run. It reads no production secret.
+
 ## Phase 2: Task approach
 
 tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
