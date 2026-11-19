@@ -284,7 +284,7 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T124 ARBORA-IDENTITY-R004.4 Host browser-session adapter.
 - [ ] T125 ARBORA-IDENTITY-R004.5 Same-owner HTTP dispatch fence.
 - [ ] T126 ARBORA-IDENTITY-R004.6 Explicit anonymous effect migration.
-- [ ] T127 ARBORA-IDENTITY-R004.7.1 Host mode configuration source contract.
+- [x] T127 ARBORA-IDENTITY-R004.7.1 Host mode configuration source contract.
 - [ ] T128 ARBORA-IDENTITY-R004.7.2 Installed identity-mode startup qualification.
 - [ ] T129 ARBORA-IDENTITY-R004.4.1 Bound HTTP adapter source contract.
 - [ ] T130 ARBORA-IDENTITY-R004.4.2 Installed browser identity lifecycle qualification.
