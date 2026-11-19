@@ -57,7 +57,7 @@ Order. R602.4 (small, independent), then R602.1, R602.2, R602.3 in parallel, the
 
 `arbora-sandbox up` starts the lock-pinned engine, Arbora and the web UI in explicit no-auth mode on loopback with a fresh store. It provisions content, onboards the sandbox fleet and prints the local addresses. `down` stops the processes and deletes the store. UI tests and reviews use this real stack, never mocked identity responses.
 
-Released engine 3.3.4 refuses Arbora's provisioned content. It reports `ONTOLOGY_ORPHAN` for 128 classes and `PROMPT_BLUEPRINT_INVALID` for about 29 prompts. No existing row or open pull request covers this. R020 fixes the content and proves provisioning into a fresh store in CI. The provisioning limit of 3 runs per hour for each target is stated in `docs/deployment.md`. A fresh store resets it.
+Released engine 3.3.4 refuses Arbora's provisioned content. It reports `ONTOLOGY_ORPHAN` for 128 classes and `PROMPT_BLUEPRINT_INVALID` for about 29 prompts. R020 fixes the content and proves provisioning into a fresh store in CI. The provisioning limit of 3 runs per hour for each target is stated in `docs/deployment.md`. A fresh store resets it.
 
 - **Owner.** Arbora owns the sandbox command, its documentation and its provisioned content. The engine owns admission and the provisioning counter.
 - **Cohesion.** One module starts and stops the sandbox. Content fixes stay in the pack and prompt files.
