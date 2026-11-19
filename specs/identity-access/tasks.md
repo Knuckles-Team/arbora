@@ -179,11 +179,11 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 
 
 - [ ] T022 ARBORA-IDENTITY-R004.9 Complete the local anonymous text execution children.
-- [ ] T023 ARBORA-IDENTITY-R004.9.1 Compose native admission and the received text-only harness in source tests.
+- [x] T023 ARBORA-IDENTITY-R004.9.1 Compose native admission and the received text-only harness in source tests.
 - [ ] T024 ARBORA-IDENTITY-R004.9.2 Qualify installed local sends and cancellation before activation.
 - [ ] T025 ARBORA-IDENTITY-R004.9.3 Qualify owner-bound durable answer recovery.
 
-- [ ] T026 ARBORA-IDENTITY-R004.9.3.1 Test bounded native event storage and committed-reference recovery in source composition.
+- [x] T026 ARBORA-IDENTITY-R004.9.3.1 Test bounded native event storage and committed-reference recovery in source composition.
 - [ ] T027 ARBORA-IDENTITY-R004.9.3.2 Qualify installed host and native restart recovery.
 - [ ] T028 ARBORA-IDENTITY-R001 Elevation request, approve and revoke operations on every surface.
 - [ ] T029 ARBORA-IDENTITY-R002 Domain scopes consume the generated scope registry.
