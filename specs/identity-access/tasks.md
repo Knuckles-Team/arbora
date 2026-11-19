@@ -286,7 +286,7 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T126 ARBORA-IDENTITY-R004.6 Explicit anonymous effect migration.
 - [x] T127 ARBORA-IDENTITY-R004.7.1 Host mode configuration source contract.
 - [ ] T128 ARBORA-IDENTITY-R004.7.2 Installed identity-mode startup qualification.
-- [ ] T129 ARBORA-IDENTITY-R004.4.1 Bound HTTP adapter source contract.
+- [x] T129 ARBORA-IDENTITY-R004.4.1 Bound HTTP adapter source contract.
 - [ ] T130 ARBORA-IDENTITY-R004.4.2 Installed browser identity lifecycle qualification.
 - [x] T131 ARBORA-IDENTITY-R004.5.1 Private same-owner dispatch source contract.
 - [x] T132 ARBORA-IDENTITY-R004.5.2 Canonical WebUI factory safety source contract.
