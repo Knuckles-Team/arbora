@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=84.0.0", "wheel>=0.48.0"]
+requires = ["setuptools>=84.2.1", "wheel>=0.48.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -31,8 +31,8 @@ dependencies = [
     "httpx>=0.28.1",
     "pyjwt>=2.15.1",
     # arbora.security.auth verifies bearer JWTs against the issuer's JWKS.
-    "joserfc>=1.7.5",
-    "python-multipart>=0.0.32",
+    "joserfc>=1.8.0",
+    "python-multipart>=0.0.34",
     # Arbora is the deployment composition root for connector workers.  The
     # SDK owns source transport and runner construction; Arbora supplies its
     # authenticated medulla client through the SDK's public injection
@@ -45,33 +45,33 @@ dependencies = [
     # The fleet gateway imports the MCP protocol/client and FastMCP middleware
     # directly; keep these first-party runtime requirements explicit rather
     # than relying on AU's optional extra to expose them transitively.
-    "anyio>=4.15.1",
+    "anyio>=4.16.0",
     # Production operations and the canary call the public client/numeric
     # surface directly; AU's transitive requirement is not enough for this
     # package's own imports. The root source override below aligns AU and SDK
     # on the Arbora-compatible revision without changing the published floor.
-    "medulla==3.3.4",
-    "fastapi>=0.143.3",
-    "filelock>=4.2.0",
+    "medulla>=3.3.4",
+    "fastapi>=0.165.0",
+    "filelock>=4.2.12",
     # The served source reads (arbora.mcp_server.source_reader) decode the
     # engine's stored node and edge property blobs, which the pinned
     # medulla contract carries as MessagePack `bin`; the engine's own
     # floor is the same.
-    "msgpack>=1.2.1",
+    "msgpack>=1.2.4",
     "prometheus-client>=0.26.0",
     # Matches the scion-sdk floor (meristem allows the 2.14 line).
-    "pydantic>=2.14.1,<3.0.0",
+    "pydantic>=2.14.4,<3.0.0",
     "PyYAML>=6.0.3",
-    "starlette>=1.8.0",
-    "fastmcp>=4.1.0",
+    "starlette>=1.10.0",
+    "fastmcp>=4.2.2",
     "mcp>=2.3.0,<3.0.0",
-    "opentelemetry-api>=1.45.1",
+    "opentelemetry-api>=1.45.2",
     "pydantic-ai-slim[openai]==2.63.0",
     # Installed so its ``scion_sdk.connector`` declaration (a
     # content-only connector) resolves in THIS process through
     # ``installed_connectors()`` — see arbora/core/providers.py. The floor
     # moves to the first release that declares it once that release ships.
-    "universal-skills>=1.3.11,<2.0.0",
+    "universal-skills>=1.5.0,<2.0.0",
     "cryptography>=50.0.2",
 ]
 
@@ -89,25 +89,25 @@ test = [
     "agent-client-protocol==0.11.0",
     "tuig==2.3.6; sys_platform == 'linux' and (platform_machine == 'x86_64' or platform_machine == 'aarch64')",
     "pyte==0.8.2",
-    "pytest>=9.1.1",
-    "pytest-asyncio>=1.4.0",
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.5.0",
     "pytest-cov>=7.1.0",
     "pytest-xdist>=3.8.0",
     "pytest-timeout>=2.4.0",
-    "mypy>=2.4.0",
-    "ruff==0.17.1",
-    "types-PyYAML>=6.0.12.20260906",
+    "mypy>=2.4.1",
+    "ruff==0.17.5",
+    "types-PyYAML>=6.0.12.20261113",
     # The messaging real-boot test drives the Telegram adapter against a local
     # Bot API double (tests/test_real_boot_messaging.py).
     "python-telegram-bot>=22.8",
     # DEV/TEST-ONLY. setuptools is already a `[build-system] requires` floor
-    # (>=84.0.0) for this project's own PEP 517 backend — build requirements
+    # (>=84.2.1) for this project's own PEP 517 backend — build requirements
     # are installed only into an ephemeral build environment, not the runtime
     # venv. tests/test_dependency_manifest.py reads
     # `setuptools.config.pyprojecttoml` directly to prove the published
     # manifest contract (host-composition-boundary spec, dependency-manifest
     # requirement).
-    "setuptools>=84.0.0",
+    "setuptools>=84.2.1",
 ]
 overstory = [
     "overstory>=3.0.0,<4.0.0",
@@ -125,18 +125,18 @@ messaging-telegram = ["python-telegram-bot>=22.8"]
 messaging-mattermost = ["mattermostdriver>=7.3.2"]
 messaging-discord = ["discord.py>=2.7.1"]
 messaging-slack = ["slack-bolt>=1.30.0"]
-messaging-whatsapp = ["neonize>=0.5.2", "httpx>=0.28.1"]
+messaging-whatsapp = ["neonize>=0.10.0", "httpx>=0.28.1"]
 messaging-teams = ["botbuilder-core>=4.17.1"]
-messaging-googlechat = ["google-api-python-client>=2.198.0", "google-auth>=2.62.0"]
-messaging-googlemeet = ["google-api-python-client>=2.198.0", "google-auth>=2.62.0"]
+messaging-googlechat = ["google-api-python-client>=2.202.0", "google-auth>=2.62.2"]
+messaging-googlemeet = ["google-api-python-client>=2.202.0", "google-auth>=2.62.2"]
 messaging-matrix = ["matrix-nio>=0.26.0"]
 messaging-irc = ["irc>=20.5.0"]
 messaging-signal = []
 messaging-imessage = []  # macOS-only, AppleScript bridge
-messaging-line = ["line-bot-sdk>=3.26.0"]
+messaging-line = ["line-bot-sdk>=3.27.0"]
 messaging-twitch = ["twitchio>=3.3.2"]
 messaging-synology = ["httpx>=0.28.1"]
-messaging-voicecall = ["twilio>=9.12.0"]
+messaging-voicecall = ["twilio>=9.13.0"]
 messaging-nextcloud = ["httpx>=0.28.1"]
 messaging = [
     "arbora[messaging-telegram,messaging-mattermost,messaging-discord,messaging-slack,messaging-whatsapp,messaging-teams,messaging-googlechat,messaging-googlemeet,messaging-matrix,messaging-irc,messaging-signal,messaging-line,messaging-twitch,messaging-synology,messaging-voicecall,messaging-nextcloud]"
