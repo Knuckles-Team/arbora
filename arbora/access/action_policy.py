@@ -331,11 +331,13 @@ DEFAULT_POLICY: dict[str, Any] = {
         {"kind": "deploy_service", "target": "*", "tier": TIER_APPROVAL},
         {"kind": "redeploy_stack", "target": "*", "tier": TIER_APPROVAL},
         {"kind": "merge_promotion", "target": "*", "tier": TIER_APPROVAL},
-        # Arbora provisions its own two semantic content packs at deploy time
-        # (``arbora-production-ops provision-semantic-content``) through
-        # the pack import authority. Only those exact
-        # connector targets run unattended (audited); any other connector-pack
-        # import falls through to the approval_required default.
+        # Arbora provisions the semantic content packs of its own installed
+        # packages at deploy time (``arbora-production-ops
+        # provision-semantic-content``) through the pack import authority:
+        # arbora, meristem and the universal skills library, which declares
+        # itself under ``scion_sdk.connector``. Only those exact connector
+        # targets run unattended (audited); any other connector-pack import
+        # falls through to the approval_required default.
         {
             "kind": "connector_pack_import",
             "target": "arbora",
@@ -344,6 +346,11 @@ DEFAULT_POLICY: dict[str, Any] = {
         {
             "kind": "connector_pack_import",
             "target": "meristem",
+            "tier": TIER_AUTO_NOTIFY,
+        },
+        {
+            "kind": "connector_pack_import",
+            "target": "universal-skills",
             "tier": TIER_AUTO_NOTIFY,
         },
         # Insight Engine closed loop (CONCEPT:MERISTEM-KG.evolution.insight-engine-closed-loop,

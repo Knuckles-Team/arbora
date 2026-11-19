@@ -30,31 +30,6 @@ wheels = [
 ]
 
 [[package]]
-name = "agent-connector-sdk"
-version = "0.5.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "anyio" },
-    { name = "cryptography" },
-    { name = "epistemic-graph" },
-    { name = "httpx" },
-    { name = "httpx2" },
-    { name = "mcp-types" },
-    { name = "pydantic" },
-    { name = "pyyaml" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/2d/a0/882c0b0f681f4b56f9243e88ff44ae25725de2da0ccd4f43ecd6095afdd0/agent_connector_sdk-0.5.5.tar.gz", hash = "sha256:5990f2468ce0d293a94b069160b97faf5dcaad267b7354f94189fb50747ebe0c", size = 797176, upload-time = "2026-10-24T15:32:54.234Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/0b/47/b1c5b60927f76dd28143fd21af5092d1fe02e633ef3e68209d414315c9dd/agent_connector_sdk-0.5.5-py3-none-any.whl", hash = "sha256:061c6615b00a4694ee91a60b3fc7911ca41e95c69755de42faf41477d45d6acc", size = 784912, upload-time = "2026-10-24T15:32:55.459Z" },
-]
-
-[package.optional-dependencies]
-mcp = [
-    { name = "fastmcp" },
-    { name = "mcp" },
-]
-
-[[package]]
 name = "aiofile"
 version = "3.12.3"
 source = { registry = "https://pypi.org/simple" }
@@ -445,7 +420,7 @@ requires-dist = [
     { name = "matrix-nio", marker = "extra == 'messaging-matrix'", specifier = ">=0.26.0" },
     { name = "mattermostdriver", marker = "extra == 'messaging-mattermost'", specifier = ">=7.3.2" },
     { name = "mcp", specifier = ">=2.3.0,<3.0.0" },
-    { name = "medulla", specifier = ">=3.3.4", index = "https://pypi.org/simple" },
+    { name = "medulla", specifier = "==3.3.4", index = "https://pypi.org/simple" },
     { name = "meristem", specifier = ">=5.0.0,<6.0.0" },
     { name = "msgpack", specifier = ">=1.2.4" },
     { name = "mypy", marker = "extra == 'test'", specifier = ">=2.4.1" },
@@ -468,7 +443,7 @@ requires-dist = [
     { name = "python-telegram-bot", marker = "extra == 'test'", specifier = ">=22.8" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "ruff", marker = "extra == 'test'", specifier = "==0.17.5" },
-    { name = "scion-sdk", extras = ["a2a", "mcp"], specifier = ">=0.11.2,<0.12" },
+    { name = "scion-sdk", extras = ["a2a", "mcp"], specifier = ">=0.11.3,<0.12" },
     { name = "setuptools", marker = "extra == 'test'", specifier = ">=84.2.1" },
     { name = "slack-bolt", marker = "extra == 'messaging-slack'", specifier = ">=1.30.0" },
     { name = "starlette", specifier = ">=1.10.0" },
@@ -476,7 +451,7 @@ requires-dist = [
     { name = "twilio", marker = "extra == 'messaging-voicecall'", specifier = ">=9.13.0" },
     { name = "twitchio", marker = "extra == 'messaging-twitch'", specifier = ">=3.3.2" },
     { name = "types-pyyaml", marker = "extra == 'test'", specifier = ">=6.0.12.20261113" },
-    { name = "universal-skills", specifier = ">=1.5.0,<2.0.0" },
+    { name = "universal-skills", specifier = ">=1.6.1,<2.0.0" },
     { name = "uvicorn", marker = "extra == 'overstory'", specifier = ">=0.54.0" },
 ]
 provides-extras = ["acp", "test", "overstory", "vault", "messaging-telegram", "messaging-mattermost", "messaging-discord", "messaging-slack", "messaging-whatsapp", "messaging-teams", "messaging-googlechat", "messaging-googlemeet", "messaging-matrix", "messaging-irc", "messaging-signal", "messaging-imessage", "messaging-line", "messaging-twitch", "messaging-synology", "messaging-voicecall", "messaging-nextcloud", "messaging"]
@@ -1272,24 +1247,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c0/4d/f5e9d9de19f4b8f9e33d802fe3efb0ef96e88d4d6d45d604f335bef2f1ef/email_validator-2.4.0.tar.gz", hash = "sha256:be487bc50bc3bd832a98515a55a15649d9bec06d954fa178663190714b6c4ee1", size = 55168, upload-time = "2026-11-14T20:21:28.125Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b8/8b/99e715c59560afa0bf68f21ed16eec794d94293945f57934b70c5255d741/email_validator-2.4.0-py3-none-any.whl", hash = "sha256:4454e41c4e1c6b6caee34a1dc71d5e736791562be8fd179b02e298f796522684", size = 36810, upload-time = "2026-11-14T20:21:27.14Z" },
-]
-
-[[package]]
-name = "epistemic-graph"
-version = "2.27.7"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "httpx" },
-    { name = "msgpack" },
-    { name = "pydantic" },
-    { name = "pyoxigraph" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/7c/be/beb16018cb5243f8711a23843ceb55e6a9d59ba04debe92f6cd5ed10d526/epistemic_graph-2.27.7.tar.gz", hash = "sha256:a97b1022a2c1081d45671fd21c21dcf3b1ce3eec81c1b95becd4a0fdbf42d7f0", size = 7617716, upload-time = "2026-10-24T20:31:48.086Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/6b/02d0f7b621212dc2201e7b277de5ea0c50c0147ab6394bad4c4fdc4fde65/epistemic_graph-2.27.7-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:aa9cc21757be066a0bae6802cce19af266f5d4afdad91af9f6fcb66139d73569", size = 7918549, upload-time = "2026-10-24T20:52:35.051Z" },
-    { url = "https://files.pythonhosted.org/packages/8f/62/8f1ef8cd3eeb8ce74bb592683118259602cb67293ca14e7cb4ed87a9c964/epistemic_graph-2.27.7-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:bb05fe3cdfec27f329bfff528da6e5bbd2c91b09b22cb1239c1a6aeaf6c1cdff", size = 8110727, upload-time = "2026-10-24T20:59:43.431Z" },
-    { url = "https://files.pythonhosted.org/packages/b1/dd/29a8272c86e5b0d704703ba74981ed30e0d0df33577cfb435ebe7709c425/epistemic_graph-2.27.7-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:d3e217c83ab80295f019ab44d861ea19a21de879cc804835f27e86bfa74cb78f", size = 8764065, upload-time = "2026-10-24T20:48:57.753Z" },
-    { url = "https://files.pythonhosted.org/packages/1f/97/c5f8354f4ba35d2f15fbbc4657bf732ede763c013b5a44f52c428b3eaf13/epistemic_graph-2.27.7-cp39-abi3-win_amd64.whl", hash = "sha256:e6c761d69fe17d90c185542880050634f5569358bbec3ca58f3ca788ab641fca", size = 9572735, upload-time = "2026-10-24T21:02:57.596Z" },
 ]
 
 [[package]]
@@ -4173,7 +4130,7 @@ wheels = [
 
 [[package]]
 name = "scion-sdk"
-version = "0.11.2"
+version = "0.11.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -4186,9 +4143,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0a/e8/1aec9c011f4ae4489e0f6ad8cdf30eb8deb54653de97a4fbbd8eb4d83534/scion_sdk-0.11.2.tar.gz", hash = "sha256:c06f035387f0f2db08dc94c3706ad3cca266526edb4206f8fdfc8b7334fe6304", size = 1265645, upload-time = "2026-11-17T19:21:54.011Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b4/f6/8ed99aae71c476c6de3ffb3111cb274a26ca0b758389e928d8424aa07c9f/scion_sdk-0.11.3.tar.gz", hash = "sha256:b0818765792a6c63ba0ab5a0ef46580eb9f27c7bb357e09c8145cd647a6759bd", size = 1266647, upload-time = "2026-11-19T17:44:09.42Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c0/e4/d56e2b79557ee86fb52221d3a19b44f6549d05635b32d9089fa3bafa48ed/scion_sdk-0.11.2-py3-none-any.whl", hash = "sha256:a6049b8c5dbfca7be234cc7b396e9c55ed8525f862df33ed52e3963529e7d525", size = 1224777, upload-time = "2026-11-17T19:21:52.096Z" },
+    { url = "https://files.pythonhosted.org/packages/78/f4/86be5f2075f7c8c85b59d40f944c6ba19c18912f9ef57e26fec9b08019e0/scion_sdk-0.11.3-py3-none-any.whl", hash = "sha256:49fdbc9149bc322a7ded544acccc48e1b1b837a424a698644edf1930ccad2f35", size = 1225153, upload-time = "2026-11-19T17:44:08.033Z" },
 ]
 
 [package.optional-dependencies]
@@ -4499,14 +4456,15 @@ wheels = [
 
 [[package]]
 name = "universal-skills"
-version = "1.5.0"
+version = "1.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "agent-connector-sdk", extra = ["mcp"] },
+    { name = "medulla" },
+    { name = "scion-sdk", extra = ["mcp"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8e/40/b0b5f0ba21cbb07eadee05e0c128384102748d64104be37a71227430e634/universal_skills-1.5.0.tar.gz", hash = "sha256:40b56cc38a852bb230bc46d39f2d615d331fcb49db1fc7057bb5ef3843b8eaf3", size = 3161560, upload-time = "2026-10-24T03:30:48.831Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/44/7f/f498614f636387b96ccecaf90b7520fa09f23ca1f60ebde561610f13f4e9/universal_skills-1.6.1.tar.gz", hash = "sha256:978d621819d7828af96ab640af1e5db17db76b07e1e38764ea6ac68cef0d8d0e", size = 7247777, upload-time = "2026-11-19T17:18:10.117Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c7/1e/370a15331727b6c1bf218c1e31499e9ad0a0a873f24d0754d70cab487f89/universal_skills-1.5.0-py3-none-any.whl", hash = "sha256:d35c80706d2db9eae9d853c6a9a7048a54903c87ee9c860d210074865fd6b8db", size = 3888236, upload-time = "2026-10-24T03:30:33.075Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/9a/bca3e2be8d854bb01b383ed073cd7b2e4aa21e5bd1b39b32eaa71bf62e04/universal_skills-1.6.1-py3-none-any.whl", hash = "sha256:1841fbc05f64b858adea903cd40f9a4d6f48b9dfd6443940964b88469b60e96f", size = 8374174, upload-time = "2026-11-19T17:18:03.715Z" },
 ]
 
 [[package]]
