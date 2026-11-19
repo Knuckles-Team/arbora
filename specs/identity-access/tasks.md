@@ -303,6 +303,8 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T143 ARBORA-IDENTITY-R018.6 Admin gate.
 - [ ] T144 ARBORA-IDENTITY-R018.7 Identity operations served parity.
 - [ ] T145 ARBORA-IDENTITY-R019.7 Register approvals operations.
+- [ ] T171 ARBORA-IDENTITY-R019.8 A held action files its approval as an engine control lease: new `arbora/access/approval_leases.py` (`file_approval`, `granted_approval`), `ActionPolicy.queue_approval` and `granted_approval_id` call it, `ServedEngine.control_leases` gives the synchronous view; L2 tests and the L4 real-boot test.
+- [ ] T172 ARBORA-IDENTITY-R019.9 Every approval door lists and decides the same control leases: `fleet_approvals` reads `pending_approvals`, `ApprovalDecisions.decide` transitions the lease; the `ActionApproval` node path is deleted.
 - [ ] T146 ARBORA-IDENTITY-R651 Share grant and revoke operations.
 - [ ] T147 ARBORA-IDENTITY-R652 Graph ownership plan and apply operations.
 - [ ] T148 ARBORA-IDENTITY-R030 Coding clients and terminal UIs authenticate natively (rollup).

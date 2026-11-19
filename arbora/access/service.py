@@ -9,8 +9,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from arbora.access.action_policy import (
+from arbora.access.approval_leases import (
     ACTION_APPROVAL_KIND,
+    APPROVAL_ID_PREFIX,
     approval_lease_to_props,
 )
 from arbora.access.external_policy_sync import (
@@ -150,7 +151,7 @@ async def get_approval(context: Any, params: Mapping[str, Any], op: Any) -> Any:
 
 async def _decide_approval(context: Any, params: Mapping[str, Any], target: str) -> Any:
     approval_id = params["approval_id"]
-    if not approval_id.startswith("action_approval:"):
+    if not approval_id.startswith(APPROVAL_ID_PREFIX):
         raise ValueError("approval_id must identify an action approval")
     lease = await context.client.control_leases.get(
         tenant=context.caller.tenant, lease_id=approval_id

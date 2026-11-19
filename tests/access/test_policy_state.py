@@ -8,6 +8,7 @@ import arbora.access.action_policy as ap
 import arbora.access.approval as approval
 from arbora.access.policy_state import PolicyState
 from arbora.mcp_server.host_context import build_host_context
+from tests._eg_fakes import SyncControlLeases
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R039.3")
 
@@ -69,14 +70,24 @@ def test_no_module_policy_global_remains() -> None:
 
 
 class _ApprovalEngine:
-    def __init__(self) -> None:
-        self.calls: list[tuple[str, dict, dict, str]] = []
+    """An engine whose only approval record is one pending control lease."""
 
-    def compare_and_set_node_fields(
-        self, node_id, conditions, updates, *, idempotency_key
-    ):
-        self.calls.append((node_id, dict(conditions), dict(updates), idempotency_key))
-        return True
+    def __init__(self) -> None:
+        self.control_leases = SyncControlLeases(tenant="test")
+        self.control_leases.rows["action_approval:7"] = {
+            "lease_id": "action_approval:7",
+            "kind": "action.approval",
+            "status": "active",
+            "grant": {"kind": "restart_service", "target": "svc"},
+            "issued_at_ms": 1,
+            "expires_at_ms": 2**62,
+            "hard_expires_at_ms": 2**62,
+            "revision": 1,
+        }
+
+    @property
+    def calls(self) -> list[tuple[str, dict]]:
+        return [call for call in self.control_leases.calls if call[0] == "transition"]
 
 
 def _verified_session():
@@ -96,6 +107,7 @@ def _verified_session():
     )
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R019.9")
 @pytest.mark.asyncio
 async def test_served_approval_decides_only_under_a_verified_session(
     monkeypatch,
@@ -132,12 +144,14 @@ async def test_served_approval_decides_only_under_a_verified_session(
         "status": "success",
         "result": {"approval_id": "action_approval:7", "decision": "approved"},
     }
-    node_id, conditions, updates, _key = engine.calls[0]
-    assert (node_id, conditions, updates["status"]) == (
+    ((_verb, transition),) = engine.calls
+    assert (transition["lease_id"], transition["to"]) == (
         "action_approval:7",
-        {"status": "pending"},
-        "approved",
+        "consumed",
     )
+    assert transition["expected_revision"] == 1
+    assert transition["idempotency_key"] == "decide:action_approval:7"
+    assert engine.control_leases.rows["action_approval:7"]["status"] == "consumed"
 
 
 def test_a_policy_state_without_a_session_scope_refuses_approvals() -> None:

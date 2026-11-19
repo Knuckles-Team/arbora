@@ -235,6 +235,30 @@ class _BlockingWorkItems:
         return call
 
 
+class _BlockingControlLeases:
+    """EG's ``control_leases`` methods, called synchronously under one caller.
+
+    The action policy and the fleet approval routes are synchronous; each
+    verb runs the async EG method to completion through :func:`_run_blocking`.
+    ``tenant`` is the verified session's tenant, which every control-lease
+    request must carry (ARBORA-IDENTITY-R019.8).
+    """
+
+    def __init__(self, routed: Any, tenant: str) -> None:
+        self._routed = routed
+        self.tenant = tenant
+
+    def __getattr__(self, name: str) -> Any:
+        if name.startswith("_"):
+            raise AttributeError(name)
+        method = getattr(self._routed, name)
+
+        def call(*args: Any, **kwargs: Any) -> Any:
+            return _run_blocking(lambda: method(*args, **kwargs))
+
+        return call
+
+
 class ServedEngine:
     """The served process's engine handle over the one EG client pool."""
 
@@ -269,6 +293,17 @@ class ServedEngine:
         """EG WorkItems, held on the tenant's control graph (``__control__``)."""
         return _BlockingWorkItems(
             self.graph_compute.for_graph(self.work_item_graph).async_client.work_items
+        )
+
+    @property
+    def control_leases(self) -> _BlockingControlLeases:
+        """EG control leases on the session graph, under the caller's tenant."""
+        session = _ambient_session()
+        return _BlockingControlLeases(
+            self.graph_compute.for_graph(
+                str(session.graph)
+            ).async_client.control_leases,
+            str(session.tenant),
         )
 
     async def health(self, graph: str) -> Mapping[str, Any]:
