@@ -451,7 +451,7 @@ requires-dist = [
     { name = "twilio", marker = "extra == 'messaging-voicecall'", specifier = ">=9.13.0" },
     { name = "twitchio", marker = "extra == 'messaging-twitch'", specifier = ">=3.3.2" },
     { name = "types-pyyaml", marker = "extra == 'test'", specifier = ">=6.0.12.20261113" },
-    { name = "universal-skills", specifier = ">=1.6.1,<2.0.0" },
+    { name = "universal-skills", specifier = ">=1.6.2,<2.0.0" },
     { name = "uvicorn", marker = "extra == 'overstory'", specifier = ">=0.54.0" },
 ]
 provides-extras = ["acp", "test", "overstory", "vault", "messaging-telegram", "messaging-mattermost", "messaging-discord", "messaging-slack", "messaging-whatsapp", "messaging-teams", "messaging-googlechat", "messaging-googlemeet", "messaging-matrix", "messaging-irc", "messaging-signal", "messaging-imessage", "messaging-line", "messaging-twitch", "messaging-synology", "messaging-voicecall", "messaging-nextcloud", "messaging"]
@@ -4456,15 +4456,15 @@ wheels = [
 
 [[package]]
 name = "universal-skills"
-version = "1.6.1"
+version = "1.6.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "medulla" },
     { name = "scion-sdk", extra = ["mcp"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/44/7f/f498614f636387b96ccecaf90b7520fa09f23ca1f60ebde561610f13f4e9/universal_skills-1.6.1.tar.gz", hash = "sha256:978d621819d7828af96ab640af1e5db17db76b07e1e38764ea6ac68cef0d8d0e", size = 7247777, upload-time = "2026-11-19T17:18:10.117Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/aa/a93efe2e655d7678f322155c2c2cc565b77022b199cb2f1cf75e87ca95db/universal_skills-1.6.2.tar.gz", hash = "sha256:1a22df3ab53ce94245a1608d9a37e0d407187c85b7d47075739b86be7a790754", size = 7251030, upload-time = "2026-11-19T18:59:49.237Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2b/9a/bca3e2be8d854bb01b383ed073cd7b2e4aa21e5bd1b39b32eaa71bf62e04/universal_skills-1.6.1-py3-none-any.whl", hash = "sha256:1841fbc05f64b858adea903cd40f9a4d6f48b9dfd6443940964b88469b60e96f", size = 8374174, upload-time = "2026-11-19T17:18:03.715Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/2c/e98b310a235e91c077e9d05ab67e34b878c0b91b6b3beed4434a66d54b31/universal_skills-1.6.2-py3-none-any.whl", hash = "sha256:e6b667256b2fea08b01165dae912e7204d294922f7e348ab3dc05f2e3546ce37", size = 8376098, upload-time = "2026-11-19T18:59:43.342Z" },
 ]
 
 [[package]]
