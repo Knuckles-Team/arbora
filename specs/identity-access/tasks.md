@@ -289,7 +289,7 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T129 ARBORA-IDENTITY-R004.4.1 Bound HTTP adapter source contract.
 - [ ] T130 ARBORA-IDENTITY-R004.4.2 Installed browser identity lifecycle qualification.
 - [x] T131 ARBORA-IDENTITY-R004.5.1 Private same-owner dispatch source contract.
-- [ ] T132 ARBORA-IDENTITY-R004.5.2 Canonical WebUI factory safety source contract.
+- [x] T132 ARBORA-IDENTITY-R004.5.2 Canonical WebUI factory safety source contract.
 - [ ] T133 ARBORA-IDENTITY-R004.5.3 Installed dispatch and streaming qualification.
 - [ ] T134 ARBORA-IDENTITY-R013.1 CLI skeleton with claim and link-claim.
 - [ ] T135 ARBORA-IDENTITY-R013.2 CLI transition, reset-admin and rotate.
