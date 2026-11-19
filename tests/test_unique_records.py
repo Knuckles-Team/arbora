@@ -13,6 +13,7 @@ from typing import Any
 import pytest
 
 from arbora.unique_records import create_record, has_record_writer
+from tests._eg_fakes import SyncControlLeases
 
 
 class _CreateOnlyEngine:
@@ -20,6 +21,7 @@ class _CreateOnlyEngine:
 
     def __init__(self) -> None:
         self.created: dict[str, tuple[str, dict[str, Any]]] = {}
+        self.control_leases = SyncControlLeases()
 
     def create_node(self, node_id: str, label: str, properties: Any) -> bool:
         if node_id in self.created:
@@ -60,8 +62,10 @@ def test_action_policy_decisions_and_approvals_are_created() -> None:
     assert audit_id and approval_id
     assert engine.created[audit_id][0] == "ActionDecision"
     assert engine.created[audit_id][1]["kind"] == "connector_pack_import"
-    assert engine.created[approval_id][0] == "ActionApproval"
-    assert engine.created[approval_id][1]["status"] == "pending"
+    # The approval is an engine control lease, never a generic graph node.
+    assert approval_id not in engine.created
+    lease = engine.control_leases.rows[approval_id]
+    assert (lease["kind"], lease["status"]) == ("action.approval", "active")
 
 
 @pytest.mark.spec("ARBORA-HOST-R033")
