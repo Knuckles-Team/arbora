@@ -438,6 +438,14 @@ def generate_config(profile: str = "tiny") -> dict[str, Any]:
     # JSON-normalize (drops non-serializable defaults to their str form).
     data = json.loads(json.dumps(data, default=str))
     data.update(_PROFILE_PRESETS[profile])
+    from arbora.deployment.genesis_environments import load_environment_profile
+
+    environment = {"tiny": "dev", "single-node-prod": "prod", "enterprise": "prod"}[
+        profile
+    ]
+    data["WEBUI_ORIGIN"] = load_environment_profile(
+        environment
+    ).public_ingress.public_origin
     return _flat_config_document(_sanitize_generated_value(data))
 
 

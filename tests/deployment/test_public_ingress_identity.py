@@ -10,6 +10,11 @@ from __future__ import annotations
 
 import pytest
 
+from arbora.deployment.config_generator import generate_config
+from arbora.deployment.genesis_environments import (
+    load_environment_profile,
+    profile_summary,
+)
 from arbora.deployment.public_ingress_identity import (
     PublicIngressProfile,
     PublicIngressProfileError,
@@ -139,3 +144,13 @@ def test_refusal_never_leaks_secret_value() -> None:
         PublicIngressProfileError("unrelated")
     )
     assert profile.tls_secret_ref == "env://MY_TLS_SECRET_VALUE_12345"
+
+
+@pytest.mark.spec("ARBORA-INGRESS-R001.2")
+def test_profile_renders_origin_callback_and_proxy() -> None:
+    profile = load_environment_profile("dev")
+    rendered = profile_summary(profile)["public_ingress"]
+    assert rendered["public_origin"] == "https://arbora-dev.example"
+    assert rendered["callback_uri"] == "https://arbora-dev.example/auth/callback"
+    assert rendered["trusted_proxy"] == "ingress-controller"
+    assert generate_config("tiny")["WEBUI_ORIGIN"] == rendered["public_origin"]
