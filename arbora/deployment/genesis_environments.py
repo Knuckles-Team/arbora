@@ -44,13 +44,16 @@ import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
 from arbora.core.settings import config_dir
 
 from .config_generator import _is_secret
+
+if TYPE_CHECKING:
+    from .public_ingress_identity import PublicIngressProfile
 
 #: Repo-shipped default profiles (dev/test/prod). Never written to at runtime.
 BUILTIN_ENVIRONMENTS_DIR = (
@@ -281,6 +284,7 @@ class EnvironmentProfile:
     secrets: SecretsInputs
     network: NetworkInputs
     identity: IdentityInputs
+    public_ingress: PublicIngressProfile
     validation: ValidationInputs
     source: Path = field(compare=False)
 
@@ -295,6 +299,7 @@ _TOP_LEVEL_SECTIONS = (
     "secrets",
     "network",
     "identity",
+    "public_ingress",
     "validation",
 )
 
@@ -751,6 +756,8 @@ def _validation_from_mapping(raw: Any, source: Path) -> ValidationInputs:
 def _profile_from_mapping(
     raw: Mapping[str, Any], *, source: Path
 ) -> EnvironmentProfile:
+    from .public_ingress_identity import public_ingress_profile_from_mapping
+
     _require_keys(raw, _TOP_LEVEL_SECTIONS, section="<top level>", source=source)
     return EnvironmentProfile(
         environment=_environment_from_mapping(raw["environment"], source),
@@ -762,6 +769,7 @@ def _profile_from_mapping(
         secrets=_secrets_from_mapping(raw["secrets"], source),
         network=_network_from_mapping(raw["network"], source),
         identity=_identity_from_mapping(raw["identity"], source),
+        public_ingress=public_ingress_profile_from_mapping(raw["public_ingress"]),
         validation=_validation_from_mapping(raw["validation"], source),
         source=source,
     )
@@ -1140,6 +1148,7 @@ def profile_summary(profile: EnvironmentProfile) -> dict[str, Any]:
             "automount_service_account_token": profile.identity.automount_service_account_token,
             "client_secret_ref": profile.identity.client_secret_ref,
         },
+        "public_ingress": profile.public_ingress.redacted_render(),
         "validation": {
             "readiness_checks": list(profile.validation.readiness_checks),
             "liveness_checks": list(profile.validation.liveness_checks),

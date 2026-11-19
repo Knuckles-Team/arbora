@@ -136,6 +136,13 @@ identity:
   automount_service_account_token: false
   client_secret_ref: arbora-secrets
 
+public_ingress:
+  version: 1
+  public_origin: https://arbora.example
+  tls_secret_ref: k8s-secret://platform/arbora-public-ingress-tls
+  callback_uri: https://arbora.example/auth/callback
+  trusted_proxy: ingress-controller
+
 validation:
   readiness_checks:
     - http:/health/ready
