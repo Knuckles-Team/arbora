@@ -492,12 +492,14 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T223 ARBORA-FLEET-R060.3 Wire coverage into the served status and the operator command.
 - [x] T224 ARBORA-FLEET-R060.4 Refuse with a named reason for each uncovered connector.
 - [x] T225 ARBORA-FLEET-R060.5 Prove a missing or empty connector fails the served status.
+- [x] T278 ARBORA-FLEET-R060.6 An unreadable registry names its cause.
 - [x] T226 ARBORA-FLEET-R060 Every registered connector is multiplexed, and a coverage gate enforces it (rollup).
 - [x] T227 ARBORA-FLEET-R061 A caller loads and unloads the tools of one connector group.
 - [ ] T228 ARBORA-FLEET-R015.4 A Medulla `Mcp` foreign source is read through the existing source executor.
 - [ ] T229 ARBORA-FLEET-R062 Fleet discovery and fleet calls never hang while the fleet comes up.
 - [ ] T230 ARBORA-FLEET-R063 The find catalog op lists one server's tools with their schemas.
 - [ ] T231 ARBORA-FLEET-R064 A fleet onboarding refusal names its engine operation and refusal code.
+- [x] T279 ARBORA-FLEET-R064.1 A rejected pack import names every violation, even one the client cannot decode.
 - [ ] T232 ARBORA-FLEET-R065 Engine, discovery and fleet report health on their own.
 - [ ] T233 ARBORA-FLEET-R066 Parallel find and act calls do not hang under load.
 - [x] T234 ARBORA-FLEET-R067 A shielded, shared verified fleet read caches even when every caller deadline is shorter; stale-while-refresh.

@@ -250,3 +250,38 @@ async def test_missing_and_empty_connectors_fail_status(tmp_path) -> None:
     coverage = result["value"]["coverage"]
     assert coverage["ok"] is True
     assert coverage["covered"] == ["alpha", "beta", "delta", "gamma"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-FLEET-R060.6")
+async def test_an_unreadable_registry_names_its_cause_once(tmp_path, caplog) -> None:
+    # A deployed manifest that predates the connectors group: the block and
+    # the strict refusal name why the registry is unreadable, and repeated
+    # status calls log the cause once.
+    state = await _harness(
+        tmp_path,
+        connectors=CONNECTORS,
+        endpoints=[_endpoint("alpha")],
+        tools_per_server={"alpha": 1},
+    )
+    (tmp_path / "workspace.yml").write_text(
+        yaml.safe_dump(
+            {"subdirectories": {"agent-packages": {"subdirectories": {"agents": {}}}}}
+        ),
+        encoding="utf-8",
+    )
+    caplog.set_level("WARNING", logger="arbora.fleet.multiplexer_ops")
+    first = (await _status(state))["value"]["coverage"]
+    second = (await _status(state))["value"]["coverage"]
+    assert first == second
+    assert first["ok"] is False
+    assert first["error"] == "registry_unreadable"
+    assert first["detail"] == "workspace.yml has no connectors group"
+    logged = [r.getMessage() for r in caplog.records if "registry" in r.getMessage()]
+    assert logged == [
+        "fleet coverage registry is unreadable: workspace.yml has no connectors group"
+    ]
+    with pytest.raises(OperationRefused) as refused:
+        await _status(state, require_full_coverage=True)
+    assert refused.value.details["error"] == "registry_unreadable"
+    assert refused.value.details["detail"] == "workspace.yml has no connectors group"
