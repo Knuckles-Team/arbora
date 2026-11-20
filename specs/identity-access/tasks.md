@@ -207,8 +207,8 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [x] T047 ARBORA-IDENTITY-R008.2 Scope intersection and revocation.
 - [x] T048 ARBORA-IDENTITY-R009.1 Typed OIDC mapping-rule model.
 - [ ] T049 ARBORA-IDENTITY-R009.2 OIDC authentication flow (rollup).
-- [ ] T050 ARBORA-IDENTITY-R009.2.1 Ordered claim-to-rule evaluation.
-- [ ] T051 ARBORA-IDENTITY-R009.2.2 ID-token validation inputs and typed refusal.
+- [x] T050 ARBORA-IDENTITY-R009.2.1 Ordered claim-to-rule evaluation.
+- [x] T051 ARBORA-IDENTITY-R009.2.2 ID-token validation inputs and typed refusal.
 - [ ] T052 ARBORA-IDENTITY-R009.2.3 OIDC callback wiring.
 - [x] T053 ARBORA-IDENTITY-R010.1 Typed LDAPS bind-config model.
 - [ ] T054 ARBORA-IDENTITY-R010.2 Directory bind and group sync (rollup).
