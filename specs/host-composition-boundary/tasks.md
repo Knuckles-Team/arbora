@@ -131,8 +131,8 @@
 - [ ] T133 ARBORA-HOST-R007.2.63 Rename the messaging entry-point groups to `arbora.messaging`.
 - [ ] T134 ARBORA-HOST-R011 Arbora serves the messaging channel and routing layer.
 - [ ] T136 ARBORA-HOST-R015 Layered agent capability model with a harness abstraction.
-- [ ] T137 ARBORA-HOST-R017 Browser inventory lists native Arbora tools.
-- [ ] T138 ARBORA-HOST-R018 Browser catalog reads run under the process authority.
+- [x] T137 ARBORA-HOST-R017 Browser inventory lists native Arbora tools.
+- [x] T138 ARBORA-HOST-R018 Browser catalog reads run under the process authority.
 - [ ] T139 ARBORA-HOST-R024 Serve the Arbora intent surface from serving start through the Arbora registration path.
 - [ ] T140 ARBORA-HOST-R010.7.1 Check injected startup admission.
 - [ ] T141 ARBORA-HOST-R010.7.2.1 Bind actual declarative startup inputs.
