@@ -246,7 +246,7 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [x] T009 ARBORA-DEPLOY-R007.3 arbora-daemon console script retired.
 - [x] T010 ARBORA-DEPLOY-R007.4 arbora-venv console-script collision resolved.
 - [x] T011 ARBORA-DEPLOY-R007.5 arbora-release-canary is declared only by arbora.
-- [ ] T012 ARBORA-DEPLOY-R007.6 The Arbora doctor checks the served engine families and graph connections.
+- [x] T012 ARBORA-DEPLOY-R007.6 The Arbora doctor checks the served engine families and graph connections. Evidence: `tests/deployment/test_doctor_graph.py`.
 - [ ] T013 ARBORA-DEPLOY-R008 Arbora hosts its own boundary modules.
 - [x] T014 ARBORA-DEPLOY-R009.1 Arbora hosts a typed arbora.core.config_admin hosting/deployment settings module.
 - [x] T015 ARBORA-DEPLOY-R009.4 Arbora owns the config administration core.
