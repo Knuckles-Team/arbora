@@ -251,7 +251,7 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [x] T014 ARBORA-DEPLOY-R009.1 Arbora hosts a typed arbora.core.config_admin hosting/deployment settings module.
 - [x] T015 ARBORA-DEPLOY-R009.4 Arbora owns the config administration core.
 - [ ] T016 ARBORA-DEPLOY-R011 Deployment test suite passes in full.
-- [ ] T017 ARBORA-DEPLOY-R012 Pipelines dependency is referenced at main, never pinned.
+- [x] T017 ARBORA-DEPLOY-R012 Pipelines dependency is referenced at main, never pinned.
 - [ ] T018 ARBORA-DEPLOY-R014 Split packages are consumed by published version range.
 - [x] T019 ARBORA-DEPLOY-R015 AVX2 guard test runs on any hosted runner.
 - [ ] T020 ARBORA-DEPLOY-R016 The serving container is the one in-pod host process.
