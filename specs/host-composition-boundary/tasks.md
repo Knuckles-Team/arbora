@@ -106,6 +106,9 @@
 - [ ] T105 ARBORA-HOST-R009.8 Record authenticated requests through the production sink.
 - [ ] T106 ARBORA-HOST-R009.8.2.2.1 Qualify all four real native terminal cases against the pinned released wheel.
 - [ ] T107 ARBORA-HOST-R009.8.2.2.2 Qualify retained metadata and gap clearing in installed Overstory.
+- [x] T135 ARBORA-HOST-R009.8.1 Admit exact source generations for host-log reads.
+- [x] T136 ARBORA-HOST-R009.8.2.1 Replay retained host files with fresh grant and cursor validation.
+- [x] T137 ARBORA-HOST-R009.8.2.2 Project source metadata and retention gaps in the host-log batch.
 - [x] T108 ARBORA-HOST-R004 Keep one gateway package. Evidence: `tests/architecture/test_single_gateway_implementation.py::test_single_gateway_and_retired_script_and_extra_absent`.
 - [ ] T109 ARBORA-HOST-R007.2.69 Add the declared-module fence test `tests/test_package_layout.py::test_arbora_imports_only_meristem_public_modules` and its planted-violation proof.
 - [x] T110 ARBORA-HOST-R012 Publish the Arbora and connector SDK boundary seeds. Evidence: `tests/test_component_registry_boundary_seeds.py`.
