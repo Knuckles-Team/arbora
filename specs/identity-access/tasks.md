@@ -257,7 +257,7 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T097 ARBORA-IDENTITY-R019.5 Resource access evidence.
 - [ ] T098 ARBORA-IDENTITY-R019.6 Resource access hot-path proof.
 - [ ] T099 ARBORA-IDENTITY-R020 Domain scope registry covers finance, fleet, loops and ops.
-- [ ] T100 ARBORA-IDENTITY-R021 Identity wiring depends only on identity ports.
+- [x] T100 ARBORA-IDENTITY-R021 Identity wiring depends only on identity ports.
 - [ ] T101 ARBORA-IDENTITY-R022 Fleet authorization fails closed on exact scopes.
 - [ ] T102 ARBORA-IDENTITY-R023 Native self-refreshing credentials for MCP clients (rollup).
 - [ ] T103 ARBORA-IDENTITY-R023.1 Credential reuse model.
