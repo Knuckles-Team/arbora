@@ -273,9 +273,9 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T036 ARBORA-DEPLOY-R017.16 Environment policy drives the digest check.
 - [x] T037 ARBORA-DEPLOY-R018.1 Engine endpoint type.
 - [x] T038 ARBORA-DEPLOY-R018.2 Probe before start.
-- [ ] T039 ARBORA-DEPLOY-R018.3 Start only when absent.
-- [ ] T040 ARBORA-DEPLOY-R018.4 Second process attaches.
-- [ ] T041 ARBORA-DEPLOY-R018.5 Last client out stops the engine arbora started.
+- [x] T039 ARBORA-DEPLOY-R018.3 Start only when absent.
+- [x] T040 ARBORA-DEPLOY-R018.4 Second process attaches.
+- [x] T041 ARBORA-DEPLOY-R018.5 Last client out stops the engine arbora started.
 - [ ] T042 ARBORA-DEPLOY-R018.6 Remote engine skips local start.
 - [ ] T043 ARBORA-DEPLOY-R010.1 Development skill keeps every original topic.
 - [ ] T044 ARBORA-DEPLOY-R010.2 Deployment examples stay executable and synchronized.

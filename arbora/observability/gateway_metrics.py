@@ -63,6 +63,7 @@ __all__ = [
     "DISPATCH_WORKERS",
     "ENGINE_BREAKER_STATE",
     "ENGINE_REQUESTS",
+    "ENGINE_SPAWNS",
     "ENGINE_REQUEST_LATENCY",
     "ENGINE_SHARD_REQUESTS",
     "ENGINE_SHARD_UP",
@@ -437,6 +438,10 @@ GATEWAY_RATE_LIMITED = _counter(
     "meristem_gateway_rate_limited_total",
     "Requests rejected (429) by the per-tenant token-bucket rate limiter.",
     ("tenant",),
+)
+ENGINE_SPAWNS = _counter(
+    "engine_spawn_total",
+    "Local medulla engine processes this host started (ARBORA-DEPLOY-R018.3).",
 )
 ENGINE_REQUESTS = _counter(
     "meristem_gateway_engine_requests_total",
