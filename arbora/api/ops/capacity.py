@@ -28,8 +28,10 @@ from pydantic import BaseModel, ConfigDict
 from arbora.api.registry import (
     AuditClass,
     Composite,
+    Confirm,
     Effect,
     OpSpec,
+    PrincipalRule,
     Surface,
     Verb,
 )
@@ -38,10 +40,8 @@ from arbora.fleet.error_budget import Partition, ThrottleMode
 
 class CapacityPartitionParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    tenant: str
     child: str
     operation_class: str
-    policy_revision: str
 
 
 class CapacitySetModeParams(CapacityPartitionParams):
@@ -58,12 +58,12 @@ class CapacityModeResult(BaseModel):
     mode: str
 
 
-def _partition(params: Mapping[str, Any]) -> Partition:
+def _partition(context: Any, params: Mapping[str, Any]) -> Partition:
     return Partition(
-        tenant=params["tenant"],
+        tenant=context.caller.tenant,
         child=params["child"],
         operation_class=params["operation_class"],
-        policy_revision=params["policy_revision"],
+        policy_revision=context.caller.policy_revision,
     )
 
 
@@ -78,7 +78,7 @@ async def handle_capacity_status(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Report the partition's recorded throttle state, never a fabricated one."""
-    status = _bound_registry(context).status(_partition(params))
+    status = _bound_registry(context).status(_partition(context, params))
     return {
         "value": {
             "mode": status.mode.value,
@@ -93,7 +93,7 @@ async def handle_capacity_set_mode(
 ) -> dict[str, Any]:
     """Select observe or enforce mode; the invoke pipeline already verified authority."""
     registry = _bound_registry(context)
-    partition = _partition(params)
+    partition = _partition(context, params)
     registry.set_mode(partition, ThrottleMode(params["mode"]))
     return {"value": {"mode": registry.mode(partition).value}}
 
@@ -126,6 +126,8 @@ def operations() -> tuple[OpSpec, ...]:
             ),
             scopes=frozenset({"capacity:admin"}),
             effect=Effect.ADMIN,
+            confirm=Confirm.CONSOLE,
+            principals=PrincipalRule.HUMAN_UNDELEGATED,
             audit=AuditClass.EVENT,
             surfaces=frozenset({Surface.MCP, Surface.HTTP, Surface.CONSOLE}),
         ),
