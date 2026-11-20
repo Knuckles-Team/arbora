@@ -286,8 +286,8 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T049 ARBORA-DEPLOY-R013.4 Deployment target matrix is complete.
 - [ ] T050 ARBORA-DEPLOY-R013.5 Confirmed profiles bind to governed deployment.
 - [ ] T051 ARBORA-DEPLOY-R013.6 Component choices and target profiles are proven served.
-- [ ] T052 ARBORA-DEPLOY-R018.7 A reused engine only attaches.
-- [ ] T053 ARBORA-DEPLOY-R018.8 A reused engine survives host shutdown.
+- [x] T052 ARBORA-DEPLOY-R018.7 A reused engine only attaches.
+- [x] T053 ARBORA-DEPLOY-R018.8 A reused engine survives host shutdown.
 - [x] T054 ARBORA-DEPLOY-R009.2.1 Small-profile import footprint.
 - [ ] T055 ARBORA-DEPLOY-R009.2.2 Single image serves a capability and refusal parity matrix.
 - [ ] T056 ARBORA-DEPLOY-R009.3 Deployment selection imports the approved ontology once.

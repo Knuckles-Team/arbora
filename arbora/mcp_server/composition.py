@@ -11,6 +11,7 @@ import dataclasses
 import json
 import logging
 import os
+import re
 import signal
 import socket
 import subprocess  # nosec B404 - the one place that starts the local engine
@@ -538,6 +539,61 @@ def ensure_local_engine(config: LocalEngineConfig | None = None) -> EngineEndpoi
     return endpoint
 
 
+def _version_key(text: str) -> tuple[int, ...] | None:
+    """A comparable key for a plain dotted release version, else ``None``."""
+    match = re.match(r"^\s*v?(\d+(?:\.\d+)*)", str(text))
+    return tuple(int(part) for part in match.group(1).split(".")) if match else None
+
+
+def engine_version_floor() -> tuple[int, ...] | None:
+    """The lowest engine version this release serves, from its own package metadata."""
+    from importlib import metadata
+
+    try:
+        requirements = metadata.requires("arbora") or []
+    except metadata.PackageNotFoundError:
+        return None
+    floors = [
+        key
+        for text in requirements
+        if (
+            match := re.match(
+                r"^medulla\s*(?:==|>=|~=)\s*([0-9][0-9.]*)\s*(?:;|$)", text.strip()
+            )
+        )
+        and (key := _version_key(match.group(1)))
+    ]
+    return min(floors) if floors else None
+
+
+def attach_reused_engine(
+    endpoint: EngineEndpoint, probe_timeout_s: float | None = None
+) -> EngineProbe:
+    """Attach to an engine the operator chose to reuse; never start a replacement.
+
+    A dead endpoint refuses ``REUSE_UNREACHABLE`` and an engine older than the
+    floor refuses ``REUSE_INCOMPATIBLE``. Neither starts anything.
+    """
+    import hashlib
+
+    digest = hashlib.sha256(endpoint.address.encode()).hexdigest()[:16]
+    probe = probe_engine(endpoint, probe_timeout_s)
+    if probe.state != "running":
+        raise EngineRefusal(
+            "REUSE_UNREACHABLE", f"the reused engine {digest} does not answer"
+        )
+    floor = engine_version_floor()
+    found = _version_key(probe.version) if probe.version else None
+    if floor is not None and found is not None and found < floor:
+        raise EngineRefusal(
+            "REUSE_INCOMPATIBLE",
+            f"the reused engine {digest} is {probe.version}; this release needs"
+            f" {'.'.join(map(str, floor))}",
+        )
+    logger.info("attached to the reused engine %s (spawns: %d)", digest, _SPAWNED)
+    return probe
+
+
 _CREDENTIAL_SETTINGS = ("GRAPH_SERVICE_AUTH_SECRET", "MEDULLA_SIGNER_KEYS_JSON")
 
 
@@ -627,10 +683,39 @@ def stand_down_engine(endpoint: EngineEndpoint) -> bool:
         os.close(fd)
 
 
+def _owned_pid(endpoint: EngineEndpoint, marker: Path) -> int:
+    """The pid of the engine this host started, or an ``OWNERSHIP_UNKNOWN`` refusal.
+
+    An unreadable marker, a pid that is gone, or a process that does not
+    carry this endpoint on its command line is not proof of ownership, so the
+    caller never signals it.
+    """
+
+    def unknown(why: str) -> EngineRefusal:
+        return EngineRefusal(
+            "OWNERSHIP_UNKNOWN",
+            f"refusing to stop the engine on {endpoint.address}: {why}",
+        )
+
+    try:
+        pid = int(json.loads(marker.read_text())["pid"])
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise unknown("the owner marker is unreadable") from exc
+    if pid <= 1 or not _pid_alive(pid):
+        raise unknown("the marked process is gone")
+    try:
+        command_line = Path(f"/proc/{pid}/cmdline").read_bytes()
+    except OSError:
+        return pid  # no /proc on this platform: the live pid is the evidence
+    if endpoint.address.encode() not in command_line:
+        raise unknown("the marked process is not this engine")
+    return pid
+
+
 def _stop_marked_engine(
     endpoint: EngineEndpoint, attachment: _Attachment, marker: Path
 ) -> bool:
-    pid = int(json.loads(marker.read_text())["pid"])
+    pid = _owned_pid(endpoint, marker)
     process = attachment.process
     try:
         os.kill(pid, signal.SIGTERM)
@@ -657,6 +742,8 @@ def _stand_down_all() -> None:
     for attachment in list(_ATTACHED.values()):
         try:
             stand_down_engine(attachment.endpoint)
+        except EngineRefusal as refusal:
+            logger.error("engine stand-down refused: %s", refusal)
         except Exception:
             logger.exception(
                 "engine stand-down failed for %s", attachment.endpoint.address

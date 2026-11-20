@@ -119,8 +119,8 @@ Each row below has no spec marker on a test yet. The listed test is the proof to
 | ARBORA-DEPLOY-R013.4 | `tests/deployment/test_target_matrix.py::test_every_declared_triple_has_a_refusal_case_and_a_success_case_id` (planned) | Deployment target matrix is complete. |
 | ARBORA-DEPLOY-R013.5 | `tests/api/test_deploy_ops_served.py::test_mixed_deployment_changes_only_deploy_marked_components` (planned) | Confirmed profiles bind to governed deployment. |
 | ARBORA-DEPLOY-R013.6 | `tests/deployment/test_component_choices_served.py::test_seed_4110_inventories_and_matrix_cells` (planned) | Component choices and target profiles are proven served. |
-| ARBORA-DEPLOY-R018.7 | `tests/deployment/test_engine_reuse.py::test_two_hosts_reuse_one_engine_and_unavailable_reuse_starts_zero` (planned) | A reused engine only attaches. |
-| ARBORA-DEPLOY-R018.8 | `tests/deployment/test_engine_reuse.py::test_reused_engine_stays_reachable_after_both_clients_stop` (planned) | A reused engine survives host shutdown. |
+| ARBORA-DEPLOY-R018.7 | `tests/deployment/test_engine_reuse.py::test_two_hosts_reuse_one_engine_and_unavailable_reuse_starts_zero` | A reused engine only attaches. |
+| ARBORA-DEPLOY-R018.8 | `tests/deployment/test_engine_reuse.py::test_reused_engine_stays_reachable_after_both_clients_stop` | A reused engine survives host shutdown. |
 | ARBORA-DEPLOY-R009.2.2 | `tests/deployment/test_single_image_parity_served.py::test_every_matrix_row_matches_the_single_image` (planned) | Single image serves a capability and refusal parity matrix. |
 | ARBORA-DEPLOY-R600.1 | `tests/deployment/test_process_locks.py::test_exclusive_lock_contends_then_frees` (existing, not yet bound by a spec marker) | Lock model. |
 | ARBORA-DEPLOY-R600.2 | `tests/deployment/test_process_locks.py::test_engine_guard_is_per_socket` (existing, not yet bound by a spec marker) | Spawn guard behavior. |
