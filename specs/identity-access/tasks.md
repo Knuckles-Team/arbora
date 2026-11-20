@@ -219,11 +219,11 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T059 ARBORA-IDENTITY-R010.2.3.2 Scheduled directory sync apply.
 - [ ] T060 ARBORA-IDENTITY-R010.2.4 Live directory probe.
 - [ ] T061 ARBORA-IDENTITY-R012 Native SAML service provider (rollup).
-- [ ] T062 ARBORA-IDENTITY-R011.1 Typed SCIM service-credential model.
+- [x] T062 ARBORA-IDENTITY-R011.1 Typed SCIM service-credential model.
 - [ ] T063 ARBORA-IDENTITY-R011.2 SCIM server surface (rollup).
-- [ ] T064 ARBORA-IDENTITY-R011.2.1 Typed SCIM User resource model.
-- [ ] T065 ARBORA-IDENTITY-R011.2.2 SCIM credential check.
-- [ ] T066 ARBORA-IDENTITY-R011.2.3 SCIM create/patch/deactivate handlers.
+- [x] T064 ARBORA-IDENTITY-R011.2.1 Typed SCIM User resource model.
+- [x] T065 ARBORA-IDENTITY-R011.2.2 SCIM credential check.
+- [x] T066 ARBORA-IDENTITY-R011.2.3 SCIM create/patch/deactivate handlers.
 - [ ] T067 ARBORA-IDENTITY-R011.2.4 SCIM route registration.
 - [ ] T068 ARBORA-IDENTITY-R012.1 Typed SAML service-provider model.
 - [ ] T069 ARBORA-IDENTITY-R012.2 SAML assertion verification and sign-in (rollup).
