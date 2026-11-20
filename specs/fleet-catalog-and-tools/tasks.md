@@ -540,3 +540,4 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T272 [US1] ARBORA-FLEET-R084 The fleet serves the city layout read from the engine world view. Size: S, 1 PR, 2 hours.
 - [ ] T273 [US1] ARBORA-FLEET-R085 A sandbox fleet profile fills the catalog without external credentials (rollup). Size: L, 2 PRs, 1 day.
 - [ ] T274 [US1] ARBORA-FLEET-R085.1 The fleet onboarding command reports each connector and exits non-zero only for the declared set. Size: S, 1 PR, 2 hours.
+- [ ] T275 [US1] ARBORA-FLEET-R015.7 Built-in content-pack imports leave the connector onboarding budget whole. Size: XS, 1 PR, 1 hour.
