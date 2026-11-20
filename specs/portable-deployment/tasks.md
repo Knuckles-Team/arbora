@@ -288,7 +288,7 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T051 ARBORA-DEPLOY-R013.6 Component choices and target profiles are proven served.
 - [ ] T052 ARBORA-DEPLOY-R018.7 A reused engine only attaches.
 - [ ] T053 ARBORA-DEPLOY-R018.8 A reused engine survives host shutdown.
-- [ ] T054 ARBORA-DEPLOY-R009.2.1 Small-profile import footprint.
+- [x] T054 ARBORA-DEPLOY-R009.2.1 Small-profile import footprint.
 - [ ] T055 ARBORA-DEPLOY-R009.2.2 Single image serves a capability and refusal parity matrix.
 - [ ] T056 ARBORA-DEPLOY-R009.3 Deployment selection imports the approved ontology once.
 - [ ] T057 ARBORA-DEPLOY-R013.7 Secrets default to the vault and the trust bundle reaches every component.
