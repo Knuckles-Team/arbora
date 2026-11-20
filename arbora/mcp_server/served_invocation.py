@@ -33,7 +33,6 @@ __all__ = [
     "PoolLeases",
     "refused_fleet_effect",
     "compose_served_invocation",
-    "engine_endpoint",
     "served_invocation_from_settings",
     "validate_provider_schema",
 ]
@@ -123,19 +122,6 @@ async def refused_fleet_effect(
     raise OperationRefused(
         "UNAVAILABLE", {"reason": "governed fleet calls unavailable"}
     )
-
-
-def engine_endpoint(endpoints: Any) -> dict[str, str]:
-    """``{"socket_path": ...}`` or ``{"tcp_addr": ...}`` for the first endpoint."""
-    values = [str(item).strip() for item in (endpoints or []) if str(item).strip()]
-    if not values:
-        raise ValueError("GRAPH_SERVICE_ENDPOINTS names no engine endpoint")
-    endpoint = values[0]
-    if endpoint.startswith("unix://"):
-        return {"socket_path": endpoint.removeprefix("unix://")}
-    if endpoint.startswith("/"):
-        return {"socket_path": endpoint}
-    return {"tcp_addr": endpoint.removeprefix("tcp://")}
 
 
 def _with_ingest_runner(
