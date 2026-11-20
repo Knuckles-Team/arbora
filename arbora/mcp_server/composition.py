@@ -109,7 +109,8 @@ async def _engine_health(
     from medulla import MedullaClient
 
     client = await MedullaClient.connect(
-        **endpoint.client_kwargs(),
+        socket_path=endpoint.address if endpoint.kind == "unix" else None,
+        tcp_addr=endpoint.address if endpoint.kind == "tcp" else None,
         auth_mode="none",
         connect_timeout=timeout_s,
         timeout=timeout_s,
