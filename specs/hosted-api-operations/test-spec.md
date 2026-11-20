@@ -571,3 +571,5 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R913` | Test: `tests/api/test_fleet_admin_ops.py::test_register_server_needs_plan_confirmation_and_hides_secret_values`, `tests/api/test_command_ops.py::test_commands_are_exactly_the_served_operations` and `tests/api/test_workflow_ops.py::test_run_returns_a_run_id_in_the_run_machine` (L2). |
 | `ARBORA-OPS-R914` | Test: `tests/api/test_ecosystem_widget_ops.py::test_each_widget_projects_rows_from_its_connector_call`, `tests/api/test_ecosystem_widget_ops.py::test_down_connector_gives_degraded_cached_rows` and `tests/api/test_media_transcribe.py::test_blob_ref_goes_to_asr` (L2). (planned: the named test file does not exist yet) |
 | `ARBORA-OPS-R844.2` | Test: `tests/test_served_operation_api.py::test_node_and_batch_writes_mask_secret_bearing_properties` (L2). |
+| `ARBORA-OPS-R915` | Test: `tests/api/test_presence_ops_served.py::test_presence_serves_one_snapshot_at_a_bounded_interval` (planned, L3). |
+| `ARBORA-OPS-R916` | Test: `tests/api/test_activity_ops_served.py::test_activity_serves_run_trace_facts_with_cursor_and_refuses_unrecorded` (planned, L3). |

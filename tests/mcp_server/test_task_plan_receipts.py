@@ -35,6 +35,7 @@ from arbora.security.session import (  # noqa: E402
     resolve_session,
     use_session,
 )
+from tests._eg_fakes import SyncControlLeases  # noqa: E402
 
 
 def _session(**changes: Any) -> GraphSession:
@@ -62,6 +63,7 @@ class _Audit:
         self.attempts: list[str] = []
         self.existing: set[str] = set()
         self.fail = False
+        self.control_leases = SyncControlLeases(tenant="tenant-a")
 
     def query_cypher(self, _query: str, _params: Any = None) -> list[Any]:
         resolve_session()
@@ -419,11 +421,10 @@ def test_default_schema_action_stays_held(
     with pytest.raises(PermissionError, match="exact effect-authorizing receipt"):
         _publish(fixture)
     assert fixture.pool.sent == []
-    assert [row[1] for row in fixture.audit.records] == [
-        "ActionApproval",
-        "ActionDecision",
-    ]
+    assert [row[1] for row in fixture.audit.records] == ["ActionDecision"]
     assert fixture.audit.records[-1][2]["decision"] == "queue_approval"
+    (lease,) = fixture.audit.control_leases.rows.values()
+    assert (lease["kind"], lease["status"]) == ("action.approval", "active")
 
 
 def test_matching_component_reuse_needs_no_new_write_receipt(

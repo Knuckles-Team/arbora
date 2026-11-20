@@ -1242,6 +1242,77 @@ async def _pack_status(stack: dict[str, Any], connector: str) -> Any:
         await client.close()
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R019.8")
+def test_a_held_pack_import_queues_an_approval_lease(
+    stack: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A held connector-pack import waits for approval; it does not fail.
+
+    The installed engine refuses a generic ``ActionApproval`` node write
+    (native record authority), so the action policy must file the approval as
+    an ``action.approval`` control lease under the process identity, and the
+    approvals listing reads it back as pending.
+    """
+    from medulla import MedullaClient
+
+    from arbora.access.action_policy import (
+        DECISION_QUEUE,
+        ActionPolicy,
+        ActionRequest,
+    )
+    from arbora.access.approval_leases import pending_approvals
+    from arbora.core.settings import runtime_config
+    from arbora.epistemic import ConnectClient, EpistemicClientPool
+    from arbora.mcp_server.served_engine import ServedEngine
+    from arbora.security.request_identity import (
+        actor_from_bearer_token,
+        mint_graph_session,
+    )
+    from arbora.security.session import use_session
+
+    monkeypatch.setattr(runtime_config, "auth_jwt_jwks_uri", stack["issuer_jwks_uri"])
+    monkeypatch.setattr(runtime_config, "auth_jwt_issuer", ISSUER)
+    monkeypatch.setattr(runtime_config, "auth_jwt_audience", AUDIENCE)
+    monkeypatch.setattr(runtime_config, "kg_policy_version", POLICY_VERSION)
+    monkeypatch.delenv("ACTION_POLICY_PATH", raising=False)
+    session = mint_graph_session(asyncio.run(actor_from_bearer_token(stack["token"])))
+    engine = ServedEngine(
+        EpistemicClientPool(
+            cast(ConnectClient, MedullaClient.connect),
+            socket_path=stack["socket_path"],
+            auth_secret=stack["secret"],
+        )
+    )
+    # Not in the shipped default's unattended list: the import is held.
+    request = ActionRequest(
+        kind="connector_pack_import",
+        target=f"held-connector-{uuid.uuid4().hex[:8]}",
+        params={"tenant_id": TENANT},
+        source="arbora",
+        reason="authorize semantic connector-pack provisioning",
+        actor_id=PROCESS_SUBJECT,
+    )
+    with use_session(session):
+        policy = ActionPolicy(engine=engine)
+        held = policy.decide(request)
+        again = policy.decide(request)
+        lease = engine.control_leases.get(
+            tenant=session.tenant, lease_id=str(held.approval_id)
+        )
+        # The listing every approval door reads (R019.9) shows it pending.
+        pending = {entry["id"]: entry for entry in pending_approvals(engine)}
+
+    assert held.decision == DECISION_QUEUE, (held.reason, stack["logs"]())
+    assert str(held.approval_id).startswith("action_approval:"), held
+    assert again.approval_id == held.approval_id
+    assert lease is not None
+    assert (lease["kind"], lease["status"]) == ("action.approval", "active")
+    assert lease["grant"]["request_digest"] == request.digest()
+    assert lease["grant"]["target"] == request.target
+    assert pending[held.approval_id]["kind"] == "connector_pack_import"
+    assert pending[held.approval_id]["target"] == request.target
+
+
 @pytest.mark.spec("ARBORA-OPS-R020.6.6")
 def test_ingest_sources_list_sync_status(stack: dict[str, Any]) -> None:
     """A declared connector source lists, syncs as a WorkItem, and lands in EG."""

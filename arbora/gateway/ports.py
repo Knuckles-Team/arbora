@@ -29,7 +29,7 @@ class GatewayApplicationPort(Protocol):
         """Return the process-scoped engine adapter used by host-only routes."""
 
     def decide_approval(self, approval_id: str, decision: str) -> dict[str, str]:
-        """Decide one pending ``ActionApproval`` through the host's approvals."""
+        """Decide one pending approval lease through the host's approvals."""
 
     def ensure_tools_registered(self) -> None:
         """Make the canonical action catalog available before routes are mounted."""

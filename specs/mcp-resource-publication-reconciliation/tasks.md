@@ -10,14 +10,14 @@ the final release task records served evidence.
   mismatched, generation-mismatched, partial-family, and wrong-tenant receipts as
   `reingestion-unreconciled`, and a fully matching fresh receipt as `reconciled`. Cover
   `ARBORA-MCP-RESOURCES-R001.1`.
-- [ ] T003 ARBORA-MCP-RESOURCES-R002 Confirm and link the medulla producing contract (`MEDULLA-REPO-INGEST-001`) in
+- [x] T003 ARBORA-MCP-RESOURCES-R002 Confirm and link the medulla producing contract (`MEDULLA-REPO-INGEST-001`) in
   `spec.md`/`requirements.md`. Cover `ARBORA-MCP-RESOURCES-R002`. (Link added this PR; Medulla-side
   delivery is tracked in medulla's own spec, not here.)
-- [ ] T004 ARBORA-MCP-RESOURCES-R003.1 Add `require_reconciled_for_swap()` and `PublicationRefusedError` with refusal tests.
+- [x] T004 ARBORA-MCP-RESOURCES-R003.1 Add `require_reconciled_for_swap()` and `PublicationRefusedError` with refusal tests.
   Cover `ARBORA-MCP-RESOURCES-R003.1`.
 - [ ] T005 ARBORA-MCP-RESOURCES-R003.2 Call the guard from the ARBORA-FLEET-001 atomic generation-publish step once
   `fleet-catalog-and-tools` R022/ARBORA-FLEET-R051 lands. Cover `ARBORA-MCP-RESOURCES-R003.2`.
-- [ ] T006 ARBORA-MCP-RESOURCES-R004 Reconcile `docs/status.md` / `docs/fleet.md` wording against the gate's actual
+- [x] T006 ARBORA-MCP-RESOURCES-R004 Reconcile `docs/status.md` / `docs/fleet.md` wording against the gate's actual
   status/reason vocabulary. Cover `ARBORA-MCP-RESOURCES-R004`.
 - [ ] T007 ARBORA-MCP-RESOURCES-R001.1 Land reviewed code and record merge commits per slice in `spec.md`; do not mark
   ACCEPTED on source evidence alone.

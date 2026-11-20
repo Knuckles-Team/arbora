@@ -21,7 +21,7 @@ def register_governance_tools(mcp: Any, approvals: ApprovalDecisions) -> None:
         name="graph_governance",
         description=(
             "Govern orchestration actions. Actions: 'grant_approval' atomically decides a "
-            "pending ActionApproval; 'submit_risk_veto' records a governed veto against an "
+            "pending action approval; 'submit_risk_veto' records a governed veto against an "
             "existing target; 'verify_action' evaluates an ActionPolicy request without "
             "writing a decision or approval; 'ownership_report' runs the W2.8 per-graph "
             "RBAC-ownership disposition pass (read-only) over the live engine catalog; "

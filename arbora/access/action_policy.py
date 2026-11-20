@@ -34,9 +34,10 @@ Decision pipeline (most-specific rule wins; KG rules beat file rules):
 
 Every decision is audit-logged as an ``ActionDecision`` KG node; rate/blast
 accounting reads those same nodes back, so the ledger is durable and shared
-across processes. Queue-approval reuses the existing fleet approvals flow:
-it files an ``ActionApproval`` node that ``GET /api/fleet/approvals`` lists
-and ``POST /api/fleet/approvals/grant`` resolves; the fleet reconciler tick
+across processes. Queue-approval files an engine ``action.approval`` control lease
+(:mod:`arbora.access.approval_leases`) that ``GET /api/fleet/approvals`` and
+``approvals.list`` list and ``POST /api/fleet/approvals/grant`` and
+``approvals.grant``/``deny`` decide; the fleet reconciler tick
 executes granted entries through the durable action-outbox fence
 (CONCEPT:MERISTEM-OS.config.desired-state-fleet-reconciler).
 """
@@ -51,12 +52,13 @@ import math
 import threading
 import time
 import uuid
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, ClassVar
 
+from arbora.access.approval_leases import file_approval, granted_approval
 from arbora.access.assurance import verify_action
 from arbora.core.settings import setting
 from arbora.unique_records import create_record
@@ -156,40 +158,6 @@ def _budget_set(limit: Any, key: str) -> bool:
 
 
 POLICY_RECEIPT_SCHEMA = "policy-receipt.v1"
-
-#: The durable control-lease ``kind`` an action approval is filed under
-#: (ARBORA-IDENTITY-R019: Arbora's ``approvals.*`` operations list, get and
-#: decide leases of exactly this kind over the engine's generic control-lease
-#: surface). The schema-drift repair approval kind carries the identical literal.
-ACTION_APPROVAL_KIND = "action.approval"
-
-#: Lifecycle fields every control lease carries, regardless of domain payload.
-_LEASE_LIFECYCLE_FIELDS = (
-    "lease_id",
-    "kind",
-    "status",
-    "revision",
-    "requested_at_ms",
-    "approved_at_ms",
-    "hard_expires_at_ms",
-    "ended_at_ms",
-)
-
-
-def approval_lease_to_props(lease: Mapping[str, Any]) -> dict[str, Any]:
-    """Project one ``ACTION_APPROVAL_KIND`` control lease to public properties.
-
-    Starts from the lease's own ``props`` payload (the action-specific
-    request body), then layers the shared lifecycle fields on top so a
-    caller sees both without needing the raw engine lease shape. Never
-    mutates ``lease``.
-    """
-    payload = lease.get("props")
-    props: dict[str, Any] = dict(payload) if isinstance(payload, Mapping) else {}
-    for field_name in _LEASE_LIFECYCLE_FIELDS:
-        if field_name in lease:
-            props[field_name] = lease[field_name]
-    return props
 
 
 class PolicyDisposition(StrEnum):
@@ -941,7 +909,7 @@ class ActionPolicy:
 
         This is what backs the ``verify_action`` MCP/REST surface (a caller
         self-checking a routing payload before proposing it for real) — unlike
-        :meth:`decide`, it writes no ``ActionDecision``/``ActionApproval`` node
+        :meth:`decide`, it writes no ``ActionDecision`` node and files no approval
         and applies no rate-limit/blast-radius accounting (those are stateful
         side effects, not a payload's structural validity). Never raises —
         fails CLOSED like every other entry point here.
@@ -1019,7 +987,7 @@ class ActionPolicy:
         """Return the policy *tier* for ``request`` with NO side effects.
 
         Unlike :meth:`decide`, this writes no ``ActionDecision`` audit node and
-        files no ``ActionApproval`` — it only resolves the matching rule (file +
+        files no approval — it only resolves the matching rule (file +
         KG ``governance_rule`` overrides) and returns its tier
         (``auto`` | ``auto_notify`` | ``approval_required`` | ``forbidden``).
 
@@ -1293,71 +1261,56 @@ class ActionPolicy:
         return self._granted_approval_id(request)
 
     def _granted_approval_id(self, request: ActionRequest) -> str | None:
-        """Return an approval bound to this exact request, never a target match."""
+        """Return an approval bound to this exact request, never a target match.
+
+        A consumed (approved), unexpired ``action.approval`` lease whose grant
+        names this request's digest (ARBORA-IDENTITY-R019.8).
+        """
         if self.engine is None:
             return None
         try:
-            rows = self.engine.query_cypher(
-                "MATCH (a:ActionApproval {status: 'approved', "
-                "request_digest: $request_digest}) RETURN a.id AS id LIMIT 1",
-                {"request_digest": request.digest()},
+            return granted_approval(
+                self.engine, request.digest(), now_ms=int(_now() * 1000)
             )
-            for row in rows or []:
-                approval = row.get("a", row)
-                if approval.get("request_digest") == request.digest() and approval.get(
-                    "id"
-                ):
-                    return str(approval["id"])
         except Exception as exc:  # noqa: BLE001 — missing evidence fails closed
             logger.debug("action_policy: granted approval probe failed: %s", exc)
         return None
 
     def queue_approval(self, request: ActionRequest, reason: str = "") -> str | None:
-        """File an ``ActionApproval`` node for the existing fleet approvals flow.
+        """File an ``action.approval`` control lease for this held request.
 
-        Listed by ``GET /api/fleet/approvals``; resolved by
-        ``POST /api/fleet/approvals/grant`` (job_id = this node id); executed
-        by the fleet reconciler's approved-action drain (CONCEPT:MERISTEM-OS.config.desired-state-fleet-reconciler).
-        Deliberately not a WorkItem: the immutable approval request cannot be
-        claimed or executed before a separate authorized action-outbox intent
-        exists. The approval id becomes the replay identity for the granted
-        action; completion is closed by that same durable boundary.
+        The engine reserves approval records for its native control-lease path
+        and refuses a generic ``ActionApproval`` node write, so the approval is
+        issued with ``IssueControlLease`` (ARBORA-IDENTITY-R019.8). Listed by
+        ``GET /api/fleet/approvals`` and ``approvals.list``; decided by
+        ``POST /api/fleet/approvals/grant`` and ``approvals.grant``/``deny``;
+        executed by the fleet reconciler's approved-action drain
+        (CONCEPT:MERISTEM-OS.config.desired-state-fleet-reconciler). A pending
+        approval of the same request digest is reused, so a recurring request
+        does not flood the queue. Returns ``None`` when nothing was filed; the
+        caller then fails the hold closed.
         """
         if self.engine is None:
             return None
-        # Dedup: a still-pending approval for the same kind+target is reused so
-        # a recurring divergence doesn't flood the queue one entry per tick.
+        grant = {
+            "kind": request.kind,
+            "target": request.target,
+            "request_digest": request.digest(),
+            "params_json": json.dumps(request.params, default=str)[:2000],
+            "source": request.source,
+            "reason": (reason or request.reason)[:2000],
+            "receipt_schema": POLICY_RECEIPT_SCHEMA,
+            "requested_at": _now_iso(),
+        }
         try:
-            rows = self.engine.query_cypher(
-                "MATCH (a:ActionApproval {kind: $kind, target: $target, "
-                "status: 'pending'}) RETURN a.id AS id LIMIT 1",
-                {"kind": request.kind, "target": request.target},
+            approval_id = file_approval(self.engine, grant, now_ms=int(_now() * 1000))
+        except Exception as e:  # noqa: BLE001 — no approval: the hold fails closed
+            logger.warning(
+                "action_policy: approval queue write failed (%s) for kind=%s target=%s",
+                type(e).__name__,
+                request.kind,
+                request.target,
             )
-            if rows and rows[0].get("id"):
-                return str(rows[0]["id"])
-        except Exception as e:  # noqa: BLE001 — dedup is best-effort
-            logger.debug("action_policy: approval dedup probe failed: %s", e)
-        approval_id = f"action_approval:{uuid.uuid4().hex}"
-        try:
-            create_record(
-                self.engine,
-                approval_id,
-                "ActionApproval",
-                {
-                    "kind": request.kind,
-                    "target": request.target,
-                    "params_json": json.dumps(request.params, default=str)[:2000],
-                    "source": request.source,
-                    "reason": reason or request.reason,
-                    "request_digest": request.digest(),
-                    "receipt_schema": POLICY_RECEIPT_SCHEMA,
-                    "status": "pending",
-                    "created_at": _now_iso(),
-                    "created_unix": _now(),
-                },
-            )
-        except Exception as e:  # noqa: BLE001
-            logger.warning("action_policy: approval queue write failed: %s", e)
             return None
         self._notify(
             f"[fleet-autonomy] approval required: {request.summary()} "

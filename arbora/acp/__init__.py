@@ -5,6 +5,7 @@ from .coding_session import (
     CodingSessionAdmission,
     CodingSessionAdmitted,
     CodingSessionRequest,
+    EffectDecision,
     WorkspaceGrant,
 )
 from .session_policy import (
@@ -29,6 +30,7 @@ __all__ = [
     "CodingSessionAdmission",
     "CodingSessionAdmitted",
     "CodingSessionRequest",
+    "EffectDecision",
     "WorkspaceGrant",
 ]
 
