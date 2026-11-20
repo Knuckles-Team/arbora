@@ -93,7 +93,10 @@ jobs:
     # the locked type check and the affected-test subset.
     name: gates
     needs: [changes, freeze-gate-source]
-    timeout-minutes: 20
+    # A change to pyproject.toml, uv.lock or a conftest.py makes the scope FULL
+    # (the whole suite). The full gates job measured 23m20s on main
+    # (run 44644414881), so a dependency pull request needs more than 20 minutes.
+    timeout-minutes: 40
     # Homelab self-hosted runner for same-repo PRs; a fork PR lands on a hosted runner.
     runs-on: ${{ github.event.pull_request.head.repo.full_name == github.repository && fromJSON('["self-hosted", "homelab"]') || 'ubuntu-latest' }}
     env:
