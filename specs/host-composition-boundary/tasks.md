@@ -82,7 +82,7 @@
 - [ ] T081 ARBORA-HOST-R009.4 Define and prove bound log delivery and shutdown through the owning production entrypoint.
 - [ ] T082 ARBORA-HOST-R009.5 Define and prove publish the terminal log-consumer handoff through the owning production entrypoint.
 - [ ] T083 ARBORA-HOST-R009.6 Define and prove prove start and logs through real processes through the owning production entrypoint.
-- [ ] T084 ARBORA-HOST-R006.1 Define and prove preserve the sole multiplexer owner through the owning production entrypoint.
+- [x] T084 ARBORA-HOST-R006.1 Define and prove preserve the sole multiplexer owner through the owning production entrypoint.
 - [ ] T085 ARBORA-HOST-R006.2 Define and prove use one standard transport scaffold through the owning production entrypoint.
 - [ ] T086 ARBORA-HOST-R023.1 Define and prove preserve the entire intent surface through the owning production entrypoint.
 - [ ] T087 ARBORA-HOST-R023.2 Define and prove prove transport parity on the served surface through the owning production entrypoint.
@@ -145,8 +145,8 @@
 - [ ] T148 ARBORA-HOST-R008.1002 Behaviour of the turn handler and send gate.
 - [ ] T149 ARBORA-HOST-R008.1003 Wiring of messaging, readiness and A2A mounting.
 - [ ] T150 ARBORA-HOST-R008.1004 Refusals of send, A2A and readiness.
-- [ ] T151 ARBORA-HOST-R008.1005 Evidence.
-- [ ] T152 ARBORA-HOST-R008.1007 Behaviour of correlation and probes.
+- [x] T151 ARBORA-HOST-R008.1005 Evidence.
+- [x] T152 ARBORA-HOST-R008.1007 Behaviour of correlation and probes.
 - [ ] T153 ARBORA-HOST-R008.1008 Refusals of trace export and asset reading.
 - [ ] T154 ARBORA-HOST-R010.7.2.2.1 Attest runtime ownership.
 - [ ] T155 ARBORA-HOST-R010.7.2.2.2.1 Revalidate borrowed runtime at ASGI startup.
