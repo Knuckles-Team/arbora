@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -19,6 +20,9 @@ import pytest
 
 _SCRIPT = (
     Path(__file__).resolve().parents[1] / "scripts" / "check_acceptance_evidence.py"
+)
+_WORKLIST = (
+    Path(__file__).resolve().parents[1] / "scripts" / "acceptance_evidence_worklist.sh"
 )
 _SPEC = importlib.util.spec_from_file_location("check_acceptance_evidence", _SCRIPT)
 assert _SPEC is not None and _SPEC.loader is not None
@@ -305,3 +309,34 @@ def test_main_is_deterministic_across_runs(
     main([str(status_path)])
     second = capsys.readouterr().out
     assert first == second
+
+
+@pytest.mark.spec("ARBORA-ACCEPTANCE-R005")
+def test_worklist_reports_a_gap_without_blocking(tmp_path: Path) -> None:
+    """The hook is a report; `main` remains the refusing standalone checker."""
+    status_path = tmp_path / "status.json"
+    status_path.write_text(
+        json.dumps(
+            _status(
+                [
+                    {
+                        "id": "FIX-R007",
+                        "title": "Worklist gap",
+                        "delivery_state": "LANDED",
+                        "evidence": [_evidence("merged_head", COMMIT_A)],
+                    }
+                ]
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [_WORKLIST, status_path],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    assert "FIX-R007 missing=test,operational" in result.stdout
