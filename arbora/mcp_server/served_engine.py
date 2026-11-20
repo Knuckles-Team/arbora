@@ -446,8 +446,9 @@ class ServedEngine:
 def process_engine_pool() -> Any:
     """The one EG client pool of this process, built on first use.
 
-    Raises:
-        RuntimeError: ``GRAPH_SERVICE_ENDPOINTS`` names no engine.
+    With ``GRAPH_SERVICE_ENDPOINTS`` unset, the process attaches to the local
+    loopback engine and starts one only when none answers
+    (``ARBORA-DEPLOY-R018.9``). A configured endpoint never starts an engine.
     """
     global _POOL
     with _LOCK:
@@ -456,19 +457,24 @@ def process_engine_pool() -> Any:
 
             from arbora.core.settings import runtime_config
             from arbora.epistemic import ConnectClient, EpistemicClientPool
-            from arbora.mcp_server.composition import parse_engine_endpoint
+            from arbora.mcp_server.composition import (
+                ensure_local_engine,
+                parse_engine_endpoint,
+                require_remote_engine_credential,
+            )
 
             endpoints = runtime_config.graph_service_endpoints
-            if not endpoints:
-                raise RuntimeError(
-                    "arbora serves through medulla: set "
-                    "GRAPH_SERVICE_ENDPOINTS to the engine endpoint"
+            if endpoints:
+                # A configured endpoint is connect-only: nothing starts locally.
+                endpoint = parse_engine_endpoint(
+                    next((item for item in endpoints if str(item).strip()), "")
                 )
+                require_remote_engine_credential(endpoint)
+            else:
+                endpoint = ensure_local_engine()
             _POOL = EpistemicClientPool(
                 cast(ConnectClient, MedullaClient.connect),
-                **parse_engine_endpoint(
-                    next((item for item in endpoints if str(item).strip()), "")
-                ).client_kwargs(),
+                **endpoint.client_kwargs(),
             )
         return _POOL
 

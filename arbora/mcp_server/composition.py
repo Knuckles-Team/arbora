@@ -264,6 +264,8 @@ class LocalEngineConfig:
     persist_dir: Path | None = None
     #: Extra engine arguments, for example the explicit local no-auth mode.
     extra_args: tuple[str, ...] = ()
+    #: Extra engine environment, for example the bound connector-pack importer.
+    extra_env: Mapping[str, str] = dataclasses.field(default_factory=dict)
 
     @property
     def endpoint(self) -> EngineEndpoint:
@@ -297,9 +299,12 @@ def _ranged(name: str, default: float) -> float:
 
 def local_engine_config(**overrides: Any) -> LocalEngineConfig:
     """The lifecycle settings from the environment; ``overrides`` win."""
-    from arbora.core.settings import setting
+    from arbora.core.settings import runtime_config, setting
 
+    anonymous = runtime_config.arbora_auth_mode == "none"
     base = LocalEngineConfig(
+        extra_args=("--auth-mode", "none") if anonymous else (),
+        extra_env=_anonymous_importer_env() if anonymous else {},
         port=int(_ranged("ENGINE_LOCAL_PORT", 47980)),
         start_timeout_s=_ranged("ENGINE_START_TIMEOUT_S", 60),
         probe_timeout_s=_ranged("ENGINE_PROBE_TIMEOUT_S", 2),
@@ -308,6 +313,16 @@ def local_engine_config(**overrides: Any) -> LocalEngineConfig:
         binary=str(setting("MEDULLA_BIN", "") or "") or None,
     )
     return dataclasses.replace(base, **overrides)
+
+
+def _anonymous_importer_env() -> dict[str, str]:
+    """Bind Arbora's own content pack import to the explicit no-auth principal."""
+    import hashlib
+
+    from arbora.security.anonymous import PRINCIPAL
+
+    digest = hashlib.sha256(PRINCIPAL.encode()).hexdigest()
+    return {"MEDULLA_CONNECTOR_PACK_IMPORTERS": f"arbora=principal:sha256:{digest}"}
 
 
 def _persist_dir(config: LocalEngineConfig) -> Path:
@@ -433,6 +448,7 @@ def _spawn_engine(
             stdout=log,
             stderr=subprocess.STDOUT,
             start_new_session=True,
+            env={**os.environ, **config.extra_env},
         )
     global _SPAWNED
     _SPAWNED += 1
@@ -520,6 +536,42 @@ def ensure_local_engine(config: LocalEngineConfig | None = None) -> EngineEndpoi
         if len(_ATTACHED) == 1:
             atexit.register(_stand_down_all)
     return endpoint
+
+
+_CREDENTIAL_SETTINGS = ("GRAPH_SERVICE_AUTH_SECRET", "MEDULLA_SIGNER_KEYS_JSON")
+
+
+def is_remote_engine(endpoint: EngineEndpoint) -> bool:
+    """True for a TCP endpoint whose host is not loopback."""
+    if endpoint.kind != "tcp":
+        return False
+    import ipaddress
+
+    host = endpoint.address.rpartition(":")[0].strip("[]")
+    if host == "localhost":
+        return False
+    try:
+        return not ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return True
+
+
+def require_remote_engine_credential(endpoint: EngineEndpoint) -> None:
+    """Refuse a remote engine that has no engine credential configured.
+
+    A configured endpoint never starts a local engine. A remote one also needs
+    the engine admission credential the deployment sets (see
+    ``setup-config engine-admission``); without it Arbora refuses.
+    """
+    from arbora.core.settings import setting
+
+    if is_remote_engine(endpoint) and not any(
+        str(setting(name, "") or "").strip() for name in _CREDENTIAL_SETTINGS
+    ):
+        raise EngineRefusal(
+            "ENGINE_CREDENTIAL_MISSING",
+            "a remote engine needs the engine admission credential",
+        )
 
 
 def _release_client_lock(fd: int) -> None:
