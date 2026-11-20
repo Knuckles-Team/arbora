@@ -237,10 +237,10 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T077 ARBORA-IDENTITY-R014 Shared RBAC decision oracle across identity modes.
 - [ ] T078 ARBORA-IDENTITY-R015 Identity operations documentation and cutover runbook.
 - [ ] T079 ARBORA-IDENTITY-R016 Optional SMTP adapter for identity email.
-- [ ] T080 ARBORA-IDENTITY-R016.1 Arbora-side mail capability model.
+- [x] T080 ARBORA-IDENTITY-R016.1 Arbora-side mail capability model.
 - [ ] T081 ARBORA-IDENTITY-R016.2 SMTP send transport for identity email.
 - [ ] T082 ARBORA-IDENTITY-R017 Remove the unauthenticated opt-out (rollup).
-- [ ] T083 ARBORA-IDENTITY-R017.1 Client entry-point token audit registry.
+- [x] T083 ARBORA-IDENTITY-R017.1 Client entry-point token audit registry.
 - [ ] T084 ARBORA-IDENTITY-R017.2 Engine opt-out removal.
 - [ ] T085 ARBORA-IDENTITY-R017.3 Bearer model.
 - [ ] T086 ARBORA-IDENTITY-R017.4 Bearer verification behaviour.
