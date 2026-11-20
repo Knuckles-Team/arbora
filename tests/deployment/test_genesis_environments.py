@@ -37,6 +37,7 @@ def _raw(name: str) -> dict:
 
 # ── defaults ─────────────────────────────────────────────────────────────
 @pytest.mark.parametrize("name", ["dev", "test", "prod"])
+@pytest.mark.spec("ARBORA-DEPLOY-R013.1")
 def test_default_profile_loads_and_validates(name):
     profile = load_environment_profile(name)
     assert profile.environment.name == name

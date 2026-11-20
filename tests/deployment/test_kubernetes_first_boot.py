@@ -142,6 +142,7 @@ def test_valid_observations_require_separate_application_evidence(profile, snaps
         "missing_mount",
     ],
 )
+@pytest.mark.spec("ARBORA-DEPLOY-R013.1")
 def test_bad_cluster_observations_fail_closed(profile, snapshot, failure):
     expected, observed = snapshot
     _damage_container_or_storage(snapshot, failure)
