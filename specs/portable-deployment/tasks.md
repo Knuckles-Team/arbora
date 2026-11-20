@@ -236,16 +236,16 @@ Order: R017.1 (placement), R017.2 to R017.5 (assembly, view, confirm, refusal), 
 One task per active leaf row, in requirement order. A rollup parent is covered by its child rows.
 
 - [ ] T001 ARBORA-DEPLOY-R001 Rendered workload images are digest-pinned.
-- [ ] T002 ARBORA-DEPLOY-R002 Executable release-qualification runbook.
-- [ ] T003 ARBORA-DEPLOY-R003 Pre-push hooks always run the full gate suite.
-- [ ] T004 ARBORA-DEPLOY-R004 mypy hook type-checks the test suite.
-- [ ] T005 ARBORA-DEPLOY-R005 Web UI keeps its component package name.
-- [ ] T006 ARBORA-DEPLOY-R006 The base dependency pins a compatible connector-SDK floor.
-- [ ] T007 ARBORA-DEPLOY-R007.1 arbora-doctor console-script collision resolved.
-- [ ] T008 ARBORA-DEPLOY-R007.2 setup-config console-script collision resolved.
-- [ ] T009 ARBORA-DEPLOY-R007.3 arbora-daemon console script retired.
-- [ ] T010 ARBORA-DEPLOY-R007.4 arbora-venv console-script collision resolved.
-- [ ] T011 ARBORA-DEPLOY-R007.5 arbora-release-canary is declared only by arbora.
+- [x] T002 ARBORA-DEPLOY-R002 Executable release-qualification runbook.
+- [x] T003 ARBORA-DEPLOY-R003 Pre-push hooks always run the full gate suite.
+- [x] T004 ARBORA-DEPLOY-R004 mypy hook type-checks the test suite.
+- [x] T005 ARBORA-DEPLOY-R005 Web UI keeps its component package name.
+- [x] T006 ARBORA-DEPLOY-R006 The base dependency pins a compatible connector-SDK floor.
+- [x] T007 ARBORA-DEPLOY-R007.1 arbora-doctor console-script collision resolved.
+- [x] T008 ARBORA-DEPLOY-R007.2 setup-config console-script collision resolved.
+- [x] T009 ARBORA-DEPLOY-R007.3 arbora-daemon console script retired.
+- [x] T010 ARBORA-DEPLOY-R007.4 arbora-venv console-script collision resolved.
+- [x] T011 ARBORA-DEPLOY-R007.5 arbora-release-canary is declared only by arbora.
 - [ ] T012 ARBORA-DEPLOY-R007.6 The Arbora doctor checks the served engine families and graph connections.
 - [ ] T013 ARBORA-DEPLOY-R008 Arbora hosts its own boundary modules.
 - [ ] T014 ARBORA-DEPLOY-R009.1 Arbora hosts a typed arbora.core.config_admin hosting/deployment settings module.
