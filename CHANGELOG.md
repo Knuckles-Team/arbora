@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Pins medulla 3.3.4 and scion-sdk 0.11.3. The state-machine ontology and shapes use the engine's ontology IRI base, and prompts are packed as canonical blueprints, so a fresh store admits everything Arbora provisions. The engine publishes no Windows wheel from 3.3.4, so the install smoke test drops its Windows leg.
+
 ## [0.1.11] - 2026-11-19
 
 ### Added

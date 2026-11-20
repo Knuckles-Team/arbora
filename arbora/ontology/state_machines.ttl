@@ -6,8 +6,8 @@
 # event <Name>Machine_Event_<event>, a transition <Name>Machine_<edge id>.
 # tests/ontology/ compares each machine here with its Python enums and edge table.
 
-@prefix : <http://knuckles.team/kg#> .
-@prefix arbora: <http://knuckles.team/kg/arbora#> .
+@prefix : <https://knuckles-team.github.io/ontology/core#> .
+@prefix arbora: <https://knuckles-team.github.io/ontology/admission#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 

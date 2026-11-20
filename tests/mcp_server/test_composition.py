@@ -320,9 +320,9 @@ def test_arbora_runtime_shapes_use_connector_content_contract() -> None:
     assert str(resource.uri) == "shapes://arbora/runtime.shapes.ttl"
     assert resource.name == "shapes://arbora/runtime.shapes.ttl"
     assert resource.mime_type == "text/turtle"
-    assert len(body) == 2775
+    assert len(body) == 2819
     assert hashlib.sha256(body).hexdigest() == (
-        "a9427e032d379e2f6aae44f2c11eebdcc247c059bce3fd6de9c8911ea19e63bd"
+        "bdd5a65807aa8ea1d57c59044de08b332d3c88df674a5b543b513f6a85de4fe8"
     )
 
 
