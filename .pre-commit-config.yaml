@@ -139,6 +139,13 @@ repos:
 
 - repo: local
   hooks:
+  - id: reference-pin-lint
+    name: Deployment — shared pipelines references use main
+    entry: python3 scripts/check_wiring.py reference-pins
+    language: system
+    pass_filenames: false
+    always_run: true
+    stages: [pre-commit, pre-push]
   # arbora's Python orphan-module wiring gate (see
   # AGENTS.md "Orphan-module wiring gate (Python)"): a
   # arbora/ module with no production fan-in and no production fan-out
@@ -169,6 +176,16 @@ repos:
     language: system
     pass_filenames: false
     files: ^(specs/|scripts/check_public_specs\.py$|\.specify/memory/constitution\.md$)
+  # ARBORA-ACCEPTANCE-R005: report incomplete acceptance receipts on every
+  # delivery push, but keep it informational. `check_public_specs.py` remains
+  # the blocking authority for a status file that claims ACCEPTED.
+  - id: acceptance-evidence-worklist
+    name: Acceptance evidence worklist (informational)
+    entry: scripts/acceptance_evidence_worklist.sh
+    language: system
+    pass_filenames: false
+    always_run: true
+    stages: [pre-push, manual]
   # Freshness check for this repository's own core-pack skills (see
   # scripts/check_core_skills.py): every backticked repository path and bare
   # console command they mention must still exist on disk / in

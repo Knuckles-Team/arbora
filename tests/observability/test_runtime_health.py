@@ -46,6 +46,7 @@ def test_bound_probes_receive_the_readiness_session_and_decide_readiness():
 
 
 @pytest.mark.parametrize("failure", [RuntimeError("down"), None])
+@pytest.mark.spec("ARBORA-HOST-R008.1007")
 def test_a_failing_probe_is_unhealthy_with_its_reason(failure):
     def probe(_session):
         if failure is not None:
