@@ -280,7 +280,7 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T043 ARBORA-DEPLOY-R010.1 Development skill keeps every original topic.
 - [ ] T044 ARBORA-DEPLOY-R010.2 Deployment examples stay executable and synchronized.
 - [ ] T045 ARBORA-DEPLOY-R010.3 Supported-profile instructions are complete.
-- [ ] T046 ARBORA-DEPLOY-R013.1 Profile and first-boot obligations are retained.
+- [x] T046 ARBORA-DEPLOY-R013.1 Profile and first-boot obligations are retained.
 - [ ] T047 ARBORA-DEPLOY-R013.2 Record explicit deploy or reuse choice per component.
 - [ ] T048 ARBORA-DEPLOY-R013.3 Reused components are connect-only.
 - [ ] T049 ARBORA-DEPLOY-R013.4 Deployment target matrix is complete.
