@@ -93,6 +93,7 @@ def test_build_backend_cannot_see_the_local_dev_source_override() -> None:
         )
 
 
+@pytest.mark.spec("ARBORA-DEPLOY-R014")
 @pytest.mark.parametrize("name", SPLIT_PACKAGES)
 def test_build_backend_metadata_requires_published_floor_not_a_path(
     name: str,
