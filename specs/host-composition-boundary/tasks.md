@@ -148,8 +148,8 @@
 - [x] T151 ARBORA-HOST-R008.1005 Evidence.
 - [x] T152 ARBORA-HOST-R008.1007 Behaviour of correlation and probes.
 - [ ] T153 ARBORA-HOST-R008.1008 Refusals of trace export and asset reading.
-- [ ] T154 ARBORA-HOST-R010.7.2.2.1 Attest runtime ownership.
-- [ ] T155 ARBORA-HOST-R010.7.2.2.2.1 Revalidate borrowed runtime at ASGI startup.
+- [x] T154 ARBORA-HOST-R010.7.2.2.1 Attest runtime ownership.
+- [x] T155 ARBORA-HOST-R010.7.2.2.2.1 Revalidate borrowed runtime at ASGI startup.
 - [ ] T156 ARBORA-HOST-R001.2.1.1 Shared TaskPlan evaluation admission.
 - [ ] T157 ARBORA-HOST-R001.2.1.2 Durable TaskPlan execution bridge.
 - [ ] T158 ARBORA-HOST-R001.2.5 Arbora binds the engine read and write methods to the decision port.
