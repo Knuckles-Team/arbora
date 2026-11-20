@@ -271,8 +271,8 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T034 ARBORA-DEPLOY-R017.14 Helm pinned and default renders.
 - [ ] T035 ARBORA-DEPLOY-R017.15 systemd stays refused.
 - [ ] T036 ARBORA-DEPLOY-R017.16 Environment policy drives the digest check.
-- [ ] T037 ARBORA-DEPLOY-R018.1 Engine endpoint type.
-- [ ] T038 ARBORA-DEPLOY-R018.2 Probe before start.
+- [x] T037 ARBORA-DEPLOY-R018.1 Engine endpoint type.
+- [x] T038 ARBORA-DEPLOY-R018.2 Probe before start.
 - [ ] T039 ARBORA-DEPLOY-R018.3 Start only when absent.
 - [ ] T040 ARBORA-DEPLOY-R018.4 Second process attaches.
 - [ ] T041 ARBORA-DEPLOY-R018.5 Last client out stops the engine arbora started.

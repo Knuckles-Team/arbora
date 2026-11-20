@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
+import concurrent.futures
 import contextvars
 import dataclasses
 import logging
+import socket
 import threading
 import time
-from collections.abc import Callable, Sequence
-from typing import Any
+from collections.abc import Awaitable, Callable, Mapping, Sequence
+from typing import Any, Literal
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
@@ -25,6 +28,142 @@ logger = logging.getLogger(__name__)
 _MAX_RESTARTS = 5
 _RESTART_WINDOW_SECONDS = 300.0
 _MAX_BACKOFF_SECONDS = 30.0
+_DEFAULT_PROBE_TIMEOUT_S = 2.0
+_MAX_PORT = 65535
+
+
+class EngineRefusal(RuntimeError):
+    """A typed refusal of the engine lifecycle; ``code`` is the stable name."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(f"{code}: {message}")
+        self.code = code
+        self.detail = message
+
+
+class EngineEndpointError(EngineRefusal, ValueError):
+    """The engine endpoint text is empty or malformed."""
+
+
+@dataclasses.dataclass(frozen=True)
+class EngineEndpoint:
+    """Where one engine listens: a Unix socket path or a ``host:port`` address."""
+
+    kind: Literal["unix", "tcp"]
+    address: str
+
+    def client_kwargs(self) -> dict[str, str]:
+        """The keyword argument the engine client connects with."""
+        return {"socket_path" if self.kind == "unix" else "tcp_addr": self.address}
+
+
+def _malformed(text: str, why: str) -> EngineEndpointError:
+    return EngineEndpointError(
+        "ENGINE_ENDPOINT_MALFORMED", f"engine endpoint {text!r} is malformed: {why}"
+    )
+
+
+def parse_engine_endpoint(text: Any) -> EngineEndpoint:
+    """Parse one engine endpoint.
+
+    Accepts ``unix:///abs/path``, an absolute path, ``tcp://host:port`` and
+    ``host:port``. Raises :class:`EngineEndpointError` with
+    ``ENGINE_ENDPOINT_EMPTY`` or ``ENGINE_ENDPOINT_MALFORMED``.
+    """
+    value = str(text or "").strip()
+    if not value:
+        raise EngineEndpointError(
+            "ENGINE_ENDPOINT_EMPTY", "the engine endpoint is empty"
+        )
+    if value.startswith("unix://"):
+        value = value.removeprefix("unix://")
+        if not value.startswith("/"):
+            raise _malformed(value, "a socket path must be absolute")
+    if value.startswith("/"):
+        return EngineEndpoint("unix", value)
+    hostport = value.removeprefix("tcp://")
+    host, separator, port = hostport.rpartition(":")
+    if "/" in hostport or not separator or not host:
+        raise _malformed(value, "expected host:port or an absolute socket path")
+    if not port.isascii() or not port.isdigit() or not 1 <= int(port) <= _MAX_PORT:
+        raise _malformed(value, f"the port must be 1 to {_MAX_PORT}")
+    return EngineEndpoint("tcp", f"{host}:{int(port)}")
+
+
+@dataclasses.dataclass(frozen=True)
+class EngineProbe:
+    """What a probe found: ``running`` (the engine answered) or ``absent``."""
+
+    state: Literal["running", "absent"]
+    #: The engine version from its ``Health`` reply, when it gave one.
+    version: str | None = None
+
+
+HealthReader = Callable[[EngineEndpoint, float], Awaitable[Mapping[str, Any]]]
+
+
+async def _engine_health(
+    endpoint: EngineEndpoint, timeout_s: float
+) -> Mapping[str, Any]:
+    """Call the engine ``Health`` method over a local anonymous transport."""
+    from medulla import MedullaClient
+
+    client = await MedullaClient.connect(
+        **endpoint.client_kwargs(),
+        auth_mode="none",
+        connect_timeout=timeout_s,
+        timeout=timeout_s,
+    )
+    try:
+        return await client.health()
+    finally:
+        await client.close()
+
+
+def _reachable(endpoint: EngineEndpoint, timeout_s: float) -> bool:
+    """True when the transport accepts a connection within ``timeout_s``."""
+    try:
+        if endpoint.kind == "unix":
+            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+                sock.settimeout(timeout_s)
+                sock.connect(endpoint.address)
+            return True
+        host, _, port = endpoint.address.rpartition(":")
+        with socket.create_connection((host.strip("[]"), int(port)), timeout_s):
+            return True
+    except OSError:
+        return False
+
+
+def probe_engine(
+    endpoint: EngineEndpoint,
+    timeout_s: float | None = None,
+    *,
+    health: HealthReader | None = None,
+) -> EngineProbe:
+    """Report whether an engine answers on ``endpoint``. Never starts anything.
+
+    The probe opens the transport, then calls the engine ``Health`` method. An
+    engine that answers with a refusal still counts as running. A transport
+    that refuses, or a reply later than ``timeout_s``, counts as absent.
+    """
+    timeout = _DEFAULT_PROBE_TIMEOUT_S if timeout_s is None else float(timeout_s)
+    if not _reachable(endpoint, timeout):
+        return EngineProbe("absent")
+    reader = health or _engine_health
+
+    def ask() -> Mapping[str, Any]:
+        return asyncio.run(asyncio.wait_for(reader(endpoint, timeout), timeout))
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as worker:
+        try:
+            reply = worker.submit(ask).result()
+        except (TimeoutError, OSError):
+            return EngineProbe("absent")
+        except Exception:  # an engine refusal is still an answer
+            return EngineProbe("running")
+    version = reply.get("version") if isinstance(reply, Mapping) else None
+    return EngineProbe("running", str(version) if version else None)
 
 
 @dataclasses.dataclass(frozen=True)
