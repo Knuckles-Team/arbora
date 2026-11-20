@@ -203,14 +203,14 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T043 ARBORA-IDENTITY-R007.2 Mapping dry-run and mode-transition behaviour.
 - [ ] T044 ARBORA-IDENTITY-R009 Multi-provider OIDC with mapping rules and JIT policy (rollup).
 - [ ] T045 ARBORA-IDENTITY-R010 LDAPS bind with nested group sync (rollup).
-- [ ] T046 ARBORA-IDENTITY-R008.1 Typed API-key grant model.
-- [ ] T047 ARBORA-IDENTITY-R008.2 Scope intersection and revocation.
-- [ ] T048 ARBORA-IDENTITY-R009.1 Typed OIDC mapping-rule model.
+- [x] T046 ARBORA-IDENTITY-R008.1 Typed API-key grant model.
+- [x] T047 ARBORA-IDENTITY-R008.2 Scope intersection and revocation.
+- [x] T048 ARBORA-IDENTITY-R009.1 Typed OIDC mapping-rule model.
 - [ ] T049 ARBORA-IDENTITY-R009.2 OIDC authentication flow (rollup).
 - [ ] T050 ARBORA-IDENTITY-R009.2.1 Ordered claim-to-rule evaluation.
 - [ ] T051 ARBORA-IDENTITY-R009.2.2 ID-token validation inputs and typed refusal.
 - [ ] T052 ARBORA-IDENTITY-R009.2.3 OIDC callback wiring.
-- [ ] T053 ARBORA-IDENTITY-R010.1 Typed LDAPS bind-config model.
+- [x] T053 ARBORA-IDENTITY-R010.1 Typed LDAPS bind-config model.
 - [ ] T054 ARBORA-IDENTITY-R010.2 Directory bind and group sync (rollup).
 - [ ] T055 ARBORA-IDENTITY-R010.2.1 Group-DN-to-role mapping evaluation.
 - [ ] T056 ARBORA-IDENTITY-R010.2.2 Bind through an injected directory port.
