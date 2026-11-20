@@ -10,6 +10,8 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
+import pytest
+
 ARBORA_ROOT = Path(__file__).resolve().parents[2] / "arbora"
 FLEET_ROOT = ARBORA_ROOT / "fleet"
 
@@ -32,6 +34,7 @@ def test_fleet_defines_the_multiplexer_implementation() -> None:
     assert "MCPMultiplexer" in found
 
 
+@pytest.mark.spec("ARBORA-HOST-R006.1")
 def test_no_multiplexer_class_is_defined_outside_arbora_fleet() -> None:
     offenders = {
         (path, name)

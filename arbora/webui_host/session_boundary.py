@@ -209,10 +209,37 @@ class BrowserSessionMiddleware:
             await send({"type": "http.response.body", "body": body})
 
 
+def _declared_read_routes() -> frozenset[str]:
+    """The exact anonymous read routes the installed web UI package declares."""
+    try:
+        from overstory.auth_policy import exported_anonymous_read_routes
+    except ImportError:
+        return frozenset()
+    return frozenset(exported_anonymous_read_routes())
+
+
+def _loopback_listener(host: str) -> bool:
+    from arbora.security.anonymous import loopback
+
+    return host == "localhost" or loopback(host)
+
+
 def identity_factory_kwargs(
-    mode: str, boundary: WebUISessionBoundary | None, *, factory: Any = None
+    mode: str,
+    boundary: WebUISessionBoundary | None,
+    *,
+    factory: Any = None,
+    listener_host: str | None = None,
+    read_routes: Callable[[], frozenset[str]] = _declared_read_routes,
 ) -> dict[str, Any]:
-    """Map explicit host configuration to the public WebUI factory contract."""
+    """Map explicit host configuration to the public WebUI factory contract.
+
+    In explicit no-auth mode, when the listener is named, the read routes the
+    web UI package declares are passed as its anonymous read policy
+    (ARBORA-IDENTITY-R004.7.3). Arbora hard-codes no route list, passes no
+    policy in any other mode, and refuses a non-loopback listener or a package
+    that declares no read routes.
+    """
     if mode not in {"required", "none", "eg", "oidc"}:
         raise IdentityUnavailable("unknown WebUI identity mode")
     if mode == "none" and boundary is not None:
@@ -227,4 +254,20 @@ def identity_factory_kwargs(
     kwargs: dict[str, Any] = {"auth_mode": mode} if mode != "required" else {}
     if boundary is not None:
         kwargs["session_boundary"] = boundary
+    if mode == "none" and listener_host is not None:
+        if not _loopback_listener(listener_host):
+            raise IdentityUnavailable("no-auth read routes require a loopback listener")
+        routes = read_routes()
+        if not routes:
+            raise IdentityUnavailable(
+                "installed WebUI declares no anonymous read routes"
+            )
+        if (
+            factory is not None
+            and "anonymous_read_routes" not in inspect.signature(factory).parameters
+        ):
+            raise IdentityUnavailable(
+                "installed WebUI cannot take an anonymous read policy"
+            )
+        kwargs["anonymous_read_routes"] = routes
     return kwargs

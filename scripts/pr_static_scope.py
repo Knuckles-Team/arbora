@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ARCHITECTURE_DIR = "tests/architecture"
 
 STATIC_SCAN_TESTS: tuple[str, ...] = (
+    "tests/access/test_service_imports.py",
     "tests/a2a/test_first_party_facade.py",
     "tests/control_plane/test_boundary.py",
     "tests/core/test_providers.py",
@@ -39,6 +40,7 @@ STATIC_SCAN_TESTS: tuple[str, ...] = (
     "tests/mcp_server/test_engine_wiring_gate.py",
     "tests/mcp_server/test_late_gateway_parity.py",
     "tests/mcp_server/test_task_plan_receipts.py",
+    "tests/messaging/test_import_boundary.py",
     "tests/security/test_credential_lease_machine.py",
     "tests/test_component_registry_boundary_seeds.py",
     "tests/test_connector_pack_typed_publisher.py",
