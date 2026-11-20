@@ -102,7 +102,7 @@
 - [x] T101 ARBORA-HOST-R033.2 Run recorded, idempotent data migrations at serving start; label type-only `ActionDecision` rows.
 - [x] T102 ARBORA-HOST-R033.3 Gate persisted shapes on a declared migration.
 - [x] T103 ARBORA-HOST-R010.9 Refuse unsupported explicit interfaces before workspace, graph or listener effects.
-- [ ] T104 ARBORA-HOST-R009.7 Inject and verify bounded host log authority.
+- [x] T104 ARBORA-HOST-R009.7 Inject and verify bounded host log authority.
 - [ ] T105 ARBORA-HOST-R009.8 Record authenticated requests through the production sink.
 - [ ] T106 ARBORA-HOST-R009.8.2.2.1 Qualify all four real native terminal cases against the pinned released wheel.
 - [ ] T107 ARBORA-HOST-R009.8.2.2.2 Qualify retained metadata and gap clearing in installed Overstory.
