@@ -212,10 +212,10 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T052 ARBORA-IDENTITY-R009.2.3 OIDC callback wiring.
 - [ ] T053 ARBORA-IDENTITY-R010.1 Typed LDAPS bind-config model.
 - [ ] T054 ARBORA-IDENTITY-R010.2 Directory bind and group sync (rollup).
-- [ ] T055 ARBORA-IDENTITY-R010.2.1 Group-DN-to-role mapping evaluation.
-- [ ] T056 ARBORA-IDENTITY-R010.2.2 Bind through an injected directory port.
+- [x] T055 ARBORA-IDENTITY-R010.2.1 Group-DN-to-role mapping evaluation.
+- [x] T056 ARBORA-IDENTITY-R010.2.2 Bind through an injected directory port.
 - [ ] T057 ARBORA-IDENTITY-R010.2.3 Scheduled group sync (rollup).
-- [ ] T058 ARBORA-IDENTITY-R010.2.3.1 Pure sync plan.
+- [x] T058 ARBORA-IDENTITY-R010.2.3.1 Pure sync plan.
 - [ ] T059 ARBORA-IDENTITY-R010.2.3.2 Scheduled directory sync apply.
 - [ ] T060 ARBORA-IDENTITY-R010.2.4 Live directory probe.
 - [ ] T061 ARBORA-IDENTITY-R012 Native SAML service provider (rollup).
