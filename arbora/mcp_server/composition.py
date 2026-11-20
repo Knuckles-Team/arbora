@@ -3,14 +3,21 @@
 from __future__ import annotations
 
 import asyncio
+import atexit
 import concurrent.futures
+import contextlib
 import contextvars
 import dataclasses
+import json
 import logging
+import os
+import signal
 import socket
+import subprocess  # nosec B404 - the one place that starts the local engine
 import threading
 import time
 from collections.abc import Awaitable, Callable, Mapping, Sequence
+from pathlib import Path
 from typing import Any, Literal
 
 from arbora.access.action_policy import ActionPolicies
@@ -240,6 +247,368 @@ def detect_composition(
         messaging_intake_enabled=_explicitly_true(messaging_intake_enabled)
         and (is_gateway_daemon_role or served_network),
     )
+
+
+@dataclasses.dataclass(frozen=True)
+class LocalEngineConfig:
+    """The local engine lifecycle settings (ARBORA-DEPLOY-R018 config keys)."""
+
+    port: int = 47980
+    start_timeout_s: float = 60.0
+    probe_timeout_s: float = 2.0
+    idle_shutdown_s: int = 300
+    stop_grace_s: float = 10.0
+    #: The engine binary; ``None`` uses the one the engine wheel packages.
+    binary: str | None = None
+    #: The persist directory; ``None`` uses ``<user data dir>/engine``.
+    persist_dir: Path | None = None
+    #: Extra engine arguments, for example the explicit local no-auth mode.
+    extra_args: tuple[str, ...] = ()
+
+    @property
+    def endpoint(self) -> EngineEndpoint:
+        return EngineEndpoint("tcp", f"127.0.0.1:{self.port}")
+
+
+_RANGES: Mapping[str, tuple[float, float]] = {
+    "ENGINE_LOCAL_PORT": (1024, 65535),
+    "ENGINE_START_TIMEOUT_S": (5, 600),
+    "ENGINE_PROBE_TIMEOUT_S": (0.1, 30),
+    "ENGINE_IDLE_SHUTDOWN_S": (30, 86400),
+    "ENGINE_STOP_GRACE_S": (1, 120),
+}
+
+
+def _ranged(name: str, default: float) -> float:
+    from arbora.core.settings import setting
+
+    raw = setting(name, default)
+    low, high = _RANGES[name]
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        value = float("nan")
+    if not low <= value <= high:
+        raise EngineRefusal(
+            "ENGINE_CONFIG_INVALID", f"{name} must be a number from {low:g} to {high:g}"
+        )
+    return value
+
+
+def local_engine_config(**overrides: Any) -> LocalEngineConfig:
+    """The lifecycle settings from the environment; ``overrides`` win."""
+    from arbora.core.settings import setting
+
+    base = LocalEngineConfig(
+        port=int(_ranged("ENGINE_LOCAL_PORT", 47980)),
+        start_timeout_s=_ranged("ENGINE_START_TIMEOUT_S", 60),
+        probe_timeout_s=_ranged("ENGINE_PROBE_TIMEOUT_S", 2),
+        idle_shutdown_s=int(_ranged("ENGINE_IDLE_SHUTDOWN_S", 300)),
+        stop_grace_s=_ranged("ENGINE_STOP_GRACE_S", 10),
+        binary=str(setting("MEDULLA_BIN", "") or "") or None,
+    )
+    return dataclasses.replace(base, **overrides)
+
+
+def _persist_dir(config: LocalEngineConfig) -> Path:
+    if config.persist_dir is not None:
+        return config.persist_dir
+    import platformdirs
+
+    return Path(platformdirs.user_data_dir("arbora")) / "engine"
+
+
+def _engine_binary(config: LocalEngineConfig) -> str:
+    """The engine executable, or an ``ENGINE_BINARY_MISSING`` refusal."""
+    if config.binary:
+        path = Path(config.binary).expanduser()
+        if path.is_file() and os.access(path, os.X_OK):
+            return str(path)
+        raise EngineRefusal(
+            "ENGINE_BINARY_MISSING", "MEDULLA_BIN does not name an executable file"
+        )
+    try:
+        from medulla.server_binary import resolve_server_binary
+
+        return resolve_server_binary()
+    except Exception as exc:
+        raise EngineRefusal(
+            "ENGINE_BINARY_MISSING", "no engine binary: install a medulla wheel"
+        ) from exc
+
+
+def _check_launch_contract(binary: str) -> None:
+    """Refuse a binary that cannot stop itself when idle."""
+    try:
+        help_text = subprocess.run(  # noqa: S603  # nosec B603 - fixed argv
+            [binary, "--help"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        ).stdout
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise EngineRefusal(
+            "ENGINE_LAUNCH_CONTRACT_INVALID", "the engine binary cannot report --help"
+        ) from exc
+    if "--idle-shutdown-secs" not in help_text:
+        raise EngineRefusal(
+            "ENGINE_LAUNCH_CONTRACT_INVALID",
+            "the engine binary lacks --idle-shutdown-secs",
+        )
+
+
+@dataclasses.dataclass
+class _Attachment:
+    """One endpoint this process is attached to, with its shared client lock."""
+
+    endpoint: EngineEndpoint
+    config: LocalEngineConfig
+    lock_fd: int
+    process: subprocess.Popen[bytes] | None = None
+
+
+_ATTACHED: dict[str, _Attachment] = {}
+_SPAWNED = 0
+
+
+def engine_spawn_count() -> int:
+    """How many engine processes this process has started."""
+    return _SPAWNED
+
+
+_ATTACHED_LOCK = threading.Lock()
+
+
+def _take_client_lock(endpoint: EngineEndpoint) -> int:
+    from arbora.deployment import engine_lock, file_lock
+
+    fd = os.open(
+        str(engine_lock.engine_clients_lock_path(endpoint.address)),
+        os.O_RDWR | os.O_CREAT,
+        0o644,
+    )
+    try:
+        file_lock.lock_shared_nb(fd)
+    except OSError:
+        # A peer is standing the engine down right now; wait for its verdict.
+        file_lock.lock_shared(fd)
+    return fd
+
+
+def _write_marker(endpoint: EngineEndpoint, pid: int) -> None:
+    from arbora.deployment import engine_lock
+
+    engine_lock.engine_marker_path(endpoint.address).write_text(
+        json.dumps({"pid": pid, "started_at": time.strftime("%Y-%m-%dT%H:%M:%S")})
+    )
+
+
+def _spawn_engine(
+    endpoint: EngineEndpoint, config: LocalEngineConfig
+) -> subprocess.Popen[bytes]:
+    """Start the engine once, under the spawn guard, and record ownership."""
+    from arbora.deployment import engine_lock
+    from arbora.observability.gateway_metrics import ENGINE_SPAWNS
+
+    binary = _engine_binary(config)
+    _check_launch_contract(binary)
+    persist = _persist_dir(config)
+    persist.mkdir(parents=True, exist_ok=True)
+    command = [
+        binary,
+        "--tcp-only",
+        "--tcp-addr",
+        endpoint.address,
+        "--persist-dir",
+        str(persist),
+        "--idle-shutdown-secs",
+        str(config.idle_shutdown_s),
+        *config.extra_args,
+    ]
+    with open(engine_lock.engine_log_path(endpoint.address), "ab") as log:
+        process = subprocess.Popen(  # noqa: S603  # nosec B603 - fixed argv
+            command,
+            stdin=subprocess.DEVNULL,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+    global _SPAWNED
+    _SPAWNED += 1
+    ENGINE_SPAWNS.inc()
+    _write_marker(endpoint, process.pid)
+    logger.info(
+        "started the local engine (pid %s) on %s", process.pid, endpoint.address
+    )
+    return process
+
+
+def _wait_until_running(
+    endpoint: EngineEndpoint,
+    config: LocalEngineConfig,
+    process: subprocess.Popen[bytes],
+) -> None:
+    deadline = time.monotonic() + config.start_timeout_s
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            raise EngineRefusal(
+                "ENGINE_START_TIMEOUT",
+                f"the engine exited with status {process.returncode} while starting",
+            )
+        if probe_engine(endpoint, config.probe_timeout_s).state == "running":
+            return
+        time.sleep(0.2)
+    raise EngineRefusal(
+        "ENGINE_START_TIMEOUT",
+        f"the engine did not answer within {config.start_timeout_s:g} seconds",
+    )
+
+
+def _abandon(endpoint: EngineEndpoint, process: subprocess.Popen[bytes]) -> None:
+    from arbora.deployment import engine_lock
+
+    with contextlib.suppress(OSError):
+        process.terminate()
+        process.wait(timeout=10)
+    with contextlib.suppress(OSError):
+        engine_lock.engine_marker_path(endpoint.address).unlink()
+
+
+def ensure_local_engine(config: LocalEngineConfig | None = None) -> EngineEndpoint:
+    """Return the loopback engine endpoint, starting an engine only when none answers.
+
+    Every process attaches by holding a shared lock on the endpoint's client
+    lock for its life. Only a process that finds no engine starts one, under
+    the per-endpoint spawn guard, and it alone writes the owner marker. On exit
+    the last client out stops an engine this host started
+    (:func:`stand_down_engine`).
+    """
+    from arbora.deployment import engine_lock
+
+    config = config or local_engine_config()
+    endpoint = config.endpoint
+    with _ATTACHED_LOCK:
+        if endpoint.address in _ATTACHED:
+            return endpoint
+        fd = _take_client_lock(endpoint)
+        attachment = _Attachment(endpoint, config, fd)
+        try:
+            if probe_engine(endpoint, config.probe_timeout_s).state != "running":
+                with engine_lock.engine_spawn_guard(endpoint.address) as sole:
+                    if (
+                        probe_engine(endpoint, config.probe_timeout_s).state
+                        != "running"
+                    ):
+                        if not sole:
+                            holder = engine_lock.engine_lock_holder(endpoint.address)
+                            raise EngineRefusal(
+                                "ENGINE_SPAWN_GUARD_BUSY",
+                                "a peer is starting the engine"
+                                f" (pid {(holder or {}).get('pid', '?')})",
+                            )
+                        attachment.process = _spawn_engine(endpoint, config)
+                        try:
+                            _wait_until_running(endpoint, config, attachment.process)
+                        except BaseException:
+                            _abandon(endpoint, attachment.process)
+                            raise
+        except BaseException:
+            _release_client_lock(fd)
+            raise
+        _ATTACHED[endpoint.address] = attachment
+        if len(_ATTACHED) == 1:
+            atexit.register(_stand_down_all)
+    return endpoint
+
+
+def _release_client_lock(fd: int) -> None:
+    from arbora.deployment import file_lock
+
+    file_lock.unlock(fd)
+    try:
+        os.close(fd)
+    except OSError:
+        pass
+
+
+def _pid_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def stand_down_engine(endpoint: EngineEndpoint) -> bool:
+    """Release this process's client lock; stop the engine when it owns the last one.
+
+    Returns True when this call stopped the engine. The engine is stopped only
+    when no other client holds the client lock and the owner marker exists.
+    Otherwise it is left running.
+    """
+    from arbora.deployment import engine_lock, file_lock
+
+    with _ATTACHED_LOCK:
+        attachment = _ATTACHED.pop(endpoint.address, None)
+    if attachment is None:
+        return False
+    _release_client_lock(attachment.lock_fd)
+    fd = os.open(
+        str(engine_lock.engine_clients_lock_path(endpoint.address)),
+        os.O_RDWR | os.O_CREAT,
+        0o644,
+    )
+    try:
+        try:
+            file_lock.lock_exclusive_nb(fd)
+        except OSError:
+            return False  # another client remains
+        marker = engine_lock.engine_marker_path(endpoint.address)
+        if not marker.exists():
+            return False
+        return _stop_marked_engine(endpoint, attachment, marker)
+    finally:
+        file_lock.unlock(fd)
+        os.close(fd)
+
+
+def _stop_marked_engine(
+    endpoint: EngineEndpoint, attachment: _Attachment, marker: Path
+) -> bool:
+    pid = int(json.loads(marker.read_text())["pid"])
+    process = attachment.process
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        marker.unlink(missing_ok=True)
+        return False
+    deadline = time.monotonic() + attachment.config.stop_grace_s
+    while time.monotonic() < deadline:
+        if process is not None and process.pid == pid:
+            if process.poll() is not None:
+                break
+        elif not _pid_alive(pid):
+            break
+        time.sleep(0.1)
+    else:
+        logger.warning(
+            "the engine on %s did not stop within the grace", endpoint.address
+        )
+    marker.unlink(missing_ok=True)
+    return True
+
+
+def _stand_down_all() -> None:
+    for attachment in list(_ATTACHED.values()):
+        try:
+            stand_down_engine(attachment.endpoint)
+        except Exception:
+            logger.exception(
+                "engine stand-down failed for %s", attachment.endpoint.address
+            )
 
 
 class CoServiceSupervisor:

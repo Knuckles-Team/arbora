@@ -67,11 +67,29 @@ def _runtime_base() -> Path:
     return base
 
 
+def _transport_digest(socket_path: str | None) -> str:
+    sock = socket_path or _DEFAULT_SOCKET
+    return hashlib.sha256(str(sock).encode("utf-8")).hexdigest()[:8]
+
+
 def engine_lock_path(socket_path: str | None) -> Path:
     """Per-socket engine lock path: ``engine-<sha8(socket)>.lock``."""
-    sock = socket_path or _DEFAULT_SOCKET
-    digest = hashlib.sha256(str(sock).encode("utf-8")).hexdigest()[:8]
-    return _runtime_base() / f"engine-{digest}.lock"
+    return _runtime_base() / f"engine-{_transport_digest(socket_path)}.lock"
+
+
+def engine_clients_lock_path(socket_path: str | None) -> Path:
+    """The lock every attached client holds shared: ``engine-<sha8>.clients.lock``."""
+    return _runtime_base() / f"engine-{_transport_digest(socket_path)}.clients.lock"
+
+
+def engine_marker_path(socket_path: str | None) -> Path:
+    """The marker of an engine this host started: ``engine-<sha8>.owner``."""
+    return _runtime_base() / f"engine-{_transport_digest(socket_path)}.owner"
+
+
+def engine_log_path(socket_path: str | None) -> Path:
+    """Where the engine this host started writes its log."""
+    return _runtime_base() / f"engine-{_transport_digest(socket_path)}.log"
 
 
 def _record_holder(fd: int, transport_key: str | None) -> None:
