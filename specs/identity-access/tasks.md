@@ -175,7 +175,7 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T018 ARBORA-IDENTITY-R004.8 Complete all anonymous task access children.
 - [x] T019 ARBORA-IDENTITY-R004.8.1 Implement and test the served read contract with synthetic native evidence.
 - [ ] T020 ARBORA-IDENTITY-R004.8.2 Reconcile native anonymous ownership and qualify installed reads before activation.
-- [ ] T021 ARBORA-IDENTITY-R004.8.3 Qualify the existing public native client adapter with synthetic transport tests.
+- [x] T021 ARBORA-IDENTITY-R004.8.3 Qualify the existing public native client adapter with synthetic transport tests.
 
 
 - [ ] T022 ARBORA-IDENTITY-R004.9 Complete the local anonymous text execution children.
