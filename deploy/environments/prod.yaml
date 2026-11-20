@@ -142,6 +142,8 @@ public_ingress:
   tls_secret_ref: k8s-secret://platform/arbora-public-ingress-tls
   callback_uri: https://arbora.example/auth/callback
   trusted_proxy: ingress-controller
+  legacy_hostname: null
+  legacy_redirect_until: null
 
 validation:
   readiness_checks:

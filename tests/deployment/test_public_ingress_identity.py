@@ -8,6 +8,8 @@ here (ARBORA-INGRESS-R001.2+).
 
 from __future__ import annotations
 
+from datetime import date
+
 import pytest
 
 from arbora.deployment.config_generator import generate_config
@@ -29,6 +31,8 @@ _VALID = {
     "tls_secret_ref": "k8s-secret://arbora/public-ingress-tls",
     "callback_uri": "https://arbora.example.com/auth/callback",
     "trusted_proxy": "ingress-controller",
+    "legacy_hostname": None,
+    "legacy_redirect_until": None,
 }
 
 
@@ -154,3 +158,34 @@ def test_profile_renders_origin_callback_and_proxy() -> None:
     assert rendered["callback_uri"] == "https://arbora-dev.example/auth/callback"
     assert rendered["trusted_proxy"] == "ingress-controller"
     assert generate_config("tiny")["WEBUI_ORIGIN"] == rendered["public_origin"]
+
+
+@pytest.mark.spec("ARBORA-INGRESS-R001.3")
+def test_legacy_redirect_is_bounded() -> None:
+    today = date(2026, 11, 20)
+    profile = public_ingress_profile_from_mapping(
+        {
+            **_VALID,
+            "legacy_hostname": "old-arbora.example",
+            "legacy_redirect_until": "2026-12-20",
+        },
+        today=today,
+    )
+
+    assert profile.legacy_redirect_route(rendered_on=today) == {
+        "hostname": "old-arbora.example",
+        "status": "308",
+        "location": "https://arbora.example.com{path}",
+        "until": "2026-12-20",
+    }
+    assert profile.legacy_redirect_route(rendered_on=date(2026, 12, 21)) is None
+
+    with pytest.raises(PublicIngressProfileError, match="LEGACY_REDIRECT_TOO_LONG"):
+        public_ingress_profile_from_mapping(
+            {
+                **_VALID,
+                "legacy_hostname": "old-arbora.example",
+                "legacy_redirect_until": "2027-03-01",
+            },
+            today=today,
+        )

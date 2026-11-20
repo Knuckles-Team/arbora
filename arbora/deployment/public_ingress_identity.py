@@ -18,6 +18,7 @@ import hashlib
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import date, timedelta
 from typing import Any
 
 from .genesis_environments import EnvironmentProfileError
@@ -47,6 +48,8 @@ _REQUIRED_KEYS = (
     "tls_secret_ref",
     "callback_uri",
     "trusted_proxy",
+    "legacy_hostname",
+    "legacy_redirect_until",
 )
 
 
@@ -73,6 +76,8 @@ class PublicIngressProfile:
     tls_secret_ref: str
     callback_uri: str
     trusted_proxy: str
+    legacy_hostname: str | None
+    legacy_redirect_until: date | None
 
     @property
     def profile_digest(self) -> str:
@@ -83,6 +88,10 @@ class PublicIngressProfile:
                 self.public_origin,
                 self.callback_uri,
                 self.trusted_proxy,
+                self.legacy_hostname or "",
+                self.legacy_redirect_until.isoformat()
+                if self.legacy_redirect_until is not None
+                else "",
             )
         ).encode("utf-8")
         return hashlib.sha256(material).hexdigest()
@@ -101,6 +110,24 @@ class PublicIngressProfile:
             "trusted_proxy": self.trusted_proxy,
             "tls_secret_ref": self.tls_secret_ref,
             "profile_digest": self.profile_digest,
+        }
+
+    def legacy_redirect_route(self, *, rendered_on: date) -> dict[str, str] | None:
+        """Return the bounded same-path redirect route, if it is still active.
+
+        The deploy renderer owns translating this small, transport-neutral shape
+        into its ingress resource.  Keeping the date comparison here ensures a
+        stale profile cannot continue to render a legacy hostname route.
+        """
+        if self.legacy_hostname is None or self.legacy_redirect_until is None:
+            return None
+        if rendered_on > self.legacy_redirect_until:
+            return None
+        return {
+            "hostname": self.legacy_hostname,
+            "status": "308",
+            "location": f"{self.public_origin}{{path}}",
+            "until": self.legacy_redirect_until.isoformat(),
         }
 
 
@@ -179,7 +206,45 @@ def _validate_trusted_proxy(trusted_proxy: Any) -> str:
     return trusted_proxy
 
 
-def public_ingress_profile_from_mapping(raw: Any) -> PublicIngressProfile:
+def _validate_legacy_redirect(
+    hostname: Any, until: Any, *, today: date
+) -> tuple[str | None, date | None]:
+    """Validate the all-or-nothing, short-lived legacy ingress route."""
+    if hostname is None and until is None:
+        return None, None
+    if (
+        not isinstance(hostname, str)
+        or not hostname
+        or "/" in hostname
+        or "*" in hostname
+    ):
+        raise PublicIngressProfileError(
+            "public ingress profile 'legacy_hostname' must name one concrete host."
+        )
+    if not isinstance(until, str):
+        raise PublicIngressProfileError(
+            "public ingress profile 'legacy_redirect_until' must be an ISO date."
+        )
+    try:
+        parsed_until = date.fromisoformat(until)
+    except ValueError as exc:
+        raise PublicIngressProfileError(
+            "public ingress profile 'legacy_redirect_until' must be an ISO date."
+        ) from exc
+    if parsed_until < today:
+        raise PublicIngressProfileError(
+            "public ingress profile 'legacy_redirect_until' must not be in the past."
+        )
+    if parsed_until > today + timedelta(days=90):
+        raise PublicIngressProfileError(
+            "public ingress profile 'legacy_redirect_until' is LEGACY_REDIRECT_TOO_LONG."
+        )
+    return hostname, parsed_until
+
+
+def public_ingress_profile_from_mapping(
+    raw: Any, *, today: date | None = None
+) -> PublicIngressProfile:
     """Build and validate a :class:`PublicIngressProfile` from a plain mapping.
 
     Raises :class:`PublicIngressProfileError` naming the exact key for every
@@ -198,6 +263,11 @@ def public_ingress_profile_from_mapping(raw: Any) -> PublicIngressProfile:
     tls_secret_ref = _validate_tls_secret_ref(raw["tls_secret_ref"])
     callback_uri = _validate_callback_uri(raw["callback_uri"], public_origin)
     trusted_proxy = _validate_trusted_proxy(raw["trusted_proxy"])
+    legacy_hostname, legacy_redirect_until = _validate_legacy_redirect(
+        raw["legacy_hostname"],
+        raw["legacy_redirect_until"],
+        today=today or date.today(),
+    )
 
     return PublicIngressProfile(
         version=version,
@@ -205,4 +275,6 @@ def public_ingress_profile_from_mapping(raw: Any) -> PublicIngressProfile:
         tls_secret_ref=tls_secret_ref,
         callback_uri=callback_uri,
         trusted_proxy=trusted_proxy,
+        legacy_hostname=legacy_hostname,
+        legacy_redirect_until=legacy_redirect_until,
     )
