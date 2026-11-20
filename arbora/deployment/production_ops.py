@@ -414,14 +414,25 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
 
 
 async def _onboard_fleet(
-    served_url: str, allow_mass_withdrawal: frozenset[str] = frozenset()
+    served_url: str,
+    allow_mass_withdrawal: frozenset[str] = frozenset(),
+    *,
+    sandbox: bool = False,
 ) -> dict[str, Any]:
     """Run one full fleet onboarding pass under Arbora's process session.
 
     ``allow_mass_withdrawal`` names the servers whose import the operator
     approved to withdraw more than half of the published pack surface.
+    ``sandbox`` selects the declared sandbox fleet profile: only its
+    connectors are onboarded, and only their failures (or a shared
+    infrastructure failure) fail the run (ARBORA-FLEET-R085, R085.1).
     """
 
+    from arbora.deployment.sandbox_fleet import (
+        load_sandbox_profile,
+        onboarding_ok,
+        select_endpoints,
+    )
     from arbora.fleet.declarations import Declarations
     from arbora.fleet.onboarding import (
         FleetOnboarding,
@@ -434,6 +445,10 @@ async def _onboard_fleet(
     from arbora.security.actor_context import use_actor
     from arbora.security.session import use_session
 
+    profile = load_sandbox_profile() if sandbox else None
+    endpoints = configured_fleet_endpoints(exclude=self_served_connectors())
+    if profile is not None:
+        endpoints = select_endpoints(endpoints, profile)
     session = runtime._mint_process_session("http")
     with use_actor(session.actor), use_session(session):
         engine = runtime._get_engine()
@@ -448,13 +463,13 @@ async def _onboard_fleet(
                 action_policies=ActionPolicies(),
                 allow_mass_withdrawal=allow_mass_withdrawal,
             ),
-            configured_fleet_endpoints(exclude=self_served_connectors()),
+            endpoints,
             served_url=served_url,
         )
     # Failure detail can name endpoints; the CLI prints only each error type.
     return {
         "operation": "onboard-fleet",
-        "ok": not report.failed,
+        "ok": onboarding_ok(report.failed, profile),
         **report.as_dict(private=True),
     }
 
@@ -580,6 +595,14 @@ def _parser() -> argparse.ArgumentParser:
             " half of the published surface (repeatable, or comma-separated)."
         ),
     )
+    onboard.add_argument(
+        "--sandbox",
+        action="store_true",
+        help=(
+            "Onboard only the declared sandbox fleet profile; only its failures"
+            " fail the run."
+        ),
+    )
     _served_url_argument(
         subparsers.add_parser(
             "check-fleet-coverage",
@@ -608,7 +631,11 @@ _OPERATIONS: dict[str, Any] = {
     ),
     "provision-semantic-content": _provision,
     "onboard-fleet": lambda args: asyncio.run(
-        _onboard_fleet(args.served_url, _server_names(args.allow_mass_withdrawal))
+        _onboard_fleet(
+            args.served_url,
+            _server_names(args.allow_mass_withdrawal),
+            sandbox=args.sandbox,
+        )
     ),
     "check-fleet-coverage": lambda args: asyncio.run(_check_fleet_coverage()),
 }
