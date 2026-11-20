@@ -340,7 +340,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T072 ARBORA-FLEET-R023 Connector count pins stay consistent across the fleet.
 - [ ] T073 ARBORA-FLEET-R023.1 Pure connector count-pin comparison (producer).
 - [ ] T074 ARBORA-FLEET-R024 Fleet reconciliation, scaling and deploy watch are served by arbora (rollup).
-- [ ] T075 ARBORA-FLEET-R051.1 Catalog reload rejects invalid candidates.
+- [x] T075 ARBORA-FLEET-R051.1 Catalog reload rejects invalid candidates.
 - [ ] T076 ARBORA-FLEET-R051.2 Multi-replica convergence is observed by generation and digest.
 - [ ] T077 ARBORA-FLEET-R024.1 Deploy-watch verdict is a typed Arbora operation.
 - [ ] T078 ARBORA-FLEET-R024.2 Reconcile, scale and deploy-watch dispatch are served operations.
