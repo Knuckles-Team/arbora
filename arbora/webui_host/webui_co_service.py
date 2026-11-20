@@ -228,7 +228,10 @@ def run_web_ui(
     from arbora.webui_host.session_boundary import identity_factory_kwargs
 
     identity_kwargs = identity_factory_kwargs(
-        config.webui_auth_mode, session_boundary, factory=create_agent_web_app
+        config.webui_auth_mode,
+        session_boundary,
+        factory=create_agent_web_app,
+        listener_host=bind_host,
     )
     app = create_agent_web_app(
         agent,

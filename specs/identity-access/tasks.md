@@ -328,5 +328,5 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T166 ARBORA-IDENTITY-R030.4.7 Derive the native redirect URIs and default scopes from the harness profile table.
 - [x] T167 ARBORA-IDENTITY-R030.4.8 Advertise the native sign-in scopes in the protected-resource metadata and the challenge. Evidence: `tests/identity/test_native_signin_scopes.py::test_metadata_scopes_supported_equal_the_native_contract_scopes`.
 - [x] T168 ARBORA-IDENTITY-R030.4.9 Report every identity contract state in readiness. Evidence: `tests/identity/test_native_signin_scopes.py::test_readiness_reports_each_identity_state`.
-- [ ] T169 ARBORA-IDENTITY-R004.7.3 Explicit no-auth composes the web UI read routes. Size: S, 1 PR, 2 hours.
+- [x] T169 ARBORA-IDENTITY-R004.7.3 Explicit no-auth composes the web UI read routes. Size: S, 1 PR, 2 hours.
 - [ ] T170 ARBORA-IDENTITY-R004.10 An optional sandbox principal exercises authenticated paths on loopback. Size: M, 1 PR, 4 hours.
