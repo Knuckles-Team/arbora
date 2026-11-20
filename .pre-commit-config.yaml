@@ -139,6 +139,13 @@ repos:
 
 - repo: local
   hooks:
+  - id: reference-pin-lint
+    name: Deployment — shared pipelines references use main
+    entry: python3 scripts/check_wiring.py reference-pins
+    language: system
+    pass_filenames: false
+    always_run: true
+    stages: [pre-commit, pre-push]
   # arbora's Python orphan-module wiring gate (see
   # AGENTS.md "Orphan-module wiring gate (Python)"): a
   # arbora/ module with no production fan-in and no production fan-out
