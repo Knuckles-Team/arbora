@@ -148,6 +148,10 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         webui, "orchestrator_model", types.ModuleType("overstory.orchestrator_model")
     )
     _export(webui, "server", types.ModuleType("overstory.server"))
+    declared_reads = frozenset({"/api/apps", "/api/apps/city/status"})
+    webui_apps = types.ModuleType("overstory.apps")
+    _export(webui_apps, "anonymous_read_routes", lambda: declared_reads)
+    monkeypatch.setitem(sys.modules, "overstory.apps", webui_apps)
     browser_control = types.ModuleType("overstory.browser_control")
 
     async def revalidate_browser_control_session(_binding: object) -> bool:
@@ -184,6 +188,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         browser_control: object | None = None,
         auth_mode: str = "required",
         session_boundary: object | None = None,
+        anonymous_read_routes: frozenset[str] = frozenset(),
     ) -> object:
         calls["app"] = {
             "agent": agent,
@@ -194,6 +199,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
             "browser_control": browser_control,
             "auth_mode": auth_mode,
             "session_boundary": session_boundary,
+            "anonymous_read_routes": anonymous_read_routes,
         }
         return "webui-app"
 
@@ -240,10 +246,12 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     # route tests separately exercise admission and operation ownership.
     boundary = object.__new__(WebUISessionBoundary) if auth_mode == "eg" else None
     policies = ActionPolicies()
+    # No-auth serves only on loopback; every other mode keeps the public bind.
+    listener = "127.0.0.1" if auth_mode == "none" else "0.0.0.0"
     module.run_web_ui(
         stop_event,
         action_policies=policies,
-        host="0.0.0.0",
+        host=listener,
         port=8181,
         session_boundary=boundary,
     )
@@ -257,7 +265,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
             "call_mcp_tool": "mcp-helper",
             "transcribe_voice": "voice-helper",
         },
-        "listener_host": "0.0.0.0",
+        "listener_host": listener,
         "application_composer": None
         if auth_mode == "eg"
         else module.compose_web_application,
@@ -265,6 +273,8 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         "browser_control": service,
         "auth_mode": auth_mode,
         "session_boundary": boundary,
+        # R004.7.3: the declared read routes pass in no-auth mode only.
+        "anonymous_read_routes": declared_reads if auth_mode == "none" else frozenset(),
     }
     assert calls["contact_factory"] is create_agent_web_app
     assert callable(calls["contact_runner"])
@@ -275,7 +285,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     assert calls["browser_revalidator"] is revalidate_browser_control_session
     assert calls["uvicorn_config"] == {
         "app": "webui-app",
-        "host": "0.0.0.0",
+        "host": listener,
         "port": 8181,
         "access_log": False,
     }
