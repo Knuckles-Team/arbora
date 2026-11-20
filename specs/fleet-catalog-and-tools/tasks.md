@@ -306,10 +306,10 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T038 ARBORA-FLEET-R009.2 Routing and composition publish only through acquired capacity.
 - [ ] T039 ARBORA-FLEET-R009.3 Run admission publishes with all-or-nothing capacity control.
 - [ ] T040 ARBORA-FLEET-R003.3 Write-back idempotency and preview gating survive a service restart.
-- [ ] T041 ARBORA-FLEET-R006.1 Harvest call-site inventory, the removal baseline.
-- [ ] T042 ARBORA-FLEET-R006.2 Skill/prompt body-harvest cutover for an already-admitted child.
+- [x] T041 ARBORA-FLEET-R006.1 Harvest call-site inventory, the removal baseline.
+- [x] T042 ARBORA-FLEET-R006.2 Skill/prompt body-harvest cutover for an already-admitted child.
 - [ ] T043 ARBORA-FLEET-R006.3 Dead harvest helpers removed (rollup over `.3.1` to `.3.4`).
-- [ ] T044 ARBORA-FLEET-R006.3.1 Deliver `_probe_protocol_families` harvest calls routed through the cutover helper.
+- [x] T044 ARBORA-FLEET-R006.3.1 Deliver `_probe_protocol_families` harvest calls routed through the cutover helper.
 - [ ] T045 ARBORA-FLEET-R006.3.2 Non-admitted fallback and `_harvest_resource_bodies` deleted.
 - [ ] T046 ARBORA-FLEET-R006.3.3 Deadline and error-reason helpers deleted.
 - [ ] T047 ARBORA-FLEET-R006.3.4 Harvest specs deleted.
