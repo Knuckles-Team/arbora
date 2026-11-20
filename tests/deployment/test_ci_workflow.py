@@ -63,7 +63,8 @@ def test_pull_requests_run_only_fast_python_314_jobs() -> None:
     for name in ("gates", "build"):
         text = yaml.safe_dump(jobs[name])
         assert "3.12" not in text
-    assert jobs["gates"]["timeout-minutes"] <= 20
+    # FULL scope (dependency changes) runs the whole suite: 23m20s measured on main.
+    assert jobs["gates"]["timeout-minutes"] <= 40
     assert jobs["build"]["timeout-minutes"] <= 10
 
 
