@@ -173,17 +173,17 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - ARBORA-IDENTITY-R004.6: Qualify the separate local browser transport and discriminated attended proof before runtime wiring.
 - ARBORA-IDENTITY-R004.6: Prove policy, gesture, exact action binding, revocation and separate mutation confirmation without an identity upgrade.
 - [ ] T018 ARBORA-IDENTITY-R004.8 Complete all anonymous task access children.
-- [ ] T019 ARBORA-IDENTITY-R004.8.1 Implement and test the served read contract with synthetic native evidence.
+- [x] T019 ARBORA-IDENTITY-R004.8.1 Implement and test the served read contract with synthetic native evidence.
 - [ ] T020 ARBORA-IDENTITY-R004.8.2 Reconcile native anonymous ownership and qualify installed reads before activation.
-- [ ] T021 ARBORA-IDENTITY-R004.8.3 Qualify the existing public native client adapter with synthetic transport tests.
+- [x] T021 ARBORA-IDENTITY-R004.8.3 Qualify the existing public native client adapter with synthetic transport tests.
 
 
 - [ ] T022 ARBORA-IDENTITY-R004.9 Complete the local anonymous text execution children.
-- [ ] T023 ARBORA-IDENTITY-R004.9.1 Compose native admission and the received text-only harness in source tests.
+- [x] T023 ARBORA-IDENTITY-R004.9.1 Compose native admission and the received text-only harness in source tests.
 - [ ] T024 ARBORA-IDENTITY-R004.9.2 Qualify installed local sends and cancellation before activation.
 - [ ] T025 ARBORA-IDENTITY-R004.9.3 Qualify owner-bound durable answer recovery.
 
-- [ ] T026 ARBORA-IDENTITY-R004.9.3.1 Test bounded native event storage and committed-reference recovery in source composition.
+- [x] T026 ARBORA-IDENTITY-R004.9.3.1 Test bounded native event storage and committed-reference recovery in source composition.
 - [ ] T027 ARBORA-IDENTITY-R004.9.3.2 Qualify installed host and native restart recovery.
 - [ ] T028 ARBORA-IDENTITY-R001 Elevation request, approve and revoke operations on every surface.
 - [ ] T029 ARBORA-IDENTITY-R002 Domain scopes consume the generated scope registry.
@@ -284,12 +284,12 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T124 ARBORA-IDENTITY-R004.4 Host browser-session adapter.
 - [ ] T125 ARBORA-IDENTITY-R004.5 Same-owner HTTP dispatch fence.
 - [ ] T126 ARBORA-IDENTITY-R004.6 Explicit anonymous effect migration.
-- [ ] T127 ARBORA-IDENTITY-R004.7.1 Host mode configuration source contract.
+- [x] T127 ARBORA-IDENTITY-R004.7.1 Host mode configuration source contract.
 - [ ] T128 ARBORA-IDENTITY-R004.7.2 Installed identity-mode startup qualification.
-- [ ] T129 ARBORA-IDENTITY-R004.4.1 Bound HTTP adapter source contract.
+- [x] T129 ARBORA-IDENTITY-R004.4.1 Bound HTTP adapter source contract.
 - [ ] T130 ARBORA-IDENTITY-R004.4.2 Installed browser identity lifecycle qualification.
-- [ ] T131 ARBORA-IDENTITY-R004.5.1 Private same-owner dispatch source contract.
-- [ ] T132 ARBORA-IDENTITY-R004.5.2 Canonical WebUI factory safety source contract.
+- [x] T131 ARBORA-IDENTITY-R004.5.1 Private same-owner dispatch source contract.
+- [x] T132 ARBORA-IDENTITY-R004.5.2 Canonical WebUI factory safety source contract.
 - [ ] T133 ARBORA-IDENTITY-R004.5.3 Installed dispatch and streaming qualification.
 - [ ] T134 ARBORA-IDENTITY-R013.1 CLI skeleton with claim and link-claim.
 - [ ] T135 ARBORA-IDENTITY-R013.2 CLI transition, reset-admin and rotate.
@@ -303,6 +303,8 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T143 ARBORA-IDENTITY-R018.6 Admin gate.
 - [ ] T144 ARBORA-IDENTITY-R018.7 Identity operations served parity.
 - [ ] T145 ARBORA-IDENTITY-R019.7 Register approvals operations.
+- [ ] T171 ARBORA-IDENTITY-R019.8 A held action files its approval as an engine control lease: new `arbora/access/approval_leases.py` (`file_approval`, `granted_approval`), `ActionPolicy.queue_approval` and `granted_approval_id` call it, `ServedEngine.control_leases` gives the synchronous view; L2 tests and the L4 real-boot test.
+- [ ] T172 ARBORA-IDENTITY-R019.9 Every approval door lists and decides the same control leases: `fleet_approvals` reads `pending_approvals`, `ApprovalDecisions.decide` transitions the lease; the `ActionApproval` node path is deleted.
 - [ ] T146 ARBORA-IDENTITY-R651 Share grant and revoke operations.
 - [ ] T147 ARBORA-IDENTITY-R652 Graph ownership plan and apply operations.
 - [ ] T148 ARBORA-IDENTITY-R030 Coding clients and terminal UIs authenticate natively (rollup).
@@ -326,3 +328,5 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T166 ARBORA-IDENTITY-R030.4.7 Derive the native redirect URIs and default scopes from the harness profile table.
 - [x] T167 ARBORA-IDENTITY-R030.4.8 Advertise the native sign-in scopes in the protected-resource metadata and the challenge. Evidence: `tests/identity/test_native_signin_scopes.py::test_metadata_scopes_supported_equal_the_native_contract_scopes`.
 - [x] T168 ARBORA-IDENTITY-R030.4.9 Report every identity contract state in readiness. Evidence: `tests/identity/test_native_signin_scopes.py::test_readiness_reports_each_identity_state`.
+- [ ] T169 ARBORA-IDENTITY-R004.7.3 Explicit no-auth composes the web UI read routes. Size: S, 1 PR, 2 hours.
+- [ ] T170 ARBORA-IDENTITY-R004.10 An optional sandbox principal exercises authenticated paths on loopback. Size: M, 1 PR, 4 hours.

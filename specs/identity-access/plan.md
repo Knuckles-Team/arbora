@@ -131,6 +131,16 @@ The MCP `identity.*` twin is read and low-risk self service only. Identity admin
 
 OIDC validates discovery metadata, issuer/audience/signature, `state`/`nonce`, PKCE S256 and callback binding. Ordered mappings union matching targets; no match grants only the base user role under JIT-create, or denies under JIT-deny. Source-tagged memberships are replaced on every login/sync while local grants remain. Link by verified email is off unless explicitly enabled per provider. Logout uses `id_token_hint` where supported. LDAP accepts LDAPS or StartTLS only, escapes RFC 4515 filters, bounds recursion and paging, and deprovisions disabled users. SCIM binds each token to one provider. SAML is brokered through an OIDC provider initially, so Arbora does not parse XML signatures. SMTP is optional; with no adapter, email-only routes and UI options are unavailable. All external adapters have deterministic local test doubles.
 
+### Action approvals are engine control leases (R019.8, R019.9)
+
+The engine owns the approval record. It keeps `ActionApproval`, `ControlLease` and `Gap` rows for its native paths and refuses a generic node write of them, so an approval is an `action.approval` control lease: filed with `IssueControlLease`, listed with `ListControlLeases`, decided with `TransitionControlLease` (`active` to `consumed` approves, `active` to `revoked` denies). The engine's schema-repair attach reads the same kind and the same `consumed` meaning.
+
+- One module, `arbora/access/approval_leases.py`, holds the kind, the 24-hour lifetime (the engine's maximum lease span), the grant shape and the four calls (`file_approval`, `granted_approval`, `pending_approvals`, `decide_approval`). The action policy, the fleet routes, the governance tool and `ApprovalDecisions` call it; the served `approvals.*` operations stay on the async client and project with the same `approval_lease_to_props`.
+- The synchronous action policy reaches the engine through `ServedEngine.control_leases`, a blocking view over the session graph's client that carries the verified session's tenant. Every call still runs under the caller's session; the view widens nothing.
+- Dedup is by request digest, not by target: the digest is what a grant must match, so reusing an approval for a different request would leave that request held forever.
+- An approval expires 24 hours after filing whether or not it was decided. A consumed lease stays the request's approval until it expires; this is the same single-request binding the policy receipt already checks.
+- Failure is closed: no lease view, an engine refusal or a collision gives no approval id, and the hold becomes `unavailable`.
+
 ### Decisions, failure modes, and observability
 
 One engine-backed authority eliminates local/engine disagreement. Unavailable engine or secrets store means login/identity mutation fail closed. Use distinct internal reason codes but safe public messages. Cover bad signing key, unknown `kid`, wrong tenant/audience, stale epoch, revoked credential, denied scope, and unavailable external IdP. Emit metrics for issuance, login failures, mode transitions, denied access and adapter availability. Those metrics carry no subject, token, password or raw IP labels. Audit all privileged identity/access changes and sampled denials through engine authority. No readiness gate needs an existing external provider; optional live-provider qualification is a separate deployment exercise.
@@ -629,6 +639,20 @@ Delivery runs in phases P1 to P5. Concept-proof scenarios define each phase (`AR
 ### Phase placement notes
 
 Native client authentication: the operator enrols a named client once. The client then fetches tokens itself or through a header helper. The served endpoint publishes protected-resource metadata, so clients with native OAuth need no bridge. This retires the token-refresh service and the stdio bridge.
+
+### Local no-auth sandbox (ARBORA-IDENTITY-R004.7.3, R004.10)
+
+The web UI co-service calls `create_agent_web_app` without an anonymous read policy today. In explicit no-auth mode every web UI API route therefore answers 403. The web UI package declares the exact read routes for a trusted host. `identity_factory_kwargs` passes that declaration in mode `none` only, on a loopback listener. Arbora keeps no route list of its own. Write routes run as the optional sandbox principal or refuse.
+
+The sandbox principal is minted by the sandbox command only, in a throwaway store, with one declared role. No other profile reaches the mint function. The cross-repository prerequisite is a web UI row that declares the read routes for a trusted host. File that row before implementation.
+
+- **Owner.** Arbora owns the route composition and the sandbox principal. The web UI package owns the route declaration. The engine owns principal admission.
+- **Cohesion.** One function selects the read policy by mode. One module mints the principal.
+- **Dependency direction.** The co-service calls `identity_factory_kwargs`. The sandbox command calls the mint function. Neither imports the other.
+- **Interface depth.** One factory argument and one mint function. Internals stay private.
+- **Special cases.** None. Every mode except `none` passes an empty policy.
+- **State.** The principal exists for one sandbox run. `down` deletes it with the store.
+- **Environment.** The sandbox profile alone enables the mint. Production profiles refuse it.
 
 ## Phase 2: Task approach
 

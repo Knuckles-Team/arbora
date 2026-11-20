@@ -71,6 +71,14 @@ class CodingSessionAdmitted:
     grants: tuple[WorkspaceGrant, ...] = field(default=(), init=False)
 
 
+@dataclass(frozen=True)
+class EffectDecision:
+    """One in-memory permission result; it never performs the effect."""
+
+    outcome: str
+    refusal_reason: AcpRefusalReason | None = None
+
+
 class CodingSessionAdmission:
     """Extend session policy without performing or forwarding host effects."""
 
@@ -78,6 +86,9 @@ class CodingSessionAdmission:
         self, policy: AcpSessionPolicy, *, trusted_roots: frozenset[str]
     ) -> None:
         self._sessions = AcpSessionAdmission(policy)
+        self._standing_grants: dict[
+            tuple[PrincipalContext, datetime, str], set[ClientCapability]
+        ] = {}
         self._trusted_roots = frozenset(trusted_roots)
         for root in self._trusted_roots:
             _validate_root(root)
@@ -121,3 +132,47 @@ class CodingSessionAdmission:
         if method != ClientCapability.READ_TEXT_FILE:
             raise AcpRefusal(AcpRefusalReason.PERMISSION_REQUIRED)
         return replace(session, snapshot=snapshot)
+
+    def decide_effect(
+        self,
+        session: CodingSessionAdmitted,
+        method: str,
+        *,
+        client_connected: bool,
+        chat_adapter_available: bool,
+        permission_answer: str | None = None,
+        now: datetime | None = None,
+    ) -> EffectDecision:
+        """Apply one client answer for an admitted capability without forwarding it."""
+        snapshot = self._sessions.check_message(
+            session.snapshot, chat_adapter_available=chat_adapter_available, now=now
+        )
+        if session.request.workspace_root not in self._trusted_roots:
+            raise AcpRefusal(AcpRefusalReason.UNTRUSTED_ROOT)
+        if not client_connected:
+            raise AcpRefusal(AcpRefusalReason.CLIENT_DISCONNECTED)
+        try:
+            capability = ClientCapability(method)
+        except ValueError:
+            raise AcpRefusal(AcpRefusalReason.CAPABILITY_NOT_DECLARED) from None
+        if capability not in session.request.client_capabilities:
+            raise AcpRefusal(AcpRefusalReason.CAPABILITY_NOT_DECLARED)
+        if capability is ClientCapability.READ_TEXT_FILE:
+            return EffectDecision("granted")
+        key = (snapshot.principal, snapshot.admitted_at, session.request.workspace_root)
+        if capability in self._standing_grants.get(key, set()):
+            return EffectDecision("standing")
+        if permission_answer is None:
+            return EffectDecision(
+                "permission_required", AcpRefusalReason.PERMISSION_REQUIRED
+            )
+        if permission_answer == "allow_once":
+            return EffectDecision("granted")
+        if permission_answer == "allow_always":
+            self._standing_grants.setdefault(key, set()).add(capability)
+            return EffectDecision("granted")
+        if permission_answer == "reject":
+            return EffectDecision("denied")
+        return EffectDecision(
+            "permission_required", AcpRefusalReason.PERMISSION_REQUIRED
+        )

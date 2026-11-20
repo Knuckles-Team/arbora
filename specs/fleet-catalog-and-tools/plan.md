@@ -567,6 +567,18 @@ Pre-untangled design for these rows, one line per answer.
 
 Question ids (medulla catalog entries of kind `Rank`): `catalog.tool_rank`, `catalog.skill_rank`, `catalog.operation_rank`, `catalog.catalog_item_rank`, `catalog.intent_action_rank`. The request never carries a score, a rank or a threshold.
 
+### Sandbox fleet profile (ARBORA-FLEET-R085)
+
+Without credentials the catalog holds only Arbora's own 45 items: 29 prompts, 15 skills, 1 resource and no connectors. A sandbox fleet profile declares a closed set of connectors that run locally from fixture data. `onboard-fleet` takes its endpoint set from the profile when the sandbox is active. The report lists each connector. The exit code fails only for a connector of the declared set. The connector SDK owns the fixture-serving mode. No SDK row for it exists yet. File that row before implementation.
+
+- **Owner.** Arbora owns the profile file and the onboarding report. The connector SDK owns the fixture-serving mode.
+- **Cohesion.** One loader reads the profile. One report function sets the exit status.
+- **Dependency direction.** `onboard-fleet` calls the loader. The loader imports no fleet runtime module.
+- **Interface depth.** One typed profile and one flag. Internals stay private.
+- **Special cases.** None. A connector name is data in the profile, never a branch.
+- **State.** The profile is read-only data. No new persisted field exists.
+- **Environment.** The sandbox selects the profile. A production profile never reads it.
+
 ## Phase 2: Task approach
 
 tasks.md carries one numbered task line for each active row. Tasks run producer first. A task marked `[P]` may run in parallel with its neighbours.

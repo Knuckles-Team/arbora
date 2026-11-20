@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-11-19
+
+### Added
+
+- Native sign-in advertises the scopes a client may request, including `offline_access`, so an MCP client that asks for offline access receives a durable refresh token and stays signed in past the identity provider's session limits.
+- The identity provider configuration is reconciled from one declared file.
+- SPARQL 1.1 Protocol and Graph Store endpoints, covered schema projections, an engine-backed finance receipt store, and connector source approvals in the fleet catalog.
+
+### Fixed
+
+- Sign-in scopes are passed as typed arguments.
+- An expired engine session is renewed during the catalog warm-up.
+- A declared destructive tool needs a plan whatever its arguments say.
+- Error text and docstrings no longer name a secret storage path.
+
 ## [0.1.10] - 2026-11-12
 
 ### Changed

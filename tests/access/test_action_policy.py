@@ -90,13 +90,16 @@ def test_policy_cache_is_per_engine() -> None:
 
 
 class _Graph:
+    """The verified approval writer: records each lease decision."""
+
     def __init__(self, applied: bool) -> None:
         self.applied = applied
-        self.calls: list[tuple[str, dict[str, Any], dict[str, Any]]] = []
+        self.calls: list[tuple[str, str]] = []
 
-    def compare_and_set_node_fields(self, node_id, expected, update):
-        self.calls.append((node_id, expected, update))
-        return self.applied
+    def decide(self, approval_id: str, status: str) -> None:
+        self.calls.append((approval_id, status))
+        if not self.applied:
+            raise LookupError("approval is missing or no longer pending")
 
 
 def _bind(graph: _Graph) -> tuple[approval.ApprovalDecisions, list[str]]:
@@ -110,6 +113,7 @@ def _bind(graph: _Graph) -> tuple[approval.ApprovalDecisions, list[str]]:
     return approval.ApprovalDecisions(scope), scopes
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R019.9")
 @pytest.mark.parametrize(
     ("decision", "status"),
     [("approve", "approved"), ("Approved", "approved"), ("reject", "denied")],
@@ -120,9 +124,10 @@ def test_approval_decision_writes_through_the_session(decision, status) -> None:
     result = decisions.decide(None, "action_approval:1", decision)
     assert result == {"approval_id": "action_approval:1", "decision": status}
     assert scopes == ["kg:write"]
-    assert graph.calls[0][1] == {"status": "pending"}
+    assert graph.calls == [("action_approval:1", status)]
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R019.9")
 @pytest.mark.parametrize(
     ("approval_id", "decision", "bound", "applied", "error"),
     [

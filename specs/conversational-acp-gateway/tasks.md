@@ -6,7 +6,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Tasks run p
 
 - [x] T001 [US1] ARBORA-ACP-R001.1 Implement the typed ACP session-policy model and admission check with the unauthenticated, expiry and `chat_adapter_unavailable` refusals.
 - [x] T002 [US1] ARBORA-ACP-R001.3 Define the frozen coding-session request, grant and admitted types in `arbora/acp/coding_session.py`.
-- [ ] T003 [US1] ARBORA-ACP-R001.4 Add `decide_effect` with the workspace trust and permission rules.
+- [x] T003 [US1] ARBORA-ACP-R001.4 Add `decide_effect` with the workspace trust and permission rules.
 - [ ] T004 [US1] ARBORA-ACP-R001.6 Add `PERMISSION_DENIED` and return every typed reason as ACP error -32001 before any forwarded request.
 - [ ] T005 [US1] ARBORA-ACP-R001.5 Add `_EffectTransport` so the effect path reaches the session policy.
 - [ ] T006 [US1] ARBORA-ACP-R001.7 Emit one trace record per admission and capability request.

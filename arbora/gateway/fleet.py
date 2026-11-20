@@ -20,7 +20,7 @@ no separate supervisor service. Everything here surfaces state the ecosystem
   sessions owned by another host get ``pause_requested``/``kill_requested``,
   which the owning host's goal loop reconciles on its next tick
   (CONCEPT:MERISTEM-OS.state.fleet-supervisory-plane-at).
-* **approvals** — pending mutation/risk approvals stored as ``ActionApproval`` nodes,
+* **approvals** — pending mutation/risk approvals stored as engine ``action.approval`` control leases,
   read and decided through the parity-covered ``graph_query`` / ``graph_governance``
   tools.
 
@@ -342,31 +342,22 @@ async def fleet_kill(request: Request) -> JSONResponse:
 
 
 async def fleet_approvals(request: Request) -> JSONResponse:
-    """List pending mutation/risk approvals.
+    """List pending action approvals.
 
-    ``ActionApproval`` is immutable approval evidence filed by the operational
-    ActionPolicy gate (CONCEPT:MERISTEM-OS.deployment.fleet-lifecycle-control). A WorkItem is
-    created or
-    released only after authorization; unclaimed operational work is never
-    misrepresented as a pending human decision.
+    An approval is an engine ``action.approval`` control lease filed by the
+    operational ActionPolicy gate (ARBORA-IDENTITY-R019.8/.9,
+    CONCEPT:MERISTEM-OS.deployment.fleet-lifecycle-control). A WorkItem is
+    created or released only after authorization; unclaimed operational work
+    is never misrepresented as a pending human decision.
     """
 
     pending: list = []
     note = None
     try:
+        from arbora.access.approval_leases import pending_approvals
         from arbora.gateway.ports import gateway_application
 
-        rows = (
-            gateway_application()
-            .engine()
-            .query_cypher(
-                "MATCH (a:ActionApproval {status: 'pending'}) RETURN a LIMIT 200"
-            )
-        )
-        for row in rows or []:
-            props = row.get("a") if isinstance(row, dict) else None
-            if isinstance(props, dict):
-                pending.append(props)
+        pending = pending_approvals(gateway_application().engine())
     except Exception as exc:
         logger.warning("Fleet approval source unavailable: %s", exc)
         note = "approval_source_unavailable"
@@ -377,7 +368,7 @@ async def fleet_approvals(request: Request) -> JSONResponse:
 
 
 async def fleet_grant_approval(request: Request) -> JSONResponse:
-    """Atomically grant or deny a pending ``ActionApproval`` by id."""
+    """Atomically grant or deny one pending ``action.approval`` lease by id."""
 
     try:
         body = await request.json()
@@ -389,7 +380,9 @@ async def fleet_grant_approval(request: Request) -> JSONResponse:
         return JSONResponse(
             {"status": "error", "message": "job_id is required"}, status_code=400
         )
-    if str(job_id).startswith("action_approval:"):
+    from arbora.access.approval_leases import APPROVAL_ID_PREFIX
+
+    if str(job_id).startswith(APPROVAL_ID_PREFIX):
         try:
             from arbora.gateway.ports import gateway_application
 
@@ -415,7 +408,7 @@ async def fleet_grant_approval(request: Request) -> JSONResponse:
     return JSONResponse(
         {
             "status": "error",
-            "message": "approval_id must identify an ActionApproval",
+            "message": "approval_id must identify an action approval",
         },
         status_code=400,
     )
@@ -429,7 +422,7 @@ async def fleet_verify_action(request: Request) -> JSONResponse:
     ``ActionPolicy.evaluate()`` core. POST body: ``{kind, target, params, source,
     reason, actor_id}``. Read-only — runs the same deterministic role/schema/
     precondition/reference invariants ``ActionPolicy.decide()`` enforces for real,
-    without writing an ``ActionDecision``/``ActionApproval`` node, so a caller can
+    without writing an ``ActionDecision`` node or an approval lease, so a caller can
     validate a routing payload before proposing it for real execution.
     """
     import json
