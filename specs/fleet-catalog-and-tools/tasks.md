@@ -338,7 +338,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T070 ARBORA-FLEET-R022 Catalog reconciliation re-ingests via durable replay.
 - [ ] T071 ARBORA-FLEET-R051 Catalog reload rejects invalid candidates, proves replica convergence (rollup).
 - [ ] T072 ARBORA-FLEET-R023 Connector count pins stay consistent across the fleet.
-- [ ] T073 ARBORA-FLEET-R023.1 Pure connector count-pin comparison (producer).
+- [x] T073 ARBORA-FLEET-R023.1 Pure connector count-pin comparison (producer).
 - [ ] T074 ARBORA-FLEET-R024 Fleet reconciliation, scaling and deploy watch are served by arbora (rollup).
 - [x] T075 ARBORA-FLEET-R051.1 Catalog reload rejects invalid candidates.
 - [ ] T076 ARBORA-FLEET-R051.2 Multi-replica convergence is observed by generation and digest.
