@@ -539,7 +539,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T271 [US1] ARBORA-FLEET-R015.6 A connector's destructive declaration decides at the door; no argument lifts the plan requirement. Size: XS, 1 PR, 1 hour.
 - [ ] T272 [US1] ARBORA-FLEET-R084 The fleet serves the city layout read from the engine world view. Size: S, 1 PR, 2 hours.
 - [ ] T273 [US1] ARBORA-FLEET-R085 A sandbox fleet profile fills the catalog without external credentials (rollup). Size: L, 2 PRs, 1 day.
-- [ ] T274 [US1] ARBORA-FLEET-R085.1 The fleet onboarding command reports each connector and exits non-zero only for the declared set. Size: S, 1 PR, 2 hours.
+- [x] T274 [US1] ARBORA-FLEET-R085.1 The fleet onboarding command reports each connector and exits non-zero only for the declared set. Size: S, 1 PR, 2 hours.
 - [ ] T275 [US1] ARBORA-FLEET-R086 The fleet serves graph neighbourhoods as city chunks. Size: S, 1 PR, 2 hours.
 - [ ] T276 [US1] ARBORA-FLEET-R087 The fleet serves the city edit layer. Size: S, 1 PR, 2 hours.
 - [ ] T277 [US1] ARBORA-FLEET-R088 The fleet serves the city mapping registry, growth rules and seed. Size: S, 1 PR, 2 hours.
