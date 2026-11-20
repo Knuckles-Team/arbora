@@ -6,8 +6,8 @@ Governing spec: [spec.md](spec.md). Design: [plan.md](plan.md).
 - [x] T001 ARBORA-ACCEPTANCE-R001.1 implement the typed `EvidenceRecord`/`RequirementGap` model and `gaps_for_status`/`load_status` functions plus the standalone CLI entry point in `scripts/check_acceptance_evidence.py`.
 - [x] T002 ARBORA-ACCEPTANCE-R001.1 add the refusal test for a missing/malformed `status.json` alongside the gap-detection unit tests in `tests/test_check_acceptance_evidence.py`.
 - [ ] T003 ARBORA-ACCEPTANCE-R002 wire an auditor-identity check (reviewer distinct from the `merged_head` commit author) into the review/merge convention for an `acceptance_state` change.
-- [ ] T004 ARBORA-ACCEPTANCE-R003 add the append-only regression test comparing two revisions of a `status.json`.
-- [ ] T005 ARBORA-ACCEPTANCE-R004 extend the fixture suite with the stale-operational-evidence case once R001.1 lands.
+- [x] T004 ARBORA-ACCEPTANCE-R003 add the append-only regression test comparing two revisions of a `status.json`.
+- [x] T005 ARBORA-ACCEPTANCE-R004 extend the fixture suite with the stale-operational-evidence case once R001.1 lands.
 - [ ] T006 ARBORA-ACCEPTANCE-R005 wire the checker into the repository's pre-commit/CI spec-check group as an informational (non-blocking) worklist report.
 - Run focused tests and `scripts/check_public_specs.py`; capture exact revision and results in `status.json`.
 - [ ] T007 ARBORA-ACCEPTANCE-R002 Review evidence and change `acceptance_state` only after required gates and the distinct-auditor review in .
