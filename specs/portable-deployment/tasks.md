@@ -253,7 +253,7 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T016 ARBORA-DEPLOY-R011 Deployment test suite passes in full.
 - [ ] T017 ARBORA-DEPLOY-R012 Pipelines dependency is referenced at main, never pinned.
 - [ ] T018 ARBORA-DEPLOY-R014 Split packages are consumed by published version range.
-- [ ] T019 ARBORA-DEPLOY-R015 AVX2 guard test runs on any hosted runner.
+- [x] T019 ARBORA-DEPLOY-R015 AVX2 guard test runs on any hosted runner.
 - [ ] T020 ARBORA-DEPLOY-R016 The serving container is the one in-pod host process.
 - [ ] T021 ARBORA-DEPLOY-R017.1 Placement Decide mapping.
 - [ ] T022 ARBORA-DEPLOY-R017.2 Request assembly for a deployment task.
