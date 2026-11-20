@@ -7,7 +7,7 @@ See [design](plan.md) and [tests](test-spec.md). Generated delivery evidence is 
 - [x] T003 ARBORA-MESSAGING-R001 Wire `InboundRouter.start()`/`_supervise_backend()`/`stop()` to call `transition()` and expose a per-backend state read (`ARBORA-MESSAGING-R001` rollup, `ARBORA-MESSAGING-R002`, `ARBORA-MESSAGING-R004`).
 - [x] T004 ARBORA-MESSAGING-R005.1 Wire `MessagingRegistry.create_all_enabled` to record a typed `DEGRADED` entry for a missing/import-failed adapter instead of only logging (`ARBORA-MESSAGING-R005.1`).
 - [x] T005 ARBORA-MESSAGING-R003 Add the backoff-sequence and healthy-reset tests against the live router (`ARBORA-MESSAGING-R003`).
-- [ ] T006 ARBORA-MESSAGING-R006 Add the static import-boundary check (`ARBORA-MESSAGING-R006`, `MSG-T08`).
+- [x] T006 ARBORA-MESSAGING-R006 Add the static import-boundary check (`ARBORA-MESSAGING-R006`, `MSG-T08`).
 - [ ] T007 ARBORA-MESSAGING-R005.1 Preserve and serve the typed missing-adapter behavior from MessagingRegistry.create_all_enabled; prove other configured channels still start (ARBORA-MESSAGING-R005.1, MSG-T07).
 - [ ] T008 ARBORA-MESSAGING-R001.1 Compose the operator-enabled messaging projection into authenticated dashboard and graph_configure(action="health") responses while preserving detail-free unauthenticated probes (MSG-T09, MSG-T12).
 - [ ] T009 ARBORA-MESSAGING-R001.1 Prove the configured/disabled/unconfigured/unavailable state matrix, safe reason codes, and alert-eligibility rule through the real served health surface (MSG-T10, MSG-T11).
