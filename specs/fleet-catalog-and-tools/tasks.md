@@ -299,7 +299,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T031 ARBORA-FLEET-R006 Multiplexer skill and prompt harvest path removed.
 - [ ] T032 ARBORA-FLEET-R007 Bridge runs on FastMCP 4 with native primitives (rollup).
 - [ ] T033 ARBORA-FLEET-R008 RUM, security-audit and CI/CD feeds join the catalog (rollup).
-- [ ] T034 ARBORA-FLEET-R008.1 Typed feed-event model per feed kind.
+- [x] T034 ARBORA-FLEET-R008.1 Typed feed-event model per feed kind.
 - [ ] T035 ARBORA-FLEET-R008.2 Live feed ingestion wired into the catalog.
 - [ ] T036 ARBORA-FLEET-R009 Run admission evaluates, commits and publishes with capacity control.
 - [ ] T037 ARBORA-FLEET-R009.1 Capacity acquisition is all-or-nothing with one re-decision.
