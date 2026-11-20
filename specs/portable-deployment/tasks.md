@@ -248,8 +248,8 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T011 ARBORA-DEPLOY-R007.5 arbora-release-canary is declared only by arbora.
 - [ ] T012 ARBORA-DEPLOY-R007.6 The Arbora doctor checks the served engine families and graph connections.
 - [ ] T013 ARBORA-DEPLOY-R008 Arbora hosts its own boundary modules.
-- [ ] T014 ARBORA-DEPLOY-R009.1 Arbora hosts a typed arbora.core.config_admin hosting/deployment settings module.
-- [ ] T015 ARBORA-DEPLOY-R009.4 Arbora owns the config administration core.
+- [x] T014 ARBORA-DEPLOY-R009.1 Arbora hosts a typed arbora.core.config_admin hosting/deployment settings module.
+- [x] T015 ARBORA-DEPLOY-R009.4 Arbora owns the config administration core.
 - [ ] T016 ARBORA-DEPLOY-R011 Deployment test suite passes in full.
 - [ ] T017 ARBORA-DEPLOY-R012 Pipelines dependency is referenced at main, never pinned.
 - [ ] T018 ARBORA-DEPLOY-R014 Split packages are consumed by published version range.
