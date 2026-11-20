@@ -27,6 +27,7 @@ def test_arbora_owns_channel_adapter(platform: str, class_name: str) -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-MESSAGING-R800.3")
 @pytest.mark.parametrize(
     ("platform", "class_name", "sdk_module", "extra"),
     [

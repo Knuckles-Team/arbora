@@ -82,7 +82,7 @@
 - [ ] T081 ARBORA-HOST-R009.4 Define and prove bound log delivery and shutdown through the owning production entrypoint.
 - [ ] T082 ARBORA-HOST-R009.5 Define and prove publish the terminal log-consumer handoff through the owning production entrypoint.
 - [ ] T083 ARBORA-HOST-R009.6 Define and prove prove start and logs through real processes through the owning production entrypoint.
-- [ ] T084 ARBORA-HOST-R006.1 Define and prove preserve the sole multiplexer owner through the owning production entrypoint.
+- [x] T084 ARBORA-HOST-R006.1 Define and prove preserve the sole multiplexer owner through the owning production entrypoint.
 - [ ] T085 ARBORA-HOST-R006.2 Define and prove use one standard transport scaffold through the owning production entrypoint.
 - [ ] T086 ARBORA-HOST-R023.1 Define and prove preserve the entire intent surface through the owning production entrypoint.
 - [ ] T087 ARBORA-HOST-R023.2 Define and prove prove transport parity on the served surface through the owning production entrypoint.
@@ -102,16 +102,19 @@
 - [x] T101 ARBORA-HOST-R033.2 Run recorded, idempotent data migrations at serving start; label type-only `ActionDecision` rows.
 - [x] T102 ARBORA-HOST-R033.3 Gate persisted shapes on a declared migration.
 - [x] T103 ARBORA-HOST-R010.9 Refuse unsupported explicit interfaces before workspace, graph or listener effects.
-- [ ] T104 ARBORA-HOST-R009.7 Inject and verify bounded host log authority.
+- [x] T104 ARBORA-HOST-R009.7 Inject and verify bounded host log authority.
 - [ ] T105 ARBORA-HOST-R009.8 Record authenticated requests through the production sink.
-- [ ] T106 ARBORA-HOST-R009.8.2.2.1 Qualify all four real native terminal cases against the pinned released wheel.
+- [x] T106 ARBORA-HOST-R009.8.2.2.1 Qualify all four real native terminal cases against the pinned released wheel.
 - [ ] T107 ARBORA-HOST-R009.8.2.2.2 Qualify retained metadata and gap clearing in installed Overstory.
+- [x] T135 ARBORA-HOST-R009.8.1 Admit exact source generations for host-log reads.
+- [x] T136 ARBORA-HOST-R009.8.2.1 Replay retained host files with fresh grant and cursor validation.
+- [x] T137 ARBORA-HOST-R009.8.2.2 Project source metadata and retention gaps in the host-log batch.
 - [x] T108 ARBORA-HOST-R004 Keep one gateway package. Evidence: `tests/architecture/test_single_gateway_implementation.py::test_single_gateway_and_retired_script_and_extra_absent`.
 - [ ] T109 ARBORA-HOST-R007.2.69 Add the declared-module fence test `tests/test_package_layout.py::test_arbora_imports_only_meristem_public_modules` and its planted-violation proof.
 - [x] T110 ARBORA-HOST-R012 Publish the Arbora and connector SDK boundary seeds. Evidence: `tests/test_component_registry_boundary_seeds.py`.
 - [x] T111 ARBORA-HOST-R007.2.1 Keep `arbora/a2a/authority.py` free of imports of the retired harness package name. Evidence: `tests/a2a/test_authority.py::test_selected_tool_subset_is_refused_before_durable_admission`.
 - [x] T112 ARBORA-HOST-R007.2.2 Keep `arbora/a2a/routing.py` free of imports of the retired harness package name. Evidence: `tests/a2a/test_authority.py::test_router_routes_to_the_named_or_the_default_agent`.
-- [ ] T113 ARBORA-HOST-R007.2.3 Prove `arbora/access/service.py` imports no agent runtime module with `tests/access/test_service_imports.py`.
+- [x] T113 ARBORA-HOST-R007.2.3 Prove `arbora/access/service.py` imports no agent runtime module with `tests/access/test_service_imports.py`.
 - [x] T114 ARBORA-HOST-R007.2.55 Keep `arbora/mcp_server/server.py` free of imports of the retired harness package name. Evidence: `tests/mcp_server/test_browser_composition.py::test_packaged_console_injects_exact_identity_factory`.
 - [x] T115 ARBORA-HOST-R007.2.68 Keep `arbora/webui_host/webui_co_service.py` free of imports of the retired harness package name. Evidence: `tests/mcp_server/test_composition.py::test_webui_co_service_uses_arbora_host`.
 - [ ] T116 ARBORA-HOST-R007.2.70 Rename the remaining harness imports from retired harness-package to `meristem` across `arbora/` and `tests/`.
@@ -145,11 +148,11 @@
 - [ ] T148 ARBORA-HOST-R008.1002 Behaviour of the turn handler and send gate.
 - [ ] T149 ARBORA-HOST-R008.1003 Wiring of messaging, readiness and A2A mounting.
 - [ ] T150 ARBORA-HOST-R008.1004 Refusals of send, A2A and readiness.
-- [ ] T151 ARBORA-HOST-R008.1005 Evidence.
-- [ ] T152 ARBORA-HOST-R008.1007 Behaviour of correlation and probes.
+- [x] T151 ARBORA-HOST-R008.1005 Evidence.
+- [x] T152 ARBORA-HOST-R008.1007 Behaviour of correlation and probes.
 - [ ] T153 ARBORA-HOST-R008.1008 Refusals of trace export and asset reading.
-- [ ] T154 ARBORA-HOST-R010.7.2.2.1 Attest runtime ownership.
-- [ ] T155 ARBORA-HOST-R010.7.2.2.2.1 Revalidate borrowed runtime at ASGI startup.
+- [x] T154 ARBORA-HOST-R010.7.2.2.1 Attest runtime ownership.
+- [x] T155 ARBORA-HOST-R010.7.2.2.2.1 Revalidate borrowed runtime at ASGI startup.
 - [ ] T156 ARBORA-HOST-R001.2.1.1 Shared TaskPlan evaluation admission.
 - [ ] T157 ARBORA-HOST-R001.2.1.2 Durable TaskPlan execution bridge.
 - [ ] T158 ARBORA-HOST-R001.2.5 Arbora binds the engine read and write methods to the decision port.
