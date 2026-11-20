@@ -43,11 +43,11 @@ See [design](plan.md) and [tests](test-spec.md). Generated delivery evidence is 
 - [ ] T039 ARBORA-MESSAGING-R009.19 Yuanbao channel (`yuanbao`).
 - [ ] T040 ARBORA-MESSAGING-R009.20 Zalo Official Account channel (`zalo`).
 - [ ] T041 ARBORA-MESSAGING-R009.21 Zalo personal account channel (`zalouser`).
-- [ ] T042 ARBORA-MESSAGING-R800.1 Model: contract records and entry-point discovery.
-- [ ] T043 ARBORA-MESSAGING-R800.2 Behavior.
-- [ ] T044 ARBORA-MESSAGING-R800.3 Wiring: lazy adapter loading names the missing extra.
-- [ ] T045 ARBORA-MESSAGING-R800.4 Refusal.
-- [ ] T046 ARBORA-MESSAGING-R800.5 Evidence.
+- [x] T042 ARBORA-MESSAGING-R800.1 Model: contract records and entry-point discovery.
+- [x] T043 ARBORA-MESSAGING-R800.2 Behavior.
+- [x] T044 ARBORA-MESSAGING-R800.3 Wiring: lazy adapter loading names the missing extra.
+- [x] T045 ARBORA-MESSAGING-R800.4 Refusal.
+- [x] T046 ARBORA-MESSAGING-R800.5 Evidence.
 - [ ] T047 ARBORA-MESSAGING-R800.6 Hot-path proof: render and dispatch latency.
 - [ ] T048 ARBORA-MESSAGING-R800.1000 Intake lease on the engine WorkItem methods.
 - [ ] T049 ARBORA-MESSAGING-R800.1001 Behavior.
