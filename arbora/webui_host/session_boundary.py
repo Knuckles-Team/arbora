@@ -212,10 +212,10 @@ class BrowserSessionMiddleware:
 def _declared_read_routes() -> frozenset[str]:
     """The exact anonymous read routes the installed web UI package declares."""
     try:
-        from overstory.apps import anonymous_read_routes
+        from overstory.auth_policy import exported_anonymous_read_routes
     except ImportError:
         return frozenset()
-    return frozenset(anonymous_read_routes())
+    return frozenset(exported_anonymous_read_routes())
 
 
 def _loopback_listener(host: str) -> bool:

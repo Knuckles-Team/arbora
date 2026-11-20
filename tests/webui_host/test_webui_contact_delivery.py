@@ -149,9 +149,9 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     )
     _export(webui, "server", types.ModuleType("overstory.server"))
     declared_reads = frozenset({"/api/apps", "/api/apps/city/status"})
-    webui_apps = types.ModuleType("overstory.apps")
-    _export(webui_apps, "anonymous_read_routes", lambda: declared_reads)
-    monkeypatch.setitem(sys.modules, "overstory.apps", webui_apps)
+    webui_policy = types.ModuleType("overstory.auth_policy")
+    _export(webui_policy, "exported_anonymous_read_routes", lambda: declared_reads)
+    monkeypatch.setitem(sys.modules, "overstory.auth_policy", webui_policy)
     browser_control = types.ModuleType("overstory.browser_control")
 
     async def revalidate_browser_control_session(_binding: object) -> bool:
