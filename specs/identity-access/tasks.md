@@ -196,10 +196,10 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T036 ARBORA-IDENTITY-R005.1 Consume exact persisted session facts.
 - [ ] T037 ARBORA-IDENTITY-R005.2 Account ceremonies and throttling.
 - [ ] T038 ARBORA-IDENTITY-R006 Optional MFA with TOTP, WebAuthn and recovery codes (rollup).
-- [ ] T039 ARBORA-IDENTITY-R006.1 Typed MFA enrollment model.
+- [x] T039 ARBORA-IDENTITY-R006.1 Typed MFA enrollment model.
 - [ ] T040 ARBORA-IDENTITY-R006.2 MFA ceremonies.
 - [ ] T041 ARBORA-IDENTITY-R007 Admin console tabs with mapping dry-run and mode wizard (rollup).
-- [ ] T042 ARBORA-IDENTITY-R007.1 Typed admin-console tab model.
+- [x] T042 ARBORA-IDENTITY-R007.1 Typed admin-console tab model.
 - [ ] T043 ARBORA-IDENTITY-R007.2 Mapping dry-run and mode-transition behaviour.
 - [ ] T044 ARBORA-IDENTITY-R009 Multi-provider OIDC with mapping rules and JIT policy (rollup).
 - [ ] T045 ARBORA-IDENTITY-R010 LDAPS bind with nested group sync (rollup).
