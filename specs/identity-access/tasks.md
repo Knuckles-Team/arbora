@@ -225,12 +225,12 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T065 ARBORA-IDENTITY-R011.2.2 SCIM credential check.
 - [ ] T066 ARBORA-IDENTITY-R011.2.3 SCIM create/patch/deactivate handlers.
 - [ ] T067 ARBORA-IDENTITY-R011.2.4 SCIM route registration.
-- [ ] T068 ARBORA-IDENTITY-R012.1 Typed SAML service-provider model.
+- [x] T068 ARBORA-IDENTITY-R012.1 Typed SAML service-provider model.
 - [ ] T069 ARBORA-IDENTITY-R012.2 SAML assertion verification and sign-in (rollup).
-- [ ] T070 ARBORA-IDENTITY-R012.2.1 Typed parsed-assertion model and condition checks.
-- [ ] T071 ARBORA-IDENTITY-R012.2.2 Signature verification through an injected verifier port.
+- [x] T070 ARBORA-IDENTITY-R012.2.1 Typed parsed-assertion model and condition checks.
+- [x] T071 ARBORA-IDENTITY-R012.2.2 Signature verification through an injected verifier port.
 - [ ] T072 ARBORA-IDENTITY-R012.2.3 SAML replay check and sign-in wiring (rollup).
-- [ ] T073 ARBORA-IDENTITY-R012.2.3.1 Replay check through a seen-assertion-id store port.
+- [x] T073 ARBORA-IDENTITY-R012.2.3.1 Replay check through a seen-assertion-id store port.
 - [ ] T074 ARBORA-IDENTITY-R012.2.3.2 SAML sign-in handler.
 - [ ] T075 ARBORA-IDENTITY-R012.2.4 Live SAML provider sign-in probe.
 - [ ] T076 ARBORA-IDENTITY-R013 Identity CLI commands and doctor diagnostics (rollup).
