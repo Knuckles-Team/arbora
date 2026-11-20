@@ -323,3 +323,4 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T086 [US1] ARBORA-DEPLOY-R020.1 Every pack class extends an engine core class. Size: M, 1 PR, 4 hours.
 - [ ] T087 [US1] ARBORA-DEPLOY-R020.2 Every prompt passes the engine blueprint validation. Size: M, 1 PR, 4 hours.
 - [ ] T088 [US1] ARBORA-DEPLOY-R020.3 CI proves provisioning into a fresh store on the pinned engine. Size: M, 1 PR, 4 hours.
+- [ ] T089 [US1] ARBORA-DEPLOY-R021 Every deploy delivers the current registry manifest and proves it readable. Size: S, 1 PR, 2 hours.
