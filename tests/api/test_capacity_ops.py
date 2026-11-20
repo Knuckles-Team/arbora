@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 from test_invoke_contract import caller as _caller
@@ -37,7 +38,7 @@ _PARTITION_PARAMS = {
 }
 
 
-def _partition_context(**services: object) -> SimpleNamespace:
+def _partition_context(**services: Any) -> SimpleNamespace:
     context = _context(tenant="t1", **services)
     context.caller.policy_revision = "p1"
     return context
