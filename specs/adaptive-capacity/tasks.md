@@ -4,7 +4,7 @@
 - [ ] T002 ARBORA-CAPACITY-R001 Add a pure, partitioned AIMD controller and deterministic budget-window fixtures.
 - [x] T003 ARBORA-CAPACITY-R001.1 (child, producer): `arbora/fleet/error_budget.py` + `tests/fleet/test_error_budget.py`.
 - [ ] T004 ARBORA-CAPACITY-R001 Connect one limiter to the existing fleet dispatch path; prove observe mode does not enforce.
-- [ ] T005 ARBORA-CAPACITY-R002 Add `capacity.throttle.status` and `capacity.throttle.set_mode` to the shared hosted operation registry with exact scopes, audit reservation and parity tests.
+- [x] T005 ARBORA-CAPACITY-R002 Add `capacity.throttle.status` and `capacity.throttle.set_mode` to the shared hosted operation registry with exact scopes, audit reservation and parity tests.
 - [ ] T006 ARBORA-CAPACITY-R001 Prove fail-closed stale premise, unavailable policy/audit, tenant isolation and restart behavior.
 - [ ] T007 ARBORA-CAPACITY-R001 Run all portable source, scanner and package gates on an exact commit; attach CI and artifact identity.
 - [ ] T008 ARBORA-CAPACITY-R001 Run disposable served fault injection for observe and enforce modes; attach redacted decision and refusal receipts.
