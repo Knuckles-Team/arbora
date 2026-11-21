@@ -1209,6 +1209,29 @@ The delivery rows add two entry points. Code-host webhooks enter at `POST /api/v
 - `ARBORA-OPS-R899` calls the audio-transcriber `transcribe_speech` tool of `TRANSCRIBE-R002` through `fleet.call`; any connector serving the same `speech-transcript/1` contract qualifies.
 - `ARBORA-OPS-R898` serves the medulla process plan (`Decide` `ProcessPlan`) and binds the branch and table verdicts (`BranchSelect`, `DecisionTableEval`). The meristem run loop applies the control steps. Contract: `contracts/process-plan-run.md`, which names the provider rows.
 
+### 2026-11-20 amendment: one durable city state, rendered by many viewers
+
+`ARBORA-OPS-R915.1` narrows the City presence contract. Arbora remains the
+admitted, tenant-scoped door. Medulla owns the durable city-state facts and
+their revision. Overstory renders and interpolates them. No browser owns the
+simulation clock, invents a shared location, or writes another subject's
+avatar. The R915 snapshot interval remains the presentation cadence; it does
+not make every animation frame durable. The companion heartbeat admits only a
+verified human's virtual avatar update and is unavailable in the anonymous
+sandbox. The production caller chain is:
+
+```text
+Overstory GET /api/apps/city/state
+  -> hosted City gateway
+  -> ask fleet.city.presence
+  -> Arbora invoke/admission
+  -> Medulla city-state read (MEDULLA-WORLD-VIEW-R004)
+  -> revisioned tenant snapshot
+```
+
+The matching authenticated heartbeat follows `write fleet.city.presence.heartbeat`.
+It is subject-bound, revision-fenced, and rate-limited before the Medulla write.
+
 ### Explicit state machines (ARBORA-OPS-R900 to R903)
 
 Medulla owns the persisted run and work item vocabulary. Arbora owns only the plan lease, which is an in-process preview and confirm record. `R900` deletes a hand-copied run status tuple. `R902` uses the medulla work item enum and its typed refusal. `R901` makes the plan lease one machine and gives a consumed plan its own refusal code. These behaviour rows depend on the medulla vocabulary row the medulla core state-machine vocabulary row.

@@ -527,3 +527,4 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T454 [US1] ARBORA-OPS-R922.2 One model's editable field set is a served read that returns references, never secrets. Size: S, 1 PR, 2 hours.
 - [ ] T455 [US1] ARBORA-OPS-R922.3 Source sync runs are listed. Size: S, 1 PR, 2 hours.
 - [ ] T456 [US1] ARBORA-OPS-R922.4 The active agent system prompt is a served read. Size: S, 1 PR, 2 hours.
+- [ ] T457 [US1] ARBORA-OPS-R915.1 Revisioned durable city-state snapshots. Size: M, 2 PRs, 5 hours.
