@@ -522,3 +522,8 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T449 [US1] ARBORA-OPS-R921.3 Read one catalog asset with its owners, terms, lineage, ratings and comments. Size: M, 1 PR, 4 hours.
 - [ ] T450 [US1] ARBORA-OPS-R921.4 Hot-path proof: browse, search and open an asset over MCP. Size: M, 1 PR, 4 hours.
 - [ ] T451 [US1] ARBORA-OPS-R861.10 Read the access of one dashboard. Size: M, 1 PR, 4 hours.
+- [ ] T452 [US1] ARBORA-OPS-R922 Every pending census route of the web interface names one registered operation (rollup). Size: S, 1 PR, 2 hours.
+- [ ] T453 [US1] ARBORA-OPS-R922.1 Ontology interfaces are listed and their implementers read. Size: S, 1 PR, 2 hours.
+- [ ] T454 [US1] ARBORA-OPS-R922.2 One model's editable field set is a served read that returns references, never secrets. Size: S, 1 PR, 2 hours.
+- [ ] T455 [US1] ARBORA-OPS-R922.3 Source sync runs are listed. Size: S, 1 PR, 2 hours.
+- [ ] T456 [US1] ARBORA-OPS-R922.4 The active agent system prompt is a served read. Size: S, 1 PR, 2 hours.
