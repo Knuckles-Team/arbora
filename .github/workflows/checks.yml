@@ -329,8 +329,10 @@ jobs:
             runner: ubuntu-24.04-arm
           - name: macos-aarch64
             runner: macos-15
-          - name: windows-x86_64
-            runner: windows-latest
+          # No windows-x86_64 leg: the locked engine release publishes no
+          # Windows wheel. Whoever locks an engine release with a Windows
+          # wheel re-adds the leg (name: windows-x86_64, runner:
+          # windows-latest) in that same change.
     defaults:
       run:
         shell: bash

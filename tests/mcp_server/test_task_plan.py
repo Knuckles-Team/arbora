@@ -300,7 +300,7 @@ async def test_native_typed_receipt_preserves_premise_wire_aliases(bridge, monke
         wire["question"]["question_id"],
         {key: proposal[key] for key in ("tasks", "output_task_id")},
     )
-    assert result["plan_digest"] == wire["task_plan"]["plan_digest"]
+    assert result["plan_digest"] == wire["answer"]["value"]["plan_digest"]
     request = send.await_args.args[1]["request"]
     assert request["tenant_id"] == "local"
     assert request["feature_schema"] == wire["inputs"]["feature_schema"]
