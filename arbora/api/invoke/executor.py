@@ -64,6 +64,9 @@ class ExecutionContext:
     # task-plan publication) need the same services object that performed the
     # request recheck; bindings alone are not an authority.
     operation_services: Any = None
+    # The reserved audit event of this call; a write result echoes it as its
+    # receipt (ARBORA-IDENTITY-R001.1).
+    audit_ref: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "services", MappingProxyType(dict(self.services)))

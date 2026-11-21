@@ -508,6 +508,7 @@ async def _dispatch(
     services: InvokeServices,
     idempotency_key: str | None,
     decision: FleetCallDecision | None,
+    audit_ref: str = "",
 ) -> Any:
     async with execution_context(
         op,
@@ -523,7 +524,7 @@ async def _dispatch(
         # Keep the verified invocation bundle attached to the context.  This
         # is deliberately added after the recheck so a composite cannot reuse
         # an unverified or stale services object as authority.
-        context = replace(context, operation_services=services)
+        context = replace(context, operation_services=services, audit_ref=audit_ref)
         return await services.runtime.dispatch(op, params, context)
 
 
@@ -945,6 +946,7 @@ async def _dispatch_outcome(call: _Call, audit_ref: str) -> OpResult | OpError:
                 call.services,
                 dispatch_key,
                 call.decision,
+                audit_ref,
             ),
             timeout=DISPATCH_TIMEOUT_SECONDS,
         )
