@@ -44,6 +44,7 @@ class ArboraErrorCode(StrEnum):
     ELEVATION_APPROVAL_SURFACE = "ELEVATION_APPROVAL_SURFACE"
     ELEVATION_APPROVER_DELEGATED = "ELEVATION_APPROVER_DELEGATED"
     ELEVATION_APPROVER_SCOPE = "ELEVATION_APPROVER_SCOPE"
+    UNKNOWN_KIND = "UNKNOWN_KIND"
 
 
 # Wire status and retry posture are part of the closed Arbora vocabulary.
@@ -76,6 +77,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.ELEVATION_APPROVAL_SURFACE: 403,
     ArboraErrorCode.ELEVATION_APPROVER_DELEGATED: 403,
     ArboraErrorCode.ELEVATION_APPROVER_SCOPE: 403,
+    ArboraErrorCode.UNKNOWN_KIND: 400,
 }
 
 _RETRYABLE = frozenset(
@@ -543,6 +545,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.ELEVATION_APPROVAL_SURFACE: -32003,
     ArboraErrorCode.ELEVATION_APPROVER_DELEGATED: -32003,
     ArboraErrorCode.ELEVATION_APPROVER_SCOPE: -32003,
+    ArboraErrorCode.UNKNOWN_KIND: -32602,
 }
 
 
