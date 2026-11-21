@@ -38,6 +38,13 @@ class ArboraErrorCode(StrEnum):
     INDETERMINATE = "INDETERMINATE"
     RATE_LIMITED = "RATE_LIMITED"
     INTERNAL = "INTERNAL"
+    # Surface-side elevation refusals raised before anything reaches the engine
+    # (ARBORA-IDENTITY-R001.1).
+    ELEVATION_STALE_VIEW = "ELEVATION_STALE_VIEW"
+    ELEVATION_APPROVAL_SURFACE = "ELEVATION_APPROVAL_SURFACE"
+    ELEVATION_APPROVER_DELEGATED = "ELEVATION_APPROVER_DELEGATED"
+    ELEVATION_APPROVER_SCOPE = "ELEVATION_APPROVER_SCOPE"
+    UNKNOWN_KIND = "UNKNOWN_KIND"
 
 
 # Wire status and retry posture are part of the closed Arbora vocabulary.
@@ -66,6 +73,11 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.INDETERMINATE: 500,
     ArboraErrorCode.RATE_LIMITED: 429,
     ArboraErrorCode.INTERNAL: 500,
+    ArboraErrorCode.ELEVATION_STALE_VIEW: 409,
+    ArboraErrorCode.ELEVATION_APPROVAL_SURFACE: 403,
+    ArboraErrorCode.ELEVATION_APPROVER_DELEGATED: 403,
+    ArboraErrorCode.ELEVATION_APPROVER_SCOPE: 403,
+    ArboraErrorCode.UNKNOWN_KIND: 400,
 }
 
 _RETRYABLE = frozenset(
@@ -529,6 +541,11 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.INDETERMINATE: -32052,
     ArboraErrorCode.RATE_LIMITED: -32029,
     ArboraErrorCode.INTERNAL: -32603,
+    ArboraErrorCode.ELEVATION_STALE_VIEW: -32003,
+    ArboraErrorCode.ELEVATION_APPROVAL_SURFACE: -32003,
+    ArboraErrorCode.ELEVATION_APPROVER_DELEGATED: -32003,
+    ArboraErrorCode.ELEVATION_APPROVER_SCOPE: -32003,
+    ArboraErrorCode.UNKNOWN_KIND: -32602,
 }
 
 

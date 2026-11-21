@@ -83,3 +83,93 @@ def test_operations_require_console_confirmation_for_decisions() -> None:
     assert op.confirm is not None
     assert op.confirm.value == "console"
     assert op.principals.value == "human_undelegated"
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R001.1")
+def test_generated_schema_types_elevation_params_result_receipt_and_refusals() -> None:
+    from arbora.api.errors import ArboraErrorCode
+    from arbora.api.ops.access import operations
+
+    ops = {op.id: op for op in operations()}
+    request = ops["access.elevation.request"].params.model_json_schema()
+    assert set(request["properties"]) == {
+        "scopes",
+        "span_ms",
+        "justification",
+        "elevation_id",
+    }
+    assert request["required"] == ["scopes", "span_ms", "justification"]
+    assert request["properties"]["scopes"]["maxItems"] == 16
+    assert request["properties"]["justification"]["maxLength"] == 2048
+    assert "path" not in request["properties"]
+    approve = ops["access.elevation.approve"].params.model_json_schema()
+    assert set(approve["properties"]) == {"elevation_id", "request_digest"}
+    assert set(
+        ops["access.elevation.revoke"].params.model_json_schema()["properties"]
+    ) == {"elevation_id"}
+    assert not ops["access.elevation.list"].params.model_json_schema()["properties"]
+    for name in ("request", "approve", "revoke"):
+        result = ops[f"access.elevation.{name}"].result.model_json_schema()
+        assert {"elevation_id", "request_digest", "remaining_ms", "own"} <= set(
+            result["properties"]
+        )
+        assert "receipt" in result["required"]
+    listing = ops["access.elevation.list"].result.model_json_schema()
+    assert set(listing["properties"]) == {"elevations"}
+    for code in (
+        "ELEVATION_STALE_VIEW",
+        "ELEVATION_APPROVAL_SURFACE",
+        "ELEVATION_APPROVER_DELEGATED",
+        "ELEVATION_APPROVER_SCOPE",
+    ):
+        assert ArboraErrorCode(code)
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R001.1")
+async def test_elevation_write_returns_the_view_with_a_receipt(monkeypatch) -> None:
+    from arbora.security.elevation import ElevationScope, ElevationView
+
+    view = ElevationView(
+        elevation_id="e1",
+        grantee="alice",
+        status="requested",
+        scopes=[ElevationScope(graph="g", action="read")],
+        span_ms=1000,
+        justification="why",
+        request_digest="d" * 8,
+        requested_at_ms=1,
+        revision=1,
+    )
+    fake = SimpleNamespace(request=AsyncMock(return_value=view))
+    monkeypatch.setattr(service, "_elevations", lambda _context: fake)
+    context = _context()
+    context.audit_ref = '["ref", 3]'
+    result = await service.request_elevation(
+        context,
+        {
+            "scopes": [{"graph": "g", "action": "read"}],
+            "span_ms": 1000,
+            "justification": "why",
+        },
+        None,
+    )
+    assert result["receipt"] == {"audit_ref": '["ref", 3]', "request_digest": "d" * 8}
+    assert result["elevation_id"] == "e1"
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R001.1")
+async def test_surface_refusal_keeps_its_stable_code(monkeypatch) -> None:
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.security.elevation import ElevationRefused
+
+    fake = SimpleNamespace(
+        approve=AsyncMock(side_effect=ElevationRefused("ELEVATION_STALE_VIEW", "x"))
+    )
+    monkeypatch.setattr(service, "_elevations", lambda _context: fake)
+    context = _context()
+    context.caller.engine_claims = {"agent_id": "approver"}
+    with pytest.raises(OperationRefused) as raised:
+        await service.approve_elevation(
+            context, {"elevation_id": "e1", "request_digest": "d"}, None
+        )
+    assert raised.value.code == "ELEVATION_STALE_VIEW"
