@@ -541,6 +541,12 @@ def compose_served_invocation(
             **bindings,
             "finance_receipt_store": FinanceReceiptStore(ServedBrowserState(pool)),
         }
+    if bindings is not None and "memory_materializer" not in bindings:
+        # ARBORA-OPS-R024.4.4: one materializer writes accepted memory file
+        # heads to the hosted directory and reports them to the engine.
+        from arbora.api.ops.memory_files import MemoryMaterializer
+
+        bindings = {**bindings, "memory_materializer": MemoryMaterializer()}
     step_invoke = None
     if bindings is not None and "plan_step_invoke" not in bindings:
         from arbora.api.ops.plans import LateStepInvoke
