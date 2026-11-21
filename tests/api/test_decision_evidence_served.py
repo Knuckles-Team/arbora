@@ -234,7 +234,7 @@ def test_why_not_is_bounded_and_refuses_retired_inputs(engine: Any) -> None:
     assert unknown.json()["error"]["code"] == "DECISION_NOT_FOUND"
 
 
-@pytest.mark.spec("ARBORA-OPS-R920.4")
+@pytest.mark.spec("ARBORA-OPS-R920", "ARBORA-OPS-R920.4")
 def test_decision_evidence_journey_over_mcp_and_http(
     engine: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
