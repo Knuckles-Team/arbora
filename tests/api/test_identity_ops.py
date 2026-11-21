@@ -72,6 +72,7 @@ async def test_handler_refuses_when_the_port_is_not_bound() -> None:
         )
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R018.2")
 async def test_self_get_reads_only_the_callers_own_record() -> None:
     port = RecordingPort({("user", "get"): {"principal_id": "usr:me"}})
     result = await identity.handle_self_get(
@@ -81,6 +82,7 @@ async def test_self_get_reads_only_the_callers_own_record() -> None:
     assert result == {"value": {"user": {"principal_id": "usr:me"}}}
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R018.3")
 async def test_users_list_filters_by_text_and_pages_by_last_principal() -> None:
     rows = [
         {"principal_id": "a", "username": "alice", "email": None},
@@ -96,6 +98,7 @@ async def test_users_list_filters_by_text_and_pages_by_last_principal() -> None:
     assert result["value"]["next_cursor"] == "b"
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R018.3")
 async def test_user_create_names_a_taken_username() -> None:
     port = RecordingPort({("user", "create"): "IDENTITY_COLLISION"})
     with pytest.raises(OperationRefused) as refused:
@@ -107,6 +110,7 @@ async def test_user_create_names_a_taken_username() -> None:
     assert refused.value.code == "USER_EXISTS"
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R018.3")
 async def test_disable_names_the_last_administrator_and_unknown_user() -> None:
     op = _op("identity.users.disable")
     for engine, expected in (
@@ -119,6 +123,7 @@ async def test_disable_names_the_last_administrator_and_unknown_user() -> None:
         assert refused.value.code == expected
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R018.8")
 async def test_deprovision_and_enable_use_the_engine_status_edges() -> None:
     port = RecordingPort({("user", "set_status"): {"changed": True}})
     await identity.handle_users_deprovision(
@@ -130,6 +135,7 @@ async def test_deprovision_and_enable_use_the_engine_status_edges() -> None:
     assert [call[2]["status"] for call in port.calls] == ["deprovisioned", "active"]
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R018.8")
 async def test_force_logout_counts_the_live_sessions_it_ends() -> None:
     port = RecordingPort(
         {
@@ -148,6 +154,7 @@ async def test_force_logout_counts_the_live_sessions_it_ends() -> None:
     assert port.calls[-1] == ("session", "revoke_all", {"id": "u"})
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R018.4")
 async def test_role_assign_sends_one_binding_change_and_names_unknown_role() -> None:
     port = RecordingPort({("access", "change_user_role"): {"changed": True}})
     await identity.handle_roles_assign(
@@ -170,6 +177,7 @@ async def test_role_assign_sends_one_binding_change_and_names_unknown_role() -> 
     assert refused.value.code == "ROLE_UNKNOWN"
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R018.4")
 async def test_group_members_apply_each_change_and_count_real_changes() -> None:
     port = RecordingPort({("access", "change_membership"): {"changed": True}})
     result = await identity.handle_groups_set_members(
@@ -181,6 +189,7 @@ async def test_group_members_apply_each_change_and_count_real_changes() -> None:
     assert [call[2]["change"] for call in port.calls] == ["add", "add", "remove"]
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R018.4")
 async def test_mapping_dry_run_is_the_engine_union_and_writes_nothing() -> None:
     provider = {
         "idp_id": "corp",
@@ -207,6 +216,7 @@ async def test_mapping_dry_run_is_the_engine_union_and_writes_nothing() -> None:
     assert [call[1] for call in port.calls] == ["list"]
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R018.8")
 async def test_audit_export_filters_the_range_and_returns_the_chain_digest() -> None:
     rows = [
         {"seq": 1, "at_ms": 10, "chain": "c1"},
@@ -223,6 +233,7 @@ async def test_audit_export_filters_the_range_and_returns_the_chain_digest() -> 
     assert result["value"]["next_cursor"] == "2"
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R018.5")
 async def test_audit_verify_refuses_a_broken_chain() -> None:
     port = RecordingPort({("audit", "verify"): {"ok": False, "first_broken_seq": 7}})
     with pytest.raises(OperationRefused) as refused:
@@ -232,6 +243,7 @@ async def test_audit_verify_refuses_a_broken_chain() -> None:
     assert refused.value.code == "AUDIT_CHAIN_BROKEN"
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R018.5")
 async def test_mode_transition_names_an_out_of_order_step() -> None:
     port = RecordingPort({("config", "transition"): "IDENTITY_EPOCH_CONFLICT"})
     with pytest.raises(OperationRefused) as refused:
