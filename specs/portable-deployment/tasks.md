@@ -324,3 +324,6 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T087 [US1] ARBORA-DEPLOY-R020.2 Every prompt passes the engine blueprint validation. Size: M, 1 PR, 4 hours.
 - [ ] T088 [US1] ARBORA-DEPLOY-R020.3 CI proves provisioning into a fresh store on the pinned engine. Size: M, 1 PR, 4 hours.
 - [ ] T089 [US1] ARBORA-DEPLOY-R021 Every deploy delivers the current registry manifest and proves it readable. Size: S, 1 PR, 2 hours.
+- [ ] T090 [US1] ARBORA-DEPLOY-R017.22 Promote a built artifact through a governed operation. Size: M, 1 PR, 4 hours.
+- [ ] T091 [US1] ARBORA-DEPLOY-R017.23 Promotion applies only after approval and records a deploy record. Size: M, 1 PR, 4 hours.
+- [ ] T092 [US1] ARBORA-DEPLOY-R017.24 Hot-path proof: an agent runs CI to deploy through the door. Size: M, 1 PR, 4 hours.

@@ -48,3 +48,6 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Tasks run p
 - [ ] T042 [US4] ARBORA-HARNESS-PLUGINS-R010.2 A hosted client with the configured vendor redirect.
 - [ ] T043 [US4] ARBORA-HARNESS-PLUGINS-R010.3 The playbook attaches and checkpoints.
 - [ ] T044 [US4] ARBORA-HARNESS-PLUGINS-R010 A hosted coding agent reaches the door (rollup).
+- [ ] T045 [US4] ARBORA-HARNESS-PLUGINS-R011 One sign-in gives an MCP client the connector fleet (rollup).
+- [ ] T046 [US4] ARBORA-HARNESS-PLUGINS-R011.1 Entitlement-scoped discovery after one sign-in.
+- [ ] T047 [US4] ARBORA-HARNESS-PLUGINS-R011.2 The bundle connection sheet names the sign-in path, not connector settings.

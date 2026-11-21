@@ -383,8 +383,8 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R020.5` | Test: `tests/api/test_ingest_drift_embedding_ops.py::test_embedding_ops_call_runner_and_return_job_state` (L1). Test: `tests/api/test_ingest_served.py::test_reembed_creates_one_durable_job_per_key` (L3) runs HTTP and MCP through `invoke`, with a loopback medulla engine. |
 | `ARBORA-OPS-R021.1` | Test: `tests/api/test_decide_ops.py::test_commit_calls_engine_client_not_runner` (L1). Test: `tests/api/test_decide_served.py::test_human_cannot_commit_and_result_has_provenance` (L3) runs HTTP and MCP through `invoke`, with a loopback medulla engine. |
 | `ARBORA-OPS-R022.1` | A test confirms a work-item write requires the declared scope and that offers are visible only to their bound principal. |
-| `ARBORA-OPS-R022.2.1` | Test: `tests/api/test_evolution_ops.py::test_status_reaches_runner_with_tenant_and_declares_loops_read` (L1). It is verified by the root slice test `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause`. |
-| `ARBORA-OPS-R022.2.2` | Test: `tests/api/test_evolution_ops.py::test_schedules_list_reaches_runner_with_tenant_and_fails_closed` (L1). It is verified by the root slice test `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause`. |
+| `ARBORA-OPS-R022.2.1` | Test: `tests/api/test_evolution_ops.py::test_status_reaches_runner_with_tenant_and_declares_loops_read` (L1). It is verified by the root slice test `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause`. (planned: the named files do not exist yet) |
+| `ARBORA-OPS-R022.2.2` | Test: `tests/api/test_evolution_ops.py::test_schedules_list_reaches_runner_with_tenant_and_fails_closed` (L1). It is verified by the root slice test `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause`. (planned: the named files do not exist yet) |
 | `ARBORA-OPS-R022.2.3` | Test: `tests/api/test_evolution_ops.py::test_proposals_list_reaches_runner_with_tenant_and_fails_closed` (L1). It is verified by the root slice test `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause`. |
 | `ARBORA-OPS-R022.2.4` | Test: `tests/api/test_evolution_ops.py::test_run_requires_loops_control_and_key` (L1). Test: `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause` (L3) asserts one job for two calls with one key. |
 | `ARBORA-OPS-R022.2.5` | Test: `tests/api/test_evolution_ops.py::test_pause_requires_loops_control_and_is_idempotent` (L1). It is verified by the root slice test `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause`. |
@@ -531,12 +531,12 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R896.11` | Test: `tests/api/test_delivery_ops_served.py::test_delivery_writes_are_idempotent_and_uncertain_effects_reconcile` (L3). |
 | `ARBORA-OPS-R896.12` | Test: `tests/development/test_assignments_served.py::test_assignments_reserve_lanes_and_keep_a_person_slot` (L3). |
 | `ARBORA-OPS-R896.13` | Test: `tests/api/test_delivery_surface_served.py::test_delivery_runs_from_slice_to_merge_over_mcp` (L4). |
-| `ARBORA-OPS-R022.2.6` | Test: `tests/api/test_schedule_ops.py::test_create_requires_loops_control_key_and_forwards_owner` (L1). |
+| `ARBORA-OPS-R022.2.6` | Test: `tests/api/test_schedule_ops.py::test_create_requires_loops_control_key_and_forwards_owner` (L1). (planned: the schedule ops files do not exist yet) |
 | `ARBORA-OPS-R022.2.7` | Test: `tests/api/test_schedule_ops.py::test_delete_requires_step_up_and_owner` (L1). |
 | `ARBORA-OPS-R022.2.8` | Test: `tests/api/test_schedule_ops.py::test_pause_and_resume_are_scoped_and_idempotent` (L1). |
-| `ARBORA-OPS-R022.2.9` | Test: `tests/api/test_schedule_ops.py::test_runs_returns_engine_tick_history_unchanged` (L1). |
+| `ARBORA-OPS-R022.2.9` | Test: `tests/api/test_schedule_ops.py::test_runs_returns_engine_tick_history_unchanged` (L1). (planned: the named files do not exist yet) |
 | `ARBORA-OPS-R022.2.10` | Test: `tests/api/test_schedule_served.py::test_scheduled_agent_run_fires_pauses_and_reports_over_mcp` (L4). |
-| `ARBORA-OPS-R022.2.11` | Test: `tests/api/test_schedule_ops.py::test_exclusion_group_and_spacing_are_forwarded_and_engine_refusal_is_typed` (L1). |
+| `ARBORA-OPS-R022.2.11` | Test: `tests/api/test_schedule_ops.py::test_exclusion_group_and_spacing_are_forwarded_and_engine_refusal_is_typed` (L1). (planned: the schedule ops files do not exist yet) |
 | `ARBORA-OPS-R898` | Rollup closes when `.1` to `.8` are verified. Root test: `tests/api/test_process_ops_served.py::test_process_run_waits_for_approval_and_follows_branch` (L4). |
 | `ARBORA-OPS-R898.1` | Test: `tests/api/test_process_ops.py::test_models_round_trip_engine_vectors` (L1). |
 | `ARBORA-OPS-R898.2` | Test: `tests/api/test_process_ops.py::test_plan_returns_engine_plan_unchanged` (L1). |
@@ -573,3 +573,21 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R844.2` | Test: `tests/test_served_operation_api.py::test_node_and_batch_writes_mask_secret_bearing_properties` (L2). |
 | `ARBORA-OPS-R915` | Test: `tests/api/test_presence_ops_served.py::test_presence_serves_one_snapshot_at_a_bounded_interval` (planned, L3). |
 | `ARBORA-OPS-R916` | Test: `tests/api/test_activity_ops_served.py::test_activity_serves_run_trace_facts_with_cursor_and_refuses_unrecorded` (planned, L3). |
+| `ARBORA-OPS-R022.2.12` | Test: `tests/api/test_schedule_ops.py::test_role_target_inherits_binding_budget_and_group` (planned, L1). |
+| `ARBORA-OPS-R917` | Roll-up of its children. |
+| `ARBORA-OPS-R917.1` | Test: `tests/api/test_role_ops.py::test_templates_list_reads_engine_library_and_fails_closed` (planned, L1). |
+| `ARBORA-OPS-R917.2` | Test: `tests/api/test_role_ops.py::test_instance_binds_template_to_profile_and_refuses_widening` (planned, L1). |
+| `ARBORA-OPS-R917.3` | Test: `tests/test_native_run_admission.py::test_role_run_refuses_missing_profile_and_narrows_tools` (planned, L1). |
+| `ARBORA-OPS-R917.4` | Test: `tests/api/test_role_served.py::test_one_template_two_tenants_isolated_profiles` (planned, L1). |
+| `ARBORA-OPS-R918` | Roll-up of its children. |
+| `ARBORA-OPS-R918.1` | Test: `tests/api/test_approvals_ops.py::test_list_filters_by_gate_class_and_approver_role` (planned, L1). |
+| `ARBORA-OPS-R918.2` | Test: `tests/api/test_gate_class.py::test_engine_answer_sets_class_roles_expiry_and_default_is_strict` (planned, L1). |
+| `ARBORA-OPS-R918.3` | Test: `tests/api/test_approvals_ops.py::test_decide_refuses_self_approval_and_records_provenance` (planned, L1). |
+| `ARBORA-OPS-R918.4` | Test: `tests/api/test_approvals_ops.py::test_expired_item_refuses_consume_and_lists_expired` (planned, L1). |
+| `ARBORA-OPS-R918.5` | Test: `tests/api/test_approvals_ops.py::test_digest_counts_by_class_and_delivers_one_notice_per_owner` (planned, L1). |
+| `ARBORA-OPS-R918.6` | Test: `tests/fleet/test_approval_notifier.py::test_notice_per_approver_without_preview_and_retries_from_outbox` (planned, L1). |
+| `ARBORA-OPS-R918.7` | Test: `tests/api/test_approvals_served.py::test_proposal_to_decision_runs_once_and_refusals_run_nothing` (planned, L1). |
+| `ARBORA-OPS-R919` | Roll-up of its children. |
+| `ARBORA-OPS-R919.1` | Test: `tests/test_model_route.py::test_local_route_default_and_unreachable_refuses_without_silent_fallback` (planned, L1). |
+| `ARBORA-OPS-R919.2` | Test: `tests/test_model_route.py::test_escalation_requires_policy_and_is_traced` (planned, L1). |
+| `ARBORA-OPS-R919.3` | Test: `tests/api/test_role_served.py::test_engine_operations_are_allowlisted_and_counted_in_trace` (planned, L1). |

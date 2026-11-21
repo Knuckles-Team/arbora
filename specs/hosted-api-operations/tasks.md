@@ -493,3 +493,21 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T420 ARBORA-OPS-R024.5.1 Model list read for ordinary users.
 - [ ] T421 [US1] ARBORA-OPS-R915 Agent presence is served on one channel with a bounded update rate. Size: S, 1 PR, 2 hours.
 - [ ] T422 [US1] ARBORA-OPS-R916 The activity stream is served from run-trace provenance. Size: S, 1 PR, 2 hours.
+- [ ] T423 [US1] ARBORA-OPS-R022.2.12 A schedule may target a role instance. Size: S, 1 PR, 2 hours.
+- [ ] T424 [US1] ARBORA-OPS-R917 Role templates bind to a tenant business profile (rollup). Size: S, 1 PR, 2 hours.
+- [ ] T425 [US1] ARBORA-OPS-R917.1 The roles.templates.list and roles.templates.get reads. Size: S, 1 PR, 2 hours.
+- [ ] T426 [US1] ARBORA-OPS-R917.2 The roles.instances.create, update and retire writes. Size: M, 1 PR, 4 hours.
+- [ ] T427 [US1] ARBORA-OPS-R917.3 Run admission reads the profile and enforces the binding. Size: M, 1 PR, 4 hours.
+- [ ] T428 [US1] ARBORA-OPS-R917.4 Hot-path proof: one template serves two tenants. Size: M, 1 PR, 4 hours.
+- [ ] T429 [US1] ARBORA-OPS-R918 Per-tenant approval inbox over the plan flow (rollup). Size: S, 1 PR, 2 hours.
+- [ ] T430 [US1] ARBORA-OPS-R918.1 The approvals.list and approvals.get reads. Size: M, 1 PR, 4 hours.
+- [ ] T431 [US1] ARBORA-OPS-R918.2 Gate class and approver roles come from the engine. Size: M, 1 PR, 4 hours.
+- [ ] T432 [US1] ARBORA-OPS-R918.3 The approvals.decide write records provenance. Size: M, 1 PR, 4 hours.
+- [ ] T433 [US1] ARBORA-OPS-R918.4 An expired plan item refuses execution. Size: S, 1 PR, 2 hours.
+- [ ] T434 [US1] ARBORA-OPS-R918.5 The approvals.digest read and its scheduled delivery. Size: M, 1 PR, 4 hours.
+- [ ] T435 [US1] ARBORA-OPS-R918.6 Push notification hook on gate-class plans. Size: M, 1 PR, 4 hours.
+- [ ] T436 [US1] ARBORA-OPS-R918.7 Hot-path proof: an agent proposal reaches a human decision. Size: M, 1 PR, 4 hours.
+- [ ] T437 [US1] ARBORA-OPS-R919 Role runs prefer the tenant's local model (rollup). Size: S, 1 PR, 2 hours.
+- [ ] T438 [US1] ARBORA-OPS-R919.1 Admission resolves the model route and probes it. Size: M, 1 PR, 4 hours.
+- [ ] T439 [US1] ARBORA-OPS-R919.2 Escalation to a hosted model needs a policy and leaves a record. Size: M, 1 PR, 4 hours.
+- [ ] T440 [US1] ARBORA-OPS-R919.3 Role tool allowlists include the deterministic engine operations. Size: S, 1 PR, 2 hours.
