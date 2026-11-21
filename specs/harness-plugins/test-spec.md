@@ -52,3 +52,6 @@ Governing spec: [spec.md](spec.md).
 ## Quality and release proof
 
 Focused: `uv run pytest tests/harness_plugins tests/api/ops/test_workstreams.py tests/api/ops/test_workstreams_served.py -q`. The release proof of `PIPE-RELEASE-R028` runs each harness validator on a generated bundle. Gates: the repository complexity, duplication, dead-code and KISS gates and the spec gates.
+| T-045 | `ARBORA-HARNESS-PLUGINS-R011` | `Children `.1` and `.2`.` | One sign-in gives an MCP client the connector fleet (rollup). (planned) |
+| T-046 | `ARBORA-HARNESS-PLUGINS-R011.1` | `tests/harness_plugins/test_signin_fleet_access.py::test_one_signin_lists_only_entitled_connectors_and_revocation_stops_calls` | Entitlement-scoped discovery after one sign-in. (planned) |
+| T-047 | `ARBORA-HARNESS-PLUGINS-R011.2` | `tests/harness_plugins/test_render_signin_only.py::test_bundle_holds_door_endpoint_and_no_connector_settings` | The bundle connection sheet names the sign-in path, not connector settings. (planned) |

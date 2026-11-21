@@ -152,3 +152,6 @@ Each row below has no spec marker on a test yet. The listed test is the proof to
 | ARBORA-DEPLOY-R020.1 | `tests/deployment/test_pack_class_rollup.py::test_every_pack_class_has_a_core_subclass_path` (planned, L2). | Every pack class extends an engine core class. |
 | ARBORA-DEPLOY-R020.2 | `tests/deployment/test_prompt_blueprints_valid.py::test_every_prompt_passes_the_pinned_engine_blueprint` (planned, L2). | Every prompt passes the engine blueprint validation. |
 | ARBORA-DEPLOY-R020.3 | `tests/deployment/test_provisioning_admitted_by_pinned_engine.py::test_fresh_store_accepts_all_arbora_content` (planned, L5). | CI proves provisioning into a fresh store on the pinned engine. |
+| ARBORA-DEPLOY-R017.22 | `tests/api/test_promote_ops.py::test_plan_requires_digest_and_green_pipeline` (planned, L3). | Promote a built artifact through a governed operation. |
+| ARBORA-DEPLOY-R017.23 | `tests/api/test_promote_ops.py::test_apply_needs_approval_records_deploy_and_is_idempotent` (planned, L3). | Promotion applies only after approval and records a deploy record. |
+| ARBORA-DEPLOY-R017.24 | `tests/api/test_promote_served.py::test_agent_promotes_after_approval_and_refusals_run_nothing` (planned, L3). | Hot-path proof: an agent runs CI to deploy through the door. |
