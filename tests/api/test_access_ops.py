@@ -127,13 +127,13 @@ def test_generated_schema_types_elevation_params_result_receipt_and_refusals() -
 
 @pytest.mark.spec("ARBORA-IDENTITY-R001.1")
 async def test_elevation_write_returns_the_view_with_a_receipt(monkeypatch) -> None:
-    from arbora.security.elevation import ElevationView
+    from arbora.security.elevation import ElevationScope, ElevationView
 
     view = ElevationView(
         elevation_id="e1",
         grantee="alice",
         status="requested",
-        scopes=[{"graph": "g", "action": "read"}],
+        scopes=[ElevationScope(graph="g", action="read")],
         span_ms=1000,
         justification="why",
         request_digest="d" * 8,
