@@ -313,6 +313,64 @@ async def _owner_principal(
     return payload
 
 
+class _ImportResultRecorder:
+    """The engine client, keeping the raw answer of the last pack import.
+
+    Every other attribute and call passes through unchanged."""
+
+    def __init__(self, client: Any) -> None:
+        self._client = client
+        self.last_import: Any = None
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._client, name)
+
+    async def _send(
+        self, method: str, params: Any = None, *args: Any, **kwargs: Any
+    ) -> Any:
+        payload = await self._client._send(method, params, *args, **kwargs)
+        op = params.get("op") if isinstance(params, Mapping) else None
+        if (
+            method == "ConnectorPack"
+            and isinstance(op, Mapping)
+            and op.get("op") == "import"
+        ):
+            self.last_import = payload
+        return payload
+
+
+def _client_version() -> str:
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version("medulla")
+    except PackageNotFoundError:
+        return "unknown"
+
+
+def _undecodable_rejection(
+    payload: Any, connector: str
+) -> SemanticProvisioningError | None:
+    """A rejection the generated client could not decode, read from its raw answer.
+
+    ``None`` when the raw answer is not a rejection with a violation list."""
+    if not isinstance(payload, Mapping) or payload.get("result") != "rejected":
+        return None
+    raw = payload.get("violations")
+    if not isinstance(raw, (list, tuple)):
+        return None
+    violations = [
+        f"{item.get('code', '')}:{item.get('uri') or ''}:{item.get('detail', '')}"
+        for item in raw
+        if isinstance(item, Mapping)
+    ]
+    return SemanticProvisioningError(
+        f"ConnectorPack import of {connector!r} was rejected "
+        f"(engine_contract_mismatch: medulla client {_client_version()} "
+        "cannot decode the engine's result): " + "; ".join(violations)
+    )
+
+
 def _rejection(result: Any, connector: str) -> SemanticProvisioningError | None:
     if getattr(result, "result", None) != "rejected":
         return None
@@ -363,8 +421,9 @@ async def import_attested_pack(
         owner = await _owner_principal(
             client, tenant_id=tenant_id, graph=graph, connector=pack.connector
         )
+        recorder = _ImportResultRecorder(client)
         sink = MedullaSink(
-            client,
+            recorder,
             pack_import_authority(
                 engine,
                 session.with_graph(graph),
@@ -373,9 +432,18 @@ async def import_attested_pack(
                 serving_principal=lambda: owner,
             ),
         )
-        result = await sink.import_pack(
-            pack, allow_mass_withdrawal=allow_mass_withdrawal
-        )
+        try:
+            result = await sink.import_pack(
+                pack, allow_mass_withdrawal=allow_mass_withdrawal
+            )
+        except ValueError as exc:
+            # pydantic's ValidationError is a ValueError: the generated client
+            # could not decode the engine's answer. Read the raw answer so a
+            # rejection still names every violation (ARBORA-FLEET-R064.1).
+            undecodable = _undecodable_rejection(recorder.last_import, pack.connector)
+            if undecodable is None:
+                raise
+            raise undecodable from exc
     rejection = _rejection(result, pack.connector)
     if rejection is not None:
         raise rejection

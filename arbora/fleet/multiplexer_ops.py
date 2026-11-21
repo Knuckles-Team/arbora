@@ -227,6 +227,9 @@ class MultiplexerOps:
         self._coverage_registry = coverage_registry or _default_coverage_registry
         self._coverage_endpoints = coverage_endpoints or _default_coverage_endpoints
         self._unadmitted_servers = unadmitted_servers or (lambda: [])
+        #: The last registry failure logged, so a repeated status call does not
+        #: repeat the warning (ARBORA-FLEET-R060.6).
+        self._registry_warned: str | None = None
 
     async def admitted_tool(self, caller: Any, server: str, tool: str) -> CatalogItem:
         """Return one call-authorized descriptor without requiring discovery scope."""
@@ -518,10 +521,17 @@ class MultiplexerOps:
 
         try:
             registered = tuple(self._coverage_registry())
-        except FleetCoverageError:
+        except FleetCoverageError as exc:
+            # ARBORA-FLEET-R060.6: the cause is named in the block and logged
+            # once per distinct cause, never only the bare state.
+            detail = str(exc)
+            if detail != self._registry_warned:
+                self._registry_warned = detail
+                _LOG.warning("fleet coverage registry is unreadable: %s", detail)
             return {
                 "ok": False,
                 "error": "registry_unreadable",
+                "detail": detail,
                 "registered": [],
                 "covered": [],
                 "missing": [],
