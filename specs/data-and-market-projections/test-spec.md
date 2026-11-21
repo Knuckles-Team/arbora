@@ -105,13 +105,13 @@ These are required future served tests using the existing named acceptance cases
 These are required future tests; no runtime result is claimed. The tests run
 through the real mounted Arbora surfaces with an instrumented local provider.
 
-- **FI-11 — registration and request schema:** `tests/mcp_server/test_data_market_reads_served.py::test_all_nine_operations_have_closed_v1_schemas` checks all nine operation IDs and closed request schemas. It pins resource filters and limit bounds. It covers the 512-byte cursor cap, ID grammar, and the 1–200-byte NFC query cap. It checks search fields and fixed ordering. It rejects extra keys before provider calls.
-- **FI-12 — projection and metadata:** `tests/mcp_server/test_data_market_reads_served.py::test_v1_projections_preserve_metadata_and_paginate_deterministically` pins exact page/get/item keys and nullability. It checks decimal strings and UTC timestamps. It checks source/session/currency/unit/freshness/provenance and cursor continuation. It rejects provider-only keys. Arbora preserves unknown metadata as explicit null or unknown where allowed. Arbora never synthesizes these values.
-- **FI-13 — authority refusal:** `tests/mcp_server/test_data_market_reads_served.py::test_denials_and_malformed_requests_precede_provider_calls` tests tenant A/B and missing or mismatched accounts on the real routes. REST calls `POST /api/v1/ops/markets.list`. MCP sends JSON-RPC `tools/call` to `POST /mcp` with `name: ask` and `arguments.op: markets.list`. Denials use R010, make zero provider calls, and reveal no cross-tenant records.
-- **FI-14 — route parity:** `tests/mcp_server/test_data_market_reads_served.py::test_rest_post_and_mcp_tools_call_share_the_finance_port` exercises both registered entrypoints. Equivalent requests use one `finance_read_port`. Results and refusals normalize identically and retain audit correlation.
-- **FI-15 — effect isolation:** `tests/mcp_server/test_data_market_reads_served.py::test_read_operations_never_reserve_or_submit_effects` spies on paper submission and effect reservations. Reads carry only `Effect.READ` and reach neither path.
-- **FI-16 — paper submission preservation:** `tests/mcp_server/test_data_market_reads_served.py::test_paper_submit_keeps_separate_authority_and_receipt` retains parent R003 and FI-08 prerequisites: `finance:paper-trade`, verified account, lease, and idempotency. Denials cause no effect. A repeated valid key yields one receipt. Preserve R017.2 ownership.
-- **FI-17 — unavailable dependency:** `tests/mcp_server/test_data_market_reads_served.py::test_missing_scope_or_provider_is_unavailable` verifies that a missing `finance:read` scope, `finance_read_port`, or resource capability returns typed unavailable before dispatch. The operation never fabricates an empty result.
+- **FI-11 — registration and request schema:** `tests/mcp_server/test_data_market_reads_served.py::test_all_nine_operations_have_closed_v1_schemas` checks all nine operation IDs and closed request schemas. It pins resource filters and limit bounds. It covers the 512-byte cursor cap, ID grammar, and the 1–200-byte NFC query cap. It checks search fields and fixed ordering. It rejects extra keys before provider calls. (planned)
+- **FI-12 — projection and metadata:** `tests/mcp_server/test_data_market_reads_served.py::test_v1_projections_preserve_metadata_and_paginate_deterministically` pins exact page/get/item keys and nullability. It checks decimal strings and UTC timestamps. It checks source/session/currency/unit/freshness/provenance and cursor continuation. It rejects provider-only keys. Arbora preserves unknown metadata as explicit null or unknown where allowed. Arbora never synthesizes these values. (planned)
+- **FI-13 — authority refusal:** `tests/mcp_server/test_data_market_reads_served.py::test_denials_and_malformed_requests_precede_provider_calls` tests tenant A/B and missing or mismatched accounts on the real routes. REST calls `POST /api/v1/ops/markets.list`. MCP sends JSON-RPC `tools/call` to `POST /mcp` with `name: ask` and `arguments.op: markets.list`. Denials use R010, make zero provider calls, and reveal no cross-tenant records. (planned)
+- **FI-14 — route parity:** `tests/mcp_server/test_data_market_reads_served.py::test_rest_post_and_mcp_tools_call_share_the_finance_port` exercises both registered entrypoints. Equivalent requests use one `finance_read_port`. Results and refusals normalize identically and retain audit correlation. (planned)
+- **FI-15 — effect isolation:** `tests/mcp_server/test_data_market_reads_served.py::test_read_operations_never_reserve_or_submit_effects` spies on paper submission and effect reservations. Reads carry only `Effect.READ` and reach neither path. (planned)
+- **FI-16 — paper submission preservation:** `tests/mcp_server/test_data_market_reads_served.py::test_paper_submit_keeps_separate_authority_and_receipt` retains parent R003 and FI-08 prerequisites: `finance:paper-trade`, verified account, lease, and idempotency. Denials cause no effect. A repeated valid key yields one receipt. Preserve R017.2 ownership. (planned)
+- **FI-17 — unavailable dependency:** `tests/mcp_server/test_data_market_reads_served.py::test_missing_scope_or_provider_is_unavailable` verifies that a missing `finance:read` scope, `finance_read_port`, or resource capability returns typed unavailable before dispatch. The operation never fabricates an empty result. (planned)
 
 The route contract is the generic v1 `POST /api/v1/ops/{op_id}` registered by `create_api_application`, and the `/mcp` streamable-HTTP JSON-RPC `tools/call` path invoking `ask` with an operation ID and params. Both require explicit composition and contract admission. The current process has not activated those finance bindings; these tests remain future acceptance.
 <!-- /spec-definition-patch -->
@@ -123,38 +123,38 @@ Each active row has one planned or existing proving test. A test that does not y
 | Row | Proving test |
 |---|---|
 | `ARBORA-DATA-MARKET-R001.1` | `tests/finance/test_receipt_store_served.py::test_receipt_survives_restart_and_is_tenant_scoped` |
-| `ARBORA-DATA-MARKET-R002` | `tests/finance/test_scheduler_served.py::test_dst_and_replay_run_each_occurrence_once` |
-| `ARBORA-DATA-MARKET-R004` | `tests/data_apps/test_admission_served.py::test_failed_admission_rolls_back_without_retiring_prior_connector` |
-| `ARBORA-DATA-MARKET-R005` | `tests/gateway/test_schema_context_served.py::test_each_intent_over_http_and_mcp_and_unsupported_source` |
-| `ARBORA-DATA-MARKET-R006` | `tests/finance/test_dca_served.py::test_replay_and_clock_drift_yield_one_proposal_and_missed_is_reported` |
-| `ARBORA-DATA-MARKET-R007.1` | `tests/api/test_order_confirmation.py::test_models_bind_exact_intent_and_exclude_proof` |
-| `ARBORA-DATA-MARKET-R007.2` | `tests/api/test_order_confirmation.py::test_digest_is_stable_across_signing_and_retries_reuse_effect_key` |
-| `ARBORA-DATA-MARKET-R007.3` | `tests/api/test_order_confirmation.py::test_operations_are_registered_and_envelope_is_shared_over_http_and_mcp` |
-| `ARBORA-DATA-MARKET-R007.4` | `tests/api/test_order_confirmation.py::test_each_refusal_code_reaches_no_provider_mutation` |
-| `ARBORA-DATA-MARKET-R007.5` | `tests/api/test_order_confirmation.py::test_audit_joins_authorization_and_proof_digest_without_secrets` |
-| `ARBORA-DATA-MARKET-R007.6` | `tests/api/test_order_confirmation.py::test_wallet_proof_confirmation_and_replay` |
-| `ARBORA-DATA-MARKET-R003.1` | `tests/mcp_server/test_data_market_reads_served.py::test_markets_reads_served` |
-| `ARBORA-DATA-MARKET-R003.2` | `tests/mcp_server/test_data_market_reads_served.py::test_events_reads_served` |
-| `ARBORA-DATA-MARKET-R003.3` | `tests/mcp_server/test_data_market_reads_served.py::test_orders_reads_served` |
-| `ARBORA-DATA-MARKET-R003.4` | `tests/mcp_server/test_data_market_contracts.py::test_projection_keys_types_and_cursor_binding` |
-| `ARBORA-DATA-MARKET-R003.5` | `tests/mcp_server/test_data_market_reads_served.py::test_two_tenant_denials_make_zero_provider_calls` |
-| `ARBORA-DATA-MARKET-R003.6` | `tests/mcp_server/test_data_market_reads_served.py::test_both_routes_share_provider_dispatch_and_isolate_effects` |
+| `ARBORA-DATA-MARKET-R002` | `tests/finance/test_scheduler_served.py::test_dst_and_replay_run_each_occurrence_once` (planned) |
+| `ARBORA-DATA-MARKET-R004` | `tests/data_apps/test_admission_served.py::test_failed_admission_rolls_back_without_retiring_prior_connector` (planned) |
+| `ARBORA-DATA-MARKET-R005` | `tests/gateway/test_schema_context_served.py::test_each_intent_over_http_and_mcp_and_unsupported_source` (planned) |
+| `ARBORA-DATA-MARKET-R006` | `tests/finance/test_dca_served.py::test_replay_and_clock_drift_yield_one_proposal_and_missed_is_reported` (planned) |
+| `ARBORA-DATA-MARKET-R007.1` | `tests/api/test_order_confirmation.py::test_models_bind_exact_intent_and_exclude_proof` (planned) |
+| `ARBORA-DATA-MARKET-R007.2` | `tests/api/test_order_confirmation.py::test_digest_is_stable_across_signing_and_retries_reuse_effect_key` (planned) |
+| `ARBORA-DATA-MARKET-R007.3` | `tests/api/test_order_confirmation.py::test_operations_are_registered_and_envelope_is_shared_over_http_and_mcp` (planned) |
+| `ARBORA-DATA-MARKET-R007.4` | `tests/api/test_order_confirmation.py::test_each_refusal_code_reaches_no_provider_mutation` (planned) |
+| `ARBORA-DATA-MARKET-R007.5` | `tests/api/test_order_confirmation.py::test_audit_joins_authorization_and_proof_digest_without_secrets` (planned) |
+| `ARBORA-DATA-MARKET-R007.6` | `tests/api/test_order_confirmation.py::test_wallet_proof_confirmation_and_replay` (planned) |
+| `ARBORA-DATA-MARKET-R003.1` | `tests/mcp_server/test_data_market_reads_served.py::test_markets_reads_served` (planned) |
+| `ARBORA-DATA-MARKET-R003.2` | `tests/mcp_server/test_data_market_reads_served.py::test_events_reads_served` (planned) |
+| `ARBORA-DATA-MARKET-R003.3` | `tests/mcp_server/test_data_market_reads_served.py::test_orders_reads_served` (planned) |
+| `ARBORA-DATA-MARKET-R003.4` | `tests/mcp_server/test_data_market_contracts.py::test_projection_keys_types_and_cursor_binding` (planned) |
+| `ARBORA-DATA-MARKET-R003.5` | `tests/mcp_server/test_data_market_reads_served.py::test_two_tenant_denials_make_zero_provider_calls` (planned) |
+| `ARBORA-DATA-MARKET-R003.6` | `tests/mcp_server/test_data_market_reads_served.py::test_both_routes_share_provider_dispatch_and_isolate_effects` (planned) |
 | `ARBORA-DATA-MARKET-R003.7` | `tests/mcp_server/test_orders_submit_paper_served.py::test_paper_submit_is_planned_keyed_and_tenant_bound` |
-| `ARBORA-DATA-MARKET-R003.8` | `tests/mcp_server/test_market_compute_served.py::test_signal_ops_over_http_and_mcp` |
-| `ARBORA-DATA-MARKET-R003.9` | `tests/api/test_market_size.py::test_size_and_abstain_over_http_and_mcp` |
-| `ARBORA-DATA-MARKET-R003.10` | `tests/api/test_market_evaluate.py::test_market_evaluate_over_http_and_mcp` |
-| `ARBORA-DATA-MARKET-R003.11` | `tests/api/test_market_positions.py::test_positions_carry_provenance` |
-| `ARBORA-DATA-MARKET-R003.12` | `tests/mcp_server/test_market_compute_served.py::test_research_kernel_ops_over_http_and_mcp` |
-| `ARBORA-DATA-MARKET-R003.13` | `tests/mcp_server/test_market_compute_served.py::test_sizing_and_shift_over_http_and_mcp` |
-| `ARBORA-DATA-MARKET-R003.14` | `tests/mcp_server/test_market_compute_served.py::test_banking_ops_over_http_and_mcp` |
-| `ARBORA-DATA-MARKET-R003.15` | `tests/mcp_server/test_finance_guide_served.py::test_projection_matches_skill_revision_header` |
-| `ARBORA-DATA-MARKET-R007.7` | `tests/api/test_order_confirmation.py::test_stage_confirm_promote` |
-| `ARBORA-DATA-MARKET-R008` | `tests/api/test_market_forecast_served.py::test_sample_is_stored_with_probabilistic_flag` |
+| `ARBORA-DATA-MARKET-R003.8` | `tests/mcp_server/test_market_compute_served.py::test_signal_ops_over_http_and_mcp` (planned) |
+| `ARBORA-DATA-MARKET-R003.9` | `tests/api/test_market_size.py::test_size_and_abstain_over_http_and_mcp` (planned) |
+| `ARBORA-DATA-MARKET-R003.10` | `tests/api/test_market_evaluate.py::test_market_evaluate_over_http_and_mcp` (planned) |
+| `ARBORA-DATA-MARKET-R003.11` | `tests/api/test_market_positions.py::test_positions_carry_provenance` (planned) |
+| `ARBORA-DATA-MARKET-R003.12` | `tests/mcp_server/test_market_compute_served.py::test_research_kernel_ops_over_http_and_mcp` (planned) |
+| `ARBORA-DATA-MARKET-R003.13` | `tests/mcp_server/test_market_compute_served.py::test_sizing_and_shift_over_http_and_mcp` (planned) |
+| `ARBORA-DATA-MARKET-R003.14` | `tests/mcp_server/test_market_compute_served.py::test_banking_ops_over_http_and_mcp` (planned) |
+| `ARBORA-DATA-MARKET-R003.15` | `tests/mcp_server/test_finance_guide_served.py::test_projection_matches_skill_revision_header` (planned) |
+| `ARBORA-DATA-MARKET-R007.7` | `tests/api/test_order_confirmation.py::test_stage_confirm_promote` (planned) |
+| `ARBORA-DATA-MARKET-R008` | `tests/api/test_market_forecast_served.py::test_sample_is_stored_with_probabilistic_flag` (planned) |
 | `ARBORA-DATA-MARKET-R009` | Roll-up of its children. |
-| `ARBORA-DATA-MARKET-R009.1` | `tests/api/test_market_performance.py::test_card_is_verbatim_unavailable_never_zero_and_refuses_unverified_binding` |
-| `ARBORA-DATA-MARKET-R009.2` | `tests/api/test_market_instrument_detail.py::test_rates_and_dividends_tabs_and_unknown_listing` |
-| `ARBORA-DATA-MARKET-R009.3` | `tests/api/test_market_recommendation.py::test_recommendation_cites_evidence_abstains_and_has_no_order_field` |
-| `ARBORA-DATA-MARKET-R009.4` | `tests/api/test_finance_receipts_list.py::test_states_dedupe_by_event_id_and_paper_never_live` |
-| `ARBORA-DATA-MARKET-R009.5` | `tests/api/test_finance_import_served.py::test_preview_reports_mapping_and_row_errors_without_cell_contents` |
-| `ARBORA-DATA-MARKET-R009.6` | `tests/api/test_finance_import_served.py::test_commit_is_idempotent_by_digest_and_refuses_errors` |
-| `ARBORA-DATA-MARKET-R009.7` | `tests/api/test_markets_app_served.py::test_markets_journey_over_mcp_and_http` |
+| `ARBORA-DATA-MARKET-R009.1` | `tests/api/test_market_performance.py::test_card_is_verbatim_unavailable_never_zero_and_refuses_unverified_binding` (planned) |
+| `ARBORA-DATA-MARKET-R009.2` | `tests/api/test_market_instrument_detail.py::test_rates_and_dividends_tabs_and_unknown_listing` (planned) |
+| `ARBORA-DATA-MARKET-R009.3` | `tests/api/test_market_recommendation.py::test_recommendation_cites_evidence_abstains_and_has_no_order_field` (planned) |
+| `ARBORA-DATA-MARKET-R009.4` | `tests/api/test_finance_receipts_list.py::test_states_dedupe_by_event_id_and_paper_never_live` (planned) |
+| `ARBORA-DATA-MARKET-R009.5` | `tests/api/test_finance_import_served.py::test_preview_reports_mapping_and_row_errors_without_cell_contents` (planned) |
+| `ARBORA-DATA-MARKET-R009.6` | `tests/api/test_finance_import_served.py::test_commit_is_idempotent_by_digest_and_refuses_errors` (planned) |
+| `ARBORA-DATA-MARKET-R009.7` | `tests/api/test_markets_app_served.py::test_markets_journey_over_mcp_and_http` (planned) |
