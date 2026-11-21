@@ -591,3 +591,14 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R919.1` | Test: `tests/test_model_route.py::test_local_route_default_and_unreachable_refuses_without_silent_fallback` (planned, L1). |
 | `ARBORA-OPS-R919.2` | Test: `tests/test_model_route.py::test_escalation_requires_policy_and_is_traced` (planned, L1). |
 | `ARBORA-OPS-R919.3` | Test: `tests/api/test_role_served.py::test_engine_operations_are_allowlisted_and_counted_in_trace` (planned, L1). |
+| `ARBORA-OPS-R920` | Roll-up of its children. |
+| `ARBORA-OPS-R920.1` | Test: `tests/api/test_decision_evidence_served.py::test_decision_list_pages_filters_and_isolates_tenants` (planned, L3: HTTP and MCP, recorded engine) |
+| `ARBORA-OPS-R920.2` | Test: `tests/api/test_decision_evidence_served.py::test_provenance_returns_facts_at_used_revision_and_hides_other_tenants` (planned, L3) |
+| `ARBORA-OPS-R920.3` | Test: `tests/api/test_decision_evidence_served.py::test_why_not_is_bounded_and_refuses_retired_inputs` (planned, L3) |
+| `ARBORA-OPS-R920.4` | Test: `tests/api/test_decision_evidence_served.py::test_decision_evidence_journey_over_mcp_and_http` (planned, L3) |
+| `ARBORA-OPS-R921` | Roll-up of its children. |
+| `ARBORA-OPS-R921.1` | Test: `tests/api/test_catalog_ops_served.py::test_browse_counts_kinds_and_hides_unreadable_assets` (planned, L3) |
+| `ARBORA-OPS-R921.2` | Test: `tests/api/test_catalog_ops_served.py::test_search_passes_engine_ranking_and_too_long_refusal` (planned, L3) |
+| `ARBORA-OPS-R921.3` | Test: `tests/api/test_catalog_ops_served.py::test_get_returns_detail_and_refuses_unreadable_with_asset_not_found` (planned, L3) |
+| `ARBORA-OPS-R921.4` | Test: `tests/api/test_catalog_ops_served.py::test_catalog_journey_over_mcp` (planned, L3) |
+| `ARBORA-OPS-R861.10` | Test: `tests/api/test_dashboard_ops_served.py::test_access_read_shows_grants_only_to_owner_and_editor` (planned, L3) |

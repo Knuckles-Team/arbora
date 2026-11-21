@@ -511,3 +511,14 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T438 [US1] ARBORA-OPS-R919.1 Admission resolves the model route and probes it. Size: M, 1 PR, 4 hours.
 - [ ] T439 [US1] ARBORA-OPS-R919.2 Escalation to a hosted model needs a policy and leaves a record. Size: M, 1 PR, 4 hours.
 - [ ] T440 [US1] ARBORA-OPS-R919.3 Role tool allowlists include the deterministic engine operations. Size: S, 1 PR, 2 hours.
+- [ ] T441 [US1] ARBORA-OPS-R920 Decision evidence reads are served operations (rollup). Size: S, 1 PR, 2 hours.
+- [ ] T442 [US1] ARBORA-OPS-R920.1 List decisions of a tenant. Size: M, 1 PR, 4 hours.
+- [ ] T443 [US1] ARBORA-OPS-R920.2 Read the provenance of one decision. Size: M, 1 PR, 4 hours.
+- [ ] T444 [US1] ARBORA-OPS-R920.3 Explain why an option was not chosen, on demand, within a bounded budget. Size: M, 1 PR, 4 hours.
+- [ ] T445 [US1] ARBORA-OPS-R920.4 Hot-path proof: decision evidence over MCP and HTTP. Size: M, 1 PR, 4 hours.
+- [ ] T446 [US1] ARBORA-OPS-R921 Catalog browse and search are served operations (rollup). Size: S, 1 PR, 2 hours.
+- [ ] T447 [US1] ARBORA-OPS-R921.1 Browse catalog assets by kind. Size: M, 1 PR, 4 hours.
+- [ ] T448 [US1] ARBORA-OPS-R921.2 Search catalog assets with one ranked index. Size: M, 1 PR, 4 hours.
+- [ ] T449 [US1] ARBORA-OPS-R921.3 Read one catalog asset with its owners, terms, lineage, ratings and comments. Size: M, 1 PR, 4 hours.
+- [ ] T450 [US1] ARBORA-OPS-R921.4 Hot-path proof: browse, search and open an asset over MCP. Size: M, 1 PR, 4 hours.
+- [ ] T451 [US1] ARBORA-OPS-R861.10 Read the access of one dashboard. Size: M, 1 PR, 4 hours.
