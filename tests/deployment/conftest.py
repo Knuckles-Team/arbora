@@ -8,6 +8,7 @@ import socket
 import subprocess
 import sys
 import textwrap
+import time
 from collections.abc import Callable, Iterator
 from pathlib import Path
 
@@ -108,3 +109,46 @@ def start_child(runtime_dir: Path, tmp_path: Path) -> Iterator[Callable[[int], C
             os.kill(pid, 15)
         except (OSError, ValueError, KeyError):
             pass
+
+
+@pytest.fixture
+def independent_engine(
+    tmp_path: Path, free_port: Callable[[], int]
+) -> Iterator[Callable[[], int]]:
+    """Start a real engine that no Arbora process owns; returns its port."""
+    from medulla.server_binary import resolve_server_binary
+
+    from arbora.mcp_server.composition import EngineEndpoint, probe_engine
+
+    started: list[subprocess.Popen[bytes]] = []
+
+    def start() -> int:
+        port = free_port()
+        process = subprocess.Popen(  # noqa: S603 - the packaged engine, a fixed argv
+            [
+                resolve_server_binary(),
+                "--auth-mode",
+                "none",
+                "--tcp-only",
+                "--tcp-addr",
+                f"127.0.0.1:{port}",
+                "--persist-dir",
+                str(tmp_path / f"independent-{port}"),
+                "--idle-shutdown-secs",
+                "600",
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        started.append(process)
+        endpoint = EngineEndpoint("tcp", f"127.0.0.1:{port}")
+        deadline = time.monotonic() + 60
+        while probe_engine(endpoint, 1).state != "running":
+            assert time.monotonic() < deadline, "the independent engine did not start"
+            time.sleep(0.3)
+        return port
+
+    yield start
+    for process in started:
+        process.terminate()
+        process.wait(timeout=30)
