@@ -491,7 +491,7 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T417 [US1] ARBORA-OPS-R913 Fleet management, schedule, maintenance, workflow, code, command and resource operations. Size: L, 4 PRs, 1.5 days.
 - [ ] T418 [US1] ARBORA-OPS-R914 Ecosystem widgets and media transcription. Size: M, 2 PRs, 5 hours.
 - [ ] T420 ARBORA-OPS-R024.5.1 Model list read for ordinary users.
-- [ ] T421 [US1] ARBORA-OPS-R915 Agent presence is served on one channel with a bounded update rate. Size: S, 1 PR, 2 hours.
+- [x] T421 [US1] ARBORA-OPS-R915 Agent presence is served on one channel with a bounded update rate. Size: S, 1 PR, 2 hours.
 - [ ] T422 [US1] ARBORA-OPS-R916 The activity stream is served from run-trace provenance. Size: S, 1 PR, 2 hours.
 - [ ] T423 [US1] ARBORA-OPS-R022.2.12 A schedule may target a role instance. Size: S, 1 PR, 2 hours.
 - [ ] T424 [US1] ARBORA-OPS-R917 Role templates bind to a tenant business profile (rollup). Size: S, 1 PR, 2 hours.
