@@ -236,24 +236,24 @@ Order: R017.1 (placement), R017.2 to R017.5 (assembly, view, confirm, refusal), 
 One task per active leaf row, in requirement order. A rollup parent is covered by its child rows.
 
 - [ ] T001 ARBORA-DEPLOY-R001 Rendered workload images are digest-pinned.
-- [ ] T002 ARBORA-DEPLOY-R002 Executable release-qualification runbook.
-- [ ] T003 ARBORA-DEPLOY-R003 Pre-push hooks always run the full gate suite.
-- [ ] T004 ARBORA-DEPLOY-R004 mypy hook type-checks the test suite.
-- [ ] T005 ARBORA-DEPLOY-R005 Web UI keeps its component package name.
-- [ ] T006 ARBORA-DEPLOY-R006 The base dependency pins a compatible connector-SDK floor.
-- [ ] T007 ARBORA-DEPLOY-R007.1 arbora-doctor console-script collision resolved.
-- [ ] T008 ARBORA-DEPLOY-R007.2 setup-config console-script collision resolved.
-- [ ] T009 ARBORA-DEPLOY-R007.3 arbora-daemon console script retired.
-- [ ] T010 ARBORA-DEPLOY-R007.4 arbora-venv console-script collision resolved.
-- [ ] T011 ARBORA-DEPLOY-R007.5 arbora-release-canary is declared only by arbora.
-- [ ] T012 ARBORA-DEPLOY-R007.6 The Arbora doctor checks the served engine families and graph connections.
+- [x] T002 ARBORA-DEPLOY-R002 Executable release-qualification runbook.
+- [x] T003 ARBORA-DEPLOY-R003 Pre-push hooks always run the full gate suite.
+- [x] T004 ARBORA-DEPLOY-R004 mypy hook type-checks the test suite.
+- [x] T005 ARBORA-DEPLOY-R005 Web UI keeps its component package name.
+- [x] T006 ARBORA-DEPLOY-R006 The base dependency pins a compatible connector-SDK floor.
+- [x] T007 ARBORA-DEPLOY-R007.1 arbora-doctor console-script collision resolved.
+- [x] T008 ARBORA-DEPLOY-R007.2 setup-config console-script collision resolved.
+- [x] T009 ARBORA-DEPLOY-R007.3 arbora-daemon console script retired.
+- [x] T010 ARBORA-DEPLOY-R007.4 arbora-venv console-script collision resolved.
+- [x] T011 ARBORA-DEPLOY-R007.5 arbora-release-canary is declared only by arbora.
+- [x] T012 ARBORA-DEPLOY-R007.6 The Arbora doctor checks the served engine families and graph connections. Evidence: `tests/deployment/test_doctor_graph.py`.
 - [ ] T013 ARBORA-DEPLOY-R008 Arbora hosts its own boundary modules.
-- [ ] T014 ARBORA-DEPLOY-R009.1 Arbora hosts a typed arbora.core.config_admin hosting/deployment settings module.
-- [ ] T015 ARBORA-DEPLOY-R009.4 Arbora owns the config administration core.
+- [x] T014 ARBORA-DEPLOY-R009.1 Arbora hosts a typed arbora.core.config_admin hosting/deployment settings module.
+- [x] T015 ARBORA-DEPLOY-R009.4 Arbora owns the config administration core.
 - [ ] T016 ARBORA-DEPLOY-R011 Deployment test suite passes in full.
-- [ ] T017 ARBORA-DEPLOY-R012 Pipelines dependency is referenced at main, never pinned.
-- [ ] T018 ARBORA-DEPLOY-R014 Split packages are consumed by published version range.
-- [ ] T019 ARBORA-DEPLOY-R015 AVX2 guard test runs on any hosted runner.
+- [x] T017 ARBORA-DEPLOY-R012 Pipelines dependency is referenced at main, never pinned.
+- [x] T018 ARBORA-DEPLOY-R014 Split packages are consumed by published version range.
+- [x] T019 ARBORA-DEPLOY-R015 AVX2 guard test runs on any hosted runner.
 - [ ] T020 ARBORA-DEPLOY-R016 The serving container is the one in-pod host process.
 - [ ] T021 ARBORA-DEPLOY-R017.1 Placement Decide mapping.
 - [ ] T022 ARBORA-DEPLOY-R017.2 Request assembly for a deployment task.
@@ -271,16 +271,16 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T034 ARBORA-DEPLOY-R017.14 Helm pinned and default renders.
 - [ ] T035 ARBORA-DEPLOY-R017.15 systemd stays refused.
 - [ ] T036 ARBORA-DEPLOY-R017.16 Environment policy drives the digest check.
-- [ ] T037 ARBORA-DEPLOY-R018.1 Engine endpoint type.
-- [ ] T038 ARBORA-DEPLOY-R018.2 Probe before start.
-- [ ] T039 ARBORA-DEPLOY-R018.3 Start only when absent.
-- [ ] T040 ARBORA-DEPLOY-R018.4 Second process attaches.
-- [ ] T041 ARBORA-DEPLOY-R018.5 Last client out stops the engine arbora started.
+- [x] T037 ARBORA-DEPLOY-R018.1 Engine endpoint type.
+- [x] T038 ARBORA-DEPLOY-R018.2 Probe before start.
+- [x] T039 ARBORA-DEPLOY-R018.3 Start only when absent.
+- [x] T040 ARBORA-DEPLOY-R018.4 Second process attaches.
+- [x] T041 ARBORA-DEPLOY-R018.5 Last client out stops the engine arbora started.
 - [ ] T042 ARBORA-DEPLOY-R018.6 Remote engine skips local start.
 - [ ] T043 ARBORA-DEPLOY-R010.1 Development skill keeps every original topic.
 - [ ] T044 ARBORA-DEPLOY-R010.2 Deployment examples stay executable and synchronized.
 - [ ] T045 ARBORA-DEPLOY-R010.3 Supported-profile instructions are complete.
-- [ ] T046 ARBORA-DEPLOY-R013.1 Profile and first-boot obligations are retained.
+- [x] T046 ARBORA-DEPLOY-R013.1 Profile and first-boot obligations are retained.
 - [ ] T047 ARBORA-DEPLOY-R013.2 Record explicit deploy or reuse choice per component.
 - [ ] T048 ARBORA-DEPLOY-R013.3 Reused components are connect-only.
 - [ ] T049 ARBORA-DEPLOY-R013.4 Deployment target matrix is complete.
@@ -288,7 +288,7 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T051 ARBORA-DEPLOY-R013.6 Component choices and target profiles are proven served.
 - [ ] T052 ARBORA-DEPLOY-R018.7 A reused engine only attaches.
 - [ ] T053 ARBORA-DEPLOY-R018.8 A reused engine survives host shutdown.
-- [ ] T054 ARBORA-DEPLOY-R009.2.1 Small-profile import footprint.
+- [x] T054 ARBORA-DEPLOY-R009.2.1 Small-profile import footprint.
 - [ ] T055 ARBORA-DEPLOY-R009.2.2 Single image serves a capability and refusal parity matrix.
 - [ ] T056 ARBORA-DEPLOY-R009.3 Deployment selection imports the approved ontology once.
 - [ ] T057 ARBORA-DEPLOY-R013.7 Secrets default to the vault and the trust bundle reaches every component.
@@ -323,3 +323,7 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T086 [US1] ARBORA-DEPLOY-R020.1 Every pack class extends an engine core class. Size: M, 1 PR, 4 hours.
 - [ ] T087 [US1] ARBORA-DEPLOY-R020.2 Every prompt passes the engine blueprint validation. Size: M, 1 PR, 4 hours.
 - [ ] T088 [US1] ARBORA-DEPLOY-R020.3 CI proves provisioning into a fresh store on the pinned engine. Size: M, 1 PR, 4 hours.
+- [ ] T089 [US1] ARBORA-DEPLOY-R021 Every deploy delivers the current registry manifest and proves it readable. Size: S, 1 PR, 2 hours.
+- [ ] T090 [US1] ARBORA-DEPLOY-R017.22 Promote a built artifact through a governed operation. Size: M, 1 PR, 4 hours.
+- [ ] T091 [US1] ARBORA-DEPLOY-R017.23 Promotion applies only after approval and records a deploy record. Size: M, 1 PR, 4 hours.
+- [ ] T092 [US1] ARBORA-DEPLOY-R017.24 Hot-path proof: an agent runs CI to deploy through the door. Size: M, 1 PR, 4 hours.

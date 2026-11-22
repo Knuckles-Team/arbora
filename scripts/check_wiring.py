@@ -22,7 +22,7 @@ See ``scripts/wiring/reachability.py``.
 Both commands need only the standard library (``ast``, ``tomllib``) and run
 in a fresh clone with no synced environment.
 
-Usage: ``python3 scripts/check_wiring.py {orphans,unreachable} [--root REPO]``.
+Usage: ``python3 scripts/check_wiring.py {orphans,reference-pins,unreachable} [--root REPO]``.
 Exit 0 = clean, 1 = findings, 2 = the gate could not establish its universe.
 """
 
@@ -37,6 +37,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from wiring.discovery import GateError
 from wiring.orphans import orphans as find_orphans
 from wiring.reachability import unreachable as find_unreachable
+from wiring.reference_pins import reference_pins
 
 _CHECKS = {
     "orphans": (
@@ -49,6 +50,10 @@ _CHECKS = {
         "module(s) staged work: nothing a declared root reaches imports "
         "them, directly or indirectly. Not served yet -- wire them in, "
         "register them, or delete them; this report does not block CI.",
+    ),
+    "reference-pins": (
+        reference_pins,
+        "shared pipelines references must use main; replace the pinned ref.",
     ),
 }
 

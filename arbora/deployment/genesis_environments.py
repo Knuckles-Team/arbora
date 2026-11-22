@@ -43,6 +43,7 @@ import hmac
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -1148,7 +1149,12 @@ def profile_summary(profile: EnvironmentProfile) -> dict[str, Any]:
             "automount_service_account_token": profile.identity.automount_service_account_token,
             "client_secret_ref": profile.identity.client_secret_ref,
         },
-        "public_ingress": profile.public_ingress.redacted_render(),
+        "public_ingress": {
+            **profile.public_ingress.redacted_render(),
+            "legacy_redirect": profile.public_ingress.legacy_redirect_route(
+                rendered_on=date.today()
+            ),
+        },
         "validation": {
             "readiness_checks": list(profile.validation.readiness_checks),
             "liveness_checks": list(profile.validation.liveness_checks),

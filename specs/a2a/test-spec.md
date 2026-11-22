@@ -216,3 +216,4 @@ Rows below name tests that are planned or only partly built. Each entry restates
 | A2A-PL18 | ARBORA-A2A-R023 | Test: `tests/a2a/test_routing.py::test_task_routes_through_a2a_route_decision` (L3) submits to a known graph and an unknown graph. It asserts dispatch and refusal against a loopback engine. |
 | A2A-PL19 | ARBORA-A2A-R024 | Test: `tests/a2a/test_hub_federation_served.py::test_forward_respects_peer_scope` runs the A2A server against a loopback peer and a recorded medulla engine. |
 | A2A-PL20 | ARBORA-A2A-R025 | Test: `tests/a2a/test_anonymous_send.py::test_text_only_plan_admitted_and_limited` (served HTTP). |
+| A2A-PL21 | ARBORA-A2A-R026 | Test: `tests/a2a/test_task_plan_validation.py::test_integer_task_ids_are_refused_typed_with_field_paths` (planned). |

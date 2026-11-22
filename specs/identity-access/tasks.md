@@ -196,51 +196,51 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T036 ARBORA-IDENTITY-R005.1 Consume exact persisted session facts.
 - [ ] T037 ARBORA-IDENTITY-R005.2 Account ceremonies and throttling.
 - [ ] T038 ARBORA-IDENTITY-R006 Optional MFA with TOTP, WebAuthn and recovery codes (rollup).
-- [ ] T039 ARBORA-IDENTITY-R006.1 Typed MFA enrollment model.
+- [x] T039 ARBORA-IDENTITY-R006.1 Typed MFA enrollment model.
 - [ ] T040 ARBORA-IDENTITY-R006.2 MFA ceremonies.
 - [ ] T041 ARBORA-IDENTITY-R007 Admin console tabs with mapping dry-run and mode wizard (rollup).
-- [ ] T042 ARBORA-IDENTITY-R007.1 Typed admin-console tab model.
+- [x] T042 ARBORA-IDENTITY-R007.1 Typed admin-console tab model.
 - [ ] T043 ARBORA-IDENTITY-R007.2 Mapping dry-run and mode-transition behaviour.
 - [ ] T044 ARBORA-IDENTITY-R009 Multi-provider OIDC with mapping rules and JIT policy (rollup).
 - [ ] T045 ARBORA-IDENTITY-R010 LDAPS bind with nested group sync (rollup).
-- [ ] T046 ARBORA-IDENTITY-R008.1 Typed API-key grant model.
-- [ ] T047 ARBORA-IDENTITY-R008.2 Scope intersection and revocation.
-- [ ] T048 ARBORA-IDENTITY-R009.1 Typed OIDC mapping-rule model.
+- [x] T046 ARBORA-IDENTITY-R008.1 Typed API-key grant model.
+- [x] T047 ARBORA-IDENTITY-R008.2 Scope intersection and revocation.
+- [x] T048 ARBORA-IDENTITY-R009.1 Typed OIDC mapping-rule model.
 - [ ] T049 ARBORA-IDENTITY-R009.2 OIDC authentication flow (rollup).
-- [ ] T050 ARBORA-IDENTITY-R009.2.1 Ordered claim-to-rule evaluation.
-- [ ] T051 ARBORA-IDENTITY-R009.2.2 ID-token validation inputs and typed refusal.
+- [x] T050 ARBORA-IDENTITY-R009.2.1 Ordered claim-to-rule evaluation.
+- [x] T051 ARBORA-IDENTITY-R009.2.2 ID-token validation inputs and typed refusal.
 - [ ] T052 ARBORA-IDENTITY-R009.2.3 OIDC callback wiring.
-- [ ] T053 ARBORA-IDENTITY-R010.1 Typed LDAPS bind-config model.
+- [x] T053 ARBORA-IDENTITY-R010.1 Typed LDAPS bind-config model.
 - [ ] T054 ARBORA-IDENTITY-R010.2 Directory bind and group sync (rollup).
-- [ ] T055 ARBORA-IDENTITY-R010.2.1 Group-DN-to-role mapping evaluation.
-- [ ] T056 ARBORA-IDENTITY-R010.2.2 Bind through an injected directory port.
+- [x] T055 ARBORA-IDENTITY-R010.2.1 Group-DN-to-role mapping evaluation.
+- [x] T056 ARBORA-IDENTITY-R010.2.2 Bind through an injected directory port.
 - [ ] T057 ARBORA-IDENTITY-R010.2.3 Scheduled group sync (rollup).
-- [ ] T058 ARBORA-IDENTITY-R010.2.3.1 Pure sync plan.
+- [x] T058 ARBORA-IDENTITY-R010.2.3.1 Pure sync plan.
 - [ ] T059 ARBORA-IDENTITY-R010.2.3.2 Scheduled directory sync apply.
 - [ ] T060 ARBORA-IDENTITY-R010.2.4 Live directory probe.
 - [ ] T061 ARBORA-IDENTITY-R012 Native SAML service provider (rollup).
-- [ ] T062 ARBORA-IDENTITY-R011.1 Typed SCIM service-credential model.
+- [x] T062 ARBORA-IDENTITY-R011.1 Typed SCIM service-credential model.
 - [ ] T063 ARBORA-IDENTITY-R011.2 SCIM server surface (rollup).
-- [ ] T064 ARBORA-IDENTITY-R011.2.1 Typed SCIM User resource model.
-- [ ] T065 ARBORA-IDENTITY-R011.2.2 SCIM credential check.
-- [ ] T066 ARBORA-IDENTITY-R011.2.3 SCIM create/patch/deactivate handlers.
+- [x] T064 ARBORA-IDENTITY-R011.2.1 Typed SCIM User resource model.
+- [x] T065 ARBORA-IDENTITY-R011.2.2 SCIM credential check.
+- [x] T066 ARBORA-IDENTITY-R011.2.3 SCIM create/patch/deactivate handlers.
 - [ ] T067 ARBORA-IDENTITY-R011.2.4 SCIM route registration.
-- [ ] T068 ARBORA-IDENTITY-R012.1 Typed SAML service-provider model.
+- [x] T068 ARBORA-IDENTITY-R012.1 Typed SAML service-provider model.
 - [ ] T069 ARBORA-IDENTITY-R012.2 SAML assertion verification and sign-in (rollup).
-- [ ] T070 ARBORA-IDENTITY-R012.2.1 Typed parsed-assertion model and condition checks.
-- [ ] T071 ARBORA-IDENTITY-R012.2.2 Signature verification through an injected verifier port.
+- [x] T070 ARBORA-IDENTITY-R012.2.1 Typed parsed-assertion model and condition checks.
+- [x] T071 ARBORA-IDENTITY-R012.2.2 Signature verification through an injected verifier port.
 - [ ] T072 ARBORA-IDENTITY-R012.2.3 SAML replay check and sign-in wiring (rollup).
-- [ ] T073 ARBORA-IDENTITY-R012.2.3.1 Replay check through a seen-assertion-id store port.
+- [x] T073 ARBORA-IDENTITY-R012.2.3.1 Replay check through a seen-assertion-id store port.
 - [ ] T074 ARBORA-IDENTITY-R012.2.3.2 SAML sign-in handler.
 - [ ] T075 ARBORA-IDENTITY-R012.2.4 Live SAML provider sign-in probe.
 - [ ] T076 ARBORA-IDENTITY-R013 Identity CLI commands and doctor diagnostics (rollup).
 - [ ] T077 ARBORA-IDENTITY-R014 Shared RBAC decision oracle across identity modes.
 - [ ] T078 ARBORA-IDENTITY-R015 Identity operations documentation and cutover runbook.
 - [ ] T079 ARBORA-IDENTITY-R016 Optional SMTP adapter for identity email.
-- [ ] T080 ARBORA-IDENTITY-R016.1 Arbora-side mail capability model.
+- [x] T080 ARBORA-IDENTITY-R016.1 Arbora-side mail capability model.
 - [ ] T081 ARBORA-IDENTITY-R016.2 SMTP send transport for identity email.
 - [ ] T082 ARBORA-IDENTITY-R017 Remove the unauthenticated opt-out (rollup).
-- [ ] T083 ARBORA-IDENTITY-R017.1 Client entry-point token audit registry.
+- [x] T083 ARBORA-IDENTITY-R017.1 Client entry-point token audit registry.
 - [ ] T084 ARBORA-IDENTITY-R017.2 Engine opt-out removal.
 - [ ] T085 ARBORA-IDENTITY-R017.3 Bearer model.
 - [ ] T086 ARBORA-IDENTITY-R017.4 Bearer verification behaviour.
@@ -257,7 +257,7 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T097 ARBORA-IDENTITY-R019.5 Resource access evidence.
 - [ ] T098 ARBORA-IDENTITY-R019.6 Resource access hot-path proof.
 - [ ] T099 ARBORA-IDENTITY-R020 Domain scope registry covers finance, fleet, loops and ops.
-- [ ] T100 ARBORA-IDENTITY-R021 Identity wiring depends only on identity ports.
+- [x] T100 ARBORA-IDENTITY-R021 Identity wiring depends only on identity ports.
 - [ ] T101 ARBORA-IDENTITY-R022 Fleet authorization fails closed on exact scopes.
 - [ ] T102 ARBORA-IDENTITY-R023 Native self-refreshing credentials for MCP clients (rollup).
 - [ ] T103 ARBORA-IDENTITY-R023.1 Credential reuse model.
@@ -328,5 +328,9 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T166 ARBORA-IDENTITY-R030.4.7 Derive the native redirect URIs and default scopes from the harness profile table.
 - [x] T167 ARBORA-IDENTITY-R030.4.8 Advertise the native sign-in scopes in the protected-resource metadata and the challenge. Evidence: `tests/identity/test_native_signin_scopes.py::test_metadata_scopes_supported_equal_the_native_contract_scopes`.
 - [x] T168 ARBORA-IDENTITY-R030.4.9 Report every identity contract state in readiness. Evidence: `tests/identity/test_native_signin_scopes.py::test_readiness_reports_each_identity_state`.
-- [ ] T169 ARBORA-IDENTITY-R004.7.3 Explicit no-auth composes the web UI read routes. Size: S, 1 PR, 2 hours.
+- [x] T169 ARBORA-IDENTITY-R004.7.3 Explicit no-auth composes the web UI read routes. Size: S, 1 PR, 2 hours.
 - [ ] T170 ARBORA-IDENTITY-R004.10 An optional sandbox principal exercises authenticated paths on loopback. Size: M, 1 PR, 4 hours.
+- [ ] T171 ARBORA-IDENTITY-R001.1 Elevation operations carry typed params, results and refusals in the generated schema. Size: S, 1 PR, 2 hours.
+- [ ] T172 ARBORA-IDENTITY-R006.3 A signed-in person enrolls and manages second factors through served operations. Size: M, 1 PR, 4 hours.
+- [ ] T173 ARBORA-IDENTITY-R006.4 The WebAuthn sign-in challenge is issued by a begin route. Size: S, 1 PR, 2 hours.
+- [ ] T174 ARBORA-IDENTITY-R018.8 Identity operation names are the registry names, and the admin console gaps are served. Size: M, 1 PR, 4 hours.

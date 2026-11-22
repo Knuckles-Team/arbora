@@ -299,17 +299,17 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T031 ARBORA-FLEET-R006 Multiplexer skill and prompt harvest path removed.
 - [ ] T032 ARBORA-FLEET-R007 Bridge runs on FastMCP 4 with native primitives (rollup).
 - [ ] T033 ARBORA-FLEET-R008 RUM, security-audit and CI/CD feeds join the catalog (rollup).
-- [ ] T034 ARBORA-FLEET-R008.1 Typed feed-event model per feed kind.
+- [x] T034 ARBORA-FLEET-R008.1 Typed feed-event model per feed kind.
 - [ ] T035 ARBORA-FLEET-R008.2 Live feed ingestion wired into the catalog.
 - [ ] T036 ARBORA-FLEET-R009 Run admission evaluates, commits and publishes with capacity control.
 - [ ] T037 ARBORA-FLEET-R009.1 Capacity acquisition is all-or-nothing with one re-decision.
 - [ ] T038 ARBORA-FLEET-R009.2 Routing and composition publish only through acquired capacity.
 - [ ] T039 ARBORA-FLEET-R009.3 Run admission publishes with all-or-nothing capacity control.
 - [ ] T040 ARBORA-FLEET-R003.3 Write-back idempotency and preview gating survive a service restart.
-- [ ] T041 ARBORA-FLEET-R006.1 Harvest call-site inventory, the removal baseline.
-- [ ] T042 ARBORA-FLEET-R006.2 Skill/prompt body-harvest cutover for an already-admitted child.
+- [x] T041 ARBORA-FLEET-R006.1 Harvest call-site inventory, the removal baseline.
+- [x] T042 ARBORA-FLEET-R006.2 Skill/prompt body-harvest cutover for an already-admitted child.
 - [ ] T043 ARBORA-FLEET-R006.3 Dead harvest helpers removed (rollup over `.3.1` to `.3.4`).
-- [ ] T044 ARBORA-FLEET-R006.3.1 Deliver `_probe_protocol_families` harvest calls routed through the cutover helper.
+- [x] T044 ARBORA-FLEET-R006.3.1 Deliver `_probe_protocol_families` harvest calls routed through the cutover helper.
 - [ ] T045 ARBORA-FLEET-R006.3.2 Non-admitted fallback and `_harvest_resource_bodies` deleted.
 - [ ] T046 ARBORA-FLEET-R006.3.3 Deadline and error-reason helpers deleted.
 - [ ] T047 ARBORA-FLEET-R006.3.4 Harvest specs deleted.
@@ -338,9 +338,9 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T070 ARBORA-FLEET-R022 Catalog reconciliation re-ingests via durable replay.
 - [ ] T071 ARBORA-FLEET-R051 Catalog reload rejects invalid candidates, proves replica convergence (rollup).
 - [ ] T072 ARBORA-FLEET-R023 Connector count pins stay consistent across the fleet.
-- [ ] T073 ARBORA-FLEET-R023.1 Pure connector count-pin comparison (producer).
+- [x] T073 ARBORA-FLEET-R023.1 Pure connector count-pin comparison (producer).
 - [ ] T074 ARBORA-FLEET-R024 Fleet reconciliation, scaling and deploy watch are served by arbora (rollup).
-- [ ] T075 ARBORA-FLEET-R051.1 Catalog reload rejects invalid candidates.
+- [x] T075 ARBORA-FLEET-R051.1 Catalog reload rejects invalid candidates.
 - [ ] T076 ARBORA-FLEET-R051.2 Multi-replica convergence is observed by generation and digest.
 - [ ] T077 ARBORA-FLEET-R024.1 Deploy-watch verdict is a typed Arbora operation.
 - [ ] T078 ARBORA-FLEET-R024.2 Reconcile, scale and deploy-watch dispatch are served operations.
@@ -492,12 +492,14 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T223 ARBORA-FLEET-R060.3 Wire coverage into the served status and the operator command.
 - [x] T224 ARBORA-FLEET-R060.4 Refuse with a named reason for each uncovered connector.
 - [x] T225 ARBORA-FLEET-R060.5 Prove a missing or empty connector fails the served status.
+- [x] T278 ARBORA-FLEET-R060.6 An unreadable registry names its cause.
 - [x] T226 ARBORA-FLEET-R060 Every registered connector is multiplexed, and a coverage gate enforces it (rollup).
 - [x] T227 ARBORA-FLEET-R061 A caller loads and unloads the tools of one connector group.
 - [ ] T228 ARBORA-FLEET-R015.4 A Medulla `Mcp` foreign source is read through the existing source executor.
 - [ ] T229 ARBORA-FLEET-R062 Fleet discovery and fleet calls never hang while the fleet comes up.
 - [ ] T230 ARBORA-FLEET-R063 The find catalog op lists one server's tools with their schemas.
 - [ ] T231 ARBORA-FLEET-R064 A fleet onboarding refusal names its engine operation and refusal code.
+- [x] T279 ARBORA-FLEET-R064.1 A rejected pack import names every violation, even one the client cannot decode.
 - [ ] T232 ARBORA-FLEET-R065 Engine, discovery and fleet report health on their own.
 - [ ] T233 ARBORA-FLEET-R066 Parallel find and act calls do not hang under load.
 - [x] T234 ARBORA-FLEET-R067 A shielded, shared verified fleet read caches even when every caller deadline is shorter; stale-while-refresh.
@@ -537,7 +539,10 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T268 [US1] ARBORA-FLEET-R083.5 Ranking served proof and degradation evidence. Size: S, 1 PR, 3 hours.
 - [ ] T269 [US1] ARBORA-FLEET-R015.5 An allowed decision whose audit write failed is refused with that cause. Size: XS, 1 PR, 1 hour.
 - [ ] T271 [US1] ARBORA-FLEET-R015.6 A connector's destructive declaration decides at the door; no argument lifts the plan requirement. Size: XS, 1 PR, 1 hour.
-- [ ] T272 [US1] ARBORA-FLEET-R084 The fleet serves the city layout read from the engine world view. Size: S, 1 PR, 2 hours.
+- [x] T272 [US1] ARBORA-FLEET-R084 The fleet serves the city layout read from the engine world view. Size: S, 1 PR, 2 hours.
 - [ ] T273 [US1] ARBORA-FLEET-R085 A sandbox fleet profile fills the catalog without external credentials (rollup). Size: L, 2 PRs, 1 day.
-- [ ] T274 [US1] ARBORA-FLEET-R085.1 The fleet onboarding command reports each connector and exits non-zero only for the declared set. Size: S, 1 PR, 2 hours.
-- [ ] T275 [US1] ARBORA-FLEET-R015.7 Built-in content-pack imports leave the connector onboarding budget whole. Size: XS, 1 PR, 1 hour.
+- [x] T274 [US1] ARBORA-FLEET-R085.1 The fleet onboarding command reports each connector and exits non-zero only for the declared set. Size: S, 1 PR, 2 hours.
+- [ ] T275 [US1] ARBORA-FLEET-R086 The fleet serves graph neighbourhoods as city chunks. Size: S, 1 PR, 2 hours.
+- [ ] T276 [US1] ARBORA-FLEET-R087 The fleet serves the city edit layer. Size: S, 1 PR, 2 hours.
+- [ ] T277 [US1] ARBORA-FLEET-R088 The fleet serves the city mapping registry, growth rules and seed. Size: S, 1 PR, 2 hours.
+- [ ] T280 [US1] ARBORA-FLEET-R015.7 Built-in content-pack imports leave the connector onboarding budget whole. Size: XS, 1 PR, 1 hour.

@@ -5,6 +5,8 @@ from __future__ import annotations
 import tomllib
 from pathlib import Path
 
+import pytest
+
 from arbora.deployment import release_canary
 
 
@@ -14,6 +16,7 @@ def _project_scripts() -> dict[str, str]:
         return tomllib.load(stream)["project"]["scripts"]
 
 
+@pytest.mark.spec("ARBORA-DEPLOY-R007.4")
 def test_host_deployment_scripts_point_to_arbora_modules() -> None:
     scripts = _project_scripts()
     assert scripts == {

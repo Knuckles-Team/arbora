@@ -456,7 +456,7 @@ def process_engine_pool() -> Any:
 
             from arbora.core.settings import runtime_config
             from arbora.epistemic import ConnectClient, EpistemicClientPool
-            from arbora.mcp_server.served_invocation import engine_endpoint
+            from arbora.mcp_server.composition import parse_engine_endpoint
 
             endpoints = runtime_config.graph_service_endpoints
             if not endpoints:
@@ -466,7 +466,9 @@ def process_engine_pool() -> Any:
                 )
             _POOL = EpistemicClientPool(
                 cast(ConnectClient, MedullaClient.connect),
-                **engine_endpoint(endpoints),
+                **parse_engine_endpoint(
+                    next((item for item in endpoints if str(item).strip()), "")
+                ).client_kwargs(),
             )
         return _POOL
 

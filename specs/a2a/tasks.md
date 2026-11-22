@@ -86,3 +86,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T074 ARBORA-A2A-R023 Inbound A2A tasks route through the medulla `A2aRoute` decision
 - [ ] T075 ARBORA-A2A-R024 Hub federation forwards topic messages to a registered peer
 - [ ] T076 ARBORA-A2A-R025 Admit anonymous chat under the text-only constraint
+- [ ] T083 ARBORA-A2A-R026 Refuse a model task plan that breaks the plan model with a typed code

@@ -58,6 +58,14 @@ No unknowns; no research.md.
 
 ## Phase 1: Design
 
+- **Owner.** arbora: `arbora/api/invoke` owns the admission path, `arbora/api/ops` owns the operation definitions and their composite handlers, and `arbora/api/registry` owns the typed `OpSpec` and `Registry` surface; the engine (`medulla`) owns every durable fact and its revision, and the viewer renders the served projection.
+- **Cohesion.** one operation family per module: the handler, its param and result types, and the `operations()` tuple live in one file (`arbora/api/ops/presence.py`, `arbora/api/ops/activity.py`, `arbora/api/ops/fleet_city.py`), and `arbora/api/ops/registry_factory.py` is the only place that curates which modules are registered.
+- **Dependency direction.** op modules import the typed port protocols, the admission types and the shared `build_read_op` helper; the served process composes the engine ports as bindings into the runtime; op modules never import the engine wire surface, and no module reaches into the curation list to register itself.
+- **Interface depth.** the caller sees only the operation id and its JSON schema; admission, policy, subject, effect, idempotency and audit are hidden behind `invoke`, and each operation exposes one handler and one result model (`arbora/api/ops/presence.py` reached from `arbora/api/invoke/executor.py` and `arbora/api/mcp/verbs.py`).
+- **Special cases.** the governed heartbeat is the only write among these rows: subject-bound to the verified caller principal, fenced by `expected_revision` and rate-limited; the other city operations are reads; and operations awaiting the engine wire surface stay unregistered (fail-closed) rather than served as stubs that can only answer `UNAVAILABLE`.
+- **State.** arbora holds no durable state of its own: the heartbeat's in-process fence is a presentation guard only, and the engine city-state store is the source of truth for revisions and accepted updates; snapshots are served from the engine `simulated_at`.
+- **Environment.** the snapshot cadence is configuration (`presence.snapshot_interval_s`, default 5 seconds) read through `ArboraConfig`; nothing else varies by deployment.
+
 ### Existing wiring to reuse
 
 `arbora.mcp_server.runtime` owns the served FastMCP loop, verified session scope, 320-second bounded dispatch, and `runtime.graph_client(tenant)`. `arbora.gateway.graph_api.register_graph_routes` composes the REST host. `arbora.fleet.multiplexer` owns per-session loading, forwarding, notifications, and child lifecycle. `arbora.a2a` already has authenticated unary task methods. `arbora.webui_host.mcp_delegation` must use the same public invocation boundary. These are migration seams, not new parallel servers. Engine state belongs to `medulla`. Decisions, context, traces and durable WorkItems belong to `medulla`. `meristem` is the agent harness that applies engine decisions. Connector ingestion belongs to `agent-connector-sdk` (SCION-CONNECTOR-CONTROL-R005). Connector effects belong to the SDK and fleet. Arbora authenticates, composes, supervises, routes and projects.
@@ -1208,6 +1216,29 @@ The delivery rows add two entry points. Code-host webhooks enter at `POST /api/v
 - `ARBORA-OPS-R896.12` starts the meristem run that applies one delivery assignment beside `MERISTEM-SCM-R011`. Contract: `contracts/delivery-assignment.md`.
 - `ARBORA-OPS-R899` calls the audio-transcriber `transcribe_speech` tool of `TRANSCRIBE-R002` through `fleet.call`; any connector serving the same `speech-transcript/1` contract qualifies.
 - `ARBORA-OPS-R898` serves the medulla process plan (`Decide` `ProcessPlan`) and binds the branch and table verdicts (`BranchSelect`, `DecisionTableEval`). The meristem run loop applies the control steps. Contract: `contracts/process-plan-run.md`, which names the provider rows.
+
+### 2026-11-20 amendment: one durable city state, rendered by many viewers
+
+`ARBORA-OPS-R915.1` narrows the City presence contract. Arbora remains the
+admitted, tenant-scoped door. Medulla owns the durable city-state facts and
+their revision. Overstory renders and interpolates them. No browser owns the
+simulation clock, invents a shared location, or writes another subject's
+avatar. The R915 snapshot interval remains the presentation cadence; it does
+not make every animation frame durable. The companion heartbeat admits only a
+verified human's virtual avatar update and is unavailable in the anonymous
+sandbox. The production caller chain is:
+
+```text
+Overstory GET /api/apps/city/state
+  -> hosted City gateway
+  -> ask fleet.city.presence
+  -> Arbora invoke/admission
+  -> Medulla city-state read (MEDULLA-WORLD-VIEW-R004)
+  -> revisioned tenant snapshot
+```
+
+The matching authenticated heartbeat follows `write fleet.city.presence.heartbeat`.
+It is subject-bound, revision-fenced, and rate-limited before the Medulla write.
 
 ### Explicit state machines (ARBORA-OPS-R900 to R903)
 

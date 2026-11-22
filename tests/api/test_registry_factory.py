@@ -13,6 +13,7 @@ from arbora.api.ops import (
     browser,
     capacity,
     decide,
+    decision_evidence,
     federation,
     fleet,
     get_registry,
@@ -146,6 +147,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *browser.operations(),
         *capacity.operations(),
         *decide.operations(),
+        *decision_evidence.operations(),
         *federation.operations(),
         *fleet.operations(),
         *ingest.operations(),
@@ -384,6 +386,31 @@ def test_harness_operations_unregistered_until_engine_senders() -> None:
     )
     served = {op.id for op in get_registry() if op.id.startswith("harness.")}
     assert published or not served
+
+
+@pytest.mark.spec(
+    "ARBORA-OPS-R915", "ARBORA-OPS-R915.1", "ARBORA-OPS-R916", "ARBORA-FLEET-R084"
+)
+def test_city_operations_unregistered_until_engine_world_view() -> None:
+    """No ``fleet.city.*`` op is served before the engine publishes the
+    world-view and run-trace wire surface.
+
+    A served operation whose every call can only answer ``UNAVAILABLE``
+    must not be listed: the presence read and heartbeat wait on the
+    Medulla city-state read/write (``MEDULLA-WORLD-VIEW-R004``), the
+    activity stream on the run-trace read (``MEDULLA-ORCH-VOCAB-R803``,
+    the ``RunMetrics`` method) and the city layout on the one spatial
+    query (``MEDULLA-WORLD-VIEW-R003``).
+    """
+    import importlib.util
+
+    from arbora.api.ops.registry_factory import get_registry
+    from arbora.api.registry.eg_binding import load_catalog
+
+    world_view = importlib.util.find_spec("medulla.generated.world_view") is not None
+    run_trace = any(m["id"] == "RunMetrics" for m in load_catalog()["methods"])
+    served = {op.id for op in get_registry() if op.id.startswith("fleet.city.")}
+    assert (world_view or run_trace) or not served
 
 
 @pytest.mark.spec("ARBORA-FLEET-R012.1")

@@ -29,9 +29,10 @@ from arbora.api.registry import (
 )
 from arbora.security.elevation import (
     ElevationApproval,
+    ElevationRequest,
     ElevationRevocation,
-    ElevationScope,
     ElevationView,
+    ElevationWriteResult,
 )
 
 #: Re-exported so ``registry_factory.get_registry()`` can resolve each
@@ -58,15 +59,6 @@ class _Params(BaseModel):
 
 class Empty(_Params):
     pass
-
-
-class ElevationAsk(_Params):
-    elevation_id: str = Field(
-        min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_.:-]+$"
-    )
-    scopes: list[ElevationScope] = Field(min_length=1, max_length=16)
-    span_ms: int = Field(gt=0, le=86_400_000)
-    justification: str = Field(min_length=1, max_length=2048)
 
 
 class ElevationPage(_Params):
@@ -162,8 +154,8 @@ def operations() -> tuple[OpSpec, ...]:
             "access.elevation.request",
             Verb.MANAGE,
             "Request a time-boxed elevation",
-            ElevationAsk,
-            ElevationView,
+            ElevationRequest,
+            ElevationWriteResult,
             scopes=("rbac:elevation",),
             effect=Effect.WRITE,
             idempotency=Idempotency.KEY_REQUIRED,
@@ -181,7 +173,7 @@ def operations() -> tuple[OpSpec, ...]:
             Verb.MANAGE,
             "Revoke an elevation",
             ElevationRevocation,
-            ElevationView,
+            ElevationWriteResult,
             scopes=("rbac:elevation",),
             effect=Effect.DESTRUCTIVE,
         ),
@@ -190,7 +182,7 @@ def operations() -> tuple[OpSpec, ...]:
             Verb.MANAGE,
             "Approve an exact elevation request",
             ElevationApproval,
-            ElevationView,
+            ElevationWriteResult,
             scopes=("rbac:approve-elevation",),
             effect=Effect.ADMIN,
             principals=PrincipalRule.HUMAN_UNDELEGATED,

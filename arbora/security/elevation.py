@@ -40,12 +40,14 @@ __all__ = [
     "APPROVAL_SCOPE",
     "ElevationApproval",
     "ElevationRefused",
+    "ElevationReceipt",
     "ElevationRequest",
     "ElevationRevocation",
     "ElevationScope",
     "ElevationService",
     "ElevationSurface",
     "ElevationView",
+    "ElevationWriteResult",
     "MAX_SPAN_MS",
 ]
 
@@ -149,6 +151,21 @@ class ElevationView(BaseModel):
         remaining = max(0, expires - now_ms) if active and expires else 0
         own = bool(caller) and lease.get("grantee") == caller
         return cls.model_validate({**lease, "remaining_ms": remaining, "own": own})
+
+
+class ElevationReceipt(BaseModel):
+    """What a write returns as proof: the audit event of the call and the digest."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    audit_ref: str
+    request_digest: str
+
+
+class ElevationWriteResult(ElevationView):
+    """An elevation view plus the receipt of the write that produced it."""
+
+    receipt: ElevationReceipt
 
 
 def _clock_ms() -> int:

@@ -231,6 +231,9 @@ async def handle_fleet_operation(
                     "missing": list(coverage.get("missing", ())),
                     "zero_tools": list(coverage.get("zero_tools", ())),
                 }
+                if coverage.get("error"):
+                    details["error"] = coverage["error"]
+                    details["detail"] = coverage.get("detail", "")
                 raise OperationRefused("UNAVAILABLE", details)
     else:
         raise ValueError("unknown fleet operation")

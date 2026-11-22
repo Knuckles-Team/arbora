@@ -9,6 +9,7 @@ import pytest
 from arbora.deployment import release_canary
 
 
+@pytest.mark.spec("ARBORA-DEPLOY-R007.5")
 def test_entry_points_ready_requires_exact_direct_targets(monkeypatch) -> None:
     entries = [
         SimpleNamespace(

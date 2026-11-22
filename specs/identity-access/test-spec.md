@@ -60,7 +60,7 @@ evidence return. These preserve the earlier cookie and effective-route probes.
 | ARBORA-IDENTITY-R026.2 | `tests/identity/test_client_session_open.py` | Record at session open. |
 | ARBORA-IDENTITY-R026.3 | `tests/identity/test_run_attribution.py` | Runs carry the session id. |
 | ARBORA-IDENTITY-R026.4 | `tests/identity/test_run_audit.py` | Audit event per run. |
-| ARBORA-IDENTITY-R026.5 | `tests/identity/test_list_clients.py` | Caller-scoped client listing. |
+| ARBORA-IDENTITY-R026.5 | `tests/identity/test_list_clients.py` | Caller-scoped client listing. | (planned: the named files do not exist yet)
 | ARBORA-IDENTITY-R026.6 | `tests/identity/test_principal_parity.py` | User and service account parity. |
 | ARBORA-IDENTITY-R026.7 | `tests/identity/test_cross_client_denial.py` | Cross-client denial is uniform. |
 | ARBORA-IDENTITY-R027 | `tests/mcp_server/test_process_authority_renewal.py` | Process authority renews over twelve hours of 300-second tokens; failures report a reason. |
@@ -68,7 +68,7 @@ evidence return. These preserve the earlier cookie and effective-route probes.
 | ARBORA-IDENTITY-R029.2 | `tests/mcp_server/test_caller_run_authority.py` | Revocation, cancellation and the maximum lifetime stop renewal. |
 | ARBORA-IDENTITY-R029.3 | `tests/mcp_server/test_caller_run_authority.py` | Fan-out children inherit the parent's renewal; audit carries no token. |
 | ARBORA-IDENTITY-R029.4 | `tests/security/test_session_reference_claim.py` | Session-backed bearers carry the reference claim without token text. |
-| ARBORA-IDENTITY-R029.5 | `tests/api/test_session_revocation_routes.py` | Logout and revocation routes call `revoke_caller` and audit. |
+| ARBORA-IDENTITY-R029.5 | `tests/api/test_session_revocation_routes.py` | Logout and revocation routes call `revoke_caller` and audit. | (planned: the named files do not exist yet)
 | ARBORA-IDENTITY-R029.6 | `tests/mcp_server/test_caller_run_authority.py` | An engine-revoked session stops renewal; engine failure never renews. |
 
 
@@ -445,5 +445,9 @@ Each test below is named by its requirement row, has no running implementation y
 | PT-102 | ARBORA-IDENTITY-R030.4.6 | `tests/identity/test_client_contract.py::test_reconcile_command_prints_state_and_exit_code` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-103 | ARBORA-IDENTITY-R030.4.8 | `tests/identity/test_native_signin_scopes.py::test_metadata_scopes_supported_equal_the_native_contract_scopes`, `::test_challenge_carries_the_same_scope_list`, `::test_advertising_scopes_does_not_require_them`, `::test_served_sign_in_that_follows_the_advertised_scopes_gets_an_offline_token` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-104 | ARBORA-IDENTITY-R030.4.9 | `tests/identity/test_native_signin_scopes.py::test_readiness_reports_each_identity_state` | The result the row states holds. | Each refusal the row states is returned. |
-| PT-105 | ARBORA-IDENTITY-R004.7.3 | `tests/webui_host/test_noauth_read_routes.py::test_none_mode_serves_shell_identity_and_app_reads` (planned) | The result the row states holds. | Each refusal the row states is returned. |
+| PT-105 | ARBORA-IDENTITY-R004.7.3 | `tests/webui_host/test_noauth_read_routes.py::test_none_mode_serves_shell_identity_and_app_reads` | The result the row states holds. | Each refusal the row states is returned. |
 | PT-106 | ARBORA-IDENTITY-R004.10 | `tests/identity/test_sandbox_principal.py::test_mint_is_sandbox_only_loopback_only_and_single` (planned) | The result the row states holds. | Each refusal the row states is returned. |
+| PT-109 | ARBORA-IDENTITY-R001.1 | `tests/api/test_access_ops.py::test_generated_schema_types_elevation_params_result_receipt_and_refusals` (planned) | The result the row states holds. | Each refusal the row states is returned. |
+| PT-110 | ARBORA-IDENTITY-R006.3 | `tests/identity/test_mfa_self_ops_served.py::test_enroll_totp_webauthn_and_recovery_through_served_operations` (planned) | The result the row states holds. | Each refusal the row states is returned. |
+| PT-111 | ARBORA-IDENTITY-R006.4 | `tests/identity/test_mfa_ceremonies_served.py::test_webauthn_begin_issues_a_one_use_challenge_bound_to_the_interim_session` (planned) | The result the row states holds. | Each refusal the row states is returned. |
+| PT-112 | ARBORA-IDENTITY-R018.8 | `tests/identity/test_identity_ops_served.py::test_console_lifecycle_and_audit_export_operations` (planned) | The result the row states holds. | Each refusal the row states is returned. |

@@ -41,6 +41,7 @@ def test_module_does_not_import_meristem_config_internals() -> None:
 
 
 @pytest.mark.spec("ARBORA-HOST-R010")
+@pytest.mark.spec("ARBORA-DEPLOY-R009.1")
 def test_load_resolves_defaults_from_arbora_owned_env_vars() -> None:
     settings = load_hosting_deployment_settings(env={})
     assert settings.bind_host == "127.0.0.1"
@@ -61,6 +62,7 @@ def test_load_honors_arbora_owned_overrides() -> None:
     assert settings.deployment_environment == "production"
 
 
+@pytest.mark.spec("ARBORA-DEPLOY-R009.1")
 def test_refuses_an_out_of_range_port() -> None:
     with pytest.raises(InvalidHostConfigError):
         HostingDeploymentSettings(
@@ -71,6 +73,7 @@ def test_refuses_an_out_of_range_port() -> None:
         )
 
 
+@pytest.mark.spec("ARBORA-DEPLOY-R009.1")
 def test_refuses_an_unrecognized_deployment_environment() -> None:
     with pytest.raises(InvalidHostConfigError):
         HostingDeploymentSettings(
