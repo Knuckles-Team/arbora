@@ -10,7 +10,10 @@ from arbora.api.ops import identity
 from arbora.api.registry import Registry, Surface
 from tests.api.test_invoke_contract import caller, run, setup_services
 
-pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R018.6")
+pytestmark = [
+    pytest.mark.spec("ARBORA-IDENTITY-R018.6"),
+    pytest.mark.spec("ARBORA-IDENTITY-R018.7"),
+]
 
 _ADMIN = frozenset({"identity:admin"})
 
@@ -114,12 +117,6 @@ def test_self_operations_need_no_console() -> None:
     assert len(runtime.calls) == 1
 
 
-pytestmark = [
-    pytest.mark.spec("ARBORA-IDENTITY-R018.6"),
-    pytest.mark.spec("ARBORA-IDENTITY-R018.7"),
-]
-
-
 class _TenantPort:
     """A fake engine whose rows belong to a tenant; it reads the forwarded claims."""
 
@@ -128,12 +125,22 @@ class _TenantPort:
             "tenant:one": [{"principal_id": "usr:one", "username": "one"}],
             "tenant:two": [{"principal_id": "usr:two", "username": "two"}],
         }
-        self.seen: list[tuple[str, object]] = []
+        self.seen: list[tuple[str, dict[str, object] | None]] = []
 
-    async def identity(self, client, claims, family, op, request=None, *, expect):
+    async def identity(
+        self,
+        client,
+        claims,
+        family,
+        op,
+        request: dict[str, object] | None = None,
+        *,
+        expect,
+    ):
         self.seen.append((claims["tenant"], request))
         rows = self.rows[claims["tenant"]]
         if op == "get":
+            assert request is not None
             found = [r for r in rows if r["principal_id"] == request["id"]]
             if not found:
                 from arbora.identity.engine_admin import IdentityRefused
