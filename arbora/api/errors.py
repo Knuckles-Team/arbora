@@ -37,6 +37,7 @@ class ArboraErrorCode(StrEnum):
     TIMEOUT = "TIMEOUT"
     INDETERMINATE = "INDETERMINATE"
     RATE_LIMITED = "RATE_LIMITED"
+    REVISION_CONFLICT = "REVISION_CONFLICT"
     INTERNAL = "INTERNAL"
     # Surface-side elevation refusals raised before anything reaches the engine
     # (ARBORA-IDENTITY-R001.1).
@@ -72,6 +73,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.TIMEOUT: 504,
     ArboraErrorCode.INDETERMINATE: 500,
     ArboraErrorCode.RATE_LIMITED: 429,
+    ArboraErrorCode.REVISION_CONFLICT: 409,
     ArboraErrorCode.INTERNAL: 500,
     ArboraErrorCode.ELEVATION_STALE_VIEW: 409,
     ArboraErrorCode.ELEVATION_APPROVAL_SURFACE: 403,
@@ -540,6 +542,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.TIMEOUT: -32051,
     ArboraErrorCode.INDETERMINATE: -32052,
     ArboraErrorCode.RATE_LIMITED: -32029,
+    ArboraErrorCode.REVISION_CONFLICT: -32005,
     ArboraErrorCode.INTERNAL: -32603,
     ArboraErrorCode.ELEVATION_STALE_VIEW: -32003,
     ArboraErrorCode.ELEVATION_APPROVAL_SURFACE: -32003,
