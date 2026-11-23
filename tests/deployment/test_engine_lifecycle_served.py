@@ -29,7 +29,9 @@ def test_unset_endpoints_start_one_loopback_engine_and_serve_a_call(
     port = free_port()
     # The explicit local no-auth mode: the pool then connects without credentials.
     monkeypatch.setattr(anonymous, "_ACTIVE_MODE", "none")
-    monkeypatch.setattr(runtime_config, "graph_service_endpoints", None)
+    # setattr would restore the frozen live value as a permanent override at
+    # teardown; setitem drops the key so later reads stay live.
+    monkeypatch.setitem(runtime_config._overrides, "graph_service_endpoints", None)
     monkeypatch.setattr(
         composition,
         "local_engine_config",
@@ -72,7 +74,11 @@ def test_unset_endpoints_start_one_loopback_engine_and_serve_a_call(
 
 @pytest.mark.spec("ARBORA-DEPLOY-R018.9")
 def test_set_endpoint_starts_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(runtime_config, "graph_service_endpoints", ["127.0.0.1:1"])
+    # setattr would restore the frozen live value as a permanent override at
+    # teardown; setitem drops the key so later reads stay live.
+    monkeypatch.setitem(
+        runtime_config._overrides, "graph_service_endpoints", ["127.0.0.1:1"]
+    )
 
     def forbidden(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("a configured endpoint must never start a local engine")

@@ -49,7 +49,11 @@ def test_two_hosts_reuse_one_engine_and_unavailable_reuse_starts_zero(
     assert unreachable.value.code == "REUSE_UNREACHABLE"
 
     # Through the pool: the reuse mark makes a dead configured endpoint refuse at once.
-    monkeypatch.setattr(runtime_config, "graph_service_endpoints", [dead.address])
+    # setattr would restore the frozen live value as a permanent override at
+    # teardown; setitem drops the key so later reads stay live.
+    monkeypatch.setitem(
+        runtime_config._overrides, "graph_service_endpoints", [dead.address]
+    )
     monkeypatch.setenv("ENGINE_REUSE", "true")
 
     def forbidden(*_args: object, **_kwargs: object) -> None:
