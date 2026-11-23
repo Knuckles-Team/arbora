@@ -722,10 +722,16 @@ def main(argv: list[str] | None = None) -> int:
                 validate_startup(Namespace(host=endpoint.hostname, auth_type="none"))
             report = _run(args)
     except Exception as exc:  # noqa: BLE001 - CLI returns one privacy-safe failure
+        detail = refusal_detail(exc)
+        if "error_code" not in detail:
+            # A refusal shows its code and message (ARBORA-DEPLOY-R019.4); an
+            # internal failure without a stable code stays private in the
+            # report, keeping only its type and digest (ARBORA-FLEET-R027.7.1).
+            detail = {k: v for k, v in detail.items() if k != "error_message"}
         report = {
             "operation": args.operation,
             "ok": False,
-            **refusal_detail(exc),
+            **detail,
             "error_digest": "sha256:"
             + hashlib.sha256(str(exc).encode("utf-8")).hexdigest(),
         }
