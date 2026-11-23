@@ -13,6 +13,7 @@ import asyncio
 import hashlib
 import json
 import os
+import re
 import secrets
 import shutil
 import socket
@@ -651,6 +652,51 @@ def _exit_status(report: dict[str, Any]) -> int:
     return 0 if report.get("ok", True) else 1
 
 
+_MESSAGE_LIMIT = 400
+_CODE = re.compile(r"^([A-Z][A-Z0-9_]{2,63})\b")
+_REDACTIONS = (
+    (re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]+"), "Bearer [redacted]"),
+    (re.compile(r"(?i)://[^/\s:@]+:[^/\s@]+@"), "://[redacted]@"),
+    (re.compile(r"(?i)\bsecret://\S+"), "[redacted-reference]"),
+    (
+        re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*"),
+        "[redacted]",
+    ),
+    (
+        re.compile(
+            r"(?i)\b([A-Za-z0-9_.-]*(?:token|secret|password|passwd|api[_-]?key|"
+            r"authorization|credential)[A-Za-z0-9_.-]*)(\s*[=:]\s*)(\"[^\"]*\"|'[^']*'|\S+)"
+        ),
+        r"\1\2[redacted]",
+    ),
+)
+
+
+def refusal_detail(exc: BaseException) -> dict[str, str]:
+    """The type, stable code and bounded message of a refusal, secrets removed.
+
+    The code is the exception's own ``code``, else the upper-case name that
+    starts its message. The message is redacted (bearer tokens, URL
+    credentials, secret references, credential-named values) and cut to a
+    fixed length, so an operator sees why a step was refused without the
+    command ever printing a credential (ARBORA-DEPLOY-R019.4).
+    """
+    text = str(exc)
+    code = getattr(exc, "code", None)
+    if not isinstance(code, str) or not _CODE.match(code):
+        match = _CODE.match(text.strip())
+        code = match.group(1) if match else ""
+    for pattern, replacement in _REDACTIONS:
+        text = pattern.sub(replacement, text)
+    text = " ".join(text.split())
+    if len(text) > _MESSAGE_LIMIT:
+        text = text[: _MESSAGE_LIMIT - 1] + "\u2026"
+    detail = {"error_type": type(exc).__name__, "error_message": text}
+    if code:
+        detail["error_code"] = code
+    return detail
+
+
 def main(argv: list[str] | None = None) -> int:
     from arbora.core.settings import load_config
 
@@ -676,10 +722,16 @@ def main(argv: list[str] | None = None) -> int:
                 validate_startup(Namespace(host=endpoint.hostname, auth_type="none"))
             report = _run(args)
     except Exception as exc:  # noqa: BLE001 - CLI returns one privacy-safe failure
+        detail = refusal_detail(exc)
+        if "error_code" not in detail:
+            # A refusal shows its code and message (ARBORA-DEPLOY-R019.4); an
+            # internal failure without a stable code stays private in the
+            # report, keeping only its type and digest (ARBORA-FLEET-R027.7.1).
+            detail = {k: v for k, v in detail.items() if k != "error_message"}
         report = {
             "operation": args.operation,
             "ok": False,
-            "error_type": type(exc).__name__,
+            **detail,
             "error_digest": "sha256:"
             + hashlib.sha256(str(exc).encode("utf-8")).hexdigest(),
         }
