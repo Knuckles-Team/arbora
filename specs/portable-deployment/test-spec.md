@@ -147,7 +147,7 @@ Each row below has no spec marker on a test yet. The listed test is the proof to
 | ARBORA-DEPLOY-R019.1 | `tests/deployment/test_deployment_docs_sandbox.py::test_documented_sandbox_commands_and_variables_match_the_code` (planned, L2). | The local deployment page documents the sandbox. |
 | ARBORA-DEPLOY-R019.2 | `tests/deployment/test_sandbox_engine_pin.py::test_sandbox_refuses_an_engine_that_differs_from_the_lock` (planned, L2). | The sandbox engine is the version the lock pins. |
 | ARBORA-DEPLOY-R019.3 | `tests/deployment/test_sandbox_provisioning_limit.py::test_repeat_up_on_a_fresh_store_is_not_rate_limited` (planned, L3). | The provisioning limit is stated, and a fresh store resets it. |
-| ARBORA-DEPLOY-R019.4 | `tests/deployment/test_refusal_detail.py::test_refusal_prints_code_and_message_and_redacts_secrets` (planned, L2). | A refusal shows its error code and message. |
+| ARBORA-DEPLOY-R019.4 | `tests/deployment/test_refusal_detail.py::test_refusal_prints_code_and_message_and_redacts_secrets` (L2). | A refusal shows its error code and message. |
 | ARBORA-DEPLOY-R020 | `tests/deployment/test_provisioning_admitted_by_pinned_engine.py::test_fresh_store_accepts_all_arbora_content` (planned, L5). | Content that Arbora provisions passes the pinned engine's admission (rollup). |
 | ARBORA-DEPLOY-R020.1 | `tests/deployment/test_pack_class_rollup.py::test_every_pack_class_has_a_core_subclass_path` (planned, L2). | Every pack class extends an engine core class. |
 | ARBORA-DEPLOY-R020.2 | `tests/deployment/test_prompt_blueprints_valid.py::test_every_prompt_passes_the_pinned_engine_blueprint` (planned, L2). | Every prompt passes the engine blueprint validation. |

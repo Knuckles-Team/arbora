@@ -318,7 +318,7 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T081 [US1] ARBORA-DEPLOY-R019.1 The local deployment page documents the sandbox. Size: S, 1 PR, 2 hours.
 - [ ] T082 [US1] ARBORA-DEPLOY-R019.2 The sandbox engine is the version the lock pins. Size: S, 1 PR, 2 hours.
 - [ ] T083 [US1] ARBORA-DEPLOY-R019.3 The provisioning limit is stated, and a fresh store resets it. Size: S, 1 PR, 2 hours.
-- [ ] T084 [US1] ARBORA-DEPLOY-R019.4 A refusal shows its error code and message. Size: S, 1 PR, 2 hours.
+- [x] T084 [US1] ARBORA-DEPLOY-R019.4 A refusal shows its error code and message. Size: S, 1 PR, 2 hours.
 - [ ] T085 [US1] ARBORA-DEPLOY-R020 Content that Arbora provisions passes the pinned engine's admission (rollup). Size: L, 2 PRs, 1 day.
 - [ ] T086 [US1] ARBORA-DEPLOY-R020.1 Every pack class extends an engine core class. Size: M, 1 PR, 4 hours.
 - [ ] T087 [US1] ARBORA-DEPLOY-R020.2 Every prompt passes the engine blueprint validation. Size: M, 1 PR, 4 hours.
