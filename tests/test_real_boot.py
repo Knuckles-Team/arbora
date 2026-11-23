@@ -1342,10 +1342,13 @@ def test_ingest_sources_list_sync_status(stack: dict[str, Any]) -> None:
         stack, "eg.graph.GetNodesByLabel", {"label": "Document", "limit": 10}
     )
     assert nodes["ok"] is True, nodes
+    # The pinned engine addresses node properties by their full core
+    # namespace IRI, not a short name.
+    core = "https://knuckles-team.github.io/ontology/core#"
     mapped = {
-        props["source_record_id"]
+        props[f"{core}sourceRecordId"]
         for _node_id, props in nodes["result"]
-        if props.get("source_mapping_reference")
+        if props.get(f"{core}sourceMappingReference")
         == f"connector:{INGEST_CONNECTOR}#mappings/FixtureItem"
     }
     assert mapped == {"item-1", "item-2", "item-3"}, json.dumps(nodes)[:3000]
