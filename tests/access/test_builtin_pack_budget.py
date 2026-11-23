@@ -26,12 +26,67 @@ pytestmark = pytest.mark.spec("ARBORA-FLEET-R015.7")
 _CONNECTORS = ("conn-a", "conn-b", "conn-c")
 
 
+class _LeaseView:
+    """A minimal ``action.approval`` control-lease view for filing approvals."""
+
+    def __init__(self) -> None:
+        self.tenant = "tenant-a"
+        self.issued: list[dict[str, Any]] = []
+
+    def list(
+        self,
+        *,
+        tenant: str,
+        kind: str,
+        status: str,
+        grant_match: dict[str, Any] | None = None,
+        cursor: str | None = None,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        return {
+            "leases": [
+                lease
+                for lease in self.issued
+                if lease["kind"] == kind and lease["status"] == status
+            ],
+            "next_cursor": None,
+        }
+
+    def issue(
+        self,
+        *,
+        tenant: str,
+        lease_id: str,
+        kind: str,
+        grant: dict[str, Any],
+        issued_at_ms: int,
+        expires_at_ms: int,
+        hard_expires_at_ms: int,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        lease = {
+            "lease_id": lease_id,
+            "kind": kind,
+            "grant": grant,
+            "status": "active",
+            "issued_at_ms": issued_at_ms,
+            "expires_at_ms": expires_at_ms,
+            "hard_expires_at_ms": hard_expires_at_ms,
+            "revision": 1,
+        }
+        self.issued.append(lease)
+        return {"outcome": "issued", "lease": lease}
+
+
 class _RecordingLedger:
     """Keeps every written ``ActionDecision`` row and answers ledger scans."""
 
     def __init__(self) -> None:
         self.decisions: list[dict[str, Any]] = []
         self.approvals: list[str] = []
+        # Held decisions file their approval as a native control lease
+        # (``IssueControlLease``), never as a generic node write.
+        self.control_leases = _LeaseView()
 
     def query_cypher(self, query: str, params: Any = None) -> list[Any]:
         if "count(d)" in query:
@@ -93,6 +148,7 @@ def test_fresh_deploy_leaves_the_full_budget_for_connectors(tmp_path):
         assert decision.allowed, (connector, decision.reason)
 
     assert ledger.approvals == []
+    assert ledger.control_leases.issued == []
     assert {row["target"] for row in ledger.decisions} == {
         *BUILTIN_CONTENT_PACKS,
         *_CONNECTORS,
@@ -112,4 +168,5 @@ def test_connector_imports_beyond_the_cap_are_still_held(tmp_path):
     held = _import(policy, extra)
     assert not held.allowed
     assert "blast-radius cap" in held.reason
-    assert len(ledger.approvals) == 1
+    # The hold filed exactly one approval lease for the over-cap import.
+    assert len(ledger.control_leases.issued) == 1
