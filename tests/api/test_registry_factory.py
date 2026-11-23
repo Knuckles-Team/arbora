@@ -17,6 +17,7 @@ from arbora.api.ops import (
     federation,
     fleet,
     get_registry,
+    identity,
     ingest,
     memory,
     messaging,
@@ -94,6 +95,8 @@ _CURATED_SCOPES = (
     "fleet:control",
     "mcp:admin",
     "registry:read",
+    "identity:self",
+    "identity:admin",
 )
 
 _ENGINE_METHODS = {
@@ -150,6 +153,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *decision_evidence.operations(),
         *federation.operations(),
         *fleet.operations(),
+        *identity.operations(),
         *ingest.operations(),
         *memory.operations(),
         *messaging.operations(),

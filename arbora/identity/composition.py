@@ -13,8 +13,10 @@ from .engine import IdentityUnavailable
 from .ports import (
     CredentialAuthority,
     CredentialState,
+    IdentityAdminPort,
     SessionAuthority,
     SessionState,
+    engine_identity_admin,
 )
 
 
@@ -24,6 +26,7 @@ class IdentityPorts:
 
     credentials: CredentialAuthority
     sessions: SessionAuthority
+    admin: IdentityAdminPort | None = None
 
 
 class _CheckedRuntime:
@@ -65,6 +68,11 @@ def build_engine_identity_ports(
     from .engine_ports import EngineSessionAuthority
 
     owner = EngineSessionAuthority(client, graph=graph, refresh=refresh)
-    return build_identity_ports(
+    ports = build_identity_ports(
         owner, owner, runtime_factory=lambda _credentials, sessions: sessions
+    )
+    return IdentityPorts(
+        credentials=ports.credentials,
+        sessions=ports.sessions,
+        admin=engine_identity_admin(graph),
     )
