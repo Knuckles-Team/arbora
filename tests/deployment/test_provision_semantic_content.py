@@ -16,6 +16,10 @@ from arbora.deployment import production_ops, semantic_provisioning
 from arbora.security.session import GraphSession
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
 
+# The provisioned packs must pass the pinned engine's admission
+# (ARBORA-DEPLOY-R020); this is the same command path its CI proof runs.
+pytestmark = pytest.mark.spec("ARBORA-DEPLOY-R020")
+
 TENANT = "tenant-a"
 GRAPH = "tenant__tenant-a__default"
 URL = "https://arbora.example/mcp"
