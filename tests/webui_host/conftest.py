@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+
 import pytest
 
 
 @pytest.fixture(autouse=True)
-def _fresh_webui_settings() -> None:
+def _fresh_webui_settings() -> Iterator[None]:
     """Give every test a clean overstory ``WebUiSettings`` singleton.
 
     The overstory factory installs its remote-listener rate defaults
