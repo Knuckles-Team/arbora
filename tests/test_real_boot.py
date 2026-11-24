@@ -548,6 +548,11 @@ def _do_booted_stack(
             "GRAPH_SERVICE_AUTH_SECRET": secret,
             "ARBORA_BOOT_PROCESS_TOKEN": process_token,
             "ARBORA_BOOT_MODEL_KEY": "boot-model-key",  # sanitizer:ignore - synthetic
+            # The pack import is a non-heavy engine RPC (60 s client default);
+            # on the shared CI pod, six workers contend for the engine's CPU
+            # and the import can outrun that. Give the provision step its own
+            # budget, still inside the 300 s subprocess cap below.
+            "GRAPH_SERVICE_RPC_TIMEOUT": "240",
             "XDG_CONFIG_HOME": str(root / "xdg-config"),
             "XDG_DATA_HOME": str(root / "xdg-data"),
             "XDG_STATE_HOME": str(root / "xdg-state"),
