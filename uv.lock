@@ -2341,6 +2341,8 @@ dependencies = [
     { name = "pyoxigraph" },
 ]
 wheels = [
+    { url = "https://files.pythonhosted.org/packages/ab/ad/691b46203c8c24543ed8f45b81b51c27da3ab4b33d23d747195532b8e30e/medulla-3.3.5-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:17d18218081195d83172d0a2989ac686723a977d20d6dec4e8cda6fbf8f93dfe", size = 104288232, upload-time = "2026-11-23T19:46:13.688Z" },
+    { url = "https://files.pythonhosted.org/packages/56/40/ba55f667c34345e19a4939d22ef88bb35ba77046b8aa71dd9b0574ff540a/medulla-3.3.5-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:7606d030bbf9a7f1969c6c719a18595ded4a61357fe1577e41b3937019e0ba0a", size = 96996180, upload-time = "2026-11-23T18:07:04.05Z" },
     { url = "https://files.pythonhosted.org/packages/32/79/7f3e6fef0f5318b259cdd3056a8b4d1a1ecfee6e67b2e9f75ab28bb30248/medulla-3.3.5-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:cd416a7c53e4615afe15bb4ffb42b3a68f3c0fd001b27baf938d9b9478a4c763", size = 87469688, upload-time = "2026-11-23T12:49:45.596Z" },
 ]
 
