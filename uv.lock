@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -420,7 +420,7 @@ requires-dist = [
     { name = "matrix-nio", marker = "extra == 'messaging-matrix'", specifier = ">=0.26.0" },
     { name = "mattermostdriver", marker = "extra == 'messaging-mattermost'", specifier = ">=7.3.2" },
     { name = "mcp", specifier = ">=2.3.0,<3.0.0" },
-    { name = "medulla", specifier = "==3.3.4", index = "https://pypi.org/simple" },
+    { name = "medulla", specifier = "==3.3.5", index = "https://pypi.org/simple" },
     { name = "meristem", specifier = ">=5.0.0,<6.0.0" },
     { name = "msgpack", specifier = ">=1.2.1" },
     { name = "mypy", marker = "extra == 'test'", specifier = ">=2.4.0" },
@@ -2328,7 +2328,7 @@ wheels = [
 
 [[package]]
 name = "medulla"
-version = "3.3.4"
+version = "3.3.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -2337,9 +2337,9 @@ dependencies = [
     { name = "pyoxigraph" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/d6/c9897305c120d6be6e19c16a440738c2b6a86b321a5a69599200f630f663/medulla-3.3.4-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:e236b53c2d70b52e9a7ee94c4c3d0e65502ca63edea6d0bf9695388c4d5c24f0", size = 104288870, upload-time = "2026-11-17T10:49:38.657Z" },
-    { url = "https://files.pythonhosted.org/packages/30/5d/4d1e97c971d4469b4ea72ca59242caab4a339cf6c553cbab2568ebae0135/medulla-3.3.4-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:92b95ac8dd93ed47aebdcfd8234a3680349efa19a00b520afd537912000e1053", size = 96943266, upload-time = "2026-11-17T08:59:53.687Z" },
-    { url = "https://files.pythonhosted.org/packages/26/64/5de9bda4d88b49495773b49a31fc799d023a012f13ac7c1477429dc36428/medulla-3.3.4-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:1462647a578bf8f9baa9b0d2a85fd26a4016969e9e1a1f48e98ff5cbfe393b38", size = 87493349, upload-time = "2026-11-17T12:31:08.082Z" },
+    { url = "https://files.pythonhosted.org/packages/ab/ad/691b46203c8c24543ed8f45b81b51c27da3ab4b33d23d747195532b8e30e/medulla-3.3.5-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:17d18218081195d83172d0a2989ac686723a977d20d6dec4e8cda6fbf8f93dfe", size = 104288232, upload-time = "2026-11-23T19:46:13.688Z" },
+    { url = "https://files.pythonhosted.org/packages/56/40/ba55f667c34345e19a4939d22ef88bb35ba77046b8aa71dd9b0574ff540a/medulla-3.3.5-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:7606d030bbf9a7f1969c6c719a18595ded4a61357fe1577e41b3937019e0ba0a", size = 96996180, upload-time = "2026-11-23T18:07:04.05Z" },
+    { url = "https://files.pythonhosted.org/packages/32/79/7f3e6fef0f5318b259cdd3056a8b4d1a1ecfee6e67b2e9f75ab28bb30248/medulla-3.3.5-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:cd416a7c53e4615afe15bb4ffb42b3a68f3c0fd001b27baf938d9b9478a4c763", size = 87469688, upload-time = "2026-11-23T12:49:45.596Z" },
 ]
 
 [[package]]

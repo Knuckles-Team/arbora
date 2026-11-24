@@ -54,7 +54,10 @@ def test_fresh_store_accepts_all_arbora_content(tmp_path: Path) -> None:
             "--idle-shutdown-secs",
             "1800",
         ],
-        env={**os.environ, "MEDULLA_CONNECTOR_PACK_IMPORTERS": f"arbora={importer}"},
+        env={
+            **os.environ,
+            "MEDULLA_CONNECTOR_PACK_IMPORTERS": f"arbora={importer},universal-skills={importer}",
+        },
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
@@ -87,7 +90,12 @@ def test_fresh_store_accepts_all_arbora_content(tmp_path: Path) -> None:
             result.stdout[-2000:],
             result.stderr[-2000:],
         )
-        assert report["imports"] == {"arbora": "imported"}
+        # The skills library declares itself as a content connector, so the
+        # provision imports its pack alongside arbora's own.
+        assert report["imports"] == {
+            "arbora": "imported",
+            "universal-skills": "imported",
+        }
         assert report["verified"] is True
     finally:
         engine.terminate()
