@@ -24,7 +24,6 @@ def test_real_composed_eg_shell_has_one_protected_route_owner(
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
     from fastapi.responses import JSONResponse
     from overstory import server as webui
-    from overstory.host import config
     from pydantic_ai import Agent
     from pydantic_ai.models.test import TestModel
 
@@ -46,10 +45,13 @@ def test_real_composed_eg_shell_has_one_protected_route_owner(
         "WEBUI_OIDC_ATTENDED_ACR_VALUES",
     ):
         monkeypatch.delenv(name, raising=False)
-    for name in ("auth_jwt_jwks_uri", "auth_jwt_issuer", "auth_jwt_audience"):
-        monkeypatch.setattr(config, name, None, raising=False)
-    monkeypatch.setattr(config, "allowed_hosts", "console.invalid", raising=False)
-    monkeypatch.setattr(config, "gateway_rate_limit", 0)
+    # WebUiSettings keeps its overrides outside the instance __dict__, which
+    # pytest 9.2's monkeypatch cannot restore, so drive these settings
+    # through the environment, the documented override source it reads live.
+    for name in ("AUTH_JWT_JWKS_URI", "AUTH_JWT_ISSUER", "AUTH_JWT_AUDIENCE"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("ALLOWED_HOSTS", "console.invalid")
+    monkeypatch.setenv("GATEWAY_RATE_LIMIT", "0")
     monkeypatch.setattr(runtime_config, "gateway_rate_limit", 0)
     monkeypatch.setattr(runtime_config, "gateway_metrics", False)
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))

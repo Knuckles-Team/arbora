@@ -545,3 +545,4 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T275 [US1] ARBORA-FLEET-R086 The fleet serves graph neighbourhoods as city chunks. Size: S, 1 PR, 2 hours.
 - [ ] T276 [US1] ARBORA-FLEET-R087 The fleet serves the city edit layer. Size: S, 1 PR, 2 hours.
 - [ ] T277 [US1] ARBORA-FLEET-R088 The fleet serves the city mapping registry, growth rules and seed. Size: S, 1 PR, 2 hours.
+- [ ] T280 [US1] ARBORA-FLEET-R015.7 Built-in content-pack imports leave the connector onboarding budget whole. Size: XS, 1 PR, 1 hour.

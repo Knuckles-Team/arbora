@@ -21,14 +21,16 @@ from tests.test_served_engine_native_labels import native_engine as native_engin
 
 def _app(monkeypatch, boundary=None):
     from overstory import oidc_session
-    from overstory.host import config
     from overstory.server import create_agent_web_app
     from pydantic_ai import Agent
     from pydantic_ai.models.test import TestModel
 
-    for field in ("auth_jwt_jwks_uri", "auth_jwt_issuer", "auth_jwt_audience"):
-        monkeypatch.setattr(config, field, None, raising=False)
-    monkeypatch.setattr(config, "allowed_hosts", "127.0.0.1", raising=False)
+    # WebUiSettings keeps its overrides outside the instance __dict__, which
+    # pytest 9.2's monkeypatch cannot restore, so drive these settings
+    # through the environment, the documented override source it reads live.
+    for field in ("AUTH_JWT_JWKS_URI", "AUTH_JWT_ISSUER", "AUTH_JWT_AUDIENCE"):
+        monkeypatch.delenv(field, raising=False)
+    monkeypatch.setenv("ALLOWED_HOSTS", "127.0.0.1")
     monkeypatch.setattr(oidc_session, "load_settings", lambda: None)
     monkeypatch.setenv("OVERSTORY_ACCESS_LOG_POLICY", "disabled")
     return create_agent_web_app(

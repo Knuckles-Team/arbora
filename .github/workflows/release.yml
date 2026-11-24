@@ -82,8 +82,8 @@ jobs:
             echo "pip install \"arbora[overstory]==$version\""
             echo '```'
             echo
-            echo "Installs from PyPI on Linux (x86_64, aarch64), macOS (arm64) and"
-            echo "Windows (x86_64), the platforms the engine publishes wheels for."
+            echo "Installs from PyPI on Linux (x86_64, aarch64) and macOS (arm64),"
+            echo "the platforms the engine publishes wheels for."
             echo
             echo "Commit: $SHA"
           } > "$RUNNER_TEMP/notes.md"

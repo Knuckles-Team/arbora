@@ -23,11 +23,13 @@ from collections.abc import Iterable, Iterator, Mapping
 from typing import Any
 from urllib.parse import quote
 
+from scion_sdk.ontology_namespaces import CORE_NAMESPACE, module_namespace
+
 logger = logging.getLogger(__name__)
 
-KG = "http://knuckles.team/kg#"
-CAT = "http://knuckles.team/kg/catalog#"
-CP = "http://knuckles.team/kg/connector-pack#"
+KG = CORE_NAMESPACE
+CAT = module_namespace("catalog")
+CP = module_namespace("connector-pack")
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 RDFS_LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
 RDFS_COMMENT = "http://www.w3.org/2000/01/rdf-schema#comment"
