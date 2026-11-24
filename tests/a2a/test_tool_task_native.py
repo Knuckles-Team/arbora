@@ -36,6 +36,9 @@ pytestmark = [
     pytest.mark.real_boot,
     pytest.mark.spec("ARBORA-A2A-R002.2.2"),
     pytest.mark.spec("ARBORA-A2A-R002.2.2.2"),
+    # A queued boot may wait behind the heavy-boot chain before its own
+    # stack finishes, far beyond the suite-wide 120 s.
+    pytest.mark.timeout(600),
 ]
 
 
