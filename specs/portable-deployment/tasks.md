@@ -319,10 +319,10 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T082 [US1] ARBORA-DEPLOY-R019.2 The sandbox engine is the version the lock pins. Size: S, 1 PR, 2 hours.
 - [ ] T083 [US1] ARBORA-DEPLOY-R019.3 The provisioning limit is stated, and a fresh store resets it. Size: S, 1 PR, 2 hours.
 - [x] T084 [US1] ARBORA-DEPLOY-R019.4 A refusal shows its error code and message. Size: S, 1 PR, 2 hours.
-- [ ] T085 [US1] ARBORA-DEPLOY-R020 Content that Arbora provisions passes the pinned engine's admission (rollup). Size: L, 2 PRs, 1 day.
-- [ ] T086 [US1] ARBORA-DEPLOY-R020.1 Every pack class extends an engine core class. Size: M, 1 PR, 4 hours.
-- [ ] T087 [US1] ARBORA-DEPLOY-R020.2 Every prompt passes the engine blueprint validation. Size: M, 1 PR, 4 hours.
-- [ ] T088 [US1] ARBORA-DEPLOY-R020.3 CI proves provisioning into a fresh store on the pinned engine. Size: M, 1 PR, 4 hours.
+- [x] T085 [US1] ARBORA-DEPLOY-R020 Content that Arbora provisions passes the pinned engine's admission (rollup). Size: L, 2 PRs, 1 day.
+- [x] T086 [US1] ARBORA-DEPLOY-R020.1 Every pack class extends an engine core class. Size: M, 1 PR, 4 hours.
+- [x] T087 [US1] ARBORA-DEPLOY-R020.2 Every prompt passes the engine blueprint validation. Size: M, 1 PR, 4 hours.
+- [x] T088 [US1] ARBORA-DEPLOY-R020.3 CI proves provisioning into a fresh store on the pinned engine. Size: M, 1 PR, 4 hours.
 - [ ] T089 [US1] ARBORA-DEPLOY-R021 Every deploy delivers the current registry manifest and proves it readable. Size: S, 1 PR, 2 hours.
 - [ ] T090 [US1] ARBORA-DEPLOY-R017.22 Promote a built artifact through a governed operation. Size: M, 1 PR, 4 hours.
 - [ ] T091 [US1] ARBORA-DEPLOY-R017.23 Promotion applies only after approval and records a deploy record. Size: M, 1 PR, 4 hours.
