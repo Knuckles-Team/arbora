@@ -204,13 +204,6 @@
         "scores": [],
         "calibrated": false
       },
-      "calibration": null,
-      "explanation": null,
-      "audit": null,
-      "logging_propensities": [],
-      "nl_binding": null,
-      "synthetic_evidence": false,
-      "record_digest": "sha256:b27b97a5c4364c670735ace48b31d7f7e572816735bd71baf29a81ac423cfb85",
       "answer": {
         "type": "task_plan",
         "value": {
@@ -250,7 +243,14 @@
           "input_digest": "sha256:8e500fa456a49c334317f866ef6d72a9026edffd7ef43227b3a7a881e7ab481e",
           "plan_digest": "sha256:084edc417aeace65eeb66f570199d6f46d1b2be7ae25e28fe2157703c29f12db"
         }
-      }
+      },
+      "calibration": null,
+      "explanation": null,
+      "audit": null,
+      "logging_propensities": [],
+      "nl_binding": null,
+      "synthetic_evidence": false,
+      "record_digest": "sha256:b27b97a5c4364c670735ace48b31d7f7e572816735bd71baf29a81ac423cfb85"
     }
   ]
 }

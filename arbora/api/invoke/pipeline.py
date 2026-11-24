@@ -508,6 +508,7 @@ async def _dispatch(
     services: InvokeServices,
     idempotency_key: str | None,
     decision: FleetCallDecision | None,
+    audit_ref: str = "",
 ) -> Any:
     async with execution_context(
         op,
@@ -523,7 +524,7 @@ async def _dispatch(
         # Keep the verified invocation bundle attached to the context.  This
         # is deliberately added after the recheck so a composite cannot reuse
         # an unverified or stale services object as authority.
-        context = replace(context, operation_services=services)
+        context = replace(context, operation_services=services, audit_ref=audit_ref)
         return await services.runtime.dispatch(op, params, context)
 
 
@@ -746,7 +747,34 @@ def _missing_idempotency_key(call: _Call) -> bool:
     )
 
 
+def identity_gate(op: Any, caller: RequestCaller, surface: Surface) -> OpError | None:
+    """Admin identity operations need the console and a fresh second factor.
+
+    ARBORA-IDENTITY-R018.6. The exact scope is checked with every other scope
+    before this runs. The age bound is ``identity.admin.mfa_max_age_seconds``.
+    """
+    if not (op.id.startswith("identity.") and "identity:admin" in op.scopes):
+        return None
+    if surface != Surface.CONSOLE:
+        return OpError("CONSOLE_ORIGIN_REQUIRED")
+    if op.effect == Effect.READ:
+        return None
+    import time
+
+    from arbora.core.settings import runtime_config
+
+    limit = getattr(runtime_config, "identity_admin_mfa_max_age_seconds", 300)
+    limit = min(900, max(60, int(limit))) if isinstance(limit, int) else 300
+    if caller.mfa_at_ms is None:
+        return OpError("MFA_STALE")
+    age_ms = int(time.time() * 1000) - caller.mfa_at_ms
+    return None if 0 <= age_ms <= limit * 1000 else OpError("MFA_STALE")
+
+
 def _execution_refusal(call: _Call) -> OpError | None:
+    gate = identity_gate(call.op, call.caller, call.surface)
+    if gate is not None:
+        return gate
     if call.op.confirm == Confirm.CONSOLE and not _console_ready(
         call.caller, call.surface
     ):
@@ -945,6 +973,7 @@ async def _dispatch_outcome(call: _Call, audit_ref: str) -> OpResult | OpError:
                 call.services,
                 dispatch_key,
                 call.decision,
+                audit_ref,
             ),
             timeout=DISPATCH_TIMEOUT_SECONDS,
         )

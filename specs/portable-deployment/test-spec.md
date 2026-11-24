@@ -119,8 +119,8 @@ Each row below has no spec marker on a test yet. The listed test is the proof to
 | ARBORA-DEPLOY-R013.4 | `tests/deployment/test_target_matrix.py::test_every_declared_triple_has_a_refusal_case_and_a_success_case_id` (planned) | Deployment target matrix is complete. |
 | ARBORA-DEPLOY-R013.5 | `tests/api/test_deploy_ops_served.py::test_mixed_deployment_changes_only_deploy_marked_components` (planned) | Confirmed profiles bind to governed deployment. |
 | ARBORA-DEPLOY-R013.6 | `tests/deployment/test_component_choices_served.py::test_seed_4110_inventories_and_matrix_cells` (planned) | Component choices and target profiles are proven served. |
-| ARBORA-DEPLOY-R018.7 | `tests/deployment/test_engine_reuse.py::test_two_hosts_reuse_one_engine_and_unavailable_reuse_starts_zero` (planned) | A reused engine only attaches. |
-| ARBORA-DEPLOY-R018.8 | `tests/deployment/test_engine_reuse.py::test_reused_engine_stays_reachable_after_both_clients_stop` (planned) | A reused engine survives host shutdown. |
+| ARBORA-DEPLOY-R018.7 | `tests/deployment/test_engine_reuse.py::test_two_hosts_reuse_one_engine_and_unavailable_reuse_starts_zero` | A reused engine only attaches. |
+| ARBORA-DEPLOY-R018.8 | `tests/deployment/test_engine_reuse.py::test_reused_engine_stays_reachable_after_both_clients_stop` | A reused engine survives host shutdown. |
 | ARBORA-DEPLOY-R009.2.2 | `tests/deployment/test_single_image_parity_served.py::test_every_matrix_row_matches_the_single_image` (planned) | Single image serves a capability and refusal parity matrix. |
 | ARBORA-DEPLOY-R600.1 | `tests/deployment/test_process_locks.py::test_exclusive_lock_contends_then_frees` (existing, not yet bound by a spec marker) | Lock model. |
 | ARBORA-DEPLOY-R600.2 | `tests/deployment/test_process_locks.py::test_engine_guard_is_per_socket` (existing, not yet bound by a spec marker) | Spawn guard behavior. |
@@ -132,7 +132,7 @@ Each row below has no spec marker on a test yet. The listed test is the proof to
 | ARBORA-DEPLOY-R017.19 | `tests/api/test_deploy_ops_served.py::test_plan_then_confirmed_apply_runs_once` (planned) | Serve the placement and apply operations. |
 | ARBORA-DEPLOY-R017.20 | `arbora/deployment/assembly_library.py::publish_deployment_library` (planned); `tests/deployment/test_assembly_library.py::test_startup_publishes_templates_and_components_once_per_tenant` (planned) | Publish the deployment template and its tool components. |
 | ARBORA-DEPLOY-R017.21 | `arbora/deployment/assembly.py::run_confirmed_steps` (planned); `tests/deployment/test_run_confirmed_steps.py::test_nodes_run_in_engine_order_once_per_key` (planned) | Run the confirmed step graph through governed fleet calls. |
-| ARBORA-DEPLOY-R018.9 | `tests/deployment/test_engine_lifecycle_served.py::test_unset_endpoints_start_one_loopback_engine_and_serve_a_call` (planned) | Engine pool wires the local lifecycle. |
+| ARBORA-DEPLOY-R018.9 | `tests/deployment/test_engine_lifecycle_served.py::test_unset_endpoints_start_one_loopback_engine_and_serve_a_call` | Engine pool wires the local lifecycle. |
 | ARBORA-DEPLOY-R601 | `tests/deployment/test_deploy_templates.py::test_templates_published_and_assemble_solved` (planned) | Publish deployment templates and tool components. |
 | ARBORA-DEPLOY-R602 | `tests/deployment/test_deploy_commands.py::test_each_script_function_is_a_command_with_a_config_input` (planned) | The deployment configuration repository holds configuration only. |
 | ARBORA-DEPLOY-R021 | `tests/deployment/test_registry_delivery.py::test_deploy_delivers_workspace_manifest_and_fails_on_unreadable_registry` (planned) | Every deploy delivers the current registry manifest and proves it readable. |
@@ -147,7 +147,7 @@ Each row below has no spec marker on a test yet. The listed test is the proof to
 | ARBORA-DEPLOY-R019.1 | `tests/deployment/test_deployment_docs_sandbox.py::test_documented_sandbox_commands_and_variables_match_the_code` (planned, L2). | The local deployment page documents the sandbox. |
 | ARBORA-DEPLOY-R019.2 | `tests/deployment/test_sandbox_engine_pin.py::test_sandbox_refuses_an_engine_that_differs_from_the_lock` (planned, L2). | The sandbox engine is the version the lock pins. |
 | ARBORA-DEPLOY-R019.3 | `tests/deployment/test_sandbox_provisioning_limit.py::test_repeat_up_on_a_fresh_store_is_not_rate_limited` (planned, L3). | The provisioning limit is stated, and a fresh store resets it. |
-| ARBORA-DEPLOY-R019.4 | `tests/deployment/test_refusal_detail.py::test_refusal_prints_code_and_message_and_redacts_secrets` (planned, L2). | A refusal shows its error code and message. |
+| ARBORA-DEPLOY-R019.4 | `tests/deployment/test_refusal_detail.py::test_refusal_prints_code_and_message_and_redacts_secrets` (L2). | A refusal shows its error code and message. |
 | ARBORA-DEPLOY-R020 | `tests/deployment/test_provisioning_admitted_by_pinned_engine.py::test_fresh_store_accepts_all_arbora_content` (L5). | Content that Arbora provisions passes the pinned engine's admission (rollup). |
 | ARBORA-DEPLOY-R020.1 | `tests/deployment/test_pack_class_rollup.py::test_every_pack_class_has_a_core_subclass_path` (L2). | Every pack class extends an engine core class. |
 | ARBORA-DEPLOY-R020.2 | `tests/deployment/test_prompt_blueprints_valid.py::test_every_prompt_passes_the_pinned_engine_blueprint` (L2). | Every prompt passes the engine blueprint validation. |

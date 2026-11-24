@@ -9,8 +9,8 @@ def test_arbora_declares_native_fastmcp_runtime_floor() -> None:
     requirement = protocol_compat._declared_runtime_floor("arbora", "fastmcp")
 
     assert requirement is not None
-    assert requirement.specifier.contains("4.1.0")
-    assert not requirement.specifier.contains("4.0.11")
+    assert requirement.specifier.contains("4.2.2")
+    assert not requirement.specifier.contains("4.2.1")
     assert not requirement.specifier.contains("4.0.0b1", prereleases=True)
 
 
@@ -18,8 +18,8 @@ def test_source_floor_is_read_from_arbora_manifest() -> None:
     requirement, manifest = protocol_compat._source_shadow_floor("fastmcp")
 
     assert requirement is not None
-    assert requirement.specifier.contains("4.1.0")
-    assert not requirement.specifier.contains("4.0.11")
+    assert requirement.specifier.contains("4.2.2")
+    assert not requirement.specifier.contains("4.2.1")
     assert not requirement.specifier.contains("4.0.0b1", prereleases=True)
     expected = Path(protocol_compat.__file__).resolve().parents[2] / "pyproject.toml"
     assert manifest is not None and Path(manifest) == expected

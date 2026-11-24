@@ -22,6 +22,8 @@ from arbora.access.external_policy_sync import (
 )
 from arbora.security.elevation import (
     ElevationApproval,
+    ElevationReceipt,
+    ElevationRefused,
     ElevationRequest,
     ElevationRevocation,
     ElevationService,
@@ -62,9 +64,33 @@ def _console_claims(context: Any) -> Mapping[str, Any]:
     return claims
 
 
+def _written(context: Any, view: Any) -> dict[str, Any]:
+    """The view of one write with its receipt (ARBORA-IDENTITY-R001.1)."""
+    receipt = ElevationReceipt(
+        audit_ref=getattr(context, "audit_ref", "") or "",
+        request_digest=view.request_digest,
+    )
+    return {**view.model_dump(mode="json"), "receipt": receipt.model_dump()}
+
+
+def _refusal(exc: ElevationRefused) -> Exception:
+    """A surface-side or engine elevation refusal under its own stable code."""
+    from arbora.api.errors import ArboraErrorCode, EngineRefusal
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    try:
+        ArboraErrorCode(exc.code)
+    except ValueError:
+        return EngineRefusal(exc.code)
+    return OperationRefused(exc.code)
+
+
 async def request_elevation(context: Any, params: Mapping[str, Any], op: Any) -> Any:
     ask = ElevationRequest.model_validate(params)
-    return (await _elevations(context).request(ask)).model_dump(mode="json")
+    try:
+        return _written(context, await _elevations(context).request(ask))
+    except ElevationRefused as exc:
+        raise _refusal(exc) from exc
 
 
 async def list_elevations(context: Any, params: Mapping[str, Any], op: Any) -> Any:
@@ -74,17 +100,23 @@ async def list_elevations(context: Any, params: Mapping[str, Any], op: Any) -> A
 
 async def revoke_elevation(context: Any, params: Mapping[str, Any], op: Any) -> Any:
     revocation = ElevationRevocation.model_validate(params)
-    return (await _elevations(context).revoke(revocation)).model_dump(mode="json")
+    try:
+        return _written(context, await _elevations(context).revoke(revocation))
+    except ElevationRefused as exc:
+        raise _refusal(exc) from exc
 
 
 async def approve_elevation(context: Any, params: Mapping[str, Any], op: Any) -> Any:
     approval = ElevationApproval.model_validate(params)
-    view = await _elevations(context).approve(
-        approval,
-        surface=ElevationSurface.OPERATOR_CONSOLE,
-        claims=_console_claims(context),
-    )
-    return view.model_dump(mode="json")
+    try:
+        view = await _elevations(context).approve(
+            approval,
+            surface=ElevationSurface.OPERATOR_CONSOLE,
+            claims=_console_claims(context),
+        )
+    except ElevationRefused as exc:
+        raise _refusal(exc) from exc
+    return _written(context, view)
 
 
 async def deny_elevation(context: Any, params: Mapping[str, Any], op: Any) -> Any:
