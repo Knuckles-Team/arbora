@@ -20,6 +20,7 @@ import pytest
 from arbora.fleet.multiplexer import MCPMultiplexer
 from arbora.fleet.onboarding import (
     RESOURCES_URI,
+    SLOW_RETRY_S,
     FleetEndpoint,
     FleetOnboarding,
     HandshakeOnboarder,
@@ -54,6 +55,8 @@ class _Clock:
         self.delays.append(seconds)
         if seconds == DEBOUNCE:
             self.gate.wait(10)
+        elif seconds >= SLOW_RETRY_S:
+            return True  # a controlled clock: the slow retry ends the run
         elif self.on_wait is not None:
             self.on_wait(seconds)
         return False
@@ -157,7 +160,7 @@ def test_completed_handshake_starts_one_pass_and_imports_full_pack(
     assert onboarder.passes_run == 1
     assert eg.attested == ["alpha-mcp"]
     assert [c for c, _b in _RecordingSink.imported] == ["alpha-mcp"]
-    assert _record(mux)["state"] == "onboarded"
+    assert _record(mux)["outcome"] == "onboarded"
     assert _record(mux)["reason"] == "handshake"
     trigger = OnboardingTrigger("alpha-mcp", "handshake")
     assert trigger.reason == "handshake"
@@ -223,7 +226,7 @@ def test_reconnect_recaptures_only_on_content_digest_change(
     _handshake(mux)  # unchanged reconnect
     onboarder.drain()
     assert captured == ["alpha-mcp"]
-    assert _record(mux)["state"] == "renewed"
+    assert _record(mux)["outcome"] == "renewed"
     assert len(eg.registers) >= registers  # the lease was renewed, not re-imported
     assert eg.attested == ["alpha-mcp"]
 
@@ -307,7 +310,7 @@ def test_unchanged_pack_in_eg_renews_without_reattest(eg: _Registry) -> None:
     _run(onboarder, clock)
 
     assert eg.attested == []
-    assert _record(mux)["state"] == "renewed"
+    assert _record(mux)["outcome"] == "renewed"
 
 
 # spec: ARBORA-FLEET-R041.9
@@ -335,11 +338,11 @@ def test_failed_capture_serves_tools_reports_gap_and_retries_with_backoff(
 
     assert calls == 3
     assert clock.delays == [DEBOUNCE, 5.0, 8.0]  # doubled, then capped
-    assert [s["state"] for s in states] == ["failed", "failed"]
+    assert [s["state"] for s in states] == ["backoff", "backoff"]
     assert states[0]["error"].startswith("ConnectionError")
     assert states[0]["attempts"] == 1
     assert states[1]["attempts"] == 2
-    assert _record(mux)["state"] == "onboarded"  # reset on success
+    assert _record(mux)["outcome"] == "onboarded"  # reset on success
     assert _record(mux)["attempts"] == 0
     assert "error" not in _record(mux)
 
@@ -523,7 +526,7 @@ def test_handshake_pass_scopes_its_loop_transports(
         clock.gate.set()
         onboarder.drain()  # join the worker's asyncio.run loop
 
-        assert _record(mux)["state"] == "onboarded"
+        assert _record(mux)["outcome"] == "onboarded"
         assert eg.attested == ["alpha-mcp"]
         assert [name for name, _b in _RecordingSink.imported] == ["alpha-mcp"]
         for client in clients:

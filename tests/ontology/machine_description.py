@@ -50,6 +50,7 @@ def check_machine(
     edges: set[tuple[str, str, str]],
     guards: dict[str, str] | None = None,
     initial: str | None = None,
+    machine_name: str | None = None,
 ) -> None:
     """Assert ``arbora:<name>Machine`` equals the given Python machine.
 
@@ -58,7 +59,7 @@ def check_machine(
     """
     imports = ox.NamedNode("http://www.w3.org/2002/07/owl#imports")
     assert list(store.quads_for_pattern(None, imports, None)) == []
-    machine = f"{ARBORA}{name}Machine"
+    machine = f"{ARBORA}{machine_name or name + 'Machine'}"
     assert _rolls_up(store, machine, "StateMachine")
     by_state = _by_form(store, f"arbora:{name}State")
     assert set(by_state) == states
