@@ -29,6 +29,15 @@ def print_usage_or_version(argv: list[str]) -> bool:
     return False
 
 
+_PROVISION_COMMANDS = (
+    "provision",
+    "enrol",
+    "normalize-config",
+    "probe-sso",
+    "check-in-pod",
+)
+
+
 def main() -> None:
     """Process composition root: inject concrete browser identity exactly once."""
     import sys
@@ -43,6 +52,14 @@ def main() -> None:
         from arbora.deployment.deployed_source import main as deployed_source_main
 
         raise SystemExit(deployed_source_main(sys.argv[3:]))
+    if (
+        sys.argv[1:2] == ["deploy"]
+        and sys.argv[2:3]
+        and sys.argv[2] in _PROVISION_COMMANDS
+    ):
+        from arbora.deployment.provision import main as provision_main
+
+        raise SystemExit(provision_main(sys.argv[2:]))
     if sys.argv[1:2] == ["plugin"]:
         from arbora.harness_plugins.cli import main as plugin_main
 
