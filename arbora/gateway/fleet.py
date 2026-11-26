@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from starlette.requests import Request
@@ -45,6 +46,7 @@ from arbora.fleet.health import (
     domain_sql,
     health_payload,
     mark_dependency_failure,
+    with_catalog_generation,
 )
 from arbora.security.error_surface import public_error_payload
 
@@ -61,6 +63,32 @@ def bind_fleet_authorities(authorities: FleetAuthorities) -> None:
     """Bind the session-store and goal readers this process serves."""
     global _AUTHORITIES
     _AUTHORITIES = authorities
+
+
+#: The replica's catalog generation reader, bound by catalog composition
+#: (ARBORA-FLEET-R051.2.2). Unbound, the health payload carries no generation.
+_CATALOG_GENERATION: Callable[[], Awaitable[Any]] | None = None
+
+
+def bind_catalog_generation(source: Callable[[], Awaitable[Any]] | None) -> None:
+    """Bind the reader of this replica's catalog generation and convergence state."""
+    global _CATALOG_GENERATION
+    _CATALOG_GENERATION = source
+
+
+async def _health_snapshot() -> Any:
+    """The fleet health snapshot with this replica's catalog generation published."""
+    snapshot = collect_fleet_health(_fleet_authorities(), scope_resolver=_tenant_scope)
+    source = _CATALOG_GENERATION
+    if source is None:
+        return snapshot
+    try:
+        status = await source()
+    except Exception as exc:  # an unreadable generation is reported, never hidden
+        return mark_dependency_failure(
+            snapshot, "catalog_generation", "catalog generation read", exc
+        )
+    return with_catalog_generation(snapshot, status)
 
 
 def _connect() -> Any:
@@ -162,7 +190,7 @@ def _fleet_authorities() -> FleetAuthorities:
 async def fleet_health(request: Request) -> JSONResponse:
     """Aggregate swarm health from the shared fail-closed evidence collector."""
 
-    snapshot = collect_fleet_health(_fleet_authorities(), scope_resolver=_tenant_scope)
+    snapshot = await _health_snapshot()
     return JSONResponse(
         health_payload(snapshot),
         status_code=200 if snapshot.evidence.ready else 503,

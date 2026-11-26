@@ -20,6 +20,9 @@ def test_two_renders_give_one_digest(skill_root: Path, tmp_path: Path) -> None:
         first = render(spec, tmp_path / prof.id / "a")
         second = render(spec, tmp_path / prof.id / "b")
         assert first == second
+        if prof.manifest is None:  # hosted: no plugin manifest, so no version stamp
+            assert first == tree_digest(tmp_path / prof.id / "a")
+            continue
         assert first == tree_digest(tmp_path / prof.id / "a", exclude=(prof.manifest,))
         manifest = (tmp_path / prof.id / "a" / prof.manifest).read_text()
         assert first[:12] in manifest

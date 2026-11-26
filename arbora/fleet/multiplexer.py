@@ -97,6 +97,7 @@ from arbora.fleet.local_skill_catalog import (
 from arbora.fleet.oauth_brokers import oauth_gated
 from arbora.fleet.session_notifications import SessionCatalogNotifications
 from arbora.fleet.state import FleetState, LiveMultiplexers
+from arbora.pin_lag.unavailable import PinLagUnavailable
 from arbora.security.error_surface import public_error_text
 from arbora.security.log_redaction import redact_for_log
 
@@ -2594,6 +2595,25 @@ class MCPMultiplexer:
             if server.registration is not None
         }
 
+    @staticmethod
+    async def _publish_reconciled(
+        reader: _typing.Any, catalog: _catalog_reader.FleetCatalog
+    ) -> None:
+        """Swap the candidate in as the active generation through the receipt guard.
+
+        The receipt is fetched from the engine (ARBORA-FLEET-R051.2.2). An
+        unreconciled candidate raises ``PublicationRefusedError`` and the
+        last-known-good generation keeps serving. PIN-LAG: a pinned engine that
+        cannot issue the receipt installs the read unpublished and logs it.
+        """
+        publish = getattr(reader, "publish_from_engine", None)
+        if publish is None or catalog.generation is None:
+            return
+        try:
+            await publish(catalog, now_ms=int(time.time() * 1000))
+        except PinLagUnavailable as unavailable:
+            logger.warning("catalog generation not published: %s", unavailable)
+
     async def refresh_engine_catalog(self) -> dict[str, dict[str, _typing.Any]]:
         """Read and publish the authoritative EG fleet catalog.
 
@@ -2607,6 +2627,7 @@ class MCPMultiplexer:
             raise RuntimeError(
                 "the engine fleet catalog can only be refreshed before child startup"
             )
+        await self._publish_reconciled(reader, catalog)
         self._fleet_catalog = catalog
         self._fleet_catalog_loaded_at = time.time()
         raw_catalog = self._catalog_from_engine(catalog)

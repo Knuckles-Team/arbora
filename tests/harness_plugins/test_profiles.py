@@ -9,16 +9,28 @@ from arbora.harness_plugins.profiles import PROFILES, HookKind, Lifecycle, Part,
 
 @pytest.mark.spec("ARBORA-HARNESS-PLUGINS-R001.1")
 def test_profile_table_is_closed_and_complete() -> None:
-    assert [p.id for p in PROFILES] == ["claude-code", "opencode", "codex", "grok"]
+    assert [p.id for p in PROFILES] == [
+        "claude-code",
+        "opencode",
+        "codex",
+        "grok",
+        "hosted",
+    ]
     with pytest.raises(KeyError):
         profile("devin")
-    for prof in PROFILES:
+    native = [p for p in PROFILES if p.id != "hosted"]
+    hosted = profile("hosted")
+    assert hosted.hook_kind is HookKind.NONE
+    assert hosted.callback == "" and hosted.callback_port is None
+    assert hosted.manifest is None and hosted.parts == {Part.SKILLS, Part.MCP}
+    assert hosted.client_id == "arbora-hosted-mcp"
+    for prof in native:
         assert prof.callback.startswith(("http://localhost:", "http://127.0.0.1:"))
         assert prof.callback_port > 1024
         assert prof.event(Lifecycle.FIRST_PROMPT) is not None
         assert {Part.SKILLS, Part.HOOKS, Part.MCP} <= prof.parts
         assert prof.door_configs and prof.skill_dirs
-    assert len({p.callback for p in PROFILES}) == len(PROFILES)
+    assert len({p.callback for p in native}) == len(native)
     assert profile("claude-code").hook_kind is HookKind.MCP_TOOL
     assert {p.id for p in PROFILES if p.hook_kind is HookKind.COMMAND} == {
         "opencode",

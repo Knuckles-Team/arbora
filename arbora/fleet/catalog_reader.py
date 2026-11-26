@@ -27,6 +27,7 @@ from arbora.fleet.mcp_resource_reconciliation import (
     ReconciliationReceipt,
     require_reconciled_for_swap,
 )
+from arbora.pin_lag.unavailable import PinLagUnavailable
 
 logger = logging.getLogger(__name__)
 
@@ -412,6 +413,25 @@ class FleetCatalogReader:
         with self._cache_lock:
             self._published = candidate
         return candidate
+
+    async def fetch_receipt(self) -> ReconciliationReceipt | None:
+        """The engine's reconciliation receipt for this tenant (ARBORA-FLEET-R051.2.2).
+
+        PIN-LAG: a port whose engine adapter lacks the receipt method refuses
+        ``UNAVAILABLE`` naming it.
+        """
+        fetch = getattr(self._port, "reconciliation_receipt", None)
+        if fetch is None:
+            raise PinLagUnavailable("ConnectorPack.catalog_reconciliation_receipt")
+        return await fetch()
+
+    async def publish_from_engine(
+        self, candidate: FleetCatalog, *, now_ms: int
+    ) -> FleetCatalog:
+        """Fetch the engine receipt and swap ``candidate`` in through the guard."""
+        return self.publish_generation(
+            candidate, await self.fetch_receipt(), now_ms=now_ms
+        )
 
     async def generation_status(self) -> GenerationStatus:
         """Compare the active generation with the engine's current one.
@@ -928,6 +948,13 @@ class DeferredFleetCatalogReader:
                 {"reason": "catalog warming", "retry_after_s": FLEET_RETRY_AFTER_S},
             )
         return await self._reader.read(kinds=kinds)
+
+    async def publish_from_engine(
+        self, candidate: FleetCatalog, *, now_ms: int
+    ) -> FleetCatalog:
+        if self._reader is None:
+            raise RuntimeError("fleet catalog authority is not installed")
+        return await self._reader.publish_from_engine(candidate, now_ms=now_ms)
 
     async def generation_status(self) -> GenerationStatus:
         if self._reader is None:
