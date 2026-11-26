@@ -61,9 +61,9 @@ class Fixture:
         return refused is None
 
 
-@pytest.mark.spec(
-    "ARBORA-IDENTITY-R019.3", "ARBORA-IDENTITY-R019.4", "ARBORA-IDENTITY-R019.6"
-)
+@pytest.mark.spec("ARBORA-IDENTITY-R019.3")
+@pytest.mark.spec("ARBORA-IDENTITY-R019.4")
+@pytest.mark.spec("ARBORA-IDENTITY-R019.6")
 def test_served_protocol_grants_default_deny() -> None:
     fx = Fixture()
     fx.grant("web:one")

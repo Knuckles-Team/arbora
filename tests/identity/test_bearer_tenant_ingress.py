@@ -81,9 +81,9 @@ def _status(error: HTTPAuthenticationError) -> int:
     return getattr(error, "status_code", 401)
 
 
-@pytest.mark.spec(
-    "ARBORA-IDENTITY-R017.5", "ARBORA-IDENTITY-R017.6", "ARBORA-IDENTITY-R017.8"
-)
+@pytest.mark.spec("ARBORA-IDENTITY-R017.5")
+@pytest.mark.spec("ARBORA-IDENTITY-R017.6")
+@pytest.mark.spec("ARBORA-IDENTITY-R017.8")
 def test_served_stateless_bearer_requires_tenant(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

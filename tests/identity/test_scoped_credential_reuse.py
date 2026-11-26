@@ -31,9 +31,9 @@ def _refusal(ports: Ports, **kwargs: Any) -> CredentialRefusal:
     return caught.value.refusal
 
 
-@pytest.mark.spec(
-    "ARBORA-IDENTITY-R023.3", "ARBORA-IDENTITY-R023.4", "ARBORA-IDENTITY-R023.6"
-)
+@pytest.mark.spec("ARBORA-IDENTITY-R023.3")
+@pytest.mark.spec("ARBORA-IDENTITY-R023.4")
+@pytest.mark.spec("ARBORA-IDENTITY-R023.6")
 @pytest.mark.parametrize("profile", ["jwt_oidc", "opaque"])
 def test_served_pkce_reuse_and_refusal(profile: str) -> None:
     ports = Ports(profile=profile)
