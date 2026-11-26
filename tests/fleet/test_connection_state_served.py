@@ -83,3 +83,16 @@ def test_operation_is_a_discover_scoped_read() -> None:
     op = {o.id: o for o in operations()}["fleet.connections.state"]
     assert op.verb.value == "ask" and op.effect.value == "read"
     assert op.scopes == frozenset({"mcp:discover"})
+
+
+def test_result_is_a_typed_list_of_connector_rows() -> None:
+    from arbora.api.ops.fleet import ConnectionRow, ConnectionStateResult
+
+    op = {o.id: o for o in operations()}["fleet.connections.state"]
+    assert op.result is ConnectionStateResult
+    parsed = ConnectionStateResult.model_validate(
+        {"connectors": [{"server": "alpha", "state": "ready", "mounted_tools": 5}]}
+    )
+    assert isinstance(parsed.connectors[0], ConnectionRow)
+    with pytest.raises(ValueError):
+        ConnectionRow.model_validate({"server": "x", "endpoint": "http://h"})
