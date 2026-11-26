@@ -1,7 +1,6 @@
 """Single-instance spawn guard for the local medulla engine.
 
-companion to :mod:`host_lock`. The host-lock elects ONE
-*daemon* owner; this elects ONE *engine* process per socket path.
+This elects ONE *engine* process per socket path.
 
 Engine autostart (``graph_compute`` connect → ``subprocess.Popen`` of
 ``medulla-server``) was previously unguarded: any process that found the
@@ -47,7 +46,7 @@ from arbora.deployment.file_lock import (
 
 logger = logging.getLogger(__name__)
 
-# Default socket if a caller passes None (matches host_lock's default).
+# Default socket if a caller passes None.
 _DEFAULT_SOCKET = "/tmp/medulla.sock"  # nosec B108 — default UDS path, overridable
 
 # How long to wait for the spawn guard before giving up and proceeding without it
@@ -56,7 +55,7 @@ _GUARD_TIMEOUT_SECS = 30.0
 
 
 def _runtime_base() -> Path:
-    """Return the user runtime dir (created if needed) — same base as host_lock."""
+    """Return the user runtime dir (created if needed) — the one runtime base of the process locks."""
     try:
         import platformdirs
 
