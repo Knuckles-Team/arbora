@@ -6,6 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+from arbora.core.settings import runtime_config
 from arbora.run_origin import RunOriginRegistry
 
 from .application import A2AAuthenticator, create_a2a_application
@@ -15,6 +16,14 @@ from .routing import OrchestratorA2ARouter
 from .service import A2ACardMetadata, A2AService
 
 __all__ = ["A2AComposition", "build_a2a_service", "compose_a2a"]
+
+
+def stream_buffer_events(config: object) -> int:
+    """``a2a.stream_buffer_events``: the slow-consumer bound, from 8 to 4096."""
+    value = getattr(config, "a2a_stream_buffer_events", 256)
+    if type(value) is not int or not 8 <= value <= 4_096:
+        raise ValueError("a2a_stream_buffer_events must be an integer from 8 to 4096")
+    return value
 
 
 @dataclass(frozen=True)
@@ -49,7 +58,9 @@ def build_a2a_service(
         authority=authority,
         router=OrchestratorA2ARouter(engine_provider),
         card_metadata=card_metadata or A2ACardMetadata(),
-        streaming=A2AEventStreams(log, authority),
+        streaming=A2AEventStreams(
+            log, authority, buffer_events=stream_buffer_events(runtime_config)
+        ),
     )
 
 

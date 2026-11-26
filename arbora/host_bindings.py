@@ -239,8 +239,13 @@ class A2AAppExtension(ServerExtension):
             await stop.wait()
 
 
-def mount_sdk_a2a(mcp: Any) -> Any:
-    """Mount the SDK A2A application for the fleet agent behind admission."""
+def mount_sdk_a2a(mcp: Any, *, stream_handler: Any = None) -> Any:
+    """Mount the SDK A2A application for the fleet agent behind admission.
+
+    ``stream_handler`` is the shared A2A JSON-RPC handler: the route serves
+    ``message/stream`` and ``tasks/resubscribe`` through it and the one event
+    log, never through the SDK application (ARBORA-A2A-R001.4.1).
+    """
     from fasta2a.broker import InMemoryBroker
     from fasta2a.storage import InMemoryStorage
 
@@ -258,6 +263,7 @@ def mount_sdk_a2a(mcp: Any) -> Any:
         agent=MediaNormalizingAgent(fleet_agent(), prompt_normalizer()),
         authenticator=AmbientA2AAuthenticator(),
         bind_caller=caller_session_scope,
+        stream_handler=stream_handler,
         name="arbora",
         url=f"{base}{A2A_PATH}",
         version=__version__,

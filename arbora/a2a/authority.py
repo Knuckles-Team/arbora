@@ -451,6 +451,25 @@ class WorkItemA2AAuthority:
             }
         await self.events.publish(item_id, draft, claim=claim)
 
+    def _run_observer(
+        self, item_id: str, claim: Any, *, task_id: str, context_id: str
+    ) -> Any:
+        """The run's stream observer, publishing through the one event log.
+
+        ``None`` when no event log is wired or an enclosing host already
+        observes the run.
+        """
+        from arbora.agent_runs import native_stream_open
+
+        if self.events is None or native_stream_open():
+            return None
+        from .run_events import RunEventObserver
+
+        async def publish(draft: dict[str, Any]) -> None:
+            await self.events.publish(item_id, draft, claim=claim)
+
+        return RunEventObserver(publish, task_id=task_id, context_id=context_id)
+
     async def owned_item(self, task_id: str) -> dict[str, Any] | None:
         """The caller's own task record, or ``None`` for an absent or foreign task."""
         try:
@@ -477,6 +496,7 @@ class WorkItemA2AAuthority:
         task_id: str,
         context_id: str,
         run_id: str | None,
+        observer: Any = None,
     ) -> Any:
         """Execute only inside the host's revocable native owner scope."""
         from arbora import work_items
@@ -486,7 +506,7 @@ class WorkItemA2AAuthority:
             raise RuntimeError("UPGRADE_REQUIRED: hosted task-plan invocation")
         from contextlib import nullcontext
 
-        from arbora.agent_runs import native_run_scope
+        from arbora.agent_runs import native_run_scope, native_stream_scope
         from arbora.current_plan_publication import bind_admitted_claim
         from arbora.host_bindings import preloaded_agent_tools
 
@@ -516,6 +536,11 @@ class WorkItemA2AAuthority:
                     owner_graph=work_items.native_owner_graph(work_engine),
                 )
                 if self.task_plan_config is not None
+                else nullcontext()
+            ),
+            (
+                native_stream_scope(session, observer)
+                if observer is not None
                 else nullcontext()
             ),
         ):
@@ -569,6 +594,9 @@ class WorkItemA2AAuthority:
             kind="status-update",
             state="working",
         )
+        observer = self._run_observer(
+            item_id, claim, task_id=task_id, context_id=context_id
+        )
         try:
             result = await self._execute_claimed_run(
                 work_engine,
@@ -580,6 +608,7 @@ class WorkItemA2AAuthority:
                 task_id=task_id,
                 context_id=context_id,
                 run_id=run_id,
+                observer=observer,
             )
             if result.run_id != (run_id or task_id):
                 raise RuntimeError("agent result does not belong to this A2A turn")
@@ -604,14 +633,19 @@ class WorkItemA2AAuthority:
                 "error", type(exc).__name__, namespace="arbora-a2a"
             )
         if reply is not None:
+            reply = reply[:_MAX_OUTPUT_CHARS]
+        answered = await observer.finish(reply) if observer is not None else False
+        if reply is not None and not answered:
             await self._publish(
                 item_id,
                 claim,
                 task_id=task_id,
                 context_id=context_id,
                 kind="artifact-update",
-                reply=reply[:_MAX_OUTPUT_CHARS],
+                reply=reply,
             )
+        # The final event is durable before the result commits (the lease fence
+        # needs that order). The stream holds it back until the commit lands.
         await self._publish(
             item_id,
             claim,
@@ -628,17 +662,86 @@ class WorkItemA2AAuthority:
                 "run_id": run_id or task_id,
                 **({"usage": usage} if usage is not None else {}),
             }
-        await asyncio.to_thread(
-            work_items.commit_result,
+        await self._commit_outcome(
             work_engine,
             item_id,
             claim,
             outcome=outcome,
             result_ref=result_ref,
             error_ref=error_ref,
-            **completion_kwargs,
+            task_id=task_id,
+            context_id=context_id,
+            completion_kwargs=completion_kwargs,
         )
         return usage
+
+    async def _commit_outcome(
+        self,
+        work_engine: Any,
+        item_id: str,
+        claim: Any,
+        *,
+        outcome: str,
+        result_ref: str | None,
+        error_ref: str | None,
+        task_id: str,
+        context_id: str,
+        completion_kwargs: dict[str, Any],
+    ) -> None:
+        """Commit the outcome, then wake the streams that wait on it.
+
+        A commit that does not apply moves a ``succeeded`` run to ``failed``
+        through the same edge: a final ``failed`` event, then the ``failed``
+        commit. The stream delivers the committed state and never the
+        ``completed`` event that was written ahead of the commit.
+        """
+        from arbora import work_items
+
+        try:
+            status = await asyncio.to_thread(
+                work_items.commit_result,
+                work_engine,
+                item_id,
+                claim,
+                outcome=outcome,
+                result_ref=result_ref,
+                error_ref=error_ref,
+                **completion_kwargs,
+            )
+        except Exception as exc:  # noqa: BLE001 - the failed edge is the answer
+            if outcome != "succeeded":
+                raise
+            logging.getLogger(__name__).warning(
+                "A2A run %s commit failed: %s", item_id, type(exc).__name__
+            )
+            status = "commit_failed"
+        applied = not isinstance(status, str) or status in {"committed", "noop"}
+        if applied or status in _TERMINAL or outcome != "succeeded":
+            if self.events is not None:
+                self.events.notify(item_id)
+            return
+        await self._publish(
+            item_id,
+            claim,
+            task_id=task_id,
+            context_id=context_id,
+            kind="status-update",
+            state="failed",
+            final=True,
+        )
+        await asyncio.to_thread(
+            work_items.commit_result,
+            work_engine,
+            item_id,
+            claim,
+            outcome="failed",
+            error_ref=persistence_reference(
+                "error", "CommitFailed", namespace="arbora-a2a"
+            ),
+            **completion_kwargs,
+        )
+        if self.events is not None:
+            self.events.notify(item_id)
 
     def _validate_admitted_item(
         self,

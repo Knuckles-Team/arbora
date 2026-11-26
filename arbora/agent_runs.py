@@ -144,6 +144,12 @@ def native_stream_scope(
         _NATIVE_STREAM.reset(token)
 
 
+def native_stream_open() -> bool:
+    """Whether an enclosing host already observes the current run."""
+    scope = _NATIVE_STREAM.get()
+    return scope is not None and scope.active
+
+
 def native_stream_protocol() -> str | None:
     """Trusted transport provenance, never parsed from caller message metadata."""
     scope = _NATIVE_STREAM.get()
