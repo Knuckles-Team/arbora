@@ -24,6 +24,7 @@ from .authority import (
     A2ATransitionHistoryUnavailable,
 )
 from .event_log import A2AEventGap, A2AEventStream, wire_event
+from .media_refs import MediaRefRefused, MediaStoreUnavailable
 from .models import A2AMessage, A2AOperationInvokeParams, A2APlanConfirmParams
 from .parts import FilePartRefused, MediaCapabilityRefused
 from .routing import A2AAssemblyUnavailable, A2AOperationBridgeUnavailable
@@ -396,6 +397,13 @@ def _application_error(request_id: Any, error: Exception) -> JSONResponse:
         return _error(
             request_id, -32602, "Invalid params", 400, {"reason": error.reason}
         )
+    if isinstance(error, MediaRefRefused):
+        # ARBORA-A2A-R001.5.5: a closed reason; a foreign reference reads as unknown.
+        return _error(
+            request_id, -32602, "Invalid params", 400, {"reason": error.reason}
+        )
+    if isinstance(error, MediaStoreUnavailable):
+        return _error(request_id, -32015, "UNAVAILABLE", 503)
     if isinstance(error, MediaCapabilityRefused):
         # ARBORA-A2A-R001.5.2: the typed code and a closed reason.
         unavailable = error.code == "UNAVAILABLE"
@@ -558,6 +566,7 @@ async def _unary_request(
         A2ATaskNotCancelable,
         ModalityRefused,
         MediaCapabilityRefused,
+        MediaStoreUnavailable,
         ValidationError,
         TypeError,
         ValueError,
