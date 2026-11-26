@@ -27,7 +27,8 @@ def _record(monkeypatch: pytest.MonkeyPatch, answer: Any = None) -> list[Any]:
     return sent
 
 
-async def test_profile_and_document_set_round_trip(
+@pytest.mark.spec("ARBORA-OPS-R897.6")
+async def test_profile_and_document_set_round_trip_and_run_reference(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     sent = _record(monkeypatch)
@@ -84,3 +85,43 @@ async def test_profile_and_document_set_round_trip(
             context, {"profile_id": "p1", "name": "n", "instructions": ""}, NO_OP
         )
     assert conflict.value.code == "PROFILE_REVISION_CONFLICT"
+    await _run_carries_the_profile_reference(monkeypatch)
+
+
+async def _run_carries_the_profile_reference(monkeypatch: pytest.MonkeyPatch) -> None:
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+
+    from arbora.api.ops import agents
+
+    calls: list[dict[str, Any]] = []
+
+    class Service:
+        async def send_message(self, **params: Any) -> SimpleNamespace:
+            calls.append(params)
+            return SimpleNamespace(model_dump=lambda **_kw: {"id": "task-1"})
+
+    op = next(op for op in agents.operations() if op.id == "agents.run")
+    context = caller_context()
+    context.caller.session = object()
+    context.idempotency_key = "key-1"
+    context.services = {"a2a": Service()}
+    import arbora.security.session as session
+
+    monkeypatch.setattr(session, "use_session", lambda _session: nullcontext())
+    await agents.handle_agent(
+        context,
+        {
+            "message": {"parts": [], "metadata": {"agent_name": "a"}},
+            "assistant_profile_ref": "profile:p1",
+        },
+        op,
+    )
+    await agents.handle_agent(context, {"message": {"parts": []}}, op)
+    # The reference rides in the message metadata beside the caller's own; a run
+    # with none sends the message unchanged.
+    assert calls[0]["message"]["metadata"] == {
+        "agent_name": "a",
+        "assistant_profile_ref": "profile:p1",
+    }
+    assert calls[1]["message"] == {"parts": []}
