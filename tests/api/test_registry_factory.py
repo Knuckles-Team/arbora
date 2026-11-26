@@ -35,6 +35,7 @@ from arbora.api.ops import (
     goals,
     governance,
     graph_limits,
+    harness,
     identity,
     ingest,
     knowledge,
@@ -220,6 +221,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *governance.operations(),
         *finance_receipts.operations(),
         *fleet.operations(),
+        *harness.operations(),
         *identity.operations(),
         *atlas.operations(),
         *goals.operations(),
@@ -464,26 +466,12 @@ def test_memory_and_kv_operations_are_registered() -> None:
 
 
 @pytest.mark.spec("ARBORA-OPS-R068.5")
-def test_harness_operations_unregistered_until_engine_senders() -> None:
-    """ARBORA-OPS-R068.5: no ``harness.*`` op is served before EG ships its senders."""
-    import importlib
-    import importlib.util
-
+def test_harness_operations_registered_once_in_the_registry() -> None:
+    """ARBORA-OPS-R068.5: the registry is the authority; a served ``harness.*`` op is registered."""
     from arbora.api.ops.registry_factory import get_registry
 
-    module = importlib.util.find_spec("medulla.generated.orchestration")
-    senders = (
-        "send_list_harness_components",
-        "send_current_harness_component",
-        "send_retrieve_lessons",
-        "send_harness_evolution_report",
-    )
-    published = module is not None and all(
-        hasattr(importlib.import_module("medulla.generated.orchestration"), s)
-        for s in senders
-    )
     served = {op.id for op in get_registry() if op.id.startswith("harness.")}
-    assert published or not served
+    assert served == {op.id for op in harness.operations()}
 
 
 @pytest.mark.spec(

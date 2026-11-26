@@ -139,6 +139,13 @@ class ArboraConfig(BaseModel):
         alias="PRESENCE_SNAPSHOT_INTERVAL_S",
         description="City presence snapshot cadence in seconds (ARBORA-OPS-R915). A snapshot whose simulated_at is older than this interval is served flagged fresh: false; a consumer polling faster than the interval receives the same snapshot, not a new computation.",
     )
+    resource_grants_max_working_bytes: int = Field(
+        default=8_589_934_592,
+        ge=1_048_576,
+        le=1_099_511_627_776,
+        alias="RESOURCE_GRANTS_MAX_WORKING_BYTES",
+        description="Per-tenant ceiling on the working bytes of the repository index jobs held at once (ARBORA-OPS-R073). The engine holds the ledger; an index request that would exceed the ceiling is refused LOAD_CAP_EXCEEDED before the job is admitted.",
+    )
     allowed_hosts: str | None = Field(
         default=None,
         alias="ALLOWED_HOSTS",

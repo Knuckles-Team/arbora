@@ -186,10 +186,10 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 
 | Case | Row | Proving test and observation |
 |---|---|---|
-| Component reads | `ARBORA-OPS-R068.1` | `tests/api/test_harness_components.py::test_components_list_and_get_served`: A served round trip returns versions with their digests and valid intervals. |
-| Lesson query | `ARBORA-OPS-R068.2` | `tests/api/test_harness_lessons.py::test_lessons_retrieve_ranks_by_confidence`: The answer order follows the engine confidence ranking. |
-| Evolution report | `ARBORA-OPS-R068.3` | `tests/api/test_harness_evolution.py::test_evolution_report_denial_hides_both`: The denied caller sees the refusal and nothing else. |
-| Adoption | `ARBORA-OPS-R068.4` | `tests/api/test_harness_evolution.py::test_adopt_refuses_human_token`: A human-scoped caller cannot invoke the adoption. |
+| Component reads | `ARBORA-OPS-R068.1` | `tests/api/test_harness_ops_served.py::test_components_list_and_get_served`: A served round trip returns versions with their digests and valid intervals. |
+| Lesson query | `ARBORA-OPS-R068.2` | `tests/api/test_harness_ops_served.py::test_lessons_retrieve_ranks_by_confidence`: The answer order follows the engine confidence ranking. |
+| Evolution report | `ARBORA-OPS-R068.3` | `tests/api/test_harness_ops_served.py::test_evolution_report_denial_hides_both`: The denied caller sees the refusal and nothing else. |
+| Adoption | `ARBORA-OPS-R068.4` | `tests/api/test_harness_ops_served.py::test_adopt_refuses_human_token`: A human-scoped caller cannot invoke the adoption. |
 
 ## ARBORA-OPS-R848 to R851 acceptance
 
