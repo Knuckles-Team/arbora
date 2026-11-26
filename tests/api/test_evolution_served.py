@@ -65,16 +65,15 @@ def test_scopes_idempotent_run_and_pause(loops: tuple[Any, Loops]) -> None:
     status = _value(_call(http, "evolution.loops.status", {"loop_id": "L1"}))
     assert status == {"state": "running", "last_run_ms": 1, "next_run_ms": None}
     key = {"Idempotency-Key": "run-1"}
-    ran = _value(
-        _call(http, "evolution.loops.run", {"loop_id": "L1", "kind": {}}, **key)
-    )
-    assert ran == {"job_id": "job-1"}
-    missing_key = _call(http, "evolution.loops.run", {"loop_id": "L1", "kind": {}})
+    # The pinned engine lacks TaskQueueEnqueue: the run refuses and
+    # claims nothing (the pin-lag guard runs first).
+    ran = _call(http, "evolution.loops.run", {"loop_id": "L1"}, **key)
+    assert ran.status_code == 503 and "UNAVAILABLE" in ran.text
+    assert "Submit" not in engine.calls
+    missing_key = _call(http, "evolution.loops.run", {"loop_id": "L1"})
     assert missing_key.status_code == 400
     reader = {"Authorization": "Bearer fixture-reader"}
-    refused = _call(
-        http, "evolution.loops.run", {"loop_id": "L1", "kind": {}}, **key, **reader
-    )
+    refused = _call(http, "evolution.loops.run", {"loop_id": "L1"}, **key, **reader)
     assert refused.status_code == 403
     paused = _value(
         _call(

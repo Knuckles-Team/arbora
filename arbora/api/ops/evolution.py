@@ -37,7 +37,7 @@ __all__ = [
 
 #: The engine replays each write by the idempotency key the pipeline forwards.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "evolution.loops.run": "medulla:AnalyticsJob.Submit",
+    "evolution.loops.run": "medulla:TaskQueueEnqueue",
     "evolution.loops.pause": "medulla:AnalyticsJob.SchedulePause",
 }
 READ_SCOPE = "loops:read"
@@ -51,8 +51,7 @@ class LoopRefParams(Params):
 
 
 class LoopRunParams(LoopRefParams):
-    #: The engine ``JobKind`` of the run, passed to ``Submit`` unchanged.
-    kind: dict[str, Any]
+    """A run-now request names the loop only; the engine hosts no loop body."""
 
 
 class EvolutionPageParams(Params):
@@ -97,22 +96,47 @@ async def handle_loops_status(
     }
 
 
+#: The engine task queue and kind an arbora worker claims to run a loop body.
+LOOP_RUN_QUEUE = "loop_run"
+
+
 async def handle_loops_run(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """Request one loop run as a submitted job; one key returns one job id."""
-    _require_shape("JobOpSubmit")
-    graph = await caller_dispatch_graph(context)
-    spec = {"graph": graph, "kind": params["kind"], "purpose": params["loop_id"]}
+    """Run one loop now: hold its ``Loops`` lease, then enqueue the run task.
+
+    The engine hosts no loop body. Arbora claims the loop lease and takes the
+    run-now receipt from ``TaskQueueEnqueue``; an arbora worker runs the body.
+    One idempotency key returns one task id.
+    """
+    from arbora.pin_lag.medulla import require_methods
+
+    try:
+        require_methods("TaskQueueEnqueue")
+    except PinLagUnavailable as error:
+        raise refusal(error) from error
+    loop_id = params["loop_id"]
+    await engine_send(
+        context,
+        "Loops",
+        {"op": {"op": "claim", "loop_id": loop_id}},
+        idempotent=True,
+    )
     answer = await engine_send(
-        context, "AnalyticsJob", {"op": {"Submit": spec}}, idempotent=True
+        context,
+        "TaskQueueEnqueue",
+        {
+            "queue": LOOP_RUN_QUEUE,
+            "kind": LOOP_RUN_QUEUE,
+            "payload_ref": loop_id,
+            "idempotency_key": context.idempotency_key,
+        },
+        idempotent=True,
     )
-    job_id = (
-        answer.get("id", answer.get("job_id")) if isinstance(answer, Mapping) else None
-    )
-    if not isinstance(job_id, str):
+    task_id = answer.get("task_id") if isinstance(answer, Mapping) else None
+    if not isinstance(task_id, str):
         raise OperationRefused("UNAVAILABLE", {"reason": "unexpected engine answer"})
-    return {"value": {"job_id": job_id}}
+    return {"value": {"task_id": task_id}}
 
 
 async def handle_loops_pause(
