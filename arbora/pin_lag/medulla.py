@@ -199,6 +199,21 @@ def require_agent_run_delegation() -> None:
         raise PinLagUnavailable("ClaimWorkItemResult.delegation_id")
 
 
+def require_pack_import_seed() -> None:
+    """Return once the pack import carries a seed (ARBORA-FLEET-R054), else name the gap.
+
+    Two pieces must exist: the engine request field ``ConnectorPackImportRequest.seed``
+    and the SDK sink's ``seed`` argument. Either missing refuses ``UNAVAILABLE``.
+    """
+    require_model_field("ConnectorPackImportRequest", "seed")
+    import inspect
+
+    from scion_sdk.sinks.medulla import MedullaSink
+
+    if "seed" not in inspect.signature(MedullaSink.import_pack).parameters:
+        raise PinLagUnavailable("MedullaSink.import_pack.seed")
+
+
 def agent_run_delegation_served() -> bool:
     """Whether the installed engine serves agent-run delegations."""
     try:

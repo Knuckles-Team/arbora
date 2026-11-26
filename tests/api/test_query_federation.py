@@ -320,3 +320,62 @@ async def test_cross_source_report_served(monkeypatch: pytest.MonkeyPatch) -> No
     )
     assert result["value"] == report
     assert engine.sent[0][1] == {"request": {"advisory": "A-1"}}
+
+
+@pytest.mark.spec("ARBORA-FLEET-R043.5")
+def test_audit_line_names_sources_and_holds_no_rows(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    import hashlib
+    import json
+    import logging
+
+    class Planner:
+        async def prepare(self, *, text: str, graph: str, caller: Any) -> Any:
+            return _prepared_model()
+
+    class Binding:
+        source = SimpleNamespace(
+            connector="gitlab",
+            contract=SimpleNamespace(contract_iri="iri:contract:gitlab"),
+            mapping=SimpleNamespace(mapping_id="iri:mapping:gitlab"),
+        )
+
+        async def read(self, **kwargs: Any) -> Any:
+            query_result = await kwargs["correlate"](
+                {"execution_id": 7, "query_digest": _DIGEST}
+            )
+            return SimpleNamespace(
+                ok=True, query_result=query_result, rows=1, pages=1, truncated=False
+            )
+
+    async def send_uql(params: Mapping[str, Any]) -> Any:
+        return {
+            "Rows": {
+                "rows": [{"id": "SECRET-ROW-VALUE"}],
+                "columns": [],
+                "warnings": [],
+            },
+            "federation": {
+                "native_count": 0,
+                "virtual_count": 1,
+                "decision_id": "dec-42",
+            },
+        }
+
+    with caplog.at_level(logging.INFO, logger="arbora.audit.federation"):
+        asyncio.run(
+            dispatch_federated_nl(
+                planner=Planner(),
+                text="find issues",
+                graph="tenant:bound",
+                context=_context({"fleet_source_binding": lambda *_a, **_k: Binding()}),
+                send_uql=send_uql,
+            )
+        )
+    assert "SECRET-ROW-VALUE" not in caplog.text
+    line = json.loads(caplog.records[-1].getMessage())
+    assert line["question_digest"] == hashlib.sha256(b"find issues").hexdigest()
+    assert len(line["question_digest"]) == 64
+    assert line["decision_id"] == "dec-42" and line["tenant"] == "tenant:a"
+    assert line["sources"][0]["connector"] == "gitlab" and line["principal"]
