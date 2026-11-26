@@ -15,7 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import subprocess
+import subprocess  # nosec B404 - runs the fixed argv built from the validated deploy file
 import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
