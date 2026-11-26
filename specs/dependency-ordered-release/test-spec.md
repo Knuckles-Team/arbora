@@ -70,3 +70,4 @@ fresh decision holds or denies the request. Check the audit ID and disposition.
 | `ARBORA-RELEASE-R003.4.15` | `tests/api/test_plan_run_ops.py::test_duplicate_write_item_fails_without_a_call_and_keeps_earlier_calls` |
 | `ARBORA-RELEASE-R003.4.16` | `tests/api/test_plan_run_ops.py::test_reply_lists_each_foreach_item_and_masks_secrets` |
 | `ARBORA-RELEASE-R003.4.17` | `tests/api/test_plan_run_ops.py::test_foreach_plan_served_end_to_end` |
+| `ARBORA-RELEASE-R003.4.18` | `tests/api/test_invoke_contract.py::test_a_recorded_success_carries_the_audit_ref_of_its_own_call` |
