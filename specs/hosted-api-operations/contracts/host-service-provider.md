@@ -15,3 +15,14 @@ Consumer: arbora ARBORA-OPS-R014.1
 | read logs | `HostServiceProvider.read_logs(service, since, limit)` | redacted log lines |
 
 An operating system with no adapter refuses `UNSUPPORTED_PLATFORM`.
+
+## Refusal codes
+
+| Code | Meaning |
+|---|---|
+| `UNSUPPORTED_PLATFORM` | The operating system has no adapter for the operation. |
+
+## Owner rows
+
+- Provider: `SCION-CENTRALIZED-CAPABILITIES-R056` (scion-sdk).
+- Consumer: `ARBORA-OPS-R014.1` (retired; the host-management operations consume the SDK interface once a release serves it).
