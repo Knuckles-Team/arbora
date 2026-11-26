@@ -26,6 +26,7 @@ from arbora.messaging.coalescer import BurstCoalescer, Clock, Sleep
 from arbora.messaging.commands import handle_command
 from arbora.messaging.host_ports import host_ports
 from arbora.messaging.models import EventType, InboundEvent
+from arbora.messaging.sender_identity import SenderRefused, session_for_sender
 
 __all__ = ["channel_session", "create_planner_handler", "sender_admitted"]
 
@@ -71,10 +72,15 @@ def _burst_responder(service: Any) -> Callable[[str, list[Any]], Awaitable[None]
         if turn_handler is None:
             logger.error("messaging: no turn handler is bound; burst not answered")
             return
+        try:
+            sender = session_for_sender(str(event.platform), event.user_id)
+        except SenderRefused as refusal:
+            logger.warning("messaging: sender refused (%s); no turn run", refusal.code)
+            return
         reply = await turn_handler(
             service._resolve_engine(),
             combined,
-            session=channel_session(str(event.platform), event.channel_id),
+            session=sender,
         )
         if reply:
             await _send(backend, event, reply)
