@@ -125,12 +125,16 @@ async def test_run_ticks_on_the_injected_clock_and_never_sleeps_for_real() -> No
     assert [c[0] for c in curation.calls].count("claim") == 3
     with pytest.raises(ValueError):
         cs.CuratorScheduler(
-            tenants=lambda: None,
+            tenants=_no_tenants,
             curation=curation,
             runner=FakeRunner(),
             clock=clock,
-            tick_s=0,  # type: ignore[arg-type]
+            tick_s=0,
         )
+
+
+async def _no_tenants() -> list[str]:
+    return []
 
 
 class _Cause(Exception):
