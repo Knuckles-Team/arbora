@@ -45,6 +45,7 @@ if TYPE_CHECKING:
     )
 
 from arbora.access.action_policy import (
+    PACK_IMPORT_KIND,
     ActionPolicies,
     ActionRequest,
 )
@@ -90,7 +91,7 @@ else:
     PackImportAuthorityResolver = Callable[[str], Awaitable[tuple[Any, Any]]]
 
 _REQUIRED_SCOPE = "agent:pack-control"
-_ACTION_KIND = "connector_pack_import"
+_ACTION_KIND = PACK_IMPORT_KIND
 _OPAQUE_PRINCIPAL = re.compile(r"^principal:sha256:[0-9a-f]{64}$")
 
 

@@ -276,7 +276,7 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [x] T039 ARBORA-DEPLOY-R018.3 Start only when absent.
 - [x] T040 ARBORA-DEPLOY-R018.4 Second process attaches.
 - [x] T041 ARBORA-DEPLOY-R018.5 Last client out stops the engine arbora started.
-- [ ] T042 ARBORA-DEPLOY-R018.6 Remote engine skips local start.
+- [x] T042 ARBORA-DEPLOY-R018.6 Remote engine skips local start.
 - [ ] T043 ARBORA-DEPLOY-R010.1 Development skill keeps every original topic.
 - [ ] T044 ARBORA-DEPLOY-R010.2 Deployment examples stay executable and synchronized.
 - [ ] T045 ARBORA-DEPLOY-R010.3 Supported-profile instructions are complete.
@@ -286,8 +286,8 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T049 ARBORA-DEPLOY-R013.4 Deployment target matrix is complete.
 - [ ] T050 ARBORA-DEPLOY-R013.5 Confirmed profiles bind to governed deployment.
 - [ ] T051 ARBORA-DEPLOY-R013.6 Component choices and target profiles are proven served.
-- [ ] T052 ARBORA-DEPLOY-R018.7 A reused engine only attaches.
-- [ ] T053 ARBORA-DEPLOY-R018.8 A reused engine survives host shutdown.
+- [x] T052 ARBORA-DEPLOY-R018.7 A reused engine only attaches.
+- [x] T053 ARBORA-DEPLOY-R018.8 A reused engine survives host shutdown.
 - [x] T054 ARBORA-DEPLOY-R009.2.1 Small-profile import footprint.
 - [ ] T055 ARBORA-DEPLOY-R009.2.2 Single image serves a capability and refusal parity matrix.
 - [ ] T056 ARBORA-DEPLOY-R009.3 Deployment selection imports the approved ontology once.
@@ -304,7 +304,7 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T067 ARBORA-DEPLOY-R017.19 Serve the placement and apply operations.
 - [ ] T068 ARBORA-DEPLOY-R017.20 Publish the deployment template and its tool components.
 - [ ] T069 ARBORA-DEPLOY-R017.21 Run the confirmed step graph through governed fleet calls.
-- [ ] T070 ARBORA-DEPLOY-R018.9 Engine pool wires the local lifecycle.
+- [x] T070 ARBORA-DEPLOY-R018.9 Engine pool wires the local lifecycle.
 - [ ] T071 ARBORA-DEPLOY-R601 Publish deployment templates and tool components.
 - [ ] T072 [US1] ARBORA-DEPLOY-R602 The deployment configuration repository holds configuration only.
 - [ ] T073 [US1] ARBORA-DEPLOY-R603 Identity and application SSO provisioning is one declarative reconcile.
@@ -318,11 +318,11 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T081 [US1] ARBORA-DEPLOY-R019.1 The local deployment page documents the sandbox. Size: S, 1 PR, 2 hours.
 - [ ] T082 [US1] ARBORA-DEPLOY-R019.2 The sandbox engine is the version the lock pins. Size: S, 1 PR, 2 hours.
 - [ ] T083 [US1] ARBORA-DEPLOY-R019.3 The provisioning limit is stated, and a fresh store resets it. Size: S, 1 PR, 2 hours.
-- [ ] T084 [US1] ARBORA-DEPLOY-R019.4 A refusal shows its error code and message. Size: S, 1 PR, 2 hours.
-- [ ] T085 [US1] ARBORA-DEPLOY-R020 Content that Arbora provisions passes the pinned engine's admission (rollup). Size: L, 2 PRs, 1 day.
-- [ ] T086 [US1] ARBORA-DEPLOY-R020.1 Every pack class extends an engine core class. Size: M, 1 PR, 4 hours.
-- [ ] T087 [US1] ARBORA-DEPLOY-R020.2 Every prompt passes the engine blueprint validation. Size: M, 1 PR, 4 hours.
-- [ ] T088 [US1] ARBORA-DEPLOY-R020.3 CI proves provisioning into a fresh store on the pinned engine. Size: M, 1 PR, 4 hours.
+- [x] T084 [US1] ARBORA-DEPLOY-R019.4 A refusal shows its error code and message. Size: S, 1 PR, 2 hours.
+- [x] T085 [US1] ARBORA-DEPLOY-R020 Content that Arbora provisions passes the pinned engine's admission (rollup). Size: L, 2 PRs, 1 day.
+- [x] T086 [US1] ARBORA-DEPLOY-R020.1 Every pack class extends an engine core class. Size: M, 1 PR, 4 hours.
+- [x] T087 [US1] ARBORA-DEPLOY-R020.2 Every prompt passes the engine blueprint validation. Size: M, 1 PR, 4 hours.
+- [x] T088 [US1] ARBORA-DEPLOY-R020.3 CI proves provisioning into a fresh store on the pinned engine. Size: M, 1 PR, 4 hours.
 - [ ] T089 [US1] ARBORA-DEPLOY-R021 Every deploy delivers the current registry manifest and proves it readable. Size: S, 1 PR, 2 hours.
 - [ ] T090 [US1] ARBORA-DEPLOY-R017.22 Promote a built artifact through a governed operation. Size: M, 1 PR, 4 hours.
 - [ ] T091 [US1] ARBORA-DEPLOY-R017.23 Promotion applies only after approval and records a deploy record. Size: M, 1 PR, 4 hours.

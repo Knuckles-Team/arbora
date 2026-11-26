@@ -16,6 +16,10 @@ from arbora.deployment import production_ops, semantic_provisioning
 from arbora.security.session import GraphSession
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
 
+# The provisioned packs must pass the pinned engine's admission
+# (ARBORA-DEPLOY-R020); this is the same command path its CI proof runs.
+pytestmark = pytest.mark.spec("ARBORA-DEPLOY-R020")
+
 TENANT = "tenant-a"
 GRAPH = "tenant__tenant-a__default"
 URL = "https://arbora.example/mcp"
@@ -192,9 +196,13 @@ def test_cli_provisions_both_packs_under_eg_issued_bindings(
     # A fresh store also lacks the WorkItem control graph (leases, queues).
     assert report["control_graph_created"] is True
     assert "__control__" in engine.graphs
-    # The cut meristem harness ships no semantic content pack.
-    assert sorted(report["registered"]) == ["arbora"]
-    assert sorted(attest["connector"] for attest in engine.attests) == ["arbora"]
+    # The cut meristem harness ships its own pack and the universal-skills
+    # pack (the skills library declares itself as a content connector).
+    assert sorted(report["registered"]) == ["arbora", "universal-skills"]
+    assert sorted(attest["connector"] for attest in engine.attests) == [
+        "arbora",
+        "universal-skills",
+    ]
     for attest in engine.attests:
         # The first binding of a fresh store: no generation to fence on.
         assert attest.get("expected_catalog_generation") is None
@@ -206,15 +214,19 @@ def test_cli_provisions_both_packs_under_eg_issued_bindings(
     assert not [call for call in engine.calls if call[0] == "reproject"]
     attaches = [call for call in engine.calls if call[0] == "GraphSchema"]
     assert {call[1] for call in attaches} == {GRAPH}
-    final = [call for call in wired["verified"] if len(call["connectors"]) == 1]
-    assert len(final) == 1 and final[0]["graph"] == GRAPH
+    # Only the final verify (every connector attached) records: the
+    # per-connector probes run before each attach and are still unready.
+    final = wired["verified"]
+    assert len(final) == 1
+    assert sorted(final[0]["connectors"]) == ["arbora", "universal-skills"]
+    assert final[0]["graph"] == GRAPH
 
 
 def test_rerun_registers_and_creates_nothing(
     wired: dict[str, Any], capsys: pytest.CaptureFixture[str]
 ) -> None:
     engine: _Engine = wired["engine"]
-    engine.registered.update({"arbora", "meristem"})
+    engine.registered.update({"arbora", "universal-skills"})
     engine.graphs.update({GRAPH, "__control__"})
 
     assert production_ops.main(["provision-semantic-content", "--served-url", URL]) == 0

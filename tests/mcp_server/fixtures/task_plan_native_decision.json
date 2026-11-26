@@ -204,42 +204,45 @@
         "scores": [],
         "calibrated": false
       },
-      "task_plan": {
-        "tasks": [
-          {
-            "task_id": "A",
-            "prompt": "EXECUTE_A",
-            "depends_on": []
-          },
-          {
-            "task_id": "B",
-            "prompt": "EXECUTE_B",
-            "depends_on": []
-          },
-          {
-            "task_id": "C",
-            "prompt": "EXECUTE_C",
-            "depends_on": [
-              "B"
-            ]
-          },
-          {
-            "task_id": "JOIN",
-            "prompt": "EXECUTE_JOIN",
-            "depends_on": [
-              "A",
-              "C"
-            ]
-          }
-        ],
-        "output_task_id": "JOIN",
-        "max_concurrency": 2,
-        "max_steps": 4,
-        "total_tasks": 4,
-        "policy_revision": "bounded-explicit-dag-v1",
-        "policy_digest": "sha256:d1d62f424ffbe609df32d6e4639c4b83b2b5cfd462b450146f25bb49d8b9da85",
-        "input_digest": "sha256:8e500fa456a49c334317f866ef6d72a9026edffd7ef43227b3a7a881e7ab481e",
-        "plan_digest": "sha256:084edc417aeace65eeb66f570199d6f46d1b2be7ae25e28fe2157703c29f12db"
+      "answer": {
+        "type": "task_plan",
+        "value": {
+          "tasks": [
+            {
+              "task_id": "A",
+              "prompt": "EXECUTE_A",
+              "depends_on": []
+            },
+            {
+              "task_id": "B",
+              "prompt": "EXECUTE_B",
+              "depends_on": []
+            },
+            {
+              "task_id": "C",
+              "prompt": "EXECUTE_C",
+              "depends_on": [
+                "B"
+              ]
+            },
+            {
+              "task_id": "JOIN",
+              "prompt": "EXECUTE_JOIN",
+              "depends_on": [
+                "A",
+                "C"
+              ]
+            }
+          ],
+          "output_task_id": "JOIN",
+          "max_concurrency": 2,
+          "max_steps": 4,
+          "total_tasks": 4,
+          "policy_revision": "bounded-explicit-dag-v1",
+          "policy_digest": "sha256:d1d62f424ffbe609df32d6e4639c4b83b2b5cfd462b450146f25bb49d8b9da85",
+          "input_digest": "sha256:8e500fa456a49c334317f866ef6d72a9026edffd7ef43227b3a7a881e7ab481e",
+          "plan_digest": "sha256:084edc417aeace65eeb66f570199d6f46d1b2be7ae25e28fe2157703c29f12db"
+        }
       },
       "calibration": null,
       "explanation": null,

@@ -52,3 +52,38 @@ def transition_mode_step(tab: AdminConsoleTab, target_mode: str) -> dict[str, st
     if target_mode not in ("none", "local", "external"):
         raise IdentityUnavailable(f"unknown target auth mode {target_mode!r}")
     return {"step": "confirm", "target_mode": target_mode}
+
+
+def dry_run_provider_rules(
+    rules: list[dict[str, object]], claims: dict[str, list[str]]
+) -> dict[str, list[str]]:
+    """Preview what a provider's stored mapping rules assign, as the engine would.
+
+    The engine takes the union of every matching rule (``equals`` or ``prefix``
+    on one claim path) and splits each ``role:<id>`` or ``group:<id>`` target.
+    It writes nothing; the result names the matching rule ids in rule order.
+    """
+    roles: set[str] = set()
+    groups: set[str] = set()
+    matched: list[str] = []
+    for rule in rules:
+        values = claims.get(str(rule.get("claim_path", "")), [])
+        kind, expected = str(rule.get("match_kind", "")), str(rule.get("value", ""))
+        hit = any(
+            (kind == "equals" and value == expected)
+            or (kind == "prefix" and value.startswith(expected))
+            for value in values
+        )
+        if not hit:
+            continue
+        matched.append(str(rule.get("rule_id", "")))
+        target_kind, _, target_id = str(rule.get("target", "")).partition(":")
+        if target_kind == "role" and target_id:
+            roles.add(target_id)
+        elif target_kind == "group" and target_id:
+            groups.add(target_id)
+    return {
+        "roles": sorted(roles),
+        "groups": sorted(groups),
+        "matched_rules": matched,
+    }

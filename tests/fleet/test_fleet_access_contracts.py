@@ -429,7 +429,7 @@ def test_onboarding_registers_after_import(fake_sdk, monkeypatch) -> None:
     assert not any(m.approved for m in catalog.mappings)
 
 
-AC_NS = "https://knuckles-team.github.io/scion-sdk/access#"
+AC_NS = "https://knuckles-team.github.io/ontology/access#"
 DOMAIN_TTL = (
     "@prefix ex: <https://example.org/onto#> .\n"
     'ex:Ticket ex:comment """A ticket.\nSpans lines.""" .\n'

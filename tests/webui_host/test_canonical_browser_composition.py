@@ -57,17 +57,18 @@ def test_actual_webui_factory_dispatches_only_canonical_bound_operations(
     from pydantic_ai import Agent
     from pydantic_ai.models.test import TestModel
 
-    for field in ("auth_jwt_jwks_uri", "auth_jwt_issuer", "auth_jwt_audience"):
-        monkeypatch.setattr(config, field, None, raising=False)
-    monkeypatch.setattr(config, "allowed_hosts", "console.invalid", raising=False)
+    # WebUiSettings keeps its overrides outside the instance __dict__, which
+    # pytest 9.2's monkeypatch cannot restore, so drive these settings
+    # through the environment, the documented override source it reads live.
+    for name in ("AUTH_JWT_JWKS_URI", "AUTH_JWT_ISSUER", "AUTH_JWT_AUDIENCE"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("ALLOWED_HOSTS", "console.invalid")
     monkeypatch.setattr(oidc_session, "load_settings", lambda: None)
     monkeypatch.setenv("KG_AUTH_REQUIRED", "1")
     monkeypatch.setenv("KG_BRAIN_ENFORCE", "1")
     monkeypatch.setenv("OVERSTORY_ACCESS_LOG_POLICY", "disabled")
-    monkeypatch.setattr(
-        config, "gateway_rate_limit", 0.001 if transition == "rate" else 0
-    )
-    monkeypatch.setattr(config, "gateway_rate_burst", 1 if transition == "rate" else 0)
+    monkeypatch.setenv("GATEWAY_RATE_LIMIT", "0.001" if transition == "rate" else "0")
+    monkeypatch.setenv("GATEWAY_RATE_BURST", "1" if transition == "rate" else "0")
     from arbora.core.settings import runtime_config
 
     monkeypatch.setattr(

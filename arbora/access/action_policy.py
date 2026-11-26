@@ -235,6 +235,22 @@ class PolicyReceipt:
         return self.disposition is PolicyDisposition.APPROVE
 
 
+#: The action kind of a connector-pack import.
+PACK_IMPORT_KIND = "connector_pack_import"
+
+#: The first-party content packs Arbora provisions at deploy time
+#: (``arbora-production-ops provision-semantic-content``): its own package,
+#: meristem and the universal skills library. Their imports are pre-authorized
+#: provisioning, run unattended by the default policy, and never spend or
+#: meet the blast-radius budget meant for fleet connector onboarding.
+BUILTIN_CONTENT_PACKS: tuple[str, ...] = ("arbora", "meristem", "universal-skills")
+
+
+def _spends_blast_budget(kind: Any, target: Any) -> bool:
+    """Whether a decision for ``kind``/``target`` counts toward the target cap."""
+    return not (kind == PACK_IMPORT_KIND and target in BUILTIN_CONTENT_PACKS)
+
+
 # The conservative shipped policy (kept byte-for-byte in sync with
 # ``deploy/action-policy.default.yml`` — tests assert the parity) so an
 # installed wheel without the repo's ``deploy/`` tree gets identical behavior.
@@ -299,21 +315,15 @@ DEFAULT_POLICY: dict[str, Any] = {
         {"kind": "deploy_service", "target": "*", "tier": TIER_APPROVAL},
         {"kind": "redeploy_stack", "target": "*", "tier": TIER_APPROVAL},
         {"kind": "merge_promotion", "target": "*", "tier": TIER_APPROVAL},
-        # Arbora provisions its own two semantic content packs at deploy time
-        # (``arbora-production-ops provision-semantic-content``) through
-        # the pack import authority. Only those exact
-        # connector targets run unattended (audited); any other connector-pack
-        # import falls through to the approval_required default.
-        {
-            "kind": "connector_pack_import",
-            "target": "arbora",
-            "tier": TIER_AUTO_NOTIFY,
-        },
-        {
-            "kind": "connector_pack_import",
-            "target": "meristem",
-            "tier": TIER_AUTO_NOTIFY,
-        },
+        # Arbora provisions its first-party content packs at deploy time
+        # through the pack import authority (``BUILTIN_CONTENT_PACKS``).
+        # Only those exact connector targets run unattended (audited); any
+        # other connector-pack import falls through to the approval_required
+        # default.
+        *(
+            {"kind": PACK_IMPORT_KIND, "target": target, "tier": TIER_AUTO_NOTIFY}
+            for target in BUILTIN_CONTENT_PACKS
+        ),
         # Insight Engine closed loop (CONCEPT:MERISTEM-KG.evolution.insight-engine-closed-loop,
         # workstream C4): a mined finding (:AssociationRule/:Anomaly/:PredictedEdge)
         # that cleared its confidence floor and the promotion-governance validator
@@ -842,13 +852,18 @@ class ActionPolicy:
         cap: dict[str, Any],
         recent: list[dict[str, Any]] | LedgerUnreadable | None = None,
     ) -> bool:
-        """True when allowing this target widens the kind's window beyond the cap."""
+        """True when allowing this target widens the kind's window beyond the cap.
+
+        Built-in content-pack imports neither count toward the cap nor meet it.
+        """
         try:
             max_targets = int(cap.get("max_targets", 0))
             window_s = float(cap.get("window_s", 3600))
         except (TypeError, ValueError):
             return False
         if max_targets <= 0:
+            return False
+        if not _spends_blast_budget(request.kind, request.target):
             return False
         if recent is None:
             recent = self._recent_decisions(request.kind)
@@ -858,7 +873,9 @@ class ActionPolicy:
         targets = {
             d.get("target")
             for d in recent
-            if d.get("decision") in _ALLOWING and float(d.get("ts") or 0) >= since
+            if d.get("decision") in _ALLOWING
+            and float(d.get("ts") or 0) >= since
+            and _spends_blast_budget(request.kind, d.get("target"))
         }
         targets.add(request.target)
         return len(targets) > max_targets
