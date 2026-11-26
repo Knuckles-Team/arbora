@@ -126,7 +126,7 @@ async def test_status_unknown_loop_is_not_found(
     ("op_id", "handler", "shape"),
     [
         ("evolution.loops.status", evolution.handle_loops_status, "LoopOpGet"),
-        ("evolution.loops.run", evolution.handle_loops_run, "JobOpSubmit"),
+        ("evolution.loops.run", evolution.handle_loops_run, "TaskQueueEnqueue"),
         ("evolution.loops.pause", evolution.handle_loops_pause, "JobOpSchedulePause"),
     ],
 )
@@ -213,19 +213,29 @@ async def test_proposals_list_reaches_runner_with_tenant_and_fails_closed(
 async def test_run_requires_loops_control_and_key(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _serve(monkeypatch)
-    client = _Client({"AnalyticsJob": {"id": "job-1"}})
+    _serve(monkeypatch, "TaskQueueEnqueue", "Loops")
+
+    async def send(client: Any, method: str, params: Any, graph: str, **kw: Any):
+        return await client._send(method, params, graph, **kw)
+
+    monkeypatch.setattr(generated, "send_by_id", send)
+    client = _Client(
+        {"Loops": {"instance": {}}, "TaskQueueEnqueue": {"task_id": "t-1"}}
+    )
     context = _context(client, monkeypatch)
-    kind = {"ProgramOptimize": {}}
     for _ in range(2):
         answer = await evolution.handle_loops_run(
-            context, {"loop_id": "L1", "kind": kind}, OPS["evolution.loops.run"]
+            context, {"loop_id": "L1"}, OPS["evolution.loops.run"]
         )
-        assert answer == {"value": {"job_id": "job-1"}}
-    assert client.keys == ["key-1", "key-1"]
-    assert client.sent[0][1] == {
-        "op": {"Submit": {"graph": "tenant-content", "kind": kind, "purpose": "L1"}}
-    }
+        assert answer == {"value": {"task_id": "t-1"}}
+    assert client.keys == ["key-1"] * 4
+    claim, enqueue = client.sent[0], client.sent[1]
+    assert claim[0] == "Loops" and claim[1] == {"op": {"op": "claim", "loop_id": "L1"}}
+    assert enqueue[0] == "TaskQueueEnqueue"
+    assert (
+        enqueue[1]["payload_ref"] == "L1" and enqueue[1]["idempotency_key"] == "key-1"
+    )
+    assert not any(m == "AnalyticsJob" for m, *_ in client.sent)  # hard cutover
     assert OPS["evolution.loops.run"].scopes == {"loops:control"}
     assert OPS["evolution.loops.run"].effect is Effect.WRITE
     assert OPS["evolution.loops.run"].idempotency.name == "KEY_REQUIRED"
