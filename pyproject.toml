@@ -285,7 +285,7 @@ units = ["data_migrations", "ecosystem", "epistemic", "identity", "messaging", "
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "operations"
-units = ["agent_runs", "api", "current_plan_publication", "native_run_admission", "work_items"]
+units = ["agent_runs", "api", "current_plan_publication", "native_run_admission", "work_items", "workflow_worker"]
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "subsystems"
