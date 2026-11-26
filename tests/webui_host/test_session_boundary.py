@@ -289,3 +289,14 @@ def test_discovery_and_jwks_are_served_through_the_webui_session_boundary():
         assert [key["kid"] for key in keys] == ["k1"]
         assert all("d" not in key for key in keys)
         assert client.get("/.well-known/unlisted").status_code == 404
+
+
+@pytest.mark.spec("ARBORA-OPS-R032.2.3")
+def test_eg_mode_requires_boundary_and_none_mode_refuses_one():
+    from arbora.identity.engine import IdentityUnavailable
+    from arbora.webui_host.session_boundary import identity_factory_kwargs
+
+    with pytest.raises(IdentityUnavailable):
+        identity_factory_kwargs("eg", None)
+    with pytest.raises(IdentityUnavailable):
+        identity_factory_kwargs("none", object())  # not a boundary: refused either way
