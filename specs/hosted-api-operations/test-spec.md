@@ -213,8 +213,8 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | `ARBORA-OPS-R855.1` | `tests/api/test_resolve.py::test_catalog_class_ask_routes_to_the_engine_planner_ahead_of_ranking` |
 | `ARBORA-OPS-R855.2` | `tests/api/test_governance_ops.py::test_term_review_and_search` |
 | `ARBORA-OPS-R856` | See each child. |
-| `ARBORA-OPS-R856.1` | `tests/api/test_governance_ops.py::test_registry_lists_quality_operations` |
-| `ARBORA-OPS-R856.2` | `tests/api/test_governance_ops.py::test_quality_incident_served` |
+| `ARBORA-OPS-R856.1` | `tests/api/test_quality_ops_served.py::test_registry_lists_quality_operations` |
+| `ARBORA-OPS-R856.2` | `tests/api/test_quality_ops_served.py::test_quality_incident_served` |
 | `ARBORA-OPS-R857` | See each child. |
 | `ARBORA-OPS-R857.1` | `tests/api/test_sparql_protocol.py::test_routes_registered` |
 | `ARBORA-OPS-R857.2` | `tests/api/test_sparql_protocol.py::test_protocol_query_and_update` |
@@ -487,7 +487,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R875` | Test: `tests/api/test_skill_upgrade_gate_served.py::test_breaking_stops_and_compatible_and_migrated_dispatch` (served). |
 | `ARBORA-OPS-R876` | Test: `tests/api/test_loops_continuation_served.py::test_same_continuation_after_host_restart` (served). The host restarts between two reads. |
 | `ARBORA-OPS-R877` | Test: `tests/a2a/test_team_coordination_served.py::test_unavailable_starts_team_available_keeps_primary_and_status_survives_restart` (served). |
-| `ARBORA-OPS-R878` | Test: `tests/api/ops/test_models_list.py::test_lists_only_visible_profiles_over_http_and_mcp` (planned) (L3) runs through the registry `invoke` and asserts a cross-tenant profile is absent. |
+| `ARBORA-OPS-R878` | Test: `tests/api/ops/test_models_list.py::test_lists_only_visible_profiles_over_http_and_mcp` runs the handler under two tenants and asserts a cross-tenant profile is absent. |
 | `ARBORA-OPS-R879` | `tests/api/test_ops_hooks_served.py::test_hooks_install_uninstall_over_http_and_mcp` (L3). |
 | `ARBORA-OPS-R880` | Test: `tests/api/test_query_federation.py::test_cross_source_report_served` (served HTTP and MCP, recorded engine). |
 | `ARBORA-OPS-R881` | (planned) Test: `tests/api/test_artifact_ops_served.py::test_artifact_operations_serve_over_http_and_mcp` (L3). It creates, gets and refreshes an artifact and asserts each refusal. |
@@ -497,7 +497,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R885` | A served test invokes the operation through the registry over HTTP and MCP with a loopback engine. It asserts the receipt digests. A self-approval refuses. |
 | `ARBORA-OPS-R886` | Test: `tests/api/test_ingest_maintenance_served.py::test_maintenance_run_refuses_without_authorization_and_applies_admitted_actions` (L3, through the operation registry's `invoke` over HTTP and MCP with a recorded medulla engine). |
 | `ARBORA-OPS-R887` | A served test calls the registry `invoke` over HTTP and MCP against a recorded medulla engine. It approves one proposal. It asserts the refusal passthrough for a missing approver. |
-| `ARBORA-OPS-R888` | Test: `tests/api/test_governance_ops.py::test_access_request_approval_needs_steward` (L3) runs through the registry `invoke` over HTTP and MCP against a loopback medulla engine. It asserts the grant after a steward approval and zero effects after a non-steward approval. |
+| `ARBORA-OPS-R888` | Test: `tests/api/test_access_request_ops.py::test_access_request_approval_needs_steward` (L3) runs through the registry `invoke` over HTTP and MCP against a loopback medulla engine. It asserts the grant after a steward approval and zero effects after a non-steward approval. |
 | `ARBORA-OPS-R889` | Test: `tests/api/test_lineage_route.py::test_run_event_reaches_engine_under_caller_tenant` posts one event and reads the edge through `ask`. |
 | `ARBORA-OPS-R890` | Test: `tests/pin_lag/test_host_ports_pin_lag.py::test_pinned_release_refuses_every_host_port_binding_naming_the_gap` (L2). The pinned release refuses UNAVAILABLE naming the missing `HostPorts` symbol; the real-path test runs the adapters against a structural double of the main shape. |
 | `ARBORA-OPS-R890.1` | Test: `tests/pin_lag/test_host_ports_backends.py::test_approval_waiter_maps_the_run_task_to_its_inbox_item_by_plan_ref` (L2). The real-path test runs the service against a structural double of the main shape. |

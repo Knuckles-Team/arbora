@@ -14,10 +14,12 @@ from typing import Any, Literal
 
 from pydantic import Field
 
+from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops._engine import engine_send, unavailable
 from arbora.api.registry import OpSpec, Verb
+from arbora.pin_lag.medulla import guard, send_main
 
 #: The engine replays each of these writes by its idempotency key.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
@@ -25,6 +27,10 @@ NATIVE_IDEMPOTENCY: dict[str, str] = {
     "curation.proposals.review": "medulla:Glossary",
     "query.workspace.save": "medulla:StoredQueryPut",
     "query.workspace.delete": "medulla:StoredQueryRetire",
+    "quality.rule.put": "medulla:QualityRulePut",
+    "quality.evaluate": "medulla:AnalyticsJob",
+    "profile.run": "medulla:AnalyticsJob",
+    "access_request.decide": "medulla:AccessRequestDecide",
 }
 #: The stored-query methods are read and written under the query scopes.
 QUERY_READ_SCOPE = "query:read"
@@ -255,6 +261,155 @@ async def handle_workspace_delete(
     )
 
 
+class AccessRequestDecideParams(Params):
+    product: str = Field(min_length=1, max_length=2048)
+    principal: str = Field(min_length=1, max_length=512)
+    approve: bool
+
+
+async def handle_access_request_decide(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Decide a data-product access request as an owner or steward the engine names.
+
+    Arbora holds no role table: the engine's ``governance`` answer for the product names
+    the roles. A caller holding neither refuses ``STEWARD_ROLE_MISSING`` with no effect.
+    """
+    if not await _is_steward(context, params["product"]):
+        raise OperationRefused("STEWARD_ROLE_MISSING")
+    return _mapping(
+        await engine_send(
+            context,
+            "AccessRequestDecide",
+            {
+                "product": params["product"],
+                "principal": params["principal"],
+                "approve": params["approve"],
+                "tenant": str(context.caller.tenant),
+            },
+            idempotent=True,
+        )
+    )
+
+
+QualityDimension = Literal[
+    "completeness", "validity", "uniqueness", "consistency", "timeliness", "accuracy"
+]
+QualitySeverity = Literal["info", "warning", "error", "critical"]
+
+
+class QualityRulePutParams(Params):
+    id: str = Field(min_length=1, max_length=256)
+    target: str = Field(min_length=1, max_length=2048)
+    dimension: QualityDimension
+    expression: str = Field(min_length=1, max_length=4096)
+    threshold: float = Field(ge=0.0, le=1.0)
+    severity: QualitySeverity
+
+
+class QualityEvaluateParams(Params):
+    target: str = Field(min_length=1, max_length=2048)
+
+
+class QualityScoresParams(Params):
+    target: str = Field(min_length=1, max_length=2048)
+    limit: int = Field(default=50, ge=1, le=200)
+
+
+class ProfileRunParams(Params):
+    dataset: str = Field(min_length=1, max_length=2048)
+    columns: list[str] = Field(default_factory=list, max_length=256)
+
+
+class LineageColumnsParams(Params):
+    column: str = Field(min_length=1, max_length=2048)
+    direction: Literal["upstream", "downstream"] = "downstream"
+    max_depth: int | None = Field(default=None, ge=0, le=32)
+
+
+async def _job(
+    context: Any, kind: dict[str, Any], purpose: str, model: str
+) -> dict[str, Any]:
+    """Submit one analytics job as the verified caller; the engine owns the job and its result."""
+    guard("AnalyticsJob", models=(model,))
+    graph = await caller_dispatch_graph(context)
+    submit = {
+        "graph": graph,
+        "kind": kind,
+        "actor": str(context.caller.principal),
+        "purpose": purpose,
+    }
+    answer = await send_main(
+        context,
+        "AnalyticsJob",
+        {"op": {"Submit": submit}},
+        idempotent=True,
+        models=(model,),
+    )
+    return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
+
+
+async def handle_quality_rule_put(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Put one rule; the engine holds the rule table and the proposed or approved state."""
+    rule = {
+        key: params[key]
+        for key in ("id", "target", "dimension", "expression", "threshold", "severity")
+    }
+    answer = await send_main(context, "QualityRulePut", {"rule": rule}, idempotent=True)
+    return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
+
+
+async def handle_quality_evaluate(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Submit an evaluation; the engine scores it and opens any incident, never this handler."""
+    body = {"target": params["target"], "tenant": str(context.caller.tenant)}
+    return await _job(
+        context, {"QualityEvaluate": body}, "quality.evaluate", "JobKindQualityEvaluate"
+    )
+
+
+async def handle_profile_run(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    body = {
+        "dataset": params["dataset"],
+        "columns": list(params.get("columns") or ()),
+        "tenant": str(context.caller.tenant),
+    }
+    return await _job(
+        context, {"DatasetProfile": body}, "profile.run", "JobKindDatasetProfile"
+    )
+
+
+async def handle_quality_scores(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Read the engine's scores and incidents for one target."""
+    answer = await send_main(
+        context,
+        "QualityScores",
+        {"target": params["target"], "limit": int(params.get("limit", 50))},
+    )
+    return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
+
+
+async def handle_lineage_columns(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    operation: dict[str, Any] = {
+        "op": "impact",
+        "column": params["column"],
+        "direction": params.get("direction", "downstream"),
+    }
+    if params.get("max_depth") is not None:
+        operation["max_depth"] = int(params["max_depth"])
+    answer = await send_main(context, "ColumnLineage", {"op": operation})
+    return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
+
+
 def operations() -> tuple[OpSpec, ...]:
     module = "arbora.api.ops.governance"
     return (
@@ -330,6 +485,60 @@ def operations() -> tuple[OpSpec, ...]:
             result=EngineAnswer,
             handler=f"{module}.handle_workspace_delete",
             scope=QUERY_WRITE_SCOPE,
+        ),
+        build_write_op(
+            op_id="access_request.decide",
+            summary="Approve or deny a data-product access request as its steward",
+            examples=("approve this access request",),
+            params=AccessRequestDecideParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_access_request_decide",
+            scope="approvals:decide",
+        ),
+        build_write_op(
+            op_id="quality.rule.put",
+            summary="Put one data quality rule on a target",
+            examples=("require this column to be complete",),
+            params=QualityRulePutParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_quality_rule_put",
+            scope=WRITE_SCOPE,
+        ),
+        build_write_op(
+            op_id="quality.evaluate",
+            summary="Evaluate the quality rules of one target",
+            examples=("evaluate quality for this table",),
+            params=QualityEvaluateParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_quality_evaluate",
+            scope=WRITE_SCOPE,
+        ),
+        build_read_op(
+            op_id="quality.scores",
+            summary="Read the quality scores and incidents of one target",
+            examples=("show the quality scores for this table",),
+            params=QualityScoresParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_quality_scores",
+            scope=READ_SCOPE,
+        ),
+        build_write_op(
+            op_id="profile.run",
+            summary="Profile one dataset",
+            examples=("profile this dataset",),
+            params=ProfileRunParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_profile_run",
+            scope=WRITE_SCOPE,
+        ),
+        build_read_op(
+            op_id="lineage.columns",
+            summary="Trace the column lineage impact of one column",
+            examples=("what depends on this column",),
+            params=LineageColumnsParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_lineage_columns",
+            scope=READ_SCOPE,
         ),
     )
 

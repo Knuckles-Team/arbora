@@ -290,13 +290,13 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T022 ARBORA-FLEET-R001 Typed pack publisher replaces placeholder ContentPack.
 - [ ] T023 ARBORA-FLEET-R002 Tool schema fingerprints recomputed from served schemas (rollup).
 - [ ] T024 ARBORA-FLEET-R002.1 Per-tool schema fingerprint computed from the served schema.
-- [ ] T025 ARBORA-FLEET-R003 D18 write-back exposed only as a typed, previewed operation (rollup).
+- [x] T025 ARBORA-FLEET-R003 D18 write-back exposed only as a typed, previewed operation (rollup).
 - [ ] T026 ARBORA-FLEET-R003.1 Typed write-back preview model and its refusal rule.
-- [ ] T027 ARBORA-FLEET-R003.2 Write-back registered as a typed, gated registry operation, not a native child tool.
+- [x] T027 ARBORA-FLEET-R003.2 Write-back registered as a typed, gated registry operation, not a native child tool.
 - [ ] T028 ARBORA-FLEET-R004 Pack annotations carry capability, digest, modality, cost, latency.
 - [ ] T029 ARBORA-FLEET-R005 A2A task routing with typed work-item and lease operations (rollup).
 - [ ] T030 ARBORA-FLEET-R005.1 Typed WorkItem view, the GetWorkItem/ListWorkItems producer.
-- [ ] T031 ARBORA-FLEET-R006 Multiplexer skill and prompt harvest path removed.
+- [x] T031 ARBORA-FLEET-R006 Multiplexer skill and prompt harvest path removed.
 - [ ] T032 ARBORA-FLEET-R007 Bridge runs on FastMCP 4 with native primitives (rollup).
 - [ ] T033 ARBORA-FLEET-R008 RUM, security-audit and CI/CD feeds join the catalog (rollup).
 - [x] T034 ARBORA-FLEET-R008.1 Typed feed-event model per feed kind.
@@ -305,16 +305,16 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T037 ARBORA-FLEET-R009.1 Capacity acquisition is all-or-nothing with one re-decision.
 - [ ] T038 ARBORA-FLEET-R009.2 Routing and composition publish only through acquired capacity.
 - [ ] T039 ARBORA-FLEET-R009.3 Run admission publishes with all-or-nothing capacity control.
-- [ ] T040 ARBORA-FLEET-R003.3 Write-back idempotency and preview gating survive a service restart.
+- [x] T040 ARBORA-FLEET-R003.3 Write-back idempotency and preview gating survive a service restart.
 - [x] T041 ARBORA-FLEET-R006.1 Harvest call-site inventory, the removal baseline.
 - [x] T042 ARBORA-FLEET-R006.2 Skill/prompt body-harvest cutover for an already-admitted child.
-- [ ] T043 ARBORA-FLEET-R006.3 Dead harvest helpers removed (rollup over `.3.1` to `.3.4`).
+- [x] T043 ARBORA-FLEET-R006.3 Dead harvest helpers removed (rollup over `.3.1` to `.3.4`).
 - [x] T044 ARBORA-FLEET-R006.3.1 Deliver `_probe_protocol_families` harvest calls routed through the cutover helper.
-- [ ] T045 ARBORA-FLEET-R006.3.2 Non-admitted fallback and `_harvest_resource_bodies` deleted.
-- [ ] T046 ARBORA-FLEET-R006.3.3 Deadline and error-reason helpers deleted.
-- [ ] T047 ARBORA-FLEET-R006.3.4 Harvest specs deleted.
-- [ ] T048 ARBORA-FLEET-R006.4 Residual harvest-named symbol renamed off the removed path.
-- [ ] T049 ARBORA-FLEET-R006.5 Closing audit: no harvest or hydration code remains.
+- [x] T045 ARBORA-FLEET-R006.3.2 Non-admitted fallback and `_harvest_resource_bodies` deleted.
+- [x] T046 ARBORA-FLEET-R006.3.3 Deadline and error-reason helpers deleted.
+- [x] T047 ARBORA-FLEET-R006.3.4 Harvest specs deleted.
+- [x] T048 ARBORA-FLEET-R006.4 Residual harvest-named symbol renamed off the removed path.
+- [x] T049 ARBORA-FLEET-R006.5 Closing audit: no harvest or hydration code remains.
 - [ ] T050 ARBORA-FLEET-R007.1 Connector SDK server registers native prompts, resources and templates.
 - [ ] T051 ARBORA-FLEET-R007.2 meristem's arbora bridge surface gains native prompt/resource/template registration (cross-repo, owner: meristem).
 - [ ] T052 ARBORA-FLEET-R007.3 The served bridge exercises native prompts, resources and templates end to end.
@@ -395,12 +395,12 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T126 ARBORA-FLEET-R021.1 Every workflow tool requires its declaration and grant binding.
 - [ ] T127 ARBORA-FLEET-R005.3 Integrated work-item distribution and provisioning use the R027 flow.
 - [ ] T128 ARBORA-FLEET-R027.7.1 Production CLI report stream.
-- [ ] T129 ARBORA-FLEET-R003.5 Complete repository request binding.
-- [ ] T130 ARBORA-FLEET-R003.6 Trusted composition through shared invoke.
-- [ ] T131 ARBORA-FLEET-R003.7 Preview and approval bind the commit operation.
-- [ ] T132 ARBORA-FLEET-R003.8 Served effect and independent readback evidence.
-- [ ] T133 ARBORA-FLEET-R003.9 Zero-effect refusal parity.
-- [ ] T134 ARBORA-FLEET-R003.10 Durable replay across host and connector restart.
+- [x] T129 ARBORA-FLEET-R003.5 Complete repository request binding.
+- [x] T130 ARBORA-FLEET-R003.6 Trusted composition through shared invoke.
+- [x] T131 ARBORA-FLEET-R003.7 Preview and approval bind the commit operation.
+- [x] T132 ARBORA-FLEET-R003.8 Served effect and independent readback evidence.
+- [x] T133 ARBORA-FLEET-R003.9 Zero-effect refusal parity.
+- [x] T134 ARBORA-FLEET-R003.10 Durable replay across host and connector restart.
 - [ ] T135 ARBORA-FLEET-R036 The connector contract is established on first connect (rollup).
 - [ ] T136 ARBORA-FLEET-R036.1 Model.
 - [ ] T137 ARBORA-FLEET-R036.2 Behavior.
@@ -523,7 +523,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T251 ARBORA-FLEET-R080.2 Retry after the process authority recovers.
 - [x] T252 ARBORA-FLEET-R080.3 Describe the onboarding machine in the ontology.
 - [x] T260 ARBORA-FLEET-R080.4 Wire the onboarding machine; hot-path proof.
-- [ ] T253 ARBORA-FLEET-R081 Catalog serving state machine (rollup).
+- [x] T253 ARBORA-FLEET-R081 Catalog serving state machine (rollup).
 - [x] T254 ARBORA-FLEET-R081.1 Catalog state model and transition function.
 - [x] T255 ARBORA-FLEET-R081.2 Derive readiness flags from the catalog state.
 - [x] T256 ARBORA-FLEET-R081.3 Describe the catalog machine in the ontology.

@@ -116,3 +116,23 @@ def commit_write_back(
         idempotency_key=commit.idempotency_key,
         applied=True,
     )
+
+
+class RepositoryWriteBackParams(_Model):
+    """A repository write-back request and the trusted binding it was built for.
+
+    ``request`` is the complete SDK ``RepositorySourceEffectRequest`` wire form:
+    exact payload bytes, immutable base, actor, approval and effect key. It is
+    parsed by the SDK model, which refuses every unknown field. ``binding_digest``
+    is the digest of the trusted connector binding the caller previewed against
+    (ARBORA-FLEET-R003.5).
+    """
+
+    request: dict[str, Any]
+    binding_digest: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class RepositoryWriteBackResult(_Model):
+    """One preview projection or one verified receipt of a repository effect."""
+
+    value: dict[str, Any]

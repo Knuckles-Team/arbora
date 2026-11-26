@@ -73,14 +73,19 @@ def _run(
 
 @pytest.mark.spec("ARBORA-IDENTITY-R013.1")
 def test_claim_and_link_claim_typed_results(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    fresh = {("config", "get"): {"initialized": False}, ("user", "list"): {"users": []}}
+    fresh = {
+        ("config", "get"): Refused("IDENTITY_NOT_INITIALIZED"),
+        ("user", "list"): Refused("IDENTITY_NOT_INITIALIZED"),
+    }
     code, out, admin, _, audits = _run(
         tmp_path,
         capsys,
         ["claim", "--username", "root"],
-        {**fresh, ("config", "initialize"): {}},
+        {**fresh, ("config", "initialize"): {"principal_id": cli.BOOTSTRAP_PRINCIPAL}},
     )
     assert code == 0 and out["ok"] is True and out["command"] == "claim"
     initialize = [r for f, o, r in admin.sent if o == "initialize"][0]
@@ -88,33 +93,41 @@ def test_claim_and_link_claim_typed_results(
     assert "typed-at-the-prompt" not in json.dumps(out)
     assert audits == [("claim", True, "")]
 
-    done = {("config", "get"): {"initialized": True}}
+    # The wire: ``config.get`` answers the IdentityConfig record; ``user.list``
+    # answers the bare list of views and takes ``{limit}`` (``after`` optional).
+    done = {("config", "get"): {"epoch": 1, "mode": "local"}}
     code, out, *_ = _run(tmp_path, capsys, ["claim", "--username", "root"], done)
     assert code == 2 and out["detail"]["code"] == "CLAIM_ALREADY_DONE"
 
     used = {
-        ("config", "get"): {"initialized": False},
-        ("user", "list"): {"users": [{"id": "u"}]},
+        ("config", "get"): Refused("IDENTITY_NOT_INITIALIZED"),
+        ("user", "list"): [{"principal_id": "usr:u"}],
     }
-    code, out, *_ = _run(tmp_path, capsys, ["claim", "--username", "root"], used)
+    code, out, admin, *_ = _run(tmp_path, capsys, ["claim", "--username", "root"], used)
     assert code == 2 and out["detail"]["code"] == "STORE_NOT_FRESH"
+    assert [r for f, o, r in admin.sent if o == "list"] == [{"limit": 1}]
 
+    # PIN-LAG: the pinned engine has no ``idp.link`` dry run, so link-claim
+    # refuses and sends nothing.
     link = ["link-claim", "--provider", "idp-1", "--subject", "s-1"]
-    code, out, admin, *_ = _run(
-        tmp_path,
-        capsys,
-        link,
-        {("idp", "list_provisioned"): {"items": []}, ("idp", "link"): {}},
-    )
-    assert code == 0 and out["ok"] is True
-    assert [op for _, op, _ in admin.sent] == ["list_provisioned", "link"]
+    monkeypatch.setattr(cli, "_link_dry_run_served", lambda: False)
+    code, out, admin, *_ = _run(tmp_path, capsys, link, {})
+    assert code == 2 and out["detail"]["code"] == "LINK_DRY_RUN_UNAVAILABLE"
+    assert admin.sent == []
 
-    other = {"items": [{"subject": "s-1", "principal_id": "usr:other"}]}
-    code, out, admin, *_ = _run(
-        tmp_path, capsys, link, {("idp", "list_provisioned"): other}
-    )
+    # Engine main: the dry run answers the ownership changes, then the link runs.
+    monkeypatch.setattr(cli, "_link_dry_run_served", lambda: True)
+    clean = {
+        ("idp", "link"): {"ownership_changes": []},
+    }
+    code, out, admin, *_ = _run(tmp_path, capsys, link, clean)
+    assert code == 0 and out["ok"] is True
+    assert [r.get("dry_run") for _, _, r in admin.sent] == [True, None]
+
+    moved = {("idp", "link"): {"ownership_changes": [{"principal_id": "usr:other"}]}}
+    code, out, admin, *_ = _run(tmp_path, capsys, link, moved)
     assert code == 2 and out["detail"]["code"] == "LINK_OWNERSHIP_CHANGES"
-    assert [op for _, op, _ in admin.sent] == ["list_provisioned"]
+    assert len(admin.sent) == 1
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R013.2")
@@ -123,9 +136,12 @@ def test_transition_reset_and_rotate(
 ) -> None:
     transition = {
         ("config", "get"): {"epoch": 4},
-        ("token", "read_issuer_keys"): {"active": "kid-1"},
+        ("token", "read_issuer_keys"): [
+            {"kid": "kid-1", "state": "active"},
+            {"kid": "kid-0", "state": "retired"},
+        ],
         ("config", "transition"): {},
-        ("user", "list"): {"users": [{"id": "u1"}, {"id": "u2"}]},
+        ("user", "list"): [{"principal_id": "u1"}, {"principal_id": "u2"}],
         ("session", "revoke_all"): {},
     }
     code, out, admin, *_ = _run(
@@ -139,12 +155,15 @@ def test_transition_reset_and_rotate(
         {"id": "u2"},
     ]
 
-    stale = {**transition, ("config", "transition"): Refused("CONFLICT")}
+    stale = {**transition, ("config", "transition"): Refused("IDENTITY_EPOCH_CONFLICT")}
     code, out, *_ = _run(tmp_path, capsys, ["transition", "--to", "local"], stale)
     assert code == 2 and out["detail"]["code"] == "TRANSITION_PRECONDITION_FAILED"
 
     code, out, admin, shown, _ = _run(
-        tmp_path, capsys, ["reset-admin"], {("token", "issue_admin_reset"): {}}
+        tmp_path,
+        capsys,
+        ["reset-admin"],
+        {("token", "issue_admin_reset"): {"email": None}},
     )
     assert code == 0 and len(shown) == 1 and shown[0] not in json.dumps(out)
     issued = admin.sent[0][2]
