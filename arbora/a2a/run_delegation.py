@@ -15,6 +15,7 @@ the guard after the re-pin that carries ``DelegationRecord.kind``, ``run_id`` an
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Mapping, Sequence
+from dataclasses import dataclass
 from typing import Any
 
 from arbora.pin_lag.medulla import (
@@ -28,9 +29,13 @@ __all__ = [
     "DELEGATION_KEY",
     "EngineRunDelegations",
     "RECLAIM_ATTEMPTS",
+    "ResolvedRunDelegation",
+    "RunDelegationRefused",
     "delegation_refused",
+    "engine_delegation_reader",
     "engine_run_delegations",
     "engine_identity_sender",
+    "resolve_run_delegation",
     "run_delegation_id",
 ]
 
@@ -45,6 +50,104 @@ RECLAIM_ATTEMPTS = 3
 
 #: Sends one engine ``Identity`` op for the verified caller and answers its reply.
 IdentitySender = Callable[[Mapping[str, Any]], Awaitable[Any]]
+
+
+#: Reads one delegation by id: the engine's ``DelegationState`` mapping, or ``None``
+#: when the engine answers ``DELEGATION_UNKNOWN`` (a foreign tenant answers the same).
+DelegationStateReader = Callable[[str], Awaitable[Mapping[str, Any] | None]]
+_OWNER_NAMESPACE = "a2a-owner"
+
+
+class RunDelegationRefused(Exception):
+    """The resumed run has no delegation held by its owner; it must end ``failed``.
+
+    One code answers every refusal (absent, foreign, revoked, expired), so the
+    outcome tells a caller nothing about which delegation exists.
+    """
+
+    code = DELEGATION_INVALID
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(f"{DELEGATION_INVALID}: {reason}")
+        #: The internal reason, for the host's own log; never sent to a client.
+        self.reason = reason
+
+
+@dataclass(frozen=True, slots=True)
+class ResolvedRunDelegation:
+    """The delegation a reclaimed run acts under, proven to belong to its owner."""
+
+    delegation_id: str
+    principal: str
+    operations: tuple[str, ...]
+
+
+def owner_ref_of(tenant: str, principal: str) -> str:
+    """The durable owner reference the item stores for ``principal`` in ``tenant``."""
+    from scion_sdk.privacy import persistence_reference
+
+    return persistence_reference(
+        "actor", principal, namespace=f"{_OWNER_NAMESPACE}:{tenant}"
+    )
+
+
+async def resolve_run_delegation(
+    item: Mapping[str, Any],
+    claim: Mapping[str, Any],
+    *,
+    read: DelegationStateReader | None,
+    tenant: str,
+) -> ResolvedRunDelegation:
+    """Prove the claim's ``agent_run`` delegation belongs to the run's owner, or refuse.
+
+    The delegation id comes from ``ClaimWorkItem`` (``delegation_id``), as the
+    tool-task consumer takes ``authority_ref``. The record's principal must be the
+    run's owner (the item's ``a2a_owner_ref``); a missing, foreign, revoked or expired
+    delegation, or one for another run, refuses and the run ends ``failed``.
+    """
+    delegation_id = str(claim.get("delegation_id") or "")
+    if not delegation_id or read is None:
+        raise RunDelegationRefused("absent")
+    try:
+        state = await read(delegation_id)
+    except Exception as exc:  # noqa: BLE001 - an unreadable record grants nothing
+        raise RunDelegationRefused("unreadable") from exc
+    record = state.get("record") if isinstance(state, Mapping) else None
+    if not isinstance(record, Mapping):
+        raise RunDelegationRefused("absent")
+    metadata = item.get("metadata") or {}
+    principal = str(record.get("principal") or "")
+    delegator = claim.get("delegator_id")
+    run_id = str(metadata.get("a2a_run_id") or "")
+    task_id = str(item.get("work_item_id") or "").rsplit(":", 1)[-1]
+    refusal = (
+        "tenant"
+        if record.get("tenant") != tenant
+        else "kind"
+        if str(getattr(record.get("kind"), "value", record.get("kind")))
+        != AGENT_RUN_KIND
+        else "run"
+        if record.get("run_id") not in {run_id, task_id}
+        else "owner"
+        if not principal
+        or not metadata.get("a2a_owner_ref")
+        or owner_ref_of(tenant, principal) != metadata.get("a2a_owner_ref")
+        or (delegator is not None and delegator != principal)
+        else "standing"
+        if str(getattr(state.get("standing"), "value", state.get("standing")))
+        != "active"
+        or record.get("revoked_at") is not None
+        or state.get("principal_active") is not True
+        or state.get("holds_tool_scope") is not True
+        else ""
+    )
+    if refusal:
+        raise RunDelegationRefused(refusal)
+    return ResolvedRunDelegation(
+        delegation_id=delegation_id,
+        principal=principal,
+        operations=tuple(str(op) for op in record.get("operations") or ()),
+    )
 
 
 def run_delegation_id(task_id: str) -> str:
@@ -150,3 +253,43 @@ def engine_run_delegations(
     return EngineRunDelegations(
         engine_identity_sender(engine_provider), clock=clock, lease_s=lease_s
     )
+
+
+def engine_delegation_reader(
+    engine_provider: Callable[[], Any],
+) -> DelegationStateReader:
+    """Read one delegation (``GetDelegationRecord``) as the verified session of the host."""
+
+    async def read(delegation_id: str) -> Mapping[str, Any] | None:
+        from medulla.generated.security import (
+            decode_get_delegation_record,
+            send_get_delegation_record,
+        )
+
+        from arbora import work_items
+        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+
+        engine = engine_provider()
+        if engine is None:
+            raise RuntimeError("Arbora task authority is unavailable")
+        routed = getattr(engine, "_session_client", None)
+        client = routed() if callable(routed) else engine
+        try:
+            graph = work_items.native_owner_graph(
+                getattr(engine, "_work_item_engine", engine)
+            )
+        except work_items.WorkItemBackendUnavailable:
+            graph = CONTROL_GRAPH
+        try:
+            answer = await send_get_delegation_record(
+                client, {"work_item_id": delegation_id}, graph
+            )
+        except Exception as exc:  # noqa: BLE001 - DELEGATION_UNKNOWN is an absent record
+            if getattr(exc, "code", None) == "DELEGATION_UNKNOWN":
+                return None
+            raise
+        state = decode_get_delegation_record(answer)
+        dump = getattr(state, "model_dump", None)
+        return dump(mode="json") if callable(dump) else state
+
+    return read
