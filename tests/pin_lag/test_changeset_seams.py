@@ -230,3 +230,68 @@ def test_an_unconfirmed_commit_returns_the_refusal_not_a_submission(
     submitter = adapters.ChangesetSubmitter(call, _seams(), "run:1", TARGET)
     result = asyncio.run(submitter.submit(_Pending("h", (), "run:1", (("a", "x"),))))
     assert getattr(result, "paths", None) == ()
+
+
+@pytest.mark.spec("ARBORA-OPS-R894")
+def test_changeset_cycle_commits_on_the_head_the_source_tree_served(
+    cycle_shape: None,  # noqa: F811
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The head the engine's ``source.tree`` states is the ``base_head`` of the commit."""
+    from arbora.api.ops.source import SourceTreeOutcome
+
+    state = {"head": "rev:head-9"}
+    sent: list[tuple[str, Mapping[str, Any]]] = []
+
+    async def call(
+        op: str, params: Mapping[str, Any], run: str, plan_ref: str | None = None
+    ) -> Mapping[str, Any]:
+        sent.append((op, dict(params)))
+        if op == "source.tree":
+            outcome = SourceTreeOutcome(
+                tenant="t1",
+                repository=params["repository"],
+                ref=params["ref"],
+                path=params["path"],
+                found=True,
+                head_revision=state["head"],
+            )
+            return {
+                "outcome": "answered",
+                "payload": {"value": outcome.model_dump(mode="json")},
+            }
+        if plan_ref is None:
+            return {
+                "outcome": "answered",
+                "code": "CONFIRMATION_REQUIRED",
+                "details": {"plan_ref": f"plan:{op}"},
+                "payload": {"value": None},
+            }
+        value = {"changeset": {"id": "cs-1"}} if op == "source.commit" else {}
+        return {"outcome": "answered", "payload": {"value": value}}
+
+    transport = seams.ServedSourceTransport(call, "run:1")
+    page = asyncio.run(
+        transport.call(
+            "tree", {"repository_id": "repo-a", "ref": "feature", "path_prefix": None}
+        )
+    )
+    assert page["status"] == "ok"
+    submitter = adapters.ChangesetSubmitter(call, _seams(), "run:1", TARGET)
+    result = asyncio.run(
+        submitter.submit(
+            _Pending(page["result"]["revision"], (), "run:1", (("a", "x"),))
+        )
+    )
+    assert getattr(result, "changeset_id", None) == "cs-1"
+    commit = next(params for op, params in sent if op == "source.commit")
+    assert commit["base_head"] == "rev:head-9"
+    assert [op for op, _ in sent if op != "source.tree"][-1] == "source.land"
+    # Behind pin-lag the projection states no head: the transport refuses, no base exists.
+    state["head"] = None  # type: ignore[assignment]
+    refused = asyncio.run(
+        transport.call(
+            "tree", {"repository_id": "repo-a", "ref": "feature", "path_prefix": None}
+        )
+    )
+    assert refused == {"status": "refused", "reason": "not_found"}
