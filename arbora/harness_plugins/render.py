@@ -147,13 +147,20 @@ def _hook_input(intent: HookIntent, profile_id: str) -> dict[str, Any]:
 def hook_entries(
     intents: tuple[HookIntent, ...], prof: HarnessProfile
 ) -> dict[str, Any]:
-    """Harness event -> matcher groups, for both hook kinds."""
+    """Harness event -> matcher groups, for both hook kinds.
+
+    A skill hook always runs the command runner: it posts one OpenTelemetry log
+    record to the door's HTTP route, which an MCP tool hook cannot do.
+    """
     events: dict[str, Any] = {}
     for intent in intents:
         event = prof.event(intent.point)
         if event is None:
             continue
-        if prof.hook_kind is HookKind.MCP_TOOL:
+        if (
+            prof.hook_kind is HookKind.MCP_TOOL
+            and intent.point is not Lifecycle.SKILL_END
+        ):
             handler: dict[str, Any] = {
                 "type": "mcp_tool",
                 "server": f"plugin:{PLUGIN_NAME}:{SERVER_NAME}",
@@ -167,7 +174,10 @@ def hook_entries(
                 "command": f"{RUNNER} {intent.point.value} --harness {prof.id}",
                 "timeout": HOOK_TIMEOUT_SECONDS,
             }
-        events[event] = [{"hooks": [handler]}]
+        group: dict[str, Any] = {"hooks": [handler]}
+        if intent.matcher:
+            group["matcher"] = intent.matcher
+        events.setdefault(event, []).append(group)
     return {"hooks": dict(sorted(events.items()))}
 
 
@@ -207,6 +217,7 @@ def _shared_parts(spec: BundleSpec, root: Path, prof: HarnessProfile) -> None:
         root, ".mcp.json", _dump({"mcpServers": {SERVER_NAME: _mcp_server(spec, prof)}})
     )
     _write(root, "hooks/hooks.json", _dump(hook_entries(spec.hooks, prof)))
+    _write_layered_config(spec, root)
 
 
 def _mcp_server(spec: BundleSpec, prof: HarnessProfile) -> dict[str, Any]:
@@ -224,6 +235,30 @@ def _manifest(version: str) -> dict[str, Any]:
         "description": DESCRIPTION,
         "author": {"name": "arbora"},
     }
+
+
+def _persona_fields(spec: BundleSpec) -> dict[str, Any]:
+    """The persona and its load-set digest, named in the manifest (R014)."""
+    if spec.persona is None:
+        return {}
+    return {"persona": spec.persona, "loadSetDigest": spec.load_set_digest}
+
+
+def _write_layered_config(spec: BundleSpec, root: Path) -> None:
+    """What the configuration layers added, as one record (R013)."""
+    if not (spec.personas or spec.tools or spec.policy):
+        return
+    _write(
+        root,
+        "bundle-config.json",
+        _dump(
+            {
+                "personas": list(spec.personas),
+                "tools": list(spec.tools),
+                "policy": dict(spec.policy),
+            }
+        ),
+    )
 
 
 def render_claude_code(spec: BundleSpec, root: Path) -> None:
@@ -254,6 +289,7 @@ def render_codex(spec: BundleSpec, root: Path) -> None:
     }
     _write(root, ".mcp.json", _dump({"mcpServers": {SERVER_NAME: server}}))
     _write(root, "hooks/hooks.json", _dump(hook_entries(spec.hooks, prof)))
+    _write_layered_config(spec, root)
 
 
 OPENCODE_TEMPLATE = "templates/opencode"
@@ -290,6 +326,7 @@ def render_opencode(spec: BundleSpec, root: Path) -> None:
         "runner": RUNNER,
     }
     _write(root, "bundle.json", _dump(bundle))
+    _write_layered_config(spec, root)
 
 
 RENDERERS: dict[str, Callable[[BundleSpec, Path], None]] = {
@@ -324,6 +361,7 @@ def render(spec: BundleSpec, out_dir: Path) -> str:
         }
     else:
         manifest = _manifest(version)
+    manifest |= _persona_fields(spec)
     _write(out_dir, prof.manifest, _dump(manifest))
     return digest
 

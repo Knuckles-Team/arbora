@@ -14,7 +14,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [x] T008 ARBORA-A2A-R003 No duplicate skill or prompt harvesting in the multiplexer
 - [x] T009 ARBORA-A2A-R004 Served MCP bridge runs FastMCP 4, matching its declared version
 - [x] T010 ARBORA-A2A-R005.1 Fail-closed `arbora.plan/confirm` stub on the A2A method table
-- [ ] T011 ARBORA-A2A-R005.2.1 Human-grant store over the engine pending-call lease with atomic consume-once
+- [x] T011 ARBORA-A2A-R005.2.1 Human-grant store over the engine pending-call lease with atomic consume-once
 - [x] T012 ARBORA-A2A-R005.2.2 Validate detached pending-call signatures without authorizing execution
 - [x] T013 ARBORA-A2A-R005.2.3 Human authority snapshot evaluation
 - [x] T014 ARBORA-A2A-R005.2.4 Native facts adapters and registration proof

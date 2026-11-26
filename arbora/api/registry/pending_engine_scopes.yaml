@@ -8,6 +8,7 @@ pending_engine_scopes:
   - knowledge:flag
   - participant:read
   - participant:write
+  - runs:control
   - sessions:read
   - skills:author
   - skills:eval
