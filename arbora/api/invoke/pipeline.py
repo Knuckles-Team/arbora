@@ -22,14 +22,25 @@ from arbora.api.invoke.executor import (
     prepare_executor,
 )
 from arbora.api.invoke.gate_class import GateReader, no_engine_answer, resolve_gate
+from arbora.api.invoke.hooks import HookChain, HookRecord
 from arbora.api.invoke.plan import PlanBinding, PlanStore, bind_plan, params_digest
 from arbora.api.invoke.privacy import mask_persisted_arguments
+from arbora.api.invoke.screening import (
+    ContentOrigin,
+    ContentScreenVerdict,
+    ScreenOutcome,
+    redact_result,
+    screen_params,
+    screen_result,
+    screening_fields,
+)
 from arbora.api.invoke.steps import (
     OpError,
     OpResult,
     RequestCaller,
     SchemaValidate,
     authenticate,
+    claim_values,
     freeze_claims,
     principal_rule,
     require_scopes,
@@ -268,6 +279,8 @@ class InvokeServices:
     schema_validate: SchemaValidate | None = None
     #: Reads the engine's gate answer when a plan is minted (ARBORA-OPS-R918.2).
     gate_reader: GateReader = no_engine_answer
+    #: Operator hooks (ARBORA-OPS-R009.6); empty unless the host binds some.
+    hooks: HookChain = field(default_factory=HookChain)
 
     def __post_init__(self) -> None:
         self._cover_plan_gated_operations()
@@ -678,6 +691,8 @@ class _Call:
     plan_ref: str | None
     idempotency_key: str | None
     resolved_from_intent: bool
+    hook_records: tuple[HookRecord, ...] = ()
+    hooks_enabled: bool = True
 
     @property
     def needs_plan(self) -> bool:
@@ -712,6 +727,7 @@ async def _record(
     audit_ref: str,
     reservation: EffectReservation | None,
     result: OpResult | OpError,
+    evidence: Mapping[str, str] | None = None,
 ) -> OpResult | OpError:
     services = call.services
     try:
@@ -724,6 +740,7 @@ async def _record(
                     call.surface,
                     result.code,
                     audit_ref,
+                    evidence=_evidence(call, evidence),
                 ),
                 call.op.audit,
                 call.caller,
@@ -740,6 +757,16 @@ async def _record(
         )
         return OpError("INDETERMINATE", {"audit_ref": audit_ref})
     return result
+
+
+def _evidence(call: _Call, extra: Mapping[str, str] | None) -> dict[str, str]:
+    """Counts and identifiers only: screening fields and the hook decisions."""
+    merged = dict(extra or {})
+    if call.hook_records and "hooks" not in merged:
+        merged["hooks"] = json.dumps(
+            [record.as_json() for record in call.hook_records], separators=(",", ":")
+        )
+    return merged
 
 
 def _arguments(
@@ -1148,9 +1175,74 @@ def _typed_refusal(exc: OperationRefused | EngineRefusal | FleetRefusal) -> OpEr
     return OpError(exc.code, details, source="fleet")
 
 
+def _screen_params_refusal(call: _Call) -> tuple[OpError, dict[str, str]] | None:
+    """Screen open-web params of a long-term memory write before the effect."""
+    if (
+        call.op.id != "memory.write"
+        or call.arguments.get("content_origin") != ContentOrigin.OPEN_WEB.value
+    ):
+        return None
+    outcome = screen_params(call.arguments)
+    if outcome.verdict == ContentScreenVerdict.CLEAN:
+        return None
+    return (
+        OpError(
+            "UNSCREENED_MEMORY_WRITE",
+            {"finding_classes": list(outcome.finding_classes)},
+        ),
+        screening_fields(outcome, 0),
+    )
+
+
+def _screen_outcome(
+    call: _Call, result: OpResult | OpError
+) -> tuple[OpResult | OpError, dict[str, str]]:
+    """Screen an open-web result, then redact secrets from every result."""
+    if isinstance(result, OpError):
+        return result, {}
+    screened: ScreenOutcome | None = None
+    value = result.value
+    if call.op.content_origin == ContentOrigin.OPEN_WEB:
+        screened = screen_result(value)
+        if screened.verdict == ContentScreenVerdict.QUARANTINED:
+            refusal = OpError(
+                "CONTENT_QUARANTINED",
+                {
+                    "finding_classes": list(screened.finding_classes),
+                    "effect_applied": True,
+                },
+            )
+            return refusal, screening_fields(screened, 0)
+        value = screened.value
+    value, redactions = redact_result(value)
+    if screened is None and not redactions:
+        return result, {}
+    return replace(result, value=value), screening_fields(screened, redactions)
+
+
+async def _output_hooks(
+    call: _Call, result: OpResult | OpError
+) -> tuple[OpResult | OpError, tuple[HookRecord, ...]]:
+    chain = call.services.hooks
+    if not call.hooks_enabled or not chain:
+        return result, ()
+    outcome = await chain.run_output(
+        call.op.id, result, call.caller.tenant, call.caller.request_id, call.surface
+    )
+    if outcome.error is not None:
+        details = {**outcome.error.details, "effect_applied": True}
+        return OpError(outcome.error.code, details), outcome.records
+    if isinstance(result, OpError):
+        return result, outcome.records
+    return replace(result, value=outcome.subject), outcome.records
+
+
 async def _execute(
     call: _Call, audit_ref: str, reservation: EffectReservation | None
 ) -> OpResult | OpError:
+    unscreened = _screen_params_refusal(call)
+    if unscreened is not None:
+        return await _record(call, audit_ref, reservation, *unscreened)
     effect = await call.effect(call.plan_ref)
     if effect is not None:
         return await _record(call, audit_ref, reservation, effect)
@@ -1160,7 +1252,11 @@ async def _execute(
         indeterminate = OpError("INDETERMINATE", {"audit_ref": audit_ref})
         await _record(call, audit_ref, reservation, indeterminate)
         raise
-    return await _record(call, audit_ref, reservation, result)
+    result, evidence = _screen_outcome(call, result)
+    result, hook_records = await _output_hooks(call, result)
+    if hook_records:
+        call = replace(call, hook_records=(*call.hook_records, *hook_records))
+    return await _record(call, audit_ref, reservation, result, evidence)
 
 
 def _static_refusal(op: Any, surface: Surface) -> OpError | None:
@@ -1169,6 +1265,31 @@ def _static_refusal(op: Any, surface: Surface) -> OpError | None:
     if surface not in op.surfaces:
         return OpError("SURFACE_NOT_ALLOWED")
     return None
+
+
+async def _input_hooks(
+    op: Any,
+    arguments: Mapping[str, Any],
+    caller: RequestCaller,
+    surface: Surface,
+    services: InvokeServices,
+    enabled: bool,
+) -> tuple[Mapping[str, Any], tuple[HookRecord, ...]] | OpError:
+    """Run the input hooks; a redaction must still pass argument validation."""
+    chain = services.hooks
+    if not enabled or not chain:
+        return arguments, ()
+    outcome = await chain.run_input(
+        op.id, claim_values(arguments), caller.tenant, caller.request_id, surface
+    )
+    if outcome.error is not None:
+        return outcome.error
+    if outcome.subject == claim_values(arguments):
+        return arguments, outcome.records
+    revalidated = _arguments(op, outcome.subject, services)
+    if isinstance(revalidated, OpError):
+        return revalidated
+    return revalidated, outcome.records
 
 
 async def invoke(
@@ -1181,6 +1302,7 @@ async def invoke(
     plan_ref: str | None = None,
     idempotency_key: str | None = None,
     resolved_from_intent: bool = False,
+    hooks_enabled: bool = True,
 ) -> OpResult | OpError:
     """One fail-closed validation, authorization, effect and outcome boundary."""
     op = services.registry.get(op_id)
@@ -1196,6 +1318,12 @@ async def invoke(
     if isinstance(resolved, OpError):
         return resolved
     effective_op, verified, decision = resolved
+    hooked = await _input_hooks(
+        op, arguments, verified, surface, services, hooks_enabled
+    )
+    if isinstance(hooked, OpError):
+        return hooked
+    arguments, input_records = hooked
     if idempotency_key is None and plan_ref is None:
         idempotency_key = _derived_fleet_key(effective_op, arguments, verified)
     call = _Call(
@@ -1208,6 +1336,8 @@ async def invoke(
         plan_ref,
         idempotency_key,
         resolved_from_intent,
+        input_records,
+        hooks_enabled,
     )
     early = await _confirmation_gate(call)
     if early is not None:

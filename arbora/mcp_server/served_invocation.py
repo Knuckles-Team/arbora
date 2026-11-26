@@ -732,6 +732,21 @@ def compose_served_invocation(
     )
     if step_invoke is not None:
         step_invoke.bind(services)
+    if services.hooks:
+        # ARBORA-OPS-R009.7: a hook runs through ``invoke`` as the host service
+        # principal; the tenant is the one the host session serves.
+        from arbora.api.invoke.hooks import host_hook_invoker
+        from arbora.api.mcp.caller import caller_from_session
+
+        def hook_caller(tenant: str, request_id: str) -> Any:
+            caller = caller_from_session(
+                session(), credential_kind="service", request_id=request_id
+            )
+            if caller.tenant != tenant:
+                raise PermissionError("hook runs only for the host tenant")
+            return caller
+
+        services.hooks.bind(host_hook_invoker(services, hook_caller))
     invocation = HostedInvocation(
         services=services,
         task_plan_config=task_plan_config,
