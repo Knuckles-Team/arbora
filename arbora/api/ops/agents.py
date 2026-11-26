@@ -46,6 +46,26 @@ class AgentResult(Params):
     value: dict[str, Any]
 
 
+async def _with_role_profile(context: Any, message: Mapping[str, Any]) -> Any:
+    """A role run needs the tenant business profile and carries its reference.
+
+    The profile is one tenant-shared engine record; a tenant with none refuses
+    ``PROFILE_UNSET`` before any run is admitted (ARBORA-OPS-R917.3).
+    """
+    metadata = message.get("metadata") or {}
+    if not metadata.get("role_instance_id"):
+        return message
+    from arbora.api.ops.operator_surface import (
+        PROFILE_KEY,
+        PROFILE_NAMESPACE,
+        read_profile,
+    )
+
+    _profile, version = await read_profile(context)
+    reference = f"{PROFILE_NAMESPACE}/{PROFILE_KEY}@{version}"
+    return {**message, "metadata": {**metadata, "profile_ref": reference}}
+
+
 async def handle_agent(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
@@ -63,7 +83,7 @@ async def handle_agent(
                 raise ValueError("Idempotency-Key is required")
             from arbora.modality.models import ModalityRefused
 
-            message = params["message"]
+            message = await _with_role_profile(context, params["message"])
             if params.get("assistant_profile_ref"):
                 message = {
                     **message,

@@ -21,6 +21,7 @@ class EngineDouble:
         self.monkeypatch = monkeypatch
         self.handlers: dict[str, Handler] = {}
         self.sent: list[tuple[str, dict[str, Any], bool]] = []
+        self.tenant = ""
 
     def serve(self, method: str, handler: Handler, *models: str) -> None:
         import medulla.generated as generated
@@ -41,6 +42,7 @@ class EngineDouble:
             idempotent: bool = False,
         ) -> Any:
             self.sent.append((method, params, idempotent))
+            self.tenant = str(context.caller.tenant)
             return self.handlers[method](params)
 
         self.monkeypatch.setattr(module, "engine_send", send)
@@ -49,7 +51,19 @@ class EngineDouble:
 def context(
     tenant: str = "tenant:one", scopes: frozenset[str] = frozenset(), key: str = "k"
 ) -> Any:
-    caller = SimpleNamespace(tenant=tenant, effective_scopes=scopes)
+    caller = SimpleNamespace(
+        tenant=tenant,
+        effective_scopes=scopes,
+        principal="principal:one",
+        engine_claims={
+            "agent_id": "agent:one",
+            "principal": "principal:one",
+            "tenant": tenant,
+            "audience": "arbora",
+            "policy_version": "p1",
+            "scopes": [],
+        },
+    )
     return SimpleNamespace(
         caller=caller, idempotency_key=key, services={}, operation_services=None
     )

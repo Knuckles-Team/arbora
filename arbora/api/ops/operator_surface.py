@@ -131,20 +131,6 @@ def _tenant(context: Any) -> str:
     return str(context.caller.tenant)
 
 
-def _registry_op(operation: str) -> Build:
-    return lambda ctx, p: {
-        "op": {"operation": operation, "name": p["name"], **_config_of(p)}
-    }
-
-
-def _config_of(params: Mapping[str, Any]) -> dict[str, Any]:
-    config = params.get("config")
-    if config is None:
-        return {}
-    secrets_are_references(config)
-    return {"config": config}
-
-
 def _value(answer: Any, _params: Mapping[str, Any]) -> dict[str, Any]:
     return {"value": masked(answer)}
 
@@ -217,25 +203,12 @@ def _instantiate(ctx: Any, params: Mapping[str, Any]) -> dict[str, Any]:
 
 
 _ENGINE: dict[str, Engine] = {
-    "fleet.servers.register": Engine(
-        "FleetServerRegistry", _registry_op("register"), _value, idempotent=True
-    ),
-    "fleet.servers.update": Engine(
-        "FleetServerRegistry", _registry_op("update"), _value, idempotent=True
-    ),
-    "fleet.servers.remove": Engine(
-        "FleetServerRegistry", _registry_op("remove"), _value, idempotent=True
-    ),
-    "fleet.servers.config.get": Engine(
-        "FleetServerRegistry", _registry_op("get_config"), _value
-    ),
     "schedule.tasks.read": Engine(
         "AnalyticsJob",
         _calendar_request,
         _calendar,
         models=("JobOpScheduleCalendar",),
     ),
-    "ops.maintenance.status": Engine("MaintainStatus", lambda ctx, p: {}, _value),
     "ops.maintenance.run": Engine(
         "Maintain", lambda ctx, p: _maintain(ctx, p), _value, idempotent=True
     ),
@@ -279,7 +252,28 @@ _ENGINE: dict[str, Engine] = {
 }
 
 #: Engine methods a role binding needs before it may bind a template (R917.2).
-PROFILE_METHOD = "BusinessProfile"
+PROFILE_METHOD = "KvGet"
+#: The tenant business profile is one tenant-shared KV record (R917).
+PROFILE_NAMESPACE = "business.profile"
+PROFILE_KEY = "profile"
+PROFILE_FIELDS = frozenset(
+    {
+        "entity",
+        "brand",
+        "products",
+        "policies",
+        "owners",
+        "approval_matrix",
+        "claim_rules",
+    }
+)
+#: The maintenance cycle runs as one engine schedule of this name.
+MAINTENANCE_SCHEDULE = "maintenance"
+SERVER_TTL_SECS = 3600
+_ACTIVE_STATUS = frozenset({"submitted", "ready", "leased", "running"})
+_SERVER_OWN = frozenset({"url", "transport", "ttl_secs"})
+_WORK_ITEM_KIND = "workflow.run"
+_MAX_TENANT_IN_FLIGHT = 16
 
 
 async def _send(context: Any, spec: Engine, params: Mapping[str, Any]) -> Any:
@@ -302,17 +296,74 @@ async def handle_engine(
     return spec.project(await _send(context, spec, params), params)
 
 
-async def _profile_set(context: Any) -> None:
+def _entry_value(entry: Any) -> Any:
+    """The decoded JSON a KV entry holds, or ``None`` for an absent key."""
+    import json
+
+    if not isinstance(entry, Mapping) or "value" not in entry:
+        return None
+    raw = entry["value"]
+    if isinstance(raw, (list, tuple)):
+        raw = bytes(raw)
+    if isinstance(raw, (bytes, bytearray, memoryview)):
+        try:
+            return json.loads(bytes(raw))
+        except ValueError:
+            return None
+    return raw
+
+
+async def read_profile(context: Any) -> tuple[dict[str, Any], int]:
+    """The tenant business profile and its KV version; ``PROFILE_UNSET`` when absent."""
     try:
         require_methods(PROFILE_METHOD)
     except PinLagUnavailable as error:
         raise refusal(error) from error
-    answer = await engine_send(
-        context, PROFILE_METHOD, {"op": {"op": "get", "tenant_id": _tenant(context)}}
+    entry = await engine_send(
+        context,
+        PROFILE_METHOD,
+        {"namespace": PROFILE_NAMESPACE, "key": PROFILE_KEY, "shared": True},
     )
-    profile = answer.get("profile") if isinstance(answer, Mapping) else None
-    if not profile:
+    profile = _entry_value(entry)
+    if not isinstance(profile, dict) or not profile:
         raise OperationRefused("PROFILE_UNSET")
+    return profile, int(entry.get("version", 0))
+
+
+async def _profile_set(context: Any) -> int:
+    return (await read_profile(context))[1]
+
+
+async def write_profile(
+    context: Any, profile: Mapping[str, Any], expected_version: int
+) -> int:
+    """Compare-and-set the profile on its KV version (``0`` means it must not exist)."""
+    import json
+
+    unknown = sorted(set(profile) - PROFILE_FIELDS)
+    if unknown:
+        raise OperationRefused("INVALID_ARGUMENT", {"field": unknown[0]})
+    try:
+        require_methods("KvCas")
+    except PinLagUnavailable as error:
+        raise refusal(error) from error
+    answer = await engine_send(
+        context,
+        "KvCas",
+        {
+            "namespace": PROFILE_NAMESPACE,
+            "key": PROFILE_KEY,
+            "shared": True,
+            "expected_version": expected_version,
+            "new": json.dumps(dict(profile), sort_keys=True).encode(),
+        },
+        idempotent=True,
+    )
+    if not (isinstance(answer, Mapping) and answer.get("swapped")):
+        raise OperationRefused(
+            "REVISION_CONFLICT", {"expected_version": expected_version}
+        )
+    return int(answer.get("version", 0))
 
 
 async def handle_instance_bind(
@@ -328,6 +379,140 @@ async def handle_instance_bind(
     answer = await engine_send(context, "AgentTemplate", request, idempotent=True)
     entry = answer.get("entry", answer) if isinstance(answer, Mapping) else {}
     return {"value": dict(entry)}
+
+
+# --- fleet server registry: RegisterServer and ListRegisteredServers -------------
+
+
+def _server_request(
+    name: str, config: Mapping[str, Any], desired: str
+) -> dict[str, Any]:
+    import json
+
+    secrets_are_references(config)
+    url = config.get("url")
+    if not isinstance(url, str) or not url:
+        raise OperationRefused("INVALID_ARGUMENT", {"field": "config.url"})
+    request: dict[str, Any] = {
+        "name": name,
+        "url": url,
+        "desired": desired,
+        "ttl_secs": int(config.get("ttl_secs", SERVER_TTL_SECS)),
+        # References only: the engine stores them and never resolves them.
+        "resources_json": json.dumps(
+            {k: v for k, v in config.items() if k not in _SERVER_OWN}, sort_keys=True
+        ),
+    }
+    if config.get("transport"):
+        request["transport"] = config["transport"]
+    return request
+
+
+async def _registered_server(context: Any, name: str) -> dict[str, Any]:
+    """The registry row of ``name``; an absent row answers exactly like a foreign one."""
+    cursor: Any = None
+    for _page in range(64):
+        request: dict[str, Any] = {"limit": 256}
+        if cursor is not None:
+            request["cursor"] = cursor
+        page = await engine_send(context, "ListRegisteredServers", {"request": request})
+        for row in page.get("entries", []) if isinstance(page, Mapping) else []:
+            if isinstance(row, Mapping) and row.get("name") == name:
+                return dict(row)
+        cursor = page.get("next_cursor") if isinstance(page, Mapping) else None
+        if cursor is None:
+            break
+    raise OperationRefused("NOT_FOUND")
+
+
+async def handle_server(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Register, update, remove or read one fleet server over the engine registry."""
+    import json
+
+    try:
+        require_methods("RegisterServer", "ListRegisteredServers")
+    except PinLagUnavailable as error:
+        raise refusal(error) from error
+    name = str(params["name"])
+    if op.id == "fleet.servers.config.get":
+        return {"value": masked(await _registered_server(context, name))}
+    if op.id == "fleet.servers.remove":
+        # Remove is disabled now; the engine sweep drops the row at lease expiry.
+        row = await _registered_server(context, name)
+        request = {
+            "name": name,
+            "url": row["url"],
+            "desired": "disabled",
+            "ttl_secs": int(row.get("ttl_secs", SERVER_TTL_SECS)),
+            "resources_json": json.dumps(row.get("resources") or {}, sort_keys=True),
+        }
+        if row.get("transport"):
+            request["transport"] = row["transport"]
+    else:
+        request = _server_request(name, params["config"], "enabled")
+    await engine_send(context, "RegisterServer", request, idempotent=True)
+    return {"value": {"name": name, "desired": request["desired"]}}
+
+
+# --- maintenance status: schedule list, schedule ticks and work items -------------
+
+
+async def handle_maintenance_status(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Compose the maintenance schedule state; ``Maintain`` is never called here."""
+    from arbora.api.invoke.bootstrap import caller_dispatch_graph
+
+    try:
+        require_methods("AnalyticsJob", "ListWorkItems")
+        require_models(("JobOpScheduleList", "JobOpScheduleTicks"))
+    except PinLagUnavailable as error:
+        raise refusal(error) from error
+    graph = await caller_dispatch_graph(context)
+    listed = await engine_send(
+        context, "AnalyticsJob", {"op": {"ScheduleList": {"graph": graph}}}
+    )
+    schedule = next(
+        (
+            row
+            for row in (
+                listed.get("schedules", []) if isinstance(listed, Mapping) else []
+            )
+            if isinstance(row, Mapping) and row.get("name") == MAINTENANCE_SCHEDULE
+        ),
+        None,
+    )
+    if schedule is None:
+        return {"value": {"state": "unscheduled", "pending": 0, "last_tick": None}}
+    ticks = await engine_send(
+        context,
+        "AnalyticsJob",
+        {
+            "op": {
+                "ScheduleTicks": {
+                    "graph": graph,
+                    "name": MAINTENANCE_SCHEDULE,
+                    "limit": 1,
+                }
+            }
+        },
+    )
+    last = (ticks.get("ticks") or [None])[-1] if isinstance(ticks, Mapping) else None
+    items = await engine_send(
+        context,
+        "ListWorkItems",
+        {"tenant": _tenant(context), "kind": schedule.get("task_kind"), "limit": 200},
+    )
+    pending = sum(
+        1
+        for item in (items.get("items", []) if isinstance(items, Mapping) else [])
+        if isinstance(item, Mapping) and item.get("status") in _ACTIVE_STATUS
+    )
+    return {
+        "value": {"state": schedule.get("state"), "pending": pending, "last_tick": last}
+    }
 
 
 # --- names for other registered operations ---------------------------------
@@ -418,35 +603,97 @@ async def handle_commands_execute(
 
 # --- workflows: the business-process connector through the fleet -------------
 
-_WORKFLOW_TOOL = {
-    "workflows.list": "list",
-    "workflows.create": "create",
-    "workflows.run": "run",
-}
+_WORKFLOW_TOOL = {"workflows.list": "list", "workflows.create": "create"}
+
+
+async def _submit_run(context: Any, params: Mapping[str, Any]) -> str:
+    """Submit one workflow run as an engine WorkItem; its id is the run id."""
+    import hashlib
+    import json
+
+    from arbora.api.invoke.bootstrap import caller_dispatch_graph
+    from arbora.api.invoke.steps import claim_values
+    from arbora.mcp_server.effect_journal import _request_context
+
+    try:
+        require_methods("SubmitWorkItem")
+    except PinLagUnavailable as error:
+        raise refusal(error) from error
+    key = context.idempotency_key
+    if not key:
+        raise OperationRefused("INVALID_ARGUMENT", {"field": "idempotency_key"})
+    graph = await caller_dispatch_graph(context)
+    claims = claim_values(context.caller.engine_claims)
+
+    class _Graph:
+        graph_name = graph
+
+    body = {"workflow_id": params["workflow_id"], "inputs": dict(params["inputs"])}
+    digest = hashlib.sha256(
+        json.dumps([_tenant(context), body], sort_keys=True).encode()
+    ).hexdigest()
+    answer = await engine_send(
+        context,
+        "SubmitWorkItem",
+        {
+            "request": {
+                "schema_version": "1",
+                "context": _request_context(claims, _Graph(), key),
+                "idempotency_key": key,
+                "command_digest": digest,
+                "kind": _WORK_ITEM_KIND,
+                "priority": 0,
+                "depends_on": [],
+                "input_ref": f"workflow:{params['workflow_id']}",
+                "policy_digest": hashlib.sha256(
+                    str(claims.get("policy_version") or "none").encode()
+                ).hexdigest(),
+                "catalog_digest": digest,
+                "model_digest": "none",
+                "max_attempts": 1,
+                "max_tenant_in_flight": _MAX_TENANT_IN_FLIGHT,
+                "metadata": body,
+                "provenance_refs": [str(context.caller.principal)],
+            }
+        },
+        idempotent=True,
+    )
+    run_id = (
+        answer.get("work_item_id") or answer.get("id")
+        if isinstance(answer, Mapping)
+        else None
+    )
+    if not isinstance(run_id, str) or not run_id:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "the engine returned no work item id"}
+        )
+    return run_id
 
 
 async def handle_workflow(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    arguments = {k: v for k, v in params.items() if v is not None}
+    if op.id == "workflows.run":
+        return {"value": {"run_id": await _submit_run(context, params)}}
     reply = await invoke_registered(
         context,
         "fleet.call",
         {
             "server": WORKFLOW_SERVER,
             "tool": _WORKFLOW_TOOL[op.id],
-            "arguments": arguments,
+            "arguments": {k: v for k, v in params.items() if v is not None},
         },
     )
     value = reply.get("value", reply) if isinstance(reply, Mapping) else reply
-    if op.id != "workflows.run":
-        return {"value": value}
-    run_id = value.get("run_id") if isinstance(value, Mapping) else None
-    if not isinstance(run_id, str) or not run_id:
+    if isinstance(value, Mapping) and set(value) == {"error"}:
+        # The fleet has no such server or tool: refuse, never fabricate an answer.
         raise OperationRefused(
-            "UNAVAILABLE", {"reason": "the connector returned no run id"}
+            "UNAVAILABLE",
+            {
+                "reason": f"the fleet does not serve {WORKFLOW_SERVER} {_WORKFLOW_TOOL[op.id]}"
+            },
         )
-    return {"value": {"run_id": run_id}}
+    return {"value": value}
 
 
 # --- registration -------------------------------------------------------------
@@ -459,7 +706,7 @@ _TABLE: dict[str, tuple[str, Verb, Effect, str, dict[str, Any], str]] = {
         Effect.ADMIN,
         "fleet:control",
         {"name": _Name, "config": _Obj},
-        "handle_engine",
+        "handle_server",
     ),
     "fleet.servers.update": (
         "Update one fleet server",
@@ -467,7 +714,7 @@ _TABLE: dict[str, tuple[str, Verb, Effect, str, dict[str, Any], str]] = {
         Effect.ADMIN,
         "fleet:control",
         {"name": _Name, "config": _Obj},
-        "handle_engine",
+        "handle_server",
     ),
     "fleet.servers.remove": (
         "Remove one fleet server",
@@ -475,7 +722,7 @@ _TABLE: dict[str, tuple[str, Verb, Effect, str, dict[str, Any], str]] = {
         Effect.ADMIN,
         "fleet:control",
         {"name": _Name},
-        "handle_engine",
+        "handle_server",
     ),
     "fleet.servers.config.get": (
         "Read one fleet server configuration with secrets as references",
@@ -483,7 +730,7 @@ _TABLE: dict[str, tuple[str, Verb, Effect, str, dict[str, Any], str]] = {
         Effect.READ,
         "fleet:read",
         {"name": _Name},
-        "handle_engine",
+        "handle_server",
     ),
     "fleet.skills.toggle": (
         "Enable or disable one skill",
@@ -518,7 +765,7 @@ _TABLE: dict[str, tuple[str, Verb, Effect, str, dict[str, Any], str]] = {
         Effect.READ,
         "ops:read",
         {},
-        "handle_engine",
+        "handle_maintenance_status",
     ),
     "ops.maintenance.run": (
         "Run one maintenance cycle",
@@ -661,8 +908,12 @@ def _replay_owner(op_id: str) -> str:
         return f"medulla:{_ENGINE[op_id].method}"
     if op_id in _ALIAS:
         return "nested:registered-operation"
+    if op_id == "workflows.run":
+        return "medulla:SubmitWorkItem"
     if op_id in _WORKFLOW_TOOL:
         return "fleet:call"
+    if op_id.startswith("fleet.servers."):
+        return "medulla:RegisterServer"
     if op_id == "commands.execute":
         return "nested:registered-operation"
     return "medulla:AgentTemplate"

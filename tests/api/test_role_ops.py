@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import pytest
@@ -9,6 +10,7 @@ import pytest
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import operator_surface as surface
+from arbora.api.ops.operator_surface import PROFILE_NAMESPACE
 from tests.api._engine_double import EngineDouble, context
 
 _OPS = {op.id: op for op in surface.operations()}
@@ -62,17 +64,17 @@ async def test_instance_binds_template_to_profile_and_refuses_widening(
         "template_id": "t1",
         "binding": {"instance_id": "role:one", "bindings": {}},
     }
-    # No profile method on the pinned engine: the write refuses naming it.
-    with pytest.raises(OperationRefused) as pinned:
-        await surface.handle_instance_bind(context(), params, create)
-    assert pinned.value.details["missing"] == "BusinessProfile"
-
     profiles: dict[str, Any] = {}
     engine = EngineDouble(monkeypatch)
     engine.serve(
-        "BusinessProfile",
-        lambda p: {"profile": profiles.get(p["op"]["tenant_id"])},
+        "KvGet",
+        lambda p: (
+            {"value": json.dumps(profiles[engine.tenant]).encode(), "version": 3}
+            if engine.tenant in profiles
+            else None
+        ),
     )
+    assert PROFILE_NAMESPACE == "business.profile"
 
     def template(p: dict[str, Any]) -> Any:
         request = p["op"]["request"]
@@ -86,6 +88,12 @@ async def test_instance_binds_template_to_profile_and_refuses_widening(
         await surface.handle_instance_bind(context(), params, create)
     assert unset.value.code == "PROFILE_UNSET"
     profiles["tenant:one"] = {"entity": "e"}
+    kv = engine.sent[0]
+    assert kv[0] == "KvGet" and kv[1] == {
+        "namespace": "business.profile",
+        "key": "profile",
+        "shared": True,
+    }
     # The other tenant still has no profile: its answer is the same refusal.
     with pytest.raises(OperationRefused) as other:
         await surface.handle_instance_bind(context("tenant:two"), params, create)
