@@ -118,6 +118,13 @@ async def handle_friction_get(
     return {"value": answer}
 
 
+#: Writes the engine replays by the idempotency key the pipeline forwards.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "skills.friction.report": "medulla:FrictionReport",
+    "skills.friction.transition": "medulla:FrictionReport",
+}
+
+
 def operations() -> tuple[OpSpec, ...]:
     handlers = "arbora.api.ops.skills_friction.handle_friction_"
     return (
@@ -165,6 +172,7 @@ def operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 __all__ = [
+    "NATIVE_IDEMPOTENCY",
     "handle_friction_get",
     "handle_friction_group",
     "handle_friction_report",
