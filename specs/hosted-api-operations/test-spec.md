@@ -582,9 +582,9 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R917.3` | Test: `tests/test_native_run_admission.py::test_role_run_refuses_missing_profile_and_narrows_tools` (planned, L1). |
 | `ARBORA-OPS-R917.4` | Test: `tests/api/test_role_served.py::test_one_template_two_tenants_isolated_profiles` (planned, L1). |
 | `ARBORA-OPS-R918` | Roll-up of its children. |
-| `ARBORA-OPS-R918.1` | Test: `tests/api/test_approvals_ops.py::test_list_filters_by_gate_class_and_approver_role` (planned, L1). |
-| `ARBORA-OPS-R918.2` | Test: `tests/api/test_gate_class.py::test_engine_answer_sets_class_roles_expiry_and_default_is_strict` (planned, L1). |
-| `ARBORA-OPS-R918.3` | Test: `tests/api/test_approvals_ops.py::test_decide_refuses_self_approval_and_records_provenance` (planned, L1). |
+| `ARBORA-OPS-R918.1` | Test: `tests/api/test_approvals_ops.py::test_list_filters_by_gate_class_and_approver_role` (L1). |
+| `ARBORA-OPS-R918.2` | Test: `tests/api/test_gate_class.py::test_engine_answer_sets_class_roles_expiry_and_default_is_strict` (L1). |
+| `ARBORA-OPS-R918.3` | Test: `tests/api/test_approvals_ops.py::test_decide_refuses_self_approval_and_records_provenance` (L1). |
 | `ARBORA-OPS-R918.4` | Test: `tests/api/test_approvals_ops.py::test_expired_item_refuses_consume_and_lists_expired` (planned, L1). |
 | `ARBORA-OPS-R918.5` | Test: `tests/api/test_approvals_ops.py::test_digest_counts_by_class_and_delivers_one_notice_per_owner` (planned, L1). |
 | `ARBORA-OPS-R918.6` | Test: `tests/fleet/test_approval_notifier.py::test_notice_per_approver_without_preview_and_retries_from_outbox` (planned, L1). |
