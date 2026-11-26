@@ -371,7 +371,7 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T297 ARBORA-OPS-R059.4 Evolution metrics hot-path proof.
 - [ ] T298 ARBORA-OPS-R060.1 Session and harness models.
 - [ ] T299 ARBORA-OPS-R060.2 Harness manifest and discovery status operations.
-- [ ] T300 ARBORA-OPS-R060.3 Session browse, search and cost operations.
+- [x] T300 ARBORA-OPS-R060.3 Session browse, search and cost operations.
 - [ ] T301 ARBORA-OPS-R060.4 Session operation refusals.
 - [ ] T302 ARBORA-OPS-R060.5 Session projection hot-path proof.
 - [ ] T303 ARBORA-OPS-R061.1 Usage index models.
