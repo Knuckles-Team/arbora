@@ -34,6 +34,10 @@ class HostedInvocation:
     #: ``(method, params, tenant)`` to the decoded engine answer as the host service
     #: identity; the host's run ports stage blobs through it.
     engine_send: Any = None
+    #: The caller tenant's published feature-schema pin, and the identity the engine
+    #: sees on ``engine_send``; the A2A door's ``Decide`` port binds both (R005.4).
+    decision_feature_schema: Callable[[str], Mapping[str, Any]] | None = None
+    decision_principal: Callable[[], str] | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.services, InvokeServices) or not isinstance(
