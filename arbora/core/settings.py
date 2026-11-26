@@ -139,6 +139,27 @@ class ArboraConfig(BaseModel):
         alias="PRESENCE_SNAPSHOT_INTERVAL_S",
         description="City presence snapshot cadence in seconds (ARBORA-OPS-R915). A snapshot whose simulated_at is older than this interval is served flagged fresh: false; a consumer polling faster than the interval receives the same snapshot, not a new computation.",
     )
+    usage_index_p95_bound_ms: int = Field(
+        default=500,
+        ge=50,
+        le=5_000,
+        alias="USAGE_INDEX_P95_BOUND_MS",
+        description="Largest p95 latency bound the indexed usage query may carry in its latency profile, in milliseconds (ARBORA-OPS-R061.4). A profile that is absent, incomplete or above it refuses UNAVAILABLE with no aggregates.",
+    )
+    viewport_max_bytes: int = Field(
+        default=1_048_576,
+        ge=4_096,
+        le=16_777_216,
+        alias="VIEWPORT_MAX_BYTES",
+        description="Ceiling on the bytes one viewport bins response may carry (ARBORA-OPS-R064.2). A request may lower it, never raise it; a response above it is refused LOAD_CAP_EXCEEDED with no bins.",
+    )
+    viewport_max_bins: int = Field(
+        default=4_096,
+        ge=16,
+        le=65_536,
+        alias="VIEWPORT_MAX_BINS",
+        description="Ceiling on the bins one viewport response may carry (ARBORA-OPS-R064.2).",
+    )
     allowed_hosts: str | None = Field(
         default=None,
         alias="ALLOWED_HOSTS",
