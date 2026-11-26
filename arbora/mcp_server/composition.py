@@ -888,6 +888,36 @@ class NativeGatewayApplication:
     async def execute_tool(self, tool: str, /, **kwargs: Any) -> Any:
         return await runtime._execute_tool(tool, **kwargs)
 
+    async def invoke_operation(
+        self,
+        op_id: str,
+        params: Mapping[str, Any],
+        /,
+        *,
+        request: Any,
+        idempotency_key: str | None = None,
+    ) -> Any:
+        from arbora.api.invoke.pipeline import OperationRefused, invoke
+        from arbora.api.invoke.steps import OpError
+        from arbora.api.registry import Surface
+
+        if self._invocation is None:
+            raise OperationRefused("UNAVAILABLE", {"capability": "invoke"})
+        caller = await self._invocation.authenticator.authenticate(request)
+        result = await invoke(
+            op_id,
+            params,
+            caller,
+            Surface.HTTP,
+            services=self._invocation.services,
+            idempotency_key=idempotency_key,
+        )
+        if isinstance(result, OpError):
+            raise OperationRefused(result.code, result.details)
+        if result.code != "OK":
+            raise OperationRefused(result.code, result.details)
+        return result.value
+
     def engine(self) -> Any:
         return runtime._get_engine()
 
