@@ -75,7 +75,6 @@ def _run(
 def test_claim_and_link_claim_typed_results(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fresh = {
         ("config", "get"): Refused("IDENTITY_NOT_INITIALIZED"),
@@ -107,27 +106,26 @@ def test_claim_and_link_claim_typed_results(
     assert code == 2 and out["detail"]["code"] == "STORE_NOT_FRESH"
     assert [r for f, o, r in admin.sent if o == "list"] == [{"limit": 1}]
 
-    # PIN-LAG: the pinned engine has no ``idp.link`` dry run, so link-claim
-    # refuses and sends nothing.
-    link = ["link-claim", "--provider", "idp-1", "--subject", "s-1"]
-    monkeypatch.setattr(cli, "_link_dry_run_served", lambda: False)
-    code, out, admin, *_ = _run(tmp_path, capsys, link, {})
-    assert code == 2 and out["detail"]["code"] == "LINK_DRY_RUN_UNAVAILABLE"
-    assert admin.sent == []
 
-    # Engine main: the dry run answers the ownership changes, then the link runs.
-    monkeypatch.setattr(cli, "_link_dry_run_served", lambda: True)
-    clean = {
-        ("idp", "link"): {"ownership_changes": []},
-    }
+@pytest.mark.spec("ARBORA-IDENTITY-R013.1")
+def test_link_claim_previews_from_the_provisioned_list(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # The preview is ``idp.list_provisioned``: a link never reassigns.
+    link = ["link-claim", "--provider", "idp-1", "--subject", "s-1"]
+    clean = {("idp", "list_provisioned"): [], ("idp", "link"): None}
     code, out, admin, *_ = _run(tmp_path, capsys, link, clean)
     assert code == 0 and out["ok"] is True
-    assert [r.get("dry_run") for _, _, r in admin.sent] == [True, None]
+    assert [o for _, o, _ in admin.sent] == ["list_provisioned", "link"]
 
-    moved = {("idp", "link"): {"ownership_changes": [{"principal_id": "usr:other"}]}}
+    own = {("idp", "list_provisioned"): [{"user": {"principal_id": "usr:bootstrap"}}]}
+    code, out, admin, *_ = _run(tmp_path, capsys, link, {**clean, **own})
+    assert code == 0 and [o for _, o, _ in admin.sent] == ["list_provisioned", "link"]
+
+    moved = {("idp", "list_provisioned"): [{"user": {"principal_id": "usr:other"}}]}
     code, out, admin, *_ = _run(tmp_path, capsys, link, moved)
     assert code == 2 and out["detail"]["code"] == "LINK_OWNERSHIP_CHANGES"
-    assert len(admin.sent) == 1
+    assert [o for _, o, _ in admin.sent] == ["list_provisioned"]
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R013.2")

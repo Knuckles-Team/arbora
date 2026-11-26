@@ -55,6 +55,10 @@ class FleetCatalogParams(_Params):
     cursor: str | None = Field(default=None, max_length=1_024)
     limit: int = Field(default=50, ge=1, le=100)
     context_budget_tokens: int | None = Field(default=None, ge=256, le=1_000_000)
+    #: ``fleet.catalog.search`` only: the job whose tools the engine selects
+    #: (ARBORA-FLEET-R037.3).
+    job_text: str | None = Field(default=None, min_length=1, max_length=4_096)
+    required_capabilities: tuple[str, ...] = ()
 
 
 class FleetSurfaceListParams(_Params):
@@ -121,6 +125,9 @@ class FleetCallParams(_Params):
     server: str = Field(min_length=1, max_length=128)
     tool: str = Field(min_length=1, max_length=128)
     arguments: dict[str, Any] = Field(default_factory=dict)
+    #: A playbook write step cites the committed ``ConnectorWriteBack`` record (R871).
+    playbook_step_id: str | None = Field(default=None, min_length=1, max_length=256)
+    decision_record_digest: str | None = Field(default=None, max_length=128)
 
 
 class FleetPackStatusParams(_Params):
@@ -246,6 +253,37 @@ async def handle_fleet_acceptance(
     return {"value": receipt}
 
 
+async def _find_for_job(
+    context: Any, gateway: Any, job_text: str, capabilities: tuple[str, ...]
+) -> dict[str, Any]:
+    """One engine ``LoadSet`` decision for a job; the tenant is the caller's."""
+    from medulla.decision_client import load_set_request
+
+    from arbora.api.invoke.bootstrap import caller_dispatch_graph
+    from arbora.api.ops._engine import engine_send
+    from arbora.api.ops.skills_tier import _feature_schema
+    from arbora.fleet.job_loads import JobLoadRequest, find_for_job
+
+    tenant = str(context.caller.tenant)
+    graph = await caller_dispatch_graph(context)
+
+    async def decide(question: dict[str, Any]) -> Mapping[str, Any]:
+        request = load_set_request(
+            tenant,
+            "job-load-set",
+            {**question, "graph": graph},
+            _feature_schema(context, tenant),
+        )
+        return await engine_send(context, "Decide", {"request": request})
+
+    return await find_for_job(
+        gateway,
+        context.caller,
+        decide,
+        JobLoadRequest(job_text, tuple(capabilities)),
+    )
+
+
 async def handle_fleet_operation(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
@@ -254,6 +292,21 @@ async def handle_fleet_operation(
     if gateway is None:
         raise RuntimeError("fleet gateway is not bound")
     caller = context.caller
+    job_text = params.get("job_text")
+    capabilities = params.get("required_capabilities") or ()
+    params = {
+        k: v
+        for k, v in params.items()
+        if k not in ("job_text", "required_capabilities")
+    }
+    if job_text is not None or capabilities:
+        if op.id != "fleet.catalog.search" or job_text is None:
+            from arbora.api.invoke.pipeline import OperationRefused
+
+            raise OperationRefused(
+                "INVALID_ARGUMENT", {"field": "job_text", "reason": "search only"}
+            )
+        return {"value": await _find_for_job(context, gateway, job_text, capabilities)}
     if op.id == "fleet.catalog.search":
         summary = params.get("summary")
         params = {key: value for key, value in params.items() if key != "summary"}
@@ -373,6 +426,30 @@ async def handle_catalog_convergence(
     return {"replicas": [generation_payload(status)]}
 
 
+async def require_step_decision(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> None:
+    """A playbook write step needs a committed record of its own step and tenant.
+
+    A missing or mismatched record refuses ``POLICY_DENIED`` with zero connector calls;
+    the engine only proposes and arbora keeps execution authority (ARBORA-OPS-R871).
+    """
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.api.ops._decide import committed_record
+
+    step = params.get("playbook_step_id")
+    if not step or op.effect == Effect.READ:
+        return
+    digest = params.get("decision_record_digest")
+    record = await committed_record(context, digest) if digest else {}
+    if record.get("kind") != "ConnectorWriteBack":
+        raise OperationRefused("POLICY_DENIED", {"reason": "step_decision_missing"})
+    if record.get("step_id") != step or str(record.get("tenant")) != str(
+        context.caller.tenant
+    ):
+        raise OperationRefused("POLICY_DENIED", {"reason": "step_decision_mismatch"})
+
+
 async def handle_fleet_call(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
@@ -387,6 +464,7 @@ async def handle_fleet_call(
     gateway = context.services.get("fleet_gateway")
     if gateway is None:
         raise RuntimeError("fleet gateway is not bound")
+    await require_step_decision(context, params, op)
     with _plan_confirmation(context, params, op):
         return await _gateway_call(gateway, context, params, op)
 

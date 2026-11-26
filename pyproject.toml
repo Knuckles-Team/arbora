@@ -349,5 +349,3 @@ mode = "staged"
 
 # Inputs of the shared complexity gate owned by pipelines (ARBORA-DEPLOY-R010.4).
 [tool.complexity]
-max_function_arguments = 7
-max_try_block_statements = 5

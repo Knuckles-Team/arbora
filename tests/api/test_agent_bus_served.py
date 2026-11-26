@@ -40,9 +40,10 @@ class _Bus:
         self.engine.serve("BusRegister", self._register)
         self.engine.serve("BusHeartbeat", lambda p: {"seen": p["now_ms"]})
         self.engine.serve("BusRoster", lambda p: {"participants": self.roster})
-        self.engine.serve("TopicAppend", self._append)
+        self.engine.serve("StreamDeclare", lambda p: {})
+        self.engine.serve("StreamPublish", self._append)
         self.engine.serve(
-            "TopicRead", lambda p: {"messages": self.topics.get(p["topic"], [])}
+            "StreamRead", lambda p: self.topics.get(p["stream"], [])[p["from_offset"] :]
         )
         self.engine.install(bus)
         self.engine.install(pin_lag)
@@ -52,10 +53,13 @@ class _Bus:
         return {"registered": p["participant"]["session_ref"]}
 
     def _append(self, p: dict[str, Any]) -> Any:
-        self.topics.setdefault(p["topic"], []).append(
-            {"sender": p["sender"], "payload": p["payload"]}
+        import msgpack
+
+        body = msgpack.unpackb(p["payload"], raw=False)
+        self.topics.setdefault(p["stream"], []).append(
+            {"sender": body["sender"], "payload": body["body"]}
         )
-        return {"offset": len(self.topics[p["topic"]])}
+        return len(self.topics[p["stream"]]) - 1
 
 
 @pytest.mark.spec("ARBORA-OPS-R882")
@@ -75,20 +79,6 @@ def test_the_six_operations_are_registered_with_bus_scopes() -> None:
         assert _OPS[op_id].effect is Effect.WRITE
         assert _OPS[op_id].scopes == frozenset({"bus:write"})
         assert op_id in bus.NATIVE_IDEMPOTENCY
-
-
-@pytest.mark.spec("ARBORA-OPS-R882")
-async def test_a_pinned_engine_without_the_topic_methods_refuses_naming_them() -> None:
-    from medulla.generated import METHOD_IDS
-
-    if "TopicAppend" in METHOD_IDS:
-        pytest.skip("the pin carries the topic methods")
-    with pytest.raises(OperationRefused) as refused:
-        await bus.handle_bus_receive(
-            _ctx(), {"session_ref": "s1", "limit": 5}, _OPS["bus.receive"]
-        )
-    assert refused.value.code == "UNAVAILABLE"
-    assert refused.value.details["missing"] == "TopicRead"
 
 
 @pytest.mark.spec("ARBORA-OPS-R882")

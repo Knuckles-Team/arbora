@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from arbora.api.errors import EngineRefusal, FleetRefusal
 from arbora.api.invoke.agent_ref import bind_agent_ref
 from arbora.api.invoke.audit import EffectJournal, EffectReservation, audit_event
+from arbora.api.invoke.autonomy import AskVerdict, require_autonomy_clearance
 from arbora.api.invoke.executor import (
     OperationRuntime,
     execution_context,
@@ -26,6 +27,7 @@ from arbora.api.invoke.gate_class import GateReader, no_engine_answer, resolve_g
 from arbora.api.invoke.hooks import HookChain, HookRecord
 from arbora.api.invoke.plan import PlanBinding, PlanStore, bind_plan, params_digest
 from arbora.api.invoke.privacy import mask_persisted_arguments
+from arbora.api.invoke.recommendation_gate import gate_result
 from arbora.api.invoke.screening import (
     ContentOrigin,
     ContentScreenVerdict,
@@ -323,6 +325,8 @@ class InvokeServices:
     #: Skill and workflow admission, run before the confirmation gate
     #: (ARBORA-FLEET-R034.3). The default gate admits what declares nothing.
     admission: AdmissionGate = field(default_factory=AdmissionGate)
+    #: The engine autonomy verdict reader (ARBORA-OPS-R867); ``None`` until the host binds one.
+    autonomy: AskVerdict | None = None
 
     def __post_init__(self) -> None:
         self._cover_plan_gated_operations()
@@ -986,8 +990,17 @@ async def _confirmation_gate(call: _Call) -> OpError | OpResult | None:
         assert preview is not None
         return preview
     refused = _execution_refusal(call)
-    if refused is not None or call.plan_ref is None:
+    if refused is not None:
         return refused
+    cleared = await require_autonomy_clearance(
+        call.services.autonomy,
+        op_id=call.op.id,
+        tenant=call.caller.tenant,
+        is_read=call.op.effect == Effect.READ,
+        plan_approved=call.plan_ref is not None,
+    )
+    if cleared is not None or call.plan_ref is None:
+        return cleared
     return await _approval_wait(call)
 
 
@@ -1327,6 +1340,7 @@ async def _execute(
         indeterminate = OpError("INDETERMINATE", {"audit_ref": audit_ref})
         await _record(call, audit_ref, reservation, indeterminate)
         raise
+    result = gate_result(call.op.id, result)
     result, evidence = _screen_outcome(call, result)
     result, hook_records = await _output_hooks(call, result)
     if hook_records:

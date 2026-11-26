@@ -13,6 +13,9 @@ from .admission import (
     ModelProfileDecision,
     ModelProfilePreference,
     ModelProfileUnavailable,
+    ToolSubsetAdmissionRequest,
+    admit_tool_subset,
+    priority_for,
 )
 from .authority import (
     A2AStreamingUnavailable,
@@ -24,6 +27,7 @@ from .models import (
     TRANSITION_PAGE_LIMIT,
     A2AAgentCapabilities,
     A2AAgentCard,
+    A2AContextBudget,
     A2AListResult,
     A2AMessage,
     A2APushNotificationAuthority,
@@ -114,6 +118,11 @@ class A2AService:
     #: Stores uploaded image bytes by digest for the caller's tenant (R001.5.5);
     #: ``None`` leaves a reference refusing ``UNAVAILABLE``.
     media_refs: MediaRefStore | None = None
+    #: The engine decision port for the harness configuration; without one a
+    #: budgeted message refuses closed (ARBORA-A2A-R017.5).
+    harness_decider: Any = None
+    #: Reads the verified caller's principal class (ARBORA-A2A-R017.3).
+    principal_kind: Callable[[], str] | None = None
     #: The durable push-notification worker (ARBORA-A2A-R013); the card
     #: advertises ``pushNotifications`` only while one is wired (R013.3).
     push: A2APushNotificationAuthority | None = None
@@ -165,9 +174,12 @@ class A2AService:
             if isinstance(outcome, ModelProfileUnavailable):
                 raise A2AAssemblyUnavailable(outcome.reason)
             profile = {"model_profile": outcome}
+        harness: dict[str, Any] = {}
         decision = await self.router.route(
             parsed, context_budget_tokens=context_budget_tokens
         )
+        if context_budget_tokens is not None:
+            harness = await self._admit(decision, context_budget_tokens)
         media: dict[str, Any] = {}
         if any(file.mime_type in IMAGE_TYPES for _, file in parsed.media_files()):
             capability = (
@@ -194,7 +206,46 @@ class A2AService:
             blocking=blocking,
             media=media or None,
             **profile,
+            **harness,
         )
+
+    async def _admit(
+        self, decision: A2ARouteDecision, budget_tokens: int
+    ) -> dict[str, Any]:
+        """Admit the engine's harness decision for a budgeted message (R017.5).
+
+        A refusal raises before ``authority.dispatch``; an admission is handed to
+        it as ``harness``. A message with no budget never reaches this.
+        """
+        from types import SimpleNamespace
+
+        from arbora.security.session import current_session
+
+        if self.harness_decider is None:
+            raise A2AAssemblyUnavailable(
+                "harness admission is not available", "HARNESS_CONFIG_UNAVAILABLE"
+            )
+        if not decision.model_profile_ref or not decision.task_class:
+            raise A2AAssemblyUnavailable(
+                "capability record lacks model profile or task class",
+                "HARNESS_CONFIG_UNAVAILABLE",
+            )
+        session = current_session()
+        kind = self.principal_kind() if self.principal_kind else ""
+        outcome = await admit_tool_subset(
+            ToolSubsetAdmissionRequest(
+                agent_graph_ref=decision.agent_name,
+                context_budget=A2AContextBudget(tokens=budget_tokens),
+                model_profile_ref=decision.model_profile_ref,
+                task_class=decision.task_class,
+                tenant=str(getattr(session, "tenant", "")),
+                priority=priority_for(SimpleNamespace(principal_kind=kind)),
+            ),
+            self.harness_decider,
+        )
+        if not outcome.admitted:
+            raise A2AAssemblyUnavailable(outcome.provenance, outcome.refusal_reason)
+        return {"harness": outcome}
 
     async def _normalize_media(self, message: A2AMessage) -> A2AMessage:
         """Route media parts through the modality seam (ARBORA-OPS-R899.5).

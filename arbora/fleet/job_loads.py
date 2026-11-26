@@ -8,7 +8,7 @@ answered tools in answer order until the session cap, lists the rest as
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -66,3 +66,70 @@ def apply_load_set(answer: Mapping[str, Any], session_cap: int) -> JobLoadResult
         decision_id=str(answer.get("decision_id", "")),
         premises=premises,
     )
+
+
+#: The engine's refusal when a job asks for more tools than the session may hold.
+PARAMETER_INVALID = "PARAMETER_INVALID"
+DECISION_UNAVAILABLE = "decision_unavailable"
+
+
+def _answer_of(response: Mapping[str, Any]) -> Mapping[str, Any]:
+    """The ``LoadSet`` answer inside one ``Decide`` response."""
+    for key in ("answer", "value"):
+        inner = response.get(key)
+        if isinstance(inner, Mapping):
+            return inner
+    return response
+
+
+def _normalized(answer: Mapping[str, Any]) -> dict[str, Any]:
+    """The engine's tool names with their ``load_set:component=`` premises."""
+    premises: dict[str, str] = {}
+    for ref in answer.get("premises") or ():
+        text = ref if isinstance(ref, str) else (ref or {}).get("id", "")
+        if isinstance(text, str) and text.startswith("load_set:component="):
+            premises[text.removeprefix("load_set:component=")] = text
+    tools = []
+    for tool in answer.get("tools") or ():
+        if isinstance(tool, Mapping):
+            tools.append(dict(tool))
+        else:
+            tools.append({"id": str(tool), "premise": premises.get(str(tool))})
+    return {**answer, "tools": tools}
+
+
+async def find_for_job(
+    gateway: Any,
+    caller: Any,
+    decide: Callable[[dict[str, Any]], Awaitable[Mapping[str, Any]]],
+    request: JobLoadRequest,
+    *,
+    max_agents: int = 0,
+) -> dict[str, Any]:
+    """Ask the engine which tools the job needs and load exactly those.
+
+    ARBORA-FLEET-R037.3/.4/.5: ``decide`` sends one ``Decide`` question as the
+    verified caller. An abstention loads nothing and returns its reason; an
+    unreachable engine returns ``decision_unavailable``; every other refusal,
+    ``PARAMETER_INVALID`` included, keeps the engine's code. There is no
+    fallback ranking or keyword search.
+    """
+    question = request.question(gateway.sessions.cap, max_agents)
+    try:
+        response = await decide(question)
+    except (ConnectionError, TimeoutError, OSError):
+        return {"loaded": [], "refusal": DECISION_UNAVAILABLE}
+    abstain = response.get("abstain") or response.get("abstain_reason")
+    if abstain:
+        return {"loaded": [], "abstain_reason": abstain}
+    answer = _normalized(_answer_of(response))
+    answer.setdefault("decision_id", response.get("decision_id", ""))
+    result = await gateway.load_job_answer(caller, answer)
+    return {
+        "loaded": list(result.loaded),
+        "over_cap": list(result.over_cap),
+        "skills": list(result.skills),
+        "agent_starts": list(result.agent_starts),
+        "decision_id": result.decision_id,
+        "premises": dict(result.premises or {}),
+    }
