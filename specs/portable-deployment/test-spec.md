@@ -122,12 +122,12 @@ Each row below has no spec marker on a test yet. The listed test is the proof to
 | ARBORA-DEPLOY-R018.7 | `tests/deployment/test_engine_reuse.py::test_two_hosts_reuse_one_engine_and_unavailable_reuse_starts_zero` | A reused engine only attaches. |
 | ARBORA-DEPLOY-R018.8 | `tests/deployment/test_engine_reuse.py::test_reused_engine_stays_reachable_after_both_clients_stop` | A reused engine survives host shutdown. |
 | ARBORA-DEPLOY-R009.2.2 | `tests/deployment/test_single_image_parity_served.py::test_every_matrix_row_matches_the_single_image` (planned) | Single image serves a capability and refusal parity matrix. |
-| ARBORA-DEPLOY-R600.1 | `tests/deployment/test_process_locks.py::test_exclusive_lock_contends_then_frees` (existing, not yet bound by a spec marker) | Lock model. |
-| ARBORA-DEPLOY-R600.2 | `tests/deployment/test_process_locks.py::test_engine_guard_is_per_socket` (existing, not yet bound by a spec marker) | Spawn guard behavior. |
-| ARBORA-DEPLOY-R600.3 | `tests/deployment/test_engine_lifecycle_served.py::test_unset_endpoints_start_one_loopback_engine_and_serve_a_call` (planned); `tests/architecture/test_no_orphan_modules.py::test_no_host_lock_module` (planned) | Lock wiring. |
-| ARBORA-DEPLOY-R600.4 | `tests/deployment/test_process_locks.py::test_busy_guard_refuses_without_spawning` (planned) | Lock refusal. |
-| ARBORA-DEPLOY-R600.5 | `arbora/deployment/engine_lock.py::engine_spawn_guard` (existing, not yet bound by a spec marker); `tests/deployment/test_process_locks.py::test_lock_file_holds_pid_and_opaque_digest_only` (planned) | Lock evidence. |
-| ARBORA-DEPLOY-R600.6 | `tests/deployment/test_process_locks.py::test_engine_guard_acquire_time_budget` (planned) | Lock hot-path proof. |
+| ARBORA-DEPLOY-R600.1 | `tests/deployment/test_process_locks.py::test_exclusive_lock_contends_then_frees` | Lock model. |
+| ARBORA-DEPLOY-R600.2 | `tests/deployment/test_process_locks.py::test_engine_guard_is_per_socket` | Spawn guard behavior. |
+| ARBORA-DEPLOY-R600.3 | `tests/deployment/test_engine_lifecycle_served.py::test_unset_endpoints_start_one_loopback_engine_and_serve_a_call`; `tests/architecture/test_no_orphan_modules.py::test_no_host_lock_module` | Lock wiring. |
+| ARBORA-DEPLOY-R600.4 | `tests/deployment/test_process_locks.py::test_busy_guard_refuses_without_spawning` | Lock refusal. |
+| ARBORA-DEPLOY-R600.5 | `tests/deployment/test_process_locks.py::test_lock_file_holds_pid_and_opaque_digest_only` | Lock evidence. |
+| ARBORA-DEPLOY-R600.6 | `tests/deployment/test_process_locks.py::test_engine_guard_acquire_time_budget` | Lock hot-path proof. |
 | ARBORA-DEPLOY-R017.18 | `arbora/deployment/artifacts.py::verify_digests` (planned); `arbora/deployment/image_digests.py::check_file` (planned); `tests/deployment/test_image_digests.py::test_script_wrapper_and_module_share_one_checker` (planned) | Digest checker lives in the package. |
 | ARBORA-DEPLOY-R017.19 | `tests/api/test_deploy_ops_served.py::test_plan_then_confirmed_apply_runs_once` (planned) | Serve the placement and apply operations. |
 | ARBORA-DEPLOY-R017.20 | `arbora/deployment/assembly_library.py::publish_deployment_library` (planned); `tests/deployment/test_assembly_library.py::test_startup_publishes_templates_and_components_once_per_tenant` (planned) | Publish the deployment template and its tool components. |
