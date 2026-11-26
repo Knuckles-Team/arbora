@@ -31,6 +31,10 @@ from arbora.identity.sandbox_principal import (
 
 LOOPBACK = "127.0.0.1"
 STATE_FILE = "sandbox.json"
+#: The explicit no-auth mode of the serving process and of the web UI co-service.
+NO_AUTH_MODE = "none"
+#: The web UI co-service's own listener; never the serving process's port.
+DEFAULT_WEBUI_PORT = 8080
 
 
 def _root(override: str | None) -> Path:
@@ -55,6 +59,12 @@ def _arguments(argv: Sequence[str] | None) -> argparse.Namespace:
         help=f"also mint a principal in {SANDBOX_TENANTS[1]} with this role",
     )
     up.add_argument("--port", type=int, default=0, help="engine loopback port")
+    up.add_argument(
+        "--webui-port",
+        type=int,
+        default=DEFAULT_WEBUI_PORT,
+        help="web UI co-service loopback port",
+    )
     commands.add_parser("down", help="stop the sandbox and delete its store")
     return parser.parse_args(argv)
 
@@ -67,10 +77,76 @@ def _free_port() -> int:
         return int(probe.getsockname()[1])
 
 
+def render_sandbox(
+    *,
+    engine_port: int,
+    webui_port: int = DEFAULT_WEBUI_PORT,
+    bind_host: str = LOOPBACK,
+) -> dict[str, Any]:
+    """The sandbox environment and listeners, rendered without starting anything.
+
+    ARBORA-DEPLOY-R019, R019.1: the serving process and the web UI co-service
+    both run in the explicit no-auth mode, and every listener is loopback. A
+    non-loopback bind refuses before anything is rendered.
+    """
+    from arbora.identity.sandbox_principal import _is_loopback
+
+    if not _is_loopback(bind_host):
+        raise SandboxPrincipalRefusal(
+            "SANDBOX_PRINCIPAL_NOT_LOOPBACK",
+            "the sandbox listener must be a literal loopback address",
+        )
+    return {
+        "environment": {
+            "ARBORA_AUTH_MODE": NO_AUTH_MODE,
+            "WEBUI_AUTH_MODE": NO_AUTH_MODE,
+            "ENABLE_WEB_UI": "true",
+            "ARBORA_WEBUI_PORT": str(webui_port),
+            "GRAPH_SERVICE_ENDPOINTS": f"tcp://{bind_host}:{engine_port}",
+        },
+        "listeners": {
+            "engine": f"{bind_host}:{engine_port}",
+            "webui": f"{bind_host}:{webui_port}",
+        },
+        "co_services": ["webui"],
+    }
+
+
+def resolve_engine(pinned: str | None = None, installed: str | None = None) -> str:
+    """The engine version the sandbox starts: the one the package pins, or a refusal.
+
+    ARBORA-DEPLOY-R019.2: the pin is read from the installed package metadata
+    (the exact ``medulla==X`` requirement). An available engine that differs
+    refuses ``SANDBOX_ENGINE_VERSION_MISMATCH`` naming both versions; a
+    different engine is never started silently.
+    """
+    from importlib import metadata
+
+    if pinned is None:
+        requirement = next(
+            (
+                r
+                for r in metadata.requires("arbora") or ()
+                if r.split(";")[0].replace(" ", "").startswith("medulla==")
+            ),
+            "",
+        )
+        pinned = requirement.split(";")[0].replace(" ", "").removeprefix("medulla==")
+    if installed is None:
+        installed = metadata.version("medulla")
+    if not pinned or installed != pinned:
+        raise SandboxPrincipalRefusal(
+            "SANDBOX_ENGINE_VERSION_MISMATCH",
+            f"the engine is {installed}, the lock pins {pinned or 'none'}",
+        )
+    return pinned
+
+
 def up(args: argparse.Namespace, *, hold: bool = True) -> dict[str, Any]:
     """Start the engine and mint principals; the summary names no secret."""
     from arbora.mcp_server.composition import LocalEngineConfig, ensure_local_engine
 
+    resolve_engine()
     root = _root(args.root)
     state = root / STATE_FILE
     if state.exists():
@@ -84,6 +160,9 @@ def up(args: argparse.Namespace, *, hold: bool = True) -> dict[str, Any]:
     root.mkdir(parents=True, exist_ok=True)
     store = Path(tempfile.mkdtemp(prefix="store-", dir=root))
     port = args.port or _free_port()
+    rendered = render_sandbox(
+        engine_port=port, webui_port=getattr(args, "webui_port", DEFAULT_WEBUI_PORT)
+    )
     config = LocalEngineConfig(
         port=port, persist_dir=store, extra_args=("--auth-mode", "none")
     )
@@ -95,6 +174,8 @@ def up(args: argparse.Namespace, *, hold: bool = True) -> dict[str, Any]:
     )
     summary = {
         "address": endpoint.address,
+        "webui": rendered["listeners"]["webui"],
+        "environment": rendered["environment"],
         "principals": [
             {"principal": p.principal, "tenant": p.tenant, "role": p.role}
             for p in principals

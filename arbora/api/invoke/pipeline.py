@@ -236,6 +236,7 @@ EXTERNAL_EFFECT_OPERATIONS: tuple[str, ...] = (
     "schedules.resume",
     "schedules.update",
     "approvals.digest.send",
+    "orders.paper_submit",
 )
 
 

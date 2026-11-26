@@ -272,3 +272,19 @@ async def test_handler_refuses_before_the_gateway_call() -> None:
         )
     assert refused.value.code == "POLICY_DENIED"
     assert calls == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-OPS-R009.5")
+async def test_a_call_without_a_plan_key_never_reads_the_lease_store() -> None:
+    """No ``plan:`` key means no approval: the call needs no lease client at all."""
+    from arbora.api.registry import Effect
+
+    context = SimpleNamespace(
+        client=object(),
+        caller=SimpleNamespace(tenant="t"),
+        idempotency_key=None,
+    )
+    op = SimpleNamespace(id="fleet.call", effect=Effect.WRITE)
+
+    assert await fleet._approval_ref(context, {}, op) == ""

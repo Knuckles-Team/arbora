@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -12,6 +13,7 @@ from arbora.run_origin import RunOriginRegistry
 from .application import A2AAuthenticator, create_a2a_application
 from .authority import WorkItemA2AAuthority
 from .event_log import A2AEventLog, A2AEventStreams, StreamClock
+from .history import EngineTransitionHistory
 from .media_refs import SessionMediaRefStore
 from .routing import OrchestratorA2ARouter
 from .service import A2ACardMetadata, A2AService
@@ -47,9 +49,16 @@ def build_a2a_service(
     The event log is the streaming authority: the card advertises
     ``streaming`` because this function wires it (ARBORA-A2A-R014).
     """
+    from .authority import _RUN_LEASE_SECONDS
+    from .run_delegation import engine_run_delegations
+
     log = A2AEventLog(engine_provider, clock=clock)
     authority = WorkItemA2AAuthority(
         engine_provider,
+        # PIN-LAG: None until the installed engine serves agent-run delegations.
+        delegations=engine_run_delegations(
+            engine_provider, clock=time.time, lease_s=_RUN_LEASE_SECONDS
+        ),
         origins=origins,
         task_plan_config=task_plan_config,
         hosted_invocation=hosted_invocation,
@@ -62,6 +71,7 @@ def build_a2a_service(
         streaming=A2AEventStreams(
             log, authority, buffer_events=stream_buffer_events(runtime_config)
         ),
+        history=EngineTransitionHistory(authority),
         media_refs=SessionMediaRefStore(engine_provider),
     )
 

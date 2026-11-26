@@ -250,6 +250,20 @@ async def handle_participant_card(
     return {"value": await _participant(context, body, write=False)}
 
 
+class DerivationStatusParams(Params):
+    scope_id: str | None = Field(default=None, min_length=1, max_length=256)
+
+
+async def handle_derivation_status(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """The pending derivation backlog per scope, session and subject (engine rows)."""
+    body: dict[str, Any] = {"op": "status"}
+    if params.get("scope_id"):
+        body["memory_scope"] = {"scope_id": params["scope_id"]}
+    return {"value": await _participant(context, body, write=False)}
+
+
 def operations() -> tuple[OpSpec, ...]:
     h = "arbora.api.ops.participants.handle_"
     writes = (
@@ -340,6 +354,14 @@ def operations() -> tuple[OpSpec, ...]:
             ParticipantCardParams,
             "participant_card",
         ),
+        (
+            "participant.derivation.status",
+            Verb.ASK,
+            "Show the pending memory derivation backlog",
+            "how far behind is memory derivation",
+            DerivationStatusParams,
+            "derivation_status",
+        ),
     )
     built.extend(
         build_read_op(
@@ -367,6 +389,7 @@ __all__ = [
     "handle_participant_card",
     "handle_participant_get",
     "handle_participant_list",
+    "handle_derivation_status",
     "handle_participant_put",
     "handle_scope_put",
     "handle_turn_append",

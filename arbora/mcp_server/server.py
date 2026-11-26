@@ -27,6 +27,19 @@ from arbora.semantic_content import default_content_providers
 logger = logging.getLogger(__name__)
 
 
+def _changeset_seams(invocation: Any) -> Any:
+    """The run ports' changeset seams, only when the host has the engine to stage through."""
+    send = getattr(invocation, "engine_send", None)
+    if invocation is None or send is None:
+        return None
+    from arbora.agent_host.changeset_seams import production_changeset_seams
+    from arbora.agent_host.host_port_composition import _run_of, run_principal_call
+
+    return production_changeset_seams(
+        run_principal_call(invocation.services), send, _run_of
+    )
+
+
 def _register_semantic_content(mcp: Any) -> None:
     """Expose independently owned semantic artifacts through the SDK contract.
 
@@ -163,6 +176,7 @@ def _served_invocation(
         if task_plan_config is not None:
             raise ValueError("task planning requires graph service endpoints")
         return None, None
+    from arbora.a2a.source_grant import EngineSourceGrants
     from arbora.mcp_server.backing.server_factory import create_mcp_parser
     from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
     from arbora.mcp_server.fleet_composition import LateFleetGateway
@@ -194,6 +208,7 @@ def _served_invocation(
             "browser_control": dispatch_browser_operation,
             "current_plan_reader": NativeCurrentPlanReader(),
             "source_reader": NativeSourceReader(),
+            "source_grants": EngineSourceGrants(),
             "run_trace_reader": NativeRunReader(
                 runtime._get_engine, origins=host.runs.origins
             ),
@@ -220,6 +235,31 @@ def _bind_served_fleet(
         bind_fleet_gateway(
             late, mux=fleet_mux, reader=reader, services=invocation.services
         )
+
+
+def _register_resident_surface(
+    mcp: Any, fleet_mux: Any, invocation: HostedInvocation | None
+) -> None:
+    """Attach the six verbs and four fleet tools once (ARBORA-OPS-R035.2).
+
+    Runs after the multiplexer is attached and the fleet gateway is bound, so
+    the live authorities exist. A failure aborts startup: a host that served
+    a surface without them would silently lose the governed fleet.
+    """
+    if invocation is None:
+        return
+    from arbora.api.mcp.registration import FleetMCPBinding, register_mcp_tools
+    from arbora.mcp_server.fleet_composition import LateFleetGateway, session_key
+
+    late = getattr(invocation.services.runtime, "bindings", {}).get("fleet_gateway")
+    projection = runtime.SERVED_PROJECTION
+    if not isinstance(late, LateFleetGateway) or late.ops is None or projection is None:
+        raise RuntimeError(
+            "the resident MCP surface needs the bound fleet gateway and the "
+            "served operation projection"
+        )
+    binding = FleetMCPBinding(projection, late.ops, session_key)
+    asyncio.run(register_mcp_tools(mcp, fleet_mux, binding))
 
 
 def _start_catalog_warmup(
@@ -345,6 +385,7 @@ def mcp_server(
     bind_run_ports(
         invocation.services if invocation is not None else None,
         HostSeams(
+            changeset=_changeset_seams(invocation),
             sandbox_verified=boundary_verified,
             approval_chain=chain,
             plan_for=run_plan_binding(invocation.services)
@@ -397,6 +438,7 @@ def mcp_server(
 
     register_harness_host(fleet_mux)
     _bind_served_fleet(invocation, fleet_mux, fleet_catalog_reader)
+    _register_resident_surface(mcp, fleet_mux, invocation)
 
     transport = getattr(args, "transport", "stdio")
     host = getattr(args, "host", "127.0.0.1")

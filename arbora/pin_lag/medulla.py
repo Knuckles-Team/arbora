@@ -9,6 +9,8 @@ Guards held here (delete each with the re-pin that carries it):
 
 - ``ApprovalGateResolve``: the approval gate question at plan mint.
 - ``DeployRecordPut`` and ``DeployRecordGet``: the promotion deploy record.
+- ``DelegationRecord`` agent-run fields (``kind``, ``run_id``, ``operations``) and
+  ``DelegationKind``: the A2A run delegation and its reclaim (``ARBORA-A2A-R001.2.2``).
 - ``MutationOutbox`` pull and acknowledge: the approval and trust-flag consumers.
 """
 
@@ -22,11 +24,15 @@ from arbora.pin_lag.unavailable import PinLagUnavailable
 
 __all__ = [
     "ADMISSION_MODELS",
+    "AGENT_RUN_DELEGATION_FIELDS",
     "CLAIM_IDENTITY_FIELDS",
+    "agent_run_delegation_served",
+    "require_agent_run_delegation",
     "admission_models",
     "require_claim_identity",
     "OUTBOX_MODELS",
     "PinLagUnavailable",
+    "accepts_parameter",
     "refusal",
     "require_methods",
     "require_models",
@@ -52,6 +58,8 @@ CLAIM_IDENTITY_FIELDS: tuple[str, ...] = (
     "selected_agent_id",
     "delegation_id",
 )
+#: The fields an agent-run ``DelegationRecord`` carries (engine ``main``, unreleased).
+AGENT_RUN_DELEGATION_FIELDS: tuple[str, ...] = ("kind", "run_id", "operations")
 
 
 def require_methods(*names: str) -> None:
@@ -70,6 +78,17 @@ def require_models(names: Iterable[str]) -> None:
     for name in names:
         if not hasattr(models, name):
             raise PinLagUnavailable(name)
+
+
+def accepts_parameter(method: Any, name: str) -> bool:
+    """Whether the installed client method takes ``name`` (a request field the pin may lack).
+
+    ``AuditAppend`` gained ``evidence`` on the engine's main branch; until the
+    pin carries it the field is withheld and this answers ``False``.
+    """
+    import inspect
+
+    return name in inspect.signature(method).parameters
 
 
 def refusal(error: PinLagUnavailable) -> OperationRefused:
@@ -102,3 +121,30 @@ def require_claim_identity() -> None:
     for name in CLAIM_IDENTITY_FIELDS:
         if name not in declared:
             raise PinLagUnavailable(f"ClaimWorkItemResult.{name}")
+
+
+def require_agent_run_delegation() -> None:
+    """Return once the engine serves agent-run delegations, else name what is missing.
+
+    The record must declare ``kind``, ``run_id`` and ``operations``, and the kind
+    enumeration must exist; the claim answer must carry ``delegation_id``.
+    """
+    from medulla.generated import models
+
+    require_models(("DelegationKind", "DelegationRecord"))
+    declared = getattr(models.DelegationRecord, "model_fields", {})
+    for name in AGENT_RUN_DELEGATION_FIELDS:
+        if name not in declared:
+            raise PinLagUnavailable(f"DelegationRecord.{name}")
+    claim = getattr(models, "ClaimWorkItemResult", None)
+    if "delegation_id" not in getattr(claim, "model_fields", {}):
+        raise PinLagUnavailable("ClaimWorkItemResult.delegation_id")
+
+
+def agent_run_delegation_served() -> bool:
+    """Whether the installed engine serves agent-run delegations."""
+    try:
+        require_agent_run_delegation()
+    except PinLagUnavailable:
+        return False
+    return True

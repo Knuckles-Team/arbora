@@ -20,7 +20,7 @@ from collections.abc import Callable
 from typing import Any
 
 from arbora.api.mcp.discovery import FleetCatalog, FleetSearch
-from arbora.api.mcp.verbs import VERBS, MCPProjection, make_verb, native_verb
+from arbora.api.mcp.verbs import VERBS, MCPProjection, native_verb
 from arbora.api.registry import Invoke
 
 __all__ = ["register_intent_surface"]
@@ -38,11 +38,12 @@ def register_intent_surface(
     fleet_search: FleetSearch | None = None,
     fleet_catalog: FleetCatalog | None = None,
 ) -> MCPProjection:
-    """Register Arbora's served tools on ``mcp``; return the built projection.
+    """Compose Arbora's served surface on ``mcp``; return the built projection.
 
-    Registers the six intent verbs over ``registry``/``services``/``invoke``
-    (the shared operation chokepoint, ARBORA-OPS-R007) and the two MCP Apps
-    launcher tools from the agent runtime's reusable registrar. The returned
+    Builds the projection over ``registry``/``services``/``invoke`` (the shared
+    operation chokepoint, ARBORA-OPS-R007), binds the native verb twins and
+    registers the two MCP Apps launcher tools from the agent runtime's reusable
+    registrar. The verbs themselves are attached by ``register_mcp_tools``. The returned
     :class:`~arbora.api.mcp.verbs.MCPProjection` lets a caller read
     ``registry.digest`` or build :func:`~arbora.api.mcp.verbs.mcp_instructions`.
     """
@@ -59,8 +60,10 @@ def register_intent_surface(
     )
     from arbora.mcp_server import runtime
 
+    # The verbs are attached to MCP by ``register_mcp_tools`` at startup
+    # (ARBORA-OPS-R035.2), the one registration path; the native twins below
+    # are what the REST gateway reaches.
     for name in VERBS:
-        mcp.add_tool(make_verb(name, projection))
         runtime.NATIVE_INTENT_TOOLS[name] = native_verb(name, projection)
     _register_app_launchers(mcp)
     return projection
