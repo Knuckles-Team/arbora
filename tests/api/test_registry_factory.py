@@ -29,6 +29,7 @@ from arbora.api.ops import (
     ecosystem,
     evolution,
     federation,
+    finance,
     finance_receipts,
     fleet,
     get_registry,
@@ -151,6 +152,7 @@ _CURATED_SCOPES = (
     "agent:library-write",
     "loops:read",
     "loops:control",
+    "finance:propose-order",
 )
 
 _ENGINE_METHODS = {
@@ -218,6 +220,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *ecosystem.operations(),
         *evolution.operations(),
         *federation.operations(),
+        *finance.operations(),
         *governance.operations(),
         *finance_receipts.operations(),
         *fleet.operations(),
