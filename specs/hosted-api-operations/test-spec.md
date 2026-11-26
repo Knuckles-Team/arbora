@@ -33,7 +33,6 @@ Governing [spec](spec.md).
 | HO-T30 | ARBORA-OPS-R003 | Planned test path: `tests/fleet/test_harvest_removed.py::test_multiplexer_has_no_skill_prompt_harvest_path`. Assert arbora.fleet.multiplexer defines none of the harvest functions and no module in the package imports them. It remains unexecuted. |
 | HO-T31 | ARBORA-OPS-R025.1 | Planned test path: `tests/api/test_client_invoke.py::test_unknown_operation_makes_zero_calls_and_digest_mismatch_is_refused`. Assert an unknown op id raises before any transport call and a mismatched meta registry digest raises. It remains unexecuted. |
 | HO-T34 | ARBORA-OPS-R024.1.1 | Planned test path: `tests/api/test_telemetry_export_ops.py::test_export_formats_backend_opt_in_and_refused_cases`. Served test of telemetry export formats, opt-in backend selection and refusals over HTTP and MCP. It remains unexecuted. |
-| HO-T35 | ARBORA-OPS-R014.1 | Planned test path: `tests/api/test_host_service_ops.py::test_service_and_log_operations_parity_and_refusal`. Served test of the shared service/log operations across the supported OS adapter fakes, including the refusal for an unsupported OS. It remains unexecuted. |
 | HO-T36 | ARBORA-OPS-R022.4 | Planned test path: `tests/api/test_loop_feedback_ops.py::test_loop_status_run_pause_fail_closed_until_bound`. Served test that the loop facade exposes status, run and pause, and refuses an unscoped or replayed call. It remains unexecuted. |
 | HO-T37 | ARBORA-OPS-R885 | Planned test path: `tests/api/test_policy_review_served.py::test_policy_review_returns_bound_receipt_and_refuses_self_approval`. Served over HTTP and MCP with a loopback engine: asserts the receipt digests and that an author self-approval refuses. It remains unexecuted. |
 
@@ -92,7 +91,6 @@ These paths are planned acceptance, not passing test receipts.
 ## Additional owner requirements
 
 - `ARBORA-OPS-R024.1.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
-- `ARBORA-OPS-R014.1`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-OPS-R022.3`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-OPS-R022.4`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
 - `ARBORA-OPS-R053.7`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
@@ -404,11 +402,11 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R042.4` | Test: `tests/api/test_content_screening.py::test_quarantine_and_unscreened_memory_write_refuse_with_zero_effects` (L3). It asserts both codes and no memory write. |
 | `ARBORA-OPS-R042.5` | Test: `tests/api/test_content_screening.py::test_audit_holds_fields_and_no_secret_text` (L3). It asserts the four fields and the absence of the planted secret. |
 | `ARBORA-OPS-R042.6` | Test: `tests/gateway/test_content_screening_hot_path.py::test_served_route_quarantines_hidden_instructions_and_masks_secrets` (L3). |
-| `ARBORA-OPS-R050.1` | Test: `tests/api/test_policy_models.py::test_models_validate_fields_and_closed_change_set` (L1). Verified by the root slice test `tests/api/test_policy_plan_guard_served.py::test_policy_create_then_violating_plan_is_refused`. |
-| `ARBORA-OPS-R050.3` | Test: `tests/api/test_policy_wiring.py::test_served_policy_request_reaches_engine_port_and_absent_producer_refuses` (L3). It asserts the engine call and zero effects without a producer. |
-| `ARBORA-OPS-R050.4` | Test: `tests/api/test_policy_refusal.py::test_three_refusals_have_zero_effects` (L3). It asserts each code and no plan run or policy write. |
-| `ARBORA-OPS-R050.5` | Test: `tests/api/test_policy_evidence.py::test_audit_record_fields_for_change_and_refused_plan` (L3). |
-| `ARBORA-OPS-R050.6` | Test: `tests/api/test_policy_plan_guard_served.py::test_policy_create_then_violating_plan_is_refused` (L3). |
+| `ARBORA-OPS-R050.1` | Test: `tests/api/test_policy_lifecycle.py::test_models_validate_fields_and_closed_change_set` (L1). Verified by the root slice test `tests/api/test_policy_lifecycle.py::test_policy_create_then_violating_plan_is_refused`. |
+| `ARBORA-OPS-R050.3` | Test: `tests/api/test_policy_lifecycle.py::test_served_policy_request_reaches_engine_port_and_absent_producer_refuses` (L3). It asserts the engine call and zero effects without a producer. |
+| `ARBORA-OPS-R050.4` | Test: `tests/api/test_policy_lifecycle.py::test_three_refusals_have_zero_effects` (L3). It asserts each code and no plan run or policy write. |
+| `ARBORA-OPS-R050.5` | Test: `tests/api/test_policy_lifecycle.py::test_audit_record_fields_for_change_and_refused_plan` (L3). |
+| `ARBORA-OPS-R050.6` | Test: `tests/api/test_policy_lifecycle.py::test_policy_create_then_violating_plan_is_refused` (L3). |
 | `ARBORA-OPS-R051.1` | Test: `tests/api/test_security_eval_models.py::test_models_validate_and_close_verdict_set` (L1). Verified by the root slice test. |
 | `ARBORA-OPS-R051.2` | Test: `tests/api/test_security_eval_select.py::test_only_declared_catalog_entries_are_selected_and_cap_applies` (L2). It asserts selection comes from the engine answer and the cap holds. |
 | `ARBORA-OPS-R051.3` | Test: `tests/api/test_security_eval_wiring.py::test_registry_lists_operation_and_binder_composes_ports` (L3). |

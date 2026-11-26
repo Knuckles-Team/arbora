@@ -1,9 +1,15 @@
-"""Schedule operations over the engine's durable job scheduler (ARBORA-OPS-R022.2.6 to R022.2.11).
+"""Schedule operations over the engine's durable job scheduler (ARBORA-OPS-R022.2.6 to R022.2.12).
 
 A schedule is an engine ``AnalyticsJob`` schedule record. Arbora forwards the
 caller's verified graph and claims, holds no schedule state, runs no scheduler
 loop and does no group or spacing arithmetic: the engine decides ownership,
 exclusion and skips, and its refusals keep their own codes.
+
+A schedule whose ``task_kind`` is ``roles.run`` names a ``role_instance_id`` in
+its ``spec``. Arbora reads that instance from the engine agent library as the
+caller and fills the token budget (from the instance usage limits) and the
+exclusion group (the instance id: one active run per role instance) when the
+caller gave none; the caller's own values win.
 """
 
 from __future__ import annotations
@@ -14,6 +20,7 @@ from typing import Any
 from pydantic import Field
 
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
+from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops._engine import engine_send
 from arbora.api.registry import Effect, OpSpec
@@ -45,7 +52,7 @@ class ScheduleWriteParams(Params):
     max_run_s: int | None = Field(default=None, ge=0)
     max_tokens: int | None = Field(default=None, ge=0)
     exclusion_group: str | None = Field(default=None, min_length=1, max_length=64)
-    min_spacing_s: int = Field(default=0, ge=0, le=604_800)
+    min_spacing_s: int | None = Field(default=None, ge=0, le=604_800)
 
 
 class ScheduleRunsParams(ScheduleRefParams):
@@ -65,6 +72,50 @@ def _body(op_id: str, params: Mapping[str, Any]) -> dict[str, Any]:
     return body
 
 
+ROLE_TARGET = "roles.run"
+
+
+def _instance_budget(entry: Mapping[str, Any]) -> int | None:
+    """The token budget one run of the instance may use, from its usage limits."""
+    runtime = entry.get("runtime")
+    limits = runtime.get("usage_limits") if isinstance(runtime, Mapping) else None
+    if not isinstance(limits, Mapping):
+        return None
+    parts = [limits.get("input_tokens_limit"), limits.get("output_tokens_limit")]
+    if all(isinstance(part, int) for part in parts):
+        return sum(parts)
+    return next((part for part in parts if isinstance(part, int)), None)
+
+
+async def _role_defaults(context: Any, params: Mapping[str, Any]) -> dict[str, Any]:
+    """Fill the budget and exclusion group from the named role instance binding."""
+    spec = params.get("spec")
+    instance = spec.get("role_instance_id") if isinstance(spec, Mapping) else None
+    if not isinstance(instance, str) or not instance:
+        raise OperationRefused("INVALID_ARGUMENT", {"field": "spec.role_instance_id"})
+    answer = await engine_send(
+        context,
+        "AgentLibrary",
+        {
+            "op": {
+                "operation": "current",
+                "agent_id": instance,
+                "tenant_id": str(context.caller.tenant),
+            }
+        },
+    )
+    entry = answer.get("entry", answer) if isinstance(answer, Mapping) else None
+    if not isinstance(entry, Mapping) or entry.get("agent_id") != instance:
+        # An absent instance and a foreign one answer the same way.
+        raise OperationRefused("NOT_FOUND")
+    filled = dict(params)
+    if filled.get("max_tokens") is None:
+        filled["max_tokens"] = _instance_budget(entry)
+    if filled.get("exclusion_group") is None:
+        filled["exclusion_group"] = instance[:64]
+    return filled
+
+
 async def handle_schedule(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
@@ -75,6 +126,10 @@ async def handle_schedule(
             require_models(["JobOpScheduleTicks"])
         except PinLagUnavailable as error:
             raise refusal(error) from error
+    if op.id in ("schedules.create", "schedules.update") and (
+        params.get("task_kind") == ROLE_TARGET
+    ):
+        params = await _role_defaults(context, params)
     graph = await caller_dispatch_graph(context)
     body = {**_body(op.id, params), "graph": graph}
     answer = await engine_send(

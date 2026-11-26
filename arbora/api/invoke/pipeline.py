@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from arbora.api.errors import EngineRefusal, FleetRefusal
 from arbora.api.invoke.agent_ref import bind_agent_ref
 from arbora.api.invoke.audit import EffectJournal, EffectReservation, audit_event
+from arbora.api.invoke.audit_evidence import result_evidence
 from arbora.api.invoke.autonomy import AskVerdict, require_autonomy_clearance
 from arbora.api.invoke.executor import (
     OperationRuntime,
@@ -830,7 +831,13 @@ async def _record(
                     call.surface,
                     result.code,
                     audit_ref,
-                    evidence=_evidence(call, evidence),
+                    evidence=_evidence(
+                        call,
+                        {
+                            **(evidence or {}),
+                            **result_evidence(call.op.id, call.arguments, result),
+                        },
+                    ),
                 ),
                 call.op.audit,
                 call.caller,

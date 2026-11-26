@@ -48,6 +48,7 @@ from pydantic_ai import RunContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import claim_values
 from arbora.api.ops._common import Params
+from arbora.api.ops.policy import policy_guard
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -1322,17 +1323,19 @@ async def handle_plan_run(
         context.client
     )
     _require_pinned_features(proposal, feature_schema)
-    plan, record = await decide_task_plan(
-        engine,
-        proposal,
-        tenant=caller.tenant,
-        principal=caller.principal,
-        feature_schema=feature_schema,
-    )
+    with policy_guard():
+        plan, record = await decide_task_plan(
+            engine,
+            proposal,
+            tenant=caller.tenant,
+            principal=caller.principal,
+            feature_schema=feature_schema,
+        )
     native: _NativePlanAdmission | None = None
     lease = parsed.work_item
     if lease is None and context.services.get("task_plan_work_engine") is not None:
-        native = await _admit_native_plan_run(context, plan)
+        with policy_guard():
+            native = await _admit_native_plan_run(context, plan)
         if native.terminal_status is not None:
             return {
                 "value": {

@@ -447,7 +447,6 @@ Missing producer implementation must remain unavailable. Definitions and planned
 ### Additional owner requirements
 
 - `ARBORA-OPS-R024.1.1`: Plan the owner work and dependencies defined in requirements.md.
-- `ARBORA-OPS-R014.1`: Plan the owner work and dependencies defined in requirements.md.
 - `ARBORA-OPS-R022.3`: Plan the owner work and dependencies defined in requirements.md.
 - `ARBORA-OPS-R022.4`: Plan the owner work and dependencies defined in requirements.md.
 - `ARBORA-OPS-R053.7`: Plan the owner work and dependencies defined in requirements.md.
