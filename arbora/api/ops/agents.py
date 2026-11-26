@@ -87,15 +87,34 @@ async def _with_role_profile(context: Any, message: Mapping[str, Any]) -> Any:
         # A request may only narrow the binding, never widen it.
         allowlist = [tool for tool in requested if tool in set(allowlist)]
     scopes = sorted(getattr(context.caller, "effective_scopes", ()) or ())
-    return {
-        **message,
-        "metadata": {
-            **metadata,
-            "profile_ref": reference,
-            "tool_allowlist": allowlist,
-            "scope_ceiling": scopes,
-        },
+    from arbora.api.model_route import http_probe, resolve_route
+
+    route = await resolve_route(
+        context,
+        str(metadata["role_instance_id"]),
+        metadata.get("escalate"),
+        probe=context.services.get("model_probe") or http_probe,
+    )
+    admitted: dict[str, Any] = {
+        **metadata,
+        "profile_ref": reference,
+        "tool_allowlist": allowlist,
+        "tool_routes": {tool: _tool_route(tool) for tool in allowlist},
+        "scope_ceiling": scopes,
     }
+    admitted.pop("escalate", None)
+    if route is not None:
+        admitted["model_route"] = route
+    return {**message, "metadata": admitted}
+
+
+def _tool_route(tool: str) -> str:
+    """Whether a tool is a deterministic engine operation or a fleet or other tool.
+
+    The run trace counts calls by this route, so a tenant sees how much work
+    the engine took from the model (ARBORA-OPS-R919.3).
+    """
+    return "engine" if tool.startswith("eg.") else "tool"
 
 
 async def _binding_tools(context: Any, instance_id: str) -> list[str]:

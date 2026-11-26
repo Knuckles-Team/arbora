@@ -197,6 +197,9 @@ def terminal_extension_supplier(
     """
 
     def build(run_id: str) -> Mapping[str, Any]:
+        from arbora.pin_lag.medulla import require_claim_identity
+
+        require_claim_identity()
         owner = owner_of(run_id)
         event = events.take(run_id)
         if owner is None or event is None:

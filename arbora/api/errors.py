@@ -25,6 +25,7 @@ class ArboraErrorCode(StrEnum):
     CONFIRMATION_REQUIRED = "CONFIRMATION_REQUIRED"
     STEP_UP_REQUIRED = "STEP_UP_REQUIRED"
     PLAN_EXPIRED = "PLAN_EXPIRED"
+    PLAN_CONSUMED = "PLAN_CONSUMED"
     PLAN_MISMATCH = "PLAN_MISMATCH"
     PLAN_STALE = "PLAN_STALE"
     POLICY_DENIED = "POLICY_DENIED"
@@ -96,6 +97,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.CONFIRMATION_REQUIRED: 428,
     ArboraErrorCode.STEP_UP_REQUIRED: 428,
     ArboraErrorCode.PLAN_EXPIRED: 409,
+    ArboraErrorCode.PLAN_CONSUMED: 409,
     ArboraErrorCode.PLAN_MISMATCH: 409,
     ArboraErrorCode.PLAN_STALE: 409,
     ArboraErrorCode.POLICY_DENIED: 403,
@@ -595,6 +597,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.VERB_MISMATCH: -32602,
     ArboraErrorCode.INVALID_ARGUMENT: -32602,
     ArboraErrorCode.PLAN_EXPIRED: -32009,
+    ArboraErrorCode.PLAN_CONSUMED: -32009,
     ArboraErrorCode.PLAN_MISMATCH: -32009,
     ArboraErrorCode.PLAN_STALE: -32009,
     ArboraErrorCode.POLICY_DENIED: -32003,

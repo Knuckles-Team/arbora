@@ -1467,6 +1467,7 @@ def _check_secrets_backend() -> dict[str, Any]:
 def _check_auth() -> dict[str, Any]:
     from arbora.core.settings import runtime_config as config
     from arbora.core.settings import setting
+    from arbora.identity.deployment_settings import identity_deployment
     from arbora.security.anonymous import indicator
     from arbora.security.request_identity import (
         local_process_authority_enabled,
@@ -1518,6 +1519,7 @@ def _check_auth() -> dict[str, Any]:
             "auth",
             "ok",
             f"verified graph authority configured ({idp}; audience + policy pinned)",
+            data={"identity": identity_deployment().report()},
         )
     return _result(
         "auth",
