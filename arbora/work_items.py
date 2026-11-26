@@ -377,6 +377,42 @@ def list_work_items(
     )
 
 
+def cas_work_item_metadata(
+    engine: Any,
+    item: Mapping[str, Any],
+    *,
+    metadata: Mapping[str, Any],
+    claim: Mapping[str, Any] | None = None,
+) -> bool:
+    """Replace the item's metadata only if it is unchanged (``CasWorkItemMetadata``).
+
+    ``item`` is the record the caller read; the engine compares its metadata and
+    status. With ``claim`` the write is also fenced by the live lease, so a
+    writer whose lease was lost or reclaimed loses. Returns ``True`` when applied.
+    """
+    fence = {} if claim is None else _fence(claim)
+    result = _work_items(engine).cas_metadata(
+        tenant=_tenant(),
+        work_item_id=str(item["work_item_id"]),
+        expected_status=[str(item.get("status"))],
+        now_ms=_now_ms(),
+        expected_metadata=dict(item.get("metadata") or {}),
+        set_metadata=dict(metadata),
+        **(
+            {
+                "expected_lease": {
+                    "worker_ref": fence["worker_id"],
+                    "lease_epoch": fence["lease_epoch"],
+                    "fencing_token": fence["fencing_token"],
+                }
+            }
+            if claim is not None
+            else {}
+        ),
+    )
+    return result.get("outcome") == "applied"
+
+
 def set_priority_bucket(engine: Any, item_id: str, *, bucket: int) -> bool:
     """Set a not-yet-terminal WorkItem's priority bucket (``CasWorkItemMetadata``)."""
     item = get_work_item(engine, item_id)
@@ -395,6 +431,7 @@ def set_priority_bucket(engine: Any, item_id: str, *, bucket: int) -> bool:
 
 __all__ = [
     "SPEC_ROW",
+    "cas_work_item_metadata",
     "list_work_items",
     "set_priority_bucket",
     "TERMINAL_WORK_ITEM_STATUSES",

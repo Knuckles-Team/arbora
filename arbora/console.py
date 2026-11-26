@@ -52,6 +52,10 @@ def main() -> None:
         from arbora.deployment.run import main as deploy_run_main
 
         raise SystemExit(deploy_run_main(sys.argv[3:]))
+    if sys.argv[1:3] == ["secrets", "diagnose"]:
+        from arbora.security.secret_diagnostics import main as diagnose_main
+
+        raise SystemExit(diagnose_main(sys.argv[3:]))
     if sys.argv[1:3] == ["deploy", "source"]:
         from arbora.deployment.deployed_source import main as deployed_source_main
 
@@ -64,6 +68,10 @@ def main() -> None:
         from arbora.deployment.provision import main as provision_main
 
         raise SystemExit(provision_main(sys.argv[2:]))
+    if sys.argv[1:3] == ["deploy", "render"]:
+        from arbora.deployment.cli import main as deployment_main
+
+        raise SystemExit(deployment_main(["render", *sys.argv[3:]]))
     if sys.argv[1:2] == ["plugin"]:
         from arbora.harness_plugins.cli import main as plugin_main
 

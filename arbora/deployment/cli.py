@@ -248,6 +248,12 @@ def main(argv: list[str] | None = None) -> int:
         "--profile", required=True, help="Existing named deployment profile."
     )
 
+    from arbora.deployment import render
+
+    render.add_arguments(
+        sub.add_parser("render", help="Render the production topology manifests.")
+    )
+
     deploy = sub.add_parser(
         "deploy",
         help="Print the engine's placement decision and graph for a workload.",
@@ -258,6 +264,8 @@ def main(argv: list[str] | None = None) -> int:
     deploy.add_argument("--url", help="Served Arbora base URL (default: ARBORA_URL).")
 
     args = parser.parse_args(argv)
+    if args.command == "render":
+        return render.run(args)
     handler = _COMMAND_HANDLERS.get(args.command)
     return handler(args) if handler is not None else 2
 

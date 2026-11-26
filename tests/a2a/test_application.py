@@ -174,7 +174,7 @@ def test_json_rpc_refuses_resubscribe_until_streaming_is_implemented() -> None:
             "jsonrpc": "2.0",
             "id": "resubscribe",
             "method": "tasks/resubscribe",
-            "params": {"id": authority.task.id, "cursor": None},
+            "params": {"id": authority.task.id, "afterSeq": 0},
         },
     )
     assert refused.status_code == 501
