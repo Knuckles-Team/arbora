@@ -1,4 +1,8 @@
-"""Lexical ranking of fleet discovery candidates (ARBORA-FLEET-R074).
+"""The one lexical floor under the ranking port (ARBORA-FLEET-R074, R083.1).
+
+Medulla owns the choice of order; this floor is only what answers when the
+engine abstains, errors or times out. It holds no learned or tuned weights.
+
 
 ``find`` ranks every tool and skill of the probed fleet against a natural
 language request. A plain overlap ratio treats each query word alike, so on a
@@ -16,7 +20,7 @@ import math
 import re
 from collections.abc import Iterable
 
-__all__ = ["LexicalRanker", "terms"]
+__all__ = ["LexicalFloor", "terms"]
 
 _WORD_RE = re.compile(r"[a-z0-9]+")
 #: Request words that carry no routing signal.
@@ -76,7 +80,7 @@ def terms(text: str) -> set[str]:
     }
 
 
-class LexicalRanker:
+class LexicalFloor:
     """Score candidates for one query against the candidate population."""
 
     def __init__(self, query: str, documents: Iterable[str]) -> None:
@@ -104,3 +108,11 @@ class LexicalRanker:
             for term in matched
         )
         return weight / self._total
+
+    def order(self, candidates: Iterable[tuple[str, str, str]]) -> list[str]:
+        """Candidate ids best first: score, then name coverage, then input order."""
+        rows = []
+        for index, (cid, name, description) in enumerate(candidates):
+            coverage = len(self._query & terms(name))
+            rows.append((-self.score(name, description), -coverage, index, cid))
+        return [cid for *_key, cid in sorted(rows)]

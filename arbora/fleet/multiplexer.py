@@ -854,7 +854,7 @@ async def _list_all_tools(session: _typing.Any) -> list[_typing.Any]:
 
 def _discovery_ranker(query: str, sources: list[tuple[str, dict]]) -> _typing.Any:
     """One ranker over every tool and skill row this discovery call scores."""
-    from arbora.fleet.discovery_ranking import LexicalRanker
+    from arbora.fleet.lexical_floor import LexicalFloor
 
     documents = (
         f"{entry.get('name', '')} {entry.get('description', '')}"
@@ -863,7 +863,7 @@ def _discovery_ranker(query: str, sources: list[tuple[str, dict]]) -> _typing.An
         for entry in info.get(family) or ()
         if isinstance(entry, dict)
     )
-    return LexicalRanker(query, documents)
+    return LexicalFloor(query, documents)
 
 
 def _tool_catalog_digest(tools: list[MCPTool]) -> str:

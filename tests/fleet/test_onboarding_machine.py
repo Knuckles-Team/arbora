@@ -141,5 +141,5 @@ def test_handshake_to_status_runs_through_the_machine(
 def test_no_site_writes_a_state_string() -> None:
     source = inspect.getsource(onboarding_module)
     assert not re.findall(r'_record\([^)]*"(?:failed|awaiting_approval)"', source)
-    assert len(re.findall(r'\["state"\]\s*=|"state":\s*(?!state\.value)', source)) == 0
+    assert len(re.findall(r'\["state"\]\s*=|"state":\s*+(?!state\.value)', source)) == 0
     assert source.count("= transition(") == 1  # _record is its only caller
