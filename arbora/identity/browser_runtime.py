@@ -158,9 +158,12 @@ class BrowserAuthApplication:
             build = published.get(scope.get("path"))
             if build is not None:
                 return JSONResponse(build())
+        from .mfa_totp import TOTP_ROUTES
+
         if scope.get("method") != "POST" or scope.get("path") not in {
             "/auth/login",
             "/auth/logout",
+            *TOTP_ROUTES,
         }:
             return Response(status_code=404)
         if (
@@ -173,7 +176,31 @@ class BrowserAuthApplication:
             raise PermissionError("exact secure browser origin required")
         if scope["path"] == "/auth/logout":
             return await self._logout(scope)
+        if scope["path"] in TOTP_ROUTES:
+            return await self._totp(scope, receive, TOTP_ROUTES[scope["path"]])
         return await self._login(scope, await _login_body(scope, receive))
+
+    async def _totp(self, scope: Any, receive: Any, operation: str) -> Any:
+        """A TOTP step for the signed-in person: the engine holds the secret and checks."""
+        from .browser import require_mutation_proof, session_from_scope
+        from .mfa_totp import MfaBodyInvalid, totp_body, totp_pass_through
+
+        require_mutation_proof(scope, trusted_origin=self.origin)
+        credential = session_from_scope(scope)
+        assert credential is not None  # require_mutation_proof refused its absence
+        session = await self.caller(await self.issuer.issue(credential), credential)
+        try:
+            code = await totp_body(scope, receive, operation)
+        except MfaBodyInvalid:
+            return JSONResponse({"error": "MFA_CODE_INVALID"}, status_code=400)
+        return await totp_pass_through(
+            self.client,
+            self.graph,
+            operation,
+            tenant=session.tenant,
+            session_token=credential,
+            code=code,
+        )
 
     async def _logout(self, scope: Any) -> Any:
         from starlette.responses import Response

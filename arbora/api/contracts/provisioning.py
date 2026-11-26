@@ -45,6 +45,7 @@ if TYPE_CHECKING:
     )
 
 from arbora.access.action_policy import (
+    DENIAL_RATE_LIMITED,
     PACK_IMPORT_KIND,
     ActionPolicies,
     ActionRequest,
@@ -54,12 +55,32 @@ from arbora.security.session import GraphSession, resolve_session
 __all__ = [
     "PackImportAuthorityResolver",
     "ProvisioningAuthorityError",
+    "ProvisioningRateLimited",
     "pack_import_authority",
 ]
 
 
 class ProvisioningAuthorityError(RuntimeError):
     """The verified provisioning authority could not be issued."""
+
+
+class ProvisioningRateLimited(ProvisioningAuthorityError):
+    """The per-target provisioning budget is spent (ARBORA-DEPLOY-R019.3).
+
+    Carries the limit, the window and the seconds until the next run, so the
+    refusal names the wait instead of a bare denial.
+    """
+
+    code = "PROVISIONING_RATE_LIMITED"
+
+    def __init__(self, *, limit: int, window_s: float, retry_after_s: float) -> None:
+        self.limit = limit
+        self.window_s = window_s
+        self.retry_after_s = retry_after_s
+        super().__init__(
+            f"{self.code}: {limit} runs per {int(window_s)}s for each target; "
+            f"the next run is allowed in {int(retry_after_s) + 1}s"
+        )
 
 
 class _Decision(Protocol):
@@ -139,6 +160,12 @@ def _require_receipt(policy: _Policy, request: ActionRequest) -> tuple[Any, str]
         reason = str(getattr(decision, "reason", "") or "")[:200]
     except Exception as exc:  # noqa: BLE001 - policy errors deny authority
         raise ProvisioningAuthorityError("provisioning policy is unavailable") from exc
+    if getattr(decision, "denial", "") == DENIAL_RATE_LIMITED:
+        raise ProvisioningRateLimited(
+            limit=int(getattr(decision, "rate_max", 0)),
+            window_s=float(getattr(decision, "rate_window_s", 0.0)),
+            retry_after_s=float(getattr(decision, "retry_after_s", 0.0)),
+        )
     if not allowed or receipt is None or not receipt.authorizes_effect:
         # The policy's own reason (e.g. "ledger unreadable: N rows lack label
         # ActionDecision"): a refusal that hides its cause hides the fault.

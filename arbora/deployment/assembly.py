@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Awaitable, Callable, Collection, Mapping, Sequence
+from pathlib import Path
 from typing import Any, Literal
 
 from arbora.api.invoke.pipeline import OperationRefused
@@ -96,6 +97,51 @@ def choices_digest(
     )
 
 
+def config_digest(config: Mapping[str, Any] | None) -> str:
+    """The digest of the resolved deployment configuration (never a secret value)."""
+    return _canonical_digest(config or {})
+
+
+def artifact_digest(path: Path) -> str:
+    """SHA-256 over the shipped artifact: one file, or a directory tree in path order."""
+    sha = hashlib.sha256()
+    files = (
+        [path] if path.is_file() else sorted(p for p in path.rglob("*") if p.is_file())
+    )
+    for file in files:
+        sha.update(str(file.relative_to(path) if path.is_dir() else file.name).encode())
+        sha.update(b"\0")
+        sha.update(file.read_bytes())
+        sha.update(b"\0")
+    return "sha256:" + sha.hexdigest()
+
+
+def require_fresh_binding(
+    *,
+    target: str,
+    expected_config: str,
+    expected_artifact: str,
+    config: Mapping[str, Any] | None,
+    deploy_root: Path | None = None,
+) -> None:
+    """Refuse unless the confirmed config and artifact digests are still current.
+
+    ARBORA-DEPLOY-R013.5: the plan bound the four digests; a changed
+    configuration refuses ``PLAN_MISMATCH`` and a changed shipped artifact
+    refuses ``ARTIFACT_STALE``, both before any step runs.
+    """
+    from arbora.deployment.artifacts import ArtifactRefused, select_artifact
+
+    if config_digest(config) != expected_config:
+        raise OperationRefused("PLAN_MISMATCH", {"reason": "the configuration changed"})
+    try:
+        current = artifact_digest(select_artifact(target, deploy_root=deploy_root))
+    except ArtifactRefused as refused:
+        raise OperationRefused("ARTIFACT_STALE", {"reason": refused.code}) from refused
+    if current != expected_artifact:
+        raise OperationRefused("ARTIFACT_STALE", {"reason": "the artifact changed"})
+
+
 def require_confirmed_plan(op: OpSpec) -> None:
     """Refuse ``PLAN_REQUIRED`` unless the operation is gated by plan confirmation.
 
@@ -109,6 +155,44 @@ def require_confirmed_plan(op: OpSpec) -> None:
 
 
 StepInvoke = Callable[[str, Mapping[str, Any], Any, str], Awaitable[Any]]
+
+
+async def store_secret_step(
+    invoke: StepInvoke,
+    caller: Any,
+    config: Mapping[str, Any],
+    *,
+    plan_digest: str,
+) -> dict[str, Any]:
+    """The ``store-secret`` step: inline secrets go to the vault tool, before any node.
+
+    ARBORA-DEPLOY-R013.7: an inline secret is replaced by an ``openbao://``
+    reference and Arbora keeps no value; with no vault tool bound it refuses
+    ``SECRET_INLINE_REFUSED`` and runs nothing.
+    """
+    from arbora.deployment.trust_bundle import store_secrets
+
+    _, stored = await store_secrets(config, invoke, caller, plan_digest=plan_digest)
+    return {"stored_secrets": stored}
+
+
+async def propagate_trust_step(
+    invoke: StepInvoke,
+    caller: Any,
+    config: Mapping[str, Any],
+    *,
+    plan_digest: str,
+    components: Sequence[str],
+) -> dict[str, Any]:
+    """The ``propagate-trust`` step: mount and verify the bundle in every component."""
+    from arbora.deployment.trust_bundle import propagate_trust
+
+    if not (config.get("trust") or {}).get("bundle_path"):
+        return {"trust": []}
+    rows = await propagate_trust(
+        config, invoke, caller, components=components, plan_digest=plan_digest
+    )
+    return {"trust": [row.as_dict() for row in rows]}
 
 
 async def run_confirmed_steps(
