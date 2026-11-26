@@ -10,15 +10,15 @@ Before a pull request, run `uvx pre-commit run --all-files` at both stages. Foll
 - [ ] T004 [P] [US3] ARBORA-DATA-MARKET-R003.2 Event list/search/get.
 - [ ] T005 [P] [US3] ARBORA-DATA-MARKET-R003.3 Order list/search/get.
 - [ ] T006 [P] [US3] ARBORA-DATA-MARKET-R003.4 Stable JSON projections.
-- [ ] T007 [P] [US3] ARBORA-DATA-MARKET-R003.5 Authority before provider calls.
+- [x] T007 [P] [US3] ARBORA-DATA-MARKET-R003.5 Authority before provider calls.
 - [ ] T008 [P] [US3] ARBORA-DATA-MARKET-R003.6 Producer port, registration, and read/effect separation.
 - [ ] T009 [P] [US3] ARBORA-DATA-MARKET-R003.7 Paper order submission.
 - [ ] T010 [P] [US3] ARBORA-DATA-MARKET-R003.8 Market signal compute operations.
 - [ ] T011 [P] [US3] ARBORA-DATA-MARKET-R003.9 Served market.size operation over RegimeSizingInput.
 - [ ] T012 [P] [US3] ARBORA-DATA-MARKET-R003.10 Served market.evaluate operation over medulla NumericEvaluate.
-- [ ] T013 [P] [US3] ARBORA-DATA-MARKET-R003.11 Served market.positions operation over FinanceAccountProject.
+- [x] T013 [P] [US3] ARBORA-DATA-MARKET-R003.11 Served market.positions operation over FinanceAccountProject.
 - [ ] T014 [P] [US3] ARBORA-DATA-MARKET-R003.12 Research kernel compute operations.
-- [ ] T015 [P] [US3] ARBORA-DATA-MARKET-R003.13 Market compute port and sizing operations.
+- [x] T015 [P] [US3] ARBORA-DATA-MARKET-R003.13 Market compute port and sizing operations.
 - [ ] T016 [P] [US3] ARBORA-DATA-MARKET-R003.14 Banking compute operations.
 - [ ] T017 [P] [US3] ARBORA-DATA-MARKET-R003.15 Finance guide projection.
 - [ ] T018 [P] [US2] ARBORA-DATA-MARKET-R004 One-at-a-time application admission with rollback.
@@ -33,7 +33,7 @@ Before a pull request, run `uvx pre-commit run --all-files` at both stages. Foll
 - [ ] T027 [P] [US3] ARBORA-DATA-MARKET-R007.7 Order stage and confirm operations call the proposal door.
 - [ ] T028 [P] [US3] ARBORA-DATA-MARKET-R008 Served forecast operation `market.forecast.sample`.
 - [ ] T029 [P] [US3] ARBORA-DATA-MARKET-R009 Served reads and imports for the Markets app (rollup).
-- [ ] T030 [P] [US3] ARBORA-DATA-MARKET-R009.1 Performance and benchmark card read.
+- [x] T030 [P] [US3] ARBORA-DATA-MARKET-R009.1 Performance and benchmark card read.
 - [ ] T031 [P] [US3] ARBORA-DATA-MARKET-R009.2 Instrument detail: rates and dividends.
 - [ ] T032 [P] [US3] ARBORA-DATA-MARKET-R009.3 Strategy recommendation with evidence or an abstain reason.
 - [ ] T033 [P] [US3] ARBORA-DATA-MARKET-R009.4 DCA and alert delivery receipts read.

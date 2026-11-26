@@ -16,6 +16,7 @@ live order submission (FI-08/FI-10) are separate, not-yet-built slices.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -24,10 +25,15 @@ from arbora.api.errors import ArboraErrorCode, ArboraRefusal
 
 __all__ = [
     "AccountBinding",
+    "FinanceAuthority",
     "MarketProvider",
     "MarketReadRequest",
     "MarketReadResult",
     "get_market_read",
+    "project_account",
+    "project_performance",
+    "resolve_finance_authority",
+    "ticks_to_decimal",
 ]
 
 
@@ -114,3 +120,144 @@ def get_market_read(
             details={"symbol": request.symbol},
         )
     return read(request)
+
+
+class FinanceAuthority(BaseModel):
+    """The tenant and principal a finance call runs under, from verified authority."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    tenant_id: str = Field(min_length=1, max_length=256)
+    principal: str = Field(min_length=1, max_length=256)
+
+
+def resolve_finance_authority(
+    caller: Any, params: Mapping[str, Any]
+) -> FinanceAuthority:
+    """The authority of one finance call, resolved before any provider request.
+
+    ARBORA-DATA-MARKET-R003.5. Tenant and principal come from the verified
+    caller only. A request that names either one is refused
+    ``INVALID_ARGUMENT``, and a caller without both is ``UNAVAILABLE``. The
+    function holds no provider client, so a refusal here has made zero
+    provider calls.
+    """
+
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.api.invoke.steps import (
+        FORBIDDEN_AUTHORITY,
+        FORBIDDEN_OWNER,
+        forbidden_path,
+    )
+
+    named = forbidden_path(
+        params,
+        names=FORBIDDEN_AUTHORITY | FORBIDDEN_OWNER | {"tenant_id", "principal_id"},
+    )
+    if named is not None:
+        raise OperationRefused("INVALID_ARGUMENT", {"field": named})
+    tenant = getattr(caller, "tenant", None)
+    principal = getattr(caller, "principal", None)
+    if not isinstance(tenant, str) or not tenant or not isinstance(principal, str):
+        raise OperationRefused("UNAVAILABLE", {"reason": "finance authority absent"})
+    if not principal:
+        raise OperationRefused("UNAVAILABLE", {"reason": "finance authority absent"})
+    return FinanceAuthority(tenant_id=tenant, principal=principal)
+
+
+def ticks_to_decimal(ticks: int, scale: int) -> str:
+    """The exact base-10 string of fixed-point ticks; formatting only, no rounding.
+
+    ``scale`` is a power of ten (the engine's ``FINANCE_SCALE``). The string has
+    no exponent and never passes through a float.
+    """
+
+    if isinstance(ticks, bool) or not isinstance(ticks, int):
+        raise ValueError("ticks must be an integer")
+    if not isinstance(scale, int) or scale < 1 or set(str(scale)) - {"1", "0"}:
+        raise ValueError("scale must be a power of ten")
+    if scale == 1:
+        return str(ticks)
+    width = len(str(scale)) - 1
+    sign = "-" if ticks < 0 else ""
+    whole, fraction = divmod(abs(ticks), scale)
+    return f"{sign}{whole}.{fraction:0{width}d}"
+
+
+_FIGURE_KEYS = ("position", "name", "value_ticks", "source", "as_of", "session")
+
+
+def project_account(projection: Mapping[str, Any]) -> dict[str, Any]:
+    """The served shape of one engine account projection.
+
+    ARBORA-DATA-MARKET-R003.11. Every figure keeps the source, as-of and
+    session the engine gave it; a figure without all three is a malformed
+    engine answer and refuses ``UNAVAILABLE``. Arbora adds the decimal string
+    of the engine's ticks and does no other arithmetic.
+    """
+
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    try:
+        scale = projection["scale"]
+        figures = []
+        for figure in projection["figures"]:
+            if any(
+                not figure.get(key) and key != "value_ticks" for key in _FIGURE_KEYS
+            ):
+                raise KeyError("figure provenance")
+            figures.append(
+                {
+                    **{key: figure[key] for key in _FIGURE_KEYS},
+                    "value": ticks_to_decimal(figure["value_ticks"], scale),
+                }
+            )
+        return {
+            "account": projection["account"],
+            "as_of": projection["as_of"],
+            "known_at": projection["known_at"],
+            "basis_policy": projection["basis_policy"],
+            "base_currency": projection["base_currency"],
+            "scale": scale,
+            "input_digest": projection["input_digest"],
+            "figures": figures,
+        }
+    except (KeyError, TypeError, ValueError, AttributeError):
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "engine result malformed"}
+        ) from None
+
+
+def project_performance(card: Mapping[str, Any]) -> dict[str, Any]:
+    """The served shape of one engine performance card (ARBORA-DATA-MARKET-R009.1).
+
+    Each number is the engine's decimal string, copied as it came. A figure the
+    engine could not produce stays null with its reason and is never zero.
+    """
+
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    try:
+        benchmark = card.get("benchmark")
+        return {
+            "method": card["method"],
+            "currency": card["currency"],
+            "range": card["range"],
+            "value": card["value"],
+            "benchmark": None
+            if benchmark is None
+            else {
+                "name": benchmark["name"],
+                "value": benchmark["value"],
+                "unavailable_reason": benchmark["reason"],
+            },
+            "source": card["source"],
+            "as_of": card["as_of"],
+            "session": card["session"],
+            "stale": card["stale"],
+            "unavailable_reason": card["reason"],
+        }
+    except (KeyError, TypeError, AttributeError):
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "engine result malformed"}
+        ) from None

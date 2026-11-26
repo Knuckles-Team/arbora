@@ -541,6 +541,18 @@ def compose_served_invocation(
             **bindings,
             "finance_receipt_store": FinanceReceiptStore(ServedBrowserState(pool)),
         }
+    if bindings is not None and "market_compute_port" not in bindings:
+        # ARBORA-DATA-MARKET-R003.13: the engine computes every sizing and
+        # shift figure; the port sends it through the served client pool.
+        from arbora.finance.compute_port import EngineMarketComputePort
+
+        async def compute_client(tenant: str) -> Any:
+            return await pool.connected_client(connect_context(tenant), graph)
+
+        bindings = {
+            **bindings,
+            "market_compute_port": EngineMarketComputePort(compute_client, graph),
+        }
     if bindings is not None and "identity_admin" not in bindings:
         # ARBORA-IDENTITY-R018.1: the identity operations reach the engine
         # through the one administration port of the composition root.

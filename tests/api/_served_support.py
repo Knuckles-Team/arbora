@@ -90,8 +90,13 @@ def route_methods(
 class McpAsk:
     """The served MCP intent surface over the captured invocation."""
 
-    def __init__(self, invocation: Any, monkeypatch: pytest.MonkeyPatch) -> None:
-        process = request_identity.mint_graph_session(person("one"))
+    def __init__(
+        self,
+        invocation: Any,
+        monkeypatch: pytest.MonkeyPatch,
+        who: ActorContext | None = None,
+    ) -> None:
+        process = request_identity.mint_graph_session(who or person("one"))
         monkeypatch.setattr(mcp_runtime, "_PROCESS_SESSION", process)
         self.mcp = FastMCP("served-ops")
         mcp_runtime._register_served_intent_surface(self.mcp, invocation)
