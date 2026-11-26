@@ -69,11 +69,11 @@ class Engine:
     async def send(self, method: str, params: dict, tenant: str) -> Any:
         self.calls.append((method, params))
         self.journal.append(f"engine:{method}")
-        assert method == "DecisionEval" and params["op"] == "receipt"
-        item = self.stored.get(params["request"]["receipt_digest"])
+        assert method == "DecisionEval" and params["op"] == "certification_get"
+        item = self.stored.get(params["request"]["attestation_digest"])
         if item is None:
             raise LookupError("no such receipt")
-        return {"record": {"attestation": item}}
+        return {"attestation": item}
 
 
 class DenyingPolicy(PolicyGate):

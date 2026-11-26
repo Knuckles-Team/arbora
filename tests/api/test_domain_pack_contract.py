@@ -20,16 +20,15 @@ def _engine(monkeypatch: pytest.MonkeyPatch, *, tenant: str = TENANT, fail=None)
     sent: list[tuple[str, dict[str, Any]]] = []
     answers = {
         "ConnectorPack": {
-            "digest": "sha256:abc",
+            "head": {"pack_digest": "sha256:abc", "record_id": "rec-1"},
             "tenant_id": tenant,
-            "request_id": "r1",
         },
         "OntologyInspect": {
             "classes": ["Employee"],
             "enumerations": ["Grade"],
-            "request_id": "r2",
+            "composed_digest": "cd-2",
         },
-        "ShaclValidate": {"conforms": True, "request_id": "r3"},
+        "ShaclValidate": {"conforms": True, "composed_digest": "cd-3"},
     }
 
     async def send(context, method, params, **_):
@@ -58,7 +57,7 @@ def test_request_and_result_fields() -> None:
         "classes",
         "enumerations",
         "shapes_verdict",
-        "request_ids",
+        "evidence_ids",
     }
     with pytest.raises(ValidationError):
         domain_pack.DomainPackRequest(domain="legal", version="1.0.0", extra="x")
@@ -77,7 +76,7 @@ async def test_result_equals_three_engine_responses(monkeypatch) -> None:
     assert [m for m, _ in sent] == ["ConnectorPack", "OntologyInspect", "ShaclValidate"]
     assert value["classes"] == answers["OntologyInspect"]["classes"]
     assert value["enumerations"] == answers["OntologyInspect"]["enumerations"]
-    assert value["shapes_verdict"] == {"conforms": True}
+    assert value["shapes_verdict"] == answers["ShaclValidate"]
     assert value["pack_digest"] == "sha256:abc"
 
 
@@ -122,8 +121,8 @@ async def test_result_carries_digest_and_request_ids(monkeypatch) -> None:
     out = await domain_pack.read_domain_pack(
         _context(), {"domain": "government", "version": "1.0.0"}, _op()
     )
-    assert out["value"]["request_ids"] == ["r1", "r2", "r3"]
-    answers["ShaclValidate"].pop("request_id")
+    assert out["value"]["evidence_ids"] == ["rec-1", "cd-2", "cd-3"]
+    answers["ShaclValidate"].pop("composed_digest")
     with pytest.raises(OperationRefused) as refused:
         await domain_pack.read_domain_pack(
             _context(), {"domain": "government", "version": "1.0.0"}, _op()

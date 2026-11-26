@@ -17,9 +17,10 @@ async def test_domain_pack_read_composes_engine_methods(monkeypatch, domain) -> 
 
     async def send(context, method, params, **_):
         seen.append(method)
-        base = {"request_id": f"id-{method}"}
+        base = {"composed_digest": f"cd-{method}"}
         if method == "ConnectorPack":
-            return {**base, "digest": f"d-{domain}", "tenant_id": "t"}
+            head = {"pack_digest": f"d-{domain}", "record_id": "rec"}
+            return {"head": head, "tenant_id": "t"}
         if method == "OntologyInspect":
             return {**base, "classes": [domain]}
         return {**base, "conforms": True}

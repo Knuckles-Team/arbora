@@ -33,9 +33,26 @@ class UpgradeEngine:
             f["name"] for f in body["new"]["fields"]
         }
         if removed and not body.get("declared_migration_id"):
-            error = RuntimeError("breaking")
-            error.code = "SKILL_UPGRADE_BREAKING_WITHOUT_MIGRATION"  # type: ignore[attr-defined]
-            raise error
+            # The engine answers a refusal as an abstained record, not an error.
+            return {
+                "records": [
+                    {
+                        "record_id": "dec-0",
+                        "outcome": {
+                            "outcome": "abstained",
+                            "reasons": [
+                                {
+                                    "reason": "family",
+                                    "family": "skill_upgrade",
+                                    "code": "SKILL_UPGRADE_BREAKING_WITHOUT_MIGRATION",
+                                    "detail": "breaking",
+                                }
+                            ],
+                        },
+                        "answer": None,
+                    }
+                ]
+            }
         return {
             "record_id": "dec-1",
             "answer": {
@@ -91,12 +108,18 @@ def world(monkeypatch: pytest.MonkeyPatch) -> tuple[World, UpgradeEngine]:
     return built, engine
 
 
+def _assert_one_declared_option(sent: dict[str, Any]) -> None:
+    """The engine family declares one option, ``admit_upgrade`` (engine main)."""
+    assert [o["option_id"] for o in sent["candidates"]["options"]] == ["admit_upgrade"]
+
+
 @pytest.mark.spec("ARBORA-FLEET-R034.13")
 def test_compatible_breaking_and_migrated_upgrades(world) -> None:
     served, engine = world
     assert served.call(_upgrade("1.0.0", "1.1.0"), key="a").code == "OK"
     sent = engine.requests[0]
     assert sent["question"]["kind"] == "skill_upgrade"
+    _assert_one_declared_option(sent)
     assert served.audit.events[-1]["admission.decision_ids"] == "dec-1"
 
     breaking = served.call(_upgrade("1.0.0", "2.0.0", removed=True), key="b")
