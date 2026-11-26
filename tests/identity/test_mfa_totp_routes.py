@@ -142,16 +142,20 @@ def test_each_route_forwards_session_tenant_and_code_and_returns_the_engine_answ
 def test_replay_invalid_and_lockout_are_the_engine_refusals(engine: _Engine) -> None:
     from medulla import EngineResponseError
 
-    for code, expected in (("MFA_CODE_REPLAYED", 403), ("MFA_CODE_INVALID", 403)):
+    for code, public in (
+        ("MFA_CODE_REPLAYED", "IDENTITY_REPLAY"),
+        ("MFA_CODE_INVALID", "IDENTITY_NOT_FOUND"),
+    ):
         engine.refuse = EngineResponseError(code)
         assert _post("/auth/mfa/totp/verify", {"code": "123456"}) == (
-            expected,
-            {"error": code},
+            403,
+            {"error": public},
         )
     engine.refuse = EngineResponseError("MFA_LOCKED", "retry_at_ms=1800000000000")
+    # A lockout is no oracle: it answers like any other unknown proof.
     assert _post("/auth/mfa/totp/verify", {"code": "123456"}) == (
-        429,
-        {"error": "MFA_LOCKED", "retry_at_ms": 1800000000000},
+        403,
+        {"error": "IDENTITY_NOT_FOUND"},
     )
     engine.refuse = EngineResponseError("SOMETHING_ELSE", "diagnostic")
     status, answer = _post("/auth/mfa/totp/verify", {"code": "123456"})
