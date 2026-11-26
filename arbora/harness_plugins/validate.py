@@ -28,7 +28,13 @@ def _check_hooks(root: Path, kind: HookKind) -> list[str]:
     for event, groups in hooks.items():
         for group in groups:
             for handler in group.get("hooks", []):
-                if handler.get("type") != kind.value:
+                # A skill hook is always a command: it posts a log record over
+                # HTTP, which an MCP tool hook cannot do (R012).
+                if group.get("matcher") == "Skill":
+                    expected = HookKind.COMMAND.value
+                else:
+                    expected = kind.value
+                if handler.get("type") != expected:
                     problems.append(f"{event}: hook type {handler.get('type')}")
     return problems
 
