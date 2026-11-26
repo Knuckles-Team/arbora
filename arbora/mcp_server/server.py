@@ -176,6 +176,7 @@ def _served_invocation(
         if task_plan_config is not None:
             raise ValueError("task planning requires graph service endpoints")
         return None, None
+    from arbora.a2a.source_grant import EngineSourceGrants
     from arbora.mcp_server.backing.server_factory import create_mcp_parser
     from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
     from arbora.mcp_server.fleet_composition import LateFleetGateway
@@ -207,6 +208,7 @@ def _served_invocation(
             "browser_control": dispatch_browser_operation,
             "current_plan_reader": NativeCurrentPlanReader(),
             "source_reader": NativeSourceReader(),
+            "source_grants": EngineSourceGrants(),
             "run_trace_reader": NativeRunReader(
                 runtime._get_engine, origins=host.runs.origins
             ),

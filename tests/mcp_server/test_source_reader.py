@@ -30,7 +30,7 @@ from arbora.mcp_server.host_context import build_host_context
 from arbora.mcp_server.source_reader import NativeSourceReader
 from tests._support import Actor
 
-pytestmark = pytest.mark.spec("ARBORA-OPS-R848.1")
+pytestmark = pytest.mark.spec("ARBORA-OPS-R848.1", "ARBORA-OPS-R894")
 
 REPOSITORY = "repo-a"
 BRANCH_MAIN = "branch:main"
@@ -597,3 +597,29 @@ def test_actual_serving_root_composes_stateless_source_reader(monkeypatch):
     assert invocation is not None and session is not None
     assert isinstance(captured["bindings"]["source_reader"], NativeSourceReader)
     assert vars(captured["bindings"]["source_reader"]) == {}
+
+
+async def test_tree_serves_the_head_revision_the_branch_projection_states(
+    monkeypatch,
+):
+    engine = Engine()
+    _patch_engine(monkeypatch, engine)
+    ctx = context()
+    reader = NativeSourceReader()
+    # Pin-lag: a Branch projection that states no head serves none, never a guess.
+    unstated = await reader.tree(
+        repository=REPOSITORY, ref="main", path="", context=ctx
+    )
+    assert unstated.found is True and unstated.head_revision is None
+    monkeypatch.setitem(BRANCHES[0][1], "head_revision", "rev:head-9")
+    stated = await reader.tree(repository=REPOSITORY, ref="main", path="", context=ctx)
+    assert stated.head_revision == "rev:head-9"
+    monkeypatch.setitem(BRANCHES[0][1], "head_revision", 12)
+    assert (
+        await reader.tree(repository=REPOSITORY, ref="main", path="", context=ctx)
+    ).head_revision == "12"
+    for malformed in ("", True, -1, ["x"]):
+        monkeypatch.setitem(BRANCHES[0][1], "head_revision", malformed)
+        assert (
+            await reader.tree(repository=REPOSITORY, ref="main", path="", context=ctx)
+        ).head_revision is None

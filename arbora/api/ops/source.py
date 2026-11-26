@@ -146,6 +146,10 @@ class SourceTreeOutcome(BaseModel):
     path: str
     found: bool
     reason: str | None = None
+    #: The ref's head revision as the engine's Branch projection holds it. Absent while
+    #: the engine release serves none (pin-lag): a changeset base then cannot be read and
+    #: the submission refuses closed (ARBORA-OPS-R894).
+    head_revision: str | None = None
     entries: tuple[SourceTreeEntry, ...] = ()
 
 
