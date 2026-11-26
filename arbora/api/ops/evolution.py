@@ -2,10 +2,10 @@
 
 The engine keeps every loop's durable state; this module is a facade. Each
 operation sends one existing engine method as the verified caller and returns
-the engine's answer. Status reads the ``Loops`` ``get`` view, run submits an
-``AnalyticsJob`` ``Submit`` and pause is ``AnalyticsJob`` ``SchedulePause``;
-the engine has no separate loop methods (it retired them as duplicates). A
-pinned release that lacks one of these shapes refuses ``UNAVAILABLE`` naming
+the engine's answer. Status reads the ``Loops`` ``get`` view, run claims the
+``Loops`` lease and enqueues a ``TaskQueueEnqueue`` task that the loop worker
+runs (ARBORA-OPS-R022.2.13), and pause is ``AnalyticsJob`` ``SchedulePause``.
+A pinned release that lacks one of these shapes refuses ``UNAVAILABLE`` naming
 it through the pin-lag guard.
 """
 

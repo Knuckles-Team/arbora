@@ -141,6 +141,7 @@ def _decide(
 
 
 # spec: ARBORA-OPS-R918.3
+# spec: ARBORA-IDENTITY-R019.7
 def test_decide_refuses_self_approval_and_records_provenance() -> None:
     leases = _Leases()
     item = leases.add("one", roles=("editors", "agents"))

@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 
 from tests.api._loopback_engine import PRINCIPAL, loopback  # noqa: F401
+from tests.test_served_operation_api import served  # noqa: F401
 
 OP = "capacity.adjust.apply"
 DIGEST = "a" * 64
@@ -39,12 +40,27 @@ def _record(request: dict[str, Any], answer: str, echoed: dict[str, Any]) -> Any
                 + hashlib.sha256(PRINCIPAL.encode()).hexdigest(),
                 "tenant_id": request["tenant_id"],
                 "question": request["question"],
+                # The engine appends the headroom it read as ``observation``.
                 "inputs": {
-                    "params": request["params"] if echoed is PROPOSAL else params
+                    "params": [
+                        *(request["params"] if echoed is PROPOSAL else params),
+                        {
+                            "name": "observation",
+                            "value": {
+                                "kind": "text",
+                                "value": '{"available":4,"epoch":9,"unit":"slots"}',
+                            },
+                        },
+                    ]
                 },
                 "record_id": "decision:cap",
                 "record_digest": "digest:cap",
-                "outcome": {"answer": answer},
+                "outcome": {
+                    "outcome": "advisory",
+                    "calibrated": True,
+                    "ranked_total": 1,
+                    "scores": [{"option_id": answer}],
+                },
             }
         ]
     }

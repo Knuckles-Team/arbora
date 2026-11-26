@@ -93,6 +93,9 @@ class ArboraErrorCode(StrEnum):
     WRITE_BACK_RECEIPT_UNBOUND = "WRITE_BACK_RECEIPT_UNBOUND"
     WRITE_BACK_EFFECT_UNCERTAIN = "WRITE_BACK_EFFECT_UNCERTAIN"
     WRITE_BACK_REPLAY_UNRESOLVED = "WRITE_BACK_REPLAY_UNRESOLVED"
+    # The engine's decision record does not answer this request, caller or
+    # tenant (ARBORA-RELEASE-R003.4.1, ARBORA-DEPLOY-R017.1, R017.17).
+    RECEIPT_MISMATCH = "RECEIPT_MISMATCH"
 
 
 # Wire status and retry posture are part of the closed Arbora vocabulary.
@@ -168,6 +171,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.WRITE_BACK_RECEIPT_UNBOUND: 502,
     ArboraErrorCode.WRITE_BACK_EFFECT_UNCERTAIN: 502,
     ArboraErrorCode.WRITE_BACK_REPLAY_UNRESOLVED: 409,
+    ArboraErrorCode.RECEIPT_MISMATCH: 502,
 }
 
 _RETRYABLE = frozenset(
@@ -659,6 +663,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.CHILD_LIMIT_EXHAUSTED: -32029,
     ArboraErrorCode.CONTINUATION_HISTORY_UNSUPPORTED: -32009,
     ArboraErrorCode.CONTINUATION_LIFECYCLE_INVALID: -32009,
+    ArboraErrorCode.RECEIPT_MISMATCH: -32603,
     ArboraErrorCode.HISTORY_REVISION_CONFLICT: -32009,
 }
 

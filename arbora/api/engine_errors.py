@@ -43,6 +43,17 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "CANDIDATE_SCOPE_TOO_LARGE": (400, False),
     "CANDIDATE_SET_TOO_LARGE": (400, False),
     "CAPACITY_DENIED": (429, True),
+    # The refusal codes of a decided capacity_proposal verdict
+    # (MEDULLA-DECISION-ENGINE-R824); a stale premise is re-proposed next window.
+    "CAPACITY_HEADROOM_EXCEEDED": (409, False),
+    "CAPACITY_LIMIT_EXCEEDED": (409, False),
+    "CAPACITY_LIMIT_INVALID": (400, False),
+    "CAPACITY_MEASUREMENT_INVALID": (400, False),
+    "CAPACITY_PREMISE_STALE": (409, True),
+    "CAPACITY_PROPOSAL_DIGEST_INVALID": (400, False),
+    "CAPACITY_TENANT_MISMATCH": (403, False),
+    "CAPACITY_UNIT_MISMATCH": (400, False),
+    "CAPACITY_WINDOW_INVALID": (400, False),
     "CAPACITY_UNAVAILABLE": (503, False),
     "CARD_ABSENT": (404, False),
     "CARRIER_INNER_METHOD_REFUSED": (400, False),

@@ -524,3 +524,26 @@ def test_engine_operations_come_from_served_descriptors(
     document.pop("catalog_digest")
     with pytest.raises(EgContractError, match="catalog_digest"):
         get_registry()
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R025")
+def test_identity_operations_are_registered() -> None:
+    """Identity administration is composed unconditionally and needs ``identity:admin``."""
+    import inspect
+
+    from arbora.api.ops import identity, registry_factory
+    from arbora.security.scope_registry import SESSION_SCOPES
+
+    composed = inspect.getsource(registry_factory.get_registry)
+    assert "        identity,\n" in composed
+    operations = {op.id: op for op in identity.operations()}
+    assert {
+        "identity.self.get",
+        "identity.users.list",
+        "identity.roles.assign",
+        "identity.providers.upsert",
+        "identity.mode.transition_step",
+        "identity.audit.verify",
+    } <= set(operations)
+    assert "identity:admin" in SESSION_SCOPES
+    assert "identity:admin" in operations["identity.users.list"].scopes
