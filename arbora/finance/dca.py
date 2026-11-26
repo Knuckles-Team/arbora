@@ -14,12 +14,17 @@ module owns only the plan model and the proposal dedupe record.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from arbora.finance.receipt_store import FinanceReceiptStore
+from arbora.finance.receipts import (
+    FinanceReceiptEngine,
+    claim_receipt,
+    complete_receipt,
+)
 
 __all__ = [
     "DCAPlan",
@@ -64,8 +69,8 @@ def build_dca_proposal_key(plan: DCAPlan, occurrence: str) -> str:
     return f"{plan.plan_id}:{plan.revision}:{occurrence}"
 
 
-def record_dca_proposal(
-    store: FinanceReceiptStore, plan: DCAPlan, occurrence: str
+async def record_dca_proposal(
+    engine: FinanceReceiptEngine, plan: DCAPlan, occurrence: str
 ) -> DCAProposalOutcome:
     """Propose one DCA occurrence exactly once per plan revision.
 
@@ -75,7 +80,16 @@ def record_dca_proposal(
     """
 
     key = build_dca_proposal_key(plan, occurrence)
-    if not store.claim(plan.tenant_id, "dca_proposal", key):
+    claimed = await claim_receipt(
+        engine,
+        plan.tenant_id,
+        "dca_proposal",
+        key,
+        event_id=key,
+        mode=plan.mode,
+        recorded_at=datetime.now(UTC).isoformat(),
+    )
+    if not claimed:
         return "duplicate"
-    store.complete(plan.tenant_id, "dca_proposal", key)
+    await complete_receipt(engine, plan.tenant_id, "dca_proposal", key)
     return "proposed"

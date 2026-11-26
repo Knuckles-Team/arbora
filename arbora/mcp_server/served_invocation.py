@@ -530,17 +530,6 @@ def compose_served_invocation(
         from arbora.mcp_server.served_engine import ServedEngine
 
         bindings = {**bindings, "task_plan_work_engine": ServedEngine(pool)}
-    if bindings is not None and "finance_receipt_store" not in bindings:
-        # ARBORA-DATA-MARKET-R001.1: the one finance idempotency fence writes
-        # FinanceReceipt nodes through the caller-bound engine client, so the
-        # tenant comes from the verified invoke context, never a process store.
-        from arbora.finance.receipt_store import FinanceReceiptStore
-        from arbora.mcp_server.browser_state import ServedBrowserState
-
-        bindings = {
-            **bindings,
-            "finance_receipt_store": FinanceReceiptStore(ServedBrowserState(pool)),
-        }
     if bindings is not None and "identity_admin" not in bindings:
         # ARBORA-IDENTITY-R018.1: the identity operations reach the engine
         # through the one administration port of the composition root.
