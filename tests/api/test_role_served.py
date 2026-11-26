@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 
+from arbora.api import model_route
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import agent_library, agents
 from arbora.api.ops import operator_surface as surface
@@ -41,7 +42,7 @@ async def test_one_template_two_tenants_isolated_profiles(
         "KvGet",
         lambda p: (
             {"value": json.dumps(profiles[engine.tenant]).encode(), "version": 7}
-            if engine.tenant in profiles
+            if engine.tenant in profiles and p["namespace"] == "business.profile"
             else None
         ),
     )
@@ -53,6 +54,7 @@ async def test_one_template_two_tenants_isolated_profiles(
     )
     engine.install(surface)
     engine.install(agent_library)
+    engine.install(model_route)
     monkeypatch.setattr("arbora.security.session.use_session", _noop_session)
     a2a = _A2A()
     run = next(op for op in agents.operations() if op.id == "agents.run")
@@ -60,7 +62,7 @@ async def test_one_template_two_tenants_isolated_profiles(
     for tenant in ("tenant:one", "tenant:two"):
         await agents.handle_agent(_run_context(tenant, a2a), {"message": message}, run)
     # Each run carries only its own tenant's profile reference, read by that tenant.
-    assert [s[0] for s in engine.sent] == ["KvGet", "AgentLibrary"] * 2
+    assert [s[0] for s in engine.sent] == ["KvGet", "AgentLibrary", "KvGet"] * 2
     assert all(m["metadata"]["profile_ref"].endswith("@7") for m in a2a.messages)
     # A tenant with no profile refuses before a run is admitted.
     with pytest.raises(OperationRefused) as unset:
@@ -81,3 +83,46 @@ def _noop_session(_session: Any) -> Any:
     from contextlib import nullcontext
 
     return nullcontext()
+
+
+@pytest.mark.spec("ARBORA-OPS-R919.3")
+async def test_engine_operations_are_allowlisted_and_counted_in_trace(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine = EngineDouble(monkeypatch)
+    engine.serve(
+        "KvGet",
+        lambda p: (
+            {"value": json.dumps({"entity": "e"}).encode(), "version": 1}
+            if p["namespace"] == "business.profile"
+            else None
+        ),
+    )
+    engine.serve(
+        "AgentLibrary",
+        lambda p: {
+            "entry": {
+                "agent_id": p["op"]["agent_id"],
+                "tools": [
+                    {"component_id": "eg.graph.GetNodesByLabel"},
+                    {"component_id": "mail.send"},
+                ],
+            }
+        },
+    )
+    engine.install(surface)
+    engine.install(agent_library)
+    engine.install(model_route)
+    monkeypatch.setattr("arbora.security.session.use_session", _noop_session)
+    a2a = _A2A()
+    run = next(op for op in agents.operations() if op.id == "agents.run")
+    message = {"kind": "message", "metadata": {"role_instance_id": "role:one"}}
+    await agents.handle_agent(
+        _run_context("tenant:one", a2a), {"message": message}, run
+    )
+    sent = a2a.messages[0]["metadata"]
+    assert "eg.graph.GetNodesByLabel" in sent["tool_allowlist"]
+    assert sent["tool_routes"] == {
+        "eg.graph.GetNodesByLabel": "engine",
+        "mail.send": "tool",
+    }

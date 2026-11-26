@@ -267,6 +267,7 @@ async def test_role_run_refuses_missing_profile_and_narrows_tools(
 ) -> None:
     import json
 
+    from arbora.api import model_route
     from arbora.api.ops import agent_library, agents
     from arbora.api.ops import operator_surface as surface
     from tests.api._engine_double import EngineDouble, context
@@ -284,7 +285,9 @@ async def test_role_run_refuses_missing_profile_and_narrows_tools(
     engine.serve(
         "KvGet",
         lambda p: (
-            {"value": json.dumps(profile).encode(), "version": 4} if profile else None
+            {"value": json.dumps(profile).encode(), "version": 4}
+            if profile and p["namespace"] == "business.profile"
+            else None
         ),
     )
     engine.serve(
@@ -302,6 +305,7 @@ async def test_role_run_refuses_missing_profile_and_narrows_tools(
     )
     engine.install(surface)
     engine.install(agent_library)
+    engine.install(model_route)
     from contextlib import nullcontext
 
     monkeypatch.setattr("arbora.security.session.use_session", lambda _s: nullcontext())
