@@ -212,7 +212,7 @@ def test_webauthn_begin_issues_a_one_use_challenge_bound_to_the_interim_session(
     first = world.engine.sign(count=5)
     assert _post(world, mfa_ceremonies.FINISH, first)[0] == 200
     again = _post(world, mfa_ceremonies.FINISH, first)
-    assert again[0] == 403 and again[1] == {"error": "WEBAUTHN_CHALLENGE_USED"}
+    assert again[0] == 403 and again[1] == {"error": "IDENTITY_REPLAY"}
     # It is bound to a pending session cookie: no cookie, no proof, no challenge.
     before = len(world.engine.calls)
     assert _post(world, mfa_ceremonies.BEGIN, session=False)[0] == 401
@@ -221,7 +221,7 @@ def test_webauthn_begin_issues_a_one_use_challenge_bound_to_the_interim_session(
     # A person with no registered credential has nothing to assert.
     world.engine.credentials.clear()
     status, answer, _ = _post(world, mfa_ceremonies.BEGIN)
-    assert (status, answer) == (403, {"error": "WEBAUTHN_NO_CREDENTIAL"})
+    assert (status, answer) == (403, {"error": "IDENTITY_NOT_FOUND"})
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R006.2.2")
@@ -230,14 +230,14 @@ def test_webauthn_finish_checks_origin_and_counter(world: SimpleNamespace) -> No
     wrong_origin = world.engine.sign(count=5, origin="https://evil.invalid")
     assert _post(world, mfa_ceremonies.FINISH, wrong_origin)[:2] == (
         403,
-        {"error": "WEBAUTHN_ORIGIN_MISMATCH"},
+        {"error": "IDENTITY_NOT_FOUND"},
     )
     assert world.authority.error is not None
     # A counter that does not rise is refused, and the credential's counter is unchanged.
     _begin(world)
     assert _post(world, mfa_ceremonies.FINISH, world.engine.sign(count=4))[:2] == (
         403,
-        {"error": "WEBAUTHN_COUNTER_REGRESSED"},
+        {"error": "IDENTITY_REPLAY"},
     )
     assert world.engine.credential["sign_count"] == 4
     # A signature by another key is refused before the engine records anything.
@@ -248,7 +248,7 @@ def test_webauthn_finish_checks_origin_and_counter(world: SimpleNamespace) -> No
     )
     assert _post(world, mfa_ceremonies.FINISH, forged)[:2] == (
         403,
-        {"error": "WEBAUTHN_SIGNATURE_INVALID"},
+        {"error": "IDENTITY_NOT_FOUND"},
     )
     assert not [c for c in world.engine.calls if c[0] == "verify_webauthn"]
     # The right origin and a rising counter complete the login with a full session.
@@ -280,9 +280,9 @@ def test_recovery_codes_are_single_use_and_enrollment_is_enforced(
     # Each code is valid once: the engine refuses its reuse and the session stays pending.
     world.authority.error = PermissionError("second factor pending")
     reused = _post(world, mfa_ceremonies.RECOVERY, {"code": CODES[0]})
-    assert reused[:2] == (403, {"error": "RECOVERY_CODE_USED"})
+    assert reused[:2] == (403, {"error": "IDENTITY_REPLAY"})
     unknown = _post(world, mfa_ceremonies.RECOVERY, {"code": "ZZZZZ00000"})
-    assert unknown[:2] == (403, {"error": "MFA_CODE_INVALID"})
+    assert unknown[:2] == (403, {"error": "IDENTITY_NOT_FOUND"})
     # A malformed code never reaches the engine.
     before = len(world.engine.calls)
     for code in ("short", "ABCDE1234!", "ABCDE123456"):
@@ -343,7 +343,7 @@ def test_totp_webauthn_recovery_and_enforced_enrollment(
     world.authority.error = PermissionError("second factor pending")
     assert _post(world, mfa_ceremonies.RECOVERY, {"code": CODES[1]})[0] == 200
     assert _post(world, mfa_ceremonies.RECOVERY, {"code": CODES[1]})[0] == 403
-    # The engine's lockout is returned unchanged with the time it lifts.
+    # A lockout answers like any unknown proof; the time it lifts is not sent.
     from medulla import EngineResponseError
 
     async def locked(client: Any, req: Any, graph: str) -> Any:
@@ -351,10 +351,7 @@ def test_totp_webauthn_recovery_and_enforced_enrollment(
 
     monkeypatch.setattr("medulla.generated.security.send_identity", locked)
     status, answer, _ = _post(world, mfa_ceremonies.RECOVERY, {"code": CODES[0]})
-    assert (status, answer) == (
-        429,
-        {"error": "MFA_LOCKED", "retry_at_ms": 1800000000000},
-    )
+    assert (status, answer) == (403, {"error": "IDENTITY_NOT_FOUND"})
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R006.2.2")

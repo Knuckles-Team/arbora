@@ -9,6 +9,7 @@ from collections.abc import Awaitable, Callable, Iterable, Mapping
 from typing import Any, cast
 
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog, ItemKind
+from arbora.fleet.job_loads import JobLoadResult
 from arbora.fleet.pin_store import PinRecord, PinStore, pinned_now_ms
 from arbora.fleet.session_loads import LoadCapExceeded, SessionLoads
 
@@ -636,6 +637,22 @@ class MultiplexerOps:
                 for row in result["items"]:
                     if row.get("id") in pinned:
                         row["pinned"] = True
+        return result
+
+    async def load_job_answer(
+        self, caller: Any, answer: Mapping[str, Any]
+    ) -> JobLoadResult:
+        """Load the tools of one engine ``LoadSet`` answer, in its order.
+
+        Arbora computes no ranking (ARBORA-FLEET-R037.2): the answered tools
+        load until the session cap and the rest are listed as ``over_cap``.
+        """
+        from arbora.fleet.job_loads import apply_load_set
+
+        result = apply_load_set(answer, self.sessions.cap)
+        key = self._session_key_for(caller)
+        if result.loaded and key:
+            await self.load_tools(caller, key, result.loaded)
         return result
 
     def _forwarder(self, item: CatalogItem) -> Callable[..., Awaitable[Any]]:

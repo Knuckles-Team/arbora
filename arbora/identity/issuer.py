@@ -6,6 +6,7 @@ the DTO nor the mapping result is an authentication capability.
 """
 
 import json
+import re
 import secrets
 import time
 from collections.abc import Callable, Mapping
@@ -16,6 +17,7 @@ from .engine import IdentityUnavailable, Resolution, _text
 from .ports import CredentialAuthority, CredentialState, SigningKeyStore
 
 ACCESS_TOKEN_MAX_SECONDS = 300
+_SESSION_REF = re.compile(r"[A-Za-z0-9_:-]{1,128}")
 ISSUER_KEY_RING_PATH = "arbora/identity/issuer-signing-keys"
 
 
@@ -40,6 +42,7 @@ def claims_for(
     *,
     source_expires_at_ms: int,
     now_ms: int,
+    session_ref: str | None = None,
 ) -> dict[str, Any]:
     """Prepare exact local claims; missing/expired source authority refuses.
 
@@ -59,7 +62,7 @@ def claims_for(
     expires = min(issued + settings.access_ttl_seconds, source_expires_at_ms // 1000)
     if expires * 1000 <= now_ms:
         raise PermissionError("source credential cannot support a live token")
-    return {
+    claims = {
         "iss": settings.issuer,
         **identity_claims(resolution),
         "iat": issued,
@@ -67,6 +70,17 @@ def claims_for(
         "exp": expires,
         "jti": secrets.token_hex(16),
     }
+    if session_ref is not None:
+        # Only a session-backed caller carries the reference (ARBORA-IDENTITY-R029.4).
+        claims["session_ref"] = _session_ref(session_ref)
+    return claims
+
+
+def _session_ref(value: str) -> str:
+    """The opaque reference: short, no token shape, never credential material."""
+    if type(value) is not str or not _SESSION_REF.fullmatch(value):
+        raise IdentityUnavailable("a session reference is opaque and bounded")
+    return value
 
 
 def identity_claims(resolution: Resolution) -> dict[str, Any]:
@@ -165,6 +179,7 @@ class LocalIssuer:
             self._settings,
             source_expires_at_ms=state.expires_at_ms,
             now_ms=int(self._clock() * 1000),
+            session_ref=state.session_ref,
         )
         import asyncio
 

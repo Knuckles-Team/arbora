@@ -29,7 +29,7 @@ from starlette.responses import JSONResponse
 
 from arbora.pin_lag.medulla import PinLagUnavailable, require_models
 
-from .mfa_totp import BODY_LIMIT, MfaBodyInvalid, refusal_response
+from .mfa_totp import BODY_LIMIT, MfaBodyInvalid, public_refusal, refusal_response
 from .webauthn import (
     Assertion,
     WebauthnRefused,
@@ -172,7 +172,8 @@ class MfaCeremonies:
             if not isinstance(credentials, list) or not credentials:
                 self._done("webauthn", "WEBAUTHN_NO_CREDENTIAL")
                 return JSONResponse(
-                    {"error": "WEBAUTHN_NO_CREDENTIAL"}, status_code=403
+                    {"error": public_refusal("WEBAUTHN_NO_CREDENTIAL")},
+                    status_code=403,
                 )
             challenge = b64url_encode(secrets.token_bytes(CHALLENGE_BYTES))
             await self._mfa(
@@ -223,7 +224,9 @@ class MfaCeremonies:
             )
         except WebauthnRefused as refused:
             self._done("webauthn", refused.code)
-            return JSONResponse({"error": refused.code}, status_code=403)
+            return JSONResponse(
+                {"error": public_refusal(refused.code)}, status_code=403
+            )
         except EngineResponseError as refused:
             return self._engine_refusal("webauthn", refused)
         except Exception:  # noqa: BLE001 - an unanswered question steps nothing up
@@ -274,7 +277,9 @@ class MfaCeremonies:
 
         if len(code) != RECOVERY_CODE_LENGTH or not code.isalnum():
             self._done("recovery", "MFA_CODE_INVALID")
-            return JSONResponse({"error": "MFA_CODE_INVALID"}, status_code=400)
+            return JSONResponse(
+                {"error": public_refusal("MFA_CODE_INVALID")}, status_code=400
+            )
         try:
             require_models(RECOVERY_MODELS)
         except PinLagUnavailable as missing:
