@@ -32,6 +32,7 @@ from .models import (
     A2AOperationInvokeParams,
 )
 from .parts import FilePartRefused, MediaCapabilityRefused
+from .push import PushRefused
 from .routing import A2AAssemblyUnavailable, A2AOperationBridgeUnavailable
 from .service import A2AService
 from .terminal_event import A2ATerminalEventUnavailable
@@ -173,6 +174,16 @@ class _ResubscribeParams(_Params):
 
     id: str = Field(min_length=1, max_length=80)
     after_seq: int = Field(default=0, alias="afterSeq", ge=0, le=2**53)
+
+
+class _PushSetParams(_Params):
+    """``tasks/pushNotificationConfig/set``: one webhook for one of the caller's tasks."""
+
+    id: str = Field(min_length=1, max_length=80)
+    url: str = Field(min_length=1, max_length=2048)
+    token_ref: str | None = Field(
+        default=None, alias="tokenRef", min_length=1, max_length=512
+    )
 
 
 class _ListParams(_Params):
@@ -377,6 +388,15 @@ async def _invoke_method(
     if method == "tasks/cancel":
         cancel_params = _TaskParams.model_validate(raw_params)
         return await service.cancel_task(cancel_params.id)
+    if method == "tasks/pushNotificationConfig/set" and service.push is not None:
+        push_params = _PushSetParams.model_validate(raw_params)
+        try:
+            target = await service.set_push_target(
+                push_params.id, push_params.url, push_params.token_ref
+            )
+        except LookupError:
+            return _error(request_id, -32001, "Task not found", 404)
+        return {"id": target.task_id, "url": target.url, "tokenRef": target.token_ref}
     sync_handler = _SYNC_METHODS.get(method)
     if sync_handler is not None:
         return sync_handler(raw_params)
@@ -438,6 +458,9 @@ def _application_error(request_id: Any, error: Exception) -> JSONResponse:
             403,
             {"reason": error.reason},
         )
+    if isinstance(error, PushRefused):
+        # ARBORA-A2A-R013.1: a closed code, never the URL.
+        return _error(request_id, -32602, "Invalid params", 400, {"reason": error.code})
     if isinstance(error, ConfirmationKindInvalid):
         return _error(request_id, -32602, error.code, 400)
     if isinstance(error, ApprovalRefused):
@@ -573,6 +596,7 @@ async def _unary_request(
         "message/send",
         "message/stream",
         "tasks/cancel",
+        "tasks/pushNotificationConfig/set",
         "arbora.plan/confirm",
     }
     scope = "kg:write" if method in write_methods else "kg:read"

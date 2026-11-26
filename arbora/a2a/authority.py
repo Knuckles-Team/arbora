@@ -193,6 +193,8 @@ class WorkItemA2AAuthority:
         #: The durable event publisher (ARBORA-A2A-R001.2); ``None`` publishes
         #: nothing and leaves streaming unserved.
         self.events = events
+        #: The push-notification worker (ARBORA-A2A-R013); ``None`` pushes nothing.
+        self.push: Any = None
         self._executor = executor
         self._origins = origins
         # Runs admitted by a non-blocking send (ARBORA-A2A-R001.6). The set
@@ -496,8 +498,48 @@ class WorkItemA2AAuthority:
         reply: str | None = None,
     ) -> None:
         """Write one A2A-visible run event under the run's lease fence."""
-        if self.events is None:
-            return
+        if self.events is not None:
+            await self._publish_event(
+                item_id,
+                claim,
+                task_id=task_id,
+                context_id=context_id,
+                kind=kind,
+                state=state,
+                final=final,
+                reply=reply,
+            )
+        if final and self.push is not None:
+            await self._push_terminal(item_id, task_id)
+
+    async def _push_terminal(self, item_id: str, task_id: str) -> None:
+        """Submit one push item per registered target of a terminal task (R013.2).
+
+        The task is already terminal, so a failure here never fails the run.
+        """
+        from arbora import work_items
+
+        try:
+            item = await asyncio.to_thread(
+                work_items.get_work_item, self._engine()[1], item_id
+            )
+            if isinstance(item, dict):
+                await asyncio.to_thread(self.push.enqueue, task_id, item)
+        except Exception:  # noqa: BLE001 - terminal state is already committed
+            logging.getLogger(__name__).exception("a2a push enqueue failed")
+
+    async def _publish_event(
+        self,
+        item_id: str,
+        claim: Any,
+        *,
+        task_id: str,
+        context_id: str,
+        kind: str,
+        state: str | None,
+        final: bool,
+        reply: str | None,
+    ) -> None:
         draft: dict[str, Any] = {
             "task_id": task_id,
             "context_id": context_id,
