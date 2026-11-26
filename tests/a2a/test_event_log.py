@@ -271,6 +271,9 @@ def test_a_stream_goes_live_on_a_signal_and_ends_on_the_terminal_event(
         assert not waiter.done()
         await log.publish(ITEM, _draft("completed", final=True), claim=claim)
         await waiter
+        # The final event is written but the WorkItem is not terminal yet.
+        assert await stream.batch() == [] and not stream.finished
+        engine.work_items.commit_result(work_item_id=ITEM, outcome="succeeded")
         seen += [r["event_seq"] for r in await stream.batch()]
         stream.close()
         assert stream.finished

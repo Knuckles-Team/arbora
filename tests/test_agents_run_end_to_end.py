@@ -30,6 +30,7 @@ from arbora.api.registry import Registry, Surface
 from arbora.core.settings import runtime_config
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.run_origin import RunOriginRegistry
+from tests.a2a._support import streaming_model
 from tests.a2a.test_operation_bridge import session
 from tests.api._support import make_verified_caller
 from tests.api.test_invoke_contract import FixtureRuntime, setup_services
@@ -280,7 +281,6 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
 
     monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)
     from pydantic_ai.messages import ModelResponse, TextPart, UserPromptPart
-    from pydantic_ai.models.function import FunctionModel
 
     observed: list[Any] = []
 
@@ -293,7 +293,7 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
         )
         return ModelResponse(parts=[TextPart("received")])
 
-    host_ports.register_model_provider(lambda _id: FunctionModel(model))
+    host_ports.register_model_provider(lambda _id: streaming_model(model))
     parts: list[dict[str, Any]] = [{"kind": "text", "text": "say hello"}]
     if attachment_case != "none":
         content = b"attached text: maple"

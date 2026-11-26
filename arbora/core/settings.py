@@ -529,6 +529,16 @@ class ArboraConfig(BaseModel):
         alias="A2A_MAX_IMAGE_PARTS",
         description="Most image parts one A2A message may carry.",
     )
+    a2a_stream_buffer_events: int = Field(
+        default=256,
+        ge=8,
+        le=4_096,
+        alias="A2A_STREAM_BUFFER_EVENTS",
+        description=(
+            "Most events a caught-up A2A stream consumer may fall behind the "
+            "log before it is cut with a final error frame."
+        ),
+    )
     a2a_inline_media_max_bytes: int = Field(
         default=1_048_576,
         ge=1_024,

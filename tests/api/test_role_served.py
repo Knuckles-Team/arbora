@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops import agents
+from arbora.api.ops import agent_library, agents
 from arbora.api.ops import operator_surface as surface
 from tests.api._engine_double import EngineDouble, context
 
@@ -45,7 +45,14 @@ async def test_one_template_two_tenants_isolated_profiles(
             else None
         ),
     )
+    engine.serve(
+        "AgentLibrary",
+        lambda p: {
+            "entry": {"agent_id": p["op"]["agent_id"], "tools": [{"component_id": "t"}]}
+        },
+    )
     engine.install(surface)
+    engine.install(agent_library)
     monkeypatch.setattr("arbora.security.session.use_session", _noop_session)
     a2a = _A2A()
     run = next(op for op in agents.operations() if op.id == "agents.run")
@@ -53,7 +60,7 @@ async def test_one_template_two_tenants_isolated_profiles(
     for tenant in ("tenant:one", "tenant:two"):
         await agents.handle_agent(_run_context(tenant, a2a), {"message": message}, run)
     # Each run carries only its own tenant's profile reference, read by that tenant.
-    assert [sent[0] for sent in engine.sent] == ["KvGet", "KvGet"]
+    assert [s[0] for s in engine.sent] == ["KvGet", "AgentLibrary"] * 2
     assert all(m["metadata"]["profile_ref"].endswith("@7") for m in a2a.messages)
     # A tenant with no profile refuses before a run is admitted.
     with pytest.raises(OperationRefused) as unset:
