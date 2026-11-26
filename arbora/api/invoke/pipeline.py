@@ -1031,10 +1031,15 @@ def _execution_refusal(call: _Call) -> OpError | None:
     return None
 
 
-def _admission_gate(call: _Call) -> Mapping[str, str] | OpError:
-    """Admit a skill or workflow before any effect or plan (ARBORA-FLEET-R034.3)."""
+async def _admission_gate(call: _Call) -> Mapping[str, str] | OpError:
+    """Admit a skill or workflow before any effect or plan (ARBORA-FLEET-R034.3, R034.9)."""
+    gate = call.services.admission
     try:
-        return call.services.admission.evaluate(call.op.id, call.arguments).evidence
+        evidence = dict(gate.evaluate(call.op.id, call.arguments).evidence)
+        bound = await gate.evaluate_bound(
+            call.op.id, call.arguments, call.caller, call.services.policy_gate
+        )
+        return {**evidence, **bound.evidence}
     except AdmissionRefused as refusal:
         return OpError(refusal.code, refusal.detail, source="arbora")
 
@@ -1491,7 +1496,7 @@ async def invoke(
         input_records,
         hooks_enabled,
     )
-    admitted = _admission_gate(call)
+    admitted = await _admission_gate(call)
     if isinstance(admitted, OpError):
         return admitted
     call = replace(call, admission_evidence=admitted)
