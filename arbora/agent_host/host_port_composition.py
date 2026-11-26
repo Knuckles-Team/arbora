@@ -18,12 +18,15 @@ from types import SimpleNamespace
 from typing import Any
 
 from arbora.agent_host.host_port_adapters import (
+    ChangesetSeams,
     EngineDecisionAdapter,
     HostPortsBinding,
     RunCall,
     approval_waiter,
     bind_host_ports,
+    changeset_submitter_factory,
     decision_port,
+    gate_runner_factory,
     liveness_wait,
     plan_confirmer,
     run_trace_sink,
@@ -128,6 +131,8 @@ class PortBackends:
     ) = None
     terminal_extension: Callable[[str], Mapping[str, Any]] | None = None
     encode: Callable[[Any], bytes] | None = None
+    changeset: ChangesetSeams | None = None
+    sandbox_verified: Callable[[], bool] | None = None
 
 
 def compose_host_ports(
@@ -184,4 +189,11 @@ def compose_host_ports(
             call, resolve_run, backends.terminal_extension, backends.encode
         )
         ports["run_trace"] = run_trace_sink(receipts.commit)
+    if backends.changeset is not None and backends.sandbox_verified is not None:
+        ports["changeset_submitter"] = changeset_submitter_factory(
+            call, backends.changeset, backends.sandbox_verified
+        )
+        ports["gate_runner"] = gate_runner_factory(
+            backends.changeset, backends.sandbox_verified
+        )
     return bind_host_ports(**ports)

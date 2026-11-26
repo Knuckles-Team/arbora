@@ -263,6 +263,7 @@ class HostSeams:
         Callable[[Mapping[str, Any], str], Awaitable[Mapping[str, Any]]] | None
     ) = None
     clock_ms: Callable[[], int] = wall_clock_ms
+    changeset: Any = None
 
 
 def production_backends(
@@ -288,4 +289,6 @@ def production_backends(
             resolve_run, terminals, seams.clock_ms
         ),
         encode=encode_step,
+        changeset=seams.changeset,
+        sandbox_verified=seams.sandbox_verified,
     )
