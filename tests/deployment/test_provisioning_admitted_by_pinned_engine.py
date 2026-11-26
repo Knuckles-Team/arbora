@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 from medulla.server_binary import resolve_server_binary
 
-from tests.test_real_boot import _heavy_engine_slot
+from tests.test_real_boot import HEAVY_BOOT_TEST_TIMEOUT_S, _heavy_engine_slot
 
 # Loaded hosts start the engine slowly; the wait is bounded, never unbounded.
 _START_DEADLINE_S = 240
@@ -40,6 +40,9 @@ def _wait_for_port(port: int) -> None:
 
 @pytest.mark.spec("ARBORA-DEPLOY-R020")
 @pytest.mark.spec("ARBORA-DEPLOY-R020.3")
+# The default 120 s ends the worker with no reason while the engine projects
+# the two packs (about 100 s idle) or while the slot is held by another boot.
+@pytest.mark.timeout(HEAVY_BOOT_TEST_TIMEOUT_S)
 def test_fresh_store_accepts_all_arbora_content(tmp_path: Path) -> None:
     # The engine boots several GB into memory, the same as the real-boot
     # stack; the shared host-wide slot keeps the suite's peak at one engine.
