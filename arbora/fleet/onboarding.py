@@ -27,6 +27,7 @@ import contextlib
 import hashlib
 import json
 import logging
+import random
 import threading
 from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field, replace
@@ -40,6 +41,11 @@ from arbora.fleet.declarations import (
     Declarations,
     entry_bytes,
     parse_declaration,
+)
+from arbora.fleet.onboarding_machine import (
+    OnboardingEvent,
+    OnboardingState,
+    transition,
 )
 from arbora.fleet.surfaces import pack_surface_report
 from arbora.security.anonymous import session_context
@@ -59,6 +65,10 @@ HANDSHAKE_DEBOUNCE_S = 2.0
 RETRY_BASE_S = 5.0
 RETRY_CAP_S = 300.0
 RETRY_MAX_ATTEMPTS = 6
+#: The slow-retry period out of ``failed``, once the process lease is Live (R080.2).
+SLOW_RETRY_S = 60.0
+#: The states in which a new handshake joins the worker that is already running.
+_JOINABLE = frozenset({OnboardingState.DEBOUNCING, OnboardingState.RUNNING})
 #: The engine code that holds a large pack shrink for operator approval.
 MASS_WITHDRAWAL_CODE = "PACK_MASS_WITHDRAWAL"
 
@@ -1106,6 +1116,7 @@ class HandshakeOnboarder:
     _latest: dict[str, _Handshake] = field(default_factory=dict)
     _active: dict[str, threading.Thread] = field(default_factory=dict)
     _seq: int = 0
+    _state_lock: threading.RLock = field(default_factory=threading.RLock)
 
     def notify(
         self,
@@ -1120,11 +1131,32 @@ class HandshakeOnboarder:
         try:
             with self._lock:
                 self._seq += 1
-                self._latest[connector] = _Handshake(
-                    self._seq, server_version, digest, reason
-                )
+                info = _Handshake(self._seq, server_version, digest, reason)
+                self._latest[connector] = info
                 if connector in self._active:
+                    # Joined to the running worker: Debouncing coalesces and
+                    # Running joins; Backoff keeps waiting and uses ``info``.
+                    if self._state(connector) in _JOINABLE:
+                        self._record(connector, info, OnboardingEvent.REGISTERED, 0, "")
                     return
+                state = self._state(connector)
+                if state is OnboardingState.IDLE:
+                    self._record(connector, info, OnboardingEvent.REGISTERED, 0, "")
+                elif state is OnboardingState.AWAITING_APPROVAL:
+                    # A new handshake after the operator's decision is the
+                    # approval: the pass runs again and is held again if it
+                    # still is not approved.
+                    self._record(connector, info, OnboardingEvent.APPROVED, 0, "")
+                elif state is OnboardingState.FAILED:
+                    if self._lease_live():
+                        self._record(
+                            connector, info, OnboardingEvent.AUTHORITY_LIVE, 0, ""
+                        )
+                        self._record(
+                            connector, info, OnboardingEvent.RETRY_ELAPSED, 0, ""
+                        )
+                    else:
+                        return  # the slow retry waits for the live lease
                 thread = threading.Thread(
                     target=self._work,
                     args=(connector,),
@@ -1147,6 +1179,23 @@ class HandshakeOnboarder:
     def _sleep(self, seconds: float) -> bool:
         return (self.wait or self.stop.wait)(seconds)
 
+    def _state(self, connector: str) -> OnboardingState:
+        raw = self.onboarding.handshake.get(connector, {}).get("state", "idle")
+        try:
+            return OnboardingState(raw)
+        except ValueError:
+            return OnboardingState.IDLE
+
+    def _lease_live(self) -> bool:
+        """True while the process credential lease is Live (ARBORA-IDENTITY-R027.1)."""
+
+        from arbora.security.actor_context import LeaseState
+
+        actor = getattr(self.onboarding.session, "actor", None)
+        lease = getattr(actor, "credential_lease", None)
+        state = getattr(lease, "state", None)
+        return lease is None or state is LeaseState.LIVE
+
     def _work(self, connector: str) -> None:
         try:
             self._loop(connector)
@@ -1156,39 +1205,73 @@ class HandshakeOnboarder:
             with self._lock:
                 self._active.pop(connector, None)
 
+    def _info(self, connector: str) -> _Handshake:
+        with self._lock:
+            return self._latest[connector]
+
     def _loop(self, connector: str) -> None:
         attempts = 0
-        fresh = True
-        while True:
-            if fresh and self._sleep(self.debounce_s):
+        if self._state(connector) is OnboardingState.DEBOUNCING:
+            if self._sleep(self.debounce_s):
                 return
-            fresh = False
-            with self._lock:
-                info = self._latest[connector]
+            self._record(
+                connector,
+                self._info(connector),
+                OnboardingEvent.DEBOUNCE_ELAPSED,
+                0,
+                "",
+            )
+        while True:
+            info = self._info(connector)
             endpoint = next((e for e in self.endpoints() if e.name == connector), None)
             if endpoint is None:
                 return  # not a fleet endpoint: nothing to onboard
             status, error = self._attempt(endpoint, info)
             self.passes_run += 1
             if status == "ok":
+                self._record(
+                    connector, info, OnboardingEvent.PASS_OK, 0, "", outcome=error
+                )
                 with self._lock:
                     if self._latest[connector].seq == info.seq:
                         self._active.pop(connector, None)
                         return
-                attempts = 0  # a newer handshake arrived mid-pass: run again
-                fresh = True
+                # A newer handshake arrived mid-pass: debounce and run again.
+                attempts = 0
+                newest = self._info(connector)
+                self._record(connector, newest, OnboardingEvent.REGISTERED, 0, "")
+                if self._sleep(self.debounce_s):
+                    return
+                self._record(connector, newest, OnboardingEvent.DEBOUNCE_ELAPSED, 0, "")
                 continue
             attempts += 1
             if status == "held":
-                self._record(connector, info, "awaiting_approval", attempts, error)
-                return
-            if attempts >= self.max_attempts:
-                self._record(connector, info, "failed", attempts, error)
+                self._record(connector, info, OnboardingEvent.HELD, attempts, error)
                 return
             delay = min(self.retry_cap_s, self.retry_base_s * 2 ** (attempts - 1))
-            self._record(connector, info, "failed", attempts, error, delay)
+            self._record(
+                connector, info, OnboardingEvent.PASS_ERR, attempts, error, delay
+            )
+            if self._state(connector) is OnboardingState.FAILED:
+                if not self._await_live_lease(connector, info):
+                    return
+                attempts = 0
+                continue
             if self._sleep(delay):
                 return
+            self._record(connector, info, OnboardingEvent.RETRY_ELAPSED, attempts, "")
+
+    def _await_live_lease(self, connector: str, info: _Handshake) -> bool:
+        """The slow-retry edge out of ``failed``: wait for a Live lease, then retry."""
+
+        while True:
+            period = SLOW_RETRY_S * (1 + 0.2 * random.random())  # noqa: S311 - jitter only
+            if self._sleep(period):
+                return False
+            if self._lease_live():
+                self._record(connector, info, OnboardingEvent.AUTHORITY_LIVE, 0, "")
+                self._record(connector, info, OnboardingEvent.RETRY_ELAPSED, 0, "")
+                return True
 
     def _attempt(self, endpoint: FleetEndpoint, info: _Handshake) -> tuple[str, str]:
         """Run one pass; return ``("ok", outcome)``, ``("held", e)`` or ``("error", e)``."""
@@ -1202,14 +1285,15 @@ class HandshakeOnboarder:
             with use_actor(session.actor), use_session(session):
                 outcome = asyncio.run(self._pass(endpoint, info, trigger))
         except Exception as exc:
-            if MASS_WITHDRAWAL_CODE in str(exc):
+            if getattr(
+                exc, "code", None
+            ) == MASS_WITHDRAWAL_CODE or MASS_WITHDRAWAL_CODE in str(exc):
                 logger.warning(
                     "%s: handshake pass awaits mass-withdrawal approval", endpoint.name
                 )
                 return "held", _failure(exc)
             logger.warning("%s: handshake onboarding failed: %s", endpoint.name, exc)
             return "error", _failure(exc)
-        self._record(endpoint.name, info, outcome, 0, "")
         return "ok", outcome
 
     async def _pass(
@@ -1233,27 +1317,40 @@ class HandshakeOnboarder:
         self,
         connector: str,
         info: _Handshake,
-        state: str,
+        event: OnboardingEvent,
         attempts: int,
         error: str,
         retry_in_s: float | None = None,
+        *,
+        outcome: str = "",
     ) -> None:
-        record: dict[str, Any] = {
-            "reason": info.reason,
-            "state": state,
-            "attempts": attempts,
-            "server_version": info.server_version,
-            "catalog_digest": info.digest,
-        }
-        if error:
-            record["error"] = error
-        if retry_in_s is not None:
-            record["retry_in_s"] = retry_in_s
-        self.onboarding.handshake[connector] = record
-        current = self.multiplexer._fleet_onboarding
-        self.multiplexer._fleet_onboarding = merge_handshake_records(
-            dict(current or {}), {connector: record}
-        )
+        """The only caller of ``transition``: apply ``event`` and record the result."""
+
+        with self._state_lock:
+            state = transition(
+                self._state(connector),
+                event,
+                attempts_left=attempts < self.max_attempts,
+                lease_live=self._lease_live(),
+            )
+            record: dict[str, Any] = {
+                "reason": info.reason,
+                "state": state.value,
+                "attempts": attempts,
+                "server_version": info.server_version,
+                "catalog_digest": info.digest,
+            }
+            if outcome:
+                record["outcome"] = outcome
+            if error:
+                record["error"] = error
+            if retry_in_s is not None:
+                record["retry_in_s"] = retry_in_s
+            self.onboarding.handshake[connector] = record
+            current = self.multiplexer._fleet_onboarding
+            self.multiplexer._fleet_onboarding = merge_handshake_records(
+                dict(current or {}), {connector: record}
+            )
 
 
 def configured_served_url() -> str:
