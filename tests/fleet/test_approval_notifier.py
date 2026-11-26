@@ -167,48 +167,78 @@ def _row(suffix: str, gate_class: str, issued: int) -> dict[str, Any]:
     }
 
 
-# spec: ARBORA-OPS-R918.5
-def test_digest_counts_by_class_and_delivers_one_notice_per_owner() -> None:
-    rows = [
-        _row("a", "publishing", 1_000),
-        _row("b", "publishing", 4_000),
-        _row("c", "money_movement", 2_000),
-        _row("old", "publishing", 10),
-    ]
-    engine = Engine([])
-    notifier = Notifier()
-    context = SimpleNamespace(
+def _digest_context(rows: list[dict[str, Any]], notifier: Notifier) -> SimpleNamespace:
+    return SimpleNamespace(
         caller=SimpleNamespace(principal="s", tenant="t", roles=()),
         client=SimpleNamespace(control_leases=_Leases(rows)),
         services={
             "now_ms": lambda: 5_000,
             "approval_digest_delivery": digest_delivery(
-                role_holders(engine.send), notifier
+                role_holders(Engine([]).send), notifier
             ),
         },
     )
 
-    async def digest(**params: Any) -> dict[str, Any]:
-        return await approvals.handle_approvals_digest(
+
+_ROWS = [
+    ("a", "publishing", 1_000),
+    ("b", "publishing", 4_000),
+    ("c", "money_movement", 2_000),
+    ("old", "publishing", 10),
+]
+_BY_CLASS = [
+    {"gate_class": "money_movement", "pending": 1, "oldest_age_ms": 3_000},
+    {"gate_class": "publishing", "pending": 2, "oldest_age_ms": 4_000},
+]
+
+
+# spec: ARBORA-OPS-R918.5
+def test_digest_read_counts_by_class_and_has_no_effects() -> None:
+    notifier = Notifier()
+    context = _digest_context([_row(*r) for r in _ROWS], notifier)
+    read = asyncio.run(
+        approvals.handle_approvals_digest(
             context,
-            {"since_ms": 0, "deliver": False, **params},
+            {"since_ms": 100},
             None,  # type: ignore[arg-type]
         )
+    )
+    assert read == {"by_class": _BY_CLASS, "cursor_ms": 5_000}
+    assert notifier.sent == []
+    spec = {op.id: op for op in approvals.operations()}["approvals.digest"]
+    assert spec.effect.value == "read"
+    assert "deliver" not in spec.params.model_fields
 
-    first = asyncio.run(digest(since_ms=100, deliver=True))
-    assert first["by_class"] == [
-        {"gate_class": "money_movement", "pending": 1, "oldest_age_ms": 3_000},
-        {"gate_class": "publishing", "pending": 2, "oldest_age_ms": 4_000},
-    ]
-    assert first["cursor_ms"] == 5_000 and first["delivered"] == 2
+
+# spec: ARBORA-OPS-R918.5.1
+def test_digest_send_delivers_one_notice_per_owner_and_refuses_without_a_channel() -> (
+    None
+):
+    notifier = Notifier()
+    context = _digest_context([_row(*r) for r in _ROWS], notifier)
+    sent = asyncio.run(
+        approvals.handle_approvals_digest_send(
+            context,
+            {"since_ms": 100},
+            None,  # type: ignore[arg-type]
+        )
+    )
+    assert sent["by_class"] == _BY_CLASS
+    assert sent["cursor_ms"] == 5_000 and sent["delivered"] == 2
     assert sorted(r for r, _ in notifier.sent) == ["p:boss", "p:ed2"]
     assert all("SECRET" not in m and "publishing: 2" in m for _, m in notifier.sent)
+    spec = {op.id: op for op in approvals.operations()}["approvals.digest.send"]
+    assert spec.verb.value == "act" and spec.effect.value == "write"
 
-    # No delivery channel bound: a delivery request refuses, a read does not.
     context.services.pop("approval_digest_delivery")
-    assert asyncio.run(digest())["delivered"] == 0
     with pytest.raises(OperationRefused) as unbound:
-        asyncio.run(digest(deliver=True))
+        asyncio.run(
+            approvals.handle_approvals_digest_send(
+                context,
+                {"since_ms": 0},
+                None,  # type: ignore[arg-type]
+            )
+        )
     assert unbound.value.code == "UNAVAILABLE"
 
 
