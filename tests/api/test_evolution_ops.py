@@ -85,14 +85,21 @@ def test_operations_declare_scopes_effects_and_keys() -> None:
 async def test_status_reaches_runner_with_tenant_and_declares_loops_read(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _serve(monkeypatch, "LoopStatus")
-    reply = {"state": "running", "last_run_ms": 5, "next_run_ms": 9}
-    client = _Client({"LoopStatus": {**reply, "internal": "dropped"}})
+    _serve(monkeypatch, "Loops")
+    view = {
+        "instance": {"state": "running", "loop_id": "L1"},
+        "transitions": [{"at_ms": 5}, {"at_ms": 9}],
+    }
+    client = _Client({"Loops": view})
     answer = await evolution.handle_loops_status(
         _context(client, monkeypatch), {"loop_id": "L1"}, OPS["evolution.loops.status"]
     )
-    assert answer == {"value": reply}
-    assert client.sent == [("LoopStatus", {"loop_id": "L1"}, "tenant-content")]
+    assert answer == {
+        "value": {"state": "running", "last_run_ms": 9, "next_run_ms": None}
+    }
+    assert client.sent == [
+        ("Loops", {"op": {"op": "get", "loop_id": "L1"}}, "tenant-content")
+    ]
     assert client.claims == [{"principal": "alice"}]
     assert OPS["evolution.loops.status"].scopes == {"loops:read"}
 
@@ -102,7 +109,7 @@ async def test_status_reaches_runner_with_tenant_and_declares_loops_read(
 async def test_status_unknown_loop_is_not_found(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _serve(monkeypatch, "LoopStatus")
+    _serve(monkeypatch, "Loops")
     context = _context(_Client({}, refuse="NOT_FOUND"), monkeypatch)
     with pytest.raises(EngineRefusal) as refused:
         await evolution.handle_loops_status(
@@ -116,24 +123,23 @@ async def test_status_unknown_loop_is_not_found(
 @pytest.mark.spec("ARBORA-OPS-R022.2.5")
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("op_id", "handler", "method"),
+    ("op_id", "handler", "shape"),
     [
-        ("evolution.loops.status", evolution.handle_loops_status, "LoopStatus"),
-        ("evolution.loops.run", evolution.handle_loops_run, "LoopRun"),
-        ("evolution.loops.pause", evolution.handle_loops_pause, "LoopPause"),
+        ("evolution.loops.status", evolution.handle_loops_status, "LoopOpGet"),
+        ("evolution.loops.run", evolution.handle_loops_run, "JobOpSubmit"),
+        ("evolution.loops.pause", evolution.handle_loops_pause, "JobOpSchedulePause"),
     ],
 )
-async def test_pinned_engine_refuses_naming_the_missing_method(
-    monkeypatch: pytest.MonkeyPatch, op_id: str, handler: Any, method: str
+async def test_pinned_engine_refuses_naming_the_missing_shape(
+    monkeypatch: pytest.MonkeyPatch, op_id: str, handler: Any, shape: str
 ) -> None:
-    monkeypatch.setattr(
-        generated, "METHOD_IDS", frozenset(generated.METHOD_IDS) - {method}
-    )
+    monkeypatch.delattr(generated.models, shape, raising=False)
     client = _Client({})
+    params = {"loop_id": "L1", "kind": {}}
     with pytest.raises(OperationRefused) as refused:
-        await handler(_context(client, monkeypatch), {"loop_id": "L1"}, OPS[op_id])
+        await handler(_context(client, monkeypatch), params, OPS[op_id])
     assert refused.value.code == "UNAVAILABLE"
-    assert refused.value.details["missing"] == method
+    assert refused.value.details["missing"] == shape
     assert client.sent == []
 
 
@@ -207,15 +213,19 @@ async def test_proposals_list_reaches_runner_with_tenant_and_fails_closed(
 async def test_run_requires_loops_control_and_key(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _serve(monkeypatch, "LoopRun")
-    client = _Client({"LoopRun": {"job_id": "job-1"}})
+    _serve(monkeypatch)
+    client = _Client({"AnalyticsJob": {"id": "job-1"}})
     context = _context(client, monkeypatch)
+    kind = {"ProgramOptimize": {}}
     for _ in range(2):
         answer = await evolution.handle_loops_run(
-            context, {"loop_id": "L1"}, OPS["evolution.loops.run"]
+            context, {"loop_id": "L1", "kind": kind}, OPS["evolution.loops.run"]
         )
         assert answer == {"value": {"job_id": "job-1"}}
     assert client.keys == ["key-1", "key-1"]
+    assert client.sent[0][1] == {
+        "op": {"Submit": {"graph": "tenant-content", "kind": kind, "purpose": "L1"}}
+    }
     assert OPS["evolution.loops.run"].scopes == {"loops:control"}
     assert OPS["evolution.loops.run"].effect is Effect.WRITE
     assert OPS["evolution.loops.run"].idempotency.name == "KEY_REQUIRED"
@@ -226,15 +236,17 @@ async def test_run_requires_loops_control_and_key(
 async def test_pause_requires_loops_control_and_is_idempotent(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _serve(monkeypatch, "LoopPause")
-    client = _Client({"LoopPause": {"state": "paused"}})
+    _serve(monkeypatch)
+    client = _Client({"AnalyticsJob": {"state": "paused", "name": "L1"}})
     context = _context(client, monkeypatch)
     for _ in range(2):
         answer = await evolution.handle_loops_pause(
             context, {"loop_id": "L1"}, OPS["evolution.loops.pause"]
         )
         assert answer == {"value": {"state": "paused"}}
-    assert client.sent[-1] == ("LoopPause", {"loop_id": "L1"}, "tenant-content")
+    assert client.sent[-1][1] == {
+        "op": {"SchedulePause": {"name": "L1", "graph": "tenant-content"}}
+    }
     assert OPS["evolution.loops.pause"].scopes == {"loops:control"}
     refusing = _context(_Client({}, refuse="NOT_FOUND"), monkeypatch)
     with pytest.raises(EngineRefusal) as unknown:
