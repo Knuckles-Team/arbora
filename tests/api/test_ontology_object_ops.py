@@ -11,6 +11,7 @@ from pydantic import ValidationError
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import ontology_objects as oo
 from arbora.api.registry import Effect, Verb
+from tests.test_served_operation_api import served  # noqa: F401
 
 NO_OP: Any = None
 
@@ -244,11 +245,82 @@ async def test_document_process_returns_the_enrichment_as_the_job(
 
 
 @pytest.mark.spec("ARBORA-OPS-R908")
-async def test_function_invoke_refuses_until_it_resolves_through_the_registry() -> None:
-    assert "ontology.functions.invoke" in {o.id for o in oo.operations()}
-    with pytest.raises(OperationRefused) as refused:
-        await oo.handle_unserved(_context(), {}, NO_OP)
-    assert refused.value.code == "UNAVAILABLE"
+def test_the_registry_marks_functions_and_every_mark_is_a_read() -> None:
+    from arbora.api.ops.registry_factory import get_registry
+    from arbora.api.registry import Effect
+
+    registry = get_registry()
+    marked = [op for op in registry if op.function]
+    assert marked and all(op.effect is Effect.READ for op in marked)
+    assert registry["eg.compute.PageRank"].function
+    assert not registry["memory.list"].function
+    assert not registry["ontology.functions.invoke"].function
+    invoke = registry["ontology.functions.invoke"]
+    assert invoke.effect is Effect.READ and invoke.scopes == frozenset({"kg:read"})
+
+
+@pytest.mark.spec("ARBORA-OPS-R908")
+async def test_function_invoke_runs_only_a_marked_operation_through_the_pipeline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.api.ops.registry_factory import get_registry
+
+    registry = get_registry()
+    seen: list[tuple[str, dict[str, Any], bool]] = []
+
+    async def pipeline(context: Any, op_id: str, args: Any, *, only: Any = None) -> Any:
+        target = registry.get(op_id)
+        seen.append((op_id, dict(args), bool(only(target)) if target else False))
+        if target is None or not only(target):
+            raise OperationRefused("NOT_FOUND")
+        return {"ranked": []}
+
+    monkeypatch.setattr(oo, "invoke_registered", pipeline)
+    reply = await oo.handle_functions_invoke(
+        _context(), {"function": "eg.compute.PageRank", "args": {"k": 1}}, NO_OP
+    )
+    assert reply == {"value": {"result": {"ranked": []}}}
+    for refused_name in ("memory.list", "ontology.functions.invoke", "no.such"):
+        with pytest.raises(OperationRefused) as refused:
+            await oo.handle_functions_invoke(
+                _context(), {"function": refused_name, "args": {}}, NO_OP
+            )
+        assert refused.value.code == "NOT_FOUND"
+    assert seen[0] == ("eg.compute.PageRank", {"k": 1}, True)
+
+
+@pytest.mark.spec("ARBORA-OPS-R908")
+def test_function_invoke_is_served_under_the_function_scope(
+    served: Any,  # noqa: F811
+) -> None:
+    from tests.test_served_operation_api import _call
+
+    app, _client = served
+    scope = _call(
+        app,
+        "ontology.functions.invoke",
+        {"function": "eg.compute.GetBlastRadius", "args": {}},
+    )
+    # The caller holds kg:read, not the function's own compute scope.
+    assert scope.json()["error"]["code"] == "SCOPE_REQUIRED", scope.text
+    # A service-only function stays service-only behind its name.
+    service = _call(
+        app,
+        "ontology.functions.invoke",
+        {"function": "eg.compute.PageRank", "args": {}},
+    )
+    assert service.json()["error"]["code"] == "PRINCIPAL_NOT_ALLOWED", service.text
+    unmarked = _call(
+        app, "ontology.functions.invoke", {"function": "memory.list", "args": {}}
+    )
+    absent = _call(
+        app, "ontology.functions.invoke", {"function": "no.such.fn", "args": {}}
+    )
+    assert (
+        unmarked.json()["error"]["code"]
+        == absent.json()["error"]["code"]
+        == "NOT_FOUND"
+    )
 
 
 @pytest.mark.spec("ARBORA-OPS-R908")
