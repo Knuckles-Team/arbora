@@ -256,6 +256,7 @@ def _method_op(row: dict[str, Any], scopes: dict[str, str]) -> OpSpec:
         audit=AuditClass.EVENT
         if effect is not Effect.READ or policy.get("audited") is True
         else AuditClass.NONE,
+        function=domain == "compute" and effect is Effect.READ,
     )
 
 

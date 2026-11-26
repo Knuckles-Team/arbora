@@ -230,6 +230,11 @@ EXTERNAL_EFFECT_OPERATIONS: tuple[str, ...] = (
     "roles.instances.update",
     "workflows.create",
     "workflows.run",
+    "a2a.media.upload",
+    "schedules.create",
+    "schedules.pause",
+    "schedules.resume",
+    "schedules.update",
 )
 
 
