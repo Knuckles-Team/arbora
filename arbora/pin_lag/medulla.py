@@ -21,6 +21,10 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
 __all__ = [
+    "ADMISSION_MODELS",
+    "CLAIM_IDENTITY_FIELDS",
+    "admission_models",
+    "require_claim_identity",
     "OUTBOX_MODELS",
     "PinLagUnavailable",
     "refusal",
@@ -30,6 +34,24 @@ __all__ = [
 
 #: The request shapes of the engine outbox pull and acknowledge.
 OUTBOX_MODELS: tuple[str, ...] = ("MutationOutboxOpPull", "MutationOutboxOpAck")
+
+#: The typed ``Decide`` answers the confirm deciders read, and the identity digests a
+#: ``ClaimWorkItem`` result carries for the run trace (engine ``main``, unreleased).
+ADMISSION_MODELS: tuple[str, ...] = (
+    "ToolActionAnswer",
+    "HeldItemAnswer",
+    "FamilyAnswerToolActionAdmission",
+    "FamilyAnswerHeldItemAdmission",
+)
+CLAIM_IDENTITY_FIELDS: tuple[str, ...] = (
+    "capability_digest",
+    "catalog_digest",
+    "model_digest",
+    "policy_digest",
+    "delegator_id",
+    "selected_agent_id",
+    "delegation_id",
+)
 
 
 def require_methods(*names: str) -> None:
@@ -57,3 +79,26 @@ def refusal(error: PinLagUnavailable) -> OperationRefused:
         "missing": error.missing,
     }
     return OperationRefused("UNAVAILABLE", details)
+
+
+def admission_models() -> Any:
+    """The typed admission answer models, or refuse naming the first one missing."""
+    from types import SimpleNamespace
+
+    require_models(ADMISSION_MODELS)
+    from medulla.generated import models
+
+    return SimpleNamespace(**{name: getattr(models, name) for name in ADMISSION_MODELS})
+
+
+def require_claim_identity() -> None:
+    """Return once the claim answer carries every identity digest, else name the first missing."""
+    from medulla.generated import models
+
+    claim = getattr(models, "ClaimWorkItemResult", None)
+    if claim is None:
+        raise PinLagUnavailable("ClaimWorkItemResult")
+    declared = getattr(claim, "model_fields", {})
+    for name in CLAIM_IDENTITY_FIELDS:
+        if name not in declared:
+            raise PinLagUnavailable(f"ClaimWorkItemResult.{name}")

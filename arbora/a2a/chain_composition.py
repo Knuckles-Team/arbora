@@ -17,6 +17,7 @@ from typing import Any
 
 from .approval import PendingCallBinding
 from .confirm import ApprovalChain, RegisteredKeyProducer
+from .engine_deciders import AskDecide, EngineHeldItemDecider, EngineToolActionDecider
 from .grant_store import HumanGrantStore
 from .held_item_admission import HeldItemAdmitter, HeldItemDecider
 from .tool_action_admission import ToolActionAdmitter, ToolActionDecider
@@ -94,9 +95,17 @@ def compose_approval_chain(
     current_session: Callable[[], Any],
     tool_decider: ToolActionDecider | None = None,
     held_decider: HeldItemDecider | None = None,
+    ask_decide: AskDecide | None = None,
     timeout_s: float | None = None,
 ) -> ApprovalChain:
-    """Grant store, key authority, audit and the two admitters over the engine."""
+    """Grant store, key authority, audit and the two admitters over the engine.
+
+    ``ask_decide`` binds both engine deciders over one ``Decide`` seam; an explicit
+    decider wins. With neither, the admitter stays unbound and confirm refuses closed.
+    """
+    if ask_decide is not None:
+        tool_decider = tool_decider or EngineToolActionDecider(ask_decide)
+        held_decider = held_decider or EngineHeldItemDecider(ask_decide)
     audit = audit_sink(audit_adapter, current_session)
     return ApprovalChain(
         HumanGrantStore(leases, lease_kind=LEASE_KIND),
