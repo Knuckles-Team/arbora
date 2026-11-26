@@ -270,3 +270,39 @@ async def test_a_pinned_engine_without_toc_digest_refuses_naming_it() -> None:
         )
     assert refused.value.code == "UNAVAILABLE"
     assert refused.value.details["missing"] == "MethodReadSpanParams.toc_digest"
+
+
+# --- the verified agent reference (ARBORA-OPS-R883) -----------------------------------------
+
+
+def _eg_op(method: str) -> Any:
+    return SimpleNamespace(binding=SimpleNamespace(kind="eg", service=method))
+
+
+def _who(kind: str, agent: str | None = None) -> Any:
+    claims = {"agent_id": agent} if agent else {}
+    return SimpleNamespace(principal_kind=kind, engine_claims=claims)
+
+
+@pytest.mark.spec("ARBORA-OPS-R883")
+def test_agent_ref_is_taken_from_identity() -> None:
+    from arbora.api.invoke.agent_ref import AGENT_REF_METHODS, bind_agent_ref
+    from arbora.api.invoke.steps import OpError
+
+    assert len(AGENT_REF_METHODS) == 6
+    for method in sorted(AGENT_REF_METHODS):
+        op = _eg_op(method)
+        agent = _who("agent", "agent:one")
+        bound = bind_agent_ref(op, {"k": 1}, agent)
+        assert bound["agent_ref"] == "agent:one" and bound["k"] == 1
+        assert (
+            bind_agent_ref(op, {"agent_ref": "agent:one"}, agent)["agent_ref"]
+            == "agent:one"
+        )
+        forged = bind_agent_ref(op, {"agent_ref": "agent:two"}, agent)
+        assert isinstance(forged, OpError) and forged.code == "AGENT_REF_FORGED"
+        human = _who("human")
+        assert "agent_ref" not in bind_agent_ref(op, {"k": 1}, human)
+        assert bind_agent_ref(op, {"agent_ref": "x"}, human).code == "AGENT_REF_FORGED"
+    other = {"k": 1, "agent_ref": "x"}
+    assert bind_agent_ref(_eg_op("GetNodesByLabel"), other, _who("human")) is other
