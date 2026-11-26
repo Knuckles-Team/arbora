@@ -25,7 +25,6 @@ from .config_generator import (
 )
 from .exit_criteria import (
     ExitCriteriaAudit,
-    ExitCriterion,
     audit_exit_criteria,
 )
 from .genesis_environments import (
@@ -71,7 +70,6 @@ __all__ = [
     "EnvironmentProfile",
     "EnvironmentProfileError",
     "ExitCriteriaAudit",
-    "ExitCriterion",
     "GateBlockedError",
     "GateReport",
     "MissingSecretReferenceError",

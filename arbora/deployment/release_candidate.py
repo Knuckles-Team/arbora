@@ -265,13 +265,53 @@ def read_candidate(path: Path, *, trusted_digest: str) -> tuple[Candidate, str]:
     return candidate, digest
 
 
+class ExitCriteriaUnmet(CandidateError):
+    """``EXIT_CRITERIA_UNMET``: obligations whose test did not pass (R003.10)."""
+
+    def __init__(self, missing: tuple[str, ...]) -> None:
+        super().__init__("EXIT_CRITERIA_UNMET")
+        self.missing = missing
+
+
+def default_matrix_path() -> Path:
+    return (
+        Path(__file__).resolve().parents[2]
+        / "deploy"
+        / "release"
+        / "exit-criteria.json"
+    )
+
+
+def audit_candidate_exit_criteria(junit: Path, matrix_path: Path | None = None) -> Any:
+    """Audit the shipped matrix against the passed ids of a junit report."""
+    from .exit_criteria import audit_exit_criteria, passed_node_ids_from_junit
+
+    raw = json.loads((matrix_path or default_matrix_path()).read_text(encoding="utf-8"))
+    matrix = read_exit_criteria_matrix(raw["rows"])
+    return audit_exit_criteria(matrix.rows, passed_node_ids_from_junit(junit))
+
+
 def plan_candidate(
-    path: Path, *, trusted_digest: str, profile_name: str
+    path: Path,
+    *,
+    trusted_digest: str,
+    profile_name: str,
+    junit: Path | None = None,
+    matrix_path: Path | None = None,
 ) -> dict[str, Any]:
-    """Validate trust, closure, ordering and the existing profile before planning."""
+    """Validate trust, closure, ordering, the profile and the exit criteria before planning.
+
+    With ``junit`` the exit-criteria matrix is audited first and a gap refuses
+    ``EXIT_CRITERIA_UNMET`` naming every missing obligation; nothing is planned.
+    """
     from .genesis_environments import EnvironmentProfileError, load_environment_profile
 
     candidate, digest = read_candidate(path, trusted_digest=trusted_digest)
+    audit = (
+        audit_candidate_exit_criteria(junit, matrix_path) if junit is not None else None
+    )
+    if audit is not None and not audit.all_satisfied:
+        raise ExitCriteriaUnmet(audit.missing)
     artifacts = _artifact_index(candidate)
     stages = _stage_index(candidate)
     graph = _dependency_graph(stages, artifacts)
@@ -291,7 +331,9 @@ def plan_candidate(
     return {
         "status": "planned",
         "executed": False,
-        "acceptance": "not_audited",
+        "acceptance": "not_audited" if audit is None else "audited",
+        "satisfied": list(audit.satisfied) if audit is not None else [],
+        "missing": [],
         "manifest_digest": digest,
         "profile_digest": binding.digest,
         "created_at": datetime.now(UTC).isoformat(),
