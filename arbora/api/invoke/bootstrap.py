@@ -191,6 +191,10 @@ def _session_graph(session: Any) -> str:
     return graph
 
 
+#: The engine's refusal when it has no natural-language planner composed.
+_NL_PLANNER_UNCONFIGURED = "NL_PLANNER_UNCONFIGURED"
+
+
 async def dispatch_eg_method(
     binding: EgMethod, params: Mapping[str, Any], context: ExecutionContext
 ) -> Any:
@@ -200,6 +204,7 @@ async def dispatch_eg_method(
     use the caller's verified claims, but must not follow the caller's content
     graph or expose a graph selector in the request.
     """
+    from medulla import EngineResponseError
     from medulla.generated import send_by_id
 
     method = _eg_method_id(binding)
@@ -255,13 +260,22 @@ async def dispatch_eg_method(
                 context=context,
                 send_uql=send_uql,
             )
-    return await send_by_id(
-        context.client,
-        method,
-        payload,
-        graph,
-        idempotency_key=context.idempotency_key,
-    )
+    try:
+        return await send_by_id(
+            context.client,
+            method,
+            payload,
+            graph,
+            idempotency_key=context.idempotency_key,
+        )
+    except EngineResponseError as exc:
+        if method == "NlQuery" and exc.code == _NL_PLANNER_UNCONFIGURED:
+            # The engine has no planner composed: the one UNAVAILABLE refusal,
+            # with no second code and no local fallback.
+            raise OperationRefused(
+                "UNAVAILABLE", {"reason": "the engine has no NL planner configured"}
+            ) from exc
+        raise
 
 
 def build_operation_runtime(

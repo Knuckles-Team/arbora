@@ -1,0 +1,222 @@
+"""Trust flags, curation review and catalog usage over the engine (ARBORA-OPS-R855.3).
+
+The engine models the glossary, stewardship and catalog as graph facts and serves
+them through ``Glossary``, ``Stewardship`` and ``CatalogRead``. Arbora holds no
+role table: a review is admitted only when the engine's own ``governance`` answer
+for the proposal's target names the verified caller as an owner or steward, and a
+caller without that role is refused ``SUBJECT_ACCESS_DENIED`` before any write.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, Literal
+
+from pydantic import Field
+
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops._common import Params, build_read_op, build_write_op
+from arbora.api.ops._engine import engine_send, unavailable
+from arbora.api.registry import OpSpec, Verb
+
+#: The engine replays each of these writes by its idempotency key.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "catalog.trust_flag.set": "medulla:Stewardship",
+    "curation.proposals.review": "medulla:Glossary",
+}
+READ_SCOPE = "kg:read"
+WRITE_SCOPE = "kg:write"
+#: ``CatalogUsage`` is a ``query:unified`` read; the engine returns principal names
+#: only to a caller holding ``catalog:usage:principals`` and counts to the rest.
+USAGE_SCOPE = "query:unified"
+
+Flag = Literal["endorsement", "warning", "deprecation"]
+ProposalKind = Literal["description", "change_request"]
+
+
+class TrustFlagParams(Params):
+    asset: str = Field(min_length=1, max_length=2048)
+    flag: Flag
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class ProposalListParams(Params):
+    state: str | None = Field(default=None, max_length=64)
+    target: str | None = Field(default=None, max_length=2048)
+    limit: int = Field(default=50, ge=1, le=200)
+    cursor: str | None = Field(default=None, max_length=512)
+
+
+class ProposalReviewParams(Params):
+    target: str = Field(min_length=1, max_length=2048)
+    proposal_id: str = Field(min_length=1, max_length=2048)
+    approve: bool
+
+
+class UsageParams(Params):
+    asset: str = Field(min_length=1, max_length=2048)
+    top_n: int | None = Field(default=None, ge=1, le=100)
+
+
+class EngineAnswer(Params):
+    """An engine answer carried as the engine sent it."""
+
+    model_config = {"extra": "allow"}
+
+
+def _mapping(answer: Any) -> dict[str, Any]:
+    if not isinstance(answer, Mapping):
+        raise unavailable("engine result malformed")
+    return dict(answer)
+
+
+async def _proposals(context: Any, request: dict[str, Any]) -> dict[str, Any]:
+    answer = _mapping(
+        await engine_send(
+            context, "CatalogRead", {"op": {"op": "proposals", **request}}
+        )
+    )
+    if not isinstance(answer.get("proposals"), list):
+        raise unavailable("engine result malformed")
+    return answer
+
+
+async def handle_trust_flag_set(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """One flag per asset with a reason; the engine records and ranks it."""
+    action = {
+        "op": "set_trust_flag",
+        "asset": params["asset"],
+        "flag": params["flag"],
+        "reason": params["reason"],
+    }
+    return _mapping(
+        await engine_send(context, "Stewardship", {"op": action}, idempotent=True)
+    )
+
+
+async def handle_proposals_list(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Description proposals and change requests, paged by the engine."""
+    request = {k: params[k] for k in ("state", "target", "cursor") if params.get(k)}
+    request["limit"] = params["limit"]
+    answer = await _proposals(context, request)
+    return {"proposals": answer["proposals"], "next_cursor": answer.get("next_cursor")}
+
+
+async def _is_steward(context: Any, target: str) -> bool:
+    """The engine's owners and stewards for ``target`` name the caller."""
+    answer = _mapping(
+        await engine_send(
+            context,
+            "CatalogRead",
+            {"op": {"op": "governance", "target": {"asset": target}}},
+        )
+    )
+    governance = answer.get("governance")
+    if not isinstance(governance, Mapping):
+        raise unavailable("engine result malformed")
+    roles = {*governance.get("owners", ()), *governance.get("stewards", ())}
+    return str(context.caller.principal) in roles
+
+
+async def handle_proposal_review(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Approve or reject one proposal as a steward the engine names."""
+    if not await _is_steward(context, params["target"]):
+        raise OperationRefused("SUBJECT_ACCESS_DENIED")
+    found = await _proposals(context, {"target": params["target"], "limit": 200})
+    proposal = next(
+        (
+            row
+            for row in found["proposals"]
+            if isinstance(row, Mapping) and row.get("id") == params["proposal_id"]
+        ),
+        None,
+    )
+    if proposal is None:
+        raise OperationRefused("NOT_FOUND", {"proposal_id": params["proposal_id"]})
+    if proposal.get("kind") == "description":
+        method = "Glossary"
+        action = {
+            "op": "review_description",
+            "proposal": params["proposal_id"],
+            "approve": params["approve"],
+        }
+    elif proposal.get("kind") == "change_request":
+        method = "Stewardship"
+        action = {
+            "op": "review",
+            "request_id": params["proposal_id"],
+            "approve": params["approve"],
+        }
+    else:
+        raise unavailable("engine result malformed")
+    receipt = await engine_send(context, method, {"op": action}, idempotent=True)
+    return {
+        "proposal_id": params["proposal_id"],
+        "kind": proposal["kind"],
+        "approved": params["approve"],
+        "receipt": _mapping(receipt),
+    }
+
+
+async def handle_catalog_usage(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Who queried an asset and how often, as the engine reports it."""
+    request: dict[str, Any] = {"asset": params["asset"]}
+    if params.get("top_n") is not None:
+        request["top_n"] = params["top_n"]
+    return _mapping(await engine_send(context, "CatalogUsage", request))
+
+
+def operations() -> tuple[OpSpec, ...]:
+    module = "arbora.api.ops.governance"
+    return (
+        build_write_op(
+            op_id="catalog.trust_flag.set",
+            summary="Flag an asset as endorsed, warned or deprecated, with a reason",
+            examples=("deprecate this table",),
+            params=TrustFlagParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_trust_flag_set",
+            scope=WRITE_SCOPE,
+        ),
+        build_read_op(
+            op_id="curation.proposals.list",
+            summary="List description proposals and change requests awaiting review",
+            examples=("list the open curation proposals",),
+            params=ProposalListParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_proposals_list",
+            scope=READ_SCOPE,
+        ),
+        build_write_op(
+            op_id="curation.proposals.review",
+            summary="Approve or reject one curation proposal as a steward",
+            examples=("approve this glossary description",),
+            params=ProposalReviewParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_proposal_review",
+            scope=WRITE_SCOPE,
+        ),
+        build_read_op(
+            op_id="catalog.usage",
+            verb=Verb.ASK,
+            summary="Read which principals query an asset and how often",
+            examples=("who uses this table",),
+            params=UsageParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_catalog_usage",
+            scope=USAGE_SCOPE,
+        ),
+    )
+
+
+specs = operations
+
+__all__ = ["NATIVE_IDEMPOTENCY", "operations", "specs"]

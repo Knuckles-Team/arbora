@@ -153,3 +153,40 @@ class McpAsk:
 @contextlib.contextmanager
 def nothing() -> Iterator[None]:
     yield
+
+
+class RecordingEngine:
+    """Records every engine method with the verified principal and answers from handlers.
+
+    One fixture for the served tests: ``route`` sends the named methods here, a
+    handler may be a canned answer, a callable ``(params, principal)`` or raise an
+    ``EngineResponseError``. ``calls`` holds ``(method, params, principal)``.
+    """
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, Any, str]] = []
+
+    def record(self, name: str, answer: Any) -> Callable[[Any, str], Any]:
+        def handle(params: Any, principal: str) -> Any:
+            self.calls.append((name, params, principal))
+            return answer(params, principal) if callable(answer) else answer
+
+        return handle
+
+    def route(
+        self,
+        client: Any,
+        monkeypatch: pytest.MonkeyPatch,
+        answers: dict[str, Any],
+        people: dict[str, ActorContext],
+    ) -> RecordingEngine:
+        route_methods(
+            client,
+            {name: self.record(name, answer) for name, answer in answers.items()},
+            monkeypatch,
+            people,
+        )
+        return self
+
+    def names(self) -> list[str]:
+        return [name for name, *_ in self.calls]
