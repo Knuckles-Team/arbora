@@ -1,5 +1,7 @@
 """Shared A2A application fixtures using the real request-session authority."""
 
+from typing import Any
+
 from fastapi import FastAPI
 
 from arbora.a2a.application import AmbientA2AAuthenticator, create_a2a_application
@@ -22,3 +24,26 @@ def authenticated_operation_app(services: InvokeServices) -> FastAPI:
             session_for_request=verified_bearer_session_for_request,
         ),
     )
+
+
+def streaming_model(function: Any) -> Any:
+    """A ``FunctionModel`` that also streams the text its ``function`` answers.
+
+    A served A2A run streams the model so its answer reaches the event log as
+    deltas (ARBORA-A2A-R001.4.1); a function model needs a stream function too.
+    """
+    import inspect
+
+    from pydantic_ai.messages import TextPart
+    from pydantic_ai.models.function import FunctionModel
+
+    async def stream(messages: Any, info: Any) -> Any:
+        response = function(messages, info)
+        if inspect.isawaitable(response):
+            response = await response
+        for part in response.parts:
+            if not isinstance(part, TextPart):
+                raise AssertionError("streaming_model answers text only")
+            yield part.content
+
+    return FunctionModel(function, stream_function=stream)

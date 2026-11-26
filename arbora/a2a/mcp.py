@@ -40,8 +40,11 @@ def register_a2a_tools(
     task_plan_config: Any = None,
     hosted_invocation: Any = None,
     approval_chain: Any = None,
-) -> None:
-    """Register one action router and the protocol-native unary routes.
+) -> Any:
+    """Register one action router and the protocol-native routes.
+
+    Returns the shared JSON-RPC handler, which also serves the streams; the SDK
+    route serves its streams through it (ARBORA-A2A-R001.4.1).
 
     The ``graph_a2a`` operation registers on ``tools`` (arbora's backing
     server, reached through ``act``) and the HTTP routes on the served ``mcp``.
@@ -106,6 +109,7 @@ def register_a2a_tools(
     # A2A clients read the card next to the endpoint the card names.
     mcp.custom_route("/a2a/.well-known/agent-card.json", methods=["GET"])(card_handler)
     mcp.custom_route("/a2a", methods=["POST"])(rpc_handler)
+    return rpc_handler
 
 
 __all__ = ["register_a2a_tools"]
