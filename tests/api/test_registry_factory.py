@@ -122,6 +122,7 @@ _CURATED_SCOPES = (
     "identity:admin",
     "approvals:read",
     "approvals:decide",
+    "query:write",
     "profile:write",
     "telemetry:write",
 )
