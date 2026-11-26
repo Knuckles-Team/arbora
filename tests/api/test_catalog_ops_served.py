@@ -16,7 +16,7 @@ from tests.api._served_support import (
 )
 from tests.test_served_operation_api import _call, _value, served  # noqa: F401
 
-ASSETS = [
+ASSETS: list[dict[str, Any]] = [
     {
         "asset": "dashboard:a",
         "kind": "DashboardAsset",
