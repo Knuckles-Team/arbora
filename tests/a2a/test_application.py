@@ -294,6 +294,11 @@ def test_json_rpc_refuses_plan_confirm_until_approval_exchange_exists() -> None:
                 "pending_call_id": "call-1",
                 "plan_ref": "plan-1",
                 "signature": "sig",
+                "confirmation_kind": "held_item",
+                "item_kind": "run_output_proposal",
+                "item_ref": "item-1",
+                "content_digest": "b" * 64,
+                "engine_decision_ref": "dec-1",
             },
         },
     )
