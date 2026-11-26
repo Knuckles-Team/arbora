@@ -18,6 +18,8 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
+from scion_sdk.http.safe_post import SsrfBlockedError
+
 from arbora.api.registry import Effect
 
 MAX_PAGES_CAP = 20
@@ -348,6 +350,13 @@ class FleetSourceExecutor:
                 request,
                 "SOURCE_BAD_RESPONSE",
                 "the source page was not a row list",
+                pages=done,
+            )
+        except SsrfBlockedError:
+            return _failure(
+                request,
+                "SOURCE_OUTBOUND_DENIED",
+                "the shared outbound guard refused the target",
                 pages=done,
             )
         except Exception as exc:
@@ -713,3 +722,136 @@ __all__ = [
     "SourceReadRequest",
     "SourceReadResult",
 ]
+
+
+# ARBORA-FLEET-R015.4: the provider side of a Medulla ``Mcp`` foreign source.
+# Medulla never calls MCP; arbora serves the call and returns rows through the
+# one executor above. No second executor, no new operation.
+
+_ROW_MAX_ROWS = (1, 10_000, 1000)
+_ROW_TIMEOUT_MS = (100, 60_000, 10_000)
+#: executor code -> the seam's code (``contracts/mcp-source-fleet-call.md``)
+SEAM_CODES = {
+    "SOURCE_NOT_GRANTED": "FOREIGN_SOURCE_UNGRANTED",
+    "SOURCE_TIMEOUT": "SOURCE_UNREACHABLE",
+    "SOURCE_UNAVAILABLE": "SOURCE_UNREACHABLE",
+    "SOURCE_BAD_RESPONSE": "SOURCE_UNREACHABLE",
+    "SOURCE_OUTBOUND_DENIED": "OUTBOUND_TARGET_DENIED",
+}
+_JSON_TYPES: dict[str, tuple[type, ...]] = {
+    "string": (str,),
+    "integer": (int,),
+    "number": (int, float),
+    "boolean": (bool,),
+    "array": (list, tuple),
+    "object": (dict,),
+}
+
+
+@dataclass(frozen=True)
+class ConnectorRowBudget:
+    max_rows: int = _ROW_MAX_ROWS[2]
+    timeout_ms: int = _ROW_TIMEOUT_MS[2]
+
+
+@dataclass(frozen=True)
+class ConnectorRowRequest:
+    """One ``McpRemote::fetch`` request; ``input_schema`` is the tool's declared one."""
+
+    source_label: str
+    server: str
+    tool: str
+    arguments: Mapping[str, Any] = field(default_factory=dict)
+    pushed_filter: Mapping[str, Any] | None = None
+    budget: ConnectorRowBudget = field(default_factory=ConnectorRowBudget)
+    input_schema: Mapping[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ConnectorRowReply:
+    source_label: str
+    rows: tuple[Any, ...] = ()
+    truncated: bool = False
+    missing_source: str | None = None
+    error_code: str | None = None
+    error_reason: str | None = None
+
+
+def _clamped(value: int, bounds: tuple[int, int, int]) -> int:
+    low, high, _ = bounds
+    return max(low, min(high, int(value)))
+
+
+def schema_mismatch(
+    schema: Mapping[str, Any], arguments: Mapping[str, Any]
+) -> str | None:
+    """The first way ``arguments`` leave the declared input schema, or ``None``."""
+    properties = schema.get("properties") or {}
+    for name in schema.get("required") or ():
+        if name not in arguments:
+            return f"missing {name}"
+    for name, value in arguments.items():
+        if name not in properties:
+            if schema.get("additionalProperties") is False:
+                return f"unknown {name}"
+            continue
+        wanted = properties[name].get("type")
+        allowed = _JSON_TYPES.get(wanted) if isinstance(wanted, str) else None
+        if allowed is not None and (
+            not isinstance(value, allowed)
+            or (isinstance(value, bool) and wanted in {"integer", "number"})
+        ):
+            return f"{name} is not {wanted}"
+    return None
+
+
+def source_read_from_connector_row(request: ConnectorRowRequest) -> SourceReadRequest:
+    """Map the seam request to the one executor request (R043.7 reuse)."""
+    arguments = dict(request.arguments)
+    properties = (request.input_schema or {}).get("properties") or {}
+    for name, value in (request.pushed_filter or {}).items():
+        if name in properties:
+            arguments[name] = value
+    return SourceReadRequest(
+        source_id=request.source_label,
+        connector=request.server,
+        tool=request.tool,
+        arguments=arguments,
+        max_rows=_clamped(request.budget.max_rows, _ROW_MAX_ROWS),
+        timeout_s=_clamped(request.budget.timeout_ms, _ROW_TIMEOUT_MS) / 1000,
+    )
+
+
+def connector_row_reply(
+    request: ConnectorRowRequest, result: SourceReadResult
+) -> ConnectorRowReply:
+    """Build ``{source_label, rows, truncated, missing_source}`` from one result."""
+    if result.error_code is None:
+        return ConnectorRowReply(request.source_label, result.rows, result.truncated)
+    return ConnectorRowReply(
+        request.source_label,
+        result.rows,
+        result.truncated,
+        missing_source=request.source_label,
+        error_code=SEAM_CODES.get(result.error_code, "SOURCE_UNREACHABLE"),
+        error_reason=result.error_reason,
+    )
+
+
+async def read_connector_row(
+    executor: FleetSourceExecutor, request: ConnectorRowRequest
+) -> ConnectorRowReply:
+    """Validate against the declared schema, then read through the executor.
+
+    A mismatch returns ``UNSUPPORTED_SEARCH_ARGUMENT`` without calling the tool.
+    """
+    mapped = source_read_from_connector_row(request)
+    mismatch = schema_mismatch(request.input_schema or {}, mapped.arguments)
+    if mismatch is not None:
+        return ConnectorRowReply(
+            request.source_label,
+            missing_source=request.source_label,
+            error_code="UNSUPPORTED_SEARCH_ARGUMENT",
+            error_reason=mismatch,
+        )
+    return connector_row_reply(request, await executor.read(mapped))

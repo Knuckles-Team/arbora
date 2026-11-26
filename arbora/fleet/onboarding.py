@@ -29,6 +29,7 @@ import json
 import logging
 import random
 import threading
+import time
 from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -338,6 +339,8 @@ class FleetOnboarding:
     surfaces: dict[str, dict[str, Any]] = field(default_factory=dict)
     #: The ``(content digest,)`` last onboarded per connector.
     seen: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    #: The last captured connect contract per connector (ARBORA-FLEET-R036).
+    contracts: dict[str, Any] = field(default_factory=dict)
     #: The handshake pass record per connector (state, attempts, last error).
     handshake: dict[str, dict[str, Any]] = field(default_factory=dict)
     #: Local policy decisions and native EG receipts, keyed by connector.
@@ -373,6 +376,24 @@ class FleetOnboarding:
                 now_ms=now_ms,
             )
 
+    def _record_contract(self, connector: str, pack: Any) -> None:
+        """Digest the captured pack and report which resource keys moved.
+
+        The engine decides what to replace and answers ``unchanged`` for equal
+        digests; this keeps no second diff authority (ARBORA-FLEET-R036.2).
+        """
+        from arbora.fleet.connect_contract import contract_delta, contract_from_pack
+
+        current = contract_from_pack(
+            connector, pack, observed_at_ms=int(time.time() * 1000)
+        )
+        changed = contract_delta(self.contracts.get(connector), current)
+        self.contracts[connector] = current
+        self.surfaces[connector]["contract"] = {
+            **current.as_dict(),
+            "changed": sorted(changed),
+        }
+
     async def onboard(
         self,
         endpoint: FleetEndpoint,
@@ -402,6 +423,7 @@ class FleetOnboarding:
         with onboarding_step("capture"):
             pack = await capture(endpoint, auth=auth)
         self.surfaces[endpoint.name] = pack_surface_report(pack)
+        self._record_contract(endpoint.name, pack)
         _remember_declaration(self.declarations, endpoint.name, pack)
         with onboarding_step("ConnectorPackStatus"):
             changed = not await self.pack_unchanged(endpoint, pack)
