@@ -154,96 +154,15 @@ _MAX_CATALOG_NODES = 131_072
 # an unbounded resource listing into the KG.
 _MAX_DISCOVERED_SKILLS = 2_048
 _SKILL_RESOURCE_RE = re.compile(r"^skill://(?P<name>[^/]+)/SKILL\.md$")
-# CONCEPT:MERISTEM-ECO.mcp.cross-process-skill-harvest — a probed child's skill
-# *bodies* are read back over the SAME already-open probe session, so a fleet
-# skill becomes runnable in arbora without co-installing the child's package
-# (AGENTS.md "Dependency discipline"). Bounded per body and in aggregate: the
-# harvest reads attacker-influenced content, so it can never be allowed to
-# dominate the probe's latency or memory budget.
-_MAX_SKILL_BODY_BYTES = 512 * 1024
-_MAX_HARVEST_TOTAL_BYTES = 8 * 1024 * 1024
-_SKILL_HARVEST_BUDGET_SEC = 120.0
-# A child enforces its OWN request rate limit, and a body harvest is the most
-# request-dense thing we ever do to one: probing a fleet child that serves the
-# whole shared skill corpus tripped "Rate limit exceeded for client: global"
-# after ~50 reads. That is the child correctly defending itself, so the harvest
-# BACKS OFF and retries rather than treating a rate-limited read as a permanent
-# failure (which would silently strand most of the corpus as un-runnable).
-_SKILL_HARVEST_MAX_ATTEMPTS = 5
-_SKILL_HARVEST_BACKOFF_SEC = 0.5
+# A skill body is never read back over the wire: the resident local-skill
+# catalog (``arbora.fleet.local_skill_catalog``) is the one source of bodies
+# (ARBORA-FLEET-R006.2 to .5).
 # Prompts-over-MCP (CONCEPT:MERISTEM-ECO.mcp.cross-process-prompt-harvest — the
-# ``prompt://`` sibling of the skill harvest above): a probed server's
+# ``prompt://`` sibling of the skill resources above): a probed server's
 # Resources may include ``prompt://{provider}/{name}`` entries served by
-# ``server_factory._register_prompt_providers``. Same bounding rationale and
-# same budget SHAPE as skills, kept as separate constants/counters so a
-# pathological prompt corpus on one child cannot eat a skill harvest's
-# budget on the same probe, or vice versa.
+# ``server_factory._register_prompt_providers``, bounded the same way.
 _MAX_DISCOVERED_PROMPTS = 2_048
 _PROMPT_RESOURCE_RE = re.compile(r"^prompt://(?P<provider>[^/]+)/(?P<name>[^/]+)$")
-_MAX_PROMPT_BODY_BYTES = 512 * 1024
-_MAX_PROMPT_HARVEST_TOTAL_BYTES = 8 * 1024 * 1024
-_PROMPT_HARVEST_BUDGET_SEC = 120.0
-
-
-class _ResourceHarvestSpec(_typing.NamedTuple):
-    """Per-resource result and safety policy for the shared body harvester."""
-
-    kind: str
-    body_field: str
-    max_body_bytes: int
-    max_total_bytes: int
-    budget_sec: float
-
-
-_SKILL_HARVEST_SPEC = _ResourceHarvestSpec(
-    "skill",
-    "instructions",
-    _MAX_SKILL_BODY_BYTES,
-    _MAX_HARVEST_TOTAL_BYTES,
-    _SKILL_HARVEST_BUDGET_SEC,
-)
-_PROMPT_HARVEST_SPEC = _ResourceHarvestSpec(
-    "prompt",
-    "body",
-    _MAX_PROMPT_BODY_BYTES,
-    _MAX_PROMPT_HARVEST_TOTAL_BYTES,
-    _PROMPT_HARVEST_BUDGET_SEC,
-)
-# Share of the ENCLOSING probe's remaining time an OPTIONAL body harvest may
-# consume (BUG-PE-054). ``_SKILL_HARVEST_BUDGET_SEC``/``_PROMPT_HARVEST_BUDGET_SEC``
-# above are 120s, but every harvest runs INSIDE ``probe_server``'s own
-# ``asyncio.wait_for(_probe(), timeout=probe_to)`` — and ``probe_to`` is the
-# per-server EG component ``timeout``, in practice 10-15s. An inner
-# best-effort budget 8-12x larger than the outer deadline it lives in is not a
-# bound at all: measured live 2026-08-25 against the homelab fleet,
-# ``fan-manager-mcp``'s prompt harvest spent 16.3s retrying two unservable
-# ``prompt://`` bodies (5 attempts each with backoff), blowing the 15s probe
-# deadline and DISCARDING the 14 tools ``list_tools`` had already returned
-# 16 seconds earlier. Six servers failed that way on every single sweep, and
-# because ``write_fleet_catalog`` only writes a discovery row for a probe that
-# bound an authority, they showed up in overstory as "0 tools" rather than as
-# unreachable. Half of what is left, taken fresh at each harvest, keeps the
-# tools/skills already in hand: skills can never spend more than half the
-# remaining probe, and prompts never more than half of what skills left.
-_HARVEST_DEADLINE_SHARE = 0.5
-
-
-def _harvest_deadline(probe_deadline: float | None, budget_sec: float) -> float:
-    """Monotonic deadline for one optional body harvest.
-
-    ``probe_deadline`` is the enclosing :meth:`MCPMultiplexer.probe_server`
-    deadline (``None`` for a caller with no probe deadline of its own, which
-    keeps the standalone ``budget_sec`` behaviour). The harvest gets whichever
-    is SOONER: its own budget, or its share of the probe time still left.
-    """
-    own = time.monotonic() + budget_sec
-    if probe_deadline is None:
-        return own
-    share = time.monotonic() + max(
-        0.0, (probe_deadline - time.monotonic()) * _HARVEST_DEADLINE_SHARE
-    )
-    return min(own, share)
-
 
 _SERVER_DISCOVERY_STOPWORDS = frozenset({"api", "mcp", "manager", "server", "service"})
 # Fleet-wide concurrent-probe ceiling (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog), shared
@@ -4992,21 +4911,6 @@ class MCPMultiplexer:
         """
         future.exception()
 
-    @staticmethod
-    def _harvest_error_reason(exc: BaseException) -> str:
-        """The reason string recorded on a skill/prompt harvest entry.
-
-        ``exc.args[0]`` (not ``str(exc)``/``repr(exc)``) so a caller-useful
-        detail (e.g. "Rate limit exceeded for client: global" -- see
-        ``test_an_unreadable_body_records_a_named_reason_and_no_body``/
-        ``..._no_instructions``, which assert on it) still reaches the
-        ``harvest_error`` field returned to the probe caller, while the
-        served-boundary exception-surface gate stays satisfied: it flags
-        ``str()``/``repr()`` calls and a bare exception name passed to a log
-        call, never attribute/subscript access on the exception object.
-        """
-        return str(exc.args[0]) if exc.args else type(exc).__name__
-
     def _release_mount_ownership(
         self, server_name: str, leader_future: asyncio.Future
     ) -> None:
@@ -5631,12 +5535,6 @@ class MCPMultiplexer:
             info = {"tools": [], "error": "invalid probe timeout"}
             return self._cache_probe(server_name, info)
 
-        # The deadline ``asyncio.wait_for`` below will enforce. The OPTIONAL
-        # skill/prompt body harvests are clamped to a share of what is left of
-        # it (:func:`_harvest_deadline`, BUG-PE-054) so neither can spend the
-        # tool probe's own deadline and discard tools already in hand.
-        probe_deadline = time.monotonic() + probe_to
-
         async def _probe() -> tuple[
             list[dict],
             list[dict],
@@ -5682,7 +5580,6 @@ class MCPMultiplexer:
                     ) = await self._probe_protocol_families(
                         server_name,
                         session,
-                        probe_deadline=probe_deadline,
                     )
                     discovery_binding = _CURRENT_DISCOVERY_BINDING.get()
                     if discovery_binding is None:
@@ -5721,8 +5618,6 @@ class MCPMultiplexer:
         self,
         server_name: str,
         session: _typing.Any,
-        *,
-        probe_deadline: float | None = None,
     ) -> tuple[
         list[dict],
         list[dict],
@@ -5774,22 +5669,8 @@ class MCPMultiplexer:
                 errors["prompts"] = type(exc).__name__
             native_prompts = []
 
-        await self._resolve_via_local_catalog_or_harvest(
-            server_name,
-            session,
-            skills,
-            _SKILL_HARVEST_SPEC,
-            self._read_skill_body,
-            probe_deadline=probe_deadline,
-        )
-        await self._resolve_via_local_catalog_or_harvest(
-            server_name,
-            session,
-            prompt_resources,
-            _PROMPT_HARVEST_SPEC,
-            self._read_prompt_body,
-            probe_deadline=probe_deadline,
-        )
+        self._fill_bodies_from_local_catalog(skills, "instructions")
+        self._fill_bodies_from_local_catalog(prompt_resources, "body")
         return resources, templates, native_prompts, skills, prompt_resources, errors
 
     async def _probe_resource_family(
@@ -5798,17 +5679,16 @@ class MCPMultiplexer:
         session: _typing.Any,
         *,
         catalog_builder: _typing.Callable[[_typing.Any], list[dict]],
-        spec: _ResourceHarvestSpec,
-        reader: _typing.Any,
-        probe_deadline: float | None = None,
+        kind: str,
+        body_field: str,
     ) -> list[dict]:
         """Best-effort ``resources/list``-backed enumeration for one probed
         session, shared by ``_probe_skills`` and ``_probe_prompts``: both
-        resource families degrade to an empty list — never a failed probe —
+        resource families degrade to an empty list, never a failed probe,
         when the session doesn't support resource discovery at all, or when
-        this server's catalog for the family is malformed; otherwise each
-        entry's body is resolved via the resident local catalog or harvested
-        over the wire (``_resolve_via_local_catalog_or_harvest``).
+        this server's catalog for the family is malformed. Each entry's body
+        comes from the resident local catalog only
+        (``_fill_bodies_from_local_catalog``).
         """
         try:
             resources = await _list_all(session, "list_resources", "resources")
@@ -5819,7 +5699,7 @@ class MCPMultiplexer:
             logger.debug(
                 "Server %s does not support %s resource discovery: %s: %s",
                 server_name,
-                spec.kind,
+                kind,
                 type(exc).__name__,
                 redact_for_log(exc),
             )
@@ -5832,27 +5712,18 @@ class MCPMultiplexer:
             logger.warning(
                 "Server %s returned an invalid %s resource catalog: %s: %s",
                 server_name,
-                spec.kind,
+                kind,
                 type(exc).__name__,
                 redact_for_log(exc),
             )
             return []
-        await self._resolve_via_local_catalog_or_harvest(
-            server_name,
-            session,
-            entries,
-            spec,
-            reader,
-            probe_deadline=probe_deadline,
-        )
+        self._fill_bodies_from_local_catalog(entries, body_field)
         return entries
 
     async def _probe_skills(
         self,
         server_name: str,
         session: _typing.Any,
-        *,
-        probe_deadline: float | None = None,
     ) -> list[dict]:
         """Best-effort ``skill://`` resource enumeration for one probed session
         (CONCEPT:MERISTEM-ECO.mcp.skills-over-mcp-provider).
@@ -5867,160 +5738,41 @@ class MCPMultiplexer:
             server_name,
             session,
             catalog_builder=_bounded_skill_catalog,
-            spec=_SKILL_HARVEST_SPEC,
-            reader=self._read_skill_body,
-            probe_deadline=probe_deadline,
+            kind="skill",
+            body_field="instructions",
         )
 
-    async def _resolve_via_local_catalog_or_harvest(
-        self,
-        server_name: str,
-        session: _typing.Any,
-        entries: list[dict],
-        spec: _ResourceHarvestSpec,
-        reader: _typing.Any,
-        *,
-        probe_deadline: float | None = None,
+    def _fill_bodies_from_local_catalog(
+        self, entries: list[dict], body_field: str
     ) -> None:
-        """Fill each entry's body from the resident local catalog when its
-        name is already admitted there (ARBORA-FLEET-R006.2); only the
-        remainder -- a name the resident local-skill catalog
-        (``arbora.fleet.local_skill_catalog.build_local_skill_catalog``)
-        does not resolve -- still costs the pre-existing live
-        ``_harvest_resource_bodies`` round trip against ``session``. An
-        admitted child's skill/prompt resources are already served from a
-        package installed in THIS process (the same resolution
-        ``_local_skill_probe_info`` caches for the local-skill pseudo-server),
-        so reading the identical body back over the wire from the mounted
-        child would be redundant work for zero new information.
+        """Fill each entry's body from the resident local-skill catalog.
+
+        ARBORA-FLEET-R006.3.2: the catalog
+        (``arbora.fleet.local_skill_catalog.build_local_skill_catalog``) is the
+        only source of a skill or prompt body. A name it does not admit keeps
+        no body; nothing reads a body back over the wire from the child.
         """
         try:
             local_entries = self._local_skill_probe_info().get("skills") or []
         except AttributeError:
             # A bare ``MCPMultiplexer.__new__(MCPMultiplexer)`` test fixture
             # never ran ``__init__`` and so has no ``_local_skill_probe_cache``
-            # to build from; fall back to a fresh, uncached resolution rather
-            # than letting that pre-existing test pattern crash here.
+            # to build from; resolve afresh rather than crash.
             local_entries, _problems = build_local_skill_catalog()
         local_bodies = {
             item["name"]: item["instructions"]
             for item in local_entries
             if item.get("name") and item.get("instructions")
         }
-        non_admitted: list[dict] = []
         for entry in entries:
             local_body = local_bodies.get(entry.get("name"))
             if local_body is not None:
-                entry[spec.body_field] = local_body
-                continue
-            non_admitted.append(entry)
-        if not non_admitted:
-            return
-        await self._harvest_resource_bodies(
-            server_name,
-            session,
-            non_admitted,
-            spec,
-            reader,
-            probe_deadline=probe_deadline,
-        )
-
-    async def _harvest_resource_bodies(
-        self,
-        server_name: str,
-        session: _typing.Any,
-        entries: list[dict],
-        spec: _ResourceHarvestSpec,
-        reader: _typing.Any,
-        *,
-        probe_deadline: float | None = None,
-    ) -> None:
-        """Read one bounded family of resource bodies over an open session.
-
-        Skills and prompts have distinct result fields, byte budgets, retry
-        readers, and user-visible error wording, but their safety and failure
-        semantics are the same. Keeping the accounting loop here makes those
-        two resource families evolve together without allowing one family's
-        budget or result model to leak into the other.
-        """
-        harvested_bytes = 0
-        deadline = _harvest_deadline(probe_deadline, spec.budget_sec)
-        for entry in entries:
-            uri = entry.get("uri") or ""
-            if time.monotonic() >= deadline:
-                entry["harvest_error"] = (
-                    f"{spec.kind} body harvest budget exceeded (bounded by the "
-                    f"smaller of {spec.budget_sec:g}s and this probe's own "
-                    "remaining deadline)"
-                )
-                continue
-            if harvested_bytes >= spec.max_total_bytes:
-                entry["harvest_error"] = (
-                    f"{spec.kind} body harvest exceeded its total budget"
-                )
-                continue
-            try:
-                body = await reader(session, uri, deadline)
-            except Exception as exc:  # noqa: BLE001 - one unreadable body
-                # One unreadable resource must not fail the tool probe that
-                # already succeeded. The named reason is recorded ON THE
-                # ENTRY (so promotion can name it and a caller sees why) and
-                # logged — never a raw traceback (served-boundary policy).
-                entry["harvest_error"] = self._harvest_error_reason(exc)
-                logger.warning(
-                    "Server %s could not serve %s body %s (%s)",
-                    server_name,
-                    spec.kind,
-                    entry.get("name", "?"),
-                    type(exc).__name__,
-                )
-                continue
-            encoded = len(body.encode("utf-8"))
-            if not body.strip():
-                entry["harvest_error"] = f"server served an empty {spec.kind} body"
-                continue
-            if encoded > spec.max_body_bytes:
-                entry["harvest_error"] = f"{spec.kind} body exceeded its size boundary"
-                continue
-            harvested_bytes += encoded
-            entry[spec.body_field] = body
-
-    @staticmethod
-    async def _read_resource_body(
-        session: _typing.Any, uri: str, deadline: float, resource_kind: str
-    ) -> str:
-        """Read one body with bounded retries, deadline, and original errors."""
-        delay = _SKILL_HARVEST_BACKOFF_SEC
-        last: Exception | None = None
-        for attempt in range(_SKILL_HARVEST_MAX_ATTEMPTS):
-            try:
-                return _resource_body_text(await session.read_resource(uri))
-            except Exception as exc:  # noqa: BLE001 — retried below, then re-raised
-                last = exc
-                if attempt == _SKILL_HARVEST_MAX_ATTEMPTS - 1:
-                    break
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    break
-                await asyncio.sleep(min(delay, remaining))
-                delay *= 2
-        if last is None:  # pragma: no cover — the loop only exits via a failure
-            raise RuntimeError(
-                f"{resource_kind} body read failed without a recorded cause"
-            )
-        raise last
-
-    @staticmethod
-    async def _read_skill_body(session: _typing.Any, uri: str, deadline: float) -> str:
-        """Read one skill body with the shared bounded retry provider."""
-        return await MCPMultiplexer._read_resource_body(session, uri, deadline, "skill")
+                entry[body_field] = local_body
 
     async def _probe_prompts(
         self,
         server_name: str,
         session: _typing.Any,
-        *,
-        probe_deadline: float | None = None,
     ) -> list[dict]:
         """Best-effort ``prompt://`` resource enumeration for one probed
         session (CONCEPT:MERISTEM-ECO.mcp.cross-process-prompt-harvest).
@@ -6037,16 +5789,8 @@ class MCPMultiplexer:
             server_name,
             session,
             catalog_builder=_bounded_prompt_catalog,
-            spec=_PROMPT_HARVEST_SPEC,
-            reader=self._read_prompt_body,
-            probe_deadline=probe_deadline,
-        )
-
-    @staticmethod
-    async def _read_prompt_body(session: _typing.Any, uri: str, deadline: float) -> str:
-        """Read one prompt body with the shared bounded retry provider."""
-        return await MCPMultiplexer._read_resource_body(
-            session, uri, deadline, "prompt"
+            kind="prompt",
+            body_field="body",
         )
 
     @classmethod
@@ -6196,7 +5940,7 @@ class MCPMultiplexer:
                 for server in targets
             }
 
-    def _harvest_probe_results(
+    def _settled_probe_results(
         self,
         tasks: dict[asyncio.Task, str],
         pending: frozenset[asyncio.Task] | set[asyncio.Task] = frozenset(),
@@ -6311,10 +6055,10 @@ class MCPMultiplexer:
 
         if budget is None:
             await asyncio.gather(*tasks, return_exceptions=True)
-            return self._harvest_probe_results(tasks)
+            return self._settled_probe_results(tasks)
 
         _done, pending = await asyncio.wait(tasks, timeout=budget)
-        result = self._harvest_probe_results(tasks, pending)
+        result = self._settled_probe_results(tasks, pending)
         if pending:
             now = time.time()
             for task in pending:
@@ -7321,6 +7065,7 @@ class MCPMultiplexer:
         mounted = self._mounted_tool_counts()
         snapshot = {
             "catalog_source": "medulla",
+            "catalog_state": self._catalog_state.value,
             "children": {
                 name: {
                     **runtime.status(),
