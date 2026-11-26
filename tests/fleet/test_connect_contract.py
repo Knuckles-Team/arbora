@@ -248,3 +248,30 @@ def test_section_length_bounds_the_resource() -> None:
     with pytest.raises(ContractRefused):
         check_resource_sizes(pack, 4096)
     check_resource_sizes(pack, 8192)
+
+
+def test_seed_body_refuses_unavailable_while_the_pin_lacks_the_seed_path() -> None:
+    """A seeded pack is never imported with its seed dropped (ARBORA-FLEET-R054 pin-lag)."""
+    import asyncio
+
+    from arbora.deployment.semantic_provisioning import import_attested_pack
+    from arbora.pin_lag.medulla import PinLagUnavailable, require_pack_import_seed
+
+    try:
+        require_pack_import_seed()
+    except PinLagUnavailable as lag:
+        with pytest.raises(PinLagUnavailable) as caught:
+            asyncio.run(
+                import_attested_pack(
+                    object(),
+                    object(),
+                    client=object(),
+                    commons=object(),
+                    pack=object(),
+                    action_policies=object(),
+                    seed_body={"nodes": []},
+                )
+            )
+        assert str(caught.value) == str(lag)
+    else:  # pragma: no cover - the re-pin carries the path; bind R054 then
+        pytest.skip("seed path served; add the recorded-engine seed test")

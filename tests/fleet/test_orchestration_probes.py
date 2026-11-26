@@ -178,3 +178,42 @@ def test_probe_delegate_list_containers(holder, served, monkeypatch, tmp_path) -
     _receipt(
         tmp_path, "delegate-containers", question, {"premises": [], "rows": containers}
     )
+
+
+@pytest.mark.spec("ARBORA-FLEET-R055")
+def test_execution_answer_through_intent_surface() -> None:
+    """The execution question reaches the engine's answer op unchanged, never composed here."""
+    from arbora.api.mcp.resolve import IntentResolver
+
+    answer = {
+        "op": "eg.orchestration.AgentExecutionAnswer",
+        "verb": "ask",
+        "summary": "Compose the execution answer for one task",
+        "params_schema": {"required": ["request"]},
+    }
+    other = {"op": "fleet.catalog.list", "verb": "ask", "summary": "List the catalog"}
+    question = "how can I execute task urn:task:build-report"
+    resolver = IntentResolver()
+    routed = resolver.resolve("ask", question, [other, answer], scope_ref="s")
+    assert routed.op == "eg.orchestration.AgentExecutionAnswer"
+    assert routed.params["request"]["task_iri"] == "urn:task:build-report"
+    assert routed.missing_required == () and routed.preview is False
+
+    # An engine that does not serve the op, or a caller without its scope, gets no
+    # route and no local stand-in.
+    unserved = resolver.resolve("ask", question, [other], scope_ref="s")
+    assert unserved.op != "eg.orchestration.AgentExecutionAnswer"
+    assert "task_iri" not in unserved.params.get("request", {})
+
+
+@pytest.mark.spec("ARBORA-FLEET-R052.5")
+def test_cross_source_question_is_a_generated_read_with_no_new_tool() -> None:
+    from arbora.api.ops.registry_factory import get_registry
+    from arbora.api.registry import Effect, Verb
+
+    spec = get_registry().get("eg.query.CrossSourceQuestion")
+    assert spec is not None and spec.verb is Verb.ASK and spec.effect is Effect.READ
+    text = (
+        Path(__file__).parents[2] / "arbora/api/registry/eg_exclusions.yaml"
+    ).read_text()
+    assert "CrossSourceQuestion" not in text

@@ -44,6 +44,11 @@ _GRAPH_OPS = ("query.nl", "query.uql")
 #: ``agent:library-read``, never from the fleet catalog, which holds no agents.
 _AGENT_LIBRARY_QUESTION = re.compile(r"\bagent library\b")
 _AGENT_LIBRARY_OP = "eg.storage.AgentLibrary"
+#: ARBORA-FLEET-R055: ``how can I execute task <iri>`` is the engine's composed answer.
+_EXECUTE_TASK_QUESTION = re.compile(
+    r"^\W*how can i execute task\s+(\S+)", re.IGNORECASE
+)
+_EXECUTION_ANSWER_OP = re.compile(r"^eg\.[a-z_]+\.AgentExecutionAnswer$")
 #: A delegation names the fleet, not an operation word: ``act`` with an intent
 #: that opens with the verb ``delegate`` reaches ``fleet.call`` (ARBORA-FLEET-R052.4.6).
 _DELEGATION = re.compile(r"^\W*delegate\b")
@@ -247,6 +252,10 @@ class IntentResolver:
             library = _agent_library_route(supplied, descriptors)
             if library is not None:
                 return library
+        if verb == "ask":
+            execution = _execution_answer_route(intent, supplied, descriptors)
+            if execution is not None:
+                return execution
         if verb == "ask" and graph_question and "text" not in supplied:
             routed = _graph_question_route(intent, supplied, descriptors)
             if routed is not None:
@@ -473,6 +482,35 @@ def _agent_library_route(
                 _missing_required(item.params_schema, params),
                 (),
                 "Agent Library question: read from the engine's AgentLibrary method",
+            )
+    return None
+
+
+def _execution_answer_route(
+    intent: str,
+    params: Mapping[str, Any],
+    descriptors: Sequence[Descriptor | Mapping[str, Any]],
+) -> Resolution | None:
+    """Route ``how can I execute task <iri>`` to the engine's execution answer.
+
+    The seven parts are the engine's; arbora composes none of them and holds no
+    planner. Only the authorized generated op the caller can see qualifies.
+    """
+    matched = _EXECUTE_TASK_QUESTION.match(intent.strip())
+    if matched is None:
+        return None
+    iri = matched.group(1)
+    for item in (_coerce(entry) for entry in descriptors):
+        if item.verb == "ask" and _EXECUTION_ANSWER_OP.match(item.id):
+            request = {**dict(params.get("request") or {}), "task_iri": iri}
+            filled = {**params, "request": request}
+            return Resolution(
+                item.id,
+                filled,
+                False,
+                _missing_required(item.params_schema, filled),
+                (),
+                "Execution question: the engine's composed AgentExecutionAnswer",
             )
     return None
 

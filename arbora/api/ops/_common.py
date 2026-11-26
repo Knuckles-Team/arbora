@@ -12,6 +12,7 @@ Behavior is unchanged: a module imports these instead of repeating them.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, create_model
@@ -150,6 +151,19 @@ def build_write_op(
     )
 
 
+def require_sources_block(reply: Any) -> Any:
+    """Return a source-authority ``reply`` only when it carries the engine's block.
+
+    The block is the unaltered ``audit`` field of the ``SourceCoverage`` reply
+    (ARBORA-FLEET-R052.3). It is never dropped to fit a budget and never
+    rebuilt here; an absent or empty block refuses ``SOURCES_BLOCK_MISSING``.
+    """
+    block = reply.get("audit") if isinstance(reply, Mapping) else None
+    if not block:
+        raise OperationRefused("SOURCES_BLOCK_MISSING", {"field": "audit"})
+    return reply
+
+
 async def handle_tenant_read(
     context: Any, *, service_name: str, unavailable_reason: str
 ) -> dict[str, Any]:
@@ -168,5 +182,6 @@ __all__ = [
     "build_tenant_read_op",
     "build_write_op",
     "handle_tenant_read",
+    "require_sources_block",
     "read_op_models",
 ]

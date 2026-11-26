@@ -48,6 +48,7 @@ from arbora.fleet.onboarding_machine import (
     OnboardingState,
     transition,
 )
+from arbora.fleet.smoke_sweep import FleetSmokeService
 from arbora.fleet.surfaces import pack_surface_report
 from arbora.security.anonymous import session_context
 
@@ -976,6 +977,8 @@ class FleetOnboardingService:
     served_url: str = ""
     interval_s: float = PASS_INTERVAL_S
     stop: threading.Event = field(default_factory=threading.Event)
+    #: The scheduled smoke sweep, ticked beside each pass (ARBORA-FLEET-R053).
+    smoke: FleetSmokeService | None = None
 
     def endpoints(self) -> tuple[FleetEndpoint, ...]:
         exclude = {*self_served_connectors(), *self._skipped()}
@@ -1021,6 +1024,11 @@ class FleetOnboardingService:
             asyncio.run(self._run_pass_scoped())
         except Exception as exc:  # serving must outlive any onboarding fault
             logger.warning("fleet onboarding pass failed: %s", exc)
+        if self.smoke is not None:
+            try:
+                asyncio.run(self.smoke.tick())
+            except Exception as exc:  # a failed sweep never stops onboarding
+                logger.warning("fleet smoke sweep failed: %s", exc)
 
     async def _run_pass_scoped(self) -> OnboardingReport:
         from arbora.epistemic import temporary_client_scope
@@ -1424,6 +1432,7 @@ def start_fleet_onboarding(
     declarations: Declarations,
     action_policies: ActionPolicies,
     served_url: str | None = None,
+    smoke_service: FleetSmokeService | None = None,
 ) -> threading.Thread | None:
     """Start the background onboarding service; never raise into boot.
 
@@ -1447,6 +1456,7 @@ def start_fleet_onboarding(
         ),
         multiplexer=multiplexer,
         served_url=configured_served_url() if served_url is None else served_url,
+        smoke=smoke_service,
     )
     onboarder = HandshakeOnboarder(
         onboarding=service.onboarding,

@@ -30,6 +30,7 @@ __all__ = [
     "write_private_mapping",
     "is_production_profile",
     "load_config",
+    "data_prep_path",
     "mcp_config_path",
     "platform_config_file",
     "read_config_document",
@@ -59,6 +60,11 @@ def config_dir() -> Path:
 def mcp_config_path() -> Path:
     """Return the MCP configuration under the active Arbora directory."""
     return config_dir() / "mcp_config.json"
+
+
+def data_prep_path() -> Path:
+    """The data-prep declarations file under the active Arbora directory."""
+    return config_dir() / "data_prep.yml"
 
 
 def platform_config_file(name: str) -> Path:
