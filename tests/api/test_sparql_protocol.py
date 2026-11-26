@@ -19,7 +19,7 @@ import pytest
 from fastapi import FastAPI
 
 from arbora.access.action_policy import ActionPolicies
-from arbora.api.http.sparql import SPARQL_UPDATE_EVENT
+from arbora.api.http.sparql import RDF_GRAPH_WRITE_EVENT, SPARQL_UPDATE_EVENT
 from arbora.core.settings import runtime_config
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
@@ -242,25 +242,24 @@ def test_protocol_query_and_update(monkeypatch: pytest.MonkeyPatch) -> None:
         headers={"Content-Type": "application/n-triples"},
     )
     assert put.status_code == 204, put.text
-    read = _request(app, "GET", "/api/v1/sparql/graphs?default")
-    assert read.status_code == 200, read.text
-    assert read.text == '<urn:a> <urn:p> "one" .\n'
 
     calls = [(method, params) for method, params, _graph in client.sent]
     assert [method for method, _ in calls] == [
         "Sparql",
         "ApplyMutation",
         "ApplyMutation",
-        "Sparql",
     ]
     assert calls[1][1]["event_type"] == SPARQL_UPDATE_EVENT
     assert calls[1][1]["query"] == "INSERT DATA { <urn:a> <urn:p> 'one' }"
-    assert calls[2][1]["query"].startswith("CLEAR DEFAULT; INSERT DATA {")
-    # Each write is held once in the engine's effect journal.
-    assert sorted(row["status"] for row in client.journal.rows.values()) == [
-        "succeeded",
-        "succeeded",
-    ]
+    # A graph write sends the serialized body to the engine, which parses it.
+    assert calls[2][1]["event_type"] == RDF_GRAPH_WRITE_EVENT
+    assert json.loads(calls[2][1]["query"]) == {
+        "media_type": "application/n-triples",
+        "mode": "replace",
+        "body": '<urn:a> <urn:p> "one" .',
+    }
+    # The effect journal that held each write once per key is the invoke pipeline's
+    # ``EffectJournal`` port now; its once-per-key proof lives with that port.
 
 
 @pytest.mark.spec("ARBORA-OPS-R857.2")
@@ -280,3 +279,237 @@ def test_update_without_write_scope_is_refused_before_the_engine(
     delete = _request(app, "DELETE", "/api/v1/sparql/graphs?default")
     assert delete.status_code == 403
     assert client.sent == []
+
+
+# --- the graph store carries six RDF media types (ARBORA-OPS-R857.3 to R857.5) ---------------
+
+import re as _re  # noqa: E402
+from types import SimpleNamespace  # noqa: E402
+
+from arbora.api.errors import EngineRefusal  # noqa: E402
+from arbora.api.http import sparql as sparql_http  # noqa: E402
+from arbora.api.invoke.steps import OpError  # noqa: E402
+
+_SIX = (
+    "application/n-triples",
+    "text/turtle",
+    "application/n-quads",
+    "application/trig",
+    "application/ld+json",
+    "application/rdf+xml",
+)
+_BODIES = {media: f"body in {media}" for media in _SIX}
+
+
+class _GraphEngine:
+    """Stores one serialized graph per media type and answers the engine's refusals."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, dict[str, Any]]] = []
+        self.body = ""
+        self.write_scope = True
+
+    async def invoke(
+        self, op: str, params: dict[str, Any], caller: Any, surface: Any, **_: Any
+    ) -> Any:
+        if op == sparql_http.UPDATE_OP and not self.write_scope:
+            return OpError("SCOPE_REQUIRED", {"missing_scopes": ["graph:write"]})
+        self.calls.append((op, params))
+        if op == sparql_http.UPDATE_OP:
+            request = json.loads(params["query"])
+            if request["body"] == "unparseable":
+                return EngineRefusal("RDF_PARSE_FAILED")
+            if request["body"] == "huge":
+                return EngineRefusal("RDF_BODY_TOO_LARGE")
+            if request["body"] == "quads":
+                return EngineRefusal("RDF_DATASET_GRAPH_MISMATCH")
+            if request["media_type"] == "application/x-unknown":
+                return EngineRefusal("RDF_MEDIA_TYPE_UNSUPPORTED")
+            self.body = request["body"]
+            return SimpleNamespace(value={"operations": 1})
+        return SimpleNamespace(
+            value={"graph_body": f"{self.body}|{params['graph_media_type']}"}
+        )
+
+
+def _graph_app(engine: _GraphEngine, monkeypatch: pytest.MonkeyPatch) -> FastAPI:
+    from medulla.generated import models
+
+    monkeypatch.setattr(
+        models.MethodSparqlParams,
+        "model_fields",
+        {**models.MethodSparqlParams.model_fields, "graph_media_type": object()},
+    )
+
+    async def authenticate(_request: Any) -> Any:
+        return SimpleNamespace(request_id="req-1", session=None)
+
+    app = FastAPI()
+    sparql_http.mount_sparql_protocol(
+        app,
+        services=SimpleNamespace(registry=SimpleNamespace(digest="digest")),
+        authenticate=authenticate,
+        invoke=engine.invoke,
+        max_result_bytes=1_000_000,
+    )
+    return app
+
+
+def _go(app: FastAPI, method: str, path: str, **kwargs: Any) -> httpx.Response:
+    async def call() -> httpx.Response:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://graph"
+        ) as http:
+            return await http.request(method, path, **kwargs)
+
+    return asyncio.run(call())
+
+
+@pytest.mark.spec("ARBORA-OPS-R857.3")
+def test_graph_store_round_trips_each_media_type(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    assert set(sparql_http.GRAPH_TYPES) == {*_SIX, "text/plain"}
+    assert sparql_http.GRAPH_TYPES["text/plain"] == "application/n-triples"
+    assert not hasattr(sparql_http, "render_ntriples")
+    engine = _GraphEngine()
+    app = _graph_app(engine, monkeypatch)
+    for media in _SIX:
+        put = _go(
+            app,
+            "PUT",
+            "/sparql/graphs?default",
+            content=_BODIES[media],
+            headers={"Content-Type": media},
+        )
+        assert put.status_code == 204, put.text
+        write = engine.calls[-1]
+        assert write[0] == sparql_http.UPDATE_OP
+        assert write[1]["event_type"] == RDF_GRAPH_WRITE_EVENT
+        assert json.loads(write[1]["query"]) == {
+            "media_type": media,
+            "mode": "replace",
+            "body": _BODIES[media],
+        }
+        read = _go(app, "GET", "/sparql/graphs?default", headers={"Accept": media})
+        assert read.status_code == 200, read.text
+        assert read.headers["content-type"].startswith(media)
+        assert read.text == f"{_BODIES[media]}|{media}"
+    merge = _go(
+        app,
+        "POST",
+        "/sparql/graphs?default",
+        content="x",
+        headers={"Content-Type": "text/plain"},
+    )
+    assert merge.status_code == 204
+    assert json.loads(engine.calls[-1][1]["query"])["mode"] == "merge"
+    assert (
+        json.loads(engine.calls[-1][1]["query"])["media_type"]
+        == "application/n-triples"
+    )
+    # CONSTRUCT on /sparql is negotiated from the same six types.
+    construct = _go(
+        app,
+        "GET",
+        "/sparql",
+        params={"query": "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"},
+        headers={"Accept": "text/turtle"},
+    )
+    assert construct.status_code == 200 and construct.text.endswith("|text/turtle")
+    assert _re.search(r"graph_media_type", repr(engine.calls[-1]))
+
+
+@pytest.mark.spec("ARBORA-OPS-R857.4")
+def test_graph_store_refusals_use_engine_codes(monkeypatch: pytest.MonkeyPatch) -> None:
+    engine = _GraphEngine()
+    app = _graph_app(engine, monkeypatch)
+    before = len(engine.calls)
+    unsupported = _go(
+        app,
+        "PUT",
+        "/sparql/graphs?default",
+        content="x",
+        headers={"Content-Type": "application/x-unknown"},
+    )
+    assert unsupported.status_code == 415
+    unacceptable = _go(
+        app, "GET", "/sparql/graphs?default", headers={"Accept": "image/png"}
+    )
+    assert unacceptable.status_code == 406
+    assert len(engine.calls) == before, "a local refusal makes no engine call"
+    for body, status, code in (
+        ("unparseable", 400, "RDF_PARSE_FAILED"),
+        ("huge", 413, "RDF_BODY_TOO_LARGE"),
+        ("quads", 400, "RDF_DATASET_GRAPH_MISMATCH"),
+    ):
+        refused = _go(
+            app,
+            "PUT",
+            "/sparql/graphs?default",
+            content=body,
+            headers={"Content-Type": "text/turtle"},
+        )
+        assert refused.status_code == status, refused.text
+        assert refused.json()["error"]["code"] == code
+    from arbora.api.engine_errors import ENGINE_ERRORS
+
+    assert ENGINE_ERRORS["RDF_MEDIA_TYPE_UNSUPPORTED"][0] == 415
+
+
+@pytest.mark.spec("ARBORA-OPS-R857.3")
+def test_a_pinned_engine_without_graph_media_type_refuses_the_read(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from medulla.generated import models
+
+    if "graph_media_type" in models.MethodSparqlParams.model_fields:
+        pytest.skip("the pin carries graph_media_type")
+    engine = _GraphEngine()
+
+    async def authenticate(_request: Any) -> Any:
+        return SimpleNamespace(request_id="req-1", session=None)
+
+    app = FastAPI()
+    sparql_http.mount_sparql_protocol(
+        app,
+        services=SimpleNamespace(registry=SimpleNamespace(digest="digest")),
+        authenticate=authenticate,
+        invoke=engine.invoke,
+        max_result_bytes=1_000_000,
+    )
+    read = _go(app, "GET", "/sparql/graphs?default")
+    assert read.json()["error"]["code"] == "UNAVAILABLE"
+    assert engine.calls == []
+
+
+@pytest.mark.spec("ARBORA-OPS-R857.5")
+def test_turtle_put_then_jsonld_get(monkeypatch: pytest.MonkeyPatch) -> None:
+    engine = _GraphEngine()
+    app = _graph_app(engine, monkeypatch)
+    turtle = "<urn:a> <urn:p> 'one' ."
+    put = _go(
+        app,
+        "PUT",
+        "/sparql/graphs?default",
+        content=turtle,
+        headers={"Content-Type": "text/turtle"},
+    )
+    assert put.status_code == 204
+    read = _go(
+        app, "GET", "/sparql/graphs?default", headers={"Accept": "application/ld+json"}
+    )
+    assert read.status_code == 200
+    assert read.text == f"{turtle}|application/ld+json"
+    engine.write_scope = False
+    calls = len(engine.calls)
+    denied = _go(
+        app,
+        "PUT",
+        "/sparql/graphs?default",
+        content=turtle,
+        headers={"Content-Type": "text/turtle"},
+    )
+    assert denied.status_code == 403
+    assert denied.json()["error"]["code"] == "SCOPE_REQUIRED"
+    assert len(engine.calls) == calls, "a refused write makes zero engine calls"

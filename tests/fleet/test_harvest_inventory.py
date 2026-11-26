@@ -1,27 +1,18 @@
-"""ARBORA-FLEET-R006.1/.2: the harvest call-site inventory, and the first
-removal.
+"""ARBORA-FLEET-R006.1 to R006.4: the harvest call-site inventory, now zero.
 
-``arbora/fleet/multiplexer.py`` still carries the skill/prompt
-body-harvest path (``_harvest_resource_bodies`` and its helpers) that
-``ARBORA-FLEET-R006.2``-``.5`` remove once the resident local-skill
-catalog (``arbora/fleet/local_skill_catalog.py``) serves the same
-capability for an admitted child. This is a static, source-level census:
-it enumerates every ``_harvest``-named entry point defined in that module
-and every direct call site of ``_harvest_resource_bodies`` in any
-function or method of that module, and pins the counts as the baseline the
-later children must shrink. ``ARBORA-FLEET-R006.2`` moved ``_probe_skills``'
-and ``_probe_prompts``' call sites behind the new
-``_resolve_via_local_catalog_or_harvest`` cutover helper; a non-admitted
-child still reaches ``_harvest_resource_bodies`` through it, so that
-fallback stays counted until ``ARBORA-FLEET-R006.3`` removes it. A failure here means a
-harvest-named symbol or call site was added or removed without updating
-the pinned baseline.
+``arbora/fleet/multiplexer.py`` no longer reads a skill or prompt body back
+over the wire from a child. The resident local-skill catalog
+(``arbora/fleet/local_skill_catalog.py``) is the only source of a body. This
+static, source-level census scans the module for every harvest-named symbol
+and pins the removal: the helpers, the specs and the budget constants are
+gone, and the settled-probe fold carries a neutral name.
 """
 
 from __future__ import annotations
 
 import ast
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -29,107 +20,108 @@ import arbora
 
 _MULTIPLEXER_RELATIVE_PATH = Path("fleet") / "multiplexer.py"
 
-# ARBORA-FLEET-R006.1 baseline: every ``_harvest``-named entry point
-# (function or method) defined in arbora/fleet/multiplexer.py today.
-# ARBORA-FLEET-R006.3 deletes _harvest_resource_bodies, _harvest_deadline
-# and _harvest_error_reason; ARBORA-FLEET-R006.4 renames
-# _harvest_probe_results off this list.
-_BASELINE_HARVEST_ENTRY_POINTS = frozenset(
+#: ARBORA-FLEET-R006.3 removed these symbols.
+_REMOVED_SYMBOLS = frozenset(
     {
-        "_harvest_deadline",
-        "_harvest_error_reason",
         "_harvest_resource_bodies",
+        "_resolve_via_local_catalog_or_harvest",
+        "_harvest_deadline",
+        "_HARVEST_DEADLINE_SHARE",
+        "_harvest_error_reason",
+        "_SKILL_HARVEST_SPEC",
+        "_PROMPT_HARVEST_SPEC",
+        "_ResourceHarvestSpec",
         "_harvest_probe_results",
     }
 )
 
-# ARBORA-FLEET-R006.1/.2 baseline: call sites of _harvest_resource_bodies,
-# by enclosing function. ARBORA-FLEET-R006.2 replaced the _probe_skills and
-# _probe_prompts call sites with one non-admitted-child fallback in
-# _resolve_via_local_catalog_or_harvest; ARBORA-FLEET-R006.3 removes that
-# fallback and the remaining _probe_protocol_families sites.
-_BASELINE_CALL_SITES_BY_METHOD = {
-    "_resolve_via_local_catalog_or_harvest": 1,
-}
-_BASELINE_TOTAL_CALL_SITES = sum(_BASELINE_CALL_SITES_BY_METHOD.values())
+
+def _multiplexer_source() -> str:
+    path = Path(arbora.__file__).resolve().parent / _MULTIPLEXER_RELATIVE_PATH
+    return path.read_text(encoding="utf-8")
 
 
-def _multiplexer_source_path() -> Path:
-    package_root = Path(arbora.__file__).resolve().parent
-    return package_root / _MULTIPLEXER_RELATIVE_PATH
-
-
-def _multiplexer_tree() -> ast.Module:
-    path = _multiplexer_source_path()
-    return ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-
-
-def _harvest_named_entry_points(tree: ast.Module) -> set[str]:
-    return {
-        node.name
-        for node in ast.walk(tree)
-        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
-        and node.name.startswith("_harvest")
-    }
-
-
-def _call_target_name(call: ast.Call) -> str | None:
-    func = call.func
-    if isinstance(func, ast.Name):
-        return func.id
-    if isinstance(func, ast.Attribute):
-        return func.attr
-    return None
-
-
-def _harvest_resource_bodies_call_sites_by_method(
-    tree: ast.Module,
-) -> dict[str, int]:
-    """Count calls to ``_harvest_resource_bodies`` in every function of the
-    module, keyed by the enclosing function's name."""
-    counts: dict[str, int] = {}
+def _defined_and_referenced_names(tree: ast.Module) -> set[str]:
+    names: set[str] = set()
     for node in ast.walk(tree):
-        if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
-            continue
-        calls = sum(
-            1
-            for call in ast.walk(node)
-            if isinstance(call, ast.Call)
-            and _call_target_name(call) == "_harvest_resource_bodies"
-        )
-        if calls:
-            counts[node.name] = calls
-    return counts
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef):
+            names.add(node.name)
+        elif isinstance(node, ast.Name):
+            names.add(node.id)
+        elif isinstance(node, ast.Attribute):
+            names.add(node.attr)
+    return names
+
+
+def _harvest_names(tree: ast.Module) -> set[str]:
+    return {n for n in _defined_and_referenced_names(tree) if "harvest" in n.lower()}
 
 
 @pytest.mark.spec("ARBORA-FLEET-R006.1")
 def test_harvest_named_entry_points_match_pinned_baseline() -> None:
-    found = _harvest_named_entry_points(_multiplexer_tree())
-    assert found == _BASELINE_HARVEST_ENTRY_POINTS, (
-        "a harvest-named entry point was added or removed in "
-        "arbora/fleet/multiplexer.py without updating the "
-        "ARBORA-FLEET-R006.1 baseline: "
-        f"found={sorted(found)} baseline={sorted(_BASELINE_HARVEST_ENTRY_POINTS)}"
-    )
+    """The pinned baseline after the removal is empty."""
+    assert _harvest_names(ast.parse(_multiplexer_source())) == set()
 
 
-@pytest.mark.spec("ARBORA-FLEET-R006.1")
-def test_harvest_resource_bodies_call_sites_match_pinned_baseline() -> None:
-    found = _harvest_resource_bodies_call_sites_by_method(_multiplexer_tree())
-    assert found == _BASELINE_CALL_SITES_BY_METHOD, (
-        "a _harvest_resource_bodies call site was added or removed in "
-        "arbora/fleet/multiplexer.py without updating the "
-        f"ARBORA-FLEET-R006.1 baseline: found={found} "
-        f"baseline={_BASELINE_CALL_SITES_BY_METHOD}"
-    )
-    assert sum(found.values()) == _BASELINE_TOTAL_CALL_SITES
+@pytest.mark.spec("ARBORA-FLEET-R006.3")
+@pytest.mark.spec("ARBORA-FLEET-R006.3.2")
+def test_harvest_resource_bodies_absent() -> None:
+    names = _defined_and_referenced_names(ast.parse(_multiplexer_source()))
+    assert "_harvest_resource_bodies" not in names
+    assert "_resolve_via_local_catalog_or_harvest" not in names
+
+
+@pytest.mark.spec("ARBORA-FLEET-R006.3")
+@pytest.mark.spec("ARBORA-FLEET-R006.3.3")
+def test_deadline_helpers_absent() -> None:
+    names = _defined_and_referenced_names(ast.parse(_multiplexer_source()))
+    assert not names & {
+        "_harvest_deadline",
+        "_HARVEST_DEADLINE_SHARE",
+        "_harvest_error_reason",
+    }
+
+
+@pytest.mark.spec("ARBORA-FLEET-R006.3")
+@pytest.mark.spec("ARBORA-FLEET-R006.3.4")
+def test_harvest_specs_absent() -> None:
+    names = _defined_and_referenced_names(ast.parse(_multiplexer_source()))
+    assert not names & {
+        "_SKILL_HARVEST_SPEC",
+        "_PROMPT_HARVEST_SPEC",
+        "_ResourceHarvestSpec",
+    }
+
+
+@pytest.mark.spec("ARBORA-FLEET-R006.3")
+def test_removed_symbols_absent() -> None:
+    names = _defined_and_referenced_names(ast.parse(_multiplexer_source()))
+    assert not names & _REMOVED_SYMBOLS
+
+
+@pytest.mark.spec("ARBORA-FLEET-R006.4")
+def test_no_harvest_named_symbol() -> None:
+    tree = ast.parse(_multiplexer_source())
+    assert not _harvest_names(tree)
+    assert "_settled_probe_results" in _defined_and_referenced_names(tree)
 
 
 @pytest.mark.spec("ARBORA-FLEET-R006.3.1")
 def test_probe_protocol_families_has_no_direct_harvest_call() -> None:
-    found = _harvest_resource_bodies_call_sites_by_method(_multiplexer_tree())
-    assert "_probe_protocol_families" not in found
-    assert found == {"_resolve_via_local_catalog_or_harvest": 1}
+    tree = ast.parse(_multiplexer_source())
+    families = next(
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.AsyncFunctionDef)
+        and node.name == "_probe_protocol_families"
+    )
+    called = {
+        call.func.attr
+        for call in ast.walk(families)
+        if isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute)
+    }
+    assert "_fill_bodies_from_local_catalog" in called
+    assert not {name for name in called if "harvest" in name}
 
 
 @pytest.mark.spec("ARBORA-FLEET-R006.3.1")
@@ -137,8 +129,6 @@ def test_probe_protocol_families_has_no_direct_harvest_call() -> None:
 async def test_probe_protocol_families_resolves_admitted_skill_without_wire_read(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from types import SimpleNamespace
-
     from arbora.fleet import multiplexer as mux
 
     resource = SimpleNamespace(
@@ -175,4 +165,4 @@ async def test_probe_protocol_families_resolves_admitted_skill_without_wire_read
         "srv", _Session()
     )
     assert errors == {}
-    assert skills[0][mux._SKILL_HARVEST_SPEC.body_field] == "LOCAL BODY"
+    assert skills[0]["instructions"] == "LOCAL BODY"

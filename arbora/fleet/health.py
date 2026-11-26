@@ -25,6 +25,12 @@ from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from arbora.fleet.catalog_machine import (
+    CatalogState,
+    autoscaling_ready,
+    convergence_ready,
+)
+
 if TYPE_CHECKING:
     from arbora.fleet.catalog_reader import GenerationStatus
 
@@ -215,13 +221,6 @@ def _not_served(label: str, now: float) -> FleetDependencyEvidence:
     )
 
 
-def _fully_served(
-    status: FleetHealthState, dependencies: Iterable[FleetDependencyEvidence]
-) -> bool:
-    """Autoscaling and convergence need every authority served and healthy."""
-    return status == "healthy" and all(d.status != "not_served" for d in dependencies)
-
-
 def _rollup(dependencies: Iterable[FleetDependencyEvidence]) -> FleetHealthState:
     all_states = [dependency.status for dependency in dependencies]
     # Only served authorities count; an unserved one is not applicable.
@@ -407,8 +406,13 @@ def collect_fleet_health(
     scope_params: Iterable[Any] = (),
     scope_resolver: Callable[[str], tuple[str, Iterable[Any]]] | None = None,
     now: float | None = None,
+    catalog_state: CatalogState = CatalogState.COLD,
 ) -> FleetHealthSnapshot:
     """Collect one fail-closed fleet snapshot from the live authorities.
+
+    ``autoscaling_ready`` and ``convergence_ready`` are pure functions of the
+    catalog serving ``catalog_state`` (ARBORA-FLEET-R081.2); an unbound state
+    is ``cold`` and therefore never ready.
 
     ``scope_sql``/``scope_params`` are supplied by the authenticated gateway
     caller.  Internal maintenance callers intentionally use the unrestricted
@@ -457,8 +461,8 @@ def collect_fleet_health(
         status=status,
         # Readiness: every served authority is healthy (none served is ready).
         ready=status in ("healthy", "not_served"),
-        autoscaling_ready=_fully_served(status, dependencies.values()),
-        convergence_ready=_fully_served(status, dependencies.values()),
+        autoscaling_ready=autoscaling_ready(catalog_state),
+        convergence_ready=convergence_ready(catalog_state),
         generated_at=generated_at,
         last_success_at=last_success_at,
         freshness_seconds=(
@@ -504,8 +508,8 @@ def unavailable_fleet_health(
     return FleetHealthEvidence(
         status="unavailable",
         ready=False,
-        autoscaling_ready=False,
-        convergence_ready=False,
+        autoscaling_ready=autoscaling_ready(CatalogState.COLD),
+        convergence_ready=convergence_ready(CatalogState.COLD),
         generated_at=checked_at,
         dependencies=dependencies,
         diagnostics=[diagnostic],
@@ -560,8 +564,6 @@ def _with_dependency(
         update={
             "status": status,
             "ready": status in ("healthy", "not_served"),
-            "autoscaling_ready": _fully_served(status, dependencies.values()),
-            "convergence_ready": _fully_served(status, dependencies.values()),
             "generated_at": generated_at,
             "last_success_at": last_success_at,
             "freshness_seconds": (

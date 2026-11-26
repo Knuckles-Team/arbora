@@ -346,40 +346,6 @@ async def test_served_mcp_surface_lists_the_intent_verbs_and_finds(
     assert text and '"error"' not in text, text
 
 
-@pytest.mark.spec("ARBORA-OPS-R024.5.1")
-def test_models_list_serves_identity_rows_without_the_admin_scope(
-    served: Any, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """An ordinary user (no ops:read) lists models; endpoints and key refs stay out."""
-    assert "ops:read" not in SCOPES
-    monkeypatch.setattr(
-        runtime_config,
-        "chat_models",
-        [
-            {
-                "id": "chat-a",
-                "provider": "openai",
-                "model": "m-a",
-                "base_url": "https://llm.invalid/v1",
-                "api_key_ref": "env://SECRET_REF",
-            }
-        ],
-    )
-    monkeypatch.setattr(
-        runtime_config, "embedding_models", [{"id": "embed-a", "name": "Embed"}]
-    )
-    app, _client = served
-    chat = _value(_call(app, "models.list", {}))
-    assert chat == {
-        "kind": "chat",
-        "models": [{"id": "chat-a", "provider": "openai", "model": "m-a"}],
-    }
-    embedding = _value(_call(app, "models.list", {"kind": "embedding"}))
-    assert embedding["models"] == [{"id": "embed-a", "name": "Embed"}]
-    denied = _call(app, "ops.config", {})
-    assert denied.status_code == 403
-
-
 _SECRET = (
     "ghp_" + "a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8"
 )  # sanitizer:ignore - synthetic

@@ -11,6 +11,7 @@ import pytest
 from test_invoke_contract import caller
 
 from arbora.api.invoke.eg_audit import EgAuditAdapter
+from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.registry import AuditClass
 
 EVENT = {
@@ -74,14 +75,30 @@ def test_evidence_is_forwarded_in_the_engine_bounds() -> None:
 
 
 @pytest.mark.spec("ARBORA-OPS-R042.5", "ARBORA-OPS-R009.9")
-def test_a_pin_without_the_evidence_field_withholds_it() -> None:
+def test_a_pin_without_the_evidence_field_refuses_when_evidence_is_supplied() -> None:
     seen: list[str] = []
 
     async def append(*, op, surface, params_sha256, status, request_id, audit_class):
         seen.append(status)
         return _receipt(status)
 
-    asyncio.run(_adapter(append).preflight(EVENT, AuditClass.EVENT, caller()))
+    with pytest.raises(OperationRefused) as refused:
+        asyncio.run(_adapter(append).preflight(EVENT, AuditClass.EVENT, caller()))
+    assert refused.value.code == "UNAVAILABLE"
+    assert "AuditAppend.evidence" in str(refused.value.details)
+    assert seen == []
+
+
+@pytest.mark.spec("ARBORA-OPS-R042.5", "ARBORA-OPS-R009.9")
+def test_a_pin_without_the_evidence_field_still_writes_a_bare_event() -> None:
+    seen: list[str] = []
+
+    async def append(*, op, surface, params_sha256, status, request_id, audit_class):
+        seen.append(status)
+        return _receipt(status)
+
+    bare = {k: v for k, v in EVENT.items() if k not in EgAuditAdapter.EVIDENCE_KEYS}
+    asyncio.run(_adapter(append).preflight(bare, AuditClass.EVENT, caller()))
     assert seen == ["reserved"]
 
 

@@ -21,11 +21,6 @@ Governing [spec](spec.md).
 | HO-T13 | HO-11 | Boot one FastMCP loop and multiplexer. Enumerate tools, routes, and methods; compare them with the registry and protocol list. Remove one resident registration in a fixture; assert startup fails. A loaded forwarder is the only runtime addition. Its body calls invoke.
 | HO-T14 | ARBORA-OPS-R039 | Build the dashboard router. All 15 old method and path pairs present |
 | HO-T15 | ARBORA-OPS-R039 | Read-only caller on mutating routes. 403; API-key caller passes; health open |
-| HO-T16 | ARBORA-OPS-R040 | Create with empty template or oversize data. Typed validation or 400 refusal |
-| HO-T17 | ARBORA-OPS-R040 | Create then get. Id and rendered output returned; same artifact read back |
-| HO-T18 | ARBORA-OPS-R040 | Get unknown id. 404 |
-| HO-T19 | ARBORA-OPS-R040 | Refresh with inline data, with resolver, and with a failing resolver. New render; resolver render; prior render preserved with ok false |
-| HO-T20 | ARBORA-OPS-R040 | Mount on the host app; read-only caller POSTs. Routes present; 403 on POST |
 | HO-T21 | ARBORA-OPS-R041 | Discover registry widgets. genius_agent absent |
 | HO-T22 | ARBORA-OPS-R021.4.1 | Run `tests/api/test_runs_ops.py::test_run_trace_reader_is_runtime_checkable_protocol`; it must pass and bind to this row. |
 | HO-T23 | ARBORA-OPS-R021.4.2 | Run `tests/api/test_runs_ops.py::test_adapter_calls_engine_wire_method`; it must pass and bind to this row. |
@@ -37,8 +32,6 @@ Governing [spec](spec.md).
 | HO-T29 | ARBORA-OPS-R063 | Planned test path: `tests/api/test_retrieval_evaluation_served.py::test_evaluation_and_original_utf8_context`. It remains unexecuted. See the R063 served-acceptance cases below. |
 | HO-T30 | ARBORA-OPS-R003 | Planned test path: `tests/fleet/test_harvest_removed.py::test_multiplexer_has_no_skill_prompt_harvest_path`. Assert arbora.fleet.multiplexer defines none of the harvest functions and no module in the package imports them. It remains unexecuted. |
 | HO-T31 | ARBORA-OPS-R025.1 | Planned test path: `tests/api/test_client_invoke.py::test_unknown_operation_makes_zero_calls_and_digest_mismatch_is_refused`. Assert an unknown op id raises before any transport call and a mismatched meta registry digest raises. It remains unexecuted. |
-| HO-T32 | ARBORA-OPS-R040.1 | Planned test path: `tests/api/test_public_artifact_exports.py::test_public_module_exports_artifact_names`. A meristem-side test importing each of the four names from the public api module (path relative to the meristem repo). It remains unexecuted. |
-| HO-T33 | ARBORA-OPS-R040.9 | Planned test path: `tests/spec/test_boundary_row_cited.py::test_r040_1_cites_the_meristem_boundary_row`. A spec-gate check that ARBORA-OPS-R040.1 cites an existing meristem boundary row ID. It remains unexecuted. |
 | HO-T34 | ARBORA-OPS-R024.1.1 | Planned test path: `tests/api/test_telemetry_export_ops.py::test_export_formats_backend_opt_in_and_refused_cases`. Served test of telemetry export formats, opt-in backend selection and refusals over HTTP and MCP. It remains unexecuted. |
 | HO-T35 | ARBORA-OPS-R014.1 | Planned test path: `tests/api/test_host_service_ops.py::test_service_and_log_operations_parity_and_refusal`. Served test of the shared service/log operations across the supported OS adapter fakes, including the refusal for an unsupported OS. It remains unexecuted. |
 | HO-T36 | ARBORA-OPS-R022.4 | Planned test path: `tests/api/test_loop_feedback_ops.py::test_loop_status_run_pause_fail_closed_until_bound`. Served test that the loop facade exposes status, run and pause, and refuses an unscoped or replayed call. It remains unexecuted. |
@@ -220,8 +213,8 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | `ARBORA-OPS-R855.1` | `tests/api/test_resolve.py::test_catalog_class_ask_routes_to_the_engine_planner_ahead_of_ranking` |
 | `ARBORA-OPS-R855.2` | `tests/api/test_governance_ops.py::test_term_review_and_search` |
 | `ARBORA-OPS-R856` | See each child. |
-| `ARBORA-OPS-R856.1` | `tests/api/test_governance_ops.py::test_registry_lists_quality_operations` |
-| `ARBORA-OPS-R856.2` | `tests/api/test_governance_ops.py::test_quality_incident_served` |
+| `ARBORA-OPS-R856.1` | `tests/api/test_quality_ops_served.py::test_registry_lists_quality_operations` |
+| `ARBORA-OPS-R856.2` | `tests/api/test_quality_ops_served.py::test_quality_incident_served` |
 | `ARBORA-OPS-R857` | See each child. |
 | `ARBORA-OPS-R857.1` | `tests/api/test_sparql_protocol.py::test_routes_registered` |
 | `ARBORA-OPS-R857.2` | `tests/api/test_sparql_protocol.py::test_protocol_query_and_update` |
@@ -405,16 +398,6 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R039.6` | Test: `tests/gateway/test_dashboard_api.py::test_daemon_shards_reads_engine_snapshot_and_refuses_when_absent` (L3). It asserts the snapshot body, both refusals and no import of `knowledge_graph` modules. |
 | `ARBORA-OPS-R039.7` | Test: `tests/gateway/test_dashboard_api.py::test_hydration_routes_call_served_ingest_and_keep_refusal_codes` (L3). It asserts the job identifier, the three refusal codes and the status shape. |
 | `ARBORA-OPS-R039.9` | tests/gateway/test_dashboard_api.py: 403 cases unchanged; an import census shows no Meristem-internal import. |
-| `ARBORA-OPS-R040.1` | An meristem test imports each name from the public module. |
-| `ARBORA-OPS-R040.2` | Test: `tests/gateway/test_artifacts_api.py::test_create_request_rejects_empty_template_and_oversize_data` (L1). Verified by the route test `test_create_and_refusal_cases`. |
-| `ARBORA-OPS-R040.3` | Test: `tests/gateway/test_ports.py::test_artifact_ports_are_runtime_protocols` (L1). |
-| `ARBORA-OPS-R040.4` | Test: `tests/gateway/test_artifacts_api.py::test_create_returns_id_and_rendered_and_refuses_bounded_json_error` (L3). It asserts 201, 400 and 422. |
-| `ARBORA-OPS-R040.5` | Test: `tests/gateway/test_artifacts_api.py::test_get_returns_artifact_and_404_when_absent` (L3). |
-| `ARBORA-OPS-R040.6` | Test: `tests/gateway/test_artifacts_api.py::test_refresh_inline_resolver_404_and_failure_preserves_render` (L3). |
-| `ARBORA-OPS-R040.7` | Test: `tests/gateway/test_artifacts_route_mount.py::test_routes_mount_with_capability_dependencies` (L3). It asserts the three routes and the 403 cases. |
-| `ARBORA-OPS-R040.8` | Test: `tests/gateway/test_artifacts_api.py::test_refresh_uses_the_exported_resolver_and_defaults_to_preserve` (L3). It uses a fake resolver and the default. |
-| `ARBORA-OPS-R040.9` | The meristem row exists and ARBORA-OPS-R040.1 cites its ID. |
-| `ARBORA-OPS-R040.10` | Test: `tests/gateway/test_artifacts_route_mount.py::test_capability_matrix_on_artifact_routes` (L3). It asserts the 403 cases and the API-key pass. |
 | `ARBORA-OPS-R042.1` | Test: `tests/api/test_content_screening.py::test_closed_value_sets_and_opspec_origin` (L1). Verified by the root slice test. |
 | `ARBORA-OPS-R042.2` | Test: `tests/api/test_content_screening.py::test_each_attack_class_and_masked_secret` (L1). It plants one case per class and one secret per pattern. |
 | `ARBORA-OPS-R042.3` | Test: `tests/api/test_content_screening.py::test_invoke_calls_screen_then_redactor_in_order` (L3). It records call order through the served route. |
@@ -504,10 +487,10 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R875` | Test: `tests/api/test_skill_upgrade_gate_served.py::test_breaking_stops_and_compatible_and_migrated_dispatch` (served). |
 | `ARBORA-OPS-R876` | Test: `tests/api/test_loops_continuation_served.py::test_same_continuation_after_host_restart` (served). The host restarts between two reads. |
 | `ARBORA-OPS-R877` | Test: `tests/a2a/test_team_coordination_served.py::test_unavailable_starts_team_available_keeps_primary_and_status_survives_restart` (served). |
-| `ARBORA-OPS-R878` | Test: `tests/api/ops/test_models_list.py::test_lists_only_visible_profiles_over_http_and_mcp` (planned) (L3) runs through the registry `invoke` and asserts a cross-tenant profile is absent. |
+| `ARBORA-OPS-R878` | Test: `tests/api/ops/test_models_list.py::test_lists_only_visible_profiles_over_http_and_mcp` runs the handler under two tenants and asserts a cross-tenant profile is absent. |
 | `ARBORA-OPS-R879` | `tests/api/test_ops_hooks_served.py::test_hooks_install_uninstall_over_http_and_mcp` (L3). |
 | `ARBORA-OPS-R880` | Test: `tests/api/test_query_federation.py::test_cross_source_report_served` (served HTTP and MCP, recorded engine). |
-| `ARBORA-OPS-R881` | Test: `tests/api/test_artifact_ops_served.py::test_artifact_operations_serve_over_http_and_mcp` (L3). It creates, gets and refreshes an artifact and asserts each refusal. |
+| `ARBORA-OPS-R881` | (planned) Test: `tests/api/test_artifact_ops_served.py::test_artifact_operations_serve_over_http_and_mcp` (L3). It creates, gets and refreshes an artifact and asserts each refusal. |
 | `ARBORA-OPS-R882` | Test: `tests/api/test_agent_bus_served.py::test_send_receive_dispatch_over_medulla` runs `invoke` over HTTP and MCP with a loopback medulla engine. |
 | `ARBORA-OPS-R883` | Test: `tests/api/test_retrieval_ops.py::test_agent_ref_is_taken_from_identity` calls the operations over HTTP and MCP against a recorded engine (served). |
 | `ARBORA-OPS-R884` | Test: `tests/api/test_meetings_ops.py::test_summary_create_admits_context_and_commit` (L3) runs through the registry `invoke` with a loopback medulla and a recorded harness receipt. It asserts the denied-provider refusal makes zero medulla calls. |

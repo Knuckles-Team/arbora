@@ -1,45 +1,42 @@
-"""The indexed token and cost projection forwards the engine query (ARBORA-OPS-R061)."""
+"""The run-trace measure forwards the engine ``RunMetrics`` query (ARBORA-OPS-R061)."""
 
 from __future__ import annotations
 
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
+from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops import _engine, usage
+from arbora.api.ops import usage
 from arbora.api.ops.registry_factory import get_registry
 from arbora.pin_lag import medulla as pin_lag
 from tests.api._lane_double import EngineDouble, context
 
 OP = next(op for op in usage.operations() if op.id == "usage.index.query")
-QUERY = {"window_start_ms": 0, "window_end_ms": 10, "group_by": "model"}
-PROFILE = {
-    "profile_revision": "1",
-    "p95_bound_ms": 500,
-    "unit": "ms",
-    "boundary": "handler entry to serialized response",
-    "workload": "1000000 traces, 32 readers, 1000 queries",
-    "indexed_dataset_size": 1_000_000,
-    "data_revision": "d1",
-    "index_revision": "i1",
-    "cache_policy_revision": "c1",
+QUERY = {
+    "query": "latency",
+    "group_by": "technique",
+    "window_start_ms": 0,
+    "window_end_ms": 10,
+    "technique": "rerank",
+    "arm": "a",
+    "config_digest": "c" * 8,
 }
-AGGREGATE = {
-    "groups": [{"key": "m1", "amount": "12.5"}],
-    "counters": {"uncached_input": 3, "cached_input": 1},
-    "latency_profile": PROFILE,
+ANSWER = {
+    "query": "latency",
+    "groups": [{"key": "rerank", "value": 120.0, "trace_count": 4}],
 }
 
 
 def _engine_serves(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Structural double for a pin that carries the query shape and method."""
+    """Structural double for a pin that declares the ``RunMetrics`` method."""
     import medulla.generated as generated
 
-    monkeypatch.setattr(pin_lag, "require_models", lambda _names: None)
     monkeypatch.setattr(pin_lag, "require_methods", lambda *_names: None)
     monkeypatch.setattr(
-        generated, "METHOD_IDS", frozenset(generated.METHOD_IDS) | {"RunTraceUsage"}
+        generated, "METHOD_IDS", frozenset(generated.METHOD_IDS) | {"RunMetrics"}
     )
 
     async def send(client: Any, method: str, params: Any, graph: str, **keywords: Any):
@@ -49,15 +46,20 @@ def _engine_serves(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.spec("ARBORA-OPS-R061.1")
-def test_models_validate_the_window_and_page_size() -> None:
+def test_models_validate_the_query_window_and_filters() -> None:
     parsed = usage.UsageIndexQuery(**QUERY)
-    assert parsed.schema_version == 1 and parsed.page_size == 100
-    with pytest.raises(ValueError):
-        usage.UsageIndexQuery(window_start_ms=5, window_end_ms=1)
-    with pytest.raises(ValueError):
-        usage.UsageIndexQuery(**QUERY, page_size=1001)
-    with pytest.raises(ValueError):  # the caller cannot pick the p95 bound
-        usage.UsageIndexQuery(**QUERY, p95_bound_ms=1)
+    assert parsed.schema_version == 1 and parsed.technique == "rerank"
+    for bad in (
+        {**QUERY, "window_end_ms": 0},  # empty window
+        {k: v for k, v in QUERY.items() if k != "window_end_ms"},  # half a window
+        {**QUERY, "query": "tokens_per_second"},  # not a measure
+        {**QUERY, "group_by": "model"},  # not a grouping
+        {**QUERY, "arm": ""},
+        {**QUERY, "p95_bound_ms": 1},  # no field the schema does not name
+    ):
+        with pytest.raises(ValidationError):
+            usage.UsageIndexQuery(**bad)
+    assert usage.UsageIndexQuery(query="score").group_by is None
 
 
 @pytest.mark.spec("ARBORA-OPS-R061.2")
@@ -66,13 +68,22 @@ async def test_projection_is_engine_aggregate_without_local_arithmetic(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _engine_serves(monkeypatch)
-    client = EngineDouble(RunTraceUsage=AGGREGATE)
+    client = EngineDouble(RunMetrics=ANSWER)
     ctx = context(client, monkeypatch)
     answer = await usage.handle_usage_index_query(ctx, QUERY, OP)
-    assert answer["value"] == AGGREGATE  # forwarded unchanged
+    assert answer["value"] == ANSWER  # forwarded unchanged
     method, sent, graph, _ = client.sent[0]
-    assert method == "RunTraceUsage" and graph == "tenant-content"
-    assert sent["request"] == QUERY and client.claims == [{"principal": "alice"}]
+    assert method == "RunMetrics" and graph == "tenant-content"
+    assert sent["request"] == {
+        "tenant": "tenant-a",  # the verified caller's, never the request's
+        "query": "latency",
+        "group_by": "technique",
+        "window": {"start_ms": 0, "end_ms": 10},
+        "technique": "rerank",
+        "arm": "a",
+        "config_digest": "c" * 8,
+    }
+    assert client.claims == [{"principal": "alice"}]
 
 
 @pytest.mark.spec("ARBORA-OPS-R061.3")
@@ -87,34 +98,34 @@ def test_registry_lists_operation_and_binder_composes_reader() -> None:
 async def test_denied_stale_and_unproven_latency_expose_no_rows(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # The pinned engine lacks the query shape: refused, naming it, before any send.
-    client = EngineDouble(RunTraceUsage=AGGREGATE)
+    from medulla import EngineResponseError
+
+    # The pinned engine lacks the method: refused, naming it, before any send.
+    client = EngineDouble(RunMetrics=ANSWER)
     with pytest.raises(OperationRefused) as refused:
         await usage.handle_usage_index_query(context(client, monkeypatch), QUERY, OP)
     assert refused.value.code == "UNAVAILABLE"
-    assert refused.value.details["missing"] == "RunTraceUsageQuery"
+    assert refused.value.details["missing"] == "RunMetrics"
     assert client.sent == []
     _engine_serves(monkeypatch)
-    for bad in (
-        {**AGGREGATE, "latency_profile": {**PROFILE, "p95_bound_ms": 501}},
-        {**AGGREGATE, "latency_profile": {"p95_bound_ms": 100}},
-        {k: v for k, v in AGGREGATE.items() if k != "latency_profile"},
-    ):
-        ctx = context(EngineDouble(RunTraceUsage=bad), monkeypatch)
-        with pytest.raises(OperationRefused) as refused:
-            await usage.handle_usage_index_query(ctx, QUERY, OP)
-        assert refused.value.code == "UNAVAILABLE"
-        assert "groups" not in str(refused.value.details)
-    # A stale cursor keeps the engine's own code and exposes no rows.
-    from medulla import EngineResponseError
-
-    from arbora.api.errors import EngineRefusal
-
-    stale = EngineDouble(RunTraceUsage=EngineResponseError("STALE_CURSOR", "stale"))
-    with pytest.raises(EngineRefusal):
+    # A population that reports no such counter abstains: no group, never a zero.
+    abstained = {"query": "latency", "groups": [], "abstained": "NO_MEASUREMENTS"}
+    answer = await usage.handle_usage_index_query(
+        context(EngineDouble(RunMetrics=abstained), monkeypatch), QUERY, OP
+    )
+    assert answer["value"] == abstained
+    # A malformed answer is unavailable and exposes nothing.
+    with pytest.raises(OperationRefused) as malformed:
         await usage.handle_usage_index_query(
-            context(stale, monkeypatch), {**QUERY, "cursor": "old"}, OP
+            context(EngineDouble(RunMetrics={"query": "latency"}), monkeypatch),
+            QUERY,
+            OP,
         )
+    assert malformed.value.code == "UNAVAILABLE"
+    # A foreign tenant is refused by the engine with its own code, and no rows.
+    denied = EngineDouble(RunMetrics=EngineResponseError("ACCESS_DENIED", "no"))
+    with pytest.raises(EngineRefusal):
+        await usage.handle_usage_index_query(context(denied, monkeypatch), QUERY, OP)
 
 
 @pytest.mark.spec("ARBORA-OPS-R061", "ARBORA-OPS-R061.5")
@@ -123,10 +134,21 @@ async def test_browser_query_reconciles_with_independent_ledger(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _engine_serves(monkeypatch)
-    ledger: dict[str, Any] = {"uncached_input": 3, "cached_input": 1}
-    ctx = context(EngineDouble(RunTraceUsage=AGGREGATE), monkeypatch)
-    answer = await usage.handle_usage_index_query(ctx, QUERY, OP)
-    # Each counter equals the independent ledger read; the profile is recorded whole.
-    assert answer["value"]["counters"] == ledger
-    assert set(answer["value"]["latency_profile"]) == set(usage._PROFILE_FIELDS)
-    assert _engine is not None
+    ledger = {"cost": 0.5, "tokens": 900.0, "solved": 4.0}
+    client = EngineDouble(
+        RunMetrics=lambda params: {
+            "query": params["request"]["query"],
+            "groups": [
+                {
+                    "key": "all",
+                    "value": ledger[params["request"]["query"]],
+                    "trace_count": 5,
+                }
+            ],
+        }
+    )
+    ctx = context(client, monkeypatch)
+    for query, expected in ledger.items():
+        answer = await usage.handle_usage_index_query(ctx, {"query": query}, OP)
+        assert answer["value"]["groups"][0]["value"] == expected
+    assert [sent[1]["request"]["query"] for sent in client.sent] == list(ledger)

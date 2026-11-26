@@ -105,10 +105,6 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T082 ARBORA-OPS-R039.7 Replace `_active_engine` and `_hydration_manager` in arbora/gateway/dashboard_api
 - [ ] T083 ARBORA-OPS-R039.8 Add one test in tests/gateway/test_registry
 - [ ] T084 ARBORA-OPS-R039.9 Replace the `agent_utilities
-- [ ] T085 ARBORA-OPS-R040 Live Artifacts routes
-- [ ] T086 ARBORA-OPS-R040.1 Cross-repo prerequisite
-- [ ] T087 ARBORA-OPS-R040.9 Cross-repo prerequisite (owner: meristem): add the proposed `MERISTEM-BOUNDARY-R013
-- [ ] T088 ARBORA-OPS-R040.10 Add one test in tests/gateway/test_artifacts_route_mount
 - [ ] T089 ARBORA-OPS-R041 Agent summary widget dropped
 - [ ] T090 ARBORA-OPS-R050 Policy lifecycle operations that guard plans.
 - [ ] T091 ARBORA-OPS-R050.1 Model.
@@ -154,8 +150,8 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - **R056:** Resolve the EG/AU review operation, finding schema, and impact-filter contract; leave `decide.commit` unchanged.
 - **R057:** Resolve EG R094 and SDK source-effect/receipt contracts before defining the Arbora serializer or difference oracle.
 - **R058:** Resolve WebUI table-control/statistics requirements and EG producer bindings before extending schema-context reads.
-- [ ] T124 ARBORA-OPS-R061 Define closed indexed-usage query/projection models and the EG reader in usage.py. Bind the tenant to the authenticated caller principal; ignore client-supplied tenant values. Preserve producer counters, exact totals, pinned PriceTableV1, revisions, cursor, unknown reasons, and the R010.101 latency profile. Keep runs.metrics and context budgets distinct.
-- [ ] T125 ARBORA-OPS-R061 Wire the existing registry/invoke path to ObservabilityView.tsx. Specify served authorization, independent-ledger, pagination, unknown-value, stale-revision, and latency-profile acceptance.
+- [ ] T124 ARBORA-OPS-R061 Define closed run-trace measure query/projection models and the `RunMetrics` reader in usage.py. Bind the tenant to the authenticated caller; ignore client-supplied tenant values. Forward the technique, arm and config_digest filters and the latency and score queries unchanged. Keep runs.metrics and context budgets distinct.
+- [ ] T125 ARBORA-OPS-R061 Wire the existing registry/invoke path to ObservabilityView.tsx. Specify served authorization, independent-ledger, abstention and pin-lag acceptance.
 - [ ] T126 ARBORA-OPS-R063 Define typed evaluation and context reads in arbora/api/ops/retrieval.py. Bind the EG R100.100 ranking receipt and context method. Require identical inputs across registered algorithms. Preserve original-text UTF-8 offsets, revisions, authentication, and span bounds.
 - [ ] T127 ARBORA-OPS-R063 Wire the shared registry/invoke route to the WebUI comparison panel. Specify served two-algorithm and independent-metric checks. Cover Unicode offsets, stale or denied access, missing labels, invalid maps, and over-limit spans.
 
@@ -173,7 +169,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T137 ARBORA-OPS-R009.3 Declared replay owners
 - [ ] T138 ARBORA-OPS-R009.4 Typed refusal details (fields, engine reason code, prompt arguments)
 - [ ] T139 ARBORA-OPS-R053.8 Deliver every requirement in requirements.md.
-- [ ] T140 ARBORA-OPS-R059 Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
+- [ ] T140 ARBORA-OPS-R059 Serve the technique measure as three RunMetrics queries over one technique, arm and config_digest filter, with its served proof. Preserve each specified refusal.
 - [ ] T141 ARBORA-OPS-R060 Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
 - [ ] T142 ARBORA-OPS-R062 Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
 - [ ] T143 ARBORA-OPS-R064 Resolve the producer contracts named in plan.md. Then implement the existing registry attachment and its served proof. Preserve each specified refusal.
@@ -347,13 +343,6 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T271 ARBORA-OPS-R039.2 Dashboard write capability.
 - [ ] T272 ARBORA-OPS-R039.3 Add one test in tests/gateway/test_dashboard_api.py asserting GET /health returns 200 without a capability and sets Cache-Control no-store.
 - [ ] T273 ARBORA-OPS-R039.4 Dashboard input refusals.
-- [ ] T274 ARBORA-OPS-R040.2 Create-artifact request model.
-- [ ] T275 ARBORA-OPS-R040.3 Artifact store and refresh ports.
-- [ ] T276 ARBORA-OPS-R040.4 Create artifact route.
-- [ ] T277 ARBORA-OPS-R040.5 Get artifact route.
-- [ ] T278 ARBORA-OPS-R040.6 Refresh artifact route.
-- [ ] T279 ARBORA-OPS-R040.7 Mount the artifact routes.
-- [ ] T280 ARBORA-OPS-R040.8 Wire the source resolver.
 - [ ] T281 ARBORA-OPS-R041.1 Add one test in tests/gateway/test_registry.py asserting genius_agent is absent from the widget registry and no fixed-value widget is registered.
 - [ ] T282 ARBORA-OPS-R042.1 Screening model.
 - [ ] T283 ARBORA-OPS-R042.2 Default screen rules and output redactor.
@@ -379,7 +368,7 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T303 ARBORA-OPS-R061.1 Usage index models.
 - [ ] T304 ARBORA-OPS-R061.2 Usage index forwarding.
 - [ ] T305 ARBORA-OPS-R061.3 Usage index wiring.
-- [ ] T306 ARBORA-OPS-R061.4 Usage index refusals and latency profile.
+- [ ] T306 ARBORA-OPS-R061.4 Usage index refusals.
 - [ ] T307 ARBORA-OPS-R061.5 Usage index hot-path proof.
 - [ ] T308 ARBORA-OPS-R062.1 Graph change models.
 - [ ] T309 ARBORA-OPS-R062.2 Subscribe and stream.
@@ -560,3 +549,4 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T476 [US1] ARBORA-OPS-R924.1 Wiring and refusal: contract fields and engine codes.
 - [ ] T477 [US1] ARBORA-OPS-R924.2 Hot-path proof: guided Discover over HTTP and MCP.
 - [x] T478 [US1] ARBORA-OPS-R024.3.3 Grouped usage rollup with currency and p95 latency.
+- [ ] T736 ARBORA-OPS-R022.2.13 A worker runs the loop body after the run-now receipt.
