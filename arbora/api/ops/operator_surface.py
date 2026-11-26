@@ -697,7 +697,11 @@ async def handle_workflow(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     if op.id == "workflows.run":
-        return {"value": {"run_id": await _submit_run(context, params)}}
+        run_id = await _submit_run(context, params)
+        starter = context.services.get("workflow_worker")
+        if starter is not None:
+            starter.start(run_id, context.caller.session)
+        return {"value": {"run_id": run_id}}
     reply = await invoke_registered(
         context,
         "fleet.call",
