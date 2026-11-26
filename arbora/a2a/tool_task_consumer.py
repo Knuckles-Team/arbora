@@ -244,7 +244,7 @@ class ToolTaskConsumer:
         except WorkItemLeaseLost:
             return ToolTaskRun("fenced")
         except Exception:  # noqa: BLE001 - an unreadable outcome stays uncertain
-            pass
+            self._emit("tool_task_lookup_failed", {"job_id": carrier.job_id})
         self._announce_uncertain(carrier, item_id)
         return ToolTaskRun("indeterminate", "tool_task_execution_uncertain")
 
