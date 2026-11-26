@@ -6,18 +6,16 @@ import json
 import time
 from typing import Any
 
-import pytest
-
 from tests.api._served_support import (
-    McpAsk,
-    confirmable_invocation,
-    person,
-    route_methods,
+    TENANT,
+    TENANT_TWO,
+    TwoTenants,
+    confirmable,  # noqa: F401
+    two_tenant_served,  # noqa: F401
 )
 from tests.api.test_workstreams import Graph
-from tests.test_served_operation_api import _call, served  # noqa: F401
+from tests.test_served_operation_api import served  # noqa: F401
 
-SCOPES = ("workstream:read", "workstream:write")
 ROOT = "/w/shared-repo"
 ATTACH_P95_BUDGET_S = 0.150
 
@@ -27,17 +25,9 @@ def _p95(samples: list[float]) -> float:
     return ordered[max(0, int(len(ordered) * 0.95) - 1)]
 
 
-@pytest.fixture
-def captured(monkeypatch: pytest.MonkeyPatch) -> Any:
-    return confirmable_invocation(monkeypatch)
-
-
 def test_two_harnesses_share_one_workstream(
-    captured: Any,
-    served: Any,  # noqa: F811
-    monkeypatch: pytest.MonkeyPatch,
+    two_tenant_served: TwoTenants,  # noqa: F811
 ) -> None:
-    http, client = served
     graph = Graph()
 
     def engine(method: str) -> Any:
@@ -46,32 +36,20 @@ def test_two_harnesses_share_one_workstream(
 
         return lambda params, principal: _run(send(params, principal))
 
-    methods = (
-        "GetNodePropertiesBatch",
-        "AddNode",
-        "AddEdge",
-        "CompareAndSetNodeFields",
-        "GetPredecessors",
-        "GetNodesByLabel",
-    )
-    route_methods(
-        client,
-        {method: engine(method) for method in methods},
-        monkeypatch,
+    two_tenant_served.route(
         {
-            "fixture-verified": person("one", extra_scopes=SCOPES),
-            "stranger": person("two", extra_scopes=SCOPES),
-        },
+            method: engine(method)
+            for method in (
+                "GetNodePropertiesBatch",
+                "AddNode",
+                "AddEdge",
+                "CompareAndSetNodeFields",
+                "GetPredecessors",
+                "GetNodesByLabel",
+            )
+        }
     )
-
-    def ask_as(name: str, tenant: str) -> McpAsk:
-        return McpAsk(
-            captured["invocation"],
-            monkeypatch,
-            person(name, tenant=tenant, extra_scopes=SCOPES),
-        )
-
-    one = ask_as("one", "tenant:one")
+    one = two_tenant_served.mcp(TENANT)
     first = one(
         "write",
         "workstream.attach",
@@ -107,27 +85,36 @@ def test_two_harnesses_share_one_workstream(
     assert "left off at step 3" in repr(context)
     assert len(graph.edges) == 2
 
-    # Another principal, with the same root, finds nothing: a foreign workstream
-    # answers exactly like an absent one. The served fixture binds one tenant, so
-    # the second-tenant leg is not proven here (the key embeds the tenant and is
-    # covered in tests/api/test_workstreams.py).
-    absent = _call(
-        http,
-        "workstream.get",
-        {"workspace_root": ROOT},
-        Authorization="Bearer stranger",
+    # A principal of the second tenant names the same root and finds nothing: a
+    # foreign workstream answers exactly like an absent one.
+    absent = two_tenant_served.call(
+        TENANT_TWO, "workstream.get", {"workspace_root": ROOT}
     )
     assert absent.json()["error"]["code"] == "WORKSTREAM_NOT_FOUND", absent.text
-    assert (
-        _call(http, "workstream.get", {"workspace_root": "/w/never-attached"}).json()[
-            "error"
-        ]["code"]
-        == "WORKSTREAM_NOT_FOUND"
+    unknown = two_tenant_served.call(
+        TENANT, "workstream.get", {"workspace_root": "/w/never-attached"}
     )
+    assert {**unknown.json()["error"], "request_id": ""} == {
+        **absent.json()["error"],
+        "request_id": "",
+    }
+    foreign_mcp = two_tenant_served.mcp(TENANT_TWO)(
+        "ask", "workstream.get", {"workspace_root": ROOT}
+    )
+    assert "left off at step 3" not in repr(foreign_mcp)
+    assert (
+        two_tenant_served.call(
+            TENANT, "workstream.get", {"workspace_root": ROOT}, credential_of=TENANT_TWO
+        ).json()["error"]["code"]
+        == "UNAUTHENTICATED"
+    )
+    assert not any(node.get("tenant") == TENANT_TWO for node in graph.nodes.values()), (
+        "the second tenant must not have written anything"
+    )
+    one = two_tenant_served.mcp(TENANT)  # the MCP process session is per surface
     mine = one("ask", "workstream.get", {"workspace_root": ROOT})
     assert mine["ok"] is True and "left off at step 3" in repr(mine)
 
-    one = ask_as("one", "tenant:one")
     samples: list[float] = []
     for index in range(200):
         started = time.perf_counter()
