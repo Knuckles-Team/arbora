@@ -27,6 +27,19 @@ from arbora.semantic_content import default_content_providers
 logger = logging.getLogger(__name__)
 
 
+def _changeset_seams(invocation: Any) -> Any:
+    """The run ports' changeset seams, only when the host has the engine to stage through."""
+    send = getattr(invocation, "engine_send", None)
+    if invocation is None or send is None:
+        return None
+    from arbora.agent_host.changeset_seams import production_changeset_seams
+    from arbora.agent_host.host_port_composition import _run_of, run_principal_call
+
+    return production_changeset_seams(
+        run_principal_call(invocation.services), send, _run_of
+    )
+
+
 def _register_semantic_content(mcp: Any) -> None:
     """Expose independently owned semantic artifacts through the SDK contract.
 
@@ -370,6 +383,7 @@ def mcp_server(
     bind_run_ports(
         invocation.services if invocation is not None else None,
         HostSeams(
+            changeset=_changeset_seams(invocation),
             sandbox_verified=boundary_verified,
             approval_chain=chain,
             plan_for=run_plan_binding(invocation.services)
