@@ -62,6 +62,8 @@ class HookIntent:
     point: Lifecycle
     op: str
     trigger: str | None = None
+    #: The harness tool name a hook is limited to (a skill hook fires on the skill tool).
+    matcher: str | None = None
 
 
 @dataclass(frozen=True)
@@ -72,12 +74,20 @@ class BundleSpec:
     agents: tuple[AgentDef, ...]
     commands: tuple[CommandDef, ...]
     hooks: tuple[HookIntent, ...] = field(default_factory=tuple)
+    #: Added by the configuration layers (ARBORA-HARNESS-PLUGINS-R013).
+    personas: tuple[str, ...] = ()
+    tools: tuple[str, ...] = ()
+    policy: tuple[tuple[str, bool | int], ...] = ()
+    #: The role persona and the digest of its load set (R014).
+    persona: str | None = None
+    load_set_digest: str | None = None
 
 
 HOOK_INTENTS: tuple[HookIntent, ...] = (
     HookIntent(Lifecycle.FIRST_PROMPT, "workstream.attach"),
     HookIntent(Lifecycle.BEFORE_COMPACTION, "workstream.checkpoint", "compact"),
     HookIntent(Lifecycle.SESSION_END, "workstream.detach"),
+    HookIntent(Lifecycle.SKILL_END, "skills.telemetry.ingest", matcher="Skill"),
 )
 
 COMMANDS: tuple[CommandDef, ...] = (
@@ -146,13 +156,24 @@ def compose_bundle(
     skills: Sequence[str] = (),
     agents: Sequence[AgentDef] = (),
     skill_roots: Sequence[Path] | None = None,
+    persona: str | None = None,
+    persona_skills: Sequence[str] = (),
+    load_set_digest: str | None = None,
 ) -> BundleSpec:
-    """The frozen bundle for ``profile``; :class:`SkillMissing` names a gap."""
+    """The frozen bundle for ``profile``; :class:`SkillMissing` names a gap.
+
+    With a ``persona`` the skill set is the door skills plus exactly the
+    ``persona_skills`` the engine returned (its always-on skills first); the
+    declared list is not used (ARBORA-HARNESS-PLUGINS-R014).
+    """
     roots = installed_skill_roots() if skill_roots is None else tuple(skill_roots)
+    wanted = persona_skills if persona is not None else skills
     return BundleSpec(
         profile_id=profile.id,
         door=door_entry(profile, base_url),
-        skills=find_skills((*DOOR_SKILLS, *skills), roots),
+        persona=persona,
+        load_set_digest=load_set_digest,
+        skills=find_skills((*DOOR_SKILLS, *wanted), roots),
         agents=tuple(sorted(agents, key=lambda a: a.name)),
         commands=COMMANDS,
         hooks=tuple(i for i in HOOK_INTENTS if profile.event(i.point) is not None),

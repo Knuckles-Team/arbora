@@ -14,7 +14,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [x] T008 ARBORA-A2A-R003 No duplicate skill or prompt harvesting in the multiplexer
 - [x] T009 ARBORA-A2A-R004 Served MCP bridge runs FastMCP 4, matching its declared version
 - [x] T010 ARBORA-A2A-R005.1 Fail-closed `arbora.plan/confirm` stub on the A2A method table
-- [ ] T011 ARBORA-A2A-R005.2.1 Human-grant store over the engine pending-call lease with atomic consume-once
+- [x] T011 ARBORA-A2A-R005.2.1 Human-grant store over the engine pending-call lease with atomic consume-once
 - [x] T012 ARBORA-A2A-R005.2.2 Validate detached pending-call signatures without authorizing execution
 - [x] T013 ARBORA-A2A-R005.2.3 Human authority snapshot evaluation
 - [x] T014 ARBORA-A2A-R005.2.4 Native facts adapters and registration proof
@@ -66,10 +66,10 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T060 ARBORA-A2A-R001.3 Served agent keeps and lists caller conversations
 - [ ] T061 ARBORA-A2A-R001.4.1 Served A2A route streams task events
 - [x] T062 ARBORA-A2A-R001.6 Non-blocking `message/send`
-- [ ] T063 ARBORA-A2A-R001.5.1 Bounded inline text input
+- [x] T063 ARBORA-A2A-R001.5.1 Bounded inline text input
 - [ ] T064 ARBORA-A2A-R001.5.2 Selected-model binary input
-- [ ] T077 ARBORA-A2A-R001.5.3 Verify image content against the declared type
-- [ ] T078 ARBORA-A2A-R001.5.4 Limit images per request
+- [x] T077 ARBORA-A2A-R001.5.3 Verify image content against the declared type
+- [x] T078 ARBORA-A2A-R001.5.4 Limit images per request
 - [ ] T079 ARBORA-A2A-R001.5.5 Carry image bytes inline or by upload reference
 - [ ] T080 ARBORA-A2A-R001.5.6 Serve the effective media limits to clients
 - [ ] T081 ARBORA-A2A-R001.5.7 Hand admitted images to the run with the capability and fallback mode

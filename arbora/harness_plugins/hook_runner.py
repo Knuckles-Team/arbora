@@ -10,6 +10,7 @@ refused credential prints a one-line ``AUTH_REQUIRED`` note instead.
 from __future__ import annotations
 
 import json
+import time
 from collections.abc import Callable, Mapping
 from typing import Any
 
@@ -52,6 +53,48 @@ def params_for(
     return {"harness_session_id": session}
 
 
+#: The version a skill hook reports: the harness hook input carries none.
+SKILL_VERSION = "unversioned"
+
+
+def skill_log_body(hook: Mapping[str, Any], now_ns: int) -> dict[str, Any] | None:
+    """One OTLP log record for one ended skill use (ARBORA-HARNESS-PLUGINS-R012).
+
+    Only the skill name, the session id and the outcome are read from the hook
+    input; the prompt, the arguments and the output never enter the body. A
+    skill the user typed as a command is not a tool call, so a tool hook only
+    sees an agent choice.
+    """
+    tool_input = hook.get("tool_input")
+    skill = (
+        str(tool_input.get("skill") or "") if isinstance(tool_input, Mapping) else ""
+    )
+    session = str(hook.get("session_id") or hook.get("sessionID") or "")
+    if not skill or not session:
+        return None
+    response = hook.get("tool_response")
+    failed = bool(hook.get("error")) or (
+        isinstance(response, Mapping) and bool(response.get("is_error"))
+    )
+    attributes = {
+        "skill.ref": skill,
+        "skill.version": SKILL_VERSION,
+        "skill.chosen_by": "agent",
+        "session.run_id": session,
+        "skill.outcome": "error" if failed else "ok",
+    }
+    if failed:
+        attributes["skill.error_code"] = "SKILL_FAILED"
+    record = {
+        "timeUnixNano": str(now_ns),
+        "attributes": [
+            {"key": key, "value": {"stringValue": value}}
+            for key, value in sorted(attributes.items())
+        ],
+    }
+    return {"resourceLogs": [{"scopeLogs": [{"logRecords": [record]}]}]}
+
+
 def output_form(point: Lifecycle, profile: HarnessProfile, context: str) -> str:
     """Hook stdout in the form the harness reads."""
     if not context:
@@ -78,10 +121,20 @@ def run(
     base_url: str,
     store: TokenStore,
     post: Post = _default_post,
+    now_ns: Callable[[], int] = time.time_ns,
 ) -> str:
     """The hook output; never raises."""
     try:
         hook = json.loads(stdin_text or "{}")
+        if point is Lifecycle.SKILL_END:
+            return _report_skill(
+                profile,
+                hook if isinstance(hook, Mapping) else {},
+                base_url=base_url,
+                store=store,
+                post=post,
+                now_ns=now_ns(),
+            )
         params = params_for(point, profile, hook if isinstance(hook, Mapping) else {})
         if not params["harness_session_id"]:
             return ""
@@ -105,4 +158,38 @@ def run(
         return ""
 
 
-__all__ = ["OPS", "auth_required_note", "output_form", "params_for", "run"]
+def _report_skill(
+    profile: HarnessProfile,
+    hook: Mapping[str, Any],
+    *,
+    base_url: str,
+    store: TokenStore,
+    post: Post,
+    now_ns: int,
+) -> str:
+    """Post one skill log record; with no usable credential nothing is sent and
+    nothing is printed, so a skill use is never blocked or noisy (R003.4)."""
+    body = skill_log_body(hook, now_ns)
+    credential = store.load(profile.id)
+    if body is None or credential is None:
+        return ""
+    if credential.state is CredentialState.AUTHORIZED:
+        credential = renew(credential, store=store)
+    if credential.state is not CredentialState.AUTHORIZED:
+        return ""
+    post(
+        f"{base_url.rstrip('/')}/api/v1/logs",
+        body,
+        {"Authorization": f"Bearer {credential.access_token}"},
+    )
+    return ""
+
+
+__all__ = [
+    "OPS",
+    "skill_log_body",
+    "auth_required_note",
+    "output_form",
+    "params_for",
+    "run",
+]

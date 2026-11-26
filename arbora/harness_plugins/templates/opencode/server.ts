@@ -130,5 +130,23 @@ export default Plugin.define({
         }
       },
     })
+    // One skill use ends: report the skill name and the outcome only, never the
+    // arguments or the output (ARBORA-HARNESS-PLUGINS-R012).
+    ctx.event.subscribe({
+      types: ["tool.execute.after"],
+      handler: async (event: any) => {
+        const properties = event?.properties ?? {}
+        if (String(properties.tool ?? "").toLowerCase() !== "skill") return
+        const sessionID = String(properties.sessionID ?? event?.sessionID ?? "")
+        const skill = String(properties.args?.name ?? properties.args?.skill ?? "")
+        if (!sessionID || !skill) return
+        await runHook(bundle.hooks["tool.execute.after"], {
+          session_id: sessionID,
+          tool_name: "Skill",
+          tool_input: { skill },
+          error: properties.error ? true : false,
+        })
+      },
+    })
   },
 })

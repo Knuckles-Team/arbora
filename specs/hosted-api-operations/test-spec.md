@@ -582,9 +582,9 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R917.3` | Test: `tests/test_native_run_admission.py::test_role_run_refuses_missing_profile_and_narrows_tools` (planned, L1). |
 | `ARBORA-OPS-R917.4` | Test: `tests/api/test_role_served.py::test_one_template_two_tenants_isolated_profiles` (planned, L1). |
 | `ARBORA-OPS-R918` | Roll-up of its children. |
-| `ARBORA-OPS-R918.1` | Test: `tests/api/test_approvals_ops.py::test_list_filters_by_gate_class_and_approver_role` (planned, L1). |
-| `ARBORA-OPS-R918.2` | Test: `tests/api/test_gate_class.py::test_engine_answer_sets_class_roles_expiry_and_default_is_strict` (planned, L1). |
-| `ARBORA-OPS-R918.3` | Test: `tests/api/test_approvals_ops.py::test_decide_refuses_self_approval_and_records_provenance` (planned, L1). |
+| `ARBORA-OPS-R918.1` | Test: `tests/api/test_approvals_ops.py::test_list_filters_by_gate_class_and_approver_role` (L1). |
+| `ARBORA-OPS-R918.2` | Test: `tests/api/test_gate_class.py::test_engine_answer_sets_class_roles_expiry_and_default_is_strict` (L1). |
+| `ARBORA-OPS-R918.3` | Test: `tests/api/test_approvals_ops.py::test_decide_refuses_self_approval_and_records_provenance` (L1). |
 | `ARBORA-OPS-R918.4` | Test: `tests/api/test_approvals_ops.py::test_expired_item_refuses_consume_and_lists_expired` (planned, L1). |
 | `ARBORA-OPS-R918.5` | Test: `tests/api/test_approvals_ops.py::test_digest_counts_by_class_and_delivers_one_notice_per_owner` (planned, L1). |
 | `ARBORA-OPS-R918.6` | Test: `tests/fleet/test_approval_notifier.py::test_notice_per_approver_without_preview_and_retries_from_outbox` (planned, L1). |
@@ -605,9 +605,9 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R921.4` | Test: `tests/api/test_catalog_ops_served.py::test_catalog_journey_over_mcp` (planned, L3) |
 | `ARBORA-OPS-R861.10` | Test: `tests/api/test_dashboard_ops_served.py::test_access_read_shows_grants_only_to_owner_and_editor` (planned, L3) |
 | `ARBORA-OPS-R922` | Test: `tests/api/test_web_route_map.py::test_every_pending_route_names_a_registered_operation_or_a_named_retirement` (planned, L2) |
-| `ARBORA-OPS-R922.1` | Test: `tests/api/test_ontology_object_ops.py::test_interfaces_and_implementers_read_the_engine_schema` (planned, L2) |
+| `ARBORA-OPS-R922.1` | Test: `tests/api/test_ontology_object_ops.py::test_interfaces_refuse_unavailable_until_the_engine_marks_them` (L2) |
 | `ARBORA-OPS-R922.2` | Test: `tests/api/test_models_list.py::test_get_returns_secret_references_and_never_values` (planned, L2) |
-| `ARBORA-OPS-R922.3` | Test: `tests/api/test_atlas_ops.py::test_runs_list_filters_by_connection_and_state` (planned, L2) |
+| `ARBORA-OPS-R922.3` | Test: `tests/api/test_atlas_ops.py::test_runs_list_refuses_unavailable_until_the_engine_lists_runs` (L2) |
 | `ARBORA-OPS-R922.4` | Test: `tests/api/test_prompt_ops.py::test_active_prompt_resolves_the_session_agent_and_truncates` (planned, L2) |
 | `ARBORA-OPS-R915.1` | Test: `tests/api/test_city_presence_state_served.py::test_snapshot_is_revisioned_tenant_scoped_and_heartbeat_is_subject_bound` (L3; HTTP and MCP). |
 | `ARBORA-OPS-R950` | Test: `tests/api/test_knowledge_flag_ops.py::test_raise_resolve_get_list_over_http_and_mcp_with_denied_grant` (L3). |
@@ -617,7 +617,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R954` | Test: `tests/api/test_skills_discovery_ops.py::test_measures_rank_find_peers_and_small_cohort_refusal` (L3). |
 | `ARBORA-OPS-R955` | Test: `tests/api/test_skills_eval_ops.py::test_case_report_and_calibrate_forward_the_new_eval_ops` (planned) (L3). |
 | `ARBORA-OPS-R956` | Test: `tests/api/test_skills_eval_ops.py::test_ablation_record_and_canary_verdict_pass_through` (planned) (L3). |
-| `ARBORA-OPS-R957` | Test: `tests/api/test_skills_tier_ops.py::test_promote_by_tier_grant_and_persona_reads` (planned) (L3). |
+| `ARBORA-OPS-R957` | Test: `tests/api/test_skills_tier_ops.py::test_promote_by_tier_grant_and_persona_reads` (L3). |
 | `ARBORA-OPS-R958` | Test: `tests/knowledge/test_curator_scheduler.py::test_due_tick_claims_lease_and_starts_the_agent_and_not_due_does_nothing` (planned) (L3). |
 | `ARBORA-OPS-R857.3` | Test: `tests/api/test_sparql_protocol.py::test_graph_store_round_trips_each_media_type` (planned, L3) |
 | `ARBORA-OPS-R857.4` | Test: `tests/api/test_sparql_protocol.py::test_graph_store_refusals_use_engine_codes` (planned, L3) |

@@ -59,9 +59,18 @@ def test_hooks_are_mcp_tool_calls_to_the_door(skill_root: Path, tmp_path: Path) 
     hooks = json.loads((_tree(skill_root, tmp_path) / "hooks/hooks.json").read_text())[
         "hooks"
     ]
-    assert sorted(hooks) == ["PreCompact", "SessionEnd", "UserPromptSubmit"]
+    assert sorted(hooks) == [
+        "PostToolUse",
+        "PreCompact",
+        "SessionEnd",
+        "UserPromptSubmit",
+    ]
+    # The skill-end hook is a command (ARBORA-HARNESS-PLUGINS-R012); the rest call the door.
+    assert hooks["PostToolUse"][0]["hooks"][0]["type"] == "command"
     ops = {}
     for event, groups in hooks.items():
+        if event == "PostToolUse":
+            continue
         (handler,) = groups[0]["hooks"]
         assert handler["type"] == "mcp_tool"
         assert (

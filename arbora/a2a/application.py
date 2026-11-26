@@ -25,6 +25,7 @@ from .authority import (
 )
 from .event_log import A2AEventGap, A2AEventStream, wire_event
 from .models import A2AMessage, A2AOperationInvokeParams, A2APlanConfirmParams
+from .parts import FilePartRefused
 from .routing import A2AAssemblyUnavailable, A2AOperationBridgeUnavailable
 from .service import A2AService
 from .terminal_event import A2ATerminalEventUnavailable
@@ -156,13 +157,18 @@ class _ListParams(_Params):
     limit: int = Field(default=50, ge=1, le=100)
 
 
-def _error(request_id: Any, code: int, message: str, status: int = 400) -> JSONResponse:
+def _error(
+    request_id: Any,
+    code: int,
+    message: str,
+    status: int = 400,
+    data: dict[str, Any] | None = None,
+) -> JSONResponse:
+    error: dict[str, Any] = {"code": code, "message": message}
+    if data is not None:
+        error["data"] = data
     return JSONResponse(
-        {
-            "jsonrpc": "2.0",
-            "id": request_id,
-            "error": {"code": code, "message": message},
-        },
+        {"jsonrpc": "2.0", "id": request_id, "error": error},
         status_code=status,
         headers={"Cache-Control": "no-store"},
     )
@@ -385,6 +391,11 @@ def _application_error(request_id: Any, error: Exception) -> JSONResponse:
         # code and a fixed reason, never caller input.
         unavailable = error.arbora_code == "UNAVAILABLE"
         return _error(request_id, -32015, str(error), 503 if unavailable else 422)
+    if isinstance(error, FilePartRefused):
+        # ARBORA-A2A-R001.5: a closed reason, never caller input.
+        return _error(
+            request_id, -32602, "Invalid params", 400, {"reason": error.reason}
+        )
     mapped = _ERROR_CODES.get(type(error))
     if mapped is not None:
         code, status = mapped

@@ -21,6 +21,7 @@ from arbora.api.invoke.executor import (
     execution_context,
     prepare_executor,
 )
+from arbora.api.invoke.gate_class import GateReader, no_engine_answer, resolve_gate
 from arbora.api.invoke.plan import PlanBinding, PlanStore, bind_plan, params_digest
 from arbora.api.invoke.privacy import mask_persisted_arguments
 from arbora.api.invoke.steps import (
@@ -186,6 +187,8 @@ class InvokeServices:
     native_idempotency: Mapping[str, str] = field(default_factory=dict)
     fleet_effect: FleetEffect | None = None
     schema_validate: SchemaValidate | None = None
+    #: Reads the engine's gate answer when a plan is minted (ARBORA-OPS-R918.2).
+    gate_reader: GateReader = no_engine_answer
 
     def __post_init__(self) -> None:
         self._cover_plan_gated_operations()
@@ -309,7 +312,8 @@ async def _issue_plan(
 ) -> OpResult | OpError:
     unavailable = OpError("UNAVAILABLE", {"reason": "plan lease unavailable"})
     try:
-        reference = await services.plans.issue(binding, params)
+        gate = await resolve_gate(services.gate_reader, op.id, binding.tenant)
+        reference = await services.plans.issue(binding, params, gate)
     except Exception:
         return unavailable
     if not isinstance(reference, str) or not reference:

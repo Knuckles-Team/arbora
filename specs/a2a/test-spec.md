@@ -192,13 +192,14 @@ Rows below name tests that are planned or only partly built. Each entry restates
 | Test | Requirement | Planned test and expected observation |
 |---|---|---|
 | A2A-PL01 | ARBORA-A2A-R002.2.1 | No arbora-side test is possible against the current AU carrier contract. Verified by the fail-closed tests bound to `ARBORA-A2A-R002.1` continuing to refuse rather than silently drop the filter. Tracked as the explicit cross-repo dependency recorded in `tasks.md`. Test: `tests/a2a/test_authority.py::test_selected_tool_subset_is_refused_before_durable_admission`. |
-| A2A-PL02 | ARBORA-A2A-R005.2.1 | Test: `tests/a2a/test_grant_store.py::test_concurrent_consume_succeeds_once` (planned) (L2) runs 8 concurrent consumes against a loopback engine and asserts one success. `::test_expired_and_revoked_grants_refuse` asserts the refusal codes. Served proof is `ARBORA-A2A-R005.2.5`. |
-| A2A-PL03 | ARBORA-A2A-R011 | Test: `tests/a2a/test_transition_history.py::test_history_matches_engine_ledger_exactly` (L3) runs `tasks/get` against a loopback engine and asserts the entries equal the ledger, plus a foreign-tenant refusal. (planned: the named files do not exist yet) |
+| A2A-PL02 | ARBORA-A2A-R005.2.1 | Test: `tests/a2a/test_grant_store.py::test_concurrent_consume_succeeds_once` (L2) runs 8 concurrent consumes against a control-lease double that keeps the engine revision compare-and-set and asserts one success. `::test_expired_and_revoked_grants_refuse` asserts the refusal codes. Served proof is `ARBORA-A2A-R005.2.5`. |
+| A2A-PL03 | ARBORA-A2A-R011 | Test: `tests/a2a/test_transition_history.py::test_history_matches_engine_ledger_exactly` (L3) runs `tasks/get` against a loopback engine and asserts the entries equal the ledger, plus a foreign-tenant refusal. |
 | A2A-PL04 | ARBORA-A2A-R012.3 | Test: `tests/a2a/test_transition_history.py::test_get_task_raises_typed_refusal_without_authority` (L2) covers the absent and the raising authority. |
 | A2A-PL05 | ARBORA-A2A-R015 | Test: `tests/a2a/test_agent_card.py::test_served_card_matches_wired_authorities` (L3) compares the advertised set with the exercised set. |
 | A2A-PL06 | ARBORA-A2A-R001.3 | Test: (planned) `tests/a2a/test_served_agent.py::test_context_survives_restart_and_list_is_caller_scoped` (served). It restarts between two turns, lists only the caller's contexts and refuses a foreign `contextId`. |
 | A2A-PL07 | ARBORA-A2A-R001.4.1 | Test: `tests/a2a/test_event_cursor_served.py::test_stream_disconnect_and_resubscribe_from_a_mid_cursor_get_exactly_the_rest` (served). A resubscribe from a mid cursor replays exactly the tail. |
-| A2A-PL08 | ARBORA-A2A-R001.5.2 | Test: `tests/a2a/test_served_agent.py::test_capable_model_accepts_png_and_unknown_stale_oversize_create_no_task` (served). |
+| A2A-PL08a | ARBORA-A2A-R001.5.1 | Test: `tests/a2a/test_inline_text_input.py::test_inline_text_files_are_bounded_and_oversize_creates_no_task` (served). |
+| A2A-PL08 | ARBORA-A2A-R001.5.2 | Test: (planned) `tests/a2a/test_served_agent.py::test_capable_model_accepts_png_and_unknown_stale_oversize_create_no_task` (served). |
 | A2A-PL09 | ARBORA-A2A-R001.5.3 | Test: `tests/a2a/test_media_admission.py::test_mismatched_signature_is_refused_with_zero_tasks` (served). |
 | A2A-PL10 | ARBORA-A2A-R001.5.4 | Test: `tests/a2a/test_media_admission.py::test_request_byte_and_image_count_limits_refuse_with_reasons` (served). |
 | A2A-PL11 | ARBORA-A2A-R001.5.5 | Test: `tests/a2a/test_media_admission.py::test_upload_reference_resolves_for_owner_and_refuses_foreign_expired_unknown` (served). |
