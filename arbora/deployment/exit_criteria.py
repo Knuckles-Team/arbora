@@ -19,7 +19,7 @@ obligation audits as missing, never as a silent pass.
 
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET  # noqa: S405 - a local pytest report
+import xml.etree.ElementTree as ET  # noqa: S405  # nosec B405 - a local pytest report
 from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -73,7 +73,7 @@ def passed_node_ids_from_junit(path: Path) -> frozenset[str]:
     (ARBORA-RELEASE-R003.10).
     """
     passed: set[str] = set()
-    for case in ET.parse(path).getroot().iter("testcase"):  # noqa: S314
+    for case in ET.parse(path).getroot().iter("testcase"):  # noqa: S314  # nosec B314
         if any(case.find(tag) is not None for tag in ("failure", "error", "skipped")):
             continue
         classname, name = case.get("classname", ""), case.get("name", "")
