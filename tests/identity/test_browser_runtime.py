@@ -223,6 +223,14 @@ def test_auth_routes_refuse_and_never_return_tokens(monkeypatch, fault):
         elif fault == "logout":
             assert start["status"] == 204 and b"Max-Age=0" in headers[b"set-cookie"]
             assert [op["op"] for op in calls] == ["revoke"]
+        elif fault == "mfa":
+            # ARBORA-IDENTITY-R006.2.3: the login waits for a second factor. The cookie names
+            # the engine's pending session for five minutes and is never resolved to a caller.
+            assert start["status"] == 200
+            assert json.loads(response)["outcome"] == "mfa_required"
+            assert b"Max-Age=300" in headers[b"set-cookie"]
+            assert [op["op"] for op in calls] == ["authenticate"]
+            assert authority.calls == []
         else:
             assert start["status"] == (503 if fault == "missing-key" else 401)
             assert b"set-cookie" not in headers
