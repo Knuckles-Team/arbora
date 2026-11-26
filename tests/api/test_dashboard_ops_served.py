@@ -174,6 +174,50 @@ def test_save_update_and_stale_revision_conflict(env: Any) -> None:
     assert _save(app, DOC, None, "k5").status_code == 400
 
 
+PANEL_QUERIES: list[dict[str, Any]] = [
+    {"kind": "uql", "text": "MATCH (n) RETURN n"},
+    {"kind": "nl", "text": "how many open defects are there"},
+    {"kind": "stored", "ref": "query:weekly"},
+    {
+        "kind": "fleet-call",
+        "server": "gitlab-mcp",
+        "tool": "list_pipelines",
+        "arguments": {"project": "x", "limit": 5},
+    },
+    {"kind": "eg-op", "op": "eg.query.Uql", "params": {"text": "MATCH (n) RETURN n"}},
+]
+
+
+@pytest.mark.spec("ARBORA-OPS-R861.2")
+def test_every_panel_kind_is_stored_as_data_and_runs_nothing(env: Any) -> None:
+    app, engine, *_ = env
+    panels = [
+        {**DOC["panels"][0], "id": f"p{i}", "query": query}
+        for i, query in enumerate(PANEL_QUERIES)
+    ]
+    _value(_save(app, {**DOC, "panels": panels}, 0, "kk"))
+    # Saving is one engine write; no fleet call or query ran.
+    assert engine.sent == [("save", "person:one")]
+    got = _value(_call(app, "dashboard.get", {"id": "sales"}, **ONE))
+    assert [p["query"] for p in got["document"]["panels"]] == PANEL_QUERIES
+    bad = [
+        {"kind": "fleet-call", "server": "x"},
+        {"kind": "eg-op", "op": "eg.graph.DeleteNode", "params": {}},
+        {"kind": "nl", "ref": "r"},
+        {"kind": "shell", "text": "ls"},
+    ]
+    for query in bad:
+        panel = {**DOC["panels"][0], "query": query}
+        assert _save(app, {**DOC, "panels": [panel]}, 0, "kb").status_code == 400
+
+
+@pytest.mark.spec("ARBORA-OPS-R861.4")
+def test_list_result_rows_declare_the_title() -> None:
+    from arbora.api.ops import dashboard
+
+    assert "title" in dashboard.DashboardEntry.model_fields
+
+
 @pytest.mark.spec("ARBORA-OPS-R861.3")
 def test_validation_and_size_cap_make_no_engine_write(env: Any) -> None:
     app, engine, *_ = env
