@@ -11,6 +11,7 @@ from arbora.api.registry.eg_binding import (
     load_eg_bindings,
     load_generated_scopes,
 )
+from arbora.api.registry.pending_scopes import apply_pending_scopes
 
 
 def get_registry() -> Registry:
@@ -37,6 +38,7 @@ def get_registry() -> Registry:
         fleet,
         identity,
         ingest,
+        knowledge,
         memory,
         messaging,
         models,
@@ -51,6 +53,7 @@ def get_registry() -> Registry:
         runs,
         security,
         skills_discovery,
+        skills_friction,
         source,
         swarm,
         telemetry,
@@ -75,6 +78,7 @@ def get_registry() -> Registry:
         fleet,
         identity,
         ingest,
+        knowledge,
         memory,
         messaging,
         models,
@@ -89,6 +93,7 @@ def get_registry() -> Registry:
         runs,
         security,
         skills_discovery,
+        skills_friction,
         source,
         swarm,
         telemetry,
@@ -106,11 +111,8 @@ def get_registry() -> Registry:
             curated.append(op)
     engine_catalog = load_catalog()
     scopes = load_generated_scopes(engine_catalog)
-    for op in curated:
-        missing = (op.scopes | op.executor_scopes) - scopes.keys()
-        if missing:
-            raise EgContractError(
-                f"{op.id}: unregistered curated EG scopes: {', '.join(sorted(missing))}"
-            )
+    curated, errors = apply_pending_scopes(curated, scopes.keys())
+    if errors:
+        raise EgContractError("; ".join(errors))
     generated = load_eg_bindings(catalog=engine_catalog, curated_ops=curated)
     return Registry((*curated, *generated), catalog=engine_catalog)

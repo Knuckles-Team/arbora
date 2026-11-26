@@ -1,0 +1,8 @@
+# Engine scopes that exist on the engine's main branch but not yet in the
+# pinned engine catalog (ARBORA-FLEET-R012.2). An operation whose scope is
+# listed here is served and refuses UNAVAILABLE. Remove an entry when the pin
+# moves; a test fails while a listed scope is already in the pinned catalog.
+pending_engine_scopes:
+  - knowledge:approve
+  - knowledge:curate
+  - knowledge:flag
