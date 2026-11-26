@@ -10,7 +10,8 @@ does not exist yet is left unbound, and the harness refuses it closed (see
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping
+from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any
 
@@ -18,9 +19,25 @@ from arbora.agent_host.host_port_adapters import (
     EngineDecisionAdapter,
     HostPortsBinding,
     RunCall,
+    approval_waiter,
     bind_host_ports,
     decision_port,
     liveness_wait,
+    plan_confirmer,
+    run_trace_sink,
+    sandbox_process_provider,
+    study_content_reader,
+    summary_provider,
+    technique_measure,
+)
+from arbora.agent_host.port_services import (
+    ApprovalInboxWaiter,
+    RunTraceReceipts,
+    RunVerdictConfirm,
+    SandboxProcessTable,
+    StudyContentService,
+    SummaryService,
+    TechniqueMeasureService,
 )
 
 
@@ -73,6 +90,33 @@ def run_principal_call(
     return call
 
 
+def active_run_ref() -> str:
+    """The run id of the executing run scope, for ports that carry no run reference."""
+    from arbora.agent_runs import _NATIVE_RUN
+
+    scope = _NATIVE_RUN.get()
+    if scope is None or not scope.active:
+        raise RuntimeError("no run is executing")
+    return str(scope.ownership.run_id)
+
+
+@dataclass(frozen=True, slots=True)
+class PortBackends:
+    """The host seams the composed ports stand on; a missing one leaves its port unbound."""
+
+    read_lease: Callable[[str, str], Awaitable[Mapping[str, Any] | None]] | None = None
+    now_ms: Callable[[], int] | None = None
+    processes: SandboxProcessTable | None = None
+    summary_model: (
+        Callable[[Mapping[str, Any], str], Awaitable[Mapping[str, Any]]] | None
+    ) = None
+    confirm_exchange: (
+        Callable[[str, Mapping[str, Any], str], Awaitable[Mapping[str, Any]]] | None
+    ) = None
+    terminal_extension: Callable[[str], Mapping[str, Any]] | None = None
+    encode: Callable[[Any], bytes] | None = None
+
+
 def compose_host_ports(
     services: Any,
     *,
@@ -80,12 +124,41 @@ def compose_host_ports(
     checkpoint_store: Any = None,
     resolve_run: Callable[[str], Any] = _run_of,
     method_op: Callable[[str], str | None] = lambda _: None,
+    backends: PortBackends | None = None,
 ) -> HostPortsBinding:
     """Bind every port that has a backend; the pinned release refuses ``UNAVAILABLE``."""
+    backends = backends or PortBackends()
     call = run_principal_call(services, resolve_run)
-    return bind_host_ports(
-        engine_decision=EngineDecisionAdapter(call, method_op),
-        decision=decision_port(call),
-        liveness_wait=liveness_wait(wait),
-        checkpoint_store=checkpoint_store,
-    )
+
+    def tenant_of(run_ref: str) -> str:
+        owner = resolve_run(run_ref)
+        return "" if owner is None else str(owner.session.tenant)
+
+    ports: dict[str, Any] = {
+        "engine_decision": EngineDecisionAdapter(call, method_op),
+        "decision": decision_port(call),
+        "liveness_wait": liveness_wait(wait),
+        "checkpoint_store": checkpoint_store,
+        "summary_provider": summary_provider(
+            SummaryService(call, backends.summary_model)
+        ),
+        "study_content": study_content_reader(
+            StudyContentService(call, active_run_ref, tenant_of)
+        ),
+        "technique_measure": technique_measure(
+            TechniqueMeasureService(call, active_run_ref)
+        ),
+    }
+    if backends.read_lease is not None and backends.now_ms is not None:
+        inbox = ApprovalInboxWaiter(backends.read_lease, wait, backends.now_ms)
+        ports["approval"] = approval_waiter(inbox.decided, wait)
+    if backends.processes is not None:
+        ports["sandbox_processes"] = sandbox_process_provider(backends.processes.list)
+    if backends.confirm_exchange is not None:
+        ports["confirm"] = plan_confirmer(RunVerdictConfirm(backends.confirm_exchange))
+    if backends.terminal_extension is not None and backends.encode is not None:
+        receipts = RunTraceReceipts(
+            call, resolve_run, backends.terminal_extension, backends.encode
+        )
+        ports["run_trace"] = run_trace_sink(receipts.commit)
+    return bind_host_ports(**ports)

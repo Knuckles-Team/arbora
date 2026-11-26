@@ -95,16 +95,21 @@ def decision_port(
 
 
 def approval_waiter(
-    decided: Callable[[str, str, str], Awaitable[Mapping[str, Any]]],
+    decided: Callable[[str, str, str, str], Awaitable[Mapping[str, Any]]],
     wait: Callable[[float], Awaitable[None]],
-) -> Callable[[str, str, str, int], Awaitable[Any]]:
-    """``ApprovalWaiter``: the decision races an injected clock; the loser is cancelled."""
+) -> Callable[[str, str, str, int, str], Awaitable[Any]]:
+    """``ApprovalWaiter``: the decision races an injected clock; the loser is cancelled.
+
+    ``plan_ref`` is the received plan's reference, which keys the inbox item.
+    """
 
     async def wait_for_approval(
-        run_id: str, task_id: str, approver_role: str, timeout_s: int
+        run_id: str, task_id: str, approver_role: str, timeout_s: int, plan_ref: str
     ) -> Any:
         types = port_types()
-        answer = asyncio.ensure_future(decided(run_id, task_id, approver_role))
+        answer = asyncio.ensure_future(
+            decided(run_id, task_id, approver_role, plan_ref)
+        )
         timer = asyncio.ensure_future(wait(float(timeout_s)))
         try:
             await asyncio.wait({answer, timer}, return_when=asyncio.FIRST_COMPLETED)
@@ -139,7 +144,7 @@ def plan_confirmer(
             )
         except Exception:
             return types.ConfirmVerdict(
-                verdict="denied", refusal_code="confirm_unavailable"
+                verdict="deny", refusal_code="confirm_unavailable"
             )
 
     return confirmed
