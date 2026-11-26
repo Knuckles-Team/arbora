@@ -155,6 +155,7 @@ arbora-connector-count-pins = "arbora.fleet.connector_count_pins:main"
 arbora-check-import-boundaries = "arbora.architecture.boundary_census:main"
 arbora-hosting-config = "arbora.deployment.host_config:main"
 arbora-capability-layers = "arbora.architecture.capability_layers:main"
+arbora-sandbox = "arbora.deployment.sandbox:main"
 
 [project.entry-points."arbora.messaging"]
 telegram = "arbora.messaging.backends.telegram:TelegramBackend"
