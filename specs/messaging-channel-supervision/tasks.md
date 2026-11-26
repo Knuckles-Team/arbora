@@ -8,50 +8,50 @@ See [design](plan.md) and [tests](test-spec.md). Generated delivery evidence is 
 - [x] T004 ARBORA-MESSAGING-R005.1 Wire `MessagingRegistry.create_all_enabled` to record a typed `DEGRADED` entry for a missing/import-failed adapter instead of only logging (`ARBORA-MESSAGING-R005.1`).
 - [x] T005 ARBORA-MESSAGING-R003 Add the backoff-sequence and healthy-reset tests against the live router (`ARBORA-MESSAGING-R003`).
 - [x] T006 ARBORA-MESSAGING-R006 Add the static import-boundary check (`ARBORA-MESSAGING-R006`, `MSG-T08`).
-- [ ] T007 ARBORA-MESSAGING-R005.1 Preserve and serve the typed missing-adapter behavior from MessagingRegistry.create_all_enabled; prove other configured channels still start (ARBORA-MESSAGING-R005.1, MSG-T07).
+- [x] T007 ARBORA-MESSAGING-R005.1 Preserve and serve the typed missing-adapter behavior from MessagingRegistry.create_all_enabled; prove other configured channels still start (ARBORA-MESSAGING-R005.1, MSG-T07).
 - [ ] T008 ARBORA-MESSAGING-R001.1 Compose the operator-enabled messaging projection into authenticated dashboard and graph_configure(action="health") responses while preserving detail-free unauthenticated probes (MSG-T09, MSG-T12).
 - [ ] T009 ARBORA-MESSAGING-R001.1 Prove the configured/disabled/unconfigured/unavailable state matrix, safe reason codes, and alert-eligibility rule through the real served health surface (MSG-T10, MSG-T11).
 - [ ] T010 ARBORA-MESSAGING-R001.1 Gate component-health alerts on alert_eligible. Disabled credentials never cause alerts; enabled configuration failures remain eligible.
 - [ ] T011 ARBORA-MESSAGING-R001.1 Run acceptance at a merged revision. Record actual test and consumer evidence in generated status.json.
-- [ ] T012 ARBORA-MESSAGING-R700.1 - Memory webhook subscription operations. Deliver as written in requirements.md.
-- [ ] T013 ARBORA-MESSAGING-R700.2 - Signed delivery with retries. Deliver as written in requirements.md.
-- [ ] T014 ARBORA-MESSAGING-R700.3 - Outbox pump from the engine. Deliver as written in requirements.md.
-- [ ] T015 ARBORA-MESSAGING-R700.4 - Refusal, evidence and hot-path proof. Deliver as written in requirements.md.
+- [x] T012 ARBORA-MESSAGING-R700.1 - Memory webhook subscription operations. Deliver as written in requirements.md.
+- [x] T013 ARBORA-MESSAGING-R700.2 - Signed delivery with retries. Deliver as written in requirements.md.
+- [x] T014 ARBORA-MESSAGING-R700.3 - Outbox pump from the engine. Deliver as written in requirements.md.
+- [x] T015 ARBORA-MESSAGING-R700.4 - Refusal, evidence and hot-path proof. Deliver as written in requirements.md.
 - [x] T016 ARBORA-MESSAGING-R002 Expose the health-gated start result through the per-backend state read.
 - [x] T017 ARBORA-MESSAGING-R004 Prove graceful stop drains through the stopping state, including cancellation during backoff.
-- [ ] T018 ARBORA-MESSAGING-R005.1.1 Consume connector component states on the health endpoint.
-- [ ] T019 ARBORA-MESSAGING-R007.1 Per-sender identity for inbound turns.
-- [ ] T020 ARBORA-MESSAGING-R008.1 Shared signed inbound webhook ingress for webhook based adapters.
-- [ ] T021 ARBORA-MESSAGING-R009.1 BlueBubbles iMessage relay channel (`bluebubbles`).
-- [ ] T022 ARBORA-MESSAGING-R009.2 Buzz community relay channel (`buzz`).
-- [ ] T023 ARBORA-MESSAGING-R009.3 DingTalk channel (`dingtalk`).
-- [ ] T024 ARBORA-MESSAGING-R009.4 email channel (`email`).
-- [ ] T025 ARBORA-MESSAGING-R009.5 Feishu and Lark channel (`feishu`).
-- [ ] T026 ARBORA-MESSAGING-R009.6 Nostr channel (`nostr`).
-- [ ] T027 ARBORA-MESSAGING-R009.7 ntfy push topics channel (`ntfy`).
-- [ ] T028 ARBORA-MESSAGING-R009.8 Photon Spectrum channel (`photon`).
-- [ ] T029 ARBORA-MESSAGING-R009.9 QQ Bot channel (`qqbot`).
-- [ ] T030 ARBORA-MESSAGING-R009.10 Raft workspace channel (`raft`).
-- [ ] T031 ARBORA-MESSAGING-R009.11 Reef encrypted channel channel (`reef`).
-- [ ] T032 ARBORA-MESSAGING-R009.12 SimpleX Chat channel (`simplex`).
-- [ ] T033 ARBORA-MESSAGING-R009.13 SMS channel (`sms`).
-- [ ] T034 ARBORA-MESSAGING-R009.14 Tlon (Urbit) channel (`tlon`).
-- [ ] T035 ARBORA-MESSAGING-R009.15 generic webhook channel (`webhook`).
-- [ ] T036 ARBORA-MESSAGING-R009.16 WeCom channel (`wecom`).
-- [ ] T037 ARBORA-MESSAGING-R009.17 Weixin channel (`weixin`).
-- [ ] T038 ARBORA-MESSAGING-R009.18 X mentions channel (`x`).
-- [ ] T039 ARBORA-MESSAGING-R009.19 Yuanbao channel (`yuanbao`).
-- [ ] T040 ARBORA-MESSAGING-R009.20 Zalo Official Account channel (`zalo`).
-- [ ] T041 ARBORA-MESSAGING-R009.21 Zalo personal account channel (`zalouser`).
+- [x] T018 ARBORA-MESSAGING-R005.1.1 Consume connector component states on the health endpoint.
+- [x] T019 ARBORA-MESSAGING-R007.1 Per-sender identity for inbound turns.
+- [x] T020 ARBORA-MESSAGING-R008.1 Shared signed inbound webhook ingress for webhook based adapters.
+- [x] T021 ARBORA-MESSAGING-R009.1 BlueBubbles iMessage relay channel (`bluebubbles`).
+- [x] T022 ARBORA-MESSAGING-R009.2 Buzz community relay channel (`buzz`).
+- [x] T023 ARBORA-MESSAGING-R009.3 DingTalk channel (`dingtalk`).
+- [x] T024 ARBORA-MESSAGING-R009.4 email channel (`email`).
+- [x] T025 ARBORA-MESSAGING-R009.5 Feishu and Lark channel (`feishu`).
+- [x] T026 ARBORA-MESSAGING-R009.6 Nostr channel (`nostr`).
+- [x] T027 ARBORA-MESSAGING-R009.7 ntfy push topics channel (`ntfy`).
+- [x] T028 ARBORA-MESSAGING-R009.8 Photon Spectrum channel (`photon`).
+- [x] T029 ARBORA-MESSAGING-R009.9 QQ Bot channel (`qqbot`).
+- [x] T030 ARBORA-MESSAGING-R009.10 Raft workspace channel (`raft`).
+- [x] T031 ARBORA-MESSAGING-R009.11 Reef encrypted channel channel (`reef`).
+- [x] T032 ARBORA-MESSAGING-R009.12 SimpleX Chat channel (`simplex`).
+- [x] T033 ARBORA-MESSAGING-R009.13 SMS channel (`sms`).
+- [x] T034 ARBORA-MESSAGING-R009.14 Tlon (Urbit) channel (`tlon`).
+- [x] T035 ARBORA-MESSAGING-R009.15 generic webhook channel (`webhook`).
+- [x] T036 ARBORA-MESSAGING-R009.16 WeCom channel (`wecom`).
+- [x] T037 ARBORA-MESSAGING-R009.17 Weixin channel (`weixin`).
+- [x] T038 ARBORA-MESSAGING-R009.18 X mentions channel (`x`).
+- [x] T039 ARBORA-MESSAGING-R009.19 Yuanbao channel (`yuanbao`).
+- [x] T040 ARBORA-MESSAGING-R009.20 Zalo Official Account channel (`zalo`).
+- [x] T041 ARBORA-MESSAGING-R009.21 Zalo personal account channel (`zalouser`).
 - [x] T042 ARBORA-MESSAGING-R800.1 Model: contract records and entry-point discovery.
 - [x] T043 ARBORA-MESSAGING-R800.2 Behavior.
 - [x] T044 ARBORA-MESSAGING-R800.3 Wiring: lazy adapter loading names the missing extra.
 - [x] T045 ARBORA-MESSAGING-R800.4 Refusal.
 - [x] T046 ARBORA-MESSAGING-R800.5 Evidence.
-- [ ] T047 ARBORA-MESSAGING-R800.6 Hot-path proof: render and dispatch latency.
-- [ ] T048 ARBORA-MESSAGING-R800.1000 Intake lease on the engine WorkItem methods.
+- [x] T047 ARBORA-MESSAGING-R800.6 Hot-path proof: render and dispatch latency.
+- [x] T048 ARBORA-MESSAGING-R800.1000 Intake lease on the engine WorkItem methods.
 - [ ] T049 ARBORA-MESSAGING-R800.1001 Behavior.
 - [ ] T050 ARBORA-MESSAGING-R800.1002 Refusal.
-- [ ] T051 ARBORA-MESSAGING-R800.1003 Intake lease state machine with `Suspect`.
-- [ ] T052 ARBORA-MESSAGING-R800.1004 One failed heartbeat does not stop polling; a lost lease re-acquires.
-- [ ] T053 ARBORA-MESSAGING-R800.1005 Describe the intake lease machine in the ontology.
+- [x] T051 ARBORA-MESSAGING-R800.1003 Intake lease state machine with `Suspect`.
+- [x] T052 ARBORA-MESSAGING-R800.1004 One failed heartbeat does not stop polling; a lost lease re-acquires.
+- [x] T053 ARBORA-MESSAGING-R800.1005 Describe the intake lease machine in the ontology.
