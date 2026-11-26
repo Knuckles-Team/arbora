@@ -125,6 +125,20 @@ def route_methods(
     client._send = send
 
 
+def serve_verbs(mcp: Any, invocation: Any) -> Any:
+    """Compose the served surface and attach the verbs the way startup does.
+
+    Startup attaches them through ``register_mcp_tools`` once the fleet is
+    bound; these harnesses have no fleet, so they attach the same verbs only.
+    """
+    from arbora.api.mcp.verbs import VERBS, make_verb
+
+    projection = mcp_runtime._register_served_intent_surface(mcp, invocation)
+    for name in VERBS:
+        mcp.add_tool(make_verb(name, projection))
+    return projection
+
+
 class McpAsk:
     """The served MCP intent surface over the captured invocation."""
 
@@ -137,7 +151,7 @@ class McpAsk:
         process = request_identity.mint_graph_session(caller or person("one"))
         monkeypatch.setattr(mcp_runtime, "_PROCESS_SESSION", process)
         self.mcp = FastMCP("served-ops")
-        mcp_runtime._register_served_intent_surface(self.mcp, invocation)
+        serve_verbs(self.mcp, invocation)
 
     def __call__(self, verb: str, op: str, params: dict[str, Any], **extra: Any) -> Any:
         async def call() -> Any:

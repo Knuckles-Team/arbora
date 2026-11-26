@@ -168,7 +168,12 @@ class IngestRunner(Protocol):
     ) -> IngestSyncReceipt: ...
 
     async def index_repository(
-        self, *, tenant: str, repo_id: str, idempotency_key: str
+        self,
+        *,
+        tenant: str,
+        repo_id: str,
+        idempotency_key: str,
+        max_working_bytes: int | None = None,
     ) -> IngestIndexReceipt: ...
 
     async def list_sources(
@@ -271,11 +276,33 @@ async def index_repository(context: Any, params: Mapping[str, Any], op: Any) -> 
         raise ValueError("Idempotency-Key is required")
     runner = _bound_runner(context)
     repo_id = params["repo_id"]
-    receipt = await runner.index_repository(
-        tenant=context.caller.tenant,
-        repo_id=repo_id,
-        idempotency_key=context.idempotency_key,
+    grant = params.get("max_working_bytes")
+    if grant is None:
+        receipt = await runner.index_repository(
+            tenant=context.caller.tenant,
+            repo_id=repo_id,
+            idempotency_key=context.idempotency_key,
+        )
+        return {"value": receipt.model_dump(mode="json")}
+    from arbora.api.ops._grants import ResourceGrantLedger
+    from arbora.core.settings import runtime_config
+
+    ledger = ResourceGrantLedger(
+        context, limit=int(runtime_config.resource_grants_max_working_bytes)
     )
+    job_key = f"{repo_id}:{context.idempotency_key}"
+    try:
+        await ledger.admit(job_key, int(grant))
+        receipt = await runner.index_repository(
+            tenant=context.caller.tenant,
+            repo_id=repo_id,
+            idempotency_key=context.idempotency_key,
+            max_working_bytes=int(grant),
+        )
+    finally:
+        # The grant is released on success, cancellation and failure alike,
+        # including a failed admission: the engine accounts the running job.
+        await ledger.release(job_key)
     return {"value": receipt.model_dump(mode="json")}
 
 

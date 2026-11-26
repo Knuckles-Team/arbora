@@ -258,7 +258,9 @@ def test_decision_evidence_journey_over_mcp_and_http(
     process = request_identity.mint_graph_session(_actor())
     monkeypatch.setattr(mcp_runtime, "_PROCESS_SESSION", process)
     mcp = FastMCP("decision-evidence")
-    mcp_runtime._register_served_intent_surface(mcp, invocation)
+    from tests.api._served_support import serve_verbs
+
+    serve_verbs(mcp, invocation)
 
     async def call(op: str, params: dict[str, Any]) -> Any:
         result = await mcp.call_tool("ask", {"op": op, "params": params})
