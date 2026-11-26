@@ -91,16 +91,44 @@ def check_tree(root: Path, *, allowed_urls: tuple[str, ...] = ()) -> None:
             raise TreeRefused("PATH_ESCAPES_TREE", rel)
 
 
+#: File names a skill must not carry: they would add a second connection to the
+#: one door entry the bundle writes (ARBORA-HARNESS-PLUGINS-R011.2).
+_CONNECTOR_FILE = re.compile(r"(^|[._-])mcp([._-][\w.-]*)?\.json$|^\.mcp\.json$", re.I)
+_CONNECTOR_KEYS = ("mcpServers", "mcp_servers", "mcpservers")
+
+
+def skill_tree(skill: Any) -> list[Path]:
+    """The files of one skill, refusing a connector file or an MCP server entry.
+
+    ARBORA-HARNESS-PLUGINS-R015: the only connection a bundle holds is the door
+    entry; a skill that ships ``.mcp.json`` or names an MCP server refuses the
+    bundle with ``SKILL_BUNDLE_HAS_CONNECTOR_FILE`` and nothing is written.
+    """
+    source = skill.source.resolve()
+    files: list[Path] = []
+    for path in sorted(skill.source.rglob("*")):
+        if not path.resolve().is_relative_to(source):
+            raise TreeRefused("PATH_ESCAPES_TREE", f"{skill.name}/{path.name}")
+        if not path.is_file():
+            continue
+        rel = f"{skill.name}/{path.relative_to(skill.source).as_posix()}"
+        if _CONNECTOR_FILE.search(path.name):
+            raise TreeRefused("SKILL_BUNDLE_HAS_CONNECTOR_FILE", rel)
+        if path.suffix == ".json" and any(
+            f'"{key}"' in path.read_text(encoding="utf-8", errors="replace")
+            for key in _CONNECTOR_KEYS
+        ):
+            raise TreeRefused("SKILL_BUNDLE_HAS_CONNECTOR_FILE", rel)
+        files.append(path)
+    return files
+
+
 def _copy_skills(spec: BundleSpec, root: Path, into: str) -> None:
     for skill in spec.skills:
-        source = skill.source.resolve()
-        for path in sorted(skill.source.rglob("*")):
-            if not path.resolve().is_relative_to(source):
-                raise TreeRefused("PATH_ESCAPES_TREE", f"{skill.name}/{path.name}")
-            if path.is_file():
-                target = root / into / skill.name / path.relative_to(skill.source)
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(path, target)
+        for path in skill_tree(skill):
+            target = root / into / skill.name / path.relative_to(skill.source)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(path, target)
 
 
 def _hook_input(intent: HookIntent, profile_id: str) -> dict[str, Any]:
@@ -310,5 +338,6 @@ __all__ = [
     "render_codex",
     "render_grok",
     "render_opencode",
+    "skill_tree",
     "tree_digest",
 ]
