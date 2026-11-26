@@ -11,6 +11,7 @@ import medulla.generated as generated
 import pytest
 
 from arbora.security import request_identity
+from tests.api._loopback_engine import loopback  # noqa: F401
 from tests.api._served_support import McpAsk, route_methods
 from tests.api._served_support import person as _person
 from tests.test_served_operation_api import (  # noqa: F401
@@ -194,3 +195,94 @@ def test_feature_absent_engine_refuses_over_http(
     assert refused.status_code == 503, refused.text
     assert refused.json()["error"]["code"] == "UNAVAILABLE"
     assert [m for m, *_ in client.sent if m in {"Decide", "AgentAssemble"}] == []
+
+
+def _graph_for(capabilities: list[str]) -> dict[str, Any]:
+    return {
+        "shape": {
+            "nodes": [
+                {
+                    "node_id": name.split(":")[1],
+                    "slot": name.split(":")[1],
+                    "component_id": name,
+                    "tool": {"server": "ops", "tool": f"{name.split(':')[1]}_tool"},
+                }
+                for name in capabilities
+            ]
+        }
+    }
+
+
+def _apply_params(loop: Any, components: list[str], reuse: list[str]) -> dict[str, Any]:
+    from arbora.deployment.artifacts import select_artifact
+    from arbora.deployment.assembly import (
+        artifact_digest,
+        choices_digest,
+        config_digest,
+        graph_digest,
+    )
+
+    return {
+        "target": "compose",
+        "components": components,
+        "reuse_components": reuse,
+        "plan_digest": graph_digest(_graph_for(components)),
+        "choices_digest": choices_digest("compose", components, reuse),
+        "config_digest": config_digest({}),
+        "artifact_digest": artifact_digest(
+            select_artifact("compose", deploy_root=loop.deploy_root)
+        ),
+    }
+
+
+def _assembling(loop: Any) -> None:
+    def assemble(params: dict[str, Any], _principal: str) -> Any:
+        wanted = params["request"]["requirements"]["capabilities"]
+        return {"graph": _graph_for(wanted), "record": {"record_id": "assembly:1"}}
+
+    loop.serve({"AgentAssemble": assemble})
+
+
+@pytest.mark.spec("ARBORA-DEPLOY-R013.5")
+def test_mixed_deployment_changes_only_deploy_marked_components(
+    loopback: Any,  # noqa: F811
+) -> None:
+    _assembling(loopback)
+    params = _apply_params(loopback, ["tool:a", "tool:b"], ["tool:keep"])
+
+    done = loopback.confirmed("deploy.placement.apply", params, "mixed")
+
+    value = loopback.value(done)
+    assert value["ok"] is True
+    assert loopback.steps.tools == ["a_tool", "b_tool"]
+    assert value["plan_digest"] == params["plan_digest"]
+    assert value["config_digest"] == params["config_digest"]
+    assert value["artifact_digest"] == params["artifact_digest"]
+    requested = [
+        c[1]["request"]["requirements"]["capabilities"] for c in loopback.engine_calls
+    ]
+    assert requested == [["tool:a", "tool:b"]]
+
+
+@pytest.mark.spec("ARBORA-DEPLOY-R013.5")
+def test_altered_binding_causes_zero_effects(loopback: Any) -> None:  # noqa: F811
+    _assembling(loopback)
+    params = _apply_params(loopback, ["tool:a", "tool:b"], [])
+
+    # A digest altered after the plan was shown changes the plan binding.
+    ref = loopback.preview("deploy.placement.apply", params, "bind-1")
+    for field in ("plan_digest", "choices_digest", "config_digest", "artifact_digest"):
+        altered = {**params, field: "sha256:" + "9" * 64}
+        refused = loopback.call("deploy.placement.apply", altered, "bind-1", ref)
+        assert refused.json()["error"]["code"] == "PLAN_MISMATCH", (field, refused.text)
+
+    # A shipped artifact that changed after confirmation refuses ARTIFACT_STALE.
+    stale_ref = loopback.preview("deploy.placement.apply", params, "bind-2")
+    (loopback.deploy_root / "compose" / "compose.yaml").write_text(
+        "services: {a: {}}\n"
+    )
+    stale = loopback.call("deploy.placement.apply", params, "bind-2", stale_ref)
+    assert stale.json()["error"]["code"] == "ARTIFACT_STALE", stale.text
+
+    # Nothing ran for any altered binding.
+    assert loopback.steps.calls == []

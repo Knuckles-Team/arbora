@@ -83,9 +83,19 @@ it and deletes the store. The engine must be the version this package pins:
 otherwise `up` refuses with `SANDBOX_ENGINE_VERSION_MISMATCH` and names both
 versions.
 
+`up` renders the sandbox environment first and refuses any non-loopback bind
+with `SANDBOX_PRINCIPAL_NOT_LOOPBACK`. The serving process and the web UI
+co-service both run in explicit no-auth mode, so the environment sets
+`ARBORA_AUTH_MODE=none`, `WEBUI_AUTH_MODE=none`, `ENABLE_WEB_UI=true`,
+`ARBORA_WEBUI_PORT` (`--webui-port`, 8080 by default) and
+`GRAPH_SERVICE_ENDPOINTS` for the engine port. The web UI co-service is the
+`webui` entry of the rendered `co_services`; its listener is its own loopback
+port, never the serving process's port.
+
 Semantic-content provisioning allows 3 runs per hour for each target. Each `up`
 uses a fresh store with no provisioning history, so a repeat `up` never meets
-the limit.
+the limit. When the limit is met, the refusal is `PROVISIONING_RATE_LIMITED`
+with the limit, the window and the seconds until the next run.
 
 ## Engine admission
 
