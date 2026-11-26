@@ -64,7 +64,7 @@ import time
 from collections.abc import Callable, Mapping
 from concurrent.futures import Future, ThreadPoolExecutor
 from concurrent.futures import TimeoutError as _FutureTimeoutError
-from typing import Any, TypedDict, cast
+from typing import Any, NotRequired, TypedDict, cast
 from urllib.parse import urlsplit
 
 logger = logging.getLogger(__name__)
@@ -138,6 +138,7 @@ class HealthReport(TypedDict):
     status: str
     checks: list[HealthCheck]
     generated_at: str
+    components: NotRequired[dict[str, Any]]
 
 
 # --------------------------------------------------------------------------- #
@@ -273,6 +274,63 @@ def _check_messaging(cfg: Any) -> dict[str, Any]:
             detail=detail,
         )
     return _ok("messaging", detail=detail)
+
+
+def parse_connector_components(body: Mapping[str, Any]) -> list[Any]:
+    """Validate each ``components`` entry as a ``ComponentHealthState``.
+
+    A malformed entry raises; it is never read as healthy.
+    """
+    from scion_sdk.host import ComponentHealthState
+
+    entries = body.get("components") or ()
+    return [ComponentHealthState.model_validate(entry) for entry in entries]
+
+
+def connector_components_probe(
+    read_bodies: Callable[[Any], Mapping[str, Mapping[str, Any]]],
+) -> HealthProbe:
+    """Build the probe that reads connector component states (ARBORA-MESSAGING-R005.1.1).
+
+    ``read_bodies(session)`` returns each connector's health body by connector
+    id. The probe alerts only where ``should_alert`` holds: an enabled,
+    initialized component that is degraded or unavailable. An unconfigured
+    connector is reported ``not_configured`` and raises no alert.
+    """
+    from scion_sdk.host import should_alert
+
+    def probe(session: Any) -> dict[str, Any]:
+        alerts: list[dict[str, str]] = []
+        states: dict[str, str] = {}
+        for connector, body in sorted(read_bodies(session).items()):
+            for component in parse_connector_components(body):
+                states[f"{connector}/{component.component_id}"] = component.state
+                if should_alert(component):
+                    alerts.append(
+                        {
+                            "connector": connector,
+                            "component": component.component_id,
+                            "state": component.state,
+                            "reason": component.availability_reason or "",
+                        }
+                    )
+        detail = {"components": states, "alerts": alerts}
+        if alerts:
+            return _degraded(
+                "connector_components",
+                f"{len(alerts)} connector component(s) need attention",
+                detail=detail,
+            )
+        if states and all(v == "not_configured" for v in states.values()):
+            return {**_not_configured("connector_components"), "detail": detail}
+        return _ok("connector_components", detail=detail)
+
+    return probe
+
+
+def _check_connector_components(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
+    """Connector component states, bound by the host."""
+    return _bound_probe("connector_components", mandatory=False)
 
 
 def _check_state_store(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
@@ -607,6 +665,7 @@ _CHECKS: tuple[tuple[str, Callable[[Any], dict[str, Any]]], ...] = (
     ("kg_host_daemon", _check_kg_host_daemon),
     ("messaging", _check_messaging),
     ("state_store", _check_state_store),
+    ("connector_components", _check_connector_components),
     ("fleet_supervision", _check_fleet_supervision),
     ("kafka_bus", _check_kafka_bus),
     ("stardog_mirror", _check_stardog_mirror),
@@ -709,10 +768,13 @@ def collect_health() -> HealthReport:
     overall = (
         "unhealthy" if any(c["status"] == "unhealthy" for c in checks) else "healthy"
     )
+    from arbora.messaging.health import messaging_intake_component
+
     return HealthReport(
         status=overall,
         checks=cast(list[HealthCheck], checks),
         generated_at=_now_iso(),
+        components={"messaging_intake": messaging_intake_component()},
     )
 
 

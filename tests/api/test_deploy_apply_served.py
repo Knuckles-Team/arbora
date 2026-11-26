@@ -8,7 +8,13 @@ from typing import Any
 import pytest
 
 from arbora.api.invoke.steps import OpResult
-from arbora.deployment.assembly import choices_digest, graph_digest
+from arbora.deployment.artifacts import select_artifact
+from arbora.deployment.assembly import (
+    artifact_digest,
+    choices_digest,
+    config_digest,
+    graph_digest,
+)
 from tests.api._served_support import confirmable_invocation, person, route_methods
 from tests.test_served_operation_api import _call, _value, served  # noqa: F401
 
@@ -33,8 +39,8 @@ APPLY = {
     "components": COMPONENTS,
     "plan_digest": graph_digest(GRAPH),
     "choices_digest": choices_digest("compose", COMPONENTS, ()),
-    "config_digest": "sha256:" + "c" * 64,
-    "artifact_digest": "sha256:" + "a" * 64,
+    "config_digest": config_digest({}),
+    "artifact_digest": artifact_digest(select_artifact("compose")),
 }
 
 
@@ -66,7 +72,11 @@ def stack(monkeypatch: pytest.MonkeyPatch) -> StepPipeline:
     compose = harness.compose_served_invocation
 
     def composing(**kwargs: Any) -> Any:
-        kwargs["bindings"] = {**kwargs["bindings"], "plan_step_invoke": steps}
+        kwargs["bindings"] = {
+            **kwargs["bindings"],
+            "plan_step_invoke": steps,
+            "deploy_config": {},
+        }
         return compose(**kwargs)
 
     monkeypatch.setattr(harness, "compose_served_invocation", composing)

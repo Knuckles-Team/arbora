@@ -10,6 +10,7 @@ operator to confirm. Nothing runs from this operation.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import Field
@@ -21,12 +22,17 @@ from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops._engine import engine_send, refusal_code
 from arbora.api.registry import Confirm, Effect, OpSpec
 from arbora.deployment.assembly import (
+    artifact_digest,
     assemble_deployment,
     choices_digest,
+    config_digest,
     graph_digest,
+    propagate_trust_step,
     refuse_unavailable,
     require_confirmed_plan,
+    require_fresh_binding,
     run_confirmed_steps,
+    store_secret_step,
 )
 from arbora.deployment.assembly_view import render_graph
 from arbora.deployment.manifest import (
@@ -72,6 +78,8 @@ class PlacementPlanResult(Params):
     steps: list[dict[str, Any]]
     plan_digest: str
     choices_digest: str
+    config_digest: str
+    artifact_digest: str
 
 
 _DIGEST = r"^sha256:[0-9a-f]{64}$"
@@ -93,12 +101,14 @@ class PlacementApplyParams(Params):
 class PlacementApplyResult(Params):
     ok: bool
     steps: list[dict[str, Any]]
+    stored_secrets: list[str] = Field(default_factory=list)
+    trust: list[dict[str, Any]] = Field(default_factory=list)
     plan_digest: str
     config_digest: str
     artifact_digest: str
 
 
-def _feature_schema(context: Any, tenant: str) -> Mapping[str, Any]:
+def feature_schema_of(context: Any, tenant: str) -> Mapping[str, Any]:
     """The tenant's published feature-schema pin that every ``Decide`` names."""
     fixed = context.services.get("deploy_feature_schema")
     if isinstance(fixed, Mapping):
@@ -131,7 +141,7 @@ async def handle_placement_plan(
             tenant=tenant,
             principal=str(context.caller.principal),
             graph=graph,
-            feature_schema=_feature_schema(context, tenant),
+            feature_schema=feature_schema_of(context, tenant),
             subject={
                 "workload_iri": params["workload_iri"],
                 "cpu_millis": params["cpu_millis"],
@@ -163,7 +173,24 @@ async def handle_placement_plan(
         "steps": render_graph(assembly.get("graph")),
         "plan_digest": graph_digest(assembly.get("graph")),
         "choices_digest": choices_digest(target, params["components"], ()),
+        "config_digest": config_digest(deploy_config_of(context)),
+        "artifact_digest": _current_artifact_digest(context, target),
     }
+
+
+def _current_artifact_digest(context: Any, target: str) -> str:
+    """The digest of the shipped artifact the target deploys; empty when none ships."""
+    from pathlib import Path
+
+    from arbora.deployment.artifacts import ArtifactRefused, select_artifact
+
+    root = context.services.get("deploy_root")
+    try:
+        return artifact_digest(
+            select_artifact(target, deploy_root=Path(root) if root else None)
+        )
+    except ArtifactRefused:
+        return ""
 
 
 async def _assemble(
@@ -200,10 +227,26 @@ async def handle_placement_apply(
             "UNAVAILABLE", {"reason": "the engine assembled no step graph"}
         )
     invoke = context.services.get("plan_step_invoke")
-    if invoke is None:
+    if invoke is None or not str(context.caller.principal):
         raise OperationRefused(
-            "UNAVAILABLE", {"reason": "the invoke pipeline is not bound"}
+            "AUTHORITY_UNAVAILABLE",
+            {"reason": "the checked actor or pipeline is not bound"},
         )
+    root = context.services.get("deploy_root")
+    require_fresh_binding(
+        target=target,
+        expected_config=params["config_digest"],
+        expected_artifact=params["artifact_digest"],
+        config=deploy_config_of(context),
+        deploy_root=Path(root) if root else None,
+    )
+    # Secrets default to the vault, before any node runs (ARBORA-DEPLOY-R013.7).
+    stored = await store_secret_step(
+        invoke,
+        context.caller,
+        deploy_config_of(context),
+        plan_digest=params["plan_digest"],
+    )
     run = await run_confirmed_steps(
         invoke,
         context.caller,
@@ -212,11 +255,145 @@ async def handle_placement_apply(
         reuse=reuse,
         arguments=params["step_arguments"],
     )
+    if run["ok"]:
+        # The trust bundle reaches every component, each verified over TLS.
+        run = {
+            **run,
+            **stored,
+            **await propagate_trust_step(
+                invoke,
+                context.caller,
+                deploy_config_of(context),
+                plan_digest=params["plan_digest"],
+                components=components,
+            ),
+        }
     return {
         **run,
         "plan_digest": params["plan_digest"],
         "config_digest": params["config_digest"],
         "artifact_digest": params["artifact_digest"],
+    }
+
+
+class OntologyImportParams(Params):
+    """The schema source candidate and the SHA-256 the operator confirmed."""
+
+    connector: str = Field(min_length=1, max_length=256)
+    ontology_iri: str = Field(min_length=1, max_length=2048)
+    version: str = Field(min_length=1, max_length=64)
+    ontology_ttl: str = Field(min_length=1, max_length=4_000_000)
+    shapes_ttl: str | None = Field(default=None, max_length=4_000_000)
+    sha256: str = Field(pattern=_DIGEST)
+    expected_prior_revision: int | None = Field(default=None, ge=0)
+
+
+class OntologyImportResult(Params):
+    ontology_iri: str
+    sha256: str
+    served_digest: str
+    revision: int | None
+    changed: bool
+
+
+def _sha256(text: str) -> str:
+    import hashlib
+
+    return "sha256:" + hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+async def _existing_ontology(
+    context: Any, params: Mapping[str, Any]
+) -> tuple[Mapping[str, Any], Mapping[str, Any] | None]:
+    """The served source listing and the source already serving this ontology."""
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    listing = await engine_send(context, "GraphSchemaList", {})
+    if not isinstance(listing, Mapping):
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "the engine returned a malformed listing"}
+        )
+    for source in listing.get("dynamic_sources") or []:
+        if (
+            isinstance(source, Mapping)
+            and source.get("source_id") == params["ontology_iri"]
+        ):
+            return listing, source
+    return listing, None
+
+
+async def handle_ontology_import(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Import the approved ontology once; the engine admits it and serves the digest.
+
+    The op passes the schema source and its SHA-256, reads the served digest
+    back through the caller's engine client and returns both. A prior import
+    of the same ontology with other content refuses ``ONTOLOGY_DRIFT``; an
+    ontology already served by another authority refuses
+    ``ONTOLOGY_DUPLICATE``. Both refuse before any write. Arbora holds no
+    ontology store (ARBORA-DEPLOY-R009.3).
+    """
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_models
+
+    try:
+        # PIN-LAG: remove after the re-pin that carries the import op.
+        require_models(["GraphSchemaOpImportOntology"])
+    except PinLagUnavailable as error:
+        raise refusal(error) from error
+    if _sha256(params["ontology_ttl"]) != params["sha256"]:
+        raise OperationRefused(
+            "INVALID_ARGUMENT",
+            {"reason": "the schema source does not match its sha256"},
+        )
+    _, existing = await _existing_ontology(context, params)
+    if existing is not None:
+        origin = existing.get("origin") or {}
+        if (
+            origin.get("origin") != "pack"
+            or origin.get("connector") != params["connector"]
+        ):
+            raise OperationRefused(
+                "ONTOLOGY_DUPLICATE", {"ontology_iri": params["ontology_iri"]}
+            )
+        served = existing.get("ontology_sha256")
+        if isinstance(served, str) and served.removeprefix("sha256:") != params[
+            "sha256"
+        ].removeprefix("sha256:"):
+            raise OperationRefused(
+                "ONTOLOGY_DRIFT",
+                {"ontology_iri": params["ontology_iri"], "served": served},
+            )
+    committed = await engine_send(
+        context,
+        "GraphSchema",
+        {
+            "op": {
+                "op": "import_ontology",
+                "connector": params["connector"],
+                "content_digest": params["sha256"].removeprefix("sha256:"),
+                "expected_prior_revision": params["expected_prior_revision"],
+                "ontology_iri": params["ontology_iri"],
+                "ontology_ttl": params["ontology_ttl"],
+                "shapes_ttl": params["shapes_ttl"],
+                "version": params["version"],
+            }
+        },
+        idempotent=True,
+    )
+    after, _ = await _existing_ontology(context, params)
+    served_digest = after.get("composed_digest")
+    if not isinstance(committed, Mapping) or not isinstance(served_digest, str):
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "the engine did not serve the imported digest"}
+        )
+    return {
+        "ontology_iri": params["ontology_iri"],
+        "sha256": params["sha256"],
+        "served_digest": served_digest,
+        "revision": committed.get("revision"),
+        "changed": bool(committed.get("changed")),
     }
 
 
@@ -262,8 +439,8 @@ def _manifest_root(context: Any) -> Any:
     return Path(root) if root is not None else config_dir() / "deploy" / "manifests"
 
 
-def _live_tool(context: Any, target: str) -> Mapping[str, Any]:
-    """The read tool ``deploy.yaml`` names for ``tools.live_state.<target>``."""
+def deploy_config_of(context: Any) -> Mapping[str, Any]:
+    """The resolved ``deploy.yaml`` (read, never written), or the bound override."""
     config = context.services.get("deploy_config")
     if config is None:
         from arbora.core.settings import config_dir
@@ -271,6 +448,12 @@ def _live_tool(context: Any, target: str) -> Mapping[str, Any]:
 
         path = config_dir() / "deploy.yaml"
         config = load_strict(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    return config or {}
+
+
+def _live_tool(context: Any, target: str) -> Mapping[str, Any]:
+    """The read tool ``deploy.yaml`` names for ``tools.live_state.<target>``."""
+    config = deploy_config_of(context)
     tools = ((config or {}).get("tools") or {}).get("live_state") or {}
     tool = tools.get(target)
     if not (
@@ -434,6 +617,8 @@ def apply_receipt(manifest: DeploymentManifest, diff: DeploymentDiff) -> dict[st
 NATIVE_IDEMPOTENCY: dict[str, str] = {
     "deploy.placement.apply": "arbora.mcp_server.effect_journal:EgEffectJournal",
     "deploy.manifest.apply": "arbora.mcp_server.effect_journal:EgEffectJournal",
+    # The engine replays ``GraphSchema`` by operation identity (the idempotency key).
+    "deploy.ontology.import": "medulla:GraphSchema",
 }
 
 
@@ -457,6 +642,15 @@ def operations() -> tuple[OpSpec, ...]:
             handler="arbora.api.ops.deploy.handle_placement_apply",
             scope="fleet:control",
             confirm=Confirm.PLAN,
+        ),
+        build_write_op(
+            op_id="deploy.ontology.import",
+            summary="Import the approved ontology once and read back its served digest",
+            examples=("import the deployment ontology",),
+            params=OntologyImportParams,
+            result=OntologyImportResult,
+            handler="arbora.api.ops.deploy.handle_ontology_import",
+            scope="fleet:control",
         ),
         build_read_op(
             op_id="deploy.manifest.plan",
@@ -485,12 +679,15 @@ specs = operations
 
 __all__ = [
     "NATIVE_IDEMPOTENCY",
+    "OntologyImportParams",
+    "OntologyImportResult",
     "PlacementApplyParams",
     "PlacementApplyResult",
     "PlacementPlanParams",
     "PlacementPlanResult",
     "handle_manifest_apply",
     "handle_manifest_plan",
+    "handle_ontology_import",
     "handle_placement_apply",
     "handle_placement_plan",
     "operations",

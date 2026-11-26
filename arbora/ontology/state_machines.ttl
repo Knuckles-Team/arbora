@@ -883,3 +883,157 @@ arbora:PlanLeaseMachine_issued-expire-expired a owl:Class ;
     :fromState arbora:PlanIssued ;
     :toState arbora:PlanExpired ;
     :firedBy arbora:PlanLeaseMachine_Event_expire .
+
+# ---------------------------------------------------------------------------
+# Messaging intake lease (ARBORA-MESSAGING-R800.1003, R800.1005).
+# Python: IntakeLeaseState, IntakeLeaseEvent in arbora/messaging/lease.py.
+# ---------------------------------------------------------------------------
+
+arbora:IntakeLeaseMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Messaging intake lease" ;
+    rdfs:comment "The lease that admits one inbound poller per channel identity: held, suspect after one failed heartbeat, lost on a fence refusal or a lapsed TTL, released on stop; a lost lease is won again through the same engine call as the first acquire." ;
+    :initialState arbora:IntakeHeld ;
+    :hasState arbora:IntakeHeld ,
+        arbora:IntakeSuspect ,
+        arbora:IntakeLost ,
+        arbora:IntakeReleased .
+
+arbora:IntakeLeaseState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Messaging intake lease state" .
+
+arbora:IntakeLeaseTerminalState a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseState, :TerminalState ;
+    rdfs:label "Messaging intake lease terminal state" .
+
+arbora:IntakeLeaseTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Messaging intake lease transition" .
+
+arbora:IntakeLeaseEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Messaging intake lease event" .
+
+arbora:WithinTtl a owl:Class ;
+    rdfs:subClassOf :TransitionGuard ;
+    rdfs:label "WithinTtl" ;
+    :storedForm "within_ttl" .
+
+arbora:IntakeLeaseTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Messaging intake lease transition refused" ;
+    rdfs:comment "IllegalIntakeLeaseTransition, code INTAKE_LEASE_TRANSITION_ILLEGAL, fields machine (messaging_intake_lease), from_state and event. The lease state does not change." .
+
+arbora:IntakeHeld a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseState ;
+    :storedForm "held" .
+
+arbora:IntakeSuspect a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseState ;
+    :storedForm "suspect" .
+
+arbora:IntakeLost a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseState ;
+    :storedForm "lost" .
+
+arbora:IntakeReleased a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseTerminalState ;
+    :storedForm "released" .
+
+arbora:IntakeLeaseMachine_Event_heartbeat_ok a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseEvent ;
+    :storedForm "heartbeat_ok" .
+
+arbora:IntakeLeaseMachine_Event_heartbeat_err a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseEvent ;
+    :storedForm "heartbeat_err" .
+
+arbora:IntakeLeaseMachine_Event_fence_refused a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseEvent ;
+    :storedForm "fence_refused" .
+
+arbora:IntakeLeaseMachine_Event_ttl_lapsed a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseEvent ;
+    :storedForm "ttl_lapsed" .
+
+arbora:IntakeLeaseMachine_Event_reacquired a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseEvent ;
+    :storedForm "reacquired" .
+
+arbora:IntakeLeaseMachine_Event_release a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseEvent ;
+    :storedForm "release" .
+
+arbora:IntakeLeaseMachine_held-heartbeat_ok-held a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseTransition ;
+    :fromState arbora:IntakeHeld ;
+    :toState arbora:IntakeHeld ;
+    :firedBy arbora:IntakeLeaseMachine_Event_heartbeat_ok .
+
+arbora:IntakeLeaseMachine_held-heartbeat_err-suspect a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseTransition ;
+    :fromState arbora:IntakeHeld ;
+    :toState arbora:IntakeSuspect ;
+    :firedBy arbora:IntakeLeaseMachine_Event_heartbeat_err .
+
+arbora:IntakeLeaseMachine_suspect-heartbeat_ok-held a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseTransition ;
+    :fromState arbora:IntakeSuspect ;
+    :toState arbora:IntakeHeld ;
+    :firedBy arbora:IntakeLeaseMachine_Event_heartbeat_ok .
+
+arbora:IntakeLeaseMachine_suspect-heartbeat_err-suspect a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseTransition ;
+    :fromState arbora:IntakeSuspect ;
+    :toState arbora:IntakeSuspect ;
+    :firedBy arbora:IntakeLeaseMachine_Event_heartbeat_err ;
+    :guardedBy arbora:WithinTtl .
+
+arbora:IntakeLeaseMachine_held-fence_refused-lost a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseTransition ;
+    :fromState arbora:IntakeHeld ;
+    :toState arbora:IntakeLost ;
+    :firedBy arbora:IntakeLeaseMachine_Event_fence_refused .
+
+arbora:IntakeLeaseMachine_suspect-fence_refused-lost a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseTransition ;
+    :fromState arbora:IntakeSuspect ;
+    :toState arbora:IntakeLost ;
+    :firedBy arbora:IntakeLeaseMachine_Event_fence_refused .
+
+arbora:IntakeLeaseMachine_held-ttl_lapsed-lost a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseTransition ;
+    :fromState arbora:IntakeHeld ;
+    :toState arbora:IntakeLost ;
+    :firedBy arbora:IntakeLeaseMachine_Event_ttl_lapsed .
+
+arbora:IntakeLeaseMachine_suspect-ttl_lapsed-lost a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseTransition ;
+    :fromState arbora:IntakeSuspect ;
+    :toState arbora:IntakeLost ;
+    :firedBy arbora:IntakeLeaseMachine_Event_ttl_lapsed .
+
+arbora:IntakeLeaseMachine_lost-reacquired-held a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseTransition ;
+    :fromState arbora:IntakeLost ;
+    :toState arbora:IntakeHeld ;
+    :firedBy arbora:IntakeLeaseMachine_Event_reacquired .
+
+arbora:IntakeLeaseMachine_held-release-released a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseTransition ;
+    :fromState arbora:IntakeHeld ;
+    :toState arbora:IntakeReleased ;
+    :firedBy arbora:IntakeLeaseMachine_Event_release .
+
+arbora:IntakeLeaseMachine_suspect-release-released a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseTransition ;
+    :fromState arbora:IntakeSuspect ;
+    :toState arbora:IntakeReleased ;
+    :firedBy arbora:IntakeLeaseMachine_Event_release .
+
+arbora:IntakeLeaseMachine_lost-release-released a owl:Class ;
+    rdfs:subClassOf arbora:IntakeLeaseTransition ;
+    :fromState arbora:IntakeLost ;
+    :toState arbora:IntakeReleased ;
+    :firedBy arbora:IntakeLeaseMachine_Event_release .
