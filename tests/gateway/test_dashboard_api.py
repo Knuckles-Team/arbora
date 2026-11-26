@@ -15,7 +15,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from arbora.gateway import dashboard_api
+from arbora.gateway import dashboard_api, ports
 from arbora.gateway.models import DashboardLayout, WidgetData
 
 FRONTEND_PATHS = (
@@ -24,6 +24,34 @@ FRONTEND_PATHS = (
     "/api/dashboard/daemon/status",
     "/api/dashboard/daemon/shards",
 )
+
+
+class _ServedApplication:
+    """A gateway application that answers served ingest operations."""
+
+    def __init__(self, refuse: str | None = None) -> None:
+        self.calls: list[tuple[str, dict[str, Any], str | None]] = []
+        self.refuse = refuse
+
+    async def invoke_operation(
+        self,
+        op_id: str,
+        params: dict[str, Any],
+        /,
+        *,
+        request: Any,
+        idempotency_key: str | None = None,
+    ) -> Any:
+        from arbora.api.invoke.pipeline import OperationRefused
+
+        self.calls.append((op_id, dict(params), idempotency_key))
+        if self.refuse is not None:
+            raise OperationRefused(self.refuse)
+        if op_id == "ingest.sources.list":
+            return {"value": {"sources": [{"source_id": "a/x"}, {"source_id": "b/y"}]}}
+        if op_id == "ingest.sources.status":
+            return {"value": {"source_id": params["source_id"], "last_job_id": "job-9"}}
+        return {"value": {"job_id": "job-1", "source_id": params["source_id"]}}
 
 
 class _FakeAggregator:
@@ -220,10 +248,9 @@ def test_write_routes_refuse_read_only_callers(
 def test_malformed_source_is_422_and_unknown_service_is_404(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    engine_calls: list[str] = []
-    monkeypatch.setattr(
-        dashboard_api, "_active_engine", lambda: engine_calls.append("engine")
-    )
+    application = _ServedApplication()
+    monkeypatch.setattr(ports, "_application", application)
+    engine_calls = application.calls
     refused = client.post("/api/dashboard/hydrate/bad%20source")
     assert refused.status_code == 422
     assert refused.json()["detail"] == "invalid hydration source"
@@ -371,3 +398,32 @@ def test_capabilities_use_public_resolver_and_403_unchanged(
     with pytest.raises(dashboard_api.HTTPException) as refused:
         dashboard_api._require_dashboard_write(request)  # type: ignore[arg-type]
     assert refused.value.status_code == 403
+
+
+@pytest.mark.spec("ARBORA-OPS-R039.7")
+def test_hydration_routes_call_served_ingest_and_keep_refusal_codes(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    application = _ServedApplication()
+    monkeypatch.setattr(ports, "_application", application)
+    one = client.post("/api/dashboard/hydrate/github")
+    assert one.status_code == 200
+    assert one.json() == {"job_id": "job-1", "source_id": "github"}
+    op_id, params, key = application.calls[-1]
+    assert (op_id, params["source_id"]) == ("ingest.sources.sync", "github")
+    assert key and key.startswith("dashboard-hydrate-")
+    every = client.post("/api/dashboard/hydrate")
+    assert every.status_code == 200
+    assert set(every.json()) == {"a/x", "b/y"}
+    status = client.get("/api/dashboard/hydration-status")
+    assert status.json() == {
+        "a/x": {"configured": True, "last_job_id": "job-9"},
+        "b/y": {"configured": True, "last_job_id": "job-9"},
+    }
+    monkeypatch.setattr(ports, "_application", _ServedApplication(refuse="NOT_FOUND"))
+    assert client.post("/api/dashboard/hydrate/github").status_code == 400
+    monkeypatch.setattr(ports, "_application", _ServedApplication(refuse="INTERNAL"))
+    assert client.post("/api/dashboard/hydrate/github").status_code == 500
+    monkeypatch.setattr(ports, "_application", None)
+    assert client.post("/api/dashboard/hydrate/github").status_code == 500
+    assert client.post("/api/dashboard/hydrate/bad%20source").status_code == 422

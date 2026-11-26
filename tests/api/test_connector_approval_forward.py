@@ -10,7 +10,11 @@ import pytest
 from arbora.api.invoke.plan import approval_id_for
 from arbora.api.ops import fleet
 from arbora.fleet import multiplexer as multiplexer_module
-from arbora.fleet.approval_meta import APPROVAL_META_KEY
+from arbora.fleet.approval_meta import (
+    APPROVAL_META_KEY,
+    ApprovalRefused,
+    checked_approval_ref,
+)
 from arbora.fleet.gateway_ops import (
     oauth_delegated_call_for_mux,
 )
@@ -135,9 +139,47 @@ async def test_gateway_service_call_forwards_the_approval_ref() -> None:
     assert calls == [{"approval_ref": APPROVAL_REF}]
 
 
+NOW_MS = 1_000_000
+
+
+class _Leases:
+    """A control-lease view that answers by lease id."""
+
+    def __init__(self, **by_id: Any) -> None:
+        self.by_id = by_id
+
+    async def get(self, *, tenant: str, lease_id: str) -> Any:
+        return self.by_id.get(lease_id)
+
+
+def _approval(
+    *, status: str = "consumed", op_id: str = "fleet.call", end: int = 2 * NOW_MS
+) -> dict[str, Any]:
+    return {
+        "kind": "action.approval",
+        "lease_id": APPROVAL_REF,
+        "status": status,
+        "revision": 2,
+        "issued_at_ms": 0,
+        "expires_at_ms": end,
+        "hard_expires_at_ms": end,
+        "grant": {"op_id": op_id, "plan_ref": PLAN_REF},
+    }
+
+
+def _plan(gate_source: str) -> dict[str, Any]:
+    return {"kind": "arbora.plan", "grant": {"gate_source": gate_source}}
+
+
+async def _check(leases: _Leases, key: str | None = f"plan:{PLAN_REF}") -> str:
+    return await checked_approval_ref(
+        leases, tenant="acme", idempotency_key=key, op_id="fleet.call", now_ms=NOW_MS
+    )
+
+
 @pytest.mark.spec("ARBORA-OPS-R009.5")
 async def test_destructive_call_carries_approval_ref() -> None:
-    """A plan-confirmed ``fleet.call`` hands the plan's approval to the gateway."""
+    """A plan-confirmed ``fleet.call`` hands the plan's checked approval to the gateway."""
     got: list[Any] = []
 
     class Gateway:
@@ -149,7 +191,10 @@ async def test_destructive_call_carries_approval_ref() -> None:
     params = {"server": "s", "tool": "drop", "arguments": {}}
     for key in (f"plan:{PLAN_REF}", "idem-1", None):
         context = SimpleNamespace(
-            caller=SimpleNamespace(),
+            caller=SimpleNamespace(tenant="acme"),
+            client=SimpleNamespace(
+                control_leases=_Leases(**{APPROVAL_REF: _approval(end=10**15)})
+            ),
             services={"fleet_gateway": Gateway()},
             service_identity=False,
             owner="alice",
@@ -159,3 +204,71 @@ async def test_destructive_call_carries_approval_ref() -> None:
         )
         await fleet.handle_fleet_call(context, params, op)
     assert got == [APPROVAL_REF, "", ""]
+
+
+@pytest.mark.spec("ARBORA-OPS-R009.5")
+async def test_granted_approval_returns_its_reference() -> None:
+    assert await _check(_Leases(**{APPROVAL_REF: _approval()})) == APPROVAL_REF
+    assert await _check(_Leases(), key="idem-1") == ""
+
+
+@pytest.mark.spec("ARBORA-OPS-R009.5")
+@pytest.mark.parametrize(
+    ("lease", "code"),
+    [
+        (_approval(status="revoked"), "POLICY_DENIED"),
+        (_approval(end=NOW_MS), "PLAN_EXPIRED"),
+        (_approval(status="active", end=NOW_MS), "PLAN_EXPIRED"),
+        (_approval(status="expired"), "PLAN_EXPIRED"),
+        (_approval(op_id="fleet.other"), "PLAN_MISMATCH"),
+        (_approval(status="active"), "CONFIRMATION_REQUIRED"),
+    ],
+    ids=["denied", "expired", "pending-expired", "inactive", "wrong-op", "pending"],
+)
+async def test_refused_approval_never_reaches_the_connector(
+    lease: dict[str, Any], code: str
+) -> None:
+    with pytest.raises(ApprovalRefused) as refused:
+        await _check(_Leases(**{APPROVAL_REF: lease}))
+    assert refused.value.code == code
+
+
+@pytest.mark.spec("ARBORA-OPS-R009.5")
+async def test_absent_approval_refuses_only_an_engine_gated_plan() -> None:
+    gated = _Leases(**{PLAN_REF: _plan("engine")})
+    with pytest.raises(ApprovalRefused) as refused:
+        await _check(gated)
+    assert refused.value.code == "CONFIRMATION_REQUIRED"
+    assert await _check(_Leases(**{PLAN_REF: _plan("default")})) == ""
+
+
+@pytest.mark.spec("ARBORA-OPS-R009.5")
+async def test_handler_refuses_before_the_gateway_call() -> None:
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    calls: list[Any] = []
+
+    class Gateway:
+        async def call(self, *_args: Any, **_kwargs: Any) -> Any:
+            calls.append(1)
+            return {}
+
+    op = next(o for o in fleet.specs() if o.id == "fleet.call")
+    context = SimpleNamespace(
+        caller=SimpleNamespace(tenant="acme"),
+        client=SimpleNamespace(
+            control_leases=_Leases(**{APPROVAL_REF: _approval(status="revoked")})
+        ),
+        services={"fleet_gateway": Gateway()},
+        service_identity=False,
+        owner="alice",
+        fleet_decision=None,
+        registry_digest="",
+        idempotency_key=f"plan:{PLAN_REF}",
+    )
+    with pytest.raises(OperationRefused) as refused:
+        await fleet.handle_fleet_call(
+            context, {"server": "s", "tool": "drop", "arguments": {}}, op
+        )
+    assert refused.value.code == "POLICY_DENIED"
+    assert calls == []
