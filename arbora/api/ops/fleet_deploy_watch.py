@@ -22,6 +22,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops._common import bound_service, build_write_op
 from arbora.api.registry import Composite, Effect, OpSpec, Verb
 from arbora.control_plane.fleet_watch.service import (
     DeployProbe,
@@ -36,6 +38,18 @@ class _Params(BaseModel):
 class FleetDeployWatchEvaluateParams(_Params):
     service: str = Field(min_length=1, max_length=256)
     probes: tuple[DeployProbe, ...] = ()
+
+
+#: The rollback is one ``fleet.call`` the durable effect journal settles at most once.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "fleet.deploy_watch.dispatch": "arbora.mcp_server.effect_journal:EgEffectJournal",
+}
+
+
+class FleetDeployWatchDispatchResult(BaseModel):
+    outcome: str
+    dispatched: bool
+    detail: str
 
 
 class FleetDeployWatchResult(BaseModel):
@@ -59,8 +73,40 @@ async def handle_fleet_deploy_watch_evaluate(
     return verdict.model_dump()
 
 
+async def handle_fleet_deploy_watch_dispatch(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Dispatch the rollback only after a ``failed`` verdict (ARBORA-FLEET-R024.2).
+
+    ``success`` and ``unobserved`` dispatch nothing: no evidence never rolls back.
+    """
+
+    verdict = await handle_fleet_deploy_watch_evaluate(context, params, op)
+    if verdict["outcome"] != "failed":
+        return {**verdict, "dispatched": False}
+    rollback = bound_service(
+        context, "deploy_rollback", reason="the rollback dispatcher is not composed"
+    )
+    try:
+        await rollback(params["service"], verdict["detail"])
+    except OperationRefused:
+        raise
+    return {**verdict, "dispatched": True}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
+        build_write_op(
+            op_id="fleet.deploy_watch.dispatch",
+            summary="Roll a service back when its deploy-watch verdict is failed",
+            examples=("roll back this service if the deploy watch failed",),
+            params=FleetDeployWatchEvaluateParams,
+            result=FleetDeployWatchDispatchResult,
+            handler=(
+                "arbora.api.ops.fleet_deploy_watch.handle_fleet_deploy_watch_dispatch"
+            ),
+            scope="mcp:delegate",
+        ),
         OpSpec(
             id="fleet.deploy_watch.evaluate",
             verb=Verb.ASK,
@@ -86,8 +132,11 @@ def operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 __all__ = [
+    "NATIVE_IDEMPOTENCY",
+    "FleetDeployWatchDispatchResult",
     "FleetDeployWatchEvaluateParams",
     "FleetDeployWatchResult",
+    "handle_fleet_deploy_watch_dispatch",
     "handle_fleet_deploy_watch_evaluate",
     "operations",
     "specs",

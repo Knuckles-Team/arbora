@@ -27,6 +27,14 @@ class A2AAssemblyUnavailable(RuntimeError):
         self.reason = reason
 
 
+class A2ACapacityRefused(RuntimeError):
+    """Capacity was denied; ``code`` says whether the one re-decision is spent."""
+
+    def __init__(self, code: str) -> None:
+        self.code = code
+        super().__init__(code)
+
+
 class A2AOperationBridgeUnavailable(RuntimeError):
     """``arbora.op/invoke``/``arbora.plan/confirm`` are not wired yet.
 
@@ -71,12 +79,41 @@ class OrchestratorA2ARouter:
         feature_schema: Callable[[str], Mapping[str, Any]] | None = None,
         tenant: Callable[[], str] | None = None,
         principal: Callable[[], str] | None = None,
+        provisioning: Any = None,
+        capacity: Any = None,
     ) -> None:
         self._engine_provider = engine_provider
+        #: The provisioning service (ARBORA-FLEET-R005.3); ``None`` provisions nothing.
+        self._provisioning = provisioning
+        #: A ``CapacityLedger``; routing publishes only through acquired capacity.
+        self._capacity = capacity
         self._decide = decide
         self._feature_schema = feature_schema or (lambda tenant: {})
         self._tenant = tenant or (lambda: "")
         self._principal = principal or (lambda: "")
+
+    def acquire_capacity(self, holder: str, amount: int = 1) -> None:
+        """Acquire before publish; one re-decision, then ``CAPACITY_REDECISION_EXHAUSTED``."""
+        if self._capacity is None:
+            return
+        from arbora.control_plane.runs.capacity import CapacityReDecisionExhaustedError
+
+        try:
+            decision = self._capacity.acquire(holder, amount)
+        except CapacityReDecisionExhaustedError:
+            raise A2ACapacityRefused("CAPACITY_REDECISION_EXHAUSTED") from None
+        if not decision.granted:
+            raise A2ACapacityRefused("CAPACITY_REDECISION_OFFERED")
+
+    def stop(self, holder: str) -> int:
+        """A stopped run returns its capacity."""
+        return 0 if self._capacity is None else int(self._capacity.release(holder))
+
+    def route_work_item(self, view: Any, request: Any, *, lease_id: str) -> Any:
+        """Provision through the R027 flow, keeping the work item and its single-use lease."""
+        if self._provisioning is None:
+            raise A2AAssemblyUnavailable("the provisioning flow is not composed")
+        return self._provisioning.for_work_item(view, request, lease_id=lease_id)
 
     async def route(
         self, message: A2AMessage, *, context_budget_tokens: int | None
