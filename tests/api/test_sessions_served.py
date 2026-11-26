@@ -284,3 +284,40 @@ def test_models_are_closed_and_bound_page_size() -> None:
         harnesses=[sessions.HarnessEntry(harness_id="h", server="s", sync_state="idle")]
     )
     assert sessions.HarnessManifest.model_validate(manifest.model_dump()) == manifest
+
+
+@pytest.mark.spec("ARBORA-OPS-R060", "ARBORA-OPS-R060.5")
+async def test_browser_discovers_browses_and_searches_every_harness(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Discovery, browse and search keep stable identities and cursors across an engine restart."""
+    context = _with_runner(_Runner({"job-1": "running"}))
+    manifest = await sessions.handle_harness_manifest(context, {}, NO_OP)
+    declared = [row["harness_id"] for row in manifest["harnesses"]]
+    assert declared == ["claude-code", "codex"]
+    cursor = "sessioncursor:v1:4:f:7:s1"
+    seen: dict[str, list[Any]] = {}
+    for _engine_generation in range(2):
+        # A restarted engine answers from the same durable index.
+        sent = _record(monkeypatch, _answer(SUMMARY, ENTRY, cursor=cursor))
+        for harness in declared:
+            page = await sessions.handle_sessions_browse(
+                caller_context(), {"harness_id": harness, "page_size": 25}, NO_OP
+            )
+            found = await sessions.handle_sessions_search(
+                caller_context(),
+                {"harness_id": harness, "text": "s1", "page_size": 5},
+                NO_OP,
+            )
+            seen.setdefault(harness, []).append(
+                (
+                    [row["source_session_id"] for row in page["sessions"]],
+                    page["next_cursor"],
+                    [row["source_session_id"] for row in found["sessions"]],
+                )
+            )
+        costs = await sessions.handle_sessions_costs(caller_context(), {}, NO_OP)
+        assert costs is not None and len(sent) >= 2 * len(declared)
+    for harness, generations in seen.items():
+        assert generations[0] == generations[1], harness
+        assert generations[0][1] == cursor
