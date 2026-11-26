@@ -13,13 +13,12 @@ from arbora.identity.deployment_settings import identity_deployment
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R015")
-def test_unserved_commands_refuse_unavailable_and_unknown_ones_print_usage(
+def test_unknown_commands_print_usage_and_every_lifecycle_command_is_registered(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    for command in cli.PENDING_COMMANDS:
-        assert cli.main([command]) == cli.UNAVAILABLE_EXIT
-        assert json.loads(capsys.readouterr().out)["status"] == "UNAVAILABLE"
+    assert set(cli.PENDING_COMMANDS) <= set(cli.COMMANDS)
     assert cli.main(["nonsense"]) == cli.USAGE_EXIT
+    assert json.loads(capsys.readouterr().out)["status"] == "usage"
     assert cli.main([]) == cli.USAGE_EXIT
 
 
