@@ -332,10 +332,26 @@ def _chosen_profile(record: Mapping[str, Any]) -> str:
     return option
 
 
+def _premises(record: Mapping[str, Any]) -> list[Any]:
+    premises = record.get("premises")
+    return premises if isinstance(premises, list) else []
+
+
+def _not_honoured(premise: Any, preferred: str) -> bool:
+    return (
+        isinstance(premise, Mapping)
+        and premise.get("subject") == PREFERENCE_NOT_LEGAL
+        and premise.get("fact") == f"preference_not_honoured:{preferred}"
+    )
+
+
 def _preference_refused(record: Mapping[str, Any], preferred: str) -> bool:
-    """Whether the record carries the engine's ``preference_not_honoured`` premise."""
-    needle = f"preference_not_honoured:{preferred}"
-    return needle in repr(record) or PREFERENCE_NOT_LEGAL in repr(record)
+    """Whether a premise of the record is the engine's ``preference_not_honoured``.
+
+    The route family seals the premise ``{subject: "PREFERENCE_NOT_LEGAL", fact:
+    "preference_not_honoured:<option>"}`` (MEDULLA-DECISION-ENGINE-R039.3).
+    """
+    return any(_not_honoured(premise, preferred) for premise in _premises(record))
 
 
 async def resolve_model_profile(

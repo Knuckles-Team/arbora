@@ -33,6 +33,14 @@ def _digest(value: Any) -> str:
     ).hexdigest()
 
 
+class AnonymousRefused(PermissionError):
+    """A typed anonymous refusal: ``ANON_ADMISSION_DENIED`` or ``ANON_INFLIGHT_EXCEEDED``."""
+
+    def __init__(self, code: str = "ANON_ADMISSION_DENIED") -> None:
+        super().__init__("Anonymous text policy or capacity refused")
+        self.code = code
+
+
 @dataclass(frozen=True, slots=True)
 class AnonymousTextPolicy:
     origin: str
@@ -41,20 +49,49 @@ class AnonymousTextPolicy:
     model_id: str
     max_in_flight: int = 1
     operations: frozenset[str] = frozenset()
+    #: ``anonymous.max_output_tokens``: the plan's ``max_tokens`` may not exceed it.
+    max_output_tokens: int | None = None
 
     def __post_init__(self) -> None:
         AnonymousReadPolicy(self.origin, "local", self.revision)
         if (
             type(self.operations) is not frozenset
             or not self.operations <= {"message/send"}
-            or type(self.max_in_flight) is not int
-            or not 1 <= self.max_in_flight <= 4
+            or not _limits_valid(self.max_in_flight, self.max_output_tokens)
             or any(
                 type(v) is not str or not v or len(v) > 128
                 for v in (self.graph, self.model_id)
             )
         ):
             raise ValueError("Explicit bounded local text policy required")
+
+
+def _limits_valid(in_flight: object, output_tokens: object) -> bool:
+    """``anonymous.max_inflight`` is 1 to 4; ``anonymous.max_output_tokens`` is unset or 1 to 8192."""
+    if type(in_flight) is not int or not 1 <= in_flight <= 4:
+        return False
+    return output_tokens is None or (
+        type(output_tokens) is int and 1 <= output_tokens <= 8192
+    )
+
+
+def _fixed_text_plan(plan: RunPlan, policy: AnonymousTextPolicy) -> bool:
+    timeout = plan.budget.timeout_seconds
+    return (
+        plan.execution_constraint == "text-only"
+        and plan.model.model_name == policy.model_id
+        and type(timeout) in (int, float)
+        and 0 < timeout <= 60
+        and _within_output_cap(plan, policy.max_output_tokens)
+    )
+
+
+def _within_output_cap(plan: RunPlan, cap: int | None) -> bool:
+    """A capped policy needs the plan to bound its own output at or under the cap."""
+    if cap is None:
+        return True
+    limit = plan.harness.model_settings.get("max_tokens")
+    return type(limit) is int and 1 <= limit <= cap
 
 
 class AnonymousTextService:
@@ -72,12 +109,7 @@ class AnonymousTextService:
             raise ValueError("Explicit none mode required")
         if type(client) is not MedullaClient or type(plan) is not RunPlan:
             raise ValueError("Exact native client and run plan required")
-        if (
-            plan.execution_constraint != "text-only"
-            or plan.model.model_name != policy.model_id
-            or type(plan.budget.timeout_seconds) not in (int, float)
-            or not 0 < plan.budget.timeout_seconds <= 60
-        ):
+        if not _fixed_text_plan(plan, policy):
             raise ValueError("Fixed bounded text plan required")
         self._policy = policy
         self._client = client
@@ -165,18 +197,25 @@ class AnonymousTextService:
         # Reuse the exact loopback/origin/header/credential rejection contract.
         AnonymousTaskReadOwner._validate_ingress(request, self.policy.origin)
 
-    @contextmanager
-    def admission(self, request: Request):
-        self._validate_request(request)
-        task = asyncio.current_task()
+    def _refusal(self, task: asyncio.Task[Any] | None) -> str | None:
         if (
             task is None
             or task in self._active
             or self._revoked
             or "message/send" not in self.policy.operations
-            or len(self._active) >= self.policy.max_in_flight
         ):
-            raise PermissionError("Anonymous text policy or capacity refused")
+            return "ANON_ADMISSION_DENIED"
+        if len(self._active) >= self.policy.max_in_flight:
+            return "ANON_INFLIGHT_EXCEEDED"
+        return None
+
+    @contextmanager
+    def admission(self, request: Request):
+        self._validate_request(request)
+        task = asyncio.current_task()
+        refusal = self._refusal(task)
+        if refusal is not None:
+            raise AnonymousRefused(refusal)
         self._active[task] = [
             request,
             AnonymousTaskReadOwner._snapshot(request),
@@ -833,8 +872,11 @@ def anonymous_text_app(service: AnonymousTextService) -> FastAPI:
                         },
                         headers={"Cache-Control": "no-store"},
                     )
-        except PermissionError:
-            return _error(request_id, -32001, "Anonymous send refused", 403)
+        except PermissionError as refused:
+            code = getattr(refused, "code", "ANON_ADMISSION_DENIED")
+            return _error(
+                request_id, -32001, "Anonymous send refused", 403, {"reason": code}
+            )
         except (ValueError, TypeError):
             return _error(request_id, -32602, "Invalid text request")
         except Exception:

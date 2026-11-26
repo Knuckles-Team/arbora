@@ -551,3 +551,87 @@ async def test_encoded_answer_bound_matches_raw_recovery(text, accepted):
             assert engine.receipt["payload"]["result_ref"] is None
     finally:
         await client.close()
+
+
+def _capped(service, engine, **policy):
+    return AnonymousTextService(
+        mode="none",
+        policy=AnonymousTextPolicy(
+            ORIGIN,
+            "control",
+            "policy-1",
+            "fixture",
+            operations=frozenset({"message/send"}),
+            **policy,
+        ),
+        client=engine.client,
+        plan=service._plan,
+    )
+
+
+COMPLETION = {
+    "id": "fixture",
+    "object": "chat.completion",
+    "created": 1,
+    "model": "fixture",
+    "choices": [
+        {
+            "index": 0,
+            "finish_reason": "stop",
+            "message": {"role": "assistant", "content": "hello"},
+        }
+    ],
+    "usage": {"prompt_tokens": 2, "completion_tokens": 1, "total_tokens": 3},
+}
+
+
+@pytest.mark.spec("ARBORA-A2A-R025")
+@pytest.mark.asyncio
+async def test_text_only_plan_admitted_and_limited():
+    engine, service, client, _calls = setup()
+    try:
+        # The output cap is the policy's: a plan above it is refused at construction.
+        with pytest.raises(ValueError, match="Fixed bounded text plan required"):
+            _capped(service, engine, max_output_tokens=5)  # the plan allows 10
+        capped = _capped(service, engine, max_output_tokens=10)
+        response = await post(capped)
+        assert response.status_code == 200, response.text
+        assert response.json()["result"]["status"]["state"] == "completed"
+        # A text-only plan is the only plan admitted.
+        with pytest.raises(ValueError, match="Fixed bounded text plan required"):
+            AnonymousTextService(
+                mode="none",
+                policy=capped.policy,
+                client=engine.client,
+                plan=replace(service._plan, execution_constraint="tools"),
+            )
+        # An origin the policy does not name is refused with the typed code.
+        denied = await post(capped, key="message-2", origin="http://evil.example")
+        assert denied.status_code == 403
+        assert denied.json()["error"]["data"] == {"reason": "ANON_ADMISSION_DENIED"}
+    finally:
+        await client.close()
+
+
+@pytest.mark.spec("ARBORA-A2A-R025")
+@pytest.mark.asyncio
+async def test_a_second_send_over_the_inflight_limit_is_refused_typed():
+    entered, gate = asyncio.Event(), asyncio.Event()
+
+    async def slow(request):
+        entered.set()
+        await gate.wait()
+        return httpx.Response(200, json=COMPLETION)
+
+    engine, service, client, _calls = setup(slow)
+    try:
+        first = asyncio.create_task(post(service, key="message-1"))
+        await asyncio.wait_for(entered.wait(), 5)
+        over = await post(service, key="message-2")
+        assert over.status_code == 403
+        assert over.json()["error"]["data"] == {"reason": "ANON_INFLIGHT_EXCEEDED"}
+        gate.set()
+        assert (await first).status_code == 200
+    finally:
+        gate.set()
+        await client.close()
