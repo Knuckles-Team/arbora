@@ -32,11 +32,9 @@ logger = logging.getLogger(__name__)
 # appears in ``load_catalog()`` and is never dialed as a connection target.
 LOCAL_SKILLS_SERVER = "arbora-skills"
 
-# Mirrors ``arbora.fleet.multiplexer._MAX_SKILL_BODY_BYTES`` (the bound a
-# fleet-harvested skill body is held to) -- kept as an independent constant
-# rather than an import, so this module stays free of any dependency on the
-# multiplexer and the orphan-module wiring gate sees one clean import
-# direction (multiplexer -> this module, never the reverse).
+# The bound a resident skill body is held to. This module stays free of any
+# dependency on the multiplexer so the orphan-module wiring gate sees one
+# clean import direction (multiplexer -> this module, never the reverse).
 _MAX_SKILL_BODY_BYTES = 512 * 1024
 
 _FRONTMATTER_FIELD_RE = re.compile(r"^(name|description):\s*(.*)$")
