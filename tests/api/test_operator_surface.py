@@ -64,18 +64,6 @@ class Pipeline:
 @pytest.mark.parametrize(
     ("op_id", "params", "target", "arguments"),
     [
-        (
-            "fleet.tools.toggle",
-            {"id": "t", "enabled": True},
-            "fleet.tools.pin",
-            {"items": ["t"]},
-        ),
-        (
-            "fleet.skills.toggle",
-            {"id": "s", "enabled": False},
-            "fleet.tools.unpin",
-            {"items": ["s"]},
-        ),
         ("ingest.pipeline.status", {}, "ingest.jobs.list", {}),
         (
             "ingest.pipeline.run",
@@ -118,3 +106,41 @@ async def test_an_ingest_run_with_no_source_is_refused() -> None:
             context(), {"source": None}, _OPS["ingest.pipeline.run"]
         )
     assert refused.value.code == "INVALID_ARGUMENT"
+
+
+@pytest.mark.spec("ARBORA-OPS-R913")
+async def test_skill_and_tool_toggles_are_engine_enabled_overrides(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from tests.api._engine_double import EngineDouble
+
+    # The pinned engine lacks the enabled override: refused, naming the shape.
+    with pytest.raises(OperationRefused) as pinned:
+        await surface.handle_engine(
+            context(), {"id": "s", "enabled": True}, _OPS["fleet.skills.toggle"]
+        )
+    assert pinned.value.code == "UNAVAILABLE"
+    assert pinned.value.details["missing"] == "FleetOverrideEnabled"
+    engine = EngineDouble(monkeypatch)
+    engine.serve("FleetCatalog", lambda p: {"revision": 2}, "FleetOverrideEnabled")
+    engine.install(surface)
+    for op_id, enabled in (
+        ("fleet.skills.toggle", False),
+        ("fleet.tools.toggle", True),
+    ):
+        reply = await surface.handle_engine(
+            context(), {"id": "c", "enabled": enabled}, _OPS[op_id]
+        )
+        assert reply == {"value": {"revision": 2}}
+        method, request, idempotent = engine.sent[-1]
+        assert method == "FleetCatalog" and idempotent is True
+        assert request == {
+            "op": {
+                "op": "set_override",
+                "request": {
+                    "component_id": "c",
+                    "value": {"field": "enabled", "enabled": enabled},
+                },
+            }
+        }
+    assert surface.NATIVE_IDEMPOTENCY["fleet.tools.toggle"] == "medulla:FleetCatalog"
