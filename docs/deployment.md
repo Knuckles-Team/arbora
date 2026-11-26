@@ -75,6 +75,18 @@ through both the development (Compose) and production (Kubernetes/Helm)
 profiles end to end, including the forced first administrator, default
 authorization policy, secrets backend selection, and first-boot verification.
 
+## Local sandbox
+
+`arbora-sandbox up` starts a throwaway engine on a loopback port (`--port`, a
+free port by default) and mints sandbox principals; `arbora-sandbox down` stops
+it and deletes the store. The engine must be the version this package pins:
+otherwise `up` refuses with `SANDBOX_ENGINE_VERSION_MISMATCH` and names both
+versions.
+
+Semantic-content provisioning allows 3 runs per hour for each target. Each `up`
+uses a fresh store with no provisioning history, so a repeat `up` never meets
+the limit.
+
 ## Engine admission
 
 A served Arbora process and its engine must agree on one verified request
