@@ -31,7 +31,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T014 ARBORA-OPS-R022.2 Evolution loop, schedule, and proposal operations — evolution slice of `ARBORA-OPS-R022`.
 - [ ] T015 ARBORA-OPS-R024.1 Telemetry operations — telemetry slice of `ARBORA-OPS-R024`.
 - [ ] T016 ARBORA-OPS-R024.2 Security operations — security slice of `ARBORA-OPS-R024`.
-- [ ] T017 ARBORA-OPS-R024.3 Usage operations — usage slice of `ARBORA-OPS-R024`.
+- [x] T017 ARBORA-OPS-R024.3 Usage operations — usage slice of `ARBORA-OPS-R024`.
 - [x] T018 ARBORA-OPS-R024.3.1 Serve canonical caller-context committed session usage.
 - [x] T019 ARBORA-OPS-R024.3.2 Project bounded AU measured request timing for shared clients.
 - [ ] T020 ARBORA-OPS-R024.4 Memory operations — memory slice of `ARBORA-OPS-R024`.
