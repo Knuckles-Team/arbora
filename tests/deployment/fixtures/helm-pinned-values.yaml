@@ -1,0 +1,16 @@
+# Digest-pinned image references for the arbora, engine and one connector.
+# The digests are fixtures; nothing is pulled.
+arbora:
+  image:
+    digest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+engine:
+  placement: sidecar
+  image:
+    repository: registry.invalid/fixture/engine
+    digest: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+connectors:
+  - name: sample-mcp
+    port: 9123
+    image:
+      repository: registry.invalid/fixture/connector
+      digest: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
