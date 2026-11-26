@@ -11,6 +11,7 @@ from arbora.run_origin import RunOriginRegistry
 from .application import A2AAuthenticator, create_a2a_application
 from .authority import WorkItemA2AAuthority
 from .event_log import A2AEventLog, A2AEventStreams, StreamClock
+from .media_refs import SessionMediaRefStore
 from .routing import OrchestratorA2ARouter
 from .service import A2ACardMetadata, A2AService
 
@@ -50,6 +51,7 @@ def build_a2a_service(
         router=OrchestratorA2ARouter(engine_provider),
         card_metadata=card_metadata or A2ACardMetadata(),
         streaming=A2AEventStreams(log, authority),
+        media_refs=SessionMediaRefStore(engine_provider),
     )
 
 

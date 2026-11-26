@@ -15,6 +15,7 @@ is the typed model for the first slice of the migration (ARBORA-HOST-R010
 
 from __future__ import annotations
 
+import argparse
 import os
 from dataclasses import dataclass
 
@@ -62,6 +63,58 @@ def load_hosting_deployment_settings(
         deployment_environment=source.get(
             "ARBORA_DEPLOYMENT_ENVIRONMENT", "development"
         ),
+    )
+
+
+class UnknownServeFlag(InvalidHostConfigError):
+    """The serve command line carries a flag the host parser does not know."""
+
+
+TRANSPORTS = ("stdio", "streamable-http", "sse")
+
+
+@dataclass(frozen=True)
+class ServeArguments:
+    """The parsed serve command line of ``arbora``."""
+
+    transport: str
+    host: str
+    port: int
+    auth_type: str | None
+    token_jwks_uri: str | None
+    token_issuer: str | None
+    token_audience: str | None
+
+
+class _Parser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:  # type: ignore[override]
+        raise UnknownServeFlag(message)
+
+
+def parse_serve_argv(argv: list[str]) -> ServeArguments:
+    """Parse ``arbora`` serve arguments; the leading program name is optional.
+
+    A flag this parser does not know raises :class:`UnknownServeFlag`, so a
+    documented example that names an obsolete flag fails instead of passing.
+    """
+    parser = _Parser(prog="arbora", add_help=False, allow_abbrev=False)
+    parser.add_argument("--transport", choices=TRANSPORTS, default="stdio")
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--auth-type", default=None)
+    parser.add_argument("--token-jwks-uri", default=None)
+    parser.add_argument("--token-issuer", default=None)
+    parser.add_argument("--token-audience", default=None)
+    arguments = argv[1:] if argv[:1] == ["arbora"] else argv
+    parsed = parser.parse_args(arguments)
+    return ServeArguments(
+        transport=parsed.transport,
+        host=parsed.host,
+        port=parsed.port,
+        auth_type=parsed.auth_type,
+        token_jwks_uri=parsed.token_jwks_uri,
+        token_issuer=parsed.token_issuer,
+        token_audience=parsed.token_audience,
     )
 
 

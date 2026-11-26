@@ -113,6 +113,22 @@ clients can start the local transport directly:
 arbora --transport stdio
 ```
 
+The examples below are checked against the code on every change:
+
+```deployment-example
+profile: tiny
+transport: stdio
+argv: arbora --transport stdio
+probe: mcp-initialize
+```
+
+```deployment-example
+profile: tiny
+transport: streamable-http
+argv: arbora --transport streamable-http --host 127.0.0.1 --port 18765 --auth-type none
+probe: mcp-initialize
+```
+
 Network deployments use the identity, TLS, and authorization settings in the
 [deployment guide](https://knuckles-team.github.io/arbora/deployment/).
 

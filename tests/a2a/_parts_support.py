@@ -21,9 +21,11 @@ class CountingAuthority(Authority):
     def __init__(self) -> None:
         super().__init__()
         self.dispatched: list[Any] = []
+        self.media: list[Any] = []
 
     async def dispatch(self, **kwargs: Any) -> Any:
         self.dispatched.append(kwargs["message"])
+        self.media.append(kwargs.get("media"))
         return self.task
 
 
@@ -34,6 +36,8 @@ class AnyRouter:
 
 def served(
     capability: Any = None,
+    media_refs: Any = None,
+    owner: str = "tenant:ann",
 ) -> tuple[TestClient, CountingAuthority]:
     authority = CountingAuthority()
 
@@ -44,6 +48,8 @@ def served(
         authority=authority,
         router=AnyRouter(),
         media_capability=read if capability is not None else None,
+        media_refs=media_refs,
+        caller_owner=lambda: owner,
     )
     app = create_a2a_application(
         service=service,
