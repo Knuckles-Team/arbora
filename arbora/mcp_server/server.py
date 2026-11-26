@@ -20,7 +20,7 @@ from arbora.mcp_server.composition import (
     install_gateway_application,
     start_composed_services,
 )
-from arbora.mcp_server.host_context import HostContext
+from arbora.mcp_server.host_context import HostContext, bind_a2a_decision
 from arbora.mcp_server.hosted_invocation import HostedInvocation
 from arbora.semantic_content import default_content_providers
 
@@ -367,6 +367,7 @@ def mcp_server(
             if browser_boundary_factory is not None
             else _served_invocation(host=host_context)
         )
+    bind_a2a_decision(host_context, invocation)
     install_gateway_application(
         invocation, fleet=host_context.fleet, approvals=host_context.policy.approvals
     )

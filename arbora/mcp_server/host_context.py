@@ -13,13 +13,14 @@ from dataclasses import dataclass
 from typing import Any
 
 from arbora.a2a.composition import build_a2a_service
+from arbora.a2a.engine_decide import HostDecide
 from arbora.a2a.service import A2AService
 from arbora.access.approval import ApprovalDecisions, verified_approval_session
 from arbora.access.policy_state import PolicyState
 from arbora.fleet.state import FleetState
 from arbora.run_origin import RunOriginRegistry
 
-__all__ = ["HostContext", "RunState", "build_host_context"]
+__all__ = ["HostContext", "RunState", "bind_a2a_decision", "build_host_context"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,6 +29,8 @@ class RunState:
 
     origins: RunOriginRegistry
     a2a: A2AService
+    #: The A2A door's engine ``Decide`` port; the served invocation binds it.
+    decide: HostDecide
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,11 +45,32 @@ class HostContext:
 def build_host_context(engine_provider: Callable[[], Any]) -> HostContext:
     """Build the host state once; ``engine_provider`` resolves the engine lazily."""
     origins = RunOriginRegistry()
-    a2a = build_a2a_service(engine_provider=engine_provider, origins=origins)
+    decide = HostDecide()
+    a2a = build_a2a_service(
+        engine_provider=engine_provider,
+        origins=origins,
+        decide=decide,
+        feature_schema=decide.feature_schema,
+        decision_principal=decide.principal,
+    )
     return HostContext(
-        runs=RunState(origins=origins, a2a=a2a),
+        runs=RunState(origins=origins, a2a=a2a, decide=decide),
         fleet=FleetState(),
         policy=PolicyState(
             approvals=ApprovalDecisions(verified_approval_session),
         ),
     )
+
+
+def bind_a2a_decision(host: HostContext, invocation: Any) -> None:
+    """Bind the A2A door's ``Decide`` port to the served invocation's engine sender.
+
+    A host with no engine endpoint has no invocation, so the port stays unbound and
+    a named-agent or budgeted message refuses closed (ARBORA-A2A-R023, R017.5).
+    """
+    send = getattr(invocation, "engine_send", None)
+    schema = getattr(invocation, "decision_feature_schema", None)
+    principal = getattr(invocation, "decision_principal", None)
+    if send is None or schema is None or principal is None:
+        return
+    host.runs.decide.bind(send, feature_schema=schema, principal=principal)
