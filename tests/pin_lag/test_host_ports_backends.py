@@ -323,7 +323,10 @@ def test_composition_binds_each_port_that_has_a_backend(
     async def read(run: str, approval: str) -> None:
         return None
 
-    bare = compose_host_ports(services, wait=lambda s: asyncio.sleep(0)).ports
+    bare = compose_host_ports(
+        services, wait=lambda s: asyncio.sleep(0), backends=PortBackends()
+    ).ports
+    assert bare is not None
     assert bare.summary_provider is not None and bare.study_content is not None
     assert bare.technique_measure is not None
     assert bare.approval is None and bare.sandbox_processes is None

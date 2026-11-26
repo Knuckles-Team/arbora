@@ -138,10 +138,18 @@ def compose_host_ports(
     resolve_run: Callable[[str], Any] = _run_of,
     method_op: Callable[[str], str | None] = lambda _: None,
     backends: PortBackends | None = None,
+    seams: Any = None,
 ) -> HostPortsBinding:
-    """Bind every port that has a backend; the pinned release refuses ``UNAVAILABLE``."""
-    backends = backends or PortBackends()
+    """Bind every port that has a backend; the pinned release refuses ``UNAVAILABLE``.
+
+    Without explicit ``backends`` the production seams are built over ``seams`` (the host's
+    ``HostSeams``), and each seam the host cannot stand behind leaves its port closed.
+    """
     call = run_principal_call(services, resolve_run)
+    if backends is None:
+        from arbora.agent_host.port_backends import TERMINALS, production_backends
+
+        backends = production_backends(call, resolve_run, TERMINALS, seams)
 
     def tenant_of(run_ref: str) -> str:
         owner = resolve_run(run_ref)

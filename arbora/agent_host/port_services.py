@@ -297,7 +297,9 @@ class TechniqueMeasureService:
         if answer.get("outcome") != "answered":
             raise RuntimeError(f"technique measure refused: {dict(answer)}")
         rows = (answer.get("payload") or {}).get("rows") or ()
-        row = next((r for r in rows if r.get("option_id") == arm), {})
+        row: Mapping[str, Any] = next(
+            (r for r in rows if r.get("option_id") == arm), {}
+        )
         trials = int(row.get("trials") or 0)
         successes = int(row.get("successes") or 0)
         return {

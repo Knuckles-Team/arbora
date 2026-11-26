@@ -494,6 +494,9 @@ def record_run_event(event: Mapping[str, Any]) -> None:
     if not _valid_event_identity(run_id, event_type, step):
         logger.warning("run event not persisted: invalid event identity")
         return
+    from arbora.agent_host.port_backends import TERMINALS
+
+    TERMINALS.note(event)
     payload = _run_event_payload(event, cast(str, run_id), cast(str, event_type), step)
     engine = _engine()
     event_id = event.get("event_id")
@@ -621,11 +624,12 @@ def host_ports_binding() -> Any:
     return _HOST_PORTS
 
 
-def bind_run_ports(services: Any = None) -> Any:
+def bind_run_ports(services: Any = None, seams: Any = None) -> Any:
     """Register the run decision, model and run event providers with the harness.
 
     With the served ``services`` the one ``HostPorts`` record is composed over the
-    backends the host holds (ARBORA-OPS-R890); the pinned release refuses it.
+    backends the host holds (ARBORA-OPS-R890); ``seams`` are the host's own
+    (``HostSeams``). The pinned release refuses the record.
     """
     global _HOST_PORTS
     from meristem import host_ports
@@ -653,6 +657,6 @@ def bind_run_ports(services: Any = None) -> Any:
         from arbora.agent_host.host_port_composition import compose_host_ports
 
         _HOST_PORTS = compose_host_ports(
-            services, wait=asyncio.sleep, checkpoint_store=store
+            services, wait=asyncio.sleep, checkpoint_store=store, seams=seams
         )
     return _HOST_PORTS

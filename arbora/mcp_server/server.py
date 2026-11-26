@@ -332,7 +332,16 @@ def mcp_server(
     )
 
     bind_messaging_ports()
-    bind_run_ports(invocation.services if invocation is not None else None)
+    from arbora.agent_host.port_backends import HostSeams
+
+    bind_run_ports(
+        invocation.services if invocation is not None else None,
+        HostSeams(
+            action_policy=lambda: host_context.policy.action_policies.for_engine(
+                runtime._get_engine() if runtime._get_engine else None
+            )
+        ),
+    )
     bind_health_probes()
     _preflight_mcp_sdk_floor()
     _configure_arbora_otel()
