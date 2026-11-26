@@ -68,6 +68,10 @@ def main() -> None:
         from arbora.deployment.provision import main as provision_main
 
         raise SystemExit(provision_main(sys.argv[2:]))
+    if sys.argv[1:3] == ["skills", "export"]:
+        from arbora.fleet.agent_surface_cli import main as skills_export_main
+
+        raise SystemExit(skills_export_main(sys.argv[3:]))
     if sys.argv[1:3] == ["deploy", "render"]:
         from arbora.deployment.cli import main as deployment_main
 

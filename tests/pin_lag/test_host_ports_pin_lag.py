@@ -182,7 +182,7 @@ def test_real_path_binds_every_port_through_the_main_shape(main_shape: None) -> 
         assert (answer.outcome, answer.record_digest) == ("committed", "d1")
         assert seen[-1] == (
             "eg.coordination.DecisionLog",
-            {"op": "Evaluate", "round": 2},
+            {"op": {"op": "evaluate", "round": 2}},
             "run:1",
         )
         await engine.read("MemoryRecall", {"q": 1}, run_ref="run:1")
@@ -201,7 +201,9 @@ def test_real_path_binds_every_port_through_the_main_shape(main_shape: None) -> 
         gate = asyncio.Event()
         decided = asyncio.Event()
 
-        async def waiting(run: str, task: str, role: str) -> Mapping[str, Any]:
+        async def waiting(
+            run: str, task: str, role: str, plan: str
+        ) -> Mapping[str, Any]:
             await decided.wait()
             return {"verdict": "approve", "approver": "ann", "decided_at_ms": 5}
 
@@ -210,10 +212,14 @@ def test_real_path_binds_every_port_through_the_main_shape(main_shape: None) -> 
 
         waiter = adapters.approval_waiter(waiting, clock)
         decided.set()
-        assert (await waiter("r", "t", "owner", 30)).verdict == "approve"
+        assert (
+            await waiter("r", "t", "owner", 30, "arbora_plan:p")
+        ).verdict == "approve"
         decided.clear()
         gate.set()
-        assert (await waiter("r", "t", "owner", 30)).verdict == "timeout"
+        assert (
+            await waiter("r", "t", "owner", 30, "arbora_plan:p")
+        ).verdict == "timeout"
 
         async def broken(
             kind: str, payload: Mapping[str, Any], ref: str
@@ -222,7 +228,7 @@ def test_real_path_binds_every_port_through_the_main_shape(main_shape: None) -> 
 
         denied = await adapters.plan_confirmer(broken)("tool_action", {}, "r")
         assert (denied.verdict, denied.refusal_code) == (
-            "denied",
+            "deny",
             "confirm_unavailable",
         )
 

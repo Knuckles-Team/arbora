@@ -46,7 +46,7 @@ async def test_policy_read_fails_closed_when_reader_not_composed(op_by_id) -> No
 
 
 def test_policy_operation_is_caller_scoped_and_read_only() -> None:
-    (op,) = policy.operations()
+    op = next(o for o in policy.operations() if o.id == "policy.read")
     assert op.id == "policy.read"
     assert op.scopes == frozenset({"policy:read"})
     assert op.effect.value == "read"

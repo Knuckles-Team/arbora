@@ -26,6 +26,7 @@ PROTOCOL_ROUTES = (
     ProtocolRoute("/scim/v2/{path:path}", "arbora.identity", "SCIM protocol"),
     ProtocolRoute("/oauth/{path:path}", "arbora.identity", "OAuth protocol"),
     ProtocolRoute("/fleet/events", "arbora.fleet", "Signed child webhook ingress"),
+    ProtocolRoute("/llms.txt", "arbora.fleet", "Agent surface index"),
     ProtocolRoute("/health", "arbora.deployment", "Liveness probe"),
     ProtocolRoute("/health/ready", "arbora.deployment", "Readiness probe"),
     ProtocolRoute("/health/subsystems", "arbora.deployment", "Per-subsystem health"),
