@@ -436,11 +436,11 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T363 ARBORA-OPS-R893 arbora serves the credential access authority port to the SDK.
 - [ ] T364 ARBORA-OPS-R894 Register the changeset submitter and gate runner at host start.
 - [ ] T365 ARBORA-OPS-R895 Summarize a finalized meeting under an admitted provider.
-- [ ] T366 [US3] ARBORA-OPS-R896.1 Artifact-graph reads resolve to registered engine competency queries.
-- [ ] T367 [US3] ARBORA-OPS-R896.2 Project mode is read and changed through served operations.
+- [x] T366 [US3] ARBORA-OPS-R896.1 Artifact-graph reads resolve to registered engine competency queries.
+- [x] T367 [US3] ARBORA-OPS-R896.2 Project mode is read and changed through served operations.
 - [ ] T368 [US3] ARBORA-OPS-R896.3 An orchestrated implementation run starts through a served act operation.
 - [ ] T369 [US3] ARBORA-OPS-R896.4 An implementation run is observed through a served ask operation.
-- [ ] T370 [US3] ARBORA-OPS-R896.5 Proposals are listed and reviewed through served operations and land only as pull requests.
+- [x] T370 [US3] ARBORA-OPS-R896.5 Proposals are listed and reviewed through served operations and land only as pull requests.
 - [ ] T371 [US3] ARBORA-OPS-R896.6 Hot-path proof: the artifact graph drives a run over MCP.
 - [ ] T372 [US4] ARBORA-OPS-R896.7 Autonomous deliveries are listed, read and steered through served operations.
 - [ ] T373 [US4] ARBORA-OPS-R896.8 Code-host events reach the engine as delivery feedback.
