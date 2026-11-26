@@ -67,7 +67,7 @@ def _at(workdir: Path, state: S, completed: list[E] | None = None) -> run.Deploy
 @pytest.mark.spec("ARBORA-DEPLOY-R602.5")
 @pytest.mark.parametrize(
     ("state", "event"),
-    sorted(EXPECTED_LEGAL, key=lambda pair: (pair[0].value, pair[1].value)),
+    list(EXPECTED_LEGAL),
 )
 def test_each_legal_edge_has_a_test(tmp_path: Path, state: S, event: E) -> None:
     machine = _at(tmp_path, state)
