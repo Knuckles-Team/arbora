@@ -1,0 +1,85 @@
+"""Host and supervise the ingest worker; surface its health (ARBORA-FLEET-R045).
+
+Arbora declares one supervised unit that runs the ``ingest-worker`` command of
+``SCION-SOURCE-INGEST-R011`` against the served engine, and reports its health.
+It holds no job logic, queue or policy: the gauges and counters of
+``MEDULLA-INGEST-WORKER-R001.13`` are read through the engine metrics read and
+returned unchanged. A stopped unit is ``unhealthy`` with reason
+``worker_stopped``; an unreachable metrics read is ``metrics_unavailable``.
+"""
+
+from __future__ import annotations
+
+import time
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
+from typing import Any
+
+from arbora.fleet.health import FleetHealthSnapshot, _dependency, _with_dependency
+
+__all__ = [
+    "INGEST_WORKER_DEPENDENCY",
+    "IngestWorkerHealth",
+    "IngestWorkerUnit",
+    "declare_ingest_worker_unit",
+    "with_ingest_worker_health",
+]
+
+INGEST_WORKER_DEPENDENCY = "ingest_worker"
+
+
+@dataclass(frozen=True)
+class IngestWorkerUnit:
+    """One supervised process: its name and the command line it runs."""
+
+    name: str
+    argv: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class IngestWorkerHealth:
+    state: str  # "healthy" or "unhealthy"
+    reason: str | None = None
+    metrics: Mapping[str, Any] = field(default_factory=dict)
+
+
+def declare_ingest_worker_unit(
+    *, engine_endpoint: str, enabled: bool = True
+) -> IngestWorkerUnit | None:
+    """The unit for the host to supervise, or ``None`` when configured off.
+
+    ``enabled`` is the config key ``ingest_worker.enabled`` (default true).
+    """
+    if not enabled:
+        return None
+    if not engine_endpoint or not engine_endpoint.strip():
+        raise ValueError("the ingest worker needs the served engine endpoint")
+    return IngestWorkerUnit(
+        name="ingest-worker",
+        argv=("ingest-worker", "--engine-endpoint", engine_endpoint.strip()),
+    )
+
+
+def with_ingest_worker_health(
+    snapshot: FleetHealthSnapshot,
+    *,
+    running: Callable[[], bool],
+    read_metrics: Callable[[], Mapping[str, Any]],
+    now: float | None = None,
+) -> tuple[FleetHealthSnapshot, IngestWorkerHealth]:
+    """Add the worker's health to a fleet snapshot and return it with the metrics."""
+    checked = time.time() if now is None else float(now)
+    if not running():
+        health = IngestWorkerHealth("unhealthy", "worker_stopped")
+    else:
+        try:
+            health = IngestWorkerHealth("healthy", None, dict(read_metrics()))
+        except Exception:  # noqa: BLE001 - an unreachable read is a state, not a crash
+            health = IngestWorkerHealth("unhealthy", "metrics_unavailable")
+    if health.state == "healthy":
+        dependency = _dependency("healthy", checked, checked)
+    else:
+        dependency = _dependency(
+            "unavailable", checked, None, (f"ingest_worker: {health.reason}",)
+        )
+    return _with_dependency(snapshot, INGEST_WORKER_DEPENDENCY, dependency), health

@@ -26,6 +26,10 @@ MAX_PAGES_CAP = 20
 MAX_ROWS_CAP = 10_000
 MAX_SOURCES = 32
 MAX_CONCURRENCY = 8
+#: ARBORA-FLEET-R057: record refs per access-check call and the call deadline.
+ACCESS_CHECK_BATCH = 200
+ACCESS_CHECK_TIMEOUT_S = 2.0
+ACCESS_CHECK_UNAVAILABLE = "SOURCE_ACCESS_CHECK_UNAVAILABLE"
 _FOREIGN_ABORT_CLEANUP_TIMEOUT_S = 1.0
 
 
@@ -105,6 +109,14 @@ class ForeignReadResult:
     @property
     def ok(self) -> bool:
         return self.error_code is None
+
+
+@dataclass(frozen=True)
+class AccessCheckResult:
+    """Per-record read-time access answers; a failed check denies every record."""
+
+    allowed: Mapping[str, bool]
+    error_code: str | None = None
 
 
 def _page(payload: Any, rows_key: str) -> list[Any]:
@@ -592,6 +604,50 @@ class FleetSourceExecutor:
                 "the catalog mapping is not the approved contract",
             )
         return await self.read_foreign(request, correlate=correlate)
+
+    async def access_check(
+        self,
+        connector: str,
+        tool: str,
+        record_refs: Sequence[str],
+        *,
+        timeout_s: float = ACCESS_CHECK_TIMEOUT_S,
+    ) -> AccessCheckResult:
+        """Relay the engine's read-time access check to the connector tool.
+
+        At most ``ACCESS_CHECK_BATCH`` refs go per call, through the governed
+        gateway as a READ. A timeout, a missing tool or any failure answers every
+        record denied with ``SOURCE_ACCESS_CHECK_UNAVAILABLE``; only a ref the
+        connector names with ``True`` is allowed.
+        """
+        refs = tuple(dict.fromkeys(str(r) for r in record_refs))
+        allowed: dict[str, bool] = {}
+        for start in range(0, len(refs), ACCESS_CHECK_BATCH):
+            batch = refs[start : start + ACCESS_CHECK_BATCH]
+            try:
+                reply = await asyncio.wait_for(
+                    self._gateway.call(
+                        self._caller,
+                        connector,
+                        tool,
+                        {"record_refs": list(batch)},
+                        expected_effect=Effect.READ,
+                    ),
+                    timeout=timeout_s,
+                )
+                value = reply.get("value") if isinstance(reply, Mapping) else None
+                decisions = (
+                    value.get("decisions") if isinstance(value, Mapping) else None
+                )
+                if not isinstance(decisions, Mapping):
+                    raise ValueError("access check reply malformed")
+            except Exception:  # noqa: BLE001 - every failure denies every record
+                return AccessCheckResult(
+                    allowed={ref: False for ref in refs},
+                    error_code=ACCESS_CHECK_UNAVAILABLE,
+                )
+            allowed.update({ref: decisions.get(ref) is True for ref in batch})
+        return AccessCheckResult(allowed=allowed)
 
     async def read_all(
         self, requests: Sequence[SourceReadRequest]

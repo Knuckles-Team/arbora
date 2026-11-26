@@ -846,7 +846,21 @@ async def _record(
             exc_info=True,
         )
         return OpError("INDETERMINATE", {"audit_ref": audit_ref})
-    return result
+    return _with_audit_ref(result, audit_ref)
+
+
+def _with_audit_ref(result: OpResult | OpError, audit_ref: str) -> OpResult | OpError:
+    """A recorded success carries the audit reference of its own call.
+
+    ``_record`` is the one place the audit entry is written, so it is the one
+    place its reference is attached: every in-process caller (plan steps
+    included) reads ``details['audit_ref']``. The effect journal stored the
+    bare result first, so a replay is stamped with the replaying call's own
+    reference.
+    """
+    if not audit_ref or not isinstance(result, OpResult):
+        return result
+    return replace(result, details={**result.details, "audit_ref": audit_ref})
 
 
 def _evidence(call: _Call, extra: Mapping[str, str] | None) -> dict[str, str]:

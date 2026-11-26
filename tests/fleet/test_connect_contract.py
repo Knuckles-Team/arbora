@@ -136,6 +136,12 @@ class RecordingOnboarding(FleetOnboarding):
     async def write_catalog(self, endpoint, pack):
         return None
 
+    async def projection_state(self, connector):
+        return ("applied", "")
+
+    async def reproject(self, connector):
+        return None
+
 
 def make_onboarding(packs, monkeypatch, *, result=None, error=None):
     from arbora.access.action_policy import ActionPolicies
@@ -207,7 +213,7 @@ async def test_contract_refusals(monkeypatch) -> None:
         await onboarding.onboard(ENDPOINT, auth=None)
     assert refused.value.code == "CONTRACT_RESOURCE_TOO_LARGE"
     assert imports == []
-    assert onboarding.surfaces["crm"]["contract"]["state"] == "contract_rejected"
+    assert onboarding.surfaces["crm"]["contract"]["outcome"] == "contract_rejected"
 
     for code in ("ONTOLOGY_INVALID", "SHACL_VIOLATION", "SEED_SHACL_VIOLATION"):
         failure = SemanticProvisioningError(f"import was rejected: {code}:u:d")
@@ -215,7 +221,7 @@ async def test_contract_refusals(monkeypatch) -> None:
         with pytest.raises(SemanticProvisioningError):
             await onboarding.onboard(ENDPOINT, auth=None)
         contract = onboarding.surfaces["crm"]["contract"]
-        assert contract["state"] == "contract_rejected" and contract["reason"] == code
+        assert contract["outcome"] == "contract_rejected" and contract["reason"] == code
 
 
 @pytest.mark.spec("ARBORA-FLEET-R036.5")
@@ -248,3 +254,30 @@ def test_section_length_bounds_the_resource() -> None:
     with pytest.raises(ContractRefused):
         check_resource_sizes(pack, 4096)
     check_resource_sizes(pack, 8192)
+
+
+def test_seed_body_refuses_unavailable_while_the_pin_lacks_the_seed_path() -> None:
+    """A seeded pack is never imported with its seed dropped (ARBORA-FLEET-R054 pin-lag)."""
+    import asyncio
+
+    from arbora.deployment.semantic_provisioning import import_attested_pack
+    from arbora.pin_lag.medulla import PinLagUnavailable, require_pack_import_seed
+
+    try:
+        require_pack_import_seed()
+    except PinLagUnavailable as lag:
+        with pytest.raises(PinLagUnavailable) as caught:
+            asyncio.run(
+                import_attested_pack(
+                    object(),
+                    object(),
+                    client=object(),
+                    commons=object(),
+                    pack=object(),
+                    action_policies=object(),
+                    seed_body={"nodes": []},
+                )
+            )
+        assert str(caught.value) == str(lag)
+    else:  # pragma: no cover - the re-pin carries the path; bind R054 then
+        pytest.skip("seed path served; add the recorded-engine seed test")

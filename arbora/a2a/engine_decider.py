@@ -28,9 +28,15 @@ Decide = Callable[[dict[str, Any]], Awaitable[Any]]
 
 
 def _answer(record: Mapping[str, Any]) -> Mapping[str, Any]:
-    outcome = record.get("outcome")
-    family = outcome.get("family_answer") if isinstance(outcome, Mapping) else None
-    value = family.get("value") if isinstance(family, Mapping) else None
+    """``record.answer`` is ``FamilyAnswer::HarnessConfig``: ``{type, value}``.
+
+    ``value`` is the engine's ``HarnessConfigEvaluationEvidence``; its ``answer`` is the
+    ``HarnessConfigAnswer`` (medulla ``StatisticalDecisionRecord.answer``).
+    """
+    family = record.get("answer")
+    if not isinstance(family, Mapping) or family.get("type") != QUESTION_KIND:
+        raise ValueError("the record carries no harness configuration")
+    value = family.get("value")
     answer = value.get("answer") if isinstance(value, Mapping) else None
     if not isinstance(answer, Mapping):
         raise ValueError("the record carries no harness configuration")
@@ -44,7 +50,7 @@ class EngineHarnessConfigDecider:
         self,
         decide: Decide,
         *,
-        feature_schema: Mapping[str, Any],
+        feature_schema: Callable[[str], Mapping[str, Any]],
         principal: Callable[[], str],
         timeout_s: float | None = None,
     ) -> None:
@@ -80,7 +86,7 @@ class EngineHarnessConfigDecider:
             tenant,
             (f"a2a.harness:{task_class}", QUESTION_KIND, "ordinary"),
             declared([DeclaredOption(model_profile_ref)]),
-            self._feature_schema,
+            self._feature_schema(tenant),
             params=[
                 param("model_profile_ref", "iri", model_profile_ref),
                 param("task_class", "iri", task_class),
@@ -95,12 +101,12 @@ class EngineHarnessConfigDecider:
         digest = _HEX.search(str(record.get("record_digest", "")))
         if digest is None:
             raise ValueError("the record carries no digest")
-        expires = record.get("expires_at_ms")
+        # PIN-LAG: ``StatisticalDecisionRecord`` has no expiry field on engine main
+        # (only ``created_at_ms``), so no expiry is read until the engine carries one.
         return HarnessConfigRecord(
             answer=HarnessConfigMirror.model_validate(_answer(record)),
             decision_record_ref=str(record["record_id"]),
             digest=digest.group(0),
-            expires_at_ms=expires if isinstance(expires, int) else None,
         )
 
 

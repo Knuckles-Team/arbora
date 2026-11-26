@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, cast
 
+import pytest
 import yaml
 
 ROOT = Path(__file__).parents[2]
@@ -91,3 +92,29 @@ def test_ci_never_writes_and_never_calls_the_release_workflow() -> None:
         for grant in granted
     ), granted
     assert "write" not in yaml.safe_dump(granted)
+
+
+@pytest.mark.spec("ARBORA-A2A-R021")
+def test_a2a_admission_runs_from_clean_clone() -> None:
+    jobs = _ci()["jobs"]
+    job = jobs["a2a-admission-clean-clone"]
+    assert job["name"] == "a2a-admission-clean-clone"
+    assert job["needs"] == ["changes"] and "permissions" not in job
+    assert job["runs-on"] == "ubuntu-latest"  # no homelab runner, no private network
+    steps = job["steps"]
+    clone = steps[0]
+    assert clone["uses"].startswith("actions/checkout@")
+    assert clone["with"] == {"path": "clean-clone", "persist-credentials": False}
+    run = next(step for step in steps if step.get("working-directory"))
+    assert run["working-directory"] == "clean-clone"
+    assert "uv sync --frozen --extra test" in run["run"]
+    assert (
+        "pytest tests/a2a/test_admission.py tests/a2a/test_service_admission.py"
+        in run["run"]
+    )
+    # The aggregate fails on a failed clean-clone run.
+    assert "a2a-admission-clean-clone" in jobs["ci-required"]["needs"]
+    # Every needs entry names a defined job.
+    for name, definition in jobs.items():
+        for need in definition.get("needs", []):
+            assert need in jobs, (name, need)

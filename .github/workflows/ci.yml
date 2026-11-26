@@ -325,6 +325,31 @@ jobs:
       - name: Wheel carries every data file
         run: uv run --no-project python -I scripts/wheel_boot_check.py contents dist/arbora-*.whl
 
+  a2a-admission-clean-clone:
+    # ARBORA-A2A-R021: the admission tests run from a fresh clone with the
+    # published dependency set only: no sibling checkout, no private network.
+    name: a2a-admission-clean-clone
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fresh clone of the public repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: clean-clone
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: '0.13.1'
+          python-version: '3.14'
+      - name: Install from the package index and run the admission tests
+        working-directory: clean-clone
+        run: |
+          set -euo pipefail
+          uv sync --frozen --extra test
+          uv run --frozen --no-sync python -m pytest tests/a2a/test_admission.py tests/a2a/test_service_admission.py -q
+
   # Push to main and nightly: the full read-only checks, no publication.
   main-checks:
     if: github.event_name != 'pull_request'
@@ -335,7 +360,7 @@ jobs:
   ci-required:
     name: CI required
     if: always()
-    needs: [changes, freeze-gate-source, gates, build, main-checks]
+    needs: [changes, freeze-gate-source, gates, build, a2a-admission-clean-clone, main-checks]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

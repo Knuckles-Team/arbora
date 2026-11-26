@@ -59,9 +59,13 @@ class FakeAudit:
 
     def __init__(self) -> None:
         self.entries: list[dict[str, Any]] = []
+        self.evidence: list[dict[str, str] | None] = []
 
-    async def audit_append(self, **fields: Any) -> dict[str, Any]:
+    async def audit_append(
+        self, *, evidence: dict[str, str] | None = None, **fields: Any
+    ) -> dict[str, Any]:
         seq = len(self.entries)
+        self.evidence.append(evidence)
         self.entries.append(fields)
         reserved = fields["status"] == "reserved"
         return {

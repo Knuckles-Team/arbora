@@ -10,6 +10,9 @@ connector transport in this module.
 
 from __future__ import annotations
 
+import hashlib
+import json
+import logging
 import re
 from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime
@@ -20,6 +23,8 @@ from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 from arbora.api.errors import FleetRefusal
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
+
+logger = logging.getLogger("arbora.audit.federation")
 
 _DIGEST = re.compile(r"[0-9a-f]{64}\Z")
 _LIMIT_FIELDS = frozenset(
@@ -446,6 +451,29 @@ def _metadata(value: Any) -> Mapping[str, Any]:
     return payload
 
 
+def federation_audit_line(
+    *,
+    principal: str,
+    tenant: str,
+    question: str,
+    sources: list[SourceProvenance],
+    decision_id: str | None,
+) -> dict[str, Any]:
+    """The audit line of one federated answer (ARBORA-FLEET-R043.5).
+
+    It names the caller, tenant, the SHA-256 digest of the question, each source
+    used and the engine decision id. No source row ever enters it.
+    """
+    return {
+        "event": "federated_query",
+        "principal": principal,
+        "tenant": tenant,
+        "question_digest": hashlib.sha256(question.encode("utf-8")).hexdigest(),
+        "sources": [source.model_dump(mode="json") for source in sources],
+        "decision_id": decision_id,
+    }
+
+
 def _provenance(binding: Any) -> SourceProvenance:
     source = getattr(binding, "source", None)
     mapping = getattr(source, "mapping", None)
@@ -616,10 +644,25 @@ async def dispatch_federated_nl(
             "truncated": bool(getattr(result, "truncated", False)),
         },
     )
+    decision = metadata.get("decision_id")
+    logger.info(
+        "%s",
+        json.dumps(
+            federation_audit_line(
+                principal=str(context.caller.principal),
+                tenant=str(context.caller.tenant),
+                question=text,
+                sources=view.sources,
+                decision_id=decision if isinstance(decision, str) else None,
+            ),
+            sort_keys=True,
+        ),
+    )
     return {"value": view.model_dump(mode="json")}
 
 
 __all__ = [
+    "federation_audit_line",
     "FederatedAnswerView",
     "ForeignReadDescriptor",
     "NativeNlQueryPlanPlanner",

@@ -393,8 +393,14 @@ async def import_attested_pack(
     action_policies: ActionPolicies,
     bind_graph: GraphBinder = bind_session_graph,
     allow_mass_withdrawal: bool = False,
+    seed_body: Any | None = None,
 ) -> Any:
     """Attest ``pack``'s catalog with EG, then import it under EG's binding.
+
+    A captured ``seed_body`` is handed to the import untouched (ARBORA-FLEET-R054);
+    the engine's ``SEED_*`` refusals propagate unchanged. Until the pinned engine
+    request and the SDK sink carry the seed, a pack with a seed refuses
+    ``UNAVAILABLE`` naming the missing piece rather than dropping it.
 
     The caller owns projection and schema attachment. A rejected import
     raises :class:`SemanticProvisioningError` with every EG violation.
@@ -406,7 +412,10 @@ async def import_attested_pack(
     from scion_sdk.sinks.medulla import MedullaSink
 
     from arbora.api.contracts import pack_import_authority
+    from arbora.pin_lag.medulla import require_pack_import_seed
 
+    if seed_body is not None:
+        require_pack_import_seed()
     tenant_id = str(session_context(session)["tenant"])
     graph = str(session.graph)
     binding = await attest_self_served_catalog(
@@ -433,8 +442,9 @@ async def import_attested_pack(
             ),
         )
         try:
+            extra = {} if seed_body is None else {"seed": seed_body}
             result = await sink.import_pack(
-                pack, allow_mass_withdrawal=allow_mass_withdrawal
+                pack, allow_mass_withdrawal=allow_mass_withdrawal, **extra
             )
         except ValueError as exc:
             # pydantic's ValidationError is a ValueError: the generated client

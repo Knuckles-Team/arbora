@@ -31,3 +31,4 @@ Governing [spec](spec.md) and [plan](plan.md). One task per row, producer first.
 - [ ] T027 [US1] ARBORA-RELEASE-R003.4.15 Refusal: a duplicate write inside one foreach.
 - [ ] T028 [US1] ARBORA-RELEASE-R003.4.16 Reply lists each foreach item.
 - [ ] T029 [US1] ARBORA-RELEASE-R003.4.17 Hot-path proof: foreach served over HTTP and MCP.
+- [ ] T030 [US1] ARBORA-RELEASE-R003.4.18 An invoke result carries its audit reference.

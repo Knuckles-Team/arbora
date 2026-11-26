@@ -68,13 +68,13 @@ class OrchestratorA2ARouter:
         engine_provider: Callable[[], Any],
         *,
         decide: Callable[[dict[str, Any]], Awaitable[Any]] | None = None,
-        feature_schema: Mapping[str, Any] | None = None,
+        feature_schema: Callable[[str], Mapping[str, Any]] | None = None,
         tenant: Callable[[], str] | None = None,
         principal: Callable[[], str] | None = None,
     ) -> None:
         self._engine_provider = engine_provider
         self._decide = decide
-        self._feature_schema = feature_schema or {}
+        self._feature_schema = feature_schema or (lambda tenant: {})
         self._tenant = tenant or (lambda: "")
         self._principal = principal or (lambda: "")
 
@@ -93,35 +93,36 @@ class OrchestratorA2ARouter:
         return await self._a2a_route(name)
 
     async def _a2a_route(self, requested: str) -> A2ARouteDecision:
-        from medulla.decision_client import (
-            DeclaredOption,
-            decide_request,
-            declared,
-            param,
-        )
+        from medulla.decision_client import decide_request, library, param
 
         from arbora.deployment.placement import check_receipt, single_record
 
         assert self._decide is not None
-        request = decide_request(
-            self._tenant(),
-            (f"a2a.route:{requested}", "a2a_route", "ordinary"),
-            declared([DeclaredOption(requested)]),
-            self._feature_schema,
-            params=[param("a2a.requested_graph_id", "text", requested)],
-        )
+        tenant = self._tenant()
         try:
+            request = decide_request(
+                tenant,
+                (f"a2a.route:{requested}", "a2a_route", "ordinary"),
+                # The family reads the tenant's published agent cards, not options.
+                library([ROUTE_CANDIDATE_KIND]),
+                self._feature_schema(tenant),
+                params=[param("a2a.requested_graph_id", "text", requested)],
+            )
             record = single_record(await self._decide(request))
             check_receipt(record, request, self._principal())
         except Exception:  # noqa: BLE001 - an unanswered route decision routes nothing
             raise A2AAssemblyUnavailable(
                 "a2a route decision unavailable", "A2A_ROUTE_UNAVAILABLE"
             ) from None
-        for code in ("A2A_GRAPH_UNKNOWN", "A2A_REQUEST_MISSING"):
-            if code in repr(record):
-                raise A2AAssemblyUnavailable("a2a route abstained", code)
         outcome = record.get("outcome")
-        scores = outcome.get("scores") if isinstance(outcome, Mapping) else None
+        if not isinstance(outcome, Mapping):
+            raise A2AAssemblyUnavailable(
+                "a2a route decision unavailable", "A2A_ROUTE_UNAVAILABLE"
+            )
+        for code in _abstention_codes(outcome):
+            if code in ROUTE_ABSTENTIONS:
+                raise A2AAssemblyUnavailable("a2a route abstained", code)
+        scores = outcome.get("scores") if outcome.get("outcome") == "advisory" else None
         chosen = (
             scores[0].get("option_id") if isinstance(scores, list) and scores else None
         )
@@ -129,12 +130,58 @@ class OrchestratorA2ARouter:
             raise A2AAssemblyUnavailable(
                 "a2a route decision unavailable", "A2A_ROUTE_UNAVAILABLE"
             )
-        capability = outcome.get("capability") if isinstance(outcome, Mapping) else None
-        capability = capability if isinstance(capability, Mapping) else {}
+        profile, task_class = _route_capability(record, chosen)
         return A2ARouteDecision(
             agent_name=chosen,
             selection_mode="a2a-route",
             decision_record_ref=str(record["record_id"]),
-            model_profile_ref=capability.get("model_profile_ref") or None,
-            task_class=capability.get("task_class") or None,
+            model_profile_ref=profile,
+            task_class=task_class,
         )
+
+
+#: The component kind (engine wire name) whose published entries are route targets.
+ROUTE_CANDIDATE_KIND = "a2a_agent_card"
+#: The registered refusal codes of the engine ``a2a_route`` family.
+ROUTE_ABSTENTIONS = ("A2A_GRAPH_UNKNOWN", "A2A_REQUEST_MISSING")
+
+
+def _abstention_codes(outcome: Mapping[str, Any]) -> list[str]:
+    """Codes of ``StatisticalOutcome::Abstained``: ``reasons[].code`` of family reasons."""
+    if outcome.get("outcome") != "abstained":
+        return []
+    reasons = outcome.get("reasons")
+    return [
+        str(reason["code"])
+        for reason in (reasons if isinstance(reasons, list) else [])
+        if isinstance(reason, Mapping)
+        and reason.get("reason") == "family"
+        and "code" in reason
+    ]
+
+
+def _route_capability(
+    record: Mapping[str, Any], chosen: str
+) -> tuple[str | None, str | None]:
+    """The routed agent's model profile and task class, when the record carries them.
+
+    PIN-LAG: engine ``main`` seals the route as ``outcome.scores[0].option_id`` only;
+    ``FamilyAnswer`` has no ``a2a_route`` variant. The requested typed answer is
+    ``record.answer = {type: "a2a_route", value: {graph_id, model_profile_ref,
+    task_class}}`` (OVERSTORY-GAPS, "MEDULLA FOR ARBORA (w14)"). Until the engine
+    seals it both are ``None`` and a budgeted message refuses closed.
+    """
+    answer = record.get("answer")
+    value = answer.get("value") if isinstance(answer, Mapping) else None
+    if (
+        not isinstance(answer, Mapping)
+        or answer.get("type") != "a2a_route"
+        or not isinstance(value, Mapping)
+        or value.get("graph_id") != chosen
+    ):
+        return None, None
+    profile, task_class = value.get("model_profile_ref"), value.get("task_class")
+    return (
+        profile if isinstance(profile, str) and profile else None,
+        task_class if isinstance(task_class, str) and task_class else None,
+    )

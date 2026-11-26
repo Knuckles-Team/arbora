@@ -1487,3 +1487,35 @@ async def test_foreach_plan_served_end_to_end():
     value, _ = await _serve_tools(plan, invoke=duplicate, gateway=WriteGateway())
     assert len(duplicate.effects) == 2
     assert value["run"]["status"] != "completed"
+
+
+class AuditedInvoke(ObjectInvoke):
+    """An invoke pipeline whose results carry the audit ref of their own call."""
+
+    async def __call__(self, op_id, params, caller, key):
+        from dataclasses import replace
+
+        outcome = await super().__call__(op_id, params, caller, key)
+        return replace(outcome, details={"audit_ref": f"audit:{key}"})
+
+
+# spec: ARBORA-RELEASE-R003.4.18
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.18")
+async def test_reply_fills_audit_ref_from_the_invoke_result_for_steps_and_items():
+    invoke = AuditedInvoke(["a", "b"])
+    value, _ = await _serve_tools(FOREACH_PLAN, invoke=invoke, gateway=WriteGateway())
+    listing = _step_by_id(value, "list")
+    assert listing["idempotency_key"] in invoke.keys
+    assert listing["audit_ref"] == "audit:" + listing["idempotency_key"]
+    each = _step_by_id(value, "each")
+    assert len(each["items"]) == 2
+    for item in each["items"]:
+        assert item["audit_ref"] == "audit:" + item["idempotency_key"]
+    # A step the pipeline did not answer names no audit ref.
+    plain, _ = await _serve_tools(BINDING_PLAN, invoke=ToolInvoke())
+    assert _step_by_id(plain, "open")["audit_ref"] is None
+
+
+def _step_by_id(value, task_id):
+    (step,) = [s for s in value["run"]["steps"] if s["task_id"] == task_id]
+    return step

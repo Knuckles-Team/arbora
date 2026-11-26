@@ -97,3 +97,53 @@ def build_ask_decide(
         return record
 
     return ask
+
+
+class HostDecide:
+    """The A2A door's engine ``Decide`` port, bound once the host invocation exists.
+
+    The host builds its A2A service before the served invocation (which owns the
+    engine sender) is composed, so the port starts unbound and refuses closed: an
+    unbound call raises, and the router and harness decider read a raise as
+    unavailable. ``bind`` hands it the same ``Decide`` sender, tenant feature-schema
+    pin and service principal the confirm deciders use (ARBORA-A2A-R005.4).
+    """
+
+    def __init__(self) -> None:
+        self._send: Send | None = None
+        self._feature_schema: Callable[[str], Mapping[str, Any]] | None = None
+        self._principal: Callable[[], str] | None = None
+
+    @property
+    def bound(self) -> bool:
+        return self._send is not None
+
+    def bind(
+        self,
+        send: Send,
+        *,
+        feature_schema: Callable[[str], Mapping[str, Any]],
+        principal: Callable[[], str],
+    ) -> None:
+        if self._send is not None:
+            raise RuntimeError("the A2A decision port is already bound")
+        self._send, self._feature_schema, self._principal = (
+            send,
+            feature_schema,
+            principal,
+        )
+
+    async def __call__(self, request: dict[str, Any]) -> Any:
+        if self._send is None:
+            raise RuntimeError("the A2A decision port is not bound")
+        return await self._send("Decide", request, str(request["tenant_id"]))
+
+    def feature_schema(self, tenant: str) -> Mapping[str, Any]:
+        if self._feature_schema is None:
+            raise RuntimeError("the A2A decision port is not bound")
+        return self._feature_schema(tenant)
+
+    def principal(self) -> str:
+        if self._principal is None:
+            raise RuntimeError("the A2A decision port is not bound")
+        return self._principal()
