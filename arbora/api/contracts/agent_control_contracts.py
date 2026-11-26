@@ -271,6 +271,10 @@ class SignedAgentDispatchRequest(_StrictModel):
     session_ref: str = Field(min_length=1, max_length=512)
     kind: Literal["orchestrator_task"] = "orchestrator_task"
     agent_name: str = Field(min_length=1, max_length=512)
+    #: The harness decision the engine committed for this turn (ARBORA-A2A-R018.1).
+    allowed_tool_subset: tuple[str, ...] = Field(default=(), max_length=64)
+    decision_record_ref: str | None = Field(default=None, max_length=512)
+    harness_config_digest: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
 
 class SignedAgentDispatchReceipt(_StrictModel):
