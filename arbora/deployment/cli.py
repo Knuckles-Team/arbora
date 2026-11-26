@@ -213,7 +213,15 @@ def main(argv: list[str] | None = None) -> int:
         "--profile", required=True, help="Existing named deployment profile."
     )
 
+    from arbora.deployment import render
+
+    render.add_arguments(
+        sub.add_parser("render", help="Render the production topology manifests.")
+    )
+
     args = parser.parse_args(argv)
+    if args.command == "render":
+        return render.run(args)
     handler = _COMMAND_HANDLERS.get(args.command)
     return handler(args) if handler is not None else 2
 
