@@ -256,8 +256,201 @@ NATIVE_IDEMPOTENCY: dict[str, str] = {
 }
 
 
+# --- retrieval evaluation and authorized context search (ARBORA-OPS-R063) ----
+
+
+class RetrievalPinned(Params):
+    id: str = Field(min_length=1, max_length=256)
+    revision: int = Field(ge=0)
+    digest: str = Field(min_length=1, max_length=128)
+
+
+class RetrievalLabelPair(Params):
+    query_id: str = Field(min_length=1, max_length=256)
+    document_id: str = Field(min_length=1, max_length=256)
+
+
+class RetrievalRanking(Params):
+    query_id: str = Field(min_length=1, max_length=256)
+    document_ids: list[str] = Field(max_length=1000)
+
+
+class RetrievalAlgorithmRun(Params):
+    algorithm_id: str = Field(min_length=1, max_length=128)
+    version: str = Field(min_length=1, max_length=64)
+    settings_digest: str = Field(min_length=1, max_length=128)
+    corpus_digest: str = Field(min_length=1, max_length=128)
+    input_digest: str = Field(min_length=1, max_length=128)
+    rankings: list[RetrievalRanking] = Field(min_length=1)
+
+
+class RetrievalCompareParams(Params):
+    """One evaluation: shared pinned inputs and at least two algorithm runs."""
+
+    corpus: RetrievalPinned
+    labels: RetrievalPinned
+    label_pairs: list[RetrievalLabelPair] = Field(min_length=1, max_length=100_000)
+    queries: RetrievalPinned
+    query_ids: list[str] = Field(min_length=1, max_length=100_000)
+    k: int = Field(ge=1, le=1000)
+    evaluator_revision: int = Field(ge=0)
+    algorithms: list[RetrievalAlgorithmRun] = Field(min_length=2, max_length=16)
+
+
+class RetrievalContextSearchParams(Params):
+    query: str = Field(min_length=1, max_length=4096)
+    ngram_n: int = Field(default=3, ge=1, le=16)
+    max_spans: int = Field(default=20, ge=1, le=100)
+    cursor: str | None = Field(default=None, min_length=1, max_length=512)
+
+
+class RetrievalEvalResult(Params):
+    value: dict[str, Any]
+
+
+MAX_SPAN_BYTES = 8192
+MAX_SPANS = 100
+
+
+def _check_runs(params: Mapping[str, Any]) -> None:
+    """Refuse inputs that disagree before anything is sent to the engine."""
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    queries = set(params["query_ids"])
+    labelled = {pair["query_id"] for pair in params["label_pairs"]}
+    if not labelled or not queries <= labelled:
+        raise OperationRefused("INVALID_ARGUMENT", {"field": "label_pairs"})
+    algorithms = params["algorithms"]
+    if len({run["algorithm_id"] for run in algorithms}) != len(algorithms):
+        raise OperationRefused("INVALID_ARGUMENT", {"field": "algorithms"})
+    for run in algorithms:
+        if run["corpus_digest"] != params["corpus"]["digest"]:
+            raise OperationRefused("PLAN_STALE", {"field": "corpus_digest"})
+        if {row["query_id"] for row in run["rankings"]} != queries:
+            raise OperationRefused("INVALID_ARGUMENT", {"field": "rankings"})
+
+
+def _comparison_request(context: Any, params: Mapping[str, Any]) -> dict[str, Any]:
+    """The engine request for one checked comparison."""
+    import hashlib
+    import json
+
+    _check_runs(params)
+    request = {
+        "schema_version": 1,
+        "tenant_id": str(context.caller.tenant),
+        "corpus": dict(params["corpus"]),
+        "labels": {
+            "pinned": dict(params["labels"]),
+            "pairs": list(params["label_pairs"]),
+        },
+        "queries": {
+            "pinned": dict(params["queries"]),
+            "query_ids": list(params["query_ids"]),
+        },
+        "k": params["k"],
+        "evaluator_revision": params["evaluator_revision"],
+        "algorithms": [dict(run) for run in params["algorithms"]],
+    }
+    canonical = json.dumps(request, sort_keys=True, default=list).encode()
+    request["idempotency_key"] = hashlib.sha256(canonical).hexdigest()
+    return request
+
+
+async def handle_retrieval_compare(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Forward one ranking submission; the engine computes every number."""
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_models
+
+    try:
+        require_models(("DecisionEvalOpRetrievalRankingSubmit",))
+    except PinLagUnavailable as missing:
+        raise refusal(missing) from missing
+    request = _comparison_request(context, params)
+    answer = await engine_send(
+        context,
+        "DecisionEval",
+        {"op": {"op": "retrieval_ranking_submit", "request": request}},
+        idempotent=False,
+    )
+    if not isinstance(answer, Mapping) or "scores" not in answer:
+        raise OperationRefused("UNAVAILABLE", {"reason": "engine result malformed"})
+    return {"value": dict(answer)}
+
+
+def _checked_span(span: Mapping[str, Any]) -> None:
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    text = span.get("context_text", "")
+    start, end = span.get("context_start", -1), span.get("context_end", -1)
+    inside = (
+        0 <= start <= span.get("match_start", -1) <= span.get("match_end", -1) <= end
+    )
+    if not (
+        isinstance(text, str)
+        and inside
+        and len(text.encode()) == end - start
+        and end - start <= MAX_SPAN_BYTES
+    ):
+        raise OperationRefused("UNAVAILABLE", {"reason": "invalid byte map"})
+
+
+async def handle_retrieval_context_search(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Authorized context spans over original bytes; a bad byte map refuses the page."""
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+
+    try:
+        require_methods("RetrievalContextSearch")
+    except PinLagUnavailable as missing:
+        raise refusal(missing) from missing
+    from arbora.api.ops import _engine
+
+    request: dict[str, Any] = {
+        "schema_version": 1,
+        "tenant_id": str(context.caller.tenant),
+        "graph": await _engine.caller_dispatch_graph(context),
+        "query": params["query"],
+        "ngram_n": params["ngram_n"],
+        "max_spans": min(int(params["max_spans"]), MAX_SPANS),
+    }
+    if params.get("cursor") is not None:
+        request["cursor"] = params["cursor"]
+    answer = await engine_send(context, "RetrievalContextSearch", {"request": request})
+    spans = answer.get("spans") if isinstance(answer, Mapping) else None
+    if not isinstance(spans, list) or len(spans) > MAX_SPANS:
+        raise OperationRefused("UNAVAILABLE", {"reason": "engine result malformed"})
+    for span in spans:
+        _checked_span(span)
+    return {"value": dict(answer)}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
+        build_read_op(
+            verb=Verb.FIND,
+            op_id="retrieval.evaluation.compare",
+            summary="Compare retrieval algorithms on one labeled query set",
+            examples=("compare these retrieval algorithms",),
+            params=RetrievalCompareParams,
+            result=RetrievalEvalResult,
+            handler="arbora.api.ops.retrieval.handle_retrieval_compare",
+            scope="memory:read",
+        ),
+        build_read_op(
+            verb=Verb.FIND,
+            op_id="retrieval.context.search",
+            summary="Search authorized documents and return context spans",
+            examples=("search my documents with context",),
+            params=RetrievalContextSearchParams,
+            result=RetrievalEvalResult,
+            handler="arbora.api.ops.retrieval.handle_retrieval_context_search",
+            scope="memory:read",
+        ),
         build_read_op(
             verb=Verb.FIND,
             op_id="retrieval.search",
@@ -324,6 +517,10 @@ def operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 __all__ = [
+    "RetrievalCompareParams",
+    "RetrievalContextSearchParams",
+    "handle_retrieval_compare",
+    "handle_retrieval_context_search",
     "RetrievalFreshnessOutcome",
     "RetrievalFreshnessParams",
     "RetrievalFreshnessResult",
