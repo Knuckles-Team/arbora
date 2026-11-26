@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import AsyncIterator, Callable, Iterator
+from collections.abc import AsyncIterator, Callable, Iterator, Mapping
 from contextlib import contextmanager
 from secrets import token_hex
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
@@ -603,7 +603,12 @@ async def _unary_request(
 def _unary_response(result: Any, request_id: Any) -> Any:
     if isinstance(result, (JSONResponse, StreamingResponse)):
         return result
-    payload = result.model_dump(mode="json", by_alias=True)
+    # ``arbora.plan/confirm`` answers a plain mapping; the task methods answer models.
+    payload = (
+        dict(result)
+        if isinstance(result, Mapping)
+        else result.model_dump(mode="json", by_alias=True)
+    )
     return JSONResponse(
         {"jsonrpc": "2.0", "id": request_id, "result": payload},
         headers={"Cache-Control": "no-store"},
