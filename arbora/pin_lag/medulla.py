@@ -12,6 +12,15 @@ Guards held here (delete each with the re-pin that carries it):
 - ``DelegationRecord`` agent-run fields (``kind``, ``run_id``, ``operations``) and
   ``DelegationKind``: the A2A run delegation and its reclaim (``ARBORA-A2A-R001.2.2``).
 - ``MutationOutbox`` pull and acknowledge: the approval and trust-flag consumers.
+- ``FileDefect``, ``TransitionDefect``, ``RecordRelease``, ``RecordDeployment``,
+  ``SpecStatus``, ``LifecycleTrace`` (ARBORA-OPS-R853), ``RetrievalFeedbackRecord``
+  (R854), ``QualityRulePut`` and ``ColumnLineage`` (R856), ``ApproveEntityLink``
+  (R887): methods engine ``main`` serves and the pinned release lacks. They go through
+  :func:`send_main`.
+- ``MethodSparqlParams.graph_media_type`` (R857.3): the graph body serialized by the engine.
+- ``IdentityOpWireLoginGrant`` and ``IdentityOpWireLoginRevoke`` (R858),
+  ``JobKindProgramOptimize`` and ``LearningWriteMovePointer`` (R860): request shapes the
+  pinned release lacks, checked by :func:`require_models`.
 """
 
 from __future__ import annotations
@@ -20,6 +29,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops._engine import engine_send
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
 __all__ = [
@@ -33,9 +43,12 @@ __all__ = [
     "OUTBOX_MODELS",
     "PinLagUnavailable",
     "accepts_parameter",
+    "guard",
     "refusal",
     "require_methods",
+    "require_model_field",
     "require_models",
+    "send_main",
 ]
 
 #: The request shapes of the engine outbox pull and acknowledge.
@@ -80,6 +93,15 @@ def require_models(names: Iterable[str]) -> None:
             raise PinLagUnavailable(name)
 
 
+def require_model_field(model: str, field: str) -> None:
+    """Return once the pinned request shape carries ``field``, else name ``Model.field``."""
+    from medulla.generated import models
+
+    declared = getattr(getattr(models, model, None), "model_fields", {})
+    if field not in declared:
+        raise PinLagUnavailable(f"{model}.{field}")
+
+
 def accepts_parameter(method: Any, name: str) -> bool:
     """Whether the installed client method takes ``name`` (a request field the pin may lack).
 
@@ -121,6 +143,33 @@ def require_claim_identity() -> None:
     for name in CLAIM_IDENTITY_FIELDS:
         if name not in declared:
             raise PinLagUnavailable(f"ClaimWorkItemResult.{name}")
+
+
+def guard(*methods: str, models: Iterable[str] = ()) -> None:
+    """Refuse ``UNAVAILABLE`` naming the first method or request shape the pin lacks."""
+    try:
+        require_methods(*methods)
+        require_models(models)
+    except PinLagUnavailable as error:
+        raise refusal(error) from error
+
+
+async def send_main(
+    context: Any,
+    method: str,
+    params: dict[str, Any],
+    *,
+    idempotent: bool = False,
+    models: Iterable[str] = (),
+) -> Any:
+    """Send one engine ``main`` method as the verified caller, or refuse ``UNAVAILABLE``.
+
+    The refusal names the first method or request shape the pinned release lacks. The
+    guard is the whole difference from :func:`arbora.api.ops._engine.engine_send`; delete
+    the call's ``models`` and this wrapper with the re-pin that carries them.
+    """
+    guard(method, models=models)
+    return await engine_send(context, method, params, idempotent=idempotent)
 
 
 def require_agent_run_delegation() -> None:

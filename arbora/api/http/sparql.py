@@ -12,7 +12,7 @@ and scope therefore come from those operations: a caller without the write
 scope is refused HTTP 403 before any engine call.
 
 Results are negotiated from the ``Accept`` header: SPARQL results JSON, XML,
-CSV or TSV for a query, N-Triples for a graph read. An unsupported type is
+CSV or TSV for a query, a graph read is one of the six RDF media types the graph store carries. An unsupported type is
 HTTP 406 and makes no engine call.
 """
 
@@ -31,6 +31,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 
 from arbora.api.errors import ArboraErrorCode, ArboraRefusal, to_envelope
+from arbora.pin_lag.medulla import PinLagUnavailable, require_model_field
 
 from .auth import HTTPAuthenticationError
 from .routes import MAX_BODY_BYTES, _surface_for, caller_session_scope
@@ -39,12 +40,19 @@ QUERY_OP = "query.sparql"
 UPDATE_OP = "eg.graph.ApplyMutation"
 #: The engine event type that applies a SPARQL 1.1 Update request as one batch.
 SPARQL_UPDATE_EVENT = "sparql_http_update_v1"
+#: The engine event type that replaces or merges one default graph from a serialized body.
+RDF_GRAPH_WRITE_EVENT = "rdf_graph_write"
 
 JSON_RESULTS = "application/sparql-results+json"
 XML_RESULTS = "application/sparql-results+xml"
 CSV_RESULTS = "text/csv"
 TSV_RESULTS = "text/tab-separated-values"
 N_TRIPLES = "application/n-triples"
+TURTLE = "text/turtle"
+N_QUADS = "application/n-quads"
+TRIG = "application/trig"
+JSON_LD = "application/ld+json"
+RDF_XML = "application/rdf+xml"
 
 #: Accept media type -> served result type, in server preference order.
 RESULT_TYPES: dict[str, str] = {
@@ -55,9 +63,22 @@ RESULT_TYPES: dict[str, str] = {
     CSV_RESULTS: CSV_RESULTS,
     TSV_RESULTS: TSV_RESULTS,
 }
-GRAPH_TYPES: dict[str, str] = {N_TRIPLES: N_TRIPLES, "text/plain": N_TRIPLES}
+#: The six RDF media types the graph store reads and writes; ``text/plain`` is N-Triples.
+GRAPH_TYPES: dict[str, str] = {
+    N_TRIPLES: N_TRIPLES,
+    TURTLE: TURTLE,
+    N_QUADS: N_QUADS,
+    TRIG: TRIG,
+    JSON_LD: JSON_LD,
+    RDF_XML: RDF_XML,
+    "text/plain": N_TRIPLES,
+}
 
 _GRAPH_READ = "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
+_GRAPH_QUERY = re.compile(
+    r"^\s*(?:(?:PREFIX\s+\S*\s*<[^>]*>|BASE\s*<[^>]*>)\s*)*(?:CONSTRUCT|DESCRIBE)\b",
+    re.IGNORECASE,
+)
 _IRI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:[^\s<>\"]*$")
 _ASK = re.compile(
     r"^\s*(?:(?:PREFIX\s+\S*\s*<[^>]*>|BASE\s*<[^>]*>)\s*)*ASK\b", re.IGNORECASE
@@ -194,32 +215,6 @@ def _xml_results(variables: list[str], rows: list[list[str | None]]) -> str:
     )
 
 
-def render_ntriples(table: dict[str, Any]) -> str:
-    """N-Triples for a ``CONSTRUCT`` table whose cells are N-Triples terms."""
-
-    lines: list[str] = []
-    for row in table.get("rows") or []:
-        if len(row) != 3 or any(cell is None for cell in row):
-            continue
-        subject, predicate, obj = (str(cell) for cell in row)
-        lines.append(f"{_node(subject)} {_node(predicate)} {_object(obj)} .")
-    return "\n".join(lines) + ("\n" if lines else "")
-
-
-def _node(value: str) -> str:
-    if value.startswith(("<", "_:")):
-        return value
-    return f"<{value}>"
-
-
-def _object(value: str) -> str:
-    if value.startswith(("<", "_:", '"')):
-        return value
-    if _IRI.match(value):
-        return f"<{value}>"
-    return json.dumps(value, ensure_ascii=False)
-
-
 async def _body(request: Request) -> str:
     length = request.headers.get("content-length")
     if length is not None and int(length) > MAX_BODY_BYTES:
@@ -354,6 +349,24 @@ def mount_sparql_protocol(
             headers={"Cache-Control": "no-store", "Vary": "Accept"},
         )
 
+    async def read_graph(request: Request, text: str, media: str, op: str) -> Response:
+        """Ask the engine to serialize the graph; it returns the body, arbora parses nothing."""
+        digest = services.registry.digest
+        try:
+            require_model_field("MethodSparqlParams", "graph_media_type")
+        except PinLagUnavailable:
+            return _code("UNAVAILABLE", op=op, digest=digest)
+        ran = await run(request, QUERY_OP, {"query": text, "graph_media_type": media})
+        if isinstance(ran, Response):
+            return ran
+        try:
+            body = _table(ran[1]).get("graph_body")
+        except ValueError:
+            body = None
+        if not isinstance(body, str):
+            return _code("UNAVAILABLE", op=op, digest=digest)
+        return answer(body, media, op)
+
     async def update(request: Request, text: str) -> Response:
         ran = await run(
             request,
@@ -373,10 +386,16 @@ def mount_sparql_protocol(
             return _code("INVALID_ARGUMENT", op=QUERY_OP, digest=digest)
         if kind == "update":
             return await update(request, text)
+        graph_query = bool(_GRAPH_QUERY.match(text))
         try:
-            media = negotiate(request.headers.get("accept"), RESULT_TYPES)
+            media = negotiate(
+                request.headers.get("accept"),
+                GRAPH_TYPES if graph_query else RESULT_TYPES,
+            )
         except _NotAcceptable:
             return Response(status_code=406, headers={"Cache-Control": "no-store"})
+        if graph_query:
+            return await read_graph(request, text, media, QUERY_OP)
         ran = await run(request, QUERY_OP, {"query": text})
         if isinstance(ran, Response):
             return ran
@@ -401,25 +420,30 @@ def mount_sparql_protocol(
                 media = negotiate(request.headers.get("accept"), GRAPH_TYPES)
             except _NotAcceptable:
                 return Response(status_code=406, headers={"Cache-Control": "no-store"})
-            ran = await run(request, QUERY_OP, {"query": _GRAPH_READ})
-            if isinstance(ran, Response):
-                return ran
-            try:
-                table = _table(ran[1])
-            except ValueError:
-                return _code("UNAVAILABLE", op=QUERY_OP, digest=digest)
-            return answer(render_ntriples(table), media, QUERY_OP)
+            return await read_graph(request, _GRAPH_READ, media, QUERY_OP)
         if request.method == "DELETE":
             return await update(request, "CLEAR DEFAULT")
-        if _content_type(request) not in (N_TRIPLES, "text/plain"):
+        media = GRAPH_TYPES.get(_content_type(request))
+        if media is None:
             return Response(status_code=415, headers={"Cache-Control": "no-store"})
         try:
-            triples = await _body(request)
+            body = await _body(request)
         except (_BadRequest, UnicodeDecodeError):
             return _code("INVALID_ARGUMENT", op=UPDATE_OP, digest=digest)
-        insert = f"INSERT DATA {{\n{triples}\n}}"
-        text = f"CLEAR DEFAULT; {insert}" if request.method == "PUT" else insert
-        return await update(request, text)
+        # The engine parses and validates; its RDF refusals reach the caller unchanged.
+        mode = "replace" if request.method == "PUT" else "merge"
+        ran = await run(
+            request,
+            UPDATE_OP,
+            {
+                "event_type": RDF_GRAPH_WRITE_EVENT,
+                "query": json.dumps({"media_type": media, "mode": mode, "body": body}),
+            },
+            write=True,
+        )
+        if isinstance(ran, Response):
+            return ran
+        return Response(status_code=204, headers={"Cache-Control": "no-store"})
 
     sparql_endpoint.__name__ = "http_sparql_protocol"
     graph_store.__name__ = "http_sparql_graph_store"
@@ -439,10 +463,10 @@ def mount_sparql_protocol(
 
 __all__ = [
     "QUERY_OP",
+    "RDF_GRAPH_WRITE_EVENT",
     "SPARQL_UPDATE_EVENT",
     "UPDATE_OP",
     "mount_sparql_protocol",
     "negotiate",
-    "render_ntriples",
     "render_results",
 ]
