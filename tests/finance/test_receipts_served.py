@@ -13,11 +13,17 @@ from tests.finance._receipt_engine import ReceiptMachine
 async def test_receipt_claims_once_and_survives_a_new_port() -> None:
     machine = ReceiptMachine()
     first = machine.engine()
-    args = ("tenant-a", "schedule_run", "k-1")
-    assert await claim_receipt(first, *args, event_id="e", recorded_at="t") is True
+    ids = ("tenant-a", "schedule_run", "k-1")
+    claim = {"event_id": "e", "recorded_at": "t"}
+    assert (
+        await claim_receipt(first, "tenant-a", "schedule_run", "k-1", **claim) is True
+    )
     restarted = machine.engine()
-    assert await claim_receipt(restarted, *args, event_id="e", recorded_at="t") is False
-    node = machine.nodes[receipt_id(*args)]
+    assert (
+        await claim_receipt(restarted, "tenant-a", "schedule_run", "k-1", **claim)
+        is False
+    )
+    node = machine.nodes[receipt_id(*ids)]
     assert node["receiptState"] == "claimed"
     assert node["receiptAttempt"] == 1
     assert len(machine.nodes) == 1
