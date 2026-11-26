@@ -42,6 +42,7 @@ from arbora.api.ops._common import Params
 from arbora.api.registry import (
     AuditClass,
     Composite,
+    ContentOrigin,
     Effect,
     Idempotency,
     OpSpec,
@@ -813,6 +814,7 @@ def operations() -> tuple[OpSpec, ...]:
             effect=Effect.WRITE,
             idempotency=Idempotency.NATURAL,
             audit=AuditClass.EVENT,
+            content_origin=ContentOrigin.OPEN_WEB,
         ),
     )
 
