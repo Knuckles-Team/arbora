@@ -1,0 +1,211 @@
+{
+  "$schema": "./topology-input.schema.json",
+  "apiVersion": "arbora.services/v1",
+  "kind": "ArboraProductionTopologyInput",
+  "authority": "deployment/topology",
+  "environment": "production",
+  "namespace": "platform",
+  "engine_identity_contract": {
+    "ref": "engine/identity-contract.v1.json",
+    "digest": "@@DIGEST@@"
+  },
+  "resource_pool": {
+    "id": "arbora-production-measured-pool",
+    "measured_at": "2026-08-19T00:00:00Z",
+    "evidence_ref": "resourcepool://production/arbora/measurement/example",
+    "nodes": [
+      {
+        "ordinal": 0,
+        "id": "node-a",
+        "hostname": "eg-a",
+        "zone": "zone-a",
+        "allocatable": {
+          "cpu_millicores": 12000,
+          "memory_bytes": 51539607552
+        }
+      },
+      {
+        "ordinal": 1,
+        "id": "node-b",
+        "hostname": "eg-b",
+        "zone": "zone-b",
+        "allocatable": {
+          "cpu_millicores": 12000,
+          "memory_bytes": 51539607552
+        }
+      },
+      {
+        "ordinal": 2,
+        "id": "node-c",
+        "hostname": "eg-c",
+        "zone": "zone-c",
+        "allocatable": {
+          "cpu_millicores": 12000,
+          "memory_bytes": 51539607552
+        }
+      }
+    ]
+  },
+  "engine": {
+    "client_service_name": "epistemic-graph-coordinator",
+    "peer_service_name": "epistemic-graph-raft",
+    "peer_port": 9100,
+    "client_port": 9101,
+    "metrics_port": 9102,
+    "tls_server_name": "epistemic-graph-raft.arbora-cell@@SVC@@",
+    "tls_verified": true,
+    "ca_bundle_configmap": "ca-bundle",
+    "ca_bundle_path": "/etc/ssl/trust/ca-bundle.pem",
+    "discovery_ref": "evidence://epistemic-graph/production-service-discovery/example",
+    "discovery_verified": true
+  },
+  "oidc": {
+    "issuer": "https://sso.example.test/realms/main",
+    "audience": "agent-services",
+    "jwks_url": "https://sso.example.test/realms/main/protocol/openid-connect/certs",
+    "client_id": "graph-os",
+    "verified": true
+  },
+  "authorities": {
+    "configmap_name": "graph-os-config-authority",
+    "configmap_retention": "Retain",
+    "configmap_ref": "evidence://arbora/config-authority/example",
+    "secret_name": "graph-os-secrets",
+    "secret_retention": "Retain",
+    "secret_ref": "evidence://arbora/credential-authority/example",
+    "session_store": {
+      "kind": "external",
+      "service_name": "graph-os-session-store",
+      "namespace": "platform",
+      "authority_ref": "evidence://arbora/session-store/retained-external-authority/example",
+      "retention": "Retain"
+    }
+  },
+  "release": {
+    "rollout_evidence_ref": "evidence://arbora/rollout-preflight/example",
+    "rollback_evidence_ref": "evidence://arbora/rollback-preflight/example"
+  },
+  "workloads": {
+    "gateway": {
+      "name": "graph-os",
+      "entrypoint": "arbora",
+      "image": "registry.example.invalid/arbora-unified@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "previous_image": "registry.example.invalid/arbora-unified@sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+      "replicas": {
+        "min": 2,
+        "desired": 2,
+        "max": 3,
+        "scale_up_step": 1,
+        "scale_down_step": 1,
+        "up_stabilization_seconds": 30,
+        "down_stabilization_seconds": 300
+      },
+      "resources": {
+        "cpu_request_millicores": 500,
+        "cpu_limit_millicores": 4000,
+        "memory_request_bytes": 1073741824,
+        "memory_limit_bytes": 6442450944
+      },
+      "pdb_max_unavailable": 0,
+      "termination_grace_seconds": 60,
+      "pre_stop_seconds": 15,
+      "metric": {
+        "mode": "hpa",
+        "name": "agent_utilities_gateway_in_flight_requests",
+        "target": "50",
+        "adapter_ref": "evidence://prometheus-adapter/arbora-gateway/example"
+      },
+      "service_port": 8000,
+      "public_host": "arbora.example.test",
+      "public_tls_secret": "graph-os-tls"
+    },
+    "dispatch": {
+      "name": "graph-os-dispatch",
+      "entrypoint": "agent-dispatch-worker",
+      "image": "registry.example.invalid/agent-utilities@sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+      "previous_image": "registry.example.invalid/agent-utilities@sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+      "replicas": {
+        "min": 1,
+        "desired": 1,
+        "max": 3,
+        "scale_up_step": 1,
+        "scale_down_step": 1,
+        "up_stabilization_seconds": 30,
+        "down_stabilization_seconds": 300
+      },
+      "resources": {
+        "cpu_request_millicores": 250,
+        "cpu_limit_millicores": 2000,
+        "memory_request_bytes": 536870912,
+        "memory_limit_bytes": 3221225472
+      },
+      "pdb_max_unavailable": 0,
+      "termination_grace_seconds": 60,
+      "pre_stop_seconds": 15,
+      "metric": {
+        "mode": "hpa",
+        "name": "agent_utilities_dispatch_queue_depth",
+        "target": "200",
+        "adapter_ref": "evidence://prometheus-adapter/arbora-dispatch/example"
+      }
+    },
+    "ingest": {
+      "name": "graph-os-ingest",
+      "entrypoint": "kg-ingest-worker",
+      "image": "registry.example.invalid/agent-utilities@sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+      "previous_image": "registry.example.invalid/agent-utilities@sha256:123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+      "replicas": {
+        "min": 1,
+        "desired": 1,
+        "max": 3,
+        "scale_up_step": 1,
+        "scale_down_step": 1,
+        "up_stabilization_seconds": 30,
+        "down_stabilization_seconds": 300
+      },
+      "resources": {
+        "cpu_request_millicores": 250,
+        "cpu_limit_millicores": 2000,
+        "memory_request_bytes": 536870912,
+        "memory_limit_bytes": 3221225472
+      },
+      "pdb_max_unavailable": 0,
+      "termination_grace_seconds": 60,
+      "pre_stop_seconds": 15,
+      "metric": {
+        "mode": "hpa",
+        "name": "agent_utilities_kg_ingest_queue_depth",
+        "target": "200",
+        "adapter_ref": "evidence://prometheus-adapter/arbora-ingest/example"
+      }
+    },
+    "mining": {
+      "name": "graph-os-mining",
+      "entrypoint": "arbora-analytics-worker",
+      "image": "registry.example.invalid/agent-utilities@sha256:123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+      "previous_image": "registry.example.invalid/agent-utilities@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "replicas": {
+        "min": 1,
+        "desired": 1,
+        "max": 1,
+        "scale_up_step": 1,
+        "scale_down_step": 1,
+        "up_stabilization_seconds": 0,
+        "down_stabilization_seconds": 300
+      },
+      "resources": {
+        "cpu_request_millicores": 250,
+        "cpu_limit_millicores": 2000,
+        "memory_request_bytes": 536870912,
+        "memory_limit_bytes": 4294967296
+      },
+      "pdb_max_unavailable": 0,
+      "termination_grace_seconds": 60,
+      "pre_stop_seconds": 15,
+      "metric": {
+        "mode": "fixed",
+        "reason": "No bounded mining queue metric is currently published; do not invent one."
+      }
+    }
+  }
+}

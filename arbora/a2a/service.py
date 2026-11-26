@@ -14,15 +14,25 @@ from .admission import (
     ModelProfileUnavailable,
 )
 from .authority import A2ATaskAuthority
+from .media_refs import MediaRefStore, resolve_media_refs, run_media
 from .models import (
     A2AAgentCapabilities,
     A2AAgentCard,
     A2AListResult,
     A2AMessage,
+    A2ARouteDecision,
     A2ASkill,
+    A2AStreamingAuthority,
     A2ATask,
 )
-from .parts import MediaLimits, admit_file_parts
+from .parts import (
+    IMAGE_TYPES,
+    MediaCapability,
+    MediaLimits,
+    admit_file_parts,
+    admit_image_capability,
+    check_inline_threshold,
+)
 from .routing import A2AAssemblyUnavailable, A2ARouter
 from .terminal_event import A2ATerminalEventUnavailable
 from .tool_task_card import (
@@ -49,6 +59,16 @@ class A2ACardMetadata:
     version: str = "1.0.0"
 
 
+def _caller_owner() -> str:
+    """The verified caller of this request: tenant and actor, never a request field."""
+    from arbora.security.session import current_session
+
+    session = current_session()
+    if session is None:
+        return ""
+    return f"{session.tenant}:{session.actor.actor_id}"
+
+
 @dataclass(frozen=True)
 class A2AService:
     authority: A2ATaskAuthority
@@ -68,6 +88,22 @@ class A2AService:
         ]
         | None
     ) = None
+    #: The durable event-cursor authority (ARBORA-A2A-R001.2). The card
+    #: advertises ``streaming`` only when one is wired (ARBORA-A2A-R014).
+    streaming: A2AStreamingAuthority | None = None
+
+    #: Reads the selected model's media capability (``AgentAssemble``);
+    #: ``None`` reads as unknown, and an image then refuses ``UNAVAILABLE``.
+    media_capability: (
+        Callable[[A2AMessage, A2ARouteDecision], Awaitable[MediaCapability | None]]
+        | None
+    ) = None
+
+    #: Stores uploaded image bytes by digest for the caller's tenant (R001.5.5);
+    #: ``None`` leaves a reference refusing ``UNAVAILABLE``.
+    media_refs: MediaRefStore | None = None
+    #: The verified caller a media reference is bound to.
+    caller_owner: Callable[[], str] = _caller_owner
 
     async def send_message(
         self,
@@ -93,14 +129,15 @@ class A2AService:
                 idempotency_key,
             )
         profile: dict[str, ModelProfileDecision] = {}
-        admit_file_parts(parsed, MediaLimits.from_config())
+        limits = MediaLimits.from_config()
+        check_inline_threshold(parsed, limits)
+        parsed = await resolve_media_refs(parsed, self.media_refs, self.caller_owner())
+        admit_file_parts(parsed, limits)
         attachment_size = parsed.attachment_size()
         if attachment_size:
             limit = runtime_config.max_upload_size
             if type(limit) is not int or limit < 1 or attachment_size > limit:
                 raise ValueError("attachments exceed configured upload size")
-        if parsed.media_files():
-            parsed = await self._normalize_media(parsed)
         if "arboraModelProfile" in parsed.metadata:
             preference = ModelProfilePreference(
                 preferred_profile_ref=parsed.metadata["arboraModelProfile"]
@@ -116,11 +153,31 @@ class A2AService:
         decision = await self.router.route(
             parsed, context_budget_tokens=context_budget_tokens
         )
+        media: dict[str, Any] = {}
+        if any(file.mime_type in IMAGE_TYPES for _, file in parsed.media_files()):
+            capability = (
+                await self.media_capability(parsed, decision)
+                if self.media_capability is not None
+                else None
+            )
+            admit_image_capability(
+                parsed,
+                capability,
+                request_revision=str(parsed.metadata.get("arboraModelRevision") or "")
+                or None,
+            )
+            if capability is not None:
+                media = run_media(parsed, capability)
+        # The model-accepted images stay on the message for the run; the rest of
+        # the media goes through the modality seam (ARBORA-OPS-R899.5).
+        if parsed.media_files(exclude=IMAGE_TYPES):
+            parsed = await self._normalize_media(parsed)
         return await self.authority.dispatch(
             message=parsed,
             idempotency_key=idempotency_key,
             decision=decision,
             blocking=blocking,
+            media=media or None,
             **profile,
         )
 
@@ -141,7 +198,7 @@ class A2AService:
                 filename=file.name or "",
                 source=f"a2a:{message.message_id}#{index}",
             )
-            for index, file in message.media_files()
+            for index, file in message.media_files(exclude=IMAGE_TYPES)
         ]
         # A machine caller gets a typed refusal for a part no handler reads,
         # never a silently ignored attachment.
@@ -186,15 +243,16 @@ class A2AService:
     def agent_card(self, endpoint_url: str) -> A2AAgentCard:
         metadata = self.card_metadata
         served = self.tool_task_admitter is not None and self.attestation_signer
-        capabilities = A2AAgentCapabilities(
-            extensions=[tool_task_extension()] if served else []
-        )
+        capabilities = A2AAgentCapabilities.from_wired_authorities(
+            streaming_authority=self.streaming
+        ).model_copy(update={"extensions": [tool_task_extension()] if served else []})
         return A2AAgentCard(
             capabilities=capabilities,
             name=metadata.name,
             description=metadata.description,
             version=metadata.version,
             url=endpoint_url,
+            media=MediaLimits.from_config().card(),
             skills=[
                 A2ASkill(
                     id="arbora-delegate",

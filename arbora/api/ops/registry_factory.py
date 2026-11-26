@@ -23,6 +23,7 @@ def get_registry() -> Registry:
     Provider failures propagate; there is no partial-registry fallback.
     """
     from . import (
+        a2a_media,
         access,
         agent_library,
         agents,
@@ -84,6 +85,7 @@ def get_registry() -> Registry:
 
     curated: list[OpSpec] = []
     for module in (
+        a2a_media,
         access,
         agent_library,
         agents,
