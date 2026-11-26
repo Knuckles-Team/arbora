@@ -380,3 +380,18 @@ async def test_runs_are_listed_read_and_cancelled_through_the_run_records(
     with pytest.raises(OperationRefused) as absent:
         await atlas.handle_runs_get(context(), {"run_id": "zz"}, _NO_OP)
     assert absent.value.code == "CONNECTOR_RUN_NOT_FOUND"
+
+
+async def test_a_fleet_without_the_atlas_tool_refuses_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def absent(_ctx: Any, _op_id: str, arguments: dict[str, Any]) -> Any:
+        return {"value": {"error": f"'{arguments['server']}' is not in the catalog"}}
+
+    monkeypatch.setattr(atlas, "invoke_registered", absent)
+    with pytest.raises(OperationRefused) as refused:
+        await atlas.handle_providers_list(
+            context(), {}, _OPS["ingest.sources.providers.list"]
+        )
+    assert refused.value.code == "UNAVAILABLE"
+    assert atlas.ATLAS_SERVER in refused.value.details["reason"]

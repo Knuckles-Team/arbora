@@ -156,6 +156,11 @@ async def _connector(
         context, "fleet.call", {"server": server, "tool": tool, "arguments": arguments}
     )
     value = reply.get("value", reply) if isinstance(reply, Mapping) else None
+    if isinstance(value, Mapping) and set(value) == {"error"}:
+        # The fleet has no such server or tool: refuse, never fabricate an answer.
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": f"the fleet does not serve {server} {tool}"}
+        )
     if not isinstance(value, Mapping):
         raise OperationRefused(
             "UNAVAILABLE", {"reason": f"the connector answered {tool} with no object"}
