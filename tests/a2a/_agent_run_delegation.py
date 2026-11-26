@@ -89,6 +89,22 @@ class DelegationStore:
     def revoke(self, delegation_id: str) -> None:
         self.records[delegation_id]["revoked_at"] = 1
 
+    async def read(self, delegation_id: str) -> dict[str, Any] | None:
+        """``GetDelegationRecord``: the record with its standing, or ``None``."""
+        record = self.records.get(delegation_id)
+        if record is None:
+            return None
+        standing = "revoked" if record["revoked_at"] is not None else "active"
+        return {
+            "record": dict(record),
+            "standing": standing,
+            "principal_active": True,
+            "holds_tool_scope": True,
+        }
+
+    def reassign(self, delegation_id: str, principal: str) -> None:
+        self.records[delegation_id]["principal"] = principal
+
     def active(self, delegation_id: str, now_ms: int) -> bool:
         record = self.records.get(delegation_id)
         return (
