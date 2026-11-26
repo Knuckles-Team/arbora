@@ -324,11 +324,11 @@ def _fleet_probe(session: Any) -> dict[str, Any]:
     }
 
 
-def bind_run_ports() -> None:
+def bind_run_ports(services: Any = None, seams: Any = None) -> None:
     """Bind the harness run-loop decision, model and event providers."""
     from arbora.agent_runs import bind_run_ports as _bind
 
-    _bind()
+    _bind(services, seams)
 
 
 def bind_health_probes() -> None:

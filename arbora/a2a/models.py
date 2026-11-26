@@ -7,7 +7,14 @@ import binascii
 import builtins
 from typing import Any, Literal, Protocol, runtime_checkable
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 from pydantic.alias_generators import to_camel
 
 __all__ = [
@@ -15,6 +22,8 @@ __all__ = [
     "A2AAgentCapabilities",
     "A2AContextBudget",
     "A2AListResult",
+    "A2AMediaLimits",
+    "A2AMediaRefFile",
     "A2AMessage",
     "A2APushNotificationAuthority",
     "A2AOperationInvokeParams",
@@ -105,6 +114,14 @@ class A2AInlineMediaFile(_WireModel):
         return base64.b64decode(self.bytes, validate=True)
 
 
+class A2AMediaRefFile(_WireModel):
+    """An image carried by upload reference (ARBORA-A2A-R001.5.5)."""
+
+    uri: str = Field(pattern=r"^media:sha256:[0-9a-f]{64}$")
+    mime_type: Literal["image/png", "image/jpeg", "image/webp"]
+    name: str | None = Field(default=None, max_length=256)
+
+
 class A2ADataPart(_WireModel):
     """A structured JSON part; the tool-task extension reads ``toolTask`` from it."""
 
@@ -114,7 +131,7 @@ class A2ADataPart(_WireModel):
 
 class A2AFilePart(_WireModel):
     kind: Literal["file"]
-    file: A2AInlineTextFile | A2AInlineMediaFile
+    file: A2AInlineTextFile | A2AInlineMediaFile | A2AMediaRefFile
 
 
 class A2AMessage(_WireModel):
@@ -153,16 +170,19 @@ class A2AMessage(_WireModel):
             len(part.file.decoded_bytes())
             for part in self.parts
             if isinstance(part, A2AFilePart)
+            and not isinstance(part.file, A2AMediaRefFile)
         )
 
     def task_text(self) -> str:
-        return "\n".join(
-            part.text
-            if isinstance(part, A2ATextPart)
-            else part.file.decoded_bytes().decode("utf-8")
-            for part in self.parts
-            if not self._is_media(part) and not isinstance(part, A2ADataPart)
-        )
+        chunks: list[str] = []
+        for part in self.parts:
+            if isinstance(part, A2ATextPart):
+                chunks.append(part.text)
+            elif isinstance(part, A2AFilePart) and isinstance(
+                part.file, A2AInlineTextFile
+            ):
+                chunks.append(part.file.decoded_bytes().decode("utf-8"))
+        return "\n".join(chunks)
 
     def data_parts(self) -> list[dict[str, Any]]:
         """The structured data parts, in order."""
@@ -171,7 +191,7 @@ class A2AMessage(_WireModel):
     @staticmethod
     def _is_media(part: A2ATextPart | A2AFilePart | A2ADataPart) -> bool:
         return isinstance(part, A2AFilePart) and isinstance(
-            part.file, A2AInlineMediaFile
+            part.file, (A2AInlineMediaFile, A2AMediaRefFile)
         )
 
     def media_files(
@@ -252,8 +272,8 @@ class A2AOperationInvokeParams(_WireModel):
 class A2APlanConfirmParams(_WireModel):
     """``arbora.plan/confirm`` params (ARBORA-A2A-R005.1/R006.1).
 
-    The signed human approval exchange this carries is not implemented yet;
-    see ``A2AOperationBridgeUnavailable``.
+    The signed human approval exchange this carries is served by
+    ``arbora.a2a.confirm.confirm_dispatch`` (ARBORA-A2A-R005.2.5).
     """
 
     task_id: str = Field(min_length=1, max_length=80)
@@ -262,8 +282,46 @@ class A2APlanConfirmParams(_WireModel):
     signature: str = Field(min_length=1, max_length=4096)
 
 
+def parse_confirmation(raw: Any) -> A2APlanConfirmParams:
+    """The closed ``confirmation_kind`` union: ``tool_action`` or ``held_item``.
+
+    A missing, unknown or mixed kind (one kind's fields on the other) is refused with
+    ``CONFIRMATION_KIND_INVALID`` before any grant is read (ARBORA-A2A-R005.3).
+    """
+    from .held_item_admission import HeldItemAdmissionRequest
+    from .tool_action_admission import (
+        ConfirmationKindInvalid,
+        ToolActionAdmissionRequest,
+    )
+
+    kind = (
+        raw.get("confirmationKind", raw.get("confirmation_kind"))
+        if isinstance(raw, dict)
+        else None
+    )
+    members: dict[str, type[A2APlanConfirmParams]] = {
+        "tool_action": ToolActionAdmissionRequest,
+        "held_item": HeldItemAdmissionRequest,
+    }
+    member = members.get(kind) if isinstance(kind, str) else None
+    if member is None:
+        raise ConfirmationKindInvalid(ConfirmationKindInvalid.code)
+    try:
+        return member.model_validate(raw)
+    except ValidationError as error:
+        if any(e["type"] == "extra_forbidden" for e in error.errors()):
+            raise ConfirmationKindInvalid(ConfirmationKindInvalid.code) from None
+        raise
+
+
 A2ATaskState = Literal[
-    "submitted", "working", "completed", "canceled", "failed", "rejected"
+    "submitted",
+    "working",
+    "input-required",
+    "completed",
+    "canceled",
+    "failed",
+    "rejected",
 ]
 
 
@@ -400,6 +458,16 @@ class A2ASkill(_WireModel):
     output_modes: list[str]
 
 
+class A2AMediaLimits(_WireModel):
+    """The admission limit table, published as enforced (ARBORA-A2A-R001.5.6)."""
+
+    allowed_types: list[str]
+    max_file_part_bytes: int
+    max_request_media_bytes: int
+    max_image_parts: int
+    inline_max_bytes: int
+
+
 class A2AAgentCard(_WireModel):
     name: str
     description: str
@@ -423,3 +491,4 @@ class A2AAgentCard(_WireModel):
     default_input_modes: list[str] = Field(default_factory=lambda: ["text/plain"])
     default_output_modes: list[str] = Field(default_factory=lambda: ["text/plain"])
     skills: list[A2ASkill]
+    media: A2AMediaLimits | None = None

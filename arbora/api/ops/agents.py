@@ -38,12 +38,44 @@ class TaskListParams(Params):
     limit: int = Field(default=50, ge=1, le=100)
 
 
+class ChildMessageParams(Params):
+    conversation_target: str = Field(min_length=1, max_length=512)
+    expected_revision: int = Field(ge=0)
+    content: str = Field(min_length=1)
+
+
+class ContinuationParams(Params):
+    conversation_target: str = Field(min_length=1, max_length=512)
+    history_revision: int = Field(ge=0)
+    content: str = Field(min_length=1, max_length=100_000)
+
+
 class RlmParams(Params):
     request: dict[str, Any]
 
 
 class AgentResult(Params):
     value: dict[str, Any]
+
+
+async def _with_role_profile(context: Any, message: Mapping[str, Any]) -> Any:
+    """A role run needs the tenant business profile and carries its reference.
+
+    The profile is one tenant-shared engine record; a tenant with none refuses
+    ``PROFILE_UNSET`` before any run is admitted (ARBORA-OPS-R917.3).
+    """
+    metadata = message.get("metadata") or {}
+    if not metadata.get("role_instance_id"):
+        return message
+    from arbora.api.ops.operator_surface import (
+        PROFILE_KEY,
+        PROFILE_NAMESPACE,
+        read_profile,
+    )
+
+    _profile, version = await read_profile(context)
+    reference = f"{PROFILE_NAMESPACE}/{PROFILE_KEY}@{version}"
+    return {**message, "metadata": {**metadata, "profile_ref": reference}}
 
 
 async def handle_agent(
@@ -63,7 +95,7 @@ async def handle_agent(
                 raise ValueError("Idempotency-Key is required")
             from arbora.modality.models import ModalityRefused
 
-            message = params["message"]
+            message = await _with_role_profile(context, params["message"])
             if params.get("assistant_profile_ref"):
                 message = {
                     **message,
@@ -91,6 +123,31 @@ async def handle_agent(
             result = await service.list_tasks(
                 cursor=params.get("cursor"), limit=params["limit"]
             )
+        elif op.id in ("agents.tasks.message", "agents.tasks.continue"):
+            if not context.idempotency_key:
+                raise ValueError("Idempotency-Key is required")
+            authority = service.authority
+            from arbora.a2a.authority import A2AIdempotencyConflict
+            from arbora.api.invoke.pipeline import OperationRefused
+
+            try:
+                if op.id == "agents.tasks.message":
+                    receipt = await authority.admit_child_message(
+                        conversation_target=params["conversation_target"],
+                        expected_revision=params["expected_revision"],
+                        content=params["content"],
+                        idempotency_key=context.idempotency_key,
+                    )
+                else:
+                    receipt = await authority.admit_continuation(
+                        conversation_target=params["conversation_target"],
+                        history_revision=params["history_revision"],
+                        content=params["content"],
+                        idempotency_key=context.idempotency_key,
+                    )
+            except A2AIdempotencyConflict:
+                raise OperationRefused("IDEMPOTENCY_CONFLICT", {}) from None
+            return {"value": receipt}
         elif op.id == "agents.tasks.cancel":
             result = await service.cancel_task(params["task_id"])
         else:
@@ -127,6 +184,8 @@ async def handle_rlm(
 #: idempotency key derives the task id, so a replay returns the same task.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
     "agents.run": "arbora.a2a.authority:WorkItemA2AAuthority",
+    "agents.tasks.message": "arbora.a2a.authority:WorkItemA2AAuthority",
+    "agents.tasks.continue": "arbora.a2a.authority:WorkItemA2AAuthority",
 }
 
 
@@ -178,6 +237,32 @@ def operations() -> tuple[OpSpec, ...]:
             binding=handler,
             scopes=frozenset({"kg:write"}),
             effect=Effect.WRITE,
+            audit=AuditClass.EVENT,
+        ),
+        OpSpec(
+            id="agents.tasks.message",
+            verb=Verb.ACT,
+            summary="Send one message to an active child run",
+            examples=("send this message to the running child agent",),
+            params=ChildMessageParams,
+            result=AgentResult,
+            binding=handler,
+            scopes=frozenset({"kg:write"}),
+            effect=Effect.WRITE,
+            idempotency=Idempotency.KEY_REQUIRED,
+            audit=AuditClass.EVENT,
+        ),
+        OpSpec(
+            id="agents.tasks.continue",
+            verb=Verb.ACT,
+            summary="Continue a completed child run with a new turn",
+            examples=("continue the completed child agent conversation",),
+            params=ContinuationParams,
+            result=AgentResult,
+            binding=handler,
+            scopes=frozenset({"kg:write"}),
+            effect=Effect.WRITE,
+            idempotency=Idempotency.KEY_REQUIRED,
             audit=AuditClass.EVENT,
         ),
         *(

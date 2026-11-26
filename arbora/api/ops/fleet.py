@@ -26,7 +26,6 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from arbora.api.invoke.plan import approval_ref_of
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -36,6 +35,7 @@ from arbora.api.registry import (
     Surface,
     Verb,
 )
+from arbora.fleet.approval_meta import ApprovalRefused, checked_approval_ref
 from arbora.fleet.service_child import ServiceChildOutcomeUnknown
 
 
@@ -343,6 +343,7 @@ def _plan_confirmation(context: Any, params: Mapping[str, Any], op: OpSpec) -> A
 async def _gateway_call(
     gateway: Any, context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
+    approval_ref = await _approval_ref(context, params, op)
     result = await gateway.call(
         context.caller,
         params["server"],
@@ -354,9 +355,28 @@ async def _gateway_call(
         owner_ref=getattr(context, "owner_ref", None),
         fleet_decision=context.fleet_decision,
         registry_digest=context.registry_digest,
-        approval_ref=approval_ref_of(getattr(context, "idempotency_key", None)),
+        approval_ref=approval_ref,
     )
     return {"value": result}
+
+
+async def _approval_ref(context: Any, params: Mapping[str, Any], op: OpSpec) -> str:
+    """The checked approval of a plan-confirmed call; refuses before the call.
+
+    The plan lease already bound the arguments, so the check compares the
+    approval's operation only (ARBORA-OPS-R009.5).
+    """
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    try:
+        return await checked_approval_ref(
+            context.client.control_leases,
+            tenant=context.caller.tenant,
+            idempotency_key=getattr(context, "idempotency_key", None),
+            op_id=op.id,
+        )
+    except ApprovalRefused as refusal:
+        raise OperationRefused(refusal.code) from refusal
 
 
 def operations() -> tuple[OpSpec, ...]:

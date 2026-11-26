@@ -47,3 +47,21 @@ def test_the_generator_refuses_an_unknown_scope_class():
     bad = json.dumps({"scopes": [{"scope": "x:y", "class": "superuser"}]}).encode()
     with pytest.raises(ValueError, match="unknown scope classes"):
         _generator().render(bad)
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R020")
+def test_exported_domain_scopes_match_the_registry():
+    expected = {
+        "finance:read": "domain",
+        "fleet:read": "user",
+        "fleet:control": "admin",
+        "loops:read": "user",
+        "loops:control": "admin",
+        "ops:read": "admin",
+        "ops:admin": "admin",
+    }
+    assert {
+        name: scope_registry.SCOPE_CLASSES.get(name) for name in expected
+    } == expected
+    # One registry: every exported domain scope is a session scope too.
+    assert set(expected) <= scope_registry.SESSION_SCOPES

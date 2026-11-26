@@ -11,7 +11,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from arbora.a2a.models import A2AFilePart, A2AMessage
+from arbora.a2a.models import (
+    A2AFilePart,
+    A2AMediaLimits,
+    A2AMediaRefFile,
+    A2AMessage,
+)
 
 IMAGE_TYPES = frozenset({"image/png", "image/jpeg", "image/webp"})
 TEXT_TYPES = frozenset({"text/plain", "text/markdown"})
@@ -51,6 +56,7 @@ class MediaLimits:
     max_file_part_bytes: int
     max_request_media_bytes: int
     max_image_parts: int
+    inline_max_bytes: int = 1_048_576
     max_file_parts: int = MAX_FILE_PARTS
     max_text_bytes: int = MAX_TEXT_BYTES
 
@@ -69,6 +75,19 @@ class MediaLimits:
                 config, "a2a_max_request_media_bytes", 20_971_520, 1_024, 134_217_728
             ),
             max_image_parts=_bounded(config, "a2a_max_image_parts", 4, 1, 8),
+            inline_max_bytes=_bounded(
+                config, "a2a_inline_media_max_bytes", 1_048_576, 1_024, 33_554_432
+            ),
+        )
+
+    def card(self) -> A2AMediaLimits:
+        """The table the agent card publishes: the same values admission enforces."""
+        return A2AMediaLimits(
+            allowed_types=sorted(ALLOWED_TYPES),
+            max_file_part_bytes=self.max_file_part_bytes,
+            max_request_media_bytes=self.max_request_media_bytes,
+            max_image_parts=self.max_image_parts,
+            inline_max_bytes=self.inline_max_bytes,
         )
 
 
@@ -90,13 +109,31 @@ def sniff_image_type(data: bytes) -> str | None:
     return None
 
 
+def check_inline_threshold(message: A2AMessage, limits: MediaLimits) -> None:
+    """Refuse an inline image over the threshold; a larger image must be a reference."""
+    for part in message.parts:
+        if (
+            isinstance(part, A2AFilePart)
+            and part.file.mime_type in IMAGE_TYPES
+            and not isinstance(part.file, A2AMediaRefFile)
+            and len(part.file.decoded_bytes()) > limits.inline_max_bytes
+        ):
+            raise FilePartRefused("file_part_too_large")
+
+
 def admit_file_parts(message: A2AMessage, limits: MediaLimits) -> None:
-    """Refuse the message unless every text and image part fits the table."""
+    """Refuse the message unless every text and image part fits the table.
+
+    References are resolved to inline bytes first (``resolve_media_refs``); one
+    that reaches this check unresolved is refused as unknown.
+    """
     files = [part.file for part in message.parts if isinstance(part, A2AFilePart)]
     if len(files) > limits.max_file_parts:
         raise FilePartRefused("file_part_count")
     text_bytes = image_parts = media_bytes = 0
     for file in files:
+        if isinstance(file, A2AMediaRefFile):
+            raise FilePartRefused("file_part_type_unsupported")
         kind = file.mime_type
         if kind.startswith(("image/", "text/")) and kind not in ALLOWED_TYPES:
             raise FilePartRefused("file_part_type_unsupported")
@@ -205,7 +242,8 @@ def admit_image_capability(
         limit = capability.limit_for(file.mime_type)
         if limit is None:
             raise MediaCapabilityRefused("POLICY_DENIED", "media_type_not_accepted")
-        if len(file.decoded_bytes()) > limit:
+        # A reference carries no bytes; its size is checked when it resolves.
+        if not isinstance(file, A2AMediaRefFile) and len(file.decoded_bytes()) > limit:
             raise MediaCapabilityRefused("POLICY_DENIED", "media_part_too_large")
 
 
@@ -217,6 +255,7 @@ __all__ = [
     "MediaLimits",
     "admit_file_parts",
     "admit_image_capability",
+    "check_inline_threshold",
     "capability_from_assembly",
     "sniff_image_type",
 ]

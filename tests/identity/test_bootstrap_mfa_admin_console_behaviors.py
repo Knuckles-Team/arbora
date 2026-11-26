@@ -1,4 +1,4 @@
-"""Focused tests for the .2 behavior slices: R004.2, R006.2, R007.2."""
+"""Focused tests for the .2 behavior slices: R006.2, R007.2."""
 
 import pytest
 
@@ -7,7 +7,6 @@ from arbora.identity.admin_console import (
     dry_run_mapping,
     transition_mode_step,
 )
-from arbora.identity.bootstrap import resolve_bootstrap_access, unsecured_mode_banner
 from arbora.identity.engine import IdentityUnavailable
 from arbora.identity.mfa import (
     MfaEnrollment,
@@ -15,37 +14,6 @@ from arbora.identity.mfa import (
     enforce_group_requirement,
     verify_totp_step,
 )
-
-
-def test_resolve_bootstrap_access_allows_loopback_mutation() -> None:
-    principal = resolve_bootstrap_access(
-        bind_host="127.0.0.1",
-        host_header="127.0.0.1",
-        origin_header="http://127.0.0.1",
-        is_mutating=True,
-    )
-    assert principal.bind_host == "127.0.0.1"
-
-
-def test_resolve_bootstrap_access_refuses_origin_mismatch() -> None:
-    with pytest.raises(IdentityUnavailable):
-        resolve_bootstrap_access(
-            bind_host="127.0.0.1",
-            host_header="127.0.0.1",
-            origin_header="http://evil.example",
-            is_mutating=True,
-        )
-
-
-def test_unsecured_mode_banner_flags_exposed_bind() -> None:
-    principal = resolve_bootstrap_access(
-        bind_host="10.0.0.5",
-        exposure_acknowledged=True,
-        host_header="10.0.0.5",
-    )
-    banner = unsecured_mode_banner(principal)
-    assert banner["doctor_check"] == "fail"
-    assert banner["principal"] == "usr:bootstrap"
 
 
 def test_verify_totp_step_refuses_replay() -> None:

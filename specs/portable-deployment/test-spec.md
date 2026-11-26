@@ -114,8 +114,8 @@ Each row below has no spec marker on a test yet. The listed test is the proof to
 | ARBORA-DEPLOY-R010.2 | `tests/skills/test_deployment_examples.py::test_examples_agree_parse_and_probe_on_both_transports` (planned) | Deployment examples stay executable and synchronized. |
 | ARBORA-DEPLOY-R010.3 | `tests/skills/test_deployment_examples.py::test_every_supported_profile_has_all_parts` (planned) | Supported-profile instructions are complete. |
 | ARBORA-DEPLOY-R013.1 | `tests/deployment/test_kubernetes_first_boot.py::test_bad_cluster_observations_fail_closed` (existing, not yet bound by a spec marker); `tests/deployment/test_genesis_environments.py::test_default_profile_loads_and_validates` (existing, not yet bound by a spec marker) | Profile and first-boot obligations are retained. |
-| ARBORA-DEPLOY-R013.2 | `tests/deployment/test_component_choices.py::test_all_new_all_reused_and_mixed_inventories_match_the_presented_choices` (planned) | Record explicit deploy or reuse choice per component. |
-| ARBORA-DEPLOY-R013.3 | `tests/deployment/test_run_confirmed_steps.py::test_injected_update_for_reused_service_makes_zero_calls` (planned) | Reused components are connect-only. |
+| ARBORA-DEPLOY-R013.2 | `tests/deployment/test_component_choices.py::test_all_new_all_reused_and_mixed_inventories_match_the_presented_choices` | Record explicit deploy or reuse choice per component. |
+| ARBORA-DEPLOY-R013.3 | `tests/deployment/test_run_confirmed_steps.py::test_injected_update_for_reused_service_makes_zero_calls` | Reused components are connect-only. |
 | ARBORA-DEPLOY-R013.4 | `tests/deployment/test_target_matrix.py::test_every_declared_triple_has_a_refusal_case_and_a_success_case_id` | Deployment target matrix is complete. |
 | ARBORA-DEPLOY-R013.5 | `tests/api/test_deploy_ops_served.py::test_mixed_deployment_changes_only_deploy_marked_components` (planned) | Confirmed profiles bind to governed deployment. |
 | ARBORA-DEPLOY-R013.6 | `tests/deployment/test_component_choices_served.py::test_seed_4110_inventories_and_matrix_cells` (planned) | Component choices and target profiles are proven served. |
@@ -133,7 +133,7 @@ Each row below has no spec marker on a test yet. The listed test is the proof to
 | ARBORA-DEPLOY-R017.20 | `arbora/deployment/assembly_library.py::publish_deployment_library` (planned); `tests/deployment/test_assembly_library.py::test_startup_publishes_templates_and_components_once_per_tenant` (planned) | Publish the deployment template and its tool components. |
 | ARBORA-DEPLOY-R017.21 | `arbora/deployment/assembly.py::run_confirmed_steps` (planned); `tests/deployment/test_run_confirmed_steps.py::test_nodes_run_in_engine_order_once_per_key` (planned) | Run the confirmed step graph through governed fleet calls. |
 | ARBORA-DEPLOY-R018.9 | `tests/deployment/test_engine_lifecycle_served.py::test_unset_endpoints_start_one_loopback_engine_and_serve_a_call` | Engine pool wires the local lifecycle. |
-| ARBORA-DEPLOY-R601 | `tests/deployment/test_deploy_templates.py::test_templates_published_and_assemble_solved` (planned) | Publish deployment templates and tool components. |
+| ARBORA-DEPLOY-R601 | `tests/deployment/test_deploy_templates.py::test_templates_published_and_assemble_solved` | Publish deployment templates and tool components. |
 | ARBORA-DEPLOY-R602 | `tests/deployment/test_deploy_commands.py::test_each_script_function_is_a_command_with_a_config_input` (planned) | The deployment configuration repository holds configuration only. |
 | ARBORA-DEPLOY-R021 | `tests/deployment/test_registry_delivery.py::test_deploy_delivers_workspace_manifest_and_fails_on_unreadable_registry` (planned) | Every deploy delivers the current registry manifest and proves it readable. |
 | ARBORA-DEPLOY-R603 | `tests/deployment/test_identity_reconcile.py::test_reconcile_is_idempotent_and_reports_drift` (planned) | Identity and application SSO provisioning is one declarative reconcile. |
@@ -152,6 +152,6 @@ Each row below has no spec marker on a test yet. The listed test is the proof to
 | ARBORA-DEPLOY-R020.1 | `tests/deployment/test_pack_class_rollup.py::test_every_pack_class_has_a_core_subclass_path` (L2). | Every pack class extends an engine core class. |
 | ARBORA-DEPLOY-R020.2 | `tests/deployment/test_prompt_blueprints_valid.py::test_every_prompt_passes_the_pinned_engine_blueprint` (L2). | Every prompt passes the engine blueprint validation. |
 | ARBORA-DEPLOY-R020.3 | `tests/deployment/test_provisioning_admitted_by_pinned_engine.py::test_fresh_store_accepts_all_arbora_content` (L5). | CI proves provisioning into a fresh store on the pinned engine. |
-| ARBORA-DEPLOY-R017.22 | `tests/api/test_promote_ops.py::test_plan_requires_digest_and_green_pipeline` (planned, L3). | Promote a built artifact through a governed operation. |
-| ARBORA-DEPLOY-R017.23 | `tests/api/test_promote_ops.py::test_apply_needs_approval_records_deploy_and_is_idempotent` (planned, L3). | Promotion applies only after approval and records a deploy record. |
-| ARBORA-DEPLOY-R017.24 | `tests/api/test_promote_served.py::test_agent_promotes_after_approval_and_refusals_run_nothing` (planned, L3). | Hot-path proof: an agent runs CI to deploy through the door. |
+| ARBORA-DEPLOY-R017.22 | `tests/api/test_promote_ops.py::test_plan_requires_digest_and_green_pipeline` (L3). | Promote a built artifact through a governed operation. |
+| ARBORA-DEPLOY-R017.23 | `tests/api/test_promote_ops.py::test_apply_needs_approval_records_deploy_and_is_idempotent` (L3). | Promotion applies only after approval and records a deploy record. |
+| ARBORA-DEPLOY-R017.24 | `tests/api/test_promote_served.py::test_agent_promotes_after_approval_and_refusals_run_nothing` (L3). | Hot-path proof: an agent runs CI to deploy through the door. |

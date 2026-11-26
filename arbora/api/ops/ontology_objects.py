@@ -13,9 +13,8 @@ Handlers group by the engine surface they ride on and hold no state:
 - ``document.process`` calls the engine ``EnrichDocument``.
 - ``interfaces.*`` read the marker on the engine schema class rows.
 
-``actions.list``, ``functions.invoke`` and ``derive`` have no engine surface on
-the engine main branch yet and refuse ``UNAVAILABLE``; the shapes wanted are in
-the gaps list.
+``functions.invoke`` is a name for a registered function operation: the target
+runs through the invoke pipeline under its own scope (``arbora.api.ops._nested``).
 """
 
 from __future__ import annotations
@@ -30,12 +29,23 @@ from pydantic import Field
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops._engine import engine_send, unavailable
-from arbora.api.ops._pending import refuse_unavailable, unserved_write
+from arbora.api.ops._nested import invoke_registered
+from arbora.api.ops._pending import refuse_unavailable
 from arbora.api.ops.knowledge import EngineReply
 from arbora.api.ops.memory import _decode, _encode, _payload, _send
 from arbora.api.registry import Effect, OpSpec, Verb
 
 handle_unserved = refuse_unavailable
+#: Writes replay under the engine method or record that holds the effect.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "ontology.object_sets.save": "medulla:KvCas",
+    "ontology.object_sets.delete": "medulla:KvDelete",
+    "ontology.object_views.put": "medulla:KvCas",
+    "ontology.objects.edit": "medulla:GovernedChange",
+    "ontology.objects.revert": "medulla:GovernedChange",
+    "ontology.actions.apply": "medulla:ActionSubmit",
+    "ontology.document.process": "medulla:EnrichDocument",
+}
 READ_SCOPE = "kg:read"
 WRITE_SCOPE = "kg:write"
 KV_READ = "kv:read"
@@ -130,7 +140,9 @@ class ViewPutParams(ViewGetParams):
 
 
 class FunctionParams(Params):
-    function: str = Field(pattern=_NAME)
+    function: str = Field(
+        pattern=r"^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$", max_length=128
+    )
     args: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -218,6 +230,25 @@ async def handle_derive(
     limit = int(params.get("limit", 50))
     rows = await _rows(context, _Statement(), f"{text} |> LIMIT {limit}")
     return {"value": {"preview": rows, "limit": limit}}
+
+
+async def handle_functions_invoke(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Run one function the registry marks, as the caller and under its own scope.
+
+    The registry decides what a function is: an operation marked ``function``
+    (a read of the engine compute methods). A name outside that set answers
+    ``NOT_FOUND``, exactly like an absent one, and the target's own scope,
+    parameter check and audit apply through the one invoke pipeline.
+    """
+    result = await invoke_registered(
+        context,
+        str(params["function"]),
+        params["args"],
+        only=lambda target: target.function,
+    )
+    return {"value": {"result": result}}
 
 
 async def handle_actions_list(
@@ -715,7 +746,6 @@ def _suffix(op_id: str) -> str:
 
 
 def operations() -> tuple[OpSpec, ...]:
-    m = __name__
     return (
         _read(
             "ontology.interfaces.list",
@@ -827,13 +857,11 @@ def operations() -> tuple[OpSpec, ...]:
             Params,
             scope="actions:read",
         ),
-        unserved_write(
-            module=m,
-            op_id="ontology.functions.invoke",
-            summary="Invoke a named compute function",
-            example="invoke this function",
-            params=FunctionParams,
-            scope=WRITE_SCOPE,
+        _read(
+            "ontology.functions.invoke",
+            "Invoke a named compute function",
+            "invoke this function",
+            FunctionParams,
         ),
         _read(
             "ontology.derive",
@@ -846,4 +874,10 @@ def operations() -> tuple[OpSpec, ...]:
 
 specs = operations
 
-__all__ = ["EngineReply", "handle_unserved", "operations", "specs"]
+__all__ = [
+    "EngineReply",
+    "NATIVE_IDEMPOTENCY",
+    "handle_unserved",
+    "operations",
+    "specs",
+]

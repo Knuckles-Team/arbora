@@ -504,6 +504,54 @@ def _deployment_library_startup(
     return startup
 
 
+def _with_approval_notices(
+    bindings: Mapping[str, Any],
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+    session: Callable[[], Any],
+) -> tuple[Mapping[str, Any], Callable[[], Coroutine[Any, Any, Any]]]:
+    """Bind the digest channel and the outbox consumers of the serving process.
+
+    ``approvals.digest.send`` delivers through the governed reach notifier to
+    the tenant owners (ARBORA-OPS-R918.5.1). The trust-flag notice
+    (ARBORA-OPS-R855.3.1) and the approver notice (ARBORA-OPS-R918.6) run as
+    one scheduled runner started by the process start-up step. Both send to the
+    engine as the process service identity; a pinned engine without the outbox
+    shapes refuses ``UNAVAILABLE`` inside each tick (``arbora.pin_lag.medulla``).
+    """
+    from arbora.api.invoke.bootstrap import build_outbox_consumers
+    from arbora.core.settings import setting
+    from arbora.fleet.approval_notifier import digest_delivery, role_holders
+    from arbora.fleet.outbox_consumer import OutboxRunner
+    from arbora.messaging.service import ReachNotifier
+
+    async def send(method: str, params: dict[str, Any]) -> Any:
+        from medulla.generated import send_by_id
+
+        client = await pool.connected_client(
+            connect_context(str(session().tenant)), graph
+        )
+        return await send_by_id(client, method, params, graph)
+
+    notifier = ReachNotifier()
+    runner = OutboxRunner(
+        build_outbox_consumers(send, notifier),
+        send,
+        graph=graph,
+        interval_s=float(setting("ARBORA_OUTBOX_INTERVAL_S", 15.0)),
+    )
+
+    async def startup() -> None:
+        runner.start()
+
+    bound = {
+        "approval_digest_delivery": digest_delivery(role_holders(send), notifier),
+        "outbox_runner": runner,
+    }
+    return {**bound, **bindings}, startup
+
+
 def _chained_startup(
     first: Callable[[], Coroutine[Any, Any, Any]] | None,
     second: Callable[[], Coroutine[Any, Any, Any]],
@@ -583,6 +631,7 @@ def compose_served_invocation(
     fleet_effect: Any = None,
     task_plan_config: Any = None,
     browser_boundary_factory: BrowserBoundaryFactory | None = None,
+    promotion_ci_tool: Mapping[str, str] | None = None,
 ) -> Any:
     """One admitted :class:`HostedInvocation` over the served EG pool."""
     from arbora.api.http.auth import (
@@ -632,6 +681,11 @@ def compose_served_invocation(
                 pool, graph, connect_context, session, action_policies
             ),
         )
+    if bindings is not None:
+        bindings, outbox_startup = _with_approval_notices(
+            bindings, pool, graph, connect_context, session
+        )
+        process_startup = _chained_startup(process_startup, outbox_startup)
     if (
         bindings is not None
         and task_plan_config is not None
@@ -648,6 +702,15 @@ def compose_served_invocation(
         from arbora.mcp_server.served_engine import ServedEngine
 
         bindings = {**bindings, "task_plan_work_engine": ServedEngine(pool)}
+    if bindings is not None and "media_ref_store" not in bindings:
+        # ARBORA-A2A-R001.5.5: uploaded image bytes live in the engine, never here.
+        from arbora.a2a.media_refs import SessionMediaRefStore
+        from arbora.mcp_server.served_engine import ServedEngine as _Engine
+
+        bindings = {
+            **bindings,
+            "media_ref_store": SessionMediaRefStore(lambda: _Engine(pool)),
+        }
     if bindings is not None and "identity_admin" not in bindings:
         # ARBORA-IDENTITY-R018.1: the identity operations reach the engine
         # through the one administration port of the composition root.
@@ -660,6 +723,13 @@ def compose_served_invocation(
         from arbora.api.ops.memory_files import MemoryMaterializer
 
         bindings = {**bindings, "memory_materializer": MemoryMaterializer()}
+    if (
+        bindings is not None
+        and promotion_ci_tool is not None
+        and "promotion_ci_tool" not in bindings
+    ):
+        # ARBORA-PROMOTE: the one governed pipeline read a promotion confirms.
+        bindings = {"promotion_ci_tool": dict(promotion_ci_tool), **bindings}
     step_invoke = None
     if bindings is not None and "plan_step_invoke" not in bindings:
         from arbora.api.ops.plans import LateStepInvoke
@@ -720,7 +790,23 @@ def compose_served_invocation(
     changes["external_effect_operations"] = frozenset(
         op_id for op_id in EXTERNAL_EFFECT_OPERATIONS if registry.get(op_id) is not None
     )
+
+    async def gate_send(method: str, params: dict[str, Any], tenant: str) -> Any:
+        """The engine as the service identity, for the approval gate question."""
+        from medulla.generated import send_by_id
+
+        from arbora.api.ops._engine import decode
+        from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+
+        try:
+            require_methods(method)
+        except PinLagUnavailable as missing:
+            raise refusal(missing) from missing
+        client = await pool.connected_client(connect_context(tenant), graph)
+        return decode(await send_by_id(client, method, params, graph))
+
     services = build_invoke_services(
+        gate_send=gate_send,
         registry=registry,
         runtime=runtime,
         plans=_LeaseClient(PoolLeases(service_client)).store(
@@ -732,6 +818,19 @@ def compose_served_invocation(
     )
     if step_invoke is not None:
         step_invoke.bind(services)
+    from arbora.a2a.chain_composition import compose_approval_chain
+    from arbora.api.invoke.eg_audit import EgAuditAdapter
+    from arbora.security.session import current_session
+
+    approval_chain = compose_approval_chain(
+        leases=_LeaseClient(PoolLeases(service_client)),
+        client=service_client,
+        graph=graph,
+        tenant=minted.tenant,
+        audit_adapter=EgAuditAdapter(audit_client),
+        current_session=current_session,
+    )
+
     if services.hooks:
         # ARBORA-OPS-R009.7: a hook runs through ``invoke`` as the host service
         # principal; the tenant is the one the host session serves.
@@ -749,6 +848,7 @@ def compose_served_invocation(
         services.hooks.bind(host_hook_invoker(services, hook_caller))
     invocation = HostedInvocation(
         services=services,
+        approval_chain=approval_chain,
         task_plan_config=task_plan_config,
         process_startup=process_startup,
         background_services=_background_services(services, runtime, graph, session),
@@ -865,4 +965,12 @@ def served_invocation_from_settings(
         fleet_effect=fleet_effect,
         task_plan_config=task_plan_config,
         browser_boundary_factory=browser_boundary_factory,
+        promotion_ci_tool=_promotion_ci_tool(setting),
     )
+
+
+def _promotion_ci_tool(setting: Callable[..., Any]) -> dict[str, str] | None:
+    """The configured promotion pipeline read, or ``None`` when unset."""
+    server = str(setting("ARBORA_PROMOTION_CI_SERVER", "") or "").strip()
+    tool = str(setting("ARBORA_PROMOTION_CI_TOOL", "") or "").strip()
+    return {"server": server, "tool": tool} if server and tool else None

@@ -17,6 +17,7 @@ def _admitted_handlers(
     service: A2AService,
     operation_services: InvokeServices | None,
     operation_authenticator: AmbientHTTPAuthenticator | None,
+    approvals: Any = None,
 ) -> tuple[Any, Any]:
     """Validate composition and provider admission before exposing routes."""
     handlers = create_a2a_handlers(
@@ -24,6 +25,7 @@ def _admitted_handlers(
         authenticator=AmbientA2AAuthenticator(),
         operation_services=operation_services,
         operation_authenticator=operation_authenticator,
+        approvals=approvals,
     )
     return handlers
 
@@ -37,6 +39,7 @@ def register_a2a_tools(
     operation_authenticator: AmbientHTTPAuthenticator | None = None,
     task_plan_config: Any = None,
     hosted_invocation: Any = None,
+    approval_chain: Any = None,
 ) -> Any:
     """Register one action router and the protocol-native routes.
 
@@ -51,7 +54,10 @@ def register_a2a_tools(
         authority.task_plan_config = task_plan_config
         authority.hosted_invocation = hosted_invocation
     card_handler, rpc_handler = _admitted_handlers(
-        service, operation_services, operation_authenticator
+        service,
+        operation_services,
+        operation_authenticator,
+        approval_chain,
     )
     registrar = tools if tools is not None else mcp
 

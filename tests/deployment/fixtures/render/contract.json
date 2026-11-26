@@ -1,0 +1,30 @@
+{
+  "$schema": "https://example.test/schemas/engine-identity-contract-v1.json",
+  "apiVersion": "agent-utilities.io/engine-identity/v1",
+  "kind": "EngineIdentityContract",
+  "authority": "engine/identity-contract.v1.json",
+  "contract_version": "engine-identity.v1",
+  "namespace": "arbora-cell",
+  "statefulset_name": "epistemic-graph-raft",
+  "peer_service_name": "epistemic-graph-raft",
+  "client_service_name": "epistemic-graph-coordinator",
+  "peer_port": 9100,
+  "client_port": 9101,
+  "metrics_port": 9102,
+  "tls_server_name": "epistemic-graph-raft.arbora-cell@@SVC@@",
+  "tls_sans": [
+    "epistemic-graph-raft.arbora-cell@@SVC@@"
+  ],
+  "discovery_identity": "epistemic-graph-raft.arbora-cell@@SVC@@",
+  "transport": "length-prefixed-msgpack-tls",
+  "compatibility_aliases": [
+    {
+      "peer_service_name": "epistemic-graph-peer",
+      "client_service_name": "epistemic-graph",
+      "namespace": "platform",
+      "status": "migration-only",
+      "live_authority": false
+    }
+  ],
+  "digest": "@@DIGEST@@"
+}

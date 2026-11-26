@@ -119,6 +119,8 @@ async def run_confirmed_steps(
     plan_digest: str,
     reuse: Collection[str] = (),
     arguments: Mapping[str, Mapping[str, Any]] | None = None,
+    key_prefix: str | None = None,
+    probe_reused: Callable[[str], Awaitable[bool]] | None = None,
 ) -> dict[str, Any]:
     """Run the confirmed engine graph, one governed ``fleet.call`` per node.
 
@@ -130,6 +132,11 @@ async def run_confirmed_steps(
     ``PLAN_MISMATCH`` and a node on a reused component refuses
     ``REUSE_COMPONENT_MUTATION``, both before any call. No node is added,
     dropped or reordered.
+
+    A reused component is connect-only (ARBORA-DEPLOY-R013.3): ``probe_reused``
+    is the read-only reachability and compatibility probe, called once per
+    reused component before the first node. A component it reports unreachable
+    refuses ``REUSE_UNREACHABLE``; the run never falls back to deploying it.
     """
     if graph_digest(graph) != plan_digest:
         raise OperationRefused("PLAN_MISMATCH", {"reason": "the graph changed"})
@@ -147,12 +154,16 @@ async def run_confirmed_steps(
             and isinstance(tool.get("tool"), str)
         ):
             raise OperationRefused("INVALID_ARGUMENT", {"node_id": row["node_id"]})
+    if probe_reused is not None:
+        for component in sorted(reuse):
+            if not await probe_reused(component):
+                raise OperationRefused("REUSE_UNREACHABLE", {"component_id": component})
     steps: list[dict[str, Any]] = []
     ok = True
     for row in rows:
         node_id = row["node_id"]
         tool = row["tool"]
-        key = f"deploy:{plan_digest}:{node_id}"
+        key = f"{key_prefix or f'deploy:{plan_digest}'}:{node_id}"
         outcome = await invoke(
             "fleet.call",
             {
