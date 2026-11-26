@@ -300,13 +300,13 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T234 ARBORA-OPS-R009.9 Hooks fail closed and record their decisions. Deliver as written in requirements.md.
 - [ ] T235 ARBORA-OPS-R024.6 Derivation status read. Deliver as written in requirements.md.
 - [ ] T236 ARBORA-OPS-R897 Participant memory, scopes, profiles and document sets are served operations (rollup). Deliver as written in requirements.md.
-- [ ] T237 ARBORA-OPS-R897.1 Model and the shared engine send helper. Deliver as written in requirements.md.
-- [ ] T238 ARBORA-OPS-R897.2 Participant and membership operations. Deliver as written in requirements.md.
-- [ ] T239 ARBORA-OPS-R897.3 Scope and observation operations. Deliver as written in requirements.md.
-- [ ] T240 ARBORA-OPS-R897.4 Turn append operation. Deliver as written in requirements.md.
-- [ ] T241 ARBORA-OPS-R897.5 Ask and card operations. Deliver as written in requirements.md.
+- [x] T237 ARBORA-OPS-R897.1 Model and the shared engine send helper. Deliver as written in requirements.md.
+- [x] T238 ARBORA-OPS-R897.2 Participant and membership operations. Deliver as written in requirements.md.
+- [x] T239 ARBORA-OPS-R897.3 Scope and observation operations. Deliver as written in requirements.md.
+- [x] T240 ARBORA-OPS-R897.4 Turn append operation. Deliver as written in requirements.md.
+- [x] T241 ARBORA-OPS-R897.5 Ask and card operations. Deliver as written in requirements.md.
 - [ ] T242 ARBORA-OPS-R897.6 Assistant profile and document set operations. Deliver as written in requirements.md.
-- [ ] T243 ARBORA-OPS-R897.7 Registration and error mapping. Deliver as written in requirements.md.
+- [x] T243 ARBORA-OPS-R897.7 Registration and error mapping. Deliver as written in requirements.md.
 - [ ] T244 ARBORA-OPS-R897.8 Hot-path proof. Deliver as written in requirements.md.
 
 
