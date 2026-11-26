@@ -62,6 +62,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T056 ARBORA-A2A-R021 Fresh checkout runs the admission tests
 - [ ] T057 ARBORA-A2A-R022 Critique-gated output release
 - [ ] T058 ARBORA-A2A-R001.2 Run checkpoint and event-cursor binding
+- [ ] T086 ARBORA-A2A-R001.2.2 Agent-run delegation and reclaim of an expired-lease run
 - [x] T059 ARBORA-A2A-R010.1 Opt-in committed terminal point read
 - [ ] T060 ARBORA-A2A-R001.3 Served agent keeps and lists caller conversations
 - [ ] T061 ARBORA-A2A-R001.4.1 Served A2A route streams task events

@@ -1464,6 +1464,44 @@ def _check_secrets_backend() -> dict[str, Any]:
     )
 
 
+def _check_identity_exposure() -> dict[str, Any]:
+    """Fail for an exposed none mode or a generated secret in production (R013.3).
+
+    Cases: mode ``none`` bound to a non-loopback host, ``ARBORA_AUTH_NONE_EXPOSE``
+    set, or ``GRAPH_SERVICE_AUTH_SECRET`` generated automatically under the
+    production profile. Reads the same settings as ``arbora.security.anonymous``.
+    """
+    import os
+
+    from arbora.core.settings import runtime_config as config
+    from arbora.core.settings import setting
+    from arbora.security.anonymous import loopback
+
+    failures: list[str] = []
+    if config.arbora_auth_mode == "none":
+        if not loopback(str(config.host)):
+            failures.append("identity.exposed_none_mode")
+        elif os.environ.get("ARBORA_AUTH_NONE_EXPOSE"):
+            failures.append("identity.exposed_none_mode")
+    production = str(setting("ARBORA_PROFILE", "") or "").lower() == "production"
+    if production and setting("GRAPH_SERVICE_AUTH_SECRET_GENERATED", ""):
+        failures.append("identity.generated_secret")
+    if not failures:
+        return _result(
+            "identity_exposure", "ok", "no exposed none mode or generated secret"
+        )
+    return _result(
+        "identity_exposure",
+        "fail",
+        "identity exposure: " + ", ".join(failures),
+        remediation=(
+            "bind none mode to loopback only, clear ARBORA_AUTH_NONE_EXPOSE, and "
+            "supply GRAPH_SERVICE_AUTH_SECRET as a vault reference in production"
+        ),
+        data={"checks": failures},
+    )
+
+
 def _check_auth() -> dict[str, Any]:
     from arbora.core.settings import runtime_config as config
     from arbora.core.settings import setting
@@ -1993,6 +2031,7 @@ CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
     "secrets": _check_secrets,
     "secrets_backend": _check_secrets_backend,
     "auth": _check_auth,
+    "identity_exposure": _check_identity_exposure,
     "outbound_auth": _check_outbound_auth,
     "skill_certification": _check_skill_certification,
     "graph_identity": _check_graph_identity,

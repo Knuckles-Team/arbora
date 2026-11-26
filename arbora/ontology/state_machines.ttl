@@ -1037,3 +1037,444 @@ arbora:IntakeLeaseMachine_lost-release-released a owl:Class ;
     :fromState arbora:IntakeLost ;
     :toState arbora:IntakeReleased ;
     :firedBy arbora:IntakeLeaseMachine_Event_release .
+
+# ---------------------------------------------------------------------------
+# Connector desired status (ARBORA-FLEET-R082.1, R082.3).
+# Python: DesiredEvent, DESIRED_EDGES in arbora/control_plane/connectors/machine.py.
+# ---------------------------------------------------------------------------
+
+arbora:ConnectorDesiredStatusMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Connector desired status" ;
+    rdfs:comment "The operator-owned target state of one connector: disabled, enabled or quarantined; quarantined leaves only through release, to disabled. Authorization outcome is a projection of the medulla decision and has no arbora state classes." ;
+    :initialState arbora:DesiredDisabled ;
+    :hasState arbora:DesiredDisabled ,
+        arbora:DesiredEnabled ,
+        arbora:DesiredQuarantined .
+
+arbora:ConnectorDesiredState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Connector desired status state" .
+
+arbora:ConnectorDesiredTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Connector desired status transition" .
+
+arbora:ConnectorDesiredEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Connector desired status event" .
+
+arbora:ConnectorDesiredTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Connector desired status transition refused" ;
+    rdfs:comment "IllegalDesiredTransition, code CONNECTOR_TRANSITION_ILLEGAL, fields machine (connector_desired_status), from_state and event. The desired status does not change." .
+
+arbora:DesiredDisabled a owl:Class ;
+    rdfs:subClassOf arbora:ConnectorDesiredState ;
+    :storedForm "disabled" .
+
+arbora:DesiredEnabled a owl:Class ;
+    rdfs:subClassOf arbora:ConnectorDesiredState ;
+    :storedForm "enabled" .
+
+arbora:DesiredQuarantined a owl:Class ;
+    rdfs:subClassOf arbora:ConnectorDesiredState ;
+    :storedForm "quarantined" .
+
+arbora:ConnectorDesiredStatusMachine_Event_enable a owl:Class ;
+    rdfs:subClassOf arbora:ConnectorDesiredEvent ;
+    :storedForm "enable" .
+
+arbora:ConnectorDesiredStatusMachine_Event_disable a owl:Class ;
+    rdfs:subClassOf arbora:ConnectorDesiredEvent ;
+    :storedForm "disable" .
+
+arbora:ConnectorDesiredStatusMachine_Event_quarantine a owl:Class ;
+    rdfs:subClassOf arbora:ConnectorDesiredEvent ;
+    :storedForm "quarantine" .
+
+arbora:ConnectorDesiredStatusMachine_Event_release a owl:Class ;
+    rdfs:subClassOf arbora:ConnectorDesiredEvent ;
+    :storedForm "release" .
+
+arbora:ConnectorDesiredStatusMachine_disabled-enable-enabled a owl:Class ;
+    rdfs:subClassOf arbora:ConnectorDesiredTransition ;
+    :fromState arbora:DesiredDisabled ;
+    :toState arbora:DesiredEnabled ;
+    :firedBy arbora:ConnectorDesiredStatusMachine_Event_enable .
+
+arbora:ConnectorDesiredStatusMachine_enabled-disable-disabled a owl:Class ;
+    rdfs:subClassOf arbora:ConnectorDesiredTransition ;
+    :fromState arbora:DesiredEnabled ;
+    :toState arbora:DesiredDisabled ;
+    :firedBy arbora:ConnectorDesiredStatusMachine_Event_disable .
+
+arbora:ConnectorDesiredStatusMachine_disabled-quarantine-quarantined a owl:Class ;
+    rdfs:subClassOf arbora:ConnectorDesiredTransition ;
+    :fromState arbora:DesiredDisabled ;
+    :toState arbora:DesiredQuarantined ;
+    :firedBy arbora:ConnectorDesiredStatusMachine_Event_quarantine .
+
+arbora:ConnectorDesiredStatusMachine_enabled-quarantine-quarantined a owl:Class ;
+    rdfs:subClassOf arbora:ConnectorDesiredTransition ;
+    :fromState arbora:DesiredEnabled ;
+    :toState arbora:DesiredQuarantined ;
+    :firedBy arbora:ConnectorDesiredStatusMachine_Event_quarantine .
+
+arbora:ConnectorDesiredStatusMachine_quarantined-release-disabled a owl:Class ;
+    rdfs:subClassOf arbora:ConnectorDesiredTransition ;
+    :fromState arbora:DesiredQuarantined ;
+    :toState arbora:DesiredDisabled ;
+    :firedBy arbora:ConnectorDesiredStatusMachine_Event_release .
+
+
+# ---------------------------------------------------------------------------
+# Catalog serving (ARBORA-FLEET-R081.1, R081.3).
+# Python: CatalogState, CatalogEvent, CATALOG_EDGES in arbora/fleet/catalog_machine.py.
+# ---------------------------------------------------------------------------
+
+arbora:CatalogServingMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Catalog serving" ;
+    rdfs:comment "The serving state of the fleet catalog: cold until the first read, loading, snapshot once read, serving once the children are up, degraded when a later read fails (the stale snapshot is served), closing at shutdown." ;
+    :initialState arbora:CatalogCold ;
+    :hasState arbora:CatalogCold ,
+        arbora:CatalogLoading ,
+        arbora:CatalogSnapshot ,
+        arbora:CatalogServing ,
+        arbora:CatalogDegraded ,
+        arbora:CatalogClosing .
+
+arbora:CatalogState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Catalog serving state" .
+
+arbora:CatalogTerminalState a owl:Class ;
+    rdfs:subClassOf arbora:CatalogState, :TerminalState ;
+    rdfs:label "Catalog serving terminal state" .
+
+arbora:CatalogTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Catalog serving transition" .
+
+arbora:CatalogEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Catalog serving event" .
+
+arbora:HasSnapshot a owl:Class ;
+    rdfs:subClassOf :TransitionGuard ;
+    rdfs:label "HasSnapshot" ;
+    :storedForm "has_snapshot" .
+
+arbora:NoSnapshot a owl:Class ;
+    rdfs:subClassOf :TransitionGuard ;
+    rdfs:label "NoSnapshot" ;
+    :storedForm "no_snapshot" .
+
+arbora:CatalogTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Catalog serving transition refused" ;
+    rdfs:comment "IllegalCatalogTransition, code CATALOG_TRANSITION_ILLEGAL, fields machine (catalog_serving), from_state and event. The catalog state does not change." .
+
+arbora:CatalogCold a owl:Class ;
+    rdfs:subClassOf arbora:CatalogState ;
+    :storedForm "cold" .
+
+arbora:CatalogLoading a owl:Class ;
+    rdfs:subClassOf arbora:CatalogState ;
+    :storedForm "loading" .
+
+arbora:CatalogSnapshot a owl:Class ;
+    rdfs:subClassOf arbora:CatalogState ;
+    :storedForm "snapshot" .
+
+arbora:CatalogServing a owl:Class ;
+    rdfs:subClassOf arbora:CatalogState ;
+    :storedForm "serving" .
+
+arbora:CatalogDegraded a owl:Class ;
+    rdfs:subClassOf arbora:CatalogState ;
+    :storedForm "degraded" .
+
+arbora:CatalogClosing a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTerminalState ;
+    :storedForm "closing" .
+
+arbora:CatalogServingMachine_Event_load_start a owl:Class ;
+    rdfs:subClassOf arbora:CatalogEvent ;
+    :storedForm "load_start" .
+
+arbora:CatalogServingMachine_Event_read_ok a owl:Class ;
+    rdfs:subClassOf arbora:CatalogEvent ;
+    :storedForm "read_ok" .
+
+arbora:CatalogServingMachine_Event_read_err a owl:Class ;
+    rdfs:subClassOf arbora:CatalogEvent ;
+    :storedForm "read_err" .
+
+arbora:CatalogServingMachine_Event_children_up a owl:Class ;
+    rdfs:subClassOf arbora:CatalogEvent ;
+    :storedForm "children_up" .
+
+arbora:CatalogServingMachine_Event_epoch_bump a owl:Class ;
+    rdfs:subClassOf arbora:CatalogEvent ;
+    :storedForm "epoch_bump" .
+
+arbora:CatalogServingMachine_Event_close a owl:Class ;
+    rdfs:subClassOf arbora:CatalogEvent ;
+    :storedForm "close" .
+
+arbora:CatalogServingMachine_cold-load_start-loading a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTransition ;
+    :fromState arbora:CatalogCold ;
+    :toState arbora:CatalogLoading ;
+    :firedBy arbora:CatalogServingMachine_Event_load_start .
+
+arbora:CatalogServingMachine_loading-read_ok-snapshot a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTransition ;
+    :fromState arbora:CatalogLoading ;
+    :toState arbora:CatalogSnapshot ;
+    :firedBy arbora:CatalogServingMachine_Event_read_ok .
+
+arbora:CatalogServingMachine_loading-read_err-cold a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTransition ;
+    :fromState arbora:CatalogLoading ;
+    :toState arbora:CatalogCold ;
+    :firedBy arbora:CatalogServingMachine_Event_read_err ;
+    :guardedBy arbora:NoSnapshot .
+
+arbora:CatalogServingMachine_loading-read_err-degraded a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTransition ;
+    :fromState arbora:CatalogLoading ;
+    :toState arbora:CatalogDegraded ;
+    :firedBy arbora:CatalogServingMachine_Event_read_err ;
+    :guardedBy arbora:HasSnapshot .
+
+arbora:CatalogServingMachine_snapshot-children_up-serving a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTransition ;
+    :fromState arbora:CatalogSnapshot ;
+    :toState arbora:CatalogServing ;
+    :firedBy arbora:CatalogServingMachine_Event_children_up .
+
+arbora:CatalogServingMachine_serving-epoch_bump-loading a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTransition ;
+    :fromState arbora:CatalogServing ;
+    :toState arbora:CatalogLoading ;
+    :firedBy arbora:CatalogServingMachine_Event_epoch_bump .
+
+arbora:CatalogServingMachine_snapshot-epoch_bump-loading a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTransition ;
+    :fromState arbora:CatalogSnapshot ;
+    :toState arbora:CatalogLoading ;
+    :firedBy arbora:CatalogServingMachine_Event_epoch_bump .
+
+arbora:CatalogServingMachine_degraded-load_start-loading a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTransition ;
+    :fromState arbora:CatalogDegraded ;
+    :toState arbora:CatalogLoading ;
+    :firedBy arbora:CatalogServingMachine_Event_load_start .
+
+arbora:CatalogServingMachine_cold-close-closing a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTransition ;
+    :fromState arbora:CatalogCold ;
+    :toState arbora:CatalogClosing ;
+    :firedBy arbora:CatalogServingMachine_Event_close .
+
+arbora:CatalogServingMachine_loading-close-closing a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTransition ;
+    :fromState arbora:CatalogLoading ;
+    :toState arbora:CatalogClosing ;
+    :firedBy arbora:CatalogServingMachine_Event_close .
+
+arbora:CatalogServingMachine_snapshot-close-closing a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTransition ;
+    :fromState arbora:CatalogSnapshot ;
+    :toState arbora:CatalogClosing ;
+    :firedBy arbora:CatalogServingMachine_Event_close .
+
+arbora:CatalogServingMachine_serving-close-closing a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTransition ;
+    :fromState arbora:CatalogServing ;
+    :toState arbora:CatalogClosing ;
+    :firedBy arbora:CatalogServingMachine_Event_close .
+
+arbora:CatalogServingMachine_degraded-close-closing a owl:Class ;
+    rdfs:subClassOf arbora:CatalogTransition ;
+    :fromState arbora:CatalogDegraded ;
+    :toState arbora:CatalogClosing ;
+    :firedBy arbora:CatalogServingMachine_Event_close .
+
+
+# ---------------------------------------------------------------------------
+# Fleet onboarding handshake (ARBORA-FLEET-R080.1, R080.3).
+# Python: OnboardingState, OnboardingEvent, ONBOARDING_EDGES in arbora/fleet/onboarding_machine.py.
+# ---------------------------------------------------------------------------
+
+arbora:FleetOnboardingMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Fleet onboarding" ;
+    rdfs:comment "The onboarding handshake of one connector: idle, debouncing a burst, running a pass, backing off after an error, awaiting approval of a held mass withdrawal, or failed; failed leaves on the slow-retry edge once the process lease is live. No state is terminal." ;
+    :initialState arbora:OnboardingIdle ;
+    :hasState arbora:OnboardingIdle ,
+        arbora:OnboardingDebouncing ,
+        arbora:OnboardingRunning ,
+        arbora:OnboardingBackoff ,
+        arbora:OnboardingAwaitingApproval ,
+        arbora:OnboardingFailed .
+
+arbora:OnboardingState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Fleet onboarding state" .
+
+arbora:OnboardingTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Fleet onboarding transition" .
+
+arbora:OnboardingEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Fleet onboarding event" .
+
+arbora:AttemptsLeft a owl:Class ;
+    rdfs:subClassOf :TransitionGuard ;
+    rdfs:label "AttemptsLeft" ;
+    :storedForm "attempts_left" .
+
+arbora:NoAttemptsLeft a owl:Class ;
+    rdfs:subClassOf :TransitionGuard ;
+    rdfs:label "NoAttemptsLeft" ;
+    :storedForm "no_attempts_left" .
+
+arbora:LeaseLive a owl:Class ;
+    rdfs:subClassOf :TransitionGuard ;
+    rdfs:label "LeaseLive" ;
+    :storedForm "lease_live" .
+
+arbora:OnboardingTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Fleet onboarding transition refused" ;
+    rdfs:comment "IllegalOnboardingTransition, code ONBOARDING_TRANSITION_ILLEGAL, fields machine (fleet_onboarding), from_state and event. The onboarding state does not change." .
+
+arbora:OnboardingIdle a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingState ;
+    :storedForm "idle" .
+
+arbora:OnboardingDebouncing a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingState ;
+    :storedForm "debouncing" .
+
+arbora:OnboardingRunning a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingState ;
+    :storedForm "running" .
+
+arbora:OnboardingBackoff a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingState ;
+    :storedForm "backoff" .
+
+arbora:OnboardingAwaitingApproval a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingState ;
+    :storedForm "awaiting_approval" .
+
+arbora:OnboardingFailed a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingState ;
+    :storedForm "failed" .
+
+arbora:FleetOnboardingMachine_Event_registered a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingEvent ;
+    :storedForm "registered" .
+
+arbora:FleetOnboardingMachine_Event_debounce_elapsed a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingEvent ;
+    :storedForm "debounce_elapsed" .
+
+arbora:FleetOnboardingMachine_Event_retry_elapsed a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingEvent ;
+    :storedForm "retry_elapsed" .
+
+arbora:FleetOnboardingMachine_Event_pass_ok a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingEvent ;
+    :storedForm "pass_ok" .
+
+arbora:FleetOnboardingMachine_Event_pass_err a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingEvent ;
+    :storedForm "pass_err" .
+
+arbora:FleetOnboardingMachine_Event_held a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingEvent ;
+    :storedForm "held" .
+
+arbora:FleetOnboardingMachine_Event_approved a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingEvent ;
+    :storedForm "approved" .
+
+arbora:FleetOnboardingMachine_Event_authority_live a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingEvent ;
+    :storedForm "authority_live" .
+
+arbora:FleetOnboardingMachine_idle-registered-debouncing a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingTransition ;
+    :fromState arbora:OnboardingIdle ;
+    :toState arbora:OnboardingDebouncing ;
+    :firedBy arbora:FleetOnboardingMachine_Event_registered .
+
+arbora:FleetOnboardingMachine_debouncing-registered-debouncing a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingTransition ;
+    :fromState arbora:OnboardingDebouncing ;
+    :toState arbora:OnboardingDebouncing ;
+    :firedBy arbora:FleetOnboardingMachine_Event_registered .
+
+arbora:FleetOnboardingMachine_debouncing-debounce_elapsed-running a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingTransition ;
+    :fromState arbora:OnboardingDebouncing ;
+    :toState arbora:OnboardingRunning ;
+    :firedBy arbora:FleetOnboardingMachine_Event_debounce_elapsed .
+
+arbora:FleetOnboardingMachine_running-registered-running a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingTransition ;
+    :fromState arbora:OnboardingRunning ;
+    :toState arbora:OnboardingRunning ;
+    :firedBy arbora:FleetOnboardingMachine_Event_registered .
+
+arbora:FleetOnboardingMachine_running-pass_ok-idle a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingTransition ;
+    :fromState arbora:OnboardingRunning ;
+    :toState arbora:OnboardingIdle ;
+    :firedBy arbora:FleetOnboardingMachine_Event_pass_ok .
+
+arbora:FleetOnboardingMachine_running-pass_err-backoff a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingTransition ;
+    :fromState arbora:OnboardingRunning ;
+    :toState arbora:OnboardingBackoff ;
+    :firedBy arbora:FleetOnboardingMachine_Event_pass_err ;
+    :guardedBy arbora:AttemptsLeft .
+
+arbora:FleetOnboardingMachine_running-pass_err-failed a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingTransition ;
+    :fromState arbora:OnboardingRunning ;
+    :toState arbora:OnboardingFailed ;
+    :firedBy arbora:FleetOnboardingMachine_Event_pass_err ;
+    :guardedBy arbora:NoAttemptsLeft .
+
+arbora:FleetOnboardingMachine_running-held-awaiting_approval a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingTransition ;
+    :fromState arbora:OnboardingRunning ;
+    :toState arbora:OnboardingAwaitingApproval ;
+    :firedBy arbora:FleetOnboardingMachine_Event_held .
+
+arbora:FleetOnboardingMachine_backoff-retry_elapsed-running a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingTransition ;
+    :fromState arbora:OnboardingBackoff ;
+    :toState arbora:OnboardingRunning ;
+    :firedBy arbora:FleetOnboardingMachine_Event_retry_elapsed .
+
+arbora:FleetOnboardingMachine_awaiting_approval-approved-running a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingTransition ;
+    :fromState arbora:OnboardingAwaitingApproval ;
+    :toState arbora:OnboardingRunning ;
+    :firedBy arbora:FleetOnboardingMachine_Event_approved .
+
+arbora:FleetOnboardingMachine_failed-authority_live-backoff a owl:Class ;
+    rdfs:subClassOf arbora:OnboardingTransition ;
+    :fromState arbora:OnboardingFailed ;
+    :toState arbora:OnboardingBackoff ;
+    :firedBy arbora:FleetOnboardingMachine_Event_authority_live ;
+    :guardedBy arbora:LeaseLive .

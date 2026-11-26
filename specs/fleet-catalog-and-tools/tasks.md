@@ -519,19 +519,19 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T247 ARBORA-FLEET-R077 Arm per-call sessions, plan confirm-declaring tools, refuse a cancelled result typed.
 - [x] T248 ARBORA-FLEET-R078 Compose the catalog off boot with retries; refuse retryably while it warms.
 - [ ] T249 ARBORA-FLEET-R080 Onboarding handshake explicit machine (rollup).
-- [ ] T250 ARBORA-FLEET-R080.1 Onboarding state model, transition function and typed held refusal.
-- [ ] T251 ARBORA-FLEET-R080.2 Retry after the process authority recovers.
-- [ ] T252 ARBORA-FLEET-R080.3 Describe the onboarding machine in the ontology.
-- [ ] T260 ARBORA-FLEET-R080.4 Wire the onboarding machine; hot-path proof.
+- [x] T250 ARBORA-FLEET-R080.1 Onboarding state model, transition function and typed held refusal.
+- [x] T251 ARBORA-FLEET-R080.2 Retry after the process authority recovers.
+- [x] T252 ARBORA-FLEET-R080.3 Describe the onboarding machine in the ontology.
+- [x] T260 ARBORA-FLEET-R080.4 Wire the onboarding machine; hot-path proof.
 - [ ] T253 ARBORA-FLEET-R081 Catalog serving state machine (rollup).
-- [ ] T254 ARBORA-FLEET-R081.1 Catalog state model and transition function.
-- [ ] T255 ARBORA-FLEET-R081.2 Derive readiness flags from the catalog state.
-- [ ] T256 ARBORA-FLEET-R081.3 Describe the catalog machine in the ontology.
-- [ ] T261 ARBORA-FLEET-R081.4 Wire the catalog machine; hot-path proof.
+- [x] T254 ARBORA-FLEET-R081.1 Catalog state model and transition function.
+- [x] T255 ARBORA-FLEET-R081.2 Derive readiness flags from the catalog state.
+- [x] T256 ARBORA-FLEET-R081.3 Describe the catalog machine in the ontology.
+- [x] T261 ARBORA-FLEET-R081.4 Wire the catalog machine; hot-path proof.
 - [ ] T257 ARBORA-FLEET-R082 Connector desired status machine; authorization projection (rollup).
-- [ ] T258 ARBORA-FLEET-R082.1 Desired-status machine with typed refusal.
-- [ ] T259 ARBORA-FLEET-R082.2 Project the authorization outcome from the medulla decision.
-- [ ] T262 ARBORA-FLEET-R082.3 Describe the desired-status machine in the ontology; hot-path proof.
+- [x] T258 ARBORA-FLEET-R082.1 Desired-status machine with typed refusal.
+- [x] T259 ARBORA-FLEET-R082.2 Project the authorization outcome from the medulla decision.
+- [x] T262 ARBORA-FLEET-R082.3 Describe the desired-status machine in the ontology; hot-path proof.
 - [ ] T263 [US1] ARBORA-FLEET-R083 Tool, skill and operation ranking asks medulla; the lexical floor is the received fallback (rollup). Size: L, 5 PRs, 1 day.
 - [ ] T264 [US1] ARBORA-FLEET-R083.1 The ranking port and the single lexical floor. Size: M, 1 PR, 5 hours.
 - [ ] T265 [US1] ARBORA-FLEET-R083.2 Intent tools and the intent resolver ask the port. Size: M, 1 PR, 4 hours.

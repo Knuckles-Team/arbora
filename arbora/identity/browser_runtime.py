@@ -88,7 +88,11 @@ class BrowserAuthApplication:
         issuer: Any,
         caller: Any,
         discovery: Any = None,
+        audit: Any = None,
     ):
+        from .mfa_ceremonies import MfaCeremonies, log_audit
+
+        self.ceremonies = MfaCeremonies(client, graph, origin, audit or log_audit)
         self.discovery = discovery
         self.client, self.authority = client, authority
         self.graph, self.origin = graph, origin
@@ -158,12 +162,14 @@ class BrowserAuthApplication:
             build = published.get(scope.get("path"))
             if build is not None:
                 return JSONResponse(build())
+        from .mfa_ceremonies import CEREMONY_ROUTES
         from .mfa_totp import TOTP_ROUTES
 
         if scope.get("method") != "POST" or scope.get("path") not in {
             "/auth/login",
             "/auth/logout",
             *TOTP_ROUTES,
+            *CEREMONY_ROUTES,
         }:
             return Response(status_code=404)
         if (
@@ -178,6 +184,8 @@ class BrowserAuthApplication:
             return await self._logout(scope)
         if scope["path"] in TOTP_ROUTES:
             return await self._totp(scope, receive, TOTP_ROUTES[scope["path"]])
+        if scope["path"] in CEREMONY_ROUTES:
+            return await self._ceremony(scope, receive, scope["path"])
         return await self._login(scope, await _login_body(scope, receive))
 
     async def _totp(self, scope: Any, receive: Any, operation: str) -> Any:
@@ -201,6 +209,93 @@ class BrowserAuthApplication:
             session_token=credential,
             code=code,
         )
+
+    async def _ceremony(self, scope: Any, receive: Any, path: str) -> Any:
+        """A second-factor step of a pending login (ARBORA-IDENTITY-R006.2.2, .2.3, .4).
+
+        The interim session cookie and the mutation proof are required; the pending
+        session is never resolved to a caller here, so it grants nothing. A passed
+        ceremony completes the login exactly as a password login does.
+        """
+        from .browser import require_mutation_proof, session_from_scope
+        from .mfa_ceremonies import (
+            BEGIN,
+            FINISH,
+            FINISH_FIELDS,
+            MfaBodyInvalid,
+            ceremony_body,
+        )
+
+        require_mutation_proof(scope, trusted_origin=self.origin)
+        credential = session_from_scope(scope)
+        assert credential is not None  # require_mutation_proof refused its absence
+        fields = (
+            frozenset()
+            if path == BEGIN
+            else FINISH_FIELDS
+            if path == FINISH
+            else frozenset({"code"})
+        )
+        try:
+            body = await ceremony_body(
+                scope, receive, fields, limit=8192 if path == FINISH else 1024
+            )
+        except MfaBodyInvalid:
+            return JSONResponse({"error": "MFA_CODE_INVALID"}, status_code=400)
+        if path == BEGIN:
+            return await self.ceremonies.begin(credential)
+        refusal = await (
+            self.ceremonies.finish(credential, body)
+            if path == FINISH
+            else self.ceremonies.recovery(credential, body["code"])
+        )
+        return refusal if refusal is not None else await self._complete(credential)
+
+    async def _complete(self, credential: str) -> Any:
+        """Issue the full session response for a credential whose login is complete."""
+        from .browser import csrf_token_for, session_cookie_header
+
+        token = await self.issuer.issue(credential)
+        await self.caller(token, credential)
+        state = await self.authority.resolve_session(credential)
+        if not isinstance(state, SessionState) or state.resolution.kind != "human":
+            raise PermissionError("human browser session required")
+        response = _LoginResponse(
+            {"outcome": "ok", "csrf_token": csrf_token_for(credential)}
+        )
+        response.headers["Set-Cookie"] = session_cookie_header(
+            credential,
+            expires_at_ms=state.expires_at_ms,
+            now_ms=int(time.time() * 1000),
+        ).decode("ascii")
+        response._created_session = credential
+        return response
+
+    def _interim(self, credential: str, outcome: str) -> Any:
+        """The response of a login that waits for a second factor (ARBORA-IDENTITY-R006.2.3).
+
+        The cookie names the engine's pending session and grants nothing: it is not
+        resolved to a caller and lives only as long as a challenge.
+        """
+        from .browser import csrf_token_for, session_cookie_header
+        from .mfa_ceremonies import INTERIM_SECONDS
+
+        enrollment = outcome == "mfa_enrollment_required"
+        body: dict[str, Any] = {
+            "outcome": outcome,
+            "csrf_token": csrf_token_for(credential),
+        }
+        if enrollment:
+            body["error"] = "MFA_ENROLLMENT_REQUIRED"
+        response = _LoginResponse(body, status_code=403 if enrollment else 200)
+        now_ms = int(time.time() * 1000)
+        response.headers["Set-Cookie"] = session_cookie_header(
+            credential,
+            expires_at_ms=now_ms + INTERIM_SECONDS * 1000,
+            now_ms=now_ms,
+        ).decode("ascii")
+        response._created_session = credential
+        return response
 
     async def _logout(self, scope: Any) -> Any:
         from starlette.responses import Response
@@ -227,7 +322,6 @@ class BrowserAuthApplication:
         import secrets
 
         from .approval_engine import identity_value
-        from .browser import csrf_token_for, session_cookie_header
 
         credential = secrets.token_urlsafe(32)
         try:
@@ -245,25 +339,12 @@ class BrowserAuthApplication:
                 },
                 "authenticate",
             )
-            if not isinstance(result, dict) or result.get("outcome") != "ok":
+            outcome = result.get("outcome") if isinstance(result, dict) else None
+            if outcome in ("mfa_required", "mfa_enrollment_required"):
+                return self._interim(credential, outcome)
+            if outcome != "ok":
                 raise PermissionError("authentication ceremony incomplete")
-            # Do not emit a cookie unless the existing signing/verifier inputs
-            # and current caller conversion actually agree. Never return JWTs.
-            token = await self.issuer.issue(credential)
-            await self.caller(token, credential)
-            state = await self.authority.resolve_session(credential)
-            if not isinstance(state, SessionState) or state.resolution.kind != "human":
-                raise PermissionError("human browser session required")
-            response = _LoginResponse(
-                {"outcome": "ok", "csrf_token": csrf_token_for(credential)}
-            )
-            response.headers["Set-Cookie"] = session_cookie_header(
-                credential,
-                expires_at_ms=state.expires_at_ms,
-                now_ms=int(time.time() * 1000),
-            ).decode("ascii")
-            response._created_session = credential
-            return response
+            return await self._complete(credential)
         except BaseException:
             # Authentication may have persisted a session before its response
             # was lost. Revoke this exact random token, never all user sessions.

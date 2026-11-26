@@ -422,3 +422,38 @@ def test_participant_memory_journey(
     assert foreign.status_code == absent.status_code, foreign.text
     assert foreign.json()["error"]["code"] == absent.json()["error"]["code"]
     assert "ada" not in json.dumps(foreign.json()["error"].get("details"))
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.6")
+async def test_derivation_status_reaches_the_engine(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rows = [
+        {
+            "scope_id": "sc",
+            "session_id": "s1",
+            "subject": "ada",
+            "pending": 3,
+            "oldest_pending_age_ms": 1200,
+        }
+    ]
+    sent = _record(monkeypatch, {"rows": rows})
+    context = caller_context()
+    answer = await participants.handle_derivation_status(
+        context, {"scope_id": "sc"}, NO_OP
+    )
+    assert answer == {"value": {"rows": rows}}  # the engine rows, unchanged
+    method, params, idempotent = sent[0]
+    assert (method, idempotent) == ("ParticipantRead", False)
+    assert params == {"op": {"op": "status", "memory_scope": {"scope_id": "sc"}}}
+    await participants.handle_derivation_status(context, {}, NO_OP)
+    assert sent[1][1] == {"op": {"op": "status"}}
+    # The engine answers a scope the caller may not see exactly like an absent one.
+    _record(monkeypatch, EngineRefusal("PARTICIPANT_NOT_VISIBLE"))
+    with pytest.raises(EngineRefusal) as refused:
+        await participants.handle_derivation_status(context, {}, NO_OP)
+    assert refused.value.code == "PARTICIPANT_NOT_VISIBLE"
+    op = next(
+        o for o in participants.operations() if o.id == "participant.derivation.status"
+    )
+    assert op.scopes == {"participant:read"} and op.effect.name == "READ"
