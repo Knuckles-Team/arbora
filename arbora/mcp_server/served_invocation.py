@@ -819,10 +819,24 @@ def compose_served_invocation(
     if step_invoke is not None:
         step_invoke.bind(services)
     from arbora.a2a.chain_composition import compose_approval_chain
+    from arbora.a2a.engine_decide import build_ask_decide
     from arbora.api.invoke.eg_audit import EgAuditAdapter
+    from arbora.api.task_plan_schema import published_pin
     from arbora.security.session import current_session
 
+    def confirm_principal() -> str:
+        # The engine sees the host's service identity: the record's receipt names it.
+        return str(session().actor.actor_id)
+
     approval_chain = compose_approval_chain(
+        ask_decide=build_ask_decide(
+            gate_send,
+            graph=graph,
+            feature_schema=lambda tenant: published_pin(
+                (bindings or {}).get("task_plan_schema_pins"), tenant
+            ),
+            principal=confirm_principal,
+        ),
         leases=_LeaseClient(PoolLeases(service_client)),
         client=service_client,
         graph=graph,

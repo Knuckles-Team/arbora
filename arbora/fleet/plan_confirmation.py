@@ -35,6 +35,13 @@ from typing import Any
 
 from mcp import types
 
+from arbora.api.invoke.plan import (
+    IllegalPlanTransition,
+    PlanEvent,
+    PlanState,
+    transition,
+)
+
 __all__ = ["PlanConfirmations", "confirmed_plan_call", "plan_confirmed"]
 
 #: The child tool a consumed plan confirmed for the current dispatch.
@@ -47,7 +54,7 @@ _ACTION = re.compile(r"^Are you sure you want to (?P<action>[A-Za-z0-9_.:-]{1,25
 @dataclass
 class _Armed:
     tool: str
-    used: bool = False
+    state: PlanState = PlanState.ISSUED
 
 
 @contextlib.contextmanager
@@ -113,10 +120,12 @@ class PlanConfirmations:
         current = self._armed.get(getattr(context, "session", None))
         if (
             current is None
-            or current.used
             or not _asks_boolean_confirmation(params)
             or not _names_tool(getattr(params, "message", None), current.tool)
         ):
             return types.ElicitResult(action="decline")
-        current.used = True
+        try:
+            current.state = transition(current.state, PlanEvent.CONSUME)
+        except IllegalPlanTransition:
+            return types.ElicitResult(action="decline")
         return types.ElicitResult(action="accept", content={"confirmed": True})
