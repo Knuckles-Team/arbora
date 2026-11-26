@@ -33,12 +33,12 @@ Governing spec: [spec.md](spec.md).
 | T-027 | `ARBORA-HARNESS-PLUGINS-R003.3` | `tests/harness_plugins/test_login.py::test_credential_edges_match_the_ontology` | The test observes the rule of the row: model: the credential machine. |
 | T-028 | `ARBORA-HARNESS-PLUGINS-R003.4` | `tests/harness_plugins/test_hook_runner.py::test_missing_credential_is_a_non_blocking_note` | The test observes the rule of the row: refusal: a hook without a credential never blocks. |
 | T-029 | `ARBORA-HARNESS-PLUGINS-R003` | Every child row. | See each child. |
-| T-030 | `ARBORA-HARNESS-PLUGINS-R004.1` | `tests/api/ops/test_workstreams.py::test_key_holds_digest_and_never_the_path` | The test observes the rule of the row: model: workstream params and results. (planned) |
-| T-031 | `ARBORA-HARNESS-PLUGINS-R004.2` | `tests/api/ops/test_workstreams.py::test_attach_is_idempotent_and_bounded` | The test observes the rule of the row: the attach operation joins a harness session to the workstream. (planned) |
-| T-032 | `ARBORA-HARNESS-PLUGINS-R004.3` | `tests/api/ops/test_workstreams.py::test_checkpoint_writes_one_masked_turn` | The test observes the rule of the row: the checkpoint operation records a handoff. (planned) |
-| T-033 | `ARBORA-HARNESS-PLUGINS-R004.4` | `tests/api/ops/test_workstreams.py::test_cross_principal_read_matches_unknown` | The test observes the rule of the row: detach, get and list, with a uniform denial. (planned) |
-| T-034 | `ARBORA-HARNESS-PLUGINS-R004.5` | `tests/api/ops/test_workstreams.py::test_attachment_edges_match_the_ontology` | The test observes the rule of the row: model: the attachment machine. (planned) |
-| T-035 | `ARBORA-HARNESS-PLUGINS-R004.6` | `tests/api/ops/test_workstreams.py::test_operations_and_scopes_are_registered` | The test observes the rule of the row: registration and scopes. (planned) |
+| T-030 | `ARBORA-HARNESS-PLUGINS-R004.1` | `tests/api/test_workstreams.py::test_key_holds_digest_and_never_the_path` | The test observes the rule of the row: model: workstream params and results. |
+| T-031 | `ARBORA-HARNESS-PLUGINS-R004.2` | `tests/api/test_workstreams.py::test_attach_is_idempotent_and_bounded` | The test observes the rule of the row: the attach operation joins a harness session to the workstream. |
+| T-032 | `ARBORA-HARNESS-PLUGINS-R004.3` | `tests/api/test_workstreams.py::test_checkpoint_records_the_handoff_for_the_next_harness` | The test observes the rule of the row: the checkpoint operation records a handoff. |
+| T-033 | `ARBORA-HARNESS-PLUGINS-R004.4` | `tests/api/test_workstreams.py::test_cross_principal_read_matches_unknown` | The test observes the rule of the row: detach, get and list, with a uniform denial. |
+| T-034 | `ARBORA-HARNESS-PLUGINS-R004.5` | `tests/api/test_workstreams.py::test_attachment_edges_match_the_ontology` | The test observes the rule of the row: model: the attachment machine. |
+| T-035 | `ARBORA-HARNESS-PLUGINS-R004.6` | `tests/api/test_workstreams.py::test_operations_and_scopes_are_registered` | The test observes the rule of the row: registration and scopes. |
 | T-036 | `ARBORA-HARNESS-PLUGINS-R004.7` | `tests/api/ops/test_workstreams_served.py::test_two_harnesses_share_one_workstream` | The test observes the rule of the row: hot-path proof: two harnesses share one workstream over MCP. (planned) |
 | T-037 | `ARBORA-HARNESS-PLUGINS-R004` | Every child row. | See each child. |
 | T-038 | `ARBORA-HARNESS-PLUGINS-R007` | `tests/harness_plugins/test_hook_runner.py::test_runner_maps_events_and_always_exits_zero` | The test observes the rule of the row: command hook runner. |

@@ -61,11 +61,13 @@ def get_registry() -> Registry:
         skills_discovery,
         skills_eval,
         skills_friction,
+        skills_telemetry,
         source,
         swarm,
         telemetry,
         usage,
         work,
+        workstreams,
     )
 
     curated: list[OpSpec] = []
@@ -108,11 +110,13 @@ def get_registry() -> Registry:
         skills_discovery,
         skills_eval,
         skills_friction,
+        skills_telemetry,
         source,
         swarm,
         telemetry,
         usage,
         work,
+        workstreams,
     ):
         for op in module.operations():
             if isinstance(op.binding, Composite):

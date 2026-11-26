@@ -47,11 +47,13 @@ from arbora.api.ops import (
     skills_discovery,
     skills_eval,
     skills_friction,
+    skills_telemetry,
     source,
     swarm,
     telemetry,
     usage,
     work,
+    workstreams,
 )
 from arbora.api.registry import (
     Composite,
@@ -67,6 +69,8 @@ from tests.api._catalog import method_row, scope_row
 from tests.api.test_eg_binding import _curated, _fixture
 
 _CURATED_SCOPES = (
+    "workstream:read",
+    "workstream:write",
     "query:unified",
     "query:nl",
     "kg:read",
@@ -114,6 +118,7 @@ _CURATED_SCOPES = (
     "identity:self",
     "identity:admin",
     "query:write",
+    "telemetry:write",
 )
 
 _ENGINE_METHODS = {
@@ -188,6 +193,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *skills_discovery.operations(),
         *skills_eval.operations(),
         *skills_friction.operations(),
+        *skills_telemetry.operations(),
         *telemetry.operations(),
         *usage.operations(),
         *graph_limits.operations(),
@@ -201,6 +207,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *source.operations(),
         *swarm.operations(),
         *work.operations(),
+        *workstreams.operations(),
         *ops.operations(),
         *plans.operations(),
         *preferences.operations(),
