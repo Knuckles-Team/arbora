@@ -26,6 +26,7 @@ __all__ = [
     "A2AMediaRefFile",
     "A2AMessage",
     "A2APushNotificationAuthority",
+    "A2APushTarget",
     "A2AOperationInvokeParams",
     "A2APlanConfirmParams",
     "A2ARouteDecision",
@@ -397,11 +398,24 @@ class A2AStreamingAuthority(Protocol):
     async def resume_from_cursor(self, task_id: str, after_seq: int = 0) -> Any: ...
 
 
+class A2APushTarget(_WireModel):
+    """One webhook a task's terminal state is pushed to (ARBORA-A2A-R013.1).
+
+    ``token_ref`` is a secrets-backend reference, never a token value.
+    """
+
+    task_id: str = Field(min_length=1, max_length=512)
+    url: str = Field(min_length=1, max_length=2048)
+    token_ref: str | None = Field(default=None, min_length=1, max_length=512)
+
+
 @runtime_checkable
 class A2APushNotificationAuthority(Protocol):
     """Durable push-notification delivery authority for task state changes."""
 
-    def register_push_target(self, task_id: str, target_url: str) -> Any: ...
+    def register_push_target(
+        self, task_id: str, target_url: str, token_ref: str | None = None
+    ) -> Any: ...
 
 
 @runtime_checkable

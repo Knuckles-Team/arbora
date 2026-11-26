@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
@@ -13,7 +14,11 @@ from .admission import (
     ModelProfilePreference,
     ModelProfileUnavailable,
 )
-from .authority import A2ATaskAuthority, A2ATransitionHistoryUnavailable
+from .authority import (
+    A2AStreamingUnavailable,
+    A2ATaskAuthority,
+    A2ATransitionHistoryUnavailable,
+)
 from .media_refs import MediaRefStore, resolve_media_refs, run_media
 from .models import (
     TRANSITION_PAGE_LIMIT,
@@ -21,6 +26,8 @@ from .models import (
     A2AAgentCard,
     A2AListResult,
     A2AMessage,
+    A2APushNotificationAuthority,
+    A2APushTarget,
     A2ARouteDecision,
     A2ASkill,
     A2AStreamingAuthority,
@@ -107,6 +114,9 @@ class A2AService:
     #: Stores uploaded image bytes by digest for the caller's tenant (R001.5.5);
     #: ``None`` leaves a reference refusing ``UNAVAILABLE``.
     media_refs: MediaRefStore | None = None
+    #: The durable push-notification worker (ARBORA-A2A-R013); the card
+    #: advertises ``pushNotifications`` only while one is wired (R013.3).
+    push: A2APushNotificationAuthority | None = None
     #: The verified caller a media reference is bound to.
     caller_owner: Callable[[], str] = _caller_owner
 
@@ -272,6 +282,16 @@ class A2AService:
         tasks, next_cursor = await self.authority.list(cursor=cursor, limit=limit)
         return A2AListResult(tasks=tasks, next_cursor=next_cursor)
 
+    async def set_push_target(
+        self, task_id: str, url: str, token_ref: str | None = None
+    ) -> A2APushTarget:
+        """Register one push webhook on the caller's task (ARBORA-A2A-R013.1)."""
+        if self.push is None:
+            raise A2AStreamingUnavailable("push notifications are not available")
+        return await asyncio.to_thread(
+            self.push.register_push_target, task_id, url, token_ref
+        )
+
     async def cancel_task(self, task_id: str) -> A2ATask:
         return await self.authority.cancel(task_id)
 
@@ -290,6 +310,7 @@ class A2AService:
         served = self.tool_task_admitter is not None and self.attestation_signer
         capabilities = A2AAgentCapabilities.from_wired_authorities(
             streaming_authority=self.streaming,
+            push_notification_authority=self.push,
             transition_history_authority=self._serving_history(),
         ).model_copy(update={"extensions": [tool_task_extension()] if served else []})
         return A2AAgentCard(
