@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any
 from arbora.api.errors import FleetRefusal, fleet_detail
 from arbora.api.invoke.steps import claim_values
 from arbora.api.registry import Confirm, Effect, Executor, PrincipalRule
+from arbora.fleet.approval_meta import approval_kwargs
 from arbora.security.anonymous import admitted_actor
 
 if TYPE_CHECKING:
@@ -234,11 +235,18 @@ class AdmittedTool:
 
 ToolFor = Callable[[str, str, Any], Awaitable[AdmittedTool]]
 PolicyCheck = Callable[[str, str, Any], Awaitable[bool]]
-DelegatedCall = Callable[[str, str, Mapping[str, Any], Any], Awaitable[Any]]
+
+
+# One caller-credential child call: ``(server, tool, arguments, caller)``.
+# The pipeline adds ``approval_ref=`` (ARBORA-OPS-R009.5) only when the call
+# was approved, so a transport that never sees an approval needs no parameter.
+DelegatedCall = Callable[..., Awaitable[Any]]
 # A service callback must stamp every durable child record with the verified
 # owner's canonical principal reference. The generic multiplexer dispatcher
-# cannot prove that property and must not be bound here.
-ServiceCall = Callable[[str, str, Mapping[str, Any], Any, str, str], Awaitable[Any]]
+# cannot prove that property and must not be bound here. Positional:
+# ``(server, tool, arguments, caller, owner_ref, registry_digest)``, plus the
+# optional ``approval_ref=`` keyword.
+ServiceCall = Callable[..., Awaitable[Any]]
 
 
 def _require_admitted_target(item: Any, server: str, tool: str) -> None:
@@ -449,10 +457,17 @@ def oauth_delegated_call_for_mux(mux: Any) -> DelegatedCall:
     """
 
     async def delegated(
-        server: str, tool: str, arguments: Mapping[str, Any], caller: Any
+        server: str,
+        tool: str,
+        arguments: Mapping[str, Any],
+        caller: Any,
+        *,
+        approval_ref: str = "",
     ) -> Any:
         with _verified_delegation(caller, allow_admitted_anonymous=True):
-            result = await mux.call_admitted_child_once(server, tool, dict(arguments))
+            result = await mux.call_admitted_child_once(
+                server, tool, dict(arguments), **approval_kwargs(approval_ref)
+            )
         if bool(getattr(result, "is_error", getattr(result, "isError", False))):
             raise FleetRefusal(
                 _child_error_code(result),
@@ -740,6 +755,7 @@ class FleetGateway:
         owner_ref: str | None = None,
         fleet_decision: Any = None,
         registry_digest: str = "",
+        approval_ref: str = "",
     ) -> Any:
         # The pipeline freezes arguments (nested objects are read-only
         # mappings, arrays are tuples). Children take plain JSON, so thaw once
@@ -780,6 +796,7 @@ class FleetGateway:
                     caller,
                     validated_owner_ref,
                     registry_digest,
+                    **approval_kwargs(approval_ref),
                 ),
                 server,
                 tool,
@@ -788,7 +805,11 @@ class FleetGateway:
             raise PermissionError("delegated child cannot use service identity")
         commit_native_dispatch(server, tool, caller)
         return self._confirming_tools.refuse_cancelled(
-            await self._delegated_call(server, tool, arguments, caller), server, tool
+            await self._delegated_call(
+                server, tool, arguments, caller, **approval_kwargs(approval_ref)
+            ),
+            server,
+            tool,
         )
 
 

@@ -622,3 +622,12 @@ def bind_run_ports() -> None:
     from arbora.current_plan_publication import publication_scope
 
     host_ports.register_optional_scaffold_publication_factory(publication_scope)
+    from arbora.a2a.checkpoint import checkpoint_store
+    from arbora.mcp_server import runtime as mcp_runtime
+
+    # The engine is resolved when a run binds, never at registration.
+    host_ports.register_run_checkpoint_factory(
+        checkpoint_store(
+            lambda: mcp_runtime._get_engine() if mcp_runtime._get_engine else None
+        )
+    )
