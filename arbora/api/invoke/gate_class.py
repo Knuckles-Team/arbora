@@ -30,7 +30,9 @@ DEFAULT_APPROVER_ROLES: tuple[str, ...] = ("action-approvers",)
 DEFAULT_EXPIRY_MS = 600_000
 MAX_EXPIRY_MS = 24 * 60 * 60 * 1000
 
-GateSource = Literal["engine", "default"]
+#: ``engine``: the engine named a gate. ``none``: the engine answered that the
+#: operation needs no approval. ``default``: no usable answer, so the strict gate.
+GateSource = Literal["engine", "none", "default"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,6 +61,9 @@ STRICT_DEFAULT = GateResolution(
     STRICTEST_CLASS, DEFAULT_APPROVER_ROLES, DEFAULT_EXPIRY_MS, "default"
 )
 
+#: An explicit engine ``none`` is the graph's own answer: no approval item.
+NO_APPROVAL = GateResolution("", (), DEFAULT_EXPIRY_MS, "none")
+
 
 async def no_engine_answer(_op_id: str, _tenant: str) -> Mapping[str, Any] | None:
     """The reader until the engine serves the gate question: no answer."""
@@ -72,15 +77,17 @@ GateSend = Callable[[str, dict[str, Any], str], Awaitable[Any]]
 def engine_gate_reader(send: GateSend) -> GateReader:
     """Ask the engine decision capability for one operation's gate (R918.2).
 
-    The engine answers from the tenant's approval rules. ``unresolved`` and
-    ``none`` give no gate class here, so the strict default applies: an operation
-    is never easier to approve than the engine says. Arbora holds no class table.
+    The engine answers from the tenant's approval rules. An explicit ``none`` is
+    the graph's own answer and means no approval; ``unresolved`` gives no answer,
+    so the strict default applies. Arbora holds no class table.
     """
 
     async def read(op_id: str, tenant: str) -> Mapping[str, Any] | None:
         answer = await send(
             "ApprovalGateResolve", {"request": {"operation": op_id}}, tenant
         )
+        if isinstance(answer, Mapping) and answer.get("gate") == "none":
+            return {"gate": "none"}
         if not isinstance(answer, Mapping) or answer.get("gate") not in {
             "single",
             "two_person",
@@ -97,6 +104,8 @@ def engine_gate_reader(send: GateSend) -> GateReader:
 
 
 def _parse(answer: Mapping[str, Any]) -> GateResolution | None:
+    if answer.get("gate") == "none":
+        return NO_APPROVAL
     gate_class = answer.get("gate_class")
     roles = answer.get("approver_roles")
     expiry = answer.get("expires_in_ms")

@@ -148,7 +148,9 @@ def engine(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
 
     sent: list[dict[str, Any]] = []
     monkeypatch.setattr(
-        generated, "METHOD_IDS", frozenset(generated.METHOD_IDS) | {"DeployRecordPut"}
+        generated,
+        "METHOD_IDS",
+        frozenset(generated.METHOD_IDS) | {"DeployRecordPut", "DeployRecordGet"},
     )
 
     async def send(ctx: Any, method: str, params: dict[str, Any], **kw: Any) -> Any:
@@ -211,14 +213,34 @@ def test_apply_needs_approval_records_deploy_and_is_idempotent(
 
 
 # spec: ARBORA-DEPLOY-R017.23
-def test_engine_without_the_deploy_record_method_refuses_unavailable_before_any_step() -> (
-    None
-):
-    from medulla.generated import METHOD_IDS
+def test_engine_without_the_deploy_record_method_refuses_unavailable_before_any_step(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import medulla.generated as generated
 
-    if "DeployRecordPut" in METHOD_IDS:
-        pytest.skip("the pinned engine serves the deploy record")
+    monkeypatch.setattr(
+        generated, "METHOD_IDS", frozenset(generated.METHOD_IDS) - {"DeployRecordPut"}
+    )
     pipeline = Pipeline(GREEN)
     with pytest.raises(OperationRefused) as refused:
         _apply(pipeline)
     assert refused.value.code == "UNAVAILABLE" and pipeline.calls == []
+    assert refused.value.details["missing"] == "DeployRecordPut"
+
+
+# spec: ARBORA-DEPLOY-R017.24
+def test_engine_without_the_deploy_record_read_refuses_unavailable_naming_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import medulla.generated as generated
+
+    monkeypatch.setattr(
+        generated, "METHOD_IDS", frozenset(generated.METHOD_IDS) - {"DeployRecordGet"}
+    )
+    context = SimpleNamespace(caller=SimpleNamespace(tenant="t"), services={})
+    with pytest.raises(OperationRefused) as refused:
+        asyncio.run(
+            promote.handle_promotion_record(context, {"plan_digest": "d" * 64}, None)  # type: ignore[arg-type]
+        )
+    assert refused.value.code == "UNAVAILABLE"
+    assert refused.value.details["missing"] == "DeployRecordGet"

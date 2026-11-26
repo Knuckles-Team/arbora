@@ -473,6 +473,7 @@ def compose_served_invocation(
     fleet_effect: Any = None,
     task_plan_config: Any = None,
     browser_boundary_factory: BrowserBoundaryFactory | None = None,
+    promotion_ci_tool: Mapping[str, str] | None = None,
 ) -> Any:
     """One admitted :class:`HostedInvocation` over the served EG pool."""
     from arbora.api.http.auth import (
@@ -542,6 +543,13 @@ def compose_served_invocation(
         from arbora.api.ops.memory_files import MemoryMaterializer
 
         bindings = {**bindings, "memory_materializer": MemoryMaterializer()}
+    if (
+        bindings is not None
+        and promotion_ci_tool is not None
+        and "promotion_ci_tool" not in bindings
+    ):
+        # ARBORA-PROMOTE: the one governed pipeline read a promotion confirms.
+        bindings = {"promotion_ci_tool": dict(promotion_ci_tool), **bindings}
     step_invoke = None
     if bindings is not None and "plan_step_invoke" not in bindings:
         from arbora.api.ops.plans import LateStepInvoke
@@ -611,7 +619,23 @@ def compose_served_invocation(
         )
         if registry.get(op_id) is not None
     )
+
+    async def gate_send(method: str, params: dict[str, Any], tenant: str) -> Any:
+        """The engine as the service identity, for the approval gate question."""
+        from medulla.generated import send_by_id
+
+        from arbora.api.ops._engine import decode
+        from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+
+        try:
+            require_methods(method)
+        except PinLagUnavailable as missing:
+            raise refusal(missing) from missing
+        client = await pool.connected_client(connect_context(tenant), graph)
+        return decode(await send_by_id(client, method, params, graph))
+
     services = build_invoke_services(
+        gate_send=gate_send,
         registry=registry,
         runtime=runtime,
         plans=_LeaseClient(PoolLeases(service_client)).store(
@@ -705,4 +729,12 @@ def served_invocation_from_settings(
         fleet_effect=fleet_effect,
         task_plan_config=task_plan_config,
         browser_boundary_factory=browser_boundary_factory,
+        promotion_ci_tool=_promotion_ci_tool(setting),
     )
+
+
+def _promotion_ci_tool(setting: Callable[..., Any]) -> dict[str, str] | None:
+    """The configured promotion pipeline read, or ``None`` when unset."""
+    server = str(setting("ARBORA_PROMOTION_CI_SERVER", "") or "").strip()
+    tool = str(setting("ARBORA_PROMOTION_CI_TOOL", "") or "").strip()
+    return {"server": server, "tool": tool} if server and tool else None

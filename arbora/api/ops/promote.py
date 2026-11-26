@@ -31,6 +31,7 @@ from arbora.deployment.assembly import (
 )
 from arbora.deployment.assembly_view import render_graph
 from arbora.deployment.image_digests import is_digest_pinned
+from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
 
 _DIGEST = r"^sha256:[0-9a-f]{64}$"
 _PASSED = frozenset({"passed", "success", "succeeded"})
@@ -207,15 +208,12 @@ async def handle_promotion_apply(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     require_confirmed_plan(op)
-    from medulla.generated import METHOD_IDS
-
     _digest_of(params["artifact"])
-    if DEPLOY_RECORD_METHOD not in METHOD_IDS:
+    try:
         # Nothing runs that the engine cannot record.
-        raise OperationRefused(
-            "UNAVAILABLE",
-            {"reason": f"the installed engine does not serve {DEPLOY_RECORD_METHOD}"},
-        )
+        require_methods(DEPLOY_RECORD_METHOD)
+    except PinLagUnavailable as missing:
+        raise refusal(missing) from missing
     approval_id = await _require_approved(context)
     assembly = await _assemble(
         context, str(context.caller.tenant), params["target"], params["components"]
@@ -246,6 +244,10 @@ async def handle_promotion_apply(
 async def handle_promotion_record(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
+    try:
+        require_methods("DeployRecordGet")
+    except PinLagUnavailable as missing:
+        raise refusal(missing) from missing
     answer = await engine_send(
         context, "DeployRecordGet", {"plan_digest": params["plan_digest"]}
     )

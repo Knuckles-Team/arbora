@@ -88,7 +88,9 @@ def world(monkeypatch: pytest.MonkeyPatch) -> Any:
     monkeypatch.setattr(promote, "_assemble", assemble)
     monkeypatch.setattr(promote, "engine_send", engine)
     monkeypatch.setattr(
-        generated, "METHOD_IDS", frozenset(generated.METHOD_IDS) | {"DeployRecordPut"}
+        generated,
+        "METHOD_IDS",
+        frozenset(generated.METHOD_IDS) | {"DeployRecordPut", "DeployRecordGet"},
     )
 
     async def reader(_op: str, _tenant: str) -> dict[str, Any]:

@@ -16,11 +16,17 @@ from typing import Any
 
 import msgpack
 
-from arbora.api.ops._engine import decode, unavailable
+from arbora.api.ops._engine import decode
 from arbora.messaging.action_dispatch import (
     NotificationSpec,
     Notifier,
     send_notification,
+)
+from arbora.pin_lag.medulla import (
+    OUTBOX_MODELS,
+    PinLagUnavailable,
+    refusal,
+    require_models,
 )
 
 __all__ = [
@@ -86,12 +92,12 @@ def _event(lease: Mapping[str, Any]) -> OutboxEvent:
     )
 
 
-def _pull_served() -> bool:
-    from medulla.generated import models
-
-    return hasattr(models, "MutationOutboxOpPull") and hasattr(
-        models, "MutationOutboxOpAck"
-    )
+def _require_pull_served() -> None:
+    """Refuse ``UNAVAILABLE`` naming the outbox shape the pinned engine lacks."""
+    try:
+        require_models(OUTBOX_MODELS)
+    except PinLagUnavailable as missing:
+        raise refusal(missing) from missing
 
 
 async def consume_topic(
@@ -110,8 +116,7 @@ async def consume_topic(
     stops the batch at that event: the earlier events stay acknowledged and the
     failed one is pulled again.
     """
-    if not _pull_served():
-        raise unavailable("the installed engine does not serve outbox pull and ack")
+    _require_pull_served()
     target = {"target": "graph", "graph": graph}
     pulled = decode(
         await send(

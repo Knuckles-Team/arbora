@@ -11,7 +11,6 @@ import pytest
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import approvals
-from arbora.fleet import outbox_consumer
 from arbora.fleet.approval_notifier import (
     APPROVALS_TOPIC,
     approval_handler,
@@ -84,7 +83,11 @@ class Engine:
 
 @pytest.fixture
 def pull_served(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(outbox_consumer, "_pull_served", lambda: True)
+    from medulla.generated import models
+
+    # The structural double of a re-pinned engine: both outbox shapes declared.
+    monkeypatch.setattr(models, "MutationOutboxOpPull", object, raising=False)
+    monkeypatch.setattr(models, "MutationOutboxOpAck", object, raising=False)
 
 
 # spec: ARBORA-OPS-R918.6
@@ -123,7 +126,10 @@ def test_notice_per_approver_without_preview_and_retries_from_outbox(
 def test_outbox_pull_refuses_unavailable_on_an_engine_without_it(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(outbox_consumer, "_pull_served", lambda: False)
+    from medulla.generated import models
+
+    monkeypatch.delattr(models, "MutationOutboxOpAck", raising=False)
+    monkeypatch.setattr(models, "MutationOutboxOpPull", object, raising=False)
     engine = Engine([EVENT])
 
     async def attempt() -> None:
@@ -138,6 +144,8 @@ def test_outbox_pull_refuses_unavailable_on_an_engine_without_it(
     with pytest.raises(OperationRefused) as refused:
         asyncio.run(attempt())
     assert refused.value.code == "UNAVAILABLE" and engine.acked == []
+    assert refused.value.details["missing"] == "MutationOutboxOpAck"
+    assert len(engine.leases) == 1  # nothing was pulled or acknowledged
 
 
 class _Leases:

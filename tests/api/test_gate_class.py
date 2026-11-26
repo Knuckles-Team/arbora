@@ -10,6 +10,7 @@ from arbora.api.invoke.gate_class import (
     DECIDE_SCOPE,
     DEFAULT_APPROVER_ROLES,
     GATE_CLASSES,
+    NO_APPROVAL,
     STRICT_DEFAULT,
     STRICTEST_CLASS,
     no_engine_answer,
@@ -25,6 +26,9 @@ class _Leases:
     async def issue(self, **request: Any) -> dict[str, Any]:
         self.issued.append(request)
         return {"outcome": "issued"}
+
+    async def get(self, *, tenant: str, lease_id: str) -> dict[str, Any] | None:
+        return next((r for r in self.issued if r["lease_id"] == lease_id), None)
 
 
 class _Client:
@@ -155,6 +159,16 @@ def test_engine_gate_reader_maps_the_decision_answer_and_unresolved_is_strict() 
         {"request": {"operation": "deploy.promotions.apply"}},
         "tenant-a",
     )
-    # Unresolved and an explicit no-gate answer both stay the strict default.
-    for op in ("open.op", "free.op"):
-        assert asyncio.run(resolve_gate(reader, op, "tenant-a")) == STRICT_DEFAULT
+    # Unresolved is no answer, so the strict default applies.
+    assert asyncio.run(resolve_gate(reader, "open.op", "tenant-a")) == STRICT_DEFAULT
+    # An explicit engine ``none`` is the graph's answer: no approval, never strict.
+    free = asyncio.run(resolve_gate(reader, "free.op", "tenant-a"))
+    assert free == NO_APPROVAL and free != STRICT_DEFAULT
+
+    # An explicit-none plan files no approval item and never waits for one.
+    client = _Client()
+    store = EgPlanStore(client, lease_kind="arbora.plan")
+    plan_ref = asyncio.run(store.issue(_binding(), {"x": 1}, free))
+    assert [row["kind"] for row in client.control_leases.issued] == ["arbora.plan"]
+    assert client.control_leases.issued[0]["grant"]["gate_source"] == "none"
+    assert asyncio.run(store.approval_pending(plan_ref, "tenant-a")) is False
