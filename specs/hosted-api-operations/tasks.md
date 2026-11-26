@@ -299,6 +299,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T233 ARBORA-OPS-R009.8 Output hook runs before a response leaves. Deliver as written in requirements.md.
 - [ ] T234 ARBORA-OPS-R009.9 Hooks fail closed and record their decisions. Deliver as written in requirements.md.
 - [ ] T235 ARBORA-OPS-R024.6 Derivation status read. Deliver as written in requirements.md.
+- [x] T478 ARBORA-OPS-R024.7 Preferences are one versioned engine record per principal.
 - [ ] T236 ARBORA-OPS-R897 Participant memory, scopes, profiles and document sets are served operations (rollup). Deliver as written in requirements.md.
 - [ ] T237 ARBORA-OPS-R897.1 Model and the shared engine send helper. Deliver as written in requirements.md.
 - [ ] T238 ARBORA-OPS-R897.2 Participant and membership operations. Deliver as written in requirements.md.
