@@ -31,9 +31,11 @@ from .run_delegation import DELEGATION_INVALID, DELEGATION_KEY, delegation_refus
 
 __all__ = [
     "A2ARunReclaimConsumer",
+    "A2ARunReclaimService",
     "ExpiredLeaseCandidates",
     "ReclaimCandidate",
     "ReclaimOutcome",
+    "build_run_reclaim_service",
 ]
 
 _KIND = "orchestrator_task"
@@ -227,3 +229,53 @@ class A2ARunReclaimConsumer:
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await task
+
+
+class A2ARunReclaimService:
+    """The consumer as a host background service: ``run(should_stop)`` until stopped.
+
+    The host's background thread owns the loop; this holds no state beyond the consumer,
+    whose every decision reads the engine (ARBORA-A2A-R001.2.2).
+    """
+
+    def __init__(self, consumer: A2ARunReclaimConsumer) -> None:
+        self.consumer = consumer
+
+    async def run(self, should_stop: Callable[[], bool]) -> None:
+        while not should_stop():
+            try:
+                await self.consumer.run_once()
+            except Exception:  # noqa: BLE001 - the next poll retries
+                self.consumer._emit("a2a_run_reclaim_poll_failed", {})
+            await self.consumer._sleep(self.consumer._poll)
+
+
+def build_run_reclaim_service(
+    *,
+    authority: Any,
+    process_session: Callable[[], Any],
+    clock: Callable[[], float],
+    sleep: Callable[[float], Any] = asyncio.sleep,
+    emit: Callable[[str, Mapping[str, Any]], None] | None = None,
+    poll_interval_s: float = DEFAULT_POLL_INTERVAL_S,
+) -> A2ARunReclaimService:
+    """Compose the reclaim consumer for the served host.
+
+    The candidates are the engine's own WorkItem list for the tenant the host serves.
+    The tenant session is asked of the process authority at each poll (never kept), and
+    the engine's list under it is the only source of what is expired.
+    """
+    candidates = ExpiredLeaseCandidates(
+        authority.work_engine, lambda: (process_session(),), clock=clock
+    )
+    return A2ARunReclaimService(
+        A2ARunReclaimConsumer(
+            authority=authority,
+            candidates=candidates,
+            clock=clock,
+            work_engine_provider=authority.work_engine,
+            sleep=sleep,
+            emit=emit,
+            poll_interval_s=poll_interval_s,
+        )
+    )
