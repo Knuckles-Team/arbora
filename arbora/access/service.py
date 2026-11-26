@@ -207,3 +207,66 @@ async def grant_approval(context: Any, params: Mapping[str, Any], op: Any) -> An
 
 async def deny_approval(context: Any, params: Mapping[str, Any], op: Any) -> Any:
     return await _decide_approval(context, params, "revoked")
+
+
+async def _rbac_admin(context: Any, op: Mapping[str, Any]) -> Any:
+    """One engine ``RbacAdmin`` write under the caller's verified authority."""
+    from arbora.api.engine_errors import (
+        ENGINE_ERRORS,  # noqa: F401 - refusal vocabulary
+    )
+    from arbora.pin_lag.medulla import send_main
+
+    return await send_main(
+        context, "RbacAdmin", {"op": dict(op)}, idempotent=True, models=("ShareGrant",)
+    )
+
+
+async def grant_share(context: Any, params: Mapping[str, Any], op: Any) -> Any:
+    """``access.share.grant``: the engine decides; Arbora maps its refusals."""
+    answer = await _rbac_admin(
+        context,
+        {
+            "ShareGrant": {
+                "node_id": params["node_id"],
+                "scope": params["scope"],
+                "grantees": list(params["grantees"]),
+            }
+        },
+    )
+    return {"value": answer if isinstance(answer, Mapping) else {}}
+
+
+async def revoke_share(context: Any, params: Mapping[str, Any], op: Any) -> Any:
+    answer = await _rbac_admin(context, {"ShareRevoke": {"node_id": params["node_id"]}})
+    return {"value": answer if isinstance(answer, Mapping) else {}}
+
+
+async def plan_ownership(context: Any, params: Mapping[str, Any], op: Any) -> Any:
+    """``access.ownership.plan``: the engine's read-only plan of one graph."""
+    from arbora.api.invoke.bootstrap import caller_dispatch_graph
+    from arbora.pin_lag.medulla import send_main
+
+    graph = params.get("graph") or await caller_dispatch_graph(context)
+    answer = await send_main(
+        context,
+        "GraphOwnershipPlan",
+        {"graph": graph},
+        models=("GraphOwnershipPlanReply",),
+    )
+    return {"value": answer if isinstance(answer, Mapping) else {}}
+
+
+async def apply_ownership(context: Any, params: Mapping[str, Any], op: Any) -> Any:
+    """``access.ownership.apply``: pass the plan digest and approval reference through."""
+    answer = await _rbac_admin(
+        context,
+        {
+            "ApplyOwnership": {
+                "graph": params["graph"],
+                "plan": list(params["plan"]),
+                "plan_digest": params["plan_digest"],
+                "signals_digest": params["signals_digest"],
+            }
+        },
+    )
+    return {"value": answer if isinstance(answer, Mapping) else {}}

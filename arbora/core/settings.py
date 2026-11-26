@@ -567,6 +567,13 @@ class ArboraConfig(BaseModel):
             "log before it is cut with a final error frame."
         ),
     )
+    contract_resource_max_bytes: int = Field(
+        default=8_388_608,
+        ge=1_024,
+        le=67_108_864,
+        alias="ARBORA_CONTRACT_RESOURCE_MAX_BYTES",
+        description="Largest connector contract resource (manifest, ontology or seed) onboarding accepts, in bytes; a larger one refuses CONTRACT_RESOURCE_TOO_LARGE before any engine call.",
+    )
     a2a_inline_media_max_bytes: int = Field(
         default=1_048_576,
         ge=1_024,

@@ -47,6 +47,42 @@ def audit_event(
     return event
 
 
+def run_audit_event(
+    run: Any,
+    caller: RequestCaller,
+    *,
+    op: Any = None,
+    params: Mapping[str, Any] | None = None,
+    result_status: str = "ok",
+) -> dict[str, str]:
+    """The one event of an orchestrated run (ARBORA-IDENTITY-R026.4).
+
+    Keys: ``trace_id``, ``principal``, ``session_id``, ``run_id``, ``tenant``. A run that
+    fails still emits its event with ``result_status``. The event holds no prompt text:
+    only identifiers are read from the run.
+    """
+    from arbora.api.ops.agents import client_session_id
+
+    body = run if isinstance(run, Mapping) else getattr(run, "__dict__", {}) or {}
+    run_id = str(body.get("id") or body.get("run_id") or body.get("task_id") or "")
+    status = body.get("status")
+    state = getattr(status, "state", status)
+    event = {
+        "op": getattr(op, "id", "agents.run"),
+        "trace_id": str(
+            body.get("trace_id") or getattr(caller, "request_id", "") or run_id
+        ),
+        "principal": caller.principal,
+        "session_id": client_session_id(caller),
+        "run_id": run_id,
+        "tenant": caller.tenant,
+        "result_status": result_status
+        if result_status != "ok"
+        else str(getattr(state, "value", state) or result_status),
+    }
+    return event
+
+
 @dataclass(frozen=True, slots=True)
 class EffectReservation:
     """Durable atomic claim; only acquired may dispatch. No local fallback."""

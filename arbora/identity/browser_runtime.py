@@ -304,19 +304,42 @@ class BrowserAuthApplication:
         from .browser import require_mutation_proof, session_from_scope
 
         require_mutation_proof(scope, trusted_origin=self.origin)
+        token = session_from_scope(scope)
+        # Resolve who is signing out before the engine forgets the session
+        # (ARBORA-IDENTITY-R029.5): logout reaches only the caller's own session.
+        state = await self.authority.resolve_session(token)
         await identity_value(
             self.client,
             self.graph,
             {
                 "family": "session",
                 "op": "revoke",
-                "request": {"session_token": session_from_scope(scope)},
+                "request": {"session_token": token},
             },
             "done",
         )
+        self._stop_leases(state, token)
         response = Response(status_code=204)
         _clear_cookie(response)
         return response
+
+    def _stop_leases(self, state: Any, token: str | None) -> None:
+        """Close every live run lease of the signed-out caller and audit it once."""
+        from arbora.security.session_revocation import revoke_own_session
+
+        resolution = getattr(state, "resolution", None)
+        if resolution is None:
+            return
+        import hashlib
+
+        principal = str(resolution.principal_id)
+        revoke_own_session(
+            tenant=str(resolution.request_context["tenant"]),
+            caller_principal=principal,
+            session_principal=principal,
+            session_id=hashlib.sha256(str(token).encode()).hexdigest()[:16],
+            emit=self.ceremonies._audit,
+        )
 
     async def _login(self, scope: Any, body: dict[str, str]) -> Any:
         import secrets
