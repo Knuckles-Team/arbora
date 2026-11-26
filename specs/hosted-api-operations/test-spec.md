@@ -450,7 +450,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R059.2` | Test: `tests/api/test_evolution_metrics_served.py::test_projection_forwards_caller_scope_and_keeps_partial_state` (L3). |
 | `ARBORA-OPS-R059.3` | Test: `tests/api/test_evolution_metrics_served.py::test_denied_or_incomplete_requests_read_nothing` (L3). It asserts zero engine calls on the first two refusals. |
 | `ARBORA-OPS-R059.4` | Test: `tests/api/test_evolution_metrics_served.py::test_dashboard_joins_proposal_to_trace_metrics` (L3). |
-| `ARBORA-OPS-R060.1` | Test: `tests/api/test_sessions_served.py::test_models_round_trip_rust_vectors_and_bound_page_size` (L1). |
+| `ARBORA-OPS-R060.1` | Test: `tests/api/test_sessions_served.py::test_models_are_closed_and_bound_page_size` (L1). |
 | `ARBORA-OPS-R060.2` | Test: `tests/api/test_sessions_served.py::test_manifest_and_discovery_status_name_every_declared_harness` (L3). |
 | `ARBORA-OPS-R060.3` | Test: `tests/api/test_sessions_served.py::test_denied_sources_are_partial_without_metadata` (L3). |
 | `ARBORA-OPS-R060.4` | Test: `tests/api/test_sessions_served.py::test_refusals_expose_no_cross_tenant_sessions` (L3). |

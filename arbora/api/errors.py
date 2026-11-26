@@ -57,6 +57,8 @@ class ArboraErrorCode(StrEnum):
     AUDIT_CHAIN_BROKEN = "AUDIT_CHAIN_BROKEN"
     CONSOLE_ORIGIN_REQUIRED = "CONSOLE_ORIGIN_REQUIRED"
     MFA_STALE = "MFA_STALE"
+    # A paging cursor the source moved past; the caller restarts the listing.
+    STALE_CURSOR = "STALE_CURSOR"
 
 
 # Wire status and retry posture are part of the closed Arbora vocabulary.
@@ -102,6 +104,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.AUDIT_CHAIN_BROKEN: 409,
     ArboraErrorCode.CONSOLE_ORIGIN_REQUIRED: 403,
     ArboraErrorCode.MFA_STALE: 403,
+    ArboraErrorCode.STALE_CURSOR: 409,
 }
 
 _RETRYABLE = frozenset(
@@ -582,6 +585,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.AUDIT_CHAIN_BROKEN: -32009,
     ArboraErrorCode.CONSOLE_ORIGIN_REQUIRED: -32003,
     ArboraErrorCode.MFA_STALE: -32003,
+    ArboraErrorCode.STALE_CURSOR: -32009,
 }
 
 

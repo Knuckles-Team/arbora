@@ -369,10 +369,10 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T295 ARBORA-OPS-R059.2 Evolution metrics behavior and wiring.
 - [ ] T296 ARBORA-OPS-R059.3 Evolution metrics refusals.
 - [ ] T297 ARBORA-OPS-R059.4 Evolution metrics hot-path proof.
-- [ ] T298 ARBORA-OPS-R060.1 Session and harness models.
-- [ ] T299 ARBORA-OPS-R060.2 Harness manifest and discovery status operations.
+- [x] T298 ARBORA-OPS-R060.1 Session and harness models.
+- [x] T299 ARBORA-OPS-R060.2 Harness manifest and discovery status operations.
 - [x] T300 ARBORA-OPS-R060.3 Session browse, search and cost operations.
-- [ ] T301 ARBORA-OPS-R060.4 Session operation refusals.
+- [x] T301 ARBORA-OPS-R060.4 Session operation refusals.
 - [ ] T302 ARBORA-OPS-R060.5 Session projection hot-path proof.
 - [ ] T303 ARBORA-OPS-R061.1 Usage index models.
 - [ ] T304 ARBORA-OPS-R061.2 Usage index forwarding.
