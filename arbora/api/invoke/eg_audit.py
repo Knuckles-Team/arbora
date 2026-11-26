@@ -77,6 +77,27 @@ class EgAuditAdapter:
             raise ValueError("audit request identity mismatch")
         return {"op": op, "surface": surface, "params_sha256": digest}
 
+    #: The event keys that are evidence (identifiers and counts, never text).
+    EVIDENCE_KEYS = (
+        "screen_verdict",
+        "finding_classes",
+        "rule_ids",
+        "redaction_count",
+        "hooks",
+    )
+
+    @classmethod
+    def _evidence(cls, append: Any, event: Mapping[str, str]) -> dict[str, Any]:
+        """Forward the evidence only when the installed client accepts it.
+
+        ARBORA-OPS-R042.5: the pinned engine ``AuditAppend`` has no evidence
+        field yet; the request is filed for medulla, and nothing is invented.
+        """
+        if "evidence" not in inspect.signature(append).parameters:
+            return {}
+        present = {k: event[k] for k in cls.EVIDENCE_KEYS if k in event}
+        return {"evidence": present} if present else {}
+
     async def _append(
         self,
         event: Mapping[str, str],
@@ -95,9 +116,11 @@ class EgAuditAdapter:
             raise RuntimeError("EG audit client is unavailable")
         from arbora.security.anonymous import client_scope
 
+        extra = self._evidence(append, event)
         with client_scope(client, claim_values(caller.engine_claims)):
             receipt = await append(
                 **fields,
+                **extra,
                 status=status,
                 request_id=self._request_id(event, caller),
                 audit_class=audit_class.value,
