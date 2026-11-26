@@ -7321,6 +7321,7 @@ class MCPMultiplexer:
         mounted = self._mounted_tool_counts()
         snapshot = {
             "catalog_source": "medulla",
+            "catalog_state": self._catalog_state.value,
             "children": {
                 name: {
                     **runtime.status(),

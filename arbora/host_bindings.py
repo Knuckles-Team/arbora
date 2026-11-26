@@ -304,14 +304,11 @@ def _engine_probe(session: Any) -> dict[str, Any]:
 
 
 def _fleet_probe(session: Any) -> dict[str, Any]:
-    from arbora.fleet.health import collect_fleet_health
     from arbora.gateway import fleet as fleet_api
     from arbora.security.session import use_session
 
     def _collect() -> Any:
-        return collect_fleet_health(
-            fleet_api._fleet_authorities(), scope_resolver=fleet_api._tenant_scope
-        )
+        return fleet_api.collect_health()
 
     if session is None:
         snapshot = _collect()
