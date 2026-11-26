@@ -37,6 +37,7 @@ import tempfile
 import time
 import typing as _typing
 from pathlib import Path
+from types import SimpleNamespace
 from urllib.parse import urlsplit
 
 import fastmcp.exceptions as _fastmcp_exceptions
@@ -3764,6 +3765,47 @@ class MCPMultiplexer:
             )
         return validated_headers
 
+    async def _resolve_actor_exchange_bearer(self, cfg: dict) -> dict[str, str] | None:
+        """The one exchange call site of delegated identity (ARBORA-IDENTITY-R028.3).
+
+        An actor-required tool (``requires_actor`` from ``tools/list`` ``_meta``) gets an
+        exchanged bearer for the verified acting user; a refusal makes no connector call
+        and a process credential never stands in.
+        """
+        from arbora.access.delegation import resolve_actor_exchange_bearer
+        from arbora.security.actor_context import current_actor
+        from arbora.security.session import current_session
+
+        needs = cfg.get("requires_actor") is True
+        if not needs:
+            return None
+        session = current_session()
+        actor = current_actor() if session is not None else None
+        caller = None
+        claims = None
+        if actor is not None and session is not None:
+            caller = SimpleNamespace(
+                principal=actor.actor_id,
+                tenant=actor.tenant_id,
+                principal_kind="user"
+                if actor.actor_type.value == "human"
+                else "service",
+                authenticated=actor.authenticated,
+                effective_scopes=frozenset(getattr(session, "scopes", ()) or ()),
+                request_id="",
+            )
+            claims = getattr(self._fleet, "actor_claims", lambda _a: None)(actor)
+        return await resolve_actor_exchange_bearer(
+            str(cfg.get("name", "")),
+            str(cfg.get("tool", "")),
+            needs_actor=needs,
+            caller=caller,
+            claims=claims,
+            connector_client_id=str(cfg.get("client_id") or cfg.get("name") or ""),
+            issuer=getattr(self._fleet, "actor_issuer", None),
+            emit=getattr(self._fleet, "actor_audit", lambda _event: None),
+        )
+
     async def _apply_remote_child_oauth_grant(
         self, cfg: dict, url: str, headers: dict[str, str] | None
     ) -> tuple[dict[str, str] | None, dict[str, str] | None]:
@@ -3774,6 +3816,9 @@ class MCPMultiplexer:
         # (missing/expired/revoked grant) rather than falling back to any
         # shared/service credential; the caller sees that failure as this
         # session never opening, exactly like any other connect failure.
+        actor_headers = await self._resolve_actor_exchange_bearer(cfg)
+        if actor_headers is not None:
+            headers = {**(headers or {}), **actor_headers}
         oauth_grant = await asyncio.to_thread(self._fleet.oauth_brokers.grant, cfg, url)
         if oauth_grant is not None:
             oauth_bearer_headers, discovery_binding = oauth_grant

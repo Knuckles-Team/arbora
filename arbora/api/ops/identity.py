@@ -28,6 +28,10 @@ from arbora.api.registry import (
 )
 from arbora.identity.engine_admin import IdentityRefused
 
+#: The engine replays a session end by its node write key (ARBORA-IDENTITY-R029.5).
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "identity.sessions.revoke": "medulla:CompareAndSetNodeFields"
+}
 ADMIN_SCOPE = "identity:admin"
 SELF_SCOPE = "identity:self"
 _PAGE = 100
@@ -150,6 +154,20 @@ class ModeTransition(_P):
     local_fallback: str | None = Field(default=None, max_length=64)
 
 
+class ClientRef(_P):
+    session_id: str = Field(min_length=1, max_length=256)
+
+
+class ClientsList(_P):
+    limit: int = Field(default=_PAGE, ge=1, le=500)
+    cursor: str | None = Field(default=None, max_length=512)
+
+
+class SessionRevoke(_P):
+    session_id: str = Field(min_length=1, max_length=256)
+    reason: str = Field(default="operator_revoked", max_length=128)
+
+
 class AuditExport(_P):
     from_ms: int = Field(ge=0, alias="from")
     to_ms: int = Field(ge=0, alias="to")
@@ -211,6 +229,96 @@ async def handle_self_sessions_list(
         context, "session", "list", {"id": context.caller.principal}, expect="sessions"
     )
     return {"value": {"sessions": rows}}
+
+
+def _session_rows(blob: Any) -> list[tuple[str, Mapping[str, Any]]]:
+    from arbora.api.ops.workstreams import _props
+
+    rows: list[tuple[str, Mapping[str, Any]]] = []
+    for row in blob or ():
+        if isinstance(row, (list, tuple)) and len(row) == 2:
+            props = _props(row[1])
+            if props is not None:
+                rows.append((str(row[0]), props))
+    return rows
+
+
+def _is_admin(caller: Any) -> bool:
+    """Only the exact administrator scope widens the view (ARBORA-IDENTITY-R026.5)."""
+    return ADMIN_SCOPE in caller.effective_scopes
+
+
+async def handle_clients_list(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> Any:
+    """Own sessions, or every session of the tenant for ``identity:admin``."""
+    from arbora.api.ops._engine import decode, engine_send
+    from arbora.identity.client_session import CLIENT_SESSION_LABEL, visible_sessions
+
+    caller = context.caller
+    raw = decode(
+        await engine_send(
+            context,
+            "GetNodesByLabel",
+            {
+                "label": CLIENT_SESSION_LABEL,
+                "limit": params["limit"],
+                "after": params.get("cursor"),
+            },
+        )
+    )
+    found = _session_rows(raw)
+    shown = visible_sessions(
+        [dict(props, id=node) for node, props in found],
+        principal=str(caller.principal),
+        tenant=str(caller.tenant),
+        admin=_is_admin(caller),
+    )
+    full = len(found) >= params["limit"] and bool(found)
+    return {
+        "value": {
+            "clients": shown,
+            "next_cursor": found[-1][0] if full else None,
+        }
+    }
+
+
+async def handle_clients_get(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> Any:
+    """A foreign or unknown session answers the one ``CLIENT_NOT_FOUND`` denial."""
+    from arbora.api.ops._engine import decode, engine_send
+    from arbora.identity.client_session import session_node_id, visible_sessions
+
+    caller = context.caller
+    node = session_node_id(str(caller.tenant), params["session_id"])
+    raw = decode(
+        await engine_send(context, "GetNodePropertiesBatch", {"node_ids": [node]})
+    )
+    found = _session_rows(raw)
+    shown = visible_sessions(
+        [dict(props, id=n) for n, props in found if n == node],
+        principal=str(caller.principal),
+        tenant=str(caller.tenant),
+        admin=_is_admin(caller),
+    )
+    if not shown:
+        raise OperationRefused("CLIENT_NOT_FOUND")
+    return {"value": {"client": shown[0]}}
+
+
+async def handle_sessions_revoke(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> Any:
+    """Revoke a named session; every live run lease of its principal stops at once."""
+    from arbora.security.session_revocation import revoke_session
+
+    return await revoke_session(
+        context,
+        session_id=params["session_id"],
+        reason=params["reason"],
+        admin=_is_admin(context.caller),
+    )
 
 
 async def handle_users_list(context: Any, params: Mapping[str, Any], op: OpSpec) -> Any:
@@ -660,6 +768,9 @@ _ALL = frozenset({Surface.MCP, Surface.HTTP, Surface.A2A})
 _TABLE: tuple[tuple[str, str, type[_P], str, str], ...] = (
     ("identity.self.get", "handle_self_get", Empty, "Read the caller's own identity record", "self"),
     ("identity.self.sessions.list", "handle_self_sessions_list", Empty, "List the caller's own sessions", "self"),
+    ("identity.clients.list", "handle_clients_list", ClientsList, "List the caller's own client sessions", "self"),
+    ("identity.clients.get", "handle_clients_get", ClientRef, "Read one of the caller's own client sessions", "self"),
+    ("identity.sessions.revoke", "handle_sessions_revoke", SessionRevoke, "Revoke a named session and stop its live runs", "admin"),
     ("identity.users.list", "handle_users_list", UsersList, "List users, optionally filtered by text", "read"),
     ("identity.users.get", "handle_users_get", UserRef, "Read one user", "read"),
     ("identity.users.create", "handle_users_create", UserCreate, "Create a user", "admin"),

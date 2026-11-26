@@ -44,6 +44,14 @@ def main() -> None:
 
     if print_usage_or_version(sys.argv[1:]):
         return
+    if sys.argv[1:2] == ["token"]:
+        from arbora.identity.client_enrollment_cli import token_main
+
+        raise SystemExit(token_main(sys.argv[2:]))
+    if sys.argv[1:3] == ["clients", "enroll"]:
+        from arbora.identity.client_enrollment_cli import enroll_main
+
+        raise SystemExit(enroll_main(sys.argv[3:]))
     if sys.argv[1:3] == ["identity", "reconcile"]:
         from arbora.identity.client_contract import reconcile_command
 

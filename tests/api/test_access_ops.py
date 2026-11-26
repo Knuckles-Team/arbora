@@ -173,3 +173,51 @@ async def test_surface_refusal_keeps_its_stable_code(monkeypatch) -> None:
             context, {"elevation_id": "e1", "request_digest": "d"}, None
         )
     assert raised.value.code == "ELEVATION_STALE_VIEW"
+
+
+class _Engine:
+    def __init__(self) -> None:
+        self.sent: list[tuple[str, dict]] = []
+
+    async def send_main(self, context, method, params, **kwargs):
+        self.sent.append((method, params))
+        return {"ok": True}
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R651")
+async def test_share_grant_and_revoke_reach_engine(monkeypatch) -> None:
+    from arbora.api.ops import access
+
+    engine = _Engine()
+    monkeypatch.setattr("arbora.pin_lag.medulla.send_main", engine.send_main)
+    context = _context()
+    grant = {"node_id": "n1", "scope": "tenant", "grantees": ["person:bob"]}
+    await access.grant_share(context, grant, None)
+    await access.revoke_share(context, {"node_id": "n1"}, None)
+    assert engine.sent == [
+        ("RbacAdmin", {"op": {"ShareGrant": grant}}),
+        ("RbacAdmin", {"op": {"ShareRevoke": {"node_id": "n1"}}}),
+    ]
+    ops = {op.id: op for op in access.operations()}
+    assert ops["access.share.grant"].scopes == frozenset({"access:share"})
+    assert ops["access.share.revoke"].scopes == frozenset({"access:share"})
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R652")
+async def test_ownership_apply_requires_approval(monkeypatch) -> None:
+    from arbora.api.ops import access
+    from arbora.api.registry import Confirm
+
+    engine = _Engine()
+    monkeypatch.setattr("arbora.pin_lag.medulla.send_main", engine.send_main)
+    context = _context()
+    await access.plan_ownership(context, {"graph": "g1"}, None)
+    apply = {"graph": "g1", "plan": [], "plan_digest": "d", "signals_digest": "s"}
+    await access.apply_ownership(context, apply, None)
+    assert engine.sent[0] == ("GraphOwnershipPlan", {"graph": "g1"})
+    assert engine.sent[1] == ("RbacAdmin", {"op": {"ApplyOwnership": apply}})
+    ops = {op.id: op for op in access.operations()}
+    assert ops["access.ownership.plan"].scopes == frozenset({"access:ownership"})
+    assert (
+        ops["access.ownership.apply"].confirm is Confirm.PLAN
+    )  # the approval is the plan

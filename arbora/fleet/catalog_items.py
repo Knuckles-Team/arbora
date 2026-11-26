@@ -45,6 +45,9 @@ class CatalogItem:
     #: goal, topic, tone, style, version and agent definition), as the
     #: connector lists them (ARBORA-FLEET-R076).
     details: Mapping[str, Any] | None = field(default=None, repr=False)
+    #: The connector declared an acting user is required (``tools/list`` ``_meta`` key
+    #: ``team.knuckles/requires_actor``); never read from a connector manifest.
+    requires_actor: bool = field(default=False, repr=False)
 
     def public(self) -> dict[str, Any]:
         result: dict[str, Any] = {
