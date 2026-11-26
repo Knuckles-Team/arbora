@@ -740,7 +740,24 @@ def refusal_detail(exc: BaseException) -> dict[str, str]:
     detail = {"error_type": type(exc).__name__, "error_message": text}
     if code:
         detail["error_code"] = code
-    return detail
+    return {**detail, **_rate_limit_detail(exc)}
+
+
+def _rate_limit_detail(exc: BaseException) -> dict[str, Any]:
+    """The PROVISIONING_RATE_LIMITED mapping: the limit, the window and the wait.
+
+    ARBORA-DEPLOY-R019.3: provisioning allows a fixed number of runs per window
+    for each target; the refusal names all three numbers.
+    """
+    from arbora.api.contracts.provisioning import ProvisioningRateLimited
+
+    if not isinstance(exc, ProvisioningRateLimited):
+        return {}
+    return {
+        "limit": exc.limit,
+        "window_seconds": int(exc.window_s),
+        "retry_after_seconds": int(exc.retry_after_s) + 1,
+    }
 
 
 def main(argv: list[str] | None = None) -> int:

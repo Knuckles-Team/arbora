@@ -1,0 +1,17 @@
+[
+  {
+    "operation_id": "deploy.placement.apply",
+    "clustered_result": "CONFIRMATION_REQUIRED",
+    "single_image_result": "CONFIRMATION_REQUIRED"
+  },
+  {
+    "operation_id": "capacity.adjust.apply",
+    "clustered_result": "CONFIRMATION_REQUIRED",
+    "single_image_result": "CONFIRMATION_REQUIRED"
+  },
+  {
+    "operation_id": "deploy.ontology.import",
+    "clustered_result": "INVALID_ARGUMENT",
+    "single_image_result": "INVALID_ARGUMENT"
+  }
+]
