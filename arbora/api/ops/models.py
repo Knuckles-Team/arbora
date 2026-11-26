@@ -1,10 +1,10 @@
-"""Model list read operation (ARBORA-OPS-R024.5.1).
+"""Model read operations (ARBORA-OPS-R878, R922.2).
 
-``models.list`` returns the deployment's configured chat or embedding models
-as identity rows, so a model picker works for an ordinary user without the
-admin ``ops:read`` scope that ``ops.config`` needs. Only the identity fields
-are projected: endpoints, key references and headers never leave the
-deployment configuration.
+``models.list`` lists the ``ModelProfile`` components the engine holds and the verified
+caller may see (ARBORA-OPS-R878). The graph is the authority: there is no configuration
+read, so a profile added to the graph shows at once and a foreign tenant's profile never
+does. Only identity fields are projected. ``models.get`` reads one configured model's
+editable fields for the admin editor (ARBORA-OPS-R922.2).
 """
 
 from __future__ import annotations
@@ -12,24 +12,26 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Mapping
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 from arbora.api.ops._common import Params, build_read_op
+from arbora.api.ops._engine import decode, engine_send
 from arbora.api.registry import OpSpec
 
-#: The only fields a model row exposes.
-MODEL_FIELDS = ("id", "name", "provider", "model", "model_id", "description")
-#: An existing engine scope of the user class (the engine registry owns scope names).
-MODELS_READ_SCOPE = "registry:read"
+#: The engine label of the model profile components.
+MODEL_PROFILE_LABEL = "ModelProfile"
+MODELS_READ_SCOPE = "kg:read"
+#: The most rows one page returns.
+MAX_MODELS = 200
 
-ModelKind = Literal["chat", "embedding"]
 _SETTING = {"chat": "chat_models", "embedding": "embedding_models"}
 
 
 class ModelsListParams(Params):
-    kind: ModelKind = "chat"
+    limit: int = Field(default=MAX_MODELS, ge=1, le=MAX_MODELS)
+    cursor: str | None = Field(default=None, min_length=1, max_length=512)
 
 
 class ModelsListResult(Params):
@@ -72,19 +74,39 @@ def _entries(raw: Any) -> list[Mapping[str, Any]]:
     return rows
 
 
+def _profile(row: Any) -> dict[str, Any] | None:
+    """One profile as ``id``, ``display_name`` and ``provider``; any other row is skipped."""
+    if not (isinstance(row, (list, tuple)) and len(row) == 2):
+        return None
+    node_id, props = row
+    if isinstance(props, BaseModel):
+        props = props.model_dump(mode="json")
+    if not isinstance(props, Mapping):
+        return None
+    return {
+        "id": str(node_id),
+        "display_name": str(props.get("display_name") or props.get("name") or ""),
+        "provider": str(props.get("provider") or ""),
+    }
+
+
 async def handle_models_list(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """List the configured models of one kind as identity rows."""
-    from arbora.core.settings import runtime_config
-
-    kind = params.get("kind", "chat")
-    raw = getattr(runtime_config, _SETTING[kind], None)
-    models = [
-        {name: entry[name] for name in MODEL_FIELDS if name in entry}
-        for entry in _entries(raw)
-    ]
-    return {"value": {"kind": kind, "models": models}}
+    """List the profiles the engine shows this caller; arbora filters nothing itself."""
+    limit = int(params.get("limit", MAX_MODELS))
+    request: dict[str, Any] = {"label": MODEL_PROFILE_LABEL, "limit": limit + 1}
+    if params.get("cursor"):
+        request["after"] = params["cursor"]
+    rows = list(decode(await engine_send(context, "GetNodesByLabel", request)) or ())
+    profiles = [p for p in map(_profile, rows[:limit]) if p is not None]
+    more = len(rows) > limit
+    return {
+        "value": {
+            "models": profiles,
+            "next_cursor": profiles[-1]["id"] if more and profiles else None,
+        }
+    }
 
 
 def _split_fields(
@@ -150,8 +172,8 @@ def operations() -> tuple[OpSpec, ...]:
     return (
         build_read_op(
             op_id="models.list",
-            summary="List the configured chat or embedding models for a model picker",
-            examples=("which chat models can I pick",),
+            summary="List the model profiles the caller may prefer",
+            examples=("which model profiles can I pick",),
             params=ModelsListParams,
             result=ModelsListResult,
             handler="arbora.api.ops.models.handle_models_list",
@@ -172,7 +194,8 @@ def operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 __all__ = [
-    "MODEL_FIELDS",
+    "MAX_MODELS",
+    "MODEL_PROFILE_LABEL",
     "ModelsGetParams",
     "ModelsListParams",
     "handle_models_get",
