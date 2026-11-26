@@ -79,6 +79,10 @@ class FleetStatusParams(_Params):
     require_full_coverage: bool = False
 
 
+class FleetConnectionStateParams(_Params):
+    servers: tuple[str, ...] = Field(default=(), max_length=64)
+
+
 class FleetLoadParams(_Params):
     items: tuple[str, ...] = Field(default=(), max_length=256)
     groups: tuple[str, ...] = ()
@@ -238,6 +242,38 @@ async def handle_fleet_operation(
     else:
         raise ValueError("unknown fleet operation")
     return {"value": result}
+
+
+#: The fields of one child's health a connection-state row carries. Nothing a
+#: credential or an endpoint could sit in is projected.
+_CONNECTION_FIELDS = ("state", "breaker", "restart_count", "mounted_tools")
+
+
+async def handle_connection_state(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Per-connector connection state, read from the one child-health producer.
+
+    ARBORA-FLEET-R089: each row is one connector the multiplexer runs, with the
+    state the runtime reports. A connector that is only registered and has no
+    running child has no row; absence is not a state Arbora invents.
+    """
+    gateway = context.services.get("fleet_gateway")
+    if gateway is None:
+        raise RuntimeError("fleet gateway is not bound")
+    snapshot = await gateway.status(context.caller, servers=tuple(params["servers"]))
+    children = snapshot.get("children") if isinstance(snapshot, Mapping) else None
+    if not isinstance(children, Mapping):
+        raise RuntimeError("fleet status carries no children")
+    rows = [
+        {
+            "server": name,
+            **{key: child[key] for key in _CONNECTION_FIELDS if key in child},
+        }
+        for name, child in sorted(children.items())
+        if isinstance(child, Mapping)
+    ]
+    return {"connectors": rows}
 
 
 async def handle_fleet_call(
@@ -476,6 +512,17 @@ def operations() -> tuple[OpSpec, ...]:
             effect=Effect.READ,
         ),
         OpSpec(
+            id="fleet.connections.state",
+            verb=Verb.ASK,
+            summary="Show each running connector's connection state, without credentials",
+            examples=("which connectors are connected",),
+            params=FleetConnectionStateParams,
+            result=FleetResult,
+            binding=Composite(handler="arbora.api.ops.fleet.handle_connection_state"),
+            scopes=frozenset({"mcp:discover"}),
+            effect=Effect.READ,
+        ),
+        OpSpec(
             id="fleet.status",
             verb=Verb.ASK,
             summary="Show child fleet health and this session's loaded items",
@@ -494,6 +541,7 @@ specs = operations
 
 __all__ = [
     "FleetCallParams",
+    "FleetConnectionStateParams",
     "FleetCatalogParams",
     "FleetCatalogRefreshParams",
     "FleetLoadParams",
@@ -507,6 +555,7 @@ __all__ = [
     "FleetSurfaceListParams",
     "FleetUnloadParams",
     "ServiceChildOutcomeUnknown",
+    "handle_connection_state",
     "handle_fleet_call",
     "handle_fleet_operation",
     "handle_pack_status",
