@@ -17,6 +17,7 @@ reply masks any value that is not one.
 
 from __future__ import annotations
 
+import inspect
 import re
 import time
 from collections.abc import Callable, Mapping
@@ -111,7 +112,7 @@ def _ms(moment: str, field_name: str) -> int:
 
 # --- engine-bound operations ----------------------------------------------
 
-Build = Callable[[Any, Mapping[str, Any]], dict[str, Any]]
+Build = Callable[[Any, Mapping[str, Any]], Any]
 Project = Callable[[Any, Mapping[str, Any]], dict[str, Any]]
 
 
@@ -155,6 +156,21 @@ def _page(answer: Any, key: str) -> dict[str, Any]:
         "next_cursor": answer.get("next_cursor")
         if isinstance(answer, Mapping)
         else None,
+    }
+
+
+async def _calendar_request(ctx: Any, p: Mapping[str, Any]) -> dict[str, Any]:
+    """``AnalyticsJob`` ``ScheduleCalendar`` over the caller's graph (at most 31 days)."""
+    from arbora.api.invoke.bootstrap import caller_dispatch_graph
+
+    return {
+        "op": {
+            "ScheduleCalendar": {
+                "graph": await caller_dispatch_graph(ctx),
+                "from_ms": _ms(p["from_"] if "from_" in p else p["from"], "from"),
+                "to_ms": _ms(p["to"], "to"),
+            }
+        }
     }
 
 
@@ -214,12 +230,10 @@ _ENGINE: dict[str, Engine] = {
         "FleetServerRegistry", _registry_op("get_config"), _value
     ),
     "schedule.tasks.read": Engine(
-        "ScheduleCalendar",
-        lambda ctx, p: {
-            "from_ms": _ms(p["from_"] if "from_" in p else p["from"], "from"),
-            "to_ms": _ms(p["to"], "to"),
-        },
+        "AnalyticsJob",
+        _calendar_request,
         _calendar,
+        models=("JobOpScheduleCalendar",),
     ),
     "ops.maintenance.status": Engine("MaintainStatus", lambda ctx, p: {}, _value),
     "ops.maintenance.run": Engine(
@@ -238,9 +252,11 @@ _ENGINE: dict[str, Engine] = {
         lambda ctx, p: {
             "op": {
                 "op": "list",
-                "tenant_id": _tenant(ctx),
-                "limit": p["limit"],
-                **({"cursor": p["cursor"]} if p.get("cursor") else {}),
+                "request": {
+                    "tenant_id": _tenant(ctx),
+                    "limit": p["limit"],
+                    **({"cursor": p["cursor"]} if p.get("cursor") else {}),
+                },
             }
         },
         lambda answer, p: _page(answer, "templates"),
@@ -270,6 +286,8 @@ async def _send(context: Any, spec: Engine, params: Mapping[str, Any]) -> Any:
     except PinLagUnavailable as error:
         raise refusal(error) from error
     request = spec.build(context, params)
+    if inspect.isawaitable(request):
+        request = await request
     return await engine_send(context, spec.method, request, idempotent=spec.idempotent)
 
 

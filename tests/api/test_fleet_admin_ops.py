@@ -77,7 +77,7 @@ def test_register_server_needs_plan_confirmation_and_hides_secret_values(
         ("fleet.servers.config.get", "FleetServerRegistry", {"name": "x"}),
         (
             "schedule.tasks.read",
-            "ScheduleCalendar",
+            "JobOpScheduleCalendar",
             {"from_": "2026-11-01T00:00:00Z", "to": "2026-11-02T00:00:00Z"},
         ),
         ("ops.maintenance.status", "MaintainStatus", {}),
@@ -98,16 +98,24 @@ async def test_schedule_maintenance_and_code_read_through_the_engine(
 ) -> None:
     engine = EngineDouble(monkeypatch)
     engine.serve(
-        "ScheduleCalendar",
+        "AnalyticsJob",
         lambda p: {
-            "entries": [{"schedule_id": "s", "at_ms": p["from_ms"]}],
+            "entries": [
+                {"schedule_id": "s", "at_ms": p["op"]["ScheduleCalendar"]["from_ms"]}
+            ],
             "logs": [],
         },
+        "JobOpScheduleCalendar",
     )
     engine.serve("MaintainStatus", lambda p: {"state": "idle", "pending": 0})
     engine.serve("Maintain", lambda p: {"evicted": 0})
     engine.serve("CodeContext", lambda p: {"items": [{"symbol": p["symbol"]}]})
     engine.install(surface)
+
+    async def graph(_context: Any) -> str:
+        return "graph:one"
+
+    monkeypatch.setattr("arbora.api.invoke.bootstrap.caller_dispatch_graph", graph)
     monkeypatch.setattr(surface, "_now_ms", lambda: 1_000)
     calendar = await surface.handle_engine(
         context(),
@@ -115,7 +123,7 @@ async def test_schedule_maintenance_and_code_read_through_the_engine(
         _op("schedule.tasks.read"),
     )
     assert calendar["entries"][0]["at_ms"] == 1_000
-    assert engine.sent[0][1] == {"from_ms": 1_000, "to_ms": 2_000}
+    assert engine.sent[0][1]["op"]["ScheduleCalendar"]["to_ms"] == 2_000
     with pytest.raises(OperationRefused) as bad:
         await surface.handle_engine(
             context(), {"from_": "soon", "to": "later"}, _op("schedule.tasks.read")

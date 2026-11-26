@@ -40,7 +40,7 @@ async def test_templates_list_reads_engine_library_and_fails_closed(
     engine.install(surface)
     page = await surface.handle_engine(context(), {"limit": 10, "cursor": None}, listed)
     assert page == {"templates": [{"template_id": "t1"}], "next_cursor": "c2"}
-    assert engine.sent[0][1]["op"]["tenant_id"] == "tenant:one"
+    assert engine.sent[0][1]["op"]["request"]["tenant_id"] == "tenant:one"
     got = await surface.handle_engine(
         context(), {"template_id": "t1"}, _OPS["roles.templates.get"]
     )
