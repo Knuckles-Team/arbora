@@ -119,6 +119,7 @@ _CURATED_SCOPES = (
     "registry:read",
     "identity:self",
     "identity:admin",
+    "query:write",
     "profile:write",
     "telemetry:write",
 )
