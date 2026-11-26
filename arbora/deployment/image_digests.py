@@ -1,9 +1,19 @@
-"""Check explicitly supplied, rendered Kubernetes YAML for digest-pinned images.
+"""Check explicitly supplied deployment YAML for digest-pinned images.
 
-Run ``python scripts/check_deployment_image_digests.py rendered.yaml [...]``.
-Exit 0 means every checked image passed; exit 1 means an input or policy error.
-At least one container across the input files must be checked. Non-workload
+Run ``python -m arbora.deployment.image_digests rendered.yaml [--set NAME=value]``
+(the ``arbora-image-digests`` console script is the same entry). Exit 0 means
+every checked image passed; exit 1 means an input or policy error. At least one
+container or service across the input files must be checked. Non-workload
 resources are ignored; this is not a general Kubernetes schema validator.
+
+A document with a top-level ``services`` mapping and no ``kind`` is a Compose
+or Swarm file (ARBORA-DEPLOY-R017.9). Each service ``image`` is a literal pin,
+or in template mode exactly ``${NAME:?message}`` (pin required at deploy time)
+or ``${NAME:-default}`` whose default is itself a pin. A bare ``${NAME}`` is
+refused. ``--set NAME=value`` substitutes ``value`` for ``NAME`` before
+validation (resolve mode); a name no file uses is refused ``UNUSED_SET_NAME``.
+Refusal codes close each message: ``IMAGE_NOT_DIGEST_PINNED``,
+``SERVICE_IMAGE_MISSING``, ``IMAGE_VARIABLE_UNPINNED``, ``UNSUPPORTED_DOCUMENT``.
 
 Only Pod, Deployment, StatefulSet, DaemonSet, ReplicaSet, Job, CronJob and
 recursive List resources are traversed, checking containers and initContainers.
@@ -20,6 +30,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +44,9 @@ _REGISTRY = rf"{_HOST_LABEL}(?:\.{_HOST_LABEL})*(?::[0-9]+)?"
 _IMAGE = re.compile(
     rf"(?P<repository>(?:{_REGISTRY}/)?{_COMPONENT}(?:/{_COMPONENT})*)"
     r"@sha256:[0-9a-f]{64}"
+)
+_VARIABLE = re.compile(
+    r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?P<form>:\?|:-)?(?P<arg>[^}]*)\}"
 )
 _POD_PATHS = {
     "Pod": ("spec",),
@@ -101,15 +115,91 @@ def _check_containers(pod: dict[str, Any], location: str) -> int:
                 raise ValueError(
                     f"{entry_location}.image: expected repository@sha256:"
                     "<64 lowercase hex> with no tag (repository max 255 characters)"
+                    " (IMAGE_NOT_DIGEST_PINNED)"
                 )
             count += 1
     return count
 
 
+def _substitute(image: str, values: Mapping[str, str], used: set[str]) -> str:
+    """Replace each variable named in ``values``; record which names were used."""
+
+    def replace(match: re.Match[str]) -> str:
+        name = match["name"]
+        if name not in values:
+            return match.group(0)
+        used.add(name)
+        return values[name]
+
+    return _VARIABLE.sub(replace, image)
+
+
+def _service_image(image: str, location: str) -> None:
+    variable = _VARIABLE.fullmatch(image)
+    if variable is None:
+        if not _valid_image(image):
+            raise ValueError(
+                f"{location}: expected repository@sha256:<64 lowercase hex> "
+                "with no tag (IMAGE_NOT_DIGEST_PINNED)"
+            )
+        return
+    if variable["form"] == ":?":
+        return
+    if variable["form"] == ":-":
+        if not _valid_image(variable["arg"]):
+            raise ValueError(
+                f"{location}: the default of ${{{variable['name']}:-...}} must be "
+                "a digest reference (IMAGE_NOT_DIGEST_PINNED)"
+            )
+        return
+    raise ValueError(
+        f"{location}: ${{{variable['name']}}} carries no pin; use "
+        f"${{{variable['name']}:?message}} (IMAGE_VARIABLE_UNPINNED)"
+    )
+
+
+def _check_services(
+    resource: dict[str, Any],
+    location: str,
+    values: Mapping[str, str],
+    used: set[str],
+) -> int:
+    services = _mapping(resource.get("services"), f"{location}.services")
+    count = 0
+    for name, entry in services.items():
+        service_location = f"{location}.services.{name}"
+        service = _mapping(entry, service_location)
+        image = service.get("image")
+        if image is None:
+            raise ValueError(
+                f"{service_location}.image: missing (SERVICE_IMAGE_MISSING)"
+            )
+        if not isinstance(image, str):
+            raise ValueError(
+                f"{service_location}.image: expected repository@sha256:"
+                "<64 lowercase hex> (IMAGE_NOT_DIGEST_PINNED)"
+            )
+        _service_image(_substitute(image, values, used), f"{service_location}.image")
+        count += 1
+    return count
+
+
 def _check_resource(
-    value: object, location: str, ancestors: frozenset[int] = frozenset()
+    value: object,
+    location: str,
+    ancestors: frozenset[int] = frozenset(),
+    values: Mapping[str, str] | None = None,
+    used: set[str] | None = None,
 ) -> int:
     resource = _mapping(value, location)
+    if "kind" not in resource and isinstance(resource.get("services"), dict):
+        return _check_services(
+            resource, location, values or {}, used if used is not None else set()
+        )
+    if "kind" not in resource and "services" not in resource:
+        raise ValueError(
+            f"{location}: expected a Kubernetes or Compose document (UNSUPPORTED_DOCUMENT)"
+        )
     if id(resource) in ancestors:
         raise ValueError(f"{location}: cyclic List aliases are unsupported")
     kind = resource.get("kind")
@@ -126,7 +216,7 @@ def _check_resource(
             raise ValueError(f"{location}.items: expected a list")
         lineage = ancestors | {id(resource)}
         return sum(
-            _check_resource(item, f"{location}.items[{index}]", lineage)
+            _check_resource(item, f"{location}.items[{index}]", lineage, values, used)
             for index, item in enumerate(items)
         )
     if kind not in _POD_PATHS:
@@ -138,10 +228,20 @@ def _check_resource(
     return _check_containers(pod, location)
 
 
-def check_file(path: Path) -> tuple[int, list[str]]:
-    """Return the checked count and diagnostics, including file/document context."""
+def check_file(
+    path: Path,
+    values: Mapping[str, str] | None = None,
+    used: set[str] | None = None,
+) -> tuple[int, list[str]]:
+    """Return the checked count and diagnostics, including file/document context.
+
+    ``values`` is the resolve-mode substitution; ``used`` collects the names
+    the file referenced so the caller can refuse an unused one.
+    """
     count = 0
     errors: list[str] = []
+    values = values or {}
+    used = used if used is not None else set()
     try:
         with path.open(encoding="utf-8") as stream:
             for index, resource in enumerate(
@@ -152,7 +252,9 @@ def check_file(path: Path) -> tuple[int, list[str]]:
                 if resource is None:
                     continue
                 try:
-                    count += _check_resource(resource, location)
+                    count += _check_resource(
+                        resource, location, values=values, used=used
+                    )
                 except ValueError as exc:
                     errors.append(str(exc))
     except (OSError, UnicodeError, yaml.YAMLError, RecursionError) as exc:
@@ -160,18 +262,47 @@ def check_file(path: Path) -> tuple[int, list[str]]:
     return count, errors
 
 
+def check_paths(
+    paths: Sequence[Path], values: Mapping[str, str] | None = None
+) -> tuple[int, list[str]]:
+    """Check every file; refuse zero checked images and any unused ``values`` name."""
+    total = 0
+    errors: list[str] = []
+    used: set[str] = set()
+    for path in paths:
+        count, file_errors = check_file(path, values, used)
+        total += count
+        errors.extend(file_errors)
+    errors.extend(
+        f"{name}: not used by any supplied file (UNUSED_SET_NAME)"
+        for name in sorted(set(values or {}) - used)
+    )
+    if not total and not errors:
+        errors.append("no containers checked across the supplied rendered YAML files")
+    return total, errors
+
+
+def _assignment(text: str) -> tuple[str, str]:
+    name, separator, value = text.partition("=")
+    if not separator or not _VARIABLE.fullmatch("${" + name + "}"):
+        raise argparse.ArgumentTypeError(f"expected NAME=value, got {text!r}")
+    return name, value
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("paths", nargs="+", type=Path, help="rendered YAML files")
+    parser.add_argument(
+        "--set",
+        dest="values",
+        action="append",
+        default=[],
+        type=_assignment,
+        metavar="NAME=value",
+        help="substitute value for ${NAME} before validation (repeatable)",
+    )
     args = parser.parse_args(argv)
-    total = 0
-    errors: list[str] = []
-    for path in args.paths:
-        count, file_errors = check_file(path)
-        total += count
-        errors.extend(file_errors)
-    if not total and not errors:
-        errors.append("no containers checked across the supplied rendered YAML files")
+    total, errors = check_paths(args.paths, dict(args.values))
     if errors:
         for error in errors:
             print(error, file=sys.stderr)

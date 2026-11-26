@@ -123,6 +123,8 @@ _CURATED_SCOPES = (
     "node:read",
     "edge:read",
     "blob:read",
+    "blob:write",
+    "graph:write",
     "agent:pack-control",
     "fleet:control",
     "mcp:admin",
