@@ -180,8 +180,12 @@ class WorkItemA2AAuthority:
         executor: Any = None,
         task_plan_config: Any = None,
         hosted_invocation: Any = None,
+        events: Any = None,
     ) -> None:
         self._engine_provider = engine_provider
+        #: The durable event publisher (ARBORA-A2A-R001.2); ``None`` publishes
+        #: nothing and leaves streaming unserved.
+        self.events = events
         self._executor = executor
         self._origins = origins
         # Runs admitted by a non-blocking send (ARBORA-A2A-R001.6). The set
@@ -420,6 +424,43 @@ class WorkItemA2AAuthority:
                 ) from exc
             raise
 
+    async def _publish(
+        self,
+        item_id: str,
+        claim: Any,
+        *,
+        task_id: str,
+        context_id: str,
+        kind: str,
+        state: str | None = None,
+        final: bool = False,
+        reply: str | None = None,
+    ) -> None:
+        """Write one A2A-visible run event under the run's lease fence."""
+        if self.events is None:
+            return
+        draft: dict[str, Any] = {
+            "task_id": task_id,
+            "context_id": context_id,
+            "kind": kind,
+            "state": state,
+            "final": final,
+        }
+        if reply is not None:
+            draft["artifact"] = {
+                "artifactId": f"{task_id}:reply",
+                "name": "reply",
+                "parts": [{"kind": "text", "text": reply}],
+            }
+        await self.events.publish(item_id, draft, claim=claim)
+
+    async def owned_item(self, task_id: str) -> dict[str, Any] | None:
+        """The caller's own task record, or ``None`` for an absent or foreign task."""
+        try:
+            return await asyncio.to_thread(self._authorized_item, task_id, "kg:read")
+        except ValueError:
+            return None
+
     def _agent_executor(self) -> Any:
         if self._executor is None:
             from arbora.agent_runs import AgentRunPort
@@ -525,6 +566,15 @@ class WorkItemA2AAuthority:
             return None
         outcome, result_ref, error_ref = "succeeded", None, None
         usage = None
+        reply: str | None = None
+        await self._publish(
+            item_id,
+            claim,
+            task_id=task_id,
+            context_id=context_id,
+            kind="status-update",
+            state="working",
+        )
         try:
             result = await self._execute_claimed_run(
                 work_engine,
@@ -545,6 +595,8 @@ class WorkItemA2AAuthority:
             )
             usage = getattr(result, "usage", None)
             remember_task_output(task_id, getattr(result, "output", None))
+            output = getattr(result, "output", None)
+            reply = output if isinstance(output, str) and output else None
         except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
             logging.getLogger(__name__).warning(
                 "A2A run %s failed: %s: %s", item_id, type(exc).__name__, str(exc)[:300]
@@ -558,6 +610,24 @@ class WorkItemA2AAuthority:
             error_ref = persistence_reference(
                 "error", type(exc).__name__, namespace="arbora-a2a"
             )
+        if reply is not None:
+            await self._publish(
+                item_id,
+                claim,
+                task_id=task_id,
+                context_id=context_id,
+                kind="artifact-update",
+                reply=reply[:_MAX_OUTPUT_CHARS],
+            )
+        await self._publish(
+            item_id,
+            claim,
+            task_id=task_id,
+            context_id=context_id,
+            kind="status-update",
+            state="completed" if outcome == "succeeded" else "failed",
+            final=True,
+        )
         completion_kwargs: dict[str, Any] = {}
         if self.task_plan_config is not None:
             completion_kwargs["run_completion"] = {
@@ -1385,6 +1455,15 @@ class WorkItemA2AAuthority:
         ):
             raise A2ATaskNotCancelable("A2A task is not cancelable")
         self._origins.revoke(cancellation_session, run_id)
+        await self._publish(
+            item_id,
+            None,
+            task_id=task_id,
+            context_id=str(item["metadata"].get("a2a_context_id") or ""),
+            kind="status-update",
+            state="canceled",
+            final=True,
+        )
         current = await asyncio.to_thread(
             work_items.get_work_item, work_engine, item_id
         )

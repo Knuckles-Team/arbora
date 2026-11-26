@@ -26,6 +26,7 @@ from arbora.api.invoke.executor import (
     ServiceClaims,
     SubjectCheck,
 )
+from arbora.api.invoke.hooks import load_hooks
 from arbora.api.invoke.pipeline import InvokeServices, OperationRefused
 from arbora.api.invoke.plan import EgPlanStore
 from arbora.api.invoke.steps import (
@@ -340,6 +341,9 @@ def build_invoke_services(
     """
 
     audit = EgAuditAdapter(audit_client_factory)
+    # ARBORA-OPS-R009.6: the operator hooks are validated against the registry
+    # here; an invalid configuration stops the host start (``hook_invalid``).
+    changes.setdefault("hooks", load_hooks(registry))
     return InvokeServices(
         registry=registry,
         runtime=runtime,

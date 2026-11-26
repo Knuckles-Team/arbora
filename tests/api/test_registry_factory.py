@@ -10,6 +10,7 @@ import pytest
 from arbora.api.ops import (
     a2a_media,
     access,
+    agent_library,
     agents,
     approvals,
     assistants,
@@ -119,6 +120,8 @@ _CURATED_SCOPES = (
     "node:read",
     "edge:read",
     "blob:read",
+    "blob:write",
+    "graph:write",
     "agent:pack-control",
     "fleet:control",
     "mcp:admin",
@@ -131,6 +134,7 @@ _CURATED_SCOPES = (
     "profile:write",
     "telemetry:write",
     "agent:library-read",
+    "agent:library-write",
 )
 
 _ENGINE_METHODS = {
@@ -180,6 +184,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
     assert first.digest == second.digest
     declared = (
         *access.operations(),
+        *agent_library.operations(),
         *agents.operations(),
         *approvals.operations(),
         *assistants.operations(),

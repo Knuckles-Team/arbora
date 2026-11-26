@@ -136,6 +136,8 @@ class TargetInputs:
     orchestrator: str
     namespace: str
     authority: str  # genesis.yaml run_plan.substrate_authority
+    runtime: str  # "docker" | "podman" (ARBORA-DEPLOY-R013.4)
+    privilege: str  # "rootful" | "rootless"
     cluster_context_ref: str | None  # a kubeconfig CONTEXT NAME, never credentials
     node_selector: Mapping[str, str]
 
@@ -308,6 +310,8 @@ _TARGET_KEYS = (
     "orchestrator",
     "namespace",
     "authority",
+    "runtime",
+    "privilege",
     "cluster_context_ref",
     "node_selector",
 )
@@ -484,7 +488,7 @@ def _environment_from_mapping(raw: Any, source: Path) -> EnvironmentInputs:
 def _target_from_mapping(raw: Any, source: Path) -> TargetInputs:
     m = _SectionMapping.from_raw(raw, _TARGET_KEYS, "target", source)
     return TargetInputs(
-        **m.strings("orchestrator", "namespace", "authority"),
+        **m.strings("orchestrator", "namespace", "authority", "runtime", "privilege"),
         cluster_context_ref=m.optional_string("cluster_context_ref"),
         node_selector=m.string_mapping("node_selector"),
     )
@@ -1005,6 +1009,69 @@ def _validate_runtime_paths(profile: EnvironmentProfile, source: Path) -> None:
     _validate_runtime_path_entries(profile, source, writable_mount_paths)
 
 
+#: The placement target each genesis orchestrator deploys to.
+ORCHESTRATOR_TARGET: Mapping[str, str] = {
+    "bare-metal": "standalone",
+    "podman": "standalone",
+    "docker-compose": "compose",
+    "podman-compose": "compose",
+    "docker-swarm": "swarm",
+    "kubernetes": "helm",
+}
+#: The container runtimes and privileges a profile may declare.
+RUNTIMES: tuple[str, ...] = ("docker", "podman")
+PRIVILEGES: tuple[str, ...] = ("rootful", "rootless")
+#: Privileges each target has an adapter for: standalone and compose cover all
+#: four runtime-and-privilege cells each; helm and swarm are rootful only.
+TARGET_PRIVILEGES: Mapping[str, tuple[str, ...]] = {
+    "standalone": PRIVILEGES,
+    "compose": PRIVILEGES,
+    "helm": ("rootful",),
+    "swarm": ("rootful",),
+}
+#: A runtime an orchestrator names is the only one it runs on; never substituted.
+ORCHESTRATOR_RUNTIME: Mapping[str, str] = {
+    "docker-compose": "docker",
+    "docker-swarm": "docker",
+    "podman": "podman",
+    "podman-compose": "podman",
+}
+
+
+def target_cell_refusal(orchestrator: str, runtime: str, privilege: str) -> str | None:
+    """Why a deployment cell has no adapter, else ``None`` (the cell is served).
+
+    The refusal is ``unsupported_target`` followed by the cell and the reason;
+    an unknown value is refused, and another runtime is never substituted.
+    """
+    target = ORCHESTRATOR_TARGET.get(orchestrator)
+    cell = f"{target or orchestrator}/{runtime}/{privilege}"
+    if target is None:
+        return f"unsupported_target: orchestrator {orchestrator!r} has no target"
+    if runtime not in RUNTIMES:
+        return (
+            f"unsupported_target: {cell}: runtime {runtime!r} is not one of {RUNTIMES}"
+        )
+    if privilege not in PRIVILEGES:
+        return f"unsupported_target: {cell}: privilege {privilege!r} is not one of {PRIVILEGES}"
+    named = ORCHESTRATOR_RUNTIME.get(orchestrator)
+    if named is not None and named != runtime:
+        return (
+            f"unsupported_target: {cell}: {orchestrator} runs on {named}, not {runtime}"
+        )
+    if privilege not in TARGET_PRIVILEGES[target]:
+        return f"unsupported_target: {cell}: {target} has no {privilege} adapter"
+    return None
+
+
+def _validate_target_cell(profile: EnvironmentProfile, source: Path) -> None:
+    refusal = target_cell_refusal(
+        profile.target.orchestrator, profile.target.runtime, profile.target.privilege
+    )
+    if refusal is not None:
+        raise EnvironmentProfileError(f"{source}: {refusal}")
+
+
 def _validate_genesis_bindings(profile: EnvironmentProfile, source: Path) -> None:
     """Cross-check target and identity values against genesis.yaml enums."""
     orchestrators = _genesis_run_plan("orchestrators")
@@ -1070,6 +1137,7 @@ def validate_environment_profile(profile: EnvironmentProfile) -> None:
     _validate_writable_paths(profile, source)
     _validate_runtime_paths(profile, source)
     _validate_genesis_bindings(profile, source)
+    _validate_target_cell(profile, source)
     _validate_release(profile, source)
     _validate_functional_checks(profile, source)
 
@@ -1088,6 +1156,8 @@ def profile_summary(profile: EnvironmentProfile) -> dict[str, Any]:
             "orchestrator": profile.target.orchestrator,
             "namespace": profile.target.namespace,
             "authority": profile.target.authority,
+            "runtime": profile.target.runtime,
+            "privilege": profile.target.privilege,
             "cluster_context_ref": profile.target.cluster_context_ref,
             "node_selector": dict(profile.target.node_selector),
         },

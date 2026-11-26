@@ -9,14 +9,16 @@ the same ``unavailable`` result, which carries no items.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import Any, Protocol, runtime_checkable
 
-from pydantic import ValidationError
+from pydantic import Field, ValidationError, model_validator
 from scion_sdk.current_plan import CurrentPlanRead, CurrentPlanRequest
 
 from arbora.api.invoke.executor import ExecutionContext
+from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op
 from arbora.api.ops.run_graph import (
     ExecutionGraphParams,
@@ -36,6 +38,102 @@ UNAVAILABLE = CurrentPlanRead(availability="unavailable")
 
 class RunsCurrentPlanResult(Params):
     value: dict[str, Any]
+
+
+@runtime_checkable
+class RunTraceReader(Protocol):
+    """The host-composed read port for owned run traces (ARBORA-OPS-R021.4.1).
+
+    Each method takes the verified ``context`` and a typed request; the reader
+    keeps the caller's claims and the engine's values unchanged.
+    """
+
+    async def get(
+        self, *, context: ExecutionContext, run_id: str, task_id: str | None = None
+    ) -> dict[str, Any]: ...
+
+    async def events(
+        self, *, context: ExecutionContext, request: RunEventsParams
+    ) -> dict[str, Any]: ...
+
+    async def execution_graph(
+        self, *, context: ExecutionContext, request: ExecutionGraphParams
+    ) -> dict[str, Any]: ...
+
+    async def metrics(
+        self, *, context: ExecutionContext, request: RunMetricsParams
+    ) -> dict[str, Any]: ...
+
+    async def node(
+        self, *, context: ExecutionContext, request: RunNodeParams
+    ) -> dict[str, Any]: ...
+
+
+class MetricsWindow(Params):
+    start_ms: int = Field(ge=0, le=2**63 - 1, strict=True)
+    end_ms: int = Field(ge=0, le=2**63 - 1, strict=True)
+
+    @model_validator(mode="after")
+    def ordered(self) -> MetricsWindow:
+        if self.start_ms > self.end_ms:
+            raise ValueError("the window starts after it ends")
+        return self
+
+
+class RunMetricsParams(Params):
+    """The ``RunMetrics`` request: what to measure, how to group it, over when."""
+
+    query: str = Field(min_length=1, max_length=128, strict=True)
+    group_by: str | None = Field(
+        default=None, min_length=1, max_length=128, strict=True
+    )
+    window: MetricsWindow | None = None
+
+
+class MetricGroup(Params):
+    key: str = Field(max_length=256, strict=True)
+    value: float = Field(ge=0)
+    trace_count: int = Field(ge=0, le=2**63 - 1, strict=True)
+
+    @model_validator(mode="after")
+    def finite(self) -> MetricGroup:
+        if not math.isfinite(self.value):
+            raise ValueError("a metric value is not finite")
+        return self
+
+
+class RunMetricsOutcome(Params):
+    """The engine's aggregate: groups, or an abstention code and no groups."""
+
+    query: str = Field(min_length=1, max_length=128, strict=True)
+    groups: list[MetricGroup] = Field(default_factory=list, max_length=1000)
+    abstained: str | None = Field(default=None, max_length=128)
+
+    @model_validator(mode="after")
+    def abstention_has_no_groups(self) -> RunMetricsOutcome:
+        if self.abstained is not None and self.groups:
+            raise ValueError("an abstained outcome carries no groups")
+        return self
+
+
+class RunNodeParams(RunReadParams):
+    node_id: str = Field(min_length=1, max_length=512, strict=True)
+
+
+#: Capabilities a node read reports; each defaults to unavailable until the
+#: producer issues an owner-bound target (ARBORA-OPS-R021.4.9).
+NODE_CAPABILITIES = (
+    "can_read_events",
+    "can_read_transcript",
+    "can_message_active",
+    "can_continue_completed",
+)
+
+
+def unavailable_capabilities(
+    reason: str = "no_owner_binding",
+) -> dict[str, dict[str, Any]]:
+    return {name: {"allowed": False, "reason": reason} for name in NODE_CAPABILITIES}
 
 
 @runtime_checkable
@@ -139,6 +237,55 @@ async def handle_runs_execution_graph(
     return {"value": value}
 
 
+async def handle_runs_metrics(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Return the engine's run aggregates unchanged, validated, with no arithmetic."""
+    request = RunMetricsParams.model_validate(dict(params))
+    reader = context.services.get("run_trace_reader")
+    if reader is None:
+        return {
+            "value": {
+                "schema_version": SCHEMA,
+                "availability": "unavailable",
+                "query": request.query,
+            }
+        }
+    raw = await reader.metrics(context=context, request=request)
+    try:
+        outcome = RunMetricsOutcome.model_validate(raw)
+    except ValidationError:
+        raise OperationRefused(
+            "INVALID_ARGUMENT", {"reason": "the engine outcome is not a valid metric"}
+        ) from None
+    return {
+        "value": {
+            "schema_version": SCHEMA,
+            "availability": "available",
+            **outcome.model_dump(mode="json"),
+        }
+    }
+
+
+async def handle_runs_node(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    request = RunNodeParams.model_validate(dict(params))
+    reader = context.services.get("run_trace_reader")
+    value = (
+        {
+            "schema_version": SCHEMA,
+            "availability": "unavailable",
+            "run_id": request.run_id,
+            "node_id": request.node_id,
+            "capabilities": unavailable_capabilities(),
+        }
+        if reader is None
+        else await reader.node(context=context, request=request)
+    )
+    return {"value": value}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         build_read_op(
@@ -174,6 +321,24 @@ def operations() -> tuple[OpSpec, ...]:
             handler="arbora.api.ops.runs.handle_runs_execution_graph",
             scope="kg:read",
         ),
+        build_read_op(
+            op_id="runs.metrics",
+            summary="Read engine aggregates over run traces",
+            examples=("what did runs cost last week, grouped by agent",),
+            params=RunMetricsParams,
+            result=RunsCurrentPlanResult,
+            handler="arbora.api.ops.runs.handle_runs_metrics",
+            scope="telemetry:read",
+        ),
+        build_read_op(
+            op_id="runs.node",
+            summary="Read one permitted node of an owned run with its capabilities",
+            examples=("show this node of the run and what I may do with it",),
+            params=RunNodeParams,
+            result=RunsCurrentPlanResult,
+            handler="arbora.api.ops.runs.handle_runs_node",
+            scope="kg:read",
+        ),
     )
 
 
@@ -184,8 +349,14 @@ __all__ = [
     "CurrentPlanRead",
     "CurrentPlanReader",
     "CurrentPlanRequest",
+    "RunMetricsOutcome",
+    "RunMetricsParams",
+    "RunNodeParams",
+    "RunTraceReader",
     "RunsCurrentPlanResult",
     "handle_runs_current_plan",
+    "handle_runs_metrics",
+    "handle_runs_node",
     "operations",
     "project_current_plan",
     "read_current_plan",

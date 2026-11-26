@@ -417,6 +417,7 @@ def mcp_server(
 
     co_service_supervisor = None
     catalog_warmup = None
+    background_host = None
     try:
         logger.info("Starting arbora MCP server (transport=%s)", transport)
 
@@ -502,6 +503,13 @@ def mcp_server(
             )
             logger.info("Decide consumers installed: %s", installed)
 
+            # The host's own schedulers start with the process (ARBORA-OPS-R958).
+            if invocation is not None and invocation.background_services:
+                from arbora.mcp_server.background import BackgroundHost
+
+                background_host = BackgroundHost(invocation.background_services)
+                background_host.start()
+
             # Process-owned publications run here, under the process
             # authority, before any request is served (ARBORA-RELEASE-R003.4.4).
             if invocation is not None and invocation.process_startup is not None:
@@ -550,6 +558,8 @@ def mcp_server(
     finally:
         if catalog_warmup is not None:
             catalog_warmup.stop()
+        if background_host is not None:
+            background_host.stop()
         unregister_harness_host()
         if co_service_supervisor is not None:
             co_service_supervisor.stop_all()

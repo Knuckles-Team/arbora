@@ -17,7 +17,7 @@ from arbora.a2a.models import (
 
 
 class _StreamingAuthority:
-    def resume_from_cursor(self, task_id: str, cursor: str | None) -> None:
+    async def resume_from_cursor(self, task_id: str, after_seq: int = 0) -> None:
         return None
 
 

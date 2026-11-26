@@ -26,6 +26,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from arbora.api.invoke.plan import approval_ref_of
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -353,6 +354,7 @@ async def _gateway_call(
         owner_ref=getattr(context, "owner_ref", None),
         fleet_decision=context.fleet_decision,
         registry_digest=context.registry_digest,
+        approval_ref=approval_ref_of(getattr(context, "idempotency_key", None)),
     )
     return {"value": result}
 

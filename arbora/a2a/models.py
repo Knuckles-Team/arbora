@@ -365,10 +365,12 @@ class A2AListResult(_WireModel):
 class A2AStreamingAuthority(Protocol):
     """Durable, restart-safe event-cursor-backed task-streaming authority.
 
-    ARBORA-A2A-R001's open streaming slice; no implementation is wired yet.
+    ``resume_from_cursor`` opens a stream of the task's durable events after the
+    last ``event_seq`` the caller saw (``ARBORA-A2A-R001.2``); an absent or
+    foreign task answers ``None``.
     """
 
-    def resume_from_cursor(self, task_id: str, cursor: str | None) -> Any: ...
+    async def resume_from_cursor(self, task_id: str, after_seq: int = 0) -> Any: ...
 
 
 @runtime_checkable

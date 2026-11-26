@@ -25,6 +25,7 @@ def get_registry() -> Registry:
     from . import (
         a2a_media,
         access,
+        agent_library,
         agents,
         approvals,
         assistants,
@@ -82,6 +83,7 @@ def get_registry() -> Registry:
     for module in (
         a2a_media,
         access,
+        agent_library,
         agents,
         approvals,
         assistants,
