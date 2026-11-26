@@ -11,6 +11,7 @@ from arbora.api.ops import (
     access,
     agents,
     approvals,
+    assistants,
     browser,
     capacity,
     catalog,
@@ -25,6 +26,7 @@ from arbora.api.ops import (
     fleet,
     get_registry,
     governance,
+    graph_limits,
     identity,
     ingest,
     knowledge,
@@ -32,6 +34,7 @@ from arbora.api.ops import (
     messaging,
     models,
     ops,
+    participants,
     plans,
     policy,
     preferences,
@@ -47,11 +50,13 @@ from arbora.api.ops import (
     skills_discovery,
     skills_eval,
     skills_friction,
+    skills_telemetry,
     source,
     swarm,
     telemetry,
     usage,
     work,
+    workstreams,
 )
 from arbora.api.registry import (
     Composite,
@@ -67,6 +72,8 @@ from tests.api._catalog import method_row, scope_row
 from tests.api.test_eg_binding import _curated, _fixture
 
 _CURATED_SCOPES = (
+    "workstream:read",
+    "workstream:write",
     "query:unified",
     "query:nl",
     "kg:read",
@@ -115,6 +122,8 @@ _CURATED_SCOPES = (
     "identity:admin",
     "approvals:read",
     "approvals:decide",
+    "profile:write",
+    "telemetry:write",
 )
 
 _ENGINE_METHODS = {
@@ -166,6 +175,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *access.operations(),
         *agents.operations(),
         *approvals.operations(),
+        *assistants.operations(),
         *browser.operations(),
         *capacity.operations(),
         *decide.operations(),
@@ -190,8 +200,10 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *skills_discovery.operations(),
         *skills_eval.operations(),
         *skills_friction.operations(),
+        *skills_telemetry.operations(),
         *telemetry.operations(),
         *usage.operations(),
+        *graph_limits.operations(),
         *policy.operations(),
         *query.operations(),
         *query_engine.operations(),
@@ -202,7 +214,9 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *source.operations(),
         *swarm.operations(),
         *work.operations(),
+        *workstreams.operations(),
         *ops.operations(),
+        *participants.operations(),
         *plans.operations(),
         *preferences.operations(),
         *prompts.operations(),

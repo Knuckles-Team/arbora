@@ -47,6 +47,7 @@ class ArboraErrorCode(StrEnum):
     ELEVATION_APPROVER_SCOPE = "ELEVATION_APPROVER_SCOPE"
     UNKNOWN_KIND = "UNKNOWN_KIND"
     USER_NOT_FOUND = "USER_NOT_FOUND"
+    WORKSTREAM_NOT_FOUND = "WORKSTREAM_NOT_FOUND"
     USER_EXISTS = "USER_EXISTS"
     LAST_ADMIN_PROTECTED = "LAST_ADMIN_PROTECTED"
     ROLE_UNKNOWN = "ROLE_UNKNOWN"
@@ -97,6 +98,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.ELEVATION_APPROVER_SCOPE: 403,
     ArboraErrorCode.UNKNOWN_KIND: 400,
     ArboraErrorCode.USER_NOT_FOUND: 404,
+    ArboraErrorCode.WORKSTREAM_NOT_FOUND: 404,
     ArboraErrorCode.USER_EXISTS: 409,
     ArboraErrorCode.LAST_ADMIN_PROTECTED: 409,
     ArboraErrorCode.ROLE_UNKNOWN: 400,
@@ -580,6 +582,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.ELEVATION_APPROVER_SCOPE: -32003,
     ArboraErrorCode.UNKNOWN_KIND: -32602,
     ArboraErrorCode.USER_NOT_FOUND: -32002,
+    ArboraErrorCode.WORKSTREAM_NOT_FOUND: -32002,
     ArboraErrorCode.USER_EXISTS: -32009,
     ArboraErrorCode.LAST_ADMIN_PROTECTED: -32009,
     ArboraErrorCode.ROLE_UNKNOWN: -32602,

@@ -4,16 +4,25 @@ import pytest
 from pydantic import ValidationError
 
 from arbora.a2a.admission import (
+    ModelProfileDecision,
     ModelProfilePreference,
     ModelProfileUnavailable,
-    refuse_model_profile_preference,
+    resolve_model_profile,
 )
 
 
 @pytest.mark.parametrize("reference", [None, "profile-one", "x" * 512])
-def test_uncomposed_authority_never_admits_a_preference(reference):
+@pytest.mark.asyncio
+async def test_uncomposed_authority_never_admits_a_preference(reference):
     request = ModelProfilePreference(preferred_profile_ref=reference)
-    result = refuse_model_profile_preference(request)
+    result = await resolve_model_profile(
+        None,
+        request,
+        tenant="t",
+        principal="p",
+        profiles=["profile-one"],
+        feature_schema={},
+    )
     assert result.model_dump() == {
         "status": "unavailable",
         "reason": "AUTHORITY_UNAVAILABLE",
@@ -48,12 +57,18 @@ def test_unavailable_result_cannot_carry_success_or_secrets(value):
         ModelProfileUnavailable.model_validate(value)
 
 
-def test_configured_provider_is_not_permission(monkeypatch):
+@pytest.mark.asyncio
+async def test_configured_provider_is_not_permission(monkeypatch):
     monkeypatch.setenv("ARBORA_AGENT_MODEL", "configured-model")
     monkeypatch.setenv("CHAT_MODELS", '[{"id":"profile-one"}]')
     monkeypatch.setenv("MODEL_REGISTRY_PATH", "/must-not-be-opened")
-    result = refuse_model_profile_preference(
-        ModelProfilePreference(preferred_profile_ref="profile-one")
+    result = await resolve_model_profile(
+        None,
+        ModelProfilePreference(preferred_profile_ref="profile-one"),
+        tenant="t",
+        principal="p",
+        profiles=["profile-one"],
+        feature_schema={},
     )
     assert result.reason == "AUTHORITY_UNAVAILABLE"
 
@@ -145,3 +160,72 @@ def test_http_profile_admission_has_no_dispatch(reference, expected):
     assert "result" not in response.json()
     router.route.assert_not_called()
     authority.dispatch.assert_not_called()
+
+
+PROFILES = ["profile-one", "profile-two"]
+SCHEMA = {"definition_digest": "d" * 64}
+
+
+def _engine(chosen: str, *, refused: bool):
+    """A fake engine that answers one Route record bound to the request."""
+    import hashlib
+
+    async def decide(request):
+        premises = (
+            [{"subject": "PREFERENCE_NOT_LEGAL", "claim": "preference_not_honoured"}]
+            if refused
+            else []
+        )
+        return {
+            "records": [
+                {
+                    "record_id": "r1",
+                    "record_digest": "d1",
+                    "tenant_id": request["tenant_id"],
+                    "question": request["question"],
+                    "caller_principal": "principal:sha256:"
+                    + hashlib.sha256(b"user:alice").hexdigest(),
+                    "inputs": {"params": request["params"]},
+                    "outcome": {"scores": [{"option_id": chosen}]},
+                    "premises": premises,
+                }
+            ]
+        }
+
+    return decide
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("preferred", "chosen", "refused", "honoured"),
+    [
+        ("profile-two", "profile-two", False, True),
+        ("profile-two", "profile-one", True, False),
+    ],
+)
+async def test_engine_decides_the_preference(preferred, chosen, refused, honoured):
+    result = await resolve_model_profile(
+        _engine(chosen, refused=refused),
+        ModelProfilePreference(preferred_profile_ref=preferred),
+        tenant="t",
+        principal="user:alice",
+        profiles=PROFILES,
+        feature_schema=SCHEMA,
+    )
+    assert result == ModelProfileDecision(profile=chosen, preference_honoured=honoured)
+
+
+@pytest.mark.asyncio
+async def test_unbound_or_failed_decision_grants_no_profile():
+    async def broken(request):
+        raise RuntimeError("engine down")
+
+    result = await resolve_model_profile(
+        broken,
+        ModelProfilePreference(preferred_profile_ref="profile-two"),
+        tenant="t",
+        principal="user:alice",
+        profiles=PROFILES,
+        feature_schema=SCHEMA,
+    )
+    assert result.status == "unavailable" and result.reason == "INVALID_DECISION"

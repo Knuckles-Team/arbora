@@ -143,6 +143,7 @@ class A2ATaskAuthority(Protocol):
         idempotency_key: str,
         decision: A2ARouteDecision,
         blocking: bool = True,
+        model_profile: Any = None,
     ) -> A2ATask: ...
 
     async def get(self, task_id: str) -> A2ATask | None: ...
@@ -324,11 +325,20 @@ class WorkItemA2AAuthority:
         owner_ref: str,
         request_digest: str,
         decision: A2ARouteDecision,
+        model_profile: Any = None,
     ) -> dict[str, Any]:
         from arbora.agent_runs import native_stream_protocol
 
         protocol = native_stream_protocol()
         return {
+            **(
+                {
+                    "a2a_model_profile": model_profile.profile,
+                    "a2a_preference_honoured": model_profile.preference_honoured,
+                }
+                if model_profile is not None
+                else {}
+            ),
             **({"host_transport_protocol": protocol} if protocol else {}),
             "a2a_schema": _A2A_METADATA_SCHEMA,
             "a2a_context_id": context_id,
@@ -625,6 +635,7 @@ class WorkItemA2AAuthority:
         idempotency_key: str,
         decision: A2ARouteDecision,
         blocking: bool = True,
+        model_profile: Any = None,
     ) -> A2ATask:
         if decision.selected_tools:
             # Refuse before durable admission: the current signed AU dispatch
@@ -646,6 +657,7 @@ class WorkItemA2AAuthority:
             owner_ref=owner_ref,
             request_digest=request_digest,
             decision=decision,
+            model_profile=model_profile,
         )
         from arbora.access.task_guard import screen_and_redact_agent_task
 
