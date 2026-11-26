@@ -17,8 +17,13 @@ def audit_event(
     surface: Any,
     status: str,
     audit_ref: str = "",
+    evidence: Mapping[str, str] | None = None,
 ) -> dict[str, str]:
-    """Record identity and a digest, never argument values."""
+    """Record identity and a digest, never argument values.
+
+    ``evidence`` holds identifiers and counts only (screening fields and the
+    operator hook decisions); it never holds matched or redacted text.
+    """
 
     event = {
         "op": op.id,
@@ -31,6 +36,8 @@ def audit_event(
     }
     if audit_ref:
         event["audit_ref"] = audit_ref
+    if evidence:
+        event.update(evidence)
     if op.id == "fleet.call":
         server, tool = params.get("server"), params.get("tool")
         if isinstance(server, str) and isinstance(tool, str):

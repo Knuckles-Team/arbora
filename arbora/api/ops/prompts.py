@@ -336,6 +336,14 @@ def _write(op_id: str, summary: str, example: str, params: type[Params]) -> OpSp
     )
 
 
+#: Writes the engine replays by the idempotency key the pipeline forwards.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "prompts.create": "medulla:KvCas",
+    "prompts.update": "medulla:KvCas",
+    "prompts.rollback": "medulla:KvCas",
+}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         _read(
