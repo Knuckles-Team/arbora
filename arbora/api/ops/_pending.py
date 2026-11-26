@@ -52,14 +52,16 @@ def unserved_write(
     example: str,
     params: type[Any],
     scope: str,
+    effect: Any = None,
 ) -> OpSpec:
     """A write the engine does not serve yet, bound to the refusal handler."""
     from arbora.api.ops._common import build_write_op
     from arbora.api.ops.knowledge import EngineReply
-    from arbora.api.registry import Verb
+    from arbora.api.registry import Effect, Verb
 
     return build_write_op(
         verb=Verb.ACT,
+        effect=effect or Effect.WRITE,
         op_id=op_id,
         summary=summary,
         examples=(example,),
