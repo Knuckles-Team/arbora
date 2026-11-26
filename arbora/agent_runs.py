@@ -419,6 +419,40 @@ def _engine() -> Any:
         return None
 
 
+def canonical_run_statuses() -> tuple[str, ...]:
+    """The closed run status set of the harness run machine (ARBORA-OPS-R900).
+
+    Arbora owns no run machine and no second vocabulary: the set is the harness
+    ``RunStatus`` (``Pending``, ``Running``, ``Completed``, ``Stopped``, ``Failed``).
+    """
+    from typing import get_args
+
+    from meristem.graph.state import RunStatus
+
+    return tuple(get_args(RunStatus))
+
+
+class UnknownRunStatus(ValueError):
+    """A run event carried a status outside the canonical set (``RUN_STATUS_UNKNOWN``)."""
+
+    code = "RUN_STATUS_UNKNOWN"
+    machine = "agent_run"
+
+    def __init__(self, from_state: str, event: str) -> None:
+        super().__init__(
+            f"{self.machine} has no status {event!r} (last {from_state!r})"
+        )
+        self.from_state = from_state
+        self.event = event
+
+
+def canonical_run_status(value: str, from_state: str = "") -> str:
+    """Return ``value`` when the harness run machine names it, else refuse typed."""
+    if value not in canonical_run_statuses():
+        raise UnknownRunStatus(from_state, value)
+    return value
+
+
 def _run_event_payload(
     event: Mapping[str, Any], run_id: str, event_type: str, step: int
 ) -> str:
@@ -446,13 +480,8 @@ def _run_event_payload(
             },
         }
         status = event.get("status")
-        if isinstance(status, str) and status in (
-            "completed",
-            "stopped",
-            "failed",
-            "running",
-        ):
-            marker["status"] = status
+        if isinstance(status, str):
+            marker["status"] = canonical_run_status(status)
         payload = json.dumps(marker, sort_keys=True, ensure_ascii=True)
         logger.warning("run event body unavailable: %s", payload_error)
     return payload
@@ -502,6 +531,9 @@ def record_run_event(event: Mapping[str, Any]) -> None:
         return
     from arbora.agent_host.port_backends import TERMINALS
 
+    status = event.get("status")
+    if isinstance(status, str):
+        canonical_run_status(status, str(event.get("previous_status") or ""))
     TERMINALS.note(event)
     payload = _run_event_payload(event, cast(str, run_id), cast(str, event_type), step)
     engine = _engine()
@@ -572,7 +604,7 @@ def failed_run_usage(error: Exception, run_id: str) -> dict[str, int] | None:
         return None
     try:
         result = cast(Any, failure_type)(cast(Any, error).result).result
-        if result.run_id != run_id or result.status != "failed":
+        if result.run_id != run_id or result.status != canonical_run_status("failed"):
             return None
         # Revalidate the public snapshot and enforce the narrower wire bounds.
         receipt = AgentExecutionResult(

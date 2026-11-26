@@ -237,6 +237,7 @@ async def test_webui_dictation_transcribes_through_the_seam_without_provenance(
         content=wav(), content_type="audio/wav"
     )
     assert out["text"] == "what is the capital of france" and out["language"] == "en"
+    assert "transcript_id" in out
     assert recorded == []
 
 

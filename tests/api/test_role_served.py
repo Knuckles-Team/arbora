@@ -36,34 +36,56 @@ def _run_context(tenant: str, a2a: _A2A) -> Any:
 async def test_one_template_two_tenants_isolated_profiles(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    profiles = {"tenant:one": {"entity": "one"}, "tenant:two": {"entity": "two"}}
+    profiles = {
+        "tenant:one": ({"entity": "one"}, 7),
+        "tenant:two": ({"entity": "two"}, 9),
+    }
+    instances = {("tenant:one", "role:one"), ("tenant:two", "role:two")}
+    profile_reads: list[str] = []
     engine = EngineDouble(monkeypatch)
-    engine.serve(
-        "KvGet",
-        lambda p: (
-            {"value": json.dumps(profiles[engine.tenant]).encode(), "version": 7}
-            if engine.tenant in profiles and p["namespace"] == "business.profile"
-            else None
-        ),
-    )
-    engine.serve(
-        "AgentLibrary",
-        lambda p: {
+
+    def _kv_get(p: dict[str, Any]) -> Any:
+        if engine.tenant not in profiles or p["namespace"] != "business.profile":
+            return None
+        profile_reads.append(engine.tenant)
+        profile, version = profiles[engine.tenant]
+        return {"value": json.dumps(profile).encode(), "version": version}
+
+    def _library(p: dict[str, Any]) -> dict[str, Any]:
+        if (engine.tenant, p["op"]["agent_id"]) not in instances:
+            return {"entry": None}
+        return {
             "entry": {"agent_id": p["op"]["agent_id"], "tools": [{"component_id": "t"}]}
-        },
-    )
+        }
+
+    engine.serve("KvGet", _kv_get)
+    engine.serve("AgentLibrary", _library)
     engine.install(surface)
     engine.install(agent_library)
     engine.install(model_route)
     monkeypatch.setattr("arbora.security.session.use_session", _noop_session)
     a2a = _A2A()
     run = next(op for op in agents.operations() if op.id == "agents.run")
-    message = {"kind": "message", "metadata": {"role_instance_id": "role:one"}}
-    for tenant in ("tenant:one", "tenant:two"):
-        await agents.handle_agent(_run_context(tenant, a2a), {"message": message}, run)
-    # Each run carries only its own tenant's profile reference, read by that tenant.
-    assert [s[0] for s in engine.sent] == ["KvGet", "AgentLibrary", "KvGet"] * 2
-    assert all(m["metadata"]["profile_ref"].endswith("@7") for m in a2a.messages)
+
+    def _message(instance: str) -> dict[str, Any]:
+        return {"kind": "message", "metadata": {"role_instance_id": instance}}
+
+    for tenant, instance in (("tenant:one", "role:one"), ("tenant:two", "role:two")):
+        await agents.handle_agent(
+            _run_context(tenant, a2a), {"message": _message(instance)}, run
+        )
+    # Each run reads only its own tenant's profile and carries that profile's reference.
+    assert profile_reads == ["tenant:one", "tenant:two"]
+    assert [m["metadata"]["profile_ref"][-2:] for m in a2a.messages] == ["@7", "@9"]
+    # Neither tenant sees the other's instance: a foreign one answers as an absent one.
+    for tenant, foreign in (("tenant:one", "role:two"), ("tenant:two", "role:one")):
+        with pytest.raises(OperationRefused) as hidden:
+            await agents.handle_agent(
+                _run_context(tenant, a2a), {"message": _message(foreign)}, run
+            )
+        assert hidden.value.code == "NOT_FOUND"
+    assert len(a2a.messages) == 2
+    message = _message("role:one")
     # A tenant with no profile refuses before a run is admitted.
     with pytest.raises(OperationRefused) as unset:
         await agents.handle_agent(
