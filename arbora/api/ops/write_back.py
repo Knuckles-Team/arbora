@@ -23,12 +23,21 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from arbora.api.ops._common import build_read_op, build_write_op
+from arbora.api.ops._common import Params, build_read_op, build_write_op
+from arbora.api.ops._engine import engine_send
 from arbora.api.ops.write_back_models import (
     RepositoryWriteBackParams,
     RepositoryWriteBackResult,
 )
-from arbora.api.registry import Confirm, Effect, Idempotency, OpSpec, Verb
+from arbora.api.registry import (
+    AuditClass,
+    Confirm,
+    Effect,
+    Idempotency,
+    OpSpec,
+    PrincipalRule,
+    Verb,
+)
 
 #: The largest request the parser reads before the trusted binding supplies the
 #: tighter per-source payload limit.
@@ -326,9 +335,115 @@ async def handle_write_back_commit(
     }
 
 
+class WriteBackProposalApproveParams(Params):
+    queue_id: str = Field(min_length=1, max_length=256)
+    proposal_id: str = Field(min_length=1, max_length=256)
+
+
+class WriteBackProposalsListParams(Params):
+    queue_id: str = Field(min_length=1, max_length=256)
+
+
+class WriteBackValueResult(Params):
+    value: dict[str, Any]
+
+
+APPROVE_SCOPE = "approvals:decide"
+
+
+def _writeback_published() -> bool:
+    """Whether the pinned contract declares the ``DecisionLog`` write-back operation."""
+    from medulla.generated import models
+
+    return hasattr(models, "DecisionLogOpWriteback")
+
+
+async def _writeback(context: Any, computation: dict[str, Any]) -> dict[str, Any]:
+    answer = await engine_send(
+        context,
+        "DecisionLog",
+        {
+            "op": {
+                "op": "writeback",
+                "tenant_id": str(context.caller.tenant),
+                "computation": computation,
+            }
+        },
+        idempotent=computation["kind"] == "approve",
+    )
+    return dict(answer) if isinstance(answer, Mapping) else {"items": answer}
+
+
+async def handle_write_back_proposals_list(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Read the queued proposals of one queue; the engine owns the queue."""
+    return {
+        "value": await _writeback(
+            context, {"kind": "list", "queue_id": params["queue_id"]}
+        )
+    }
+
+
+async def handle_write_back_proposal_approve(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Record one approval with the approver principal; release stays with the engine."""
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    if APPROVE_SCOPE not in (getattr(context.caller, "effective_scopes", None) or ()):
+        raise OperationRefused("SCOPE_REQUIRED", {"missing_scopes": [APPROVE_SCOPE]})
+    return {
+        "value": await _writeback(
+            context,
+            {
+                "kind": "approve",
+                "queue_id": params["queue_id"],
+                "proposal_id": params["proposal_id"],
+            },
+        )
+    }
+
+
+#: The engine decision log replays each approval (ARBORA-OPS-R865).
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "write_back.proposal.approve": "medulla:DecisionLog",
+}
+
+
+def _proposal_operations() -> tuple[OpSpec, ...]:
+    if not _writeback_published():
+        return ()
+    return (
+        build_read_op(
+            op_id="write_back.proposals.list",
+            verb=Verb.FIND,
+            summary="List the queued write-back proposals",
+            examples=("list queued write-back proposals",),
+            params=WriteBackProposalsListParams,
+            result=WriteBackValueResult,
+            handler="arbora.api.ops.write_back.handle_write_back_proposals_list",
+            scope="kg:read",
+        ),
+        build_write_op(
+            op_id="write_back.proposal.approve",
+            verb=Verb.ACT,
+            summary="Approve one queued write-back proposal",
+            examples=("approve this write-back proposal",),
+            params=WriteBackProposalApproveParams,
+            result=WriteBackValueResult,
+            handler="arbora.api.ops.write_back.handle_write_back_proposal_approve",
+            scope=APPROVE_SCOPE,
+            confirm=Confirm.PLAN,
+            principals=PrincipalRule.HUMAN,
+        ).model_copy(update={"audit": AuditClass.IDENTITY_CHAIN}),
+    )
+
+
 def operations() -> tuple[OpSpec, ...]:
     """Register write-back as typed, gated operations, never a native child tool."""
     return (
+        *_proposal_operations(),
         build_read_op(
             op_id="fleet.write_back.preview",
             verb=Verb.ASK,

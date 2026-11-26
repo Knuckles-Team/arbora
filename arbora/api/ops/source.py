@@ -188,6 +188,8 @@ class SymbolEditParams(Params):
     ops: list[SymbolEditOpParams] = Field(min_length=1, max_length=256)
     message: str = Field(min_length=1, max_length=8192)
     run_trace_id: str = Field(min_length=1, max_length=128)
+    #: The committed ``GeneratedCodeAdmission`` record an agent principal cites (R869).
+    admission_record_digest: str | None = Field(default=None, max_length=128)
 
 
 class SourceTreeEntry(BaseModel):
@@ -498,6 +500,9 @@ async def handle_source_edit_symbol(
         require_methods("SubmitSymbolEdit")
     except PinLagUnavailable as missing:
         raise refusal(missing) from None
+    edit = request.model_dump(mode="json")
+    cited = edit.pop("admission_record_digest", None)
+    await require_admission_record(context, edit, cited)
     symbols = tuple(dict.fromkeys(op_.symbol_id for op_ in request.ops))
     resolved = await _reader(context).symbol_paths(
         repository=request.repo,
@@ -512,7 +517,7 @@ async def handle_source_edit_symbol(
     answer = await engine_send(
         context,
         "SubmitSymbolEdit",
-        {"request": request.model_dump(mode="json")},
+        {"request": edit},
         idempotent=True,
     )
     return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
@@ -589,6 +594,7 @@ class SourceCommitParams(Params):
     base_head: str | None = Field(default=None, max_length=128)
     run_trace_id: str | None = Field(default=None, max_length=128)
     trailers: SourceTrailers | None = None
+    admission_record_digest: str | None = Field(default=None, max_length=128)
 
 
 class SourceLandParams(Params):
@@ -607,6 +613,35 @@ class SourceWriteResult(Params):
     value: dict[str, Any]
 
 
+async def require_admission_record(
+    context: Any, body: Mapping[str, Any], digest: str | None
+) -> None:
+    """An agent's changeset needs a committed, matching ``GeneratedCodeAdmission`` record.
+
+    The verdict must be admit, the tenant the caller's and the artifact digest the digest
+    of the proposed content; anything else refuses ``POLICY_DENIED`` with zero writes
+    (ARBORA-OPS-R869). Arbora keeps the materialization authority.
+    """
+    from arbora.api.ops._decide import committed_record, record_digest
+
+    if getattr(context.caller, "principal_kind", None) != "agent":
+        return
+    missing = OperationRefused("POLICY_DENIED", {"reason": "admission_record_missing"})
+    if not digest:
+        raise missing
+    record = await committed_record(context, digest)
+    if (
+        record.get("kind") != "GeneratedCodeAdmission"
+        or record.get("verdict") != "admit"
+        or str(record.get("tenant")) != str(context.caller.tenant)
+    ):
+        raise missing
+    if record.get("artifact_digest") != record_digest(body):
+        raise OperationRefused(
+            "POLICY_DENIED", {"reason": "admission_artifact_mismatch"}
+        )
+
+
 async def handle_source_commit(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
@@ -614,6 +649,8 @@ async def handle_source_commit(
     request = SourceCommitParams.model_validate(dict(params))
     body = request.model_dump(mode="json", exclude_none=True)
     body["repo"] = body.pop("repository")
+    cited = body.pop("admission_record_digest", None)
+    await require_admission_record(context, body, cited)
     answer = await engine_send(
         context, "SubmitChangeset", {"request": body}, idempotent=True
     )

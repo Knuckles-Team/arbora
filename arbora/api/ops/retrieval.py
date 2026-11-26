@@ -11,9 +11,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, Literal, Protocol, runtime_checkable
 
+import msgpack
 from pydantic import BaseModel, ConfigDict, Field
 
 from arbora.api.ops._common import Params, bound_service, build_read_op, build_write_op
+from arbora.api.ops._engine import engine_send
 from arbora.api.registry import AuditClass, OpSpec, Verb
 from arbora.pin_lag.medulla import guard_field, send_main
 
@@ -21,6 +23,9 @@ from arbora.pin_lag.medulla import guard_field, send_main
 class RetrievalSearchParams(Params):
     query: str = Field(min_length=1, max_length=4096)
     context_budget: int = Field(default=4096, ge=1, le=1_000_000)
+    #: A committed decision record whose ``retrieval_binding`` names the one provider
+    #: to run (ARBORA-OPS-R864); absent, the composed retriever answers.
+    decision_record_id: str | None = Field(default=None, min_length=1, max_length=256)
 
 
 class RetrievalHit(BaseModel):
@@ -74,12 +79,32 @@ class Retriever(Protocol):
     async def freshness(self, *, tenant: str) -> RetrievalFreshnessOutcome: ...
 
 
+async def _bound_retriever(context: Any, record_id: str) -> Retriever:
+    """The one provider the committed record binds, or a refusal that calls no other."""
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.api.ops._decide import committed_record
+
+    binding = (await committed_record(context, record_id)).get("retrieval_binding")
+    if not isinstance(binding, Mapping) or not binding.get("provider"):
+        raise OperationRefused("INVALID_ARGUMENT", {"field": "decision_record_id"})
+    registry = context.services.get("retrievers") or {}
+    provider = registry.get(binding["provider"])
+    if provider is None:
+        raise OperationRefused("UNAVAILABLE", {"reason": "bound_provider_unavailable"})
+    if getattr(provider, "config_digest", None) != binding.get("config_digest"):
+        raise OperationRefused("POLICY_DENIED", {"reason": "bound_provider_mismatch"})
+    return provider  # type: ignore[no-any-return]
+
+
 async def handle_retrieval_search(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Return budget-bounded hits for the caller's own tenant."""
-    retriever: Retriever = bound_service(
-        context, "retriever", reason="retriever is not composed"
+    record_id = params.get("decision_record_id")
+    retriever: Retriever = (
+        await _bound_retriever(context, record_id)
+        if record_id
+        else bound_service(context, "retriever", reason="retriever is not composed")
     )
     context_budget = params["context_budget"]
     outcome = await retriever.search(
@@ -204,11 +229,21 @@ async def handle_retrieval_feedback(
 async def handle_agent_knowledge_scope_set(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """Set one agent's knowledge scope; an engine refusal of a widening scope passes through."""
-    answer = await send_main(
+    """Write ``knowledgeScope`` on the agent's definition node (``MEDULLA-ORCH-VOCAB-R808``).
+
+    The typed admission refuses ``SCOPE_SET_UNKNOWN`` for a set the writer's graph does
+    not hold; a scope only narrows, so there is no widening refusal to build.
+    """
+    answer = await engine_send(
         context,
-        "AgentKnowledgeScopeSet",
-        {"agent_id": params["agent_id"], "sources": list(params["sources"])},
+        "CompareAndSetNodeFields",
+        {
+            "node_id": params["agent_id"],
+            "conditions_msgpack": msgpack.packb({}),
+            "updates_msgpack": msgpack.packb(
+                {"knowledgeScope": list(params["sources"])}
+            ),
+        },
         idempotent=True,
     )
     return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
@@ -217,7 +252,7 @@ async def handle_agent_knowledge_scope_set(
 #: Writes replay under the engine method that holds the record, never here.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
     "retrieval.feedback": "medulla:RetrievalFeedbackRecord",
-    "agent.knowledge_scope.set": "medulla:AgentKnowledgeScopeSet",
+    "agent.knowledge_scope.set": "medulla:CompareAndSetNodeFields",
 }
 
 
@@ -281,7 +316,7 @@ def operations() -> tuple[OpSpec, ...]:
             params=KnowledgeScopeSetParams,
             result=RetrievalWriteResult,
             handler="arbora.api.ops.retrieval.handle_agent_knowledge_scope_set",
-            scope="registry:write",
+            scope="node:write",
         ).model_copy(update={"audit": AuditClass.IDENTITY_CHAIN}),
     )
 

@@ -71,3 +71,66 @@ def test_absent_engine_client_refuses_unavailable() -> None:
     with pytest.raises(OperationRefused) as refused:
         asyncio.run(decide.handle_decide_commit(context, {"request": {}}, _op()))
     assert refused.value.code == "UNAVAILABLE"
+
+
+# --- recommendation approval (ARBORA-OPS-R863) ---------------------------------------------
+
+
+@pytest.mark.spec("ARBORA-OPS-R863")
+async def test_approval_commits_once_and_scope_refusal_precedes_engine(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from medulla.generated import models
+
+    from arbora.api.ops import _decide
+    from tests.api._engine_double import EngineDouble
+    from tests.api._engine_double import context as engine_context
+
+    # Until the pinned contract publishes the receipt, the registry omits the op.
+    monkeypatch.delattr(models, "RecommendationApproval", raising=False)
+    assert "decide.recommendation.approve" not in {o.id for o in decide.operations()}
+    monkeypatch.setattr(models, "RecommendationApproval", object, raising=False)
+    (approve,) = [
+        o for o in decide.operations() if o.id == "decide.recommendation.approve"
+    ]
+    assert approve.principals.name == "HUMAN" and approve.scopes == {"approvals:decide"}
+
+    stored = {"answer": "go", "approval_revision": 2}
+    engine = EngineDouble(monkeypatch)
+    engine.serve("DecisionLog", lambda p: stored)
+    engine.install(_decide)
+    commits: list[dict] = []
+
+    class _Runner:
+        async def commit(self, request, *, tenant):
+            commits.append(request)
+            return {"committed": True}
+
+    context = engine_context(scopes=frozenset({"approvals:decide"}))
+    context.services = {"decide_runner": _Runner(), "now_ms": lambda: 99}
+    digest = _decide.record_digest(stored)
+    result = await decide.handle_recommendation_approve(
+        context, {"record_id": "r1", "record_digest": digest}, approve
+    )
+    assert commits == [{"record_id": "r1", "approval": result["value"]["approval"]}]
+    assert result["value"]["approval"] == {
+        "record_id": "r1",
+        "record_digest": digest,
+        "reviewer_principal": "principal:one",
+        "approved_at_ms": 99,
+        "approval_revision": 3,
+    }
+    with pytest.raises(OperationRefused) as mismatch:
+        await decide.handle_recommendation_approve(
+            context, {"record_id": "r1", "record_digest": "0" * 64}, approve
+        )
+    assert mismatch.value.code == "PLAN_MISMATCH" and len(commits) == 1
+
+    engine.sent.clear()
+    outside = engine_context(scopes=frozenset())
+    outside.services = context.services
+    with pytest.raises(OperationRefused) as scope:
+        await decide.handle_recommendation_approve(
+            outside, {"record_id": "r1", "record_digest": digest}, approve
+        )
+    assert scope.value.code == "SCOPE_REQUIRED" and engine.sent == []

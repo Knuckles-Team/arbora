@@ -9,6 +9,7 @@ caller without that role is refused ``SUBJECT_ACCESS_DENIED`` before any write.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from typing import Any, Literal
 
@@ -384,16 +385,28 @@ async def handle_profile_run(
     )
 
 
+_TARGET = re.compile(r"^[A-Za-z0-9_.:/-]{1,256}$")
+
+
 async def handle_quality_scores(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """Read the engine's scores and incidents for one target."""
-    answer = await send_main(
+    """Read score and incident nodes with ``Uql``: no named quality method exists."""
+    target = str(params["target"])
+    if _TARGET.fullmatch(target) is None:
+        raise OperationRefused("INVALID_ARGUMENT", {"field": "target"})
+    limit = int(params.get("limit", 50))
+    scores = await engine_send(
         context,
-        "QualityScores",
-        {"target": params["target"], "limit": int(params.get("limit", 50))},
+        "Uql",
+        {
+            "text": f"MATCH (n:QualityScore) |> WHERE target = '{target}' |> LIMIT {limit}"
+        },
     )
-    return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
+    incidents = await engine_send(
+        context, "Uql", {"text": f"MATCH (n:Incident) |> LIMIT {limit}"}
+    )
+    return {"value": {"evaluations": scores, "incidents": incidents}}
 
 
 async def handle_lineage_columns(
