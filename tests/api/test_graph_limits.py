@@ -10,6 +10,8 @@ import pytest
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import graph_limits
 
+pytestmark = pytest.mark.spec("ARBORA-OPS-R062.6")
+
 GOOD = {
     "profile_revision": 1,
     "contract_revision": "c1",
