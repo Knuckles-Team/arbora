@@ -23,7 +23,7 @@ from .authority import (
     A2ATransitionHistoryUnavailable,
 )
 from .models import A2AMessage, A2AOperationInvokeParams, A2APlanConfirmParams
-from .parts import FilePartRefused
+from .parts import FilePartRefused, MediaCapabilityRefused
 from .routing import A2AAssemblyUnavailable, A2AOperationBridgeUnavailable
 from .service import A2AService
 from .terminal_event import A2ATerminalEventUnavailable
@@ -320,6 +320,16 @@ def _application_error(request_id: Any, error: Exception) -> JSONResponse:
         return _error(
             request_id, -32602, "Invalid params", 400, {"reason": error.reason}
         )
+    if isinstance(error, MediaCapabilityRefused):
+        # ARBORA-A2A-R001.5.2: the typed code and a closed reason.
+        unavailable = error.code == "UNAVAILABLE"
+        return _error(
+            request_id,
+            -32015 if unavailable else -32016,
+            error.code,
+            503 if unavailable else 403,
+            {"reason": error.reason},
+        )
     mapped = _ERROR_CODES.get(type(error))
     if mapped is not None:
         code, status = mapped
@@ -460,6 +470,7 @@ async def _unary_request(
         A2ATransitionHistoryUnavailable,
         A2ATaskNotCancelable,
         ModalityRefused,
+        MediaCapabilityRefused,
         ValidationError,
         TypeError,
         ValueError,
