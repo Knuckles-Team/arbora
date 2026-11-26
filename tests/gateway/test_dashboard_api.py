@@ -64,10 +64,10 @@ class _FakeAggregator:
     def save_layout(self, layout: DashboardLayout) -> None:
         self.fetched.append("save_layout")
 
-    async def fetch_all(self) -> dict[str, WidgetData]:
+    async def fetch_all(self, read: Any) -> dict[str, WidgetData]:
         return {"alpha": self._widget("alpha"), "beta": self._widget("beta")}
 
-    async def fetch_one(self, service_id: str) -> WidgetData:
+    async def fetch_one(self, service_id: str, read: Any) -> WidgetData:
         self.fetched.append(service_id)
         return self._widget(service_id)
 
@@ -427,3 +427,66 @@ def test_hydration_routes_call_served_ingest_and_keep_refusal_codes(
     monkeypatch.setattr(ports, "_application", None)
     assert client.post("/api/dashboard/hydrate/github").status_code == 500
     assert client.post("/api/dashboard/hydrate/bad%20source").status_code == 422
+
+
+class _CensusApplication(_ServedApplication):
+    async def invoke_operation(self, op_id: str, params: dict[str, Any], /, **kw: Any):
+        if op_id == "fleet.catalog.list":
+            self.calls.append((op_id, dict(params), None))
+            return {
+                "value": {"servers": [{"server": "uptime-kuma"}, {"server": "arr"}]}
+            }
+        if op_id == "ecosystem.widgets.read":
+            self.calls.append((op_id, dict(params), None))
+            return {
+                "value": {
+                    "rows": [{"key": "up", "label": "up", "value": 3}],
+                    "source": params["widget"],
+                    "degraded": False,
+                    "fetched_at": "t",
+                }
+            }
+        return await super().invoke_operation(op_id, params, **kw)
+
+
+@pytest.mark.spec("ARBORA-OPS-R914")
+def test_widget_list_and_data_come_from_served_operations(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    """One path: the census lists widgets and ``ecosystem.widgets.read`` fills them."""
+    from arbora.gateway.aggregator import Aggregator
+    from arbora.gateway.config import ConfigManager
+    from arbora.gateway.models import ServiceConfig, ServiceGroup
+
+    application = _CensusApplication()
+    monkeypatch.setattr(ports, "_application", application)
+    manager = ConfigManager(config_path=tmp_path / "services.yaml")
+    manager.save(
+        DashboardLayout(
+            groups=[
+                ServiceGroup(
+                    name="g",
+                    services=[
+                        ServiceConfig(id="kuma", name="k", widget_type="uptime_kuma")
+                    ],
+                )
+            ]
+        )
+    )
+    monkeypatch.setattr(
+        dashboard_api, "_aggregator", Aggregator(config_manager=manager)
+    )
+    app = FastAPI()
+    dashboard_api.register_dashboard_routes(app)
+    client = TestClient(app)
+
+    listed = client.get("/api/dashboard/widgets").json()
+    data = client.get("/api/dashboard/data/kuma").json()
+
+    assert [item["widget_type"] for item in listed] == ["uptime_kuma", "arr"]
+    assert data["fields"] == {"up": 3}
+    assert (
+        "ecosystem.widgets.read",
+        {"widget": "uptime_kuma"},
+        None,
+    ) in application.calls

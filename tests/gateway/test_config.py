@@ -1,7 +1,6 @@
 """Tests for arbora.gateway.config — migrated from service-dashboard-core."""
 
 import json
-from pathlib import Path
 
 import pytest
 
@@ -12,49 +11,6 @@ from arbora.gateway.models import (
     ServiceConfig,
     ServiceGroup,
 )
-from arbora.gateway.widgets.base import BaseWidget
-
-
-class _URLWidget(BaseWidget):
-    service_type = "configured-service"
-    env_prefix = "CONFIGURED_SERVICE"
-
-    def get_fields(self):
-        return []
-
-    def fetch_data(self, config):
-        raise NotImplementedError
-
-
-def test_widget_url_is_required_and_resolves_explicit_config():
-    widget = _URLWidget()
-    missing = ServiceConfig(id="service", name="Service", widget_type="configured")
-    with pytest.raises(RuntimeError, match="URL is not configured"):
-        widget._resolve_url(missing)
-    configured = missing.model_copy(update={"url": "https://service.example.test"})
-    assert widget._resolve_url(configured) == "https://service.example.test"
-
-
-def test_widget_url_resolves_process_configuration(monkeypatch):
-    monkeypatch.setattr(
-        "arbora.gateway.widgets.base.setting",
-        lambda key, default="": (
-            "https://service.example.test"
-            if key == "CONFIGURED_SERVICE_URL"
-            else default
-        ),
-    )
-    config = ServiceConfig(id="service", name="Service", widget_type="configured")
-    assert _URLWidget()._resolve_url(config) == "https://service.example.test"
-
-
-def test_widget_modules_contain_no_environment_specific_url_fallbacks():
-    widgets = Path(__file__).parents[2] / "meristem" / "gateway" / "widgets"
-    forbidden = "local" + ".example.com"
-    retired_default = "default" + "_url"
-    sources = [path.read_text() for path in widgets.glob("*.py")]
-    assert all(forbidden not in source for source in sources)
-    assert all(retired_default not in source for source in sources)
 
 
 def test_config_manager_load_save(tmp_path):

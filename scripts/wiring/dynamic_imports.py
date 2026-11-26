@@ -2,9 +2,9 @@
 
 Arbora has more than one plugin/registration mechanism that chooses a
 ``arbora`` submodule by a string at runtime instead of a static ``import``
-statement -- for example ``arbora.gateway.registry``'s widget loader
-(``importlib.import_module(module_path)`` where ``module_path`` comes from a
-``dict[str, str]`` of absolute dotted names) and ``arbora.deployment``'s
+statement -- a plugin map resolved with
+``importlib.import_module(module_path)`` where ``module_path`` comes from a
+``dict[str, str]`` of absolute dotted names, and ``arbora.deployment``'s
 lazy-submodule facade (``import_module(".doctor", __name__)``, a relative
 dotted name). The reachability report (unlike the narrower, unchanged orphan
 check in :mod:`scripts.wiring.orphans`) must follow these or it would

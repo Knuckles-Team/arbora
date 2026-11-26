@@ -81,8 +81,8 @@ flowchart LR
 ```
 
 Dependencies point toward those authorities through public contracts. Do not
-copy their implementations here. Connector widgets invoke admitted fleet tools
-instead of importing vendor clients. MCP and REST routes share the same
+copy their implementations here. Dashboard widgets are read through the served
+`ecosystem.widgets.read` operation instead of importing vendor clients. MCP and REST routes share the same
 application service and authorization decision.
 
 The serving lifecycle owns one FastMCP event loop and one multiplexer
@@ -186,9 +186,9 @@ staged) fails when it has neither production fan-in (nothing in the
 package imports it) nor production fan-out (it imports nothing from the
 package), and is not a declared root (the top-level `arbora` package or a
 `[project.scripts]` / `[project.entry-points]` target). A dynamically
-dispatched module — for example `arbora.gateway.registry`'s string-keyed
-widget loader — is not an orphan as long as it imports something from the
-package itself (every widget imports its shared `base` module), matching
+dispatched module — for example one of `arbora.deployment`'s lazily loaded
+submodules — is not an orphan as long as it imports something from the
+package itself, matching
 this gate's structural, not reachability, definition. There is no allowlist:
 an isolated module is wired in, reached by another module, or removed. This
 restores the semantics `kiss check`'s own `orphan_module_enabled` provided
@@ -203,8 +203,7 @@ gate above: starting from the same declared roots, which `arbora` modules
 does walking every import edge — static (including a function-local
 `import`) and dynamic/name-based (a string literal anywhere in a module that
 names another discovered module, absolute or relative, the way
-`arbora.deployment`'s lazy-submodule facade and
-`arbora.gateway.registry`'s widget loader both select a module by value)
+`arbora.deployment`'s lazy-submodule facade selects a module by value)
 — never reach? A cluster of modules that only import each other has nonzero
 fan-in/fan-out, so it passes `check-orphan-modules`, but can still be served
 by no running process. This command lists exactly that: code that exists,

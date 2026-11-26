@@ -42,24 +42,6 @@ class ServiceCategory(StrEnum):
     CUSTOM = "Custom"
 
 
-class WidgetField(BaseModel):
-    """A single metric field displayed in a widget card.
-
-    Mirrors Homepage's ``Block`` component — a label + formatted value pair.
-    """
-
-    key: str = Field(description="Machine key for the field, e.g. 'running'")
-    label: str = Field(description="Human-readable label, e.g. 'Running'")
-    format: str = Field(
-        default="number",
-        description="Display format: number, percent, bytes, duration, text, status",
-    )
-    suffix: str = Field(default="", description="Optional suffix like 'ms', 'GB'")
-    highlight: bool = Field(
-        default=False, description="Whether to apply conditional highlighting"
-    )
-
-
 class WidgetData(BaseModel):
     """Data returned from a widget's fetch_data() method.
 
@@ -94,7 +76,7 @@ class ServiceConfig(BaseModel):
     widget_type: str = Field(
         min_length=1,
         max_length=128,
-        description="Widget type key from registry, e.g. 'portainer'",
+        description="Connector of the fleet census read as a widget, e.g. 'portainer'",
     )
     url: str = Field(default="", max_length=8192, description="Service base URL")
     icon: str = Field(
@@ -213,20 +195,4 @@ class DashboardLayout(BaseModel):
         ge=1,
         le=86400,
         description="Global default refresh interval in seconds",
-    )
-
-
-class WidgetRegistration(BaseModel):
-    """Metadata about a registered widget type."""
-
-    widget_type: str
-    display_name: str
-    icon: str
-    category: ServiceCategory
-    description: str
-    available_fields: list[WidgetField]
-    supports_websocket: bool = False
-    env_prefix: str = Field(
-        default="",
-        description="Default env var prefix for credential auto-discovery",
     )
