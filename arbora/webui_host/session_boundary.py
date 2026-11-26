@@ -11,6 +11,13 @@ from arbora.identity.ports import (
 )
 
 
+def _owned_by_auth(path: str) -> bool:
+    """``/auth/*`` and the issuer discovery documents under ``/.well-known/*`` (R015)."""
+    return (
+        path == "/auth" or path.startswith("/auth/") or path.startswith("/.well-known/")
+    )
+
+
 class WebUISessionBoundary:
     """Install only with composition-owned admission and authentication routes.
 
@@ -93,7 +100,7 @@ class CanonicalWebUIBoundaryMiddleware:
             await self.app(scope, receive, send)
             return
         path = str(scope.get("path") or "")
-        if path == "/auth" or path.startswith("/auth/"):
+        if _owned_by_auth(path):
             await self._dispatch(self.auth_app, scope, receive, send)
             return
         if path == "/api/v1" or path.startswith("/api/v1/"):
@@ -162,7 +169,7 @@ class BrowserSessionMiddleware:
             await self.app(scope, receive, send)
             return
         path = str(scope.get("path") or "")
-        if path == "/auth" or path.startswith("/auth/"):
+        if _owned_by_auth(path):
             await self.auth_app(scope, receive, send)
             return
         started = False
