@@ -552,6 +552,47 @@ def _with_approval_notices(
     return {**bound, **bindings}, startup
 
 
+def _with_loop_worker(
+    bindings: Mapping[str, Any],
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+    session: Callable[[], Any],
+) -> tuple[Mapping[str, Any], Callable[[], Coroutine[Any, Any, Any]] | None]:
+    """Start the loop run worker when a ``loop_body`` is bound (ARBORA-OPS-R022.2.13).
+
+    The worker claims the ``loop_run`` task that ``evolution.loops.run`` enqueued
+    and runs the body through the bound port. With no body bound nothing is
+    claimed and the queued run stays in the engine: the capability fails closed.
+    """
+    body = bindings.get("loop_body")
+    if body is None:
+        return bindings, None
+    import socket
+
+    from arbora.core.settings import setting
+    from arbora.fleet.loop_worker import LoopWorker, LoopWorkerRunner
+
+    async def send(method: str, params: dict[str, Any]) -> Any:
+        from medulla.generated import send_by_id
+
+        client = await pool.connected_client(
+            connect_context(str(session().tenant)), graph
+        )
+        return await send_by_id(client, method, params, graph)
+
+    host = socket.gethostname()
+    runner = LoopWorkerRunner(
+        LoopWorker(send, body, worker_id=f"arbora-loops-{host}", host_iri=host),
+        interval_s=float(setting("ARBORA_LOOP_WORKER_INTERVAL_S", 5.0)),
+    )
+
+    async def startup() -> None:
+        runner.start()
+
+    return {**bindings, "loop_worker_runner": runner}, startup
+
+
 def _chained_startup(
     first: Callable[[], Coroutine[Any, Any, Any]] | None,
     second: Callable[[], Coroutine[Any, Any, Any]],
@@ -686,6 +727,11 @@ def compose_served_invocation(
             bindings, pool, graph, connect_context, session
         )
         process_startup = _chained_startup(process_startup, outbox_startup)
+        bindings, loop_startup = _with_loop_worker(
+            bindings, pool, graph, connect_context, session
+        )
+        if loop_startup is not None:
+            process_startup = _chained_startup(process_startup, loop_startup)
     if (
         bindings is not None
         and task_plan_config is not None

@@ -139,13 +139,6 @@ class ArboraConfig(BaseModel):
         alias="PRESENCE_SNAPSHOT_INTERVAL_S",
         description="City presence snapshot cadence in seconds (ARBORA-OPS-R915). A snapshot whose simulated_at is older than this interval is served flagged fresh: false; a consumer polling faster than the interval receives the same snapshot, not a new computation.",
     )
-    usage_index_p95_bound_ms: int = Field(
-        default=500,
-        ge=50,
-        le=5_000,
-        alias="USAGE_INDEX_P95_BOUND_MS",
-        description="Largest p95 latency bound the indexed usage query may carry in its latency profile, in milliseconds (ARBORA-OPS-R061.4). A profile that is absent, incomplete or above it refuses UNAVAILABLE with no aggregates.",
-    )
     viewport_max_bytes: int = Field(
         default=1_048_576,
         ge=4_096,

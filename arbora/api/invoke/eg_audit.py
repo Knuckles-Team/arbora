@@ -95,13 +95,21 @@ class EgAuditAdapter:
         """Forward the screening and hook evidence in the engine's bounds.
 
         ARBORA-OPS-R042.5, R009.9: the engine stores ``evidence`` (identifiers
-        and counts) in the chain entry. A pin that predates the field withholds
-        it (``pin_lag``) until the re-pin; nothing is invented.
+        and counts) in the chain entry. Evidence the caller supplied is never
+        silently dropped: a pin that predates the field refuses ``UNAVAILABLE``
+        naming ``AuditAppend.evidence`` (PIN-LAG, delete with the re-pin). An
+        event with no evidence writes on any pin.
         """
-        from arbora.pin_lag.medulla import accepts_parameter
+        from arbora.pin_lag.medulla import (
+            PinLagUnavailable,
+            accepts_parameter,
+            refusal,
+        )
 
-        if not accepts_parameter(append, "evidence"):
+        if not any(key in event for key in cls.EVIDENCE_KEYS):
             return {}
+        if not accepts_parameter(append, "evidence"):
+            raise refusal(PinLagUnavailable("AuditAppend.evidence"))
         present = {
             key: cls._FORBIDDEN.sub(",", event[key])
             .encode()[: cls._MAX_VALUE]
