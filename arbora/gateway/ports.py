@@ -8,7 +8,7 @@ implementations by transport modules.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any, Protocol, runtime_checkable
 
 __all__ = [
@@ -24,6 +24,22 @@ class GatewayApplicationPort(Protocol):
 
     async def execute_tool(self, tool: str, /, **kwargs: Any) -> Any:
         """Execute one canonical arbora action and return decoded data."""
+
+    async def invoke_operation(
+        self,
+        op_id: str,
+        params: Mapping[str, Any],
+        /,
+        *,
+        request: Any,
+        idempotency_key: str | None = None,
+    ) -> Any:
+        """Invoke one served operation as the verified caller of ``request``.
+
+        The call runs through the one invoke pipeline, so authority, effect and
+        audit are decided exactly as for any other surface (ARBORA-OPS-R039.7).
+        A refusal raises ``OperationRefused``; success returns the result value.
+        """
 
     def engine(self) -> Any:
         """Return the process-scoped engine adapter used by host-only routes."""

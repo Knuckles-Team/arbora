@@ -18,6 +18,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.pin_lag.unavailable import PinLagUnavailable
 
 __all__ = [
     "OUTBOX_MODELS",
@@ -29,16 +30,6 @@ __all__ = [
 
 #: The request shapes of the engine outbox pull and acknowledge.
 OUTBOX_MODELS: tuple[str, ...] = ("MutationOutboxOpPull", "MutationOutboxOpAck")
-
-
-class PinLagUnavailable(RuntimeError):
-    """The pinned engine lacks a method or shape; ``missing`` names it."""
-
-    code = "UNAVAILABLE"
-
-    def __init__(self, missing: str) -> None:
-        self.missing = missing
-        super().__init__(f"UNAVAILABLE: the pinned engine lacks {missing}")
 
 
 def require_methods(*names: str) -> None:
