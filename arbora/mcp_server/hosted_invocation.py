@@ -26,6 +26,9 @@ class HostedInvocation:
     #: authority before serving (the task-plan schema publication). No request
     #: path reaches it.
     process_startup: Callable[[], Coroutine[Any, Any, Any]] | None = None
+    #: Host-owned schedulers (``async run(should_stop)``), started with the
+    #: process on :class:`~arbora.mcp_server.background.BackgroundHost`.
+    background_services: tuple[Any, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.services, InvokeServices) or not isinstance(
