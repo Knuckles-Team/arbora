@@ -108,7 +108,10 @@ def _agent_context(service: Any) -> Any:
         session=service_session("tenant:one", "graph:one"), tenant="tenant:one"
     )
     return SimpleNamespace(
-        caller=caller, services={"a2a": service}, idempotency_key="run-key"
+        caller=caller,
+        services={"a2a": service},
+        operation_services=None,
+        idempotency_key="run-key",
     )
 
 
