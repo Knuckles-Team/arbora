@@ -144,6 +144,9 @@ class McpAsk:
             result = await self.mcp.call_tool(
                 verb, {"op": op, "params": params, **extra}
             )
+            if result.structured_content is not None:
+                # The text part is a 1000-character summary; the payload is whole.
+                return result.structured_content
             text = "".join(getattr(part, "text", "") for part in result.content)
             return json.loads(text)
 

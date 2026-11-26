@@ -25,6 +25,7 @@ def get_registry() -> Registry:
     from . import (
         access,
         agents,
+        assistants,
         atlas,
         browser,
         capacity,
@@ -49,6 +50,7 @@ def get_registry() -> Registry:
         models,
         ontology_objects,
         ops,
+        participants,
         plans,
         policy,
         preferences,
@@ -78,6 +80,7 @@ def get_registry() -> Registry:
     for module in (
         access,
         agents,
+        assistants,
         browser,
         capacity,
         catalog,
@@ -102,6 +105,7 @@ def get_registry() -> Registry:
         messaging,
         models,
         ops,
+        participants,
         plans,
         preferences,
         policy,

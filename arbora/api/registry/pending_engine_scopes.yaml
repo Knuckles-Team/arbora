@@ -6,6 +6,8 @@ pending_engine_scopes:
   - knowledge:approve
   - knowledge:curate
   - knowledge:flag
+  - participant:read
+  - participant:write
   - runs:control
   - sessions:read
   - skills:author
