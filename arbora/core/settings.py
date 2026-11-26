@@ -139,6 +139,13 @@ class ArboraConfig(BaseModel):
         alias="PRESENCE_SNAPSHOT_INTERVAL_S",
         description="City presence snapshot cadence in seconds (ARBORA-OPS-R915). A snapshot whose simulated_at is older than this interval is served flagged fresh: false; a consumer polling faster than the interval receives the same snapshot, not a new computation.",
     )
+    bookmarks_max_export_rows: int = Field(
+        default=50_000,
+        ge=100,
+        le=1_000_000,
+        alias="BOOKMARKS_MAX_EXPORT_ROWS",
+        description="Most rows one bookmark export may carry (ARBORA-OPS-R066.3). A request above it is refused LOAD_CAP_EXCEEDED before any engine read.",
+    )
     viewport_max_bytes: int = Field(
         default=1_048_576,
         ge=4_096,

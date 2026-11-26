@@ -170,6 +170,16 @@ def _digest(value: Any) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _delegated_tools(preloaded: Any, operations: tuple[str, ...] | None) -> Any:
+    """The run's tools bounded by its delegation: ``None`` operations leave them as is."""
+    if operations is None:
+        return preloaded
+    held = frozenset(operations)
+    if preloaded is None:
+        return tuple(op for op in operations if not op.startswith("agent:"))
+    return tuple(tool for tool in preloaded if tool in held)
+
+
 class WorkItemA2AAuthority:
     """A2A projection over AU's sole durable WorkItem and dispatch authorities."""
 
@@ -183,16 +193,22 @@ class WorkItemA2AAuthority:
         hosted_invocation: Any = None,
         events: Any = None,
         delegations: Any = None,
+        delegation_reader: Any = None,
         clock: Callable[[], float] = time.time,
     ) -> None:
         self._engine_provider = engine_provider
         #: Records the run's ``agent_run`` delegation at admission
         #: (``ARBORA-A2A-R001.2.2``); ``None`` admits a run without one.
         self.delegations = delegations
+        #: Reads a delegation by id so a reclaimed run proves its owner
+        #: (``ARBORA-A2A-R001.2.2``); ``None`` refuses every reclaim.
+        self.delegation_reader = delegation_reader
         self.clock = clock
         #: The durable event publisher (ARBORA-A2A-R001.2); ``None`` publishes
         #: nothing and leaves streaming unserved.
         self.events = events
+        #: The push-notification worker (ARBORA-A2A-R013); ``None`` pushes nothing.
+        self.push: Any = None
         self._executor = executor
         self._origins = origins
         # Runs admitted by a non-blocking send (ARBORA-A2A-R001.6). The set
@@ -496,8 +512,48 @@ class WorkItemA2AAuthority:
         reply: str | None = None,
     ) -> None:
         """Write one A2A-visible run event under the run's lease fence."""
-        if self.events is None:
-            return
+        if self.events is not None:
+            await self._publish_event(
+                item_id,
+                claim,
+                task_id=task_id,
+                context_id=context_id,
+                kind=kind,
+                state=state,
+                final=final,
+                reply=reply,
+            )
+        if final and self.push is not None:
+            await self._push_terminal(item_id, task_id)
+
+    async def _push_terminal(self, item_id: str, task_id: str) -> None:
+        """Submit one push item per registered target of a terminal task (R013.2).
+
+        The task is already terminal, so a failure here never fails the run.
+        """
+        from arbora import work_items
+
+        try:
+            item = await asyncio.to_thread(
+                work_items.get_work_item, self._engine()[1], item_id
+            )
+            if isinstance(item, dict):
+                await asyncio.to_thread(self.push.enqueue, task_id, item)
+        except Exception:  # noqa: BLE001 - terminal state is already committed
+            logging.getLogger(__name__).exception("a2a push enqueue failed")
+
+    async def _publish_event(
+        self,
+        item_id: str,
+        claim: Any,
+        *,
+        task_id: str,
+        context_id: str,
+        kind: str,
+        state: str | None,
+        final: bool,
+        reply: str | None,
+    ) -> None:
         draft: dict[str, Any] = {
             "task_id": task_id,
             "context_id": context_id,
@@ -560,6 +616,7 @@ class WorkItemA2AAuthority:
         run_id: str | None,
         media: dict[str, Any] | None = None,
         observer: Any = None,
+        delegated_operations: tuple[str, ...] | None = None,
     ) -> Any:
         """Execute only inside the host's revocable native owner scope."""
         from arbora import work_items
@@ -612,7 +669,9 @@ class WorkItemA2AAuthority:
                     agent_name=agent_name,
                     task=task,
                     run_id=run_id or task_id or None,
-                    allowed_tools=preloaded_agent_tools(agent_name),
+                    allowed_tools=_delegated_tools(
+                        preloaded_agent_tools(agent_name), delegated_operations
+                    ),
                     **(media or {}),
                 ),
                 session=session,
@@ -675,7 +734,21 @@ class WorkItemA2AAuthority:
         run from ``EngineHostCheckpoint`` (``MERISTEM-BOUNDARY-R043.8``), and the
         event log continues from the committed ``event_seq``: the ``working``
         event of the first attempt is not published again.
+
+        The run acts under its own ``agent_run`` delegation (``delegation_id`` of the
+        claim), not the host's process session: the delegation's principal must be
+        the run's owner, and the run's tools are bounded by the delegation's
+        operations. A foreign, absent, revoked or expired delegation raises
+        ``RunDelegationRefused`` before any step runs.
         """
+        from .run_delegation import resolve_run_delegation
+
+        delegation = await resolve_run_delegation(
+            item,
+            claim,
+            read=self.delegation_reader,
+            tenant=str(session.tenant),
+        )
         metadata = item["metadata"]
         item_id = str(item["work_item_id"])
         route = metadata.get("a2a_route") or {}
@@ -692,6 +765,7 @@ class WorkItemA2AAuthority:
             context_id=str(metadata.get("a2a_context_id") or ""),
             run_id=str(metadata.get("a2a_run_id") or task_id),
             resumed=True,
+            delegated_operations=delegation.operations,
         )
 
     async def _run_claimed(
@@ -708,6 +782,7 @@ class WorkItemA2AAuthority:
         run_id: str | None,
         media: dict[str, Any] | None = None,
         resumed: bool = False,
+        delegated_operations: tuple[str, ...] | None = None,
     ) -> dict[str, int] | None:
         """Run the agent under a lease already held and commit its outcome."""
         outcome, result_ref, error_ref = "succeeded", None, None
@@ -738,6 +813,7 @@ class WorkItemA2AAuthority:
                 run_id=run_id,
                 media=media,
                 observer=observer,
+                delegated_operations=delegated_operations,
             )
             if result.run_id != (run_id or task_id):
                 raise RuntimeError("agent result does not belong to this A2A turn")

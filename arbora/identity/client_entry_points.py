@@ -21,6 +21,7 @@ __all__ = [
     "ClientEntryPoint",
     "TokenRequirement",
     "entry_points_without_verified_tokens",
+    "require_verified_entry_points",
 ]
 
 
@@ -40,11 +41,10 @@ class TokenRequirement:
     token_kind: str
 
 
-# Audited 2026-10-09: every Arbora client path attaches a verified
-# local-issuer or permitted service token before calling the engine.
-# Arbora still relies on the engine's unauthenticated opt-out only as
-# the defense-in-depth fallback for the loopback bootstrap principal
-# (ARBORA-IDENTITY-R004); no other entry point ever exercises an
+# Every Arbora client path attaches a verified local-issuer or permitted service
+# token before calling the engine. No start-up path starts or connects to an
+# engine without a signed token; the one exception is the explicit none mode of
+# MEDULLA-IDENTITY-R003.1 (ARBORA-IDENTITY-R017.2). No entry point has an
 # unsigned retry or fallback path.
 CLIENT_TOKEN_REQUIREMENTS: tuple[TokenRequirement, ...] = (
     TokenRequirement(ClientEntryPoint.BOOTSTRAP, True, "local-issuer"),
@@ -68,3 +68,11 @@ def entry_points_without_verified_tokens() -> tuple[ClientEntryPoint, ...]:
         for req in CLIENT_TOKEN_REQUIREMENTS
         if not req.carries_verified_token
     )
+
+
+def require_verified_entry_points() -> None:
+    """Refuse to start while any entry point lacks a verified token (R017.2)."""
+    unverified = entry_points_without_verified_tokens()
+    if unverified:
+        names = ", ".join(sorted(point.value for point in unverified))
+        raise RuntimeError(f"entry points without verified tokens: {names}")

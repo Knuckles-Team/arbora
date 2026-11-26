@@ -128,15 +128,30 @@ async def totp_pass_through(
     return JSONResponse(value if isinstance(value, dict) else {"ok": True})
 
 
+#: Refusals that say a proof was already used; every other refusal is "not found".
+_REPLAY_CODES = frozenset(
+    {
+        "MFA_CODE_REPLAYED",
+        "RECOVERY_CODE_USED",
+        "WEBAUTHN_CHALLENGE_USED",
+        "WEBAUTHN_COUNTER_REGRESSED",
+    }
+)
+
+
+def public_refusal(code: str) -> str:
+    """The one public name of an MFA refusal: no distinct code is an existence oracle.
+
+    Replayed proofs answer ``IDENTITY_REPLAY``; an invalid, locked, unknown or
+    unenrolled proof answers ``IDENTITY_NOT_FOUND``. The precise engine code stays in
+    the audit event only.
+    """
+    return "IDENTITY_REPLAY" if code in _REPLAY_CODES else "IDENTITY_NOT_FOUND"
+
+
 def refusal_response(refused: Any) -> JSONResponse:
-    """The engine's closed refusal; a lockout carries the time it lifts."""
-    if refused.code == "MFA_LOCKED":
-        retry_at = _retry_at_ms(refused.detail)
-        body: dict[str, Any] = {"error": "MFA_LOCKED"}
-        if retry_at is not None:
-            body["retry_at_ms"] = retry_at
-        return JSONResponse(body, status_code=429)
-    return JSONResponse({"error": refused.code}, status_code=403)
+    """The engine's closed refusal, answered uniformly (lockout timing is not sent)."""
+    return JSONResponse({"error": public_refusal(refused.code)}, status_code=403)
 
 
 def _retry_at_ms(detail: str | None) -> int | None:

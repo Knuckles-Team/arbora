@@ -15,6 +15,7 @@ from .authority import WorkItemA2AAuthority
 from .event_log import A2AEventLog, A2AEventStreams, StreamClock
 from .history import EngineTransitionHistory
 from .media_refs import SessionMediaRefStore
+from .push import PushDeliveryWorker
 from .routing import OrchestratorA2ARouter
 from .service import A2ACardMetadata, A2AService
 
@@ -50,7 +51,7 @@ def build_a2a_service(
     ``streaming`` because this function wires it (ARBORA-A2A-R014).
     """
     from .authority import _RUN_LEASE_SECONDS
-    from .run_delegation import engine_run_delegations
+    from .run_delegation import engine_delegation_reader, engine_run_delegations
 
     log = A2AEventLog(engine_provider, clock=clock)
     authority = WorkItemA2AAuthority(
@@ -59,13 +60,17 @@ def build_a2a_service(
         delegations=engine_run_delegations(
             engine_provider, clock=time.time, lease_s=_RUN_LEASE_SECONDS
         ),
+        delegation_reader=engine_delegation_reader(engine_provider),
         origins=origins,
         task_plan_config=task_plan_config,
         hosted_invocation=hosted_invocation,
         events=log,
     )
+    push = PushDeliveryWorker(authority)
+    authority.push = push
     return A2AService(
         authority=authority,
+        push=push,
         router=OrchestratorA2ARouter(engine_provider),
         card_metadata=card_metadata or A2ACardMetadata(),
         streaming=A2AEventStreams(

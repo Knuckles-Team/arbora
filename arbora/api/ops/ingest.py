@@ -26,6 +26,7 @@ from arbora.api.registry import (
     OpSpec,
     Verb,
 )
+from arbora.ingest.maintenance import run_maintenance
 from arbora.ingest.service import (
     admit_embedding,
     approve_repair,
@@ -58,6 +59,7 @@ __all__ = [
     "list_drift",
     "propose_repair",
     "reembed",
+    "run_maintenance",
     "operations",
     "cancel_job",
     "get_job_status",
@@ -77,6 +79,8 @@ __all__ = [
 #: idempotency key, so a replay returns the same durable job.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
     "ingest.sources.sync": "arbora.ingest.connector_sources:ConnectorIngestRunner",
+    # Each admitted action is its own engine write under the caller's key (R886).
+    "ingest.maintenance.run": "medulla:ingest-maintenance-actions",
 }
 
 
@@ -190,6 +194,15 @@ class IngestEmbeddingAdmitParams(_Params):
 class IngestReembedParams(_Params):
     source_id: str = Field(min_length=1, max_length=256)
     model: str = Field(min_length=1, max_length=256)
+
+
+class IngestMaintenanceParams(_Params):
+    corpus: str = Field(min_length=1, max_length=256)
+    window_end_ms: int = Field(ge=0)
+    #: The owner's authorization; absent, the run refuses before any engine call.
+    owner_authorization: str | None = Field(default=None, max_length=256)
+    expected_revision: int = Field(ge=0)
+    cost_ceiling: int = Field(ge=0)
 
 
 class IngestValueResult(_Params):
@@ -403,4 +416,13 @@ def operations() -> tuple[OpSpec, ...]:
             audit=AuditClass.EVENT,
         ),
         *_drift_embedding_operations(),
+        _ingest_op(
+            "ingest.maintenance.run",
+            "Measure ingest throughput and apply the engine-admitted maintenance actions",
+            "repair the ingest shortfall",
+            IngestMaintenanceParams,
+            "run_maintenance",
+            write=True,
+            verb=Verb.ACT,
+        ),
     )

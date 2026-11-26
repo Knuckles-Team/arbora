@@ -619,3 +619,106 @@ async def test_foreign_read_cancellation_sends_remote_abort_before_reraising() -
     with pytest.raises(asyncio.CancelledError):
         await task
     assert [name for name, _ in foreign.calls] == ["open", "chunk", "abort"]
+
+
+_ROW_SCHEMA = {
+    "type": "object",
+    "properties": {"q": {"type": "string"}, "limit": {"type": "integer"}},
+    "required": ["q"],
+    "additionalProperties": False,
+}
+
+
+def _row_request(**changes: Any):
+    from arbora.fleet.source_executor import ConnectorRowBudget, ConnectorRowRequest
+
+    fields: dict[str, Any] = {
+        "source_label": "crm",
+        "server": "good",
+        "tool": "list",
+        "arguments": {"q": "x"},
+        "input_schema": _ROW_SCHEMA,
+        "budget": ConnectorRowBudget(max_rows=3, timeout_ms=2000),
+    }
+    fields.update(changes)
+    return ConnectorRowRequest(**fields)
+
+
+@pytest.mark.spec("ARBORA-FLEET-R015.4")
+async def test_connector_row_request_maps_budget_and_pushed_filter() -> None:
+    from arbora.fleet.source_executor import (
+        ConnectorRowBudget,
+        read_connector_row,
+        source_read_from_connector_row,
+    )
+
+    mapped = source_read_from_connector_row(
+        _row_request(pushed_filter={"limit": 5, "ghost": 1})
+    )
+    assert (mapped.source_id, mapped.connector, mapped.tool) == ("crm", "good", "list")
+    assert mapped.arguments == {"q": "x", "limit": 5}
+    assert (mapped.max_rows, mapped.timeout_s, mapped.max_pages) == (3, 2.0, 5)
+    low = source_read_from_connector_row(
+        _row_request(budget=ConnectorRowBudget(max_rows=0, timeout_ms=1))
+    )
+    assert (low.max_rows, low.timeout_s) == (1, 0.1)
+    high = source_read_from_connector_row(
+        _row_request(budget=ConnectorRowBudget(max_rows=10**9, timeout_ms=10**9))
+    )
+    assert (high.max_rows, high.timeout_s) == (10_000, 60.0)
+    gateway = FakeGateway()
+    executor = FleetSourceExecutor(gateway, object())
+    reply = await read_connector_row(executor, _row_request())
+    assert len(reply.rows) == 3 and reply.truncated and reply.missing_source is None
+    assert gateway.calls[0][3] == {"q": "x"}
+
+
+@pytest.mark.spec("ARBORA-FLEET-R015.4")
+async def test_arguments_outside_the_tool_schema_are_refused_before_any_call() -> None:
+    from arbora.fleet.source_executor import read_connector_row
+
+    gateway = FakeGateway()
+    executor = FleetSourceExecutor(gateway, object())
+    for arguments in (
+        {},
+        {"q": 1},
+        {"q": "x", "extra": True},
+        {"q": "x", "limit": True},
+    ):
+        reply = await read_connector_row(executor, _row_request(arguments=arguments))
+        assert reply.error_code == "UNSUPPORTED_SEARCH_ARGUMENT"
+        assert reply.missing_source == "crm" and reply.rows == ()
+    assert gateway.calls == []
+
+
+@pytest.mark.spec("ARBORA-FLEET-R015.4")
+async def test_executor_codes_map_to_the_seam_codes_and_name_the_missing_source() -> (
+    None
+):
+    from scion_sdk.http.safe_post import SsrfBlockedError
+
+    from arbora.fleet.source_executor import ConnectorRowBudget, read_connector_row
+
+    class Gateway(FakeGateway):
+        async def call(self, caller, server, tool, arguments, *, expected_effect):
+            if server == "blocked":
+                raise SsrfBlockedError("private target")
+            return await super().call(
+                caller, server, tool, arguments, expected_effect=expected_effect
+            )
+
+    executor = FleetSourceExecutor(Gateway(), object())
+    expected = {
+        "denied": "FOREIGN_SOURCE_UNGRANTED",
+        "bad": "SOURCE_UNREACHABLE",
+        "write": "SOURCE_UNREACHABLE",
+        "blocked": "OUTBOUND_TARGET_DENIED",
+    }
+    for server, code in expected.items():
+        reply = await read_connector_row(executor, _row_request(server=server))
+        assert reply.error_code == code and reply.missing_source == "crm"
+    slow = await read_connector_row(
+        executor,
+        _row_request(server="slow", budget=ConnectorRowBudget(1000, 100)),
+    )
+    assert slow.error_code == "SOURCE_UNREACHABLE" and slow.missing_source == "crm"

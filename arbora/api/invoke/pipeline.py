@@ -15,7 +15,9 @@ from typing import Any
 from pydantic import BaseModel
 
 from arbora.api.errors import EngineRefusal, FleetRefusal
+from arbora.api.invoke.agent_ref import bind_agent_ref
 from arbora.api.invoke.audit import EffectJournal, EffectReservation, audit_event
+from arbora.api.invoke.autonomy import AskVerdict, require_autonomy_clearance
 from arbora.api.invoke.executor import (
     OperationRuntime,
     execution_context,
@@ -25,6 +27,7 @@ from arbora.api.invoke.gate_class import GateReader, no_engine_answer, resolve_g
 from arbora.api.invoke.hooks import HookChain, HookRecord
 from arbora.api.invoke.plan import PlanBinding, PlanStore, bind_plan, params_digest
 from arbora.api.invoke.privacy import mask_persisted_arguments
+from arbora.api.invoke.recommendation_gate import gate_result
 from arbora.api.invoke.screening import (
     ContentOrigin,
     ContentScreenVerdict,
@@ -58,6 +61,8 @@ from arbora.api.registry import (
     Registry,
     Surface,
 )
+from arbora.fleet.admission import AdmissionGate
+from arbora.fleet.admission_models import AdmissionRefused
 
 _logger = logging.getLogger(__name__)
 
@@ -113,6 +118,9 @@ class FleetCallDecision:
     executor_scopes: frozenset[str]
     subject_id: str | None
     credential_mode: str
+    #: The tool's resource declaration (``SCION-CONNECTOR-CONTROL-R911``), when it has one.
+    resource_protocol: str | None = None
+    resource_param: str | None = None
 
 
 FleetEffect = Callable[
@@ -311,6 +319,14 @@ class InvokeServices:
     gate_reader: GateReader = no_engine_answer
     #: Operator hooks (ARBORA-OPS-R009.6); empty unless the host binds some.
     hooks: HookChain = field(default_factory=HookChain)
+    #: The resource-grant gate for tools that declare a resource
+    #: (ARBORA-IDENTITY-R019.3); ``None`` while no gate is composed.
+    resource_gate: Any = None
+    #: Skill and workflow admission, run before the confirmation gate
+    #: (ARBORA-FLEET-R034.3). The default gate admits what declares nothing.
+    admission: AdmissionGate = field(default_factory=AdmissionGate)
+    #: The engine autonomy verdict reader (ARBORA-OPS-R867); ``None`` until the host binds one.
+    autonomy: AskVerdict | None = None
 
     def __post_init__(self) -> None:
         self._cover_plan_gated_operations()
@@ -617,6 +633,10 @@ async def authorize(
     refused = await _base_authority(op, caller, services)
     if refused is not None:
         return refused
+    if services.resource_gate is not None and decision is not None:
+        refused = await services.resource_gate(op, params, caller, decision)
+        if refused is not None:
+            return refused
     return await prepare_executor(
         op,
         params,
@@ -723,6 +743,8 @@ class _Call:
     resolved_from_intent: bool
     hook_records: tuple[HookRecord, ...] = ()
     hooks_enabled: bool = True
+    #: Digests, policy names and field names the admission gate recorded.
+    admission_evidence: Mapping[str, str] = field(default_factory=dict)
 
     @property
     def needs_plan(self) -> bool:
@@ -791,7 +813,7 @@ async def _record(
 
 def _evidence(call: _Call, extra: Mapping[str, str] | None) -> dict[str, str]:
     """Counts and identifiers only: screening fields and the hook decisions."""
-    merged = dict(extra or {})
+    merged = {**call.admission_evidence, **(extra or {})}
     if call.hook_records and "hooks" not in merged:
         merged["hooks"] = json.dumps(
             [record.as_json() for record in call.hook_records], separators=(",", ":")
@@ -950,6 +972,14 @@ def _execution_refusal(call: _Call) -> OpError | None:
     return None
 
 
+def _admission_gate(call: _Call) -> Mapping[str, str] | OpError:
+    """Admit a skill or workflow before any effect or plan (ARBORA-FLEET-R034.3)."""
+    try:
+        return call.services.admission.evaluate(call.op.id, call.arguments).evidence
+    except AdmissionRefused as refusal:
+        return OpError(refusal.code, refusal.detail, source="arbora")
+
+
 async def _confirmation_gate(call: _Call) -> OpError | OpResult | None:
     """Refuse malformed requests, or answer an unconfirmed plan with a preview."""
     refused = _request_refusal(call)
@@ -960,8 +990,17 @@ async def _confirmation_gate(call: _Call) -> OpError | OpResult | None:
         assert preview is not None
         return preview
     refused = _execution_refusal(call)
-    if refused is not None or call.plan_ref is None:
+    if refused is not None:
         return refused
+    cleared = await require_autonomy_clearance(
+        call.services.autonomy,
+        op_id=call.op.id,
+        tenant=call.caller.tenant,
+        is_read=call.op.effect == Effect.READ,
+        plan_approved=call.plan_ref is not None,
+    )
+    if cleared is not None or call.plan_ref is None:
+        return cleared
     return await _approval_wait(call)
 
 
@@ -1301,6 +1340,7 @@ async def _execute(
         indeterminate = OpError("INDETERMINATE", {"audit_ref": audit_ref})
         await _record(call, audit_ref, reservation, indeterminate)
         raise
+    result = gate_result(call.op.id, result)
     result, evidence = _screen_outcome(call, result)
     result, hook_records = await _output_hooks(call, result)
     if hook_records:
@@ -1367,6 +1407,10 @@ async def invoke(
     if isinstance(resolved, OpError):
         return resolved
     effective_op, verified, decision = resolved
+    bound_arguments = bind_agent_ref(effective_op, arguments, verified)
+    if isinstance(bound_arguments, OpError):
+        return bound_arguments
+    arguments = bound_arguments
     hooked = await _input_hooks(
         op, arguments, verified, surface, services, hooks_enabled
     )
@@ -1388,6 +1432,10 @@ async def invoke(
         input_records,
         hooks_enabled,
     )
+    admitted = _admission_gate(call)
+    if isinstance(admitted, OpError):
+        return admitted
+    call = replace(call, admission_evidence=admitted)
     early = await _confirmation_gate(call)
     if early is not None:
         return early

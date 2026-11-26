@@ -350,6 +350,9 @@ def build_invoke_services(
     # ARBORA-OPS-R009.6: the operator hooks are validated against the registry
     # here; an invalid configuration stops the host start (``hook_invalid``).
     changes.setdefault("hooks", load_hooks(registry))
+    # ARBORA-FLEET-R034.2: the admission limits come from config.json; an
+    # invalid value stops the host start rather than weakening the gate.
+    changes.setdefault("admission", _admission_gate_from_config())
     return InvokeServices(
         registry=registry,
         runtime=runtime,
@@ -359,6 +362,16 @@ def build_invoke_services(
         audit_write=audit.write,
         **changes,
     )
+
+
+def _admission_gate_from_config() -> Any:
+    from arbora.core.settings import platform_config_file, read_config_document
+    from arbora.fleet.admission import AdmissionGate
+    from arbora.fleet.admission_policy import AdmissionConfig
+
+    path = platform_config_file("config.json")
+    document = read_config_document(path) if path.is_file() else {}
+    return AdmissionGate(AdmissionConfig.from_document(document))
 
 
 def build_outbox_consumers(send: Any, notifier: Any) -> tuple[Any, ...]:

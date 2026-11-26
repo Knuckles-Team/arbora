@@ -481,12 +481,12 @@ def _arr_like_catalog() -> list[tuple[str, str]]:
 
 @pytest.mark.spec("ARBORA-FLEET-R074")
 def test_find_ranks_the_named_system_and_object_first_in_a_large_catalog() -> None:
-    from arbora.fleet.discovery_ranking import LexicalRanker
+    from arbora.fleet.lexical_floor import LexicalFloor
     from arbora.fleet.multiplexer import MCPMultiplexer
 
     catalog = _arr_like_catalog()
     query = "list pending media requests in seerr"
-    ranker = LexicalRanker(query, (f"{n} {d}" for n, d in catalog))
+    ranker = LexicalFloor(query, (f"{n} {d}" for n, d in catalog))
     ranked = sorted(catalog, key=lambda row: -ranker.score(*row))
     assert [name for name, _ in ranked[:2]] == [
         "seerr_get_requests",

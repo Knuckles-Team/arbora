@@ -5,10 +5,11 @@ from __future__ import annotations
 import builtins
 import logging
 import re
-from collections.abc import Awaitable, Callable, Iterable, Mapping
+from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
 from typing import Any, cast
 
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog, ItemKind
+from arbora.fleet.job_loads import JobLoadResult
 from arbora.fleet.pin_store import PinRecord, PinStore, pinned_now_ms
 from arbora.fleet.session_loads import LoadCapExceeded, SessionLoads
 
@@ -612,6 +613,37 @@ class MultiplexerOps:
         snapshot["coverage"] = await self._coverage_block()
         return snapshot
 
+    #: ``async (caller, query, role, context_budget_tokens) -> ordered item ids``: the
+    #: sealed ``ToolRelevance`` record of the engine ``Decide`` (ARBORA-OPS-R866). Arbora
+    #: ranks nothing locally; without one the catalog order stands.
+    tool_ranker: Callable[..., Awaitable[Sequence[str]]] | None = None
+
+    async def _ranked(
+        self, caller: Any, params: Mapping[str, Any], result: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Order the items by the engine's sealed ranking; a failed call refuses."""
+        from arbora.api.invoke.pipeline import OperationRefused
+
+        assert self.tool_ranker is not None
+        try:
+            order = list(
+                await self.tool_ranker(
+                    caller,
+                    query=params["query"],
+                    role=params.get("role"),
+                    context_budget_tokens=params.get("context_budget_tokens"),
+                )
+            )
+        except Exception as error:
+            raise OperationRefused(
+                "UNAVAILABLE", {"reason": "tool_ranking_unavailable"}
+            ) from error
+        rank = {item_id: index for index, item_id in enumerate(order)}
+        items = sorted(
+            result["items"], key=lambda row: rank.get(row.get("id"), len(rank))
+        )
+        return {**result, "items": items}
+
     async def find_tools(self, caller: Any, **params: Any) -> dict[str, Any]:
         """Forward to the one typed catalog search; see ``FleetCatalog.search``
         for the accepted ``query``/``kinds``/``servers``/``groups``/``browse``/
@@ -629,6 +661,8 @@ class MultiplexerOps:
         if 0 < len(servers) <= _MAX_PRIMED_SERVERS:
             await self._prime(servers)
         result = await self.catalog.search(caller, **params)
+        if params.get("query") and self.tool_ranker is not None:
+            result = await self._ranked(caller, params, result)
         key = self._session_key_for(caller)
         if key:
             pinned = self.sessions.pinned_items(key)
@@ -636,6 +670,22 @@ class MultiplexerOps:
                 for row in result["items"]:
                     if row.get("id") in pinned:
                         row["pinned"] = True
+        return result
+
+    async def load_job_answer(
+        self, caller: Any, answer: Mapping[str, Any]
+    ) -> JobLoadResult:
+        """Load the tools of one engine ``LoadSet`` answer, in its order.
+
+        Arbora computes no ranking (ARBORA-FLEET-R037.2): the answered tools
+        load until the session cap and the rest are listed as ``over_cap``.
+        """
+        from arbora.fleet.job_loads import apply_load_set
+
+        result = apply_load_set(answer, self.sessions.cap)
+        key = self._session_key_for(caller)
+        if result.loaded and key:
+            await self.load_tools(caller, key, result.loaded)
         return result
 
     def _forwarder(self, item: CatalogItem) -> Callable[..., Awaitable[Any]]:

@@ -727,6 +727,8 @@ class FleetGateway:
             executor_scopes=descriptor.executor_scopes,
             subject_id=descriptor.subject_id,
             credential_mode=descriptor.credential_mode,
+            resource_protocol=getattr(descriptor, "resource_protocol", None),
+            resource_param=getattr(descriptor, "resource_param", None),
         )
 
     async def _admitted_tool(self, caller: Any, server: str, tool: str) -> AdmittedTool:

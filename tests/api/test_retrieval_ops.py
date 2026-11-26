@@ -108,7 +108,7 @@ def test_feedback_and_scope_operations_listed() -> None:
     assert feedback.effect is Effect.WRITE
     assert feedback.scopes == frozenset({"memory:write"})
     assert scope.effect is Effect.WRITE
-    assert scope.scopes == frozenset({"registry:write"})
+    assert scope.scopes == frozenset({"node:write"})
     assert scope.audit is AuditClass.IDENTITY_CHAIN
     assert set(retrieval.NATIVE_IDEMPOTENCY) == {
         "retrieval.feedback",
@@ -126,29 +126,6 @@ def test_feedback_principal_comes_from_admission() -> None:
         retrieval.RetrievalFeedbackParams(document_ref="d1", kind="implicit_click")
 
 
-@pytest.mark.spec("ARBORA-OPS-R854.1")
-async def test_a_pinned_engine_without_the_method_refuses_naming_it() -> None:
-    from medulla.generated import METHOD_IDS
-
-    if "RetrievalFeedbackRecord" in METHOD_IDS:
-        pytest.skip("the pin carries RetrievalFeedbackRecord")
-    with pytest.raises(OperationRefused) as refused:
-        await retrieval.handle_retrieval_feedback(
-            engine_context(),
-            {"document_ref": "d1", "kind": "upvote", "weight": 1.0},
-            _RETRIEVAL_OPS["retrieval.feedback"],
-        )
-    assert refused.value.code == "UNAVAILABLE"
-    assert refused.value.details["missing"] == "RetrievalFeedbackRecord"
-    with pytest.raises(OperationRefused) as scope:
-        await retrieval.handle_agent_knowledge_scope_set(
-            engine_context(),
-            {"agent_id": "a", "sources": ["s"]},
-            _RETRIEVAL_OPS["agent.knowledge_scope.set"],
-        )
-    assert scope.value.details["missing"] == "AgentKnowledgeScopeSet"
-
-
 @pytest.mark.spec("ARBORA-OPS-R854", "ARBORA-OPS-R854.2")
 async def test_scope_and_feedback_served(monkeypatch: pytest.MonkeyPatch) -> None:
     engine = EngineDouble(monkeypatch)
@@ -156,16 +133,20 @@ async def test_scope_and_feedback_served(monkeypatch: pytest.MonkeyPatch) -> Non
     ranks = {"d1": 2, "d2": 1}
 
     def set_scope(p: dict[str, Any]) -> Any:
-        if "s-admin" in p["sources"]:
-            raise EngineRefusal("KNOWLEDGE_SCOPE_WIDENS")
-        scopes[p["agent_id"]] = list(p["sources"])
-        return {"agent_id": p["agent_id"], "sources": scopes[p["agent_id"]]}
+        import msgpack
+
+        updates = msgpack.unpackb(p["updates_msgpack"], raw=False)
+        if "s-admin" in updates["knowledgeScope"]:
+            raise EngineRefusal("SCOPE_SET_UNKNOWN")
+        scopes[p["node_id"]] = updates["knowledgeScope"]
+        return {"node_id": p["node_id"]}
 
     def feedback(p: dict[str, Any]) -> Any:
         ranks[p["document_ref"]] += 5 if p["kind"] == "upvote" else -5
         return {"recorded": True}
 
-    engine.serve("AgentKnowledgeScopeSet", set_scope)
+    engine.serve("CompareAndSetNodeFields", set_scope)
+    engine.install(retrieval)
     engine.serve("RetrievalFeedbackRecord", feedback)
     engine.install(pin_lag)
     ctx = engine_context()
@@ -181,7 +162,7 @@ async def test_scope_and_feedback_served(monkeypatch: pytest.MonkeyPatch) -> Non
             {"agent_id": "a1", "sources": ["s-admin"]},
             _RETRIEVAL_OPS["agent.knowledge_scope.set"],
         )
-    assert widened.value.code == "KNOWLEDGE_SCOPE_WIDENS"
+    assert widened.value.code == "SCOPE_SET_UNKNOWN"
     assert scopes == {"a1": ["docs"]}
 
     before = dict(ranks)
@@ -270,3 +251,90 @@ async def test_a_pinned_engine_without_toc_digest_refuses_naming_it() -> None:
         )
     assert refused.value.code == "UNAVAILABLE"
     assert refused.value.details["missing"] == "MethodReadSpanParams.toc_digest"
+
+
+# --- the verified agent reference (ARBORA-OPS-R883) -----------------------------------------
+
+
+def _eg_op(method: str) -> Any:
+    return SimpleNamespace(binding=SimpleNamespace(kind="eg", service=method))
+
+
+def _who(kind: str, agent: str | None = None) -> Any:
+    claims = {"agent_id": agent} if agent else {}
+    return SimpleNamespace(principal_kind=kind, engine_claims=claims)
+
+
+@pytest.mark.spec("ARBORA-OPS-R883")
+def test_agent_ref_is_taken_from_identity() -> None:
+    from arbora.api.invoke.agent_ref import AGENT_REF_METHODS, bind_agent_ref
+    from arbora.api.invoke.steps import OpError
+
+    assert len(AGENT_REF_METHODS) == 6
+    for method in sorted(AGENT_REF_METHODS):
+        op = _eg_op(method)
+        agent = _who("agent", "agent:one")
+        bound = bind_agent_ref(op, {"k": 1}, agent)
+        assert bound["agent_ref"] == "agent:one" and bound["k"] == 1
+        assert (
+            bind_agent_ref(op, {"agent_ref": "agent:one"}, agent)["agent_ref"]
+            == "agent:one"
+        )
+        forged = bind_agent_ref(op, {"agent_ref": "agent:two"}, agent)
+        assert isinstance(forged, OpError) and forged.code == "AGENT_REF_FORGED"
+        human = _who("human")
+        assert "agent_ref" not in bind_agent_ref(op, {"k": 1}, human)
+        assert bind_agent_ref(op, {"agent_ref": "x"}, human).code == "AGENT_REF_FORGED"
+    other = {"k": 1, "agent_ref": "x"}
+    assert bind_agent_ref(_eg_op("GetNodesByLabel"), other, _who("human")) is other
+
+
+# --- the bound retrieval provider (ARBORA-OPS-R864) -----------------------------------------
+
+
+@pytest.mark.spec("ARBORA-OPS-R864")
+async def test_bound_provider_only_and_zero_alternate_calls_on_refusal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.api.ops import _decide
+
+    class _Provider(_FakeRetriever):
+        def __init__(self, digest: str) -> None:
+            super().__init__()
+            self.config_digest = digest
+
+    bound, other = _Provider("d1"), _Provider("d9")
+    engine = EngineDouble(monkeypatch)
+    records = {
+        "ok": {"retrieval_binding": {"provider": "p1", "config_digest": "d1"}},
+        "drift": {"retrieval_binding": {"provider": "p1", "config_digest": "dX"}},
+        "gone": {"retrieval_binding": {"provider": "p3", "config_digest": "d1"}},
+        "bare": {},
+    }
+    engine.serve("DecisionLog", lambda p: records[p["op"]["record_id"]])
+    engine.install(_decide)
+    context = _context(None)
+    context.services = {"retrievers": {"p1": bound, "p2": other}}
+    context.client = object()
+    op = _RETRIEVAL_OPS["retrieval.search"]
+
+    def search(record: str) -> Any:
+        return retrieval.handle_retrieval_search(
+            context,
+            {"query": "q", "context_budget": 100, "decision_record_id": record},
+            op,
+        )
+
+    # The reasoning model never changes the provider: two calls reach the same one.
+    await search("ok")
+    await search("ok")
+    assert len(bound.calls) == 2 and other.calls == []
+    for record, code, field in (
+        ("gone", "UNAVAILABLE", "reason"),
+        ("drift", "POLICY_DENIED", "reason"),
+        ("bare", "INVALID_ARGUMENT", "field"),
+    ):
+        with pytest.raises(OperationRefused) as refused:
+            await search(record)
+        assert refused.value.code == code and field in refused.value.details
+    assert len(bound.calls) == 2 and other.calls == []

@@ -69,10 +69,19 @@ class RunCredentialLease(CredentialLease):
     reacquires the *process* identity) can never touch it.
     """
 
-    def __init__(self, expires_at: int, *, run_deadline: int, run_ref: str) -> None:
+    def __init__(
+        self,
+        expires_at: int,
+        *,
+        run_deadline: int,
+        run_ref: str,
+        session_ref: str | None = None,
+    ) -> None:
         super().__init__(expires_at)
         self.run_deadline = int(run_deadline)
         self.run_ref = run_ref
+        #: The caller bearer's opaque session reference (``MEDULLA-IDENTITY-R708``).
+        self.session_ref = session_ref
         self.renewals = 0
 
     def _renew_due_at(self, issued_at: float, expires_at: float) -> float:
@@ -228,8 +237,13 @@ def open_run_lease(
     *,
     policy: RunRenewalPolicy,
     clock: Callable[[], float] | None = None,
+    session_ref: str | None = None,
 ) -> RunCredentialLease:
-    """Seed a run lease from the caller's verified expiry; never extend it here."""
+    """Seed a run lease from the caller's verified expiry; never extend it here.
+
+    ``session_ref`` is the verified bearer's reference
+    (``VerifiedBearer.session_ref``); a lease without one has no session to consult.
+    """
     clock = clock or time.time
     expires_at = int(actor.credential_expires_at or 0)
     now = int(clock())
@@ -239,6 +253,7 @@ def open_run_lease(
         expires_at,
         run_deadline=now + int(policy.max_run_seconds),
         run_ref=secrets.token_hex(8),
+        session_ref=session_ref,
     )
 
 
@@ -315,3 +330,35 @@ async def keep_run_authority_current(
             continue
         wait = max(0.0, min(float(policy.poll_seconds), due - now))
         await sleep(wait if wait > 0 else min(1.0, float(policy.poll_seconds)))
+
+
+#: The engine's answer to a session-liveness question (``MEDULLA-IDENTITY-R709``).
+SessionLiveness = Callable[[str], Awaitable[str]]
+_SESSION_REASONS = {"revoked": "SESSION_REVOKED", "expired": "SESSION_EXPIRED"}
+
+
+def engine_session_check(
+    liveness: SessionLiveness,
+    session_ref_of: Callable[[ActorContext], str | None],
+) -> RevocationCheck:
+    """A renewal check that asks the engine whether the caller's session is live.
+
+    A caller with no ``session_ref`` (or one the engine reports ``not_session_bound``)
+    registers no check outcome and renews to its lease end. ``revoked`` and
+    ``expired`` stop the next renewal. An engine failure never renews
+    (``LIVENESS_UNAVAILABLE``, ``ARBORA-IDENTITY-R029.2``).
+    """
+
+    async def check(actor: ActorContext) -> str | None:
+        reference = session_ref_of(actor)
+        if not reference:
+            return None
+        try:
+            standing = await liveness(reference)
+        except Exception:  # noqa: BLE001 - an unanswered question never renews
+            return "LIVENESS_UNAVAILABLE"
+        if standing in ("active", "not_session_bound"):
+            return None
+        return _SESSION_REASONS.get(str(standing), "LIVENESS_UNAVAILABLE")
+
+    return check
