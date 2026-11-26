@@ -12,7 +12,8 @@ local heuristic, a cached prior subset, or an advisory best-effort answer.
 
 from __future__ import annotations
 
-from typing import Literal
+from collections.abc import Awaitable, Callable, Mapping, Sequence
+from typing import Any, Literal
 
 from pydantic import Field, StrictStr, field_validator
 
@@ -22,7 +23,8 @@ __all__ = [
     "ModelProfilePreference",
     "ModelProfileRefusalReason",
     "ModelProfileUnavailable",
-    "refuse_model_profile_preference",
+    "ModelProfileDecision",
+    "resolve_model_profile",
     "ToolSubsetAdmissionDecision",
     "ToolSubsetAdmissionRefusalReason",
     "ToolSubsetAdmissionRequest",
@@ -103,14 +105,77 @@ class ModelProfileUnavailable(_WireModel):
     reason: ModelProfileRefusalReason = "AUTHORITY_UNAVAILABLE"
 
 
-def refuse_model_profile_preference(
-    request: ModelProfilePreference,
-) -> ModelProfileUnavailable:
-    """Keep the uncomposed profile authority unavailable without reading settings.
+#: The engine ``Decide`` question this module asks (MEDULLA-DECISION-ENGINE-R039.3).
+MODEL_ROUTE_QUESTION_ID = "a2a.model_profile"
+PREFERENCE_NOT_LEGAL = "PREFERENCE_NOT_LEGAL"
 
-    R016.6 requires a current owner-issued profile-use decision and atomic
-    admission. Valid preference syntax, catalog visibility and provider settings
-    supply none of those. This boundary does not alter the default-agent path.
+Decide = Callable[[dict[str, Any]], Awaitable[Any]]
+
+
+class ModelProfileDecision(_WireModel):
+    """The profile the engine chose and whether the caller's preference held."""
+
+    profile: str = Field(min_length=1, max_length=512)
+    preference_honoured: bool
+
+
+def _chosen_profile(record: Mapping[str, Any]) -> str:
+    outcome = record.get("outcome")
+    scores = outcome.get("scores") if isinstance(outcome, Mapping) else None
+    first = scores[0] if isinstance(scores, list) and scores else None
+    option = first.get("option_id") if isinstance(first, Mapping) else None
+    if not isinstance(option, str) or not option:
+        raise ValueError("the engine chose no model profile")
+    return option
+
+
+def _preference_refused(record: Mapping[str, Any], preferred: str) -> bool:
+    """Whether the record carries the engine's ``preference_not_honoured`` premise."""
+    needle = f"preference_not_honoured:{preferred}"
+    return needle in repr(record) or PREFERENCE_NOT_LEGAL in repr(record)
+
+
+async def resolve_model_profile(
+    decide: Decide | None,
+    preference: ModelProfilePreference,
+    *,
+    tenant: str,
+    principal: str,
+    profiles: Sequence[str],
+    feature_schema: Mapping[str, Any],
+    policy: Mapping[str, Any] | None = None,
+) -> ModelProfileDecision | ModelProfileUnavailable:
+    """Send the preference to the engine ``Route`` question; Arbora decides nothing.
+
+    ``profiles`` are the profiles the caller may prefer (``models.list``). The
+    engine ranks them, honours a legal preference and records
+    ``PREFERENCE_NOT_LEGAL`` otherwise. Without a composed ``decide`` port, or
+    on any engine failure, the answer stays the typed ``AUTHORITY_UNAVAILABLE``
+    refusal; no local choice is made.
     """
-    del request
-    return ModelProfileUnavailable()
+    preferred = preference.preferred_profile_ref
+    if decide is None or preferred is None or not profiles:
+        return ModelProfileUnavailable()
+    from medulla.decision_client import DeclaredOption, decide_request, declared, param
+
+    from arbora.deployment.placement import check_receipt, single_record
+
+    request = decide_request(
+        tenant,
+        (MODEL_ROUTE_QUESTION_ID, "route", "ordinary"),
+        declared([DeclaredOption(name) for name in profiles]),
+        feature_schema,
+        policy=policy,
+        params=[param("route.preferred_option", "text", preferred)],
+    )
+    try:
+        record = single_record(await decide(request))
+        check_receipt(record, request, principal)
+        chosen = _chosen_profile(record)
+    except Exception:  # noqa: BLE001 - an unanswered question grants no profile
+        return ModelProfileUnavailable(reason="INVALID_DECISION")
+    return ModelProfileDecision(
+        profile=chosen,
+        preference_honoured=chosen == preferred
+        and not _preference_refused(record, preferred),
+    )
