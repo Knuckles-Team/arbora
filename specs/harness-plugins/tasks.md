@@ -51,3 +51,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Tasks run p
 - [ ] T045 [US4] ARBORA-HARNESS-PLUGINS-R011 One sign-in gives an MCP client the connector fleet (rollup).
 - [ ] T046 [US4] ARBORA-HARNESS-PLUGINS-R011.1 Entitlement-scoped discovery after one sign-in.
 - [ ] T047 [US4] ARBORA-HARNESS-PLUGINS-R011.2 The bundle connection sheet names the sign-in path, not connector settings.
+- [ ] T048 [US4] ARBORA-HARNESS-PLUGINS-R012 Hook events report skill use through the door, with no prompt text
+- [ ] T049 [US4] ARBORA-HARNESS-PLUGINS-R013 Bundle configuration comes from six layers that only add
+- [ ] T050 [US4] ARBORA-HARNESS-PLUGINS-R014 A role persona selects the installed skill set
+- [ ] T051 [US4] ARBORA-HARNESS-PLUGINS-R015 A skill bundle never carries its own connector file
