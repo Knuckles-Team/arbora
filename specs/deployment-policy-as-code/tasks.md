@@ -7,7 +7,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Tasks run p
 - [ ] T001 [US1] ARBORA-DEPLOY-POLICY-R001 Add the typed `deploy.yaml` manifest model, the strict lint and the read-only `deploy.manifest.plan` diff.
 - [ ] T002 [US1] ARBORA-DEPLOY-POLICY-R002 Add idempotent `deploy.manifest.apply` convergence with the digest-bound receipt and fail-closed missing inputs.
 - [ ] T003 [US2] ARBORA-DEPLOY-POLICY-R003 Add read-only drift inspection and the destructive-change approval gate on the existing elevation model.
-- [ ] T004 [P] [US3] ARBORA-DEPLOY-POLICY-R004 Add `policy.bundle.validate` and `policy.bundle.bind` over the engine bundle methods.
-- [ ] T005 [P] [US3] ARBORA-DEPLOY-POLICY-R005 Map the engine epistemic refusals to typed refusals in the invoke pipeline.
+- [ ] T004 [P] [US3] ARBORA-DEPLOY-POLICY-R004 Add `policy.bundle.validate` and `policy.bundle.bind` over the engine identity policy family.
+- [x] T005 [P] [US3] ARBORA-DEPLOY-POLICY-R005 Retired: the engine retired the epistemic-predicate row, so there is no caller.
 - [ ] T006 [US3] ARBORA-DEPLOY-POLICY-R006 Serve `llms.txt`, the MCP best-practice resources and the digest-stamped skill export behind the reconciliation gate.
 - [ ] T007 [US1] ARBORA-DEPLOY-POLICY-R007 Record each successful rollout through `deployment.record`.

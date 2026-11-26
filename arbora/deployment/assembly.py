@@ -119,6 +119,7 @@ async def run_confirmed_steps(
     plan_digest: str,
     reuse: Collection[str] = (),
     arguments: Mapping[str, Mapping[str, Any]] | None = None,
+    key_prefix: str | None = None,
 ) -> dict[str, Any]:
     """Run the confirmed engine graph, one governed ``fleet.call`` per node.
 
@@ -152,7 +153,7 @@ async def run_confirmed_steps(
     for row in rows:
         node_id = row["node_id"]
         tool = row["tool"]
-        key = f"deploy:{plan_digest}:{node_id}"
+        key = f"{key_prefix or f'deploy:{plan_digest}'}:{node_id}"
         outcome = await invoke(
             "fleet.call",
             {

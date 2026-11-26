@@ -570,11 +570,11 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R904` | Test: Rollup closes when `.1` and `.2` pass. Root test: `tests/api/test_browser_graph_map.py::test_every_mapped_operation_exists_in_the_registry_with_the_scope_named` (L2). |
 | `ARBORA-OPS-R904.1` | Test: `tests/api/test_browser_graph_map.py::test_degraded_graphs_and_truncation_pass_through` and `tests/api/test_browser_graph_map.py::test_uql_parse_error_lists_expected_tokens` (L2). |
 | `ARBORA-OPS-R904.2` | Test: `tests/api/test_browser_graph_map.py::test_each_view_text_parses_with_the_engine_grammar_and_returns_the_expected_columns` (L3). |
-| `ARBORA-OPS-R906` | Test: `tests/api/test_documents_ops.py::test_sdd_documents_read_through_source_operations`, `tests/api/test_documents_ops.py::test_sdd_never_reads_the_host_disk` and `tests/api/test_documents_ops.py::test_kb_articles_list_get_and_search` (L2). | (planned: the named files do not exist yet)
-| `ARBORA-OPS-R907` | Test: `tests/api/test_ops_config_set.py::test_set_needs_step_up_and_audits`, `tests/api/test_ops_config_set.py::test_secret_status_returns_presence_only` and `tests/api/test_models_list.py::test_non_admin_session_lists_chat_models` (L2). | (planned: the named files do not exist yet)
+| `ARBORA-OPS-R906` | Test: `tests/api/test_documents_ops.py::test_sdd_documents_read_through_source_operations`, `tests/api/test_documents_ops.py::test_sdd_never_reads_the_host_disk` and `tests/api/test_documents_ops.py::test_kb_articles_list_get_and_search` (L2).
+| `ARBORA-OPS-R907` | Test: `tests/api/test_ops_config_set.py::test_set_needs_step_up_and_audits`, `tests/api/test_ops_config_set.py::test_secret_status_returns_presence_only` and `tests/api/test_models_list.py::test_non_admin_session_lists_chat_models` (L2).
 | `ARBORA-OPS-R908` | Test: `tests/api/test_ontology_object_ops.py::test_search_compiles_to_uql_and_returns_objects`, `tests/api/test_ontology_object_ops.py::test_edit_and_revert_go_through_governed_change` and `tests/api/test_ontology_object_ops.py::test_apply_action_requires_plan_confirmation` (L2). | (planned: the named files do not exist yet)
-| `ARBORA-OPS-R909` | Test: `tests/api/test_chats_ops.py::test_chat_rows_are_scoped_to_the_caller`, `tests/api/test_chats_ops.py::test_stale_revision_is_refused` and `tests/api/test_chats_ops.py::test_other_subject_chat_is_not_found` (L2). | (planned: the named files do not exist yet)
-| `ARBORA-OPS-R910` | Test: `tests/api/test_workspace_files.py::test_dotdot_and_symlink_escape_are_refused`, `tests/api/test_workspace_files.py::test_write_conflict_on_stale_modified_at` and `tests/api/test_workspace_files.py::test_size_limit_is_refused` (L2). | (planned: the named files do not exist yet)
+| `ARBORA-OPS-R909` | Test: `tests/api/test_chats_ops.py::test_chat_rows_are_scoped_to_the_caller`, `tests/api/test_chats_ops.py::test_stale_revision_is_refused` and `tests/api/test_chats_ops.py::test_other_subject_chat_is_not_found` (L2).
+| `ARBORA-OPS-R910` | Test: `tests/api/test_workspace_files.py::test_dotdot_and_symlink_escape_are_refused`, `tests/api/test_workspace_files.py::test_write_conflict_on_stale_modified_at` and `tests/api/test_workspace_files.py::test_size_limit_is_refused` (L2).
 | `ARBORA-OPS-R911` | Test: `tests/api/test_atlas_ops.py::test_mapping_approve_needs_current_digest_and_plan_confirmation`, `tests/api/test_atlas_ops.py::test_credentials_are_references_only` and `tests/api/test_atlas_ops.py::test_unserved_connection_operations_refuse_unavailable` (L2). | (planned: the named files do not exist yet)
 | `ARBORA-OPS-R912` | Test: `tests/api/test_agent_library_ops.py::test_create_update_delete_with_revision_conflict`, `tests/api/test_prompt_ops.py::test_rollback_appends_a_version_and_diff_matches` and `tests/api/test_goal_ops.py::test_cancel_goal_uses_the_run_machine` (L2). | (planned: the named files do not exist yet)
 | `ARBORA-OPS-R913` | Test: `tests/api/test_fleet_admin_ops.py::test_register_server_needs_plan_confirmation_and_hides_secret_values`, `tests/api/test_command_ops.py::test_commands_are_exactly_the_served_operations` and `tests/api/test_workflow_ops.py::test_run_returns_a_run_id_in_the_run_machine` (L2). | (planned: the named files do not exist yet)
@@ -592,10 +592,11 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R918.1` | Test: `tests/api/test_approvals_ops.py::test_list_filters_by_gate_class_and_approver_role` (L1). |
 | `ARBORA-OPS-R918.2` | Test: `tests/api/test_gate_class.py::test_engine_answer_sets_class_roles_expiry_and_default_is_strict` (L1). |
 | `ARBORA-OPS-R918.3` | Test: `tests/api/test_approvals_ops.py::test_decide_refuses_self_approval_and_records_provenance` (L1). |
-| `ARBORA-OPS-R918.4` | Test: `tests/api/test_approvals_ops.py::test_expired_item_refuses_consume_and_lists_expired` (planned, L1). |
-| `ARBORA-OPS-R918.5` | Test: `tests/api/test_approvals_ops.py::test_digest_counts_by_class_and_delivers_one_notice_per_owner` (planned, L1). |
-| `ARBORA-OPS-R918.6` | Test: `tests/fleet/test_approval_notifier.py::test_notice_per_approver_without_preview_and_retries_from_outbox` (planned, L1). |
-| `ARBORA-OPS-R918.7` | Test: `tests/api/test_approvals_served.py::test_proposal_to_decision_runs_once_and_refusals_run_nothing` (planned, L1). |
+| `ARBORA-OPS-R918.4` | Test: `tests/api/test_approvals_ops.py::test_expired_item_refuses_consume_and_lists_expired` (L1). |
+| `ARBORA-OPS-R918.5` | Test: `tests/fleet/test_approval_notifier.py::test_digest_read_counts_by_class_and_has_no_effects` (L1). |
+| `ARBORA-OPS-R918.5.1` | Test: `tests/fleet/test_approval_notifier.py::test_digest_send_delivers_one_notice_per_owner_and_refuses_without_a_channel` (L1). |
+| `ARBORA-OPS-R918.6` | Test: `tests/fleet/test_approval_notifier.py::test_notice_per_approver_without_preview_and_retries_from_outbox` (L1). |
+| `ARBORA-OPS-R918.7` | Test: `tests/api/test_approvals_served.py::test_proposal_to_decision_runs_once_and_refusals_run_nothing` (L1). |
 | `ARBORA-OPS-R919` | Roll-up of its children. |
 | `ARBORA-OPS-R919.1` | Test: `tests/test_model_route.py::test_local_route_default_and_unreachable_refuses_without_silent_fallback` (planned, L1). |
 | `ARBORA-OPS-R919.2` | Test: `tests/test_model_route.py::test_escalation_requires_policy_and_is_traced` (planned, L1). |
