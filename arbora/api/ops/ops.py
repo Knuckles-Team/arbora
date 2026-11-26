@@ -268,6 +268,39 @@ async def handle_ops_restore(
     return {"value": receipt.model_dump(mode="json")}
 
 
+class OpsHooksParams(Params):
+    #: The agent surfaces to change; ``None`` is every supported one.
+    agents: list[str] | None = Field(default=None, max_length=64)
+
+
+class OpsHooksResult(Params):
+    value: dict[str, Any]
+
+
+async def _hooks(
+    context: Any, params: Mapping[str, Any], *, install: bool
+) -> dict[str, Any]:
+    """Run the managed-block installer; it is idempotent and touches only its block."""
+    from arbora.ecosystem.hook_installer import HookInstaller
+
+    installer = HookInstaller()
+    agents = params.get("agents")
+    results = installer.install(agents) if install else installer.uninstall(agents)
+    return {"value": {"results": dict(results)}}
+
+
+async def hooks_install(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    return await _hooks(context, params, install=True)
+
+
+async def hooks_uninstall(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    return await _hooks(context, params, install=False)
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         build_read_op(
@@ -324,6 +357,26 @@ def operations() -> tuple[OpSpec, ...]:
             params=OpsRestoreParams,
             result=OpsRestoreResult,
             handler="arbora.api.ops.ops.handle_ops_restore",
+            scope="ops:admin",
+            effect=Effect.ADMIN,
+        ),
+        build_write_op(
+            op_id="ops.hooks.install",
+            summary="Install the managed memory hook block for the agent surfaces",
+            examples=("install the agent hooks",),
+            params=OpsHooksParams,
+            result=OpsHooksResult,
+            handler="arbora.api.ops.ops.hooks_install",
+            scope="ops:admin",
+            effect=Effect.ADMIN,
+        ),
+        build_write_op(
+            op_id="ops.hooks.uninstall",
+            summary="Remove the managed memory hook block from the agent surfaces",
+            examples=("remove the agent hooks",),
+            params=OpsHooksParams,
+            result=OpsHooksResult,
+            handler="arbora.api.ops.ops.hooks_uninstall",
             scope="ops:admin",
             effect=Effect.ADMIN,
         ),
