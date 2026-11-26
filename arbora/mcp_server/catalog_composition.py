@@ -149,6 +149,9 @@ async def compose_catalog_authorities(
         authority_scope=lambda: _use_process_session(session),
     )
     await multiplexer.refresh_engine_catalog()
+    from arbora.gateway.fleet import bind_catalog_generation
+
+    bind_catalog_generation(reader.generation_status)
     return reader
 
 

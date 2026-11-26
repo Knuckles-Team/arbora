@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -320,8 +320,20 @@ messaging = [
     { name = "twilio" },
     { name = "twitchio" },
 ]
+messaging-bluebubbles = [
+    { name = "httpx" },
+]
+messaging-buzz = [
+    { name = "httpx" },
+]
+messaging-dingtalk = [
+    { name = "httpx" },
+]
 messaging-discord = [
     { name = "discord-py" },
+]
+messaging-feishu = [
+    { name = "httpx" },
 ]
 messaging-googlechat = [
     { name = "google-api-python-client" },
@@ -346,8 +358,32 @@ messaging-mattermost = [
 messaging-nextcloud = [
     { name = "httpx" },
 ]
+messaging-nostr = [
+    { name = "httpx" },
+]
+messaging-ntfy = [
+    { name = "httpx" },
+]
+messaging-photon = [
+    { name = "httpx" },
+]
+messaging-qqbot = [
+    { name = "httpx" },
+]
+messaging-raft = [
+    { name = "httpx" },
+]
+messaging-reef = [
+    { name = "httpx" },
+]
+messaging-simplex = [
+    { name = "httpx" },
+]
 messaging-slack = [
     { name = "slack-bolt" },
+]
+messaging-sms = [
+    { name = "httpx" },
 ]
 messaging-synology = [
     { name = "httpx" },
@@ -358,15 +394,39 @@ messaging-teams = [
 messaging-telegram = [
     { name = "python-telegram-bot" },
 ]
+messaging-tlon = [
+    { name = "httpx" },
+]
 messaging-twitch = [
     { name = "twitchio" },
 ]
 messaging-voicecall = [
     { name = "twilio" },
 ]
+messaging-webhook = [
+    { name = "httpx" },
+]
+messaging-wecom = [
+    { name = "httpx" },
+]
+messaging-weixin = [
+    { name = "httpx" },
+]
 messaging-whatsapp = [
     { name = "httpx" },
     { name = "neonize" },
+]
+messaging-x = [
+    { name = "httpx" },
+]
+messaging-yuanbao = [
+    { name = "httpx" },
+]
+messaging-zalo = [
+    { name = "httpx" },
+]
+messaging-zalouser = [
+    { name = "httpx" },
 ]
 overstory = [
     { name = "overstory" },
@@ -397,7 +457,7 @@ requires-dist = [
     { name = "agent-client-protocol", marker = "extra == 'test'", specifier = "==0.11.0" },
     { name = "aiohttp", specifier = ">=3.14.5" },
     { name = "anyio", specifier = ">=4.16.0" },
-    { name = "arbora", extras = ["messaging-discord", "messaging-googlechat", "messaging-googlemeet", "messaging-irc", "messaging-line", "messaging-matrix", "messaging-mattermost", "messaging-nextcloud", "messaging-signal", "messaging-slack", "messaging-synology", "messaging-teams", "messaging-telegram", "messaging-twitch", "messaging-voicecall", "messaging-whatsapp"], marker = "extra == 'messaging'" },
+    { name = "arbora", extras = ["messaging-bluebubbles", "messaging-buzz", "messaging-dingtalk", "messaging-discord", "messaging-email", "messaging-feishu", "messaging-googlechat", "messaging-googlemeet", "messaging-irc", "messaging-line", "messaging-matrix", "messaging-mattermost", "messaging-nextcloud", "messaging-nostr", "messaging-ntfy", "messaging-photon", "messaging-qqbot", "messaging-raft", "messaging-reef", "messaging-signal", "messaging-simplex", "messaging-slack", "messaging-sms", "messaging-synology", "messaging-teams", "messaging-telegram", "messaging-tlon", "messaging-twitch", "messaging-voicecall", "messaging-webhook", "messaging-wecom", "messaging-weixin", "messaging-whatsapp", "messaging-x", "messaging-yuanbao", "messaging-zalo", "messaging-zalouser"], marker = "extra == 'messaging'" },
     { name = "botbuilder-core", marker = "extra == 'messaging-teams'", specifier = ">=4.17.1" },
     { name = "cryptography", specifier = ">=50.0.2" },
     { name = "discord-py", marker = "extra == 'messaging-discord'", specifier = ">=2.7.1" },
@@ -410,9 +470,29 @@ requires-dist = [
     { name = "google-auth", marker = "extra == 'messaging-googlechat'", specifier = ">=2.62.2" },
     { name = "google-auth", marker = "extra == 'messaging-googlemeet'", specifier = ">=2.62.2" },
     { name = "httpx", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-bluebubbles'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-buzz'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-dingtalk'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-feishu'", specifier = ">=0.28.1" },
     { name = "httpx", marker = "extra == 'messaging-nextcloud'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-nostr'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-ntfy'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-photon'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-qqbot'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-raft'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-reef'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-simplex'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-sms'", specifier = ">=0.28.1" },
     { name = "httpx", marker = "extra == 'messaging-synology'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-tlon'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-webhook'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-wecom'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-weixin'", specifier = ">=0.28.1" },
     { name = "httpx", marker = "extra == 'messaging-whatsapp'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-x'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-yuanbao'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-zalo'", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'messaging-zalouser'", specifier = ">=0.28.1" },
     { name = "hvac", marker = "extra == 'vault'", specifier = ">=2.4.0" },
     { name = "irc", marker = "extra == 'messaging-irc'", specifier = ">=20.5.0" },
     { name = "joserfc", specifier = ">=1.8.0" },
@@ -454,7 +534,7 @@ requires-dist = [
     { name = "universal-skills", specifier = ">=1.6.2,<2.0.0" },
     { name = "uvicorn", marker = "extra == 'overstory'", specifier = ">=0.54.0" },
 ]
-provides-extras = ["acp", "test", "overstory", "vault", "messaging-telegram", "messaging-mattermost", "messaging-discord", "messaging-slack", "messaging-whatsapp", "messaging-teams", "messaging-googlechat", "messaging-googlemeet", "messaging-matrix", "messaging-irc", "messaging-signal", "messaging-imessage", "messaging-line", "messaging-twitch", "messaging-synology", "messaging-voicecall", "messaging-nextcloud", "messaging"]
+provides-extras = ["acp", "test", "overstory", "vault", "messaging-telegram", "messaging-mattermost", "messaging-discord", "messaging-slack", "messaging-whatsapp", "messaging-teams", "messaging-googlechat", "messaging-googlemeet", "messaging-matrix", "messaging-irc", "messaging-signal", "messaging-imessage", "messaging-line", "messaging-twitch", "messaging-synology", "messaging-voicecall", "messaging-nextcloud", "messaging-bluebubbles", "messaging-buzz", "messaging-dingtalk", "messaging-email", "messaging-feishu", "messaging-nostr", "messaging-ntfy", "messaging-photon", "messaging-qqbot", "messaging-raft", "messaging-reef", "messaging-simplex", "messaging-sms", "messaging-tlon", "messaging-webhook", "messaging-wecom", "messaging-weixin", "messaging-x", "messaging-yuanbao", "messaging-zalo", "messaging-zalouser", "messaging"]
 
 [[package]]
 name = "asgiref"

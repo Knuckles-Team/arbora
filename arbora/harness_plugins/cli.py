@@ -22,6 +22,7 @@ from pathlib import Path
 
 from arbora.harness_plugins import install as inst
 from arbora.harness_plugins.compose import (
+    HOSTED_FILES,
     AgentDef,
     SkillMissing,
     compose_bundle,
@@ -55,6 +56,9 @@ class BundleRefusal(StrEnum):
     LAYERS_UNAVAILABLE = "LAYERS_UNAVAILABLE"
     PERSONA_UNKNOWN = "PERSONA_UNKNOWN"
     PERSONA_UNAVAILABLE = "PERSONA_UNAVAILABLE"
+    HOSTED_ENDPOINT_UNREACHABLE = "HOSTED_ENDPOINT_UNREACHABLE"
+    HOSTED_CLIENT_UNSET = "HOSTED_CLIENT_UNSET"
+    HOSTED_HARNESS = "HOSTED_HARNESS"
 
 
 class Refused(Exception):
@@ -80,6 +84,27 @@ def _endpoint(arg: str | None, config: inst.PluginsConfig) -> str:
     if not value.startswith(("http://", "https://")):
         raise Refused(BundleRefusal.ENDPOINT_UNSET)
     return value.rstrip("/")
+
+
+def _require_hosted_client() -> None:
+    """A hosted bundle names the hosted client, which exists only when configured."""
+    from arbora.identity.client_contract import configured_contract_config
+
+    config = configured_contract_config()
+    if config is None or not config.hosted_redirect_uris:
+        raise Refused(BundleRefusal.HOSTED_CLIENT_UNSET, "hosted_redirect_uris")
+
+
+def _refuse_hosted_install(endpoint: str) -> None:
+    """A hosted agent runs on a vendor cloud: nothing is installed locally."""
+    print(
+        f"{BundleRefusal.HOSTED_HARNESS.value}: a hosted agent is not installed on this machine.\n"
+        f"  1. Run `arbora plugin bundle --harness hosted --endpoint {endpoint}`.\n"
+        "  2. Paste connection.md into the vendor connector settings.\n"
+        "  3. Paste playbook.md into the vendor agent instructions.",
+        file=sys.stderr,
+    )
+    raise Refused(BundleRefusal.HOSTED_HARNESS)
 
 
 def _skill_roots(args: argparse.Namespace) -> list[Path] | None:
@@ -170,6 +195,8 @@ def build(
     except KeyError as exc:
         raise Refused(BundleRefusal.HARNESS_UNKNOWN, harness) from exc
     endpoint = _endpoint(getattr(args, "endpoint", None), config)
+    if prof.id == "hosted":
+        _require_hosted_client()
     persona = getattr(args, "persona", None)
     persona_skills, load_set_digest = (
         _persona_set(persona, prof, endpoint) if persona else ([], None)
@@ -200,9 +227,11 @@ def build(
     try:
         digest = render(spec, staging / "tree")
     except TreeRefused as exc:
+        if exc.code == BundleRefusal.HOSTED_ENDPOINT_UNREACHABLE.value:
+            raise Refused(BundleRefusal.HOSTED_ENDPOINT_UNREACHABLE, exc.path) from exc
         raise Refused(BundleRefusal.TREE_REFUSED, str(exc)) from exc
     target = Path(out) if out else _cache_root() / harness / digest
-    if not (target / prof.manifest).is_file() or out:
+    if not (target / (prof.manifest or HOSTED_FILES[0])).is_file() or out:
         if target.exists():
             shutil.rmtree(target)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -229,6 +258,8 @@ def install_command(args: argparse.Namespace) -> int:
     if prof is None:
         raise Refused(BundleRefusal.HARNESS_UNKNOWN, args.harness)
     endpoint = _endpoint(None, config)
+    if prof.id == "hosted":
+        _refuse_hosted_install(endpoint)
     doors = inst.find_duplicate_doors(prof, _home(), endpoint, [Path.cwd()])
     if doors:
         print(
@@ -314,6 +345,8 @@ def login_command(args: argparse.Namespace) -> int:
     from arbora.harness_plugins.login import TokenStore, authorize
 
     config = inst.load_config()
+    if profile(args.harness).id == "hosted":
+        _refuse_hosted_install(_endpoint(args.endpoint, config))
     credential = authorize(
         profile(args.harness),
         _endpoint(args.endpoint, config),

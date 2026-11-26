@@ -53,7 +53,7 @@ def _build_fixture(root: Path) -> None:
         import arbora.reached.leaf
 
         # A plugin/registration-style map, resolved by VALUE, never a static
-        # import -- mirrors arbora.gateway.registry's widget loader.
+        # import -- a widget-loader-style plugin map.
         _DYNAMIC_TARGETS = {"d": "arbora.dynamic_target"}
 
 

@@ -28,8 +28,7 @@ from urllib.parse import parse_qs, urlencode, urlsplit
 
 import httpx
 
-from arbora.harness_plugins.compose import NATIVE_CLIENT_ID
-from arbora.harness_plugins.profiles import HarnessProfile
+from arbora.harness_plugins.profiles import NATIVE_CLIENT_ID, HarnessProfile
 
 KEYRING_SERVICE = "arbora-harness-plugin"
 #: Renew when the access token has less than this many seconds left.

@@ -138,8 +138,29 @@ messaging-twitch = ["twitchio>=3.3.2"]
 messaging-synology = ["httpx>=0.28.1"]
 messaging-voicecall = ["twilio>=9.13.0"]
 messaging-nextcloud = ["httpx>=0.28.1"]
+messaging-bluebubbles = ["httpx>=0.28.1"]
+messaging-buzz = ["httpx>=0.28.1"]
+messaging-dingtalk = ["httpx>=0.28.1"]
+messaging-email = []  # standard-library IMAP and SMTP
+messaging-feishu = ["httpx>=0.28.1"]
+messaging-nostr = ["httpx>=0.28.1"]
+messaging-ntfy = ["httpx>=0.28.1"]
+messaging-photon = ["httpx>=0.28.1"]
+messaging-qqbot = ["httpx>=0.28.1"]
+messaging-raft = ["httpx>=0.28.1"]
+messaging-reef = ["httpx>=0.28.1"]
+messaging-simplex = ["httpx>=0.28.1"]
+messaging-sms = ["httpx>=0.28.1"]
+messaging-tlon = ["httpx>=0.28.1"]
+messaging-webhook = ["httpx>=0.28.1"]
+messaging-wecom = ["httpx>=0.28.1"]
+messaging-weixin = ["httpx>=0.28.1"]
+messaging-x = ["httpx>=0.28.1"]
+messaging-yuanbao = ["httpx>=0.28.1"]
+messaging-zalo = ["httpx>=0.28.1"]
+messaging-zalouser = ["httpx>=0.28.1"]
 messaging = [
-    "arbora[messaging-telegram,messaging-mattermost,messaging-discord,messaging-slack,messaging-whatsapp,messaging-teams,messaging-googlechat,messaging-googlemeet,messaging-matrix,messaging-irc,messaging-signal,messaging-line,messaging-twitch,messaging-synology,messaging-voicecall,messaging-nextcloud]"
+    "arbora[messaging-telegram,messaging-mattermost,messaging-discord,messaging-slack,messaging-whatsapp,messaging-teams,messaging-googlechat,messaging-googlemeet,messaging-matrix,messaging-irc,messaging-signal,messaging-line,messaging-twitch,messaging-synology,messaging-voicecall,messaging-nextcloud,messaging-bluebubbles,messaging-buzz,messaging-dingtalk,messaging-email,messaging-feishu,messaging-nostr,messaging-ntfy,messaging-photon,messaging-qqbot,messaging-raft,messaging-reef,messaging-simplex,messaging-sms,messaging-tlon,messaging-webhook,messaging-wecom,messaging-weixin,messaging-x,messaging-yuanbao,messaging-zalo,messaging-zalouser]"
 ]
 
 [project.scripts]
@@ -177,6 +198,27 @@ twitch = "arbora.messaging.backends.twitch:TwitchBackend"
 synology = "arbora.messaging.backends.synology:SynologyChatBackend"
 voicecall = "arbora.messaging.backends.voicecall:VoiceCallBackend"
 nextcloud = "arbora.messaging.backends.nextcloud:NextcloudTalkBackend"
+bluebubbles = "arbora.messaging.backends.bluebubbles:BlueBubblesBackend"
+buzz = "arbora.messaging.backends.buzz:BuzzBackend"
+dingtalk = "arbora.messaging.backends.dingtalk:DingTalkBackend"
+email = "arbora.messaging.backends.email:EmailBackend"
+feishu = "arbora.messaging.backends.feishu:FeishuBackend"
+nostr = "arbora.messaging.backends.nostr:NostrBackend"
+ntfy = "arbora.messaging.backends.ntfy:NtfyBackend"
+photon = "arbora.messaging.backends.photon:PhotonBackend"
+qqbot = "arbora.messaging.backends.qqbot:QQBotBackend"
+raft = "arbora.messaging.backends.raft:RaftBackend"
+reef = "arbora.messaging.backends.reef:ReefBackend"
+simplex = "arbora.messaging.backends.simplex:SimplexBackend"
+sms = "arbora.messaging.backends.sms:SmsBackend"
+tlon = "arbora.messaging.backends.tlon:TlonBackend"
+webhook = "arbora.messaging.backends.webhook:WebhookBackend"
+wecom = "arbora.messaging.backends.wecom:WeComBackend"
+weixin = "arbora.messaging.backends.weixin:WeixinBackend"
+x = "arbora.messaging.backends.x:XBackend"
+yuanbao = "arbora.messaging.backends.yuanbao:YuanbaoBackend"
+zalo = "arbora.messaging.backends.zalo:ZaloBackend"
+zalouser = "arbora.messaging.backends.zalouser:ZaloUserBackend"
 
 [project.entry-points."arbora.messaging.reach"]
 notify_sync = "arbora.messaging.reach:notify_sync"

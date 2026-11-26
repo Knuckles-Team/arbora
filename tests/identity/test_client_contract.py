@@ -290,3 +290,48 @@ def test_reconcile_command_prints_state_and_exit_code(
         console.main()
     assert exited.value.code == 1
     assert json.loads(capsys.readouterr().out)["code"] == "admin_unreachable"
+
+
+@pytest.mark.spec("ARBORA-HARNESS-PLUGINS-R010.2")
+def test_hosted_client_has_vendor_redirect_and_no_loopback() -> None:
+    vendor = "https://vendor.example.test/oauth/callback"
+    # Empty by default: no hosted client is written.
+    assert [c.client_id for c in cc.build_contract(CONFIG).clients] == [
+        "arbora-native-mcp"
+    ]
+    config = cc.ContractConfig.from_mapping(
+        {
+            "admin_url": "https://idp.example.test",
+            "realm": "r",
+            "admin_client_id": "a",
+            "admin_client_secret_ref": "ref",
+            "hosted_redirect_uris": [vendor],
+        }
+    )
+    contract = cc.build_contract(config)
+    hosted = next(c for c in contract.clients if c.client_id == "arbora-hosted-mcp")
+    body = cc.client_representation(hosted)
+    assert body["publicClient"] is False
+    assert body["redirectUris"] == [vendor]
+    assert not any("localhost" in u or "127.0.0.1" in u for u in body["redirectUris"])
+    assert set(hosted.default_scopes) >= {
+        *cc.NATIVE_DEFAULT_SCOPES,
+        "workstream:read",
+        "workstream:write",
+    }
+    assert {"workstream:read", "workstream:write"} <= {s.name for s in contract.scopes}
+    for refused in (
+        ["http://localhost:1/cb"],
+        ["http://vendor.example.test/cb"],
+        vendor,
+    ):
+        with pytest.raises(ValueError, match="hosted_redirect_uris"):
+            cc.ContractConfig.from_mapping(
+                {
+                    "admin_url": "https://idp.example.test",
+                    "realm": "r",
+                    "admin_client_id": "a",
+                    "admin_client_secret_ref": "ref",
+                    "hosted_redirect_uris": refused,
+                }
+            )

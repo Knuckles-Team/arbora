@@ -55,14 +55,22 @@ class HostedInvocation:
             self.services, self.task_plan_config, caller, question_id, proposal
         )
 
-    def configure_acp(self, app: Any, *, trusted_roots: frozenset[str]) -> None:
+    def configure_acp(
+        self, app: Any, *, trusted_roots: frozenset[str] | None = None
+    ) -> None:
         """Opt in to the central ACP projection with explicit client roots.
+
+        Without ``trusted_roots`` the host's ``ACP_TRUSTED_ROOTS`` setting
+        supplies them (ARBORA-ACP-R001.5).
 
         This uses this invocation's existing authentication, operation policies
         and task owner. It does not register a second execution runtime.
         """
         from arbora.acp.central_runtime import configure_central_acp
+        from arbora.acp.coding_session import trusted_roots_from_config
 
+        if trusted_roots is None:
+            trusted_roots = trusted_roots_from_config()
         configure_central_acp(app, self, trusted_roots=trusted_roots)
 
     def http_application(self) -> Any:
