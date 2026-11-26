@@ -10,14 +10,14 @@ body, and every filter, order, page and bound is the engine's.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 
 from pydantic import ConfigDict, Field
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op
-from arbora.api.ops._engine import engine_send, unavailable
+from arbora.api.ops._engine import engine_send, rfc3339, unavailable
 from arbora.api.registry import OpSpec
 
 #: The scope the rows name; the engine adds its own decision-read action.
@@ -119,11 +119,6 @@ def _millis(value: str | None, field: str) -> int | None:
     return int(moment.timestamp() * 1000)
 
 
-def _rfc3339(millis: int) -> str:
-    moment = datetime.fromtimestamp(millis / 1000, tz=UTC)
-    return moment.isoformat(timespec="milliseconds").replace("+00:00", "Z")
-
-
 async def _log(context: Any, action: dict[str, Any]) -> Mapping[str, Any]:
     """One ``DecisionLog`` read for the verified caller's tenant."""
     body = {**action, "tenant_id": str(context.caller.tenant)}
@@ -143,7 +138,7 @@ def _item(row: Any) -> dict[str, Any]:
             "question_kind": row.get("question_kind"),
             "resolution_kind": row["resolution_kind"],
             "outcome": outcome if outcome is not None else row.get("assembly_outcome"),
-            "decided_at": _rfc3339(int(row["decided_at_ms"])),
+            "decided_at": rfc3339(int(row["decided_at_ms"])),
             "record_digest": row["record_digest"],
             "inputs_state": row["inputs"],
         }

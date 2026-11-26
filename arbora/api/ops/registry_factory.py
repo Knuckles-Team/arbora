@@ -26,6 +26,8 @@ def get_registry() -> Registry:
         agents,
         browser,
         capacity,
+        catalog,
+        dashboard,
         decide,
         decision_evidence,
         federation,
@@ -58,7 +60,9 @@ def get_registry() -> Registry:
         agents,
         browser,
         capacity,
+        catalog,
         decide,
+        dashboard,
         decision_evidence,
         federation,
         fleet,
@@ -92,13 +96,13 @@ def get_registry() -> Registry:
                         f"{op.id}: unsupported or unbound handler {op.binding.handler}"
                     )
             curated.append(op)
-    catalog = load_catalog()
-    scopes = load_generated_scopes(catalog)
+    engine_catalog = load_catalog()
+    scopes = load_generated_scopes(engine_catalog)
     for op in curated:
         missing = (op.scopes | op.executor_scopes) - scopes.keys()
         if missing:
             raise EgContractError(
                 f"{op.id}: unregistered curated EG scopes: {', '.join(sorted(missing))}"
             )
-    generated = load_eg_bindings(catalog=catalog, curated_ops=curated)
-    return Registry((*curated, *generated), catalog=catalog)
+    generated = load_eg_bindings(catalog=engine_catalog, curated_ops=curated)
+    return Registry((*curated, *generated), catalog=engine_catalog)

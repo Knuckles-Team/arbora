@@ -269,16 +269,16 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 
 ## Served dashboard operations (R861)
 
-- [ ] T212 ARBORA-OPS-R861 Served dashboard operations (rollup). (rollup)
-- [ ] T213 ARBORA-OPS-R861.1 Model.
-- [ ] T214 ARBORA-OPS-R861.2 Save.
-- [ ] T215 ARBORA-OPS-R861.3 Validation and size cap.
-- [ ] T216 ARBORA-OPS-R861.4 Read.
-- [ ] T217 ARBORA-OPS-R861.5 Delete.
-- [ ] T218 ARBORA-OPS-R861.6 Share.
-- [ ] T219 ARBORA-OPS-R861.7 Scope and audit.
-- [ ] T220 ARBORA-OPS-R861.8 Wiring.
-- [ ] T221 ARBORA-OPS-R861.9 Hot-path proof.
+- [x] T212 ARBORA-OPS-R861 Served dashboard operations (rollup). (rollup)
+- [x] T213 ARBORA-OPS-R861.1 Model.
+- [x] T214 ARBORA-OPS-R861.2 Save.
+- [x] T215 ARBORA-OPS-R861.3 Validation and size cap.
+- [x] T216 ARBORA-OPS-R861.4 Read.
+- [x] T217 ARBORA-OPS-R861.5 Delete.
+- [x] T218 ARBORA-OPS-R861.6 Share.
+- [x] T219 ARBORA-OPS-R861.7 Scope and audit.
+- [x] T220 ARBORA-OPS-R861.8 Wiring.
+- [x] T221 ARBORA-OPS-R861.9 Hot-path proof.
 
 ## Shared execution explorer
 
@@ -516,12 +516,12 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [x] T443 [US1] ARBORA-OPS-R920.2 Read the provenance of one decision. Size: M, 1 PR, 4 hours.
 - [x] T444 [US1] ARBORA-OPS-R920.3 Explain why an option was not chosen, on demand, within a bounded budget. Size: M, 1 PR, 4 hours.
 - [x] T445 [US1] ARBORA-OPS-R920.4 Hot-path proof: decision evidence over MCP and HTTP. Size: M, 1 PR, 4 hours.
-- [ ] T446 [US1] ARBORA-OPS-R921 Catalog browse and search are served operations (rollup). Size: S, 1 PR, 2 hours.
-- [ ] T447 [US1] ARBORA-OPS-R921.1 Browse catalog assets by kind. Size: M, 1 PR, 4 hours.
-- [ ] T448 [US1] ARBORA-OPS-R921.2 Search catalog assets with one ranked index. Size: M, 1 PR, 4 hours.
-- [ ] T449 [US1] ARBORA-OPS-R921.3 Read one catalog asset with its owners, terms, lineage, ratings and comments. Size: M, 1 PR, 4 hours.
-- [ ] T450 [US1] ARBORA-OPS-R921.4 Hot-path proof: browse, search and open an asset over MCP. Size: M, 1 PR, 4 hours.
-- [ ] T451 [US1] ARBORA-OPS-R861.10 Read the access of one dashboard. Size: M, 1 PR, 4 hours.
+- [x] T446 [US1] ARBORA-OPS-R921 Catalog browse and search are served operations (rollup). Size: S, 1 PR, 2 hours.
+- [x] T447 [US1] ARBORA-OPS-R921.1 Browse catalog assets by kind. Size: M, 1 PR, 4 hours.
+- [x] T448 [US1] ARBORA-OPS-R921.2 Search catalog assets with one ranked index. Size: M, 1 PR, 4 hours.
+- [x] T449 [US1] ARBORA-OPS-R921.3 Read one catalog asset with its owners, terms, lineage, ratings and comments. Size: M, 1 PR, 4 hours.
+- [x] T450 [US1] ARBORA-OPS-R921.4 Hot-path proof: browse, search and open an asset over MCP. Size: M, 1 PR, 4 hours.
+- [x] T451 [US1] ARBORA-OPS-R861.10 Read the access of one dashboard. Size: M, 1 PR, 4 hours.
 - [ ] T452 [US1] ARBORA-OPS-R922 Every pending census route of the web interface names one registered operation (rollup). Size: S, 1 PR, 2 hours.
 - [ ] T453 [US1] ARBORA-OPS-R922.1 Ontology interfaces are listed and their implementers read. Size: S, 1 PR, 2 hours.
 - [ ] T454 [US1] ARBORA-OPS-R922.2 One model's editable field set is a served read that returns references, never secrets. Size: S, 1 PR, 2 hours.
