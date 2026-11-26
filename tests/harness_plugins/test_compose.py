@@ -34,6 +34,7 @@ def test_bundle_holds_door_skills_agents_and_no_prompt_copy(skill_root: Path) ->
         "workstream.attach",
         "workstream.checkpoint",
         "workstream.detach",
+        "skills.telemetry.ingest",
     ]
     assert not hasattr(spec, "prompts")
     default = compose_bundle(

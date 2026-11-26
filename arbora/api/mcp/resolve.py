@@ -39,6 +39,15 @@ _GRAPH_QUESTION = re.compile(
     r"|system[ -]prompt candidates?)\b"
 )
 _GRAPH_OPS = ("query.nl", "query.uql")
+#: The Agent Library is the engine's own record (ARBORA-FLEET-R052.4.3): a
+#: question about it is read from the engine's ``AgentLibrary`` method under
+#: ``agent:library-read``, never from the fleet catalog, which holds no agents.
+_AGENT_LIBRARY_QUESTION = re.compile(r"\bagent library\b")
+_AGENT_LIBRARY_OP = "eg.storage.AgentLibrary"
+#: A delegation names the fleet, not an operation word: ``act`` with an intent
+#: that opens with the verb ``delegate`` reaches ``fleet.call`` (ARBORA-FLEET-R052.4.6).
+_DELEGATION = re.compile(r"^\W*delegate\b")
+_DELEGATE_OP = "fleet.call"
 #: The share of a plain question's content terms an op must match to answer it
 #: instead of the engine planner (ARBORA-FLEET-R014.3).
 _PLAIN_QUESTION_COVERAGE = 0.5
@@ -230,6 +239,14 @@ class IntentResolver:
                 ids,
                 "Discovery results; no operation executed",
             )
+        if verb == "act" and _DELEGATION.search(intent.lower()):
+            delegated = _delegate_route(supplied, descriptors)
+            if delegated is not None:
+                return delegated
+        if verb == "ask" and _AGENT_LIBRARY_QUESTION.search(intent.lower()):
+            library = _agent_library_route(supplied, descriptors)
+            if library is not None:
+                return library
         if verb == "ask" and graph_question and "text" not in supplied:
             routed = _graph_question_route(intent, supplied, descriptors)
             if routed is not None:
@@ -412,6 +429,52 @@ def _plain_question_answers(
         if not _engine_method(candidate.descriptor)
         and len(set(candidate.matched_terms)) >= _PLAIN_QUESTION_COVERAGE * len(terms)
     )
+
+
+def _delegate_route(
+    params: Mapping[str, Any],
+    descriptors: Sequence[Descriptor | Mapping[str, Any]],
+) -> Resolution | None:
+    """Route a delegation intent to the governed ``fleet.call`` the caller can see.
+
+    The text names no tool, so the call's ``server`` and ``tool`` stay required
+    parameters the caller supplies, from ``find`` or the catalog. Admission,
+    the effect authority and the plan gate all run on the op as for any call.
+    """
+    for item in (_coerce(entry) for entry in descriptors):
+        if item.id == _DELEGATE_OP and item.verb == "act":
+            return Resolution(
+                item.id,
+                params,
+                False,
+                _missing_required(item.params_schema, params),
+                (),
+                "Delegation: a governed fleet call to the named tool",
+            )
+    return None
+
+
+def _agent_library_route(
+    params: Mapping[str, Any],
+    descriptors: Sequence[Descriptor | Mapping[str, Any]],
+) -> Resolution | None:
+    """Route an Agent Library question to the engine's ``AgentLibrary`` read.
+
+    Only the authorized op the caller can see qualifies, so scope and policy
+    filtering already happened. A plain question cannot fill the op's required
+    parameters, so they come back as ``missing_required``.
+    """
+    for item in (_coerce(entry) for entry in descriptors):
+        if item.id == _AGENT_LIBRARY_OP and item.verb == "ask":
+            return Resolution(
+                item.id,
+                params,
+                False,
+                _missing_required(item.params_schema, params),
+                (),
+                "Agent Library question: read from the engine's AgentLibrary method",
+            )
+    return None
 
 
 def _graph_question_route(

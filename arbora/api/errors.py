@@ -47,6 +47,7 @@ class ArboraErrorCode(StrEnum):
     ELEVATION_APPROVER_SCOPE = "ELEVATION_APPROVER_SCOPE"
     UNKNOWN_KIND = "UNKNOWN_KIND"
     USER_NOT_FOUND = "USER_NOT_FOUND"
+    WORKSTREAM_NOT_FOUND = "WORKSTREAM_NOT_FOUND"
     USER_EXISTS = "USER_EXISTS"
     LAST_ADMIN_PROTECTED = "LAST_ADMIN_PROTECTED"
     ROLE_UNKNOWN = "ROLE_UNKNOWN"
@@ -69,6 +70,9 @@ class ArboraErrorCode(StrEnum):
     HISTORY_REVISION_CONFLICT = "HISTORY_REVISION_CONFLICT"
     # A paging cursor the source moved past; the caller restarts the listing.
     STALE_CURSOR = "STALE_CURSOR"
+    # Approval refusals (ARBORA-OPS-R918.3).
+    SELF_APPROVAL = "SELF_APPROVAL"
+    ALREADY_DECIDED = "ALREADY_DECIDED"
 
 
 # Wire status and retry posture are part of the closed Arbora vocabulary.
@@ -104,6 +108,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.ELEVATION_APPROVER_SCOPE: 403,
     ArboraErrorCode.UNKNOWN_KIND: 400,
     ArboraErrorCode.USER_NOT_FOUND: 404,
+    ArboraErrorCode.WORKSTREAM_NOT_FOUND: 404,
     ArboraErrorCode.USER_EXISTS: 409,
     ArboraErrorCode.LAST_ADMIN_PROTECTED: 409,
     ArboraErrorCode.ROLE_UNKNOWN: 400,
@@ -124,6 +129,8 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.CONTINUATION_HISTORY_UNSUPPORTED: 409,
     ArboraErrorCode.CONTINUATION_LIFECYCLE_INVALID: 409,
     ArboraErrorCode.HISTORY_REVISION_CONFLICT: 409,
+    ArboraErrorCode.SELF_APPROVAL: 403,
+    ArboraErrorCode.ALREADY_DECIDED: 409,
 }
 
 _RETRYABLE = frozenset(
@@ -594,6 +601,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.ELEVATION_APPROVER_SCOPE: -32003,
     ArboraErrorCode.UNKNOWN_KIND: -32602,
     ArboraErrorCode.USER_NOT_FOUND: -32002,
+    ArboraErrorCode.WORKSTREAM_NOT_FOUND: -32002,
     ArboraErrorCode.USER_EXISTS: -32009,
     ArboraErrorCode.LAST_ADMIN_PROTECTED: -32009,
     ArboraErrorCode.ROLE_UNKNOWN: -32602,

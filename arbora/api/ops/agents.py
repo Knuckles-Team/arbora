@@ -21,6 +21,12 @@ from arbora.api.registry import (
 class AgentRunParams(Params):
     message: dict[str, Any]
     context_budget_tokens: int | None = Field(default=None, ge=256, le=1_000_000)
+    #: An assistant profile for the run (ARBORA-OPS-R897.6). Arbora forwards it
+    #: in the message metadata and reads nothing of the profile: admission has
+    #: already run, and the engine checks the profile-use grant.
+    assistant_profile_ref: str | None = Field(
+        default=None, min_length=1, max_length=256
+    )
 
 
 class TaskRefParams(Params):
@@ -69,9 +75,18 @@ async def handle_agent(
                 raise ValueError("Idempotency-Key is required")
             from arbora.modality.models import ModalityRefused
 
+            message = params["message"]
+            if params.get("assistant_profile_ref"):
+                message = {
+                    **message,
+                    "metadata": {
+                        **(message.get("metadata") or {}),
+                        "assistant_profile_ref": params["assistant_profile_ref"],
+                    },
+                }
             try:
                 result = await service.send_message(
-                    message=params["message"],
+                    message=message,
                     idempotency_key=context.idempotency_key,
                     context_budget_tokens=params.get("context_budget_tokens"),
                 )
