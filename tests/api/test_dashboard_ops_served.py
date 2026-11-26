@@ -111,7 +111,7 @@ class DashboardEngine:
         return {"kind_counts": [], "rows": rows[: op["limit"]]}
 
 
-DOC = {
+DOC: dict[str, Any] = {
     "schema_version": 1,
     "id": "sales",
     "title": "Sales",
@@ -391,9 +391,11 @@ def test_document_round_trip_and_rejects_unknown_field() -> None:
 def test_each_operation_reaches_its_handler() -> None:
     from arbora.api.ops import dashboard
     from arbora.api.ops.registry_factory import get_registry
+    from arbora.api.registry import Composite
 
     registry = get_registry()
     for op in dashboard.operations():
         assert registry.get(op.id) is not None
+        assert isinstance(op.binding, Composite)
         module, _, name = op.binding.handler.rpartition(".")
         assert callable(getattr(dashboard, name)), module
