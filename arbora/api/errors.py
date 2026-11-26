@@ -47,6 +47,7 @@ class ArboraErrorCode(StrEnum):
     ELEVATION_APPROVER_SCOPE = "ELEVATION_APPROVER_SCOPE"
     UNKNOWN_KIND = "UNKNOWN_KIND"
     USER_NOT_FOUND = "USER_NOT_FOUND"
+    WORKSTREAM_NOT_FOUND = "WORKSTREAM_NOT_FOUND"
     USER_EXISTS = "USER_EXISTS"
     LAST_ADMIN_PROTECTED = "LAST_ADMIN_PROTECTED"
     ROLE_UNKNOWN = "ROLE_UNKNOWN"
@@ -57,6 +58,8 @@ class ArboraErrorCode(StrEnum):
     AUDIT_CHAIN_BROKEN = "AUDIT_CHAIN_BROKEN"
     CONSOLE_ORIGIN_REQUIRED = "CONSOLE_ORIGIN_REQUIRED"
     MFA_STALE = "MFA_STALE"
+    # A paging cursor the source moved past; the caller restarts the listing.
+    STALE_CURSOR = "STALE_CURSOR"
 
 
 # Wire status and retry posture are part of the closed Arbora vocabulary.
@@ -92,6 +95,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.ELEVATION_APPROVER_SCOPE: 403,
     ArboraErrorCode.UNKNOWN_KIND: 400,
     ArboraErrorCode.USER_NOT_FOUND: 404,
+    ArboraErrorCode.WORKSTREAM_NOT_FOUND: 404,
     ArboraErrorCode.USER_EXISTS: 409,
     ArboraErrorCode.LAST_ADMIN_PROTECTED: 409,
     ArboraErrorCode.ROLE_UNKNOWN: 400,
@@ -102,6 +106,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.AUDIT_CHAIN_BROKEN: 409,
     ArboraErrorCode.CONSOLE_ORIGIN_REQUIRED: 403,
     ArboraErrorCode.MFA_STALE: 403,
+    ArboraErrorCode.STALE_CURSOR: 409,
 }
 
 _RETRYABLE = frozenset(
@@ -572,6 +577,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.ELEVATION_APPROVER_SCOPE: -32003,
     ArboraErrorCode.UNKNOWN_KIND: -32602,
     ArboraErrorCode.USER_NOT_FOUND: -32002,
+    ArboraErrorCode.WORKSTREAM_NOT_FOUND: -32002,
     ArboraErrorCode.USER_EXISTS: -32009,
     ArboraErrorCode.LAST_ADMIN_PROTECTED: -32009,
     ArboraErrorCode.ROLE_UNKNOWN: -32602,
@@ -582,6 +588,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.AUDIT_CHAIN_BROKEN: -32009,
     ArboraErrorCode.CONSOLE_ORIGIN_REQUIRED: -32003,
     ArboraErrorCode.MFA_STALE: -32003,
+    ArboraErrorCode.STALE_CURSOR: -32009,
 }
 
 

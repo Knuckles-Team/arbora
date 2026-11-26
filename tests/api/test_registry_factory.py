@@ -14,6 +14,7 @@ from arbora.api.ops import (
     browser,
     capacity,
     catalog,
+    config_layers,
     dashboard,
     decide,
     decision_evidence,
@@ -24,6 +25,7 @@ from arbora.api.ops import (
     fleet,
     get_registry,
     governance,
+    graph_limits,
     identity,
     ingest,
     knowledge,
@@ -34,6 +36,7 @@ from arbora.api.ops import (
     participants,
     plans,
     policy,
+    preferences,
     prompts,
     query,
     query_engine,
@@ -44,12 +47,15 @@ from arbora.api.ops import (
     security,
     sessions,
     skills_discovery,
+    skills_eval,
     skills_friction,
+    skills_telemetry,
     source,
     swarm,
     telemetry,
     usage,
     work,
+    workstreams,
 )
 from arbora.api.registry import (
     Composite,
@@ -65,6 +71,8 @@ from tests.api._catalog import method_row, scope_row
 from tests.api.test_eg_binding import _curated, _fixture
 
 _CURATED_SCOPES = (
+    "workstream:read",
+    "workstream:write",
     "query:unified",
     "query:nl",
     "kg:read",
@@ -112,6 +120,7 @@ _CURATED_SCOPES = (
     "identity:self",
     "identity:admin",
     "profile:write",
+    "telemetry:write",
 )
 
 _ENGINE_METHODS = {
@@ -167,6 +176,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *capacity.operations(),
         *decide.operations(),
         *catalog.operations(),
+        *config_layers.operations(),
         *dashboard.operations(),
         *decision_evidence.operations(),
         *deploy.operations(),
@@ -184,9 +194,12 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *security.operations(),
         *sessions.operations(),
         *skills_discovery.operations(),
+        *skills_eval.operations(),
         *skills_friction.operations(),
+        *skills_telemetry.operations(),
         *telemetry.operations(),
         *usage.operations(),
+        *graph_limits.operations(),
         *policy.operations(),
         *query.operations(),
         *query_engine.operations(),
@@ -197,9 +210,11 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *source.operations(),
         *swarm.operations(),
         *work.operations(),
+        *workstreams.operations(),
         *ops.operations(),
         *participants.operations(),
         *plans.operations(),
+        *preferences.operations(),
         *prompts.operations(),
     )
     assert {op.id for op in first} == {op.id for op in declared} | {

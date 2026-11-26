@@ -21,7 +21,7 @@ at call time, so a renewed process credential applies without a rebuild.
 from __future__ import annotations
 
 import json
-from collections.abc import AsyncIterator, Callable, Coroutine, Mapping
+from collections.abc import AsyncIterator, Callable, Coroutine, Mapping, Sequence
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -291,50 +291,58 @@ def _schema_action(session: Any, graph: str, pin: Mapping[str, Any]) -> Any:
     )
 
 
-def _schema_session(session: Callable[[], Any], tenant: str, graph: str) -> Any:
+def _publication_session(
+    session: Callable[[], Any], tenant: str, graph: str, scopes: Sequence[str]
+) -> Any:
+    """The verified process session, holding one of ``scopes`` for ``tenant``.
+
+    The engine classifies each publish as an exact admin or write action. A
+    service identity carrying that exact capability may use it directly; the
+    engine also treats ``kg:admin`` as the aggregate grant for every admin
+    action. Keep the aggregate fallback here rather than lowering publication to
+    the ordinary ``kg:write`` capability, which the engine deliberately refuses.
+    """
     from arbora.security.session import ScopeError, resolve_session
 
     verified = resolve_session(session(), graph=graph)
-    try:
-        # EG's FeatureSchema publisher classifies this as the exact
-        # admin:decision-catalog action.  A service identity carrying that
-        # exact capability may use it directly; EG also explicitly treats
-        # kg:admin as the aggregate grant for every admin action.  Keep the
-        # aggregate fallback here rather than lowering publication to the
-        # ordinary kg:write capability (which EG deliberately refuses).
-        verified.require_scope("admin:decision-catalog")
-    except ScopeError:
+    for scope in scopes:
+        try:
+            verified.require_scope(scope)
+            break
+        except ScopeError:
+            continue
+    else:
         verified.require_scope("kg:admin")
     if verified.tenant != tenant or not str(verified.policy_version).strip():
         raise PermissionError(
-            "schema publication needs its verified tenant and revision"
+            "library publication needs its verified tenant and revision"
         )
     return verified
 
 
-async def _schema_publish_context(
+def _schema_session(session: Callable[[], Any], tenant: str, graph: str) -> Any:
+    return _publication_session(session, tenant, graph, ("admin:decision-catalog",))
+
+
+async def _receipted_publish_context(
     policy: ActionPolicy,
-    session: Callable[[], Any],
-    graph: str,
-    tenant: str,
-    pin: Mapping[str, Any],
+    verify: Callable[[], Any],
+    action_for: Callable[[Any], Any],
+    purpose_id: str,
 ) -> dict[str, Any]:
-    """Require a new durable receipt; default policy still holds this action."""
+    """Require a new durable receipt for ``action_for(session)``, then bind it."""
     import asyncio
 
     from arbora.api.contracts import PolicyDisposition, PolicyReceipt
     from arbora.api.contracts.provisioning import opaque_principal
-    from arbora.api.task_plan_schema import PURPOSE_ID
     from arbora.mcp_server.decide_wiring import _mutation_context
 
-    request = _schema_action(_schema_session(session, tenant, graph), graph, pin)
+    request = action_for(verify())
     digest = request.digest()
     decision = await asyncio.to_thread(policy.decide, request)
-    verified = _schema_session(session, tenant, graph)
-    if _schema_action(verified, graph, pin).digest() != digest:
-        raise PermissionError(
-            "schema publication intent changed during policy decision"
-        )
+    verified = verify()
+    if action_for(verified).digest() != digest:
+        raise PermissionError("publication intent changed during policy decision")
     receipt = decision.receipt
     if not (
         decision.allowed
@@ -345,10 +353,8 @@ async def _schema_publish_context(
         and receipt.request_digest == digest
         and decision.request.digest() == digest
     ):
-        raise PermissionError(
-            "schema publication has no exact effect-authorizing receipt"
-        )
-    context = _mutation_context(verified, PURPOSE_ID)
+        raise PermissionError("publication has no exact effect-authorizing receipt")
+    context = _mutation_context(verified, purpose_id)
     # AgentComponent validates the caller-shaped mutation context before EG's
     # admitted-context binder replaces its policy and process-owner fields.
     # Use the same canonical opaque principal derivation as connector-pack
@@ -365,6 +371,24 @@ async def _schema_publish_context(
         "policy_digest": f"sha256:{receipt.request_digest}",
         "policy_decision_id": receipt.receipt_id,
     }
+
+
+async def _schema_publish_context(
+    policy: ActionPolicy,
+    session: Callable[[], Any],
+    graph: str,
+    tenant: str,
+    pin: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Require a new durable receipt; default policy still holds this action."""
+    from arbora.api.task_plan_schema import PURPOSE_ID
+
+    return await _receipted_publish_context(
+        policy,
+        lambda: _schema_session(session, tenant, graph),
+        lambda verified: _schema_action(verified, graph, pin),
+        PURPOSE_ID,
+    )
 
 
 def _task_plan_schema_publisher(
@@ -407,6 +431,92 @@ def _task_plan_schema_publisher(
             return await publisher(tenant, pin)
 
     return publish
+
+
+def _library_action(session: Any, graph: str, tenant: str) -> Any:
+    """The exact deployment-library intent considered by the action-policy owner."""
+    from arbora.api.contracts import ActionRequest
+    from arbora.deployment.assembly_library import PURPOSE_ID, ROLES, TARGETS
+
+    return ActionRequest(
+        kind=PURPOSE_ID,
+        target=f"deployment:{tenant}",
+        params={
+            "targets": list(TARGETS),
+            "slots": list(ROLES),
+            "tenant_id": session.tenant,
+            "graph": graph,
+            "policy_revision": str(session.policy_version),
+        },
+        source="arbora",
+        reason="authorize the deployment templates and tool components",
+        actor_id=str(session.actor.actor_id),
+    )
+
+
+def _deployment_library_startup(
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+    session: Callable[[], Any],
+    action_policies: ActionPolicies,
+) -> Callable[[], Coroutine[Any, Any, Any]]:
+    """The process-lifecycle publisher of the deployment library (R017.20).
+
+    Every write binds the process authority to the exact tenant and graph, under
+    a fresh receipted mutation context. A request binding never reaches it.
+    """
+    from arbora.deployment import assembly_library as library
+    from arbora.mcp_server.served_engine import ServedEngine
+    from arbora.security.session import resolve_session, use_session
+
+    engine = ServedEngine(pool)
+    tenant = str(session().tenant)
+
+    async def context_for(for_tenant: str, key: str) -> Mapping[str, Any]:
+        policy = action_policies.for_engine(engine)
+        scopes = ("agent:component-write", "agent:template-write", "agent:graph-write")
+        context = await _receipted_publish_context(
+            policy,
+            lambda: _publication_session(session, for_tenant, graph, scopes),
+            lambda verified: _library_action(verified, graph, for_tenant),
+            library.PURPOSE_ID,
+        )
+        return {**context, "idempotency_key": key}
+
+    async def send(method: str, params: dict[str, Any], key: str | None) -> Any:
+        from medulla.generated import storage
+
+        sender = {
+            "AgentComponent": storage.send_agent_component,
+            "AgentTemplate": storage.send_agent_template,
+            "AgentGraph": storage.send_agent_graph,
+        }[method]
+        async with pool.bind(connect_context(tenant), graph) as client:
+            with use_session(session()):
+                resolve_session(graph=graph)
+                return await sender(client, params, graph, idempotency_key=key)
+
+    async def startup() -> dict[str, dict[str, bool]]:
+        bindings = library.load_tool_bindings()
+        return await library.publish_at_startup(send, context_for, (tenant,), bindings)
+
+    return startup
+
+
+def _chained_startup(
+    first: Callable[[], Coroutine[Any, Any, Any]] | None,
+    second: Callable[[], Coroutine[Any, Any, Any]],
+) -> Callable[[], Coroutine[Any, Any, Any]]:
+    """Run ``first`` then ``second`` as one process start-up step."""
+    if first is None:
+        return second
+
+    async def both() -> None:
+        await first()
+        await second()
+
+    return both
 
 
 def _with_projection_reader(
@@ -514,6 +624,13 @@ def compose_served_invocation(
     bindings, process_startup = _with_task_plan_schema(
         bindings, pool, graph, connect_context, session, action_policies
     )
+    if bindings is not None:
+        process_startup = _chained_startup(
+            process_startup,
+            _deployment_library_startup(
+                pool, graph, connect_context, session, action_policies
+            ),
+        )
     if (
         bindings is not None
         and task_plan_config is not None
@@ -536,6 +653,12 @@ def compose_served_invocation(
         from arbora.identity.ports import engine_identity_admin
 
         bindings = {**bindings, "identity_admin": engine_identity_admin(graph)}
+    if bindings is not None and "memory_materializer" not in bindings:
+        # ARBORA-OPS-R024.4.4: one materializer writes accepted memory file
+        # heads to the hosted directory and reports them to the engine.
+        from arbora.api.ops.memory_files import MemoryMaterializer
+
+        bindings = {**bindings, "memory_materializer": MemoryMaterializer()}
     step_invoke = None
     if bindings is not None and "plan_step_invoke" not in bindings:
         from arbora.api.ops.plans import LateStepInvoke

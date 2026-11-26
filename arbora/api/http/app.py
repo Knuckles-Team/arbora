@@ -11,6 +11,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from arbora.api.otlp_logs import body_key
 from arbora.api.registry import Invoke
 
 from .auth import HTTPAuthenticationError
@@ -20,6 +21,12 @@ from .routes import _error, make_endpoint
 from .sparql import mount_sparql_protocol
 
 Visibility = Callable[[Any, Any], Awaitable[bool]]
+
+# Operations whose protocol clients cannot send an Idempotency-Key are keyed
+# by their body (ARBORA-OPS-R953).
+_BODY_KEYED: dict[str, Callable[[dict[str, Any]], str]] = {
+    "skills.telemetry.ingest": body_key,
+}
 
 
 def _subapp_path(path: str) -> str:
@@ -239,6 +246,7 @@ def create_api_application(
                     generic=False,
                     is_console_request=auth.is_console_request,
                     operation_authority=operation_authority,
+                    derive_key=_BODY_KEYED.get(op.id),
                 ),
                 methods=[str(op.http.method).upper()],
                 include_in_schema=False,

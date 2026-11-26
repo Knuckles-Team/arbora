@@ -282,6 +282,20 @@ def heartbeat(
     return bool(result.get("renewed"))
 
 
+def mark_effect_started(
+    engine: Any,
+    item_id: str,
+    claim: Mapping[str, Any],
+    *,
+    expected_revision: int,
+) -> dict[str, Any]:
+    """Record under the live claim that an external effect starts
+    (``MarkWorkItemEffectStarted``, MEDULLA-DURABLE-KERNEL-R820.3)."""
+    return _work_items(engine).mark_effect_started(
+        work_item_id=item_id, expected_revision=expected_revision, **_fence(claim)
+    )
+
+
 def commit_result(
     engine: Any,
     item_id: str,

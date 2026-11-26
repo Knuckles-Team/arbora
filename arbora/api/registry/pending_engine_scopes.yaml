@@ -9,3 +9,6 @@ pending_engine_scopes:
   - participant:read
   - participant:write
   - sessions:read
+  - skills:author
+  - skills:eval
+  - skills:review

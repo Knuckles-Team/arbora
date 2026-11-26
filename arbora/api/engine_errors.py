@@ -301,6 +301,7 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "SEED_TOO_LARGE": (400, False),
     "SEED_TURTLE_INVALID": (400, False),
     "SELECTION_UNAVAILABLE": (400, False),
+    "SESSION_CURSOR_STALE": (409, False),
     "SHAPES_INVALID": (400, False),
     "SOLVE_CERTIFICATE_REJECTED": (400, False),
     "SOLVE_CONFIG_INVALID": (400, False),

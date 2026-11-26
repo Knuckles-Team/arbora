@@ -14,14 +14,19 @@ from arbora.epistemic import ConnectClient, EpistemicClientPool
 from arbora.mcp_server.served_engine import ServedEngine
 from arbora.security.session import use_session
 from tests.a2a.test_tool_task_native import _session
-from tests.test_real_boot import PROCESS_SUBJECT, TENANT, _booted_stack
+from tests.test_real_boot import (
+    HEAVY_BOOT_TEST_TIMEOUT_S,
+    PROCESS_SUBJECT,
+    TENANT,
+    _booted_stack,
+)
 
 pytestmark = [
     pytest.mark.real_boot,
     pytest.mark.spec("ARBORA-A2A-R002.2.3.1"),
     # A queued boot may wait behind the heavy-boot chain before its own
     # stack finishes, far beyond the suite-wide 120 s.
-    pytest.mark.timeout(600),
+    pytest.mark.timeout(HEAVY_BOOT_TEST_TIMEOUT_S),
 ]
 
 

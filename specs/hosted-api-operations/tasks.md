@@ -31,10 +31,10 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T014 ARBORA-OPS-R022.2 Evolution loop, schedule, and proposal operations — evolution slice of `ARBORA-OPS-R022`.
 - [ ] T015 ARBORA-OPS-R024.1 Telemetry operations — telemetry slice of `ARBORA-OPS-R024`.
 - [ ] T016 ARBORA-OPS-R024.2 Security operations — security slice of `ARBORA-OPS-R024`.
-- [ ] T017 ARBORA-OPS-R024.3 Usage operations — usage slice of `ARBORA-OPS-R024`.
+- [x] T017 ARBORA-OPS-R024.3 Usage operations — usage slice of `ARBORA-OPS-R024`.
 - [x] T018 ARBORA-OPS-R024.3.1 Serve canonical caller-context committed session usage.
 - [x] T019 ARBORA-OPS-R024.3.2 Project bounded AU measured request timing for shared clients.
-- [ ] T020 ARBORA-OPS-R024.4 Memory operations — memory slice of `ARBORA-OPS-R024`.
+- [x] T020 ARBORA-OPS-R024.4 Memory operations — memory slice of `ARBORA-OPS-R024`.
 - [ ] T021 ARBORA-OPS-R024.5 Operational admin operations — admin slice of `ARBORA-OPS-R024` (graph/query/search/ontology excluded; owned by `ARBORA-HOST-R026.x`).
 - [ ] T022 ARBORA-OPS-R026.1 API-surface drift gate — api-surface slice of `ARBORA-OPS-R026`.
 - [ ] T023 ARBORA-OPS-R026.2 Backward-compatibility drift gate — backward-compat slice of `ARBORA-OPS-R026`.
@@ -141,12 +141,12 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 
 ## Versioned memory consumer sequence
 
-- [ ] T118 ARBORA-OPS-R024.4.1 Versioned memory port; implement the planned served positive and negative acceptance.
-- [ ] T119 ARBORA-OPS-R024.4.2 Snapshot reads and listing; implement the planned served positive and negative acceptance.
-- [ ] T120 ARBORA-OPS-R024.4.3 Versioned saves and conflicts; implement the planned served positive and negative acceptance.
-- [ ] T121 ARBORA-OPS-R024.4.4 Hosted materialization; implement the planned served positive and negative acceptance.
-- [ ] T122 ARBORA-OPS-R024.4.5 Authority and replay; implement the planned served positive and negative acceptance.
-- [ ] T123 ARBORA-OPS-R024.4.6 Registration and served proof; implement the planned served positive and negative acceptance.
+- [x] T118 ARBORA-OPS-R024.4.1 Versioned memory port; implement the planned served positive and negative acceptance.
+- [x] T119 ARBORA-OPS-R024.4.2 Snapshot reads and listing; implement the planned served positive and negative acceptance.
+- [x] T120 ARBORA-OPS-R024.4.3 Versioned saves and conflicts; implement the planned served positive and negative acceptance.
+- [x] T121 ARBORA-OPS-R024.4.4 Hosted materialization; implement the planned served positive and negative acceptance.
+- [x] T122 ARBORA-OPS-R024.4.5 Authority and replay; implement the planned served positive and negative acceptance.
+- [x] T123 ARBORA-OPS-R024.4.6 Registration and served proof; implement the planned served positive and negative acceptance.
 
 ## Owner-bound projections (ARBORA-OPS-R054–R058, R061, R063)
 
@@ -299,6 +299,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T233 ARBORA-OPS-R009.8 Output hook runs before a response leaves. Deliver as written in requirements.md.
 - [ ] T234 ARBORA-OPS-R009.9 Hooks fail closed and record their decisions. Deliver as written in requirements.md.
 - [ ] T235 ARBORA-OPS-R024.6 Derivation status read. Deliver as written in requirements.md.
+- [x] T478 ARBORA-OPS-R024.7 Preferences are one versioned engine record per principal.
 - [ ] T236 ARBORA-OPS-R897 Participant memory, scopes, profiles and document sets are served operations (rollup). Deliver as written in requirements.md.
 - [x] T237 ARBORA-OPS-R897.1 Model and the shared engine send helper. Deliver as written in requirements.md.
 - [x] T238 ARBORA-OPS-R897.2 Participant and membership operations. Deliver as written in requirements.md.
@@ -369,10 +370,10 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T295 ARBORA-OPS-R059.2 Evolution metrics behavior and wiring.
 - [ ] T296 ARBORA-OPS-R059.3 Evolution metrics refusals.
 - [ ] T297 ARBORA-OPS-R059.4 Evolution metrics hot-path proof.
-- [ ] T298 ARBORA-OPS-R060.1 Session and harness models.
-- [ ] T299 ARBORA-OPS-R060.2 Harness manifest and discovery status operations.
+- [x] T298 ARBORA-OPS-R060.1 Session and harness models.
+- [x] T299 ARBORA-OPS-R060.2 Harness manifest and discovery status operations.
 - [x] T300 ARBORA-OPS-R060.3 Session browse, search and cost operations.
-- [ ] T301 ARBORA-OPS-R060.4 Session operation refusals.
+- [x] T301 ARBORA-OPS-R060.4 Session operation refusals.
 - [ ] T302 ARBORA-OPS-R060.5 Session projection hot-path proof.
 - [ ] T303 ARBORA-OPS-R061.1 Usage index models.
 - [ ] T304 ARBORA-OPS-R061.2 Usage index forwarding.
@@ -381,6 +382,7 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T307 ARBORA-OPS-R061.5 Usage index hot-path proof.
 - [ ] T308 ARBORA-OPS-R062.1 Graph change models.
 - [ ] T309 ARBORA-OPS-R062.2 Subscribe and stream.
+- [ ] T702 ARBORA-OPS-R062.6 Publish the owner's live graph limits.
 - [ ] T310 ARBORA-OPS-R062.3 Snapshot recovery.
 - [ ] T311 ARBORA-OPS-R062.4 Revocation, refusals and visibility limit.
 - [ ] T312 ARBORA-OPS-R062.5 Graph change hot-path proof.
@@ -532,10 +534,10 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [x] T458 [US1] ARBORA-OPS-R950 Serve the flag operations. Size: M, 2 PRs, 5 hours.
 - [x] T459 [US1] ARBORA-OPS-R951 Serve the curation operations. Size: M, 2 PRs, 5 hours.
 - [x] T460 [US1] ARBORA-OPS-R952 Serve the friction operations. Size: M, 2 PRs, 5 hours.
-- [ ] T461 [US1] ARBORA-OPS-R953 Receive skill hook events as OpenTelemetry logs. Size: M, 2 PRs, 5 hours.
+- [x] T461 [US1] ARBORA-OPS-R953 Receive skill hook events as OpenTelemetry logs. Size: M, 2 PRs, 5 hours.
 - [ ] T462 [US1] ARBORA-OPS-R954 Serve skill measures, ranking, discovery and peer recommendations. Size: M, 2 PRs, 5 hours.
-- [ ] T463 [US1] ARBORA-OPS-R955 Serve the skill evaluation operations. Size: M, 2 PRs, 5 hours.
-- [ ] T464 [US1] ARBORA-OPS-R956 Serve the ablation and canary operations. Size: M, 2 PRs, 5 hours.
+- [x] T463 [US1] ARBORA-OPS-R955 Serve the skill evaluation operations. Size: M, 2 PRs, 5 hours.
+- [x] T464 [US1] ARBORA-OPS-R956 Serve the ablation and canary operations. Size: M, 2 PRs, 5 hours.
 - [ ] T465 [US1] ARBORA-OPS-R957 Serve the skill tier and persona operations. Size: M, 2 PRs, 5 hours.
 - [ ] T466 [US1] ARBORA-OPS-R958 Run the knowledge curator on the engine cadence. Size: M, 2 PRs, 5 hours.
 - [ ] T467 [US1] ARBORA-OPS-R857.3 Wiring: the graph store carries six RDF media types.
@@ -549,3 +551,4 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T475 [US1] ARBORA-OPS-R924 Served Discover carries caller seeds and hop filters (rollup).
 - [ ] T476 [US1] ARBORA-OPS-R924.1 Wiring and refusal: contract fields and engine codes.
 - [ ] T477 [US1] ARBORA-OPS-R924.2 Hot-path proof: guided Discover over HTTP and MCP.
+- [x] T478 [US1] ARBORA-OPS-R024.3.3 Grouped usage rollup with currency and p95 latency.

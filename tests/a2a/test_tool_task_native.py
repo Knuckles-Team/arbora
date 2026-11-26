@@ -25,6 +25,7 @@ from arbora.security.request_identity import _resolve_authenticated_scopes
 from arbora.security.session import GraphSession, use_session
 from tests.test_real_boot import (
     AUDIENCE,
+    HEAVY_BOOT_TEST_TIMEOUT_S,
     POLICY_VERSION,
     PROCESS_SUBJECT,
     ROLES,
@@ -38,7 +39,7 @@ pytestmark = [
     pytest.mark.spec("ARBORA-A2A-R002.2.2.2"),
     # A queued boot may wait behind the heavy-boot chain before its own
     # stack finishes, far beyond the suite-wide 120 s.
-    pytest.mark.timeout(600),
+    pytest.mark.timeout(HEAVY_BOOT_TEST_TIMEOUT_S),
 ]
 
 

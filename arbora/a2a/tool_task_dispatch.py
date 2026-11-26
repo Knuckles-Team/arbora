@@ -96,6 +96,23 @@ class EgWorkItemFence:
         ):
             raise WorkItemLeaseLost("tool-task lease renewal refused")
 
+    def mark_effect_started(self, item_id: str, claim: str) -> None:
+        """Record under the live fence that the effect is starting (R820.3).
+
+        A stale fence or a moved row refuses and stops the worker, so no effect
+        starts without the engine knowing it may have.
+        """
+        native = self._claim(item_id, claim)
+        row = work_items.get_work_item(self._engine, item_id)
+        if row is None or type(row.get("version")) is not int:
+            raise WorkItemLeaseLost("tool-task record unavailable for effect marker")
+        try:
+            work_items.mark_effect_started(
+                self._engine, item_id, native, expected_revision=row["version"]
+            )
+        except Exception as exc:  # noqa: BLE001 - an unmarked effect must not start
+            raise WorkItemLeaseLost("tool-task effect marker refused") from exc
+
     def commit(self, item_id: str, claim: str, *, succeeded: bool, ref: str) -> None:
         """Accept only a native commit of this exact terminal outcome."""
         native = self._claim(item_id, claim)

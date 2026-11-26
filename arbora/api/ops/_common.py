@@ -22,6 +22,7 @@ from arbora.api.registry import (
     Composite,
     Confirm,
     Effect,
+    HttpShape,
     Idempotency,
     OpSpec,
     PrincipalRule,
@@ -92,6 +93,7 @@ def _build_op(
     principals: PrincipalRule = PrincipalRule.ANY,
     confirm: Confirm | None = None,
     surfaces: frozenset[Surface] = frozenset({Surface.MCP, Surface.HTTP, Surface.A2A}),
+    http: HttpShape | None = None,
 ) -> OpSpec:
     """The one OpSpec constructor every builder below specializes."""
     return OpSpec(
@@ -109,6 +111,7 @@ def _build_op(
         principals=principals,
         confirm=confirm,
         surfaces=surfaces,
+        http=http,
     )
 
 
