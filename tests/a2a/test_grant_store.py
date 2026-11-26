@@ -189,7 +189,9 @@ def test_an_unreachable_engine_grants_nothing() -> None:
     asyncio.run(run())
 
 
-def test_grant_lifetime_never_exceeds_the_plan_lifetime() -> None:
+def test_grant_lifetime_never_exceeds_the_plan_lifetime(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     client, clock = Client(), [NOW - 100_000]
     grants = store(client, clock)
     seen: list[int] = []
@@ -199,6 +201,6 @@ def test_grant_lifetime_never_exceeds_the_plan_lifetime() -> None:
         seen.append(fields["hard_expires_at_ms"] - fields["issued_at_ms"])
         return await original(**fields)
 
-    client.control_leases.issue = spy
+    monkeypatch.setattr(client.control_leases, "issue", spy)
     asyncio.run(grants.issue(binding()))
     assert seen == [PLAN_TTL_MS]
