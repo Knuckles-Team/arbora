@@ -4,7 +4,7 @@ Governing [spec](spec.md) and [plan](plan.md). One task per row, producer first.
 
 Before a pull request, run `uvx pre-commit run --all-files` at both stages. Follow the repository gate and use local fixtures, never private services.
 
-- [x] T001 [P] [US3] ARBORA-DATA-MARKET-R001.1 Durable finance receipt store.
+- [x] T001 [P] [US3] ARBORA-DATA-MARKET-R001.1 Finance receipts move through the engine machine.
 - [ ] T002 [US3] ARBORA-DATA-MARKET-R002 Scheduled finance backfill, scan, and explanation jobs.
 - [ ] T003 [P] [US3] ARBORA-DATA-MARKET-R003.1 Market list/search/get.
 - [ ] T004 [P] [US3] ARBORA-DATA-MARKET-R003.2 Event list/search/get.
@@ -36,7 +36,7 @@ Before a pull request, run `uvx pre-commit run --all-files` at both stages. Foll
 - [ ] T030 [P] [US3] ARBORA-DATA-MARKET-R009.1 Performance and benchmark card read.
 - [ ] T031 [P] [US3] ARBORA-DATA-MARKET-R009.2 Instrument detail: rates and dividends.
 - [ ] T032 [P] [US3] ARBORA-DATA-MARKET-R009.3 Strategy recommendation with evidence or an abstain reason.
-- [ ] T033 [P] [US3] ARBORA-DATA-MARKET-R009.4 DCA and alert delivery receipts read.
+- [x] T033 [P] [US3] ARBORA-DATA-MARKET-R009.4 DCA and alert delivery receipts read.
 - [ ] T034 [P] [US3] ARBORA-DATA-MARKET-R009.5 CSV import preview.
 - [ ] T035 [P] [US3] ARBORA-DATA-MARKET-R009.6 CSV import commit with an idempotent receipt.
 - [ ] T036 [P] [US3] ARBORA-DATA-MARKET-R009.7 Hot-path proof: the Markets reads over MCP and HTTP.
