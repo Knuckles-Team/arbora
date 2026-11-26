@@ -263,6 +263,7 @@ def test_fleet_ops_are_distinct_and_loading_is_mcp_only() -> None:
         "fleet.tools.unpin",
         "fleet.pins.list",
         "fleet.status",
+        "fleet.connections.state",
         "fleet.packs.status",
         "fleet.prompts.list",
         "fleet.prompts.get",
