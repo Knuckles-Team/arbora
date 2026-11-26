@@ -911,9 +911,13 @@ def _background_services(
     from arbora.knowledge.curator_scheduler import build_curator_scheduler
     from arbora.mcp_server.background import SystemClock
 
+    started: list[Any] = []
+    reclaim = _reclaim_service(runtime, session)
+    if reclaim is not None:
+        started.append(reclaim)
     tick_s = float(str(setting("ARBORA_CURATOR_TICK_S", "300") or "300"))
     if tick_s <= 0:
-        return ()
+        return tuple(started)
 
     async def invoke_op(op_id: str, params: Any, caller: Any, key: str) -> Any:
         return await invoke(
@@ -928,7 +932,48 @@ def _background_services(
     callers = ServiceCallers(
         process_session=session, runtime=runtime, graph=graph, invoke=invoke_op
     )
-    return (build_curator_scheduler(callers, SystemClock(), tick_s=tick_s),)
+    return (build_curator_scheduler(callers, SystemClock(), tick_s=tick_s), *started)
+
+
+def _reclaim_service(
+    runtime: Any,
+    session: Callable[[], Any],
+    *,
+    clock: Callable[[], float] | None = None,
+    sleep: Callable[[float], Any] | None = None,
+) -> Any:
+    """The A2A run reclaim consumer for this host (ARBORA-A2A-R001.2.2), or ``None``.
+
+    It starts with the process so a run whose host died is reclaimed by a replica; it is
+    absent only when the host composes no A2A service or
+    ``ARBORA_A2A_RECLAIM_POLL_S`` is ``0``.
+    """
+    import logging
+    import time
+
+    from arbora.a2a.run_reclaim import (
+        DEFAULT_POLL_INTERVAL_S,
+        build_run_reclaim_service,
+    )
+    from arbora.core.settings import setting
+
+    a2a = getattr(runtime, "bindings", {}).get("a2a")
+    authority = getattr(a2a, "authority", None)
+    poll = float(
+        str(setting("ARBORA_A2A_RECLAIM_POLL_S", str(DEFAULT_POLL_INTERVAL_S)) or "")
+        or DEFAULT_POLL_INTERVAL_S
+    )
+    if authority is None or not hasattr(authority, "work_engine") or poll <= 0:
+        return None
+    log = logging.getLogger("arbora.a2a.reclaim")
+    return build_run_reclaim_service(
+        authority=authority,
+        process_session=session,
+        clock=clock or time.time,
+        **({"sleep": sleep} if sleep is not None else {}),
+        emit=lambda event, fields: log.warning("%s %s", event, dict(fields)),
+        poll_interval_s=poll,
+    )
 
 
 class _LeaseClient:

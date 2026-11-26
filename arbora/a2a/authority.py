@@ -207,6 +207,10 @@ class WorkItemA2AAuthority:
 
         return resolve_session(required_scope=scope)
 
+    def work_engine(self) -> Any:
+        """The engine's WorkItem surface the host reclaim consumer lists and claims through."""
+        return self._engine()[1]
+
     def _engine(self) -> tuple[Any, Any]:
         engine = self._engine_provider()
         if engine is None:
