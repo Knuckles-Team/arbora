@@ -22,7 +22,7 @@ from typing import Any, Literal, Protocol
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from arbora.deployment.image_digests import StrictLoader, is_digest_pinned
+from arbora.deployment.image_digests import is_digest_pinned, load_strict
 
 __all__ = [
     "ApplyReceipt",
@@ -134,7 +134,7 @@ def load_manifest(root: Path, name: str) -> DeploymentManifest:
         raise ManifestRefused("MANIFEST_INVALID", {"field": "name"})
     path = root / f"{name}.yaml"
     try:
-        document = yaml.load(path.read_text(encoding="utf-8"), Loader=StrictLoader)  # noqa: S506 - strict safe loader
+        document = load_strict(path.read_text(encoding="utf-8"))
     except OSError as exc:
         raise ManifestRefused("MANIFEST_INVALID", {"reason": "unreadable"}) from exc
     except yaml.YAMLError as exc:
@@ -184,7 +184,9 @@ def plan_manifest(
     wanted = {c.id: c for c in manifest.components}
     for cid in sorted(wanted | by_id):
         component, row = wanted.get(cid), by_id.get(cid)
-        if component is None and row is not None:
+        if component is None:
+            if row is None:
+                continue
             entries.append(
                 {
                     "component_id": cid,
@@ -195,7 +197,6 @@ def plan_manifest(
             )
             destructive.append({"component_id": cid, "reason": "destroy"})
             continue
-        assert component is not None
         if row is None:
             entries.append(
                 {

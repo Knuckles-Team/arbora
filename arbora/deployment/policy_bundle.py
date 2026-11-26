@@ -16,7 +16,7 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from arbora.deployment.image_digests import StrictLoader
+from arbora.deployment.image_digests import load_strict
 
 __all__ = ["BundleRefused", "PolicyBundle", "bundle_name_ok", "load_bundle"]
 
@@ -74,9 +74,7 @@ def load_bundle(root: Path, name: str) -> PolicyBundle:
     if not bundle_name_ok(name):
         raise BundleRefused("POLICY_BUNDLE_INVALID", {"field": "name"})
     try:
-        document = yaml.load(  # noqa: S506 - strict safe loader
-            (root / f"{name}.yaml").read_text(encoding="utf-8"), Loader=StrictLoader
-        )
+        document = load_strict((root / f"{name}.yaml").read_text(encoding="utf-8"))
         bundle = PolicyBundle.model_validate(document)
     except (OSError, yaml.YAMLError, ValidationError) as exc:
         raise BundleRefused(

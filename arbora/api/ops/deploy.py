@@ -266,17 +266,11 @@ def _live_tool(context: Any, target: str) -> Mapping[str, Any]:
     """The read tool ``deploy.yaml`` names for ``tools.live_state.<target>``."""
     config = context.services.get("deploy_config")
     if config is None:
-        import yaml
-
         from arbora.core.settings import config_dir
-        from arbora.deployment.image_digests import StrictLoader
+        from arbora.deployment.image_digests import load_strict
 
         path = config_dir() / "deploy.yaml"
-        config = (
-            yaml.load(path.read_text(encoding="utf-8"), Loader=StrictLoader)  # noqa: S506 - strict safe loader
-            if path.is_file()
-            else {}
-        )
+        config = load_strict(path.read_text(encoding="utf-8")) if path.is_file() else {}
     tools = ((config or {}).get("tools") or {}).get("live_state") or {}
     tool = tools.get(target)
     if not (

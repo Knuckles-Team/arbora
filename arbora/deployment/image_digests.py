@@ -83,6 +83,11 @@ class StrictLoader(yaml.SafeLoader):
         return super().construct_mapping(node, deep=deep)
 
 
+def load_strict(text: str) -> Any:
+    """Parse one YAML document with :class:`StrictLoader` (a safe loader)."""
+    return yaml.load(text, Loader=StrictLoader)  # nosec B506 - SafeLoader subclass
+
+
 def _mapping(value: object, location: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"{location}: expected a mapping")
