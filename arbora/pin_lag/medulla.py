@@ -17,6 +17,9 @@ Guards held here (delete each with the re-pin that carries it):
   (R854), ``QualityRulePut`` and ``ColumnLineage`` (R856), ``ApproveEntityLink``
   (R887): methods engine ``main`` serves and the pinned release lacks. They go through
   :func:`send_main`.
+- ``QuestionKind`` members ``autonomy_verdict`` (R867), ``tool_relevance`` (R866) and
+  ``team_coordination`` (R877): the host composes each gate only once the pinned contract
+  names the question (:func:`question_kind_served`).
 - ``MethodSparqlParams.graph_media_type`` (R857.3): the graph body serialized by the engine.
 - ``IdentityOpWireLoginGrant`` and ``IdentityOpWireLoginRevoke`` (R858),
   ``JobKindProgramOptimize`` and ``LearningWriteMovePointer`` (R860): request shapes the
@@ -45,6 +48,7 @@ __all__ = [
     "accepts_parameter",
     "guard",
     "guard_field",
+    "question_kind_served",
     "refusal",
     "require_methods",
     "require_model_field",
@@ -83,6 +87,21 @@ def require_methods(*names: str) -> None:
     for name in names:
         if name not in METHOD_IDS:
             raise PinLagUnavailable(name)
+
+
+def question_kind_served(kind: str) -> bool:
+    """Whether the pinned engine contract names the ``Decide`` question kind ``kind``.
+
+    The wire kinds are the snake_case members of ``QuestionKind``. A host composes a
+    gate over a question only when the pinned contract publishes it, so a release that
+    lacks the question never fails every call closed (ARBORA-OPS-R866, R867, R877).
+    """
+    import typing
+
+    from medulla.generated import models
+
+    members = typing.get_args(models.QuestionKind)
+    return any(kind in typing.get_args(member) for member in members)
 
 
 def require_models(names: Iterable[str]) -> None:

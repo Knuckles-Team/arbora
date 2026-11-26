@@ -20,7 +20,7 @@ from typing import Any
 
 from arbora.api.mcp.discovery import not_ready_detail
 
-__all__ = ["LateFleetGateway", "bind_fleet_gateway"]
+__all__ = ["LateFleetGateway", "bind_fleet_gateway", "tool_ranker_for"]
 
 
 def _unavailable() -> Exception:
@@ -213,12 +213,27 @@ def _pin_store(services: Any) -> Any:
     return EgPinStore(SimpleNamespace(control_leases=leases))
 
 
+def tool_ranker_for(engine_send: Any) -> Any:
+    """The engine tool ranker of the host, or ``None`` (ARBORA-OPS-R866).
+
+    Tool search orders by the engine ranking once the pinned contract names the
+    ``tool_relevance`` question; without a send or the question the catalog order stands.
+    """
+    from arbora.fleet.tool_ranking import engine_tool_ranker
+    from arbora.pin_lag.medulla import question_kind_served
+
+    if engine_send is None or not question_kind_served("tool_relevance"):
+        return None
+    return engine_tool_ranker(engine_send)
+
+
 def bind_fleet_gateway(
     late: LateFleetGateway,
     *,
     mux: Any,
     reader: Any,
     services: Any,
+    engine_send: Any = None,
 ) -> Any:
     """Compose the multiplexer operation service and governed gateway; bind both.
 
@@ -262,6 +277,7 @@ def bind_fleet_gateway(
         invoke=bound_invoke,
         session_key_for=session_key,
         pin_store=_pin_store(services),
+        tool_ranker=tool_ranker_for(engine_send),
     )
 
     async def policy_check(server: str, tool: str, caller: Any) -> bool:

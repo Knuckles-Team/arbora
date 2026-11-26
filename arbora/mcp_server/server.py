@@ -233,7 +233,11 @@ def _bind_served_fleet(
     late = getattr(invocation.services.runtime, "bindings", {}).get("fleet_gateway")
     if isinstance(late, LateFleetGateway):
         bind_fleet_gateway(
-            late, mux=fleet_mux, reader=reader, services=invocation.services
+            late,
+            mux=fleet_mux,
+            reader=reader,
+            services=invocation.services,
+            engine_send=invocation.engine_send,
         )
 
 

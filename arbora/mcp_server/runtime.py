@@ -1009,6 +1009,10 @@ def _register_graph_tool_surface(
             hosted_invocation=invocation if invocation.task_plan_config else None,
             approval_chain=invocation.approval_chain,
         )
+        from arbora.a2a.team import bind_team_coordination
+
+        # ARBORA-OPS-R877: admission writes team records and applies the decision.
+        bind_team_coordination(host.runs.a2a.authority, invocation.engine_send)
     mount_sdk_a2a(mcp, stream_handler=rpc_handler)
 
 

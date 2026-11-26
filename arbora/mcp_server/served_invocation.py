@@ -851,6 +851,10 @@ def compose_served_invocation(
         client = await pool.connected_client(connect_context(tenant), graph)
         return decode(await send_by_id(client, method, params, graph))
 
+    from arbora.api.invoke.autonomy import served_autonomy
+
+    # ARBORA-OPS-R867: every non-read effect asks the engine autonomy verdict first.
+    changes.update(served_autonomy(gate_send))
     services = build_invoke_services(
         gate_send=gate_send,
         registry=registry,
