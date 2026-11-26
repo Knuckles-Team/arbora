@@ -90,6 +90,7 @@ The served confirm fixture rejects missing, unknown and mixed confirmation_kind 
 ## Additional owner requirements
 
 - `ARBORA-A2A-R001.2`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-A2A-R001.2.1`: `tests/a2a/test_event_log.py` covers the sequence fence with two writers, replay from a cursor, the gap refusal and the redaction.
 
 ## Verified caller and shared invocation acceptance
 
@@ -196,7 +197,7 @@ Rows below name tests that are planned or only partly built. Each entry restates
 | A2A-PL04 | ARBORA-A2A-R012.3 | Test: `tests/a2a/test_transition_history.py::test_get_task_raises_typed_refusal_without_authority` (L2) covers the absent and the raising authority. |
 | A2A-PL05 | ARBORA-A2A-R015 | Test: `tests/a2a/test_agent_card.py::test_served_card_matches_wired_authorities` (L3) compares the advertised set with the exercised set. |
 | A2A-PL06 | ARBORA-A2A-R001.3 | Test: (planned) `tests/a2a/test_served_agent.py::test_context_survives_restart_and_list_is_caller_scoped` (served). It restarts between two turns, lists only the caller's contexts and refuses a foreign `contextId`. |
-| A2A-PL07 | ARBORA-A2A-R001.4.1 | Test: `tests/a2a/test_served_agent.py::test_stream_emits_delta_tool_call_result_final_in_order` (served). A resubscribe from a cursor replays the tail. |
+| A2A-PL07 | ARBORA-A2A-R001.4.1 | Test: `tests/a2a/test_event_cursor_served.py::test_stream_disconnect_and_resubscribe_from_a_mid_cursor_get_exactly_the_rest` (served). A resubscribe from a mid cursor replays exactly the tail. |
 | A2A-PL08 | ARBORA-A2A-R001.5.2 | Test: `tests/a2a/test_served_agent.py::test_capable_model_accepts_png_and_unknown_stale_oversize_create_no_task` (served). |
 | A2A-PL09 | ARBORA-A2A-R001.5.3 | Test: `tests/a2a/test_media_admission.py::test_mismatched_signature_is_refused_with_zero_tasks` (served). |
 | A2A-PL10 | ARBORA-A2A-R001.5.4 | Test: `tests/a2a/test_media_admission.py::test_request_byte_and_image_count_limits_refuse_with_reasons` (served). |

@@ -133,6 +133,7 @@ Requirement IDs are defined in [requirements.md](requirements.md); delivery stat
 ## Additional owner requirements
 
 - `ARBORA-A2A-R001.2`: Owner scope and complete acceptance are defined in requirements.md.
+- `ARBORA-A2A-R001.2.1`: Owner scope and complete acceptance are defined in requirements.md.
 
 ## Verified caller and event producer boundaries
 

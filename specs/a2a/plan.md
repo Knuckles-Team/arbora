@@ -284,6 +284,7 @@ Cross-repository: `MEDULLA-` rows for the held proposal, the verification record
 ### Additional owner requirements
 
 - `ARBORA-A2A-R001.2`: Plan the owner work and dependencies defined in requirements.md.
+- `ARBORA-A2A-R001.2.1`: Plan the owner work and dependencies defined in requirements.md.
 
 ### Verified caller correction
 

@@ -64,7 +64,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T058 ARBORA-A2A-R001.2 Run checkpoint and event-cursor binding
 - [x] T059 ARBORA-A2A-R010.1 Opt-in committed terminal point read
 - [ ] T060 ARBORA-A2A-R001.3 Served agent keeps and lists caller conversations
-- [ ] T061 ARBORA-A2A-R001.4.1 Served agent streams turn events
+- [ ] T061 ARBORA-A2A-R001.4.1 Served A2A route streams task events
 - [x] T062 ARBORA-A2A-R001.6 Non-blocking `message/send`
 - [ ] T063 ARBORA-A2A-R001.5.1 Bounded inline text input
 - [ ] T064 ARBORA-A2A-R001.5.2 Selected-model binary input
@@ -88,3 +88,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T075 ARBORA-A2A-R024 Hub federation forwards topic messages to a registered peer
 - [ ] T076 ARBORA-A2A-R025 Admit anonymous chat under the text-only constraint
 - [ ] T083 ARBORA-A2A-R026 Refuse a model task plan that breaks the plan model with a typed code
+- [ ] T085 ARBORA-A2A-R001.2.1 Durable event cursor and run-event publisher

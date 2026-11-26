@@ -20,6 +20,7 @@ from .models import (
     A2AListResult,
     A2AMessage,
     A2ASkill,
+    A2AStreamingAuthority,
     A2ATask,
 )
 from .routing import A2AAssemblyUnavailable, A2ARouter
@@ -67,6 +68,9 @@ class A2AService:
         ]
         | None
     ) = None
+    #: The durable event-cursor authority (ARBORA-A2A-R001.2). The card
+    #: advertises ``streaming`` only when one is wired (ARBORA-A2A-R014).
+    streaming: A2AStreamingAuthority | None = None
 
     async def send_message(
         self,
@@ -184,9 +188,9 @@ class A2AService:
     def agent_card(self, endpoint_url: str) -> A2AAgentCard:
         metadata = self.card_metadata
         served = self.tool_task_admitter is not None and self.attestation_signer
-        capabilities = A2AAgentCapabilities(
-            extensions=[tool_task_extension()] if served else []
-        )
+        capabilities = A2AAgentCapabilities.from_wired_authorities(
+            streaming_authority=self.streaming
+        ).model_copy(update={"extensions": [tool_task_extension()] if served else []})
         return A2AAgentCard(
             capabilities=capabilities,
             name=metadata.name,
