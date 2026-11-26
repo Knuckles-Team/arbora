@@ -51,8 +51,10 @@ class SteppedExecutor:
         self.checkpoints = checkpoints
         self.die_after = die_after
         self.effects: list[str] = []
+        self.requests: list[Any] = []
 
     async def execute_agent(self, request: Any, *, session: Any) -> Any:
+        self.requests.append(request)
         owner = agent_runs.current_native_run(request)
         assert owner is not None
         port = EngineHostCheckpoint(self.checkpoints, owner)
@@ -80,6 +82,7 @@ class Host:
         checkpoints: CheckpointEngine,
         die_after: str | None,
         clock: Any,
+        delegation_reader: Any = "store",
     ) -> None:
         self.executor = SteppedExecutor(checkpoints, die_after)
         self.log = A2AEventLog(lambda: engine, clock=StepClock())
@@ -91,6 +94,9 @@ class Host:
             delegations=EngineRunDelegations(
                 store.send, clock=clock, lease_s=_RUN_LEASE_SECONDS
             ),
+            delegation_reader=store.read
+            if delegation_reader == "store"
+            else delegation_reader,
             clock=clock,
         )
 
@@ -267,3 +273,100 @@ def test_revoked_delegation_fails_the_run_with_a_final_failed_frame(
     # CancelWorkItem finished the item on the injected clock.
     [cancel] = out["cancels"]
     assert cancel["now_ms"] == out["now_ms"]
+
+
+def _reclaim_after_expiry(
+    monkeypatch: pytest.MonkeyPatch,
+    tamper: Any,
+    *,
+    reader: Any = "store",
+) -> dict[str, Any]:
+    """Interrupt a run, let ``tamper(engine, store, item_id)`` change its delegation, reclaim."""
+    engine, store, checkpoints, clock = _world(monkeypatch)
+    who = session(frozenset({"kg:read", "kg:write"}))
+
+    async def scenario() -> dict[str, Any]:
+        with use_session(who):
+            first = Host(engine, store, checkpoints, "write", clock)
+            task_id = await _interrupted_run(first)
+            item_id = f"workitem:orchestrator:{task_id}"
+            tamper(engine, store, item_id)
+            second = Host(engine, store, checkpoints, None, clock, reader)
+            consumer = _consumer(second, engine, clock, who)
+            clock.now = START + _RUN_LEASE_SECONDS + 1
+            outcomes = await consumer.run_once()
+            stream = await A2AEventStreams(
+                second.log, second.authority
+            ).resume_from_cursor(task_id, 0)
+            assert stream is not None
+            events = await stream.batch()
+            return {
+                "outcomes": [o.outcome for o in outcomes],
+                "effects": second.executor.effects,
+                "requests": second.executor.requests,
+                "states": [e["state"] for e in events if e["kind"] == "status-update"],
+                "status": engine.work_items.rows[item_id]["status"],
+            }
+
+    return asyncio.run(scenario())
+
+
+@pytest.mark.spec("ARBORA-A2A-R001.2", "ARBORA-A2A-R001.2.2")
+def test_reclaim_resumes_under_the_delegation_of_the_run_owner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    out = _reclaim_after_expiry(monkeypatch, lambda *_: None)
+
+    assert out["outcomes"] == ["resumed"]
+    assert out["effects"] == ["notify"]
+    # The resumed run's tools are bounded by the delegation's operations.
+    [request] = out["requests"]
+    assert set(request.allowed_tools or ()) <= {"agent:helper"}
+
+
+@pytest.mark.spec("ARBORA-A2A-R001.2", "ARBORA-A2A-R001.2.2")
+def test_reclaim_refuses_a_delegation_of_another_principal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def foreign(engine: Any, store: DelegationStore, item_id: str) -> None:
+        store.reassign(
+            engine.work_items.rows[item_id]["metadata"]["delegation_id"], "person:two"
+        )
+
+    out = _reclaim_after_expiry(monkeypatch, foreign)
+
+    assert out["outcomes"] == ["failed"]
+    assert (
+        out["effects"] == []
+    )  # no step ran under a delegation the owner does not hold
+    assert out["states"] == ["working", "failed"]
+    assert out["status"] == "cancelled"
+
+
+@pytest.mark.spec("ARBORA-A2A-R001.2", "ARBORA-A2A-R001.2.2")
+def test_reclaim_refuses_a_claim_that_names_no_delegation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def anonymous_claim(engine: Any, store: DelegationStore, item_id: str) -> None:
+        claim = engine.work_items.claim
+
+        def without(request: dict[str, Any]) -> dict[str, Any]:
+            return {**claim(request), "delegation_id": None}
+
+        engine.work_items.claim = without
+
+    out = _reclaim_after_expiry(monkeypatch, anonymous_claim)
+
+    assert out["outcomes"] == ["failed"]
+    assert out["effects"] == []
+    assert out["status"] == "cancelled"
+
+
+@pytest.mark.spec("ARBORA-A2A-R001.2", "ARBORA-A2A-R001.2.2")
+def test_reclaim_refuses_when_the_host_cannot_read_delegations(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    out = _reclaim_after_expiry(monkeypatch, lambda *_: None, reader=None)
+
+    assert out["outcomes"] == ["failed"]
+    assert out["effects"] == []

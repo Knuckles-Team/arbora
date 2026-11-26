@@ -39,6 +39,7 @@ __all__ = [
     "WorkflowDefinition",
     "WorkflowGraphStats",
     "WorkflowIdentity",
+    "WorkflowRegistryIdentity",
     "WorkflowResolution",
     "WorkflowStep",
     "WorkflowSummary",
@@ -227,6 +228,19 @@ class WorkflowIdentity(_FrozenModel):
     workflow_id: StableId
     template_id: StableId
     version: Version
+
+
+class WorkflowRegistryIdentity(_FrozenModel):
+    """The engine registry identity of one version: id, version and content digest.
+
+    This is the tuple the engine ``WorkflowRegistry`` read takes
+    (``MEDULLA-DECISION-ENGINE-R166.6``); it is distinct from the template-level
+    ``WorkflowIdentity`` above (ARBORA-OPS-R874).
+    """
+
+    workflow_id: StableId
+    version: Version
+    content_digest: Digest
 
 
 class WorkflowTemplate(_FrozenModel):

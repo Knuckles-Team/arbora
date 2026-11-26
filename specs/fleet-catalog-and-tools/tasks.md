@@ -290,9 +290,9 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T022 ARBORA-FLEET-R001 Typed pack publisher replaces placeholder ContentPack.
 - [ ] T023 ARBORA-FLEET-R002 Tool schema fingerprints recomputed from served schemas (rollup).
 - [ ] T024 ARBORA-FLEET-R002.1 Per-tool schema fingerprint computed from the served schema.
-- [ ] T025 ARBORA-FLEET-R003 D18 write-back exposed only as a typed, previewed operation (rollup).
+- [x] T025 ARBORA-FLEET-R003 D18 write-back exposed only as a typed, previewed operation (rollup).
 - [ ] T026 ARBORA-FLEET-R003.1 Typed write-back preview model and its refusal rule.
-- [ ] T027 ARBORA-FLEET-R003.2 Write-back registered as a typed, gated registry operation, not a native child tool.
+- [x] T027 ARBORA-FLEET-R003.2 Write-back registered as a typed, gated registry operation, not a native child tool.
 - [ ] T028 ARBORA-FLEET-R004 Pack annotations carry capability, digest, modality, cost, latency.
 - [ ] T029 ARBORA-FLEET-R005 A2A task routing with typed work-item and lease operations (rollup).
 - [ ] T030 ARBORA-FLEET-R005.1 Typed WorkItem view, the GetWorkItem/ListWorkItems producer.
@@ -305,7 +305,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T037 ARBORA-FLEET-R009.1 Capacity acquisition is all-or-nothing with one re-decision.
 - [ ] T038 ARBORA-FLEET-R009.2 Routing and composition publish only through acquired capacity.
 - [ ] T039 ARBORA-FLEET-R009.3 Run admission publishes with all-or-nothing capacity control.
-- [ ] T040 ARBORA-FLEET-R003.3 Write-back idempotency and preview gating survive a service restart.
+- [x] T040 ARBORA-FLEET-R003.3 Write-back idempotency and preview gating survive a service restart.
 - [x] T041 ARBORA-FLEET-R006.1 Harvest call-site inventory, the removal baseline.
 - [x] T042 ARBORA-FLEET-R006.2 Skill/prompt body-harvest cutover for an already-admitted child.
 - [x] T043 ARBORA-FLEET-R006.3 Dead harvest helpers removed (rollup over `.3.1` to `.3.4`).
@@ -395,12 +395,12 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T126 ARBORA-FLEET-R021.1 Every workflow tool requires its declaration and grant binding.
 - [ ] T127 ARBORA-FLEET-R005.3 Integrated work-item distribution and provisioning use the R027 flow.
 - [ ] T128 ARBORA-FLEET-R027.7.1 Production CLI report stream.
-- [ ] T129 ARBORA-FLEET-R003.5 Complete repository request binding.
-- [ ] T130 ARBORA-FLEET-R003.6 Trusted composition through shared invoke.
-- [ ] T131 ARBORA-FLEET-R003.7 Preview and approval bind the commit operation.
-- [ ] T132 ARBORA-FLEET-R003.8 Served effect and independent readback evidence.
-- [ ] T133 ARBORA-FLEET-R003.9 Zero-effect refusal parity.
-- [ ] T134 ARBORA-FLEET-R003.10 Durable replay across host and connector restart.
+- [x] T129 ARBORA-FLEET-R003.5 Complete repository request binding.
+- [x] T130 ARBORA-FLEET-R003.6 Trusted composition through shared invoke.
+- [x] T131 ARBORA-FLEET-R003.7 Preview and approval bind the commit operation.
+- [x] T132 ARBORA-FLEET-R003.8 Served effect and independent readback evidence.
+- [x] T133 ARBORA-FLEET-R003.9 Zero-effect refusal parity.
+- [x] T134 ARBORA-FLEET-R003.10 Durable replay across host and connector restart.
 - [ ] T135 ARBORA-FLEET-R036 The connector contract is established on first connect (rollup).
 - [ ] T136 ARBORA-FLEET-R036.1 Model.
 - [ ] T137 ARBORA-FLEET-R036.2 Behavior.

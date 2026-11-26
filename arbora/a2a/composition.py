@@ -51,7 +51,7 @@ def build_a2a_service(
     ``streaming`` because this function wires it (ARBORA-A2A-R014).
     """
     from .authority import _RUN_LEASE_SECONDS
-    from .run_delegation import engine_run_delegations
+    from .run_delegation import engine_delegation_reader, engine_run_delegations
 
     log = A2AEventLog(engine_provider, clock=clock)
     authority = WorkItemA2AAuthority(
@@ -60,6 +60,7 @@ def build_a2a_service(
         delegations=engine_run_delegations(
             engine_provider, clock=time.time, lease_s=_RUN_LEASE_SECONDS
         ),
+        delegation_reader=engine_delegation_reader(engine_provider),
         origins=origins,
         task_plan_config=task_plan_config,
         hosted_invocation=hosted_invocation,

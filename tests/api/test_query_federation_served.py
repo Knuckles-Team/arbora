@@ -171,7 +171,7 @@ def _served_native_app(
     return app, client
 
 
-@pytest.mark.spec("ARBORA-FLEET-R043.3")
+@pytest.mark.spec("ARBORA-FLEET-R043", "ARBORA-FLEET-R043.3", "ARBORA-FLEET-R043.6")
 def test_nl_question_spans_native_facts_and_live_connector_rows(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

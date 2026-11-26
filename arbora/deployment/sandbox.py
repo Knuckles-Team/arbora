@@ -15,10 +15,11 @@ import json
 import os
 import shutil
 import signal
+import subprocess  # nosec B404 - fixed argv, no shell
 import sys
 import tempfile
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -47,6 +48,43 @@ def _root(override: str | None) -> Path:
     )
 
 
+#: Starts one process and returns its PID. Tests inject a recorder.
+Launcher = Callable[[Sequence[str], Mapping[str, str]], int]
+#: Stops one process by PID. Tests inject a recorder.
+Terminator = Callable[[int], None]
+
+
+def _launch(command: Sequence[str], environment: Mapping[str, str]) -> int:
+    """Start ``command`` detached from this terminal, on loopback, and return its PID."""
+    process = subprocess.Popen(  # noqa: S603  # nosec B603 - fixed argv, no shell
+        list(command),
+        env={**os.environ, **environment},
+        stdin=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    return process.pid
+
+
+def _terminate(pid: int) -> None:
+    with contextlib.suppress(ProcessLookupError):
+        os.kill(pid, signal.SIGTERM)
+
+
+def serving_command(serving_port: int) -> list[str]:
+    """The serving process, bound to loopback. The web UI is its co-service."""
+    return [
+        sys.executable,
+        "-c",
+        "from arbora.console import main; main()",
+        "--transport",
+        "streamable-http",
+        "--host",
+        LOOPBACK,
+        "--port",
+        str(serving_port),
+    ]
+
+
 def _arguments(argv: Sequence[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="arbora-sandbox")
     parser.add_argument("--root", help="the sandbox state directory")
@@ -59,6 +97,12 @@ def _arguments(argv: Sequence[str] | None) -> argparse.Namespace:
         help=f"also mint a principal in {SANDBOX_TENANTS[1]} with this role",
     )
     up.add_argument("--port", type=int, default=0, help="engine loopback port")
+    up.add_argument(
+        "--serving-port",
+        type=int,
+        default=0,
+        help="serving process loopback port (a free port by default)",
+    )
     up.add_argument(
         "--webui-port",
         type=int,
@@ -142,8 +186,18 @@ def resolve_engine(pinned: str | None = None, installed: str | None = None) -> s
     return pinned
 
 
-def up(args: argparse.Namespace, *, hold: bool = True) -> dict[str, Any]:
-    """Start the engine and mint principals; the summary names no secret."""
+def up(
+    args: argparse.Namespace,
+    *,
+    hold: bool = True,
+    launcher: Launcher = _launch,
+) -> dict[str, Any]:
+    """Start the engine, the serving process and its web UI co-service.
+
+    ARBORA-DEPLOY-R019: the serving process starts in the rendered no-auth
+    environment on loopback with the web UI co-service enabled; its PID is
+    recorded so ``down`` stops exactly that process. The summary names no secret.
+    """
     from arbora.mcp_server.composition import LocalEngineConfig, ensure_local_engine
 
     resolve_engine()
@@ -167,13 +221,21 @@ def up(args: argparse.Namespace, *, hold: bool = True) -> dict[str, Any]:
         port=port, persist_dir=store, extra_args=("--auth-mode", "none")
     )
     endpoint = ensure_local_engine(config)
+    serving_port = getattr(args, "serving_port", 0) or _free_port()
+    serving_pid = launcher(serving_command(serving_port), rendered["environment"])
     state.write_text(
         json.dumps(
-            {"pid": os.getpid(), "store": str(store), "address": endpoint.address}
+            {
+                "pid": os.getpid(),
+                "store": str(store),
+                "address": endpoint.address,
+                "processes": [serving_pid],
+            }
         )
     )
     summary = {
         "address": endpoint.address,
+        "serving": f"{LOOPBACK}:{serving_port}",
         "webui": rendered["listeners"]["webui"],
         "environment": rendered["environment"],
         "principals": [
@@ -201,8 +263,8 @@ def _hold() -> None:
         time.sleep(0.5)
 
 
-def down(args: argparse.Namespace) -> bool:
-    """Stop the holding process, stand the engine down and delete the store."""
+def down(args: argparse.Namespace, *, terminate: Terminator = _terminate) -> bool:
+    """Stop the holding process, the processes ``up`` launched, and the engine; delete the store."""
     root = _root(args.root)
     state = root / STATE_FILE
     if not state.exists():
@@ -214,6 +276,8 @@ def down(args: argparse.Namespace) -> bool:
             return True
     from arbora.mcp_server.composition import EngineEndpoint, stand_down_engine
 
+    for pid in record.get("processes", []):
+        terminate(int(pid))
     stand_down_engine(EngineEndpoint("tcp", record["address"]))
     shutil.rmtree(record["store"], ignore_errors=True)
     state.unlink(missing_ok=True)

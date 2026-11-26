@@ -26,6 +26,7 @@ from pydantic import (
 )
 
 from arbora.api.invoke.executor import ExecutionContext
+from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, bound_service
 from arbora.api.ops._engine import engine_send
 from arbora.api.registry import (
@@ -117,6 +118,76 @@ class SourceHistoryParams(_SourceRepoPathParams):
 
 class SourceBlameParams(SourceBlobParams):
     """Attribute one file to its last-touch revision on one ref."""
+
+
+_DIFF_PAGE = 1000
+
+
+class SourceDiffParams(Params):
+    """Diff two refs of one repository, optionally under one path prefix."""
+
+    repository: str = Field(min_length=1, max_length=_NAME_MAX)
+    base_ref: str = Field(min_length=1, max_length=_NAME_MAX)
+    head_ref: str = Field(min_length=1, max_length=_NAME_MAX)
+    path: str = Field(default="", max_length=4096)
+    cursor: str | None = Field(default=None, min_length=1, max_length=4096)
+
+    _validate = field_validator("path")(_portable_path)
+
+
+class SourceDiffEntry(BaseModel):
+    """One changed path between two refs; ``readable`` is the caller's read grant."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    path: str
+    change: Literal["added", "removed", "modified"]
+    base_digest: str | None = None
+    head_digest: str | None = None
+    readable: bool = True
+
+
+class SourceDiffOutcome(BaseModel):
+    """The tree diff of two refs, in path order, one page at a time."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    tenant: str
+    repository: str
+    base_ref: str
+    head_ref: str
+    path: str
+    found: bool
+    reason: str | None = None
+    entries: tuple[SourceDiffEntry, ...] = ()
+    removed: int = 0
+    next_cursor: str | None = None
+
+
+class SourceDiffResult(Params):
+    value: dict[str, Any]
+
+
+class SymbolEditOpParams(Params):
+    """One symbol-anchored edit of the ``SymbolEdit`` contract (MEDULLA-SCM-R013.1)."""
+
+    symbol_id: str = Field(min_length=1, max_length=512)
+    kind: Literal[
+        "replace_symbol", "replace_body", "insert_before", "insert_after", "delete"
+    ]
+    anchor_span_digest: str = Field(min_length=1, max_length=128)
+    new_text: str = Field(max_length=1_048_576)
+
+
+class SymbolEditParams(Params):
+    """Submit one graph-native symbol edit to one branch."""
+
+    repo: str = Field(min_length=1, max_length=_NAME_MAX)
+    branch: str = Field(min_length=1, max_length=_NAME_MAX)
+    base_rev: str = Field(min_length=1, max_length=128)
+    ops: list[SymbolEditOpParams] = Field(min_length=1, max_length=256)
+    message: str = Field(min_length=1, max_length=8192)
+    run_trace_id: str = Field(min_length=1, max_length=128)
 
 
 class SourceTreeEntry(BaseModel):
@@ -288,6 +359,25 @@ class SourceReader(Protocol):
         context: ExecutionContext,
     ) -> SourceBlameOutcome: ...
 
+    async def diff(
+        self,
+        *,
+        repository: str,
+        base_ref: str,
+        head_ref: str,
+        path: str,
+        context: ExecutionContext,
+    ) -> SourceDiffOutcome: ...
+
+    async def symbol_paths(
+        self,
+        *,
+        repository: str,
+        branch: str,
+        symbol_ids: tuple[str, ...],
+        context: ExecutionContext,
+    ) -> Mapping[str, str | None]: ...
+
 
 def _reader(context: Any) -> SourceReader:
     return bound_service(
@@ -352,6 +442,80 @@ async def handle_source_blame(
         context=context,
     )
     return _value(outcome)
+
+
+def _page(
+    entries: tuple[SourceDiffEntry, ...], cursor: str | None
+) -> tuple[list[dict[str, Any]], str | None]:
+    """One cursor page of the readable entries: after ``cursor``, at most 1000."""
+    later = [e for e in entries if cursor is None or e.path > cursor]
+    page = later[:_DIFF_PAGE]
+    more = len(later) > _DIFF_PAGE
+    return (
+        [e.model_dump(mode="json", exclude={"readable"}) for e in page],
+        page[-1].path if more else None,
+    )
+
+
+async def handle_source_diff(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Diff two refs; an entry whose path the caller may not read is removed and counted."""
+    request = SourceDiffParams.model_validate(dict(params))
+    outcome = await _reader(context).diff(
+        repository=request.repository,
+        base_ref=request.base_ref,
+        head_ref=request.head_ref,
+        path=request.path,
+        context=context,
+    )
+    readable = tuple(e for e in outcome.entries if e.readable)
+    entries, cursor = _page(readable, request.cursor)
+    value = outcome.model_dump(mode="json", exclude={"entries", "next_cursor"})
+    value.update(
+        entries=entries,
+        removed=outcome.removed + len(outcome.entries) - len(readable),
+        next_cursor=cursor,
+    )
+    return {"value": value}
+
+
+async def handle_source_edit_symbol(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """``SubmitSymbolEdit`` once every touched file is one the caller may write.
+
+    Each symbol resolves to its file through the ``SourceReader`` port. A symbol
+    that does not resolve is refused exactly like an absent one, so a denied
+    path discloses nothing. The engine accept, rebase receipt or refusal
+    (``EDIT_BASE_STALE``, ``EDIT_OPS_OVERLAP``, ``EDIT_UNPARSEABLE``,
+    ``EDIT_ROUNDTRIP_MISMATCH``) returns unchanged.
+    """
+    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+
+    request = SymbolEditParams.model_validate(dict(params))
+    try:
+        require_methods("SubmitSymbolEdit")
+    except PinLagUnavailable as missing:
+        raise refusal(missing) from None
+    symbols = tuple(dict.fromkeys(op_.symbol_id for op_ in request.ops))
+    resolved = await _reader(context).symbol_paths(
+        repository=request.repo,
+        branch=request.branch,
+        symbol_ids=symbols,
+        context=context,
+    )
+    if any(resolved.get(symbol) is None for symbol in symbols):
+        raise OperationRefused(
+            "INVALID_ARGUMENT", {"reason": "a symbol is not an editable file symbol"}
+        )
+    answer = await engine_send(
+        context,
+        "SubmitSymbolEdit",
+        {"request": request.model_dump(mode="json")},
+        idempotent=True,
+    )
+    return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
 
 
 def _read_op(
@@ -562,6 +726,22 @@ def operations() -> tuple[OpSpec, ...]:
             scopes=frozenset({"node:read", "edge:read", "blob:read"}),
         ),
         _read_op(
+            op_id="source.diff",
+            summary="List the paths that differ between two refs of one repository",
+            examples=("what changed between main and this branch",),
+            params=SourceDiffParams,
+            result=SourceDiffResult,
+            handler="arbora.api.ops.source.handle_source_diff",
+            scopes=frozenset({"node:read", "edge:read", "blob:read"}),
+        ),
+        _write_op(
+            "source.edit_symbol",
+            "Edit one symbol of one branch through the graph-native edit contract",
+            "replace the body of this function",
+            SymbolEditParams,
+            "arbora.api.ops.source.handle_source_edit_symbol",
+        ),
+        _read_op(
             op_id="source.history",
             summary="List the refs of one repository that carry one path",
             examples=("which refs carry src/app.py",),
@@ -592,6 +772,12 @@ __all__ = [
     "SourceBlameParams",
     "SourceBlameResult",
     "SourceCommitParams",
+    "SourceDiffEntry",
+    "SourceDiffOutcome",
+    "SourceDiffParams",
+    "SourceDiffResult",
+    "SymbolEditOpParams",
+    "SymbolEditParams",
     "SourceHistoryEntry",
     "SourceHistoryOutcome",
     "SourceHistoryParams",
@@ -606,6 +792,8 @@ __all__ = [
     "handle_source_blob",
     "handle_source_blame",
     "handle_source_commit",
+    "handle_source_diff",
+    "handle_source_edit_symbol",
     "handle_source_land",
     "handle_source_revert",
     "handle_source_history",

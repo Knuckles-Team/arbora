@@ -965,8 +965,6 @@ def _background_services(
     if push is not None:
         started.append(push)
     tick_s = float(str(setting("ARBORA_CURATOR_TICK_S", "300") or "300"))
-    if tick_s <= 0:
-        return tuple(started)
 
     async def invoke_op(op_id: str, params: Any, caller: Any, key: str) -> Any:
         return await invoke(
@@ -981,6 +979,11 @@ def _background_services(
     callers = ServiceCallers(
         process_session=session, runtime=runtime, graph=graph, invoke=invoke_op
     )
+    from arbora.agent_host.usage_ledger import LEDGER
+
+    LEDGER.configure(callers)
+    if tick_s <= 0:
+        return tuple(started)
     return (build_curator_scheduler(callers, SystemClock(), tick_s=tick_s), *started)
 
 

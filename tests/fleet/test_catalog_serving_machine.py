@@ -99,3 +99,14 @@ def test_only_transition_writes_catalog_state() -> None:
     assert [line for line in writes if "transition(" not in line] == [
         " _catalog_machine.CatalogState.COLD"
     ]
+
+
+@pytest.mark.spec("ARBORA-FLEET-R081.2")
+def test_bootstrap_stores_no_readiness_boolean() -> None:
+    """Readiness has one authority, the catalog state machine; bootstrap keeps none."""
+    from arbora.mcp_server import bootstrap
+
+    assert not hasattr(bootstrap, "_BUNDLED_SKILL_READINESS")
+    assert not hasattr(bootstrap, "bundled_skill_readiness")
+    source = inspect.getsource(bootstrap)
+    assert "skill_readiness" not in source

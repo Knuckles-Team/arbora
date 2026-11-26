@@ -15,6 +15,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from arbora.api.errors import EngineRefusal, FleetRefusal
+from arbora.api.invoke.agent_ref import bind_agent_ref
 from arbora.api.invoke.audit import EffectJournal, EffectReservation, audit_event
 from arbora.api.invoke.executor import (
     OperationRuntime,
@@ -58,6 +59,8 @@ from arbora.api.registry import (
     Registry,
     Surface,
 )
+from arbora.fleet.admission import AdmissionGate
+from arbora.fleet.admission_models import AdmissionRefused
 
 _logger = logging.getLogger(__name__)
 
@@ -175,6 +178,7 @@ def _declared_owners(modules: Iterable[str] | None = None) -> dict[str, str]:
 #: request: the replay owner of every write the engine does not replay by key.
 EXTERNAL_EFFECT_OPERATIONS: tuple[str, ...] = (
     "fleet.call",
+    "fleet.write_back.commit",
     "fleet.tools.pin",
     "fleet.tools.unpin",
     "messaging.alert",
@@ -310,6 +314,9 @@ class InvokeServices:
     gate_reader: GateReader = no_engine_answer
     #: Operator hooks (ARBORA-OPS-R009.6); empty unless the host binds some.
     hooks: HookChain = field(default_factory=HookChain)
+    #: Skill and workflow admission, run before the confirmation gate
+    #: (ARBORA-FLEET-R034.3). The default gate admits what declares nothing.
+    admission: AdmissionGate = field(default_factory=AdmissionGate)
 
     def __post_init__(self) -> None:
         self._cover_plan_gated_operations()
@@ -722,6 +729,8 @@ class _Call:
     resolved_from_intent: bool
     hook_records: tuple[HookRecord, ...] = ()
     hooks_enabled: bool = True
+    #: Digests, policy names and field names the admission gate recorded.
+    admission_evidence: Mapping[str, str] = field(default_factory=dict)
 
     @property
     def needs_plan(self) -> bool:
@@ -790,7 +799,7 @@ async def _record(
 
 def _evidence(call: _Call, extra: Mapping[str, str] | None) -> dict[str, str]:
     """Counts and identifiers only: screening fields and the hook decisions."""
-    merged = dict(extra or {})
+    merged = {**call.admission_evidence, **(extra or {})}
     if call.hook_records and "hooks" not in merged:
         merged["hooks"] = json.dumps(
             [record.as_json() for record in call.hook_records], separators=(",", ":")
@@ -947,6 +956,14 @@ def _execution_refusal(call: _Call) -> OpError | None:
         # NATIVE_IDEMPOTENCY entry or the external effect journal.
         return OpError("UNAVAILABLE", {"reason": "durable effect owner unavailable"})
     return None
+
+
+def _admission_gate(call: _Call) -> Mapping[str, str] | OpError:
+    """Admit a skill or workflow before any effect or plan (ARBORA-FLEET-R034.3)."""
+    try:
+        return call.services.admission.evaluate(call.op.id, call.arguments).evidence
+    except AdmissionRefused as refusal:
+        return OpError(refusal.code, refusal.detail, source="arbora")
 
 
 async def _confirmation_gate(call: _Call) -> OpError | OpResult | None:
@@ -1366,6 +1383,10 @@ async def invoke(
     if isinstance(resolved, OpError):
         return resolved
     effective_op, verified, decision = resolved
+    bound_arguments = bind_agent_ref(effective_op, arguments, verified)
+    if isinstance(bound_arguments, OpError):
+        return bound_arguments
+    arguments = bound_arguments
     hooked = await _input_hooks(
         op, arguments, verified, surface, services, hooks_enabled
     )
@@ -1387,6 +1408,10 @@ async def invoke(
         input_records,
         hooks_enabled,
     )
+    admitted = _admission_gate(call)
+    if isinstance(admitted, OpError):
+        return admitted
+    call = replace(call, admission_evidence=admitted)
     early = await _confirmation_gate(call)
     if early is not None:
         return early

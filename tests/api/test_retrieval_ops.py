@@ -198,3 +198,111 @@ async def test_scope_and_feedback_served(monkeypatch: pytest.MonkeyPatch) -> Non
     for op_id in ("retrieval.feedback", "agent.knowledge_scope.set"):
         refused = require_scopes(_RETRIEVAL_OPS[op_id], caller)
         assert refused is not None and refused.code == "SCOPE_REQUIRED"
+
+
+@pytest.mark.spec("ARBORA-OPS-R868")
+async def test_listing_toc_digest_equals_read_span_digest(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from medulla.generated import models
+
+    monkeypatch.setattr(
+        models.MethodReadSpanParams,
+        "model_fields",
+        {**models.MethodReadSpanParams.model_fields, "toc_digest": object()},
+    )
+    engine = EngineDouble(monkeypatch)
+    digest = "b" * 64
+
+    def read_span(p: dict[str, Any]) -> Any:
+        if p.get("toc_digest") not in (None, digest):
+            raise EngineRefusal("TOC_DIGEST_STALE")
+        return {"document_id": p["document_id"], "toc_digest": digest, "text": "line"}
+
+    engine.serve("ReadSpan", read_span)
+    engine.install(pin_lag)
+    ctx = engine_context()
+    listing = await retrieval.handle_retrieval_documents_list(
+        ctx, {"document_ids": ["d1"]}, _RETRIEVAL_OPS["retrieval.documents.list"]
+    )
+    span = await retrieval.handle_retrieval_span_read(
+        ctx,
+        {
+            "document_id": "d1",
+            "revision": 1,
+            "line_start": 0,
+            "line_end": 4,
+            "toc_digest": digest,
+        },
+        _RETRIEVAL_OPS["retrieval.span.read"],
+    )
+    assert listing["value"]["documents"][0]["toc_digest"] == span["value"]["toc_digest"]
+    with pytest.raises(EngineRefusal) as stale:
+        await retrieval.handle_retrieval_span_read(
+            ctx,
+            {
+                "document_id": "d1",
+                "revision": 1,
+                "line_start": 0,
+                "line_end": 4,
+                "toc_digest": "c" * 64,
+            },
+            _RETRIEVAL_OPS["retrieval.span.read"],
+        )
+    assert stale.value.code == "TOC_DIGEST_STALE"
+    with pytest.raises(ValidationError):
+        retrieval.RetrievalSpanReadParams(
+            document_id="d1", revision=1, line_start=0, line_end=4, toc_digest="short"
+        )
+
+
+@pytest.mark.spec("ARBORA-OPS-R868")
+async def test_a_pinned_engine_without_toc_digest_refuses_naming_it() -> None:
+    from medulla.generated import models
+
+    if "toc_digest" in models.MethodReadSpanParams.model_fields:
+        pytest.skip("the pin carries toc_digest")
+    with pytest.raises(OperationRefused) as refused:
+        await retrieval.handle_retrieval_documents_list(
+            engine_context(),
+            {"document_ids": ["d1"]},
+            _RETRIEVAL_OPS["retrieval.documents.list"],
+        )
+    assert refused.value.code == "UNAVAILABLE"
+    assert refused.value.details["missing"] == "MethodReadSpanParams.toc_digest"
+
+
+# --- the verified agent reference (ARBORA-OPS-R883) -----------------------------------------
+
+
+def _eg_op(method: str) -> Any:
+    return SimpleNamespace(binding=SimpleNamespace(kind="eg", service=method))
+
+
+def _who(kind: str, agent: str | None = None) -> Any:
+    claims = {"agent_id": agent} if agent else {}
+    return SimpleNamespace(principal_kind=kind, engine_claims=claims)
+
+
+@pytest.mark.spec("ARBORA-OPS-R883")
+def test_agent_ref_is_taken_from_identity() -> None:
+    from arbora.api.invoke.agent_ref import AGENT_REF_METHODS, bind_agent_ref
+    from arbora.api.invoke.steps import OpError
+
+    assert len(AGENT_REF_METHODS) == 6
+    for method in sorted(AGENT_REF_METHODS):
+        op = _eg_op(method)
+        agent = _who("agent", "agent:one")
+        bound = bind_agent_ref(op, {"k": 1}, agent)
+        assert bound["agent_ref"] == "agent:one" and bound["k"] == 1
+        assert (
+            bind_agent_ref(op, {"agent_ref": "agent:one"}, agent)["agent_ref"]
+            == "agent:one"
+        )
+        forged = bind_agent_ref(op, {"agent_ref": "agent:two"}, agent)
+        assert isinstance(forged, OpError) and forged.code == "AGENT_REF_FORGED"
+        human = _who("human")
+        assert "agent_ref" not in bind_agent_ref(op, {"k": 1}, human)
+        assert bind_agent_ref(op, {"agent_ref": "x"}, human).code == "AGENT_REF_FORGED"
+    other = {"k": 1, "agent_ref": "x"}
+    assert bind_agent_ref(_eg_op("GetNodesByLabel"), other, _who("human")) is other
