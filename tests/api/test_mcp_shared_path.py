@@ -327,6 +327,20 @@ def test_current_unauthenticated_caller_cannot_use_previously_loaded_tool(
     asyncio.run(run())
 
 
+async def _reached(entered: asyncio.Event, task: asyncio.Task) -> None:
+    """Return once the paused section is entered; event-driven, no wall-clock deadline.
+
+    If the task ends before it enters (an unexpected error), surface that result
+    instead of waiting, so the test fails by assertion and never hangs or races a timer.
+    """
+    waiter = asyncio.ensure_future(entered.wait())
+    await asyncio.wait({waiter, task}, return_when=asyncio.FIRST_COMPLETED)
+    if not entered.is_set():
+        waiter.cancel()
+        task.result()
+        raise AssertionError("the call finished without reaching the paused section")
+
+
 async def _real_native_fixture():
     from mcp.types import CallToolResult, TextContent
 
@@ -362,12 +376,10 @@ def test_concurrent_one_shot_acquires_only_one_real_invocation() -> None:
 
         state.services.runtime.dispatch = paused
         first = asyncio.create_task(state.binding.call_native("synthetic__tool", {}))
-        await asyncio.wait_for(entered.wait(), 1)
+        await _reached(entered, first)
         try:
             with pytest.raises(ToolError, match="UNKNOWN_TOOL"):
-                await asyncio.wait_for(
-                    state.binding.call_native("synthetic__tool", {}), 1
-                )
+                await state.binding.call_native("synthetic__tool", {})
         finally:
             release.set()
             await first
@@ -396,7 +408,7 @@ def test_unload_during_catalog_lookup_cannot_reach_invoke() -> None:
 
         ops.catalog.get = paused
         pending = asyncio.create_task(state.binding.call_native("synthetic__tool", {}))
-        await asyncio.wait_for(entered.wait(), 1)
+        await _reached(entered, pending)
         await ops.unload(state.caller, items=["fleet:tool:synthetic/tool"])
         release.set()
         with pytest.raises(ToolError, match="UNKNOWN_TOOL"):
@@ -443,7 +455,7 @@ def test_reload_while_invoke_waits_invalidates_old_grant_not_new_load() -> None:
 
         state.services.runtime.dispatch = paused
         pending = asyncio.create_task(state.binding.call_native("synthetic__tool", {}))
-        await asyncio.wait_for(entered.wait(), 1)
+        await _reached(entered, pending)
         await ops.unload(state.caller, items=["fleet:tool:synthetic/tool"])
         await ops.load(state.caller, items=["fleet:tool:synthetic/tool"])
         release.set()
@@ -470,7 +482,7 @@ def test_consumed_one_shot_is_revocable_while_transport_setup_waits() -> None:
 
         state.gateway._delegated_call = paused
         pending = asyncio.create_task(state.binding.call_native("synthetic__tool", {}))
-        await asyncio.wait_for(entered.wait(), 1)
+        await _reached(entered, pending)
         assert not ops.sessions.loaded("fixture:session")
         await ops.unload(state.caller, all_items=True)
         release.set()
