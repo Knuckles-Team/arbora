@@ -120,3 +120,41 @@ def test_mint_stores_the_gate_and_files_one_approval_item_per_engine_gated_plan(
     )
     assert len(other.control_leases.issued) == 1
     assert other.control_leases.issued[0]["grant"]["gate_class"] == STRICTEST_CLASS
+
+
+# spec: ARBORA-OPS-R918.2
+def test_engine_gate_reader_maps_the_decision_answer_and_unresolved_is_strict() -> None:
+    from arbora.api.invoke.gate_class import engine_gate_reader
+
+    answers = {
+        "deploy.promotions.apply": {
+            "gate": "single",
+            "gate_class": "publishing",
+            "approver_roles": ["release-managers"],
+            "expires_after_ms": 90_000,
+        },
+        "open.op": {"gate": "unresolved", "gate_class": None, "approver_roles": []},
+        "free.op": {"gate": "none", "gate_class": None, "approver_roles": []},
+    }
+    sent: list[tuple[str, dict[str, Any], str]] = []
+
+    async def send(method: str, params: dict[str, Any], tenant: str) -> Any:
+        sent.append((method, params, tenant))
+        return answers[params["request"]["operation"]]
+
+    reader = engine_gate_reader(send)
+    gate = asyncio.run(resolve_gate(reader, "deploy.promotions.apply", "tenant-a"))
+    assert (gate.gate_class, gate.approver_roles, gate.expires_in_ms, gate.source) == (
+        "publishing",
+        ("release-managers",),
+        90_000,
+        "engine",
+    )
+    assert sent[0] == (
+        "ApprovalGateResolve",
+        {"request": {"operation": "deploy.promotions.apply"}},
+        "tenant-a",
+    )
+    # Unresolved and an explicit no-gate answer both stay the strict default.
+    for op in ("open.op", "free.op"):
+        assert asyncio.run(resolve_gate(reader, op, "tenant-a")) == STRICT_DEFAULT

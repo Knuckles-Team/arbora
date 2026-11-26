@@ -330,6 +330,7 @@ def build_invoke_services(
     plans: EgPlanStore,
     policy_gate: PolicyGate,
     audit_client_factory: ClientFactory,
+    gate_send: Any = None,
     **changes: Any,
 ) -> InvokeServices:
     """Wire the real EG audit adapter (ARBORA-HOST-R024.1); no fake audit sink.
@@ -341,6 +342,10 @@ def build_invoke_services(
     """
 
     audit = EgAuditAdapter(audit_client_factory)
+    if gate_send is not None:
+        from arbora.api.invoke.gate_class import engine_gate_reader
+
+        changes = {"gate_reader": engine_gate_reader(gate_send), **changes}
     return InvokeServices(
         registry=registry,
         runtime=runtime,

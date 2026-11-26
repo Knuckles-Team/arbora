@@ -99,6 +99,11 @@ def _valid_image(image: object) -> bool:
     return True
 
 
+def is_digest_pinned(image: object) -> bool:
+    """True when ``image`` is ``repository@sha256:<64 lowercase hex>`` with no tag."""
+    return _valid_image(image)
+
+
 def _check_containers(pod: dict[str, Any], location: str) -> int:
     count = 0
     for field in ("containers", "initContainers"):
