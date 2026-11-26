@@ -83,7 +83,7 @@ class HttpChannelBackend(MessagingBackend):
     ) -> None:
         super().__init__(config)
         self._client: Any = None
-        self._token = ""
+        self._token: str | None = None
         self._sleep = sleep
         self._event_queue: asyncio.Queue[InboundEvent] = asyncio.Queue()
         self._cursor = ""
@@ -116,7 +116,9 @@ class HttpChannelBackend(MessagingBackend):
             raise AdapterImportFailed(
                 f"Install: pip install arbora[messaging-{self.platform}]"
             ) from exc
-        self._token = self.config.token or str(setting(self._key("TOKEN"), "") or "")
+        self._token = (
+            self.config.token or str(setting(self._key("TOKEN"), "") or "") or None
+        )
         if not self._token:
             raise ValueError(f"Set {self._key('TOKEN')}.")
         if not self._base_url():
@@ -135,7 +137,7 @@ class HttpChannelBackend(MessagingBackend):
     def auth(self) -> tuple[dict[str, str], dict[str, str]]:
         """Return the (headers, query params) that carry the credential."""
         if self.auth_param:
-            return {}, {self.auth_param: self._token}
+            return {}, {self.auth_param: str(self._token)}
         return {"Authorization": f"Bearer {self._token}"}, {}
 
     def send_body(

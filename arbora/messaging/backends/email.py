@@ -53,7 +53,7 @@ class EmailBackend(MessagingBackend):
         super().__init__(config)
         self._imaplib: Any = None
         self._smtplib: Any = None
-        self._password = ""
+        self._password: str | None = None
         self._sleep = sleep
         self._cursor = 0
 
@@ -76,7 +76,7 @@ class EmailBackend(MessagingBackend):
             raise AdapterImportFailed(
                 "Install: pip install arbora[messaging-email]"
             ) from exc
-        self._password = self.config.token or self._setting("TOKEN")
+        self._password = self.config.token or self._setting("TOKEN") or None
         if not (
             self._password and self._setting("USER") and self._setting("SMTP_HOST")
         ):
@@ -100,7 +100,7 @@ class EmailBackend(MessagingBackend):
 
     def _smtp_send(self, message: EmailMessage) -> None:
         with self._smtplib.SMTP_SSL(self._setting("SMTP_HOST")) as smtp:
-            smtp.login(self._setting("USER"), self._password)
+            smtp.login(self._setting("USER"), self._password or "")
             smtp.send_message(message)
 
     async def send_message(
@@ -132,7 +132,7 @@ class EmailBackend(MessagingBackend):
     def _fetch_after(self, cursor: int) -> list[tuple[int, bytes]]:
         box = self._imaplib.IMAP4_SSL(self._setting("IMAP_HOST"))
         try:
-            box.login(self._setting("USER"), self._password)
+            box.login(self._setting("USER"), self._password or "")
             box.select("INBOX")
             _, data = box.uid("search", None, f"UID {cursor + 1}:*")
             found: list[tuple[int, bytes]] = []
