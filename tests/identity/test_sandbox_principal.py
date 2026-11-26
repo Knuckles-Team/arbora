@@ -62,17 +62,17 @@ def test_mint_is_sandbox_only_loopback_only_and_single(
     args = argparse.Namespace(
         root=str(tmp_path), principal="operator", second_tenant_principal=None, port=0
     )
-    summary = sandbox.up(args, hold=False)
+    summary = sandbox.up(args, hold=False, launcher=lambda *_: 0)
     assert started[0].extra_args == ("--auth-mode", "none")
     assert started[0].endpoint.address.startswith("127.0.0.1:")
     assert [p["tenant"] for p in summary["principals"]] == ["sandbox-a"]
     store = started[0].persist_dir
     assert store is not None and store.is_dir()
     with pytest.raises(SandboxPrincipalRefusal):
-        sandbox.up(args, hold=False)
-    assert sandbox.down(args) is True
+        sandbox.up(args, hold=False, launcher=lambda *_: 0)
+    assert sandbox.down(args, terminate=lambda pid: None) is True
     assert not store.exists() and not (tmp_path / sandbox.STATE_FILE).exists()
-    assert sandbox.down(args) is False
+    assert sandbox.down(args, terminate=lambda pid: None) is False
 
 
 def test_two_tenant_fixture_holds_distinct_tenants_and_envelopes(
@@ -140,7 +140,7 @@ def test_second_tenant_principal_cannot_read_the_first_tenants_object(
         second_tenant_principal="viewer",
         port=0,
     )
-    summary = sandbox.up(args, hold=False)
+    summary = sandbox.up(args, hold=False, launcher=lambda *_: 0)
     # Exactly two principals, each in its own tenant, each with its own role.
     assert [(p["role"], p["tenant"]) for p in summary["principals"]] == [
         ("operator", "sandbox-a"),
@@ -186,5 +186,5 @@ def test_second_tenant_principal_cannot_read_the_first_tenants_object(
     # down destroys the store, and with it both principals.
     store_dir = started[0].persist_dir
     assert store_dir is not None and store_dir.is_dir()
-    assert sandbox.down(args) is True
+    assert sandbox.down(args, terminate=lambda pid: None) is True
     assert not store_dir.exists() and not (tmp_path / sandbox.STATE_FILE).exists()
