@@ -6,6 +6,8 @@ import json
 import time
 from typing import Any
 
+import pytest
+
 from tests.api._served_support import (
     TENANT,
     TENANT_TWO,
@@ -25,6 +27,7 @@ def _p95(samples: list[float]) -> float:
     return ordered[max(0, int(len(ordered) * 0.95) - 1)]
 
 
+@pytest.mark.spec("ARBORA-HARNESS-PLUGINS-R004.7")
 def test_two_harnesses_share_one_workstream(
     two_tenant_served: TwoTenants,  # noqa: F811
 ) -> None:
