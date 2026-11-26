@@ -30,6 +30,7 @@ class AcpRefusalReason(enum.Enum):
     CAPABILITY_NOT_DECLARED = "capability_not_declared"
     CLIENT_DISCONNECTED = "client_disconnected"
     PERMISSION_REQUIRED = "permission_required"
+    PERMISSION_DENIED = "permission_denied"
 
 
 class AcpRefusal(Exception):

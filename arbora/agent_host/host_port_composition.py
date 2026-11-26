@@ -65,7 +65,10 @@ def run_principal_call(
     """``RunCall`` over registry ``invoke`` as the executing run's verified principal."""
 
     async def call(
-        op_id: str, params: Mapping[str, Any], run_ref: str
+        op_id: str,
+        params: Mapping[str, Any],
+        run_ref: str,
+        plan_ref: str | None = None,
     ) -> Mapping[str, Any]:
         from arbora.api.invoke.pipeline import invoke
         from arbora.api.invoke.steps import OpError
@@ -90,6 +93,7 @@ def run_principal_call(
                 Surface.MCP,
                 services=services,
                 idempotency_key=_run_key(op_id, params, run_ref),
+                plan_ref=plan_ref,
             )
         if isinstance(result, OpError):
             return {
@@ -100,6 +104,8 @@ def run_principal_call(
         value = result.value
         return {
             "outcome": "answered",
+            "code": result.code,
+            "details": dict(result.details),
             "payload": dict(value) if isinstance(value, Mapping) else {"value": value},
         }
 

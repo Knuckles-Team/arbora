@@ -17,8 +17,11 @@ from typing import Any
 
 from arbora.pin_lag.meristem import PinLagUnavailable, changeset_types, port_types
 
-#: ``(operation id, params, run ref)`` to the engine result as plain data.
-RunCall = Callable[[str, Mapping[str, Any], str], Awaitable[Mapping[str, Any]]]
+#: ``(operation id, params, run ref[, plan_ref])`` to the engine result as plain data. An
+#: answered result carries the pipeline ``code`` and ``details``: a plan-gated operation
+#: called without a ``plan_ref`` answers ``CONFIRMATION_REQUIRED`` with the plan reference.
+RunCall = Callable[..., Awaitable[Mapping[str, Any]]]
+PLAN_REQUIRED = "CONFIRMATION_REQUIRED"
 
 DECIDE_OP = "eg.query.Decide"
 ASSEMBLE_OP = "eg.storage.AgentAssemble"
@@ -332,6 +335,26 @@ class ChangesetSubmitter:
                 await mount.read(entry.path)
                 self._materialized.add(entry.path)
 
+    async def _confirmed(
+        self, op_id: str, params: Mapping[str, Any]
+    ) -> Mapping[str, Any]:
+        """Run one plan-gated source operation: preview, then execute under its plan ref.
+
+        The pipeline mints the plan reference and the approver gate decides whether it
+        runs (ARBORA-OPS-R918); an operation that is not plan-gated answers directly.
+        """
+        preview = await self._call(op_id, params, self._run_ref)
+        details = preview.get("details") or {}
+        plan_ref = details.get("plan_ref")
+        if (
+            preview.get("outcome") != "answered"
+            or preview.get("code") != PLAN_REQUIRED
+            or not isinstance(plan_ref, str)
+            or not plan_ref
+        ):
+            return preview
+        return await self._call(op_id, params, self._run_ref, plan_ref=plan_ref)
+
     async def _path(self, path: str, content: str) -> dict[str, Any]:
         data = content.encode("utf-8")
         blob = await self._seams.stage_blob(self._run_ref, data)
@@ -345,7 +368,7 @@ class ChangesetSubmitter:
     async def submit(self, pending: Any) -> Any:
         types = changeset_types()
         paths = [await self._path(path, text) for path, text in pending.files]
-        committed = await self._call(
+        committed = await self._confirmed(
             COMMIT_OP,
             {
                 "repository": self._target.repository,
@@ -355,7 +378,6 @@ class ChangesetSubmitter:
                 "base_head": pending.base_head,
                 "run_trace_id": pending.run_ref,
             },
-            self._run_ref,
         )
         if committed.get("outcome") != "answered":
             conflict = committed.get("refusal_code") == "SOURCE_CONFLICT"
@@ -369,14 +391,13 @@ class ChangesetSubmitter:
         changeset_id = str(receipt.get("id") or "")
         if not changeset_id:
             return types.SourceConflict(paths=())
-        await self._call(
+        await self._confirmed(
             LAND_OP,
             {
                 "repository": self._target.repository,
                 "branch": self._target.branch,
                 "changeset": changeset_id,
             },
-            self._run_ref,
         )
         return types.Submitted(changeset_id=changeset_id)
 

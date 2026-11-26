@@ -33,10 +33,12 @@ from .coding_session import (
 )
 from .session_policy import (
     AcpRefusal,
+    AcpRefusalReason,
     AcpSessionAdmission,
     AcpSessionPolicy,
     PrincipalContext,
 )
+from .trace import AcpTraceRecord, emit_acp_record
 
 RequestFactory = Callable[
     [PrincipalContext, str, str], RunRequest | Awaitable[RunRequest]
@@ -70,6 +72,11 @@ def _prompt_text(prompt: list[Any], max_bytes: int) -> str:
     if len(text.encode()) > max_bytes:
         raise acp.RequestError.invalid_params({"reason": "prompt_limit"})
     return text
+
+
+def _refusal_error(reason: AcpRefusalReason) -> acp.RequestError:
+    """Every refusal reason is ACP error -32001 with ``data.reason`` (R001.6)."""
+    return acp.RequestError(-32001, "Session refused", {"reason": reason.value})
 
 
 def _normalize_read_path(params: dict[str, Any], root: str) -> None:
@@ -202,11 +209,27 @@ class HostedACPAgent:
                 or (self._factory is not None and self._harness_available),
             )
         except AcpRefusal as exc:
-            raise acp.RequestError(
-                -32001, "Session refused", {"reason": exc.reason.value}
-            ) from None
+            principal = self._principal()
+            emit_acp_record(
+                AcpTraceRecord(
+                    session_id="",
+                    principal_id=principal.principal_id if principal else "",
+                    tenant=principal.tenant if principal else "",
+                    workspace_root=cwd,
+                    refusal_reason=exc.reason.value,
+                )
+            )
+            raise _refusal_error(exc.reason) from None
         session_id = uuid4().hex
         self._sessions[session_id] = _Session(admitted)
+        emit_acp_record(
+            AcpTraceRecord(
+                session_id=session_id,
+                principal_id=admitted.snapshot.principal.principal_id,
+                tenant=admitted.snapshot.principal.tenant,
+                workspace_root=cwd,
+            )
+        )
         return schema.NewSessionResponse(session_id=session_id)
 
     def _session(
@@ -227,9 +250,7 @@ class HostedACPAgent:
                 or (self._factory is not None and self._harness_available),
             )
         except AcpRefusal as exc:
-            raise acp.RequestError(
-                -32001, "Session refused", {"reason": exc.reason.value}
-            ) from None
+            raise _refusal_error(exc.reason) from None
         if touch:
             session.admission = replace(session.admission, snapshot=snapshot)
         return session
@@ -296,7 +317,7 @@ class HostedACPAgent:
         if not isinstance(request, RunRequest) or request.task != text:
             raise acp.RequestError(-32001, "Host request refused")
 
-        transport = _ReadTransport(self, session_id)
+        transport = _ClientTransport(self, session_id)
         async with aclosing(
             iterate_client_run(request, transport, stream_observer=observe)
         ) as run:
@@ -453,6 +474,125 @@ class _ReadTransport:
             ),
         )
         return call_id
+
+
+class _EffectTransport:
+    """Writes and terminals: one permission answer, then the forwarded request.
+
+    ``decide_effect`` rules; a refusal is typed and returns before anything is
+    forwarded (ARBORA-ACP-R001.5, R001.6). Each decision is traced (R001.7).
+    """
+
+    _OPTIONS = (
+        ("allow_once", "Allow once", "allow_once"),
+        ("allow_always", "Allow always", "allow_always"),
+        ("reject", "Reject", "reject_once"),
+    )
+
+    def __init__(self, agent: HostedACPAgent, session_id: str) -> None:
+        self._agent = agent
+        self._session_id = session_id
+
+    def _trace(
+        self,
+        session: _Session,
+        method: str,
+        outcome: str | None,
+        reason: AcpRefusalReason | None,
+    ) -> None:
+        principal = session.admission.snapshot.principal
+        emit_acp_record(
+            AcpTraceRecord(
+                session_id=self._session_id,
+                principal_id=principal.principal_id,
+                tenant=principal.tenant,
+                workspace_root=session.admission.request.workspace_root,
+                capability=method,
+                permission_outcome=outcome,
+                refusal_reason=reason.value if reason else None,
+            )
+        )
+
+    def _decide(self, session: _Session, method: str, answer: str | None) -> Any:
+        agent = self._agent
+        try:
+            return agent._admission.decide_effect(
+                session.admission,
+                method,
+                client_connected=agent._client is not None,
+                chat_adapter_available=agent._factory is not None,
+                permission_answer=answer,
+            )
+        except AcpRefusal as exc:
+            self._trace(session, method, None, exc.reason)
+            raise ClientCapabilityRefused(exc.reason.value) from None
+
+    async def _ask(self, method: str) -> str:
+        """Send ``session/request_permission``; a cancel counts as a rejection."""
+        agent = self._agent
+        assert agent._client is not None
+        response = await agent._client.request_permission(
+            session_id=self._session_id,
+            options=[
+                schema.PermissionOption(option_id=oid, name=name, kind=kind)
+                for oid, name, kind in self._OPTIONS
+            ],
+            tool_call=schema.ToolCallUpdate(
+                tool_call_id=uuid4().hex,
+                title=f"Permission: {method}",
+                status="pending",
+            ),
+        )
+        outcome = response.outcome
+        if getattr(outcome, "outcome", None) != "selected":
+            return "reject"
+        return str(getattr(outcome, "option_id", "reject"))
+
+    async def call(self, method: str, params: Mapping[str, Any]) -> str:
+        agent = self._agent
+        session = agent._session(self._session_id)
+        params = dict(params)
+        _normalize_read_path(params, session.admission.request.workspace_root)
+        decision = self._decide(session, method, None)
+        if decision.outcome == "permission_required":
+            decision = self._decide(session, method, await self._ask(method))
+        self._trace(session, method, decision.outcome, decision.refusal_reason)
+        if decision.outcome not in ("granted", "standing"):
+            raise ClientCapabilityRefused(AcpRefusalReason.PERMISSION_DENIED.value)
+        agent._session(self._session_id, touch=False)
+        assert agent._client is not None
+        return await self._forward(method, params)
+
+    async def _forward(self, method: str, params: dict[str, Any]) -> str:
+        client = self._agent._client
+        assert client is not None
+        sid = self._session_id
+        if method == ClientCapability.WRITE_TEXT_FILE:
+            await client.write_text_file(
+                content=params["content"], path=params["path"], session_id=sid
+            )
+            return "written"
+        calls = {
+            ClientCapability.TERMINAL_CREATE: client.create_terminal,
+            ClientCapability.TERMINAL_OUTPUT: client.terminal_output,
+            ClientCapability.TERMINAL_WAIT_FOR_EXIT: client.wait_for_terminal_exit,
+            ClientCapability.TERMINAL_KILL: client.kill_terminal,
+        }
+        response = await calls[ClientCapability(method)](session_id=sid, **params)
+        return response.model_dump_json() if response is not None else ""
+
+
+class _ClientTransport:
+    """The one transport of a run: reads pass, effects go through permission."""
+
+    def __init__(self, agent: HostedACPAgent, session_id: str) -> None:
+        self._read = _ReadTransport(agent, session_id)
+        self._effect = _EffectTransport(agent, session_id)
+
+    async def call(self, method: str, params: Mapping[str, Any]) -> str:
+        if method == ClientCapability.READ_TEXT_FILE:
+            return await self._read.call(method, params)
+        return await self._effect.call(method, params)
 
 
 async def serve_acp_stdio(agent: HostedACPAgent) -> None:

@@ -86,16 +86,29 @@ class EgAuditAdapter:
         "hooks",
     )
 
+    #: The engine bound on one evidence entry: 16 keys, values of at most 256 bytes.
+    _MAX_VALUE = 256
+    _FORBIDDEN = re.compile(r"[|;\x00-\x1f\x7f]")
+
     @classmethod
     def _evidence(cls, append: Any, event: Mapping[str, str]) -> dict[str, Any]:
-        """Forward the evidence only when the installed client accepts it.
+        """Forward the screening and hook evidence in the engine's bounds.
 
-        ARBORA-OPS-R042.5: the pinned engine ``AuditAppend`` has no evidence
-        field yet; the request is filed for medulla, and nothing is invented.
+        ARBORA-OPS-R042.5, R009.9: the engine stores ``evidence`` (identifiers
+        and counts) in the chain entry. A pin that predates the field withholds
+        it (``pin_lag``) until the re-pin; nothing is invented.
         """
-        if "evidence" not in inspect.signature(append).parameters:
+        from arbora.pin_lag.medulla import accepts_parameter
+
+        if not accepts_parameter(append, "evidence"):
             return {}
-        present = {k: event[k] for k in cls.EVIDENCE_KEYS if k in event}
+        present = {
+            key: cls._FORBIDDEN.sub(",", event[key])
+            .encode()[: cls._MAX_VALUE]
+            .decode(errors="ignore")
+            for key in cls.EVIDENCE_KEYS
+            if key in event
+        }
         return {"evidence": present} if present else {}
 
     async def _append(
