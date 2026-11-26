@@ -24,6 +24,7 @@ def get_registry() -> Registry:
     """
     from . import (
         access,
+        agent_library,
         agents,
         approvals,
         assistants,
@@ -84,6 +85,7 @@ def get_registry() -> Registry:
     curated: list[OpSpec] = []
     for module in (
         access,
+        agent_library,
         agents,
         approvals,
         assistants,

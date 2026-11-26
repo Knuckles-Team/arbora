@@ -47,6 +47,11 @@ STATIC_SCAN_TESTS: tuple[str, ...] = (
     "tests/test_package_layout.py",
 )
 
+#: Directories the fast subset runs whole. Their tests that boot a real engine or
+#: stack carry the ``real_boot`` marker, which the pull-request run deselects
+#: (``-m "not real_boot"``); the full suite on main and nightly still runs them.
+FAST_SUBSET_DIRS: tuple[str, ...] = ("tests/deployment",)
+
 # A test file that parses or walks repository source is a static scan.
 SCAN_MARKERS = re.compile(
     r"ast\.(?:parse|walk)\(|rglob\(.\*\.py|\.glob\(.\*\*/\*\.py|import_scan"
@@ -59,11 +64,11 @@ def static_scan_tests(root: Path = ROOT) -> list[str]:
         path.relative_to(root).as_posix()
         for path in (root / ARCHITECTURE_DIR).rglob("test_*.py")
     }
-    return sorted(architecture | set(STATIC_SCAN_TESTS))
+    return sorted(architecture | set(STATIC_SCAN_TESTS) | set(FAST_SUBSET_DIRS))
 
 
 def main() -> int:
-    missing = [path for path in static_scan_tests() if not (ROOT / path).is_file()]
+    missing = [path for path in static_scan_tests() if not (ROOT / path).exists()]
     if missing:
         print(f"pr_static_scope: listed tests do not exist: {missing}", file=sys.stderr)
         return 1

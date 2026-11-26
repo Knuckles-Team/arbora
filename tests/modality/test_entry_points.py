@@ -252,6 +252,9 @@ async def test_a2a_refuses_a_part_no_handler_reads() -> None:
     )
     message = _audio_message()
     message["parts"][1]["file"]["mimeType"] = "image/png"
+    message["parts"][1]["file"]["bytes"] = base64.b64encode(
+        b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
+    ).decode()
     with pytest.raises(ModalityRefused) as caught:
         await service.send_message(message=message, idempotency_key="k")
     assert caught.value.code == "MODALITY_UNSUPPORTED" and authority.messages == []
