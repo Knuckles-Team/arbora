@@ -183,21 +183,9 @@ Compared `git show 0eb67c99c^:agent_utilities/gateway/api.py` (328 lines) with `
 
 No route is missing. The capability resolver still imports internal meristem modules core.config and security.identity. This dependency difference belongs to R001.9. Decision: use the engine client session and source-sync methods required by ARBORA-HOST-R002 for shard, hydration, and active-engine state. Do not add another meristem public API export. Row R001.6 first tests whether the installed client exposes these methods. If not, block that row on the engine client owner. Keep present imports until then.
 
-##### D3 Live Artifacts authentication (DECIDED; not blocked)
+##### Live Artifacts routes (RETIRED, ARBORA-OPS-R040 to R040.10)
 
-Evidence: `arbora/api/registry/scopes.py` exports `FinanceScope`, `FleetScope`, `LoopsScope`, `OpsScope`; `arbora/api/policy/domain_scopes.py` lists `fleet:events` and `webui:{admin,maintainer,reader,user}`. The pinned engine `contract/scopes.json` (175 rows, the file `eg_binding._load_scopes` reads and `tests/api/test_registry_factory.py` checks for "unregistered EG scope") has no `gateway:*` row. So `gateway:read` and `gateway:write` are NOT registry scopes. They are identity capabilities that the dashboard resolves from the identity group capability map (`_dashboard_capabilities`). The earlier text calling them "already in the engine contract" was wrong and is corrected above.
-
-Decision: the artifact routes use the same dependencies as the dashboard routes (`_require_dashboard_read` for GET, `_require_dashboard_write` for POST, reused from `dashboard_api.py`, not copied). Behaviour matches sibling routes and no engine change is needed. Gateway scopes need no addition to the engine. `MEDULLA-IDENTITY-R007` registers `identity:admin`, `loops:read` and `loops:control` and is unrelated. The `loops:*` scopes are absent from the pinned `scopes.json` today. That is the concern of that row. Alternative rejected: map to registry scopes `webui:reader`/`webui:user`; those are the WebUI role namespace. That mapping creates a second authorization model for one gateway.
-
-##### D4 Agent-utilities export for artifacts (CONFIRMED; proposed AU row)
-
-Read `agent_utilities/knowledge_graph/live_artifacts/`. Public names: `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `render_template` (models.py); `LiveArtifactStore`, `get_live_artifact_store`, `ArtifactWriter` (store.py); `RefreshService`, `RefreshResult`, `DataSource` (refresh.py); `kg_source_resolver` (kg_source.py). `install_kg_artifact_source` imports the deleted `agent_utilities.gateway.artifacts_api` and always logs a failure; it must not be exported.
-
-Proposed meristem row (orchestrator adds it; new file `agent_utilities/api/live_artifacts.py`, re-exported from `agent_utilities/api/__init__.py`):
-
-> **Export the Live Artifact store, models and refresh service.** Re-export `LiveArtifact`, `Provenance`, `BoundedJSONError`, `validate_bounded_json`, `LiveArtifactStore`, `get_live_artifact_store`, `RefreshService`, `RefreshResult`, `DataSource` and `kg_source_resolver` from `agent_utilities.knowledge_graph.live_artifacts` through `agent_utilities.api.live_artifacts`; delete the dead `install_kg_artifact_source`. Verification: an meristem test imports each name from `agent_utilities.api` and the layout fence still passes.
-
-Because the AU resolver already re-runs `source_query`, ARBORA-OPS-R040.8 wires `kg_source_resolver` instead of re-implementing it (no parallel function). The bounded-JSON limits (depth 8, 100 keys, 500 items, 16 KiB string, 256 KiB total) stay in the AU validator. The arbora request model does not copy them.
+The gateway routes, ports and meristem exports are retired with no code left behind. `ARBORA-OPS-R881` serves artifact create, get and refresh as registry operations, and the boundary forbids importing the meristem store.
 
 ### Run read operations
 
@@ -442,12 +430,12 @@ Missing producer implementation must remain unavailable. Definitions and planned
 - **R057:** Add no repository-writeback attachment until EG `R094.2/.3/.5/.7` and SDK source-effect/receipt contracts publish. The current Arbora tree has no serializer or served handler.
 - **R058:** Use the existing schema-context routes/service for read-only data. Add no table mutation or statistics until WebUI and EG publish their contracts.
 
-#### ARBORA-OPS-R061: indexed usage projection
+#### ARBORA-OPS-R061: run-trace measure projection
 
-1. Bind the Arbora read to EG RunTraceUsageQueryV1 / MEDULLA-ORCH-VOCAB-R010.101; derive tenant only from verified caller claims and pass the producer's bounded window, model/project/agent grouping, currency, page size, and snapshot cursor.
-2. Extend the usage.py reader with closed UsageQueryV1 and UsageProjectionV1 models. Add a distinct usage.index.query port beside usage.read. Use existing usage:read, build_read_op, registry_factory, and shared invoke. Keep accounting separate from runs.metrics (R021.4.3/.4) and usage.read.
-3. Preserve four disjoint EG counters, producer totals, unknown reasons, pinned PriceTableV1, minor units, revisions, coverage, watermark, and cursor. Aggregate exact rational amounts by final group and category. Apply half-even rounding once. Keep unknown values unknown with reasons and coverage; never use zero. Keep currencies separate unless EG supplies pinned FX. Bind p95 <= 500 ms from authenticated-handler entry through serialized response. Use 1,000,000 indexed traces, 32 readers, and 1,000 fixed-window queries. Bind data/index/cache-policy revisions. Missing or invalid profile evidence is unavailable; an exceeded bound is not success.
-4. Connect the projection to WebUI ObservabilityView.tsx under OVERSTORY-APPS-R004.8.1-.6. Served proof compares groups with an independent EG ledger. It exercises authorization, pagination, unknown values, stale revisions, and absent, invalid, or exceeded profile evidence. This remains planned work, not runtime delivery.
+1. Bind the Arbora read to the engine `RunMetrics` method with its technique extension (MEDULLA-ORCH-VOCAB-R811.1, R811.1.1). Derive the tenant only from verified caller claims. Pass the `query` (`cost`, `tokens`, `latency`, `score`, `solved`), the `group_by`, the optional window and the `technique`, `arm` and `config_digest` filters. No `RunTraceUsage` or `EvolutionTraceMetrics` method is used.
+2. Keep the closed `UsageIndexQuery` and `UsageIndexProjection` models in `arbora/api/ops/usage.py` and the distinct `usage.index.query` port beside `usage.read`. Use the existing `usage:read`, `build_tenant_read_op`, `get_registry` and shared invoke. `runs.metrics` (R021.4.3/.4) serves the same engine method to the run reader.
+3. Return the engine answer unchanged. A population that matches nothing or reports no such counter abstains; arbora never turns an abstention into a zero. Arbora does no arithmetic.
+4. `evolution.proposals.metrics` (R059) is three of these queries over one filter. Served proof compares each answer with an independent ledger and exercises the pin-lag, foreign-tenant, abstention and malformed-answer refusals.
 
 #### ARBORA-OPS-R063: retrieval evaluation and context projection
 
