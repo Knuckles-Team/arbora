@@ -24,6 +24,7 @@ from arbora.fleet.gateway_ops import (
 from arbora.fleet.multiplexer_ops import MultiplexerOps
 from arbora.fleet.session_loads import SessionLoads
 from arbora.mcp_server import runtime as mcp_runtime
+from arbora.mcp_server.fleet_composition import _scoped
 from arbora.security import request_identity
 from tests.api._served_support import RecordingEngine, confirmable_invocation, person
 
@@ -118,6 +119,7 @@ class Fleet:
             catalog=FleetCatalog([source], allowed),
             sessions=SessionLoads(),
             loadable=allowed,
+            callable_item=_scoped,
             mount=mount,
             notify=allowed,
             invoke=invoke,
@@ -134,9 +136,14 @@ class Fleet:
                 "isError": False,
             }
 
+        async def policy_check(server: str, tool: str, caller: Any) -> bool:
+            # The production policy: the admitted tool's scopes, then the scope check.
+            item = await ops.admitted_tool(caller, server, tool)
+            return await _scoped(item, caller)
+
         self.gateway = FleetGateway(
             tool_for=tool_for_multiplexer_ops(ops),
-            policy_check=allowed,
+            policy_check=policy_check,
             delegated_call=delegated,
             catalog_ops=ops,
             confirming_tools=ConfirmingTools(),

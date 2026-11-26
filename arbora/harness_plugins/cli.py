@@ -9,6 +9,7 @@ always exits 0.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -20,8 +21,25 @@ from enum import StrEnum
 from pathlib import Path
 
 from arbora.harness_plugins import install as inst
-from arbora.harness_plugins.compose import AgentDef, SkillMissing, compose_bundle
-from arbora.harness_plugins.profiles import Lifecycle, profile, profile_ids
+from arbora.harness_plugins.compose import (
+    AgentDef,
+    SkillMissing,
+    compose_bundle,
+    installed_skill_roots,
+)
+from arbora.harness_plugins.layers import (
+    Layer,
+    LayerRefused,
+    file_layers,
+    resolve,
+    served_layers,
+)
+from arbora.harness_plugins.profiles import (
+    HarnessProfile,
+    Lifecycle,
+    profile,
+    profile_ids,
+)
 from arbora.harness_plugins.render import TreeRefused, render
 
 
@@ -31,6 +49,12 @@ class BundleRefusal(StrEnum):
     SKILL_UNKNOWN = "SKILL_UNKNOWN"
     DUPLICATE_DOOR = "DUPLICATE_DOOR"
     TREE_REFUSED = "TREE_REFUSED"
+    LAYER_REMOVES_ENTRY = "LAYER_REMOVES_ENTRY"
+    LAYER_LOOSENS_POLICY = "LAYER_LOOSENS_POLICY"
+    LAYER_MALFORMED = "LAYER_MALFORMED"
+    LAYERS_UNAVAILABLE = "LAYERS_UNAVAILABLE"
+    PERSONA_UNKNOWN = "PERSONA_UNKNOWN"
+    PERSONA_UNAVAILABLE = "PERSONA_UNAVAILABLE"
 
 
 class Refused(Exception):
@@ -75,6 +99,68 @@ def _agents(config_path: Path) -> list[AgentDef]:
     ]
 
 
+def _door_token(prof: HarnessProfile) -> str | None:
+    from arbora.harness_plugins.door import bearer
+    from arbora.harness_plugins.login import TokenStore
+
+    return bearer(prof, TokenStore())
+
+
+def _persona_set(
+    persona: str, prof: HarnessProfile, endpoint: str
+) -> tuple[list[str], str]:
+    """The engine's load set for ``persona``: its skills and the set's digest."""
+    from arbora.harness_plugins.door import DoorRefused, call
+
+    token = _door_token(prof)
+    if token is None:
+        raise Refused(BundleRefusal.PERSONA_UNAVAILABLE, "sign in first")
+    try:
+        value = call(endpoint, "skills.persona.get", {"persona": persona}, token)
+    except DoorRefused as exc:
+        if exc.mentions("PERSONA_UNKNOWN"):
+            raise Refused(BundleRefusal.PERSONA_UNKNOWN, persona) from exc
+        raise Refused(BundleRefusal.PERSONA_UNAVAILABLE, exc.code) from exc
+    records = value.get("records") if isinstance(value, dict) else None
+    answer = None
+    if records:
+        answer = ((records[0] or {}).get("answer") or {}).get("value")
+    if not isinstance(answer, dict):
+        raise Refused(BundleRefusal.PERSONA_UNAVAILABLE, "malformed load set")
+    skills = answer.get("skills")
+    if not isinstance(skills, list) or not all(isinstance(s, str) for s in skills):
+        raise Refused(BundleRefusal.PERSONA_UNAVAILABLE, "malformed load set")
+    digest = hashlib.sha256(
+        json.dumps(
+            {"skills": skills, "tiered": answer.get("tiered_skills") or []},
+            sort_keys=True,
+        ).encode()
+    ).hexdigest()
+    return skills, digest
+
+
+def _layers(prof: HarnessProfile, endpoint: str) -> list[Layer]:
+    """The six-layer inputs: served company and team, then the client's files."""
+    from arbora.core.settings import config_dir
+    from arbora.harness_plugins.door import DoorRefused, call
+
+    try:
+        layers = file_layers(Path.cwd(), config_dir())
+    except LayerRefused as exc:
+        raise Refused(BundleRefusal.LAYER_MALFORMED, exc.detail) from exc
+    token = _door_token(prof)
+    if token is None:
+        return layers
+    try:
+        served = served_layers(call(endpoint, "config.layers.get", {}, token))
+    except DoorRefused as exc:
+        raise Refused(BundleRefusal.LAYERS_UNAVAILABLE, exc.code) from exc
+    # The served user layer applies with the user's own files.
+    before = [layer for layer in served if layer.name != "user"]
+    after = [layer for layer in served if layer.name == "user"]
+    return [*before, *layers, *after]
+
+
 def build(
     harness: str, args: argparse.Namespace, config: inst.PluginsConfig
 ) -> tuple[str, Path]:
@@ -84,16 +170,31 @@ def build(
     except KeyError as exc:
         raise Refused(BundleRefusal.HARNESS_UNKNOWN, harness) from exc
     endpoint = _endpoint(getattr(args, "endpoint", None), config)
+    persona = getattr(args, "persona", None)
+    persona_skills, load_set_digest = (
+        _persona_set(persona, prof, endpoint) if persona else ([], None)
+    )
+    roots = _skill_roots(args)
     try:
         spec = compose_bundle(
             prof,
             base_url=endpoint,
             skills=[*config.skills, *(getattr(args, "skill", None) or [])],
             agents=_agents(inst.config_path()),
-            skill_roots=_skill_roots(args),
+            skill_roots=roots,
+            persona=persona,
+            persona_skills=persona_skills,
+            load_set_digest=load_set_digest,
+        )
+        spec = resolve(
+            _layers(prof, endpoint),
+            spec,
+            installed_skill_roots() if roots is None else roots,
         )
     except SkillMissing as exc:
         raise Refused(BundleRefusal.SKILL_UNKNOWN, str(exc)) from exc
+    except LayerRefused as exc:
+        raise Refused(BundleRefusal(exc.code), exc.detail) from exc
     out = getattr(args, "out", None)
     staging = Path(tempfile.mkdtemp(prefix="arbora-plugin-"))
     try:
@@ -281,6 +382,7 @@ def parser() -> argparse.ArgumentParser:
             cmd.add_argument("--out")
         if name == "bundle":
             cmd.add_argument("--print-path", action="store_true")
+            cmd.add_argument("--persona")
     remove = sub.add_parser("remove")
     remove.add_argument("--harness", required=True)
     login = sub.add_parser("login")

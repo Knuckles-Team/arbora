@@ -301,14 +301,14 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T235 ARBORA-OPS-R024.6 Derivation status read. Deliver as written in requirements.md.
 - [x] T478 ARBORA-OPS-R024.7 Preferences are one versioned engine record per principal.
 - [ ] T236 ARBORA-OPS-R897 Participant memory, scopes, profiles and document sets are served operations (rollup). Deliver as written in requirements.md.
-- [ ] T237 ARBORA-OPS-R897.1 Model and the shared engine send helper. Deliver as written in requirements.md.
-- [ ] T238 ARBORA-OPS-R897.2 Participant and membership operations. Deliver as written in requirements.md.
-- [ ] T239 ARBORA-OPS-R897.3 Scope and observation operations. Deliver as written in requirements.md.
-- [ ] T240 ARBORA-OPS-R897.4 Turn append operation. Deliver as written in requirements.md.
-- [ ] T241 ARBORA-OPS-R897.5 Ask and card operations. Deliver as written in requirements.md.
-- [ ] T242 ARBORA-OPS-R897.6 Assistant profile and document set operations. Deliver as written in requirements.md.
-- [ ] T243 ARBORA-OPS-R897.7 Registration and error mapping. Deliver as written in requirements.md.
-- [ ] T244 ARBORA-OPS-R897.8 Hot-path proof. Deliver as written in requirements.md.
+- [x] T237 ARBORA-OPS-R897.1 Model and the shared engine send helper. Deliver as written in requirements.md.
+- [x] T238 ARBORA-OPS-R897.2 Participant and membership operations. Deliver as written in requirements.md.
+- [x] T239 ARBORA-OPS-R897.3 Scope and observation operations. Deliver as written in requirements.md.
+- [x] T240 ARBORA-OPS-R897.4 Turn append operation. Deliver as written in requirements.md.
+- [x] T241 ARBORA-OPS-R897.5 Ask and card operations. Deliver as written in requirements.md.
+- [x] T242 ARBORA-OPS-R897.6 Assistant profile and document set operations. Deliver as written in requirements.md.
+- [x] T243 ARBORA-OPS-R897.7 Registration and error mapping. Deliver as written in requirements.md.
+- [x] T244 ARBORA-OPS-R897.8 Hot-path proof. Deliver as written in requirements.md.
 
 
 
@@ -382,6 +382,7 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T307 ARBORA-OPS-R061.5 Usage index hot-path proof.
 - [ ] T308 ARBORA-OPS-R062.1 Graph change models.
 - [ ] T309 ARBORA-OPS-R062.2 Subscribe and stream.
+- [ ] T702 ARBORA-OPS-R062.6 Publish the owner's live graph limits.
 - [ ] T310 ARBORA-OPS-R062.3 Snapshot recovery.
 - [ ] T311 ARBORA-OPS-R062.4 Revocation, refusals and visibility limit.
 - [ ] T312 ARBORA-OPS-R062.5 Graph change hot-path proof.
@@ -525,19 +526,19 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [x] T450 [US1] ARBORA-OPS-R921.4 Hot-path proof: browse, search and open an asset over MCP. Size: M, 1 PR, 4 hours.
 - [x] T451 [US1] ARBORA-OPS-R861.10 Read the access of one dashboard. Size: M, 1 PR, 4 hours.
 - [ ] T452 [US1] ARBORA-OPS-R922 Every pending census route of the web interface names one registered operation (rollup). Size: S, 1 PR, 2 hours.
-- [ ] T453 [US1] ARBORA-OPS-R922.1 Ontology interfaces are listed and their implementers read. Size: S, 1 PR, 2 hours.
+- [x] T453 [US1] ARBORA-OPS-R922.1 Ontology interfaces are listed and their implementers read. Size: S, 1 PR, 2 hours.
 - [ ] T454 [US1] ARBORA-OPS-R922.2 One model's editable field set is a served read that returns references, never secrets. Size: S, 1 PR, 2 hours.
-- [ ] T455 [US1] ARBORA-OPS-R922.3 Source sync runs are listed. Size: S, 1 PR, 2 hours.
+- [x] T455 [US1] ARBORA-OPS-R922.3 Source sync runs are listed. Size: S, 1 PR, 2 hours.
 - [ ] T456 [US1] ARBORA-OPS-R922.4 The active agent system prompt is a served read. Size: S, 1 PR, 2 hours.
 - [x] T457 [US1] ARBORA-OPS-R915.1 Revisioned durable city-state snapshots. Size: M, 2 PRs, 5 hours.
 - [x] T458 [US1] ARBORA-OPS-R950 Serve the flag operations. Size: M, 2 PRs, 5 hours.
 - [x] T459 [US1] ARBORA-OPS-R951 Serve the curation operations. Size: M, 2 PRs, 5 hours.
 - [x] T460 [US1] ARBORA-OPS-R952 Serve the friction operations. Size: M, 2 PRs, 5 hours.
-- [ ] T461 [US1] ARBORA-OPS-R953 Receive skill hook events as OpenTelemetry logs. Size: M, 2 PRs, 5 hours.
+- [x] T461 [US1] ARBORA-OPS-R953 Receive skill hook events as OpenTelemetry logs. Size: M, 2 PRs, 5 hours.
 - [ ] T462 [US1] ARBORA-OPS-R954 Serve skill measures, ranking, discovery and peer recommendations. Size: M, 2 PRs, 5 hours.
 - [x] T463 [US1] ARBORA-OPS-R955 Serve the skill evaluation operations. Size: M, 2 PRs, 5 hours.
 - [x] T464 [US1] ARBORA-OPS-R956 Serve the ablation and canary operations. Size: M, 2 PRs, 5 hours.
-- [ ] T465 [US1] ARBORA-OPS-R957 Serve the skill tier and persona operations. Size: M, 2 PRs, 5 hours.
+- [x] T465 [US1] ARBORA-OPS-R957 Serve the skill tier and persona operations. Size: M, 2 PRs, 5 hours.
 - [ ] T466 [US1] ARBORA-OPS-R958 Run the knowledge curator on the engine cadence. Size: M, 2 PRs, 5 hours.
 - [ ] T467 [US1] ARBORA-OPS-R857.3 Wiring: the graph store carries six RDF media types.
 - [ ] T468 [US1] ARBORA-OPS-R857.4 Refusal: media type and parse errors pass through.
@@ -550,3 +551,4 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T475 [US1] ARBORA-OPS-R924 Served Discover carries caller seeds and hop filters (rollup).
 - [ ] T476 [US1] ARBORA-OPS-R924.1 Wiring and refusal: contract fields and engine codes.
 - [ ] T477 [US1] ARBORA-OPS-R924.2 Hot-path proof: guided Discover over HTTP and MCP.
+- [x] T478 [US1] ARBORA-OPS-R024.3.3 Grouped usage rollup with currency and p95 latency.
