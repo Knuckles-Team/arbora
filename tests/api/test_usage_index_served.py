@@ -5,12 +5,12 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from tests.api._lane_double import EngineDouble, context
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _engine, usage
 from arbora.api.ops.registry_factory import get_registry
 from arbora.pin_lag import medulla as pin_lag
+from tests.api._lane_double import EngineDouble, context
 
 OP = next(op for op in usage.operations() if op.id == "usage.index.query")
 QUERY = {"window_start_ms": 0, "window_end_ms": 10, "group_by": "model"}
@@ -41,6 +41,11 @@ def _engine_serves(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         generated, "METHOD_IDS", frozenset(generated.METHOD_IDS) | {"RunTraceUsage"}
     )
+
+    async def send(client: Any, method: str, params: Any, graph: str, **keywords: Any):
+        return await client._send(method, params, graph, **keywords)
+
+    monkeypatch.setattr(generated, "send_by_id", send)
 
 
 @pytest.mark.spec("ARBORA-OPS-R061.1")

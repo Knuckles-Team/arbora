@@ -7,11 +7,11 @@ from typing import Any
 
 import pytest
 from medulla.generated.models import ViewportRequest
-from tests.api._lane_double import EngineDouble, context
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import viewport
 from arbora.api.ops.registry_factory import get_registry
+from tests.api._lane_double import EngineDouble, context
 
 OPS = {op.id: op for op in viewport.operations()}
 
@@ -100,9 +100,8 @@ async def test_stale_tokens_and_bad_limits_return_no_usable_result(
         await viewport.handle_viewport_bins(
             ctx, {"request": _request()}, OPS["graph.viewport.bins"]
         )
-    assert refused.value.code == "LOAD_CAP_EXCEEDED" and "bins" not in str(
-        refused.value.details
-    )
+    assert refused.value.code == "LOAD_CAP_EXCEEDED"
+    assert set(refused.value.details) == {"max_bytes", "max_bins"}  # no bins returned
     fat = {"blob": "x" * 9000}
     ctx = context(EngineDouble(ViewportQuery=fat), monkeypatch)
     with pytest.raises(OperationRefused) as refused:
