@@ -72,6 +72,14 @@ class LateFleetGateway:
         with _caller_session(caller):
             return await self._reader.read(kinds=("mcp_server",))
 
+    async def generation_status(self, caller: Any) -> Any:
+        """This replica's catalog generation and convergence state (ARBORA-FLEET-R051.2.1)."""
+        self._bound()
+        if self._reader is None:
+            raise _unavailable()
+        with _caller_session(caller):
+            return await self._reader.generation_status()
+
     def _bound(self) -> Any:
         if self._gateway is None:
             raise _unavailable()

@@ -145,6 +145,7 @@ messaging = [
 [project.scripts]
 arbora = "arbora.console:main"
 arbora-acp = "arbora.acp.local_runtime:main"
+arbora-identity = "arbora.identity.cli:main"
 arbora-release-canary = "arbora.deployment.release_canary:main"
 arbora-production-ops = "arbora.deployment.production_ops:main"
 arbora-image-digests = "arbora.deployment.image_digests:main"
@@ -285,7 +286,7 @@ units = ["data_migrations", "ecosystem", "epistemic", "identity", "messaging", "
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "operations"
-units = ["agent_runs", "api", "current_plan_publication", "native_run_admission", "work_items"]
+units = ["agent_runs", "api", "current_plan_publication", "native_run_admission", "work_items", "workflow_worker"]
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "subsystems"

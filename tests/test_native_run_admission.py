@@ -259,3 +259,89 @@ def test_nonambiguous_refusal_is_not_retried() -> None:
         recovery.submit(namespace, request())
     assert caught.value is error
     assert namespace.calls == ["lookup", "submit"]
+
+
+@pytest.mark.spec("ARBORA-OPS-R917.3")
+async def test_role_run_refuses_missing_profile_and_narrows_tools(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import json
+
+    from arbora.api import model_route
+    from arbora.api.ops import agent_library, agents
+    from arbora.api.ops import operator_surface as surface
+    from tests.api._engine_double import EngineDouble, context
+
+    class A2A:
+        def __init__(self) -> None:
+            self.messages: list[dict[str, Any]] = []
+
+        async def send_message(self, *, message: dict[str, Any], **_: Any) -> Any:
+            self.messages.append(message)
+            return SimpleNamespace(model_dump=lambda **_kw: {"id": "task"})
+
+    profile: dict[str, Any] = {}
+    engine = EngineDouble(monkeypatch)
+    engine.serve(
+        "KvGet",
+        lambda p: (
+            {"value": json.dumps(profile).encode(), "version": 4}
+            if profile and p["namespace"] == "business.profile"
+            else None
+        ),
+    )
+    engine.serve(
+        "AgentLibrary",
+        lambda p: (
+            {
+                "entry": {
+                    "agent_id": p["op"]["agent_id"],
+                    "tools": [{"component_id": "a"}, {"component_id": "b"}],
+                }
+            }
+            if p["op"]["agent_id"] == "role:one"
+            else {}
+        ),
+    )
+    engine.install(surface)
+    engine.install(agent_library)
+    engine.install(model_route)
+    from contextlib import nullcontext
+
+    monkeypatch.setattr("arbora.security.session.use_session", lambda _s: nullcontext())
+    a2a = A2A()
+    run = next(op for op in agents.operations() if op.id == "agents.run")
+
+    def ctx() -> Any:
+        base = context(scopes=frozenset({"fleet:read"}))
+        base.caller.session = object()
+        base.services = {"a2a": a2a}
+        return base
+
+    def message(**extra: Any) -> dict[str, Any]:
+        return {
+            "kind": "message",
+            "metadata": {"role_instance_id": "role:one", **extra},
+        }
+
+    with pytest.raises(OperationRefused) as unset:
+        await agents.handle_agent(ctx(), {"message": message()}, run)
+    assert unset.value.code == "PROFILE_UNSET" and not a2a.messages
+    profile["entity"] = "e"
+    await agents.handle_agent(ctx(), {"message": message()}, run)
+    sent = a2a.messages[-1]["metadata"]
+    assert sent["tool_allowlist"] == ["a", "b"]
+    assert sent["scope_ceiling"] == ["fleet:read"]
+    # A request narrows the binding and can never widen it.
+    await agents.handle_agent(
+        ctx(), {"message": message(tool_allowlist=["b", "outside"])}, run
+    )
+    assert a2a.messages[-1]["metadata"]["tool_allowlist"] == ["b"]
+    with pytest.raises(OperationRefused) as shape:
+        await agents.handle_agent(ctx(), {"message": message(tool_allowlist="b")}, run)
+    assert shape.value.code == "INVALID_ARGUMENT"
+    # An absent instance answers NOT_FOUND, like a foreign one.
+    absent = {"kind": "message", "metadata": {"role_instance_id": "role:gone"}}
+    with pytest.raises(OperationRefused) as gone:
+        await agents.handle_agent(ctx(), {"message": absent}, run)
+    assert gone.value.code == "NOT_FOUND"

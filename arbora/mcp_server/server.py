@@ -169,6 +169,8 @@ def _served_invocation(
     from arbora.mcp_server.run_reader import NativeRunReader
     from arbora.mcp_server.served_invocation import served_invocation_from_settings
     from arbora.mcp_server.source_reader import NativeSourceReader
+    from arbora.modality.fleet_port import NativeIntentFleet
+    from arbora.workflow_worker import WorkflowRunStarter
 
     args, _unknown = create_mcp_parser().parse_known_args()
     session = runtime._mint_process_session(str(getattr(args, "transport", "stdio")))
@@ -184,6 +186,9 @@ def _served_invocation(
             "a2a": host.runs.a2a,
             "run_origins": host.runs.origins,
             "fleet_gateway": fleet,
+            "workflow_worker": WorkflowRunStarter(
+                runtime._get_engine, NativeIntentFleet(), worker_ref="arbora-workflow"
+            ),
             "fleet_virtual_catalog": host.fleet.virtual_catalog,
             "fleet_declarations": host.fleet.declarations,
             "browser_control": dispatch_browser_operation,
