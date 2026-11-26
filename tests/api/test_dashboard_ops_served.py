@@ -9,7 +9,7 @@ from medulla import EngineResponseError
 
 from tests.api._served_support import (
     McpAsk,
-    capture_invocation,
+    confirmable_invocation,
     person,
     route_methods,
 )
@@ -132,7 +132,7 @@ DOC: dict[str, Any] = {
 
 @pytest.fixture
 def stack(monkeypatch: pytest.MonkeyPatch) -> Any:
-    holder = capture_invocation(monkeypatch)
+    holder = confirmable_invocation(monkeypatch)
     return holder
 
 
@@ -147,6 +147,17 @@ def env(stack: Any, served: Any, monkeypatch: pytest.MonkeyPatch) -> Any:  # noq
         {"one": person("one"), "two": person("two")},
     )
     return app, engine, stack["invocation"], monkeypatch
+
+
+PLAN = "Arbora-Plan-Ref"
+
+
+def _delete(app: Any, params: dict[str, Any], key: str, who=ONE) -> Any:
+    """Delete as the one confirmation mechanism does: preview, then the plan."""
+    preview = _call(app, "dashboard.delete", params, **who, **{KEY: key})
+    assert preview.json()["error"]["code"] == "CONFIRMATION_REQUIRED", preview.text
+    ref = preview.json()["error"]["details"]["plan_ref"]
+    return _call(app, "dashboard.delete", params, **who, **{KEY: key, PLAN: ref})
 
 
 def _save(
@@ -272,33 +283,22 @@ def test_list_owned_and_shared_and_get_by_id(env: Any) -> None:
 def test_delete_checks_revision_and_removes_the_asset(env: Any) -> None:
     app, engine, *_ = env
     _save(app, DOC, 0, "k1")
-    stale = _call(
-        app,
-        "dashboard.delete",
-        {"id": "sales", "expected_revision": 0},
-        **ONE,
-        **{KEY: "d1"},
-    )
-    assert stale.status_code == 409
-    assert stale.json()["error"]["code"] == "DASHBOARD_REVISION_CONFLICT"
-    other = _call(
+    unconfirmed = _call(
         app,
         "dashboard.delete",
         {"id": "sales", "expected_revision": 1},
-        **TWO,
-        **{KEY: "d2"},
+        **ONE,
+        **{KEY: "d0"},
     )
+    assert unconfirmed.json()["error"]["code"] == "CONFIRMATION_REQUIRED"
+    assert "delete" not in [action for action, _ in engine.sent]
+    stale = _delete(app, {"id": "sales", "expected_revision": 0}, "d1")
+    assert stale.status_code == 409
+    assert stale.json()["error"]["code"] == "DASHBOARD_REVISION_CONFLICT"
+    other = _delete(app, {"id": "sales", "expected_revision": 1}, "d2", TWO)
     assert other.json()["error"]["code"] == "DASHBOARD_NOT_GRANTED"
     assert "sales" in engine.store
-    gone = _value(
-        _call(
-            app,
-            "dashboard.delete",
-            {"id": "sales", "expected_revision": 1},
-            **ONE,
-            **{KEY: "d3"},
-        )
-    )
+    gone = _value(_delete(app, {"id": "sales", "expected_revision": 1}, "d3"))
     assert gone == {"id": "sales", "deleted": True}
     assert "sales" not in engine.store
 
@@ -398,11 +398,17 @@ def test_save_share_list_conflict_delete_served(env: Any) -> None:
         == "Sales"
     )
     assert _save(app, DOC, 0, "k9").status_code == 409
+    delete = {"id": "sales", "expected_revision": 1}
+    preview = ask("act", "dashboard.delete", delete, idempotency_key="m2")
+    assert "sales" in engine.store, preview
+    ref = preview["meta"]["plan"]["plan_ref"]
     gone = ask(
         "act",
         "dashboard.delete",
-        {"id": "sales", "expected_revision": 1},
+        delete,
         idempotency_key="m2",
+        plan_ref=ref,
+        execute=True,
     )
     assert gone["ok"] is True, gone
     assert "sales" not in engine.store

@@ -51,6 +51,42 @@ def capture_invocation(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     return captured
 
 
+def confirmable_invocation(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+    """Capture the served invocation with in-memory plan leases and effect journal.
+
+    The plan and the confirmed-replay owner are engine-backed in production;
+    the double keeps the real invoke pipeline and replaces only those two.
+    """
+    import dataclasses
+    from types import SimpleNamespace
+
+    import tests.test_served_operation_api as harness
+    from arbora.api.invoke.plan import EgPlanStore
+    from tests.api.test_invoke_contract import FixtureJournal, FixtureLeases
+
+    captured: dict[str, Any] = {}
+    compose = harness.compose_served_invocation
+
+    def capturing(**kwargs: Any) -> Any:
+        invocation = compose(**kwargs)
+        leases, journal = FixtureLeases(), FixtureJournal()
+        services = dataclasses.replace(
+            invocation.services,
+            plans=EgPlanStore(
+                SimpleNamespace(control_leases=leases),
+                lease_kind="fixture.plan",
+                seal_key=b"x" * 32,
+            ),
+            effects=journal,
+        )
+        captured["invocation"] = dataclasses.replace(invocation, services=services)
+        captured["journal"] = journal
+        return captured["invocation"]
+
+    monkeypatch.setattr(harness, "compose_served_invocation", capturing)
+    return captured
+
+
 def route_methods(
     client: Any,
     handlers: dict[str, Callable[[dict[str, Any], str], Any]],

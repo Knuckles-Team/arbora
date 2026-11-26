@@ -26,6 +26,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops._engine import engine_send, unavailable
 from arbora.api.registry import (
+    Effect,
     OpSpec,
 )
 
@@ -504,6 +505,7 @@ def operations() -> tuple[OpSpec, ...]:
         ),
         build_write_op(
             op_id="dashboard.delete",
+            effect=Effect.DESTRUCTIVE,
             summary="Delete a dashboard; the engine keeps the body for its retention",
             examples=("delete this dashboard",),
             params=DashboardDeleteParams,

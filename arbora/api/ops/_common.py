@@ -20,6 +20,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.registry import (
     AuditClass,
     Composite,
+    Confirm,
     Effect,
     Idempotency,
     OpSpec,
@@ -89,6 +90,7 @@ def _build_op(
     idempotency: Idempotency = Idempotency.NONE,
     audit: AuditClass = AuditClass.NONE,
     principals: PrincipalRule = PrincipalRule.ANY,
+    confirm: Confirm | None = None,
     surfaces: frozenset[Surface] = frozenset({Surface.MCP, Surface.HTTP, Surface.A2A}),
 ) -> OpSpec:
     """The one OpSpec constructor every builder below specializes."""
@@ -105,6 +107,7 @@ def _build_op(
         idempotency=idempotency,
         audit=audit,
         principals=principals,
+        confirm=confirm,
         surfaces=surfaces,
     )
 

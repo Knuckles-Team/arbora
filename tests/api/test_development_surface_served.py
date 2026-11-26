@@ -12,13 +12,22 @@ from medulla import EngineResponseError
 from arbora.api.ops import development
 from tests.api._served_support import (
     McpAsk,
-    capture_invocation,
+    confirmable_invocation,
     person,
     route_methods,
 )
 from tests.test_served_operation_api import _call, _value, served  # noqa: F401
 
 KEY = "Idempotency-Key"
+PLAN = "Arbora-Plan-Ref"
+
+
+def _confirmed(app: Any, op: str, params: dict[str, Any], key: str) -> Any:
+    """Preview, then resubmit under the plan: the one confirmation path."""
+    preview = _call(app, op, params, **{KEY: key})
+    assert preview.json()["error"]["code"] == "CONFIRMATION_REQUIRED", preview.text
+    ref = preview.json()["error"]["details"]["plan_ref"]
+    return _call(app, op, params, **{KEY: key, PLAN: ref})
 
 
 class LoopbackEngine:
@@ -96,7 +105,7 @@ class LoopbackEngine:
 
 @pytest.fixture
 def stack(monkeypatch: pytest.MonkeyPatch) -> Any:
-    return capture_invocation(monkeypatch)
+    return confirmable_invocation(monkeypatch)
 
 
 @pytest.fixture
@@ -169,7 +178,10 @@ def test_evolving_mode_needs_operator_approval(env: Any) -> None:
     assert _call(app, "project.mode.set", bare, **{KEY: "m2"}).status_code == 400
     assert [n for n, _ in engine.calls if n == "ProjectModeSet"] == []
     body = {**bare, "reason": "goal work"}
-    moved = _value(_call(app, "project.mode.set", body, **{KEY: "m3"}))
+    unconfirmed = _call(app, "project.mode.set", body, **{KEY: "m3"})
+    assert unconfirmed.json()["error"]["code"] == "CONFIRMATION_REQUIRED"
+    assert [n for n, _ in engine.calls if n == "ProjectModeSet"] == []
+    moved = _value(_confirmed(app, "project.mode.set", body, "m4"))
     assert moved == {"repository": "repo", "mode": "evolving", "previous": "reference"}
     sent = [p for n, p in engine.calls if n == "ProjectModeSet"][0]["request"]
     assert sent["approval"]["approver"] == "person:one"
