@@ -436,6 +436,12 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T359 ARBORA-OPS-R888 Admit data-product access requests against the steward role.
 - [ ] T360 ARBORA-OPS-R889 Serve an OpenLineage-compatible run-event route that calls `LineageIngest`.
 - [ ] T361 ARBORA-OPS-R890 Bind the engine decision port at host start.
+- [ ] T703 ARBORA-OPS-R890.1 Approval waiter maps a waiting run task to its inbox item.
+- [ ] T704 ARBORA-OPS-R890.2 Per-run sandbox process table.
+- [ ] T705 ARBORA-OPS-R890.3 Summary provider, study content and technique measure services.
+- [ ] T706 ARBORA-OPS-R890.4 Run trace receipts reach the terminal commit.
+- [ ] T707 ARBORA-OPS-R890.5 Run-keyed confirm verdict adapter.
+- [ ] T708 ARBORA-OPS-R890.6 Composition binds each port that has a backend.
 - [ ] T362 ARBORA-OPS-R891 Step usage events reach the usage ledger.
 - [ ] T363 ARBORA-OPS-R893 arbora serves the credential access authority port to the SDK.
 - [ ] T364 ARBORA-OPS-R894 Register the changeset submitter and gate runner at host start.

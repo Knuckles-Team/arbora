@@ -362,3 +362,64 @@ def test_admission_rejects_incoming_cookie_bearer_before_issuing(synthetic_signi
         assert authority.calls == [] and store.reads == []
 
     asyncio.run(scenario())
+
+
+def _ring(retired_at_ms: int | None) -> str:
+    import json
+
+    from joserfc.jwk import RSAKey
+
+    def private(kid: str) -> dict:
+        return RSAKey.generate_key(
+            2048, {"kid": kid, "use": "sig", "alg": "RS256"}
+        ).as_dict(private=True)
+
+    ring: dict = {"active": private("new")}
+    if retired_at_ms is not None:
+        ring["previous"] = {**private("old"), "retired_at_ms": retired_at_ms}
+    return json.dumps(ring)
+
+
+class _Ring:
+    def __init__(self, value: str | None) -> None:
+        self.value = value
+
+    def get(self, name: str) -> str | None:
+        return self.value
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R003")
+def test_discovery_jwks_stable_subject_and_bounded_overlap_rotation() -> None:
+    from starlette.testclient import TestClient
+
+    from arbora.identity.issuer import IssuerSettings
+    from arbora.identity.issuer_discovery import IssuerDiscovery
+
+    settings = IssuerSettings("https://issuer.test", "aud", "tenant")
+    now = [1_000_000.0]
+    ring = _Ring(_ring(retired_at_ms=1_000_000_000 - 100_000))
+    discovery = IssuerDiscovery(
+        ring, settings, rotation_overlap_s=3600, clock=lambda: now[0]
+    )
+    client = TestClient(discovery.asgi())
+
+    document = client.get("/.well-known/openid-configuration").json()
+    assert document["issuer"] == "https://issuer.test"
+    assert document["jwks_uri"] == "https://issuer.test/.well-known/jwks.json"
+
+    # Inside the overlap both keys are listed, public members only.
+    now[0] = 1_000_000.0
+    keys = client.get("/.well-known/jwks.json").json()["keys"]
+    assert [k["kid"] for k in keys] == ["new", "old"]
+    assert all("d" not in k and "p" not in k for k in keys)
+    # After the overlap only the new key remains.
+    now[0] = 1_000_000.0 + 3600 + 1_000_000
+    assert [k["kid"] for k in client.get("/.well-known/jwks.json").json()["keys"]] == [
+        "new"
+    ]
+    # An unreadable ring refuses to start, and the overlap is bounded.
+    with pytest.raises(IdentityUnavailable):
+        IssuerDiscovery(_Ring(None), settings)
+    for bad in (59, 604_801):
+        with pytest.raises(ValueError):
+            IssuerDiscovery(ring, settings, rotation_overlap_s=bad)

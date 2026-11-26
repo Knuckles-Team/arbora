@@ -1467,10 +1467,23 @@ def _check_secrets_backend() -> dict[str, Any]:
 def _check_auth() -> dict[str, Any]:
     from arbora.core.settings import runtime_config as config
     from arbora.core.settings import setting
+    from arbora.security.anonymous import indicator
     from arbora.security.request_identity import (
         local_process_authority_enabled,
     )
 
+    unsecured = indicator()
+    if unsecured:
+        return _result(
+            "auth",
+            unsecured["doctor_check"],
+            unsecured["banner"],
+            remediation=(
+                "use local or external identity mode (docs/identity.md, mode "
+                "transition); none mode is for loopback demos only"
+            ),
+            data={"mode": unsecured["mode"], "principal": unsecured["principal"]},
+        )
     if local_process_authority_enabled(config):
         return _result(
             "auth",

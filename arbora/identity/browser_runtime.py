@@ -87,7 +87,9 @@ class BrowserAuthApplication:
         origin: str,
         issuer: Any,
         caller: Any,
+        discovery: Any = None,
     ):
+        self.discovery = discovery
         self.client, self.authority = client, authority
         self.graph, self.origin = graph, origin
         self.issuer, self.caller = issuer, caller
@@ -146,6 +148,16 @@ class BrowserAuthApplication:
 
         if scope.get("method") == "GET" and scope.get("path") == "/auth/session":
             return await self._session(scope)
+        if scope.get("method") == "GET" and self.discovery is not None:
+            from starlette.responses import JSONResponse
+
+            published = {
+                "/.well-known/openid-configuration": self.discovery.document,
+                "/.well-known/jwks.json": self.discovery.jwks,
+            }
+            build = published.get(scope.get("path"))
+            if build is not None:
+                return JSONResponse(build())
         if scope.get("method") != "POST" or scope.get("path") not in {
             "/auth/login",
             "/auth/logout",
