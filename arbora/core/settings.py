@@ -425,6 +425,23 @@ class ArboraConfig(BaseModel):
     kg_loop_mine_discovery: bool = Field(
         default=True, alias="KG_LOOP_MINE_DISCOVERY", description=""
     )
+    content_screen_rules: str = Field(
+        default="default_screen_rules",
+        alias="CONTENT_SCREEN_RULES",
+        description="Name of the registered rule set that screens open-web content (ARBORA-OPS-R042.2).",
+    )
+    content_screen_redactor: str = Field(
+        default="default_output_redactor",
+        alias="CONTENT_SCREEN_REDACTOR",
+        description="Name of the registered redactor that masks secrets in every served result (ARBORA-OPS-R042.2).",
+    )
+    content_screen_max_scan_bytes: int = Field(
+        default=1_048_576,
+        ge=4_096,
+        le=16_777_216,
+        alias="CONTENT_SCREEN_MAX_SCAN_BYTES",
+        description="Largest open-web result the screen scans; larger content is quarantined (ARBORA-OPS-R042.2).",
+    )
     memory_files_root: str | None = Field(
         default=None,
         alias="MEMORY_FILES_ROOT",
@@ -490,6 +507,27 @@ class ArboraConfig(BaseModel):
     )
     max_upload_size: int = Field(
         default=10485760, alias="MAX_UPLOAD_SIZE", description=""
+    )
+    a2a_max_file_part_bytes: int = Field(
+        default=5_242_880,
+        ge=1_024,
+        le=33_554_432,
+        alias="A2A_MAX_FILE_PART_BYTES",
+        description="Largest decoded A2A file part, in bytes.",
+    )
+    a2a_max_request_media_bytes: int = Field(
+        default=20_971_520,
+        ge=1_024,
+        le=134_217_728,
+        alias="A2A_MAX_REQUEST_MEDIA_BYTES",
+        description="Most decoded image bytes one A2A message may carry.",
+    )
+    a2a_max_image_parts: int = Field(
+        default=4,
+        ge=1,
+        le=8,
+        alias="A2A_MAX_IMAGE_PARTS",
+        description="Most image parts one A2A message may carry.",
     )
     mcp_always_load: list[str] = Field(
         default_factory=lambda: [
