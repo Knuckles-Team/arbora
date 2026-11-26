@@ -81,7 +81,7 @@ def test_register_server_needs_plan_confirmation_and_hides_secret_values(
             {"from_": "2026-11-01T00:00:00Z", "to": "2026-11-02T00:00:00Z"},
         ),
         ("ops.maintenance.status", "MaintainStatus", {}),
-        ("code.context.read", "CodeContext", {"action": "nav"}),
+        ("code.context.read", "CodeNavigation", {"action": "nav"}),
     ],
 )
 async def test_a_pinned_engine_without_the_method_refuses_naming_it(
@@ -109,7 +109,9 @@ async def test_schedule_maintenance_and_code_read_through_the_engine(
     )
     engine.serve("MaintainStatus", lambda p: {"state": "idle", "pending": 0})
     engine.serve("Maintain", lambda p: {"evicted": 0})
-    engine.serve("CodeContext", lambda p: {"items": [{"symbol": p["symbol"]}]})
+    engine.serve(
+        "CodeNavigation", lambda p: {"items": [{"symbol": p["request"]["symbol"]}]}
+    )
     engine.install(surface)
 
     async def graph(_context: Any) -> str:
@@ -140,6 +142,7 @@ async def test_schedule_maintenance_and_code_read_through_the_engine(
         context(), {"action": "nav", "symbol": "f"}, _op("code.context.read")
     )
     assert code["items"] == [{"symbol": "f"}]
+    assert engine.sent[-1][1] == {"request": {"action": "nav", "symbol": "f"}}
 
 
 def test_secret_masking_leaves_references_and_plain_fields() -> None:

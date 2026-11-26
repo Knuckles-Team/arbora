@@ -240,10 +240,13 @@ _ENGINE: dict[str, Engine] = {
         "Maintain", lambda ctx, p: _maintain(ctx, p), _value, idempotent=True
     ),
     "code.context.read": Engine(
-        "CodeContext",
+        "CodeNavigation",
         lambda ctx, p: {
-            "action": p["action"],
-            **({"symbol": p["symbol"]} if p.get("symbol") else {}),
+            "request": {
+                "action": p["action"],
+                **({"symbol": p["symbol"]} if p.get("symbol") else {}),
+                **({"limit": p["limit"]} if p.get("limit") else {}),
+            }
         },
         _code,
     ),
