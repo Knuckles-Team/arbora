@@ -455,11 +455,11 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R060.3` | Test: `tests/api/test_sessions_served.py::test_denied_sources_are_partial_without_metadata` (L3). |
 | `ARBORA-OPS-R060.4` | Test: `tests/api/test_sessions_served.py::test_refusals_expose_no_cross_tenant_sessions` (L3). |
 | `ARBORA-OPS-R060.5` | Test: `tests/api/test_sessions_served.py::test_browser_discovers_browses_and_searches_every_harness` (L3). |
-| `ARBORA-OPS-R061.1` | Test: `tests/api/test_usage_index_served.py::test_models_round_trip_rust_vectors_and_unknown_stays_unknown` (L1). |
-| `ARBORA-OPS-R061.2` | Test: `tests/api/test_usage_index_served.py::test_projection_is_engine_aggregate_without_local_arithmetic` (L3). |
-| `ARBORA-OPS-R061.3` | Test: `tests/api/test_usage_index_served.py::test_registry_lists_operation_and_binder_composes_reader` (L3). |
-| `ARBORA-OPS-R061.4` | Test: `tests/api/test_usage_index_served.py::test_denied_stale_and_unproven_latency_expose_no_rows` (L3). |
-| `ARBORA-OPS-R061.5` | Test: `tests/api/test_usage_index_served.py::test_browser_query_reconciles_with_independent_ledger` (L3). It checks the four counters, rounding, minor units, watermark, cursor and unknown reasons. |
+| `ARBORA-OPS-R061.1` | Test: `tests/api/test_usage_index_served.py::test_models_round_trip_rust_vectors_and_unknown_stays_unknown` (planned) (L1). |
+| `ARBORA-OPS-R061.2` | Test: `tests/api/test_usage_index_served.py::test_projection_is_engine_aggregate_without_local_arithmetic` (planned) (L3). |
+| `ARBORA-OPS-R061.3` | Test: `tests/api/test_usage_index_served.py::test_registry_lists_operation_and_binder_composes_reader` (planned) (L3). |
+| `ARBORA-OPS-R061.4` | Test: `tests/api/test_usage_index_served.py::test_denied_stale_and_unproven_latency_expose_no_rows` (planned) (L3). |
+| `ARBORA-OPS-R061.5` | Test: `tests/api/test_usage_index_served.py::test_browser_query_reconciles_with_independent_ledger` (planned) (L3). It checks the four counters, rounding, minor units, watermark, cursor and unknown reasons. |
 | `ARBORA-OPS-R062.1` | Test: `tests/api/test_graph_changes_served.py::test_models_round_trip_rust_vectors` (L1). |
 | `ARBORA-OPS-R062.2` | Test: `tests/api/test_graph_changes_served.py::test_stream_orders_events_and_reauthorizes_on_reconnect` (L3). |
 | `ARBORA-OPS-R062.3` | Test: `tests/api/test_graph_changes_served.py::test_expired_cursor_returns_typed_recovery` (L3). |
