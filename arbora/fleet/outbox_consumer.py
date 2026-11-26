@@ -10,6 +10,8 @@ and no state of its own beyond the engine's per-consumer cursor.
 from __future__ import annotations
 
 import json
+import logging
+import threading
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
@@ -32,6 +34,7 @@ from arbora.pin_lag.medulla import (
 __all__ = [
     "NoticeFailed",
     "OutboxConsumer",
+    "OutboxRunner",
     "tick",
     "OutboxEvent",
     "TRUST_FLAG_TOPIC",
@@ -39,6 +42,8 @@ __all__ = [
     "notify_each",
     "trust_flag_handler",
 ]
+
+logger = logging.getLogger(__name__)
 
 TRUST_FLAG_TOPIC = "catalog.trust_flag"
 
@@ -183,6 +188,70 @@ async def tick(
                 raise
             done[item.topic] = 0
     return done
+
+
+class OutboxRunner:
+    """The serving process's schedule for the outbox consumers (R855.3.1, R918.6).
+
+    One daemon thread runs :func:`tick` on a private event loop every
+    ``interval_s``. The engine holds each consumer cursor, so nothing is kept
+    between ticks. A failed tick is logged by name and the next one retries;
+    a stopped runner never ticks again. ``wait(seconds)`` blocks for the
+    interval and returns True when the runner was stopped, so a test drives the
+    schedule with a controlled clock instead of sleeping.
+    """
+
+    def __init__(
+        self,
+        consumers: Sequence[OutboxConsumer],
+        send: Send,
+        *,
+        graph: str,
+        interval_s: float,
+        wait: Callable[[float], bool] | None = None,
+    ) -> None:
+        self._consumers = tuple(consumers)
+        self._send = send
+        self._graph = graph
+        self._interval_s = interval_s
+        self._stop = threading.Event()
+        self._wait = wait or self._stop.wait
+        self._thread: threading.Thread | None = None
+        self._lock = threading.Lock()
+        self.last: dict[str, int] = {}
+
+    async def run_once(self) -> dict[str, int]:
+        """One tick of every consumer; an engine failure is logged, never raised."""
+        try:
+            self.last = await tick(self._consumers, self._send, graph=self._graph)
+        except Exception:  # noqa: BLE001 - the next tick retries the same events
+            logger.exception("outbox consumers: tick failed; the events stay queued")
+        return self.last
+
+    def _loop(self) -> None:
+        import asyncio
+
+        while not self._stop.is_set():
+            asyncio.run(self.run_once())
+            if self._wait(self._interval_s):
+                return
+
+    def start(self) -> bool:
+        """Start the schedule once; False when it already runs or was stopped."""
+        with self._lock:
+            if self._thread is not None or self._stop.is_set():
+                return False
+            self._thread = threading.Thread(
+                target=self._loop, name="arbora-outbox-consumers", daemon=True
+            )
+            self._thread.start()
+            return True
+
+    def stop(self) -> None:
+        self._stop.set()
+        thread = self._thread
+        if thread is not None and thread is not threading.current_thread():
+            thread.join(timeout=30)
 
 
 def notify_each(

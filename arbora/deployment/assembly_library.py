@@ -52,6 +52,8 @@ _TOOL_SCOPE = "fleet:control"
 _BASE_PROMPT = "deployment:step-prompt"
 _BASE_MODEL = "deployment:step-model"
 _BASE_TOOL = "deployment:step-tool"
+_BASE_SKILL = "deployment:step-skill"
+_BASE_ONTOLOGY = "deployment:step-ontology"
 _UNESTIMATED = 0
 
 #: ``(method, params, idempotency_key)`` through the generated senders.
@@ -140,7 +142,9 @@ def _component(
         "kind": kind,
         "version": VERSION,
         "content_digest": _digest(body),
-        "attributes": dict(attributes) if attributes else None,
+        # The engine reads ``attributes`` as a map, never null (a null is
+        # refused as an invalid request encoding), so an empty one is ``{}``.
+        "attributes": dict(attributes or {}),
         "content_ref": None,
         "facts": dict(facts),
         "provenance": {"origin": "native"},
@@ -161,11 +165,16 @@ def _component(
     return draft
 
 
+#: The engine refuses a zero context window; one token is the least it admits.
+_NO_WINDOW = 1
+
+
 def base_components(tenant: str, context: Mapping[str, Any]) -> list[dict[str, Any]]:
-    """The model profile, prompt and placeholder tool of the step agent.
+    """The model profile, prompt, skill, ontology and placeholder tool of the step agent.
 
     A deployment step runs a tool, not a model, so the profile states that: no
-    provider, no capability, no window.
+    provider, no capability and the smallest window the engine admits (it
+    refuses a zero window).
     """
     return [
         _component(
@@ -177,8 +186,8 @@ def base_components(tenant: str, context: Mapping[str, Any]) -> list[dict[str, A
                 "facts": "model_profile",
                 "provider": "none",
                 "model_identity": "none",
-                "context_window_tokens": 0,
-                "max_output_tokens": 0,
+                "context_window_tokens": _NO_WINDOW,
+                "max_output_tokens": _NO_WINDOW,
                 "supports_structured_output": False,
                 "supports_tools": False,
                 "supports_vision": False,
@@ -209,6 +218,22 @@ def base_components(tenant: str, context: Mapping[str, Any]) -> list[dict[str, A
                 "required_scopes": [_TOOL_SCOPE],
             },
             summary="Placeholder tool every deployment slot replaces",
+        ),
+        _component(
+            tenant,
+            context,
+            component_id=_BASE_SKILL,
+            kind="skill",
+            facts={"facts": "opaque"},
+            summary="The engine requires an agent to name a skill; a step runs one tool",
+        ),
+        _component(
+            tenant,
+            context,
+            component_id=_BASE_ONTOLOGY,
+            kind="ontology",
+            facts={"facts": "opaque"},
+            summary="The engine requires an agent to name an ontology; a step uses none",
         ),
     ]
 
@@ -260,17 +285,16 @@ def template_draft(
             "role_digest": _digest("deployment step"),
             "system_prompt": dict(pins[_BASE_PROMPT]),
             "tools": [dict(pins[_BASE_TOOL])],
-            "skills": [],
+            "skills": [dict(pins[_BASE_SKILL])],
             "model_profile": dict(pins[_BASE_MODEL]),
             "model_identity": "none",
-            "ontologies": [],
+            "ontologies": [dict(pins[_BASE_ONTOLOGY])],
             "tenant_id": tenant,
             "actor_scope": context["actor_scope"],
             "purpose_id": context["purpose_id"],
             "policy_digest": context["policy_digest"],
             "source_revision": f"arbora-{VERSION}",
             "source_revision_digest": _digest(TEMPLATE_ID),
-            "runtime": None,
             "instantiated_from": None,
         },
         "params": [
