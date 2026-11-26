@@ -220,6 +220,8 @@ class WorkItemA2AAuthority:
         self.events = events
         #: The push-notification worker (ARBORA-A2A-R013); ``None`` pushes nothing.
         self.push: Any = None
+        #: The provisioning service (ARBORA-FLEET-R024.6, R027.3); ``None`` provisions nothing.
+        self.provisioning: Any = None
         self._executor = executor
         self._origins = origins
         # Runs admitted by a non-blocking send (ARBORA-A2A-R001.6). The set
@@ -227,6 +229,18 @@ class WorkItemA2AAuthority:
         self._detached: set[asyncio.Task[Any]] = set()
         self.task_plan_config = task_plan_config
         self.hosted_invocation = hosted_invocation
+
+    def provision_capacity(self, request: Any) -> Any:
+        """Provision instances for a run before its dispatch (ARBORA-FLEET-R024.6)."""
+        if self.provisioning is None:
+            raise RuntimeError("Arbora provisioning is unavailable")
+        return self.provisioning.provision(request)
+
+    def provision_work_item(self, view: Any, request: Any, **kwargs: Any) -> Any:
+        """Discover, distribute and provision one work item (ARBORA-FLEET-R027.3)."""
+        if self.provisioning is None:
+            raise RuntimeError("Arbora provisioning is unavailable")
+        return self.provisioning.for_work_item(view, request, **kwargs)
 
     @staticmethod
     def _session(scope: str) -> Any:

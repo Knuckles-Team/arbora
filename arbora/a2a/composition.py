@@ -87,6 +87,8 @@ def build_a2a_service(
     decide: Callable[[dict[str, Any]], Any] | None = None,
     feature_schema: Callable[[str], Mapping[str, Any]] | None = None,
     decision_principal: Callable[[], str] | None = None,
+    provisioning: Any = None,
+    capacity: Any = None,
 ) -> A2AService:
     """One service over the WorkItem authority and its durable event cursor.
 
@@ -111,6 +113,7 @@ def build_a2a_service(
     )
     push = PushDeliveryWorker(authority)
     authority.push = push
+    authority.provisioning = provisioning
     return A2AService(
         authority=authority,
         push=push,
@@ -120,6 +123,8 @@ def build_a2a_service(
             feature_schema=feature_schema,
             tenant=_tenant,
             principal=decision_principal or _principal,
+            provisioning=provisioning,
+            capacity=capacity,
         ),
         harness_decider=_harness_decider(decide, feature_schema, decision_principal),
         principal_kind=_principal_kind,
@@ -144,6 +149,8 @@ def compose_a2a(
     decide: Callable[[dict[str, Any]], Any] | None = None,
     feature_schema: Callable[[str], Mapping[str, Any]] | None = None,
     decision_principal: Callable[[], str] | None = None,
+    provisioning: Any = None,
+    capacity: Any = None,
 ) -> A2AComposition:
     """Compose one projection over the existing WorkItem/dispatch authorities."""
     service = build_a2a_service(
@@ -156,6 +163,8 @@ def compose_a2a(
         decide=decide,
         feature_schema=feature_schema,
         decision_principal=decision_principal,
+        provisioning=provisioning,
+        capacity=capacity,
     )
     return A2AComposition(
         application=create_a2a_application(

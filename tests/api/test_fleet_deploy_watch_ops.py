@@ -12,7 +12,15 @@ from types import SimpleNamespace
 import pytest
 
 from arbora.api.ops import fleet_deploy_watch
-from arbora.api.registry import Caller, Effect, Registry, Surface, Verb, authorized
+from arbora.api.registry import (
+    Caller,
+    Effect,
+    OpSpec,
+    Registry,
+    Surface,
+    Verb,
+    authorized,
+)
 
 pytestmark = pytest.mark.spec("ARBORA-FLEET-R024.1")
 
@@ -26,6 +34,14 @@ class _FakeCaller:
     delegated: bool = False
 
 
+def _evaluate_op() -> OpSpec:
+    return next(
+        op
+        for op in fleet_deploy_watch.operations()
+        if op.id == "fleet.deploy_watch.evaluate"
+    )
+
+
 def _allow_all(_op: object, _caller: Caller) -> bool:
     return True
 
@@ -35,7 +51,7 @@ def _deny_all(_op: object, _caller: Caller) -> bool:
 
 
 def test_operation_is_a_read_ask_scoped_to_mcp_delegate() -> None:
-    (op,) = fleet_deploy_watch.operations()
+    op = _evaluate_op()
     assert op.id == "fleet.deploy_watch.evaluate"
     assert op.verb is Verb.ASK
     assert op.effect is Effect.READ
@@ -68,7 +84,7 @@ def test_registry_still_refuses_a_scoped_caller_when_policy_denies() -> None:
 
 @pytest.mark.asyncio
 async def test_handler_returns_the_verdict_for_an_authorized_call() -> None:
-    (op,) = fleet_deploy_watch.operations()
+    op = _evaluate_op()
     context = SimpleNamespace(caller=object(), services={})
     result = await fleet_deploy_watch.handle_fleet_deploy_watch_evaluate(
         context,
@@ -88,7 +104,7 @@ async def test_handler_returns_the_verdict_for_an_authorized_call() -> None:
 
 @pytest.mark.asyncio
 async def test_handler_reproduces_success_and_unobserved_verdicts() -> None:
-    (op,) = fleet_deploy_watch.operations()
+    op = _evaluate_op()
     context = SimpleNamespace(caller=object(), services={})
     success = await fleet_deploy_watch.handle_fleet_deploy_watch_evaluate(
         context,
