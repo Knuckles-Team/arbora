@@ -30,12 +30,10 @@ def _record(monkeypatch: pytest.MonkeyPatch, answer: Any = None) -> list[Any]:
 
 @pytest.mark.spec("ARBORA-OPS-R897.1")
 def test_models_build_the_engine_shapes() -> None:
+    bad_kind: Any = "robot"
     with pytest.raises(ValidationError):
         participants.ParticipantPutParams(
-            participant_id="p",
-            workspace="w",
-            kind="robot",
-            display_name="x",  # type: ignore[arg-type]
+            participant_id="p", workspace="w", kind=bad_kind, display_name="x"
         )
     with pytest.raises(ValidationError):
         participants.TurnAppendParams(
