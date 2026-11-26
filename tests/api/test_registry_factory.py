@@ -46,6 +46,7 @@ from arbora.api.ops import (
     skills_discovery,
     skills_eval,
     skills_friction,
+    skills_telemetry,
     source,
     swarm,
     telemetry,
@@ -112,6 +113,7 @@ _CURATED_SCOPES = (
     "registry:read",
     "identity:self",
     "identity:admin",
+    "telemetry:write",
 )
 
 _ENGINE_METHODS = {
@@ -186,6 +188,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *skills_discovery.operations(),
         *skills_eval.operations(),
         *skills_friction.operations(),
+        *skills_telemetry.operations(),
         *telemetry.operations(),
         *usage.operations(),
         *policy.operations(),
