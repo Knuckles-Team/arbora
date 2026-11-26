@@ -53,12 +53,12 @@
 Each row's acceptance test binds its ID where the test lands. The lines below record the planned
 homes now. The spec-trailers gate resolves the spec PR's trailer. No delivery is claimed.
 
-- `# spec: ARBORA-DEPLOY-POLICY-R001` — `tests/deployment/test_deploy_manifest.py`
-- `# spec: ARBORA-DEPLOY-POLICY-R002` — `tests/deployment/test_apply_convergence.py`
-- `# spec: ARBORA-DEPLOY-POLICY-R003` — `tests/deployment/test_drift_approval.py`
-- `# spec: ARBORA-DEPLOY-POLICY-R004` — `tests/policy/test_policy_bundle.py`
-- `# spec: ARBORA-DEPLOY-POLICY-R005` — `tests/policy/test_epistemic_conditions.py`
-- `# spec: ARBORA-DEPLOY-POLICY-R006` — `tests/fleet/test_served_agent_surface.py`
+- `# spec: ARBORA-DEPLOY-POLICY-R001` — `tests/deployment/test_manifest.py` and `tests/api/test_deploy_manifest_served.py` (planned)
+- `# spec: ARBORA-DEPLOY-POLICY-R002` — `tests/api/test_deploy_manifest_served.py` (planned)
+- `# spec: ARBORA-DEPLOY-POLICY-R003` — `tests/api/test_deploy_manifest_served.py` (planned)
+- `# spec: ARBORA-DEPLOY-POLICY-R004` — `tests/api/test_policy_bundle_served.py` (planned)
+- `# spec: ARBORA-DEPLOY-POLICY-R005` — `tests/api/test_policy_epistemic_served.py` (planned)
+- `# spec: ARBORA-DEPLOY-POLICY-R006` — `tests/fleet/test_agent_surface_served.py` (planned)
 
 ## Row coverage
 
@@ -66,5 +66,5 @@ Every test below is planned; none exists yet.
 
 | Row | Test |
 |---|---|
-| `ARBORA-DEPLOY-POLICY-R001` | `tests/api/test_deploy_manifest_served.py::test_plan_returns_typed_diff_and_makes_no_write_call` and `tests/deployment/test_manifest.py::test_unknown_key_duplicate_key_and_floating_image_are_rejected` |
-| `ARBORA-DEPLOY-POLICY-R007` | `tests/api/test_deploy_manifest_served.py::test_rollout_records_one_deployment_and_none_on_failure` |
+| `ARBORA-DEPLOY-POLICY-R001` | `tests/api/test_deploy_manifest_served.py::test_plan_returns_typed_diff_and_makes_no_write_call` (planned) and `tests/deployment/test_manifest.py::test_unknown_key_duplicate_key_and_floating_image_are_rejected` (planned) |
+| `ARBORA-DEPLOY-POLICY-R007` | `tests/api/test_deploy_manifest_served.py::test_rollout_records_one_deployment_and_none_on_failure` (planned) |
