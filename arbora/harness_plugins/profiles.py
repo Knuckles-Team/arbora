@@ -25,6 +25,8 @@ class Lifecycle(StrEnum):
     FIRST_PROMPT = "first_prompt"
     BEFORE_COMPACTION = "before_compaction"
     SESSION_END = "session_end"
+    #: One skill use ended; the hook reports it as one telemetry log record.
+    SKILL_END = "skill_end"
 
 
 class Part(StrEnum):
@@ -70,6 +72,7 @@ _CC_EVENTS = (
     (Lifecycle.FIRST_PROMPT, "UserPromptSubmit"),
     (Lifecycle.BEFORE_COMPACTION, "PreCompact"),
     (Lifecycle.SESSION_END, "SessionEnd"),
+    (Lifecycle.SKILL_END, "PostToolUse"),
 )
 
 PROFILES: tuple[HarnessProfile, ...] = (
@@ -92,6 +95,7 @@ PROFILES: tuple[HarnessProfile, ...] = (
             (Lifecycle.FIRST_PROMPT, "session.context"),
             (Lifecycle.BEFORE_COMPACTION, "session.compaction"),
             (Lifecycle.SESSION_END, "session.deleted"),
+            (Lifecycle.SKILL_END, "tool.execute.after"),
         ),
         parts=frozenset({Part.SKILLS, Part.COMMANDS, Part.HOOKS, Part.MCP}),
         door_configs=(
