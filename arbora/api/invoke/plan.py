@@ -10,6 +10,7 @@ from base64 import urlsafe_b64decode, urlsafe_b64encode
 from binascii import Error as Base64Error
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
+from enum import StrEnum
 from typing import Any, Protocol
 
 from cryptography.exceptions import InvalidTag
@@ -20,6 +21,77 @@ from arbora.api.invoke.gate_class import GateResolution
 from arbora.api.invoke.steps import OpError, RequestCaller, claim_values
 
 PLAN_TTL_MS = 600_000
+
+
+class PlanState(StrEnum):
+    ISSUED = "issued"
+    CONSUMED = "consumed"
+    EXECUTING = "executing"
+    DONE = "done"
+    FAILED = "failed"
+    EXPIRED = "expired"
+
+
+class PlanEvent(StrEnum):
+    CONSUME = "consume"
+    BEGIN = "begin"
+    FINISH_OK = "finish_ok"
+    FINISH_ERR = "finish_err"
+    EXPIRE = "expire"
+
+
+_P, _V = PlanState, PlanEvent
+#: The six legal edges of the plan lease machine (ARBORA-OPS-R901). ``consume``
+#: also needs the guard ``before_hard_expiry``, decided by :func:`plan_state`.
+PLAN_EDGES: dict[tuple[PlanState, PlanEvent], PlanState] = {
+    (_P.ISSUED, _V.CONSUME): _P.CONSUMED,
+    (_P.CONSUMED, _V.BEGIN): _P.EXECUTING,
+    (_P.EXECUTING, _V.FINISH_OK): _P.DONE,
+    (_P.EXECUTING, _V.FINISH_ERR): _P.FAILED,
+    (_P.CONSUMED, _V.FINISH_ERR): _P.FAILED,
+    (_P.ISSUED, _V.EXPIRE): _P.EXPIRED,
+}
+TERMINAL_PLAN_STATES = frozenset({_P.DONE, _P.FAILED, _P.EXPIRED})
+
+
+class IllegalPlanTransition(RuntimeError):
+    code = "PLAN_TRANSITION_ILLEGAL"
+    machine = "plan_lease"
+
+    def __init__(self, state: PlanState, event: PlanEvent) -> None:
+        super().__init__(f"{self.code}: {state} --{event}-->")
+        self.from_state = state
+        self.event = event
+
+
+def transition(state: PlanState, event: PlanEvent) -> PlanState:
+    """The one function that decides every plan lease edge."""
+    target = PLAN_EDGES.get((state, event))
+    if target is None:
+        raise IllegalPlanTransition(state, event)
+    return target
+
+
+_ENGINE_STATUS = {
+    "active": PlanState.ISSUED,
+    "consumed": PlanState.CONSUMED,
+    "executing": PlanState.EXECUTING,
+    "done": PlanState.DONE,
+    "failed": PlanState.FAILED,
+}
+
+
+def plan_state(lease: Mapping[str, Any], now_ms: int) -> PlanState:
+    """The machine state of an engine plan lease.
+
+    An active lease at or past its hard expiry is ``Expired`` (the guard
+    ``before_hard_expiry`` fails); any status the machine does not name
+    (expired, revoked) reads as ``Expired`` too.
+    """
+    state = _ENGINE_STATUS.get(str(lease.get("status")), PlanState.EXPIRED)
+    if state is PlanState.ISSUED and int(lease.get("hard_expires_at_ms", 0)) <= now_ms:
+        return PlanState.EXPIRED
+    return state
 
 
 def approval_id_for(plan_ref: str) -> str:
@@ -302,11 +374,13 @@ def _live_lease_refusal(lease: Any, lease_kind: str, now_ms: int) -> OpError | N
     """Refuse a lease that is absent, foreign, inactive or past its hard expiry."""
     if not lease or lease.get("kind") != lease_kind:
         return OpError("PLAN_MISMATCH")
-    if (
-        lease.get("status") != "active"
-        or int(lease.get("hard_expires_at_ms", 0)) <= now_ms
-    ):
-        return OpError("PLAN_EXPIRED")
+    state = plan_state(lease, now_ms)
+    try:
+        transition(state, PlanEvent.CONSUME)
+    except IllegalPlanTransition:
+        return OpError(
+            "PLAN_EXPIRED" if state is PlanState.EXPIRED else "PLAN_CONSUMED"
+        )
     return None
 
 
