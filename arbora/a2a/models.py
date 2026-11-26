@@ -174,13 +174,16 @@ class A2AMessage(_WireModel):
             part.file, A2AInlineMediaFile
         )
 
-    def media_files(self) -> list[tuple[int, A2AInlineMediaFile]]:
-        """The inline media files with their part index."""
+    def media_files(
+        self, exclude: frozenset[str] = frozenset()
+    ) -> list[tuple[int, A2AInlineMediaFile]]:
+        """The inline media files with their part index, less the ``exclude`` types."""
         return [
             (index, part.file)
             for index, part in enumerate(self.parts)
             if isinstance(part, A2AFilePart)
             and isinstance(part.file, A2AInlineMediaFile)
+            and part.file.mime_type not in exclude
         ]
 
     def with_normalized_text(
@@ -192,9 +195,18 @@ class A2AMessage(_WireModel):
         type, size and the derived transcript id); their bytes are not carried on.
         """
         metadata = {**self.metadata, "arboraAttachments": attachments}
+        kept = [
+            part
+            for part in self.parts
+            if isinstance(part, A2AFilePart) and part.file.mime_type in _KEPT_TYPES
+        ]
         return self.model_copy(
-            update={"parts": [A2ATextPart(text=text)], "metadata": metadata}
+            update={"parts": [A2ATextPart(text=text), *kept], "metadata": metadata}
         )
+
+
+#: Parts a model reads as input; normalisation leaves them on the message.
+_KEPT_TYPES = frozenset({"image/png", "image/jpeg", "image/webp"})
 
 
 class A2AContextBudget(_WireModel):
@@ -295,10 +307,12 @@ class A2AListResult(_WireModel):
 class A2AStreamingAuthority(Protocol):
     """Durable, restart-safe event-cursor-backed task-streaming authority.
 
-    ARBORA-A2A-R001's open streaming slice; no implementation is wired yet.
+    ``resume_from_cursor`` opens a stream of the task's durable events after the
+    last ``event_seq`` the caller saw (``ARBORA-A2A-R001.2``); an absent or
+    foreign task answers ``None``.
     """
 
-    def resume_from_cursor(self, task_id: str, cursor: str | None) -> Any: ...
+    async def resume_from_cursor(self, task_id: str, after_seq: int = 0) -> Any: ...
 
 
 @runtime_checkable
