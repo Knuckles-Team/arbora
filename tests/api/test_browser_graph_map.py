@@ -107,3 +107,40 @@ def test_degraded_graphs_and_truncation_pass_through(method: str) -> None:
     )
     assert result == reply
     assert "graph" not in client.sent[0][1]
+
+
+class _EngineRefuses(RecordingClient):
+    def __init__(self, code: str, detail: str) -> None:
+        super().__init__()
+        self.refusal = (code, detail)
+
+    async def _send(
+        self, method: str, params: Any, graph: str, *, idempotency_key: Any = None
+    ) -> Any:
+        from medulla import EngineResponseError
+
+        await super()._send(method, params, graph, idempotency_key=idempotency_key)
+        raise EngineResponseError(*self.refusal)
+
+
+@pytest.mark.spec("ARBORA-OPS-R904.1")
+@pytest.mark.parametrize(
+    ("code", "detail"),
+    [
+        ("UQL_UNEXPECTED_TOKEN", "expected one of: MATCH, TRAVERSE, RETURN"),
+        ("UQL_BUDGET_EXCEEDED", "row budget 10000 exceeded"),
+    ],
+)
+def test_uql_parse_error_lists_expected_tokens(code: str, detail: str) -> None:
+    """The engine's parse and budget refusals reach the caller with their detail intact."""
+    from medulla import EngineResponseError
+
+    client = _EngineRefuses(code, detail)
+    with pytest.raises(EngineResponseError) as refused:
+        asyncio.run(
+            dispatch_eg_method(
+                EgMethod(service="Uql", op="Uql"), {"text": "MATCH ("}, context(client)
+            )
+        )
+    assert refused.value.code == code
+    assert detail in str(refused.value.detail)
