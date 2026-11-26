@@ -122,8 +122,12 @@ def _persona_set(
             raise Refused(BundleRefusal.PERSONA_UNKNOWN, persona) from exc
         raise Refused(BundleRefusal.PERSONA_UNAVAILABLE, exc.code) from exc
     records = value.get("records") if isinstance(value, dict) else None
-    answer = (records[0].get("answer") or {}).get("value") if records else None
-    skills = answer.get("skills") if isinstance(answer, dict) else None
+    answer = None
+    if records:
+        answer = ((records[0] or {}).get("answer") or {}).get("value")
+    if not isinstance(answer, dict):
+        raise Refused(BundleRefusal.PERSONA_UNAVAILABLE, "malformed load set")
+    skills = answer.get("skills")
     if not isinstance(skills, list) or not all(isinstance(s, str) for s in skills):
         raise Refused(BundleRefusal.PERSONA_UNAVAILABLE, "malformed load set")
     digest = hashlib.sha256(

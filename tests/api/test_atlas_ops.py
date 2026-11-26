@@ -18,7 +18,7 @@ async def test_runs_list_refuses_unavailable_until_the_engine_lists_runs() -> No
     )
     assert atlas.RunsListParams(state="failed", connection_id="c").limit == 25
     with pytest.raises(ValidationError):
-        atlas.RunsListParams(state="stuck")
+        atlas.RunsListParams(state="stuck")  # type: ignore[arg-type]
     with pytest.raises(OperationRefused) as refused:
         await atlas.handle_unserved(caller_context(), {}, NO_OP)
     assert refused.value.code == "UNAVAILABLE"

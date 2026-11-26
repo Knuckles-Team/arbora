@@ -88,11 +88,16 @@ def _policy(layer: Layer, held: dict[str, bool | int]) -> None:
         raise LayerRefused("LAYER_MALFORMED", f"{layer.name}.policy")
     for key, value in table.items():
         kind = POLICY_KEYS.get(key)
-        if kind is None or type(value) is not kind or (kind is int and value < 0):
+        if (
+            kind is None
+            or type(value) is not kind
+            or (kind is int and isinstance(value, int) and value < 0)
+        ):
             raise LayerRefused("LAYER_MALFORMED", f"{layer.name}.policy.{key}")
-        if key in held and _loosens(key, held[key], value):
+        setting: bool | int = value if isinstance(value, (bool, int)) else 0
+        if key in held and _loosens(key, held[key], setting):
             raise LayerRefused("LAYER_LOOSENS_POLICY", f"{layer.name}.policy.{key}")
-        held[key] = value
+        held[key] = setting
 
 
 def resolve(
