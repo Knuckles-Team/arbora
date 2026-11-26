@@ -243,6 +243,21 @@ def _not_found_tree(
     )
 
 
+def _head_revision(branch_props: dict[str, Any]) -> str | None:
+    """The Branch node's head revision, or ``None`` when the engine serves none yet.
+
+    The projection stores it as ``head_revision`` (a string id or a non-negative
+    integer). Nothing is derived from the membership edges: a head the engine did not
+    state is unknown, not the newest edge revision.
+    """
+    head = branch_props.get("head_revision")
+    if isinstance(head, bool):
+        return None
+    if isinstance(head, int) and head >= 0:
+        return str(head)
+    return head if isinstance(head, str) and head else None
+
+
 def _revision_of(fv_id: str, revisions: dict[str, dict[str, Any]]) -> str | None:
     """The membership edge's last-touch revision for one live file version."""
     membership = revisions.get(fv_id)
@@ -372,7 +387,7 @@ class NativeSourceReader:
         branches = await _branch_nodes(context, graph, repository=repository, ref=ref)
         if not branches:
             return _not_found_tree(tenant, repository, ref, path, "ref-not-found")
-        branch_id, _branch_props = branches[0]
+        branch_id, branch_props = branches[0]
         prefix = path + "/" if path else ""
         versions = await _live_file_versions(context, graph, branch_id)
         revisions = await _membership_revisions(
@@ -396,6 +411,7 @@ class NativeSourceReader:
             ref=ref,
             path=path,
             found=True,
+            head_revision=_head_revision(branch_props),
             entries=tuple(sorted(children.values(), key=lambda entry: entry.path)),
         )
 

@@ -160,12 +160,19 @@ async def handle_agent(
                         "assistant_profile_ref": params["assistant_profile_ref"],
                     },
                 }
+            from arbora.a2a.source_grant import (
+                resolve_verified_grant,
+                source_grant_scope,
+            )
+
+            grant = await resolve_verified_grant(context)
             try:
-                result = await service.send_message(
-                    message=message,
-                    idempotency_key=context.idempotency_key,
-                    context_budget_tokens=params.get("context_budget_tokens"),
-                )
+                with source_grant_scope(grant):
+                    result = await service.send_message(
+                        message=message,
+                        idempotency_key=context.idempotency_key,
+                        context_budget_tokens=params.get("context_budget_tokens"),
+                    )
             except ModalityRefused as refusal:
                 # ARBORA-OPS-R899.3: a typed refusal on MCP, HTTP and A2A alike.
                 from arbora.api.invoke.pipeline import OperationRefused

@@ -29,6 +29,7 @@ from arbora.mcp_server import runtime
 from arbora.mcp_server.hosted_invocation import HostedInvocation
 from arbora.mcp_server.routes import mount_rest_routes
 from arbora.messaging.intake import configured_platforms, start_messaging_intake
+from arbora.messaging.memory_webhooks import start_memory_webhook_pump
 from arbora.webui_host import run_web_ui
 
 logger = logging.getLogger(__name__)
@@ -1007,6 +1008,10 @@ def start_composed_services(
         start_messaging_intake(supervisor, engine, session, plan.intake_platforms)
     elif plan.messaging_configured:
         logger.info("messaging credentials are present but inbound intake is disabled")
+    from arbora.core.settings import setting
+
+    if _explicitly_true(setting("MEMORY_WEBHOOKS_ENABLED", "")):
+        start_memory_webhook_pump(supervisor, engine, session)
     if plan.web_ui_enabled:
         from functools import partial
 

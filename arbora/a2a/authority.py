@@ -319,11 +319,14 @@ class WorkItemA2AAuthority:
     def _request_digest(
         message: A2AMessage, context_id: str, decision: A2ARouteDecision
     ) -> str:
+        from arbora.a2a.source_grant import bound_source_grant
         from arbora.agent_runs import native_stream_protocol
 
         protocol = native_stream_protocol()
+        grant = bound_source_grant()
         return _digest(
             {
+                **({"source_grant": grant} if grant is not None else {}),
                 **({"host_transport_protocol": protocol} if protocol else {}),
                 "context_id": context_id,
                 "decision": decision.model_dump(mode="json"),
@@ -341,10 +344,13 @@ class WorkItemA2AAuthority:
         decision: A2ARouteDecision,
         model_profile: Any = None,
     ) -> dict[str, Any]:
+        from arbora.a2a.source_grant import work_item_grant_metadata
         from arbora.agent_runs import native_stream_protocol
 
         protocol = native_stream_protocol()
         return {
+            # Only the grant the verified admission bound; never message text.
+            **work_item_grant_metadata(),
             **(
                 {
                     "a2a_model_profile": model_profile.profile,

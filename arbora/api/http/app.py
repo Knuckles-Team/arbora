@@ -16,6 +16,7 @@ from arbora.api.registry import Invoke
 
 from .auth import HTTPAuthenticationError
 from .checkout import make_checkout_endpoint
+from .lineage import mount_lineage_route
 from .openapi import document
 from .routes import _error, make_endpoint
 from .sparql import mount_sparql_protocol
@@ -278,6 +279,15 @@ def create_api_application(
     # and eg.graph.ApplyMutation through the same invoke chokepoint
     # (ARBORA-OPS-R857.1).
     mount_sparql_protocol(
+        app,
+        services=services,
+        authenticate=authenticate,
+        invoke=invoke,
+        is_console_request=auth.is_console_request,
+    )
+    # OpenLineage run events drive eg.ingestion.LineageIngest through the same
+    # chokepoint (ARBORA-OPS-R889).
+    mount_lineage_route(
         app,
         services=services,
         authenticate=authenticate,
