@@ -217,6 +217,31 @@ def _bind_served_fleet(
         )
 
 
+def _register_resident_surface(
+    mcp: Any, fleet_mux: Any, invocation: HostedInvocation | None
+) -> None:
+    """Attach the six verbs and four fleet tools once (ARBORA-OPS-R035.2).
+
+    Runs after the multiplexer is attached and the fleet gateway is bound, so
+    the live authorities exist. A failure aborts startup: a host that served
+    a surface without them would silently lose the governed fleet.
+    """
+    if invocation is None:
+        return
+    from arbora.api.mcp.registration import FleetMCPBinding, register_mcp_tools
+    from arbora.mcp_server.fleet_composition import LateFleetGateway, session_key
+
+    late = getattr(invocation.services.runtime, "bindings", {}).get("fleet_gateway")
+    projection = runtime.SERVED_PROJECTION
+    if not isinstance(late, LateFleetGateway) or late.ops is None or projection is None:
+        raise RuntimeError(
+            "the resident MCP surface needs the bound fleet gateway and the "
+            "served operation projection"
+        )
+    binding = FleetMCPBinding(projection, late.ops, session_key)
+    asyncio.run(register_mcp_tools(mcp, fleet_mux, binding))
+
+
 def _start_catalog_warmup(
     engine: Any,
     session: Any,
@@ -392,6 +417,7 @@ def mcp_server(
 
     register_harness_host(fleet_mux)
     _bind_served_fleet(invocation, fleet_mux, fleet_catalog_reader)
+    _register_resident_surface(mcp, fleet_mux, invocation)
 
     transport = getattr(args, "transport", "stdio")
     host = getattr(args, "host", "127.0.0.1")

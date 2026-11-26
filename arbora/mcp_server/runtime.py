@@ -74,6 +74,8 @@ _FULL_TOOL_NAMES: frozenset[str] = frozenset()
 #: native tools; each call goes through the same invocation pipeline as an
 #: MCP client's call, under the run's verified session.
 NATIVE_INTENT_TOOLS: dict[str, Any] = {}
+#: The served MCP projection ``register_mcp_tools`` binds at startup (ARBORA-OPS-R035.2).
+SERVED_PROJECTION: Any = None
 
 
 def _build_dummy_request(path_params=None, json_body=None):
@@ -1043,7 +1045,8 @@ def _register_served_intent_surface(mcp: Any, invocation: Any) -> Any:
         session_for_request=_served_caller_session,
         credential_kind_for_request=_served_credential_kind,
     )
-    return register_intent_surface(
+    global SERVED_PROJECTION
+    SERVED_PROJECTION = register_intent_surface(
         mcp,
         registry=services.registry,
         services=services,
@@ -1058,6 +1061,7 @@ def _register_served_intent_surface(mcp: Any, invocation: Any) -> Any:
             services.runtime.bindings.get("fleet_gateway"), "fleet_catalog", None
         ),
     )
+    return SERVED_PROJECTION
 
 
 def _attach_headless_fleet_loader(mcp: Any, fleet: Any) -> None:

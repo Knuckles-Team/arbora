@@ -176,7 +176,7 @@ async def _scoped(item: Any, caller: Any) -> bool:
     return bool(item.required_scopes <= scopes)
 
 
-def _session_key(caller: Any) -> str | None:
+def session_key(caller: Any) -> str | None:
     principal = getattr(caller, "principal", None)
     tenant = getattr(caller, "tenant", None)
     if not principal or not tenant:
@@ -214,11 +214,9 @@ def bind_fleet_gateway(
 ) -> Any:
     """Compose the multiplexer operation service and governed gateway; bind both.
 
-    Native per-session tool mounts need the governed MCP visibility cutover
-    (``arbora.api.mcp.registration``); until it is served, a connector tool
-    is called through ``act(op='fleet.call')``, which mounts the child on
-    demand. Load requests therefore refuse instead of mounting a tool every
-    session would see.
+    A loaded connector tool is mounted natively on the host MCP server and
+    shown only to the sessions that loaded it, by the governed visibility
+    middleware ``register_mcp_tools`` installs (ARBORA-OPS-R035.2).
     """
     from arbora.api.invoke.pipeline import invoke
     from arbora.fleet.catalog_composition import compose_multiplexer_ops
@@ -227,14 +225,18 @@ def bind_fleet_gateway(
     async def no_sdk_entries() -> tuple[Mapping[str, Any], ...]:
         return ()
 
-    async def refuse_mount(_item: Any, _forwarder: Any) -> None:
-        raise PermissionError(
-            "native fleet mounts need the governed MCP visibility surface; "
-            "call the tool with act(op='fleet.call')"
-        )
+    from arbora.fleet.multiplexer import clean_tool_name, make_governed_tool_mount
 
-    async def no_notify(_session_key: str) -> bool:
-        return False
+    def native_name(item: Any) -> str:
+        return clean_tool_name(mux.server_prefix(item.server), item.server, item.name)
+
+    # The governed mount adds the forwarder to the host MCP server; the
+    # session-visibility middleware of ``register_mcp_tools`` hides it from
+    # every session that has not loaded it.
+    mount = make_governed_tool_mount(mux._host_mcp, mux, native_name)
+
+    async def notify(_session_key: str) -> bool:
+        return await mux.notify_pending_tools_changed()
 
     async def bound_invoke(op: str, params: Any, caller: Any, surface: Any) -> Any:
         return await invoke(op, params, caller, surface, services=services)
@@ -246,10 +248,11 @@ def bind_fleet_gateway(
         visible=_scoped,
         loadable=_scoped,
         callable_item=_scoped,
-        mount=refuse_mount,
-        notify=no_notify,
+        mount=mount,
+        notify=notify,
+        native_name=native_name,
         invoke=bound_invoke,
-        session_key_for=_session_key,
+        session_key_for=session_key,
         pin_store=_pin_store(services),
     )
 
