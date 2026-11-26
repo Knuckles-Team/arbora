@@ -42,6 +42,8 @@ _WORK_ITEM_PREFIX = "workitem:orchestrator:"
 _A2A_METADATA_SCHEMA = "arbora-a2a-unary-v1"
 #: How long one agent run may hold its WorkItem lease.
 _RUN_LEASE_SECONDS = 600.0
+#: The most content one child message carries (ARBORA-RELEASE-R003.4.12).
+CHILD_INPUT_MAX_BYTES = 16_384
 _TERMINAL = frozenset({"succeeded", "failed", "cancelled", "dead_letter"})
 #: Agent reply text of recent runs, by task id. A WorkItem holds only the
 #: result reference; the durable record is the run's RunEvents in EG. This
@@ -144,6 +146,7 @@ class A2ATaskAuthority(Protocol):
         decision: A2ARouteDecision,
         blocking: bool = True,
         model_profile: Any = None,
+        media: dict[str, Any] | None = None,
     ) -> A2ATask: ...
 
     async def get(self, task_id: str) -> A2ATask | None: ...
@@ -177,8 +180,12 @@ class WorkItemA2AAuthority:
         executor: Any = None,
         task_plan_config: Any = None,
         hosted_invocation: Any = None,
+        events: Any = None,
     ) -> None:
         self._engine_provider = engine_provider
+        #: The durable event publisher (ARBORA-A2A-R001.2); ``None`` publishes
+        #: nothing and leaves streaming unserved.
+        self.events = events
         self._executor = executor
         self._origins = origins
         # Runs admitted by a non-blocking send (ARBORA-A2A-R001.6). The set
@@ -417,6 +424,43 @@ class WorkItemA2AAuthority:
                 ) from exc
             raise
 
+    async def _publish(
+        self,
+        item_id: str,
+        claim: Any,
+        *,
+        task_id: str,
+        context_id: str,
+        kind: str,
+        state: str | None = None,
+        final: bool = False,
+        reply: str | None = None,
+    ) -> None:
+        """Write one A2A-visible run event under the run's lease fence."""
+        if self.events is None:
+            return
+        draft: dict[str, Any] = {
+            "task_id": task_id,
+            "context_id": context_id,
+            "kind": kind,
+            "state": state,
+            "final": final,
+        }
+        if reply is not None:
+            draft["artifact"] = {
+                "artifactId": f"{task_id}:reply",
+                "name": "reply",
+                "parts": [{"kind": "text", "text": reply}],
+            }
+        await self.events.publish(item_id, draft, claim=claim)
+
+    async def owned_item(self, task_id: str) -> dict[str, Any] | None:
+        """The caller's own task record, or ``None`` for an absent or foreign task."""
+        try:
+            return await asyncio.to_thread(self._authorized_item, task_id, "kg:read")
+        except ValueError:
+            return None
+
     def _agent_executor(self) -> Any:
         if self._executor is None:
             from arbora.agent_runs import AgentRunPort
@@ -436,6 +480,7 @@ class WorkItemA2AAuthority:
         task_id: str,
         context_id: str,
         run_id: str | None,
+        media: dict[str, Any] | None = None,
     ) -> Any:
         """Execute only inside the host's revocable native owner scope."""
         from arbora import work_items
@@ -484,6 +529,7 @@ class WorkItemA2AAuthority:
                     task=task,
                     run_id=run_id or task_id or None,
                     allowed_tools=preloaded_agent_tools(agent_name),
+                    **(media or {}),
                 ),
                 session=session,
             )
@@ -499,6 +545,7 @@ class WorkItemA2AAuthority:
         task_id: str = "",
         context_id: str = "",
         run_id: str | None = None,
+        media: dict[str, Any] | None = None,
     ) -> dict[str, int] | None:
         """Lease the WorkItem, run the agent through the harness, commit the outcome.
 
@@ -519,6 +566,15 @@ class WorkItemA2AAuthority:
             return None
         outcome, result_ref, error_ref = "succeeded", None, None
         usage = None
+        reply: str | None = None
+        await self._publish(
+            item_id,
+            claim,
+            task_id=task_id,
+            context_id=context_id,
+            kind="status-update",
+            state="working",
+        )
         try:
             result = await self._execute_claimed_run(
                 work_engine,
@@ -530,6 +586,7 @@ class WorkItemA2AAuthority:
                 task_id=task_id,
                 context_id=context_id,
                 run_id=run_id,
+                media=media,
             )
             if result.run_id != (run_id or task_id):
                 raise RuntimeError("agent result does not belong to this A2A turn")
@@ -538,6 +595,8 @@ class WorkItemA2AAuthority:
             )
             usage = getattr(result, "usage", None)
             remember_task_output(task_id, getattr(result, "output", None))
+            output = getattr(result, "output", None)
+            reply = output if isinstance(output, str) and output else None
         except Exception as exc:  # noqa: BLE001 - a failed run is a failed task
             logging.getLogger(__name__).warning(
                 "A2A run %s failed: %s: %s", item_id, type(exc).__name__, str(exc)[:300]
@@ -551,6 +610,24 @@ class WorkItemA2AAuthority:
             error_ref = persistence_reference(
                 "error", type(exc).__name__, namespace="arbora-a2a"
             )
+        if reply is not None:
+            await self._publish(
+                item_id,
+                claim,
+                task_id=task_id,
+                context_id=context_id,
+                kind="artifact-update",
+                reply=reply[:_MAX_OUTPUT_CHARS],
+            )
+        await self._publish(
+            item_id,
+            claim,
+            task_id=task_id,
+            context_id=context_id,
+            kind="status-update",
+            state="completed" if outcome == "succeeded" else "failed",
+            final=True,
+        )
         completion_kwargs: dict[str, Any] = {}
         if self.task_plan_config is not None:
             completion_kwargs["run_completion"] = {
@@ -628,6 +705,166 @@ class WorkItemA2AAuthority:
                 "native admission notification failed: admitted task canceled"
             ) from None
 
+    #: Refusals the engine decides on a child admission; Arbora passes them through.
+    _CHILD_REFUSALS = frozenset(
+        {
+            "CHILD_TARGET_TERMINAL",
+            "CHILD_REVISION_STALE",
+            "CHILD_OWNER_MISMATCH",
+            "CHILD_LIMIT_EXHAUSTED",
+            "CONTINUATION_HISTORY_UNSUPPORTED",
+            "CONTINUATION_LIFECYCLE_INVALID",
+            "HISTORY_REVISION_CONFLICT",
+        }
+    )
+
+    def _admit(
+        self, request: dict[str, Any], session: Any, owner_ref: str
+    ) -> tuple[str, bool]:
+        from arbora.api.invoke.pipeline import OperationRefused
+
+        _engine, work_engine = self._engine()
+        try:
+            return self._submit_admission(work_engine, session, owner_ref, **request)
+        except OperationRefused:
+            raise
+        except Exception as exc:
+            code = getattr(exc, "code", "")
+            if code == "IDEMPOTENCY_CONFLICT":
+                raise A2AIdempotencyConflict(
+                    "idempotency key conflicts with admission"
+                ) from exc
+            if code in self._CHILD_REFUSALS:
+                raise OperationRefused(code, {}) from None
+            raise
+
+    @staticmethod
+    def _submit_admission(
+        work_engine: Any, session: Any, owner_ref: str, **fields: Any
+    ) -> tuple[str, bool]:
+        from arbora import work_items
+
+        return work_items.submit_work_item_atomic(
+            work_engine,
+            tenant=session.tenant,
+            created_by=owner_ref,
+            **fields,
+        )
+
+    async def admit_child_message(
+        self,
+        *,
+        conversation_target: str,
+        expected_revision: int,
+        content: str,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        """Admit one message to an active child (ARBORA-RELEASE-R003.4.12).
+
+        The identity binds caller, root owner, target, mode and the content digest;
+        the same identity returns the same receipt and different content conflicts.
+        The engine records the admission and the lifecycle revision, the harness
+        delivers at its step boundary, and Arbora keeps no mailbox.
+        """
+        from arbora.api.invoke.pipeline import OperationRefused
+
+        if len(content.encode("utf-8")) > CHILD_INPUT_MAX_BYTES:
+            raise OperationRefused("CHILD_INPUT_TOO_LARGE", {})
+        session = self._session("kg:write")
+        owner_ref = self._owner_ref(session)
+        digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        key = idempotency_key.strip()
+        if not key or len(key) > 512:
+            raise ValueError("A2A idempotency key is invalid")
+        item_id = "child-input:" + _digest(
+            {"tenant": session.tenant, "owner": owner_ref, "key": key}
+        )
+        identity = {
+            "mode": "message",
+            "owner": owner_ref,
+            "target": conversation_target,
+            "content_digest": digest,
+        }
+        created_id, created = await asyncio.to_thread(
+            self._admit,
+            {
+                "kind": "child_input",
+                "work_item_id": item_id,
+                "idempotency_key": key,
+                "queue": "child_input",
+                "payload_ref": conversation_target,
+                "metadata": {**identity, "content": content},
+                "child_input": {
+                    "child_run_id": conversation_target,
+                    "content_digest": digest,
+                    "expected_revision": expected_revision,
+                    "idempotency_key": key,
+                    "state": "queued",
+                },
+            },
+            session,
+            owner_ref,
+        )
+        return {
+            "work_item_id": created_id,
+            "conversation_target": conversation_target,
+            "content_digest": digest,
+            "state": "queued",
+            "created": created,
+        }
+
+    async def admit_continuation(
+        self,
+        *,
+        conversation_target: str,
+        history_revision: int,
+        content: str,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        """Admit one run continuing a completed child (ARBORA-RELEASE-R003.4.13).
+
+        The engine's ``ConversationTurnAdmission`` checks the owner, the completed
+        lifecycle and the history revision; a refusal starts nothing and a terminal
+        run is never reopened. Arbora keeps no history store.
+        """
+        session = self._session("kg:write")
+        owner_ref = self._owner_ref(session)
+        digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        run_id = self._task_id(session.tenant, owner_ref, idempotency_key)
+        item_id, created = await asyncio.to_thread(
+            self._admit,
+            {
+                "kind": "orchestrator_task",
+                "run_id": run_id,
+                "idempotency_key": run_id,
+                "queue": "orchestrator_task",
+                "resource_class": "agent_dispatch",
+                "payload_ref": run_id,
+                "description": content,
+                "metadata": {
+                    "mode": "continuation",
+                    "owner": owner_ref,
+                    "target": conversation_target,
+                    "content_digest": digest,
+                    "a2a_run_id": run_id,
+                },
+                "conversation": {
+                    "context_id": conversation_target,
+                    "expected_revision": history_revision,
+                    "predecessor_run_id": conversation_target,
+                    "schema_version": "1",
+                },
+            },
+            session,
+            owner_ref,
+        )
+        return {
+            "work_item_id": item_id,
+            "run_id": run_id,
+            "predecessor_run_id": conversation_target,
+            "created": created,
+        }
+
     async def dispatch(
         self,
         *,
@@ -636,6 +873,7 @@ class WorkItemA2AAuthority:
         decision: A2ARouteDecision,
         blocking: bool = True,
         model_profile: Any = None,
+        media: dict[str, Any] | None = None,
     ) -> A2ATask:
         if decision.selected_tools:
             # Refuse before durable admission: the current signed AU dispatch
@@ -715,6 +953,7 @@ class WorkItemA2AAuthority:
                     task_id=task_id,
                     context_id=context_id,
                     run_id=run_id,
+                    media=media,
                 ),
                 item_id,
             )
@@ -728,6 +967,7 @@ class WorkItemA2AAuthority:
                 task_id=task_id,
                 context_id=context_id,
                 run_id=run_id,
+                media=media,
             )
             refreshed = await asyncio.to_thread(
                 work_items.get_work_item, work_engine, item_id
@@ -1173,6 +1413,15 @@ class WorkItemA2AAuthority:
         ):
             raise A2ATaskNotCancelable("A2A task is not cancelable")
         self._origins.revoke(cancellation_session, run_id)
+        await self._publish(
+            item_id,
+            None,
+            task_id=task_id,
+            context_id=str(item["metadata"].get("a2a_context_id") or ""),
+            kind="status-update",
+            state="canceled",
+            final=True,
+        )
         current = await asyncio.to_thread(
             work_items.get_work_item, work_engine, item_id
         )

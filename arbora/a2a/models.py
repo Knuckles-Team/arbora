@@ -15,6 +15,8 @@ __all__ = [
     "A2AAgentCapabilities",
     "A2AContextBudget",
     "A2AListResult",
+    "A2AMediaLimits",
+    "A2AMediaRefFile",
     "A2AMessage",
     "A2APushNotificationAuthority",
     "A2AOperationInvokeParams",
@@ -105,6 +107,14 @@ class A2AInlineMediaFile(_WireModel):
         return base64.b64decode(self.bytes, validate=True)
 
 
+class A2AMediaRefFile(_WireModel):
+    """An image carried by upload reference (ARBORA-A2A-R001.5.5)."""
+
+    uri: str = Field(pattern=r"^media:sha256:[0-9a-f]{64}$")
+    mime_type: Literal["image/png", "image/jpeg", "image/webp"]
+    name: str | None = Field(default=None, max_length=256)
+
+
 class A2ADataPart(_WireModel):
     """A structured JSON part; the tool-task extension reads ``toolTask`` from it."""
 
@@ -114,7 +124,7 @@ class A2ADataPart(_WireModel):
 
 class A2AFilePart(_WireModel):
     kind: Literal["file"]
-    file: A2AInlineTextFile | A2AInlineMediaFile
+    file: A2AInlineTextFile | A2AInlineMediaFile | A2AMediaRefFile
 
 
 class A2AMessage(_WireModel):
@@ -153,16 +163,19 @@ class A2AMessage(_WireModel):
             len(part.file.decoded_bytes())
             for part in self.parts
             if isinstance(part, A2AFilePart)
+            and not isinstance(part.file, A2AMediaRefFile)
         )
 
     def task_text(self) -> str:
-        return "\n".join(
-            part.text
-            if isinstance(part, A2ATextPart)
-            else part.file.decoded_bytes().decode("utf-8")
-            for part in self.parts
-            if not self._is_media(part) and not isinstance(part, A2ADataPart)
-        )
+        chunks: list[str] = []
+        for part in self.parts:
+            if isinstance(part, A2ATextPart):
+                chunks.append(part.text)
+            elif isinstance(part, A2AFilePart) and isinstance(
+                part.file, A2AInlineTextFile
+            ):
+                chunks.append(part.file.decoded_bytes().decode("utf-8"))
+        return "\n".join(chunks)
 
     def data_parts(self) -> list[dict[str, Any]]:
         """The structured data parts, in order."""
@@ -171,16 +184,19 @@ class A2AMessage(_WireModel):
     @staticmethod
     def _is_media(part: A2ATextPart | A2AFilePart | A2ADataPart) -> bool:
         return isinstance(part, A2AFilePart) and isinstance(
-            part.file, A2AInlineMediaFile
+            part.file, (A2AInlineMediaFile, A2AMediaRefFile)
         )
 
-    def media_files(self) -> list[tuple[int, A2AInlineMediaFile]]:
-        """The inline media files with their part index."""
+    def media_files(
+        self, exclude: frozenset[str] = frozenset()
+    ) -> list[tuple[int, A2AInlineMediaFile]]:
+        """The inline media files with their part index, less the ``exclude`` types."""
         return [
             (index, part.file)
             for index, part in enumerate(self.parts)
             if isinstance(part, A2AFilePart)
             and isinstance(part.file, A2AInlineMediaFile)
+            and part.file.mime_type not in exclude
         ]
 
     def with_normalized_text(
@@ -192,9 +208,18 @@ class A2AMessage(_WireModel):
         type, size and the derived transcript id); their bytes are not carried on.
         """
         metadata = {**self.metadata, "arboraAttachments": attachments}
+        kept = [
+            part
+            for part in self.parts
+            if isinstance(part, A2AFilePart) and part.file.mime_type in _KEPT_TYPES
+        ]
         return self.model_copy(
-            update={"parts": [A2ATextPart(text=text)], "metadata": metadata}
+            update={"parts": [A2ATextPart(text=text), *kept], "metadata": metadata}
         )
+
+
+#: Parts a model reads as input; normalisation leaves them on the message.
+_KEPT_TYPES = frozenset({"image/png", "image/jpeg", "image/webp"})
 
 
 class A2AContextBudget(_WireModel):
@@ -295,10 +320,12 @@ class A2AListResult(_WireModel):
 class A2AStreamingAuthority(Protocol):
     """Durable, restart-safe event-cursor-backed task-streaming authority.
 
-    ARBORA-A2A-R001's open streaming slice; no implementation is wired yet.
+    ``resume_from_cursor`` opens a stream of the task's durable events after the
+    last ``event_seq`` the caller saw (``ARBORA-A2A-R001.2``); an absent or
+    foreign task answers ``None``.
     """
 
-    def resume_from_cursor(self, task_id: str, cursor: str | None) -> Any: ...
+    async def resume_from_cursor(self, task_id: str, after_seq: int = 0) -> Any: ...
 
 
 @runtime_checkable
@@ -386,6 +413,16 @@ class A2ASkill(_WireModel):
     output_modes: list[str]
 
 
+class A2AMediaLimits(_WireModel):
+    """The admission limit table, published as enforced (ARBORA-A2A-R001.5.6)."""
+
+    allowed_types: list[str]
+    max_file_part_bytes: int
+    max_request_media_bytes: int
+    max_image_parts: int
+    inline_max_bytes: int
+
+
 class A2AAgentCard(_WireModel):
     name: str
     description: str
@@ -409,3 +446,4 @@ class A2AAgentCard(_WireModel):
     default_input_modes: list[str] = Field(default_factory=lambda: ["text/plain"])
     default_output_modes: list[str] = Field(default_factory=lambda: ["text/plain"])
     skills: list[A2ASkill]
+    media: A2AMediaLimits | None = None

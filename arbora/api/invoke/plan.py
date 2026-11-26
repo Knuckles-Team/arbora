@@ -27,6 +27,16 @@ def approval_id_for(plan_ref: str) -> str:
     return APPROVAL_ID_PREFIX + plan_ref.removeprefix("arbora_plan:")
 
 
+def approval_ref_of(idempotency_key: str | None) -> str:
+    """The approval reference a plan-confirmed dispatch carries to its child.
+
+    The pipeline dispatches under the key ``plan:<plan_ref>`` only after it
+    validated and consumed that plan; any other call has no approval.
+    """
+    key = idempotency_key or ""
+    return approval_id_for(key[len("plan:") :]) if key.startswith("plan:") else ""
+
+
 MAX_SEALED_PLAN_BYTES = 16_384
 
 
