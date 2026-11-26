@@ -160,18 +160,97 @@ def _declared_owners(modules: Iterable[str] | None = None) -> dict[str, str]:
     return owners
 
 
+#: Operations whose effect the durable effect journal settles at most once per
+#: request: the replay owner of every write the engine does not replay by key.
+EXTERNAL_EFFECT_OPERATIONS: tuple[str, ...] = (
+    "fleet.call",
+    "fleet.tools.pin",
+    "fleet.tools.unpin",
+    "messaging.alert",
+    "browser.request_call",
+    "eg.graph.ApplyMutation",
+    "access.elevation.request",
+    "agents.goals.cancel",
+    "agents.goals.run",
+    "agents.tasks.cancel",
+    "browser.cancel_call",
+    "browser.execute_call",
+    "browser.issue_lease",
+    "browser.reconcile_call",
+    "browser.revoke_lease",
+    "decide.commit",
+    "federation.sources.share",
+    "federation.sources.unshare",
+    "fleet.catalog.refresh",
+    "fleet.tools.load",
+    "fleet.tools.unload",
+    "ingest.drift.repair_approve",
+    "ingest.drift.repair_propose",
+    "ingest.embedding.admit",
+    "ingest.embedding.reembed",
+    "ingest.jobs.cancel",
+    "ingest.jobs.prioritize",
+    "ingest.repositories.index",
+    "ingest.submissions.create",
+    "knowledge.curation.propose",
+    "knowledge.flag.raise",
+    "knowledge.flag.resolve",
+    "rlm.run",
+    "skills.tier.promote",
+)
+
+
+def _engine_replayed(registry: Any) -> dict[str, str]:
+    """Engine methods that replay by the idempotency key the pipeline forwards."""
+    from arbora.api.registry import EgMethod
+
+    return {
+        op.id: f"medulla:{op.binding.service}"
+        for op in registry
+        if isinstance(op.binding, EgMethod)
+        and op.idempotency == Idempotency.KEY_REQUIRED
+    }
+
+
+def _registered_owners(registry: Any) -> dict[str, str]:
+    return {
+        op_id: owner
+        for op_id, owner in {
+            **_engine_replayed(registry),
+            **_declared_owners(),
+        }.items()
+        if registry.get(op_id) is not None
+    }
+
+
+def uncovered_write_operations(registry: Any) -> list[str]:
+    """Write, act and admin operations that no replay owner settles.
+
+    An operation is covered by a declared native owner, by the effect journal's
+    operation list, or by a plan gate (the one confirmed-replay owner).
+    """
+    owned = _registered_owners(registry)
+    journal = frozenset(EXTERNAL_EFFECT_OPERATIONS)
+    return sorted(
+        op.id
+        for op in registry
+        if op.effect != Effect.READ
+        and op.id not in owned
+        and op.id not in journal
+        and op.confirm not in _PLAN_GATED_CONFIRMS
+    )
+
+
 def _with_owned_idempotency(services: Any) -> dict[str, str]:
     """Declared owners plus each registered operation whose authority owns replay.
 
     ``agents.run`` derives its A2A task id from the idempotency key, so every
     composition that registers it serves it without a separate declaration.
     """
-    owned = {
-        op_id: owner
-        for op_id, owner in _declared_owners().items()
-        if services.registry.get(op_id) is not None
+    return {
+        **_registered_owners(services.registry),
+        **dict(services.native_idempotency),
     }
-    return {**owned, **dict(services.native_idempotency)}
 
 
 @dataclass(frozen=True, slots=True)

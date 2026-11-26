@@ -30,7 +30,9 @@ CLASSES = ("user", "domain", "service-only", "approver", "admin")
 
 def installed_registry_bytes() -> bytes:
     """The scopes the installed engine's run-time method catalog serves."""
-    from medulla import engine
+    import importlib
+
+    engine = importlib.import_module("medulla.engine")
 
     scopes = json.loads(engine.method_catalog())["scopes"]
     return json.dumps({"scopes": scopes}, sort_keys=True, separators=(",", ":")).encode(

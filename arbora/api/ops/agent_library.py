@@ -272,6 +272,14 @@ def _mutate(op_id: str, summary: str, example: str, params: type[Params]) -> OpS
     )
 
 
+#: Writes the engine replays by the idempotency key the pipeline forwards.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "agents.library.create": "medulla:AgentLibrary",
+    "agents.library.update": "medulla:AgentLibrary",
+    "agents.library.delete": "medulla:AgentLibrary",
+}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         _read(
