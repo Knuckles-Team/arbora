@@ -155,3 +155,28 @@ def verify_datapoint(datapoint: Any, signature_b64: str, public_key_b64_: str) -
         return True
     except Exception:  # noqa: BLE001 — any verify failure is a rejection, not an error
         return False
+
+
+class ArboraSigner:
+    """Arbora's one Ed25519 signer, as raw-byte signing for detached attestations.
+
+    It reads the same key as :func:`sign_datapoint` and adds no second key. The
+    key id is the SHA-256 prefix of the public key, so a verifier finds the key
+    it must trust without any secret. With no configured key (development), the
+    process-local ephemeral key signs only when ``allow_ephemeral`` is set; a
+    served attestation never signs with a key nobody can verify later.
+    """
+
+    def __init__(self, *, allow_ephemeral: bool = False) -> None:
+        if not signing_available():
+            raise RuntimeError("ed25519 signing is unavailable")
+        if not allow_ephemeral and not is_configured():
+            raise RuntimeError("the arbora signing key is not configured")
+        public = public_key_b64() or ""
+        self.key_id = "arbora-" + hashlib.sha256(_b64d(public)).hexdigest()[:16]
+
+    def sign(self, data: bytes) -> bytes:
+        key = _private_key()
+        if key is None:
+            raise RuntimeError("ed25519 signing is unavailable")
+        return key.sign(data)
