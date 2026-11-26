@@ -14,6 +14,7 @@ from arbora.api.ops import (
     browser,
     capacity,
     catalog,
+    chats,
     config_layers,
     dashboard,
     decide,
@@ -55,6 +56,7 @@ from arbora.api.ops import (
     telemetry,
     usage,
     work,
+    workspace_files,
     workstreams,
 )
 from arbora.api.registry import (
@@ -120,6 +122,9 @@ _CURATED_SCOPES = (
     "identity:self",
     "identity:admin",
     "profile:write",
+    "chats:own",
+    "workspace:read",
+    "workspace:write",
     "telemetry:write",
 )
 
@@ -176,6 +181,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *capacity.operations(),
         *decide.operations(),
         *catalog.operations(),
+        *chats.operations(),
         *config_layers.operations(),
         *dashboard.operations(),
         *decision_evidence.operations(),
@@ -210,6 +216,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *source.operations(),
         *swarm.operations(),
         *work.operations(),
+        *workspace_files.operations(),
         *workstreams.operations(),
         *ops.operations(),
         *participants.operations(),

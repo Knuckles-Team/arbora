@@ -29,6 +29,7 @@ def get_registry() -> Registry:
         browser,
         capacity,
         catalog,
+        chats,
         config_layers,
         dashboard,
         decide,
@@ -69,6 +70,7 @@ def get_registry() -> Registry:
         telemetry,
         usage,
         work,
+        workspace_files,
         workstreams,
     )
 
@@ -80,6 +82,7 @@ def get_registry() -> Registry:
         browser,
         capacity,
         catalog,
+        chats,
         config_layers,
         decide,
         development,
@@ -120,6 +123,7 @@ def get_registry() -> Registry:
         telemetry,
         usage,
         work,
+        workspace_files,
         workstreams,
     ):
         for op in module.operations():
