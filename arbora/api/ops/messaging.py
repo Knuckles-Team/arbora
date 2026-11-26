@@ -162,6 +162,7 @@ async def handle_messaging_alert(
 NATIVE_IDEMPOTENCY: dict[str, str] = {
     "webhook.memory.subscribe": "medulla:KvCas",
     "webhook.memory.unsubscribe": "medulla:KvDelete",
+    "messaging.inbox.send": "medulla:TopicAppend",
 }
 
 
@@ -238,6 +239,112 @@ async def handle_webhook_list(
     }
 
 
+class InboxSendParams(Params):
+    recipient_session_id: str = Field(min_length=1, max_length=256)
+    body: str = Field(min_length=1, max_length=65536)
+
+
+class InboxReadParams(Params):
+    session_id: str = Field(min_length=1, max_length=256)
+    cursor: str | None = Field(default=None, max_length=512)
+    limit: int = Field(default=50, ge=1, le=200)
+
+
+class InboxResult(Params):
+    value: dict[str, Any]
+
+
+def _inbox_topic(tenant: str, session_id: str) -> str:
+    return f"inbox/{tenant}/{session_id}"
+
+
+async def _session_props(context: Any, session_id: str) -> Mapping[str, Any] | None:
+    """The ``ClientSession`` node of the caller's tenant, or ``None``."""
+    from arbora.api.ops._engine import decode, engine_send
+    from arbora.api.ops.workstreams import _props
+    from arbora.identity.client_session import session_node_id
+
+    node = session_node_id(str(context.caller.tenant), session_id)
+    rows = decode(
+        await engine_send(context, "GetNodePropertiesBatch", {"node_ids": [node]})
+    )
+    for row in rows or ():
+        if isinstance(row, (list, tuple)) and len(row) == 2 and row[0] == node:
+            return _props(row[1])
+    return None
+
+
+async def _audit_inbox(context: Any, event: Mapping[str, str]) -> None:
+    services = context.operation_services
+    if services is not None:
+        await services.audit_write(dict(event), AuditClass.EVENT, context.caller)
+
+
+async def handle_inbox_send(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Deliver to a recipient session after sender-to-recipient authorization.
+
+    The sender is the verified caller. An unknown session answers
+    ``INBOX_RECIPIENT_UNKNOWN``; a session of another principal the sender may not reach
+    answers ``INBOX_SEND_DENIED``. Either refusal enqueues nothing.
+    """
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.pin_lag.medulla import send_main
+
+    caller = context.caller
+    recipient = await _session_props(context, params["recipient_session_id"])
+    if recipient is None:
+        raise OperationRefused("INBOX_RECIPIENT_UNKNOWN")
+    own = str(recipient.get("principal")) == str(caller.principal)
+    if not own and "identity:admin" not in caller.effective_scopes:
+        raise OperationRefused("INBOX_SEND_DENIED")
+    answer = await send_main(
+        context,
+        "TopicAppend",
+        {
+            "topic": _inbox_topic(str(caller.tenant), params["recipient_session_id"]),
+            "payload": params["body"],
+            "sender": str(caller.principal),
+        },
+        idempotent=True,
+    )
+    delivery = dict(answer) if isinstance(answer, Mapping) else {}
+    await _audit_inbox(
+        context,
+        {
+            "op": "messaging.inbox.send",
+            "sender": str(caller.principal),
+            "recipient": str(recipient.get("principal")),
+            "recipient_session_id": params["recipient_session_id"],
+            "delivery_id": str(delivery.get("offset", delivery.get("id", ""))),
+            "tenant": str(caller.tenant),
+        },
+    )
+    return {"value": delivery}
+
+
+async def handle_inbox_read(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Read only the caller's own inbox; a foreign session answers as absent."""
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.pin_lag.medulla import send_main
+
+    caller = context.caller
+    session = await _session_props(context, params["session_id"])
+    if session is None or str(session.get("principal")) != str(caller.principal):
+        raise OperationRefused("INBOX_RECIPIENT_UNKNOWN")
+    request: dict[str, Any] = {
+        "topic": _inbox_topic(str(caller.tenant), params["session_id"]),
+        "limit": int(params.get("limit", 50)),
+    }
+    if params.get("cursor"):
+        request["cursor"] = params["cursor"]
+    answer = await send_main(context, "TopicRead", request)
+    return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         build_write_op(
@@ -269,6 +376,26 @@ def operations() -> tuple[OpSpec, ...]:
             result=WebhookResult,
             handler="arbora.api.ops.messaging.handle_webhook_list",
             scope="webhook:manage",
+        ),
+        build_write_op(
+            op_id="messaging.inbox.send",
+            verb=Verb.ACT,
+            summary="Send a message to a client session's inbox",
+            examples=("message that session",),
+            params=InboxSendParams,
+            result=InboxResult,
+            handler="arbora.api.ops.messaging.handle_inbox_send",
+            scope="bus:write",
+        ),
+        build_read_op(
+            op_id="messaging.inbox.read",
+            verb=Verb.ASK,
+            summary="Read the messages waiting in the caller's own session inbox",
+            examples=("read my session inbox",),
+            params=InboxReadParams,
+            result=InboxResult,
+            handler="arbora.api.ops.messaging.handle_inbox_read",
+            scope="bus:read",
         ),
         OpSpec(
             id="messaging.alert",
