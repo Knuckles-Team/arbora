@@ -113,7 +113,7 @@ R001/R010 durable replay and host receipt/log acceptance remain pending under th
 | Requirement | Planned test | Acceptance |
 |---|---|---|
 | ARBORA-A2A-R006.2.1.1 | `tests/a2a/test_verified_caller_bridge.py::test_http_retains_and_refreshes_verified_caller` | Preserve request-bound caller identity and refuse before downstream calls. |
-| ARBORA-A2A-R006.2.2 | `tests/a2a/test_verified_caller_bridge.py::test_serving_composition_reaches_shared_invoke` | Production composition reaches shared invocation and proves operation-specific surface parity. |
+| ARBORA-A2A-R006.2.2 | `tests/a2a/test_verified_caller_bridge.py::test_serving_composition_reaches_shared_invoke` (planned) | Production composition reaches shared invocation and proves operation-specific surface parity. |
 
 ## Detached signature validation
 
@@ -191,7 +191,7 @@ Rows below name tests that are planned or only partly built. Each entry restates
 | Test | Requirement | Planned test and expected observation |
 |---|---|---|
 | A2A-PL01 | ARBORA-A2A-R002.2.1 | No arbora-side test is possible against the current AU carrier contract. Verified by the fail-closed tests bound to `ARBORA-A2A-R002.1` continuing to refuse rather than silently drop the filter. Tracked as the explicit cross-repo dependency recorded in `tasks.md`. Test: `tests/a2a/test_authority.py::test_selected_tool_subset_is_refused_before_durable_admission`. |
-| A2A-PL02 | ARBORA-A2A-R005.2.1 | Test: `tests/a2a/test_grant_store.py::test_concurrent_consume_succeeds_once` (L2) runs 8 concurrent consumes against a loopback engine and asserts one success. `::test_expired_and_revoked_grants_refuse` asserts the refusal codes. Served proof is `ARBORA-A2A-R005.2.5`. |
+| A2A-PL02 | ARBORA-A2A-R005.2.1 | Test: `tests/a2a/test_grant_store.py::test_concurrent_consume_succeeds_once` (planned) (L2) runs 8 concurrent consumes against a loopback engine and asserts one success. `::test_expired_and_revoked_grants_refuse` asserts the refusal codes. Served proof is `ARBORA-A2A-R005.2.5`. |
 | A2A-PL03 | ARBORA-A2A-R011 | Test: `tests/a2a/test_transition_history.py::test_history_matches_engine_ledger_exactly` (L3) runs `tasks/get` against a loopback engine and asserts the entries equal the ledger, plus a foreign-tenant refusal. |
 | A2A-PL04 | ARBORA-A2A-R012.3 | Test: `tests/a2a/test_transition_history.py::test_get_task_raises_typed_refusal_without_authority` (L2) covers the absent and the raising authority. |
 | A2A-PL05 | ARBORA-A2A-R015 | Test: `tests/a2a/test_agent_card.py::test_served_card_matches_wired_authorities` (L3) compares the advertised set with the exercised set. |
