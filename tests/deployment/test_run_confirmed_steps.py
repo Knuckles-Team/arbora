@@ -116,3 +116,69 @@ def test_a_changed_graph_refuses_plan_mismatch_and_a_toolless_node_refuses() -> 
         )
     assert toolless.value.code == "INVALID_ARGUMENT"
     assert pipeline.calls == []
+
+
+class Probe:
+    """The read-only reachability and compatibility probe of reused components."""
+
+    def __init__(self, healthy: dict[str, bool]) -> None:
+        self.healthy = healthy
+        self.probed: list[str] = []
+
+    async def __call__(self, component: str) -> bool:
+        self.probed.append(component)
+        return self.healthy.get(component, False)
+
+
+@pytest.mark.spec("ARBORA-DEPLOY-R013.3")
+def test_injected_update_for_reused_service_makes_zero_calls() -> None:
+    # An update node injected against a reused component refuses before any call,
+    # whether or not the probe finds the service healthy.
+    graph = {
+        "shape": {
+            "nodes": [
+                {
+                    "node_id": "update-engine",
+                    "slot": "apply",
+                    "component_id": "service:engine",
+                    "tool": {"server": "ops", "tool": "update_service"},
+                }
+            ]
+        }
+    }
+    pipeline = Pipeline()
+    probe = Probe({"service:engine": True})
+    with pytest.raises(OperationRefused) as refused:
+        asyncio.run(
+            run_confirmed_steps(
+                pipeline,
+                "caller",
+                graph,
+                plan_digest=graph_digest(graph),
+                reuse=["service:engine"],
+                probe_reused=probe,
+            )
+        )
+    assert refused.value.code == "REUSE_COMPONENT_MUTATION"
+    assert pipeline.calls == [] and probe.probed == []
+    # An unreachable reused service refuses and never falls back to deploying it.
+    unreachable = Probe({})
+    with pytest.raises(OperationRefused) as down:
+        _run(Pipeline(), reuse=["service:engine"], probe_reused=unreachable)
+    assert down.value.code == "REUSE_UNREACHABLE"
+    assert down.value.details == {"component_id": "service:engine"}
+
+
+@pytest.mark.spec("ARBORA-DEPLOY-R013.3")
+def test_healthy_reused_service_connects_without_mutation() -> None:
+    pipeline = Pipeline()
+    probe = Probe({"service:engine": True, "service:cache": True})
+    outcome = _run(
+        pipeline, reuse=["service:engine", "service:cache"], probe_reused=probe
+    )
+    assert outcome["ok"] is True
+    # Each reused component is probed once, read-only, and no mutation touches it.
+    assert sorted(probe.probed) == ["service:cache", "service:engine"]
+    assert all(call[0] == "fleet.call" for call in pipeline.calls)
+    assert not any("service:" in call[1]["tool"] for call in pipeline.calls)
+    assert len(pipeline.calls) == 3
