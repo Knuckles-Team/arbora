@@ -25,13 +25,15 @@ from tests.test_served_operation_api import SCOPES
 TENANT = "tenant:one"
 
 
-def person(name: str, tenant: str = TENANT) -> ActorContext:
+def person(
+    name: str, tenant: str = TENANT, extra_scopes: tuple[str, ...] = ()
+) -> ActorContext:
     return ActorContext(
         actor_id=f"person:{name}",
         actor_type=ActorType.HUMAN,
         tenant_id=tenant,
         authenticated=True,
-        roles=SCOPES,
+        roles=(*SCOPES, *extra_scopes),
         credential_expires_at=int(time.time()) + 3600,
     )
 
@@ -126,8 +128,13 @@ def route_methods(
 class McpAsk:
     """The served MCP intent surface over the captured invocation."""
 
-    def __init__(self, invocation: Any, monkeypatch: pytest.MonkeyPatch) -> None:
-        process = request_identity.mint_graph_session(person("one"))
+    def __init__(
+        self,
+        invocation: Any,
+        monkeypatch: pytest.MonkeyPatch,
+        caller: ActorContext | None = None,
+    ) -> None:
+        process = request_identity.mint_graph_session(caller or person("one"))
         monkeypatch.setattr(mcp_runtime, "_PROCESS_SESSION", process)
         self.mcp = FastMCP("served-ops")
         mcp_runtime._register_served_intent_surface(self.mcp, invocation)
