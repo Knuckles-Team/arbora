@@ -15,6 +15,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from arbora.api.errors import EngineRefusal, FleetRefusal
+from arbora.api.invoke.agent_ref import bind_agent_ref
 from arbora.api.invoke.audit import EffectJournal, EffectReservation, audit_event
 from arbora.api.invoke.executor import (
     OperationRuntime,
@@ -1382,6 +1383,10 @@ async def invoke(
     if isinstance(resolved, OpError):
         return resolved
     effective_op, verified, decision = resolved
+    bound_arguments = bind_agent_ref(effective_op, arguments, verified)
+    if isinstance(bound_arguments, OpError):
+        return bound_arguments
+    arguments = bound_arguments
     hooked = await _input_hooks(
         op, arguments, verified, surface, services, hooks_enabled
     )

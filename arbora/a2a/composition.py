@@ -15,6 +15,7 @@ from .authority import WorkItemA2AAuthority
 from .event_log import A2AEventLog, A2AEventStreams, StreamClock
 from .history import EngineTransitionHistory
 from .media_refs import SessionMediaRefStore
+from .push import PushDeliveryWorker
 from .routing import OrchestratorA2ARouter
 from .service import A2ACardMetadata, A2AService
 
@@ -65,8 +66,11 @@ def build_a2a_service(
         hosted_invocation=hosted_invocation,
         events=log,
     )
+    push = PushDeliveryWorker(authority)
+    authority.push = push
     return A2AService(
         authority=authority,
+        push=push,
         router=OrchestratorA2ARouter(engine_provider),
         card_metadata=card_metadata or A2ACardMetadata(),
         streaming=A2AEventStreams(

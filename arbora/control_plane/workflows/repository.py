@@ -25,6 +25,7 @@ from .domain import (
     StableId,
     Version,
     WorkflowDefinition,
+    WorkflowRegistryIdentity,
     WorkflowResolution,
     WorkflowSummary,
     resolution_digest,
@@ -136,6 +137,11 @@ class WorkflowRepository(Protocol):
     ) -> ReleasePointer:
         """Atomically replace a pointer if its complete prior value matches."""
 
+    def match(
+        self, workflow_id: str, version: str | None = None, channel: str = "stable"
+    ) -> WorkflowRegistryIdentity | None:
+        """The registry identity of one exact version or one channel head, or ``None``."""
+
 
 class InMemoryWorkflowRepository:
     """Thread-safe deterministic reference repository.
@@ -168,6 +174,24 @@ class InMemoryWorkflowRepository:
     def read_pointer(self, workflow_id: str, channel: str) -> ReleasePointer | None:
         with self._lock:
             return self._pointers.get((workflow_id, channel))
+
+    def match(
+        self, workflow_id: str, version: str | None = None, channel: str = "stable"
+    ) -> WorkflowRegistryIdentity | None:
+        with self._lock:
+            if version is None:
+                pointer = self._pointers.get((workflow_id, channel))
+                if pointer is None:
+                    return None
+                version = pointer.version
+            definition = self._versions.get((workflow_id, version))
+            if definition is None:
+                return None
+            return WorkflowRegistryIdentity(
+                workflow_id=workflow_id,
+                version=version,
+                content_digest=definition.definition_digest,
+            )
 
     def compare_and_set_pointer(
         self,

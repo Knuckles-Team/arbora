@@ -530,7 +530,10 @@ def record_run_event(event: Mapping[str, Any]) -> None:
         logger.warning("run event not persisted: invalid event identity")
         return
     from arbora.agent_host.port_backends import TERMINALS
+    from arbora.agent_host.usage_ledger import forward_step_usage
 
+    if event_type == "step_usage":
+        forward_step_usage(event)
     status = event.get("status")
     if isinstance(status, str):
         canonical_run_status(status, str(event.get("previous_status") or ""))
@@ -641,10 +644,20 @@ class AgentRunPort:
             ):
                 raise RuntimeError("UPGRADE_REQUIRED: native run stream observer")
             kwargs["stream_observer"] = observer
-        with self._origins.agent_run_origin_scope(
-            session, request.agent_name, request.run_id
-        ):
-            result = await self._executor.execute_agent(request, **kwargs)
+        from arbora.agent_host.usage_ledger import LEDGER, flush_usage
+
+        LEDGER.bind(
+            request.run_id,
+            tenant=str(getattr(session, "tenant", "") or ""),
+            principal=str(getattr(session, "principal", "") or ""),
+        )
+        try:
+            with self._origins.agent_run_origin_scope(
+                session, request.agent_name, request.run_id
+            ):
+                result = await self._executor.execute_agent(request, **kwargs)
+        finally:
+            await flush_usage(request.run_id)
         return AgentExecutionResult(
             run_id=result.run_id,
             output=result.output,

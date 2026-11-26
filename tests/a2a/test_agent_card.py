@@ -86,3 +86,40 @@ def test_card_withholds_history_the_pinned_engine_would_refuse() -> None:
     card = client.get("/.well-known/agent-card.json", headers=HEADERS).json()
     assert card["capabilities"]["stateTransitionHistory"] is False
     assert inspect.iscoroutinefunction(EngineTransitionHistory.transition_history)
+
+
+@pytest.mark.spec("ARBORA-A2A-R013.3")
+def test_push_capability_follows_wired_worker() -> None:
+    from arbora.a2a.application import create_a2a_application
+    from arbora.a2a.service import A2AService
+    from tests.a2a._push_support import world
+    from tests.a2a.test_application import Authenticator, Authority, Router
+
+    def card(service: A2AService) -> dict[str, Any]:
+        client = TestClient(
+            create_a2a_application(service=service, authenticator=Authenticator())
+        )
+        return client.get("/.well-known/agent-card.json", headers=HEADERS).json()[
+            "capabilities"
+        ]
+
+    unwired = A2AService(authority=Authority(), router=Router())
+    assert card(unwired)["pushNotifications"] is False
+    worker = world().worker
+    wired = A2AService(authority=Authority(), router=Router(), push=worker)
+    assert card(wired)["pushNotifications"] is True
+    # The unwired method is unknown, so the card and the table agree.
+    client = TestClient(
+        create_a2a_application(service=unwired, authenticator=Authenticator())
+    )
+    response = client.post(
+        "/a2a",
+        headers=HEADERS,
+        json={
+            "jsonrpc": "2.0",
+            "id": "x",
+            "method": "tasks/pushNotificationConfig/set",
+            "params": {"id": "t", "url": "https://hooks.example.test/a"},
+        },
+    )
+    assert response.status_code == 404
