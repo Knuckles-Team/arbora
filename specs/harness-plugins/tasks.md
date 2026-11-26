@@ -54,4 +54,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Tasks run p
 - [ ] T048 [US4] ARBORA-HARNESS-PLUGINS-R012 Hook events report skill use through the door, with no prompt text
 - [ ] T049 [US4] ARBORA-HARNESS-PLUGINS-R013 Bundle configuration comes from six layers that only add
 - [ ] T050 [US4] ARBORA-HARNESS-PLUGINS-R014 A role persona selects the installed skill set
-- [ ] T051 [US4] ARBORA-HARNESS-PLUGINS-R015 A skill bundle never carries its own connector file
+- [x] T051 [US4] ARBORA-HARNESS-PLUGINS-R015 A skill bundle never carries its own connector file
