@@ -1,0 +1,38 @@
+"""Reef encrypted channel channel adapter (ARBORA-MESSAGING-R009).
+
+Inbound is a long-lived outbound connection with a bounded reconnect backoff.
+Credentials: ``setting('MESSAGING_REEF_TOKEN')``.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any, ClassVar
+
+from arbora.messaging.backends._channel_http import HttpChannelBackend
+
+
+class ReefBackend(HttpChannelBackend):
+    """Reef encrypted channel backend."""
+
+    platform: ClassVar[str] = "reef"
+    inbound_mode: ClassVar[str] = "stream"
+    send_path: ClassVar[str] = "/v1/send"
+
+    def send_body(
+        self, channel_id: str, text: str, *, thread_id: str, reply_to_id: str
+    ) -> dict[str, Any]:
+        return {
+            "conversation": channel_id,
+            "text": text,
+            **({"thread": thread_id} if thread_id else {}),
+        }
+
+    def fields(self, raw: Mapping[str, Any]) -> Mapping[str, Any] | None:
+        return {
+            "channel_id": raw.get("conversation", ""),
+            "user_id": raw.get("peer", ""),
+            "text": raw.get("text", ""),
+            "id": raw.get("id", ""),
+            "thread_id": raw.get("thread", ""),
+        }

@@ -2,7 +2,7 @@
 
 CONCEPT:MERISTEM-OS.config.gateway-service-dashboard — Gateway Service Dashboard
 
-Provides the widget registry, data aggregation, and API layer that all
+Provides data aggregation over the served widget read, and API layer that all
 three frontends (overstory, agent-terminal-ui, geniusbot) use to render
 Homepage-style service dashboards.
 
@@ -15,7 +15,6 @@ Usage::
 
     from arbora.gateway import Aggregator, ConfigManager
     from arbora.gateway.models import WidgetData, DashboardLayout
-    from arbora.gateway.registry import get_registry
 """
 
 from arbora.gateway.models import (
@@ -24,22 +23,15 @@ from arbora.gateway.models import (
     ServiceConfig,
     ServiceGroup,
     WidgetData,
-    WidgetField,
-    WidgetRegistration,
 )
-from arbora.gateway.registry import Registry, get_registry
 from arbora.version import __version__ as __version__
 
 __all__ = [
     "Aggregator",
     "ConfigManager",
     "DashboardLayout",
-    "Registry",
     "ServiceCategory",
     "ServiceConfig",
     "ServiceGroup",
     "WidgetData",
-    "WidgetField",
-    "WidgetRegistration",
-    "get_registry",
 ]

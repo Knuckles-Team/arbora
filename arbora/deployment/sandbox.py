@@ -67,10 +67,41 @@ def _free_port() -> int:
         return int(probe.getsockname()[1])
 
 
+def resolve_engine(pinned: str | None = None, installed: str | None = None) -> str:
+    """The engine version the sandbox starts: the one the package pins, or a refusal.
+
+    ARBORA-DEPLOY-R019.2: the pin is read from the installed package metadata
+    (the exact ``medulla==X`` requirement). An available engine that differs
+    refuses ``SANDBOX_ENGINE_VERSION_MISMATCH`` naming both versions; a
+    different engine is never started silently.
+    """
+    from importlib import metadata
+
+    if pinned is None:
+        requirement = next(
+            (
+                r
+                for r in metadata.requires("arbora") or ()
+                if r.split(";")[0].replace(" ", "").startswith("medulla==")
+            ),
+            "",
+        )
+        pinned = requirement.split(";")[0].replace(" ", "").removeprefix("medulla==")
+    if installed is None:
+        installed = metadata.version("medulla")
+    if not pinned or installed != pinned:
+        raise SandboxPrincipalRefusal(
+            "SANDBOX_ENGINE_VERSION_MISMATCH",
+            f"the engine is {installed}, the lock pins {pinned or 'none'}",
+        )
+    return pinned
+
+
 def up(args: argparse.Namespace, *, hold: bool = True) -> dict[str, Any]:
     """Start the engine and mint principals; the summary names no secret."""
     from arbora.mcp_server.composition import LocalEngineConfig, ensure_local_engine
 
+    resolve_engine()
     root = _root(args.root)
     state = root / STATE_FILE
     if state.exists():

@@ -13,12 +13,19 @@ from dataclasses import dataclass
 from enum import StrEnum
 from urllib.parse import urlsplit
 
+#: The native public client of ``ARBORA-IDENTITY-R030.4``.
+NATIVE_CLIENT_ID = "arbora-native-mcp"
+#: The confidential client of a hosted agent (``ARBORA-HARNESS-PLUGINS-R010.2``).
+HOSTED_CLIENT_ID = "arbora-hosted-mcp"
+
 
 class HookKind(StrEnum):
     #: The harness calls an MCP tool of the door directly from a hook.
     MCP_TOOL = "mcp_tool"
     #: The harness runs ``arbora plugin hook`` with the login credential.
     COMMAND = "command"
+    #: The agent runs on a vendor cloud and has no hook (``hosted``).
+    NONE = "none"
 
 
 class Lifecycle(StrEnum):
@@ -41,9 +48,11 @@ class Part(StrEnum):
 @dataclass(frozen=True)
 class HarnessProfile:
     id: str
-    #: The manifest file, relative to the bundle root.
-    manifest: str
-    #: The fixed loopback redirect URI of the native client for this harness.
+    #: The manifest file, relative to the bundle root; ``None`` for a profile
+    #: that writes no plugin manifest (``hosted``).
+    manifest: str | None
+    #: The fixed loopback redirect URI of the native client for this harness;
+    #: empty for a profile with no loopback callback (``hosted``).
     callback: str
     hook_kind: HookKind
     #: ``(lifecycle point, harness event)``; a point with no event is absent.
@@ -56,12 +65,17 @@ class HarnessProfile:
     skill_dirs: tuple[str, ...]
     #: Hook timeout unit of the harness hook file.
     timeout_unit: str = "seconds"
+    #: The OAuth client the bundle names (the native public client by default).
+    client_id: str = NATIVE_CLIENT_ID
 
     def event(self, point: Lifecycle) -> str | None:
         return dict(self.events).get(point)
 
     @property
-    def callback_port(self) -> int:
+    def callback_port(self) -> int | None:
+        """The loopback callback port, or ``None`` for a profile with no callback."""
+        if not self.callback:
+            return None
         port = urlsplit(self.callback).port
         assert port is not None
         return port
@@ -130,6 +144,17 @@ PROFILES: tuple[HarnessProfile, ...] = (
         door_configs=(".grok/settings.json", ".grok/mcp.json"),
         skill_dirs=(".grok/skills",),
     ),
+    HarnessProfile(
+        id="hosted",
+        manifest=None,
+        callback="",
+        hook_kind=HookKind.NONE,
+        events=(),
+        parts=frozenset({Part.SKILLS, Part.MCP}),
+        door_configs=(),
+        skill_dirs=(),
+        client_id=HOSTED_CLIENT_ID,
+    ),
 )
 
 _BY_ID = {p.id: p for p in PROFILES}
@@ -145,6 +170,8 @@ def profile_ids() -> tuple[str, ...]:
 
 
 __all__ = [
+    "HOSTED_CLIENT_ID",
+    "NATIVE_CLIENT_ID",
     "PROFILES",
     "HarnessProfile",
     "HookKind",

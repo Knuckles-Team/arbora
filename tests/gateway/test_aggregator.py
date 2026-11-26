@@ -1,184 +1,117 @@
-"""Tests for arbora.gateway.aggregator — migrated from service-dashboard-core."""
+"""The dashboard aggregator reads widgets through ``ecosystem.widgets.read``.
 
-from types import SimpleNamespace
+There is no widget registry and no gateway widget module; one path serves every
+widget (ARBORA-OPS-R914).
+"""
+
+from __future__ import annotations
+
+import importlib.util
+from collections.abc import Mapping
+from typing import Any
 
 import pytest
 
-import arbora.gateway.aggregator as aggregator_module
-from arbora.gateway.aggregator import Aggregator
+from arbora.gateway.aggregator import WIDGET_READ_OP, Aggregator, widget_data
 from arbora.gateway.config import ConfigManager
 from arbora.gateway.models import (
     DashboardLayout,
     ServiceCategory,
     ServiceConfig,
     ServiceGroup,
-    WidgetData,
-)
-from arbora.gateway.registry import Registry
-from arbora.gateway.widgets.base import BaseWidget
-from arbora.security.actor_context import ActorContext
-
-# ARBORA-FLEET-R032: these tests never want a real process-identity token
-# minted (that needs live credential config this suite does not have); they
-# stand in a fake, already-verified service session the same shape
-# `_service_authority` caches, so `_run_as_service_actor` has a real actor to
-# bind without touching `mint_process_identity`.
-_TEST_SERVICE_ACTOR = ActorContext(
-    actor_id="test-gateway-service",
-    roles=("service",),
-    tenant_id="test-tenant",
-    authenticated=True,
 )
 
 
-@pytest.fixture(autouse=True)
-def _fake_service_authority(monkeypatch: pytest.MonkeyPatch) -> None:
-    # `use_session` revalidates at the ambient boundary via
-    # `session.__post_init__()` even for a caller-constructed stand-in, so
-    # this fake must offer a (no-op) one too, exactly like a real
-    # ``GraphSession``'s.
-    session = SimpleNamespace(
-        actor=_TEST_SERVICE_ACTOR,
-        ensure_authority_current=lambda **_kw: None,
-        __post_init__=lambda: None,
+def _manager(tmp_path: Any, *widget_types: str) -> ConfigManager:
+    manager = ConfigManager(config_path=tmp_path / "services.yaml")
+    services = [
+        ServiceConfig(
+            id=f"{kind}-test",
+            name=kind,
+            widget_type=kind,
+            category=ServiceCategory.INFRASTRUCTURE,
+        )
+        for kind in widget_types
+    ]
+    manager.save(DashboardLayout(groups=[ServiceGroup(name="g", services=services)]))
+    return manager
+
+
+class _Reads:
+    def __init__(self, replies: Mapping[str, Any]) -> None:
+        self.replies = replies
+        self.widgets: list[str] = []
+
+    async def __call__(self, widget: str) -> Any:
+        self.widgets.append(widget)
+        reply = self.replies[widget]
+        if isinstance(reply, BaseException):
+            raise reply
+        return reply
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-OPS-R914")
+async def test_each_service_is_read_through_the_one_served_operation(tmp_path) -> None:
+    read = _Reads(
+        {
+            "portainer": {
+                "rows": [{"key": "running", "label": "running", "value": 4}],
+                "source": "portainer",
+                "degraded": False,
+                "fetched_at": "t",
+            },
+            "arr": {
+                "rows": [{"title": "one"}],
+                "source": "arr",
+                "degraded": True,
+                "fetched_at": "t",
+            },
+        }
     )
-    monkeypatch.setattr(aggregator_module, "_service_authority", lambda: session)
+    agg = Aggregator(config_manager=_manager(tmp_path, "portainer", "arr"))
 
+    results = await agg.fetch_all(read)
 
-class MockWidget(BaseWidget):
-    service_type = "portainer"
-    display_name = "Portainer"
-
-    def get_fields(self):
-        return []
-
-    def fetch_data(self, config: ServiceConfig) -> WidgetData:
-        return WidgetData(
-            status="healthy",
-            fields={"cpu": 12.5, "memory": 45.2},
-            raw={"summary": "Portainer healthy with 2 running containers."},
-        )
+    assert sorted(read.widgets) == ["arr", "portainer"]
+    assert results["portainer-test"].status == "ok"
+    assert results["portainer-test"].fields == {"running": 4}
+    assert results["arr-test"].status == "degraded"
+    assert results["arr-test"].fields == {"rows": [{"title": "one"}]}
+    assert WIDGET_READ_OP == "ecosystem.widgets.read"
 
 
 @pytest.mark.asyncio
-async def test_aggregator_fetch_all(tmp_path):
-    # Setup registry with MockWidget
-    registry = Registry()
-    registry._widgets["portainer"] = MockWidget
+@pytest.mark.spec("ARBORA-OPS-R914")
+async def test_a_failed_read_is_one_error_widget_and_an_unknown_id_is_absent(
+    tmp_path,
+) -> None:
+    read = _Reads({"portainer": RuntimeError("secret detail")})
+    agg = Aggregator(config_manager=_manager(tmp_path, "portainer"))
 
-    # Setup ConfigManager with one service
-    config_file = tmp_path / "services.yaml"
-    config_manager = ConfigManager(config_path=config_file)
+    failed = await agg.fetch_one("portainer-test", read)
+    missing = await agg.fetch_one("nope", read)
 
-    services = [
-        ServiceConfig(
-            id="portainer-test",
-            name="Portainer Test",
-            widget_type="portainer",
-            url="http://localhost:9000",
-            category=ServiceCategory.INFRASTRUCTURE,
-        )
-    ]
-    group = ServiceGroup(name="Infrastructure", services=services)
-    layout = DashboardLayout(groups=[group])
-    config_manager.save(layout)
-
-    # Run aggregator
-    agg = Aggregator(registry=registry, config_manager=config_manager)
-    results = await agg.fetch_all()
-
-    assert "portainer-test" in results
-    assert results["portainer-test"].status == "healthy"
-    assert results["portainer-test"].fields["cpu"] == 12.5
-    assert results["portainer-test"].raw is not None
-    assert (
-        results["portainer-test"].raw.get("summary")
-        == "Portainer healthy with 2 running containers."
-    )
+    assert failed.status == "error"
+    assert "secret detail" not in (failed.error or "")
+    assert failed.raw is not None and "correlation_id" in failed.raw
+    assert missing.status == "error" and "not found" in (missing.error or "")
+    assert read.widgets == ["portainer"]
 
 
 @pytest.mark.asyncio
-async def test_aggregator_fetch_one(tmp_path):
-    registry = Registry()
-    registry._widgets["portainer"] = MockWidget
+@pytest.mark.spec("ARBORA-OPS-R914")
+async def test_health_is_the_read_not_degrading(tmp_path) -> None:
+    ok = {"rows": [], "source": "a", "degraded": False, "fetched_at": "t"}
+    read = _Reads({"portainer": ok, "arr": {**ok, "degraded": True}})
+    agg = Aggregator(config_manager=_manager(tmp_path, "portainer", "arr"))
 
-    config_file = tmp_path / "services.yaml"
-    config_manager = ConfigManager(config_path=config_file)
-
-    services = [
-        ServiceConfig(
-            id="portainer-test",
-            name="Portainer Test",
-            widget_type="portainer",
-            url="http://localhost:9000",
-            category=ServiceCategory.INFRASTRUCTURE,
-        )
-    ]
-    group = ServiceGroup(name="Infrastructure", services=services)
-    layout = DashboardLayout(groups=[group])
-    config_manager.save(layout)
-
-    agg = Aggregator(registry=registry, config_manager=config_manager)
-    result = await agg.fetch_one("portainer-test")
-    assert result.status == "healthy"
-
-    # Fetch non-existent
-    result_fail = await agg.fetch_one("non-existent")
-    assert result_fail.status == "error"
-    assert result_fail.error is not None
-    assert "not found" in result_fail.error
+    assert await agg.health_check(read) == {"portainer-test": True, "arr-test": False}
 
 
-class _ActorObservingWidget(BaseWidget):
-    """Records the actor bound at fetch time (ARBORA-FLEET-R032).
-
-    Before the fix, `widget._safe_fetch` ran on a plain `ThreadPoolExecutor`
-    thread with no contextvars copied from the submitting coroutine, so
-    `current_actor()` found nothing bound and raised — the same shape as the
-    `Authenticated local process context required` failure every real fleet
-    widget hit. This widget surfaces that same call so the Aggregator's fix
-    is observed directly rather than inferred from a fleet widget's error.
-    """
-
-    service_type = "actor-observer"
-    display_name = "Actor Observer"
-    observed_actor_id: str | None = None
-
-    def get_fields(self):
-        return []
-
-    def fetch_data(self, config: ServiceConfig) -> WidgetData:
-        from arbora.security.actor_context import current_actor
-
-        actor = current_actor()
-        type(self).observed_actor_id = str(actor.actor_id)
-        return WidgetData(status="healthy")
-
-
-@pytest.mark.asyncio
-@pytest.mark.spec("ARBORA-FLEET-R032")
-async def test_aggregator_fetch_binds_service_actor(tmp_path):
-    """A widget fetch through the Aggregator observes the bound service actor."""
-    registry = Registry()
-    registry._widgets["actor-observer"] = _ActorObservingWidget
-    _ActorObservingWidget.observed_actor_id = None
-
-    config_file = tmp_path / "services.yaml"
-    config_manager = ConfigManager(config_path=config_file)
-    services = [
-        ServiceConfig(
-            id="actor-observer-test",
-            name="Actor Observer Test",
-            widget_type="actor-observer",
-            url="http://localhost:9999",
-            category=ServiceCategory.INFRASTRUCTURE,
-        )
-    ]
-    group = ServiceGroup(name="Infrastructure", services=services)
-    config_manager.save(DashboardLayout(groups=[group]))
-
-    agg = Aggregator(registry=registry, config_manager=config_manager)
-    result = await agg.fetch_one("actor-observer-test")
-
-    assert result.status == "healthy"
-    assert _ActorObservingWidget.observed_actor_id == _TEST_SERVICE_ACTOR.actor_id
+@pytest.mark.spec("ARBORA-OPS-R914")
+def test_the_gateway_widget_package_and_registry_are_gone() -> None:
+    assert importlib.util.find_spec("arbora.gateway.widgets") is None
+    assert importlib.util.find_spec("arbora.gateway.registry") is None
+    reply = {"rows": [], "source": "x", "degraded": False, "fetched_at": "t"}
+    assert widget_data(reply).fields == {"rows": []}

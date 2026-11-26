@@ -163,6 +163,10 @@ HEALTH_PATHS: frozenset[str] = frozenset(
 # Remote metrics must authenticate just like any other operational endpoint.
 UNAUTHENTICATED_PATHS: frozenset[str] = HEALTH_PATHS
 
+# The shared signed inbound webhook route (ARBORA-MESSAGING-R008.1) carries no
+# bearer: the adapter's signature check over the raw body is its only admission.
+SIGNED_INGRESS_PREFIX = "/api/v1/messaging/inbound/"
+
 # Network MCP transports expose arbora to many clients at once. Serving them
 # without server-validated identity is the "security fails open" condition, so
 # the served profile is enforced for these transports (CONCEPT:MERISTEM-OS.identity.authenticated-identity-enforcement).
@@ -1394,7 +1398,9 @@ class ActorIdentityMiddleware:
         """Handle the ``actor is None`` case: 401 unless ``path`` is exempt,
         in which case it is served under an explicit non-authoritative
         health-probe actor with no inherited GraphSession."""
-        if path not in UNAUTHENTICATED_PATHS:
+        if path not in UNAUTHENTICATED_PATHS and not path.startswith(
+            SIGNED_INGRESS_PREFIX
+        ):
             await _send_json(
                 send,
                 401,

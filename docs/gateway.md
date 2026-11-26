@@ -22,22 +22,14 @@ observable rather than silently selecting another implementation.
 
 ## Connector widgets
 
-Dashboard widgets retain only presentation and response-projection logic in
-`arbora.gateway.widgets`. They do not import connector packages or
-construct vendor API clients. Each connector operation is resolved from the
-served multiplexer tool catalog and invoked with
-`MCPMultiplexer.delegate_server_tool()` through
-`run_on_served_multiplexer()`. Credentials, TLS, child lifecycle, and tool
-admission therefore remain at the connector/fleet boundary.
+The dashboard holds no widget code and no widget registry. Each configured
+service names a connector of the fleet census as its widget, and the dashboard
+reads it through the served operation `ecosystem.widgets.read` under the
+caller's own identity. The operation projects the connector's read-only tool
+that needs no argument, from the catalog the connector's pack imported, and
+calls it through `fleet.call`. Credentials, TLS, child lifecycle and tool
+admission therefore stay at the connector and fleet boundary.
 
-<ol class="site-flow" aria-label="Connector widget request flow">
-  <li class="site-flow__step"><span class="site-flow__title">Schedule</span><span class="site-flow__body">The dashboard aggregator assigns work to a bounded widget worker.</span></li>
-  <li class="site-flow__step"><span class="site-flow__title">Project</span><span class="site-flow__body">Arbora retains only presentation and response projection.</span></li>
-  <li class="site-flow__step"><span class="site-flow__title">Resolve</span><span class="site-flow__body">The served multiplexer resolves the operation from the verified catalog.</span></li>
-  <li class="site-flow__step"><span class="site-flow__title">Delegate</span><span class="site-flow__body">The admitted connector child performs the source-specific operation.</span></li>
-  <li class="site-flow__step"><span class="site-flow__title">Return</span><span class="site-flow__body">The response returns through the same multiplexer and projection.</span></li>
-</ol>
-
-A connector absent from the Medulla-backed catalog, an ambiguous operation, or a
-child failure produces the widget's existing correlation-safe error shape.
-Arbora never falls back to package importability or direct vendor credentials.
+A connector that is down gives a `degraded` widget with the last rows read for
+that tenant. A connector absent from the census gives an error widget. Arbora
+never falls back to package importability or direct vendor credentials.

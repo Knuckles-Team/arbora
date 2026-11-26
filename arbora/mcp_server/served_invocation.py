@@ -863,6 +863,7 @@ def compose_served_invocation(
     invocation = HostedInvocation(
         services=services,
         approval_chain=approval_chain,
+        engine_send=gate_send,
         task_plan_config=task_plan_config,
         process_startup=process_startup,
         background_services=_background_services(services, runtime, graph, session),

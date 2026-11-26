@@ -18,7 +18,7 @@ medulla).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 #: The durable four-family MCP resource/template set this gate reconciles.
 MCP_RESOURCE_FAMILIES: frozenset[str] = frozenset(
@@ -118,6 +118,25 @@ class PublicationRefusedError(Exception):
     def __init__(self, result: PublicationGateResult) -> None:
         self.result = result
         super().__init__(f"{result.code}: publication refused (reason={result.reason})")
+
+
+def receipt_from_engine(wire: Any) -> ReconciliationReceipt | None:
+    """The one place an engine receipt becomes a ``ReconciliationReceipt``.
+
+    ``wire`` is the engine's ``McpCatalogReconciliationReceipt`` (or ``None`` for
+    a foreign or absent tenant, which answers like an absent one). Nothing here
+    issues a receipt (ARBORA-MCP-RESOURCES-R002); a malformed wire value is
+    refused by the gate as ``invalid`` rather than repaired.
+    """
+    if wire is None:
+        return None
+    return ReconciliationReceipt(
+        tenant_id=wire.tenant_id,
+        catalog_generation=wire.catalog_generation,
+        snapshot_digest=str(wire.snapshot_digest),
+        acknowledged_families=frozenset(wire.acknowledged_families),
+        issued_at_ms=wire.issued_at_ms,
+    )
 
 
 def require_reconciled_for_swap(

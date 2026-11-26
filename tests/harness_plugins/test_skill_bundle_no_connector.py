@@ -38,7 +38,7 @@ def test_mcp_json_inside_a_skill_refuses_the_bundle(
         with pytest.raises(TreeRefused) as refused:
             render(_bundle(skill_root, prof.id), out)  # type: ignore[arg-type]
         assert refused.value.code == "SKILL_BUNDLE_HAS_CONNECTOR_FILE"
-        assert not (out / prof.manifest).exists()
+        assert not (out / (prof.manifest or "playbook.md")).exists()
 
 
 def test_a_clean_skill_still_renders(skill_root: Path, tmp_path: Path) -> None:
