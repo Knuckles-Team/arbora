@@ -66,6 +66,7 @@ def get_registry() -> Registry:
         telemetry,
         usage,
         work,
+        workstreams,
     )
 
     curated: list[OpSpec] = []
@@ -113,6 +114,7 @@ def get_registry() -> Registry:
         telemetry,
         usage,
         work,
+        workstreams,
     ):
         for op in module.operations():
             if isinstance(op.binding, Composite):

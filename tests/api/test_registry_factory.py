@@ -52,6 +52,7 @@ from arbora.api.ops import (
     telemetry,
     usage,
     work,
+    workstreams,
 )
 from arbora.api.registry import (
     Composite,
@@ -67,6 +68,8 @@ from tests.api._catalog import method_row, scope_row
 from tests.api.test_eg_binding import _curated, _fixture
 
 _CURATED_SCOPES = (
+    "workstream:read",
+    "workstream:write",
     "query:unified",
     "query:nl",
     "kg:read",
@@ -200,6 +203,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *source.operations(),
         *swarm.operations(),
         *work.operations(),
+        *workstreams.operations(),
         *ops.operations(),
         *plans.operations(),
         *preferences.operations(),

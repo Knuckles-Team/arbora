@@ -691,3 +691,71 @@ arbora:HarnessCredentialMachine_revoked-begin-authorizing a owl:Class ;
     :fromState arbora:HarnessCredentialRevoked ;
     :toState arbora:HarnessCredentialAuthorizing ;
     :firedBy arbora:HarnessCredentialMachine_Event_begin .
+
+# ---------------------------------------------------------------------------
+# Workstream attachment (ARBORA-HARNESS-PLUGINS-R004.5).
+# Python: AttachmentState, AttachmentEvent, ATTACH_EDGES in arbora/api/ops/workstreams.py.
+# ---------------------------------------------------------------------------
+
+arbora:WorkstreamAttachmentMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Workstream attachment" ;
+    rdfs:comment "One harness session on one workstream. A checkpoint is valid only while attached; a detach of a detached session is a no-op result, not a transition." ;
+    :initialState arbora:WorkstreamAttachmentDetached ;
+    :hasState arbora:WorkstreamAttachmentDetached ,
+        arbora:WorkstreamAttachmentAttached .
+
+arbora:WorkstreamAttachmentState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Workstream attachment state" .
+
+arbora:WorkstreamAttachmentTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Workstream attachment transition" .
+
+arbora:WorkstreamAttachmentEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Workstream attachment event" .
+
+arbora:WorkstreamAttachmentTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Workstream attachment transition refused" ;
+    rdfs:comment "IllegalAttachTransition, code ATTACH_TRANSITION_ILLEGAL. The attachment state does not change." .
+
+arbora:WorkstreamAttachmentDetached a owl:Class ;
+    rdfs:subClassOf arbora:WorkstreamAttachmentState ;
+    :storedForm "detached" .
+
+arbora:WorkstreamAttachmentAttached a owl:Class ;
+    rdfs:subClassOf arbora:WorkstreamAttachmentState ;
+    :storedForm "attached" .
+
+arbora:WorkstreamAttachmentMachine_Event_attach a owl:Class ;
+    rdfs:subClassOf arbora:WorkstreamAttachmentEvent ;
+    :storedForm "attach" .
+
+arbora:WorkstreamAttachmentMachine_Event_checkpoint a owl:Class ;
+    rdfs:subClassOf arbora:WorkstreamAttachmentEvent ;
+    :storedForm "checkpoint" .
+
+arbora:WorkstreamAttachmentMachine_Event_detach a owl:Class ;
+    rdfs:subClassOf arbora:WorkstreamAttachmentEvent ;
+    :storedForm "detach" .
+
+arbora:WorkstreamAttachmentMachine_detached-attach-attached a owl:Class ;
+    rdfs:subClassOf arbora:WorkstreamAttachmentTransition ;
+    :fromState arbora:WorkstreamAttachmentDetached ;
+    :toState arbora:WorkstreamAttachmentAttached ;
+    :firedBy arbora:WorkstreamAttachmentMachine_Event_attach .
+
+arbora:WorkstreamAttachmentMachine_attached-checkpoint-attached a owl:Class ;
+    rdfs:subClassOf arbora:WorkstreamAttachmentTransition ;
+    :fromState arbora:WorkstreamAttachmentAttached ;
+    :toState arbora:WorkstreamAttachmentAttached ;
+    :firedBy arbora:WorkstreamAttachmentMachine_Event_checkpoint .
+
+arbora:WorkstreamAttachmentMachine_attached-detach-detached a owl:Class ;
+    rdfs:subClassOf arbora:WorkstreamAttachmentTransition ;
+    :fromState arbora:WorkstreamAttachmentAttached ;
+    :toState arbora:WorkstreamAttachmentDetached ;
+    :firedBy arbora:WorkstreamAttachmentMachine_Event_detach .
