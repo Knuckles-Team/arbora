@@ -156,6 +156,64 @@ async def _binding_tools(context: Any, instance_id: str) -> list[str]:
     ]
 
 
+def client_session_id(caller: Any) -> str:
+    """The opening session of a caller: its session reference claim, else the MCP session."""
+    claims = getattr(caller, "engine_claims", None) or {}
+    reference = claims.get("session_ref") if hasattr(claims, "get") else None
+    if reference:
+        return str(reference)
+    from arbora.api.mcp.caller import mcp_request_ref
+
+    ref = mcp_request_ref()
+    parts = ref.split(":", 2)
+    return parts[1] if len(parts) == 3 and parts[0] == "mcp" and parts[1] != "-" else ""
+
+
+def _with_client_session(context: Any, message: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Attribute a run to the session that opened it (ARBORA-IDENTITY-R026.3)."""
+    caller = context.caller
+    if not getattr(caller, "authenticated", False):
+        return message
+    session_id = client_session_id(caller)
+    if not session_id:
+        from arbora.api.invoke.pipeline import OperationRefused
+
+        raise OperationRefused("CLIENT_SESSION_MISSING")
+    return {
+        **message,
+        "metadata": {
+            **(message.get("metadata") or {}),
+            "client_session_id": session_id,
+            "client_principal": str(caller.principal),
+        },
+    }
+
+
+async def _audit_run(
+    context: Any,
+    op: OpSpec,
+    params: Mapping[str, Any],
+    result: Any,
+    *,
+    failed: bool = False,
+) -> None:
+    """One audit event for the orchestrated run (ARBORA-IDENTITY-R026.4)."""
+    services = context.operation_services
+    if services is None:
+        return
+    from arbora.api.invoke.audit import run_audit_event
+    from arbora.api.registry import AuditClass
+
+    event = run_audit_event(
+        result,
+        context.caller,
+        op=op,
+        params=params,
+        result_status="failed" if failed else "ok",
+    )
+    await services.audit_write(event, AuditClass.EVENT, context.caller)
+
+
 async def handle_agent(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
@@ -183,6 +241,7 @@ async def handle_agent(
                         "assistant_profile_ref": params["assistant_profile_ref"],
                     },
                 }
+            message = _with_client_session(context, message)
             from arbora.a2a.source_grant import (
                 resolve_verified_grant,
                 source_grant_scope,
@@ -200,7 +259,12 @@ async def handle_agent(
                 # ARBORA-OPS-R899.3: a typed refusal on MCP, HTTP and A2A alike.
                 from arbora.api.invoke.pipeline import OperationRefused
 
+                await _audit_run(context, op, params, {}, failed=True)
                 raise OperationRefused(refusal.arbora_code, refusal.details()) from None
+            except Exception:
+                await _audit_run(context, op, params, {}, failed=True)
+                raise
+            await _audit_run(context, op, params, result)
         elif op.id == "agents.tasks.get":
             result = await service.get_task(params["task_id"])
             if result is None:

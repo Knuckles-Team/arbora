@@ -851,6 +851,11 @@ def compose_served_invocation(
         client = await pool.connected_client(connect_context(tenant), graph)
         return decode(await send_by_id(client, method, params, graph))
 
+    # ARBORA-IDENTITY-R019.3: the resource gate asks the engine for each decision, behind
+    # the capability guard (PIN-LAG); a pinned release without the method refuses.
+    from arbora.access.host_ports import resource_gate_for_host
+
+    changes.setdefault("resource_gate", resource_gate_for_host(gate_send))
     services = build_invoke_services(
         gate_send=gate_send,
         registry=registry,
