@@ -48,6 +48,7 @@ from arbora.api.ops import (
     research,
     retrieval,
     runs,
+    schedules,
     schema,
     security,
     sessions,
@@ -134,6 +135,8 @@ _CURATED_SCOPES = (
     "telemetry:write",
     "agent:library-read",
     "agent:library-write",
+    "loops:read",
+    "loops:control",
 )
 
 _ENGINE_METHODS = {
@@ -225,6 +228,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *research.operations(),
         *retrieval.operations(),
         *runs.operations(),
+        *schedules.operations(),
         *schema.operations(),
         *source.operations(),
         *swarm.operations(),
