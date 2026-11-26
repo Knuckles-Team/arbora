@@ -14,3 +14,4 @@ pending_engine_scopes:
   - skills:author
   - skills:eval
   - skills:review
+  - webhook:manage
