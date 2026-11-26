@@ -112,3 +112,45 @@ def test_timing_is_validated_and_correlated_to_turn_receipts(app: Any) -> None:
     answer = ask("ask", "usage.read", {"context_id": "ctx-1"})
     assert answer["ok"] is True, answer
     assert answer["result"]["session"]["recorded_runs"] == 2
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.3")
+def test_usage_read_reaches_engine_ledger_for_the_caller_tenant(
+    served: Any,  # noqa: F811
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    http, client = served
+    seen: list[dict[str, Any]] = []
+    rollup = {
+        "view": "rollup",
+        "days": [
+            {
+                "day": 20,
+                "model_key": "m",
+                "calls": 3,
+                "errors": 1,
+                "tokens_in": 10,
+                "tokens_out": 4,
+                "tokens_cached": 2,
+                "cost_micro": None,
+            }
+        ],
+    }
+
+    def usage(params: dict[str, Any], _principal: str) -> Any:
+        seen.append(params)
+        return rollup
+
+    route_methods(
+        client,
+        {"Usage": usage},
+        monkeypatch,
+        {
+            "fixture-verified": person("one", extra_scopes=("usage:read",)),
+        },
+    )
+    answer = _value(_call(http, "usage.read", {"from_ms": 5, "to_ms": 99}))
+    assert answer == rollup
+    assert seen == [{"op": {"op": "read", "view": "rollup", "from_ms": 5, "to_ms": 99}}]
+    backwards = _call(http, "usage.read", {"from_ms": 9, "to_ms": 3})
+    assert backwards.status_code == 400

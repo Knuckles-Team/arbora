@@ -16,12 +16,18 @@ the entry's EG version.
 from __future__ import annotations
 
 import json
+import logging
 from collections.abc import Mapping
 from typing import Any, Literal
 
 from pydantic import Field
 
 from arbora.api.ops._common import Params, build_read_op, build_write_op
+from arbora.api.ops.memory_files import (
+    MemoryFilesList,
+    MemoryFilesRead,
+    MemoryFilesSave,
+)
 from arbora.api.registry import OpSpec
 
 #: The one EG KV namespace that holds every memory entry.
@@ -36,6 +42,7 @@ Scope = Literal["principal", "shared"]
 #: EG replays each KV write by its idempotency key (``OperationIdentity``),
 #: so the engine owns these operations' replay.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "memory.files.save": "medulla:SyncMemorySnapshot",
     "memory.write": "medulla:KvPut/KvCas",
     "memory.delete": "medulla:KvDelete",
 }
@@ -261,8 +268,138 @@ async def handle_memory_delete(
     }
 
 
+async def _decoded(result: Any, method: str, decoder: Any) -> dict[str, Any]:
+    from medulla.generated._runtime import OpaqueResult
+
+    return decoder(OpaqueResult(method, _payload(result))).model_dump(
+        mode="json", exclude_none=False
+    )
+
+
+async def handle_memory_files_read(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Read one document head or retained revision, with its head facts."""
+    from medulla.generated.graph import decode_read_memory_snapshot
+
+    request: dict[str, Any] = {"doc_id": params["doc_id"]}
+    if params.get("revision") is not None:
+        request["revision"] = params["revision"]
+    result = await _send(context, "ReadMemorySnapshot", request, None)
+    return {
+        "value": await _decoded(
+            result, "ReadMemorySnapshot", decode_read_memory_snapshot
+        )
+    }
+
+
+async def handle_memory_files_list(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """List document heads under a prefix; the cursor passes through unchanged."""
+    from medulla.generated.graph import decode_list_memory_snapshots
+
+    request: dict[str, Any] = {
+        "prefix": params.get("prefix", ""),
+        "limit": min(200, max(1, int(params.get("limit", 50)))),
+    }
+    if params.get("cursor") is not None:
+        request["cursor"] = params["cursor"]
+    result = await _send(context, "ListMemorySnapshots", request, None)
+    return {
+        "value": await _decoded(
+            result, "ListMemorySnapshots", decode_list_memory_snapshots
+        )
+    }
+
+
+async def handle_memory_files_save(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Submit or resolve one document. The engine decides; Arbora never merges.
+
+    After the engine accepts or resolves a head, the projection is written to
+    the hosted directory and then acknowledged (ARBORA-OPS-R024.4.4).
+    """
+    from medulla.generated.graph import (
+        decode_read_memory_snapshot,
+        decode_sync_memory_snapshot,
+    )
+
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.api.ops.memory_files import digest_matches, sync_outcome, sync_request
+
+    materializer = context.services.get("memory_materializer")
+    if materializer is None:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "memory file materializer is not bound"}
+        )
+    materializer.root()
+    content, digest = params.get("content"), params.get("content_digest")
+    if content is not None and not digest_matches(content, digest or ""):
+        raise OperationRefused("INVALID_ARGUMENT", {"field": "content_digest"})
+    materializer.path_for(params["doc_id"])
+    key = context.idempotency_key or ""
+    result = await _send(context, "SyncMemorySnapshot", sync_request(params, key), key)
+    raw = await _decoded(result, "SyncMemorySnapshot", decode_sync_memory_snapshot)
+    value = sync_outcome(raw)
+    if raw["outcome"] not in ("accepted", "resolved"):
+        return {"value": value}
+    head = raw["head"]
+    text = content
+    if text is None or raw["outcome"] == "resolved":
+        read = await _send(
+            context, "ReadMemorySnapshot", {"doc_id": params["doc_id"]}, None
+        )
+        text = (
+            await _decoded(read, "ReadMemorySnapshot", decode_read_memory_snapshot)
+        )["content"]
+    value["materialized"] = False
+    if materializer.write(params["doc_id"], text):
+        try:
+            await _send(
+                context,
+                "SyncMemorySnapshot",
+                materializer.acknowledgment(params["doc_id"], head, key),
+                f"{key}:ack",
+            )
+            value["materialized"] = True
+        except Exception as error:  # noqa: BLE001 - the head stands; the report is retried
+            logging.getLogger(__name__).warning(
+                "memory file acknowledgment failed: %s", type(error).__name__
+            )
+    return {"value": value}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
+        build_read_op(
+            op_id="memory.files.read",
+            summary="Read one memory file head or retained revision",
+            examples=("read this memory file", "open my notes document"),
+            params=MemoryFilesRead,
+            result=MemoryResult,
+            handler="arbora.api.ops.memory.handle_memory_files_read",
+            scope="memory:read",
+        ),
+        build_read_op(
+            op_id="memory.files.list",
+            summary="List memory file heads under a prefix",
+            examples=("list my memory files", "which notes documents exist"),
+            params=MemoryFilesList,
+            result=MemoryResult,
+            handler="arbora.api.ops.memory.handle_memory_files_list",
+            scope="memory:read",
+        ),
+        build_write_op(
+            op_id="memory.files.save",
+            summary="Save a memory file revision or resolve its conflict",
+            examples=("save this memory file", "resolve the conflict in my notes"),
+            params=MemoryFilesSave,
+            result=MemoryResult,
+            handler="arbora.api.ops.memory.handle_memory_files_save",
+            scope="memory:write",
+        ),
         build_read_op(
             op_id="memory.read",
             summary="Read one of the caller's memory entries with its version",
@@ -313,6 +450,9 @@ __all__ = [
     "MemoryResult",
     "MemoryWriteParams",
     "handle_memory_delete",
+    "handle_memory_files_list",
+    "handle_memory_files_read",
+    "handle_memory_files_save",
     "handle_memory_list",
     "handle_memory_read",
     "handle_memory_write",

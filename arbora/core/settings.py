@@ -425,6 +425,11 @@ class ArboraConfig(BaseModel):
     kg_loop_mine_discovery: bool = Field(
         default=True, alias="KG_LOOP_MINE_DISCOVERY", description=""
     )
+    memory_files_root: str | None = Field(
+        default=None,
+        alias="MEMORY_FILES_ROOT",
+        description="Directory that holds the hosted projection of the versioned memory files. Unset refuses every memory.files.save (ARBORA-OPS-R024.4.4).",
+    )
     kg_policy_version: str | None = Field(
         default=None,
         alias="KG_POLICY_VERSION",

@@ -66,8 +66,8 @@ The fixture must enter REST and MCP, traverse authorization and registration, an
 |---|---|---|---|
 | ARBORA-OPS-R021.4.1 | `tests/api/test_runs_served.py::test_reader_binding` | Both operations reach the bound reader with caller authority. | Missing binding returns `UNAVAILABLE` with no engine call. |
 | ARBORA-OPS-R021.4.2 | `tests/api/test_runs_served.py::test_validated_trace_readback` | An ingested trace and decision edge survive engine readback. | Invalid ingestion stores nothing; another tenant cannot reveal the trace. |
-| ARBORA-OPS-R021.4.3 | `tests/api/test_runs_served.py::test_metrics_grouping_and_abstention` | Mixed solved and failed traces preserve engine cost and grouping. | Zero solved traces abstain; malformed numeric values refuse. |
-| ARBORA-OPS-R021.4.4 | `tests/api/test_runs_served.py::test_metrics_authority` | Authorized filters reach the engine unchanged. | Denied scope makes no engine call; no local aggregate replaces failure. |
+| ARBORA-OPS-R021.4.3 | `tests/api/test_runs_served.py::test_metrics_grouping_and_abstention` (planned) | Mixed solved and failed traces preserve engine cost and grouping. | Zero solved traces abstain; malformed numeric values refuse. |
+| ARBORA-OPS-R021.4.4 | `tests/api/test_runs_served.py::test_metrics_authority` (planned) | Authorized filters reach the engine unchanged. | Denied scope makes no engine call; no local aggregate replaces failure. |
 | ARBORA-OPS-R021.4.5 | `tests/api/test_runs_served.py::test_summary_and_plan_projection` | Fields map exactly; an authorized fresh plan preserves order and revision. | Missing plan export stays unavailable; wrong-run, expired and regressing snapshots reveal no items. |
 | ARBORA-OPS-R021.4.6 | `tests/api/test_runs_served.py::test_registered_rest_mcp_parity` | Generated clients invoke both registered transports with equal results. | Absent operation and malformed envelopes refuse without dispatch. |
 
@@ -355,6 +355,7 @@ The failing real-boot assertion remains unchanged until the hosted serving path 
 - `ARBORA-OPS-R009.7`: Test: `tests/api/test_operator_hooks.py::test_input_hook_allow_redact_and_reject` (served: HTTP and MCP through the registry `invoke`) asserts the three decisions and the order of two hooks.
 - `ARBORA-OPS-R009.8`: Test: `tests/api/test_operator_hooks.py::test_output_hook_redacts_and_rejects_and_replay_matches` (served: HTTP and MCP) asserts the replayed response equals the hooked response.
 - `ARBORA-OPS-R009.9`: Test: `tests/api/test_operator_hooks.py::test_timeout_error_and_unknown_decision_reject_with_hook_failed` (served) and `::test_decisions_are_recorded_without_matched_text` (served). Hot-path proof: `tests/api/test_operator_hooks.py::test_two_hooks_through_http_and_mcp` enters through the HTTP route and the MCP tool.
+- `ARBORA-OPS-R024.7`: Test: `tests/api/test_preferences_served.py::test_preferences_round_trip_isolate_principals_and_conflict` (served: HTTP, recording engine).
 - `ARBORA-OPS-R024.6`: Test: `tests/api/test_participant_ops_served.py::test_derivation_status_reaches_the_engine` (served: HTTP and MCP, loopback engine).
 - `ARBORA-OPS-R897`: Satisfied only when every child is satisfied. Root journey: `tests/api/test_participant_ops_served.py::test_participant_memory_journey` (served: HTTP and MCP).
 - `ARBORA-OPS-R897.1`: Test: `tests/api/test_participant_models.py::test_models_round_trip_engine_vectors` (module test). Test: `tests/api/test_memory_ops.py::test_memory_ops_still_round_trip_after_send_extraction` (served).
@@ -455,11 +456,11 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R060.3` | Test: `tests/api/test_sessions_served.py::test_denied_sources_are_partial_without_metadata` (L3). |
 | `ARBORA-OPS-R060.4` | Test: `tests/api/test_sessions_served.py::test_refusals_expose_no_cross_tenant_sessions` (L3). |
 | `ARBORA-OPS-R060.5` | Test: `tests/api/test_sessions_served.py::test_browser_discovers_browses_and_searches_every_harness` (L3). |
-| `ARBORA-OPS-R061.1` | Test: `tests/api/test_usage_index_served.py::test_models_round_trip_rust_vectors_and_unknown_stays_unknown` (L1). |
-| `ARBORA-OPS-R061.2` | Test: `tests/api/test_usage_index_served.py::test_projection_is_engine_aggregate_without_local_arithmetic` (L3). |
-| `ARBORA-OPS-R061.3` | Test: `tests/api/test_usage_index_served.py::test_registry_lists_operation_and_binder_composes_reader` (L3). |
-| `ARBORA-OPS-R061.4` | Test: `tests/api/test_usage_index_served.py::test_denied_stale_and_unproven_latency_expose_no_rows` (L3). |
-| `ARBORA-OPS-R061.5` | Test: `tests/api/test_usage_index_served.py::test_browser_query_reconciles_with_independent_ledger` (L3). It checks the four counters, rounding, minor units, watermark, cursor and unknown reasons. |
+| `ARBORA-OPS-R061.1` | Test: `tests/api/test_usage_index_served.py::test_models_round_trip_rust_vectors_and_unknown_stays_unknown` (planned) (L1). |
+| `ARBORA-OPS-R061.2` | Test: `tests/api/test_usage_index_served.py::test_projection_is_engine_aggregate_without_local_arithmetic` (planned) (L3). |
+| `ARBORA-OPS-R061.3` | Test: `tests/api/test_usage_index_served.py::test_registry_lists_operation_and_binder_composes_reader` (planned) (L3). |
+| `ARBORA-OPS-R061.4` | Test: `tests/api/test_usage_index_served.py::test_denied_stale_and_unproven_latency_expose_no_rows` (planned) (L3). |
+| `ARBORA-OPS-R061.5` | Test: `tests/api/test_usage_index_served.py::test_browser_query_reconciles_with_independent_ledger` (planned) (L3). It checks the four counters, rounding, minor units, watermark, cursor and unknown reasons. |
 | `ARBORA-OPS-R062.1` | Test: `tests/api/test_graph_changes_served.py::test_models_round_trip_rust_vectors` (L1). |
 | `ARBORA-OPS-R062.2` | Test: `tests/api/test_graph_changes_served.py::test_stream_orders_events_and_reauthorizes_on_reconnect` (L3). |
 | `ARBORA-OPS-R062.3` | Test: `tests/api/test_graph_changes_served.py::test_expired_cursor_returns_typed_recovery` (L3). |

@@ -9,9 +9,24 @@ from arbora.core.settings import runtime_config
 
 from .admission import ModelProfilePreference, refuse_model_profile_preference
 from .authority import A2ATaskAuthority
-from .models import A2AAgentCard, A2AListResult, A2AMessage, A2ASkill, A2ATask
+from .models import (
+    A2AAgentCapabilities,
+    A2AAgentCard,
+    A2AListResult,
+    A2AMessage,
+    A2ASkill,
+    A2ATask,
+)
 from .routing import A2AAssemblyUnavailable, A2ARouter
 from .terminal_event import A2ATerminalEventUnavailable
+from .tool_task_card import (
+    AttestationSigner,
+    ToolTaskAdmitter,
+    admit_tool_task,
+    reject_client_authority,
+    tool_task_calls,
+    tool_task_extension,
+)
 
 __all__ = ["A2ACardMetadata", "A2AService"]
 
@@ -35,6 +50,9 @@ class A2AService:
     card_metadata: A2ACardMetadata = A2ACardMetadata()
     #: The modality seam; ``None`` uses the process default normaliser.
     modality: Any = None
+    #: The tool-task seam (ARBORA-A2A-R002.2.4); both unset leaves it unserved.
+    tool_task_admitter: ToolTaskAdmitter | None = None
+    attestation_signer: AttestationSigner | None = None
 
     async def send_message(
         self,
@@ -49,6 +67,16 @@ class A2AService:
             if isinstance(message, A2AMessage)
             else A2AMessage.model_validate(message)
         )
+        reject_client_authority(parsed)
+        calls = tool_task_calls(parsed)
+        if calls:
+            return await admit_tool_task(
+                self.tool_task_admitter,
+                self.attestation_signer,
+                parsed,
+                calls[0],
+                idempotency_key,
+            )
         attachment_size = parsed.attachment_size()
         if attachment_size:
             limit = runtime_config.max_upload_size
@@ -133,7 +161,12 @@ class A2AService:
 
     def agent_card(self, endpoint_url: str) -> A2AAgentCard:
         metadata = self.card_metadata
+        served = self.tool_task_admitter is not None and self.attestation_signer
+        capabilities = A2AAgentCapabilities(
+            extensions=[tool_task_extension()] if served else []
+        )
         return A2AAgentCard(
+            capabilities=capabilities,
             name=metadata.name,
             description=metadata.description,
             version=metadata.version,

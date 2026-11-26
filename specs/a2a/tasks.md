@@ -78,6 +78,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T066 ARBORA-A2A-R002.2.3.3 Original-caller authority resolver
 - [ ] T067 ARBORA-A2A-R002.2.3.4 Uncertain-effect reconciliation
 - [ ] T068 ARBORA-A2A-R002.2.3.5 Duplicate delivery is idempotent
+- [x] T084 ARBORA-A2A-R002.2.4 Tool-task Agent Card extension and approval attestation
 - [ ] T069 ARBORA-A2A-R013.1 Model and registration of a push target
 - [ ] T070 ARBORA-A2A-R013.2 Delivery worker with bounded retry and dead letter
 - [ ] T071 ARBORA-A2A-R013.3 Advertise push only when the worker runs

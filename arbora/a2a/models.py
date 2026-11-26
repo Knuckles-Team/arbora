@@ -98,6 +98,13 @@ class A2AInlineMediaFile(_WireModel):
         return base64.b64decode(self.bytes, validate=True)
 
 
+class A2ADataPart(_WireModel):
+    """A structured JSON part; the tool-task extension reads ``toolTask`` from it."""
+
+    kind: Literal["data"]
+    data: dict[str, Any]
+
+
 class A2AFilePart(_WireModel):
     kind: Literal["file"]
     file: A2AInlineTextFile | A2AInlineMediaFile
@@ -111,7 +118,9 @@ class A2AMessage(_WireModel):
     """
 
     role: Literal["user"]
-    parts: list[A2ATextPart | A2AFilePart] = Field(min_length=1, max_length=32)
+    parts: list[A2ATextPart | A2AFilePart | A2ADataPart] = Field(
+        min_length=1, max_length=32
+    )
     kind: Literal["message"] = "message"
     message_id: str = Field(min_length=1, max_length=512)
     context_id: str | None = Field(default=None, min_length=1, max_length=512)
@@ -151,11 +160,15 @@ class A2AMessage(_WireModel):
             if isinstance(part, A2ATextPart)
             else part.file.decoded_bytes().decode("utf-8")
             for part in self.parts
-            if not self._is_media(part)
+            if not self._is_media(part) and not isinstance(part, A2ADataPart)
         )
 
+    def data_parts(self) -> list[dict[str, Any]]:
+        """The structured data parts, in order."""
+        return [part.data for part in self.parts if isinstance(part, A2ADataPart)]
+
     @staticmethod
-    def _is_media(part: A2ATextPart | A2AFilePart) -> bool:
+    def _is_media(part: A2ATextPart | A2AFilePart | A2ADataPart) -> bool:
         return isinstance(part, A2AFilePart) and isinstance(
             part.file, A2AInlineMediaFile
         )
@@ -304,6 +317,13 @@ class A2ATransitionHistoryAuthority(Protocol):
     def transition_history(self, task_id: str) -> Any: ...
 
 
+class A2AExtension(_WireModel):
+    uri: str = Field(min_length=1, max_length=512)
+    description: str = Field(max_length=1024)
+    required: bool = False
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
 class A2AAgentCapabilities(_WireModel):
     """Capabilities advertised on the Agent Card.
 
@@ -317,6 +337,7 @@ class A2AAgentCapabilities(_WireModel):
     streaming: bool = False
     push_notifications: bool = False
     state_transition_history: bool = False
+    extensions: list[A2AExtension] = Field(default_factory=list)
 
     @classmethod
     def from_wired_authorities(

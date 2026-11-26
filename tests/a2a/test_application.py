@@ -79,6 +79,7 @@ def test_agent_card_is_authenticated_truthful_and_has_one_path() -> None:
         "streaming": False,
         "pushNotifications": False,
         "stateTransitionHistory": False,
+        "extensions": [],
     }
     assert card["securitySchemes"]["bearerAuth"]["scheme"] == "bearer"
     assert client.get("/.well-known/agent.json").status_code == 404
