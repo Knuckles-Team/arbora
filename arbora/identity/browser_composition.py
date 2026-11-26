@@ -39,6 +39,7 @@ def configured_browser_boundary(
 ) -> Any:
     """Require explicit existing deployment inputs, never provision defaults."""
     from arbora.core.settings import runtime_config, setting
+    from arbora.identity.deployment_settings import identity_deployment
     from arbora.security.settings import security_settings
 
     if not runtime_config.enable_web_ui or runtime_config.webui_auth_mode != "eg":
@@ -75,13 +76,14 @@ def configured_browser_boundary(
     )
     from arbora.security.secrets import create_secrets_client
 
+    deployed = identity_deployment()
     return build_browser_boundary(
         invocation,
         _IdentityClient(client_factory, broker),
         graph=graph,
-        tenant=tenant,
+        tenant=deployed.tenant or tenant,
         origin=origin,
-        issuer=config.auth_jwt_issuer,
+        issuer=deployed.issuer or config.auth_jwt_issuer,
         audience=config.auth_jwt_audience,
         store=create_secrets_client().backend,
         request_dispatch=request_dispatch,
