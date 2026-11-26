@@ -479,3 +479,59 @@ def test_consumed_one_shot_is_revocable_while_transport_setup_waits() -> None:
         assert state.child_calls == []
 
     asyncio.run(run())
+
+
+def _served(surface, monkeypatch, *, bound: bool = True) -> SimpleNamespace:
+    """A served invocation whose fleet gateway is (or is not) bound."""
+    from arbora.mcp_server import runtime
+    from arbora.mcp_server.fleet_composition import LateFleetGateway
+
+    late = LateFleetGateway()
+    if bound:
+        late.bind(object(), surface.ops)
+    monkeypatch.setattr(runtime, "SERVED_PROJECTION", surface.projection)
+    runtime_ns = SimpleNamespace(bindings={"fleet_gateway": late})
+    return SimpleNamespace(services=SimpleNamespace(runtime=runtime_ns))
+
+
+@pytest.mark.spec("ARBORA-OPS-R035.2")
+def test_running_server_lists_exactly_the_resident_tools(surface, monkeypatch) -> None:
+    """Startup attaches the ten resident tools once and the launchers stay."""
+    from arbora.mcp_server.backing.tools.mcp_apps import register_mcp_apps_tools
+    from arbora.mcp_server.server import _register_resident_surface
+
+    invocation = _served(surface, monkeypatch)
+    register_mcp_apps_tools(surface.mcp)  # registered by the host before startup
+    _register_resident_surface(surface.mcp, surface.mux, invocation)
+
+    async def listed() -> set[str]:
+        tools = await surface.mcp.list_tools()
+        return {tool.name for tool in tools}
+
+    names = asyncio.run(listed())
+    launchers = {"graph_task_progress_app", "graph_trace_waterfall_app"}
+    assert names == set(RESIDENT_NAMES) | launchers
+    assert surface.mux._governed_fleet is not None
+    # The visibility middleware denies no resident tool and no launcher.
+    middleware = GovernedSessionVisibility(surface.binding, frozenset(launchers))
+
+    async def candidates(_context):
+        return [SimpleNamespace(name=name) for name in sorted(names)]
+
+    visible = asyncio.run(middleware.on_list_tools(None, candidates))
+    assert {tool.name for tool in visible} == names
+    # A second attachment refuses: one registration path, attached once.
+    with pytest.raises(RuntimeError, match="empty and unbound"):
+        _register_resident_surface(surface.mcp, surface.mux, invocation)
+
+
+@pytest.mark.spec("ARBORA-OPS-R035.2")
+def test_an_unbound_fleet_gateway_aborts_startup(surface, monkeypatch) -> None:
+    from arbora.mcp_server.server import _register_resident_surface
+
+    invocation = _served(surface, monkeypatch, bound=False)
+    with pytest.raises(RuntimeError, match="bound fleet gateway"):
+        _register_resident_surface(surface.mcp, surface.mux, invocation)
+    assert not hasattr(surface.mux, "_governed_fleet")
+    # With no served invocation there is no resident surface to attach.
+    _register_resident_surface(surface.mcp, surface.mux, None)

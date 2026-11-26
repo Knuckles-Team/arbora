@@ -335,3 +335,6 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [ ] T172 ARBORA-IDENTITY-R006.3 A signed-in person enrolls and manages second factors through served operations. Size: M, 1 PR, 4 hours.
 - [ ] T173 ARBORA-IDENTITY-R006.4 The WebAuthn sign-in challenge is issued by a begin route. Size: S, 1 PR, 2 hours.
 - [ ] T174 ARBORA-IDENTITY-R018.8 Identity operation names are the registry names, and the admin console gaps are served. Size: M, 1 PR, 4 hours.
+- [ ] T175 ARBORA-IDENTITY-R006.2.1 TOTP routes pass through to the engine, which holds the secret. Size: S, 1 PR, 2 hours.
+- [ ] T176 ARBORA-IDENTITY-R006.2.2 The WebAuthn finish route verifies origin and counter. Size: S, 1 PR, 2 hours.
+- [ ] T177 ARBORA-IDENTITY-R006.2.3 The recovery route consumes a one-use code and group enforcement holds the login incomplete. Size: S, 1 PR, 2 hours.

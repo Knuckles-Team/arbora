@@ -28,11 +28,46 @@ from filelock import FileLock
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.core.settings import ArboraConfig as AgentConfig
-from arbora.core.settings import setting
+from arbora.core.settings import platform_config_file, setting
 
 
 class ProductionOperationError(RuntimeError):
     """A production operation could not satisfy its safety contract."""
+
+
+def deliver_registry_manifest(source: Path, target_dir: Path) -> dict[str, Any]:
+    """Deliver ``workspace.yml`` to the deployed configuration and prove it readable.
+
+    ARBORA-DEPLOY-R021: the manifest is delivered on every deploy, on its own,
+    from the operator's canonical copy. The delivered file's SHA-256 must equal
+    the source's, and the registry must parse with a ``connectors`` group;
+    otherwise the step fails naming the cause.
+    """
+    from arbora.fleet.coverage import FleetCoverageError, registered_connectors
+
+    if not source.is_file():
+        raise ProductionOperationError("REGISTRY_SOURCE_MISSING: no source manifest")
+    body = source.read_bytes()
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / "workspace.yml"
+    staging = target_dir / ".workspace.yml.delivering"
+    staging.write_bytes(body)
+    staging.replace(target)
+    expected = hashlib.sha256(body).hexdigest()
+    if hashlib.sha256(target.read_bytes()).hexdigest() != expected:
+        raise ProductionOperationError(
+            "REGISTRY_DIGEST_MISMATCH: the delivered manifest differs from the source"
+        )
+    try:
+        connectors = registered_connectors(target)
+    except FleetCoverageError as exc:
+        raise ProductionOperationError(f"registry_unreadable: {exc}") from exc
+    return {
+        "operation": "deliver-registry-manifest",
+        "ok": True,
+        "sha256": expected,
+        "connectors": len(connectors),
+    }
 
 
 def _required_env(name: str) -> str:
@@ -614,6 +649,14 @@ def _parser() -> argparse.ArgumentParser:
         ),
         "Local MCP URL Arbora serves at; the anonymous-mode startup check reads it.",
     )
+    deliver = subparsers.add_parser(
+        "deliver-registry-manifest",
+        help=(
+            "Deliver the canonical workspace.yml to the deployed configuration "
+            "and verify its digest and its connectors group."
+        ),
+    )
+    deliver.add_argument("--source", required=True, type=Path)
     return parser
 
 
@@ -639,6 +682,9 @@ _OPERATIONS: dict[str, Any] = {
         )
     ),
     "check-fleet-coverage": lambda args: asyncio.run(_check_fleet_coverage()),
+    "deliver-registry-manifest": lambda args: deliver_registry_manifest(
+        args.source, platform_config_file("workspace.yml").parent
+    ),
 }
 
 
@@ -694,7 +740,24 @@ def refusal_detail(exc: BaseException) -> dict[str, str]:
     detail = {"error_type": type(exc).__name__, "error_message": text}
     if code:
         detail["error_code"] = code
-    return detail
+    return {**detail, **_rate_limit_detail(exc)}
+
+
+def _rate_limit_detail(exc: BaseException) -> dict[str, Any]:
+    """The PROVISIONING_RATE_LIMITED mapping: the limit, the window and the wait.
+
+    ARBORA-DEPLOY-R019.3: provisioning allows a fixed number of runs per window
+    for each target; the refusal names all three numbers.
+    """
+    from arbora.api.contracts.provisioning import ProvisioningRateLimited
+
+    if not isinstance(exc, ProvisioningRateLimited):
+        return {}
+    return {
+        "limit": exc.limit,
+        "window_seconds": int(exc.window_s),
+        "retry_after_seconds": int(exc.retry_after_s) + 1,
+    }
 
 
 def main(argv: list[str] | None = None) -> int:

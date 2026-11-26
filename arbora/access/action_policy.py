@@ -499,6 +499,11 @@ class ActionDecision:
     # ``DENIAL_LEDGER_UNREADABLE`` (the budget cannot be read, so the
     # gate fails closed). Empty for every other outcome.
     denial: str = ""
+    # With ``DENIAL_RATE_LIMITED``: the budget (max runs per window) and the
+    # seconds until the next run is allowed (ARBORA-DEPLOY-R019.3).
+    rate_max: int = 0
+    rate_window_s: float = 0.0
+    retry_after_s: float = 0.0
 
     @property
     def allowed(self) -> bool:
@@ -845,6 +850,30 @@ class ActionPolicy:
             and float(d.get("ts") or 0) >= since
         )
         return n >= max_n
+
+    def _rate_retry_after(
+        self,
+        request: ActionRequest,
+        limit: dict[str, Any],
+        recent: list[dict[str, Any]] | LedgerUnreadable,
+    ) -> float:
+        """Seconds until the oldest counted run leaves the window (0 when none)."""
+        if isinstance(recent, LedgerUnreadable):
+            return 0.0
+        window_s = float(limit.get("window_s", 3600))
+        now = _now()
+        stamps = sorted(
+            float(d.get("ts") or 0)
+            for d in recent
+            if d.get("target") == request.target
+            and d.get("decision") in _ALLOWING
+            and float(d.get("ts") or 0) >= now - window_s
+        )
+        max_n = int(limit.get("max", 0))
+        if max_n <= 0 or len(stamps) < max_n:
+            return 0.0
+        # The run that frees a slot is the one that is max_n from the newest.
+        return max(0.0, stamps[len(stamps) - max_n] + window_s - now)
 
     def _blast_exceeded(
         self,
@@ -1216,6 +1245,9 @@ class ActionPolicy:
                 "for this action+target)"
             )
             base.denial = DENIAL_RATE_LIMITED
+            base.rate_max = int(rate.get("max", 0))
+            base.rate_window_s = float(rate.get("window_s", 3600))
+            base.retry_after_s = self._rate_retry_after(request, rate, recent)
             return base
 
         if isinstance(blast, dict) and self._blast_exceeded(request, blast, recent):

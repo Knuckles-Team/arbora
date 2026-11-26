@@ -103,3 +103,88 @@ def test_a_client_without_sandbox_admission_refuses_unavailable(
     with pytest.raises(SandboxPrincipalRefusal) as caught:
         connect_kwargs(two_sandbox_tenants[0], _pinned_connect)
     assert caught.value.code == "UNAVAILABLE"
+
+
+class _TenantStore:
+    """An engine double that resolves the tenant from the connecting envelope only.
+
+    The envelope is the one the client sends; there is no tenant argument on a read, so a
+    caller cannot name another tenant. A foreign object and an absent one answer alike.
+    """
+
+    def __init__(self) -> None:
+        self.objects: dict[tuple[str, str], str] = {}
+
+    def read(self, envelope: dict[str, str], object_id: str) -> dict[str, Any]:
+        found = self.objects.get((envelope["tenant"], object_id))
+        return {"found": found is not None, "value": found}
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R004.10.1")
+def test_second_tenant_principal_cannot_read_the_first_tenants_object(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    started: list[composition.LocalEngineConfig] = []
+
+    def fake_engine(
+        config: composition.LocalEngineConfig,
+    ) -> composition.EngineEndpoint:
+        started.append(config)
+        return config.endpoint
+
+    monkeypatch.setattr(composition, "ensure_local_engine", fake_engine)
+    monkeypatch.setattr(composition, "stand_down_engine", lambda endpoint: None)
+    args = argparse.Namespace(
+        root=str(tmp_path),
+        principal="operator",
+        second_tenant_principal="viewer",
+        port=0,
+    )
+    summary = sandbox.up(args, hold=False)
+    # Exactly two principals, each in its own tenant, each with its own role.
+    assert [(p["role"], p["tenant"]) for p in summary["principals"]] == [
+        ("operator", "sandbox-a"),
+        ("viewer", "sandbox-b"),
+    ]
+    first, second = (
+        SandboxPrincipal(p["principal"], p["tenant"], p["role"])
+        for p in summary["principals"]
+    )
+    assert first.principal != second.principal
+    envelopes = [
+        connect_kwargs(first, _sandbox_connect)["sandbox"],
+        connect_kwargs(second, _sandbox_connect)["sandbox"],
+    ]
+    # Distinct admissions and no credential in either: nothing durable to leak.
+    assert envelopes[0] != envelopes[1]
+    assert set(envelopes[0]) == {"principal", "tenant"}
+
+    store = _TenantStore()
+    store.objects[("sandbox-a", "object-1")] = "first tenant's value"
+    owned = store.read(envelopes[0], "object-1")
+    foreign = store.read(envelopes[1], "object-1")
+    absent = store.read(envelopes[1], "object-never-written")
+    assert owned == {"found": True, "value": "first tenant's value"}
+    assert foreign == absent == {"found": False, "value": None}
+
+    # A repeated tenant is a duplicate, and the mint stays sandbox-only.
+    with pytest.raises(SandboxPrincipalRefusal) as repeated:
+        mint_sandbox_principals(
+            [("operator", "sandbox-b"), ("viewer", "sandbox-b")],
+            profile="sandbox",
+            bind_host="127.0.0.1",
+        )
+    assert repeated.value.code == "SANDBOX_PRINCIPAL_DUPLICATE"
+    with pytest.raises(SandboxPrincipalRefusal) as outside:
+        mint_sandbox_principals(
+            [("operator", "sandbox-a"), ("viewer", "sandbox-b")],
+            profile="production",
+            bind_host="127.0.0.1",
+        )
+    assert outside.value.code == "SANDBOX_PRINCIPAL_OUTSIDE_PROFILE"
+
+    # down destroys the store, and with it both principals.
+    store_dir = started[0].persist_dir
+    assert store_dir is not None and store_dir.is_dir()
+    assert sandbox.down(args) is True
+    assert not store_dir.exists() and not (tmp_path / sandbox.STATE_FILE).exists()

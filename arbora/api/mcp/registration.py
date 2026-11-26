@@ -197,8 +197,13 @@ class FleetMCPBinding:
 class GovernedSessionVisibility(Middleware):
     """Route visibility using the catalog service; policy remains in its owner."""
 
-    def __init__(self, binding: FleetMCPBinding) -> None:
+    def __init__(
+        self, binding: FleetMCPBinding, host_tools: frozenset[str] = frozenset()
+    ) -> None:
         self.binding = binding
+        # Tools the host registered before attachment (the MCP Apps launchers)
+        # are not fleet tools; only fleet-mounted tools are session-filtered.
+        self.host_tools = host_tools
 
     async def on_list_tools(self, context: Any, call_next: Any) -> Any:
         loaded = await self.binding.visible_names()
@@ -207,6 +212,7 @@ class GovernedSessionVisibility(Middleware):
             tool
             for tool in tools
             if tool.name in RESIDENT_NAMES
+            or tool.name in self.host_tools
             or self.binding.ops.catalog_id_for_native(tool.name) in loaded
         ]
 
@@ -214,8 +220,10 @@ class GovernedSessionVisibility(Middleware):
 async def _require_unbound_surface(
     mcp: Any, multiplexer: Any, binding: FleetMCPBinding
 ) -> None:
+    """The host's own tools (the MCP Apps launchers) may exist; a resident tool may not."""
+    registered = {tool.name for tool in await mcp.list_tools()}
     if (
-        await mcp.list_tools()
+        registered & set(RESIDENT_NAMES)
         or getattr(multiplexer, "_governed_fleet", None) is not None
     ):
         raise RuntimeError("MCP surface must be empty and unbound before registration")
@@ -228,21 +236,24 @@ async def _attach_resident_tools(mcp: Any, binding: FleetMCPBinding) -> None:
     tools.extend(make_fleet_tool(name, binding.projection) for name in FLEET_OPERATIONS)
     for tool in tools:
         mcp.add_tool(tool)
-    names = [tool.name for tool in await mcp.list_tools()]
-    if len(names) != len(RESIDENT_NAMES) or set(names) != set(RESIDENT_NAMES):
+    names = {tool.name for tool in await mcp.list_tools()}
+    if not set(RESIDENT_NAMES) <= names:
         raise RuntimeError("MCP resident attachment was incomplete")
 
 
 async def register_mcp_tools(
     mcp: Any, multiplexer: Any, binding: FleetMCPBinding
 ) -> None:
-    """Attach once after E retires legacy tools; attachment failure aborts startup.
+    """Attach the resident tools once at startup; an attachment failure aborts it.
 
-    This function is intentionally not called by server/runtime on this lane.
-    E must validate live authorities before calling it and must discard the host
-    if any attachment fails. Native mounts subsequently use the mux factory.
+    ``arbora.mcp_server.server`` calls this after the fleet multiplexer is
+    attached and the gateway is bound (ARBORA-OPS-R035.2). It is the only path
+    that registers the six verbs and the four fleet tools. Tools the host
+    registered before it, such as the MCP Apps launchers, stay registered and
+    visible. Native mounts afterwards use the mux factory.
     """
     await _require_unbound_surface(mcp, multiplexer, binding)
+    host_tools = frozenset(tool.name for tool in await mcp.list_tools())
     await _attach_resident_tools(mcp, binding)
     register_resources(
         mcp,
@@ -250,5 +261,5 @@ async def register_mcp_tools(
         binding.projection.caller_for_request,
         binding.projection.policy_gate,
     )
-    mcp.add_middleware(GovernedSessionVisibility(binding))
+    mcp.add_middleware(GovernedSessionVisibility(binding, host_tools))
     multiplexer._governed_fleet = binding

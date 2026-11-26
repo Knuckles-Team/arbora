@@ -27,6 +27,7 @@ __all__ = [
     "require_claim_identity",
     "OUTBOX_MODELS",
     "PinLagUnavailable",
+    "accepts_parameter",
     "refusal",
     "require_methods",
     "require_models",
@@ -70,6 +71,17 @@ def require_models(names: Iterable[str]) -> None:
     for name in names:
         if not hasattr(models, name):
             raise PinLagUnavailable(name)
+
+
+def accepts_parameter(method: Any, name: str) -> bool:
+    """Whether the installed client method takes ``name`` (a request field the pin may lack).
+
+    ``AuditAppend`` gained ``evidence`` on the engine's main branch; until the
+    pin carries it the field is withheld and this answers ``False``.
+    """
+    import inspect
+
+    return name in inspect.signature(method).parameters
 
 
 def refusal(error: PinLagUnavailable) -> OperationRefused:
