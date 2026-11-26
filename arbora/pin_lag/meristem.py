@@ -116,3 +116,15 @@ def assembly_model_input(result: Any) -> Any:
     if not hasattr(result, "model_input"):
         raise PinLagUnavailable("medulla AssemblyResult.model_input")
     return result.model_input
+
+
+def require_submit_field(name: str) -> None:
+    """``SubmitWorkItemRequest.<name>`` of the engine, or refuse naming it."""
+    try:
+        from medulla.generated.models import SubmitWorkItemRequest
+    except ImportError:
+        raise PinLagUnavailable(
+            "medulla.generated.models.SubmitWorkItemRequest"
+        ) from None
+    if name not in SubmitWorkItemRequest.model_fields:
+        raise PinLagUnavailable(f"medulla SubmitWorkItemRequest.{name}")

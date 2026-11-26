@@ -159,8 +159,14 @@ def submit_work_item_atomic(
     description: str = "",
     created_by: str = "",
     metadata: Mapping[str, Any] | None = None,
+    child_input: Mapping[str, Any] | None = None,
+    conversation: Mapping[str, Any] | None = None,
 ) -> tuple[str, bool]:
-    """Submit one WorkItem (``SubmitWorkItem``); return its id and creation."""
+    """Submit one WorkItem (``SubmitWorkItem``); return its id and creation.
+
+    ``child_input`` and ``conversation`` are the engine's admission fields
+    (``ChildInputAdmission`` and ``ConversationTurnAdmission``).
+    """
     _require_native_submission(run_id, work_item_id)
     tenant_id = _tenant(tenant)
     session = _session()
@@ -202,6 +208,15 @@ def submit_work_item_atomic(
     }
     if run_id is not None:
         request["run_id"] = run_id
+    for name, admission in (
+        ("child_input", child_input),
+        ("conversation", conversation),
+    ):
+        if admission is not None:
+            from arbora.pin_lag.meristem import require_submit_field
+
+            require_submit_field(name)
+            request[name] = dict(admission)
     if run_id is not None:
         from arbora.native_run_admission import submit
 
