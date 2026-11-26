@@ -72,6 +72,21 @@ def port_types() -> SimpleNamespace:
     return SimpleNamespace(**found)
 
 
+def changeset_types() -> SimpleNamespace:
+    """The changeset cycle's outcome types, or refuse naming the first one missing."""
+    try:
+        from meristem.harness import changeset_loop
+    except ImportError:
+        raise PinLagUnavailable("meristem.harness.changeset_loop") from None
+    found: dict[str, Any] = {}
+    for name in ("Submitted", "SourceConflict"):
+        value = getattr(changeset_loop, name, None)
+        if value is None:
+            raise PinLagUnavailable(f"meristem.harness.changeset_loop.{name}")
+        found[name] = value
+    return SimpleNamespace(**found)
+
+
 def require_fields(names: tuple[str, ...]) -> Any:
     """``HostPorts`` once every named field exists on it, else refuse the first missing."""
     cls = host_ports_type()
