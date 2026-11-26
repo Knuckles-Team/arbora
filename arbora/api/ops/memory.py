@@ -28,7 +28,7 @@ from arbora.api.ops.memory_files import (
     MemoryFilesRead,
     MemoryFilesSave,
 )
-from arbora.api.registry import OpSpec
+from arbora.api.registry import ContentOrigin, OpSpec
 
 #: The one EG KV namespace that holds every memory entry.
 EG_NAMESPACE = "memory"
@@ -62,6 +62,9 @@ class MemoryWriteParams(MemoryKeyParams):
     #: Compare-and-set: write only when the entry is at this version
     #: (``0`` = only when absent).
     expected_version: int | None = Field(default=None, ge=0)
+    #: ``open_web`` content is long-term memory only after a clean screen
+    #: (ARBORA-OPS-R042.4).
+    content_origin: ContentOrigin = ContentOrigin.TRUSTED
 
 
 class MemoryListParams(_Located):

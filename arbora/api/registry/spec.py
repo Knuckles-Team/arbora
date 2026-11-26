@@ -50,6 +50,13 @@ class Surface(StrEnum):
     CONSOLE = "console"
 
 
+class ContentOrigin(StrEnum):
+    """Where an operation's content comes from (ARBORA-OPS-R042.1)."""
+
+    TRUSTED = "trusted"
+    OPEN_WEB = "open_web"
+
+
 class Idempotency(StrEnum):
     KEY_REQUIRED = "key_required"
     NATURAL = "natural"
@@ -168,6 +175,7 @@ class OpSpec(BaseModel):
     stability: Stability = Stability.STABLE
     remove_in: str | None = None
     audit: AuditClass = AuditClass.NONE
+    content_origin: ContentOrigin = ContentOrigin.TRUSTED
 
     @field_validator("id")
     @classmethod
