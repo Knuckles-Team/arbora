@@ -538,7 +538,7 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T462 [US1] ARBORA-OPS-R954 Serve skill measures, ranking, discovery and peer recommendations. Size: M, 2 PRs, 5 hours.
 - [x] T463 [US1] ARBORA-OPS-R955 Serve the skill evaluation operations. Size: M, 2 PRs, 5 hours.
 - [x] T464 [US1] ARBORA-OPS-R956 Serve the ablation and canary operations. Size: M, 2 PRs, 5 hours.
-- [ ] T465 [US1] ARBORA-OPS-R957 Serve the skill tier and persona operations. Size: M, 2 PRs, 5 hours.
+- [x] T465 [US1] ARBORA-OPS-R957 Serve the skill tier and persona operations. Size: M, 2 PRs, 5 hours.
 - [ ] T466 [US1] ARBORA-OPS-R958 Run the knowledge curator on the engine cadence. Size: M, 2 PRs, 5 hours.
 - [ ] T467 [US1] ARBORA-OPS-R857.3 Wiring: the graph store carries six RDF media types.
 - [ ] T468 [US1] ARBORA-OPS-R857.4 Refusal: media type and parse errors pass through.
