@@ -177,93 +177,101 @@ def _checked_rollup(answer: dict[str, Any], *, grouped: bool) -> dict[str, Any]:
     return answer
 
 
+_FILTER = Field(default=None, min_length=1, max_length=256)
+
+
 class UsageIndexQuery(_common.Params):
-    """The trace usage query; the caller picks no latency bound or workload."""
+    """The engine ``RunMetrics`` query over the run traces of the caller's tenant.
+
+    ``query`` is ``cost`` or ``tokens`` (per solved run), ``latency`` or
+    ``score`` (the mean of the solved runs that report one) or ``solved``. The
+    ``technique``, ``arm`` and ``config_digest`` filters together select one
+    technique measure. The window is both bounds or neither.
+    """
 
     schema_version: Literal[1] = 1
-    window_start_ms: int = Field(ge=0)
-    window_end_ms: int = Field(ge=0)
-    model: str | None = Field(default=None, min_length=1, max_length=256)
-    project: str | None = Field(default=None, min_length=1, max_length=256)
-    agent: str | None = Field(default=None, min_length=1, max_length=256)
-    group_by: Literal["model", "project", "agent"] | None = None
-    currency: str | None = Field(default=None, pattern=r"^[A-Z]{3}$")
-    page_size: int = Field(default=100, ge=1, le=1000)
-    cursor: str | None = Field(default=None, min_length=1, max_length=512)
+    query: Literal["cost", "tokens", "latency", "score", "solved"]
+    group_by: (
+        Literal["agent", "project", "termination", "technique", "arm", "config"] | None
+    ) = None
+    window_start_ms: int | None = Field(default=None, ge=0)
+    window_end_ms: int | None = Field(default=None, ge=0)
+    technique: str | None = _FILTER
+    arm: str | None = _FILTER
+    config_digest: str | None = _FILTER
 
     @model_validator(mode="after")
-    def _window_is_ordered(self) -> UsageIndexQuery:
-        if self.window_end_ms < self.window_start_ms:
-            raise ValueError("window_end_ms precedes window_start_ms")
+    def _window_is_a_nonempty_pair(self) -> UsageIndexQuery:
+        start, end = self.window_start_ms, self.window_end_ms
+        if (start is None) != (end is None):
+            raise ValueError("a window names both bounds or neither")
+        if start is not None and end is not None and end <= start:
+            raise ValueError("window_end_ms must follow window_start_ms")
         return self
 
 
 class UsageIndexProjection(_common.Params):
-    """The engine's aggregate, carried unchanged; arbora does no token or cost arithmetic."""
+    """The engine answer unchanged: ``query``, ``groups`` and ``abstained``."""
 
     value: dict[str, Any]
 
 
-#: The engine method and request shape of the trace usage query (MEDULLA-ORCH-VOCAB-R010.101).
-INDEX_METHOD = "RunTraceUsage"
-INDEX_MODEL = "RunTraceUsageQuery"
-_PROFILE_FIELDS = (
-    "profile_revision",
-    "p95_bound_ms",
-    "unit",
-    "boundary",
-    "workload",
-    "indexed_dataset_size",
-    "data_revision",
-    "index_revision",
-    "cache_policy_revision",
-)
+#: The engine method of the run-trace measure (MEDULLA-ORCH-VOCAB-R811.1, R811.1.1).
+INDEX_METHOD = "RunMetrics"
 
 
-def _latency_proven(answer: Mapping[str, Any]) -> bool:
-    """The answer carries a complete profile whose bound is within the configured one."""
-    from arbora.core.settings import runtime_config
+def run_metrics_request(context: Any, params: Mapping[str, Any]) -> dict[str, Any]:
+    """The engine ``RunMetrics`` request: the verified tenant plus the named filters."""
+    request: dict[str, Any] = {
+        "tenant": str(context.caller.tenant),
+        "query": params["query"],
+    }
+    if params.get("group_by") is not None:
+        request["group_by"] = params["group_by"]
+    if params.get("window_start_ms") is not None:
+        request["window"] = {
+            "start_ms": params["window_start_ms"],
+            "end_ms": params["window_end_ms"],
+        }
+    for name in ("technique", "arm", "config_digest"):
+        if params.get(name) is not None:
+            request[name] = params[name]
+    return request
 
-    profile = answer.get("latency_profile")
-    if not isinstance(profile, Mapping) or not all(
-        name in profile for name in _PROFILE_FIELDS
-    ):
-        return False
-    bound = profile["p95_bound_ms"]
-    return type(bound) is int and 0 < bound <= int(
-        runtime_config.usage_index_p95_bound_ms
+
+async def run_metrics_answer(context: Any, params: Mapping[str, Any]) -> dict[str, Any]:
+    """Send ``RunMetrics`` as the verified caller; a pin without it refuses ``UNAVAILABLE``."""
+    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+
+    try:
+        require_methods(INDEX_METHOD)
+    except PinLagUnavailable as error:
+        raise refusal(error) from error
+    answer = await engine_send(
+        context, INDEX_METHOD, {"request": run_metrics_request(context, params)}
     )
+    if (
+        not isinstance(answer, Mapping)
+        or not isinstance(answer.get("groups"), list)
+        or not isinstance(answer.get("abstained"), (str, type(None)))
+    ):
+        raise unavailable("engine result malformed")
+    return dict(answer)
 
 
 async def handle_usage_index_query(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """Forward the trace usage query as the verified caller; no rows without proof."""
-    from arbora.pin_lag.medulla import (
-        PinLagUnavailable,
-        refusal,
-        require_methods,
-        require_models,
-    )
-
-    query = {k: v for k, v in params.items() if v is not None}
-    try:
-        require_models([INDEX_MODEL])
-        require_methods(INDEX_METHOD)
-    except PinLagUnavailable as error:
-        raise refusal(error) from error
-    answer = await engine_send(context, INDEX_METHOD, {"request": query})
-    if not isinstance(answer, Mapping) or not _latency_proven(answer):
-        raise unavailable("the engine gave no valid latency evidence for the query")
-    return {"value": dict(answer)}
+    """Forward the measure as the verified caller; arbora does no arithmetic."""
+    return {"value": await run_metrics_answer(context, params)}
 
 
 def operations() -> tuple[OpSpec, ...]:
     return (
         _common.build_tenant_read_op(
             op_id="usage.index.query",
-            summary="Query indexed token and cost usage over a window",
-            examples=("show token usage by model",),
+            summary="Measure cost, tokens, latency or score over the run traces",
+            examples=("what did runs cost by technique last week",),
             params=UsageIndexQuery,
             result=UsageIndexProjection,
             handler="arbora.api.ops.usage.handle_usage_index_query",
@@ -287,6 +295,8 @@ __all__ = [
     "UsageIndexProjection",
     "UsageIndexQuery",
     "handle_usage_index_query",
+    "run_metrics_answer",
+    "run_metrics_request",
     "SessionUsageView",
     "TurnTiming",
     "UsageGroup",
