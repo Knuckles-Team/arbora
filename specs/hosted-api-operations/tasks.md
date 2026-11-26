@@ -34,7 +34,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [x] T017 ARBORA-OPS-R024.3 Usage operations — usage slice of `ARBORA-OPS-R024`.
 - [x] T018 ARBORA-OPS-R024.3.1 Serve canonical caller-context committed session usage.
 - [x] T019 ARBORA-OPS-R024.3.2 Project bounded AU measured request timing for shared clients.
-- [ ] T020 ARBORA-OPS-R024.4 Memory operations — memory slice of `ARBORA-OPS-R024`.
+- [x] T020 ARBORA-OPS-R024.4 Memory operations — memory slice of `ARBORA-OPS-R024`.
 - [ ] T021 ARBORA-OPS-R024.5 Operational admin operations — admin slice of `ARBORA-OPS-R024` (graph/query/search/ontology excluded; owned by `ARBORA-HOST-R026.x`).
 - [ ] T022 ARBORA-OPS-R026.1 API-surface drift gate — api-surface slice of `ARBORA-OPS-R026`.
 - [ ] T023 ARBORA-OPS-R026.2 Backward-compatibility drift gate — backward-compat slice of `ARBORA-OPS-R026`.
@@ -141,12 +141,12 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 
 ## Versioned memory consumer sequence
 
-- [ ] T118 ARBORA-OPS-R024.4.1 Versioned memory port; implement the planned served positive and negative acceptance.
-- [ ] T119 ARBORA-OPS-R024.4.2 Snapshot reads and listing; implement the planned served positive and negative acceptance.
-- [ ] T120 ARBORA-OPS-R024.4.3 Versioned saves and conflicts; implement the planned served positive and negative acceptance.
-- [ ] T121 ARBORA-OPS-R024.4.4 Hosted materialization; implement the planned served positive and negative acceptance.
-- [ ] T122 ARBORA-OPS-R024.4.5 Authority and replay; implement the planned served positive and negative acceptance.
-- [ ] T123 ARBORA-OPS-R024.4.6 Registration and served proof; implement the planned served positive and negative acceptance.
+- [x] T118 ARBORA-OPS-R024.4.1 Versioned memory port; implement the planned served positive and negative acceptance.
+- [x] T119 ARBORA-OPS-R024.4.2 Snapshot reads and listing; implement the planned served positive and negative acceptance.
+- [x] T120 ARBORA-OPS-R024.4.3 Versioned saves and conflicts; implement the planned served positive and negative acceptance.
+- [x] T121 ARBORA-OPS-R024.4.4 Hosted materialization; implement the planned served positive and negative acceptance.
+- [x] T122 ARBORA-OPS-R024.4.5 Authority and replay; implement the planned served positive and negative acceptance.
+- [x] T123 ARBORA-OPS-R024.4.6 Registration and served proof; implement the planned served positive and negative acceptance.
 
 ## Owner-bound projections (ARBORA-OPS-R054–R058, R061, R063)
 
