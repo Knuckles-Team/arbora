@@ -180,3 +180,97 @@ def test_settings_composition_forwards_factory_without_constructing_it(monkeypat
     )
     assert calls[0]["browser_boundary_factory"] is factory
     assert calls[0]["pool"] is pool
+
+
+def _production_sources() -> dict[str, str]:
+    from pathlib import Path
+
+    import arbora
+
+    root = Path(arbora.__file__).parent
+    return {
+        str(path.relative_to(root)): path.read_text()
+        for path in root.rglob("*.py")
+        if "skills" not in path.parts
+    }
+
+
+@pytest.mark.spec("ARBORA-OPS-R032.2")
+@pytest.mark.spec("ARBORA-OPS-R032.2.4")
+def test_root_builds_ports_once_and_injects_boundary():
+    """One call site builds the identity runtime; both consumers take the boundary."""
+    sources = _production_sources()
+    builders = [
+        name
+        for name, text in sources.items()
+        if "build_engine_identity_ports(" in text and name != "identity/composition.py"
+    ]
+    assert builders == ["identity/browser_composition.py"]
+    constructors = [
+        name
+        for name, text in sources.items()
+        if "EngineSessionAuthority(" in text and name != "identity/engine_ports.py"
+    ]
+    assert constructors == ["identity/composition.py"]
+    server = sources["mcp_server/server.py"]
+    assert "browser_boundary_factory=browser_boundary_factory" in server
+    assert (
+        "session_boundary=invocation.browser_boundary if invocation else None" in server
+    )
+
+
+@pytest.mark.spec("ARBORA-OPS-R032.2.2")
+def test_mcp_server_refuses_eg_browser_without_factory(monkeypatch):
+    test_direct_unconfigured_eg_server_refuses_before_serving(monkeypatch)
+
+
+@pytest.mark.spec("ARBORA-OPS-R032.2.2")
+def test_factory_bearing_start_composes_the_invocation(monkeypatch):
+    test_settings_composition_forwards_factory_without_constructing_it(monkeypatch)
+
+
+@pytest.mark.spec("ARBORA-OPS-R032.2.3.2")
+def test_supervisor_start_call_supplies_boundary(monkeypatch):
+    test_supervisor_receives_exact_boundary(monkeypatch)
+
+
+@pytest.mark.spec("ARBORA-OPS-R032.2.3.2.2")
+def test_start_call_receives_the_root_boundary():
+    server = _production_sources()["mcp_server/server.py"]
+    assert server.count("session_boundary=") == 1
+    assert "invocation.browser_boundary" in server
+
+
+@pytest.mark.spec("ARBORA-OPS-R032.2.4")
+def test_one_runtime_reaches_mcp_server_and_webui(monkeypatch):
+    """The boundary the supervisor receives is the object run_web_ui is handed."""
+    from arbora.mcp_server import composition
+
+    boundary, handed = object(), []
+
+    class Supervisor:
+        def start_service(self, name, runner, session):
+            runner("stop")
+
+    monkeypatch.setattr(composition, "CoServiceSupervisor", Supervisor)
+    monkeypatch.setattr(
+        composition,
+        "detect_composition",
+        lambda *a, **k: SimpleNamespace(
+            messaging_intake_configured=False,
+            messaging_configured=False,
+            web_ui_enabled=True,
+        ),
+    )
+    monkeypatch.setattr(
+        composition,
+        "run_web_ui",
+        lambda stop, **kw: handed.append(kw["session_boundary"]),
+    )
+    composition.start_composed_services(
+        object(), object(), action_policies=ActionPolicies(), session_boundary=boundary
+    )
+    assert handed == [boundary] and handed[0] is boundary
+    for name, text in _production_sources().items():
+        if name.startswith(("webui_host/", "mcp_server/")):
+            assert "from arbora.identity.engine_ports" not in text, name

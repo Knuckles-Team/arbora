@@ -1,10 +1,11 @@
 """Decide operations: service-executed commit (ARBORA-OPS-R021.1).
 
 The commit path runs only under the service executor so no caller can
-materialize an agent decision using only a human-scoped token; the runner
-itself stays a typed seam (``agent_utilities.decide``) composed by the
-serving root, matching the ingest/runner-facade convention in
-``arbora/api/ops`` (see ARBORA-OPS-R020).
+materialize an agent decision using only a human-scoped token. The handler
+sends the engine ``DecisionCommit`` method through the composition root's
+client; there is no runner seam. When the pinned policy requires approval the
+request carries the recommendation approval and the engine checks it, so the
+engine's ``APPROVAL_MISSING`` and ``APPROVAL_STALE`` pass through unchanged.
 """
 
 from __future__ import annotations
@@ -14,6 +15,9 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.plan import params_digest
+from arbora.api.ops._engine import engine_send
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -43,13 +47,17 @@ class DecideCommitResult(_Params):
 async def handle_decide_commit(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """Commit a decision through the service-bound decide runner only."""
-    runner = context.services.get("decide_runner")
-    if runner is None:
-        raise RuntimeError("decide runner is not composed")
-    result = await runner.commit(dict(params["request"]), tenant=context.caller.tenant)
+    """Commit one decision record through the engine as the service executor."""
+    if getattr(context, "client", None) is None:
+        raise OperationRefused("UNAVAILABLE", {"reason": "engine client is not bound"})
+    request = dict(params["request"])
+    answer = await engine_send(
+        context, "DecisionCommit", {"request": request}, idempotent=True
+    )
+    value = dict(answer) if isinstance(answer, Mapping) else {"result": answer}
+    value["record_digest"] = params_digest(request.get("record", request))
     return {
-        "value": dict(result),
+        "value": value,
         "provenance": {
             "op": op.id,
             "tenant": str(context.caller.tenant),
