@@ -33,6 +33,36 @@ class WorkItemBackendUnavailable(RuntimeError):
     """The engine WorkItem authority cannot serve the transition."""
 
 
+class TransitionRefused(Exception):
+    """The engine refused an illegal work item transition (``TRANSITION_REFUSED``).
+
+    Carries the typed fields of the owner's refusal record: ``machine``, the
+    ``from_state`` the item was in, the ``event`` and the closed ``reason``
+    (``MEDULLA-ORCH-VOCAB-R811.4``). Arbora owns no work item machine.
+    """
+
+    code = "TRANSITION_REFUSED"
+
+    def __init__(self, machine: str, from_state: str, event: str, reason: str) -> None:
+        super().__init__(f"{machine} refused {event!r} from {from_state!r} ({reason})")
+        self.machine = machine
+        self.from_state = from_state
+        self.event = event
+        self.reason = reason
+
+
+def transition_refusal(error: Exception) -> TransitionRefused | None:
+    """The typed refusal an engine error carries, or ``None`` for any other error."""
+    if getattr(error, "code", None) != "TRANSITION_REFUSED":
+        return None
+    return TransitionRefused(
+        str(getattr(error, "machine", "")),
+        str(getattr(error, "from_state", "")),
+        str(getattr(error, "event", "")),
+        str(getattr(error, "reason", "")),
+    )
+
+
 class NativeWorkItemRequired(WorkItemBackendUnavailable):
     """The engine-native WorkItem method is required and not bound."""
 
@@ -335,17 +365,25 @@ def commit_result(
             json.dumps(dict(run_completion)), strict=True
         ).model_dump(mode="json", exclude_none=True)
     fence = _fence(claim)
-    result = _work_items(engine).commit_result(
-        work_item_id=item_id,
-        idempotency_key=_key("commit", item_id, fence["fencing_token"], outcome),
-        outcome=outcome,
-        now_ms=_now_ms(),
-        result_ref=result_ref,
-        error_ref=error_ref,
-        retryable=retryable,
-        **completion,
-        **fence,
-    )
+    try:
+        result = _work_items(engine).commit_result(
+            work_item_id=item_id,
+            idempotency_key=_key("commit", item_id, fence["fencing_token"], outcome),
+            outcome=outcome,
+            now_ms=_now_ms(),
+            result_ref=result_ref,
+            error_ref=error_ref,
+            retryable=retryable,
+            **completion,
+            **fence,
+        )
+    except Exception as exc:
+        refusal = transition_refusal(exc)
+        if refusal is None:
+            raise
+        if refusal.reason == "terminal_state":
+            return "noop"
+        raise refusal from exc
     status = str(result.get("status"))
     return "committed" if status == outcome else status
 
