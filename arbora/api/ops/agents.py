@@ -92,20 +92,26 @@ async def handle_agent(
             if not context.idempotency_key:
                 raise ValueError("Idempotency-Key is required")
             authority = service.authority
-            if op.id == "agents.tasks.message":
-                receipt = await authority.admit_child_message(
-                    conversation_target=params["conversation_target"],
-                    expected_revision=params["expected_revision"],
-                    content=params["content"],
-                    idempotency_key=context.idempotency_key,
-                )
-            else:
-                receipt = await authority.admit_continuation(
-                    conversation_target=params["conversation_target"],
-                    history_revision=params["history_revision"],
-                    content=params["content"],
-                    idempotency_key=context.idempotency_key,
-                )
+            from arbora.a2a.authority import A2AIdempotencyConflict
+            from arbora.api.invoke.pipeline import OperationRefused
+
+            try:
+                if op.id == "agents.tasks.message":
+                    receipt = await authority.admit_child_message(
+                        conversation_target=params["conversation_target"],
+                        expected_revision=params["expected_revision"],
+                        content=params["content"],
+                        idempotency_key=context.idempotency_key,
+                    )
+                else:
+                    receipt = await authority.admit_continuation(
+                        conversation_target=params["conversation_target"],
+                        history_revision=params["history_revision"],
+                        content=params["content"],
+                        idempotency_key=context.idempotency_key,
+                    )
+            except A2AIdempotencyConflict:
+                raise OperationRefused("IDEMPOTENCY_CONFLICT", {}) from None
             return {"value": receipt}
         elif op.id == "agents.tasks.cancel":
             result = await service.cancel_task(params["task_id"])

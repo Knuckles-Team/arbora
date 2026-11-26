@@ -757,10 +757,24 @@ class WorkItemA2AAuthority:
         lifecycle and the history revision; a refusal starts nothing and a terminal
         run is never reopened. Arbora keeps no history store.
         """
+        from arbora import work_items
+        from arbora.api.invoke.pipeline import OperationRefused
+
         session = self._session("kg:write")
         owner_ref = self._owner_ref(session)
+        _engine, work_engine = self._engine()
         digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
         run_id = self._task_id(session.tenant, owner_ref, idempotency_key)
+        predecessor = await asyncio.to_thread(
+            work_items.get_work_item,
+            work_engine,
+            self._work_item_id(conversation_target),
+        )
+        # A foreign or absent predecessor answers alike: no run starts.
+        if not self._owned(predecessor, owner_ref):
+            raise OperationRefused("CHILD_OWNER_MISMATCH", {})
+        route = A2ARouteDecision.model_validate(predecessor["metadata"]["a2a_route"])
+        context_id = str(predecessor["metadata"].get("a2a_context_id") or run_id)
         item_id, created = await asyncio.to_thread(
             self._admit,
             {
@@ -772,6 +786,18 @@ class WorkItemA2AAuthority:
                 "payload_ref": run_id,
                 "description": content,
                 "metadata": {
+                    "a2a_schema": _A2A_METADATA_SCHEMA,
+                    "a2a_owner_ref": owner_ref,
+                    "a2a_context_id": context_id,
+                    "a2a_route": route.model_dump(mode="json", by_alias=True),
+                    "a2a_request_digest": _digest(
+                        {
+                            "mode": "continuation",
+                            "target": conversation_target,
+                            "history_revision": history_revision,
+                            "content_digest": digest,
+                        }
+                    ),
                     "mode": "continuation",
                     "owner": owner_ref,
                     "target": conversation_target,
@@ -788,10 +814,26 @@ class WorkItemA2AAuthority:
             session,
             owner_ref,
         )
+        if created:
+            # One new run on the predecessor's chosen agent; a replay starts nothing.
+            self._detach(
+                self._run(
+                    work_engine,
+                    item_id=item_id,
+                    session=session,
+                    agent_name=route.agent_name,
+                    task=content,
+                    task_id=run_id,
+                    context_id=context_id,
+                    run_id=run_id,
+                ),
+                item_id,
+            )
         return {
             "work_item_id": item_id,
             "run_id": run_id,
             "predecessor_run_id": conversation_target,
+            "agent_name": route.agent_name,
             "created": created,
         }
 
