@@ -143,7 +143,9 @@ def test_models_refuse_invalid_fields_and_digest_mismatch() -> None:
     with pytest.raises(ValueError):
         MemoryFilesSave(doc_id="d", content="x")  # no digest
     with pytest.raises(ValueError):
-        MemoryFilesSave(doc_id="d", content="x", content_digest="nothex", extra=1)
+        MemoryFilesSave.model_validate(
+            {"doc_id": "d", "content": "x", "content_digest": "nothex", "extra": 1}
+        )
     assert digest_matches("x", _digest("x"))
     assert not digest_matches("x", _digest("y"))
     assert sync_outcome({"outcome": "refused", "code": "MEMSYNC_NOT_AVAILABLE"}) == {

@@ -21,13 +21,12 @@ from pydantic import Field, model_validator
 from arbora.api.ops._common import Params
 
 _DIGEST = r"^[0-9a-f]{64}$"
-_DOC = {"min_length": 1, "max_length": 512}
 
 
 class MemoryFilesRead(Params):
     """Read the head of one document, or one retained revision."""
 
-    doc_id: str = Field(**_DOC)
+    doc_id: str = Field(min_length=1, max_length=512)
     revision: int | None = Field(default=None, ge=0)
 
 
@@ -43,7 +42,7 @@ class MemoryFilesSave(Params):
     """Submit new content, or resolve a retained conflict."""
 
     action: Literal["submit", "resolve"] = "submit"
-    doc_id: str = Field(**_DOC)
+    doc_id: str = Field(min_length=1, max_length=512)
     content: str | None = None
     content_digest: str | None = Field(default=None, pattern=_DIGEST)
     expected_revision: int | None = Field(default=None, ge=0)
