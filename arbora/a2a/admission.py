@@ -1,21 +1,20 @@
 """Typed context-budget tool-subset admission for the A2A door.
 
-Owned by ``ARBORA-A2A-002``: admission, refusal, and provenance for the
-smallest authorized tool subset that covers a selected agent graph within a
-caller's context budget (see ``docs/a2a.md``, "Tool-subset assembly
-status"). This fails closed today because medulla's
-``AgentAssemble`` operation returns unavailable and the signed AU
-``AgentTurnEnvelope`` carries no allowed-tool-subset field
-(meristem ``MERISTEM-CONTROL-R035``). Neither upstream gap is bridged with a
-local heuristic, a cached prior subset, or an advisory best-effort answer.
+Owned by ``ARBORA-A2A-R016`` to ``R020``: admission, refusal and provenance for the
+tool subset the engine commits in its ``harness_config`` decision
+(``MEDULLA-DECISION-ENGINE-R128``). Arbora makes one decider call per request,
+holds no policy table, no default threshold and no cache, and refuses closed when
+the answer is unavailable, stale, abstained or partial.
 """
 
 from __future__ import annotations
 
+import time
 from collections.abc import Awaitable, Callable, Mapping, Sequence
-from typing import Any, Literal
+from typing import Any, Literal, Protocol, runtime_checkable
 
-from pydantic import Field, StrictStr, field_validator
+from pydantic import ConfigDict, Field, StrictStr, field_validator, model_validator
+from pydantic.alias_generators import to_camel
 
 from .models import A2AContextBudget, _WireModel
 
@@ -28,20 +27,122 @@ __all__ = [
     "ToolSubsetAdmissionDecision",
     "ToolSubsetAdmissionRefusalReason",
     "ToolSubsetAdmissionRequest",
+    "HarnessConfigDecider",
+    "HarnessConfigMirror",
+    "HarnessConfigRecord",
+    "HarnessPartMirror",
     "admit_tool_subset",
+    "priority_for",
 ]
 
 ToolSubsetAdmissionRefusalReason = Literal[
-    "EG_ASSEMBLE_UNAVAILABLE",
+    "HARNESS_CONFIG_UNAVAILABLE",
+    "HARNESS_CONFIG_ABSTAINED",
     "ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET",
+    "ENVELOPE_LACKS_HARNESS_CONFIG",
+    "CONTEXT_BUDGET_MISSING",
 ]
+
+Priority = Literal["interactive", "orchestration"]
+
+_OPERATION = "eg.decide:harness_config"
+_PART_NAMES = (
+    "action_space",
+    "context_policy",
+    "hard_threshold",
+    "plan_scaffold",
+    "recent_window_fraction",
+    "soft_threshold",
+    "tool_subset",
+)
+
+
+class HarnessPartMirror(_WireModel):
+    """One part of the engine's ``HarnessConfigAnswer``: decided, or abstained.
+
+    Mirrors the engine's ``Decided``/``Abstained { missing_fact, conservative_default }``
+    wrapper (``MEDULLA-DECISION-ENGINE-R128.3``). Arbora never applies the default.
+    """
+
+    decision: Literal["decided", "abstained"]
+    value: Any = None
+    conservative_default: Any = None
+    missing_fact: tuple[str, ...] = ()
+
+    @model_validator(mode="before")
+    @classmethod
+    def _tag_name(cls, data: Any) -> Any:
+        """Read the part tag under either name the engine has shipped it as.
+
+        PIN-LAG: the pinned engine tags a part ``status``; engine ``main`` tags it
+        ``decision``. The mirror accepts both and serves ``decision``.
+        """
+        if isinstance(data, dict) and "decision" not in data and "status" in data:
+            return {
+                **{k: v for k, v in data.items() if k != "status"},
+                "decision": data["status"],
+            }
+        return data
+
+
+class HarnessConfigMirror(_WireModel):
+    """Frozen hand-written mirror of the engine's ``HarnessConfigAnswer``."""
+
+    model_config = ConfigDict(
+        alias_generator=to_camel, populate_by_name=True, extra="forbid", frozen=True
+    )
+
+    action_space: HarnessPartMirror
+    context_policy: HarnessPartMirror
+    hard_threshold: HarnessPartMirror
+    plan_scaffold: HarnessPartMirror
+    recent_window_fraction: HarnessPartMirror
+    soft_threshold: HarnessPartMirror
+    tool_subset: HarnessPartMirror
+
+    def parts(self) -> dict[str, HarnessPartMirror]:
+        return {name: getattr(self, name) for name in _PART_NAMES}
+
+
+class HarnessConfigRecord(_WireModel):
+    """The committed engine record of one ``harness_config`` decision."""
+
+    answer: HarnessConfigMirror
+    decision_record_ref: str = Field(min_length=1, max_length=512)
+    #: The record digest, 64 lowercase hex; bound into the dispatch envelope.
+    digest: str = Field(pattern=r"^[0-9a-f]{64}$")
+    #: Read from the engine record; Arbora holds no default lifetime.
+    expires_at_ms: int | None = Field(default=None, ge=0)
+
+
+@runtime_checkable
+class HarnessConfigDecider(Protocol):
+    """The engine decision port for the harness configuration (R017.1)."""
+
+    async def decide(
+        self,
+        *,
+        tenant: str,
+        model_profile_ref: str,
+        task_class: str,
+        budget_tokens: int,
+        priority: Priority,
+    ) -> HarnessConfigRecord: ...
 
 
 class ToolSubsetAdmissionRequest(_WireModel):
-    """A caller's request to admit the smallest authorized tool subset."""
+    """A caller's request to admit the smallest authorized tool subset.
+
+    ``model_profile_ref`` and ``task_class`` come from the routed capability,
+    never from the caller (``ARBORA-A2A-R016.2``).
+    """
 
     agent_graph_ref: str = Field(min_length=1, max_length=512)
-    context_budget: A2AContextBudget
+    context_budget: A2AContextBudget | None = None
+    model_profile_ref: str = Field(min_length=1, max_length=512)
+    task_class: str = Field(min_length=1, max_length=512)
+    tenant: str = Field(default="", max_length=512)
+    priority: Priority = "interactive"
 
 
 class ToolSubsetAdmissionDecision(_WireModel):
@@ -51,26 +152,128 @@ class ToolSubsetAdmissionDecision(_WireModel):
     admitted_tools: tuple[str, ...] = Field(default=(), max_length=64)
     refusal_reason: ToolSubsetAdmissionRefusalReason | None = None
     provenance: str = Field(min_length=1, max_length=256)
+    harness_config: HarnessConfigMirror | None = None
+    decision_record_ref: str | None = Field(default=None, max_length=512)
+    context_budget_tokens: int | None = Field(default=None, ge=1)
+    harness_config_digest: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def _admitted_carries_all_or_none(self) -> ToolSubsetAdmissionDecision:
+        carried = (
+            self.harness_config,
+            self.decision_record_ref,
+            self.context_budget_tokens,
+        )
+        if self.admitted:
+            if self.refusal_reason is not None or any(c is None for c in carried):
+                raise ValueError("an admitted decision carries the answer, no reason")
+        elif self.refusal_reason is None or any(c is not None for c in carried):
+            raise ValueError("a refused decision carries a reason and no answer")
+        return self
 
 
-def admit_tool_subset(
-    request: ToolSubsetAdmissionRequest,
+def priority_for(caller: Any) -> Priority:
+    """The lease priority of a principal class; the caller never supplies it (R017.3)."""
+    kind = getattr(caller, "principal_kind", None)
+    if kind == "human":
+        return "interactive"
+    if kind == "service":
+        return "orchestration"
+    raise PermissionError("principal class has no admission priority")
+
+
+def _refused(
+    reason: ToolSubsetAdmissionRefusalReason, provenance: str
 ) -> ToolSubsetAdmissionDecision:
-    """Admit the request, or fail closed with a typed, provenanced refusal.
-
-    ``ARBORA-A2A-R017.1``: medulla's ``AgentAssemble`` operation
-    returns unavailable today, so no context-budget-bound tool subset can be
-    derived or cryptographically carried. This refuses closed rather than
-    returning an advisory, cached, or partial subset.
-    """
-
-    del request
     return ToolSubsetAdmissionDecision(
         admitted=False,
-        admitted_tools=(),
-        refusal_reason="EG_ASSEMBLE_UNAVAILABLE",
-        provenance="eg.AgentAssemble:unavailable",
+        refusal_reason=reason,
+        provenance=provenance[:256],
     )
+
+
+def _abstentions(answer: HarnessConfigMirror) -> list[str]:
+    return [
+        f"{name}:{'+'.join(part.missing_fact) or 'unknown'}={part.conservative_default!s}"
+        for name, part in answer.parts().items()
+        if part.decision == "abstained"
+    ]
+
+
+def _incomplete(answer: HarnessConfigMirror) -> bool:
+    """A summarizing policy needs both thresholds decided (R020.2)."""
+    if answer.context_policy.value != "elide_then_summarize":
+        return False
+    return any(
+        part.decision != "decided" or part.value is None
+        for part in (answer.soft_threshold, answer.hard_threshold)
+    )
+
+
+def _envelope_gap(dispatch_model: Any) -> ToolSubsetAdmissionRefusalReason | None:
+    fields = getattr(dispatch_model, "model_fields", {})
+    if "allowed_tool_subset" not in fields:
+        return "ENVELOPE_LACKS_ALLOWED_TOOL_SUBSET"
+    if "decision_record_ref" not in fields or "harness_config_digest" not in fields:
+        return "ENVELOPE_LACKS_HARNESS_CONFIG"
+    return None
+
+
+async def admit_tool_subset(
+    request: ToolSubsetAdmissionRequest,
+    decider: HarnessConfigDecider,
+    *,
+    clock: Callable[[], float] = time.time,
+    dispatch_model: Any = None,
+) -> ToolSubsetAdmissionDecision:
+    """Admit the engine's committed tool subset, or refuse closed with provenance.
+
+    One decider call per request and no cache: an earlier subset, an advisory
+    one or a trimmed one is never returned (``ARBORA-A2A-R017.2``, ``R020``).
+    """
+    tokens = request.context_budget.tokens if request.context_budget else None
+    if tokens is None or tokens < 1:
+        return _refused("CONTEXT_BUDGET_MISSING", f"{_OPERATION}:budget_missing")
+    try:
+        record = await decider.decide(
+            tenant=request.tenant,
+            model_profile_ref=request.model_profile_ref,
+            task_class=request.task_class,
+            budget_tokens=tokens,
+            priority=request.priority,
+        )
+    except Exception:  # noqa: BLE001 - an unanswered question admits nothing
+        return _refused("HARNESS_CONFIG_UNAVAILABLE", f"{_OPERATION}:unavailable")
+    if record.expires_at_ms is not None and clock() * 1000 >= record.expires_at_ms:
+        return _refused("HARNESS_CONFIG_UNAVAILABLE", f"{_OPERATION}:stale")
+    abstained = _abstentions(record.answer)
+    if abstained:
+        return _refused(
+            "HARNESS_CONFIG_ABSTAINED", f"{_OPERATION}:abstained:{';'.join(abstained)}"
+        )
+    tools = record.answer.tool_subset.value
+    if _incomplete(record.answer) or not isinstance(tools, (list, tuple)):
+        return _refused("HARNESS_CONFIG_UNAVAILABLE", f"{_OPERATION}:partial")
+    if len(tools) > 64 or any(not isinstance(tool, str) or not tool for tool in tools):
+        return _refused("HARNESS_CONFIG_UNAVAILABLE", f"{_OPERATION}:partial")
+    gap = _envelope_gap(dispatch_model or _dispatch_model())
+    if gap is not None:
+        return _refused(gap, f"{_OPERATION}:{gap.lower()}")
+    return ToolSubsetAdmissionDecision(
+        admitted=True,
+        admitted_tools=tuple(tools),
+        provenance=f"{_OPERATION}:{record.decision_record_ref}"[:256],
+        harness_config=record.answer,
+        decision_record_ref=record.decision_record_ref,
+        context_budget_tokens=tokens,
+        harness_config_digest=record.digest,
+    )
+
+
+def _dispatch_model() -> Any:
+    from arbora.api.contracts import SignedAgentDispatchRequest
+
+    return SignedAgentDispatchRequest
 
 
 ModelProfileRefusalReason = Literal[
