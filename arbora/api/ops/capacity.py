@@ -58,6 +58,12 @@ class CapacityModeResult(BaseModel):
     mode: str
 
 
+class CapacityReceiptResult(BaseModel):
+    """The latest applied-state receipt of a partition, or none yet."""
+
+    receipt: dict[str, Any] | None
+
+
 def _partition(context: Any, params: Mapping[str, Any]) -> Partition:
     return Partition(
         tenant=context.caller.tenant,
@@ -86,6 +92,16 @@ async def handle_capacity_status(
             "reason": status.reason,
         }
     }
+
+
+async def handle_capacity_receipt_get(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """The latest receipt of this caller's partition (ARBORA-CAPACITY-R001.3.4)."""
+    from dataclasses import asdict
+
+    receipt = _bound_registry(context).latest_receipt(_partition(context, params))
+    return {"value": {"receipt": None if receipt is None else asdict(receipt)}}
 
 
 async def handle_capacity_set_mode(
@@ -231,6 +247,22 @@ def operations() -> tuple[OpSpec, ...]:
             ),
         ),
         OpSpec(
+            id="capacity.throttle.receipt.get",
+            verb=Verb.ASK,
+            summary="Show the latest applied capacity receipt for this partition",
+            examples=("show the last capacity change receipt for this child",),
+            params=CapacityPartitionParams,
+            result=CapacityReceiptResult,
+            binding=Composite(
+                handler="arbora.api.ops.capacity.handle_capacity_receipt_get"
+            ),
+            scopes=frozenset({"capacity:read"}),
+            effect=Effect.READ,
+            surfaces=frozenset(
+                {Surface.MCP, Surface.HTTP, Surface.A2A, Surface.CONSOLE}
+            ),
+        ),
+        OpSpec(
             id="capacity.throttle.set_mode",
             verb=Verb.MANAGE,
             summary="Select observe or enforce throttle mode for this partition",
@@ -257,9 +289,11 @@ __all__ = [
     "CapacityAdjustResult",
     "CapacityModeResult",
     "CapacityPartitionParams",
+    "CapacityReceiptResult",
     "CapacitySetModeParams",
     "CapacityStatusResult",
     "handle_capacity_adjust_apply",
+    "handle_capacity_receipt_get",
     "handle_capacity_set_mode",
     "handle_capacity_status",
     "operations",

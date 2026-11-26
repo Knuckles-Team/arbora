@@ -497,6 +497,45 @@ def _plan_confirmation(context: Any, params: Mapping[str, Any], op: OpSpec) -> A
 async def _gateway_call(
     gateway: Any, context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
+    """Forward the call, admitted and recorded per partition when capacity is bound."""
+
+    async def forward() -> dict[str, Any]:
+        return await _forward(gateway, context, params, op)
+
+    return await _capacity_guard(context).run(
+        lambda: _capacity_partition(context, params, op), forward
+    )
+
+
+def _capacity_guard(context: Any) -> Any:
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.fleet.throttle_service import UNGUARDED, CapacityGuard
+
+    limiter = context.services.get("partition_limiter")
+    recorder = context.services.get("outcome_recorder")
+    if limiter is None or recorder is None:
+        return UNGUARDED
+    return CapacityGuard(
+        limiter, recorder, lambda t: OperationRefused(t.code, t.details)
+    )
+
+
+def _capacity_partition(context: Any, params: Mapping[str, Any], op: OpSpec) -> Any:
+    """Tenant, child, read or write class and policy revision of one call."""
+    from arbora.fleet.error_budget import Partition
+
+    effect = getattr(context.fleet_decision, "effect", op.effect)
+    return Partition(
+        tenant=str(context.caller.tenant),
+        child=str(params["server"]),
+        operation_class="read" if effect == Effect.READ else "write",
+        policy_revision=str(context.caller.policy_revision),
+    )
+
+
+async def _forward(
+    gateway: Any, context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
     approval_ref = await _approval_ref(context, params, op)
     result = await gateway.call(
         context.caller,

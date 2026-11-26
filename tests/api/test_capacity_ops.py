@@ -46,7 +46,7 @@ def _partition_context(**services: Any) -> SimpleNamespace:
 
 def test_capacity_ops_declare_exact_scopes_and_admin_effect() -> None:
     registry = Registry(capacity.operations())
-    assert len(registry) == 3
+    assert len(registry) == 4
     status_op = registry["capacity.throttle.status"]
     mode_op = registry["capacity.throttle.set_mode"]
     assert status_op.scopes == frozenset({"capacity:read"})
@@ -164,3 +164,86 @@ def test_denied_set_mode_leaves_throttle_state_unchanged() -> None:
         tenant="tenant:one", policy_revision="revision:one", **_PARTITION_PARAMS
     )
     assert throttle_registry.mode(denied_partition) is ThrottleMode.OBSERVE
+
+
+@pytest.mark.spec("ARBORA-CAPACITY-R001.3.4")
+@pytest.mark.asyncio
+async def test_receipt_reflects_readback_and_mismatch() -> None:
+    from arbora.fleet.capacity_proposals import (
+        CAPACITY_APPLY_MISMATCH,
+        CapacityAppliedReceipt,
+    )
+
+    registry = ThrottleRegistry()
+    partition = Partition(tenant="t1", policy_revision="p1", **_PARTITION_PARAMS)
+    op = Registry(capacity.operations())["capacity.throttle.receipt.get"]
+    assert op.scopes == frozenset({"capacity:read"}) and op.effect is Effect.READ
+    assert {Surface.HTTP, Surface.MCP} <= op.surfaces
+    context = _partition_context(throttle_registry=registry)
+    none_yet = await capacity.handle_capacity_receipt_get(
+        context, _PARTITION_PARAMS, op
+    )
+    assert none_yet == {"value": {"receipt": None}}
+    for outcome, applied in (("raised", 6), (CAPACITY_APPLY_MISMATCH, 1)):
+        registry.record_receipt(
+            partition,
+            CapacityAppliedReceipt(
+                proposal_digest="a" * 64,
+                requested_capacity=6,
+                applied_capacity=applied,
+                cell_id="fleet:search",
+                policy_revision=1,
+                state_revision=4,
+                outcome=outcome,
+            ),
+        )
+        shown = await capacity.handle_capacity_receipt_get(
+            context, _PARTITION_PARAMS, op
+        )
+        receipt = shown["value"]["receipt"]
+        assert receipt["outcome"] == outcome
+        assert receipt["applied_capacity"] == applied
+        assert receipt["requested_capacity"] == 6
+    # Another tenant's partition has no receipt: the answer is the same as none.
+    other = _partition_context(throttle_registry=registry)
+    other.caller.tenant = "t2"
+    assert (
+        await capacity.handle_capacity_receipt_get(other, _PARTITION_PARAMS, op)
+    ) == {"value": {"receipt": None}}
+
+
+@pytest.mark.spec("ARBORA-CAPACITY-R001.3.4")
+def test_a_reader_gets_the_receipt_over_http_and_mcp_through_the_invoke_pipeline() -> (
+    None
+):
+    from arbora.fleet.capacity_proposals import CapacityAppliedReceipt
+
+    registry = ThrottleRegistry()
+    registry.record_receipt(
+        Partition(
+            tenant="tenant:one", policy_revision="revision:one", **_PARTITION_PARAMS
+        ),
+        CapacityAppliedReceipt("a" * 64, 6, 6, "fleet:search", 1, 4, "raised"),
+    )
+    for surface in (Surface.HTTP, Surface.MCP):
+        services, runtime, _audit, _journal, _leases = _setup_services(
+            registry=Registry(capacity.operations()), effects=None
+        )
+
+        async def dispatched() -> dict[str, Any]:
+            return await capacity.handle_capacity_receipt_get(
+                _partition_context(throttle_registry=registry), _PARTITION_PARAMS, None
+            )
+
+        runtime.on_dispatch = dispatched
+        result = asyncio.run(
+            invoke(
+                "capacity.throttle.receipt.get",
+                _PARTITION_PARAMS,
+                _caller(effective_scopes=frozenset({"capacity:read"})),
+                surface,
+                services=services,
+            )
+        )
+        assert not isinstance(result, OpError), result
+        assert len(runtime.calls) == 1

@@ -593,6 +593,33 @@ def _with_loop_worker(
     return {**bindings, "loop_worker_runner": runner}, startup
 
 
+def _with_capacity(
+    bindings: Mapping[str, Any],
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+) -> tuple[Mapping[str, Any], Callable[[], Coroutine[Any, Any, Any]]]:
+    """Bind the throttle controller and its limiter (ARBORA-CAPACITY-R001.4)."""
+    if "throttle_registry" in bindings:
+
+        async def nothing() -> None:
+            return None
+
+        return bindings, nothing
+    from arbora.core.settings import setting
+    from arbora.fleet.capacity_binding import with_capacity
+
+    async def send(method: str, params: dict[str, Any], tenant: str) -> Any:
+        from medulla.generated import send_by_id
+
+        client = await pool.connected_client(connect_context(tenant), graph)
+        return await send_by_id(client, method, params, graph)
+
+    return with_capacity(
+        bindings, send, aimd_section=setting("ARBORA_CAPACITY_AIMD", "")
+    )
+
+
 def _chained_startup(
     first: Callable[[], Coroutine[Any, Any, Any]] | None,
     second: Callable[[], Coroutine[Any, Any, Any]],
@@ -732,6 +759,10 @@ def compose_served_invocation(
         )
         if loop_startup is not None:
             process_startup = _chained_startup(process_startup, loop_startup)
+        bindings, capacity_startup = _with_capacity(
+            bindings, pool, graph, connect_context
+        )
+        process_startup = _chained_startup(process_startup, capacity_startup)
     if (
         bindings is not None
         and task_plan_config is not None
