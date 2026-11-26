@@ -119,3 +119,66 @@ def test_prompt_operations_are_registered_with_storage_scopes() -> None:
         ("prompts.rollback", "kv:write"),
     ):
         assert registry[op_id].scopes == frozenset({scope})
+
+
+@pytest.mark.spec("ARBORA-OPS-R922.4")
+async def test_active_prompt_resolves_the_session_agent_and_truncates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.api.ops import agent_library
+
+    sent: list[tuple[str, dict[str, Any]]] = []
+    body = {"text": b"x" * (prompts._ACTIVE_LIMIT + 5)}
+
+    async def library(
+        _context: Any, method: str, params: dict[str, Any], **_k: Any
+    ) -> Any:
+        sent.append((method, params["op"]))
+        if method == "AgentLibrary":
+            return {
+                "entry": {
+                    "agent_id": params["op"]["agent_id"],
+                    "role": "researcher",
+                    "entry_revision": 4,
+                    "system_prompt": {"component_id": "prompt:one"},
+                }
+            }
+        return {"body": body["text"]}
+
+    monkeypatch.setattr(agent_library, "engine_send", library)
+    import arbora.api.ops._engine as engine
+
+    monkeypatch.setattr(engine, "engine_send", library)
+    context = SimpleNamespace(
+        caller=SimpleNamespace(tenant="tenant:one", agent_id="agent:session")
+    )
+    result = await prompts.handle_prompts_active_get(context, {}, None)  # type: ignore[arg-type]
+    assert result["value"]["agent_id"] == "agent:session"
+    assert result["value"]["profile"] == "researcher"
+    assert result["value"]["revision"] == 4
+    assert result["value"]["truncated"] is True
+    assert len(result["value"]["system_prompt"]) == prompts._ACTIVE_LIMIT
+    assert sent[1] == (
+        "AgentComponent",
+        {
+            "op": "content",
+            "request": {"component_id": "prompt:one", "tenant_id": "tenant:one"},
+        },
+    )
+    body["text"] = b"short"
+    short = await prompts.handle_prompts_active_get(
+        context,
+        {"agent_id": "agent:other"},
+        None,  # type: ignore[arg-type]
+    )
+    assert (
+        short["value"]["system_prompt"] == "short"
+        and short["value"]["truncated"] is False
+    )
+    with pytest.raises(OperationRefused) as refused:
+        await prompts.handle_prompts_active_get(
+            SimpleNamespace(caller=SimpleNamespace(tenant="t")),
+            {},
+            None,  # type: ignore[arg-type]
+        )
+    assert refused.value.code == "AGENT_NOT_FOUND"
