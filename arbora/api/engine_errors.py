@@ -240,6 +240,7 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "PACK_REVISION_NOT_VISIBLE": (400, False),
     "PACK_TOO_LARGE": (400, False),
     "PARAMETER_INVALID": (400, False),
+    "PEER_COHORT_TOO_SMALL": (400, False),
     "POLICY_BODY_UNAVAILABLE": (400, False),
     "POLICY_LOOSENING": (400, False),
     "POLICY_NATIVE_AUTHORITY_REQUIRED": (403, False),
