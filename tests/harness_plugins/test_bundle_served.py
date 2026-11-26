@@ -35,6 +35,16 @@ def arbora(
 
 @pytest.mark.spec("ARBORA-HARNESS-PLUGINS-R001.7")
 def test_console_builds_every_profile_and_each_validates(home: Path) -> None:
+    # The hosted profile needs the deployment's vendor redirect (R010.2).
+    contract = {
+        "admin_url": "https://idp.example.test",
+        "realm": "r",
+        "admin_client_id": "a",
+        "admin_client_secret_ref": "ref",
+        "hosted_redirect_uris": ["https://vendor.example.test/oauth/callback"],
+    }
+    env = {**os.environ, "ARBORA_IDENTITY_CLIENT_CONTRACT": json.dumps(contract)}
+    assert len(profile_ids()) == 5
     for harness in profile_ids():
         done = arbora(
             "plugin",
@@ -44,6 +54,7 @@ def test_console_builds_every_profile_and_each_validates(home: Path) -> None:
             "--endpoint",
             ENDPOINT,
             "--print-path",
+            env=env,
         )
         assert done.returncode == 0, done.stderr
         tree = Path(done.stdout.strip())

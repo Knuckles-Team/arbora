@@ -39,6 +39,8 @@ from arbora.fleet.catalog_reader import (
     ServerPage,
     ServerRegistration,
 )
+from arbora.fleet.mcp_resource_reconciliation import receipt_from_engine
+from arbora.pin_lag.unavailable import PinLagUnavailable
 
 _KINDS = {
     "mcp_server": AgentComponentKind.MCP_SERVER,
@@ -183,6 +185,33 @@ class GeneratedFleetCatalogPort:
             body=result.body,
             receipt=self._receipt(COMPONENT_CONTENT_SOURCE, self._context.tenant_id),
         )
+
+    async def reconciliation_receipt(self) -> Any:
+        """The engine's catalog reconciliation receipt for the verified tenant.
+
+        PIN-LAG: a pinned engine without ``ConnectorPack.catalog_reconciliation_receipt``
+        refuses ``UNAVAILABLE`` naming it; nothing fabricates a receipt.
+        """
+        try:
+            from medulla.generated.connector_pack import (
+                McpCatalogReconciliationReceiptRequest,
+            )
+            from medulla.generated.storage import (
+                send_connector_pack_catalog_reconciliation_receipt,
+            )
+        except ImportError as exc:
+            raise PinLagUnavailable(
+                "ConnectorPack.catalog_reconciliation_receipt"
+            ) from exc
+        with self._bind_graph(self._tenant_graph):
+            wire = await send_connector_pack_catalog_reconciliation_receipt(
+                self._tenant,
+                McpCatalogReconciliationReceiptRequest(
+                    tenant_id=self._context.tenant_id
+                ),
+                self._tenant_graph,
+            )
+        return receipt_from_engine(wire)
 
     @staticmethod
     def _server(row: Any) -> ServerRegistration:
