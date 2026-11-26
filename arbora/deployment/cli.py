@@ -38,9 +38,19 @@ def _run_release_plan(args: argparse.Namespace) -> int:
             Path(args.candidate),
             trusted_digest=args.trusted_digest,
             profile_name=args.profile,
+            junit=Path(args.junit) if args.junit else None,
         )
     except CandidateError as exc:
-        print(json.dumps({"status": "blocked", "executed": False, "code": str(exc)}))
+        print(
+            json.dumps(
+                {
+                    "status": "blocked",
+                    "executed": False,
+                    "code": str(exc),
+                    "missing": list(getattr(exc, "missing", ())),
+                }
+            )
+        )
         return 1
     print(json.dumps(result, indent=2))
     return 0
@@ -300,6 +310,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     release.add_argument(
         "--profile", required=True, help="Existing named deployment profile."
+    )
+    release.add_argument(
+        "--junit",
+        help="pytest report (junit_family=xunit1) the exit-criteria matrix is audited against.",
     )
 
     from arbora.deployment import render
