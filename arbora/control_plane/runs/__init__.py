@@ -5,7 +5,6 @@ from .admission import (
     NativeAdmissionError,
     NativeWorkItemAdmissionProtocol,
     ReplayDriftError,
-    ResolvedAuthorizationVerifier,
 )
 from .audit import AuditChain, AuditDiscontinuityError, AuditEvent
 from .capacity import (
@@ -13,6 +12,13 @@ from .capacity import (
     CapacityError,
     CapacityLedger,
     CapacityReDecisionExhaustedError,
+)
+from .engine_policy import (
+    ENGINE_POLICY_DENIALS,
+    EngineRunPolicy,
+    RunPolicyDecision,
+    RunPolicyDenied,
+    RunPolicyUnavailable,
 )
 from .models import (
     AdmissionReceipt,
@@ -58,7 +64,11 @@ __all__ = [
     "ObservationDiscontinuityError",
     "RelationalObservation",
     "ReplayDriftError",
-    "ResolvedAuthorizationVerifier",
+    "ENGINE_POLICY_DENIALS",
+    "EngineRunPolicy",
+    "RunPolicyDecision",
+    "RunPolicyDenied",
+    "RunPolicyUnavailable",
     "RunAdmissionIdentity",
     "RunRecord",
     "RunRef",

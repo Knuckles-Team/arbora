@@ -2,38 +2,36 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
-from concurrent.futures import ThreadPoolExecutor
-from typing import Literal, cast
+from typing import Literal
 
 import pytest
 from pydantic import ValidationError
 
+from arbora.api.errors import EngineRefusal
 from arbora.control_plane.policy import (
     ApprovalDecision,
     CapabilityBinding,
-    ExactSignatureVerifier,
     ExecutionBudget,
-    InMemoryPolicyRepository,
-    PolicyAuthority,
-    PolicyDomainError,
-    PolicyException,
+    PolicyAuthorization,
     PolicyRule,
     PolicyVersion,
 )
 from arbora.control_plane.runs import (
     ArtifactRef,
     AuditChain,
+    EngineRunPolicy,
     InMemoryNativeAdmission,
     InMemoryObservationLedger,
     InvocationRef,
     JobRef,
+    NativeAdmissionError,
     NativeAdmissionRequest,
     NativeWorkItemAdmission,
     ObservationDiscontinuityError,
     RelationalObservation,
     ReplayDriftError,
-    ResolvedAuthorizationVerifier,
     RunResolution,
     TaskRef,
     ToolBindingRef,
@@ -97,18 +95,21 @@ def _policy(*, effect: Literal["allow", "deny"] = "allow") -> PolicyVersion:
     )
 
 
-def _authority(policy: PolicyVersion, approval: ApprovalDecision) -> PolicyAuthority:
-    verifier = ExactSignatureVerifier(
-        ((approval.signer_ref, approval.decision_digest, approval.signature),)
-    )
-    authority = PolicyAuthority(
-        InMemoryPolicyRepository(),
-        verifier=verifier,
-        clock=lambda: 100,
-    )
-    authority.publish(policy)
-    authority.record_approval(approval)
-    return authority
+class EngineDouble:
+    """The engine's active policy: admits, or denies with one refusal code."""
+
+    def __init__(self, deny: str | None = None) -> None:
+        self.deny = deny
+        self.asked: list[object] = []
+
+    async def ask(self, authorization: object, now: int) -> None:
+        self.asked.append(authorization)
+        if self.deny is not None:
+            raise EngineRefusal(self.deny)
+
+
+def _engine_policy(engine: EngineDouble) -> EngineRunPolicy:
+    return EngineRunPolicy(engine.ask)
 
 
 def _approval(policy: PolicyVersion, *, request_digest: str) -> ApprovalDecision:
@@ -126,19 +127,18 @@ def _approval(policy: PolicyVersion, *, request_digest: str) -> ApprovalDecision
     )
 
 
-def _resolution(authority: PolicyAuthority, *, request_digest: str) -> RunResolution:
+def _resolution(*, request_digest: str) -> RunResolution:
     policy = _policy()
     approval = _approval(policy, request_digest=request_digest)
-    # The helper's authority already contains the exact approval used by the
-    # caller; constructing the resolution from that authorization pins it.
-    authorization = authority.authorize(
+    # The authorization pins the exact approval reference the engine decided on.
+    authorization = PolicyAuthorization(
         policy_ref=policy.ref,
         operation="run:research",
         request_digest=request_digest,
         bindings=(_binding(),),
-        requested_budget=_budget(),
-        approval=approval,
-        now=100,
+        budget=_budget(),
+        approval_ref=approval.ref,
+        resolved_at=100,
     )
     job = JobRef(job_id="job:research", version="1.0.0", digest=_digest("j"))
     task = TaskRef(
@@ -217,83 +217,40 @@ def test_policy_pins_exact_versions_and_rejects_budget_or_privilege_escalation()
         )
 
 
-def test_stale_approval_and_expired_signed_exception_fail_closed() -> None:
-    policy = _policy(effect="deny")
+def _request_and_admission(
+    engine: EngineDouble,
+) -> tuple[NativeAdmissionRequest, InMemoryNativeAdmission]:
     request_digest = _digest("q")
-    approval = _approval(policy, request_digest=request_digest)
-    authority = _authority(policy, approval)
-    with pytest.raises(PolicyDomainError, match="policy_denied"):
-        authority.authorize(
-            policy_ref=policy.ref,
-            operation="run:research",
-            request_digest=request_digest,
-            bindings=(_binding(),),
-            requested_budget=_budget(),
-            approval=approval,
-            now=100,
-        )
-
-    exception = PolicyException(
-        exception_id="exception:research",
-        policy_ref=policy.ref,
-        operation="run:research",
-        request_digest=request_digest,
-        scope_ref="scope:breakglass",
-        budget=_budget(),
-        allow_denied_operation=True,
-        issued_at=90,
-        expires_at=99,
-        signer_ref="principal:breakglass",
-        signature="sig:exception",
-    )
-    verifier = ExactSignatureVerifier(
-        ((exception.signer_ref, exception.exception_digest, exception.signature),)
-    )
-    authority = PolicyAuthority(
-        InMemoryPolicyRepository(), verifier=verifier, clock=lambda: 100
-    )
-    authority.publish(policy)
-    authority.record_exception(exception)
-    with pytest.raises(PolicyDomainError, match="exception_expired_or_not_yet_valid"):
-        authority.authorize(
-            policy_ref=policy.ref,
-            operation="run:research",
-            request_digest=request_digest,
-            bindings=(_binding(),),
-            requested_budget=_budget(),
-            exception=exception,
-            now=100,
-        )
-
-
-def test_admission_is_one_run_one_work_item_and_duplicate_delivery_is_idempotent() -> (
-    None
-):
-    policy = _policy()
-    request_digest = _digest("q")
-    approval = _approval(policy, request_digest=request_digest)
-    authority = _authority(policy, approval)
-    resolution = _resolution(authority, request_digest=request_digest)
-    request = _admission_request(resolution)
+    resolution = _resolution(request_digest=request_digest)
     admission = InMemoryNativeAdmission(
         audit=AuditChain(max_events=8),
         clock=lambda: 100,
-        authorization_verifier=cast(ResolvedAuthorizationVerifier, authority),
+        policy=_engine_policy(engine),
     )
+    return _admission_request(resolution), admission
 
-    first = admission.admit_once(request)
-    second = admission.admit_once(request)
+
+@pytest.mark.spec("ARBORA-OPS-R050.3")
+async def test_admission_is_one_run_one_work_item_and_duplicate_delivery_is_idempotent() -> (
+    None
+):
+    engine = EngineDouble()
+    request, admission = _request_and_admission(engine)
+    resolution = request.resolution
+
+    first = await admission.admit_once(request)
+    second = await admission.admit_once(request)
     assert first.created is True
     assert second.created is False
     record = admission.read(resolution.run_id)
     assert record is not None
     assert record.resolution == resolution
+    # The engine decided once; the replay never asks again.
+    assert len(engine.asked) == 1
 
     # Drift the request digest COHERENTLY: RunResolution's own validator
-    # requires authorization.request_digest == request_digest, so updating only
-    # the outer field builds an internally-invalid object that is rejected
-    # before the replay-drift check is ever reached. Update both so the object
-    # is valid but genuinely differs from the stored one.
+    # requires authorization.request_digest == request_digest, so update both so
+    # the object is valid but genuinely differs from the stored one.
     drifted_digest = _digest("d")
     altered = resolution.model_copy(
         update={
@@ -303,11 +260,6 @@ def test_admission_is_one_run_one_work_item_and_duplicate_delivery_is_idempotent
             ),
         }
     )
-    # resolution_digest is a computed property over the WHOLE resolution, so
-    # drifting the request digest necessarily changes it too. NativeAdmission
-    # Request requires the work item to carry BOTH matching values, so the item
-    # has to track both or the request is rejected as incoherent before the
-    # replay-drift path runs.
     altered_item = request.work_item.model_copy(
         update={
             "request_digest": altered.request_digest,
@@ -315,13 +267,62 @@ def test_admission_is_one_run_one_work_item_and_duplicate_delivery_is_idempotent
         }
     )
     with pytest.raises(ReplayDriftError, match="replay_or_body_drift"):
-        admission.admit_once(
+        await admission.admit_once(
             NativeAdmissionRequest(resolution=altered, work_item=altered_item)
         )
 
-    with ThreadPoolExecutor(max_workers=4) as pool:
-        receipts = list(pool.map(lambda _: admission.admit_once(request), range(4)))
-    assert sum(receipt.created for receipt in receipts) == 0
+
+@pytest.mark.spec("ARBORA-OPS-R050.3")
+async def test_concurrent_duplicate_delivery_admits_once() -> None:
+    engine = EngineDouble()
+    request, admission = _request_and_admission(engine)
+    receipts = await asyncio.gather(*map(admission.admit_once, [request] * 4))
+    assert [receipt.created for receipt in receipts].count(True) == 1
+    assert len(engine.asked) == 1
+
+
+@pytest.mark.spec("ARBORA-OPS-R050.3")
+@pytest.mark.parametrize(
+    "code",
+    [
+        "SCOPE_EXCEEDS_POLICY",
+        "POLICY_REVIEW_MISSING",
+        "POLICY_REVIEW_MISMATCH",
+        "REVIEW_NOT_INDEPENDENT",
+    ],
+)
+async def test_admission_refuses_when_the_engine_denies(code: str) -> None:
+    engine = EngineDouble(deny=code)
+    request, admission = _request_and_admission(engine)
+    with pytest.raises(NativeAdmissionError, match="policy_denied") as refused:
+        await admission.admit_once(request)
+    assert code in str(refused.value)
+    # A denied run records nothing: no run, no work item, no audit event.
+    assert admission.read(request.resolution.run_id) is None
+    assert admission.audit is not None and len(admission.audit._events) == 0
+
+
+@pytest.mark.spec("ARBORA-OPS-R050.3")
+async def test_admission_fails_closed_when_the_engine_is_unreachable() -> None:
+    class Down(EngineDouble):
+        async def ask(self, authorization: object, now: int) -> None:
+            raise TimeoutError
+
+    request, admission = _request_and_admission(Down())
+    with pytest.raises(NativeAdmissionError, match="policy_unavailable"):
+        await admission.admit_once(request)
+    assert admission.read(request.resolution.run_id) is None
+
+
+@pytest.mark.spec("ARBORA-OPS-R050.3")
+def test_arbora_keeps_no_local_policy_authority() -> None:
+    import importlib
+
+    import arbora.control_plane.policy as policy_package
+
+    assert not hasattr(policy_package, "PolicyAuthority")
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module("arbora.control_plane.policy.repository")
 
 
 def test_audit_chain_and_observations_fail_on_discontinuity_or_regression() -> None:

@@ -280,7 +280,7 @@ Data flow starts with `policy.create` over POST /api/v1/ops/{op_id}. It calls `_
 
 Types: `PolicyEntity`, `ConstitutionSource`, `PolicyChange`. Failure: `POLICY_DENIED` or `POLICY_UNAVAILABLE`, never a partial change.
 
-Existing code: arbora/control_plane/policy/repository.py:100, :117, :129, :179; arbora/control_plane/policy/models.py:203; arbora/api/ops/policy.py:36; arbora/api/invoke/pipeline.py:198, :208, :218. Reachable today: no. `PolicyAuthority` has no production constructor.
+Existing code: arbora/control_plane/runs/engine_policy.py (`EngineRunPolicy`); arbora/control_plane/policy/models.py:203; arbora/api/ops/policy.py:36; arbora/api/invoke/pipeline.py:198, :208, :218. The local `PolicyAuthority` is deleted; run admission decides through the engine.
 
 Decision: Arbora serves the operation and admits plans, and the engine decides violation. Rejected: a policy evaluator inside Arbora, which duplicates engine decisions. Cross-repository: MEDULLA-DECISION-ENGINE-R001 owns policy decisions; Arbora owns authenticated operation admission and transport. Clause interpretation requires a published engine producer contract, not an AU policy evaluator.
 

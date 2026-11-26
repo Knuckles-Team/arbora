@@ -30,6 +30,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
 from arbora.api.ops._engine import engine_send
 from arbora.api.registry import Confirm, Effect, OpSpec
+from arbora.control_plane.runs.engine_policy import ENGINE_POLICY_DENIALS
 from arbora.deployment.policy_bundle import BundleRefused, load_bundle
 from arbora.pin_lag.medulla import (
     PinLagUnavailable,
@@ -118,48 +119,7 @@ async def handle_bundle_bind(
     return await _send_bundle(context, params, "bind")
 
 
-class PolicyReviewParams(_common.Params):
-    repository: str = Field(min_length=1, max_length=256)
-    candidate_set_digest: str = Field(pattern=r"^[0-9a-f]{64}$")
-    source_blob_digest: str = Field(pattern=r"^[0-9a-f]{64}$")
-    invariant_generation: int = Field(ge=0)
-    #: The principal that authored the revision; the reviewer must be another.
-    author: str = Field(min_length=1, max_length=256)
-
-
-class PolicyReviewResult(_common.Params):
-    value: dict[str, Any]
-
-
-async def handle_policy_review(
-    context: Any, params: Mapping[str, Any], op: OpSpec
-) -> dict[str, Any]:
-    """Return a ``ReviewApproval`` bound to the digests and the verified reviewer."""
-    reviewer = str(context.caller.principal)
-    if reviewer == params["author"]:
-        raise OperationRefused("POLICY_DENIED", {"reason": "self_approval"})
-    return {
-        "value": {
-            "repository": params["repository"],
-            "candidate_set_digest": params["candidate_set_digest"],
-            "source_blob_digest": params["source_blob_digest"],
-            "invariant_generation": params["invariant_generation"],
-            "reviewer_principal": reviewer,
-        }
-    }
-
-
-
 _DIGEST = re.compile(r"[0-9a-f]{64}")
-#: Engine refusals that mean "no verified approval, or beyond the active policy".
-_DENIED = frozenset(
-    {
-        "POLICY_REVIEW_MISSING",
-        "POLICY_REVIEW_MISMATCH",
-        "REVIEW_NOT_INDEPENDENT",
-        "SCOPE_EXCEEDS_POLICY",
-    }
-)
 WRITE_SCOPE = "agent:decision-write"
 
 
@@ -264,7 +224,7 @@ def policy_guard() -> Iterator[None]:
     try:
         yield
     except EngineRefusal as refused:
-        if refused.code not in _DENIED:
+        if refused.code not in ENGINE_POLICY_DENIALS:
             raise
         details = {"engine_code": refused.code}
         if refused.details.get("policy_ref"):
@@ -334,7 +294,6 @@ async def handle_policy_source_bind(
 
 #: The approval is a returned receipt; the engine stores it under the caller's key.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "policy.review": "medulla:DecisionLog",
     "policy.create": "medulla:DecisionLog",
     "policy.update": "medulla:DecisionLog",
     "policy.retire": "medulla:DecisionLog",
@@ -371,15 +330,6 @@ def operations() -> tuple[OpSpec, ...]:
             handler="arbora.api.ops.policy.handle_policy_source_bind",
             scope=WRITE_SCOPE,
             confirm=Confirm.PLAN,
-        ),
-        _common.build_write_op(
-            op_id="policy.review",
-            summary="Review a policy revision and return a bound approval",
-            examples=("approve this policy revision",),
-            params=PolicyReviewParams,
-            result=PolicyReviewResult,
-            handler="arbora.api.ops.policy.handle_policy_review",
-            scope="approvals:decide",
         ),
         _common.build_read_op(
             op_id="policy.bundle.validate",
