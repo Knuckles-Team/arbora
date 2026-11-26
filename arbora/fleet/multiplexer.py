@@ -88,6 +88,7 @@ import arbora.fleet.catalog_reader as _catalog_reader
 import arbora.fleet.child_resilience as _child_resilience
 from arbora.core.capability_contract import Capability
 from arbora.core.settings import setting
+from arbora.fleet import catalog_machine as _catalog_machine
 from arbora.fleet.approval_meta import approval_call_kwargs
 from arbora.fleet.local_skill_catalog import (
     LOCAL_SKILLS_SERVER,
@@ -2433,6 +2434,10 @@ class MCPMultiplexer:
         # started. ``_exposed`` tracks prefixed tool names currently registered
         # as live FastMCP tools (so lazy mounts don't double-register).
         self._catalog: dict[str, dict] | None = None
+        # ARBORA-FLEET-R081: the one serving state of the catalog. Cold is not
+        # empty: a failed first read leaves it Cold. Written only through
+        # ``_catalog_event`` (``arbora.fleet.catalog_machine.transition``).
+        self._catalog_state = _catalog_machine.CatalogState.COLD
         # ``_exposed`` tracks prefixed tools registered as live FastMCP tools
         # (process-global, so lazy mounts don't double-register). Visibility,
         # however, is PER-SESSION on a shared HTTP server (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog,
@@ -2622,12 +2627,17 @@ class MCPMultiplexer:
         prefix/discovery state is rebuilt from it.
         """
         reader = self._fleet_catalog_reader
-        catalog = await reader.read()
-        if self.children or self.sessions:
-            raise RuntimeError(
-                "the engine fleet catalog can only be refreshed before child startup"
-            )
-        await self._publish_reconciled(reader, catalog)
+        self._catalog_event(_catalog_machine.CatalogEvent.LOAD_START)
+        try:
+            catalog = await reader.read()
+            if self.children or self.sessions:
+                raise RuntimeError(
+                    "the engine fleet catalog can only be refreshed before child startup"
+                )
+            await self._publish_reconciled(reader, catalog)
+        except BaseException:
+            self._catalog_event(_catalog_machine.CatalogEvent.READ_ERR)
+            raise
         self._fleet_catalog = catalog
         self._fleet_catalog_loaded_at = time.time()
         raw_catalog = self._catalog_from_engine(catalog)
@@ -2645,7 +2655,19 @@ class MCPMultiplexer:
         self._prefix_map = None
         self._prefix_reverse.clear()
         self._catalog_epoch += 1
+        self._catalog_event(_catalog_machine.CatalogEvent.READ_OK)
         return self._catalog
+
+    def _catalog_event(self, event: _catalog_machine.CatalogEvent) -> None:
+        """Send one event to the catalog serving machine (ARBORA-FLEET-R081.4)."""
+        self._catalog_state = _catalog_machine.transition(
+            self._catalog_state, event, has_snapshot=self._catalog is not None
+        )
+
+    @property
+    def catalog_state(self) -> _catalog_machine.CatalogState:
+        """The serving state ``fleet.status`` and readiness derive from."""
+        return self._catalog_state
 
     def _admit_proxied_call(
         self, prefixed_name: str
@@ -5226,6 +5248,8 @@ class MCPMultiplexer:
                     await payload.aclose()
                 continue
             self._register_child_result(server_name, payload, tools, cfg)
+        if self._catalog_state is _catalog_machine.CatalogState.SNAPSHOT:
+            self._catalog_event(_catalog_machine.CatalogEvent.CHILDREN_UP)
 
     # ------------------------------------------------------------------
     # Always-load (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog)
@@ -7344,6 +7368,8 @@ class MCPMultiplexer:
     async def aclose(self) -> None:
         """Shut down every child runtime and direct stack registration."""
         self._closing = True
+        if self._catalog_state is not _catalog_machine.CatalogState.CLOSING:
+            self._catalog_event(_catalog_machine.CatalogEvent.CLOSE)
         # Background catalog probes (CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog) are
         # deliberately left running past an interactive call's own budget so a
         # later call can benefit from their result — but they must not outlive
