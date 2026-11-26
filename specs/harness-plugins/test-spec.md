@@ -55,3 +55,7 @@ Focused: `uv run pytest tests/harness_plugins tests/api/ops/test_workstreams.py 
 | T-045 | `ARBORA-HARNESS-PLUGINS-R011` | `Children `.1` and `.2`.` | One sign-in gives an MCP client the connector fleet (rollup). (planned) |
 | T-046 | `ARBORA-HARNESS-PLUGINS-R011.1` | `tests/harness_plugins/test_signin_fleet_access.py::test_one_signin_lists_only_entitled_connectors_and_revocation_stops_calls` | Entitlement-scoped discovery after one sign-in. (planned) |
 | T-047 | `ARBORA-HARNESS-PLUGINS-R011.2` | `tests/harness_plugins/test_render_signin_only.py::test_bundle_holds_door_endpoint_and_no_connector_settings` | The bundle connection sheet names the sign-in path, not connector settings. (planned) |
+| T-048 | `ARBORA-HARNESS-PLUGINS-R012` | `tests/harness_plugins/test_render_skill_hooks.py::test_hooks_carry_only_the_listed_attributes` | Hook events report skill use through the door, with no prompt text. (planned) |
+| T-049 | `ARBORA-HARNESS-PLUGINS-R013` | `tests/harness_plugins/test_layers.py::test_six_layers_add_only_and_removal_or_loosening_refuses` | Bundle configuration comes from six layers that only add. (planned) |
+| T-050 | `ARBORA-HARNESS-PLUGINS-R014` | `tests/harness_plugins/test_persona_bundle.py::test_persona_set_and_always_on_rendered_and_unknown_refused` | A role persona selects the installed skill set. (planned) |
+| T-051 | `ARBORA-HARNESS-PLUGINS-R015` | `tests/harness_plugins/test_skill_bundle_no_connector.py::test_mcp_json_inside_a_skill_refuses_the_bundle` | A skill bundle never carries its own connector file. (planned) |

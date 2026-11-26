@@ -528,3 +528,12 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T455 [US1] ARBORA-OPS-R922.3 Source sync runs are listed. Size: S, 1 PR, 2 hours.
 - [ ] T456 [US1] ARBORA-OPS-R922.4 The active agent system prompt is a served read. Size: S, 1 PR, 2 hours.
 - [x] T457 [US1] ARBORA-OPS-R915.1 Revisioned durable city-state snapshots. Size: M, 2 PRs, 5 hours.
+- [ ] T458 [US1] ARBORA-OPS-R950 Serve the flag operations. Size: M, 2 PRs, 5 hours.
+- [ ] T459 [US1] ARBORA-OPS-R951 Serve the curation operations. Size: M, 2 PRs, 5 hours.
+- [ ] T460 [US1] ARBORA-OPS-R952 Serve the friction operations. Size: M, 2 PRs, 5 hours.
+- [ ] T461 [US1] ARBORA-OPS-R953 Receive skill hook events as OpenTelemetry logs. Size: M, 2 PRs, 5 hours.
+- [ ] T462 [US1] ARBORA-OPS-R954 Serve skill measures, ranking, discovery and peer recommendations. Size: M, 2 PRs, 5 hours.
+- [ ] T463 [US1] ARBORA-OPS-R955 Serve the skill evaluation operations. Size: M, 2 PRs, 5 hours.
+- [ ] T464 [US1] ARBORA-OPS-R956 Serve the ablation and canary operations. Size: M, 2 PRs, 5 hours.
+- [ ] T465 [US1] ARBORA-OPS-R957 Serve the skill tier and persona operations. Size: M, 2 PRs, 5 hours.
+- [ ] T466 [US1] ARBORA-OPS-R958 Run the knowledge curator on the engine cadence. Size: M, 2 PRs, 5 hours.

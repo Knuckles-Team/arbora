@@ -216,3 +216,7 @@ None.
 | `MEDULLA-CQ-ORCH-R820` | medulla | Competency questions that the workstream and bundle rows serve |
 | `US-CONTENT-R007` | universal-skills | Door skills and portable frontmatter |
 | `PIPE-RELEASE-R028` | pipelines | Release proof with the harness validators; no committed bundle |
+
+### Skill hooks, layers and personas
+
+Hooks send skill start and end records to the door (R012). The bundle resolves six add-only configuration layers (R013) and renders one persona set (R014). A skill directory never carries a connector file (R015).
