@@ -12,6 +12,8 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import agent_library
 from arbora.api.ops.registry_factory import get_registry
 
+_NO_OP: Any = None
+
 pytestmark = pytest.mark.spec("ARBORA-OPS-R912")
 
 
@@ -120,27 +122,27 @@ async def test_create_update_delete_with_revision_conflict(
 ) -> None:
     context = _context()
     created = await agent_library.handle_agents_library_create(
-        context, {"item": _item(), "kind": "agent"}, None
+        context, {"item": _item(), "kind": "agent"}, _NO_OP
     )
     assert created["value"]["revision"] == 1
     # The draft is bound to the caller's tenant, never to the item's own claim.
     assert library.heads["agent:one"]["tenant_id"] == "tenant:one"
     updated = await agent_library.handle_agents_library_update(
-        context, {"item": _item(), "expected_revision": 1}, None
+        context, {"item": _item(), "expected_revision": 1}, _NO_OP
     )
     assert updated["value"]["revision"] == 2
     with pytest.raises(OperationRefused) as stale:
         await agent_library.handle_agents_library_update(
-            context, {"item": _item(), "expected_revision": 1}, None
+            context, {"item": _item(), "expected_revision": 1}, _NO_OP
         )
     assert stale.value.code == "REVISION_CONFLICT"
     with pytest.raises(OperationRefused) as blind:
         await agent_library.handle_agents_library_update(
-            context, {"item": _item()}, None
+            context, {"item": _item()}, _NO_OP
         )
     assert blind.value.code == "REVISION_CONFLICT"
     gone = await agent_library.handle_agents_library_delete(
-        context, {"id": "agent:one"}, None
+        context, {"id": "agent:one"}, _NO_OP
     )
     assert gone["value"] == {"id": "agent:one", "retired": True}
     assert library.heads["agent:one"]["lifecycle"] == "retired"
@@ -152,7 +154,7 @@ async def test_an_invalid_item_is_refused_before_the_engine(
 ) -> None:
     with pytest.raises(OperationRefused) as refused:
         await agent_library.handle_agents_library_create(
-            _context(), {"item": {"agent_id": "x"}}, None
+            _context(), {"item": {"agent_id": "x"}}, _NO_OP
         )
     assert refused.value.code == "INVALID_ARGUMENT"
     assert library.sent == []
@@ -160,26 +162,28 @@ async def test_an_invalid_item_is_refused_before_the_engine(
 
 async def test_get_a2a_and_absent_agent(library: FakeLibrary) -> None:
     context = _context()
-    await agent_library.handle_agents_library_create(context, {"item": _item()}, None)
+    await agent_library.handle_agents_library_create(context, {"item": _item()}, _NO_OP)
     got = await agent_library.handle_agents_library_get(
-        context, {"id": "agent:one"}, None
+        context, {"id": "agent:one"}, _NO_OP
     )
     assert got["value"]["items"][0]["agent_id"] == "agent:one"
     card = await agent_library.handle_agents_library_a2a(
-        context, {"id": "agent:one"}, None
+        context, {"id": "agent:one"}, _NO_OP
     )
     assert card["value"]["agent_card"]["skills"] == [
         {"id": "skill:search", "name": "skill:search"}
     ]
     with pytest.raises(OperationRefused) as absent:
         await agent_library.handle_agents_library_get(
-            context, {"id": "agent:none"}, None
+            context, {"id": "agent:none"}, _NO_OP
         )
     assert absent.value.code == "NOT_FOUND"
-    await agent_library.handle_agents_library_delete(context, {"id": "agent:one"}, None)
+    await agent_library.handle_agents_library_delete(
+        context, {"id": "agent:one"}, _NO_OP
+    )
     with pytest.raises(OperationRefused) as retired:
         await agent_library.handle_agents_library_a2a(
-            context, {"id": "agent:one"}, None
+            context, {"id": "agent:one"}, _NO_OP
         )
     assert retired.value.code == "NOT_FOUND"
 
@@ -188,15 +192,17 @@ async def test_list_and_summary_page_through_the_engine(library: FakeLibrary) ->
     context = _context()
     for n in range(3):
         await agent_library.handle_agents_library_create(
-            context, {"item": _item(f"agent:{n}")}, None
+            context, {"item": _item(f"agent:{n}")}, _NO_OP
         )
-    first = await agent_library.handle_agents_library_list(context, {"limit": 2}, None)
+    first = await agent_library.handle_agents_library_list(
+        context, {"limit": 2}, _NO_OP
+    )
     assert len(first["value"]["items"]) == 2 and first["value"]["next_cursor"] == "2"
     rest = await agent_library.handle_agents_library_list(
-        context, {"limit": 2, "cursor": "2"}, None
+        context, {"limit": 2, "cursor": "2"}, _NO_OP
     )
     assert rest["value"]["next_cursor"] is None
-    summary = await agent_library.handle_agents_library_summary(context, {}, None)
+    summary = await agent_library.handle_agents_library_summary(context, {}, _NO_OP)
     assert summary["value"] == {"counts": {"published": 3}, "total": 3}
 
 
@@ -204,12 +210,13 @@ async def test_list_is_unavailable_until_the_pinned_engine_serves_it(
     monkeypatch: pytest.MonkeyPatch, library: FakeLibrary
 ) -> None:
     monkeypatch.setattr(agent_library, "_list_op_served", lambda: False)
-    for handler, params in (
+    cases: list[tuple[Any, dict[str, Any]]] = [
         (agent_library.handle_agents_library_list, {}),
         (agent_library.handle_agents_library_summary, {}),
-    ):
+    ]
+    for handler, params in cases:
         with pytest.raises(OperationRefused) as refused:
-            await handler(_context(), params, None)
+            await handler(_context(), params, _NO_OP)
         assert refused.value.code == "UNAVAILABLE"
     assert library.sent == []
 
@@ -224,7 +231,7 @@ async def test_other_kinds_are_unavailable_until_the_engine_has_a_kind_read(
         (agent_library.handle_agents_library_create, {"item": _item(), "kind": kind}),
     ):
         with pytest.raises(OperationRefused) as refused:
-            await handler(_context(), params, None)
+            await handler(_context(), params, _NO_OP)
         assert refused.value.code == "UNAVAILABLE"
     assert library.sent == []
 
@@ -244,4 +251,4 @@ def test_the_seven_operations_are_registered_with_library_scopes() -> None:
 
 def test_a_suggestion_kind_does_not_exist() -> None:
     with pytest.raises(ValidationError):
-        agent_library.ListParams(kind="suggestion")
+        agent_library.ListParams(kind="suggestion")  # type: ignore[arg-type]
