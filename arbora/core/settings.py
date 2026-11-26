@@ -491,6 +491,27 @@ class ArboraConfig(BaseModel):
     max_upload_size: int = Field(
         default=10485760, alias="MAX_UPLOAD_SIZE", description=""
     )
+    a2a_max_file_part_bytes: int = Field(
+        default=5_242_880,
+        ge=1_024,
+        le=33_554_432,
+        alias="A2A_MAX_FILE_PART_BYTES",
+        description="Largest decoded A2A file part, in bytes.",
+    )
+    a2a_max_request_media_bytes: int = Field(
+        default=20_971_520,
+        ge=1_024,
+        le=134_217_728,
+        alias="A2A_MAX_REQUEST_MEDIA_BYTES",
+        description="Most decoded image bytes one A2A message may carry.",
+    )
+    a2a_max_image_parts: int = Field(
+        default=4,
+        ge=1,
+        le=8,
+        alias="A2A_MAX_IMAGE_PARTS",
+        description="Most image parts one A2A message may carry.",
+    )
     mcp_always_load: list[str] = Field(
         default_factory=lambda: [
             "tunnel-manager-mcp",

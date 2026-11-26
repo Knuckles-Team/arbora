@@ -66,10 +66,10 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T060 ARBORA-A2A-R001.3 Served agent keeps and lists caller conversations
 - [ ] T061 ARBORA-A2A-R001.4.1 Served agent streams turn events
 - [x] T062 ARBORA-A2A-R001.6 Non-blocking `message/send`
-- [ ] T063 ARBORA-A2A-R001.5.1 Bounded inline text input
+- [x] T063 ARBORA-A2A-R001.5.1 Bounded inline text input
 - [ ] T064 ARBORA-A2A-R001.5.2 Selected-model binary input
-- [ ] T077 ARBORA-A2A-R001.5.3 Verify image content against the declared type
-- [ ] T078 ARBORA-A2A-R001.5.4 Limit images per request
+- [x] T077 ARBORA-A2A-R001.5.3 Verify image content against the declared type
+- [x] T078 ARBORA-A2A-R001.5.4 Limit images per request
 - [ ] T079 ARBORA-A2A-R001.5.5 Carry image bytes inline or by upload reference
 - [ ] T080 ARBORA-A2A-R001.5.6 Serve the effective media limits to clients
 - [ ] T081 ARBORA-A2A-R001.5.7 Hand admitted images to the run with the capability and fallback mode
