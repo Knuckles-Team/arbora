@@ -22,6 +22,7 @@ from .models import (
     A2ASkill,
     A2ATask,
 )
+from .parts import MediaLimits, admit_file_parts
 from .routing import A2AAssemblyUnavailable, A2ARouter
 from .terminal_event import A2ATerminalEventUnavailable
 from .tool_task_card import (
@@ -92,6 +93,7 @@ class A2AService:
                 idempotency_key,
             )
         profile: dict[str, ModelProfileDecision] = {}
+        admit_file_parts(parsed, MediaLimits.from_config())
         attachment_size = parsed.attachment_size()
         if attachment_size:
             limit = runtime_config.max_upload_size
