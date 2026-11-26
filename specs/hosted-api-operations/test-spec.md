@@ -490,7 +490,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R878` | Test: `tests/api/ops/test_models_list.py::test_lists_only_visible_profiles_over_http_and_mcp` (planned) (L3) runs through the registry `invoke` and asserts a cross-tenant profile is absent. |
 | `ARBORA-OPS-R879` | `tests/api/test_ops_hooks_served.py::test_hooks_install_uninstall_over_http_and_mcp` (L3). |
 | `ARBORA-OPS-R880` | Test: `tests/api/test_query_federation.py::test_cross_source_report_served` (served HTTP and MCP, recorded engine). |
-| `ARBORA-OPS-R881` | Test: `tests/api/test_artifact_ops_served.py::test_artifact_operations_serve_over_http_and_mcp` (L3). It creates, gets and refreshes an artifact and asserts each refusal. |
+| `ARBORA-OPS-R881` | (planned) Test: `tests/api/test_artifact_ops_served.py::test_artifact_operations_serve_over_http_and_mcp` (L3). It creates, gets and refreshes an artifact and asserts each refusal. |
 | `ARBORA-OPS-R882` | Test: `tests/api/test_agent_bus_served.py::test_send_receive_dispatch_over_medulla` runs `invoke` over HTTP and MCP with a loopback medulla engine. |
 | `ARBORA-OPS-R883` | Test: `tests/api/test_retrieval_ops.py::test_agent_ref_is_taken_from_identity` calls the operations over HTTP and MCP against a recorded engine (served). |
 | `ARBORA-OPS-R884` | Test: `tests/api/test_meetings_ops.py::test_summary_create_admits_context_and_commit` (L3) runs through the registry `invoke` with a loopback medulla and a recorded harness receipt. It asserts the denied-provider refusal makes zero medulla calls. |
