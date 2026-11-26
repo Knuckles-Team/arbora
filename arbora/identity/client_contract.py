@@ -43,6 +43,11 @@ DEFAULT_NATIVE_REDIRECT_URIS: tuple[str, ...] = (
     "http://127.0.0.1:19876/mcp/oauth/callback",
 )
 DEFAULT_NATIVE_CLIENT_ID = "arbora-native-mcp"
+#: The confidential client of a hosted coding agent (ARBORA-HARNESS-PLUGINS-R010.2).
+#: It exists only when the deployment configures the vendor redirect.
+HOSTED_CLIENT_ID = "arbora-hosted-mcp"
+#: The workstream scopes a hosted agent adds to the native scopes.
+WORKSTREAM_SCOPES: tuple[str, ...] = ("workstream:read", "workstream:write")
 #: Default client scopes of the native client. ``offline_access`` makes the
 #: refresh token an offline token, so a long coding session never re-logs in.
 NATIVE_DEFAULT_SCOPES: tuple[str, ...] = (
@@ -100,6 +105,8 @@ class ClientSpec:
     name: str
     redirect_uris: tuple[str, ...]
     default_scopes: tuple[str, ...]
+    #: ``False`` makes a confidential client (a hosted agent holds its secret).
+    public: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,6 +130,9 @@ class ContractConfig:
     native_redirect_uris: tuple[str, ...] = DEFAULT_NATIVE_REDIRECT_URIS
     audience: str = ""
     ca_bundle: str = ""
+    #: The vendor's fixed OAuth callback of a hosted agent; empty writes no
+    #: hosted client (ARBORA-HARNESS-PLUGINS-R010.2).
+    hosted_redirect_uris: tuple[str, ...] = ()
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> ContractConfig:
@@ -135,6 +145,11 @@ class ContractConfig:
             isinstance(uri, str) and _is_loopback(uri) for uri in redirects
         ):
             raise ValueError("native_redirect_uris must be loopback http URIs")
+        hosted = raw.get("hosted_redirect_uris") or ()
+        if isinstance(hosted, str) or not all(
+            isinstance(uri, str) and _is_vendor_redirect(uri) for uri in hosted
+        ):
+            raise ValueError("hosted_redirect_uris must be https, non-loopback URIs")
         return cls(
             admin_url=str(raw["admin_url"]).rstrip("/"),
             realm=str(raw["realm"]),
@@ -147,6 +162,7 @@ class ContractConfig:
             native_redirect_uris=tuple(redirects),
             audience=str(raw.get("audience") or ""),
             ca_bundle=str(raw.get("ca_bundle") or ""),
+            hosted_redirect_uris=tuple(hosted),
         )
 
 
@@ -155,6 +171,17 @@ def _is_loopback(uri: str) -> bool:
 
     parts = urlsplit(uri)
     return parts.scheme == "http" and parts.hostname in {"localhost", "127.0.0.1"}
+
+
+def _is_vendor_redirect(uri: str) -> bool:
+    from urllib.parse import urlsplit
+
+    parts = urlsplit(uri)
+    return (
+        parts.scheme == "https"
+        and bool(parts.hostname)
+        and not _is_loopback(f"http://{parts.hostname}")
+    )
 
 
 def configured_contract_config() -> ContractConfig | None:
@@ -173,20 +200,30 @@ def configured_contract_config() -> ContractConfig | None:
 def build_contract(config: ContractConfig) -> ClientContract:
     """The one definition of arbora's clients and scopes."""
     audience = config.audience or None
-    return ClientContract(
-        clients=(
+    clients = [
+        ClientSpec(
+            client_id=config.native_client_id,
+            name="Native MCP clients",
+            redirect_uris=config.native_redirect_uris,
+            default_scopes=NATIVE_DEFAULT_SCOPES,
+        )
+    ]
+    scopes = [
+        ScopeSpec(name, audience if name == AUDIENCE_SCOPE else None)
+        for name in REQUIRED_SCOPES
+    ]
+    if config.hosted_redirect_uris:
+        clients.append(
             ClientSpec(
-                client_id=config.native_client_id,
-                name="Native MCP clients",
-                redirect_uris=config.native_redirect_uris,
-                default_scopes=NATIVE_DEFAULT_SCOPES,
-            ),
-        ),
-        scopes=tuple(
-            ScopeSpec(name, audience if name == AUDIENCE_SCOPE else None)
-            for name in REQUIRED_SCOPES
-        ),
-    )
+                client_id=HOSTED_CLIENT_ID,
+                name="Hosted coding agents",
+                redirect_uris=config.hosted_redirect_uris,
+                default_scopes=(*NATIVE_DEFAULT_SCOPES, *WORKSTREAM_SCOPES),
+                public=False,
+            )
+        )
+        scopes += [ScopeSpec(name, None) for name in WORKSTREAM_SCOPES]
+    return ClientContract(clients=tuple(clients), scopes=tuple(scopes))
 
 
 def client_representation(spec: ClientSpec) -> dict[str, Any]:
@@ -195,7 +232,7 @@ def client_representation(spec: ClientSpec) -> dict[str, Any]:
         "clientId": spec.client_id,
         "name": spec.name,
         "protocol": "openid-connect",
-        "publicClient": True,
+        "publicClient": spec.public,
         "standardFlowEnabled": True,
         "implicitFlowEnabled": False,
         "directAccessGrantsEnabled": False,

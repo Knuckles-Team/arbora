@@ -18,9 +18,9 @@ from arbora.harness_plugins.profiles import HarnessProfile, Lifecycle
 
 #: The skills every bundle carries (``US-CONTENT-R007``).
 DOOR_SKILLS: tuple[str, ...] = ("canopy", "session-handoff")
-#: The native public client of ``ARBORA-IDENTITY-R030.4``.
-NATIVE_CLIENT_ID = "arbora-native-mcp"
 MCP_PATH = "/mcp"
+#: The two files of a hosted bundle (ARBORA-HARNESS-PLUGINS-R010.1).
+HOSTED_FILES: tuple[str, ...] = ("connection.md", "playbook.md")
 SERVER_NAME = "arbora"
 PLUGIN_NAME = "arbora"
 
@@ -34,7 +34,7 @@ class DoorEntry:
     url: str
     client_id: str
     callback: str
-    callback_port: int
+    callback_port: int | None
 
 
 @dataclass(frozen=True)
@@ -115,10 +115,10 @@ COMMANDS: tuple[CommandDef, ...] = (
 
 
 def door_entry(profile: HarnessProfile, base_url: str) -> DoorEntry:
-    """The door MCP entry: the native client and the profile's fixed callback."""
+    """The door MCP entry: the profile's client and its fixed callback."""
     return DoorEntry(
         url=base_url.rstrip("/") + MCP_PATH,
-        client_id=NATIVE_CLIENT_ID,
+        client_id=profile.client_id,
         callback=profile.callback,
         callback_port=profile.callback_port,
     )
@@ -184,6 +184,7 @@ __all__ = [
     "COMMANDS",
     "DOOR_SKILLS",
     "HOOK_INTENTS",
+    "HOSTED_FILES",
     "AgentDef",
     "BundleSpec",
     "CommandDef",

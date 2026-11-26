@@ -172,7 +172,26 @@ class CodingSessionAdmission:
             self._standing_grants.setdefault(key, set()).add(capability)
             return EffectDecision("granted")
         if permission_answer == "reject":
-            return EffectDecision("denied")
+            return EffectDecision("denied", AcpRefusalReason.PERMISSION_DENIED)
         return EffectDecision(
             "permission_required", AcpRefusalReason.PERMISSION_REQUIRED
         )
+
+
+def trusted_roots_from_config() -> frozenset[str]:
+    """The ``ACP_TRUSTED_ROOTS`` list of ``~/.config/arbora/config.json``.
+
+    Absolute paths only; the default is empty, which admits nothing. A root
+    matches a session only by exact string equality (ARBORA-ACP-R001.4).
+    """
+    import json
+
+    from arbora.core.settings import setting
+
+    raw = setting("ACP_TRUSTED_ROOTS", "")
+    roots = json.loads(raw) if isinstance(raw, str) and raw else raw or []
+    if not isinstance(roots, (list, tuple)) or not all(
+        isinstance(root, str) and root.startswith("/") for root in roots
+    ):
+        raise ValueError("ACP_TRUSTED_ROOTS must be a list of absolute paths")
+    return frozenset(roots)

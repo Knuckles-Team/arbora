@@ -11,8 +11,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from arbora.harness_plugins.compose import NATIVE_CLIENT_ID, SERVER_NAME
-from arbora.harness_plugins.profiles import HookKind, profile
+from arbora.harness_plugins.compose import HOSTED_FILES, SERVER_NAME
+from arbora.harness_plugins.profiles import NATIVE_CLIENT_ID, HookKind, profile
 
 
 def _json(path: Path) -> dict:
@@ -43,6 +43,10 @@ def validate_tree(harness: str, root: Path) -> list[str]:
     """Every structural problem of the tree; empty means valid."""
     prof = profile(harness)
     problems: list[str] = []
+    if prof.manifest is None:
+        return [
+            f"missing {name}" for name in HOSTED_FILES if not (root / name).is_file()
+        ]
     if not (root / prof.manifest).is_file():
         return [f"missing {prof.manifest}"]
     manifest = _json(root / prof.manifest)

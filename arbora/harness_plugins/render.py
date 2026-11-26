@@ -12,6 +12,7 @@ the tree is written on the developer's machine at the point of use.
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import re
 import shutil
@@ -19,6 +20,7 @@ from collections.abc import Callable, Mapping
 from importlib import resources
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from arbora.harness_plugins.compose import (
     PLUGIN_NAME,
@@ -329,11 +331,71 @@ def render_opencode(spec: BundleSpec, root: Path) -> None:
     _write_layered_config(spec, root)
 
 
+#: Why a hosted bundle refuses an endpoint a vendor cloud cannot reach.
+HOSTED_ENDPOINT_UNREACHABLE = "HOSTED_ENDPOINT_UNREACHABLE"
+
+
+def _hosted_reachable(url: str) -> bool:
+    """``https`` and a host that is neither a loopback nor an unspecified address."""
+    parts = urlsplit(url)
+    host = parts.hostname or ""
+    if parts.scheme != "https" or not host or host == "localhost":
+        return False
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return True
+    return not (address.is_loopback or address.is_unspecified)
+
+
+def _connection_sheet(spec: BundleSpec) -> str:
+    return (
+        "# Connect a hosted coding agent to the arbora door\n\n"
+        f"- Door endpoint: {spec.door.url}\n"
+        "- Transport: streamable HTTP\n"
+        f"- OAuth client ID: {spec.door.client_id}\n\n"
+        "This sheet holds no secret. Paste the client secret into the vendor "
+        "settings from your credential store, then paste `playbook.md` into the "
+        "vendor agent instructions.\n"
+    )
+
+
+def _playbook(spec: BundleSpec) -> str:
+    steps = (
+        "## Workstream\n\n"
+        "This agent has no hook, so it attaches and checkpoints itself.\n\n"
+        "1. At task start call the arbora `write` tool with "
+        '`op="workstream.attach"` and params `harness="hosted"`, '
+        "`harness_session_id` (this session) and `workspace_root` set to the "
+        "repository remote and branch, written `<remote>#<branch>`. A hosted "
+        "machine path names no developer workspace.\n"
+        '2. Before you finish call `write` with `op="workstream.checkpoint"` and '
+        'params `harness_session_id`, `summary` and `trigger="manual"`.\n'
+    )
+    skills = []
+    for skill in spec.skills:
+        for path in skill_tree(skill):
+            if path.name == "SKILL.md":
+                skills.append(
+                    f"## Skill: {skill.name}\n\n{path.read_text(encoding='utf-8').strip()}\n"
+                )
+    return "# arbora playbook\n\n" + steps + "\n" + "\n".join(skills)
+
+
+def render_hosted(spec: BundleSpec, root: Path) -> None:
+    """The connection sheet and the playbook; no plugin manifest (R010.1, R010.3)."""
+    if not _hosted_reachable(spec.door.url):
+        raise TreeRefused(HOSTED_ENDPOINT_UNREACHABLE, spec.door.url)
+    _write(root, "connection.md", _connection_sheet(spec))
+    _write(root, "playbook.md", _playbook(spec))
+
+
 RENDERERS: dict[str, Callable[[BundleSpec, Path], None]] = {
     "claude-code": render_claude_code,
     "opencode": render_opencode,
     "codex": render_codex,
     "grok": render_grok,
+    "hosted": render_hosted,
 }
 
 
@@ -346,6 +408,8 @@ def render(spec: BundleSpec, out_dir: Path) -> str:
         out_dir.mkdir(parents=True)
     RENDERERS[prof.id](spec, out_dir)
     check_tree(out_dir, allowed_urls=(spec.door.url,))
+    if prof.manifest is None:
+        return tree_digest(out_dir)
     digest = tree_digest(out_dir, exclude=(prof.manifest,))
     from arbora.version import __version__
 
@@ -375,6 +439,7 @@ __all__ = [
     "render_claude_code",
     "render_codex",
     "render_grok",
+    "render_hosted",
     "render_opencode",
     "skill_tree",
     "tree_digest",

@@ -8,8 +8,9 @@ composer. Arbora never registered them, so the browser received 404 for the
 REST reads and a bare 403 for the unmatched WebSocket handshake.
 
 This module ports the meristem ``gateway/api.py`` dashboard router and
-the overstory WebSocket handler onto Arbora's own gateway aggregator,
-registry and daemon. :func:`register_dashboard_routes` mounts both from
+the overstory WebSocket handler onto Arbora's own gateway aggregator and
+daemon. Widget data is read through the served operation
+``ecosystem.widgets.read`` as the caller (ARBORA-OPS-R914). :func:`register_dashboard_routes` mounts both from
 :func:`arbora.gateway.graph_api.register_graph_routes`, so the routes share
 the identity middleware and the WebUI authorization middleware that guard
 every other ``/api`` route. The WebSocket handler performs no extra auth
@@ -31,11 +32,10 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
-from arbora.gateway.aggregator import Aggregator
+from arbora.gateway.aggregator import WIDGET_READ_OP, Aggregator, WidgetReader
 from arbora.gateway.config import ConfigManager
 from arbora.gateway.models import DashboardLayout, WidgetData
 from arbora.gateway.ports import gateway_application
-from arbora.gateway.registry import get_registry
 from arbora.security.error_surface import public_error_payload
 
 __all__ = [
@@ -54,6 +54,8 @@ _SERVICE_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}\Z")
 _HYDRATION_SOURCE_RE = re.compile(r"[A-Za-z0-9_.-]{1,128}")
 #: Bound on how many widget ids one ``subscribe`` message may name.
 _MAX_SUBSCRIBE_WIDGET_IDS = 256
+#: Bound on census pages read to list the widgets.
+_CENSUS_PAGES = 20
 #: Push cadence after the initial snapshot. Matches the aggregator read cache.
 _WS_PUSH_INTERVAL_SECONDS = 15.0
 _READ_CAPABILITIES = frozenset(
@@ -145,64 +147,79 @@ async def save_layout(layout: DashboardLayout, request: Request) -> dict[str, st
 
 
 @dashboard_router.get("/data")
-async def get_all_data() -> dict[str, WidgetData]:
+async def get_all_data(request: Request) -> dict[str, WidgetData]:
     """Fetch data from every active widget."""
-    return await _get_aggregator().fetch_all()
+    return await _get_aggregator().fetch_all(_reader(request))
 
 
 @dashboard_router.get("/data/{service_id}")
-async def get_service_data(service_id: str) -> WidgetData:
+async def get_service_data(service_id: str, request: Request) -> WidgetData:
     """Fetch data for one service."""
     if not _SERVICE_ID_RE.fullmatch(service_id):
         raise HTTPException(status_code=404, detail="service not found")
-    data = await _get_aggregator().fetch_one(service_id)
+    data = await _get_aggregator().fetch_one(service_id, _reader(request))
     if data.status == "error" and "not found" in (data.error or ""):
         raise HTTPException(status_code=404, detail="service not found")
     return data
 
 
 @dashboard_router.get("/full")
-async def get_full_dashboard() -> DashboardResponse:
+async def get_full_dashboard(request: Request) -> DashboardResponse:
     """Return layout and data in one request for the initial page load."""
     aggregator = _get_aggregator()
     layout = aggregator.get_layout()
-    data = await aggregator.fetch_all()
+    data = await aggregator.fetch_all(_reader(request))
     return DashboardResponse(layout=layout, data=data)
 
 
-async def fetch_dashboard_subset(widget_ids: set[str]) -> dict[str, WidgetData]:
+async def fetch_dashboard_subset(
+    widget_ids: set[str], request: Any
+) -> dict[str, WidgetData]:
     """Fetch exactly the named widgets concurrently through ``fetch_one``."""
     aggregator = _get_aggregator()
+    read = _reader(request)
     ordered_ids = list(widget_ids)
     results = await asyncio.gather(
-        *(aggregator.fetch_one(widget_id) for widget_id in ordered_ids)
+        *(aggregator.fetch_one(widget_id, read) for widget_id in ordered_ids)
     )
     return dict(zip(ordered_ids, results, strict=True))
 
 
 @dashboard_router.get("/data-subset")
 async def get_dashboard_subset(
+    request: Request,
     widget_id: Annotated[list[str] | None, Query()] = None,
 ) -> dict[str, WidgetData]:
     """REST twin of :func:`fetch_dashboard_subset`."""
-    return await fetch_dashboard_subset(set(widget_id or ()))
+    return await fetch_dashboard_subset(set(widget_id or ()), request)
 
 
 @dashboard_router.get("/widgets")
-async def list_available_widgets() -> list[WidgetListItem]:
-    """List every widget type available for configuration."""
-    registrations = get_registry().discover_all()
-    return [
-        WidgetListItem(
-            widget_type=r.widget_type,
-            display_name=r.display_name,
-            icon=r.icon,
-            category=r.category.value,
-            description=r.description,
-            supports_websocket=r.supports_websocket,
+async def list_available_widgets(request: Request) -> list[WidgetListItem]:
+    """List every connector of the fleet census a widget can read."""
+    items: list[WidgetListItem] = []
+    cursor: str | None = None
+    for _page in range(_CENSUS_PAGES):
+        arguments: dict[str, Any] = {"summary": True, "limit": 100}
+        if cursor:
+            arguments["cursor"] = cursor
+        census = await _served(request, "fleet.catalog.list", arguments)
+        items.extend(
+            WidgetListItem(
+                widget_type=row["server"].replace("-", "_"),
+                display_name=row["server"],
+                icon="",
+                category="",
+                description="",
+                supports_websocket=False,
+            )
+            for row in census.get("servers", ())
+            if isinstance(row, dict) and isinstance(row.get("server"), str)
         )
-        for r in registrations.values()
-    ]
+        cursor = census.get("next_cursor")
+        if not cursor:
+            break
+    return items
 
 
 @dashboard_router.get("/health")
@@ -361,6 +378,15 @@ async def _served(
     return value
 
 
+def _reader(request: Any) -> WidgetReader:
+    """``ecosystem.widgets.read`` as the caller of ``request`` (ARBORA-OPS-R914)."""
+
+    async def read(widget: str) -> Any:
+        return await _served(request, WIDGET_READ_OP, {"widget": widget})
+
+    return read
+
+
 async def _sync_source(request: Request, source_id: str) -> dict[str, Any]:
     receipt = await _served(
         request,
@@ -428,10 +454,12 @@ def parsed_widget_subscription(raw: str) -> set[str] | None:
     }
 
 
-async def _widgets_for(subscription: set[str] | None) -> dict[str, WidgetData]:
+async def _widgets_for(
+    subscription: set[str] | None, websocket: WebSocket
+) -> dict[str, WidgetData]:
     if subscription is None:
-        return (await get_full_dashboard()).data
-    return await fetch_dashboard_subset(subscription)
+        return (await get_full_dashboard(websocket)).data  # type: ignore[arg-type]
+    return await fetch_dashboard_subset(subscription, websocket)
 
 
 async def _next_subscription(
@@ -460,7 +488,7 @@ async def _stream_dashboard(websocket: WebSocket) -> None:
     message_type = "snapshot"
     subscription: set[str] | None = None
     while True:
-        widgets = await _widgets_for(subscription)
+        widgets = await _widgets_for(subscription, websocket)
         sequence += 1
         await websocket.send_json(
             {

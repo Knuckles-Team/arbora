@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 from typing import TYPE_CHECKING, Any
 
 from arbora.messaging.capabilities import MessagingCapabilities
@@ -40,6 +40,14 @@ if TYPE_CHECKING:
     pass
 
 logger = logging.getLogger(__name__)
+
+
+class InboundSignatureInvalid(Exception):
+    """An inbound webhook did not carry a valid adapter signature.
+
+    ARBORA-MESSAGING-R008.1: the adapter signature check is the only admission
+    for the shared inbound route; every refusal is this one type.
+    """
 
 
 class MessagingBackend(ABC):
@@ -371,6 +379,19 @@ class MessagingBackend(ABC):
             f"{self.id} backend does not support inbound listening. "
             "Override listen() to enable bidirectional messaging."
         )
+
+    def verify_inbound(self, headers: Mapping[str, str], body: bytes) -> InboundEvent:
+        """Verify one signed inbound webhook and return its event.
+
+        ARBORA-MESSAGING-R008.1. The default refuses: only a webhook based
+        adapter overrides it, and only after it checks a signature over the raw
+        body. Raises ``InboundSignatureInvalid``.
+        """
+        raise InboundSignatureInvalid(f"{self.id} accepts no inbound webhook")
+
+    async def enqueue_inbound(self, event: InboundEvent) -> None:
+        """Put a verified inbound event on the queue that ``listen`` drains."""
+        raise InboundSignatureInvalid(f"{self.id} accepts no inbound webhook")
 
     # ── Directory ────────────────────────────────────────────────────
 
