@@ -19,20 +19,19 @@ class Loops:
         self.calls: list[str] = []
 
     def status(self, params: dict[str, Any], principal: str) -> Any:
-        self.calls.append("LoopStatus")
+        self.calls.append("Loops")
         return {
-            "state": self.state[params["loop_id"]],
-            "last_run_ms": 1,
-            "next_run_ms": 2,
+            "instance": {"state": self.state[params["op"]["loop_id"]]},
+            "transitions": [{"at_ms": 1}],
         }
 
-    def run(self, params: dict[str, Any], principal: str) -> Any:
-        self.calls.append("LoopRun")
-        return {"job_id": f"job-{len(self.jobs) + 1}"}
-
-    def pause(self, params: dict[str, Any], principal: str) -> Any:
-        self.calls.append("LoopPause")
-        self.state[params["loop_id"]] = "paused"
+    def job(self, params: dict[str, Any], principal: str) -> Any:
+        op = params["op"]
+        if "Submit" in op:
+            self.calls.append("Submit")
+            return {"id": "job-1"}
+        self.calls.append("SchedulePause")
+        self.state[op["SchedulePause"]["name"]] = "paused"
         return {"state": "paused"}
 
 
@@ -43,9 +42,8 @@ def loops(served: Any, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, Loops]:  #
     route_methods(
         client,
         {
-            "LoopStatus": engine.status,
-            "LoopRun": engine.run,
-            "LoopPause": engine.pause,
+            "Loops": engine.status,
+            "AnalyticsJob": engine.job,
         },
         monkeypatch,
         {
@@ -65,14 +63,18 @@ def loops(served: Any, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, Loops]:  #
 def test_scopes_idempotent_run_and_pause(loops: tuple[Any, Loops]) -> None:
     http, engine = loops
     status = _value(_call(http, "evolution.loops.status", {"loop_id": "L1"}))
-    assert status == {"state": "running", "last_run_ms": 1, "next_run_ms": 2}
+    assert status == {"state": "running", "last_run_ms": 1, "next_run_ms": None}
     key = {"Idempotency-Key": "run-1"}
-    ran = _value(_call(http, "evolution.loops.run", {"loop_id": "L1"}, **key))
+    ran = _value(
+        _call(http, "evolution.loops.run", {"loop_id": "L1", "kind": {}}, **key)
+    )
     assert ran == {"job_id": "job-1"}
-    missing_key = _call(http, "evolution.loops.run", {"loop_id": "L1"})
+    missing_key = _call(http, "evolution.loops.run", {"loop_id": "L1", "kind": {}})
     assert missing_key.status_code == 400
     reader = {"Authorization": "Bearer fixture-reader"}
-    refused = _call(http, "evolution.loops.run", {"loop_id": "L1"}, **key, **reader)
+    refused = _call(
+        http, "evolution.loops.run", {"loop_id": "L1", "kind": {}}, **key, **reader
+    )
     assert refused.status_code == 403
     paused = _value(
         _call(
