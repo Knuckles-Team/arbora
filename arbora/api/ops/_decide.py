@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
 from arbora.api.ops._engine import engine_send
@@ -29,16 +29,27 @@ def record_digest(record: Mapping[str, Any]) -> str:
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 
+async def decide_with(
+    send: Callable[[str, dict[str, Any]], Awaitable[Any]],
+    tenant: str,
+    kind: str,
+    fields: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Ask one ``QuestionKind`` over ``send(method, params)`` and return its sealed record."""
+    guard("Decide")
+    request = {"tenant_id": tenant, "question": {"kind": kind, **dict(fields or {})}}
+    return record_of(await send("Decide", {"request": request}))
+
+
 async def decide_record(
     context: Any, kind: str, fields: Mapping[str, Any] | None = None
 ) -> dict[str, Any]:
-    """Ask one ``QuestionKind`` and return its sealed record."""
-    guard("Decide")
-    request = {
-        "tenant_id": str(context.caller.tenant),
-        "question": {"kind": kind, **dict(fields or {})},
-    }
-    return record_of(await engine_send(context, "Decide", {"request": request}))
+    """Ask one ``QuestionKind`` as the verified caller and return its sealed record."""
+
+    async def send(method: str, params: dict[str, Any]) -> Any:
+        return await engine_send(context, method, params)
+
+    return await decide_with(send, str(context.caller.tenant), kind, fields)
 
 
 async def committed_record(context: Any, record_id: str) -> dict[str, Any]:
@@ -48,4 +59,10 @@ async def committed_record(context: Any, record_id: str) -> dict[str, Any]:
     return record_of(await engine_send(context, "DecisionLog", {"op": op}))
 
 
-__all__ = ["committed_record", "decide_record", "record_digest", "record_of"]
+__all__ = [
+    "committed_record",
+    "decide_record",
+    "decide_with",
+    "record_digest",
+    "record_of",
+]
