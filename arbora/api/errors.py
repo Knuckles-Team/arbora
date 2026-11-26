@@ -60,6 +60,9 @@ class ArboraErrorCode(StrEnum):
     MFA_STALE = "MFA_STALE"
     # A paging cursor the source moved past; the caller restarts the listing.
     STALE_CURSOR = "STALE_CURSOR"
+    # Approval refusals (ARBORA-OPS-R918.3).
+    SELF_APPROVAL = "SELF_APPROVAL"
+    ALREADY_DECIDED = "ALREADY_DECIDED"
 
 
 # Wire status and retry posture are part of the closed Arbora vocabulary.
@@ -107,6 +110,8 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.CONSOLE_ORIGIN_REQUIRED: 403,
     ArboraErrorCode.MFA_STALE: 403,
     ArboraErrorCode.STALE_CURSOR: 409,
+    ArboraErrorCode.SELF_APPROVAL: 403,
+    ArboraErrorCode.ALREADY_DECIDED: 409,
 }
 
 _RETRYABLE = frozenset(

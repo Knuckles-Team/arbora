@@ -306,9 +306,9 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [x] T239 ARBORA-OPS-R897.3 Scope and observation operations. Deliver as written in requirements.md.
 - [x] T240 ARBORA-OPS-R897.4 Turn append operation. Deliver as written in requirements.md.
 - [x] T241 ARBORA-OPS-R897.5 Ask and card operations. Deliver as written in requirements.md.
-- [ ] T242 ARBORA-OPS-R897.6 Assistant profile and document set operations. Deliver as written in requirements.md.
+- [x] T242 ARBORA-OPS-R897.6 Assistant profile and document set operations. Deliver as written in requirements.md.
 - [x] T243 ARBORA-OPS-R897.7 Registration and error mapping. Deliver as written in requirements.md.
-- [ ] T244 ARBORA-OPS-R897.8 Hot-path proof. Deliver as written in requirements.md.
+- [x] T244 ARBORA-OPS-R897.8 Hot-path proof. Deliver as written in requirements.md.
 
 
 
@@ -526,9 +526,9 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [x] T450 [US1] ARBORA-OPS-R921.4 Hot-path proof: browse, search and open an asset over MCP. Size: M, 1 PR, 4 hours.
 - [x] T451 [US1] ARBORA-OPS-R861.10 Read the access of one dashboard. Size: M, 1 PR, 4 hours.
 - [ ] T452 [US1] ARBORA-OPS-R922 Every pending census route of the web interface names one registered operation (rollup). Size: S, 1 PR, 2 hours.
-- [ ] T453 [US1] ARBORA-OPS-R922.1 Ontology interfaces are listed and their implementers read. Size: S, 1 PR, 2 hours.
+- [x] T453 [US1] ARBORA-OPS-R922.1 Ontology interfaces are listed and their implementers read. Size: S, 1 PR, 2 hours.
 - [ ] T454 [US1] ARBORA-OPS-R922.2 One model's editable field set is a served read that returns references, never secrets. Size: S, 1 PR, 2 hours.
-- [ ] T455 [US1] ARBORA-OPS-R922.3 Source sync runs are listed. Size: S, 1 PR, 2 hours.
+- [x] T455 [US1] ARBORA-OPS-R922.3 Source sync runs are listed. Size: S, 1 PR, 2 hours.
 - [ ] T456 [US1] ARBORA-OPS-R922.4 The active agent system prompt is a served read. Size: S, 1 PR, 2 hours.
 - [x] T457 [US1] ARBORA-OPS-R915.1 Revisioned durable city-state snapshots. Size: M, 2 PRs, 5 hours.
 - [x] T458 [US1] ARBORA-OPS-R950 Serve the flag operations. Size: M, 2 PRs, 5 hours.
@@ -538,7 +538,7 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T462 [US1] ARBORA-OPS-R954 Serve skill measures, ranking, discovery and peer recommendations. Size: M, 2 PRs, 5 hours.
 - [x] T463 [US1] ARBORA-OPS-R955 Serve the skill evaluation operations. Size: M, 2 PRs, 5 hours.
 - [x] T464 [US1] ARBORA-OPS-R956 Serve the ablation and canary operations. Size: M, 2 PRs, 5 hours.
-- [ ] T465 [US1] ARBORA-OPS-R957 Serve the skill tier and persona operations. Size: M, 2 PRs, 5 hours.
+- [x] T465 [US1] ARBORA-OPS-R957 Serve the skill tier and persona operations. Size: M, 2 PRs, 5 hours.
 - [ ] T466 [US1] ARBORA-OPS-R958 Run the knowledge curator on the engine cadence. Size: M, 2 PRs, 5 hours.
 - [ ] T467 [US1] ARBORA-OPS-R857.3 Wiring: the graph store carries six RDF media types.
 - [ ] T468 [US1] ARBORA-OPS-R857.4 Refusal: media type and parse errors pass through.
