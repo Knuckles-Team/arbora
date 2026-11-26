@@ -961,6 +961,9 @@ def _background_services(
     reclaim = _reclaim_service(runtime, session)
     if reclaim is not None:
         started.append(reclaim)
+    push = _push_service(runtime, session)
+    if push is not None:
+        started.append(push)
     tick_s = float(str(setting("ARBORA_CURATOR_TICK_S", "300") or "300"))
 
     async def invoke_op(op_id: str, params: Any, caller: Any, key: str) -> Any:
@@ -1019,6 +1022,40 @@ def _reclaim_service(
         authority=authority,
         process_session=session,
         clock=clock or time.time,
+        **({"sleep": sleep} if sleep is not None else {}),
+        emit=lambda event, fields: log.warning("%s %s", event, dict(fields)),
+        poll_interval_s=poll,
+    )
+
+
+def _push_service(
+    runtime: Any,
+    session: Callable[[], Any],
+    *,
+    sleep: Callable[[float], Any] | None = None,
+) -> Any:
+    """The A2A push delivery service for this host (ARBORA-A2A-R013.2), or ``None``.
+
+    It starts with the process so a push item survives a restart; it is absent
+    only when the host composes no push worker or ``A2A_PUSH_POLL_S`` is ``0``.
+    """
+    import logging
+
+    from arbora.a2a.push import DEFAULT_POLL_INTERVAL_S, PushDeliveryService
+    from arbora.core.settings import setting
+
+    a2a = getattr(runtime, "bindings", {}).get("a2a")
+    worker = getattr(getattr(a2a, "authority", None), "push", None)
+    poll = float(
+        str(setting("A2A_PUSH_POLL_S", str(DEFAULT_POLL_INTERVAL_S)) or "")
+        or DEFAULT_POLL_INTERVAL_S
+    )
+    if worker is None or poll <= 0:
+        return None
+    log = logging.getLogger("arbora.a2a.push")
+    return PushDeliveryService(
+        worker,
+        session,
         **({"sleep": sleep} if sleep is not None else {}),
         emit=lambda event, fields: log.warning("%s %s", event, dict(fields)),
         poll_interval_s=poll,
