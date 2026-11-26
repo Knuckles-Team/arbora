@@ -148,6 +148,7 @@ class A2ATaskAuthority(Protocol):
         blocking: bool = True,
         model_profile: Any = None,
         media: dict[str, Any] | None = None,
+        harness: Any = None,
     ) -> A2ATask: ...
 
     async def get(self, task_id: str) -> A2ATask | None: ...
@@ -157,6 +158,16 @@ class A2ATaskAuthority(Protocol):
     ) -> tuple[list[A2ATask], str | None]: ...
 
     async def cancel(self, task_id: str) -> A2ATask: ...
+
+
+def harness_metadata(harness: Any) -> dict[str, Any]:
+    """The admitted harness decision a run reads by reference (ARBORA-A2A-R018.1)."""
+    return {
+        "decision_record_ref": harness.decision_record_ref,
+        "harness_config_digest": harness.harness_config_digest,
+        "allowed_tool_subset": list(harness.admitted_tools),
+        "context_budget_tokens": harness.context_budget_tokens,
+    }
 
 
 def _digest(value: Any) -> str:
@@ -1217,6 +1228,7 @@ class WorkItemA2AAuthority:
         blocking: bool = True,
         model_profile: Any = None,
         media: dict[str, Any] | None = None,
+        harness: Any = None,
     ) -> A2ATask:
         if decision.selected_tools:
             # Refuse before durable admission: the current signed AU dispatch
@@ -1240,6 +1252,8 @@ class WorkItemA2AAuthority:
             decision=decision,
             model_profile=model_profile,
         )
+        if harness is not None:
+            metadata["a2a_harness"] = harness_metadata(harness)
         from arbora.access.task_guard import screen_and_redact_agent_task
 
         description = screen_and_redact_agent_task(message.task_text())

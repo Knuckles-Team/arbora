@@ -475,7 +475,13 @@ def _application_error(request_id: Any, error: Exception) -> JSONResponse:
     mapped = _ERROR_CODES.get(type(error))
     if mapped is not None:
         code, status = mapped
-        return _error(request_id, code, str(error), status)
+        reason = getattr(error, "reason", None)
+        data = (
+            {"reason": reason}
+            if isinstance(error, A2AAssemblyUnavailable) and reason
+            else None
+        )
+        return _error(request_id, code, str(error), status, data)
     # Pydantic errors may echo caller text in ``input_value``. Keep the wire
     # error stable and privacy-safe; details belong in local logs.
     return _error(request_id, -32602, "Invalid params")

@@ -98,6 +98,9 @@ repos:
     stages: [manual]
   - id: secrets
     stages: [pre-commit, pre-push]
+  # One hook id; reads [tool.complexity] in pyproject.toml (ARBORA-DEPLOY-R010.4).
+  - id: complexity
+    stages: [pre-commit, pre-push]
   - id: spec
     stages: [pre-push, manual]
   - id: spec-templates

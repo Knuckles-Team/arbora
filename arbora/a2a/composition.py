@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -12,6 +12,7 @@ from arbora.run_origin import RunOriginRegistry
 
 from .application import A2AAuthenticator, create_a2a_application
 from .authority import WorkItemA2AAuthority
+from .engine_decider import EngineHarnessConfigDecider
 from .event_log import A2AEventLog, A2AEventStreams, StreamClock
 from .history import EngineTransitionHistory
 from .media_refs import SessionMediaRefStore
@@ -20,6 +21,30 @@ from .routing import OrchestratorA2ARouter
 from .service import A2ACardMetadata, A2AService
 
 __all__ = ["A2AComposition", "build_a2a_service", "compose_a2a"]
+
+
+def _tenant() -> str:
+    from arbora.security.session import current_session
+
+    return str(getattr(current_session(), "tenant", ""))
+
+
+def _principal() -> str:
+    from arbora.security.session import current_session
+
+    actor = getattr(current_session(), "actor", None)
+    return str(getattr(actor, "actor_id", ""))
+
+
+def _principal_kind() -> str:
+    """The verified caller's principal class: ``human`` or ``service``."""
+    from arbora.security.actor_context import ActorType
+    from arbora.security.session import current_session
+
+    kind = getattr(getattr(current_session(), "actor", None), "actor_type", None)
+    return {ActorType.HUMAN: "human", ActorType.AUTOMATED_SERVICE: "service"}.get(
+        kind, str(kind)
+    )
 
 
 def stream_buffer_events(config: object) -> int:
@@ -44,6 +69,8 @@ def build_a2a_service(
     task_plan_config: Any = None,
     hosted_invocation: Any = None,
     clock: StreamClock | None = None,
+    decide: Callable[[dict[str, Any]], Any] | None = None,
+    feature_schema: Mapping[str, Any] | None = None,
 ) -> A2AService:
     """One service over the WorkItem authority and its durable event cursor.
 
@@ -71,7 +98,21 @@ def build_a2a_service(
     return A2AService(
         authority=authority,
         push=push,
-        router=OrchestratorA2ARouter(engine_provider),
+        router=OrchestratorA2ARouter(
+            engine_provider,
+            decide=decide,
+            feature_schema=feature_schema,
+            tenant=_tenant,
+            principal=_principal,
+        ),
+        harness_decider=(
+            EngineHarnessConfigDecider(
+                decide, feature_schema=feature_schema or {}, principal=_principal
+            )
+            if decide is not None
+            else None
+        ),
+        principal_kind=_principal_kind,
         card_metadata=card_metadata or A2ACardMetadata(),
         streaming=A2AEventStreams(
             log, authority, buffer_events=stream_buffer_events(runtime_config)
@@ -90,6 +131,8 @@ def compose_a2a(
     task_plan_config: Any = None,
     hosted_invocation: Any = None,
     clock: StreamClock | None = None,
+    decide: Callable[[dict[str, Any]], Any] | None = None,
+    feature_schema: Mapping[str, Any] | None = None,
 ) -> A2AComposition:
     """Compose one projection over the existing WorkItem/dispatch authorities."""
     service = build_a2a_service(
@@ -99,6 +142,8 @@ def compose_a2a(
         task_plan_config=task_plan_config,
         hosted_invocation=hosted_invocation,
         clock=clock,
+        decide=decide,
+        feature_schema=feature_schema,
     )
     return A2AComposition(
         application=create_a2a_application(
