@@ -114,7 +114,7 @@ DEFAULT_RULES: tuple[ScreenRule, ...] = (
     _rule(
         "screen.perception.hidden_text",
         AttackClass.PERCEPTION,
-        r"[​-‏⁠﻿]+"
+        r"[\u200b-\u200f\u2060\ufeff]+"
         r"|<(\w+)\b[^>]*style\s*=\s*[\"'][^\"']*"
         + _HIDDEN_STYLE
         + r"[^\"']*[\"'][^>]*>"
