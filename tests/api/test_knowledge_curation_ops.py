@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from arbora.api.ops import knowledge
-from tests.api._knowledge_support import caller_context, record_engine
+from tests.api._knowledge_support import NO_OP, caller_context, record_engine
 from tests.test_served_operation_api import _call, served  # noqa: F401
 
 
@@ -18,13 +18,13 @@ async def test_inputs_propose_status_metrics_forward_unchanged(
     sent = record_engine(monkeypatch, knowledge, {"ok": True})
     context = caller_context()
     await knowledge.handle_curation_inputs(
-        context, {"loop_id": "l", "epoch": 2, "force": False, "cursor": None}, None
+        context, {"loop_id": "l", "epoch": 2, "force": False, "cursor": None}, NO_OP
     )
     await knowledge.handle_curation_propose(
-        context, {"loop_id": "l", "epoch": 2, "proposal": {"p": 1}, "body": "b"}, None
+        context, {"loop_id": "l", "epoch": 2, "proposal": {"p": 1}, "body": "b"}, NO_OP
     )
-    await knowledge.handle_curation_status(context, {"proposal_id": "p1"}, None)
-    await knowledge.handle_curation_metrics(context, {"from_ms": 1, "to_ms": 9}, None)
+    await knowledge.handle_curation_status(context, {"proposal_id": "p1"}, NO_OP)
+    await knowledge.handle_curation_metrics(context, {"from_ms": 1, "to_ms": 9}, NO_OP)
     assert [(m, o["op"], idem) for m, o, idem in sent] == [
         ("KnowledgeCuration", "inputs", False),
         ("KnowledgeCuration", "propose", True),

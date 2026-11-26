@@ -8,7 +8,7 @@ import pytest
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import skills_friction
-from tests.api._knowledge_support import caller_context, record_engine
+from tests.api._knowledge_support import NO_OP, caller_context, record_engine
 from tests.test_served_operation_api import _call, served  # noqa: F401
 
 REPORT = {
@@ -30,11 +30,11 @@ async def test_report_names_the_verified_caller_and_group_reads_forward(
 ) -> None:
     sent = record_engine(monkeypatch, skills_friction, {"ok": True})
     context = caller_context("knowledge:flag", "knowledge:curate")
-    await skills_friction.handle_friction_report(context, REPORT, None)
+    await skills_friction.handle_friction_report(context, REPORT, NO_OP)
     await skills_friction.handle_friction_group(
-        context, {"skill_ref": "skill:x@1", "limit": None}, None
+        context, {"skill_ref": "skill:x@1", "limit": None}, NO_OP
     )
-    await skills_friction.handle_friction_get(context, {"group_ref": "g"}, None)
+    await skills_friction.handle_friction_get(context, {"group_ref": "g"}, NO_OP)
     report = sent[0][1]["report"]
     assert report["tenant_id"] == "tenant:one"
     assert report["reported_by"] == "person:one"
@@ -49,15 +49,15 @@ async def test_approving_needs_its_own_grant(monkeypatch: pytest.MonkeyPatch) ->
     move = {"group_ref": "g", "to": "approved", "evidence_ref": None, "at_ms": 3}
     with pytest.raises(OperationRefused) as denied:
         await skills_friction.handle_friction_transition(
-            caller_context("knowledge:curate"), move, None
+            caller_context("knowledge:curate"), move, NO_OP
         )
     assert denied.value.code == "POLICY_DENIED"
     assert sent == []
     await skills_friction.handle_friction_transition(
-        caller_context("knowledge:curate", "knowledge:approve"), move, None
+        caller_context("knowledge:curate", "knowledge:approve"), move, NO_OP
     )
     await skills_friction.handle_friction_transition(
-        caller_context("knowledge:curate"), {**move, "to": "triaged"}, None
+        caller_context("knowledge:curate"), {**move, "to": "triaged"}, NO_OP
     )
     assert sent[0][1] == {
         "op": "transition",

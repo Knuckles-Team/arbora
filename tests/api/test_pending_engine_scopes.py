@@ -59,6 +59,7 @@ def test_listed_scope_is_served_refusing_unavailable(
     registry = get_registry()
     op = registry.get("knowledge.flag.raise")
     assert op is not None
+    assert isinstance(op.binding, Composite)
     assert op.binding.handler.endswith("refuse_unavailable")
     app, _client = served
     reply = _call(
@@ -77,7 +78,7 @@ def test_no_listed_scope_is_in_the_pinned_catalog() -> None:
     assert listed
     assert not (listed & pinned.keys()), "remove the scope from the pending list"
     registry = get_registry()
-    used = set()
+    used: set[str] = set()
     for op in registry:
         used |= op.scopes | op.executor_scopes
     assert not (listed & used), "a served operation still holds a pending scope"

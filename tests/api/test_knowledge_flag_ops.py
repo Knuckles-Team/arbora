@@ -8,7 +8,7 @@ import pytest
 
 from arbora.api.ops import knowledge
 from arbora.api.registry.pending_scopes import load_pending_engine_scopes
-from tests.api._knowledge_support import caller_context, record_engine
+from tests.api._knowledge_support import NO_OP, caller_context, record_engine
 from tests.test_served_operation_api import _call, served  # noqa: F401
 
 
@@ -29,14 +29,14 @@ async def test_raise_resolve_get_list_forward_unchanged(
             "at_ms": 5,
             "suggested_correction": None,
         },
-        None,
+        NO_OP,
     )
     assert raised == {"value": {"flag_id": "f1"}}
     await knowledge.handle_flag_resolve(
-        context, {"flag_id": "f1", "resolution": "adopt"}, None
+        context, {"flag_id": "f1", "resolution": "adopt"}, NO_OP
     )
-    await knowledge.handle_flag_get(context, {"flag_id": "f1"}, None)
-    await knowledge.handle_flag_list(context, {"state": "open", "limit": None}, None)
+    await knowledge.handle_flag_get(context, {"flag_id": "f1"}, NO_OP)
+    await knowledge.handle_flag_list(context, {"state": "open", "limit": None}, NO_OP)
     assert sent == [
         (
             "KnowledgeFlag",

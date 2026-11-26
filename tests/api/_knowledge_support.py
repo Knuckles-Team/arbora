@@ -7,6 +7,9 @@ from typing import Any
 
 import pytest
 
+#: The handlers never read their operation argument; tests pass this stand-in.
+NO_OP: Any = None
+
 
 def caller_context(*scopes: str) -> Any:
     caller = SimpleNamespace(
