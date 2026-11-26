@@ -1,11 +1,12 @@
 """Evolution loop, schedule and proposal operations (ARBORA-OPS-R022.2.1 to R022.2.5).
 
 The engine keeps every loop's durable state; this module is a facade. Each
-operation sends one engine method as the verified caller and returns the
-engine's answer unchanged. The loop methods ``LoopStatus``, ``LoopRun`` and
-``LoopPause`` are not in the pinned engine release, so they go through the
-pin-lag guard: a pinned release refuses ``UNAVAILABLE`` naming the method, and
-nothing falls back to a local stand-in.
+operation sends one existing engine method as the verified caller and returns
+the engine's answer. Status reads the ``Loops`` ``get`` view, run submits an
+``AnalyticsJob`` ``Submit`` and pause is ``AnalyticsJob`` ``SchedulePause``;
+the engine has no separate loop methods (it retired them as duplicates). A
+pinned release that lacks one of these shapes refuses ``UNAVAILABLE`` naming
+it through the pin-lag guard.
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops._engine import engine_send
 from arbora.api.registry import OpSpec
-from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_models
 
 __all__ = [
     "handle_loops_pause",
@@ -36,8 +37,8 @@ __all__ = [
 
 #: The engine replays each write by the idempotency key the pipeline forwards.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "evolution.loops.run": "medulla:LoopRun",
-    "evolution.loops.pause": "medulla:LoopPause",
+    "evolution.loops.run": "medulla:AnalyticsJob.Submit",
+    "evolution.loops.pause": "medulla:AnalyticsJob.SchedulePause",
 }
 READ_SCOPE = "loops:read"
 CONTROL_SCOPE = "loops:control"
@@ -49,6 +50,11 @@ class LoopRefParams(Params):
     loop_id: str = _LOOP_ID
 
 
+class LoopRunParams(LoopRefParams):
+    #: The engine ``JobKind`` of the run, passed to ``Submit`` unchanged.
+    kind: dict[str, Any]
+
+
 class EvolutionPageParams(Params):
     cursor: str | None = Field(default=None, min_length=1, max_length=512)
     limit: int = _PAGE_LIMIT
@@ -58,9 +64,9 @@ class EvolutionResult(Params):
     value: dict[str, Any]
 
 
-def _loop_method(method: str) -> None:
+def _require_shape(*names: str) -> None:
     try:
-        require_methods(method)
+        require_models(names)
     except PinLagUnavailable as error:
         raise refusal(error) from error
 
@@ -69,31 +75,59 @@ async def handle_loops_status(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """One loop's ``state``, ``last_run_ms`` and ``next_run_ms`` from the engine."""
-    _loop_method("LoopStatus")
-    answer = await engine_send(context, "LoopStatus", {"loop_id": params["loop_id"]})
-    return {"value": _mapping(answer, ("state", "last_run_ms", "next_run_ms"))}
+    _require_shape("LoopOpGet")
+    answer = await engine_send(
+        context, "Loops", {"op": {"op": "get", "loop_id": params["loop_id"]}}
+    )
+    instance = answer.get("instance") if isinstance(answer, Mapping) else None
+    if not isinstance(instance, Mapping) or "state" not in instance:
+        raise OperationRefused("UNAVAILABLE", {"reason": "unexpected engine answer"})
+    moments = [
+        step["at_ms"]
+        for step in answer.get("transitions", ())
+        if isinstance(step, Mapping) and isinstance(step.get("at_ms"), int)
+    ]
+    return {
+        "value": {
+            "state": instance["state"],
+            "last_run_ms": max(moments) if moments else None,
+            # A next-run instant is derived from the schedule tick history.
+            "next_run_ms": None,
+        }
+    }
 
 
 async def handle_loops_run(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """Request one loop run; one idempotency key returns one job id."""
-    _loop_method("LoopRun")
+    """Request one loop run as a submitted job; one key returns one job id."""
+    _require_shape("JobOpSubmit")
+    graph = await caller_dispatch_graph(context)
+    spec = {"graph": graph, "kind": params["kind"], "purpose": params["loop_id"]}
     answer = await engine_send(
-        context, "LoopRun", {"loop_id": params["loop_id"]}, idempotent=True
+        context, "AnalyticsJob", {"op": {"Submit": spec}}, idempotent=True
     )
-    return {"value": _mapping(answer, ("job_id",))}
+    job_id = (
+        answer.get("id", answer.get("job_id")) if isinstance(answer, Mapping) else None
+    )
+    if not isinstance(job_id, str):
+        raise OperationRefused("UNAVAILABLE", {"reason": "unexpected engine answer"})
+    return {"value": {"job_id": job_id}}
 
 
 async def handle_loops_pause(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """Pause one loop; pausing a paused loop answers the paused state again."""
-    _loop_method("LoopPause")
+    """Pause one loop's schedule; pausing a paused loop answers paused again."""
+    _require_shape("JobOpSchedulePause")
+    graph = await caller_dispatch_graph(context)
     answer = await engine_send(
-        context, "LoopPause", {"loop_id": params["loop_id"]}, idempotent=True
+        context,
+        "AnalyticsJob",
+        {"op": {"SchedulePause": {"name": params["loop_id"], "graph": graph}}},
+        idempotent=True,
     )
-    return {"value": _mapping(answer, ("state",))}
+    return {"value": {"state": _mapping(answer, ("state",))["state"]}}
 
 
 def _mapping(answer: Any, keys: tuple[str, ...]) -> dict[str, Any]:
@@ -209,7 +243,7 @@ def operations() -> tuple[OpSpec, ...]:
             op_id="evolution.loops.run",
             summary="Request one run of an evolution loop",
             examples=("run this loop now",),
-            params=LoopRefParams,
+            params=LoopRunParams,
             result=EvolutionResult,
             handler=f"{module}.handle_loops_run",
             scope=CONTROL_SCOPE,
