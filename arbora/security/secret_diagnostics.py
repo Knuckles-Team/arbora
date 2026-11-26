@@ -71,7 +71,7 @@ class SourceKind(StrEnum):
     """Supported non-secret source authorities."""
 
     ENVIRONMENT = "environment"
-    SECRET_REF = "secret_ref"
+    SECRET_REF = "secret_ref"  # nosec B105 - a label, not a credential
 
 
 class Presence(StrEnum):
@@ -88,7 +88,7 @@ class Health(StrEnum):
 
 class ArtifactStatus(StrEnum):
     SAFE = "safe"
-    SECRET_LIKE_CONTENT = "secret-like-content"  # sanitizer:ignore - a fixed status code name, not a secret
+    SECRET_LIKE_CONTENT = "secret-like-content"  # sanitizer:ignore - a fixed status code name, not a secret  # nosec B105 - a label, not a credential
     TOO_LARGE = "artifact-too-large"
     INVALID = "artifact-invalid"
     UNREADABLE = "artifact-unreadable"
