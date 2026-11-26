@@ -126,9 +126,9 @@ class FakeEngine:
     async def _send(
         self,
         method: str,
-        params: dict[str, Any],
-        _context: Any = None,
-        idempotency_key: str | None = None,
+        params: Any,
+        graph: str | None,
+        **_kwargs: Any,
     ) -> Any:
         """The versioned KV methods the A2A event log uses."""
         slot = (params["namespace"], params["key"])

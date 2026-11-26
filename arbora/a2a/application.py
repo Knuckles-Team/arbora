@@ -514,7 +514,7 @@ async def _unary_request(
     method: str,
     raw_params: dict[str, Any],
     request_id: Any,
-) -> JSONResponse:
+) -> Any:
     write_methods = {
         "message/send",
         "message/stream",
@@ -555,7 +555,7 @@ async def _unary_request(
     return _unary_response(result, request_id)
 
 
-def _unary_response(result: Any, request_id: Any) -> JSONResponse:
+def _unary_response(result: Any, request_id: Any) -> Any:
     if isinstance(result, (JSONResponse, StreamingResponse)):
         return result
     payload = result.model_dump(mode="json", by_alias=True)

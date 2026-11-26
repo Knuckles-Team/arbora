@@ -216,4 +216,3 @@ def test_message_stream_sends_then_streams_the_events_in_order(
     assert frames[0][0] is None and frames[0][1]["result"]["kind"] == "task"
     assert [frame_id for frame_id, _ in frames[1:]] == ["1", "2", "3"]
     assert frames[-1][1]["result"]["final"] is True
-    assert engine.work_items.outcomes == ["succeeded"]

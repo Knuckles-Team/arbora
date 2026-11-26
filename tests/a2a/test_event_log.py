@@ -126,11 +126,13 @@ def test_concurrent_writers_under_one_fence_publish_exactly_one_event(
 
     engine.work_items.get = read_together  # type: ignore[method-assign]
 
-    async def scenario() -> list[object]:
-        return await asyncio.gather(
-            log_a.publish(ITEM, _draft("working"), claim=claim),
-            log_b.publish(ITEM, _draft("working"), claim=claim),
-            return_exceptions=True,
+    async def scenario() -> list[Any]:
+        return list(
+            await asyncio.gather(
+                log_a.publish(ITEM, _draft("working"), claim=claim),
+                log_b.publish(ITEM, _draft("working"), claim=claim),
+                return_exceptions=True,
+            )
         )
 
     results = asyncio.run(scenario())
