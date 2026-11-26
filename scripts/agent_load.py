@@ -157,25 +157,41 @@ async def profile(
     )
 
 
-def _served_run(args: argparse.Namespace) -> RunOnce:
-    import urllib.request
+def _connection(base_url: str) -> tuple[Any, Any]:
+    """The parsed base URL and the connection class for its checked scheme."""
+    import http.client
+    import urllib.parse
 
+    base = urllib.parse.urlsplit(base_url.rstrip("/"))
+    if base.scheme not in {"http", "https"} or not base.hostname:
+        raise SystemExit("--base-url must be an http or https URL")
+    if base.scheme == "https":
+        return base, http.client.HTTPSConnection
+    return base, http.client.HTTPConnection
+
+
+def _served_run(args: argparse.Namespace) -> RunOnce:
     token = os.environ["ARBORA_LOAD_TOKEN"]
-    message = json.loads(open(args.message_file, encoding="utf-8").read())
+    with open(args.message_file, encoding="utf-8") as handle:
+        message = json.loads(handle.read())
+    base, connect = _connection(args.base_url)
 
     def post(op: str, body: dict[str, Any]) -> dict[str, Any]:
-        request = urllib.request.Request(
-            f"{args.base_url.rstrip('/')}/api/v1/ops/{op}",
-            data=json.dumps(body).encode(),
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-                "Idempotency-Key": os.urandom(12).hex(),
-            },
-            method="POST",
-        )
-        with urllib.request.urlopen(request, timeout=args.timeout_s) as reply:
-            return json.loads(reply.read())
+        connection = connect(base.hostname, base.port, timeout=args.timeout_s)
+        try:
+            connection.request(
+                "POST",
+                f"{base.path}/api/v1/ops/{op}",
+                body=json.dumps(body),
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                    "Idempotency-Key": os.urandom(12).hex(),
+                },
+            )
+            return json.loads(connection.getresponse().read())
+        finally:
+            connection.close()
 
     async def once() -> bool:
         deadline = time.monotonic() + args.timeout_s
