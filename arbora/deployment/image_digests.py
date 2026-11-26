@@ -83,6 +83,11 @@ class StrictLoader(yaml.SafeLoader):
         return super().construct_mapping(node, deep=deep)
 
 
+def load_strict(text: str) -> Any:
+    """Parse one YAML document with :class:`StrictLoader` (a safe loader)."""
+    return yaml.load(text, Loader=StrictLoader)  # nosec B506 - SafeLoader subclass
+
+
 def _mapping(value: object, location: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"{location}: expected a mapping")
@@ -97,6 +102,11 @@ def _valid_image(image: object) -> bool:
     if separator and ("." in first or ":" in first or first == "localhost"):
         return re.fullmatch(_REGISTRY, first) is not None
     return True
+
+
+def is_digest_pinned(image: object) -> bool:
+    """True when ``image`` is ``repository@sha256:<64 lowercase hex>`` with no tag."""
+    return _valid_image(image)
 
 
 def _check_containers(pod: dict[str, Any], location: str) -> int:

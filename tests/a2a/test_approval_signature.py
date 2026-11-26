@@ -252,13 +252,20 @@ def test_route_reaches_verification_refusal_without_accepting_wire_authority(
             "jsonrpc": "2.0",
             "id": "confirm",
             "method": "arbora.plan/confirm",
-            "params": confirmation.model_dump(),
+            "params": confirmation.model_dump()
+            | {
+                "confirmation_kind": "tool_action",
+                "params_digest": "a" * 64,
+                "trust_mark_ref": "trust:mark",
+                "action_class": "egress",
+            },
         },
     )
     assert response.status_code == 501
     assert response.json()["error"]["code"] == -32011
-    assert "AUTHORITY_UNAVAILABLE" in response.json()["error"]["message"]
-    assert observed == [None]
+    assert "APPROVAL_CHAIN_UNQUALIFIED" in response.json()["error"]["message"]
+    # No chain is composed: the signature is never even consulted.
+    assert observed == []
     assert authority.task.status.state == "submitted"
     with pytest.raises(ValidationError):
         A2APlanConfirmParams(**(confirmation.model_dump() | {"public_key": "wire-key"}))

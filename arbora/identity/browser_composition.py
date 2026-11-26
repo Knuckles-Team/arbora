@@ -114,12 +114,14 @@ def build_browser_boundary(
     )
     from arbora.identity.composition import build_engine_identity_ports
     from arbora.identity.issuer import IssuerSettings, LocalIssuer
+    from arbora.identity.issuer_discovery import IssuerDiscovery
     from arbora.security.request_identity import verify_local_bearer_token
 
     ports = build_engine_identity_ports(client, graph=graph, refresh=False)
-    signer = LocalIssuer(
-        store, IssuerSettings(issuer, audience, tenant), ports.credentials
-    )
+    settings = IssuerSettings(issuer, audience, tenant)
+    # ISSUER_KEY_UNAVAILABLE: an unreadable key ring refuses to start the issuer.
+    discovery = IssuerDiscovery(store, settings)
+    signer = LocalIssuer(store, settings, ports.credentials)
     owner = ArboraBrowserAuthority(
         ports.sessions, verify_local_bearer_token, trusted_origin=origin
     )
@@ -149,6 +151,7 @@ def build_browser_boundary(
             origin=origin,
             issuer=signer,
             caller=caller,
+            discovery=discovery,
         ),
     )
 

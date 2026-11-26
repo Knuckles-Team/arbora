@@ -54,8 +54,14 @@ class _Leases:
     async def get(self, *, tenant: str, lease_id: str) -> dict[str, Any] | None:
         return self.rows.get(lease_id)
 
-    async def list(self, *, status: str, **_kw: Any) -> dict[str, Any]:
-        return {"leases": [r for r in self.rows.values() if r["status"] == status]}
+    async def list(self, *, status: str, kind: str, **_kw: Any) -> dict[str, Any]:
+        return {
+            "leases": [
+                r
+                for r in self.rows.values()
+                if r["status"] == status and r["kind"] == kind
+            ]
+        }
 
     async def transition(self, **request: Any) -> dict[str, Any]:
         self.transitions.append(request)
@@ -188,3 +194,55 @@ def test_expired_item_refuses_decision_and_denial_revokes() -> None:
     result = _decide(_context(leases, "ed-1", "editors"), fresh, decision="denied")
     assert result["item"]["state"] == "denied"
     assert leases.transitions[-1]["to"] == "revoked"
+
+
+# spec: ARBORA-OPS-R918.4
+def test_expired_item_refuses_consume_and_lists_expired() -> None:
+    from arbora.api.invoke.plan import EgPlanStore, PlanBinding, approval_id_for
+    from tests.api.test_invoke_contract import FixtureLeases
+
+    class Clock:
+        now = NOW
+        reads = 0
+
+        def __call__(self) -> int:
+            self.reads += 1
+            return self.now
+
+    class Rows(FixtureLeases):
+        async def list(self, *, status: str, kind: str, **_kw: Any) -> dict[str, Any]:
+            return {
+                "leases": [
+                    r
+                    for r in self.rows.values()
+                    if r["status"] == status and r["kind"] == kind
+                ]
+            }
+
+    leases, clock = Rows(), Clock()
+    store = EgPlanStore(
+        SimpleNamespace(control_leases=leases), lease_kind="plan", clock_ms=clock
+    )
+    from arbora.api.invoke.gate_class import GateResolution
+
+    gate = GateResolution("publishing", ("editors",), 30_000, "engine")
+    binding = PlanBinding(
+        "op", "d" * 64, "agent-1", "tenant-a", "r", "g", "write", "plan"
+    )
+    ref = _run(store.issue(binding, {"x": 1}, gate))
+    item_id = approval_id_for(ref)
+
+    clock.now = NOW + 30_001
+    clock.reads = 0
+    refusal = _run(store.consume(ref, binding))
+    assert refusal is not None and refusal.code == "PLAN_EXPIRED"
+    assert clock.reads == 1  # the clock is read once per consume
+    assert leases.rows[ref]["status"] == "active" and leases.transitions == 0
+
+    editor = SimpleNamespace(
+        caller=SimpleNamespace(principal="ed", tenant="tenant-a", roles=("editors",)),
+        client=SimpleNamespace(control_leases=leases),
+        services={"now_ms": lambda: clock.now},
+    )
+    listed = _run(approvals.handle_approvals_list(editor, {"limit": 50}, None))  # type: ignore[arg-type]
+    assert {i["approval_id"]: i["state"] for i in listed["items"]}[item_id] == "expired"

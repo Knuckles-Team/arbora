@@ -175,6 +175,10 @@ class OpSpec(BaseModel):
     stability: Stability = Stability.STABLE
     remove_in: str | None = None
     audit: AuditClass = AuditClass.NONE
+    #: A named read-only function a caller may invoke by name through
+    #: ``ontology.functions.invoke`` (ARBORA-OPS-R908); the call runs the
+    #: operation itself, under its own scope.
+    function: bool = False
     content_origin: ContentOrigin = ContentOrigin.TRUSTED
 
     @field_validator("id")
@@ -207,6 +211,12 @@ class OpSpec(BaseModel):
         if self.stability is not Stability.DEPRECATED and self.remove_in:
             raise ValueError("remove_in is reserved for deprecated operations")
 
+    def _check_function_mark(self) -> None:
+        if self.function and (
+            self.effect is not Effect.READ or self.verb is not Verb.ASK
+        ):
+            raise ValueError("a function operation is a read: verb ask, effect read")
+
     def _check_surfaces_and_audit(self) -> None:
         if not self.surfaces:
             raise ValueError("operation requires at least one surface")
@@ -223,5 +233,6 @@ class OpSpec(BaseModel):
         self._check_executor_authority()
         self._check_stability_lifecycle()
         self._check_surfaces_and_audit()
+        self._check_function_mark()
         self._apply_default_confirm()
         return self

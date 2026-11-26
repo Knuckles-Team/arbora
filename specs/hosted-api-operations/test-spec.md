@@ -517,6 +517,12 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R888` | Test: `tests/api/test_governance_ops.py::test_access_request_approval_needs_steward` (L3) runs through the registry `invoke` over HTTP and MCP against a loopback medulla engine. It asserts the grant after a steward approval and zero effects after a non-steward approval. |
 | `ARBORA-OPS-R889` | Test: `tests/api/test_lineage_route.py::test_run_event_reaches_engine_under_caller_tenant` posts one event and reads the edge through `ask`. |
 | `ARBORA-OPS-R890` | Test: `tests/pin_lag/test_host_ports_pin_lag.py::test_pinned_release_refuses_every_host_port_binding_naming_the_gap` (L2). The pinned release refuses UNAVAILABLE naming the missing `HostPorts` symbol; the real-path test runs the adapters against a structural double of the main shape. |
+| `ARBORA-OPS-R890.1` | Test: `tests/pin_lag/test_host_ports_backends.py::test_approval_waiter_maps_the_run_task_to_its_inbox_item_by_plan_ref` (L2). The real-path test runs the service against a structural double of the main shape. |
+| `ARBORA-OPS-R890.2` | Test: `tests/pin_lag/test_host_ports_backends.py::test_process_table_is_keyed_by_run_and_admitted` (L2). The real-path test runs the service against a structural double of the main shape. |
+| `ARBORA-OPS-R890.3` | Test: `tests/pin_lag/test_host_ports_backends.py::test_summary_study_and_technique_services_reach_the_engine_as_the_run_principal` (L2). The real-path test runs the service against a structural double of the main shape. |
+| `ARBORA-OPS-R890.4` | Test: `tests/pin_lag/test_host_ports_backends.py::test_run_trace_receipts_commit_with_the_run_fence` (L2). The real-path test runs the service against a structural double of the main shape. |
+| `ARBORA-OPS-R890.5` | Test: `tests/pin_lag/test_host_ports_backends.py::test_confirm_admits_only_a_signed_grant` (L2). The real-path test runs the service against a structural double of the main shape. |
+| `ARBORA-OPS-R890.6` | Test: `tests/pin_lag/test_host_ports_backends.py::test_composition_binds_each_port_that_has_a_backend` (L2). The real-path test runs the service against a structural double of the main shape. |
 | `ARBORA-OPS-R891` | Test: `tests/test_usage_forwarding.py::test_step_usage_events_append_once_per_run` (L3). A loopback engine records the principal, tenant and batches. It asserts the field set and the batch split. It also asserts that a refusal leaves the run result unchanged. |
 | `ARBORA-OPS-R893` | Test: `tests/gateway/test_credential_authority.py::test_exact_grant_only_and_refusals_write_receipts` (L3) over MCP through the multiplexer. |
 | `ARBORA-OPS-R894` | Test: `tests/pin_lag/test_host_ports_pin_lag.py::test_pinned_release_refuses_every_host_port_binding_naming_the_gap` (L2). The pinned release refuses UNAVAILABLE naming the missing `HostPorts` symbol; the real-path test runs the adapters against a structural double of the main shape. |
@@ -586,10 +592,11 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R918.1` | Test: `tests/api/test_approvals_ops.py::test_list_filters_by_gate_class_and_approver_role` (L1). |
 | `ARBORA-OPS-R918.2` | Test: `tests/api/test_gate_class.py::test_engine_answer_sets_class_roles_expiry_and_default_is_strict` (L1). |
 | `ARBORA-OPS-R918.3` | Test: `tests/api/test_approvals_ops.py::test_decide_refuses_self_approval_and_records_provenance` (L1). |
-| `ARBORA-OPS-R918.4` | Test: `tests/api/test_approvals_ops.py::test_expired_item_refuses_consume_and_lists_expired` (planned, L1). |
-| `ARBORA-OPS-R918.5` | Test: `tests/api/test_approvals_ops.py::test_digest_counts_by_class_and_delivers_one_notice_per_owner` (planned, L1). |
-| `ARBORA-OPS-R918.6` | Test: `tests/fleet/test_approval_notifier.py::test_notice_per_approver_without_preview_and_retries_from_outbox` (planned, L1). |
-| `ARBORA-OPS-R918.7` | Test: `tests/api/test_approvals_served.py::test_proposal_to_decision_runs_once_and_refusals_run_nothing` (planned, L1). |
+| `ARBORA-OPS-R918.4` | Test: `tests/api/test_approvals_ops.py::test_expired_item_refuses_consume_and_lists_expired` (L1). |
+| `ARBORA-OPS-R918.5` | Test: `tests/fleet/test_approval_notifier.py::test_digest_read_counts_by_class_and_has_no_effects` (L1). |
+| `ARBORA-OPS-R918.5.1` | Test: `tests/fleet/test_approval_notifier.py::test_digest_send_delivers_one_notice_per_owner_and_refuses_without_a_channel` (L1). |
+| `ARBORA-OPS-R918.6` | Test: `tests/fleet/test_approval_notifier.py::test_notice_per_approver_without_preview_and_retries_from_outbox` (L1). |
+| `ARBORA-OPS-R918.7` | Test: `tests/api/test_approvals_served.py::test_proposal_to_decision_runs_once_and_refusals_run_nothing` (L1). |
 | `ARBORA-OPS-R919` | Roll-up of its children. |
 | `ARBORA-OPS-R919.1` | Test: `tests/test_model_route.py::test_local_route_default_and_unreachable_refuses_without_silent_fallback` (planned, L1). |
 | `ARBORA-OPS-R919.2` | Test: `tests/test_model_route.py::test_escalation_requires_policy_and_is_traced` (planned, L1). |
