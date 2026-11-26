@@ -271,7 +271,7 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 - `ARBORA-FLEET-R041`: See each child.
 - `ARBORA-FLEET-R041.1`: `tests/fleet/test_auto_onboard.py::test_trigger_and_counts_round_trip` stores and reads a record.
 - `ARBORA-FLEET-R041.2`: `tests/fleet/test_auto_onboard.py::test_registration_and_release_start_one_pass_each` registers a fixture, then bumps its manifest digest.
-- `ARBORA-FLEET-R041.3`: `tests/fleet/test_auto_onboard.py::test_every_trigger_reaches_the_one_onboard_function` patches `onboard` and drives each trigger.
+- `ARBORA-FLEET-R041.3`: `tests/fleet/test_auto_onboard.py::test_every_trigger_reaches_the_one_onboard_function` (planned) patches `onboard` and drives each trigger.
 - `ARBORA-FLEET-R041.4`: `tests/fleet/test_auto_onboard.py::test_orphan_refusal_marks_contract_rejected_and_admits_no_tools`.
 - `ARBORA-FLEET-R041.5`: `tests/fleet/test_auto_onboard.py::test_status_reports_counts_digests_receipt_and_reason`.
 - `ARBORA-FLEET-R041.6`: `tests/fleet/test_auto_onboard_served.py::test_register_then_release_serves_all_surfaces_without_manual_step`.
