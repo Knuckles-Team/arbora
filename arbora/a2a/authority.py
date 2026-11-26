@@ -771,7 +771,7 @@ class WorkItemA2AAuthority:
             self._work_item_id(conversation_target),
         )
         # A foreign or absent predecessor answers alike: no run starts.
-        if not self._owned(predecessor, owner_ref):
+        if predecessor is None or not self._owned(predecessor, owner_ref):
             raise OperationRefused("CHILD_OWNER_MISMATCH", {})
         route = A2ARouteDecision.model_validate(predecessor["metadata"]["a2a_route"])
         context_id = str(predecessor["metadata"].get("a2a_context_id") or run_id)

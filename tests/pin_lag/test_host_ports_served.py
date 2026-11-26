@@ -69,7 +69,7 @@ def test_engine_decision_seam_reaches_the_engine_as_the_run_principal(
         wait=lambda seconds: asyncio.sleep(0),
         resolve_run=lambda ref: owner if ref == RUN else None,
     )
-    assert binding.refusal is None
+    assert binding.refusal is None and binding.ports is not None
     ports = binding.ports
 
     async def scenario() -> Any:
