@@ -120,7 +120,7 @@ def test_startup_publishes_templates_and_components_once_per_tenant() -> None:
         assert tools["attributes"] == {"server": "helm-mcp", "tool": "apply_tool"}
         assert tools["facts"]["effect"] == "write"
     first_writes = len(engine.writes)
-    assert first_writes == 2 * (3 + 12 + 1 + 4)
+    assert first_writes == 2 * (5 + 12 + 1 + 4)
 
     again = asyncio.run(
         library.publish_at_startup(engine.send, _context, ["tenant-a"], _bindings())

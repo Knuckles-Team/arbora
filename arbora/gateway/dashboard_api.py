@@ -31,7 +31,6 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
-from arbora.api.errors import not_served
 from arbora.gateway.aggregator import Aggregator
 from arbora.gateway.config import ConfigManager
 from arbora.gateway.models import DashboardLayout, WidgetData
@@ -302,23 +301,52 @@ async def daemon_start(request: Request) -> dict[str, Any]:
     return _status()
 
 
-def _active_engine() -> Any:
-    raise not_served("knowledge_graph.core.engine", "MEDULLA-PLACEMENT-R611")
+#: Refusal codes of a served operation, mapped to the dashboard's HTTP statuses.
+_REFUSAL_STATUS = {
+    "INVALID_ARGUMENT": 400,
+    "NOT_FOUND": 400,
+    "UNAUTHENTICATED": 401,
+    "SCOPE_REQUIRED": 403,
+    "PRINCIPAL_NOT_ALLOWED": 403,
+    "SURFACE_NOT_ALLOWED": 403,
+}
 
 
-def _hydration_manager() -> Any:
-    raise not_served("knowledge_graph.core.hydration", "MEDULLA-INGEST-WORKER-R606")
+async def _served(
+    request: Request,
+    op_id: str,
+    params: dict[str, Any],
+    *,
+    idempotency_key: str | None = None,
+) -> Any:
+    """Call one served operation as the dashboard caller (ARBORA-OPS-R039.7).
 
+    The call goes through the one invoke pipeline under the caller's own
+    verified identity. Refusals keep the dashboard's status codes: 400 for an
+    invalid or unknown source, 401/403 for authority, and 500 for the rest,
+    including a gateway that has no application composed.
+    """
+    from arbora.api.http.auth import HTTPAuthenticationError
+    from arbora.api.invoke.pipeline import OperationRefused
 
-@dashboard_router.post("/hydrate/{source}")
-async def trigger_hydration(source: str, request: Request) -> dict[str, Any]:
-    """Trigger hydration for one external source."""
-    _require_dashboard_write(request)
-    if not _HYDRATION_SOURCE_RE.fullmatch(source):
-        raise HTTPException(status_code=422, detail="invalid hydration source")
-    engine = _active_engine()
     try:
-        return _hydration_manager().hydrate_source(engine, source)
+        value = await gateway_application().invoke_operation(
+            op_id, params, request=request, idempotency_key=idempotency_key
+        )
+    except HTTPAuthenticationError as exc:
+        raise HTTPException(
+            status_code=401, detail=public_error_payload(exc, logger=logger)
+        ) from None
+    except OperationRefused as exc:
+        status = _REFUSAL_STATUS.get(exc.code, 500)
+        raise HTTPException(
+            status_code=status,
+            detail=public_error_payload(
+                exc,
+                logger=logger,
+                code="invalid_request" if status == 400 else "operation_failed",
+            ),
+        ) from None
     except ValueError as exc:
         raise HTTPException(
             status_code=400,
@@ -328,25 +356,58 @@ async def trigger_hydration(source: str, request: Request) -> dict[str, Any]:
         raise HTTPException(
             status_code=500, detail=public_error_payload(exc, logger=logger)
         ) from None
+    if isinstance(value, dict) and set(value) == {"value"}:
+        return value["value"]
+    return value
+
+
+async def _sync_source(request: Request, source_id: str) -> dict[str, Any]:
+    receipt = await _served(
+        request,
+        "ingest.sources.sync",
+        {"source_id": source_id, "mode": "incremental"},
+        idempotency_key=f"dashboard-hydrate-{uuid.uuid4().hex}",
+    )
+    return dict(receipt)
+
+
+async def _source_ids(request: Request) -> list[str]:
+    inventory = await _served(request, "ingest.sources.list", {})
+    return [str(source["source_id"]) for source in inventory.get("sources", ())]
+
+
+@dashboard_router.post("/hydrate/{source}")
+async def trigger_hydration(source: str, request: Request) -> dict[str, Any]:
+    """Trigger hydration for one external source through served ingest."""
+    _require_dashboard_write(request)
+    if not _HYDRATION_SOURCE_RE.fullmatch(source):
+        raise HTTPException(status_code=422, detail="invalid hydration source")
+    return await _sync_source(request, source)
 
 
 @dashboard_router.post("/hydrate")
 async def trigger_all_hydration(request: Request) -> dict[str, Any]:
     """Trigger hydration for every configured source in sequence."""
     _require_dashboard_write(request)
-    engine = _active_engine()
-    try:
-        return _hydration_manager().hydrate_all(engine)
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500, detail=public_error_payload(exc, logger=logger)
-        ) from None
+    return {
+        source_id: await _sync_source(request, source_id)
+        for source_id in await _source_ids(request)
+    }
 
 
 @dashboard_router.get("/hydration-status")
-async def get_hydration_status() -> dict[str, Any]:
-    """Return the configuration status of every hydration source."""
-    return _hydration_manager().get_status()
+async def get_hydration_status(request: Request) -> dict[str, Any]:
+    """Return one status entry per hydration source."""
+    status: dict[str, Any] = {}
+    for source_id in await _source_ids(request):
+        record = await _served(
+            request, "ingest.sources.status", {"source_id": source_id}
+        )
+        status[source_id] = {
+            "configured": True,
+            "last_job_id": record.get("last_job_id"),
+        }
+    return status
 
 
 def parsed_widget_subscription(raw: str) -> set[str] | None:
