@@ -54,13 +54,23 @@ class LateFleetGateway:
 
     def __init__(self) -> None:
         self._gateway: Any = None
+        self._reader: Any = None
         self.ops: Any = None
 
-    def bind(self, gateway: Any, ops: Any) -> None:
+    def bind(self, gateway: Any, ops: Any, reader: Any = None) -> None:
         if self._gateway is not None:
             raise RuntimeError("the fleet gateway is already bound")
         self._gateway = gateway
         self.ops = ops
+        self._reader = reader
+
+    async def read_catalog(self, caller: Any) -> Any:
+        """The verified fleet catalog snapshot for the caller (ARBORA-FLEET-R052.2)."""
+        self._bound()
+        if self._reader is None:
+            raise _unavailable()
+        with _caller_session(caller):
+            return await self._reader.read(kinds=("mcp_server",))
 
     def _bound(self) -> Any:
         if self._gateway is None:
@@ -248,5 +258,5 @@ def bind_fleet_gateway(
         return await _scoped(item, caller)
 
     gateway = compose_fleet_gateway(ops=ops, mux=mux, policy_check=policy_check)
-    late.bind(gateway, ops)
+    late.bind(gateway, ops, reader)
     return gateway

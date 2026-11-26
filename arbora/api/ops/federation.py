@@ -22,6 +22,7 @@ from arbora.api.ops._common import (
     build_read_op,
     build_write_op,
 )
+from arbora.api.ops._engine import engine_send, unavailable
 from arbora.api.registry import OpSpec, Verb
 
 _SECRET_MARKERS = (
@@ -53,6 +54,20 @@ class SourceGrantParams(Params):
 
 class SourceResult(Params):
     value: dict[str, Any]
+
+
+class SupplyChainImpactParams(Params):
+    """The ontology class roots the supply-chain question reads over."""
+
+    class_roots: list[str] = Field(min_length=1, max_length=64)
+
+
+class SupplyChainImpactResult(Params):
+    """The engine's report, unchanged, with its sources and abstentions."""
+
+    report: dict[str, Any]
+    sources_used: list[Any]
+    abstentions: list[Any]
 
 
 def redact(value: Any) -> Any:
@@ -132,9 +147,62 @@ async def handle_federation(
     return {"value": _public(updated)}
 
 
+async def connected_sources(tenant: str, *, catalog: Any) -> tuple[str, ...]:
+    """The tenant's admitted connectors, from the verified fleet catalog.
+
+    ``catalog`` is the verified snapshot of ``FleetCatalogReader.read``. A
+    snapshot bound to another tenant is never read (ARBORA-FLEET-R052.2).
+    """
+    if getattr(catalog.context, "tenant_id", None) != tenant:
+        raise PermissionError("fleet catalog belongs to another tenant")
+    return tuple(sorted({server.component.server_name for server in catalog.servers}))
+
+
+async def handle_supply_chain_impact(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Serve the engine's supply-chain impact report through one operation.
+
+    Arbora passes the connected connectors in the request and the engine's
+    report back unchanged; abstentions (an authoritative source with no
+    connected connector comes back as ``Unconnected``) stay the engine's.
+    """
+    gateway = bound_service(
+        context, "fleet_gateway", reason="fleet catalog is not composed"
+    )
+    tenant = str(context.caller.tenant)
+    sources = await connected_sources(
+        tenant, catalog=await gateway.read_catalog(context.caller)
+    )
+    report = await engine_send(
+        context,
+        "SupplyChainImpact",
+        {
+            "class_roots": list(params["class_roots"]),
+            "connected_sources": list(sources),
+        },
+    )
+    if not isinstance(report, Mapping):
+        raise unavailable("engine result malformed")
+    return {
+        "report": dict(report),
+        "sources_used": list(report.get("sources_used", ())),
+        "abstentions": list(report.get("abstentions", ())),
+    }
+
+
 def operations() -> tuple[OpSpec, ...]:
     handler = "arbora.api.ops.federation.handle_federation"
     return (
+        build_read_op(
+            op_id="report.supply_chain_impact",
+            summary="Report which services a supplier or vulnerability impacts",
+            examples=("which services does this vulnerability impact",),
+            params=SupplyChainImpactParams,
+            result=SupplyChainImpactResult,
+            handler="arbora.api.ops.federation.handle_supply_chain_impact",
+            scope="federation:read",
+        ),
         build_read_op(
             op_id="federation.sources.list",
             summary="List the federation sources visible to the caller",
