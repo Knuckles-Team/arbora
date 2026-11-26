@@ -83,9 +83,25 @@ class DashboardEngine:
             return self._receipt(row)
         if row["owner"] != principal:
             raise EngineResponseError("DASHBOARD_NOT_GRANTED", "owner only")
-        if action == "share":
-            row["grants"] = op["grants"]
+        if action == "grant":
+            grant = op["grant"]
+            row["grants"] = [
+                g
+                for g in row["grants"]
+                if g["principal_or_group"] != grant["principal_or_group"]
+            ] + [grant]
             return self._receipt(row, body=False)
+        if action == "revoke":
+            row["grants"] = [
+                g
+                for g in row["grants"]
+                if g["principal_or_group"] != op["principal_or_group"]
+            ]
+            return self._receipt(row, body=False)
+        if op["expected_revision"] != row["revision"]:
+            raise EngineResponseError(
+                "DASHBOARD_REVISION_CONFLICT", f"at revision {row['revision']}"
+            )
         del self.store[op["id"]]
         return {
             "id": op["id"],
@@ -390,6 +406,8 @@ def test_save_share_list_conflict_delete_served(env: Any) -> None:
             **{KEY: "s1"},
         )
     )
+    actions = [action for action, _ in engine.sent]
+    assert "grant" in actions and "share" not in actions
     assert [
         i["id"] for i in _value(_call(app, "dashboard.list", {}, **TWO))["items"]
     ] == ["sales"]

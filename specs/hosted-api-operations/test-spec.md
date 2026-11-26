@@ -389,7 +389,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R022.2.4` | Test: `tests/api/test_evolution_ops.py::test_run_requires_loops_control_and_key` (L1). Test: `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause` (L3) asserts one job for two calls with one key. |
 | `ARBORA-OPS-R022.2.5` | Test: `tests/api/test_evolution_ops.py::test_pause_requires_loops_control_and_is_idempotent` (L1). It is verified by the root slice test `tests/api/test_evolution_served.py::test_scopes_idempotent_run_and_pause`. |
 | `ARBORA-OPS-R024.3.1` | Test: `tests/api/test_usage_served.py::test_session_usage_forwards_caller_and_keeps_partial_coverage` (L3). It asserts forwarding, scope refusal, foreign-context refusal and preserved partial coverage. |
-| `ARBORA-OPS-R024.3.2` | Test: `tests/api/test_usage_served.py::test_timing_is_validated_and_correlated_to_turn_receipts` (L3). It asserts correlation, the range bounds, a missing receipt reference and absence of derived rate fields. |
+| `ARBORA-OPS-R024.3.2` | Test: `tests/api/test_usage_served.py::test_timing_is_validated_and_correlated_to_turn_receipts` (L3). It asserts the range bound, the typed refusal and absence of derived rate fields. |
 | `ARBORA-OPS-R024.5` | Test: `tests/api/test_ops_admin_ops.py::test_backup_restore_require_step_up_and_audit` (L3). It asserts the plain-confirmation refusal, the step-up success and the audit fields. |
 | `ARBORA-OPS-R032.2.2` | Test: `tests/mcp_server/test_browser_composition.py::test_mcp_server_refuses_eg_browser_without_factory` (L3). It asserts the startup refusal and that a factory-bearing start succeeds. |
 | `ARBORA-OPS-R032.2.3.2.2` | Test: `tests/mcp_server/test_browser_composition.py::test_start_call_receives_the_root_boundary` (L3). It asserts the object passed to the supervisor is the root's boundary. |
@@ -612,7 +612,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R951` | Test: `tests/api/test_knowledge_curation_ops.py::test_inputs_propose_status_metrics_and_contradiction_codes_pass_through` (planned) (L3). |
 | `ARBORA-OPS-R952` | Test: `tests/api/test_skills_friction_ops.py::test_report_group_transition_and_approval_grant` (planned) (L3). |
 | `ARBORA-OPS-R953` | Test: `tests/api/test_skills_telemetry_ingest.py::test_otlp_logs_map_to_invocations_and_unknown_attribute_refuses_all` (planned) (L3). |
-| `ARBORA-OPS-R954` | Test: `tests/api/test_skills_discovery_ops.py::test_measures_rank_find_peers_and_small_cohort_refusal` (planned) (L3). |
+| `ARBORA-OPS-R954` | Test: `tests/api/test_skills_discovery_ops.py::test_measures_rank_find_peers_and_small_cohort_refusal` (L3). |
 | `ARBORA-OPS-R955` | Test: `tests/api/test_skills_eval_ops.py::test_case_run_report_calibrate_and_refusal_codes` (planned) (L3). |
 | `ARBORA-OPS-R956` | Test: `tests/api/test_skills_ablation_ops.py::test_arm_run_and_canary_verdict_pass_through` (planned) (L3). |
 | `ARBORA-OPS-R957` | Test: `tests/api/test_skills_tier_ops.py::test_promote_by_tier_grant_and_persona_reads` (planned) (L3). |

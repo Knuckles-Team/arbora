@@ -21,7 +21,6 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
-from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops._engine import engine_send, unavailable
@@ -429,33 +428,33 @@ async def handle_dashboard_list(
 async def handle_dashboard_delete(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """Soft delete at the revision the caller read; the engine keeps the body."""
-    current = await _dashboard(context, {"op": "get", "id": params["id"]})
-    if current.get("revision") != params["expected_revision"]:
-        raise EngineRefusal("DASHBOARD_REVISION_CONFLICT")
-    await _dashboard(context, {"op": "delete", "id": params["id"]}, keyed=True)
+    """Soft delete at the revision the caller read; the engine checks it and keeps the body."""
+    await _dashboard(
+        context,
+        {
+            "op": "delete",
+            "id": params["id"],
+            "expected_revision": params["expected_revision"],
+        },
+        keyed=True,
+    )
     return {"id": params["id"], "deleted": True}
-
-
-def _changed_grants(
-    current: list[dict[str, Any]], params: Mapping[str, Any]
-) -> list[dict[str, Any]]:
-    subject = params.get("grantee") or params["group"]
-    kept = [g for g in current if g["principal_or_group"] != subject]
-    if params["action"] == "grant":
-        kept.append({"principal_or_group": subject, "role": params["role"]})
-    return kept
 
 
 async def handle_dashboard_share(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """Grant or revoke one role; the engine lets only the owner replace grants."""
-    current = await _dashboard(context, {"op": "get", "id": params["id"]})
-    grants = _changed_grants(_grants(current), params)
-    receipt = await _dashboard(
-        context, {"op": "share", "id": params["id"], "grants": grants}, keyed=True
-    )
+    """Grant or revoke one role; the engine changes that one grant and only for the owner."""
+    subject = params.get("grantee") or params["group"]
+    if params["action"] == "grant":
+        action = {
+            "op": "grant",
+            "id": params["id"],
+            "grant": {"principal_or_group": subject, "role": params["role"]},
+        }
+    else:
+        action = {"op": "revoke", "id": params["id"], "principal_or_group": subject}
+    receipt = await _dashboard(context, action, keyed=True)
     return {"id": params["id"], "grants": _grants(receipt)}
 
 

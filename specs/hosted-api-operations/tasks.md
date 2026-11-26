@@ -32,8 +32,8 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T015 ARBORA-OPS-R024.1 Telemetry operations — telemetry slice of `ARBORA-OPS-R024`.
 - [ ] T016 ARBORA-OPS-R024.2 Security operations — security slice of `ARBORA-OPS-R024`.
 - [ ] T017 ARBORA-OPS-R024.3 Usage operations — usage slice of `ARBORA-OPS-R024`.
-- [ ] T018 ARBORA-OPS-R024.3.1 Serve canonical caller-context committed session usage.
-- [ ] T019 ARBORA-OPS-R024.3.2 Project bounded AU measured request timing for shared clients.
+- [x] T018 ARBORA-OPS-R024.3.1 Serve canonical caller-context committed session usage.
+- [x] T019 ARBORA-OPS-R024.3.2 Project bounded AU measured request timing for shared clients.
 - [ ] T020 ARBORA-OPS-R024.4 Memory operations — memory slice of `ARBORA-OPS-R024`.
 - [ ] T021 ARBORA-OPS-R024.5 Operational admin operations — admin slice of `ARBORA-OPS-R024` (graph/query/search/ontology excluded; owned by `ARBORA-HOST-R026.x`).
 - [ ] T022 ARBORA-OPS-R026.1 API-surface drift gate — api-surface slice of `ARBORA-OPS-R026`.

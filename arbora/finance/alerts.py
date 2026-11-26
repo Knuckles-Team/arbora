@@ -13,9 +13,15 @@ notification channels is GDM-08 follow-on work.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
-from arbora.finance.receipt_store import FinanceReceiptStore
+from arbora.finance.receipts import (
+    FinanceReceiptEngine,
+    claim_receipt,
+    complete_receipt,
+)
 
 __all__ = [
     "DeliveryOutcome",
@@ -37,8 +43,8 @@ class FlipAlertDelivery(BaseModel):
     channel: str = Field(min_length=1, max_length=128)
 
 
-def record_alert_delivery(
-    store: FinanceReceiptStore, entry: FlipAlertDelivery
+async def record_alert_delivery(
+    engine: FinanceReceiptEngine, entry: FlipAlertDelivery
 ) -> DeliveryOutcome:
     """Deliver one alert exactly once per ``(tenant, event, subscriber)``.
 
@@ -49,7 +55,16 @@ def record_alert_delivery(
     """
 
     key = f"{entry.event_id}:{entry.subscriber_id}"
-    if not store.claim(entry.tenant_id, "alert_delivery", key):
+    claimed = await claim_receipt(
+        engine,
+        entry.tenant_id,
+        "alert_delivery",
+        key,
+        event_id=entry.event_id,
+        channel=entry.channel,
+        recorded_at=datetime.now(UTC).isoformat(),
+    )
+    if not claimed:
         return "duplicate"
-    store.complete(entry.tenant_id, "alert_delivery", key)
+    await complete_receipt(engine, entry.tenant_id, "alert_delivery", key)
     return "delivered"
