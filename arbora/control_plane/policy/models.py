@@ -212,6 +212,8 @@ class PolicyVersion(_FrozenModel):
     max_privilege: Privilege = "read"
     approval: ApprovalRequirement = Field(default_factory=ApprovalRequirement)
     summary: str = "immutable policy version"
+    constitution_ref: OpaqueRef | None = None
+    state: Literal["active", "retired"] = "active"
 
     @field_validator("summary")
     @classmethod

@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from arbora.api.errors import EngineRefusal, FleetRefusal
 from arbora.api.invoke.agent_ref import bind_agent_ref
 from arbora.api.invoke.audit import EffectJournal, EffectReservation, audit_event
+from arbora.api.invoke.audit_evidence import result_evidence
 from arbora.api.invoke.autonomy import AskVerdict, require_autonomy_clearance
 from arbora.api.invoke.executor import (
     OperationRuntime,
@@ -38,6 +39,7 @@ from arbora.api.invoke.screening import (
     screening_fields,
 )
 from arbora.api.invoke.steps import (
+    AnonymousCaller,
     OpError,
     OpResult,
     RequestCaller,
@@ -419,7 +421,44 @@ async def _base_authority(
     return await _policy(op, caller, services)
 
 
+def _anonymous_effect(
+    op: Any, params: Mapping[str, Any], caller: RequestCaller
+) -> OpError | None:
+    """An anonymous effect runs only under an operator policy entry (R004.6)."""
+    if not isinstance(caller, AnonymousCaller) or op.effect == Effect.READ:
+        return None
+    from arbora.security.anonymous import admit_effect
+
+    target = str(params.get("target") or params.get("node_id") or "")
+    code = admit_effect(op.id, target, params_digest(params))
+    return None if code is None else OpError(code)
+
+
 async def _effect(
+    op: Any,
+    params: Mapping[str, Any],
+    caller: RequestCaller,
+    surface: Surface,
+    services: InvokeServices,
+    *,
+    plan_ref: str | None,
+    resolved_from_intent: bool,
+) -> OpError | OpResult | None:
+    refused = _anonymous_effect(op, params, caller)
+    if refused is not None:
+        return refused
+    return await _effect_plan(
+        op,
+        params,
+        caller,
+        surface,
+        services,
+        plan_ref=plan_ref,
+        resolved_from_intent=resolved_from_intent,
+    )
+
+
+async def _effect_plan(
     op: Any,
     params: Mapping[str, Any],
     caller: RequestCaller,
@@ -792,7 +831,13 @@ async def _record(
                     call.surface,
                     result.code,
                     audit_ref,
-                    evidence=_evidence(call, evidence),
+                    evidence=_evidence(
+                        call,
+                        {
+                            **(evidence or {}),
+                            **result_evidence(call.op.id, call.arguments, result),
+                        },
+                    ),
                 ),
                 call.op.audit,
                 call.caller,

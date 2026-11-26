@@ -227,3 +227,105 @@ async def test_exclusion_group_and_spacing_are_forwarded_and_engine_refusal_is_t
             _context(refusing, monkeypatch), params, OPS["schedules.create"]
         )
     assert refused.value.code == "SCHEDULE_INVALID"
+
+
+def _library_answer(agent_id: str = "inst-1") -> dict[str, Any]:
+    return {
+        "entry": {
+            "agent_id": agent_id,
+            "runtime": {
+                "usage_limits": {"input_tokens_limit": 100, "output_tokens_limit": 50}
+            },
+        }
+    }
+
+
+class _LibraryClient(_Client):
+    def __init__(self, library: Any) -> None:
+        super().__init__()
+        self._library = library
+
+    async def _send(self, method: str, params: Any, graph: str, **keywords: Any) -> Any:
+        if method == "AgentLibrary":
+            self.sent.append((method, params, graph))
+            return self._library
+        return await super()._send(method, params, graph, **keywords)
+
+
+@pytest.mark.spec("ARBORA-OPS-R022.2.12")
+@pytest.mark.asyncio
+async def test_role_target_inherits_binding_budget_and_group(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _serve(monkeypatch, "AgentLibrary")
+    spec = {"role_instance_id": "inst-1"}
+    client = _LibraryClient(_library_answer())
+    inherited = schedules.ScheduleWriteParams(
+        name="n", task_kind="roles.run", spec=spec
+    ).model_dump()
+    await schedules.handle_schedule(
+        _context(client, monkeypatch), inherited, OPS["schedules.create"]
+    )
+    read = client.sent[0]
+    assert read[0] == "AgentLibrary"
+    assert read[1]["op"] == {
+        "operation": "current",
+        "agent_id": "inst-1",
+        "tenant_id": "tenant-a",
+    }
+    body = client.sent[1][1]["op"]["ScheduleCreate"]
+    assert (body["max_tokens"], body["exclusion_group"]) == (150, "inst-1")
+    # The caller's own values win and a non-role target never reads the library.
+    own = schedules.ScheduleWriteParams(
+        name="n",
+        task_kind="roles.run",
+        spec=spec,
+        max_tokens=7,
+        exclusion_group="mine",
+        min_spacing_s=30,
+    ).model_dump()
+    client = _LibraryClient(_library_answer())
+    await schedules.handle_schedule(
+        _context(client, monkeypatch), own, OPS["schedules.update"]
+    )
+    body = client.sent[1][1]["op"]["ScheduleUpdate"]
+    assert (body["max_tokens"], body["exclusion_group"], body["min_spacing_s"]) == (
+        7,
+        "mine",
+        30,
+    )
+    plain = schedules.ScheduleWriteParams(
+        name="n", task_kind="agent_run", spec="0 * * * *"
+    ).model_dump()
+    client = _LibraryClient(_library_answer())
+    await schedules.handle_schedule(
+        _context(client, monkeypatch), plain, OPS["schedules.create"]
+    )
+    assert [sent[0] for sent in client.sent] == ["AnalyticsJob"]
+
+
+@pytest.mark.spec("ARBORA-OPS-R022.2.12")
+@pytest.mark.asyncio
+async def test_role_target_refuses_absent_or_foreign_instance_with_no_schedule(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _serve(monkeypatch, "AgentLibrary")
+    for library in ({}, _library_answer("someone-else")):
+        client = _LibraryClient(library)
+        params = schedules.ScheduleWriteParams(
+            name="n", task_kind="roles.run", spec={"role_instance_id": "inst-1"}
+        ).model_dump()
+        with pytest.raises(OperationRefused) as refused:
+            await schedules.handle_schedule(
+                _context(client, monkeypatch), params, OPS["schedules.create"]
+            )
+        assert refused.value.code == "NOT_FOUND"
+        assert [sent[0] for sent in client.sent] == ["AgentLibrary"]
+    missing = schedules.ScheduleWriteParams(
+        name="n", task_kind="roles.run", spec={"x": 1}
+    ).model_dump()
+    with pytest.raises(OperationRefused) as refused:
+        await schedules.handle_schedule(
+            _context(_LibraryClient({}), monkeypatch), missing, OPS["schedules.create"]
+        )
+    assert refused.value.code == "INVALID_ARGUMENT"

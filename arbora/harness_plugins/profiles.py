@@ -165,6 +165,15 @@ def profile(name: str) -> HarnessProfile:
     return _BY_ID[name]
 
 
+def native_redirect_uris() -> tuple[str, ...]:
+    """The loopback callback of each profile, in table order (ARBORA-IDENTITY-R030.4.7).
+
+    The one list of native redirect URIs: the identity contract reads it, and a profile
+    with no callback (``hosted``) adds none.
+    """
+    return tuple(p.callback for p in PROFILES if p.callback)
+
+
 def profile_ids() -> tuple[str, ...]:
     return tuple(_BY_ID)
 
@@ -173,6 +182,7 @@ __all__ = [
     "HOSTED_CLIENT_ID",
     "NATIVE_CLIENT_ID",
     "PROFILES",
+    "native_redirect_uris",
     "HarnessProfile",
     "HookKind",
     "Lifecycle",

@@ -158,7 +158,6 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 ## Additional owner requirements
 
 - [ ] T128 ARBORA-OPS-R024.1.1 Deliver every requirement in requirements.md.
-- [ ] T129 ARBORA-OPS-R014.1 Deliver every requirement in requirements.md.
 - [ ] T130 ARBORA-OPS-R022.3 Deliver every requirement in requirements.md.
 - [ ] T131 ARBORA-OPS-R022.4 Deliver every requirement in requirements.md.
 - [ ] T132 ARBORA-OPS-R053.7 Deliver every requirement in requirements.md.
