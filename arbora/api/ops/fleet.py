@@ -131,6 +131,30 @@ class FleetResult(BaseModel):
     value: Any
 
 
+class FleetConvergenceParams(_Params):
+    pass
+
+
+class ReplicaGeneration(BaseModel):
+    """One replica's active catalog generation and convergence state."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    replica: str
+    state: str
+    reason: str | None = None
+    generation: dict[str, Any] | None = None
+    engine_generation: int
+
+
+class ConvergenceResult(BaseModel):
+    """The rows of ``fleet.catalog.convergence``; reading writes nothing."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    replicas: list[ReplicaGeneration]
+
+
 class ConnectionRow(BaseModel):
     """One running connector's connection state; no endpoint or credential is carried."""
 
@@ -295,6 +319,26 @@ async def handle_connection_state(
         if isinstance(child, Mapping)
     ]
     return {"connectors": rows}
+
+
+async def handle_catalog_convergence(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Each replica's catalog generation and state, from the one catalog reader.
+
+    ARBORA-FLEET-R051.2.1: a read of ``FleetCatalogReader.generation_status``.
+    A generation of another tenant is refused as ``TENANT_DENIED``.
+    """
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.fleet.health import generation_payload
+
+    gateway = context.services.get("fleet_gateway")
+    if gateway is None:
+        raise RuntimeError("fleet gateway is not bound")
+    status = await gateway.generation_status(context.caller)
+    if status.active is not None and status.active.tenant != str(context.caller.tenant):
+        raise OperationRefused("TENANT_DENIED")
+    return {"replicas": [generation_payload(status)]}
 
 
 async def handle_fleet_call(
@@ -554,6 +598,19 @@ def operations() -> tuple[OpSpec, ...]:
             effect=Effect.READ,
         ),
         OpSpec(
+            id="fleet.catalog.convergence",
+            verb=Verb.ASK,
+            summary="Show each replica's catalog generation and convergence state",
+            examples=("which catalog generation does each replica serve",),
+            params=FleetConvergenceParams,
+            result=ConvergenceResult,
+            binding=Composite(
+                handler="arbora.api.ops.fleet.handle_catalog_convergence"
+            ),
+            scopes=frozenset({"agent:pack-control"}),
+            effect=Effect.READ,
+        ),
+        OpSpec(
             id="fleet.connections.state",
             verb=Verb.ASK,
             summary="Show each running connector's connection state, without credentials",
@@ -582,6 +639,9 @@ specs = operations
 
 
 __all__ = [
+    "ConvergenceResult",
+    "FleetConvergenceParams",
+    "ReplicaGeneration",
     "FleetCallParams",
     "FleetConnectionStateParams",
     "FleetCatalogParams",

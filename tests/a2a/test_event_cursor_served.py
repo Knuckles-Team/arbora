@@ -51,7 +51,15 @@ def _served(
         await gate.wait()
         return ModelResponse(parts=[TextPart("the reply, key sk-" + "Zz9" * 8)])
 
-    host_ports.register_model_provider(lambda _id: FunctionModel(gated_model))
+    async def gated_stream(messages: Any, info: Any) -> Any:
+        started.set()
+        await gate.wait()
+        yield "the reply, "
+        yield "key sk-" + "Zz9" * 8
+
+    host_ports.register_model_provider(
+        lambda _id: FunctionModel(gated_model, stream_function=gated_stream)
+    )
     _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False)
     return mcp.http_app()
 
@@ -130,7 +138,7 @@ def test_stream_disconnect_and_resubscribe_from_a_mid_cursor_get_exactly_the_res
             done = await client.post(
                 "/a2a",
                 headers=_headers(),
-                json=_rpc("tasks/resubscribe", {"id": task_id, "afterSeq": 3}),
+                json=_rpc("tasks/resubscribe", {"id": task_id, "afterSeq": 4}),
             )
             ahead = await client.post(
                 "/a2a",
@@ -161,17 +169,23 @@ def test_stream_disconnect_and_resubscribe_from_a_mid_cursor_get_exactly_the_res
 
     assert out["card"]["capabilities"]["streaming"] is True
     whole = _frames(out["whole"].text)
-    assert [frame_id for frame_id, _ in whole] == ["1", "2", "3"]
+    assert [frame_id for frame_id, _ in whole] == ["1", "2", "3", "4"]
     events = [body["result"] for _, body in whole]
-    assert [e["metadata"]["event_seq"] for e in events] == [1, 2, 3]
+    assert [e["metadata"]["event_seq"] for e in events] == [1, 2, 3, 4]
     assert [e["kind"] for e in events] == [
         "status-update",
+        "artifact-update",
         "artifact-update",
         "status-update",
     ]
     assert events[0]["status"]["state"] == "working" and events[0]["final"] is False
-    assert events[2]["status"]["state"] == "completed" and events[2]["final"] is True
-    reply = events[1]["artifact"]["parts"][0]["text"]
+    assert events[3]["status"]["state"] == "completed" and events[3]["final"] is True
+    # The answer streams as chunks of one artifact; the last chunk closes it.
+    assert [(e["append"], e["lastChunk"]) for e in events[1:3]] == [
+        (False, False),
+        (True, True),
+    ]
+    reply = "".join(e["artifact"]["parts"][0]["text"] for e in events[1:3])
     assert reply == "the reply, key [REDACTED]"  # the redactor ran before delivery
     # Resubscribing from the mid cursor yields exactly the rest, each once.
     assert _frames(out["rest"].text) == whole[1:]
@@ -214,5 +228,5 @@ def test_message_stream_sends_then_streams_the_events_in_order(
     frames = _frames(response.text)
     # The admitted task first, then each durable event under its event_seq.
     assert frames[0][0] is None and frames[0][1]["result"]["kind"] == "task"
-    assert [frame_id for frame_id, _ in frames[1:]] == ["1", "2", "3"]
+    assert [frame_id for frame_id, _ in frames[1:]] == ["1", "2", "3", "4"]
     assert frames[-1][1]["result"]["final"] is True
