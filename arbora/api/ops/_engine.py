@@ -38,22 +38,34 @@ async def engine_send(
     context: Any, method: str, params: dict[str, Any], *, idempotent: bool = False
 ) -> Any:
     """Send one engine method as the verified caller and return plain data."""
-    from medulla import EngineResponseError
-    from medulla.generated import METHOD_IDS, send_by_id
+    _require_method(method)
+    graph = await caller_dispatch_graph(context)
+    key = context.idempotency_key if idempotent else None
+    with client_scope(context.client, claim_values(context.caller.engine_claims)):
+        return await send_on_client(context.client, method, params, graph, key=key)
+
+
+def _require_method(method: str) -> None:
+    from medulla.generated import METHOD_IDS
 
     if method not in METHOD_IDS:
         # A newer engine release declares the method; until it is pinned the
         # operation refuses rather than sending a method the client cannot.
         raise unavailable(f"the installed engine does not serve {method}")
-    graph = await caller_dispatch_graph(context)
-    key = context.idempotency_key if idempotent else None
-    with client_scope(context.client, claim_values(context.caller.engine_claims)):
-        try:
-            payload = await send_by_id(
-                context.client, method, params, graph, idempotency_key=key
-            )
-        except EngineResponseError as exc:
-            raise EngineRefusal(refusal_code(exc.code, exc.detail)) from exc
+
+
+async def send_on_client(
+    client: Any, method: str, params: dict[str, Any], graph: str, *, key: str | None
+) -> Any:
+    """Send one engine method on a client whose claims are already bound."""
+    from medulla import EngineResponseError
+    from medulla.generated import send_by_id
+
+    _require_method(method)
+    try:
+        payload = await send_by_id(client, method, params, graph, idempotency_key=key)
+    except EngineResponseError as exc:
+        raise EngineRefusal(refusal_code(exc.code, exc.detail)) from exc
     return decode(payload)
 
 

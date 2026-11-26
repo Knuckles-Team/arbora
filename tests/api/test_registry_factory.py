@@ -9,7 +9,11 @@ import pytest
 
 from arbora.api.ops import (
     access,
+    agent_library,
     agents,
+    approvals,
+    assistants,
+    atlas,
     browser,
     capacity,
     catalog,
@@ -23,6 +27,7 @@ from arbora.api.ops import (
     finance_receipts,
     fleet,
     get_registry,
+    goals,
     governance,
     graph_limits,
     identity,
@@ -31,7 +36,9 @@ from arbora.api.ops import (
     memory,
     messaging,
     models,
+    ontology_objects,
     ops,
+    participants,
     plans,
     policy,
     preferences,
@@ -47,11 +54,14 @@ from arbora.api.ops import (
     skills_discovery,
     skills_eval,
     skills_friction,
+    skills_telemetry,
+    skills_tier,
     source,
     swarm,
     telemetry,
     usage,
     work,
+    workstreams,
 )
 from arbora.api.registry import (
     Composite,
@@ -67,6 +77,8 @@ from tests.api._catalog import method_row, scope_row
 from tests.api.test_eg_binding import _curated, _fixture
 
 _CURATED_SCOPES = (
+    "workstream:read",
+    "workstream:write",
     "query:unified",
     "query:nl",
     "kg:read",
@@ -113,6 +125,13 @@ _CURATED_SCOPES = (
     "registry:read",
     "identity:self",
     "identity:admin",
+    "approvals:read",
+    "approvals:decide",
+    "query:write",
+    "profile:write",
+    "telemetry:write",
+    "agent:library-read",
+    "agent:library-write",
 )
 
 _ENGINE_METHODS = {
@@ -162,7 +181,10 @@ def test_no_argument_factory_is_deterministic_and_complete(
     assert first.digest == second.digest
     declared = (
         *access.operations(),
+        *agent_library.operations(),
         *agents.operations(),
+        *approvals.operations(),
+        *assistants.operations(),
         *browser.operations(),
         *capacity.operations(),
         *decide.operations(),
@@ -177,7 +199,10 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *finance_receipts.operations(),
         *fleet.operations(),
         *identity.operations(),
+        *atlas.operations(),
+        *goals.operations(),
         *ingest.operations(),
+        *ontology_objects.operations(),
         *knowledge.operations(),
         *memory.operations(),
         *messaging.operations(),
@@ -187,6 +212,8 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *skills_discovery.operations(),
         *skills_eval.operations(),
         *skills_friction.operations(),
+        *skills_telemetry.operations(),
+        *skills_tier.operations(),
         *telemetry.operations(),
         *usage.operations(),
         *graph_limits.operations(),
@@ -200,7 +227,9 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *source.operations(),
         *swarm.operations(),
         *work.operations(),
+        *workstreams.operations(),
         *ops.operations(),
+        *participants.operations(),
         *plans.operations(),
         *preferences.operations(),
         *prompts.operations(),

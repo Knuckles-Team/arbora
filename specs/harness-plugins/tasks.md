@@ -33,12 +33,12 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Tasks run p
 - [x] T027 [US2] ARBORA-HARNESS-PLUGINS-R003.3 Model: the credential machine.
 - [x] T028 [US2] ARBORA-HARNESS-PLUGINS-R003.4 Refusal: a hook without a credential never blocks.
 - [x] T029 [US2] ARBORA-HARNESS-PLUGINS-R003 The harness signs in through the native client, with no credential in the bundle (rollup).
-- [ ] T030 [US3] ARBORA-HARNESS-PLUGINS-R004.1 Model: workstream params and results.
-- [ ] T031 [US3] ARBORA-HARNESS-PLUGINS-R004.2 The attach operation joins a harness session to the workstream.
-- [ ] T032 [US3] ARBORA-HARNESS-PLUGINS-R004.3 The checkpoint operation records a handoff.
-- [ ] T033 [US3] ARBORA-HARNESS-PLUGINS-R004.4 Detach, get and list, with a uniform denial.
-- [ ] T034 [US3] ARBORA-HARNESS-PLUGINS-R004.5 Model: the attachment machine.
-- [ ] T035 [US3] ARBORA-HARNESS-PLUGINS-R004.6 Registration and scopes.
+- [x] T030 [US3] ARBORA-HARNESS-PLUGINS-R004.1 Model: workstream params and results.
+- [x] T031 [US3] ARBORA-HARNESS-PLUGINS-R004.2 The attach operation joins a harness session to the workstream.
+- [x] T032 [US3] ARBORA-HARNESS-PLUGINS-R004.3 The checkpoint operation records a handoff.
+- [x] T033 [US3] ARBORA-HARNESS-PLUGINS-R004.4 Detach, get and list, with a uniform denial.
+- [x] T034 [US3] ARBORA-HARNESS-PLUGINS-R004.5 Model: the attachment machine.
+- [x] T035 [US3] ARBORA-HARNESS-PLUGINS-R004.6 Registration and scopes.
 - [ ] T036 [US3] ARBORA-HARNESS-PLUGINS-R004.7 Hot-path proof: two harnesses share one workstream over MCP.
 - [ ] T037 [US3] ARBORA-HARNESS-PLUGINS-R004 Workstream operations share session context across harnesses (rollup).
 - [x] T038 [US4] ARBORA-HARNESS-PLUGINS-R007 Command hook runner.
@@ -51,7 +51,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Tasks run p
 - [ ] T045 [US4] ARBORA-HARNESS-PLUGINS-R011 One sign-in gives an MCP client the connector fleet (rollup).
 - [ ] T046 [US4] ARBORA-HARNESS-PLUGINS-R011.1 Entitlement-scoped discovery after one sign-in.
 - [ ] T047 [US4] ARBORA-HARNESS-PLUGINS-R011.2 The bundle connection sheet names the sign-in path, not connector settings.
-- [ ] T048 [US4] ARBORA-HARNESS-PLUGINS-R012 Hook events report skill use through the door, with no prompt text
-- [ ] T049 [US4] ARBORA-HARNESS-PLUGINS-R013 Bundle configuration comes from six layers that only add
-- [ ] T050 [US4] ARBORA-HARNESS-PLUGINS-R014 A role persona selects the installed skill set
+- [x] T048 [US4] ARBORA-HARNESS-PLUGINS-R012 Hook events report skill use through the door, with no prompt text
+- [x] T049 [US4] ARBORA-HARNESS-PLUGINS-R013 Bundle configuration comes from six layers that only add
+- [x] T050 [US4] ARBORA-HARNESS-PLUGINS-R014 A role persona selects the installed skill set
 - [x] T051 [US4] ARBORA-HARNESS-PLUGINS-R015 A skill bundle never carries its own connector file

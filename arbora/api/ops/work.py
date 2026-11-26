@@ -87,6 +87,12 @@ async def handle_work(
     return {"value": dict(result)}
 
 
+#: Writes the engine replays by the idempotency key the pipeline forwards.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "work.offers.create": "medulla:WorkItem",
+}
+
+
 def operations() -> tuple[OpSpec, ...]:
     handler = "arbora.api.ops.work.handle_work"
     return (
@@ -124,6 +130,7 @@ def operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 __all__ = [
+    "NATIVE_IDEMPOTENCY",
     "WorkItemRefParams",
     "WorkItemsListParams",
     "WorkOfferCreateParams",

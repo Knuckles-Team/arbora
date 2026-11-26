@@ -1,12 +1,10 @@
-"""Skill evaluation, ablation, canary and tier review served from the engine.
+"""Skill evaluation, ablation and canary served from the engine.
 
-ARBORA-OPS-R955 to R957. Each operation forwards one engine method as the
+ARBORA-OPS-R955 and R956. Each operation forwards one engine method as the
 verified caller. Arbora fills the tenant from the caller, never sends a
 reviewer or approver (the engine takes both from the verified caller) and
-keeps no eval, rollout or tier state. Engine refusals pass through by code
-(``JUDGE_NOT_CALIBRATED``, ``EVAL_SCOPE_REQUIRED``, ``TIER_REVIEW_MISSING``,
-``TIER_SELF_REVIEW``, ``TIER_REVIEW_SCOPE_REQUIRED``,
-``ALWAYS_ON_CAPACITY_REACHED``).
+keeps no eval or rollout state. Engine refusals pass through by code
+(``JUDGE_NOT_CALIBRATED``, ``EVAL_SCOPE_REQUIRED``).
 """
 
 from __future__ import annotations
@@ -23,7 +21,6 @@ from arbora.api.registry import OpSpec, Verb
 
 AUTHOR_SCOPE = "skills:author"
 EVAL_SCOPE = "skills:eval"
-REVIEW_SCOPE = "skills:review"
 _Ref = Field(min_length=1, max_length=512)
 _Body = Field(description="the engine request body, validated by the engine")
 #: Fields only the verified caller may supply.
@@ -108,7 +105,7 @@ def _decide_request(context: Any, params: Mapping[str, Any]) -> dict[str, Any]:
     return {**request, "tenant_id": _tenant(context)}
 
 
-async def _decide(context: Any, params: Mapping[str, Any]) -> dict[str, Any]:
+async def decide_as_caller(context: Any, params: Mapping[str, Any]) -> dict[str, Any]:
     body = {"request": _decide_request(context, params)}
     return {"value": await engine_send(context, "Decide", body)}
 
@@ -117,14 +114,7 @@ async def handle_canary_decide(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """The engine's canary verdict (ramp, hold or rollback), unchanged."""
-    return await _decide(context, params)
-
-
-async def handle_tier_promote(
-    context: Any, params: Mapping[str, Any], op: OpSpec
-) -> dict[str, Any]:
-    """A tier promotion; the reviewer is the verified caller, decided by the engine."""
-    return await _decide(context, params)
+    return await decide_as_caller(context, params)
 
 
 def operations() -> tuple[OpSpec, ...]:
@@ -178,29 +168,19 @@ def operations() -> tuple[OpSpec, ...]:
             handler=h + "canary_decide",
             scope=EVAL_SCOPE,
         ),
-        build_write_op(
-            verb=Verb.WRITE,
-            op_id="skills.tier.promote",
-            summary="Promote a skill to a tier under the caller's review",
-            examples=("promote this skill to the domain tier",),
-            params=RequestParams,
-            result=EngineReply,
-            handler=h + "tier_promote",
-            scope=REVIEW_SCOPE,
-        ),
     )
 
 
 specs = operations
 
 __all__ = [
+    "decide_as_caller",
     "NATIVE_IDEMPOTENCY",
     "handle_ablation_record",
     "handle_calibrate",
     "handle_canary_decide",
     "handle_case_add",
     "handle_report",
-    "handle_tier_promote",
     "operations",
     "specs",
 ]

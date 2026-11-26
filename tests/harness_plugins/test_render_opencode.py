@@ -112,11 +112,18 @@ def test_hooks_call_workstream_operations_non_blocking(
 ) -> None:
     record, calls = _run_loader(_tree(skill_root, tmp_path), tmp_path)
     assert record["hooks"] == ["context", "compaction"]
-    assert record["events"] == ["session.deleted"]
+    assert record["events"] == ["session.deleted", "tool.execute.after"]
     assert [c["argv"] for c in calls] == [
         ["plugin", "hook", point, "--harness", "opencode"]
-        for point in ("first_prompt", "before_compaction", "session_end")
+        for point in ("first_prompt", "before_compaction", "session_end", "skill_end")
     ]
+    # Only the skill name and the outcome reach the runner, never the arguments.
+    assert calls[3]["input"] == {
+        "session_id": "oc-1",
+        "tool_name": "Skill",
+        "tool_input": {"skill": "canopy"},
+        "error": False,
+    }
     assert calls[0]["input"] == {"session_id": "oc-1", "cwd": "/workspace/project"}
     assert record["system"] == [{"type": "text", "text": "handoff from claude-code"}]
 
