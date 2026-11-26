@@ -25,6 +25,7 @@ def get_registry() -> Registry:
     from . import (
         access,
         agents,
+        approvals,
         browser,
         capacity,
         catalog,
@@ -71,6 +72,7 @@ def get_registry() -> Registry:
     for module in (
         access,
         agents,
+        approvals,
         browser,
         capacity,
         catalog,
