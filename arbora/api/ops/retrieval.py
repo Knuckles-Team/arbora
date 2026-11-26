@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from arbora.api.ops._common import Params, bound_service, build_read_op, build_write_op
 from arbora.api.registry import AuditClass, OpSpec, Verb
-from arbora.pin_lag.medulla import send_main
+from arbora.pin_lag.medulla import guard_field, send_main
 
 
 class RetrievalSearchParams(Params):
@@ -109,6 +109,59 @@ async def handle_retrieval_freshness(
     return {"value": outcome.model_dump(mode="json")}
 
 
+class RetrievalDocumentsListParams(Params):
+    """One source document's listing, each entry carrying its table-of-contents digest."""
+
+    document_ids: list[str] = Field(min_length=1, max_length=100)
+
+
+class RetrievalSpanReadParams(Params):
+    document_id: str = Field(min_length=1, max_length=512)
+    revision: int = Field(ge=0)
+    line_start: int = Field(ge=0)
+    line_end: int = Field(ge=0)
+    toc_digest: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+async def _read_span(
+    context: Any, request: dict[str, Any], *, with_toc: bool
+) -> dict[str, Any]:
+    """One engine ``ReadSpan``; the digest field is an engine ``main`` field the pin lacks."""
+    models = ("MethodReadSpanParams",)
+    if with_toc:
+        guard_field("MethodReadSpanParams", "toc_digest")
+    answer = await send_main(context, "ReadSpan", request, models=models)
+    return dict(answer) if isinstance(answer, Mapping) else {}
+
+
+async def handle_retrieval_documents_list(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """List documents with the ``toc_digest`` the engine returned; arbora builds no contents table."""
+    entries = []
+    for document_id in params["document_ids"]:
+        span = await _read_span(
+            context,
+            {"document_id": document_id, "revision": 0, "line_start": 0, "line_end": 0},
+            with_toc=True,
+        )
+        entries.append(
+            {"document_id": document_id, "toc_digest": span.get("toc_digest")}
+        )
+    return {"value": {"documents": entries}}
+
+
+async def handle_retrieval_span_read(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Read one span, forwarding ``toc_digest``; a stale digest is the engine's refusal."""
+    request = {
+        key: params[key]
+        for key in ("document_id", "revision", "line_start", "line_end", "toc_digest")
+    }
+    return {"value": await _read_span(context, request, with_toc=True)}
+
+
 FeedbackKind = Literal["upvote", "downvote", "cited", "ignored"]
 
 
@@ -189,6 +242,26 @@ def operations() -> tuple[OpSpec, ...]:
             result=RetrievalFreshnessResult,
             handler="arbora.api.ops.retrieval.handle_retrieval_freshness",
             scope="memory:read",
+        ),
+        build_read_op(
+            verb=Verb.FIND,
+            op_id="retrieval.documents.list",
+            summary="List source documents with their table-of-contents digests",
+            examples=("list these documents",),
+            params=RetrievalDocumentsListParams,
+            result=RetrievalWriteResult,
+            handler="arbora.api.ops.retrieval.handle_retrieval_documents_list",
+            scope="kg:read",
+        ),
+        build_read_op(
+            verb=Verb.FIND,
+            op_id="retrieval.span.read",
+            summary="Read a line span of one document revision",
+            examples=("read these lines of the document",),
+            params=RetrievalSpanReadParams,
+            result=RetrievalWriteResult,
+            handler="arbora.api.ops.retrieval.handle_retrieval_span_read",
+            scope="kg:read",
         ),
         build_write_op(
             verb=Verb.WRITE,

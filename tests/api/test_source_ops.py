@@ -42,12 +42,19 @@ EXPECTED_SCOPES = {
     "source.blob": FULL_SCOPES,
     "source.history": frozenset({"node:read", "edge:read"}),
     "source.blame": frozenset({"node:read", "edge:read"}),
+    "source.diff": FULL_SCOPES,
 }
 PARAMS = {
     "source.tree": {"repository": "repo-a", "ref": "main", "path": "src"},
     "source.blob": {"repository": "repo-a", "ref": "main", "path": "src/app.py"},
     "source.history": {"repository": "repo-a", "path": "src/app.py"},
     "source.blame": {"repository": "repo-a", "ref": "main", "path": "src/app.py"},
+    "source.diff": {
+        "repository": "repo-a",
+        "base_ref": "main",
+        "head_ref": "feature",
+        "path": "src",
+    },
 }
 
 
@@ -73,6 +80,8 @@ class FakeReader:
         self.calls: list[tuple[str, dict[str, str]]] = []
         self.seen_claims: list[Any] = []
         self.blob_content = b"print('hello')\n"
+        self.diff_paths: list[tuple[str, bool]] = [("src/app.py", True)]
+        self.symbols: dict[str, str | None] = {"sym:one": "src/app.py"}
 
     def _record(self, method: str, context: Any, **fields: str) -> None:
         self.calls.append((method, fields))
@@ -137,6 +146,39 @@ class FakeReader:
             revision_id="rev:one",
             content_digest="digest:one",
         )
+
+    async def diff(
+        self, *, repository: str, base_ref: str, head_ref: str, path: str, context: Any
+    ):
+        self._record(
+            "diff",
+            context,
+            repository=repository,
+            base_ref=base_ref,
+            head_ref=head_ref,
+            path=path,
+        )
+        entries = tuple(
+            source_ops.SourceDiffEntry(
+                path=name, change="modified", head_digest="d", readable=readable
+            )
+            for name, readable in self.diff_paths
+        )
+        return source_ops.SourceDiffOutcome(
+            tenant=context.caller.tenant,
+            repository=repository,
+            base_ref=base_ref,
+            head_ref=head_ref,
+            path=path,
+            found=True,
+            entries=entries,
+        )
+
+    async def symbol_paths(
+        self, *, repository: str, branch: str, symbol_ids: tuple[str, ...], context: Any
+    ):
+        self._record("symbol_paths", context, repository=repository, branch=branch)
+        return {symbol: self.symbols.get(symbol) for symbol in symbol_ids}
 
 
 def _services(reader: Any | None) -> tuple[Any, Any, _ClaimsClient]:
@@ -368,3 +410,204 @@ def test_native_reader_satisfies_the_typed_port():
     from arbora.mcp_server.source_reader import NativeSourceReader
 
     assert isinstance(NativeSourceReader(), source_ops.SourceReader)
+
+
+@pytest.mark.spec("ARBORA-OPS-R848.3")
+@pytest.mark.parametrize("surface", [Surface.HTTP, Surface.MCP])
+def test_source_diff_served_under_path_acl(surface: Surface):
+    reader = FakeReader()
+    reader.diff_paths = [("src/a.py", True), ("src/secret.py", False)]
+    services, _runtime, _client = _services(reader)
+    result = asyncio.run(
+        invoke(
+            "source.diff",
+            dict(PARAMS["source.diff"]),
+            caller(effective_scopes=FULL_SCOPES),
+            surface,
+            services=services,
+        )
+    )
+    assert isinstance(result, OpResult) and result.code == "OK", result
+    value = result.value["value"]
+    assert [entry["path"] for entry in value["entries"]] == ["src/a.py"]
+    assert value["removed"] == 1  # the denied path is named only as a count
+    assert "readable" not in value["entries"][0]
+    # The three engine read scopes are the admission: one missing refuses.
+    short = asyncio.run(
+        invoke(
+            "source.diff",
+            dict(PARAMS["source.diff"]),
+            caller(effective_scopes=frozenset({"node:read", "edge:read"})),
+            surface,
+            services=services,
+        )
+    )
+    assert isinstance(short, OpError)
+
+
+@pytest.mark.spec("ARBORA-OPS-R848.3")
+def test_source_diff_pages_at_one_thousand_entries_by_cursor():
+    from arbora.api.ops.source import handle_source_diff
+
+    reader = FakeReader()
+    reader.diff_paths = [(f"src/f{n:04d}.py", True) for n in range(1500)]
+
+    from types import SimpleNamespace
+
+    Ctx = SimpleNamespace(
+        services={"source_reader": reader},
+        client=SimpleNamespace(claims=None),
+        caller=SimpleNamespace(tenant="tenant:one"),
+    )
+    first = asyncio.run(
+        handle_source_diff(Ctx, {**PARAMS["source.diff"]}, None)  # type: ignore[arg-type]
+    )["value"]
+    assert len(first["entries"]) == 1000 and first["next_cursor"] == "src/f0999.py"
+    second = asyncio.run(
+        handle_source_diff(
+            Ctx,
+            {**PARAMS["source.diff"], "cursor": first["next_cursor"]},
+            None,  # type: ignore[arg-type]
+        )
+    )["value"]
+    assert len(second["entries"]) == 500 and second["next_cursor"] is None
+
+
+@pytest.mark.spec("ARBORA-OPS-R848.3")
+def test_source_diff_rejects_a_non_portable_path_prefix():
+    with pytest.raises(ValueError):
+        source_ops.SourceDiffParams.model_validate(
+            {**PARAMS["source.diff"], "path": "../etc"}
+        )
+
+
+EDIT = {
+    "repo": "repo-a",
+    "branch": "feature",
+    "base_rev": "rev:1",
+    "message": "rename the helper",
+    "run_trace_id": "trace:1",
+    "ops": [
+        {
+            "symbol_id": "sym:one",
+            "kind": "replace_body",
+            "anchor_span_digest": "a" * 64,
+            "new_text": "return 1",
+        }
+    ],
+}
+
+
+def _edit_context(monkeypatch: pytest.MonkeyPatch, reader: FakeReader, **answers: Any):
+    import medulla.generated as generated
+
+    from arbora.pin_lag import medulla as pin_lag
+    from tests.api._lane_double import EngineDouble, context
+
+    monkeypatch.setattr(pin_lag, "require_methods", lambda *_names: None)
+    monkeypatch.setattr(
+        generated,
+        "METHOD_IDS",
+        frozenset(generated.METHOD_IDS) | {"SubmitSymbolEdit"},
+    )
+
+    async def send(client: Any, method: str, params: Any, graph: str, **kw: Any):
+        return await client._send(method, params, graph, **kw)
+
+    monkeypatch.setattr(generated, "send_by_id", send)
+    client = EngineDouble(**answers)
+    ctx = context(client, monkeypatch, services={"source_reader": reader})
+    ctx.client.authenticated = True
+    return ctx, client
+
+
+class _Claims(FakeReader):
+    """The edit handler reads no claims; the double needs the recorder only."""
+
+
+@pytest.mark.spec("ARBORA-OPS-R848.4")
+def test_edit_symbol_is_a_plan_confirmed_destructive_identity_audited_write():
+    op = next(o for o in source_ops.operations() if o.id == "source.edit_symbol")
+    assert op.effect.name == "DESTRUCTIVE" and op.confirm.name == "PLAN"
+    assert op.idempotency.name == "KEY_REQUIRED"
+    assert op.audit.name == "IDENTITY_CHAIN"
+
+
+@pytest.mark.spec("ARBORA-OPS-R848.4")
+def test_edit_symbol_admitted_and_refusals_pass_through(monkeypatch):
+    from medulla import EngineResponseError
+
+    from arbora.api.errors import EngineRefusal
+
+    reader = FakeReader()
+    accept = {"accepted": True, "base_rev": "rev:2"}
+    ctx, client = _edit_context(monkeypatch, reader, SubmitSymbolEdit=accept)
+    ctx.client.use_verified_context = lambda claims: contextlib.nullcontext()
+    ctx.caller.effective_scopes = FULL_SCOPES
+    answer = asyncio.run(source_ops.handle_source_edit_symbol(ctx, EDIT, None))  # type: ignore[arg-type]
+    assert answer["value"] == accept
+    method, sent, _graph, key = client.sent[0]
+    assert method == "SubmitSymbolEdit" and key == "key-1"
+    assert sent["request"]["ops"][0]["symbol_id"] == "sym:one"
+    # A symbol outside the caller's view is refused like an absent one, before the engine.
+    hidden = {**EDIT, "ops": [{**EDIT["ops"][0], "symbol_id": "sym:hidden"}]}
+    with pytest.raises(Exception) as refused:
+        asyncio.run(source_ops.handle_source_edit_symbol(ctx, hidden, None))  # type: ignore[arg-type]
+    assert getattr(refused.value, "code", "") == "INVALID_ARGUMENT"
+    assert len(client.sent) == 1
+    # Engine refusals return unchanged.
+    for code in (
+        "EDIT_BASE_STALE",
+        "EDIT_OPS_OVERLAP",
+        "EDIT_UNPARSEABLE",
+        "EDIT_ROUNDTRIP_MISMATCH",
+    ):
+        ctx, _client = _edit_context(
+            monkeypatch, reader, SubmitSymbolEdit=EngineResponseError(code, "no")
+        )
+        with pytest.raises(EngineRefusal) as engine_refused:
+            asyncio.run(source_ops.handle_source_edit_symbol(ctx, EDIT, None))  # type: ignore[arg-type]
+        assert engine_refused.value.code == code
+
+
+@pytest.mark.spec("ARBORA-OPS-R848.4")
+def test_edit_symbol_on_a_pin_without_the_method_refuses_unavailable(monkeypatch):
+    from tests.api._lane_double import EngineDouble, context
+
+    client = EngineDouble(SubmitSymbolEdit={})
+    ctx = context(client, monkeypatch, services={"source_reader": FakeReader()})
+    with pytest.raises(Exception) as refused:
+        asyncio.run(source_ops.handle_source_edit_symbol(ctx, EDIT, None))  # type: ignore[arg-type]
+    assert getattr(refused.value, "code", "") == "UNAVAILABLE"
+    assert refused.value.details["missing"] == "SubmitSymbolEdit"  # type: ignore[attr-defined]
+    assert client.sent == []
+
+
+@pytest.mark.spec("ARBORA-OPS-R848")
+@pytest.mark.parametrize("surface", [Surface.HTTP, Surface.MCP])
+def test_source_operations_served_round_trip(surface: Surface):
+    """One read per read child and the four writes are served typed over both surfaces."""
+    reader = FakeReader()
+    services, _runtime, _client = _services(reader)
+    for op_id in ("source.tree", "source.diff"):
+        served = asyncio.run(
+            invoke(
+                op_id,
+                dict(PARAMS[op_id]),
+                caller(effective_scopes=FULL_SCOPES),
+                surface,
+                services=services,
+            )
+        )
+        assert isinstance(served, OpResult) and served.code == "OK", served
+    ops = {op.id: op for op in source_ops.operations()}
+    assert {
+        "source.commit",
+        "source.land",
+        "source.revert",
+        "source.edit_symbol",
+    } <= set(ops)
+    assert all(
+        ops[w].effect.name == "DESTRUCTIVE"
+        for w in ("source.commit", "source.land", "source.revert", "source.edit_symbol")
+    )

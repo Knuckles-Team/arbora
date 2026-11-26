@@ -14,6 +14,7 @@ import json
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
+from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import OpError
 from arbora.deployment.placement import check_receipt, single_record
@@ -33,14 +34,39 @@ StepInvoke = Callable[[str, Mapping[str, Any], Any, str], Awaitable[Any]]
 ReadBack = Callable[[str], Awaitable[Mapping[str, Any]]]
 
 
+#: The parameter the engine adds to the sealed record: the headroom and epoch it read.
+OBSERVATION_PARAM = "observation"
+
+
 def _answer(record: Mapping[str, Any]) -> str:
+    """The verdict: the first scored option of the advisory outcome.
+
+    The engine answers a ``capacity_proposal`` question as an advisory outcome
+    whose one scored option id is ``allow`` or ``refuse:<CODE>``.
+    """
     outcome = record.get("outcome")
-    answer = outcome.get("answer") if isinstance(outcome, Mapping) else None
+    scores = outcome.get("scores") if isinstance(outcome, Mapping) else None
+    first = scores[0] if isinstance(scores, list) and scores else None
+    answer = first.get("option_id") if isinstance(first, Mapping) else None
     if not isinstance(answer, str) or not answer:
         raise OperationRefused(
             "RECEIPT_MISMATCH", {"reason": "the record carries no verdict"}
         )
     return answer
+
+
+def _without_observation(record: Mapping[str, Any]) -> Mapping[str, Any]:
+    """The record as the caller asked it: the engine-filled observation set aside."""
+    inputs = record.get("inputs")
+    params = inputs.get("params") if isinstance(inputs, Mapping) else None
+    if not isinstance(params, list):
+        return record
+    kept = [
+        p
+        for p in params
+        if not (isinstance(p, Mapping) and p.get("name") == OBSERVATION_PARAM)
+    ]
+    return {**record, "inputs": {**inputs, "params": kept}}
 
 
 async def actuate(
@@ -80,13 +106,13 @@ async def actuate(
         ],
     )
     record = single_record(await decide(request))
-    check_receipt(record, request, principal)
+    check_receipt(_without_observation(record), request, principal)
     answer = _answer(record)
     if answer != "allow":
         code = (
             answer.removeprefix("refuse:") if answer.startswith("refuse:") else answer
         )
-        raise OperationRefused(code, {"proposal_digest": digest})
+        raise EngineRefusal(code, details={"proposal_digest": digest})
     outcome = await invoke(
         "fleet.call",
         {

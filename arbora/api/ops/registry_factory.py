@@ -30,7 +30,9 @@ def get_registry() -> Registry:
         approvals,
         assistants,
         atlas,
+        bookmarks,
         browser,
+        bus,
         capacity,
         catalog,
         chats,
@@ -94,6 +96,7 @@ def get_registry() -> Registry:
         work,
         workspace_files,
         workstreams,
+        write_back,
     )
 
     curated: list[OpSpec] = []
@@ -104,7 +107,9 @@ def get_registry() -> Registry:
         agents,
         approvals,
         assistants,
+        bookmarks,
         browser,
+        bus,
         capacity,
         catalog,
         chats,
@@ -136,6 +141,7 @@ def get_registry() -> Registry:
         media,
         memory,
         messaging,
+        write_back,
         models,
         operator_surface,
         ops,

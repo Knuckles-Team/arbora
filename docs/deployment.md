@@ -92,6 +92,11 @@ co-service both run in explicit no-auth mode, so the environment sets
 `webui` entry of the rendered `co_services`; its listener is its own loopback
 port, never the serving process's port.
 
+`up` also starts the serving process (`--serving-port`, a free loopback port by
+default) in that environment, so the web UI co-service is live; it records the
+process ID. `down` stops exactly the processes `up` started, then the engine,
+and deletes the store.
+
 Semantic-content provisioning allows 3 runs per hour for each target. Each `up`
 uses a fresh store with no provisioning history, so a repeat `up` never meets
 the limit. When the limit is met, the refusal is `PROVISIONING_RATE_LIMITED`

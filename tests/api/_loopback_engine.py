@@ -164,6 +164,11 @@ def loopback(
             "plan_step_invoke": steps,
             "deploy_config": config,
             "deploy_root": deploy_root,
+            "deploy_feature_schema": {
+                "component_id": "deploy.feature_schema",
+                "definition_digest": "sha256:" + "0" * 64,
+                "kind": "feature_schema",
+            },
         }
         return compose(**kwargs)
 
