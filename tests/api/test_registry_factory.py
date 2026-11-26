@@ -46,6 +46,7 @@ from arbora.api.ops import (
     plans,
     policy,
     preferences,
+    promote,
     prompts,
     query,
     query_engine,
@@ -253,6 +254,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *participants.operations(),
         *plans.operations(),
         *preferences.operations(),
+        *promote.operations(),
         *prompts.operations(),
     )
     assert {op.id for op in first} == {op.id for op in declared} | {

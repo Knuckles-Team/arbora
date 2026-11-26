@@ -893,6 +893,16 @@ def _build_server(
 
         return JSONResponse(build_ai_catalog())
 
+    import time
+
+    from arbora.api.ops.registry_factory import get_registry
+    from arbora.fleet.agent_surface import deployed_surface, register_agent_surface
+
+    register_agent_surface(
+        mcp,
+        deployed_surface(get_registry(), clock_ms=lambda: int(time.time() * 1000)),
+    )
+
     @mcp.custom_route("/search", methods=["POST"])
     async def ard_search_route(request: Request) -> JSONResponse:
         from arbora.ecosystem.ard_federation import ArdFederationRelay

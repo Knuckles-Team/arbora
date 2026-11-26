@@ -19,7 +19,7 @@ from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.steps import claim_values
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops._engine import engine_send, refusal_code
-from arbora.api.registry import Confirm, OpSpec
+from arbora.api.registry import Confirm, Effect, OpSpec
 from arbora.deployment.assembly import (
     assemble_deployment,
     choices_digest,
@@ -29,6 +29,16 @@ from arbora.deployment.assembly import (
     run_confirmed_steps,
 )
 from arbora.deployment.assembly_view import render_graph
+from arbora.deployment.manifest import (
+    DeploymentDiff,
+    DeploymentManifest,
+    ManifestRefused,
+    apply_manifest,
+    load_manifest,
+    missing_inputs,
+    plan_manifest,
+    record_rollout,
+)
 from arbora.deployment.placement import ask_placement, chosen_target
 from arbora.security.anonymous import client_scope
 
@@ -210,11 +220,220 @@ async def handle_placement_apply(
     }
 
 
+class ManifestPlanParams(Params):
+    name: str = Field(min_length=1, max_length=64)
+    target: str = Field(min_length=1, max_length=64)
+
+
+class ManifestPlanResult(Params):
+    manifest_digest: str
+    plan_digest: str
+    entries: list[dict[str, Any]]
+    drift: list[dict[str, Any]]
+    destructive: list[dict[str, Any]]
+    destructive_digest: str
+
+
+class ManifestApplyParams(ManifestPlanParams):
+    plan_digest: str = Field(pattern=_DIGEST)
+    approval_elevation_id: str | None = Field(
+        default=None, min_length=1, max_length=256
+    )
+
+
+class ManifestApplyResult(Params):
+    manifest_digest: str
+    components: list[dict[str, str]]
+    receipt_digest: str
+
+
+def _refused(error: ManifestRefused) -> Any:
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    return OperationRefused(error.code, error.details)
+
+
+def _manifest_root(context: Any) -> Any:
+    from pathlib import Path
+
+    from arbora.core.settings import config_dir
+
+    root = context.services.get("deploy_manifest_root")
+    return Path(root) if root is not None else config_dir() / "deploy" / "manifests"
+
+
+def _live_tool(context: Any, target: str) -> Mapping[str, Any]:
+    """The read tool ``deploy.yaml`` names for ``tools.live_state.<target>``."""
+    config = context.services.get("deploy_config")
+    if config is None:
+        from arbora.core.settings import config_dir
+        from arbora.deployment.image_digests import load_strict
+
+        path = config_dir() / "deploy.yaml"
+        config = load_strict(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    tools = ((config or {}).get("tools") or {}).get("live_state") or {}
+    tool = tools.get(target)
+    if not (
+        isinstance(tool, Mapping)
+        and isinstance(tool.get("server"), str)
+        and isinstance(tool.get("tool"), str)
+    ):
+        raise ManifestRefused(
+            "LIVE_STATE_UNAVAILABLE", {"missing": f"tools.live_state.{target}"}
+        )
+    return tool
+
+
+async def _read_live(context: Any, target: str) -> list[Mapping[str, Any]]:
+    tool = _live_tool(context, target)
+    invoke = _step_invoke_of(context)
+    outcome = await invoke(
+        "fleet.call",
+        {"server": tool["server"], "tool": tool["tool"], "arguments": {}},
+        context.caller,
+        f"live-state:{target}",
+    )
+    code = getattr(outcome, "code", None)
+    if code in {"CONFIRMATION_REQUIRED", "STEP_UP_REQUIRED", "PLAN_REQUIRED"}:
+        raise ManifestRefused("LIVE_STATE_TOOL_NOT_READ", {"tool": tool["tool"]})
+    value = getattr(outcome, "value", None)
+    if isinstance(value, Mapping) and isinstance(value.get("value"), Mapping):
+        value = value["value"]
+    rows = value.get("components") if isinstance(value, Mapping) else None
+    if code != "OK" or not isinstance(rows, list):
+        raise ManifestRefused("LIVE_STATE_UNAVAILABLE", {"tool": tool["tool"]})
+    return [row for row in rows if isinstance(row, Mapping)]
+
+
+def _step_invoke_of(context: Any) -> Any:
+    invoke = context.services.get("plan_step_invoke")
+    if invoke is None:
+        raise ManifestRefused(
+            "UNAVAILABLE", {"reason": "the invoke pipeline is not bound"}
+        )
+    return invoke
+
+
+async def _manifest_diff(
+    context: Any, params: Mapping[str, Any]
+) -> tuple[DeploymentManifest, DeploymentDiff]:
+    manifest = load_manifest(_manifest_root(context), params["name"])
+    live = await _read_live(context, params["target"])
+    return manifest, plan_manifest(manifest, live)
+
+
+async def handle_manifest_plan(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """The typed diff, drift and destructive set of a manifest. Writes nothing."""
+    try:
+        _, diff = await _manifest_diff(context, params)
+    except ManifestRefused as error:
+        raise _refused(error) from error
+    return {
+        "manifest_digest": diff.manifest_digest,
+        "plan_digest": diff.plan_digest,
+        "entries": list(diff.entries),
+        "drift": list(diff.drift),
+        "destructive": list(diff.destructive),
+        "destructive_digest": diff.destructive_digest,
+    }
+
+
+async def _require_destructive_approval(
+    context: Any, diff: DeploymentDiff, elevation_id: str | None
+) -> None:
+    """A destructive change runs only under a fresh approved elevation of its digest."""
+    if not diff.destructive:
+        return
+    service = context.services.get("elevation_service")
+    if service is None:
+        raise ManifestRefused(
+            "UNAVAILABLE", {"reason": "no elevation service is bound"}
+        )
+    if elevation_id is None:
+        raise ManifestRefused(
+            "APPROVAL_REQUIRED", {"destructive": len(diff.destructive)}
+        )
+    views = {v.elevation_id: v for v in await service.list_elevations()}
+    view = views.get(elevation_id)
+    if view is None or view.approved_at_ms is None:
+        raise ManifestRefused("APPROVAL_REQUIRED", {"elevation_id": elevation_id})
+    if view.status != "active" or view.remaining_ms <= 0:
+        raise ManifestRefused("APPROVAL_EXPIRED", {"elevation_id": elevation_id})
+    if view.justification != f"deploy-destructive:{diff.destructive_digest}":
+        raise ManifestRefused("APPROVAL_MISMATCH", {"elevation_id": elevation_id})
+
+
+async def handle_manifest_apply(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Converge the live state to the manifest; the plan was consumed by the pipeline."""
+    require_confirmed_plan(op)
+    try:
+        manifest, diff = await _manifest_diff(context, params)
+        if not diff.entries and not diff.destructive:
+            return apply_receipt(manifest, diff)
+        if diff.plan_digest != params["plan_digest"]:
+            raise ManifestRefused("PLAN_MISMATCH", {"reason": "the diff changed"})
+        absent = missing_inputs(manifest, diff.entries)
+        if absent:
+            raise ManifestRefused("MANIFEST_INPUT_MISSING", {"missing": absent})
+        await _require_destructive_approval(
+            context, diff, params.get("approval_elevation_id")
+        )
+        invoke = _step_invoke_of(context)
+        tenant, target = str(context.caller.tenant), params["target"]
+
+        async def rollout(component_id: str, key_prefix: str) -> Mapping[str, Any]:
+            assembly = await _assemble(context, tenant, target, [component_id])
+            graph = assembly.get("graph")
+            return await run_confirmed_steps(
+                invoke,
+                context.caller,
+                graph,
+                plan_digest=graph_digest(graph),
+                key_prefix=key_prefix,
+            )
+
+        clock = context.services.get("now_ms")
+
+        async def record(component_id: str, image: str) -> bool:
+            return await record_rollout(
+                invoke,
+                context.caller,
+                manifest_digest=diff.manifest_digest,
+                component_id=component_id,
+                artifact_digest=image,
+                target=target,
+                now_ms=int(clock()) if callable(clock) else 0,
+            )
+
+        receipt = await apply_manifest(manifest, diff, rollout=rollout, record=record)
+    except ManifestRefused as error:
+        raise _refused(error) from error
+    return receipt.as_dict()
+
+
+def apply_receipt(manifest: DeploymentManifest, diff: DeploymentDiff) -> dict[str, Any]:
+    """The receipt of a converged state: the same value the first apply returned."""
+    from arbora.deployment.manifest import ApplyReceipt
+
+    return ApplyReceipt(
+        diff.manifest_digest,
+        tuple(
+            {"id": c.id, "revision": c.revision, "outcome": "converged"}
+            for c in manifest.components
+        ),
+    ).as_dict()
+
+
 #: A replay of a confirmed apply returns the recorded node outcomes: every node
 #: is one ``fleet.call`` reserved in the engine effect journal under
 #: ``deploy:<plan_digest>:<node_id>`` (ARBORA-DEPLOY-R017.21).
 NATIVE_IDEMPOTENCY: dict[str, str] = {
     "deploy.placement.apply": "arbora.mcp_server.effect_journal:EgEffectJournal",
+    "deploy.manifest.apply": "arbora.mcp_server.effect_journal:EgEffectJournal",
 }
 
 
@@ -239,6 +458,26 @@ def operations() -> tuple[OpSpec, ...]:
             scope="fleet:control",
             confirm=Confirm.PLAN,
         ),
+        build_read_op(
+            op_id="deploy.manifest.plan",
+            summary="Diff a deployment manifest against the live state",
+            examples=("what would this deployment manifest change",),
+            params=ManifestPlanParams,
+            result=ManifestPlanResult,
+            handler="arbora.api.ops.deploy.handle_manifest_plan",
+            scope="ops:read",
+        ),
+        build_write_op(
+            op_id="deploy.manifest.apply",
+            summary="Converge the live state to a deployment manifest",
+            examples=("apply the deployment manifest",),
+            params=ManifestApplyParams,
+            result=ManifestApplyResult,
+            handler="arbora.api.ops.deploy.handle_manifest_apply",
+            scope="fleet:control",
+            effect=Effect.DESTRUCTIVE,
+            confirm=Confirm.PLAN,
+        ),
     )
 
 
@@ -250,6 +489,8 @@ __all__ = [
     "PlacementApplyResult",
     "PlacementPlanParams",
     "PlacementPlanResult",
+    "handle_manifest_apply",
+    "handle_manifest_plan",
     "handle_placement_apply",
     "handle_placement_plan",
     "operations",
