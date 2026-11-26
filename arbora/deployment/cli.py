@@ -80,6 +80,59 @@ def _run_deploy(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_onboard(args: argparse.Namespace) -> int:
+    """Record one deploy or reuse choice per declared component (ARBORA-DEPLOY-R013.2)."""
+    from pathlib import Path
+
+    from .component_choices import (
+        ChoiceRefused,
+        ask_once_per_component,
+        build_inventory,
+    )
+    from .manifest import ManifestRefused, load_manifest
+
+    try:
+        manifest = load_manifest(Path(args.root), args.manifest)
+        declared = [component.id for component in manifest.components]
+        if args.answers:
+            answers = json.loads(Path(args.answers).read_text(encoding="utf-8"))
+            inventory = build_inventory(declared, answers)
+        else:
+
+            def ask(component: str) -> dict[str, str] | None:
+                action = input(f"{component}: deploy or reuse? ").strip()
+                if action == "reuse":
+                    return {
+                        "action": "reuse",
+                        "endpoint_ref": input("endpoint_ref: ").strip(),
+                    }
+                return {"action": action} if action else None
+
+            inventory = ask_once_per_component(declared, ask, profile=args.profile)
+    except ManifestRefused as exc:
+        print(json.dumps({"status": "refused", "code": exc.code}))
+        return 1
+    except ChoiceRefused as exc:
+        print(json.dumps({"status": "refused", "code": exc.code, "detail": exc.detail}))
+        return 1
+    except (OSError, ValueError) as exc:
+        print(json.dumps({"status": "blocked", "code": "INVALID_REQUEST"}))
+        print(str(exc), file=sys.stderr)
+        return 2
+    print(
+        json.dumps(
+            {
+                "choices": [c.evidence() for c in inventory.choices],
+                "choices_digest": inventory.choices_digest,
+                "placement_components": inventory.placement_components(),
+                "reuse_components": list(inventory.reuse_components),
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
 def _run_generate(args: argparse.Namespace) -> int:
     res = write_config(args.profile, args.out)
     print(json.dumps(res, indent=2))
@@ -149,6 +202,7 @@ def _run_engine_admission(args: argparse.Namespace) -> int:
 
 
 _COMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
+    "onboard": _run_onboard,
     "engine-admission": _run_engine_admission,
     "release-plan": _run_release_plan,
     "deploy": _run_deploy,
@@ -254,6 +308,20 @@ def main(argv: list[str] | None = None) -> int:
         sub.add_parser("render", help="Render the production topology manifests.")
     )
 
+    onboard = sub.add_parser(
+        "onboard",
+        help="Record a deploy or reuse choice for every component of a manifest.",
+    )
+    onboard.add_argument("manifest", help="Manifest name under --root.")
+    onboard.add_argument(
+        "--root", required=True, help="Directory of deployment manifests."
+    )
+    onboard.add_argument(
+        "--profile", default="", help="Profile recorded with each choice."
+    )
+    onboard.add_argument(
+        "--answers", help="JSON list of choices; omit to be asked per component."
+    )
     deploy = sub.add_parser(
         "deploy",
         help="Print the engine's placement decision and graph for a workload.",
