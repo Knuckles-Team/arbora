@@ -67,6 +67,8 @@ from tests.api._catalog import method_row, scope_row
 from tests.api.test_eg_binding import _curated, _fixture
 
 _CURATED_SCOPES = (
+    "workstream:read",
+    "workstream:write",
     "query:unified",
     "query:nl",
     "kg:read",
