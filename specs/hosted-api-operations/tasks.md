@@ -534,7 +534,7 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [x] T458 [US1] ARBORA-OPS-R950 Serve the flag operations. Size: M, 2 PRs, 5 hours.
 - [x] T459 [US1] ARBORA-OPS-R951 Serve the curation operations. Size: M, 2 PRs, 5 hours.
 - [x] T460 [US1] ARBORA-OPS-R952 Serve the friction operations. Size: M, 2 PRs, 5 hours.
-- [ ] T461 [US1] ARBORA-OPS-R953 Receive skill hook events as OpenTelemetry logs. Size: M, 2 PRs, 5 hours.
+- [x] T461 [US1] ARBORA-OPS-R953 Receive skill hook events as OpenTelemetry logs. Size: M, 2 PRs, 5 hours.
 - [ ] T462 [US1] ARBORA-OPS-R954 Serve skill measures, ranking, discovery and peer recommendations. Size: M, 2 PRs, 5 hours.
 - [x] T463 [US1] ARBORA-OPS-R955 Serve the skill evaluation operations. Size: M, 2 PRs, 5 hours.
 - [x] T464 [US1] ARBORA-OPS-R956 Serve the ablation and canary operations. Size: M, 2 PRs, 5 hours.
