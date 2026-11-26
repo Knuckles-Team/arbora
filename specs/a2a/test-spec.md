@@ -60,7 +60,7 @@ Run `uv run pytest tests/a2a`, `uv run ruff check .`, `uv run ruff format --chec
 | A2A-ADM-T22 | ARBORA-A2A-R014.1 | Run `tests/a2a/test_agent_card.py::test_card_has_no_harness_field_before_admission_e2e`; it must pass and bind to this row. |
 | A2A-HOLD-T01 | ARBORA-A2A-R005.3 | Run `tests/a2a/test_tool_action_admission.py::test_models_are_closed_and_frozen`; it must pass and bind to this row. |
 | A2A-HOLD-T02 | ARBORA-A2A-R005.4 | Run `tests/a2a/test_tool_action_admission.py::test_admit_returns_engine_verdict_unchanged`; it must pass and bind to this row. |
-| A2A-HOLD-T03 | ARBORA-A2A-R005.5 | Run `tests/a2a/test_tool_action_admission.py::test_confirm_dispatch_reaches_admitter`; it must pass and bind to this row. |
+| A2A-HOLD-T03 | ARBORA-A2A-R005.5 | Run `tests/a2a/test_approval_chain_served.py::test_request_sign_approve_execute_once_across_restart`; it must pass and bind to this row. |
 | A2A-HOLD-T04 | ARBORA-A2A-R005.6 | Run `tests/a2a/test_tool_action_admission.py::test_each_refusal_reason_denies`; it must pass and bind to this row. |
 | A2A-HOLD-T05 | ARBORA-A2A-R005.7 | Run `tests/a2a/test_tool_action_admission.py::test_audit_entry_names_decision_without_values`; it must pass and bind to this row. |
 | A2A-HOLD-T06 | ARBORA-A2A-R005.8 | Run `tests/a2a/test_tool_action_admission_e2e.py::test_confirm_returns_engine_verdict_and_audit`; it must pass and bind to this row. |

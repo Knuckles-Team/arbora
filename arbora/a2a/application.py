@@ -22,8 +22,9 @@ from .authority import (
     A2ATaskNotCancelable,
     A2ATransitionHistoryUnavailable,
 )
+from .confirm import UNQUALIFIED, ApprovalChain, ApprovalRefused, confirm_dispatch
 from .media_refs import MediaRefRefused, MediaStoreUnavailable
-from .models import A2AMessage, A2AOperationInvokeParams, A2APlanConfirmParams
+from .models import A2AMessage, A2AOperationInvokeParams
 from .parts import FilePartRefused, MediaCapabilityRefused
 from .routing import A2AAssemblyUnavailable, A2AOperationBridgeUnavailable
 from .service import A2AService
@@ -244,26 +245,10 @@ def _op_invoke_stub(raw_params: Any) -> Any:
     )
 
 
-def _plan_confirm_stub(raw_params: Any) -> Any:
-    # Registered in the method table (ARBORA-A2A-R005/R006) but
-    # fail-closed: the signed human approval exchange is not implemented
-    # end to end yet, so no approval attempt may succeed.
-    from .approval import verify_pending_signature
-
-    confirmation = A2APlanConfirmParams.model_validate(raw_params)
-    # No trusted human-key resolver or durable pending/grant authority is wired.
-    # A parsed payload or valid detached signature cannot supply that authority.
-    check = verify_pending_signature(confirmation, evidence=None)
-    raise A2AOperationBridgeUnavailable(
-        f"arbora.plan/confirm authority unavailable: {check.value}"
-    )
-
-
 _SYNC_METHODS: dict[str, Callable[[Any], Any]] = {
     "message/stream": _stream_stub,
     "tasks/resubscribe": _resubscribe_stub,
     "arbora.op/invoke": _op_invoke_stub,
-    "arbora.plan/confirm": _plan_confirm_stub,
 }
 
 
@@ -273,8 +258,13 @@ async def _invoke_method(
     method: str,
     raw_params: dict[str, Any],
     request_id: Any,
+    *,
+    caller: Any = None,
+    approvals: ApprovalChain | None = None,
 ) -> Any:
     """Validate and invoke one unary method on the shared service."""
+    if method == "arbora.plan/confirm":
+        return await confirm_dispatch(raw_params, caller=caller, chain=approvals)
     if method == "message/send":
         return await _send_message(service, request, raw_params)
     if method == "tasks/get":
@@ -337,6 +327,15 @@ def _application_error(request_id: Any, error: Exception) -> JSONResponse:
             error.code,
             503 if unavailable else 403,
             {"reason": error.reason},
+        )
+    if isinstance(error, ApprovalRefused):
+        # ARBORA-A2A-R005.2.5: the closed refusal code, never caller input.
+        unqualified = error.code == UNQUALIFIED
+        return _error(
+            request_id,
+            -32011 if unqualified else -32017,
+            error.code,
+            501 if unqualified else 403,
         )
     mapped = _ERROR_CODES.get(type(error))
     if mapped is not None:
@@ -456,6 +455,7 @@ async def _unary_request(
     method: str,
     raw_params: dict[str, Any],
     request_id: Any,
+    approvals: ApprovalChain | None = None,
 ) -> JSONResponse:
     write_methods = {"message/send", "tasks/cancel", "arbora.plan/confirm"}
     scope = "kg:write" if method in write_methods else "kg:read"
@@ -464,11 +464,18 @@ async def _unary_request(
         await _refresh_unary_caller(caller)
         with caller_session_scope(caller):
             result = await _invoke_method(
-                service, request, method, raw_params, request_id
+                service,
+                request,
+                method,
+                raw_params,
+                request_id,
+                caller=caller,
+                approvals=approvals,
             )
     except PermissionError as error:
         return _authentication_error(request_id, error)
     except (
+        ApprovalRefused,
         A2AContextUnavailable,
         A2ATerminalEventUnavailable,
         A2AIdempotencyConflict,
@@ -518,6 +525,7 @@ def create_a2a_handlers(
     authenticator: A2AAuthenticator,
     operation_services: InvokeServices | None = None,
     operation_authenticator: AmbientHTTPAuthenticator | None = None,
+    approvals: ApprovalChain | None = None,
 ) -> tuple[Any, Any]:
     """Create route handlers reusable by standalone FastAPI and FastMCP."""
     if not isinstance(authenticator, A2AAuthenticator):
@@ -542,7 +550,7 @@ def create_a2a_handlers(
                 operation_authenticator,
             )
         return await _unary_request(
-            service, authenticator, request, method, raw_params, request_id
+            service, authenticator, request, method, raw_params, request_id, approvals
         )
 
     return agent_card, json_rpc
@@ -554,6 +562,7 @@ def create_a2a_application(
     authenticator: A2AAuthenticator,
     operation_services: InvokeServices | None = None,
     operation_authenticator: AmbientHTTPAuthenticator | None = None,
+    approvals: ApprovalChain | None = None,
 ) -> FastAPI:
     metadata = service.card_metadata
     app = FastAPI(title=f"{metadata.name} A2A", version=metadata.version)
@@ -562,6 +571,7 @@ def create_a2a_application(
         authenticator=authenticator,
         operation_services=operation_services,
         operation_authenticator=operation_authenticator,
+        approvals=approvals,
     )
     app.add_api_route("/.well-known/agent-card.json", card_handler, methods=["GET"])
     app.add_api_route("/a2a", rpc_handler, methods=["POST"])

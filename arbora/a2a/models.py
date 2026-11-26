@@ -265,8 +265,8 @@ class A2AOperationInvokeParams(_WireModel):
 class A2APlanConfirmParams(_WireModel):
     """``arbora.plan/confirm`` params (ARBORA-A2A-R005.1/R006.1).
 
-    The signed human approval exchange this carries is not implemented yet;
-    see ``A2AOperationBridgeUnavailable``.
+    The signed human approval exchange this carries is served by
+    ``arbora.a2a.confirm.confirm_dispatch`` (ARBORA-A2A-R005.2.5).
     """
 
     task_id: str = Field(min_length=1, max_length=80)
@@ -276,7 +276,13 @@ class A2APlanConfirmParams(_WireModel):
 
 
 A2ATaskState = Literal[
-    "submitted", "working", "completed", "canceled", "failed", "rejected"
+    "submitted",
+    "working",
+    "input-required",
+    "completed",
+    "canceled",
+    "failed",
+    "rejected",
 ]
 
 
