@@ -8,6 +8,7 @@ both read the engine's own vocabulary and never a message Arbora wrote.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
 
 import msgpack
@@ -38,8 +39,12 @@ async def engine_send(
 ) -> Any:
     """Send one engine method as the verified caller and return plain data."""
     from medulla import EngineResponseError
-    from medulla.generated import send_by_id
+    from medulla.generated import METHOD_IDS, send_by_id
 
+    if method not in METHOD_IDS:
+        # A newer engine release declares the method; until it is pinned the
+        # operation refuses rather than sending a method the client cannot.
+        raise unavailable(f"the installed engine does not serve {method}")
     graph = await caller_dispatch_graph(context)
     key = context.idempotency_key if idempotent else None
     with client_scope(context.client, claim_values(context.caller.engine_claims)):
@@ -55,3 +60,9 @@ async def engine_send(
 def unavailable(reason: str) -> OperationRefused:
     """The engine answered with a shape the contract does not declare."""
     return OperationRefused("UNAVAILABLE", {"reason": reason})
+
+
+def rfc3339(millis: int) -> str:
+    """Epoch milliseconds as an RFC 3339 UTC instant."""
+    moment = datetime.fromtimestamp(millis / 1000, tz=UTC)
+    return moment.isoformat(timespec="milliseconds").replace("+00:00", "Z")
