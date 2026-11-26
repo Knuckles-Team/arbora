@@ -144,3 +144,53 @@ def test_uql_parse_error_lists_expected_tokens(code: str, detail: str) -> None:
         )
     assert refused.value.code == code
     assert detail in str(refused.value.detail)
+
+
+#: The three consumer views, each with its UQL text and the columns it expects. The
+#: overstory table ``UQL_VIEWS`` holds the same texts; an engine column the form cannot
+#: produce yet is listed with the medulla row that owns it (ARBORA-OPS-R904.2).
+UQL_VIEWS: dict[str, tuple[str, tuple[str, ...]]] = {
+    "GraphView.nodes": ("MATCH (n:Person) |> LIMIT 100", ("id", "label", "properties")),
+    "GraphView.edges": (
+        "TRAVERSE (a:Person)-[:knows]->(b) |> LIMIT 100",
+        ("source", "target", "rel"),
+    ),
+    "TemporalGraphView.nodes": (
+        "MATCH (n:Person) |> LIMIT 100 AS OF 2026-01-01T00:00:00Z",
+        ("id", "label", "properties"),
+    ),
+    "TemporalGraphView.edges": (
+        "TRAVERSE (a:Person)-[:knows]->(b) |> LIMIT 100 AS OF 2026-01-01T00:00:00Z",
+        ("source", "target", "rel"),
+    ),
+}
+UQL_MISSING_COLUMNS = {
+    "per-label counts and degrees": "MEDULLA-FEDERATED-QUERY-R733",
+    "stable paging (order and skip)": "MEDULLA-FEDERATED-QUERY-R734",
+    "edge rows from an edge source": "MEDULLA-FEDERATED-QUERY-R735",
+}
+
+
+@pytest.mark.spec("ARBORA-OPS-R904.2")
+@pytest.mark.parametrize("view", sorted(UQL_VIEWS))
+def test_each_view_text_parses_with_the_engine_grammar_and_returns_the_expected_columns(
+    view: str,
+) -> None:
+    """Each view text reaches the engine as UQL, never Cypher, and answers its columns."""
+    text, columns = UQL_VIEWS[view]
+    assert "RETURN" not in text and "MATCH (" in text or text.startswith("TRAVERSE")
+    reply = {"columns": list(columns), "rows": [[f"{c}-1" for c in columns]]}
+    client = _EngineReply(reply)
+    result = asyncio.run(
+        dispatch_eg_method(
+            EgMethod(service="Uql", op="Uql"), {"text": text}, context(client)
+        )
+    )
+    method, params, _graph = client.sent[0]
+    assert method == "Uql" and params["text"] == text
+    assert tuple(result["columns"]) == columns
+    assert set(UQL_MISSING_COLUMNS.values()) == {
+        "MEDULLA-FEDERATED-QUERY-R733",
+        "MEDULLA-FEDERATED-QUERY-R734",
+        "MEDULLA-FEDERATED-QUERY-R735",
+    }
