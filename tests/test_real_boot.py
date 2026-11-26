@@ -40,6 +40,12 @@ from arbora.access.action_policy import ActionPolicies
 from arbora.deployment.config_generator import PROCESS_IDENTITY_ROLES
 from tests._boot_diagnostics import BootDiagnostics
 
+#: Bounds of one native boot, each failing with its own reason. The slot wait,
+#: the provision and the rest of the boot sum to less than the test timeout.
+HEAVY_SLOT_WAIT_S = 900.0
+PROVISION_DEADLINE_S = 900.0
+HEAVY_BOOT_TEST_TIMEOUT_S = 2400
+
 pytestmark = [
     pytest.mark.real_boot,
     pytest.mark.skipif(
@@ -47,8 +53,11 @@ pytestmark = [
         reason="the medulla-server wheel ships linux x86_64 only",
     ),
     # A queued boot may wait behind the whole heavy-boot chain before its
-    # own stack finishes, far beyond the suite-wide 120 s.
-    pytest.mark.timeout(600),
+    # own stack finishes, far beyond the suite-wide 120 s. The mark covers the
+    # slot wait, the provision and the boot, so each of those carries its own
+    # shorter bound below and fails with its reason before this one fires (the
+    # thread method ends the worker with no reason at all).
+    pytest.mark.timeout(HEAVY_BOOT_TEST_TIMEOUT_S),
 ]
 
 TENANT = "boot"
@@ -262,6 +271,21 @@ def _terminate(process: subprocess.Popen[Any]) -> None:
 _HEAVY_SLOT = threading.local()
 
 
+def _acquire_heavy_slot(fd: int, path: Path) -> None:
+    """Wait for the host-wide slot, bounded: name the holder instead of hanging."""
+    from arbora.deployment import file_lock
+
+    deadline = time.monotonic() + HEAVY_SLOT_WAIT_S
+    while not file_lock.lock_exclusive(fd, blocking=False):
+        if time.monotonic() >= deadline:
+            holder = path.read_text(errors="replace").strip() or "unknown"
+            pytest.fail(
+                f"the heavy-engine slot stayed held for {HEAVY_SLOT_WAIT_S:.0f} s "
+                f"(holder: {holder}); another worker's native boot did not finish"
+            )
+        time.sleep(1.0)
+
+
 @contextlib.contextmanager
 def _heavy_engine_slot() -> Iterator[None]:
     """Serialize full-stack engine boots across the host's test workers.
@@ -291,7 +315,7 @@ def _heavy_engine_slot() -> Iterator[None]:
     path = engine_lock._runtime_base() / "real-boot-engine.slot"
     fd = os.open(path, os.O_CREAT | os.O_RDWR, 0o600)
     try:
-        file_lock.lock_exclusive(fd)  # blocks until another worker's boot ends
+        _acquire_heavy_slot(fd, path)
         _HEAVY_SLOT.depth = 1  # nested boots on this thread skip the wait
         with contextlib.suppress(OSError):  # diagnostics only, never fatal
             os.ftruncate(fd, 0)
@@ -566,20 +590,29 @@ def _do_booted_stack(
         # semantic packs under its own process identity before first serve.
         if boot_stage is not None:
             boot_stage("semantic_provisioning")
-        provision = subprocess.run(
-            [
-                shutil.which("arbora-production-ops", path=bindir)
-                or "arbora-production-ops",
-                "provision-semantic-content",
-                "--served-url",
-                served_url,
-            ],
-            env=gos_env,
-            capture_output=True,
-            text=True,
-            timeout=300,
-            check=False,
-        )
+        try:
+            provision = subprocess.run(
+                [
+                    shutil.which("arbora-production-ops", path=bindir)
+                    or "arbora-production-ops",
+                    "provision-semantic-content",
+                    "--served-url",
+                    served_url,
+                ],
+                env=gos_env,
+                capture_output=True,
+                text=True,
+                timeout=PROVISION_DEADLINE_S,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raw: str | bytes = exc.stderr or ""
+            tail = raw.decode(errors="replace") if isinstance(raw, bytes) else raw
+            pytest.fail(
+                f"semantic provisioning did not finish in {PROVISION_DEADLINE_S:.0f} s: "
+                "the engine's pack projection and schema attach are CPU-bound "
+                f"(about 25 s and 2 GB per pack on an idle host)\n{tail[-2000:]}"
+            )
         assert provision.returncode == 0, (
             f"semantic provisioning failed\n{provision.stdout}\n{provision.stderr}"
         )
