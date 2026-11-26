@@ -21,9 +21,11 @@ class CountingAuthority(Authority):
     def __init__(self) -> None:
         super().__init__()
         self.dispatched: list[Any] = []
+        self.media: list[Any] = []
 
     async def dispatch(self, **kwargs: Any) -> Any:
         self.dispatched.append(kwargs["message"])
+        self.media.append(kwargs.get("media"))
         return self.task
 
 
@@ -32,10 +34,25 @@ class AnyRouter:
         return A2ARouteDecision(agent_name="meristem-expert", selection_mode="test")
 
 
-def served() -> tuple[TestClient, CountingAuthority]:
+def served(
+    capability: Any = None,
+    media_refs: Any = None,
+    owner: str = "tenant:ann",
+) -> tuple[TestClient, CountingAuthority]:
     authority = CountingAuthority()
+
+    async def read(_message: Any, _decision: Any) -> Any:
+        return capability
+
+    service = A2AService(
+        authority=authority,
+        router=AnyRouter(),
+        media_capability=read if capability is not None else None,
+        media_refs=media_refs,
+        caller_owner=lambda: owner,
+    )
     app = create_a2a_application(
-        service=A2AService(authority=authority, router=AnyRouter()),
+        service=service,
         authenticator=Authenticator(),
     )
     return TestClient(app), authority
@@ -49,6 +66,12 @@ def file_part(data: bytes, mime_type: str) -> dict[str, Any]:
 
 
 def send(client: TestClient, parts: list[dict[str, Any]]) -> dict[str, Any]:
+    return send_with_metadata(client, parts, {})
+
+
+def send_with_metadata(
+    client: TestClient, parts: list[dict[str, Any]], metadata: dict[str, Any]
+) -> dict[str, Any]:
     response = client.post(
         "/a2a",
         headers={"Authorization": "Bearer verified", "Idempotency-Key": "send-key"},
@@ -61,6 +84,7 @@ def send(client: TestClient, parts: list[dict[str, Any]]) -> dict[str, Any]:
                     "role": "user",
                     "parts": [{"kind": "text", "text": "look"}, *parts],
                     "messageId": "m1",
+                    "metadata": metadata,
                 }
             },
         },

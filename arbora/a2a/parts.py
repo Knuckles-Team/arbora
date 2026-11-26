@@ -9,8 +9,14 @@ against it; audio, video and document parts belong to the modality seam
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
-from arbora.a2a.models import A2AFilePart, A2AMessage
+from arbora.a2a.models import (
+    A2AFilePart,
+    A2AMediaLimits,
+    A2AMediaRefFile,
+    A2AMessage,
+)
 
 IMAGE_TYPES = frozenset({"image/png", "image/jpeg", "image/webp"})
 TEXT_TYPES = frozenset({"text/plain", "text/markdown"})
@@ -50,6 +56,7 @@ class MediaLimits:
     max_file_part_bytes: int
     max_request_media_bytes: int
     max_image_parts: int
+    inline_max_bytes: int = 1_048_576
     max_file_parts: int = MAX_FILE_PARTS
     max_text_bytes: int = MAX_TEXT_BYTES
 
@@ -68,6 +75,19 @@ class MediaLimits:
                 config, "a2a_max_request_media_bytes", 20_971_520, 1_024, 134_217_728
             ),
             max_image_parts=_bounded(config, "a2a_max_image_parts", 4, 1, 8),
+            inline_max_bytes=_bounded(
+                config, "a2a_inline_media_max_bytes", 1_048_576, 1_024, 33_554_432
+            ),
+        )
+
+    def card(self) -> A2AMediaLimits:
+        """The table the agent card publishes: the same values admission enforces."""
+        return A2AMediaLimits(
+            allowed_types=sorted(ALLOWED_TYPES),
+            max_file_part_bytes=self.max_file_part_bytes,
+            max_request_media_bytes=self.max_request_media_bytes,
+            max_image_parts=self.max_image_parts,
+            inline_max_bytes=self.inline_max_bytes,
         )
 
 
@@ -89,13 +109,31 @@ def sniff_image_type(data: bytes) -> str | None:
     return None
 
 
+def check_inline_threshold(message: A2AMessage, limits: MediaLimits) -> None:
+    """Refuse an inline image over the threshold; a larger image must be a reference."""
+    for part in message.parts:
+        if (
+            isinstance(part, A2AFilePart)
+            and part.file.mime_type in IMAGE_TYPES
+            and not isinstance(part.file, A2AMediaRefFile)
+            and len(part.file.decoded_bytes()) > limits.inline_max_bytes
+        ):
+            raise FilePartRefused("file_part_too_large")
+
+
 def admit_file_parts(message: A2AMessage, limits: MediaLimits) -> None:
-    """Refuse the message unless every text and image part fits the table."""
+    """Refuse the message unless every text and image part fits the table.
+
+    References are resolved to inline bytes first (``resolve_media_refs``); one
+    that reaches this check unresolved is refused as unknown.
+    """
     files = [part.file for part in message.parts if isinstance(part, A2AFilePart)]
     if len(files) > limits.max_file_parts:
         raise FilePartRefused("file_part_count")
     text_bytes = image_parts = media_bytes = 0
     for file in files:
+        if isinstance(file, A2AMediaRefFile):
+            raise FilePartRefused("file_part_type_unsupported")
         kind = file.mime_type
         if kind.startswith(("image/", "text/")) and kind not in ALLOWED_TYPES:
             raise FilePartRefused("file_part_type_unsupported")
@@ -119,10 +157,105 @@ def admit_file_parts(message: A2AMessage, limits: MediaLimits) -> None:
         raise FilePartRefused("request_media_too_large")
 
 
+class MediaCapabilityRefused(Exception):
+    """An image the selected model cannot take; ``code`` is the typed refusal."""
+
+    def __init__(self, code: str, reason: str) -> None:
+        if (code, reason) not in {
+            ("UNAVAILABLE", "media_capability_unknown"),
+            ("POLICY_DENIED", "media_capability_stale"),
+            ("POLICY_DENIED", "media_type_not_accepted"),
+            ("POLICY_DENIED", "media_part_too_large"),
+        }:
+            raise ValueError("unknown media capability refusal")
+        super().__init__(f"{code}: {reason}")
+        self.code = code
+        self.reason = reason
+
+
+@dataclass(frozen=True, slots=True)
+class MediaCapability:
+    """What the selected model accepts, read from the engine's assembly answer.
+
+    ``accepts`` holds one ``(media_type, max_bytes)`` per accepted type; the
+    engine states one aggregate byte limit, so every type carries it.
+    ``revision`` is the model's definition digest.
+    """
+
+    revision: str
+    accepts: tuple[tuple[str, int], ...]
+    max_parts: int
+
+    def limit_for(self, media_type: str) -> int | None:
+        return dict(self.accepts).get(media_type)
+
+
+def capability_from_assembly(result: Any) -> MediaCapability | None:
+    """Map an ``AgentAssemble`` answer to the capability; ``None`` is unknown.
+
+    A client that predates the answer's ``model_input`` and ``model_revision``
+    fields, or an answer whose ``model_input`` is null, reads as unknown, and
+    unknown never admits.
+    """
+    model_input = getattr(result, "model_input", None)
+    revision = getattr(result, "model_revision", None)
+    if model_input is None or not isinstance(revision, str) or not revision:
+        return None
+    return MediaCapability(
+        revision=revision,
+        accepts=tuple(
+            (str(getattr(kind, "value", kind)), int(model_input.max_aggregate_bytes))
+            for kind in model_input.media_types
+        ),
+        max_parts=int(model_input.max_parts),
+    )
+
+
+def admit_image_capability(
+    message: A2AMessage,
+    capability: MediaCapability | None,
+    *,
+    request_revision: str | None = None,
+) -> None:
+    """Refuse an image part the selected model cannot take, before any task.
+
+    Only the model-accepted types (text, png, jpeg, webp) are checked here;
+    audio, video and document parts belong to the modality seam and are never
+    checked against the model capability. Text parts stay bounded by the limit
+    table. ``request_revision`` is the model revision the request was made
+    against; when given it must equal the capability's.
+    """
+    images = [
+        part.file
+        for part in message.parts
+        if isinstance(part, A2AFilePart) and part.file.mime_type in IMAGE_TYPES
+    ]
+    if not images:
+        return
+    if capability is None:
+        raise MediaCapabilityRefused("UNAVAILABLE", "media_capability_unknown")
+    if request_revision is not None and request_revision != capability.revision:
+        raise MediaCapabilityRefused("POLICY_DENIED", "media_capability_stale")
+    if len(images) > capability.max_parts:
+        raise MediaCapabilityRefused("POLICY_DENIED", "media_part_too_large")
+    for file in images:
+        limit = capability.limit_for(file.mime_type)
+        if limit is None:
+            raise MediaCapabilityRefused("POLICY_DENIED", "media_type_not_accepted")
+        # A reference carries no bytes; its size is checked when it resolves.
+        if not isinstance(file, A2AMediaRefFile) and len(file.decoded_bytes()) > limit:
+            raise MediaCapabilityRefused("POLICY_DENIED", "media_part_too_large")
+
+
 __all__ = [
     "ALLOWED_TYPES",
     "FilePartRefused",
+    "MediaCapability",
+    "MediaCapabilityRefused",
     "MediaLimits",
     "admit_file_parts",
+    "admit_image_capability",
+    "check_inline_threshold",
+    "capability_from_assembly",
     "sniff_image_type",
 ]

@@ -26,6 +26,7 @@ from arbora.api.invoke.executor import (
     ServiceClaims,
     SubjectCheck,
 )
+from arbora.api.invoke.hooks import load_hooks
 from arbora.api.invoke.pipeline import InvokeServices, OperationRefused
 from arbora.api.invoke.plan import EgPlanStore
 from arbora.api.invoke.steps import (
@@ -41,6 +42,7 @@ from arbora.security.anonymous import admitted_actor, session_context
 
 __all__ = [
     "SessionRequiredError",
+    "build_outbox_consumers",
     "VerifiedSession",
     "build_client_factory",
     "build_invoke_services",
@@ -329,6 +331,7 @@ def build_invoke_services(
     plans: EgPlanStore,
     policy_gate: PolicyGate,
     audit_client_factory: ClientFactory,
+    gate_send: Any = None,
     **changes: Any,
 ) -> InvokeServices:
     """Wire the real EG audit adapter (ARBORA-HOST-R024.1); no fake audit sink.
@@ -340,6 +343,13 @@ def build_invoke_services(
     """
 
     audit = EgAuditAdapter(audit_client_factory)
+    if gate_send is not None:
+        from arbora.api.invoke.gate_class import engine_gate_reader
+
+        changes = {"gate_reader": engine_gate_reader(gate_send), **changes}
+    # ARBORA-OPS-R009.6: the operator hooks are validated against the registry
+    # here; an invalid configuration stops the host start (``hook_invalid``).
+    changes.setdefault("hooks", load_hooks(registry))
     return InvokeServices(
         registry=registry,
         runtime=runtime,
@@ -348,4 +358,34 @@ def build_invoke_services(
         audit_preflight=audit.preflight,
         audit_write=audit.write,
         **changes,
+    )
+
+
+def build_outbox_consumers(send: Any, notifier: Any) -> tuple[Any, ...]:
+    """The outbox consumers the serving process ticks (R855.3.1, R918.6).
+
+    ``send(method, params)`` is the bound service engine client; each consumer
+    reads one topic and notifies through ``notifier``. The engine holds each
+    cursor, so the process keeps no state between ticks.
+    """
+    from arbora.fleet.approval_notifier import (
+        APPROVALS_TOPIC,
+        approval_handler,
+        role_holders,
+    )
+    from arbora.fleet.outbox_consumer import (
+        TRUST_FLAG_TOPIC,
+        OutboxConsumer,
+        trust_flag_handler,
+    )
+
+    return (
+        OutboxConsumer(
+            TRUST_FLAG_TOPIC, "arbora-trust-flags", trust_flag_handler(send, notifier)
+        ),
+        OutboxConsumer(
+            APPROVALS_TOPIC,
+            "arbora-approvals",
+            approval_handler(role_holders(send), notifier),
+        ),
     )

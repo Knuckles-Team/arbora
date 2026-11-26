@@ -58,9 +58,22 @@ class FakeWorkItems:
         return {"work_item_id": item_id, "created": created}
 
     def get(self, *, tenant: str, work_item_id: str) -> dict[str, Any] | None:
-        assert tenant == "tenant:one"
         row = self.rows.get(work_item_id)
-        return None if row is None else dict(row)
+        # The engine scopes a read to the verified tenant: another tenant's
+        # item answers like an absent one.
+        return None if row is None or tenant != "tenant:one" else dict(row)
+
+    def list(self, **request: Any) -> dict[str, Any]:
+        """One page of the tenant's items of one kind that match the metadata."""
+        match = request.get("metadata_match") or {}
+        items = [
+            dict(row)
+            for row in self.rows.values()
+            if request["tenant"] == "tenant:one"
+            and row["kind"] == request["kind"]
+            and all(row["metadata"].get(k) == v for k, v in match.items())
+        ]
+        return {"items": items[: request["limit"]], "next_cursor": None}
 
     def claim(self, request: dict[str, Any]) -> dict[str, Any]:
         row = self.rows[request["work_item_id"]]
@@ -68,12 +81,34 @@ class FakeWorkItems:
             return {"claimed": False}
         row["status"] = "leased"
         self.leases.append(request["work_item_id"])
+        token = self.leases.count(request["work_item_id"])
+        row["lease"] = (request["worker_ref"], 1, token)
         return {
             "claimed": True,
             "lease_holder_ref": request["worker_ref"],
             "lease_epoch": 1,
-            "fencing_token": 1,
+            "fencing_token": token,
         }
+
+    def cas_metadata(self, **request: Any) -> dict[str, Any]:
+        """Replace metadata when status, metadata and the lease fence all match."""
+        row = self.rows.get(request["work_item_id"])
+        if row is None:
+            return {"outcome": "not_found"}
+        lease = request.get("expected_lease")
+        fenced = lease is None or row.get("lease") == (
+            lease["worker_ref"],
+            lease["lease_epoch"],
+            lease["fencing_token"],
+        )
+        if (
+            row["status"] not in request["expected_status"]
+            or not fenced
+            or row["metadata"] != request["expected_metadata"]
+        ):
+            return {"outcome": "conflict"}
+        row["metadata"] = dict(request["set_metadata"])
+        return {"outcome": "applied"}
 
     def commit_result(self, **request: Any) -> dict[str, Any]:
         self.rows[request["work_item_id"]]["status"] = request["outcome"]
@@ -85,6 +120,29 @@ class FakeEngine:
     def __init__(self) -> None:
         self.work_items = FakeWorkItems()
         self.events: list[dict[str, Any]] = []
+        #: The engine KV store: (namespace, key) -> (value, version).
+        self.kv: dict[tuple[str, str], tuple[bytes, int]] = {}
+
+    async def _send(
+        self,
+        method: str,
+        params: Any,
+        graph: str | None,
+        **_kwargs: Any,
+    ) -> Any:
+        """The versioned KV methods the A2A event log uses."""
+        slot = (params["namespace"], params["key"])
+        stored = self.kv.get(slot)
+        if method == "KvGet":
+            return (
+                None if stored is None else {"value": stored[0], "version": stored[1]}
+            )
+        assert method == "KvCas", method
+        version = 0 if stored is None else stored[1]
+        if params["expected_version"] != version:
+            return {"swapped": False, "version": version}
+        self.kv[slot] = (params["new"], version + 1)
+        return {"swapped": True, "version": version + 1}
 
     def batch_typed_mutations(self, mutations: list[dict[str, Any]]) -> bool:
         self.events.extend(mutations)

@@ -757,6 +757,14 @@ _LEGACY_INSTRUCTIONS = (
 )
 
 
+def _with_unsecured_banner(instructions: str) -> str:
+    """Name the unsecured loopback mode in the ``initialize`` reply (ARBORA-IDENTITY-R004.2)."""
+    from arbora.security.anonymous import indicator
+
+    banner = indicator().get("banner")
+    return f"{banner} {instructions}" if banner else instructions
+
+
 def _build_server(
     bootstrap: bool = True,
     *,
@@ -798,7 +806,7 @@ def _build_server(
     args, mcp, middlewares = create_mcp_server(
         name="arbora",
         version=__version__,
-        instructions=(
+        instructions=_with_unsecured_banner(
             _LEGACY_INSTRUCTIONS if invocation is None else SERVED_INSTRUCTIONS
         ),
         command_args=None if bootstrap else [],
@@ -892,6 +900,16 @@ def _build_server(
         from arbora.ecosystem.ard_registry import build_ai_catalog
 
         return JSONResponse(build_ai_catalog())
+
+    import time
+
+    from arbora.api.ops.registry_factory import get_registry
+    from arbora.fleet.agent_surface import deployed_surface, register_agent_surface
+
+    register_agent_surface(
+        mcp,
+        deployed_surface(get_registry(), clock_ms=lambda: int(time.time() * 1000)),
+    )
 
     @mcp.custom_route("/search", methods=["POST"])
     async def ard_search_route(request: Request) -> JSONResponse:
@@ -987,6 +1005,7 @@ def _register_graph_tool_surface(
             operation_authenticator=invocation.authenticator,
             task_plan_config=invocation.task_plan_config,
             hosted_invocation=invocation if invocation.task_plan_config else None,
+            approval_chain=invocation.approval_chain,
         )
     mount_sdk_a2a(mcp)
 

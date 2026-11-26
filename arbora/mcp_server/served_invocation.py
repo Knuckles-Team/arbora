@@ -583,6 +583,7 @@ def compose_served_invocation(
     fleet_effect: Any = None,
     task_plan_config: Any = None,
     browser_boundary_factory: BrowserBoundaryFactory | None = None,
+    promotion_ci_tool: Mapping[str, str] | None = None,
 ) -> Any:
     """One admitted :class:`HostedInvocation` over the served EG pool."""
     from arbora.api.http.auth import (
@@ -594,6 +595,7 @@ def compose_served_invocation(
         build_operation_runtime,
         build_service_claims,
     )
+    from arbora.api.invoke.pipeline import EXTERNAL_EFFECT_OPERATIONS
     from arbora.api.invoke.plan import EgPlanStore
     from arbora.api.ops.registry_factory import get_registry
     from arbora.api.policy.eunomia import PolicyGate
@@ -647,6 +649,15 @@ def compose_served_invocation(
         from arbora.mcp_server.served_engine import ServedEngine
 
         bindings = {**bindings, "task_plan_work_engine": ServedEngine(pool)}
+    if bindings is not None and "media_ref_store" not in bindings:
+        # ARBORA-A2A-R001.5.5: uploaded image bytes live in the engine, never here.
+        from arbora.a2a.media_refs import SessionMediaRefStore
+        from arbora.mcp_server.served_engine import ServedEngine as _Engine
+
+        bindings = {
+            **bindings,
+            "media_ref_store": SessionMediaRefStore(lambda: _Engine(pool)),
+        }
     if bindings is not None and "identity_admin" not in bindings:
         # ARBORA-IDENTITY-R018.1: the identity operations reach the engine
         # through the one administration port of the composition root.
@@ -659,6 +670,13 @@ def compose_served_invocation(
         from arbora.api.ops.memory_files import MemoryMaterializer
 
         bindings = {**bindings, "memory_materializer": MemoryMaterializer()}
+    if (
+        bindings is not None
+        and promotion_ci_tool is not None
+        and "promotion_ci_tool" not in bindings
+    ):
+        # ARBORA-PROMOTE: the one governed pipeline read a promotion confirms.
+        bindings = {"promotion_ci_tool": dict(promotion_ci_tool), **bindings}
     step_invoke = None
     if bindings is not None and "plan_step_invoke" not in bindings:
         from arbora.api.ops.plans import LateStepInvoke
@@ -717,18 +735,25 @@ def compose_served_invocation(
     # protocol endpoint (ARBORA-OPS-R857.1) is one engine mutation batch,
     # held at most once per key by the same journal.
     changes["external_effect_operations"] = frozenset(
-        op_id
-        for op_id in (
-            "fleet.call",
-            "fleet.tools.pin",
-            "fleet.tools.unpin",
-            "messaging.alert",
-            "browser.request_call",
-            "eg.graph.ApplyMutation",
-        )
-        if registry.get(op_id) is not None
+        op_id for op_id in EXTERNAL_EFFECT_OPERATIONS if registry.get(op_id) is not None
     )
+
+    async def gate_send(method: str, params: dict[str, Any], tenant: str) -> Any:
+        """The engine as the service identity, for the approval gate question."""
+        from medulla.generated import send_by_id
+
+        from arbora.api.ops._engine import decode
+        from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+
+        try:
+            require_methods(method)
+        except PinLagUnavailable as missing:
+            raise refusal(missing) from missing
+        client = await pool.connected_client(connect_context(tenant), graph)
+        return decode(await send_by_id(client, method, params, graph))
+
     services = build_invoke_services(
+        gate_send=gate_send,
         registry=registry,
         runtime=runtime,
         plans=_LeaseClient(PoolLeases(service_client)).store(
@@ -740,10 +765,40 @@ def compose_served_invocation(
     )
     if step_invoke is not None:
         step_invoke.bind(services)
+    from arbora.a2a.chain_composition import compose_approval_chain
+    from arbora.api.invoke.eg_audit import EgAuditAdapter
+    from arbora.security.session import current_session
+
+    approval_chain = compose_approval_chain(
+        leases=_LeaseClient(PoolLeases(service_client)),
+        client=service_client,
+        graph=graph,
+        tenant=minted.tenant,
+        audit_adapter=EgAuditAdapter(audit_client),
+        current_session=current_session,
+    )
+
+    if services.hooks:
+        # ARBORA-OPS-R009.7: a hook runs through ``invoke`` as the host service
+        # principal; the tenant is the one the host session serves.
+        from arbora.api.invoke.hooks import host_hook_invoker
+        from arbora.api.mcp.caller import caller_from_session
+
+        def hook_caller(tenant: str, request_id: str) -> Any:
+            caller = caller_from_session(
+                session(), credential_kind="service", request_id=request_id
+            )
+            if caller.tenant != tenant:
+                raise PermissionError("hook runs only for the host tenant")
+            return caller
+
+        services.hooks.bind(host_hook_invoker(services, hook_caller))
     invocation = HostedInvocation(
         services=services,
+        approval_chain=approval_chain,
         task_plan_config=task_plan_config,
         process_startup=process_startup,
+        background_services=_background_services(services, runtime, graph, session),
         authenticator=AmbientHTTPAuthenticator(
             session_for_request=verified_bearer_session_for_request
         ),
@@ -771,6 +826,41 @@ def compose_served_invocation(
         broker_claims=browser_broker_claims,
     )
     return replace(invocation, browser_boundary=boundary)
+
+
+def _background_services(
+    services: Any, runtime: Any, graph: str, session: Callable[[], Any]
+) -> tuple[Any, ...]:
+    """The host's own schedulers, each calling as the tenant's service caller.
+
+    The curator tick is ``ARBORA_CURATOR_TICK_S`` seconds; ``0`` turns the
+    scheduler off (ARBORA-OPS-R958).
+    """
+    from arbora.api.invoke.pipeline import invoke
+    from arbora.api.invoke.service_caller import ServiceCallers
+    from arbora.api.registry import Surface
+    from arbora.core.settings import setting
+    from arbora.knowledge.curator_scheduler import build_curator_scheduler
+    from arbora.mcp_server.background import SystemClock
+
+    tick_s = float(str(setting("ARBORA_CURATOR_TICK_S", "300") or "300"))
+    if tick_s <= 0:
+        return ()
+
+    async def invoke_op(op_id: str, params: Any, caller: Any, key: str) -> Any:
+        return await invoke(
+            op_id,
+            params,
+            caller,
+            Surface.MCP,
+            services=services,
+            idempotency_key=key,
+        )
+
+    callers = ServiceCallers(
+        process_session=session, runtime=runtime, graph=graph, invoke=invoke_op
+    )
+    return (build_curator_scheduler(callers, SystemClock(), tick_s=tick_s),)
 
 
 class _LeaseClient:
@@ -822,4 +912,12 @@ def served_invocation_from_settings(
         fleet_effect=fleet_effect,
         task_plan_config=task_plan_config,
         browser_boundary_factory=browser_boundary_factory,
+        promotion_ci_tool=_promotion_ci_tool(setting),
     )
+
+
+def _promotion_ci_tool(setting: Callable[..., Any]) -> dict[str, str] | None:
+    """The configured promotion pipeline read, or ``None`` when unset."""
+    server = str(setting("ARBORA_PROMOTION_CI_SERVER", "") or "").strip()
+    tool = str(setting("ARBORA_PROMOTION_CI_TOOL", "") or "").strip()
+    return {"server": server, "tool": tool} if server and tool else None

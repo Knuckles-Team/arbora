@@ -329,7 +329,7 @@ State: READY FOR IMPLEMENTATION. Check a task only with an exact commit and test
 - [x] T167 ARBORA-IDENTITY-R030.4.8 Advertise the native sign-in scopes in the protected-resource metadata and the challenge. Evidence: `tests/identity/test_native_signin_scopes.py::test_metadata_scopes_supported_equal_the_native_contract_scopes`.
 - [x] T168 ARBORA-IDENTITY-R030.4.9 Report every identity contract state in readiness. Evidence: `tests/identity/test_native_signin_scopes.py::test_readiness_reports_each_identity_state`.
 - [x] T169 ARBORA-IDENTITY-R004.7.3 Explicit no-auth composes the web UI read routes. Size: S, 1 PR, 2 hours.
-- [ ] T170 ARBORA-IDENTITY-R004.10 An optional sandbox principal exercises authenticated paths on loopback. Size: M, 1 PR, 4 hours.
+- [x] T170 ARBORA-IDENTITY-R004.10 An optional sandbox principal exercises authenticated paths on loopback. Size: M, 1 PR, 4 hours.
 - [ ] T171 ARBORA-IDENTITY-R004.10.1 The sandbox may mint a second principal in a second tenant for cross-tenant tests. Size: M, 1 PR, 4 hours.
 - [ ] T171 ARBORA-IDENTITY-R001.1 Elevation operations carry typed params, results and refusals in the generated schema. Size: S, 1 PR, 2 hours.
 - [ ] T172 ARBORA-IDENTITY-R006.3 A signed-in person enrolls and manages second factors through served operations. Size: M, 1 PR, 4 hours.

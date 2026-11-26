@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from arbora.api.ops import (
+    a2a_media,
     access,
     agent_library,
     agents,
@@ -17,12 +18,15 @@ from arbora.api.ops import (
     browser,
     capacity,
     catalog,
+    chats,
     config_layers,
     dashboard,
     decide,
     decision_evidence,
     deploy,
     development,
+    documents,
+    ecosystem,
     federation,
     finance_receipts,
     fleet,
@@ -37,17 +41,20 @@ from arbora.api.ops import (
     messaging,
     models,
     ontology_objects,
+    operator_surface,
     ops,
     participants,
     plans,
     policy,
     preferences,
+    promote,
     prompts,
     query,
     query_engine,
     research,
     retrieval,
     runs,
+    schedules,
     schema,
     security,
     sessions,
@@ -61,6 +68,7 @@ from arbora.api.ops import (
     telemetry,
     usage,
     work,
+    workspace_files,
     workstreams,
 )
 from arbora.api.registry import (
@@ -119,6 +127,8 @@ _CURATED_SCOPES = (
     "node:read",
     "edge:read",
     "blob:read",
+    "blob:write",
+    "graph:write",
     "agent:pack-control",
     "fleet:control",
     "mcp:admin",
@@ -129,9 +139,16 @@ _CURATED_SCOPES = (
     "approvals:decide",
     "query:write",
     "profile:write",
+    "chats:own",
+    "fleet:read",
+    "agent:component-write",
+    "workspace:read",
+    "workspace:write",
     "telemetry:write",
     "agent:library-read",
     "agent:library-write",
+    "loops:read",
+    "loops:control",
 )
 
 _ENGINE_METHODS = {
@@ -189,11 +206,14 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *capacity.operations(),
         *decide.operations(),
         *catalog.operations(),
+        *chats.operations(),
         *config_layers.operations(),
         *dashboard.operations(),
         *decision_evidence.operations(),
         *deploy.operations(),
         *development.operations(),
+        *documents.operations(),
+        *ecosystem.operations(),
         *federation.operations(),
         *governance.operations(),
         *finance_receipts.operations(),
@@ -217,21 +237,26 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *telemetry.operations(),
         *usage.operations(),
         *graph_limits.operations(),
+        *a2a_media.operations(),
         *policy.operations(),
         *query.operations(),
         *query_engine.operations(),
         *research.operations(),
         *retrieval.operations(),
         *runs.operations(),
+        *schedules.operations(),
         *schema.operations(),
         *source.operations(),
         *swarm.operations(),
         *work.operations(),
+        *workspace_files.operations(),
         *workstreams.operations(),
         *ops.operations(),
+        *operator_surface.operations(),
         *participants.operations(),
         *plans.operations(),
         *preferences.operations(),
+        *promote.operations(),
         *prompts.operations(),
     )
     assert {op.id for op in first} == {op.id for op in declared} | {
@@ -305,6 +330,7 @@ def test_missing_provider_contract_never_returns_partial_registry(
         get_registry()
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R020")
 def test_unapproved_provider_scope_is_not_inferred(provider: tuple[dict, Path]) -> None:
     document, _ = provider
     document["methods"][0]["policy"]["authz_action"] = "pending:classification"

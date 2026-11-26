@@ -21,6 +21,31 @@ def enabled() -> bool:
     return _ACTIVE_MODE == "none"
 
 
+BANNER = "Arbora is running in unsecured loopback mode."
+
+
+def indicator() -> dict[str, str]:
+    """The unsecured-mode indicator read by MCP ``initialize`` and ``ops.doctor``.
+
+    Empty outside none mode. ``doctor_check`` is ``fail`` when the exposure
+    acknowledgement is set, because anyone who can reach the port is then an
+    administrator, and ``warn`` otherwise (ARBORA-IDENTITY-R004.2).
+    """
+    import os
+
+    from arbora.core.settings import runtime_config
+
+    if runtime_config.arbora_auth_mode != "none":
+        return {}
+    exposed = bool(os.environ.get("ARBORA_AUTH_NONE_EXPOSE"))
+    return {
+        "mode": "anonymous_local",
+        "principal": PRINCIPAL,
+        "banner": BANNER,
+        "doctor_check": "fail" if exposed else "warn",
+    }
+
+
 def loopback(value: str) -> bool:
     try:
         return ipaddress.ip_address(value).is_loopback

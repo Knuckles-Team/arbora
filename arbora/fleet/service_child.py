@@ -15,6 +15,7 @@ from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
 from arbora.api.invoke.steps import surface_caller_admitted
+from arbora.fleet.approval_meta import approval_kwargs
 from arbora.security.anonymous import admitted_actor
 
 logger = logging.getLogger(__name__)
@@ -83,7 +84,7 @@ class ServiceChildTransport(Protocol):
     """One child attempt; never calls ChildRuntime.call_tool's retry loop."""
 
     async def call_service_child_once(
-        self, record: ServiceChildRecord, arguments: Mapping[str, Any]
+        self, record: ServiceChildRecord, arguments: Mapping[str, Any], **forwarded: str
     ) -> Any: ...
 
 
@@ -244,6 +245,8 @@ class ServiceChildAdapter:
         caller: Any,
         owner_ref: str,
         registry_digest: str,
+        *,
+        approval_ref: str = "",
     ) -> Any:
         self._verify_caller(caller, owner_ref)
         policy_revision = _require_current_revision(registry_digest, caller)
@@ -295,7 +298,9 @@ class ServiceChildAdapter:
         record = replace(record, record_id=reservation.record_id)
         record_id = record.record_id
         try:
-            result = await self._transport.call_service_child_once(record, arguments)
+            result = await self._transport.call_service_child_once(
+                record, arguments, **approval_kwargs(approval_ref)
+            )
         except BaseException as exc:
             await _record_outcome_unknown_best_effort(
                 self._journal, record_id, type(exc).__name__, caller

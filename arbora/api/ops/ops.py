@@ -13,7 +13,7 @@ scope here; it is owned by ``ARBORA-HOST-R026.x``.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import Field
 
@@ -32,8 +32,27 @@ class OpsDoctorParams(Params):
     pass
 
 
+ConfigView = Literal["values", "groups", "schema", "secret_status"]
+
+
 class OpsConfigParams(Params):
-    pass
+    view: ConfigView = "values"
+
+
+class OpsConfigSetParams(Params):
+    key: str = Field(min_length=1, max_length=256)
+    value: Any = None
+
+
+class ConfigChange(TenantState):
+    """The settings after one change, and whether the process must restart."""
+
+    settings: dict[str, Any] = Field(default_factory=dict)
+    restart_required: bool = False
+
+
+class OpsConfigSetResult(Params):
+    value: ConfigChange
 
 
 class OpsTenantsParams(Params):
@@ -112,6 +131,13 @@ class OpsAdminStore(Protocol):
 
     async def get_config(self, *, tenant: str) -> OperationalConfig: ...
 
+    async def config_view(self, *, tenant: str, view: str) -> dict[str, Any]: ...
+
+    async def set_config(
+        self, *, tenant: str, key: str, value: Any, idempotency_key: str
+    ) -> ConfigChange:
+        """Apply one setting; raise ``ConfigRefused`` for an unknown key or value."""
+
     async def list_tenants(
         self, *, tenant: str, cursor: str | None, limit: int
     ) -> TenantPage: ...
@@ -123,6 +149,22 @@ class OpsAdminStore(Protocol):
     async def restore(
         self, *, tenant: str, backup_id: str, idempotency_key: str
     ) -> RestoreReceipt: ...
+
+
+class ConfigRefused(Exception):
+    """The store refused a setting: ``UNKNOWN_SETTING`` or ``INVALID_VALUE``."""
+
+    def __init__(self, code: str) -> None:
+        super().__init__(code)
+        self.code = code
+
+
+def secret_status(rows: Any) -> list[dict[str, Any]]:
+    """Presence only: every row is cut to ``{name, present}``, never a value."""
+    return [
+        {"name": str(row["name"]), "present": bool(row["present"])}
+        for row in (rows or ())
+    ]
 
 
 def _bound_store(context: Any) -> OpsAdminStore:
@@ -137,7 +179,14 @@ async def handle_ops_doctor(
     """Return one diagnostic report scoped to the caller's own tenant."""
     store = _bound_store(context)
     report = await store.doctor(tenant=context.caller.tenant)
-    return {"value": report.model_dump(mode="json")}
+    value = report.model_dump(mode="json")
+    from arbora.security.anonymous import indicator
+
+    unsecured = indicator()
+    if unsecured:
+        # The unsecured mode is named in every report, beside the store's own checks.
+        value["checks"] = {**value["checks"], "auth": unsecured}
+    return {"value": value}
 
 
 async def handle_ops_config(
@@ -145,8 +194,35 @@ async def handle_ops_config(
 ) -> dict[str, Any]:
     """Return the effective operational config scoped to the caller's own tenant."""
     store = _bound_store(context)
-    config = await store.get_config(tenant=context.caller.tenant)
-    return {"value": config.model_dump(mode="json")}
+    view = params.get("view", "values")
+    if view == "values":
+        config = await store.get_config(tenant=context.caller.tenant)
+        return {"value": config.model_dump(mode="json")}
+    answer = await store.config_view(tenant=context.caller.tenant, view=view)
+    if view == "secret_status":
+        return {"value": {"secrets": secret_status(answer.get("secrets"))}}
+    return {"value": answer}
+
+
+async def handle_ops_config_set(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Apply one setting under the admin step-up; the store validates the key."""
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    if not context.idempotency_key:
+        raise ValueError("Idempotency-Key is required")
+    store = _bound_store(context)
+    try:
+        change = await store.set_config(
+            tenant=context.caller.tenant,
+            key=params["key"],
+            value=params.get("value"),
+            idempotency_key=context.idempotency_key,
+        )
+    except ConfigRefused as refused:
+        raise OperationRefused(refused.code) from refused
+    return {"value": change.model_dump(mode="json")}
 
 
 async def handle_ops_tenants(
@@ -212,6 +288,16 @@ def operations() -> tuple[OpSpec, ...]:
             handler="arbora.api.ops.ops.handle_ops_config",
             scope="ops:read",
         ),
+        build_write_op(
+            op_id="ops.config.set",
+            summary="Change one operational setting for the caller's own tenant",
+            examples=("change an operational setting",),
+            params=OpsConfigSetParams,
+            result=OpsConfigSetResult,
+            handler="arbora.api.ops.ops.handle_ops_config_set",
+            scope="ops:admin",
+            effect=Effect.ADMIN,
+        ),
         build_read_op(
             op_id="ops.tenants",
             summary="List tenants visible under the caller's own admin authority",
@@ -253,7 +339,11 @@ __all__ = [
     "OpsAdminStore",
     "OpsBackupParams",
     "OpsBackupResult",
+    "ConfigChange",
+    "ConfigRefused",
     "OpsConfigParams",
+    "OpsConfigSetParams",
+    "OpsConfigSetResult",
     "OpsConfigResult",
     "OpsDoctorParams",
     "OpsDoctorResult",
@@ -265,6 +355,7 @@ __all__ = [
     "TenantPage",
     "handle_ops_backup",
     "handle_ops_config",
+    "handle_ops_config_set",
     "handle_ops_doctor",
     "handle_ops_restore",
     "handle_ops_tenants",
