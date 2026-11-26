@@ -150,7 +150,7 @@ class Fleet:
             return out
 
         # The served ``find`` reads this binding off the gateway.
-        gateway.fleet_search = fleet_search
+        gateway.fleet_search = fleet_search  # type: ignore[attr-defined]
 
 
 def install_fleet(monkeypatch: pytest.MonkeyPatch) -> tuple[Fleet, dict[str, Any]]:
