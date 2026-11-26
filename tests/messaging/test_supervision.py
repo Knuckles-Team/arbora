@@ -41,6 +41,7 @@ _ILLEGAL_PAIRS = [
 ]
 
 
+@pytest.mark.spec("ARBORA-MESSAGING-R001.1")
 @pytest.mark.parametrize("current,target", _ALL_LEGAL_PAIRS)
 def test_legal_transition_succeeds(
     current: ChannelSupervisionState, target: ChannelSupervisionState
@@ -48,6 +49,7 @@ def test_legal_transition_succeeds(
     assert transition(current, target) is target
 
 
+@pytest.mark.spec("ARBORA-MESSAGING-R001.1")
 @pytest.mark.parametrize(
     "current,target",
     [
@@ -91,6 +93,7 @@ def test_stopped_has_no_incoming_self_loop() -> None:
 
 
 # spec: ARBORA-MESSAGING-R002
+@pytest.mark.spec("ARBORA-MESSAGING-R001")
 @pytest.mark.asyncio
 async def test_router_promotes_connected_backend_to_running_then_drains_to_stopped() -> (
     None

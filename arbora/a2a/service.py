@@ -13,9 +13,10 @@ from .admission import (
     ModelProfilePreference,
     ModelProfileUnavailable,
 )
-from .authority import A2ATaskAuthority
+from .authority import A2ATaskAuthority, A2ATransitionHistoryUnavailable
 from .media_refs import MediaRefStore, resolve_media_refs, run_media
 from .models import (
+    TRANSITION_PAGE_LIMIT,
     A2AAgentCapabilities,
     A2AAgentCard,
     A2AListResult,
@@ -24,6 +25,7 @@ from .models import (
     A2ASkill,
     A2AStreamingAuthority,
     A2ATask,
+    A2ATransitionHistoryAuthority,
 )
 from .parts import (
     IMAGE_TYPES,
@@ -91,6 +93,9 @@ class A2AService:
     #: The durable event-cursor authority (ARBORA-A2A-R001.2). The card
     #: advertises ``streaming`` only when one is wired (ARBORA-A2A-R014).
     streaming: A2AStreamingAuthority | None = None
+    #: The engine transition-ledger reader (ARBORA-A2A-R011). The card advertises
+    #: ``stateTransitionHistory`` only when one is wired (ARBORA-A2A-R015).
+    history: A2ATransitionHistoryAuthority | None = None
 
     #: Reads the selected model's media capability (``AgentAssemble``);
     #: ``None`` reads as unknown, and an image then refuses ``UNAVAILABLE``.
@@ -221,15 +226,45 @@ class A2AService:
         return message.with_normalized_text(prompt.text, attachments)
 
     async def get_task(
-        self, task_id: str, *, include_committed_event: bool = False
+        self,
+        task_id: str,
+        *,
+        include_committed_event: bool = False,
+        include_transition_history: bool = False,
+        history_cursor: str | None = None,
+        history_limit: int = TRANSITION_PAGE_LIMIT,
     ) -> A2ATask | None:
         if include_committed_event:
             if not isinstance(self.authority, _CommittedTerminalAuthority):
                 raise A2ATerminalEventUnavailable(
                     "committed terminal event is unavailable"
                 )
-            return await self.authority.get_committed_task(task_id)
-        return await self.authority.get(task_id)
+            task = await self.authority.get_committed_task(task_id)
+        else:
+            task = await self.authority.get(task_id)
+        if task is None or not include_transition_history:
+            return task
+        return await self._with_history(task, task_id, history_cursor, history_limit)
+
+    async def _with_history(
+        self, task: A2ATask, task_id: str, cursor: str | None, limit: int
+    ) -> A2ATask:
+        """Attach one ledger page; an absent or failing authority refuses (R012.3)."""
+        if self.history is None:
+            raise A2ATransitionHistoryUnavailable()
+        try:
+            page = await self.history.transition_history(
+                task_id, cursor=cursor, limit=limit
+            )
+        except A2ATransitionHistoryUnavailable:
+            raise
+        except Exception:  # noqa: BLE001 - the refusal never echoes the failure text
+            raise A2ATransitionHistoryUnavailable() from None
+        if page is None:
+            raise A2ATransitionHistoryUnavailable()
+        task.transition_history = page.entries
+        task.transition_history_next_cursor = page.next_cursor
+        return task
 
     async def list_tasks(
         self, *, cursor: str | None = None, limit: int = 50
@@ -240,11 +275,22 @@ class A2AService:
     async def cancel_task(self, task_id: str) -> A2ATask:
         return await self.authority.cancel(task_id)
 
+    def _serving_history(self) -> A2ATransitionHistoryAuthority | None:
+        """The wired history reader, only while its engine ledger read is served.
+
+        The card never advertises a capability the pinned engine would refuse.
+        """
+        serves = getattr(self.history, "serves", None)
+        if self.history is None or (callable(serves) and not serves()):
+            return None
+        return self.history
+
     def agent_card(self, endpoint_url: str) -> A2AAgentCard:
         metadata = self.card_metadata
         served = self.tool_task_admitter is not None and self.attestation_signer
         capabilities = A2AAgentCapabilities.from_wired_authorities(
-            streaming_authority=self.streaming
+            streaming_authority=self.streaming,
+            transition_history_authority=self._serving_history(),
         ).model_copy(update={"extensions": [tool_task_extension()] if served else []})
         return A2AAgentCard(
             capabilities=capabilities,

@@ -46,7 +46,7 @@ def _partition_context(**services: Any) -> SimpleNamespace:
 
 def test_capacity_ops_declare_exact_scopes_and_admin_effect() -> None:
     registry = Registry(capacity.operations())
-    assert len(registry) == 2
+    assert len(registry) == 3
     status_op = registry["capacity.throttle.status"]
     mode_op = registry["capacity.throttle.set_mode"]
     assert status_op.scopes == frozenset({"capacity:read"})

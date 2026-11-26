@@ -412,11 +412,14 @@ async def _approval_ref(context: Any, params: Mapping[str, Any], op: OpSpec) -> 
     """
     from arbora.api.invoke.pipeline import OperationRefused
 
+    key = getattr(context, "idempotency_key", None)
+    if not (key or "").startswith("plan:"):
+        return ""
     try:
         return await checked_approval_ref(
             context.client.control_leases,
             tenant=context.caller.tenant,
-            idempotency_key=getattr(context, "idempotency_key", None),
+            idempotency_key=key,
             op_id=op.id,
         )
     except ApprovalRefused as refusal:
