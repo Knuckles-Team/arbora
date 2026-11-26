@@ -5,6 +5,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
+import msgpack
 import pytest
 from medulla import EngineResponseError
 
@@ -115,6 +116,7 @@ def env(stack: Any, served: Any, monkeypatch: pytest.MonkeyPatch) -> Any:  # noq
         client,
         {
             "ProjectModeGet": engine.mode_get,
+            "GetNodeProperties": engine.node,
             "ProjectModeSet": engine.mode_set,
             "ProposalList": engine.proposal_list,
             "ProposalDecide": engine.proposal_decide,
