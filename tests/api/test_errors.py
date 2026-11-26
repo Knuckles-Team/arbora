@@ -356,6 +356,7 @@ def test_invocation_keeps_structured_child_code_and_bounds_provenance() -> None:
     assert "secret" not in str(envelope)
 
 
+@pytest.mark.spec("ARBORA-OPS-R005")
 @pytest.mark.parametrize("retryable", [False, True])
 def test_generated_engine_table_controls_envelope(monkeypatch, retryable):
     from arbora.api.errors import EngineRefusal
@@ -385,3 +386,35 @@ def test_not_found_is_in_the_closed_enum_for_every_projection() -> None:
     assert status == 404
     assert envelope["error"]["code"] == "NOT_FOUND"
     assert a2a_error_status("NOT_FOUND") == (-32002, 404)
+
+
+@pytest.mark.spec("ARBORA-OPS-R005")
+@pytest.mark.parametrize(
+    "code",
+    [
+        "AUTH_TENANT_MISMATCH",
+        "AUTH_AUDIENCE_MISMATCH",
+        "AUTH_POLICY_VERSION_MISMATCH",
+    ],
+)
+def test_stable_auth_codes_are_forbidden_and_never_retryable(code: str) -> None:
+    from arbora.api.errors import EngineRefusal
+
+    status, envelope = to_envelope(EngineRefusal(code), **CONTEXT)
+    assert (status, envelope["error"]["code"]) == (403, code)
+    assert envelope["error"]["retryable"] is False
+
+
+@pytest.mark.spec("ARBORA-OPS-R005")
+def test_an_absent_or_inconsistent_engine_contract_refuses_to_bind(monkeypatch):
+    from arbora.api.registry import eg_binding
+    from arbora.api.registry.eg_binding import EgContractError, load_eg_bindings
+
+    def unreadable() -> None:
+        raise EgContractError("engine contract is unreadable")
+
+    monkeypatch.setattr(eg_binding, "_installed_catalog", unreadable)
+    with pytest.raises(EgContractError):
+        load_eg_bindings()
+    with pytest.raises(EgContractError):
+        load_eg_bindings(catalog={"methods": []})
