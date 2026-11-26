@@ -605,9 +605,9 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R921.4` | Test: `tests/api/test_catalog_ops_served.py::test_catalog_journey_over_mcp` (planned, L3) |
 | `ARBORA-OPS-R861.10` | Test: `tests/api/test_dashboard_ops_served.py::test_access_read_shows_grants_only_to_owner_and_editor` (planned, L3) |
 | `ARBORA-OPS-R922` | Test: `tests/api/test_web_route_map.py::test_every_pending_route_names_a_registered_operation_or_a_named_retirement` (planned, L2) |
-| `ARBORA-OPS-R922.1` | Test: `tests/api/test_ontology_object_ops.py::test_interfaces_and_implementers_read_the_engine_schema` (planned, L2) |
+| `ARBORA-OPS-R922.1` | Test: `tests/api/test_ontology_object_ops.py::test_interfaces_refuse_unavailable_until_the_engine_marks_them` (L2) |
 | `ARBORA-OPS-R922.2` | Test: `tests/api/test_models_list.py::test_get_returns_secret_references_and_never_values` (planned, L2) |
-| `ARBORA-OPS-R922.3` | Test: `tests/api/test_atlas_ops.py::test_runs_list_filters_by_connection_and_state` (planned, L2) |
+| `ARBORA-OPS-R922.3` | Test: `tests/api/test_atlas_ops.py::test_runs_list_refuses_unavailable_until_the_engine_lists_runs` (L2) |
 | `ARBORA-OPS-R922.4` | Test: `tests/api/test_prompt_ops.py::test_active_prompt_resolves_the_session_agent_and_truncates` (planned, L2) |
 | `ARBORA-OPS-R915.1` | Test: `tests/api/test_city_presence_state_served.py::test_snapshot_is_revisioned_tenant_scoped_and_heartbeat_is_subject_bound` (L3; HTTP and MCP). |
 | `ARBORA-OPS-R950` | Test: `tests/api/test_knowledge_flag_ops.py::test_raise_resolve_get_list_over_http_and_mcp_with_denied_grant` (L3). |

@@ -10,6 +10,7 @@ import pytest
 from arbora.api.ops import (
     access,
     agents,
+    atlas,
     browser,
     capacity,
     catalog,
@@ -23,6 +24,7 @@ from arbora.api.ops import (
     finance_receipts,
     fleet,
     get_registry,
+    goals,
     governance,
     graph_limits,
     identity,
@@ -31,6 +33,7 @@ from arbora.api.ops import (
     memory,
     messaging,
     models,
+    ontology_objects,
     ops,
     plans,
     policy,
@@ -119,6 +122,7 @@ _CURATED_SCOPES = (
     "identity:self",
     "identity:admin",
     "telemetry:write",
+    "agent:library-read",
 )
 
 _ENGINE_METHODS = {
@@ -183,7 +187,10 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *finance_receipts.operations(),
         *fleet.operations(),
         *identity.operations(),
+        *atlas.operations(),
+        *goals.operations(),
         *ingest.operations(),
+        *ontology_objects.operations(),
         *knowledge.operations(),
         *memory.operations(),
         *messaging.operations(),
