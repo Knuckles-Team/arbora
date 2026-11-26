@@ -77,7 +77,7 @@ class Transport:
         self.calls: list[tuple[ServiceChildRecord, Mapping[str, Any]]] = []
 
     async def call_service_child_once(
-        self, record: ServiceChildRecord, arguments: Mapping[str, Any]
+        self, record: ServiceChildRecord, arguments: Mapping[str, Any], **forwarded: str
     ) -> Any:
         self.calls.append((record, arguments))
         if self.fail:
