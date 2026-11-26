@@ -107,7 +107,7 @@ async def _read(
     answer = await engine_send(context, "Uql", _query(params))
     body = answer.get("Rows") if isinstance(answer, Mapping) else None
     rows = body.get("rows") if isinstance(body, Mapping) else None
-    if not isinstance(rows, list):
+    if not isinstance(body, Mapping) or not isinstance(rows, list):
         raise unavailable("engine result malformed")
     cursor = next(
         (

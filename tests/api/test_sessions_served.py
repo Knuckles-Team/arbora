@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from arbora.api.ops import sessions
-from tests.api._knowledge_support import caller_context
+from tests.api._knowledge_support import NO_OP, caller_context
 from tests.test_served_operation_api import _call, served  # noqa: F401
 
 SUMMARY = {
@@ -70,7 +70,7 @@ async def test_denied_sources_are_partial_without_metadata(
     page = await sessions.handle_sessions_browse(
         caller_context(),
         {"harness_id": "claude-code", "page_size": 25, "from_ms": None},
-        None,
+        NO_OP,
     )
     assert sent[0] == {
         "text": "harness_session_search",
@@ -91,14 +91,14 @@ async def test_denied_sources_are_partial_without_metadata(
     ]
     assert page["next_cursor"] == "sessioncursor:v1:4:f:7:s1"
     await sessions.handle_sessions_search(
-        caller_context(), {"text": "s1", "page_size": 5, "cursor": "c"}, None
+        caller_context(), {"text": "s1", "page_size": 5, "cursor": "c"}, NO_OP
     )
     assert sent[1]["params"]["text"] == {"Str": "s1"}
     assert sent[1]["params"]["cursor"] == {"Str": "c"}
     # A later page has no summary row and claims no partial outcome.
     _record(monkeypatch, _answer(ENTRY))
     later = await sessions.handle_sessions_browse(
-        caller_context(), {"page_size": 25}, None
+        caller_context(), {"page_size": 25}, NO_OP
     )
     assert later["summary"] is None and later["partial"] is False
 
@@ -108,7 +108,7 @@ async def test_costs_keep_unknown_unknown_and_report_measured_totals(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _record(monkeypatch, _answer(SUMMARY))
-    unknown = await sessions.handle_sessions_costs(caller_context(), {}, None)
+    unknown = await sessions.handle_sessions_costs(caller_context(), {}, NO_OP)
     assert unknown["status"] == "unknown"
     assert unknown["reason"] == "price_missing"
     assert unknown["amount_minor"] is None
@@ -124,7 +124,7 @@ async def test_costs_keep_unknown_unknown_and_report_measured_totals(
         "reasoning_output": "5",
     }
     _record(monkeypatch, _answer(measured))
-    cost = await sessions.handle_sessions_costs(caller_context(), {}, None)
+    cost = await sessions.handle_sessions_costs(caller_context(), {}, NO_OP)
     assert (cost["status"], cost["amount_minor"], cost["currency"]) == (
         "measured",
         1250,
