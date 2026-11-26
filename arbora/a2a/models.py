@@ -174,13 +174,16 @@ class A2AMessage(_WireModel):
             part.file, A2AInlineMediaFile
         )
 
-    def media_files(self) -> list[tuple[int, A2AInlineMediaFile]]:
-        """The inline media files with their part index."""
+    def media_files(
+        self, exclude: frozenset[str] = frozenset()
+    ) -> list[tuple[int, A2AInlineMediaFile]]:
+        """The inline media files with their part index, less the ``exclude`` types."""
         return [
             (index, part.file)
             for index, part in enumerate(self.parts)
             if isinstance(part, A2AFilePart)
             and isinstance(part.file, A2AInlineMediaFile)
+            and part.file.mime_type not in exclude
         ]
 
     def with_normalized_text(
@@ -192,9 +195,18 @@ class A2AMessage(_WireModel):
         type, size and the derived transcript id); their bytes are not carried on.
         """
         metadata = {**self.metadata, "arboraAttachments": attachments}
+        kept = [
+            part
+            for part in self.parts
+            if isinstance(part, A2AFilePart) and part.file.mime_type in _KEPT_TYPES
+        ]
         return self.model_copy(
-            update={"parts": [A2ATextPart(text=text)], "metadata": metadata}
+            update={"parts": [A2ATextPart(text=text), *kept], "metadata": metadata}
         )
+
+
+#: Parts a model reads as input; normalisation leaves them on the message.
+_KEPT_TYPES = frozenset({"image/png", "image/jpeg", "image/webp"})
 
 
 class A2AContextBudget(_WireModel):
