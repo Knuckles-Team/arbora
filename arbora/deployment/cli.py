@@ -46,6 +46,40 @@ def _run_release_plan(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_deploy(args: argparse.Namespace) -> int:
+    """Ask the served door where a workload runs and print what it returns."""
+    import asyncio
+    import os
+    from pathlib import Path
+
+    from arbora.client.http import HttpTransport, OperationError
+    from arbora.client.invoke import invoke
+
+    base_url = args.url or os.environ.get("ARBORA_URL", "")
+    token = os.environ.get("ARBORA_TOKEN", "")
+    try:
+        request = json.loads(Path(args.request).read_text(encoding="utf-8"))
+        transport = HttpTransport(base_url, token)
+    except (OSError, ValueError) as exc:
+        print(json.dumps({"status": "blocked", "code": "INVALID_REQUEST"}))
+        print(str(exc), file=sys.stderr)
+        return 2
+    try:
+        response = asyncio.run(invoke(transport, "deploy.placement.plan", request))
+    except OperationError as exc:
+        print(json.dumps({"status": "refused", "code": exc.code}))
+        return 1
+    result = response.get("result", {})
+    result = result.get("value", result) if isinstance(result, dict) else {}
+    print(
+        json.dumps(
+            {"decision": result.get("decision"), "graph": result.get("assembly")},
+            indent=2,
+        )
+    )
+    return 0
+
+
 def _run_generate(args: argparse.Namespace) -> int:
     res = write_config(args.profile, args.out)
     print(json.dumps(res, indent=2))
@@ -117,6 +151,7 @@ def _run_engine_admission(args: argparse.Namespace) -> int:
 _COMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
     "engine-admission": _run_engine_admission,
     "release-plan": _run_release_plan,
+    "deploy": _run_deploy,
     "generate": _run_generate,
     "doctor": _run_doctor,
     "reference": _run_reference,
@@ -213,7 +248,24 @@ def main(argv: list[str] | None = None) -> int:
         "--profile", required=True, help="Existing named deployment profile."
     )
 
+    from arbora.deployment import render
+
+    render.add_arguments(
+        sub.add_parser("render", help="Render the production topology manifests.")
+    )
+
+    deploy = sub.add_parser(
+        "deploy",
+        help="Print the engine's placement decision and graph for a workload.",
+    )
+    deploy.add_argument(
+        "request", help="JSON file with the deploy.placement.plan parameters."
+    )
+    deploy.add_argument("--url", help="Served Arbora base URL (default: ARBORA_URL).")
+
     args = parser.parse_args(argv)
+    if args.command == "render":
+        return render.run(args)
     handler = _COMMAND_HANDLERS.get(args.command)
     return handler(args) if handler is not None else 2
 

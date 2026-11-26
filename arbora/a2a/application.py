@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator
+import json
+from collections.abc import AsyncIterator, Callable, Iterator
 from contextlib import contextmanager
 from secrets import token_hex
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from arbora.api.http.auth import HTTPAuthenticationError
@@ -22,7 +23,10 @@ from .authority import (
     A2ATaskNotCancelable,
     A2ATransitionHistoryUnavailable,
 )
+from .event_log import A2AEventGap, A2AEventStream, wire_event
+from .media_refs import MediaRefRefused, MediaStoreUnavailable
 from .models import A2AMessage, A2AOperationInvokeParams, A2APlanConfirmParams
+from .parts import FilePartRefused, MediaCapabilityRefused
 from .routing import A2AAssemblyUnavailable, A2AOperationBridgeUnavailable
 from .service import A2AService
 from .terminal_event import A2ATerminalEventUnavailable
@@ -143,8 +147,10 @@ class _GetTaskParams(_TaskParams):
 
 
 class _ResubscribeParams(_Params):
+    """``after_seq`` is the last ``event_seq`` the caller saw; 0 replays from the start."""
+
     id: str = Field(min_length=1, max_length=80)
-    cursor: str | None = Field(default=None, max_length=1024)
+    after_seq: int = Field(default=0, alias="afterSeq", ge=0, le=2**53)
 
 
 class _ListParams(_Params):
@@ -152,13 +158,18 @@ class _ListParams(_Params):
     limit: int = Field(default=50, ge=1, le=100)
 
 
-def _error(request_id: Any, code: int, message: str, status: int = 400) -> JSONResponse:
+def _error(
+    request_id: Any,
+    code: int,
+    message: str,
+    status: int = 400,
+    data: dict[str, Any] | None = None,
+) -> JSONResponse:
+    error: dict[str, Any] = {"code": code, "message": message}
+    if data is not None:
+        error["data"] = data
     return JSONResponse(
-        {
-            "jsonrpc": "2.0",
-            "id": request_id,
-            "error": {"code": code, "message": message},
-        },
+        {"jsonrpc": "2.0", "id": request_id, "error": error},
         status_code=status,
         headers={"Cache-Control": "no-store"},
     )
@@ -182,7 +193,9 @@ async def _request_envelope(
     return request_id, method, params
 
 
-async def _send_message(service: A2AService, request: Request, raw_params: Any) -> Any:
+async def _send_message(
+    service: A2AService, request: Request, raw_params: Any, *, stream: bool = False
+) -> Any:
     send_params = _SendParams.model_validate(raw_params)
     key = request.headers.get("Idempotency-Key", "")
     if not key:
@@ -190,7 +203,9 @@ async def _send_message(service: A2AService, request: Request, raw_params: Any) 
     configuration = send_params.configuration
     # ARBORA-A2A-R001.6: ``blocking: false`` answers with the admitted task at
     # once; an absent ``blocking`` keeps the blocking behavior.
-    blocking = configuration is None or configuration.blocking is not False
+    blocking = not stream and (
+        configuration is None or configuration.blocking is not False
+    )
     return await service.send_message(
         message=send_params.message,
         idempotency_key=key,
@@ -207,23 +222,90 @@ async def _get_task(service: A2AService, raw_params: Any, request_id: Any) -> An
     return result or _error(request_id, -32001, "Task not found", 404)
 
 
-def _resubscribe_stub(raw_params: Any) -> Any:
-    # Registered in the method table (ARBORA-A2A-R001) but fail-closed:
-    # durable streaming has no bounded, restart-safe event-cursor backing
-    # yet. Params are still validated so a malformed call is rejected as
-    # invalid, not treated as an unreachable method.
-    _ResubscribeParams.model_validate(raw_params)
-    raise A2AStreamingUnavailable(
-        "durable task streaming and resubscribe are not available yet"
+_STREAM_UNAVAILABLE = {
+    "message/stream": "message/stream is not available; use message/send",
+    "tasks/resubscribe": "durable task streaming and resubscribe are not available yet",
+}
+
+
+def _sse_frame(payload: dict[str, Any], event_seq: int | None = None) -> bytes:
+    prefix = "" if event_seq is None else f"id: {event_seq}\n"
+    return f"{prefix}data: {json.dumps(payload, separators=(',', ':'))}\n\n".encode()
+
+
+async def _event_frames(
+    first: Any,
+    stream: A2AEventStream,
+    caller: RequestCaller | None,
+    request_id: Any,
+) -> AsyncIterator[bytes]:
+    """Replay the durable events after the cursor, then follow live ones.
+
+    Each batch is read inside the caller's session scope; the scope is never
+    held across a ``yield``.
+    """
+
+    def envelope(result: Any) -> dict[str, Any]:
+        return {"jsonrpc": "2.0", "id": request_id, "result": result}
+
+    try:
+        if first is not None:
+            yield _sse_frame(envelope(first.model_dump(mode="json", by_alias=True)))
+        while True:
+            with caller_session_scope(caller):
+                records = await stream.batch()
+            for record in records:
+                yield _sse_frame(envelope(wire_event(record)), int(record["event_seq"]))
+            if stream.finished:
+                return
+            if not records:
+                await stream.wait()
+    except A2AEventGap as gap:
+        yield _sse_frame(
+            {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {"code": -32010, "message": str(gap)},
+            }
+        )
+    finally:
+        stream.close()
+
+
+async def _stream_response(
+    service: A2AService,
+    request: Request,
+    method: str,
+    raw_params: Any,
+    request_id: Any,
+    caller: RequestCaller | None,
+) -> Any:
+    """``message/stream`` and ``tasks/resubscribe`` (ARBORA-A2A-R001.4.1).
+
+    Both serve the durable events of one task from the event cursor. An absent
+    task and another tenant's task answer the same ``-32001``.
+    """
+    if method == "message/stream":
+        _SendParams.model_validate(raw_params)
+    else:
+        resubscribe = _ResubscribeParams.model_validate(raw_params)
+    streaming = service.streaming
+    if streaming is None:
+        raise A2AStreamingUnavailable(_STREAM_UNAVAILABLE[method])
+    first = None
+    if method == "message/stream":
+        first = await _send_message(service, request, raw_params, stream=True)
+        task_id, after_seq = first.id, 0
+    else:
+        task_id, after_seq = resubscribe.id, resubscribe.after_seq
+    stream = await streaming.resume_from_cursor(task_id, after_seq)
+    if stream is None:
+        return _error(request_id, -32001, "Task not found", 404)
+    return StreamingResponse(
+        _event_frames(first, stream, caller, request_id),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
     )
-
-
-def _stream_stub(raw_params: Any) -> Any:
-    # The card advertises ``streaming: false``. ``message/stream`` is still a
-    # known method: it validates its params and refuses as unsupported, so a
-    # client falls back to ``message/send`` instead of seeing an unknown method.
-    _SendParams.model_validate(raw_params)
-    raise A2AStreamingUnavailable("message/stream is not available; use message/send")
 
 
 def _op_invoke_stub(raw_params: Any) -> Any:
@@ -252,9 +334,9 @@ def _plan_confirm_stub(raw_params: Any) -> Any:
     )
 
 
+_STREAM_METHODS = frozenset({"message/stream", "tasks/resubscribe"})
+
 _SYNC_METHODS: dict[str, Callable[[Any], Any]] = {
-    "message/stream": _stream_stub,
-    "tasks/resubscribe": _resubscribe_stub,
     "arbora.op/invoke": _op_invoke_stub,
     "arbora.plan/confirm": _plan_confirm_stub,
 }
@@ -293,6 +375,7 @@ _ERROR_CODES: dict[type[Exception], tuple[int, int]] = {
     A2AAssemblyUnavailable: (-32003, 503),
     A2ATaskNotCancelable: (-32002, 409),
     A2AStreamingUnavailable: (-32010, 501),
+    A2AEventGap: (-32010, 409),
     A2AOperationBridgeUnavailable: (-32011, 501),
     A2ATransitionHistoryUnavailable: (-32012, 501),
 }
@@ -309,6 +392,28 @@ def _application_error(request_id: Any, error: Exception) -> JSONResponse:
         # code and a fixed reason, never caller input.
         unavailable = error.arbora_code == "UNAVAILABLE"
         return _error(request_id, -32015, str(error), 503 if unavailable else 422)
+    if isinstance(error, FilePartRefused):
+        # ARBORA-A2A-R001.5: a closed reason, never caller input.
+        return _error(
+            request_id, -32602, "Invalid params", 400, {"reason": error.reason}
+        )
+    if isinstance(error, MediaRefRefused):
+        # ARBORA-A2A-R001.5.5: a closed reason; a foreign reference reads as unknown.
+        return _error(
+            request_id, -32602, "Invalid params", 400, {"reason": error.reason}
+        )
+    if isinstance(error, MediaStoreUnavailable):
+        return _error(request_id, -32015, "UNAVAILABLE", 503)
+    if isinstance(error, MediaCapabilityRefused):
+        # ARBORA-A2A-R001.5.2: the typed code and a closed reason.
+        unavailable = error.code == "UNAVAILABLE"
+        return _error(
+            request_id,
+            -32015 if unavailable else -32016,
+            error.code,
+            503 if unavailable else 403,
+            {"reason": error.reason},
+        )
     mapped = _ERROR_CODES.get(type(error))
     if mapped is not None:
         code, status = mapped
@@ -427,16 +532,26 @@ async def _unary_request(
     method: str,
     raw_params: dict[str, Any],
     request_id: Any,
-) -> JSONResponse:
-    write_methods = {"message/send", "tasks/cancel", "arbora.plan/confirm"}
+) -> Any:
+    write_methods = {
+        "message/send",
+        "message/stream",
+        "tasks/cancel",
+        "arbora.plan/confirm",
+    }
     scope = "kg:write" if method in write_methods else "kg:read"
     try:
         caller = await authenticator.authenticate(request, scope=scope)
         await _refresh_unary_caller(caller)
         with caller_session_scope(caller):
-            result = await _invoke_method(
-                service, request, method, raw_params, request_id
-            )
+            if method in _STREAM_METHODS:
+                result = await _stream_response(
+                    service, request, method, raw_params, request_id, caller
+                )
+            else:
+                result = await _invoke_method(
+                    service, request, method, raw_params, request_id
+                )
     except PermissionError as error:
         return _authentication_error(request_id, error)
     except (
@@ -446,9 +561,12 @@ async def _unary_request(
         A2AAssemblyUnavailable,
         A2AOperationBridgeUnavailable,
         A2AStreamingUnavailable,
+        A2AEventGap,
         A2ATransitionHistoryUnavailable,
         A2ATaskNotCancelable,
         ModalityRefused,
+        MediaCapabilityRefused,
+        MediaStoreUnavailable,
         ValidationError,
         TypeError,
         ValueError,
@@ -457,8 +575,8 @@ async def _unary_request(
     return _unary_response(result, request_id)
 
 
-def _unary_response(result: Any, request_id: Any) -> JSONResponse:
-    if isinstance(result, JSONResponse):
+def _unary_response(result: Any, request_id: Any) -> Any:
+    if isinstance(result, (JSONResponse, StreamingResponse)):
         return result
     payload = result.model_dump(mode="json", by_alias=True)
     return JSONResponse(

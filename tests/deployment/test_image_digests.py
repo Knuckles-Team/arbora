@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import importlib.util
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -11,13 +11,10 @@ from typing import Any
 import pytest
 import yaml
 
-SCRIPT = (
-    Path(__file__).resolve().parents[2] / "scripts/check_deployment_image_digests.py"
-)
-SPEC = importlib.util.spec_from_file_location("check_deployment_image_digests", SCRIPT)
-assert SPEC is not None and SPEC.loader is not None
-checker = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(checker)
+from arbora.deployment import image_digests as checker
+
+ROOT = Path(__file__).resolve().parents[2]
+COMMAND = [sys.executable, "-m", "arbora.deployment.image_digests"]
 
 DIGEST = "0123456789abcdef" * 4
 PINNED = f"registry.example/team/worker@sha256:{DIGEST}"
@@ -130,6 +127,7 @@ def test_malformed_and_unsupported_references_fail(
     _, errors = _check(tmp_path, _workload(image=image))
     assert len(errors) == 1
     assert "containers[0].image: expected repository@sha256:" in errors[0]
+    assert "IMAGE_NOT_DIGEST_PINNED" in errors[0]
 
 
 def test_containers_and_native_sidecar_are_checked(tmp_path: Path) -> None:
@@ -344,8 +342,9 @@ def test_input_failures_are_actionable(
 def test_real_cli_has_explicit_inputs_and_exit_status(tmp_path: Path) -> None:
     path = _write(tmp_path, _workload())
     result = subprocess.run(
-        [sys.executable, str(SCRIPT), str(path)],
+        [*COMMAND, str(path)],
         cwd=tmp_path,
+        env={**os.environ, "PYTHONPATH": str(ROOT)},
         capture_output=True,
         text=True,
         check=False,
@@ -355,8 +354,9 @@ def test_real_cli_has_explicit_inputs_and_exit_status(tmp_path: Path) -> None:
     assert not result.stderr
     path.write_text("kind: Pod\nspec: {}", encoding="utf-8")
     result = subprocess.run(
-        [sys.executable, str(SCRIPT), str(path)],
+        [*COMMAND, str(path)],
         cwd=tmp_path,
+        env={**os.environ, "PYTHONPATH": str(ROOT)},
         capture_output=True,
         text=True,
         check=False,
@@ -364,11 +364,80 @@ def test_real_cli_has_explicit_inputs_and_exit_status(tmp_path: Path) -> None:
     assert result.returncode == 1
     assert "containers" in result.stderr
     result = subprocess.run(
-        [sys.executable, str(SCRIPT)],
+        COMMAND,
         cwd=tmp_path,
+        env={**os.environ, "PYTHONPATH": str(ROOT)},
         capture_output=True,
         text=True,
         check=False,
     )
     assert result.returncode == 2  # argparse usage error: no implicit search or stdin.
     assert "paths" in result.stderr
+
+
+# spec: ARBORA-DEPLOY-R017.18
+def test_module_is_the_one_checker_and_script_is_removed() -> None:
+    """The checker lives in the package; no script copy or wrapper remains."""
+    assert not (ROOT / "scripts" / "check_deployment_image_digests.py").exists()
+    assert checker.__name__ == "arbora.deployment.image_digests"
+    from arbora.deployment import artifacts
+
+    assert artifacts.check_paths is checker.check_paths
+
+
+def _compose(**services: object) -> dict[str, Any]:
+    return {"services": {name: {"image": image} for name, image in services.items()}}
+
+
+# spec: ARBORA-DEPLOY-R017.9
+def test_compose_document_is_walked_and_kubernetes_cases_still_pass(
+    tmp_path: Path,
+) -> None:
+    assert _check(tmp_path, _compose(web=PINNED, db=PINNED)) == (2, [])
+    assert _check(tmp_path, _workload(), _compose(web=PINNED)) == (2, [])
+    _, errors = _check(tmp_path, _workload(), {"data": 1})
+    assert "rendered.yaml: document 2" in errors[0]
+    assert "UNSUPPORTED_DOCUMENT" in errors[0]
+
+
+# spec: ARBORA-DEPLOY-R017.10
+def test_pinned_literal_accepted_tagged_and_missing_rejected_with_location(
+    tmp_path: Path,
+) -> None:
+    assert _check(tmp_path, _compose(web=PINNED)) == (1, [])
+    _, tagged = _check(tmp_path, _compose(web="registry.example/web:latest"))
+    assert "services.web.image" in tagged[0]
+    assert "IMAGE_NOT_DIGEST_PINNED" in tagged[0]
+    _, missing = _check(tmp_path, {"services": {"web": {"ports": []}}})
+    assert "services.web.image" in missing[0]
+    assert "SERVICE_IMAGE_MISSING" in missing[0]
+
+
+# spec: ARBORA-DEPLOY-R017.11
+def test_required_variable_form_accepted_default_and_bare_forms_validated(
+    tmp_path: Path,
+) -> None:
+    assert _check(tmp_path, _compose(web="${X:?set X to a digest reference}")) == (
+        1,
+        [],
+    )
+    assert _check(tmp_path, _compose(web=f"${{X:-{PINNED}}}")) == (1, [])
+    _, floating = _check(tmp_path, _compose(web="${X:-repo:latest}"))
+    assert "IMAGE_NOT_DIGEST_PINNED" in floating[0]
+    _, bare = _check(tmp_path, _compose(web="${X}"))
+    assert "IMAGE_VARIABLE_UNPINNED" in bare[0]
+
+
+# spec: ARBORA-DEPLOY-R017.12
+def test_set_digest_passes_set_tag_fails_unused_name_errors(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    path = _write(tmp_path, _compose(web="${X:?set X}"))
+    assert checker.main([str(path), "--set", f"X={PINNED}"]) == 0
+    assert "Checked 1 container images" in capsys.readouterr().out
+    assert checker.main([str(path), "--set", "X=registry.example/web:latest"]) == 1
+    assert "services.web.image" in capsys.readouterr().err
+    assert (
+        checker.main([str(path), "--set", f"X={PINNED}", "--set", f"Y={PINNED}"]) == 1
+    )
+    assert "UNUSED_SET_NAME" in capsys.readouterr().err

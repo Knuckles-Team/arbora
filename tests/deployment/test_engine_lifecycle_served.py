@@ -91,3 +91,7 @@ def test_set_endpoint_starts_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
         assert composition.engine_spawn_count() == before
     finally:
         served_engine.reset_process_engine()
+
+
+# These tests boot a real engine: the pull-request subset deselects the marker.
+pytestmark = pytest.mark.real_boot

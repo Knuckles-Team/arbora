@@ -50,6 +50,13 @@ class Surface(StrEnum):
     CONSOLE = "console"
 
 
+class ContentOrigin(StrEnum):
+    """Where an operation's content comes from (ARBORA-OPS-R042.1)."""
+
+    TRUSTED = "trusted"
+    OPEN_WEB = "open_web"
+
+
 class Idempotency(StrEnum):
     KEY_REQUIRED = "key_required"
     NATURAL = "natural"
@@ -172,6 +179,7 @@ class OpSpec(BaseModel):
     #: ``ontology.functions.invoke`` (ARBORA-OPS-R908); the call runs the
     #: operation itself, under its own scope.
     function: bool = False
+    content_origin: ContentOrigin = ContentOrigin.TRUSTED
 
     @field_validator("id")
     @classmethod

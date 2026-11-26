@@ -8,7 +8,9 @@ from pathlib import Path
 import pytest
 
 from arbora.api.ops import (
+    a2a_media,
     access,
+    agent_library,
     agents,
     approvals,
     assistants,
@@ -51,6 +53,7 @@ from arbora.api.ops import (
     research,
     retrieval,
     runs,
+    schedules,
     schema,
     security,
     sessions,
@@ -123,6 +126,8 @@ _CURATED_SCOPES = (
     "node:read",
     "edge:read",
     "blob:read",
+    "blob:write",
+    "graph:write",
     "agent:pack-control",
     "fleet:control",
     "mcp:admin",
@@ -140,6 +145,9 @@ _CURATED_SCOPES = (
     "workspace:write",
     "telemetry:write",
     "agent:library-read",
+    "agent:library-write",
+    "loops:read",
+    "loops:control",
 )
 
 _ENGINE_METHODS = {
@@ -189,6 +197,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
     assert first.digest == second.digest
     declared = (
         *access.operations(),
+        *agent_library.operations(),
         *agents.operations(),
         *approvals.operations(),
         *assistants.operations(),
@@ -227,12 +236,14 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *telemetry.operations(),
         *usage.operations(),
         *graph_limits.operations(),
+        *a2a_media.operations(),
         *policy.operations(),
         *query.operations(),
         *query_engine.operations(),
         *research.operations(),
         *retrieval.operations(),
         *runs.operations(),
+        *schedules.operations(),
         *schema.operations(),
         *source.operations(),
         *swarm.operations(),

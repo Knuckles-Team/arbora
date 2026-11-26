@@ -251,7 +251,12 @@ async def test_a2a_refuses_a_part_no_handler_reads() -> None:
         modality=_normalizer(),
     )
     message = _audio_message()
-    message["parts"][1]["file"]["mimeType"] = "image/png"
+    # A video part: the model media capability governs images only, so the part
+    # reaches the modality seam, which has no video handler.
+    message["parts"][1]["file"]["mimeType"] = "video/mp4"
+    message["parts"][1]["file"]["bytes"] = base64.b64encode(
+        b"\x00\x00\x00\x18ftypmp42" + b"\x00" * 16
+    ).decode()
     with pytest.raises(ModalityRefused) as caught:
         await service.send_message(message=message, idempotency_key="k")
     assert caught.value.code == "MODALITY_UNSUPPORTED" and authority.messages == []
