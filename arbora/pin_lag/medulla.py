@@ -44,6 +44,7 @@ __all__ = [
     "PinLagUnavailable",
     "accepts_parameter",
     "guard",
+    "guard_field",
     "refusal",
     "require_methods",
     "require_model_field",
@@ -100,6 +101,14 @@ def require_model_field(model: str, field: str) -> None:
     declared = getattr(getattr(models, model, None), "model_fields", {})
     if field not in declared:
         raise PinLagUnavailable(f"{model}.{field}")
+
+
+def guard_field(model: str, field: str) -> None:
+    """Refuse ``UNAVAILABLE`` naming ``Model.field`` when the pinned shape lacks it."""
+    try:
+        require_model_field(model, field)
+    except PinLagUnavailable as error:
+        raise refusal(error) from error
 
 
 def accepts_parameter(method: Any, name: str) -> bool:
