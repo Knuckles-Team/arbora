@@ -75,7 +75,44 @@ async def _with_role_profile(context: Any, message: Mapping[str, Any]) -> Any:
 
     _profile, version = await read_profile(context)
     reference = f"{PROFILE_NAMESPACE}/{PROFILE_KEY}@{version}"
-    return {**message, "metadata": {**metadata, "profile_ref": reference}}
+    allowlist = await _binding_tools(context, str(metadata["role_instance_id"]))
+    requested = metadata.get("tool_allowlist")
+    if requested is not None:
+        if not isinstance(requested, list) or not all(
+            isinstance(tool, str) for tool in requested
+        ):
+            from arbora.api.invoke.pipeline import OperationRefused
+
+            raise OperationRefused("INVALID_ARGUMENT", {"field": "tool_allowlist"})
+        # A request may only narrow the binding, never widen it.
+        allowlist = [tool for tool in requested if tool in set(allowlist)]
+    scopes = sorted(getattr(context.caller, "effective_scopes", ()) or ())
+    return {
+        **message,
+        "metadata": {
+            **metadata,
+            "profile_ref": reference,
+            "tool_allowlist": allowlist,
+            "scope_ceiling": scopes,
+        },
+    }
+
+
+async def _binding_tools(context: Any, instance_id: str) -> list[str]:
+    """The tool ids the role instance binding names (ARBORA-OPS-R917.3).
+
+    The instance is the engine library entry; an absent or foreign instance is
+    one ``NOT_FOUND``. The binding already cannot widen its template, so the
+    run's tool ceiling is exactly this list intersected with the caller scopes.
+    """
+    from arbora.api.ops.agent_library import _current
+
+    entry = await _current(context, instance_id)
+    return [
+        str(tool["component_id"])
+        for tool in entry.get("tools", [])
+        if isinstance(tool, Mapping) and tool.get("component_id")
+    ]
 
 
 async def handle_agent(
