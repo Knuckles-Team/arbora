@@ -23,7 +23,12 @@ from arbora.messaging.models import MessagingConfig
 from arbora.messaging.registry import _ENTRY_POINT_GROUP, MessagingRegistry
 
 PLATFORMS = (
+    "bluebubbles",
+    "buzz",
+    "dingtalk",
     "discord",
+    "email",
+    "feishu",
     "googlechat",
     "googlemeet",
     "imessage",
@@ -32,14 +37,30 @@ PLATFORMS = (
     "matrix",
     "mattermost",
     "nextcloud",
+    "nostr",
+    "ntfy",
+    "photon",
+    "qqbot",
+    "raft",
+    "reef",
     "signal",
+    "simplex",
     "slack",
+    "sms",
     "synology",
     "teams",
     "telegram",
+    "tlon",
     "twitch",
     "voicecall",
+    "webhook",
+    "wecom",
+    "weixin",
     "whatsapp",
+    "x",
+    "yuanbao",
+    "zalo",
+    "zalouser",
 )
 #: Platforms that have no text channel; their adapter must refuse a send.
 NO_TEXT = frozenset({"googlemeet"})
@@ -150,6 +171,27 @@ def test_every_platform_is_published_and_discovered() -> None:
 
 
 @pytest.mark.spec("ARBORA-MESSAGING-R008")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.1")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.2")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.3")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.4")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.5")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.6")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.7")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.8")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.9")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.10")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.11")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.12")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.13")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.14")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.15")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.16")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.17")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.18")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.19")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.20")
+@pytest.mark.spec("ARBORA-MESSAGING-R009.21")
 @pytest.mark.parametrize("platform", PLATFORMS)
 async def test_send_reaches_the_faked_platform_api(
     platform: str, monkeypatch: pytest.MonkeyPatch
@@ -182,6 +224,8 @@ async def test_send_reaches_the_faked_platform_api(
         if hasattr(backend, attribute):
             setattr(backend, attribute, api)
     backend._connected = True
+    if platform == "email":
+        backend._smtplib = _Smtplib(calls)
     if platform == "teams":
         transport = _teams_transport(calls)
         monkeypatch.setattr(
@@ -207,6 +251,28 @@ async def test_send_reaches_the_faked_platform_api(
         return
     assert result.success is True, result.error
     assert _carries(calls, text), calls
+
+
+class _Smtplib:
+    """An ``smtplib`` double whose SMTP session records each sent message."""
+
+    def __init__(self, calls: list) -> None:
+        self._calls = calls
+
+    def SMTP_SSL(self, host: str) -> _Smtplib:  # noqa: N802 (the library's name)
+        return self
+
+    def __enter__(self) -> _Smtplib:
+        return self
+
+    def __exit__(self, *exc: Any) -> None:
+        return None
+
+    def login(self, user: str, password: str) -> None:
+        return None
+
+    def send_message(self, message: Any) -> None:
+        self._calls.append(("smtp.send_message", (message.as_string(),), {}))
 
 
 async def _record_process(calls: list, args: tuple) -> _Api:
