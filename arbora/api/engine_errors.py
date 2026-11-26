@@ -245,6 +245,8 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "POLICY_BODY_UNAVAILABLE": (400, False),
     "POLICY_LOOSENING": (400, False),
     "POLICY_NATIVE_AUTHORITY_REQUIRED": (403, False),
+    "POLICY_SCOPE_BOUND": (409, False),
+    "POLICY_SELF_AUTHORIZATION": (403, False),
     "PROPOSAL_NOT_FOUND": (404, False),
     "PROPOSAL_NOT_OPEN": (409, False),
     "RAFT_NOT_CONFIGURED": (400, False),

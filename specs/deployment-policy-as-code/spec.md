@@ -83,7 +83,7 @@ carries its bound test evidence.
 - Drift surfaces read-only. Destructive operations require an approval receipt (R003).
 - A policy bundle compiles into the existing evaluator. It enforces on every mutation through
   the one access boundary. Grants never authorize under the proposed policy (R004).
-- Epistemic conditions gate mutations on live evidence. Missing evidence fails closed (R005).
+- Epistemic conditions have no engine caller: the engine retired them, and Arbora adds no predicate code (R005, retired).
 - The served agent surface matches the deployed digest. It fails closed on an unreconciled fleet
   state (R006). A rollout records itself through `deployment.record` (R007).
 

@@ -12,8 +12,6 @@
 - A compiled policy bundle enforces its scoped rules on a served mutation. Enforcement runs
   through the one access boundary. The same decision reaches the MCP and REST paths.
   *(ARBORA-DEPLOY-POLICY-R004)*
-- A write backed by in-validity, high-confidence evidence admits under the epistemic condition.
-  *(ARBORA-DEPLOY-POLICY-R005)*
 - `llms.txt` and the MCP best-practice resources match the deployed digest. The skill export
   carries the release digest stamp. *(ARBORA-DEPLOY-POLICY-R006)*
 
@@ -26,8 +24,6 @@
 - A missing apply input names the gap and fails closed. Nothing fabricates. Nothing creates.
 - Binding a second bundle to the same scope refuses. A grant under the proposed (not yet
   applied) policy refuses.
-- The same write after its evidence expires refuses. A write with missing evidence refs
-  refuses. The refusal carries a typed reason. The engine never defaults to allow.
 - Agent-surface generation on a stale reconciliation receipt refuses. A missing receipt
   refuses. The last-known-good surface stays served.
 
@@ -50,21 +46,22 @@
 
 ## Test bindings
 
-Each row's acceptance test binds its ID where the test lands. The lines below record the planned
-homes now. The spec-trailers gate resolves the spec PR's trailer. No delivery is claimed.
+- `# spec: ARBORA-DEPLOY-POLICY-R001` — `tests/deployment/test_manifest.py` and `tests/api/test_deploy_manifest_served.py`
+- `# spec: ARBORA-DEPLOY-POLICY-R002` — `tests/api/test_deploy_manifest_served.py`
+- `# spec: ARBORA-DEPLOY-POLICY-R003` — `tests/api/test_deploy_manifest_served.py`
+- `# spec: ARBORA-DEPLOY-POLICY-R004` — `tests/api/test_policy_bundle_served.py`
+- `# spec: ARBORA-DEPLOY-POLICY-R006` — `tests/fleet/test_agent_surface_served.py`
+- `# spec: ARBORA-DEPLOY-POLICY-R007` — `tests/api/test_deploy_manifest_served.py`
 
-- `# spec: ARBORA-DEPLOY-POLICY-R001` — `tests/deployment/test_manifest.py` and `tests/api/test_deploy_manifest_served.py` (planned)
-- `# spec: ARBORA-DEPLOY-POLICY-R002` — `tests/api/test_deploy_manifest_served.py` (planned)
-- `# spec: ARBORA-DEPLOY-POLICY-R003` — `tests/api/test_deploy_manifest_served.py` (planned)
-- `# spec: ARBORA-DEPLOY-POLICY-R004` — `tests/api/test_policy_bundle_served.py` (planned)
-- `# spec: ARBORA-DEPLOY-POLICY-R005` — `tests/api/test_policy_epistemic_served.py` (planned)
-- `# spec: ARBORA-DEPLOY-POLICY-R006` — `tests/fleet/test_agent_surface_served.py` (planned)
+R005 is retired; its engine row has no caller.
 
 ## Row coverage
 
-Every test below is planned; none exists yet.
-
 | Row | Test |
 |---|---|
-| `ARBORA-DEPLOY-POLICY-R001` | `tests/api/test_deploy_manifest_served.py::test_plan_returns_typed_diff_and_makes_no_write_call` (planned) and `tests/deployment/test_manifest.py::test_unknown_key_duplicate_key_and_floating_image_are_rejected` (planned) |
-| `ARBORA-DEPLOY-POLICY-R007` | `tests/api/test_deploy_manifest_served.py::test_rollout_records_one_deployment_and_none_on_failure` (planned) |
+| `ARBORA-DEPLOY-POLICY-R001` | `tests/api/test_deploy_manifest_served.py::test_plan_returns_typed_diff_and_makes_no_write_call` and `tests/deployment/test_manifest.py::test_unknown_key_duplicate_key_and_floating_image_are_rejected` |
+| `ARBORA-DEPLOY-POLICY-R002` | `tests/api/test_deploy_manifest_served.py::test_second_apply_makes_zero_calls_and_returns_identical_receipt` and `::test_missing_input_names_the_gap_and_creates_nothing` |
+| `ARBORA-DEPLOY-POLICY-R003` | `tests/api/test_deploy_manifest_served.py::test_manual_replica_change_is_reported_as_drift` and `::test_destructive_apply_needs_a_fresh_approval_and_a_stale_one_expires` |
+| `ARBORA-DEPLOY-POLICY-R004` | `tests/api/test_policy_bundle_served.py::test_bundle_ops_send_the_file_unchanged_and_decide_the_same_on_http_and_mcp`, `::test_scope_exclusivity_and_self_authorization_refusals_pass_through` and `::test_engine_without_the_policy_family_refuses_unavailable_naming_it` |
+| `ARBORA-DEPLOY-POLICY-R006` | `tests/fleet/test_agent_surface_served.py::test_llms_txt_and_resources_match_the_deployed_digest` and `::test_stale_or_missing_receipt_refuses_generation` |
+| `ARBORA-DEPLOY-POLICY-R007` | `tests/api/test_deploy_manifest_served.py::test_rollout_records_one_deployment_and_none_on_failure` |
