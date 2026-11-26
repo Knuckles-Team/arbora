@@ -504,6 +504,54 @@ def _deployment_library_startup(
     return startup
 
 
+def _with_approval_notices(
+    bindings: Mapping[str, Any],
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+    session: Callable[[], Any],
+) -> tuple[Mapping[str, Any], Callable[[], Coroutine[Any, Any, Any]]]:
+    """Bind the digest channel and the outbox consumers of the serving process.
+
+    ``approvals.digest.send`` delivers through the governed reach notifier to
+    the tenant owners (ARBORA-OPS-R918.5.1). The trust-flag notice
+    (ARBORA-OPS-R855.3.1) and the approver notice (ARBORA-OPS-R918.6) run as
+    one scheduled runner started by the process start-up step. Both send to the
+    engine as the process service identity; a pinned engine without the outbox
+    shapes refuses ``UNAVAILABLE`` inside each tick (``arbora.pin_lag.medulla``).
+    """
+    from arbora.api.invoke.bootstrap import build_outbox_consumers
+    from arbora.core.settings import setting
+    from arbora.fleet.approval_notifier import digest_delivery, role_holders
+    from arbora.fleet.outbox_consumer import OutboxRunner
+    from arbora.messaging.service import ReachNotifier
+
+    async def send(method: str, params: dict[str, Any]) -> Any:
+        from medulla.generated import send_by_id
+
+        client = await pool.connected_client(
+            connect_context(str(session().tenant)), graph
+        )
+        return await send_by_id(client, method, params, graph)
+
+    notifier = ReachNotifier()
+    runner = OutboxRunner(
+        build_outbox_consumers(send, notifier),
+        send,
+        graph=graph,
+        interval_s=float(setting("ARBORA_OUTBOX_INTERVAL_S", 15.0)),
+    )
+
+    async def startup() -> None:
+        runner.start()
+
+    bound = {
+        "approval_digest_delivery": digest_delivery(role_holders(send), notifier),
+        "outbox_runner": runner,
+    }
+    return {**bound, **bindings}, startup
+
+
 def _chained_startup(
     first: Callable[[], Coroutine[Any, Any, Any]] | None,
     second: Callable[[], Coroutine[Any, Any, Any]],
@@ -632,6 +680,11 @@ def compose_served_invocation(
                 pool, graph, connect_context, session, action_policies
             ),
         )
+    if bindings is not None:
+        bindings, outbox_startup = _with_approval_notices(
+            bindings, pool, graph, connect_context, session
+        )
+        process_startup = _chained_startup(process_startup, outbox_startup)
     if (
         bindings is not None
         and task_plan_config is not None
