@@ -39,6 +39,14 @@ No unknowns remain. The sections below record the earlier research and decisions
 
 The sections below hold the architecture, ownership, data flow and failure modes of this spec.
 
+- **Owner:** arbora owns the A2A serving surface, the task event cursor and the stream and resubscribe methods. medulla owns the WorkItem record, its fence and the KV store the events live in. The SDK owns the A2A protocol library.
+- **Cohesion:** `arbora/a2a/` holds the method table, the authority and the event log. `arbora/a2a/event_log.py` holds every event cursor fact; `arbora/api/invoke/screening.py` holds the one output redactor.
+- **Dependency direction:** the application depends on the service, the service on the authority and the streaming port, the event log on the WorkItem seam and the engine. Nothing in the engine depends on arbora.
+- **Interface depth:** `A2AEventLog.publish` and `read` are the two entry points; callers are `WorkItemA2AAuthority._run` and `A2AEventStreams.resume_from_cursor`.
+- **Special cases:** a lease-less writer (a cancellation) is a fence value, not a branch per caller.
+- **State:** the event sequence and every record are durable in the engine. In-process signals only wake a waiting stream and are never read for correctness.
+- **Environment:** the poll interval is a constant of the injected `StreamClock`; no setting or environment variable selects a path.
+
 ## Phase 2: Task approach
 
 tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.

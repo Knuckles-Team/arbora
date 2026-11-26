@@ -193,7 +193,7 @@ Rows below name tests that are planned or only partly built. Each entry restates
 |---|---|---|
 | A2A-PL01 | ARBORA-A2A-R002.2.1 | No arbora-side test is possible against the current AU carrier contract. Verified by the fail-closed tests bound to `ARBORA-A2A-R002.1` continuing to refuse rather than silently drop the filter. Tracked as the explicit cross-repo dependency recorded in `tasks.md`. Test: `tests/a2a/test_authority.py::test_selected_tool_subset_is_refused_before_durable_admission`. |
 | A2A-PL02 | ARBORA-A2A-R005.2.1 | Test: `tests/a2a/test_grant_store.py::test_concurrent_consume_succeeds_once` (planned) (L2) runs 8 concurrent consumes against a loopback engine and asserts one success. `::test_expired_and_revoked_grants_refuse` asserts the refusal codes. Served proof is `ARBORA-A2A-R005.2.5`. |
-| A2A-PL03 | ARBORA-A2A-R011 | Test: `tests/a2a/test_transition_history.py::test_history_matches_engine_ledger_exactly` (L3) runs `tasks/get` against a loopback engine and asserts the entries equal the ledger, plus a foreign-tenant refusal. |
+| A2A-PL03 | ARBORA-A2A-R011 | Test: `tests/a2a/test_transition_history.py::test_history_matches_engine_ledger_exactly` (L3) runs `tasks/get` against a loopback engine and asserts the entries equal the ledger, plus a foreign-tenant refusal. (planned: the named files do not exist yet) |
 | A2A-PL04 | ARBORA-A2A-R012.3 | Test: `tests/a2a/test_transition_history.py::test_get_task_raises_typed_refusal_without_authority` (L2) covers the absent and the raising authority. |
 | A2A-PL05 | ARBORA-A2A-R015 | Test: `tests/a2a/test_agent_card.py::test_served_card_matches_wired_authorities` (L3) compares the advertised set with the exercised set. |
 | A2A-PL06 | ARBORA-A2A-R001.3 | Test: (planned) `tests/a2a/test_served_agent.py::test_context_survives_restart_and_list_is_caller_scoped` (served). It restarts between two turns, lists only the caller's contexts and refuses a foreign `contextId`. |
@@ -212,7 +212,7 @@ Rows below name tests that are planned or only partly built. Each entry restates
 | A2A-PL22 | ARBORA-A2A-R002.2.4 | Test: `tests/a2a/test_tool_task_card.py::test_card_lists_extension_only_when_composed_and_refuses_client_approval` (served). Test: `tests/a2a/test_tool_task_card.py::test_attestation_binds_task_record_and_digest` (L1). |
 | A2A-PL13 | ARBORA-A2A-R013.1 | Test: `tests/a2a/test_push_delivery.py::test_registration_refuses_private_and_non_https_targets` (L2) and a cross-tenant refusal (L3). |
 | A2A-PL14 | ARBORA-A2A-R013.2 | Test: `tests/a2a/test_push_delivery.py::test_failed_delivery_defers_then_dead_letters` (L2) asserts the delays and the dead-letter commit against a fake target. |
-| A2A-PL15 | ARBORA-A2A-R013.3 | Test: `tests/a2a/test_agent_card.py::test_push_capability_follows_wired_worker` (L2). |
+| A2A-PL15 | ARBORA-A2A-R013.3 | Test: `tests/a2a/test_agent_card.py::test_push_capability_follows_wired_worker` (L2). (planned: the named files do not exist yet) |
 | A2A-PL16 | ARBORA-A2A-R013.4 | Test: `tests/a2a/test_push_delivery_served.py::test_push_survives_restart_and_dead_letters` (L3) against a real engine binary, with a cross-tenant refusal. |
 | A2A-PL17 | ARBORA-A2A-R016.6 | Test: `tests/a2a/test_model_profile_boundary.py::test_preference_allowed_disallowed_absent` (L3) covers the three cases against a loopback engine. |
 | A2A-PL18 | ARBORA-A2A-R023 | Test: `tests/a2a/test_routing.py::test_task_routes_through_a2a_route_decision` (L3) submits to a known graph and an unknown graph. It asserts dispatch and refusal against a loopback engine. |
