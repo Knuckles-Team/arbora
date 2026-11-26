@@ -9,6 +9,7 @@ against it; audio, video and document parts belong to the modality seam
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from arbora.a2a.models import A2AFilePart, A2AMessage
 
@@ -119,10 +120,103 @@ def admit_file_parts(message: A2AMessage, limits: MediaLimits) -> None:
         raise FilePartRefused("request_media_too_large")
 
 
+class MediaCapabilityRefused(Exception):
+    """An image the selected model cannot take; ``code`` is the typed refusal."""
+
+    def __init__(self, code: str, reason: str) -> None:
+        if (code, reason) not in {
+            ("UNAVAILABLE", "media_capability_unknown"),
+            ("POLICY_DENIED", "media_capability_stale"),
+            ("POLICY_DENIED", "media_type_not_accepted"),
+            ("POLICY_DENIED", "media_part_too_large"),
+        }:
+            raise ValueError("unknown media capability refusal")
+        super().__init__(f"{code}: {reason}")
+        self.code = code
+        self.reason = reason
+
+
+@dataclass(frozen=True, slots=True)
+class MediaCapability:
+    """What the selected model accepts, read from the engine's assembly answer.
+
+    ``accepts`` holds one ``(media_type, max_bytes)`` per accepted type; the
+    engine states one aggregate byte limit, so every type carries it.
+    ``revision`` is the model's definition digest.
+    """
+
+    revision: str
+    accepts: tuple[tuple[str, int], ...]
+    max_parts: int
+
+    def limit_for(self, media_type: str) -> int | None:
+        return dict(self.accepts).get(media_type)
+
+
+def capability_from_assembly(result: Any) -> MediaCapability | None:
+    """Map an ``AgentAssemble`` answer to the capability; ``None`` is unknown.
+
+    A client that predates the answer's ``model_input`` and ``model_revision``
+    fields, or an answer whose ``model_input`` is null, reads as unknown, and
+    unknown never admits.
+    """
+    model_input = getattr(result, "model_input", None)
+    revision = getattr(result, "model_revision", None)
+    if model_input is None or not isinstance(revision, str) or not revision:
+        return None
+    return MediaCapability(
+        revision=revision,
+        accepts=tuple(
+            (str(getattr(kind, "value", kind)), int(model_input.max_aggregate_bytes))
+            for kind in model_input.media_types
+        ),
+        max_parts=int(model_input.max_parts),
+    )
+
+
+def admit_image_capability(
+    message: A2AMessage,
+    capability: MediaCapability | None,
+    *,
+    request_revision: str | None = None,
+) -> None:
+    """Refuse an image part the selected model cannot take, before any task.
+
+    Only the model-accepted types (text, png, jpeg, webp) are checked here;
+    audio, video and document parts belong to the modality seam and are never
+    checked against the model capability. Text parts stay bounded by the limit
+    table. ``request_revision`` is the model revision the request was made
+    against; when given it must equal the capability's.
+    """
+    images = [
+        part.file
+        for part in message.parts
+        if isinstance(part, A2AFilePart) and part.file.mime_type in IMAGE_TYPES
+    ]
+    if not images:
+        return
+    if capability is None:
+        raise MediaCapabilityRefused("UNAVAILABLE", "media_capability_unknown")
+    if request_revision is not None and request_revision != capability.revision:
+        raise MediaCapabilityRefused("POLICY_DENIED", "media_capability_stale")
+    if len(images) > capability.max_parts:
+        raise MediaCapabilityRefused("POLICY_DENIED", "media_part_too_large")
+    for file in images:
+        limit = capability.limit_for(file.mime_type)
+        if limit is None:
+            raise MediaCapabilityRefused("POLICY_DENIED", "media_type_not_accepted")
+        if len(file.decoded_bytes()) > limit:
+            raise MediaCapabilityRefused("POLICY_DENIED", "media_part_too_large")
+
+
 __all__ = [
     "ALLOWED_TYPES",
     "FilePartRefused",
+    "MediaCapability",
+    "MediaCapabilityRefused",
     "MediaLimits",
     "admit_file_parts",
+    "admit_image_capability",
+    "capability_from_assembly",
     "sniff_image_type",
 ]

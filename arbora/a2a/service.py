@@ -19,10 +19,17 @@ from .models import (
     A2AAgentCard,
     A2AListResult,
     A2AMessage,
+    A2ARouteDecision,
     A2ASkill,
     A2ATask,
 )
-from .parts import MediaLimits, admit_file_parts
+from .parts import (
+    IMAGE_TYPES,
+    MediaCapability,
+    MediaLimits,
+    admit_file_parts,
+    admit_image_capability,
+)
 from .routing import A2AAssemblyUnavailable, A2ARouter
 from .terminal_event import A2ATerminalEventUnavailable
 from .tool_task_card import (
@@ -69,6 +76,13 @@ class A2AService:
         | None
     ) = None
 
+    #: Reads the selected model's media capability (``AgentAssemble``);
+    #: ``None`` reads as unknown, and an image then refuses ``UNAVAILABLE``.
+    media_capability: (
+        Callable[[A2AMessage, A2ARouteDecision], Awaitable[MediaCapability | None]]
+        | None
+    ) = None
+
     async def send_message(
         self,
         *,
@@ -99,8 +113,6 @@ class A2AService:
             limit = runtime_config.max_upload_size
             if type(limit) is not int or limit < 1 or attachment_size > limit:
                 raise ValueError("attachments exceed configured upload size")
-        if parsed.media_files():
-            parsed = await self._normalize_media(parsed)
         if "arboraModelProfile" in parsed.metadata:
             preference = ModelProfilePreference(
                 preferred_profile_ref=parsed.metadata["arboraModelProfile"]
@@ -116,6 +128,22 @@ class A2AService:
         decision = await self.router.route(
             parsed, context_budget_tokens=context_budget_tokens
         )
+        if any(file.mime_type in IMAGE_TYPES for _, file in parsed.media_files()):
+            capability = (
+                await self.media_capability(parsed, decision)
+                if self.media_capability is not None
+                else None
+            )
+            admit_image_capability(
+                parsed,
+                capability,
+                request_revision=str(parsed.metadata.get("arboraModelRevision") or "")
+                or None,
+            )
+        # The model-accepted images stay on the message for the run; the rest of
+        # the media goes through the modality seam (ARBORA-OPS-R899.5).
+        if parsed.media_files(exclude=IMAGE_TYPES):
+            parsed = await self._normalize_media(parsed)
         return await self.authority.dispatch(
             message=parsed,
             idempotency_key=idempotency_key,
@@ -141,7 +169,7 @@ class A2AService:
                 filename=file.name or "",
                 source=f"a2a:{message.message_id}#{index}",
             )
-            for index, file in message.media_files()
+            for index, file in message.media_files(exclude=IMAGE_TYPES)
         ]
         # A machine caller gets a typed refusal for a part no handler reads,
         # never a silently ignored attachment.

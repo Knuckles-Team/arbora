@@ -67,7 +67,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T061 ARBORA-A2A-R001.4.1 Served agent streams turn events
 - [x] T062 ARBORA-A2A-R001.6 Non-blocking `message/send`
 - [x] T063 ARBORA-A2A-R001.5.1 Bounded inline text input
-- [ ] T064 ARBORA-A2A-R001.5.2 Selected-model binary input
+- [x] T064 ARBORA-A2A-R001.5.2 Selected-model binary input
 - [x] T077 ARBORA-A2A-R001.5.3 Verify image content against the declared type
 - [x] T078 ARBORA-A2A-R001.5.4 Limit images per request
 - [ ] T079 ARBORA-A2A-R001.5.5 Carry image bytes inline or by upload reference

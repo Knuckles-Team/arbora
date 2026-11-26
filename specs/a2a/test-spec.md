@@ -198,7 +198,7 @@ Rows below name tests that are planned or only partly built. Each entry restates
 | A2A-PL06 | ARBORA-A2A-R001.3 | Test: (planned) `tests/a2a/test_served_agent.py::test_context_survives_restart_and_list_is_caller_scoped` (served). It restarts between two turns, lists only the caller's contexts and refuses a foreign `contextId`. |
 | A2A-PL07 | ARBORA-A2A-R001.4.1 | Test: `tests/a2a/test_served_agent.py::test_stream_emits_delta_tool_call_result_final_in_order` (served). A resubscribe from a cursor replays the tail. |
 | A2A-PL08a | ARBORA-A2A-R001.5.1 | Test: `tests/a2a/test_inline_text_input.py::test_inline_text_files_are_bounded_and_oversize_creates_no_task` (served). |
-| A2A-PL08 | ARBORA-A2A-R001.5.2 | Test: (planned) `tests/a2a/test_served_agent.py::test_capable_model_accepts_png_and_unknown_stale_oversize_create_no_task` (served). |
+| A2A-PL08 | ARBORA-A2A-R001.5.2 | Test: `tests/a2a/test_media_admission.py::test_capable_model_accepts_png_and_unknown_stale_oversize_create_no_task` (served). |
 | A2A-PL09 | ARBORA-A2A-R001.5.3 | Test: `tests/a2a/test_media_admission.py::test_mismatched_signature_is_refused_with_zero_tasks` (served). |
 | A2A-PL10 | ARBORA-A2A-R001.5.4 | Test: `tests/a2a/test_media_admission.py::test_request_byte_and_image_count_limits_refuse_with_reasons` (served). |
 | A2A-PL11 | ARBORA-A2A-R001.5.5 | Test: `tests/a2a/test_media_admission.py::test_upload_reference_resolves_for_owner_and_refuses_foreign_expired_unknown` (served). |
