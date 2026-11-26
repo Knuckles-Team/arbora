@@ -31,7 +31,7 @@ import random
 import threading
 import time
 from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
-from dataclasses import dataclass, field, replace
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Literal, cast
@@ -78,6 +78,15 @@ TriggerReason = Literal[
 ]
 
 
+class ProjectionFailed(RuntimeError):
+    """A pack import committed and its projection did not apply (R041.19)."""
+
+    def __init__(self, connector: str, code: str) -> None:
+        super().__init__(f"{connector}: imported_projection_failed: {code}")
+        self.connector = connector
+        self.code = code
+
+
 @dataclass(frozen=True, slots=True)
 class OnboardingTrigger:
     """Why one onboarding pass runs for one connector (ARBORA-FLEET-R041)."""
@@ -85,6 +94,49 @@ class OnboardingTrigger:
     connector: str
     reason: TriggerReason
     release_digest: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class PackSurfaceCounts:
+    """What one onboarding pass found a connector serving (ARBORA-FLEET-R041.1).
+
+    Built from the existing ``pack_surface_report`` and the pass's connect
+    contract; ``contract_state`` is ``imported``, ``contract_rejected``,
+    ``imported_projection_failed`` or ``onboarding_failed``.
+    """
+
+    tools: int = 0
+    prompts: int = 0
+    skills: int = 0
+    resources: int = 0
+    ontologies: int = 0
+    contracts: int = 0
+    contract_state: str = "imported"
+
+    @classmethod
+    def build(
+        cls, report: Mapping[str, Any], contract: Mapping[str, Any] | None = None
+    ) -> PackSurfaceCounts:
+        served = report.get("surfaces", {})
+
+        def count(name: str) -> int:
+            return int(served.get(name, {}).get("count", 0))
+
+        contract = contract or {}
+        contracts = (
+            (1 if contract.get("manifest_digest") else 0)
+            + len(contract.get("ontology_digests") or ())
+            + (1 if contract.get("seed_digest") else 0)
+        )
+        return cls(
+            tools=count("tools"),
+            prompts=count("prompts"),
+            skills=count("skills"),
+            resources=count("resources"),
+            ontologies=count("ontology"),
+            contracts=contracts,
+            contract_state=str(contract.get("outcome", "imported")),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -341,6 +393,9 @@ class FleetOnboarding:
     seen: dict[str, tuple[str, ...]] = field(default_factory=dict)
     #: The last captured connect contract per connector (ARBORA-FLEET-R036).
     contracts: dict[str, Any] = field(default_factory=dict)
+    #: The verified graph authority a long pass renews between imports
+    #: (ARBORA-FLEET-R041.20): ``near_expiry()`` and ``async renew()``.
+    authority: Any = None
     #: The handshake pass record per connector (state, attempts, last error).
     handshake: dict[str, dict[str, Any]] = field(default_factory=dict)
     #: Local policy decisions and native EG receipts, keyed by connector.
@@ -403,7 +458,7 @@ class FleetOnboarding:
         try:
             check_resource_sizes(pack)
         except ContractRefused as exc:
-            contract["state"] = "contract_rejected"
+            contract["outcome"] = "contract_rejected"
             contract["reason"] = exc.code
             raise
 
@@ -426,7 +481,7 @@ class FleetOnboarding:
             code = contract_rejection_code(exc)
             if code is not None:
                 contract = self.surfaces[endpoint.name]["contract"]
-                contract["state"] = "contract_rejected"
+                contract["outcome"] = "contract_rejected"
                 contract["reason"] = code
             raise
         self.surfaces[endpoint.name]["contract"]["import_receipt"] = {
@@ -435,7 +490,123 @@ class FleetOnboarding:
             "binding_revision": getattr(result, "binding_revision", None),
         }
 
+    def _tenant(self) -> str:
+        from arbora.deployment.semantic_provisioning import session_context
+
+        return str(session_context(self.session)["tenant"])
+
+    async def projection_state(self, connector: str) -> tuple[str, str]:
+        """The engine pack status read: the projection state and its stable code."""
+        from medulla.generated.connector_pack import ConnectorPackStatusRequest
+        from medulla.generated.storage import send_connector_pack_status
+
+        status = await send_connector_pack_status(
+            self.tenant_client,
+            ConnectorPackStatusRequest(connector=connector, tenant_id=self._tenant()),
+            str(self.session.graph),
+        )
+        projection = status.projection
+        return (
+            str(getattr(projection, "projection", "none")),
+            str(getattr(projection, "code", "") or ""),
+        )
+
+    async def reproject(self, connector: str) -> None:
+        from arbora.deployment.semantic_provisioning import _reproject
+
+        await _reproject(
+            self.tenant_client,
+            tenant_id=self._tenant(),
+            graph=str(self.session.graph),
+            connector=connector,
+        )
+
+    async def _check_projection(self, connector: str) -> None:
+        """A committed import whose projection failed is reported with its cause.
+
+        ARBORA-FLEET-R041.19: the pass reads the pack status, requests the
+        served reproject once, and if the projection still failed marks the
+        connector ``imported_projection_failed`` with the engine's stable code
+        and the graph name, never a bare refusal. The connector stays unadmitted.
+        """
+        state, code = await self.projection_state(connector)
+        if state != "failed":
+            return
+        await self.reproject(connector)
+        state, code2 = await self.projection_state(connector)
+        if state == "applied":
+            return
+        report = self.surfaces[connector]
+        report["onboarding_state"] = "imported_projection_failed"
+        report["projection"] = {
+            "connector": connector,
+            "code": code2 or code or "PROJECTION_FAILED",
+            "graph_name": str(self.session.graph),
+        }
+        raise ProjectionFailed(connector, report["projection"]["code"])
+
+    async def ensure_authority(self) -> None:
+        """Renew the graph authority before the next import when it nears expiry."""
+        authority = self.authority
+        if authority is not None and authority.near_expiry():
+            await authority.renew()
+
+    async def onboard_renewing(self, endpoint: FleetEndpoint, *, auth: Any) -> bool:
+        """Onboard one connector, renewing a lapsing graph authority first.
+
+        An authority that lapses mid-import is renewed and the pass retried
+        once; a connector that still fails is ``onboarding_failed`` with the
+        cause ``authority_expired`` (ARBORA-FLEET-R041.20).
+        """
+        await self.ensure_authority()
+        try:
+            return await self.onboard(endpoint, auth=auth)
+        except Exception:
+            cause = self.surfaces.get(endpoint.name, {}).get("cause")
+            if cause != "authority_expired" or self.authority is None:
+                raise
+        await self.authority.renew()
+        return await self.onboard(endpoint, auth=auth)
+
     async def onboard(
+        self,
+        endpoint: FleetEndpoint,
+        *,
+        auth: Any,
+        trigger: OnboardingTrigger | None = None,
+    ) -> bool:
+        """One onboarding pass; a failure marks only this connector (R041.4).
+
+        A failed pass records ``onboarding_failed`` (or ``contract_rejected``
+        for an engine contract refusal) with a typed cause and re-raises, so
+        the pass loop reports it and goes on to the next connector.
+        """
+        try:
+            return await self._onboard_pass(endpoint, auth=auth, trigger=trigger)
+        except Exception as exc:
+            self._mark_failed(endpoint.name, exc)
+            raise
+
+    def _mark_failed(self, connector: str, error: Exception) -> None:
+        from arbora.fleet.connect_contract import ContractRefused
+
+        report = self.surfaces.setdefault(connector, {})
+        contract = report.get("contract") or {}
+        if contract.get("outcome") == "contract_rejected":
+            state, cause = "contract_rejected", str(contract.get("reason", ""))
+        elif isinstance(error, ProjectionFailed):
+            state, cause = "imported_projection_failed", error.code
+        elif isinstance(error, ContractRefused):
+            state, cause = "contract_rejected", error.code
+        elif "expired" in str(error).lower():
+            state, cause = "onboarding_failed", "authority_expired"
+        else:
+            state, cause = "onboarding_failed", type(error).__name__
+        report["onboarding_state"] = state
+        report["cause"] = cause
+        report["counts"] = asdict(PackSurfaceCounts.build(report, {"outcome": state}))
+
+    async def _onboard_pass(
         self,
         endpoint: FleetEndpoint,
         *,
@@ -464,12 +635,18 @@ class FleetOnboarding:
         self.surfaces[endpoint.name] = pack_surface_report(pack)
         self._record_contract(endpoint.name, pack)
         self._check_contract(endpoint.name, pack)
+        if trigger is not None:
+            self.surfaces[endpoint.name]["trigger"] = {
+                "reason": trigger.reason,
+                "release_digest": trigger.release_digest,
+            }
         _remember_declaration(self.declarations, endpoint.name, pack)
         with onboarding_step("ConnectorPackStatus"):
             changed = not await self.pack_unchanged(endpoint, pack)
         if changed:
             with onboarding_step("ConnectorPackImport"):
                 await self._import_pack(endpoint, pack)
+            await self._check_projection(endpoint.name)
         else:
             with onboarding_step("renew"):
                 await self.renew({endpoint.name: endpoint.url})
@@ -479,6 +656,11 @@ class FleetOnboarding:
             decisions = self.register_contracts(endpoint, pack) or ()
             await self.approve_contracts(endpoint, pack, decisions)
         await self.write_catalog(endpoint, pack)
+        report = self.surfaces[endpoint.name]
+        report["onboarding_state"] = "onboarded"
+        report["counts"] = asdict(
+            PackSurfaceCounts.build(report, report.get("contract"))
+        )
         return changed
 
     async def write_catalog(self, endpoint: FleetEndpoint, pack: Any) -> None:
@@ -908,7 +1090,7 @@ async def _onboard_all(
         return
     for endpoint in pending:
         try:
-            changed = await onboarding.onboard(endpoint, auth=auth)
+            changed = await onboarding.onboard_renewing(endpoint, auth=auth)
         except Exception as exc:  # one child must not stop the fleet
             report.failed[endpoint.name] = _failure(exc)
             logger.warning("fleet onboarding of %s failed: %s", endpoint.name, exc)
@@ -1460,6 +1642,8 @@ def start_fleet_onboarding(
 
 
 __all__ = [
+    "PackSurfaceCounts",
+    "ProjectionFailed",
     "FleetEndpoint",
     "FleetOnboarding",
     "FleetOnboardingService",

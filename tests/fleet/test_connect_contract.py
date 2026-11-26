@@ -136,6 +136,12 @@ class RecordingOnboarding(FleetOnboarding):
     async def write_catalog(self, endpoint, pack):
         return None
 
+    async def projection_state(self, connector):
+        return ("applied", "")
+
+    async def reproject(self, connector):
+        return None
+
 
 def make_onboarding(packs, monkeypatch, *, result=None, error=None):
     from arbora.access.action_policy import ActionPolicies
@@ -207,7 +213,7 @@ async def test_contract_refusals(monkeypatch) -> None:
         await onboarding.onboard(ENDPOINT, auth=None)
     assert refused.value.code == "CONTRACT_RESOURCE_TOO_LARGE"
     assert imports == []
-    assert onboarding.surfaces["crm"]["contract"]["state"] == "contract_rejected"
+    assert onboarding.surfaces["crm"]["contract"]["outcome"] == "contract_rejected"
 
     for code in ("ONTOLOGY_INVALID", "SHACL_VIOLATION", "SEED_SHACL_VIOLATION"):
         failure = SemanticProvisioningError(f"import was rejected: {code}:u:d")
@@ -215,7 +221,7 @@ async def test_contract_refusals(monkeypatch) -> None:
         with pytest.raises(SemanticProvisioningError):
             await onboarding.onboard(ENDPOINT, auth=None)
         contract = onboarding.surfaces["crm"]["contract"]
-        assert contract["state"] == "contract_rejected" and contract["reason"] == code
+        assert contract["outcome"] == "contract_rejected" and contract["reason"] == code
 
 
 @pytest.mark.spec("ARBORA-FLEET-R036.5")
