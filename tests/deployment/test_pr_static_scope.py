@@ -65,7 +65,25 @@ def test_every_architecture_test_is_selected() -> None:
 
 def test_every_selected_test_exists() -> None:
     for path in _scope_module().static_scan_tests():
-        assert (ROOT / path).is_file(), path
+        assert (ROOT / path).exists(), path
+
+
+@pytest.mark.spec("ARBORA-DEPLOY-R011")
+def test_fast_subset_includes_every_deployment_test() -> None:
+    """The fast subset runs ``tests/deployment`` whole, minus the real-boot tests."""
+    module = _scope_module()
+    assert "tests/deployment" in module.static_scan_tests()
+    run = _fast_subset_run()
+    assert 'pytest -m "not real_boot" "${affected_tests[@]}"' in run
+    full = run.partition('if [ "$SCOPE" = "FULL" ]')[2].partition("else")[0]
+    assert "real_boot" not in full
+    # Every test that boots a real engine is marked, so deselecting skips only those.
+    for name in (
+        "test_engine_lifecycle_served.py",
+        "test_provisioning_admitted_by_pinned_engine.py",
+    ):
+        source = (ROOT / "tests" / "deployment" / name).read_text(encoding="utf-8")
+        assert "real_boot" in source, name
 
 
 def test_every_source_scanning_test_is_selected() -> None:
@@ -77,7 +95,12 @@ def test_every_source_scanning_test_is_selected() -> None:
         if p.name != Path(__file__).name
         and module.SCAN_MARKERS.search(p.read_text(encoding="utf-8"))
     }
-    assert scanners <= selected, sorted(scanners - selected)
+    covered = {
+        path
+        for path in scanners
+        if path in selected or any(path.startswith(d + "/") for d in selected)
+    }
+    assert scanners <= covered, sorted(scanners - covered)
 
 
 def test_workflow_adds_the_static_set_to_every_non_full_scope() -> None:
@@ -127,6 +150,7 @@ def test_static_scope_producer_failure_blocks_pytest(
         return
     expected = ["pytest"]
     if scope != "FULL":
+        expected.extend(["-m", "not real_boot"])
         if scope != "NONE":
             expected.append(scope)
         expected.extend(["tests/static/test_one.py", "tests/static/test_two.py"])
