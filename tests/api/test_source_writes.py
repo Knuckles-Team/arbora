@@ -36,7 +36,12 @@ def _write_ops() -> dict[str, Any]:
 @pytest.mark.spec("ARBORA-OPS-R848.2")
 def test_write_ops_are_destructive_plan_confirmed_and_identity_audited() -> None:
     ops = _write_ops()
-    assert set(ops) == {"source.commit", "source.land", "source.revert"}
+    assert set(ops) == {
+        "source.commit",
+        "source.land",
+        "source.revert",
+        "source.edit_symbol",
+    }
     for op in ops.values():
         assert op.effect == Effect.DESTRUCTIVE
         assert op.confirm == Confirm.PLAN

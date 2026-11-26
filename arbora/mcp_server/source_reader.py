@@ -27,6 +27,8 @@ from arbora.api.invoke.steps import claim_values
 from arbora.api.ops.source import (
     SourceBlameOutcome,
     SourceBlobOutcome,
+    SourceDiffEntry,
+    SourceDiffOutcome,
     SourceHistoryEntry,
     SourceHistoryOutcome,
     SourceTreeEntry,
@@ -547,6 +549,117 @@ class NativeSourceReader:
             found=False,
             reason="path-not-found",
         )
+
+    async def diff(
+        self,
+        *,
+        repository: str,
+        base_ref: str,
+        head_ref: str,
+        path: str,
+        context: ExecutionContext,
+    ) -> SourceDiffOutcome:
+        """The paths that differ between two live refs, from the engine projection.
+
+        Both refs read the caller's own row-level view, so a path the caller
+        may not read is absent from both trees and never named here. Each side
+        is one projection read; a path is ``added``, ``removed`` or ``modified``
+        by its content digest.
+        """
+        _require_scopes(context, BLOB_SCOPES)
+        graph = await caller_dispatch_graph(context)
+        tenant = context.caller.tenant
+        sides: list[dict[str, str]] = []
+        for ref in (base_ref, head_ref):
+            branches = await _branch_nodes(
+                context, graph, repository=repository, ref=ref
+            )
+            if not branches:
+                return SourceDiffOutcome(
+                    tenant=tenant,
+                    repository=repository,
+                    base_ref=base_ref,
+                    head_ref=head_ref,
+                    path=path,
+                    found=False,
+                    reason="ref-not-found",
+                )
+            versions = await _live_file_versions(context, graph, branches[0][0])
+            sides.append(
+                {
+                    str(props["path"]): str(props.get("content_digest") or "")
+                    for _id, props in versions
+                    if isinstance(props.get("path"), str)
+                    and props["path"].startswith(path)
+                }
+            )
+        base, head = sides
+        entries = []
+        for name in sorted(set(base) | set(head)):
+            if name in base and name in head:
+                if base[name] == head[name]:
+                    continue
+                change = "modified"
+            else:
+                change = "removed" if name in base else "added"
+            entries.append(
+                SourceDiffEntry(
+                    path=name,
+                    change=change,
+                    base_digest=base.get(name),
+                    head_digest=head.get(name),
+                )
+            )
+        return SourceDiffOutcome(
+            tenant=tenant,
+            repository=repository,
+            base_ref=base_ref,
+            head_ref=head_ref,
+            path=path,
+            found=True,
+            entries=tuple(entries),
+        )
+
+    async def symbol_paths(
+        self,
+        *,
+        repository: str,
+        branch: str,
+        symbol_ids: tuple[str, ...],
+        context: ExecutionContext,
+    ) -> dict[str, str | None]:
+        """The file each symbol lives in on one branch, or ``None`` when the caller sees none.
+
+        A symbol the caller's row-level view hides, one on another repository's
+        branch and one that does not exist all answer ``None``: nothing says
+        which. Only a path inside the branch's live tree counts.
+        """
+        _require_scopes(context, TREE_SCOPES)
+        graph = await caller_dispatch_graph(context)
+        branches = await _branch_nodes(
+            context, graph, repository=repository, ref=branch
+        )
+        if not branches:
+            return dict.fromkeys(symbol_ids)
+        live = {
+            props["path"]
+            for _id, props in await _live_file_versions(context, graph, branches[0][0])
+            if isinstance(props.get("path"), str)
+        }
+        found: dict[str, str | None] = dict.fromkeys(symbol_ids)
+        rows = _rows(
+            await _send(
+                context, graph, "GetNodePropertiesBatch", {"node_ids": list(symbol_ids)}
+            )
+        )
+        for row in rows:
+            if not isinstance(row, (list, tuple)) or len(row) != 2:
+                continue
+            props = _decode_properties(row[1])
+            file_path = props.get("path") if props else None
+            if row[0] in found and isinstance(file_path, str) and file_path in live:
+                found[row[0]] = file_path
+        return found
 
 
 __all__ = ["NativeSourceReader"]
