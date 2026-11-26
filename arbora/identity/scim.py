@@ -119,6 +119,14 @@ def scim_create_user(
     return _require_port(port).create_user(user)
 
 
+def scim_update_user(
+    port: ScimIdentityPort | None, user_id: str, payload: Mapping[str, object]
+) -> None:
+    """Validate a full SCIM User resource (``PUT``) and apply it to an existing user."""
+    user = ScimUser.from_payload(payload)
+    _require_port(port).update_user(user_id, user)
+
+
 def scim_patch_user(
     port: ScimIdentityPort | None, user_id: str, payload: Mapping[str, object]
 ) -> None:

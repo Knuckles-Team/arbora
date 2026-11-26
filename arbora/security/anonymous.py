@@ -290,3 +290,55 @@ def network_run_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
             *kwargs.get("middleware", ()),
         ],
     }
+
+
+#: The operator list of admitted anonymous effects (ARBORA-IDENTITY-R004.6).
+EFFECT_POLICY_KEY = "anonymous_effect_policy"
+NOT_ADMITTED = "ANONYMOUS_EFFECT_NOT_ADMITTED"
+DIRECT_EFFECT_DENIED = "ANONYMOUS_DIRECT_EFFECT_DENIED"
+_DIGEST = __import__("re").compile(r"[0-9a-f]{64}")
+
+
+def _policy_entry(entry: Any) -> tuple[str, str, str] | None:
+    """One well-formed ``(op_id, target, action_digest)`` entry, else ``None``."""
+    if not isinstance(entry, dict):
+        return None
+    op_id, target = entry.get("op_id"), entry.get("target")
+    digest = entry.get("action_digest")
+    if not (
+        isinstance(op_id, str) and isinstance(target, str) and isinstance(digest, str)
+    ):
+        return None
+    return (op_id, target, digest) if _DIGEST.fullmatch(digest) else None
+
+
+def effect_policy(document: Any = None) -> tuple[tuple[str, str, str], ...]:
+    """The ``identity.anonymous_effect_policy`` entries; the default (empty) denies all.
+
+    An entry holds ``op_id``, ``target`` and ``action_digest`` (SHA-256, 64 lowercase
+    hex). A malformed entry is dropped, so it can never admit anything.
+    """
+    if document is None:
+        from arbora.core.settings import platform_config_file, read_config_document
+
+        path = platform_config_file("config.json")
+        document = read_config_document(path) if path.is_file() else {}
+    entries = ((document or {}).get("identity") or {}).get(EFFECT_POLICY_KEY) or []
+    parsed = (_policy_entry(entry) for entry in entries)
+    return tuple(entry for entry in parsed if entry is not None)
+
+
+def admit_effect(
+    op_id: str,
+    target: str,
+    action_digest: str,
+    *,
+    policy: tuple[tuple[str, str, str], ...] | None = None,
+) -> str | None:
+    """``None`` when an operator entry matches the operation, target and digest.
+
+    Otherwise ``ANONYMOUS_EFFECT_NOT_ADMITTED``. An anonymous actor never gains grants
+    through this check: the shared dispatcher still applies containment and confirmation.
+    """
+    entries = effect_policy() if policy is None else policy
+    return None if (op_id, target, action_digest) in entries else NOT_ADMITTED
