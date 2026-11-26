@@ -10,6 +10,8 @@ does not exist yet is left unbound, and the harness refuses it closed (see
 
 from __future__ import annotations
 
+import hashlib
+import json
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from types import SimpleNamespace
@@ -47,6 +49,12 @@ def _run_of(run_ref: str) -> Any:
     return current_native_run(SimpleNamespace(run_id=run_ref))
 
 
+def _run_key(op_id: str, params: Mapping[str, Any], run_ref: str) -> str:
+    """One stable key per run, operation and body: a replayed call writes once."""
+    body = json.dumps(params, sort_keys=True, default=repr, separators=(",", ":"))
+    return "run:" + hashlib.sha256(f"{run_ref}\0{op_id}\0{body}".encode()).hexdigest()
+
+
 def run_principal_call(
     services: Any,
     resolve_run: Callable[[str], Any] = _run_of,
@@ -73,7 +81,12 @@ def run_principal_call(
         caller = caller_from_session(owner.session, credential_kind="session")
         with use_session(owner.session):
             result = await invoke(
-                op_id, dict(params), caller, Surface.MCP, services=services
+                op_id,
+                dict(params),
+                caller,
+                Surface.MCP,
+                services=services,
+                idempotency_key=_run_key(op_id, params, run_ref),
             )
         if isinstance(result, OpError):
             return {
@@ -146,7 +159,9 @@ def compose_host_ports(
             StudyContentService(call, active_run_ref, tenant_of)
         ),
         "technique_measure": technique_measure(
-            TechniqueMeasureService(call, active_run_ref)
+            TechniqueMeasureService(
+                call, active_run_ref, tenant_of, backends.now_ms or (lambda: 0)
+            )
         ),
     }
     if backends.read_lease is not None and backends.now_ms is not None:

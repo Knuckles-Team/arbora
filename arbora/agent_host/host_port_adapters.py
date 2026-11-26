@@ -52,7 +52,9 @@ class EngineDecisionAdapter:
 
     async def log(self, op: str, body: Mapping[str, Any], *, run_ref: str) -> Any:
         """One call and one atomic engine write: the body travels with the op."""
-        return _answer(await self._call(LOG_OP, {"op": op, **body}, run_ref))
+        return _answer(
+            await self._call(LOG_OP, {"op": {"op": op.lower(), **body}}, run_ref)
+        )
 
     async def read(
         self, method: str, params: Mapping[str, Any], *, run_ref: str

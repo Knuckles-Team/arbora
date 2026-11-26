@@ -257,30 +257,55 @@ class StudyContentService:
 
 
 class TechniqueMeasureService:
-    """``technique_measure`` backend: one ``DecisionLog`` Evaluate per benchmark arm."""
+    """``technique_measure`` backend: one ``DecisionLog`` aggregate read per benchmark arm.
 
-    def __init__(self, call: RunCall, run_ref: Callable[[], str]) -> None:
+    The arm is the decision option; its logged outcomes for the technique question are the
+    measure: trials, successes, refusals and the success rate. An arm with no logged
+    outcome measures zero trials, never a made-up rate.
+    """
+
+    def __init__(
+        self,
+        call: RunCall,
+        run_ref: Callable[[], str],
+        tenant_of: Callable[[str], str],
+        now_ms: Callable[[], int],
+    ) -> None:
         self._call = call
         self._run_ref = run_ref
+        self._tenant_of = tenant_of
+        self._now_ms = now_ms
 
     async def __call__(
         self, technique: str, arm: str, config_digest: str
     ) -> Mapping[str, Any]:
+        run_ref = self._run_ref()
         answer = await self._call(
             LOG_OP,
             {
-                "op": "Evaluate",
-                "technique": technique,
-                "arm": arm,
-                "config_digest": config_digest,
+                "op": {
+                    "op": "aggregate",
+                    "request": {
+                        "tenant_id": self._tenant_of(run_ref),
+                        "question_id": f"technique:{technique}:{config_digest}",
+                        "window": {"from_ms": 0, "to_ms": self._now_ms()},
+                    },
+                }
             },
-            self._run_ref(),
+            run_ref,
         )
         if answer.get("outcome") != "answered":
-            raise RuntimeError(
-                f"technique measure refused: {answer.get('refusal_code')}"
-            )
-        return dict((answer.get("payload") or {}).get("metrics") or {})
+            raise RuntimeError(f"technique measure refused: {dict(answer)}")
+        rows = (answer.get("payload") or {}).get("rows") or ()
+        row = next((r for r in rows if r.get("option_id") == arm), {})
+        trials = int(row.get("trials") or 0)
+        successes = int(row.get("successes") or 0)
+        return {
+            "trials": trials,
+            "successes": successes,
+            "refused": int(row.get("refused") or 0),
+            "success_rate": successes / trials if trials else 0.0,
+        }
 
 
 def _digest(raw: bytes) -> str:

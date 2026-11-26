@@ -182,7 +182,7 @@ def test_real_path_binds_every_port_through_the_main_shape(main_shape: None) -> 
         assert (answer.outcome, answer.record_digest) == ("committed", "d1")
         assert seen[-1] == (
             "eg.coordination.DecisionLog",
-            {"op": "Evaluate", "round": 2},
+            {"op": {"op": "evaluate", "round": 2}},
             "run:1",
         )
         await engine.read("MemoryRecall", {"q": 1}, run_ref="run:1")

@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import sys
 from collections.abc import Mapping
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -36,7 +37,7 @@ from tests.pin_lag.test_host_ports_pin_lag import main_shape  # noqa: F401
 from tests.test_served_operation_api import served  # noqa: F401
 
 RUN = "run:backend-1"
-SCOPES = ("query:decide", "query:read", "graph:read", "coordination:write")
+SCOPES = ("query:retrieval", "node:read", "agent:decision-write", "work:write")
 
 
 @pytest.fixture
@@ -97,12 +98,28 @@ def test_summary_study_and_technique_services_reach_the_engine_as_the_run_princi
     _http, client = served
     compiled = Recorder({"bundle": {"items": []}})
     node = Recorder({"properties": {"content": "the study body"}})
-    log = Recorder({"metrics": {"score": 0.5}})
+    log: list[tuple[str, Mapping[str, Any], str]] = []
+
+    async def measure_call(
+        op: str, params: Mapping[str, Any], ref: str
+    ) -> Mapping[str, Any]:
+        # A governed write needs the effect journal's replay owner, which the served
+        # fixture lacks, so the arm read is proven against a recording call.
+        log.append((op, params, ref))
+        return {
+            "outcome": "answered",
+            "payload": {
+                "rows": [
+                    {"option_id": "arm-a", "trials": 4, "successes": 3, "refused": 1}
+                ]
+            },
+        }
+
     call, owner = _served_call(
         client,
         monkeypatch,
         captured,
-        {"ContextCompile": compiled, "GetNodeProperties": node, "DecisionLog": log},
+        {"ContextCompile": compiled, "GetNodeProperties": node},
     )
     tenant = owner.session.tenant
 
@@ -123,18 +140,19 @@ def test_summary_study_and_technique_services_reach_the_engine_as_the_run_princi
         foreign = await StudyContentService(call, run_ref, lambda _r: tenant)(
             "other-tenant", "g", "n1", 2
         )
-        metrics = await TechniqueMeasureService(call, run_ref)("t", "arm-a", "d" * 8)
+        metrics = await TechniqueMeasureService(
+            measure_call, run_ref, lambda _r: tenant, lambda: 50
+        )("t", "arm-a", "d" * 8)
         return summary, off, body, foreign, metrics
 
     summary, off, body, foreign, metrics = asyncio.run(scenario())
     assert summary["output"] == "s" and off is None
     assert body == b"the study body" and foreign is None
-    assert metrics == {"score": 0.5}
-    assert [p for _r, p in compiled.requests + node.requests + log.requests] == [
-        "person:one"
-    ] * 3
+    assert metrics == {"trials": 4, "successes": 3, "refused": 1, "success_rate": 0.75}
+    assert [p for _r, p in compiled.requests + node.requests] == ["person:one"] * 2
     assert node.requests[0][0]["node_id"] == "n1"
-    assert log.requests[0][0]["op"] == "Evaluate"
+    assert log[0][1]["op"]["op"] == "aggregate" and log[0][2] == RUN
+    assert log[0][1]["op"]["request"]["tenant_id"] == tenant
 
 
 @pytest.mark.spec("ARBORA-OPS-R890.1")
@@ -229,7 +247,12 @@ def test_process_table_is_keyed_by_run_and_admitted() -> None:
 @pytest.mark.spec("ARBORA-OPS-R890.4")
 def test_run_trace_receipts_commit_with_the_run_fence() -> None:
     sent: list[tuple[str, Mapping[str, Any], str]] = []
-    owner = _owner()
+    owner = SimpleNamespace(
+        task_id=RUN,
+        work_item_id="work:1",
+        session=SimpleNamespace(tenant="t1"),
+        claim={"lease_epoch": 3, "fencing_token": 9, "worker_id": "w1"},
+    )
 
     async def call(op: str, params: Mapping[str, Any], ref: str) -> Mapping[str, Any]:
         sent.append((op, params, ref))
