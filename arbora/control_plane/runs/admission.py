@@ -17,6 +17,7 @@ from .models import (
 
 __all__ = [
     "CapacityAcquisition",
+    "CapacityRetryError",
     "CapacityDeniedError",
     "InMemoryNativeAdmission",
     "NativeAdmissionError",
@@ -43,6 +44,13 @@ class CapacityDeniedError(NativeAdmissionError):
 
     def __init__(self, run_id: str) -> None:
         super().__init__("capacity_denied_after_redecision", run_id)
+
+
+class CapacityRetryError(NativeAdmissionError):
+    """Capacity was denied once; the caller may re-decide exactly once."""
+
+    def __init__(self, run_id: str) -> None:
+        super().__init__("capacity_denied_redecide", run_id)
 
 
 class CapacityAcquisition:
@@ -130,7 +138,12 @@ class InMemoryNativeAdmission:
         audit: AuditChain | None = None,
         clock: Callable[[], int] | None = None,
         authorization_verifier: ResolvedAuthorizationVerifier | None = None,
+        capacity: CapacityAcquisition | None = None,
+        resources_for: Callable[[NativeAdmissionRequest], dict[str, int]] | None = None,
     ) -> None:
+        #: All-or-nothing capacity (ARBORA-FLEET-R009.3); ``None`` admits without it.
+        self.capacity = capacity
+        self._resources_for = resources_for or (lambda _request: {"run": 1})
         self.audit = audit
         self.clock = clock or (lambda: 0)
         self.authorization_verifier = authorization_verifier
@@ -149,6 +162,7 @@ class InMemoryNativeAdmission:
             self._ensure_work_item_available(work_item_id)
             self._verify_authorization(request)
             self._ensure_audit_capacity()
+            self._acquire_capacity(run_id, request)
             now = self.clock()
             audit_ids = self._append_audit(request, now=now)
 
@@ -160,6 +174,18 @@ class InMemoryNativeAdmission:
             self._records[run_id] = record
             self._work_items[work_item_id] = run_id
             return self._receipt(record, created=True)
+
+    def _acquire_capacity(self, run_id: str, request: NativeAdmissionRequest) -> None:
+        """Publish only after every resource is granted; the first denial is a retry signal."""
+        if self.capacity is None:
+            return
+        if not self.capacity.acquire(run_id, self._resources_for(request)):
+            raise CapacityRetryError(run_id)
+
+    def stop(self, run_id: str) -> None:
+        """A stopped run releases every unit it holds."""
+        if self.capacity is not None:
+            self.capacity.release(run_id)
 
     def _replay_receipt(
         self, run_id: str, request: NativeAdmissionRequest

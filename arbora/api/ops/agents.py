@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import Field
 
+from arbora.api.contracts.provisioning_capacity import ProvisionRequest
 from arbora.api.ops._common import Params, bound_service
 from arbora.api.ops._engine import engine_send
 from arbora.api.registry import (
@@ -28,6 +29,9 @@ class AgentRunParams(Params):
     assistant_profile_ref: str | None = Field(
         default=None, min_length=1, max_length=256
     )
+    #: Instances the run needs; allocated through the SDK provisioner before dispatch
+    #: (ARBORA-FLEET-R024.6). The replay key of the allocation is the request's own.
+    provision: ProvisionRequest | None = None
 
 
 class TaskRefParams(Params):
@@ -214,6 +218,40 @@ async def _audit_run(
     await services.audit_write(event, AuditClass.EVENT, context.caller)
 
 
+async def _provision_for_run(
+    context: Any, service: Any, params: Mapping[str, Any], message: Mapping[str, Any]
+) -> Mapping[str, Any]:
+    """Allocate the run's instances first; every refusal is typed and allocates nothing."""
+    request = params.get("provision")
+    if request is None:
+        return message
+    import asyncio
+
+    if not isinstance(request, ProvisionRequest):
+        request = ProvisionRequest.model_validate(request)
+
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.fleet.provisioning import ProvisionRefused
+    from arbora.pin_lag.unavailable import PinLagUnavailable
+
+    if request.tenant != str(context.caller.tenant):
+        raise OperationRefused("PROVISION_GRANT_DENIED", {})
+    try:
+        result = await asyncio.to_thread(service.authority.provision_capacity, request)
+    except ProvisionRefused as refused:
+        raise OperationRefused(refused.code, dict(refused.details)) from None
+    except PinLagUnavailable as lag:
+        raise OperationRefused("UNAVAILABLE", {"missing": lag.missing}) from None
+    return {
+        **message,
+        "metadata": {
+            **(message.get("metadata") or {}),
+            "provisioned_instances": list(result.instance_ids),
+            "allocation_receipt_digest": result.allocation_receipt_digest,
+        },
+    }
+
+
 async def handle_agent(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
@@ -242,6 +280,7 @@ async def handle_agent(
                     },
                 }
             message = _with_client_session(context, message)
+            message = await _provision_for_run(context, service, params, message)
             from arbora.a2a.source_grant import (
                 resolve_verified_grant,
                 source_grant_scope,

@@ -58,3 +58,6 @@ def _empty_local_skill_catalog_by_default(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setattr(
         _multiplexer_module, "build_local_skill_catalog", lambda: ([], [])
     )
+
+
+from tests.fleet._provisioning_support import sdk as sdk  # noqa: E402,F401
