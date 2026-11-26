@@ -139,3 +139,43 @@ def test_swap_guard_raises_typed_refusal(
 def test_swap_guard_returns_matching_receipt() -> None:
     receipt = _valid_receipt()
     assert _require(receipt) is receipt
+
+
+@pytest.mark.spec("ARBORA-MCP-RESOURCES-R003.2")
+def test_publish_step_refuses_missing_stale_invalid_and_allows_match() -> None:
+    import asyncio
+    from dataclasses import replace
+
+    from arbora.fleet.catalog_reader import FleetCatalogReader
+    from tests.fleet.test_catalog_convergence import EnginePort, receipt_for
+
+    now_ms = 5_000_000
+    engine = EnginePort(revision=3)
+    reader = FleetCatalogReader(engine)
+    good = asyncio.run(reader.read())
+    assert good.generation is not None
+    valid = receipt_for(good.generation)
+    assert reader.publish_generation(good, valid, now_ms=now_ms) is good
+    assert reader.published is good
+
+    engine.revision = 4
+    candidate = asyncio.run(reader.read())
+    assert candidate.generation is not None
+    fresh = receipt_for(candidate.generation)
+    refusals = {
+        "missing": None,
+        "stale": replace(fresh, issued_at_ms=now_ms - 300_001),
+        "invalid": replace(fresh, snapshot_digest="0" * 64),
+    }
+    for reason, receipt in refusals.items():
+        with pytest.raises(PublicationRefusedError) as refused:
+            reader.publish_generation(candidate, receipt, now_ms=now_ms)
+        assert refused.value.result.reason == reason
+        # The last-known-good generation stays active after every refusal.
+        assert reader.published is good
+
+    assert reader.publish_generation(candidate, fresh, now_ms=now_ms) is candidate
+    assert reader.published is candidate
+    from arbora.fleet.catalog_reader import FleetCatalog
+
+    assert isinstance(reader.published, FleetCatalog)
