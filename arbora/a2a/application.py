@@ -26,7 +26,11 @@ from .authority import (
 from .confirm import UNQUALIFIED, ApprovalChain, ApprovalRefused, confirm_dispatch
 from .event_log import A2AEventGap, A2AEventStream, wire_event
 from .media_refs import MediaRefRefused, MediaStoreUnavailable
-from .models import A2AMessage, A2AOperationInvokeParams
+from .models import (
+    TRANSITION_PAGE_LIMIT,
+    A2AMessage,
+    A2AOperationInvokeParams,
+)
 from .parts import FilePartRefused, MediaCapabilityRefused
 from .routing import A2AAssemblyUnavailable, A2AOperationBridgeUnavailable
 from .service import A2AService
@@ -150,6 +154,18 @@ class _GetTaskParams(_TaskParams):
     include_committed_event: bool = Field(
         default=False, alias="includeCommittedEvent", strict=True
     )
+    include_transition_history: bool = Field(
+        default=False, alias="includeTransitionHistory", strict=True
+    )
+    history_cursor: str | None = Field(
+        default=None, alias="historyCursor", min_length=1, max_length=512
+    )
+    history_limit: int = Field(
+        default=TRANSITION_PAGE_LIMIT,
+        alias="historyLimit",
+        ge=1,
+        le=TRANSITION_PAGE_LIMIT,
+    )
 
 
 class _ResubscribeParams(_Params):
@@ -223,7 +239,11 @@ async def _send_message(
 async def _get_task(service: A2AService, raw_params: Any, request_id: Any) -> Any:
     task_params = _GetTaskParams.model_validate(raw_params)
     result = await service.get_task(
-        task_params.id, include_committed_event=task_params.include_committed_event
+        task_params.id,
+        include_committed_event=task_params.include_committed_event,
+        include_transition_history=task_params.include_transition_history,
+        history_cursor=task_params.history_cursor,
+        history_limit=task_params.history_limit,
     )
     return result or _error(request_id, -32001, "Task not found", 404)
 

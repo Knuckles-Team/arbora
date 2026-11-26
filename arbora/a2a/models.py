@@ -36,7 +36,9 @@ __all__ = [
     "A2ATaskState",
     "A2ATaskStatus",
     "A2ATextPart",
+    "A2ATransition",
     "A2ATransitionHistoryAuthority",
+    "A2ATransitionPage",
 ]
 
 
@@ -347,6 +349,25 @@ class A2ATaskStatus(_WireModel):
     timestamp: str | None = None
 
 
+#: At most this many transitions answer one ``tasks/get`` page (ARBORA-A2A-R011).
+TRANSITION_PAGE_LIMIT = 200
+
+
+class A2ATransition(_WireModel):
+    """One WorkItem state change from the engine's transition ledger, unchanged."""
+
+    state: str = Field(min_length=1, max_length=64)
+    at_ms: int = Field(ge=0)
+    revision: int = Field(ge=0)
+
+
+class A2ATransitionPage(_WireModel):
+    """One page of the ledger in commit order, and the cursor to continue."""
+
+    entries: list[A2ATransition] = Field(max_length=TRANSITION_PAGE_LIMIT)
+    next_cursor: str | None = Field(default=None, max_length=512)
+
+
 class A2ATask(_WireModel):
     id: str = Field(pattern=r"^(?:a2a-|work-item:)[0-9a-f]{64}$")
     context_id: str = Field(pattern=r"^a2a-context-[0-9a-f]{64}$")
@@ -354,6 +375,9 @@ class A2ATask(_WireModel):
     status: A2ATaskStatus
     artifacts: list[A2AArtifact] | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
+    #: Only present when ``tasks/get`` asked for ``includeTransitionHistory``.
+    transition_history: list[A2ATransition] | None = None
+    transition_history_next_cursor: str | None = None
 
 
 class A2AListResult(_WireModel):
@@ -387,7 +411,13 @@ class A2ATransitionHistoryAuthority(Protocol):
     Owned by medulla, not Arbora; see ARBORA-A2A-R011.
     """
 
-    def transition_history(self, task_id: str) -> Any: ...
+    async def transition_history(
+        self,
+        task_id: str,
+        *,
+        cursor: str | None = None,
+        limit: int = TRANSITION_PAGE_LIMIT,
+    ) -> A2ATransitionPage | None: ...
 
 
 class A2AExtension(_WireModel):
