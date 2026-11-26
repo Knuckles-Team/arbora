@@ -110,7 +110,7 @@ Each row below has no spec marker on a test yet. The listed test is the proof to
 | ARBORA-DEPLOY-R017.14 | `tests/deployment/test_helm_image_digests.py::test_pinned_render_passes_and_default_render_fails_on_replace_me` | Helm pinned and default renders. |
 | ARBORA-DEPLOY-R017.15 | `tests/deployment/test_deploy_artifacts.py::test_systemd_refused_and_others_resolve` | systemd stays refused. |
 | ARBORA-DEPLOY-R017.16 | `arbora/deployment/artifacts.py::digest_check_decision`; `tests/deployment/test_deploy_artifacts.py::test_prod_and_test_require_the_check_dev_reports_skipped_by_policy` | Environment policy drives the digest check. |
-| ARBORA-DEPLOY-R010.1 | `tests/skills/test_development_skill_freshness.py::test_required_sections_are_present` | Development skill keeps every original topic. |
+| ARBORA-DEPLOY-R010.1 | `tests/skills/test_development_skill_freshness.py::test_required_sections_are_present` (planned) | Development skill keeps every original topic. |
 | ARBORA-DEPLOY-R010.2 | `tests/skills/test_deployment_examples.py::test_examples_agree_parse_and_probe_on_both_transports` (planned) | Deployment examples stay executable and synchronized. |
 | ARBORA-DEPLOY-R010.3 | `tests/skills/test_deployment_examples.py::test_every_supported_profile_has_all_parts` (planned) | Supported-profile instructions are complete. |
 | ARBORA-DEPLOY-R013.1 | `tests/deployment/test_kubernetes_first_boot.py::test_bad_cluster_observations_fail_closed` (existing, not yet bound by a spec marker); `tests/deployment/test_genesis_environments.py::test_default_profile_loads_and_validates` (existing, not yet bound by a spec marker) | Profile and first-boot obligations are retained. |
