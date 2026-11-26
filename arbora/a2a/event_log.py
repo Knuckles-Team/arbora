@@ -26,6 +26,7 @@ from arbora.api.invoke.screening import redact_result
 __all__ = [
     "A2AEventFenceLost",
     "A2AEventGap",
+    "A2AEventConsumerTooSlow",
     "A2AEventLog",
     "A2AEventStore",
     "A2AEventStream",
@@ -44,11 +45,22 @@ EVENT_NAMESPACE = "a2a_events"
 _EXTERNAL_FENCE = 2**62
 _READ_BATCH = 64
 _POLL_SECONDS = 1.0
-_TERMINAL = frozenset({"succeeded", "failed", "cancelled", "dead_letter"})
+#: The A2A state each terminal WorkItem status projects to (the ``tasks/get`` view).
+_TERMINAL_STATE = {
+    "succeeded": "completed",
+    "failed": "failed",
+    "cancelled": "canceled",
+    "dead_letter": "failed",
+}
+_DEFAULT_BUFFER_EVENTS = 256
 
 
 class A2AEventGap(RuntimeError):
     """The requested cursor is ahead of the log or a record is missing."""
+
+
+class A2AEventConsumerTooSlow(A2AEventGap):
+    """A caught-up consumer fell more than the stream buffer behind the log."""
 
 
 class A2AEventFenceLost(RuntimeError):
@@ -146,14 +158,17 @@ def wire_event(record: Mapping[str, Any]) -> dict[str, Any]:
             **base,
             "kind": "artifact-update",
             "artifact": record["artifact"],
-            "append": False,
-            "lastChunk": True,
+            "append": bool(record.get("append", False)),
+            "lastChunk": bool(record.get("last_chunk", True)),
         }
     stamp = datetime.fromtimestamp(record["timestamp_ms"] / 1000, tz=UTC).isoformat()
+    status: dict[str, Any] = {"state": record["state"], "timestamp": stamp}
+    if record.get("message") is not None:
+        status["message"] = record["message"]
     return {
         **base,
         "kind": "status-update",
-        "status": {"state": record["state"], "timestamp": stamp},
+        "status": status,
         "final": bool(record["final"]),
     }
 
@@ -225,9 +240,13 @@ class A2AEventLog:
         )
         if not applied:
             raise A2AEventFenceLost("the event sequence advanced elsewhere")
+        self.notify(item_id)
+        return sequence
+
+    def notify(self, item_id: str) -> None:
+        """Wake every waiting stream of the task. Waking is never correctness."""
         for waiter in tuple(self._waiters.get(item_id, ())):
             waiter.set()
-        return sequence
 
     async def _write(self, item_id: str, sequence: int, record: dict[str, Any]) -> None:
         """Write the record unless a writer with an equal or higher fence did."""
@@ -279,6 +298,18 @@ class A2AEventStream:
     ``batch`` returns the next committed events; ``wait`` blocks until a writer
     signals or the poll interval elapses. The stream is finished once it has
     returned the terminal event.
+
+    A final event is delivered only once the WorkItem itself is terminal in the
+    state the event names, so a client never sees ``completed`` on the stream
+    while ``tasks/get`` still answers ``working``. The run writes its final
+    event before it commits the result (the lease fence needs that order); the
+    reader holds the event back until the commit lands. A final event the
+    committed state contradicts (a failed commit that moved the run to
+    ``failed``, or a cancellation that won) is never delivered.
+
+    A consumer that has caught up and then falls more than ``buffer_events``
+    behind the log is cut with ``A2AEventConsumerTooSlow``: no stream ever holds
+    an unbounded backlog.
     """
 
     def __init__(
@@ -287,36 +318,78 @@ class A2AEventStream:
         lookup: Callable[[], Any],
         item_id: str,
         after_seq: int,
+        buffer_events: int = _DEFAULT_BUFFER_EVENTS,
     ) -> None:
         self._log = log
         self._lookup = lookup
         self._item_id = item_id
         self._seq = after_seq
+        self._buffer = max(1, buffer_events)
+        self._caught_up = False
         self._signal = log.subscribe(item_id)
         self.finished = False
 
     async def batch(self) -> list[dict[str, Any]]:
         self._signal.clear()
-        item = await self._lookup()
-        if item is None:
-            raise A2AEventGap("the task is no longer available")
-        records = await self._log.read(item, self._seq)
-        if records:
-            self._seq = int(records[-1]["event_seq"])
-            self.finished = any(record["final"] for record in records)
-            return records
-        if item.get("status") in _TERMINAL and self._seq == int(
-            item["metadata"].get(EVENT_SEQ_KEY, 0)
-        ):
-            await self._finish_terminal(item)
-        return []
+        while True:
+            item = await self._lookup()
+            if item is None:
+                raise A2AEventGap("the task is no longer available")
+            committed = int(item["metadata"].get(EVENT_SEQ_KEY, 0))
+            if self._caught_up and committed - self._seq > self._buffer:
+                raise A2AEventConsumerTooSlow(
+                    "the consumer fell behind the event log; resubscribe from the "
+                    "last event_seq received"
+                )
+            records = await self._log.read(
+                item, self._seq, min(_READ_BATCH, self._buffer)
+            )
+            terminal = _TERMINAL_STATE.get(str(item.get("status")))
+            delivered, held = self._deliverable(records, terminal)
+            if self._seq >= committed or held:
+                self._caught_up = True
+            if delivered or held:
+                return delivered
+            if self._seq >= committed:
+                if terminal is not None:
+                    await self._finish_terminal(terminal)
+                return []
+            if not records:
+                return []
 
-    async def _finish_terminal(self, item: Mapping[str, Any]) -> None:
-        """A terminal task with every event read must have ended on a final one."""
-        last = await self._log.store.get(_key(self._item_id, self._seq))
-        if self._seq < 1 or last is None or not last[0].get("final"):
-            raise A2AEventGap("the task is terminal without a terminal event")
-        self.finished = True
+    def _deliverable(
+        self, records: list[dict[str, Any]], terminal: str | None
+    ) -> tuple[list[dict[str, Any]], bool]:
+        """The events to send now and whether a final event is held for the commit.
+
+        The cursor moves past every event sent and every final event skipped.
+        """
+        out: list[dict[str, Any]] = []
+        for record in records:
+            if record["final"]:
+                if terminal is None:
+                    return out, True  # hold: the commit has not landed
+                self._seq = int(record["event_seq"])
+                if record["state"] != terminal:
+                    continue  # superseded or contradicted by the committed state
+                self.finished = True
+                out.append(record)
+                return out, False
+            self._seq = int(record["event_seq"])
+            out.append(record)
+        return out, False
+
+    async def _finish_terminal(self, terminal: str) -> None:
+        """A terminal task with every event read must hold a matching final event."""
+        for sequence in range(self._seq, max(0, self._seq - _READ_BATCH), -1):
+            stored = await self._log.store.get(_key(self._item_id, sequence))
+            if stored is None:
+                break
+            record = stored[0]
+            if record.get("final") and record.get("state") == terminal:
+                self.finished = True
+                return
+        raise A2AEventGap("the task is terminal without a matching terminal event")
 
     async def wait(self) -> None:
         await self._log.clock.wait(self._signal, _POLL_SECONDS)
@@ -330,11 +403,20 @@ class A2AEventStreams:
 
     ``resume_from_cursor`` opens a stream after the last ``event_seq`` the caller
     saw. A task that is absent or belongs to another caller answers ``None``.
+    ``buffer_events`` is ``a2a.stream_buffer_events``: how far behind the log a
+    caught-up consumer may fall before it is cut.
     """
 
-    def __init__(self, log: A2AEventLog, authority: Any) -> None:
+    def __init__(
+        self,
+        log: A2AEventLog,
+        authority: Any,
+        *,
+        buffer_events: int = _DEFAULT_BUFFER_EVENTS,
+    ) -> None:
         self.log = log
         self._authority = authority
+        self._buffer_events = buffer_events
 
     async def resume_from_cursor(
         self, task_id: str, after_seq: int = 0
@@ -345,5 +427,9 @@ class A2AEventStreams:
         await self.log.read(item, after_seq, 0)  # refuse a cursor ahead of the log
         item_id = str(item["work_item_id"])
         return A2AEventStream(
-            self.log, lambda: self._authority.owned_item(task_id), item_id, after_seq
+            self.log,
+            lambda: self._authority.owned_item(task_id),
+            item_id,
+            after_seq,
+            self._buffer_events,
         )

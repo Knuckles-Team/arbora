@@ -995,9 +995,9 @@ def _register_graph_tool_surface(
         )
     register_browser_control_tools(backing)
     if invocation is None:
-        register_a2a_tools(mcp, service=host.runs.a2a, tools=backing)
+        rpc_handler = register_a2a_tools(mcp, service=host.runs.a2a, tools=backing)
     else:
-        register_a2a_tools(
+        rpc_handler = register_a2a_tools(
             mcp,
             service=host.runs.a2a,
             tools=backing,
@@ -1007,7 +1007,7 @@ def _register_graph_tool_surface(
             hosted_invocation=invocation if invocation.task_plan_config else None,
             approval_chain=invocation.approval_chain,
         )
-    mount_sdk_a2a(mcp)
+    mount_sdk_a2a(mcp, stream_handler=rpc_handler)
 
 
 def _served_caller_session() -> Any:

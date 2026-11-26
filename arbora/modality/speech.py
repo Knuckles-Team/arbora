@@ -79,6 +79,7 @@ class SpeechHandler:
         self._ttl = discovery_ttl_s
         self._clock = clock
         self._found: tuple[str, str] | None = None
+        self._takes_language = False
         self._found_at = 0.0
 
     async def _provider(self) -> tuple[str, str]:
@@ -95,6 +96,7 @@ class SpeechHandler:
         for item in items:
             if is_speech_tool(item):
                 self._found = (str(item["server"]), str(item["name"]))
+                self._takes_language = "language" in item["input_schema"]["properties"]
                 self._found_at = self._clock()
                 return self._found
         raise ModalityRefused(
@@ -103,6 +105,13 @@ class SpeechHandler:
         )
 
     async def derive(self, part: MediaPart) -> Derivation:
+        return (await self.transcribe(part))[0]
+
+    async def transcribe(
+        self, part: MediaPart, language: str | None = None
+    ) -> tuple[Derivation, list[Any]]:
+        """The derivation and the provider's segments; ``language`` is a hint
+        passed only to a provider whose schema takes it."""
         duration = wav_duration_s(part.data)
         if duration is not None and duration > self._max_duration_s:
             raise ModalityRefused(
@@ -114,6 +123,8 @@ class SpeechHandler:
             "digest": f"sha256:{part.digest}",
             "media_type": part.media_type.split(";")[0].strip(),
         }
+        if language and self._takes_language:
+            arguments["language"] = language
         try:
             envelope = await self._fleet.call(server, tool, arguments)
         except FleetCallFailed as exc:
@@ -143,7 +154,7 @@ class SpeechHandler:
         if not text:
             raise ModalityRefused("TRANSCRIPTION_REFUSED", "the audio held no speech")
         segments = result.get("segments") or []
-        return Derivation(
+        derivation = Derivation(
             derivation_id=f"transcript:{part.digest}",
             kind="transcript",
             derived_from=f"media:{part.digest}",
@@ -161,3 +172,4 @@ class SpeechHandler:
                 "model": result.get("model", ""),
             },
         )
+        return derivation, list(segments) if isinstance(segments, list) else []
