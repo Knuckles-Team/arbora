@@ -119,7 +119,7 @@ async def totp_pass_through(
             decode_identity(response)
     except EngineResponseError as refused:
         if refused.code in REFUSALS:
-            return _refusal(refused)
+            return refusal_response(refused)
         return JSONResponse({"error": "UNAVAILABLE"}, status_code=503)
     except Exception:  # noqa: BLE001 - an unanswered question steps nothing up
         return JSONResponse({"error": "UNAVAILABLE"}, status_code=503)
@@ -128,7 +128,7 @@ async def totp_pass_through(
     return JSONResponse(value if isinstance(value, dict) else {"ok": True})
 
 
-def _refusal(refused: Any) -> JSONResponse:
+def refusal_response(refused: Any) -> JSONResponse:
     """The engine's closed refusal; a lockout carries the time it lifts."""
     if refused.code == "MFA_LOCKED":
         retry_at = _retry_at_ms(refused.detail)
