@@ -140,14 +140,40 @@ def _refusal_code(error: Exception) -> str:
     return str(getattr(error, "code", "")) or ""
 
 
+NOT_INITIALIZED = "IDENTITY_NOT_INITIALIZED"
+
+
+async def _config(env: Environment) -> dict[str, Any] | None:
+    """The engine ``IdentityConfig``, or ``None`` while the store is uninitialised.
+
+    ``config.get`` answers ``kind: config`` with the record (``epoch``, ``mode``,
+    ``issuer_kid_current`` ...); a fresh store refuses ``IDENTITY_NOT_INITIALIZED``.
+    """
+    try:
+        value = await env.identity("config", "get", None, "config")
+    except Exception as error:
+        if _refusal_code(error) == NOT_INITIALIZED:
+            return None
+        raise
+    return value if isinstance(value, dict) else None
+
+
+async def _users(env: Environment, limit: int) -> list[dict[str, Any]]:
+    """``user.list`` answers ``kind: users`` whose value is the list of views."""
+    try:
+        value = await env.identity("user", "list", {"limit": limit}, "users")
+    except Exception as error:
+        if _refusal_code(error) == NOT_INITIALIZED:
+            return []
+        raise
+    return list(value) if isinstance(value, list) else []
+
+
 async def claim(env: Environment, username: str) -> dict[str, Any]:
     """Claim ``usr:bootstrap`` of a fresh store and enrol its password."""
-    state = await env.identity("config", "get", None, "config")
-    if isinstance(state, dict) and state.get("initialized"):
+    if await _config(env) is not None:
         raise CommandRefused("CLAIM_ALREADY_DONE")
-    users = await env.identity("user", "list", {"limit": 1, "cursor": None}, "users")
-    listed = users.get("users") if isinstance(users, dict) else users
-    if listed:
+    if await _users(env, 1):
         raise CommandRefused("STORE_NOT_FRESH")
     await env.identity(
         "config",
@@ -157,40 +183,60 @@ async def claim(env: Environment, username: str) -> dict[str, Any]:
             "admin_password": env.prompt_password(),
             "mode": "local",
         },
-        "config",
+        "principal",
     )
     return {"principal": BOOTSTRAP_PRINCIPAL, "username": username}
 
 
 async def link_claim(env: Environment, provider: str, subject: str) -> dict[str, Any]:
-    """Link the claimed administrator to a provider identity, dry run first."""
-    provisioned = await env.identity(
-        "idp", "list_provisioned", {"idp_id": provider, "limit": 100}, "provisioned"
+    """Link the claimed administrator to a provider identity.
+
+    PIN-LAG: the engine has no ``idp.link`` dry run, so the ownership dry run
+    cannot be asked of it. The command refuses ``LINK_DRY_RUN_UNAVAILABLE``
+    until the ``dry_run`` flag of ``MEDULLA FOR ARBORA (w13)`` is served; it
+    never links without the dry run the row requires.
+    """
+    from arbora.pin_lag.unavailable import PinLagUnavailable
+
+    if not _link_dry_run_served():
+        raise CommandRefused(
+            "LINK_DRY_RUN_UNAVAILABLE", PinLagUnavailable("LinkRequest.dry_run").missing
+        )
+    plan = await env.identity(
+        "idp",
+        "link",
+        {
+            "idp_id": provider,
+            "principal_id": BOOTSTRAP_PRINCIPAL,
+            "subject": subject,
+            "dry_run": True,
+        },
+        "link_plan",
     )
-    rows = (provisioned or {}).get("items", []) if isinstance(provisioned, dict) else []
-    moved = [
-        row.get("principal_id")
-        for row in rows
-        if row.get("subject") == subject
-        and row.get("principal_id") != BOOTSTRAP_PRINCIPAL
-    ]
+    moved = (plan or {}).get("ownership_changes", []) if isinstance(plan, dict) else []
     if moved:
-        # The dry run: linking would move objects owned by another principal.
         raise CommandRefused("LINK_OWNERSHIP_CHANGES", f"{len(moved)} principal(s)")
     await env.identity(
         "idp",
         "link",
         {"idp_id": provider, "principal_id": BOOTSTRAP_PRINCIPAL, "subject": subject},
-        "link",
+        "done",
     )
     return {"provider": provider, "principal": BOOTSTRAP_PRINCIPAL}
 
 
+def _link_dry_run_served() -> bool:
+    """Whether the pinned engine's ``LinkRequest`` carries ``dry_run``."""
+    from medulla.generated import models
+
+    request = getattr(models, "LinkRequest", None)
+    return "dry_run" in getattr(request, "model_fields", {})
+
+
 async def _revoke_sessions(env: Environment) -> int:
-    users = await env.identity("user", "list", {"limit": 1000, "cursor": None}, "users")
-    rows = users.get("users", []) if isinstance(users, dict) else []
+    rows = await _users(env, 1000)
     for row in rows:
-        await env.identity("session", "revoke_all", {"id": row["id"]}, "revoked")
+        await env.identity("session", "revoke_all", {"id": row["principal_id"]}, "done")
     return len(rows)
 
 
@@ -199,11 +245,22 @@ async def transition(env: Environment, target: str) -> dict[str, Any]:
     from arbora.identity.admin_console import AdminConsoleTab, transition_mode_step
 
     transition_mode_step(AdminConsoleTab("policy"), target)
-    state = await env.identity("config", "get", None, "config")
-    if not isinstance(state, dict) or "epoch" not in state:
+    state = await _config(env)
+    if state is None or "epoch" not in state:
         raise CommandRefused("TRANSITION_PRECONDITION_FAILED", "no mode epoch")
     keys = await env.identity("token", "read_issuer_keys", None, "issuer_keys")
-    active = (keys or {}).get("active") if isinstance(keys, dict) else None
+    active = (
+        next(
+            (
+                key.get("kid")
+                for key in keys
+                if isinstance(key, dict) and key.get("state") == "active"
+            ),
+            None,
+        )
+        if isinstance(keys, list)
+        else None
+    )
     if not active:
         raise CommandRefused("TRANSITION_PRECONDITION_FAILED", "no issuer key")
     try:
@@ -214,7 +271,7 @@ async def transition(env: Environment, target: str) -> dict[str, Any]:
             "config",
         )
     except Exception as error:
-        if _refusal_code(error) == "CONFLICT":
+        if _refusal_code(error) in {"CONFLICT", "IDENTITY_EPOCH_CONFLICT"}:
             raise CommandRefused(
                 "TRANSITION_PRECONDITION_FAILED", "epoch moved"
             ) from error
@@ -230,7 +287,7 @@ async def reset_admin(env: Environment) -> dict[str, Any]:
         "token",
         "issue_admin_reset",
         {"principal_id": BOOTSTRAP_PRINCIPAL, "token": token, "ttl_ms": RESET_TTL_MS},
-        "admin_reset",
+        "reset_delivery",
     )
     env.show_once(token)
     return {
@@ -257,7 +314,7 @@ async def rotate(env: Environment) -> dict[str, Any]:
         "token",
         "rotate_issuer_key",
         {"algorithm": "EdDSA", "kid": kid, "public_key_hex": public.hex()},
-        "issuer_key",
+        "issuer_keys",
     )
     env.ring.store(
         kid,
