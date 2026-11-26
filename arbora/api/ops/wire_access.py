@@ -24,7 +24,7 @@ from arbora.api.registry import AuditClass, Confirm, Effect, OpSpec, Verb
 from arbora.pin_lag.medulla import send_main
 
 SCOPE = "identity:admin"
-SECRET_PREFIX = "wire_access/"
+STORE_PATH_ROOT = "wire_access/"
 #: The request shapes of the engine's wire-login family (engine ``main``).
 WIRE_MODELS: tuple[str, ...] = ("IdentityOpWireLoginGrant", "IdentityOpWireLoginRevoke")
 #: SCRAM-SHA-256 salted-password iteration count of the wire front end.
@@ -76,7 +76,7 @@ async def handle_wire_access_grant(
     identity = str(params["identity"])
     password = secrets.token_urlsafe(32)
     verifier = scram_verifier(password, secrets.token_bytes(16))
-    path = f"{SECRET_PREFIX}{identity}"
+    path = f"{STORE_PATH_ROOT}{identity}"
     request = {
         "kind": "Password",
         "login": identity,
@@ -117,7 +117,7 @@ async def handle_wire_access_revoke(
         idempotent=True,
         models=WIRE_MODELS,
     )
-    await store.delete(f"{SECRET_PREFIX}{identity}")
+    await store.delete(f"{STORE_PATH_ROOT}{identity}")
     revoked = dict(answer) if isinstance(answer, Mapping) else {}
     return {"value": {"identity": identity, "revoked_ms": revoked.get("revoked_ms")}}
 
