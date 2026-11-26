@@ -358,7 +358,7 @@ The failing real-boot assertion remains unchanged until the hosted serving path 
 - `ARBORA-OPS-R024.7`: Test: `tests/api/test_preferences_served.py::test_preferences_round_trip_isolate_principals_and_conflict` (served: HTTP, recording engine).
 - `ARBORA-OPS-R024.6`: Test: `tests/api/test_participant_ops_served.py::test_derivation_status_reaches_the_engine` (served: HTTP and MCP, loopback engine).
 - `ARBORA-OPS-R897`: Satisfied only when every child is satisfied. Root journey: `tests/api/test_participant_ops_served.py::test_participant_memory_journey` (served: HTTP and MCP).
-- `ARBORA-OPS-R897.1`: Test: `tests/api/test_participant_models.py::test_models_round_trip_engine_vectors` (module test). Test: `tests/api/test_memory_ops.py::test_memory_ops_still_round_trip_after_send_extraction` (served).
+- `ARBORA-OPS-R897.1`: Test: `tests/api/test_participant_ops_served.py::test_models_build_the_engine_shapes` (module test).
 - `ARBORA-OPS-R897.2`: Test: `tests/api/test_participant_ops_served.py::test_participant_put_and_member_add_round_trip` (served: HTTP and MCP) asserts replay by idempotency key and both refusal codes.
 - `ARBORA-OPS-R897.3`: Test: `tests/api/test_participant_ops_served.py::test_scope_and_observation_round_trip_with_refusals` (served).
 - `ARBORA-OPS-R897.4`: Test: `tests/api/test_participant_ops_served.py::test_turn_append_commits_and_enqueues` (served, loopback engine) and `::test_backlog_refusal_keeps_the_turn`.
