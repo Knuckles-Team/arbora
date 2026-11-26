@@ -242,7 +242,8 @@ def admit_image_capability(
         limit = capability.limit_for(file.mime_type)
         if limit is None:
             raise MediaCapabilityRefused("POLICY_DENIED", "media_type_not_accepted")
-        if len(file.decoded_bytes()) > limit:
+        # A reference carries no bytes; its size is checked when it resolves.
+        if not isinstance(file, A2AMediaRefFile) and len(file.decoded_bytes()) > limit:
             raise MediaCapabilityRefused("POLICY_DENIED", "media_part_too_large")
 
 

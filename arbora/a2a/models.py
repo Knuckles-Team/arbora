@@ -167,13 +167,15 @@ class A2AMessage(_WireModel):
         )
 
     def task_text(self) -> str:
-        return "\n".join(
-            part.text
-            if isinstance(part, A2ATextPart)
-            else part.file.decoded_bytes().decode("utf-8")
-            for part in self.parts
-            if not self._is_media(part) and not isinstance(part, A2ADataPart)
-        )
+        chunks: list[str] = []
+        for part in self.parts:
+            if isinstance(part, A2ATextPart):
+                chunks.append(part.text)
+            elif isinstance(part, A2AFilePart) and isinstance(
+                part.file, A2AInlineTextFile
+            ):
+                chunks.append(part.file.decoded_bytes().decode("utf-8"))
+        return "\n".join(chunks)
 
     def data_parts(self) -> list[dict[str, Any]]:
         """The structured data parts, in order."""

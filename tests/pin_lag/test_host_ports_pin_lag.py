@@ -121,7 +121,7 @@ def test_pinned_release_refuses_every_host_port_binding_naming_the_gap() -> None
     binding = adapters.bind_host_ports(
         engine_decision=object(), checkpoint_store=object()
     )
-    assert binding.ports is None
+    assert binding.ports is None and binding.refusal is not None
     assert binding.refusal.missing == "meristem.host_ports.HostPorts"
 
     async def call(
@@ -246,7 +246,8 @@ def test_real_path_binds_every_port_through_the_main_shape(main_shape: None) -> 
 
     asyncio.run(scenario())
     rows = adapters.bind_host_ports(engine_decision=object(), gate_runner=object())
-    assert rows.refusal is None and rows.ports.engine_decision is not None
+    assert rows.refusal is None and rows.ports is not None
+    assert rows.ports.engine_decision is not None
     unverified = adapters.changeset_submitter_factory(
         lambda run: object(), lambda: False
     )

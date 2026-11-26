@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from arbora.a2a.authority import A2AIdempotencyConflict
@@ -9,7 +11,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from tests.api._child_admission_support import AdmissionEngine, authority
 
 
-def _args(**over: object) -> dict[str, object]:
+def _args(**over: Any) -> dict[str, Any]:
     base = {
         "conversation_target": "done:1",
         "history_revision": 5,
@@ -24,8 +26,8 @@ def _args(**over: object) -> dict[str, object]:
 async def test_retry_starts_one_continuation(monkeypatch: pytest.MonkeyPatch) -> None:
     engine = AdmissionEngine()
     auth = authority(monkeypatch, engine)
-    first = await auth.admit_continuation(**_args())  # type: ignore[arg-type]
-    again = await auth.admit_continuation(**_args())  # type: ignore[arg-type]
+    first = await auth.admit_continuation(**_args())
+    again = await auth.admit_continuation(**_args())
     assert first["run_id"] == again["run_id"] and first["created"] is True
     assert again["created"] is False and engine.delivered == 1
     request = next(iter(engine.rows.values()))[1]
@@ -45,13 +47,11 @@ async def test_changed_history_or_content_conflicts(
 ) -> None:
     engine = AdmissionEngine()
     auth = authority(monkeypatch, engine)
-    await auth.admit_continuation(**_args())  # type: ignore[arg-type]
+    await auth.admit_continuation(**_args())
     with pytest.raises(A2AIdempotencyConflict):
-        await auth.admit_continuation(**_args(content="other"))  # type: ignore[arg-type]
+        await auth.admit_continuation(**_args(content="other"))
     with pytest.raises(OperationRefused) as stale:
-        await auth.admit_continuation(  # type: ignore[arg-type]
-            **_args(idempotency_key="c2", history_revision=4)
-        )
+        await auth.admit_continuation(**_args(idempotency_key="c2", history_revision=4))
     assert stale.value.code == "HISTORY_REVISION_CONFLICT"
 
 
@@ -63,12 +63,12 @@ async def test_foreign_incomplete_and_unsupported_histories_start_nothing(
     engine = AdmissionEngine()
     auth = authority(monkeypatch, engine)
     with pytest.raises(OperationRefused) as active:
-        await auth.admit_continuation(  # type: ignore[arg-type]
+        await auth.admit_continuation(
             **_args(conversation_target="child:1", history_revision=3)
         )
     assert active.value.code == "CONTINUATION_LIFECYCLE_INVALID"
     foreign = authority(monkeypatch, engine, owner="intruder")
     with pytest.raises(OperationRefused) as owner:
-        await foreign.admit_continuation(**_args())  # type: ignore[arg-type]
+        await foreign.admit_continuation(**_args())
     assert owner.value.code == "CHILD_OWNER_MISMATCH"
     assert engine.delivered == 0
