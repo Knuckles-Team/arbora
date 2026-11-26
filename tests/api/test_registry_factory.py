@@ -113,6 +113,7 @@ _CURATED_SCOPES = (
     "registry:read",
     "identity:self",
     "identity:admin",
+    "query:write",
 )
 
 _ENGINE_METHODS = {
