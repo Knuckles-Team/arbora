@@ -304,6 +304,7 @@ def test_missing_provider_contract_never_returns_partial_registry(
         get_registry()
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R020")
 def test_unapproved_provider_scope_is_not_inferred(provider: tuple[dict, Path]) -> None:
     document, _ = provider
     document["methods"][0]["policy"]["authz_action"] = "pending:classification"
