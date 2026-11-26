@@ -13,6 +13,8 @@ import dataclasses
 from types import SimpleNamespace
 from typing import Any
 
+from arbora.pin_lag.unavailable import PinLagUnavailable
+
 HOST_PORT_FIELDS: tuple[str, ...] = (
     "engine_decision",
     "decision",
@@ -40,16 +42,6 @@ _ANSWER_TYPES: tuple[str, ...] = (
 )
 
 MEDIA_METHODS: tuple[str, ...] = ("MediaPut", "MediaGet", "MediaTombstone")
-
-
-class PinLagUnavailable(RuntimeError):
-    """The pinned upstream lacks a symbol or field; ``missing`` names it."""
-
-    code = "UNAVAILABLE"
-
-    def __init__(self, missing: str) -> None:
-        self.missing = missing
-        super().__init__(f"UNAVAILABLE: the pinned release lacks {missing}")
 
 
 def _host_ports_module() -> Any:
