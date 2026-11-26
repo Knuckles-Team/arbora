@@ -19,6 +19,7 @@ check; the middleware chain decides who may connect.
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import logging
 import re
@@ -34,6 +35,7 @@ from arbora.api.errors import not_served
 from arbora.gateway.aggregator import Aggregator
 from arbora.gateway.config import ConfigManager
 from arbora.gateway.models import DashboardLayout, WidgetData
+from arbora.gateway.ports import gateway_application
 from arbora.gateway.registry import get_registry
 from arbora.security.error_surface import public_error_payload
 
@@ -259,8 +261,34 @@ async def daemon_status() -> dict[str, Any]:
 
 @dashboard_router.get("/daemon/shards")
 async def daemon_shards() -> dict[str, Any]:
-    """Return the engine shard topology and per-shard reachability."""
-    raise not_served("knowledge_graph.core.shard_topology", "MEDULLA-PLACEMENT-R611")
+    """Return the engine shard topology and per-shard reachability.
+
+    The engine's member list, reachability and snapshot epochs are returned
+    unchanged; arbora computes no route (ARBORA-OPS-R039.6).
+    """
+    from medulla.placement import PlacementStaleError
+
+    unavailable = HTTPException(status_code=503, detail={"code": "UNAVAILABLE"})
+    try:
+        engine = gateway_application().engine()
+    except Exception:
+        raise unavailable from None
+    topology = getattr(
+        getattr(engine, "placement_directory", None), "shard_topology", None
+    )
+    if not callable(topology):
+        raise unavailable
+    try:
+        if inspect.iscoroutinefunction(topology):
+            return dict(await topology())
+        return dict(await asyncio.to_thread(topology))
+    except PlacementStaleError:
+        raise HTTPException(
+            status_code=409, detail={"code": "PLACEMENT_STALE"}
+        ) from None
+    except Exception:
+        logger.warning("engine shard topology read failed", exc_info=True)
+        raise unavailable from None
 
 
 @dashboard_router.post("/daemon/start")

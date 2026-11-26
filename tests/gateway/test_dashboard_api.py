@@ -8,6 +8,7 @@ No live engine or services: the aggregator and daemon are replaced by fakes.
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -256,3 +257,117 @@ def test_daemon_status_key_sets_are_pinned(
     monkeypatch.setattr(daemon, "_engine", Engine())
     busy = client.get("/api/dashboard/daemon/status").json()
     assert {"running", "role", "threads", "jobs", "queue_depth"} <= set(busy)
+
+
+class _Directory:
+    def __init__(self, outcome: Any, *, is_async: bool) -> None:
+        self._outcome = outcome
+        if is_async:
+
+            async def shard_topology() -> dict[str, Any]:
+                return self._answer()
+
+        else:
+
+            def shard_topology() -> dict[str, Any]:  # type: ignore[misc]
+                return self._answer()
+
+        self.shard_topology = shard_topology
+
+    def _answer(self) -> dict[str, Any]:
+        if isinstance(self._outcome, BaseException):
+            raise self._outcome
+        return dict(self._outcome)
+
+
+class _App:
+    def __init__(self, engine: Any) -> None:
+        self._engine = engine
+
+    def engine(self) -> Any:
+        if self._engine is None:
+            raise RuntimeError("no engine installed")
+        return self._engine
+
+
+_SNAPSHOT = {
+    "mode": "sharded",
+    "cluster_id": "c1",
+    "membership_epoch": 3,
+    "placement_epoch": 7,
+    "groups": 2,
+    "endpoints": [
+        {
+            "endpoint": "a:1",
+            "node_id": "1",
+            "local": True,
+            "reachable": True,
+            "breaker": "closed",
+        }
+    ],
+}
+
+
+@pytest.mark.spec("ARBORA-OPS-R039.6")
+@pytest.mark.parametrize("is_async", [True, False], ids=["async", "sync-wrapper"])
+def test_daemon_shards_reads_engine_snapshot_and_refuses_when_absent(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, is_async: bool
+) -> None:
+    from medulla.placement import PlacementStaleError
+
+    def install(engine: Any) -> None:
+        monkeypatch.setattr(dashboard_api, "gateway_application", lambda: _App(engine))
+
+    url = "/api/dashboard/daemon/shards"
+    install(
+        SimpleNamespace(placement_directory=_Directory(_SNAPSHOT, is_async=is_async))
+    )
+    answered = client.get(url)
+    assert answered.status_code == 200
+    assert answered.json() == _SNAPSHOT
+
+    install(None)
+    assert client.get(url).status_code == 503
+    assert client.get(url).json()["detail"] == {"code": "UNAVAILABLE"}
+    install(SimpleNamespace())
+    assert client.get(url).status_code == 503
+    install(
+        SimpleNamespace(
+            placement_directory=_Directory(
+                PlacementStaleError("old"), is_async=is_async
+            )
+        )
+    )
+    stale = client.get(url)
+    assert stale.status_code == 409
+    assert stale.json()["detail"] == {"code": "PLACEMENT_STALE"}
+
+
+@pytest.mark.spec("ARBORA-OPS-R039.9")
+def test_capabilities_use_public_resolver_and_403_unchanged(
+    client: TestClient,
+) -> None:
+    """The resolver is arbora's own; no meristem-internal module is imported."""
+    import ast
+    import inspect as _inspect
+
+    tree = ast.parse(_inspect.getsource(dashboard_api))
+    imported = {
+        node.module or "" for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)
+    } | {
+        alias.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Import)
+        for alias in node.names
+    }
+    assert not {
+        m for m in imported if m.split(".")[0] in {"agent_utilities", "meristem"}
+    }
+
+    request = SimpleNamespace(
+        state=SimpleNamespace(user_claims={"sub": "u", "groups": []}),
+        url=SimpleNamespace(path="/api/dashboard/full"),
+    )
+    with pytest.raises(dashboard_api.HTTPException) as refused:
+        dashboard_api._require_dashboard_write(request)  # type: ignore[arg-type]
+    assert refused.value.status_code == 403
