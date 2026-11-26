@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
 from arbora.core.settings import runtime_config
 
-from .admission import ModelProfilePreference, refuse_model_profile_preference
+from .admission import (
+    ModelProfileDecision,
+    ModelProfilePreference,
+    ModelProfileUnavailable,
+)
 from .authority import A2ATaskAuthority
 from .models import (
     A2AAgentCapabilities,
@@ -53,6 +58,15 @@ class A2AService:
     #: The tool-task seam (ARBORA-A2A-R002.2.4); both unset leaves it unserved.
     tool_task_admitter: ToolTaskAdmitter | None = None
     attestation_signer: AttestationSigner | None = None
+    #: Sends a caller's profile preference to the engine ``Route`` question;
+    #: ``None`` keeps every preference refused as unavailable.
+    profile_resolver: (
+        Callable[
+            [ModelProfilePreference],
+            Awaitable[ModelProfileDecision | ModelProfileUnavailable],
+        ]
+        | None
+    ) = None
 
     async def send_message(
         self,
@@ -77,6 +91,7 @@ class A2AService:
                 calls[0],
                 idempotency_key,
             )
+        profile: dict[str, ModelProfileDecision] = {}
         attachment_size = parsed.attachment_size()
         if attachment_size:
             limit = runtime_config.max_upload_size
@@ -88,8 +103,14 @@ class A2AService:
             preference = ModelProfilePreference(
                 preferred_profile_ref=parsed.metadata["arboraModelProfile"]
             )
-            refusal = refuse_model_profile_preference(preference)
-            raise A2AAssemblyUnavailable(refusal.reason)
+            outcome = (
+                await self.profile_resolver(preference)
+                if self.profile_resolver is not None
+                else ModelProfileUnavailable()
+            )
+            if isinstance(outcome, ModelProfileUnavailable):
+                raise A2AAssemblyUnavailable(outcome.reason)
+            profile = {"model_profile": outcome}
         decision = await self.router.route(
             parsed, context_budget_tokens=context_budget_tokens
         )
@@ -98,6 +119,7 @@ class A2AService:
             idempotency_key=idempotency_key,
             decision=decision,
             blocking=blocking,
+            **profile,
         )
 
     async def _normalize_media(self, message: A2AMessage) -> A2AMessage:

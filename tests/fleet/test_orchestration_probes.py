@@ -125,3 +125,56 @@ def test_probe_find_list_containers_tool(holder, served, monkeypatch, tmp_path) 
     (tmp_path / "find.json").write_text(
         json.dumps({"question": question, "top": items})
     )
+
+
+@pytest.mark.spec("ARBORA-FLEET-R052.4.3")
+def test_probe_agent_library_listing() -> None:
+    """The Agent Library question routes to the engine's own read, not the fleet catalog."""
+    from arbora.api.mcp.resolve import IntentResolver
+
+    library = {
+        "op": "eg.storage.AgentLibrary",
+        "verb": "ask",
+        "summary": "Read the tenant Agent Library",
+        "params_schema": {"required": ["op"]},
+    }
+    catalog = {
+        "op": "fleet.catalog.list",
+        "verb": "ask",
+        "summary": "List agents tools and prompts in the fleet catalog",
+        "params_schema": {},
+    }
+    question = "Which agents are in the Agent Library?"
+    resolver = IntentResolver()
+    routed = resolver.resolve("ask", question, [catalog, library], scope_ref="s")
+    assert routed.op == "eg.storage.AgentLibrary"
+    assert routed.missing_required == ("op",)
+    assert routed.preview is False
+
+    supplied = {"op": {"operation": "current", "agent_id": "agent:a"}}
+    filled = resolver.resolve(
+        "ask", question, [catalog, library], scope_ref="s", params=supplied
+    )
+    assert filled.op == "eg.storage.AgentLibrary" and filled.missing_required == ()
+
+    # No authorized AgentLibrary read means no route: the caller lacks the scope
+    # and the fleet catalog never stands in for it.
+    hidden = resolver.resolve("ask", question, [catalog], scope_ref="s")
+    assert hidden.op != "eg.storage.AgentLibrary"
+
+
+@pytest.mark.spec("ARBORA-FLEET-R052.4.6")
+def test_probe_delegate_list_containers(holder, served, monkeypatch, tmp_path) -> None:  # noqa: F811
+    question = "Delegate: list running containers"
+    stack = _stack(holder, served, monkeypatch, {})
+    call = {"server": "container-manager", "tool": "list_containers", "arguments": {}}
+    reply = stack("act", question, call)
+    assert reply.get("ok") is True, reply
+    assert reply["meta"].get("resolved_op", "fleet.call") == "fleet.call"
+    containers = reply["result"]["value"]["structuredContent"]["containers"]
+    assert containers, "EMPTY_ANSWER"
+    assert containers == [{"id": "c1", "image": "nginx", "state": "running"}]
+    assert stack.child_calls == [("container-manager", "list_containers", {})]
+    _receipt(
+        tmp_path, "delegate-containers", question, {"premises": [], "rows": containers}
+    )
