@@ -82,6 +82,9 @@ class ArboraErrorCode(StrEnum):
     # Operator hooks (ARBORA-OPS-R009.9).
     HOOK_FAILED = "HOOK_FAILED"
     HOOK_REJECTED = "HOOK_REJECTED"
+    # The engine's decision record does not answer this request, caller or
+    # tenant (ARBORA-RELEASE-R003.4.1, ARBORA-DEPLOY-R017.1, R017.17).
+    RECEIPT_MISMATCH = "RECEIPT_MISMATCH"
 
 
 # Wire status and retry posture are part of the closed Arbora vocabulary.
@@ -147,6 +150,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.UNSCREENED_MEMORY_WRITE: 422,
     ArboraErrorCode.HOOK_FAILED: 502,
     ArboraErrorCode.HOOK_REJECTED: 422,
+    ArboraErrorCode.RECEIPT_MISMATCH: 502,
 }
 
 _RETRYABLE = frozenset(
@@ -638,6 +642,7 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.CHILD_LIMIT_EXHAUSTED: -32029,
     ArboraErrorCode.CONTINUATION_HISTORY_UNSUPPORTED: -32009,
     ArboraErrorCode.CONTINUATION_LIFECYCLE_INVALID: -32009,
+    ArboraErrorCode.RECEIPT_MISMATCH: -32603,
     ArboraErrorCode.HISTORY_REVISION_CONFLICT: -32009,
 }
 

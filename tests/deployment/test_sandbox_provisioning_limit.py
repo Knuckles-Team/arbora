@@ -36,8 +36,8 @@ def test_repeat_up_on_a_fresh_store_is_not_rate_limited(
     # Three ups inside one hour: each gets its own empty store, so the
     # per-target count starts at zero and no refusal can arise.
     for _ in range(3):
-        sandbox.up(args, hold=False)
-        assert sandbox.down(args) is True
+        sandbox.up(args, hold=False, launcher=lambda *_: 0)
+        assert sandbox.down(args, terminate=lambda pid: None) is True
 
     assert len(set(stores)) == 3
     assert not any(Path(s).exists() for s in stores)
