@@ -25,6 +25,7 @@ from arbora.api.ops import (
     governance,
     identity,
     ingest,
+    knowledge,
     memory,
     messaging,
     models,
@@ -40,6 +41,7 @@ from arbora.api.ops import (
     schema,
     security,
     skills_discovery,
+    skills_friction,
     source,
     swarm,
     telemetry,
@@ -170,11 +172,13 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *fleet.operations(),
         *identity.operations(),
         *ingest.operations(),
+        *knowledge.operations(),
         *memory.operations(),
         *messaging.operations(),
         *models.operations(),
         *security.operations(),
         *skills_discovery.operations(),
+        *skills_friction.operations(),
         *telemetry.operations(),
         *usage.operations(),
         *policy.operations(),
@@ -196,7 +200,13 @@ def test_no_argument_factory_is_deterministic_and_complete(
         "eg.query.Admin",
         "eg.query.Service",
     }
-    assert all(first[op.id] == op for op in declared)
+    from arbora.api.registry.pending_scopes import apply_pending_scopes
+
+    served, errors = apply_pending_scopes(
+        declared, {row["scope"] for row in provider[0]["scopes"]}
+    )
+    assert errors == []
+    assert all(first[op.id] == op for op in served)
 
 
 def test_only_exact_curated_method_is_suppressed(

@@ -608,9 +608,9 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R922.3` | Test: `tests/api/test_atlas_ops.py::test_runs_list_filters_by_connection_and_state` (planned, L2) |
 | `ARBORA-OPS-R922.4` | Test: `tests/api/test_prompt_ops.py::test_active_prompt_resolves_the_session_agent_and_truncates` (planned, L2) |
 | `ARBORA-OPS-R915.1` | Test: `tests/api/test_city_presence_state_served.py::test_snapshot_is_revisioned_tenant_scoped_and_heartbeat_is_subject_bound` (L3; HTTP and MCP). |
-| `ARBORA-OPS-R950` | Test: `tests/api/test_knowledge_flag_ops.py::test_raise_resolve_get_list_over_http_and_mcp_with_denied_grant` (planned) (L3). |
-| `ARBORA-OPS-R951` | Test: `tests/api/test_knowledge_curation_ops.py::test_inputs_propose_status_metrics_and_contradiction_codes_pass_through` (planned) (L3). |
-| `ARBORA-OPS-R952` | Test: `tests/api/test_skills_friction_ops.py::test_report_group_transition_and_approval_grant` (planned) (L3). |
+| `ARBORA-OPS-R950` | Test: `tests/api/test_knowledge_flag_ops.py::test_raise_resolve_get_list_over_http_and_mcp_with_denied_grant` (L3). |
+| `ARBORA-OPS-R951` | Test: `tests/api/test_knowledge_curation_ops.py::test_inputs_propose_status_metrics_and_contradiction_codes_pass_through` (L3). |
+| `ARBORA-OPS-R952` | Test: `tests/api/test_skills_friction_ops.py::test_report_group_transition_and_approval_grant` (L3). |
 | `ARBORA-OPS-R953` | Test: `tests/api/test_skills_telemetry_ingest.py::test_otlp_logs_map_to_invocations_and_unknown_attribute_refuses_all` (planned) (L3). |
 | `ARBORA-OPS-R954` | Test: `tests/api/test_skills_discovery_ops.py::test_measures_rank_find_peers_and_small_cohort_refusal` (L3). |
 | `ARBORA-OPS-R955` | Test: `tests/api/test_skills_eval_ops.py::test_case_run_report_calibrate_and_refusal_codes` (planned) (L3). |
