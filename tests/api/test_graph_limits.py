@@ -28,7 +28,9 @@ def _handler(monkeypatch: pytest.MonkeyPatch, answer: Any):
         return answer
 
     monkeypatch.setattr(graph_limits, "engine_send", send)
-    return graph_limits.handle_graph_limits_read(SimpleNamespace(), {}, None)
+    return graph_limits.handle_graph_limits_read(
+        SimpleNamespace(), {}, graph_limits.operations()[0]
+    )
 
 
 @pytest.mark.asyncio

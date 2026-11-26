@@ -56,7 +56,9 @@ def resolve_original_caller(
         state = read_delegation(request.authority_ref)
     except Exception as exc:  # noqa: BLE001 - an unreadable record grants nothing
         raise CallerAuthorityRefused(CALLER_AUTHORITY_REVOKED) from exc
-    record = state.get("record") if isinstance(state, Mapping) else None
+    if not isinstance(state, Mapping):
+        raise CallerAuthorityRefused(CALLER_AUTHORITY_REVOKED)
+    record = state.get("record")
     if not isinstance(record, Mapping):
         raise CallerAuthorityRefused(CALLER_AUTHORITY_REVOKED)
     if (

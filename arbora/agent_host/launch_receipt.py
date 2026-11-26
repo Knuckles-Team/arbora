@@ -124,7 +124,16 @@ def issue_launch_receipt(
         digest=digest,
         signature=base64.urlsafe_b64encode(raw).decode("ascii").rstrip("="),
         key_id=signer.key_id,
-        **binding,
+        tenant=grant.tenant,
+        principal=grant.principal,
+        session_ref=grant.session_ref,
+        workspace=request.workspace,
+        interfaces=request.interfaces,
+        web_logs=request.web_logs,
+        configuration_digest=request.configuration_digest,
+        policy_revision=grant.policy_revision,
+        generation=grant.revision,
+        expires_at_ms=grant.expires_at_ms,
     )
 
 

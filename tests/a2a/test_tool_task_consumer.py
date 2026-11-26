@@ -159,8 +159,8 @@ def build(
     now = [1000.0]
     consumer = ToolTaskConsumer(
         queue=queue,
-        fence=fence,  # type: ignore[arg-type]
-        dispatcher=dispatcher,  # type: ignore[arg-type]
+        fence=fence,
+        dispatcher=dispatcher,
         read_delegation=lambda ref: state if state is not None else delegation(),
         clock=lambda: now[0],
         emit=lambda event, _fields: events.append(event),
@@ -273,9 +273,9 @@ def test_claimed_elsewhere_is_skipped_not_acknowledged() -> None:
 def test_intervals_are_bounded() -> None:
     with pytest.raises(ValueError):
         ToolTaskConsumer(
-            queue=Queue(),  # type: ignore[arg-type]
-            fence=Fence(),  # type: ignore[arg-type]
-            dispatcher=Dispatcher(),  # type: ignore[arg-type]
+            queue=Queue(),
+            fence=Fence(),
+            dispatcher=Dispatcher(),
             read_delegation=lambda ref: None,
             clock=lambda: 0.0,
             poll_interval_s=0.01,
