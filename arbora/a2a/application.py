@@ -29,6 +29,11 @@ from .parts import FilePartRefused, MediaCapabilityRefused
 from .routing import A2AAssemblyUnavailable, A2AOperationBridgeUnavailable
 from .service import A2AService
 from .terminal_event import A2ATerminalEventUnavailable
+from .tool_action_admission import (
+    REFUSAL_WIRE_CODE,
+    ConfirmationKindInvalid,
+    ConfirmRefusal,
+)
 
 if TYPE_CHECKING:
     from arbora.api.http.auth import AmbientHTTPAuthenticator
@@ -328,6 +333,17 @@ def _application_error(request_id: Any, error: Exception) -> JSONResponse:
             503 if unavailable else 403,
             {"reason": error.reason},
         )
+    if isinstance(error, ConfirmRefusal):
+        # R005.6, R006.6: the reason is a closed code and the consumer treats it as deny.
+        return _error(
+            request_id,
+            REFUSAL_WIRE_CODE,
+            "confirmation refused",
+            403,
+            {"reason": error.reason},
+        )
+    if isinstance(error, ConfirmationKindInvalid):
+        return _error(request_id, -32602, error.code, 400)
     if isinstance(error, ApprovalRefused):
         # ARBORA-A2A-R005.2.5: the closed refusal code, never caller input.
         unqualified = error.code == UNQUALIFIED
@@ -476,6 +492,8 @@ async def _unary_request(
         return _authentication_error(request_id, error)
     except (
         ApprovalRefused,
+        ConfirmRefusal,
+        ConfirmationKindInvalid,
         A2AContextUnavailable,
         A2ATerminalEventUnavailable,
         A2AIdempotencyConflict,

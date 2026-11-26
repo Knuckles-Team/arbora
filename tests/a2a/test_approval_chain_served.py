@@ -30,6 +30,7 @@ from arbora.a2a.confirm import (
 )
 from arbora.a2a.grant_store import HumanGrantStore
 from arbora.a2a.service import A2AService
+from arbora.a2a.tool_action_admission import ToolActionAdmitter
 from arbora.api.invoke.plan import PlanBinding, params_digest
 from arbora.identity.approval import RegisteredApprovalKey
 from tests.a2a.test_application import Authority, Router
@@ -115,6 +116,21 @@ class Audit:
         self.entries.append(entry)
 
 
+class AdmittingDecider:
+    """The engine's ``tool_action_admission`` answer, admitting every action."""
+
+    async def decide(self, request: Any, *, tenant: str) -> dict[str, str]:
+        return {
+            "verdict": "admit",
+            "approval_ref": "approval:1",
+            "decision_ref": "decision:1",
+        }
+
+
+async def _no_audit(entry: Any) -> None:
+    return None
+
+
 def _chain(
     stack: dict[str, Any],  # noqa: F811
     keys: Keys,
@@ -138,7 +154,13 @@ def _chain(
         type("Client", (), {"control_leases": AsyncLeases(engine.control_leases)})(),
         lease_kind=LEASE_KIND,
     )
-    return ApprovalChain(store, RegisteredKeyProducer(keys), effects, audit)
+    return ApprovalChain(
+        store,
+        RegisteredKeyProducer(keys),
+        effects,
+        audit,
+        tool_actions=ToolActionAdmitter(AdmittingDecider(), _no_audit),
+    )
 
 
 def _session() -> Any:
@@ -191,6 +213,10 @@ def _body(task: str, call: str, plan_ref: str, signature: str) -> dict[str, Any]
             "pending_call_id": call,
             "plan_ref": plan_ref,
             "signature": signature,
+            "confirmation_kind": "tool_action",
+            "params_digest": _plan(HUMAN).params_digest,
+            "trust_mark_ref": "trust:mark",
+            "action_class": "egress",
         },
     }
 

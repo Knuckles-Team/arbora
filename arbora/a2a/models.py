@@ -7,7 +7,14 @@ import binascii
 import builtins
 from typing import Any, Literal, Protocol, runtime_checkable
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 from pydantic.alias_generators import to_camel
 
 __all__ = [
@@ -273,6 +280,38 @@ class A2APlanConfirmParams(_WireModel):
     pending_call_id: str = Field(min_length=1, max_length=256)
     plan_ref: str = Field(min_length=1, max_length=512)
     signature: str = Field(min_length=1, max_length=4096)
+
+
+def parse_confirmation(raw: Any) -> A2APlanConfirmParams:
+    """The closed ``confirmation_kind`` union: ``tool_action`` or ``held_item``.
+
+    A missing, unknown or mixed kind (one kind's fields on the other) is refused with
+    ``CONFIRMATION_KIND_INVALID`` before any grant is read (ARBORA-A2A-R005.3).
+    """
+    from .held_item_admission import HeldItemAdmissionRequest
+    from .tool_action_admission import (
+        ConfirmationKindInvalid,
+        ToolActionAdmissionRequest,
+    )
+
+    kind = (
+        raw.get("confirmationKind", raw.get("confirmation_kind"))
+        if isinstance(raw, dict)
+        else None
+    )
+    members: dict[str, type[A2APlanConfirmParams]] = {
+        "tool_action": ToolActionAdmissionRequest,
+        "held_item": HeldItemAdmissionRequest,
+    }
+    member = members.get(kind) if isinstance(kind, str) else None
+    if member is None:
+        raise ConfirmationKindInvalid(ConfirmationKindInvalid.code)
+    try:
+        return member.model_validate(raw)
+    except ValidationError as error:
+        if any(e["type"] == "extra_forbidden" for e in error.errors()):
+            raise ConfirmationKindInvalid(ConfirmationKindInvalid.code) from None
+        raise
 
 
 A2ATaskState = Literal[

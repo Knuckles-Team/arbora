@@ -29,7 +29,14 @@ from .approval import (
     verify_pending_signature,
 )
 from .grant_store import GrantError, GrantEvidence, HumanGrantStore
-from .models import A2APlanConfirmParams
+from .held_item_admission import HeldItemAdmissionRequest, HeldItemAdmitter
+from .models import A2APlanConfirmParams, parse_confirmation
+from .tool_action_admission import (
+    ConfirmRefusal,
+    ToolActionAdmissionRequest,
+    ToolActionAdmitter,
+    ToolActionRefusal,
+)
 
 UNQUALIFIED = "APPROVAL_CHAIN_UNQUALIFIED"
 
@@ -110,6 +117,9 @@ class ApprovalChain:
     effect: EffectRunner
     audit: AuditSink
     clock_ms: Callable[[], int] = lambda: int(time.time() * 1000)  # noqa: E731
+    #: The engine admitters of the two confirmation kinds; an absent one refuses.
+    tool_actions: ToolActionAdmitter | None = None
+    held_items: HeldItemAdmitter | None = None
 
 
 async def emit_input_required(
@@ -185,7 +195,7 @@ async def confirm_dispatch(
     Every refusal happens before the effect and leaves one audit entry with the grant id
     and the refusal code.
     """
-    confirmation = A2APlanConfirmParams.model_validate(raw_params)
+    confirmation = parse_confirmation(raw_params)
     if chain is None:
         raise ApprovalRefused(UNQUALIFIED)
     grant_id = grant_id_for(confirmation.task_id, confirmation.pending_call_id)
@@ -193,6 +203,12 @@ async def confirm_dispatch(
         view = await chain.grants.get(caller.tenant, grant_id)
         if view is None:
             # A foreign tenant's grant and an absent one answer alike.
+            raise ApprovalRefused(SignatureCheck.BINDING_MISMATCH.value)
+        if (
+            isinstance(confirmation, ToolActionAdmissionRequest)
+            and confirmation.params_digest != view.binding.plan.params_digest
+        ):
+            # The signed call is bound to its params; a changed digest is another call.
             raise ApprovalRefused(SignatureCheck.BINDING_MISMATCH.value)
         key = await chain.keys.public_key(caller.tenant, caller.principal)
         if key is None:
@@ -218,11 +234,31 @@ async def confirm_dispatch(
         await _audit(chain, confirmation, None, refusal.code)
         raise
     await _audit(chain, confirmation, consumed, "consumed")
-    result = await chain.effect(view.binding)
+    admitted, proceed = await _admit(chain, confirmation, caller.tenant)
+    result = await chain.effect(view.binding) if proceed else None
     return {
         "task_id": confirmation.task_id,
         "pending_call_id": confirmation.pending_call_id,
         "grant_id": consumed.grant_id,
         "grant_revision": consumed.grant_revision,
-        "result": dict(result),
+        "result": None if result is None else dict(result),
+        "admission": admitted,
     }
+
+
+async def _admit(
+    chain: ApprovalChain, confirmation: A2APlanConfirmParams, tenant: str
+) -> tuple[dict[str, Any], bool]:
+    """Ask the engine; only an admit lets the effect run, and any refusal denies."""
+    if isinstance(confirmation, ToolActionAdmissionRequest):
+        if chain.tool_actions is None:
+            raise ToolActionRefusal("ENGINE_UNAVAILABLE")
+        approval = await chain.tool_actions.admit(confirmation, tenant=tenant)
+        return approval.model_dump(mode="json", by_alias=True), (
+            approval.verdict == "admit"
+        )
+    assert isinstance(confirmation, HeldItemAdmissionRequest)
+    if chain.held_items is None:
+        raise ConfirmRefusal("ENGINE_UNAVAILABLE")
+    verdict = await chain.held_items.admit(confirmation, tenant=tenant)
+    return verdict.model_dump(mode="json", by_alias=True, exclude_none=True), True
