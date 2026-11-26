@@ -26,6 +26,7 @@ STATIC_SCAN_TESTS: tuple[str, ...] = (
     "tests/a2a/test_first_party_facade.py",
     "tests/control_plane/test_boundary.py",
     "tests/core/test_providers.py",
+    "tests/deployment/test_deploy_cli.py",
     "tests/deployment/test_host_config.py",
     "tests/deployment/test_real_boot_fixture.py",
     "tests/deployment/test_release_workflow_sources.py",

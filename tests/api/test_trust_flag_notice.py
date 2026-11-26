@@ -8,7 +8,6 @@ from typing import Any
 import msgpack
 import pytest
 
-from arbora.fleet import outbox_consumer
 from arbora.fleet.outbox_consumer import (
     TRUST_FLAG_TOPIC,
     consume_topic,
@@ -55,7 +54,11 @@ class Engine:
 def test_deprecation_event_notifies_reading_principals(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(outbox_consumer, "_pull_served", lambda: True)
+    from medulla.generated import models
+
+    # The structural double of a re-pinned engine: both outbox shapes declared.
+    monkeypatch.setattr(models, "MutationOutboxOpPull", object, raising=False)
+    monkeypatch.setattr(models, "MutationOutboxOpAck", object, raising=False)
     engine, notifier = Engine(["p:ann", "p:bob", "p:ann"]), Notifier()
 
     count = asyncio.run(
