@@ -76,7 +76,9 @@ class ProbeStack:
         self.gateway = gateway
         self.child_calls: list[tuple[str, str, Any]] = []
         self._mcp = FastMCP("probe")
-        mcp_runtime._register_served_intent_surface(self._mcp, invocation)
+        from tests.api._served_support import serve_verbs
+
+        serve_verbs(self._mcp, invocation)
 
     def __call__(
         self, verb: str, intent: str, params: dict[str, Any] | None = None, **x: Any

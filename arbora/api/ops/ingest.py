@@ -95,6 +95,8 @@ class IngestSyncResult(_Params):
 
 class IngestRepositoryIndexParams(_Params):
     repo_id: str = Field(min_length=1, max_length=256)
+    #: The job's working-byte grant, held in the engine ledger until the job ends.
+    max_working_bytes: int | None = Field(default=None, ge=1)
 
 
 class IngestIndexResult(_Params):

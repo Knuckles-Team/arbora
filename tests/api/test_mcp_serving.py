@@ -53,7 +53,8 @@ LIVE_CONTRACT_TOOL_NAMES = frozenset(
 )
 
 
-def test_register_intent_surface_matches_the_live_tool_contract() -> None:
+@pytest.mark.spec("ARBORA-OPS-R035.2")
+def test_register_intent_surface_registers_launchers_and_no_verb() -> None:
     from fastmcp import FastMCP
 
     mcp = FastMCP("arbora-test")
@@ -72,7 +73,15 @@ def test_register_intent_surface_matches_the_live_tool_contract() -> None:
         invoke=_unused_invoke,
     )
     names = {tool.name for tool in asyncio.run(mcp.list_tools())}
-    assert names == LIVE_CONTRACT_TOOL_NAMES
+    # The verbs are attached by ``register_mcp_tools``, the one registration path.
+    assert names == LIVE_CONTRACT_TOOL_NAMES - {
+        "ask",
+        "find",
+        "why",
+        "write",
+        "act",
+        "manage",
+    }
 
 
 class Params(BaseModel):

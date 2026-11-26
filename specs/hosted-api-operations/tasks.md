@@ -213,7 +213,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T166 ARBORA-OPS-R068.2 Lesson query. Add `harness.lessons.retrieve`.
 - [ ] T167 ARBORA-OPS-R068.3 Evolution report. Add `harness.evolution.report`.
 - [ ] T168 ARBORA-OPS-R068.4 Adoption. Add the service-only `harness.evolution.adopt`.
-- [ ] T169 ARBORA-OPS-R068.5 Registration gate. Keep `harness.*` unregistered until the engine release publishes their senders.
+- [ ] T169 ARBORA-OPS-R068.5 Registration. Register `harness.*` in the curated loop of the registry factory.
 
 
 - [ ] T170 ARBORA-OPS-R021.4.5.1.1 Compose the stateless native reader and qualify source-level authority/projection checks; retain the installed-EG acceptance blocker.
