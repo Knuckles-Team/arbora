@@ -594,6 +594,7 @@ def compose_served_invocation(
         build_operation_runtime,
         build_service_claims,
     )
+    from arbora.api.invoke.pipeline import EXTERNAL_EFFECT_OPERATIONS
     from arbora.api.invoke.plan import EgPlanStore
     from arbora.api.ops.registry_factory import get_registry
     from arbora.api.policy.eunomia import PolicyGate
@@ -717,16 +718,7 @@ def compose_served_invocation(
     # protocol endpoint (ARBORA-OPS-R857.1) is one engine mutation batch,
     # held at most once per key by the same journal.
     changes["external_effect_operations"] = frozenset(
-        op_id
-        for op_id in (
-            "fleet.call",
-            "fleet.tools.pin",
-            "fleet.tools.unpin",
-            "messaging.alert",
-            "browser.request_call",
-            "eg.graph.ApplyMutation",
-        )
-        if registry.get(op_id) is not None
+        op_id for op_id in EXTERNAL_EFFECT_OPERATIONS if registry.get(op_id) is not None
     )
     services = build_invoke_services(
         registry=registry,
@@ -740,10 +732,26 @@ def compose_served_invocation(
     )
     if step_invoke is not None:
         step_invoke.bind(services)
+    if services.hooks:
+        # ARBORA-OPS-R009.7: a hook runs through ``invoke`` as the host service
+        # principal; the tenant is the one the host session serves.
+        from arbora.api.invoke.hooks import host_hook_invoker
+        from arbora.api.mcp.caller import caller_from_session
+
+        def hook_caller(tenant: str, request_id: str) -> Any:
+            caller = caller_from_session(
+                session(), credential_kind="service", request_id=request_id
+            )
+            if caller.tenant != tenant:
+                raise PermissionError("hook runs only for the host tenant")
+            return caller
+
+        services.hooks.bind(host_hook_invoker(services, hook_caller))
     invocation = HostedInvocation(
         services=services,
         task_plan_config=task_plan_config,
         process_startup=process_startup,
+        background_services=_background_services(services, runtime, graph, session),
         authenticator=AmbientHTTPAuthenticator(
             session_for_request=verified_bearer_session_for_request
         ),
@@ -771,6 +779,41 @@ def compose_served_invocation(
         broker_claims=browser_broker_claims,
     )
     return replace(invocation, browser_boundary=boundary)
+
+
+def _background_services(
+    services: Any, runtime: Any, graph: str, session: Callable[[], Any]
+) -> tuple[Any, ...]:
+    """The host's own schedulers, each calling as the tenant's service caller.
+
+    The curator tick is ``ARBORA_CURATOR_TICK_S`` seconds; ``0`` turns the
+    scheduler off (ARBORA-OPS-R958).
+    """
+    from arbora.api.invoke.pipeline import invoke
+    from arbora.api.invoke.service_caller import ServiceCallers
+    from arbora.api.registry import Surface
+    from arbora.core.settings import setting
+    from arbora.knowledge.curator_scheduler import build_curator_scheduler
+    from arbora.mcp_server.background import SystemClock
+
+    tick_s = float(str(setting("ARBORA_CURATOR_TICK_S", "300") or "300"))
+    if tick_s <= 0:
+        return ()
+
+    async def invoke_op(op_id: str, params: Any, caller: Any, key: str) -> Any:
+        return await invoke(
+            op_id,
+            params,
+            caller,
+            Surface.MCP,
+            services=services,
+            idempotency_key=key,
+        )
+
+    callers = ServiceCallers(
+        process_session=session, runtime=runtime, graph=graph, invoke=invoke_op
+    )
+    return (build_curator_scheduler(callers, SystemClock(), tick_s=tick_s),)
 
 
 class _LeaseClient:
