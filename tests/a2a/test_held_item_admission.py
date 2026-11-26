@@ -164,3 +164,66 @@ def test_audit_entry_names_verdict_and_item() -> None:
         "verification_ref",
         "reason",
     }
+
+
+@pytest.mark.spec("ARBORA-A2A-R006.5")
+def test_confirm_dispatch_reaches_held_item_admitter() -> None:
+    """The real route's ``held_item`` branch runs the admitter exactly once."""
+    from tests.a2a._confirm_served import Served
+
+    served = Served()
+    ran: list[str] = []
+    admitter = served.chain.held_items
+    assert admitter is not None
+    original = admitter.admit
+
+    async def counted(request: Any, *, tenant: str) -> Any:
+        ran.append(request.item_ref)
+        return await original(request, tenant=tenant)
+
+    object.__setattr__(admitter, "admit", counted)
+    served.engine.answers["item"] = {
+        "type": "held_item_admission",
+        "value": {
+            "outcome": "admitted",
+            "verdict_ref": "rec:item",
+            "verification_ref": "ver:item",
+            "verifier": "v",
+            "compiler": "c",
+            "reason": None,
+        },
+    }
+    import asyncio
+
+    from medulla.generated import models
+
+    from tests.a2a.test_engine_deciders import _HeldFamily
+
+    patch = pytest.MonkeyPatch()
+    try:
+        for name, value in {
+            "ToolActionAnswer": object,
+            "HeldItemAnswer": object,
+            "FamilyAnswerHeldItemAdmission": _HeldFamily,
+            "FamilyAnswerToolActionAdmission": _HeldFamily,
+        }.items():
+            patch.setattr(models, name, value, raising=False)
+        signature = asyncio.run(served.pend("task:r", "call:item"))
+        response = served.post(
+            served.caller(),
+            {
+                "task_id": "task:r",
+                "pending_call_id": "call:item",
+                "plan_ref": "plan:one",
+                "signature": signature,
+                "confirmation_kind": "held_item",
+                "item_kind": "run_output_proposal",
+                "item_ref": "item",
+                "content_digest": "b" * 64,
+                "engine_decision_ref": "dec:item",
+            },
+        )
+    finally:
+        patch.undo()
+    assert response.status_code == 200
+    assert ran == ["item"]
