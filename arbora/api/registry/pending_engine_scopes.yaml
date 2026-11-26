@@ -7,3 +7,6 @@ pending_engine_scopes:
   - knowledge:curate
   - knowledge:flag
   - sessions:read
+  - skills:author
+  - skills:eval
+  - skills:review
