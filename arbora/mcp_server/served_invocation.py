@@ -594,6 +594,7 @@ def compose_served_invocation(
         build_operation_runtime,
         build_service_claims,
     )
+    from arbora.api.invoke.pipeline import EXTERNAL_EFFECT_OPERATIONS
     from arbora.api.invoke.plan import EgPlanStore
     from arbora.api.ops.registry_factory import get_registry
     from arbora.api.policy.eunomia import PolicyGate
@@ -717,16 +718,7 @@ def compose_served_invocation(
     # protocol endpoint (ARBORA-OPS-R857.1) is one engine mutation batch,
     # held at most once per key by the same journal.
     changes["external_effect_operations"] = frozenset(
-        op_id
-        for op_id in (
-            "fleet.call",
-            "fleet.tools.pin",
-            "fleet.tools.unpin",
-            "messaging.alert",
-            "browser.request_call",
-            "eg.graph.ApplyMutation",
-        )
-        if registry.get(op_id) is not None
+        op_id for op_id in EXTERNAL_EFFECT_OPERATIONS if registry.get(op_id) is not None
     )
     services = build_invoke_services(
         registry=registry,
