@@ -1265,7 +1265,7 @@ class HandshakeOnboarder:
         """The slow-retry edge out of ``failed``: wait for a Live lease, then retry."""
 
         while True:
-            period = SLOW_RETRY_S * (1 + 0.2 * random.random())  # noqa: S311 - jitter only
+            period = SLOW_RETRY_S * (1 + 0.2 * random.random())  # nosec B311 - jitter only, not security
             if self._sleep(period):
                 return False
             if self._lease_live():
