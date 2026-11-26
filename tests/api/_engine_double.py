@@ -13,8 +13,6 @@ from typing import Any
 
 import pytest
 
-from arbora.api.ops import operator_surface
-
 Handler = Callable[[dict[str, Any]], Any]
 
 
@@ -34,7 +32,7 @@ class EngineDouble:
         for name in models:
             self.monkeypatch.setattr(generated_models, name, object, raising=False)
 
-    def install(self, module: Any = operator_surface) -> None:
+    def install(self, module: Any) -> None:
         async def send(
             context: Any,
             method: str,

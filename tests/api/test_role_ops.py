@@ -37,7 +37,7 @@ async def test_templates_list_reads_engine_library_and_fails_closed(
         ),
         "AgentTemplateOpList",
     )
-    engine.install()
+    engine.install(surface)
     page = await surface.handle_engine(context(), {"limit": 10, "cursor": None}, listed)
     assert page == {"templates": [{"template_id": "t1"}], "next_cursor": "c2"}
     assert engine.sent[0][1]["op"]["tenant_id"] == "tenant:one"
@@ -81,7 +81,7 @@ async def test_instance_binds_template_to_profile_and_refuses_widening(
         return {"entry": {"agent_id": request["agent_id"], "entry_revision": 1}}
 
     engine.serve("AgentTemplate", template)
-    engine.install()
+    engine.install(surface)
     with pytest.raises(OperationRefused) as unset:
         await surface.handle_instance_bind(context(), params, create)
     assert unset.value.code == "PROFILE_UNSET"

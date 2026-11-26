@@ -36,7 +36,7 @@ def test_register_server_needs_plan_confirmation_and_hides_secret_values(
             "FleetServerRegistry",
             lambda params: {"name": "x", "config": {"api_token": _RAW, "url": "u"}},
         )
-        engine.install()
+        engine.install(surface)
         # A raw secret is refused by field path and the value is never echoed.
         with pytest.raises(OperationRefused) as raw:
             await surface.handle_engine(
@@ -107,7 +107,7 @@ async def test_schedule_maintenance_and_code_read_through_the_engine(
     engine.serve("MaintainStatus", lambda p: {"state": "idle", "pending": 0})
     engine.serve("Maintain", lambda p: {"evicted": 0})
     engine.serve("CodeContext", lambda p: {"items": [{"symbol": p["symbol"]}]})
-    engine.install()
+    engine.install(surface)
     monkeypatch.setattr(surface, "_now_ms", lambda: 1_000)
     calendar = await surface.handle_engine(
         context(),
