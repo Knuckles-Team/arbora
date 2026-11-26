@@ -69,9 +69,11 @@ ADMIT = {"verdict": "admit", "approval_ref": "ap:1", "decision_ref": "de:1"}
 def test_models_are_closed_and_frozen() -> None:
     request = _request()
     with pytest.raises(ValidationError):
-        request.action_class = "delegation"  # type: ignore[misc]
+        request.action_class = "delegation"
     with pytest.raises(ValidationError):
-        ToolActionApproval(verdict="maybe", approval_ref="a", decision_ref="d")
+        ToolActionApproval.model_validate(
+            {"verdict": "maybe", "approval_ref": "a", "decision_ref": "d"}
+        )
     for bad in (
         {"confirmation_kind": None},
         {"confirmation_kind": "other"},

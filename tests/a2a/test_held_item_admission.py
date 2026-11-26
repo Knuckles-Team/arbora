@@ -77,13 +77,13 @@ def _admit(answer: Any, audit: Audit | None = None, **over: Any) -> Any:
 def test_models_are_closed_and_frozen() -> None:
     request = _request()
     with pytest.raises(ValidationError):
-        request.item_ref = "x"  # type: ignore[misc]
+        request.item_ref = "x"
     with pytest.raises(ValidationError):
         _request(item_kind="other")
     with pytest.raises(ValidationError):
         _request(content_digest="short")
     with pytest.raises(ValidationError):
-        HeldItemVerdict(outcome="maybe", verdict_ref="v")
+        HeldItemVerdict.model_validate({"outcome": "maybe", "verdict_ref": "v"})
     with pytest.raises(ConfirmationKindInvalid):
         parse_confirmation(_raw(action_class="egress"))
 

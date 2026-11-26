@@ -749,8 +749,21 @@ def compose_served_invocation(
     )
     if step_invoke is not None:
         step_invoke.bind(services)
+    from arbora.a2a.chain_composition import compose_approval_chain
+    from arbora.api.invoke.eg_audit import EgAuditAdapter
+    from arbora.security.session import current_session
+
+    approval_chain = compose_approval_chain(
+        leases=_LeaseClient(PoolLeases(service_client)),
+        client=service_client,
+        graph=graph,
+        tenant=minted.tenant,
+        audit_adapter=EgAuditAdapter(audit_client),
+        current_session=current_session,
+    )
     invocation = HostedInvocation(
         services=services,
+        approval_chain=approval_chain,
         task_plan_config=task_plan_config,
         process_startup=process_startup,
         authenticator=AmbientHTTPAuthenticator(

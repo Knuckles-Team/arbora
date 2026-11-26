@@ -26,6 +26,8 @@ class HostedInvocation:
     #: authority before serving (the task-plan schema publication). No request
     #: path reaches it.
     process_startup: Callable[[], Coroutine[Any, Any, Any]] | None = None
+    #: The composed A2A human-approval chain; ``None`` leaves confirmation closed.
+    approval_chain: Any = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.services, InvokeServices) or not isinstance(
