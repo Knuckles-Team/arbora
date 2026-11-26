@@ -322,6 +322,7 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T249 ARBORA-OPS-R005 Stable auth error codes from the engine contract.
 - [ ] T250 ARBORA-OPS-R006 Consume the engine's packaged wire-callable contract.
 - [ ] T251 ARBORA-OPS-R007.1 REST request authority.
+- [x] T458 [US1] ARBORA-OPS-R007.2 One confirmation mechanism. Size: M, 1 PR, 3 hours.
 - [ ] T252 ARBORA-OPS-R010 Closed error enum and one response envelope.
 - [ ] T253 ARBORA-OPS-R011 Six resident MCP verbs with typed discovery.
 - [ ] T254 ARBORA-OPS-R012 Bounded resolver for natural-language operation lookup.

@@ -126,6 +126,7 @@ _RUNTIME_PORTS = (
     "dispatch",
 )
 _PLAN_PORTS = ("issue", "validate", "consume")
+_PLAN_GATED_CONFIRMS = frozenset({Confirm.PLAN, Confirm.CONSOLE})
 
 
 def _has_methods(owner: Any, names: tuple[str, ...]) -> bool:
@@ -187,6 +188,7 @@ class InvokeServices:
     schema_validate: SchemaValidate | None = None
 
     def __post_init__(self) -> None:
+        self._cover_plan_gated_operations()
         self._check_effect_coverage()
         object.__setattr__(self, "native_idempotency", _with_owned_idempotency(self))
         self._check_native_idempotency()
@@ -194,6 +196,26 @@ class InvokeServices:
             self, "native_idempotency", MappingProxyType(dict(self.native_idempotency))
         )
         self._check_authorities()
+
+    def _cover_plan_gated_operations(self) -> None:
+        """Put every plan-gated operation under the one confirmed-replay owner.
+
+        A consumed plan cannot prove that its effect completed, so the durable
+        effect journal is the single coordinator that settles a retry. Fleet,
+        admin and console operations all reach it through this one rule; with
+        no journal the operation refuses at the confirmation gate.
+        """
+        if self.effects is None:
+            return
+        gated = frozenset(
+            op.id for op in self.registry if op.confirm in _PLAN_GATED_CONFIRMS
+        )
+        if gated and isinstance(self.external_effect_operations, frozenset):
+            object.__setattr__(
+                self,
+                "external_effect_operations",
+                self.external_effect_operations | gated,
+            )
 
     def _check_effect_coverage(self) -> None:
         if self.effects is not None and not _has_methods(
@@ -300,7 +322,7 @@ async def _issue_plan(
 
 
 def _requires_plan(op: Any, resolved_from_intent: bool) -> bool:
-    return op.confirm in {Confirm.PLAN, Confirm.CONSOLE} or (
+    return op.confirm in _PLAN_GATED_CONFIRMS or (
         op.effect == Effect.WRITE and resolved_from_intent
     )
 

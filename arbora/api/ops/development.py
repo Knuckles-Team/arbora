@@ -21,7 +21,7 @@ from pydantic import Field, model_validator
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops._engine import engine_send, unavailable
-from arbora.api.registry import OpSpec, PrincipalRule, Verb
+from arbora.api.registry import Confirm, OpSpec, PrincipalRule, Verb
 
 READ_SCOPE = "kg:read"
 WRITE_SCOPE = "kg:write"
@@ -160,7 +160,7 @@ async def handle_project_mode_get(
 async def handle_project_mode_set(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """Change the mode. The undelegated person who calls is the operator approval."""
+    """Change the mode. The confirmed plan is the operator approval, held by that person."""
     request: dict[str, Any] = {
         "project": params["repository"],
         "mode": params["mode"],
@@ -290,6 +290,7 @@ def operations() -> tuple[OpSpec, ...]:
             handler=f"{module}.handle_project_mode_set",
             scope=WRITE_SCOPE,
             verb=Verb.MANAGE,
+            confirm=Confirm.PLAN,
             principals=PrincipalRule.HUMAN_UNDELEGATED,
         ),
         build_read_op(

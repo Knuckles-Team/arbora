@@ -579,43 +579,43 @@ def compose_served_invocation(
     if registry.get("fleet.call") is not None:
         if fleet_effect is None:
             raise ValueError("fleet.call needs the governed fleet gateway effect")
-        from arbora.mcp_server.effect_journal import EgEffectJournal
-
         changes["fleet_effect"] = fleet_effect
-        # A governed child call is reserved and recorded in EG before dispatch.
-        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+    # Every external effect, and every plan-gated one, is reserved and recorded
+    # in EG before dispatch: one coordinator settles a confirmed replay.
+    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+    from arbora.mcp_server.effect_journal import EgEffectJournal
 
-        async def control_client() -> Any:
-            # EG holds WorkItems on the tenant's control graph.
-            return await pool.connected_client(
-                connect_context(session().tenant), CONTROL_GRAPH
-            )
+    async def control_client() -> Any:
+        # EG holds WorkItems on the tenant's control graph.
+        return await pool.connected_client(
+            connect_context(session().tenant), CONTROL_GRAPH
+        )
 
-        changes["effects"] = EgEffectJournal(
-            control_client,
-            claims=lambda: connect_context(session().tenant).to_claims(),
+    changes["effects"] = EgEffectJournal(
+        control_client,
+        claims=lambda: connect_context(session().tenant).to_claims(),
+    )
+    # An alert send is an external effect too: the same journal holds it
+    # at most once per idempotency key (ARBORA-MESSAGING-R008).
+    # Awaited attended proposals share that owner; replay never sends a
+    # second browser prompt or repeats a human-approved execution.
+    # The served pin and unpin writes (ARBORA-FLEET-R059.4) share the
+    # owner as well: one session load and one durable record per
+    # idempotency key. A SPARQL update or graph-store write from the
+    # protocol endpoint (ARBORA-OPS-R857.1) is one engine mutation batch,
+    # held at most once per key by the same journal.
+    changes["external_effect_operations"] = frozenset(
+        op_id
+        for op_id in (
+            "fleet.call",
+            "fleet.tools.pin",
+            "fleet.tools.unpin",
+            "messaging.alert",
+            "browser.request_call",
+            "eg.graph.ApplyMutation",
         )
-        # An alert send is an external effect too: the same journal holds it
-        # at most once per idempotency key (ARBORA-MESSAGING-R008).
-        # Awaited attended proposals share that owner; replay never sends a
-        # second browser prompt or repeats a human-approved execution.
-        # The served pin and unpin writes (ARBORA-FLEET-R059.4) share the
-        # owner as well: one session load and one durable record per
-        # idempotency key. A SPARQL update or graph-store write from the
-        # protocol endpoint (ARBORA-OPS-R857.1) is one engine mutation batch,
-        # held at most once per key by the same journal.
-        changes["external_effect_operations"] = frozenset(
-            op_id
-            for op_id in (
-                "fleet.call",
-                "fleet.tools.pin",
-                "fleet.tools.unpin",
-                "messaging.alert",
-                "browser.request_call",
-                "eg.graph.ApplyMutation",
-            )
-            if registry.get(op_id) is not None
-        )
+        if registry.get(op_id) is not None
+    )
     services = build_invoke_services(
         registry=registry,
         runtime=runtime,
