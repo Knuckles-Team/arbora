@@ -27,6 +27,7 @@ revision that was read.
 from __future__ import annotations
 
 import asyncio
+import functools
 import hashlib
 import json
 import logging
@@ -357,7 +358,7 @@ def _dependency(kind: str, component_id: str, digest: str) -> dict[str, str]:
 _VOLATILE = frozenset({"actor_scope", "purpose_id", "policy_digest"})
 
 
-def _same_body(entry: Any, draft: Mapping[str, Any]) -> bool:
+def _same_body(entry: Any, *, draft: Mapping[str, Any]) -> bool:
     """The current entry already carries every body field of ``draft``."""
     if not isinstance(entry, Mapping):
         return False
@@ -484,7 +485,7 @@ async def publish_deployment_library(
         f"template:{_digest(template_probe['base'])}",
         build_template,
         "template",
-        lambda entry: _same_body(entry, template_probe),
+        functools.partial(_same_body, draft=template_probe),
     )
     for target in ready:
         graph_probe = graph_draft(tenant, probe, target, template_digest, pins)
@@ -501,7 +502,7 @@ async def publish_deployment_library(
             f"graph:{target}:{_digest(graph_probe['shape'])}",
             build_graph,
             "graph",
-            lambda entry, probe=graph_probe: _same_body(entry, probe),
+            functools.partial(_same_body, draft=graph_probe),
         )
         published[target] = True
     return published

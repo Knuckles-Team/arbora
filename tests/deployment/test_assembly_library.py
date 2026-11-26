@@ -18,7 +18,7 @@ from arbora.deployment import assembly_library as library  # noqa: E402
 
 pytestmark = pytest.mark.spec("ARBORA-DEPLOY-R017.20")
 
-_PARAMS = {
+_PARAMS: dict[str, Any] = {
     "AgentComponent": models.MethodAgentComponentParams,
     "AgentTemplate": models.MethodAgentTemplateParams,
     "AgentGraph": models.MethodAgentGraphParams,
@@ -38,7 +38,7 @@ class LoopbackEngine:
 
     def __init__(self) -> None:
         self.heads: dict[tuple[str, str, str], dict[str, Any]] = {}
-        self.writes: list[tuple[str, str, int | None]] = []
+        self.writes: list[tuple[str, str, Any]] = []
 
     async def send(self, method: str, params: dict[str, Any], key: str | None) -> Any:
         _PARAMS[method].model_validate(params)
