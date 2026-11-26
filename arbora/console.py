@@ -52,6 +52,10 @@ def main() -> None:
         from arbora.deployment.run import main as deploy_run_main
 
         raise SystemExit(deploy_run_main(sys.argv[3:]))
+    if sys.argv[1:3] == ["acceptance", "run"]:
+        from arbora.deployment.acceptance.runner import main as acceptance_main
+
+        raise SystemExit(acceptance_main(sys.argv[2:]))
     if sys.argv[1:3] == ["secrets", "diagnose"]:
         from arbora.security.secret_diagnostics import main as diagnose_main
 
