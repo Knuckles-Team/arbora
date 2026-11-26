@@ -18,13 +18,13 @@ import time
 from collections.abc import Mapping
 from typing import Any, Protocol, runtime_checkable
 
+import msgpack
 from pydantic import Field
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, bound_service, build_read_op, build_write_op
 from arbora.api.ops._engine import engine_send
 from arbora.api.registry import OpSpec, Verb
-from arbora.pin_lag.medulla import send_main
 
 READ_SCOPE = "bus:read"
 WRITE_SCOPE = "bus:write"
@@ -141,31 +141,36 @@ async def handle_bus_roster(
 async def handle_bus_send(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
+    """Publish to the recipient's stream; the engine's offset log is the topic."""
     await _require_recipient(context, params["recipient"])
-    answer = await send_main(
+    stream = _topic(str(context.caller.tenant), params["recipient"])
+    await engine_send(context, "StreamDeclare", {"stream": stream}, idempotent=True)
+    payload = msgpack.packb(
+        {"sender": str(context.caller.principal), "body": params["body"]}
+    )
+    answer = await engine_send(
         context,
-        "TopicAppend",
-        {
-            "topic": _topic(str(context.caller.tenant), params["recipient"]),
-            "payload": params["body"],
-            "sender": str(context.caller.principal),
-        },
+        "StreamPublish",
+        {"stream": stream, "payload": payload, "now_ms": _now_ms(context)},
         idempotent=True,
     )
-    return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
+    return {"value": {"offset": answer}}
 
 
 async def handle_bus_receive(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    request: dict[str, Any] = {
-        "topic": _topic(str(context.caller.tenant), params["session_ref"]),
-        "limit": int(params.get("limit", 50)),
-    }
-    if params.get("cursor"):
-        request["cursor"] = params["cursor"]
-    answer = await send_main(context, "TopicRead", request)
-    return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
+    """Read the session's stream from the caller's offset (``cursor``)."""
+    answer = await engine_send(
+        context,
+        "StreamRead",
+        {
+            "stream": _topic(str(context.caller.tenant), params["session_ref"]),
+            "from_offset": int(params.get("cursor") or 0),
+            "max": int(params.get("limit", 50)),
+        },
+    )
+    return {"value": {"messages": list(answer) if isinstance(answer, list) else []}}
 
 
 async def handle_bus_dispatch(
@@ -188,7 +193,7 @@ async def handle_bus_dispatch(
 NATIVE_IDEMPOTENCY: dict[str, str] = {
     "bus.register": "medulla:BusRegister",
     "bus.heartbeat": "medulla:BusHeartbeat",
-    "bus.send": "medulla:TopicAppend",
+    "bus.send": "medulla:StreamPublish",
     "bus.dispatch": "medulla:SubmitWorkItem",
 }
 

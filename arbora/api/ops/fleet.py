@@ -121,6 +121,9 @@ class FleetCallParams(_Params):
     server: str = Field(min_length=1, max_length=128)
     tool: str = Field(min_length=1, max_length=128)
     arguments: dict[str, Any] = Field(default_factory=dict)
+    #: A playbook write step cites the committed ``ConnectorWriteBack`` record (R871).
+    playbook_step_id: str | None = Field(default=None, min_length=1, max_length=256)
+    decision_record_digest: str | None = Field(default=None, max_length=128)
 
 
 class FleetPackStatusParams(_Params):
@@ -373,6 +376,30 @@ async def handle_catalog_convergence(
     return {"replicas": [generation_payload(status)]}
 
 
+async def require_step_decision(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> None:
+    """A playbook write step needs a committed record of its own step and tenant.
+
+    A missing or mismatched record refuses ``POLICY_DENIED`` with zero connector calls;
+    the engine only proposes and arbora keeps execution authority (ARBORA-OPS-R871).
+    """
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.api.ops._decide import committed_record
+
+    step = params.get("playbook_step_id")
+    if not step or op.effect == Effect.READ:
+        return
+    digest = params.get("decision_record_digest")
+    record = await committed_record(context, digest) if digest else {}
+    if record.get("kind") != "ConnectorWriteBack":
+        raise OperationRefused("POLICY_DENIED", {"reason": "step_decision_missing"})
+    if record.get("step_id") != step or str(record.get("tenant")) != str(
+        context.caller.tenant
+    ):
+        raise OperationRefused("POLICY_DENIED", {"reason": "step_decision_mismatch"})
+
+
 async def handle_fleet_call(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
@@ -387,6 +414,7 @@ async def handle_fleet_call(
     gateway = context.services.get("fleet_gateway")
     if gateway is None:
         raise RuntimeError("fleet gateway is not bound")
+    await require_step_decision(context, params, op)
     with _plan_confirmation(context, params, op):
         return await _gateway_call(gateway, context, params, op)
 
