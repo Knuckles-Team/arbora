@@ -10,6 +10,7 @@ import pytest
 from arbora.api.ops import (
     access,
     agents,
+    assistants,
     browser,
     capacity,
     catalog,
@@ -32,6 +33,7 @@ from arbora.api.ops import (
     messaging,
     models,
     ops,
+    participants,
     plans,
     policy,
     preferences,
@@ -118,6 +120,7 @@ _CURATED_SCOPES = (
     "identity:self",
     "identity:admin",
     "query:write",
+    "profile:write",
     "telemetry:write",
 )
 
@@ -169,6 +172,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
     declared = (
         *access.operations(),
         *agents.operations(),
+        *assistants.operations(),
         *browser.operations(),
         *capacity.operations(),
         *decide.operations(),
@@ -209,6 +213,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *work.operations(),
         *workstreams.operations(),
         *ops.operations(),
+        *participants.operations(),
         *plans.operations(),
         *preferences.operations(),
         *prompts.operations(),
