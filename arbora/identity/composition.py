@@ -55,6 +55,9 @@ def build_identity_ports(
     runtime_factory: Callable[[Any, Any], Any],
 ) -> IdentityPorts:
     """Construct the concrete runtime exactly once and return port-typed views."""
+    from .client_entry_points import require_verified_entry_points
+
+    require_verified_entry_points()  # ARBORA-IDENTITY-R017.2: no unsigned start-up path
     if credentials is None or sessions is None:
         raise IdentityUnavailable("authoritative identity sources required")
     runtime = _CheckedRuntime(runtime_factory(credentials, sessions))

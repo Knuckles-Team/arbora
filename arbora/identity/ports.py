@@ -32,6 +32,9 @@ class CredentialState:
 
     resolution: Resolution
     expires_at_ms: int
+    #: The opaque session reference of ``MEDULLA-IDENTITY-R708`` for a session-backed
+    #: credential (ARBORA-IDENTITY-R029.4); ``None`` for an API key or external identity.
+    session_ref: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.resolution, Resolution):

@@ -332,3 +332,38 @@ def test_process_renewal_never_touches_a_run_lease(clock: Clock, scope: Any) -> 
         asyncio.run(main())
     finally:
         bootstrap._renewed_process_actor = original
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R029.6")
+def test_renewal_stops_on_revocation_and_engine_failure(clock: Clock) -> None:
+    from arbora.security.run_authority import engine_session_check
+
+    refs = {"user:ada": "sess:one"}
+    standing = {"value": "active"}
+
+    async def liveness(reference: str) -> str:
+        assert reference == "sess:one"
+        if standing["value"] == "down":
+            raise RuntimeError("engine unreachable")
+        return standing["value"]
+
+    check = engine_session_check(liveness, lambda actor: refs.get(actor.actor_id))
+    actor = _caller(clock)
+
+    async def ask() -> str | None:
+        return await check(actor)
+
+    assert asyncio.run(ask()) is None
+    standing["value"] = "revoked"
+    assert asyncio.run(ask()) == "SESSION_REVOKED"
+    standing["value"] = "expired"
+    assert asyncio.run(ask()) == "SESSION_EXPIRED"
+    standing["value"] = "down"
+    assert (
+        asyncio.run(ask()) == "LIVENESS_UNAVAILABLE"
+    )  # an engine failure never renews
+    standing["value"] = "not_session_bound"
+    assert asyncio.run(ask()) is None
+    refs.clear()  # no session_ref claim: no check outcome, renews to lease end
+    standing["value"] = "revoked"
+    assert asyncio.run(ask()) is None

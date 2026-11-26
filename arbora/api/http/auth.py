@@ -212,6 +212,7 @@ async def verify_local_bearer_request(request: Request) -> VerifiedLocalBearer:
     No ambient identity or legacy actor/session minter is consulted here.
     """
     from arbora.security.auth import parse_bearer_authorization
+    from arbora.security.bearer import BearerRefused, precheck_bearer
     from arbora.security.request_identity import verify_local_bearer_token
 
     try:
@@ -224,7 +225,15 @@ async def verify_local_bearer_request(request: Request) -> VerifiedLocalBearer:
         )
         if token is None:
             raise PermissionError("Presented bearer required")
+
+        # The token's own checks first (ARBORA-IDENTITY-R017.5), then engine authority.
+        await precheck_bearer(token)
         return await verify_local_bearer_token(token)
+    except BearerRefused as refused:
+        error = HTTPAuthenticationError("Verified local bearer required")
+        #: 401 for every credential refusal, 503 while the authority is unreadable.
+        error.status_code = refused.status_code  # type: ignore[attr-defined]
+        raise error from None
     except PermissionError:
         raise HTTPAuthenticationError("Verified local bearer required") from None
 
