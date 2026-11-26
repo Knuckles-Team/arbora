@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import time
 from collections import OrderedDict
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -181,8 +182,14 @@ class WorkItemA2AAuthority:
         task_plan_config: Any = None,
         hosted_invocation: Any = None,
         events: Any = None,
+        delegations: Any = None,
+        clock: Callable[[], float] = time.time,
     ) -> None:
         self._engine_provider = engine_provider
+        #: Records the run's ``agent_run`` delegation at admission
+        #: (``ARBORA-A2A-R001.2.2``); ``None`` admits a run without one.
+        self.delegations = delegations
+        self.clock = clock
         #: The durable event publisher (ARBORA-A2A-R001.2); ``None`` publishes
         #: nothing and leaves streaming unserved.
         self.events = events
@@ -312,11 +319,14 @@ class WorkItemA2AAuthority:
     def _request_digest(
         message: A2AMessage, context_id: str, decision: A2ARouteDecision
     ) -> str:
+        from arbora.a2a.source_grant import bound_source_grant
         from arbora.agent_runs import native_stream_protocol
 
         protocol = native_stream_protocol()
+        grant = bound_source_grant()
         return _digest(
             {
+                **({"source_grant": grant} if grant is not None else {}),
                 **({"host_transport_protocol": protocol} if protocol else {}),
                 "context_id": context_id,
                 "decision": decision.model_dump(mode="json"),
@@ -334,10 +344,13 @@ class WorkItemA2AAuthority:
         decision: A2ARouteDecision,
         model_profile: Any = None,
     ) -> dict[str, Any]:
+        from arbora.a2a.source_grant import work_item_grant_metadata
         from arbora.agent_runs import native_stream_protocol
 
         protocol = native_stream_protocol()
         return {
+            # Only the grant the verified admission bound; never message text.
+            **work_item_grant_metadata(),
             **(
                 {
                     "a2a_model_profile": model_profile.profile,
@@ -423,6 +436,48 @@ class WorkItemA2AAuthority:
                     "idempotency key conflicts with admission"
                 ) from exc
             raise
+
+    async def _with_delegation(
+        self,
+        metadata: dict[str, Any],
+        work_engine: Any,
+        *,
+        session: Any,
+        task_id: str,
+        agent_name: str,
+    ) -> dict[str, Any]:
+        """Name the run's ``agent_run`` delegation in the item metadata.
+
+        The delegation is recorded once, at first admission: a retried admission
+        finds the item and so never re-records (which could undo a revocation).
+        """
+        if self.delegations is None:
+            return metadata
+        from arbora import work_items
+        from arbora.pin_lag.medulla import PinLagUnavailable, refusal
+
+        from .run_delegation import DELEGATION_KEY, run_delegation_id
+
+        existing = await asyncio.to_thread(
+            work_items.get_work_item, work_engine, self._work_item_id(task_id)
+        )
+        if existing is None:
+            from arbora.host_bindings import preloaded_agent_tools
+
+            try:
+                await self.delegations.record(
+                    tenant=session.tenant,
+                    principal=str(session.actor.actor_id),
+                    task_id=task_id,
+                    run_id=task_id,
+                    operations=(
+                        f"agent:{agent_name}",
+                        *(preloaded_agent_tools(agent_name) or ()),
+                    ),
+                )
+            except PinLagUnavailable as missing:
+                raise refusal(missing) from missing
+        return {**metadata, DELEGATION_KEY: run_delegation_id(task_id)}
 
     async def _publish(
         self,
@@ -589,17 +644,80 @@ class WorkItemA2AAuthority:
         )
         if claim is None:
             return None
+        return await self._run_claimed(
+            work_engine,
+            claim,
+            item_id=item_id,
+            session=session,
+            agent_name=agent_name,
+            task=task,
+            task_id=task_id,
+            context_id=context_id,
+            run_id=run_id,
+            media=media,
+        )
+
+    async def resume_reclaimed(
+        self,
+        work_engine: Any,
+        item: dict[str, Any],
+        claim: dict[str, Any],
+        *,
+        session: Any,
+    ) -> dict[str, int] | None:
+        """Resume a run whose lease expired, under the claim the consumer won.
+
+        The run restarts under the new lease fence. The harness restores the
+        run from ``EngineHostCheckpoint`` (``MERISTEM-BOUNDARY-R043.8``), and the
+        event log continues from the committed ``event_seq``: the ``working``
+        event of the first attempt is not published again.
+        """
+        metadata = item["metadata"]
+        item_id = str(item["work_item_id"])
+        route = metadata.get("a2a_route") or {}
+        agent_name = str(route.get("agent_name") or route.get("agentName") or "")
+        task_id = item_id.removeprefix(_WORK_ITEM_PREFIX)
+        return await self._run_claimed(
+            work_engine,
+            claim,
+            item_id=item_id,
+            session=session,
+            agent_name=agent_name,
+            task=str(metadata.get("description") or ""),
+            task_id=task_id,
+            context_id=str(metadata.get("a2a_context_id") or ""),
+            run_id=str(metadata.get("a2a_run_id") or task_id),
+            resumed=True,
+        )
+
+    async def _run_claimed(
+        self,
+        work_engine: Any,
+        claim: dict[str, Any],
+        *,
+        item_id: str,
+        session: Any,
+        agent_name: str,
+        task: str,
+        task_id: str,
+        context_id: str,
+        run_id: str | None,
+        media: dict[str, Any] | None = None,
+        resumed: bool = False,
+    ) -> dict[str, int] | None:
+        """Run the agent under a lease already held and commit its outcome."""
         outcome, result_ref, error_ref = "succeeded", None, None
         usage = None
         reply: str | None = None
-        await self._publish(
-            item_id,
-            claim,
-            task_id=task_id,
-            context_id=context_id,
-            kind="status-update",
-            state="working",
-        )
+        if not resumed:
+            await self._publish(
+                item_id,
+                claim,
+                task_id=task_id,
+                context_id=context_id,
+                kind="status-update",
+                state="working",
+            )
         observer = self._run_observer(
             item_id, claim, task_id=task_id, context_id=context_id
         )
@@ -1045,6 +1163,13 @@ class WorkItemA2AAuthority:
         from arbora.access.task_guard import screen_and_redact_agent_task
 
         description = screen_and_redact_agent_task(message.task_text())
+        metadata = await self._with_delegation(
+            metadata,
+            work_engine,
+            session=session,
+            task_id=task_id,
+            agent_name=decision.agent_name,
+        )
         item_id, created = await asyncio.to_thread(
             self._submit,
             work_engine,
@@ -1189,7 +1314,13 @@ class WorkItemA2AAuthority:
     @staticmethod
     def _project(item: dict[str, Any], *, task_id: str) -> A2ATask:
         raw_state = str(item.get("status") or "")
-        state = _STATE_MAP.get(raw_state)
+        from .event_log import terminal_state
+
+        state = (
+            "failed"
+            if terminal_state(item) == "failed" and raw_state == "cancelled"
+            else _STATE_MAP.get(raw_state)
+        )
         if state is None:
             raise RuntimeError("canonical WorkItem has an invalid A2A state")
         metadata = item.get("metadata")

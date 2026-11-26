@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import contextvars
 import dataclasses
+import enum
 import hashlib
 import json
 import logging
@@ -100,14 +101,90 @@ _MAX_LEASE_ATTEMPTS = 2**31 - 1
 _MAX_TENANT_IN_FLIGHT = 4096
 
 
-@dataclasses.dataclass(frozen=True)
+class IntakeLeaseState(enum.Enum):
+    """The closed states of one intake lease (ARBORA-MESSAGING-R800.1003)."""
+
+    HELD = "held"
+    SUSPECT = "suspect"
+    LOST = "lost"
+    RELEASED = "released"
+
+
+class IntakeLeaseEvent(enum.Enum):
+    """The closed events of the intake lease machine."""
+
+    HEARTBEAT_OK = "heartbeat_ok"
+    HEARTBEAT_ERR = "heartbeat_err"
+    FENCE_REFUSED = "fence_refused"
+    TTL_LAPSED = "ttl_lapsed"
+    REACQUIRED = "reacquired"
+    RELEASE = "release"
+
+
+_S = IntakeLeaseState
+_E = IntakeLeaseEvent
+#: The 12 legal edges. Every other (state, event) pair is refused.
+_LEASE_TRANSITIONS: dict[
+    tuple[IntakeLeaseState, IntakeLeaseEvent], IntakeLeaseState
+] = {
+    (_S.HELD, _E.HEARTBEAT_OK): _S.HELD,
+    (_S.HELD, _E.HEARTBEAT_ERR): _S.SUSPECT,
+    (_S.SUSPECT, _E.HEARTBEAT_OK): _S.HELD,
+    (_S.SUSPECT, _E.HEARTBEAT_ERR): _S.SUSPECT,  # guarded by within_ttl
+    (_S.HELD, _E.FENCE_REFUSED): _S.LOST,
+    (_S.SUSPECT, _E.FENCE_REFUSED): _S.LOST,
+    (_S.HELD, _E.TTL_LAPSED): _S.LOST,
+    (_S.SUSPECT, _E.TTL_LAPSED): _S.LOST,
+    (_S.LOST, _E.REACQUIRED): _S.HELD,
+    (_S.HELD, _E.RELEASE): _S.RELEASED,
+    (_S.SUSPECT, _E.RELEASE): _S.RELEASED,
+    (_S.LOST, _E.RELEASE): _S.RELEASED,
+}
+
+
+class IllegalIntakeLeaseTransition(Exception):
+    """A lease event that the machine refuses (or whose guard failed)."""
+
+    code = "INTAKE_LEASE_TRANSITION_ILLEGAL"
+    machine = "messaging_intake_lease"
+
+    def __init__(self, from_state: IntakeLeaseState, event: IntakeLeaseEvent) -> None:
+        self.from_state = from_state
+        self.event = event
+        super().__init__(
+            f"{self.code}: machine={self.machine} from_state={from_state.value} "
+            f"event={event.value}"
+        )
+
+
+@dataclasses.dataclass
 class IntakeLease:
-    """One engine-issued claim authorizing a platform's inbound poller."""
+    """One engine-issued claim authorizing a platform's inbound poller.
+
+    ``state`` is written only by :func:`transition`; the engine WorkItem row
+    stays the durable owner record.
+    """
 
     platform: str
     item_id: str
     claim: dict[str, Any]
     lease_ttl_s: float
+    state: IntakeLeaseState = IntakeLeaseState.HELD
+    last_good_s: float = dataclasses.field(default_factory=lambda: _clock())
+
+
+def transition(
+    lease: IntakeLease, event: IntakeLeaseEvent, *, within_ttl: bool = True
+) -> IntakeLeaseState:
+    """Apply ``event`` to ``lease``; the one writer of ``IntakeLease.state``."""
+    target = _LEASE_TRANSITIONS.get((lease.state, event))
+    guard_failed = (
+        lease.state is _S.SUSPECT and event is _E.HEARTBEAT_ERR and not within_ttl
+    )
+    if target is None or guard_failed:
+        raise IllegalIntakeLeaseTransition(lease.state, event)
+    lease.state = target
+    return target
 
 
 def _session_tenant(session: Any) -> str:
@@ -192,6 +269,25 @@ def acquire_intake_lease(
         tenant=tenant,
     )
 
+    answer, owner_ref = _claim(engine, platform, item_id, tenant, lease_ttl_s)
+    if not answer.get("claimed"):
+        logger.info(
+            "messaging intake lease is held by another owner: platform=%s", platform
+        )
+        return None
+    claim = {**answer, "tenant": tenant, "worker_ref": owner_ref}
+    return IntakeLease(
+        platform=platform,
+        item_id=item_id,
+        claim=claim,
+        lease_ttl_s=lease_ttl_s,
+    )
+
+
+def _claim(
+    engine: Any, platform: str, item_id: str, tenant: str, lease_ttl_s: float
+) -> tuple[dict[str, Any], str]:
+    """The one engine claim call, shared by first acquire and re-acquire."""
     owner_ref = f"messaging-intake:{platform}:{uuid.uuid4().hex}"
     answer = _work_items(engine).claim(
         {
@@ -207,18 +303,7 @@ def acquire_intake_lease(
             "max_tenant_in_flight": _MAX_TENANT_IN_FLIGHT,
         }
     )
-    if not answer.get("claimed"):
-        logger.info(
-            "messaging intake lease is held by another owner: platform=%s", platform
-        )
-        return None
-    claim = {**answer, "tenant": tenant, "worker_ref": owner_ref}
-    return IntakeLease(
-        platform=platform,
-        item_id=item_id,
-        claim=claim,
-        lease_ttl_s=lease_ttl_s,
-    )
+    return answer, owner_ref
 
 
 def acquire_intake_leases(
@@ -261,6 +346,7 @@ def acquire_intake_leases(
 def _release_intake_lease(engine: Any, lease: IntakeLease) -> None:
     """Return a healthy lease to ``ready``; expiry remains the crash fallback."""
     now_ms = _now_ms()
+    transition(lease, IntakeLeaseEvent.RELEASE)
     try:
         _work_items(engine).defer(
             tenant=lease.claim["tenant"],
@@ -299,8 +385,12 @@ def _still_leased(
     ]
 
 
-def _renew_one(engine: Any, lease: IntakeLease) -> bool:
-    """Heartbeat one lease; a renewal error counts as lost (fail closed)."""
+def _renew_one(engine: Any, lease: IntakeLease) -> IntakeLeaseEvent:
+    """Heartbeat one lease and report what happened as a machine event.
+
+    An engine refusal is ``fence_refused``; an exception is only a
+    ``heartbeat_err``, which leaves the platform polling (ARBORA-MESSAGING-R800.1004).
+    """
     try:
         answer = _work_items(engine).renew(
             tenant=lease.claim["tenant"],
@@ -311,14 +401,53 @@ def _renew_one(engine: Any, lease: IntakeLease) -> bool:
             now_ms=_now_ms(),
             lease_ms=int(lease.lease_ttl_s * 1000),
         )
-        return bool(answer.get("renewed", answer.get("ok", False)))
-    except Exception as exc:  # losing a lease must stop that platform's polling
+    except Exception as exc:  # a transient heartbeat error is not a loss
         logger.error(
             "messaging intake lease renewal failed: platform=%s error=%s",
             lease.platform,
-            exc,
+            type(exc).__name__,
+        )
+        return IntakeLeaseEvent.HEARTBEAT_ERR
+    if bool(answer.get("renewed", answer.get("ok", False))):
+        return IntakeLeaseEvent.HEARTBEAT_OK
+    return IntakeLeaseEvent.FENCE_REFUSED
+
+
+def _try_reacquire(engine: Any, lease: IntakeLease) -> bool:
+    """Claim a lost lease again through the same engine call as the first acquire."""
+    try:
+        answer, owner_ref = _claim(
+            engine,
+            lease.platform,
+            lease.item_id,
+            lease.claim["tenant"],
+            lease.lease_ttl_s,
+        )
+    except Exception as exc:  # the engine is unreachable: stay lost
+        logger.error(
+            "messaging intake re-acquire failed: platform=%s error=%s",
+            lease.platform,
+            type(exc).__name__,
         )
         return False
+    if not answer.get("claimed"):
+        return False
+    lease.claim = {**answer, "tenant": lease.claim["tenant"], "worker_ref": owner_ref}
+    lease.last_good_s = _clock()
+    return True
+
+
+def _apply_heartbeat(engine: Any, lease: IntakeLease) -> IntakeLeaseState:
+    """Heartbeat once and move the lease machine; returns the new state."""
+    event = _renew_one(engine, lease)
+    now = _clock()
+    within_ttl = now - lease.last_good_s < lease.lease_ttl_s
+    if event is IntakeLeaseEvent.HEARTBEAT_ERR and not within_ttl:
+        event = IntakeLeaseEvent.TTL_LAPSED
+    state = transition(lease, event, within_ttl=within_ttl)
+    if event is IntakeLeaseEvent.HEARTBEAT_OK:
+        lease.last_good_s = now
+    return state
 
 
 def _handle_lease_loss(
@@ -387,10 +516,16 @@ def run_with_intake_leases(
             if not still_leased:
                 return
             for lease in still_leased:
-                if not _renew_one(engine, lease):
-                    _handle_lease_loss(
-                        lease, leases, platform_stop_events, state_lock, stop_event
-                    )
+                if _apply_heartbeat(engine, lease) is not IntakeLeaseState.LOST:
+                    continue
+                # A lost lease may be won again without a restart; only a
+                # failed re-acquire drops the platform's listener.
+                if _try_reacquire(engine, lease):
+                    transition(lease, IntakeLeaseEvent.REACQUIRED)
+                    continue
+                _handle_lease_loss(
+                    lease, leases, platform_stop_events, state_lock, stop_event
+                )
 
     # threading.Thread does NOT inherit contextvars (unlike asyncio.Task), so
     # the renewal thread would otherwise run with an EMPTY context — losing
@@ -459,7 +594,11 @@ __all__ = [
     "DEFAULT_LEASE_TTL_S",
     "NativeWorkItemRequired",
     "WorkItemBackendUnavailable",
+    "IllegalIntakeLeaseTransition",
     "IntakeLease",
+    "IntakeLeaseEvent",
+    "IntakeLeaseState",
+    "transition",
     "acquire_intake_lease",
     "acquire_intake_leases",
     "run_owned_intake",

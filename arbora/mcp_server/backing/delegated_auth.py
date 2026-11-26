@@ -305,8 +305,12 @@ def exchange_token_for_agent(
     audience: str | None = None,
     scopes: str | None = None,
     timeout: int = 30,
+    requested_subject: str | None = None,
 ) -> str:
     """Exchange the caller's token for one acting on behalf of a spawned agent (RFC 8693).
+
+    ``requested_subject`` names the principal the issued token speaks for (the
+    identity provider's impersonation parameter); the acting party stays the agent.
 
     CONCEPT:MERISTEM-OS.identity.per-agent-on-behalf-delegation — the *exchange* leg of the per-agent
     on-behalf-of pipeline. The caller's token (``subject_token``, or the ambient user token
@@ -375,6 +379,7 @@ def exchange_token_for_agent(
         extra={
             "actor_token_type": "urn:ietf:params:oauth:token-type:jwt",  # nosec B105 - RFC 8693 type URN
             "act_as": label,
+            **({"requested_subject": requested_subject} if requested_subject else {}),
         },
     )
 

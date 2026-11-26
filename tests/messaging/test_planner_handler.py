@@ -9,6 +9,7 @@ import pytest
 from arbora.messaging import planner_handler
 from arbora.messaging.host_ports import bind_host_ports
 from arbora.messaging.models import EventType, InboundEvent, Message
+from arbora.messaging.sender_identity import SenderSession
 from arbora.messaging.service import MessagingService
 
 from ._fakes import FakeMessagingBackend
@@ -54,6 +55,12 @@ def turns(monkeypatch) -> list[tuple[Any, str, str]]:
 async def _handler(monkeypatch, timer, *, waiting: bool = False):
     # The sender of every test event is admitted (ARBORA-MESSAGING-R007).
     monkeypatch.setenv("MESSAGING_ALLOWED_SENDERS", "telegram:7")
+    # Each admitted sender runs under its own principal (ARBORA-MESSAGING-R007.1).
+    monkeypatch.setenv("MESSAGING_SENDER_PRINCIPALS", '{"telegram:7": "principal-7"}')
+    monkeypatch.setattr(
+        "arbora.messaging.sender_identity._exchange_for_principal",
+        lambda principal: f"token-for-{principal}",
+    )
     monkeypatch.setattr(
         MessagingService, "instance", lambda _engine=None: _Service(waiting)
     )
@@ -70,7 +77,15 @@ async def test_burst_becomes_one_turn_and_one_threaded_reply(
     await handler(_event("hello"), backend)
     await handler(_event("again"), backend)
     await timer.advance(3.0)
-    assert turns == [("engine", "hello\nagain", "messaging:telegram:42")]
+    assert turns == [
+        (
+            "engine",
+            "hello\nagain",
+            SenderSession(
+                "principal-7", "token-for-principal-7", "messaging:telegram:7"
+            ),
+        )
+    ]
     assert backend.replies == [("42", "m1", "re: hello\nagain")]
 
 

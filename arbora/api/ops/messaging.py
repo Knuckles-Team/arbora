@@ -22,6 +22,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.registry import AuditClass, Composite, Effect, HttpShape, OpSpec, Verb
 from arbora.core.settings import setting
 from arbora.messaging.alert_intake import extract_alert_text
@@ -157,8 +158,118 @@ async def handle_messaging_alert(
     ).model_dump()
 
 
+#: The engine replays each KV write by its idempotency key.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "webhook.memory.subscribe": "medulla:KvCas",
+    "webhook.memory.unsubscribe": "medulla:KvDelete",
+}
+
+
+class WebhookSubscribeParams(Params):
+    subscription_id: str = Field(min_length=1, max_length=128)
+    url: str = Field(max_length=2048)
+    secret_ref: str = Field(max_length=512)
+    topics: list[str] = Field(max_length=16)
+
+
+class WebhookUnsubscribeParams(Params):
+    subscription_id: str = Field(min_length=1, max_length=128)
+
+
+class WebhookListParams(Params):
+    pass
+
+
+class WebhookResult(Params):
+    value: dict[str, Any]
+
+
+def _store(context: Any) -> Any:
+    from arbora.api.ops import memory
+    from arbora.messaging.memory_subscriptions import SubscriptionStore
+
+    async def send(method: str, params: dict[str, Any], key: str | None) -> Any:
+        return await memory._send(context, method, params, key)
+
+    return SubscriptionStore(send)
+
+
+async def handle_webhook_subscribe(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Create or replace one memory webhook subscription of the caller's tenant."""
+    from arbora.messaging.memory_subscriptions import InvalidSubscription
+
+    del op
+    try:
+        record = await _store(context).subscribe(
+            context.caller.tenant,
+            subscription_id=params["subscription_id"],
+            url=params["url"],
+            secret_ref=params["secret_ref"],
+            topics=list(params["topics"]),
+            idempotency_key=context.idempotency_key,
+        )
+    except InvalidSubscription as invalid:
+        from arbora.api.invoke.pipeline import OperationRefused
+
+        raise OperationRefused("INVALID_ARGUMENT", {"field": invalid.field}) from None
+    return {"value": record}
+
+
+async def handle_webhook_unsubscribe(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    del op
+    removed = await _store(context).unsubscribe(
+        context.caller.tenant,
+        params["subscription_id"],
+        idempotency_key=context.idempotency_key,
+    )
+    return {"value": {"subscription_id": params["subscription_id"], "removed": removed}}
+
+
+async def handle_webhook_list(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    del params, op
+    return {
+        "value": {"subscriptions": await _store(context).list(context.caller.tenant)}
+    }
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
+        build_write_op(
+            op_id="webhook.memory.subscribe",
+            verb=Verb.MANAGE,
+            summary="Subscribe an https endpoint to memory events",
+            examples=("subscribe this url to memory events",),
+            params=WebhookSubscribeParams,
+            result=WebhookResult,
+            handler="arbora.api.ops.messaging.handle_webhook_subscribe",
+            scope="webhook:manage",
+        ),
+        build_write_op(
+            op_id="webhook.memory.unsubscribe",
+            verb=Verb.MANAGE,
+            summary="Remove a memory webhook subscription",
+            examples=("stop sending memory events to this url",),
+            params=WebhookUnsubscribeParams,
+            result=WebhookResult,
+            handler="arbora.api.ops.messaging.handle_webhook_unsubscribe",
+            scope="webhook:manage",
+        ),
+        build_read_op(
+            op_id="webhook.memory.list",
+            verb=Verb.FIND,
+            summary="List the tenant's memory webhook subscriptions",
+            examples=("list my memory webhooks",),
+            params=WebhookListParams,
+            result=WebhookResult,
+            handler="arbora.api.ops.messaging.handle_webhook_list",
+            scope="webhook:manage",
+        ),
         OpSpec(
             id="messaging.alert",
             verb=Verb.ACT,
@@ -180,6 +291,7 @@ def operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 __all__ = [
+    "NATIVE_IDEMPOTENCY",
     "MessagingAlertParams",
     "MessagingAlertResult",
     "handle_messaging_alert",

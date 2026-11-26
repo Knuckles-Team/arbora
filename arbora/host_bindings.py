@@ -91,7 +91,11 @@ def fleet_agent() -> Any:
 
 
 async def turn_handler(engine: Any, text: str, *, session: Any = "") -> str | None:
-    """Run one inbound turn on the fleet agent and return the reply text."""
+    """Run one inbound turn on the fleet agent and return the reply text.
+
+    ``session`` is the sender's ``SenderSession`` (ARBORA-MESSAGING-R007.1) for a
+    channel turn; the fleet agent runs under the principal it names.
+    """
     del engine, session
     result = await fleet_agent().run(text)
     output = getattr(result, "output", None)
