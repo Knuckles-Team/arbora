@@ -127,6 +127,12 @@ class FleetPackStatusParams(_Params):
     connector: str = Field(min_length=1, max_length=128)
 
 
+class FleetAcceptanceParams(_Params):
+    connectors: tuple[str, ...] = Field(default=(), max_length=128)
+    expected_skip: dict[str, str] = Field(default_factory=dict)
+    probes: dict[str, dict[str, Any]] = Field(default_factory=dict)
+
+
 class FleetResult(BaseModel):
     value: Any
 
@@ -212,6 +218,32 @@ async def handle_pack_status(
     if hasattr(value, "model_dump"):
         value = value.model_dump(mode="json")
     return {"value": value}
+
+
+async def handle_fleet_acceptance(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Run the four acceptance checks per connector (ARBORA-RELEASE-R003.9).
+
+    Read-only. The checks read ``fleet.status``, the engine ``ConnectorPack``
+    status, one read-only ``fleet.call`` probe and the onboarding digest
+    comparison; Arbora records nothing. ``blocked`` carries
+    ``ACCEPTANCE_BLOCKED``.
+    """
+    from arbora.fleet.acceptance import check_fleet
+    from arbora.fleet.acceptance_ports import ContextAcceptancePorts
+
+    ports = ContextAcceptancePorts(
+        context,
+        pack_status=handle_pack_status,
+        pack_op=op,
+        probes={name: dict(probe) for name, probe in params["probes"].items()},
+    )
+    connectors = tuple(params["connectors"]) or await ports.configured()
+    receipt = await check_fleet(ports, connectors, params["expected_skip"])
+    if receipt["state"] == "blocked":
+        receipt["refusal"] = "ACCEPTANCE_BLOCKED"
+    return {"value": receipt}
 
 
 async def handle_fleet_operation(
@@ -601,6 +633,17 @@ def operations() -> tuple[OpSpec, ...]:
             effect=Effect.READ,
         ),
         OpSpec(
+            id="fleet.acceptance.check",
+            verb=Verb.ASK,
+            summary="Run the four fleet acceptance checks for each connector",
+            examples=("run the fleet acceptance checks",),
+            params=FleetAcceptanceParams,
+            result=FleetResult,
+            binding=Composite(handler="arbora.api.ops.fleet.handle_fleet_acceptance"),
+            scopes=frozenset({"fleet:read"}),
+            effect=Effect.READ,
+        ),
+        OpSpec(
             id="fleet.catalog.convergence",
             verb=Verb.ASK,
             summary="Show each replica's catalog generation and convergence state",
@@ -643,6 +686,7 @@ specs = operations
 
 __all__ = [
     "ConvergenceResult",
+    "FleetAcceptanceParams",
     "FleetConvergenceParams",
     "ReplicaGeneration",
     "FleetCallParams",
@@ -663,6 +707,7 @@ __all__ = [
     "ConnectionStateResult",
     "ServiceChildOutcomeUnknown",
     "handle_connection_state",
+    "handle_fleet_acceptance",
     "handle_fleet_call",
     "handle_fleet_operation",
     "handle_pack_status",

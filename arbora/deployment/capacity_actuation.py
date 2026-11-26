@@ -14,6 +14,7 @@ import json
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
+from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import OpError
 from arbora.deployment.placement import check_receipt, single_record
@@ -111,7 +112,7 @@ async def actuate(
         code = (
             answer.removeprefix("refuse:") if answer.startswith("refuse:") else answer
         )
-        raise OperationRefused(code, {"proposal_digest": digest})
+        raise EngineRefusal(code, details={"proposal_digest": digest})
     outcome = await invoke(
         "fleet.call",
         {
