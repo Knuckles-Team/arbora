@@ -62,6 +62,8 @@ class ArboraErrorCode(StrEnum):
     # Approval refusals (ARBORA-OPS-R918.3).
     SELF_APPROVAL = "SELF_APPROVAL"
     ALREADY_DECIDED = "ALREADY_DECIDED"
+    APPROVAL_REQUIRED = "APPROVAL_REQUIRED"
+    APPROVAL_DENIED = "APPROVAL_DENIED"
 
 
 # Wire status and retry posture are part of the closed Arbora vocabulary.
@@ -110,6 +112,8 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.STALE_CURSOR: 409,
     ArboraErrorCode.SELF_APPROVAL: 403,
     ArboraErrorCode.ALREADY_DECIDED: 409,
+    ArboraErrorCode.APPROVAL_REQUIRED: 403,
+    ArboraErrorCode.APPROVAL_DENIED: 403,
 }
 
 _RETRYABLE = frozenset(

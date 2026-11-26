@@ -60,6 +60,17 @@ class ApprovalsGetResult(Params):
     item: dict[str, Any]
 
 
+class ApprovalsDigestParams(Params):
+    since_ms: int = Field(default=0, ge=0)
+    deliver: bool = False
+
+
+class ApprovalsDigestResult(Params):
+    by_class: list[dict[str, Any]]
+    cursor_ms: int
+    delivered: int = 0
+
+
 class ApprovalsDecideParams(Params):
     approval_id: str = Field(min_length=1, max_length=256)
     decision: Literal["approved", "denied"]
@@ -175,6 +186,47 @@ async def handle_approvals_get(
     return {"item": item}
 
 
+async def handle_approvals_digest(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Pending counts and the oldest age per gate class, delivered to owners on request."""
+    now_ms = _now_ms(context)
+    counts: dict[str, dict[str, Any]] = {}
+    cursor: str | None = None
+    for _ in range(_MAX_PAGES):
+        page = await _leases(context).list(
+            tenant=context.caller.tenant,
+            kind=ACTION_APPROVAL_KIND,
+            status="active",
+            cursor=cursor,
+            limit=100,
+        )
+        for lease in page.get("leases") or ():
+            item = _item(lease, now_ms)
+            issued = int(lease.get("issued_at_ms", 0) or 0)
+            if item["state"] != "pending" or issued < params["since_ms"]:
+                continue
+            row = counts.setdefault(
+                str(item["gate_class"]),
+                {"gate_class": item["gate_class"], "pending": 0, "oldest_age_ms": 0},
+            )
+            row["pending"] += 1
+            row["oldest_age_ms"] = max(row["oldest_age_ms"], now_ms - issued)
+        cursor = page.get("next_cursor")
+        if not cursor:
+            break
+    by_class = [counts[name] for name in GATE_CLASSES if name in counts]
+    delivered = 0
+    if params.get("deliver"):
+        deliver = context.services.get("approval_digest_delivery")
+        if deliver is None:
+            raise OperationRefused(
+                "UNAVAILABLE", {"reason": "no digest delivery channel is bound"}
+            )
+        delivered = await deliver(by_class)
+    return {"by_class": by_class, "cursor_ms": now_ms, "delivered": delivered}
+
+
 async def handle_approvals_decide(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
@@ -231,6 +283,15 @@ def operations() -> tuple[OpSpec, ...]:
             handler="arbora.api.ops.approvals.handle_approvals_get",
             scope="approvals:read",
         ),
+        build_read_op(
+            op_id="approvals.digest",
+            summary="Count pending approval items by gate class",
+            examples=("how many approvals are waiting",),
+            params=ApprovalsDigestParams,
+            result=ApprovalsDigestResult,
+            handler="arbora.api.ops.approvals.handle_approvals_digest",
+            scope="approvals:read",
+        ),
         build_write_op(
             op_id="approvals.decide",
             summary="Approve or deny one pending approval item",
@@ -247,6 +308,7 @@ specs = operations
 
 __all__ = [
     "handle_approvals_decide",
+    "handle_approvals_digest",
     "handle_approvals_get",
     "handle_approvals_list",
     "operations",

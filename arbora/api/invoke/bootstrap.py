@@ -41,6 +41,7 @@ from arbora.security.anonymous import admitted_actor, session_context
 
 __all__ = [
     "SessionRequiredError",
+    "build_outbox_consumers",
     "VerifiedSession",
     "build_client_factory",
     "build_invoke_services",
@@ -348,4 +349,34 @@ def build_invoke_services(
         audit_preflight=audit.preflight,
         audit_write=audit.write,
         **changes,
+    )
+
+
+def build_outbox_consumers(send: Any, notifier: Any) -> tuple[Any, ...]:
+    """The outbox consumers the serving process ticks (R855.3.1, R918.6).
+
+    ``send(method, params)`` is the bound service engine client; each consumer
+    reads one topic and notifies through ``notifier``. The engine holds each
+    cursor, so the process keeps no state between ticks.
+    """
+    from arbora.fleet.approval_notifier import (
+        APPROVALS_TOPIC,
+        approval_handler,
+        role_holders,
+    )
+    from arbora.fleet.outbox_consumer import (
+        TRUST_FLAG_TOPIC,
+        OutboxConsumer,
+        trust_flag_handler,
+    )
+
+    return (
+        OutboxConsumer(
+            TRUST_FLAG_TOPIC, "arbora-trust-flags", trust_flag_handler(send, notifier)
+        ),
+        OutboxConsumer(
+            APPROVALS_TOPIC,
+            "arbora-approvals",
+            approval_handler(role_holders(send), notifier),
+        ),
     )
