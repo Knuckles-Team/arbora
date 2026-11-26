@@ -86,3 +86,15 @@ def test_get_is_an_admin_read_with_the_model_id_in_the_body() -> None:
     assert op.effect.value == "read"
     assert op.scopes == frozenset({"ops:admin"})
     assert set(op.params.model_json_schema()["properties"]) == {"kind", "model_id"}
+
+
+@pytest.mark.spec("ARBORA-OPS-R907")
+async def test_non_admin_session_lists_chat_models(configured) -> None:
+    (op,) = (op for op in models.operations() if op.id == "models.list")
+    assert op.scopes == frozenset({"registry:read"})
+    answer = await models.handle_models_list(None, {"kind": "chat"}, op)
+    (row,) = answer["value"]["models"]
+    assert row == {"id": "org/model-a", "name": "Model A", "provider": "openai"}
+    assert (await models.handle_models_list(None, {"kind": "embedding"}, op))["value"][
+        "models"
+    ] == []
