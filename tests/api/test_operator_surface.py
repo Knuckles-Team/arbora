@@ -7,6 +7,8 @@ capability it waits on. Nothing is faked and no local state is kept.
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from pydantic import ValidationError
 
@@ -14,6 +16,10 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import operator_surface as surface
 
 _OPS = {op.id: op for op in surface.operations()}
+
+
+def _model(op: Any) -> Any:
+    return op.params
 
 
 def test_every_named_operation_is_registered_once() -> None:
@@ -49,7 +55,7 @@ def test_admin_effects_need_admin_authority_and_params_are_closed() -> None:
     assert register.principals.value == "human_undelegated"
     assert _OPS["ops.maintenance.run"].scopes == frozenset({"ops:admin"})
     with pytest.raises(ValidationError):
-        register.params(name="x", config={}, extra=1)
+        _model(register)(name="x", config={}, extra=1)
     with pytest.raises(ValidationError):
-        _OPS["code.context.read"].params(action="other")
-    assert _OPS["schedule.tasks.read"].params.model_validate({"from": "a", "to": "b"})
+        _model(_OPS["code.context.read"])(action="other")
+    assert _model(_OPS["schedule.tasks.read"]).model_validate({"from": "a", "to": "b"})

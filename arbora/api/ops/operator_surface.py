@@ -23,7 +23,7 @@ from arbora.api.registry import Effect, OpSpec, Verb
 
 _Name = (str, Field(min_length=1, max_length=256))
 _OptName = (str | None, Field(default=None, min_length=1, max_length=256))
-_Obj = (dict[str, Any], Field(default_factory=dict))
+_Obj: tuple[Any, Any] = (dict[str, Any], Field(default_factory=dict))
 _Limit = (int, Field(default=50, ge=1, le=200))
 _Cursor = (str | None, Field(default=None, max_length=1024))
 

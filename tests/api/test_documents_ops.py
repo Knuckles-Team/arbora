@@ -18,7 +18,8 @@ pytestmark = pytest.mark.spec("ARBORA-OPS-R906")
 
 class Reader:
     def __init__(self, files: dict[str, bytes], dirs: list[str]) -> None:
-        self.files, self.dirs, self.calls = files, dirs, []
+        self.files, self.dirs = files, dirs
+        self.calls: list[tuple[str, ...]] = []
 
     async def tree(self, *, repository: str, ref: str, path: str, context: Any) -> Any:
         self.calls.append(("tree", repository, ref, path))

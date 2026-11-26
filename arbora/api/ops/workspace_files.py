@@ -86,7 +86,7 @@ async def handle_files_list(
     target = resolve_under_root(root, params.get("path") or "")
     if not target.is_dir():
         raise OperationRefused("NOT_FOUND")
-    entries = []
+    entries: list[dict[str, Any]] = []
     for child in sorted(target.iterdir(), key=lambda item: item.name):
         if len(entries) >= MAX_LIST_ENTRIES:
             break
