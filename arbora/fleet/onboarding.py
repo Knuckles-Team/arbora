@@ -394,6 +394,47 @@ class FleetOnboarding:
             "changed": sorted(changed),
         }
 
+    def _check_contract(self, connector: str, pack: Any) -> None:
+        """Refuse an oversized resource before any engine call (R036.4)."""
+        from arbora.fleet.connect_contract import ContractRefused, check_resource_sizes
+
+        contract = self.surfaces[connector]["contract"]
+        contract["seed"] = "present" if contract.get("seed_digest") else "seed_absent"
+        try:
+            check_resource_sizes(pack)
+        except ContractRefused as exc:
+            contract["state"] = "contract_rejected"
+            contract["reason"] = exc.code
+            raise
+
+    async def _import_pack(self, endpoint: FleetEndpoint, pack: Any) -> None:
+        """Import one pack; an engine contract refusal marks the connector."""
+        from arbora.deployment.semantic_provisioning import import_attested_pack
+        from arbora.fleet.connect_contract import contract_rejection_code
+
+        try:
+            result = await import_attested_pack(
+                self.engine,
+                self.session,
+                client=self.tenant_client,
+                commons=self.commons_client,
+                pack=pack,
+                action_policies=self.action_policies,
+                allow_mass_withdrawal=endpoint.name in self.allow_mass_withdrawal,
+            )
+        except Exception as exc:
+            code = contract_rejection_code(exc)
+            if code is not None:
+                contract = self.surfaces[endpoint.name]["contract"]
+                contract["state"] = "contract_rejected"
+                contract["reason"] = code
+            raise
+        self.surfaces[endpoint.name]["contract"]["import_receipt"] = {
+            "result": str(getattr(result, "result", "")),
+            "pack_digest": str(getattr(result, "pack_digest", "")),
+            "binding_revision": getattr(result, "binding_revision", None),
+        }
+
     async def onboard(
         self,
         endpoint: FleetEndpoint,
@@ -415,8 +456,6 @@ class FleetOnboarding:
         rather than re-onboarded.
         """
 
-        from arbora.deployment.semantic_provisioning import import_attested_pack
-
         if trigger is not None:
             logger.info("%s: onboarding pass (%s)", endpoint.name, trigger.reason)
         capture = self.capture or capture_server_pack
@@ -424,20 +463,13 @@ class FleetOnboarding:
             pack = await capture(endpoint, auth=auth)
         self.surfaces[endpoint.name] = pack_surface_report(pack)
         self._record_contract(endpoint.name, pack)
+        self._check_contract(endpoint.name, pack)
         _remember_declaration(self.declarations, endpoint.name, pack)
         with onboarding_step("ConnectorPackStatus"):
             changed = not await self.pack_unchanged(endpoint, pack)
         if changed:
             with onboarding_step("ConnectorPackImport"):
-                await import_attested_pack(
-                    self.engine,
-                    self.session,
-                    client=self.tenant_client,
-                    commons=self.commons_client,
-                    pack=pack,
-                    action_policies=self.action_policies,
-                    allow_mass_withdrawal=endpoint.name in self.allow_mass_withdrawal,
-                )
+                await self._import_pack(endpoint, pack)
         else:
             with onboarding_step("renew"):
                 await self.renew({endpoint.name: endpoint.url})

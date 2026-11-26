@@ -61,3 +61,130 @@ async def test_multiplexer_ops_loads_the_answer_under_the_session_cap() -> None:
     result = await MultiplexerOps.load_job_answer(host, object(), answer)
     assert loaded == [("session-1", ["t1", "t2"])]
     assert result.over_cap == ("t3",)
+
+
+# --- R037.3 to R037.6: the served job find -----------------------------------
+
+from types import SimpleNamespace  # noqa: E402
+
+from arbora.api.errors import EngineRefusal  # noqa: E402
+from arbora.api.invoke.pipeline import OperationRefused  # noqa: E402
+from arbora.api.ops import fleet as fleet_ops  # noqa: E402
+from arbora.fleet import job_loads  # noqa: E402
+
+
+class _Gateway:
+    def __init__(self, cap: int = 3) -> None:
+        self.sessions = SimpleNamespace(cap=cap)
+        self.loaded: list[tuple[str, ...]] = []
+        self.searched = 0
+
+    async def load_job_answer(self, caller, answer):
+        result = job_loads.apply_load_set(answer, self.sessions.cap)
+        self.loaded.append(result.loaded)
+        return result
+
+    async def search(self, caller, **params):
+        self.searched += 1
+        return {"items": []}
+
+
+def _served(monkeypatch, response, *, error=None):
+    sent: list[dict] = []
+
+    async def send(context, method, params, **_):
+        sent.append({"method": method, "params": params})
+        if error is not None:
+            raise error
+        return response
+
+    async def graph(context):
+        return "g1"
+
+    monkeypatch.setattr("arbora.api.ops._engine.engine_send", send)
+    monkeypatch.setattr("arbora.api.invoke.bootstrap.caller_dispatch_graph", graph)
+    monkeypatch.setattr(
+        "arbora.api.ops.skills_tier._feature_schema", lambda c, t: {"features": []}
+    )
+    monkeypatch.setattr(
+        "medulla.decision_client.load_set_request",
+        lambda tenant, qid, question, schema, **_: {
+            "tenant": tenant,
+            "question": question,
+        },
+    )
+    context = SimpleNamespace(caller=SimpleNamespace(tenant="tenant:one"))
+    return context, sent
+
+
+async def _find(context, gateway, **params):
+    op = SimpleNamespace(id="fleet.catalog.search")
+    return await fleet_ops.handle_fleet_operation(context, params, op)
+
+
+@pytest.mark.spec("ARBORA-FLEET-R037.3")
+@pytest.mark.asyncio
+async def test_find_job_reaches_load_tools(monkeypatch) -> None:
+    gateway = _Gateway()
+    response = {
+        "answer": {"tools": ["web.search", "web.fetch"], "skills": [], "agents": []},
+        "decision_id": "dec-9",
+    }
+    context, sent = _served(monkeypatch, response)
+    context.services = {"fleet_gateway": gateway}
+    out = await _find(context, gateway, job_text="search the web")
+    assert gateway.loaded == [("web.search", "web.fetch")]
+    assert out["value"]["loaded"] == ["web.search", "web.fetch"]
+    assert sent[0]["method"] == "Decide"
+    assert sent[0]["params"]["request"]["tenant"] == "tenant:one"
+    assert gateway.searched == 0
+
+
+@pytest.mark.spec("ARBORA-FLEET-R037.4")
+@pytest.mark.asyncio
+async def test_job_load_refusals(monkeypatch) -> None:
+    gateway = _Gateway()
+    context, _ = _served(
+        monkeypatch, {"abstain": {"reason": "insufficient_confidence"}}
+    )
+    context.services = {"fleet_gateway": gateway}
+    out = await _find(context, gateway, job_text="job")
+    assert out["value"] == {
+        "loaded": [],
+        "abstain_reason": {"reason": "insufficient_confidence"},
+    }
+    context, _ = _served(monkeypatch, {}, error=ConnectionError("down"))
+    context.services = {"fleet_gateway": gateway}
+    out = await _find(context, gateway, job_text="job")
+    assert out["value"] == {"loaded": [], "refusal": "decision_unavailable"}
+    context, _ = _served(monkeypatch, {}, error=EngineRefusal("PARAMETER_INVALID"))
+    context.services = {"fleet_gateway": gateway}
+    with pytest.raises(EngineRefusal) as refused:
+        await _find(context, gateway, job_text="job")
+    assert refused.value.code == "PARAMETER_INVALID"
+    assert gateway.loaded == [] and gateway.searched == 0
+    with pytest.raises(OperationRefused):
+        await fleet_ops.handle_fleet_operation(
+            context, {"job_text": "x"}, SimpleNamespace(id="fleet.catalog.list")
+        )
+
+
+@pytest.mark.spec("ARBORA-FLEET-R037.5")
+@pytest.mark.asyncio
+async def test_result_cites_decision(monkeypatch) -> None:
+    gateway = _Gateway()
+    response = {
+        "answer": {
+            "tools": ["a", "b"],
+            "premises": ["load_set:component=a", {"id": "load_set:component=b"}],
+        },
+        "decision_id": "dec-3",
+    }
+    context, _ = _served(monkeypatch, response)
+    context.services = {"fleet_gateway": gateway}
+    out = (await _find(context, gateway, job_text="job"))["value"]
+    assert out["decision_id"] == "dec-3"
+    assert out["premises"] == {
+        "a": "load_set:component=a",
+        "b": "load_set:component=b",
+    }
