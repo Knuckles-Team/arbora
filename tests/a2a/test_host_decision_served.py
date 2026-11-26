@@ -141,6 +141,7 @@ def _post(service: Any, *, agent: str | None, budget: int | None) -> Any:
 
 
 @pytest.mark.spec("ARBORA-A2A-R017.5")
+@pytest.mark.spec("ARBORA-A2A-R017.6")
 @pytest.mark.spec("ARBORA-A2A-R023")
 def test_a_budgeted_message_admits_through_the_host_composition() -> None:
     engine = Engine()

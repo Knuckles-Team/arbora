@@ -171,8 +171,14 @@ def _engine(chosen: str, *, refused: bool):
     import hashlib
 
     async def decide(request):
+        preferred = request["params"][0]["value"]["value"]
         premises = (
-            [{"subject": "PREFERENCE_NOT_LEGAL", "claim": "preference_not_honoured"}]
+            [
+                {
+                    "subject": "PREFERENCE_NOT_LEGAL",
+                    "fact": f"preference_not_honoured:{preferred}",
+                }
+            ]
             if refused
             else []
         )
@@ -195,6 +201,7 @@ def _engine(chosen: str, *, refused: bool):
     return decide
 
 
+@pytest.mark.spec("ARBORA-A2A-R016.6")
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("preferred", "chosen", "refused", "honoured"),
@@ -215,6 +222,7 @@ async def test_engine_decides_the_preference(preferred, chosen, refused, honoure
     assert result == ModelProfileDecision(profile=chosen, preference_honoured=honoured)
 
 
+@pytest.mark.spec("ARBORA-A2A-R016.6")
 @pytest.mark.asyncio
 async def test_unbound_or_failed_decision_grants_no_profile():
     async def broken(request):
@@ -229,3 +237,61 @@ async def test_unbound_or_failed_decision_grants_no_profile():
         feature_schema=SCHEMA,
     )
     assert result.status == "unavailable" and result.reason == "INVALID_DECISION"
+
+
+@pytest.mark.spec("ARBORA-A2A-R016.6")
+@pytest.mark.asyncio
+async def test_preference_allowed_disallowed_absent():
+    """Allowed is honoured, disallowed carries the engine's premise, absent asks nothing.
+
+    The engine is a scripted ``Decide`` returning records shaped as the route family
+    seals them (``premises[].fact == "preference_not_honoured:<option>"``); this proves
+    Arbora's reading and refusal handling, not the engine's ranking.
+    """
+    asked: list[dict] = []
+
+    def counting(engine):
+        async def decide(request):
+            asked.append(request)
+            return await engine(request)
+
+        return decide
+
+    kwargs = dict(
+        tenant="t", principal="user:alice", profiles=PROFILES, feature_schema=SCHEMA
+    )
+    allowed = await resolve_model_profile(
+        counting(_engine("profile-two", refused=False)),
+        ModelProfilePreference(preferred_profile_ref="profile-two"),
+        **kwargs,
+    )
+    assert allowed == ModelProfileDecision(
+        profile="profile-two", preference_honoured=True
+    )
+    disallowed = await resolve_model_profile(
+        counting(_engine("profile-one", refused=True)),
+        ModelProfilePreference(preferred_profile_ref="profile-two"),
+        **kwargs,
+    )
+    assert disallowed == ModelProfileDecision(
+        profile="profile-one", preference_honoured=False
+    )
+    assert len(asked) == 2
+    absent = await resolve_model_profile(
+        counting(_engine("profile-one", refused=False)),
+        ModelProfilePreference(preferred_profile_ref=None),
+        **kwargs,
+    )
+    assert absent.status == "unavailable" and len(asked) == 2  # no engine call
+    # A code named only in free text is not the engine's premise.
+    forged = _engine("profile-one", refused=False)
+
+    async def noisy(request):
+        batch = await forged(request)
+        batch["records"][0]["inputs"]["note"] = "PREFERENCE_NOT_LEGAL"
+        return batch
+
+    result = await resolve_model_profile(
+        noisy, ModelProfilePreference(preferred_profile_ref="profile-one"), **kwargs
+    )
+    assert result.preference_honoured is True
