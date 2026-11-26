@@ -27,7 +27,8 @@ class Notifier:
 
 class Engine:
     def __init__(self, readers: list[str]) -> None:
-        self.readers, self.calls, self.acked = readers, [], 0
+        self.readers, self.acked = readers, 0
+        self.calls: list[Any] = []
         event = {"asset": "asset:orders", "flag": "deprecation"}
         self.lease = {
             "record": {

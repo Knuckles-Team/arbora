@@ -74,7 +74,8 @@ class Fleet:
     """The bound step pipeline: the live-state read, node calls and deployment.record."""
 
     def __init__(self, live: list[dict[str, Any]]) -> None:
-        self.live, self.calls = live, []
+        self.live = live
+        self.calls: list[Any] = []
         self.fail_record = False
         self.write_tool = False
 
