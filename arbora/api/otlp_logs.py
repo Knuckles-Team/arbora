@@ -10,6 +10,7 @@ derives it from the verified principal for a human caller.
 from __future__ import annotations
 
 import hashlib
+import json
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -102,3 +103,9 @@ def events_from_logs(
     if len(records) > MAX_RECORDS:
         raise TelemetryFieldUnknown("too many records")
     return [_event(tenant, record) for record in records]
+
+
+def body_key(params: Mapping[str, Any]) -> str:
+    """An idempotency key for an exporter that sends none: the body's digest."""
+    canonical = json.dumps(params, sort_keys=True, separators=(",", ":"))
+    return "otlp:" + hashlib.sha256(canonical.encode()).hexdigest()

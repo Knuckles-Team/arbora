@@ -19,7 +19,7 @@ from arbora.api.ops._common import Params, build_write_op
 from arbora.api.ops._engine import engine_graph_op
 from arbora.api.ops.knowledge import EngineReply
 from arbora.api.otlp_logs import MAX_RECORDS, TelemetryFieldUnknown, events_from_logs
-from arbora.api.registry import OpSpec, Verb
+from arbora.api.registry import HttpShape, OpSpec, Verb
 
 SCOPE = "telemetry:write"
 NATIVE_IDEMPOTENCY: dict[str, str] = {
@@ -60,6 +60,7 @@ def operations() -> tuple[OpSpec, ...]:
             result=EngineReply,
             handler="arbora.api.ops.skills_telemetry.handle_skill_telemetry_ingest",
             scope=SCOPE,
+            http=HttpShape(method="POST", path="/api/v1/logs"),
         ),
     )
 
