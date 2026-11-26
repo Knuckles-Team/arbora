@@ -30,18 +30,17 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
 
+from arbora.harness_plugins.profiles import native_redirect_uris
+
 logger = logging.getLogger(__name__)
 
 #: The configuration key: a JSON object (see :class:`ContractConfig`).
 CONFIG_KEY = "ARBORA_IDENTITY_CLIENT_CONTRACT"
 
-#: The default loopback callbacks of the native coding clients: a fixed
-#: ``--callback-port`` of one client, and the fixed remote-MCP OAuth callback of
-#: the other. Configuration replaces them (``native_redirect_uris``).
-DEFAULT_NATIVE_REDIRECT_URIS: tuple[str, ...] = (
-    "http://localhost:33418/callback",
-    "http://127.0.0.1:19876/mcp/oauth/callback",
-)
+#: The default loopback callbacks of the native coding clients: the callback of each
+#: harness profile (``arbora/harness_plugins/profiles.py``). Configuration replaces
+#: them (``native_redirect_uris``); no second list remains (ARBORA-IDENTITY-R030.4.7).
+DEFAULT_NATIVE_REDIRECT_URIS: tuple[str, ...] = native_redirect_uris()
 DEFAULT_NATIVE_CLIENT_ID = "arbora-native-mcp"
 #: The confidential client of a hosted coding agent (ARBORA-HARNESS-PLUGINS-R010.2).
 #: It exists only when the deployment configures the vendor redirect.
@@ -57,6 +56,7 @@ NATIVE_DEFAULT_SCOPES: tuple[str, ...] = (
     "offline_access",
     "profile",
     "email",
+    *WORKSTREAM_SCOPES,
 )
 #: Client scopes arbora requires to exist. ``mcp-fleet`` is shared with other
 #: clients, so arbora only ensures it exists and never adds a mapper to it.
@@ -218,7 +218,7 @@ def build_contract(config: ContractConfig) -> ClientContract:
                 client_id=HOSTED_CLIENT_ID,
                 name="Hosted coding agents",
                 redirect_uris=config.hosted_redirect_uris,
-                default_scopes=(*NATIVE_DEFAULT_SCOPES, *WORKSTREAM_SCOPES),
+                default_scopes=NATIVE_DEFAULT_SCOPES,
                 public=False,
             )
         )

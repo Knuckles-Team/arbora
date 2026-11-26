@@ -64,12 +64,22 @@ def _outcome_response(
     )
 
 
+def _mount_scim(app: FastAPI, scim_ports: Any) -> None:
+    """ARBORA-IDENTITY-R011.2.4: the SCIM Users resource at its declared protocol path."""
+    if scim_ports is None:
+        return
+    from arbora.identity.scim_routes import scim_app
+
+    app.mount("/scim/v2", scim_app(scim_ports))
+
+
 def create_api_application(
     *,
     services: Any,
     visibility: Visibility,
     authenticator: Any,
     invoke: Invoke,
+    scim_ports: Any = None,
 ) -> FastAPI:
     """Create an isolated sub-app with explicit shared authority dependencies.
 
@@ -92,6 +102,7 @@ def create_api_application(
         auth if isinstance(auth, BoundBrowserHTTPAuthenticator) else None
     )
     app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
+    _mount_scim(app, scim_ports)
     from fastapi.exceptions import RequestValidationError
     from starlette.exceptions import HTTPException
 
