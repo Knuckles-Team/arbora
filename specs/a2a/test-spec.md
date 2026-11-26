@@ -208,16 +208,16 @@ Rows below name tests that are planned or only partly built. Each entry restates
 | A2A-PL13 | ARBORA-A2A-R001.5.7 | Test: `tests/a2a/test_media_admission.py::test_run_request_carries_attachments_capability_and_fallback_mode` (served). |
 | A2A-PL14 | ARBORA-A2A-R001.5.8 | Test: `tests/a2a/test_media_admission.py::test_png_message_send_reaches_run_request_end_to_end` (served). |
 | A2A-PL09 | ARBORA-A2A-R001.7 | Test: `tests/a2a/test_peer_registry_served.py::test_register_refresh_list_delete_through_invoke` (served, HTTP and MCP) registers, refreshes, lists and removes a peer. It asserts both refusals and the revision history. It runs one cross-tenant negative case. |
-| A2A-PL10 | ARBORA-A2A-R002.2.3.3 | Test: `tests/a2a/test_tool_task_served.py::test_revoked_caller_makes_no_effect_and_is_acknowledged` (served). |
-| A2A-PL11 | ARBORA-A2A-R002.2.3.4 | Test: `tests/a2a/test_tool_task_served.py::test_crash_after_effect_reconciles_without_repeat` (served). The connector fake counts one execution. |
-| A2A-PL12 | ARBORA-A2A-R002.2.3.5 | Test: `tests/a2a/test_tool_task_served.py::test_duplicate_delivery_executes_once` (served). |
+| A2A-PL10 | ARBORA-A2A-R002.2.3.3 | Test: `tests/a2a/test_tool_task_consumer.py::test_revoked_or_expired_caller_makes_no_effect_and_is_acknowledged` (L2, controlled ports). |
+| A2A-PL11 | ARBORA-A2A-R002.2.3.4 | Test: `tests/a2a/test_tool_task_consumer.py::test_crash_after_effect_reconciles_without_repeat` (L2, controlled ports). The dispatcher double counts one execution. |
+| A2A-PL12 | ARBORA-A2A-R002.2.3.5 | Test: `tests/a2a/test_tool_task_consumer.py::test_duplicate_delivery_executes_once` (L2, controlled ports). |
 | A2A-PL22 | ARBORA-A2A-R002.2.4 | Test: `tests/a2a/test_tool_task_card.py::test_card_lists_extension_only_when_composed_and_refuses_client_approval` (served). Test: `tests/a2a/test_tool_task_card.py::test_attestation_binds_task_record_and_digest` (L1). |
 | A2A-PL13 | ARBORA-A2A-R013.1 | Test: `tests/a2a/test_push_delivery.py::test_registration_refuses_private_and_non_https_targets` (L2) and a cross-tenant refusal (L3). |
 | A2A-PL14 | ARBORA-A2A-R013.2 | Test: `tests/a2a/test_push_delivery.py::test_failed_delivery_defers_then_dead_letters` (L2) asserts the delays and the dead-letter commit against a fake target. (planned: the named files do not exist yet) |
 | A2A-PL15 | ARBORA-A2A-R013.3 | Test: `tests/a2a/test_agent_card.py::test_push_capability_follows_wired_worker` (L2). (planned: the named files do not exist yet) |
 | A2A-PL16 | ARBORA-A2A-R013.4 | Test: `tests/a2a/test_push_delivery_served.py::test_push_survives_restart_and_dead_letters` (L3) against a real engine binary, with a cross-tenant refusal. |
-| A2A-PL17 | ARBORA-A2A-R016.6 | Test: `tests/a2a/test_model_profile_boundary.py::test_preference_allowed_disallowed_absent` (L3) covers the three cases against a loopback engine. |
+| A2A-PL17 | ARBORA-A2A-R016.6 | Test: `tests/a2a/test_model_profile_boundary.py::test_preference_allowed_disallowed_absent` (L2) covers the three cases against a scripted `Decide` that returns records shaped as the route family seals them; it proves Arbora's reading, not the engine's ranking. |
 | A2A-PL18 | ARBORA-A2A-R023 | Test: `tests/a2a/test_routing.py::test_task_routes_through_a2a_route_decision` (L3) submits to a known graph and an unknown graph. It asserts dispatch and refusal against a loopback engine. |
 | A2A-PL19 | ARBORA-A2A-R024 | Test: `tests/a2a/test_hub_federation_served.py::test_forward_respects_peer_scope` runs the A2A server against a loopback peer and a recorded medulla engine. |
-| A2A-PL20 | ARBORA-A2A-R025 | Test: `tests/a2a/test_anonymous_send.py::test_text_only_plan_admitted_and_limited` (served HTTP). |
-| A2A-PL21 | ARBORA-A2A-R026 | Test: `tests/a2a/test_task_plan_validation.py::test_integer_task_ids_are_refused_typed_with_field_paths` (planned). |
+| A2A-PL20 | ARBORA-A2A-R025 | Test: `tests/a2a/test_anonymous_send.py::test_text_only_plan_admitted_and_limited` and `::test_a_second_send_over_the_inflight_limit_is_refused_typed` (served HTTP over an in-process ASGI transport and a controlled engine client). |
+| A2A-PL21 | ARBORA-A2A-R026 | Test: `tests/a2a/test_task_plan_validation.py::test_integer_task_ids_are_refused_typed_with_field_paths` (L2). |
