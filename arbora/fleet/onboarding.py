@@ -346,6 +346,9 @@ class FleetOnboarding:
     #: Local policy decisions and native EG receipts, keyed by connector.
     source_decisions: dict[str, tuple[Any, ...]] = field(default_factory=dict)
     source_receipts: dict[str, tuple[Any, ...]] = field(default_factory=dict)
+    #: Admits versioned definitions before the pack import (ARBORA-FLEET-R002.5);
+    #: ``None`` leaves definitions unversioned, as before the engine port is wired.
+    definition_admission: Any = None
 
     @property
     def tenant_client(self) -> Any:
@@ -407,6 +410,24 @@ class FleetOnboarding:
             contract["reason"] = exc.code
             raise
 
+    async def _admit_definitions(
+        self, endpoint: FleetEndpoint, pack: Any
+    ) -> tuple[Any, ...]:
+        """Admit the pack's versioned definitions before any import (R002.5)."""
+        if self.definition_admission is None:
+            return ()
+        with onboarding_step("DefinitionAdmission"):
+            return await self.definition_admission.admit(
+                str(self.session.tenant), endpoint.name, pack
+            )
+
+    async def _record_definitions(self, receipts: tuple[Any, ...]) -> None:
+        """Write the admission receipts after the import (R002.7)."""
+        if self.definition_admission is None:
+            return
+        with onboarding_step("DefinitionReceipt"):
+            await self.definition_admission.record(str(self.session.tenant), receipts)
+
     async def _import_pack(self, endpoint: FleetEndpoint, pack: Any) -> None:
         """Import one pack; an engine contract refusal marks the connector."""
         from arbora.deployment.semantic_provisioning import import_attested_pack
@@ -465,11 +486,13 @@ class FleetOnboarding:
         self._record_contract(endpoint.name, pack)
         self._check_contract(endpoint.name, pack)
         _remember_declaration(self.declarations, endpoint.name, pack)
+        receipts = await self._admit_definitions(endpoint, pack)
         with onboarding_step("ConnectorPackStatus"):
             changed = not await self.pack_unchanged(endpoint, pack)
         if changed:
             with onboarding_step("ConnectorPackImport"):
                 await self._import_pack(endpoint, pack)
+            await self._record_definitions(receipts)
         else:
             with onboarding_step("renew"):
                 await self.renew({endpoint.name: endpoint.url})

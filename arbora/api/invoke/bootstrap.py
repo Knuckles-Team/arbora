@@ -352,7 +352,9 @@ def build_invoke_services(
     changes.setdefault("hooks", load_hooks(registry))
     # ARBORA-FLEET-R034.2: the admission limits come from config.json; an
     # invalid value stops the host start rather than weakening the gate.
-    changes.setdefault("admission", _admission_gate_from_config())
+    changes.setdefault(
+        "admission", _admission_gate_from_config(gate_send, changes.get("bindings"))
+    )
     return InvokeServices(
         registry=registry,
         runtime=runtime,
@@ -364,14 +366,18 @@ def build_invoke_services(
     )
 
 
-def _admission_gate_from_config() -> Any:
+def _admission_gate_from_config(gate_send: Any = None, bindings: Any = None) -> Any:
     from arbora.core.settings import platform_config_file, read_config_document
     from arbora.fleet.admission import AdmissionGate
     from arbora.fleet.admission_policy import AdmissionConfig
 
     path = platform_config_file("config.json")
     document = read_config_document(path) if path.is_file() else {}
-    return AdmissionGate(AdmissionConfig.from_document(document))
+    from arbora.fleet.engine_admission import engine_port
+
+    return AdmissionGate(
+        AdmissionConfig.from_document(document), port=engine_port(gate_send, bindings)
+    )
 
 
 def build_outbox_consumers(send: Any, notifier: Any) -> tuple[Any, ...]:
