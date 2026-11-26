@@ -21,7 +21,7 @@ from tests.deployment.test_assembly_library import (  # noqa: E402
 pytestmark = pytest.mark.spec("ARBORA-DEPLOY-R601")
 
 
-def _assemble_from(engine: LoopbackEngine, tenant: str):  # type: ignore[no-untyped-def]
+def _assemble_from(engine: LoopbackEngine, tenant: str):
     """The engine's resolution of ``template_key``: the published head of that id.
 
     The answer is solved only when every dependency the graph names resolves to a
