@@ -188,6 +188,22 @@ arbora --transport stdio
 Configure `arbora --transport stdio` using the client's
 standard MCP server configuration format.
 
+The examples below are checked against the code on every change:
+
+```deployment-example
+profile: tiny
+transport: stdio
+argv: arbora --transport stdio
+probe: mcp-initialize
+```
+
+```deployment-example
+profile: tiny
+transport: streamable-http
+argv: arbora --transport streamable-http --host 127.0.0.1 --port 18765 --auth-type none
+probe: mcp-initialize
+```
+
 ## Network transport
 
 Serve the streamable HTTP transport on a private listener with a real token

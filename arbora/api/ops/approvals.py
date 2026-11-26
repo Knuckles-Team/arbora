@@ -284,6 +284,12 @@ async def handle_approvals_decide(
     return {"item": {**item, "state": _STATE_OF_STATUS[target]}, "changed": True}
 
 
+#: Writes the engine replays by the idempotency key the pipeline forwards.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "approvals.decide": "medulla:LeaseTransition",
+}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         build_read_op(
@@ -337,6 +343,7 @@ def operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 __all__ = [
+    "NATIVE_IDEMPOTENCY",
     "handle_approvals_decide",
     "handle_approvals_digest",
     "handle_approvals_digest_send",

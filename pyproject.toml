@@ -156,6 +156,7 @@ arbora-connector-count-pins = "arbora.fleet.connector_count_pins:main"
 arbora-check-import-boundaries = "arbora.architecture.boundary_census:main"
 arbora-hosting-config = "arbora.deployment.host_config:main"
 arbora-capability-layers = "arbora.architecture.capability_layers:main"
+arbora-sandbox = "arbora.deployment.sandbox:main"
 
 [project.entry-points."arbora.messaging"]
 telegram = "arbora.messaging.backends.telegram:TelegramBackend"
@@ -256,6 +257,7 @@ markers = [
     "spec: binds a test to a spec requirement ID",
     "integration: integration test (moved meristem profile tests)",
     "concept: binds a test to a concept ID (moved meristem tests)",
+    "pin_lag: real path against a structural double of an upstream main shape; remove with the pin-lag guards",
     "real_boot: boots a real arbora process against a real EG server (linux x86_64)",
 ]
 
@@ -287,7 +289,7 @@ units = ["agent_runs", "api", "current_plan_publication", "native_run_admission"
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "subsystems"
-units = ["a2a", "acp", "agent_host", "browser_control", "certification", "connector_runner", "control_plane", "deployment", "evolution", "finance", "fleet", "fleet_tool_call", "gateway", "harness_plugins", "ingest"]
+units = ["a2a", "acp", "agent_host", "browser_control", "certification", "connector_runner", "control_plane", "deployment", "evolution", "finance", "fleet", "fleet_tool_call", "gateway", "harness_plugins", "ingest", "pin_lag"]
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "host"

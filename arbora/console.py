@@ -39,6 +39,10 @@ def main() -> None:
         from arbora.identity.client_contract import reconcile_command
 
         raise SystemExit(reconcile_command(sys.argv[3:]))
+    if sys.argv[1:3] == ["secrets", "diagnose"]:
+        from arbora.security.secret_diagnostics import main as diagnose_main
+
+        raise SystemExit(diagnose_main(sys.argv[3:]))
     if sys.argv[1:3] == ["deploy", "source"]:
         from arbora.deployment.deployed_source import main as deployed_source_main
 
@@ -47,6 +51,10 @@ def main() -> None:
         from arbora.fleet.agent_surface_cli import main as skills_export_main
 
         raise SystemExit(skills_export_main(sys.argv[3:]))
+    if sys.argv[1:3] == ["deploy", "render"]:
+        from arbora.deployment.cli import main as deployment_main
+
+        raise SystemExit(deployment_main(["render", *sys.argv[3:]]))
     if sys.argv[1:2] == ["plugin"]:
         from arbora.harness_plugins.cli import main as plugin_main
 

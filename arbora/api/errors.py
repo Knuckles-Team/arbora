@@ -65,6 +65,12 @@ class ArboraErrorCode(StrEnum):
     ALREADY_DECIDED = "ALREADY_DECIDED"
     APPROVAL_REQUIRED = "APPROVAL_REQUIRED"
     APPROVAL_DENIED = "APPROVAL_DENIED"
+    # Content screening (ARBORA-OPS-R042.4).
+    CONTENT_QUARANTINED = "CONTENT_QUARANTINED"
+    UNSCREENED_MEMORY_WRITE = "UNSCREENED_MEMORY_WRITE"
+    # Operator hooks (ARBORA-OPS-R009.9).
+    HOOK_FAILED = "HOOK_FAILED"
+    HOOK_REJECTED = "HOOK_REJECTED"
 
 
 # Wire status and retry posture are part of the closed Arbora vocabulary.
@@ -116,6 +122,10 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.ALREADY_DECIDED: 409,
     ArboraErrorCode.APPROVAL_REQUIRED: 403,
     ArboraErrorCode.APPROVAL_DENIED: 403,
+    ArboraErrorCode.CONTENT_QUARANTINED: 422,
+    ArboraErrorCode.UNSCREENED_MEMORY_WRITE: 422,
+    ArboraErrorCode.HOOK_FAILED: 502,
+    ArboraErrorCode.HOOK_REJECTED: 422,
 }
 
 _RETRYABLE = frozenset(

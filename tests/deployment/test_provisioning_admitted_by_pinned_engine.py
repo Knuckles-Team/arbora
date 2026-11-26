@@ -113,3 +113,7 @@ def test_fresh_store_accepts_all_arbora_content(tmp_path: Path) -> None:
         finally:
             engine.terminate()
             engine.wait(timeout=60)
+
+
+# These tests boot a real engine: the pull-request subset deselects the marker.
+pytestmark = pytest.mark.real_boot
