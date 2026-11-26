@@ -27,9 +27,11 @@ from pydantic import (
 
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.ops._common import Params, bound_service
+from arbora.api.ops._engine import engine_send
 from arbora.api.registry import (
     AuditClass,
     Composite,
+    Confirm,
     Effect,
     Idempotency,
     OpSpec,
@@ -374,8 +376,169 @@ def _read_op(
     )
 
 
+_PATH_OPS = ("add", "modify", "delete", "rename")
+
+
+class SubmittedBlob(Params):
+    digest: str = Field(min_length=1, max_length=128)
+    size: int = Field(ge=0)
+
+
+class SubmittedPath(Params):
+    """One changed path; the content is a blob already stored by digest."""
+
+    path: str = Field(min_length=1, max_length=_PATH_MAX)
+    op: Literal["add", "modify", "delete", "rename"]
+    mode: int = Field(ge=0, le=0o177777)
+    blob: SubmittedBlob | None = None
+    renamed_from: str | None = Field(default=None, max_length=_PATH_MAX)
+
+    _validate = field_validator("path")(_portable_path)
+
+    @model_validator(mode="after")
+    def _op_shape(self) -> SubmittedPath:
+        if (self.op == "delete") != (self.blob is None):
+            raise ValueError("a delete carries no blob and every other op carries one")
+        if (self.op == "rename") != (self.renamed_from is not None):
+            raise ValueError("only a rename names its source path")
+        return self
+
+
+class SourceTrailers(Params):
+    fixes: list[str] = Field(default_factory=list, max_length=64)
+    spec_ids: list[str] = Field(default_factory=list, max_length=256)
+    withdraw: list[str] = Field(default_factory=list, max_length=64)
+    withdraw_reason: str | None = Field(default=None, max_length=512)
+
+
+class SourceCommitParams(Params):
+    """Submit one changeset to one branch; the engine checks each path grant."""
+
+    repository: str = Field(min_length=1, max_length=_NAME_MAX)
+    branch: str = Field(min_length=1, max_length=_NAME_MAX)
+    message: str = Field(min_length=1, max_length=8192)
+    paths: list[SubmittedPath] = Field(min_length=1, max_length=4096)
+    base_head: str | None = Field(default=None, max_length=128)
+    run_trace_id: str | None = Field(default=None, max_length=128)
+    trailers: SourceTrailers | None = None
+
+
+class SourceLandParams(Params):
+    """Land one submitted changeset: fast gates, then the engine's policy."""
+
+    repository: str = Field(min_length=1, max_length=_NAME_MAX)
+    branch: str = Field(min_length=1, max_length=_NAME_MAX)
+    changeset: str = Field(min_length=1, max_length=128)
+
+
+class SourceRevertParams(SourceLandParams):
+    """Revert one landed changeset through the engine's revert decision path."""
+
+
+class SourceWriteResult(Params):
+    value: dict[str, Any]
+
+
+async def handle_source_commit(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """``SubmitChangeset`` under the caller's claims; engine refusals pass through."""
+    request = SourceCommitParams.model_validate(dict(params))
+    body = request.model_dump(mode="json", exclude_none=True)
+    body["repo"] = body.pop("repository")
+    answer = await engine_send(
+        context, "SubmitChangeset", {"request": body}, idempotent=True
+    )
+    return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
+
+
+async def handle_source_land(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    from arbora.api.ops.source_landing import land_changeset
+
+    request = SourceLandParams.model_validate(dict(params))
+    return {
+        "value": await land_changeset(
+            context,
+            repository=request.repository,
+            branch=request.branch,
+            changeset=request.changeset,
+        )
+    }
+
+
+async def handle_source_revert(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Revert is the engine's decision path (MEDULLA-SCM-R009).
+
+    PIN-LAG: neither the pinned release nor engine ``main`` publishes a revert
+    method yet, so the operation refuses ``UNAVAILABLE`` naming it.
+    """
+    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+
+    SourceRevertParams.model_validate(dict(params))
+    try:
+        require_methods("RevertChangeset")
+    except PinLagUnavailable as missing:
+        raise refusal(missing) from None
+    request = SourceRevertParams.model_validate(dict(params))
+    answer = await engine_send(
+        context,
+        "RevertChangeset",
+        {
+            "repo": request.repository,
+            "branch": request.branch,
+            "changeset": request.changeset,
+        },
+        idempotent=True,
+    )
+    return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
+
+
+def _write_op(
+    op_id: str, summary: str, example: str, params: type[Params], handler: str
+) -> OpSpec:
+    return OpSpec(
+        id=op_id,
+        verb=Verb.ACT,
+        summary=summary,
+        examples=(example,),
+        params=params,
+        result=SourceWriteResult,
+        binding=Composite(handler=handler),
+        scopes=frozenset({"blob:write", "graph:write"}),
+        effect=Effect.DESTRUCTIVE,
+        confirm=Confirm.PLAN,
+        idempotency=Idempotency.KEY_REQUIRED,
+        audit=AuditClass.IDENTITY_CHAIN,
+    )
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
+        _write_op(
+            "source.commit",
+            "Submit one changeset to one branch of one repository",
+            "commit these file changes to the branch",
+            SourceCommitParams,
+            "arbora.api.ops.source.handle_source_commit",
+        ),
+        _write_op(
+            "source.land",
+            "Run the fast gates on a submitted changeset and record the verdicts",
+            "land this changeset once the fast gates pass",
+            SourceLandParams,
+            "arbora.api.ops.source.handle_source_land",
+        ),
+        _write_op(
+            "source.revert",
+            "Revert one landed changeset through the engine decision path",
+            "revert this landed changeset",
+            SourceRevertParams,
+            "arbora.api.ops.source.handle_source_revert",
+        ),
         _read_op(
             op_id="source.tree",
             summary="List one directory of one repository ref",
@@ -424,10 +587,13 @@ __all__ = [
     "SourceBlameOutcome",
     "SourceBlameParams",
     "SourceBlameResult",
+    "SourceCommitParams",
     "SourceHistoryEntry",
     "SourceHistoryOutcome",
     "SourceHistoryParams",
     "SourceHistoryResult",
+    "SourceLandParams",
+    "SourceRevertParams",
     "SourceReader",
     "SourceTreeEntry",
     "SourceTreeOutcome",
@@ -435,6 +601,9 @@ __all__ = [
     "SourceTreeResult",
     "handle_source_blob",
     "handle_source_blame",
+    "handle_source_commit",
+    "handle_source_land",
+    "handle_source_revert",
     "handle_source_history",
     "handle_source_tree",
     "operations",
