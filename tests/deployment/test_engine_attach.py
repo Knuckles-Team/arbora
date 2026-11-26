@@ -30,3 +30,17 @@ def test_two_processes_one_engine_spawn_count_is_one(
 
     second.finish()  # type: ignore[attr-defined]
     first.finish()  # type: ignore[attr-defined]
+
+
+@pytest.mark.spec("ARBORA-DEPLOY-R018")
+def test_two_processes_share_one_engine_spawn_count_is_one(
+    start_child: Callable[[int], object],
+    free_port: Callable[[], int],
+) -> None:
+    port = free_port()
+    first = start_child(port)
+    second = start_child(port)
+    spawned = [first.report["spawned"], second.report["spawned"]]  # type: ignore[attr-defined]
+    assert sorted(spawned) == [0, 1]
+    second.finish()  # type: ignore[attr-defined]
+    first.finish()  # type: ignore[attr-defined]

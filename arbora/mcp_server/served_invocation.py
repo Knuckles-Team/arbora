@@ -547,6 +547,12 @@ def compose_served_invocation(
         from arbora.api.ops.memory_files import MemoryMaterializer
 
         bindings = {**bindings, "memory_materializer": MemoryMaterializer()}
+    if bindings is not None and "identity_admin" not in bindings:
+        # ARBORA-IDENTITY-R018.1: the identity operations reach the engine
+        # through the one administration port of the composition root.
+        from arbora.identity.ports import engine_identity_admin
+
+        bindings = {**bindings, "identity_admin": engine_identity_admin(graph)}
     step_invoke = None
     if bindings is not None and "plan_step_invoke" not in bindings:
         from arbora.api.ops.plans import LateStepInvoke

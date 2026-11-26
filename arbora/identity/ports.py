@@ -143,3 +143,38 @@ class IdentityLifecycle:
 
     start: Callable[[], object]
     stop: Callable[[], None]
+
+
+class IdentityAdminPort(Protocol):
+    """Identity administration over the engine (ARBORA-IDENTITY-R018.1).
+
+    ``identity`` sends one engine ``Identity`` request over the caller-bound
+    ``client`` and returns the value of the ``expect`` reply kind. An engine
+    refusal raises an exception that carries its wire ``code``.
+    """
+
+    async def identity(
+        self,
+        client: Any,
+        claims: Mapping[str, Any],
+        family: str,
+        op: str,
+        request: Mapping[str, Any] | None = None,
+        *,
+        expect: str,
+    ) -> Any: ...
+
+    async def audit_verify(self, client: Any, claims: Mapping[str, Any]) -> Any:
+        """Return the engine audit chain verdict."""
+        ...
+
+
+def engine_identity_admin(graph: str) -> IdentityAdminPort:
+    """The engine-backed administration port, for the served composition.
+
+    Served packages read the one port through here and never import the
+    concrete class (ARBORA-IDENTITY-R018.1).
+    """
+    from .engine_admin import EngineIdentityAdmin
+
+    return EngineIdentityAdmin(graph=graph)

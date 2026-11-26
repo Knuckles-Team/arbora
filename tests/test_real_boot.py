@@ -46,6 +46,9 @@ pytestmark = [
         not (sys.platform == "linux" and platform.machine() in {"x86_64", "AMD64"}),
         reason="the medulla-server wheel ships linux x86_64 only",
     ),
+    # A queued boot may wait behind the whole heavy-boot chain before its
+    # own stack finishes, far beyond the suite-wide 120 s.
+    pytest.mark.timeout(600),
 ]
 
 TENANT = "boot"
@@ -256,8 +259,78 @@ def _terminate(process: subprocess.Popen[Any]) -> None:
             process.wait(timeout=10)
 
 
+_HEAVY_SLOT = threading.local()
+
+
+@contextlib.contextmanager
+def _heavy_engine_slot() -> Iterator[None]:
+    """Serialize full-stack engine boots across the host's test workers.
+
+    A booted stack peaks at several GB of engine RSS (the built-in content
+    packs load into the engine's memory), and the module-scoped ``stack``
+    fixture holds that engine for its whole test module. The six-worker
+    suite distribution hands module boots to different workers; the
+    parallel stacks OOM-killed the CI runner (2026-11-23 gates, medulla
+    3.3.5). One exclusive host-wide slot keeps the suite peak at a single
+    stack. The flock drops with the holder's death, so a crashed worker
+    never wedges the rest of the suite; within one worker the slot is
+    reentrant, so a test that boots its own stack alongside the module
+    stack still runs.
+    """
+    from arbora.deployment import engine_lock, file_lock
+
+    depth = getattr(_HEAVY_SLOT, "depth", 0)
+    if depth:
+        _HEAVY_SLOT.depth = depth + 1
+        try:
+            yield
+        finally:
+            _HEAVY_SLOT.depth -= 1
+        return
+
+    path = engine_lock._runtime_base() / "real-boot-engine.slot"
+    fd = os.open(path, os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        file_lock.lock_exclusive(fd)  # blocks until another worker's boot ends
+        _HEAVY_SLOT.depth = 1  # nested boots on this thread skip the wait
+        with contextlib.suppress(OSError):  # diagnostics only, never fatal
+            os.ftruncate(fd, 0)
+            os.write(fd, f"pid={os.getpid()} ts={time.time():.0f}\n".encode())
+        yield
+    finally:
+        _HEAVY_SLOT.depth = 0
+        with contextlib.suppress(OSError):
+            os.ftruncate(fd, 0)
+        file_lock.unlock(fd)
+        os.close(fd)
+
+
 @contextlib.contextmanager
 def _booted_stack(
+    extra_config: dict[str, str] | None = None,
+    extra_env: dict[str, str] | None = None,
+    extra_token_roles: tuple[str, ...] = (),
+    process_token_roles: tuple[str, ...] | None = None,
+    process_token_email: bool = True,
+    private_root: Path | None = None,
+    before_serve: Any = None,
+    boot_stage: Any = None,
+) -> Iterator[dict[str, Any]]:
+    """Boot a native stack while holding the single heavy-engine slot."""
+    with _heavy_engine_slot():
+        yield from _do_booted_stack(
+            extra_config=extra_config,
+            extra_env=extra_env,
+            extra_token_roles=extra_token_roles,
+            process_token_roles=process_token_roles,
+            process_token_email=process_token_email,
+            private_root=private_root,
+            before_serve=before_serve,
+            boot_stage=boot_stage,
+        )
+
+
+def _do_booted_stack(
     extra_config: dict[str, str] | None = None,
     extra_env: dict[str, str] | None = None,
     extra_token_roles: tuple[str, ...] = (),
@@ -475,6 +548,11 @@ def _booted_stack(
             "GRAPH_SERVICE_AUTH_SECRET": secret,
             "ARBORA_BOOT_PROCESS_TOKEN": process_token,
             "ARBORA_BOOT_MODEL_KEY": "boot-model-key",  # sanitizer:ignore - synthetic
+            # The pack import is a non-heavy engine RPC (60 s client default);
+            # on the shared CI pod, six workers contend for the engine's CPU
+            # and the import can outrun that. Give the provision step its own
+            # budget, still inside the 300 s subprocess cap below.
+            "GRAPH_SERVICE_RPC_TIMEOUT": "240",
             "XDG_CONFIG_HOME": str(root / "xdg-config"),
             "XDG_DATA_HOME": str(root / "xdg-data"),
             "XDG_STATE_HOME": str(root / "xdg-state"),
@@ -1342,10 +1420,13 @@ def test_ingest_sources_list_sync_status(stack: dict[str, Any]) -> None:
         stack, "eg.graph.GetNodesByLabel", {"label": "Document", "limit": 10}
     )
     assert nodes["ok"] is True, nodes
+    # The pinned engine addresses node properties by their full core
+    # namespace IRI, not a short name.
+    core = "https://knuckles-team.github.io/ontology/core#"
     mapped = {
-        props["source_record_id"]
+        props[f"{core}sourceRecordId"]
         for _node_id, props in nodes["result"]
-        if props.get("source_mapping_reference")
+        if props.get(f"{core}sourceMappingReference")
         == f"connector:{INGEST_CONNECTOR}#mappings/FixtureItem"
     }
     assert mapped == {"item-1", "item-2", "item-3"}, json.dumps(nodes)[:3000]

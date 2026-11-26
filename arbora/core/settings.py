@@ -134,6 +134,11 @@ class ArboraConfig(BaseModel):
         alias="AGENT_POLICIES_PATH",
         description="Path to agent_policies.json for identity-based governance (CONCEPT:MERISTEM-OS.state.cognitive-scheduler-preemption).",
     )
+    presence_snapshot_interval_s: float = Field(
+        default=5.0,
+        alias="PRESENCE_SNAPSHOT_INTERVAL_S",
+        description="City presence snapshot cadence in seconds (ARBORA-OPS-R915). A snapshot whose simulated_at is older than this interval is served flagged fresh: false; a consumer polling faster than the interval receives the same snapshot, not a new computation.",
+    )
     allowed_hosts: str | None = Field(
         default=None,
         alias="ALLOWED_HOSTS",
