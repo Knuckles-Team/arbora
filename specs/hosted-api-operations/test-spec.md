@@ -585,7 +585,8 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R918.2` | Test: `tests/api/test_gate_class.py::test_engine_answer_sets_class_roles_expiry_and_default_is_strict` (L1). |
 | `ARBORA-OPS-R918.3` | Test: `tests/api/test_approvals_ops.py::test_decide_refuses_self_approval_and_records_provenance` (L1). |
 | `ARBORA-OPS-R918.4` | Test: `tests/api/test_approvals_ops.py::test_expired_item_refuses_consume_and_lists_expired` (L1). |
-| `ARBORA-OPS-R918.5` | Test: `tests/api/test_approvals_ops.py::test_digest_counts_by_class_and_delivers_one_notice_per_owner` (L1). |
+| `ARBORA-OPS-R918.5` | Test: `tests/fleet/test_approval_notifier.py::test_digest_read_counts_by_class_and_has_no_effects` (L1). |
+| `ARBORA-OPS-R918.5.1` | Test: `tests/fleet/test_approval_notifier.py::test_digest_send_delivers_one_notice_per_owner_and_refuses_without_a_channel` (L1). |
 | `ARBORA-OPS-R918.6` | Test: `tests/fleet/test_approval_notifier.py::test_notice_per_approver_without_preview_and_retries_from_outbox` (L1). |
 | `ARBORA-OPS-R918.7` | Test: `tests/api/test_approvals_served.py::test_proposal_to_decision_runs_once_and_refusals_run_nothing` (L1). |
 | `ARBORA-OPS-R919` | Roll-up of its children. |

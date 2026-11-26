@@ -62,13 +62,15 @@ class ApprovalsGetResult(Params):
 
 class ApprovalsDigestParams(Params):
     since_ms: int = Field(default=0, ge=0)
-    deliver: bool = False
 
 
 class ApprovalsDigestResult(Params):
     by_class: list[dict[str, Any]]
     cursor_ms: int
-    delivered: int = 0
+
+
+class ApprovalsDigestSendResult(ApprovalsDigestResult):
+    delivered: int
 
 
 class ApprovalsDecideParams(Params):
@@ -186,10 +188,9 @@ async def handle_approvals_get(
     return {"item": item}
 
 
-async def handle_approvals_digest(
-    context: Any, params: Mapping[str, Any], op: OpSpec
-) -> dict[str, Any]:
-    """Pending counts and the oldest age per gate class, delivered to owners on request."""
+async def _digest_counts(
+    context: Any, params: Mapping[str, Any]
+) -> tuple[list[dict[str, Any]], int]:
     now_ms = _now_ms(context)
     counts: dict[str, dict[str, Any]] = {}
     cursor: str | None = None
@@ -215,16 +216,36 @@ async def handle_approvals_digest(
         cursor = page.get("next_cursor")
         if not cursor:
             break
-    by_class = [counts[name] for name in GATE_CLASSES if name in counts]
-    delivered = 0
-    if params.get("deliver"):
-        deliver = context.services.get("approval_digest_delivery")
-        if deliver is None:
-            raise OperationRefused(
-                "UNAVAILABLE", {"reason": "no digest delivery channel is bound"}
-            )
-        delivered = await deliver(by_class)
-    return {"by_class": by_class, "cursor_ms": now_ms, "delivered": delivered}
+    return [counts[name] for name in GATE_CLASSES if name in counts], now_ms
+
+
+async def handle_approvals_digest(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Pending counts and the oldest age per gate class. A read: no effects."""
+    by_class, now_ms = await _digest_counts(context, params)
+    return {"by_class": by_class, "cursor_ms": now_ms}
+
+
+async def handle_approvals_digest_send(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Deliver the digest to the tenant owners through the bound channel.
+
+    With no channel bound the operation refuses UNAVAILABLE before any count is
+    read, so nothing is claimed as delivered.
+    """
+    deliver = context.services.get("approval_digest_delivery")
+    if deliver is None:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "no digest delivery channel is bound"}
+        )
+    by_class, now_ms = await _digest_counts(context, params)
+    return {
+        "by_class": by_class,
+        "cursor_ms": now_ms,
+        "delivered": await deliver(by_class),
+    }
 
 
 async def handle_approvals_decide(
@@ -293,6 +314,15 @@ def operations() -> tuple[OpSpec, ...]:
             scope="approvals:read",
         ),
         build_write_op(
+            op_id="approvals.digest.send",
+            summary="Deliver the approvals digest to the tenant owners",
+            examples=("send the approvals digest",),
+            params=ApprovalsDigestParams,
+            result=ApprovalsDigestSendResult,
+            handler="arbora.api.ops.approvals.handle_approvals_digest_send",
+            scope="approvals:read",
+        ),
+        build_write_op(
             op_id="approvals.decide",
             summary="Approve or deny one pending approval item",
             examples=("approve this plan",),
@@ -309,6 +339,7 @@ specs = operations
 __all__ = [
     "handle_approvals_decide",
     "handle_approvals_digest",
+    "handle_approvals_digest_send",
     "handle_approvals_get",
     "handle_approvals_list",
     "operations",
