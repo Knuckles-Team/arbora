@@ -66,3 +66,7 @@ fresh decision holds or denies the request. Check the audit ID and disposition.
 | Row | Test |
 |---|---|
 | `ARBORA-RELEASE-R003.4.3` | `tests/architecture/test_dependency_manifest_pins_published_packages.py::test_manifest_declares_each_split_repository_package` and `tests/api/test_plan_run_ops.py::test_engine_without_task_plan_refuses_unavailable` |
+| `ARBORA-RELEASE-R003.4.14` | `tests/api/test_plan_run_ops.py::test_foreach_runs_one_call_per_item_in_order_and_enforces_max_items` |
+| `ARBORA-RELEASE-R003.4.15` | `tests/api/test_plan_run_ops.py::test_duplicate_write_item_fails_without_a_call_and_keeps_earlier_calls` |
+| `ARBORA-RELEASE-R003.4.16` | `tests/api/test_plan_run_ops.py::test_reply_lists_each_foreach_item_and_masks_secrets` |
+| `ARBORA-RELEASE-R003.4.17` | `tests/api/test_plan_run_ops.py::test_foreach_plan_served_end_to_end` |

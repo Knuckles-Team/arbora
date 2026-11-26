@@ -501,7 +501,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R875` | Test: `tests/api/test_skill_upgrade_gate_served.py::test_breaking_stops_and_compatible_and_migrated_dispatch` (served). |
 | `ARBORA-OPS-R876` | Test: `tests/api/test_loops_continuation_served.py::test_same_continuation_after_host_restart` (served). The host restarts between two reads. |
 | `ARBORA-OPS-R877` | Test: `tests/a2a/test_team_coordination_served.py::test_unavailable_starts_team_available_keeps_primary_and_status_survives_restart` (served). |
-| `ARBORA-OPS-R878` | Test: `tests/api/ops/test_models_list.py::test_lists_only_visible_profiles_over_http_and_mcp` (L3) runs through the registry `invoke` and asserts a cross-tenant profile is absent. |
+| `ARBORA-OPS-R878` | Test: `tests/api/ops/test_models_list.py::test_lists_only_visible_profiles_over_http_and_mcp` (planned) (L3) runs through the registry `invoke` and asserts a cross-tenant profile is absent. |
 | `ARBORA-OPS-R879` | `tests/api/test_ops_hooks_served.py::test_hooks_install_uninstall_over_http_and_mcp` (L3). |
 | `ARBORA-OPS-R880` | Test: `tests/api/test_query_federation.py::test_cross_source_report_served` (served HTTP and MCP, recorded engine). |
 | `ARBORA-OPS-R881` | Test: `tests/api/test_artifact_ops_served.py::test_artifact_operations_serve_over_http_and_mcp` (L3). It creates, gets and refreshes an artifact and asserts each refusal. |
@@ -617,3 +617,14 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R956` | Test: `tests/api/test_skills_ablation_ops.py::test_arm_run_and_canary_verdict_pass_through` (planned) (L3). |
 | `ARBORA-OPS-R957` | Test: `tests/api/test_skills_tier_ops.py::test_promote_by_tier_grant_and_persona_reads` (planned) (L3). |
 | `ARBORA-OPS-R958` | Test: `tests/knowledge/test_curator_scheduler.py::test_due_tick_claims_lease_and_starts_the_agent_and_not_due_does_nothing` (planned) (L3). |
+| `ARBORA-OPS-R857.3` | Test: `tests/api/test_sparql_protocol.py::test_graph_store_round_trips_each_media_type` (planned, L3) |
+| `ARBORA-OPS-R857.4` | Test: `tests/api/test_sparql_protocol.py::test_graph_store_refusals_use_engine_codes` (planned, L3) |
+| `ARBORA-OPS-R857.5` | Test: `tests/api/test_sparql_protocol.py::test_turtle_put_then_jsonld_get` (planned, L3) |
+| `ARBORA-OPS-R923` | Test: `tests/api/test_bundle_ops_served.py::test_export_download_upload_import_between_tenants` (planned, L3) |
+| `ARBORA-OPS-R923.1` | Test: `tests/api/test_bundle_ops_served.py::test_params_round_trip_and_reject_unknown_fields` (planned, L3) |
+| `ARBORA-OPS-R923.2` | Test: `tests/api/test_bundle_ops_served.py::test_routes_stream_chunks_and_import_needs_an_approved_plan` (planned, L3) |
+| `ARBORA-OPS-R923.3` | Test: `tests/api/test_bundle_ops_served.py::test_refusals_and_foreign_ref_is_indistinguishable_from_absent` (planned, L3) |
+| `ARBORA-OPS-R923.4` | Test: `tests/api/test_bundle_ops_served.py::test_export_download_upload_import_between_tenants` (planned, L3) |
+| `ARBORA-OPS-R924` | Test: `tests/api/test_discover_guided_served.py::test_seeds_and_hop_filter_reach_the_engine` (planned, L3) |
+| `ARBORA-OPS-R924.1` | Test: `tests/api/test_discover_guided_served.py::test_older_contract_refuses_unavailable_and_codes_pass_through` (planned, L3) |
+| `ARBORA-OPS-R924.2` | Test: `tests/api/test_discover_guided_served.py::test_seeds_and_hop_filter_reach_the_engine` (planned, L3) |
