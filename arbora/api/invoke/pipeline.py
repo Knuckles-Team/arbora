@@ -175,6 +175,7 @@ def _declared_owners(modules: Iterable[str] | None = None) -> dict[str, str]:
 #: request: the replay owner of every write the engine does not replay by key.
 EXTERNAL_EFFECT_OPERATIONS: tuple[str, ...] = (
     "fleet.call",
+    "fleet.write_back.commit",
     "fleet.tools.pin",
     "fleet.tools.unpin",
     "messaging.alert",
