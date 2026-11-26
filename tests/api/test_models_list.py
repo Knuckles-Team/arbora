@@ -89,12 +89,21 @@ def test_get_is_an_admin_read_with_the_model_id_in_the_body() -> None:
 
 
 @pytest.mark.spec("ARBORA-OPS-R907")
-async def test_non_admin_session_lists_chat_models(configured) -> None:
+async def test_non_admin_session_lists_model_profiles(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
     (op,) = (op for op in models.operations() if op.id == "models.list")
-    assert op.scopes == frozenset({"registry:read"})
-    answer = await models.handle_models_list(None, {"kind": "chat"}, op)
-    (row,) = answer["value"]["models"]
-    assert row == {"id": "org/model-a", "name": "Model A", "provider": "openai"}
-    assert (await models.handle_models_list(None, {"kind": "embedding"}, op))["value"][
-        "models"
-    ] == []
+    assert op.scopes == frozenset({"kg:read"})
+
+    async def send(context, method, params, **_):
+        assert (method, params["label"]) == ("GetNodesByLabel", "ModelProfile")
+        return [["profile:a", {"display_name": "Model A", "provider": "openai"}]]
+
+    monkeypatch.setattr(models, "engine_send", send)
+    context = SimpleNamespace(caller=SimpleNamespace(tenant="tenant:one"))
+    answer = await models.handle_models_list(context, {}, op)
+    assert answer["value"]["models"] == [
+        {"id": "profile:a", "display_name": "Model A", "provider": "openai"}
+    ]

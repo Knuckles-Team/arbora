@@ -9,12 +9,13 @@ refusal, matching :mod:`arbora.api.ops.ingest`.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from arbora.api.ops._common import Params, bound_service, build_read_op
-from arbora.api.registry import OpSpec, Verb
+from arbora.api.ops._common import Params, bound_service, build_read_op, build_write_op
+from arbora.api.registry import AuditClass, OpSpec, Verb
+from arbora.pin_lag.medulla import send_main
 
 
 class RetrievalSearchParams(Params):
@@ -108,6 +109,65 @@ async def handle_retrieval_freshness(
     return {"value": outcome.model_dump(mode="json")}
 
 
+FeedbackKind = Literal["upvote", "downvote", "cited", "ignored"]
+
+
+class RetrievalFeedbackParams(Params):
+    """One feedback event; the principal is the admitted caller, never a body field."""
+
+    document_ref: str = Field(min_length=1, max_length=512)
+    kind: FeedbackKind
+    weight: float = Field(default=1.0, ge=0.0, le=1.0)
+
+
+class KnowledgeScopeSetParams(Params):
+    """The graph sources one agent may retrieve from (ARBORA-OPS-R854)."""
+
+    agent_id: str = Field(min_length=1, max_length=256)
+    sources: list[str] = Field(max_length=256)
+
+
+class RetrievalWriteResult(Params):
+    value: dict[str, Any]
+
+
+async def handle_retrieval_feedback(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Record one feedback event; ranking stays in the engine."""
+    answer = await send_main(
+        context,
+        "RetrievalFeedbackRecord",
+        {
+            "document_ref": params["document_ref"],
+            "kind": params["kind"],
+            "weight": float(params.get("weight", 1.0)),
+        },
+        idempotent=True,
+    )
+    return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
+
+
+async def handle_agent_knowledge_scope_set(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Set one agent's knowledge scope; an engine refusal of a widening scope passes through."""
+    answer = await send_main(
+        context,
+        "AgentKnowledgeScopeSet",
+        {"agent_id": params["agent_id"], "sources": list(params["sources"])},
+        idempotent=True,
+    )
+    return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
+
+
+#: Writes replay under the engine method that holds the record, never here.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "retrieval.feedback": "medulla:RetrievalFeedbackRecord",
+    "agent.knowledge_scope.set": "medulla:AgentKnowledgeScopeSet",
+}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         build_read_op(
@@ -130,6 +190,26 @@ def operations() -> tuple[OpSpec, ...]:
             handler="arbora.api.ops.retrieval.handle_retrieval_freshness",
             scope="memory:read",
         ),
+        build_write_op(
+            verb=Verb.WRITE,
+            op_id="retrieval.feedback",
+            summary="Record feedback on one retrieved document",
+            examples=("this document was useful",),
+            params=RetrievalFeedbackParams,
+            result=RetrievalWriteResult,
+            handler="arbora.api.ops.retrieval.handle_retrieval_feedback",
+            scope="memory:write",
+        ),
+        build_write_op(
+            verb=Verb.WRITE,
+            op_id="agent.knowledge_scope.set",
+            summary="Set the knowledge sources one agent may retrieve from",
+            examples=("limit this agent to these sources",),
+            params=KnowledgeScopeSetParams,
+            result=RetrievalWriteResult,
+            handler="arbora.api.ops.retrieval.handle_agent_knowledge_scope_set",
+            scope="registry:write",
+        ).model_copy(update={"audit": AuditClass.IDENTITY_CHAIN}),
     )
 
 
@@ -144,6 +224,10 @@ __all__ = [
     "RetrievalSearchParams",
     "RetrievalSearchResult",
     "Retriever",
+    "KnowledgeScopeSetParams",
+    "RetrievalFeedbackParams",
+    "handle_agent_knowledge_scope_set",
+    "handle_retrieval_feedback",
     "handle_retrieval_freshness",
     "handle_retrieval_search",
     "operations",

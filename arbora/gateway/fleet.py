@@ -39,6 +39,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from arbora.api.errors import not_served
+from arbora.fleet.catalog_machine import CatalogState
 from arbora.fleet.health import (
     AuthorityNotServed,
     FleetAuthorities,
@@ -76,9 +77,33 @@ def bind_catalog_generation(source: Callable[[], Awaitable[Any]] | None) -> None
     _CATALOG_GENERATION = source
 
 
+_CATALOG_STATE: Callable[[], CatalogState] | None = None
+
+
+def bind_catalog_state(source: Callable[[], CatalogState] | None) -> None:
+    """Bind the reader of the catalog serving state (ARBORA-FLEET-R081.2)."""
+    global _CATALOG_STATE
+    _CATALOG_STATE = source
+
+
+def catalog_serving_state() -> CatalogState:
+    """The catalog serving state; an unbound reader is ``cold``, never ready."""
+    source = _CATALOG_STATE
+    return CatalogState.COLD if source is None else source()
+
+
+def collect_health() -> Any:
+    """One fleet health collection with the readiness flags derived from state."""
+    return collect_fleet_health(
+        _fleet_authorities(),
+        scope_resolver=_tenant_scope,
+        catalog_state=catalog_serving_state(),
+    )
+
+
 async def _health_snapshot() -> Any:
     """The fleet health snapshot with this replica's catalog generation published."""
-    snapshot = collect_fleet_health(_fleet_authorities(), scope_resolver=_tenant_scope)
+    snapshot = collect_health()
     source = _CATALOG_GENERATION
     if source is None:
         return snapshot
@@ -200,7 +225,7 @@ async def fleet_health(request: Request) -> JSONResponse:
 
 async def fleet_topology(request: Request) -> JSONResponse:
     """Live agent/team topology grouped by enterprise domain (paginated)."""
-    snapshot = collect_fleet_health(_fleet_authorities(), scope_resolver=_tenant_scope)
+    snapshot = collect_health()
     limit, offset, status = _page_params(request)
     snapshot, rows = _topology_rows(snapshot, status, limit, offset)
     domains = _group_sessions(rows)

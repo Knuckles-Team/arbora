@@ -7,9 +7,8 @@ with its own skill/prompt body-harvest path. arbora owns fleet composition
 and discovery (``arbora-repository-development`` skill, "arbora.fleet |
 MCP child lifecycle, catalog discovery..."); its served package must never
 import that legacy path, and
-must define the skill/prompt body-harvest functions
-(:func:`arbora.fleet.multiplexer._harvest_resource_bodies`,
-:func:`~arbora.fleet.multiplexer._bounded_skill_catalog`,
+must define the skill/prompt catalog functions
+(:func:`~arbora.fleet.multiplexer._bounded_skill_catalog`,
 :func:`~arbora.fleet.multiplexer._bounded_prompt_catalog`) in exactly one
 module. This is a static, source-level absence check: what the package's
 own source never imports can never load as a side effect of running it.
@@ -32,7 +31,6 @@ _FORBIDDEN_MODULES = (
 _HARVEST_FUNCTIONS = (
     "_bounded_prompt_catalog",
     "_bounded_skill_catalog",
-    "_harvest_resource_bodies",
 )
 
 

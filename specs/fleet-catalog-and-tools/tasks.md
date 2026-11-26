@@ -296,7 +296,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T028 ARBORA-FLEET-R004 Pack annotations carry capability, digest, modality, cost, latency.
 - [ ] T029 ARBORA-FLEET-R005 A2A task routing with typed work-item and lease operations (rollup).
 - [ ] T030 ARBORA-FLEET-R005.1 Typed WorkItem view, the GetWorkItem/ListWorkItems producer.
-- [ ] T031 ARBORA-FLEET-R006 Multiplexer skill and prompt harvest path removed.
+- [x] T031 ARBORA-FLEET-R006 Multiplexer skill and prompt harvest path removed.
 - [ ] T032 ARBORA-FLEET-R007 Bridge runs on FastMCP 4 with native primitives (rollup).
 - [ ] T033 ARBORA-FLEET-R008 RUM, security-audit and CI/CD feeds join the catalog (rollup).
 - [x] T034 ARBORA-FLEET-R008.1 Typed feed-event model per feed kind.
@@ -308,13 +308,13 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [ ] T040 ARBORA-FLEET-R003.3 Write-back idempotency and preview gating survive a service restart.
 - [x] T041 ARBORA-FLEET-R006.1 Harvest call-site inventory, the removal baseline.
 - [x] T042 ARBORA-FLEET-R006.2 Skill/prompt body-harvest cutover for an already-admitted child.
-- [ ] T043 ARBORA-FLEET-R006.3 Dead harvest helpers removed (rollup over `.3.1` to `.3.4`).
+- [x] T043 ARBORA-FLEET-R006.3 Dead harvest helpers removed (rollup over `.3.1` to `.3.4`).
 - [x] T044 ARBORA-FLEET-R006.3.1 Deliver `_probe_protocol_families` harvest calls routed through the cutover helper.
-- [ ] T045 ARBORA-FLEET-R006.3.2 Non-admitted fallback and `_harvest_resource_bodies` deleted.
-- [ ] T046 ARBORA-FLEET-R006.3.3 Deadline and error-reason helpers deleted.
-- [ ] T047 ARBORA-FLEET-R006.3.4 Harvest specs deleted.
-- [ ] T048 ARBORA-FLEET-R006.4 Residual harvest-named symbol renamed off the removed path.
-- [ ] T049 ARBORA-FLEET-R006.5 Closing audit: no harvest or hydration code remains.
+- [x] T045 ARBORA-FLEET-R006.3.2 Non-admitted fallback and `_harvest_resource_bodies` deleted.
+- [x] T046 ARBORA-FLEET-R006.3.3 Deadline and error-reason helpers deleted.
+- [x] T047 ARBORA-FLEET-R006.3.4 Harvest specs deleted.
+- [x] T048 ARBORA-FLEET-R006.4 Residual harvest-named symbol renamed off the removed path.
+- [x] T049 ARBORA-FLEET-R006.5 Closing audit: no harvest or hydration code remains.
 - [ ] T050 ARBORA-FLEET-R007.1 Connector SDK server registers native prompts, resources and templates.
 - [ ] T051 ARBORA-FLEET-R007.2 meristem's arbora bridge surface gains native prompt/resource/template registration (cross-repo, owner: meristem).
 - [ ] T052 ARBORA-FLEET-R007.3 The served bridge exercises native prompts, resources and templates end to end.
@@ -523,7 +523,7 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T251 ARBORA-FLEET-R080.2 Retry after the process authority recovers.
 - [x] T252 ARBORA-FLEET-R080.3 Describe the onboarding machine in the ontology.
 - [x] T260 ARBORA-FLEET-R080.4 Wire the onboarding machine; hot-path proof.
-- [ ] T253 ARBORA-FLEET-R081 Catalog serving state machine (rollup).
+- [x] T253 ARBORA-FLEET-R081 Catalog serving state machine (rollup).
 - [x] T254 ARBORA-FLEET-R081.1 Catalog state model and transition function.
 - [x] T255 ARBORA-FLEET-R081.2 Derive readiness flags from the catalog state.
 - [x] T256 ARBORA-FLEET-R081.3 Describe the catalog machine in the ontology.

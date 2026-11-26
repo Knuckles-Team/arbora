@@ -7,6 +7,7 @@ from typing import Any
 
 import pytest
 
+from arbora.fleet.catalog_machine import CatalogState
 from arbora.fleet.health import (
     AuthorityNotServed,
     FleetAuthorities,
@@ -95,7 +96,7 @@ def test_unserved_authority_is_not_applicable_to_readiness(
     """AuthorityNotServed reports not_served and never gates readiness."""
     evidence = collect_fleet_health(authorities, now=NOW).evidence
     assert (evidence.status, evidence.ready) == (status, True)
-    # Autoscaling and convergence still need every authority served.
+    # Autoscaling and convergence follow the catalog state (cold here).
     assert not evidence.autoscaling_ready and not evidence.convergence_ready
     assert all(evidence.dependencies[name].status == "not_served" for name in unserved)
 
@@ -154,3 +155,28 @@ def test_readiness_body_names_failing_checks() -> None:
         ]
     }
     assert failing_checks(report) == ["engine"]
+
+
+@pytest.mark.spec("ARBORA-FLEET-R081.2")
+@pytest.mark.parametrize("state", list(CatalogState), ids=lambda s: s.value)
+def test_collected_readiness_flags_derive_from_catalog_state(
+    state: CatalogState,
+) -> None:
+    """The flags follow the catalog state, never the authority snapshot."""
+    evidence = collect_fleet_health(SERVED, now=NOW, catalog_state=state).evidence
+    assert evidence.status == "healthy"  # authorities healthy in every case
+    serving = state is CatalogState.SERVING
+    assert (evidence.autoscaling_ready, evidence.convergence_ready) == (serving,) * 2
+
+
+@pytest.mark.spec("ARBORA-FLEET-R081.2")
+def test_unbound_catalog_state_is_cold_and_never_ready() -> None:
+    from arbora.gateway import fleet as fleet_api
+
+    fleet_api.bind_catalog_state(None)
+    assert fleet_api.catalog_serving_state() is CatalogState.COLD
+    fleet_api.bind_catalog_state(lambda: CatalogState.SERVING)
+    try:
+        assert fleet_api.catalog_serving_state() is CatalogState.SERVING
+    finally:
+        fleet_api.bind_catalog_state(None)
