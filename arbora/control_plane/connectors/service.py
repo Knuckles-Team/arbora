@@ -11,6 +11,7 @@ from pydantic import model_validator
 
 from arbora.control_plane._model import ControlPlaneModel as ProtocolModel
 
+from .machine import event_between, project_outcome, transition
 from .models import (
     AccessScope,
     AuthorizationDecision,
@@ -219,6 +220,11 @@ class ConnectorControlPlane:
             )
         if version.manifest_ref != desired.inventory_ref:
             raise RepositoryContractError("desired state is not bound to its inventory")
+        if current is not None:
+            event = event_between(current.desired_status, desired.desired_status)
+            if event is not None:
+                # Raises IllegalDesiredTransition for a move the machine refuses.
+                transition(current.desired_status, event)
         self._repository.put_desired(desired)
 
     def record_observation(
@@ -340,9 +346,26 @@ class ConnectorControlPlane:
             projection=projection,
         )
 
-    def authorize(self, decision: AuthorizationDecision) -> None:
-        """Persist one independent decision without accepting credential values."""
+    def authorize(
+        self, decision: AuthorizationDecision, *, scope: AccessScope | None = None
+    ) -> None:
+        """Persist one independent decision without accepting credential values.
 
+        A denied or revoked decision never becomes approved by a rewrite: only a
+        new decision (a new ``decision_id``) can approve (ARBORA-FLEET-R082.2).
+        """
+
+        if scope is not None and project_outcome(decision) in {"approved", "pending"}:
+            known = self._repository.get_authorizations(
+                scope, decision.server_id, decision.version_id
+            )
+            for prior in known.decisions if known is not None else ():
+                if prior.decision_id == decision.decision_id and project_outcome(
+                    prior
+                ) in {"denied", "revoked"}:
+                    raise RepositoryContractError(
+                        "a denied or revoked decision cannot be approved again"
+                    )
         self._repository.put_authorization(decision)
 
     @staticmethod

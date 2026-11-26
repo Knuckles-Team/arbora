@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "rows": [
+    {"obligation_id": "ingestion_receipts", "description": "A recorded connector sync reads back its receipt and one ingested fact", "test_reference": "tests/release/test_exit_ingestion_receipts.py::test_sync_receipt_reads_back_through_ask"},
+    {"obligation_id": "query_proofs", "description": "SPARQL and natural-language questions answer from ingested facts", "test_reference": "tests/release/test_exit_query_proofs.py::test_uql_and_nl_questions_answer_from_ingested_facts"},
+    {"obligation_id": "orchestration_graph", "description": "A cross-connector plan passes data by binding end to end", "test_reference": "tests/api/test_plan_run_ops.py::test_cross_connector_plan_passes_data_by_binding_end_to_end"},
+    {"obligation_id": "connector_certification", "description": "A certified connector onboards and the engine holds its pack", "test_reference": "tests/release/test_exit_connector_certification.py::test_certified_connector_onboards_and_the_engine_holds_its_pack"},
+    {"obligation_id": "write_back_receipt", "description": "A confirmed write-back commit returns the engine journal receipt", "test_reference": "tests/release/test_exit_write_back_receipt.py::test_confirmed_commit_returns_the_engine_journal_receipt"},
+    {"obligation_id": "login_probe", "description": "A browser login through the issuer reaches a verified session", "test_reference": "tests/release/test_exit_login_probe.py::test_browser_login_through_the_issuer_reaches_a_verified_session"},
+    {"obligation_id": "typed_abstention", "description": "A capability question with no agent returns the typed abstention", "test_reference": "tests/release/test_exit_typed_abstention.py::test_capability_question_with_no_agent_returns_typed_abstention"}
+  ]
+}

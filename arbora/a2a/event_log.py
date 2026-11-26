@@ -24,6 +24,8 @@ from typing import Any, Protocol
 from arbora.api.invoke.screening import redact_result
 
 __all__ = [
+    "FAILURE_KEY",
+    "terminal_state",
     "A2AEventFenceLost",
     "A2AEventGap",
     "A2AEventConsumerTooSlow",
@@ -53,6 +55,23 @@ _TERMINAL_STATE = {
     "dead_letter": "failed",
 }
 _DEFAULT_BUFFER_EVENTS = 256
+#: The WorkItem metadata key that marks a ``cancelled`` item as a failed run: the
+#: engine finishes an item whose reclaim was refused with ``CancelWorkItem``
+#: (``ARBORA-A2A-R001.2.2``), and the run's A2A state is ``failed``.
+FAILURE_KEY = "a2a_failure"
+
+
+def terminal_state(item: Mapping[str, Any]) -> str | None:
+    """The A2A state a terminal WorkItem projects to, or ``None`` while it runs."""
+    status = str(item.get("status"))
+    metadata = item.get("metadata")
+    if (
+        status == "cancelled"
+        and isinstance(metadata, Mapping)
+        and metadata.get(FAILURE_KEY)
+    ):
+        return "failed"
+    return _TERMINAL_STATE.get(status)
 
 
 class A2AEventGap(RuntimeError):
@@ -211,16 +230,19 @@ class A2AEventLog:
         draft: Mapping[str, Any],
         *,
         claim: Mapping[str, Any] | None,
+        metadata: Mapping[str, Any] | None = None,
     ) -> int:
         """Write one event and advance ``event_seq`` under the lease fence.
 
         ``claim`` is the live lease of the run, or ``None`` for a lease-less
-        writer such as a cancellation. Raises ``A2AEventFenceLost`` when another
-        writer holds the sequence.
+        writer such as a cancellation. ``metadata`` is merged into the item's
+        metadata in the same compare-and-set that advances ``event_seq``. Raises
+        ``A2AEventFenceLost`` when another writer holds the sequence.
         """
         from arbora import work_items
 
         item = await self._item(item_id)
+        extra = metadata
         metadata = dict(item["metadata"])
         sequence = int(metadata.get(EVENT_SEQ_KEY, 0)) + 1
         fence = int(claim["fencing_token"]) if claim is not None else _EXTERNAL_FENCE
@@ -235,7 +257,7 @@ class A2AEventLog:
             work_items.cas_work_item_metadata,
             self._work_engine(),
             item,
-            metadata={**metadata, EVENT_SEQ_KEY: sequence},
+            metadata={**metadata, **dict(extra or {}), EVENT_SEQ_KEY: sequence},
             claim=claim,
         )
         if not applied:
@@ -344,7 +366,7 @@ class A2AEventStream:
             records = await self._log.read(
                 item, self._seq, min(_READ_BATCH, self._buffer)
             )
-            terminal = _TERMINAL_STATE.get(str(item.get("status")))
+            terminal = terminal_state(item)
             delivered, held = self._deliverable(records, terminal)
             if self._seq >= committed or held:
                 self._caught_up = True

@@ -409,13 +409,19 @@ def defer_work_item(
     return result.get("status") == "deferred"
 
 
-def cancel_work_item(engine: Any, item_id: str, *, reason: str | None = None) -> bool:
-    """Cancel a pending WorkItem (``CancelWorkItem``)."""
+def cancel_work_item(
+    engine: Any,
+    item_id: str,
+    *,
+    reason: str | None = None,
+    now: float | None = None,
+) -> bool:
+    """Cancel a pending WorkItem (``CancelWorkItem``); ``now`` is the caller's clock."""
     result = _work_items(engine).cancel(
         tenant=_tenant(),
         work_item_id=item_id,
         idempotency_key=_key("cancel", item_id),
-        now_ms=_now_ms(),
+        now_ms=_now_ms(now),
         reason_ref=reason,
     )
     return result.get("status") == "cancelled"
