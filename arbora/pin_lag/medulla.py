@@ -37,6 +37,8 @@ __all__ = [
     "AGENT_RUN_DELEGATION_FIELDS",
     "CLAIM_IDENTITY_FIELDS",
     "agent_run_delegation_served",
+    "guard_certification_read",
+    "guard_skill_upgrade",
     "require_agent_run_delegation",
     "admission_models",
     "require_claim_identity",
@@ -206,3 +208,21 @@ def agent_run_delegation_served() -> bool:
     except PinLagUnavailable:
         return False
     return True
+
+
+def guard_skill_upgrade() -> None:
+    """Refuse ``UNAVAILABLE`` naming what a ``SkillUpgrade`` ``Decide`` needs (R034.13).
+
+    PIN-LAG: engine ``main`` answers ``Decide`` with ``QuestionKind::SkillUpgrade`` and
+    declares ``SkillUpgradeRequest``; the pinned release may lack the shape.
+    """
+    guard("Decide", models=("SkillUpgradeRequest", "SkillUpgradeReceipt"))
+
+
+def guard_certification_read() -> None:
+    """Refuse ``UNAVAILABLE`` naming what reading a stored attestation needs (R034.14).
+
+    PIN-LAG: ``DecisionEval`` ``CertifyLocalSkill`` and its
+    ``LocalCertificationAttestation`` are engine ``main`` shapes.
+    """
+    guard("DecisionEval", models=("LocalCertificationAttestation",))

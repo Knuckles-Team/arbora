@@ -346,6 +346,9 @@ class FleetOnboarding:
     #: Local policy decisions and native EG receipts, keyed by connector.
     source_decisions: dict[str, tuple[Any, ...]] = field(default_factory=dict)
     source_receipts: dict[str, tuple[Any, ...]] = field(default_factory=dict)
+    #: Admits versioned definitions before the pack import (ARBORA-FLEET-R002.5);
+    #: ``None`` leaves definitions unversioned, as before the engine port is wired.
+    definition_admission: Any = None
 
     @property
     def tenant_client(self) -> Any:
@@ -425,6 +428,12 @@ class FleetOnboarding:
         self.surfaces[endpoint.name] = pack_surface_report(pack)
         self._record_contract(endpoint.name, pack)
         _remember_declaration(self.declarations, endpoint.name, pack)
+        receipts: tuple[Any, ...] = ()
+        if self.definition_admission is not None:
+            with onboarding_step("DefinitionAdmission"):
+                receipts = await self.definition_admission.admit(
+                    str(self.session.tenant), endpoint.name, pack
+                )
         with onboarding_step("ConnectorPackStatus"):
             changed = not await self.pack_unchanged(endpoint, pack)
         if changed:
@@ -438,6 +447,11 @@ class FleetOnboarding:
                     action_policies=self.action_policies,
                     allow_mass_withdrawal=endpoint.name in self.allow_mass_withdrawal,
                 )
+            if self.definition_admission is not None:
+                with onboarding_step("DefinitionReceipt"):
+                    await self.definition_admission.record(
+                        str(self.session.tenant), receipts
+                    )
         else:
             with onboarding_step("renew"):
                 await self.renew({endpoint.name: endpoint.url})

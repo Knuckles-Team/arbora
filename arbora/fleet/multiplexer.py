@@ -98,6 +98,7 @@ from arbora.fleet.local_skill_catalog import (
 from arbora.fleet.oauth_brokers import oauth_gated
 from arbora.fleet.session_notifications import SessionCatalogNotifications
 from arbora.fleet.state import FleetState, LiveMultiplexers
+from arbora.fleet.workflow_binding import WorkflowBindings
 from arbora.pin_lag.unavailable import PinLagUnavailable
 from arbora.security.error_surface import public_error_text
 from arbora.security.log_redaction import redact_for_log
@@ -2366,6 +2367,8 @@ class MCPMultiplexer:
         # always-on tools live in ``_global_visible`` and are shown to everyone.
         self._exposed: set[str] = set()
         self._session_loaded: dict[str, set[str]] = {}
+        #: ARBORA-FLEET-R021.1: workflow tools need their admitted binding per call.
+        self.workflow_bindings = WorkflowBindings()
         self._global_visible: set[str] = set()
         # CONCEPT:MERISTEM-ECO.multiplexer.tool-gateway-catalog — self-catalog: per-server {"tools": [...], "error": str|None}
         # learned by probing each child (connect → list_tools → release), cached so
@@ -2796,6 +2799,9 @@ class MCPMultiplexer:
         self, prefixed_name: str, original_name: str
     ) -> tuple[_typing.Any, _typing.Any]:
         """Select the currently visible descriptor and its disclosure contract."""
+        workflow_refusal = self.workflow_bindings.refusal(prefixed_name, _session_key())
+        if workflow_refusal is not None:
+            raise _fastmcp_exceptions.ToolError(workflow_refusal)
         if not self.tool_dispatchable(prefixed_name):
             raise _fastmcp_exceptions.ToolError(
                 "MCP child tool is not loaded for this session"
@@ -6970,6 +6976,10 @@ class MCPMultiplexer:
         middleware running at all, so there is nothing to defer to — refuse
         rather than default-open.
         """
+        if self.workflow_bindings.refusal(
+            prefixed_name, session_key if session_key is not None else _session_key()
+        ):
+            return False
         if prefixed_name in self._global_visible:
             return True
         if prefixed_name in self._local_gated:
