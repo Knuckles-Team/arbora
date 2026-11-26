@@ -129,6 +129,7 @@ def make_endpoint(
     generic: bool,
     is_console_request: Callable[[Request, Any], bool] | None = None,
     operation_authority: Any = None,
+    derive_key: Callable[[dict[str, Any]], str] | None = None,
 ) -> Callable[[Request], Awaitable[JSONResponse]]:
     """Return the single handler used by every registered HTTP operation.
 
@@ -144,6 +145,10 @@ def make_endpoint(
         except (ValueError, TypeError):
             return _error("INVALID_ARGUMENT", digest=digest, op=op.id)
         key = request.headers.get("idempotency-key")
+        if key is None and derive_key is not None:
+            # A protocol client that cannot send the header (an OTLP exporter)
+            # is keyed by its body, so a retry of the same body replays.
+            key = derive_key(params)
         plan_ref = request.headers.get("arbora-plan-ref")
         if _invalid_header(key) or _invalid_header(plan_ref):
             return _error("INVALID_ARGUMENT", digest=digest, op=op.id)

@@ -46,7 +46,7 @@ class A2ATextPart(_WireModel):
 
 class A2AInlineTextFile(_WireModel):
     bytes: str = Field(min_length=1, max_length=87_384)
-    mime_type: Literal["text/plain"]
+    mime_type: Literal["text/plain", "text/markdown"]
     name: str | None = Field(default=None, max_length=256)
 
     @field_validator("bytes")
@@ -79,9 +79,16 @@ class A2AInlineMediaFile(_WireModel):
 
     bytes: str = Field(min_length=4, max_length=(MEDIA_FILE_MAX_BYTES * 4) // 3 + 4)
     mime_type: str = Field(
-        pattern=r"^(audio|image|video|application)/[A-Za-z0-9.+-]{1,96}$"
+        pattern=r"^(audio|image|video|application|text)/[A-Za-z0-9.+-]{1,96}$"
     )
     name: str | None = Field(default=None, max_length=256)
+
+    @field_validator("mime_type")
+    @classmethod
+    def _not_inline_text(cls, value: str) -> str:
+        if value in ("text/plain", "text/markdown"):
+            raise ValueError("inline text files use the text file model")
+        return value
 
     @field_validator("bytes")
     @classmethod
@@ -134,15 +141,9 @@ class A2AMessage(_WireModel):
         return value
 
     @model_validator(mode="after")
-    def _bounded_files(self) -> A2AMessage:
-        files = [part.file for part in self.parts if isinstance(part, A2AFilePart)]
-        text_size = sum(
-            len(file.decoded_bytes())
-            for file in files
-            if isinstance(file, A2AInlineTextFile)
-        )
-        if len(files) > 8 or text_size > 65_536:
-            raise ValueError("message exceeds inline file bounds")
+    def _bounded_task(self) -> A2AMessage:
+        # File count and aggregate text bounds live in one place:
+        # ``arbora.a2a.parts.admit_file_parts`` (ARBORA-A2A-R001.5.1).
         if len(self.task_text()) > 100_000:
             raise ValueError("message exceeds the execution task size bound")
         return self

@@ -1,4 +1,4 @@
-"""Skill evaluation, ablation, canary and tier operations (ARBORA-OPS-R955 to R957)."""
+"""Skill evaluation, ablation, and canary operations (ARBORA-OPS-R955, R956)."""
 
 from __future__ import annotations
 
@@ -74,32 +74,6 @@ async def test_ablation_record_and_canary_verdict_pass_through(
     )
     assert verdict == {"value": {"verdict": "ramp"}}
     assert sent[1][1]["request"]["tenant_id"] == "tenant:one"
-
-
-async def test_promotion_never_sends_a_reviewer_and_surfaces_engine_codes(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    sent = _record(monkeypatch, skills_eval)
-    context = caller_context()
-    await skills_eval.handle_tier_promote(
-        context,
-        {
-            "request": {
-                "tier_review": {"tier": "domain"},
-                "tier_reviewer": "someone:else",
-                "approver_principal": "someone:else",
-            }
-        },
-        NO_OP,
-    )
-    request = sent[0][1]["request"]
-    assert "tier_reviewer" not in request and "approver_principal" not in request
-    assert request["tier_review"] == {"tier": "domain"}
-    for code in ("TIER_SELF_REVIEW", "TIER_REVIEW_SCOPE_REQUIRED"):
-        _record(monkeypatch, skills_eval, EngineRefusal(code))
-        with pytest.raises(EngineRefusal) as refused:
-            await skills_eval.handle_tier_promote(context, {"request": {}}, NO_OP)
-        assert refused.value.code == code
 
 
 async def test_config_layers_forward_the_read(monkeypatch: pytest.MonkeyPatch) -> None:

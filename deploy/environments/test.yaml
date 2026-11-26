@@ -26,6 +26,8 @@ target:
   orchestrator: kubernetes
   namespace: platform-test
   authority: namespace-only
+  runtime: docker
+  privilege: rootful
   cluster_context_ref: null
   node_selector: {}
 

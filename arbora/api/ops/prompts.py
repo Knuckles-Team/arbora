@@ -28,6 +28,8 @@ from arbora.api.registry import OpSpec
 EG_NAMESPACE = "prompts"
 _ID = r"^[A-Za-z0-9][A-Za-z0-9_.:@-]{0,127}$"
 _READ_SCOPE = "kv:read"
+_ACTIVE_SCOPE = "agent:library-read"
+_ACTIVE_LIMIT = 256 * 1024
 _WRITE_SCOPE = "kv:write"
 
 
@@ -267,6 +269,49 @@ async def handle_prompts_diff(
     return {"value": {"id": prompt_id, "a": a, "b": b, "diff": diff}}
 
 
+class ActivePromptParams(Params):
+    agent_id: str | None = Field(default=None, min_length=1, max_length=256)
+
+
+async def handle_prompts_active_get(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """The system prompt an agent runs with, joined from its library entry.
+
+    The agent defaults to the caller's session agent. The body is the engine
+    component the entry's ``system_prompt`` names; arbora holds none of it.
+    """
+    from arbora.api.ops._engine import engine_send
+    from arbora.api.ops.agent_library import _current
+
+    agent_id = params.get("agent_id") or getattr(context.caller, "agent_id", None)
+    if not agent_id:
+        raise _refuse("AGENT_NOT_FOUND")
+    entry = await _current(context, str(agent_id), missing="AGENT_NOT_FOUND")
+    request = {
+        "component_id": entry["system_prompt"]["component_id"],
+        "tenant_id": str(context.caller.tenant),
+    }
+    answer = await engine_send(
+        context, "AgentComponent", {"op": {"op": "content", "request": request}}
+    )
+    body = answer.get("body", b"") if isinstance(answer, Mapping) else b""
+    text = bytes(body).decode("utf-8", errors="replace") if body else ""
+    encoded = text.encode("utf-8")
+    truncated = len(encoded) > _ACTIVE_LIMIT
+    if truncated:
+        text = encoded[:_ACTIVE_LIMIT].decode("utf-8", errors="ignore")
+    return {
+        "value": {
+            "agent_id": str(agent_id),
+            "profile": entry.get("role", ""),
+            "system_prompt": text,
+            "revision": entry.get("entry_revision"),
+            "truncated": truncated,
+        }
+    }
+
+
 def _read(op_id: str, summary: str, example: str, params: type[Params]) -> OpSpec:
     return build_read_op(
         op_id=op_id,
@@ -316,6 +361,15 @@ def operations() -> tuple[OpSpec, ...]:
             "Diff two versions of one prompt",
             "diff prompt versions",
             PromptDiffParams,
+        ),
+        build_read_op(
+            op_id="prompts.active.get",
+            summary="Read the active instructions of one agent",
+            examples=("show the active instructions of this agent",),
+            params=ActivePromptParams,
+            result=PromptResult,
+            handler="arbora.api.ops.prompts.handle_prompts_active_get",
+            scope=_ACTIVE_SCOPE,
         ),
         _write(
             "prompts.create",

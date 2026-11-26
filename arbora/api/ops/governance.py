@@ -1,4 +1,4 @@
-"""Trust flags, curation review and catalog usage over the engine (ARBORA-OPS-R855.3).
+"""Trust flags, curation review, catalog usage and the query workspace (ARBORA-OPS-R855.3).
 
 The engine models the glossary, stewardship and catalog as graph facts and serves
 them through ``Glossary``, ``Stewardship`` and ``CatalogRead``. Arbora holds no
@@ -23,7 +23,12 @@ from arbora.api.registry import OpSpec, Verb
 NATIVE_IDEMPOTENCY: dict[str, str] = {
     "catalog.trust_flag.set": "medulla:Stewardship",
     "curation.proposals.review": "medulla:Glossary",
+    "query.workspace.save": "medulla:StoredQueryPut",
+    "query.workspace.delete": "medulla:StoredQueryRetire",
 }
+#: The stored-query methods are read and written under the query scopes.
+QUERY_READ_SCOPE = "query:read"
+QUERY_WRITE_SCOPE = "query:write"
 READ_SCOPE = "kg:read"
 WRITE_SCOPE = "kg:write"
 #: ``CatalogUsage`` is a ``query:unified`` read; the engine returns principal names
@@ -56,6 +61,42 @@ class ProposalReviewParams(Params):
 class UsageParams(Params):
     asset: str = Field(min_length=1, max_length=2048)
     top_n: int | None = Field(default=None, ge=1, le=100)
+
+
+Language = Literal["uql", "sql", "sparql"]
+ParamType = Literal["string", "int", "float", "bool"]
+Share = Literal["private", "placement", "tenant"]
+RetireReason = Literal["superseded", "deprecated", "incorrect", "unsafe"]
+
+
+class WorkspaceQueryPutParams(Params):
+    """One stored query as the engine's ``StoredQuery`` carries it; the engine sets the author."""
+
+    name: str = Field(min_length=1, max_length=256)
+    language: Language
+    text: str = Field(min_length=1, max_length=65_536)
+    params: dict[str, ParamType] = Field(default_factory=dict, max_length=64)
+    materialize: bool = False
+    refresh: dict[str, Any] = Field(default_factory=lambda: {"kind": "on_change"})
+    share: Share = "private"
+    version: int = Field(default=0, ge=0)
+
+
+class WorkspaceQueryGetParams(Params):
+    name: str = Field(min_length=1, max_length=256)
+    version: int | None = Field(default=None, ge=0)
+
+
+class WorkspaceQueryListParams(Params):
+    author: str | None = Field(default=None, max_length=256)
+    cursor: str | None = Field(default=None, max_length=512)
+    include_retired: bool = False
+    limit: int | None = Field(default=None, ge=1, le=256)
+
+
+class WorkspaceQueryDeleteParams(Params):
+    name: str = Field(min_length=1, max_length=256)
+    reason: RetireReason
 
 
 class EngineAnswer(Params):
@@ -174,6 +215,46 @@ async def handle_catalog_usage(
     return _mapping(await engine_send(context, "CatalogUsage", request))
 
 
+async def handle_workspace_put(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Publish one immutable version of a stored query under the caller's name."""
+    query = {key: params[key] for key in WorkspaceQueryPutParams.model_fields}
+    return _mapping(
+        await engine_send(context, "StoredQueryPut", {"query": query}, idempotent=True)
+    )
+
+
+async def handle_workspace_get(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    request: dict[str, Any] = {"name": params["name"]}
+    if params.get("version") is not None:
+        request["version"] = params["version"]
+    return _mapping(await engine_send(context, "StoredQueryGet", request))
+
+
+async def handle_workspace_list(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    request = {
+        key: params[key]
+        for key in ("author", "cursor", "limit")
+        if params.get(key) is not None
+    }
+    request["include_retired"] = bool(params.get("include_retired"))
+    return _mapping(await engine_send(context, "StoredQueryList", request))
+
+
+async def handle_workspace_delete(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    request = {"name": params["name"], "reason": params["reason"]}
+    return _mapping(
+        await engine_send(context, "StoredQueryRetire", request, idempotent=True)
+    )
+
+
 def operations() -> tuple[OpSpec, ...]:
     module = "arbora.api.ops.governance"
     return (
@@ -213,6 +294,42 @@ def operations() -> tuple[OpSpec, ...]:
             result=EngineAnswer,
             handler=f"{module}.handle_catalog_usage",
             scope=USAGE_SCOPE,
+        ),
+        build_write_op(
+            op_id="query.workspace.save",
+            summary="Publish a stored query to the shared query workspace",
+            examples=("save this query to the workspace",),
+            params=WorkspaceQueryPutParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_workspace_put",
+            scope=QUERY_WRITE_SCOPE,
+        ),
+        build_read_op(
+            op_id="query.workspace.get",
+            summary="Read one stored query of the shared query workspace",
+            examples=("show this workspace query",),
+            params=WorkspaceQueryGetParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_workspace_get",
+            scope=QUERY_READ_SCOPE,
+        ),
+        build_read_op(
+            op_id="query.workspace.list",
+            summary="List the stored queries of the shared query workspace",
+            examples=("list the workspace queries",),
+            params=WorkspaceQueryListParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_workspace_list",
+            scope=QUERY_READ_SCOPE,
+        ),
+        build_write_op(
+            op_id="query.workspace.delete",
+            summary="Delete (retire) a stored query you authored, with a reason",
+            examples=("retire this workspace query",),
+            params=WorkspaceQueryDeleteParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_workspace_delete",
+            scope=QUERY_WRITE_SCOPE,
         ),
     )
 

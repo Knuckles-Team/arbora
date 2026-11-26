@@ -23,6 +23,12 @@ from arbora.api.ops import _common
 from arbora.api.ops._engine import decode, engine_send
 from arbora.api.registry import Confirm, OpSpec, Verb
 
+#: EG replays each write by its idempotency key, so the engine owns replay.
+NATIVE_IDEMPOTENCY: dict[str, str] = {
+    "workstream.attach": "medulla:AddNode/AddEdge",
+    "workstream.checkpoint": "medulla:CompareAndSetNodeFields",
+    "workstream.detach": "medulla:CompareAndSetNodeFields",
+}
 READ_SCOPE = "workstream:read"
 WRITE_SCOPE = "workstream:write"
 #: The attach context is bounded so a hook can inject it directly.
@@ -313,6 +319,7 @@ async def handle_checkpoint(
                 }
             ),
         },
+        idempotent=True,
     )
     return {"value": {"workstream": key, "status": "checkpointed"}}
 
@@ -343,6 +350,7 @@ async def handle_detach(
                 {"state": "detached", "detached_at_ms": clock_ms()}
             ),
         },
+        idempotent=True,
     )
     return {"value": {"status": "detached"}}
 
@@ -470,6 +478,7 @@ __all__ = [
     "AttachmentEvent",
     "AttachmentState",
     "IllegalAttachTransition",
+    "NATIVE_IDEMPOTENCY",
     "handle_attach",
     "handle_checkpoint",
     "handle_detach",
