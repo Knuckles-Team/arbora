@@ -551,3 +551,4 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T475 [US1] ARBORA-OPS-R924 Served Discover carries caller seeds and hop filters (rollup).
 - [ ] T476 [US1] ARBORA-OPS-R924.1 Wiring and refusal: contract fields and engine codes.
 - [ ] T477 [US1] ARBORA-OPS-R924.2 Hot-path proof: guided Discover over HTTP and MCP.
+- [x] T478 [US1] ARBORA-OPS-R024.3.3 Grouped usage rollup with currency and p95 latency.

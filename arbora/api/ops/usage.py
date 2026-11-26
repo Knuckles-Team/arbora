@@ -14,7 +14,7 @@ from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, model_validator
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
@@ -31,6 +31,7 @@ class UsageReadParams(_common.Params):
     )
     from_ms: int | None = Field(default=None, ge=0)
     to_ms: int | None = Field(default=None, ge=0)
+    group_by: Literal["model", "project", "agent"] | None = None
 
 
 class TurnTiming(_common.Params):
@@ -52,6 +53,26 @@ class SessionUsageView(_common.Params):
     inventory_complete: bool
     turn_timings: list[TurnTiming] | None = None
     timing_refusal: Literal["TIMING_INVALID"] | None = None
+
+
+class UsageGroup(_common.Params):
+    """One engine rollup group; an unpriced or mixed-currency group has no cost."""
+
+    key: str
+    calls: int = Field(ge=0)
+    tokens_in: int = Field(ge=0)
+    tokens_out: int = Field(ge=0)
+    tokens_cached: int = Field(ge=0)
+    errors: int = Field(ge=0)
+    cost_micro: int | None = Field(default=None, ge=0)
+    currency: str | None = Field(default=None, pattern=r"^[A-Z]{3}$")
+    latency_p95_ms: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def _cost_has_a_currency(self) -> UsageGroup:
+        if (self.cost_micro is None) != (self.currency is None):
+            raise ValueError("cost and currency are present together or not at all")
+        return self
 
 
 class UsageReadResult(_common.Params):
@@ -109,19 +130,51 @@ async def read_tenant_rollup(
     The window defaults to everything up to now; the engine's own per-day,
     per-model rows return unchanged and an engine refusal keeps its code.
     """
+    group_by = params.get("group_by")
+    if group_by is not None and not _declares_usage_groups():
+        raise unavailable("the installed engine does not group usage")
     start = params.get("from_ms") or 0
     end = params.get("to_ms")
     end = clock_ms() if end is None else end
     if end < start:
         raise OperationRefused("INVALID_ARGUMENT", {"reason": "to_ms before from_ms"})
-    answer = await engine_send(
-        context,
-        "Usage",
-        {"op": {"op": "read", "view": "rollup", "from_ms": start, "to_ms": end}},
-    )
+    read: dict[str, Any] = {
+        "op": "read",
+        "view": "rollup",
+        "from_ms": start,
+        "to_ms": end,
+    }
+    if group_by is not None:
+        read["group_by"] = group_by
+    answer = await engine_send(context, "Usage", {"op": read})
     if not isinstance(answer, Mapping) or answer.get("view") != "rollup":
         raise unavailable("engine result malformed")
-    return dict(answer)
+    return _checked_rollup(dict(answer), grouped=group_by is not None)
+
+
+def _declares_usage_groups() -> bool:
+    """Whether the installed engine contract declares the grouped rollup."""
+    from medulla.generated import models
+
+    return hasattr(models, "UsageGroupRollup")
+
+
+def _checked_rollup(answer: dict[str, Any], *, grouped: bool) -> dict[str, Any]:
+    """The rollup with its groups and watermark validated; nothing is derived."""
+    watermark = answer.get("index_watermark_ms")
+    if watermark is not None and (type(watermark) is not int or watermark < 0):
+        raise unavailable("engine result malformed")
+    if grouped and ("groups" not in answer or "index_watermark_ms" not in answer):
+        raise unavailable("engine result malformed")
+    if "groups" in answer:
+        try:
+            answer["groups"] = [
+                UsageGroup.model_validate(row).model_dump(mode="json")
+                for row in answer["groups"]
+            ]
+        except (ValidationError, TypeError):
+            raise unavailable("engine result malformed") from None
+    return answer
 
 
 def operations() -> tuple[OpSpec, ...]:
@@ -143,6 +196,7 @@ specs = operations
 __all__ = [
     "SessionUsageView",
     "TurnTiming",
+    "UsageGroup",
     "UsageReadParams",
     "UsageReadResult",
     "read_tenant_rollup",

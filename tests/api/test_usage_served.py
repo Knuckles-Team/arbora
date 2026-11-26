@@ -154,3 +154,89 @@ def test_usage_read_reaches_engine_ledger_for_the_caller_tenant(
     assert seen == [{"op": {"op": "read", "view": "rollup", "from_ms": 5, "to_ms": 99}}]
     backwards = _call(http, "usage.read", {"from_ms": 9, "to_ms": 3})
     assert backwards.status_code == 400
+
+
+def _group(key: str, **changes: Any) -> dict[str, Any]:
+    row: dict[str, Any] = {
+        "key": key,
+        "calls": 2,
+        "tokens_in": 10,
+        "tokens_out": 4,
+        "tokens_cached": 1,
+        "errors": 0,
+        "cost_micro": 1500,
+        "currency": "USD",
+        "latency_p95_ms": 420,
+    }
+    row.update(changes)
+    return row
+
+
+@pytest.mark.spec("ARBORA-OPS-R024.3.3")
+def test_grouped_usage_forwards_group_by_and_refuses_a_missing_shape(
+    served: Any,  # noqa: F811
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import medulla.generated.models as models
+
+    http, client = served
+    seen: list[dict[str, Any]] = []
+    answer: dict[str, Any] = {}
+
+    def usage(params: dict[str, Any], _principal: str) -> Any:
+        seen.append(params)
+        return answer
+
+    route_methods(
+        client,
+        {"Usage": usage},
+        monkeypatch,
+        {"fixture-verified": person("one", extra_scopes=("usage:read",))},
+    )
+    body = {"from_ms": 5, "to_ms": 99, "group_by": "project"}
+
+    # An installed engine contract without grouped rollups refuses before sending.
+    monkeypatch.delattr(models, "UsageGroupRollup", raising=False)
+    refused = _call(http, "usage.read", body)
+    assert refused.status_code == 503 and seen == []
+    assert refused.json()["error"]["code"] == "UNAVAILABLE"
+
+    monkeypatch.setattr(models, "UsageGroupRollup", object, raising=False)
+    answer.update(
+        view="rollup",
+        days=[],
+        index_watermark_ms=77,
+        groups=[_group("p1"), _group("p2", cost_micro=None, currency=None)],
+    )
+    value = _value(_call(http, "usage.read", body))
+    assert seen == [
+        {
+            "op": {
+                "op": "read",
+                "view": "rollup",
+                "from_ms": 5,
+                "to_ms": 99,
+                "group_by": "project",
+            }
+        }
+    ]
+    assert value["index_watermark_ms"] == 77
+    assert [g["key"] for g in value["groups"]] == ["p1", "p2"]
+    assert value["groups"][0]["currency"] == "USD"
+    assert value["groups"][1]["cost_micro"] is None
+    assert not {"observed_from_ms", "observed_to_ms"} & value.keys()
+
+    for broken in (
+        {"groups": [_group("p1", currency=None)]},  # cost without a currency
+        {"groups": [_group("p1", currency="usd")]},
+        {"groups": [{"key": "p1"}]},
+        {"index_watermark_ms": -1},
+    ):
+        answer.update(
+            view="rollup", days=[], index_watermark_ms=77, groups=[_group("p1")]
+        )
+        answer.update(broken)
+        assert _call(http, "usage.read", body).status_code == 503
+    del answer["groups"]
+    assert _call(http, "usage.read", body).status_code == 503
+    assert _call(http, "usage.read", {**body, "group_by": "color"}).status_code == 400
