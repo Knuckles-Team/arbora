@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -48,9 +49,16 @@ def build_a2a_service(
     The event log is the streaming authority: the card advertises
     ``streaming`` because this function wires it (ARBORA-A2A-R014).
     """
+    from .authority import _RUN_LEASE_SECONDS
+    from .run_delegation import engine_run_delegations
+
     log = A2AEventLog(engine_provider, clock=clock)
     authority = WorkItemA2AAuthority(
         engine_provider,
+        # PIN-LAG: None until the installed engine serves agent-run delegations.
+        delegations=engine_run_delegations(
+            engine_provider, clock=time.time, lease_s=_RUN_LEASE_SECONDS
+        ),
         origins=origins,
         task_plan_config=task_plan_config,
         hosted_invocation=hosted_invocation,

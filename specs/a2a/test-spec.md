@@ -90,6 +90,7 @@ The served confirm fixture rejects missing, unknown and mixed confirmation_kind 
 ## Additional owner requirements
 
 - `ARBORA-A2A-R001.2`: Future tests cover acceptance and refusals in requirements.md. Tests have not run.
+- `ARBORA-A2A-R001.2.2`: `tests/a2a/test_checkpoint_resume_served.py` interrupts a run, reclaims it on a restarted host and resubscribes (no repeated step, gap-free cursor), and fails a run whose delegation was revoked with a final `failed` frame. `tests/pin_lag/test_agent_run_delegation_pin_lag.py` covers the pinned refusal and the `main` shape.
 - `ARBORA-A2A-R001.2.1`: `tests/a2a/test_event_log.py` covers the sequence fence with two writers, replay from a cursor, the gap refusal and the redaction.
 
 ## Verified caller and shared invocation acceptance
