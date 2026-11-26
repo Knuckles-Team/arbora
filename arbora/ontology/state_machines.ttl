@@ -759,3 +759,127 @@ arbora:WorkstreamAttachmentMachine_attached-detach-detached a owl:Class ;
     :fromState arbora:WorkstreamAttachmentAttached ;
     :toState arbora:WorkstreamAttachmentDetached ;
     :firedBy arbora:WorkstreamAttachmentMachine_Event_detach .
+
+# ---------------------------------------------------------------------------
+# Plan lease (ARBORA-OPS-R901, R903).
+# Python: PlanState, PlanEvent, PLAN_EDGES in arbora/api/invoke/plan.py.
+# ---------------------------------------------------------------------------
+
+arbora:PlanLeaseMachine a owl:Class, :StateMachine ;
+    rdfs:subClassOf :StateMachine ;
+    rdfs:label "Plan lease" ;
+    rdfs:comment "The confirmation lease of one previewed plan: issued, consumed once before its hard expiry, executed, then done or failed; an issued plan that reaches its hard expiry expires." ;
+    :initialState arbora:PlanIssued ;
+    :hasState arbora:PlanIssued ,
+        arbora:PlanConsumed ,
+        arbora:PlanExecuting ,
+        arbora:PlanDone ,
+        arbora:PlanFailed ,
+        arbora:PlanExpired .
+
+arbora:PlanState a owl:Class ;
+    rdfs:subClassOf :State ;
+    rdfs:label "Plan lease state" .
+
+arbora:PlanTerminalState a owl:Class ;
+    rdfs:subClassOf arbora:PlanState, :TerminalState ;
+    rdfs:label "Plan lease terminal state" .
+
+arbora:PlanTransition a owl:Class ;
+    rdfs:subClassOf :Transition ;
+    rdfs:label "Plan lease transition" .
+
+arbora:PlanEvent a owl:Class ;
+    rdfs:subClassOf :TransitionEvent ;
+    rdfs:label "Plan lease event" .
+
+arbora:BeforeHardExpiry a owl:Class ;
+    rdfs:subClassOf :TransitionGuard ;
+    rdfs:label "Before hard expiry" ;
+    :storedForm "before_hard_expiry" .
+
+arbora:PlanTransitionRefused a owl:Class ;
+    rdfs:subClassOf arbora:TransitionRefused ;
+    rdfs:label "Plan lease transition refused" ;
+    rdfs:comment "IllegalPlanTransition, code PLAN_TRANSITION_ILLEGAL, fields machine (plan_lease), from_state and event. The plan state does not change." .
+
+arbora:PlanIssued a owl:Class ;
+    rdfs:subClassOf arbora:PlanState ;
+    :storedForm "issued" .
+
+arbora:PlanConsumed a owl:Class ;
+    rdfs:subClassOf arbora:PlanState ;
+    :storedForm "consumed" .
+
+arbora:PlanExecuting a owl:Class ;
+    rdfs:subClassOf arbora:PlanState ;
+    :storedForm "executing" .
+
+arbora:PlanDone a owl:Class ;
+    rdfs:subClassOf arbora:PlanTerminalState ;
+    :storedForm "done" .
+
+arbora:PlanFailed a owl:Class ;
+    rdfs:subClassOf arbora:PlanTerminalState ;
+    :storedForm "failed" .
+
+arbora:PlanExpired a owl:Class ;
+    rdfs:subClassOf arbora:PlanTerminalState ;
+    :storedForm "expired" .
+
+arbora:PlanLeaseMachine_Event_consume a owl:Class ;
+    rdfs:subClassOf arbora:PlanEvent ;
+    :storedForm "consume" .
+
+arbora:PlanLeaseMachine_Event_begin a owl:Class ;
+    rdfs:subClassOf arbora:PlanEvent ;
+    :storedForm "begin" .
+
+arbora:PlanLeaseMachine_Event_finish_ok a owl:Class ;
+    rdfs:subClassOf arbora:PlanEvent ;
+    :storedForm "finish_ok" .
+
+arbora:PlanLeaseMachine_Event_finish_err a owl:Class ;
+    rdfs:subClassOf arbora:PlanEvent ;
+    :storedForm "finish_err" .
+
+arbora:PlanLeaseMachine_Event_expire a owl:Class ;
+    rdfs:subClassOf arbora:PlanEvent ;
+    :storedForm "expire" .
+
+arbora:PlanLeaseMachine_issued-consume-consumed a owl:Class ;
+    rdfs:subClassOf arbora:PlanTransition ;
+    :fromState arbora:PlanIssued ;
+    :toState arbora:PlanConsumed ;
+    :firedBy arbora:PlanLeaseMachine_Event_consume ;
+    :guardedBy arbora:BeforeHardExpiry .
+
+arbora:PlanLeaseMachine_consumed-begin-executing a owl:Class ;
+    rdfs:subClassOf arbora:PlanTransition ;
+    :fromState arbora:PlanConsumed ;
+    :toState arbora:PlanExecuting ;
+    :firedBy arbora:PlanLeaseMachine_Event_begin .
+
+arbora:PlanLeaseMachine_executing-finish_ok-done a owl:Class ;
+    rdfs:subClassOf arbora:PlanTransition ;
+    :fromState arbora:PlanExecuting ;
+    :toState arbora:PlanDone ;
+    :firedBy arbora:PlanLeaseMachine_Event_finish_ok .
+
+arbora:PlanLeaseMachine_executing-finish_err-failed a owl:Class ;
+    rdfs:subClassOf arbora:PlanTransition ;
+    :fromState arbora:PlanExecuting ;
+    :toState arbora:PlanFailed ;
+    :firedBy arbora:PlanLeaseMachine_Event_finish_err .
+
+arbora:PlanLeaseMachine_consumed-finish_err-failed a owl:Class ;
+    rdfs:subClassOf arbora:PlanTransition ;
+    :fromState arbora:PlanConsumed ;
+    :toState arbora:PlanFailed ;
+    :firedBy arbora:PlanLeaseMachine_Event_finish_err .
+
+arbora:PlanLeaseMachine_issued-expire-expired a owl:Class ;
+    rdfs:subClassOf arbora:PlanTransition ;
+    :fromState arbora:PlanIssued ;
+    :toState arbora:PlanExpired ;
+    :firedBy arbora:PlanLeaseMachine_Event_expire .
