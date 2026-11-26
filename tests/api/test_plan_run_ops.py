@@ -132,9 +132,11 @@ class FakeEngine:
             "max_records": 1,
         }
 
+    canonical = staticmethod(_canonical)
+
     async def decide(self, request: dict[str, Any]) -> dict[str, Any]:
         self.requests.append(request)
-        plan = _canonical(request["params"][0]["value"]["value"])
+        plan = self.canonical(request["params"][0]["value"]["value"])
         principal = "principal:sha256:" + hashlib.sha256(PRINCIPAL.encode()).hexdigest()
         return {
             "schema_version": 2,
@@ -149,8 +151,8 @@ class FakeEngine:
             ],
         }
 
-    @staticmethod
-    def verify(record, request, *, expected_principal):
+    @classmethod
+    def verify(cls, record, request, *, expected_principal):
         """The receipt checks of the engine facade's ``verify_task_plan_receipt``."""
         expected = (
             "principal:sha256:"
@@ -162,7 +164,7 @@ class FakeEngine:
         proposal = request["params"][0]["value"]["value"]
         if plan["input_digest"] != _digest("eg/task-plan-input/v1", proposal):
             raise ValueError("task_plan receipt mismatch: input digest")
-        if plan != _canonical(proposal):
+        if plan != cls.canonical(proposal):
             raise ValueError("task_plan receipt mismatch: plan digest")
         return plan
 
@@ -1037,3 +1039,451 @@ async def test_an_unbound_invoke_pipeline_runs_no_effect():
     )
     (entry,) = result["value"]["run"]["fleet_calls"]
     assert entry["ok"] is False and entry["error"] == "UNAVAILABLE"
+
+
+# --- typed tool steps and foreach (ARBORA-RELEASE-R003.4.6 to R003.4.17) ---------
+
+
+def _binding_refs(value: Any) -> list[str]:
+    if isinstance(value, dict) and set(value) == {"$ref"}:
+        return [value["$ref"]]
+    children = value.values() if isinstance(value, dict) else value
+    if not isinstance(value, dict | list):
+        return []
+    return [ref for child in children for ref in _binding_refs(child)]
+
+
+def _check_bindings(task: dict[str, Any]) -> None:
+    """The engine's ``binding_not_dependency`` refusal."""
+    refs = _binding_refs((task.get("call") or {}).get("arguments"))
+    refs += _binding_refs((task.get("foreach") or {}).get("source"))
+    steps = {ref.split(".")[1] for ref in refs if ref.startswith("steps.")}
+    if steps - set(task.get("depends_on", [])):
+        raise EngineRefusal("invalid parameter: binding_not_dependency")
+
+
+def _canonical_tools(proposal: dict[str, Any]) -> dict[str, Any]:
+    """The engine's canonical plan with its typed ``call`` and ``foreach`` kept."""
+    bare = [
+        {k: v for k, v in t.items() if k not in ("call", "foreach")}
+        for t in proposal["tasks"]
+    ]
+    base = _canonical({**proposal, "tasks": bare})
+    declared = {t["task_id"]: t for t in proposal["tasks"]}
+    for task in proposal["tasks"]:
+        _check_bindings(task)
+    typed = ("call", "foreach")
+    tasks = [
+        {
+            **t,
+            **{
+                k: declared[t["task_id"]][k]
+                for k in typed
+                if k in declared[t["task_id"]]
+            },
+        }
+        for t in base["tasks"]
+    ]
+    plan = {**base, "tasks": tasks}
+    plan["input_digest"] = _digest("eg/task-plan-input/v1", proposal)
+    plan["plan_digest"] = _digest("eg/task-plan/v1", [tasks, plan["output_task_id"]])
+    return plan
+
+
+class ToolEngine(FakeEngine):
+    """A recorded engine that keeps typed tool steps in the canonical plan."""
+
+    canonical = staticmethod(_canonical_tools)
+
+
+class ToolInvoke(FakeInvoke):
+    """The effect journal over two fixture connectors; ``list_ids`` is a read."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.audit: list[str] = []
+
+    def answer(self, params: dict[str, Any]) -> dict[str, Any]:
+        if params["tool"] == "list_ids":
+            return self.ids_answer()
+        return {"echo": dict(params["arguments"]), "token": "sk-" + "x" * 24}
+
+    def ids_answer(self) -> dict[str, Any]:
+        return {"ids": ["a", "b", "c"]}
+
+    def _record(self, params: dict[str, Any], key: str) -> None:
+        if params["tool"] != "list_ids":
+            self.effects.append(
+                (params["server"], params["tool"], dict(params["arguments"]))
+            )
+            self.audit.append(key)
+        self.journal[key] = {"value": self.answer(params)}
+
+    async def __call__(self, op_id, params, caller, key):
+        from arbora.api.invoke.steps import OpResult
+
+        self.keys.append(key)
+        if key not in self.journal:
+            self._record(params, key)
+        return OpResult(value=self.journal[key])
+
+
+class WriteGateway(FakeGateway):
+    async def effect(self, op, params, caller):
+        from arbora.api.registry import Confirm, Effect
+
+        return SimpleNamespace(
+            effect=Effect.WRITE, confirm=Confirm.NONE, required_scopes=frozenset()
+        )
+
+
+def _json_model(texts: dict[str, str]) -> FunctionModel:
+    async def respond(messages: Any, info: Any) -> ModelResponse:
+        parts = [p for m in messages for p in getattr(m, "parts", ())]
+        prompt = str(next(p.content for p in parts if p.part_kind == "user-prompt"))
+        return ModelResponse(parts=[TextPart(content=texts[prompt.split("::")[0]])])
+
+    return FunctionModel(respond)
+
+
+def _call_task(
+    task_id: str, server: str, tool: str, arguments: Any, *deps: str, **more: Any
+):
+    return {
+        "task_id": task_id,
+        "prompt": f"{task_id}:: call",
+        "depends_on": list(deps),
+        "call": {"server": server, "tool": tool, "arguments": arguments},
+        **more,
+    }
+
+
+def _plan(*tasks: dict[str, Any], output: str) -> dict[str, Any]:
+    return {
+        "tasks": list(tasks),
+        "output_task_id": output,
+        "max_concurrency": 1,
+        "max_steps": len(tasks),
+    }
+
+
+TOOL_PIN = {
+    **SCHEMA_PIN,
+    "body": {"features": [{"name": "task_call"}, {"name": "task_foreach"}]},
+}
+BINDING_PLAN = _plan(
+    {"task_id": "emit", "prompt": "emit:: json", "depends_on": []},
+    _call_task(
+        "open",
+        "alpha-mcp",
+        "create",
+        {"title": {"$ref": "steps.emit.output.title"}, "n": 2},
+        "emit",
+    ),
+    _call_task(
+        "link",
+        "beta-mcp",
+        "attach",
+        {"ref": {"$ref": "steps.open.output.echo.title"}, "password": "hunter2"},
+        "open",
+    ),
+    output="link",
+)
+
+
+async def _serve_tools(
+    plan,
+    *,
+    invoke=None,
+    gateway=None,
+    pin=TOOL_PIN,
+    request_id=BOUND_REQUEST,
+    texts=None,
+):
+    engine = ToolEngine()
+    context = _context(engine, RecordingModel())
+    context.services.update(
+        task_plan_model=_json_model(texts or {"emit": '{"title": "T1"}'}),
+        task_plan_feature_schema=pin,
+        fleet_gateway=gateway or FakeGateway(),
+        plan_step_invoke=invoke or ToolInvoke(),
+    )
+    context.caller = SimpleNamespace(
+        principal=PRINCIPAL,
+        tenant=TENANT,
+        effective_scopes=frozenset(),
+        request_id=request_id,
+    )
+    context.service_identity = False
+    context.owner = PRINCIPAL
+    context.registry_digest = ""
+    (op,) = plans.operations()
+    result = await plans.handle_plan_run(context, {"plan": plan}, op)
+    return result["value"], engine
+
+
+# spec: ARBORA-RELEASE-R003.4.6
+async def test_plan_run_maps_tool_steps_to_run_tasks():
+    value, engine = await _serve_tools(BINDING_PLAN)
+    # The proposal reaches the engine unchanged: Arbora validates no binding.
+    sent = engine.requests[0]["params"][0]["value"]["value"]
+    assert sent["tasks"][1]["call"] == BINDING_PLAN["tasks"][1]["call"]
+    run_plan = plans.run_plan_for({**value["plan"]}, None)
+    mapped = {t.task_id: t for t in run_plan.dependency_plan.tasks}
+    assert mapped["emit"].call is None
+    assert mapped["open"].call.server == "alpha-mcp"
+    assert mapped["open"].call.tool == "create"
+    assert (
+        dict(mapped["open"].call.arguments)
+        == BINDING_PLAN["tasks"][1]["call"]["arguments"]
+    )
+    assert [t.task_id for t in run_plan.dependency_plan.tasks] == [
+        t["task_id"] for t in value["plan"]["tasks"]
+    ]
+
+
+# spec: ARBORA-RELEASE-R003.4.6
+async def test_engine_binding_refusal_passes_through_and_starts_nothing():
+    bad = _plan(
+        {"task_id": "emit", "prompt": "emit:: json", "depends_on": []},
+        _call_task("open", "a", "t", {"x": {"$ref": "steps.emit.output.title"}}),
+        output="open",
+    )
+    invoke = ToolInvoke()
+    with pytest.raises(EngineRefusal) as refused:
+        await _serve_tools(bad, invoke=invoke)
+    assert "binding_not_dependency" in str(refused.value)
+    assert invoke.effects == []
+
+
+# spec: ARBORA-RELEASE-R003.4.6
+async def test_call_against_unpinned_schema_refuses_unavailable():
+    invoke = ToolInvoke()
+    with pytest.raises(OperationRefused) as refused:
+        await _serve_tools(BINDING_PLAN, invoke=invoke, pin=SCHEMA_PIN)
+    assert refused.value.code == "UNAVAILABLE"
+    assert refused.value.details["features"] == ["task_call"]
+    assert invoke.effects == []
+
+
+# spec: ARBORA-RELEASE-R003.4.8
+async def test_reply_lists_resolved_arguments_and_results_per_step():
+    value, _ = await _serve_tools(BINDING_PLAN)
+    steps = value["run"]["steps"]
+    assert [s["task_id"] for s in steps] == ["open", "link"]
+    first, second = steps
+    assert first["resolved_arguments"] == {"title": "T1", "n": 2}
+    assert first["outcome"] == "ok"
+    assert first["result"]["echo"] == {"title": "T1", "n": 2}
+    assert second["resolved_arguments"]["ref"] == "T1"
+    record = "run-" + BOUND_REQUEST[:32]
+    assert first["idempotency_key"] == f"plan-step:{record}:open:1"
+    assert value["plan_digest"] == value["plan"]["plan_digest"]
+
+
+# spec: ARBORA-RELEASE-R003.4.8
+async def test_reply_masks_secret_values():
+    value, _ = await _serve_tools(BINDING_PLAN)
+    second = value["run"]["steps"][1]
+    assert "hunter2" not in json.dumps(value["run"]["steps"])
+    assert second["resolved_arguments"]["password"] != "hunter2"
+    assert "sk-" + "x" * 24 not in json.dumps(value["run"]["steps"])
+
+
+# spec: ARBORA-RELEASE-R003.4.8
+async def test_unresolved_binding_reply_names_the_reference():
+    plan = _plan(
+        {"task_id": "emit", "prompt": "emit:: json", "depends_on": []},
+        _call_task(
+            "open", "a", "t", {"x": {"$ref": "steps.emit.output.missing"}}, "emit"
+        ),
+        output="open",
+    )
+    invoke = ToolInvoke()
+    value, _ = await _serve_tools(plan, invoke=invoke)
+    (step,) = value["run"]["steps"]
+    assert step["outcome"] == "failed"
+    assert step["failed_reference"] == "steps.emit.output.missing"
+    assert step["resolved_arguments"] is None
+    assert invoke.effects == []
+
+
+# spec: ARBORA-RELEASE-R003.4.9
+async def test_handle_plan_run_binds_the_governed_caller():
+    from meristem.host_ports import tool_caller
+
+    invoke = ToolInvoke()
+    await _serve_tools(BINDING_PLAN, invoke=invoke)
+    assert tool_caller() is plans.governed_tool_caller
+    # Every typed step went through the invoke pipeline as ``fleet.call``.
+    assert [e[:2] for e in invoke.effects] == [
+        ("alpha-mcp", "create"),
+        ("beta-mcp", "attach"),
+    ]
+    # No pipeline bound: the step is refused as data and no effect runs.
+    engine = ToolEngine()
+    context = _context(engine, RecordingModel())
+    context.services.update(
+        task_plan_model=_json_model({"emit": '{"title": "T1"}'}),
+        task_plan_feature_schema=TOOL_PIN,
+        fleet_gateway=FakeGateway(),
+    )
+    context.caller = SimpleNamespace(
+        principal=PRINCIPAL,
+        tenant=TENANT,
+        effective_scopes=frozenset(),
+        request_id=BOUND_REQUEST,
+    )
+    (op,) = plans.operations()
+    result = await plans.handle_plan_run(context, {"plan": BINDING_PLAN}, op)
+    first = result["value"]["run"]["steps"][0]
+    assert first["outcome"] == "refused" and first["failure_reason"] == "UNAVAILABLE"
+
+
+# spec: ARBORA-RELEASE-R003.4.10
+async def test_cross_connector_plan_passes_data_by_binding_end_to_end():
+    invoke = ToolInvoke()
+    value, _ = await _serve_tools(BINDING_PLAN, invoke=invoke)
+    assert value["run"]["status"] == "completed"
+    assert value["plan_digest"].startswith("sha256:")
+    assert invoke.effects[0][2] == {"title": "T1", "n": 2}
+    assert invoke.effects[1][2]["ref"] == "T1"
+    assert len(invoke.audit) == 2
+    # A second run of the same record repeats no effect.
+    await _serve_tools(BINDING_PLAN, invoke=invoke)
+    assert len(invoke.effects) == 2
+    # A binding to a missing path is a typed step failure; nothing depending starts.
+    missing = _plan(
+        {"task_id": "emit", "prompt": "emit:: json", "depends_on": []},
+        _call_task("open", "a", "t", {"x": {"$ref": "steps.emit.output.nope"}}, "emit"),
+        _call_task("link", "b", "t", {}, "open"),
+        output="link",
+    )
+    again = ToolInvoke()
+    failed, _ = await _serve_tools(missing, invoke=again, request_id="c" * 64)
+    assert again.effects == []
+    assert failed["run"]["status"] != "completed"
+    assert "link" not in failed["run"]["started_order"]
+
+
+FOREACH_PLAN = _plan(
+    _call_task("list", "alpha-mcp", "list_ids", {}),
+    _call_task(
+        "each",
+        "beta-mcp",
+        "write",
+        {"id": {"$ref": "item.id"}, "at": {"$ref": "item_index"}},
+        "list",
+        foreach={"source": {"$ref": "steps.list.output.ids"}, "max_items": 3},
+    ),
+    output="each",
+)
+
+
+def _objects(ids):
+    return {"ids": [{"id": i} for i in ids]}
+
+
+class ObjectInvoke(ToolInvoke):
+    def __init__(self, ids) -> None:
+        super().__init__()
+        self.ids = ids
+
+    def ids_answer(self) -> dict[str, Any]:
+        return _objects(self.ids)
+
+
+# spec: ARBORA-RELEASE-R003.4.14
+async def test_foreach_runs_one_call_per_item_in_order_and_enforces_max_items():
+    invoke = ObjectInvoke(["a", "b", "c"])
+    value, _ = await _serve_tools(FOREACH_PLAN, invoke=invoke, gateway=WriteGateway())
+    assert [e[2] for e in invoke.effects] == [
+        {"id": "a", "at": 0},
+        {"id": "b", "at": 1},
+        {"id": "c", "at": 2},
+    ]
+    record = "run-" + BOUND_REQUEST[:32]
+    assert invoke.keys[1:] == [f"plan-step:{record}:each:{i}" for i in range(3)]
+    (step,) = [s for s in value["run"]["steps"] if s["task_id"] == "each"]
+    assert [r["echo"]["id"] for r in step["result"]] == ["a", "b", "c"]
+    over = ObjectInvoke(["a", "b", "c", "d"])
+    failed, _ = await _serve_tools(FOREACH_PLAN, invoke=over, gateway=WriteGateway())
+    assert over.effects == []
+    (bad,) = [s for s in failed["run"]["steps"] if s["task_id"] == "each"]
+    assert bad["outcome"] == "failed" and bad["failure_reason"] == "FOREACH_ITEM_LIMIT"
+
+
+class Scalar(ObjectInvoke):
+    def ids_answer(self) -> dict[str, Any]:
+        return {"ids": "nope"}
+
+
+# spec: ARBORA-RELEASE-R003.4.14
+async def test_foreach_source_that_is_not_an_array_fails_the_step():
+    invoke = Scalar([])
+    value, _ = await _serve_tools(FOREACH_PLAN, invoke=invoke, gateway=WriteGateway())
+    (step,) = [s for s in value["run"]["steps"] if s["task_id"] == "each"]
+    assert step["failure_reason"] == "FOREACH_SOURCE_NOT_ARRAY"
+    assert invoke.effects == []
+
+
+# spec: ARBORA-RELEASE-R003.4.15
+async def test_duplicate_write_item_fails_without_a_call_and_keeps_earlier_calls():
+    invoke = ObjectInvoke(["a", "b", "a"])
+    plan = _plan(
+        FOREACH_PLAN["tasks"][0],
+        _call_task(
+            "each",
+            "beta-mcp",
+            "write",
+            {"id": {"$ref": "item.id"}},
+            "list",
+            foreach={"source": {"$ref": "steps.list.output.ids"}, "max_items": 3},
+        ),
+        output="each",
+    )
+    value, _ = await _serve_tools(plan, invoke=invoke, gateway=WriteGateway())
+    assert [e[2] for e in invoke.effects] == [{"id": "a"}, {"id": "b"}]
+    (step,) = [s for s in value["run"]["steps"] if s["task_id"] == "each"]
+    assert step["failure_reason"] == "FOREACH_DUPLICATE_WRITE"
+    assert [i["outcome"] for i in step["items"]] == ["ok", "ok", "failed"]
+
+
+# spec: ARBORA-RELEASE-R003.4.16
+async def test_reply_lists_each_foreach_item_and_masks_secrets():
+    invoke = ObjectInvoke(["a", "b"])
+    value, _ = await _serve_tools(FOREACH_PLAN, invoke=invoke, gateway=WriteGateway())
+    (step,) = [s for s in value["run"]["steps"] if s["task_id"] == "each"]
+    assert [i["index"] for i in step["items"]] == [0, 1]
+    assert step["items"][0]["resolved_arguments"] == {"id": "a", "at": 0}
+    assert all(i["idempotency_key"] for i in step["items"])
+    assert "sk-" + "x" * 24 not in json.dumps(step["items"])
+
+
+# spec: ARBORA-RELEASE-R003.4.17
+async def test_foreach_plan_served_end_to_end():
+    # Entered at the operation handler: the step calls go through the invoke
+    # pipeline's ``fleet.call`` caller; the HTTP and MCP doors share that handler.
+    for run_key in ("first", "second"):
+        invoke = ObjectInvoke(["x", "y", "z"])
+        request_id = hashlib.sha256(run_key.encode()).hexdigest()
+        value, _ = await _serve_tools(
+            FOREACH_PLAN, invoke=invoke, gateway=WriteGateway(), request_id=request_id
+        )
+        assert len(invoke.effects) == 3
+        assert value["run"]["status"] == "completed"
+    duplicate = ObjectInvoke(["x", "y", "x"])
+    plan = _plan(
+        FOREACH_PLAN["tasks"][0],
+        {
+            **FOREACH_PLAN["tasks"][1],
+            "call": {
+                **FOREACH_PLAN["tasks"][1]["call"],
+                "arguments": {"id": {"$ref": "item.id"}},
+            },
+        },
+        output="each",
+    )
+    value, _ = await _serve_tools(plan, invoke=duplicate, gateway=WriteGateway())
+    assert len(duplicate.effects) == 2
+    assert value["run"]["status"] != "completed"

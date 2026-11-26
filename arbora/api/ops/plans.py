@@ -32,9 +32,11 @@ arguments and result, is recorded in ``run.fleet_calls``.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import time
 from collections.abc import Awaitable, Callable, Mapping
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from importlib import import_module
 from types import SimpleNamespace
@@ -61,6 +63,14 @@ TASK_PLAN_ENGINE_RELEASE = "medulla>=2.27.5"
 TASK_PLAN_QUESTION_ID = "arbora.agents.plan_run"
 #: How long a published plan snapshot stays current.
 PLAN_SNAPSHOT_TTL_MS = 3_600_000
+
+#: The one argument a foreach step shows the harness: its resolved source array.
+FOREACH_SOURCE_ARGUMENT = "items"
+
+#: Step failures that are refusals rather than failed calls (the harness outcome).
+_REFUSED_STEP_CODES = frozenset(
+    {"SCOPE_DENIED", "CONFIRMATION_REQUIRED", "STEP_UP_REQUIRED", "UNAVAILABLE"}
+)
 
 
 class WorkItemLease(Params):
@@ -259,6 +269,27 @@ def _validated_publish_receipt(receipt: Any, lease: WorkItemLease) -> dict[str, 
     return {"run_id": run_id, "revision": revision}
 
 
+def _task_call(task: Mapping[str, Any]) -> Any:
+    """The harness ``ToolStep`` of a typed tool task, or ``None`` for a prompt step.
+
+    The engine's canonical call maps one to one. A foreach step shows the
+    harness one step that binds only the source array; the per-item template
+    stays in :class:`FleetStepTools`, because the harness resolves ``$ref``
+    values itself and an ``item.`` reference is not one of its bindings.
+    """
+    from meristem.graph import ToolStep
+
+    call = task.get("call")
+    if not isinstance(call, Mapping):
+        return None
+    foreach = task.get("foreach")
+    if isinstance(foreach, Mapping):
+        arguments: Any = {FOREACH_SOURCE_ARGUMENT: dict(foreach["source"])}
+    else:
+        arguments = call.get("arguments") or {}
+    return ToolStep(server=call["server"], tool=call["tool"], arguments=arguments)
+
+
 def run_plan_for(plan: Mapping[str, Any], model: Any, toolsets: tuple = ()) -> Any:
     """The harness ``RunPlan`` for an engine plan: same tasks, edges and limits."""
     from meristem.graph import (
@@ -275,6 +306,7 @@ def run_plan_for(plan: Mapping[str, Any], model: Any, toolsets: tuple = ()) -> A
                 task_id=task["task_id"],
                 prompt=task["prompt"],
                 depends_on=tuple(task["depends_on"]),
+                call=_task_call(task),
             )
             for task in plan["tasks"]
         ),
@@ -360,6 +392,12 @@ NATIVE_IDEMPOTENCY: dict[str, str] = {
 }
 
 
+def _audit_fields(outcome: Any) -> dict[str, Any]:
+    details = getattr(outcome, "details", None)
+    ref = details.get("audit_ref") if isinstance(details, Mapping) else None
+    return {"audit_ref": ref} if ref else {}
+
+
 @dataclass
 class FleetStepTools:
     """The governed fleet tool an agent step may call (ARBORA-RELEASE-R003.4.5).
@@ -374,17 +412,21 @@ class FleetStepTools:
     context: Any
     allowed: frozenset[tuple[str, str]]
     record_id: str = ""
+    foreach: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
     ledger: list[dict[str, Any]] = field(default_factory=list)
     _counts: dict[str, int] = field(default_factory=dict)
 
     async def call(
-        self, task_id: str, server: str, tool: str, arguments: dict[str, Any]
+        self,
+        task_id: str,
+        server: str,
+        tool: str,
+        arguments: dict[str, Any],
+        *,
+        index: int | None = None,
+        guard: Callable[[Any], str | None] | None = None,
     ) -> dict[str, Any]:
-        from arbora.api.invoke.steps import OpError
-        from arbora.api.ops.research import FleetCaller
-        from arbora.api.registry import Confirm
-
-        index = self._counts[task_id] = self._counts.get(task_id, 0) + 1
+        index = self._next_index(task_id, index)
         key = step_idempotency_key(self.record_id, task_id, index)
         entry: dict[str, Any] = {
             "sequence": len(self.ledger) + 1,
@@ -397,42 +439,151 @@ class FleetStepTools:
         }
         self.ledger.append(entry)
         try:
-            if (server, tool) not in self.allowed:
-                raise OperationRefused(
-                    "SCOPE_DENIED", {"reason": "tool is not named in fleet_tools"}
-                )
-            step_invoke = self.context.services.get("plan_step_invoke")
-            if step_invoke is None:
-                raise OperationRefused(
-                    "UNAVAILABLE", {"reason": "the invoke pipeline is not bound"}
-                )
-            decision = await FleetCaller(self.context).decision(server, tool, arguments)
-            if decision.confirm != Confirm.NONE:
-                raise OperationRefused(
-                    "CONFIRMATION_REQUIRED",
-                    {"reason": "the tool needs a human-confirmed plan"},
-                )
-            outcome = await step_invoke(
-                "fleet.call",
-                {"server": server, "tool": tool, "arguments": arguments},
-                self.context.caller,
-                key,
-            )
-            if isinstance(outcome, OpError) or outcome.code != "OK":
-                entry.update(
-                    ok=False, error=outcome.code, details=dict(outcome.details)
-                )
-                return {"ok": False, "error": outcome.code}
-            value = outcome.value
-            result = value.get("value") if isinstance(value, Mapping) else value
-            entry["result"] = json.loads(json.dumps(result, default=str))
-            entry["ok"] = True
-            return {"ok": True, "result": entry["result"]}
+            return await self._invoke(entry, key, guard)
         except OperationRefused as exc:
             entry.update(ok=False, error=exc.code, details=exc.details)
         except Exception as exc:  # noqa: BLE001 - the step sees the failure as data
             entry.update(ok=False, error=type(exc).__name__)
         return {"ok": False, "error": entry["error"]}
+
+    def _next_index(self, task_id: str, index: int | None) -> int:
+        if index is not None:
+            return index
+        self._counts[task_id] = self._counts.get(task_id, 0) + 1
+        return self._counts[task_id]
+
+    async def _decide(self, entry: dict[str, Any], guard: Any) -> Any:
+        """The effect decision of one call; a refusal raises before any effect."""
+        from arbora.api.ops.research import FleetCaller
+        from arbora.api.registry import Confirm
+
+        server, tool, arguments = entry["server"], entry["tool"], entry["arguments"]
+        if (server, tool) not in self.allowed:
+            raise OperationRefused(
+                "SCOPE_DENIED", {"reason": "tool is not named in fleet_tools"}
+            )
+        if self.context.services.get("plan_step_invoke") is None:
+            raise OperationRefused(
+                "UNAVAILABLE", {"reason": "the invoke pipeline is not bound"}
+            )
+        decision = await FleetCaller(self.context).decision(server, tool, arguments)
+        if decision.confirm != Confirm.NONE:
+            raise OperationRefused(
+                "CONFIRMATION_REQUIRED",
+                {"reason": "the tool needs a human-confirmed plan"},
+            )
+        refusal = guard(decision) if guard is not None else None
+        if refusal is not None:
+            raise OperationRefused(refusal)
+        return decision
+
+    async def _invoke(
+        self, entry: dict[str, Any], key: str, guard: Any
+    ) -> dict[str, Any]:
+        from arbora.api.invoke.steps import OpError
+
+        await self._decide(entry, guard)
+        outcome = await self.context.services["plan_step_invoke"](
+            "fleet.call",
+            {
+                "server": entry["server"],
+                "tool": entry["tool"],
+                "arguments": entry["arguments"],
+            },
+            self.context.caller,
+            key,
+        )
+        if isinstance(outcome, OpError) or outcome.code != "OK":
+            entry.update(ok=False, error=outcome.code, details=dict(outcome.details))
+            return {"ok": False, "error": outcome.code}
+        value = outcome.value
+        result = value.get("value") if isinstance(value, Mapping) else value
+        entry["result"] = json.loads(json.dumps(result, default=str))
+        entry["ok"] = True
+        entry.update(_audit_fields(outcome))
+        return {"ok": True, "result": entry["result"]}
+
+    async def run_step(
+        self, task_id: str, server: str, tool: str, arguments: Mapping[str, Any]
+    ) -> Any:
+        """One typed tool step as the harness caller sees it (R003.4.9)."""
+        from meristem.graph import ToolStepResult
+
+        spec = self.foreach.get(task_id)
+        if spec is None:
+            done = await self.call(task_id, server, tool, dict(arguments))
+        else:
+            done = await self._foreach(task_id, server, tool, arguments, spec)
+        if done["ok"]:
+            return ToolStepResult(result=done["result"])
+        code = str(done["error"])
+        outcome = "refused" if code in _REFUSED_STEP_CODES else "failed"
+        return ToolStepResult(outcome=outcome, error=code)
+
+    def _refuse_item(self, task_id: str, index: int, code: str) -> dict[str, Any]:
+        self.ledger.append(
+            {
+                "sequence": len(self.ledger) + 1,
+                "task_id": task_id,
+                "index": index,
+                "item_index": index,
+                "ok": False,
+                "error": code,
+            }
+        )
+        return {"ok": False, "error": code}
+
+    async def _foreach(
+        self,
+        task_id: str,
+        server: str,
+        tool: str,
+        arguments: Mapping[str, Any],
+        spec: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """One call per array item, in item order (ARBORA-RELEASE-R003.4.14, .15)."""
+        from arbora.api.registry import Effect
+
+        items = arguments.get(FOREACH_SOURCE_ARGUMENT)
+        if not isinstance(items, list):
+            return {"ok": False, "error": "FOREACH_SOURCE_NOT_ARRAY"}
+        if len(items) > int(spec["max_items"]):
+            return {"ok": False, "error": "FOREACH_ITEM_LIMIT"}
+        seen: set[str] = set()
+        results: list[Any] = []
+        for position, item in enumerate(items):
+            try:
+                bound = _bind_item(spec["arguments"], item, position)
+            except (KeyError, IndexError, TypeError):
+                return self._refuse_item(task_id, position, "FOREACH_ITEM_UNRESOLVED")
+            digest = hashlib.sha256(
+                json.dumps(
+                    {"server": server, "tool": tool, "arguments": bound},
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    default=str,
+                ).encode()
+            ).hexdigest()
+
+            def duplicate_write(decision: Any, digest: str = digest) -> str | None:
+                if decision.effect == Effect.WRITE and digest in seen:
+                    return "FOREACH_DUPLICATE_WRITE"
+                return None
+
+            done = await self.call(
+                task_id,
+                server,
+                tool,
+                bound,
+                index=position,
+                guard=duplicate_write,
+            )
+            self.ledger[-1]["item_index"] = position
+            seen.add(digest)
+            if not done["ok"]:
+                return done
+            results.append(done["result"])
+        return {"ok": True, "result": results}
 
     def toolset(self) -> Any:
         from pydantic_ai.toolsets import FunctionToolset
@@ -447,13 +598,82 @@ class FleetStepTools:
         return FunctionToolset([fleet_call])
 
 
+def _item_path(item: Any, tokens: list[str]) -> Any:
+    found = item
+    for token in tokens:
+        if isinstance(found, Mapping):
+            found = found[token]
+        elif isinstance(found, list) and token.isdigit():
+            found = found[int(token)]
+        else:
+            raise TypeError(token)
+    return found
+
+
+def _item_ref(reference: str, item: Any, index: int) -> Any:
+    if reference == "item_index":
+        return index
+    if not reference.startswith("item."):
+        raise KeyError(reference)
+    return _item_path(item, reference[len("item.") :].split("."))
+
+
+def _bind_item(value: Any, item: Any, index: int) -> Any:
+    """Resolve ``item.<path>`` and ``item_index`` references of one foreach call.
+
+    Any other binding inside a foreach call is not resolved here (the harness
+    resolves only the source), so it is refused rather than sent as text.
+    """
+    if isinstance(value, list | tuple):
+        return [_bind_item(child, item, index) for child in value]
+    if not isinstance(value, Mapping):
+        return value
+    if set(value) == {"$ref"}:
+        return _item_ref(str(value["$ref"]), item, index)
+    return {key: _bind_item(child, item, index) for key, child in value.items()}
+
+
+def _plan_calls(plan: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    return [t for t in plan["tasks"] if isinstance(t.get("call"), Mapping)]
+
+
+def _foreach_specs(calls: list[Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {
+        t["task_id"]: {
+            "max_items": t["foreach"]["max_items"],
+            "arguments": t["call"].get("arguments") or {},
+        }
+        for t in calls
+        if isinstance(t.get("foreach"), Mapping)
+    }
+
+
+def _allowed_tools(
+    refs: list[FleetToolRef], calls: list[Mapping[str, Any]]
+) -> frozenset[tuple[str, str]]:
+    named = {(r.server, r.tool) for r in refs}
+    return frozenset(named | {(t["call"]["server"], t["call"]["tool"]) for t in calls})
+
+
 def _fleet_step_tools(
-    context: Any, refs: list[FleetToolRef], record_id: str
+    context: Any,
+    refs: list[FleetToolRef],
+    caller: Any,
+    plan: Mapping[str, Any],
 ) -> FleetStepTools | None:
-    if not refs:
+    """The governed tools of one run: the named ``fleet_tools`` and the plan's calls.
+
+    A plan that declares its own typed calls names them by writing them; each
+    still goes through the invoke pipeline under the caller's authority.
+    """
+    calls = _plan_calls(plan)
+    if not (refs or calls):
         return None
     return FleetStepTools(
-        context, frozenset((r.server, r.tool) for r in refs), record_id
+        context,
+        _allowed_tools(refs, calls),
+        replay_record(caller),
+        foreach=_foreach_specs(calls),
     )
 
 
@@ -467,14 +687,116 @@ def _fleet_calls(fleet: FleetStepTools | None) -> list[dict[str, Any]]:
     return list(fleet.ledger) if fleet is not None else []
 
 
-async def execute_task_plan(
+#: The governed caller of the run in flight. The harness holds one process-wide
+#: tool-caller slot; each run reads its own caller from this context variable.
+_RUN_TOOLS: ContextVar[FleetStepTools | None] = ContextVar(
+    "plan_run_tools", default=None
+)
+
+
+async def governed_tool_caller(
+    server: str, tool: str, arguments: Mapping[str, Any], task_id: str
+) -> Any:
+    """The harness ``ToolCaller``: route a typed step to the run's governed tools."""
+    from meristem.graph import ToolStepResult
+
+    fleet = _RUN_TOOLS.get()
+    if fleet is None:
+        return ToolStepResult(outcome="refused", error="UNAVAILABLE")
+    return await fleet.run_step(task_id, server, tool, arguments)
+
+
+def _redacted(value: Any) -> Any:
+    from arbora.api.invoke.screening import redact_result
+
+    return redact_result(value)[0]
+
+
+def _reply_steps(
     plan: Mapping[str, Any],
-    model: Any,
-    *,
-    run_id: str,
-    fleet: FleetStepTools | None = None,
+    tasks: Mapping[str, Mapping[str, Any]],
+    fleet: FleetStepTools | None,
+) -> list[dict[str, Any]]:
+    """Each tool step in declaration order, from the harness record and the ledger.
+
+    Arbora computes none of the values (ARBORA-RELEASE-R003.4.8, R003.4.16):
+    arguments, outcome and result come from the harness record, the key and
+    the audit reference from the pipeline call. Secrets are masked.
+    """
+    ledger = fleet.ledger if fleet is not None else []
+    return [
+        _reply_step(task, (tasks.get(task["task_id"]) or {}).get("tool_step"), ledger)
+        for task in _plan_calls(plan)
+    ]
+
+
+def _step_evidence(task: Mapping[str, Any], entries: list[Any]) -> dict[str, Any]:
+    """The pipeline half of a step reply: per-item entries, or the one call's key."""
+    if isinstance(task.get("foreach"), Mapping):
+        return {"items": [_reply_item(entry) for entry in entries]}
+    first = entries[0] if entries else {}
+    return {
+        "idempotency_key": first.get("idempotency_key"),
+        "audit_ref": first.get("audit_ref"),
+    }
+
+
+def _reply_step(
+    task: Mapping[str, Any], record: Mapping[str, Any] | None, ledger: list[Any]
 ) -> dict[str, Any]:
-    """Run the plan in the harness and collect every task's terminal result."""
+    record = record or {}
+    entries = [e for e in ledger if e["task_id"] == task["task_id"]]
+    reason = record.get("error") or (None if record else "not_started")
+    step: dict[str, Any] = {
+        "task_id": task["task_id"],
+        "resolved_arguments": _redacted(record.get("arguments")),
+        "outcome": record.get("outcome") or "refused",
+        "failure_reason": _redacted(reason),
+        "result": _redacted(record.get("result")),
+        **_step_evidence(task, entries),
+    }
+    if record.get("reference"):
+        step["failed_reference"] = record["reference"]
+    return step
+
+
+def _reply_item(entry: Mapping[str, Any]) -> dict[str, Any]:
+    code = entry.get("error")
+    outcome = (
+        "ok"
+        if entry.get("ok")
+        else "refused"
+        if code in _REFUSED_STEP_CODES
+        else "failed"
+    )
+    return {
+        "index": entry.get("item_index"),
+        "resolved_arguments": _redacted(entry.get("arguments")),
+        "outcome": outcome,
+        "failure_reason": code,
+        "result": _redacted(entry.get("result")),
+        "idempotency_key": entry.get("idempotency_key"),
+        "audit_ref": entry.get("audit_ref"),
+    }
+
+
+def _bind_run_tools(plan: Mapping[str, Any], fleet: FleetStepTools | None) -> Any:
+    """Bind the run's governed caller; returns the context token to reset."""
+    from meristem.host_ports import register_tool_caller
+
+    if _plan_calls(plan):
+        if fleet is None:
+            raise OperationRefused(
+                "UNAVAILABLE", {"reason": "no governed tool caller is bound"}
+            )
+        register_tool_caller(governed_tool_caller)
+    return _RUN_TOOLS.set(fleet)
+
+
+async def _drain_run(
+    plan: Mapping[str, Any], model: Any, run_id: str, fleet: FleetStepTools | None
+) -> tuple[dict[str, dict[str, Any]], list[str], dict[str, Any]]:
+    """Run the harness and collect each task's terminal event."""
     from meristem.graph import RunRequest, iterate_run
 
     request = RunRequest(task=plan["output_task_id"], run_id=run_id)
@@ -483,26 +805,40 @@ async def execute_task_plan(
     terminal: dict[str, Any] = {}
     run_plan = run_plan_for(plan, model, _step_toolsets(fleet))
     async for event in iterate_run(request, {}, plan=run_plan):
-        kind = event.get("type")
-        task_id = event.get("task_id")
+        kind, task_id = event.get("type"), event.get("task_id")
         if kind == "task_started" and task_id:
             started.append(task_id)
         elif str(kind).startswith("task_") and task_id:
             tasks[task_id] = {
-                "status": event.get("status"),
-                "output": event.get("output"),
-                "error": event.get("error"),
+                key: event.get(key)
+                for key in ("status", "output", "error", "tool_step")
             }
         elif kind in ("graph_complete", "error"):
             terminal = dict(event.get("result") or {})
-    output_task = plan["output_task_id"]
+    return tasks, started, terminal
+
+
+async def execute_task_plan(
+    plan: Mapping[str, Any],
+    model: Any,
+    *,
+    run_id: str,
+    fleet: FleetStepTools | None = None,
+) -> dict[str, Any]:
+    """Run the plan in the harness and collect every task's terminal result."""
+    token = _bind_run_tools(plan, fleet)
+    try:
+        tasks, started, terminal = await _drain_run(plan, model, run_id, fleet)
+    finally:
+        _RUN_TOOLS.reset(token)
     return {
         "status": terminal.get("status"),
         "error": terminal.get("error"),
-        "output": (tasks.get(output_task) or {}).get("output"),
+        "output": (tasks.get(plan["output_task_id"]) or {}).get("output"),
         "started_order": started,
         "tasks": tasks,
         "fleet_calls": _fleet_calls(fleet),
+        "steps": _reply_steps(plan, tasks, fleet),
     }
 
 
@@ -532,6 +868,47 @@ async def _feature_schema(context: Any, tenant: str) -> Mapping[str, Any]:
     from arbora.api.task_plan_schema import published_pin
 
     return published_pin(context.services.get("task_plan_schema_pins"), tenant)
+
+
+def _pinned_feature_names(pin: Mapping[str, Any]) -> set[Any]:
+    """The feature names the pin's schema body describes (empty when it has none)."""
+    body: Any = pin.get("body", pin)
+    if isinstance(body, str):
+        try:
+            body = json.loads(body)
+        except ValueError:
+            return set()
+    features = body.get("features", ()) if isinstance(body, Mapping) else ()
+    return {f.get("name") for f in features if isinstance(f, Mapping)}
+
+
+def _require_pinned_features(
+    proposal: Mapping[str, Any], pin: Mapping[str, Any]
+) -> None:
+    """Refuse a call or foreach the published schema pin does not describe.
+
+    Arbora holds no binding validator (ARBORA-RELEASE-R003.4.6): the engine
+    validates the calls. It only refuses to send a feature its pin predates.
+    """
+    needs: set[str] = set()
+    for task in proposal.get("tasks", ()):
+        if isinstance(task, Mapping) and task.get("call") is not None:
+            needs.add("task_call")
+        if isinstance(task, Mapping) and task.get("foreach") is not None:
+            needs.add("task_foreach")
+    if not needs:
+        return
+    known = _pinned_feature_names(pin)
+    missing = sorted(needs - known)
+    if missing:
+        raise OperationRefused(
+            "UNAVAILABLE",
+            {
+                "reason": "the task-plan schema pin does not describe these features",
+                "features": missing,
+                "spec": "ARBORA-RELEASE-R003.4.4",
+            },
+        )
 
 
 def _native_plan_run_id(plan: Mapping[str, Any], caller: Any | None = None) -> str:
@@ -910,11 +1287,7 @@ async def _publish_and_execute_native_plan(
             plan,
             _plan_model(context),
             run_id=admission.run_id,
-            fleet=_fleet_step_tools(
-                context,
-                parsed.fleet_tools,
-                replay_record(context.caller) if parsed.fleet_tools else "",
-            ),
+            fleet=_fleet_step_tools(context, parsed.fleet_tools, context.caller, plan),
         )
     return published_plan, run
 
@@ -948,6 +1321,7 @@ async def handle_plan_run(
     engine = context.services.get("task_plan_engine") or engine_task_plan(
         context.client
     )
+    _require_pinned_features(proposal, feature_schema)
     plan, record = await decide_task_plan(
         engine,
         proposal,
@@ -1004,11 +1378,7 @@ async def handle_plan_run(
                     plan,
                     _plan_model(context),
                     run_id=lease.run_id,
-                    fleet=_fleet_step_tools(
-                        context,
-                        parsed.fleet_tools,
-                        replay_record(caller) if parsed.fleet_tools else "",
-                    ),
+                    fleet=_fleet_step_tools(context, parsed.fleet_tools, caller, plan),
                 )
         except asyncio.CancelledError:
             if native is not None:
@@ -1031,11 +1401,7 @@ async def handle_plan_run(
             plan,
             _plan_model(context),
             run_id=run_id,
-            fleet=_fleet_step_tools(
-                context,
-                parsed.fleet_tools,
-                replay_record(caller) if parsed.fleet_tools else "",
-            ),
+            fleet=_fleet_step_tools(context, parsed.fleet_tools, caller, plan),
         )
     if native is not None:
         status = run.get("status")
