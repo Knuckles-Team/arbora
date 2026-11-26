@@ -254,7 +254,4 @@ def test_real_path_binds_every_port_through_the_main_shape(main_shape: None) -> 
     rows = adapters.bind_host_ports(engine_decision=object(), gate_runner=object())
     assert rows.refusal is None and rows.ports is not None
     assert rows.ports.engine_decision is not None
-    unverified = adapters.changeset_submitter_factory(
-        lambda run: object(), lambda: False
-    )
-    assert unverified("run") is None
+    assert adapters.gate_runner_factory(object(), lambda: False)("run") is None

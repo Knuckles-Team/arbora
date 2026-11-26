@@ -14,12 +14,19 @@ composition-root adapter.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import threading
 import time
-from collections.abc import AsyncIterator, Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import AsyncIterator, Callable, Iterable, Mapping, Sequence
+from dataclasses import dataclass, replace
 from typing import Any, Final, Literal, Protocol
+
+from arbora.core.settings import setting
+from arbora.fleet.mcp_resource_reconciliation import (
+    ReconciliationReceipt,
+    require_reconciled_for_swap,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -178,16 +185,101 @@ class CatalogServer:
 
 
 @dataclass(frozen=True, slots=True)
+class CatalogGeneration:
+    """The engine catalog generation a published catalog was read at.
+
+    ``digest`` is the SHA-256 (64 lowercase hex characters) of the sorted item
+    digests, so two replicas holding the same items agree on it.
+    """
+
+    tenant: str
+    generation: int
+    digest: str
+
+    def __post_init__(self) -> None:
+        if not self.tenant:
+            raise ValueError("a catalog generation names its tenant")
+        if isinstance(self.generation, bool) or self.generation < 0:
+            raise ValueError("a catalog generation is a non-negative integer")
+        if len(self.digest) != 64 or any(
+            c not in "0123456789abcdef" for c in self.digest
+        ):
+            raise ValueError("a catalog digest is 64 lowercase hex characters")
+
+
+def catalog_digest(components: Iterable[ComponentRecord]) -> str:
+    """SHA-256 of the sorted per-item digests of ``components``."""
+    items = sorted(
+        hashlib.sha256(
+            f"{c.component_id}\n{c.definition_digest}\n{c.content_digest}".encode()
+        ).hexdigest()
+        for c in components
+    )
+    return hashlib.sha256("\n".join(items).encode()).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
 class FleetCatalog:
     """Tenant-bound joined view for loader, REST, and MCP adapters.
 
     ``unadmitted`` names live registrations without a current ``mcp_server``
     component. The catalog skips them. Onboarding admits them later.
+    ``generation`` stamps the snapshot with the engine catalog generation.
     """
 
     context: ReadContext
     servers: tuple[CatalogServer, ...]
     unadmitted: tuple[str, ...] = ()
+    generation: CatalogGeneration | None = None
+
+
+ReplicaState = Literal["converged", "converging", "degraded"]
+#: The reason a replica reports once it has been behind the engine too long.
+CATALOG_GENERATION_BEHIND: Final = "catalog_generation_behind"
+CONVERGENCE_TIMEOUT_KEY: Final = "ARBORA_REPLICA_CONVERGENCE_TIMEOUT_S"
+CONVERGENCE_TIMEOUT_DEFAULT_S: Final = 30.0
+CONVERGENCE_TIMEOUT_BOUNDS_S: Final = (1.0, 600.0)
+RECEIPT_MAX_AGE_KEY: Final = "ARBORA_MCP_RESOURCES_RECEIPT_MAX_AGE_MS"
+RECEIPT_MAX_AGE_DEFAULT_MS: Final = 300_000
+RECEIPT_MAX_AGE_BOUNDS_MS: Final = (1_000, 3_600_000)
+
+
+def _bounded_setting(key: str, default: float, bounds: tuple[float, float]) -> float:
+    """A configured number inside ``bounds``; out of range is refused, not clamped."""
+    value = float(setting(key, default))
+    low, high = bounds
+    if not low <= value <= high:
+        raise ValueError(f"{key} must be between {low:g} and {high:g}")
+    return value
+
+
+def convergence_timeout_s() -> float:
+    return _bounded_setting(
+        CONVERGENCE_TIMEOUT_KEY,
+        CONVERGENCE_TIMEOUT_DEFAULT_S,
+        CONVERGENCE_TIMEOUT_BOUNDS_S,
+    )
+
+
+def receipt_max_age_ms() -> int:
+    return int(
+        _bounded_setting(
+            RECEIPT_MAX_AGE_KEY,
+            RECEIPT_MAX_AGE_DEFAULT_MS,
+            RECEIPT_MAX_AGE_BOUNDS_MS,
+        )
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class GenerationStatus:
+    """One replica's active generation, the engine's, and the convergence state."""
+
+    replica: str
+    state: ReplicaState
+    reason: str | None
+    active: CatalogGeneration | None
+    engine_generation: int
 
 
 class FleetCatalogReadPort(Protocol):
@@ -253,6 +345,8 @@ class FleetCatalogReader:
         page_size: int = 256,
         max_pages: int = 256,
         snapshot_ttl_s: float = 0.0,
+        replica: str = "local",
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         if page_size < 1 or page_size > 256:
             raise ValueError("page_size must be between 1 and 256")
@@ -276,6 +370,82 @@ class FleetCatalogReader:
         # from its callers (ARBORA-FLEET-R067): a caller whose own deadline
         # passes never cancels the read, so the snapshot always lands.
         self._inflight: dict[tuple[Any, ...], asyncio.Task[FleetCatalog]] = {}
+        # The one published generation (ARBORA-FLEET-R051.2): replaced only by
+        # ``publish_generation``, whole, so a read never sees two generations.
+        self._replica = replica
+        self._clock = clock
+        self._published: FleetCatalog | None = None
+        self._behind_since: float | None = None
+
+    @property
+    def published(self) -> FleetCatalog | None:
+        """The last-known-good published catalog, or ``None`` before the first."""
+        return self._published
+
+    def publish_generation(
+        self,
+        candidate: FleetCatalog,
+        receipt: ReconciliationReceipt | None,
+        *,
+        now_ms: int,
+        max_age_ms: int | None = None,
+    ) -> FleetCatalog:
+        """Swap ``candidate`` in as the active generation, once the guard passes.
+
+        The receipt is the engine's (ARBORA-MCP-RESOURCES-R002); nothing here
+        issues one. A refusal raises ``PublicationRefusedError`` carrying the
+        typed result and leaves the last-known-good generation active.
+        """
+        generation = candidate.generation
+        if generation is None:
+            raise FleetCatalogIntegrityError(
+                "a candidate catalog carries no generation"
+            )
+        require_reconciled_for_swap(
+            receipt,
+            tenant_id=generation.tenant,
+            expected_generation=generation.generation,
+            expected_digest=generation.digest,
+            now_ms=now_ms,
+            max_age_ms=receipt_max_age_ms() if max_age_ms is None else max_age_ms,
+        )
+        with self._cache_lock:
+            self._published = candidate
+        return candidate
+
+    async def generation_status(self) -> GenerationStatus:
+        """Compare the active generation with the engine's current one.
+
+        A replica behind the engine for longer than the convergence timeout is
+        ``degraded`` with reason ``catalog_generation_behind``; it keeps serving
+        its last-known-good catalog and never merges two generations.
+        """
+        context = await self._port.read_context()
+        self._validate_context(context)
+        page = await self._port.query_registered_servers(COMMONS_GRAPH, 1, None)
+        self._verify_receipt(
+            page.receipt, context, source=SERVER_QUERY_SOURCE, graph=COMMONS_GRAPH
+        )
+        if page.registry_revision < 0:
+            raise FleetCatalogIntegrityError("engine generation is negative")
+        active = self._published.generation if self._published else None
+        behind = active is None or active.generation < page.registry_revision
+        now = self._clock()
+        if not behind:
+            self._behind_since = None
+            return GenerationStatus(
+                self._replica, "converged", None, active, page.registry_revision
+            )
+        if self._behind_since is None:
+            self._behind_since = now
+        lagging = now - self._behind_since > convergence_timeout_s()
+        return GenerationStatus(
+            self._replica,
+            "degraded" if lagging else "converging",
+            CATALOG_GENERATION_BEHIND if lagging else None,
+            active,
+            page.registry_revision,
+        )
 
     async def read(
         self,
@@ -343,9 +513,17 @@ class FleetCatalogReader:
     async def _read_full(
         self, context: ReadContext, kinds: tuple[ComponentKind, ...]
     ) -> FleetCatalog:
-        registrations = await self._read_servers(context)
+        registrations, revision = await self._read_servers(context)
         components = await self._read_components(context, kinds)
-        return await self._join(context, registrations, components)
+        catalog = await self._join(context, registrations, components)
+        return replace(
+            catalog,
+            generation=CatalogGeneration(
+                tenant=context.tenant_id,
+                generation=revision,
+                digest=catalog_digest(components.values()),
+            ),
+        )
 
     @staticmethod
     def _validated_kinds(kinds: Sequence[ComponentKind]) -> tuple[ComponentKind, ...]:
@@ -383,7 +561,7 @@ class FleetCatalogReader:
 
     async def _read_servers(
         self, context: ReadContext
-    ) -> dict[str, ServerRegistration]:
+    ) -> tuple[dict[str, ServerRegistration], int]:
         servers: dict[str, ServerRegistration] = {}
         server_ids: set[str] = set()
         snapshot: tuple[int, int, str] | None = None
@@ -417,7 +595,7 @@ class FleetCatalogReader:
             raise FleetCatalogIntegrityError(
                 "registered-server pages did not exhaust the live snapshot"
             )
-        return servers
+        return servers, snapshot[1]
 
     async def _read_components(
         self,
@@ -750,3 +928,14 @@ class DeferredFleetCatalogReader:
                 {"reason": "catalog warming", "retry_after_s": FLEET_RETRY_AFTER_S},
             )
         return await self._reader.read(kinds=kinds)
+
+    async def generation_status(self) -> GenerationStatus:
+        if self._reader is None:
+            from arbora.api.invoke.pipeline import OperationRefused
+            from arbora.api.mcp.discovery import FLEET_RETRY_AFTER_S
+
+            raise OperationRefused(
+                "UNAVAILABLE",
+                {"reason": "catalog warming", "retry_after_s": FLEET_RETRY_AFTER_S},
+            )
+        return await self._reader.generation_status()

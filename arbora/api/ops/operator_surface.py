@@ -202,7 +202,36 @@ def _instantiate(ctx: Any, params: Mapping[str, Any]) -> dict[str, Any]:
     return {"op": {"op": "instantiate", "request": request}}
 
 
+def _enabled_override(ctx: Any, p: Mapping[str, Any]) -> dict[str, Any]:
+    """``FleetCatalog`` ``set_override`` of the durable ``enabled`` flag of one component."""
+    return {
+        "op": {
+            "op": "set_override",
+            "request": {
+                "component_id": p["id"],
+                "value": {"field": "enabled", "enabled": bool(p["enabled"])},
+            },
+        }
+    }
+
+
 _ENGINE: dict[str, Engine] = {
+    # Skill and tool toggles are the engine's operator override (hard cutover
+    # from the session pins), refused UNAVAILABLE until the pinned engine serves it.
+    "fleet.skills.toggle": Engine(
+        "FleetCatalog",
+        _enabled_override,
+        _value,
+        models=("FleetOverrideEnabled",),
+        idempotent=True,
+    ),
+    "fleet.tools.toggle": Engine(
+        "FleetCatalog",
+        _enabled_override,
+        _value,
+        models=("FleetOverrideEnabled",),
+        idempotent=True,
+    ),
     "schedule.tasks.read": Engine(
         "AnalyticsJob",
         _calendar_request,
@@ -526,10 +555,6 @@ class Alias:
     arguments: Callable[[Mapping[str, Any]], dict[str, Any]]
 
 
-def _toggle_target(params: Mapping[str, Any]) -> str:
-    return "fleet.tools.pin" if params["enabled"] else "fleet.tools.unpin"
-
-
 def _submit(params: Mapping[str, Any]) -> dict[str, Any]:
     if not params.get("source"):
         raise OperationRefused("INVALID_ARGUMENT", {"field": "source"})
@@ -537,8 +562,6 @@ def _submit(params: Mapping[str, Any]) -> dict[str, Any]:
 
 
 _ALIAS: dict[str, Alias] = {
-    "fleet.skills.toggle": Alias(_toggle_target, lambda p: {"items": [p["id"]]}),
-    "fleet.tools.toggle": Alias(_toggle_target, lambda p: {"items": [p["id"]]}),
     "ingest.pipeline.status": Alias(lambda p: "ingest.jobs.list", lambda p: {}),
     "ingest.pipeline.run": Alias(lambda p: "ingest.submissions.create", _submit),
     "roles.instances.retire": Alias(
@@ -674,7 +697,11 @@ async def handle_workflow(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     if op.id == "workflows.run":
-        return {"value": {"run_id": await _submit_run(context, params)}}
+        run_id = await _submit_run(context, params)
+        starter = context.services.get("workflow_worker")
+        if starter is not None:
+            starter.start(run_id, context.caller.session)
+        return {"value": {"run_id": run_id}}
     reply = await invoke_registered(
         context,
         "fleet.call",
@@ -738,7 +765,7 @@ _TABLE: dict[str, tuple[str, Verb, Effect, str, dict[str, Any], str]] = {
         Effect.WRITE,
         "fleet:control",
         {"id": _Name, "enabled": (bool, ...)},
-        "handle_alias",
+        "handle_engine",
     ),
     "fleet.tools.toggle": (
         "Enable or disable one tool",
@@ -746,7 +773,7 @@ _TABLE: dict[str, tuple[str, Verb, Effect, str, dict[str, Any], str]] = {
         Effect.WRITE,
         "fleet:control",
         {"id": _Name, "enabled": (bool, ...)},
-        "handle_alias",
+        "handle_engine",
     ),
     "schedule.tasks.read": (
         "Read the schedule calendar and logs",

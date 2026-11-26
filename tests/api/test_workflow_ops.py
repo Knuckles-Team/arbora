@@ -94,3 +94,87 @@ async def test_a_fleet_without_the_connector_tool_refuses_unavailable(
             await surface.handle_workflow(context(), params, _OPS[op_id])
         assert refused.value.code == "UNAVAILABLE"
         assert surface.WORKFLOW_SERVER in refused.value.details["reason"]
+
+
+class _Fleet:
+    def __init__(self, *, serves: bool = True, fail: str | None = None) -> None:
+        self.serves, self.fail = serves, fail
+        self.calls: list[tuple[str, str, dict[str, Any]]] = []
+
+    async def search(self, query: str) -> list[dict[str, Any]]:
+        return [{"server": "business-process", "name": "run"}] if self.serves else []
+
+    async def call(self, server: str, tool: str, arguments: Any) -> Any:
+        from arbora.modality.fleet_port import FleetCallFailed
+
+        self.calls.append((server, tool, dict(arguments)))
+        if self.fail:
+            raise FleetCallFailed(self.fail)
+        return {"ok": True}
+
+
+class _Engine:
+    def __init__(self, status: str = "ready") -> None:
+        self.status = status
+        self.commits: list[dict[str, Any]] = []
+        self.work_items = self
+
+    def get(self, **_: Any) -> dict[str, Any]:
+        return {
+            "work_item_id": "run-7",
+            "kind": "workflow.run",
+            "status": self.status,
+            "metadata": {"workflow_id": "w", "inputs": {"a": 1}},
+        }
+
+    def claim(self, request: dict[str, Any]) -> dict[str, Any]:
+        return {"claimed": True, "lease_holder_ref": request["worker_ref"]}
+
+    def commit_result(self, **kwargs: Any) -> dict[str, Any]:
+        self.commits.append(kwargs)
+        return {"status": kwargs["outcome"]}
+
+
+@pytest.fixture
+def session(monkeypatch: pytest.MonkeyPatch) -> None:
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(
+        "arbora.security.session.current_session",
+        lambda: SimpleNamespace(tenant="tenant:one"),
+    )
+
+
+@pytest.mark.spec("ARBORA-OPS-R913")
+async def test_worker_claims_calls_the_connector_and_commits(session: None) -> None:
+    from arbora.workflow_worker import WorkflowWorker
+
+    engine, fleet = _Engine(), _Fleet()
+    worker = WorkflowWorker(engine, fleet, worker_ref="w1")
+    assert await worker.run("run-7") == "committed"
+    assert fleet.calls == [
+        ("business-process", "run", {"workflow_id": "w", "inputs": {"a": 1}})
+    ]
+    assert engine.commits[0]["outcome"] == "succeeded"
+    assert engine.commits[0]["result_ref"].startswith("sha256:")
+    failing = _Engine()
+    refused = WorkflowWorker(failing, _Fleet(fail="UNAVAILABLE"), worker_ref="w1")
+    assert await refused.run("run-7") == "committed"
+    assert failing.commits[0]["outcome"] == "failed"
+    assert failing.commits[0]["error_ref"] == "fleet:UNAVAILABLE"
+    done = _Engine("succeeded")
+    assert await WorkflowWorker(done, _Fleet(), worker_ref="w1").run("run-7") == "noop"
+    assert done.commits == []
+
+
+@pytest.mark.spec("ARBORA-OPS-R913")
+async def test_worker_refuses_unavailable_while_the_fleet_lacks_the_tool(
+    session: None,
+) -> None:
+    from arbora.workflow_worker import WorkflowWorker
+
+    engine = _Engine()
+    with pytest.raises(OperationRefused) as refused:
+        await WorkflowWorker(engine, _Fleet(serves=False), worker_ref="w1").run("run-7")
+    assert refused.value.code == "UNAVAILABLE"
+    assert engine.commits == []

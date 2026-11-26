@@ -12,6 +12,7 @@ from meristem import host_ports
 
 from arbora.core.settings import runtime_config
 from arbora.mcp_server import runtime as mcp_runtime
+from tests.a2a._support import streaming_model
 from tests.test_agents_run_end_to_end import FakeEngine, engine  # noqa: F401
 
 #: The TUI's A2A read timeout. A turn must not hold the request past it.
@@ -20,7 +21,6 @@ CLIENT_READ_TIMEOUT_S = 30.0
 
 def _served_app(monkeypatch: pytest.MonkeyPatch, run_seconds: float) -> Any:
     from pydantic_ai.messages import ModelResponse, TextPart
-    from pydantic_ai.models.function import FunctionModel
 
     from arbora.security import request_identity
     from arbora.security.actor_context import ActorContext, ActorType
@@ -49,7 +49,7 @@ def _served_app(monkeypatch: pytest.MonkeyPatch, run_seconds: float) -> Any:
         await asyncio.sleep(run_seconds)
         return ModelResponse(parts=[TextPart("long turn done")])
 
-    host_ports.register_model_provider(lambda _id: FunctionModel(slow_model))
+    host_ports.register_model_provider(lambda _id: streaming_model(slow_model))
     _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False)
     return mcp.http_app()
 
