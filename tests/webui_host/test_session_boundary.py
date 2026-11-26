@@ -217,3 +217,86 @@ def test_installed_factory_explicit_mode_contract(mode):
         assert values["auth_mode"] == mode
         if boundary is not None:
             assert values["session_boundary"] is boundary
+
+
+def _discovery_ring() -> str:
+    import json
+
+    from joserfc.jwk import RSAKey
+
+    key = RSAKey.generate_key(2048, {"kid": "k1", "use": "sig", "alg": "RS256"})
+    return json.dumps({"active": key.as_dict(private=True)})
+
+
+class _Ring:
+    def get(self, name: str) -> str:
+        return _discovery_ring_value
+
+
+_discovery_ring_value = _discovery_ring()
+
+
+def _served_auth_app():
+    from arbora.identity.browser_runtime import BrowserAuthApplication
+    from arbora.identity.issuer import IssuerSettings
+    from arbora.identity.issuer_discovery import IssuerDiscovery
+
+    discovery = IssuerDiscovery(
+        _Ring(), IssuerSettings("https://issuer.test", "aud", "tenant")
+    )
+    return BrowserAuthApplication(
+        object(),
+        object(),
+        graph="g",
+        origin="https://issuer.test",
+        issuer=object(),
+        caller=object(),
+        discovery=discovery,
+    )
+
+
+async def _unreachable(scope, receive, send):
+    raise AssertionError("discovery must not fall through to the app")
+
+
+@pytest.mark.spec("ARBORA-IDENTITY-R003")
+def test_discovery_and_jwks_are_served_through_the_webui_session_boundary():
+    from starlette.testclient import TestClient
+
+    from arbora.webui_host.session_boundary import (
+        BrowserSessionMiddleware,
+        CanonicalWebUIBoundaryMiddleware,
+    )
+
+    auth_app = _served_auth_app()
+    canonical = CanonicalWebUIBoundaryMiddleware(
+        _unreachable, operations=_unreachable, auth_app=auth_app
+    )
+    cookie_layer = BrowserSessionMiddleware(
+        _unreachable,
+        admission=SimpleNamespace(request=None),
+        auth_app=auth_app,
+        read_session=session_from_scope,
+    )
+    for layer in (canonical, cookie_layer):
+        client = TestClient(layer, base_url="https://issuer.test")
+        document = client.get("/.well-known/openid-configuration")
+        assert document.status_code == 200
+        assert (
+            document.json()["jwks_uri"] == "https://issuer.test/.well-known/jwks.json"
+        )
+        keys = client.get("/.well-known/jwks.json").json()["keys"]
+        assert [key["kid"] for key in keys] == ["k1"]
+        assert all("d" not in key for key in keys)
+        assert client.get("/.well-known/unlisted").status_code == 404
+
+
+@pytest.mark.spec("ARBORA-OPS-R032.2.3")
+def test_eg_mode_requires_boundary_and_none_mode_refuses_one():
+    from arbora.identity.engine import IdentityUnavailable
+    from arbora.webui_host.session_boundary import identity_factory_kwargs
+
+    with pytest.raises(IdentityUnavailable):
+        identity_factory_kwargs("eg", None)
+    with pytest.raises(IdentityUnavailable):
+        identity_factory_kwargs("none", object())  # not a boundary: refused either way

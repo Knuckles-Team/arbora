@@ -9,10 +9,13 @@ types come from ``arbora.pin_lag.meristem`` so a pinned release without them ref
 from __future__ import annotations
 
 import asyncio
+import shutil
 from collections.abc import Awaitable, Callable, Mapping, Sequence
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
-from arbora.pin_lag.meristem import port_types
+from arbora.pin_lag.meristem import PinLagUnavailable, changeset_types, port_types
 
 #: ``(operation id, params, run ref)`` to the engine result as plain data.
 RunCall = Callable[[str, Mapping[str, Any], str], Awaitable[Mapping[str, Any]]]
@@ -236,24 +239,213 @@ def sandbox_process_provider(
     return bound
 
 
+COMMIT_OP = "source.commit"
+LAND_OP = "source.land"
+FILE_MODE = 0o100644
+DIRECTORY_MODE_PREFIX = "04"
+
+
+@dataclass(frozen=True, slots=True)
+class SourceTarget:
+    """The repository, branch and declared prefixes one run may change."""
+
+    repository: str
+    branch: str
+    prefixes: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class ChangesetSeams:
+    """What the host supplies for the changeset ports; an absent one leaves them unbound.
+
+    ``target`` answers ``None`` for a run that holds no source grant. ``source_client``
+    is the served source client of that run (its reads are the ``source.*`` operations).
+    ``stage_blob`` stores content and answers ``{digest, size}`` for ``source.commit``.
+    ``is_sandbox`` says whether a workspace backend is the isolated sandbox backend.
+    """
+
+    target: Callable[[str], SourceTarget | None]
+    source_client: Callable[[str], Any]
+    stage_blob: Callable[[str, bytes], Awaitable[Mapping[str, Any]]]
+    is_sandbox: Callable[[Any], bool]
+
+
+def _empty(root: Path) -> None:
+    """Remove everything under ``root`` without following a link out of it."""
+    for child in root.iterdir():
+        if child.is_dir() and not child.is_symlink():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+
+
+class ChangesetSubmitter:
+    """``ChangesetSubmitter`` for one run: reads, materializes and submits through the door.
+
+    ``submit`` invokes ``source.commit`` then ``source.land`` as the run principal; landing
+    stays the owner side's decision, so a refused land still reports the submission. A
+    ``SOURCE_CONFLICT`` answer returns its paths unchanged for the harness rebase. Any other
+    refusal returns a conflict with no paths, which the harness reports as refused.
+    """
+
+    def __init__(
+        self, call: RunCall, seams: ChangesetSeams, run_ref: str, target: SourceTarget
+    ) -> None:
+        self._call, self._seams = call, seams
+        self._run_ref, self._target = run_ref, target
+        self._materialized: set[str] = set()
+
+    async def read_head(self) -> str:
+        from scion_sdk.source.client import TreeRequest
+
+        page = await self._seams.source_client(self._run_ref).tree(
+            TreeRequest(
+                repository_id=self._target.repository,
+                ref=self._target.branch,
+                path_prefix=self._target.prefixes[0],
+                page_size=1,
+            )
+        )
+        return str(page.provenance.revision)
+
+    async def materialize(self, head: str, workspace: Any) -> None:
+        """Replace the workspace with exactly the snapshot at ``head``."""
+        try:
+            from scion_sdk.source.mount import SourceMount
+        except ImportError:
+            raise PinLagUnavailable("scion_sdk.source.mount.SourceMount") from None
+        root = Path(workspace.backend.root)
+        _empty(root)
+        mount = await SourceMount.start(
+            self._seams.source_client(self._run_ref),
+            root=root,
+            repository_id=self._target.repository,
+            ref=head,
+            branch=self._target.branch,
+            prefixes=self._target.prefixes,
+        )
+        self._materialized = set()
+        for prefix in self._target.prefixes:
+            for entry in await mount.listdir(prefix):
+                if entry.mode.startswith(DIRECTORY_MODE_PREFIX):
+                    continue
+                await mount.read(entry.path)
+                self._materialized.add(entry.path)
+
+    async def _path(self, path: str, content: str) -> dict[str, Any]:
+        data = content.encode("utf-8")
+        blob = await self._seams.stage_blob(self._run_ref, data)
+        return {
+            "path": path,
+            "op": "modify" if path in self._materialized else "add",
+            "mode": FILE_MODE,
+            "blob": {"digest": str(blob["digest"]), "size": int(blob["size"])},
+        }
+
+    async def submit(self, pending: Any) -> Any:
+        types = changeset_types()
+        paths = [await self._path(path, text) for path, text in pending.files]
+        committed = await self._call(
+            COMMIT_OP,
+            {
+                "repository": self._target.repository,
+                "branch": self._target.branch,
+                "message": f"changeset of run {pending.run_ref}",
+                "paths": paths,
+                "base_head": pending.base_head,
+                "run_trace_id": pending.run_ref,
+            },
+            self._run_ref,
+        )
+        if committed.get("outcome") != "answered":
+            conflict = committed.get("refusal_code") == "SOURCE_CONFLICT"
+            found = (committed.get("payload") or {}).get("paths") or ()
+            return types.SourceConflict(
+                paths=tuple(str(path) for path in found) if conflict else ()
+            )
+        receipt = ((committed.get("payload") or {}).get("value") or {}).get(
+            "changeset"
+        ) or {}
+        changeset_id = str(receipt.get("id") or "")
+        if not changeset_id:
+            return types.SourceConflict(paths=())
+        await self._call(
+            LAND_OP,
+            {
+                "repository": self._target.repository,
+                "branch": self._target.branch,
+                "changeset": changeset_id,
+            },
+            self._run_ref,
+        )
+        return types.Submitted(changeset_id=changeset_id)
+
+
+class SandboxGateRunner:
+    """``SandboxGateRunner``: edits, reads and gates on one workspace, only in the sandbox."""
+
+    def __init__(self, seams: ChangesetSeams) -> None:
+        self._seams = seams
+
+    async def apply_edits(self, workspace: Any, edits: tuple[Any, ...]) -> bool:
+        """Validate the whole edit set without writing, then write it."""
+        from meristem.harness.edit_engine import apply_edits
+
+        if not self._seams.is_sandbox(workspace.backend):
+            return False
+        root = Path(workspace.backend.root)
+        if not apply_edits(list(edits), root, dry_run=True).ok:
+            return False
+        return bool(apply_edits(list(edits), root).ok)
+
+    async def read_files(
+        self, workspace: Any, paths: tuple[str, ...]
+    ) -> tuple[tuple[str, str], ...]:
+        if not self._seams.is_sandbox(workspace.backend):
+            raise OSError("SANDBOX_UNAVAILABLE")
+        root = Path(workspace.backend.root).resolve()
+        found: list[tuple[str, str]] = []
+        for path in paths:
+            resolved = (root / path).resolve(strict=True)
+            if not resolved.is_relative_to(root):
+                raise OSError("path escapes the workspace")
+            found.append((path, resolved.read_text(encoding="utf-8")))
+        return tuple(found)
+
+    async def run_gate(self, workspace: Any, command: str) -> Any:
+        from meristem.runtime.events import CmdOutputObservation, CmdRunAction
+
+        if not self._seams.is_sandbox(workspace.backend):
+            return CmdOutputObservation(exit_code=126, stderr="SANDBOX_UNAVAILABLE")
+        observation = await workspace.act(CmdRunAction(command=command))
+        if isinstance(observation, CmdOutputObservation):
+            return observation
+        return CmdOutputObservation(exit_code=1, stderr="gate produced no exit status")
+
+
 def changeset_submitter_factory(
-    build: Callable[[str], Any | None], sandbox_verified: Callable[[], bool]
+    call: RunCall, seams: ChangesetSeams, sandbox_verified: Callable[[], bool]
 ) -> Callable[[str], Any | None]:
-    """``run_id`` to the run's submitter; unverified isolation binds none."""
+    """``run_id`` to the run's submitter; unverified isolation or no grant binds none."""
 
     def for_run(run_id: str) -> Any | None:
-        return build(run_id) if sandbox_verified() else None
+        target = seams.target(run_id) if sandbox_verified() else None
+        if target is None:
+            return None
+        return ChangesetSubmitter(call, seams, run_id, target)
 
     return for_run
 
 
 def gate_runner_factory(
-    build: Callable[[str], Any | None], sandbox_verified: Callable[[], bool]
+    seams: ChangesetSeams, sandbox_verified: Callable[[], bool]
 ) -> Callable[[str], Any | None]:
     """``run_id`` to the run's sandbox gate runner; unverified isolation binds none."""
 
     def for_run(run_id: str) -> Any | None:
-        return build(run_id) if sandbox_verified() else None
+        if not sandbox_verified() or seams.target(run_id) is None:
+            return None
+        return SandboxGateRunner(seams)
 
     return for_run
 
