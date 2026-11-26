@@ -18,6 +18,7 @@ from typing import Any, Literal
 
 from pydantic import Field, model_validator
 
+from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops._engine import engine_send, unavailable
@@ -84,9 +85,12 @@ class ProposalListParams(Params):
 
 
 class ProposalEvidence(Params):
+    """One piece of evidence; a gate result carries the engine's sealed verdict or null."""
+
     kind: str
     record_id: str
     digest: str
+    gate_verdict: Any | None = None
 
 
 class ProposalEntry(Params):
@@ -197,27 +201,54 @@ async def handle_proposal_list(
         rows = rows.get("proposals", rows.get("entries"))
     if not isinstance(rows, list):
         raise unavailable("engine result malformed")
+    items = []
+    verdicts: dict[str, Any] = {}
     try:
-        items = [
-            {
-                "id": row["id"],
-                "kind": row["kind"],
-                "target": row["target"],
-                "evidence": [
+        for row in rows:
+            evidence = []
+            for e in row["evidence"]:
+                verdict = None
+                if e["kind"] == "gate_result":
+                    if e["record_id"] not in verdicts:
+                        verdicts[e["record_id"]] = await _sealed_verdict(
+                            context, e["record_id"]
+                        )
+                    verdict = verdicts[e["record_id"]]
+                evidence.append(
                     {
                         "kind": e["kind"],
                         "record_id": e["record_id"],
                         "digest": e["digest"],
+                        "gate_verdict": verdict,
                     }
-                    for e in row["evidence"]
-                ],
-                "state": row["state"],
-            }
-            for row in rows
-        ]
+                )
+            items.append(
+                {
+                    "id": row["id"],
+                    "kind": row["kind"],
+                    "target": row["target"],
+                    "evidence": evidence,
+                    "state": row["state"],
+                }
+            )
     except (KeyError, TypeError):
         raise unavailable("engine result malformed") from None
     return {"items": items}
+
+
+async def _sealed_verdict(context: Any, record_id: str) -> Any | None:
+    """The verdict of the engine's gate record, or ``None`` when it holds none.
+
+    The gate record is sealed and create-only (MEDULLA-SCM-R008), so what the
+    engine returns is what the gate recorded; Arbora adds and infers nothing.
+    """
+    try:
+        record = await engine_send(context, "GetNodeProperties", {"node_id": record_id})
+    except EngineRefusal:
+        return None
+    if not isinstance(record, Mapping):
+        return None
+    return record.get("verdict")
 
 
 async def handle_proposal_review(

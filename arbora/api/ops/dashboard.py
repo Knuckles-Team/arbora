@@ -14,11 +14,12 @@ so a get returns exactly the document that was saved.
 
 from __future__ import annotations
 
+import json
 import uuid
 from collections.abc import Mapping
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
@@ -42,6 +43,7 @@ DASHBOARD_KIND = "DashboardAsset"
 MAX_DOCUMENT_BYTES = 1_048_576
 
 _ID = r"^[a-z0-9][a-z0-9_-]{0,63}$"
+_NAME = r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"
 Role = Literal["owner", "edit", "view"]
 
 
@@ -49,20 +51,45 @@ class _Frozen(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
 
-class DashboardQuery(_Frozen):
-    """Query text, or a stored-query reference; a panel without one is invalid."""
+class UqlQuery(_Frozen):
+    kind: Literal["uql"]
+    text: str = Field(min_length=1, max_length=2000)
 
-    kind: Literal["uql", "stored"]
-    text: str | None = Field(default=None, min_length=1, max_length=2000)
-    ref: str | None = Field(default=None, min_length=1, max_length=256)
 
-    @model_validator(mode="after")
-    def _one_source(self) -> DashboardQuery:
-        if (self.kind == "uql") != (self.text is not None) or (
-            (self.kind == "stored") != (self.ref is not None)
-        ):
-            raise ValueError("a query carries its text, or its stored reference")
-        return self
+class NlQuery(_Frozen):
+    kind: Literal["nl"]
+    text: str = Field(min_length=1, max_length=2000)
+
+
+class StoredQuery(_Frozen):
+    kind: Literal["stored"]
+    ref: str = Field(min_length=1, max_length=256)
+
+
+class FleetCallQuery(_Frozen):
+    """One fleet tool call, stored as data; saving runs nothing."""
+
+    kind: Literal["fleet-call"]
+    server: str = Field(pattern=_NAME)
+    tool: str = Field(pattern=_NAME)
+    arguments: dict[str, Any] = Field(default_factory=dict)
+
+
+class EngineOpQuery(_Frozen):
+    """One named engine query operation, stored as data; saving runs nothing."""
+
+    kind: Literal["eg-op"]
+    op: str = Field(pattern=r"^eg\.query\.[A-Za-z][A-Za-z0-9]{0,63}$")
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
+#: Every panel query kind. The text kinds keep their text and the structured
+#: kinds keep their fields; none of them runs at save time.
+DashboardQuery = Annotated[
+    UqlQuery | NlQuery | StoredQuery | FleetCallQuery | EngineOpQuery,
+    Field(discriminator="kind"),
+]
+_QUERY = TypeAdapter(DashboardQuery)
 
 
 class DashboardPanel(_Frozen):
@@ -178,9 +205,35 @@ class DashboardAccessResult(Params):
     grants: list[Grant]
 
 
-def _source_of(query: DashboardQuery) -> str:
-    """The channel a panel reads: the query language, or the stored query itself."""
-    return query.ref if query.kind == "stored" and query.ref else "uql"
+def _source_of(query: Any) -> str:
+    """The channel a panel reads: its language, or the stored query or operation itself."""
+    if query.kind == "stored":
+        return str(query.ref)
+    if query.kind == "fleet-call":
+        return f"fleet:{query.server}.{query.tool}"
+    if query.kind == "eg-op":
+        return str(query.op)
+    return str(query.kind)
+
+
+def _query_text(query: Any) -> str:
+    """The engine's query string: text, the stored reference, or the structured fields as JSON."""
+    if query.kind in ("uql", "nl"):
+        return str(query.text)
+    if query.kind == "stored":
+        return str(query.ref)
+    return json.dumps(
+        query.model_dump(mode="json"), sort_keys=True, separators=(",", ":")
+    )
+
+
+def _query_of(kind: str, text: str) -> dict[str, Any]:
+    """The query a stored panel row holds, rebuilt as its kind declares."""
+    if kind in ("uql", "nl"):
+        return {"kind": kind, "text": text}
+    if kind == "stored":
+        return {"kind": kind, "ref": text}
+    return dict(_QUERY.validate_python(json.loads(text)).model_dump(mode="json"))
 
 
 def _body_of(document: DashboardDocument) -> dict[str, Any]:
@@ -190,7 +243,7 @@ def _body_of(document: DashboardDocument) -> dict[str, Any]:
             {
                 "id": panel.id,
                 "source": _source_of(panel.query),
-                "query": panel.query.text or panel.query.ref or "",
+                "query": _query_text(panel.query),
                 "terms": panel.terms,
                 "concepts": panel.concepts,
             }
@@ -223,7 +276,7 @@ def _document_of(receipt: Mapping[str, Any]) -> dict[str, Any]:
         for row in body["panels"]:
             extra = meta[row["id"]]
             kind = extra["query_kind"]
-            query = {"kind": kind, "text" if kind == "uql" else "ref": row["query"]}
+            query = _query_of(kind, row["query"])
             panels.append(
                 {
                     "id": row["id"],
@@ -244,7 +297,7 @@ def _document_of(receipt: Mapping[str, Any]) -> dict[str, Any]:
             "params": body.get("parameters") or [],
             "panels": panels,
         }
-    except (KeyError, TypeError):
+    except (KeyError, TypeError, ValueError):
         raise unavailable("dashboard body is not a dashboard document") from None
 
 

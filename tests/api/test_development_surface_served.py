@@ -33,7 +33,9 @@ class LoopbackEngine:
                 "kind": "row_add",
                 "target": "R001",
                 "evidence": [
-                    {"kind": "gate_result", "record_id": "gate:1", "digest": "d1"}
+                    {"kind": "gate_result", "record_id": "gate:1", "digest": "d1"},
+                    {"kind": "gate_result", "record_id": "gate:gone", "digest": "d2"},
+                    {"kind": "code_fact", "record_id": "code:1", "digest": "d3"},
                 ],
                 "state": "open",
             }
@@ -41,6 +43,10 @@ class LoopbackEngine:
 
     def node(self, params: dict[str, Any], _who: str) -> Any:
         self.calls.append(("GetNodeProperties", params))
+        if params["node_id"] == "gate:1":
+            return msgpack.packb(
+                {"gate_id": "pre-commit", "verdict": {"outcome": "pass"}}
+            )
         for project, mode in self.modes.items():
             if params["node_id"] == development.project_mode_node_id(project):
                 return msgpack.packb(
@@ -233,7 +239,21 @@ def test_accept_opens_a_pull_request_and_never_writes_specs(env: Any) -> None:
         == 400
     )
     # No operation writes a file: every call is one of the engine's proposal methods.
-    assert {n for n, _ in engine.calls} <= {"ProposalList", "ProposalDecide"}
+    assert {n for n, _ in engine.calls} <= {
+        "ProposalList",
+        "ProposalDecide",
+        "GetNodeProperties",
+    }
+
+
+@pytest.mark.spec("ARBORA-OPS-R896.5")
+def test_evidence_carries_the_sealed_gate_verdict_or_null(env: Any) -> None:
+    app, engine, *_ = env
+    listed = _value(_call(app, "development.proposal.list", {"repository": "repo"}))
+    evidence = listed["items"][0]["evidence"]
+    assert [e["gate_verdict"] for e in evidence] == [{"outcome": "pass"}, None, None]
+    reads = [p["node_id"] for n, p in engine.calls if n == "GetNodeProperties"]
+    assert reads == ["gate:1", "gate:gone"]
 
 
 @pytest.mark.spec("ARBORA-OPS-R896.1", "ARBORA-OPS-R896.5")

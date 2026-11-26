@@ -130,6 +130,26 @@ class FleetResult(BaseModel):
     value: Any
 
 
+class ConnectionRow(BaseModel):
+    """One running connector's connection state; no endpoint or credential is carried."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    server: str
+    state: str | None = None
+    breaker: str | None = None
+    restart_count: int | None = None
+    mounted_tools: int | None = None
+
+
+class ConnectionStateResult(BaseModel):
+    """The rows of ``fleet.connections.state``, ordered by connector name."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    connectors: list[ConnectionRow]
+
+
 #: The engine method that holds connector packs. Its ``status`` variant is an
 #: authenticated, tenant-bound read; every other variant is a governed write
 #: served as ``eg.storage.ConnectorPack``.
@@ -517,7 +537,7 @@ def operations() -> tuple[OpSpec, ...]:
             summary="Show each running connector's connection state, without credentials",
             examples=("which connectors are connected",),
             params=FleetConnectionStateParams,
-            result=FleetResult,
+            result=ConnectionStateResult,
             binding=Composite(handler="arbora.api.ops.fleet.handle_connection_state"),
             scopes=frozenset({"mcp:discover"}),
             effect=Effect.READ,
@@ -554,6 +574,8 @@ __all__ = [
     "FleetStatusParams",
     "FleetSurfaceListParams",
     "FleetUnloadParams",
+    "ConnectionRow",
+    "ConnectionStateResult",
     "ServiceChildOutcomeUnknown",
     "handle_connection_state",
     "handle_fleet_call",
