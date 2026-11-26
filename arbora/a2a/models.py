@@ -247,6 +247,9 @@ class A2ARouteDecision(_WireModel):
     agent_graph_ref: str | None = Field(default=None, max_length=512)
     run_spec_ref: str | None = Field(default=None, max_length=512)
     decision_record_ref: str | None = Field(default=None, max_length=512)
+    #: Read from the routed agent's capability record (ARBORA-A2A-R016.5).
+    model_profile_ref: str | None = Field(default=None, min_length=1, max_length=512)
+    task_class: str | None = Field(default=None, min_length=1, max_length=512)
 
     @field_validator("selected_tools")
     @classmethod

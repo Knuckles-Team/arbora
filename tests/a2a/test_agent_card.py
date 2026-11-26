@@ -123,3 +123,19 @@ def test_push_capability_follows_wired_worker() -> None:
         },
     )
     assert response.status_code == 404
+
+
+@pytest.mark.spec("ARBORA-A2A-R014.1")
+def test_card_has_no_harness_field_before_admission_e2e() -> None:
+    from arbora.a2a.models import A2AAgentCapabilities, A2AAgentCard
+    from arbora.a2a.service import A2AService
+    from tests.a2a.test_application import Authority, Router
+
+    card = A2AService(authority=Authority(), router=Router()).agent_card(
+        "https://x/a2a"
+    )
+    dumped = card.model_dump(mode="json", by_alias=True)
+    assert not [key for key in dumped if "harness" in key.lower()]
+    assert not [key for key in dumped["capabilities"] if "harness" in key.lower()]
+    for model in (A2AAgentCapabilities, A2AAgentCard):
+        assert not [name for name in model.model_fields if "harness" in name.lower()]

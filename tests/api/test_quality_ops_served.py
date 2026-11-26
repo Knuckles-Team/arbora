@@ -51,7 +51,6 @@ async def test_a_pinned_engine_without_the_method_refuses_naming_it() -> None:
 
     for handler, params, missing in (
         ("handle_quality_rule_put", _RULE, "QualityRulePut"),
-        ("handle_quality_scores", {"target": "t"}, "QualityScores"),
         ("handle_lineage_columns", {"column": "c"}, "ColumnLineage"),
         ("handle_quality_evaluate", {"target": "t"}, "JobKindQualityEvaluate"),
         ("handle_profile_run", {"dataset": "d"}, "JobKindDatasetProfile"),
@@ -94,15 +93,18 @@ async def test_quality_incident_served(monkeypatch: pytest.MonkeyPatch) -> None:
         "QualityRulePut", lambda p: rules.setdefault(p["rule"]["id"], p["rule"])
     )
     engine.serve("AnalyticsJob", evaluate)
-    engine.serve(
-        "QualityScores",
-        lambda p: {
-            "evaluations": state["evaluations"],
-            "incidents": [{"open": True}] * state["incidents"],
-        },
-    )
+    uql_texts: list[str] = []
+
+    def uql(p: dict[str, Any]) -> Any:
+        uql_texts.append(p["text"])
+        if "QualityScore" in p["text"]:
+            return [{"value": 1}] * state["evaluations"]
+        return [{"open": True}] * state["incidents"]
+
+    engine.serve("Uql", uql)
     engine.serve("ColumnLineage", lambda p: {"columns": ["orders.id"]})
     engine.install(pin_lag)
+    engine.install(governance)
     ctx = context()
 
     await governance.handle_quality_rule_put(ctx, _RULE, _OPS["quality.rule.put"])
@@ -122,7 +124,10 @@ async def test_quality_incident_served(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert started["value"]["job_id"] == "job-3"
     assert profiled["value"]["job_id"] == "job-3"
-    assert scores["value"]["evaluations"] == 3
+    assert len(scores["value"]["evaluations"]) == 3
+    assert uql_texts[0].startswith(
+        "MATCH (n:QualityScore) |> WHERE target = 'table:orders'"
+    )
     assert len(scores["value"]["incidents"]) == 1
     assert lineage["value"]["columns"] == ["orders.id"]
     assert state["arbora_incident_writes"] == 0
@@ -130,7 +135,7 @@ async def test_quality_incident_served(monkeypatch: pytest.MonkeyPatch) -> None:
     assert {m for m, _, _ in engine.sent} == {
         "QualityRulePut",
         "AnalyticsJob",
-        "QualityScores",
+        "Uql",
         "ColumnLineage",
     }
     submitted = [p["op"]["Submit"] for m, p, _ in engine.sent if m == "AnalyticsJob"]

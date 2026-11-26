@@ -188,32 +188,30 @@ async def claim(env: Environment, username: str) -> dict[str, Any]:
     return {"principal": BOOTSTRAP_PRINCIPAL, "username": username}
 
 
+def _other_owners(rows: Any) -> list[Any]:
+    """The provisioned rows of a subject that belong to another principal."""
+    owned = (r for r in rows if isinstance(rows, list) and isinstance(r, dict))
+    return [
+        r
+        for r in owned
+        if (r.get("user") or {}).get("principal_id") != BOOTSTRAP_PRINCIPAL
+    ]
+
+
 async def link_claim(env: Environment, provider: str, subject: str) -> dict[str, Any]:
     """Link the claimed administrator to a provider identity.
 
-    PIN-LAG: the engine has no ``idp.link`` dry run, so the ownership dry run
-    cannot be asked of it. The command refuses ``LINK_DRY_RUN_UNAVAILABLE``
-    until the ``dry_run`` flag of ``MEDULLA FOR ARBORA (w13)`` is served; it
-    never links without the dry run the row requires.
+    The preview is ``idp.list_provisioned``: a link never reassigns, so a
+    subject already provisioned to another principal refuses
+    ``LINK_OWNERSHIP_CHANGES`` before the link is sent.
     """
-    from arbora.pin_lag.unavailable import PinLagUnavailable
-
-    if not _link_dry_run_served():
-        raise CommandRefused(
-            "LINK_DRY_RUN_UNAVAILABLE", PinLagUnavailable("LinkRequest.dry_run").missing
-        )
-    plan = await env.identity(
+    rows = await env.identity(
         "idp",
-        "link",
-        {
-            "idp_id": provider,
-            "principal_id": BOOTSTRAP_PRINCIPAL,
-            "subject": subject,
-            "dry_run": True,
-        },
-        "link_plan",
+        "list_provisioned",
+        {"idp_id": provider, "subject": subject, "limit": 1},
+        "provisioned",
     )
-    moved = (plan or {}).get("ownership_changes", []) if isinstance(plan, dict) else []
+    moved = _other_owners(rows)
     if moved:
         raise CommandRefused("LINK_OWNERSHIP_CHANGES", f"{len(moved)} principal(s)")
     await env.identity(
@@ -223,14 +221,6 @@ async def link_claim(env: Environment, provider: str, subject: str) -> dict[str,
         "done",
     )
     return {"provider": provider, "principal": BOOTSTRAP_PRINCIPAL}
-
-
-def _link_dry_run_served() -> bool:
-    """Whether the pinned engine's ``LinkRequest`` carries ``dry_run``."""
-    from medulla.generated import models
-
-    request = getattr(models, "LinkRequest", None)
-    return "dry_run" in getattr(request, "model_fields", {})
 
 
 async def _revoke_sessions(env: Environment) -> int:
