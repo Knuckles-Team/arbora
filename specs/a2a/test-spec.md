@@ -211,7 +211,7 @@ Rows below name tests that are planned or only partly built. Each entry restates
 | A2A-PL12 | ARBORA-A2A-R002.2.3.5 | Test: `tests/a2a/test_tool_task_served.py::test_duplicate_delivery_executes_once` (served). |
 | A2A-PL22 | ARBORA-A2A-R002.2.4 | Test: `tests/a2a/test_tool_task_card.py::test_card_lists_extension_only_when_composed_and_refuses_client_approval` (served). Test: `tests/a2a/test_tool_task_card.py::test_attestation_binds_task_record_and_digest` (L1). |
 | A2A-PL13 | ARBORA-A2A-R013.1 | Test: `tests/a2a/test_push_delivery.py::test_registration_refuses_private_and_non_https_targets` (L2) and a cross-tenant refusal (L3). |
-| A2A-PL14 | ARBORA-A2A-R013.2 | Test: `tests/a2a/test_push_delivery.py::test_failed_delivery_defers_then_dead_letters` (L2) asserts the delays and the dead-letter commit against a fake target. |
+| A2A-PL14 | ARBORA-A2A-R013.2 | Test: `tests/a2a/test_push_delivery.py::test_failed_delivery_defers_then_dead_letters` (L2) asserts the delays and the dead-letter commit against a fake target. (planned: the named files do not exist yet) |
 | A2A-PL15 | ARBORA-A2A-R013.3 | Test: `tests/a2a/test_agent_card.py::test_push_capability_follows_wired_worker` (L2). (planned: the named files do not exist yet) |
 | A2A-PL16 | ARBORA-A2A-R013.4 | Test: `tests/a2a/test_push_delivery_served.py::test_push_survives_restart_and_dead_letters` (L3) against a real engine binary, with a cross-tenant refusal. |
 | A2A-PL17 | ARBORA-A2A-R016.6 | Test: `tests/a2a/test_model_profile_boundary.py::test_preference_allowed_disallowed_absent` (L3) covers the three cases against a loopback engine. |
