@@ -32,6 +32,9 @@ class _FakeAggregator:
     def get_layout(self) -> DashboardLayout:
         return DashboardLayout()
 
+    def save_layout(self, layout: DashboardLayout) -> None:
+        self.fetched.append("save_layout")
+
     async def fetch_all(self) -> dict[str, WidgetData]:
         return {"alpha": self._widget("alpha"), "beta": self._widget("beta")}
 
@@ -147,3 +150,109 @@ def test_malformed_subscription_is_ignored(raw: str) -> None:
 def test_subscription_drops_non_string_ids() -> None:
     raw = '{"type": "subscribe", "widget_ids": ["a", 2, "b"]}'
     assert dashboard_api.parsed_widget_subscription(raw) == {"a", "b"}
+
+
+def _claims_client(
+    monkeypatch: pytest.MonkeyPatch, capabilities: set[str]
+) -> TestClient:
+    """The dashboard app with caller claims taken from a header.
+
+    ``x-caller: key`` is an API-key caller; ``x-caller: user`` holds the
+    capabilities the identity mapping yields (replaced here).
+    """
+    from starlette.middleware.base import BaseHTTPMiddleware
+
+    from arbora.security import identity
+
+    monkeypatch.setattr(
+        identity, "base_capabilities", lambda _identity, _map: set(capabilities)
+    )
+    app = FastAPI()
+
+    class Claims(BaseHTTPMiddleware):
+        async def dispatch(self, request: Any, call_next: Any) -> Any:
+            kind = request.headers.get("x-caller", "user")
+            request.state.user_claims = {
+                "sub": "person:one",
+                "auth_type": "api_key" if kind == "key" else "oidc",
+            }
+            return await call_next(request)
+
+    app.add_middleware(Claims)
+    dashboard_api.register_dashboard_routes(app)
+    return TestClient(app, raise_server_exceptions=False)
+
+
+WRITE_ROUTES = (
+    ("PUT", "/api/dashboard/layout"),
+    ("POST", "/api/dashboard/daemon/start"),
+    ("POST", "/api/dashboard/hydrate"),
+    ("POST", "/api/dashboard/hydrate/github"),
+)
+
+
+def _write(client: TestClient, method: str, path: str, **headers: str) -> Any:
+    body = DashboardLayout().model_dump(mode="json") if method == "PUT" else None
+    return client.request(method, path, json=body, headers=headers)
+
+
+@pytest.mark.spec("ARBORA-OPS-R039.2")
+def test_write_routes_refuse_read_only_callers(
+    aggregator: _FakeAggregator, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    read_only = _claims_client(monkeypatch, {"gateway:read"})
+    for method, path in WRITE_ROUTES:
+        refused = _write(read_only, method, path)
+        assert refused.status_code == 403, (method, path)
+        assert refused.json()["detail"] == "dashboard write capability required"
+    # An API-key caller carries no capability set and passes the check; the
+    # engine-backed work behind the hydrate routes is refused after it.
+    for method, path in WRITE_ROUTES:
+        passed = _write(read_only, method, path, **{"x-caller": "key"})
+        assert passed.status_code != 403, (method, path)
+    writer = _claims_client(monkeypatch, {"gateway:write"})
+    for method, path in WRITE_ROUTES:
+        assert _write(writer, method, path).status_code != 403, (method, path)
+
+
+@pytest.mark.spec("ARBORA-OPS-R039.4")
+def test_malformed_source_is_422_and_unknown_service_is_404(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    engine_calls: list[str] = []
+    monkeypatch.setattr(
+        dashboard_api, "_active_engine", lambda: engine_calls.append("engine")
+    )
+    refused = client.post("/api/dashboard/hydrate/bad%20source")
+    assert refused.status_code == 422
+    assert refused.json()["detail"] == "invalid hydration source"
+    too_long = client.post("/api/dashboard/hydrate/" + "a" * 129)
+    assert too_long.status_code == 422
+    assert engine_calls == []
+    assert client.get("/api/dashboard/data/bad..id/x").status_code == 404
+
+
+@pytest.mark.spec("ARBORA-OPS-R039.5")
+def test_daemon_status_key_sets_are_pinned(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from arbora.gateway import daemon
+
+    monkeypatch.setattr(daemon, "_engine", None)
+    idle = client.get("/api/dashboard/daemon/status").json()
+    assert set(idle) == {"running", "role"}
+    assert idle["running"] is False
+
+    class Engine:
+        def unified_daemon_status(self) -> dict[str, Any]:
+            return {
+                "running": True,
+                "role": "primary",
+                "threads": 3,
+                "jobs": 2,
+                "queue_depth": 0,
+            }
+
+    monkeypatch.setattr(daemon, "_engine", Engine())
+    busy = client.get("/api/dashboard/daemon/status").json()
+    assert {"running", "role", "threads", "jobs", "queue_depth"} <= set(busy)
