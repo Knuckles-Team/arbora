@@ -612,7 +612,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R951` | Test: `tests/api/test_knowledge_curation_ops.py::test_inputs_propose_status_metrics_and_contradiction_codes_pass_through` (planned) (L3). |
 | `ARBORA-OPS-R952` | Test: `tests/api/test_skills_friction_ops.py::test_report_group_transition_and_approval_grant` (planned) (L3). |
 | `ARBORA-OPS-R953` | Test: `tests/api/test_skills_telemetry_ingest.py::test_otlp_logs_map_to_invocations_and_unknown_attribute_refuses_all` (planned) (L3). |
-| `ARBORA-OPS-R954` | Test: `tests/api/test_skills_discovery_ops.py::test_measures_rank_find_peers_and_small_cohort_refusal` (planned) (L3). |
+| `ARBORA-OPS-R954` | Test: `tests/api/test_skills_discovery_ops.py::test_measures_rank_find_peers_and_small_cohort_refusal` (L3). |
 | `ARBORA-OPS-R955` | Test: `tests/api/test_skills_eval_ops.py::test_case_run_report_calibrate_and_refusal_codes` (planned) (L3). |
 | `ARBORA-OPS-R956` | Test: `tests/api/test_skills_ablation_ops.py::test_arm_run_and_canary_verdict_pass_through` (planned) (L3). |
 | `ARBORA-OPS-R957` | Test: `tests/api/test_skills_tier_ops.py::test_promote_by_tier_grant_and_persona_reads` (planned) (L3). |

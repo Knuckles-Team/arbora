@@ -57,6 +57,16 @@ async def engine_send(
     return decode(payload)
 
 
+async def engine_graph_op(
+    context: Any, method: str, op: dict[str, Any], *, idempotent: bool = False
+) -> Any:
+    """Send one ``{op: ...}`` engine method with the caller's graph in the op."""
+    graph = await caller_dispatch_graph(context)
+    return await engine_send(
+        context, method, {"op": {**op, "graph": graph}}, idempotent=idempotent
+    )
+
+
 def unavailable(reason: str) -> OperationRefused:
     """The engine answered with a shape the contract does not declare."""
     return OperationRefused("UNAVAILABLE", {"reason": reason})
