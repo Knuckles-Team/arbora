@@ -26,3 +26,11 @@ An operating system with no adapter refuses `UNSUPPORTED_PLATFORM`.
 
 - Provider: `SCION-CENTRALIZED-CAPABILITIES-R056` (scion-sdk).
 - Consumer: `ARBORA-OPS-R014.1` (retired; the host-management operations consume the SDK interface once a release serves it).
+
+## Authoritative types
+
+The provider owns `HostServiceProvider`, the per-operation result models and the closed `HostServiceError` category set in scion-sdk. Arbora declares none of them.
+
+## Test vectors
+
+- scion-sdk: `tests/test_host_services.py::test_each_platform_maps_every_operation_and_refuses_the_unmapped`.
