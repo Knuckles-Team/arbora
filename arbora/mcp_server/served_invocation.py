@@ -856,6 +856,11 @@ def compose_served_invocation(
     from arbora.access.host_ports import resource_gate_for_host
 
     changes.setdefault("resource_gate", resource_gate_for_host(gate_send))
+
+    from arbora.api.invoke.autonomy import served_autonomy
+
+    # ARBORA-OPS-R867: every non-read effect asks the engine autonomy verdict first.
+    changes.update(served_autonomy(gate_send))
     services = build_invoke_services(
         gate_send=gate_send,
         registry=registry,

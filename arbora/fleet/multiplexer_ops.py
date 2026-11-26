@@ -206,8 +206,10 @@ class MultiplexerOps:
         coverage_registry: CoverageRegistry | None = None,
         coverage_endpoints: CoverageEndpoints | None = None,
         unadmitted_servers: UnadmittedServers | None = None,
+        tool_ranker: Callable[..., Awaitable[Sequence[str]]] | None = None,
     ) -> None:
         self.catalog = catalog
+        self.tool_ranker = tool_ranker
         self._prime = prime or _no_prime
         self._refresh = refresh
         self.sessions = sessions
@@ -644,6 +646,16 @@ class MultiplexerOps:
         )
         return {**result, "items": items}
 
+    async def _searched(self, caller: Any, params: Mapping[str, Any]) -> dict[str, Any]:
+        """The catalog search, ordered by the engine ranking for a ``query`` search.
+
+        ``role`` steers only the ranking; the catalog search never reads it."""
+        search = {key: value for key, value in params.items() if key != "role"}
+        result = await self.catalog.search(caller, **search)
+        if params.get("query") and self.tool_ranker is not None:
+            result = await self._ranked(caller, params, result)
+        return result
+
     async def find_tools(self, caller: Any, **params: Any) -> dict[str, Any]:
         """Forward to the one typed catalog search; see ``FleetCatalog.search``
         for the accepted ``query``/``kinds``/``servers``/``groups``/``browse``/
@@ -660,9 +672,7 @@ class MultiplexerOps:
         servers = tuple(servers)
         if 0 < len(servers) <= _MAX_PRIMED_SERVERS:
             await self._prime(servers)
-        result = await self.catalog.search(caller, **params)
-        if params.get("query") and self.tool_ranker is not None:
-            result = await self._ranked(caller, params, result)
+        result = await self._searched(caller, params)
         key = self._session_key_for(caller)
         if key:
             pinned = self.sessions.pinned_items(key)

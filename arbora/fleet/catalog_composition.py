@@ -5,7 +5,14 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from collections.abc import Awaitable, Callable, Iterable, Mapping, MutableMapping
+from collections.abc import (
+    Awaitable,
+    Callable,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
 from typing import Any, Protocol, cast
 
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
@@ -222,6 +229,7 @@ def compose_multiplexer_ops(
     coverage_registry: CoverageRegistry | None = None,
     coverage_endpoints: CoverageEndpoints | None = None,
     unadmitted_servers: UnadmittedServers | None = None,
+    tool_ranker: Callable[..., Awaitable[Sequence[str]]] | None = None,
 ) -> MultiplexerOps:
     """Build one operation service without claiming the MCP cutover is wired.
 
@@ -286,4 +294,5 @@ def compose_multiplexer_ops(
         coverage_registry=coverage_registry,
         coverage_endpoints=coverage_endpoints,
         unadmitted_servers=unadmitted_servers,
+        tool_ranker=tool_ranker,
     )
