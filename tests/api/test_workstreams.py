@@ -68,6 +68,7 @@ def graph(monkeypatch: pytest.MonkeyPatch) -> Graph:
     return graph
 
 
+OP = ws.operations()[0]
 ATTACH = {
     "harness": "claude-code",
     "harness_session_id": "s1",
@@ -86,15 +87,15 @@ def test_key_holds_digest_and_never_the_path() -> None:
 @pytest.mark.spec("ARBORA-HARNESS-PLUGINS-R004.2")
 async def test_attach_is_idempotent_and_bounded(graph: Graph) -> None:
     alice = caller("alice")
-    first = (await ws.handle_attach(alice, ATTACH, None, clock_ms=lambda: 5))["value"]
+    first = (await ws.handle_attach(alice, ATTACH, OP, clock_ms=lambda: 5))["value"]
     assert first["status"] == "attached"
     key = first["workstream"]
     assert all("/w/repo" not in repr(node) for node in graph.nodes.values())
-    again = (await ws.handle_attach(alice, ATTACH, None, clock_ms=lambda: 6))["value"]
+    again = (await ws.handle_attach(alice, ATTACH, OP, clock_ms=lambda: 6))["value"]
     assert again["status"] == "already_attached" and again["context"] == {}
     assert len(graph.edges) == 1
     other = await ws.handle_attach(
-        alice, {**ATTACH, "harness": "opencode", "harness_session_id": "s2"}, None
+        alice, {**ATTACH, "harness": "opencode", "harness_session_id": "s2"}, OP
     )
     assert other["value"]["context"]["attached_sessions"] == [
         "client_session:tenant:a:s1"
@@ -108,7 +109,7 @@ async def test_checkpoint_records_the_handoff_for_the_next_harness(
     graph: Graph,
 ) -> None:
     alice = caller("alice")
-    await ws.handle_attach(alice, ATTACH, None)
+    await ws.handle_attach(alice, ATTACH, OP)
     done = await ws.handle_checkpoint(
         alice,
         {
@@ -118,23 +119,23 @@ async def test_checkpoint_records_the_handoff_for_the_next_harness(
             "run_ids": ["r1"],
             "trigger": "stop",
         },
-        None,
+        OP,
         clock_ms=lambda: 9,
     )
     assert done["value"]["status"] == "checkpointed"
     joined = await ws.handle_attach(
-        alice, {**ATTACH, "harness": "opencode", "harness_session_id": "s2"}, None
+        alice, {**ATTACH, "harness": "opencode", "harness_session_id": "s2"}, OP
     )
     context = joined["value"]["context"]
     assert context["last_checkpoint"] == "left off at step 3"
     assert context["open_run_ids"] == ["r1"]
     detached = caller("alice")
-    await ws.handle_detach(detached, {"harness_session_id": "s1"}, None)
+    await ws.handle_detach(detached, {"harness_session_id": "s1"}, OP)
     with pytest.raises(IllegalCheckpoint):
         await ws.handle_checkpoint(
             alice,
             {"harness_session_id": "s1", "workspace_root": "/w/repo", "summary": "x"},
-            None,
+            OP,
         )
 
 
@@ -143,7 +144,7 @@ IllegalCheckpoint = ws.IllegalAttachTransition
 
 @pytest.mark.spec("ARBORA-HARNESS-PLUGINS-R004.4")
 async def test_cross_principal_read_matches_unknown(graph: Graph) -> None:
-    await ws.handle_attach(caller("alice"), ATTACH, None)
+    await ws.handle_attach(caller("alice"), ATTACH, OP)
     unknown = {"workspace_root": "/w/never"}
     errors = []
     for who, params in (
@@ -152,18 +153,18 @@ async def test_cross_principal_read_matches_unknown(graph: Graph) -> None:
         (caller("alice"), unknown),
     ):
         with pytest.raises(OperationRefused) as err:
-            await ws.handle_get(who, params, None)
+            await ws.handle_get(who, params, OP)
         errors.append((err.value.code, err.value.details))
     assert errors == [("WORKSTREAM_NOT_FOUND", {})] * 3
     with pytest.raises(OperationRefused):
-        await ws.handle_detach(caller("bob"), {"harness_session_id": "s1"}, None)
-    mine = await ws.handle_list(caller("alice"), {}, None)
+        await ws.handle_detach(caller("bob"), {"harness_session_id": "s1"}, OP)
+    mine = await ws.handle_list(caller("alice"), {}, OP)
     assert len(mine["value"]["workstreams"]) == 1
-    assert (await ws.handle_list(caller("bob"), {}, None))["value"]["workstreams"] == []
-    assert (
-        await ws.handle_detach(caller("alice"), {"harness_session_id": "s1"}, None)
-    )["value"]["status"] == "detached"
-    again = await ws.handle_detach(caller("alice"), {"harness_session_id": "s1"}, None)
+    assert (await ws.handle_list(caller("bob"), {}, OP))["value"]["workstreams"] == []
+    assert (await ws.handle_detach(caller("alice"), {"harness_session_id": "s1"}, OP))[
+        "value"
+    ]["status"] == "detached"
+    again = await ws.handle_detach(caller("alice"), {"harness_session_id": "s1"}, OP)
     assert again["value"]["status"] == "detached"
 
 

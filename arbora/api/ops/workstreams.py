@@ -201,7 +201,11 @@ async def handle_attach(
             },
             idempotent=True,
         )
-    if state is AttachmentState.ATTACHED and existing.get("workstream") == key:
+    if (
+        existing is not None
+        and state is AttachmentState.ATTACHED
+        and existing.get("workstream") == key
+    ):
         return {
             "value": {"workstream": key, "status": "already_attached", "context": {}}
         }
