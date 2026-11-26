@@ -21,7 +21,7 @@ from tests.test_served_operation_api import _call, _value, served  # noqa: F401
 
 WRITE = ("kg:write", "kg:read", "query:nl", "query:unified", "mcp:discover")
 TARGET = "term:margin"
-PROPOSAL = {
+PROPOSAL: dict[str, Any] = {
     "id": "proposal:1",
     "kind": "description",
     "target": TARGET,
@@ -29,7 +29,7 @@ PROPOSAL = {
     "opened_by": "person:two",
     "text": "Revenue less cost of sales",
 }
-CHANGE = {
+CHANGE: dict[str, Any] = {
     "id": "cr:9",
     "kind": "change_request",
     "target": TARGET,
@@ -53,7 +53,7 @@ class Glossary:
 
     def __init__(self, stewards: list[str]) -> None:
         self.stewards = stewards
-        self.proposals = [dict(PROPOSAL), dict(CHANGE)]
+        self.proposals: list[dict[str, Any]] = [dict(PROPOSAL), dict(CHANGE)]
         self.terms: list[dict[str, Any]] = []
 
     def catalog_read(self, params: dict[str, Any], _principal: str) -> Any:
