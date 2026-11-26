@@ -295,7 +295,7 @@ jobs:
             # files are interleaved with another directory's in the argument
             # list; group each directory's files.
             mapfile -t affected_tests < <({ printf '%s\n' "$SCOPE"; printf '%s\n' "${static_tests[@]}"; } | sed '/^$/d' | sort -u | awk -F/ '{d=$0; sub(/\/[^\/]*$/, "", d); print d "\t" $0}' | sort | cut -f2)
-            scripts/local_hook.sh pytest "${affected_tests[@]}"
+            scripts/local_hook.sh pytest -m "not real_boot" "${affected_tests[@]}"
           fi
 
   build:

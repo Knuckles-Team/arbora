@@ -231,7 +231,7 @@ else:  # pragma: no cover - exercised only on Windows (or the import-fault sim)
         the CRT-level ``msvcrt.locking`` (which has no shared mode at all),
         this does not need to probe-and-release; it matches POSIX
         ``LOCK_SH|LOCK_NB`` exactly, including that the caller is responsible
-        for calling :func:`unlock` when done (see ``host_lock.py``'s
+        for calling :func:`unlock` when done (the
         ``lock_shared_nb(fd); ...; unlock(fd)`` pattern).
         """
         if not _lock(fd, exclusive=False, blocking=False):

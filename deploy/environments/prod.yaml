@@ -32,6 +32,8 @@ target:
   orchestrator: kubernetes
   namespace: platform
   authority: cluster-admin
+  runtime: docker
+  privilege: rootful
   cluster_context_ref: null
   node_selector:
     kubernetes.io/hostname: r510
