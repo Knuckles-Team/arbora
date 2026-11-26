@@ -116,7 +116,7 @@ Each row below has no spec marker on a test yet. The listed test is the proof to
 | ARBORA-DEPLOY-R013.1 | `tests/deployment/test_kubernetes_first_boot.py::test_bad_cluster_observations_fail_closed` (existing, not yet bound by a spec marker); `tests/deployment/test_genesis_environments.py::test_default_profile_loads_and_validates` (existing, not yet bound by a spec marker) | Profile and first-boot obligations are retained. |
 | ARBORA-DEPLOY-R013.2 | `tests/deployment/test_component_choices.py::test_all_new_all_reused_and_mixed_inventories_match_the_presented_choices` (planned) | Record explicit deploy or reuse choice per component. |
 | ARBORA-DEPLOY-R013.3 | `tests/deployment/test_run_confirmed_steps.py::test_injected_update_for_reused_service_makes_zero_calls` (planned) | Reused components are connect-only. |
-| ARBORA-DEPLOY-R013.4 | `tests/deployment/test_target_matrix.py::test_every_declared_triple_has_a_refusal_case_and_a_success_case_id` (planned) | Deployment target matrix is complete. |
+| ARBORA-DEPLOY-R013.4 | `tests/deployment/test_target_matrix.py::test_every_declared_triple_has_a_refusal_case_and_a_success_case_id` | Deployment target matrix is complete. |
 | ARBORA-DEPLOY-R013.5 | `tests/api/test_deploy_ops_served.py::test_mixed_deployment_changes_only_deploy_marked_components` (planned) | Confirmed profiles bind to governed deployment. |
 | ARBORA-DEPLOY-R013.6 | `tests/deployment/test_component_choices_served.py::test_seed_4110_inventories_and_matrix_cells` (planned) | Component choices and target profiles are proven served. |
 | ARBORA-DEPLOY-R018.7 | `tests/deployment/test_engine_reuse.py::test_two_hosts_reuse_one_engine_and_unavailable_reuse_starts_zero` | A reused engine only attaches. |
