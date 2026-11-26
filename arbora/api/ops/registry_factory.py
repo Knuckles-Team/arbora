@@ -23,6 +23,7 @@ def get_registry() -> Registry:
     Provider failures propagate; there is no partial-registry fallback.
     """
     from . import (
+        a2a_media,
         access,
         agent_library,
         agents,
@@ -32,12 +33,14 @@ def get_registry() -> Registry:
         browser,
         capacity,
         catalog,
+        chats,
         config_layers,
         dashboard,
         decide,
         decision_evidence,
         deploy,
         development,
+        documents,
         federation,
         finance_receipts,
         fleet,
@@ -51,6 +54,7 @@ def get_registry() -> Registry:
         messaging,
         models,
         ontology_objects,
+        operator_surface,
         ops,
         participants,
         plans,
@@ -63,6 +67,7 @@ def get_registry() -> Registry:
         research,
         retrieval,
         runs,
+        schedules,
         schema,
         security,
         sessions,
@@ -76,11 +81,13 @@ def get_registry() -> Registry:
         telemetry,
         usage,
         work,
+        workspace_files,
         workstreams,
     )
 
     curated: list[OpSpec] = []
     for module in (
+        a2a_media,
         access,
         agent_library,
         agents,
@@ -89,12 +96,14 @@ def get_registry() -> Registry:
         browser,
         capacity,
         catalog,
+        chats,
         config_layers,
         decide,
         development,
         dashboard,
         decision_evidence,
         deploy,
+        documents,
         federation,
         governance,
         graph_limits,
@@ -109,6 +118,7 @@ def get_registry() -> Registry:
         memory,
         messaging,
         models,
+        operator_surface,
         ops,
         participants,
         plans,
@@ -121,6 +131,7 @@ def get_registry() -> Registry:
         research,
         retrieval,
         runs,
+        schedules,
         schema,
         security,
         sessions,
@@ -134,6 +145,7 @@ def get_registry() -> Registry:
         telemetry,
         usage,
         work,
+        workspace_files,
         workstreams,
     ):
         for op in module.operations():
