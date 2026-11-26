@@ -292,3 +292,31 @@ def test_multiple_source_handles_refuse_until_eg_combined_contract_exists() -> N
             )
         )
     assert error.value.code == "UNAVAILABLE"
+
+
+@pytest.mark.spec("ARBORA-OPS-R880")
+async def test_cross_source_report_served(monkeypatch: pytest.MonkeyPatch) -> None:
+    import medulla.generated as generated
+
+    from arbora.api.errors import ArboraRefusal
+    from arbora.api.ops import query as query_ops
+    from tests.api._engine_double import EngineDouble
+    from tests.api._engine_double import context as engine_context
+
+    op = next(o for o in query_ops.operations() if o.id == "query.cross_source_report")
+    monkeypatch.setattr(
+        generated, "METHOD_IDS", frozenset(generated.METHOD_IDS) - {"CrossSourceReport"}
+    )
+    with pytest.raises(ArboraRefusal):
+        await query_ops.handle_cross_source_report(
+            engine_context(), {"request": {}}, op
+        )
+    engine = EngineDouble(monkeypatch)
+    report = {"advisory": "A-1", "reached": ["svc-a"]}
+    engine.serve("CrossSourceReport", lambda p: report)
+    engine.install(query_ops)
+    result = await query_ops.handle_cross_source_report(
+        engine_context(), {"request": {"advisory": "A-1"}}, op
+    )
+    assert result["value"] == report
+    assert engine.sent[0][1] == {"request": {"advisory": "A-1"}}
