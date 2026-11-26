@@ -108,6 +108,9 @@ class Fleet:
         async def source() -> tuple[CatalogItem, ...]:
             return FLEET_ITEMS
 
+        async def mount(*_a: Any, **_k: Any) -> None:
+            return None
+
         async def invoke(*_a: Any, **_k: Any) -> Any:
             raise AssertionError("the probes load no tool into the session")
 
@@ -115,7 +118,7 @@ class Fleet:
             catalog=FleetCatalog([source], allowed),
             sessions=SessionLoads(),
             loadable=allowed,
-            mount=allowed,
+            mount=mount,
             notify=allowed,
             invoke=invoke,
             health=lambda: {},
@@ -146,7 +149,8 @@ class Fleet:
             out = (await gateway.search(caller, query=query))["items"]
             return out
 
-        gateway.fleet_search = fleet_search  # the served ``find`` reads this binding
+        # The served ``find`` reads this binding off the gateway.
+        gateway.fleet_search = fleet_search
 
 
 def install_fleet(monkeypatch: pytest.MonkeyPatch) -> tuple[Fleet, dict[str, Any]]:
