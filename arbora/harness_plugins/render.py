@@ -12,6 +12,7 @@ the tree is written on the developer's machine at the point of use.
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import re
 import shutil
@@ -332,18 +333,19 @@ def render_opencode(spec: BundleSpec, root: Path) -> None:
 
 #: Why a hosted bundle refuses an endpoint a vendor cloud cannot reach.
 HOSTED_ENDPOINT_UNREACHABLE = "HOSTED_ENDPOINT_UNREACHABLE"
-_LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "0.0.0.0"})  # noqa: S104
 
 
 def _hosted_reachable(url: str) -> bool:
+    """``https`` and a host that is neither a loopback nor an unspecified address."""
     parts = urlsplit(url)
     host = parts.hostname or ""
-    return (
-        parts.scheme == "https"
-        and bool(host)
-        and host not in _LOOPBACK_HOSTS
-        and not host.startswith("127.")
-    )
+    if parts.scheme != "https" or not host or host == "localhost":
+        return False
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return True
+    return not (address.is_loopback or address.is_unspecified)
 
 
 def _connection_sheet(spec: BundleSpec) -> str:
