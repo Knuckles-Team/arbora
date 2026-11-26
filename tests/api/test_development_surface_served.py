@@ -318,3 +318,15 @@ def test_accept_forwards_the_two_branches_and_nothing_else(env: Any) -> None:
         _call(app, "development.proposal.review", wider, **{KEY: "r10"}).status_code
         == 400
     )
+
+
+@pytest.mark.spec("ARBORA-OPS-R896.2")
+@pytest.mark.asyncio
+@pytest.mark.parametrize("method", ["ProjectModeGet", "DashboardAsset", "SpecQuestion"])
+async def test_unreleased_engine_methods_refuse_unavailable(method: str) -> None:
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.api.ops._engine import engine_send
+
+    with pytest.raises(OperationRefused) as refused:
+        await engine_send(None, method, {})
+    assert refused.value.code == "UNAVAILABLE"
