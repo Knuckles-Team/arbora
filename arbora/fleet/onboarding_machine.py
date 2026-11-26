@@ -33,8 +33,8 @@ class OnboardingEvent(enum.Enum):
     REGISTERED = "registered"
     DEBOUNCE_ELAPSED = "debounce_elapsed"
     RETRY_ELAPSED = "retry_elapsed"
-    PASS_OK = "pass_ok"
-    PASS_ERR = "pass_err"
+    PASS_OK = "pass_ok"  # nosec B105 - an event name, not a credential
+    PASS_ERR = "pass_err"  # nosec B105 - an event name, not a credential
     HELD = "held"
     APPROVED = "approved"
     AUTHORITY_LIVE = "authority_live"
