@@ -4,10 +4,10 @@ already-admitted child.
 ``_probe_skills``/``_probe_prompts`` (``arbora/fleet/multiplexer.py``) now
 resolve a resource's body from the resident local-skill catalog
 (``arbora.fleet.local_skill_catalog.build_local_skill_catalog``) when its
-name is already admitted there, skipping the live ``_harvest_resource_bodies``
-round trip entirely for that resource. A name the local catalog does not
-admit still falls back to the existing live harvest path over the mounted
-child's own session -- this file proves both halves on one fixture child.
+name is already admitted there, with no read of the child's own session. A
+name the local catalog does not admit carries no body (ARBORA-FLEET-R006.3.2
+removed the live fallback) -- this file proves both halves on one fixture
+child.
 """
 
 from __future__ import annotations
@@ -66,16 +66,15 @@ async def test_admitted_skill_resolves_via_local_catalog_without_harvest(
 
 
 @pytest.mark.spec("ARBORA-FLEET-R006.2")
-async def test_non_admitted_skill_still_falls_back_to_live_harvest(
-    tmp_path, monkeypatch
-):
-    """A skill name the local catalog does NOT resolve still reads its body
-    live from the mounted child, exactly as before this cutover."""
+@pytest.mark.spec("ARBORA-FLEET-R006.3.2")
+async def test_non_admitted_skill_has_no_body_and_no_wire_read(tmp_path, monkeypatch):
+    """A skill name the local catalog does NOT resolve keeps no body, and the
+    mounted child is never read."""
     mux = _mux_with_children(tmp_path, {CNT: [(CNT_TOOL, "manage containers")]})
     session = _fake_session_with_resources(
         [(CNT_TOOL, "manage containers")],
         [_fake_skill_resource("skill://unlisted-skill/SKILL.md", "fleet-only")],
-        bodies={"skill://unlisted-skill/SKILL.md": "live-harvested body"},
+        bodies={"skill://unlisted-skill/SKILL.md": "child body never read"},
     )
     monkeypatch.setattr(
         multiplexer_module, "build_local_skill_catalog", _fixture_local_catalog([])
@@ -84,8 +83,8 @@ async def test_non_admitted_skill_still_falls_back_to_live_harvest(
     skills = await mux._probe_skills(CNT, session)
 
     assert len(skills) == 1
-    assert skills[0]["instructions"] == "live-harvested body"
-    session.read_resource.assert_called_once()
+    assert "instructions" not in skills[0]
+    session.read_resource.assert_not_called()
 
 
 @pytest.mark.spec("ARBORA-FLEET-R006.2")
@@ -123,14 +122,13 @@ async def test_admitted_prompt_resolves_via_local_catalog_without_harvest(
 
 
 @pytest.mark.spec("ARBORA-FLEET-R006.2")
-async def test_non_admitted_prompt_still_falls_back_to_live_harvest(
-    tmp_path, monkeypatch
-):
+@pytest.mark.spec("ARBORA-FLEET-R006.3.2")
+async def test_non_admitted_prompt_has_no_body_and_no_wire_read(tmp_path, monkeypatch):
     mux = _mux_with_children(tmp_path, {CNT: [(CNT_TOOL, "manage containers")]})
     session = _fake_session_with_resources(
         [(CNT_TOOL, "manage containers")],
         [_fake_skill_resource("prompt://provider/unlisted-prompt", "fleet-only")],
-        bodies={"prompt://provider/unlisted-prompt": "live-harvested prompt body"},
+        bodies={"prompt://provider/unlisted-prompt": "child body never read"},
     )
     monkeypatch.setattr(
         multiplexer_module, "build_local_skill_catalog", _fixture_local_catalog([])
@@ -139,5 +137,5 @@ async def test_non_admitted_prompt_still_falls_back_to_live_harvest(
     prompts = await mux._probe_prompts(CNT, session)
 
     assert len(prompts) == 1
-    assert prompts[0]["body"] == "live-harvested prompt body"
-    session.read_resource.assert_called_once()
+    assert "body" not in prompts[0]
+    session.read_resource.assert_not_called()

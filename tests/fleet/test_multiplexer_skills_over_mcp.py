@@ -140,9 +140,6 @@ async def test_probe_server_captures_skill_resources_alongside_tools(tmp_path):
             "name": "onboarding",
             "uri": "skill://onboarding/SKILL.md",
             "description": "onboard a user",
-            # The body is what makes the skill promotable to a runnable
-            # resource; a name-only catalog entry never could be.
-            "instructions": "# skill://onboarding/SKILL.md\n\nbody",
         }
     ]
 
@@ -164,15 +161,13 @@ async def test_probe_server_lists_skills_for_an_already_mounted_child(tmp_path):
 
     assert info["error"] is None
     assert info["tools"][0]["name"] == CNT_TOOL
-    # _probe_skills also reads each skill's body now (CONCEPT:MERISTEM-ECO.mcp.
-    # cross-process-skill-harvest) and attaches it as "instructions"; the fake
-    # session's default read produces "# <uri>\n\nbody" for an unmapped uri.
+    # A body comes only from the resident local catalog (ARBORA-FLEET-R006.3.2);
+    # a name it does not admit carries none.
     assert info["skills"] == [
         {
             "name": "onboarding",
             "uri": "skill://onboarding/SKILL.md",
             "description": "onboard a user",
-            "instructions": "# skill://onboarding/SKILL.md\n\nbody",
         }
     ]
 
