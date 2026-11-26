@@ -11,22 +11,34 @@ exits 0 when every check passes and 2 otherwise. The real browser sign-in of
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import sys
-import urllib.error
-import urllib.request
+import urllib.parse
 from collections.abc import Sequence
 
 TIMEOUT_S = 10.0
 
 
 def _get(url: str) -> tuple[int, bytes]:
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme not in {"http", "https"} or not parts.hostname:
+        return 0, b""
+    connect = (
+        http.client.HTTPSConnection
+        if parts.scheme == "https"
+        else http.client.HTTPConnection
+    )
+    target = parts.path + (f"?{parts.query}" if parts.query else "")
     try:
-        with urllib.request.urlopen(url, timeout=TIMEOUT_S) as reply:  # noqa: S310
+        connection = connect(parts.hostname, parts.port, timeout=TIMEOUT_S)
+        try:
+            connection.request("GET", target or "/")
+            reply = connection.getresponse()
             return reply.status, reply.read(1 << 20)
-    except urllib.error.HTTPError as refused:
-        return refused.code, b""
-    except (urllib.error.URLError, TimeoutError, OSError):
+        finally:
+            connection.close()
+    except (http.client.HTTPException, TimeoutError, OSError):
         return 0, b""
 
 
