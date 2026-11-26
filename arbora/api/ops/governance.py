@@ -30,6 +30,7 @@ NATIVE_IDEMPOTENCY: dict[str, str] = {
     "quality.rule.put": "medulla:QualityRulePut",
     "quality.evaluate": "medulla:AnalyticsJob",
     "profile.run": "medulla:AnalyticsJob",
+    "access_request.decide": "medulla:AccessRequestDecide",
 }
 #: The stored-query methods are read and written under the query scopes.
 QUERY_READ_SCOPE = "query:read"
@@ -260,6 +261,37 @@ async def handle_workspace_delete(
     )
 
 
+class AccessRequestDecideParams(Params):
+    product: str = Field(min_length=1, max_length=2048)
+    principal: str = Field(min_length=1, max_length=512)
+    approve: bool
+
+
+async def handle_access_request_decide(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Decide a data-product access request as an owner or steward the engine names.
+
+    Arbora holds no role table: the engine's ``governance`` answer for the product names
+    the roles. A caller holding neither refuses ``STEWARD_ROLE_MISSING`` with no effect.
+    """
+    if not await _is_steward(context, params["product"]):
+        raise OperationRefused("STEWARD_ROLE_MISSING")
+    return _mapping(
+        await engine_send(
+            context,
+            "AccessRequestDecide",
+            {
+                "product": params["product"],
+                "principal": params["principal"],
+                "approve": params["approve"],
+                "tenant": str(context.caller.tenant),
+            },
+            idempotent=True,
+        )
+    )
+
+
 QualityDimension = Literal[
     "completeness", "validity", "uniqueness", "consistency", "timeliness", "accuracy"
 ]
@@ -453,6 +485,15 @@ def operations() -> tuple[OpSpec, ...]:
             result=EngineAnswer,
             handler=f"{module}.handle_workspace_delete",
             scope=QUERY_WRITE_SCOPE,
+        ),
+        build_write_op(
+            op_id="access_request.decide",
+            summary="Approve or deny a data-product access request as its steward",
+            examples=("approve this access request",),
+            params=AccessRequestDecideParams,
+            result=EngineAnswer,
+            handler=f"{module}.handle_access_request_decide",
+            scope="approvals:decide",
         ),
         build_write_op(
             op_id="quality.rule.put",
