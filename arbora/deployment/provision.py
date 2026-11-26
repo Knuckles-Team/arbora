@@ -32,7 +32,7 @@ import os
 import re
 import secrets
 import ssl
-import subprocess
+import subprocess  # nosec B404 - fixed kubectl argv, no shell
 import sys
 import urllib.error
 import urllib.parse
@@ -302,7 +302,7 @@ class Ports:
         context = ssl.create_default_context(cafile=config.ca_bundle)
 
         def read_secret(namespace: str, name: str) -> dict[str, str]:
-            raw = subprocess.check_output(
+            raw = subprocess.check_output(  # nosec B603 B607 - fixed kubectl argv
                 ["kubectl", "-n", namespace, "get", "secret", name, "-o", "json"]
             )  # noqa: S603,S607
             return {
@@ -311,7 +311,7 @@ class Ports:
             }
 
         def read_config(namespace: str, name: str) -> dict[str, str]:
-            raw = subprocess.check_output(
+            raw = subprocess.check_output(  # nosec B603 B607 - fixed kubectl argv
                 ["kubectl", "-n", namespace, "get", "configmap", name, "-o", "json"]
             )  # noqa: S603,S607
             return dict(json.loads(raw).get("data") or {})
@@ -324,7 +324,7 @@ class Ports:
                 return dict(json.load(response))
 
         def run(argv: list[str], stdin: bytes | None) -> bytes:
-            return subprocess.run(
+            return subprocess.run(  # nosec B603 - argv is built by this module
                 argv, input=stdin, check=True, capture_output=True
             ).stdout  # noqa: S603
 
@@ -1055,7 +1055,7 @@ class PodChecks:
         try:
             return status, dict(json.loads(raw))
         except ValueError:
-            return status, {"error": {"message": "unparseable MCP response"}}
+            return status, {"error": {"message": "unreadable MCP response"}}
 
     def verify(self) -> None:
         status, out = self.rpc(
