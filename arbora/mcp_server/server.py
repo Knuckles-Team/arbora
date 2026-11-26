@@ -332,7 +332,7 @@ def mcp_server(
     )
 
     bind_messaging_ports()
-    bind_run_ports()
+    bind_run_ports(invocation.services if invocation is not None else None)
     bind_health_probes()
     _preflight_mcp_sdk_floor()
     _configure_arbora_otel()

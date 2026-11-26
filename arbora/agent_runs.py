@@ -612,8 +612,22 @@ class AgentRunPort:
         )
 
 
-def bind_run_ports() -> Any:
-    """Register the run decision, model and run event providers with the harness."""
+#: The last ``HostPorts`` binding the host composed (the record, or the refusal).
+_HOST_PORTS: Any = None
+
+
+def host_ports_binding() -> Any:
+    """The ``HostPortsBinding`` of the served host, or ``None`` before it binds."""
+    return _HOST_PORTS
+
+
+def bind_run_ports(services: Any = None) -> Any:
+    """Register the run decision, model and run event providers with the harness.
+
+    With the served ``services`` the one ``HostPorts`` record is composed over the
+    backends the host holds (ARBORA-OPS-R890); the pinned release refuses it.
+    """
+    global _HOST_PORTS
     from meristem import host_ports
 
     host_ports.register_run_decision_provider(decide_run)
@@ -631,5 +645,14 @@ def bind_run_ports() -> Any:
         lambda: mcp_runtime._get_engine() if mcp_runtime._get_engine else None
     )
     host_ports.register_run_checkpoint_factory(store)
-    # The one HostPorts record of meristem main; the pinned release refuses it.
-    return bind_host_ports(checkpoint_store=store)
+    if services is None:
+        _HOST_PORTS = bind_host_ports(checkpoint_store=store)
+    else:
+        import asyncio
+
+        from arbora.agent_host.host_port_composition import compose_host_ports
+
+        _HOST_PORTS = compose_host_ports(
+            services, wait=asyncio.sleep, checkpoint_store=store
+        )
+    return _HOST_PORTS
