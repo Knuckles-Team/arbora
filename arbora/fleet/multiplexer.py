@@ -88,6 +88,7 @@ import arbora.fleet.catalog_reader as _catalog_reader
 import arbora.fleet.child_resilience as _child_resilience
 from arbora.core.capability_contract import Capability
 from arbora.core.settings import setting
+from arbora.fleet.approval_meta import approval_call_kwargs
 from arbora.fleet.local_skill_catalog import (
     LOCAL_SKILLS_SERVER,
     build_local_skill_catalog,
@@ -3038,6 +3039,7 @@ class MCPMultiplexer:
         arguments: dict[str, _typing.Any] | None = None,
         *,
         timeout: float | None = None,
+        approval_ref: str = "",
     ) -> MCPCallToolResult:
         """Make exactly one governed child call over a dedicated session.
 
@@ -3053,10 +3055,18 @@ class MCPMultiplexer:
         cfg = self.load_catalog().get(server_name)
         if cfg is not None and oauth_gated(cfg):
             return await self.call_oauth_gated_tool(
-                server_name, original_name, arguments, timeout=timeout
+                server_name,
+                original_name,
+                arguments,
+                timeout=timeout,
+                approval_ref=approval_ref,
             )
         return await self._call_service_child_once(
-            server_name, original_name, arguments, timeout=timeout
+            server_name,
+            original_name,
+            arguments,
+            timeout=timeout,
+            approval_ref=approval_ref,
         )
 
     async def _call_service_child_once(
@@ -3066,6 +3076,7 @@ class MCPMultiplexer:
         arguments: dict[str, _typing.Any] | None,
         *,
         timeout: float | None,
+        approval_ref: str = "",
     ) -> MCPCallToolResult:
         require_fleet_capability("delegate")
         cfg = self.load_catalog().get(server_name)
@@ -3090,7 +3101,12 @@ class MCPMultiplexer:
         try:
             return await asyncio.wait_for(
                 self._call_ephemeral_child_session(
-                    server_name, original_name, cfg, call_arguments, catalog_epoch
+                    server_name,
+                    original_name,
+                    cfg,
+                    call_arguments,
+                    catalog_epoch,
+                    approval_ref,
                 ),
                 timeout=call_timeout,
             )
@@ -3106,6 +3122,7 @@ class MCPMultiplexer:
         arguments: dict[str, _typing.Any] | None = None,
         *,
         timeout: float | None = None,
+        approval_ref: str = "",
     ) -> MCPCallToolResult:
         """Per-principal tool call for an OAuth-gated remote MCP child (NE-008,
         GOC-85 Deliverable 3 — U-44/U-45 wiring).
@@ -3152,7 +3169,12 @@ class MCPMultiplexer:
         try:
             return await asyncio.wait_for(
                 self._call_ephemeral_oauth_session(
-                    server_name, original_name, cfg, call_arguments, catalog_epoch
+                    server_name,
+                    original_name,
+                    cfg,
+                    call_arguments,
+                    catalog_epoch,
+                    approval_ref,
                 ),
                 timeout=call_timeout,
             )
@@ -3224,6 +3246,7 @@ class MCPMultiplexer:
         cfg: dict,
         arguments: dict[str, _typing.Any],
         catalog_epoch: int,
+        approval_ref: str = "",
     ) -> MCPCallToolResult:
         """One call over a dedicated service-credential session (no OAuth).
 
@@ -3243,6 +3266,7 @@ class MCPMultiplexer:
                     arguments,
                     catalog_epoch,
                     runtime_policy,
+                    approval_ref,
                 )
         finally:
             if runtime_policy is not None:
@@ -3255,6 +3279,7 @@ class MCPMultiplexer:
         cfg: dict,
         arguments: dict[str, _typing.Any],
         catalog_epoch: int,
+        approval_ref: str = "",
     ) -> MCPCallToolResult:
         """One tool call over a dedicated session bound to THIS caller's grant.
 
@@ -3275,6 +3300,7 @@ class MCPMultiplexer:
                     arguments,
                     catalog_epoch,
                     runtime_policy,
+                    approval_ref,
                 )
         finally:
             if runtime_policy is not None:
@@ -3289,6 +3315,7 @@ class MCPMultiplexer:
         arguments: dict[str, _typing.Any],
         catalog_epoch: int,
         runtime_policy: _typing.Any,
+        approval_ref: str = "",
     ) -> MCPCallToolResult:
         """Run admission, schema reads and invocation on the caller's sole session."""
 
@@ -3330,7 +3357,9 @@ class MCPMultiplexer:
         # ARBORA-FLEET-R077: a plan-confirmed call arms this dedicated session
         # to accept the connector's confirmation, as the pooled path does.
         async with self._fleet.confirmations.armed(session, original_name):
-            return await session.call_tool(original_name, arguments)
+            return await session.call_tool(
+                original_name, arguments, **approval_call_kwargs(approval_ref)
+            )
 
     @staticmethod
     def _tasks_child_capable(initialization: _typing.Any) -> bool:
