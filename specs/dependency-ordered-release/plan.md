@@ -165,6 +165,20 @@ completion/cancellation races, foreign targets and enforced budget ceilings.
 Each client consumes the same results. No new operation or authority is
 implemented by this spec-only change; all new rows remain SPECIFIED.
 
+### Foreach tool steps (R003.4.14 to R003.4.17)
+
+Call path. `agents.plan_run` → `handle_plan_run` (`arbora/api/ops/plans.py:934`) → `run_plan_for` (`plans.py:262`) → the step executor `FleetStepTools` (`plans.py:364`) → `fleet.call` (`arbora/api/ops/fleet.py:243`). A foreach step is one harness `ToolStep`. The executor reads the array after the dependency ends and makes one `fleet.call` per item, in item order. The engine validates the plan first (engine foreach rows). Arbora adds no validator.
+
+Decisions. One call at a time keeps the effect journal and replay exact. A write with equal canonical arguments inside one step stops the step, so one target is not written twice. The comparison with the public projects that motivated these rows is in `specs/hosted-api-operations/research.md`.
+
+- **Owner:** the engine validates the plan (engine foreach rows). Arbora serves and runs the expansion.
+- **Cohesion:** the expansion lives in `FleetStepTools` beside the other tool-step code of `plans.py`.
+- **Dependency direction:** Arbora reads the engine plan and calls `fleet.call`. The engine never calls Arbora.
+- **Interface depth:** one new plan field, `foreach`. The per-item loop stays private to `FleetStepTools`.
+- **Special cases:** an array over `max_items`, a source that is not an array, and an equal write inside one step each fail the step with a typed code.
+- **State:** the step holds no state between runs. The effect journal holds each item once per idempotency key.
+- **Environment:** no new setting. The bounds come from the engine plan.
+
 ## Phase 2: Task approach
 
 tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.

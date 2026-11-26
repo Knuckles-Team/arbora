@@ -27,3 +27,7 @@ Governing [spec](spec.md) and [plan](plan.md). One task per row, producer first.
 - [ ] T021 [US2] ARBORA-RELEASE-R003.8 Add the typed-abstention response test and matrix row.
 - [ ] T022 [US2] ARBORA-RELEASE-R003.9 Add the fleet acceptance row: four checks per connector, reasoned skips only, one FAIL blocks promotion.
 - [ ] T023 [US2] ARBORA-RELEASE-R003.10 Wire `plan_candidate` to audit the exit-criteria matrix against a junit report (`release-plan --junit`).
+- [ ] T026 [US1] ARBORA-RELEASE-R003.4.14 Plan run expands a foreach tool step per array item.
+- [ ] T027 [US1] ARBORA-RELEASE-R003.4.15 Refusal: a duplicate write inside one foreach.
+- [ ] T028 [US1] ARBORA-RELEASE-R003.4.16 Reply lists each foreach item.
+- [ ] T029 [US1] ARBORA-RELEASE-R003.4.17 Hot-path proof: foreach served over HTTP and MCP.

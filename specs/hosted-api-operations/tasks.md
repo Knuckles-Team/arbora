@@ -537,3 +537,14 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T464 [US1] ARBORA-OPS-R956 Serve the ablation and canary operations. Size: M, 2 PRs, 5 hours.
 - [ ] T465 [US1] ARBORA-OPS-R957 Serve the skill tier and persona operations. Size: M, 2 PRs, 5 hours.
 - [ ] T466 [US1] ARBORA-OPS-R958 Run the knowledge curator on the engine cadence. Size: M, 2 PRs, 5 hours.
+- [ ] T467 [US1] ARBORA-OPS-R857.3 Wiring: the graph store carries six RDF media types.
+- [ ] T468 [US1] ARBORA-OPS-R857.4 Refusal: media type and parse errors pass through.
+- [ ] T469 [US1] ARBORA-OPS-R857.5 Hot-path proof: a Turtle write and a JSON-LD read.
+- [ ] T470 [US1] ARBORA-OPS-R923 Knowledge bundle operations and transfer routes are served (rollup).
+- [ ] T471 [US1] ARBORA-OPS-R923.1 Model: bundle parameters and results.
+- [ ] T472 [US1] ARBORA-OPS-R923.2 Wiring: operations and streaming routes.
+- [ ] T473 [US1] ARBORA-OPS-R923.3 Refusal: bundle scope and size errors.
+- [ ] T474 [US1] ARBORA-OPS-R923.4 Hot-path proof: export, download, upload, import.
+- [ ] T475 [US1] ARBORA-OPS-R924 Served Discover carries caller seeds and hop filters (rollup).
+- [ ] T476 [US1] ARBORA-OPS-R924.1 Wiring and refusal: contract fields and engine codes.
+- [ ] T477 [US1] ARBORA-OPS-R924.2 Hot-path proof: guided Discover over HTTP and MCP.

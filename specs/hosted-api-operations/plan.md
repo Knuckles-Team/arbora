@@ -54,7 +54,7 @@ tests/api/test_development_surface_served.py   new: served proofs of R896.1 to R
 
 ## Phase 0: Research
 
-No unknowns; no research.md.
+The rows before R857.3 hold no unknowns. Rows R857.3 to R857.5, R923 and R924 compare the served surface with two public projects, and [research.md](research.md) records each decision and each rejected option.
 
 ## Phase 1: Design
 
@@ -1249,3 +1249,14 @@ Machine contracts. Plan lease (`R901`): states `Issued`, `Consumed`, `Executing`
 ### Knowledge factory operations
 
 The operations `knowledge.flag.*` (R950), `knowledge.curation.*` (R951), `skills.friction.*` (R952), `skills.telemetry.ingest` (R953), the discovery reads (R954), `skills.eval.*` (R955), `skills.ablation.run` and `skills.canary.decide` (R956) and `skills.tier.promote` with the persona reads (R957) are thin wrappers over the engine methods that `MEDULLA-DECISION-ENGINE-R708` to `R715` own. Arbora checks the grant, binds the tenant and the principal, and forwards. It holds no flag state, no ranking, no tier list and no cadence. `CuratorScheduler` (R958) only ticks, asks the engine whether a cycle is due, claims the lease and starts the curator agent.
+### Graph store media types, bundle operations and guided Discover (R857.3 to R857.5, R923, R924)
+
+Call paths.
+
+Path of R857.3 to R857.5: starts at `create_api_application` (`arbora/api/http/app.py:59`) → `mount_sparql_protocol` (`arbora/api/http/sparql.py:294`) → `graph_store` (`sparql.py:393`) → `run` → `eg.graph.ApplyMutation` with event type `rdf_graph_write`, or `Method::Sparql` with `graph_media_type`. Arbora parses no RDF. The engine owns the parse (engine row for RDF media types).
+Path of R923: `get_registry` (`arbora/api/ops/registry_factory.py:16`) loads `operations()` of new `arbora/api/ops/bundle.py`. The transfer routes stream `BlobBegin`, `BlobChunkPut`, `BlobCommit`, `BlobFetchBegin` and `BlobChunkGet` between the HTTP body and the engine. Arbora keeps no bundle bytes.
+Path of R924: `load_eg_bindings` (`arbora/api/registry/eg_binding.py:342`) generates the `Discover` operation from the installed contract. The row adds no handler.
+
+Reuse inventory. R857.3 reuses `negotiate`, `answer` and `_refusal`. R923 reuses the read-op pattern of `arbora/api/ops/retrieval.py` and the effect journal. No new store or policy table exists in Arbora.
+
+Decisions. Arbora forwards RDF bodies as text with their media type, because a parser in the door would be a second owner of the format rules. A bundle moves by reference through blob chunks, because a bundle may reach 4 GiB and a JSON body cannot carry it.
