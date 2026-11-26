@@ -103,3 +103,39 @@ def test_a_method_the_pinned_engine_lacks_refuses_unavailable_and_sends_nothing(
         with pytest.raises(OperationRefused) as refused:
             asyncio.run(handler(context, params, ops[f"query.workspace.{name}"]))
         assert refused.value.code == "UNAVAILABLE"
+
+
+# spec: ARBORA-OPS-R855.3
+@pytest.mark.parametrize("case", ["missing", "retired", "foreign", "out_of_scope"])
+def test_get_and_delete_pass_the_engines_not_found_through_unchanged(
+    monkeypatch: pytest.MonkeyPatch, case: str
+) -> None:
+    """Arbora never distinguishes the four absent cases; the engine's refusal is the answer."""
+    from arbora.api.errors import EngineRefusal
+    from arbora.api.ops import _engine
+
+    detail = {
+        "missing": "STORED_QUERY_NOT_FOUND: no stored query `q`",
+        "retired": "STORED_QUERY_NOT_FOUND: no stored query `q`",
+        "foreign": "STORED_QUERY_NOT_FOUND: no stored query `q`",
+        "out_of_scope": "STORED_QUERY_NOT_FOUND: no stored query `q`",
+    }[case]
+    assert _engine.refusal_code("INVALID_REQUEST", detail) == "STORED_QUERY_NOT_FOUND"
+    refusal = EngineRefusal(_engine.refusal_code("INVALID_REQUEST", detail))
+    assert refusal.code == "STORED_QUERY_NOT_FOUND"
+    from arbora.api.errors import _engine_error
+
+    assert _engine_error("STORED_QUERY_NOT_FOUND") == (404, False)
+
+    async def refuse(*_a: Any, **_k: Any) -> Any:
+        raise refusal
+
+    monkeypatch.setattr(governance, "engine_send", refuse)
+    ops = _ops()
+    for handler, params, name in (
+        (governance.handle_workspace_get, {"name": "q"}, "get"),
+        (governance.handle_workspace_delete, {"name": "q", "reason": "x"}, "delete"),
+    ):
+        with pytest.raises(EngineRefusal) as raised:
+            asyncio.run(handler(None, params, ops[f"query.workspace.{name}"]))
+        assert raised.value is refusal
