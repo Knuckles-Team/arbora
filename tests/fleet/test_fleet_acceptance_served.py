@@ -92,10 +92,10 @@ def test_two_connector_fixture_gives_one_pass_one_fail_and_blocks(
     )
     receipt = reply["value"]
     rows = {row["connector"]: row for row in receipt["connectors"]}
-    assert set(rows["alpha"]["results"].values()) == {acceptance.PASS}
+    assert set(rows["alpha"]["results"].values()) == {acceptance.CHECK_OK}
     assert rows["beta"]["results"]["tool_count"] == acceptance.FAIL
     assert rows["beta"]["results"]["pack_digest"] == acceptance.FAIL
-    assert rows["beta"]["results"]["health"] == acceptance.PASS
+    assert rows["beta"]["results"]["health"] == acceptance.CHECK_OK
     assert receipt["state"] == "blocked"
     assert receipt["refusal"] == "ACCEPTANCE_BLOCKED"
     assert acceptance_ports.ContextAcceptancePorts is not None

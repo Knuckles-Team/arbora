@@ -15,7 +15,7 @@ import json
 import os
 import shutil
 import signal
-import subprocess
+import subprocess  # nosec B404 - fixed argv, no shell
 import sys
 import tempfile
 import time
@@ -56,7 +56,7 @@ Terminator = Callable[[int], None]
 
 def _launch(command: Sequence[str], environment: Mapping[str, str]) -> int:
     """Start ``command`` detached from this terminal, on loopback, and return its PID."""
-    process = subprocess.Popen(  # noqa: S603 - fixed argv, no shell
+    process = subprocess.Popen(  # noqa: S603  # nosec B603 - fixed argv, no shell
         list(command),
         env={**os.environ, **environment},
         stdin=subprocess.DEVNULL,

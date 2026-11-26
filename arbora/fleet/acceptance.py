@@ -7,7 +7,7 @@ For every configured connector :func:`check_fleet` runs
 * (c) one read-only tool call succeeds through the ``fleet.call`` pipeline;
 * (d) the engine pack digest equals the connector's reported pack digest.
 
-Each check answers ``PASS``, ``FAIL``, ``GAP`` (a fact could not be read) or
+Each check answers ``PASS`` (``CHECK_OK``), ``FAIL``, ``GAP`` (a fact could not be read) or
 ``SKIP``. A skip needs a reason in ``acceptance.expected_skip`` of the fleet
 configuration; a skip without one is a ``GAP``. ``GAP`` never passes: any
 ``FAIL`` or ``GAP`` makes the receipt ``blocked``. Arbora holds no pack record;
@@ -20,7 +20,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-PASS = "PASS"
+CHECK_OK = "PASS"
 FAIL = "FAIL"
 GAP = "GAP"
 SKIP = "SKIP"
@@ -64,7 +64,7 @@ def _health(child: Mapping[str, Any] | None) -> tuple[str, str]:
         return GAP, "no child row in fleet.status"
     state, breaker = child.get("state"), child.get("breaker")
     if state == HEALTHY_STATE and breaker in (None, HEALTHY_BREAKER):
-        return PASS, ""
+        return CHECK_OK, ""
     return FAIL, f"child state {state}, breaker {breaker}"
 
 
@@ -76,7 +76,7 @@ def _tool_count(
     if not isinstance(live, int) or not isinstance(held, int):
         return GAP, "the live or the engine-held tool count is unavailable"
     if live == held:
-        return PASS, ""
+        return CHECK_OK, ""
     return FAIL, f"live {live}, engine pack {held}"
 
 
@@ -84,7 +84,7 @@ def _digest(matches: bool | None) -> tuple[str, str]:
     if matches is None:
         return GAP, "the engine or the connector pack digest is unavailable"
     if matches:
-        return PASS, ""
+        return CHECK_OK, ""
     return FAIL, "the engine pack digest differs from the connector's"
 
 
@@ -114,7 +114,7 @@ async def check_connector(
     if called is None:
         read = (GAP, "no read-only probe call is configured or reachable")
     else:
-        read = (PASS, "") if called else (FAIL, "the read-only call failed")
+        read = (CHECK_OK, "") if called else (FAIL, "the read-only call failed")
     outcomes = dict(zip(CHECKS, (health, count, read, digest), strict=True))
     return ConnectorResult(
         connector,
@@ -147,7 +147,7 @@ __all__ = [
     "CHECKS",
     "FAIL",
     "GAP",
-    "PASS",
+    "CHECK_OK",
     "SKIP",
     "AcceptancePorts",
     "ConnectorResult",
