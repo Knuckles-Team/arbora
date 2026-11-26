@@ -552,9 +552,16 @@ async def handle_providers_mapping_dry_run(
     )
     if provider is None:
         raise OperationRefused("PROVIDER_INVALID")
-    return {
-        "value": dry_run_provider_rules(provider.get("rules") or [], params["claims"])
-    }
+    from arbora.identity.admin_console import AdminConsoleRefused
+
+    try:
+        return {
+            "value": dry_run_provider_rules(
+                provider.get("rules") or [], params["claims"]
+            )
+        }
+    except AdminConsoleRefused as refused:
+        raise OperationRefused(refused.code) from None
 
 
 async def handle_policy_get(context: Any, params: Mapping[str, Any], op: OpSpec) -> Any:

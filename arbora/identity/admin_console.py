@@ -6,6 +6,7 @@ The dry-run preview and mode wizard behaviors are later slices.
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 
 from .engine import IdentityUnavailable
@@ -67,6 +68,7 @@ def dry_run_provider_rules(
     groups: set[str] = set()
     matched: list[str] = []
     for rule in rules:
+        _require_valid_rule(rule)
         values = claims.get(str(rule.get("claim_path", "")), [])
         kind, expected = str(rule.get("match_kind", "")), str(rule.get("value", ""))
         hit = any(
@@ -87,3 +89,62 @@ def dry_run_provider_rules(
         "groups": sorted(groups),
         "matched_rules": matched,
     }
+
+
+class AdminConsoleRefused(IdentityUnavailable):
+    """A closed refusal code of the admin console (ARBORA-IDENTITY-R007.2)."""
+
+    def __init__(self, code: str) -> None:
+        super().__init__(code)
+        self.code = code
+
+
+def _require_valid_rule(rule: dict[str, object]) -> None:
+    target_kind, _, target_id = str(rule.get("target", "")).partition(":")
+    if (
+        str(rule.get("match_kind", "")) not in {"equals", "prefix"}
+        or not str(rule.get("claim_path", ""))
+        or target_kind not in {"role", "group"}
+        or not target_id
+    ):
+        raise AdminConsoleRefused("MAPPING_RULE_INVALID")
+
+
+#: The wizard's fixed steps, in order; a step needs the previous step's receipt.
+WIZARD_STEPS = (
+    "plan",
+    "backup_confirmed",
+    "link_migration_dry_run",
+    "transition",
+    "verify",
+)
+
+
+@dataclass(frozen=True, slots=True)
+class StepReceipt:
+    """The proof that one wizard step ran, chained to the step before it."""
+
+    step: str
+    digest: str
+    ownership_changes: int = 0
+
+
+def advance_wizard(
+    previous: StepReceipt | None, step: str, *, ownership_changes: int = 0
+) -> StepReceipt:
+    """Run one step of the mode wizard; the order is fixed and each step is chained.
+
+    The link-migration dry run reports its ownership changes in its receipt, and the
+    transition step refuses unless that receipt reports zero.
+    """
+    if step not in WIZARD_STEPS:
+        raise AdminConsoleRefused("STEP_OUT_OF_ORDER")
+    expected = 0 if previous is None else WIZARD_STEPS.index(previous.step) + 1
+    if WIZARD_STEPS.index(step) != expected:
+        raise AdminConsoleRefused("STEP_OUT_OF_ORDER")
+    if step == "transition" and previous is not None and previous.ownership_changes:
+        raise AdminConsoleRefused("OWNERSHIP_CHANGES_PRESENT")
+    changes = ownership_changes if step == "link_migration_dry_run" else 0
+    link = "" if previous is None else previous.digest
+    digest = hashlib.sha256(f"{link}\0{step}\0{changes}".encode()).hexdigest()
+    return StepReceipt(step, digest, changes)

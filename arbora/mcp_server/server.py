@@ -334,11 +334,13 @@ def mcp_server(
     bind_messaging_ports()
     from arbora.a2a.chain_composition import run_plan_binding
     from arbora.agent_host.port_backends import HostSeams
+    from arbora.agent_host.sandbox_boundary import boundary_verified
 
     chain = getattr(invocation, "approval_chain", None)
     bind_run_ports(
         invocation.services if invocation is not None else None,
         HostSeams(
+            sandbox_verified=boundary_verified,
             approval_chain=chain,
             plan_for=run_plan_binding(invocation.services)
             if invocation is not None and chain is not None
