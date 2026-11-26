@@ -382,6 +382,7 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T307 ARBORA-OPS-R061.5 Usage index hot-path proof.
 - [ ] T308 ARBORA-OPS-R062.1 Graph change models.
 - [ ] T309 ARBORA-OPS-R062.2 Subscribe and stream.
+- [ ] T702 ARBORA-OPS-R062.6 Publish the owner's live graph limits.
 - [ ] T310 ARBORA-OPS-R062.3 Snapshot recovery.
 - [ ] T311 ARBORA-OPS-R062.4 Revocation, refusals and visibility limit.
 - [ ] T312 ARBORA-OPS-R062.5 Graph change hot-path proof.
