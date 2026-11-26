@@ -21,14 +21,14 @@ const editor = (sink) => ({
   add: (value) => sink.push(value),
 })
 const hooks = {}
-let subscriber = null
+const subscribers = {}
 const ctx = {
   location: { directory: "/workspace/project" },
   mcp: { transform: (fn) => fn(editor(null)) },
   skill: { transform: (fn) => fn(editor(record.skills)) },
   command: { transform: (fn) => fn(editor(record.commands)) },
   session: { hook: (name, fn) => { record.hooks.push(name); hooks[name] = fn } },
-  event: { subscribe: (opts) => { record.events.push(...opts.types); subscriber = opts.handler } },
+  event: { subscribe: (opts) => { for (const type of opts.types) { record.events.push(type); subscribers[type] = opts.handler } } },
 }
 const plugin = (await import(pathToFileURL(`${dir}/server.ts`).href)).default
 await plugin.setup(ctx)
@@ -36,7 +36,9 @@ const event = { sessionID: "oc-1", system: [] }
 await hooks.context(event)
 await hooks.context(event)
 await hooks.compaction({ sessionID: "oc-1" })
-await subscriber({ properties: { info: { id: "oc-1" } } })
+await subscribers["session.deleted"]({ properties: { info: { id: "oc-1" } } })
+await subscribers["tool.execute.after"]({ properties: { tool: "read", sessionID: "oc-1" } })
+await subscribers["tool.execute.after"]({ properties: { tool: "skill", sessionID: "oc-1", args: { name: "canopy", prompt: "private" } } })
 record.system = event.system
 record.skills = record.skills.map((s) => ({ id: s.id, description: s.description, hasContent: s.content.length > 0 }))
 writeFileSync(out, JSON.stringify(record))

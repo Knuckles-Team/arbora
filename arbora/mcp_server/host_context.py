@@ -12,9 +12,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from arbora.a2a.authority import WorkItemA2AAuthority
-from arbora.a2a.media_refs import SessionMediaRefStore
-from arbora.a2a.routing import OrchestratorA2ARouter
+from arbora.a2a.composition import build_a2a_service
 from arbora.a2a.service import A2AService
 from arbora.access.approval import ApprovalDecisions, verified_approval_session
 from arbora.access.policy_state import PolicyState
@@ -44,11 +42,7 @@ class HostContext:
 def build_host_context(engine_provider: Callable[[], Any]) -> HostContext:
     """Build the host state once; ``engine_provider`` resolves the engine lazily."""
     origins = RunOriginRegistry()
-    a2a = A2AService(
-        authority=WorkItemA2AAuthority(engine_provider, origins=origins),
-        router=OrchestratorA2ARouter(engine_provider),
-        media_refs=SessionMediaRefStore(engine_provider),
-    )
+    a2a = build_a2a_service(engine_provider=engine_provider, origins=origins)
     return HostContext(
         runs=RunState(origins=origins, a2a=a2a),
         fleet=FleetState(),

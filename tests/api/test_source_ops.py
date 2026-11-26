@@ -350,7 +350,7 @@ def test_invalid_params_refuse_before_authority(params: dict[str, Any]):
 
 
 def test_operation_specs_are_read_only_composites_with_exact_engine_scopes():
-    ops = {op.id: op for op in source_ops.operations()}
+    ops = {op.id: op for op in source_ops.operations() if op.effect == Effect.READ}
     assert set(ops) == set(EXPECTED_SCOPES)
     for op_id, op in ops.items():
         assert op.verb == Verb.FIND

@@ -144,6 +144,9 @@ class McpAsk:
             result = await self.mcp.call_tool(
                 verb, {"op": op, "params": params, **extra}
             )
+            if result.structured_content is not None:
+                # The text part is a 1000-character summary; the payload is whole.
+                return result.structured_content
             text = "".join(getattr(part, "text", "") for part in result.content)
             return json.loads(text)
 
@@ -190,3 +193,129 @@ class RecordingEngine:
 
     def names(self) -> list[str]:
         return [name for name, *_ in self.calls]
+
+
+TENANT_TWO = "tenant:two"
+CREDENTIAL_ONE = "fixture-verified"  # sanitizer:ignore - synthetic
+CREDENTIAL_TWO = "second-tenant-verified"  # sanitizer:ignore - synthetic
+
+
+@pytest.fixture
+def confirmable(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+    """The served invocation with in-memory plan leases (request before ``served``)."""
+    return confirmable_invocation(monkeypatch)
+
+
+class TwoTenants:
+    """One engine that admits two verified principals of different tenants.
+
+    ``one`` is bound to ``tenant:one`` and ``two`` to ``tenant:two``. Each tenant
+    has its own served runtime and graph, as in production, and both reach the
+    one engine the handlers declare, so a foreign object is reachable only if the
+    door lets it through. A request resolves to the tenant of its own
+    credential; no header names the other tenant, and a credential presented to
+    the other tenant's runtime is refused at admission.
+    """
+
+    def __init__(
+        self,
+        apps: dict[str, Any],
+        invocations: dict[str, Any],
+        client: Any,
+        monkeypatch: pytest.MonkeyPatch,
+        scopes: tuple[str, ...],
+    ) -> None:
+        self.apps = apps
+        self.invocations = invocations
+        self.client = client
+        self.monkeypatch = monkeypatch
+        self.credentials = {TENANT: CREDENTIAL_ONE, TENANT_TWO: CREDENTIAL_TWO}
+        self.actors = {
+            TENANT: person("one", TENANT, scopes),
+            TENANT_TWO: person("two", TENANT_TWO, scopes),
+        }
+
+    def route(self, handlers: dict[str, Callable[[dict[str, Any], str], Any]]) -> None:
+        people = {
+            self.credentials[tenant]: actor for tenant, actor in self.actors.items()
+        }
+        route_methods(self.client, handlers, self.monkeypatch, people)
+
+    def call(
+        self,
+        tenant: str,
+        op_id: str,
+        params: dict[str, Any],
+        *,
+        credential_of: str | None = None,
+    ) -> Any:
+        """The served HTTP operation of ``tenant``'s runtime.
+
+        ``credential_of`` presents another tenant's credential to this runtime.
+        """
+        from tests.test_served_operation_api import _call
+
+        bearer = self.credentials[credential_of or tenant]
+        return _call(self.apps[tenant], op_id, params, Authorization=f"Bearer {bearer}")
+
+    def mcp(self, tenant: str) -> McpAsk:
+        """The served MCP intent surface of ``tenant``'s runtime and principal."""
+        return McpAsk(self.invocations[tenant], self.monkeypatch, self.actors[tenant])
+
+
+@pytest.fixture
+def two_tenant_served(
+    confirmable: dict[str, Any],
+    served: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> TwoTenants:
+    """Admit two tenants against one engine (import ``served`` beside it)."""
+    import dataclasses
+    from types import SimpleNamespace
+
+    from fastapi import FastAPI
+
+    import tests.test_served_operation_api as harness
+    from arbora.access.action_policy import ActionPolicies
+    from arbora.access.approval import ApprovalDecisions
+    from arbora.api.invoke.plan import EgPlanStore
+    from arbora.fleet.state import FleetState
+    from arbora.gateway.graph_api import register_graph_routes
+    from arbora.mcp_server.composition import install_gateway_application
+    from arbora.mcp_server.served_invocation import refused_fleet_effect
+    from tests.api.test_invoke_contract import FixtureJournal, FixtureLeases
+
+    http, client = served
+    scopes = ("workstream:read", "workstream:write")
+    apps: dict[str, Any] = {TENANT: http}
+    invocations: dict[str, Any] = {TENANT: confirmable["invocation"]}
+    actor = person("two", TENANT_TWO, scopes)
+    process = request_identity.mint_graph_session(actor)
+    invocation = harness.compose_served_invocation(
+        pool=harness.FakePool(client),
+        graph=process.graph,
+        process_session=lambda: process,
+        action_policies=ActionPolicies(),
+        bindings={},
+        fleet_effect=refused_fleet_effect,
+    )
+    leases, journal = FixtureLeases(), FixtureJournal()
+    invocation = dataclasses.replace(
+        invocation,
+        services=dataclasses.replace(
+            invocation.services,
+            plans=EgPlanStore(
+                SimpleNamespace(control_leases=leases),
+                lease_kind="fixture.plan",
+                seal_key=b"y" * 32,
+            ),
+            effects=journal,
+        ),
+    )
+    install_gateway_application(
+        invocation, fleet=FleetState(), approvals=ApprovalDecisions()
+    )
+    second = FastAPI()
+    register_graph_routes(second)
+    apps[TENANT_TWO], invocations[TENANT_TWO] = second, invocation
+    return TwoTenants(apps, invocations, client, monkeypatch, scopes)

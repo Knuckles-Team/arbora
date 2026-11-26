@@ -15,9 +15,28 @@ from typing import Any, Protocol
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
+from arbora.access.approval_leases import ACTION_APPROVAL_KIND, APPROVAL_ID_PREFIX
+from arbora.api.invoke.gate_class import GateResolution
 from arbora.api.invoke.steps import OpError, RequestCaller, claim_values
 
 PLAN_TTL_MS = 600_000
+
+
+def approval_id_for(plan_ref: str) -> str:
+    """The approval lease id of one gated plan: one item per plan."""
+    return APPROVAL_ID_PREFIX + plan_ref.removeprefix("arbora_plan:")
+
+
+def approval_ref_of(idempotency_key: str | None) -> str:
+    """The approval reference a plan-confirmed dispatch carries to its child.
+
+    The pipeline dispatches under the key ``plan:<plan_ref>`` only after it
+    validated and consumed that plan; any other call has no approval.
+    """
+    key = idempotency_key or ""
+    return approval_id_for(key[len("plan:") :]) if key.startswith("plan:") else ""
+
+
 MAX_SEALED_PLAN_BYTES = 16_384
 
 
@@ -105,11 +124,16 @@ class EgPlanStore:
         return params
 
     async def issue(
-        self, binding: PlanBinding, params: Mapping[str, Any] | None = None
+        self,
+        binding: PlanBinding,
+        params: Mapping[str, Any] | None = None,
+        gate: GateResolution | None = None,
     ) -> str:
         plan_ref = f"arbora_plan:{secrets.token_hex(24)}"
         now_ms = int(time.time() * 1000)
         grant = binding.as_grant()
+        if gate is not None:
+            grant.update(gate.as_grant())
         if binding.confirm == "console":
             if params is None or params_digest(params) != binding.params_digest:
                 raise ValueError("console plan arguments do not match binding")
@@ -126,7 +150,34 @@ class EgPlanStore:
         )
         if answer.get("outcome") != "issued":
             raise RuntimeError("EG did not issue arbora.plan lease")
+        if gate is not None and gate.source == "engine":
+            await self._file_approval(plan_ref, binding, gate, now_ms)
         return plan_ref
+
+    async def _file_approval(
+        self, plan_ref: str, binding: PlanBinding, gate: GateResolution, now_ms: int
+    ) -> None:
+        """File the inbox item of a gated plan as an engine approval lease."""
+        approval_id = approval_id_for(plan_ref)
+        expires = now_ms + gate.expires_in_ms
+        answer = await self._leases.issue(
+            tenant=binding.tenant,
+            lease_id=approval_id,
+            kind=ACTION_APPROVAL_KIND,
+            grant={
+                "request_digest": binding.params_digest,
+                "plan_ref": plan_ref,
+                "op_id": binding.op_id,
+                "proposer": binding.principal,
+                **gate.as_grant(),
+            },
+            issued_at_ms=now_ms,
+            expires_at_ms=expires,
+            hard_expires_at_ms=expires,
+            idempotency_key=f"issue:{approval_id}",
+        )
+        if answer.get("outcome") != "issued":
+            raise RuntimeError("EG did not issue the approval lease")
 
     async def get_console_plan(
         self, plan_ref: str, caller: RequestCaller, registry_digest: str
@@ -223,7 +274,12 @@ def _console_grant_refusal(
 class PlanStore(Protocol):
     """Durable lease authority required by the composition root."""
 
-    async def issue(self, binding: PlanBinding, params: Mapping[str, Any]) -> str: ...
+    async def issue(
+        self,
+        binding: PlanBinding,
+        params: Mapping[str, Any],
+        gate: GateResolution | None = None,
+    ) -> str: ...
 
     async def validate(
         self, plan_ref: str, binding: PlanBinding

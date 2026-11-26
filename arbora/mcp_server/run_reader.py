@@ -14,6 +14,7 @@ from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.steps import claim_values
 from arbora.api.ops.run_graph import (
     MAX_GRAPH_EVENTS,
     ExecutionGraphParams,
@@ -31,9 +32,16 @@ from arbora.api.ops.run_replay import (
     unavailable,
     validate_history,
 )
-from arbora.api.ops.runs import project_current_plan
+from arbora.api.ops.runs import (
+    RunMetricsParams,
+    RunNodeParams,
+    project_current_plan,
+    unavailable_capabilities,
+)
 from arbora.mcp_server.current_plan_reader import _project, read_native_snapshot
+from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
 from arbora.run_origin import RunOriginRegistry
+from arbora.security.anonymous import client_scope
 from arbora.security.session import use_session
 
 _RUN_STATUS = {
@@ -141,6 +149,50 @@ class NativeRunReader:
             return project_graph(request, topology, *loaded)
         except (ValueError, TypeError, KeyError, UnicodeError):
             return unavailable_graph(request)
+
+    async def metrics(
+        self, *, context: ExecutionContext, request: RunMetricsParams
+    ) -> dict[str, Any]:
+        """Engine ``RunMetrics`` under the caller's claims; no local arithmetic.
+
+        PIN-LAG: the pinned engine release lacks the method; the guard refuses
+        ``UNAVAILABLE`` naming it until the re-pin.
+        """
+        try:
+            require_methods("RunMetrics")
+        except PinLagUnavailable as missing:
+            raise refusal(missing) from None
+        graph = await caller_dispatch_graph(context)
+        if "telemetry:read" not in context.caller.effective_scopes:
+            raise OperationRefused(
+                "SCOPE_REQUIRED", {"missing_scopes": ["telemetry:read"]}
+            )
+        body = {**request.model_dump(mode="json", exclude_none=True)}
+        body["tenant"] = context.caller.tenant
+        with client_scope(context.client, claim_values(context.caller.engine_claims)):
+            try:
+                answer = await context.client._send("RunMetrics", body, graph)
+            except EngineResponseError as exc:
+                raise EngineRefusal(exc.code) from exc
+        return dict(answer) if isinstance(answer, dict) else {}
+
+    async def node(
+        self, *, context: ExecutionContext, request: RunNodeParams
+    ) -> dict[str, Any]:
+        """A node read: owner admission first; interaction stays unavailable.
+
+        A foreign or absent run answers exactly like an owned run without a
+        producer-issued target binding. A trace id, step id or readable event
+        never grants chat authority.
+        """
+        await self._owned(context, request.run_id, request.task_id)
+        return {
+            "schema_version": SCHEMA,
+            "availability": "unavailable",
+            "run_id": request.run_id,
+            "node_id": request.node_id,
+            "capabilities": unavailable_capabilities(),
+        }
 
     async def _page(
         self, context: ExecutionContext, request: RunEventsParams
