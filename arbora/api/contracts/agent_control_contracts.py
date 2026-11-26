@@ -112,6 +112,13 @@ class CapabilitySearchPort(Protocol):
     ) -> Sequence[CapabilityCandidate]: ...
 
 
+class AgentAttachment(_StrictModel):
+    """One admitted image, passed to the run as inline binary (ARBORA-A2A-R001.5.7)."""
+
+    media_type: Literal["image/png", "image/jpeg", "image/webp"]
+    data: bytes = Field(min_length=1, max_length=33_554_432)
+
+
 class AgentExecutionRequest(_StrictModel):
     """The supported AU agent execution inputs, independent of transport."""
 
@@ -138,6 +145,9 @@ class AgentExecutionRequest(_StrictModel):
     tool_server: str | None = Field(default=None, max_length=512)
     execution_mode: Literal["auto", "direct", "graph"] = "auto"
     grounding: Literal["required", "best_effort", "none"] = "required"
+    attachments: tuple[AgentAttachment, ...] = Field(default=(), max_length=8)
+    input_media_types: tuple[str, ...] = Field(default=(), max_length=8)
+    media_fallback: Literal["refuse", "text_placeholder"] = "refuse"
 
 
 class AgentExecutionResult(_StrictModel):

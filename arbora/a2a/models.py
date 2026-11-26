@@ -15,6 +15,8 @@ __all__ = [
     "A2AAgentCapabilities",
     "A2AContextBudget",
     "A2AListResult",
+    "A2AMediaLimits",
+    "A2AMediaRefFile",
     "A2AMessage",
     "A2APushNotificationAuthority",
     "A2AOperationInvokeParams",
@@ -105,6 +107,14 @@ class A2AInlineMediaFile(_WireModel):
         return base64.b64decode(self.bytes, validate=True)
 
 
+class A2AMediaRefFile(_WireModel):
+    """An image carried by upload reference (ARBORA-A2A-R001.5.5)."""
+
+    uri: str = Field(pattern=r"^media:sha256:[0-9a-f]{64}$")
+    mime_type: Literal["image/png", "image/jpeg", "image/webp"]
+    name: str | None = Field(default=None, max_length=256)
+
+
 class A2ADataPart(_WireModel):
     """A structured JSON part; the tool-task extension reads ``toolTask`` from it."""
 
@@ -114,7 +124,7 @@ class A2ADataPart(_WireModel):
 
 class A2AFilePart(_WireModel):
     kind: Literal["file"]
-    file: A2AInlineTextFile | A2AInlineMediaFile
+    file: A2AInlineTextFile | A2AInlineMediaFile | A2AMediaRefFile
 
 
 class A2AMessage(_WireModel):
@@ -153,6 +163,7 @@ class A2AMessage(_WireModel):
             len(part.file.decoded_bytes())
             for part in self.parts
             if isinstance(part, A2AFilePart)
+            and not isinstance(part.file, A2AMediaRefFile)
         )
 
     def task_text(self) -> str:
@@ -171,7 +182,7 @@ class A2AMessage(_WireModel):
     @staticmethod
     def _is_media(part: A2ATextPart | A2AFilePart | A2ADataPart) -> bool:
         return isinstance(part, A2AFilePart) and isinstance(
-            part.file, A2AInlineMediaFile
+            part.file, (A2AInlineMediaFile, A2AMediaRefFile)
         )
 
     def media_files(
@@ -398,6 +409,16 @@ class A2ASkill(_WireModel):
     output_modes: list[str]
 
 
+class A2AMediaLimits(_WireModel):
+    """The admission limit table, published as enforced (ARBORA-A2A-R001.5.6)."""
+
+    allowed_types: list[str]
+    max_file_part_bytes: int
+    max_request_media_bytes: int
+    max_image_parts: int
+    inline_max_bytes: int
+
+
 class A2AAgentCard(_WireModel):
     name: str
     description: str
@@ -421,3 +442,4 @@ class A2AAgentCard(_WireModel):
     default_input_modes: list[str] = Field(default_factory=lambda: ["text/plain"])
     default_output_modes: list[str] = Field(default_factory=lambda: ["text/plain"])
     skills: list[A2ASkill]
+    media: A2AMediaLimits | None = None

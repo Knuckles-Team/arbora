@@ -144,6 +144,7 @@ class A2ATaskAuthority(Protocol):
         decision: A2ARouteDecision,
         blocking: bool = True,
         model_profile: Any = None,
+        media: dict[str, Any] | None = None,
     ) -> A2ATask: ...
 
     async def get(self, task_id: str) -> A2ATask | None: ...
@@ -436,6 +437,7 @@ class WorkItemA2AAuthority:
         task_id: str,
         context_id: str,
         run_id: str | None,
+        media: dict[str, Any] | None = None,
     ) -> Any:
         """Execute only inside the host's revocable native owner scope."""
         from arbora import work_items
@@ -484,6 +486,7 @@ class WorkItemA2AAuthority:
                     task=task,
                     run_id=run_id or task_id or None,
                     allowed_tools=preloaded_agent_tools(agent_name),
+                    **(media or {}),
                 ),
                 session=session,
             )
@@ -499,6 +502,7 @@ class WorkItemA2AAuthority:
         task_id: str = "",
         context_id: str = "",
         run_id: str | None = None,
+        media: dict[str, Any] | None = None,
     ) -> dict[str, int] | None:
         """Lease the WorkItem, run the agent through the harness, commit the outcome.
 
@@ -530,6 +534,7 @@ class WorkItemA2AAuthority:
                 task_id=task_id,
                 context_id=context_id,
                 run_id=run_id,
+                media=media,
             )
             if result.run_id != (run_id or task_id):
                 raise RuntimeError("agent result does not belong to this A2A turn")
@@ -636,6 +641,7 @@ class WorkItemA2AAuthority:
         decision: A2ARouteDecision,
         blocking: bool = True,
         model_profile: Any = None,
+        media: dict[str, Any] | None = None,
     ) -> A2ATask:
         if decision.selected_tools:
             # Refuse before durable admission: the current signed AU dispatch
@@ -715,6 +721,7 @@ class WorkItemA2AAuthority:
                     task_id=task_id,
                     context_id=context_id,
                     run_id=run_id,
+                    media=media,
                 ),
                 item_id,
             )
@@ -728,6 +735,7 @@ class WorkItemA2AAuthority:
                 task_id=task_id,
                 context_id=context_id,
                 run_id=run_id,
+                media=media,
             )
             refreshed = await asyncio.to_thread(
                 work_items.get_work_item, work_engine, item_id

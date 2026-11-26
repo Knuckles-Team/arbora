@@ -512,6 +512,20 @@ class ArboraConfig(BaseModel):
         alias="A2A_MAX_IMAGE_PARTS",
         description="Most image parts one A2A message may carry.",
     )
+    a2a_inline_media_max_bytes: int = Field(
+        default=1_048_576,
+        ge=1_024,
+        le=33_554_432,
+        alias="A2A_INLINE_MEDIA_MAX_BYTES",
+        description="Largest decoded image an A2A part may carry inline; a larger one must be an upload reference.",
+    )
+    a2a_media_ref_ttl_seconds: int = Field(
+        default=3_600,
+        ge=60,
+        le=604_800,
+        alias="A2A_MEDIA_REF_TTL_SECONDS",
+        description="How long an uploaded media reference stays valid, in seconds.",
+    )
     mcp_always_load: list[str] = Field(
         default_factory=lambda: [
             "tunnel-manager-mcp",

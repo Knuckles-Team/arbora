@@ -647,6 +647,15 @@ def compose_served_invocation(
         from arbora.mcp_server.served_engine import ServedEngine
 
         bindings = {**bindings, "task_plan_work_engine": ServedEngine(pool)}
+    if bindings is not None and "media_ref_store" not in bindings:
+        # ARBORA-A2A-R001.5.5: uploaded image bytes live in the engine, never here.
+        from arbora.a2a.media_refs import SessionMediaRefStore
+        from arbora.mcp_server.served_engine import ServedEngine as _Engine
+
+        bindings = {
+            **bindings,
+            "media_ref_store": SessionMediaRefStore(lambda: _Engine(pool)),
+        }
     if bindings is not None and "identity_admin" not in bindings:
         # ARBORA-IDENTITY-R018.1: the identity operations reach the engine
         # through the one administration port of the composition root.
