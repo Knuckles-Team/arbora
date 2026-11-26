@@ -956,7 +956,26 @@ async def _confirmation_gate(call: _Call) -> OpError | OpResult | None:
         preview = await call.effect(None)
         assert preview is not None
         return preview
-    return _execution_refusal(call)
+    refused = _execution_refusal(call)
+    if refused is not None or call.plan_ref is None:
+        return refused
+    return await _approval_wait(call)
+
+
+async def _approval_wait(call: _Call) -> OpError | None:
+    """Answer a plan still waiting for an approver without journaling a terminal outcome.
+
+    The wait is retriable: the same ``plan_ref`` runs once an approver approves it
+    (ARBORA-OPS-R918.3), so the refusal must not settle the effect journal.
+    """
+    pending = getattr(call.services.plans, "approval_pending", None)
+    if pending is None:
+        return None
+    try:
+        waiting = await pending(call.plan_ref, call.caller.tenant)
+    except Exception:  # noqa: BLE001 - an unreadable lease is not a wait
+        return OpError("UNAVAILABLE", {"reason": "plan lease unavailable"})
+    return OpError("APPROVAL_REQUIRED") if waiting else None
 
 
 def _journal_key(call: _Call) -> str | None:

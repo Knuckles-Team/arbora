@@ -14,8 +14,12 @@ from typing import Any, Protocol, runtime_checkable
 
 from pydantic import Field
 
+from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
-from arbora.api.registry import OpSpec
+from arbora.api.ops._engine import engine_send
+from arbora.api.registry import Confirm, Effect, OpSpec
+from arbora.deployment.policy_bundle import BundleRefused, load_bundle
+from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_models
 
 PolicyReadParams, PolicyReadResult = _common.read_op_models("PolicyRead")
 
@@ -44,8 +48,81 @@ async def handle_policy_read(
     )
 
 
+class BundleParams(_common.Params):
+    name: str = Field(min_length=1, max_length=64)
+
+
+class BundleResult(_common.Params):
+    reply: dict[str, Any]
+
+
+def _bundle_root(context: Any) -> Any:
+    from pathlib import Path
+
+    from arbora.core.settings import config_dir
+
+    root = context.services.get("policy_bundle_root")
+    return Path(root) if root is not None else config_dir() / "policy"
+
+
+async def _send_bundle(
+    context: Any, params: Mapping[str, Any], verb: str
+) -> dict[str, Any]:
+    """Send the file's bundle unchanged to the engine policy family; refusals pass through."""
+    try:
+        # PIN-LAG: the pinned engine has no identity policy family yet.
+        require_models(("IdentityOpPolicy",))
+    except PinLagUnavailable as missing:
+        raise refusal(missing) from missing
+    try:
+        bundle = load_bundle(_bundle_root(context), params["name"])
+    except BundleRefused as error:
+        raise OperationRefused(error.code, error.details) from error
+    reply = await engine_send(
+        context,
+        "Identity",
+        {"op": {"family": "policy", "op": verb, "bundle": bundle.wire()}},
+        idempotent=verb == "bind",
+    )
+    return {"reply": dict(reply) if isinstance(reply, Mapping) else {"value": reply}}
+
+
+async def handle_bundle_validate(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Compile the bundle in the engine without writing."""
+    return await _send_bundle(context, params, "validate")
+
+
+async def handle_bundle_bind(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Bind the bundle to its scope; the engine enforces it in its one access boundary."""
+    return await _send_bundle(context, params, "bind")
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
+        _common.build_read_op(
+            op_id="policy.bundle.validate",
+            summary="Validate a policy bundle file against the engine without binding it",
+            examples=("validate this policy bundle",),
+            params=BundleParams,
+            result=BundleResult,
+            handler="arbora.api.ops.policy.handle_bundle_validate",
+            scope="policy:read",
+        ),
+        _common.build_write_op(
+            op_id="policy.bundle.bind",
+            summary="Bind a policy bundle file to its scope in the engine",
+            examples=("bind this policy bundle",),
+            params=BundleParams,
+            result=BundleResult,
+            handler="arbora.api.ops.policy.handle_bundle_bind",
+            scope="fleet:control",
+            effect=Effect.ADMIN,
+            confirm=Confirm.CONSOLE,
+        ),
         _common.build_tenant_read_op(
             op_id="policy.read",
             summary="Show this tenant's active policy state",
@@ -65,6 +142,8 @@ __all__ = [
     "PolicyReadResult",
     "PolicyReader",
     "PolicyState",
+    "handle_bundle_bind",
+    "handle_bundle_validate",
     "handle_policy_read",
     "operations",
     "specs",

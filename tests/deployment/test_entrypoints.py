@@ -31,6 +31,7 @@ def test_host_deployment_scripts_point_to_arbora_modules() -> None:
         "arbora-check-import-boundaries": "arbora.architecture.boundary_census:main",
         "arbora-hosting-config": "arbora.deployment.host_config:main",
         "arbora-wiring-sweep": "arbora.evolution.wiring_sweep:main",
+        "arbora-image-digests": "arbora.deployment.image_digests:main",
         "setup-config": "arbora.deployment.cli:main",
     }
 

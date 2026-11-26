@@ -8,7 +8,7 @@ import secrets
 import time
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 from binascii import Error as Base64Error
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
 from typing import Any, Protocol
 
@@ -85,8 +85,14 @@ class EgPlanStore:
     """Use EG's allowlisted control leases; caller supplies a service-authorized client."""
 
     def __init__(
-        self, client: Any, *, lease_kind: str, seal_key: bytes | None = None
+        self,
+        client: Any,
+        *,
+        lease_kind: str,
+        seal_key: bytes | None = None,
+        clock_ms: Callable[[], int] | None = None,
     ) -> None:
+        self._clock_ms = clock_ms or (lambda: int(time.time() * 1000))
         if not isinstance(lease_kind, str) or not lease_kind:
             raise ValueError("configured plan lease kind is required")
         self._lease_kind = lease_kind
@@ -130,10 +136,13 @@ class EgPlanStore:
         gate: GateResolution | None = None,
     ) -> str:
         plan_ref = f"arbora_plan:{secrets.token_hex(24)}"
-        now_ms = int(time.time() * 1000)
+        now_ms = self._clock_ms()
         grant = binding.as_grant()
+        lifetime_ms = PLAN_TTL_MS
         if gate is not None:
             grant.update(gate.as_grant())
+            if gate.source == "engine":
+                lifetime_ms = gate.expires_in_ms
         if binding.confirm == "console":
             if params is None or params_digest(params) != binding.params_digest:
                 raise ValueError("console plan arguments do not match binding")
@@ -144,8 +153,8 @@ class EgPlanStore:
             kind=self._lease_kind,
             grant=grant,
             issued_at_ms=now_ms,
-            expires_at_ms=now_ms + PLAN_TTL_MS,
-            hard_expires_at_ms=now_ms + PLAN_TTL_MS,
+            expires_at_ms=now_ms + lifetime_ms,
+            hard_expires_at_ms=now_ms + lifetime_ms,
             idempotency_key=f"issue:{plan_ref}",
         )
         if answer.get("outcome") != "issued":
@@ -185,7 +194,7 @@ class EgPlanStore:
         """Read only this caller's live, sealed plan for attended review."""
 
         lease = await self._leases.get(tenant=caller.tenant, lease_id=plan_ref)
-        refusal = _live_lease_refusal(lease, self._lease_kind)
+        refusal = _live_lease_refusal(lease, self._lease_kind, self._clock_ms())
         if refusal is not None:
             return None, refusal
         grant = lease.get("grant")
@@ -209,10 +218,11 @@ class EgPlanStore:
         return {"plan_ref": plan_ref, "op": grant.get("op_id"), "params": params}, None
 
     async def validate(
-        self, plan_ref: str, binding: PlanBinding
+        self, plan_ref: str, binding: PlanBinding, now_ms: int | None = None
     ) -> tuple[dict[str, Any] | None, OpError | None]:
+        now_ms = self._clock_ms() if now_ms is None else now_ms
         lease = await self._leases.get(tenant=binding.tenant, lease_id=plan_ref)
-        refusal = _live_lease_refusal(lease, self._lease_kind)
+        refusal = _live_lease_refusal(lease, self._lease_kind, now_ms)
         if refusal is not None:
             return None, refusal
         grant = lease.get("grant")
@@ -228,10 +238,14 @@ class EgPlanStore:
         return lease, None
 
     async def consume(self, plan_ref: str, binding: PlanBinding) -> OpError | None:
-        lease, refusal = await self.validate(plan_ref, binding)
+        now_ms = self._clock_ms()  # one clock read per consume (R918.4)
+        lease, refusal = await self.validate(plan_ref, binding, now_ms)
         if refusal is not None:
             return refusal
         assert lease is not None
+        refusal = await self._approval_refusal(plan_ref, lease, binding, now_ms)
+        if refusal is not None:
+            return refusal
         answer = await self._leases.transition(
             tenant=binding.tenant,
             lease_id=plan_ref,
@@ -241,14 +255,57 @@ class EgPlanStore:
         )
         return None if answer.get("outcome") == "applied" else OpError("PLAN_EXPIRED")
 
+    async def approval_pending(self, plan_ref: str, tenant: str) -> bool:
+        """True while an engine-gated plan waits for an approver (retriable, not journaled)."""
+        lease = await self._leases.get(tenant=tenant, lease_id=plan_ref)
+        grant = lease.get("grant") if isinstance(lease, Mapping) else None
+        if not isinstance(grant, Mapping) or grant.get("gate_source") != "engine":
+            return False
+        item = await self._leases.get(tenant=tenant, lease_id=approval_id_for(plan_ref))
+        if not isinstance(item, Mapping) or item.get("status") != "active":
+            return False
+        deadline = min(
+            int(item.get("expires_at_ms", 0) or 0),
+            int(item.get("hard_expires_at_ms", 0) or 0),
+        )
+        return self._clock_ms() < deadline
 
-def _live_lease_refusal(lease: Any, lease_kind: str) -> OpError | None:
+    async def _approval_refusal(
+        self,
+        plan_ref: str,
+        lease: Mapping[str, Any],
+        binding: PlanBinding,
+        now_ms: int,
+    ) -> OpError | None:
+        """A plan the engine gated runs only after an approver approved its item."""
+        grant = lease.get("grant")
+        if not isinstance(grant, Mapping) or grant.get("gate_source") != "engine":
+            return None
+        item = await self._leases.get(
+            tenant=binding.tenant, lease_id=approval_id_for(plan_ref)
+        )
+        if not isinstance(item, Mapping) or item.get("kind") != ACTION_APPROVAL_KIND:
+            return OpError("APPROVAL_REQUIRED")
+        status = item.get("status")
+        if status == "consumed":
+            return None
+        if status == "revoked":
+            return OpError("APPROVAL_DENIED")
+        deadline = min(
+            int(item.get("expires_at_ms", 0) or 0),
+            int(item.get("hard_expires_at_ms", 0) or 0),
+        )
+        return OpError("PLAN_EXPIRED" if now_ms >= deadline else "APPROVAL_REQUIRED")
+
+
+def _live_lease_refusal(lease: Any, lease_kind: str, now_ms: int) -> OpError | None:
     """Refuse a lease that is absent, foreign, inactive or past its hard expiry."""
     if not lease or lease.get("kind") != lease_kind:
         return OpError("PLAN_MISMATCH")
-    if lease.get("status") != "active" or int(
-        lease.get("hard_expires_at_ms", 0)
-    ) <= int(time.time() * 1000):
+    if (
+        lease.get("status") != "active"
+        or int(lease.get("hard_expires_at_ms", 0)) <= now_ms
+    ):
         return OpError("PLAN_EXPIRED")
     return None
 

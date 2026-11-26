@@ -508,7 +508,8 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T431 [US1] ARBORA-OPS-R918.2 Gate class and approver roles come from the engine. Size: M, 1 PR, 4 hours.
 - [ ] T432 [US1] ARBORA-OPS-R918.3 The approvals.decide write records provenance. Size: M, 1 PR, 4 hours.
 - [ ] T433 [US1] ARBORA-OPS-R918.4 An expired plan item refuses execution. Size: S, 1 PR, 2 hours.
-- [ ] T434 [US1] ARBORA-OPS-R918.5 The approvals.digest read and its scheduled delivery. Size: M, 1 PR, 4 hours.
+- [ ] T434 [US1] ARBORA-OPS-R918.5 The approvals.digest read. Size: S, 1 PR, 2 hours.
+- [ ] T703 [US1] ARBORA-OPS-R918.5.1 The approvals.digest.send act and its scheduled delivery. Size: S, 1 PR, 2 hours.
 - [ ] T435 [US1] ARBORA-OPS-R918.6 Push notification hook on gate-class plans. Size: M, 1 PR, 4 hours.
 - [ ] T436 [US1] ARBORA-OPS-R918.7 Hot-path proof: an agent proposal reaches a human decision. Size: M, 1 PR, 4 hours.
 - [ ] T437 [US1] ARBORA-OPS-R919 Role runs prefer the tenant's local model (rollup). Size: S, 1 PR, 2 hours.
