@@ -612,7 +612,7 @@ class AgentRunPort:
         )
 
 
-def bind_run_ports() -> None:
+def bind_run_ports() -> Any:
     """Register the run decision, model and run event providers with the harness."""
     from meristem import host_ports
 
@@ -623,11 +623,13 @@ def bind_run_ports() -> None:
 
     host_ports.register_optional_scaffold_publication_factory(publication_scope)
     from arbora.a2a.checkpoint import checkpoint_store
+    from arbora.agent_host.host_port_adapters import bind_host_ports
     from arbora.mcp_server import runtime as mcp_runtime
 
     # The engine is resolved when a run binds, never at registration.
-    host_ports.register_run_checkpoint_factory(
-        checkpoint_store(
-            lambda: mcp_runtime._get_engine() if mcp_runtime._get_engine else None
-        )
+    store = checkpoint_store(
+        lambda: mcp_runtime._get_engine() if mcp_runtime._get_engine else None
     )
+    host_ports.register_run_checkpoint_factory(store)
+    # The one HostPorts record of meristem main; the pinned release refuses it.
+    return bind_host_ports(checkpoint_store=store)

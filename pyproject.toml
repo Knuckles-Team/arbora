@@ -255,6 +255,7 @@ markers = [
     "spec: binds a test to a spec requirement ID",
     "integration: integration test (moved meristem profile tests)",
     "concept: binds a test to a concept ID (moved meristem tests)",
+    "pin_lag: real path against a structural double of an upstream main shape; remove with the pin-lag guards",
     "real_boot: boots a real arbora process against a real EG server (linux x86_64)",
 ]
 
