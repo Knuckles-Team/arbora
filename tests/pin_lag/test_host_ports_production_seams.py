@@ -250,12 +250,26 @@ def _plan(owner: Any, kind: str, digest: str) -> Any:
     )
 
 
+@pytest.fixture
+def claim_shape(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A structural double of medulla ``main``'s claim answer with its identity digests."""
+    from medulla.generated import models
+
+    from arbora.pin_lag.medulla import CLAIM_IDENTITY_FIELDS
+
+    class Claim:
+        model_fields = dict.fromkeys(CLAIM_IDENTITY_FIELDS)
+
+    monkeypatch.setattr(models, "ClaimWorkItemResult", Claim, raising=False)
+
+
 @pytest.mark.spec("ARBORA-OPS-R890.4")
 @pytest.mark.pin_lag
 def test_terminal_outcome_comes_from_the_terminal_event_and_never_a_default(
     captured: Any,
     served: Any,  # noqa: F811
     main_shape: None,  # noqa: F811
+    claim_shape: None,
 ) -> None:
     owner = _owner()
     events = RunTerminalEvents()
