@@ -8,6 +8,7 @@ from typing import Any
 from pydantic import Field
 
 from arbora.api.ops._common import Params, bound_service
+from arbora.api.ops._engine import engine_send
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -56,6 +57,27 @@ class RlmParams(Params):
 
 class AgentResult(Params):
     value: dict[str, Any]
+
+
+async def admit_workflow(context: Any, message: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Resolve a named workflow to its registry identity before any engine starts.
+
+    An unknown workflow refuses ``WORKFLOW_IDENTITY_UNKNOWN`` with no start
+    (ARBORA-OPS-R873). A known one is read from the engine ``WorkflowRegistry`` by its
+    identity, and the run carries that identity (ARBORA-OPS-R874).
+    """
+    metadata = message.get("metadata") or {}
+    workflow_id = metadata.get("workflow_id")
+    if not workflow_id:
+        return message
+    host = bound_service(
+        context, "workflow_host", reason="workflow host is not composed"
+    )
+    identity = host.resolve(str(workflow_id), metadata.get("workflow_version"))
+    wire = identity.model_dump(mode="json")
+    await engine_send(context, "WorkflowRegistry", {"op": "read", "identity": wire})
+    host.engine()
+    return {**message, "metadata": {**metadata, "workflow_identity": wire}}
 
 
 async def _with_role_profile(context: Any, message: Mapping[str, Any]) -> Any:
@@ -152,6 +174,7 @@ async def handle_agent(
             from arbora.modality.models import ModalityRefused
 
             message = await _with_role_profile(context, params["message"])
+            message = await admit_workflow(context, message)
             if params.get("assistant_profile_ref"):
                 message = {
                     **message,
