@@ -88,7 +88,15 @@ class DecisionProvenanceResult(Params):
 
 
 class DecisionWhyNotParams(DecisionRefParams):
-    option_id: str = Field(min_length=1, max_length=256)
+    option_id: str = Field(
+        min_length=1,
+        max_length=256,
+        description=(
+            "The engine's component id of the excluded option: the "
+            "`component_id` its decision record names, in the engine's own id "
+            "space. Arbora forwards it unchanged and maps no other id."
+        ),
+    )
     budget_ms: int | None = Field(default=None, ge=0)
 
 

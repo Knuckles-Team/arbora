@@ -234,6 +234,22 @@ def test_why_not_is_bounded_and_refuses_retired_inputs(engine: Any) -> None:
     assert unknown.json()["error"]["code"] == "DECISION_NOT_FOUND"
 
 
+@pytest.mark.spec("ARBORA-OPS-R920.3")
+def test_why_not_option_id_is_the_engine_component_id_unchanged(engine: Any) -> None:
+    from arbora.api.ops.decision_evidence import DecisionWhyNotParams
+
+    app, recording, _invocation = engine
+    description = DecisionWhyNotParams.model_fields["option_id"].description or ""
+    assert "component id" in description
+    for component_id in ("option:b", "skill:triage@2", "tool/search.v1"):
+        _call(
+            app,
+            "decision.why_not",
+            {"decision_id": "decision:1", "option_id": component_id},
+        )
+        assert recording.sent[-1]["option_id"] == component_id
+
+
 @pytest.mark.spec("ARBORA-OPS-R920", "ARBORA-OPS-R920.4")
 def test_decision_evidence_journey_over_mcp_and_http(
     engine: Any, monkeypatch: pytest.MonkeyPatch
