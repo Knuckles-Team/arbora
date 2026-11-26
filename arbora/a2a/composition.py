@@ -55,6 +55,21 @@ def stream_buffer_events(config: object) -> int:
     return value
 
 
+def _harness_decider(
+    decide: Callable[[dict[str, Any]], Any] | None,
+    feature_schema: Callable[[str], Mapping[str, Any]] | None,
+    principal: Callable[[], str] | None,
+) -> EngineHarnessConfigDecider | None:
+    """The engine harness decider, present only when a ``Decide`` port is wired."""
+    if decide is None:
+        return None
+    return EngineHarnessConfigDecider(
+        decide,
+        feature_schema=feature_schema or (lambda tenant: {}),
+        principal=principal or _principal,
+    )
+
+
 @dataclass(frozen=True)
 class A2AComposition:
     application: Any
@@ -70,7 +85,8 @@ def build_a2a_service(
     hosted_invocation: Any = None,
     clock: StreamClock | None = None,
     decide: Callable[[dict[str, Any]], Any] | None = None,
-    feature_schema: Mapping[str, Any] | None = None,
+    feature_schema: Callable[[str], Mapping[str, Any]] | None = None,
+    decision_principal: Callable[[], str] | None = None,
 ) -> A2AService:
     """One service over the WorkItem authority and its durable event cursor.
 
@@ -103,15 +119,9 @@ def build_a2a_service(
             decide=decide,
             feature_schema=feature_schema,
             tenant=_tenant,
-            principal=_principal,
+            principal=decision_principal or _principal,
         ),
-        harness_decider=(
-            EngineHarnessConfigDecider(
-                decide, feature_schema=feature_schema or {}, principal=_principal
-            )
-            if decide is not None
-            else None
-        ),
+        harness_decider=_harness_decider(decide, feature_schema, decision_principal),
         principal_kind=_principal_kind,
         card_metadata=card_metadata or A2ACardMetadata(),
         streaming=A2AEventStreams(
@@ -132,7 +142,8 @@ def compose_a2a(
     hosted_invocation: Any = None,
     clock: StreamClock | None = None,
     decide: Callable[[dict[str, Any]], Any] | None = None,
-    feature_schema: Mapping[str, Any] | None = None,
+    feature_schema: Callable[[str], Mapping[str, Any]] | None = None,
+    decision_principal: Callable[[], str] | None = None,
 ) -> A2AComposition:
     """Compose one projection over the existing WorkItem/dispatch authorities."""
     service = build_a2a_service(
@@ -144,6 +155,7 @@ def compose_a2a(
         clock=clock,
         decide=decide,
         feature_schema=feature_schema,
+        decision_principal=decision_principal,
     )
     return A2AComposition(
         application=create_a2a_application(

@@ -34,9 +34,25 @@ class StepPipeline:
     def __init__(self) -> None:
         self.calls: list[tuple[str, dict[str, Any], str]] = []
         self.answers: dict[str, Any] = {}
+        # ``journal_effects`` makes the pipeline answer a repeated idempotency
+        # key from its first outcome, as the effect journal does: ``effects``
+        # then holds each governed call once.
+        self.journal_effects = False
+        self.effects: list[tuple[str, dict[str, Any], str]] = []
+        self.journal: dict[str, Any] = {}
 
     async def __call__(self, op: str, params: Any, caller: Any, key: str) -> Any:
-        self.calls.append((params["tool"], dict(params.get("arguments") or {}), key))
+        call = (params["tool"], dict(params.get("arguments") or {}), key)
+        self.calls.append(call)
+        if key in self.journal:
+            return self.journal[key]
+        outcome = self._answer(params)
+        if self.journal_effects:
+            self.effects.append(call)
+            self.journal[key] = outcome
+        return outcome
+
+    def _answer(self, params: Any) -> Any:
         answer = self.answers.get(params["tool"])
         if callable(answer):
             return answer(params)
@@ -57,6 +73,13 @@ class Loopback:
         self.engine_calls: list[tuple[str, dict[str, Any], str]] = []
         self.deploy_root = Path()
         self.config: dict[str, Any] = {}
+        self.captured: dict[str, Any] = {}
+        self.bindings: dict[str, Any] = {}
+
+    @property
+    def invocation(self) -> Any:
+        """The served invocation, for a test that also enters over MCP."""
+        return self.captured["invocation"]
 
     def serve(self, handlers: dict[str, Handler], *scopes: str) -> None:
         """Route these engine methods to ``handlers`` as a verified operator."""
@@ -145,6 +168,10 @@ class Loopback:
         return _value(response)
 
 
+def _module_bindings(module: Any) -> dict[str, Any]:
+    return getattr(module, "loopback_bindings", dict)()
+
+
 @pytest.fixture
 def loopback(
     request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
@@ -157,10 +184,14 @@ def loopback(
     (deploy_root / "compose").mkdir(parents=True)
     (deploy_root / "compose" / "compose.yaml").write_text("services: {}\n")
     compose = harness.compose_served_invocation
+    # A test module may bind more services (a plan engine, a model) by defining
+    # ``loopback_bindings() -> dict``; the served stack composes them in.
+    extra = _module_bindings(request.module)
 
     def composing(**kwargs: Any) -> Any:
         kwargs["bindings"] = {
             **kwargs["bindings"],
+            **extra,
             "plan_step_invoke": steps,
             "deploy_config": config,
             "deploy_root": deploy_root,
@@ -173,10 +204,12 @@ def loopback(
         return compose(**kwargs)
 
     monkeypatch.setattr(harness, "compose_served_invocation", composing)
-    confirmable_invocation(monkeypatch)
+    captured = confirmable_invocation(monkeypatch)
     # The served app composes its invocation on first use, after the patches.
     app, client = request.getfixturevalue("served")
     made = Loopback(app, client, steps, monkeypatch)
     made.deploy_root = deploy_root
     made.config = config
+    made.captured = captured
+    made.bindings = extra
     return made

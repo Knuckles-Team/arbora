@@ -3,6 +3,8 @@
 # listed here is served and refuses UNAVAILABLE. Remove an entry when the pin
 # moves; a test fails while a listed scope is already in the pinned catalog.
 pending_engine_scopes:
+  - access:ownership
+  - access:share
   - actions:read
   - knowledge:approve
   - knowledge:curate

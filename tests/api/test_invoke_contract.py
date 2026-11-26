@@ -242,12 +242,38 @@ def run(
 def test_equivalent_surface_authority_and_result(surface):
     services, runtime, audit, _, _ = setup_services()
     result = run(services, surface=surface, idempotency_key="key:one")
-    assert result == OpResult(value={"value": 1})
+    assert result == OpResult(
+        value={"value": 1}, details={"audit_ref": audit.events[1]["audit_ref"]}
+    )
     assert len(runtime.calls) == 1
     assert runtime.calls[0][2].idempotency_key == "key:one"
     assert audit.events[0]["result_status"] == "PENDING"
     assert audit.events[1]["audit_ref"].startswith("receipt:")
     assert "value" not in audit.events[0]
+
+
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.18")
+def test_a_recorded_success_carries_the_audit_ref_of_its_own_call():
+    services, runtime, audit, journal, _ = setup_services()
+    first = run(services, idempotency_key="key:ref")
+    assert first.code == "OK"
+    # The ref is the one the audit entry of this call holds.
+    assert first.details["audit_ref"] == audit.events[-1]["audit_ref"]
+    assert first.details["audit_ref"].startswith("receipt:")
+    # The journal keeps the bare outcome, so a replay is stamped with its own ref.
+    ((_, stored),) = journal.rows.values()
+    assert "audit_ref" not in stored.outcome.details
+    again = run(services, idempotency_key="key:ref")
+    assert again.code == "OK" and len(runtime.calls) == 1
+    assert again.details["audit_ref"] == audit.events[-1]["audit_ref"]
+
+
+@pytest.mark.spec("ARBORA-RELEASE-R003.4.18")
+def test_a_refusal_never_gains_an_audit_ref_from_the_chokepoint():
+    services, _, audit, _, _ = setup_services()
+    refused = run(services, params={"extra": 1}, idempotency_key="key:bad")
+    assert refused.code == "INVALID_ARGUMENT"
+    assert "audit_ref" not in refused.details and audit.events == []
 
 
 @pytest.mark.parametrize(

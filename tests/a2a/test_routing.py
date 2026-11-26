@@ -30,6 +30,34 @@ class Engine:
         self.known = known
         self.sent: list[dict[str, Any]] = []
 
+    def outcome(self, wanted: str) -> tuple[dict[str, Any], dict[str, Any] | None]:
+        """The sealed outcome and typed answer of one routed request."""
+        if wanted not in self.known:
+            # ``StatisticalOutcome::Abstained`` with the family's registered code.
+            return {
+                "outcome": "abstained",
+                "reasons": [
+                    {
+                        "reason": "family",
+                        "family": "a2a_route",
+                        "code": "A2A_GRAPH_UNKNOWN",
+                        "detail": "no visible published agent graph",
+                    }
+                ],
+            }, None
+        # ``StatisticalOutcome::Advisory`` as the engine seals it.
+        advisory = {
+            "outcome": "advisory",
+            "calibrated": False,
+            "ranked_total": 1,
+            "scores": [{"option_id": wanted}],
+        }
+        typed = {
+            "type": "a2a_route",
+            "value": {"graph_id": wanted, **self.known[wanted]},
+        }
+        return advisory, typed if self.known[wanted] else None
+
     async def __call__(self, body: dict[str, Any]) -> Any:
         self.sent.append(body)
         wanted = next(
@@ -37,14 +65,7 @@ class Engine:
             for p in body["params"]
             if p["name"] == "a2a.requested_graph_id"
         )
-        outcome: dict[str, Any]
-        if wanted in self.known:
-            outcome = {
-                "scores": [{"option_id": wanted}],
-                "capability": self.known[wanted],
-            }
-        else:
-            outcome = {"abstained": "A2A_GRAPH_UNKNOWN"}
+        outcome, answer = self.outcome(wanted)
         return {
             "records": [
                 {
@@ -55,6 +76,7 @@ class Engine:
                     "question": body["question"],
                     "inputs": {"params": body["params"]},
                     "outcome": outcome,
+                    **({"answer": answer} if answer else {}),
                 }
             ]
         }
@@ -64,7 +86,7 @@ def _router(engine: Engine) -> OrchestratorA2ARouter:
     return OrchestratorA2ARouter(
         lambda: None,
         decide=engine,
-        feature_schema={},
+        feature_schema=lambda tenant: {},
         tenant=lambda: "tenant:one",
         principal=lambda: "person:one",
     )
@@ -80,6 +102,11 @@ def test_task_routes_through_a2a_route_decision() -> None:
     assert routed.agent_name == "graph:known"
     assert routed.decision_record_ref == "record:route:graph:known"
     assert [body["question"]["kind"] for body in engine.sent] == ["a2a_route"]
+    # The family reads published agent cards, never caller-declared options.
+    assert engine.sent[0]["candidates"] == {
+        "source": "agent_library",
+        "scope": {"kinds": ["a2a_agent_card"], "classification_under": None},
+    }
     with pytest.raises(A2AAssemblyUnavailable) as unknown:
         asyncio.run(
             router.route(_message(agent_name="graph:other"), context_budget_tokens=None)
@@ -118,3 +145,24 @@ def test_route_decision_carries_model_profile_and_task_class() -> None:
         _router(bare).route(_message(agent_name="g"), context_budget_tokens=4_096)
     )
     assert (routed.model_profile_ref, routed.task_class) == (None, None)
+
+
+@pytest.mark.spec("ARBORA-A2A-R023")
+def test_an_abstention_is_read_from_the_family_reason_code_only() -> None:
+    """A code in free text is not an abstention; only ``reasons[].code`` is."""
+
+    class Odd(Engine):
+        async def __call__(self, body: dict[str, Any]) -> Any:
+            batch = await super().__call__(body)
+            batch["records"][0]["outcome"] = {
+                "outcome": "abstained",
+                "reasons": [{"reason": "insufficient_confidence"}],
+            }
+            batch["records"][0]["inputs"]["note"] = "A2A_GRAPH_UNKNOWN"
+            return batch
+
+    with pytest.raises(A2AAssemblyUnavailable) as refused:
+        asyncio.run(
+            _router(Odd({})).route(_message(agent_name="g"), context_budget_tokens=None)
+        )
+    assert refused.value.reason == "A2A_ROUTE_UNAVAILABLE"

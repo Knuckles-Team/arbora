@@ -197,3 +197,44 @@ class LocalIssuer:
         ):
             raise PermissionError("credential authority changed during issuance")
         return token
+
+    async def exchange(
+        self, claims: Mapping[str, Any], audience: str
+    ) -> tuple[str, int, str]:
+        """Exchange a verified caller's claims for a connector token (RFC 8693, in process).
+
+        The subject token is the verified caller token; the audience is the connector
+        client id. The new lifetime is the smaller of 300 s and the remaining caller
+        lifetime, and an expired caller refuses. Answers ``(token, exp, exchange_id)``.
+        """
+        import asyncio
+
+        from arbora.access.delegation import (
+            EXCHANGE_MAX_SECONDS,
+            new_exchange_id,
+            remaining_seconds,
+        )
+
+        now = self._clock()
+        remaining = remaining_seconds(claims, now)
+        if remaining <= 0:
+            raise PermissionError("the caller token is expired")
+        issued = int(now)
+        expires = issued + min(EXCHANGE_MAX_SECONDS, remaining)
+        exchange_id = new_exchange_id()
+        exchanged = {
+            "iss": self._settings.issuer,
+            "sub": claims["sub"],
+            "aud": _text(audience),
+            "tenant_id": claims["tenant_id"],
+            "principal_kind": claims.get("principal_kind", "user"),
+            "scope": claims.get("scope", ""),
+            "roles": list(claims.get("roles", ())),
+            "iat": issued,
+            "nbf": issued,
+            "exp": expires,
+            "jti": exchange_id,
+            "exchange_id": exchange_id,
+        }
+        token = await asyncio.to_thread(self._sign, exchanged)
+        return token, expires, exchange_id

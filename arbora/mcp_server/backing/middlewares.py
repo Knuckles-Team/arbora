@@ -178,6 +178,57 @@ class ActorContextMiddleware(Middleware):
         claims = getattr(token, "claims", None) if token is not None else None
         return dict(claims) if claims else None
 
+    @staticmethod
+    def _raw_token() -> str | None:
+        try:
+            from fastmcp.server.dependencies import get_access_token
+
+            token = getattr(get_access_token(), "token", None)
+        except Exception:  # noqa: BLE001 - no validated credential in scope
+            return None
+        return token if isinstance(token, str) and token else None
+
+    async def _precheck_bearer(self) -> None:
+        """Run ``verify_bearer`` first, as REST does (ARBORA-IDENTITY-R017.5).
+
+        Answers ``None`` work only when no local issuer is configured; a refused
+        or unverifiable bearer admits nothing.
+        """
+        token = self._raw_token()
+        if token is None:
+            return
+        from arbora.security.bearer import BearerRefused, precheck_bearer
+
+        try:
+            await precheck_bearer(token)
+        except BearerRefused:
+            raise PermissionError("Verified local bearer required") from None
+
+    async def on_initialize(self, context: MiddlewareContext, call_next):
+        """Record one ``ClientSession`` per verified session (ARBORA-IDENTITY-R026.2)."""
+        result = await call_next(context)
+        if not self.require_verified_session:
+            return result
+        claims = self._claims(context)
+        if not claims:
+            return result
+        from arbora.identity.client_session import record_session_open
+        from arbora.mcp_server import runtime
+        from arbora.security.request_identity import actor_from_claims
+
+        await self._precheck_bearer()
+        session_id = str(
+            getattr(getattr(context, "fastmcp_context", None), "session_id", "") or ""
+        )
+        actor = actor_from_claims(claims)
+        await record_session_open(
+            actor,
+            session_id=session_id,
+            engine=runtime._get_engine(),
+            client=str(claims.get("azp") or claims.get("client_id") or ""),
+        )
+        return result
+
     async def on_call_tool(self, context: MiddlewareContext, call_next):
         from arbora.security.actor_context import reset_actor, set_actor
         from arbora.security.request_identity import (
@@ -210,6 +261,8 @@ class ActorContextMiddleware(Middleware):
                 "credential was presented for this tool call and no local "
                 "process authority is bound"
             )
+        if self.require_verified_session:
+            await self._precheck_bearer()
         actor = actor_from_claims(claims)
         try:
             session = mint_graph_session(actor)

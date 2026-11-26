@@ -155,19 +155,20 @@ def test_decider_port_returns_typed_answer() -> None:
                     "tenant_id": body["tenant_id"],
                     "question": body["question"],
                     "inputs": {"params": body["params"]},
-                    "expires_at_ms": 5,
-                    "outcome": {
-                        "family_answer": {
-                            "type": "harness_config",
-                            "value": {"answer": answer_json()},
-                        }
+                    # ``StatisticalDecisionRecord.answer``: ``FamilyAnswer::HarnessConfig``
+                    # whose value is the ``HarnessConfigEvaluationEvidence``.
+                    "answer": {
+                        "type": "harness_config",
+                        "value": {"answer": answer_json()},
                     },
                 }
             ]
         }
 
     decider = EngineHarnessConfigDecider(
-        decide, feature_schema={"features": []}, principal=lambda: "person:one"
+        decide,
+        feature_schema=lambda tenant: {"features": []},
+        principal=lambda: "person:one",
     )
     got = asyncio.run(
         decider.decide(
@@ -179,7 +180,7 @@ def test_decider_port_returns_typed_answer() -> None:
         )
     )
     assert got.decision_record_ref == "record:harness:9" and got.digest == DIGEST
-    assert got.expires_at_ms == 5 and got.answer.tool_subset.value == TOOLS
+    assert got.expires_at_ms is None and got.answer.tool_subset.value == TOOLS
     [body] = sent
     assert body["question"]["kind"] == "harness_config"
     assert {p["name"] for p in body["params"]} == {
@@ -190,7 +191,10 @@ def test_decider_port_returns_typed_answer() -> None:
     }
     assert (
         EngineHarnessConfigDecider(
-            decide, feature_schema={}, principal=lambda: "x", timeout_s=900
+            decide,
+            feature_schema=lambda tenant: {},
+            principal=lambda: "x",
+            timeout_s=900,
         )._timeout_s
         == 60
     )

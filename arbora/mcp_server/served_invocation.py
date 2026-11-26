@@ -851,6 +851,11 @@ def compose_served_invocation(
         client = await pool.connected_client(connect_context(tenant), graph)
         return decode(await send_by_id(client, method, params, graph))
 
+    # ARBORA-IDENTITY-R019.3: the resource gate asks the engine for each decision, behind
+    # the capability guard (PIN-LAG); a pinned release without the method refuses.
+    from arbora.access.host_ports import resource_gate_for_host
+
+    changes.setdefault("resource_gate", resource_gate_for_host(gate_send))
     services = build_invoke_services(
         gate_send=gate_send,
         registry=registry,
@@ -874,13 +879,14 @@ def compose_served_invocation(
         # The engine sees the host's service identity: the record's receipt names it.
         return str(session().actor.actor_id)
 
+    def tenant_pin(tenant: str) -> Any:
+        return published_pin((bindings or {}).get("task_plan_schema_pins"), tenant)
+
     approval_chain = compose_approval_chain(
         ask_decide=build_ask_decide(
             gate_send,
             graph=graph,
-            feature_schema=lambda tenant: published_pin(
-                (bindings or {}).get("task_plan_schema_pins"), tenant
-            ),
+            feature_schema=tenant_pin,
             principal=confirm_principal,
         ),
         leases=_LeaseClient(PoolLeases(service_client)),
@@ -910,6 +916,8 @@ def compose_served_invocation(
         services=services,
         approval_chain=approval_chain,
         engine_send=gate_send,
+        decision_feature_schema=tenant_pin,
+        decision_principal=confirm_principal,
         task_plan_config=task_plan_config,
         process_startup=process_startup,
         background_services=_background_services(services, runtime, graph, session),
