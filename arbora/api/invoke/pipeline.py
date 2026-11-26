@@ -113,6 +113,9 @@ class FleetCallDecision:
     executor_scopes: frozenset[str]
     subject_id: str | None
     credential_mode: str
+    #: The tool's resource declaration (``SCION-CONNECTOR-CONTROL-R911``), when it has one.
+    resource_protocol: str | None = None
+    resource_param: str | None = None
 
 
 FleetEffect = Callable[
@@ -311,6 +314,9 @@ class InvokeServices:
     gate_reader: GateReader = no_engine_answer
     #: Operator hooks (ARBORA-OPS-R009.6); empty unless the host binds some.
     hooks: HookChain = field(default_factory=HookChain)
+    #: The resource-grant gate for tools that declare a resource
+    #: (ARBORA-IDENTITY-R019.3); ``None`` while no gate is composed.
+    resource_gate: Any = None
 
     def __post_init__(self) -> None:
         self._cover_plan_gated_operations()
@@ -617,6 +623,10 @@ async def authorize(
     refused = await _base_authority(op, caller, services)
     if refused is not None:
         return refused
+    if services.resource_gate is not None and decision is not None:
+        refused = await services.resource_gate(op, params, caller, decision)
+        if refused is not None:
+            return refused
     return await prepare_executor(
         op,
         params,
