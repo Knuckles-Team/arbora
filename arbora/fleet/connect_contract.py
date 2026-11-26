@@ -18,7 +18,11 @@ from dataclasses import dataclass, field
 from typing import Any
 
 __all__ = [
+    "CONTRACT_REJECTION_CODES",
+    "ContractRefused",
     "ConnectContract",
+    "check_resource_sizes",
+    "contract_rejection_code",
     "build_connect_contract",
     "contract_delta",
     "contract_from_pack",
@@ -133,3 +137,45 @@ def contract_from_pack(
     return build_connect_contract(
         connector, manifest, ontologies, seed, observed_at_ms=observed_at_ms
     )
+
+
+#: The engine codes that mark a connector ``contract_rejected``.
+CONTRACT_REJECTION_CODES = (
+    "ONTOLOGY_INVALID",
+    "SHACL_VIOLATION",
+    "SEED_SHACL_VIOLATION",
+)
+
+
+class ContractRefused(ValueError):
+    """A connector contract refusal with its stable code (ARBORA-FLEET-R036.4)."""
+
+    def __init__(self, code: str, detail: str = "") -> None:
+        super().__init__(f"{code}: {detail}" if detail else code)
+        self.code = code
+
+
+def check_resource_sizes(pack: Any, max_bytes: int | None = None) -> None:
+    """Refuse a contract resource over the configured size before any engine call."""
+    if max_bytes is None:
+        from arbora.core.settings import read_field
+
+        max_bytes = int(read_field("contract_resource_max_bytes"))
+    for entry in pack.archive.entries:
+        uri = str(getattr(entry, "uri", "") or "")
+        if uri == _MANIFEST_URI or uri == _SEED_URI or uri.startswith("ontology:"):
+            body = getattr(entry, "body", b"")
+            # A captured pack holds each body as a ``PackSection`` locator.
+            length = getattr(body, "length", None)
+            size = length if isinstance(length, int) else len(_body_bytes(body))
+            if size > max_bytes:
+                raise ContractRefused("CONTRACT_RESOURCE_TOO_LARGE", uri)
+
+
+def contract_rejection_code(error: BaseException) -> str | None:
+    """The engine contract code named in one import refusal, if any."""
+    text = str(error)
+    for code in ("SEED_SHACL_VIOLATION", "SHACL_VIOLATION", "ONTOLOGY_INVALID"):
+        if code in text:
+            return code
+    return None
