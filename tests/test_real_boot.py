@@ -606,8 +606,8 @@ def _do_booted_stack(
                 check=False,
             )
         except subprocess.TimeoutExpired as exc:
-            tail = exc.stderr or b""
-            tail = tail.decode(errors="replace") if isinstance(tail, bytes) else tail
+            raw: str | bytes = exc.stderr or ""
+            tail = raw.decode(errors="replace") if isinstance(raw, bytes) else raw
             pytest.fail(
                 f"semantic provisioning did not finish in {PROVISION_DEADLINE_S:.0f} s: "
                 "the engine's pack projection and schema attach are CPU-bound "
