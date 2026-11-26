@@ -21,7 +21,7 @@ from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
-from arbora.api.invoke.screening import redact_value
+from arbora.api.invoke.screening import redact_result
 
 __all__ = [
     "A2AEventFenceLost",
@@ -210,7 +210,7 @@ class A2AEventLog:
         sequence = int(metadata.get(EVENT_SEQ_KEY, 0)) + 1
         fence = int(claim["fencing_token"]) if claim is not None else _EXTERNAL_FENCE
         record = {
-            **redact_value(dict(draft)),
+            **redact_result(dict(draft))[0],
             "event_seq": sequence,
             "timestamp_ms": self.clock.now_ms(),
             "fence": fence,
