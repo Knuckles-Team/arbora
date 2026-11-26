@@ -31,6 +31,9 @@ class HostedInvocation:
     #: Host-owned schedulers (``async run(should_stop)``), started with the
     #: process on :class:`~arbora.mcp_server.background.BackgroundHost`.
     background_services: tuple[Any, ...] = ()
+    #: ``(method, params, tenant)`` to the decoded engine answer as the host service
+    #: identity; the host's run ports stage blobs through it.
+    engine_send: Any = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.services, InvokeServices) or not isinstance(
