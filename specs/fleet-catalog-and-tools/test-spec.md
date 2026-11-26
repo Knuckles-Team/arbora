@@ -269,11 +269,11 @@ Hot-path proof for `ARBORA-FLEET-R037`: `tests/fleet/test_job_loads_served.py::t
 | Remote tracing child | `ARBORA-FLEET-R015.1` | `tests/fleet/test_multiplexer_dynamic_gateway.py::test_load_catalog_admits_remote_langfuse_entry_without_projection`: the catalog keeps a remote tracing-service child unchanged, with or without keys. |
 
 - `ARBORA-FLEET-R041`: See each child.
-- `ARBORA-FLEET-R041.1`: `tests/fleet/test_auto_onboard.py::test_trigger_and_counts_round_trip` stores and reads a record.
-- `ARBORA-FLEET-R041.2`: `tests/fleet/test_auto_onboard.py::test_registration_and_release_start_one_pass_each` registers a fixture, then bumps its manifest digest.
+- `ARBORA-FLEET-R041.1`: `tests/fleet/test_auto_onboard.py::test_trigger_and_counts_round_trip` (planned) stores and reads a record.
+- `ARBORA-FLEET-R041.2`: `tests/fleet/test_auto_onboard.py::test_registration_and_release_start_one_pass_each` (planned) registers a fixture, then bumps its manifest digest.
 - `ARBORA-FLEET-R041.3`: `tests/fleet/test_auto_onboard.py::test_every_trigger_reaches_the_one_onboard_function` (planned) patches `onboard` and drives each trigger.
-- `ARBORA-FLEET-R041.4`: `tests/fleet/test_auto_onboard.py::test_orphan_refusal_marks_contract_rejected_and_admits_no_tools`.
-- `ARBORA-FLEET-R041.5`: `tests/fleet/test_auto_onboard.py::test_status_reports_counts_digests_receipt_and_reason`.
+- `ARBORA-FLEET-R041.4`: `tests/fleet/test_auto_onboard.py::test_orphan_refusal_marks_contract_rejected_and_admits_no_tools` (planned).
+- `ARBORA-FLEET-R041.5`: `tests/fleet/test_auto_onboard.py::test_status_reports_counts_digests_receipt_and_reason` (planned).
 - `ARBORA-FLEET-R041.6`: `tests/fleet/test_auto_onboard_served.py::test_register_then_release_serves_all_surfaces_without_manual_step`.
 - `ARBORA-FLEET-R041.7`: `tests/fleet/test_handshake_onboard.py::test_completed_handshake_starts_one_pass_and_imports_full_pack` connects a fixture connector and calls nothing else.
 - `ARBORA-FLEET-R041.8`: `tests/fleet/test_handshake_onboard.py::test_reconnect_recaptures_only_on_version_or_digest_change` reconnects unchanged, then with a new digest.
@@ -385,8 +385,8 @@ ARBORA-FLEET-R027.7.2 remains planned: qualify the complete original onboarding 
 
 | Test ID | Requirement | Expected observation |
 |---|---|---|
-| T-ARBORA-FLEET-R041.19 | ARBORA-FLEET-R041.19 | Test: `tests/fleet/test_auto_onboard.py::test_commit_then_projection_failure_names_code_and_graph_and_reprojects_once`. |
-| T-ARBORA-FLEET-R041.20 | ARBORA-FLEET-R041.20 | Test: `tests/fleet/test_auto_onboard.py::test_pass_longer_than_authority_lifetime_renews_between_imports`. |
+| T-ARBORA-FLEET-R041.19 | ARBORA-FLEET-R041.19 | Test: `tests/fleet/test_auto_onboard.py::test_commit_then_projection_failure_names_code_and_graph_and_reprojects_once` (planned). |
+| T-ARBORA-FLEET-R041.20 | ARBORA-FLEET-R041.20 | Test: `tests/fleet/test_auto_onboard.py::test_pass_longer_than_authority_lifetime_renews_between_imports` (planned). |
 | T-ARBORA-FLEET-R041.21 | ARBORA-FLEET-R041.21 | Test: `tests/fleet/test_catalog_attest.py::test_attest_key_changes_when_the_published_component_moves`. |
 
 ## Entries added for rows without a prior entry
