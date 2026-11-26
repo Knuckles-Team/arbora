@@ -48,6 +48,10 @@ def main() -> None:
         from arbora.identity.client_contract import reconcile_command
 
         raise SystemExit(reconcile_command(sys.argv[3:]))
+    if sys.argv[1:3] == ["deploy", "run"]:
+        from arbora.deployment.run import main as deploy_run_main
+
+        raise SystemExit(deploy_run_main(sys.argv[3:]))
     if sys.argv[1:3] == ["deploy", "source"]:
         from arbora.deployment.deployed_source import main as deployed_source_main
 

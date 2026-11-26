@@ -133,6 +133,8 @@ class DeployConfig:
     registry: str
     host: str
     fleet_checks: tuple[tuple[str, tuple[str, ...]], ...]
+    topology: str = ""
+    contract: str = ""
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> DeployConfig:
@@ -150,7 +152,7 @@ class DeployConfig:
                 "registry",
                 "public_url",
             },
-            {"host", "fleet_checks"},
+            {"host", "fleet_checks", "topology", "contract"},
         )
         store = _closed(doc["secret_store"], "secret_store", {"mount", "path"})
         ident = _closed(
@@ -221,6 +223,8 @@ class DeployConfig:
                 or urllib.parse.urlsplit(_text(doc["public_url"], "public_url")).netloc
             ),
             fleet_checks=tuple(checks),
+            topology=str(doc.get("topology", "")),
+            contract=str(doc.get("contract", "")),
         )
 
     @classmethod
@@ -249,6 +253,8 @@ class DeployConfig:
                 "ca_bundle": self.ca_bundle,
             },
             "tenant": self.tenant,
+            "topology": self.topology,
+            "contract": self.contract,
             "principals": [
                 {"name": p.name, "kind": p.kind, "ref": p.ref, "roles": list(p.roles)}
                 for p in self.principals
