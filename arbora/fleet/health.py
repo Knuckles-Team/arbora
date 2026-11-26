@@ -20,10 +20,13 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass
-from typing import Any, Literal, TypedDict
+from dataclasses import dataclass, replace
+from typing import TYPE_CHECKING, Any, Literal, NotRequired, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field
+
+if TYPE_CHECKING:
+    from arbora.fleet.catalog_reader import GenerationStatus
 
 #: ``not_served``: this release has no reader for the authority (AuthorityNotServed).
 #: It is "not applicable", never a failure, and never gates readiness.
@@ -65,6 +68,7 @@ class FleetHealthPayload(TypedDict):
     domains: dict[str, dict[str, float]] | None
     dispatch_workers: list[dict[str, Any]] | None
     evidence: dict[str, Any]
+    catalog_generation: NotRequired[dict[str, Any]]
 
 
 _MAX_DIAGNOSTICS = 4
@@ -168,11 +172,13 @@ class FleetHealthSnapshot:
     goals: dict[str, Any] | None
     domains: dict[str, dict[str, float]] | None
     dispatch_workers: list[dict[str, Any]] | None
+    #: This replica's active catalog generation (ARBORA-FLEET-R051.2).
+    catalog_generation: dict[str, Any] | None = None
 
     def as_dict(self) -> FleetHealthPayload:
         """Serialize the one transport-neutral response shape."""
 
-        return {
+        payload: FleetHealthPayload = {
             "generated_at": self.evidence.generated_at,
             "sessions": self.sessions,
             "goals": self.goals,
@@ -180,6 +186,9 @@ class FleetHealthSnapshot:
             "dispatch_workers": self.dispatch_workers,
             "evidence": self.evidence.model_dump(mode="json"),
         }
+        if self.catalog_generation is not None:
+            payload["catalog_generation"] = self.catalog_generation
+        return payload
 
 
 def _dependency(
@@ -524,6 +533,18 @@ def mark_dependency_failure(
         previous.last_success_at if previous is not None else None,
         (*((previous.diagnostics) if previous is not None else ()), diagnostic),
     )
+    return _with_dependency(snapshot, dependency_name, dependency)
+
+
+def _with_dependency(
+    snapshot: FleetHealthSnapshot,
+    dependency_name: str,
+    dependency: FleetDependencyEvidence,
+    **fields: Any,
+) -> FleetHealthSnapshot:
+    """Replace one dependency and recompute the rollup the snapshot reports."""
+
+    generated_at = time.time()
     dependencies = dict(snapshot.evidence.dependencies)
     dependencies[dependency_name] = dependency
     status = _rollup(dependencies.values())
@@ -556,12 +577,51 @@ def mark_dependency_failure(
             ),
         }
     )
-    return FleetHealthSnapshot(
-        evidence=evidence,
-        sessions=snapshot.sessions,
-        goals=snapshot.goals,
-        domains=snapshot.domains,
-        dispatch_workers=snapshot.dispatch_workers,
+    return replace(snapshot, evidence=evidence, **fields)
+
+
+def generation_payload(status: GenerationStatus) -> dict[str, Any]:
+    """The wire form of one replica's generation and convergence state."""
+
+    active = status.active
+    return {
+        "replica": status.replica,
+        "state": status.state,
+        "reason": status.reason,
+        "generation": None
+        if active is None
+        else {
+            "tenant": active.tenant,
+            "generation": active.generation,
+            "digest": active.digest,
+        },
+        "engine_generation": status.engine_generation,
+    }
+
+
+def with_catalog_generation(
+    snapshot: FleetHealthSnapshot, status: GenerationStatus
+) -> FleetHealthSnapshot:
+    """Publish a replica's active generation in the health snapshot.
+
+    A replica behind the engine past the convergence timeout reports its
+    catalog dependency ``degraded`` with reason ``catalog_generation_behind``;
+    that rolls up into the snapshot, so readiness fails closed.
+    """
+
+    now = time.time()
+    diagnostics = (status.reason,) if status.reason else ()
+    dependency = _dependency(
+        "degraded" if status.state == "degraded" else "healthy",
+        now,
+        None if status.state == "degraded" else now,
+        diagnostics,
+    )
+    return _with_dependency(
+        snapshot,
+        "catalog_generation",
+        dependency,
+        catalog_generation=generation_payload(status),
     )
 
 
@@ -577,7 +637,9 @@ __all__ = [
     "domain_sql",
     "_sql_in",
     "collect_fleet_health",
+    "generation_payload",
     "health_payload",
+    "with_catalog_generation",
     "mark_dependency_failure",
     "unavailable_fleet_health",
 ]
