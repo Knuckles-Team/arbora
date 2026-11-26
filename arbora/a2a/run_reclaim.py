@@ -3,7 +3,9 @@
 A host that dies mid-run leaves a leased WorkItem whose lease then lapses. This
 consumer finds such an item, claims it by name and resumes the run from
 ``EngineHostCheckpoint`` under the run's ``agent_run`` delegation, the same way
-the tool-task consumer proves ``authority_ref`` before it acts. It holds no state
+the tool-task consumer proves ``authority_ref`` before it acts: the claim's
+``delegation_id`` must name a delegation whose principal is the run's owner, else
+the run ends ``failed`` and no step runs. It holds no state
 that correctness depends on: the item, its lease fence, the delegation and the
 event log live in the engine.
 
@@ -27,7 +29,12 @@ from arbora import work_items
 from arbora.security.session import use_session
 
 from .event_log import FAILURE_KEY
-from .run_delegation import DELEGATION_INVALID, DELEGATION_KEY, delegation_refused
+from .run_delegation import (
+    DELEGATION_INVALID,
+    DELEGATION_KEY,
+    RunDelegationRefused,
+    delegation_refused,
+)
 
 __all__ = [
     "A2ARunReclaimConsumer",
@@ -162,9 +169,18 @@ class A2ARunReclaimConsumer:
                 return ReclaimOutcome(item_id, "failed")
             if claim is None:
                 return ReclaimOutcome(item_id, "skipped")
-            await self._authority.resume_reclaimed(
-                engine, dict(item), claim, session=candidate.session
-            )
+            try:
+                await self._authority.resume_reclaimed(
+                    engine, dict(item), claim, session=candidate.session
+                )
+            except RunDelegationRefused as refused:
+                # The claim names no delegation of the run's owner: no step runs.
+                await self._fail(engine, item)
+                self._emit(
+                    "a2a_run_delegation_refused",
+                    {"work_item_id": item_id, "reason": refused.reason},
+                )
+                return ReclaimOutcome(item_id, "failed")
             return ReclaimOutcome(item_id, "resumed")
 
     async def _fail(self, engine: Any, item: Mapping[str, Any]) -> None:
