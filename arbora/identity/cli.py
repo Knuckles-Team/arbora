@@ -236,7 +236,7 @@ async def reset_admin(env: Environment) -> dict[str, Any]:
     return {
         "principal": BOOTSTRAP_PRINCIPAL,
         "ttl_ms": RESET_TTL_MS,
-        "token_display": "once",
+        "shown": "once on the terminal",
     }
 
 
