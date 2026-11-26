@@ -56,17 +56,17 @@ class LoopbackEngine:
             return msgpack.packb(
                 {"gate_id": "pre-commit", "verdict": {"outcome": "pass"}}
             )
-        for project, mode in self.modes.items():
-            if params["node_id"] == development.project_mode_node_id(project):
-                return msgpack.packb(
-                    {
-                        "type": "ProjectMode",
-                        "project": project,
-                        "mode": mode,
-                        "tenant_id": "tenant:one",
-                    }
-                )
         return None
+
+    def mode_get(self, params: dict[str, Any], _who: str) -> Any:
+        self.calls.append(("ProjectModeGet", params))
+        project = params["request"]["project"]
+        return {
+            "node_id": "n",
+            "project": project,
+            "mode": self.modes.get(project, "reference"),
+            "recorded": project in self.modes,
+        }
 
     def mode_set(self, params: dict[str, Any], _who: str) -> Any:
         self.calls.append(("ProjectModeSet", params))
@@ -115,6 +115,7 @@ def env(stack: Any, served: Any, monkeypatch: pytest.MonkeyPatch) -> Any:  # noq
     route_methods(
         client,
         {
+            "ProjectModeGet": engine.mode_get,
             "GetNodeProperties": engine.node,
             "ProjectModeSet": engine.mode_set,
             "ProposalList": engine.proposal_list,
@@ -287,3 +288,47 @@ def test_artifact_graph_drives_proposals_over_mcp(env: Any) -> None:
         idempotency_key="m1",
     )
     assert decided["result"]["state"] == "rejected"
+
+
+@pytest.mark.spec("ARBORA-OPS-R896.1")
+@pytest.mark.parametrize(
+    "question",
+    ["task_context", "plan_section", "contract", "seam_routing", "plan_to_goal_phase"],
+)
+def test_plan_and_contract_questions_take_a_subject(env: Any, question: str) -> None:
+    app, engine, *_ = env
+    answer = _value(_call(app, "spec.query", {"question": question, "subject": "n1"}))
+    assert answer["digests"] == ["abc"]
+    assert engine.calls[-1][1]["question"] == question
+    assert _call(app, "spec.query", {"question": question}).status_code == 400
+
+
+@pytest.mark.spec("ARBORA-OPS-R896.5")
+def test_accept_forwards_the_two_branches_and_nothing_else(env: Any) -> None:
+    app, engine, *_ = env
+    review = {
+        "proposal_id": "proposal:1",
+        "decision": "accept",
+        "reason": "evidence holds",
+        "pull_request": {"head": "change/x", "base": "main"},
+    }
+    _value(_call(app, "development.proposal.review", review, **{KEY: "r9"}))
+    sent = [p for n, p in engine.calls if n == "ProposalDecide"][0]["request"]
+    assert sent["pull_request"] == {"head": "change/x", "base": "main"}
+    wider = {**review, "pull_request": {"head": "a", "base": "b", "server": "s"}}
+    assert (
+        _call(app, "development.proposal.review", wider, **{KEY: "r10"}).status_code
+        == 400
+    )
+
+
+@pytest.mark.spec("ARBORA-OPS-R896.2")
+@pytest.mark.asyncio
+@pytest.mark.parametrize("method", ["ProjectModeGet", "DashboardAsset", "SpecQuestion"])
+async def test_unreleased_engine_methods_refuse_unavailable(method: str) -> None:
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.api.ops._engine import engine_send
+
+    with pytest.raises(OperationRefused) as refused:
+        await engine_send(None, method, {})
+    assert refused.value.code == "UNAVAILABLE"

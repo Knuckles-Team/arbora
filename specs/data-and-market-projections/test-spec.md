@@ -122,7 +122,7 @@ Each active row has one planned or existing proving test. A test that does not y
 
 | Row | Proving test |
 |---|---|
-| `ARBORA-DATA-MARKET-R001.1` | `tests/finance/test_receipt_store_served.py::test_receipt_survives_restart_and_is_tenant_scoped` |
+| `ARBORA-DATA-MARKET-R001.1` | `tests/finance/test_receipts_served.py::test_receipt_claims_once_and_survives_a_new_port` |
 | `ARBORA-DATA-MARKET-R002` | `tests/finance/test_scheduler_served.py::test_dst_and_replay_run_each_occurrence_once` (planned) |
 | `ARBORA-DATA-MARKET-R004` | `tests/data_apps/test_admission_served.py::test_failed_admission_rolls_back_without_retiring_prior_connector` (planned) |
 | `ARBORA-DATA-MARKET-R005` | `tests/gateway/test_schema_context_served.py::test_each_intent_over_http_and_mcp_and_unsupported_source` (planned) |
@@ -154,7 +154,7 @@ Each active row has one planned or existing proving test. A test that does not y
 | `ARBORA-DATA-MARKET-R009.1` | `tests/api/test_market_performance.py::test_card_is_verbatim_unavailable_never_zero_and_refuses_unverified_binding` (planned) |
 | `ARBORA-DATA-MARKET-R009.2` | `tests/api/test_market_instrument_detail.py::test_rates_and_dividends_tabs_and_unknown_listing` (planned) |
 | `ARBORA-DATA-MARKET-R009.3` | `tests/api/test_market_recommendation.py::test_recommendation_cites_evidence_abstains_and_has_no_order_field` (planned) |
-| `ARBORA-DATA-MARKET-R009.4` | `tests/api/test_finance_receipts_list.py::test_states_dedupe_by_event_id_and_paper_never_live` (planned) |
+| `ARBORA-DATA-MARKET-R009.4` | `tests/api/test_finance_receipts_list.py::test_states_filter_by_tenant_and_paper_stays_paper` |
 | `ARBORA-DATA-MARKET-R009.5` | `tests/api/test_finance_import_served.py::test_preview_reports_mapping_and_row_errors_without_cell_contents` (planned) |
 | `ARBORA-DATA-MARKET-R009.6` | `tests/api/test_finance_import_served.py::test_commit_is_idempotent_by_digest_and_refuses_errors` (planned) |
 | `ARBORA-DATA-MARKET-R009.7` | `tests/api/test_markets_app_served.py::test_markets_journey_over_mcp_and_http` (planned) |

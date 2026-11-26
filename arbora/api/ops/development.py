@@ -11,7 +11,6 @@ answer, never writes under ``specs/`` and never merges.
 
 from __future__ import annotations
 
-import hashlib
 import time
 from collections.abc import Mapping
 from typing import Any, Literal
@@ -40,6 +39,11 @@ Question = Literal[
     "deployment_of_requirement",
     "open_defects_in_release",
     "changesets_between_deployments",
+    "task_context",
+    "plan_section",
+    "contract",
+    "seam_routing",
+    "plan_to_goal_phase",
 ]
 #: The questions that take a subject: phase, goal, changeset, requirement or
 #: release id, or two deployments.
@@ -51,6 +55,11 @@ _SUBJECT = frozenset(
         "deployment_of_requirement",
         "open_defects_in_release",
         "changesets_between_deployments",
+        "task_context",
+        "plan_section",
+        "contract",
+        "seam_routing",
+        "plan_to_goal_phase",
     }
 )
 _PROJECT = Field(min_length=1, max_length=256)
@@ -105,10 +114,18 @@ class ProposalListResult(Params):
     items: list[ProposalEntry]
 
 
+class PullRequestBranches(Params):
+    """The two branches of the pull request an acceptance opens; the engine resolves the rest."""
+
+    head: str = Field(min_length=1, max_length=256)
+    base: str = Field(min_length=1, max_length=256)
+
+
 class ProposalReviewParams(Params):
     proposal_id: str = Field(min_length=1, max_length=256)
     decision: Literal["accept", "reject"]
     reason: str = Field(min_length=1, max_length=500)
+    pull_request: PullRequestBranches | None = None
 
 
 class ProposalReviewResult(Params):
@@ -133,32 +150,17 @@ class SpecQueryResult(Params):
     digests: list[str]
 
 
-def project_mode_node_id(project: str) -> str:
-    """The engine's id of a project's mode record (a digest of the project name)."""
-    return f"projectmode:{hashlib.sha256(project.encode()).hexdigest()[:32]}"
-
-
-def _mode_of(node: Any, tenant: str) -> str:
-    """The stored mode, or ``reference`` for no record, as the engine reads it."""
-    if not isinstance(node, Mapping) or node.get("tenant_id") != tenant:
-        return "reference"
-    mode = node.get("mode")
-    return mode if mode in ("reference", "development", "evolving") else "reference"
-
-
 async def handle_project_mode_get(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """One repository's mode; a repository with no record is ``reference``."""
-    node = await engine_send(
-        context,
-        "GetNodeProperties",
-        {"node_id": project_mode_node_id(params["repository"])},
+    """One repository's mode as the engine reads it; no record answers ``reference``."""
+    record = await engine_send(
+        context, "ProjectModeGet", {"request": {"project": params["repository"]}}
     )
-    return {
-        "repository": params["repository"],
-        "mode": _mode_of(node, str(context.caller.tenant)),
-    }
+    mode = record.get("mode") if isinstance(record, Mapping) else None
+    if mode not in ("reference", "development", "evolving"):
+        raise unavailable("engine result malformed")
+    return {"repository": params["repository"], "mode": mode}
 
 
 async def handle_project_mode_set(
@@ -255,12 +257,14 @@ async def handle_proposal_review(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Record an accept or reject by the verified reviewer; the engine opens the pull request."""
-    request = {
+    request: dict[str, Any] = {
         "id": params["proposal_id"],
         "decision": "approve" if params["decision"] == "accept" else "reject",
         "reviewer": str(context.caller.principal),
         "reason": params["reason"],
     }
+    if params.get("pull_request") is not None:
+        request["pull_request"] = dict(params["pull_request"])
     receipt = await engine_send(
         context, "ProposalDecide", {"request": request}, idempotent=True
     )
@@ -365,6 +369,5 @@ __all__ = [
     "handle_proposal_review",
     "handle_spec_query",
     "operations",
-    "project_mode_node_id",
     "specs",
 ]

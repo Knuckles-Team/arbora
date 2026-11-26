@@ -14,11 +14,16 @@ follow-on work; this module owns only the dedupe record.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from arbora.finance.receipt_store import FinanceReceiptStore
+from arbora.finance.receipts import (
+    FinanceReceiptEngine,
+    claim_receipt,
+    complete_receipt,
+)
 
 __all__ = [
     "FinanceScheduleEntry",
@@ -44,18 +49,28 @@ class FinanceScheduleEntry(BaseModel):
     idempotency_key: str = Field(min_length=1, max_length=256)
 
 
-def record_schedule_run(
-    store: FinanceReceiptStore, entry: FinanceScheduleEntry
+async def record_schedule_run(
+    engine: FinanceReceiptEngine, entry: FinanceScheduleEntry
 ) -> RunOutcome:
     """Record one schedule occurrence; a replayed key never re-executes.
 
     FI-04: calling this twice with the same ``(tenant_id, idempotency_key)``
     -- whether from a daylight-saving transition's duplicated trigger or a
     restart's replay -- returns ``"executed"`` once and ``"duplicate"`` on
-    every subsequent call, with no write beyond the first ``record``.
+    every subsequent call, with no transition beyond the first claim.
     """
 
-    if not store.claim(entry.tenant_id, "schedule_run", entry.idempotency_key):
+    claimed = await claim_receipt(
+        engine,
+        entry.tenant_id,
+        "schedule_run",
+        entry.idempotency_key,
+        event_id=entry.idempotency_key,
+        recorded_at=datetime.now(UTC).isoformat(),
+    )
+    if not claimed:
         return "duplicate"
-    store.complete(entry.tenant_id, "schedule_run", entry.idempotency_key)
+    await complete_receipt(
+        engine, entry.tenant_id, "schedule_run", entry.idempotency_key
+    )
     return "executed"
