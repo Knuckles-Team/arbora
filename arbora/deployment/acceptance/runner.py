@@ -210,7 +210,7 @@ class RefreshingBearer(httpx2.Auth):
     ) -> None:
         self._mint = mint
         self._clock = clock
-        self._token = ""
+        self._token: str | None = None
         self._exp = 0.0
 
     def current(self) -> str:
@@ -218,7 +218,7 @@ class RefreshingBearer(httpx2.Auth):
         if now > self._exp - _REFRESH_MARGIN_SECONDS:
             self._token = self._mint()
             self._exp = token_expiry(self._token, now)
-        return self._token
+        return self._token or ""
 
     def auth_flow(self, request: Any) -> Any:
         request.headers["Authorization"] = f"Bearer {self.current()}"
