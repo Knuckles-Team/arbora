@@ -177,8 +177,98 @@ def _checked_rollup(answer: dict[str, Any], *, grouped: bool) -> dict[str, Any]:
     return answer
 
 
+class UsageIndexQuery(_common.Params):
+    """The trace usage query; the caller picks no latency bound or workload."""
+
+    schema_version: Literal[1] = 1
+    window_start_ms: int = Field(ge=0)
+    window_end_ms: int = Field(ge=0)
+    model: str | None = Field(default=None, min_length=1, max_length=256)
+    project: str | None = Field(default=None, min_length=1, max_length=256)
+    agent: str | None = Field(default=None, min_length=1, max_length=256)
+    group_by: Literal["model", "project", "agent"] | None = None
+    currency: str | None = Field(default=None, pattern=r"^[A-Z]{3}$")
+    page_size: int = Field(default=100, ge=1, le=1000)
+    cursor: str | None = Field(default=None, min_length=1, max_length=512)
+
+    @model_validator(mode="after")
+    def _window_is_ordered(self) -> UsageIndexQuery:
+        if self.window_end_ms < self.window_start_ms:
+            raise ValueError("window_end_ms precedes window_start_ms")
+        return self
+
+
+class UsageIndexProjection(_common.Params):
+    """The engine's aggregate, carried unchanged; arbora does no token or cost arithmetic."""
+
+    value: dict[str, Any]
+
+
+#: The engine method and request shape of the trace usage query (MEDULLA-ORCH-VOCAB-R010.101).
+INDEX_METHOD = "RunTraceUsage"
+INDEX_MODEL = "RunTraceUsageQuery"
+_PROFILE_FIELDS = (
+    "profile_revision",
+    "p95_bound_ms",
+    "unit",
+    "boundary",
+    "workload",
+    "indexed_dataset_size",
+    "data_revision",
+    "index_revision",
+    "cache_policy_revision",
+)
+
+
+def _latency_proven(answer: Mapping[str, Any]) -> bool:
+    """The answer carries a complete profile whose bound is within the configured one."""
+    from arbora.core.settings import runtime_config
+
+    profile = answer.get("latency_profile")
+    if not isinstance(profile, Mapping) or not all(
+        name in profile for name in _PROFILE_FIELDS
+    ):
+        return False
+    bound = profile["p95_bound_ms"]
+    return type(bound) is int and 0 < bound <= int(
+        runtime_config.usage_index_p95_bound_ms
+    )
+
+
+async def handle_usage_index_query(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Forward the trace usage query as the verified caller; no rows without proof."""
+    from arbora.pin_lag.medulla import (
+        PinLagUnavailable,
+        refusal,
+        require_methods,
+        require_models,
+    )
+
+    query = {k: v for k, v in params.items() if v is not None}
+    try:
+        require_models([INDEX_MODEL])
+        require_methods(INDEX_METHOD)
+    except PinLagUnavailable as error:
+        raise refusal(error) from error
+    answer = await engine_send(context, INDEX_METHOD, {"request": query})
+    if not isinstance(answer, Mapping) or not _latency_proven(answer):
+        raise unavailable("the engine gave no valid latency evidence for the query")
+    return {"value": dict(answer)}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
+        _common.build_tenant_read_op(
+            op_id="usage.index.query",
+            summary="Query indexed token and cost usage over a window",
+            examples=("show token usage by model",),
+            params=UsageIndexQuery,
+            result=UsageIndexProjection,
+            handler="arbora.api.ops.usage.handle_usage_index_query",
+            scope="usage:read",
+        ),
         _common.build_tenant_read_op(
             op_id="usage.read",
             summary="Show engine-sourced usage for this tenant or one session",
@@ -194,6 +284,9 @@ def operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 __all__ = [
+    "UsageIndexProjection",
+    "UsageIndexQuery",
+    "handle_usage_index_query",
     "SessionUsageView",
     "TurnTiming",
     "UsageGroup",
