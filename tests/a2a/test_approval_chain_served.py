@@ -46,6 +46,7 @@ from tests.test_real_boot import (  # noqa: F401
 pytestmark = [
     pytest.mark.real_boot,
     pytest.mark.spec("ARBORA-A2A-R005.2.5"),
+    pytest.mark.spec("ARBORA-A2A-R005.5"),
     pytest.mark.timeout(HEAVY_BOOT_TEST_TIMEOUT_S),
 ]
 
