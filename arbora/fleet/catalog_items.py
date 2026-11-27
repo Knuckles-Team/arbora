@@ -237,6 +237,26 @@ class FleetCatalog:
         index = {item.id: item for item in by_id}
         return [index[i] for i in order]
 
+    async def with_capability(
+        self, caller: Any, capability: str
+    ) -> tuple[CatalogItem, ...]:
+        """The caller-visible tool items whose annotations declare ``capability``.
+
+        ARBORA-OPS-R065.3 reads the meeting-summary providers this way; the
+        annotation is the connector's own and is never inferred from a name.
+        """
+        matched: dict[str, CatalogItem] = {}
+        for source in self._sources:
+            for item in await source():
+                declared = (item.annotations or {}).get("capability")
+                if (
+                    item.kind == "tool"
+                    and declared == capability
+                    and await self._authorized(item, caller)
+                ):
+                    matched[item.id] = item
+        return tuple(sorted(matched.values(), key=lambda item: item.id))
+
     async def group_items(
         self, caller: Any, groups: Iterable[str]
     ) -> tuple[CatalogItem, ...]:

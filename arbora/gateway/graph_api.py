@@ -229,6 +229,13 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
 
     register_dashboard_routes(app, prefix=prefix)
 
+    # Streams: committed graph changes (R062.2) and meeting transcripts (R065.2).
+    from arbora.gateway.graph_changes_ws import register_graph_change_routes
+    from arbora.gateway.meetings_ws import register_meeting_routes
+
+    register_graph_change_routes(app)
+    register_meeting_routes(app)
+
     from arbora.acp.http_transport import register_acp_routes
 
     register_acp_routes(app, prefix=prefix)
