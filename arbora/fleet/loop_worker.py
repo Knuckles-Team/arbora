@@ -130,7 +130,7 @@ class LoopWorker:
                     }
                 },
             )
-        except Exception as error:  # noqa: BLE001 - only the live-worker refusal is benign
+        except Exception as error:  # only the live-worker refusal is benign
             if _ALREADY_REGISTERED not in f"{getattr(error, 'code', '')} {error}":
                 raise
 
@@ -224,7 +224,7 @@ class LoopWorker:
                 objective_digest=str(instance.get("objective_digest", "")),
             )
             return await self._body.run(run, heartbeat)
-        except Exception as error:  # noqa: BLE001 - the body's failure is the task's outcome
+        except Exception as error:  # the body's failure is the task's outcome
             logger.exception("loop run %s failed", task_id)
             return LoopBodyResult("Failed", type(error).__name__)
 
@@ -257,7 +257,7 @@ class LoopWorkerRunner:
     async def tick(self) -> WorkerTick:
         try:
             self.last = await self._worker.run_once()
-        except Exception:  # noqa: BLE001 - the next tick retries; the task stays leased
+        except Exception:  # the next tick retries; the task stays leased
             logger.exception("loop worker: tick failed; the task stays queued")
         return self.last
 

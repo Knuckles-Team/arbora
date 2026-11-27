@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import contextvars
+import logging
 from collections.abc import Callable, Iterator, Mapping
 from typing import Any
 
@@ -161,7 +162,10 @@ class FleetScaleActuator:
             return _failed(
                 request, exc.code.lower(), "the fleet refused", retryable=False
             )
-        except Exception as exc:  # noqa: BLE001 - an unreachable connector is retryable
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "an unreachable connector is retryable", exc_info=True
+            )
             return _failed(
                 request, "fleet_call_failed", type(exc).__name__, retryable=True
             )

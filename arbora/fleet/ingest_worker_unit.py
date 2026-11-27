@@ -81,7 +81,10 @@ def with_ingest_worker_health(
     else:
         try:
             health = IngestWorkerHealth("healthy", None, dict(read_metrics()))
-        except Exception:  # noqa: BLE001 - an unreachable read is a state, not a crash
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "an unreachable read is a state, not a crash", exc_info=True
+            )
             health = IngestWorkerHealth("unhealthy", "metrics_unavailable")
     if health.state == "healthy":
         dependency = _dependency("healthy", checked, checked).model_copy(
@@ -161,7 +164,10 @@ async def ingest_worker_health_snapshot(
     if supervisor.running() and supervisor.read_metrics is not None:
         try:
             metrics = await supervisor.read_metrics()
-        except Exception:  # noqa: BLE001 - an unreachable read is a state, not a crash
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "an unreachable read is a state, not a crash", exc_info=True
+            )
             unreadable = True
 
     def read() -> Mapping[str, Any]:

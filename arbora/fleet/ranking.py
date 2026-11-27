@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import logging
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol
@@ -177,7 +178,10 @@ class MedullaRanking:
                 return self._counted(Ranked(floor, "floor", "decision_unavailable"))
         except TimeoutError:
             return self._counted(Ranked(floor, "floor", "timeout"))
-        except Exception:  # noqa: BLE001 - a ranking never fails the call
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "a ranking never fails the call", exc_info=True
+            )
             return self._counted(Ranked(floor, "floor", "decision_unavailable"))
         settled = self._settle(offered, narrowed, floor_of(floor, narrowed))
         return self._counted(self._tail(settled, floor))
@@ -196,7 +200,10 @@ class MedullaRanking:
                 offered = await offered
         except TimeoutError:
             return self._counted(Ranked(floor, "floor", "timeout"))
-        except Exception:  # noqa: BLE001 - a ranking never fails the call
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "a ranking never fails the call", exc_info=True
+            )
             return self._counted(Ranked(floor, "floor", "decision_unavailable"))
         settled = self._settle(offered, narrowed, floor_of(floor, narrowed))
         return self._counted(self._tail(settled, floor))
@@ -300,7 +307,10 @@ def _tenant_pin_ranks(
 ) -> bool:
     try:
         return _pin_names_a_question(dict(feature_schema(tenant)))
-    except Exception:  # noqa: BLE001 - an unreadable pin is an unpublished one
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "an unreadable pin is an unpublished one", exc_info=True
+        )
         return False
 
 

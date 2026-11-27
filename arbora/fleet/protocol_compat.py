@@ -177,7 +177,7 @@ def _install_pydantic_ai_v2_read_bridge() -> None:
 
     try:
         installed_version = importlib.metadata.version("pydantic-ai-slim")
-    except importlib.metadata.PackageNotFoundError:  # noqa: BLE001 — pydantic-ai-slim (the `[mcp]` extra) is genuinely optional; its absence means there is nothing for this bridge to patch, not a failure to surface
+    except importlib.metadata.PackageNotFoundError:  # pydantic-ai-slim (the `[mcp]` extra) is genuinely optional; its absence means there is nothing for this bridge to patch, not a failure to surface
         return
 
     if installed_version != _PATCHED_PYDANTIC_AI_VERSION:
@@ -266,11 +266,11 @@ def _extra_marker_environment(extra: str) -> dict[str, str] | None:
 
 def _parse_requirement(raw: str) -> Any | None:
     """Parse one metadata requirement, treating malformed metadata as absent."""
-    from packaging.requirements import Requirement
+    from packaging.requirements import InvalidRequirement, Requirement
 
     try:
         return Requirement(raw)
-    except Exception:  # noqa: BLE001 - malformed installed metadata is skipped
+    except InvalidRequirement:  # malformed installed metadata is skipped
         return None
 
 

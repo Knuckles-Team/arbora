@@ -119,7 +119,7 @@ class BrokerPkceBridge:
                 browser_session_id=session_ref,
                 requested_scopes=tuple(request.scopes),
             )
-        except Exception:  # noqa: BLE001 - one stable code; the cause never leaves
+        except Exception:  # one stable code; the cause never leaves
             raise CredentialRefused(CredentialRefusal.PROVIDER_UNAVAILABLE) from None
         parts = urlsplit(url)
         query = {key: values[0] for key, values in parse_qs(parts.query).items()}
@@ -178,6 +178,6 @@ class BrokerPkceBridge:
 
         try:
             fresh = await asyncio.to_thread(rotate)
-        except Exception:  # noqa: BLE001 - the narrowed authority never widens on failure
+        except Exception:  # the narrowed authority never widens on failure
             raise CredentialRefused(CredentialRefusal.EXPIRED) from None
         return dataclasses.asdict(fresh)

@@ -110,7 +110,7 @@ class EngineNativeDevelopmentLaneTransport:
             advertised = supports(name)
         except DevelopmentLaneAuthorityUnavailable:
             raise
-        except Exception as exc:  # noqa: BLE001 - malformed/old Health fails closed
+        except Exception as exc:  # malformed/old Health fails closed
             raise DevelopmentLaneAuthorityUnavailable(
                 DevelopmentLaneAuthorityUnavailable.code
             ) from exc
@@ -133,7 +133,7 @@ class EngineNativeDevelopmentLaneTransport:
             value = operation(request=dict(request))
         except DevelopmentLaneAuthorityUnavailable:
             raise
-        except Exception as exc:  # noqa: BLE001 - preserve typed transport errors
+        except Exception as exc:  # preserve typed transport errors
             if getattr(exc, "code", None) == DevelopmentLaneAuthorityUnavailable.code:
                 raise DevelopmentLaneAuthorityUnavailable(
                     DevelopmentLaneAuthorityUnavailable.code

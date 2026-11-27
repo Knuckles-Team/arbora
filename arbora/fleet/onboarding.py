@@ -749,7 +749,7 @@ class FleetOnboarding:
                     importer=str(getattr(self.session.actor, "actor_id", "")),
                     version=catalog_content_digest(pack),
                 )
-        except Exception as exc:  # noqa: BLE001 - reported, never fatal
+        except Exception as exc:  # reported, never fatal
             logger.warning("%s: catalog write failed: %s", endpoint.name, exc)
             if isinstance(report, dict):
                 report["catalog_error"] = _failure(exc)
@@ -939,7 +939,8 @@ class FleetOnboarding:
                     ),
                     graph,
                 )
-        except Exception as exc:  # noqa: BLE001 - retry on the next pass
+        except Exception as exc:
+            logging.getLogger(__name__).debug("retry on the next pass", exc_info=True)
             self._record_source_approvals(
                 endpoint.name, decisions, (), pending=_failure(exc)
             )
@@ -1043,7 +1044,7 @@ class FleetOnboarding:
                     endpoint.name, resolved, tuple(receipts), pending=str(exc)
                 )
                 return
-            except Exception as exc:  # noqa: BLE001 - retry the source next pass
+            except Exception as exc:  # retry the source next pass
                 logger.warning(
                     "%s: source approval for %s is pending: %s",
                     endpoint.name,
