@@ -154,7 +154,7 @@ async def _read_back(context: Any, cell_id: str) -> dict[str, int]:
     held = sum(
         int(lease["amount"])
         for lease in status.get("leases") or ()
-        if str(lease.get("state")) not in {"released", "expired", "reclaimed"}
+        if str(lease.get("state")) in {"granted", "running"}
     )
     capacity = int(cells[0]["capacity"])
     return {"capacity": capacity, "headroom": max(capacity - held, 0)}

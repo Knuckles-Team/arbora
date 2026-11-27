@@ -247,3 +247,28 @@ def test_a_reader_gets_the_receipt_over_http_and_mcp_through_the_invoke_pipeline
         )
         assert not isinstance(result, OpError), result
         assert len(runtime.calls) == 1
+
+
+def test_read_back_counts_only_granted_and_running_leases_as_held(monkeypatch) -> None:
+    """Queued, requested and terminal leases hold no capacity; the retired state names are gone."""
+    states = (
+        "requested",
+        "queued",
+        "granted",
+        "running",
+        "released",
+        "expired",
+        "revoked",
+    )
+    status = {
+        "cells": [{"capacity": 10}],
+        "leases": [{"amount": 1, "state": state} for state in states],
+    }
+
+    async def _send(_context: Any, _method: str, _params: Any) -> dict[str, Any]:
+        return status
+
+    monkeypatch.setattr("arbora.api.ops.engine_calls.engine_send", _send)
+    context = SimpleNamespace(caller=SimpleNamespace(tenant="t1"))
+    result = asyncio.run(capacity._read_back(context, "cell-a"))
+    assert result == {"capacity": 10, "headroom": 8}
