@@ -325,3 +325,41 @@ def test_no_cycle_remains_between_units_of_one_layer() -> None:
     layers = load_layers(ROOT / "pyproject.toml")
     cycles = [finding.detail for finding in _cycles(_same_layer_edges(layers))]
     assert cycles == []
+
+
+def _imported_by(*sources: str) -> set[tuple[str, str]]:
+    """The ``(importing unit, imported unit)`` pairs whose importer is one of ``sources``."""
+    return {(s, u) for s, u in _unit_pairs() if s in sources and s != u}
+
+
+def _units_of(layer: str) -> set[str]:
+    return set(dict(load_layers(ROOT / "pyproject.toml"))[layer])
+
+
+@pytest.mark.spec("ARBORA-HOST-R038.2")
+def test_fleet_gateway_deployment_do_not_import_mcp_server() -> None:
+    """The fleet, the gateway and deployment receive host objects as arguments."""
+    reached = _imported_by("fleet", "gateway", "deployment")
+    assert sorted(pair for pair in reached if pair[1] == "mcp_server") == []
+
+
+@pytest.mark.spec("ARBORA-HOST-R038.3")
+def test_a2a_browser_modality_do_not_import_mcp_server() -> None:
+    """A2A, browser control and modality receive the run state and the binding."""
+    reached = _imported_by("a2a", "browser_control", "modality")
+    assert sorted(pair for pair in reached if pair[1] == "mcp_server") == []
+
+
+@pytest.mark.spec("ARBORA-HOST-R038.4")
+def test_runs_plans_work_items_and_services_import_no_host_or_subsystem() -> None:
+    """The run, plan and work item units and the three service edges stay downward."""
+    later = _units_of("subsystems") | _units_of("host")
+    reached = _imported_by(
+        "agent_runs", "current_plan_publication", "work_items", "native_run_admission"
+    )
+    assert sorted(pair for pair in reached if pair[1] in later) == []
+    assert ("observability", "deployment") not in _imported_by("observability")
+    assert ("messaging", "work_items") not in _imported_by("messaging")
+    service_edges = _imported_by("access")
+    assert ("access", "agent_host") not in service_edges
+    assert ("access", "identity") not in service_edges

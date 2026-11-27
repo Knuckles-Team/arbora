@@ -215,8 +215,11 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
     service = A2AService(
         authority=WorkItemA2AAuthority(
             lambda: engine,
-            origins=RunOriginRegistry(),
+            origins=(origins := RunOriginRegistry()),
             ports=PORTS,
+            executor=agent_runs.AgentRunPort(
+                origins=origins, ports=PORTS, config=RuntimeConfig()
+            ),
             config=RuntimeConfig(),
         ),
         router=OrchestratorA2ARouter(lambda: engine),
@@ -448,8 +451,15 @@ async def test_turn_usage_is_correlated_and_not_reconstructed_on_replay(
     from arbora.api.domain.a2a.models import A2AMessage
     from arbora.security.session import use_session
 
+    origins = RunOriginRegistry()
     authority = WorkItemA2AAuthority(
-        lambda: engine, origins=RunOriginRegistry(), ports=PORTS, config=RuntimeConfig()
+        lambda: engine,
+        origins=origins,
+        ports=PORTS,
+        executor=agent_runs.AgentRunPort(
+            origins=origins, ports=PORTS, config=RuntimeConfig()
+        ),
+        config=RuntimeConfig(),
     )
     service = A2AService(
         authority=authority,

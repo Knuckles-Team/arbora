@@ -108,6 +108,7 @@ def build_a2a_service(
     provisioning: Any = None,
     capacity: Any = None,
     ports: Any = None,
+    executor: Any = None,
     config: RuntimeConfig,
     modality: Any = None,
 ) -> A2AService:
@@ -132,6 +133,7 @@ def build_a2a_service(
         hosted_invocation=hosted_invocation,
         events=log,
         ports=ports,
+        executor=executor,
         config=config,
     )
     push = PushDeliveryWorker(authority)

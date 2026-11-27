@@ -16,6 +16,7 @@ from arbora.a2a.engine_decide import HostDecide
 from arbora.a2a.service import A2AService
 from arbora.access.approval import ApprovalDecisions, verified_approval_session
 from arbora.access.policy_state import PolicyState
+from arbora.agent_runs import AgentRunPort
 from arbora.api.domain.agent_host.host_port_adapters import HostPortsSlot
 from arbora.browser_control.browser_state import BrowserState
 from arbora.core.settings import RuntimeConfig
@@ -64,6 +65,8 @@ class RunState:
     decide: HostDecide
     #: The one ``HostPorts`` record every run entry point passes to the harness.
     ports: HostPortsSlot
+    #: The one agent execution port the A2A authority and the control plane run through.
+    run_port: AgentRunPort
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,6 +116,8 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
     origins = RunOriginRegistry()
     decide = HostDecide()
     ports = HostPortsSlot()
+    config = caches.tools.authority.config
+    run_port = AgentRunPort(origins=origins, ports=ports, config=config)
     a2a = build_a2a_service(
         engine_provider=engine.served,
         origins=origins,
@@ -120,14 +125,17 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         feature_schema=decide.feature_schema,
         decision_principal=decide.principal,
         ports=ports,
-        config=caches.tools.authority.config,
+        executor=run_port,
+        config=config,
         modality=default_normalizer(fleet=NativeIntentFleet(caches.tools.verbs)),
     )
     fleet = FleetState(config=caches.tools.authority.config)
     gateway = GatewayState()
     gateway.sql_schema.set(serve_sql_schema)
     return HostContext(
-        runs=RunState(origins=origins, a2a=a2a, decide=decide, ports=ports),
+        runs=RunState(
+            origins=origins, a2a=a2a, decide=decide, ports=ports, run_port=run_port
+        ),
         fleet=fleet,
         policy=PolicyState(
             approvals=ApprovalDecisions(verified_approval_session),

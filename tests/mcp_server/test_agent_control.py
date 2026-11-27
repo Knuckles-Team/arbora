@@ -75,7 +75,9 @@ async def test_graph_rlm_is_composed_from_injected_authorities() -> None:
             calls.append(request)
             return SimpleNamespace(model_dump_json=lambda: '{"action":"run","ok":true}')
 
-    def factory(actual_client: Any, actual_session: Any, *, origins: Any, config: Any):
+    def factory(
+        actual_client: Any, actual_session: Any, *, origins: Any, run_port: Any
+    ):
         assert actual_client is client
         assert actual_session is session
         assert resolve_session(actual_session) is session
@@ -92,7 +94,7 @@ async def test_graph_rlm_is_composed_from_injected_authorities() -> None:
                 client if actual_session is session else None
             ),
             origins=object(),
-            config=RuntimeConfig(),
+            run_port=object(),
             factory=factory,
         )
         request = GraphRlmRunRequest(task="inspect", input_text="state")
@@ -124,7 +126,7 @@ async def test_graph_rlm_call_has_no_unverified_fallback() -> None:
             ToolTable(ProcessAuthority(config=RuntimeConfig())),
             client_for_session=lambda session: object(),
             origins=object(),
-            config=RuntimeConfig(),
+            run_port=object(),
         )
         with pytest.raises(PermissionError, match="verified authorities required"):
             await mcp.tools["graph_rlm"](
@@ -151,7 +153,7 @@ async def test_graph_rlm_rejects_mismatched_ambient_session() -> None:
             ToolTable(ProcessAuthority(config=RuntimeConfig())),
             client_for_session=lambda session: object(),
             origins=object(),
-            config=RuntimeConfig(),
+            run_port=object(),
         )
         with pytest.raises(PermissionError, match="authority differ"):
             await mcp.tools["graph_rlm"](
