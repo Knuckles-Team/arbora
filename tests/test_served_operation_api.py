@@ -30,6 +30,7 @@ from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
+from arbora.agent_runs import AgentRunPort
 from arbora.api.domain.agent_host.host_port_adapters import (
     HostPortsBinding,
     HostPortsSlot,
@@ -210,8 +211,9 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     a2a = A2AService(
         authority=WorkItemA2AAuthority(
             lambda: client,
-            origins=RunOriginRegistry(),
+            origins=(origins := RunOriginRegistry()),
             ports=ports,
+            executor=AgentRunPort(origins=origins, ports=ports, config=config),
             config=config,
         ),
         router=OrchestratorA2ARouter(lambda: client),

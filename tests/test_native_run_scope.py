@@ -90,10 +90,14 @@ async def test_real_a2a_run_exposes_claim_only_to_host_planning(
 
     slot = HostPortsSlot()
     slot.bind(HostPortsBinding(HostPorts(decide=decide, events=events.append), None))
+    origins = RunOriginRegistry()
     result = await WorkItemA2AAuthority(
         lambda: object(),
-        origins=RunOriginRegistry(),
+        origins=origins,
         ports=slot,
+        executor=agent_runs.AgentRunPort(
+            origins=origins, ports=slot, config=RuntimeConfig()
+        ),
         config=RuntimeConfig(),
     )._run(
         object(),

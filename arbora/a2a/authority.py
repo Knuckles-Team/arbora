@@ -689,11 +689,7 @@ class WorkItemA2AAuthority:
 
     def _agent_executor(self) -> Any:
         if self._executor is None:
-            from arbora.agent_runs import AgentRunPort
-
-            self._executor = AgentRunPort(
-                origins=self._origins, ports=self._ports, config=self._config
-            )
+            raise RuntimeError("the agent run port is not composed")
         return self._executor
 
     def _held_refs(self, task_id: str, session: Any) -> Any:
