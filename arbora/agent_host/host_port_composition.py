@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from types import MappingProxyType, SimpleNamespace
 from typing import Any
 
+from arbora.agent_host.harness_cycle import HostCycleProvider
 from arbora.agent_host.host_port_adapters import (
     ChangesetSeams,
     EngineDecisionAdapter,
@@ -181,6 +182,7 @@ def compose_host_ports(
         "decision": decision_port(
             call, tenant_of=tenant_of, schema_of=schema_of, graph_of=graph_of
         ),
+        "cycle": HostCycleProvider(call),
         "liveness_wait": liveness_wait(wait),
         "checkpoint_store": checkpoint_store,
         "events": events,

@@ -19,6 +19,7 @@ budgets, stop rules). It asks its host for every decision through
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import inspect
 import json
@@ -650,6 +651,8 @@ class AgentRunPort:
         #: The host's ``HostPortsSlot``; read when the first run starts.
         self._ports = ports
         self._built = executor
+        #: The running harness cycle ticks; each one removes itself when it ends.
+        self._ticks: set[asyncio.Task[None]] = set()
 
     @property
     def _executor(self) -> Any:
@@ -690,9 +693,100 @@ class AgentRunPort:
                 result = await self._executor.execute_agent(request, **kwargs)
         finally:
             await flush_usage(request.run_id)
-        return AgentExecutionResult(
+        finished = AgentExecutionResult(
             run_id=result.run_id,
             output=result.output,
             execution_mode=result.execution_mode,
             usage=getattr(result, "usage", None),
+        )
+        self._start_cycle_tick(request, session, ownership)
+        return finished
+
+    @property
+    def pending_ticks(self) -> tuple[asyncio.Task[None], ...]:
+        """The harness cycle ticks still running (ARBORA-HOST-R035)."""
+        return tuple(self._ticks)
+
+    def _start_cycle_tick(
+        self, request: AgentExecutionRequest, session: GraphSession, ownership: Any
+    ) -> None:
+        """Start one background tick for a finished run whose plan holds the slots.
+
+        A failure here logs and never changes the finished run result.
+        """
+        try:
+            ports = None if self._ports is None else self._ports.current()
+            if ownership is None or ports is None:
+                return
+            if ports.harness_cycle_provider() is None:
+                return
+            from meristem.graph import RunRequest
+
+            metadata = getattr(request, "metadata", None)
+            run_request = RunRequest(
+                task=str(request.task),
+                agent_name=str(request.agent_name or ""),
+                run_id=ownership.run_id,
+                metadata={"session": session, **dict(metadata or {})},
+                ports=ports,
+            )
+            plan = decide_run(run_request)
+            if not _tick_due(metadata, plan):
+                return
+            task = asyncio.get_running_loop().create_task(
+                _drive_cycle_tick(run_request, plan, ownership)
+            )
+        except Exception as exc:  # noqa: BLE001 - a tick never changes the run result
+            logger.warning(
+                "harness cycle tick not started for run %s: %s",
+                getattr(ownership, "run_id", ""),
+                type(exc).__name__,
+            )
+            return
+        self._ticks.add(task)
+        task.add_done_callback(self._ticks.discard)
+
+
+def _tick_due(metadata: Mapping[str, Any] | None, plan: Any) -> bool:
+    """One tick per finished run that is not a probe and whose plan holds enough slots."""
+    if metadata and metadata.get("harness_probe"):
+        return False
+    budget = getattr(plan, "budget", None)
+    slots = getattr(budget, "candidate_slots", None)
+    if slots is None:
+        return False
+    minimum = getattr(budget, "candidate_slots_min", None)
+    return bool(slots >= (2 if minimum is None else minimum))
+
+
+async def _drive_cycle_tick(run_request: Any, plan: Any, ownership: Any) -> None:
+    """One tick under a copy of the run's trusted scope; failures log only."""
+    from meristem.graph.harness_cycle import drive_cycle_tick
+
+    from arbora.core.settings import config_dir
+
+    try:
+        with native_run_scope(
+            run_id=ownership.run_id,
+            task_id=ownership.task_id,
+            context_id=ownership.context_id,
+            work_item_id=ownership.work_item_id,
+            session=ownership.session,
+            claim=ownership.claim,
+            owner_graph=ownership.owner_graph,
+        ):
+            await drive_cycle_tick(
+                run_request,
+                plan,
+                task_class=run_request.agent_name or "agent",
+                graph=None,
+                config=run_config(),
+                root=config_dir() / "harness",
+                mode="ask",
+            )
+    except Exception as exc:  # noqa: BLE001 - a tick never changes the run result
+        logger.warning(
+            "harness cycle tick of run %s failed: %s",
+            ownership.run_id,
+            type(exc).__name__,
         )
