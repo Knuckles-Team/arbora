@@ -92,7 +92,7 @@ def _default_provider_registry() -> Any:
         from arbora.core.settings import runtime_config as config
 
         entries = config.remote_oauth_providers
-    except Exception as exc:  # noqa: BLE001 - disable the feature, not the gateway
+    except Exception as exc:  # disable the feature, not the gateway
         logger.error(
             "Remote OAuth provider configuration is invalid; registry disabled: %s",
             exc,
@@ -172,7 +172,7 @@ def _success_redirect_url() -> str | None:
         from arbora.core.settings import runtime_config as config
 
         return config.remote_oauth_success_redirect_url
-    except Exception as exc:  # noqa: BLE001 - fail closed to a JSON success body
+    except Exception as exc:  # fail closed to a JSON success body
         logger.error(
             "Remote OAuth redirect configuration is invalid; redirect disabled: %s",
             exc,
@@ -270,7 +270,10 @@ async def authorize(provider_id: str, body: AuthorizeRequest) -> AuthorizeRespon
         _oauth_error_response(exc, code="oauth_authorize_rejected", status_code=400)
     except OAuthDiscoveryError as exc:
         _oauth_error_response(exc, code="oauth_provider_unreachable", status_code=502)
-    except Exception as exc:  # noqa: BLE001 - the ONE public-failure boundary
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "the ONE public-failure boundary", exc_info=True
+        )
         _oauth_error_response(exc, code="oauth_authorize_failed", status_code=500)
     return AuthorizeResponse(authorization_url=authorization_url)
 
@@ -319,7 +322,10 @@ async def oauth_callback(code: str, state: str, browser_session_id: str) -> Any:
         _oauth_error_response(exc, code="oauth_callback_rejected", status_code=400)
     except OAuthDiscoveryError as exc:
         _oauth_error_response(exc, code="oauth_provider_unreachable", status_code=502)
-    except Exception as exc:  # noqa: BLE001 - the ONE public-failure boundary
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "the ONE public-failure boundary", exc_info=True
+        )
         _oauth_error_response(exc, code="oauth_callback_failed", status_code=500)
 
     target = _success_redirect_url()
@@ -349,7 +355,10 @@ async def _revoke(provider_id: str) -> Any:
         )
     except OAuthProviderError as exc:
         _oauth_error_response(exc, code="oauth_revoke_rejected", status_code=400)
-    except Exception as exc:  # noqa: BLE001 - the ONE public-failure boundary
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "the ONE public-failure boundary", exc_info=True
+        )
         _oauth_error_response(exc, code="oauth_revoke_failed", status_code=500)
     return Response(status_code=204)
 

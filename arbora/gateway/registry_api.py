@@ -699,7 +699,10 @@ def _redact_text(value: Any) -> Any:
 
         safe, _ = PersistencePrivacyGuard().sanitize_text(value)
         return safe
-    except Exception:  # noqa: BLE001 - response redaction remains conservative
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "response redaction remains conservative", exc_info=True
+        )
         return ""
 
 
@@ -1094,7 +1097,7 @@ def _authorized_count(
         rows = _rows_from_engine(sql_exec(statement))
     except CatalogUnavailable:
         raise
-    except Exception as exc:  # noqa: BLE001 - explicit unavailable response
+    except Exception as exc:  # explicit unavailable response
         _log_catalog_exception("count", exc)
         raise CatalogUnavailable("authoritative catalog read failed") from exc
     if len(rows) != 1:
@@ -1197,7 +1200,7 @@ def authorized_page(
         rows = _rows_from_engine(sql_exec(statement))
     except CatalogUnavailable:
         raise
-    except Exception as exc:  # noqa: BLE001 - explicit unavailable response
+    except Exception as exc:  # explicit unavailable response
         _log_catalog_exception("page read", exc)
         raise CatalogUnavailable("authoritative catalog read failed") from exc
     if len(rows) > fetch:
@@ -1234,7 +1237,7 @@ def _authorized_item(
         rows = _rows_from_engine(sql_exec(statement))
     except CatalogUnavailable:
         raise
-    except Exception as exc:  # noqa: BLE001 - explicit unavailable response
+    except Exception as exc:  # explicit unavailable response
         _log_catalog_exception("item read", exc)
         raise CatalogUnavailable("authoritative catalog read failed") from exc
     if len(rows) > 1:
@@ -1357,7 +1360,10 @@ async def _list_kind(
                 engine=engine,
             ),
         )
-    except Exception as exc:  # noqa: BLE001 - backend unavailability is privacy-safe
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "backend unavailability is privacy-safe", exc_info=True
+        )
         return _catalog_unavailable(kind, exc)
     next_cursor = _next_page_cursor(
         spec,
@@ -1437,7 +1443,10 @@ async def _list_servers(
         )
     except HTTPException:
         raise
-    except Exception as exc:  # noqa: BLE001 - backend unavailability is privacy-safe
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "backend unavailability is privacy-safe", exc_info=True
+        )
         return _catalog_unavailable("servers", exc)
     return RegistryPage[Any](
         kind="servers", items=page.items, count=page.count, next_cursor=page.next_cursor
@@ -1464,7 +1473,10 @@ async def _get_kind(
             item_id=item_id,
             engine=get_catalog_engine(request),
         )
-    except Exception as exc:  # noqa: BLE001 - backend unavailability is privacy-safe
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "backend unavailability is privacy-safe", exc_info=True
+        )
         return _catalog_unavailable(kind, exc)
     if row is None:
         # The same response is used for an absent row and another tenant's row.
@@ -1639,7 +1651,7 @@ async def _list_multi_kind(request: Request) -> RegistryMultiKindPage:
                     engine=engine,
                 ),
             )
-        except Exception as exc:  # noqa: BLE001 - explicit per-kind unavailable
+        except Exception as exc:  # explicit per-kind unavailable
             logger.warning("registry %s unavailable (multi-kind): %s", kind, exc)
             return kind, RegistryKindResult(
                 status="unavailable", reason="catalog_unavailable"

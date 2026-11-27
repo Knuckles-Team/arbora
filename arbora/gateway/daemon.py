@@ -258,7 +258,8 @@ def daemon_status(engine: Any = None) -> dict[str, Any]:
         return {"running": False, "role": read_env("KG_DAEMON_ROLE", "auto")}
     try:
         return eng.unified_daemon_status()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
+        logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
         return {"running": False, **public_error_payload(exc, logger=logger)}
 
 
@@ -278,6 +279,6 @@ def stop_host_daemon(engine: Any = None) -> None:
             if client is not None and hasattr(client, "checkpoint"):
                 client.checkpoint()
                 logger.info("Engine checkpoint written on shutdown.")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("engine checkpoint on shutdown skipped: %s", exc)
     logger.info("Host daemon stopped.")
