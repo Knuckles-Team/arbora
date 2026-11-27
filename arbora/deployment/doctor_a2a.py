@@ -69,7 +69,7 @@ async def check_a2a_persistence(
         task_id = created.id
         stored = await read_task(task_id)
     except Exception as exc:
-        logger.warning("a2a persistence probe failed: %s", type(exc).__name__)
+        logger.warning("a2a persistence probe failed", exc_info=True)
         return _result(
             "a2a_persistence",
             "fail",
@@ -82,8 +82,8 @@ async def check_a2a_persistence(
         if task_id is not None:
             try:
                 await service.authority.cancel(task_id)
-            except Exception as exc:
-                logger.warning("a2a probe cancel failed: %s", type(exc).__name__)
+            except Exception:
+                logger.warning("a2a probe cancel failed", exc_info=True)
     if stored is None or stored.id != task_id:
         return _result(
             "a2a_persistence",

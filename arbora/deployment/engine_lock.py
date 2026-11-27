@@ -60,7 +60,7 @@ def _runtime_base() -> Path:
         import platformdirs
 
         base = Path(platformdirs.user_runtime_dir("arbora"))
-    except Exception:  # pragma: no cover - platformdirs present in practice
+    except ImportError:
         base = Path(read_env("XDG_RUNTIME_DIR")) / "arbora"  # nosec B108 — XDG fallback
     base.mkdir(parents=True, exist_ok=True)
     return base
@@ -118,7 +118,7 @@ def engine_lock_holder(transport_key: str | None) -> dict[str, Any] | None:
     path = engine_lock_path(transport_key)
     try:
         return json.loads(path.read_text() or "{}") or None
-    except Exception:
+    except (OSError, ValueError):
         return None
 
 

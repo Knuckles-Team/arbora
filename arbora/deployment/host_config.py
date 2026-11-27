@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
+from typing import NoReturn
 
 from arbora.core.environment import environment_view
 
@@ -88,7 +89,7 @@ class ServeArguments:
 
 
 class _Parser(argparse.ArgumentParser):
-    def error(self, message: str) -> None:  # type: ignore[override]
+    def error(self, message: str) -> NoReturn:
         raise UnknownServeFlag(message)
 
 

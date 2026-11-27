@@ -138,7 +138,7 @@ if sys.platform != "win32":
         except OSError:
             pass
 
-else:  # pragma: no cover - exercised only on Windows (or the import-fault sim)
+else:
     import ctypes
     import msvcrt
     from ctypes import wintypes

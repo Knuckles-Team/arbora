@@ -2917,5 +2917,5 @@ def _dispatch(args: argparse.Namespace, workspace: Workspace) -> int:
     return handler(args, workspace, as_json)
 
 
-if __name__ == "__main__":  # pragma: no cover - console entry
+if __name__ == "__main__":
     raise SystemExit(main())

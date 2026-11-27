@@ -404,5 +404,5 @@ def main(argv: list[str] | None = None, mint: Callable[[], str] | None = None) -
     return 1 if writer.failed else 0
 
 
-if __name__ == "__main__":  # pragma: no cover
+if __name__ == "__main__":
     raise SystemExit(main())
