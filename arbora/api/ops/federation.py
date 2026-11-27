@@ -24,6 +24,7 @@ from arbora.api.ops._common import (
 )
 from arbora.api.ops._engine import engine_send, unavailable
 from arbora.api.registry import OpSpec, Verb
+from arbora.api.registry.spec import SOURCE_AUTHORITY
 
 _SECRET_MARKERS = (
     "password",
@@ -68,6 +69,7 @@ class SupplyChainImpactResult(Params):
     report: dict[str, Any]
     sources_used: list[Any]
     abstentions: list[Any]
+    audit: list[Any] | None = None
 
 
 def redact(value: Any) -> Any:
@@ -188,6 +190,8 @@ async def handle_supply_chain_impact(
         "report": dict(report),
         "sources_used": list(report.get("sources_used", ())),
         "abstentions": list(report.get("abstentions", ())),
+        # The engine's sources-used-and-why block, unaltered (ARBORA-FLEET-R052.3).
+        "audit": report.get("audit"),
     }
 
 
@@ -202,6 +206,7 @@ def operations() -> tuple[OpSpec, ...]:
             result=SupplyChainImpactResult,
             handler="arbora.api.ops.federation.handle_supply_chain_impact",
             scope="federation:read",
+            tags=frozenset({SOURCE_AUTHORITY}),
         ),
         build_read_op(
             op_id="federation.sources.list",
