@@ -15,6 +15,7 @@ def _discover_models():
 
 
 @pytest.mark.spec("ARBORA-OPS-R924")
+@pytest.mark.spec("ARBORA-OPS-R924.2")
 def test_seeds_and_hop_filter_reach_the_engine() -> None:
     fields = _discover_models().model_fields
     if "seed_ids" not in fields:
