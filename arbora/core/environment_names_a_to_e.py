@@ -828,7 +828,7 @@ ROWS: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         "string",
         "",
         "ARBORA-HOST-R005",
-        ("arbora.mcp_server.backing.tools.engine_surface_tools",),
+        ("arbora.mcp_server.backing.tools.trace_tools",),
         False,
     ),
     (
