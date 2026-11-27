@@ -687,11 +687,12 @@ class ActionPolicy:
         path = self.policy_path
         if path is None:
             return DEFAULT_POLICY
+        import yaml
+
         try:
             mtime = path.stat().st_mtime
             if self._file_cache and self._file_cache[0] == mtime:
                 return self._file_cache[1]
-            import yaml
 
             data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
             if not isinstance(data, dict) or not isinstance(data.get("rules"), list):
@@ -701,10 +702,12 @@ class ActionPolicy:
                 data = DEFAULT_POLICY
             self._file_cache = (mtime, data)
             return data
-        except Exception as e:  # a broken file must not open the gate
-            logger.warning(
-                "action_policy load failed (%s) — using default", type(e).__name__
-            )
+        except (
+            OSError,
+            ValueError,
+            yaml.YAMLError,
+        ):  # a broken file must not open the gate
+            logger.warning("action_policy load failed — using default", exc_info=True)
             return DEFAULT_POLICY
 
     def option(self, name: str, default: Any = None) -> Any:
@@ -732,8 +735,8 @@ class ActionPolicy:
             rows = self.engine.query_cypher(
                 "MATCH (r:governance_rule {scope: 'action_policy'}) RETURN r LIMIT 100"
             )
-        except Exception as e:  # overrides are best-effort
-            logger.debug("action_policy: KG rule load failed: %s", e)
+        except Exception:  # overrides are best-effort
+            logger.debug("action_policy: KG rule load failed", exc_info=True)
             return []
         rules: list[ActionRule] = []
         for row in rows or []:
@@ -817,7 +820,9 @@ class ActionPolicy:
                 {"kind": kind},
             )
         except Exception as e:  # ledger read failed; callers must fail CLOSED on None, never treat it as an empty (=clear) ledger
-            logger.warning("action_policy: ledger scan failed, failing closed: %s", e)
+            logger.warning(
+                "action_policy: ledger scan failed, failing closed", exc_info=True
+            )
             return LedgerUnreadable(
                 reason=f"ledger unreadable: read failed ({type(e).__name__})"
             )
@@ -978,7 +983,9 @@ class ActionPolicy:
             )
         except Exception as e:  # evaluate fails CLOSED
             logger.warning(
-                "action_policy: evaluate error for %s: %s", request.summary(), e
+                "action_policy: evaluate error for %s",
+                request.summary(),
+                exc_info=True,
             )
             return ActionDecision(
                 decision=DECISION_UNAVAILABLE,
@@ -1048,9 +1055,11 @@ class ActionPolicy:
             if tier == TIER_APPROVAL and self._graduates(request):
                 return TIER_AUTO_NOTIFY
             return tier
-        except Exception as e:  # classification fails CLOSED
+        except Exception:  # classification fails CLOSED
             logger.warning(
-                "action_policy: classify error for %s: %s", request.summary(), e
+                "action_policy: classify error for %s",
+                request.summary(),
+                exc_info=True,
             )
             return TIER_FORBIDDEN
 
@@ -1064,7 +1073,9 @@ class ActionPolicy:
             decision = self._decide_inner(request)
         except Exception as e:  # the gate fails CLOSED
             logger.warning(
-                "action_policy: decision error for %s: %s", request.summary(), e
+                "action_policy: decision error for %s",
+                request.summary(),
+                exc_info=True,
             )
             decision = ActionDecision(
                 decision=DECISION_UNAVAILABLE,
@@ -1310,8 +1321,8 @@ class ActionPolicy:
             return granted_approval(
                 self.engine, request.digest(), now_ms=int(_now() * 1000)
             )
-        except Exception as exc:  # missing evidence fails closed
-            logger.debug("action_policy: granted approval probe failed: %s", exc)
+        except Exception:  # missing evidence fails closed
+            logger.debug("action_policy: granted approval probe failed", exc_info=True)
         return None
 
     def queue_approval(self, request: ActionRequest, reason: str = "") -> str | None:
@@ -1348,6 +1359,7 @@ class ActionPolicy:
                 type(e).__name__,
                 request.kind,
                 request.target,
+                exc_info=True,
             )
             return None
         self._notify(
@@ -1376,6 +1388,7 @@ class ActionPolicy:
                 type(e).__name__,
                 decision.request.kind,
                 decision.request.target,
+                exc_info=True,
             )
             return None
         if not created:
@@ -1396,9 +1409,11 @@ class ActionPolicy:
             return
         try:
             notifier(message)
-        except Exception as e:  # a notification never blocks a decision
+        except Exception:  # a notification never blocks a decision
             logger.info(
-                "action_policy notification (fallback log): %s (%s)", message, e
+                "action_policy notification (fallback log): %s",
+                message,
+                exc_info=True,
             )
 
 

@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import cast
 
 __all__ = [
     "PROTOCOLS",
@@ -51,9 +52,12 @@ def _text(value: object, name: str) -> str:
 
 
 def _pairs(value: object) -> tuple[tuple[str, str], ...]:
-    items: Iterable[object] = value.items() if isinstance(value, Mapping) else value  # type: ignore[assignment]
+    items = cast(
+        "Iterable[tuple[object, object]]",
+        value.items() if isinstance(value, Mapping) else value,
+    )
     try:
-        pairs = tuple((str(k), str(v)) for k, v in items)  # type: ignore[misc]
+        pairs = tuple((str(k), str(v)) for k, v in items)
     except (TypeError, ValueError):
         raise ValueError("RESOURCE_REQUEST_INVALID: constraints") from None
     return tuple(sorted(pairs))

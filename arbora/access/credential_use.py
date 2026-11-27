@@ -9,6 +9,7 @@ correctness depends on beyond the in-flight refresh lock of a grant.
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
@@ -17,6 +18,8 @@ from typing import Any, Protocol
 from urllib.parse import urlsplit
 
 from arbora.api.invoke.audit import audit_event
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "CHALLENGE_DEADLINE_SECONDS",
@@ -219,6 +222,7 @@ async def _authorize(
     try:
         answer = await ports.decide(request)
     except Exception:  # an unanswered question grants nothing
+        logger.warning("credential authority call failed", exc_info=True)
         raise CredentialRefused(CredentialRefusal.PROVIDER_UNAVAILABLE) from None
     if not answer.get("allow"):
         raise CredentialRefused(CredentialRefusal.REUSE_DENIED)
@@ -264,6 +268,7 @@ async def _acquire(
     try:
         evidence["vault_receipt"] = await ports.vault_put(grant.vault_ref, token)
     except Exception:  # nothing is ready until it is stored
+        logger.warning("credential authority call failed", exc_info=True)
         raise CredentialRefused(CredentialRefusal.PERSISTENCE_FAILED) from None
     evidence["issuance"] = challenge.state[:8]
     await _authorize(request, ports, {})  # fresh engine authorization before resuming
@@ -288,6 +293,7 @@ async def _refresh_once(
         except CredentialRefused:
             raise
         except Exception:  # the narrowed authority never widens on failure
+            logger.warning("credential authority call failed", exc_info=True)
             raise CredentialRefused(CredentialRefusal.EXPIRED) from None
         evidence["refresh"] = grant.engine_decision_ref[:8]
         return fresh
@@ -317,7 +323,7 @@ def _audit(
             id="credential.use", executor=SimpleNamespace(value="caller")
         ),
         {},
-        caller,  # type: ignore[arg-type]
+        caller,
         SimpleNamespace(value="fleet"),
         evidence.get("outcome", "refused"),
         evidence={key: value for key, value in fields.items() if value},

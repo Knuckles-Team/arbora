@@ -309,8 +309,13 @@ class BundleFetcher:
                 response.raise_for_status()
                 bundle = PolicyBundle.from_json(response.json())
             return FetchedBundle(bundle=bundle, fetched_at_monotonic=time.monotonic())
-        except Exception as exc:  # any fetch/parse failure is fail-closed data
-            logger.warning("policy bundle fetch failed: %s", exc)
+        except (
+            httpx.HTTPError,
+            OSError,
+            ValueError,
+            TypeError,
+        ) as exc:  # a fetch/parse failure is fail-closed data
+            logger.warning("policy bundle fetch failed", exc_info=True)
             return FetchedBundle(
                 bundle=None, fetched_at_monotonic=time.monotonic(), error=str(exc)
             )
