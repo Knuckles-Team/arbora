@@ -18,6 +18,7 @@ import time
 from typing import Any, cast
 from urllib.parse import urlsplit
 
+from arbora.core.settings import RuntimeConfig
 from arbora.security.key_cache import JwksCache
 
 logger = logging.getLogger(__name__)
@@ -100,11 +101,11 @@ def _require_jwks_uri(jwks_uri: str) -> None:
         raise RuntimeError("JWKS transport requires HTTPS outside loopback")
 
 
-async def _download_jwks(jwks_uri: str) -> Any:
+async def _download_jwks(jwks_uri: str, config: RuntimeConfig) -> Any:
     """The parsed JWKS document, read under the response size bound."""
     from arbora.security.oidc_discovery import oidc_async_http_client
 
-    async with oidc_async_http_client(timeout=10) as client:
+    async with oidc_async_http_client(config, timeout=10) as client:
         body = bytearray()
         async with client.stream("GET", jwks_uri) as response:
             response.raise_for_status()
@@ -146,7 +147,7 @@ async def fetch_jwks(keys: JwksCache, jwks_uri: str) -> Any:
         return cached
     _require_jwks_uri(jwks_uri)
     try:
-        document = _checked_jwks(await _download_jwks(jwks_uri))
+        document = _checked_jwks(await _download_jwks(jwks_uri, keys.config))
         keys.put(jwks_uri, document, now)
         logger.debug("JWKS refreshed (%d keys)", len(document["keys"]))
         return document
@@ -158,7 +159,12 @@ async def fetch_jwks(keys: JwksCache, jwks_uri: str) -> Any:
 
 
 def _decode_jwt(
-    token: str, jwks: dict, *, issuer: str | None, audience: str | None
+    token: str,
+    jwks: dict,
+    *,
+    issuer: str | None,
+    audience: str | None,
+    algorithms: list[str],
 ) -> dict:
     """Decode and validate a JWT token using authlib.
 
@@ -197,14 +203,10 @@ def _decode_jwt(
         key_set = KeySet.import_key_set(cast(Any, jwks))
 
         # Decode with signature verification
-        from arbora.security.settings import security_settings
-
-        config = security_settings()
-
         token_obj = jwt.decode(
             token,
             key_set,
-            algorithms=config.auth_jwt_algorithms,
+            algorithms=algorithms,
         )
         claims = token_obj.claims
 
@@ -270,7 +272,7 @@ async def authenticate_header_values(
     """
     from arbora.security.settings import security_settings
 
-    config = security_settings()
+    config = security_settings(keys.config)
 
     token = parse_bearer_authorization(authorization)
     if not config.auth_jwt_jwks_uri:
@@ -284,6 +286,7 @@ async def authenticate_header_values(
                 jwks,
                 issuer=config.auth_jwt_issuer,
                 audience=config.auth_jwt_audience,
+                algorithms=config.auth_jwt_algorithms,
             )
         except TokenValidationError as exc:
             # Only a genuine credential rejection (401) collapses to

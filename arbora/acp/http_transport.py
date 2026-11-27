@@ -21,6 +21,7 @@ import anyio
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response, StreamingResponse
 
+from arbora.core.settings import RuntimeConfig
 from arbora.security.session import GraphSession, ScopeError, resolve_session
 
 from .session_policy import PrincipalContext
@@ -120,8 +121,10 @@ class _Connection:
         authority: list[GraphSession],
         limits: AcpHttpLimits,
         connections: dict[str, _Connection],
+        config: RuntimeConfig,
     ) -> None:
         self.id = uuid4().hex
+        self.config = config
         self.agent, self.principal, self.limits = agent, principal, limits
         self.authority_ref = authority
         self.connections = connections
@@ -139,7 +142,7 @@ class _Connection:
         self.count = 0
         self.sent = 0
         self.subscribed = False
-        self.authorization_profile = _authorization_profile(self.authority)
+        self.authorization_profile = _authorization_profile(self.authority, config)
         self.task = asyncio.create_task(self._serve())
 
     @property
@@ -311,11 +314,13 @@ def _bound_principal(authority: GraphSession) -> PrincipalContext | None:
     )
 
 
-def _authorization_profile(authority: GraphSession) -> tuple[Any, ...]:
+def _authorization_profile(
+    authority: GraphSession, config: RuntimeConfig
+) -> tuple[Any, ...]:
     """Compare existing verified facts, not credential rotation or trace data."""
     from arbora.security.settings import security_settings
 
-    actor, settings = authority.actor, security_settings()
+    actor, settings = authority.actor, security_settings(config)
     return (
         actor.actor_id,
         actor.actor_type,
@@ -360,7 +365,8 @@ class _Gateway:
             raise _CarrierRefusal("connection_limit", 429)
         agent_type = _hosted_agent_type()
         authority_ref = [authority]
-        profile = _authorization_profile(authority)
+        config = request.app.state.host.config
+        profile = _authorization_profile(authority, config)
         try:
             agent = factory(
                 lambda: _bound_principal(authority_ref[0]),
@@ -370,7 +376,7 @@ class _Gateway:
             if inspect.isawaitable(agent):
                 agent = await agent
             authority.ensure_authority_current()
-            if _authorization_profile(authority) != profile:
+            if _authorization_profile(authority, config) != profile:
                 raise PermissionError("Connection authorization profile changed")
         except Exception:  # injected factory/authority: refuse the carrier
             logger.warning("chat adapter construction failed", exc_info=True)
@@ -382,7 +388,7 @@ class _Gateway:
             await agent.aclose()
             raise _CarrierRefusal("connection_limit", 429)
         connection = _Connection(
-            agent, principal, authority_ref, self.limits, self.connections
+            agent, principal, authority_ref, self.limits, self.connections, config
         )
         self.connections[connection.id] = connection
         return JSONResponse(
@@ -436,10 +442,16 @@ class _Gateway:
                 return await self.create(request, authority, principal)
             connection = self.owned(identifier, principal)
             connection.authority.ensure_authority_current()
-            if _authorization_profile(authority) != connection.authorization_profile:
+            if (
+                _authorization_profile(authority, connection.config)
+                != connection.authorization_profile
+            ):
                 raise PermissionError("Connection authorization profile changed")
             await connection.agent.admit_transport_message(request, authority)
-            if _authorization_profile(authority) != connection.authorization_profile:
+            if (
+                _authorization_profile(authority, connection.config)
+                != connection.authorization_profile
+            ):
                 raise PermissionError("Connection authorization profile changed")
             connection.authority.ensure_authority_current()
             authority.ensure_authority_current()

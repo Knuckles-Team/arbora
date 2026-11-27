@@ -15,7 +15,7 @@ DOCUMENT = {"keys": [{"kid": "k1", "kty": "RSA"}]}
 def _downloads(monkeypatch: pytest.MonkeyPatch, document: object) -> list[str]:
     calls: list[str] = []
 
-    async def download(uri: str) -> object:
+    async def download(uri: str, config: object) -> object:
         calls.append(uri)
         return document
 

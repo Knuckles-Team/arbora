@@ -9,6 +9,7 @@ from typing import Any, cast
 import httpx
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.security import client_credentials as cc
 
 
@@ -111,17 +112,17 @@ async def test_a_vanished_token_file_degrades_in_the_async_flow(
 def test_the_oidc_header_refuses_with_a_stable_error_when_the_mint_fails(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    monkeypatch.setattr(cc, "get_provider", lambda: _Provider(fail_first=True))
+    monkeypatch.setattr(cc, "get_provider", lambda config: _Provider(fail_first=True))
     with caplog.at_level(logging.WARNING), pytest.raises(RuntimeError, match="mint"):
-        cc._oidc_bearer_header()
+        cc._oidc_bearer_header(RuntimeConfig())
     assert _traced(caplog)
 
 
 def test_a_failed_prime_falls_back_to_the_default_session_age(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    monkeypatch.setattr(cc, "get_provider", lambda: _Provider(fail_first=True))
+    monkeypatch.setattr(cc, "get_provider", lambda config: _Provider(fail_first=True))
     with caplog.at_level(logging.DEBUG, logger=cc.logger.name):
-        age = cc.service_session_max_age(None)
+        age = cc.service_session_max_age(None, RuntimeConfig())
     assert age is not None and age > 0
     assert _traced(caplog)

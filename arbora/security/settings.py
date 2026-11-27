@@ -1,8 +1,9 @@
-"""Security settings read from the process environment at call time.
+"""Security settings read through the host's configuration view at call time.
 
-The security modules read their settings through :func:`security_settings`, so
-a test or an operator change to the environment applies on the next call.
-Each field names the environment variable it reads.
+The security modules read their settings through :func:`security_settings`,
+which takes the :class:`~arbora.core.settings.RuntimeConfig` of the host the
+caller runs inside, so two hosts can hold different settings. Each field names
+the setting it reads.
 """
 
 from __future__ import annotations
@@ -11,7 +12,7 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
-from arbora.core.environment import read_env
+from arbora.core.settings import RuntimeConfig
 
 __all__ = ["SecuritySettings", "security_settings"]
 
@@ -30,30 +31,21 @@ DEFAULT_JWT_ALGORITHMS: tuple[str, ...] = (
 )
 
 
-def _raw(key: str) -> Any:
-    """The value of ``key`` through the one Arbora settings view.
-
-    A ``ArboraConfig`` field is read through its declared type from the
-    environment; any other key reads the environment as text.
-    """
-    from arbora.core.settings import ArboraConfig, read_field
-
-    for name, info in ArboraConfig.model_fields.items():
-        if info.alias == key:
-            value = read_field(name)
-            if isinstance(value, (list, dict)):
-                return json.dumps(value)
-            return value
-    return read_env(key, "")
+def _raw(config: RuntimeConfig, key: str) -> Any:
+    """The value of ``key`` through the host's own configuration view."""
+    value = config.setting(key)
+    if isinstance(value, (list, dict)):
+        return json.dumps(value)
+    return value
 
 
-def _text(key: str) -> str | None:
-    value = str(_raw(key) or "").strip()
+def _text(config: RuntimeConfig, key: str) -> str | None:
+    value = str(_raw(config, key) or "").strip()
     return value or None
 
 
-def _list(key: str) -> list[str]:
-    raw = str(_raw(key) or "").strip()
+def _list(config: RuntimeConfig, key: str) -> list[str]:
+    raw = str(_raw(config, key) or "").strip()
     if not raw:
         return []
     if raw.startswith("["):
@@ -62,8 +54,8 @@ def _list(key: str) -> list[str]:
     return [item.strip() for item in raw.split(",") if item.strip()]
 
 
-def _mapping(key: str) -> Any:
-    raw = str(_raw(key) or "").strip()
+def _mapping(config: RuntimeConfig, key: str) -> Any:
+    raw = str(_raw(config, key) or "").strip()
     return json.loads(raw) if raw else None
 
 
@@ -90,23 +82,25 @@ class SecuritySettings:
     oidc_http_allowed_private_hosts: list[str] = field(default_factory=list)
 
 
-def security_settings() -> SecuritySettings:
-    """Read the security settings from the environment now."""
+def security_settings(config: RuntimeConfig) -> SecuritySettings:
+    """Read the security settings through ``config``, the host's configuration view."""
     return SecuritySettings(
-        auth_jwt_jwks_uri=_text("AUTH_JWT_JWKS_URI"),
-        auth_jwt_issuer=_text("AUTH_JWT_ISSUER"),
-        auth_jwt_audience=_text("AUTH_JWT_AUDIENCE"),
-        auth_jwt_algorithms=_list("AUTH_JWT_ALGORITHMS")
+        auth_jwt_jwks_uri=_text(config, "AUTH_JWT_JWKS_URI"),
+        auth_jwt_issuer=_text(config, "AUTH_JWT_ISSUER"),
+        auth_jwt_audience=_text(config, "AUTH_JWT_AUDIENCE"),
+        auth_jwt_algorithms=_list(config, "AUTH_JWT_ALGORITHMS")
         or list(DEFAULT_JWT_ALGORITHMS),
-        mcp_jwt_audience=_text("FASTMCP_SERVER_AUTH_JWT_AUDIENCE"),
-        kg_policy_version=_text("KG_POLICY_VERSION"),
-        kg_auth_token_ref=_text("KG_AUTH_TOKEN_REF"),
-        kg_identity_oauth2=_mapping("KG_IDENTITY_OAUTH2"),
-        deployment_profile=_text("DEPLOYMENT_PROFILE") or "tiny",
-        graph_service_endpoints=_list("GRAPH_SERVICE_ENDPOINTS") or None,
-        identity_group_capability_map=_mapping("IDENTITY_GROUP_CAPABILITY_MAP"),
-        engine_breaker_cooldown=float(read_env("ENGINE_BREAKER_COOLDOWN")),
-        oidc_tls_profile=_text("OIDC_TLS_PROFILE"),
-        oidc_tls_profile_ref=_text("OIDC_TLS_PROFILE_REF"),
-        oidc_http_allowed_private_hosts=_list("OIDC_HTTP_ALLOWED_PRIVATE_HOSTS"),
+        mcp_jwt_audience=_text(config, "FASTMCP_SERVER_AUTH_JWT_AUDIENCE"),
+        kg_policy_version=_text(config, "KG_POLICY_VERSION"),
+        kg_auth_token_ref=_text(config, "KG_AUTH_TOKEN_REF"),
+        kg_identity_oauth2=_mapping(config, "KG_IDENTITY_OAUTH2"),
+        deployment_profile=_text(config, "DEPLOYMENT_PROFILE") or "tiny",
+        graph_service_endpoints=_list(config, "GRAPH_SERVICE_ENDPOINTS") or None,
+        identity_group_capability_map=_mapping(config, "IDENTITY_GROUP_CAPABILITY_MAP"),
+        engine_breaker_cooldown=float(config.setting("ENGINE_BREAKER_COOLDOWN")),
+        oidc_tls_profile=_text(config, "OIDC_TLS_PROFILE"),
+        oidc_tls_profile_ref=_text(config, "OIDC_TLS_PROFILE_REF"),
+        oidc_http_allowed_private_hosts=_list(
+            config, "OIDC_HTTP_ALLOWED_PRIVATE_HOSTS"
+        ),
     )

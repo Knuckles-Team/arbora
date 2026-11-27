@@ -1216,6 +1216,20 @@ class RuntimeConfig:
         with self._lock:
             self._overrides.pop(name, None)
 
+    def setting(self, key: str) -> Any:
+        """One setting by its environment name: an override, else the declared field.
+
+        A key that is no declared field reads the environment as text.
+        """
+        name = key.lower()
+        with self._lock:
+            if name in self._overrides:
+                return self._overrides[name]
+        for field_name, info in ArboraConfig.model_fields.items():
+            if info.alias == key:
+                return getattr(self, field_name)
+        return read_env(key)
+
     def save_item(self, key: str, value: Any) -> str:
         """Persist one setting to ``config.json`` and the live environment.
 

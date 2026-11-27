@@ -122,7 +122,7 @@ def _compose(client: NoticeClient, monkeypatch: pytest.MonkeyPatch) -> Any:
         roles=("kg:read",),
         credential_expires_at=int(time.time()) + 3600,
     )
-    process = request_identity.mint_graph_session(actor)
+    process = request_identity.mint_graph_session(actor, RuntimeConfig())
     return compose_served_invocation(
         config=RuntimeConfig(),
         keys=JwksCache(),

@@ -27,7 +27,9 @@ def process_environment() -> Environment:
 
     # This one-shot CLI is its own composition root and owns its key cache.
     runtime_config = RuntimeConfig()
-    session = runtime._mint_process_session("http", JwksCache(), runtime_config)
+    session = runtime._mint_process_session(
+        "http", JwksCache(runtime_config), runtime_config
+    )
     # This one-shot CLI is its own composition root and owns its engine.
     engine = EngineHandles(config=runtime_config).served()
     bootstrap._wait_for_engine_materialization(engine)

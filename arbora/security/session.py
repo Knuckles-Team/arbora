@@ -555,7 +555,7 @@ def use_session(session: GraphSession) -> Iterator[GraphSession]:
 
     Example::
 
-        session = mint_graph_session(verified_identity)
+        session = mint_graph_session(verified_identity, config)
         with use_session(session):
             engine.query_cypher("MATCH (n) RETURN n LIMIT 1")  # inherits it
     """

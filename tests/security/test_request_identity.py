@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.security.actor_context import ActorContext
 from arbora.security.request_identity import (
     ensure_correlation_id,
@@ -38,4 +39,6 @@ def test_unauthenticated_actor_cannot_mint_a_session() -> None:
     from arbora.security.request_identity import mint_graph_session
 
     with pytest.raises(PermissionError):
-        mint_graph_session(ActorContext(actor_id="x", authenticated=False))
+        mint_graph_session(
+            ActorContext(actor_id="x", authenticated=False), RuntimeConfig()
+        )

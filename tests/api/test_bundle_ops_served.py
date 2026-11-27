@@ -164,7 +164,7 @@ def _app(
 
     monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)
     engine = _Engine(store, tenant)
-    process = request_identity.mint_graph_session(actor)
+    process = request_identity.mint_graph_session(actor, RuntimeConfig())
     invocation = compose_served_invocation(
         config=RuntimeConfig(),
         keys=JwksCache(),

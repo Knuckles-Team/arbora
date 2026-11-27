@@ -192,7 +192,7 @@ def eg(monkeypatch: pytest.MonkeyPatch) -> _Registry:
         "scion_sdk.sinks.medulla.MedullaSink",
         _RecordingSink,
     )
-    monkeypatch.setattr(onboarding, "_child_auth", lambda: None)
+    monkeypatch.setattr(onboarding, "_child_auth", lambda *_: None)
     monkeypatch.setattr(
         onboarding, "self_served_connectors", lambda: ("arbora", "meristem")
     )

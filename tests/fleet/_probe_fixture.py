@@ -15,6 +15,7 @@ from typing import Any
 import pytest
 from fastmcp import FastMCP
 
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
 from arbora.fleet.gateway_ops import (
     ConfirmingTools,
@@ -70,7 +71,7 @@ class ProbeStack:
         monkeypatch: pytest.MonkeyPatch,
         who: Any,
     ) -> None:
-        process = request_identity.mint_graph_session(who)
+        process = request_identity.mint_graph_session(who, RuntimeConfig())
         self.engine = engine
         self.gateway = gateway
         self.child_calls: list[tuple[str, str, Any]] = []

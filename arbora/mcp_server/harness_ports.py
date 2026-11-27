@@ -67,8 +67,8 @@ def build_host_ports(
             if multiplexer is not None
             else None
         ),
-        "remote": client_toolsets.remote_toolset_provider(),
-        "tool_client": client_toolsets.open_tool_client,
+        "remote": client_toolsets.remote_toolset_provider(host.config),
+        "tool_client": partial(client_toolsets.open_tool_client, config=host.config),
         "keepalive": partial(harness_host.keepalive, host.authority),
         "probe": HostProbeProvider(slot.current),
     }

@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.messaging import planner_handler
 from arbora.messaging.host_ports import bind_host_ports
 from arbora.messaging.models import EventType, InboundEvent
@@ -18,6 +19,8 @@ from arbora.messaging.sender_identity import (
 
 
 class _Service:
+    config = RuntimeConfig()
+
     def _resolve_engine(self) -> str:
         return "engine"
 
@@ -62,7 +65,9 @@ async def test_mapped_sender_runs_turn_under_principal(mapped: None) -> None:
         return "reply"
 
     bind_host_ports(turn_handler=turn)
-    session = session_for_sender("telegram", "7", exchange=exchange)
+    session = session_for_sender(
+        "telegram", "7", config=RuntimeConfig(), exchange=exchange
+    )
     assert (session.principal, session.token) == ("principal-7", "exchanged-token")
     assert exchanged == ["principal-7"]
 
@@ -70,7 +75,7 @@ async def test_mapped_sender_runs_turn_under_principal(mapped: None) -> None:
     import arbora.messaging.sender_identity as identity
 
     identity_exchange = identity._exchange_for_principal
-    identity._exchange_for_principal = exchange  # type: ignore[assignment]
+    identity._exchange_for_principal = lambda principal, config: exchange(principal)  # type: ignore[assignment]
     try:
         backend = _Backend()
         responder = planner_handler._burst_responder(_Service())
@@ -98,14 +103,17 @@ async def test_refused_exchange_runs_no_turn(
         raise RuntimeError("exchange denied")
 
     with pytest.raises(SenderRefused) as refused:
-        session_for_sender("telegram", "7", exchange=refuse)
+        session_for_sender("telegram", "7", config=RuntimeConfig(), exchange=refuse)
     assert refused.value.code == TOKEN_EXCHANGE_REFUSED
     with pytest.raises(SenderRefused) as unmapped:
-        session_for_sender("telegram", "8", exchange=lambda p: "t")
+        session_for_sender(
+            "telegram", "8", config=RuntimeConfig(), exchange=lambda p: "t"
+        )
     assert unmapped.value.code == SENDER_UNMAPPED
 
     monkeypatch.setattr(
-        "arbora.messaging.sender_identity._exchange_for_principal", refuse
+        "arbora.messaging.sender_identity._exchange_for_principal",
+        lambda principal, config: refuse(principal),
     )
     backend = _Backend()
     responder = planner_handler._burst_responder(_Service())

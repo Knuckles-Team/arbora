@@ -97,7 +97,7 @@ def configured_browser_boundary(
 
     if not settings.enable_web_ui or settings.webui_auth_mode != "eg":
         return None
-    config = security_settings()
+    config = security_settings(settings)
     origin = settings.webui_origin
     if not _origin_is_exact_https(origin) or not _deployment_is_configured(config):
         raise IdentityUnavailable(

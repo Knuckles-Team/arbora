@@ -91,7 +91,7 @@ def _mint_process_session(
             actor,
             credential_lease=CredentialLease(int(expires_at)),
         )
-        session = mint_graph_session(actor)
+        session = mint_graph_session(actor, config)
     session_context(session)
     logger.info("Verified graph process authority minted")
     return session

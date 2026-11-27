@@ -19,6 +19,7 @@ from enum import StrEnum
 from functools import partial
 from typing import Any
 
+from arbora.core.settings import RuntimeConfig
 from arbora.security.key_cache import JwksCache
 
 __all__ = [
@@ -247,11 +248,11 @@ def bearer_evidence(
     return event
 
 
-def profile_from_settings() -> BearerVerificationProfile | None:
+def profile_from_settings(runtime: RuntimeConfig) -> BearerVerificationProfile | None:
     """The deployment's bearer profile, or ``None`` when no local issuer is configured."""
     from arbora.security.settings import security_settings
 
-    config = security_settings()
+    config = security_settings(runtime)
     issuer = str(config.auth_jwt_issuer or "").strip()
     audience = str(config.auth_jwt_audience or "").strip()
     authority = str(config.auth_jwt_jwks_uri or "").strip()
@@ -280,7 +281,7 @@ async def precheck_bearer(
     """
     import time as _time
 
-    profile = profile_from_settings()
+    profile = profile_from_settings(key_cache.config)
     if profile is None:
         return None
     keys: Mapping[str, Any] | None

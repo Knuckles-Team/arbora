@@ -99,7 +99,7 @@ def _compose(monkeypatch: pytest.MonkeyPatch, admin: _Admin, **changes: Any) -> 
         roles=("kg:read", "identity:admin"),
         credential_expires_at=int(time.time()) + 3600,
     )
-    process = request_identity.mint_graph_session(actor)
+    process = request_identity.mint_graph_session(actor, RuntimeConfig())
     return compose_served_invocation(
         config=RuntimeConfig(),
         keys=JwksCache(),

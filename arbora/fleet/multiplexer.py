@@ -3879,8 +3879,8 @@ class MCPMultiplexer:
             raise RuntimeError("Remote MCP child cannot use an inline proxy")
         return trust
 
-    @staticmethod
     async def _open_remote_child_transport(
+        self,
         url: str,
         explicit_transport: str,
         headers: dict[str, str] | None,
@@ -3926,7 +3926,7 @@ class MCPMultiplexer:
         else:
             from arbora.security.client_credentials import child_auth
 
-            _svc_auth = child_auth(headers)
+            _svc_auth = child_auth(headers, self._fleet.config)
         use_sse = explicit_transport == "sse" or url.rstrip("/").endswith("/sse")
         if use_sse:
             # D-MTT-1: `_svc_auth` is a local `httpx.Auth` (see
@@ -4378,7 +4378,9 @@ class MCPMultiplexer:
                 service_session_max_age,
             )
 
-            session_max_age = service_session_max_age(cfg.get("headers"))
+            session_max_age = service_session_max_age(
+                cfg.get("headers"), self._fleet.config
+            )
         runtime: _child_resilience.ChildRuntime
 
         async def _on_generation(live_tools: list[_typing.Any]) -> None:

@@ -84,8 +84,8 @@ def build_host_context() -> HostContext:
     The one key cache is shared by the authority (boot and renewal) and the caches
     (request validation), so a key fetched by either is current for both.
     """
-    keys = JwksCache()
     config = RuntimeConfig()
+    keys = JwksCache(config)
     authority = ProcessAuthority(keys, config=config)
     return compose_host_context_over(
         EngineHandles(process_session=authority.session, config=config),
@@ -95,9 +95,11 @@ def build_host_context() -> HostContext:
 
 def compose_host_context(engine: EngineHandles) -> HostContext:
     """Compose the host state over the given engine handles and fresh caches."""
-    keys = JwksCache()
+    config = RuntimeConfig()
+    keys = JwksCache(config)
     return compose_host_context_over(
-        engine, HostCaches(tools=ToolTable(ProcessAuthority(keys)), jwks=keys)
+        engine,
+        HostCaches(tools=ToolTable(ProcessAuthority(keys, config=config)), jwks=keys),
     )
 
 
@@ -118,7 +120,7 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         decision_principal=decide.principal,
         ports=ports,
     )
-    fleet = FleetState()
+    fleet = FleetState(config=caches.tools.authority.config)
     return HostContext(
         runs=RunState(origins=origins, a2a=a2a, decide=decide, ports=ports),
         fleet=fleet,

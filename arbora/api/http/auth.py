@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 from fastapi import HTTPException, Request
 
 from arbora.api.mcp.caller import caller_from_session
+from arbora.core.settings import RuntimeConfig
 from arbora.security.key_cache import JwksCache
 
 logger = logging.getLogger(__name__)
@@ -156,7 +157,7 @@ async def verified_bearer_session_for_request(
     try:
         actor = await _verify_bearer_headers(keys, headers)
         _require_request_snapshot(request, scope, headers)
-        return _mint_verified_session(actor)
+        return _mint_verified_session(actor, keys.config)
     except PermissionError:
         raise HTTPAuthenticationError("Verified request session required") from None
 
@@ -200,11 +201,11 @@ def _require_request_snapshot(
         raise HTTPAuthenticationError("Request changed during verification")
 
 
-def _mint_verified_session(actor: Any) -> GraphSession:
+def _mint_verified_session(actor: Any, config: RuntimeConfig) -> GraphSession:
     """Retain the verified actor and tenant in AU's current session projection."""
     from arbora.security.request_identity import mint_graph_session
 
-    session = mint_graph_session(actor)
+    session = mint_graph_session(actor, config)
     if session.actor is not actor or session.tenant != actor.tenant_id:
         raise HTTPAuthenticationError("Verified session authority mismatch")
     session.ensure_authority_current()

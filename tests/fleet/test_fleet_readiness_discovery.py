@@ -215,7 +215,7 @@ def test_onboarding_failure_names_step_and_engine_code(caplog) -> None:
     module_remember = module._remember_declaration
     module._remember_declaration = lambda declarations, name, pack: None  # type: ignore[assignment]
     module_auth = module._child_auth
-    module._child_auth = lambda: None
+    module._child_auth = lambda *_: None
     try:
         with caplog.at_level("WARNING"):
             asyncio.run(_onboard_all(onboarding, [endpoint], report))

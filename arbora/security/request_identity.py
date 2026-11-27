@@ -77,8 +77,10 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 from arbora.core.environment import read_env
+from arbora.core.settings import RuntimeConfig
 from arbora.security.error_surface import carry_errors
 from arbora.security.key_cache import JwksCache
+from arbora.security.settings import DEFAULT_JWT_ALGORITHMS
 
 from .actor_context import (
     ActorContext,
@@ -526,7 +528,7 @@ def _is_local_process_context(context: Any) -> bool:
     )
 
 
-def mint_graph_session(actor: ActorContext) -> GraphSession:
+def mint_graph_session(actor: ActorContext, config: RuntimeConfig) -> GraphSession:
     """Mint the server-owned :class:`GraphSession` for an authenticated actor.
 
     This is the single served-boundary claims-to-session projection.  Tenant,
@@ -540,10 +542,11 @@ def mint_graph_session(actor: ActorContext) -> GraphSession:
     """
     from arbora.security.settings import security_settings
 
-    config = security_settings()
-
-    audience = str(config.auth_jwt_audience or config.mcp_jwt_audience or "").strip()
-    policy_version = str(config.kg_policy_version or "").strip()
+    settings = security_settings(config)
+    audience = str(
+        settings.auth_jwt_audience or settings.mcp_jwt_audience or ""
+    ).strip()
+    policy_version = str(settings.kg_policy_version or "").strip()
     return _mint_graph_session(
         actor,
         audience=audience,
@@ -654,7 +657,7 @@ def _require_served_profile_authority(transport: str, config: Any) -> None:
 
 def apply_served_security_profile(
     transport: str,
-    config: Any = None,
+    config: RuntimeConfig,
     *,
     transport_auth_configured: bool = False,
 ) -> None:
@@ -682,13 +685,6 @@ def apply_served_security_profile(
     """
     if transport not in SERVED_TRANSPORTS:
         return
-
-    if config is None:
-        from arbora.security.settings import security_settings
-
-        _config = security_settings()
-
-        config = _config
 
     from arbora.security.anonymous import enabled
 
@@ -718,7 +714,7 @@ def apply_served_security_profile(
     )
 
 
-def actor_from_claims(claims: dict[str, Any]) -> ActorContext:
+def actor_from_claims(claims: dict[str, Any], config: RuntimeConfig) -> ActorContext:
     """Mint an ``authenticated`` :class:`ActorContext` from validated JWT claims.
 
     Delegates claim parsing to the one IdP-agnostic normalizer
@@ -741,13 +737,18 @@ def actor_from_claims(claims: dict[str, Any]) -> ActorContext:
     """
     from arbora.security.settings import security_settings
 
-    config = security_settings()
+    return actor_from_claims_and_group_map(
+        claims, security_settings(config).identity_group_capability_map
+    )
 
+
+def actor_from_claims_and_group_map(
+    claims: dict[str, Any], group_map: dict[str, list[str]] | None
+) -> ActorContext:
+    """The actor of validated ``claims`` under the group-to-capability ``group_map``."""
     from .identity import base_capabilities, normalize_identity
 
     identity = normalize_identity(claims)
-    group_map = getattr(config, "identity_group_capability_map", None)
-
     actor_type = ActorType.HUMAN if identity.email else ActorType.AUTOMATED_SERVICE
     credential_expires_at = _claim_expiry(claims)
     return ActorContext(
@@ -856,13 +857,14 @@ def _mint_local_process_authority(grant: LocalProcessGrant) -> GraphSession:
         public_jwks,
         issuer=_LOCAL_PROCESS_ISSUER,
         audience=_LOCAL_PROCESS_AUDIENCE,
+        algorithms=DEFAULT_JWT_ALGORITHMS,
     )
     del token
     # The proof key and token are destroyed, but their validated expiry remains
     # authority. Long-running process callers renew by minting a fresh proof;
     # destroying proof material must never turn a bounded credential into an
     # indefinite process grant.
-    actor = _actor_with_credential_lease(actor_from_claims(claims))
+    actor = _actor_with_credential_lease(actor_from_claims_and_group_map(claims, None))
     session = _mint_graph_session(
         actor,
         audience=_LOCAL_PROCESS_AUDIENCE,
@@ -985,14 +987,12 @@ def system_write_session(keys: JwksCache, config: Any = None) -> GraphSession:
         return anonymous_session()
 
     if config is None:
-        from arbora.security.settings import security_settings
-
-        config = security_settings()
+        config = keys.config
     if local_process_authority_enabled(config):
         return mint_local_process_session()
     token = acquire_process_identity_token(config)
     actor = mint_actor_from_token_sync(token, keys)
-    return mint_graph_session(actor)
+    return mint_graph_session(actor, config)
 
 
 async def actor_from_bearer_token(
@@ -1006,7 +1006,7 @@ async def actor_from_bearer_token(
     """
     from arbora.security.settings import security_settings
 
-    config = security_settings()
+    config = security_settings(keys.config)
 
     from .auth import _decode_jwt, fetch_jwks
 
@@ -1024,8 +1024,9 @@ async def actor_from_bearer_token(
         jwks,
         issuer=config.auth_jwt_issuer,
         audience=config.auth_jwt_audience,
+        algorithms=config.auth_jwt_algorithms,
     )
-    actor = actor_from_claims(claims)
+    actor = actor_from_claims(claims, keys.config)
     if require_direct_service and (
         "act" in claims
         or claims.get("aud") != config.auth_jwt_audience
@@ -1062,7 +1063,7 @@ async def verify_local_bearer_token(
     """
     from arbora.security.settings import security_settings
 
-    config = security_settings()
+    config = security_settings(keys.config)
 
     from .auth import (
         HTTP_401_UNAUTHORIZED,
@@ -1079,7 +1080,13 @@ async def verify_local_bearer_token(
         raise PermissionError("Verified local bearer issuer is not configured")
     try:
         jwks = await fetch_jwks(keys, config.auth_jwt_jwks_uri)
-        claims = _decode_jwt(token, jwks, issuer=issuer, audience=audience)
+        claims = _decode_jwt(
+            token,
+            jwks,
+            issuer=issuer,
+            audience=audience,
+            algorithms=config.auth_jwt_algorithms,
+        )
     except TokenValidationError as exc:
         if exc.status_code == HTTP_401_UNAUTHORIZED:
             raise PermissionError("Verified local bearer token was rejected") from None
@@ -1146,18 +1153,12 @@ def _validate_process_identity_token(token: str) -> str:
     return token
 
 
-def acquire_process_identity_token(config: Any = None) -> str:
+def acquire_process_identity_token(config: Any) -> str:
     """Acquire the graph process JWT from exactly one runtime identity source.
 
     Configuration stores only secret references or an OAuth2 client-credentials
     block. Token material is resolved/minted at startup and is never logged.
     """
-    if config is None:
-        from arbora.security.settings import security_settings
-
-        live_config = security_settings()
-
-        config = live_config
     token_ref, oauth2 = _resolve_process_identity_source(config)
     token = _fetch_process_identity_token(token_ref, oauth2)
     return _validate_process_identity_token(token)
@@ -1222,7 +1223,7 @@ async def _send_json(send: Any, status: int, payload: dict[str, Any]) -> None:
 
 
 async def _resolve_prevalidated_actor(
-    prevalidated: Any, send: Any
+    prevalidated: Any, send: Any, config: RuntimeConfig
 ) -> tuple[ActorContext | None, bool]:
     """``(actor, handled)`` from the outer HTTP boundary's already-verified
     claims — ``handled=True`` means a 401 was already sent and the caller
@@ -1233,7 +1234,7 @@ async def _resolve_prevalidated_actor(
     # credential. Reuse its claims rather than making a second JWKS
     # lookup/verification pass with potentially different timing.
     try:
-        return actor_from_claims(prevalidated), False
+        return actor_from_claims(prevalidated, config), False
     except (TypeError, ValueError):
         await _send_json(send, 401, {"error": "Token validation failed"})
         return None, True
@@ -1276,7 +1277,7 @@ async def _resolve_request_actor(
     """``(actor, handled)`` — tries prevalidated claims first, then a live
     bearer-token verification, in the SAME order and under the SAME JWKS
     availability gate as the original inline sequence."""
-    actor, handled = await _resolve_prevalidated_actor(prevalidated, send)
+    actor, handled = await _resolve_prevalidated_actor(prevalidated, send, keys.config)
     if handled:
         return None, True
     if token and not config.auth_jwt_jwks_uri:
@@ -1326,7 +1327,9 @@ async def _read_body(receive: Any, limit: int = 1_048_576) -> bytes | None:
             return bytes(body)
 
 
-async def _mint_request_session(actor: ActorContext, send: Any) -> GraphSession | None:
+async def _mint_request_session(
+    actor: ActorContext, send: Any, config: RuntimeConfig
+) -> GraphSession | None:
     """The server-owned GraphSession, or ``None`` once the matching 401/403 has
     already been sent.
 
@@ -1340,7 +1343,7 @@ async def _mint_request_session(actor: ActorContext, send: Any) -> GraphSession 
     from arbora.security.session import SessionExpiredError
 
     try:
-        return mint_graph_session(actor)
+        return mint_graph_session(actor, config)
     except (CredentialExpiredError, SessionExpiredError):
         await _send_json(send, 401, {"error": "Bearer credential expired"})
         return None
@@ -1454,7 +1457,7 @@ class ActorIdentityMiddleware:
             authenticated=True,
             credential_expires_at=admitted.expires_at,
         )
-        session = await _mint_request_session(actor, send)
+        session = await _mint_request_session(actor, send, self._keys.config)
         if session is None:
             return
         replayed = False
@@ -1526,7 +1529,7 @@ class ActorIdentityMiddleware:
 
         from arbora.security.settings import security_settings
 
-        config = security_settings()
+        config = security_settings(self._keys.config)
 
         from arbora.security.anonymous import enabled, validate_request
         from arbora.security.anonymous import session as anonymous_session
@@ -1586,7 +1589,7 @@ class ActorIdentityMiddleware:
         # The authenticated request establishes both ambient currencies.  The
         # session is minted here, outside every served route, so async tasks and
         # worker-thread dispatch inherit one immutable, verified authority.
-        session = await _mint_request_session(actor, send)
+        session = await _mint_request_session(actor, send, self._keys.config)
         if session is None:
             return
 
@@ -1606,6 +1609,7 @@ __all__ = [
     "acquire_process_identity_token",
     "actor_from_bearer_token",
     "actor_from_claims",
+    "actor_from_claims_and_group_map",
     "apply_served_security_profile",
     "build_verified_request_authority",
     "local_process_authority_enabled",

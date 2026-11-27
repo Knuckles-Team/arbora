@@ -438,7 +438,9 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
     from arbora.security.session import use_session
     from arbora.semantic_provisioning import provision_semantic_content
 
-    session = runtime._mint_process_session("http", JwksCache(), RuntimeConfig())
+    session = runtime._mint_process_session(
+        "http", JwksCache(config := RuntimeConfig()), config
+    )
     with use_actor(session.actor), use_session(session):
         from arbora.mcp_server.served_engine import EngineHandles
 
@@ -492,7 +494,9 @@ async def _onboard_fleet(
     endpoints = configured_fleet_endpoints(exclude=self_served_connectors())
     if profile is not None:
         endpoints = select_endpoints(endpoints, profile)
-    session = runtime._mint_process_session("http", JwksCache(), RuntimeConfig())
+    session = runtime._mint_process_session(
+        "http", JwksCache(config := RuntimeConfig()), config
+    )
     with use_actor(session.actor), use_session(session):
         from arbora.mcp_server.served_engine import EngineHandles
 
@@ -545,7 +549,9 @@ async def _check_fleet_coverage() -> dict[str, Any]:
     registered = registered_connectors(exclude=exclude)
     endpoints = configured_fleet_endpoints(exclude=exclude)
 
-    session = runtime._mint_process_session("http", JwksCache(), RuntimeConfig())
+    session = runtime._mint_process_session(
+        "http", JwksCache(config := RuntimeConfig()), config
+    )
     with use_actor(session.actor), use_session(session):
         from arbora.mcp_server.served_engine import EngineHandles
 

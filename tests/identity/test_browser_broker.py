@@ -30,7 +30,7 @@ def broker_fixture(monkeypatch, synthetic_signing_key):
         kg_policy_version="fixture-policy",
         auth_jwt_algorithms=["RS256"],
     )
-    monkeypatch.setattr(settings, "security_settings", lambda: config)
+    monkeypatch.setattr(settings, "security_settings", lambda _config: config)
     key = RSAKey.import_key(synthetic_signing_key)
 
     async def jwks(_keys, uri):
