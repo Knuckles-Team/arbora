@@ -131,11 +131,11 @@ async def test_unavailable_starts_team_available_keeps_primary_and_status_surviv
 
     # A new coordinator (a restart) sees the status only in the engine graph; the
     # status is the engine's snake_case TeamTaskStatus.
-    assert graph.nodes["team:t1:task:k1"]["status"] == "working"
-    graph.nodes["team:t1:task:k1"]["status"] = "submitted"
+    assert graph.nodes["team:t1:task:k1"]["taskStatus"] == "working"
+    graph.nodes["team:t1:task:k1"]["taskStatus"] = "submitted"
     kept = await _coordinator(graph).coordinate(channel_signal="available", **args)
     assert kept["path"] == "primary_channel"
-    assert graph.nodes["team:t1:task:k1"]["status"] == "submitted"
+    assert graph.nodes["team:t1:task:k1"]["taskStatus"] == "submitted"
 
 
 @pytest.mark.spec("ARBORA-OPS-R877")
@@ -154,7 +154,7 @@ async def test_an_abstention_keeps_the_normal_path_and_names_the_code() -> None:
         "option": "primary_channel",
         "abstained": "TEAM_SIGNAL_STALE",
     }
-    assert graph.nodes["team:t2:task:k"]["status"] == "submitted"
+    assert graph.nodes["team:t2:task:k"]["taskStatus"] == "submitted"
 
 
 @pytest.mark.spec("ARBORA-OPS-R877")
@@ -240,8 +240,8 @@ def test_a2a_dispatch_runs_the_team_coordinator_and_status_survives_restart(
     labels = {node["label"] for node in graph.nodes.values()}
     assert labels == {"Team", "TeamMember", "TeamTask"}
     # Task status lives only in the engine graph: it is there after the restart.
-    assert graph.nodes[f"team:{down_id}:task:{down_id}"]["status"] == "working"
-    assert graph.nodes[f"team:{up_id}:task:{up_id}"]["status"] == "submitted"
+    assert graph.nodes[f"team:{down_id}:task:{down_id}"]["taskStatus"] == "working"
+    assert graph.nodes[f"team:{up_id}:task:{up_id}"]["taskStatus"] == "submitted"
 
 
 @pytest.mark.spec("ARBORA-OPS-R877")

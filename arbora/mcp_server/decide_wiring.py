@@ -93,7 +93,7 @@ async def _search_agent_cards(eg_client: Any, session: Any) -> Any:
 
     component = importlib.import_module("medulla.generated.agent_component")
     storage = importlib.import_module("medulla.generated.storage")
-    graph = str(getattr(session, "graph", "") or "").strip()
+    graph = str(getattr(session, "graph", "")).strip()
     if not graph:
         raise LookupError("the verified session is not bound to a graph")
     request = component.AgentComponentSearchRequest(
@@ -155,10 +155,28 @@ def _guardrail_source(policy: ActionPolicy) -> Callable[[Sequence[str]], Any]:
     return lookup
 
 
-def _workflow_lookup(engine: Any) -> Callable[[Sequence[str]], Any]:
-    """The planner's compiled-workflow lookup: the registered graph workflow
-    store's semantic match over the planned tasks."""
-    raise not_served("knowledge_graph.workflow_store", "MEDULLA-CQ-ORCH-R700")
+def _workflow_lookup(
+    client_factory: Callable[[], Any], session: Any
+) -> Callable[[Sequence[str]], Any]:
+    """The planner's compiled-workflow lookup: the engine ``WorkflowRegistry`` read.
+
+    The engine client is built on the first lookup, once (ARBORA-HOST-R022.1).
+    """
+    from arbora.mcp_server.workflow_registry import workflow_lookup
+
+    return workflow_lookup(client_factory, str(getattr(session, "graph", "")))
+
+
+def _install_workflow_lookup(
+    client_for_session: Callable[[Any], Any], session: Any
+) -> bool:
+    """Build the lookup without reading the registry or creating a client."""
+    try:
+        _workflow_lookup(lambda: client_for_session(session), session)
+    except Exception as exc:
+        logger.warning("workflow lookup install skipped: %s", _reason(exc))
+        return False
+    return True
 
 
 def _install_planner(
@@ -213,6 +231,7 @@ def install_decide_consumers(
         "topology": False,
         "task_planner": False,
         "cross_source": False,
+        "workflow_lookup": False,
     }
     assembler = None
     try:
@@ -239,6 +258,7 @@ def install_decide_consumers(
             installed["task_planner"] = True
         except Exception as exc:
             logger.warning("task planner install skipped: %s", _reason(exc))
+    installed["workflow_lookup"] = _install_workflow_lookup(client_for_session, session)
     try:
         installed["cross_source"] = _install_cross_source(eg_client)
     except Exception as exc:

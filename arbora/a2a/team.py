@@ -172,7 +172,12 @@ class TeamCoordinator:
         for task_id, status in tasks.items():
             await send(
                 "CreateNodeIfAbsent",
-                _node("TeamTask", f"{team_node}:task:{task_id}", status=status),
+                _node(
+                    "TeamTask",
+                    f"{team_node}:task:{task_id}",
+                    boundToTeam=team_node,
+                    taskStatus=status,
+                ),
             )
         request = team_request(
             self._tenant,
@@ -193,13 +198,68 @@ class TeamCoordinator:
                     {
                         "node_id": f"{team_node}:task:{task_id}",
                         "conditions_msgpack": msgpack.packb({}),
-                        "updates_msgpack": msgpack.packb({"status": ACCEPTED}),
+                        "updates_msgpack": msgpack.packb({"taskStatus": ACCEPTED}),
                     },
                 )
         applied = {"path": option, "option": option}
         if abstained is not None:
             applied["abstained"] = abstained
         return applied
+
+
+#: The nodes read per label and page; a team larger than this many nodes is read in pages.
+READ_PAGE = 500
+MAX_READ_PAGES = 64
+
+
+async def _nodes(send: TeamSend, label: str) -> list[tuple[str, dict[str, Any]]]:
+    """Every node of ``label`` the verified caller may see, in pages."""
+    from arbora.api.ops._engine import node_rows
+
+    rows: list[tuple[str, dict[str, Any]]] = []
+    after: str | None = None
+    for _ in range(MAX_READ_PAGES):
+        request: dict[str, Any] = {"label": label, "limit": READ_PAGE}
+        if after is not None:
+            request["after"] = after
+        page = node_rows(await send("GetNodesByLabel", request))
+        rows.extend(page)
+        if len(page) < READ_PAGE:
+            break
+        after = page[-1][0]
+    return rows
+
+
+async def read_team(send: TeamSend, team_id: str) -> dict[str, Any] | None:
+    """The team, its bound members and its task statuses, read from the engine graph.
+
+    Arbora keeps no team state (ARBORA-HOST-R026.6): a fresh host reads the same record.
+    A team the caller cannot see answers exactly like an absent one, ``None``.
+    """
+    team_node = f"team:{team_id}"
+    if team_node not in {node for node, _ in await _nodes(send, "Team")}:
+        return None
+    members = sorted(
+        node
+        for node, props in await _nodes(send, "TeamMember")
+        if props.get("boundToTeam") == team_node
+    )
+    tasks = sorted(
+        (node, props)
+        for node, props in await _nodes(send, "TeamTask")
+        if props.get("boundToTeam") == team_node
+    )
+    return {
+        "team_id": team_id,
+        "members": [m.removeprefix(f"{team_node}:member:") for m in members],
+        "tasks": [
+            {
+                "task_id": node.removeprefix(f"{team_node}:task:"),
+                "status": str(props.get("taskStatus", "")),
+            }
+            for node, props in tasks
+        ],
+    }
 
 
 #: ``hook(session, message, task_id, owner_ref, agent_name, now_ms)`` is the one call
@@ -294,5 +354,6 @@ __all__ = [
     "bind_team_coordination",
     "chosen_option",
     "host_team_hook",
+    "read_team",
     "team_request",
 ]

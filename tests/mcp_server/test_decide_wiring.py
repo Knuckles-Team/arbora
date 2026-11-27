@@ -51,7 +51,13 @@ def test_all_three_bind_and_each_guarded_skip(monkeypatch, caplog):
     monkeypatch.setattr("arbora.api.ops.plans.engine_task_plan", fake_task_plan)
     with caplog.at_level(logging.INFO, logger=decide_wiring.logger.name):
         installed = install_decide_consumers(lambda _s: client, session, engine)
-    assert set(installed) == {"assembler", "topology", "task_planner", "cross_source"}
+    assert set(installed) == {
+        "assembler",
+        "topology",
+        "task_planner",
+        "cross_source",
+        "workflow_lookup",
+    }
     # Each binding that the engine does not serve yet is skipped with its reason.
     assert installed["assembler"] is False
     assert installed["cross_source"] is False
