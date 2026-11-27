@@ -67,7 +67,7 @@ class OrchestratorA2ARouter:
     Arbora does not rank task text against capabilities; that choice belongs
     to the engine. A message names its agent in ``metadata.agent_name``; a
     message that names none (the TUI, plain A2A clients) runs on the fleet's
-    default agent (:data:`arbora.host_bindings.FLEET_AGENT_NAME`) and makes no
+    default agent (:data:`arbora.core.agent_names.FLEET_AGENT_NAME`) and makes no
     decision call. With a ``decide`` port wired, a named agent is resolved by the
     engine ``A2aRoute`` decision (``ARBORA-A2A-R023``): the task dispatches only to
     the graph the sealed record names, and an abstention refuses it. The
@@ -124,7 +124,7 @@ class OrchestratorA2ARouter:
     ) -> A2ARouteDecision:
         name = str(message.metadata.get("agent_name") or "").strip()
         if not name:
-            from arbora.host_bindings import FLEET_AGENT_NAME
+            from arbora.core.agent_names import FLEET_AGENT_NAME
 
             return A2ARouteDecision(
                 agent_name=FLEET_AGENT_NAME, selection_mode="default-agent"

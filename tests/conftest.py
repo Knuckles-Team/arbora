@@ -36,7 +36,7 @@ def default_agent_registered(monkeypatch: pytest.MonkeyPatch) -> None:
     that drives ``agents.run`` without its own engine takes this entry from the host.
     """
     from arbora.api.ops import agent_library
-    from arbora.host_bindings import FLEET_AGENT_NAME
+    from arbora.core.agent_names import FLEET_AGENT_NAME
 
     real = agent_library.current_entry
 

@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from arbora import host_bindings as hb
+from arbora.core.agent_names import FLEET_TOOLS
 from arbora.messaging.host_ports import host_ports, reset_host_ports
 from arbora.observability.state import RuntimeSignalBuffer
 
@@ -42,7 +43,7 @@ def test_send_gate_admits_only_a_session_with_a_send_scope(
 def test_decision_is_a_frozen_record_and_the_fleet_toolset_has_two_tools():
     import dataclasses
 
-    assert hb.FLEET_TOOLS == ("find", "act")
+    assert FLEET_TOOLS == ("find", "act")
     assert dataclasses.is_dataclass(hb.SendDecision)
     fields = {f.name for f in dataclasses.fields(hb.SendDecision)}
     assert {"allowed", "decision", "reason"} == fields

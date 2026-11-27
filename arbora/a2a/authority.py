@@ -563,7 +563,7 @@ class WorkItemA2AAuthority:
             work_items.get_work_item, work_engine, self._work_item_id(task_id)
         )
         if existing is None:
-            from arbora.host_bindings import preloaded_agent_tools
+            from arbora.core.agent_names import preloaded_agent_tools
 
             try:
                 await self.delegations.record(
@@ -729,8 +729,8 @@ class WorkItemA2AAuthority:
         from contextlib import nullcontext
 
         from arbora.agent_runs import native_run_scope, native_stream_scope
+        from arbora.core.agent_names import preloaded_agent_tools
         from arbora.current_plan_publication import bind_admitted_claim
-        from arbora.host_bindings import preloaded_agent_tools
 
         run_session, acting_scope = _acting_scope(session, acting_session)
         subset = await self._selected_tools(work_engine, item_id)

@@ -28,6 +28,7 @@ from typing import Any
 
 from fastmcp.server.extensions import ServerExtension
 
+from arbora.core.agent_names import FLEET_AGENT_NAME, FLEET_TOOLS
 from arbora.core.environment import read_env
 from arbora.observability.state import HealthState, RuntimeSignalBuffer
 from arbora.security.key_cache import JwksCache
@@ -35,8 +36,6 @@ from arbora.unique_records import create_record, has_record_writer
 
 __all__ = [
     "A2A_PATH",
-    "FLEET_AGENT_NAME",
-    "FLEET_TOOLS",
     "SendDecision",
     "action_gate",
     "bind_health_probes",
@@ -47,20 +46,6 @@ __all__ = [
     "prompt_normalizer",
     "turn_handler",
 ]
-
-#: The intent tools through which the fleet agent reaches the multiplexer.
-FLEET_TOOLS = ("find", "act")
-#: The fleet's default agent: an A2A message or ``agents.run`` that names no
-#: ``metadata.agent_name`` runs on it.
-FLEET_AGENT_NAME = "arbora"
-#: The default profile requested by overstory's orchestrator model.
-WEBUI_AGENT_NAME = "webui-assistant"
-
-
-def preloaded_agent_tools(agent_name: str) -> tuple[str, ...] | None:
-    """Select hosted intent tools; caller/session admission remains unchanged."""
-    return FLEET_TOOLS if agent_name in {FLEET_AGENT_NAME, WEBUI_AGENT_NAME} else None
-
 
 #: The model of the fleet agent, as a pydantic-ai model name.
 MODEL_SETTING = "ARBORA_AGENT_MODEL"

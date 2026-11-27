@@ -212,7 +212,7 @@ def test_an_in_process_request_names_itself() -> None:
 
 def test_the_fleet_agent_toolset_binds_the_served_intent_verbs(monkeypatch) -> None:
     """0.1.4: 'requested native Arbora tool is unavailable' for find/act."""
-    from arbora.host_bindings import FLEET_TOOLS
+    from arbora.core.agent_names import FLEET_TOOLS
     from arbora.mcp_server import runtime
     from arbora.mcp_server.host_caches import ToolTable
 
@@ -313,7 +313,7 @@ def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(
 ) -> None:
     """The run's RunEvents name the task; the fleet agent gets find/act."""
     from arbora.a2a import authority as authority_mod
-    from arbora.host_bindings import FLEET_TOOLS
+    from arbora.core.agent_names import FLEET_TOOLS
 
     seen: list[Any] = []
 
