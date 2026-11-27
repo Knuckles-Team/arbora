@@ -40,6 +40,7 @@ __all__ = [
 ]
 
 CONFIG_DIR_SETTING = "ARBORA_CONFIG_DIR"
+DATA_DIR_SETTING = "ARBORA_DATA_DIR"
 _APP_DIR = "arbora"
 
 
@@ -55,6 +56,12 @@ def _env_dir(name: str) -> Path | None:
 def config_dir() -> Path:
     """``ARBORA_CONFIG_DIR`` or ``$XDG_CONFIG_HOME/arbora`` (not created)."""
     return _env_dir(CONFIG_DIR_SETTING) or _config_home() / _APP_DIR
+
+
+def data_dir() -> Path:
+    """``ARBORA_DATA_DIR`` or ``$XDG_DATA_HOME/arbora`` (default ``~/.local/share/arbora``)."""
+    default = Path(setting("XDG_DATA_HOME", "") or Path.home() / ".local" / "share")
+    return _env_dir(DATA_DIR_SETTING) or default / _APP_DIR
 
 
 def mcp_config_path() -> Path:

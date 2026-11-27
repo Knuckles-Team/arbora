@@ -18,9 +18,8 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from meristem.core.paths import data_dir
 
-from arbora.core.settings import config_dir, mcp_config_path, setting
+from arbora.core.settings import config_dir, data_dir, mcp_config_path, setting
 from arbora.fleet.mcp_catalog import parse_mcp_servers
 from arbora.gateway.models import (
     DashboardLayout,

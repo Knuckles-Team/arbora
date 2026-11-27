@@ -13,7 +13,6 @@ from uuid import uuid4
 
 import acp
 from acp import schema
-from meristem.harness.hosted_run import iterate_client_run
 from meristem.host_ports import ClientCapabilityRefused
 from meristem.runtime import RunRequest
 from pydantic_ai.messages import (
@@ -24,6 +23,8 @@ from pydantic_ai.messages import (
     ToolCallPart,
 )
 from pydantic_ai_harness.experimental.acp import default_coding_presenter
+
+from arbora.pin_lag.meristem import hosted_run
 
 from .coding_session import (
     ClientCapability,
@@ -133,7 +134,8 @@ class HostedACPAgent:
         self._closed = closed
         self._transport_admission = transport_admission
         self._harness_available = (
-            "stream_observer" in inspect.signature(iterate_client_run).parameters
+            "stream_observer"
+            in inspect.signature(hosted_run().iterate_client_run).parameters
         )
         self._policy = AcpSessionAdmission(policy)
         self._admission = CodingSessionAdmission(policy, trusted_roots=trusted_roots)
@@ -319,7 +321,7 @@ class HostedACPAgent:
 
         transport = _ClientTransport(self, session_id)
         async with aclosing(
-            iterate_client_run(request, transport, stream_observer=observe)
+            hosted_run().iterate_client_run(request, transport, stream_observer=observe)
         ) as run:
             async for event in run:
                 if event["type"] == "error":

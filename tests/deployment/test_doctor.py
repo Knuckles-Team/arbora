@@ -1206,3 +1206,25 @@ def test_langfuse_mcp_live_probe_fails_closed(monkeypatch, responses):
     _patch_langfuse_mcp_probe(monkeypatch, responses)
 
     assert D._probe_langfuse_mcp_visibility(SimpleNamespace()) is False
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.24")
+def test_python_env_reports_meristem_version() -> None:
+    import importlib.metadata
+
+    with patch.object(importlib.metadata, "version", return_value="9.9.9"):
+        result = D._check_python_env()
+    assert "meristem 9.9.9" in result["detail"]
+    assert result["status"] == "ok"
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.24")
+def test_python_env_fails_when_meristem_absent() -> None:
+    import importlib.metadata
+
+    absent = importlib.metadata.PackageNotFoundError("meristem")
+    with patch.object(importlib.metadata, "version", side_effect=absent):
+        result = D._check_python_env()
+    assert result["status"] == "fail"
+    assert result["detail"] == "meristem not installed"
+    assert result["remediation"] == "pip install meristem"

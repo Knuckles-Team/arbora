@@ -507,7 +507,7 @@ class SandboxGateRunner:
 
     async def apply_edits(self, workspace: Any, edits: tuple[Any, ...]) -> bool:
         """Validate the whole edit set without writing, then write it."""
-        from meristem.harness.edit_engine import apply_edits
+        from arbora.pin_lag.meristem import apply_edits
 
         if not self._seams.is_sandbox(workspace.backend):
             return False

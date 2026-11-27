@@ -151,3 +151,11 @@ def test_credential_refs_require_runtime_secret_uris():
             widget_type="portainer",
             credential_refs={"api_key": "top-secret"},
         )
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.38")
+def test_layout_path_under_data_dir(monkeypatch, tmp_path) -> None:
+    from arbora.gateway.config import dashboard_layout_path
+
+    monkeypatch.setenv("ARBORA_DATA_DIR", str(tmp_path))
+    assert dashboard_layout_path() == tmp_path / "layout.yaml"

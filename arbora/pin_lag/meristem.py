@@ -44,6 +44,72 @@ _ANSWER_TYPES: tuple[str, ...] = (
 MEDIA_METHODS: tuple[str, ...] = ("MediaPut", "MediaGet", "MediaTombstone")
 
 
+#: The shape of ``meristem.PUBLIC_HOST_MODULES`` on meristem ``main``. A pinned release
+#: that does not declare the tuple is checked against this copy (PIN-LAG: remove it and
+#: read the installed tuple only after the meristem re-pin).
+MAIN_PUBLIC_HOST_MODULES: tuple[str, ...] = (
+    "meristem.host_ports",
+    "meristem.runtime",
+    "meristem.graph",
+    "meristem.rlm",
+    "meristem.graph.hosted_run",
+    "meristem.harness.plan_runtime",
+    "meristem.harness.conversation_history",
+)
+
+
+def public_host_modules() -> tuple[str, ...]:
+    """The installed ``meristem.PUBLIC_HOST_MODULES``, or refuse naming it."""
+    try:
+        import meristem
+    except ImportError:
+        raise PinLagUnavailable("meristem") from None
+    declared = getattr(meristem, "PUBLIC_HOST_MODULES", None)
+    if declared is None:
+        raise PinLagUnavailable("meristem.PUBLIC_HOST_MODULES")
+    return tuple(declared)
+
+
+def fence_modules() -> tuple[tuple[str, ...], bool]:
+    """The module list the import fence checks, and whether it came from the install.
+
+    Against a pinned release without the declaration the fence still runs, on the main
+    shape; the second value is ``False`` then.
+    """
+    try:
+        return public_host_modules(), True
+    except PinLagUnavailable:
+        return MAIN_PUBLIC_HOST_MODULES, False
+
+
+def hosted_run() -> Any:
+    """``meristem.graph.hosted_run`` (main), or the pinned release's earlier location."""
+    try:
+        from meristem.graph import hosted_run as module
+    except ImportError:
+        from meristem.harness import hosted_run as module
+    return module
+
+
+def apply_edits(edits: list[Any], root: Any, *, dry_run: bool = False) -> Any:
+    """The harness edit engine: no public module exports it yet (gap filed)."""
+    try:
+        from meristem.harness.edit_engine import apply_edits as engine
+    except ImportError:
+        raise PinLagUnavailable("meristem.harness.edit_engine.apply_edits") from None
+    return engine(edits, root, dry_run=dry_run)
+
+
+def plan_types() -> SimpleNamespace:
+    """``PlanItem`` and ``PlanState``: ``host_ports`` on main, ``harness.plan`` on the pin."""
+    module = _host_ports_module()
+    if hasattr(module, "PlanState"):
+        return SimpleNamespace(PlanItem=module.PlanItem, PlanState=module.PlanState)
+    from meristem.harness import plan
+
+    return SimpleNamespace(PlanItem=plan.PlanItem, PlanState=plan.PlanState)
+
+
 def _host_ports_module() -> Any:
     try:
         from meristem import host_ports
