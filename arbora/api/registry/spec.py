@@ -150,6 +150,11 @@ class HttpShape(BaseModel):
     path: str = Field(pattern=r"^/")
 
 
+#: The tags an operation may carry; each is enforced in the one invoke pipeline.
+SOURCE_AUTHORITY = "source_authority"
+OP_TAGS = frozenset({SOURCE_AUTHORITY})
+
+
 class OpSpec(BaseModel):
     """An operation's stable wire identity and authority requirements."""
 
@@ -180,6 +185,19 @@ class OpSpec(BaseModel):
     #: operation itself, under its own scope.
     function: bool = False
     content_origin: ContentOrigin = ContentOrigin.TRUSTED
+    #: The one tag mechanism: a closed set of names that the invoke pipeline
+    #: enforces. ``source_authority`` marks an operation that reads source
+    #: authority; ``invoke`` refuses its result unless it carries the engine's
+    #: sources-used-and-why block (ARBORA-FLEET-R052.3).
+    tags: frozenset[str] = frozenset()
+
+    @field_validator("tags")
+    @classmethod
+    def _known_tags(cls, value: frozenset[str]) -> frozenset[str]:
+        unknown = value - OP_TAGS
+        if unknown:
+            raise ValueError(f"unknown operation tag: {sorted(unknown)[0]}")
+        return value
 
     @field_validator("id")
     @classmethod

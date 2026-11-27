@@ -1440,11 +1440,26 @@ async def _execute(
         await _record(call, audit_ref, reservation, indeterminate)
         raise
     result = gate_result(call.op.id, result)
+    result = _require_source_block(call.op, result)
     result, evidence = _screen_outcome(call, result)
     result, hook_records = await _output_hooks(call, result)
     if hook_records:
         call = replace(call, hook_records=(*call.hook_records, *hook_records))
     return await _record(call, audit_ref, reservation, result, evidence)
+
+
+def _require_source_block(op: Any, result: OpResult | OpError) -> OpResult | OpError:
+    """A ``source_authority`` operation's result carries the engine's sources block."""
+    from arbora.api.ops._common import require_sources_block
+    from arbora.api.registry.spec import SOURCE_AUTHORITY
+
+    if SOURCE_AUTHORITY not in op.tags or isinstance(result, OpError):
+        return result
+    try:
+        require_sources_block(result.value)
+    except OperationRefused as exc:
+        return _typed_refusal(exc)
+    return result
 
 
 def _static_refusal(op: Any, surface: Surface) -> OpError | None:

@@ -20,6 +20,7 @@ from typing import Any
 import yaml
 
 from .spec import (
+    SOURCE_AUTHORITY,
     AuditClass,
     Effect,
     EgMethod,
@@ -32,6 +33,9 @@ from .spec import (
     eg_method_ref,
 )
 
+#: Engine methods whose reply is a source-authority answer: the served result
+#: carries the engine's sources-used-and-why block (ARBORA-FLEET-R052.3).
+_SOURCE_AUTHORITY_METHODS = frozenset({"SourceCoverage"})
 _EXCLUSIONS = Path(__file__).with_name("eg_exclusions.yaml")
 _VALID_CLASSES = {"user", "domain", "service-only", "approver", "admin"}
 #: Descriptor stability -> arbora operation stability. A deprecated engine
@@ -257,7 +261,15 @@ def _method_op(row: dict[str, Any], scopes: dict[str, str]) -> OpSpec:
         if effect is not Effect.READ or policy.get("audited") is True
         else AuditClass.NONE,
         function=domain == "compute" and effect is Effect.READ,
+        tags=_method_tags(method_id),
     )
+
+
+def _method_tags(method_id: str) -> frozenset[str]:
+    """The invoke tags of one engine method (the source-authority readers)."""
+    if method_id in _SOURCE_AUTHORITY_METHODS:
+        return frozenset({SOURCE_AUTHORITY})
+    return frozenset()
 
 
 def _index_methods(rows: list[Any]) -> dict[str, dict[str, Any]]:

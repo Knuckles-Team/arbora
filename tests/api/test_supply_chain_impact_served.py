@@ -43,6 +43,7 @@ class Engine:
 
     def __init__(self) -> None:
         self.sent: list[dict[str, Any]] = []
+        self.print_block = True
 
     def supply_chain_impact(self, body: dict[str, Any], _principal: str) -> Any:
         self.sent.append(body)
@@ -76,10 +77,22 @@ class Engine:
             if "gitlab" in body["connected_sources"]
             else []
         )
-        return {
+        report = {
             "service_impacts": impacts,
             "sources_used": used,
             "abstentions": abstained,
+        }
+        return {**report, **self._block(used)}
+
+    def _block(self, used: list[dict[str, Any]]) -> dict[str, Any]:
+        """The engine's sources-used-and-why block, when it prints one."""
+        if not self.print_block:
+            return {}
+        return {
+            "audit": [
+                {"source": u["source"], "why": "owns the record", "rank": n}
+                for n, u in enumerate(used, 1)
+            ]
         }
 
 
@@ -207,3 +220,42 @@ def test_report_is_served_over_mcp(
     reply = ask("ask", "report.supply_chain_impact", {"class_roots": ["Service"]})
     assert reply["ok"] is True, reply
     assert reply["result"]["report"]["service_impacts"][0]["service"] == "svc:billing"
+
+
+@pytest.mark.spec("ARBORA-FLEET-R052.3")
+def test_block_is_served_unaltered_and_its_absence_is_refused_on_both_surfaces(
+    stack: dict[str, Any],
+    served: Any,  # noqa: F811
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app, client = served
+    engine = _route(client, monkeypatch)
+    import tests.api._served_support as support
+
+    monkeypatch.setattr(support, "person", lambda *_a, **_k: _reader())
+    ask = McpAsk(stack["invocation"], monkeypatch)
+    params = {"class_roots": ["Service"]}
+
+    rest = _value(_call(app, "report.supply_chain_impact", params))
+    mcp = ask("ask", "report.supply_chain_impact", params)["result"]
+    assert rest["audit"] == mcp["audit"] == rest["report"]["audit"]
+    assert [row["source"] for row in rest["audit"]] == ["gitlab", "netbox"]
+
+    # The engine omits the block: the one invoke pipeline refuses on both surfaces.
+    engine.print_block = False
+    refused_rest = _call(app, "report.supply_chain_impact", params)
+    refused_mcp = ask("ask", "report.supply_chain_impact", params)
+    assert refused_rest.status_code >= 400
+    assert refused_rest.json()["error"]["code"] == "SOURCES_BLOCK_MISSING"
+    assert refused_mcp["ok"] is False
+    assert refused_mcp["error"]["code"] == "SOURCES_BLOCK_MISSING"
+
+
+@pytest.mark.spec("ARBORA-FLEET-R052.3")
+def test_only_tagged_operations_are_held_to_the_block() -> None:
+    from arbora.api.ops.registry_factory import get_registry
+    from arbora.api.registry.spec import SOURCE_AUTHORITY
+
+    tagged = {op.id for op in get_registry() if SOURCE_AUTHORITY in op.tags}
+    assert "report.supply_chain_impact" in tagged
+    assert "federation.sources.list" not in tagged

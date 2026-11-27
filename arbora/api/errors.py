@@ -85,6 +85,8 @@ class ArboraErrorCode(StrEnum):
     # Content screening (ARBORA-OPS-R042.4).
     CONTENT_QUARANTINED = "CONTENT_QUARANTINED"
     UNSCREENED_MEMORY_WRITE = "UNSCREENED_MEMORY_WRITE"
+    # Source authority (ARBORA-FLEET-R052.3): the engine omitted its sources block.
+    SOURCES_BLOCK_MISSING = "SOURCES_BLOCK_MISSING"
     # Operator hooks (ARBORA-OPS-R009.9).
     HOOK_FAILED = "HOOK_FAILED"
     HOOK_REJECTED = "HOOK_REJECTED"
@@ -186,6 +188,7 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.APPROVAL_DENIED: 403,
     ArboraErrorCode.CONTENT_QUARANTINED: 422,
     ArboraErrorCode.UNSCREENED_MEMORY_WRITE: 422,
+    ArboraErrorCode.SOURCES_BLOCK_MISSING: 502,
     ArboraErrorCode.HOOK_FAILED: 502,
     ArboraErrorCode.HOOK_REJECTED: 422,
     ArboraErrorCode.WRITE_BACK_UNKNOWN_FIELD: 400,

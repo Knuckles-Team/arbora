@@ -95,6 +95,7 @@ def _build_op(
     confirm: Confirm | None = None,
     surfaces: frozenset[Surface] = frozenset({Surface.MCP, Surface.HTTP, Surface.A2A}),
     http: HttpShape | None = None,
+    tags: frozenset[str] = frozenset(),
 ) -> OpSpec:
     """The one OpSpec constructor every builder below specializes."""
     return OpSpec(
@@ -113,6 +114,7 @@ def _build_op(
         confirm=confirm,
         surfaces=surfaces,
         http=http,
+        tags=tags,
     )
 
 
