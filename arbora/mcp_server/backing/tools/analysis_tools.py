@@ -17,6 +17,7 @@ from pydantic import Field
 
 from arbora.api.errors import not_served
 from arbora.api.evidence import EvidenceBundle
+from arbora.core.environment import read_env, read_text
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing import engine_routing
 from arbora.mcp_server.legacy_action_invoke import invoke_legacy_action
@@ -472,11 +473,10 @@ def _workspace_mcp_config_path() -> Path:
     (when set) or ``<workspace>/mcp_config.json`` and rejects traversal and every
     existing symlink component.
     """
-    from arbora.core.settings import setting
 
-    workspace = str(setting("WORKSPACE_PATH", "") or "").strip()
+    workspace = str(read_env("WORKSPACE_PATH") or "").strip()
     root = (Path(workspace) if workspace else Path.cwd()).resolve(strict=True)
-    configured = str(setting("MCP_CONFIG", "") or "").strip()
+    configured = str(read_env("MCP_CONFIG", "") or "").strip()
     candidate = _resolve_requested_mcp_config_path(root, configured)
     relative = _assert_mcp_config_path_in_workspace(candidate, root)
     if candidate.suffix.lower() != ".json":
@@ -1165,7 +1165,7 @@ def _configure_list_config(known):
     # action(s): 'list_config'
     out = {}
     for env_key, meta in known.items():
-        val = os.environ.get(env_key)
+        val = read_text(env_key)
         out[env_key] = (
             "***" if (_configuration_key_is_sensitive(env_key, meta) and val) else val
         )
@@ -1176,7 +1176,7 @@ def _configure_get_config_value(env_key, meta):
     # action(s): 'get_config'
     from arbora.deployment import is_restart_required
 
-    val = os.environ.get(env_key)
+    val = read_text(env_key)
     if _configuration_key_is_sensitive(env_key, meta) and val:
         val = "***"
     return json.dumps(

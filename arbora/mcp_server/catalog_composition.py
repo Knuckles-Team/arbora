@@ -6,6 +6,7 @@ from collections.abc import Callable
 from contextlib import AbstractContextManager
 from typing import Any
 
+from arbora.core.environment import read_env
 from arbora.fleet.catalog_reader import (
     DeferredFleetCatalogReader,
     FleetCatalogReader,
@@ -48,9 +49,8 @@ DEFAULT_CATALOG_SNAPSHOT_TTL_S = 120.0
 
 
 def _catalog_snapshot_ttl_s() -> float:
-    from arbora.core.settings import setting
 
-    raw = str(setting(CATALOG_SNAPSHOT_TTL_SETTING, "") or "").strip()
+    raw = str(read_env(CATALOG_SNAPSHOT_TTL_SETTING, "") or "").strip()
     try:
         return max(0.0, float(raw)) if raw else DEFAULT_CATALOG_SNAPSHOT_TTL_S
     except ValueError:

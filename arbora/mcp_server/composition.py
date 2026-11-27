@@ -23,6 +23,7 @@ from typing import Any, Literal
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
+from arbora.core.environment import inherited_environment, read_env
 from arbora.fleet.state import FleetState
 from arbora.gateway.ports import configure_gateway_application
 from arbora.mcp_server import runtime
@@ -236,12 +237,11 @@ def detect_composition(
     from scion_sdk.config import csv_values
 
     from arbora.core.settings import runtime_config as config
-    from arbora.core.settings import setting
 
-    is_gateway_daemon_role = str(setting("KG_DAEMON_ROLE", "client")).strip() == "host"
+    is_gateway_daemon_role = str(read_env("KG_DAEMON_ROLE", "client")).strip() == "host"
     platforms = configured_platforms(engine)
     # Intake is enabled per platform: credentials alone never open a poller.
-    enabled = set(csv_values(setting("MESSAGING_INTAKE_PLATFORMS", "")))
+    enabled = set(csv_values(read_env("MESSAGING_INTAKE_PLATFORMS")))
     return CompositionPlan(
         messaging_platforms=platforms,
         intake_platforms=tuple(p for p in platforms if p in enabled),
@@ -284,9 +284,8 @@ _RANGES: Mapping[str, tuple[float, float]] = {
 
 
 def _ranged(name: str, default: float) -> float:
-    from arbora.core.settings import setting
 
-    raw = setting(name, default)
+    raw = read_env(name, default)
     low, high = _RANGES[name]
     try:
         value = float(raw)
@@ -301,7 +300,7 @@ def _ranged(name: str, default: float) -> float:
 
 def local_engine_config(**overrides: Any) -> LocalEngineConfig:
     """The lifecycle settings from the environment; ``overrides`` win."""
-    from arbora.core.settings import runtime_config, setting
+    from arbora.core.settings import runtime_config
 
     anonymous = runtime_config.arbora_auth_mode == "none"
     base = LocalEngineConfig(
@@ -312,7 +311,7 @@ def local_engine_config(**overrides: Any) -> LocalEngineConfig:
         probe_timeout_s=_ranged("ENGINE_PROBE_TIMEOUT_S", 2),
         idle_shutdown_s=int(_ranged("ENGINE_IDLE_SHUTDOWN_S", 300)),
         stop_grace_s=_ranged("ENGINE_STOP_GRACE_S", 10),
-        binary=str(setting("MEDULLA_BIN", "") or "") or None,
+        binary=str(read_env("MEDULLA_BIN", "") or "") or None,
     )
     return dataclasses.replace(base, **overrides)
 
@@ -450,7 +449,7 @@ def _spawn_engine(
             stdout=log,
             stderr=subprocess.STDOUT,
             start_new_session=True,
-            env={**os.environ, **config.extra_env},
+            env={**inherited_environment(), **config.extra_env},
         )
     global _SPAWNED
     _SPAWNED += 1
@@ -620,10 +619,9 @@ def require_remote_engine_credential(endpoint: EngineEndpoint) -> None:
     the engine admission credential the deployment sets (see
     ``setup-config engine-admission``); without it Arbora refuses.
     """
-    from arbora.core.settings import setting
 
     if is_remote_engine(endpoint) and not any(
-        str(setting(name, "") or "").strip() for name in _CREDENTIAL_SETTINGS
+        str(read_env(name, "") or "").strip() for name in _CREDENTIAL_SETTINGS
     ):
         raise EngineRefusal(
             "ENGINE_CREDENTIAL_MISSING",
@@ -1025,9 +1023,8 @@ def start_composed_services(
         start_messaging_intake(supervisor, engine, session, plan.intake_platforms)
     elif plan.messaging_configured:
         logger.info("messaging credentials are present but inbound intake is disabled")
-    from arbora.core.settings import setting
 
-    if _explicitly_true(setting("MEMORY_WEBHOOKS_ENABLED", "")):
+    if _explicitly_true(read_env("MEMORY_WEBHOOKS_ENABLED")):
         start_memory_webhook_pump(supervisor, engine, session)
     if plan.web_ui_enabled:
         from functools import partial

@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 from arbora.api.errors import not_served
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 
 logger = logging.getLogger(__name__)
 
@@ -1007,7 +1007,7 @@ def fanout_execute(entries, fn, *, timeout=None):
     import contextvars
 
     if timeout is None:
-        timeout = float(setting("GRAPH_FANOUT_TIMEOUT", DEFAULT_FANOUT_TIMEOUT_S))
+        timeout = float(read_env("GRAPH_FANOUT_TIMEOUT", DEFAULT_FANOUT_TIMEOUT_S))
     results: dict[str, Any] = {}
     errors: dict[str, str] = {}
     if not entries:

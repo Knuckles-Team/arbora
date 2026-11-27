@@ -51,7 +51,7 @@ import uuid
 from types import MappingProxyType
 from typing import Any, cast
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.fleet.ranking import FLOOR_ONLY
 from arbora.security.anonymous import session_context
 from arbora.version import __version__
@@ -683,8 +683,8 @@ def _make_tool_endpoint(tool_name: str):
 
 
 # Default agent identity for provenance tracking
-_AGENT_ID = setting("AGENT_ID", f"mcp-client-{uuid.uuid4().hex}")
-_SESSION_ID = setting("SESSION_ID", uuid.uuid4().hex)
+_AGENT_ID = read_env("AGENT_ID", f"mcp-client-{uuid.uuid4().hex}")
+_SESSION_ID = read_env("SESSION_ID", uuid.uuid4().hex)
 
 
 _ENGINE_LOCK = threading.Lock()
@@ -711,7 +711,6 @@ for _bootstrap_name in (
     "_PROCESS_AUTHORITY_THREAD",
     "_PROCESS_SESSION_REFRESH_LOCK",
     "_SESSION_ID",
-    "setting",
 ):
     # ``bootstrap`` declares these names as explicit cycle-breaking host slots.
     # Assign them rather than using ``setdefault``: the declarations exist with

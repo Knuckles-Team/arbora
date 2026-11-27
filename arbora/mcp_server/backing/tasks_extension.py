@@ -37,7 +37,6 @@ import hmac
 import json
 import logging
 import math
-import os
 import unicodedata
 from collections.abc import Mapping
 from datetime import UTC, datetime
@@ -46,6 +45,7 @@ from typing import TYPE_CHECKING, Any
 from pydantic import ConfigDict, Field, field_validator
 
 from arbora import work_items
+from arbora.core.environment import read_env
 from arbora.fleet.protocol_compat import mcp_protocol_exception
 
 # MCP SDK v2 (which the `fastmcp>=4.0.0b1` floor pulls in) renamed
@@ -791,7 +791,8 @@ class WorkItemTasksExtension(ServerExtension):
         child process environment; the request proof below must present the
         corresponding MAC. This secret is never accepted from catalog JSON.
         Returns ``None`` when no (valid-length) stdio channel secret is set."""
-        channel_secret = os.environ.get(_TASK_DELEGATION_CHANNEL_ENV, "").strip()
+
+        channel_secret = read_env(_TASK_DELEGATION_CHANNEL_ENV, "").strip()
         if not 32 <= len(channel_secret) <= 512:
             return None
         from types import SimpleNamespace
@@ -824,14 +825,13 @@ class WorkItemTasksExtension(ServerExtension):
     @staticmethod
     def _configured_issuers() -> set[str]:
         from arbora.core.settings import runtime_config as config
-        from arbora.core.settings import setting
 
         expected_issuer = (
             getattr(config, "auth_jwt_issuer", None)
             or getattr(config, "mcp_jwt_issuer", None)
-            or setting("FASTMCP_SERVER_AUTH_JWT_ISSUER", None)
-            or setting("AUTH_JWT_ISSUER", None)
-            or setting("MCP_JWT_ISSUER", None)
+            or read_env("FASTMCP_SERVER_AUTH_JWT_ISSUER")
+            or read_env("AUTH_JWT_ISSUER")
+            or read_env("MCP_JWT_ISSUER")
         )
         return {
             value.strip()
@@ -842,14 +842,13 @@ class WorkItemTasksExtension(ServerExtension):
     @staticmethod
     def _configured_audiences() -> set[str]:
         from arbora.core.settings import runtime_config as config
-        from arbora.core.settings import setting
 
         expected_audience = (
             getattr(config, "auth_jwt_audience", None)
             or getattr(config, "mcp_jwt_audience", None)
-            or setting("FASTMCP_SERVER_AUTH_JWT_AUDIENCE", None)
-            or setting("AUTH_JWT_AUDIENCE", None)
-            or setting("MCP_JWT_AUDIENCE", None)
+            or read_env("FASTMCP_SERVER_AUTH_JWT_AUDIENCE")
+            or read_env("AUTH_JWT_AUDIENCE")
+            or read_env("MCP_JWT_AUDIENCE")
         )
         return {
             value.strip()

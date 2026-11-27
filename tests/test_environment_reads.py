@@ -80,3 +80,16 @@ def test_every_table_row_names_its_type_default_secret_flag_and_owner_row() -> N
         for site in sites:
             module = SOURCE.parent / (site.replace(".", "/") + ".py")
             assert module.exists() or module.with_suffix("").is_dir(), (name, site)
+
+
+@pytest.mark.spec("ARBORA-HOST-R010.2")
+def test_a_tool_family_toggle_is_a_declared_pattern_with_a_fixed_shape(
+    monkeypatch,
+) -> None:
+    assert env.read_env("CMDBTOOL", True) is True
+    monkeypatch.setenv("CMDBTOOL", "false")
+    assert env.read_env("CMDBTOOL", True) is False
+    for refused in ("cmdbtool", "CMDB_TOOLS", "1TOOL"):
+        with pytest.raises(EnvironmentRefusal) as raised:
+            env.read_env(refused)
+        assert raised.value.code == "ENV_UNDECLARED_READ"
