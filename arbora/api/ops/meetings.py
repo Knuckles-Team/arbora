@@ -178,6 +178,7 @@ async def run_summary(
         attempts += 1
         try:
             run = await summarizer.run(
+                request=context,
                 tenant=context.caller.tenant,
                 context=summary_context,
                 admission=dict(admission),

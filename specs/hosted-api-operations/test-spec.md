@@ -459,7 +459,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R064.4` | Test: `tests/api/test_viewport_served.py::test_scatter_and_line_interaction_over_large_source` (L3). |
 | `ARBORA-OPS-R065.1` | Test: `tests/api/test_meetings_served.py::test_models_round_trip_vectors` (L1). |
 | `ARBORA-OPS-R065.2` | Test: `tests/api/test_meetings_served.py::test_corrections_gaps_and_finalization_are_ordered` (L3). |
-| `ARBORA-OPS-R065.3` | Test: `tests/api/test_meetings_served.py::test_each_local_and_hosted_route_records_provenance` (L3). |
+| `ARBORA-OPS-R065.3` | Test: `tests/api/test_meetings_served.py::test_each_local_and_hosted_route_records_provenance` (L3). Test: `tests/api/test_meeting_fleet_served.py::test_summarizer_port_dispatches_through_fleet_call` (L3). |
 | `ARBORA-OPS-R065.4` | Test: `tests/api/test_meetings_served.py::test_denied_egress_and_stale_revision_make_zero_provider_calls` (L3). |
 | `ARBORA-OPS-R065.5` | Test: `tests/api/test_meetings_served.py::test_ordered_corrections_finalization_and_provider_routes` (L3). |
 | `ARBORA-OPS-R066.1` | Test: `tests/api/test_bookmarks_served.py::test_models_round_trip_and_schema_digests_are_stable` (L1). |
