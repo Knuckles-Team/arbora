@@ -20,6 +20,7 @@ from arbora.api.ops.run_graph import (
 )
 from arbora.api.ops.run_replay import RunEventsParams, project_page
 from arbora.api.ops.runs import handle_runs_execution_graph, operations
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import run_reader
 from arbora.mcp_server.run_reader import NativeRunReader
 from arbora.observability.state import SubsystemWindows
@@ -219,7 +220,9 @@ def test_schema_negotiation_and_authority_fields_refuse(change):
 
 def installed_reader(monkeypatch, events, *, owner=True):
     reader = NativeRunReader(
-        lambda: replay_engine(*events), origins=RunOriginRegistry()
+        lambda: replay_engine(*events),
+        origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     calls = []
 
@@ -357,7 +360,11 @@ async def test_http_and_mcp_share_native_owner_checked_projection(monkeypatch, a
     auth = AmbientHTTPAuthenticator(session_for_request=lambda _: caller.session)
     auth.authenticate = authenticate
     app = create_api_application(
-        services=services, authenticator=auth, invoke=invoke, visibility=visible
+        services=services,
+        authenticator=auth,
+        invoke=invoke,
+        visibility=visible,
+        config=RuntimeConfig(),
     )
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://fixture"

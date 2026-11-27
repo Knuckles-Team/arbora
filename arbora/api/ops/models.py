@@ -148,12 +148,11 @@ async def handle_models_get(
 ) -> dict[str, Any]:
     """One model's editable fields and its secret references, never values."""
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.core.settings import runtime_config
 
     kind = params["kind"]
     if kind not in _SETTING:
         raise OperationRefused("UNKNOWN_KIND", {"kind": kind})
-    raw = getattr(runtime_config, _SETTING[kind], None)
+    raw = getattr(context.services["config"], _SETTING[kind], None)
     for entry in _entries(raw):
         if str(entry.get("id", "")) != params["model_id"]:
             continue

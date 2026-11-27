@@ -25,6 +25,7 @@ from arbora.api.registry import (
     PrincipalRule,
     Surface,
 )
+from arbora.core.settings import RuntimeConfig
 
 
 def test_cross_surface_durable_replay_and_changed_params_conflict():
@@ -535,6 +536,7 @@ def test_real_http_projection_reaches_invoke_and_durable_replay():
         visibility=services.policy_gate.check_op,
         authenticator=Auth(),
         invoke=invoke,
+        config=RuntimeConfig(),
     )
 
     async def scenario():

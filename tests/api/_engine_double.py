@@ -13,6 +13,8 @@ from typing import Any
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
+
 Handler = Callable[[dict[str, Any]], Any]
 
 
@@ -63,8 +65,16 @@ class EngineDouble:
         self.monkeypatch.setattr(module, "engine_send", send)
 
 
+def fresh_config(config: RuntimeConfig | None) -> RuntimeConfig:
+    """The given config, or a fresh one that shares no state."""
+    return config if config is not None else RuntimeConfig()
+
+
 def context(
-    tenant: str = "tenant:one", scopes: frozenset[str] = frozenset(), key: str = "k"
+    tenant: str = "tenant:one",
+    scopes: frozenset[str] = frozenset(),
+    key: str = "k",
+    config: RuntimeConfig | None = None,
 ) -> Any:
     caller = SimpleNamespace(
         tenant=tenant,
@@ -80,5 +90,8 @@ def context(
         },
     )
     return SimpleNamespace(
-        caller=caller, idempotency_key=key, services={}, operation_services=None
+        caller=caller,
+        idempotency_key=key,
+        services={"config": fresh_config(config)},
+        operation_services=None,
     )

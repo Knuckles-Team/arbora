@@ -14,6 +14,7 @@ from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import bookmarks
 from arbora.api.ops.registry_factory import get_registry
+from arbora.core.settings import RuntimeConfig
 from arbora.pin_lag import medulla as pin_lag
 from tests.api._lane_double import EngineDouble, context
 
@@ -162,8 +163,6 @@ async def test_csv_escapes_formula_cells_and_json_preserves_unknown_metadata(
 async def test_refusals_return_before_any_data(monkeypatch: pytest.MonkeyPatch) -> None:
     from medulla import EngineResponseError
 
-    from arbora.core.settings import runtime_config
-
     # A pin without the methods: UNAVAILABLE naming one, zero engine calls.
     client = _double()
     with pytest.raises(OperationRefused) as refused:
@@ -173,11 +172,12 @@ async def test_refusals_return_before_any_data(monkeypatch: pytest.MonkeyPatch) 
     assert refused.value.code == "UNAVAILABLE" and client.sent == []
     _engine_serves(monkeypatch)
     # An export above the row cap is refused before the engine reads anything.
-    monkeypatch.setattr(runtime_config, "bookmarks_max_export_rows", 100)
+    config = RuntimeConfig()
+    config.bookmarks_max_export_rows = 100
     over = _double()
     with pytest.raises(OperationRefused) as capped:
         await bookmarks.handle_bookmarks_export(
-            context(over, monkeypatch),
+            context(over, monkeypatch, config=config),
             {**SEARCH, "max_hits": 101, "format": "json"},
             OPS["bookmarks.export"],
         )

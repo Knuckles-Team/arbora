@@ -20,6 +20,7 @@ from arbora.api.ops.runs import (
     handle_runs_metrics,
     handle_runs_node,
 )
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import run_reader
 from arbora.mcp_server.run_reader import NativeRunReader
 from arbora.run_origin import RunOriginRegistry
@@ -42,7 +43,9 @@ class _Reader:
 
 @pytest.mark.spec("ARBORA-OPS-R021.4.1")
 def test_run_trace_reader_is_runtime_checkable_protocol() -> None:
-    native = NativeRunReader(lambda: None, origins=RunOriginRegistry())
+    native = NativeRunReader(
+        lambda: None, origins=RunOriginRegistry(), config=RuntimeConfig()
+    )
     assert isinstance(native, RunTraceReader)
     assert not isinstance(object(), RunTraceReader)
     assert not isinstance(_Reader({}), RunTraceReader)
@@ -186,7 +189,9 @@ async def test_pinned_engine_refuses_metrics_naming_the_missing_method(
         "METHOD_IDS",
         frozenset(generated.METHOD_IDS) - {"RunMetrics"},
     )
-    reader = NativeRunReader(lambda: None, origins=RunOriginRegistry())
+    reader = NativeRunReader(
+        lambda: None, origins=RunOriginRegistry(), config=RuntimeConfig()
+    )
     with pytest.raises(OperationRefused) as caught:
         await reader.metrics(
             context=reader_context(), request=RunMetricsParams(query="cost")
@@ -223,7 +228,9 @@ async def test_metrics_calls_the_engine_with_the_callers_claims(monkeypatch) -> 
 
     monkeypatch.setattr(run_reader, "caller_dispatch_graph", graph)
     context = dataclasses.replace(reader_context(), client=Client())
-    reader = NativeRunReader(lambda: None, origins=RunOriginRegistry())
+    reader = NativeRunReader(
+        lambda: None, origins=RunOriginRegistry(), config=RuntimeConfig()
+    )
     # The structural double stands in for a medulla that serves RunMetrics.
     caller = context.caller
     scoped = dataclasses.replace(
@@ -246,7 +253,9 @@ async def test_metrics_calls_the_engine_with_the_callers_claims(monkeypatch) -> 
 @pytest.mark.spec("ARBORA-OPS-R021.4.9")
 @pytest.mark.asyncio
 async def test_node_capabilities_default_unavailable(monkeypatch) -> None:
-    reader = NativeRunReader(lambda: None, origins=RunOriginRegistry())
+    reader = NativeRunReader(
+        lambda: None, origins=RunOriginRegistry(), config=RuntimeConfig()
+    )
     owned = SimpleNamespace(calls=0)
 
     async def owner(context, run_id, task_id=None):
@@ -265,7 +274,9 @@ async def test_node_capabilities_default_unavailable(monkeypatch) -> None:
 @pytest.mark.spec("ARBORA-OPS-R021.4.9")
 @pytest.mark.asyncio
 async def test_a_foreign_run_node_reads_exactly_like_an_owned_one(monkeypatch) -> None:
-    reader = NativeRunReader(lambda: None, origins=RunOriginRegistry())
+    reader = NativeRunReader(
+        lambda: None, origins=RunOriginRegistry(), config=RuntimeConfig()
+    )
     answers = []
     for item in ({"status": "running"}, None):
 

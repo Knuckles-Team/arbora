@@ -100,6 +100,7 @@ def _serve(monkeypatch, *, authenticated: bool = True):
         ]
     )
     services = InvokeServices(
+        config=RuntimeConfig(),
         registry=registry,
         runtime=runtime_double,
         plans=EgPlanStore(

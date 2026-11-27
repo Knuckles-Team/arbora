@@ -19,6 +19,7 @@ from arbora.api.invoke.pipeline import invoke
 from arbora.api.mcp.caller import caller_from_session
 from arbora.api.mcp.verbs import MCPProjection, dispatch_verb
 from arbora.api.registry import Registry
+from arbora.core.settings import RuntimeConfig
 from arbora.observability.state import SubsystemWindows
 from tests.a2a.test_operation_bridge import session
 from tests.api.test_invoke_contract import setup_services
@@ -52,7 +53,11 @@ async def serve_both(
     auth = AmbientHTTPAuthenticator(session_for_request=lambda _: caller.session)
     auth.authenticate = authenticate
     app = create_api_application(
-        services=services, authenticator=auth, invoke=invoke, visibility=visible
+        services=services,
+        authenticator=auth,
+        invoke=invoke,
+        visibility=visible,
+        config=RuntimeConfig(),
     )
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://fixture"

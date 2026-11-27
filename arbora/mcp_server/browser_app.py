@@ -5,6 +5,7 @@ from typing import Any
 from arbora.api.http.app import create_api_application
 from arbora.api.http.browser_auth import BoundBrowserHTTPAuthenticator
 from arbora.api.http.routes import error_response
+from arbora.core.settings import RuntimeConfig
 from arbora.identity.admission import BrowserAdmission
 from arbora.identity.engine import IdentityUnavailable
 
@@ -149,6 +150,7 @@ def create_browser_api_application(
     services: Any,
     visibility: Any,
     invoke: Any,
+    config: RuntimeConfig,
     max_in_flight: int = 16,
 ) -> Any:
     """Compose a cookie-only canonical sub-app with one exact authority owner.
@@ -161,10 +163,16 @@ def create_browser_api_application(
     if not isinstance(admission, BrowserAdmission):
         raise IdentityUnavailable("qualified browser admission required")
     auth = BoundBrowserHTTPAuthenticator(
-        admission.browser_authority, console_origin=admission.trusted_origin
+        admission.browser_authority,
+        console_origin=admission.trusted_origin,
+        config=config,
     )
     app = create_api_application(
-        services=services, visibility=visibility, authenticator=auth, invoke=invoke
+        services=services,
+        visibility=visibility,
+        authenticator=auth,
+        invoke=invoke,
+        config=config,
     )
     return BrowserOperationApplication(
         app,

@@ -38,6 +38,7 @@ from arbora.api.registry import (
     Surface,
     Verb,
 )
+from arbora.core.settings import RuntimeConfig
 from arbora.observability.state import SubsystemWindows
 from tests.a2a.test_application import Authenticator, Authority, Router
 from tests.a2a.test_operation_bridge import DenyPolicy, SessionRuntime, session
@@ -200,6 +201,7 @@ class Surfaces:
             authenticator=AmbientHTTPAuthenticator(session_for_request=self._resolve),
             invoke=invoke,
             visibility=visible,
+            config=RuntimeConfig(),
         )
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://fixture"

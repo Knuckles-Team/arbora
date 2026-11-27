@@ -18,6 +18,7 @@ import pytest
 from arbora.api.ops import runs as runs_module
 from arbora.api.ops.run_graph import GRAPH_SCHEMA, step_key
 from arbora.api.ops.runs import operations
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import run_reader
 from arbora.mcp_server.run_reader import NativeRunReader
 from arbora.observability.state import SubsystemWindows
@@ -125,7 +126,9 @@ def install(monkeypatch, plans, histories, *, owned=OWNER):
         ]
 
     reader = NativeRunReader(
-        lambda: SimpleNamespace(query_cypher=query), origins=RunOriginRegistry()
+        lambda: SimpleNamespace(query_cypher=query),
+        origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
 
     def authorized(task_id, scope):
@@ -189,7 +192,11 @@ async def serve(op_id, params, reader, *, allowed=True):
     auth = AmbientHTTPAuthenticator(session_for_request=lambda _: caller.session)
     auth.authenticate = authenticate
     app = create_api_application(
-        services=services, authenticator=auth, invoke=invoke, visibility=visible
+        services=services,
+        authenticator=auth,
+        invoke=invoke,
+        visibility=visible,
+        config=RuntimeConfig(),
     )
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://fixture"

@@ -91,8 +91,6 @@ async def handle_git_pack(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Export the wants beyond the haves; the whole request is refused on one denied path."""
-    from arbora.core.settings import runtime_config
-
     receipt = await send_main(
         context,
         "GitExportPack",
@@ -116,7 +114,7 @@ async def handle_git_pack(
         raise unavailable("engine result malformed") from None
     if not result["pack_ref"].startswith(CAS_PREFIX):
         raise unavailable("engine result malformed")
-    if result["pack_bytes"] > int(runtime_config.git_bridge_max_pack_bytes):
+    if result["pack_bytes"] > int(context.services["config"].git_bridge_max_pack_bytes):
         raise OperationRefused("LOAD_CAP_EXCEEDED", {"reason": "git_pack_too_large"})
     return result
 

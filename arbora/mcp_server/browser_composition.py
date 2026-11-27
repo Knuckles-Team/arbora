@@ -126,6 +126,7 @@ def configured_browser_boundary(
         store=create_secrets_client().backend,
         request_dispatch=partial(request_dispatch, browser.capacity),
         keys=keys,
+        config=settings,
     )
 
 
@@ -141,6 +142,7 @@ def build_browser_boundary(
     store: Any,
     request_dispatch: Any,
     keys: JwksCache,
+    config: RuntimeConfig,
 ) -> Any:
     """One runtime, issuer and exact caller fence around the shared pipeline."""
     from arbora.api.invoke.pipeline import invoke
@@ -175,6 +177,7 @@ def build_browser_boundary(
         trusted_origin=origin,
     )
     operations = create_browser_api_application(
+        config=config,
         admission=admission,
         services=invocation.services,
         visibility=invocation.services.policy_gate.check_op,

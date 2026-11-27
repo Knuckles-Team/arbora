@@ -238,6 +238,7 @@ def test_the_served_route_admits_a_bearer_and_refuses_anonymous(
             visibility=visible,
             authenticator=Auth(),
             invoke=invoke,
+            config=RuntimeConfig(),
         ),
     )
     with TestClient(parent) as client:

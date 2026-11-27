@@ -19,7 +19,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op
 from arbora.api.ops.engine_calls import engine_send
 from arbora.api.registry import OpSpec
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig
 
 READ_SCOPE = "graph:read"
 #: The engine answers this refusal for a stale source revision or selection token.
@@ -49,17 +49,17 @@ def _request(params: Mapping[str, Any]) -> dict[str, Any]:
     )
 
 
-def _byte_limit(request: Mapping[str, Any]) -> int:
+def _byte_limit(request: Mapping[str, Any], config: RuntimeConfig) -> int:
     """The request's own ceiling: positive and never above the configured one."""
-    ceiling = int(runtime_config.viewport_max_bytes)
+    ceiling = int(config.viewport_max_bytes)
     asked = int(request.get("byte_ceiling") or 0)
     if asked < 1 or asked > ceiling:
         raise OperationRefused("INVALID_ARGUMENT", {"field": "byte_ceiling"})
     return asked
 
 
-def _bin_limit(params: Mapping[str, Any]) -> int:
-    ceiling = int(runtime_config.viewport_max_bins)
+def _bin_limit(params: Mapping[str, Any], config: RuntimeConfig) -> int:
+    ceiling = int(config.viewport_max_bins)
     asked = params.get("max_bins")
     if asked is None:
         return ceiling
@@ -84,7 +84,8 @@ async def handle_viewport_bins(
 ) -> dict[str, Any]:
     """The engine's bins for one viewport, inside both ceilings."""
     request = _request(params)
-    byte_limit, bin_limit = _byte_limit(request), _bin_limit(params)
+    config = context.services["config"]
+    byte_limit, bin_limit = _byte_limit(request, config), _bin_limit(params, config)
     answer = await engine_send(context, "ViewportQuery", {"request": request})
     return {"value": _within(answer, byte_limit, bin_limit)}
 
@@ -94,7 +95,8 @@ async def handle_selection_resolve(
 ) -> dict[str, Any]:
     """The subjects a selection token resolves to under the same viewport."""
     request = _request(params)
-    byte_limit = _byte_limit(request)
+    config = context.services["config"]
+    byte_limit = _byte_limit(request, config)
     token = params["token"]
     token = token.model_dump(mode="json") if hasattr(token, "model_dump") else token
     answer = await engine_send(
@@ -102,7 +104,7 @@ async def handle_selection_resolve(
         "ResolveViewportSelection",
         {"request": request, "token": token},
     )
-    return {"value": _within(answer, byte_limit, int(runtime_config.viewport_max_bins))}
+    return {"value": _within(answer, byte_limit, int(config.viewport_max_bins))}
 
 
 def operations() -> tuple[OpSpec, ...]:

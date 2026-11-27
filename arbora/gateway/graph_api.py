@@ -140,7 +140,7 @@ def register_graph_routes(app, host, prefix: str = "/api") -> None:
     if host.config.gateway_rate_limit > 0:
         from arbora.api.domain.gateway.rate_limit import GatewayRateLimitMiddleware
 
-        app.add_middleware(GatewayRateLimitMiddleware)
+        app.add_middleware(GatewayRateLimitMiddleware, config=host.config)
 
     # Server-minted JWT identity
     # (CONCEPT:MERISTEM-OS.identity.authenticated-identity-enforcement).

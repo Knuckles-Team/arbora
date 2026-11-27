@@ -255,7 +255,7 @@ def _served_invocation(
             "source_reader": NativeSourceReader(),
             "source_grants": EngineSourceGrants(host.config.source_run_branch),
             "run_trace_reader": NativeRunReader(
-                host.engine.served, origins=host.runs.origins
+                host.engine.served, origins=host.runs.origins, config=host.config
             ),
         },
         fleet_effect=fleet.effect,

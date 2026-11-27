@@ -13,6 +13,7 @@ from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.invoke.pipeline import invoke
 from arbora.api.mcp.verbs import MCPProjection, dispatch_verb
 from arbora.api.registry import Registry, Verb
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.serving import (
     PARITY_SCHEMA_DIVERGED,
     PARITY_TOOL_MISSING,
@@ -44,7 +45,11 @@ def _served(scopes: frozenset[str]) -> tuple[Any, Any, Any]:
 
     auth.authenticate = authenticate
     app = create_api_application(
-        services=services, authenticator=auth, invoke=invoke, visibility=visible
+        services=services,
+        authenticator=auth,
+        invoke=invoke,
+        visibility=visible,
+        config=RuntimeConfig(),
     )
     projection = MCPProjection(
         services.registry,

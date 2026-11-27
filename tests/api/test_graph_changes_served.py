@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from arbora.api.errors import EngineRefusal
 from arbora.api.ops import graph_changes
+from arbora.core.settings import RuntimeConfig
 from tests._support import served_host
 from tests.api._lane_double import EngineDouble, context
 
@@ -148,8 +149,11 @@ class ChangeFeed:
         return {"events": page, "cursor": f"cur-{start + len(page)}"}
 
 
+_CONFIG = RuntimeConfig()
+
+
 def subscribe_context() -> Any:
-    return _engine_double.context(scopes=frozenset({"graph:read"}))
+    return _engine_double.context(scopes=frozenset({"graph:read"}), config=_CONFIG)
 
 
 async def poll(cursor: str | None = None, **changes: Any) -> dict[str, Any]:
@@ -174,9 +178,7 @@ async def test_subscribe_pages_events_in_cursor_order_without_content(
     assert page["cursor"] == "cur-3"
     assert SUBSCRIBE.scopes == {"graph:read"}
     # The batch is bounded by configuration, never by the caller alone.
-    from arbora.core.settings import runtime_config
-
-    monkeypatch.setattr(runtime_config, "graph_changes_max_batch", 2)
+    monkeypatch.setattr(_CONFIG, "graph_changes_max_batch", 2)
     assert feed.engine.sent[-1][1]["limit"] == 500
     await poll("cur-0", limit=5000)
     assert feed.engine.sent[-1][1]["limit"] == 2

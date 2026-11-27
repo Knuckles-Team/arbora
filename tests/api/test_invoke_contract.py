@@ -35,6 +35,7 @@ from arbora.api.registry import (
     Verb,
     eg_method_ref,
 )
+from arbora.core.settings import RuntimeConfig
 from tests.api._catalog import catalog, method_row, scope_row
 from tests.api._support import make_verified_caller
 
@@ -213,7 +214,13 @@ def setup_services(op=None, **changes):
         else frozenset(),
     )
     fields.update(changes)
-    return InvokeServices(**fields), runtime, audit, journal, leases
+    return (
+        InvokeServices(**fields, config=RuntimeConfig()),
+        runtime,
+        audit,
+        journal,
+        leases,
+    )
 
 
 def run(

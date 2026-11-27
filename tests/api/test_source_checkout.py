@@ -21,6 +21,7 @@ from arbora.api.http.auth import HTTPAuthenticationError
 from arbora.api.invoke import OpError, OpResult
 from arbora.api.ops import source as source_ops
 from arbora.api.registry import Registry
+from arbora.core.settings import RuntimeConfig
 from tests.api._support import make_verified_caller
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R850")
@@ -132,6 +133,7 @@ def _app(invoke: Any, authenticator: FakeAuthenticator | None = None) -> FastAPI
         visibility=_allow,
         authenticator=authenticator or FakeAuthenticator(),
         invoke=invoke,
+        config=RuntimeConfig(),
     )
     root = FastAPI()
     root.mount("/api/v1", sub)

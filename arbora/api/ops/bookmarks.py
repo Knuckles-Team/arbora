@@ -171,9 +171,7 @@ async def handle_bookmarks_export(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Read one search page and serialize it; a page above the row cap is refused."""
-    from arbora.core.settings import runtime_config
-
-    cap = int(runtime_config.bookmarks_max_export_rows)
+    cap = int(context.services["config"].bookmarks_max_export_rows)
     if params["max_hits"] > cap:
         raise OperationRefused("LOAD_CAP_EXCEEDED", {"limit": cap})
     answer = await _read(context, "BookmarkSemanticSearch", _search_request(params))

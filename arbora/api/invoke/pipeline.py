@@ -64,6 +64,7 @@ from arbora.api.registry import (
     Registry,
     Surface,
 )
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.admission import AdmissionGate
 
 _logger = logging.getLogger(__name__)
@@ -324,6 +325,7 @@ class InvokeServices:
     policy_gate: PolicyGate
     audit_preflight: AuditPreflight
     audit_write: AuditWrite
+    config: RuntimeConfig
     effects: EffectJournal | None = None
     external_effect_operations: frozenset[str] = frozenset()
     native_idempotency: Mapping[str, str] = field(default_factory=dict)
@@ -1033,7 +1035,9 @@ def _missing_idempotency_key(call: _Call) -> bool:
     )
 
 
-def identity_gate(op: Any, caller: RequestCaller, surface: Surface) -> OpError | None:
+def identity_gate(
+    op: Any, caller: RequestCaller, surface: Surface, config: RuntimeConfig
+) -> OpError | None:
     """Admin identity operations need the console and a fresh second factor.
 
     ARBORA-IDENTITY-R018.6. The exact scope is checked with every other scope
@@ -1047,9 +1051,7 @@ def identity_gate(op: Any, caller: RequestCaller, surface: Surface) -> OpError |
         return None
     import time
 
-    from arbora.core.settings import runtime_config
-
-    limit = getattr(runtime_config, "identity_admin_mfa_max_age_seconds", 300)
+    limit = getattr(config, "identity_admin_mfa_max_age_seconds", 300)
     limit = min(900, max(60, int(limit))) if isinstance(limit, int) else 300
     if caller.mfa_at_ms is None:
         return OpError("MFA_STALE")
@@ -1058,7 +1060,7 @@ def identity_gate(op: Any, caller: RequestCaller, surface: Surface) -> OpError |
 
 
 def _execution_refusal(call: _Call) -> OpError | None:
-    gate = identity_gate(call.op, call.caller, call.surface)
+    gate = identity_gate(call.op, call.caller, call.surface, call.services.config)
     if gate is not None:
         return gate
     if call.op.confirm == Confirm.CONSOLE and not _console_ready(

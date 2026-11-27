@@ -988,6 +988,7 @@ class NativeGatewayApplication:
             visibility=visibility,
             authenticator=authenticator,
             invoke=invoke,
+            config=services.config,
         )
         # Gateway callers already pass their /api prefix; an empty prefix uses
         # the public API root rather than mounting versioned routes at /v1.

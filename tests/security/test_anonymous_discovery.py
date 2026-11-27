@@ -1,5 +1,7 @@
 from functools import partial
 
+from arbora.core.settings import RuntimeConfig
+
 """Anonymous discovery and invocation share authority, never a client fallback."""
 
 from dataclasses import replace
@@ -112,6 +114,7 @@ async def test_http_mcp_discovery_and_invoke_policy_parity(local_mode, denied):
             visibility=gate.check_op,
             authenticator=auth,
             invoke=invoke,
+            config=RuntimeConfig(),
         ),
     )
     transport = httpx.ASGITransport(

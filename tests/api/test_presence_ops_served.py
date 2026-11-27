@@ -24,8 +24,10 @@ from arbora.api.mcp.verbs import dispatch_verb
 from arbora.api.ops import presence as presence_ops
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import Registry, Surface
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.serving import MCPProjection
 from arbora.observability.state import SubsystemWindows
+from tests.api._engine_double import fresh_config
 from tests.api._support import make_verified_caller
 from tests.api.test_invoke_contract import setup_services
 
@@ -98,7 +100,7 @@ class _ClaimsClient:
             self.claims = None
 
 
-def _services(port: Any | None) -> Any:
+def _services(port: Any | None, config: RuntimeConfig | None = None) -> Any:
     """One invoke composition whose composite dispatch reaches the real handler."""
     client = _ClaimsClient()
 
@@ -135,7 +137,10 @@ def _services(port: Any | None) -> Any:
         eg_dispatch=eg_dispatch,
         service_scopes=frozenset({"example:execute"}),
         service_principal="service:arbora",
-        bindings={} if port is None else {"city_state": port},
+        bindings={
+            "config": fresh_config(config),
+            **({} if port is None else {"city_state": port}),
+        },
     )
     services, *_rest = setup_services(
         effects=None,
@@ -170,19 +175,15 @@ async def _mcp(services: Any) -> dict[str, Any]:
 
 def test_presence_serves_one_snapshot_at_a_bounded_interval() -> None:
     """HTTP and MCP serve the engine snapshot; fast polls share it, stale ages flag it."""
-    from arbora.core.settings import runtime_config
-
     now = datetime.now(UTC)
     port = FakeCityState(_snapshot(now - timedelta(seconds=1)))
-    services = _services(port)
-
+    config = RuntimeConfig()
     # The interval is an explicit setting, and the served value carries it.
+    config.presence_snapshot_interval_s = 3600.0
+    services = _services(port, config)
+
     # One hour of headroom keeps the fresh flag independent of invoke latency.
-    runtime_config.presence_snapshot_interval_s = 3600.0
-    try:
-        result = asyncio.run(_http(services))
-    finally:
-        del runtime_config.presence_snapshot_interval_s
+    result = asyncio.run(_http(services))
     assert isinstance(result, OpResult) and result.code == "OK", result
     served = result.value["value"]
     assert served["revision"] == 7

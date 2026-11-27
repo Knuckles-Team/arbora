@@ -10,6 +10,7 @@ from typing import Any
 import pytest
 
 from arbora.api.ops import engine_calls as _engine
+from arbora.core.settings import RuntimeConfig
 
 Answer = Any | Callable[[Any], Any]
 
@@ -36,12 +37,27 @@ class EngineDouble:
         return answer(params) if callable(answer) else answer
 
 
+def fresh_config(config: RuntimeConfig | None) -> RuntimeConfig:
+    """The given config, or a fresh one that shares no state."""
+    return config if config is not None else RuntimeConfig()
+
+
+def _services(
+    config: RuntimeConfig | None, services: dict[str, Any] | None
+) -> dict[str, Any]:
+    return {
+        "config": fresh_config(config),
+        **(services if services is not None else {}),
+    }
+
+
 def context(
     client: EngineDouble,
     monkeypatch: pytest.MonkeyPatch,
     *,
     tenant: str = "tenant-a",
     services: dict[str, Any] | None = None,
+    config: RuntimeConfig | None = None,
 ) -> Any:
     """A served-invocation context whose engine graph is ``tenant-content``."""
 
@@ -56,5 +72,5 @@ def context(
         caller=caller,
         client=client,
         idempotency_key="key-1",
-        services=services if services is not None else {},
+        services=_services(config, services),
     )

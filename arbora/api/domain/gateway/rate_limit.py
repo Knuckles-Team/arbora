@@ -38,6 +38,7 @@ import threading
 import time
 from typing import Any
 
+from arbora.core.settings import RuntimeConfig
 from arbora.observability.gateway_metrics import GATEWAY_RATE_LIMITED
 from arbora.security.actor_context import current_actor
 from arbora.security.request_identity import HEALTH_PATHS
@@ -84,9 +85,9 @@ class GatewayRateLimitMiddleware:
         app: Any,
         rate: float | None = None,
         burst: float | None = None,
+        *,
+        config: RuntimeConfig,
     ) -> None:
-        from arbora.core.settings import runtime_config as config
-
         self.app = app
         self.rate = float(rate if rate is not None else config.gateway_rate_limit or 0)
         raw_burst = float(

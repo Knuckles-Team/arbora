@@ -104,6 +104,7 @@ class HostedInvocation:
             authenticator=self.authenticator,
             invoke=invoke,
             scim_ports=self.scim_ports,
+            config=self.services.config,
         )
 
     def run_compatibility_application(self) -> Any:

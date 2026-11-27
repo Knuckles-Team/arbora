@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from arbora.api.domain.gateway.rate_limit import GatewayRateLimitMiddleware
+from arbora.core.settings import RuntimeConfig
 from arbora.observability.gateway_metrics import render_metrics
 from arbora.observability.state import Metrics
 from tests.api._support import make_verified_caller
@@ -16,7 +17,9 @@ async def _app(scope, receive, send) -> None:  # pragma: no cover - never reache
 
 @pytest.mark.spec("ARBORA-HOST-R007.3")
 def test_rate_limit_counter_renamed() -> None:
-    limiter = GatewayRateLimitMiddleware(_app, rate=0.001, burst=1)
+    limiter = GatewayRateLimitMiddleware(
+        _app, rate=0.001, burst=1, config=RuntimeConfig()
+    )
     caller = make_verified_caller("example:ask")()
     assert limiter.consume_verified_caller(caller)[0] is True
     assert limiter.consume_verified_caller(caller)[0] is False

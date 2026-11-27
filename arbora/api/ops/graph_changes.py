@@ -142,9 +142,7 @@ async def _head(context: Any) -> dict[str, Any]:
 
 
 async def _read(context: Any, cursor: str, limit: int | None) -> dict[str, Any]:
-    from arbora.core.settings import runtime_config
-
-    batch = min(limit or 5000, int(runtime_config.graph_changes_max_batch))
+    batch = min(limit or 5000, int(context.services["config"].graph_changes_max_batch))
     try:
         answer = await engine_send(
             context, "ReadGraphChanges", {"cursor": cursor, "limit": batch}

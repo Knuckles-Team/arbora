@@ -19,7 +19,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 
 from arbora.api.invoke.pipeline import EXTERNAL_EFFECT_OPERATIONS, OperationRefused
 from arbora.api.ops import identity_mfa
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.identity.engine_admin import IdentityRefused
 from arbora.identity.mfa_ceremonies import challenge_id_of
 from arbora.identity.session_credential import (
@@ -108,6 +108,10 @@ class Engine:
         return {"ok": True}
 
 
+_CONFIG = RuntimeConfig()
+_CONFIG.webui_origin = ORIGIN
+
+
 def _context(engine: Engine, *, age_ms: int = 1000) -> Any:
     caller = SimpleNamespace(
         principal="person:one",
@@ -116,7 +120,9 @@ def _context(engine: Engine, *, age_ms: int = 1000) -> Any:
         mfa_at_ms=int(time.time() * 1000) - age_ms,
     )
     return SimpleNamespace(
-        services={"identity_admin": engine}, client=None, caller=caller
+        services={"identity_admin": engine, "config": _CONFIG},
+        client=None,
+        caller=caller,
     )
 
 
@@ -163,8 +169,7 @@ def _attestation(challenge: str, *, origin: str = ORIGIN, fmt: str = "none") -> 
 
 
 @pytest.fixture(autouse=True)
-def _origin(monkeypatch: pytest.MonkeyPatch) -> Any:
-    monkeypatch.setattr(runtime_config, "webui_origin", ORIGIN, raising=False)
+def _origin() -> Any:
     with bind_session_credential(CREDENTIAL):
         yield
 
