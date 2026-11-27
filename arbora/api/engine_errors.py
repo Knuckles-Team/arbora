@@ -955,6 +955,7 @@ ENGINE_ERRORS: Mapping[str, tuple[int, bool]] = MappingProxyType(
         "POLICY_TRAJECTORY_MISSING": (400, False),
         "POLICY_VIOLATION": (400, False),
         "PRESET_UNAVAILABLE": (503, False),
+        "PRIORITY_NOT_ALLOWED_FOR_RESOURCE": (400, False),
         "PRIORITY_OUT_OF_RANGE": (400, False),
         "PROBABILISTIC_INPUT_REFUSED": (400, False),
         "PROCESS_MODEL_UNKNOWN": (404, False),
