@@ -110,6 +110,13 @@ def workflow_metadata(
     }
 
 
+def _sources_of(sources: Any, grants: Any, declarations: Any) -> dict[str, Any]:
+    """The gate's grant and declaration sources: the catalog's, or the doubles."""
+    if sources is None:
+        return {"grants": grants, "declarations": declarations}
+    return {"grants": sources.grants, "declarations": sources.declarations}
+
+
 class World:
     """One served ``agents.run`` with the engine, grants and policy doubles bound."""
 
@@ -119,6 +126,7 @@ class World:
         denied: frozenset[str] = frozenset(),
         grant_tools: tuple[str, ...] = ("crm.read",),
         wired: bool = True,
+        sources: Any = None,
     ) -> None:
         self.journal: list[str] = []
         self.engine = Engine(self.journal)
@@ -128,10 +136,12 @@ class World:
         async def grants(_caller: Any) -> Mapping[str, Any]:
             return self.grant
 
+        async def declarations(_caller: Any) -> Mapping[str, str]:
+            return {"crm.read": h("crm.read")}
+
         gate = AdmissionGate(
             port=EngineAdmission(self.engine.send, lambda _t: {}) if wired else None,
-            grants=grants,
-            declarations=lambda: {"crm.read": h("crm.read")},
+            **_sources_of(sources, grants, declarations),
         )
         op = operation(
             id="agents.run", params=_RunParams, idempotency=Idempotency.KEY_REQUIRED

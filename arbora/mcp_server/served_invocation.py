@@ -746,6 +746,15 @@ def _with_host_adapters(
     return {**{k: v for k, v in adapters.items() if k not in bindings}, **bindings}
 
 
+def _rank_schema_lookup(bindings: Mapping[str, Any] | None) -> Any:
+    """``(tenant, question_id)`` to the published ranking-schema pin, or ``None``."""
+    from arbora.api.task_plan_schema import rank_pin
+
+    return lambda tenant, question_id: rank_pin(
+        (bindings or {}).get("catalog_rank_schema_pins"), tenant, question_id
+    )
+
+
 def _with_task_plan_schema(
     bindings: Mapping[str, Any] | None,
     pool: Any,
@@ -765,10 +774,15 @@ def _with_task_plan_schema(
     """
     if bindings is None or "task_plan_schema_pins" in bindings:
         return bindings, None
-    from arbora.api.task_plan_schema import publish_at_startup, startup_pins
+    from arbora.api.task_plan_schema import (
+        catalog_rank_pins,
+        publish_all,
+        startup_pins,
+    )
 
     pins = startup_pins()
-    if pins is None:
+    rank_pins = catalog_rank_pins()
+    if not any((pins, rank_pins)):
         return bindings, None
     publish = _task_plan_schema_publisher(
         pool, graph, connect_context, session, action_policies
@@ -776,10 +790,22 @@ def _with_task_plan_schema(
 
     async def publish_served_tenants() -> dict[str, bool]:
         # Arbora serves the process tenant's graph only: the engine pool binds
-        # each graph to one tenant.
-        return await publish_at_startup(pins, publish, (str(session().tenant),))
+        # each graph to one tenant. The ranking schemas publish the same way, once
+        # per tenant (MEDULLA-DECISION-ENGINE-R829.4: the engine does not auto-publish).
+        tenants = (str(session().tenant),)
+        return await publish_all(pins, rank_pins, publish, tenants)
 
-    return {**bindings, "task_plan_schema_pins": pins}, publish_served_tenants
+    return _schema_bindings(bindings, pins, rank_pins), publish_served_tenants
+
+
+def _schema_bindings(
+    bindings: Mapping[str, Any], pins: Any, rank_pins: Mapping[str, Any]
+) -> dict[str, Any]:
+    """The request bindings that read the published schema pins (read-only)."""
+    bound = {**bindings, "catalog_rank_schema_pins": rank_pins}
+    if pins is not None:
+        bound["task_plan_schema_pins"] = pins
+    return bound
 
 
 def compose_served_invocation(
@@ -1071,6 +1097,7 @@ def compose_served_invocation(
         approval_chain=approval_chain,
         engine_send=gate_send,
         decision_feature_schema=tenant_pin,
+        ranking_feature_schema=_rank_schema_lookup(bindings),
         decision_principal=confirm_principal,
         decision_tenant=lambda: str(session().tenant),
         decision_graph=graph,

@@ -96,9 +96,16 @@ def bind_ranking(host: HostContext, invocation: Any) -> None:
     schema = getattr(invocation, "decision_feature_schema", None)
     principal = getattr(invocation, "decision_principal", None)
     tenant = getattr(invocation, "decision_tenant", None)
+    rank_schema = getattr(invocation, "ranking_feature_schema", None)
     if send is None or schema is None or principal is None or tenant is None:
         return
     host.fleet.ranking.bind(
-        engine_ask(send, tenant=tenant, feature_schema=schema, principal=principal),
-        published=schemas_published(schema, tenant),
+        engine_ask(
+            send,
+            tenant=tenant,
+            feature_schema=schema,
+            principal=principal,
+            rank_schema=rank_schema,
+        ),
+        published=schemas_published(schema, tenant, rank_schema),
     )

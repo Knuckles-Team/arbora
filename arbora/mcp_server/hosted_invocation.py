@@ -38,6 +38,9 @@ class HostedInvocation:
     #: sees on ``engine_send``; the A2A door's ``Decide`` port binds both (R005.4).
     decision_feature_schema: Callable[[str], Mapping[str, Any]] | None = None
     decision_principal: Callable[[], str] | None = None
+    #: ``(tenant, question_id)`` to the published ranking-question schema pin, or
+    #: ``None`` while unpublished (``find`` then answers the floor).
+    ranking_feature_schema: Callable[[str, str], Mapping[str, Any] | None] | None = None
     #: The host tenant the capability-ranking questions are asked for (R083.5).
     decision_tenant: Callable[[], str] | None = None
     #: The SCIM ports (credentials, identity port, audit) the composition root built, or

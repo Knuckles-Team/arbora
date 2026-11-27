@@ -102,3 +102,42 @@ def test_boot_declares_the_ingest_worker_unit(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.delenv("GRAPH_SERVICE_ENDPOINTS")
     bare = compose_onboarding_ports(_engine(), SimpleNamespace(graph="g", tenant="t"))
     assert bare.ingest_worker is None
+
+
+def _boot_with(monkeypatch: pytest.MonkeyPatch, **extra: Any) -> Any:
+    started: list[Any] = []
+    monkeypatch.setattr(
+        onboarding_module.FleetOnboardingService,
+        "start",
+        lambda self: started.append(self) or "thread",
+    )
+    monkeypatch.delenv("GRAPH_SERVICE_ENDPOINTS", raising=False)
+    monkeypatch.setattr("arbora.deployment.data_prep.data_prep_path", lambda: None)
+    onboarding_module.start_fleet_onboarding(
+        engine=_engine(),
+        session=SimpleNamespace(graph="g", tenant="t"),
+        multiplexer=SimpleNamespace(),
+        virtual_catalog=SimpleNamespace(),
+        declarations=SimpleNamespace(),
+        action_policies=SimpleNamespace(),
+        served_url="",
+        **extra,
+    )
+    return started[0].onboarding.definition_admission
+
+
+@pytest.mark.spec("ARBORA-FLEET-R002.5")
+def test_boot_hands_the_served_pin_to_the_definition_admission(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.api.invoke.pipeline import OperationRefused
+
+    pin = {"component_id": "decide.schema.catalog.operation_rank"}
+    admission = _boot_with(monkeypatch, feature_schema=lambda tenant: pin)
+    assert admission.port.feature_schema("t") == pin
+
+    # Without the seam the lookup refuses closed: no verified pin, no admission.
+    unbound = _boot_with(monkeypatch)
+    with pytest.raises(OperationRefused) as refused:
+        unbound.port.feature_schema("t")
+    assert refused.value.code == "UNAVAILABLE"
