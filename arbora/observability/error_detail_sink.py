@@ -88,7 +88,7 @@ class GraphErrorDetailSink:
         props.update({field: record.get(field, "") for field in _RECORD_FIELDS})
         try:
             create_record(self._engine, node_id, ERROR_DETAIL_NODE_LABEL, props)
-        except Exception:  # noqa: BLE001 — a provenance write must never fail the caller
+        except Exception:  # a provenance write must never fail the caller
             logger.warning(
                 "GraphErrorDetailSink failed to persist detail for correlation_id=%s",
                 correlation_id,
@@ -116,7 +116,7 @@ class GraphErrorDetailSink:
             self._engine.link_nodes(
                 node_id, run_trace_id(run_correlation_id), ERROR_DETAIL_DIAGNOSES_EDGE
             )
-        except Exception:  # noqa: BLE001 — opportunistic linkage only
+        except Exception:  # opportunistic linkage only
             logger.debug("error detail run-trace linkage skipped", exc_info=True)
 
     def resolve(self, correlation_id: str) -> dict[str, Any] | None:
@@ -136,7 +136,10 @@ class GraphErrorDetailSink:
                 "e.traceback AS traceback, e.tenant_id AS tenant_id LIMIT 1",
                 {"id": node_id},
             )
-        except Exception:  # noqa: BLE001 - an unavailable engine means no durable detail
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "an unavailable engine means no durable detail", exc_info=True
+            )
             return None
         if not rows or not isinstance(rows[0], dict):
             return None

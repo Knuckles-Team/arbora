@@ -471,7 +471,11 @@ class _FleetSupervisionCache:
             with self._compute_lock:
                 try:
                     result = compute()
-                except Exception as exc:  # noqa: BLE001 - never let a wedged refresh crash silently or hide behind stale "ok" forever
+                except Exception as exc:
+                    logging.getLogger(__name__).debug(
+                        "never let a wedged refresh crash silently or hide behind stale 'ok' forever",
+                        exc_info=True,
+                    )
                     result = _unhealthy(
                         "fleet_supervision",
                         f"background refresh raised {type(exc).__name__}: {exc}",

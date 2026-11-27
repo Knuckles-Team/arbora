@@ -15,6 +15,7 @@ timestamps and opaque strings are never used as ordering cursors.
 from __future__ import annotations
 
 import json
+import logging
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
@@ -211,7 +212,10 @@ def correlate_lineage_run_trace(engine: Any, candidate_run_id: str) -> str | Non
             "RETURN t.run_id AS run_id LIMIT 1",
             {"run_id": tid},
         )
-    except Exception:  # noqa: BLE001 - correlation lookup is best-effort
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "correlation lookup is best-effort", exc_info=True
+        )
         return None
     for row in rows or []:
         if isinstance(row, Mapping) and row.get("run_id"):

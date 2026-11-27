@@ -12,6 +12,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import json
+import logging
 from collections.abc import Callable, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeout
@@ -48,7 +49,10 @@ def _run(probe: Probe, pool: ThreadPoolExecutor, deadline_s: float) -> Check:
     except FutureTimeout:
         future.cancel()
         return check("unavailable", reason=f"probe exceeded {deadline_s}s deadline")
-    except Exception as exc:  # noqa: BLE001 - a broken probe is never ready
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "a broken probe is never ready", exc_info=True
+        )
         return check("unavailable", reason=f"probe raised {type(exc).__name__}")
     return (
         out

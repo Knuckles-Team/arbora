@@ -89,7 +89,7 @@ def record_request_duration(duration_s: float) -> None:
     """
     try:
         trend = _get_buffer().add(float(duration_s), at=time.time())
-    except Exception as e:  # noqa: BLE001 — must never affect the response path
+    except Exception as e:  # must never affect the response path
         logger.debug("gateway health sample skipped: %s", e)
         return
     if trend is not None:
@@ -160,5 +160,5 @@ async def _check_and_record(trend: dict[str, Any]) -> None:
             mime_type="application/json",
             source="gateway-health",
         )
-    except Exception as e:  # noqa: BLE001 — best-effort, never affects the request path
+    except Exception as e:  # best-effort, never affects the request path
         logger.debug("gateway health anomaly check failed: %s", e)

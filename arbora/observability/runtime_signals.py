@@ -224,7 +224,7 @@ def record_runtime_signal(
         signal = _build_signal(kind, subject, detail, severity)
         with _BUFFER_LOCK:
             _SIGNAL_BUFFER.append(signal)
-    except Exception:  # noqa: BLE001 — a signal must never affect the caller's hot path
+    except Exception:  # a signal must never affect the caller's hot path
         with contextlib.suppress(Exception):
             logger.debug("record_runtime_signal dropped a signal (kind=%s)", kind)
 
@@ -304,7 +304,7 @@ def persist_runtime_signals(engine: Any, signals: list[dict[str, Any]]) -> int:
                     "properties": _signal_properties(signal, sid),
                 }
             )
-        except Exception as e:  # noqa: BLE001 — one malformed signal never drops the batch
+        except Exception as e:  # one malformed signal never drops the batch
             logger.debug("persist_runtime_signals: skipped a malformed signal: %s", e)
     if not mutations:
         return 0
@@ -314,7 +314,7 @@ def persist_runtime_signals(engine: Any, signals: list[dict[str, Any]]) -> int:
         try:
             if batch(mutations):
                 return len(mutations)
-        except Exception as e:  # noqa: BLE001 — an all-or-nothing batch failure wrote nothing
+        except Exception as e:  # an all-or-nothing batch failure wrote nothing
             logger.error(
                 "persist_runtime_signals: typed batch of %d signal(s) failed: %s",
                 len(mutations),
@@ -331,7 +331,7 @@ def persist_runtime_signals(engine: Any, signals: list[dict[str, Any]]) -> int:
                 engine, mutation["id"], RUNTIME_SIGNAL_LABEL, mutation["properties"]
             )
             written += 1
-        except Exception as e:  # noqa: BLE001 — fallback is best-effort, per-signal isolated
+        except Exception as e:  # fallback is best-effort, per-signal isolated
             logger.debug("persist_runtime_signals: node write failed: %s", e)
     return written
 
@@ -363,7 +363,7 @@ def read_recent_runtime_signals(
             f"RETURN n LIMIT {int(limit)}",
             {"cutoff": cutoff},
         )
-    except Exception as e:  # noqa: BLE001 — read is best-effort
+    except Exception as e:  # read is best-effort
         logger.debug("read_recent_runtime_signals query failed: %s", e)
         return []
     out: list[dict[str, Any]] = []
