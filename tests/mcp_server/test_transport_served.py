@@ -126,9 +126,10 @@ def test_servable_options_and_the_startup_record() -> None:
 
 @pytest.mark.spec("ARBORA-HOST-R006.2")
 def test_network_transport_without_validated_identity_exits_before_serving() -> None:
+    from arbora.core.settings import RuntimeConfig
     from arbora.security.request_identity import apply_served_security_profile
 
     with pytest.raises(Exception):  # noqa: B017 - the profile refuses with its own error
         apply_served_security_profile(
-            "streamable-http", transport_auth_configured=False
+            "streamable-http", RuntimeConfig(), transport_auth_configured=False
         )

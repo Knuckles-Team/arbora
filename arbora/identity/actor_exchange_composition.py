@@ -42,7 +42,7 @@ def bind_actor_exchange(
     from arbora.identity.issuer import IssuerSettings, LocalIssuer
     from arbora.security.settings import security_settings
 
-    config = security_settings()
+    config = security_settings(fleet.config)
     deployed = identity_deployment()
     issuer = deployed.issuer or config.auth_jwt_issuer
     audience = config.auth_jwt_audience

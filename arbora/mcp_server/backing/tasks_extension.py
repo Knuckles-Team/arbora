@@ -442,7 +442,9 @@ class WorkItemTasksExtension(ServerExtension):
         return route
 
     @staticmethod
-    def _authorized_session(ctx: ServerRequestContext[Any, Any], scope: str) -> Any:
+    def _authorized_session(
+        ctx: ServerRequestContext[Any, Any], scope: str, config: RuntimeConfig
+    ) -> Any:
         """Resolve verified identity for extension requests (including HTTP).
 
         ``ActorContextMiddleware`` historically scoped tool calls only.  A
@@ -474,7 +476,9 @@ class WorkItemTasksExtension(ServerExtension):
                 mint_graph_session,
             )
 
-            session = mint_graph_session(actor_from_claims(dict(claims)))
+            session = mint_graph_session(
+                actor_from_claims(dict(claims), config), config
+            )
             session.require_scope(scope)
             return session
         except PermissionError:
@@ -902,7 +906,7 @@ class WorkItemTasksExtension(ServerExtension):
         )
         if delegated is not None:
             return delegated
-        session = self._authorized_session(ctx, scope)
+        session = self._authorized_session(ctx, scope, self._config)
         self._validate_delegated_caller(route, session)
         return session
 

@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.messaging import planner_handler
 from arbora.messaging.host_ports import bind_host_ports
 from arbora.messaging.models import EventType, InboundEvent, Message
@@ -18,6 +19,8 @@ pytestmark = pytest.mark.asyncio
 
 
 class _Service:
+    config = RuntimeConfig()
+
     def __init__(self, waiting: bool = False) -> None:
         self.waiting = waiting
 
@@ -59,7 +62,7 @@ async def _handler(monkeypatch, timer, *, waiting: bool = False):
     monkeypatch.setenv("MESSAGING_SENDER_PRINCIPALS", '{"telegram:7": "principal-7"}')
     monkeypatch.setattr(
         "arbora.messaging.sender_identity._exchange_for_principal",
-        lambda principal: f"token-for-{principal}",
+        lambda principal, config: f"token-for-{principal}",
     )
     monkeypatch.setattr(
         MessagingService, "instance", lambda _engine=None: _Service(waiting)

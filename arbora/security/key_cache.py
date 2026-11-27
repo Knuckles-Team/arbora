@@ -9,18 +9,27 @@ from __future__ import annotations
 import threading
 from typing import Any
 
+from arbora.core.settings import RuntimeConfig
+
 __all__ = ["JWKS_TTL_SECONDS", "JwksCache"]
 
 #: How long a fetched key set is served before it is fetched again.
 JWKS_TTL_SECONDS = 300.0
 
 
+def _config_or_new(config: RuntimeConfig | None) -> RuntimeConfig:
+    return config if config is not None else RuntimeConfig()
+
+
 class JwksCache:
     """Fetched key sets keyed by their endpoint, each valid until its expiry."""
 
-    __slots__ = ("_lock", "_sets")
+    __slots__ = ("_lock", "_sets", "config")
 
-    def __init__(self) -> None:
+    def __init__(self, config: RuntimeConfig | None = None) -> None:
+        #: The configuration view of the host this cache serves: the verifiers that
+        #: hold the cache read their security settings through it.
+        self.config = _config_or_new(config)
         self._lock = threading.Lock()
         self._sets: dict[str, tuple[dict[str, Any], float]] = {}
 

@@ -14,6 +14,7 @@ from typing import Any
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.messaging import planner_handler
 from arbora.messaging.host_ports import bind_host_ports, reset_host_ports
 from arbora.messaging.models import EventType, InboundEvent, Message
@@ -46,6 +47,8 @@ def _event(text: str) -> InboundEvent:
 
 
 class _Service:
+    config = RuntimeConfig()
+
     def _resolve_engine(self) -> str:
         return "engine"
 
@@ -65,7 +68,7 @@ async def test_web_and_messaging_return_the_same_cited_answer(
     monkeypatch.setenv("MESSAGING_SENDER_PRINCIPALS", '{"telegram:7": "principal-7"}')
     monkeypatch.setattr(
         "arbora.messaging.sender_identity._exchange_for_principal",
-        lambda principal: f"token-for-{principal}",
+        lambda principal, config: f"token-for-{principal}",
     )
     monkeypatch.setattr(MessagingService, "instance", lambda _engine=None: _Service())
 

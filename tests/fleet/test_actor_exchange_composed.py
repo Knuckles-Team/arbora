@@ -83,7 +83,9 @@ def _configure(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         settings,
         "security_settings",
-        lambda: SimpleNamespace(auth_jwt_issuer=None, auth_jwt_audience="arbora"),
+        lambda _config: SimpleNamespace(
+            auth_jwt_issuer=None, auth_jwt_audience="arbora"
+        ),
     )
 
 

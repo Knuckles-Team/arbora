@@ -120,7 +120,7 @@ def _served_app(monkeypatch: pytest.MonkeyPatch) -> tuple[FastAPI, _FederatedCli
 
     monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)
     client = _FederatedClient()
-    process = request_identity.mint_graph_session(actor)
+    process = request_identity.mint_graph_session(actor, RuntimeConfig())
     invocation = compose_served_invocation(
         config=RuntimeConfig(),
         keys=JwksCache(),
@@ -156,7 +156,7 @@ def _served_native_app(
 
     monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)
     client = _NativeOnlyClient()
-    process = request_identity.mint_graph_session(actor)
+    process = request_identity.mint_graph_session(actor, RuntimeConfig())
     invocation = compose_served_invocation(
         config=RuntimeConfig(),
         keys=JwksCache(),

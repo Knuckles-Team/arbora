@@ -219,7 +219,7 @@ async def test_onboarding_record_carries_surfaces_for_changed_and_unchanged(
         capture=capture,
     )
     report = OnboardingReport()
-    monkeypatch.setattr(onboarding_module, "_child_auth", lambda: None)
+    monkeypatch.setattr(onboarding_module, "_child_auth", lambda *_: None)
     endpoint = FleetEndpoint(BARE, "http://bare/mcp")
     await _onboard_all(onboarding, [endpoint], report)
     assert report.renewed == [BARE]

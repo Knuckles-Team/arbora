@@ -199,7 +199,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
             None,
         )
     )
-    process = request_identity.mint_graph_session(_actor())
+    process = request_identity.mint_graph_session(_actor(), RuntimeConfig())
     a2a = A2AService(
         authority=WorkItemA2AAuthority(
             lambda: client, origins=RunOriginRegistry(), ports=ports
@@ -380,7 +380,7 @@ def test_served_memory_operations_round_trip_over_eg_kv(served: Any) -> None:
 async def test_served_mcp_surface_lists_the_intent_verbs_and_finds(
     served: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    process = request_identity.mint_graph_session(_actor())
+    process = request_identity.mint_graph_session(_actor(), RuntimeConfig())
     host = build_host_context()
     host.authority.bind_session(process)
     _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False, host=host)

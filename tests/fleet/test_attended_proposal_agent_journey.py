@@ -85,8 +85,10 @@ def _session(monkeypatch: pytest.MonkeyPatch) -> Any:
                 "scope": "kg:read kg:write mcp:discover mcp:delegate",
                 "roles": ["user"],
                 "exp": int(time.time()) + 600,
-            }
-        )
+            },
+            RuntimeConfig(),
+        ),
+        RuntimeConfig(),
     )
 
 

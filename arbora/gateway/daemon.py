@@ -170,7 +170,7 @@ def mint_process_identity(keys: JwksCache) -> Any:
         actor,
         credential_lease=CredentialLease(int(expires_at)),
     )
-    session = mint_graph_session(actor)
+    session = mint_graph_session(actor, config)
     session.ensure_authority_current(minimum_ttl_seconds=30)
     session_context(session)
     logger.info("Verified graph host process authority minted")

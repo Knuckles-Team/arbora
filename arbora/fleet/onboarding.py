@@ -38,6 +38,7 @@ from typing import Any, Literal, cast
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.core.environment import read_env
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.declarations import (
     RESOURCES_URI,
     Declarations,
@@ -346,13 +347,13 @@ def _remember_declaration(
     declarations.remember(connector, declaration)
 
 
-def _child_auth() -> Any:
+def _child_auth(config: RuntimeConfig) -> Any:
     """Arbora's service credential for a child, as the multiplexer sends it."""
 
     from arbora.core.httpx_boundary import coerce_httpx2_auth
     from arbora.security.client_credentials import child_auth
 
-    return coerce_httpx2_auth(child_auth(None))
+    return coerce_httpx2_auth(child_auth(None, config))
 
 
 async def capture_server_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
@@ -407,6 +408,8 @@ class FleetOnboarding:
     #: Admits versioned definitions before the pack import (ARBORA-FLEET-R002.5);
     #: ``None`` leaves definitions unversioned, as before the engine port is wired.
     definition_admission: Any = None
+    #: The host's configuration view (the service credential is read through it).
+    config: RuntimeConfig = field(default_factory=RuntimeConfig)
 
     @property
     def tenant_client(self) -> Any:
@@ -1166,7 +1169,7 @@ async def _onboard_all(
     if not pending:
         return
     try:
-        auth = _child_auth()
+        auth = _child_auth(onboarding.config)
     except Exception as exc:  # no service identity: nothing can be captured
         report.failed["child-auth"] = _failure(exc)
         logger.warning(
@@ -1649,7 +1652,7 @@ class HandshakeOnboarder:
         async with temporary_client_scope():
             return await self.onboarding.handshake_pass(
                 endpoint,
-                auth=_child_auth(),
+                auth=_child_auth(self.onboarding.config),
                 trigger=trigger,
                 server_version=info.server_version,
             )
@@ -1743,6 +1746,7 @@ def start_fleet_onboarding(
             action_policies=action_policies,
             virtual_catalog=virtual_catalog,
             definition_admission=ports.definition_admission,
+            config=multiplexer.fleet.config,
         ),
         multiplexer=multiplexer,
         served_url=configured_served_url() if served_url is None else served_url,

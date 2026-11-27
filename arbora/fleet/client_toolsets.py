@@ -12,17 +12,20 @@ attaching its own outbound service credential and TLS policy.
 from __future__ import annotations
 
 import contextlib
+import functools
 from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 
+from arbora.core.settings import RuntimeConfig
+
 DEFAULT_MCP_TIMEOUT = 60.0
 
 
-def _service_auth() -> Any:
+def _service_auth(config: RuntimeConfig) -> Any:
     from arbora.security.client_credentials import child_auth
 
-    return child_auth(None)
+    return child_auth(None, config)
 
 
 def _http_client_factory(trust: Any, default_timeout: float) -> Any:
@@ -67,7 +70,11 @@ def _local_timeout(value: Any, default_timeout: float) -> Any:
 
 
 def build_url_toolset(
-    url: str, toolset_id: str | None = None, timeout: float = DEFAULT_MCP_TIMEOUT
+    url: str,
+    toolset_id: str | None = None,
+    timeout: float = DEFAULT_MCP_TIMEOUT,
+    *,
+    config: RuntimeConfig,
 ) -> Any:
     """One ``MCPToolset`` bound to ``url`` with arbora's outbound credential.
 
@@ -81,7 +88,7 @@ def build_url_toolset(
 
     trust = resolve_configured_tls_profile("mcp")
     try:
-        auth = _service_auth()
+        auth = _service_auth(config)
         if str(url).rstrip("/").lower().endswith("/sse"):
             transport: Any = SSETransport(
                 url,
@@ -139,7 +146,7 @@ class _HostToolClient:
 
 @contextlib.asynccontextmanager
 async def open_tool_client(
-    target: Any, *, timeout: float | None = None
+    target: Any, *, config: RuntimeConfig, timeout: float | None = None
 ) -> AsyncIterator[_HostToolClient]:
     """Open one tool-client session on ``target``.
 
@@ -152,17 +159,17 @@ async def open_tool_client(
     if isinstance(target, str) and target.startswith(("http://", "https://")):
         from arbora.core.httpx_boundary import coerce_httpx2_auth
 
-        auth = coerce_httpx2_auth(_service_auth())
+        auth = coerce_httpx2_auth(_service_auth(config))
     async with Client(target, timeout=timeout, auth=auth) as client:
         yield _HostToolClient(client)
 
 
-def remote_toolset_provider() -> Any:
+def remote_toolset_provider(config: RuntimeConfig) -> Any:
     """The ``RemoteToolsetProvider`` arbora registers with the harness."""
     from meristem.host_ports import RemoteToolsetProvider
 
     return RemoteToolsetProvider(
-        build_url_toolset=build_url_toolset,
+        build_url_toolset=functools.partial(build_url_toolset, config=config),
         load_config_toolsets=load_config_toolsets,
     )
 

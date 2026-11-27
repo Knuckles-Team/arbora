@@ -108,14 +108,15 @@ class CentralACPFactory:
 
         from .http_transport import _authorization_profile
 
-        if not security_settings().auth_jwt_issuer:
+        config = request.app.state.host.config
+        if not security_settings(config).auth_jwt_issuer:
             raise PermissionError("Configured central bearer issuer required")
-        bound_profile = _authorization_profile(authority)
+        bound_profile = _authorization_profile(authority, config)
         current: list[Any] = []
 
         async def admit(request: Any, authority: Any) -> None:
             caller = await self.invocation.authenticator.authenticate(request)
-            if _authorization_profile(authority) != bound_profile:
+            if _authorization_profile(authority, config) != bound_profile:
                 raise PermissionError("Connection authorization profile changed")
             if caller.session != authority or not caller.authenticated:
                 raise PermissionError("Exact verified HTTP authority required")

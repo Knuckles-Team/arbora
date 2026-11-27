@@ -43,6 +43,7 @@ from arbora.messaging.models import InboundEvent, MediaAttachment, SendResult
 if TYPE_CHECKING:
     from arbora.messaging.base import MessagingBackend
 from arbora.core.environment import read_env
+from arbora.core.settings import RuntimeConfig
 from arbora.security.error_surface import carry_errors
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,10 @@ logger = logging.getLogger(__name__)
 _PREF_NODE_PREFIX = "chanpref:"
 # Sentinel user id for "the operator" when an event carries no user id.
 _DEFAULT_USER = "operator"
+
+
+def _config_or_new(config: RuntimeConfig | None) -> RuntimeConfig:
+    return config if config is not None else RuntimeConfig()
 
 
 class MessagingService:
@@ -65,8 +70,10 @@ class MessagingService:
 
     _instance: MessagingService | None = None
 
-    def __init__(self, engine: Any = None) -> None:
+    def __init__(self, engine: Any = None, config: RuntimeConfig | None = None) -> None:
         self._engine = engine
+        #: The configuration view this service's senders read their settings through.
+        self.config = _config_or_new(config)
         self._backends: dict[str, MessagingBackend] = {}
         # CONCEPT:MERISTEM-ECO.messaging.elicitation-loop-bridge — elicitation and loop bridge so a blocked loop reaches the user and resumes on reply
         # Pending awaited replies keyed by "platform:channel_id":

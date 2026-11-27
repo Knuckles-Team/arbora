@@ -181,7 +181,7 @@ async def test_orphan_refusal_marks_contract_rejected_and_admits_no_tools(
     report = types.SimpleNamespace(failed={}, onboarded=[], renewed=[], surfaces={})
     other = FleetEndpoint("other", "http://o/mcp")
     onboarding2, _ = make_onboarding([_counted_pack(), _counted_pack()], monkeypatch)
-    monkeypatch.setattr(onboarding_module, "_child_auth", lambda: None)
+    monkeypatch.setattr(onboarding_module, "_child_auth", lambda *_: None)
     await _onboard_all(onboarding2, [ENDPOINT, other], report)
     assert report.onboarded == ["crm", "other"] and report.failed == {}
 
@@ -276,7 +276,7 @@ async def test_pass_longer_than_authority_lifetime_renews_between_imports(
     }
     onboarding = RecordingOnboarding(**fields, authority=authority)
     report = types.SimpleNamespace(failed={}, onboarded=[], renewed=[], surfaces={})
-    monkeypatch.setattr(onboarding_module, "_child_auth", lambda: None)
+    monkeypatch.setattr(onboarding_module, "_child_auth", lambda *_: None)
     other = FleetEndpoint("other", "http://o/mcp")
 
     original = onboarding_module.FleetOnboarding.onboard

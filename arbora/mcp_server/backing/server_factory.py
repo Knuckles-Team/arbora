@@ -1088,9 +1088,10 @@ def _discover_delegation_token_endpoint(config_url: str) -> str:
     suffix = "/.well-known/openid-configuration"
     issuer = config_url[: -len(suffix)] if config_url.endswith(suffix) else config_url
 
+    from arbora.core.settings import RuntimeConfig
     from arbora.security.oidc_discovery import discover
 
-    oidc_config = discover(issuer)
+    oidc_config = discover(issuer, RuntimeConfig())
     token_endpoint = oidc_config.get("token_endpoint")
     if not token_endpoint:
         raise ValueError("No token_endpoint found in OIDC configuration")
@@ -1466,9 +1467,13 @@ def _resolve_jwt_basic_params(
 
 
 def _oidc_discover_jwks_uris(issuer: str) -> list[str | None]:
+    from arbora.core.settings import RuntimeConfig
     from arbora.security.oidc_discovery import jwks_uri_for
 
-    return [jwks_uri_for(i.strip()) for i in str(issuer).split(",") if i.strip()]
+    config = RuntimeConfig()
+    return [
+        jwks_uri_for(i.strip(), config) for i in str(issuer).split(",") if i.strip()
+    ]
 
 
 def _maybe_discover_jwks(

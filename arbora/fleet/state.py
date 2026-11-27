@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from arbora.api.domain.fleet.plan_confirmation import PlanConfirmations
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.actor_exchange import ActorExchange
 from arbora.fleet.credential_reuse import CredentialReuse
 from arbora.fleet.declarations import Declarations
@@ -61,6 +62,8 @@ class FleetState:
     ranking: HostRanking = field(default_factory=HostRanking)
     actor: ActorExchange = field(default_factory=ActorExchange)
     credentials: CredentialReuse = field(default_factory=CredentialReuse)
+    #: The host's configuration view; every fleet reader takes its settings from it.
+    config: RuntimeConfig = field(default_factory=RuntimeConfig)
 
     @property
     def actor_issuer(self) -> Any:

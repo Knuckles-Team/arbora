@@ -23,7 +23,7 @@ from tests.identity._bearer_fixture import (
 def test_audit_event_fields_and_no_token_text(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "arbora.security.settings.security_settings",
-        lambda: SimpleNamespace(
+        lambda _config: SimpleNamespace(
             auth_jwt_issuer=ISSUER,
             auth_jwt_audience=AUDIENCE,
             auth_jwt_jwks_uri=JWKS_URI,

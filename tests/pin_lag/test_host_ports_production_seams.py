@@ -26,6 +26,7 @@ from arbora.agent_host.port_backends import (
 )
 from arbora.agent_runs import NativeRunContext
 from arbora.api.invoke.plan import approval_id_for
+from arbora.core.settings import RuntimeConfig
 from arbora.security import request_identity
 from tests.api._served_support import capture_invocation, person
 from tests.pin_lag.test_host_ports_pin_lag import main_shape  # noqa: F401
@@ -53,7 +54,7 @@ def captured(monkeypatch: pytest.MonkeyPatch) -> Any:
 
 def _owner(claim: Mapping[str, Any] | None = None) -> NativeRunContext:
     session = request_identity.mint_graph_session(
-        person("one", extra_scopes=("approvals:read",))
+        person("one", extra_scopes=("approvals:read",)), RuntimeConfig()
     )
     return NativeRunContext(
         run_id=RUN,

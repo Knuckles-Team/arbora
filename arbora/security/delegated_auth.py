@@ -81,6 +81,7 @@ def _post_token(
     timeout: int = 30,
 ) -> dict[str, Any]:
     """POST one bounded token request through the canonical OIDC transport."""
+    from arbora.core.settings import RuntimeConfig
     from arbora.security.oidc_discovery import (
         canonical_oidc_endpoint,
         oidc_http_client,
@@ -90,7 +91,7 @@ def _post_token(
     if not 1 <= int(timeout) <= 60:
         raise ValueError("Token request timeout is outside the safe range")
 
-    with oidc_http_client(timeout=float(timeout)) as client:
+    with oidc_http_client(RuntimeConfig(), timeout=float(timeout)) as client:
         with client.stream("POST", endpoint, data=data, auth=auth) as response:
             response.raise_for_status()
             body = bytearray()

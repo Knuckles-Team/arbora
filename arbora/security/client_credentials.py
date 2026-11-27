@@ -70,6 +70,7 @@ import httpx
 from fastmcp.utilities.logging import get_logger
 
 from arbora.core.environment import read_env, read_reference
+from arbora.core.settings import RuntimeConfig
 from arbora.security.log_redaction import redact_for_log
 
 logger = get_logger(name="MultiplexerClientAuth")
@@ -165,7 +166,7 @@ def _auth_mode() -> str:
     raise RuntimeError("MCP_CLIENT_AUTH has an unsupported value")
 
 
-def _derive_token_url() -> str | None:
+def _derive_token_url(config: RuntimeConfig) -> str | None:
     # Explicit pin wins (any provider, or discovery-less environments).
     explicit = _configured_text("OIDC_TOKEN_URL")
     if explicit:
@@ -185,7 +186,7 @@ def _derive_token_url() -> str | None:
         return None
     from arbora.security.oidc_discovery import token_endpoint_for
 
-    return token_endpoint_for(primary_issuer)
+    return token_endpoint_for(primary_issuer, config)
 
 
 def _invalid_oidc_text_fields(required: dict[str, str]) -> list[str]:
@@ -428,7 +429,10 @@ class ClientCredentialsTokenProvider:
         audience: str,
         scope: str | None = None,
         timeout: int = 15,
+        *,
+        config: RuntimeConfig,
     ) -> None:
+        self.config = config
         self.token_url = token_url
         self.client_id = client_id
         self.client_secret = client_secret
@@ -471,7 +475,7 @@ class ClientCredentialsTokenProvider:
             data["scope"] = self.scope
         from arbora.security.oidc_discovery import oidc_http_client
 
-        with oidc_http_client(timeout=float(self.timeout)) as client:
+        with oidc_http_client(self.config, timeout=float(self.timeout)) as client:
             with client.stream(
                 "POST",
                 self.token_url,
@@ -528,7 +532,7 @@ _provider: ClientCredentialsTokenProvider | None = None
 _provider_lock = threading.Lock()
 
 
-def get_provider() -> ClientCredentialsTokenProvider | None:
+def get_provider(config: RuntimeConfig) -> ClientCredentialsTokenProvider | None:
     """Return the configured provider, or ``None`` only when auth is disabled.
 
     Self-healing: a missing-creds result is NOT cached. A first call that races
@@ -545,7 +549,7 @@ def get_provider() -> ClientCredentialsTokenProvider | None:
         if _provider is not None:
             return _provider
         validate_outbound_auth_configuration()
-        token_url = _derive_token_url()
+        token_url = _derive_token_url(config)
         client_id = _configured_text("OIDC_CLIENT_ID")
         audience = _configured_text("OIDC_AUDIENCE")
         client_secret = _resolve_runtime_secret("OIDC_CLIENT_SECRET_REF")
@@ -558,6 +562,7 @@ def get_provider() -> ClientCredentialsTokenProvider | None:
             client_secret=client_secret,
             audience=audience,
             scope=read_env("OIDC_SCOPE") or None,
+            config=config,
         )
         return _provider
 
@@ -596,8 +601,8 @@ def _rotating_file_bearer_header() -> dict[str, str]:
     return {"Authorization": f"Bearer {read_rotating_bearer_token(path)}"}
 
 
-def _oidc_bearer_header() -> dict[str, str]:
-    provider = get_provider()
+def _oidc_bearer_header(config: RuntimeConfig) -> dict[str, str]:
+    provider = get_provider(config)
     if provider is None:  # defensive: mode=OIDC always returns or raises
         raise RuntimeError("Outbound MCP service identity is unavailable")
     try:
@@ -611,7 +616,7 @@ def _oidc_bearer_header() -> dict[str, str]:
         raise RuntimeError("Could not mint outbound MCP credential") from None
 
 
-def child_auth_header(existing: dict | None) -> dict:
+def child_auth_header(existing: dict | None, config: RuntimeConfig) -> dict:
     """Authorization header for a remote child, or ``{}`` if not applicable.
 
     Returns the configured outbound credential — ``Bearer <token>`` under
@@ -636,7 +641,7 @@ def child_auth_header(existing: dict | None) -> dict:
         return {"Authorization": _basic_header_value(*basic)}
     if mode == _MODE_ROTATING_FILE_BEARER:
         return _rotating_file_bearer_header()
-    return _oidc_bearer_header()
+    return _oidc_bearer_header(config)
 
 
 class ClientCredentialsAuth(httpx.Auth):
@@ -708,7 +713,7 @@ class ClientCredentialsAuth(httpx.Auth):
             yield request
 
 
-def child_auth(existing: dict | None) -> httpx.Auth | None:
+def child_auth(existing: dict | None, config: RuntimeConfig) -> httpx.Auth | None:
     """An :class:`httpx.Auth` that authenticates a remote child.
 
     Preferred over :func:`child_auth_header` for the multiplexer's long-lived child
@@ -736,13 +741,15 @@ def child_auth(existing: dict | None) -> httpx.Auth | None:
         if path is None:  # defensive: mode=rotating-file-bearer always has a path
             raise RuntimeError("Outbound MCP service identity is unavailable")
         return RotatingFileBearerAuth(path)
-    provider = get_provider()
+    provider = get_provider(config)
     if provider is None:
         raise RuntimeError("Outbound MCP service identity is unavailable")
     return ClientCredentialsAuth(provider)
 
 
-def service_session_max_age(existing: dict | None) -> float | None:
+def service_session_max_age(
+    existing: dict | None, config: RuntimeConfig
+) -> float | None:
     """Seconds a child session may live before it must be recycled, or ``None``.
 
     A streamable-http/SSE child session is authenticated once at connect time and
@@ -761,7 +768,7 @@ def service_session_max_age(existing: dict | None) -> float | None:
     is known."""
     if existing and any(k.lower() == "authorization" for k in existing):
         return None
-    provider = get_provider()
+    provider = get_provider(config)
     if provider is None:
         return None
     try:

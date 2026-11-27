@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlsplit
 
 import httpx
 from scion_sdk.http.client import build_http_client
 from scion_sdk.http.options import HttpClientOptions
 from scion_sdk.tls.resolve import resolve_tls_profile
+
+if TYPE_CHECKING:
+    from arbora.core.settings import RuntimeConfig
 
 _MAX_DISCOVERY_BYTES = 1024 * 1024
 
@@ -41,10 +44,10 @@ def canonical_oidc_endpoint(value: str, *, field: str = "OIDC endpoint") -> str:
     return _canonical_endpoint(value, field=field)
 
 
-def _options(timeout: float) -> HttpClientOptions:
+def _options(runtime: RuntimeConfig, timeout: float) -> HttpClientOptions:
     from arbora.security.settings import security_settings
 
-    config = security_settings()
+    config = security_settings(runtime)
     trust = resolve_tls_profile(
         "OIDC",
         profile_name=config.oidc_tls_profile,
@@ -66,14 +69,16 @@ def _options(timeout: float) -> HttpClientOptions:
     )
 
 
-def oidc_http_client(*, timeout: float = 15.0) -> httpx.Client:
+def oidc_http_client(config: RuntimeConfig, *, timeout: float = 15.0) -> httpx.Client:
     """Build the canonical synchronous OIDC/JWKS/token client."""
-    return build_http_client(_options(timeout))
+    return build_http_client(_options(config, timeout))
 
 
-def oidc_async_http_client(*, timeout: float = 15.0) -> httpx.AsyncClient:
+def oidc_async_http_client(
+    config: RuntimeConfig, *, timeout: float = 15.0
+) -> httpx.AsyncClient:
     """Build the canonical asynchronous OIDC/JWKS/token client."""
-    return build_http_client(_options(timeout), async_=True)
+    return build_http_client(_options(config, timeout), async_=True)
 
 
 def _read_bounded(response: httpx.Response, limit: int) -> bytes:
@@ -85,7 +90,7 @@ def _read_bounded(response: httpx.Response, limit: int) -> bytes:
     return bytes(body)
 
 
-def discover(issuer: str) -> dict[str, Any]:
+def discover(issuer: str, config: RuntimeConfig) -> dict[str, Any]:
     """Return a bounded, validated OIDC discovery document.
 
     Every caller is a boot-time or configuration check, so each lookup reads the
@@ -94,7 +99,7 @@ def discover(issuer: str) -> dict[str, Any]:
     canonical_issuer = _canonical_endpoint(issuer, field="OIDC issuer").rstrip("/")
 
     url = f"{canonical_issuer}/.well-known/openid-configuration"
-    with oidc_http_client(timeout=10.0) as client:
+    with oidc_http_client(config, timeout=10.0) as client:
         with client.stream("GET", url) as response:
             response.raise_for_status()
             body = _read_bounded(response, _MAX_DISCOVERY_BYTES)
@@ -120,19 +125,19 @@ def discover(issuer: str) -> dict[str, Any]:
 _DISCOVERY_ERRORS = (RuntimeError, httpx.HTTPError, OSError, ValueError)
 
 
-def jwks_uri_for(issuer: str) -> str | None:
+def jwks_uri_for(issuer: str, config: RuntimeConfig) -> str | None:
     """Discover the ``jwks_uri``; return ``None`` on a fail-closed miss."""
     try:
-        value = discover(issuer).get("jwks_uri")
+        value = discover(issuer, config).get("jwks_uri")
         return str(value) if value else None
     except _DISCOVERY_ERRORS:
         return None
 
 
-def token_endpoint_for(issuer: str) -> str | None:
+def token_endpoint_for(issuer: str, config: RuntimeConfig) -> str | None:
     """Discover the ``token_endpoint``; return ``None`` on a fail-closed miss."""
     try:
-        value = discover(issuer).get("token_endpoint")
+        value = discover(issuer, config).get("token_endpoint")
         return str(value) if value else None
     except _DISCOVERY_ERRORS:
         return None

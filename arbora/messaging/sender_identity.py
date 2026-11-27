@@ -15,9 +15,11 @@ import enum
 import json
 import logging
 from collections.abc import Callable, Mapping
+from functools import partial
 from typing import Any
 
 from arbora.core.environment import read_env
+from arbora.core.settings import RuntimeConfig
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +65,7 @@ def _principal_map() -> Mapping[str, str]:
     return {str(k): str(v) for k, v in raw.items()} if isinstance(raw, dict) else {}
 
 
-def _exchange_for_principal(principal: str) -> str:
+def _exchange_for_principal(principal: str, config: RuntimeConfig) -> str:
     """Exchange Arbora's process token for one whose subject is ``principal``."""
     from arbora.security.delegated_auth import exchange_token_for_agent
     from arbora.security.request_identity import client_credentials_token
@@ -71,20 +73,26 @@ def _exchange_for_principal(principal: str) -> str:
 
     return exchange_token_for_agent(
         ACTING_AGENT,
-        subject_token=client_credentials_token(security_settings().kg_identity_oauth2),
+        subject_token=client_credentials_token(
+            security_settings(config).kg_identity_oauth2
+        ),
         requested_subject=principal,
     )
 
 
 def session_for_sender(
-    platform: str, user_id: str, *, exchange: Exchange | None = None
+    platform: str,
+    user_id: str,
+    *,
+    config: RuntimeConfig,
+    exchange: Exchange | None = None,
 ) -> SenderSession:
     """Return the turn session of ``<platform>:<user_id>`` or raise ``SenderRefused``."""
     principal = _principal_map().get(f"{platform}:{user_id}", "")
     if not principal:
         raise SenderRefused(SENDER_UNMAPPED)
     try:
-        token = (exchange or _exchange_for_principal)(principal)
+        token = (exchange or partial(_exchange_for_principal, config=config))(principal)
     except Exception as exc:  # any exchange failure is one typed refusal
         logger.warning(
             "sender token exchange refused (%s)", type(exc).__name__, exc_info=True

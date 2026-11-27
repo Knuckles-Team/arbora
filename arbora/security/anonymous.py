@@ -65,7 +65,7 @@ def validate_startup(args: Any, runtime: RuntimeConfig) -> None:
         return
     from arbora.security.settings import security_settings
 
-    config = security_settings()
+    config = security_settings(runtime)
     _validate_transport(args)
     _validate_credentials(config)
     _validate_engine_endpoints(runtime.graph_service_endpoints or ())

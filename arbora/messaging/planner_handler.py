@@ -73,7 +73,9 @@ def _burst_responder(service: Any) -> Callable[[str, list[Any]], Awaitable[None]
             logger.error("messaging: no turn handler is bound; burst not answered")
             return
         try:
-            sender = session_for_sender(str(event.platform), event.user_id)
+            sender = session_for_sender(
+                str(event.platform), event.user_id, config=service.config
+            )
         except SenderRefused as refusal:
             logger.warning("messaging: sender refused (%s); no turn run", refusal.code)
             return

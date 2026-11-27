@@ -147,8 +147,10 @@ def _composed_authority(
                 "scope": "kg:read kg:write",
                 "roles": ["user"],
                 "exp": int(time.time()) + 600,
-            }
-        )
+            },
+            RuntimeConfig(),
+        ),
+        RuntimeConfig(),
     )
     client = EffectClient()
     invocation = compose_served_invocation(

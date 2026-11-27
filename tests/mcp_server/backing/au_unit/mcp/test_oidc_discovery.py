@@ -12,6 +12,7 @@ import json
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.security import oidc_discovery
 
 ISS = "https://idp.test/realms/homelab"  # non-loopback issuer requires HTTPS (MERISTEM-OS.identity)
@@ -66,34 +67,47 @@ class _Client:
 @pytest.fixture(autouse=True)
 def _serve_documents(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        oidc_discovery, "oidc_http_client", lambda *, timeout=15.0: _Client()
+        oidc_discovery, "oidc_http_client", lambda config, *, timeout=15.0: _Client()
     )
 
 
 def test_jwks_and_token_resolve_per_provider() -> None:
-    assert oidc_discovery.jwks_uri_for(ISS) == DOC["jwks_uri"]
-    assert oidc_discovery.token_endpoint_for(ISS) == DOC["token_endpoint"]
+    assert oidc_discovery.jwks_uri_for(ISS, RuntimeConfig()) == DOC["jwks_uri"]
+    assert (
+        oidc_discovery.token_endpoint_for(ISS, RuntimeConfig()) == DOC["token_endpoint"]
+    )
     # Okta has different paths — discovery abstracts that away.
-    assert oidc_discovery.jwks_uri_for(OKTA) == OKTA_DOC["jwks_uri"]
-    assert oidc_discovery.token_endpoint_for(OKTA) == OKTA_DOC["token_endpoint"]
+    assert oidc_discovery.jwks_uri_for(OKTA, RuntimeConfig()) == OKTA_DOC["jwks_uri"]
+    assert (
+        oidc_discovery.token_endpoint_for(OKTA, RuntimeConfig())
+        == OKTA_DOC["token_endpoint"]
+    )
 
 
 def test_trailing_slash_normalized() -> None:
-    assert oidc_discovery.jwks_uri_for(ISS + "/") == DOC["jwks_uri"]
+    assert oidc_discovery.jwks_uri_for(ISS + "/", RuntimeConfig()) == DOC["jwks_uri"]
 
 
 def test_discovery_failure_returns_none(monkeypatch: pytest.MonkeyPatch) -> None:
-    def _boom(*, timeout: float = 15.0) -> object:
+    def _boom(config, *, timeout: float = 15.0) -> object:
         raise RuntimeError("network down")
 
     monkeypatch.setattr(oidc_discovery, "oidc_http_client", _boom)
-    assert oidc_discovery.jwks_uri_for("http://unreachable.test/iss") is None
-    assert oidc_discovery.token_endpoint_for("http://unreachable.test/iss") is None
+    assert (
+        oidc_discovery.jwks_uri_for("http://unreachable.test/iss", RuntimeConfig())
+        is None
+    )
+    assert (
+        oidc_discovery.token_endpoint_for(
+            "http://unreachable.test/iss", RuntimeConfig()
+        )
+        is None
+    )
 
 
 def test_oidc_client_options_pin_egress_and_admit_loopback() -> None:
     """The transport agrees with the endpoint validator's loopback policy."""
-    options = oidc_discovery._options(10.0)
+    options = oidc_discovery._options(RuntimeConfig(), 10.0)
 
     assert options.pin_egress is True
     assert options.allow_loopback is True

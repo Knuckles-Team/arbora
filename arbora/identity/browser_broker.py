@@ -60,7 +60,7 @@ class ConfiguredBrowserBroker:
             del token
             if actor.actor_type != ActorType.AUTOMATED_SERVICE:
                 raise PermissionError("service broker required")
-            session = mint_graph_session(actor)
+            session = mint_graph_session(actor, self._keys.config)
             claims = session.engine_verified_context()
             process = self._process_claims()
             if (

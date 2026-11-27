@@ -19,8 +19,8 @@ from arbora.security.run_token import RunTokenSigner, token_secret_from_config
 __all__ = ["ProcessAuthority"]
 
 
-def _keys_or_new(keys: JwksCache | None) -> JwksCache:
-    return keys if keys is not None else JwksCache()
+def _keys_or_new(keys: JwksCache | None, config: RuntimeConfig) -> JwksCache:
+    return keys if keys is not None else JwksCache(config)
 
 
 def _config_or_new(config: RuntimeConfig | None) -> RuntimeConfig:
@@ -56,7 +56,7 @@ class ProcessAuthority:
         #: The host's settings view; renewal reads its identity settings from it.
         self.config = _config_or_new(config)
         #: The host's key cache; boot and renewal validate the process token against it.
-        self.keys = _keys_or_new(keys)
+        self.keys = _keys_or_new(keys, self.config)
         self.signer = RunTokenSigner(token_secret)
         self._lock = threading.Lock()
         self._session: Any = None

@@ -173,7 +173,7 @@ async def prepare(
         process_actor = await actor_from_bearer_token(
             context["process_token"], keys=JwksCache()
         )
-        process_session = mint_graph_session(process_actor)
+        process_session = mint_graph_session(process_actor, RuntimeConfig())
 
         async def borrowed_client():
             return admin

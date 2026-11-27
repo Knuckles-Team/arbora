@@ -155,7 +155,9 @@ class McpAsk:
         monkeypatch: pytest.MonkeyPatch,
         caller: ActorContext | None = None,
     ) -> None:
-        process = request_identity.mint_graph_session(caller or person("one"))
+        process = request_identity.mint_graph_session(
+            caller or person("one"), RuntimeConfig()
+        )
         self.mcp = FastMCP("served-ops")
         serve_verbs(self.mcp, invocation, bound_authority(process))
 
@@ -311,7 +313,7 @@ def two_tenant_served(
     apps: dict[str, Any] = {TENANT: http}
     invocations: dict[str, Any] = {TENANT: confirmable["invocation"]}
     actor = person("two", TENANT_TWO, scopes)
-    process = request_identity.mint_graph_session(actor)
+    process = request_identity.mint_graph_session(actor, RuntimeConfig())
     invocation = harness.compose_served_invocation(
         config=RuntimeConfig(),
         keys=JwksCache(),

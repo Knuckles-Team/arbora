@@ -227,11 +227,10 @@ def _engine_retry_after_hint() -> float:
     here, and never raises (a hint must not break the error path it decorates).
     """
     try:
-        from arbora.security.settings import security_settings
+        from arbora.core.environment import read_env
 
-        config = security_settings()
-
-        return float(config.engine_breaker_cooldown)
+        # The breaker reads the same declared variable, so the hint is its cooldown.
+        return float(read_env("ENGINE_BREAKER_COOLDOWN"))
     except Exception:
         logging.getLogger(__name__).debug(
             "a retry hint must never break error reporting", exc_info=True

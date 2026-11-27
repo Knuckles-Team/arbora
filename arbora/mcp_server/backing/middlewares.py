@@ -233,7 +233,7 @@ class ActorContextMiddleware(Middleware):
         session_id = str(
             getattr(getattr(context, "fastmcp_context", None), "session_id", "") or ""
         )
-        actor = actor_from_claims(claims)
+        actor = actor_from_claims(claims, self._keys.config)
         await record_session_open(
             actor,
             session_id=session_id,
@@ -274,9 +274,9 @@ class ActorContextMiddleware(Middleware):
             )
         if self.require_verified_session:
             await self._precheck_bearer()
-        actor = actor_from_claims(claims)
+        actor = actor_from_claims(claims, self._keys.config)
         try:
-            session = mint_graph_session(actor)
+            session = mint_graph_session(actor, self._keys.config)
             session_context(session)
         except PermissionError:
             raise PermissionError("Verified graph authority is incomplete") from None

@@ -43,6 +43,7 @@ from pathlib import Path
 from typing import Any
 
 from arbora.core.environment import inherited_environment
+from arbora.core.settings import RuntimeConfig
 
 #: The realm roles the process token must carry.
 PROCESS_ROLES = (
@@ -1255,7 +1256,9 @@ def _pod_check(mode: str, config_json: str) -> int:
 
     load_config()
     config = json.loads(config_json)
-    token = client_credentials_token(security_settings().kg_identity_oauth2)
+    token = client_credentials_token(
+        security_settings(RuntimeConfig()).kg_identity_oauth2
+    )
     checks = PodChecks(config, _loopback_http(config, token))
     {"verify": checks.verify, "ingest": checks.ingest}[mode]()
     print(

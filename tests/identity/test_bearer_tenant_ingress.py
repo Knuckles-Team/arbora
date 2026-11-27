@@ -50,7 +50,7 @@ class Host:
         self.up = authority_up
         monkeypatch.setattr(
             "arbora.security.settings.security_settings",
-            lambda: SimpleNamespace(
+            lambda _config: SimpleNamespace(
                 auth_jwt_issuer=ISSUER,
                 auth_jwt_audience=AUDIENCE,
                 auth_jwt_jwks_uri=JWKS_URI,
