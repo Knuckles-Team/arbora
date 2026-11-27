@@ -16,6 +16,9 @@ from typing import Any
 import pytest
 
 from arbora.core.settings import RuntimeConfig
+from arbora.mcp_server.backing.tools import (
+    analysis_mcp_config as _analysis_tools_analysis_mcp_config,
+)
 from arbora.mcp_server.backing.tools import analysis_tools
 from arbora.mcp_server.host_caches import AnalysisCore, ToolTable
 from arbora.observability.state import build_health_state
@@ -46,7 +49,7 @@ class _FakeMCP:
 )
 def test_mcp_registration_rejects_sensitive_literals(field: str, value: str) -> None:
     with pytest.raises(ValueError):
-        analysis_tools._validate_mcp_server_definition(
+        _analysis_tools_analysis_mcp_config._validate_mcp_server_definition(
             {"command": "uvx", "env": {field: value}}
         )
 
@@ -64,7 +67,10 @@ def test_mcp_registration_accepts_runtime_references() -> None:
         },
     }
 
-    assert analysis_tools._validate_mcp_server_definition(definition) is definition
+    assert (
+        _analysis_tools_analysis_mcp_config._validate_mcp_server_definition(definition)
+        is definition
+    )
 
 
 @pytest.mark.parametrize(
@@ -77,7 +83,9 @@ def test_mcp_registration_accepts_runtime_references() -> None:
 )
 def test_mcp_registration_rejects_sensitive_command_arguments(args: list[str]) -> None:
     with pytest.raises(ValueError):
-        analysis_tools._validate_mcp_server_definition({"command": "uvx", "args": args})
+        _analysis_tools_analysis_mcp_config._validate_mcp_server_definition(
+            {"command": "uvx", "args": args}
+        )
 
 
 def test_register_mcp_writes_atomically_with_private_mode(
@@ -85,7 +93,9 @@ def test_register_mcp_writes_atomically_with_private_mode(
 ) -> None:
     config_path = tmp_path / "mcp_config.json"
     monkeypatch.setattr(
-        analysis_tools, "_workspace_mcp_config_path", lambda: config_path
+        _analysis_tools_analysis_mcp_config,
+        "_workspace_mcp_config_path",
+        lambda: config_path,
     )
 
     analysis_tools._register_mcp_server(
@@ -116,7 +126,11 @@ def test_register_mcp_rejects_symlink_target(
         linked.symlink_to(outside)
     except OSError:
         pytest.skip("symlinks are unavailable on this platform")
-    monkeypatch.setattr(analysis_tools, "_workspace_mcp_config_path", lambda: linked)
+    monkeypatch.setattr(
+        _analysis_tools_analysis_mcp_config,
+        "_workspace_mcp_config_path",
+        lambda: linked,
+    )
 
     with pytest.raises(PermissionError):
         analysis_tools._register_mcp_server("arbora", json.dumps({"command": "uvx"}))
@@ -133,7 +147,9 @@ def test_register_mcp_rejects_existing_inline_material_without_rewriting(
     )
     config_path.write_text(original, encoding="utf-8")
     monkeypatch.setattr(
-        analysis_tools, "_workspace_mcp_config_path", lambda: config_path
+        _analysis_tools_analysis_mcp_config,
+        "_workspace_mcp_config_path",
+        lambda: config_path,
     )
 
     with pytest.raises(ValueError):
@@ -152,9 +168,11 @@ def test_atomic_write_failure_preserves_existing_document(
     def _replace_failure(_source, _destination) -> None:
         raise OSError("synthetic replace failure")
 
-    monkeypatch.setattr(analysis_tools.os, "replace", _replace_failure)
+    monkeypatch.setattr(
+        _analysis_tools_analysis_mcp_config.os, "replace", _replace_failure
+    )
     with pytest.raises(OSError):
-        analysis_tools._atomic_private_json_write(
+        _analysis_tools_analysis_mcp_config._atomic_private_json_write(
             config_path, {"mcpServers": {"new": {"command": "uvx"}}}
         )
 
@@ -169,7 +187,7 @@ def test_workspace_mcp_path_rejects_escape(
     monkeypatch.setenv("MCP_CONFIG", "../outside.json")
 
     with pytest.raises(PermissionError):
-        analysis_tools._workspace_mcp_config_path()
+        _analysis_tools_analysis_mcp_config._workspace_mcp_config_path()
 
 
 def test_graph_configure_registration_error_is_source_safe(
@@ -188,7 +206,9 @@ def test_graph_configure_registration_error_is_source_safe(
     def _fail(_name: str, _definition: str) -> None:
         raise RuntimeError(sensitive_detail)
 
-    monkeypatch.setattr(analysis_tools, "_register_mcp_server", _fail)
+    monkeypatch.setattr(
+        _analysis_tools_analysis_mcp_config, "_register_mcp_server", _fail
+    )
     result = fake.tools["graph_configure"](
         action="register_mcp",
         config_key="arbora",
@@ -217,7 +237,9 @@ def test_graph_configure_preserves_filesystem_policy_denial(
     def _deny(_name: str, _definition: str) -> None:
         raise PermissionError("synthetic private path")
 
-    monkeypatch.setattr(analysis_tools, "_register_mcp_server", _deny)
+    monkeypatch.setattr(
+        _analysis_tools_analysis_mcp_config, "_register_mcp_server", _deny
+    )
     with pytest.raises(PermissionError) as denied:
         fake.tools["graph_configure"](
             action="register_mcp",
