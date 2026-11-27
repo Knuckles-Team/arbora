@@ -1,6 +1,6 @@
 """The operator audit port behind pin-lag (ARBORA-OPS-R052.5).
 
-The engine serves the operator-only chain (``AuditChain.operator``) on ``main`` only.
+The engine serves the operator-only chain (``AuditList``) on ``main`` only.
 Until the pinned release carries it, the port records nothing, the read refuses
 ``UNAVAILABLE`` naming the missing member and ``ops.doctor`` says so. With the chain
 declared the same port writes and reads through the engine's operator chain.
@@ -8,7 +8,6 @@ declared the same port writes and reads through the engine's operator chain.
 
 from __future__ import annotations
 
-import enum
 from types import SimpleNamespace
 from typing import Any
 
@@ -21,30 +20,23 @@ from tests.api.test_ops_admin_ops import _context, _FakeOpsAdminStore
 from tests.question_kinds import declare_question_kinds
 
 _DOCTOR = {op.id: op for op in ops_admin.operations()}["ops.doctor"]
-INACTIVE = "operator_audit: inactive (engine lacks AuditChain.operator)"
+INACTIVE = "operator_audit: inactive (engine lacks AuditList)"
 
 
 def _pin_without_chain(monkeypatch: pytest.MonkeyPatch) -> None:
-    from medulla.generated import models
+    import medulla.generated as generated
 
-    chain = enum.Enum("AuditChain", {"graph": "graph", "read": "read"})
-    monkeypatch.setattr(models, "AuditChain", chain)
+    monkeypatch.setattr(
+        generated, "METHOD_IDS", frozenset(generated.METHOD_IDS) - {"AuditList"}
+    )
 
 
 def _pin_with_chain(monkeypatch: pytest.MonkeyPatch) -> None:
-    from medulla.generated import models
-    from pydantic import BaseModel
+    import medulla.generated as generated
 
-    chain = enum.Enum(
-        "AuditChain", {"graph": "graph", "read": "read", "operator": "operator"}
+    monkeypatch.setattr(
+        generated, "METHOD_IDS", frozenset(generated.METHOD_IDS) | {"AuditList"}
     )
-
-    class ReadEvent(BaseModel):
-        chain: str
-        request_id: str
-
-    monkeypatch.setattr(models, "AuditChain", chain)
-    monkeypatch.setattr(models, "MethodAuditReadEventParams", ReadEvent)
 
 
 def _sent(monkeypatch: pytest.MonkeyPatch, answer: Any = None) -> list[tuple[str, Any]]:
@@ -96,7 +88,7 @@ async def test_inactive_port_records_nothing_and_the_read_names_the_gap(
     with pytest.raises(OperationRefused) as refused:
         await port.read(_call_context(), request_id="req-9")
     assert refused.value.code == "UNAVAILABLE"
-    assert "AuditChain.operator" in str(refused.value.details)
+    assert "AuditList" in str(refused.value.details)
 
 
 @pytest.mark.spec("ARBORA-OPS-R052.5")
@@ -104,7 +96,12 @@ async def test_active_port_writes_and_reads_the_engine_operator_chain(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _pin_with_chain(monkeypatch)
-    sent = _sent(monkeypatch, {"request_id": "req-9", "withheld_count": "3"})
+    page = {
+        "graph": "g",
+        "records": [{"seq": 4, "entry_sha256": "a" * 64, "event_line": "line"}],
+        "next_after_seq": None,
+    }
+    sent = _sent(monkeypatch, page)
     port = EngineOperatorAudit()
     await port.record_withheld(_call_context(), withheld=3, request_id="req-9")
     ((method, params),) = sent
@@ -114,8 +111,18 @@ async def test_active_port_writes_and_reads_the_engine_operator_chain(
     assert params["request_id"] == "req-9" and params["surface"] == "http"
     sent.clear()
     record = await port.read(_call_context(), request_id="req-9")
-    assert sent == [("AuditReadEvent", {"chain": "operator", "request_id": "req-9"})]
-    assert record == {"request_id": "req-9", "withheld_count": "3"}
+    assert sent == [
+        ("AuditList", {"chain": "operator", "request_id": "req-9", "limit": 1})
+    ]
+    assert record == {
+        "request_id": "req-9",
+        "seq": 4,
+        "entry_sha256": "a" * 64,
+        "event_line": "line",
+    }
+    sent.clear()
+    _sent(monkeypatch, {"graph": "g", "records": [], "next_after_seq": None})
+    assert await port.read(_call_context(), request_id="req-none") is None
 
 
 @pytest.mark.spec("ARBORA-OPS-R052.5")

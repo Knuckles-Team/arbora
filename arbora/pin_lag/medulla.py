@@ -26,8 +26,8 @@ Guards held here (delete each with the re-pin that carries it):
   (ARBORA-IDENTITY-R019.3): the resource gate sends the real protocol on the wire.
 - ``FamilyAnswerCredentialReuse`` (ARBORA-IDENTITY-R023.3): the typed ``credential_reuse``
   ``Decide`` answer.
-- ``AuditChain.operator`` and ``MethodAuditReadEventParams.request_id`` (ARBORA-OPS-R052.5):
-  the operator-only audit chain and its read by request id (:func:`operator_audit_missing`).
+- ``AuditList`` (ARBORA-OPS-R052.5): the operator-only audit chain read
+  (:func:`operator_audit_missing`).
 - ``MethodSparqlParams.graph_media_type`` (R857.3): the graph body serialized by the engine.
 - ``IdentityOpWireLoginGrant`` and ``IdentityOpWireLoginRevoke`` (R858),
   ``JobKindProgramOptimize`` and ``LearningWriteMovePointer`` (R860): request shapes the
@@ -164,18 +164,15 @@ def guard_field(model: str, field: str) -> None:
 def operator_audit_missing() -> str | None:
     """The first capability the operator-only audit chain lacks, or ``None`` when served.
 
-    The chain is the engine ``AuditChain`` member ``operator``, read by request id
-    through ``AuditReadEvent`` (ARBORA-OPS-R052.5). A pinned release without either
-    leaves the ``operator_audit`` port inactive and ``ops.doctor`` says so by name.
+    The chain is written by ``AuditAppend`` of class ``operator`` and read by
+    ``AuditList`` under ``audit:operator`` (ARBORA-OPS-R052.5). A pinned release
+    without ``AuditList`` leaves the ``operator_audit`` port inactive and
+    ``ops.doctor`` says so by name.
     """
-    for check, args in (
-        (require_enum_member, ("AuditChain", "operator")),
-        (require_model_field, ("MethodAuditReadEventParams", "request_id")),
-    ):
-        try:
-            check(*args)
-        except PinLagUnavailable as missing:
-            return missing.missing
+    try:
+        require_methods("AuditList")
+    except PinLagUnavailable as missing:
+        return missing.missing
     return None
 
 

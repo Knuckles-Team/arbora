@@ -4,10 +4,10 @@ A count of withheld projections is evidence for the operator alone. The
 ``query.projections`` handler writes it to the separately authorized chain through
 the ``operator_audit`` port; this operation reads it back for a caller holding
 ``audit:operator``. No response, trace or caller-readable audit view carries it.
-PIN-LAG: the engine publishes the operator-only chain (``AuditChain.operator``) on
-``main`` only. :class:`EngineOperatorAudit` is always composed; until the pinned
+PIN-LAG: the engine publishes the operator-only chain (``AuditAppend`` class
+``operator`` and ``AuditList``) on ``main`` only. :class:`EngineOperatorAudit` is always composed; until the pinned
 release carries the chain it records nothing, the read refuses ``UNAVAILABLE`` naming
-the missing member, and ``ops.doctor`` reports ``operator_audit: inactive``. The port
+the missing method, and ``ops.doctor`` reports ``operator_audit: inactive``. The port
 goes live with the re-pin that carries the chain, with no further change here.
 """
 
@@ -51,8 +51,8 @@ class EngineOperatorAudit:
     """The ``operator_audit`` port over the engine's operator-only audit chain.
 
     The write is an ``AuditAppend`` of class ``operator`` holding the request id and
-    the withheld count; the read is ``AuditReadEvent`` on the operator chain by request
-    id. Both go as the verified caller, so the engine's ``audit:operator`` scope check
+    the withheld count; the read is ``AuditList`` on the operator chain by request id
+    (scope ``audit:operator``). Both go as the verified caller, so the engine's ``audit:operator`` scope check
     decides who may read. Arbora keeps no copy.
     """
 
@@ -91,12 +91,15 @@ class EngineOperatorAudit:
             raise refusal(PinLagUnavailable(missing))
         answer = await engine_send(
             context,
-            "AuditReadEvent",
-            {"chain": "operator", "request_id": request_id},
+            "AuditList",
+            {"chain": "operator", "request_id": request_id, "limit": 1},
         )
         if hasattr(answer, "model_dump"):
             answer = answer.model_dump(mode="json")
-        return dict(answer) if isinstance(answer, Mapping) and answer else None
+        records = answer.get("records") if isinstance(answer, Mapping) else None
+        if not records:
+            return None
+        return {"request_id": request_id, **dict(records[0])}
 
 
 def operator_audit_check() -> str:
