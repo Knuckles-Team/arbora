@@ -9,6 +9,7 @@ import pytest
 from pydantic import ValidationError
 
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops import plan_execution as _plan_execution
 from arbora.api.ops import processes
 from arbora.api.registry import Confirm, Idempotency, PrincipalRule
 from tests.api._engine_double import context
@@ -215,7 +216,6 @@ async def test_run_binds_ports_and_starts_admitted_plan(
     main_shape: None,  # noqa: F811
     main_run_task: None,  # noqa: F811
 ) -> None:
-    from arbora.api.ops import plans
     from tests.processes._support import PLAN, ProcessEngine, run_loop
 
     declare_question_kinds(
@@ -239,7 +239,7 @@ async def test_run_binds_ports_and_starts_admitted_plan(
         process_question_schema=lambda _t, q: {"component_id": f"decide.schema.{q}"},
     )
     monkeypatch.setattr(processes, "engine_send", engine.send)
-    monkeypatch.setattr(plans, "execute_task_plan", loop)
+    monkeypatch.setattr(_plan_execution, "execute_task_plan", loop)
     params = {"workflow_id": "wf", "version": 2, "inputs": {}}
     done = await processes.handle_process_run(ctx, params, _OPS["process.run"])
     assert done["status"] == "completed" and done["plan_digest"] == PLAN["plan_digest"]

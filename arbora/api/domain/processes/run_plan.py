@@ -27,7 +27,7 @@ class ProcessPromptUnresolved(Exception):
 
 
 def _is_agent_step(task: Mapping[str, Any]) -> bool:
-    from arbora.api.ops.plans import CONTROL_STEP_KEYS
+    from arbora.api.ops.plan_execution import CONTROL_STEP_KEYS
 
     return task.get("call") is None and not any(
         isinstance(task.get(key), Mapping) for key in CONTROL_STEP_KEYS
@@ -66,7 +66,7 @@ def map_process_plan(
     toolsets: tuple[Any, ...] = (),
 ) -> Any:
     """The harness ``RunPlan`` of one sealed process plan, agent steps carrying prompt text."""
-    from arbora.api.ops.plans import run_plan_for
+    from arbora.api.ops.plan_execution import run_plan_for
 
     bound = dict(plan)
     tasks = []

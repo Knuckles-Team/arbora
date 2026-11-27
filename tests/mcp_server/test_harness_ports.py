@@ -210,7 +210,7 @@ def test_every_run_entry_point_receives_the_host_ports(
     asyncio.run(AgentControlPlane._execute(plane, request))
     assert seen["rlm"] == slot.current()
 
-    from arbora.api.ops.plans import _run_request
+    from arbora.api.ops.plan_execution import _run_request
 
     plan = {"output_task_id": "t1", "tasks": []}
     assert _run_request(plan, "run-1", slot.current()).ports == slot.current()
