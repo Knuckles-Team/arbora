@@ -14,6 +14,7 @@ from collections.abc import AsyncIterator
 from dataclasses import replace
 from typing import Any
 
+from arbora.core.settings import RuntimeConfig
 from arbora.observability.state import HealthState
 from arbora.security.anonymous import session_context
 from arbora.security.error_surface import carry_errors
@@ -51,7 +52,9 @@ def _release_readiness_authority(health: HealthState, owner: object) -> None:
         raise RuntimeError("arbora no longer owns the readiness authority")
 
 
-def _mint_process_session(transport: str, keys: JwksCache) -> Any:
+def _mint_process_session(
+    transport: str, keys: JwksCache, config: RuntimeConfig
+) -> Any:
     """Mint the process's verified graph authority.
 
     Tiny packaged-local stdio uses an in-memory asymmetric authority. Every
@@ -61,7 +64,6 @@ def _mint_process_session(transport: str, keys: JwksCache) -> Any:
     additionally used for stdio tool calls, which have no request Authorization
     header.
     """
-    from arbora.core.settings import runtime_config as config
     from arbora.security.anonymous import enabled
     from arbora.security.anonymous import session as anonymous_session
     from arbora.security.request_identity import (
@@ -219,11 +221,11 @@ def _refresh_process_authority(
     ``Expired`` lease: the request fails closed with ``SessionExpiredError``
     and the supervisor loop alone re-acquires, with backoff.
     """
-    from arbora.core.settings import runtime_config as config
     from arbora.security.actor_context import LeaseEvent, LeaseState
     from arbora.security.run_authority import RunCredentialLease
     from arbora.security.session import SessionExpiredError
 
+    config = authority.config
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
     if lease is None or isinstance(lease, RunCredentialLease):
         # A run lease is the caller's authority, renewed only by its run
@@ -905,11 +907,9 @@ def _engine_bootstrap_is_client(engine: Any, fallback_role: str) -> bool:
     return "client" in {requested_role, effective_role}
 
 
-def _engine_ready_timeout_seconds() -> float:
+def _engine_ready_timeout_seconds(config: RuntimeConfig) -> float:
     """How long serving start waits for the engine (``ARBORA_ENGINE_READY_TIMEOUT``)."""
-    from arbora.core.settings import runtime_config
-
-    return float(getattr(runtime_config, "arbora_engine_ready_timeout", 1500.0))
+    return float(getattr(config, "arbora_engine_ready_timeout", 1500.0))
 
 
 def _start_engine_bootstrap(
@@ -926,7 +926,7 @@ def _start_engine_bootstrap(
     from arbora.security.session import use_session
 
     graph = str(session.graph)
-    deadline = time.monotonic() + _engine_ready_timeout_seconds()
+    deadline = time.monotonic() + _engine_ready_timeout_seconds(authority.config)
     while True:
         try:
             with use_session(session):

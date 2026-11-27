@@ -32,7 +32,7 @@ from arbora.browser_control.browser_control_client import (
     ControlResultMessage,
 )
 from arbora.browser_control.browser_control_runtime import dispatch_browser_operation
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig, runtime_config
 from arbora.fleet import shared_multiplexer
 from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
 from arbora.fleet.state import FleetState
@@ -98,6 +98,7 @@ async def _served(
     _isolate_registration(monkeypatch, client)
     host = compose_host_context(FixedEngineHandles(client))
     invocation = compose_served_invocation(
+        config=RuntimeConfig(),
         keys=JwksCache(),
         pool=FakePool(client),
         graph=session.graph,

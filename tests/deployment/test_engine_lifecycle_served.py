@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.deployment import engine_lock
 from arbora.epistemic import ClientContext
 from arbora.mcp_server import composition, served_engine
@@ -29,13 +29,12 @@ def test_unset_endpoints_start_one_loopback_engine_and_serve_a_call(
     port = free_port()
     # The explicit local no-auth mode: the pool then connects without credentials.
     monkeypatch.setattr(anonymous, "_ACTIVE_MODE", "none")
-    # setattr would restore the frozen live value as a permanent override at
-    # teardown; setitem drops the key so later reads stay live.
-    monkeypatch.setitem(runtime_config._overrides, "graph_service_endpoints", None)
+    config = RuntimeConfig()
+    config.graph_service_endpoints = None
     monkeypatch.setattr(
         composition,
         "local_engine_config",
-        lambda **_: LocalEngineConfig(
+        lambda *_, **__: LocalEngineConfig(
             port=port,
             persist_dir=tmp_path / "store",
             extra_args=("--auth-mode", "none"),
@@ -43,7 +42,7 @@ def test_unset_endpoints_start_one_loopback_engine_and_serve_a_call(
             stop_grace_s=20,
         ),
     )
-    handles = served_engine.EngineHandles()
+    handles = served_engine.EngineHandles(config=config)
     before = composition.engine_spawn_count()
     try:
         pool = handles.pool()
@@ -76,15 +75,14 @@ def test_unset_endpoints_start_one_loopback_engine_and_serve_a_call(
 def test_set_endpoint_starts_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
     # setattr would restore the frozen live value as a permanent override at
     # teardown; setitem drops the key so later reads stay live.
-    monkeypatch.setitem(
-        runtime_config._overrides, "graph_service_endpoints", ["127.0.0.1:1"]
-    )
+    config = RuntimeConfig()
+    config.graph_service_endpoints = ["127.0.0.1:1"]
 
     def forbidden(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("a configured endpoint must never start a local engine")
 
     monkeypatch.setattr(composition, "ensure_local_engine", forbidden)
-    handles = served_engine.EngineHandles()
+    handles = served_engine.EngineHandles(config=config)
     before = composition.engine_spawn_count()
     try:
         handles.pool()

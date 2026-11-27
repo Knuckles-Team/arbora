@@ -37,6 +37,7 @@ from typing import Any, cast
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.core.settings import RuntimeConfig
 from arbora.deployment.config_generator import PROCESS_IDENTITY_ROLES
 from arbora.security.key_cache import JwksCache
 from tests._boot_diagnostics import BootDiagnostics
@@ -998,6 +999,7 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
         )
         engine = ServedEngine(pool)
         invocation = compose_served_invocation(
+            config=RuntimeConfig(),
             keys=JwksCache(),
             pool=pool,
             graph=CONTROL_GRAPH,

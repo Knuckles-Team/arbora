@@ -106,12 +106,13 @@ def test_fleet_call_refuses_fast_with_retry_hint_when_not_ready() -> None:
 
 @pytest.mark.spec("ARBORA-FLEET-R062")
 def test_engine_ready_wait_uses_configured_budget(monkeypatch) -> None:
-    from arbora.core.settings import runtime_config
+    from arbora.core.settings import RuntimeConfig
     from arbora.mcp_server import bootstrap
 
-    assert bootstrap._engine_ready_timeout_seconds() >= 120.0
-    monkeypatch.setattr(runtime_config, "arbora_engine_ready_timeout", 42.0)
-    assert bootstrap._engine_ready_timeout_seconds() == 42.0
+    config = RuntimeConfig()
+    assert bootstrap._engine_ready_timeout_seconds(config) >= 120.0
+    config.arbora_engine_ready_timeout = 42.0
+    assert bootstrap._engine_ready_timeout_seconds(config) == 42.0
 
 
 @pytest.mark.spec("ARBORA-FLEET-R063")

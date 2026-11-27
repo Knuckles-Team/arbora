@@ -24,9 +24,11 @@ import json
 import re
 import threading
 from collections.abc import Callable, Mapping
+from functools import partial
 from typing import Any, cast
 
 from arbora.core.environment import read_env
+from arbora.core.settings import RuntimeConfig
 from arbora.security.anonymous import client_scope, session_context
 from arbora.unique_records import record_body
 
@@ -460,7 +462,7 @@ class ServedEngine:
         return bool(run_blocking(run))
 
 
-def _build_process_pool() -> Any:
+def _build_process_pool(settings: RuntimeConfig) -> Any:
     """Build the one EG client pool of a host from its configured endpoint.
 
     With ``GRAPH_SERVICE_ENDPOINTS`` unset, the host attaches to the local
@@ -469,16 +471,16 @@ def _build_process_pool() -> Any:
     """
     from medulla import MedullaClient
 
-    from arbora.core.settings import runtime_config
     from arbora.epistemic import ConnectClient, EpistemicClientPool
     from arbora.mcp_server.composition import (
         attach_reused_engine,
         ensure_local_engine,
+        local_engine_config,
         parse_engine_endpoint,
         require_remote_engine_credential,
     )
 
-    endpoints = runtime_config.graph_service_endpoints
+    endpoints = settings.graph_service_endpoints
     if endpoints:
         # A configured endpoint is connect-only: nothing starts locally.
         endpoint = parse_engine_endpoint(
@@ -488,7 +490,7 @@ def _build_process_pool() -> Any:
         if str(read_env("ENGINE_REUSE")).strip().lower() in {"1", "true"}:
             attach_reused_engine(endpoint)
     else:
-        endpoint = ensure_local_engine()
+        endpoint = ensure_local_engine(local_engine_config(settings))
     return EpistemicClientPool(
         cast(ConnectClient, MedullaClient.connect),
         **endpoint.client_kwargs(),
@@ -498,6 +500,15 @@ def _build_process_pool() -> Any:
 def engine_unbound() -> Any:
     """The engine provider of a server composed without an engine."""
     raise RuntimeError("this server was composed without an engine")
+
+
+def _pool_factory_over(
+    pool_factory: Callable[[], Any] | None, config: RuntimeConfig | None
+) -> Callable[[], Any]:
+    """The given pool factory, or the process pool over the given (or a fresh) config."""
+    if pool_factory is not None:
+        return pool_factory
+    return partial(_build_process_pool, RuntimeConfig() if config is None else config)
 
 
 class EngineHandles:
@@ -512,14 +523,15 @@ class EngineHandles:
 
     def __init__(
         self,
-        pool_factory: Callable[[], Any] = _build_process_pool,
+        pool_factory: Callable[[], Any] | None = None,
         process_session: Callable[[], Any] = no_process_session,
+        config: RuntimeConfig | None = None,
     ) -> None:
         self._lock = threading.Lock()
         self._process_session = process_session
         self._pool: Any = None
         self._engine: ServedEngine | None = None
-        self._pool_factory = pool_factory
+        self._pool_factory = _pool_factory_over(pool_factory, config)
 
     def pool(self) -> Any:
         """This host's one EG client pool, built on first use."""

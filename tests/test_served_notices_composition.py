@@ -18,7 +18,7 @@ import pytest
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.api.domain.fleet.outbox_consumer import TRUST_FLAG_TOPIC, OutboxRunner
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig, runtime_config
 from arbora.fleet.approval_notifier import APPROVALS_TOPIC
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
@@ -124,6 +124,7 @@ def _compose(client: NoticeClient, monkeypatch: pytest.MonkeyPatch) -> Any:
     )
     process = request_identity.mint_graph_session(actor)
     return compose_served_invocation(
+        config=RuntimeConfig(),
         keys=JwksCache(),
         pool=FakePool(client),
         graph=process.graph,

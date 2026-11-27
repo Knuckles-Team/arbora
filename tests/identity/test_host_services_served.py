@@ -16,7 +16,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from arbora.access.action_policy import ActionPolicies
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig, runtime_config
 from arbora.identity.directory_sync import JOB_ID
 from arbora.identity.host_services import (
     SCIM_CREDENTIALS_PATH,
@@ -101,6 +101,7 @@ def _compose(monkeypatch: pytest.MonkeyPatch, admin: _Admin, **changes: Any) -> 
     )
     process = request_identity.mint_graph_session(actor)
     return compose_served_invocation(
+        config=RuntimeConfig(),
         keys=JwksCache(),
         pool=FakePool(FakeClient()),
         graph=process.graph,

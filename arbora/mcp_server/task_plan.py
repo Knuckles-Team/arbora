@@ -16,6 +16,7 @@ from arbora.api.invoke.executor import execution_context
 from arbora.api.invoke.pipeline import InvokeServices, OperationRefused, authorize
 from arbora.api.invoke.steps import OpError, RequestCaller, claim_values
 from arbora.core.claims import freeze_claims
+from arbora.core.settings import RuntimeConfig
 from arbora.core.task_plan_config import TaskPlanConfig
 
 
@@ -115,15 +116,13 @@ async def evaluate_task_plan(
     return freeze_claims(plan)
 
 
-def configured_task_plan() -> TaskPlanConfig | None:
+def configured_task_plan(settings: RuntimeConfig) -> TaskPlanConfig | None:
     """Read explicit operator settings, rejecting invalid pins before startup."""
     import json
 
     from pydantic import TypeAdapter
 
-    from arbora.core.settings import runtime_config
-
-    raw = runtime_config.task_plan
+    raw = settings.task_plan
     if raw is None:
         return None
     # The schema body is published and resolved per tenant at request time.

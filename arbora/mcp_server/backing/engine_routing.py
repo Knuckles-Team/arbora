@@ -126,25 +126,6 @@ def _trino_principal_ref() -> str:
     return persistence_reference("delegated_actor", actor.actor_id)
 
 
-def _trino_composition_settings() -> tuple[str, str, str]:
-    """Read and validate the process-owned Trino composition settings."""
-
-    from arbora.core.settings import runtime_config
-
-    if not runtime_config.enable_delegation:
-        raise RuntimeError("Trino queries require delegated authentication")
-    endpoint = str(runtime_config.trino_endpoint or "").strip()
-    catalog = str(runtime_config.lakekeeper_warehouse or "").strip()
-    audience = str(runtime_config.delegation_audience or "").strip()
-    if not endpoint:
-        raise RuntimeError("Trino endpoint is not configured (TRINO_ENDPOINT)")
-    if not catalog:
-        raise RuntimeError("Trino catalog is not configured (LAKEKEEPER_WAREHOUSE)")
-    if not audience:
-        raise RuntimeError("Trino delegation audience is not configured (AUDIENCE)")
-    return endpoint, catalog, audience
-
-
 def get_tabular_query_service() -> Any:
     """Compose the one tabular query application service for MCP/REST callers.
 
@@ -177,65 +158,6 @@ def get_connection_registry():
         "knowledge_graph.core.connection_registry",
         "MEDULLA-UNIFIED-DATA-PLANE-R612",
     )
-
-
-def _seed_external_graph_connectors(registry: Any) -> None:
-    """Register reference-only external sources from config, best-effort per item."""
-    from arbora.core.settings import runtime_config as _cfg
-
-    for declared in _cfg.external_graph_connectors or []:
-        value = (
-            declared.model_dump() if hasattr(declared, "model_dump") else dict(declared)
-        )
-        name = str(value.pop("name", "") or "")
-        if not name:
-            continue
-        value["role"] = "read"
-        try:
-            registry.register(name, value)
-        except Exception as exc:  # one bad declaration never blocks the rest
-            logger.warning(
-                "Skipping invalid external source declaration: %s",
-                type(exc).__name__,
-                exc_info=True,
-            )
-
-
-def _seed_kg_connections(registry: Any) -> None:
-    """Register explicit KG_CONNECTIONS declarations from config, best-effort per item."""
-    from arbora.core.settings import runtime_config as _cfg
-
-    for spec in _cfg.kg_connections or []:
-        spec = dict(spec)
-        name = spec.pop("name", "")
-        if name:
-            try:
-                registry.register(name, spec)
-            except Exception as e:  # one bad declaration never blocks the rest
-                logger.warning(
-                    "Skipping invalid graph connection declaration: %s",
-                    type(e).__name__,
-                    exc_info=True,
-                )
-
-
-def _seed_connection_registry(registry: Any) -> None:
-    """Seed a fresh :class:`ConnectionRegistry` from config, best-effort.
-
-    An explicit ``KG_CONNECTIONS`` declaration takes precedence over a
-    reference-only external source registered under the same alias, since
-    external sources are seeded first. Config-less environments (the whole
-    seeding step raises) leave the registry with nothing seeded.
-    """
-    try:
-        _seed_external_graph_connectors(registry)
-        _seed_kg_connections(registry)
-    except Exception as exc:  # config-less environments
-        logger.debug(
-            "Graph connection declarations were not seeded (%s)",
-            type(exc).__name__,
-            exc_info=True,
-        )
 
 
 def _resolve_target_engines(

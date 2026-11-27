@@ -21,6 +21,8 @@ from functools import partial
 from pathlib import Path
 from typing import Any, cast
 
+from arbora.core.settings import RuntimeConfig
+
 # -I excludes the script directory. Add only copied fixture helpers, never source.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -234,6 +236,7 @@ async def prepare(
         del denied_credential
         engine = ServedEngine(pool)
         invocation = compose_served_invocation(
+            config=RuntimeConfig(),
             keys=JwksCache(),
             pool=pool,
             graph="__control__",

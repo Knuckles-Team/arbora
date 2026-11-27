@@ -25,6 +25,7 @@ from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
 from arbora.browser_control.browser_state import BrowserState
 from arbora.core.environment import inherited_environment, read_env
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.state import FleetState
 from arbora.gateway.state import GatewayState
 from arbora.mcp_server import runtime
@@ -220,6 +221,7 @@ def _explicitly_true(value: Any) -> bool:
 def detect_composition(
     engine: Any = None,
     *,
+    settings: RuntimeConfig,
     messaging_intake_enabled: bool | None = None,
     served_network: bool = False,
 ) -> CompositionPlan:
@@ -241,7 +243,7 @@ def detect_composition(
     """
     from scion_sdk.config import csv_values
 
-    from arbora.core.settings import runtime_config as config
+    config = settings
 
     is_gateway_daemon_role = str(read_env("KG_DAEMON_ROLE", "client")).strip() == "host"
     platforms = configured_platforms(engine)
@@ -303,11 +305,9 @@ def _ranged(name: str, default: float) -> float:
     return value
 
 
-def local_engine_config(**overrides: Any) -> LocalEngineConfig:
+def local_engine_config(settings: RuntimeConfig, **overrides: Any) -> LocalEngineConfig:
     """The lifecycle settings from the environment; ``overrides`` win."""
-    from arbora.core.settings import runtime_config
-
-    anonymous = runtime_config.arbora_auth_mode == "none"
+    anonymous = settings.arbora_auth_mode == "none"
     base = LocalEngineConfig(
         extra_args=("--auth-mode", "none") if anonymous else (),
         extra_env=_anonymous_importer_env() if anonymous else {},
@@ -497,7 +497,7 @@ def _abandon(endpoint: EngineEndpoint, process: subprocess.Popen[bytes]) -> None
         engine_lock.engine_marker_path(endpoint.address).unlink()
 
 
-def ensure_local_engine(config: LocalEngineConfig | None = None) -> EngineEndpoint:
+def ensure_local_engine(config: LocalEngineConfig) -> EngineEndpoint:
     """Return the loopback engine endpoint, starting an engine only when none answers.
 
     Every process attaches by holding a shared lock on the endpoint's client
@@ -508,7 +508,6 @@ def ensure_local_engine(config: LocalEngineConfig | None = None) -> EngineEndpoi
     """
     from arbora.deployment import engine_lock
 
-    config = config or local_engine_config()
     endpoint = config.endpoint
     with _ATTACHED_LOCK:
         if endpoint.address in _ATTACHED:
@@ -1029,6 +1028,7 @@ def start_composed_services(
     browser: BrowserState,
     telemetry: Telemetry,
     host: Any,
+    settings: RuntimeConfig,
     messaging_intake_enabled: bool | None = None,
     served_network: bool = False,
     session_boundary: Any = None,
@@ -1037,6 +1037,7 @@ def start_composed_services(
 
     plan = detect_composition(
         engine,
+        settings=settings,
         messaging_intake_enabled=messaging_intake_enabled,
         served_network=served_network,
     )

@@ -18,7 +18,7 @@ from arbora.api.registry import Surface
 from arbora.browser_control.browser_control_client import ControlResultMessage
 from arbora.browser_control.browser_control_runtime import dispatch_browser_operation
 from arbora.browser_control.browser_state import BrowserState
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig, runtime_config
 from arbora.mcp_server.effect_journal import EgEffectJournal
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
@@ -152,6 +152,7 @@ def _composed_authority(
     )
     client = EffectClient()
     invocation = compose_served_invocation(
+        config=RuntimeConfig(),
         keys=JwksCache(),
         pool=FakePool(client),
         graph=session.graph,

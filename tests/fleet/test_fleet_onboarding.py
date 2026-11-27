@@ -703,7 +703,7 @@ def test_cli_runs_one_full_pass_and_fails_on_any_server(
             raise ConnectionError(f"{endpoint.url} refused the session")
         return await _served_pack(endpoint, auth=auth)
 
-    monkeypatch.setattr(runtime, "_mint_process_session", lambda _t, _k: _session())
+    monkeypatch.setattr(runtime, "_mint_process_session", lambda _t, _k, _c: _session())
     monkeypatch.setattr(EngineHandles, "served", lambda _self: eg)
     monkeypatch.setattr(bootstrap, "_wait_for_engine_materialization", lambda e: None)
     monkeypatch.setattr(

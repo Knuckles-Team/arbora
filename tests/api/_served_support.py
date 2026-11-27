@@ -17,6 +17,7 @@ from typing import Any
 import pytest
 from fastmcp import FastMCP
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.mcp_server.host_caches import HostCaches
 from arbora.observability.state import SubsystemWindows
@@ -312,6 +313,7 @@ def two_tenant_served(
     actor = person("two", TENANT_TWO, scopes)
     process = request_identity.mint_graph_session(actor)
     invocation = harness.compose_served_invocation(
+        config=RuntimeConfig(),
         keys=JwksCache(),
         pool=harness.FakePool(client),
         graph=process.graph,

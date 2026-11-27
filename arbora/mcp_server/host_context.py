@@ -85,9 +85,10 @@ def build_host_context() -> HostContext:
     (request validation), so a key fetched by either is current for both.
     """
     keys = JwksCache()
-    authority = ProcessAuthority(keys)
+    config = RuntimeConfig()
+    authority = ProcessAuthority(keys, config=config)
     return compose_host_context_over(
-        EngineHandles(process_session=authority.session),
+        EngineHandles(process_session=authority.session, config=config),
         HostCaches(tools=ToolTable(authority), jwks=keys),
     )
 
@@ -130,7 +131,7 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         authority=caches.tools.authority,
         observability=_compose_observability(engine, caches.tools.authority, fleet),
         gateway=GatewayState(),
-        config=RuntimeConfig(),
+        config=caches.tools.authority.config,
     )
 
 
