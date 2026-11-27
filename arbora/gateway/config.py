@@ -19,7 +19,8 @@ from typing import Any
 
 import yaml
 
-from arbora.core.settings import config_dir, data_dir, mcp_config_path, setting
+from arbora.core.environment import read_env
+from arbora.core.settings import config_dir, data_dir, mcp_config_path
 from arbora.fleet.mcp_catalog import parse_mcp_servers
 from arbora.gateway.models import (
     DashboardLayout,
@@ -367,7 +368,7 @@ def _resolve_discovered_url(env_vars: object, env_prefix: str) -> str:
         url = candidate[:8192]
         if url:
             return url
-    return setting(f"{env_prefix}_URL", "")
+    return read_env(f"{env_prefix}_URL", "")
 
 
 def _service_for_server(

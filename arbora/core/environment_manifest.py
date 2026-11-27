@@ -130,6 +130,7 @@ _PASS_THROUGH: frozenset[tuple[str, str]] = frozenset(
         ("arbora/core/environment.py", "name"),
         ("arbora/deployment/production_ops.py", "name"),
         ("arbora/fleet/catalog_reader.py", "key"),
+        ("arbora/gateway/config.py", "f'{env_prefix}_URL'"),
         ("arbora/messaging/backends/_channel_http.py", "self._key(suffix)"),
         ("arbora/messaging/backends/email.py", "name"),
         ("arbora/messaging/registry.py", "var"),
@@ -410,9 +411,29 @@ _NAME_TABLES: dict[str, frozenset[str]] = {
 _NAME_SHAPE = re.compile(r"^[A-Z][A-Z0-9]*(_[A-Z0-9]+)+$")
 
 
+#: Modules that read ``<PREFIX><suffix>`` for each ``"env_prefix": "<PREFIX>"`` entry of
+#: their service table: the gateway's discovered service URLs.
+_PREFIXED_NAMES: dict[str, str] = {"arbora/gateway/config.py": "_URL"}
+
+
+def _prefixed_reads(path: str, tree: ast.AST) -> list[EnvironmentRead]:
+    suffix = _PREFIXED_NAMES.get(path)
+    if suffix is None:
+        return []
+    return [
+        EnvironmentRead(path, value.lineno, value.value + suffix, value.value)
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Dict)
+        for key, value in zip(node.keys, node.values, strict=True)
+        if isinstance(key, ast.Constant)
+        and key.value == "env_prefix"
+        and isinstance(value, ast.Constant)
+    ]
+
+
 def _table_reads(path: str, tree: ast.AST) -> list[EnvironmentRead]:
     tables = _NAME_TABLES.get(path, frozenset())
-    reads: list[EnvironmentRead] = []
+    reads: list[EnvironmentRead] = _prefixed_reads(path, tree)
     for node in ast.walk(tree):
         if not isinstance(node, ast.Assign | ast.AnnAssign) or node.value is None:
             continue

@@ -39,6 +39,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from arbora.api.errors import not_served
+from arbora.core.environment import read_env
 from arbora.fleet.catalog_machine import CatalogState
 from arbora.fleet.health import (
     AuthorityNotServed,
@@ -216,9 +217,8 @@ def _fetch_sessions(
 
 def _multi_host_state() -> bool:
     """True when sessions may be owned by other hosts (state externalized)."""
-    from arbora.core.settings import setting
 
-    uri = str(setting("STATE_DB_URI", "") or "")
+    uri = str(read_env("STATE_DB_URI") or "")
     return uri.startswith(("postgresql://", "postgres://"))
 
 
