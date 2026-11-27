@@ -45,6 +45,7 @@ from typing import TYPE_CHECKING, Any, cast
 if TYPE_CHECKING:
     from arbora.access.action_policy import ActionPolicies
     from arbora.browser_control.browser_state import BrowserState
+    from arbora.observability.state import Telemetry
 from arbora.core.environment import default_env, read_env
 
 __all__ = ["compose_web_application", "run_web_ui"]
@@ -114,6 +115,7 @@ def run_web_ui(
     engine: Any,
     tools: Mapping[str, Any],
     browser: BrowserState,
+    telemetry: Telemetry,
     host: str | None = None,
     port: int | None = None,
     session_boundary: Any = None,
@@ -217,6 +219,7 @@ def run_web_ui(
         engine,
         lambda operation: invoke_governed_helper(operation, deadline=10.0),
         browser=browser,
+        telemetry=telemetry,
         action_policy=action_policies.for_engine(engine),
         session_revalidator=revalidate_browser_control_session,
     )

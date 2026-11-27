@@ -373,12 +373,14 @@ async def test_invalid_proposal_audit_attributes_never_reach_storage(
     session: GraphSession, attributes: dict[str, Any]
 ) -> None:
     from arbora.browser_control.trace_bundle import record_trace_bundle
+    from arbora.observability.state import Telemetry
     from tests.browser_control.test_browser_control_service import _Engine
 
     engine = _Engine()
     with use_session(session), pytest.raises(ValueError):
         record_trace_bundle(
             engine,
+            Telemetry(),
             session=session,
             run_id="test-run",
             agent_name="browser-control",

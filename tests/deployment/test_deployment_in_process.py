@@ -12,6 +12,7 @@ from arbora.browser_control.browser_state import BrowserState
 from arbora.mcp_server import composition
 from arbora.mcp_server.composition import CompositionPlan, start_composed_services
 from arbora.mcp_server.host_caches import ToolTable
+from arbora.observability.state import Telemetry
 
 
 # spec: ARBORA-DEPLOY-R017.7
@@ -55,6 +56,7 @@ def test_live_start_calls_start_composed_services_with_detected_composition(
         action_policies=ActionPolicies(),
         tools=ToolTable(),
         browser=BrowserState(),
+        telemetry=Telemetry(),
         messaging_intake_enabled=True,
         served_network=True,
     )

@@ -192,6 +192,7 @@ class BrowserProvenanceMixin(BrowserControlMixinState):
         await self._sync_runner(
             lambda: record_trace_bundle(
                 self._engine,
+                self._telemetry,
                 session=active.channel.binding.session,
                 run_id=active.run_id,
                 agent_name="arbora-browser-control",

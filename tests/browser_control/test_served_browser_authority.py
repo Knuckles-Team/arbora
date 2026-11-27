@@ -8,6 +8,7 @@ from arbora.browser_control.browser_control_service import (
 )
 from arbora.browser_control.browser_state import BrowserState
 from arbora.mcp_server.served_engine import ServedEngine
+from arbora.observability.state import Telemetry
 
 pytestmark = pytest.mark.spec("ARBORA-FLEET-R015")
 
@@ -31,6 +32,7 @@ def test_actual_served_engine_installs_browser_authority():
         ServedEngine(None),
         sync_runner,
         browser=BrowserState(),
+        telemetry=Telemetry(),
         action_policy=ActionPolicies().for_engine(),
         session_revalidator=refuse,
     )
@@ -138,6 +140,7 @@ def test_released_native_actual_webui_factory_composition(native_engine):
         engine,
         asyncio.to_thread,
         browser=BrowserState(),
+        telemetry=Telemetry(),
         action_policy=ActionPolicies().for_engine(engine),
         session_revalidator=revalidate_browser_control_session,
     )

@@ -15,8 +15,6 @@ timestamps and opaque strings are never used as ordering cursors.
 from __future__ import annotations
 
 import json
-import threading
-import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
@@ -24,6 +22,7 @@ from typing import Any
 from scion_sdk.privacy import PersistencePrivacyGuard
 from scion_sdk.privacy_reference import persistence_reference
 
+from arbora.observability.state import Telemetry
 from arbora.unique_records import create_record
 
 TRACE_SCHEMA_VERSION = 1
@@ -38,19 +37,6 @@ TRACE_PRODUCED_OUTCOME_EDGE = "PRODUCED_OUTCOME"
 # existing RunTrace when the run correlates to a tool-originated one. Never
 # changes USED_TOOL/PRODUCED_OUTCOME semantics.
 TRACE_LINEAGE_ACTIVITY_EDGE = "HAS_LINEAGE_ACTIVITY"
-
-_sequence_lock = threading.Lock()
-_cursor_lock = threading.Lock()
-_last_sequence = 0
-
-
-def next_event_sequence() -> int:
-    """Return a process-monotonic, wall-clock-anchored numeric event sequence."""
-
-    global _last_sequence
-    with _sequence_lock:
-        _last_sequence = max(time.time_ns(), _last_sequence + 1)
-        return _last_sequence
 
 
 @dataclass(frozen=True, order=True)
@@ -117,7 +103,7 @@ def load_trace_cursor(engine: Any, consumer: str) -> TraceCursor:
 
 
 def save_trace_cursor(
-    engine: Any, consumer: str, cursor: TraceCursor | int
+    telemetry: Telemetry, engine: Any, consumer: str, cursor: TraceCursor | int
 ) -> TraceCursor:
     """Monotonically persist the greatest fully-completed trace sequence.
 
@@ -126,7 +112,7 @@ def save_trace_cursor(
     cursor. Authority write failures are explicit to the caller.
     """
 
-    with _cursor_lock:
+    with telemetry.cursor_guard:
         current = load_trace_cursor(engine, consumer)
         try:
             requested = (
@@ -250,7 +236,7 @@ def trace_properties(
     task: str,
     status: str,
     timestamp: str,
-    event_sequence: int | None = None,
+    event_sequence: int,
     error: str | None = None,
     duration_ms: float | None = None,
     result_preview: str | None = None,
@@ -282,7 +268,7 @@ def trace_properties(
     until explicitly cleared.
     """
 
-    seq = int(event_sequence or next_event_sequence())
+    seq = int(event_sequence)
     _clean, privacy = _privacy_safe(
         {
             "task": str(task or "")[:2000],
@@ -367,7 +353,7 @@ def tool_call_properties(
     status: str,
     sequence: int,
     timestamp: str,
-    event_sequence: int | None = None,
+    event_sequence: int,
     is_permanent: bool = False,
 ) -> dict[str, Any]:
     """Build canonical ToolCall properties without raw identity fields.
@@ -376,7 +362,7 @@ def tool_call_properties(
     retention/legal-hold exemption flag (CONCEPT:MERISTEM-KG.audit.trace-retention-legal-hold).
     """
 
-    seq = int(event_sequence or next_event_sequence())
+    seq = int(event_sequence)
     _clean, privacy = _privacy_safe(
         {
             "args": str(args or "")[:4000],
@@ -477,7 +463,6 @@ __all__ = [
     "TraceCursor",
     "load_trace_cursor",
     "save_trace_cursor",
-    "next_event_sequence",
     "trace_id",
     "outcome_id",
     "correlate_lineage_run_trace",

@@ -17,7 +17,7 @@ package is imported lazily, and the exporter only activates when
 configured. When the flag, credentials, or package are absent,
 every method is a clean no-op so the live graph path is never affected.
 
-Wiring: :func:`get_langfuse_exporter` returns a process-wide singleton; the
+Wiring: :func:`get_langfuse_exporter` returns the host's exporter; the
 orchestration engine calls :meth:`LangfuseExporter.export_graph_run` from inside
 its existing tracing block on every run when the exporter is enabled.
 """
@@ -36,6 +36,7 @@ from arbora.observability.langfuse_trust import (
     resolve_langfuse_credentials,
     resolve_langfuse_host,
 )
+from arbora.observability.state import Telemetry
 
 
 def normalize_tenant_id(value: str | None) -> str:
@@ -344,42 +345,23 @@ class LangfuseExporter:
                 logger.debug("Langfuse flush skipped (%s).", type(exc).__name__)
 
 
-# ── process-wide singleton (wired into the live graph path) ───────────────────
-_EXPORTER: LangfuseExporter | None = None
-_EXPORTER_BUILT = False
+# ── the host's exporter (held by ``Observability.telemetry``) ─────────────────
+def _build_exporter() -> LangfuseExporter | None:
+    """Build the exporter when export is enabled and credentialed, else ``None``."""
+    enabled = str(read_env("TRACE_EXPORT_ENABLED", "false") or "false").strip()
+    if enabled.casefold() not in {"1", "true", "yes", "on"}:
+        return None
+    exporter = LangfuseExporter()
+    return exporter if exporter.configured else None
 
 
-def get_langfuse_exporter() -> LangfuseExporter | None:
-    """Return the process-wide exporter, or ``None`` when not configured.
+def get_langfuse_exporter(telemetry: Telemetry) -> LangfuseExporter | None:
+    """Return the host's exporter, or ``None`` when not configured.
 
     Production presets explicitly enable export. Credentials alone are not an
     authorization to emit traces; absent opt-in or keys returns ``None``.
     """
-    global _EXPORTER, _EXPORTER_BUILT
-    if _EXPORTER_BUILT:
-        return _EXPORTER
-    _EXPORTER_BUILT = True
-    enabled = str(read_env("TRACE_EXPORT_ENABLED", "false") or "false").strip()
-    if enabled.casefold() not in {"1", "true", "yes", "on"}:
-        _EXPORTER = None
-        return None
-    exporter = LangfuseExporter()
-    _EXPORTER = exporter if exporter.configured else None
-    return _EXPORTER
-
-
-def set_langfuse_exporter(exporter: LangfuseExporter | None) -> None:
-    """Install a specific exporter (used by tests to inject a fake client)."""
-    global _EXPORTER, _EXPORTER_BUILT
-    _EXPORTER = exporter
-    _EXPORTER_BUILT = True
-
-
-def reset_langfuse_exporter() -> None:
-    """Reset the cached singleton so the next call re-probes the environment."""
-    global _EXPORTER, _EXPORTER_BUILT
-    _EXPORTER = None
-    _EXPORTER_BUILT = False
+    return telemetry.exporter(_build_exporter)
 
 
 def _now_ms() -> float:
