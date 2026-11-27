@@ -10,6 +10,7 @@ after_sequence: object = None
 target_url: object = None
 drift_id: object = None
 repair_id: object = None
+contextual: object = None
 _ = (
     after_agent_id,
     after_version_id,
@@ -18,4 +19,5 @@ _ = (
     target_url,
     drift_id,
     repair_id,
+    contextual,
 )
