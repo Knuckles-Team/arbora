@@ -25,7 +25,7 @@ class Decide:
 
     def __call__(self, params: dict[str, Any], principal: str) -> Any:
         self.requests.append((params, principal))
-        return {"records": []}
+        return {"records": [], "safety_verdict": "Pass"}
 
 
 @pytest.fixture

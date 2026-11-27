@@ -623,7 +623,7 @@ class FleetOnboarding:
         from arbora.fleet.connect_contract import ContractRefused
 
         report = self.surfaces.setdefault(connector, {})
-        contract = report.get("contract") or {}
+        contract = report.get("contract", {})
         if contract.get("outcome") == "contract_rejected":
             state, cause = "contract_rejected", str(contract.get("reason", ""))
         elif isinstance(error, ProjectionFailed):
@@ -693,7 +693,7 @@ class FleetOnboarding:
         report = self.surfaces[endpoint.name]
         report["onboarding_state"] = "onboarded"
         report["counts"] = asdict(
-            PackSurfaceCounts.build(report, report.get("contract"))
+            PackSurfaceCounts.build(report, report.get("contract", {}))
         )
         return changed
 
