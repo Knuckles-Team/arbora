@@ -20,7 +20,7 @@ import math
 import re
 from collections.abc import Iterable
 
-__all__ = ["LexicalFloor", "terms"]
+__all__ = ["LexicalFloor", "evidence", "terms"]
 
 _WORD_RE = re.compile(r"[a-z0-9]+")
 #: Request words that carry no routing signal.
@@ -116,3 +116,20 @@ class LexicalFloor:
             coverage = len(self._query & terms(name))
             rows.append((-self.score(name, description), -coverage, index, cid))
         return [cid for *_key, cid in sorted(rows)]
+
+
+def evidence(
+    query: str, rows: Iterable[tuple[str, str, str]]
+) -> dict[str, tuple[float, list[str]]]:
+    """Per row id: the floor's relevance in ``[0, 1]`` and the query terms it shares.
+
+    The port chooses the order; this is only the lexical evidence reported next to
+    it (a zero means no routing term matched). ``rows`` are ``(id, name, text)``.
+    """
+    rows = list(rows)
+    floor = LexicalFloor(query, (f"{name} {text}" for _id, name, text in rows))
+    wanted = terms(query)
+    return {
+        cid: (floor.score(name, text), sorted(wanted & terms(f"{name} {text}")))
+        for cid, name, text in rows
+    }

@@ -31,6 +31,7 @@ from arbora.fleet.multiplexer_ops import (
     UnadmittedServers,
 )
 from arbora.fleet.pin_store import PinStore
+from arbora.fleet.ranking import FLOOR_ONLY
 from arbora.fleet.session_loads import SessionLoads
 
 logger = logging.getLogger(__name__)
@@ -260,6 +261,7 @@ def compose_multiplexer_ops(
         (source,),
         visible,
         source_approvals=getattr(virtual, "source_approval_report", None),
+        ranking=getattr(getattr(mux, "fleet", None), "ranking", FLOOR_ONLY),
     )
 
     def health() -> Mapping[str, Any]:

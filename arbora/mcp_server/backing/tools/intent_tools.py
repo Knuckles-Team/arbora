@@ -40,7 +40,8 @@ import json
 import logging
 import re
 import time
-from collections import Counter, OrderedDict
+from collections import OrderedDict
+from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -50,6 +51,14 @@ from pydantic import BaseModel
 from scion_sdk.privacy import persistence_reference
 
 from arbora.api.errors import not_served
+from arbora.fleet.lexical_floor import evidence
+from arbora.fleet.ranking import (
+    FLOOR_ONLY,
+    RankCandidate,
+    Ranked,
+    RankingPort,
+    run_with_port,
+)
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.intent_contract import (
     DESCRIBE_ACTION,
@@ -138,20 +147,7 @@ _DESTRUCTIVE_TERMS = frozenset(
     }
 )
 
-_STOPWORDS = frozenset(
-    "a an the of for to in on with and or is are was were be do does what how "
-    "why when where which who this that it its into over about via my me i "
-    "you your please can could should would like".split()
-)
-
 _WORD_RE = re.compile(r"[a-z0-9]+")
-
-
-def _tokenize(text: str) -> Counter:
-    words = [
-        w for w in _WORD_RE.findall(str(text or "").lower()) if w not in _STOPWORDS
-    ]
-    return Counter(words)
 
 
 @dataclass
@@ -445,92 +441,27 @@ def _build_candidate_for_tool(
     )
 
 
-def _score(
-    intent_tokens: Counter, candidate: CapabilityCandidate
-) -> tuple[float, list[str]]:
-    """Dependency-free lexical overlap score over current CPD evidence.
+def _declared_phrases(tool: str) -> str:
+    """The tool's declared multi-word action phrases, as candidate text."""
 
-    Weighted count-overlap normalized by intent length, with a name-token bonus
-    (a match on the tool's OWN name/action words counts double — those are the
-    strongest routing signal, e.g. intent "search the graph" hitting
-    ``graph_search``'s own name) plus a small name-COVERAGE tie-breaker: when
-    two tools tie on overlap, the one whose ENTIRE name is accounted for by the
-    matched terms ranks first (``graph_search`` over ``graph_search_synthesis``
-    for intent "search the graph" — the extra unmatched ``synthesis`` token
-    makes it the less precise name match).
+    return " ".join(
+        " ".join(_WORD_RE.findall(action.lower()))
+        for action in _actions_by_tool().get(tool, ())
+        if len(_WORD_RE.findall(action.lower())) >= 2
+    )
+
+
+def _port_text(c: CapabilityCandidate) -> str:
+    """One capability's ranking text: its doc, declared verbs and action phrases.
+
+    The skill-delegation case is text too: a façade that accepts a named skill says
+    so, and the port, not a bonus, decides whether the request names one
+    (ARBORA-FLEET-R083.2).
     """
-    if not intent_tokens:
-        return 0.0, []
-    name_tokens = set(_WORD_RE.findall(candidate.tool.lower()))
-    doc_tokens = _tokenize(candidate.doc)
-    matched: list[str] = []
-    score = 0.0
-    name_hits = 0
-    for term, weight in intent_tokens.items():
-        in_name = term in name_tokens
-        in_doc = doc_tokens.get(term, 0) > 0
-        if not (in_name or in_doc):
-            continue
-        matched.append(term)
-        if in_name:
-            name_hits += 1
-        score += weight * (2.0 if in_name else 1.0)
-    total_weight = sum(intent_tokens.values()) or 1
-    base = score / total_weight
-    coverage_bonus = (name_hits / len(name_tokens)) * 0.01 if name_tokens else 0.0
-    return base + coverage_bonus, matched
-
-
-#: One hyphenated slug (the KG's own ingested-skill naming convention, e.g.
-#: ``servicenow-incident-management``) immediately adjacent to the literal
-#: word "skill" — in either order, optionally introduced by "named"/"called"
-#: or a colon. This is a STRUCTURAL fingerprint of "the caller is naming a
-#: specific skill to delegate to", independent of what words make up the
-#: slug (CONCEPT:MERISTEM-ECO.mcp.intent-surface-delegation-shape / D-INT-4). It
-#: deliberately does NOT special-case any domain vocabulary ("incident",
-#: "servicenow", ...) — a slug about ANY domain matches the same way, which
-#: is exactly why naming the skill you want must stop working against you.
-_SKILL_SLUG = r"[a-z][a-z0-9]*(?:-[a-z0-9]+){1,6}"
-_SKILL_DELEGATION_RE = re.compile(
-    rf"\b{_SKILL_SLUG}\s+skill\b"
-    rf"|\bskill(?:\s+(?:named|called))?\s*[:\-]?\s+{_SKILL_SLUG}\b",
-    re.IGNORECASE,
-)
-
-#: Flat score bonus applied to a delegation-façade candidate (one whose CPD
-#: declares ``skill_name``, see :data:`CapabilityCandidate.accepts_skill_name`)
-#: when :data:`_SKILL_DELEGATION_RE` matches the intent. Large enough to
-#: dominate any lexical overlap the named skill's own words happen to create
-#: with an unrelated tool (measured worst case pre-fix: 0.3383 for an
-#: incident-analysis tool against a ServiceNow-incident SKILL delegation), a
-#: score no ordinary multi-term lexical match realistically reaches.
-_SKILL_DELEGATION_BONUS = 0.5
-
-
-def _skill_delegation_bonus(intent: str, candidate: CapabilityCandidate) -> float:
-    """Structural delegation-shape bonus — see :data:`_SKILL_DELEGATION_RE`."""
-
-    if not candidate.accepts_skill_name:
-        return 0.0
-    if not _SKILL_DELEGATION_RE.search(str(intent or "")):
-        return 0.0
-    return _SKILL_DELEGATION_BONUS
-
-
-def _declared_action_phrase_bonus(intent: str, tool: str) -> float:
-    """Prefer the capability that declares an exact multi-word action phrase."""
-
-    words = " ".join(_WORD_RE.findall(str(intent or "").lower()))
-    if not words:
-        return 0.0
-    longest = 0
-    for action in _actions_by_tool().get(tool, ()):
-        action_words = _WORD_RE.findall(action.lower())
-        if len(action_words) < 2:
-            continue
-        if f" {' '.join(action_words)} " in f" {words} ":
-            longest = max(longest, len(action_words))
-    return min(0.05 * longest, 0.15)
+    parts = [c.doc, " ".join(c.verbs), _declared_phrases(c.tool)]
+    if c.accepts_skill_name:
+        parts.append("delegate to a named skill")
+    return " ".join(part for part in parts if part)
 
 
 def resolve_intent(
@@ -539,6 +470,7 @@ def resolve_intent(
     *,
     hints: dict[str, Any] | None = None,
     top_k: int = 5,
+    ranking: RankingPort = FLOOR_ONLY,
 ) -> list[CapabilityCandidate]:
     """Rank candidate capabilities for ``intent`` under ``verb`` (``None`` = all verbs).
 
@@ -570,24 +502,83 @@ def resolve_intent(
         _RESOLUTION_CACHE.move_to_end(cache_key)
         return list(cached)
 
-    intent_tokens = _tokenize(intent)
     explicit_action = hints.get("action")
     pool = _resolution_pool(candidates, verb, explicit_action)
     cpds = _load_cpds_required() if explicit_action is not None else {}
-    ctx = _RankingContext(
-        intent=intent,
-        intent_tokens=intent_tokens,
-        verb=verb,
-        explicit_action=explicit_action,
-        cpds=cpds,
-        outcome_scope_ref=outcome_scope_ref,
-    )
-    ranked = [_rank_candidate(c, ctx) for c in pool]
-    ranked.sort(key=lambda c: (c.score, c.tool), reverse=True)
-    result = ranked[:top_k]
+    request = _PortRequest(intent, explicit_action, cpds, ranking, top_k)
+    return _resolve_by_port(cache_key, pool, request)
 
-    _cache_resolution(cache_key, result)
+
+@dataclass(frozen=True)
+class _PortRequest:
+    """One resolution's inputs to the ranking port."""
+
+    intent: str
+    explicit_action: Any
+    cpds: dict[str, dict[str, Any]]
+    ranking: RankingPort
+    top_k: int
+
+
+def _resolve_by_port(
+    cache_key: tuple[Any, ...], pool: list[CapabilityCandidate], request: _PortRequest
+) -> list[CapabilityCandidate]:
+    """The pool in the port's order with the floor's evidence, cached when final.
+
+    An engine order is final; a floor answer is final only when no engine is bound,
+    so a recovered engine is asked again rather than served a degraded order.
+    """
+    rows = [_pool_row(c, request.explicit_action, request.cpds) for c in pool]
+    ordered = _ordered(
+        request.ranking, "catalog.intent_action_rank", request.intent, rows
+    )
+    by_id = {row.id: c for row, c in zip(rows, pool, strict=True)}
+    shown = evidence(request.intent, ((r.id, r.name, r.description) for r in rows))
+    result = [
+        _resolved_candidate(by_id[i], request.explicit_action, *shown[i])
+        for i in ordered.order[: request.top_k]
+    ]
+    final = ordered.source == "medulla" or not getattr(
+        request.ranking, "configured", False
+    )
+    _cache_resolution(cache_key, result) if final else None
     return list(result)
+
+
+def _pool_row(
+    c: CapabilityCandidate, explicit_action: Any, cpds: dict[str, dict[str, Any]]
+) -> RankCandidate:
+    """One capability as the port sees it: tool, action, one-line description, verbs."""
+    if explicit_action is not None:
+        one_line = cpds[c.tool].get("one_line", "")
+        return RankCandidate(
+            c.capability_id, c.tool, f"{c.tool} {explicit_action} {one_line}", "action"
+        )
+    return RankCandidate(c.capability_id, c.tool, _port_text(c), "action")
+
+
+def _ordered(
+    port: RankingPort, question: str, intent: str, rows: list[RankCandidate]
+) -> Ranked:
+    ordered = getattr(port, "ordered", None)
+    if ordered is not None:
+        return ordered(question, intent, rows)
+    return Ranked(port.rank(question, intent, rows), "medulla")
+
+
+def _resolved_candidate(
+    c: CapabilityCandidate, explicit_action: Any, relevance: float, matched: list[str]
+) -> CapabilityCandidate:
+    """The capability as resolved: the port's pick with the floor's evidence."""
+    return CapabilityCandidate(
+        tool=c.tool,
+        action=str(explicit_action) if explicit_action is not None else c.action,
+        verbs=c.verbs,
+        doc=c.doc,
+        score=relevance,
+        matched_terms=matched,
+        accepts_skill_name=c.accepts_skill_name,
+    )
 
 
 def _cache_resolution(
@@ -650,68 +641,21 @@ def _resolution_pool(
     return pool
 
 
-@dataclass
-class _RankingContext:
-    """Helper for `resolve_intent`/`_rank_candidate`: bundles the per-call scoring
-
-    context so `_rank_candidate` stays within the 7-parameter cap.
-    """
-
-    intent: str
-    intent_tokens: Counter
-    verb: str | None
-    explicit_action: Any
-    cpds: dict[str, dict[str, Any]]
-    outcome_scope_ref: str | None
-
-
-def _rank_candidate(
-    c: CapabilityCandidate, ctx: _RankingContext
-) -> CapabilityCandidate:
-    """Helper for `resolve_intent`: score + build the ranked candidate for one pool entry."""
-    scoring_candidate = c
-    if ctx.explicit_action is not None:
-        cpd = ctx.cpds[c.tool]
-        scoring_candidate = CapabilityCandidate(
-            tool=c.tool,
-            action=str(ctx.explicit_action),
-            verbs=c.verbs,
-            doc=f"{c.tool} {ctx.explicit_action} {cpd.get('one_line', '')}",
-        )
-    score, matched = _score(ctx.intent_tokens, scoring_candidate)
-    if ctx.explicit_action is None:
-        score += _declared_action_phrase_bonus(ctx.intent, c.tool)
-    score += _skill_delegation_bonus(ctx.intent, c)
-    return CapabilityCandidate(
-        tool=c.tool,
-        action=(
-            str(ctx.explicit_action) if ctx.explicit_action is not None else c.action
-        ),
-        verbs=c.verbs,
-        doc=c.doc,
-        score=score,
-        matched_terms=matched,
-        accepts_skill_name=c.accepts_skill_name,
-    )
-
-
-def _rank_actions(tool: str, intent: str) -> list[tuple[str, float]]:
-    """Return actions ranked by current lexical intent evidence."""
+def _order_actions(
+    tool: str, intent: str, ranking: RankingPort = FLOOR_ONLY
+) -> list[tuple[str, float]]:
+    """The tool's actions in the port's order, each with the floor's evidence."""
 
     actions = _actions_by_tool().get(tool)
     if not actions:
         return []
-    intent_tokens = _tokenize(intent)
-    ranked: list[tuple[str, float]] = []
-    for action in actions:
-        score, _ = _score(
-            intent_tokens,
-            CapabilityCandidate(
-                tool=tool, action=action, verbs=(), doc=action.replace("_", " ")
-            ),
-        )
-        ranked.append((action, score))
-    return sorted(ranked, key=lambda item: (item[1], item[0]), reverse=True)
+    rows = [
+        RankCandidate(action, action, action.replace("_", " "), "action")
+        for action in actions
+    ]
+    ordered = _ordered(ranking, "catalog.intent_action_rank", intent, rows)
+    shown = evidence(intent, ((r.id, r.name, r.description) for r in rows))
+    return [(action, shown[action][0]) for action in ordered.order]
 
 
 def _literal_bool(value: Any) -> bool | None:
@@ -1428,7 +1372,7 @@ def _declared_default_action(tool: str) -> str | None:
     return default if isinstance(default, str) else None
 
 
-def _zero_score_falls_back(
+def _no_term_falls_back(
     verb: str, candidate: CapabilityCandidate, explicit_tool: bool, explicit_action: Any
 ) -> bool:
     """MERISTEM-CONTROL-R034: no matched term sends an unpinned read to the NL planner."""
@@ -1456,7 +1400,7 @@ def _routed_tool(
     verb: str, candidate: CapabilityCandidate, explicit_tool: bool, explicit_action: Any
 ) -> str:
     """The top candidate's tool, or the NL planner under MERISTEM-CONTROL-R034."""
-    if _zero_score_falls_back(verb, candidate, explicit_tool, explicit_action):
+    if _no_term_falls_back(verb, candidate, explicit_tool, explicit_action):
         return _ASK_FALLBACK_TOOL
     return candidate.tool
 
@@ -1843,10 +1787,17 @@ async def dispatch_intent(
     top: CapabilityCandidate | None = None
     chosen_tool: str = ""
 
-    def _resolve_candidates() -> dict[str, Any] | None:
+    ranking = _port_of(mcp)
+
+    async def _resolve_candidates() -> dict[str, Any] | None:
         nonlocal candidates, top, chosen_tool
-        candidates = resolve_intent(
-            verb, intent, hints=raw_hints, top_k=max(2, int(top_k))
+        candidates = await run_with_port(
+            ranking,
+            resolve_intent,
+            verb,
+            intent,
+            hints=raw_hints,
+            top_k=max(2, int(top_k)),
         )
         if not candidates:
             if explicit_tool:
@@ -1887,7 +1838,7 @@ async def dispatch_intent(
         chosen_tool = _routed_tool(verb, top, explicit_tool, explicit_action)
         return None
 
-    _candidates_outcome = _resolve_candidates()
+    _candidates_outcome = await _resolve_candidates()
     if _candidates_outcome is not None:
         return _candidates_outcome
 
@@ -1902,7 +1853,7 @@ async def dispatch_intent(
     chosen_action: str | None = None
     ranked_actions: list[tuple[str, float]] = []
 
-    def _select_tool_and_action() -> dict[str, Any] | None:
+    async def _select_tool_and_action() -> dict[str, Any] | None:
         nonlocal raw_hints, chosen_tool, chosen_action, ranked_actions
         # A non-pinned resolver result can still be the orchestration façade.  It
         # is safe to normalize its two documented target aliases only after the
@@ -1918,7 +1869,9 @@ async def dispatch_intent(
         if action_error is not None:
             return action_error
 
-        ranked_actions = _rank_actions(chosen_tool, intent)
+        ranked_actions = await run_with_port(
+            ranking, _order_actions, chosen_tool, intent
+        )
         ranked_actions, read_action_error = _restrict_to_read_actions(
             verb, chosen_tool, explicit_action, ranked_actions
         )
@@ -1932,7 +1885,7 @@ async def dispatch_intent(
         )
         return None
 
-    _select_outcome = _select_tool_and_action()
+    _select_outcome = await _select_tool_and_action()
     if _select_outcome is not None:
         return _select_outcome
 
@@ -2586,39 +2539,84 @@ def _fleet_how_to_call(hit: dict[str, Any], server: str) -> str:
     )
 
 
-def _fleet_find_row(intent_tokens: Counter, hit: dict[str, Any]) -> dict[str, Any]:
-    """Score one fleet hit on the same lexical scale as native capabilities."""
+def _fleet_find_row(hit: dict[str, Any]) -> dict[str, Any]:
+    """One fleet hit shaped like a native capability row (unordered)."""
     server = str(hit.get("server") or "")
     name = str(hit.get("tool") or hit.get("skill") or server)
-    probe = CapabilityCandidate(
-        tool=f"{server} {name}",
-        action=None,
-        verbs=("act",),
-        doc=str(hit.get("description") or ""),
-    )
-    score, matched = _score(intent_tokens, probe)
     return {
         "source": "fleet",
         "kind": str(hit.get("kind") or "tool"),
         "server": server,
         "tool": name,
         "prefixed_name": hit.get("prefixed_name"),
-        "score": round(score, 4),
         "fleet_score": hit.get("score"),
-        "matched_terms": matched,
         "how_to_call": _fleet_how_to_call(hit, server),
     }
 
 
-def _merge_fleet_ranking(
-    payload: dict[str, Any], intent: str, fleet_hits: list[Any], top_k: int
+def _native_entries(
+    native: list[dict[str, Any]], local: Sequence[CapabilityCandidate]
+) -> list[tuple[str, str, str, dict[str, Any]]]:
+    return [
+        (f"native:{i}", str(row.get("tool") or ""), _port_text(c), row)
+        for i, (row, c) in enumerate(zip(native, local, strict=False))
+    ]
+
+
+def _fleet_entries(
+    fleet_hits: list[Any],
+) -> list[tuple[str, str, str, dict[str, Any]]]:
+    hits = [hit for hit in fleet_hits if isinstance(hit, dict)]
+    return [
+        (
+            f"fleet:{i}",
+            f"{row['server']} {row['tool']}",
+            str(hit.get("description") or ""),
+            row,
+        )
+        for i, (hit, row) in enumerate(
+            zip(hits, (_fleet_find_row(hit) for hit in hits), strict=True)
+        )
+    ]
+
+
+def _merge_fleet_results(
+    payload: dict[str, Any],
+    intent: str,
+    fleet_hits: list[Any],
+    top_k: int,
+    local: Sequence[CapabilityCandidate],
+    ranking: RankingPort = FLOOR_ONLY,
 ) -> None:
-    """Rank fleet hits alongside native capabilities in ``results``."""
-    tokens = _tokenize(intent)
-    rows = [_fleet_find_row(tokens, hit) for hit in fleet_hits if isinstance(hit, dict)]
-    merged = sorted([*payload["results"], *rows], key=lambda row: -float(row["score"]))
-    payload["results"] = merged[:top_k]
-    payload["count"] = len(payload["results"])
+    """Order fleet hits alongside native capabilities in ``results`` by the port."""
+    entries = _native_entries(list(payload["results"]), local) + _fleet_entries(
+        fleet_hits
+    )
+    rows = [RankCandidate(i, n, d, "tool") for i, n, d, _ in entries]
+    ordered = _ordered(ranking, "catalog.intent_action_rank", intent, rows)
+    shown = evidence(intent, ((i, n, d) for i, n, d, _ in entries))
+    by_id = {i: row for i, _n, _d, row in entries}
+    merged = [
+        {**by_id[i], **_evidence_fields(by_id[i], shown[i])}
+        for i in ordered.order[:top_k]
+    ]
+    payload["results"] = merged
+    payload["count"] = len(merged)
+
+
+def _evidence_fields(
+    row: dict[str, Any], shown: tuple[float, list[str]]
+) -> dict[str, Any]:
+    """A fleet row carries the floor's evidence; a native row keeps its own."""
+    if row.get("source") != "fleet":
+        return {}
+    return {"score": round(shown[0], 4), "matched_terms": shown[1]}
+
+
+def _port_of(mcp: Any) -> RankingPort:
+    """The host's ranking port, reached through the attached fleet multiplexer."""
+    fleet = getattr(getattr(mcp, "_fleet_mux", None), "fleet", None)
+    return getattr(fleet, "ranking", FLOOR_ONLY)
 
 
 async def _find_capability(mcp: Any, intent: str, top_k: int = 8) -> dict[str, Any]:
@@ -2632,7 +2630,8 @@ async def _find_capability(mcp: Any, intent: str, top_k: int = 8) -> dict[str, A
     security_failure = _intent_security_failure(intent)
     if security_failure is not None:
         return security_failure
-    local = resolve_intent(None, intent, top_k=top_k)
+    ranking = _port_of(mcp)
+    local = await run_with_port(ranking, resolve_intent, None, intent, top_k=top_k)
     payload: dict[str, Any] = {
         "query_ref": persistence_reference("intent", intent),
         "count": len(local),
@@ -2645,7 +2644,15 @@ async def _find_capability(mcp: Any, intent: str, top_k: int = 8) -> dict[str, A
             discovery = await mux.discover_tools(intent, top_k=top_k, loaded=set())
             payload["fleet_results"] = discovery.get("results", [])
             payload["fleet_unavailable"] = discovery.get("unavailable", {})
-            _merge_fleet_ranking(payload, intent, payload["fleet_results"], top_k)
+            await run_with_port(
+                ranking,
+                _merge_fleet_results,
+                payload,
+                intent,
+                payload["fleet_results"],
+                top_k,
+                local,
+            )
     except Exception as exc:  # noqa: BLE001 — remote discovery health is reported elsewhere
         payload["fleet_error"] = type(exc).__name__
     return payload

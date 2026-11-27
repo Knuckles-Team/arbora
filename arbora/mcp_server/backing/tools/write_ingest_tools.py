@@ -702,7 +702,7 @@ async def _ingest_action_profile(engine, request: IngestRequest) -> str:
     )
 
 
-async def _ingest_action_fleet_relevance(engine, request: IngestRequest) -> str:
+async def _ingest_action_fleet_fit(engine, request: IngestRequest) -> str:
     # action(s): 'fleet_relevance'
 
     raise not_served(
@@ -946,7 +946,7 @@ _INGEST_ACTION_DISPATCH = {
     "cohort_create": _ingest_action_cohort_create,
     "cohort_status": _ingest_action_cohort_status,
     "profile": _ingest_action_profile,
-    "fleet_relevance": _ingest_action_fleet_relevance,
+    "fleet_relevance": _ingest_action_fleet_fit,
     "rebuild_indexes": _ingest_action_rebuild_indexes,
     "observe": _ingest_action_observe,
     "materialize": _ingest_action_materialize,

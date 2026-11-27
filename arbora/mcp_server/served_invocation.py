@@ -971,6 +971,7 @@ def compose_served_invocation(
         engine_send=gate_send,
         decision_feature_schema=tenant_pin,
         decision_principal=confirm_principal,
+        decision_tenant=lambda: str(session().tenant),
         task_plan_config=task_plan_config,
         process_startup=process_startup,
         background_services=_background_services(services, runtime, graph, session),

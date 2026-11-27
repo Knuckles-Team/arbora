@@ -620,7 +620,7 @@ class MultiplexerOps:
     #: ranks nothing locally; without one the catalog order stands.
     tool_ranker: Callable[..., Awaitable[Sequence[str]]] | None = None
 
-    async def _ranked(
+    async def _in_engine_order(
         self, caller: Any, params: Mapping[str, Any], result: dict[str, Any]
     ) -> dict[str, Any]:
         """Order the items by the engine's sealed ranking; a failed call refuses."""
@@ -653,7 +653,7 @@ class MultiplexerOps:
         search = {key: value for key, value in params.items() if key != "role"}
         result = await self.catalog.search(caller, **search)
         if params.get("query") and self.tool_ranker is not None:
-            result = await self._ranked(caller, params, result)
+            result = await self._in_engine_order(caller, params, result)
         return result
 
     async def find_tools(self, caller: Any, **params: Any) -> dict[str, Any]:

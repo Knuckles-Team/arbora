@@ -41,6 +41,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "RANKING_TOTAL",
     "GATEWAY_IN_FLIGHT",
     "GATEWAY_RATE_LIMITED",
     "GATEWAY_REQUEST_DURATION",
@@ -1009,6 +1010,12 @@ RETRIEVAL_CITATION_RESOLUTION = _counter(
     "degraded result; sustained 'stale'/'lost' indicates the source drifted since the citing "
     "chunk was indexed and the affected artifact needs reprocessing.",
     ("status",),
+)
+RANKING_TOTAL = _counter(
+    "arbora_ranking_total",
+    "Capability rankings by the source that ordered them (ARBORA-FLEET-R083.5): "
+    "medulla when the engine answered, floor when the lexical floor answered.",
+    ("source",),
 )
 
 

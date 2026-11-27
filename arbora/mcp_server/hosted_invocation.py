@@ -38,6 +38,8 @@ class HostedInvocation:
     #: sees on ``engine_send``; the A2A door's ``Decide`` port binds both (R005.4).
     decision_feature_schema: Callable[[str], Mapping[str, Any]] | None = None
     decision_principal: Callable[[], str] | None = None
+    #: The host tenant the capability-ranking questions are asked for (R083.5).
+    decision_tenant: Callable[[], str] | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.services, InvokeServices) or not isinstance(

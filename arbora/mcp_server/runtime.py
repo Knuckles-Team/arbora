@@ -52,6 +52,7 @@ from types import MappingProxyType
 from typing import Any, cast
 
 from arbora.core.settings import setting
+from arbora.fleet.ranking import FLOOR_ONLY
 from arbora.mcp_server.legacy_action_mapping import (
     APPROVED_ACTION_MAPPING,
     validate_served_actions,
@@ -986,7 +987,7 @@ def _register_graph_tool_surface(
             canonical=canonical,
             intent_tools=False,
         )
-        _register_served_intent_surface(mcp, invocation)
+        _register_served_intent_surface(mcp, invocation, ranking=host.fleet.ranking)
         invocation.mount_on_mcp(mcp)
     else:
         backing = register_arbora_surface(
@@ -1037,7 +1038,9 @@ def _served_credential_kind() -> str:
     return "bearer" if current_session() is not None else "process"
 
 
-def _register_served_intent_surface(mcp: Any, invocation: Any) -> Any:
+def _register_served_intent_surface(
+    mcp: Any, invocation: Any, *, ranking: Any = FLOOR_ONLY
+) -> Any:
     """Register the eight-tool intent surface over ``invocation``'s services."""
     from arbora.api.invoke.pipeline import invoke
     from arbora.api.mcp.caller import VerifiedMCPCaller
@@ -1054,7 +1057,7 @@ def _register_served_intent_surface(mcp: Any, invocation: Any) -> Any:
         mcp,
         registry=services.registry,
         services=services,
-        resolver=IntentResolver(),
+        resolver=IntentResolver(ranking=ranking),
         caller_for_request=caller.caller_for_request,
         policy_gate=services.policy_gate,
         invoke=invoke,

@@ -26,6 +26,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from arbora.fleet.lexical_floor import evidence
+from arbora.fleet.ranking import MedullaRanking, RankCandidate, RankingPort
 from arbora.mcp_server.backing.action_dispatch import is_destructive_action
 from arbora.mcp_server.backing.intent_contract import (
     DESCRIBE_ACTION,
@@ -111,34 +113,36 @@ def connector_operations(backing: Any) -> dict[str, Operation]:
     return table
 
 
-def _tokens(text: str) -> set[str]:
-    return {
-        t
-        for t in "".join(c if c.isalnum() else " " for c in text.casefold()).split()
-        if len(t) > 2
-    }
-
-
-def rank_operations(
-    operations: Mapping[str, Operation], intent: str, *, top_k: int = _FIND_TOP_K
+def order_operations(
+    operations: Mapping[str, Operation],
+    intent: str,
+    *,
+    top_k: int = _FIND_TOP_K,
+    ranking: RankingPort | None = None,
 ) -> list[dict[str, Any]]:
-    """Rank operations by token overlap between ``intent`` and their id/description."""
-    wanted = _tokens(intent)
-    scored = []
-    for op in operations.values():
-        overlap = len(wanted & _tokens(f"{op.id} {op.description}"))
-        if overlap:
-            scored.append((overlap, op.id, op))
-    scored.sort(key=lambda item: (-item[0], item[1]))
+    """The operations ``intent`` names, in the ranking port's order.
+
+    ARBORA-FLEET-R083.3: ``catalog.operation_rank`` orders them; an unbound port
+    answers the lexical floor. An operation sharing no routing term with the intent
+    is left out.
+    """
+    rows = [
+        RankCandidate(op.id, op.id, op.description, "operation")
+        for op in operations.values()
+    ]
+    shown = evidence(intent, ((r.id, r.name, r.description) for r in rows))
+    port = ranking if ranking is not None else MedullaRanking()
+    order = port.rank("catalog.operation_rank", intent, rows)
     return [
         {
-            "action": op.id,
-            "description": op.description,
-            "tool": "ask" if op.reads else "act",
-            "score": score,
+            "action": operations[op_id].id,
+            "description": operations[op_id].description,
+            "tool": "ask" if operations[op_id].reads else "act",
+            "score": round(shown[op_id][0], 4),
         }
-        for score, _, op in scored[:top_k]
-    ]
+        for op_id in order
+        if shown[op_id][0] > 0
+    ][:top_k]
 
 
 def describe_operations(
@@ -196,11 +200,11 @@ def _intent_handler(verb: str, backing: Any):
         if verb == "find" or action == DESCRIBE_ACTION:
             if action == DESCRIBE_ACTION or not intent:
                 return describe_operations(backing, operations, params.get("action"))
-            return {"results": rank_operations(operations, intent)}
+            return {"results": order_operations(operations, intent)}
         if not action:
             return {
                 "executed": False,
-                "results": rank_operations(operations, intent),
+                "results": order_operations(operations, intent),
                 "hint": f"Resubmit {verb} with one of these operation ids as action.",
             }
         op = operations.get(action)
@@ -238,7 +242,7 @@ __all__ = [
     "Operation",
     "connector_operations",
     "describe_operations",
-    "rank_operations",
+    "order_operations",
     "register_connector_intent_tools",
     "run_operation",
 ]

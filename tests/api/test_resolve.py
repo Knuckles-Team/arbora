@@ -1,10 +1,9 @@
 """ARBORA-OPS-R012 / ARBORA-FLEET-R014: bounded resolver for NL operation lookup.
 
-Covers combined lexical/semantic ranking order, the bounded result cache,
+Covers the ranking port's order, the bounded result cache,
 the read-only preview fallback for an unmatched ``ask`` call (never a direct
-mutation), and (ARBORA-FLEET-R014) that ``record_execution``'s outcome
-feedback is an EMA partitioned by the caller's opaque ``scope_ref`` so one
-tenant/policy partition's learned reward never leaks into another's rank.
+mutation), and (ARBORA-FLEET-R014) that the cache is partitioned by the
+caller's opaque ``scope_ref``.
 """
 
 from __future__ import annotations
@@ -42,20 +41,19 @@ _NL_DESCRIPTOR = Descriptor(
 @pytest.mark.spec("ARBORA-OPS-R012")
 def test_rank_orders_lexical_name_match_above_description_only_match() -> None:
     resolver = IntentResolver()
-    ranked = resolver.rank("act", "restart the deploy", _DESCRIPTORS, scope_ref=None)
+    ranked = resolver.arrange("act", "restart the deploy", _DESCRIPTORS, scope_ref=None)
 
     assert [candidate.descriptor.id for candidate in ranked] == [
         "deploy.restart",
         "deploy.status",
     ]
-    assert ranked[0].score > ranked[1].score
 
 
 @pytest.mark.spec("ARBORA-OPS-R012")
 def test_rank_is_cached_for_an_identical_visible_snapshot() -> None:
     resolver = IntentResolver()
-    first = resolver.rank("act", "restart the deploy", _DESCRIPTORS, scope_ref=None)
-    second = resolver.rank("act", "restart the deploy", _DESCRIPTORS, scope_ref=None)
+    first = resolver.arrange("act", "restart the deploy", _DESCRIPTORS, scope_ref=None)
+    second = resolver.arrange("act", "restart the deploy", _DESCRIPTORS, scope_ref=None)
 
     assert first is second
     assert len(resolver._cache) == 1
@@ -65,7 +63,9 @@ def test_rank_is_cached_for_an_identical_visible_snapshot() -> None:
 def test_cache_evicts_oldest_entry_once_over_its_bound() -> None:
     resolver = IntentResolver(cache_limit=2)
     for n in range(3):
-        resolver.rank("act", f"restart deploy number {n}", _DESCRIPTORS, scope_ref=None)
+        resolver.arrange(
+            "act", f"restart deploy number {n}", _DESCRIPTORS, scope_ref=None
+        )
 
     assert len(resolver._cache) == 2
 
@@ -112,50 +112,42 @@ def test_matched_mutation_verb_always_requires_a_reviewed_preview() -> None:
 
 
 @pytest.mark.spec("ARBORA-FLEET-R014")
-def test_outcome_feedback_is_partitioned_by_scope_ref() -> None:
-    """A recorded outcome under one tenant/policy scope never leaks into another's rank.
+def test_ordering_is_partitioned_by_scope_ref() -> None:
+    """One tenant/policy scope's cached order never serves another scope.
 
-    ``record_execution`` folds an EMA of observed success into the next
-    ``rank`` call for the *same* ``scope_ref``, but a different tenant or
-    policy revision (a different opaque ``scope_ref``) must see the
-    unbiased baseline score, not the first partition's learned reward.
+    The order is the ranking port's (ARBORA-FLEET-R083.2); the resolver keeps
+    only the partitioned cache. A port that answers differently per call proves
+    a second scope is asked again, not served the first scope's order.
     """
 
-    resolver = IntentResolver()
+    class Flipping:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def rank(self, question_id, query, candidates):
+            self.calls += 1
+            ids = [c.id for c in candidates]
+            return ids if self.calls % 2 else list(reversed(ids))
+
+    port = Flipping()
+    resolver = IntentResolver(ranking=port)
     scope_a = resolver.scope_ref("tenant-a", "policy-1")
     scope_b = resolver.scope_ref("tenant-b", "policy-1")
 
-    baseline = resolver.rank(
+    first_a = resolver.arrange(
         "act", "restart the deploy", _DESCRIPTORS, scope_ref=scope_a
     )
-    baseline_score = next(
-        c.score for c in baseline if c.descriptor.id == "deploy.restart"
-    )
-
-    for _ in range(5):
-        resolver.record_execution(
-            scope_ref=scope_a, verb="act", op="deploy.restart", success=True
-        )
-
-    scope_a_ranked = resolver.rank(
+    again_a = resolver.arrange(
         "act", "restart the deploy", _DESCRIPTORS, scope_ref=scope_a
     )
-    scope_a_score = next(
-        c.score for c in scope_a_ranked if c.descriptor.id == "deploy.restart"
-    )
-    scope_b_ranked = resolver.rank(
+    first_b = resolver.arrange(
         "act", "restart the deploy", _DESCRIPTORS, scope_ref=scope_b
     )
-    scope_b_score = next(
-        c.score for c in scope_b_ranked if c.descriptor.id == "deploy.restart"
-    )
 
-    assert scope_a_score > baseline_score, (
-        "repeated successful outcomes must raise the score for their own scope_ref"
-    )
-    assert scope_b_score < scope_a_score, (
-        "a different tenant/policy scope_ref must not see scope_a's learned reward"
-    )
+    assert again_a == first_a and port.calls == 2
+    assert [c.descriptor.id for c in first_b] == [
+        c.descriptor.id for c in reversed(first_a)
+    ]
 
 
 @pytest.mark.spec("ARBORA-FLEET-R014")

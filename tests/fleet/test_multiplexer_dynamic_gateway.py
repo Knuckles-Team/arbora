@@ -396,10 +396,9 @@ async def test_recovered_child_replaces_exposed_schema_without_catalog_polling(
         "legacy": {"type": "string"}
     }
 
-    # A changed generation must invalidate derived discovery/embedding state,
+    # A changed generation must invalidate derived discovery state,
     # but it must not add a second tools/list to the ordinary call path.
     mux._probe_cache[server_name] = {"tools": ["legacy"]}
-    mux._tool_embeddings[f"{server_name}::query"] = [0.1, 0.2]
     runtime = mux.children[server_name]
     runtime.restart_backoff_base = 0.005
     runtime.restart_backoff_cap = 0.005
@@ -413,7 +412,6 @@ async def test_recovered_child_replaces_exposed_schema_without_catalog_polling(
         "fresh": {"type": "string"}
     }
     assert server_name not in mux._probe_cache
-    assert f"{server_name}::query" not in mux._tool_embeddings
     assert mux.status_snapshot()["children"][server_name]["catalog_revision"] == 2
     assert legacy.listed == 1
     assert refreshed.listed == 1
@@ -428,13 +426,11 @@ async def test_recovered_child_replaces_exposed_schema_without_catalog_polling(
     # paid for one tools/list in that generation, and the digest proves it is
     # the same schema without touching host registrations or probe caches.
     mux._probe_cache[server_name] = {"tools": ["fresh"]}
-    mux._tool_embeddings[f"{server_name}::query"] = [0.3, 0.4]
     runtime.request_recycle()
     await _wait_for_condition(lambda: runtime.state == "up" and equivalent.listed == 1)
     assert mux.sessions[server_name] is equivalent
     assert mux.status_snapshot()["children"][server_name]["catalog_revision"] == 2
     assert mux._probe_cache[server_name] == {"tools": ["fresh"]}
-    assert mux._tool_embeddings[f"{server_name}::query"] == [0.3, 0.4]
     assert (await host.get_tool(prefixed_name)).parameters["properties"] == {
         "fresh": {"type": "string"}
     }
@@ -1906,7 +1902,6 @@ async def test_output_only_reconnect_refreshes_descriptor_revision_and_cache(tmp
     runtime = mux.children[server]
     revision = mux._child_schema_revisions[server]
     mux._probe_cache[server] = {"tools": ["old-output"]}
-    mux._tool_embeddings[f"{server}::query"] = [0.1]
     try:
         runtime.request_recycle()
         await _wait_for_condition(
@@ -1918,7 +1913,6 @@ async def test_output_only_reconnect_refreshes_descriptor_revision_and_cache(tmp
         assert mux.tool_object(name).annotations == original.annotations
         assert mux.tool_object(name).meta == original.meta
         assert server not in mux._probe_cache
-        assert f"{server}::query" not in mux._tool_embeddings
         assert before.calls == after.calls == []
         result = await mux.call_proxied_tool(name, {})
         assert result.content[0].text == "after:query"
