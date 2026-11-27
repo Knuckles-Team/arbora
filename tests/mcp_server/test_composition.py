@@ -64,6 +64,7 @@ async def test_installed_gateway_port_dispatches_native_runtime(
     assert calls == [("graph_query", {"query": "MATCH"})]
 
 
+@pytest.mark.spec("ARBORA-HOST-R007.2.68")
 def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> None:
     started: list[tuple[str, Any]] = []
 

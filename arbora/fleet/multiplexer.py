@@ -2299,6 +2299,8 @@ class MCPMultiplexer:
         # a late callback from an old generation can never repopulate fresh
         # routing state with a stale declaration.
         self._catalog_epoch = 0
+        #: The host's credential authority (ARBORA-OPS-R893); ``None`` until bound.
+        self.credential_authority: _typing.Any = None
         # Set by ``attach_fleet_loader``.  Keeping this optional preserves the
         # standalone probe and unit-test paths, which do not own a FastMCP
         # server or live forwarders.
@@ -3030,21 +3032,55 @@ class MCPMultiplexer:
         if not 0.001 <= call_timeout <= 300.0:
             raise _fastmcp_exceptions.ToolError("Invalid call timeout")
         try:
-            return await asyncio.wait_for(
-                self._call_ephemeral_child_session(
-                    server_name,
-                    original_name,
-                    cfg,
-                    call_arguments,
-                    catalog_epoch,
-                    approval_ref,
-                ),
-                timeout=call_timeout,
+            return await self._admitted_ephemeral_call(
+                server_name,
+                original_name,
+                cfg,
+                call_arguments,
+                catalog_epoch,
+                approval_ref,
+                call_timeout,
             )
         except TimeoutError:
             return _child_error_result("MCPChildTimeout")
         except Exception as e:
             return _child_failure_result(server_name, original_name, e)
+
+    async def _admitted_ephemeral_call(
+        self,
+        server_name: str,
+        original_name: str,
+        cfg: dict,
+        arguments: dict[str, _typing.Any],
+        catalog_epoch: int,
+        approval_ref: str,
+        call_timeout: float,
+    ) -> MCPCallToolResult:
+        """One ephemeral child call, under the credential grant the child declares."""
+        from arbora.fleet.credential_admission import (
+            CredentialRefusal,
+            credentialed_call,
+        )
+
+        try:
+            async with credentialed_call(
+                self.credential_authority, server_name, original_name, cfg
+            ):
+                return await asyncio.wait_for(
+                    self._call_ephemeral_child_session(
+                        server_name,
+                        original_name,
+                        cfg,
+                        arguments,
+                        catalog_epoch,
+                        approval_ref,
+                    ),
+                    timeout=call_timeout,
+                )
+        except CredentialRefusal as refused:
+            return _classified_child_error(
+                "PERMISSION_DENIED", f"credential access denied: {refused.code}"
+            )
 
     async def call_oauth_gated_tool(
         self,

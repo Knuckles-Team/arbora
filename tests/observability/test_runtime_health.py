@@ -20,6 +20,7 @@ def _check(report, name):
     return next(check for check in report["checks"] if check["name"] == name)
 
 
+@pytest.mark.spec("ARBORA-HOST-R008.1004")
 def test_unbound_mandatory_probes_make_the_process_not_ready():
     report = rh.collect_health()
     assert _check(report, "engine")["status"] == "unhealthy"

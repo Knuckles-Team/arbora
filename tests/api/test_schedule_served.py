@@ -44,6 +44,7 @@ async def _until(client: Any, name: str, count: int) -> list[dict[str, Any]]:
     raise AssertionError(f"schedule {name} reported {len(ticks)} ticks, wanted {count}")
 
 
+@pytest.mark.usefixtures("default_agent_registered")
 @pytest.mark.spec("ARBORA-OPS-R022.2.10")
 async def test_scheduled_agent_run_fires_pauses_and_reports_over_mcp(
     stack: dict[str, Any],  # noqa: F811

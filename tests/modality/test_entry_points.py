@@ -115,6 +115,7 @@ async def test_a2a_jsonrpc_error_names_the_modality_refusal() -> None:
     assert too_big.status_code == 422
 
 
+@pytest.mark.usefixtures("default_agent_registered")
 @pytest.mark.spec("ARBORA-OPS-R899.3")
 async def test_agents_run_maps_a_modality_refusal_to_a_typed_operation_refusal(
     monkeypatch,

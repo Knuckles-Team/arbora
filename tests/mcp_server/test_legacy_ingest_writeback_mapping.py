@@ -35,10 +35,12 @@ def test_every_analyze_action_resolves_in_the_registry() -> None:
     _resolves(CODE_GRAPH_QUERY_ACTIONS + ("explain", "process_writeback"))
 
 
+@pytest.mark.spec("ARBORA-HOST-R005.2.3.2")
 def test_ingest_submission_actions_resolve_in_the_registry() -> None:
     _resolves(INGEST_SUBMISSION_ACTIONS)
 
 
+@pytest.mark.spec("ARBORA-HOST-R005.2.3.4")
 def test_job_actions_resolve_in_the_registry() -> None:
     _resolves(("jobs", "job_status", "cancel", "prioritize"))
 

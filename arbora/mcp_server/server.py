@@ -181,6 +181,11 @@ def _served_invocation(
             raise ValueError("task planning requires graph service endpoints")
         return None, None
     from arbora.a2a.source_grant import EngineSourceGrants
+    from arbora.agent_host.default_agent import (
+        DefaultAgentDefinition,
+        DefaultAgentRegistrar,
+    )
+    from arbora.host_bindings import FLEET_AGENT_NAME
     from arbora.mcp_server.backing.server_factory import create_mcp_parser
     from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
     from arbora.mcp_server.fleet_composition import LateFleetGateway
@@ -202,6 +207,9 @@ def _served_invocation(
         action_policies=host.policy.action_policies,
         bindings={
             "a2a": host.runs.a2a,
+            "default_agent": DefaultAgentRegistrar(
+                DefaultAgentDefinition(agent_id=FLEET_AGENT_NAME)
+            ),
             "run_origins": host.runs.origins,
             "fleet_gateway": fleet,
             "workflow_worker": WorkflowRunStarter(
@@ -223,6 +231,20 @@ def _served_invocation(
     return invocation, session
 
 
+def bind_credential_authority(fleet_mux: Any, invocation: Any) -> None:
+    """Give the multiplexer's child call path the host's credential authority (R893)."""
+    send = getattr(invocation, "engine_send", None)
+    if send is None or fleet_mux is None:
+        return
+    import time
+
+    from arbora.gateway.credential_engine import engine_authority
+
+    fleet_mux.credential_authority = engine_authority(
+        send, lambda: time.time_ns() // 1_000_000
+    )
+
+
 def _bind_served_fleet(
     invocation: HostedInvocation | None, fleet_mux: Any, reader: Any
 ) -> None:
@@ -234,6 +256,7 @@ def _bind_served_fleet(
         bind_fleet_gateway,
     )
 
+    bind_credential_authority(fleet_mux, invocation)
     late = getattr(invocation.services.runtime, "bindings", {}).get("fleet_gateway")
     if isinstance(late, LateFleetGateway):
         bind_fleet_gateway(
@@ -403,6 +426,7 @@ def mcp_server(
         invocation.services if invocation is not None else None,
         HostSeams(
             changeset=_changeset_seams(invocation),
+            question_schema=getattr(invocation, "ranking_feature_schema", None),
             sandbox_verified=boundary_verified,
             approval_chain=chain,
             plan_for=run_plan_binding(invocation.services)

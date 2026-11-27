@@ -25,6 +25,7 @@ def _message(text: str = "do work") -> A2AMessage:
     )
 
 
+@pytest.mark.spec("ARBORA-HOST-R007.2.1")
 @pytest.mark.spec("ARBORA-A2A-R002.1")
 @pytest.mark.asyncio
 async def test_selected_tool_subset_is_refused_before_durable_admission() -> None:
@@ -94,6 +95,7 @@ def test_transition_history_unavailable_has_distinct_privacy_safe_error() -> Non
         ({"agent_name": " "}, "arbora"),
     ],
 )
+@pytest.mark.spec("ARBORA-HOST-R007.2.2")
 async def test_router_routes_to_the_named_or_the_default_agent(
     metadata, expected
 ) -> None:

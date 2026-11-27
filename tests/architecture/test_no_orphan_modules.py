@@ -10,6 +10,7 @@ import pytest
 ARBORA_ROOT = Path(__file__).resolve().parents[2] / "arbora"
 
 
+@pytest.mark.spec("ARBORA-HOST-R039.10")
 @pytest.mark.spec("ARBORA-DEPLOY-R600.3")
 def test_no_host_lock_module() -> None:
     assert not (ARBORA_ROOT / "deployment" / "host_lock.py").exists()

@@ -186,6 +186,18 @@ async def _write(
     return {"value": {"item": entry, "revision": entry.get("entry_revision")}}
 
 
+async def publish_entry(
+    context: Any, item: Mapping[str, Any], *, expected_revision: int | None = None
+) -> dict[str, Any]:
+    """Publish one agent entry as the verified caller (a public write for the host)."""
+    answer = await _write(
+        context,
+        {"item": item, "expected_revision": expected_revision},
+        expect_existing=expected_revision is not None,
+    )
+    return dict(answer["value"]["item"])
+
+
 async def handle_agents_library_create(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:

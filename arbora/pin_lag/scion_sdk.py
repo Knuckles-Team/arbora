@@ -15,7 +15,12 @@ from types import ModuleType
 
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
-__all__ = ["PROVISIONER_SYMBOL", "require_provisioning"]
+__all__ = [
+    "BINDING_SYMBOL",
+    "PROVISIONER_SYMBOL",
+    "require_credential_binding",
+    "require_provisioning",
+]
 
 PROVISIONER_SYMBOL = "scion_sdk.provisioning.provisioner.Provisioner"
 _MODULE = "scion_sdk.provisioning.provisioner"
@@ -31,4 +36,29 @@ def require_provisioning() -> ModuleType:
     for name in _NEEDED:
         if not hasattr(module, name):
             raise PinLagUnavailable(f"{_MODULE}.{name}")
+    return module
+
+
+BINDING_SYMBOL = "scion_sdk.credentials.binding.CredentialAccessBinding"
+_BINDING_MODULE = "scion_sdk.credentials.binding"
+_BINDING_NEEDED = (
+    "CredentialAccessBinding",
+    "binding_digest",
+    "use_credential_binding",
+)
+
+
+def require_credential_binding() -> ModuleType:
+    """The SDK credential-binding module, or ``PinLagUnavailable`` naming the missing symbol.
+
+    scion-sdk ``main`` serves ``CredentialAccessBinding`` and ``CredentialAuthorityPort``
+    (``SCION-CONNECTOR-CONTROL-R035.1``); the pinned release lacks them.
+    """
+    try:
+        module = importlib.import_module(_BINDING_MODULE)
+    except ImportError:
+        raise PinLagUnavailable(BINDING_SYMBOL) from None
+    for name in _BINDING_NEEDED:
+        if not hasattr(module, name):
+            raise PinLagUnavailable(f"{_BINDING_MODULE}.{name}")
     return module

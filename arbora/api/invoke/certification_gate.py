@@ -30,33 +30,46 @@ async def require_upgrade_admission(context: Any, skill: Mapping[str, Any]) -> N
 
 
 class SkillRef(BaseModel):
-    """One atomic skill of a run: its identity, revision, digest and stored attestation."""
+    """One atomic skill of a run: its identity, the revision it is certified at and its digest."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     id: str = Field(min_length=1, max_length=256)
     revision: int = Field(ge=0)
     digest: str = Field(min_length=1, max_length=128)
-    attestation_digest: str = Field(min_length=1, max_length=128)
 
 
 #: The most atomic skills one run declares.
 MAX_RUN_SKILLS = 32
 
 
+def _attestation_view(answer: Any) -> Mapping[str, Any] | None:
+    """The compared view of a ``CertificationReadAnswer``, or ``None`` for no attestation."""
+    stored = answer.get("attestation") if isinstance(answer, Mapping) else None
+    if not isinstance(stored, Mapping) or "body" not in stored:
+        return None
+    body = stored["body"]
+    return {
+        "skill_id": body["skill"]["component_id"],
+        "digest": body["skill"]["definition_digest"],
+        "revision": body["completion_revision"],
+    }
+
+
 def engine_attestation_reader(context: Any) -> Any:
     """``read(skill)`` over the engine ``DecisionEval`` ``certification`` read.
 
-    The engine answers the stored ``LocalCertificationAttestation`` by digest, or null
-    for an absent or foreign digest (an absent and a foreign digest are the same
-    answer). The view compared is the skill component id and definition digest, and the
-    revision the attestation completed at. Pinned releases that lack the read refuse
-    ``UNAVAILABLE`` naming it.
+    The request is ``{tenant_id, component_id, definition_digest}`` and the engine answers
+    ``CertificationReadAnswer {attestation}``: the latest ``LocalCertificationAttestation``
+    of that skill at that digest, or null (an absent and a foreign skill answer alike).
+    The caller supplies no attestation evidence. The view compared is the skill component
+    id and definition digest, and the revision the attestation completed at. Pinned
+    releases that lack the read refuse ``UNAVAILABLE`` naming it.
     """
     from arbora.pin_lag.medulla import send_main
 
     async def read(skill: Mapping[str, Any]) -> Mapping[str, Any] | None:
-        stored = await send_main(
+        answer = await send_main(
             context,
             "DecisionEval",
             {
@@ -64,20 +77,18 @@ def engine_attestation_reader(context: Any) -> Any:
                     "op": "certification",
                     "request": {
                         "tenant_id": str(context.caller.tenant),
-                        "digest": skill["attestation_digest"],
+                        "component_id": skill["id"],
+                        "definition_digest": skill["digest"],
                     },
                 }
             },
-            models=("LocalCertificationAttestation", "DecisionEvalOpCertification"),
+            models=(
+                "CertificationReadRequest",
+                "CertificationReadAnswer",
+                "DecisionEvalOpCertification",
+            ),
         )
-        if not isinstance(stored, Mapping) or "body" not in stored:
-            return None
-        body = stored["body"]
-        return {
-            "skill_id": body["skill"]["component_id"],
-            "digest": body["skill"]["definition_digest"],
-            "revision": body["completion_revision"],
-        }
+        return _attestation_view(answer)
 
     return read
 
@@ -86,9 +97,21 @@ def engine_attestation_reader(context: Any) -> Any:
 SOURCE_UNAVAILABLE = "attestation_source_unavailable"
 
 
+def _definition_body(entry: Any) -> Any:
+    """The mapping that holds ``skills``: the entry itself, or its ``registration``/``entry``."""
+    if not isinstance(entry, Mapping) or "skills" in entry:
+        return entry
+    return next((entry[k] for k in ("registration", "entry") if k in entry), entry)
+
+
 def _component_skills(entry: Any) -> list[dict[str, str]]:
-    """The skill refs of one definition node: ``{id, digest}`` per component."""
-    skills = entry.get("skills") if isinstance(entry, Mapping) else None
+    """The skill refs of one definition node: ``{id, digest}`` per component.
+
+    A ``WorkflowRegistry`` read answers the registration entry, bare or under ``entry``
+    or ``registration``; its ``skills`` are ``WorkflowSkill`` refs, the same three fields.
+    """
+    body = _definition_body(entry)
+    skills = body.get("skills") if isinstance(body, Mapping) else None
     if not isinstance(skills, list):
         raise _denied(SOURCE_UNAVAILABLE)
     try:

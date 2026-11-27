@@ -282,16 +282,20 @@ async def _provision_for_run(
 async def _attest_run(
     context: Any, params: Mapping[str, Any], message: Mapping[str, Any]
 ) -> None:
-    """Gate the run on its graph skills: the named agent's and workflow's definitions."""
+    """Gate the run on its graph skills: the agent's and workflow's definitions.
+
+    A run that names no agent runs on the default fleet agent, whose definition the host
+    registers in the ``AgentLibrary`` (ARBORA-HOST-R008.1001).
+    """
+    from arbora.agent_host.default_agent import run_agent_name
     from arbora.api.invoke.certification_gate import require_run_attestation
 
-    metadata = message.get("metadata") or {}
-    agent = str(metadata.get("agent_name") or "").strip()
+    agent = await run_agent_name(context, message)
     await require_run_attestation(
         context,
         params.get("skills"),
-        agents=(agent,) if agent else (),
-        workflow=metadata.get("workflow_identity"),
+        agents=(agent,),
+        workflow=(message.get("metadata") or {}).get("workflow_identity"),
     )
 
 
