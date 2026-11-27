@@ -83,7 +83,8 @@ def request_retriever(context: Any) -> Retriever:
     """The composed retriever for this request; a request-bound one binds its session."""
     service = bound_service(context, "retriever", reason="retriever is not composed")
     bind = getattr(service, "bind", None)
-    return bind(context) if callable(bind) else service  # type: ignore[no-any-return]
+    retriever: Retriever = bind(context) if callable(bind) else service
+    return retriever
 
 
 async def _bound_retriever(context: Any, record_id: str) -> Retriever:
@@ -100,7 +101,8 @@ async def _bound_retriever(context: Any, record_id: str) -> Retriever:
         raise OperationRefused("UNAVAILABLE", {"reason": "bound_provider_unavailable"})
     if getattr(provider, "config_digest", None) != binding.get("config_digest"):
         raise OperationRefused("POLICY_DENIED", {"reason": "bound_provider_mismatch"})
-    return provider  # type: ignore[no-any-return]
+    bound: Retriever = provider
+    return bound
 
 
 async def handle_retrieval_search(

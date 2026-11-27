@@ -18,11 +18,13 @@ order.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import SplitResult, urlsplit, urlunsplit
 
+import httpx
 from eunomia_core import enums, schemas
 
 __all__ = [
@@ -258,7 +260,10 @@ class RemotePolicy:
             merged: list[schemas.CheckResponse] = []
             for start in range(0, len(selected), self._batch):
                 merged.extend(await self._post(selected[start : start + self._batch]))
-        except Exception:
+        except (ValueError, OSError, httpx.HTTPError):
+            logging.getLogger(__name__).warning(
+                "remote authorization bulk check failed", exc_info=True
+            )
             unavailable = schemas.CheckResponse(
                 allowed=False, reason=UNAVAILABLE_REASON
             )

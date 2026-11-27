@@ -410,6 +410,12 @@ class ChildPart:
     snapshot: dict[str, Any] | None
 
 
+def _cursors_of(part: ChildPart) -> list[Any]:
+    child = part.snapshot
+    assert child is not None
+    return list(child["run_cursors"])
+
+
 def child_key(run_id: str) -> str:
     return json.dumps([run_id, "child_run", run_id], separators=(",", ":"))
 
@@ -431,7 +437,7 @@ def nest_children(
             continue
         nodes += verdict[0]
         edges += verdict[1]
-        cursors += part.snapshot["run_cursors"]  # type: ignore[index]
+        cursors += _cursors_of(part)
         merged = True
         reason = reason or _child_reason(part)
     result = {**snapshot, "nodes": nodes, "edges": edges, "run_cursors": cursors}

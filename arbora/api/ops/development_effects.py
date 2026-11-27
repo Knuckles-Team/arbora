@@ -124,9 +124,10 @@ async def handle_delivery_effect(
         params["delivery_id"], params["assignment_id"], params["step"]
     )
     version, held = await _reservation(context, key)
-    state = (held or {}).get("state")
+    record = held or {}
+    state = record.get("state")
     if state == "done":
-        return {"idempotency_key": key, "state": "done", "receipt": held["receipt"]}  # type: ignore[index]
+        return {"idempotency_key": key, "state": "done", "receipt": record["receipt"]}
     if state == "pending":
         raise OperationRefused("EFFECT_UNCERTAIN", {})
     await _store(context, key, version, {"state": "pending"})

@@ -263,6 +263,7 @@ async def publish_at_startup(
                         attempts,
                         type(exc).__name__,
                         exc,
+                        exc_info=True,
                     )
                     break
                 delay = initial_delay_s * 2 ** (attempt - 1)
@@ -272,6 +273,7 @@ async def publish_at_startup(
                     type(exc).__name__,
                     exc,
                     delay,
+                    exc_info=True,
                 )
                 await sleep(delay)
             else:
@@ -312,8 +314,8 @@ def _found_export(export_name: str, modules: Sequence[str]) -> Mapping[str, Any]
         except ImportError:
             continue
         found = getattr(module, export_name, None)
-        if found is not None:
-            return found  # type: ignore[no-any-return]
+        if isinstance(found, Mapping):
+            return found
     return {}
 
 
@@ -431,6 +433,7 @@ def startup_pins() -> TaskPlanSchemaPins | None:
         committed = generate_pin()
         reason = verify(committed, committed)
     except Exception as exc:
+        logger.warning("task-plan schema pin unreadable", exc_info=True)
         reason = f"task-plan schema pin unreadable: {exc}"
     if reason is not None:
         logger.error(

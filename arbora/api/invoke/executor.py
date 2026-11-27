@@ -125,6 +125,7 @@ async def prepare_executor(
     try:
         allowed = await runtime.check_subject_access(caller, subject)
     except Exception:
+        logging.getLogger(__name__).warning("authority call failed", exc_info=True)
         return OpError("UNAVAILABLE", {"reason": "subject authority unavailable"})
     return None if allowed is True else OpError("SUBJECT_ACCESS_DENIED")
 

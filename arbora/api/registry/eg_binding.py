@@ -225,7 +225,7 @@ def _method_summary(row: dict[str, Any], method_id: str) -> str:
 
 
 def _method_stability(row: dict[str, Any], method_id: str) -> Stability:
-    stability = _STABILITY.get(row.get("stability"))  # type: ignore[arg-type]
+    stability = _STABILITY.get(str(row.get("stability")))
     if stability is None:
         raise EgContractError(
             f"{method_id}: unsupported wire stability {row.get('stability')!r}"

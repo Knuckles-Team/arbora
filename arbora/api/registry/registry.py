@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 from collections.abc import Awaitable, Callable, Iterable, Iterator, Mapping
 from typing import Any, Protocol
 
@@ -53,6 +54,7 @@ def authorized(op: OpSpec, caller: Caller, *, policy: PolicyDecision) -> bool:
     try:
         return policy(op, caller) is True
     except Exception:
+        logging.getLogger(__name__).warning("authority call failed", exc_info=True)
         return False
 
 
