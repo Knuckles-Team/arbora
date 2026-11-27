@@ -276,9 +276,9 @@ def _source_shadow_floor(package: str) -> tuple[Any | None, str | None]:
 
     from packaging.requirements import InvalidRequirement, Requirement
 
-    import arbora
+    import arbora.version as owner_module
 
-    origin = getattr(arbora, "__file__", None)
+    origin = getattr(owner_module, "__file__", None)
     if not origin:
         return None, None
     manifest = Path(origin).resolve().parent.parent / "pyproject.toml"

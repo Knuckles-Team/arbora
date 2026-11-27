@@ -1,7 +1,8 @@
 """The arbora package units follow the layer order of the coupling policy.
 
 The order is ``[[tool.pipelines_hooks.coupling.layers]]`` in ``pyproject.toml``,
-the policy the pipelines ``coupling`` gate reads (PIPE-GATES-R088).
+the policy the pipelines ``coupling`` hook reads (PIPE-GATES-R088). The layer
+tests run that hook, so the repository has one scanner and it is the shared one.
 
 ARBORA-HOST-R038: a unit (a top-level module or package under ``arbora/``)
 imports only its own layer or an earlier one, the unit import graph has no
@@ -12,28 +13,25 @@ unit. Function-local imports count: they are coupling a cold import hides.
 from __future__ import annotations
 
 import ast
+import functools
+import shutil
+import subprocess
 import tomllib
 from collections.abc import Iterator
-from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
+import yaml
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R038")
 
 ROOT = Path(__file__).resolve().parents[2]
 PACKAGE = ROOT / "arbora"
-POLICY = "pyproject.toml [tool.pipelines_hooks.coupling.layers]"
-
-
-@dataclass(frozen=True)
-class Finding:
-    rule: str
-    location: str
-    detail: str
+HOOK_SOURCE = "git+https://github.com/Knuckles-Team/pipelines@main"
 
 
 def load_layers(pyproject: Path) -> list[tuple[str, tuple[str, ...]]]:
+    """The ``{name, units}`` tables the coupling hook reads, most stable first."""
     data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
     layers = data["tool"]["pipelines_hooks"]["coupling"]["layers"]
     return [(layer["name"], tuple(layer["units"])) for layer in layers]
@@ -49,10 +47,6 @@ def package_units(package: Path) -> set[str]:
         elif child.suffix == ".py":
             units.add(child.stem)
     return units
-
-
-def _is_private(name: str) -> bool:
-    return name.startswith("_") and not (name.startswith("__") and name.endswith("__"))
 
 
 def _module_name(package: Path, path: Path) -> tuple[list[str], bool]:
@@ -81,167 +75,58 @@ def _imports(package: Path, path: Path) -> Iterator[tuple[int, list[str], str | 
                 yield node.lineno, target, alias.name
 
 
-def scan(package: Path, layers: list[tuple[str, tuple[str, ...]]]) -> list[Finding]:
-    units = package_units(package)
-    rank: dict[str, int] = {}
-    findings: list[Finding] = []
-    for index, (_layer, members) in enumerate(layers):
-        for unit in members:
-            if unit in rank:
-                findings.append(
-                    Finding(
-                        "duplicate-unit",
-                        POLICY,
-                        f"{unit} is in two layers",
-                    )
-                )
-            rank[unit] = index
-    for unit in sorted(units - rank.keys()):
-        findings.append(
-            Finding("unlayered-unit", f"arbora/{unit}", f"{unit} is named in no layer")
-        )
-    for unit in sorted(rank.keys() - units):
-        findings.append(
-            Finding(
-                "unknown-unit",
-                POLICY,
-                f"{unit} is not a unit of the package",
-            )
-        )
-    edges: dict[str, set[str]] = {unit: set() for unit in units}
-    for path in sorted(package.rglob("*.py")):
-        if "__pycache__" in path.parts:
-            continue
-        source = path.relative_to(package).parts[0].removesuffix(".py")
-        where = path.relative_to(package.parent).as_posix()
-        seen: set[tuple[int, str]] = set()
-        for line, target, name in _imports(package, path):
-            if target[0] != package.name:
-                continue
-            if len(target) == 1:
-                if name is None or name not in units:
-                    continue
-                target = [package.name, name]
-                name = None
-            unit = target[1]
-            if unit == source or unit not in units:
-                continue
-            edges[source].add(unit)
-            dotted = ".".join(target)
-            if (
-                rank.get(unit, -1) > rank.get(source, len(layers))
-                and (line, dotted) not in seen
-            ):
-                seen.add((line, dotted))
-                findings.append(
-                    Finding("upward-import", f"{where}:{line}", f"{source} -> {dotted}")
-                )
-            if any(_is_private(part) for part in target[1:]) or (
-                name and _is_private(name)
-            ):
-                shown = f"{dotted}.{name}" if name else dotted
-                findings.append(
-                    Finding("private-reach", f"{where}:{line}", f"{source} -> {shown}")
-                )
-    findings.extend(_cycles(edges))
-    return findings
+@functools.cache
+def coupling_run() -> tuple[int, list[str]]:
+    """Run the shared ``coupling`` hook on this repository: exit code and finding lines."""
+    installed = shutil.which("pipelines-hook")
+    command = (
+        [installed] if installed else ["uvx", "--from", HOOK_SOURCE, "pipelines-hook"]
+    )
+    done = subprocess.run(  # noqa: S603
+        [*command, "coupling", "--root", str(ROOT)],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=600,
+    )
+    lines = (done.stdout + done.stderr).splitlines()
+    return done.returncode, [line for line in lines if line.strip()]
 
 
-def _cycles(edges: dict[str, set[str]]) -> Iterator[Finding]:
-    """Tarjan's strongly connected components, reported by unit."""
-    index: dict[str, int] = {}
-    low: dict[str, int] = {}
-    stack: list[str] = []
-    on_stack: set[str] = set()
-    groups: list[list[str]] = []
-
-    def visit(unit: str) -> None:
-        index[unit] = low[unit] = len(index)
-        stack.append(unit)
-        on_stack.add(unit)
-        for other in sorted(edges[unit]):
-            if other not in index:
-                visit(other)
-                low[unit] = min(low[unit], low[other])
-            elif other in on_stack:
-                low[unit] = min(low[unit], index[other])
-        if low[unit] == index[unit]:
-            group = []
-            while True:
-                member = stack.pop()
-                on_stack.discard(member)
-                group.append(member)
-                if member == unit:
-                    break
-            if len(group) > 1:
-                groups.append(sorted(group))
-
-    for unit in sorted(edges):
-        if unit not in index:
-            visit(unit)
-    for group in groups:
-        yield Finding("import-cycle", f"arbora/{group[0]}", " <-> ".join(group))
+def finding_lines(*needles: str) -> list[str]:
+    """The lines of the coupling hook's output that mention any of ``needles``."""
+    _code, lines = coupling_run()
+    return [line for line in lines if any(needle in line for needle in needles)]
 
 
 def test_every_unit_is_named_in_exactly_one_layer() -> None:
-    findings = scan(PACKAGE, load_layers(ROOT / "pyproject.toml"))
-    misnamed = [
-        f
-        for f in findings
-        if f.rule in {"duplicate-unit", "unlayered-unit", "unknown-unit"}
-    ]
-    assert misnamed == []
+    """The hook refuses a unit named twice or in no layer; no layer names a missing unit."""
+    assert finding_lines("named in no layer", "twice") == []
+    named = [u for _name, units in load_layers(ROOT / "pyproject.toml") for u in units]
+    assert len(named) == len(set(named))
+    assert sorted(set(named) - package_units(PACKAGE)) == []
+
+
+def test_the_coupling_hook_is_enabled_in_the_gate_config() -> None:
+    """The ``coupling`` hook of the shared pipelines repository runs at commit and push."""
+    document = yaml.safe_load(
+        (ROOT / ".pre-commit-config.yaml").read_text(encoding="utf-8")
+    )
+    hooks = {
+        hook["id"]: hook
+        for repo in document["repos"]
+        if repo["repo"].endswith("Knuckles-Team/pipelines")
+        for hook in repo["hooks"]
+    }
+    assert "pre-push" in hooks["coupling"]["stages"]
 
 
 @pytest.mark.spec("ARBORA-HOST-R038.12")
 def test_unit_imports_follow_layers_and_no_cycle_remains() -> None:
-    """The whole policy at once: no finding of any rule, with no expected failure."""
-    findings = scan(PACKAGE, load_layers(ROOT / "pyproject.toml"))
-    assert [f"{f.rule} {f.location} {f.detail}" for f in findings] == []
-
-
-def _write(root: Path, relative: str, text: str = "") -> None:
-    path = root / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
-
-
-def test_scan_reports_each_rule_with_its_location(tmp_path: Path) -> None:
-    package = tmp_path / "arbora"
-    _write(package, "__init__.py")
-    _write(package, "core/__init__.py", "from arbora.host import thing\n")
-    _write(package, "core/_hidden.py")
-    _write(
-        package,
-        "mid.py",
-        "from arbora.core import _hidden\nfrom arbora.core.settings import _secret\n",
-    )
-    _write(
-        package,
-        "host/__init__.py",
-        "import arbora.core\nfrom . import peer\nthing = 1\n",
-    )
-    _write(package, "host/peer.py")
-    _write(package, "loose.py")
-    layers = [("base", ("core",)), ("middle", ("mid",)), ("top", ("host", "__init__"))]
-
-    by_rule = {(f.rule, f.location, f.detail) for f in scan(package, layers)}
-
-    assert (
-        "upward-import",
-        "arbora/core/__init__.py:1",
-        "core -> arbora.host",
-    ) in by_rule
-    assert ("private-reach", "arbora/mid.py:1", "mid -> arbora.core._hidden") in by_rule
-    assert (
-        "private-reach",
-        "arbora/mid.py:2",
-        "mid -> arbora.core.settings._secret",
-    ) in by_rule
-    assert ("unlayered-unit", "arbora/loose", "loose is named in no layer") in by_rule
-    assert ("import-cycle", "arbora/core", "core <-> host") in by_rule
-    # A downward import and an import inside the own unit are not findings.
-    assert not any(detail.startswith("host ->") for _, _, detail in by_rule)
+    """The whole policy at once: the hook exits 0 with no finding, with no expected failure."""
+    code, lines = coupling_run()
+    assert lines == []
+    assert code == 0
 
 
 HOST_UNITS = {
@@ -284,11 +169,10 @@ def test_api_and_identity_import_no_subsystem_or_host() -> None:
 @pytest.mark.spec("ARBORA-HOST-R038.1")
 def test_api_ops_import_no_subsystem() -> None:
     """No file of ``api`` imports a unit of a later layer: handlers read ports instead."""
-    findings = scan(PACKAGE, load_layers(ROOT / "pyproject.toml"))
     upward = [
-        f"{f.location} {f.detail}"
-        for f in findings
-        if f.rule == "upward-import" and f.location.startswith("arbora/api/")
+        line
+        for line in finding_lines("a less stable layer")
+        if line.startswith("arbora/api/")
     ]
     assert upward == []
 
@@ -296,11 +180,13 @@ def test_api_ops_import_no_subsystem() -> None:
 @pytest.mark.spec("ARBORA-HOST-R038.8")
 def test_no_unit_imports_another_units_private_name() -> None:
     """No unit imports a leading-underscore module or name of another unit."""
-    findings = scan(PACKAGE, load_layers(ROOT / "pyproject.toml"))
-    reaches = [
-        f"{f.location} {f.detail}" for f in findings if f.rule == "private-reach"
-    ]
-    assert reaches == []
+    assert finding_lines("import of private module") == []
+
+
+@pytest.mark.spec("ARBORA-HOST-R038.7")
+def test_no_cycle_remains_between_units_of_one_layer() -> None:
+    """Units of one layer import each other in one direction only."""
+    assert finding_lines("import cycle among units") == []
 
 
 def _unit_pairs() -> Iterator[tuple[str, str]]:
@@ -312,26 +198,6 @@ def _unit_pairs() -> Iterator[tuple[str, str]]:
         for _line, target, name in _imports(PACKAGE, path):
             if target[0] == "arbora":
                 yield source, (name if len(target) == 1 else target[1]) or ""
-
-
-def _same_layer_edges(
-    layers: list[tuple[str, tuple[str, ...]]],
-) -> dict[str, set[str]]:
-    """The unit import graph restricted to the edges between units of one layer."""
-    layer_of = {unit: name for name, members in layers for unit in members}
-    edges: dict[str, set[str]] = {unit: set() for unit in layer_of}
-    for source, unit in _unit_pairs():
-        if source != unit and layer_of.get(source, "") == layer_of.get(unit, None):
-            edges[source].add(unit)
-    return edges
-
-
-@pytest.mark.spec("ARBORA-HOST-R038.7")
-def test_no_cycle_remains_between_units_of_one_layer() -> None:
-    """Units of one layer import each other in one direction only."""
-    layers = load_layers(ROOT / "pyproject.toml")
-    cycles = [finding.detail for finding in _cycles(_same_layer_edges(layers))]
-    assert cycles == []
 
 
 def _imported_by(*sources: str) -> set[tuple[str, str]]:

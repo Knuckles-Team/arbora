@@ -98,6 +98,10 @@ repos:
     stages: [manual]
   - id: secrets
     stages: [pre-commit, pre-push]
+  # Unit layers, intra-layer cycles and private reaches (ARBORA-HOST-R038); reads
+  # [tool.pipelines_hooks.coupling] in pyproject.toml.
+  - id: coupling
+    stages: [pre-commit, pre-push]
   # One hook id; reads [tool.complexity] in pyproject.toml (ARBORA-DEPLOY-R010.4).
   - id: complexity
     stages: [pre-commit, pre-push]

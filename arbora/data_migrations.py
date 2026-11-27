@@ -193,7 +193,7 @@ def _recorded(engine: Any, migration_id: str) -> bool:
 
 
 def _record(engine: Any, migration: DataMigration, result: MigrationResult) -> None:
-    from arbora import __version__
+    from arbora.version import __version__
 
     create_record(
         engine,

@@ -325,8 +325,8 @@ packages = ["arbora"]
 # module or package of a declared package) imports only its own layer or an
 # earlier one, units of one layer form no cycle, and no unit imports a
 # leading-underscore module or name of another unit. Every unit is named once;
-# there is no allowance list. Read by the coupling gate (PIPE-GATES-R088) and,
-# until that ships, by tests/architecture/test_unit_layers.py.
+# there is no allowance list. Read by the coupling gate (PIPE-GATES-R088), which
+# tests/architecture/test_unit_layers.py runs.
 [[tool.pipelines_hooks.coupling.layers]]
 name = "foundation"
 units = ["architecture", "content", "core", "pin_lag", "semantic_content", "skills", "unique_records", "version"]
