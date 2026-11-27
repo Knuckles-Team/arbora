@@ -12,6 +12,8 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import processes
 from arbora.api.registry import Confirm, Idempotency, PrincipalRule
 from tests.api._engine_double import context
+from tests.pin_lag.test_host_ports_pin_lag import main_shape  # noqa: F401
+from tests.processes._support import approver_clock, main_run_task  # noqa: F401
 from tests.question_kinds import declare_question_kinds
 
 PRINCIPAL = "principal:one"
@@ -137,7 +139,10 @@ def test_the_decide_operation_is_a_planned_human_write_with_the_identity_chain()
     assert decide.idempotency is Idempotency.KEY_REQUIRED
     assert decide.scopes == frozenset({"process:approve"})
     assert _OPS["process.approvals.list"].scopes == frozenset({"process:read"})
-    assert "process.run" not in _OPS  # waits for the meristem step kinds
+    run = _OPS["process.run"]
+    assert run.scopes == frozenset({"process:run"})
+    assert run.idempotency is Idempotency.KEY_REQUIRED
+    assert "process.run" in processes.NATIVE_IDEMPOTENCY
 
 
 class _Broker:
@@ -177,8 +182,8 @@ async def test_decide_stamps_the_verified_person_and_hides_a_missing_wait(
     [(tenant, fields)] = broker.seen
     assert tenant == "tenant:one" and fields["groups"] == ("role:finance",)
     for error, code in (
-        (ApprovalNotPending(), "NOT_FOUND"),
-        (ApproverRoleRequired(), "POLICY_DENIED"),
+        (ApprovalNotPending(), "APPROVAL_NOT_PENDING"),
+        (ApproverRoleRequired(), "APPROVER_NOT_IN_ROLE"),
     ):
         monkeypatch.setattr(processes, "broker_for", lambda _c, e=error: _Broker(e))
         with pytest.raises(OperationRefused) as refused:
@@ -186,3 +191,120 @@ async def test_decide_stamps_the_verified_person_and_hides_a_missing_wait(
                 ctx, params, _OPS["process.approval.decide"]
             )
         assert refused.value.code == code
+
+
+@pytest.mark.spec("ARBORA-OPS-R898.6")
+def test_refusals_map_to_stable_codes() -> None:
+    from arbora.api.engine_errors import ENGINE_ERRORS
+    from arbora.api.errors import _ARBORA_STATUS, ArboraErrorCode
+
+    assert ENGINE_ERRORS["WORKFLOW_UNKNOWN"][0] == 404
+    for code in ("PROCESS_STEP_UNBOUND", "PROCESS_PLAN_LOOP", "BRANCH_NO_ARM"):
+        assert ENGINE_ERRORS[code][0] == 422
+    assert _ARBORA_STATUS[ArboraErrorCode.APPROVAL_NOT_PENDING] == 409
+    assert _ARBORA_STATUS[ArboraErrorCode.APPROVER_NOT_IN_ROLE] == 403
+    assert _ARBORA_STATUS[ArboraErrorCode.PROCESS_PROMPT_UNRESOLVED] == 422
+
+
+@pytest.mark.spec("ARBORA-OPS-R898.5")
+async def test_run_binds_ports_and_starts_admitted_plan(
+    monkeypatch: pytest.MonkeyPatch,
+    main_shape: None,  # noqa: F811
+    main_run_task: None,  # noqa: F811
+) -> None:
+    from arbora.api.ops import plans
+    from tests.processes._support import PLAN, ProcessEngine, run_loop
+
+    declare_question_kinds(
+        monkeypatch, "process_plan", "branch_select", "decision_table_eval"
+    )
+    _plan_double(monkeypatch)
+    engine = ProcessEngine()
+    seen: dict[str, Any] = {}
+
+    async def loop(plan: Any, model: Any, **kwargs: Any) -> dict[str, Any]:
+        seen.update(kwargs, plan=plan)
+        return await run_loop(plan, model, **kwargs)
+
+    ctx = context(key="run-1")
+    approved: list[str] = []
+    wait = approver_clock(processes.broker_for(ctx), seen, approved)
+    ctx.services.update(
+        process_wait=wait,
+        now_ms=lambda: 5,
+        task_plan_model="model:one",
+        process_question_schema=lambda _t, q: {"component_id": f"decide.schema.{q}"},
+    )
+    monkeypatch.setattr(processes, "engine_send", engine.send)
+    monkeypatch.setattr(plans, "execute_task_plan", loop)
+    params = {"workflow_id": "wf", "version": 2, "inputs": {}}
+    done = await processes.handle_process_run(ctx, params, _OPS["process.run"])
+    assert done["status"] == "completed" and done["plan_digest"] == PLAN["plan_digest"]
+    # The run started the admitted plan with the ports bound and the prompt texts resolved.
+    assert seen["ports"].decision is not None and seen["ports"].approval is not None
+    assert seen["prompts"]["prompt:triage"].startswith("Triage")
+    assert approved == ["ap"]
+    assert done["tasks"]["b1"] == {"taken": ["x1"]}
+    # The decision port sent Decide BranchSelect to the engine as the verified caller.
+    assert _kinds(engine)[-1] == "branch_select"
+    # The journal cites the plan, the branch verdict record and the approver.
+    evidence = await processes.broker_for(ctx).evidence("tenant:one", done["run_id"])
+    assert evidence["run"]["plan_digest"] == PLAN["plan_digest"]
+    assert evidence["settled"]["branch_verdicts"] == ["rec:branch_select"]
+    assert [a["approver"] for a in evidence["approvals"]] == ["person:finance"]
+    # The same key again starts no second run and answers the settled outcome.
+    again = await processes.handle_process_run(ctx, params, _OPS["process.run"])
+    assert again["run_id"] == done["run_id"] and again["status"] == "completed"
+    assert _kinds(engine).count("branch_select") == 1
+
+
+@pytest.mark.spec("ARBORA-OPS-R898.5")
+async def test_run_refuses_before_any_step_when_a_prompt_or_the_harness_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from tests.processes._support import PROMPTS, ProcessEngine
+
+    declare_question_kinds(
+        monkeypatch, "process_plan", "branch_select", "decision_table_eval"
+    )
+    _plan_double(monkeypatch)
+    engine = ProcessEngine()
+    monkeypatch.setattr(processes, "engine_send", engine.send)
+    params = {"workflow_id": "wf", "version": 2, "inputs": {}}
+    # The pinned harness has no host ports: the run refuses UNAVAILABLE naming the gap.
+    ctx = context(key="k1")
+    ctx.services.update(task_plan_model="m")
+    with pytest.raises(OperationRefused) as refused:
+        await processes.handle_process_run(ctx, params, _OPS["process.run"])
+    assert refused.value.code == "UNAVAILABLE"
+    assert "meristem" in refused.value.details["missing"]
+    # An unresolved bound prompt refuses with its own code, before the ports bind.
+    monkeypatch.delitem(PROMPTS, "prompt:ship")
+    with pytest.raises(OperationRefused) as unresolved:
+        await processes.handle_process_run(ctx, params, _OPS["process.run"])
+    assert unresolved.value.code == "PROCESS_PROMPT_UNRESOLVED"
+    assert unresolved.value.details == {"task_id": "x1"}
+    assert [m for m, _p in engine.sent].count("KvCas") == 0  # nothing journaled
+
+
+def _plan_double(monkeypatch: pytest.MonkeyPatch) -> None:
+    import medulla.decision_client as decision_client
+
+    from arbora.api.ops import plans
+
+    async def pin(_context: Any, _tenant: str) -> dict[str, Any]:
+        return {"component_id": "pin", "digest": "d"}
+
+    async def graph(_context: Any) -> str:
+        return "graph:one"
+
+    monkeypatch.setattr(
+        decision_client, "process_plan_request", _structural_request, raising=False
+    )
+    monkeypatch.setattr(plans, "_feature_schema", pin)
+    monkeypatch.setattr(processes, "caller_dispatch_graph", graph)
+
+
+def _kinds(engine: Any) -> list[str]:
+    """The question kind of every ``Decide`` the recording engine received."""
+    return [p["request"]["question"]["kind"] for m, p in engine.sent if m == "Decide"]

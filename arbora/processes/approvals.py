@@ -19,6 +19,7 @@ EngineSend = Callable[[str, dict[str, Any], str | None], Awaitable[Any]]
 NAMESPACE = "process.journal"
 VERDICTS = ("approve", "reject")
 _RUN = "_run"
+_DONE = "_done"
 
 
 class ApprovalNotPending(Exception):
@@ -95,6 +96,38 @@ class ApprovalBroker:
         }
         await self._write(key, version, record, f"approval-wait:{key}")
         return record
+
+    async def read(
+        self, tenant: str, run_id: str, step_id: str
+    ) -> dict[str, Any] | None:
+        """The one record of a step (pending or decided), or ``None``."""
+        _version, record = await self._read(self._key(tenant, run_id, step_id))
+        return record
+
+    async def settle_run(
+        self,
+        tenant: str,
+        *,
+        run_id: str,
+        status: str,
+        branch_verdicts: Sequence[str] = (),
+        decision_records: Sequence[str] = (),
+    ) -> dict[str, Any]:
+        """Record how a run ended and the verdict and decision records it cited, once."""
+        key = self._key(tenant, run_id, _DONE)
+        version, found = await self._read(key)
+        if found is not None:
+            return found
+        entry = {
+            "kind": "settled",
+            "tenant": tenant,
+            "run_id": run_id,
+            "status": status,
+            "branch_verdicts": list(branch_verdicts),
+            "decision_records": list(decision_records),
+        }
+        await self._write(key, version, entry, f"run-settled:{key}")
+        return entry
 
     async def resolve(
         self,
@@ -192,9 +225,14 @@ class ApprovalBroker:
     async def evidence(self, tenant: str, run_id: str) -> dict[str, Any]:
         """The run entry and each approval with approver, time and verdict."""
         rows = await self.records(tenant, run_id)
-        run = next((r for r in rows if r.get("kind") == "run"), None)
-        approvals = [r for r in rows if r.get("kind") == "approval"]
-        return {"run": run, "approvals": approvals}
+        by_kind: dict[str, list[dict[str, Any]]] = {}
+        for row in rows:
+            by_kind.setdefault(str(row.get("kind")), []).append(row)
+        return {
+            "run": (by_kind.get("run") or [None])[0],
+            "settled": (by_kind.get("settled") or [None])[0],
+            "approvals": by_kind.get("approval", []),
+        }
 
 
 __all__ = [

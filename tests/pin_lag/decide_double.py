@@ -20,3 +20,9 @@ def serve_control_kinds(monkeypatch: pytest.MonkeyPatch) -> None:
         | Literal["decision_table_eval"],
         raising=False,
     )
+
+
+def answered_branch(*taken: str) -> dict[str, object]:
+    """The ``RunCall`` envelope of an answered ``BranchSelect`` that took ``taken``."""
+    record = {"record_id": "rec", "answer": {"value": {"taken_task_ids": list(taken)}}}
+    return {"outcome": "answered", "payload": {"records": [record]}}

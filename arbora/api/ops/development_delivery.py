@@ -384,7 +384,9 @@ async def handle_delivery_arm(
     if not isinstance(schema, Mapping):
         raise unavailable("no verified feature schema pin")
     request = _arming_request(context, params, schema)
-    record = single_record(await engine_send(context, "Decide", {"request": request}))
+    record = single_record(
+        await engine_send(context, "Decide", {"request": request}, idempotent=True)
+    )
     # The sealed record must answer this request, for this caller.
     check_receipt(record, request, str(context.caller.principal))
     verdict = _arming_verdict(record)
@@ -418,6 +420,8 @@ NATIVE_IDEMPOTENCY: dict[str, str] = {
     "development.delivery.stop": "medulla:DeliveryStop",
     "development.delivery.retry": "medulla:DeliveryRetry",
     "development.delivery.answer": "medulla:DeliveryRespond",
+    # The arming verdict is one sealed engine ``Decide`` record, replayed by the key.
+    "development.delivery.arm": "medulla:Decide",
 }
 
 

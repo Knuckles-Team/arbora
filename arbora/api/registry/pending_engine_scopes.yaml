@@ -13,6 +13,7 @@ pending_engine_scopes:
   - participant:write
   - process:approve
   - process:read
+  - process:run
   - runs:control
   - sessions:read
   - skills:author
