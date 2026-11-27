@@ -1,7 +1,7 @@
 """``/ws/meetings/{meeting_id}/transcript``: ordered transcript events (ARBORA-OPS-R065.2).
 
 Each poll is ``meetings.transcript.subscribe`` behind the client's cursor, so the scope
-``meetings:read`` and the bearer are checked again on every round and on reconnect. A frame
+``source:read`` and the bearer are checked again on every round and on reconnect. A frame
 carries events in sequence order, a ``gap`` when a sequence is missing (distinct from an
 unavailable engine) and ``finalized`` only when the contiguous sequence is complete.
 """

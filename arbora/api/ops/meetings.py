@@ -28,34 +28,34 @@ from arbora.api.ops._common import (
 )
 from arbora.api.ops._engine import engine_send, unavailable
 from arbora.api.registry import Confirm, OpSpec, Verb
-from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_symbol
 
 #: The refusals of a provider admission, in the order they are checked.
 ADMISSION_CODES = frozenset(
     {"CAPTURE_DENIED", "EGRESS_DENIED", "TENANT_DENIED", "PROVIDER_UNAVAILABLE"}
 )
 MAX_ATTEMPTS = 3
+SUMMARY_GET_SENDER = ("medulla.generated.ingestion", "send_meeting_summary_get")
+TRANSCRIPT_READ_SENDER = ("medulla.generated.ingestion", "send_meeting_transcript_read")
 
 
 class TranscriptEvent(FrozenState):
-    """One transcript segment revision on the live stream (ARBORA-OPS-R065.1).
+    """One transcript revision on the live stream (ARBORA-OPS-R065.1).
 
-    ``state`` is ``partial`` while the speech model may still change the text, ``final``
-    once a segment is settled and ``finalized`` only when the contiguous sequence is
-    complete. A correction carries a higher ``correction_revision`` for the same segment.
+    This is the engine's ``TranscriptEventRecord``: the engine keeps digests and never the
+    text. ``op`` is ``append``, ``correct``, ``delete_segment`` or ``finalize``, and
+    ``finalization_digest`` is set only on the seal, and ``segment_ids`` (the revision's ordered
+    segments) only on a sealed revision.
     """
 
     schema_version: int = Field(default=1, ge=1)
     meeting_id: str = Field(min_length=1, max_length=256)
-    segment_id: str = Field(min_length=1, max_length=256)
     sequence: int = Field(ge=0)
-    correction_revision: int = Field(ge=0)
-    state: Literal["partial", "final", "finalized"]
-    start_ms: int = Field(ge=0)
-    end_ms: int = Field(ge=0)
-    text: str = Field(max_length=65_536)
-    source_id: str = Field(min_length=1, max_length=256)
-    model_id: str = Field(min_length=1, max_length=256)
+    revision: int = Field(ge=0)
+    op: Literal["append", "correct", "delete_segment", "finalize"] | None = None
+    text_digest: str = Field(min_length=1, max_length=256)
+    finalization_digest: str | None = Field(default=None, min_length=1, max_length=256)
+    segment_ids: list[str] = Field(default_factory=list, max_length=100_000)
 
 
 class ProviderChoice(FrozenState):
@@ -71,15 +71,35 @@ class SummaryRequest(FrozenState):
     meeting_id: str = Field(min_length=1, max_length=256)
     transcript_revision: int = Field(ge=0)
     provider_id: str = Field(min_length=1, max_length=128)
-    context_revision: str = Field(min_length=1, max_length=256)
+    context_revision: int = Field(ge=0)
+
+
+class SummaryClaim(FrozenState):
+    claim_id: str = Field(min_length=1, max_length=256)
+    text: str = Field(max_length=65_536)
+    citations: list[dict[str, Any]]
+
+
+class SummaryRecord(FrozenState):
+    """The engine's ``MeetingSummaryRecord``: the stored summary and its receipt."""
+
+    summary_id: str = Field(min_length=1, max_length=256)
+    stale: bool
+    transcript_digest: str
+    context_digest: str
+    receipt_id: str
+    receipt_digest: str
+    output_digest: str
+    provider: str
+    model: str
+    policy_revision: str
+    claims: list[SummaryClaim]
 
 
 class SummaryResult(FrozenState):
-    schema_version: int = Field(default=1, ge=1)
-    summary_id: str = Field(min_length=1, max_length=256)
-    text: str = Field(max_length=262_144)
-    provenance: dict[str, str]
-    state: Literal["pending", "complete", "unavailable"]
+    """The engine's ``MeetingSummaryGetAnswer``: ``null`` for an unknown or unseen summary."""
+
+    summary: SummaryRecord | None
 
 
 class MeetingSummaryRunParams(Params):
@@ -228,11 +248,12 @@ class MeetingSummaryCreateParams(Params):
     meeting_id: str = Field(min_length=1, max_length=256)
     transcript_revision: int = Field(ge=0)
     provider_id: str = Field(min_length=1, max_length=128)
-    context_revision: str = Field(min_length=1, max_length=256)
+    context_revision: int = Field(ge=0)
 
 
 class MeetingSummaryGetParams(Params):
     meeting_id: str = Field(min_length=1, max_length=256)
+    summary_id: str | None = Field(default=None, min_length=1, max_length=256)
 
 
 class ProvidersListParams(Params):
@@ -242,7 +263,7 @@ class ProvidersListParams(Params):
 class TranscriptSubscribeParams(Params):
     meeting_id: str = Field(min_length=1, max_length=256)
     cursor: int = Field(default=0, ge=0)
-    limit: int = Field(default=200, ge=1, le=1000)
+    limit: int = Field(default=100, ge=1, le=500)
 
 
 def stream_path(meeting_id: str) -> str:
@@ -323,7 +344,7 @@ def provenance_of(choice: ProviderChoice, request: MeetingSummaryCreateParams) -
     return {
         "provider": choice.provider_id,
         "model": choice.model_id,
-        "context_revision": request.context_revision,
+        "context_revision": str(request.context_revision),
         "transcript_revision": str(request.transcript_revision),
     }
 
@@ -348,14 +369,16 @@ async def handle_summary_create(
 async def handle_summary_get(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """The stored summary, read by the engine (PIN-LAG: ``MeetingSummaryGet``)."""
+    """The stored summary, read by the engine (``ingestion.send_meeting_summary_get``)."""
     request = MeetingSummaryGetParams.model_validate(dict(params))
     try:
-        require_methods("MeetingSummaryGet")
+        require_symbol(*SUMMARY_GET_SENDER)
     except PinLagUnavailable as missing:
         raise refusal(missing) from None
     answer = await engine_send(
-        context, "MeetingSummaryGet", {"meeting_id": request.meeting_id}
+        context,
+        "MeetingSummaryGet",
+        {"request": request.model_dump(mode="json", exclude_none=True)},
     )
     try:
         stored = SummaryResult.model_validate(answer)
@@ -380,7 +403,7 @@ def transcript_events(
         ]
     except (ValidationError, TypeError):
         raise unavailable("the engine transcript event is invalid") from None
-    return sorted(events, key=lambda e: (e.sequence, e.correction_revision)), last
+    return sorted(events, key=lambda e: e.sequence), last
 
 
 def transcript_page(answer: Any, request: TranscriptSubscribeParams) -> dict[str, Any]:
@@ -388,7 +411,7 @@ def transcript_page(answer: Any, request: TranscriptSubscribeParams) -> dict[str
     events, last = transcript_events(answer, request)
     delivered, missing = _contiguous(events, request.cursor)
     complete = missing is None and bool(answer.get("finalization_digest"))
-    delivered = [e for e in delivered if complete or e.state != "finalized"]
+    delivered = [e for e in delivered if complete or e.finalization_digest is None]
     cursor = max((e.sequence for e in delivered), default=request.cursor)
     return {
         "cursor": cursor,
@@ -417,19 +440,21 @@ def _contiguous(
 async def handle_transcript_subscribe(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
-    """One page behind the cursor; the route repeats it (PIN-LAG: ``MeetingTranscriptRead``)."""
+    """One page behind the cursor; the route repeats it (``ingestion.send_meeting_transcript_read``)."""
     request = TranscriptSubscribeParams.model_validate(dict(params))
     try:
-        require_methods("MeetingTranscriptRead")
+        require_symbol(*TRANSCRIPT_READ_SENDER)
     except PinLagUnavailable as missing:
         raise refusal(missing) from None
     answer = await engine_send(
         context,
         "MeetingTranscriptRead",
         {
-            "meeting_id": request.meeting_id,
-            "after_seq": request.cursor,
-            "limit": request.limit,
+            "request": {
+                "meeting_id": request.meeting_id,
+                "after_seq": request.cursor,
+                "limit": request.limit,
+            }
         },
     )
     return {"value": transcript_page(answer, request)}
@@ -461,7 +486,7 @@ def operations() -> tuple[OpSpec, ...]:
             params=MeetingSummaryGetParams,
             result=MeetingSummaryResult,
             handler="arbora.api.ops.meetings.handle_summary_get",
-            scope="meetings:read",
+            scope="source:read",
         ),
         build_read_op(
             op_id="meetings.providers.list",
@@ -470,7 +495,7 @@ def operations() -> tuple[OpSpec, ...]:
             params=ProvidersListParams,
             result=MeetingSummaryResult,
             handler="arbora.api.ops.meetings.handle_providers_list",
-            scope="meetings:read",
+            scope="source:read",
         ),
         build_read_op(
             op_id="meetings.transcript.subscribe",
@@ -479,7 +504,7 @@ def operations() -> tuple[OpSpec, ...]:
             params=TranscriptSubscribeParams,
             result=MeetingSummaryResult,
             handler="arbora.api.ops.meetings.handle_transcript_subscribe",
-            scope="meetings:read",
+            scope="source:read",
         ),
     )
 
@@ -497,6 +522,8 @@ __all__ = [
     "MeetingSummaryGetParams",
     "MeetingSummaryResult",
     "MeetingSummaryRunParams",
+    "SummaryClaim",
+    "SummaryRecord",
     "TranscriptSubscribeParams",
     "handle_providers_list",
     "handle_summary_get",

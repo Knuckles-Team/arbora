@@ -13,7 +13,7 @@ REQUEST = {
     "meeting_id": "m-1",
     "transcript_revision": 9,
     "provider_id": "prov",
-    "context_revision": "ctx-3",
+    "context_revision": 3,
 }
 
 
@@ -52,7 +52,7 @@ class Final:
         self.digest = digest
         self.receipt = {
             "transcript_revision": 9,
-            "context_revision": "ctx-3",
+            "context_revision": 3,
             **receipt,
         }
 

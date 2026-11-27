@@ -7,6 +7,7 @@ is engine ``main``, so the pin-lag test runs the real guard against the pinned r
 from __future__ import annotations
 
 import hashlib
+import json
 from types import SimpleNamespace
 from typing import Any
 
@@ -21,6 +22,7 @@ from arbora.fleet.scaling.scaling_intent_reconciler import (
     ScaleIntentReconciler,
     ScaleIntentState,
 )
+from tests.fleet.scaling._scale_builder import declare_scale_builder
 from tests.fleet.scaling.test_scaling_intent_reconciler import NOW, Actuator, intent
 
 PRINCIPAL = "person:one"
@@ -67,6 +69,14 @@ def _context() -> Any:
     )
 
 
+def _assert_engine_fields_only(sent: str, record: Any) -> None:
+    """Only the fields the engine's ScaleIntentRecord reads leave arbora."""
+    wire = json.loads(sent)
+    assert set(wire) == engine_policy.WIRE_FIELDS
+    assert wire["target"]["workload_id"] == record.target.workload_id
+    assert "reason" not in wire and "retry_policy" not in wire
+
+
 @pytest.fixture
 def served(monkeypatch: pytest.MonkeyPatch) -> Engine:
     """The question kind declared (as after the re-pin) and an engine double."""
@@ -75,7 +85,7 @@ def served(monkeypatch: pytest.MonkeyPatch) -> Engine:
     async def graph(context: Any) -> str:
         return "graph:t1"
 
-    monkeypatch.setattr(engine_policy, "require_question_kind", lambda kind: None)
+    declare_scale_builder(monkeypatch)
     monkeypatch.setattr("arbora.api.ops._engine.engine_send", engine)
     monkeypatch.setattr("arbora.api.invoke.bootstrap.caller_dispatch_graph", graph)
     return engine
@@ -88,6 +98,7 @@ async def test_a_pinned_release_without_the_question_refuses_before_any_send(
 ) -> None:
     engine = Engine()
     monkeypatch.setattr("arbora.api.ops._engine.engine_send", engine)
+    monkeypatch.delattr("medulla.decision_client.scale_intent_request", raising=False)
     reconciler = ScaleIntentReconciler(
         MemoryScaleIntentLedger(),
         actuator := Actuator([]),
@@ -98,7 +109,7 @@ async def test_a_pinned_release_without_the_question_refuses_before_any_send(
         with pytest.raises(OperationRefused) as refused:
             await reconciler.reconcile(intent(), controller_id="writer-1")
     assert refused.value.code == "UNAVAILABLE"
-    assert refused.value.details["missing"] == "QuestionKind.scale_intent"
+    assert refused.value.details["missing"] == "decision_client.scale_intent_request"
     assert engine.sent == [] and actuator.calls == []
 
 
@@ -119,6 +130,7 @@ async def test_an_engine_allow_is_the_decision_and_names_the_sent_question(
     assert request["question"]["question_id"] == f"fleet.scale:{record.execution_key}"
     names = {p["name"]: p["value"]["value"] for p in request["params"]}
     assert names["graph"] == "graph:t1" and record.execution_key in names["intent"]
+    _assert_engine_fields_only(names["intent"], record)
 
 
 @pytest.mark.asyncio

@@ -18,14 +18,22 @@ from typing import Any, Protocol
 from arbora.pin_lag.scion_sdk import require_credential_binding
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
-#: The five closed refusal reasons of the authority.
+#: The four closed refusal reasons of the authority.
 REFUSALS: tuple[str, ...] = (
     "scope_denied",
     "binding_mismatch",
     "grant_expired",
-    "revoked",
     "authority_unavailable",
 )
+
+#: The engine's closed ``ResourceAccessDecision.reason_code`` set, mapped exactly
+#:. A revoked grant leaves the ledger and reads as missing, so a
+#: revoked, a foreign and an absent grant answer alike.
+DENIAL_REASONS: dict[str, str] = {
+    "RESOURCE_UNKNOWN": "binding_mismatch",
+    "RESOURCE_GRANT_MISSING": "binding_mismatch",
+    "GRANT_EXPIRED": "grant_expired",
+}
 
 
 class CredentialDenied(PermissionError):
@@ -145,11 +153,9 @@ class CredentialAuthority:
 
     def _verdict(self, decision: Mapping[str, Any], ask: Mapping[str, Any]) -> str:
         if not decision.get("allow"):
-            code = str(decision.get("reason_code") or "").lower()
-            if "revoked" in code:
-                return "revoked"
-            # A foreign grant and an absent one answer alike.
-            return "grant_expired" if "expired" in code else "binding_mismatch"
+            # A code outside the closed set is a contract break: it raises and the
+            # decision refuses ``authority_unavailable``.
+            return DENIAL_REASONS[str(decision.get("reason_code"))]
         if int(decision.get("expires_at_ms") or 0) <= self._clock_ms():
             return "grant_expired"
         if not set(ask["scopes"]) <= set(decision.get("scope_ceiling") or ()):
@@ -216,4 +222,4 @@ def _receipt_digest(ask: Mapping[str, Any], binding: Any, module: Any) -> str:
     return "sha256:" + hashlib.sha256(canonical.encode()).hexdigest()
 
 
-__all__ = ["REFUSALS", "CredentialAuthority", "CredentialDenied"]
+__all__ = ["DENIAL_REASONS", "REFUSALS", "CredentialAuthority", "CredentialDenied"]
