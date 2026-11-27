@@ -95,7 +95,7 @@ async def test_every_ranking_site_asks_the_port_and_falls_back_to_the_floor() ->
         Operation,
         order_operations,
     )
-    from arbora.mcp_server.backing.tools import intent_tools
+    from arbora.mcp_server.backing.tools import intent_candidates as _intent_candidates
 
     port = _Recording()
     descriptors = [
@@ -129,7 +129,7 @@ async def test_every_ranking_site_asks_the_port_and_falls_back_to_the_floor() ->
     await catalog.search(_Caller(), query="restart")
     IntentResolver(ranking=port).arrange("act", "restart", descriptors, scope_ref=None)
     order_operations(operations, "restart service", ranking=port)
-    intent_tools.resolve_intent(
+    _intent_candidates.resolve_intent(
         build_host_caches(RuntimeConfig()), None, "search the graph", ranking=port
     )
 
@@ -144,6 +144,6 @@ async def test_every_ranking_site_asks_the_port_and_falls_back_to_the_floor() ->
     assert (await unbound.search(_Caller(), query="restart"))["items"]
     assert IntentResolver().arrange("act", "restart", descriptors, scope_ref=None)
     assert order_operations(operations, "restart service")
-    assert intent_tools.resolve_intent(
+    assert _intent_candidates.resolve_intent(
         build_host_caches(RuntimeConfig()), None, "search the graph"
     )
