@@ -9,6 +9,7 @@ from arbora.browser_control.browser_state import BrowserState
 from arbora.identity.engine import IdentityUnavailable
 from arbora.mcp_server.browser_composition import configured_browser_boundary
 from arbora.mcp_server.host_caches import ToolTable
+from arbora.security.key_cache import JwksCache
 
 pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.5.2")
 
@@ -37,6 +38,7 @@ def test_missing_secure_deployment_prerequisites_refuse(monkeypatch, origin):
             broker_claims=lambda: {},
             request_dispatch=object(),
             browser=BrowserState(),
+            keys=JwksCache(),
         )
 
 
@@ -191,6 +193,7 @@ def test_settings_composition_forwards_factory_without_constructing_it(monkeypat
         served_invocation, "compose_served_invocation", lambda **kw: calls.append(kw)
     )
     served_invocation.served_invocation_from_settings(
+        keys=JwksCache(),
         process_session=lambda: SimpleNamespace(graph="fixture-graph"),
         engine_pool=lambda: pool,
         action_policies=ActionPolicies(),

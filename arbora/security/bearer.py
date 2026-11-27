@@ -15,7 +15,10 @@ import json
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
+from functools import partial
 from typing import Any
+
+from arbora.security.key_cache import JwksCache
 
 __all__ = [
     "BEARER_CLOCK_SKEW_SECONDS",
@@ -261,6 +264,7 @@ def profile_from_settings() -> BearerVerificationProfile | None:
 async def precheck_bearer(
     token: str,
     *,
+    key_cache: JwksCache,
     emit: Callable[[Mapping[str, str]], None] | None = None,
     request_id: str = "",
     fetch_keys: Callable[[str], Any] | None = None,
@@ -281,7 +285,9 @@ async def precheck_bearer(
     keys: Mapping[str, Any] | None
     try:
         if fetch_keys is None:
-            from arbora.security.auth import _fetch_jwks as fetch_keys
+            from arbora.security.auth import _fetch_jwks
+
+            fetch_keys = partial(_fetch_jwks, key_cache)
         keys = await fetch_keys(profile.key_authority)
     except Exception:  # noqa: BLE001 - an unreadable authority admits nothing
         keys = None

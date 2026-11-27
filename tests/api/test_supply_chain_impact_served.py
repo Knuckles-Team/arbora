@@ -120,7 +120,7 @@ def _reader() -> Any:
 
 
 def _grant(monkeypatch: pytest.MonkeyPatch) -> None:
-    async def credential_owner(_credential: str) -> Any:
+    async def credential_owner(_credential: str, **_kw) -> Any:
         return _reader()
 
     monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)

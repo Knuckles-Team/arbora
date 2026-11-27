@@ -1,3 +1,5 @@
+from functools import partial
+
 """Anonymous discovery and invocation share authority, never a client fallback."""
 
 from dataclasses import replace
@@ -21,6 +23,7 @@ from arbora.api.policy import PolicyGate
 from arbora.api.registry import Effect, Idempotency, PrincipalRule, Surface, Verb
 from arbora.api.registry.registry import authorized
 from arbora.security import anonymous
+from arbora.security.key_cache import JwksCache
 from arbora.security.request_identity import ActorIdentityMiddleware
 from tests.api.test_invoke_contract import operation, setup_services
 from tests.security.test_anonymous_mode import local_mode as local_mode
@@ -98,7 +101,7 @@ async def test_http_mcp_discovery_and_invoke_policy_parity(local_mode, denied):
     gate = PolicyGate("embedded", Decisions())
     services, runtime, *_ = setup_services(op, policy_gate=gate)
     auth = AmbientHTTPAuthenticator(
-        session_for_request=verified_bearer_session_for_request
+        session_for_request=partial(verified_bearer_session_for_request, JwksCache())
     )
     app = FastAPI()
     app.mount(
@@ -111,7 +114,7 @@ async def test_http_mcp_discovery_and_invoke_policy_parity(local_mode, denied):
         ),
     )
     transport = httpx.ASGITransport(
-        app=ActorIdentityMiddleware(app), client=("127.0.0.1", 1234)
+        app=ActorIdentityMiddleware(app, JwksCache()), client=("127.0.0.1", 1234)
     )
     async with httpx.AsyncClient(
         transport=transport, base_url="http://127.0.0.1"

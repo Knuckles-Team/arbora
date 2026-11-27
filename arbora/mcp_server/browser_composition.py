@@ -6,6 +6,7 @@ from urllib.parse import urlsplit
 
 from arbora.browser_control.browser_state import BrowserState
 from arbora.identity.engine import IdentityUnavailable
+from arbora.security.key_cache import JwksCache
 
 
 class _IdentityClient:
@@ -86,6 +87,7 @@ def configured_browser_boundary(
     broker_claims: Any,
     request_dispatch: Any,
     browser: BrowserState,
+    keys: JwksCache,
 ) -> Any:
     """Require explicit existing deployment inputs, never provision defaults."""
     from arbora.core.settings import runtime_config
@@ -107,6 +109,7 @@ def configured_browser_boundary(
         tenant=tenant,
         audience=config.auth_jwt_audience,
         process_claims=broker_claims,
+        keys=keys,
     )
     from arbora.security.secrets import create_secrets_client
 
@@ -121,6 +124,7 @@ def configured_browser_boundary(
         audience=config.auth_jwt_audience,
         store=create_secrets_client().backend,
         request_dispatch=partial(request_dispatch, browser.capacity),
+        keys=keys,
     )
 
 
@@ -135,6 +139,7 @@ def build_browser_boundary(
     audience: str,
     store: Any,
     request_dispatch: Any,
+    keys: JwksCache,
 ) -> Any:
     """One runtime, issuer and exact caller fence around the shared pipeline."""
     from arbora.api.invoke.pipeline import invoke
@@ -159,12 +164,9 @@ def build_browser_boundary(
     # ISSUER_KEY_UNAVAILABLE: an unreadable key ring refuses to start the issuer.
     discovery = IssuerDiscovery(store, settings)
     signer = LocalIssuer(store, settings, ports.credentials)
-    owner = ArboraBrowserAuthority(
-        ports.sessions, verify_local_bearer_token, trusted_origin=origin
-    )
-    caller = BrowserCallerResolver(
-        ports.sessions, verify_local_bearer_token, graph=graph
-    )
+    verify_local = partial(verify_local_bearer_token, keys=keys)
+    owner = ArboraBrowserAuthority(ports.sessions, verify_local, trusted_origin=origin)
+    caller = BrowserCallerResolver(ports.sessions, verify_local, graph=graph)
     admission = BrowserAdmission(
         signer,
         owner,

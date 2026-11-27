@@ -29,6 +29,7 @@ from typing import Any
 from fastmcp.server.extensions import ServerExtension
 
 from arbora.core.environment import read_env
+from arbora.security.key_cache import JwksCache
 from arbora.unique_records import create_record, has_record_writer
 
 __all__ = [
@@ -266,6 +267,7 @@ def mount_sdk_a2a(
     *,
     engine_provider: Callable[[], Any],
     stream_handler: Any = None,
+    keys: JwksCache,
 ) -> Any:
     """Mount the SDK A2A application for the fleet agent behind admission.
 
@@ -290,7 +292,7 @@ def mount_sdk_a2a(
         agent=MediaNormalizingAgent(
             fleet_agent(tools), prompt_normalizer(engine_provider)
         ),
-        authenticator=AmbientA2AAuthenticator(),
+        authenticator=AmbientA2AAuthenticator(keys),
         bind_caller=caller_session_scope,
         stream_handler=stream_handler,
         name="arbora",

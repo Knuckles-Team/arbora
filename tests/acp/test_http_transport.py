@@ -497,7 +497,7 @@ def _test_issuer(monkeypatch):
     ):
         monkeypatch.delitem(runtime_config._overrides, name, raising=False)
 
-    async def fetch(uri):
+    async def fetch(_keys, uri):
         assert uri == "https://issuer.invalid/jwks"
         return {"keys": [key.as_dict(private=False)]}
 
@@ -627,8 +627,8 @@ async def test_connection_rejects_verified_authorization_profile_drift(
 
         original = auth._fetch_jwks
 
-        async def fetch(uri):
-            return await original("https://issuer.invalid/jwks")
+        async def fetch(keys, uri):
+            return await original(keys, "https://issuer.invalid/jwks")
 
         monkeypatch.setattr(auth, "_fetch_jwks", fetch)
         monkeypatch.setenv("AUTH_JWT_JWKS_URI", "https://issuer.invalid/rotated-jwks")

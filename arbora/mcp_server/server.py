@@ -28,6 +28,7 @@ from arbora.mcp_server.host_context import (
     bind_ranking,
 )
 from arbora.mcp_server.hosted_invocation import HostedInvocation
+from arbora.security.key_cache import JwksCache
 from arbora.security.process_authority import ProcessAuthority
 from arbora.semantic_content import default_content_providers
 
@@ -168,10 +169,10 @@ def _attach_fleet_runtime(
 
 
 def _with_browser(
-    factory: BrowserBoundaryFactory | None, browser: BrowserState
+    factory: BrowserBoundaryFactory | None, browser: BrowserState, keys: JwksCache
 ) -> BrowserBoundaryFactory | None:
-    """The browser boundary factory handed the host's browser state, or ``None``."""
-    return partial(factory, browser=browser) if factory is not None else None
+    """The browser boundary factory handed the host's browser state and key cache."""
+    return partial(factory, browser=browser, keys=keys) if factory is not None else None
 
 
 def _served_invocation(
@@ -216,6 +217,7 @@ def _served_invocation(
 
     fleet = LateFleetGateway()
     invocation = served_invocation_from_settings(
+        keys=host.caches.jwks,
         process_session=lambda: session,
         engine_pool=host.engine.pool,
         action_policies=host.policy.action_policies,
@@ -242,7 +244,9 @@ def _served_invocation(
             ),
         },
         fleet_effect=fleet.effect,
-        browser_boundary_factory=_with_browser(browser_boundary_factory, host.browser),
+        browser_boundary_factory=_with_browser(
+            browser_boundary_factory, host.browser, host.caches.jwks
+        ),
     )
     return invocation, session
 
@@ -678,7 +682,9 @@ def mcp_server(
                 transport="streamable-http",
                 host=host,
                 port=port,
-                **network_run_kwargs(network_serving.fastmcp_run_kwargs()),
+                **network_run_kwargs(
+                    network_serving.fastmcp_run_kwargs(), host_context.caches.jwks
+                ),
             )
         else:
             raise ValueError("arbora transport must be 'stdio' or 'streamable-http'")

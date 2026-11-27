@@ -8,6 +8,7 @@ import pytest
 
 from arbora.identity.browser_broker import ConfiguredBrowserBroker
 from arbora.identity.engine import IdentityUnavailable
+from arbora.security.key_cache import JwksCache
 
 from .test_issuer import synthetic_signing_key as synthetic_signing_key
 
@@ -32,7 +33,7 @@ def broker_fixture(monkeypatch, synthetic_signing_key):
     monkeypatch.setattr(settings, "security_settings", lambda: config)
     key = RSAKey.import_key(synthetic_signing_key)
 
-    async def jwks(uri):
+    async def jwks(_keys, uri):
         assert uri == config.auth_jwt_jwks_uri
         return {"keys": [key.as_dict(is_private=False)]}
 
@@ -68,6 +69,7 @@ def broker_fixture(monkeypatch, synthetic_signing_key):
         tenant="fixture-tenant",
         audience="fixture",
         process_claims=lambda: process,
+        keys=JwksCache(),
     )
 
     class Fixture(SimpleNamespace):
@@ -127,7 +129,11 @@ def test_wrong_or_expired_broker_never_uses_process_fallback(broker_fixture, cha
 def test_invalid_reference_is_not_resolved_or_exposed(reference):
     with pytest.raises(IdentityUnavailable) as failure:
         ConfiguredBrowserBroker(
-            reference, tenant="fixture", audience="fixture", process_claims=lambda: {}
+            reference,
+            tenant="fixture",
+            audience="fixture",
+            process_claims=lambda: {},
+            keys=JwksCache(),
         )
     assert str(failure.value) == "existing browser broker reference required"
     assert failure.value.__cause__ is None
@@ -160,7 +166,11 @@ def test_external_default_keeps_existing_behavior_but_direct_service_refuses(
 
     broker_fixture.issue(email="human@fixture.invalid", act={"sub": "other"})
     token = broker_fixture.tokens[-1]
-    actor = asyncio.run(actor_from_bearer_token(token))
+    actor = asyncio.run(actor_from_bearer_token(token, keys=JwksCache()))
     assert actor.actor_type == ActorType.HUMAN
     with pytest.raises(PermissionError, match="direct service bearer"):
-        asyncio.run(actor_from_bearer_token(token, require_direct_service=True))
+        asyncio.run(
+            actor_from_bearer_token(
+                token, keys=JwksCache(), require_direct_service=True
+            )
+        )

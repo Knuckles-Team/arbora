@@ -1,5 +1,6 @@
 from arbora.mcp_server.served_engine import engine_unbound, no_process_session
 from arbora.security.anonymous import session_context
+from arbora.security.key_cache import JwksCache
 
 #!/usr/bin/python
 """FastMCP Middlewares Module.
@@ -166,6 +167,7 @@ class ActorContextMiddleware(Middleware):
     def __init__(
         self,
         *,
+        keys: JwksCache,
         require_verified_session: bool = False,
         engine_provider: Callable[[], Any] = engine_unbound,
         process_session: Callable[[], Any] = no_process_session,
@@ -173,6 +175,7 @@ class ActorContextMiddleware(Middleware):
         self.require_verified_session = require_verified_session
         self._engine_provider = engine_provider
         self._process_session = process_session
+        self._keys = keys
 
     def _claims(self, context: MiddlewareContext) -> dict | None:
         auth = getattr(context, "auth", None)
@@ -211,7 +214,7 @@ class ActorContextMiddleware(Middleware):
         from arbora.security.bearer import BearerRefused, precheck_bearer
 
         try:
-            await precheck_bearer(token)
+            await precheck_bearer(token, key_cache=self._keys)
         except BearerRefused:
             raise PermissionError("Verified local bearer required") from None
 

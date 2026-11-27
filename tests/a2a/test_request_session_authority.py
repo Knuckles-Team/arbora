@@ -27,6 +27,7 @@ from arbora.security.actor_context import (
     current_actor,
     use_actor,
 )
+from arbora.security.key_cache import JwksCache
 from arbora.security.session import current_session, use_session
 from tests.a2a._support import authenticated_operation_app
 from tests.a2a.test_application import Authority, Router
@@ -49,7 +50,7 @@ def fixture(monkeypatch: pytest.MonkeyPatch, *, failure: str = "") -> Any:
     verified: list[Any] = []
     requests: list[Any] = []
 
-    async def credential_owner(credential: str) -> ActorContext:
+    async def credential_owner(credential: str, **_kw) -> ActorContext:
         if failure == "verifier-http500":
             raise HTTPException(status_code=500, detail="fixture verifier unavailable")
         if failure == "verifier-config":
@@ -276,6 +277,7 @@ def registered_unary(monkeypatch: pytest.MonkeyPatch, failure: str = "") -> Any:
         registrar,
         service=A2AService(authority=authority, router=Router()),
         tool_table={},
+        keys=JwksCache(),
     )
     app = FastAPI()
     for (path, methods), handler in registrar.routes.items():

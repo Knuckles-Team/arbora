@@ -77,6 +77,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 from arbora.core.environment import read_env
+from arbora.security.key_cache import JwksCache
 
 from .actor_context import (
     ActorContext,
@@ -994,7 +995,7 @@ def system_write_session(config: Any = None) -> GraphSession:
 
 
 async def actor_from_bearer_token(
-    token: str, *, require_direct_service: bool = False
+    token: str, *, keys: JwksCache, require_direct_service: bool = False
 ) -> ActorContext:
     """Validate ``token`` against the configured JWKS and mint the actor.
 
@@ -1016,7 +1017,7 @@ async def actor_from_bearer_token(
         )
     if not str(config.auth_jwt_audience or "").strip():
         raise RuntimeError("Cannot validate Bearer token: audience is not configured")
-    jwks = await _fetch_jwks(config.auth_jwt_jwks_uri)
+    jwks = await _fetch_jwks(keys, config.auth_jwt_jwks_uri)
     claims = _decode_jwt(
         token,
         jwks,
@@ -1035,7 +1036,9 @@ async def actor_from_bearer_token(
     return actor
 
 
-async def verify_local_bearer_token(token: str) -> VerifiedLocalBearer:
+async def verify_local_bearer_token(
+    token: str, *, keys: JwksCache
+) -> VerifiedLocalBearer:
     """Verify one locally-issued bearer JWT; return its claims, never authority.
 
     Reuses the exact JWKS validation :func:`actor_from_bearer_token` already
@@ -1074,7 +1077,7 @@ async def verify_local_bearer_token(token: str) -> VerifiedLocalBearer:
     if not config.auth_jwt_jwks_uri or not issuer or not audience:
         raise PermissionError("Verified local bearer issuer is not configured")
     try:
-        jwks = await _fetch_jwks(config.auth_jwt_jwks_uri)
+        jwks = await _fetch_jwks(keys, config.auth_jwt_jwks_uri)
         claims = _decode_jwt(token, jwks, issuer=issuer, audience=audience)
     except TokenValidationError as exc:
         if exc.status_code == HTTP_401_UNAUTHORIZED:
@@ -1185,7 +1188,8 @@ def mint_actor_from_token_sync(token: str) -> ActorContext:
     import concurrent.futures
 
     def _drive() -> ActorContext:
-        return asyncio.run(actor_from_bearer_token(token))
+        # A one-shot process identity check owns the key set it fetches.
+        return asyncio.run(actor_from_bearer_token(token, keys=JwksCache()))
 
     try:
         try:
@@ -1236,14 +1240,14 @@ async def _resolve_prevalidated_actor(
 
 
 async def _resolve_bearer_actor(
-    token: str, send: Any
+    keys: JwksCache, token: str, send: Any
 ) -> tuple[ActorContext | None, bool]:
     """``(actor, handled)`` from a live JWKS bearer-token verification —
     same ``handled`` contract as :func:`_resolve_prevalidated_actor`."""
     from .auth import HTTP_401_UNAUTHORIZED, TokenValidationError
 
     try:
-        return await actor_from_bearer_token(token), False
+        return await actor_from_bearer_token(token, keys=keys), False
     except TokenValidationError as exc:
         if exc.status_code == HTTP_401_UNAUTHORIZED:
             await _send_json(send, 401, {"error": "Token validation failed"})
@@ -1266,7 +1270,7 @@ async def _resolve_bearer_actor(
 
 
 async def _resolve_request_actor(
-    token: str | None, prevalidated: Any, config: Any, send: Any
+    keys: JwksCache, token: str | None, prevalidated: Any, config: Any, send: Any
 ) -> tuple[ActorContext | None, bool]:
     """``(actor, handled)`` — tries prevalidated claims first, then a live
     bearer-token verification, in the SAME order and under the SAME JWKS
@@ -1278,7 +1282,7 @@ async def _resolve_request_actor(
         await _send_json(send, 401, {"error": "Token validation unavailable"})
         return None, True
     if token and actor is None:
-        actor, handled = await _resolve_bearer_actor(token, send)
+        actor, handled = await _resolve_bearer_actor(keys, token, send)
         if handled:
             return None, True
     return actor, False
@@ -1360,8 +1364,9 @@ class ActorIdentityMiddleware:
     same server-minted session authority.
     """
 
-    def __init__(self, app: Any) -> None:
+    def __init__(self, app: Any, keys: JwksCache) -> None:
         self.app = app
+        self._keys = keys
 
     async def _serve_unauthenticated_path(
         self, scope: Any, receive: Any, send: Any, path: str
@@ -1567,7 +1572,9 @@ class ActorIdentityMiddleware:
             await _send_json(send, 401, {"error": "Verified Bearer identity required"})
             return
 
-        actor, handled = await _resolve_request_actor(token, prevalidated, config, send)
+        actor, handled = await _resolve_request_actor(
+            self._keys, token, prevalidated, config, send
+        )
         if handled:
             return
 

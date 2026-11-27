@@ -44,6 +44,7 @@ from arbora.mcp_server.served_invocation import (
 from arbora.run_origin import RunOriginRegistry
 from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.key_cache import JwksCache
 from tests._support import run_events
 from tests.test_agents_run_end_to_end import FakeEngine
 
@@ -177,7 +178,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         runtime_config, "auth_jwt_jwks_uri", "https://identity.invalid/jwks"
     )
 
-    async def credential_owner(credential: str) -> ActorContext:
+    async def credential_owner(credential: str, **_kw) -> ActorContext:
         assert credential == "fixture-verified"  # sanitizer:ignore - synthetic
         return _actor()
 
@@ -208,6 +209,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         router=OrchestratorA2ARouter(lambda: client),
     )
     invocation = compose_served_invocation(
+        keys=JwksCache(),
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,

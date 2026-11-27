@@ -34,7 +34,7 @@ def _served(
         runtime_config._overrides, "kg_policy_version", "policy:fixture"
     )
 
-    async def credential_owner(credential: str) -> ActorContext:
+    async def credential_owner(credential: str, **_kw) -> ActorContext:
         return ActorContext(
             actor_id="person:one",
             actor_type=ActorType.HUMAN,

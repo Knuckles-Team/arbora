@@ -18,6 +18,8 @@ import time
 from typing import Any, cast
 from urllib.parse import urlsplit
 
+from arbora.security.key_cache import JwksCache
+
 logger = logging.getLogger(__name__)
 
 HTTP_401_UNAUTHORIZED = 401
@@ -45,10 +47,6 @@ class TokenValidationError(Exception):
         self.headers = dict(headers or {})
 
 
-# In-memory JWKS cache keyed by endpoint. A single global value can otherwise
-# validate against the wrong issuer after a runtime configuration change.
-_jwks_cache: dict[str, tuple[dict[str, Any], float]] = {}
-_JWKS_CACHE_TTL: float = 300.0  # 5 minutes
 _JWKS_MAX_BYTES = 1024 * 1024
 _MAX_CREDENTIAL_BYTES = 16_384
 
@@ -87,19 +85,21 @@ def parse_bearer_authorization(authorization: list[bytes]) -> str | None:
 # ---------------------------------------------------------------------------
 
 
-async def _fetch_jwks(jwks_uri: str) -> Any:
+async def _fetch_jwks(keys: JwksCache, jwks_uri: str) -> Any:
     """Fetch and cache JSON Web Key Set from a remote URI.
 
     Args:
+        keys: The host's key cache, keyed by endpoint so a runtime configuration
+            change can never validate against the wrong issuer.
         jwks_uri: URL of the JWKS endpoint.
 
     Returns:
         The parsed JWKS dict.
     """
     now = time.monotonic()
-    cached = _jwks_cache.get(jwks_uri)
-    if cached is not None and now < cached[1]:
-        return cached[0]
+    cached = keys.get(jwks_uri, now)
+    if cached is not None:
+        return cached
 
     parsed = urlsplit(jwks_uri)
     if parsed.scheme not in {"http", "https"} or not parsed.hostname:
@@ -134,7 +134,7 @@ async def _fetch_jwks(jwks_uri: str) -> Any:
                 or not all(isinstance(key, dict) for key in keys)
             ):
                 raise RuntimeError("JWKS response has an invalid shape")
-            _jwks_cache[jwks_uri] = (document, now + _JWKS_CACHE_TTL)
+            keys.put(jwks_uri, document, now)
             logger.debug("JWKS refreshed (%d keys)", len(document["keys"]))
             return document
     except Exception:
@@ -246,6 +246,7 @@ def _decode_jwt(
 
 
 async def authenticate_header_values(
+    keys: JwksCache,
     *,
     authorization: list[bytes],
 ) -> dict[str, Any] | None:
@@ -263,7 +264,7 @@ async def authenticate_header_values(
         return None
 
     if token is not None:
-        jwks = await _fetch_jwks(config.auth_jwt_jwks_uri)
+        jwks = await _fetch_jwks(keys, config.auth_jwt_jwks_uri)
         try:
             claims = _decode_jwt(
                 token,

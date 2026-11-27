@@ -10,6 +10,7 @@ from arbora.access.action_policy import ActionPolicies
 from arbora.core.settings import ArboraConfig, runtime_config
 from arbora.mcp_server.host_context import build_host_context
 from arbora.mcp_server.task_plan import configured_task_plan
+from arbora.security.key_cache import JwksCache
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R001.2.1.2")
 CONFIG = {
@@ -41,6 +42,7 @@ def test_config_json_setting_reaches_trusted_composition(monkeypatch):
     compose = Mock(return_value=object())
     monkeypatch.setattr(served_invocation, "compose_served_invocation", compose)
     served_invocation.served_invocation_from_settings(
+        keys=JwksCache(),
         process_session=lambda: SimpleNamespace(graph="fixture"),
         engine_pool=lambda: object(),
         action_policies=ActionPolicies(),

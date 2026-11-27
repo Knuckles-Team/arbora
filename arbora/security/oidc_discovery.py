@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import time
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlsplit
 
@@ -14,8 +13,6 @@ from scion_sdk.tls.resolve import resolve_tls_profile
 if TYPE_CHECKING:
     import httpx
 
-_cache: dict[str, tuple[float, dict[str, Any]]] = {}
-_CACHE_TTL_S = 3600.0
 _MAX_DISCOVERY_BYTES = 1024 * 1024
 
 
@@ -91,12 +88,12 @@ def _read_bounded(response: httpx.Response, limit: int) -> bytes:
 
 
 def discover(issuer: str) -> dict[str, Any]:
-    """Return a bounded, validated OIDC discovery document (cached for one hour)."""
+    """Return a bounded, validated OIDC discovery document.
+
+    Every caller is a boot-time or configuration check, so each lookup reads the
+    issuer afresh and the process keeps no discovery state.
+    """
     canonical_issuer = _canonical_endpoint(issuer, field="OIDC issuer").rstrip("/")
-    now = time.monotonic()
-    cached = _cache.get(canonical_issuer)
-    if cached and now < cached[0]:
-        return dict(cached[1])
 
     url = f"{canonical_issuer}/.well-known/openid-configuration"
     with oidc_http_client(timeout=10.0) as client:
@@ -117,7 +114,6 @@ def discover(issuer: str) -> dict[str, Any]:
     for field in ("jwks_uri", "token_endpoint"):
         if document.get(field):
             document[field] = _canonical_endpoint(str(document[field]), field=field)
-    _cache[canonical_issuer] = (now + _CACHE_TTL_S, dict(document))
     return dict(document)
 
 

@@ -10,6 +10,7 @@ import pytest
 
 from arbora.identity import federated
 from arbora.identity.engine import IdentityUnavailable
+from arbora.security.key_cache import JwksCache
 from tests.identity._federated_fixture import OIDC_CONFIG, SAML_CONFIG
 
 
@@ -98,5 +99,6 @@ def test_browser_boundary_hands_the_federation_to_the_auth_application(
         audience="a",
         store=object(),
         request_dispatch=None,
+        keys=JwksCache(),
     )
     assert captured["auth_app"].federation is sentinel

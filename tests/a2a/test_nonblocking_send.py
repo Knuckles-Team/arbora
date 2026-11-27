@@ -32,7 +32,7 @@ def _served_app(monkeypatch: pytest.MonkeyPatch, run_seconds: float) -> Any:
         runtime_config._overrides, "kg_policy_version", "policy:fixture"
     )
 
-    async def credential_owner(credential: str) -> ActorContext:
+    async def credential_owner(credential: str, **_kw) -> ActorContext:
         assert credential == "fixture-verified"  # sanitizer:ignore - synthetic
         return ActorContext(
             actor_id="person:one",

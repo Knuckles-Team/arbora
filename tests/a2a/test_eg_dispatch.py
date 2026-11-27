@@ -75,8 +75,8 @@ def fixture(monkeypatch: pytest.MonkeyPatch, failure: str = "") -> Any:
     request_fixture(monkeypatch, failure=failure)
     credential_owner = request_identity.actor_from_bearer_token
 
-    async def read_credential_owner(credential: str) -> Any:
-        actor = await credential_owner(credential)
+    async def read_credential_owner(credential: str, **_kw) -> Any:
+        actor = await credential_owner(credential, **_kw)
         # Synthetic issuer grants the provider method's actual node:read scope;
         # AU's unchanged public minter projects these validated roles.
         return replace(

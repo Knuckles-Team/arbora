@@ -21,6 +21,7 @@ from arbora.mcp_server import runtime as mcp_runtime
 from arbora.mcp_server.host_caches import HostCaches
 from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.key_cache import JwksCache
 from tests._support import bound_authority
 from tests.test_served_operation_api import SCOPES
 
@@ -112,7 +113,7 @@ def route_methods(
     original = client._send
     current: dict[str, str] = {"principal": "person:one"}
 
-    async def credential_owner(credential: str) -> ActorContext:
+    async def credential_owner(credential: str, **_kw) -> ActorContext:
         actor = people[credential]
         current["principal"] = actor.actor_id
         return actor
@@ -307,6 +308,7 @@ def two_tenant_served(
     actor = person("two", TENANT_TWO, scopes)
     process = request_identity.mint_graph_session(actor)
     invocation = harness.compose_served_invocation(
+        keys=JwksCache(),
         pool=harness.FakePool(client),
         graph=process.graph,
         process_session=lambda: process,

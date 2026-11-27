@@ -29,6 +29,7 @@ from arbora.security.actor_context import (
     CredentialLease,
     LeaseEvent,
 )
+from arbora.security.key_cache import JwksCache
 from arbora.security.session import GraphSession, use_session
 from tests.a2a.test_application import Authenticator, Authority, Router
 from tests.a2a.test_mcp import _Mcp
@@ -288,6 +289,7 @@ def test_registered_mcp_route_reaches_request_auth_and_shared_pipeline(
         registrar,
         service=A2AService(authority=Authority(), router=Router()),
         tool_table=table,
+        keys=JwksCache(),
         operation_services=services,
         operation_authenticator=AmbientHTTPAuthenticator(session_for_request=resolve),
     )

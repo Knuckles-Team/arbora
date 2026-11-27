@@ -8,7 +8,7 @@ the same plumbing (no vendor-specific paths in config).
 from __future__ import annotations
 
 import argparse
-import time
+import json
 
 import pytest
 
@@ -29,13 +29,45 @@ OKTA_DOC = {
 }
 
 
+class _Response:
+    def __init__(self, body: bytes) -> None:
+        self._body = body
+
+    def raise_for_status(self) -> None:
+        return None
+
+    def iter_bytes(self):
+        yield self._body
+
+    def __enter__(self) -> _Response:
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        return None
+
+
+class _Client:
+    """Serves each issuer's discovery document; any other URL is unreachable."""
+
+    def __init__(self) -> None:
+        suffix = "/.well-known/openid-configuration"
+        self._documents = {ISS + suffix: DOC, OKTA + suffix: OKTA_DOC}
+
+    def stream(self, _method: str, url: str) -> _Response:
+        return _Response(json.dumps(self._documents[url]).encode())
+
+    def __enter__(self) -> _Client:
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        return None
+
+
 @pytest.fixture(autouse=True)
-def _seed_cache():
-    oidc_discovery._cache.clear()
-    oidc_discovery._cache[ISS] = (time.monotonic() + 1000, DOC)
-    oidc_discovery._cache[OKTA] = (time.monotonic() + 1000, OKTA_DOC)
-    yield
-    oidc_discovery._cache.clear()
+def _serve_documents(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        oidc_discovery, "oidc_http_client", lambda *, timeout=15.0: _Client()
+    )
 
 
 def test_jwks_and_token_resolve_per_provider() -> None:

@@ -115,7 +115,7 @@ def test_missing_scope_refuses_before_any_engine_call(
 ) -> None:
     app, client = served
 
-    async def credential_owner(_credential: str) -> Any:
+    async def credential_owner(_credential: str, **_kw) -> Any:
         return _caller()
 
     monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)
@@ -196,7 +196,7 @@ def test_schema_reads_refuse_without_owl_read_before_the_engine(
 ) -> None:
     app, client = served
 
-    async def credential_owner(_credential: str) -> Any:
+    async def credential_owner(_credential: str, **_kw) -> Any:
         return _caller()
 
     monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)

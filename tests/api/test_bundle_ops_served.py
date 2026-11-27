@@ -31,6 +31,7 @@ from arbora.mcp_server.served_invocation import (
     refused_fleet_effect,
 )
 from arbora.security import request_identity
+from arbora.security.key_cache import JwksCache
 from tests.api.test_sparql_protocol import _EffectItems
 from tests.test_served_operation_api import FakeAudit, FakeClient, FakePool, _actor
 
@@ -160,13 +161,14 @@ def _app(
 
     _ACTORS[f"fixture-verified-{tenant}"] = actor
 
-    async def credential_owner(credential: str) -> Any:
+    async def credential_owner(credential: str, **_kw) -> Any:
         return _ACTORS[credential]
 
     monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)
     engine = _Engine(store, tenant)
     process = request_identity.mint_graph_session(actor)
     invocation = compose_served_invocation(
+        keys=JwksCache(),
         pool=FakePool(engine),
         graph=process.graph,
         process_session=lambda: process,
