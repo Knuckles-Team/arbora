@@ -736,6 +736,7 @@ class WorkItemA2AAuthority:
             item_id,
             token=f"arbora-a2a:{item_id}",
             lease_ttl_s=_RUN_LEASE_SECONDS,
+            now=self.clock(),
         )
         if claim is None:
             return None

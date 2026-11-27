@@ -10,9 +10,10 @@ that correctness depends on: the WorkItem record, its lease fence and its
   result with zero effects and the delivery is acknowledged.
 * It marks the effect started under the lease fence before the dispatcher runs.
   A reclaimed item whose effect is started and unresolved is never executed
-  again. The consumer asks the dispatcher to look the job id up, commits a
-  proven outcome, and otherwise leaves the item open and unacknowledged and
-  emits ``tool_task_uncertain`` once per reconcile interval.
+  again. The consumer asks the dispatcher to look the job id up and commits a
+  proven outcome. Otherwise it refuses explicitly with ``EFFECT_UNCERTAIN``: the
+  run detail and the ``tool_task_uncertain`` event (once per reconcile interval)
+  carry that code, and the item stays open and unacknowledged for the owner.
 * A second delivery of one job finds the item settled (returns the stored
   receipt reference) or claimed (skipped); the connector sees one execution.
 """
@@ -43,8 +44,10 @@ from .tool_task import (
 __all__ = [
     "DEFAULT_POLL_INTERVAL_S",
     "DEFAULT_RECONCILE_INTERVAL_S",
+    "EFFECT_UNCERTAIN",
     "EffectFence",
     "ToolTaskConsumer",
+    "ToolTaskLookupUnavailable",
     "ToolTaskQueue",
     "ToolTaskReconciler",
     "UNAVAILABLE",
@@ -81,6 +84,14 @@ class ToolTaskReconciler(ToolTaskDispatcher, Protocol):
     def lookup(
         self, job_id: str, *, request: ToolTaskRequest
     ) -> ToolTaskResult | None: ...
+
+
+#: The closed refusal of an effect no connector read can prove or disprove.
+EFFECT_UNCERTAIN = "EFFECT_UNCERTAIN"
+
+
+class ToolTaskLookupUnavailable(Exception):
+    """The connector serves no outcome read by job id; the effect stays uncertain."""
 
 
 def _bounded(name: str, value: float, bounds: tuple[float, float]) -> float:
@@ -227,7 +238,7 @@ class ToolTaskConsumer:
                 tenant=carrier.tenant,
                 session_id=carrier.session_id,
             )
-            proven = self._dispatcher.lookup(carrier.job_id, request=request)
+            proven = self._lookup(carrier.job_id, request)
             if (
                 isinstance(proven, ToolTaskResult)
                 and proven.job_id == carrier.job_id
@@ -249,14 +260,24 @@ class ToolTaskConsumer:
         except Exception:  # noqa: BLE001 - an unreadable outcome stays uncertain
             self._emit("tool_task_lookup_failed", {"job_id": carrier.job_id})
         self._announce_uncertain(carrier, item_id)
-        return ToolTaskRun("indeterminate", "tool_task_execution_uncertain")
+        return ToolTaskRun("indeterminate", EFFECT_UNCERTAIN)
+
+    def _lookup(self, job_id: str, request: Any) -> ToolTaskResult | None:
+        """The connector's proof, or ``None`` when no connector read exists."""
+        try:
+            return self._dispatcher.lookup(job_id, request=request)
+        except ToolTaskLookupUnavailable:
+            return None  # refused explicitly as EFFECT_UNCERTAIN by the caller
 
     def _announce_uncertain(self, carrier: ToolTaskCarrier, item_id: str) -> None:
         now = self._clock()
         last = self._uncertain_at.get(item_id)
         if last is None or now - last >= self._reconcile:
             self._uncertain_at[item_id] = now
-            self._emit("tool_task_uncertain", {"job_id": carrier.job_id})
+            self._emit(
+                "tool_task_uncertain",
+                {"job_id": carrier.job_id, "code": EFFECT_UNCERTAIN},
+            )
 
     def run_once(self) -> list[_Delivery]:
         """Deliver every carrier now visible; acknowledge only settled ones."""

@@ -282,6 +282,7 @@ def mount_sdk_a2a(mcp: Any, *, stream_handler: Any = None) -> Any:
     base = str(setting("ARBORA_PUBLIC_URL", "") or "").rstrip("/")
     from arbora.modality.agent_input import MediaNormalizingAgent
 
+    storage = _engine_storage()
     admitted = create_admitted_a2a_app(
         agent=MediaNormalizingAgent(fleet_agent(), prompt_normalizer()),
         authenticator=AmbientA2AAuthenticator(),
@@ -290,7 +291,8 @@ def mount_sdk_a2a(mcp: Any, *, stream_handler: Any = None) -> Any:
         name="arbora",
         url=f"{base}{A2A_PATH}",
         version=__version__,
-        storage=_engine_storage(),
+        storage=storage,
+        list_contexts=storage.list_contexts,
         broker=InMemoryBroker(),
         description="The Arbora fleet agent over A2A.",
     )

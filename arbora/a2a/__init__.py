@@ -22,7 +22,6 @@ from .authority import (
     WorkItemA2AAuthority,
 )
 from .composition import A2AComposition, compose_a2a
-from .hub_federation import HubFederation
 from .models import (
     A2AAgentCard,
     A2AListResult,
@@ -51,7 +50,6 @@ from .work_items import (
 )
 
 __all__ = [
-    "HubFederation",
     "EgAnonymousTaskReadPort",
     "AnonymousCaller",
     "AnonymousNativeReadPort",

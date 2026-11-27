@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from arbora.api.ops import (
+    a2a_federation,
     a2a_media,
     a2a_peers,
     access,
@@ -253,6 +254,7 @@ def test_no_argument_factory_is_deterministic_and_complete(
         *usage.operations(),
         *viewport.operations(),
         *graph_limits.operations(),
+        *a2a_federation.operations(),
         *a2a_media.operations(),
         *a2a_peers.operations(),
         *policy.operations(),

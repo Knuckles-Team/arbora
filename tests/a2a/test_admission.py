@@ -409,3 +409,36 @@ def test_the_expiry_sealed_on_the_evidence_is_read_and_enforced() -> None:
     for bad in (-1, "soon", True):
         with pytest.raises(ValueError):
             asyncio.run(_harness_decider(sent, expires_at_ms=bad).decide(**fields))
+
+
+@pytest.mark.spec("ARBORA-A2A-R020.2")
+def test_valid_for_ms_rides_the_request_only_when_a_host_asks_for_one() -> None:
+    sent: list[dict[str, Any]] = []
+    fields = {
+        "tenant": "tenant:one",
+        "model_profile_ref": "profile:one",
+        "task_class": "task:chat",
+        "budget_tokens": 4_096,
+        "priority": "interactive",
+    }
+    asyncio.run(_harness_decider(sent).decide(**fields))
+    asyncio.run(_harness_decider(sent).decide(**fields, valid_for_ms=60_000))
+    plain, asked = ({p["name"]: p["value"] for p in body["params"]} for body in sent)
+    assert "valid_for_ms" not in plain
+    assert asked["valid_for_ms"] == {"type": "int", "value": 60_000}
+
+
+@pytest.mark.spec("ARBORA-A2A-R020.2")
+def test_admission_forwards_the_requested_lifetime_to_the_decider() -> None:
+    seen: list[dict[str, Any]] = []
+
+    class Recording:
+        async def decide(self, **fields: Any) -> Any:
+            seen.append(fields)
+            raise RuntimeError("no engine here")
+
+    for lifetime in (None, 30_000):
+        asked = request().model_copy(update={"valid_for_ms": lifetime})
+        asyncio.run(admit_tool_subset(asked, Recording()))  # type: ignore[arg-type]
+    assert "valid_for_ms" not in seen[0]
+    assert seen[1]["valid_for_ms"] == 30_000

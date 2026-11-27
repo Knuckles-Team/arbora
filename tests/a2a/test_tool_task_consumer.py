@@ -23,7 +23,11 @@ from arbora.a2a.tool_task import (
     WorkItemLeaseLost,
     tool_task_work_item_id,
 )
-from arbora.a2a.tool_task_consumer import ToolTaskConsumer
+from arbora.a2a.tool_task_consumer import (
+    EFFECT_UNCERTAIN,
+    ToolTaskConsumer,
+    ToolTaskLookupUnavailable,
+)
 
 REQUEST = ToolTaskRequest(
     operation_id="graph.query",
@@ -288,3 +292,33 @@ def test_intervals_are_bounded() -> None:
             clock=lambda: 0.0,
             poll_interval_s=0.01,
         )
+
+
+@pytest.mark.spec("ARBORA-A2A-R002.2.3.4")
+def test_unproven_effect_refuses_explicitly_as_effect_uncertain() -> None:
+    consumer, fence, dispatcher, queue, _events, _now = build()
+    fields: list[dict[str, Any]] = []
+    consumer._emit = lambda _event, payload: fields.append(dict(payload))
+    dispatcher.crash = True
+    consumer.run_once()
+    fence.held = False
+    [second] = consumer.run_once()
+    assert second.run.outcome == "indeterminate"
+    assert second.run.detail == EFFECT_UNCERTAIN == "EFFECT_UNCERTAIN"
+    assert fields[-1] == {"job_id": "job-1", "code": EFFECT_UNCERTAIN}
+    assert queue.acked == [] and fence.committed == []
+
+
+@pytest.mark.spec("ARBORA-A2A-R002.2.3.4")
+def test_connector_without_a_job_lookup_refuses_effect_uncertain() -> None:
+    from arbora.a2a.tool_task_host import InvokeToolTaskDispatcher
+
+    host = InvokeToolTaskDispatcher(None, lambda *a: None, lambda: None)  # type: ignore[arg-type]
+    with pytest.raises(ToolTaskLookupUnavailable, match="EFFECT_UNCERTAIN"):
+        host.lookup("job-1", request=REQUEST)
+    consumer, fence, dispatcher, queue, events, _now = build()
+    dispatcher.lookup = host.lookup  # type: ignore[method-assign]
+    fence.row["effect_phase"] = "started"
+    [delivery] = consumer.run_once()
+    assert delivery.run.detail == EFFECT_UNCERTAIN
+    assert events == ["tool_task_uncertain"] and queue.acked == []

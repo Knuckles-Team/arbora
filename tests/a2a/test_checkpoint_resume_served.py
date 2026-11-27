@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import time
 from types import SimpleNamespace
 from typing import Any
 
@@ -37,7 +36,8 @@ from tests.a2a.test_operation_bridge import session
 from tests.test_agents_run_end_to_end import FakeEngine
 
 STEPS = ("fetch", "write", "notify")
-START = time.time()
+#: A fixed epoch instant: the test clock never reads the wall clock.
+START = 1_900_000_000.0
 
 
 class HostDied(BaseException):

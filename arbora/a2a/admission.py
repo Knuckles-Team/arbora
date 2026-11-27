@@ -128,6 +128,7 @@ class HarnessConfigDecider(Protocol):
         budget_tokens: int,
         priority: Priority,
         tool_refs: tuple[str, ...] = (),
+        valid_for_ms: int | None = None,
     ) -> HarnessConfigRecord: ...
 
 
@@ -146,6 +147,9 @@ class ToolSubsetAdmissionRequest(_WireModel):
     priority: Priority = "interactive"
     #: The routed agent's library tool refs; the engine admits a subset of them.
     tool_refs: tuple[str, ...] = Field(default=(), max_length=64)
+    #: The lifetime the caller's host asks the engine to seal (``valid_for_ms``);
+    #: ``None`` asks for none, so the record carries no expiry.
+    valid_for_ms: int | None = Field(default=None, ge=1)
 
 
 class ToolSubsetAdmissionDecision(_WireModel):
@@ -222,6 +226,13 @@ def _envelope_gap(dispatch_model: Any) -> ToolSubsetAdmissionRefusalReason | Non
     return None
 
 
+def _lifetime(request: ToolSubsetAdmissionRequest) -> dict[str, int]:
+    """``valid_for_ms`` only when a host asked for one: no default is invented."""
+    return (
+        {} if request.valid_for_ms is None else {"valid_for_ms": request.valid_for_ms}
+    )
+
+
 async def admit_tool_subset(
     request: ToolSubsetAdmissionRequest,
     decider: HarnessConfigDecider,
@@ -245,6 +256,7 @@ async def admit_tool_subset(
             budget_tokens=tokens,
             priority=request.priority,
             tool_refs=request.tool_refs,
+            **_lifetime(request),
         )
     except Exception:  # noqa: BLE001 - an unanswered question admits nothing
         return _refused("HARNESS_CONFIG_UNAVAILABLE", f"{_OPERATION}:unavailable")

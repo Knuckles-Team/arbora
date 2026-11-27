@@ -32,7 +32,12 @@ from .tool_task import (
     ToolTaskResult,
     tool_task_work_item_id,
 )
-from .tool_task_consumer import UNAVAILABLE, ToolTaskConsumer
+from .tool_task_consumer import (
+    EFFECT_UNCERTAIN,
+    UNAVAILABLE,
+    ToolTaskConsumer,
+    ToolTaskLookupUnavailable,
+)
 from .tool_task_dispatch import EgWorkItemFence
 from .tool_task_requests import EgToolTaskRequestStore
 
@@ -190,9 +195,14 @@ class InvokeToolTaskDispatcher:
         )
 
     def lookup(self, job_id: str, *, request: ToolTaskRequest) -> ToolTaskResult | None:
-        """No connector serves an outcome read by job id yet: the item stays open."""
+        """No connector serves an outcome read by job id yet: refuse ``EFFECT_UNCERTAIN``.
+
+        The connector-side ``job_status`` by idempotency key is filed in
+        OVERSTORY-GAPS (CONNECTOR PHASE). Until it exists the item stays open for the
+        owner and the refusal is explicit, never a silent open effect.
+        """
         del job_id, request
-        return None
+        raise ToolTaskLookupUnavailable(EFFECT_UNCERTAIN)
 
 
 class ToolTaskService:
