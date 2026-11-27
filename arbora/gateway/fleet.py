@@ -492,7 +492,8 @@ async def fleet_verify_action(request: Request) -> JSONResponse:
             )
         )
         return JSONResponse({"status": "success", "result": res})
-    except Exception as exc:  # noqa: BLE001 — canonical safe error surface
+    except Exception as exc:
+        logging.getLogger(__name__).debug("canonical safe error surface", exc_info=True)
         return JSONResponse(public_error_payload(exc, logger=logger), status_code=500)
 
 
@@ -531,7 +532,10 @@ async def fleet_trace(request: Request) -> JSONResponse:
         return JSONResponse(
             {"status": "success", "correlation_id": cid, "nodes": nodes}
         )
-    except Exception as exc:  # noqa: BLE001 — degrade gracefully when engine cold
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "degrade gracefully when engine cold", exc_info=True
+        )
         return JSONResponse(public_error_payload(exc, logger=logger), status_code=500)
 
 
@@ -576,7 +580,10 @@ async def fleet_touched(request: Request) -> JSONResponse:
                 "actors": actors,
             }
         )
-    except Exception as exc:  # noqa: BLE001 — degrade gracefully when engine cold
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "degrade gracefully when engine cold", exc_info=True
+        )
         return JSONResponse(public_error_payload(exc, logger=logger), status_code=500)
 
 

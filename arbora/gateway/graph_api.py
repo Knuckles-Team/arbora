@@ -57,7 +57,7 @@ async def _sql_schema_endpoint(request: Request) -> JSONResponse:
 
     try:
         resolve_session(required_scope="kg:read")
-    except Exception as exc:  # noqa: BLE001 — authz failures are 403, never 500
+    except Exception as exc:  # authz failures are 403, never 500
         logger.info("sql-schema denied: %s", exc)
         return JSONResponse(
             {
@@ -79,7 +79,7 @@ async def _sql_schema_filter(request: Request) -> str | None:
     """The optional ``schema`` name from the request body (never SQL text)."""
     try:
         body = await request.json()
-    except Exception:  # noqa: BLE001 — an absent/blank body means "every schema"
+    except ValueError:  # an absent/blank body means "every schema"
         return None
     if not isinstance(body, dict):
         return None
