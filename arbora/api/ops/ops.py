@@ -202,7 +202,13 @@ async def handle_ops_doctor(
     # A gate the pinned engine cannot serve is named in every report (PIN-LAG), and so
     # is the ranking floor.
     checks = _with_ranking_check(value["checks"])
-    value["checks"] = {**checks, **gate_checks()}
+    from arbora.api.ops.operator_audit import operator_audit_check
+
+    value["checks"] = {
+        **checks,
+        **gate_checks(),
+        "operator_audit": operator_audit_check(),
+    }
     return {"value": value}
 
 

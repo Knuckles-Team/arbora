@@ -308,11 +308,11 @@ Caller-visible responses, counts, refusal details, traces and audit views reveal
 
 ### Bounded interaction space (ARBORA-OPS-R053)
 
-Data flow: `retrieval.space` over POST /api/v1/ops/{op_id} -> the governed retriever entry (arbora/control_plane/retrieval/service.py:61) -> `union_top_k` -> audit record.
+Data flow: `retrieval.space` over POST /api/v1/ops/{op_id} -> `EngineRetriever` (arbora/api/ops/retrieval_space.py) -> engine retrieval -> audit record.
 
 Types: `InteractionSpace`, `CorpusBoundary`, `QueryDirectory`. Failure: `LOAD_CAP_EXCEEDED`, `INVALID_ARGUMENT`, `UNAVAILABLE`.
 
-Existing code: arbora/api/ops/retrieval.py:60, :77; arbora/control_plane/retrieval/service.py:37, :61. Reachable today: no for the governed retriever; yes for `retrieval.search`. Search terms used: bm25, top_k, interaction space, working dir, corpus.
+Existing code: arbora/api/ops/retrieval.py:60, :77; arbora/api/ops/retrieval_space.py (`EngineRetriever`). The local `control_plane/retrieval` package is deleted. Reachable today: yes. Search terms used: bm25, top_k, interaction space, working dir, corpus.
 
 Decision: the engine ranks and Arbora bounds the space. Rejected: returning ranked snippets only. Cross-repository: MEDULLA-FEDERATED-QUERY-R001 supplies query results, MEDULLA-DECISION-ENGINE-R029 chooses retrieval plans, MEDULLA-DECISION-ENGINE-R137 supplies context limits, and SCION-CONNECTOR-CONTROL-R005 supplies connector ingestion. AU executes engine-directed exploration.
 
