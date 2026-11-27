@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from __future__ import annotations
 
+from arbora.observability.state import RuntimeSignalBuffer
 from arbora.unique_records import create_record
 
 """Runtime-reliability signal recording — the EMIT stage of the detect→gap→heal loop.
@@ -38,13 +39,10 @@ chokepoint, and the engine refuses a mutation declared as a read — see
 """
 
 import contextlib
-import itertools
 import json
 import logging
 import re
-import threading
 import time
-from collections import deque
 from dataclasses import dataclass
 from typing import Any
 
@@ -72,19 +70,6 @@ _KINDS = frozenset(
 SEVERITY_INFO = "info"
 SEVERITY_WARNING = "warning"
 SEVERITY_CRITICAL = "critical"
-
-#: Bounded in-process ring buffer. The maxlen is the sole memory bound on the hot-path
-#: intake: a burst that outruns the background drain drops the OLDEST signal (a lost
-#: sample, never unbounded growth, never a stalled emitter). Sized generously — a drain
-#: runs every few minutes and real emits are exceptional events, not per-call.
-_MAX_BUFFERED_SIGNALS = 512
-_SIGNAL_BUFFER: deque[dict[str, Any]] = deque(maxlen=_MAX_BUFFERED_SIGNALS)
-_BUFFER_LOCK = threading.Lock()
-
-#: Monotonic per-occurrence sequence — makes each persisted node id unique even when two
-#: same-``(kind, subject)`` signals land in the same millisecond, so a burst is counted as
-#: N occurrences (not collapsed into one node). ``next`` on an ``itertools.count`` is atomic.
-_SEQ = itertools.count()
 
 #: Default aggregation/read window shared with the analyzer (kept here so the store and
 #: its reader agree). A named constant, not an env knob (configuration discipline).
@@ -199,6 +184,7 @@ def _build_signal(
 
 
 def record_runtime_signal(
+    buffer: RuntimeSignalBuffer,
     kind: str,
     subject: str,
     detail: dict[str, Any] | None = None,
@@ -222,28 +208,23 @@ def record_runtime_signal(
     """
     try:
         signal = _build_signal(kind, subject, detail, severity)
-        with _BUFFER_LOCK:
-            _SIGNAL_BUFFER.append(signal)
+        buffer.append(signal)
     except Exception:  # a signal must never affect the caller's hot path
         with contextlib.suppress(Exception):
             logger.debug("record_runtime_signal dropped a signal (kind=%s)", kind)
 
 
-def buffered_runtime_signals() -> list[dict[str, Any]]:
+def buffered_runtime_signals(buffer: RuntimeSignalBuffer) -> list[dict[str, Any]]:
     """A snapshot copy of the buffered signals (non-destructive; for tests/inspection)."""
-    with _BUFFER_LOCK:
-        return list(_SIGNAL_BUFFER)
+    return buffer.snapshot()
 
 
-def drain_buffered_signals() -> list[dict[str, Any]]:
+def drain_buffered_signals(buffer: RuntimeSignalBuffer) -> list[dict[str, Any]]:
     """Atomically take-and-clear the buffered batch (the background drain's intake)."""
-    with _BUFFER_LOCK:
-        items = list(_SIGNAL_BUFFER)
-        _SIGNAL_BUFFER.clear()
-    return items
+    return buffer.drain()
 
 
-def _signal_node_id(signal: dict[str, Any]) -> str:
+def _signal_node_id(buffer: RuntimeSignalBuffer, signal: dict[str, Any]) -> str:
     """A UNIQUE per-occurrence ``:RuntimeSignal`` id: ``runtime:signal:<kind>:<subject>:<ts>-<seq>``.
 
     The trailing sequence guarantees two same-``(kind, subject)`` signals in the same
@@ -251,7 +232,7 @@ def _signal_node_id(signal: dict[str, Any]) -> str:
     ts_ms = int(float(signal.get("ts") or _now()) * 1000)
     return (
         f"runtime:signal:{_slug(str(signal.get('kind')), limit=40)}:"
-        f"{_slug(str(signal.get('subject')), limit=80)}:{ts_ms}-{next(_SEQ)}"
+        f"{_slug(str(signal.get('subject')), limit=80)}:{ts_ms}-{buffer.next_sequence()}"
     )
 
 
@@ -269,7 +250,9 @@ def _signal_properties(signal: dict[str, Any], sid: str) -> dict[str, Any]:
     }
 
 
-def persist_runtime_signals(engine: Any, signals: list[dict[str, Any]]) -> int:
+def persist_runtime_signals(
+    buffer: RuntimeSignalBuffer, engine: Any, signals: list[dict[str, Any]]
+) -> int:
     """Write a drained batch of buffered signals as ``:RuntimeSignal`` nodes in ONE RPC.
 
     Runs OFF the hot path (from the maintenance tick). The batch goes through
@@ -295,7 +278,7 @@ def persist_runtime_signals(engine: Any, signals: list[dict[str, Any]]) -> int:
     mutations: list[dict[str, Any]] = []
     for signal in signals:
         try:
-            sid = _signal_node_id(signal)
+            sid = _signal_node_id(buffer, signal)
             mutations.append(
                 {
                     "kind": "node",

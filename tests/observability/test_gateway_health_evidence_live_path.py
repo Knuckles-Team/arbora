@@ -14,6 +14,7 @@ import pytest
 
 from arbora.observability import gateway_health as gh
 from arbora.observability import health as h
+from arbora.observability.state import GatewayTrend
 
 
 class _FakeStore:
@@ -26,11 +27,14 @@ class _FakeStore:
 
 
 @pytest.fixture
-def store(monkeypatch):
-    monkeypatch.setattr(gh, "_buffer", None)
-    monkeypatch.setattr(gh, "_history", [])
+def trend_state():
+    return GatewayTrend()
+
+
+@pytest.fixture
+def store(trend_state):
     fake = _FakeStore()
-    monkeypatch.setattr(gh, "_media_store", lambda: fake)
+    trend_state.bind_store(fake)
     return fake
 
 
@@ -55,15 +59,16 @@ def _trend(avg: float, index: int) -> dict:
 )
 @pytest.mark.asyncio
 async def test_only_an_anomalous_window_is_written_as_evidence(
-    monkeypatch, store, history, avg, writes
+    trend_state, store, history, avg, writes
 ):
-    monkeypatch.setattr(gh, "_history", [_trend(0.05, i) for i in range(history)])
+    for i in range(history):
+        trend_state.append_window(_trend(0.05, i), 50)
     trend = _trend(avg, history)
 
-    await gh._check_and_record(trend)
+    await gh._check_and_record(trend_state, trend)
 
     assert len(store.window_calls) == writes
-    assert gh._history[-1] == trend
+    assert trend_state.history()[-1] == trend
     if writes:
         data, kwargs = store.window_calls[0]
         assert data == json.dumps(trend, sort_keys=True).encode("utf-8")
@@ -71,14 +76,14 @@ async def test_only_an_anomalous_window_is_written_as_evidence(
         assert kwargs["end_ms"] == int(trend["end_at"] * 1000)
 
 
-def test_record_request_duration_flush_triggers_the_check(monkeypatch):
+def test_record_request_duration_flush_triggers_the_check(monkeypatch, trend_state):
     """The REAL entry point: enough `at=` samples to cross the window boundary
     schedules the background anomaly-check — proving the buffer -> flush ->
     check wiring, not just `_check_and_record` in isolation.
     """
     scheduled: list[dict] = []
 
-    async def _fake_check(trend):
+    async def _fake_check(_state, trend):
         scheduled.append(trend)
 
     monkeypatch.setattr(gh, "_check_and_record", _fake_check)
@@ -89,17 +94,17 @@ def test_record_request_duration_flush_triggers_the_check(monkeypatch):
         # First call lazily creates + caches the module-level buffer, seeded
         # from the real wall clock (`record_request_duration` always samples
         # `time.time()` — no injected clock, matching the real request path).
-        gh.record_request_duration(0.05)
-        buf = gh._buffer
+        gh.record_request_duration(trend_state, 0.05)
+        buf = trend_state.buffer(lambda: None)
         assert buf is not None
         # Still well inside the window -> no flush, nothing scheduled.
-        gh.record_request_duration(0.06)
+        gh.record_request_duration(trend_state, 0.06)
         assert scheduled == []
 
         # Push the buffer's own clock back past the window boundary — the
         # SAME "time elapsed since last flush" check the real buffer runs.
         buf._last_flush = _time.time() - gh._WINDOW_S - 1
-        gh.record_request_duration(0.07)
+        gh.record_request_duration(trend_state, 0.07)
         await asyncio.sleep(0)  # let the scheduled background task run
         assert len(scheduled) == 1
         assert scheduled[0]["samples"] >= 1

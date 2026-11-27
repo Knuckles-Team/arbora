@@ -45,6 +45,8 @@ import logging
 import time
 from typing import Any
 
+from arbora.observability.state import GatewayTrend
+
 logger = logging.getLogger(__name__)
 
 # 5-minute distilled trend window — matches the health kernel's own
@@ -58,25 +60,14 @@ _HISTORY_MAX = 50
 _ENTITY_ID = "gateway"
 _SIGNAL = "request_duration_seconds"
 
-_buffer: Any = None
-_history: list[dict[str, Any]] = []
-# Strong references to in-flight background checks — asyncio only holds a
-# WEAK reference to a task via the event loop, so a task with no other
-# referent can be garbage-collected mid-run. Standard fire-and-forget idiom:
-# keep it here, discard on completion (`add_done_callback`).
-_background_tasks: set[Any] = set()
+
+def _new_buffer() -> Any:
+    from arbora.observability.health import HealthTrendBuffer
+
+    return HealthTrendBuffer(window_s=_WINDOW_S)
 
 
-def _get_buffer() -> Any:
-    global _buffer
-    if _buffer is None:
-        from arbora.observability.health import HealthTrendBuffer
-
-        _buffer = HealthTrendBuffer(window_s=_WINDOW_S)
-    return _buffer
-
-
-def record_request_duration(duration_s: float) -> None:
+def record_request_duration(trend_state: GatewayTrend, duration_s: float) -> None:
     """Feed one request's latency into the gateway's health-trend buffer.
 
     Called from the gateway's request middleware with the SAME ``duration``
@@ -88,41 +79,30 @@ def record_request_duration(duration_s: float) -> None:
     never adds latency to the response the caller is still sending.
     """
     try:
-        trend = _get_buffer().add(float(duration_s), at=time.time())
+        trend = trend_state.buffer(_new_buffer).add(float(duration_s), at=time.time())
     except Exception as e:  # must never affect the response path
         logger.debug("gateway health sample skipped: %s", e)
         return
     if trend is not None:
         try:
-            task = asyncio.create_task(_check_and_record(trend))
-            _background_tasks.add(task)
-            task.add_done_callback(_background_tasks.discard)
+            # The state holds a strong reference until the check completes:
+            # asyncio only holds a weak one, so an unreferenced task can be
+            # collected mid-run.
+            trend_state.hold(asyncio.create_task(_check_and_record(trend_state, trend)))
         except RuntimeError:
             # No running loop (e.g. a sync caller/test) — drop the check
             # rather than block; the next window's flush will try again.
             pass
 
 
-_metric_evidence_store: Any = None
-
-
-def bind_metric_evidence_store(store: Any) -> None:
-    """Bind the store that keeps anomalous metric windows as evidence.
-
-    The store exposes ``store_metric_window_evidence``. Until the composition
-    root binds one, an anomaly is logged and not written.
-    """
-    global _metric_evidence_store
-    _metric_evidence_store = store
-
-
-def _media_store() -> Any:
-    if _metric_evidence_store is None:
+def _media_store(trend_state: GatewayTrend) -> Any:
+    store = trend_state.store()
+    if store is None:
         raise RuntimeError("no metric evidence store is bound")
-    return _metric_evidence_store
+    return store
 
 
-async def _check_and_record(trend: dict[str, Any]) -> None:
+async def _check_and_record(trend_state: GatewayTrend, trend: dict[str, Any]) -> None:
     """Best-effort: baseline + anomaly-detect the just-flushed window against
     the gateway's rolling trend history; on a genuine anomaly, write a
     ``MetricWindow`` evidence locus carrying the exact triggering window.
@@ -131,7 +111,7 @@ async def _check_and_record(trend: dict[str, Any]) -> None:
     try:
         from arbora.observability import health as h
 
-        history = _history
+        history = trend_state.history()
         baseline = (
             h.compute_baseline(history, value_key="avg", peak_key="max")
             if len(history) >= h.DEFAULT_MIN_WINDOWS
@@ -142,12 +122,11 @@ async def _check_and_record(trend: dict[str, Any]) -> None:
             if baseline is not None
             else None
         )
-        history.append(trend)
-        del history[:-_HISTORY_MAX]
+        trend_state.append_window(trend, _HISTORY_MAX)
         if anomaly is None:
             return
 
-        store = _media_store()
+        store = _media_store(trend_state)
         data = json.dumps(trend, sort_keys=True).encode("utf-8")
         start_ms = int(float(trend.get("start_at") or 0.0) * 1000)
         end_ms = int(float(trend.get("end_at") or 0.0) * 1000)

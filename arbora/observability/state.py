@@ -8,6 +8,7 @@ narrowest sub-object to the units that held the former module globals.
 
 from __future__ import annotations
 
+import itertools
 import threading
 import time
 from collections import deque
@@ -16,6 +17,9 @@ from dataclasses import dataclass
 from typing import Any
 
 __all__ = [
+    "GatewayTrend",
+    "RuntimeSignalBuffer",
+    "Signals",
     "HealthState",
     "IdentityContract",
     "Observability",
@@ -281,9 +285,98 @@ def build_health_state() -> HealthState:
     )
 
 
+class RuntimeSignalBuffer:
+    """The bounded ring of runtime-reliability signals and their node sequence."""
+
+    def __init__(self, capacity: int = 512) -> None:
+        self._lock = threading.Lock()
+        self._buffer: deque[dict[str, Any]] = deque(maxlen=capacity)
+        self._sequence = itertools.count()
+
+    def append(self, signal: dict[str, Any]) -> None:
+        """Add one signal; the oldest drops when the ring is full."""
+        with self._lock:
+            self._buffer.append(signal)
+
+    def snapshot(self) -> list[dict[str, Any]]:
+        """A copy of the buffered signals."""
+        with self._lock:
+            return list(self._buffer)
+
+    def drain(self) -> list[dict[str, Any]]:
+        """Take and clear the buffered batch."""
+        with self._lock:
+            items = list(self._buffer)
+            self._buffer.clear()
+        return items
+
+    def next_sequence(self) -> int:
+        """The next per-occurrence node sequence number."""
+        with self._lock:
+            return next(self._sequence)
+
+
+class GatewayTrend:
+    """The gateway's request-latency trend buffer, window history and evidence store."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._buffer: Any = None
+        self._history: list[dict[str, Any]] = []
+        self._store: Any = None
+        self._tasks: set[Any] = set()
+
+    def buffer(self, build: Callable[[], Any]) -> Any:
+        """The trend buffer, built on first use."""
+        with self._lock:
+            if self._buffer is None:
+                self._buffer = build()
+            return self._buffer
+
+    def history(self) -> list[dict[str, Any]]:
+        """A copy of the rolling window history."""
+        with self._lock:
+            return list(self._history)
+
+    def append_window(self, trend: dict[str, Any], keep: int) -> None:
+        """Add one window; only the newest ``keep`` windows stay."""
+        with self._lock:
+            self._history.append(trend)
+            del self._history[:-keep]
+
+    def bind_store(self, store: Any) -> None:
+        """Bind the store that keeps anomalous windows as evidence."""
+        with self._lock:
+            self._store = store
+
+    def store(self) -> Any:
+        """The bound evidence store, or ``None``."""
+        with self._lock:
+            return self._store
+
+    def hold(self, task: Any) -> None:
+        """Keep a strong reference to a background check until it completes."""
+        with self._lock:
+            self._tasks.add(task)
+        task.add_done_callback(self._release)
+
+    def _release(self, task: Any) -> None:
+        with self._lock:
+            self._tasks.discard(task)
+
+
+@dataclass(frozen=True, slots=True)
+class Signals:
+    """Runtime-reliability signals and the gateway latency trend."""
+
+    runtime: RuntimeSignalBuffer
+    gateway: GatewayTrend
+
+
 @dataclass(frozen=True, slots=True)
 class Observability:
     """Every owned observability object of one host process."""
 
     telemetry: Telemetry
     health: HealthState
+    signals: Signals
