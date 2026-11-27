@@ -16,9 +16,9 @@ Before a pull request, run `uvx pre-commit run --all-files` at both stages. Foll
 - [x] T010 [P] [US3] ARBORA-DATA-MARKET-R003.8 Market signal compute operations.
 - [x] T011 [P] [US3] ARBORA-DATA-MARKET-R003.9 Served market.size operation over RegimeSizingInput.
 - [x] T012 [P] [US3] ARBORA-DATA-MARKET-R003.10 Served market.evaluate operation over medulla NumericEvaluate.
-- [ ] T013 [P] [US3] ARBORA-DATA-MARKET-R003.11 Served market.positions operation over FinanceAccountProject.
+- [x] T013 [P] [US3] ARBORA-DATA-MARKET-R003.11 Served market.positions operation over FinanceAccountProject.
 - [x] T014 [P] [US3] ARBORA-DATA-MARKET-R003.12 Research kernel compute operations.
-- [ ] T015 [P] [US3] ARBORA-DATA-MARKET-R003.13 Market compute port and sizing operations.
+- [x] T015 [P] [US3] ARBORA-DATA-MARKET-R003.13 Market compute port and sizing operations.
 - [x] T016 [P] [US3] ARBORA-DATA-MARKET-R003.14 Banking compute operations.
 - [x] T017 [P] [US3] ARBORA-DATA-MARKET-R003.15 Finance guide projection.
 - [x] T018 [P] [US2] ARBORA-DATA-MARKET-R004 One-at-a-time application admission with rollback.
@@ -33,7 +33,7 @@ Before a pull request, run `uvx pre-commit run --all-files` at both stages. Foll
 - [ ] T027 [P] [US3] ARBORA-DATA-MARKET-R007.7 Order stage and confirm operations call the proposal door.
 - [ ] T028 [P] [US3] ARBORA-DATA-MARKET-R008 Served forecast operation `market.forecast.sample`.
 - [ ] T029 [P] [US3] ARBORA-DATA-MARKET-R009 Served reads and imports for the Markets app (rollup).
-- [ ] T030 [P] [US3] ARBORA-DATA-MARKET-R009.1 Performance and benchmark card read.
+- [x] T030 [P] [US3] ARBORA-DATA-MARKET-R009.1 Performance and benchmark card read.
 - [x] T031 [P] [US3] ARBORA-DATA-MARKET-R009.2 Instrument detail: rates and dividends.
 - [x] T032 [P] [US3] ARBORA-DATA-MARKET-R009.3 Strategy recommendation with evidence or an abstain reason.
 - [x] T033 [P] [US3] ARBORA-DATA-MARKET-R009.4 DCA and alert delivery receipts read.

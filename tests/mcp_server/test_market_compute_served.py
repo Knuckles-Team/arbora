@@ -200,3 +200,63 @@ def test_banking_ops_over_http_and_mcp(
     ):
         refusing = MarketServed(captured, served, monkeypatch, {method: _refuse(code)})
         assert _code(refusing.http(op_id, bodies[op_id])) == code
+
+
+@pytest.mark.spec("ARBORA-DATA-MARKET-R003.13")
+def test_sizing_and_shift_over_http_and_mcp(
+    captured: Any,
+    served: Any,
+    monkeypatch: pytest.MonkeyPatch,  # noqa: F811
+) -> None:
+    answers = {
+        "FinancePositionSize": lambda params, _p: {"fraction": params.get("fraction")},
+        "FinanceDistributionShift": {"shifted": True},
+    }
+    market = MarketServed(captured, served, monkeypatch, answers)
+    size = {"accuracy": 0.6, "win_loss_ratio": 1.5}
+    # An omitted optional stays omitted: the engine applies its own knobs.
+    assert _value(market.http("market.position_size", size)) == {"fraction": None}
+    shift = {"current": [0.1, 0.2], "reference": [0.1, 0.3], "threshold": 0.05}
+    assert _value(market.http("market.distribution_shift", shift)) == {"shifted": True}
+    assert market.mcp("market.position_size", size)["ok"] is True
+    sent = [plain(params) for _name, params, _principal in market.engine.calls]
+    assert sent[0] == size and sent[1] == shift
+    assert len(sent) == 3
+    # A request outside the engine's shape is refused before any engine call.
+    bad = market.http("market.position_size", {"accuracy": 0.6})
+    assert bad.status_code == 400
+    assert len(market.engine.calls) == 3
+    # The engine's own refusal code reaches the caller.
+    refusing = MarketServed(
+        captured,
+        served,
+        monkeypatch,
+        {"FinancePositionSize": _refuse("SIZING_INPUT_INVALID")},
+    )
+    assert _code(refusing.http("market.position_size", size)) == "SIZING_INPUT_INVALID"
+    # Without the finance grant nothing reaches the engine.
+    denied = MarketServed(
+        captured, served, monkeypatch, {"FinanceDistributionShift": {}}, scopes=()
+    )
+    assert denied.http("market.distribution_shift", shift).status_code == 403
+    assert denied.engine.calls == []
+
+
+@pytest.mark.spec("ARBORA-DATA-MARKET-R003.13")
+def test_the_compute_port_refuses_unavailable_when_not_composed() -> None:
+    import asyncio
+    from types import SimpleNamespace
+
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.api.ops import market_detail as detail
+
+    context = SimpleNamespace(services={})
+    with pytest.raises(OperationRefused) as refused:
+        asyncio.run(
+            detail.handle_market_position_size(
+                context,
+                {"accuracy": 0.6, "win_loss_ratio": 1.5},
+                None,  # type: ignore[arg-type]
+            )
+        )
+    assert refused.value.code == "UNAVAILABLE"

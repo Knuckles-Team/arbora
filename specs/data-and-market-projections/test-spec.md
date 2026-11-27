@@ -143,15 +143,15 @@ Each active row has one planned or existing proving test. A test that does not y
 | `ARBORA-DATA-MARKET-R003.8` | `tests/mcp_server/test_market_compute_served.py::test_signal_ops_over_http_and_mcp` |
 | `ARBORA-DATA-MARKET-R003.9` | `tests/api/test_market_size.py::test_size_and_abstain_over_http_and_mcp` |
 | `ARBORA-DATA-MARKET-R003.10` | `tests/api/test_market_evaluate.py::test_market_evaluate_over_http_and_mcp` |
-| `ARBORA-DATA-MARKET-R003.11` | `tests/api/test_market_positions.py::test_positions_carry_provenance` (planned) |
+| `ARBORA-DATA-MARKET-R003.11` | `tests/api/test_market_positions.py::test_positions_carry_provenance` |
 | `ARBORA-DATA-MARKET-R003.12` | `tests/mcp_server/test_market_compute_served.py::test_research_kernel_ops_over_http_and_mcp` |
-| `ARBORA-DATA-MARKET-R003.13` | `tests/mcp_server/test_market_compute_served.py::test_sizing_and_shift_over_http_and_mcp` (planned) |
+| `ARBORA-DATA-MARKET-R003.13` | `tests/mcp_server/test_market_compute_served.py::test_sizing_and_shift_over_http_and_mcp` |
 | `ARBORA-DATA-MARKET-R003.14` | `tests/mcp_server/test_market_compute_served.py::test_banking_ops_over_http_and_mcp` |
 | `ARBORA-DATA-MARKET-R003.15` | `tests/mcp_server/test_finance_guide_served.py::test_projection_matches_skill_revision_header` |
 | `ARBORA-DATA-MARKET-R007.7` | `tests/api/test_order_confirmation.py::test_stage_confirm_promote` (planned) |
 | `ARBORA-DATA-MARKET-R008` | `tests/api/test_market_forecast_served.py::test_sample_is_stored_with_probabilistic_flag` (planned) |
 | `ARBORA-DATA-MARKET-R009` | Roll-up of its children. |
-| `ARBORA-DATA-MARKET-R009.1` | `tests/api/test_market_performance.py::test_card_is_verbatim_unavailable_never_zero_and_refuses_unverified_binding` (planned) |
+| `ARBORA-DATA-MARKET-R009.1` | `tests/api/test_market_performance.py::test_card_is_verbatim_unavailable_never_zero_and_refuses_unverified_binding` |
 | `ARBORA-DATA-MARKET-R009.2` | `tests/api/test_market_instrument_detail.py::test_rates_and_dividends_tabs_and_unknown_listing` |
 | `ARBORA-DATA-MARKET-R009.3` | `tests/api/test_market_recommendation.py::test_recommendation_cites_evidence_abstains_and_has_no_order_field` |
 | `ARBORA-DATA-MARKET-R009.4` | `tests/api/test_finance_receipts_list.py::test_states_filter_by_tenant_and_paper_stays_paper` |

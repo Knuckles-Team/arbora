@@ -19,13 +19,15 @@ from typing import Any, Literal
 
 from pydantic import Field
 
+from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._common import Params, build_read_op
+from arbora.api.ops._common import Params, bound_service, build_read_op
 from arbora.api.ops._engine import engine_send
 from arbora.api.ops._nested import invoke_registered
-from arbora.api.ops.finance import _one
+from arbora.api.ops.finance import _authority, _one
 from arbora.api.ops.market_compute import READ_SCOPE, VENUE_SERVER, _tool_value
 from arbora.api.registry import OpSpec
+from arbora.finance.markets import project_account, project_performance
 from arbora.pin_lag.medulla import guard
 
 #: The venue tool that answers one listing's corporate-action records in the engine shape.
@@ -43,6 +45,105 @@ class InstrumentDetailParams(Params):
 
 class InstrumentDetailResult(Params):
     value: dict[str, Any]
+
+
+_STAMP = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$"
+_CURRENCY = r"^[A-Z]{3}$"
+_NUMBERS = Field(min_length=1, max_length=100_000)
+
+
+class PositionsParams(Params):
+    as_of: str = Field(pattern=_STAMP)
+    known_at: str = Field(pattern=_STAMP)
+    base_currency: str = Field(pattern=_CURRENCY)
+    basis_policy: str = Field(min_length=1, max_length=64)
+
+
+class PerformanceParams(Params):
+    range: Literal["1D", "1M", "YTD", "1Y", "5Y", "ALL"]
+    method: str = Field(min_length=1, max_length=64)
+    as_of: str = Field(pattern=_STAMP)
+    known_at: str = Field(pattern=_STAMP)
+    base_currency: str = Field(pattern=_CURRENCY)
+    benchmark: str | None = Field(default=None, min_length=1, max_length=128)
+
+
+class PositionSizeParams(Params):
+    accuracy: float
+    win_loss_ratio: float
+    fraction: float | None = None
+    max_risk: float | None = None
+    series_revision: str | None = Field(default=None, min_length=1, max_length=256)
+
+
+class DistributionShiftParams(Params):
+    current: list[float] = _NUMBERS
+    reference: list[float] = _NUMBERS
+    threshold: float
+
+
+async def _verified(context: Any) -> tuple[str, Any]:
+    """The verified account, resolved before any engine call (never a request field)."""
+    try:
+        _port, _tenant, account = await _authority(context)
+    except OperationRefused as refused:
+        if (refused.details or {}).get("reason") == "account binding unverified":
+            raise EngineRefusal("ACCOUNT_BINDING_UNVERIFIED") from None
+        raise
+
+    async def send(method: str, params: dict[str, Any]) -> Any:
+        return await engine_send(context, method, params)
+
+    return account, send
+
+
+async def handle_market_positions(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """The account's positions, every figure verbatim with its source, as-of and session."""
+    account, send = await _verified(context)
+    return {"value": await project_account(send, account=account, **params)}
+
+
+async def handle_market_performance(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """The performance card as the engine produced it; a missing figure is never zero."""
+    account, send = await _verified(context)
+    guard("FinancePerformance")
+    return {"value": await project_performance(send, account=account, **params)}
+
+
+async def _compute(
+    context: Any, method: str, model: str, params: Mapping[str, Any]
+) -> dict[str, Any]:
+    from medulla.generated import models
+
+    port = bound_service(
+        context, "market_compute_port", reason="the market compute port is not composed"
+    )
+    body = {k: v for k, v in params.items() if v is not None}
+    getattr(models, model).model_validate(body)
+    return {"value": await port.call(context, method, body)}
+
+
+async def handle_market_position_size(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    return await _compute(
+        context, "FinancePositionSize", "MethodFinancePositionSizeParams", params
+    )
+
+
+async def handle_market_distribution_shift(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    return await _compute(
+        context,
+        "FinanceDistributionShift",
+        "MethodFinanceDistributionShiftParams",
+        params,
+    )
 
 
 def _not_found() -> OperationRefused:
@@ -157,9 +258,53 @@ def operations() -> tuple[OpSpec, ...]:
             handler="arbora.api.ops.market_detail.handle_market_instrument_detail",
             scope=READ_SCOPE,
         ),
+        build_read_op(
+            op_id="market.positions",
+            summary="Read the account's positions with source, as-of and session",
+            examples=("show my positions",),
+            params=PositionsParams,
+            result=InstrumentDetailResult,
+            handler="arbora.api.ops.market_detail.handle_market_positions",
+            scope=READ_SCOPE,
+        ),
+        build_read_op(
+            op_id="market.performance",
+            summary="Read the account performance card against an optional benchmark",
+            examples=("how is my portfolio performing this year",),
+            params=PerformanceParams,
+            result=InstrumentDetailResult,
+            handler="arbora.api.ops.market_detail.handle_market_performance",
+            scope=READ_SCOPE,
+        ),
+        build_read_op(
+            op_id="market.position_size",
+            summary="Size a position with the engine's sizing rule",
+            examples=("how large should this position be",),
+            params=PositionSizeParams,
+            result=InstrumentDetailResult,
+            handler="arbora.api.ops.market_detail.handle_market_position_size",
+            scope=READ_SCOPE,
+        ),
+        build_read_op(
+            op_id="market.distribution_shift",
+            summary="Test whether a return series has shifted from its reference",
+            examples=("has this distribution shifted",),
+            params=DistributionShiftParams,
+            result=InstrumentDetailResult,
+            handler="arbora.api.ops.market_detail.handle_market_distribution_shift",
+            scope=READ_SCOPE,
+        ),
     )
 
 
 specs = operations
 
-__all__ = ["handle_market_instrument_detail", "operations", "specs"]
+__all__ = [
+    "handle_market_distribution_shift",
+    "handle_market_instrument_detail",
+    "handle_market_performance",
+    "handle_market_position_size",
+    "handle_market_positions",
+    "operations",
+    "specs",
+]

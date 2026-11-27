@@ -184,6 +184,17 @@ def _with_finance_read_port(
     return {**bindings, "finance_read_port": FleetFinanceReadPort()}
 
 
+def _with_market_compute_port(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the market compute port (ARBORA-DATA-MARKET-R003.13); it sends as the caller."""
+    if bindings is None or "market_compute_port" in bindings:
+        return bindings
+    from arbora.finance.compute_port import EngineMarketComputePort
+
+    return {**bindings, "market_compute_port": EngineMarketComputePort()}
+
+
 def _with_meeting_summarizer(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
@@ -1105,6 +1116,7 @@ def compose_served_invocation(
         }
     bindings = _with_a2a_peer_transport(bindings)
     bindings = _with_finance_read_port(bindings)
+    bindings = _with_market_compute_port(bindings)
     bindings = _with_meeting_summarizer(bindings)
     if bindings is not None and "identity_admin" not in bindings:
         # ARBORA-IDENTITY-R018.1: the identity operations reach the engine

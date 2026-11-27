@@ -24,6 +24,8 @@ from arbora.api.errors import ArboraErrorCode, ArboraRefusal
 
 __all__ = [
     "AccountBinding",
+    "project_account",
+    "project_performance",
     "MarketProvider",
     "MarketReadRequest",
     "MarketReadResult",
@@ -114,3 +116,58 @@ def get_market_read(
             details={"symbol": request.symbol},
         )
     return read(request)
+
+
+async def project_account(
+    send: Any,
+    *,
+    account: str,
+    as_of: str,
+    known_at: str,
+    base_currency: str,
+    basis_policy: str,
+) -> Any:
+    """The engine's account projection (``FinanceAccountProject``), figures verbatim.
+
+    Every figure keeps its source, as-of and session as the engine produced them;
+    Arbora copies the answer and does no arithmetic (ARBORA-DATA-MARKET-R003.11).
+    """
+    return await send(
+        "FinanceAccountProject",
+        {
+            "account": account,
+            "as_of": as_of,
+            "known_at": known_at,
+            "base_currency": base_currency,
+            "basis_policy": basis_policy,
+        },
+    )
+
+
+async def project_performance(
+    send: Any,
+    *,
+    account: str,
+    as_of: str,
+    known_at: str,
+    base_currency: str,
+    method: str,
+    range: str,  # noqa: A002 - the engine's own field name
+    benchmark: str | None = None,
+) -> Any:
+    """The engine's ``FinancePerformance`` projection, forwarded with no arithmetic.
+
+    ``FinancePerformance`` is an engine ``main`` method the pinned release lacks
+    (PIN-LAG), so the caller guards it before this send (ARBORA-DATA-MARKET-R009.1).
+    """
+    body: dict[str, Any] = {
+        "account": account,
+        "as_of": as_of,
+        "known_at": known_at,
+        "base_currency": base_currency,
+        "method": method,
+        "range": range,
+    }
+    if benchmark is not None:
+        body["benchmark"] = benchmark
+    return await send("FinancePerformance", body)
