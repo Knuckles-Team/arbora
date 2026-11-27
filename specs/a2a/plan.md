@@ -66,7 +66,9 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 
 ## Cross-repo seams
 
-None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
+- `MEDULLA-IDENTITY-R744` provides the delegated run identity that `ARBORA-A2A-R001.2.2.1` consumes. The contract is `contracts/delegated-run-identity.md`.
+
+The `Depends on` lines of requirements.md name every other dependency by the row ID that owns it in the other repository.
 
 ### A2A task and approval projection
 
