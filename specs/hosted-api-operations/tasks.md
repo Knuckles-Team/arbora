@@ -212,7 +212,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 
 
 - [ ] T170 ARBORA-OPS-R021.4.5.1.1 Compose the stateless native reader and qualify source-level authority/projection checks; retain the installed-EG acceptance blocker.
-- [ ] T171 ARBORA-OPS-R021.4.5.1.2 Compose native run admission, lease-bound scaffold publication and matching graph reads. Add explicit trusted scaffold on/off configuration, default off. Qualify both modes through the actual AU callback and real native lifecycle.
+- [ ] T171 ARBORA-OPS-R021.4.5.1.2 Compose native run admission, lease-bound scaffold publication and matching graph reads. Qualify scaffold publication through the real native lifecycle; the harness release owns the scaffold, so the operator object carries no scaffold option.
 
 ## Served source operations (R848)
 

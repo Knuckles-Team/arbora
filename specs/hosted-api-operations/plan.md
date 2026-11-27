@@ -1042,12 +1042,10 @@ This slice has no spawned children, transcript, message target or continuation.
 Nested production and snapshot/update reconciliation remain required by the
 parent row. Native-service acceptance is not claimed by source fixtures.
 
-The existing ARBORA_TASK_PLAN operator object accepts `plan_scaffold: "on"`
-to enable AU scaffolds for admitted native runs. The default remains `"off"`.
-This explicit trusted option changes only the matching harness field.
-It does not infer a HarnessConfig decision or accept authority from request metadata.
-A disabled run may publish its executable TaskPlan without any scaffold updates.
-That result is not scaffold acceptance; enabled mode requires native revision evidence.
+The ARBORA_TASK_PLAN operator object carries no scaffold option. Under the harness
+release the scaffold is owned by the run loop, so the operator object cannot enable or
+disable it, and an operator object that still names `plan_scaffold` is refused at
+startup. Arbora does not infer a HarnessConfig decision or accept authority from request metadata.
 
 R021.4.8.2 retains the parent row's nested production and snapshot/update proof.
 It remains open after the flat slice passes its source checks. The parent row
