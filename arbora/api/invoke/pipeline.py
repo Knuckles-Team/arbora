@@ -1070,6 +1070,7 @@ async def _confirmation_gate(call: _Call) -> OpError | OpResult | None:
         tenant=call.caller.tenant,
         is_read=call.op.effect == Effect.READ,
         plan_approved=call.plan_ref is not None,
+        irreversible=call.op.effect == Effect.DESTRUCTIVE,
     )
     if cleared is not None or call.plan_ref is None:
         return cleared

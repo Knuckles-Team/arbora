@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 import pytest
@@ -58,7 +60,11 @@ def _declare(monkeypatch: pytest.MonkeyPatch, *, present: bool) -> None:
         )
 
 
-def _compose(client: GateClient, monkeypatch: pytest.MonkeyPatch) -> Any:
+def _compose(
+    client: GateClient,
+    monkeypatch: pytest.MonkeyPatch,
+    bindings: Mapping[str, Any] = MappingProxyType({}),
+) -> Any:
     _declare(monkeypatch, present=True)
     monkeypatch.setattr(runtime_config, "auth_jwt_audience", "arbora-fixture")
     monkeypatch.setattr(runtime_config, "kg_policy_version", "policy:fixture")
@@ -76,7 +82,7 @@ def _compose(client: GateClient, monkeypatch: pytest.MonkeyPatch) -> Any:
         graph=process.graph,
         process_session=lambda: process,
         action_policies=ActionPolicies(),
-        bindings={},
+        bindings=dict(bindings),
         fleet_effect=refused_fleet_effect,
         promotion_ci_tool=CI_TOOL,
     )

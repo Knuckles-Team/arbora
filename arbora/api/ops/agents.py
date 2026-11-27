@@ -8,6 +8,7 @@ from typing import Any
 from pydantic import Field
 
 from arbora.api.contracts.provisioning_capacity import ProvisionRequest
+from arbora.api.invoke.certification_gate import MAX_RUN_SKILLS, SkillRef
 from arbora.api.ops._common import Params, bound_service
 from arbora.api.ops._engine import engine_send
 from arbora.api.registry import (
@@ -32,6 +33,9 @@ class AgentRunParams(Params):
     #: Instances the run needs; allocated through the SDK provisioner before dispatch
     #: (ARBORA-FLEET-R024.6). The replay key of the allocation is the request's own.
     provision: ProvisionRequest | None = None
+    #: The atomic skills the run uses. Each needs its current stored attestation before
+    #: the run starts (ARBORA-OPS-R872); a missing, stale or mismatched one refuses.
+    skills: list[SkillRef] = Field(default_factory=list, max_length=MAX_RUN_SKILLS)
 
 
 class TaskRefParams(Params):
@@ -290,8 +294,10 @@ async def handle_agent(
         if op.id == "agents.run":
             if not context.idempotency_key:
                 raise ValueError("Idempotency-Key is required")
+            from arbora.api.invoke.certification_gate import require_run_attestation
             from arbora.modality.models import ModalityRefused
 
+            await require_run_attestation(context, params.get("skills"))
             message = await _with_role_profile(context, params["message"])
             message = await admit_workflow(context, message)
             if params.get("assistant_profile_ref"):

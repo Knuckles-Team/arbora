@@ -45,6 +45,11 @@ from typing import Any
 from pydantic import Field
 from pydantic_ai import RunContext
 
+from arbora.api.invoke.certification_gate import (
+    MAX_RUN_SKILLS,
+    SkillRef,
+    require_run_attestation,
+)
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import claim_values
 from arbora.api.ops._common import Params
@@ -121,6 +126,15 @@ class PlanRunParams(Params):
         )
     )
     work_item: WorkItemLease | None = None
+    skills: list[SkillRef] = Field(
+        default_factory=list,
+        max_length=MAX_RUN_SKILLS,
+        description=(
+            "Atomic skills the plan uses. Each needs its current stored attestation "
+            "before the plan is decided; a missing, stale or mismatched one refuses "
+            "POLICY_DENIED."
+        ),
+    )
     fleet_tools: list[FleetToolRef] = Field(
         default_factory=list,
         max_length=16,
@@ -1334,6 +1348,7 @@ async def handle_plan_run(
 ) -> dict[str, Any]:
     """Decide, verify, attach and execute one task plan for the verified caller."""
     parsed = PlanRunParams.model_validate(dict(params))
+    await require_run_attestation(context, parsed.skills)
     # The shared invocation boundary freezes all nested caller arguments before
     # dispatch.  The engine's strict TaskPlan DTO is a JSON boundary and
     # requires fresh lists and dictionaries; thaw only this proposal at that

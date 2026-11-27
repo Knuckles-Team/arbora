@@ -3,11 +3,10 @@
 Arbora holds no scoring and computes no compatibility. It asks the engine two
 questions and applies the answers:
 
-- ``DecisionEval`` ``certification_get`` reads the stored ``CertifyLocalSkill``
-  attestation by digest (the producer is ``MEDULLA-DECISION-ENGINE-R142.101``).
-  Engine ``main`` stores it under ``local_certification/<digest>`` but its
-  ``receipt`` op reads only evaluation receipts, so the read op is requested
-  (OVERSTORY-GAPS, MEDULLA FOR ARBORA w15) and refuses ``UNAVAILABLE`` until served;
+- ``DecisionEval`` ``certification`` reads the stored ``CertifyLocalSkill``
+  attestation by digest (the producer is ``MEDULLA-DECISION-ENGINE-R142.101``; the read
+  is ``MEDULLA-DECISION-ENGINE-R142.103``, ``{tenant_id, digest}``, null for an absent or
+  foreign digest). It refuses ``UNAVAILABLE`` until the pinned contract declares it;
 - ``Decide`` with ``QuestionKind::SkillUpgrade`` returns the contract
   compatibility verdict (``MEDULLA-DECISION-ENGINE-R167.3``).
 
@@ -157,17 +156,18 @@ class EngineAdmission:
         except OperationRefused as refused:
             raise AdmissionRefused("PRODUCER_UNAVAILABLE", refused.details) from None
         try:
-            answer = await self.send(
+            stored = await self.send(
                 "DecisionEval",
                 {
-                    "op": "certification_get",
-                    "request": {"attestation_digest": digest, "tenant_id": tenant},
+                    "op": {
+                        "op": "certification",
+                        "request": {"tenant_id": tenant, "digest": digest},
+                    }
                 },
                 tenant,
             )
         except Exception:
             return None
-        stored = _find(answer, "attestation")
         if not isinstance(stored, Mapping) or "body" not in stored:
             return None
         try:

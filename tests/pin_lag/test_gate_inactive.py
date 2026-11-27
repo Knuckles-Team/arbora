@@ -13,6 +13,7 @@ from arbora.mcp_server.gate_audit import gate_inactive_event, gate_inactive_star
 from arbora.pin_lag import gates
 from arbora.security.session import use_session
 from tests.a2a.test_operation_bridge import session
+from tests.question_kinds import declare_autonomy_shapes
 
 _LINES = [
     "gate_inactive: autonomy (engine lacks autonomy_verdict)",
@@ -24,6 +25,7 @@ _LINES = [
 def _served(monkeypatch: pytest.MonkeyPatch, *kinds: str) -> None:
     """A pinned contract that names exactly ``kinds``."""
     monkeypatch.setattr(gates, "question_kind_served", lambda kind: kind in kinds)
+    declare_autonomy_shapes(monkeypatch)
 
 
 @pytest.mark.spec("ARBORA-OPS-R867")
@@ -124,3 +126,22 @@ async def test_no_audit_event_once_every_gate_is_active(
     await gate_inactive_startup(adapter, lambda: who)()
     assert adapter.calls == []
     assert gate_inactive_event("t", "p", "r") == {}
+
+
+@pytest.mark.spec("ARBORA-OPS-R867")
+def test_an_engine_naming_the_question_but_not_the_typed_shapes_keeps_the_gate_inactive(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The question without ``AutonomyRequest`` is still inactive, naming the missing shape."""
+    from medulla.generated import models
+
+    monkeypatch.delattr(models, "AutonomyRequest", raising=False)
+    monkeypatch.setattr(
+        gates, "question_kind_served", lambda kind: kind == "autonomy_verdict"
+    )
+    assert not gates.gate_served("autonomy")
+    assert gates.gate_inactive_line("autonomy") == (
+        "gate_inactive: autonomy (engine lacks AutonomyRequest)"
+    )
+    declare_autonomy_shapes(monkeypatch)
+    assert gates.gate_served("autonomy")
