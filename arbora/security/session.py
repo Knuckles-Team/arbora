@@ -373,7 +373,7 @@ class GraphSession:
         """
         try:
             from arbora.security.delegation import current_delegation
-        except Exception:  # noqa: BLE001 — delegation layer optional at import time
+        except ImportError:  # delegation layer optional at import time
             return
         delegation = current_delegation()
         if delegation is None or not delegation.enforced:

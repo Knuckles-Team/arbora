@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -289,7 +290,10 @@ async def precheck_bearer(
 
             fetch_keys = partial(_fetch_jwks, key_cache)
         keys = await fetch_keys(profile.key_authority)
-    except Exception:  # noqa: BLE001 - an unreadable authority admits nothing
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "an unreadable authority admits nothing", exc_info=True
+        )
         keys = None
     try:
         verified = verify_bearer(

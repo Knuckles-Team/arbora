@@ -317,7 +317,7 @@ class VaultBackend(SecretsBackend):
             self._token_auth_time = _time.monotonic()
             logger.info("Vault OIDC/JWT authentication succeeded")
             return True
-        except Exception as e:  # noqa: BLE001 — one candidate in _authenticate()'s auto-detect chain (oidc/approle/token/kubernetes); a loud logger.warning already fires there if every candidate fails
+        except Exception as e:  # one candidate in _authenticate()'s auto-detect chain (oidc/approle/token/kubernetes); a loud logger.warning already fires there if every candidate fails
             logger.debug("Vault OIDC authentication failed: %s", e)
             return False
 
@@ -337,7 +337,7 @@ class VaultBackend(SecretsBackend):
             self._token_auth_time = _time.monotonic()
             logger.info("Vault: AppRole auth successful.")
             return True
-        except Exception as e:  # noqa: BLE001 — one candidate in _authenticate()'s auto-detect chain; a loud logger.warning already fires there if every candidate fails
+        except Exception as e:  # one candidate in _authenticate()'s auto-detect chain; a loud logger.warning already fires there if every candidate fails
             logger.debug("Vault AppRole authentication failed: %s", e)
             return False
 
@@ -359,7 +359,7 @@ class VaultBackend(SecretsBackend):
             self._token_auth_time = _time.monotonic()
             logger.info("Vault: Kubernetes auth successful.")
             return True
-        except Exception as e:  # noqa: BLE001 — one candidate in _authenticate()'s auto-detect chain; a loud logger.warning already fires there if every candidate fails
+        except Exception as e:  # one candidate in _authenticate()'s auto-detect chain; a loud logger.warning already fires there if every candidate fails
             logger.debug("Vault Kubernetes authentication failed: %s", e)
             return False
 

@@ -122,7 +122,7 @@ def run_renewal_policy() -> RunRenewalPolicy:
 
         raw = read_env("ARBORA_RUN_MAX_LIFETIME_SECONDS", str(DEFAULT_MAX_RUN_SECONDS))
         return RunRenewalPolicy(max_run_seconds=int(raw))
-    except Exception:  # noqa: BLE001 — a bad value keeps the bounded default
+    except ValueError:  # a bad value keeps the bounded default
         logger.warning("Invalid ARBORA_RUN_MAX_LIFETIME_SECONDS; using the default")
         return RunRenewalPolicy()
 
@@ -300,7 +300,10 @@ async def keep_run_authority_current(
             return lease.renewals
         try:
             reason = await revocation_check(actor)
-        except Exception as exc:  # noqa: BLE001 — fail closed: no renewal this tick
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "fail closed: no renewal this tick", exc_info=True
+            )
             audit(audit_record("check_failed", actor, lease, type(exc).__name__))
             reason = None
             checked = False
@@ -355,7 +358,10 @@ def engine_session_check(
             return None
         try:
             standing = await liveness(reference)
-        except Exception:  # noqa: BLE001 - an unanswered question never renews
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "an unanswered question never renews", exc_info=True
+            )
             return "LIVENESS_UNAVAILABLE"
         if standing in ("active", "not_session_bound"):
             return None

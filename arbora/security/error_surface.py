@@ -231,7 +231,10 @@ def _engine_retry_after_hint() -> float:
         config = security_settings()
 
         return float(config.engine_breaker_cooldown)
-    except Exception:  # noqa: BLE001 — a retry hint must never break error reporting
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "a retry hint must never break error reporting", exc_info=True
+        )
         return 15.0  # CircuitBreaker's own default cooldown
 
 
@@ -341,7 +344,7 @@ def _recording_actor_tenant() -> str:
 
     try:
         return str(current_actor().tenant_id or "").strip()
-    except Exception as exc:  # noqa: BLE001 — diagnostics must never fail the error path
+    except Exception as exc:  # diagnostics must never fail the error path
         # Logged with its REAL cause (not just the type name) so an unexpected
         # identity-layer failure here is still diagnosable, at debug level because
         # the ordinary "no actor bound outside a served request" case is expected
@@ -431,7 +434,7 @@ def resolve_error_detail(detail_ref: str) -> dict[str, Any] | None:
         return None
     try:
         durable_record = resolver(detail_ref)
-    except Exception:  # noqa: BLE001 — a durable-backend failure must not break resolution
+    except Exception:  # a durable-backend failure must not break resolution
         _DEFAULT_LOGGER.warning(
             "durable detail persistence sink resolve failed for correlation_id=%s",
             detail_ref,
