@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.api.domain.mcp_server.effect_journal import EgEffectJournal
 from arbora.api.invoke import invoke
 from arbora.api.invoke.steps import OpError, OpResult
 from arbora.api.mcp.caller import caller_from_session
@@ -19,7 +20,6 @@ from arbora.browser_control.browser_control_client import ControlResultMessage
 from arbora.browser_control.browser_control_runtime import dispatch_browser_operation
 from arbora.browser_control.browser_state import BrowserState
 from arbora.core.settings import RuntimeConfig, runtime_config
-from arbora.mcp_server.effect_journal import EgEffectJournal
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,

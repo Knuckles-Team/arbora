@@ -9,7 +9,7 @@ from typing import Any
 import msgpack
 import pytest
 
-from arbora.a2a.team import read_team
+from arbora.api.domain.a2a.team import read_team
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import a2a_team
 from arbora.security.session import use_session

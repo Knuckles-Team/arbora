@@ -17,9 +17,10 @@ from pydantic_ai.usage import RequestUsage
 from arbora import agent_runs
 from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
+from arbora.api.domain.mcp_server import task_plan_runtime
 from arbora.api.ops import plans
 from arbora.api.registry import Effect, Registry
-from arbora.mcp_server import task_plan, task_plan_runtime
+from arbora.mcp_server import task_plan
 from arbora.security.actor_context import ActorContext, ActorType
 from arbora.security.session import GraphSession
 from tests.api.test_invoke_contract import operation

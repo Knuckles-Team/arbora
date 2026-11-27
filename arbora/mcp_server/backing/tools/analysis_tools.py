@@ -16,10 +16,10 @@ from typing import Any
 
 from pydantic import Field
 
+from arbora.api.domain.mcp_server.backing import engine_routing
 from arbora.api.errors import not_served
 from arbora.api.evidence import EvidenceBundle
 from arbora.core.environment import read_env, read_text
-from arbora.mcp_server.backing import engine_routing
 from arbora.mcp_server.host_caches import AnalysisCore, ToolTable
 from arbora.mcp_server.legacy_action_invoke import invoke_legacy_action
 from arbora.observability.state import HealthState

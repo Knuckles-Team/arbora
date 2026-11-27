@@ -33,11 +33,11 @@ import json
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
+from arbora.api.domain.mcp_server.backing.context_helpers import ctx_confirm_destructive
 from arbora.core.concurrency import (
     invoke_client_method,
     wrap_data_kwargs,
 )
-from arbora.mcp_server.backing.context_helpers import ctx_confirm_destructive
 
 #: Action strings that request the list of valid actions instead of executing one.
 DISCOVERY_ACTIONS = ("list_actions", "help", "actions")

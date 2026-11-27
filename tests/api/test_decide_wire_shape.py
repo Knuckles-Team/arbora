@@ -75,7 +75,7 @@ async def test_the_host_decision_port_wraps_the_request() -> None:
 
 @pytest.mark.spec("ARBORA-OPS-R877")
 async def test_the_team_question_is_sent_wrapped() -> None:
-    from arbora.a2a.team import TeamCoordinator
+    from arbora.api.domain.a2a.team import TeamCoordinator
 
     seen, base = _capture()
 

@@ -589,9 +589,9 @@ def _with_approval_notices(
     engine as the process service identity; a pinned engine without the outbox
     shapes refuses ``UNAVAILABLE`` inside each tick (``arbora.pin_lag.medulla``).
     """
+    from arbora.api.domain.fleet.approval_notifier import digest_delivery, role_holders
     from arbora.api.domain.fleet.outbox_consumer import OutboxRunner
     from arbora.api.invoke.bootstrap import build_outbox_consumers
-    from arbora.fleet.approval_notifier import digest_delivery, role_holders
     from arbora.messaging.service import ReachNotifier
 
     async def send(method: str, params: dict[str, Any]) -> Any:
@@ -1309,8 +1309,8 @@ def compose_served_invocation(
         changes["fleet_effect"] = fleet_effect
     # Every external effect, and every plan-gated one, is reserved and recorded
     # in EG before dispatch: one coordinator settles a confirmed replay.
+    from arbora.api.domain.mcp_server.effect_journal import EgEffectJournal
     from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
-    from arbora.mcp_server.effect_journal import EgEffectJournal
 
     async def control_client() -> Any:
         # EG holds WorkItems on the tenant's control graph.
@@ -1626,7 +1626,7 @@ def _background_services(
     callers = ServiceCallers(
         process_session=session, runtime=runtime, graph=graph, invoke=invoke_op
     )
-    from arbora.agent_host.usage_ledger import LEDGER
+    from arbora.api.domain.agent_host.usage_ledger import LEDGER
 
     LEDGER.configure(callers)
     started.extend(_scm_poll_service(callers, SystemClock()))

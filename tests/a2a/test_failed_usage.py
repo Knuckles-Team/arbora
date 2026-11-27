@@ -58,7 +58,7 @@ async def test_real_executor_failure_receipt(chain, monkeypatch, phase):
     if phase == "provider":
         from types import SimpleNamespace
 
-        from arbora.mcp_server import task_plan_runtime
+        from arbora.api.domain.mcp_server import task_plan_runtime
 
         monkeypatch.setattr(
             task_plan_runtime,
@@ -164,7 +164,7 @@ def test_readonly_counters_are_copied():
 def test_missing_public_failure_contract(monkeypatch):
     import meristem.graph as au
 
-    from arbora.mcp_server import task_plan_runtime
+    from arbora.api.domain.mcp_server import task_plan_runtime
 
     monkeypatch.delattr(au, "RunFailed")
     with pytest.raises(task_plan_runtime.OperationRefused, match="UPGRADE_REQUIRED"):

@@ -9,15 +9,15 @@ from typing import Any
 import msgpack
 import pytest
 
-from arbora.api.domain.fleet.outbox_consumer import consume_topic
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops import approvals
-from arbora.fleet.approval_notifier import (
+from arbora.api.domain.fleet.approval_notifier import (
     APPROVALS_TOPIC,
     approval_handler,
     digest_delivery,
     role_holders,
 )
+from arbora.api.domain.fleet.outbox_consumer import consume_topic
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops import approvals
 from arbora.messaging.action_dispatch import NotificationSpec
 
 USERS = [

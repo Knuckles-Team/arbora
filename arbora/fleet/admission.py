@@ -23,7 +23,7 @@ from arbora.api.domain.fleet.admission_models import (
     parse_certification_binding,
     parse_workflow_binding,
 )
-from arbora.fleet.admission_policy import (
+from arbora.api.domain.fleet.admission_policy import (
     SKILL_POLICIES,
     WORKFLOW_POLICIES,
     AdmissionConfig,

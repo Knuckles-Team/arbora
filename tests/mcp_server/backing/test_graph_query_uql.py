@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.mcp_server.backing import engine_routing
+from arbora.api.domain.mcp_server.backing import engine_routing
 from tests.mcp_server.backing._support import (
     register_graph_query as _register_graph_query,
 )

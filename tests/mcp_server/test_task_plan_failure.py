@@ -9,7 +9,7 @@ import pytest
 from meristem.graph import RunPlanFailure, RunRequest, run
 
 from arbora import agent_runs
-from arbora.mcp_server import task_plan_runtime
+from arbora.api.domain.mcp_server import task_plan_runtime
 from tests.mcp_server.test_task_plan_runtime import bridge as bridge
 from tests.mcp_server.test_task_plan_runtime import chain as chain
 from tests.mcp_server.test_task_plan_runtime import chain_ports

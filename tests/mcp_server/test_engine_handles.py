@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
+from arbora.api.domain.mcp_server.backing import engine_routing
 from arbora.gateway import daemon
 from arbora.mcp_server import served_engine
-from arbora.mcp_server.backing import engine_routing
 from arbora.mcp_server.backing.tools import engine_tools
 from arbora.mcp_server.host_context import build_host_context
 from arbora.mcp_server.served_engine import EngineHandles

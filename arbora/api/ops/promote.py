@@ -257,7 +257,7 @@ async def handle_promotion_record(
 
 
 NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "deploy.promotions.apply": "arbora.mcp_server.effect_journal:EgEffectJournal",
+    "deploy.promotions.apply": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
 }
 
 

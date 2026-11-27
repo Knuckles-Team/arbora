@@ -178,7 +178,7 @@ def capacity_verdict_ask(
     for the host principal. A raise on ``allow`` only, so a missing pin or an engine
     failure raises and the judge holds the limit.
     """
-    from arbora.deployment.capacity_actuation import verdict
+    from arbora.api.domain.deployment.capacity_actuation import verdict
 
     async def ask(proposal: Mapping[str, Any]) -> str:
         tenant = str(proposal["tenant_id"])

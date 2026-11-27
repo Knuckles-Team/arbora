@@ -42,7 +42,7 @@ class FleetDeployWatchEvaluateParams(_Params):
 
 #: The rollback is one ``fleet.call`` the durable effect journal settles at most once.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "fleet.deploy_watch.dispatch": "arbora.mcp_server.effect_journal:EgEffectJournal",
+    "fleet.deploy_watch.dispatch": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
 }
 
 

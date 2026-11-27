@@ -616,8 +616,8 @@ def apply_receipt(manifest: DeploymentManifest, diff: DeploymentDiff) -> dict[st
 #: is one ``fleet.call`` reserved in the engine effect journal under
 #: ``deploy:<plan_digest>:<node_id>`` (ARBORA-DEPLOY-R017.21).
 NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "deploy.placement.apply": "arbora.mcp_server.effect_journal:EgEffectJournal",
-    "deploy.manifest.apply": "arbora.mcp_server.effect_journal:EgEffectJournal",
+    "deploy.placement.apply": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
+    "deploy.manifest.apply": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
     # The engine replays ``GraphSchema`` by operation identity (the idempotency key).
     "deploy.ontology.import": "medulla:GraphSchema",
 }
