@@ -11,21 +11,20 @@ absolute, so a replay of one execution key converges on the same state.
 from __future__ import annotations
 
 import asyncio
-import contextlib
-import contextvars
 import logging
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Mapping
 from types import MappingProxyType
 from typing import Any
 
 from arbora.api.domain.fleet.fleet_tool_call import call_fleet_tool, refused_result
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.core.environment import read_env
-from arbora.fleet.scaling.scaling_intent_reconciler import (
+from arbora.api.domain.fleet.scale_records import (
     ScaleActuationRequest,
     ScaleActuationResult,
     ScaleIntentState,
 )
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.request_binding import bound_request
+from arbora.core.environment import read_env
 
 SERVER_SETTING = "ARBORA_CONTAINER_MANAGER_FLEET_SERVER"
 DEFAULT_SERVER = "container-manager-mcp"
@@ -36,29 +35,6 @@ MULTI_CONTEXT_TOOL = "cm_multi_context"
 RUNTIMES = MappingProxyType(
     {"deployment": "scale_deployment", "statefulset": "scale_statefulset"}
 )
-
-#: The one request-bound dispatcher the sync actuator reads: ``(context, loop)``.
-_REQUEST: contextvars.ContextVar[tuple[Any, asyncio.AbstractEventLoop] | None] = (
-    contextvars.ContextVar("fleet_actuation_request", default=None)
-)
-
-
-@contextlib.contextmanager
-def bind_request(context: Any) -> Iterator[None]:
-    """Bind the running request to the actuator for the span of one reconcile."""
-    token = _REQUEST.set((context, asyncio.get_running_loop()))
-    try:
-        yield
-    finally:
-        _REQUEST.reset(token)
-
-
-def request_context() -> Any:
-    """The verified request the running reconcile serves; refuses when none is bound."""
-    bound = _REQUEST.get()
-    if bound is None:
-        raise OperationRefused("UNAVAILABLE", {"reason": "no request is bound"})
-    return bound[0]
 
 
 def _server() -> str:
@@ -193,10 +169,7 @@ def _dispatch_on_request_loop(
     server: str, tool: str, arguments: Mapping[str, Any]
 ) -> Any:
     """Run one fleet call on the loop of the request that started this reconcile."""
-    bound = _REQUEST.get()
-    if bound is None:
-        raise OperationRefused("UNAVAILABLE", {"reason": "no request is bound"})
-    context, loop = bound
+    context, loop = bound_request()
     future = asyncio.run_coroutine_threadsafe(
         call_fleet_tool(context, server, tool, arguments), loop
     )

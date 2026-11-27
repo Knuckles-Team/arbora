@@ -274,6 +274,18 @@ def test_api_and_identity_import_no_subsystem_or_host() -> None:
     assert offenders == []
 
 
+@pytest.mark.spec("ARBORA-HOST-R038.1")
+def test_api_ops_import_no_subsystem() -> None:
+    """No file of ``api`` imports a unit of a later layer: handlers read ports instead."""
+    findings = scan(PACKAGE, load_layers(ROOT / "pyproject.toml"))
+    upward = [
+        f"{f.location} {f.detail}"
+        for f in findings
+        if f.rule == "upward-import" and f.location.startswith("arbora/api/")
+    ]
+    assert upward == []
+
+
 @pytest.mark.spec("ARBORA-HOST-R038.8")
 def test_no_unit_imports_another_units_private_name() -> None:
     """No unit imports a leading-underscore module or name of another unit."""

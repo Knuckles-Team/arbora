@@ -21,6 +21,7 @@ from arbora.api.ops import delivery_ports
 from arbora.api.ops import development_scm as scm_intake
 from arbora.api.ops.plans import LateStepInvoke
 from arbora.identity.signed_ingress import ScmSignedIngress, scm_sources
+from arbora.mcp_server.backing.tools import engine_tools
 from arbora.security.operation_result import OpError, OpResult
 from arbora.security.signed_ingress import bind_signed_ingress
 from tests.api._served_support import McpAsk, person, route_methods
@@ -66,7 +67,7 @@ def test_run_start_reaches_the_lane_and_a_signed_event_is_stamped_with_productio
     app, engine, runs, invocation, monkeypatch = runs_env
     engine.modes["repo"] = "development"
     lane = LaneClient()
-    monkeypatch.setattr(delivery_ports, "_lane_client", lambda graph: lane)
+    monkeypatch.setattr(engine_tools, "_client_for", lambda graph: lane)
     started: list[tuple[str, dict[str, Any], str]] = []
 
     async def agents_run(
@@ -188,10 +189,9 @@ def test_unserved_engine_shapes_queue_the_assignment_and_stamp_nobody(
 
     context = SimpleNamespace(
         caller=SimpleNamespace(session=SimpleNamespace(graph="g1")),
-        services=delivery_ports.delivery_bindings(),
+        # A release whose client lacks the lane namespace: the assignment waits.
+        services=delivery_ports.delivery_bindings(lambda graph: SimpleNamespace()),
     )
-    # A release whose client lacks the lane namespace: the assignment waits.
-    monkeypatch.setattr(delivery_ports, "_lane_client", lambda graph: SimpleNamespace())
     lanes = delivery_ports.delivery_port(context, "delivery_lanes")
     runner = SimpleNamespace(start=None)
     queued = asyncio.run(
@@ -210,7 +210,8 @@ def test_unserved_engine_shapes_queue_the_assignment_and_stamp_nobody(
     }
     # The pinned release lacks the identity-link and path-grant shapes: nobody is stamped.
     links = delivery_ports.delivery_port(
-        SimpleNamespace(services=delivery_ports.delivery_bindings()), "identity_links"
+        SimpleNamespace(services=delivery_ports.delivery_bindings(lambda graph: None)),
+        "identity_links",
     )
     assert asyncio.run(links.principal_for("github", "octocat")) is None
 

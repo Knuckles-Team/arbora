@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 
 from arbora import work_items
-from arbora.fleet.scaling.scaling_intent_reconciler import (
+from arbora.api.domain.fleet.scale_records import (
     ScaleActuationResult,
     ScaleIntentConflict,
     ScaleIntentState,
@@ -224,10 +224,10 @@ async def test_a_crash_before_the_observation_is_repaired_under_a_fresh_claim(
 
 @pytest.mark.spec("ARBORA-FLEET-R024.18")
 async def test_an_observation_under_a_lost_claim_commits_nothing(ledger: Any) -> None:
-    from arbora.fleet.scaling.scaling_intent_reconciler import (
+    from arbora.api.domain.fleet.scale_records import (
         ScaleObservation,
         ScaleObservationStatus,
-        _result_digest,
+        result_digest,
     )
 
     store, fake = ledger
@@ -250,7 +250,7 @@ async def test_an_observation_under_a_lost_claim_commits_nothing(ledger: Any) ->
         status=ScaleObservationStatus.CONVERGED,
         scaled=True,
         observed_replicas=record.desired_replicas,
-        outcome_digest=_result_digest(result),
+        outcome_digest=result_digest(result),
         observed_at=NOW,
     )
     with pytest.raises(ScaleLeaseLost):

@@ -49,8 +49,9 @@ class EngineLaneAuthority:
     ``DevelopmentLaneAuthorityUnavailable``, which ``start_assignment`` turns into a queue.
     """
 
-    def __init__(self, graph: str) -> None:
+    def __init__(self, graph: str, client_for: Callable[[str], Any]) -> None:
         self._graph = graph
+        self._client_for = client_for
         self._transport: Any = None
 
     def _lanes(self) -> Any:
@@ -60,7 +61,7 @@ class EngineLaneAuthority:
             )
 
             self._transport = EngineNativeDevelopmentLaneTransport(
-                _lane_client(self._graph)
+                self._client_for(self._graph)
             )
         return self._transport
 
@@ -71,16 +72,13 @@ class EngineLaneAuthority:
         return self._lanes().reserve(request)
 
 
-def _lane_client(graph: str) -> Any:
-    """The shared sync engine client of ``graph`` (the one the engine tools ride)."""
-    from arbora.mcp_server.backing.tools import engine_tools
-
-    return engine_tools._client_for(graph)
-
-
-def _lane_authority(context: Any) -> EngineLaneAuthority | None:
+def _lane_authority(
+    context: Any, client_for: Callable[[str], Any]
+) -> EngineLaneAuthority | None:
     graph = getattr(getattr(context.caller, "session", None), "graph", None)
-    return EngineLaneAuthority(graph) if isinstance(graph, str) and graph else None
+    if isinstance(graph, str) and graph:
+        return EngineLaneAuthority(graph, client_for)
+    return None
 
 
 class InvokeRunStarter:
@@ -252,10 +250,15 @@ class FleetDeliveryConnector:
         )
 
 
-def delivery_bindings() -> dict[str, ContextPort]:
-    """The six delivery ports of the production host composition."""
+def delivery_bindings(lane_client: Callable[[str], Any]) -> dict[str, ContextPort]:
+    """The six delivery ports of the production host composition.
+
+    ``lane_client`` is the shared synchronous engine client of a graph, from the host.
+    """
     return {
-        "delivery_lanes": ContextPort(_lane_authority),
+        "delivery_lanes": ContextPort(
+            lambda context: _lane_authority(context, lane_client)
+        ),
         "delivery_run_starter": ContextPort(_run_starter),
         "identity_links": ContextPort(EngineIdentityLinks),
         "source_access": ContextPort(EngineSourceAccess),

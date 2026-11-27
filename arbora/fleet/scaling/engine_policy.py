@@ -16,15 +16,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops.pin_guards import refusal
-from arbora.api.ops.question_round import advisory_scores
-from arbora.fleet.scaling.fleet_actuator import request_context
-from arbora.fleet.scaling.scaling_intent_reconciler import (
+from arbora.api.domain.fleet.scale_records import (
     ScaleIntentRecord,
     ScalePolicyDecision,
-    _derived_id,
+    derived_id,
 )
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.request_binding import request_context
+from arbora.api.ops.pin_guards import refusal
+from arbora.api.ops.question_round import advisory_scores
 from arbora.pin_lag.medulla import require_symbol
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
@@ -104,7 +104,7 @@ def _verdict(record: Any, intent: ScaleIntentRecord) -> ScalePolicyDecision:
             "RECEIPT_MISMATCH", {"reason": "the record carries no scale verdict"}
         )
     return ScalePolicyDecision(
-        decision_id=_derived_id("decision", str(record["record_id"])),
+        decision_id=derived_id("decision", str(record["record_id"])),
         allowed=option == ALLOW,
         reason=(
             "allowed by the engine"

@@ -13,8 +13,8 @@ submission refuses closed.
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping
-from contextlib import contextmanager
+from collections.abc import AsyncIterator, Iterator, Mapping
+from contextlib import asynccontextmanager, contextmanager
 from contextvars import ContextVar
 from typing import Any
 
@@ -72,6 +72,12 @@ class EngineSourceGrants:
 
     async def resolve(self, context: Any) -> dict[str, Any] | None:
         return await read_engine_grant(context, branch=self._branch)
+
+    @asynccontextmanager
+    async def admission_scope(self, context: Any) -> AsyncIterator[None]:
+        """Bind the verified caller's grant for one admission; a malformed one binds none."""
+        with source_grant_scope(normalized(await self.resolve(context))):
+            yield
 
 
 async def resolve_verified_grant(context: Any) -> dict[str, Any] | None:

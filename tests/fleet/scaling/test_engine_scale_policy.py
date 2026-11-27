@@ -13,14 +13,14 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.fleet.scale_records import ScaleIntentState
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.request_binding import bind_request
 from arbora.fleet.scaling import engine_policy
 from arbora.fleet.scaling.engine_policy import EngineScalePolicy
-from arbora.fleet.scaling.fleet_actuator import bind_request
 from arbora.fleet.scaling.scaling_intent_reconciler import (
     MemoryScaleIntentLedger,
     ScaleIntentReconciler,
-    ScaleIntentState,
 )
 from tests.fleet.scaling._scale_builder import declare_scale_builder
 from tests.fleet.scaling.test_scaling_intent_reconciler import NOW, Actuator, intent

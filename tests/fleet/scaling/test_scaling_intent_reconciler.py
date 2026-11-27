@@ -7,19 +7,21 @@ from typing import Any
 
 import pytest
 
-from arbora.fleet.scaling.scaling_intent_reconciler import (
-    AllowScalePolicy,
+from arbora.api.domain.fleet.scale_records import (
     BreakGlassAuthorization,
-    MemoryScaleIntentLedger,
     ScaleActuationRequest,
     ScaleActuationResult,
     ScaleIntentConflict,
-    ScaleIntentReconciler,
     ScaleIntentRecord,
     ScaleIntentState,
     ScaleLeaseUnavailable,
-    ScalePolicy,
     ScalePolicyDecision,
+)
+from arbora.fleet.scaling.scaling_intent_reconciler import (
+    AllowScalePolicy,
+    MemoryScaleIntentLedger,
+    ScaleIntentReconciler,
+    ScalePolicy,
 )
 
 pytestmark = pytest.mark.spec("ARBORA-CAPACITY-R750.752")

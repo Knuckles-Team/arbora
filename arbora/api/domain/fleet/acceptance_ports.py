@@ -34,9 +34,9 @@ class ContextAcceptancePorts:
 
     async def configured(self) -> tuple[str, ...]:
         """The connectors the deployment's MCP configuration runs as fleet children."""
-        from arbora.fleet.onboarding import configured_fleet_endpoints
+        from arbora.api.ops.ports import configured_connectors
 
-        return tuple(item.name for item in configured_fleet_endpoints())
+        return configured_connectors(self._context)
 
     async def child(self, connector: str) -> Mapping[str, Any] | None:
         gateway = self._context.services.get("fleet_gateway")
@@ -93,16 +93,9 @@ class ContextAcceptancePorts:
         )
 
     async def digest_matches(self, connector: str) -> bool | None:
-        from arbora.fleet.onboarding import (
-            capture_server_pack,
-            configured_fleet_endpoints,
-        )
+        from arbora.api.ops.ports import port_if_composed
 
-        onboarding = self._context.services.get("fleet_onboarding")
-        endpoint = next(
-            (e for e in configured_fleet_endpoints() if e.name == connector), None
-        )
-        if onboarding is None or endpoint is None:
+        port = port_if_composed(self._context, "fleet_acceptance")
+        if port is None:
             return None
-        pack = await capture_server_pack(endpoint)
-        return bool(await onboarding.pack_unchanged(endpoint, pack))
+        return await port.digest_matches(self._context, connector)

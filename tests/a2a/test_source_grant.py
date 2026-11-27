@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import inspect
-from contextlib import nullcontext
+from contextlib import asynccontextmanager, nullcontext
 from types import SimpleNamespace
 from typing import Any
 
@@ -200,6 +200,13 @@ async def test_agents_run_binds_the_resolved_grant_for_the_admission(
     class _Source:
         async def resolve(self, context: Any) -> Any:
             return GRANT
+
+        @asynccontextmanager
+        async def admission_scope(self, context: Any) -> Any:
+            with grants.source_grant_scope(
+                grants.normalized(await self.resolve(context))
+            ):
+                yield
 
     run = next(op for op in agents.operations() if op.id == "agents.run")
     context = SimpleNamespace(
