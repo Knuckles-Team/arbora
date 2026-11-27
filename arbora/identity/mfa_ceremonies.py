@@ -182,7 +182,8 @@ class MfaCeremonies:
             )
         except EngineResponseError as refused:
             return self._engine_refusal("webauthn", refused)
-        except Exception:  # noqa: BLE001 - an unanswered question steps nothing up
+        except Exception:
+            logging.getLogger(__name__).debug("an unanswered question steps nothing up")
             return _unavailable()
         return JSONResponse(
             {
@@ -229,7 +230,8 @@ class MfaCeremonies:
             )
         except EngineResponseError as refused:
             return self._engine_refusal("webauthn", refused)
-        except Exception:  # noqa: BLE001 - an unanswered question steps nothing up
+        except Exception:
+            logging.getLogger(__name__).debug("an unanswered question steps nothing up")
             return _unavailable()
         self._done("webauthn", "ok")
         return None
@@ -290,7 +292,8 @@ class MfaCeremonies:
             )
         except EngineResponseError as refused:
             return self._engine_refusal("recovery", refused)
-        except Exception:  # noqa: BLE001 - an unanswered question steps nothing up
+        except Exception:
+            logging.getLogger(__name__).debug("an unanswered question steps nothing up")
             return _unavailable()
         self._done("recovery", "ok")
         return None

@@ -15,6 +15,7 @@ missing shape and nothing falls back to a local check.
 from __future__ import annotations
 
 import asyncio
+import logging
 from typing import Any
 
 from starlette.responses import JSONResponse
@@ -121,7 +122,8 @@ async def totp_pass_through(
         if refused.code in REFUSALS:
             return refusal_response(refused)
         return JSONResponse({"error": "UNAVAILABLE"}, status_code=503)
-    except Exception:  # noqa: BLE001 - an unanswered question steps nothing up
+    except Exception:
+        logging.getLogger(__name__).debug("an unanswered question steps nothing up")
         return JSONResponse({"error": "UNAVAILABLE"}, status_code=503)
     payload = response.payload
     value = payload.get("value") if isinstance(payload, dict) else None

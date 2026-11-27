@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import logging
 import secrets as _secrets
 import sys
 from collections.abc import Awaitable, Callable, Mapping, Sequence
@@ -87,7 +88,10 @@ def _composed_ports(
             from arbora.security.secrets import create_secrets_client
 
             secrets = create_secrets_client()
-    except Exception:  # noqa: BLE001 - an unreadable config fails closed with one code
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "an unreadable config fails closed with one code"
+        )
         return None, None
     return provider, secrets
 
@@ -183,7 +187,8 @@ def token_main(
                 cache_dir=cache_dir,
             )
         )
-    except Exception:  # noqa: BLE001 - a stable code, never the cause text
+    except Exception:
+        logging.getLogger(__name__).debug("a stable code, never the cause text")
         print("TOKEN_FETCH_FAILED", file=err)
         return 2
     print(token, file=out)

@@ -362,7 +362,7 @@ def main(
     except IdentityUnavailable:
         _emit(env, parsed.command, False, {"code": "UNAVAILABLE"}, "UNAVAILABLE")
         return UNAVAILABLE_EXIT
-    except Exception as error:  # noqa: BLE001 - an engine refusal keeps its wire code
+    except Exception as error:  # an engine refusal keeps its wire code
         code = _refusal_code(error)
         if not code:
             raise

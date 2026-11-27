@@ -127,7 +127,7 @@ async def send_identity_mail(
             asyncio.to_thread(_deliver, settings, message, password, smtp_factory),
             timeout=SEND_TIMEOUT_SECONDS,
         )
-    except Exception:  # noqa: BLE001 - the public reply stays uniform
+    except Exception:  # the public reply stays uniform
         outcome = "MAIL_SEND_FAILED"
         _log.warning("MAIL_SEND_FAILED kind=%s recipient=%s", kind, recipient)
     emit(
