@@ -126,7 +126,7 @@ class EngineHarnessConfigDecider:
     ) -> HarnessConfigRecord:
         from medulla.decision_client import decide_request
 
-        from arbora.deployment.placement import check_receipt, single_record
+        from arbora.api.domain.deployment.placement import check_receipt, single_record
 
         request = decide_request(
             tenant,

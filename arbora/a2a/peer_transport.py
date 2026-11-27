@@ -20,7 +20,7 @@ from typing import Any
 
 import httpx
 
-from .hub_federation import FederationRefused
+from arbora.api.domain.a2a.hub_federation import FederationRefused
 
 logger = logging.getLogger(__name__)
 

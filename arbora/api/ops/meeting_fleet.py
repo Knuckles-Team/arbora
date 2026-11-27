@@ -11,8 +11,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+from arbora.api.domain.fleet.fleet_tool_call import call_fleet_tool, refused_result
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.fleet.fleet_tool_call import call_fleet_tool, refused_result
 
 
 class FleetMeetingSummarizer:

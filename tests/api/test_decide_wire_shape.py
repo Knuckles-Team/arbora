@@ -1,7 +1,7 @@
 """Every ``Decide`` arbora sends carries the engine's ``{request: ...}`` wire params.
 
 The engine's ``MethodDecideParams`` is ``{request}`` with unknown fields forbidden, so a
-bare request is refused. One helper, ``arbora.deployment.placement.send_decide``, builds the
+bare request is refused. One helper, ``arbora.api.domain.deployment.placement.send_decide``, builds the
 params; this proves the sites that sent a bare request now wrap, and that no ``Decide`` is
 sent anywhere in the package without the wrapper.
 """
@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-from arbora.deployment.placement import decide_params, send_decide
+from arbora.api.domain.deployment.placement import decide_params, send_decide
 
 ROOT = Path(__file__).resolve().parents[2] / "arbora"
 

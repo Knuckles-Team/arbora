@@ -18,12 +18,12 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.finance.changes import OrderChange, WalletOperation, refusal_for
 from arbora.api.invoke.audit import audit_event
 from arbora.api.invoke.pipeline import EXTERNAL_EFFECT_OPERATIONS, OperationRefused
 from arbora.api.ops import finance_changes as ops
 from arbora.api.ops.registry_factory import get_registry
 from arbora.api.registry import Confirm, Idempotency, Surface
-from arbora.finance.changes import OrderChange, WalletOperation, refusal_for
 from tests.api._served_support import confirmable  # noqa: F401
 from tests.test_served_operation_api import served  # noqa: F401
 

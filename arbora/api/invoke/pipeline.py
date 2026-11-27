@@ -14,6 +14,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from arbora.api.domain.fleet.admission_models import AdmissionRefused
 from arbora.api.errors import EngineRefusal, FleetRefusal
 from arbora.api.invoke.agent_ref import bind_agent_ref
 from arbora.api.invoke.audit import EffectJournal, EffectReservation, audit_event
@@ -64,7 +65,6 @@ from arbora.api.registry import (
     Surface,
 )
 from arbora.fleet.admission import AdmissionGate
-from arbora.fleet.admission_models import AdmissionRefused
 
 _logger = logging.getLogger(__name__)
 

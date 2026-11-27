@@ -17,7 +17,7 @@ from typing import Any, Literal, cast
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from scion_sdk.manifest.fingerprints import output_schema_digest
 
-from arbora.fleet.admission_models import Digest, canonical_digest
+from arbora.api.domain.fleet.admission_models import Digest, canonical_digest
 
 __all__ = [
     "REFUSALS",

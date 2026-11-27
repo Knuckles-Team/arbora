@@ -8,7 +8,7 @@ from typing import Any
 import msgpack
 import pytest
 
-from arbora.fleet.outbox_consumer import (
+from arbora.api.domain.fleet.outbox_consumer import (
     TRUST_FLAG_TOPIC,
     consume_topic,
     trust_flag_handler,

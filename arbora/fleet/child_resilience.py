@@ -65,7 +65,7 @@ from typing import Any
 
 import anyio
 
-from arbora.fleet.plan_confirmation import PlanConfirmations
+from arbora.api.domain.fleet.plan_confirmation import PlanConfirmations
 from arbora.fleet.protocol_compat import mcp_protocol_error
 from arbora.observability.gateway_metrics import (
     MCP_CHILD_BREAKER_STATE,

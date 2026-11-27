@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from arbora.deployment.placement import decide_params
+from arbora.api.domain.deployment.placement import decide_params
 from arbora.pin_lag.meristem import PinLagUnavailable, changeset_types, port_types
 
 #: ``(operation id, params, run ref[, plan_ref])`` to the engine result as plain data. An

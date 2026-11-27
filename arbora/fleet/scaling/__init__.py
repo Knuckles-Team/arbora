@@ -5,11 +5,10 @@ engine decisions; this package holds the typed contracts and the fail-closed
 evaluators arbora applies when it admits a scaling intent.
 """
 
+from arbora.api.domain.fleet.scaling import development_lane, scaling_authority
 from arbora.fleet.scaling import (
-    development_lane,
     resource_pool_authority,
     resource_reservation,
-    scaling_authority,
     scaling_intent_reconciler,
     scaling_signal_authority,
     service_scale_units,

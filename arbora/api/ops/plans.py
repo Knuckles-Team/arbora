@@ -46,6 +46,7 @@ from typing import Any
 from pydantic import Field
 from pydantic_ai import RunContext
 
+from arbora.api.domain.control_plane.runs.engine_policy import EngineRunPolicy
 from arbora.api.invoke.certification_gate import (
     MAX_RUN_SKILLS,
     SkillRef,
@@ -68,7 +69,6 @@ from arbora.api.registry import (
     OpSpec,
     Verb,
 )
-from arbora.control_plane.runs.engine_policy import EngineRunPolicy
 
 #: The engine release that serves ``TaskPlan``. Arbora's floor moves to it once
 #: it is on PyPI (ARBORA-RELEASE-R003.4.3).
@@ -879,7 +879,7 @@ def _harness_plan(
     """The run plan: a process plan resolves its prompt texts, any other maps one to one."""
     if prompts is None:
         return run_plan_for(plan, model, _step_toolsets(fleet))
-    from arbora.processes.run_plan import map_process_plan
+    from arbora.api.domain.processes.run_plan import map_process_plan
 
     return map_process_plan(plan, prompts, model=model, toolsets=_step_toolsets(fleet))
 

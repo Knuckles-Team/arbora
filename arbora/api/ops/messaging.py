@@ -22,10 +22,10 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from arbora.api.domain.fleet.fleet_tool_call import call_fleet_tool
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.registry import AuditClass, Composite, Effect, HttpShape, OpSpec, Verb
 from arbora.core.environment import read_env
-from arbora.fleet.fleet_tool_call import call_fleet_tool
 from arbora.messaging.alert_intake import extract_alert_text
 
 logger = logging.getLogger(__name__)

@@ -5,7 +5,7 @@ hosted operations.
 
 from __future__ import annotations
 
-from arbora.fleet.error_budget import (
+from arbora.api.domain.fleet.error_budget import (
     BudgetWindow,
     OutcomeClass,
     OutcomeSample,

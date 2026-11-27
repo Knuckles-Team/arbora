@@ -147,7 +147,7 @@ class TeamCoordinator:
         channel_id: str = "a2a",
     ) -> dict[str, Any]:
         """Write the team records, decide, and apply the option."""
-        from arbora.deployment.placement import (
+        from arbora.api.domain.deployment.placement import (
             check_receipt,
             send_decide,
             single_record,

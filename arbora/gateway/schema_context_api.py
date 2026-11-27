@@ -27,9 +27,9 @@ __all__ = ["SCHEMA_CONTEXT_PATH", "register_schema_context_routes"]
 
 
 async def _schema_context_endpoint(request: Request) -> JSONResponse:
+    from arbora.api.domain.gateway.schemas.schema_context import SchemaContextRequest
     from arbora.api.errors import ArboraErrorCode, ArboraRefusal
     from arbora.gateway.schema_context_service import get_schema_context
-    from arbora.gateway.schemas.schema_context import SchemaContextRequest
     from arbora.gateway.state import gateway_of
 
     try:

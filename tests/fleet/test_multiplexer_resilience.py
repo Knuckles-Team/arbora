@@ -15,6 +15,7 @@ from typing import Any
 import mcp.types
 import pytest
 
+from arbora.api.domain.fleet.plan_confirmation import PlanConfirmations
 from arbora.fleet.child_resilience import (
     ChildRuntime,
     MCPChildBusyError,
@@ -23,7 +24,6 @@ from arbora.fleet.child_resilience import (
     MCPChildUnavailableError,
     MCPError,
 )
-from arbora.fleet.plan_confirmation import PlanConfirmations
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
 

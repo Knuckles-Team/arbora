@@ -17,7 +17,11 @@ from dataclasses import asdict, dataclass, field
 from enum import StrEnum
 from typing import Any, Protocol
 
-from arbora.fleet.error_budget import Partition, ThrottleDecision, ThrottleMode
+from arbora.api.domain.fleet.error_budget import (
+    Partition,
+    ThrottleDecision,
+    ThrottleMode,
+)
 
 logger = logging.getLogger(__name__)
 

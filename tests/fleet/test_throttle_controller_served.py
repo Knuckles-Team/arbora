@@ -12,15 +12,15 @@ from typing import Any
 
 import pytest
 
-from arbora.api.errors import ArboraErrorCode, to_envelope
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops import fleet
-from arbora.fleet.error_budget import (
+from arbora.api.domain.fleet.error_budget import (
     BudgetWindow,
     OutcomeClass,
     OutcomeSample,
     ThrottleMode,
 )
+from arbora.api.errors import ArboraErrorCode, to_envelope
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops import fleet
 from arbora.fleet.throttle_service import (
     CAPACITY_THROTTLED,
     CapacityThrottled,
@@ -233,7 +233,7 @@ async def test_first_refusal_per_window_is_reported_once_and_no_decision_means_n
 
 
 async def _seed_decision():
-    from arbora.fleet.error_budget import ThrottleDecision
+    from arbora.api.domain.fleet.error_budget import ThrottleDecision
 
     return ThrottleDecision(
         window_digest="seed",

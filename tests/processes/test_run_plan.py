@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from arbora.processes.run_plan import (
+from arbora.api.domain.processes.run_plan import (
     ProcessPromptUnresolved,
     agent_prompts,
     map_process_plan,

@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from arbora.fleet.error_budget import ThrottleDecision, ThrottleMode
+from arbora.api.domain.fleet.error_budget import ThrottleDecision, ThrottleMode
 from arbora.mcp_server.served_invocation import _with_capacity
 from tests.fleet._capacity_support import PARTITION, FakePort, controller, fill
 

@@ -1,6 +1,6 @@
 """Finance application-service domain (ARBORA-DATA-MARKET-R001/R002/R003/R006).
 
-Server-side market reads (:mod:`arbora.finance.markets`), idempotent
+Server-side market reads (:mod:`arbora.api.domain.finance.markets`), idempotent
 finance-schedule run records (:mod:`arbora.finance.schedule`), deduplicated
 flip-alert delivery (:mod:`arbora.finance.alerts`), and the recurring DCA
 plan model with its non-duplicating proposal key
@@ -12,6 +12,13 @@ GDM-07a/GDM-08 in ``specs/data-and-market-projections/tasks.md``).
 
 from __future__ import annotations
 
+from arbora.api.domain.finance.markets import (
+    AccountBinding,
+    MarketProvider,
+    MarketReadRequest,
+    MarketReadResult,
+    get_market_read,
+)
 from arbora.finance.alerts import (
     DeliveryOutcome,
     FlipAlertDelivery,
@@ -23,13 +30,6 @@ from arbora.finance.dca import (
     PlanMode,
     build_dca_proposal_key,
     record_dca_proposal,
-)
-from arbora.finance.markets import (
-    AccountBinding,
-    MarketProvider,
-    MarketReadRequest,
-    MarketReadResult,
-    get_market_read,
 )
 from arbora.finance.receipts import (
     FinanceReceiptEngine,

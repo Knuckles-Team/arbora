@@ -11,6 +11,7 @@ from typing import Any
 import msgpack
 import pytest
 
+from arbora.api.domain.finance.delegation import DelegatedSubjectAccess, delegated
 from arbora.api.invoke.bootstrap import deny_subject_access
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import finance
@@ -20,7 +21,6 @@ from arbora.finance.dca import (
     DCAPlan,
     quantity_for_notional,
 )
-from arbora.finance.delegation import DelegatedSubjectAccess, delegated
 from arbora.finance.paper_door import LatePaperDoor
 from arbora.finance.schedule_host import EngineFinanceScheduleHost, schedule_node_id
 from tests.finance._receipt_engine import ReceiptMachine
@@ -224,7 +224,7 @@ async def test_the_price_reference_is_recorded_on_the_occurrence_receipt() -> No
     seen: list[tuple[str, str]] = []
 
     async def paper(plan_: Any, arguments: Any, key: str) -> Any:
-        from arbora.finance.delegation import _HELD
+        from arbora.api.domain.finance.delegation import _HELD
 
         held = _HELD.get()
         seen.append((held.owner, held.account))

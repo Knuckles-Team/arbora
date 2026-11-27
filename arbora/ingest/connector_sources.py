@@ -30,9 +30,7 @@ from scion_sdk.ingest.source_sync import (
 from scion_sdk.ingest.transport import MedullaIngestTransport
 from scion_sdk.manifest.sources import IngestSourceDeclaration
 
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.fleet.declarations import RESOURCES_URI, parse_declaration
-from arbora.ingest.service import (
+from arbora.api.domain.ingest.service import (
     IngestJobControlReceipt,
     IngestJobInventory,
     IngestJobRecord,
@@ -45,6 +43,8 @@ from arbora.ingest.service import (
     IngestSubmissionReceipt,
     IngestSyncReceipt,
 )
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.fleet.declarations import RESOURCES_URI, parse_declaration
 
 __all__ = [
     "SOURCE_SYNC_KIND",

@@ -55,7 +55,7 @@ class EngineLaneAuthority:
 
     def _lanes(self) -> Any:
         if self._transport is None:
-            from arbora.fleet.scaling.development_lane import (
+            from arbora.api.domain.fleet.scaling.development_lane import (
                 EngineNativeDevelopmentLaneTransport,
             )
 

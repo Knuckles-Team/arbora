@@ -9,6 +9,7 @@ from typing import Any
 import msgpack
 import pytest
 
+from arbora.api.domain.fleet.outbox_consumer import consume_topic
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import approvals
 from arbora.fleet.approval_notifier import (
@@ -17,7 +18,6 @@ from arbora.fleet.approval_notifier import (
     digest_delivery,
     role_holders,
 )
-from arbora.fleet.outbox_consumer import consume_topic
 from arbora.messaging.action_dispatch import NotificationSpec
 
 USERS = [
@@ -254,8 +254,8 @@ def test_digest_send_delivers_one_notice_per_owner_and_refuses_without_a_channel
 def test_bootstrap_builds_both_consumers_and_a_tick_runs_each_once(
     pull_served: None,
 ) -> None:
+    from arbora.api.domain.fleet.outbox_consumer import tick
     from arbora.api.invoke.bootstrap import build_outbox_consumers
-    from arbora.fleet.outbox_consumer import tick
 
     engine = Engine([EVENT])
     consumers = build_outbox_consumers(engine.send, Notifier())

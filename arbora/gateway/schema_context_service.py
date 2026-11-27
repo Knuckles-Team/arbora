@@ -17,8 +17,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from arbora.api.domain.gateway.schemas.schema_context import SchemaContextRequest
 from arbora.api.errors import ArboraErrorCode, ArboraRefusal
-from arbora.gateway.schemas.schema_context import SchemaContextRequest
 
 __all__ = ["get_schema_context"]
 

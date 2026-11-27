@@ -312,7 +312,7 @@ class FleetCaller:
 
 async def _admitted_extract(fleet: FleetCaller, server: str, url: str) -> Any:
     """One ``web_extract`` call, after the engine's conformance evidence admits it."""
-    from arbora.fleet.conformance import require_current_evidence
+    from arbora.api.domain.fleet.conformance import require_current_evidence
 
     await require_current_evidence(fleet.context, server)
     return await fleet.call(server, WEB_EXTRACT, {"request": {"url": url}})

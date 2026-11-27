@@ -20,6 +20,7 @@ from typing import Any
 import msgpack
 from pydantic import BaseModel, ValidationError
 
+from arbora.api.domain.fleet.scaling.scaling_authority import ScaleAuthority
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import claim_values
@@ -31,7 +32,6 @@ from arbora.fleet.scaling.graph_authority import (
     SYSTEM_PROPERTIES,
     class_nodes,
 )
-from arbora.fleet.scaling.scaling_authority import ScaleAuthority
 from arbora.security.anonymous import client_scope
 
 #: The one node that carries the inventory's revision.

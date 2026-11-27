@@ -21,8 +21,8 @@ from collections.abc import Awaitable, Callable, Iterator, Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from arbora.api.domain.fleet.admission_models import AdmissionRefused, canonical_digest
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.fleet.admission_models import AdmissionRefused, canonical_digest
 from arbora.fleet.definitions import CompatibilityDecision
 from arbora.pin_lag import medulla as pin_lag
 
@@ -205,7 +205,7 @@ class EngineAdmission:
                 param("skill_upgrade", "skill_upgrade", skill_upgrade_param(question))
             ],
         )
-        from arbora.deployment.placement import send_decide
+        from arbora.api.domain.deployment.placement import send_decide
 
         try:
             answer = await send_decide(self.send, request, tenant)

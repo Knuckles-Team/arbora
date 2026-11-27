@@ -183,7 +183,7 @@ def _with_finance_read_port(
     """
     if bindings is None or "finance_read_port" in bindings:
         return bindings
-    from arbora.finance.fleet_read_port import FleetFinanceReadPort
+    from arbora.api.domain.finance.fleet_read_port import FleetFinanceReadPort
 
     return {**bindings, "finance_read_port": FleetFinanceReadPort()}
 
@@ -588,9 +588,9 @@ def _with_approval_notices(
     engine as the process service identity; a pinned engine without the outbox
     shapes refuses ``UNAVAILABLE`` inside each tick (``arbora.pin_lag.medulla``).
     """
+    from arbora.api.domain.fleet.outbox_consumer import OutboxRunner
     from arbora.api.invoke.bootstrap import build_outbox_consumers
     from arbora.fleet.approval_notifier import digest_delivery, role_holders
-    from arbora.fleet.outbox_consumer import OutboxRunner
     from arbora.messaging.service import ReachNotifier
 
     async def send(method: str, params: dict[str, Any]) -> Any:
@@ -666,8 +666,8 @@ def _delegated_subject_check(
     service operation, admitted by the owner's delegated grant that the engine confirms.
     Everything else falls to the default refusal until a subject authority is composed.
     """
+    from arbora.api.domain.finance.delegation import DelegatedSubjectAccess
     from arbora.api.invoke.bootstrap import deny_subject_access
-    from arbora.finance.delegation import DelegatedSubjectAccess
 
     async def wire(method: str, params: dict[str, Any]) -> Any:
         from medulla.generated import send_by_id

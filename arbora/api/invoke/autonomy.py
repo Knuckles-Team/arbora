@@ -118,7 +118,7 @@ def engine_verdict(
     question uses (ARBORA-OPS-R867): one door, no second engine path. The record's
     receipt must name this request and the service principal.
     """
-    from arbora.deployment.placement import check_receipt, single_record
+    from arbora.api.domain.deployment.placement import check_receipt, single_record
 
     async def ask(op_id: str, tenant: str, irreversible: bool) -> str:
         request = autonomy_request(

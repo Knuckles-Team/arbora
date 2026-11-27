@@ -17,9 +17,9 @@ import msgpack
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.api.domain.fleet.outbox_consumer import TRUST_FLAG_TOPIC, OutboxRunner
 from arbora.core.settings import runtime_config
 from arbora.fleet.approval_notifier import APPROVALS_TOPIC
-from arbora.fleet.outbox_consumer import TRUST_FLAG_TOPIC, OutboxRunner
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
@@ -216,7 +216,7 @@ def test_a_failed_tick_is_logged_and_does_not_end_the_schedule(
     async def broken(method: str, params: dict[str, Any]) -> Any:
         raise RuntimeError("engine down")
 
-    from arbora.fleet.outbox_consumer import OutboxConsumer
+    from arbora.api.domain.fleet.outbox_consumer import OutboxConsumer
 
     async def handle(event: Any) -> None:
         raise AssertionError("never reached")

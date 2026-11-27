@@ -13,7 +13,7 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from arbora.fleet.admission_models import (
+from arbora.api.domain.fleet.admission_models import (
     AdmissionRefused,
     CertificationBinding,
     SkillAuditReport,

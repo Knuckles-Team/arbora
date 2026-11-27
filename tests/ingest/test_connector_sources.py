@@ -1,6 +1,6 @@
 """Connector sources through the composed SDK sync runner (ARBORA-OPS-R020.6.1-R020.6.5).
 
-The served handlers (``arbora.ingest.service``) run over a real
+The served handlers (``arbora.api.domain.ingest.service``) run over a real
 :class:`ConnectorIngestRunner`, the real SDK runner and checkpoint store, and
 the real WorkItem seam. Only the edges are fakes: the fleet gateway (one
 declared connector), the engine KV and WorkItem methods, and the ingest submit.
@@ -16,14 +16,14 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
+from arbora.api.domain.ingest import service
+from arbora.api.domain.ingest.service import IngestSourceRecord
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.ingest import service
 from arbora.ingest.connector_sources import (
     SOURCE_SYNC_KIND,
     ConnectorIngestRunner,
     FleetSourceSession,
 )
-from arbora.ingest.service import IngestSourceRecord
 
 DECLARATION = {
     "connector": "fixture-mcp",

@@ -234,7 +234,7 @@ def _patch_work_items(monkeypatch: Any, work: FakeWorkEngine) -> None:
 
 
 def _declarations(deployed: bool) -> Any:
-    from arbora.fleet.conformance import DeployedPack
+    from arbora.api.domain.fleet.conformance import DeployedPack
     from arbora.fleet.declarations import Declarations
 
     declarations = Declarations()

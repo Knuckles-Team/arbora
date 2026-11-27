@@ -1,6 +1,6 @@
 """ARBORA-CAPACITY-R001.1: pure partitioned AIMD controller.
 
-Covers :mod:`arbora.fleet.error_budget` -- bounded additive recovery,
+Covers :mod:`arbora.api.domain.fleet.error_budget` -- bounded additive recovery,
 multiplicative decrease on budget breach, the engine/policy ceiling, caller
 error/policy denial neutrality, idempotent replay, and tenant/child
 partition isolation, matching the fixtures in
@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from arbora.fleet.error_budget import (
+from arbora.api.domain.fleet.error_budget import (
     AimdConfig,
     BudgetWindow,
     OutcomeClass,

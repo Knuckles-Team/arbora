@@ -49,7 +49,7 @@ class BoundBrowserHTTPAuthenticator(AmbientHTTPAuthenticator):
     def __init__(self, authority: ArboraBrowserAuthority, *, console_origin: str):
         if not isinstance(authority, ArboraBrowserAuthority):
             raise ValueError("one qualified browser authority required")
-        from arbora.gateway.rate_limit import GatewayRateLimitMiddleware
+        from arbora.api.domain.gateway.rate_limit import GatewayRateLimitMiddleware
 
         self._rate_limiter = GatewayRateLimitMiddleware(None)
         self._policy_started = False
@@ -69,7 +69,7 @@ class BoundBrowserHTTPAuthenticator(AmbientHTTPAuthenticator):
         """Apply the effective trusted listener policy before serving starts."""
         import math
 
-        from arbora.gateway.rate_limit import GatewayRateLimitMiddleware
+        from arbora.api.domain.gateway.rate_limit import GatewayRateLimitMiddleware
 
         if self._policy_started or any(
             not math.isfinite(value) or value < 0 for value in (rate, burst)

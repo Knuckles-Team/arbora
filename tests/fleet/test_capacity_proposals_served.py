@@ -11,12 +11,12 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.fleet.error_budget import ThrottleDecision, ThrottleMode
 from arbora.fleet.capacity_proposals import (
     CAPACITY_APPLY_MISMATCH,
     CAPACITY_EPOCH_CONFLICT,
     VERDICT_UNAVAILABLE,
 )
-from arbora.fleet.error_budget import ThrottleDecision, ThrottleMode
 from tests.fleet._capacity_support import (
     CELL,
     PARTITION,

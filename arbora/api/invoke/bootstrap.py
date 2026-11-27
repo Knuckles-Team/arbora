@@ -405,15 +405,15 @@ def build_outbox_consumers(send: Any, notifier: Any) -> tuple[Any, ...]:
     reads one topic and notifies through ``notifier``. The engine holds each
     cursor, so the process keeps no state between ticks.
     """
+    from arbora.api.domain.fleet.outbox_consumer import (
+        TRUST_FLAG_TOPIC,
+        OutboxConsumer,
+        trust_flag_handler,
+    )
     from arbora.fleet.approval_notifier import (
         APPROVALS_TOPIC,
         approval_handler,
         role_holders,
-    )
-    from arbora.fleet.outbox_consumer import (
-        TRUST_FLAG_TOPIC,
-        OutboxConsumer,
-        trust_flag_handler,
     )
 
     return (

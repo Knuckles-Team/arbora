@@ -18,17 +18,17 @@ from typing import Any
 
 from pydantic import Field, ValidationError
 
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._common import Params, bound_service, build_write_op
-from arbora.api.ops.pin_guards import send_main
-from arbora.api.registry import Confirm, OpSpec
-from arbora.finance.changes import (
+from arbora.api.domain.finance.changes import (
     OrderChange,
     PositionChange,
     WalletOperation,
     refusal_for,
     safe_evidence,
 )
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops._common import Params, bound_service, build_write_op
+from arbora.api.ops.pin_guards import send_main
+from arbora.api.registry import Confirm, OpSpec
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
 SCOPE = "finance:propose-order"
