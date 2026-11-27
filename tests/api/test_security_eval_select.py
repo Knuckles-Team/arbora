@@ -57,3 +57,24 @@ async def test_the_default_cap_is_fifty_and_verdicts_are_the_engines(
     result = await security_eval.handle_security_evaluate(ctx, _PARAMS, _OP)
     assert len(runner.calls[0][0]) == security_eval.DEFAULT_MAX_PROBES == 50
     assert {f["verdict"] for f in result["value"]["findings"]} == {"resisted"}
+
+
+@pytest.mark.spec("ARBORA-OPS-R051.2")
+async def test_an_unlisted_question_kind_refuses_unavailable_naming_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.api.ops import _question
+    from arbora.pin_lag.medulla import PinLagUnavailable
+
+    ctx, engine, runner = evaluation_context(monkeypatch)
+
+    def unlisted(kind: str) -> None:
+        raise PinLagUnavailable(f"QuestionKind.{kind}")
+
+    monkeypatch.setattr(_question, "require_question_kind", unlisted)
+    with pytest.raises(OperationRefused) as refused:
+        await security_eval.handle_security_evaluate(ctx, _PARAMS, _OP)
+    assert refused.value.code == "UNAVAILABLE"
+    assert refused.value.details["missing"] == "QuestionKind.probe_selection"
+    assert runner.calls == [] and engine.sent == []
