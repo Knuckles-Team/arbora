@@ -208,6 +208,7 @@ The new transport acceptance must use real wire clients, including unauthorized 
 - **R029:** After the SDK publishes a typed grant-bound port and certified provider, bind it through `arbora/api/invoke/pipeline.py:invoke` and `arbora/api/invoke/executor.py:BoundOperationRuntime.dispatch` (line 273). `OperationRuntime.dispatch` is only a protocol.
 - **R030:** Bind observation and state through the same composed dispatch path. Do not add a local state store. Wait for SDK observation and EG state/context contracts.
 - **R031:** Use `arbora/mcp_server/server.py:mcp_server` for host/admission composition. Wait for EG selection, AU harness, and WebUI renderer contracts; do not advertise the complete flow before all ports exist.
+- **R031.1 (2026-11-26 amendment):** run admission reserves capacity as an engine lease (`AcquireCapacity` before the claim, `ReleaseCapacity` at the terminal commit) on the cell `run:agents`. The earlier text named the process-local `CapacityLedger`; the graph is the authority and Arbora holds no durable or in-process capacity state, so that reading is withdrawn. The provisioning call of the connector row is a separate seam.
 
 ### Amendment: authenticated terminal log preference
 

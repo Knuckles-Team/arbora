@@ -157,7 +157,7 @@
 - [ ] T157 ARBORA-HOST-R001.2.1.2 Durable TaskPlan execution bridge.
 - [ ] T158 ARBORA-HOST-R001.2.5 Arbora binds the engine read and write methods to the decision port.
 - [ ] T159 ARBORA-HOST-R007.3 Use the `arbora_` prefix for every gateway metric series.
-- [ ] T160 ARBORA-HOST-R031.1 Admit and read back sandbox allocations.
+- [ ] T160 ARBORA-HOST-R031.1 Run admission reserves engine capacity.
 - [ ] T161 ARBORA-HOST-R034 Specialist package install is transactional per provider root and registers catalog nodes.
 - [ ] T162 ARBORA-HOST-R035 Host registers the harness cycle providers and drives one tick per completed run.
 - [ ] T163 ARBORA-HOST-R036 Attach run receipt nodes to the terminal commit.

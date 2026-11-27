@@ -314,8 +314,8 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 | `ARBORA-HOST-R001.2.5` | `tests/pin_lag/test_host_ports_served.py::test_engine_decision_seam_reaches_the_engine_as_the_run_principal` | Exists |
 | `ARBORA-HOST-R007.3` | `tests/observability/test_gateway_metrics.py::test_no_series_uses_the_retired_prefix` | Planned, not yet written |
 | `ARBORA-HOST-R007.3` | `tests/gateway/test_rate_limit.py::test_rate_limit_counter_renamed` | Planned, not yet written |
-| `ARBORA-HOST-R031.1` | `arbora/api/ops/plans.py::_admit_native_plan_run` | Planned, not yet written |
-| `ARBORA-HOST-R031.1` | `tests/control_plane/test_sandbox_admission_served.py::test_agents_run_admits_and_records_allocation` | Planned, not yet written |
+| `ARBORA-HOST-R031.1` | `arbora/api/ops/plans.py::_admit_native_plan_run` | Written |
+| `ARBORA-HOST-R031.1` | `tests/api/test_run_capacity_served.py::test_agents_plan_run_reserves_and_releases_engine_capacity` | Written |
 | `ARBORA-HOST-R034` | `arbora/host/specialists.py::install_package` | Planned, not yet written |
 | `ARBORA-HOST-R034` | `tests/mcp_server/test_specialist_install.py::test_install_swaps_marker_atomically_and_registers_nodes` | Planned, not yet written |
 | `ARBORA-HOST-R035` | `arbora/agent_runs.py::bind_run_ports` | Exists |
