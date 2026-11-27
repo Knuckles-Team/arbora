@@ -717,6 +717,26 @@ def _with_city_ports(
     return {**{name: port for name in CITY_SERVICES}, **bindings}
 
 
+def _with_provisioning_ports(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the fleet-backed rollback dispatcher and scale actuator (ARBORA-FLEET-R024.12).
+
+    The engine makes no connector call, so both act through one governed
+    ``fleet.call`` to the container-manager connector. A port the host already bound
+    is kept.
+    """
+    if bindings is None:
+        return bindings
+    from arbora.fleet.scaling.fleet_actuator import FleetScaleActuator, deploy_rollback
+
+    return {
+        "deploy_rollback": deploy_rollback,
+        "scale_actuator": FleetScaleActuator(),
+        **bindings,
+    }
+
+
 def _with_security_evaluation(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
@@ -926,6 +946,7 @@ def compose_served_invocation(
     bindings = _with_nl_federation_planner(bindings)
     bindings = _with_projection_reader(bindings)
     bindings = _with_city_ports(bindings)
+    bindings = _with_provisioning_ports(bindings)
     bindings = _with_operator_audit(bindings)
     bindings = _with_federation_sources(bindings)
     bindings = _with_security_evaluation(bindings)

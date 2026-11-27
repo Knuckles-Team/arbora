@@ -19,6 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import bound_service, build_write_op
 from arbora.api.registry import Composite, Effect, OpSpec, Verb
+from arbora.fleet.scaling.fleet_actuator import bind_request
 from arbora.fleet.scaling.scaling_authority import ScaleIntent, validate_scale_intent
 from arbora.fleet.scaling.scaling_intent_reconciler import (
     ScaleIntentConflict,
@@ -81,12 +82,13 @@ async def handle_fleet_reconcile_run(
     )
     intent = _model(params["intent"], ScaleIntentRecord)
     try:
-        result = await asyncio.to_thread(
-            reconciler.reconcile,
-            intent,
-            controller_id=params["controller_id"],
-            dry_run=bool(params.get("dry_run", False)),
-        )
+        with bind_request(context):
+            result = await asyncio.to_thread(
+                reconciler.reconcile,
+                intent,
+                controller_id=params["controller_id"],
+                dry_run=bool(params.get("dry_run", False)),
+            )
     except (ScaleLeaseUnavailable, ScaleLeaseLost, ScaleIntentConflict) as exc:
         raise OperationRefused(
             "FLEET_LEASE_FENCED", {"reason": type(exc).__name__}

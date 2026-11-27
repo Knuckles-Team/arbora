@@ -144,9 +144,9 @@ def with_ingest_worker_not_configured(
 ) -> FleetHealthSnapshot:
     """A fleet that runs no ingest worker reports ``not_configured``, never unhealthy."""
     checked = time.time() if now is None else float(now)
-    dependency = _dependency(
-        "not_configured", checked, None, ("ingest_worker: not configured",)
-    )
+    # No diagnostic line: a fleet that supervises no worker has nothing to report,
+    # and the status itself says it. The rollup already ignores ``not_configured``.
+    dependency = _dependency("not_configured", checked, None)
     return _with_dependency(snapshot, INGEST_WORKER_DEPENDENCY, dependency)
 
 

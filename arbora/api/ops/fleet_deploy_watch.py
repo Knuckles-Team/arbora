@@ -88,7 +88,7 @@ async def handle_fleet_deploy_watch_dispatch(
         context, "deploy_rollback", reason="the rollback dispatcher is not composed"
     )
     try:
-        await rollback(params["service"], verdict["detail"])
+        await rollback(context, params["service"], verdict["detail"])
     except OperationRefused:
         raise
     return {**verdict, "dispatched": True}
