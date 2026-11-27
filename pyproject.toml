@@ -183,7 +183,7 @@ arbora-connector-count-pins = "arbora.fleet.connector_count_pins:main"
 arbora-check-import-boundaries = "arbora.architecture.boundary_census:main"
 arbora-hosting-config = "arbora.deployment.host_config:main"
 arbora-capability-layers = "arbora.architecture.capability_layers:main"
-arbora-sandbox = "arbora.deployment.sandbox:main"
+arbora-sandbox = "arbora.mcp_server.sandbox_cli:main"
 
 [project.entry-points."arbora.identity.saml_reader"]
 signxml = "arbora.identity.saml_reader:SamlReader"
