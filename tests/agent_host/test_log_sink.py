@@ -16,6 +16,8 @@ from arbora.agent_host.log_sink import WorkspaceLogSink
 from tests.agent_host.test_log_access import ControlledOwners, read, reference, serve
 
 
+@pytest.mark.spec("ARBORA-HOST-R009.3")
+@pytest.mark.spec("ARBORA-HOST-R009.8")
 def test_redaction_rotation_and_private_projection(tmp_path: Path) -> None:
     sink = WorkspaceLogSink(str(tmp_path), "host-1", max_bytes=1024)
     secret = "Bearer " + "A" * 30
@@ -64,6 +66,7 @@ def test_redaction_rotation_and_private_projection(tmp_path: Path) -> None:
         sink.close()
 
 
+@pytest.mark.spec("ARBORA-HOST-R009.8")
 @pytest.mark.parametrize("unsafe", ["directory-link", "file-link", "hard-link", "mode"])
 def test_unsafe_sink_refuses(tmp_path: Path, unsafe: str) -> None:
     logs = tmp_path / "agent_data/logs"
@@ -106,6 +109,8 @@ def runtime_for(
     return runtime
 
 
+@pytest.mark.spec("ARBORA-HOST-R009.3")
+@pytest.mark.spec("ARBORA-HOST-R009.8")
 @pytest.mark.usefixtures("unsynced_log_writes")
 def test_real_http_request_reaches_production_sink_and_authorized_read(
     tmp_path: Path,

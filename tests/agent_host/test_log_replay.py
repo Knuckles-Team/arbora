@@ -27,6 +27,7 @@ def access_for(sink: WorkspaceLogSink, owners: ControlledOwners) -> HostLogAcces
     )
 
 
+@pytest.mark.spec("ARBORA-HOST-R009.8.2")
 def test_http_restart_requires_fresh_grant_and_retains_original_metadata(
     tmp_path: Path,
 ) -> None:
@@ -77,6 +78,7 @@ def test_http_restart_requires_fresh_grant_and_retains_original_metadata(
         restarted.close()
 
 
+@pytest.mark.spec("ARBORA-HOST-R009.8.2")
 def test_rotated_anchor_returns_explicit_http_gap(tmp_path: Path) -> None:
     owners = ControlledOwners()
     sink = WorkspaceLogSink(str(tmp_path), "host-1", max_bytes=1024)
@@ -109,6 +111,7 @@ def test_rotated_anchor_returns_explicit_http_gap(tmp_path: Path) -> None:
         restarted.close()
 
 
+@pytest.mark.spec("ARBORA-HOST-R009.8.2")
 @pytest.mark.parametrize("mutation", ["signature", "tenant", "generations"])
 def test_durable_cursor_rejects_tampering_and_scope_changes(
     tmp_path: Path, mutation: str
