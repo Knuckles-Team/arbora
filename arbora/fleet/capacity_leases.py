@@ -70,7 +70,7 @@ class EngineCapacityLeases:
                     "ttl_ms": params.get("ttl_ms") or DEFAULT_TTL_MS,
                     "now_ms": self._now_ms(),
                     "cost_budget_micros": None,
-                    "token_budget": None,
+                    "token_budget": None,  # nosec B105 - a token budget, not a credential
                     "queue_ttl_ms": DEFAULT_QUEUE_TTL_MS,
                 }
             },
