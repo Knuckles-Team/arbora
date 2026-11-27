@@ -27,7 +27,7 @@ import importlib.metadata
 import logging
 from typing import Any
 
-from arbora.core.environment import read_env, register_platform
+from arbora.core.environment import read_env
 from arbora.messaging.models import MessagingConfig
 from arbora.messaging.supervision import (
     AdapterImportFailed,
@@ -344,11 +344,6 @@ class MessagingRegistry:
         """
         return self._degraded.get(backend_id)
 
-    def _declare_platform(self, backend_id: str) -> None:
-        """Enumerate a discovered backend for the ``MESSAGING_{PLATFORM}_*`` names."""
-        if backend_id in self._entry_points:
-            register_platform(backend_id)
-
     def _auto_config(self, backend_id: str) -> MessagingConfig:
         """Build a MessagingConfig from environment variables.
 
@@ -363,7 +358,6 @@ class MessagingRegistry:
         Returns:
             Auto-populated ``MessagingConfig``.
         """
-        self._declare_platform(backend_id)
         # Platform-native env var mappings (from OpenClaw plugin manifests)
         native_token_vars: dict[str, list[str]] = {
             "discord": ["DISCORD_BOT_TOKEN"],

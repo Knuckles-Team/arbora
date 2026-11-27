@@ -485,23 +485,24 @@ def _normalize_granted_scopes(value: str) -> tuple[str, ...]:
     return tuple(sorted({part for part in str(value or "").split() if part}))
 
 
-_TOKEN_LOCKS: weakref.WeakValueDictionary[str, threading.Lock] = (
-    weakref.WeakValueDictionary()
-)
+class KeyedLocks:
+    """Per-token locks, never a global lock — concurrent refreshes for different
+    tokens must not serialize against each other (lane resource budget). One
+    instance belongs to the store or cache that serializes its own keys."""
 
+    def __init__(self) -> None:
+        self._locks: weakref.WeakValueDictionary[str, threading.Lock] = (
+            weakref.WeakValueDictionary()
+        )
+        self._guard = threading.Lock()
 
-_TOKEN_LOCKS_GUARD = threading.Lock()
-
-
-def _lock_for(storage_key: str) -> threading.Lock:
-    """Per-token lock, never a global lock — concurrent refreshes for different
-    tokens must not serialize against each other (lane resource budget)."""
-    with _TOKEN_LOCKS_GUARD:
-        lock = _TOKEN_LOCKS.get(storage_key)
-        if lock is None:
-            lock = threading.Lock()
-            _TOKEN_LOCKS[storage_key] = lock
-        return lock
+    def lock_for(self, storage_key: str) -> threading.Lock:
+        with self._guard:
+            lock = self._locks.get(storage_key)
+            if lock is None:
+                lock = threading.Lock()
+                self._locks[storage_key] = lock
+            return lock
 
 
 def _new_grant_revision() -> str:
@@ -554,6 +555,7 @@ class OAuthTokenStore:
 
     def __init__(self, secrets_client: Any) -> None:
         self._secrets = secrets_client
+        self._locks = KeyedLocks()
 
     @staticmethod
     def _require_verified(actor: ActorContext) -> tuple[str, str]:
@@ -610,7 +612,7 @@ class OAuthTokenStore:
             "grant_revision": grant_revision,
             "revoked": False,
         }
-        lock = _lock_for(key)
+        lock = self._locks.lock_for(key)
         with lock:
             _refuse_revoked_overwrite(self._secrets.get(key), authorization_started_at)
             self._secrets.set(key, json.dumps(record, separators=(",", ":")))
@@ -688,7 +690,7 @@ class OAuthTokenStore:
                 "no client_id available for token refresh — DCR has not "
                 "completed for this provider"
             )
-        lock = _lock_for(key)
+        lock = self._locks.lock_for(key)
         with lock:
             raw = self._secrets.get(key)
             if raw is None:
@@ -769,7 +771,7 @@ class OAuthTokenStore:
         """
         tenant, principal = self._require_verified(actor)
         key = self._storage_key(tenant, principal, provider_id, resource_url, audience)
-        lock = _lock_for(key)
+        lock = self._locks.lock_for(key)
         with lock:
             self._secrets.set(
                 key,

@@ -19,6 +19,7 @@ from arbora.mcp_server.composition import (
     ensure_local_engine,
     stand_down_engine,
 )
+from arbora.mcp_server.served_engine import EngineAttachments
 
 _FAKE_ENGINE = textwrap.dedent(
     """\
@@ -71,31 +72,30 @@ def test_absent_starts_once_and_writes_marker_present_starts_nothing(
     fake_engine: tuple[str, Path],
     runtime_dir: Path,
     tmp_path: Path,
-    clean_attachments: None,
+    attachments: EngineAttachments,
     free_port: Callable[[], int],
 ) -> None:
     binary, log = fake_engine
     port = free_port()
     config = _config(binary, tmp_path, port)
 
-    before = composition.engine_spawn_count()
-    endpoint = ensure_local_engine(config)
+    endpoint = ensure_local_engine(config, attachments)
     assert endpoint.address == f"127.0.0.1:{port}"
-    assert composition.engine_spawn_count() == before + 1
+    assert attachments.spawned == 1
     spawns = log.read_text().splitlines()
     assert len(spawns) == 1
     assert f"--tcp-addr 127.0.0.1:{port}" in spawns[0]
     assert "--idle-shutdown-secs 300" in spawns[0]
     marker = engine_lock.engine_marker_path(endpoint.address)
     pid = json.loads(marker.read_text())["pid"]
-    assert pid == composition._ATTACHED[endpoint.address].process.pid  # type: ignore[union-attr]
+    assert pid == attachments.attached[endpoint.address].process.pid  # type: ignore[union-attr]
 
     # A second call in the same process attaches to the same engine and starts nothing.
-    assert ensure_local_engine(config) == endpoint
+    assert ensure_local_engine(config, attachments) == endpoint
     assert len(log.read_text().splitlines()) == 1
 
     # Standing down stops the engine this host started and removes the marker.
-    assert stand_down_engine(endpoint) is True
+    assert stand_down_engine(endpoint, attachments) is True
     assert not marker.exists()
 
     # A running engine that this process did not start: nothing is started, no marker.
@@ -114,10 +114,10 @@ def test_absent_starts_once_and_writes_marker_present_starts_nothing(
             assert time.monotonic() < deadline
             time.sleep(0.2)
         before = len(log.read_text().splitlines())
-        attached = ensure_local_engine(config2)
+        attached = ensure_local_engine(config2, attachments)
         assert len(log.read_text().splitlines()) == before
         assert not engine_lock.engine_marker_path(attached.address).exists()
-        assert stand_down_engine(attached) is False
+        assert stand_down_engine(attached, attachments) is False
     finally:
         peer.terminate()
         peer.wait()
@@ -127,17 +127,17 @@ def test_absent_starts_once_and_writes_marker_present_starts_nothing(
 def test_missing_binary_and_old_launch_contract_are_typed_refusals(
     runtime_dir: Path,
     tmp_path: Path,
-    clean_attachments: None,
+    attachments: EngineAttachments,
     free_port: Callable[[], int],
 ) -> None:
     config = _config(str(tmp_path / "absent"), tmp_path, free_port())
     with pytest.raises(EngineRefusal) as missing:
-        ensure_local_engine(config)
+        ensure_local_engine(config, attachments)
     assert missing.value.code == "ENGINE_BINARY_MISSING"
 
     old = tmp_path / "old-engine"
     old.write_text(f"#!{sys.executable}\nprint('--tcp-addr')\n")
     old.chmod(old.stat().st_mode | stat.S_IXUSR)
     with pytest.raises(EngineRefusal) as contract:
-        ensure_local_engine(_config(str(old), tmp_path, free_port()))
+        ensure_local_engine(_config(str(old), tmp_path, free_port()), attachments)
     assert contract.value.code == "ENGINE_LAUNCH_CONTRACT_INVALID"

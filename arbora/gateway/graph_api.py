@@ -154,7 +154,9 @@ def register_graph_routes(app, host, prefix: str = "/api") -> None:
     # ActorContext + GraphSession, and rejects unauthenticated requests with 401.
     from arbora.security.request_identity import ActorIdentityMiddleware
 
-    app.add_middleware(ActorIdentityMiddleware, keys=host.caches.jwks)
+    app.add_middleware(
+        ActorIdentityMiddleware, keys=host.caches.jwks, ingress=host.policy.ingress
+    )
 
     # Every request reports its failures to this host's error store.
     from arbora.gateway.errors_scope import ErrorsScopeMiddleware

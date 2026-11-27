@@ -19,6 +19,7 @@ from arbora.mcp_server.composition import (
     probe_engine,
     stand_down_engine,
 )
+from arbora.mcp_server.served_engine import EngineAttachments
 
 
 @pytest.mark.spec("ARBORA-DEPLOY-R018.7")
@@ -29,11 +30,9 @@ def test_two_hosts_reuse_one_engine_and_unavailable_reuse_starts_zero(
 ) -> None:
     port = independent_engine()
     live = EngineEndpoint("tcp", f"127.0.0.1:{port}")
-    before = composition.engine_spawn_count()
     # Two hosts reuse the one engine and neither starts anything.
     assert attach_reused_engine(live, 5).state == "running"
     assert attach_reused_engine(live, 5).state == "running"
-    assert composition.engine_spawn_count() == before
 
     # An older engine than this release serves refuses, and starts nothing.
     monkeypatch.setattr(composition, "engine_version_floor", lambda: (99, 0, 0))
@@ -63,7 +62,7 @@ def test_two_hosts_reuse_one_engine_and_unavailable_reuse_starts_zero(
         assert refused.value.code == "REUSE_UNREACHABLE"
     finally:
         handles.reset()
-    assert composition.engine_spawn_count() == before
+    assert handles.attachments.spawned == 0
 
 
 @pytest.mark.spec("ARBORA-DEPLOY-R018.8")
@@ -89,7 +88,7 @@ def test_unknown_ownership_refuses_cleanup_and_leaves_the_engine(
     independent_engine: Callable[[], int],
     runtime_dir: Path,
     tmp_path: Path,
-    clean_attachments: None,
+    attachments: EngineAttachments,
 ) -> None:
     port = independent_engine()
     config = LocalEngineConfig(port=port, persist_dir=tmp_path / "unused")
@@ -97,10 +96,10 @@ def test_unknown_ownership_refuses_cleanup_and_leaves_the_engine(
     marker = engine_lock.engine_marker_path(endpoint.address)
 
     for content in ("not json", json.dumps({"pid": 2_000_000_000})):
-        assert composition.ensure_local_engine(config) == endpoint
+        assert composition.ensure_local_engine(config, attachments) == endpoint
         marker.write_text(content)
         with pytest.raises(EngineRefusal) as unknown:
-            stand_down_engine(endpoint)
+            stand_down_engine(endpoint, attachments)
         assert unknown.value.code == "OWNERSHIP_UNKNOWN"
         assert probe_engine(endpoint, 5).state == "running"
         marker.unlink()

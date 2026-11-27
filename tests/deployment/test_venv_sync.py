@@ -274,21 +274,17 @@ def test_member_uninstall_guardrail_refuses_the_real_destructive_plan(
 def test_locked_distribution_guardrail_refuses_removing_a_locked_package(
     workspace: Workspace,
 ) -> None:
-    saved = list(venv_sync.GUARDRAILS)
-    venv_sync.GUARDRAILS[:] = [
+    without_member_check = tuple(
         g for g in venv_sync.GUARDRAILS if g.name != "member_uninstall"
-    ]
-    try:
-        plan = SyncPlan.parse("Would uninstall 1 packages\n - anyio==4.14.2\n")
-        verdict = evaluate_plan(
-            plan, SyncContext(workspace=workspace, ignore_activity=True)
-        )
-        assert verdict.decision == REFUSE
-        assert verdict.guardrail == "locked_uninstall"
-    finally:
-        # Restore the exact order: re-registering appends, which would let
-        # another guardrail refuse first in a later test.
-        venv_sync.GUARDRAILS[:] = saved
+    )
+    plan = SyncPlan.parse("Would uninstall 1 packages\n - anyio==4.14.2\n")
+    verdict = evaluate_plan(
+        plan,
+        SyncContext(workspace=workspace, ignore_activity=True),
+        guardrails=without_member_check,
+    )
+    assert verdict.decision == REFUSE
+    assert verdict.guardrail == "locked_uninstall"
 
 
 def test_uninstall_budget_allows_a_sanctioned_prune(workspace: Workspace) -> None:

@@ -295,17 +295,10 @@ class LeaseActivityProbe:
         return tuple(found)
 
 
-ACTIVITY_PROBES: list[ActivityProbe] = [ProcessActivityProbe(), LeaseActivityProbe()]
-
-
-def register_activity_probe(
-    probe: ActivityProbe, *, replace_existing: bool = True
-) -> None:
-    """Add (or replace) an activity probe."""
-
-    if replace_existing:
-        ACTIVITY_PROBES[:] = [p for p in ACTIVITY_PROBES if p.name != probe.name]
-    ACTIVITY_PROBES.append(probe)
+ACTIVITY_PROBES: tuple[ActivityProbe, ...] = (
+    ProcessActivityProbe(),
+    LeaseActivityProbe(),
+)
 
 
 def detect_activity(workspace: Workspace) -> tuple[ActivityRecord, ...]:
@@ -675,17 +668,9 @@ class SdkFloorProbe:
         )
 
 
-VERIFY_PROBES: list[VerifyProbe] = [
+VERIFY_PROBES: tuple[VerifyProbe, ...] = (
     LockCheckProbe(),
     CleanPlanProbe(),
     ImportProbe(),
     SdkFloorProbe(),
-]
-
-
-def register_verify_probe(probe: VerifyProbe, *, replace_existing: bool = True) -> None:
-    """Add (or replace) a verification probe."""
-
-    if replace_existing:
-        VERIFY_PROBES[:] = [p for p in VERIFY_PROBES if p.name != probe.name]
-    VERIFY_PROBES.append(probe)
+)

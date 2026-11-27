@@ -73,7 +73,7 @@ def record(outcome="succeeded", counts=COUNTS):
 
 def project(value, item=None):
     item = item or value["work_item"]
-    task = WorkItemA2AAuthority.project_item(
+    task = WorkItemA2AAuthority._project(
         item, task_id=("work-item:" + "a" * 64), artifacts=None
     )
     return project_run_usage(
@@ -93,7 +93,7 @@ def test_restart_projection_keeps_exact_snapshot(outcome, counts):
     assert project(value)["counts"] == counts
     if outcome == "failed":
         assert (
-            WorkItemA2AAuthority.project_item(
+            WorkItemA2AAuthority._project(
                 value["work_item"], task_id=("work-item:" + "a" * 64), artifacts=None
             ).artifacts
             is None
@@ -216,7 +216,7 @@ async def test_get_run_uses_owner_graph_and_caller_tenant():
     )
     value = record()
     item = value["work_item"]
-    task = WorkItemA2AAuthority.project_item(
+    task = WorkItemA2AAuthority._project(
         item, task_id=item["work_item_id"], artifacts=None
     )
     result = await read_run_usage(

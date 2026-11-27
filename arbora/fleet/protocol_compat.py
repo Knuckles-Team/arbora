@@ -11,13 +11,11 @@ Pydantic-AI releases read the SDK's legacy camelCase fields and assumed the
 initialize handshake, so AU briefly carried process-global aliases, a copied
 `MCPToolset` method body, and an explicit legacy-mode pin.
 
-The supported contract is now `pydantic-ai-slim==2.29.0`. Its upstream
-`pydantic_ai.mcp` implementation reads either SDK field spelling through its own
+The pinned `pydantic-ai-slim` reads either SDK field spelling through its own
 `_mcp_compat` helpers, handles modern `server/discover` sessions, and imports the
-FastMCP protocol-error alias. The old method monkeypatch and field aliases are
-therefore removed. `install_mcp_v2_bridge()` remains as a compatibility-preserving
-entrypoint that validates the exact installed contract and fails closed on drift;
-it never silently disables MCP or mutates third-party classes. The
+FastMCP protocol-error alias. The old method monkeypatch, field aliases and the
+installer that guarded them are therefore removed: this module patches nothing, at
+import or later, and holds no module state. The
 `force_legacy_protocol_mode()` helper remains an explicit AU policy for call sites
 that require initialize-handshake semantics while the fleet transitions.
 
@@ -32,8 +30,6 @@ import importlib.metadata
 import warnings
 from types import ModuleType
 from typing import Any
-
-_installed = False
 
 #: Module paths that carry the MCP wire-protocol types, newest first. The MCP SDK
 #: v2 line moved `mcp.types` OUT of the `mcp` distribution into a standalone
@@ -126,70 +122,6 @@ def mcp_types_module() -> ModuleType:
         "importable; the MCP protocol-type surface is unavailable, so tool / "
         "prompt / resource identity cannot be resolved."
     )
-
-
-def install_mcp_v2_bridge() -> None:
-    """Verify the exact Pydantic-AI MCP contract used by AU.
-
-    Pydantic-AI 2.29 natively handles both MCP SDK field spellings and modern
-    FastMCP sessions, so the old process-global aliases and copied method body
-    are intentionally gone. The public function remains at all historical
-    construction sites as a fail-closed version gate: a stale or ambient
-    installation must never silently disable the MCP compatibility contract.
-    It is idempotent and does not mutate third-party classes.
-    """
-    global _installed
-    if _installed:
-        return
-    _install_pydantic_ai_v2_read_bridge()
-
-    _installed = True
-
-
-#: The exact Pydantic-AI release whose native MCPToolset surface AU supports.
-#: This is the single contract source consumed by the fleet parity checker;
-#: package extras, locks, image inputs, and runtime verification must agree.
-_PYDANTIC_AI_CONTRACT_VERSION = "2.29.0"
-
-# Backwards-compatible name for integrations that imported the old private
-# sentinel while the method body was locally patched. It deliberately aliases
-# the one canonical literal above rather than introducing a second version.
-_PATCHED_PYDANTIC_AI_VERSION = _PYDANTIC_AI_CONTRACT_VERSION
-
-_toolset_reads_patched = False
-
-
-def _install_pydantic_ai_v2_read_bridge() -> None:
-    """Verify the native Pydantic-AI MCPToolset contract without monkeypatching it.
-
-    Pydantic-AI 2.29.0's upstream `MCPToolset` now owns the complete surface:
-    `_mcp_compat` reads current snake_case and legacy camelCase model fields,
-    `__aenter__` handles both initialize-era and modern sessions, and tool-call
-    errors use FastMCP's SDK-neutral alias. This function deliberately does not
-    assign to third-party methods or install process-global aliases. The exact
-    version check is the fail-closed guard: changing the package version requires
-    re-diffing those upstream methods and updating this contract source and its
-    tests together, rather than silently disabling the compatibility layer.
-    """
-    global _toolset_reads_patched
-    if _toolset_reads_patched:
-        return
-
-    try:
-        installed_version = importlib.metadata.version("pydantic-ai-slim")
-    except importlib.metadata.PackageNotFoundError:  # pydantic-ai-slim (the `[mcp]` extra) is genuinely optional; its absence means there is nothing for this bridge to patch, not a failure to surface
-        return
-
-    if installed_version != _PATCHED_PYDANTIC_AI_VERSION:
-        raise RuntimeError(
-            "meristem: the Pydantic-AI MCP contract requires "
-            f"pydantic-ai-slim=={_PYDANTIC_AI_CONTRACT_VERSION}, but "
-            f"{installed_version} is installed. Refusing to construct MCP "
-            "toolsets with an unverified compatibility surface; re-lock the AU "
-            "contract or re-diff the upstream methods before changing the pin."
-        )
-
-    _toolset_reads_patched = True
 
 
 def force_legacy_protocol_mode(toolset: Any) -> Any:

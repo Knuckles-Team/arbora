@@ -19,13 +19,15 @@ def test_repeat_up_on_a_fresh_store_is_not_rate_limited(
 ) -> None:
     stores: list[str] = []
 
-    def engine(config: object) -> SimpleNamespace:
+    def engine(config: object, _attachments: object) -> SimpleNamespace:
         stores.append(str(config.persist_dir))  # type: ignore[attr-defined]
         assert not any(Path(config.persist_dir).iterdir())  # type: ignore[attr-defined]
         return SimpleNamespace(address=f"127.0.0.1:{config.port}")  # type: ignore[attr-defined]
 
     monkeypatch.setattr(composition, "ensure_local_engine", engine)
-    monkeypatch.setattr(composition, "stand_down_engine", lambda endpoint: None)
+    monkeypatch.setattr(
+        composition, "stand_down_engine", lambda endpoint, attachments: None
+    )
     monkeypatch.setattr(sandbox, "resolve_engine", lambda *a, **k: "pinned")
     args = argparse.Namespace(
         root=str(tmp_path),

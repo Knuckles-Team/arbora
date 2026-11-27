@@ -117,6 +117,7 @@ def test_engine_guard_acquire_time_budget(tmp_path, monkeypatch):
 def test_busy_guard_refuses_without_spawning(tmp_path, monkeypatch):
     from arbora.mcp_server import composition
     from arbora.mcp_server.composition import LocalEngineConfig
+    from arbora.mcp_server.served_engine import EngineAttachments
 
     monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
     config = LocalEngineConfig(
@@ -138,11 +139,10 @@ def test_busy_guard_refuses_without_spawning(tmp_path, monkeypatch):
         "engine_spawn_guard",
         lambda key, timeout=0.1: original(key, timeout=0.05),
     )
-    monkeypatch.setattr(composition, "_ATTACHED", {})
     with original(address, timeout=0.5) as held:
         assert held is True
         with pytest.raises(composition.EngineRefusal) as refused:
-            composition.ensure_local_engine(config)
+            composition.ensure_local_engine(config, EngineAttachments())
     assert refused.value.code == "ENGINE_SPAWN_GUARD_BUSY"
     assert str(os.getpid()) in str(refused.value)
     assert spawned == []

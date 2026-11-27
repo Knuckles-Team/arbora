@@ -16,6 +16,7 @@ import pytest
 
 from arbora.deployment import engine_lock
 from arbora.mcp_server import composition
+from arbora.mcp_server.served_engine import EngineAttachments
 
 _CHILD = textwrap.dedent(
     """
@@ -23,15 +24,17 @@ _CHILD = textwrap.dedent(
     from pathlib import Path
     from arbora.core.settings import RuntimeConfig
     from arbora.mcp_server.composition import (
-        ensure_local_engine, engine_spawn_count, local_engine_config,
+        ensure_local_engine, local_engine_config,
     )
+    from arbora.mcp_server.served_engine import EngineAttachments
     config = local_engine_config(
         RuntimeConfig(),
         port=int(sys.argv[1]), persist_dir=Path(sys.argv[2]),
         extra_args=("--auth-mode", "none"), start_timeout_s=90, stop_grace_s=20,
     )
-    endpoint = ensure_local_engine(config)
-    print(json.dumps({"address": endpoint.address, "spawned": engine_spawn_count()}),
+    attachments = EngineAttachments()
+    endpoint = ensure_local_engine(config, attachments)
+    print(json.dumps({"address": endpoint.address, "spawned": attachments.spawned}),
           flush=True)
     sys.stdin.readline()
     """
@@ -63,11 +66,12 @@ def runtime_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return base
 
 
-@pytest.fixture(autouse=False)
-def clean_attachments() -> Iterator[None]:
-    yield
-    for attachment in list(composition._ATTACHED.values()):
-        composition.stand_down_engine(attachment.endpoint)
+@pytest.fixture
+def attachments() -> Iterator[EngineAttachments]:
+    """The engine attachments of one test host, stood down at teardown."""
+    held = EngineAttachments()
+    yield held
+    composition._stand_down_all(held)
 
 
 class Child:

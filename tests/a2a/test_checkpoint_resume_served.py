@@ -160,7 +160,7 @@ async def _projected(host: Host, task_id: str) -> str | None:
     item = await host.authority.owned_item(task_id)
     if item is None:
         return None
-    return str(host.authority._project(item, task_id=task_id).status.state)
+    return str(host.authority.project_held(item, task_id=task_id).status.state)
 
 
 def _consumer(host: Host, engine: FakeEngine, clock: Clock, who: Any) -> Any:

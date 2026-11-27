@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import os
 import threading
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from functools import cache
 from pathlib import Path
 from types import MappingProxyType
@@ -1198,6 +1198,8 @@ class RuntimeConfig:
         object.__setattr__(self, "_overrides", {})
         object.__setattr__(self, "_lock", threading.Lock())
         object.__setattr__(self, "_write_lock", threading.Lock())
+        object.__setattr__(self, "_owned", {})
+        object.__setattr__(self, "_owned_lock", threading.RLock())
 
     def __getattr__(self, name: str) -> Any:
         overrides = object.__getattribute__(self, "_overrides")
@@ -1215,6 +1217,16 @@ class RuntimeConfig:
     def __delattr__(self, name: str) -> None:
         with self._lock:
             self._overrides.pop(name, None)
+
+    def owned(self, name: str, build: Callable[[], Any]) -> Any:
+        """The object this view owns under ``name``, built once by ``build``.
+
+        A build that raises stores nothing, so the next call builds again.
+        """
+        with self._owned_lock:
+            if name not in self._owned:
+                self._owned[name] = build()
+            return self._owned[name]
 
     def setting(self, key: str) -> Any:
         """One setting by its environment name: an override, else the declared field.

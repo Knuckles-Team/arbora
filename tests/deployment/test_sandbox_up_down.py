@@ -23,13 +23,17 @@ def test_up_serves_the_real_stack_and_down_removes_it(
     monkeypatch.setattr(
         composition,
         "ensure_local_engine",
-        lambda config: (
+        lambda config, attachments: (
             engines.append(config)
             or SimpleNamespace(address=f"127.0.0.1:{config.port}")
         ),
     )
     stood_down: list[object] = []
-    monkeypatch.setattr(composition, "stand_down_engine", stood_down.append)
+    monkeypatch.setattr(
+        composition,
+        "stand_down_engine",
+        lambda endpoint, attachments: stood_down.append(endpoint),
+    )
     monkeypatch.setattr(sandbox, "resolve_engine", lambda *a, **k: "pinned")
     launched: list[tuple[list[str], dict[str, str]]] = []
 

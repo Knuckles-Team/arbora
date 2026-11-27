@@ -24,18 +24,17 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ENV_REFERENCE_FAMILY",
-    "PROCESS_ENVIRONMENT",
     "ProcessEnvironment",
     "copy_environment",
     "default_env",
     "environment_names",
     "environment_view",
     "inherited_environment",
+    "process_environment",
     "project_environment",
     "read_env",
     "read_reference",
     "read_text",
-    "register_platform",
     "read_tool_family_toggle",
     "template_covers",
     "unset_env",
@@ -88,23 +87,22 @@ def _index() -> tuple[dict[str, EnvironmentDeclaration], tuple[Any, ...]]:
     return exact, tuple(templates)
 
 
-_REGISTERED_PLATFORMS: set[str] = set()
+def _installed_backends() -> frozenset[str]:
+    """The ids of the messaging backends installed as entry points, upper-cased."""
+    import importlib.metadata
 
-
-def register_platform(platform: str) -> None:
-    """Enumerate one installed messaging backend whose id the capability matrix lacks.
-
-    The platform families (``MESSAGING_{PLATFORM}_TOKEN`` and the rest) cover the
-    capability matrix and the backends the registry discovers; nothing else.
-    """
-    if _FAMILY.fullmatch(platform.upper()):
-        _REGISTERED_PLATFORMS.add(platform.upper())
+    return frozenset(
+        point.name.upper()
+        for point in importlib.metadata.entry_points(group="arbora.messaging")
+        if _FAMILY.fullmatch(point.name.upper())
+    )
 
 
 def _platforms() -> frozenset[str]:
+    """The platform families: the capability matrix and the installed backends."""
     from arbora.core.messaging_capabilities import CAPABILITY_MATRIX
 
-    return frozenset(key.upper() for key in CAPABILITY_MATRIX) | _REGISTERED_PLATFORMS
+    return frozenset(key.upper() for key in CAPABILITY_MATRIX) | _installed_backends()
 
 
 def _slot_value(slot: str, value: str) -> bool:
@@ -260,8 +258,9 @@ class ProcessEnvironment(MutableMapping[str, str]):
         return len(environment_names())
 
 
-#: The one live view of the process environment.
-PROCESS_ENVIRONMENT = ProcessEnvironment()
+def process_environment() -> ProcessEnvironment:
+    """The live view of the process environment; each call is a view, not a copy."""
+    return ProcessEnvironment()
 
 
 def copy_environment(source: Mapping[str, str]) -> dict[str, str]:
