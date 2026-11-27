@@ -48,6 +48,7 @@ from arbora import work_items
 from arbora.core.environment import read_env
 from arbora.fleet.protocol_compat import mcp_protocol_exception
 from arbora.mcp_server.served_engine import engine_unbound
+from arbora.security.run_token import RunTokenSigner
 
 # MCP SDK v2 (which the `fastmcp>=4.0.0b1` floor pulls in) renamed
 # `McpError` -> `MCPError`. The fleet is EXPLICITLY mixed-version: child images
@@ -235,7 +236,15 @@ def _delegation_binding(
     ).hexdigest()
 
 
+def bound_signer(signer: RunTokenSigner | None) -> RunTokenSigner:
+    """The host's signer, or a refusal when this server was built without one."""
+    if signer is None:
+        raise RuntimeError("no run-token signer is bound to this server")
+    return signer
+
+
 def mint_delegation_token(
+    signer: RunTokenSigner,
     method: str,
     params: Mapping[str, Any],
     *,
@@ -245,8 +254,6 @@ def mint_delegation_token(
 ) -> str:
     """Mint a short-lived, shared-secret run token for one task request."""
 
-    from arbora.security.run_token import mint_token
-
     binding = _delegation_binding(
         method,
         params,
@@ -254,7 +261,7 @@ def mint_delegation_token(
         revision=revision,
         caller=caller,
     )
-    return mint_token(
+    return signer.mint(
         f"mcp-task:{binding}",
         project=server,
         endpoints=(server,),
@@ -570,8 +577,10 @@ class WorkItemTasksExtension(ServerExtension):
         server_id: str | None = None,
         task_router: Any | None = None,
         engine_provider: Callable[[], Any] = engine_unbound,
+        signer: RunTokenSigner | None = None,
     ) -> None:
         self._engine_provider = engine_provider
+        self._signer = signer
         self.server_id = (
             str(server_id).strip()
             if isinstance(server_id, str) and server_id.strip()
@@ -1130,9 +1139,7 @@ class WorkItemTasksExtension(ServerExtension):
 
     def _decode_delegation_token(self, token: str, method: str) -> Any:
         try:
-            from arbora.security.run_token import validate_token
-
-            return validate_token(
+            return bound_signer(self._signer).validate(
                 token,
                 endpoint=str(self.server_id or ""),
                 operation=method,

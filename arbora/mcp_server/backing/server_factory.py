@@ -34,6 +34,7 @@ from arbora.core.environment import read_env, read_reference, write_env
 from arbora.mcp_server.served_engine import engine_unbound, no_process_session
 from arbora.observability.state import Metrics
 from arbora.security.key_cache import JwksCache
+from arbora.security.run_token import RunTokenSigner
 from arbora.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -2310,7 +2311,10 @@ def _resolve_metrics_token() -> str | None:
 
 
 def _mount_tasks_extension_if_available(
-    mcp: Any, name: str, engine_provider: Callable[[], Any] = engine_unbound
+    mcp: Any,
+    name: str,
+    engine_provider: Callable[[], Any] = engine_unbound,
+    signer: RunTokenSigner | None = None,
 ) -> None:
     # CONCEPT:MERISTEM-ECO.mcp.tasks-workitem-bridge -- mount the native WorkItem-backed
     # Tasks extension (arbora/mcp_server/backing/tasks_extension/py), NOT
@@ -2342,7 +2346,9 @@ def _mount_tasks_extension_if_available(
         # tasks/get/update/cancel requests without introducing another task
         # registry or scheduler.
         mcp.add_extension(
-            WorkItemTasksExtension(server_id=name, engine_provider=engine_provider)
+            WorkItemTasksExtension(
+                server_id=name, engine_provider=engine_provider, signer=signer
+            )
         )
 
 
@@ -2427,6 +2433,7 @@ def create_mcp_server(
     manage_engine_shutdown: bool = True,
     engine_provider: Callable[[], Any] = engine_unbound,
     process_session: Callable[[], Any] = no_process_session,
+    token_signer: RunTokenSigner | None = None,
 ):
     """Initialize a FastMCP server with a standard middleware and auth stack.
 
@@ -2514,7 +2521,7 @@ def create_mcp_server(
         # default to apply to yet.
         tasks=False,
     )
-    _mount_tasks_extension_if_available(mcp, name, engine_provider)
+    _mount_tasks_extension_if_available(mcp, name, engine_provider, token_signer)
     _register_operational_routes(mcp, remote_network, metrics_token, metrics)
 
     # Inject dynamic visibility transform for dynamic tag/tool filtering

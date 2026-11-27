@@ -161,6 +161,7 @@ def _attach_fleet_runtime(
             catalog_reader=fleet_catalog_reader,
             fleet=fleet,
             authority_scope=partial(runtime.verified_tool_session_scope, authority),
+            signer=authority.signer,
         )
     except Exception as exc:
         raise RuntimeError(
