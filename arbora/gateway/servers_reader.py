@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from arbora.security.key_cache import JwksCache
 from arbora.security.run_token import RunTokenSigner
 
 ServersRefusalCode = Literal["PRINCIPAL_REQUIRED", "TENANT_MISMATCH", "SCOPE_DENIED"]
@@ -58,9 +59,10 @@ class ServersPage:
 class FleetCatalogServersReader:
     """Reads the ``mcp_servers`` table for one verified caller."""
 
-    def __init__(self, engine: Any, signer: RunTokenSigner) -> None:
+    def __init__(self, engine: Any, signer: RunTokenSigner, keys: JwksCache) -> None:
         self._engine = engine
         self._signer = signer
+        self._keys = keys
 
     def check(self, caller: ServersCaller) -> None:
         """Refuse before any read; the order is principal, tenant, scope."""
@@ -102,6 +104,7 @@ class FleetCatalogServersReader:
             after=after,
             limit=page.limit,
             engine=engine,
+            keys=self._keys,
         )
         has_more = len(rows) > page.limit
         page_rows = rows[: page.limit]
@@ -117,6 +120,7 @@ class FleetCatalogServersReader:
                 grant_digests=(),
                 query=page.query,
                 engine=engine,
+                keys=self._keys,
             ),
         )
         next_cursor = api._next_page_cursor(

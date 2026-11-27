@@ -310,7 +310,7 @@ def test_process_renewal_never_touches_a_run_lease(clock: Clock, scope: Any) -> 
     """The R027 process path must not reacquire the process identity for a caller."""
     session = _session(clock)
 
-    def must_not_run(_config: Any) -> Any:
+    def must_not_run(_config: Any, _keys: Any) -> Any:
         raise AssertionError("process identity reacquired for a caller run")
 
     async def main() -> None:

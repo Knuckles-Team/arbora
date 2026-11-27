@@ -35,6 +35,7 @@ from arbora.observability.state import (
     build_health_state,
 )
 from arbora.run_origin import RunOriginRegistry
+from arbora.security.key_cache import JwksCache
 from arbora.security.process_authority import ProcessAuthority
 
 __all__ = [
@@ -78,17 +79,25 @@ class HostContext:
 
 
 def build_host_context() -> HostContext:
-    """Build the host state once; the engine pool is built on first use."""
-    authority = ProcessAuthority()
+    """Build the host state once; the engine pool is built on first use.
+
+    The one key cache is shared by the authority (boot and renewal) and the caches
+    (request validation), so a key fetched by either is current for both.
+    """
+    keys = JwksCache()
+    authority = ProcessAuthority(keys)
     return compose_host_context_over(
         EngineHandles(process_session=authority.session),
-        HostCaches(tools=ToolTable(authority)),
+        HostCaches(tools=ToolTable(authority), jwks=keys),
     )
 
 
 def compose_host_context(engine: EngineHandles) -> HostContext:
     """Compose the host state over the given engine handles and fresh caches."""
-    return compose_host_context_over(engine, HostCaches())
+    keys = JwksCache()
+    return compose_host_context_over(
+        engine, HostCaches(tools=ToolTable(ProcessAuthority(keys)), jwks=keys)
+    )
 
 
 def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> HostContext:

@@ -16,6 +16,7 @@ from typing import Any
 
 from arbora.observability.state import HealthState
 from arbora.security.anonymous import session_context
+from arbora.security.key_cache import JwksCache
 from arbora.security.process_authority import ProcessAuthority
 
 logger = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ def _release_readiness_authority(health: HealthState, owner: object) -> None:
         raise RuntimeError("arbora no longer owns the readiness authority")
 
 
-def _mint_process_session(transport: str) -> Any:
+def _mint_process_session(transport: str, keys: JwksCache) -> Any:
     """Mint the process's verified graph authority.
 
     Tiny packaged-local stdio uses an in-memory asymmetric authority. Every
@@ -77,7 +78,7 @@ def _mint_process_session(transport: str) -> Any:
         session = mint_local_process_session()
     else:
         token = acquire_process_identity_token(config)
-        actor = mint_actor_from_token_sync(token)
+        actor = mint_actor_from_token_sync(token, keys)
         from arbora.security.actor_context import CredentialLease
 
         expires_at = getattr(actor, "credential_expires_at", None)
@@ -161,7 +162,7 @@ def _log_renewal_failure(what: str, exc: BaseException) -> None:
     )
 
 
-def _renewed_process_actor(config: Any) -> Any:
+def _renewed_process_actor(config: Any, keys: JwksCache) -> Any:
     from arbora.security.request_identity import (
         acquire_process_identity_token,
         local_process_authority_enabled,
@@ -173,7 +174,7 @@ def _renewed_process_actor(config: Any) -> Any:
         return mint_local_process_session().actor
     token = acquire_process_identity_token(config)
     try:
-        return mint_actor_from_token_sync(token)
+        return mint_actor_from_token_sync(token, keys)
     finally:
         del token
 
@@ -239,7 +240,7 @@ def _refresh_process_authority(
         if lease.state is LeaseState.RENEW_DUE:
             lease.apply(LeaseEvent.RENEW_START)
         try:
-            renewed_actor = _renewed_process_actor(config)
+            renewed_actor = _renewed_process_actor(config, authority.keys)
         except Exception as exc:
             lease.tick()
             lease.apply(LeaseEvent.IDP_ERR, code="acquisition_failed")

@@ -24,6 +24,7 @@ from arbora.security.actor_context import (
     CredentialLease,
     LeaseState,
 )
+from arbora.security.key_cache import JwksCache
 from arbora.security.process_authority import ProcessAuthority
 from arbora.security.session import GraphSession, SessionExpiredError
 
@@ -87,7 +88,7 @@ def _lease(session: GraphSession) -> CredentialLease:
 def _issue(monkeypatch: pytest.MonkeyPatch, clock: Clock, roles: Any) -> list[int]:
     issued: list[int] = []
 
-    def renewed(_config: Any) -> ActorContext:
+    def renewed(_config: Any, _keys: Any) -> ActorContext:
         issued.append(int(clock.now))
         return _actor(clock, roles() if callable(roles) else roles)
 
@@ -155,7 +156,7 @@ def test_acquisition_failure_logs_its_cause_without_secrets(
     session = _session(clock)
     token = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ4In0.c2lnbmF0dXJl"  # sanitizer:ignore - synthetic unsigned JWT fixture for masking
 
-    def failing(_config: Any) -> ActorContext:
+    def failing(_config: Any, _keys: Any) -> ActorContext:
         try:
             refused = (
                 f"token endpoint refused Bearer {token}"  # sanitizer:ignore - synthetic
@@ -238,7 +239,7 @@ def test_acquisition_crossing_expiry_recovers_with_the_new_expiry(
     expiry = _lease(session).expires_at
     clock.now = expiry - 10
 
-    def slow_identity(_config: Any) -> ActorContext:
+    def slow_identity(_config: Any, _keys: Any) -> ActorContext:
         clock.now = expiry
         return _actor(clock)
 
@@ -287,7 +288,7 @@ def test_shared_lease_recovers_expiry_and_rejects_revocation(clock: Clock) -> No
 
 
 def _gateway_issuer(
-    monkeypatch: pytest.MonkeyPatch, validated: Callable[[str], ActorContext]
+    monkeypatch: pytest.MonkeyPatch, validated: Callable[[str, Any], ActorContext]
 ) -> None:
     from arbora.security import request_identity
 
@@ -307,13 +308,13 @@ def test_gateway_revalidates_before_lease_commit(
     expiry = _lease(session).expires_at
     clock.now = expiry - 10
 
-    def validated(_token: str) -> ActorContext:
+    def validated(_token: str, _keys: Any) -> ActorContext:
         clock.now = expiry
         return _actor(clock)
 
     _gateway_issuer(monkeypatch, validated)
     with pytest.raises(SessionExpiredError):
-        refresh_process_identity(session)
+        refresh_process_identity(session, JwksCache())
     assert _lease(session).expires_at == expiry
 
 
@@ -345,9 +346,11 @@ def test_gateway_identity_change_closes_original_lease(
 
     session = _session(clock)
     clock.now = _lease(session).expires_at - 10
-    _gateway_issuer(monkeypatch, lambda _: replace(_actor(clock), tenant_id="other"))
+    _gateway_issuer(
+        monkeypatch, lambda _, _k: replace(_actor(clock), tenant_id="other")
+    )
     with pytest.raises(RuntimeError, match="changed during renewal"):
-        refresh_process_identity(session)
+        refresh_process_identity(session, JwksCache())
     assert _lease(session).revocation_reason == "identity_changed"
     with pytest.raises(SessionExpiredError):
         session.ensure_authority_current()
@@ -362,7 +365,7 @@ class FakeIdentityProvider:
         self.identity: Callable[[], ActorContext] = lambda: _actor(clock)
         self.calls: list[float] = []
 
-    def __call__(self, _config: Any) -> ActorContext:
+    def __call__(self, _config: Any, _keys: Any) -> ActorContext:
         self.calls.append(self.clock.now)
         if self.clock.now < self.recovers_at:
             raise ConnectionError("identity provider unavailable")

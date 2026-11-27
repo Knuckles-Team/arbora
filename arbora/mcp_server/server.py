@@ -215,7 +215,9 @@ def _served_invocation(
     from arbora.workflow_worker import WorkflowRunStarter
 
     args, _unknown = create_mcp_parser().parse_known_args()
-    session = runtime._mint_process_session(str(getattr(args, "transport", "stdio")))
+    session = runtime._mint_process_session(
+        str(getattr(args, "transport", "stdio")), host.caches.jwks
+    )
     from arbora.browser_control.browser_control_runtime import (
         dispatch_browser_operation,
     )
@@ -539,7 +541,9 @@ def mcp_server(
     port = int(getattr(args, "port", 8000))
     network_serving = build_network_serving_config(args)
 
-    bootstrap_session = early_session or runtime._mint_process_session(transport)
+    bootstrap_session = early_session or runtime._mint_process_session(
+        transport, host_context.caches.jwks
+    )
     host_context.authority.bind_session(
         bootstrap_session if transport == "stdio" else None
     )
