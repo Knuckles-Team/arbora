@@ -53,8 +53,8 @@ def compose_local(args: argparse.Namespace) -> Any:
     from meristem.graph import RunRequest, default_run_plan
     from meristem.host_ports import HostPorts
 
-    from arbora.security.request_identity import mint_local_process_session
     from arbora.security.session import SessionExpiredError
+    from arbora.security.system_session import mint_local_process_session
 
     from .adapter import HostedACPAgent
     from .local_history import LocalConversationHistory

@@ -71,8 +71,8 @@ def _mint_process_session(
         local_process_authority_enabled,
         mint_actor_from_token_sync,
         mint_graph_session,
-        mint_local_process_session,
     )
+    from arbora.security.system_session import mint_local_process_session
 
     if enabled():
         return anonymous_session()
@@ -170,8 +170,8 @@ def _renewed_process_actor(config: Any, keys: JwksCache) -> Any:
         acquire_process_identity_token,
         local_process_authority_enabled,
         mint_actor_from_token_sync,
-        mint_local_process_session,
     )
+    from arbora.security.system_session import mint_local_process_session
 
     if local_process_authority_enabled(config):
         return mint_local_process_session().actor
