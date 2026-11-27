@@ -152,15 +152,17 @@ def test_find_catalog_op_refuses_not_ready() -> None:
 
 
 @pytest.mark.spec("ARBORA-FLEET-R063")
-def test_catalog_detail_rows_carry_input_schema() -> None:
+async def test_catalog_detail_rows_carry_input_schema() -> None:
     from arbora.fleet.multiplexer import MCPMultiplexer
+    from arbora.fleet.tool_rows import ProbeToolRows
 
     mux: Any = SimpleNamespace(
+        _tool_rows=ProbeToolRows(),
         _tool_enabled=lambda server_name, tool_name: True,
         tool_dispatchable=lambda prefixed_name: True,
     )
     schema = {"type": "object", "properties": {"url": {"type": "string"}}}
-    rows = MCPMultiplexer._catalog_detail_tools(
+    rows = await MCPMultiplexer._catalog_detail_tools(
         mux,
         "webarchiver-mcp",
         "webarchiver",
