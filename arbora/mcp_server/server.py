@@ -210,7 +210,7 @@ def _served_invocation(
         DefaultAgentRegistrar,
     )
     from arbora.core.agent_names import FLEET_AGENT_NAME
-    from arbora.mcp_server.backing.server_factory import create_mcp_parser
+    from arbora.mcp_server.backing.server_parser import create_mcp_parser
     from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
     from arbora.mcp_server.fleet_composition import LateFleetGateway
     from arbora.mcp_server.run_reader import NativeRunReader
@@ -436,7 +436,7 @@ def mcp_server(
 
     load_config()  # resolve settings through the one shared XDG config.json
     from arbora.core.environment_manifest import enforce_startup
-    from arbora.mcp_server.backing.server_factory import create_mcp_parser
+    from arbora.mcp_server.backing.server_parser import create_mcp_parser
     from arbora.mcp_server.serving_options import parse_serving_options
     from arbora.security.anonymous import validate_startup
 

@@ -101,7 +101,7 @@ def test_degraded_contract_keeps_registration_in_metadata() -> None:
     from starlette.applications import Starlette
     from starlette.testclient import TestClient
 
-    from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
+    from arbora.mcp_server.backing.server_auth import _configure_jwt_auth
 
     health = build_health_state()
     machine = cc.ClientContractReconciler()

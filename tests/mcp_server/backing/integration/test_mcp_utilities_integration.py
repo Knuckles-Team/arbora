@@ -1,6 +1,6 @@
 """CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction"""
 
-from arbora.mcp_server.backing.server_factory import create_mcp_parser
+from arbora.mcp_server.backing.server_parser import create_mcp_parser
 
 
 def test_mcp_parser_defaults():

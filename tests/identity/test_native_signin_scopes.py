@@ -19,7 +19,7 @@ from starlette.testclient import TestClient
 from arbora.core.settings import RuntimeConfig
 from arbora.identity import client_contract as cc
 from arbora.identity.client_contract import ContractEvent, ReconcileResult
-from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
+from arbora.mcp_server.backing.server_auth import _configure_jwt_auth
 from arbora.mcp_server.host_context import build_host_context
 from arbora.observability import runtime_health
 from arbora.observability.state import IDENTITY_CONTRACT_KEY

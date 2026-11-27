@@ -13,13 +13,14 @@ import pytest
 
 import arbora.mcp_server.backing.server_factory as server_factory
 from arbora.core.settings import RuntimeConfig
+from arbora.mcp_server.backing import server_parser as _server_parser
 from arbora.observability.state import Metrics
 from arbora.security.delegation_config import McpAuthConfig
 from arbora.security.key_cache import JwksCache
 
 
 def test_create_mcp_parser():
-    parser = server_factory.create_mcp_parser()
+    parser = _server_parser.create_mcp_parser()
     assert parser.description == "MCP Server"
     # Check some default arguments
     args = parser.parse_args(["--transport", "sse", "--port", "9000"])

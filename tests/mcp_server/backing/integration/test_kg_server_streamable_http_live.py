@@ -155,10 +155,8 @@ def _live_streamable_http_server(
     # Re-parse our transport/auth argv through the real parser+auth configurer
     # (the same objects the CLI entrypoint builds), since _build_server(bootstrap=False)
     # deliberately ignores argv (see its docstring) and uses defaults.
-    from arbora.mcp_server.backing.server_factory import (
-        _configure_auth,
-        create_mcp_parser,
-    )
+    from arbora.mcp_server.backing.server_auth import _configure_auth
+    from arbora.mcp_server.backing.server_parser import create_mcp_parser
 
     parser = create_mcp_parser(transport_choices=("stdio", "streamable-http"))
     real_args, _ = parser.parse_known_args(argv)

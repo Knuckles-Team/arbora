@@ -21,7 +21,7 @@ from typing import Any, cast
 import pytest
 
 from arbora.core.settings import RuntimeConfig
-from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
+from arbora.mcp_server.backing.server_auth import _configure_jwt_auth
 
 
 def _args(**kw: object) -> argparse.Namespace:
