@@ -1,5 +1,8 @@
 """Federated sign-in: the OIDC code flow and the SAML ACS (ARBORA-IDENTITY-R009.2.3, R012.2.3.2).
 
+Arbora verifies the external identity and hands it to the engine's ``external_login``; the
+engine's identity-provider mapping and JIT policy decide. Arbora evaluates no mapping rule.
+
 Arbora holds nothing between the redirect and the callback. The state, nonce and PKCE
 verifier are sealed in the engine by ``register_login_state`` and released exactly once by
 ``consume_login_state``; a SAML assertion id is recorded by ``register_assertion``, which
@@ -27,13 +30,7 @@ from arbora.pin_lag.medulla import require_models
 
 from .engine import IdentityUnavailable
 from .mfa_ceremonies import Audit, log_audit
-from .oidc import (
-    OidcMappingRule,
-    OidcRefusalReason,
-    OidcTokenRefused,
-    check_id_token_claims,
-    select_mapping_rule,
-)
+from .oidc import OidcRefusalReason, OidcTokenRefused, check_id_token_claims
 from .saml import (
     ParsedSamlAssertion,
     SamlAssertionRefused,
@@ -84,7 +81,6 @@ class FederatedIdentity:
     idp_id: str
     subject: str
     claims: dict[str, list[str]]
-    rule_order: int
     username_hint: str | None = None
     hint: str | None = None
 
@@ -97,7 +93,6 @@ class OidcProvider:
     issuer: str
     client_id: str
     secret_ref: str
-    rules: tuple[OidcMappingRule, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,7 +103,6 @@ class SamlProvider:
     entity_id: str
     acs_url: str
     idp_certificate_ref: str
-    rules: tuple[OidcMappingRule, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,7 +116,7 @@ class ReadSamlResponse:
 
 
 class SamlResponseReader(Protocol):
-    """Injected XML and signature implementation (none lives in Arbora, R012.2.2)."""
+    """XML and signature implementation (``arbora.identity.saml_reader``, R012.2.5)."""
 
     def read(self, response: str) -> ReadSamlResponse:
         """Parse the response; raise ``ValueError`` when it is not a SAML response."""
@@ -131,15 +125,6 @@ class SamlResponseReader(Protocol):
     def verify(self, assertion: ParsedSamlAssertion, idp_certificate_pem: str) -> bool:
         """True only when the read assertion is validly signed by the certificate."""
         ...
-
-
-def _rules(provider: str, default_jit: str, raw: Any) -> tuple[OidcMappingRule, ...]:
-    return tuple(
-        OidcMappingRule(
-            provider, order, str(item["claim_match"]), item.get("jit", default_jit)
-        )
-        for order, item in enumerate(raw or [])
-    )
 
 
 def _ident(value: Any) -> str:
@@ -157,7 +142,6 @@ def oidc_providers(text: str) -> dict[str, OidcProvider]:
                 item["issuer"],
                 item["client_id"],
                 item["secret_ref"],
-                _rules(item["id"], item.get("jit", "deny"), item.get("rules")),
             )
             for item in json.loads(text or "[]")
         }
@@ -174,7 +158,6 @@ def saml_providers(text: str) -> dict[str, SamlProvider]:
                 item["entity_id"],
                 item["acs_url"],
                 item["idp_certificate_ref"],
-                _rules(item["id"], item.get("jit", "deny"), item.get("rules")),
             )
             for item in json.loads(text or "[]")
         }
@@ -284,16 +267,9 @@ class Federation:
     def redirect_uri(self) -> str:
         return self._origin + OIDC_CALLBACK
 
-    def audit(self, protocol: str, provider: str, outcome: str, rule: int = -1) -> None:
-        """One audit event: provider, matched rule index and outcome; never a secret."""
-        self._audit(
-            {
-                "protocol": protocol,
-                "provider": provider,
-                "rule": str(rule),
-                "outcome": outcome,
-            }
-        )
+    def audit(self, protocol: str, provider: str, outcome: str) -> None:
+        """One audit event: protocol, provider and outcome; never a secret."""
+        self._audit({"protocol": protocol, "provider": provider, "outcome": outcome})
 
     def _refuse(self, protocol: str, provider: str, code: str) -> FederatedRefused:
         self.audit(protocol, provider, code)
@@ -359,14 +335,12 @@ class Federation:
         subject = exchanged.claims.get("sub")
         if not isinstance(subject, str) or not subject:
             raise self._refuse("oidc", provider.id, "OIDC_TOKEN_INVALID")
-        rule = self._rule(provider, claims, "oidc", "OIDC_NO_RULE_MATCH")
         hint = exchanged.claims.get("preferred_username")
         return FederatedIdentity(
             "oidc",
             provider.id,
             subject,
             claims,
-            rule.order,
             hint if isinstance(hint, str) else None,
             f"{provider.id}.{exchanged.id_token}",
         )
@@ -406,23 +380,6 @@ class Federation:
             )
             raise self._refuse("oidc", provider.id, code) from None
 
-    def _rule(
-        self,
-        provider: OidcProvider | SamlProvider,
-        claims: Mapping[str, Any],
-        protocol: str,
-        no_match: str,
-    ) -> OidcMappingRule:
-        """The first matching rule; a ``deny`` rule refuses the sign-in (JIT policy)."""
-        try:
-            rule = select_mapping_rule(provider.rules, provider.id, claims)
-        except IdentityUnavailable:
-            raise self._refuse(protocol, provider.id, no_match) from None
-        if rule.jit_policy == "deny":
-            code = "OIDC_JIT_DENIED" if protocol == "oidc" else "SAML_JIT_DENIED"
-            raise self._refuse(protocol, provider.id, code)
-        return rule
-
     async def end_session_url(self, hint: str | None) -> str | None:
         """The provider's logout URL carrying ``id_token_hint``, or ``None``."""
         provider = self._oidc.get((hint or "").partition(".")[0])
@@ -461,10 +418,7 @@ class Federation:
         self._check_signatures(provider, read)
         await self._verify_saml(provider, assertion)
         claims = {name: list(values) for name, values in read.attributes.items()}
-        rule = self._rule(provider, claims, "saml", "SAML_NO_RULE_MATCH")
-        return FederatedIdentity(
-            "saml", provider.id, assertion.subject, claims, rule.order
-        )
+        return FederatedIdentity("saml", provider.id, assertion.subject, claims)
 
     def _check_signatures(self, provider: SamlProvider, read: ReadSamlResponse) -> None:
         if read.signature_count == 0:
@@ -520,9 +474,11 @@ def federation_from_settings(
 
 
 def _entry_point_reader() -> Any:
-    """The installed SAML reader (entry point group ``arbora.identity.saml_reader``), if any."""
+    """The SAML reader: an installed entry point of ``arbora.identity.saml_reader``, else the built-in."""
     from importlib.metadata import entry_points
 
     for point in entry_points(group="arbora.identity.saml_reader"):
         return point.load()()
-    return None
+    from .saml_reader import SamlReader
+
+    return SamlReader()

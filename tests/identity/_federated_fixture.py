@@ -38,11 +38,6 @@ OIDC_CONFIG = json.dumps(
             "issuer": ISSUER,
             "client_id": CLIENT_ID,
             "secret_ref": "env://CORP_SECRET",
-            "jit": "create",
-            "rules": [
-                {"claim_match": "groups=contractors", "jit": "deny"},
-                {"claim_match": "groups=staff"},
-            ],
         }
     ]
 )
@@ -53,8 +48,6 @@ SAML_CONFIG = json.dumps(
             "entity_id": "urn:arbora:sp",
             "acs_url": ORIGIN + "/auth/saml/acs",
             "idp_certificate_ref": "env://SAML_CERT",
-            "jit": "create",
-            "rules": [{"claim_match": "role=staff"}],
         }
     ]
 )
@@ -74,6 +67,7 @@ class Engine:
         self.logins: list[dict[str, Any]] = []
         self.calls: list[tuple[str, str]] = []
         self.last: dict[str, Any] = {}
+        self.login_outcome = "ok"
 
     async def send(self, client: Any, req: Any, graph: str) -> Any:
         from medulla import EngineResponseError
@@ -102,7 +96,7 @@ class Engine:
             self.assertions[body["assertion_id"]] = body["not_on_or_after_ms"]
         elif op == "external_login":
             self.logins.append(body)
-            kind, value = "authenticate", {"outcome": "ok"}
+            kind, value = "authenticate", {"outcome": self.login_outcome}
         return SimpleNamespace(payload={"kind": kind, "value": value})
 
 

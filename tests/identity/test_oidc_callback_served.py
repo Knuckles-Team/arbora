@@ -68,7 +68,6 @@ def test_pkce_state_nonce_mapping_and_hinted_logout(world: SimpleNamespace) -> N
     assert world.audit[-1] == {
         "protocol": "oidc",
         "provider": "corp",
-        "rule": "1",
         "outcome": "ok",
     }
     # Logout carries the stored provider's end-session URL with the ID token hint.
@@ -110,12 +109,11 @@ def test_every_refusal_is_the_same_401_and_the_state_is_single_use(
     world.transport.refuse = True
     refused("provider", state)
     world.transport.refuse = False
+    # The engine's mapping decides: its refusal of the verified identity is the same 401.
     state = _start(world)["state"]
-    world.transport.claims = {"groups": ["nobody"]}
-    refused("no-rule", state)
-    state = _start(world)["state"]
-    world.transport.claims = {"groups": ["contractors", "staff"]}
-    refused("deny", state)
+    world.engine.login_outcome = "denied"
+    refused("engine-denied", state)
+    world.engine.login_outcome = "ok"
     assert set(answers.values()) == {(401, UNIFORM)}
     # The precise reason lives in the audit event only.
     reasons = [e["outcome"] for e in world.audit if e["outcome"].startswith("OIDC_")]
@@ -125,10 +123,9 @@ def test_every_refusal_is_the_same_401_and_the_state_is_single_use(
         "OIDC_STATE_MISMATCH",
         "OIDC_NONCE_MISMATCH",
         "OIDC_TOKEN_INVALID",
-        "OIDC_NO_RULE_MATCH",
-        "OIDC_JIT_DENIED",
     ]
-    assert len(world.engine.logins) == 1
+    assert world.audit[-1]["outcome"] == "denied"
+    assert len(world.engine.logins) == 2
 
 
 @pytest.mark.pin_lag

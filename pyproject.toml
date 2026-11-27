@@ -75,6 +75,9 @@ dependencies = [
     "cryptography>=50.0.2",
     # The LDAPS transport of the directory sync job (arbora/identity/ldap_directory.py).
     "ldap3>=2.9.1",
+    # The SAML response reader (arbora/identity/saml_reader.py): XML-DSig verification
+    # that returns only the signed content, so a wrapped assertion cannot pass.
+    "signxml>=5.3.1",
 ]
 
 [[project.authors]]
@@ -181,6 +184,9 @@ arbora-check-import-boundaries = "arbora.architecture.boundary_census:main"
 arbora-hosting-config = "arbora.deployment.host_config:main"
 arbora-capability-layers = "arbora.architecture.capability_layers:main"
 arbora-sandbox = "arbora.deployment.sandbox:main"
+
+[project.entry-points."arbora.identity.saml_reader"]
+signxml = "arbora.identity.saml_reader:SamlReader"
 
 [project.entry-points."arbora.messaging"]
 telegram = "arbora.messaging.backends.telegram:TelegramBackend"

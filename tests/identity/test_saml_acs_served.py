@@ -83,7 +83,6 @@ def test_signed_assertion_yields_principal_and_each_attack_is_refused(
                 not_before=NOW - timedelta(minutes=5),
             )
         ),
-        "SAML_NO_RULE_MATCH": _read(_assertion("_g"), role="guest"),
     }
     for code, read in attacks.items():
         status, headers, body = _post(world, code, read)
