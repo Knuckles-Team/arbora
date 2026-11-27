@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, Protocol
 
+from arbora.agent_runs import AgentRunPort
 from arbora.api.contracts import (
     AgentControlPlane,
     GraphRlmRequest,
@@ -17,6 +18,18 @@ ControlPlaneFactory = Callable[..., AgentControlPlane]
 ClientForSession = Callable[[Any], Any]
 
 
+def compose_run_control_plane(
+    client: Any, session: Any, *, origins: Any
+) -> AgentControlPlane:
+    """The control plane that runs agents through the host's own run port."""
+    return compose_agent_control_plane(
+        client,
+        session,
+        origins=origins,
+        agent_executor=AgentRunPort(origins=origins, ports=None),
+    )
+
+
 class ToolRegistrar(Protocol):
     def tool(self, **kwargs: Any) -> Callable[[Any], Any]: ...
 
@@ -27,7 +40,7 @@ def register_graph_rlm(
     *,
     client_for_session: ClientForSession,
     origins: Any,
-    factory: ControlPlaneFactory = compose_agent_control_plane,
+    factory: ControlPlaneFactory = compose_run_control_plane,
 ) -> None:
     """Register the sole retained AU operation from verified injected inputs."""
 

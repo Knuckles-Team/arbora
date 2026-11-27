@@ -510,16 +510,12 @@ def compose_agent_control_plane(
     *,
     origins: RunOriginRegistry,
     capability_search: CapabilitySearchPort | None = None,
-    agent_executor: AgentExecutionPort | None = None,
+    agent_executor: AgentExecutionPort,
     work_item_store: WorkItemStorePort | None = None,
     signed_dispatch: SignedAgentDispatchPort | None = None,
     ports: Any = None,
 ) -> AgentControlPlane:
     """Compose AU application operations from verified inputs and explicit ports."""
-    if agent_executor is None:
-        from arbora.agent_runs import AgentRunPort
-
-        agent_executor = AgentRunPort(origins=origins, ports=ports)
     return AgentControlPlane(
         eg_client,
         session,

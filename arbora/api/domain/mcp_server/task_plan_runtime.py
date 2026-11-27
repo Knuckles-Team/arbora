@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+from collections.abc import Callable
 from dataclasses import replace
 from importlib import import_module
 from typing import Any
@@ -242,10 +243,18 @@ def _planning_limits(config: Any, budget: Any) -> tuple[int, int]:
     return requests, tokens
 
 
-async def admitted_run_plan(request: Any, base: Any, owner: Any) -> Any:
-    """Only the private host scope may enable this execution path."""
-    from arbora.agent_runs import current_native_run, resolve_model
+async def admitted_run_plan(
+    request: Any,
+    base: Any,
+    owner: Any,
+    *,
+    current_native_run: Callable[[Any], Any],
+    resolve_model: Callable[[str], Any],
+) -> Any:
+    """Only the private host scope may enable this execution path.
 
+    The run that calls it passes its own native-run reader and model provider.
+    """
     au, eg = _contracts()
     current = current_native_run(request)
     if current is None or current is not owner:

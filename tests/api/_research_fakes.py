@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from arbora.api.ops import research
+from arbora.api.ops.ports import PORTS_BINDING, OperationPorts
 from arbora.api.registry import Effect
 
 ARTICLE = (
@@ -262,6 +263,8 @@ def build_research_context(
     _patch_engine(monkeypatch)
     _patch_work_items(monkeypatch, work)
     ingest = FakeIngest()
+    from arbora import work_items
+
     context = SimpleNamespace(
         caller=SimpleNamespace(
             tenant="tenant-a",
@@ -275,6 +278,7 @@ def build_research_context(
             "task_plan_work_engine": work,
             "fleet_declarations": _declarations(deployed),
             "now_ms": lambda: NOW_MS,
+            PORTS_BINDING: OperationPorts(work_items=work_items),
             **(services or {}),
         },
         client=engine,

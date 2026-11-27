@@ -14,7 +14,7 @@ from pydantic_ai.messages import ModelResponse, TextPart
 from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.usage import RequestUsage
 
-from arbora import agent_runs
+from arbora import agent_runs, current_plan_publication, work_items
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 from arbora.api.domain.agent_host.host_port_adapters import (
     HostPortsBinding,
@@ -22,6 +22,7 @@ from arbora.api.domain.agent_host.host_port_adapters import (
 )
 from arbora.api.domain.mcp_server import task_plan_runtime
 from arbora.api.ops import plans
+from arbora.api.ops.ports import PORTS_BINDING, OperationPorts
 from arbora.api.registry import Effect, Registry
 from arbora.mcp_server import task_plan
 from arbora.security.actor_context import ActorContext, ActorType
@@ -233,6 +234,11 @@ async def test_native_plan_helper_wires_real_publication_and_owner_scopes(
             "task_plan_config": host.task_plan_config,
             "task_plan_work_engine": work_engine,
             "task_plan_model": object(),
+            PORTS_BINDING: OperationPorts(
+                work_items=work_items,
+                run_settings=agent_runs,
+                plan_publication=current_plan_publication,
+            ),
         },
         operation_services=host.services,
     )

@@ -25,6 +25,7 @@ from meristem.graph import DependencyPlan  # noqa: E402
 from pydantic_ai.messages import ModelResponse, TextPart  # noqa: E402
 from pydantic_ai.models.function import FunctionModel  # noqa: E402
 
+from arbora import agent_runs, current_plan_publication, work_items  # noqa: E402
 from arbora.a2a.run_identity import A2ARunIdentity  # noqa: E402
 from arbora.api.errors import EngineRefusal as EngineCodeRefusal  # noqa: E402
 from arbora.api.invoke.pipeline import OperationRefused  # noqa: E402
@@ -224,7 +225,12 @@ def _context(engine: FakeEngine, model: RecordingModel) -> Any:
             "task_plan_engine": engine,
             "task_plan_model": model.model,
             "task_plan_feature_schema": SCHEMA_PIN,
-            PORTS_BINDING: OperationPorts(run_identity=A2ARunIdentity()),
+            PORTS_BINDING: OperationPorts(
+                run_identity=A2ARunIdentity(),
+                work_items=work_items,
+                run_settings=agent_runs,
+                plan_publication=current_plan_publication,
+            ),
         },
     )
 
