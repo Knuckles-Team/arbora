@@ -142,3 +142,6 @@ def test_import_of_every_unit_creates_no_mutable_module_state() -> None:
     assert not survey["patched_at_import"]
     assert not survey["patched_by_build"]
     assert not any(name.startswith("install_") for name in survey["compat_names"])
+    # The survey ran in a fresh interpreter, so no earlier test could have filled
+    # a table it then reports as empty.
+    assert survey["found"] == []
