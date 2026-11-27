@@ -10,7 +10,7 @@ from scion_sdk.credentials.runtime_references import (
     _validated_reference,
 )
 
-from arbora.mcp_server.backing.server_factory import (
+from arbora.mcp_server.backing.server_filters import (
     _FILTER_VALUE_RE,
     _bounded_filter_values,
 )

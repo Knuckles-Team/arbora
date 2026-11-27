@@ -7,7 +7,7 @@ import argparse
 import pytest
 
 from arbora.identity.ports import native_signin_scopes
-from arbora.mcp_server.backing.server_factory import _wrap_with_resource_metadata
+from arbora.mcp_server.backing.server_auth import _wrap_with_resource_metadata
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R030.3")

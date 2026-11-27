@@ -216,13 +216,13 @@ async def test_absent_published_method_is_unavailable(monkeypatch):
 def test_actual_serving_root_composes_stateless_reader(monkeypatch):
     from arbora.core.settings import RuntimeConfig
     from arbora.mcp_server import served_invocation, server
-    from arbora.mcp_server.backing import server_factory
+    from arbora.mcp_server.backing import server_parser as _server_parser
 
     captured = {}
     parser = SimpleNamespace(
         parse_known_args=lambda: (SimpleNamespace(transport="stdio"), [])
     )
-    monkeypatch.setattr(server_factory, "create_mcp_parser", lambda: parser)
+    monkeypatch.setattr(_server_parser, "create_mcp_parser", lambda: parser)
     monkeypatch.setattr(
         server.runtime,
         "_mint_process_session",

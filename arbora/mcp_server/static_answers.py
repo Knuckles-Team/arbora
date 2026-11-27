@@ -19,7 +19,7 @@ def print_usage_or_version(argv: list[str]) -> bool:
         print(f"arbora {__version__}")
         return True
     if "--help" in argv or "-h" in argv:
-        from arbora.mcp_server.backing.server_factory import create_mcp_parser
+        from arbora.mcp_server.backing.server_parser import create_mcp_parser
 
         parser = create_mcp_parser(resolve_secret_defaults=False)
         parser.prog = "arbora"

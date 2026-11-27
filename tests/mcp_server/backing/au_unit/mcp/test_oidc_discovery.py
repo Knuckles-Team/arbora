@@ -141,7 +141,7 @@ def test_minter_multi_issuer_uses_primary(monkeypatch: pytest.MonkeyPatch) -> No
 def test_server_factory_discovers_jwks(monkeypatch: pytest.MonkeyPatch) -> None:
     from fastmcp.server.auth.providers.jwt import JWTVerifier
 
-    from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
+    from arbora.mcp_server.backing.server_auth import _configure_jwt_auth
 
     monkeypatch.delenv("FASTMCP_SERVER_AUTH_JWT_JWKS_URI", raising=False)
     monkeypatch.delenv("OIDC_ISSUER", raising=False)
