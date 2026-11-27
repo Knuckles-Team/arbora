@@ -546,6 +546,84 @@ def _agent_library_route(
     return None
 
 
+#: The five job, downtime and plan questions of ``MEDULLA-CQ-ORCH-R011`` (ARBORA-FLEET-R056):
+#: pattern, engine method, and the request fields the question itself fixes. The engine
+#: owns every answer and its provenance; arbora names the method and composes nothing.
+_SEED_CHANGES = (
+    "SELECT ?part ?outcome ?digest ?revision WHERE { ?r a seed:SeedImportReceipt ; "
+    "seed:part ?part ; seed:outcome ?outcome ; seed:digest ?digest ; "
+    "seed:graphRevision ?revision } ORDER BY ?part"
+)
+_DOWNTIME_NEXT = (
+    "SELECT ?selection ?chosen ?skipped ?reason WHERE { ?selection a dw:Selection ; "
+    "dw:chosen ?chosen . OPTIONAL { ?selection dw:skipped ?skipped } "
+    "OPTIONAL { ?selection dw:skipReason ?reason } }"
+)
+_ORCHESTRATION_QUESTIONS: tuple[tuple[re.Pattern[str], str, Mapping[str, Any]], ...] = (
+    (
+        re.compile(r"\b(tools?|skills?)\b.*\bloaded?\b.*\bjob\b|\bload set\b"),
+        "Decide",
+        {"request": {"question": {"kind": "load_set"}}},
+    ),
+    (
+        re.compile(r"\bdowntime jobs?\b.*\bnext\b|\bnext downtime\b"),
+        "Sparql",
+        {"query": _DOWNTIME_NEXT},
+    ),
+    (
+        re.compile(r"\b(best|kept)\b.*\bquery plan\b"),
+        "UnifiedQuery",
+        {"explain": True},
+    ),
+    (
+        re.compile(r"\bhow and when should\b.*\buse\b|\busage guidance\b"),
+        "Decide",
+        {"request": {"question": {"kind": "usage_guidance"}}},
+    ),
+    (
+        re.compile(r"\bseed (facts|changes)\b|\bparts changed at the last connect\b"),
+        "Sparql",
+        {"query": _SEED_CHANGES},
+    ),
+)
+
+
+def _orchestration_route(
+    intent: str,
+    params: Mapping[str, Any],
+    descriptors: Sequence[Descriptor | Mapping[str, Any]],
+) -> Resolution | None:
+    """Route a job, downtime or plan question to its engine method (ARBORA-FLEET-R056).
+
+    Only an authorized generated op the caller can see qualifies. The question's own
+    fields are filled; every other required field comes back as ``missing_required``.
+    """
+    text = intent.lower()
+    visible = tuple(_coerce(entry) for entry in descriptors)
+    for pattern, method, fixed in _ORCHESTRATION_QUESTIONS:
+        op = next(
+            (
+                i
+                for i in visible
+                if pattern.search(text)
+                and i.verb == "ask"
+                and re.fullmatch(rf"eg\.[a-z_]+\.{method}", i.id)
+            ),
+            None,
+        )
+        if op is not None:
+            filled = {**fixed, **params}
+            return Resolution(
+                op.id,
+                filled,
+                False,
+                _missing_required(op.params_schema, filled),
+                (),
+                f"Job, downtime or plan question: the engine's {method} answers with its provenance",
+            )
+    return None
+
+
 def _execution_answer_route(
     intent: str,
     params: Mapping[str, Any],
@@ -558,7 +636,7 @@ def _execution_answer_route(
     """
     matched = _EXECUTE_TASK_QUESTION.match(intent.strip())
     if matched is None:
-        return None
+        return _orchestration_route(intent, params, descriptors)
     iri = matched.group(1)
     for item in (_coerce(entry) for entry in descriptors):
         if item.verb == "ask" and _EXECUTION_ANSWER_OP.match(item.id):
