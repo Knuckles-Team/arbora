@@ -55,10 +55,11 @@ def parse_declaration(body: str | bytes) -> Mapping[str, Any]:
 class Declarations:
     """The latest captured declaration per connector, for one fleet (ARBORA-HOST-R039.2)."""
 
-    __slots__ = ("_declarations", "_lock")
+    __slots__ = ("_declarations", "_deployed", "_lock")
 
     def __init__(self) -> None:
         self._declarations: dict[str, Mapping[str, Any]] = {}
+        self._deployed: dict[str, Any] = {}
         self._lock = threading.Lock()
 
     def remember(self, connector: str, declaration: Mapping[str, Any] | None) -> None:
@@ -68,6 +69,16 @@ class Declarations:
                 self._declarations.pop(connector, None)
             else:
                 self._declarations[connector] = declaration
+
+    def remember_deployed(self, connector: str, deployed: Any) -> None:
+        """Keep the pack revision, digest and tool fingerprints onboarding deployed."""
+        with self._lock:
+            self._deployed[connector] = deployed
+
+    def deployed_pack(self, connector: str) -> Any | None:
+        """The ``DeployedPack`` onboarding recorded for ``connector``, if any."""
+        with self._lock:
+            return self._deployed.get(connector)
 
     def declaration_of(self, connector: str) -> Mapping[str, Any] | None:
         with self._lock:

@@ -5,6 +5,7 @@ ARBORA-CAPACITY-R003, R001.2 and R753. The engine is a recorded ``Decide`` answe
 
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 from typing import Any
 
@@ -43,6 +44,28 @@ def _patch_decide(
     monkeypatch.setattr("arbora.api.ops.plans._feature_schema", schema)
 
 
+def _candidate(item_id: str) -> dict[str, Any]:
+    """An engine ``PurgeCandidate`` (MEDULLA-DECISION-ENGINE-R826)."""
+    return {
+        "item_id": item_id,
+        "terminal": True,
+        "leased": False,
+        "authoritative": False,
+        "source_receipt": True,
+        "decision_receipt": True,
+        "last_source_copy": False,
+        "active_work": False,
+    }
+
+
+def _assert_engine_shape(request: dict[str, Any]) -> None:
+    """The one ``allocation`` option and the integer budget the engine family reads."""
+    by_name = {p["name"]: p["value"] for p in request["params"]}
+    assert by_name["budget"] == {"type": "int", "value": 10}
+    assert "allocation" in json.dumps(request)
+    assert "goal:g1" not in json.dumps(request)
+
+
 @pytest.mark.spec("ARBORA-CAPACITY-R003")
 async def test_below_at_above_threshold_and_refusal_reach_the_engine_route(
     monkeypatch: pytest.MonkeyPatch,
@@ -55,9 +78,12 @@ async def test_below_at_above_threshold_and_refusal_reach_the_engine_route(
     params = {
         "corpus": "papers",
         "window_end_ms": 5,
-        "goals": [{"goal_id": "g1"}, {"goal_id": "g2"}],
-        "budget": {"units": 10},
-        "purge_candidates": [{"id": "p1"}, {"id": "p2"}],
+        "goals": [
+            {"goal_id": "g1", "cost": 4, "expected_papers": 8},
+            {"goal_id": "g2", "cost": 9, "expected_papers": 1},
+        ],
+        "budget": 10,
+        "purge_candidates": [_candidate("p1"), _candidate("p2")],
     }
     answered = await capacity_questions.handle_ingest_shortfall_get(ctx, params, None)  # type: ignore[arg-type]
     assert answered["value"] == {
@@ -67,6 +93,7 @@ async def test_below_at_above_threshold_and_refusal_reach_the_engine_route(
     }
     kind, request = asked[0]
     assert kind == "ingest_shortfall"
+    _assert_engine_shape(request)
     assert {p["name"] for p in request["params"]} == {
         "window",
         "goals",
@@ -100,8 +127,8 @@ async def test_a_family_refusal_keeps_the_engine_code(
     params = {
         "corpus": "papers",
         "window_end_ms": 5,
-        "goals": [{"goal_id": "g1"}],
-        "budget": {},
+        "goals": [{"goal_id": "g1", "cost": 1, "expected_papers": 1}],
+        "budget": 0,
         "purge_candidates": [],
     }
     with pytest.raises(OperationRefused) as refused:

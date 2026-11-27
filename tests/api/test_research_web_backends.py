@@ -17,8 +17,10 @@ from tests.api._research_fakes import (
 FIRST = "https://a.example/pdb?utm_source=x"
 
 
-async def _run(fleet: FakeFleet, **params: Any) -> tuple[dict[str, Any], Any]:
-    context, ingest, _ = research_context(fleet)
+async def _run(
+    fleet: FakeFleet, monkeypatch: pytest.MonkeyPatch, **params: Any
+) -> tuple[dict[str, Any], Any]:
+    context, ingest, _ = research_context(fleet, monkeypatch)
     result = await research.handle_research_web(
         context, research_params(**params), research_op()
     )
@@ -31,7 +33,7 @@ def _without_backend(value: dict[str, Any]) -> list[dict[str, Any]]:
     for doc in value["documents"]:
         doc = {k: v for k, v in doc.items() if k not in {"backend", "fallback_from"}}
         doc["citations"] = [
-            {k: v for k, v in c.items() if k not in {"backend", "fetched_at"}}
+            {k: v for k, v in c.items() if k not in {"backend", "retrieved_at"}}
             for c in doc["citations"]
         ]
         stripped.append(doc)
@@ -39,9 +41,11 @@ def _without_backend(value: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 @pytest.mark.spec("ARBORA-OPS-R067.3")
-async def test_explicit_archivebox_run() -> None:
-    primary, _ = await _run(FakeFleet(), max_pages=2)
-    archived, ingest = await _run(FakeFleet(), max_pages=2, backend="archivebox")
+async def test_explicit_archivebox_run(monkeypatch: pytest.MonkeyPatch) -> None:
+    primary, _ = await _run(FakeFleet(), monkeypatch, max_pages=2)
+    archived, ingest = await _run(
+        FakeFleet(), monkeypatch, max_pages=2, backend="archivebox"
+    )
     assert {d["backend"] for d in archived["documents"]} == {"archivebox"}
     assert all(
         c["backend"] == "archivebox"
@@ -54,10 +58,10 @@ async def test_explicit_archivebox_run() -> None:
 
 
 @pytest.mark.spec("ARBORA-OPS-R067.3")
-async def test_forced_fallback_run() -> None:
-    primary, _ = await _run(FakeFleet(), max_pages=2)
+async def test_forced_fallback_run(monkeypatch: pytest.MonkeyPatch) -> None:
+    primary, _ = await _run(FakeFleet(), monkeypatch, max_pages=2)
     fleet = FakeFleet(webarchiver_fails={FIRST}, reason="upstream_failed")
-    fallback, _ = await _run(fleet, max_pages=2)
+    fallback, _ = await _run(fleet, monkeypatch, max_pages=2)
     first, second = fallback["documents"]
     assert first["backend"] == "archivebox"
     assert first["fallback_from"] == "upstream_failed"
@@ -85,9 +89,11 @@ async def test_forced_fallback_run() -> None:
         "extract_empty",
     ],
 )
-async def test_policy_refusal_is_not_retried(reason: str) -> None:
+async def test_policy_refusal_is_not_retried(
+    reason: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
     fleet = FakeFleet(webarchiver_fails={FIRST}, reason=reason)
-    value, _ = await _run(fleet, max_pages=1)
+    value, _ = await _run(fleet, monkeypatch, max_pages=1)
     assert value["skipped"] == [
         {"url": FIRST, "backend": "webarchiver", "reason": reason}
     ]
@@ -96,7 +102,9 @@ async def test_policy_refusal_is_not_retried(reason: str) -> None:
 
 
 @pytest.mark.spec("ARBORA-OPS-R067.3")
-async def test_unreachable_webarchiver_falls_back() -> None:
+async def test_unreachable_webarchiver_falls_back(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     class Unreachable(FakeFleet):
         async def call(
             self,
@@ -111,15 +119,15 @@ async def test_unreachable_webarchiver_falls_back() -> None:
                 raise ConnectionError("child down")
             return await super().call(caller, server, tool, arguments, **kw)
 
-    value, _ = await _run(Unreachable(), max_pages=1)
+    value, _ = await _run(Unreachable(), monkeypatch, max_pages=1)
     assert value["documents"][0]["backend"] == "archivebox"
     assert value["documents"][0]["fallback_from"] == "unreachable"
 
 
 @pytest.mark.spec("ARBORA-OPS-R067.3")
-async def test_caller_urls_skip_the_search() -> None:
+async def test_caller_urls_skip_the_search(monkeypatch: pytest.MonkeyPatch) -> None:
     fleet = FakeFleet()
-    context, _, _ = research_context(fleet)
+    context, _, _ = research_context(fleet, monkeypatch)
     params = research.ResearchWebParams(urls=("https://b.example/pdb",)).model_dump()
     value = (await research.handle_research_web(context, params, research_op()))[
         "value"
@@ -133,9 +141,11 @@ async def test_caller_urls_skip_the_search() -> None:
 
 
 @pytest.mark.spec("ARBORA-OPS-R067.8")
-async def test_backends_use_the_sdk_web_source_contract() -> None:
+async def test_backends_use_the_sdk_web_source_contract(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     fleet = FakeFleet(webarchiver_fails={FIRST}, reason="upstream_failed")
-    value, _ = await _run(fleet, max_pages=2)
+    value, _ = await _run(fleet, monkeypatch, max_pages=2)
     assert value["documents"]
     fetches = [(s, a) for s, t, a in fleet.calls if t == research.WEB_EXTRACT]
     assert fetches and all(
@@ -180,7 +190,7 @@ async def test_hanging_archivebox_times_out_and_falls_back(
     monkeypatch.setattr(research, "PAGE_TIMEOUT_S", 0.05)
     fleet = _Hangs({research.ARCHIVEBOX_SERVER})
     value, _ = await asyncio.wait_for(
-        _run(fleet, max_pages=1, backend="archivebox"), timeout=5
+        _run(fleet, monkeypatch, max_pages=1, backend="archivebox"), timeout=5
     )
     (doc,) = value["documents"]
     assert doc["backend"] == "webarchiver"
@@ -195,7 +205,7 @@ async def test_both_backends_hanging_skip_within_the_bound(
 
     monkeypatch.setattr(research, "PAGE_TIMEOUT_S", 0.05)
     fleet = _Hangs({research.ARCHIVEBOX_SERVER, research.WEBARCHIVER_SERVER})
-    value, _ = await asyncio.wait_for(_run(fleet, max_pages=1), timeout=5)
+    value, _ = await asyncio.wait_for(_run(fleet, monkeypatch, max_pages=1), timeout=5)
     assert value["documents"] == []
     assert value["skipped"] and all(
         s["reason"] == "timeout" and s["backend"] == "archivebox"

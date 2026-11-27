@@ -37,6 +37,8 @@ from arbora.api.registry import OpSpec
 
 SCOPE = "capacity:read"
 SHORTFALL_QUESTION = "ingest_shortfall"
+#: The one option the engine family declares; the answer names ``goal:``/``purge:`` ids.
+ALLOCATION_OPTION = "allocation"
 SHORTFALL_REFUSALS = frozenset({"WINDOW_UNMEASURED", "BUDGET_INVALID", "GOALS_EMPTY"})
 ADJUSTMENT_QUESTION = "run_adjustment"
 ADJUSTMENT_REFUSALS = frozenset(
@@ -50,14 +52,35 @@ ADJUSTMENT_REFUSALS = frozenset(
 )
 
 
+class ShortfallGoal(_common.Params):
+    """One declared goal (engine ``Goal``, MEDULLA-DECISION-ENGINE-R826)."""
+
+    goal_id: str = Field(min_length=1, max_length=256)
+    cost: int = Field(ge=0)
+    expected_papers: int = Field(ge=0)
+
+
+class PurgeCandidate(_common.Params):
+    """One purge candidate (engine ``PurgeCandidate``); it carries no cost."""
+
+    item_id: str = Field(min_length=1, max_length=256)
+    terminal: bool
+    leased: bool
+    authoritative: bool
+    source_receipt: bool
+    decision_receipt: bool
+    last_source_copy: bool
+    active_work: bool
+
+
 class IngestShortfallParams(_common.Params):
     """The window's corpus and end, the goals to fund and the budget they share."""
 
     corpus: str = Field(min_length=1, max_length=256)
     window_end_ms: int = Field(ge=0)
-    goals: list[dict[str, Any]] = Field(min_length=1, max_length=64)
-    budget: dict[str, Any]
-    purge_candidates: list[dict[str, Any]] = Field(default_factory=list, max_length=256)
+    goals: list[ShortfallGoal] = Field(min_length=1, max_length=64)
+    budget: int = Field(ge=0)
+    purge_candidates: list[PurgeCandidate] = Field(default_factory=list, max_length=256)
 
 
 class RunAdjustmentParams(_common.Params):
@@ -124,7 +147,7 @@ async def handle_ingest_shortfall_get(
     typed = [
         dc.param("window", "text", _text(window)),
         dc.param("goals", "text", _text(params["goals"])),
-        dc.param("budget", "text", _text(params["budget"])),
+        dc.param("budget", "int", params["budget"]),
     ]
     if params["purge_candidates"]:
         typed.append(
@@ -134,7 +157,7 @@ async def handle_ingest_shortfall_get(
         context,
         SHORTFALL_QUESTION,
         f"ingest.shortfall:{params['corpus']}",
-        [f"goal:{goal['goal_id']}" for goal in params["goals"]],
+        [ALLOCATION_OPTION],
         typed,
         SHORTFALL_REFUSALS,
     )
