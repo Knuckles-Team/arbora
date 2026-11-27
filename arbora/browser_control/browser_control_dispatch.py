@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from typing import Any, Literal, cast
 
 from arbora.browser_control.browser_control_api import (
@@ -24,6 +25,8 @@ from arbora.browser_control.browser_control_validation import verify_attended_ar
 from arbora.work_items import (
     claim_specific,
 )
+
+logger = logging.getLogger(__name__)
 
 _CANCEL_ACK_SECONDS = 2.0
 
@@ -102,7 +105,8 @@ class BrowserDispatchMixin(BrowserControlMixinState):
         except TimeoutError:
             active.timed_out = True
             return await self._cancel_active(active, "timeout")
-        except Exception:
+        except Exception:  # channel owner: converted to a typed receipt below
+            logger.warning("browser call dispatch failed", exc_info=True)
             if active.claim is None:
                 return await self._finalize(
                     active,

@@ -607,6 +607,7 @@ def record_run_event(
             type(exc).__name__,
             getattr(exc, "code", ""),
             getattr(exc, "detail", ""),
+            exc_info=True,
         )
 
 
@@ -741,6 +742,7 @@ class AgentRunPort:
                 "harness cycle tick not started for run %s: %s",
                 getattr(ownership, "run_id", ""),
                 type(exc).__name__,
+                exc_info=True,
             )
             return
         self._ticks.add(task)
@@ -789,4 +791,5 @@ async def _drive_cycle_tick(run_request: Any, plan: Any, ownership: Any) -> None
             "harness cycle tick of run %s failed: %s",
             ownership.run_id,
             type(exc).__name__,
+            exc_info=True,
         )

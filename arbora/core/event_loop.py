@@ -93,8 +93,8 @@ async def run_blocking_ordered[T](
             # cancelled. Record the real cause before cancellation wins.
             logger.debug(
                 "run_blocking_ordered: worker failed while the caller was "
-                "cancelling; cancellation supersedes it: %s",
-                worker_exc,
+                "cancelling; cancellation supersedes it",
+                exc_info=worker_exc,
             )
         raise asyncio.CancelledError
     return worker.result()

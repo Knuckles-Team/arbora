@@ -22,6 +22,8 @@ from typing import Any, Protocol, Self
 
 from arbora.security.anonymous import client_scope
 
+logger = logging.getLogger(__name__)
+
 PLACEMENT_READ_SCOPE = "cluster:placement-read"
 TOPOLOGY_READ_SCOPE = "cluster:topology-read"
 SERVICE_CONTROL_SCOPE = "service:control"
@@ -312,6 +314,7 @@ async def _close_temporary_clients(
             try:
                 await client.close()
             except Exception as exc:  # Close all owned transports before reporting.
+                logger.debug("temporary client close failed", exc_info=True)
                 failures.append(exc)
     if failures:
         raise ExceptionGroup("temporary client cleanup failed", failures)

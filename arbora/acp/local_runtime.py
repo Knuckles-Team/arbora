@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import logging
 import math
 import sys
 from dataclasses import replace
 from datetime import timedelta
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -127,7 +130,8 @@ def main(argv: list[str] | None = None) -> int:
         asyncio.run(serve_acp_stdio(agent))
     except KeyboardInterrupt:
         return 130
-    except Exception:
+    except Exception:  # CLI boundary: one stable operator message, traceback at debug
+        logger.debug("local ACP runtime failed", exc_info=True)
         print(
             "Local ACP runtime unavailable; check the installed ACP/AU versions and local configuration.",
             file=sys.stderr,

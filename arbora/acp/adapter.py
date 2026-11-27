@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import logging
 import posixpath
 from collections.abc import Awaitable, Callable, Mapping
 from contextlib import aclosing
@@ -40,6 +41,8 @@ from .session_policy import (
     PrincipalContext,
 )
 from .trace import AcpTraceRecord, emit_acp_record
+
+logger = logging.getLogger(__name__)
 
 RequestFactory = Callable[
     [PrincipalContext, str, str], RunRequest | Awaitable[RunRequest]
@@ -281,7 +284,8 @@ class HostedACPAgent:
             return schema.PromptResponse(stop_reason="cancelled")
         except acp.RequestError:
             raise
-        except Exception:
+        except Exception:  # top-level request boundary: converts to a typed error
+            logger.warning("ACP prompt run failed", exc_info=True)
             raise acp.RequestError(-32001, "Run failed") from None
         finally:
             session.active = None
