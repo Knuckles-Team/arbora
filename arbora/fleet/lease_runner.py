@@ -14,7 +14,7 @@ import enum
 import json
 import os
 import signal
-import subprocess
+import subprocess  # nosec B404 - the operator's own argument vector, no shell
 import sys
 import threading
 import time
@@ -212,7 +212,7 @@ def _spawn_child(
     argv: Sequence[str], env: Mapping[str, str], handle: Iterable[str] = ()
 ) -> subprocess.Popen[bytes]:
     """Start the child in its own process group with no descriptor of the runner's."""
-    return subprocess.Popen(  # noqa: S603 -- the operator's own argument vector
+    return subprocess.Popen(  # noqa: S603  # nosec B603 - the operator's own argv, no shell
         list(argv),
         close_fds=True,
         pass_fds=(),
