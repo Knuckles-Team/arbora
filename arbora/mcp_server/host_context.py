@@ -23,7 +23,10 @@ from arbora.gateway.state import GatewayState
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.served_engine import EngineHandles
 from arbora.observability.state import (
+    GatewayTrend,
     Observability,
+    RuntimeSignalBuffer,
+    Signals,
     Telemetry,
     build_health_state,
 )
@@ -110,7 +113,11 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         caches=caches,
         browser=BrowserState(),
         authority=caches.tools.authority,
-        observability=Observability(telemetry=Telemetry(), health=build_health_state()),
+        observability=Observability(
+            telemetry=Telemetry(),
+            health=build_health_state(),
+            signals=Signals(runtime=RuntimeSignalBuffer(), gateway=GatewayTrend()),
+        ),
         gateway=GatewayState(),
     )
 

@@ -29,7 +29,7 @@ from typing import Any
 from fastmcp.server.extensions import ServerExtension
 
 from arbora.core.environment import read_env
-from arbora.observability.state import HealthState
+from arbora.observability.state import HealthState, RuntimeSignalBuffer
 from arbora.security.key_cache import JwksCache
 from arbora.unique_records import create_record, has_record_writer
 
@@ -164,7 +164,9 @@ def prompt_normalizer(engine_provider: Callable[[], Any]) -> Any:
 
 
 def bind_messaging_ports(
-    engine_provider: Callable[[], Any], tools: Mapping[str, Any]
+    engine_provider: Callable[[], Any],
+    tools: Mapping[str, Any],
+    signals: RuntimeSignalBuffer,
 ) -> None:
     """Bind the messaging host ports at startup; the turn handler runs over ``tools``."""
     from functools import partial
@@ -173,7 +175,7 @@ def bind_messaging_ports(
     from arbora.observability.runtime_signals import record_runtime_signal
 
     def runtime_signal(kind: str, subject: str, detail: Mapping[str, Any]) -> None:
-        record_runtime_signal(kind, subject, dict(detail))
+        record_runtime_signal(signals, kind, subject, dict(detail))
 
     bind_host_ports(
         turn_handler=partial(turn_handler, tools),

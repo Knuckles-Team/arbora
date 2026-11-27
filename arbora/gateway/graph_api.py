@@ -168,7 +168,9 @@ def register_graph_routes(app, host, prefix: str = "/api") -> None:
             metrics_endpoint,
         )
 
-        app.add_middleware(GatewayMetricsMiddleware)
+        app.add_middleware(
+            GatewayMetricsMiddleware, trend=host.observability.signals.gateway
+        )
         if not any(getattr(r, "path", None) == "/metrics" for r in app.routes):
             if hasattr(app, "add_api_route"):  # FastAPI
                 app.add_api_route(

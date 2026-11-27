@@ -39,6 +39,7 @@ import time
 from typing import Any
 
 from arbora.core.environment import read_env
+from arbora.observability.state import GatewayTrend
 
 logger = logging.getLogger(__name__)
 
@@ -1294,8 +1295,9 @@ class GatewayMetricsMiddleware:
     ``/metrics`` itself is not instrumented (self-scrape noise).
     """
 
-    def __init__(self, app: Any) -> None:
+    def __init__(self, app: Any, trend: GatewayTrend) -> None:
         self.app = app
+        self.trend = trend
 
     async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
         if scope.get("type") != "http" or scope.get("path") == "/metrics":
@@ -1332,7 +1334,7 @@ class GatewayMetricsMiddleware:
                 # feeds the shared health-trend/anomaly kernel (CONCEPT:
                 # MERISTEM-OS.observability.unified-health-kernels /
                 # MERISTEM-KG.identity.evidence-spine-convergence). Best-effort.
-                record_request_duration(duration)
+                record_request_duration(self.trend, duration)
             except Exception as e:  # feeds an in-memory trend sample only (record_request_duration is itself documented as must-never-affect-the-response-path); a dropped sample just thins one window's anomaly-detection density, the response and the histogram above are already recorded
                 logger.debug("gateway health sample failed: %s", e)
 

@@ -32,3 +32,18 @@ def test_two_health_states_keep_separate_windows_probes_and_authority():
     assert second.probes.get("engine") is None
     assert second.authority.session is None
     assert first.authority.release(owner)
+
+
+def test_two_signal_buffers_keep_separate_rings_and_sequences():
+    from arbora.observability.runtime_signals import record_runtime_signal
+    from arbora.observability.state import GatewayTrend, RuntimeSignalBuffer
+
+    first, second = RuntimeSignalBuffer(), RuntimeSignalBuffer()
+    record_runtime_signal(first, "listener_restart", "telegram", {"delay_s": 1.0})
+    assert len(first.snapshot()) == 1
+    assert second.snapshot() == []
+    assert first.next_sequence() == 0 and second.next_sequence() == 0
+    assert len(first.drain()) == 1 and first.snapshot() == []
+    one, other = GatewayTrend(), GatewayTrend()
+    one.append_window({"avg": 1.0}, 50)
+    assert other.history() == []

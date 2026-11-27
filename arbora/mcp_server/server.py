@@ -445,7 +445,11 @@ def mcp_server(
     )
     from arbora.host_bindings import bind_health_probes, bind_messaging_ports
 
-    bind_messaging_ports(host_context.engine.served, host_context.caches.tools)
+    bind_messaging_ports(
+        host_context.engine.served,
+        host_context.caches.tools,
+        host_context.observability.signals.runtime,
+    )
     from arbora.a2a.chain_composition import run_plan_binding
     from arbora.agent_host.port_backends import HostSeams
     from arbora.agent_host.sandbox_boundary import boundary_verified
