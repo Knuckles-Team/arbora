@@ -27,10 +27,13 @@ __all__ = [
     "HostRanking",
     "MedullaRanking",
     "RankCandidate",
+    "RankingStatus",
     "Ranked",
     "RankingPort",
     "ThreadBridge",
     "engine_ask",
+    "ranking_probe",
+    "schemas_published",
     "run_with_port",
 ]
 
@@ -59,6 +62,21 @@ class RankCandidate:
     name: str
     description: str = ""
     kind: Kind = "tool"
+
+
+@dataclass(frozen=True)
+class RankingStatus:
+    """Which order the port serves (``medulla`` or ``floor``) and the reason."""
+
+    source: Literal["medulla", "floor"]
+    reason: str = ""
+
+    def summary(self) -> str:
+        return (
+            f"ranking: {self.source} ({self.reason})"
+            if self.reason
+            else "ranking: " + self.source
+        )
 
 
 @dataclass(frozen=True)
@@ -103,11 +121,24 @@ class MedullaRanking:
     ) -> None:
         self._ask = ask
         self._max = max_candidates
+        self._published: Callable[[], bool] | None = None
 
     @property
     def configured(self) -> bool:
         """Whether an engine ask is bound (an unbound port only ever answers the floor)."""
         return self._ask is not None
+
+    def status(self) -> RankingStatus:
+        """The order the port serves now, and why it is the floor when it is.
+
+        The reason is never silent: ``/health/ready`` and ``ops.doctor`` print it.
+        """
+        if self._ask is None:
+            return RankingStatus("floor", "engine unavailable")
+        published = self._published
+        if published is not None and not published():
+            return RankingStatus("floor", "engine schema unpublished")
+        return RankingStatus("medulla", "")
 
     def _narrow(
         self, query: str, candidates: Sequence[RankCandidate], floor: list[str]
@@ -214,10 +245,58 @@ class HostRanking(MedullaRanking):
     service principal (ARBORA-FLEET-R083.5).
     """
 
-    def bind(self, ask: Ask) -> None:
+    def bind(self, ask: Ask, *, published: Callable[[], bool] | None = None) -> None:
+        """Bind the engine ask; ``published`` says whether the engine's feature
+        schemas for the ranking questions are pinned (an unpublished schema
+        keeps the floor, and :meth:`status` says so)."""
         if self._ask is not None:
             raise RuntimeError("the ranking port is already bound")
         self._ask = ask
+        self._published = published
+
+
+def schemas_published(
+    feature_schema: Callable[[str], Mapping[str, Any]], tenant: Callable[[], str]
+) -> Callable[[], bool]:
+    """Whether the tenant's pin is a ranking question's ``decide.schema.<id>``.
+
+    Until the engine publishes the ``decide.schema.catalog.*`` components the pin
+    is another question's and every ranking asks answer the floor.
+    """
+
+    def published() -> bool:
+        try:
+            schema = dict(feature_schema(tenant()))
+        except Exception:  # noqa: BLE001 - an unreadable pin is an unpublished one
+            return False
+        return any(
+            schema.get("component_id") == f"decide.schema.{q}"
+            for q in sorted(QUESTION_IDS)
+        )
+
+    return published
+
+
+def ranking_probe(port: MedullaRanking) -> Callable[[Any], dict[str, Any]]:
+    """The ``ranking`` health check: the floor is visible, never silent.
+
+    ``degraded`` is informational (it never fails readiness): a floor order is a
+    working answer, and the check names why it is not the engine's.
+    """
+
+    def probe(_session: Any) -> dict[str, Any]:
+        status = port.status()
+        detail = {"ranking": status.source, "summary": status.summary()}
+        if status.source == "medulla":
+            return {"name": "ranking", "status": "ok", "detail": detail}
+        return {
+            "name": "ranking",
+            "status": "degraded",
+            "reason": status.reason,
+            "detail": detail,
+        }
+
+    return probe
 
 
 def _rank_catalog(options: Sequence[Any]) -> dict[str, Any]:

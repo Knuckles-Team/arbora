@@ -17,6 +17,7 @@ from typing import Any
 from arbora.fleet.definition_admission import DefinitionAdmission
 from arbora.fleet.engine_admission import EngineAdmission
 from arbora.fleet.ingest_worker_unit import (
+    IngestWorkerSupervisor,
     IngestWorkerUnit,
     declare_ingest_worker_unit,
 )
@@ -38,6 +39,7 @@ class OnboardingPorts:
 
     definition_admission: DefinitionAdmission | None
     ingest_worker: IngestWorkerUnit | None = None
+    supervisor: IngestWorkerSupervisor | None = None
 
 
 def _engine_send(client: Any, graph: str) -> Callable[..., Awaitable[Any]]:
@@ -116,17 +118,73 @@ def declare_data_prep_at_boot(engine: Any, session: Any) -> list[str]:
         return []
 
 
+def _ingest_worker_enabled() -> bool:
+    """The config key ``ingest_worker.enabled`` (default true)."""
+    from arbora.core.settings import setting
+
+    raw = str(setting("INGEST_WORKER_ENABLED", "true") or "true")
+    return raw.strip().lower() not in {"0", "false", "no", "off"}
+
+
+def _metrics_reader(engine: Any, session: Any) -> Callable[[], Awaitable[Any]] | None:
+    """The engine ``Metrics`` read, returned unchanged; ``None`` with no graph client."""
+    try:
+        graph = str(session.graph)
+        send = _engine_send(engine.graph_compute.for_graph(graph).async_client, graph)
+    except AttributeError:
+        return None
+
+    async def read() -> Any:
+        answer = await send("Metrics", {}, str(session.tenant))
+        return answer if hasattr(answer, "keys") else {"metrics": answer}
+
+    return read
+
+
+def supervise_ingest_worker(
+    unit: IngestWorkerUnit | None,
+    engine: Any,
+    session: Any,
+    *,
+    spawn: Callable[[tuple[str, ...]], Any] | None = None,
+) -> IngestWorkerSupervisor | None:
+    """Start the declared worker under the host and bind it to the health route.
+
+    No unit (configured off, or no served engine endpoint) binds ``None``: the
+    health route then reports the worker ``not_configured``, never unhealthy.
+    """
+    from arbora.gateway.fleet import bind_ingest_worker
+
+    if unit is None:
+        bind_ingest_worker(None)
+        return None
+    extra = {} if spawn is None else {"spawn": spawn}
+    supervisor = IngestWorkerSupervisor(
+        unit, read_metrics=_metrics_reader(engine, session), **extra
+    )
+    supervisor.start()
+    bind_ingest_worker(supervisor)
+    return supervisor
+
+
 def compose_onboarding_ports(
-    engine: Any, session: Any, *, engine_endpoint: str = ""
+    engine: Any,
+    session: Any,
+    *,
+    engine_endpoint: str = "",
+    spawn: Callable[[tuple[str, ...]], Any] | None = None,
 ) -> OnboardingPorts:
-    """Compose the admission and the worker unit; data prep runs on the loop."""
+    """Compose the admission and the supervised worker; data prep runs on the loop."""
     unit = None
     endpoint = engine_endpoint or _served_engine_endpoint()
     try:
-        unit = declare_ingest_worker_unit(engine_endpoint=endpoint)
+        unit = declare_ingest_worker_unit(
+            engine_endpoint=endpoint, enabled=_ingest_worker_enabled()
+        )
     except ValueError:
         logger.info("ingest worker unit not declared: no served engine endpoint")
-    return OnboardingPorts(_admission_or_none(engine, session), unit)
+    supervisor = supervise_ingest_worker(unit, engine, session, spawn=spawn)
+    return OnboardingPorts(_admission_or_none(engine, session), unit, supervisor)
 
 
 def _admission_or_none(engine: Any, session: Any) -> DefinitionAdmission | None:

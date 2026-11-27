@@ -36,8 +36,10 @@ if TYPE_CHECKING:
 
 #: ``not_served``: this release has no reader for the authority (AuthorityNotServed).
 #: It is "not applicable", never a failure, and never gates readiness.
+#: ``not_configured``: an optional dependency this deployment does not run. Like
+#: ``not_served`` it is not applicable: it never gates readiness.
 FleetDependencyState = Literal[
-    "healthy", "partial", "degraded", "unavailable", "not_served"
+    "healthy", "partial", "degraded", "unavailable", "not_served", "not_configured"
 ]
 FleetHealthState = Literal[
     "healthy", "partial", "degraded", "unavailable", "not_served"
@@ -224,7 +226,9 @@ def _not_served(label: str, now: float) -> FleetDependencyEvidence:
 def _rollup(dependencies: Iterable[FleetDependencyEvidence]) -> FleetHealthState:
     all_states = [dependency.status for dependency in dependencies]
     # Only served authorities count; an unserved one is not applicable.
-    states = [state for state in all_states if state != "not_served"]
+    states = [
+        state for state in all_states if state not in ("not_served", "not_configured")
+    ]
     if all_states and not states:
         return "not_served"
     if not states or all(state == "unavailable" for state in states):

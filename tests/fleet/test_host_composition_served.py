@@ -22,6 +22,13 @@ class _Client:
     pass
 
 
+class _Process:
+    """A started worker process the host supervises."""
+
+    def poll(self) -> None:
+        return None
+
+
 def _engine() -> Any:
     client = _Client()
     return SimpleNamespace(
@@ -62,6 +69,7 @@ def booted(monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> dict[str, Any]:
         declarations=SimpleNamespace(),
         action_policies=SimpleNamespace(),
         served_url="",
+        spawn_worker=lambda argv: _Process(),
     )
     return {"sent": sent, "service": started[0]}
 
@@ -84,7 +92,11 @@ def test_boot_declares_the_ingest_worker_unit(monkeypatch: pytest.MonkeyPatch) -
     from arbora.fleet.host_composition import compose_onboarding_ports
 
     monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", "tcp://engine:7000, tcp://b:1")
-    ports = compose_onboarding_ports(_engine(), SimpleNamespace(graph="g", tenant="t"))
+    ports = compose_onboarding_ports(
+        _engine(),
+        SimpleNamespace(graph="g", tenant="t"),
+        spawn=lambda argv: _Process(),
+    )
     assert ports.ingest_worker is not None
     assert ports.ingest_worker.argv[-1] == "tcp://engine:7000"
     monkeypatch.delenv("GRAPH_SERVICE_ENDPOINTS")

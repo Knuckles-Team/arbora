@@ -49,6 +49,10 @@ from arbora.fleet.health import (
     mark_dependency_failure,
     with_catalog_generation,
 )
+from arbora.fleet.ingest_worker_unit import (
+    IngestWorkerSupervisor,
+    ingest_worker_health_snapshot,
+)
 from arbora.security.error_surface import public_error_payload
 
 logger = logging.getLogger(__name__)
@@ -77,6 +81,17 @@ def bind_catalog_generation(source: Callable[[], Awaitable[Any]] | None) -> None
     _CATALOG_GENERATION = source
 
 
+#: The supervised ingest worker (ARBORA-FLEET-R045), bound by host composition.
+#: Unbound, the health payload reports the dependency ``not_configured``.
+_INGEST_WORKER: IngestWorkerSupervisor | None = None
+
+
+def bind_ingest_worker(supervisor: IngestWorkerSupervisor | None) -> None:
+    """Bind the supervisor of the ingest worker this host runs (or ``None``)."""
+    global _INGEST_WORKER
+    _INGEST_WORKER = supervisor
+
+
 _CATALOG_STATE: Callable[[], CatalogState] | None = None
 
 
@@ -103,7 +118,7 @@ def collect_health() -> Any:
 
 async def _health_snapshot() -> Any:
     """The fleet health snapshot with this replica's catalog generation published."""
-    snapshot = collect_health()
+    snapshot = await ingest_worker_health_snapshot(collect_health(), _INGEST_WORKER)
     source = _CATALOG_GENERATION
     if source is None:
         return snapshot

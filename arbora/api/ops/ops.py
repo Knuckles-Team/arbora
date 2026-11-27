@@ -173,6 +173,17 @@ def _bound_store(context: Any) -> OpsAdminStore:
     )
 
 
+def _with_ranking_check(checks: Mapping[str, Any]) -> dict[str, Any]:
+    """The report's checks, plus which order ``find`` serves and why (never silent)."""
+    from arbora.observability.runtime_health import run_bound_probe
+
+    ranking = run_bound_probe("ranking")
+    if ranking is None:
+        return dict(checks)
+    summary = ranking.get("detail", {}).get("summary") or "ranking: unknown"
+    return {**checks, "ranking": summary}
+
+
 async def handle_ops_doctor(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
@@ -188,8 +199,10 @@ async def handle_ops_doctor(
         value["checks"] = {**value["checks"], "auth": unsecured}
     from arbora.pin_lag.gates import gate_checks
 
-    # A gate the pinned engine cannot serve is named in every report (PIN-LAG).
-    value["checks"] = {**value["checks"], **gate_checks()}
+    # A gate the pinned engine cannot serve is named in every report (PIN-LAG), and so
+    # is the ranking floor.
+    checks = _with_ranking_check(value["checks"])
+    value["checks"] = {**checks, **gate_checks()}
     return {"value": value}
 
 
