@@ -10,9 +10,9 @@ from typing import Any
 import httpx
 import pytest
 
+from arbora.core.harness_profiles import Lifecycle, profile
 from arbora.harness_plugins import hook_runner
 from arbora.harness_plugins.login import Credential, CredentialState, TokenStore
-from arbora.harness_plugins.profiles import Lifecycle, profile
 from tests.harness_plugins.conftest import ENDPOINT
 
 

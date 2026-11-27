@@ -9,9 +9,9 @@ from pathlib import Path
 import pyoxigraph as ox
 import pytest
 
+from arbora.core.harness_profiles import profile
 from arbora.harness_plugins import cli
 from arbora.harness_plugins import install as inst
-from arbora.harness_plugins.profiles import profile
 from tests.harness_plugins.conftest import ENDPOINT, write_skill
 
 PACK = Path(__file__).resolve().parents[2] / "arbora/ontology/state_machines.ttl"

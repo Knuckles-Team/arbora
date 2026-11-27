@@ -23,13 +23,13 @@ from types import MappingProxyType
 from typing import Any
 from urllib.parse import urlsplit
 
+from arbora.core.harness_profiles import HarnessProfile, HookKind, Lifecycle, profile
 from arbora.harness_plugins.compose import (
     PLUGIN_NAME,
     SERVER_NAME,
     BundleSpec,
     HookIntent,
 )
-from arbora.harness_plugins.profiles import HarnessProfile, HookKind, Lifecycle, profile
 
 #: The hook runner of ``ARBORA-HARNESS-PLUGINS-R007``.
 RUNNER = "arbora plugin hook"

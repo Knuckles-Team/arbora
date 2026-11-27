@@ -342,7 +342,7 @@ def test_hosted_client_has_vendor_redirect_and_no_loopback() -> None:
 
 @pytest.mark.spec("ARBORA-IDENTITY-R030.4.7")
 def test_native_redirects_and_scopes_follow_the_profile_table() -> None:
-    from arbora.harness_plugins.profiles import PROFILES, native_redirect_uris
+    from arbora.core.harness_profiles import PROFILES, native_redirect_uris
     from arbora.identity import client_contract as cc
 
     assert cc.DEFAULT_NATIVE_REDIRECT_URIS == native_redirect_uris()

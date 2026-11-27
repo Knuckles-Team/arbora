@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.webui_host.package_layout_expectation import (
+from arbora.deployment.package_layout_expectation import (
     EXPECTED_TOP_LEVEL_MODULES,
     OVERSTORY_DISTRIBUTION,
     InstalledPackageFixture,

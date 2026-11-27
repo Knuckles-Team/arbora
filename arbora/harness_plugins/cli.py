@@ -23,6 +23,12 @@ from pathlib import Path
 from types import MappingProxyType
 
 from arbora.core.environment import read_env
+from arbora.core.harness_profiles import (
+    HarnessProfile,
+    Lifecycle,
+    profile,
+    profile_ids,
+)
 from arbora.harness_plugins import install as inst
 from arbora.harness_plugins.compose import (
     HOSTED_FILES,
@@ -37,12 +43,6 @@ from arbora.harness_plugins.layers import (
     file_layers,
     resolve,
     served_layers,
-)
-from arbora.harness_plugins.profiles import (
-    HarnessProfile,
-    Lifecycle,
-    profile,
-    profile_ids,
 )
 from arbora.harness_plugins.render import TreeRefused, render
 
@@ -400,7 +400,7 @@ def statusline_command(args: argparse.Namespace) -> int:
 
 def targets_command(args: argparse.Namespace) -> int:
     """Print the harness target and version matrix (ARBORA-HOST-R008.6)."""
-    from arbora.harness_plugins.profiles import TARGET_MATRIX
+    from arbora.core.harness_profiles import TARGET_MATRIX
 
     print(json.dumps(list(TARGET_MATRIX), indent=2))
     return 0

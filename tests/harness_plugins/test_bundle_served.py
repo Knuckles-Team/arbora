@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from arbora.harness_plugins.profiles import profile_ids
+from arbora.core.harness_profiles import profile_ids
 from arbora.harness_plugins.validate import validate_tree
 from tests.harness_plugins.conftest import ENDPOINT, write_skill
 

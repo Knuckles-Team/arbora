@@ -12,8 +12,8 @@ from typing import Any
 
 import httpx
 
+from arbora.core.harness_profiles import HarnessProfile
 from arbora.harness_plugins.login import CredentialState, TokenStore, renew
-from arbora.harness_plugins.profiles import HarnessProfile
 
 TIMEOUT_S = 15.0
 Post = Callable[[str, Mapping[str, Any], Mapping[str, str]], httpx.Response]

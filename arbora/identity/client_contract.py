@@ -31,7 +31,7 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import Any
 
-from arbora.harness_plugins.profiles import native_redirect_uris
+from arbora.core.harness_profiles import native_redirect_uris
 from arbora.observability.state import IdentityContract
 from arbora.security.error_surface import carry_errors
 
@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 CONFIG_KEY = "ARBORA_IDENTITY_CLIENT_CONTRACT"
 
 #: The default loopback callbacks of the native coding clients: the callback of each
-#: harness profile (``arbora/harness_plugins/profiles.py``). Configuration replaces
+#: harness profile (``arbora/core/harness_profiles.py``). Configuration replaces
 #: them (``native_redirect_uris``); no second list remains (ARBORA-IDENTITY-R030.4.7).
 DEFAULT_NATIVE_REDIRECT_URIS: tuple[str, ...] = native_redirect_uris()
 DEFAULT_NATIVE_CLIENT_ID = "arbora-native-mcp"

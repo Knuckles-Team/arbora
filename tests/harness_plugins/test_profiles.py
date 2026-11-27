@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.harness_plugins.profiles import PROFILES, HookKind, Lifecycle, Part, profile
+from arbora.core.harness_profiles import PROFILES, HookKind, Lifecycle, Part, profile
 
 
 @pytest.mark.spec("ARBORA-HARNESS-PLUGINS-R001.1")
@@ -46,7 +46,7 @@ def test_profile_table_is_closed_and_complete() -> None:
 
 @pytest.mark.spec("ARBORA-HOST-R008.6")
 def test_every_profile_has_a_matrix_entry() -> None:
-    from arbora.harness_plugins.profiles import TARGET_MATRIX
+    from arbora.core.harness_profiles import TARGET_MATRIX
 
     assert [row["harness"] for row in TARGET_MATRIX] == [p.id for p in PROFILES]
     for row, prof in zip(TARGET_MATRIX, PROFILES, strict=True):

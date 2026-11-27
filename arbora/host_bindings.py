@@ -358,6 +358,9 @@ def _fleet_health(gateway: Any, session: Any) -> dict[str, Any]:
 def bind_health_probes(
     health: HealthState, engine_provider: Callable[[], Any], gateway: Any
 ) -> None:
-    """Bind the mandatory readiness probes."""
+    """Bind the mandatory readiness probes and the source-provenance probe."""
+    from arbora.deployment.live_mount_guard import source_provenance_probe
+
     health.probes.bind("engine", _engine_probe(engine_provider))
+    health.probes.bind("source_provenance", source_provenance_probe)
     health.probes.bind("fleet_supervision", _fleet_probe(gateway))

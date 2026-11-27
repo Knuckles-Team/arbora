@@ -295,3 +295,48 @@ def check_live_mount_status(
         SOURCE_REVISION_MARKER,
     )
     return LiveMountStatus.DRIFT, {"active_source_mount": False}
+
+
+def source_provenance_probe(_session: object) -> dict[str, object]:
+    """Source-layout / immutable-image provenance (R-24/U-26/BUG-172).
+
+    Read-only snapshot of :func:`arbora.deployment.live_mount_guard.check_live_mount_status` -- never re-runs the mount/marker introspection
+    itself beyond that one call. Reported here so a genuinely stale/drifted
+    deployment (running code older than what was reviewed and merged) is
+    visible in the SAME typed capability-health surface as every other
+    dependency, instead of only a log line an operator has to go find.
+
+    Four-state mapping (module docstring): ``ACTIVE_MOUNT``/
+    ``IMMUTABLE_VERIFIED`` are both ``ok`` -- an immutable image that was
+    never meant to have a live mount is healthy, not merely "not unhealthy".
+    ``DRIFT`` is the only ``unhealthy`` outcome: this process is provably
+    running code that does not match what was reviewed. ``NOT_APPLICABLE``
+    (not in a pod, check skipped, undeterminable) is ``not_configured`` --
+    informational, never fails the rollup, per this module's four-state
+    semantics (R-24: intentionally-disabled must never read as unhealthy,
+    and "cannot determine" must never read as healthy either).
+    """
+    status, detail = check_live_mount_status()
+    if status is LiveMountStatus.NOT_APPLICABLE:
+        return {
+            "name": "source_provenance",
+            "status": "not_configured",
+            "reason": str(detail.get("reason") or "not applicable"),
+        }
+    if status is LiveMountStatus.DRIFT:
+        return {
+            "name": "source_provenance",
+            "status": "unhealthy",
+            "reason": (
+                "this package was imported from a directory that is not under an "
+                "active source mount and carries no build-time provenance marker "
+                "-- likely running STALE code baked in at build time (D-EGK-1)"
+            ),
+            "detail": dict(detail),
+        }
+    # ACTIVE_MOUNT or IMMUTABLE_VERIFIED
+    return {
+        "name": "source_provenance",
+        "status": "ok",
+        "detail": {**detail, "status": status.value},
+    }

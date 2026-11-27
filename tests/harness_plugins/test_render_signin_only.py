@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from arbora.core.harness_profiles import profile
 from arbora.harness_plugins.compose import compose_bundle
-from arbora.harness_plugins.profiles import profile
 from arbora.harness_plugins.render import render
 from tests.harness_plugins.conftest import ENDPOINT
 

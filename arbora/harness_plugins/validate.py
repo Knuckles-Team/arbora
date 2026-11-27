@@ -11,8 +11,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from arbora.core.harness_profiles import NATIVE_CLIENT_ID, HookKind, profile
 from arbora.harness_plugins.compose import HOSTED_FILES, SERVER_NAME
-from arbora.harness_plugins.profiles import NATIVE_CLIENT_ID, HookKind, profile
 
 
 def _json(path: Path) -> dict:
