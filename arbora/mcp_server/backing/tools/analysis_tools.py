@@ -19,7 +19,7 @@ from arbora.api.errors import not_served
 from arbora.api.evidence import EvidenceBundle
 from arbora.core.environment import read_env, read_text
 from arbora.mcp_server.backing import engine_routing
-from arbora.mcp_server.host_caches import ToolTable
+from arbora.mcp_server.host_caches import AnalysisCore, ToolTable
 from arbora.mcp_server.legacy_action_invoke import invoke_legacy_action
 from arbora.security.config_sensitivity import (
     ENDPOINT_KEY_PARTS as _ENDPOINT_MCP_KEY_PARTS,
@@ -70,7 +70,6 @@ _SAFE_INLINE_MCP_ENV_KEYS = frozenset(
     }
 )
 _SAFE_INLINE_MCP_ENV_VALUE_RE = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
-_analysis_core_handler: Any | None = None
 _EXTERNAL_MAPPING_POLICY_FIELDS = frozenset(
     {
         "access",
@@ -230,6 +229,7 @@ def _resolved_external_mapping_policy(
 
 
 async def execute_focused_analysis(
+    core: AnalysisCore,
     action: str,
     query: str = "",
     top_k: int = 10,
@@ -239,9 +239,7 @@ async def execute_focused_analysis(
 ) -> EvidenceBundle:
     """Execute one canonical focused action through the shared analysis kernel."""
 
-    if _analysis_core_handler is None:
-        raise RuntimeError("analysis tools are not registered")
-    raw = await _analysis_core_handler(
+    raw = await core.run(
         action=action,
         query=query,
         top_k=top_k,
@@ -1340,7 +1338,7 @@ _CONFIGURE_ACTION_DISPATCH = {
 }
 
 
-def register_analysis_tools(mcp, tools: ToolTable):
+def register_analysis_tools(mcp, tools: ToolTable, core: AnalysisCore):
     """Register the analysis_tools group on the given FastMCP server."""
 
     async def _run_analysis_action(
@@ -1378,8 +1376,7 @@ def register_analysis_tools(mcp, tools: ToolTable):
         except Exception as e:
             return public_error_text(e)
 
-    global _analysis_core_handler
-    _analysis_core_handler = _run_analysis_action
+    core.bind(_run_analysis_action)
 
     @mcp.tool(
         name="graph_analyze",
@@ -1440,6 +1437,7 @@ def register_analysis_tools(mcp, tools: ToolTable):
                 operation="graph_analyze",
             )
         return await execute_focused_analysis(
+            core,
             action=action,
             query=query,
             top_k=top_k,

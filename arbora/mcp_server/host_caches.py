@@ -12,7 +12,7 @@ from collections.abc import Iterator, MutableMapping
 from dataclasses import dataclass, field
 from typing import Any
 
-__all__ = ["HostCaches", "ToolTable"]
+__all__ = ["AnalysisCore", "HostCaches", "ToolTable", "WarmupSlot"]
 
 
 class ToolTable(MutableMapping[str, Any]):
@@ -61,8 +61,54 @@ class ToolTable(MutableMapping[str, Any]):
             return bool(self._complete) and self._complete <= self._tools.keys()
 
 
+class WarmupSlot:
+    """The host's one catalog warm-up, once boot has started it."""
+
+    __slots__ = ("_current", "_lock")
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._current: Any | None = None
+
+    def bind(self, warmup: Any) -> None:
+        """Make ``warmup`` the reported catalog state."""
+        with self._lock:
+            self._current = warmup
+
+    def state(self) -> dict[str, Any] | None:
+        """The warm-up state, or ``None`` before boot starts one."""
+        with self._lock:
+            current = self._current
+        return None if current is None else current.state()
+
+
+class AnalysisCore:
+    """The shared analysis kernel handler the focused analyze tools delegate to."""
+
+    __slots__ = ("_handler", "_lock")
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._handler: Any | None = None
+
+    def bind(self, handler: Any) -> None:
+        """Bind the handler that ``graph_analyze`` registration built."""
+        with self._lock:
+            self._handler = handler
+
+    async def run(self, **arguments: Any) -> Any:
+        """Run one canonical action; refuse when no analysis tool is registered."""
+        with self._lock:
+            handler = self._handler
+        if handler is None:
+            raise RuntimeError("analysis tools are not registered")
+        return await handler(**arguments)
+
+
 @dataclass(frozen=True, slots=True)
 class HostCaches:
     """Every owned cache of one host process."""
 
     tools: ToolTable = field(default_factory=ToolTable)
+    warmup: WarmupSlot = field(default_factory=WarmupSlot)
+    analysis: AnalysisCore = field(default_factory=AnalysisCore)

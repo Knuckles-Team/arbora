@@ -16,7 +16,7 @@ from typing import Any
 import pytest
 
 from arbora.mcp_server.backing.tools import analysis_tools
-from arbora.mcp_server.host_caches import ToolTable
+from arbora.mcp_server.host_caches import AnalysisCore, ToolTable
 
 
 class _FakeMCP:
@@ -173,7 +173,7 @@ def test_graph_configure_registration_error_is_source_safe(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fake = _FakeMCP()
-    analysis_tools.register_analysis_tools(fake, ToolTable())
+    analysis_tools.register_analysis_tools(fake, ToolTable(), AnalysisCore())
     sensitive_detail = "https://sensitive.invalid/mcp?token=synthetic"
 
     def _fail(_name: str, _definition: str) -> None:
@@ -197,7 +197,7 @@ def test_graph_configure_preserves_filesystem_policy_denial(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     fake = _FakeMCP()
-    analysis_tools.register_analysis_tools(fake, ToolTable())
+    analysis_tools.register_analysis_tools(fake, ToolTable(), AnalysisCore())
 
     def _deny(_name: str, _definition: str) -> None:
         raise PermissionError("synthetic private path")
@@ -232,7 +232,7 @@ def test_legacy_sparql_backend_actions_answer_typed_unavailable(action: str) -> 
     caller that still reaches the removed path never touches credential
     material or an import error, regardless of what it sends."""
     fake = _FakeMCP()
-    analysis_tools.register_analysis_tools(fake, ToolTable())
+    analysis_tools.register_analysis_tools(fake, ToolTable(), AnalysisCore())
 
     result = json.loads(
         fake.tools["graph_configure"](
@@ -260,7 +260,7 @@ def test_legacy_set_config_cannot_bypass_governed_config_admin(
 
     persisted: list[tuple[str, object]] = []
     fake = _FakeMCP()
-    analysis_tools.register_analysis_tools(fake, ToolTable())
+    analysis_tools.register_analysis_tools(fake, ToolTable(), AnalysisCore())
     monkeypatch.setattr(
         config,
         "save_config_item",
@@ -285,7 +285,7 @@ def test_get_config_redacts_endpoint_and_path_values(
     import arbora.deployment as deployment
 
     fake = _FakeMCP()
-    analysis_tools.register_analysis_tools(fake, ToolTable())
+    analysis_tools.register_analysis_tools(fake, ToolTable(), AnalysisCore())
     monkeypatch.setattr(
         deployment,
         "config_reference",

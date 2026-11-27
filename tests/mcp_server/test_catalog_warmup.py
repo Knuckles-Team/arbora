@@ -13,6 +13,7 @@ import pytest
 from arbora.access.action_policy import ActionPolicies
 from arbora.fleet.state import FleetState
 from arbora.mcp_server.catalog_warmup import CatalogWarmup
+from arbora.mcp_server.host_caches import WarmupSlot
 
 
 @pytest.mark.spec("ARBORA-FLEET-R078")
@@ -74,7 +75,7 @@ def test_boot_returns_while_the_catalog_composition_is_still_running(
     import arbora.mcp_server.catalog_composition as composition
     import arbora.security.actor_context as actor_module
     import arbora.security.session as session_module
-    from arbora.mcp_server import catalog_warmup, server
+    from arbora.mcp_server import server
 
     async def slow_compose(**_kwargs: Any) -> None:
         await asyncio.sleep(2.0)
@@ -85,7 +86,9 @@ def test_boot_returns_while_the_catalog_composition_is_still_running(
         session_module, "use_session", lambda _s: contextlib.nullcontext()
     )
     began = time.monotonic()
+    slot = WarmupSlot()
     warmup = server._start_catalog_warmup(
+        slot,
         object(),
         SimpleNamespace(actor=None),
         object(),
@@ -93,7 +96,7 @@ def test_boot_returns_while_the_catalog_composition_is_still_running(
         ActionPolicies(),
     )
     assert time.monotonic() - began < 1.0
-    state = catalog_warmup.catalog_state()
+    state = slot.state()
     assert state is not None
     assert state["status"] == "warming"
     warmup.stop()
@@ -126,7 +129,9 @@ def test_the_warmup_composes_inside_its_own_client_scope(monkeypatch) -> None:
     monkeypatch.setattr(
         "arbora.fleet.onboarding.start_fleet_onboarding", lambda **_k: None
     )
+    slot = WarmupSlot()
     warmup = server._start_catalog_warmup(
+        slot,
         object(),
         SimpleNamespace(actor=None),
         object(),
