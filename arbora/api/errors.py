@@ -60,6 +60,10 @@ class ArboraErrorCode(StrEnum):
     AUDIT_CHAIN_BROKEN = "AUDIT_CHAIN_BROKEN"
     CONSOLE_ORIGIN_REQUIRED = "CONSOLE_ORIGIN_REQUIRED"
     MFA_STALE = "MFA_STALE"
+    # A run needs the session that opened it (ARBORA-IDENTITY-R026.3).
+    CLIENT_SESSION_MISSING = "CLIENT_SESSION_MISSING"
+    # A shipped deployment artifact changed after the plan was shown (ARBORA-DEPLOY-R013.5).
+    ARTIFACT_STALE = "ARTIFACT_STALE"
     # Child admission refusals the engine decides (ARBORA-RELEASE-R003.4.12/.13).
     IDEMPOTENCY_CONFLICT = "IDEMPOTENCY_CONFLICT"
     CHILD_TARGET_TERMINAL = "CHILD_TARGET_TERMINAL"
@@ -162,6 +166,8 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.AUDIT_CHAIN_BROKEN: 409,
     ArboraErrorCode.CONSOLE_ORIGIN_REQUIRED: 403,
     ArboraErrorCode.MFA_STALE: 403,
+    ArboraErrorCode.CLIENT_SESSION_MISSING: 403,
+    ArboraErrorCode.ARTIFACT_STALE: 409,
     ArboraErrorCode.STALE_CURSOR: 409,
     ArboraErrorCode.IDEMPOTENCY_CONFLICT: 409,
     ArboraErrorCode.CHILD_TARGET_TERMINAL: 409,
@@ -691,6 +697,8 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.AUDIT_CHAIN_BROKEN: -32009,
     ArboraErrorCode.CONSOLE_ORIGIN_REQUIRED: -32003,
     ArboraErrorCode.MFA_STALE: -32003,
+    ArboraErrorCode.CLIENT_SESSION_MISSING: -32003,
+    ArboraErrorCode.ARTIFACT_STALE: -32009,
     ArboraErrorCode.STALE_CURSOR: -32009,
     ArboraErrorCode.IDEMPOTENCY_CONFLICT: -32009,
     ArboraErrorCode.CHILD_TARGET_TERMINAL: -32009,

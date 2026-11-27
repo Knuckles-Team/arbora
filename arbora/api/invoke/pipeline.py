@@ -716,6 +716,7 @@ async def _dispatch(
     idempotency_key: str | None,
     decision: FleetCallDecision | None,
     audit_ref: str = "",
+    surface: str = "",
 ) -> Any:
     async with execution_context(
         op,
@@ -731,7 +732,12 @@ async def _dispatch(
         # Keep the verified invocation bundle attached to the context.  This
         # is deliberately added after the recheck so a composite cannot reuse
         # an unverified or stale services object as authority.
-        context = replace(context, operation_services=services, audit_ref=audit_ref)
+        context = replace(
+            context,
+            operation_services=services,
+            audit_ref=audit_ref,
+            surface=surface,
+        )
         return await services.runtime.dispatch(op, params, context)
 
 
@@ -1211,6 +1217,39 @@ async def _reserve(call: _Call) -> Reserved | OpResult | OpError:
     return await _reserve_authorized_call(call)
 
 
+async def _unacquired(
+    call: _Call, audit_ref: str, reservation: EffectReservation
+) -> OpError:
+    _logger.warning(
+        "operation %s effect not acquired: state=%s (%s)",
+        call.op.id,
+        reservation.state,
+        call.caller.request_id,
+    )
+    code = "INDETERMINATE" if reservation.state == "pending" else "INVALID_ARGUMENT"
+    if reservation.state == "conflict" and await _plan_binding_changed(call):
+        code = "PLAN_MISMATCH"
+    return OpError(code, {"audit_ref": audit_ref})
+
+
+async def _plan_binding_changed(call: _Call) -> bool:
+    """Whether a journal conflict is a live plan shown for a different request.
+
+    A plan reference keys the journal, so a changed request under a plan that is
+    still live is a changed plan binding, not a replayed key.
+    """
+    if call.plan_ref is None:
+        return False
+    binding = bind_plan(
+        call.op, call.arguments, call.caller, call.services.registry.digest
+    )
+    try:
+        _, refusal = await call.services.plans.validate(call.plan_ref, binding)
+    except Exception:  # noqa: BLE001 - an unreadable plan keeps the conflict as is
+        return False
+    return refusal is not None and refusal.code == "PLAN_MISMATCH"
+
+
 async def _reserve_authorized_call(call: _Call) -> Reserved | OpResult | OpError:
     """Reserve audit, then acquire the effect or return its authorized replay."""
     if not call.governed:
@@ -1228,14 +1267,7 @@ async def _reserve_authorized_call(call: _Call) -> Reserved | OpResult | OpError
     ):
         return await _replay_completed(call, audit_ref, reservation.outcome)
     if reservation.state != "acquired":
-        _logger.warning(
-            "operation %s effect not acquired: state=%s (%s)",
-            call.op.id,
-            reservation.state,
-            call.caller.request_id,
-        )
-        code = "INDETERMINATE" if reservation.state == "pending" else "INVALID_ARGUMENT"
-        return OpError(code, {"audit_ref": audit_ref})
+        return await _unacquired(call, audit_ref, reservation)
     return audit_ref, reservation
 
 
@@ -1258,6 +1290,7 @@ async def _dispatch_outcome(call: _Call, audit_ref: str) -> OpResult | OpError:
                 dispatch_key,
                 call.decision,
                 audit_ref,
+                call.surface.value,
             ),
             timeout=DISPATCH_TIMEOUT_SECONDS,
         )

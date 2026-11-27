@@ -758,7 +758,13 @@ def actor_from_claims(claims: dict[str, Any]) -> ActorContext:
         authenticated=True,
         groups=identity.groups,
         credential_expires_at=credential_expires_at,
+        session_ref=_session_ref_claim(claims),
     )
+
+
+def _session_ref_claim(claims: dict[str, Any]) -> str | None:
+    value = claims.get("session_ref")
+    return value.strip() if isinstance(value, str) and value.strip() else None
 
 
 _LOCAL_PROCESS_BOOTSTRAP_SUBJECT = "arbora:local-process-bootstrap"

@@ -54,6 +54,7 @@ def run_audit_event(
     op: Any = None,
     params: Mapping[str, Any] | None = None,
     result_status: str = "ok",
+    surface: str = "",
 ) -> dict[str, str]:
     """The one event of an orchestrated run (ARBORA-IDENTITY-R026.4).
 
@@ -80,7 +81,32 @@ def run_audit_event(
         if result_status != "ok"
         else str(getattr(state, "value", state) or result_status),
     }
-    return event
+    return {**_base_fields(surface, params, caller), **event}
+
+
+def _base_fields(
+    surface: str, params: Mapping[str, Any] | None, caller: RequestCaller
+) -> dict[str, str]:
+    """The base fields the engine audit writer binds: surface, params digest, request id."""
+    if not surface:
+        return {}
+    return {
+        "surface": surface,
+        "plan_digest": params_digest(params or {}),
+        "request_id": run_request_id(caller),
+    }
+
+
+def run_request_id(caller: RequestCaller) -> str:
+    """The run event's own audit request id: a second entry beside the call's."""
+    return f"{caller.request_id}:run"
+
+
+def run_event_caller(caller: RequestCaller) -> RequestCaller:
+    """The caller as it reserves and writes the run event."""
+    from dataclasses import replace
+
+    return replace(caller, request_id=run_request_id(caller))
 
 
 @dataclass(frozen=True, slots=True)
