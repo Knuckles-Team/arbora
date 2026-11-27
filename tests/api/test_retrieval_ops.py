@@ -268,7 +268,7 @@ def _who(kind: str, agent: str | None = None) -> Any:
 @pytest.mark.spec("ARBORA-OPS-R883")
 def test_agent_ref_is_taken_from_identity() -> None:
     from arbora.api.invoke.agent_ref import AGENT_REF_METHODS, bind_agent_ref
-    from arbora.api.invoke.steps import OpError
+    from arbora.security.operation_result import OpError
 
     assert len(AGENT_REF_METHODS) == 6
     for method in sorted(AGENT_REF_METHODS):

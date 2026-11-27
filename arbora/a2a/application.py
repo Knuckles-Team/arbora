@@ -502,7 +502,7 @@ def _operation_response(
 ) -> JSONResponse:
     """Project shared operation outcomes without reclassifying refusals."""
     from arbora.api.errors import a2a_error_status, to_envelope
-    from arbora.api.invoke.steps import OpError
+    from arbora.security.operation_result import OpError
 
     status = 200
     if outcome.code == "OK":
@@ -540,8 +540,8 @@ async def _invoke_operation(
 ) -> JSONResponse:
     from arbora.api.http.auth import HTTPAuthenticationError
     from arbora.api.invoke.pipeline import invoke
-    from arbora.api.invoke.steps import OpError, OpResult
     from arbora.api.registry import Surface
+    from arbora.security.operation_result import OpError, OpResult
 
     params = A2AOperationInvokeParams.model_validate(raw_params)
     caller_id = ""

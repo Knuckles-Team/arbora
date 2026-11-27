@@ -1979,7 +1979,7 @@ def _tasks_route_server(
 
 def _tasks_request_models(method: str) -> tuple[_typing.Any, _typing.Any]:
     """The ``(params, result)`` models for one Tasks method."""
-    from arbora.mcp_server.backing.tasks_extension import (
+    from arbora.fleet.tasks_wire import (
         AckResult,
         CancelTaskParams,
         GetTaskParams,
@@ -2047,7 +2047,7 @@ def _build_task_request(
     current_secret: str | None,
 ) -> _typing.Any:
     """One outgoing Tasks request: envelope, delegation proof, and channel proof."""
-    from arbora.mcp_server.backing.tasks_extension import (
+    from arbora.fleet.tasks_wire import (
         TASKS_EXTENSION_ID,
         TASKS_EXTENSION_REVISION,
         bound_signer,
@@ -3333,10 +3333,7 @@ class MCPMultiplexer:
     def _tasks_child_capable(initialization: _typing.Any) -> bool:
         """Return whether one initialize result advertises this Tasks revision."""
 
-        from arbora.mcp_server.backing.tasks_extension import (
-            TASKS_EXTENSION_ID,
-            TASKS_EXTENSION_REVISION,
-        )
+        from arbora.fleet.tasks_wire import TASKS_EXTENSION_ID, TASKS_EXTENSION_REVISION
 
         capabilities = getattr(initialization, "capabilities", None)
         extensions = getattr(capabilities, "extensions", None)
@@ -3380,10 +3377,7 @@ class MCPMultiplexer:
         latest initialize result before any task ID crosses the route.
         """
 
-        from arbora.mcp_server.backing.tasks_extension import (
-            TASKS_EXTENSION_ID,
-            TASKS_EXTENSION_REVISION,
-        )
+        from arbora.fleet.tasks_wire import TASKS_EXTENSION_ID, TASKS_EXTENSION_REVISION
 
         if method not in _TASKS_METHODS:
             raise _fastmcp_exceptions.ToolError("Unsupported Tasks method")
@@ -7160,19 +7154,23 @@ def tool_result_from_child(result: MCPCallToolResult) -> _fastmcp_tools.ToolResu
     )
 
 
-def make_governed_tool_mount(mcp, mux: MCPMultiplexer, native_name):
+def make_governed_tool_mount(
+    mcp,
+    mux: MCPMultiplexer,
+    native_name,
+    resident_names: _collections_abc.Collection[str],
+):
     """Prepare MultiplexerOps' tool mount callback without activating the host.
 
     Non-tool native mounts need their own verified read adapter. The process
     owner composes that adapter rather than pretending a resource is a tool.
     """
-    from arbora.mcp_server.registration import RESIDENT_NAMES
 
     async def mount(item, _forwarder):
         if item.kind != "tool":
             raise RuntimeError("governed non-tool mount adapter is required")
         name = native_name(item)
-        if name in RESIDENT_NAMES:
+        if name in resident_names:
             raise ValueError("native fleet name collides with a resident tool")
         tool = _fastmcp_tools.FunctionTool(
             name=name,

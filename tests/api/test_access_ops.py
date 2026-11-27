@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from arbora.access import service
+from arbora.api.ops import access_service as service
 
 
 def _context(*, principal: str = "approver", delegated: bool = False):

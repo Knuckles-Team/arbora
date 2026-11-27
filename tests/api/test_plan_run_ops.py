@@ -931,7 +931,7 @@ class FakeInvoke:
         self.keys: list[str] = []
 
     async def __call__(self, op_id, params, caller, key):
-        from arbora.api.invoke.steps import OpResult
+        from arbora.security.operation_result import OpResult
 
         assert op_id == "fleet.call"
         self.keys.append(key)
@@ -1187,7 +1187,7 @@ class ToolInvoke(FakeInvoke):
         self.journal[key] = {"value": self.answer(params)}
 
     async def __call__(self, op_id, params, caller, key):
-        from arbora.api.invoke.steps import OpResult
+        from arbora.security.operation_result import OpResult
 
         self.keys.append(key)
         if key not in self.journal:

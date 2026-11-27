@@ -17,8 +17,8 @@ from typing import Any, Literal
 
 from arbora.api.domain.deployment.assembly_view import render_graph
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import OpError
 from arbora.api.registry import Confirm, OpSpec
+from arbora.security.operation_result import OpError
 
 #: The template key of one target in the tenant Agent Library.
 TEMPLATE_PREFIX = "deployment:"

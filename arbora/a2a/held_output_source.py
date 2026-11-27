@@ -40,9 +40,10 @@ import logging
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from typing import Any
 
+from arbora.access.credential_reuse_decider import AskDecide
 from arbora.unique_records import create_record
 
-from .engine_deciders import HELD_ITEM_KIND, AskDecide
+from .engine_deciders import HELD_ITEM_KIND
 from .held_output import lift_held_output, reply_bytes
 
 __all__ = [

@@ -11,12 +11,15 @@ pipeline refuses them off the console or after a stale second-factor check
 
 from __future__ import annotations
 
+import time
 from collections.abc import Mapping
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops.engine_calls import decode, engine_send
+from arbora.api.ops.workstreams import pack, workstream_props
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -26,7 +29,13 @@ from arbora.api.registry import (
     Surface,
     Verb,
 )
+from arbora.identity.client_session import session_node_id
 from arbora.identity.engine_admin import IdentityRefused
+from arbora.security.run_authority import CALLER_REVOCATIONS, CallerRevocations
+from arbora.security.session_revocation import (
+    SessionNotOwned,
+    session_revocation_event,
+)
 
 #: The engine replays a session end by its node write key (ARBORA-IDENTITY-R029.5).
 NATIVE_IDEMPOTENCY: dict[str, str] = {
@@ -307,12 +316,67 @@ async def handle_clients_get(
     return {"value": {"client": shown[0]}}
 
 
+async def revoke_session(
+    context: Any,
+    *,
+    session_id: str,
+    reason: str,
+    admin: bool,
+    registry: CallerRevocations | None = None,
+) -> dict[str, Any]:
+    """The served operation: revoke a named session of the tenant (admin only)."""
+    registry = registry or CALLER_REVOCATIONS
+    if not admin:
+        raise OperationRefused("SCOPE_MISSING")
+    caller = context.caller
+    tenant = str(caller.tenant)
+    node = session_node_id(tenant, session_id)
+    principal = await _session_principal(context, node, tenant)
+    await engine_send(
+        context,
+        "CompareAndSetNodeFields",
+        {
+            "node_id": node,
+            "conditions_msgpack": pack({"principal": principal}),
+            "updates_msgpack": pack({"ended_at_ms": int(time.time() * 1000)}),
+        },
+    )
+    stopped = registry.revoke_caller(tenant, principal, reason)
+    services = context.operation_services
+    if services is not None:
+        await services.audit_write(
+            session_revocation_event(
+                tenant=tenant,
+                principal=principal,
+                session_id=session_id,
+                reason=reason,
+                stopped=stopped,
+                door="operation",
+            ),
+            AuditClass.EVENT,
+            caller,
+        )
+    return {"value": {"revoked": True, "leases_stopped": stopped}}
+
+
+async def _session_principal(context: Any, node: str, tenant: str) -> str:
+    """The principal of the tenant's own session node, or refuse like an absent one."""
+    rows = decode(
+        await engine_send(context, "GetNodePropertiesBatch", {"node_ids": [node]})
+    )
+    props = None
+    for row in rows or ():
+        if isinstance(row, (list, tuple)) and len(row) == 2 and row[0] == node:
+            props = workstream_props(row[1])
+    if props is None or props.get("tenant") != tenant:
+        raise OperationRefused(SessionNotOwned.code)
+    return str(props.get("principal", ""))
+
+
 async def handle_sessions_revoke(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> Any:
     """Revoke a named session; every live run lease of its principal stops at once."""
-    from arbora.security.session_revocation import revoke_session
-
     return await revoke_session(
         context,
         session_id=params["session_id"],

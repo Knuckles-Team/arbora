@@ -10,7 +10,9 @@ import pytest
 #: The retired harness package name, spelled so no source line contains it.
 RETIRED = "agent_" + "utilities"
 
-_SERVICE = Path(__file__).resolve().parents[2] / "arbora" / "access" / "service.py"
+_SERVICE = (
+    Path(__file__).resolve().parents[2] / "arbora" / "api" / "ops" / "access_service.py"
+)
 _RETIRED_RUNTIME_PACKAGE = "agent_" + "utilities"
 
 

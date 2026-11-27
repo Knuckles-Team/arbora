@@ -14,10 +14,11 @@ from typing import Any
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.executor import execution_context
 from arbora.api.invoke.pipeline import InvokeServices, OperationRefused, authorize
-from arbora.api.invoke.steps import OpError, RequestCaller, claim_values
-from arbora.core.claims import freeze_claims
+from arbora.api.invoke.steps import RequestCaller
+from arbora.core.claims import claim_values, freeze_claims
 from arbora.core.settings import RuntimeConfig
 from arbora.core.task_plan_config import TaskPlanConfig
+from arbora.security.operation_result import OpError
 
 
 def _contract() -> tuple[Any, Any, Any, Any]:

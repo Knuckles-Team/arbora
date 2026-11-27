@@ -22,7 +22,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from arbora import work_items
-from arbora.api.invoke.steps import OpError
+from arbora.security.operation_result import OpError
 
 from .tool_task import (
     TERMINAL_WORK_ITEM_STATES,

@@ -922,8 +922,8 @@ class NativeGatewayApplication:
         idempotency_key: str | None = None,
     ) -> Any:
         from arbora.api.invoke.pipeline import OperationRefused, invoke
-        from arbora.api.invoke.steps import OpError
         from arbora.api.registry import Surface
+        from arbora.security.operation_result import OpError
 
         if self._invocation is None:
             raise OperationRefused("UNAVAILABLE", {"capability": "invoke"})

@@ -20,7 +20,6 @@ from pydantic import Field
 from arbora.api.domain.deployment.assembly_view import render_graph
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.plan import approval_id_for
-from arbora.api.invoke.steps import OpError
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops.deploy import _assemble
 from arbora.api.ops.engine_calls import engine_send
@@ -33,6 +32,7 @@ from arbora.deployment.assembly import (
 )
 from arbora.deployment.image_digests import is_digest_pinned
 from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
+from arbora.security.operation_result import OpError
 
 _DIGEST = r"^sha256:[0-9a-f]{64}$"
 _PASSED = frozenset({"passed", "success", "succeeded"})

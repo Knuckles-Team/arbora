@@ -7,11 +7,11 @@ import json
 
 import pytest
 
-from arbora.api.invoke.audit import audit_event
 from arbora.api.invoke.audit_evidence import result_evidence
-from arbora.api.invoke.steps import OpResult
 from arbora.api.ops import security_eval
 from arbora.api.registry import Surface
+from arbora.security.audit_event import audit_event
+from arbora.security.operation_result import OpResult
 
 
 @pytest.mark.spec("ARBORA-OPS-R051.5")

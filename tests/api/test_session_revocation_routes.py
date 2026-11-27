@@ -51,10 +51,9 @@ def test_logout_and_revocation_stop_leases(monkeypatch: pytest.MonkeyPatch) -> N
         )
     # The operation: administrator scope, a named session, one audit event.
     engine = Engine().install(monkeypatch)
+    monkeypatch.setattr("arbora.api.ops.identity.engine_send", engine.send)
     engine.add_session("person:bob", "b1")
-    monkeypatch.setattr(
-        "arbora.security.session_revocation.CALLER_REVOCATIONS", registry
-    )
+    monkeypatch.setattr("arbora.api.ops.identity.CALLER_REVOCATIONS", registry)
     bob = SimpleNamespace(tenant_id="tenant:one", actor_id="person:bob")
     lease = _Lease()
     registry.register(bob, lease)  # type: ignore[arg-type]

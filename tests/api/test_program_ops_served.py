@@ -10,12 +10,12 @@ import pytest
 from pydantic import ValidationError
 
 from arbora.api.errors import EngineRefusal
-from arbora.api.invoke.audit import audit_event
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import require_scopes
 from arbora.api.ops import program
 from arbora.api.registry import AuditClass, Confirm, Effect, Surface
 from arbora.pin_lag import medulla as pin_lag
+from arbora.security.audit_event import audit_event
 from tests.api._engine_double import EngineDouble, context
 
 _OPS = {op.id: op for op in program.operations()}

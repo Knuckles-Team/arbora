@@ -14,7 +14,6 @@ from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import claim_values
 from arbora.api.ops.pin_guards import refusal
 from arbora.api.ops.run_graph import (
     GRAPH_SCHEMA,
@@ -44,6 +43,7 @@ from arbora.api.ops.runs import (
     project_current_plan,
     unavailable_capabilities,
 )
+from arbora.core.claims import claim_values
 from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.current_plan_reader import _project, read_native_snapshot
 from arbora.pin_lag.medulla import PinLagUnavailable, require_methods

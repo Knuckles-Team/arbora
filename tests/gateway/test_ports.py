@@ -86,8 +86,8 @@ async def test_invoke_operation_runs_the_invoke_pipeline_as_the_request_caller(
     from types import SimpleNamespace
 
     from arbora.api.invoke import pipeline
-    from arbora.api.invoke.steps import OpError, OpResult
     from arbora.mcp_server.composition import NativeGatewayApplication
+    from arbora.security.operation_result import OpError, OpResult
 
     caller = object()
     seen: list[Any] = []

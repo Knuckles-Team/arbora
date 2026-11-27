@@ -21,8 +21,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-from arbora.api.invoke.steps import OpError, OpResult
 from arbora.api.registry import Effect, Registry
+from arbora.security.operation_result import OpError, OpResult
 
 __all__ = [
     "HOOKS_FILE",

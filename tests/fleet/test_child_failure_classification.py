@@ -262,7 +262,7 @@ def test_delegated_bound_check_rejects_frozen_mapping():
 
 def test_indeterminate_message_states_unknown_outcome():
     from arbora.api.errors import to_envelope
-    from arbora.api.invoke.steps import OpError
+    from arbora.security.operation_result import OpError
 
     _status, envelope = to_envelope(
         OpError("INDETERMINATE", {"audit_ref": ""}),

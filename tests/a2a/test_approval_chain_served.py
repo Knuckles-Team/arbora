@@ -31,7 +31,8 @@ from arbora.a2a.confirm import (
 from arbora.a2a.grant_store import HumanGrantStore
 from arbora.a2a.service import A2AService
 from arbora.a2a.tool_action_admission import ToolActionAdmitter
-from arbora.api.invoke.plan import PlanBinding, params_digest
+from arbora.api.invoke.plan import PlanBinding
+from arbora.core.claims import params_digest
 from arbora.identity.approval import RegisteredApprovalKey
 from tests.a2a.test_application import Authority, Router
 from tests.api._support import make_verified_caller

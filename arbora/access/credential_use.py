@@ -17,7 +17,7 @@ from types import SimpleNamespace
 from typing import Any, Protocol
 from urllib.parse import urlsplit
 
-from arbora.api.invoke.audit import audit_event
+from arbora.security.audit_event import audit_event
 
 logger = logging.getLogger(__name__)
 

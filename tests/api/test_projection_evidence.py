@@ -8,13 +8,13 @@ from typing import Any
 
 import pytest
 
-from arbora.api.invoke.audit import audit_event
 from arbora.api.invoke.audit_evidence import result_evidence
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import OpResult
 from arbora.api.ops.operator_audit import handle_operator_audit_read, operations
 from arbora.api.ops.projections import SchemaProjection, handle_query_projections
 from arbora.api.registry import Surface
+from arbora.security.audit_event import audit_event
+from arbora.security.operation_result import OpResult
 
 _OP = SimpleNamespace(id="query.projections", executor=SimpleNamespace(value="caller"))
 

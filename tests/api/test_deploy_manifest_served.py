@@ -9,9 +9,9 @@ from typing import Any
 import pytest
 from test_invoke_contract import FixtureRuntime, run, setup_services
 
-from arbora.api.invoke.steps import OpError, OpResult
 from arbora.api.ops import deploy
 from arbora.api.registry import Registry
+from arbora.security.operation_result import OpError, OpResult
 from tests.api._support import make_verified_caller
 
 DIGEST = "registry.example/app/{}@sha256:" + "a" * 64

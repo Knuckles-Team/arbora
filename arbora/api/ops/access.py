@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
-from arbora.access.service import (
+from arbora.api.ops.access_service import (
     apply_ownership,
     approve_elevation,
     check_access,
@@ -43,7 +43,7 @@ from arbora.security.elevation import (
 #: ``Composite(handler="arbora.api.ops.access.<name>")`` binding from this
 #: module's own namespace, matching the ``agents``/``browser``/``fleet``
 #: ops-module convention even though the implementations live in the
-#: service layer (``arbora.access.service``).
+#: service layer (``arbora.api.ops.access_service``).
 __all__ = [
     "operations",
     "apply_ownership",
@@ -185,7 +185,7 @@ def operations() -> tuple[OpSpec, ...]:
     """Supported access operations; native EG deny is tracked as a gap.
 
     ``approvals.list``/``get``/``grant``/``deny`` are implemented in
-    :mod:`arbora.access.service` but intentionally not registered here:
+    :mod:`arbora.api.ops.access_service` but intentionally not registered here:
     the installed EG contract does not yet publish the ``approvals:read``/
     ``approvals:decide`` scopes they require (ARBORA-IDENTITY-R019 follow-up,
     tracked in ``specs/identity-access/tasks.md``).

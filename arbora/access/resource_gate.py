@@ -19,8 +19,8 @@ from arbora.access.resource_grants import (
     ResourceRefusal,
     evaluate,
 )
-from arbora.api.invoke.audit import audit_event
-from arbora.api.invoke.steps import OpError
+from arbora.security.audit_event import audit_event
+from arbora.security.operation_result import OpError
 
 __all__ = ["ENFORCERS", "PUBLIC_DENIAL", "ResourceGate", "public_code"]
 

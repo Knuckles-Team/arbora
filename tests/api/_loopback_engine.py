@@ -17,7 +17,7 @@ from typing import Any
 
 import pytest
 
-from arbora.api.invoke.steps import OpResult
+from arbora.security.operation_result import OpResult
 from tests.api._served_support import confirmable_invocation, person, route_methods
 from tests.test_served_operation_api import _call, _value
 

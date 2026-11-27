@@ -23,11 +23,11 @@ from pydantic import Field
 from arbora.api.domain.a2a.hub_federation import FederationRefused, HubFederation
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import claim_values
 from arbora.api.ops import _common
 from arbora.api.ops.a2a_peers import _registry
 from arbora.api.ops.engine_calls import send_on_client
 from arbora.api.registry import OpSpec
+from arbora.core.claims import claim_values
 from arbora.security.anonymous import client_scope
 
 WRITE_SCOPE = "bus:write"

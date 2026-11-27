@@ -17,7 +17,7 @@ from typing import Any
 from arbora.api.domain.deployment.placement import check_receipt, single_record
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import OpError
+from arbora.security.operation_result import OpError
 
 #: The one Decide question this module asks.
 CAPACITY_QUESTION_ID = "deployment.capacity"

@@ -15,14 +15,14 @@ from typing import Any, Protocol
 
 from arbora.api.invoke.steps import (
     FORBIDDEN_OWNER,
-    OpError,
     RequestCaller,
-    claim_values,
     forbidden_path,
     freeze_claims,
 )
 from arbora.api.registry import Executor, SubjectSource
+from arbora.core.claims import claim_values
 from arbora.security.anonymous import client_scope
+from arbora.security.operation_result import OpError
 
 _logger = logging.getLogger(__name__)
 

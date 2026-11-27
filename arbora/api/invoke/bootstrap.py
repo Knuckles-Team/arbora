@@ -29,14 +29,10 @@ from arbora.api.invoke.executor import (
 from arbora.api.invoke.hooks import load_hooks
 from arbora.api.invoke.pipeline import InvokeServices, OperationRefused
 from arbora.api.invoke.plan import EgPlanStore
-from arbora.api.invoke.steps import (
-    RequestCaller,
-    authenticate,
-    claim_values,
-    freeze_claims,
-)
+from arbora.api.invoke.steps import RequestCaller, authenticate, freeze_claims
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import EgMethod, Registry
+from arbora.core.claims import claim_values
 from arbora.core.settings import RuntimeConfig
 from arbora.epistemic import ClientContext, EpistemicClientPool, VerifiedActor
 from arbora.security.anonymous import admitted_actor, session_context

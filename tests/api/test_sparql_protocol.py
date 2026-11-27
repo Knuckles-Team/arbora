@@ -289,7 +289,7 @@ from types import SimpleNamespace  # noqa: E402
 
 from arbora.api.errors import EngineRefusal  # noqa: E402
 from arbora.api.http import sparql as sparql_http  # noqa: E402
-from arbora.api.invoke.steps import OpError  # noqa: E402
+from arbora.security.operation_result import OpError
 
 _SIX = (
     "application/n-triples",

@@ -11,10 +11,10 @@ from pydantic import ValidationError
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.audit_evidence import result_evidence
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.invoke.steps import OpError, OpResult
 from arbora.api.ops import plans, policy, policy_review
 from arbora.api.ops.registry_factory import get_registry
 from arbora.api.registry import Confirm, Effect
+from arbora.security.operation_result import OpError, OpResult
 from tests.api._lane_double import EngineDouble, context
 
 OPS = {op.id: op for op in (*policy.operations(), *policy_review.operations())}

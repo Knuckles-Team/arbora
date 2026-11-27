@@ -114,7 +114,9 @@ def surface() -> Any:
         sessions=SessionLoads(),
         loadable=allowed,
         callable_item=allowed,
-        mount=make_governed_tool_mount(state.mcp, state.mux, native_name),
+        mount=make_governed_tool_mount(
+            state.mcp, state.mux, native_name, RESIDENT_NAMES
+        ),
         notify=notify,
         invoke=bound_invoke,
         health=lambda: {},
