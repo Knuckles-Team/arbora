@@ -106,8 +106,8 @@ def _decide_request(context: Any, params: Mapping[str, Any]) -> dict[str, Any]:
 
 
 async def decide_as_caller(context: Any, params: Mapping[str, Any]) -> dict[str, Any]:
-    body = {"request": _decide_request(context, params)}
-    return {"value": await engine_send(context, "Decide", body)}
+    request = _decide_request(context, params)
+    return {"value": await engine_send(context, "Decide", {"request": request})}
 
 
 async def handle_canary_decide(

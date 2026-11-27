@@ -279,6 +279,22 @@ async def _provision_for_run(
     }
 
 
+async def _attest_run(
+    context: Any, params: Mapping[str, Any], message: Mapping[str, Any]
+) -> None:
+    """Gate the run on its graph skills: the named agent's and workflow's definitions."""
+    from arbora.api.invoke.certification_gate import require_run_attestation
+
+    metadata = message.get("metadata") or {}
+    agent = str(metadata.get("agent_name") or "").strip()
+    await require_run_attestation(
+        context,
+        params.get("skills"),
+        agents=(agent,) if agent else (),
+        workflow=metadata.get("workflow_identity"),
+    )
+
+
 async def handle_agent(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
@@ -294,12 +310,11 @@ async def handle_agent(
         if op.id == "agents.run":
             if not context.idempotency_key:
                 raise ValueError("Idempotency-Key is required")
-            from arbora.api.invoke.certification_gate import require_run_attestation
             from arbora.modality.models import ModalityRefused
 
-            await require_run_attestation(context, params.get("skills"))
             message = await _with_role_profile(context, params["message"])
             message = await admit_workflow(context, message)
+            await _attest_run(context, params, message)
             if params.get("assistant_profile_ref"):
                 message = {
                     **message,

@@ -13,6 +13,7 @@ import pytest
 
 from arbora.fleet.admission import AdmissionGate
 from arbora.fleet.engine_admission import EngineAdmission
+from tests._support import unwrap_decide
 from tests.fleet._certified_support import World, h, no_pin_lag
 from tests.fleet.test_admission_wiring import GOOD  # noqa: F401
 
@@ -25,6 +26,7 @@ class UpgradeEngine:
 
     async def send(self, method: str, params: dict[str, Any], tenant: str) -> Any:
         assert method == "Decide"
+        params = unwrap_decide(params)
         self.requests.append(params)
         body = next(p for p in params["params"] if p["name"] == "skill_upgrade")[
             "value"

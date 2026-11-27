@@ -12,6 +12,7 @@ import pytest
 from arbora.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
 from arbora.a2a.team import TeamCoordinator, bind_team_coordination
 from arbora.security.session import use_session
+from tests._support import unwrap_decide
 from tests.a2a.test_checkpoint_resume_served import Host, _world, lenient_decode
 from tests.a2a.test_operation_bridge import session
 from tests.question_kinds import declare_question_kinds
@@ -68,7 +69,7 @@ class _Graph:
             self.nodes[params["node_id"]].update(updates)
             return {}
         assert method == "Decide"
-        return self._decide(params)
+        return self._decide(unwrap_decide(params))
 
     def _decide(self, params: dict[str, Any]) -> Any:
         self.requests.append(params)

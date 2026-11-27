@@ -139,6 +139,11 @@ async def _current(
     return dict(entry)
 
 
+async def current_entry(context: Any, agent_id: str) -> dict[str, Any]:
+    """One agent's head library entry as the verified caller (a public read for gates)."""
+    return await _current(context, agent_id)
+
+
 def _draft(item: Mapping[str, Any], context: Any) -> dict[str, Any]:
     """The item as a validated engine draft in the caller's tenant."""
     from medulla.generated.decision import AgentLibraryEntryDraft

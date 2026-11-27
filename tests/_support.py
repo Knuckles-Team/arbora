@@ -59,3 +59,9 @@ class FakeSecretsBackend(SecretsBackend):
                 return False
             self._store[key] = value
             return True
+
+
+def unwrap_decide(params):
+    """The ``request`` of one ``Decide``; the engine's wire params are ``{request}`` only."""
+    assert list(params) == ["request"], "a Decide carries MethodDecideParams {request}"
+    return params["request"]

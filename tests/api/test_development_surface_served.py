@@ -340,6 +340,8 @@ class RunEngine:
     def __init__(self, modes: dict[str, str]) -> None:
         self.modes = modes
         self.calls: list[tuple[str, dict[str, Any]]] = []
+        self.calls_order: list[str] = []
+        self.task_plan: Any = None
         self.owners: dict[str, str] = {
             "run:theirs": "person:two",
             "run:mine": "person:one",
@@ -347,6 +349,7 @@ class RunEngine:
 
     def open(self, params: dict[str, Any], who: str) -> Any:
         self.calls.append(("DeliveryOpen", params))
+        self.calls_order.append("DeliveryOpen")
         self.owners["run:mine"] = who
         return {
             "delivery": {"id": "run:mine"},
@@ -368,11 +371,45 @@ class RunEngine:
         }
 
 
+class TaskPlanDouble:
+    """The engine ``TaskPlan`` decision: one sealed record per question, in call order."""
+
+    def __init__(self, order: list[str]) -> None:
+        self.order = order
+        self.requests: list[dict[str, Any]] = []
+
+    def build_request(
+        self, tenant: str, question_id: str, proposal: dict[str, Any], schema: Any
+    ) -> dict[str, Any]:
+        return {"tenant": tenant, "question_id": question_id, "proposal": proposal}
+
+    async def decide(self, request: dict[str, Any]) -> dict[str, Any]:
+        self.order.append("Decide")
+        self.requests.append(request)
+        return {"records": [{"record_id": f"decision:tp:{len(self.requests)}"}]}
+
+    def verify(self, record: Any, request: Any, *, expected_principal: str) -> Any:
+        return {"plan_digest": "p"}
+
+    async def publish(self, request: Any, key: str) -> Any:
+        raise AssertionError("a run start never publishes a plan")
+
+
 @pytest.fixture
 def runs_env(stack: Any, served: Any, monkeypatch: pytest.MonkeyPatch) -> Any:  # noqa: F811
+    from arbora.api.ops import plans
+
     app, client = served
     engine = LoopbackEngine()
     runs = RunEngine(engine.modes)
+    task_plan = TaskPlanDouble(runs.calls_order)
+    monkeypatch.setattr(plans, "engine_task_plan", lambda *_a, **_k: task_plan)
+
+    async def pin(_context: Any, _tenant: str) -> dict[str, Any]:
+        return {"digest": "pin"}
+
+    monkeypatch.setattr(plans, "_feature_schema", pin)
+    runs.task_plan = task_plan
     route_methods(
         client,
         {
@@ -403,14 +440,34 @@ def test_run_start_returns_run_id_and_refuses_reference_mode(runs_env: Any) -> N
     assert done == {"run_id": "run:mine"}
     sent = runs.calls[0][1]["request"]
     # Arbora names no task: the slice is the engine's own next_unblocked_task answer.
-    assert sent["scope_rows"] == ["T001"] and sent["dispatch_decision_id"] == "abc"
+    assert sent["scope_rows"] == ["T001"]
+    assert sent["evidence_digests"] == ["abc"]
     assert sent["repo"] == "repo" and sent["origin"] == "requested"
     assert sent["slice_root"] == "phase-1" and sent["run_trace_id"].startswith("run:")
-    _value(
-        _call(app, "development.run.start", {**start, "task_id": "T9"}, **{KEY: "s3"})
+    nothing = _call(
+        app, "development.run.start", {**start, "task_id": "T9"}, **{KEY: "s3"}
     )
-    assert runs.calls[1][1]["request"]["scope_rows"] == []
+    assert nothing.json()["error"]["code"] == "NOT_FOUND"
+    assert len(runs.calls) == 1
     assert _call(app, "development.run.start", start).status_code == 400
+
+
+@pytest.mark.spec("ARBORA-OPS-R896.3")
+def test_run_start_opens_the_delivery_under_the_engine_task_plan_record(
+    runs_env: Any,
+) -> None:
+    app, engine, runs, *_ = runs_env
+    engine.modes["repo"] = "development"
+    start = {"repository": "repo", "phase": "phase-1"}
+    _value(_call(app, "development.run.start", start, **{KEY: "d1"}))
+    # The TaskPlan question is asked first, over the engine's own slice, and its record id
+    # (never a digest arbora computed) is the delivery's dispatch decision.
+    assert runs.calls_order == ["Decide", "DeliveryOpen"]
+    (asked,) = runs.task_plan.requests
+    assert [t["task_id"] for t in asked["proposal"]["tasks"]] == ["T001"]
+    sent = runs.calls[0][1]["request"]
+    assert sent["dispatch_decision_id"] == "decision:tp:1"
+    assert sent["dispatch_decision_id"] not in sent["evidence_digests"]
 
 
 @pytest.mark.spec("ARBORA-OPS-R896.4")

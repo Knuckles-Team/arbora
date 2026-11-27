@@ -12,6 +12,7 @@ from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
 from arbora.fleet.multiplexer_ops import MultiplexerOps
 from arbora.fleet.tool_ranking import DEFAULT_BUDGET_TOKENS
 from arbora.mcp_server.fleet_composition import tool_ranker_for
+from tests._support import unwrap_decide
 from tests.question_kinds import declare_question_kinds
 
 _ROWS = tuple(
@@ -46,6 +47,7 @@ class _Engine:
 
     async def send(self, method: str, params: dict[str, Any], tenant: str) -> Any:
         self.sent.append((method, params, tenant))
+        params = unwrap_decide(params)
         if isinstance(self.outcome, Exception):
             raise self.outcome
         digest = hashlib.sha256(PRINCIPAL.encode()).hexdigest()
@@ -112,6 +114,7 @@ async def test_host_ranker_orders_search_by_the_engine_record(
     # The engine order leads; the tool it did not rank keeps its place after.
     assert [row["name"] for row in found["items"]] == ["gamma", "alpha", "beta"]
     [(method, params, tenant)] = engine.sent
+    params = unwrap_decide(params)
     assert (method, tenant) == ("Decide", "tenant:one")
     _assert_asked(params, role="role:ops", budget=900)
 
@@ -159,13 +162,15 @@ async def test_a_budgetless_search_is_asked_with_the_configured_budget(
     engine = _Engine(_advisory("fleet:tool:s/beta"))
     found = await _ops(engine.ranker()).find_tools(_caller(), query="beta")
     assert [row["name"] for row in found["items"]][0] == "beta"
-    asked = engine.sent[0][1]["params"][0]["value"]["value"]
+    asked = unwrap_decide(engine.sent[0][1])["params"][0]["value"]["value"]
     # The role the engine requires is empty (the whole catalog); the budget is supplied.
     assert asked["agent_role_iri"] == "" and asked["context_budget_tokens"] == 1234
     monkeypatch.delenv("ARBORA_TOOL_SEARCH_CONTEXT_BUDGET_TOKENS")
     default = _Engine(_advisory())
     await _ops(default.ranker()).find_tools(_caller(), query="beta")
-    budget = default.sent[0][1]["params"][0]["value"]["value"]["context_budget_tokens"]
+    budget = unwrap_decide(default.sent[0][1])["params"][0]["value"]["value"][
+        "context_budget_tokens"
+    ]
     assert budget == DEFAULT_BUDGET_TOKENS
 
 

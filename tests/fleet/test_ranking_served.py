@@ -22,6 +22,7 @@ from arbora.api.ops import activity as activity_ops
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import Registry
 from arbora.fleet.ranking import HostRanking, engine_ask
+from tests._support import unwrap_decide
 from tests.api._support import make_verified_caller
 from tests.api.test_activity_ops_served import _services
 
@@ -48,6 +49,7 @@ class LoopbackEngine:
         if self.stopped:
             raise ConnectionError("engine stopped")
         assert method == "Decide" and tenant == TENANT
+        request = unwrap_decide(request)
         self.requests.append(request)
         ids = [o["option_id"] for o in request["candidates"]["options"]]
         digest = hashlib.sha256(PRINCIPAL.encode()).hexdigest()

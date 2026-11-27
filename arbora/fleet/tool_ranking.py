@@ -81,7 +81,7 @@ def engine_tool_order(
     principal: Callable[[], str],
 ) -> Callable[..., Awaitable[Sequence[str]]]:
     """The production ``tool_ranker`` of ``MultiplexerOps`` over engine ``Decide``."""
-    from arbora.deployment.placement import check_receipt, single_record
+    from arbora.deployment.placement import check_receipt, send_decide, single_record
 
     async def order(
         caller: Any,
@@ -98,7 +98,7 @@ def engine_tool_order(
             role=role,
             context_budget_tokens=context_budget_tokens,
         )
-        record = single_record(await send("Decide", request, tenant))
+        record = single_record(await send_decide(send, request, tenant))
         check_receipt(record, request, principal())
         return ordered_tool_ids(record)
 

@@ -201,8 +201,10 @@ class EngineAdmission:
                 param("skill_upgrade", "skill_upgrade", skill_upgrade_param(question))
             ],
         )
+        from arbora.deployment.placement import send_decide
+
         try:
-            answer = await self.send("Decide", request, tenant)
+            answer = await send_decide(self.send, request, tenant)
         except Exception as error:
             code = str(getattr(error, "code", ""))
             if code in _UPGRADE_CODES:

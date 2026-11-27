@@ -147,7 +147,11 @@ class TeamCoordinator:
         channel_id: str = "a2a",
     ) -> dict[str, Any]:
         """Write the team records, decide, and apply the option."""
-        from arbora.deployment.placement import check_receipt, single_record
+        from arbora.deployment.placement import (
+            check_receipt,
+            send_decide,
+            single_record,
+        )
 
         unknown = sorted(set(tasks.values()) - TASK_STATUSES)
         if unknown:
@@ -179,7 +183,7 @@ class TeamCoordinator:
             available=channel_signal != UNAVAILABLE,
             observed_at_ms=observed_at_ms,
         )
-        record = single_record(await send("Decide", request))
+        record = single_record(await send_decide(send, request))
         check_receipt(record, request, self._principal)
         option, abstained = chosen_option(record)
         if option == TEAM:

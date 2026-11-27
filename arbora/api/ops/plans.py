@@ -218,6 +218,7 @@ async def decide_task_plan(
     tenant: str,
     principal: str,
     feature_schema: Mapping[str, Any],
+    question_id: str = TASK_PLAN_QUESTION_ID,
 ) -> tuple[dict[str, Any], Mapping[str, Any]]:
     """Ask the engine for the plan and verify its receipt; return plan + record.
 
@@ -226,7 +227,7 @@ async def decide_task_plan(
     """
     try:
         request = engine.build_request(
-            tenant, TASK_PLAN_QUESTION_ID, dict(proposal), dict(feature_schema)
+            tenant, question_id, dict(proposal), dict(feature_schema)
         )
     except ValueError as exc:
         raise OperationRefused("INVALID_ARGUMENT", {"message": str(exc)}) from exc
@@ -1343,12 +1344,21 @@ def _terminal_replay(status: str) -> dict[str, Any]:
     }
 
 
+def _plan_assignees(plan: Any) -> tuple[str, ...]:
+    """The agents the plan's tasks name as assignee: their definitions hold the skills."""
+    tasks = plan.get("tasks", ()) if isinstance(plan, Mapping) else ()
+    names = (t.get("assignee") for t in tasks if isinstance(t, Mapping))
+    return tuple(dict.fromkeys(str(n) for n in names if n))
+
+
 async def handle_plan_run(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Decide, verify, attach and execute one task plan for the verified caller."""
     parsed = PlanRunParams.model_validate(dict(params))
-    await require_run_attestation(context, parsed.skills)
+    await require_run_attestation(
+        context, parsed.skills, agents=_plan_assignees(parsed.plan)
+    )
     # The shared invocation boundary freezes all nested caller arguments before
     # dispatch.  The engine's strict TaskPlan DTO is a JSON boundary and
     # requires fresh lists and dictionaries; thaw only this proposal at that

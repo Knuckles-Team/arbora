@@ -148,3 +148,135 @@ def test_both_run_operations_declare_the_skills_parameter() -> None:
     assert "skills" in agents.AgentRunParams.model_fields
     assert "skills" in plans.PlanRunParams.model_fields
     assert SimpleNamespace  # the structural doubles above stand in for the engine
+
+
+def _library(monkeypatch: pytest.MonkeyPatch, skills: Any) -> EngineDouble:
+    """A structural engine behind the ``AgentLibrary`` head read of the named agent."""
+    from arbora.api.ops import agent_library
+
+    library = EngineDouble(monkeypatch)
+    entry = {"agent_id": "helper", "skills": skills}
+    library.serve("AgentLibrary", lambda params: {"entry": entry})
+    library.install(agent_library)
+    return library
+
+
+_GRAPH_SKILL = [
+    {"component_id": "skill:one", "definition_digest": "d3", "kind": "skill"}
+]
+_NAMED = {"message": {"parts": [], "metadata": {"agent_name": "helper"}}}
+
+
+@pytest.mark.spec("ARBORA-OPS-R872")
+async def test_a_named_agent_declaring_no_skill_cannot_skip_the_gate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _engine(monkeypatch, _stored())
+    library = _library(monkeypatch, _GRAPH_SKILL)
+    a2a = _A2A()
+    with pytest.raises(OperationRefused) as refused:
+        await agents.handle_agent(_run_context(a2a), dict(_NAMED), _RUN)
+    # The skills come from the agent's definition node, read as the verified caller.
+    assert refused.value.details["reason"] == "attestation_missing"
+    assert a2a.started == []
+    [(method, sent, _idem)] = library.sent
+    assert method == "AgentLibrary"
+    assert sent["op"] == {
+        "operation": "current",
+        "agent_id": "helper",
+        "tenant_id": "tenant:one",
+    }
+
+
+@pytest.mark.spec("ARBORA-OPS-R872")
+async def test_a_declared_skill_at_another_digest_than_the_graph_refuses(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _engine(monkeypatch, _stored())
+    _library(monkeypatch, _GRAPH_SKILL)
+    a2a = _A2A()
+    params = {**_NAMED, "skills": [{**_SKILL, "digest": "dX"}]}
+    with pytest.raises(OperationRefused) as refused:
+        await agents.handle_agent(_run_context(a2a), params, _RUN)
+    assert refused.value.details["reason"] == "attestation_mismatch"
+    assert a2a.started == []
+
+
+@pytest.mark.spec("ARBORA-OPS-R872")
+async def test_the_graph_skills_run_once_attested_and_declared_skills_only_add(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _engine(monkeypatch, _stored())
+    _library(monkeypatch, _GRAPH_SKILL)
+    a2a = _A2A()
+    params = {**_NAMED, "skills": [_SKILL]}
+    await agents.handle_agent(_run_context(a2a), params, _RUN)
+    assert len(a2a.started) == 1
+    # An extra declared skill is gated too: it never replaces the graph set.
+    extra = {
+        "id": "skill:two",
+        "revision": 1,
+        "digest": "e",
+        "attestation_digest": "a2",
+    }
+    a2a = _A2A()
+    with pytest.raises(OperationRefused) as refused:
+        await agents.handle_agent(
+            _run_context(a2a), {**_NAMED, "skills": [_SKILL, extra]}, _RUN
+        )
+    assert refused.value.details["reason"] == "attestation_mismatch"
+    assert a2a.started == []
+
+
+@pytest.mark.spec("ARBORA-OPS-R872")
+@pytest.mark.parametrize("entry", [None, {"agent_id": "helper"}, {"skills": "x"}])
+async def test_an_unreadable_definition_refuses_the_source_unavailable(
+    monkeypatch: pytest.MonkeyPatch, entry: Any
+) -> None:
+    from arbora.api.ops import agent_library
+
+    _engine(monkeypatch, _stored())
+    library = EngineDouble(monkeypatch)
+    library.serve("AgentLibrary", lambda params: {"entry": entry})
+    library.install(agent_library)
+    a2a = _A2A()
+    with pytest.raises(OperationRefused) as refused:
+        await agents.handle_agent(
+            _run_context(a2a), {**_NAMED, "skills": [_SKILL]}, _RUN
+        )
+    assert refused.value.code == "POLICY_DENIED"
+    assert refused.value.details["reason"] == "attestation_source_unavailable"
+    assert a2a.started == []
+
+
+@pytest.mark.spec("ARBORA-OPS-R872")
+async def test_a_plan_task_assignee_definition_is_gated_with_no_declared_skill(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _engine(monkeypatch, _stored())
+    _library(monkeypatch, _GRAPH_SKILL)
+    ctx = context()
+    ctx.caller.session = session(frozenset())
+    plan = {"tasks": [{"task_id": "a", "prompt": "p", "assignee": "helper"}]}
+    with use_session(ctx.caller.session), pytest.raises(OperationRefused) as refused:
+        await plans.handle_plan_run(ctx, {"plan": plan}, _PLAN)
+    assert refused.value.details["reason"] == "attestation_missing"
+
+
+@pytest.mark.spec("ARBORA-OPS-R872")
+async def test_a_composed_definition_reader_replaces_the_engine_read(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    engine = _engine(monkeypatch, _stored())
+    asked: list[str] = []
+
+    async def reader(agent: str) -> Any:
+        asked.append(agent)
+        return {"skills": _GRAPH_SKILL}
+
+    a2a = _A2A()
+    ctx = _run_context(a2a)
+    ctx.services["attestation_definition_reader"] = reader
+    await agents.handle_agent(ctx, {**_NAMED, "skills": [_SKILL]}, _RUN)
+    assert asked == ["helper"] and len(a2a.started) == 1
+    assert [m for m, *_ in engine.sent] == ["DecisionEval"]
