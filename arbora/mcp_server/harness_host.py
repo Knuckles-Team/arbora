@@ -29,6 +29,8 @@ import logging
 from collections.abc import Callable, Mapping
 from typing import Any
 
+from arbora.mcp_server.host_caches import ToolTable
+
 logger = logging.getLogger(__name__)
 
 
@@ -38,13 +40,12 @@ def _runtime() -> Any:
     return runtime
 
 
-def available_tools(tools: Mapping[str, Any]) -> tuple[str, ...]:
-    runtime = _runtime()
-    return tuple(sorted(tools.keys() | runtime.NATIVE_INTENT_TOOLS.keys()))
+def available_tools(tools: ToolTable) -> tuple[str, ...]:
+    return tuple(sorted(tools.keys() | tools.verbs.keys()))
 
 
 def build_toolset(
-    tools: Mapping[str, Any],
+    tools: ToolTable,
     tool_names: list[str],
     toolset_id: str,
     emit: Callable[[dict[str, Any]], None],

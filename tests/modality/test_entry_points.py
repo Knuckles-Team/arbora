@@ -236,8 +236,10 @@ async def test_webui_dictation_transcribes_through_the_seam_without_provenance(
         {Modality.AUDIO: SpeechHandler(FakeFleet(), max_duration_s=60)},
         recorder=recorder,
     )
-    monkeypatch.setattr(host_bindings, "prompt_normalizer", lambda _engine: normalizer)
-    out = await webui_voice_delegation_helpers(lambda: None)["transcribe_voice"](
+    monkeypatch.setattr(
+        host_bindings, "prompt_normalizer", lambda _engine, _verbs: normalizer
+    )
+    out = await webui_voice_delegation_helpers(lambda: None, {})["transcribe_voice"](
         content=wav(), content_type="audio/wav"
     )
     assert out["text"] == "what is the capital of france" and out["language"] == "en"

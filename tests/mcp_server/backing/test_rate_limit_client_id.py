@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, patch
 
 from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing import server_factory
+from arbora.security.delegation_config import McpAuthConfig
 from arbora.security.key_cache import JwksCache
 
 
@@ -95,6 +96,7 @@ async def test_configure_middleware_keys_rate_limiter_per_caller_not_one_shared_
     middlewares = server_factory._configure_middleware(
         mock_args,
         JwksCache(RuntimeConfig()),
+        McpAuthConfig(),
         server_name="arbora",
         config=RuntimeConfig(),
     )

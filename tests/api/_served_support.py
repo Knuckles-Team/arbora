@@ -19,7 +19,7 @@ from fastmcp import FastMCP
 
 from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime as mcp_runtime
-from arbora.mcp_server.host_caches import build_host_caches
+from arbora.mcp_server.host_caches import ToolTable, build_host_caches
 from arbora.observability.state import SubsystemWindows
 from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
@@ -139,7 +139,7 @@ def serve_verbs(mcp: Any, invocation: Any, authority: Any) -> Any:
     from arbora.api.mcp.verbs import VERBS, make_verb
 
     projection = mcp_runtime._register_served_intent_surface(
-        mcp, invocation, authority, SubsystemWindows()
+        mcp, invocation, authority, SubsystemWindows(), ToolTable(authority)
     )
     for name in VERBS:
         mcp.add_tool(make_verb(name, projection))

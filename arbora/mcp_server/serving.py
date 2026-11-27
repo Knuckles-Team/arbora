@@ -23,6 +23,7 @@ from typing import Any
 from arbora.api.mcp.discovery import FleetCatalog, FleetSearch
 from arbora.api.mcp.verbs import VERBS, MCPProjection, native_verb
 from arbora.api.registry import Invoke
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.observability.state import SubsystemWindows
 
 __all__ = [
@@ -48,6 +49,7 @@ def register_intent_surface(
     fleet_search: FleetSearch | None = None,
     fleet_catalog: FleetCatalog | None = None,
     windows: SubsystemWindows,
+    tools: ToolTable,
 ) -> MCPProjection:
     """Compose Arbora's served surface on ``mcp``; return the built projection.
 
@@ -70,13 +72,11 @@ def register_intent_surface(
         fleet_catalog,
         windows=windows,
     )
-    from arbora.mcp_server import runtime
-
     # The verbs are attached to MCP by ``register_mcp_tools`` at startup
     # (ARBORA-OPS-R035.2), the one registration path; the native twins below
     # are what the REST gateway reaches.
     for name in VERBS:
-        runtime.NATIVE_INTENT_TOOLS[name] = native_verb(name, projection)
+        tools.bind_verb(name, native_verb(name, projection))
     _register_app_launchers(mcp)
     return projection
 

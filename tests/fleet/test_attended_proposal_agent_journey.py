@@ -68,7 +68,6 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.spec("ARBORA-FLEET-R015")]
 
 
 def _isolate_registration(monkeypatch: pytest.MonkeyPatch, client: Any) -> None:
-    monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {})
     monkeypatch.setattr(shared_multiplexer, "_served", None)
     monkeypatch.setenv("MCP_FLEET_REGISTRATION", "false")
 

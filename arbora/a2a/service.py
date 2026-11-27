@@ -95,7 +95,7 @@ class A2AService:
     authority: A2ATaskAuthority
     router: A2ARouter
     card_metadata: A2ACardMetadata = A2ACardMetadata()
-    #: The modality seam; ``None`` uses the process default normaliser.
+    #: The modality seam over the host's verbs; ``None`` refuses audio closed.
     modality: Any = None
     #: The tool-task seam (ARBORA-A2A-R002.2.4); both unset leaves it unserved.
     tool_task_admitter: ToolTaskAdmitter | None = None
@@ -270,9 +270,15 @@ class A2AService:
             ModalityRefused: no transcription capability is reachable, or a
                 part is too large, too long or unreadable.
         """
-        from arbora.modality import MediaPart, default_normalizer
+        from types import MappingProxyType
 
-        normalizer = self.modality or default_normalizer()
+        from arbora.modality import MediaPart, default_normalizer
+        from arbora.modality.fleet_port import NativeIntentFleet
+
+        # A service composed with no modality seam has no verbs: audio refuses closed.
+        normalizer = self.modality or default_normalizer(
+            fleet=NativeIntentFleet(MappingProxyType({}))
+        )
         parts = [
             MediaPart(
                 media_type=file.mime_type,

@@ -74,7 +74,10 @@ def _burst_responder(service: Any) -> Callable[[str, list[Any]], Awaitable[None]
             return
         try:
             sender = session_for_sender(
-                str(event.platform), event.user_id, config=service.config
+                str(event.platform),
+                event.user_id,
+                config=service.config,
+                delegation=host_ports().delegation,
             )
         except SenderRefused as refusal:
             logger.warning("messaging: sender refused (%s); no turn run", refusal.code)

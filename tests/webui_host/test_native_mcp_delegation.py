@@ -13,7 +13,8 @@ from typing import Any
 import pytest
 
 from arbora.core.settings import RuntimeConfig
-from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
+from arbora.security.process_authority import ProcessAuthority
 from arbora.webui_host import mcp_delegation
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R017")
@@ -31,7 +32,9 @@ class _FakeMux:
 
 
 #: The host tool table of the delegation under test.
-_TOOLS = {"graph_registered": object()}
+_TOOLS = ToolTable(ProcessAuthority(config=RuntimeConfig()))
+_TOOLS["graph_registered"] = object()
+_TOOLS.bind_verb("find", object())
 
 
 @pytest.fixture
@@ -51,7 +54,6 @@ def mux(monkeypatch: pytest.MonkeyPatch) -> _FakeMux:
         mcp_delegation, "require_fleet_capability", lambda kind, config: None
     )
     monkeypatch.setattr(mcp_delegation, "provider_tools", lambda host: host_tools)
-    monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {"find": object()})
     return fake
 
 

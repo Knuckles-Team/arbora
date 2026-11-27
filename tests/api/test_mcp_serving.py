@@ -34,8 +34,10 @@ from arbora.api.registry import (
     Verb,
 )
 from arbora.core.settings import RuntimeConfig
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.mcp_server.serving import register_intent_surface
 from arbora.observability.state import SubsystemWindows
+from arbora.security.process_authority import ProcessAuthority
 from tests.api._support import make_verified_caller
 
 #: The agent runtime's previously served contract (``register_intent_tools``
@@ -74,6 +76,7 @@ def test_register_intent_surface_registers_launchers_and_no_verb() -> None:
         policy_gate=PolicyGate("none"),
         invoke=_unused_invoke,
         windows=SubsystemWindows(),
+        tools=ToolTable(ProcessAuthority(config=RuntimeConfig())),
     )
     names = {tool.name for tool in asyncio.run(mcp.list_tools())}
     # The verbs are attached by ``register_mcp_tools``, the one registration path.

@@ -239,14 +239,14 @@ def test_the_fleet_agent_toolset_binds_the_served_intent_verbs(monkeypatch) -> N
         verb.__doc__ = f"{name} verb"
         return verb
 
+    table = ToolTable(ProcessAuthority(config=RuntimeConfig()))
     for name in FLEET_TOOLS:
-        monkeypatch.setitem(runtime.NATIVE_INTENT_TOOLS, name, make(name))
+        table.bind_verb(name, make(name))
 
     # A legacy action tool of the same name must not shadow the served verb.
     async def legacy_act(action: str = "") -> str:
         raise AssertionError("legacy tool called")
 
-    table = ToolTable(ProcessAuthority(config=RuntimeConfig()))
     table["act"] = legacy_act
     toolset = runtime.build_native_arbora_toolset(
         list(FLEET_TOOLS), table, toolset_id="run-a2a-1", emit=events.append

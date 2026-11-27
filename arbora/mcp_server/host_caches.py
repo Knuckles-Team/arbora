@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import threading
 from collections import OrderedDict
-from collections.abc import Iterator, MutableMapping
+from collections.abc import Iterator, Mapping, MutableMapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any
 
 from arbora.core.settings import RuntimeConfig
@@ -35,7 +36,7 @@ class ToolTable(MutableMapping[str, Any]):
     full table from a partial one.
     """
 
-    __slots__ = ("_complete", "_lock", "_tools", "authority")
+    __slots__ = ("_complete", "_lock", "_tools", "_verbs", "authority", "verbs")
 
     def __init__(self, authority: ProcessAuthority) -> None:
         #: The process authority every dispatch through this table runs under
@@ -44,6 +45,12 @@ class ToolTable(MutableMapping[str, Any]):
         self._lock = threading.RLock()
         self._tools: dict[str, Any] = {}
         self._complete: frozenset[str] = frozenset()
+        self._verbs: dict[str, Any] = {}
+        #: The served intent verbs (``find``, ``act``, ...) as in-process functions, a
+        #: read-only view the serving composition fills through :meth:`bind_verb`. A
+        #: run binds them as native tools; each call goes through the same
+        #: invocation pipeline as an MCP client's.
+        self.verbs: Mapping[str, Any] = MappingProxyType(self._verbs)
 
     def __getitem__(self, name: str) -> Any:
         with self._lock:
@@ -64,6 +71,11 @@ class ToolTable(MutableMapping[str, Any]):
     def __len__(self) -> int:
         with self._lock:
             return len(self._tools)
+
+    def bind_verb(self, name: str, function: Any) -> None:
+        """Register one served intent verb under ``name``."""
+        with self._lock:
+            self._verbs[name] = function
 
     def mark_complete(self) -> None:
         """Record the current names as the full set of a finished build."""

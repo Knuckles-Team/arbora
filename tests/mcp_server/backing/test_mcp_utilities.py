@@ -14,6 +14,7 @@ import pytest
 import arbora.mcp_server.backing.server_factory as server_factory
 from arbora.core.settings import RuntimeConfig
 from arbora.observability.state import Metrics
+from arbora.security.delegation_config import McpAuthConfig
 from arbora.security.key_cache import JwksCache
 
 
@@ -40,6 +41,7 @@ def test_create_mcp_server_basic(mock_fastmcp):
 
         args, mcp, middlewares = server_factory.create_mcp_server(
             keys=JwksCache(RuntimeConfig()),
+            delegation=McpAuthConfig(),
             metrics=Metrics(),
             name="TestServer",
             config=RuntimeConfig(),
@@ -103,6 +105,7 @@ def test_create_mcp_server_exposes_metrics_health_and_tool_middleware(monkeypatc
     monkeypatch.setattr("sys.argv", ["test-mcp"])  # defaults: auth none, eunomia none
     args, mcp, middlewares = server_factory.create_mcp_server(
         keys=JwksCache(RuntimeConfig()),
+        delegation=McpAuthConfig(),
         metrics=Metrics(),
         name="metrics-test",
         version="0.0.0",
@@ -118,8 +121,7 @@ def test_create_mcp_server_exposes_metrics_health_and_tool_middleware(monkeypatc
 
 def test_mcp_auth_config_defaults():
     # Should use env vars
-    assert isinstance(server_factory.mcp_auth_config, dict)
-    assert "enable_delegation" in server_factory.mcp_auth_config
+    assert "enable_delegation" in McpAuthConfig()
 
 
 @patch("requests.get")
@@ -142,6 +144,7 @@ def test_create_mcp_server_delegation_error(mock_get):
         with pytest.raises(SystemExit) as excinfo:
             server_factory.create_mcp_server(
                 keys=JwksCache(RuntimeConfig()),
+                delegation=McpAuthConfig(),
                 metrics=Metrics(),
                 config=RuntimeConfig(),
             )
@@ -159,6 +162,7 @@ def test_create_mcp_server_invalid_port():
         with pytest.raises(SystemExit) as excinfo:
             server_factory.create_mcp_server(
                 keys=JwksCache(RuntimeConfig()),
+                delegation=McpAuthConfig(),
                 metrics=Metrics(),
                 config=RuntimeConfig(),
             )
@@ -191,6 +195,7 @@ def test_create_mcp_server_eunomia(mock_create_mw):
 
         server_factory.create_mcp_server(
             keys=JwksCache(RuntimeConfig()),
+            delegation=McpAuthConfig(),
             metrics=Metrics(),
             name="TestServerEmbedded",
             config=config,
@@ -211,6 +216,7 @@ def test_create_mcp_server_eunomia(mock_create_mw):
 
         server_factory.create_mcp_server(
             keys=JwksCache(RuntimeConfig()),
+            delegation=McpAuthConfig(),
             metrics=Metrics(),
             name="TestServerRemote",
             config=config,

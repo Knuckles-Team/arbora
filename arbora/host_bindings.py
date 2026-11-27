@@ -30,6 +30,7 @@ from fastmcp.server.extensions import ServerExtension
 
 from arbora.core.agent_names import FLEET_AGENT_NAME, FLEET_TOOLS
 from arbora.core.environment import read_env
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.observability.state import HealthState, RuntimeSignalBuffer
 from arbora.security.key_cache import JwksCache
 from arbora.unique_records import create_record, has_record_writer
@@ -135,7 +136,9 @@ async def outbound_mirror(message: Any, engine: Any) -> None:
     )
 
 
-def prompt_normalizer(engine_provider: Callable[[], Any]) -> Any:
+def prompt_normalizer(
+    engine_provider: Callable[[], Any], verbs: Mapping[str, Any]
+) -> Any:
     """The process modality seam, recording provenance in the served engine.
 
     ARBORA-OPS-R899: audio parts go to the fleet's speech-to-text capability
@@ -143,15 +146,19 @@ def prompt_normalizer(engine_provider: Callable[[], Any]) -> Any:
     transcript link are written as ``MediaAttachment``/``Transcript`` records.
     """
     from arbora.modality import default_normalizer
+    from arbora.modality.fleet_port import NativeIntentFleet
     from arbora.modality.provenance import engine_recorder
 
-    return default_normalizer(recorder=engine_recorder(engine_provider))
+    return default_normalizer(
+        fleet=NativeIntentFleet(verbs), recorder=engine_recorder(engine_provider)
+    )
 
 
 def bind_messaging_ports(
     engine_provider: Callable[[], Any],
-    tools: Mapping[str, Any],
+    tools: ToolTable,
     signals: RuntimeSignalBuffer,
+    delegation: Mapping[str, Any],
 ) -> None:
     """Bind the messaging host ports at startup; the turn handler runs over ``tools``."""
     from functools import partial
@@ -167,7 +174,8 @@ def bind_messaging_ports(
         action_gate=action_gate,
         outbound_mirror=outbound_mirror,
         runtime_signal=runtime_signal,
-        prompt_normalizer=prompt_normalizer(engine_provider),
+        prompt_normalizer=prompt_normalizer(engine_provider, tools.verbs),
+        delegation=delegation,
     )
 
 
@@ -251,7 +259,7 @@ def _engine_storage(engine_provider: Callable[[], Any]) -> Any:
 
 def mount_sdk_a2a(
     mcp: Any,
-    tools: Mapping[str, Any],
+    tools: ToolTable,
     *,
     engine_provider: Callable[[], Any],
     stream_handler: Any = None,
@@ -278,7 +286,7 @@ def mount_sdk_a2a(
     storage = _engine_storage(engine_provider)
     admitted = create_admitted_a2a_app(
         agent=MediaNormalizingAgent(
-            fleet_agent(tools), prompt_normalizer(engine_provider)
+            fleet_agent(tools), prompt_normalizer(engine_provider, tools.verbs)
         ),
         authenticator=AmbientA2AAuthenticator(keys),
         bind_caller=caller_session_scope,

@@ -245,8 +245,11 @@ def _served_invocation(
             "health": host.observability.health,
             "config": host.config,
             "fleet_gateway": fleet,
+            "intent_verbs": host.caches.tools.verbs,
             "workflow_worker": WorkflowRunStarter(
-                host.engine.served, NativeIntentFleet(), worker_ref="arbora-workflow"
+                host.engine.served,
+                NativeIntentFleet(host.caches.tools.verbs),
+                worker_ref="arbora-workflow",
             ),
             "fleet_virtual_catalog": host.fleet.virtual_catalog,
             "fleet_declarations": host.fleet.declarations,
@@ -474,6 +477,7 @@ def mcp_server(
         host_context.engine.served,
         host_context.caches.tools,
         host_context.observability.signals.runtime,
+        host_context.delegation,
     )
     from arbora.a2a.chain_composition import run_plan_binding
     from arbora.agent_host.port_backends import HostSeams

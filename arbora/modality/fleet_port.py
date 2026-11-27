@@ -82,16 +82,12 @@ def _refusal(envelope: Any) -> str | None:
 class NativeIntentFleet:
     """:class:`FleetPort` over the in-process ``find``/``act`` intent verbs."""
 
-    def __init__(self, verbs: Mapping[str, Any] | None = None) -> None:
+    def __init__(self, verbs: Mapping[str, Any]) -> None:
+        #: The host's served intent verbs, read at each call: they bind after boot.
         self._verbs = verbs
 
     def _verb(self, name: str) -> Any:
-        verbs = self._verbs
-        if verbs is None:
-            from arbora.mcp_server import runtime
-
-            verbs = runtime.NATIVE_INTENT_TOOLS
-        verb = verbs.get(name)
+        verb = self._verbs.get(name)
         if verb is None:
             raise FleetCallFailed("UNAVAILABLE")
         return verb

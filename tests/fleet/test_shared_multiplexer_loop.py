@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.multiplexer import MCPMultiplexer
 from arbora.fleet.shared_multiplexer import (
     ServedMultiplexerBindingError,
@@ -21,6 +22,8 @@ from arbora.fleet.shared_multiplexer import (
     get_served_multiplexer,
     run_on_served_multiplexer,
 )
+from arbora.mcp_server.host_caches import ToolTable
+from arbora.security.process_authority import ProcessAuthority
 from arbora.webui_host.mcp_delegation import webui_mcp_delegation_helpers
 from tests.fleet.catalog_fixture import (
     attach_multiplexer_from_fixture,
@@ -133,7 +136,9 @@ def test_webui_helpers_use_one_owner_loop_for_inventory_call_and_resource() -> N
     owner = _LoopOwner(mux)
     owner.start()
     try:
-        helpers = webui_mcp_delegation_helpers({})
+        helpers = webui_mcp_delegation_helpers(
+            ToolTable(ProcessAuthority(config=RuntimeConfig()))
+        )
 
         async def exercise() -> tuple[Any, Any, Any]:
             tools = await helpers["list_mcp_server_tools"](server_name="docs")
@@ -211,7 +216,6 @@ async def test_served_intent_inventory_and_call_preserve_caller_session(
     from fastmcp import FastMCP
     from fastmcp.exceptions import ToolError
 
-    from arbora.mcp_server import runtime
     from arbora.security.actor_context import ActorContext, ActorType, use_actor
     from arbora.security.session import GraphSession, current_session, use_session
 
@@ -227,11 +231,12 @@ async def test_served_intent_inventory_and_call_preserve_caller_session(
     async def unregistered() -> str:
         raise AssertionError("unregistered tool must never execute")
 
-    monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {"find": find})
+    tools = ToolTable(ProcessAuthority(config=RuntimeConfig()))
+    tools.bind_verb("find", find)
     config = tmp_path / "mcp.json"
     config.write_text('{"mcpServers": {}}', encoding="utf-8")
     mux = attach_multiplexer_from_fixture(host, config)
-    helpers = webui_mcp_delegation_helpers({})
+    helpers = webui_mcp_delegation_helpers(tools)
     try:
         async with host._lifespan_manager():
             for owner, tenant in (("owner-a", "tenant-a"), ("owner-b", "tenant-b")):

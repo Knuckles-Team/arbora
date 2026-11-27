@@ -12,7 +12,6 @@ from arbora.modality.models import (
 from arbora.modality.normalizer import (
     ModalityNormalizer,
     default_normalizer,
-    reset_default_normalizer,
 )
 
 __all__ = [
@@ -25,5 +24,4 @@ __all__ = [
     "NormalizedPrompt",
     "default_normalizer",
     "modality_of",
-    "reset_default_normalizer",
 ]

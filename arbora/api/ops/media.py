@@ -90,6 +90,11 @@ def _audio(params: Mapping[str, Any]) -> tuple[bytes, str]:
     return data, media_type
 
 
+def _intent_verbs(context: Any) -> Mapping[str, Any]:
+    """The host's served intent verbs; none is bound for a host without a tool table."""
+    return context.services.get("intent_verbs", MappingProxyType({}))
+
+
 def _speech(context: Any) -> Any:
     bound = context.services.get("speech_transcriber")
     if bound is not None:
@@ -101,7 +106,8 @@ def _speech(context: Any) -> Any:
     from arbora.modality.speech import SpeechHandler
 
     return SpeechHandler(
-        NativeIntentFleet(), max_duration_s=DEFAULT_MAX_AUDIO_DURATION_S
+        NativeIntentFleet(_intent_verbs(context)),
+        max_duration_s=DEFAULT_MAX_AUDIO_DURATION_S,
     )
 
 
