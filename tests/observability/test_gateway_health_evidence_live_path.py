@@ -21,7 +21,7 @@ class _FakeStore:
     def __init__(self) -> None:
         self.window_calls: list[tuple[bytes, dict]] = []
 
-    def store_metric_window_evidence(self, data: bytes, **kwargs):
+    async def store_metric_window_evidence(self, data: bytes, **kwargs):
         self.window_calls.append((data, kwargs))
         return object()
 

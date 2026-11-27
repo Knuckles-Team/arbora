@@ -22,8 +22,10 @@ from arbora.fleet.state import FleetState
 from arbora.gateway.state import GatewayState
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.served_engine import EngineHandles
+from arbora.observability.metric_evidence import EngineMetricEvidence
 from arbora.observability.state import (
     GatewayTrend,
+    Metrics,
     Observability,
     RuntimeSignalBuffer,
     Signals,
@@ -103,9 +105,10 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         decision_principal=decide.principal,
         ports=ports,
     )
+    fleet = FleetState()
     return HostContext(
         runs=RunState(origins=origins, a2a=a2a, decide=decide, ports=ports),
-        fleet=FleetState(),
+        fleet=fleet,
         policy=PolicyState(
             approvals=ApprovalDecisions(verified_approval_session),
         ),
@@ -113,12 +116,25 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         caches=caches,
         browser=BrowserState(),
         authority=caches.tools.authority,
-        observability=Observability(
-            telemetry=Telemetry(),
-            health=build_health_state(),
-            signals=Signals(runtime=RuntimeSignalBuffer(), gateway=GatewayTrend()),
-        ),
+        observability=_compose_observability(engine, caches.tools.authority, fleet),
         gateway=GatewayState(),
+    )
+
+
+def _compose_observability(
+    engine: EngineHandles, authority: ProcessAuthority, fleet: FleetState
+) -> Observability:
+    """The observability field: the fleet's child gauges are sampled at each scrape and
+    an anomalous gateway latency window is kept as engine evidence."""
+    metrics = Metrics()
+    metrics.register(fleet.multiplexers.sample_child_health_gauges)
+    trend = GatewayTrend()
+    trend.bind_store(EngineMetricEvidence(engine.served, authority.session))
+    return Observability(
+        telemetry=Telemetry(),
+        health=build_health_state(),
+        signals=Signals(runtime=RuntimeSignalBuffer(), gateway=trend),
+        metrics=metrics,
     )
 
 

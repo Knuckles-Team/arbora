@@ -38,8 +38,10 @@ import threading
 import time
 from typing import Any
 
+from starlette.requests import Request
+
 from arbora.core.environment import read_env
-from arbora.observability.state import GatewayTrend
+from arbora.observability.state import GatewayTrend, Metrics
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +131,6 @@ __all__ = [
     "GatewayMetricsMiddleware",
     "delegation_span",
     "publish_multiplexer_child_gauges",
-    "register_scrape_sampler",
     "render_metrics",
 ]
 
@@ -1022,24 +1023,9 @@ RANKING_TOTAL = _counter(
 )
 
 
-#: Callbacks run immediately before a ``/metrics`` scrape is rendered, for
-#: gauges whose truth lives in a live object rather than in an event stream
-#: (e.g. multiplexer child health). Each runs exception-isolated so one bad
-#: sampler can never blank the whole scrape. Registration is idempotent by
-#: identity, and the list is tiny and bounded by the number of subsystems that
-#: own sampled state — this is not a plugin system.
-_SCRAPE_SAMPLERS: list[Any] = []
-
-
-def register_scrape_sampler(sampler: Any) -> None:
-    """Register a zero-arg callable refreshed on every ``/metrics`` render."""
-    if sampler not in _SCRAPE_SAMPLERS:
-        _SCRAPE_SAMPLERS.append(sampler)
-
-
-def _run_scrape_samplers() -> None:
+def _run_scrape_samplers(metrics: Metrics) -> None:
     """Refresh sampled gauges, never letting one sampler fail the scrape."""
-    for sampler in tuple(_SCRAPE_SAMPLERS):
+    for sampler in metrics.samplers():
         try:
             sampler()
         except Exception as exc:
@@ -1165,7 +1151,7 @@ def _collection_registry() -> Any:
         return REGISTRY
 
 
-def render_metrics() -> tuple[bytes, str]:
+def render_metrics(metrics: Metrics) -> tuple[bytes, str]:
     """Render the process metric registry in Prometheus exposition format.
 
     Returns ``(body, content_type)``. Without ``prometheus_client`` installed
@@ -1181,7 +1167,7 @@ def render_metrics() -> tuple[bytes, str]:
         )
     from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
-    _run_scrape_samplers()
+    _run_scrape_samplers(metrics)
     return generate_latest(_collection_registry()), CONTENT_TYPE_LATEST
 
 
@@ -1251,7 +1237,7 @@ def _engine_metrics_status_line(ok: bool) -> bytes:
     )
 
 
-async def render_metrics_with_engine() -> tuple[bytes, str]:
+async def render_metrics_with_engine(metrics: Metrics) -> tuple[bytes, str]:
     """Like :func:`render_metrics`, plus the embedded engine's own exposition.
 
     arbora's ``/metrics`` handler serves this body (the harness serves no
@@ -1260,7 +1246,7 @@ async def render_metrics_with_engine() -> tuple[bytes, str]:
     why, rather than the scrape silently coming back
     partial-but-presented-as-complete.
     """
-    body, content_type = render_metrics()
+    body, content_type = render_metrics(metrics)
     engine_body, engine_ok = await _fetch_engine_metrics()
     merged = body + b"\n" + _engine_metrics_status_line(engine_ok) + b"\n" + engine_body
     return merged, content_type
@@ -1339,15 +1325,10 @@ class GatewayMetricsMiddleware:
                 logger.debug("gateway health sample failed: %s", e)
 
 
-async def metrics_endpoint() -> Any:
+async def metrics_endpoint(request: Request) -> Any:
     """The ``/metrics`` route body: gateway series plus the engine series."""
     from starlette.responses import Response
 
-    body, content_type = await render_metrics_with_engine()
+    metrics = request.app.state.host.observability.metrics
+    body, content_type = await render_metrics_with_engine(metrics)
     return Response(body, media_type=content_type)
-
-
-async def metrics_asgi_endpoint(request: Any) -> Any:
-    """The ``/metrics`` route for a plain Starlette application."""
-    del request
-    return await metrics_endpoint()

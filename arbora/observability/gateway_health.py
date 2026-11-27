@@ -130,8 +130,7 @@ async def _check_and_record(trend_state: GatewayTrend, trend: dict[str, Any]) ->
         data = json.dumps(trend, sort_keys=True).encode("utf-8")
         start_ms = int(float(trend.get("start_at") or 0.0) * 1000)
         end_ms = int(float(trend.get("end_at") or 0.0) * 1000)
-        await asyncio.to_thread(
-            store.store_metric_window_evidence,
+        await store.store_metric_window_evidence(
             data,
             metric=f"{_ENTITY_ID}:{_SIGNAL}",
             start_ms=start_ms,

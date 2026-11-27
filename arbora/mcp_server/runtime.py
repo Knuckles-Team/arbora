@@ -781,6 +781,7 @@ def _build_server(
         command_args=None if bootstrap else [],
         transport_choices=("stdio", "streamable-http"),
         keys=host.caches.jwks,
+        metrics=host.observability.metrics,
         engine_provider=host.engine.served,
         process_session=host.authority.session,
     )

@@ -18,6 +18,7 @@ from typing import Any
 
 __all__ = [
     "GatewayTrend",
+    "Metrics",
     "RuntimeSignalBuffer",
     "Signals",
     "HealthState",
@@ -373,6 +374,30 @@ class Signals:
     gateway: GatewayTrend
 
 
+class Metrics:
+    """The scrape samplers: callables refreshed immediately before a ``/metrics`` render.
+
+    A sampler refreshes a gauge whose truth lives in a live object rather than in an
+    event stream (the fleet's child health). The set is bounded by the subsystems that
+    own sampled state; registration is idempotent by identity.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._samplers: list[Callable[[], None]] = []
+
+    def register(self, sampler: Callable[[], None]) -> None:
+        """Register a zero-argument sampler once."""
+        with self._lock:
+            if sampler not in self._samplers:
+                self._samplers.append(sampler)
+
+    def samplers(self) -> tuple[Callable[[], None], ...]:
+        """A snapshot of the registered samplers."""
+        with self._lock:
+            return tuple(self._samplers)
+
+
 @dataclass(frozen=True, slots=True)
 class Observability:
     """Every owned observability object of one host process."""
@@ -380,3 +405,4 @@ class Observability:
     telemetry: Telemetry
     health: HealthState
     signals: Signals
+    metrics: Metrics

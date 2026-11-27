@@ -6,6 +6,7 @@ import pytest
 
 from arbora.gateway.rate_limit import GatewayRateLimitMiddleware
 from arbora.observability.gateway_metrics import render_metrics
+from arbora.observability.state import Metrics
 from tests.api._support import make_verified_caller
 
 
@@ -19,6 +20,6 @@ def test_rate_limit_counter_renamed() -> None:
     caller = make_verified_caller("example:ask")()
     assert limiter.consume_verified_caller(caller)[0] is True
     assert limiter.consume_verified_caller(caller)[0] is False
-    text = render_metrics()[0].decode()
+    text = render_metrics(Metrics())[0].decode()
     assert "arbora_gateway_rate_limited_total" in text
     assert "meristem_gateway_rate_limited" not in text

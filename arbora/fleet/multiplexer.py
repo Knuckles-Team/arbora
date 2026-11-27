@@ -98,7 +98,7 @@ from arbora.fleet.local_skill_catalog import (
 )
 from arbora.fleet.oauth_brokers import oauth_gated
 from arbora.fleet.session_notifications import SessionCatalogNotifications
-from arbora.fleet.state import FleetState, LiveMultiplexers
+from arbora.fleet.state import FleetState
 from arbora.fleet.tool_rows import ProbeToolRows, ToolRowReader
 from arbora.fleet.workflow_binding import WorkflowBindings
 from arbora.pin_lag.unavailable import PinLagUnavailable
@@ -259,24 +259,6 @@ def _tool_schema_compatible(
     except (TypeError, ValueError):
         return False
     return expected == actual
-
-
-def _register_child_health_sampler(live: LiveMultiplexers) -> None:
-    """Hook the fleet's child-gauge sampler into the metrics scrape path."""
-    try:
-        from arbora.observability.gateway_metrics import (
-            register_scrape_sampler,
-        )
-
-        register_scrape_sampler(live.sample_child_health_gauges)
-    except Exception as exc:
-        logger.warning(
-            "Could not register the multiplexer child-health metrics sampler "
-            "(exception_type=%s): %s — mounted/dispatchable gauges will only "
-            "refresh when multiplexer_status is called.",
-            type(exc).__name__,
-            redact_for_log(exc),
-        )
 
 
 _ENV_RUNTIME_REF_RE = re.compile(r"^env://([A-Z][A-Z0-9_]{0,127})$")
@@ -2435,7 +2417,6 @@ class MCPMultiplexer:
         # retries per child generation finite instead of relying on caller
         # good behavior.
         fleet.multiplexers.add(self)
-        _register_child_health_sampler(fleet.multiplexers)
 
     @property
     def fleet(self) -> FleetState:
