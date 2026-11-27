@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from urllib.parse import urlsplit
 
+import httpx
 from scion_sdk.http.client import build_http_client
 from scion_sdk.http.options import HttpClientOptions
 from scion_sdk.tls.resolve import resolve_tls_profile
-
-if TYPE_CHECKING:
-    import httpx
 
 _MAX_DISCOVERY_BYTES = 1024 * 1024
 
@@ -117,12 +115,17 @@ def discover(issuer: str) -> dict[str, Any]:
     return dict(document)
 
 
+# discover() raises RuntimeError for a refused document, the httpx client's
+# transport errors, and OSError for a failed TLS profile or socket.
+_DISCOVERY_ERRORS = (RuntimeError, httpx.HTTPError, OSError, ValueError)
+
+
 def jwks_uri_for(issuer: str) -> str | None:
     """Discover the ``jwks_uri``; return ``None`` on a fail-closed miss."""
     try:
         value = discover(issuer).get("jwks_uri")
         return str(value) if value else None
-    except Exception:
+    except _DISCOVERY_ERRORS:
         return None
 
 
@@ -131,7 +134,7 @@ def token_endpoint_for(issuer: str) -> str | None:
     try:
         value = discover(issuer).get("token_endpoint")
         return str(value) if value else None
-    except Exception:
+    except _DISCOVERY_ERRORS:
         return None
 
 
