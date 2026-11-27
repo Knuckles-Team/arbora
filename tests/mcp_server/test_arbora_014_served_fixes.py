@@ -88,8 +88,8 @@ def test_a_parameterless_eg_method_accepts_an_empty_input() -> None:
 
 def test_a2a_message_without_agent_name_runs_on_the_fleet_default_agent() -> None:
     """0.1.3: A2A message/send without metadata.agent_name answered 503."""
-    from arbora.a2a.models import A2AMessage
     from arbora.a2a.routing import OrchestratorA2ARouter
+    from arbora.api.domain.a2a.models import A2AMessage
     from arbora.core.agent_names import FLEET_AGENT_NAME
 
     message = A2AMessage.model_validate(

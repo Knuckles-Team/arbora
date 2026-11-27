@@ -400,7 +400,7 @@ def test_native_intent_event_emitted(monkeypatch) -> None:
 def test_native_intent_event_refuses_when_the_pin_lacks_the_record(monkeypatch) -> None:
     from types import SimpleNamespace
 
-    from arbora.agent_host.host_port_adapters import HostPortsBinding
+    from arbora.api.domain.agent_host.host_port_adapters import HostPortsBinding
     from arbora.mcp_server import runtime
     from arbora.pin_lag.meristem import emit_run_event
     from arbora.pin_lag.unavailable import PinLagUnavailable

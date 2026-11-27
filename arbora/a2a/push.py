@@ -26,14 +26,13 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from arbora import work_items
+from arbora.api.domain.a2a.models import A2APushTarget
 from arbora.messaging.webhook_delivery import (
     canonical_body,
     clamp_setting,
     sign_payload,
 )
 from arbora.security.session import use_session
-
-from .models import A2APushTarget
 
 __all__ = [
     "PUSH_KIND",

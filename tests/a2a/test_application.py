@@ -10,8 +10,13 @@ from fastapi.testclient import TestClient
 
 from arbora.a2a.application import create_a2a_application
 from arbora.a2a.authority import A2AIdempotencyConflict
-from arbora.a2a.models import A2AArtifact, A2ARouteDecision, A2ATask, A2ATaskStatus
 from arbora.a2a.service import A2AService
+from arbora.api.domain.a2a.models import (
+    A2AArtifact,
+    A2ARouteDecision,
+    A2ATask,
+    A2ATaskStatus,
+)
 
 
 class Authenticator:
@@ -364,7 +369,7 @@ def _gated_app(
 ) -> tuple[TestClient, list[dict[str, Any]]]:
     from types import SimpleNamespace
 
-    from arbora.a2a.held_item_admission import HeldItemAdmitter
+    from arbora.api.domain.a2a.held_item_admission import HeldItemAdmitter
 
     audits: list[dict[str, Any]] = []
 

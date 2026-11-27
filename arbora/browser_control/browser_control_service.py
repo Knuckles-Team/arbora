@@ -10,7 +10,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any, Literal, Protocol, cast
 
 from arbora.access.action_policy import ActionDecision, ActionRequest
-from arbora.browser_control.browser_control_api import (
+from arbora.api.domain.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserChannelBinding,
 )
@@ -105,7 +105,7 @@ class BrowserControlService(
 
     async def discover(self, request: Any) -> Any:
         """Report only this caller's live attended registrations; never arm."""
-        from arbora.browser_control.browser_control_api import (
+        from arbora.api.domain.browser_control.browser_control_api import (
             BrowserDiscoveryReceipt,
         )
 

@@ -8,9 +8,12 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.mcp_server import decide_wiring
+from arbora.api.domain.mcp_server.decide_wiring import (
+    _workflow_lookup,
+    install_decide_consumers,
+)
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.mcp_server import decide_wiring
-from arbora.mcp_server.decide_wiring import _workflow_lookup, install_decide_consumers
 
 DIGEST = "sha256:" + "a" * 64
 KNOWN = f"workflow:release@1.2#{DIGEST}"

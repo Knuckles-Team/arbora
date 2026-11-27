@@ -1,6 +1,6 @@
 """The served composition of the harness host ports, over backends Arbora already has.
 
-Each adapter in :mod:`arbora.agent_host.host_port_adapters` is handed one backend
+Each adapter in :mod:`arbora.api.domain.agent_host.host_port_adapters` is handed one backend
 callable here. The run-principal call is the registry ``invoke`` under the verified
 session of the run that is executing; it never uses a process or service principal and
 answers a run that is not executing exactly like an unknown one. A port whose backend
@@ -18,7 +18,7 @@ from types import MappingProxyType, SimpleNamespace
 from typing import Any
 
 from arbora.agent_host.harness_cycle import HostCycleProvider
-from arbora.agent_host.host_port_adapters import (
+from arbora.api.domain.agent_host.host_port_adapters import (
     ChangesetSeams,
     EngineDecisionAdapter,
     HostPortsBinding,
@@ -36,7 +36,7 @@ from arbora.agent_host.host_port_adapters import (
     summary_provider,
     technique_measure,
 )
-from arbora.agent_host.port_services import (
+from arbora.api.domain.agent_host.port_services import (
     ApprovalInboxWaiter,
     RunTraceReceipts,
     RunVerdictConfirm,

@@ -21,8 +21,8 @@ from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from arbora.agent_host.host_port_adapters import RunCall
-from arbora.agent_host.port_services import LeaseReader, SandboxProcessTable
+from arbora.api.domain.agent_host.host_port_adapters import RunCall
+from arbora.api.domain.agent_host.port_services import LeaseReader, SandboxProcessTable
 
 _STATUS_OF_STATE: Mapping[str, str] = {
     "approved": "consumed",

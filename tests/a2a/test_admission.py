@@ -24,7 +24,7 @@ from arbora.a2a.admission import (
     priority_for,
 )
 from arbora.a2a.engine_decider import EngineHarnessConfigDecider
-from arbora.a2a.models import A2AContextBudget
+from arbora.api.domain.a2a.models import A2AContextBudget
 from tests.a2a._admission_support import (
     DIGEST,
     TOOLS,

@@ -8,7 +8,7 @@ import inspect
 import json
 from dataclasses import dataclass
 
-from arbora.fleet.catalog_reader import (
+from arbora.api.domain.fleet.catalog_reader import (
     CatalogServer,
     ComponentContent,
     ComponentRecord,

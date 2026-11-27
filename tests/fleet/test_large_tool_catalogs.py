@@ -481,7 +481,7 @@ def _arr_like_catalog() -> list[tuple[str, str]]:
 
 @pytest.mark.spec("ARBORA-FLEET-R074")
 def test_find_ranks_the_named_system_and_object_first_in_a_large_catalog() -> None:
-    from arbora.fleet.lexical_floor import LexicalFloor
+    from arbora.api.domain.fleet.lexical_floor import LexicalFloor
 
     catalog = _arr_like_catalog()
     query = "list pending media requests in seerr"
@@ -532,7 +532,7 @@ async def test_find_ranks_the_named_system_and_object_first_through_the_port(
 
 @pytest.mark.spec("ARBORA-FLEET-R083.3")
 async def test_candidate_set_is_bounded_before_the_port_call(tmp_path) -> None:
-    from arbora.fleet.ranking import MedullaRanking
+    from arbora.api.domain.fleet.ranking import MedullaRanking
 
     catalog = _arr_like_catalog()
     mux = _mux_over(tmp_path, catalog)

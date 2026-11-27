@@ -16,7 +16,7 @@ from typing import Any, Literal, Protocol
 from pydantic import ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
-from .models import A2APlanConfirmParams, _WireModel
+from .models import A2APlanConfirmParams, WireModel
 from .tool_action_admission import (
     SHA256_HEX,
     AuditReserve,
@@ -48,7 +48,7 @@ class HeldItemRefusal(ConfirmRefusal):
     """Why a held item was not admitted; the item stays held."""
 
 
-class HeldItemSubject(_WireModel):
+class HeldItemSubject(WireModel):
     """The held item the engine decides on: what it is, its digest and its decision.
 
     The confirm route signs it (:class:`HeldItemAdmissionRequest`); the critique gate
@@ -75,7 +75,7 @@ class HeldItemAdmissionRequest(A2APlanConfirmParams, HeldItemSubject):
     confirmation_kind: Literal["held_item"]
 
 
-class HeldItemVerdict(_WireModel):
+class HeldItemVerdict(WireModel):
     """The engine verdict on one held item."""
 
     model_config = ConfigDict(
@@ -131,6 +131,12 @@ class HeldItemAdmitter:
 
     async def admit(self, request: HeldItemSubject, *, tenant: str) -> HeldItemVerdict:
         await reserve_then(self._audit, self._entry(request, None), HeldItemRefusal)
+        verdict = await self._decide(request, tenant)
+        await self._check(request, verdict)
+        await reserve_then(self._audit, self._entry(request, verdict), HeldItemRefusal)
+        return verdict
+
+    async def _decide(self, request: HeldItemSubject, tenant: str) -> HeldItemVerdict:
         try:
             answer = await asyncio.wait_for(
                 self._decider.decide(request, tenant=tenant), self._timeout
@@ -142,7 +148,9 @@ class HeldItemAdmitter:
             raise HeldItemRefusal("ENGINE_UNAVAILABLE") from None
         if answer is None:
             raise HeldItemRefusal("POLICY_EVIDENCE_MISSING")
-        verdict = HeldItemVerdict.model_validate(dict(answer))
+        return HeldItemVerdict.model_validate(dict(answer))
+
+    async def _check(self, request: HeldItemSubject, verdict: HeldItemVerdict) -> None:
         if verdict.outcome == "abstained":
             await self._refuse(request, verdict, verdict.reason or "ABSTAINED")
         if verdict.outcome == "rejected":
@@ -155,8 +163,6 @@ class HeldItemAdmitter:
                 await self._refuse(request, verdict, "POLICY_EVIDENCE_MISSING")
             if not verdict.verifier or verdict.verifier == verdict.compiler:
                 await self._refuse(request, verdict, "VERIFIER_NOT_INDEPENDENT")
-        await reserve_then(self._audit, self._entry(request, verdict), HeldItemRefusal)
-        return verdict
 
     async def _refuse(
         self, request: HeldItemSubject, verdict: HeldItemVerdict, reason: str

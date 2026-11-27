@@ -22,11 +22,11 @@ from collections.abc import AsyncIterator, Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from typing import Any, Final, Literal, Protocol
 
-from arbora.core.environment import read_env
-from arbora.fleet.mcp_resource_reconciliation import (
+from arbora.api.domain.fleet.mcp_resource_reconciliation import (
     ReconciliationReceipt,
     require_reconciled_for_swap,
 )
+from arbora.core.environment import read_env
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
 logger = logging.getLogger(__name__)

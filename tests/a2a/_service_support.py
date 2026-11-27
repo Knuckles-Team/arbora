@@ -7,8 +7,8 @@ from typing import Any
 from fastapi.testclient import TestClient
 
 from arbora.a2a.application import create_a2a_application
-from arbora.a2a.models import A2ARouteDecision, A2ATask, A2ATaskStatus
 from arbora.a2a.service import A2AService
+from arbora.api.domain.a2a.models import A2ARouteDecision, A2ATask, A2ATaskStatus
 from tests.a2a.test_application import Authenticator
 
 HEADERS = {"Authorization": "Bearer verified", "Idempotency-Key": "send-key"}

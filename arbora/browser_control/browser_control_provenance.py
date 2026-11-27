@@ -7,10 +7,10 @@ from typing import Any, Literal, cast
 
 from scion_sdk.privacy import persistence_reference
 
-from arbora.browser_control.browser_control_api import BrowserCallReceipt
-from arbora.browser_control.browser_control_common import (
-    _DIGEST,
-    _RESULT_ERROR_CODE,
+from arbora.api.domain.browser_control.browser_control_api import BrowserCallReceipt
+from arbora.api.domain.browser_control.browser_control_common import (
+    DIGEST,
+    RESULT_ERROR_CODE,
     CancellationEffect,
     LangfuseStatus,
 )
@@ -107,8 +107,8 @@ def _validated_replay_values(
     matches = evidence.get("status") == expected_status and all(
         evidence.get(name) == value for name, value in expected.items()
     )
-    valid_result = _valid_optional_match(result_digest, _DIGEST)
-    valid_error = _valid_optional_match(error_code, _RESULT_ERROR_CODE)
+    valid_result = _valid_optional_match(result_digest, DIGEST)
+    valid_error = _valid_optional_match(error_code, RESULT_ERROR_CODE)
     if not matches or not valid_result or not valid_error:
         return None
     return effect, langfuse_status, result_digest, error_code

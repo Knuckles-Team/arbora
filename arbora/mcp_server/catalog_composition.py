@@ -6,12 +6,12 @@ from collections.abc import Callable
 from contextlib import AbstractContextManager
 from typing import Any
 
-from arbora.core.environment import read_env
-from arbora.fleet.catalog_reader import (
+from arbora.api.domain.fleet.catalog_reader import (
     DeferredFleetCatalogReader,
     FleetCatalogReader,
     ReadContext,
 )
+from arbora.core.environment import read_env
 from arbora.fleet.epistemic_adapter import GeneratedFleetCatalogPort, GraphBinder
 from arbora.fleet.tool_rows import tool_row_reader
 from arbora.gateway.enhanced_catalog_api import (

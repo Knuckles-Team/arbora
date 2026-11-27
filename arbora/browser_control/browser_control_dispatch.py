@@ -6,15 +6,15 @@ import asyncio
 import logging
 from typing import Any, Literal, cast
 
-from arbora.browser_control.browser_control_api import (
+from arbora.api.domain.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserCallRequest,
 )
-from arbora.browser_control.browser_control_client import ControlResultMessage
-from arbora.browser_control.browser_control_common import (
+from arbora.api.domain.browser_control.browser_control_common import (
     CancellationEffect,
     MutationClass,
 )
+from arbora.browser_control.browser_control_client import ControlResultMessage
 from arbora.browser_control.browser_control_durability import submit_call_fence
 from arbora.browser_control.browser_control_server import ControlCallMessage
 from arbora.browser_control.browser_control_state import (

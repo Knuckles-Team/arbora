@@ -12,12 +12,12 @@ from types import MethodType, SimpleNamespace
 
 import pytest
 
+from arbora.api.domain.fleet.admission import validate_certification
 from arbora.api.domain.fleet.admission_models import (
     AdmissionRefused,
     parse_certification_binding,
 )
 from arbora.api.registry import Surface
-from arbora.fleet.admission import validate_certification
 from arbora.fleet.multiplexer import MCPMultiplexer
 from arbora.fleet.workflow_binding import WorkflowBindings
 from tests.fleet._certified_support import (
@@ -151,7 +151,7 @@ def test_allowed_denied_stale(surface: Surface) -> None:
 
 @pytest.mark.spec("ARBORA-FLEET-R034.14")
 def test_attestation_consumed_by_digest() -> None:
-    from arbora.fleet.engine_admission import flatten_attestation
+    from arbora.api.domain.fleet.engine_admission import flatten_attestation
 
     item = attestation("s", deps=("d",))
     binding = parse_certification_binding(certification("s", deps=("d",)))
@@ -221,7 +221,7 @@ def test_revoked_grant_stops_later_calls() -> None:
     bindings.declare({"crm.read"})
     world, metadata = _world_with_chain()
     assert world.call(metadata).code == "OK"
-    from arbora.fleet.admission import WorkflowAdmission
+    from arbora.api.domain.fleet.admission import WorkflowAdmission
 
     bindings.bind(
         "session",

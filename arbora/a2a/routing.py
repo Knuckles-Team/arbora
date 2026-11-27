@@ -6,7 +6,7 @@ import logging
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any, Protocol, runtime_checkable
 
-from .models import A2AMessage, A2ARouteDecision
+from arbora.api.domain.a2a.models import A2AMessage, A2ARouteDecision
 
 logger = logging.getLogger(__name__)
 

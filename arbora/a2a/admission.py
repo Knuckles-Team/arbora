@@ -17,7 +17,7 @@ from typing import Any, Literal, Protocol, runtime_checkable
 from pydantic import ConfigDict, Field, StrictStr, field_validator, model_validator
 from pydantic.alias_generators import to_camel
 
-from .models import A2AContextBudget, _WireModel
+from arbora.api.domain.a2a.models import A2AContextBudget, WireModel
 
 __all__ = [
     "ModelProfilePreference",
@@ -58,7 +58,7 @@ _PART_NAMES = (
 )
 
 
-class HarnessPartMirror(_WireModel):
+class HarnessPartMirror(WireModel):
     """One part of the engine's ``HarnessConfigAnswer``: decided, or abstained.
 
     Mirrors the engine's ``Decided``/``Abstained { missing_fact, conservative_default }``
@@ -86,7 +86,7 @@ class HarnessPartMirror(_WireModel):
         return data
 
 
-class HarnessConfigMirror(_WireModel):
+class HarnessConfigMirror(WireModel):
     """Frozen hand-written mirror of the engine's ``HarnessConfigAnswer``."""
 
     model_config = ConfigDict(
@@ -105,7 +105,7 @@ class HarnessConfigMirror(_WireModel):
         return {name: getattr(self, name) for name in _PART_NAMES}
 
 
-class HarnessConfigRecord(_WireModel):
+class HarnessConfigRecord(WireModel):
     """The committed engine record of one ``harness_config`` decision."""
 
     answer: HarnessConfigMirror
@@ -133,7 +133,7 @@ class HarnessConfigDecider(Protocol):
     ) -> HarnessConfigRecord: ...
 
 
-class ToolSubsetAdmissionRequest(_WireModel):
+class ToolSubsetAdmissionRequest(WireModel):
     """A caller's request to admit the smallest authorized tool subset.
 
     ``model_profile_ref`` and ``task_class`` come from the routed capability,
@@ -153,7 +153,7 @@ class ToolSubsetAdmissionRequest(_WireModel):
     valid_for_ms: int | None = Field(default=None, ge=1)
 
 
-class ToolSubsetAdmissionDecision(_WireModel):
+class ToolSubsetAdmissionDecision(WireModel):
     """The door's admit/refuse result. Never advisory; never partial."""
 
     admitted: bool
@@ -306,7 +306,7 @@ ModelProfileRefusalReason = Literal[
 ]
 
 
-class ModelProfilePreference(_WireModel):
+class ModelProfilePreference(WireModel):
     """Untrusted preference only; this value conveys no execution authority."""
 
     preferred_profile_ref: StrictStr | None = Field(default=None, max_length=512)
@@ -321,7 +321,7 @@ class ModelProfilePreference(_WireModel):
         return value
 
 
-class ModelProfileUnavailable(_WireModel):
+class ModelProfileUnavailable(WireModel):
     """Closed refusal without profile data, credentials or fabricated receipts."""
 
     status: Literal["unavailable"] = "unavailable"
@@ -335,7 +335,7 @@ PREFERENCE_NOT_LEGAL = "PREFERENCE_NOT_LEGAL"
 Decide = Callable[[dict[str, Any]], Awaitable[Any]]
 
 
-class ModelProfileDecision(_WireModel):
+class ModelProfileDecision(WireModel):
     """The profile the engine chose and whether the caller's preference held."""
 
     profile: str = Field(min_length=1, max_length=512)

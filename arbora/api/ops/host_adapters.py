@@ -107,7 +107,7 @@ class SandboxProcessTerminator:
     async def terminate(
         self, *, run_id: str, process_id: str, approval_ref: str
     ) -> None:
-        from arbora.agent_host.port_services import SandboxProcessRefused
+        from arbora.api.domain.agent_host.port_services import SandboxProcessRefused
 
         table = self._table()
         if table is None:

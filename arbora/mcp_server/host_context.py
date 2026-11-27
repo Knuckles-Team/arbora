@@ -16,7 +16,7 @@ from arbora.a2a.engine_decide import HostDecide
 from arbora.a2a.service import A2AService
 from arbora.access.approval import ApprovalDecisions, verified_approval_session
 from arbora.access.policy_state import PolicyState
-from arbora.agent_host.host_port_adapters import HostPortsSlot
+from arbora.api.domain.agent_host.host_port_adapters import HostPortsSlot
 from arbora.browser_control.browser_state import BrowserState
 from arbora.core.settings import RuntimeConfig
 from arbora.fleet.state import FleetState
@@ -181,7 +181,11 @@ def bind_ranking(host: HostContext, invocation: Any) -> None:
     A host with no engine endpoint has no invocation, so the port stays unbound and
     every ranking site answers the lexical floor (ARBORA-FLEET-R083.5).
     """
-    from arbora.fleet.ranking import engine_ask, ranking_probe, schemas_published
+    from arbora.api.domain.fleet.ranking import (
+        engine_ask,
+        ranking_probe,
+        schemas_published,
+    )
 
     host.observability.health.probes.bind("ranking", ranking_probe(host.fleet.ranking))
     send = getattr(invocation, "engine_send", None)

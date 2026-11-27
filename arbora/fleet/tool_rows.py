@@ -82,7 +82,7 @@ class EngineToolRows:
         self._scope = scope
 
     async def _entries(self, server: str) -> list[Any]:
-        from arbora.fleet.catalog_reader import ComponentSearchRequest
+        from arbora.api.domain.fleet.catalog_reader import ComponentSearchRequest
 
         entries: list[Any] = []
         cursor: Any = None

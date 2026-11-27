@@ -18,7 +18,12 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Any
 
-from arbora.fleet.ranking import FLOOR_ONLY, RankCandidate, Ranked, RankingPort
+from arbora.api.domain.fleet.ranking import (
+    FLOOR_ONLY,
+    RankCandidate,
+    Ranked,
+    RankingPort,
+)
 
 _WORDS = re.compile(r"[a-z0-9]+")
 _STOP = frozenset(

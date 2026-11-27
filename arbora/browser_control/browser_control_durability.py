@@ -9,12 +9,14 @@ from typing import Any, cast
 
 from scion_sdk.privacy import persistence_reference
 
+from arbora.api.domain.browser_control.browser_control_common import (
+    canonical_internal_json,
+)
 from arbora.browser_control.browser_control_binding import (
     BINDING_PROPERTY_NAMES,
     BindingReferences,
     binding_properties,
 )
-from arbora.browser_control.browser_control_common import canonical_internal_json
 from arbora.work_items import (
     commit_result,
     get_work_item,

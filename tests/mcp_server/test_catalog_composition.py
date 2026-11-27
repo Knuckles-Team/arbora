@@ -9,7 +9,7 @@ from typing import Any, cast
 
 import pytest
 
-from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
+from arbora.api.domain.fleet.catalog_reader import DeferredFleetCatalogReader
 from arbora.gateway.state import GatewayState
 from arbora.mcp_server import catalog_composition as composition
 

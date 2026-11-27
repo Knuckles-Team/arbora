@@ -21,7 +21,11 @@ import base64
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from typing import Any
 
-from arbora.agent_host.host_port_adapters import ChangesetSeams, RunCall, SourceTarget
+from arbora.api.domain.agent_host.host_port_adapters import (
+    ChangesetSeams,
+    RunCall,
+    SourceTarget,
+)
 
 SOURCE_GRANT_KEY = "source_grant"
 #: Workspace backends that isolate execution from the host; ``local`` does not.

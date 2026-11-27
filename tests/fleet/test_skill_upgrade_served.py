@@ -11,8 +11,8 @@ from typing import Any
 
 import pytest
 
-from arbora.fleet.admission import AdmissionGate
-from arbora.fleet.engine_admission import EngineAdmission
+from arbora.api.domain.fleet.admission import AdmissionGate
+from arbora.api.domain.fleet.engine_admission import EngineAdmission
 from tests._support import unwrap_decide
 from tests.fleet._certified_support import World, h, no_pin_lag
 from tests.fleet.test_admission_wiring import GOOD  # noqa: F401

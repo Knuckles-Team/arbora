@@ -391,7 +391,7 @@ NAMES: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         "int",
         "300000",
         "ARBORA-OPS-R003",
-        ("arbora.fleet.catalog_reader",),
+        ("arbora.api.domain.fleet.catalog_reader",),
         False,
     ),
     (
@@ -487,7 +487,7 @@ NAMES: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         "float",
         "30.0",
         "ARBORA-OPS-R003",
-        ("arbora.fleet.catalog_reader",),
+        ("arbora.api.domain.fleet.catalog_reader",),
         False,
     ),
     (

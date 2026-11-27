@@ -8,10 +8,11 @@ against it; audio, video and document parts belong to the modality seam
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from arbora.a2a.models import (
+from arbora.api.domain.a2a.models import (
     A2AFilePart,
     A2AMediaLimits,
     A2AMediaRefFile,
@@ -130,31 +131,45 @@ def admit_file_parts(message: A2AMessage, limits: MediaLimits) -> None:
     files = [part.file for part in message.parts if isinstance(part, A2AFilePart)]
     if len(files) > limits.max_file_parts:
         raise FilePartRefused("file_part_count")
-    text_bytes = image_parts = media_bytes = 0
-    for file in files:
-        if isinstance(file, A2AMediaRefFile):
-            raise FilePartRefused("file_part_type_unsupported")
-        kind = file.mime_type
-        if kind.startswith(("image/", "text/")) and kind not in ALLOWED_TYPES:
-            raise FilePartRefused("file_part_type_unsupported")
-        if kind not in ALLOWED_TYPES:
-            continue
-        data = file.decoded_bytes()
-        if len(data) > limits.max_file_part_bytes:
-            raise FilePartRefused("file_part_too_large")
-        if kind in TEXT_TYPES:
-            text_bytes += len(data)
-            if text_bytes > limits.max_text_bytes:
-                raise FilePartRefused("file_part_too_large")
-            continue
-        if sniff_image_type(data) != kind:
-            raise FilePartRefused("file_part_type_mismatch")
-        image_parts += 1
-        media_bytes += len(data)
+    image_parts, media_bytes = _tally_media(files, limits)
     if image_parts > limits.max_image_parts:
         raise FilePartRefused("image_part_count")
     if media_bytes > limits.max_request_media_bytes:
         raise FilePartRefused("request_media_too_large")
+
+
+def _tally_media(files: Sequence[Any], limits: MediaLimits) -> tuple[int, int]:
+    """The image part count and image byte total, refusing any part the table refuses."""
+    text_bytes = image_parts = media_bytes = 0
+    for file in files:
+        data = _admitted_bytes(file, limits)
+        if data is None:
+            continue
+        if file.mime_type in TEXT_TYPES:
+            text_bytes += len(data)
+            if text_bytes > limits.max_text_bytes:
+                raise FilePartRefused("file_part_too_large")
+            continue
+        if sniff_image_type(data) != file.mime_type:
+            raise FilePartRefused("file_part_type_mismatch")
+        image_parts += 1
+        media_bytes += len(data)
+    return image_parts, media_bytes
+
+
+def _admitted_bytes(file: Any, limits: MediaLimits) -> bytes | None:
+    """The bytes of one file part the table admits, or ``None`` for a type it ignores."""
+    if isinstance(file, A2AMediaRefFile):
+        raise FilePartRefused("file_part_type_unsupported")
+    kind = file.mime_type
+    if kind.startswith(("image/", "text/")) and kind not in ALLOWED_TYPES:
+        raise FilePartRefused("file_part_type_unsupported")
+    if kind not in ALLOWED_TYPES:
+        return None
+    data = file.decoded_bytes()
+    if len(data) > limits.max_file_part_bytes:
+        raise FilePartRefused("file_part_too_large")
+    return data
 
 
 class MediaCapabilityRefused(Exception):
@@ -239,12 +254,16 @@ def admit_image_capability(
     if len(images) > capability.max_parts:
         raise MediaCapabilityRefused("POLICY_DENIED", "media_part_too_large")
     for file in images:
-        limit = capability.limit_for(file.mime_type)
-        if limit is None:
-            raise MediaCapabilityRefused("POLICY_DENIED", "media_type_not_accepted")
-        # A reference carries no bytes; its size is checked when it resolves.
-        if not isinstance(file, A2AMediaRefFile) and len(file.decoded_bytes()) > limit:
-            raise MediaCapabilityRefused("POLICY_DENIED", "media_part_too_large")
+        _check_image_size(file, capability)
+
+
+def _check_image_size(file: Any, capability: MediaCapability) -> None:
+    limit = capability.limit_for(file.mime_type)
+    if limit is None:
+        raise MediaCapabilityRefused("POLICY_DENIED", "media_type_not_accepted")
+    # A reference carries no bytes; its size is checked when it resolves.
+    if not isinstance(file, A2AMediaRefFile) and len(file.decoded_bytes()) > limit:
+        raise MediaCapabilityRefused("POLICY_DENIED", "media_part_too_large")
 
 
 __all__ = [

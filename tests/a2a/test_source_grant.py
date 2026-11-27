@@ -11,8 +11,8 @@ import pytest
 
 from arbora.a2a import source_grant as grants
 from arbora.a2a.authority import WorkItemA2AAuthority
-from arbora.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
 from arbora.agent_host.changeset_seams import source_target
+from arbora.api.domain.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
 
 GRANT = {"repository": "repo-a", "branch": "feature", "prefixes": ["src"]}
 

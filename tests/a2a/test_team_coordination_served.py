@@ -9,7 +9,7 @@ from typing import Any
 import msgpack
 import pytest
 
-from arbora.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
+from arbora.api.domain.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
 from arbora.api.domain.a2a.team import TeamCoordinator, bind_team_coordination
 from arbora.security.session import use_session
 from tests._support import unwrap_decide

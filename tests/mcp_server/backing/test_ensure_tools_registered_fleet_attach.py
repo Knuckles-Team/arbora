@@ -18,7 +18,7 @@ from unittest.mock import ANY, patch
 
 import pytest
 
-from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
+from arbora.api.domain.fleet.catalog_reader import DeferredFleetCatalogReader
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools.intent_tools import _fleet_mux

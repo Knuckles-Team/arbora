@@ -8,8 +8,8 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.browser_control.browser_control_api import BrowserLeaseReceipt
 from arbora.browser_control import mcp as browser_control_mcp
-from arbora.browser_control.browser_control_api import BrowserLeaseReceipt
 from arbora.browser_control.browser_state import BrowserState
 from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable

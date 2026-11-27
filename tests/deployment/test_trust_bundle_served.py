@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from arbora.deployment import trust_bundle
+from arbora.api.domain.deployment import trust_bundle
 from tests.api._loopback_engine import loopback  # noqa: F401
 from tests.api.test_deploy_ops_served import _apply_params, _assembling
 

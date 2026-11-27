@@ -127,8 +127,8 @@ def test_push_capability_follows_wired_worker() -> None:
 
 @pytest.mark.spec("ARBORA-A2A-R014.1")
 def test_card_has_no_harness_field_before_admission_e2e() -> None:
-    from arbora.a2a.models import A2AAgentCapabilities, A2AAgentCard
     from arbora.a2a.service import A2AService
+    from arbora.api.domain.a2a.models import A2AAgentCapabilities, A2AAgentCard
     from tests.a2a.test_application import Authority, Router
 
     card = A2AService(authority=Authority(), router=Router()).agent_card(

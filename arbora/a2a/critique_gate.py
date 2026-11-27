@@ -17,11 +17,12 @@ from typing import Any
 from pydantic import ConfigDict, Field, ValidationError
 from pydantic.alias_generators import to_camel
 
+from arbora.api.domain.a2a.held_item_admission import HeldItemRefusal, HeldItemSubject
+from arbora.api.domain.a2a.models import A2ATask, WireModel
+from arbora.api.domain.a2a.tool_action_admission import SHA256_HEX
+
 from .confirm import ApprovalChain
-from .held_item_admission import HeldItemRefusal, HeldItemSubject
 from .held_output import artifacts_bytes
-from .models import A2ATask, _WireModel
-from .tool_action_admission import SHA256_HEX
 
 __all__ = [
     "HELD_OUTPUT_KEY",
@@ -35,7 +36,7 @@ __all__ = [
 HELD_OUTPUT_KEY = "heldOutput"
 
 
-class ChecklistItem(_WireModel):
+class ChecklistItem(WireModel):
     """One typed question the critique answered about the output."""
 
     model_config = ConfigDict(
@@ -46,7 +47,7 @@ class ChecklistItem(_WireModel):
     question: str = Field(min_length=1, max_length=512)
 
 
-class HeldOutput(_WireModel):
+class HeldOutput(WireModel):
     """The typed critique preflight of one generated output."""
 
     model_config = ConfigDict(

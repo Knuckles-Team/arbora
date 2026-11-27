@@ -11,7 +11,10 @@ from meristem.host_ports import HostPorts
 
 from arbora import agent_runs, work_items
 from arbora.a2a.authority import WorkItemA2AAuthority
-from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
+from arbora.api.domain.agent_host.host_port_adapters import (
+    HostPortsBinding,
+    HostPortsSlot,
+)
 from arbora.core.settings import runtime_config
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R001")

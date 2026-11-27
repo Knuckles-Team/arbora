@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from arbora.a2a.parts import (
+from arbora.api.domain.a2a.parts import (
     MediaCapability,
     MediaLimits,
     capability_from_assembly,
@@ -143,7 +143,7 @@ class _Store:
         import hashlib
         from datetime import timedelta
 
-        from arbora.a2a.media_refs import MediaReceipt
+        from arbora.api.domain.a2a.media_refs import MediaReceipt
 
         digest = hashlib.sha256(data).hexdigest()
         expires = now + timedelta(seconds=3_600)
@@ -151,7 +151,7 @@ class _Store:
         return MediaReceipt(f"sha256:{digest}", media_type, len(data), expires)
 
     async def get(self, owner: str, digest: str, now: Any) -> Any:
-        from arbora.a2a.media_refs import MediaRefRefused, StoredMedia
+        from arbora.api.domain.a2a.media_refs import MediaRefRefused, StoredMedia
 
         row = self.rows.get((owner, digest))
         if row is None:

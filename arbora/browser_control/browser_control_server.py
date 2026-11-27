@@ -7,19 +7,19 @@ from typing import Annotated, Any, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
-from arbora.browser_control.browser_control_common import (
-    _DIGEST,
-    _ERROR_CODE,
+from arbora.api.domain.browser_control.browser_control_common import (
+    DIGEST,
+    ERROR_CODE,
     PROTOCOL_VERSION,
-    _bounded_json,
-    _identifier,
-    _opaque_ref,
+    bounded_json,
+    checked_identifier,
+    checked_opaque_ref,
 )
 
-_Identifier = Annotated[str, AfterValidator(_identifier)]
-_Digest = Annotated[str, Field(pattern=_DIGEST.pattern)]
-_MachineCode = Annotated[str, Field(pattern=_ERROR_CODE.pattern)]
-_JsonObject = Annotated[dict[str, Any], AfterValidator(_bounded_json)]
+_Identifier = Annotated[str, AfterValidator(checked_identifier)]
+_Digest = Annotated[str, Field(pattern=DIGEST.pattern)]
+_MachineCode = Annotated[str, Field(pattern=ERROR_CODE.pattern)]
+_JsonObject = Annotated[dict[str, Any], AfterValidator(bounded_json)]
 
 
 class _WireMessage(BaseModel):
@@ -39,7 +39,7 @@ class ConfirmationRequestMessage(_WireMessage):
 
     @model_validator(mode="after")
     def _bounded_message(self) -> ConfirmationRequestMessage:
-        _bounded_json(self.model_dump(mode="json"))
+        bounded_json(self.model_dump(mode="json"))
         return self
 
 
@@ -51,15 +51,15 @@ class ProposalRequestMessage(_WireMessage):
     tool_id: _Identifier
     schema_digest: _Digest
     arguments: Annotated[
-        dict[str, Any], AfterValidator(lambda value: _bounded_json(value, limit=8192))
+        dict[str, Any], AfterValidator(lambda value: bounded_json(value, limit=8192))
     ]
     requester_agent: str = Field(min_length=1, max_length=512)
-    requester_run_ref: Annotated[str, AfterValidator(_opaque_ref)]
+    requester_run_ref: Annotated[str, AfterValidator(checked_opaque_ref)]
     expires_at: int = Field(gt=0, le=9_007_199_254_740_991, strict=True)
 
     @model_validator(mode="after")
     def _bounded_message(self) -> ProposalRequestMessage:
-        _bounded_json(self.model_dump(mode="json"))
+        bounded_json(self.model_dump(mode="json"))
         return self
 
 
@@ -80,7 +80,7 @@ class ControlCallMessage(_WireMessage):
 
     @model_validator(mode="after")
     def _confirmation_matches_authorization(self) -> ControlCallMessage:
-        _bounded_json(self.model_dump(mode="json"))
+        bounded_json(self.model_dump(mode="json"))
         expects_digest = self.authorization == "confirmed_mutation"
         if expects_digest != (self.confirmation_digest is not None):
             raise ValueError("confirmation digest does not match call authorization")

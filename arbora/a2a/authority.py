@@ -14,11 +14,7 @@ from typing import Any, Protocol, cast, runtime_checkable
 
 from scion_sdk.privacy import persistence_reference
 
-from arbora.core.work_item_errors import NativeWorkItemRequired
-from arbora.run_origin import RunOriginRegistry
-
-from .held_output import held_metadata
-from .models import (
+from arbora.api.domain.a2a.models import (
     A2AArtifact,
     A2AMessage,
     A2AReplyUnavailable,
@@ -28,6 +24,10 @@ from .models import (
     A2ATaskStatus,
     A2ATextPart,
 )
+from arbora.core.work_item_errors import NativeWorkItemRequired
+from arbora.run_origin import RunOriginRegistry
+
+from .held_output import held_metadata
 from .tool_subset import require_carrier as require_tool_subset_carrier
 
 logger = logging.getLogger(__name__)

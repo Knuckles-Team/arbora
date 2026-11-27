@@ -18,7 +18,6 @@ import pytest
 
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.critique_gate import HeldOutput, output_digest, release_output
-from arbora.a2a.held_item_admission import HeldItemAdmitter, HeldItemRefusal
 from arbora.a2a.held_output import (
     HELD_OUTPUT_FIELDS,
     HeldOutputRefs,
@@ -28,7 +27,8 @@ from arbora.a2a.held_output import (
     reply_bytes,
     with_held_output,
 )
-from arbora.a2a.models import A2ATask, A2ATaskStatus
+from arbora.api.domain.a2a.held_item_admission import HeldItemAdmitter, HeldItemRefusal
+from arbora.api.domain.a2a.models import A2ATask, A2ATaskStatus
 from arbora.run_origin import RunOriginRegistry
 from tests.a2a.test_application import _Engine
 

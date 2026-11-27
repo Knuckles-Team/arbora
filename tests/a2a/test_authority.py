@@ -11,9 +11,9 @@ from arbora.a2a.authority import (
     A2ATransitionHistoryUnavailable,
     WorkItemA2AAuthority,
 )
-from arbora.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
 from arbora.a2a.routing import A2AAssemblyUnavailable, OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
+from arbora.api.domain.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
 from arbora.run_origin import RunOriginRegistry
 
 

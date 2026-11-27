@@ -48,7 +48,7 @@ def bind_run_models(monkeypatch: pytest.MonkeyPatch, provider: Any) -> None:
     """
     from meristem.host_ports import HostPorts
 
-    from arbora.agent_host.host_port_adapters import HostPortsBinding
+    from arbora.api.domain.agent_host.host_port_adapters import HostPortsBinding
     from arbora.mcp_server import host_context
 
     build = host_context.build_host_context

@@ -140,7 +140,7 @@ def test_production_process_table_refuses_without_policy_and_isolation(
     main_shape: None,  # noqa: F811
 ) -> None:
     from arbora.agent_host.port_backends import sandbox_process_table
-    from arbora.agent_host.port_services import SandboxProcessRefused
+    from arbora.api.domain.agent_host.port_services import SandboxProcessRefused
 
     ports = compose_host_ports(
         captured["invocation"].services, wait=lambda s: asyncio.sleep(0)

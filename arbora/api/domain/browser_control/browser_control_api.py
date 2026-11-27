@@ -8,27 +8,27 @@ from typing import Annotated, Any, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validator
 
-from arbora.browser_control.browser_control_common import (
-    _DIGEST,
-    _ERROR_CODE,
-    _TRUST_EVIDENCE,
+from arbora.api.domain.browser_control.browser_control_common import (
     DEFAULT_LEASE_SECONDS,
+    DIGEST,
+    ERROR_CODE,
     MAX_LEASE_SECONDS,
+    TRUST_EVIDENCE,
     CancellationEffect,
     LangfuseStatus,
-    _bounded_json,
-    _identifier,
-    _opaque_ref,
-    _timestamps_are_finite,
-    _trusted_issuer,
+    bounded_json,
+    checked_identifier,
+    checked_opaque_ref,
+    timestamps_are_finite,
+    trusted_issuer,
 )
 from arbora.security.session import GraphSession
 
-_Identifier = Annotated[str, AfterValidator(_identifier)]
-_OpaqueReference = Annotated[str, AfterValidator(_opaque_ref)]
-_Digest = Annotated[str, Field(pattern=_DIGEST.pattern)]
-_MachineCode = Annotated[str, Field(pattern=_ERROR_CODE.pattern)]
-_JsonObject = Annotated[dict[str, Any], AfterValidator(_bounded_json)]
+_Identifier = Annotated[str, AfterValidator(checked_identifier)]
+_OpaqueReference = Annotated[str, AfterValidator(checked_opaque_ref)]
+_Digest = Annotated[str, Field(pattern=DIGEST.pattern)]
+_MachineCode = Annotated[str, Field(pattern=ERROR_CODE.pattern)]
+_JsonObject = Annotated[dict[str, Any], AfterValidator(bounded_json)]
 
 
 def _validate_binding_references(binding: BrowserChannelBinding) -> None:
@@ -40,7 +40,7 @@ def _validate_binding_references(binding: BrowserChannelBinding) -> None:
         binding.attended_arm_ref,
     )
     for value in refs:
-        _opaque_ref(value)
+        checked_opaque_ref(value)
     required_prefixes = (
         (binding.login_session_ref, "login_", "login session"),
         (binding.browser_session_ref, "browser_", "browser session"),
@@ -50,7 +50,7 @@ def _validate_binding_references(binding: BrowserChannelBinding) -> None:
     for value, prefix, label in required_prefixes:
         if not value.startswith(prefix):
             raise ValueError(f"{label} reference has no verified server prefix")
-    _identifier(binding.route_id)
+    checked_identifier(binding.route_id)
     generation = binding.registration_generation
     if isinstance(generation, bool) or not 1 <= generation <= 9_007_199_254_740_991:
         raise ValueError("registration_generation must be a JS-safe positive integer")
@@ -63,7 +63,7 @@ def _validate_binding_timing(binding: BrowserChannelBinding) -> None:
         binding.attended_arm_issued_at,
         binding.attended_auth_time,
     )
-    if not _timestamps_are_finite(timestamps) or min(timestamps[:2]) <= 0:
+    if not timestamps_are_finite(timestamps) or min(timestamps[:2]) <= 0:
         raise ValueError("browser binding expiries must be finite and positive")
     if binding.attended_arm_expires_at > binding.access_token_expires_at:
         raise ValueError("attended arm cannot outlive the access token")
@@ -78,11 +78,11 @@ def _validate_binding_timing(binding: BrowserChannelBinding) -> None:
 
 def _validate_binding_evidence(binding: BrowserChannelBinding) -> None:
     for digest in (binding.catalog_digest, binding.tool_scope_digest):
-        if _DIGEST.fullmatch(digest) is None:
+        if DIGEST.fullmatch(digest) is None:
             raise ValueError("browser binding digest must be canonical sha256")
-    if _TRUST_EVIDENCE.fullmatch(binding.attended_acr) is None:
+    if TRUST_EVIDENCE.fullmatch(binding.attended_acr) is None:
         raise ValueError("attended authentication evidence is invalid")
-    _trusted_issuer(binding.attended_issuer)
+    trusted_issuer(binding.attended_issuer)
     if not callable(binding.session_revalidator):
         raise ValueError("binding session revalidator must be callable")
     if binding.attended is not True:
@@ -198,7 +198,7 @@ class BrowserProposalRequest(BaseModel):
     tool_id: _Identifier
     schema_digest: _Digest
     arguments: Annotated[
-        dict[str, Any], AfterValidator(lambda value: _bounded_json(value, limit=8192))
+        dict[str, Any], AfterValidator(lambda value: bounded_json(value, limit=8192))
     ]
     timeout_seconds: float = Field(default=30.0, gt=0.0, le=120.0)
 

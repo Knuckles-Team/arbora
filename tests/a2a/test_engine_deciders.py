@@ -15,8 +15,11 @@ import pytest
 
 from arbora.a2a.chain_composition import compose_approval_chain
 from arbora.a2a.engine_deciders import EngineHeldItemDecider, EngineToolActionDecider
-from arbora.a2a.held_item_admission import HeldItemAdmitter, HeldItemRefusal
-from arbora.a2a.tool_action_admission import ToolActionAdmitter, ToolActionRefusal
+from arbora.api.domain.a2a.held_item_admission import HeldItemAdmitter, HeldItemRefusal
+from arbora.api.domain.a2a.tool_action_admission import (
+    ToolActionAdmitter,
+    ToolActionRefusal,
+)
 from arbora.pin_lag import medulla as guard
 
 

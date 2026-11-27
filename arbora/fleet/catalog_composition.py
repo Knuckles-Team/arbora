@@ -15,6 +15,7 @@ from collections.abc import (
 )
 from typing import Any, Protocol, cast
 
+from arbora.api.domain.fleet.ranking import FLOOR_ONLY
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
 from arbora.fleet.catalog_sources import CombinedFleetSource, SdkRead
 from arbora.fleet.multiplexer_ops import (
@@ -31,7 +32,6 @@ from arbora.fleet.multiplexer_ops import (
     UnadmittedServers,
 )
 from arbora.fleet.pin_store import PinStore
-from arbora.fleet.ranking import FLOOR_ONLY
 from arbora.fleet.session_loads import SessionLoads
 
 logger = logging.getLogger(__name__)

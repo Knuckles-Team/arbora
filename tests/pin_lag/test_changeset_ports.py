@@ -18,8 +18,8 @@ from typing import Any
 
 import pytest
 
-from arbora.agent_host import host_port_adapters as adapters
 from arbora.agent_host.host_port_composition import PortBackends, compose_host_ports
+from arbora.api.domain.agent_host import host_port_adapters as adapters
 from arbora.pin_lag import meristem as guard
 from tests.pin_lag.test_host_ports_pin_lag import main_shape  # noqa: F401
 

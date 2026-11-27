@@ -22,13 +22,13 @@ _IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 _OPAQUE_REF = re.compile(
     r"^(?:pref_[a-z0-9_]+_[a-f0-9]{64}|[a-z][a-z0-9_]{0,31}_[a-f0-9]{64}|[a-f0-9]{64})$"
 )
-_DIGEST = re.compile(r"^sha256:[a-f0-9]{64}$")
-_ERROR_CODE = re.compile(r"^[a-z][a-z0-9_-]{0,63}$")
-_RESULT_ERROR_CODE = _ERROR_CODE
-_TRUST_EVIDENCE = re.compile(r"^[^\x00-\x1f\x7f]{1,256}$")
+DIGEST = re.compile(r"^sha256:[a-f0-9]{64}$")
+ERROR_CODE = re.compile(r"^[a-z][a-z0-9_-]{0,63}$")
+RESULT_ERROR_CODE = ERROR_CODE
+TRUST_EVIDENCE = re.compile(r"^[^\x00-\x1f\x7f]{1,256}$")
 
 
-def _timestamps_are_finite(values: tuple[float, ...]) -> bool:
+def timestamps_are_finite(values: tuple[float, ...]) -> bool:
     return all(
         not isinstance(value, bool)
         and isinstance(value, (int, float))
@@ -127,28 +127,28 @@ def schema_sha256(input_schema: dict[str, Any], output_schema: dict[str, Any]) -
     return f"sha256:{digest}"
 
 
-def _bounded_json(value: Any, *, limit: int = MAX_MESSAGE_BYTES) -> Any:
+def bounded_json(value: Any, *, limit: int = MAX_MESSAGE_BYTES) -> Any:
     if len(canonical_json(value).encode("utf-8")) > limit:
         raise ValueError("browser control JSON exceeds its byte limit")
     return value
 
 
-def _identifier(value: str) -> str:
+def checked_identifier(value: str) -> str:
     if _IDENTIFIER.fullmatch(value) is None:
         raise ValueError("value must be a bounded protocol identifier")
     return value
 
 
-def _opaque_ref(value: str) -> str:
+def checked_opaque_ref(value: str) -> str:
     if _OPAQUE_REF.fullmatch(value) is None:
         raise ValueError("value must be an opaque persistence reference")
     return value
 
 
-def _trusted_issuer(value: str) -> str:
+def trusted_issuer(value: str) -> str:
     parsed = urlsplit(value)
     if (
-        _TRUST_EVIDENCE.fullmatch(value) is None
+        TRUST_EVIDENCE.fullmatch(value) is None
         or parsed.scheme != "https"
         or not parsed.hostname
         or parsed.username is not None
@@ -194,15 +194,15 @@ __all__ = [
     "ConfirmationPolicy",
     "LangfuseStatus",
     "MutationClass",
-    "_DIGEST",
-    "_ERROR_CODE",
-    "_RESULT_ERROR_CODE",
-    "_TRUST_EVIDENCE",
-    "_bounded_json",
-    "_identifier",
-    "_opaque_ref",
-    "_timestamps_are_finite",
-    "_trusted_issuer",
+    "DIGEST",
+    "ERROR_CODE",
+    "RESULT_ERROR_CODE",
+    "TRUST_EVIDENCE",
+    "bounded_json",
+    "checked_identifier",
+    "checked_opaque_ref",
+    "timestamps_are_finite",
+    "trusted_issuer",
     "canonical_json",
     "canonical_internal_json",
     "content_sha256",

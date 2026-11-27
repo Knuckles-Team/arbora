@@ -15,7 +15,7 @@ from typing import Any, Literal
 
 import pytest
 
-from arbora.agent_host import host_port_adapters as adapters
+from arbora.api.domain.agent_host import host_port_adapters as adapters
 from arbora.pin_lag import meristem as guard
 from tests.pin_lag.decide_double import answered_branch, serve_control_kinds
 from tests.pin_lag.test_host_ports_pin_lag import main_shape  # noqa: F401

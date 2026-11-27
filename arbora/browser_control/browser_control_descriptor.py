@@ -14,20 +14,20 @@ from pydantic import (
     model_validator,
 )
 
-from arbora.browser_control.browser_control_common import (
-    _DIGEST,
+from arbora.api.domain.browser_control.browser_control_common import (
+    DIGEST,
     MAX_SCHEMA_BYTES,
     ConfirmationPolicy,
     MutationClass,
-    _bounded_json,
-    _identifier,
+    bounded_json,
+    checked_identifier,
     schema_sha256,
 )
 
 _SOURCE_REF = re.compile(r"^[^\x00-\x1f\x7f]{1,256}$")
-_Identifier = Annotated[str, AfterValidator(_identifier)]
-_Role = Annotated[str, Field(max_length=64), AfterValidator(_identifier)]
-_Digest = Annotated[str, Field(pattern=_DIGEST.pattern)]
+_Identifier = Annotated[str, AfterValidator(checked_identifier)]
+_Role = Annotated[str, Field(max_length=64), AfterValidator(checked_identifier)]
+_Digest = Annotated[str, Field(pattern=DIGEST.pattern)]
 
 
 class BrowserToolDescriptor(BaseModel):
@@ -62,7 +62,7 @@ class BrowserToolDescriptor(BaseModel):
     @field_validator("input_schema", "output_schema")
     @classmethod
     def _schemas(cls, value: dict[str, Any]) -> dict[str, Any]:
-        return _bounded_json(value, limit=MAX_SCHEMA_BYTES)
+        return bounded_json(value, limit=MAX_SCHEMA_BYTES)
 
     @model_validator(mode="after")
     def _consistent_descriptor(self) -> BrowserToolDescriptor:

@@ -287,7 +287,7 @@ async def _attest_run(
     A run that names no agent runs on the default fleet agent, whose definition the host
     registers in the ``AgentLibrary`` (ARBORA-HOST-R008.1001).
     """
-    from arbora.agent_host.default_agent import run_agent_name
+    from arbora.api.domain.agent_host.default_agent import run_agent_name
     from arbora.api.invoke.certification_gate import require_run_attestation
 
     agent = await run_agent_name(context, message)

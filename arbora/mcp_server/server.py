@@ -205,7 +205,7 @@ def _served_invocation(
             raise ValueError("task planning requires graph service endpoints")
         return None, None
     from arbora.a2a.source_grant import EngineSourceGrants
-    from arbora.agent_host.default_agent import (
+    from arbora.api.domain.agent_host.default_agent import (
         DefaultAgentDefinition,
         DefaultAgentRegistrar,
     )
@@ -516,7 +516,7 @@ def mcp_server(
 
     validate_startup(args)
     _register_semantic_content(mcp)
-    from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
+    from arbora.api.domain.fleet.catalog_reader import DeferredFleetCatalogReader
 
     fleet_catalog_reader = DeferredFleetCatalogReader()
 
@@ -667,7 +667,9 @@ def mcp_server(
                 # The session's own graph: AU graph views refuse any other.
                 return graph_compute.for_graph(str(session.graph)).async_client
 
-            from arbora.mcp_server.decide_wiring import install_decide_consumers
+            from arbora.api.domain.mcp_server.decide_wiring import (
+                install_decide_consumers,
+            )
 
             installed = install_decide_consumers(
                 client_for_session,

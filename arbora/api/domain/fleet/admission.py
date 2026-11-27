@@ -230,12 +230,12 @@ class AdmissionGate:
         return validate_certification(binding, stored)
 
     async def _upgrade(self, tenant: str, upgrade: Mapping[str, Any]) -> dict[str, str]:
-        from arbora.fleet.definitions import (
+        from arbora.api.domain.fleet.definitions import (
             DefinitionRefused,
             admit_definition,
             parse_definition,
         )
-        from arbora.fleet.engine_admission import SkillUpgradeQuestion
+        from arbora.api.domain.fleet.engine_admission import SkillUpgradeQuestion
 
         if self.port is None:
             raise AdmissionRefused("PRODUCER_UNAVAILABLE", {"reason": "no engine port"})

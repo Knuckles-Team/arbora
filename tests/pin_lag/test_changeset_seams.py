@@ -17,8 +17,8 @@ from typing import Any
 import pytest
 
 from arbora.agent_host import changeset_seams as seams
-from arbora.agent_host import host_port_adapters as adapters
 from arbora.agent_host.host_port_composition import PortBackends, compose_host_ports
+from arbora.api.domain.agent_host import host_port_adapters as adapters
 from tests.pin_lag.test_changeset_ports import (  # noqa: F401
     TARGET,
     _Pending,

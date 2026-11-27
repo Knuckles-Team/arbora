@@ -18,13 +18,13 @@ from meristem.graph.state import RunRequest
 
 from arbora import agent_runs
 from arbora.a2a.authority import WorkItemA2AAuthority
-from arbora.a2a.models import A2ARouteDecision
 from arbora.a2a.routing import A2AAssemblyUnavailable
 from arbora.a2a.tool_subset import (
     carrier_available,
     selected_tools_of,
     with_tool_subset,
 )
+from arbora.api.domain.a2a.models import A2ARouteDecision
 from arbora.core.settings import runtime_config
 from arbora.run_origin import RunOriginRegistry
 from tests.a2a.test_authority import _message

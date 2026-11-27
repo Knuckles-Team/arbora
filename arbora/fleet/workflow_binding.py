@@ -12,7 +12,7 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from arbora.fleet.admission import WorkflowAdmission
+from arbora.api.domain.fleet.admission import WorkflowAdmission
 
 logger = logging.getLogger(__name__)
 

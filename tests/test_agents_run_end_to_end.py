@@ -23,7 +23,10 @@ from arbora import agent_runs
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
-from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
+from arbora.api.domain.agent_host.host_port_adapters import (
+    HostPortsBinding,
+    HostPortsSlot,
+)
 from arbora.api.invoke import OpResult, invoke
 from arbora.api.invoke.executor import BoundOperationRuntime
 from arbora.api.ops import agents
@@ -437,7 +440,7 @@ async def test_turn_usage_is_correlated_and_not_reconstructed_on_replay(
 ) -> None:
     from dataclasses import replace
 
-    from arbora.a2a.models import A2AMessage
+    from arbora.api.domain.a2a.models import A2AMessage
     from arbora.security.session import use_session
 
     authority = WorkItemA2AAuthority(

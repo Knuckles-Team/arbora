@@ -148,13 +148,7 @@ def admit_definition(
         return receipt(decision.decision_id if decision else None)
     old, new = prior.semver, candidate.semver
     if new == old:
-        if (prior.schema_digest, prior.body_digest) != (
-            candidate.schema_digest,
-            candidate.body_digest,
-        ):
-            raise DefinitionRefused(
-                "DEFINITION_VERSION_CONFLICT", {"version": candidate.version}
-            )
+        _require_same_content(prior, candidate)
         return receipt(None)
     if new < old:
         raise DefinitionRefused(
@@ -163,6 +157,27 @@ def admit_definition(
         )
     if decision is None:
         raise DefinitionRefused("PRODUCER_UNAVAILABLE")
+    _require_compatible(old, new, decision)
+    return receipt(decision.decision_id)
+
+
+def _require_same_content(
+    prior: VersionedDefinition, candidate: VersionedDefinition
+) -> None:
+    """A resubmitted version must carry the schema and body already admitted."""
+    if (prior.schema_digest, prior.body_digest) != (
+        candidate.schema_digest,
+        candidate.body_digest,
+    ):
+        raise DefinitionRefused(
+            "DEFINITION_VERSION_CONFLICT", {"version": candidate.version}
+        )
+
+
+def _require_compatible(
+    old: tuple[int, ...], new: tuple[int, ...], decision: CompatibilityDecision
+) -> None:
+    """A minor change needs a compatible verdict; a major one needs a migration."""
     if new[0] == old[0]:
         if decision.verdict != "compatible":
             raise DefinitionRefused(
@@ -176,7 +191,6 @@ def admit_definition(
                 "reason": "major change needs a migration",
             },
         )
-    return receipt(decision.decision_id)
 
 
 @dataclass(frozen=True)

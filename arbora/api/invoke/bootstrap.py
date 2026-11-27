@@ -366,13 +366,13 @@ def build_invoke_services(
 
 
 def _admission_gate_from_config(gate_send: Any = None, bindings: Any = None) -> Any:
+    from arbora.api.domain.fleet.admission import AdmissionGate
     from arbora.api.domain.fleet.admission_policy import AdmissionConfig
     from arbora.core.settings import platform_config_file, read_config_document
-    from arbora.fleet.admission import AdmissionGate
 
     path = platform_config_file("config.json")
     document = read_config_document(path) if path.is_file() else {}
-    from arbora.fleet.engine_admission import engine_port
+    from arbora.api.domain.fleet.engine_admission import engine_port
 
     grants, declarations = _admission_sources(bindings)
     return AdmissionGate(

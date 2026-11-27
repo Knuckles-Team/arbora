@@ -11,7 +11,7 @@ import pytest
 
 from arbora import work_items
 from arbora.a2a.authority import WorkItemA2AAuthority
-from arbora.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
+from arbora.api.domain.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
 from arbora.mcp_server.task_plan import TaskPlanConfig
 from arbora.security.session import use_session
 from tests.a2a.test_context_continuation import SESSION

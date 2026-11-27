@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from arbora.browser_control.browser_control_api import BrowserProposalRequest
+from arbora.api.domain.browser_control.browser_control_api import BrowserProposalRequest
 from arbora.browser_control.browser_control_client import (
     ControlConfirmMessage,
     ControlProposalResponseMessage,

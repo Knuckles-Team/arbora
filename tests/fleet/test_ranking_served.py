@@ -14,13 +14,13 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.fleet.ranking import HostRanking, engine_ask
 from arbora.api.invoke import invoke
 from arbora.api.mcp.resolve import IntentResolver
 from arbora.api.mcp.verbs import dispatch_verb
 from arbora.api.ops import activity as activity_ops
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import Registry
-from arbora.fleet.ranking import HostRanking, engine_ask
 from arbora.mcp_server.serving import MCPProjection
 from arbora.observability.state import SubsystemWindows
 from tests._support import unwrap_decide

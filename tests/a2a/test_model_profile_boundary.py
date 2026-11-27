@@ -100,8 +100,8 @@ def test_service_without_preference_preserves_dispatch():
     import asyncio
     from unittest.mock import AsyncMock, Mock
 
-    from arbora.a2a.models import A2ARouteDecision
     from arbora.a2a.service import A2AService
+    from arbora.api.domain.a2a.models import A2ARouteDecision
 
     decision = A2ARouteDecision(agent_name="existing", selection_mode="default-agent")
     authority = Mock(dispatch=AsyncMock(return_value="existing-result"))

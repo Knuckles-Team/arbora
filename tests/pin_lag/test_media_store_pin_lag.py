@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from arbora.a2a.media_refs import (
+from arbora.api.domain.a2a.media_refs import (
     EngineMediaRefStore,
     MediaRefRefused,
     MediaStoreUnavailable,

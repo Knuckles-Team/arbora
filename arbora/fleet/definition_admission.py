@@ -2,7 +2,7 @@
 
 ``FleetOnboarding.onboard`` and the catalog refresh call :meth:`DefinitionAdmission.admit`
 before the pack import. Each tool, prompt or skill of the captured pack becomes a
-:class:`~arbora.fleet.definitions.VersionedDefinition`; a higher version over an
+:class:`~arbora.api.domain.fleet.definitions.VersionedDefinition`; a higher version over an
 admitted one asks the engine ``Decide`` ``SkillUpgrade`` question through the
 engine port and applies the answer (``admit_definition``). Any refusal leaves
 the prior generation active and no import runs. A success writes one
@@ -18,6 +18,15 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from arbora.api.domain.fleet.admission_models import AdmissionRefused
+from arbora.api.domain.fleet.definitions import (
+    DefinitionAdmissionReceipt,
+    DefinitionGeneration,
+    DefinitionRefused,
+    VersionedDefinition,
+    canonical_digest,
+    parse_definition,
+)
+from arbora.api.domain.fleet.engine_admission import SkillUpgradeQuestion
 from arbora.fleet.catalog_graph import (
     KG,
     RDF_TYPE,
@@ -26,15 +35,6 @@ from arbora.fleet.catalog_graph import (
     _kind,
     to_ntriples,
 )
-from arbora.fleet.definitions import (
-    DefinitionAdmissionReceipt,
-    DefinitionGeneration,
-    DefinitionRefused,
-    VersionedDefinition,
-    canonical_digest,
-    parse_definition,
-)
-from arbora.fleet.engine_admission import SkillUpgradeQuestion
 
 __all__ = ["DefinitionAdmission", "definitions_from_pack", "receipt_triples"]
 

@@ -8,8 +8,8 @@ from typing import Any, Literal
 
 from scion_sdk.privacy import persistence_reference
 
-from arbora.browser_control.browser_control_api import BrowserCallReceipt
-from arbora.browser_control.browser_control_common import (
+from arbora.api.domain.browser_control.browser_control_api import BrowserCallReceipt
+from arbora.api.domain.browser_control.browser_control_common import (
     CancellationEffect,
     content_sha256,
 )

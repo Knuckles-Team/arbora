@@ -10,20 +10,20 @@ from typing import Any, Literal
 
 from pydantic import TypeAdapter, ValidationError
 
-from arbora.browser_control.browser_control_api import (
+from arbora.api.domain.browser_control.browser_control_api import (
     BrowserCallReceipt,
     BrowserCallRequest,
     BrowserChannelBinding,
     CatalogRegistrationReceipt,
 )
+from arbora.api.domain.browser_control.browser_control_common import (
+    CancellationEffect,
+    LangfuseStatus,
+)
 from arbora.browser_control.browser_control_binding import BindingReferences
 from arbora.browser_control.browser_control_client import (
     BrowserClientMessage,
     ControlResultMessage,
-)
-from arbora.browser_control.browser_control_common import (
-    CancellationEffect,
-    LangfuseStatus,
 )
 from arbora.browser_control.browser_control_descriptor import BrowserToolDescriptor
 from arbora.browser_control.browser_control_durability import CallIdentity

@@ -9,7 +9,6 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi.testclient import TestClient
 
 from arbora.a2a.application import create_a2a_application
-from arbora.a2a.models import A2ATask, A2ATaskStatus
 from arbora.a2a.service import A2AService
 from arbora.a2a.tool_task_card import (
     EXTENSION_URI,
@@ -17,6 +16,7 @@ from arbora.a2a.tool_task_card import (
     sign_attestation,
     verify_attestation,
 )
+from arbora.api.domain.a2a.models import A2ATask, A2ATaskStatus
 from tests.a2a.test_application import Authenticator, Authority, Router
 
 HEADERS = {"Authorization": "Bearer verified", "Idempotency-Key": "send-key"}

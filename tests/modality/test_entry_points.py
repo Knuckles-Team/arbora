@@ -150,7 +150,7 @@ async def test_agents_run_maps_a_modality_refusal_to_a_typed_operation_refusal(
 async def test_a2a_message_model_keeps_text_bounds_and_takes_media() -> None:
     from pydantic import ValidationError
 
-    from arbora.a2a.models import A2AMessage
+    from arbora.api.domain.a2a.models import A2AMessage
 
     parsed = A2AMessage.model_validate(_audio_message())
     assert [i for i, _ in parsed.media_files()] == [1]

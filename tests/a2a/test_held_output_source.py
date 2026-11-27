@@ -17,15 +17,15 @@ from fastapi.testclient import TestClient
 from arbora.a2a.application import create_a2a_application
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.engine_deciders import HELD_ITEM_KIND
-from arbora.a2a.held_item_admission import HeldItemAdmitter
 from arbora.a2a.held_output_source import (
     HELD_REFS_LABEL,
     HeldOutputSource,
     bind_held_output,
     held_item_id,
 )
-from arbora.a2a.models import A2AArtifact
 from arbora.a2a.service import A2AService
+from arbora.api.domain.a2a.held_item_admission import HeldItemAdmitter
+from arbora.api.domain.a2a.models import A2AArtifact
 from arbora.run_origin import RunOriginRegistry
 from tests.a2a.test_application import Authenticator, Authority, Router, _send
 

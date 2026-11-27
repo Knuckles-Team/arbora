@@ -15,8 +15,8 @@ from typing import Any
 
 from pydantic import Field, field_validator
 
-from arbora.a2a.media_refs import MediaStoreUnavailable
-from arbora.a2a.parts import IMAGE_TYPES, MediaLimits, sniff_image_type
+from arbora.api.domain.a2a.media_refs import MediaStoreUnavailable
+from arbora.api.domain.a2a.parts import IMAGE_TYPES, MediaLimits, sniff_image_type
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
 from arbora.api.registry import OpSpec

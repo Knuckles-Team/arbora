@@ -15,7 +15,7 @@ from arbora.a2a.chain_composition import (
     compose_approval_chain,
     run_plan_binding,
 )
-from arbora.a2a.tool_action_admission import ToolActionAdmitter
+from arbora.api.domain.a2a.tool_action_admission import ToolActionAdmitter
 from arbora.api.invoke.plan import PlanBinding
 from arbora.core.claims import params_digest
 from tests.api._support import make_verified_caller  # noqa: F401

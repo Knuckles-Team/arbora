@@ -12,7 +12,7 @@ import secrets
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from arbora.a2a.models import A2AMessage, A2ARouteDecision, A2ATask
+from arbora.api.domain.a2a.models import A2AMessage, A2ARouteDecision, A2ATask
 
 from .doctor_support import _result
 

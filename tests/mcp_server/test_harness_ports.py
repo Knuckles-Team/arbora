@@ -12,7 +12,10 @@ from typing import Any
 import pytest
 from meristem.host_ports import HostPorts
 
-from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
+from arbora.api.domain.agent_host.host_port_adapters import (
+    HostPortsBinding,
+    HostPortsSlot,
+)
 from arbora.mcp_server import harness_ports
 from arbora.mcp_server.host_context import build_host_context
 from arbora.pin_lag.meristem import PinLagUnavailable

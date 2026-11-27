@@ -1,5 +1,13 @@
 """First-party Arbora unary A2A facade."""
 
+from arbora.api.domain.a2a.models import (
+    A2AAgentCard,
+    A2AListResult,
+    A2AMessage,
+    A2ARouteDecision,
+    A2ATask,
+)
+
 from .anonymous import (
     AnonymousCaller,
     AnonymousNativeReadPort,
@@ -20,13 +28,6 @@ from .authority import (
     A2ATaskAuthority,
     A2ATaskNotCancelable,
     WorkItemA2AAuthority,
-)
-from .models import (
-    A2AAgentCard,
-    A2AListResult,
-    A2AMessage,
-    A2ARouteDecision,
-    A2ATask,
 )
 from .routing import A2AAssemblyUnavailable, A2ARouter, OrchestratorA2ARouter
 from .sdk_app import AdmittedA2AApp, create_admitted_a2a_app

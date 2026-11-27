@@ -7,7 +7,7 @@ from dataclasses import replace
 
 import pytest
 
-from arbora.fleet.catalog_reader import (
+from arbora.api.domain.fleet.catalog_reader import (
     COMMONS_GRAPH,
     COMPONENT_CONTENT_SOURCE,
     COMPONENT_CURRENT_SOURCE,
@@ -297,7 +297,7 @@ def test_reader_skips_a_live_server_without_a_component(
     bare = replace(SERVER, server_id="srv:bare-mcp", name="bare-mcp")
     port = FakeFleetCatalogPort(server_pages=[server_page(SERVER, bare)])
 
-    with caplog.at_level("WARNING", logger="arbora.fleet.catalog_reader"):
+    with caplog.at_level("WARNING", logger="arbora.api.domain.fleet.catalog_reader"):
         catalog = asyncio.run(FleetCatalogReader(port).read())
 
     assert [server.registration for server in catalog.servers] == [SERVER]

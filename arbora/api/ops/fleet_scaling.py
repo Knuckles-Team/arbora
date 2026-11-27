@@ -15,6 +15,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from arbora.api.domain.fleet.scaling.inventory_writer import set_inventory
 from arbora.api.domain.fleet.scaling.scaling_authority import (
     ControllerRegistration,
     FailureDomain,
@@ -28,7 +29,6 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import bound_service, build_write_op
 from arbora.api.registry import Composite, Confirm, Effect, OpSpec, Verb
 from arbora.fleet.scaling.fleet_actuator import bind_request
-from arbora.fleet.scaling.inventory_writer import set_inventory
 from arbora.fleet.scaling.scaling_intent_reconciler import (
     ScaleIntentConflict,
     ScaleIntentRecord,

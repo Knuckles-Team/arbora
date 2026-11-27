@@ -100,7 +100,7 @@ def process_host_ports(
     evidence: RunEvidence,
 ) -> Any:
     """The ``HostPorts`` of one process run, or the ``PinLagUnavailable`` naming the gap."""
-    from arbora.agent_host.host_port_adapters import (
+    from arbora.api.domain.agent_host.host_port_adapters import (
         approval_waiter,
         bind_host_ports,
         decision_port,

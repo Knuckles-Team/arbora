@@ -128,17 +128,21 @@ def _validated_proposal_attribute(key: str, value: Any) -> str:
             raise ValueError("requester agent must be a bounded host name")
         return value
     if key == "proposal_reference":
-        from arbora.browser_control.browser_control_common import _identifier
+        from arbora.api.domain.browser_control.browser_control_common import (
+            checked_identifier,
+        )
 
-        return _identifier(_validated_reference(value))
+        return checked_identifier(_validated_reference(value))
     if key == "requester_run_reference":
-        from arbora.browser_control.browser_control_common import _opaque_ref
+        from arbora.api.domain.browser_control.browser_control_common import (
+            checked_opaque_ref,
+        )
 
-        return _opaque_ref(_validated_reference(value))
+        return checked_opaque_ref(_validated_reference(value))
     if key == "proposal_digest":
-        from arbora.browser_control.browser_control_common import _DIGEST
+        from arbora.api.domain.browser_control.browser_control_common import DIGEST
 
-        if not isinstance(value, str) or _DIGEST.fullmatch(value) is None:
+        if not isinstance(value, str) or DIGEST.fullmatch(value) is None:
             raise ValueError("proposal digest must be SHA-256")
         return value
     raise ValueError("unsupported proposal trace attribute")
