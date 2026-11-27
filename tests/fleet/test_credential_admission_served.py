@@ -9,7 +9,7 @@ import pytest
 
 from arbora.fleet import credential_admission as admission
 from arbora.fleet.credential_admission import CredentialRefusal, credentialed_call
-from arbora.gateway.credential_authority import CredentialAuthority
+from arbora.fleet.credential_authority import CredentialAuthority
 from tests.gateway._sdk_binding_double import PROFILE, decision, install
 from tests.gateway.test_credential_authority import _Grants, _Receipts
 

@@ -54,7 +54,7 @@ def booted(monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> dict[str, Any]:
 
     monkeypatch.setattr("medulla.generated.send_by_id", send_by_id)
     monkeypatch.setattr("arbora.pin_lag.medulla.require_methods", lambda *m: None)
-    monkeypatch.setattr("arbora.deployment.data_prep.data_prep_path", lambda: path)
+    monkeypatch.setattr("arbora.fleet.data_prep.data_prep_path", lambda: path)
     monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", "tcp://engine:7000")
     started: list[Any] = []
     monkeypatch.setattr(
@@ -117,7 +117,7 @@ def _boot_with(monkeypatch: pytest.MonkeyPatch, **extra: Any) -> Any:
         lambda self: started.append(self) or "thread",
     )
     monkeypatch.delenv("GRAPH_SERVICE_ENDPOINTS", raising=False)
-    monkeypatch.setattr("arbora.deployment.data_prep.data_prep_path", lambda: None)
+    monkeypatch.setattr("arbora.fleet.data_prep.data_prep_path", lambda: None)
     onboarding_module.start_fleet_onboarding(
         gateway=GatewayState(),
         engine=_engine(),

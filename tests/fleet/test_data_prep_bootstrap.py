@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from arbora.core.settings import data_prep_path
-from arbora.deployment.data_prep import (
+from arbora.fleet.data_prep import (
     DataPrepError,
     declare_data_prep,
     load_declarations,

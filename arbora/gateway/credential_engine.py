@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
-from arbora.gateway.credential_authority import CredentialAuthority
+from arbora.fleet.credential_authority import CredentialAuthority
 from arbora.pin_lag.medulla import require_methods
 
 GRANT_METHOD = "CheckResourceAccess"

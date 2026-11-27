@@ -11,7 +11,7 @@ import contextlib
 from collections.abc import AsyncIterator, Mapping
 from typing import Any
 
-from arbora.gateway.credential_authority import CredentialAuthority, CredentialDenied
+from arbora.fleet.credential_authority import CredentialAuthority, CredentialDenied
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
 

@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from arbora.gateway.credential_authority import CredentialAuthority, CredentialDenied
+from arbora.fleet.credential_authority import CredentialAuthority, CredentialDenied
 from arbora.pin_lag.unavailable import PinLagUnavailable
 from tests.gateway._sdk_binding_double import PROFILE, decision, install
 

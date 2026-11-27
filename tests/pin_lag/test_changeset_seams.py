@@ -16,6 +16,7 @@ from typing import Any
 
 import pytest
 
+from arbora.a2a.source_grant import SOURCE_GRANT_KEY, source_target
 from arbora.agent_host import changeset_seams as seams
 from arbora.agent_host.host_port_composition import PortBackends, compose_host_ports
 from arbora.api.domain.agent_host import host_port_adapters as adapters
@@ -32,21 +33,21 @@ GRANT = {"repository": "repo-a", "branch": "feature", "prefixes": ["src", "docs"
 
 @pytest.mark.spec("ARBORA-OPS-R894")
 def test_target_is_read_from_the_source_grant_on_the_work_item() -> None:
-    claim = {"metadata": {seams.SOURCE_GRANT_KEY: GRANT}}
-    assert seams.source_target(claim) == adapters.SourceTarget(
+    claim = {"metadata": {SOURCE_GRANT_KEY: GRANT}}
+    assert source_target(claim) == adapters.SourceTarget(
         "repo-a", "feature", ("src", "docs")
     )
     for broken in (
         None,
         {},
         {"metadata": {}},
-        {"metadata": {seams.SOURCE_GRANT_KEY: {**GRANT, "prefixes": []}}},
-        {"metadata": {seams.SOURCE_GRANT_KEY: {**GRANT, "prefixes": "src"}}},
-        {"metadata": {seams.SOURCE_GRANT_KEY: {**GRANT, "branch": ""}}},
-        {"metadata": {seams.SOURCE_GRANT_KEY: {**GRANT, "repository": 3}}},
-        {"metadata": {seams.SOURCE_GRANT_KEY: {**GRANT, "prefixes": ["src", 1]}}},
+        {"metadata": {SOURCE_GRANT_KEY: {**GRANT, "prefixes": []}}},
+        {"metadata": {SOURCE_GRANT_KEY: {**GRANT, "prefixes": "src"}}},
+        {"metadata": {SOURCE_GRANT_KEY: {**GRANT, "branch": ""}}},
+        {"metadata": {SOURCE_GRANT_KEY: {**GRANT, "repository": 3}}},
+        {"metadata": {SOURCE_GRANT_KEY: {**GRANT, "prefixes": ["src", 1]}}},
     ):
-        assert seams.source_target(broken) is None
+        assert source_target(broken) is None
 
 
 @pytest.mark.spec("ARBORA-OPS-R894")
@@ -139,7 +140,7 @@ def test_production_seams_read_the_run_owner_and_bind_both_ports(
 ) -> None:
     owner = SimpleNamespace(
         run_id="run:1",
-        claim={"metadata": {seams.SOURCE_GRANT_KEY: GRANT}},
+        claim={"metadata": {SOURCE_GRANT_KEY: GRANT}},
         session=SimpleNamespace(tenant="t1"),
     )
 
