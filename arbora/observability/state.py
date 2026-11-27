@@ -11,12 +11,13 @@ from __future__ import annotations
 import itertools
 import threading
 import time
-from collections import deque
+from collections import OrderedDict, deque
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
 __all__ = [
+    "Errors",
     "GatewayTrend",
     "Metrics",
     "RuntimeSignalBuffer",
@@ -398,6 +399,46 @@ class Metrics:
             return tuple(self._samplers)
 
 
+class Errors:
+    """The bounded store of sanitized failure detail and the durable sink behind it.
+
+    A detail is resolvable by its correlation id until the oldest entries age out.
+    An optional sink makes the detail durable past this process.
+    """
+
+    MAX_ENTRIES = 512
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._details: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        self._sink: Any = None
+
+    def keep(self, correlation_id: str, record: dict[str, Any]) -> None:
+        """Keep one detail; the oldest entries drop past the bound."""
+        with self._lock:
+            self._details[correlation_id] = record
+            self._details.move_to_end(correlation_id)
+            while len(self._details) > self.MAX_ENTRIES:
+                self._details.popitem(last=False)
+
+    def detail(self, correlation_id: str) -> dict[str, Any] | None:
+        """A copy of the stored detail, or ``None``."""
+        with self._lock:
+            record = self._details.get(correlation_id)
+            return None if record is None else dict(record)
+
+    def bind_sink(self, sink: Any) -> None:
+        """Bind (``None`` clears) the durable sink called as ``sink(id, record)``."""
+        with self._lock:
+            self._sink = sink
+
+    @property
+    def sink(self) -> Any:
+        """The bound durable sink, or ``None``."""
+        with self._lock:
+            return self._sink
+
+
 @dataclass(frozen=True, slots=True)
 class Observability:
     """Every owned observability object of one host process."""
@@ -406,3 +447,4 @@ class Observability:
     health: HealthState
     signals: Signals
     metrics: Metrics
+    errors: Errors

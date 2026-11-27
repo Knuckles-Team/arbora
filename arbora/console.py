@@ -42,6 +42,10 @@ def main() -> None:
     """Process composition root: inject concrete browser identity exactly once."""
     import sys
 
+    from arbora.observability.state import Errors
+    from arbora.security.error_surface import bind_errors
+
+    bind_errors(Errors())  # this command-line root owns the process's error store
     if print_usage_or_version(sys.argv[1:]):
         return
     if sys.argv[1:2] == ["token"]:

@@ -10,10 +10,9 @@ from __future__ import annotations
 
 import json
 import logging
-import threading
 import traceback
 import uuid
-from collections import OrderedDict
+from contextvars import ContextVar, Token
 from functools import lru_cache
 from importlib.resources import files
 from types import MappingProxyType
@@ -21,6 +20,7 @@ from typing import Any
 
 from scion_sdk.privacy import sanitize_for_persistence
 
+from arbora.observability.state import Errors
 from arbora.security.actor_context import ActorContext, current_actor
 from arbora.security.operation_result import OperationError, OperationResult
 
@@ -255,59 +255,36 @@ _FAILING_LAYER_PREFIXES: tuple[tuple[str, str], ...] = (
     ("medulla", "engine"),
 )
 
-#: Bounded, process-local, in-memory store of sanitized failure detail keyed by
-#: the SAME ``correlation_id`` already logged and returned to the caller as
-#: ``error.detail_ref`` — this is the "detail store" behind that reference.
-#: Bounded (never durable, never a leak vector: every entry is already
-#: sanitized before it is stored) so a busy process cannot grow it unbounded.
-#: This remains the primary, fastest-path source of truth for
-#: :func:`resolve_error_detail` (checked first); a registered
-#: :data:`_detail_persistence_sink` with a ``resolve`` method (D-24) is
-#: consulted only on a miss here — e.g. after a restart, or a resolve call
-#: served by a different replica than the one that recorded the failure. See
-#: :func:`register_detail_persistence_sink` for the durable-audit seam and
-#: ``meristem.observability.error_detail_sink.GraphErrorDetailSink``
-#: for the concrete KG-provenance backend wired through it.
-_DETAIL_STORE_MAX_ENTRIES = 512
-_detail_store: OrderedDict[str, dict[str, Any]] = OrderedDict()
-_detail_store_lock = threading.Lock()
-
-#: De-opinionated durability seam (CONCEPT:MERISTEM-KG.audit.error-detail-resolution):
-#: error_surface takes no position on the durable backend — a KG-provenance
-#: writer, a database, or nothing at all (the default, ``None``). When set,
-#: every recorded detail is ALSO handed to the sink, best-effort: a failing or
-#: unset sink never affects the in-process store or the caller's exception
-#: path (see :func:`_record_error_detail`). A sink that additionally exposes a
-#: ``resolve(correlation_id) -> dict | None`` method (duck-typed, not part of
-#: the required write contract) is also used as a read-back fallback by
-#: :func:`resolve_error_detail` (CONCEPT:MERISTEM-KG.audit.durable-error-detail).
-DetailPersistenceSink = Any  # Callable[[str, dict[str, Any]], None]
-_detail_persistence_sink: Any | None = None
+#: The one scope that holds the host's :class:`Errors` for code outside a request. It has
+#: no default: a read before an entry point set it refuses and never falls back to a
+#: global. A request reads the host it is served by; the host's entry points (composition
+#: start, each background service run, each command-line root) set it with
+#: :func:`bind_errors`.
+_ERRORS: ContextVar[Errors] = ContextVar("arbora_errors")
 
 
-def register_detail_persistence_sink(sink: Any | None) -> None:
-    """Register (or clear, with ``None``) a durable sink for recorded error detail.
+class ErrorsNotBound(RuntimeError):
+    """A failure was reported before any host entry point bound the error store."""
 
-    The sink is called as ``sink(correlation_id, record)`` with the SAME
-    sanitized bundle stored in-process. It is invoked best-effort: an
-    exception raised by the sink is logged (with its real cause, never
-    swallowed silently) and never propagated, so a broken durable backend can
-    never break the error-reporting path it is meant to observe. There is no
-    default implementation baked into this module — wiring a concrete backend
-    (``meristem.observability.error_detail_sink.GraphErrorDetailSink``,
-    a KG-provenance writer linking the detail to the failing operation's
-    ``:RunTrace``) is left to the process that wants durability past this
-    process's lifetime; see ``arbora.gateway.daemon.start_host_daemon``
-    for where the host daemon installs it.
 
-    If ``sink`` also defines ``resolve(correlation_id) -> dict | None``,
-    :func:`resolve_error_detail` uses it as a fallback when the in-process
-    store misses (D-24) — this is optional and duck-typed, so a plain write
-    callable (as every existing test/consumer already passes) remains valid
-    with no read-back capability.
-    """
-    global _detail_persistence_sink
-    _detail_persistence_sink = sink
+def bind_errors(errors: Errors) -> Token[Errors]:
+    """Bind the host's error store for this context; return the reset token."""
+    return _ERRORS.set(errors)
+
+
+def unbind_errors(token: Token[Errors]) -> None:
+    """Restore the scope :func:`bind_errors` replaced."""
+    _ERRORS.reset(token)
+
+
+def current_errors() -> Errors:
+    """The error store bound by the entry point, or refuse with :class:`ErrorsNotBound`."""
+    try:
+        return _ERRORS.get()
+    except LookupError:
+        raise ErrorsNotBound(
+            "no host entry point has bound the error store in this context"
+        ) from None
 
 
 def _infer_failing_layer(exc: BaseException) -> str:
@@ -378,19 +355,16 @@ def _record_error_detail(
         "traceback": sanitized_traceback,
         "tenant_id": _recording_actor_tenant(),
     }
-    with _detail_store_lock:
-        _detail_store[correlation_id] = record
-        _detail_store.move_to_end(correlation_id)
-        while len(_detail_store) > _DETAIL_STORE_MAX_ENTRIES:
-            _detail_store.popitem(last=False)
+    errors = current_errors()
+    errors.keep(correlation_id, record)
 
-    sink = _detail_persistence_sink
+    sink = errors.sink
     if sink is not None:
         try:
             sink(correlation_id, dict(record))
         except Exception:
             # A durable-audit sink is an OPTIONAL hardening seam (D-24, see
-            # register_detail_persistence_sink) — it must never turn a
+            # Errors.bind_sink) — it must never turn a
             # diagnostics side-channel into a second failure for the caller
             # whose original exception is already being reported. Logged with
             # the real cause (never swallowed silently), just not re-raised.
@@ -423,12 +397,12 @@ def resolve_error_detail(detail_ref: str) -> dict[str, Any] | None:
 
     if not detail_ref:
         return None
-    with _detail_store_lock:
-        record = _detail_store.get(detail_ref)
-        if record is not None:
-            return dict(record)
+    errors = current_errors()
+    record = errors.detail(detail_ref)
+    if record is not None:
+        return record
 
-    sink = _detail_persistence_sink
+    sink = errors.sink
     resolver = getattr(sink, "resolve", None)
     if not callable(resolver):
         return None
