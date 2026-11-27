@@ -184,6 +184,17 @@ def _with_finance_read_port(
     return {**bindings, "finance_read_port": FleetFinanceReadPort()}
 
 
+def _with_meeting_summarizer(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the meeting summarizer port over the governed fleet call (ARBORA-OPS-R065.3)."""
+    if bindings is None or "meeting_summarizer" in bindings:
+        return bindings
+    from arbora.api.ops.meeting_fleet import FleetMeetingSummarizer
+
+    return {**bindings, "meeting_summarizer": FleetMeetingSummarizer()}
+
+
 def _with_fleet_source_executor(
     bindings: Mapping[str, Any] | None,
     pool: Any,
@@ -1036,6 +1047,7 @@ def compose_served_invocation(
         }
     bindings = _with_a2a_peer_transport(bindings)
     bindings = _with_finance_read_port(bindings)
+    bindings = _with_meeting_summarizer(bindings)
     if bindings is not None and "identity_admin" not in bindings:
         # ARBORA-IDENTITY-R018.1: the identity operations reach the engine
         # through the one administration port of the composition root.
