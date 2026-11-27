@@ -388,10 +388,12 @@ def mcp_server(
         and invocation is None
     ):
         raise RuntimeError("EG browser requires the process-root identity factory")
+    from arbora.core.environment_manifest import enforce_startup
     from arbora.mcp_server.backing.server_factory import create_mcp_parser
     from arbora.mcp_server.serving_options import parse_serving_options
     from arbora.security.anonymous import validate_startup
 
+    enforce_startup()  # refuses before any listener, child process or engine call
     startup_args = parse_serving_options(create_mcp_parser)
     validate_startup(startup_args)
     early_session = None

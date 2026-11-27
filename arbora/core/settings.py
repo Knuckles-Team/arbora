@@ -1174,6 +1174,13 @@ def read_field(name: str) -> Any:
         return info.get_default(call_default_factory=True)
 
 
+def read_field_text(alias: str, text: str) -> Any:
+    """Validate one setting's text by its environment name; raises ``ValueError``."""
+    name = next(n for n, i in ArboraConfig.model_fields.items() if i.alias == alias)
+    info = ArboraConfig.model_fields[name]
+    return _adapter(name).validate_python(_structured_text(info.annotation, text))
+
+
 class _LiveConfig:
     """Attribute view over :class:`ArboraConfig` that reads at call time.
 
