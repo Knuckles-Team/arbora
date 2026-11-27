@@ -39,6 +39,18 @@ def _subapp_path(path: str) -> str:
     raise ValueError(f"operation HTTP path is outside /api/v1: {path}")
 
 
+#: Refusals whose reply tells the caller when to come back (R001.5 of the
+#: adaptive-capacity spec: a throttled call retries after one second).
+_RETRY_AFTER_S = {"CAPACITY_THROTTLED": "1"}
+
+
+def _refusal_headers(code: str) -> dict[str, str]:
+    headers = {"Cache-Control": "no-store"}
+    if code in _RETRY_AFTER_S:
+        headers["Retry-After"] = _RETRY_AFTER_S[code]
+    return headers
+
+
 def _outcome_response(
     outcome: Any, op: Any, *, digest: str, request_id: str
 ) -> JSONResponse:
@@ -52,7 +64,7 @@ def _outcome_response(
             registry_digest=digest,
         )
         return JSONResponse(
-            payload, status_code=status, headers={"Cache-Control": "no-store"}
+            payload, status_code=status, headers=_refusal_headers(outcome.code)
         )
     value = getattr(outcome, "value", outcome)
     meta = {"registry_digest": digest, "api_version": "v1"}

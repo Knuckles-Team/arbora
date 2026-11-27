@@ -168,6 +168,7 @@ def build(
     return consumer, fence, dispatcher, queue, events, now
 
 
+@pytest.mark.spec("ARBORA-A2A-R002.2.3.3")
 def test_active_caller_runs_marks_effect_first_and_acknowledges() -> None:
     consumer, fence, dispatcher, queue, _events, _now = build()
     [delivery] = consumer.run_once()
@@ -176,6 +177,7 @@ def test_active_caller_runs_marks_effect_first_and_acknowledges() -> None:
     assert queue.acked == ["job-1"]
 
 
+@pytest.mark.spec("ARBORA-A2A-R002.2.3.3")
 @pytest.mark.parametrize(
     ("state", "reason"),
     [
@@ -201,6 +203,7 @@ def test_revoked_or_expired_caller_makes_no_effect_and_is_acknowledged(
     assert queue.acked == ["job-1"]
 
 
+@pytest.mark.spec("ARBORA-A2A-R002.2.3.3")
 def test_unknown_delegation_refuses_as_revoked() -> None:
     consumer, fence, dispatcher, queue, _e, _n = build()
     consumer._guarded._read = lambda ref: None  # the engine answers DELEGATION_UNKNOWN
@@ -209,6 +212,7 @@ def test_unknown_delegation_refuses_as_revoked() -> None:
     assert dispatcher.executions == 0 and queue.acked == ["job-1"]
 
 
+@pytest.mark.spec("ARBORA-A2A-R002.2.3.4")
 def test_marker_refusal_starts_no_effect() -> None:
     fence = Fence()
     fence.lose_marker = True
@@ -218,6 +222,7 @@ def test_marker_refusal_starts_no_effect() -> None:
     assert dispatcher.executions == 0 and queue.acked == []
 
 
+@pytest.mark.spec("ARBORA-A2A-R002.2.3.4")
 def test_crash_after_effect_reconciles_without_repeat() -> None:
     consumer, fence, dispatcher, queue, events, now = build()
     dispatcher.crash = True
@@ -244,6 +249,7 @@ def test_crash_after_effect_reconciles_without_repeat() -> None:
     assert fence.committed == [(True, "receipt:1")] and queue.acked == ["job-1"]
 
 
+@pytest.mark.spec("ARBORA-A2A-R002.2.3.4")
 def test_foreign_lookup_result_does_not_settle_an_uncertain_item() -> None:
     consumer, fence, dispatcher, queue, _e, _n = build()
     fence.row["effect_phase"] = "started"
@@ -253,6 +259,7 @@ def test_foreign_lookup_result_does_not_settle_an_uncertain_item() -> None:
     assert fence.committed == [] and queue.acked == []
 
 
+@pytest.mark.spec("ARBORA-A2A-R002.2.3.5")
 def test_duplicate_delivery_executes_once() -> None:
     consumer, fence, dispatcher, queue, _e, _n = build()
     consumer.run_once()
@@ -262,6 +269,7 @@ def test_duplicate_delivery_executes_once() -> None:
     assert queue.acked == ["job-1", "job-1"]
 
 
+@pytest.mark.spec("ARBORA-A2A-R002.2.3.5")
 def test_claimed_elsewhere_is_skipped_not_acknowledged() -> None:
     consumer, fence, dispatcher, queue, _e, _n = build()
     fence.held = True

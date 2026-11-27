@@ -69,6 +69,40 @@ def _without_observation(record: Mapping[str, Any]) -> Mapping[str, Any]:
     return {**record, "inputs": {**inputs, "params": kept}}
 
 
+async def verdict(
+    decide: Decide,
+    *,
+    tenant: str,
+    principal: str,
+    graph: str,
+    feature_schema: Mapping[str, Any],
+    proposal: Mapping[str, Any],
+) -> str:
+    """The engine's answer to one proposal: ``allow`` or ``refuse:<CODE>``.
+
+    The record must echo exactly this request (``check_receipt``), so a verdict
+    for other revisions or another digest is a ``RECEIPT_MISMATCH``.
+    """
+    from medulla.decision_client import DeclaredOption, decide_request, declared, param
+
+    missing = [name for name in BOUND_FIELDS if not proposal.get(name)]
+    if missing:
+        raise OperationRefused("INVALID_ARGUMENT", {"missing": missing})
+    request = decide_request(
+        tenant,
+        (CAPACITY_QUESTION_ID, "capacity_proposal", "ordinary"),
+        declared([DeclaredOption("verdict")]),
+        feature_schema,
+        params=[
+            param("graph", "text", graph),
+            param("proposal", "text", json.dumps(dict(proposal), sort_keys=True)),
+        ],
+    )
+    record = single_record(await decide(request))
+    check_receipt(_without_observation(record), request, principal)
+    return _answer(record)
+
+
 async def actuate(
     decide: Decide,
     invoke: StepInvoke,
@@ -84,30 +118,18 @@ async def actuate(
 ) -> dict[str, Any]:
     """Evaluate, actuate once on ``allow``, and return the applied-state receipt.
 
-    The record must echo exactly this request (``check_receipt``), so a verdict
-    for other revisions or another digest is a ``RECEIPT_MISMATCH``. A ``refuse``
-    verdict, a stale premise or a mismatch actuates nothing and returns the
-    engine reason code.
+    A ``refuse`` verdict, a stale premise or a mismatch actuates nothing and
+    returns the engine reason code.
     """
-    from medulla.decision_client import DeclaredOption, decide_request, declared, param
-
-    missing = [name for name in BOUND_FIELDS if not proposal.get(name)]
-    if missing:
-        raise OperationRefused("INVALID_ARGUMENT", {"missing": missing})
-    digest = str(proposal["proposal_digest"])
-    request = decide_request(
-        tenant,
-        (CAPACITY_QUESTION_ID, "capacity_proposal", "ordinary"),
-        declared([DeclaredOption("verdict")]),
-        feature_schema,
-        params=[
-            param("graph", "text", graph),
-            param("proposal", "text", json.dumps(dict(proposal), sort_keys=True)),
-        ],
+    answer = await verdict(
+        decide,
+        tenant=tenant,
+        principal=principal,
+        graph=graph,
+        feature_schema=feature_schema,
+        proposal=proposal,
     )
-    record = single_record(await decide(request))
-    check_receipt(_without_observation(record), request, principal)
-    answer = _answer(record)
+    digest = str(proposal["proposal_digest"])
     if answer != "allow":
         code = (
             answer.removeprefix("refuse:") if answer.startswith("refuse:") else answer

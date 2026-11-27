@@ -42,16 +42,46 @@ async def require_autonomy_clearance(
     return OpError("UNAVAILABLE", {"reason": "autonomy_verdict_unavailable"})
 
 
-def engine_verdict(context_for: Callable[[str], Any]) -> AskVerdict:
-    """The production ``AskVerdict`` over the engine ``Decide`` method."""
-    from arbora.api.ops._decide import decide_record
+#: ``send(method, params, tenant)`` reaches the engine as the host service identity.
+VerdictSend = Callable[[str, dict[str, Any], str], Awaitable[Any]]
+
+
+def engine_verdict(send: VerdictSend) -> AskVerdict:
+    """The production ``AskVerdict`` over the engine ``Decide`` method.
+
+    The host composes it from the same service-identity engine send the approval gate
+    question uses (ARBORA-OPS-R867): one door, no second engine path.
+    """
+    from arbora.api.ops._decide import record_of
 
     async def ask(op_id: str, tenant: str) -> dict[str, Any]:
-        return await decide_record(
-            context_for(tenant), "AutonomyVerdict", {"action_class": op_id}
-        )
+        request = {
+            "tenant_id": tenant,
+            "question": {"kind": "autonomy_verdict", "action_class": op_id},
+        }
+        return record_of(await send("Decide", {"request": request}, tenant))
 
     return ask
 
 
-__all__ = ["AskVerdict", "engine_verdict", "require_autonomy_clearance"]
+def served_autonomy(send: VerdictSend) -> dict[str, AskVerdict]:
+    """The ``InvokeServices`` change that composes the gate, or none.
+
+    The gate is composed once the pinned engine contract names the ``autonomy_verdict``
+    question (PIN-LAG), so a release without it never fails every effect closed.
+    """
+    from arbora.pin_lag.medulla import question_kind_served
+
+    return (
+        {"autonomy": engine_verdict(send)}
+        if question_kind_served("autonomy_verdict")
+        else {}
+    )
+
+
+__all__ = [
+    "AskVerdict",
+    "engine_verdict",
+    "require_autonomy_clearance",
+    "served_autonomy",
+]

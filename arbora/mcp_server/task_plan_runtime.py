@@ -9,7 +9,7 @@ from dataclasses import replace
 from importlib import import_module
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from pydantic_ai import Agent
 from pydantic_ai.usage import RunUsage, UsageLimits
 
@@ -31,6 +31,18 @@ class Proposal(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     tasks: list[ProposedTask] = Field(min_length=1, max_length=64)
     output_task_id: str = Field(min_length=1, max_length=128)
+
+
+#: The planner asks for text that is the plan's JSON object. The plan's own schema is
+#: in the request, so every id (``task_id``, ``depends_on`` items, ``output_task_id``)
+#: is a string; nothing coerces another type to text (ARBORA-A2A-R026).
+PLANNER_INSTRUCTIONS = (
+    "Return only a JSON object with tasks and output_task_id. Each task has task_id, "
+    "prompt, depends_on. Produce a finite dependency DAG, all tasks contributing to the "
+    "output. Do not include authority, budgets, policy or limits. Every id is a JSON "
+    "string. The object must satisfy this JSON schema: "
+    + json.dumps(Proposal.model_json_schema(), sort_keys=True, separators=(",", ":"))
+)
 
 
 def _contracts() -> tuple[Any, Any]:
@@ -190,13 +202,24 @@ def _unique_proposal_fields(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return value
 
 
+def _validated_proposal(output: str) -> dict[str, Any]:
+    try:
+        return Proposal.model_validate(
+            json.loads(output, object_pairs_hook=_unique_proposal_fields)
+        ).model_dump()
+    except ValidationError as invalid:
+        # Field paths only: the model's values never reach the refusal (R026).
+        paths = sorted(
+            ".".join(str(part) for part in e["loc"]) for e in invalid.errors()
+        )
+        raise OperationRefused("TASK_PLAN_INVALID", {"fields": paths}) from None
+
+
 def _decode_proposal(output: str) -> dict[str, Any]:
     """Bound untrusted model output and reject duplicate keys before validation."""
     if len(output.encode("utf-8")) > 524288:
         raise OperationRefused("INVALID_ARGUMENT", {"field": "task_plan"})
-    return Proposal.model_validate(
-        json.loads(output, object_pairs_hook=_unique_proposal_fields)
-    ).model_dump()
+    return _validated_proposal(output)
 
 
 def _planning_limits(config: Any, budget: Any) -> tuple[int, int]:
@@ -244,7 +267,7 @@ async def admitted_run_plan(request: Any, base: Any, owner: Any) -> Any:
                 resolve_model(base.model),
                 output_type=str,
                 retries=0,
-                instructions="Return only a JSON object with tasks and output_task_id. Each task has task_id, prompt, depends_on. Produce a finite dependency DAG, all tasks contributing to the output. Do not include authority, budgets, policy or limits.",
+                instructions=PLANNER_INSTRUCTIONS,
                 model_settings={"max_tokens": min(tokens, 16384)},
             )
             result = await planner.run(

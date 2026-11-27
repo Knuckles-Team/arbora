@@ -229,6 +229,9 @@ class WorkItemA2AAuthority:
         self._detached: set[asyncio.Task[Any]] = set()
         self.task_plan_config = task_plan_config
         self.hosted_invocation = hosted_invocation
+        #: Writes the team records and applies the coordination decision at admission
+        #: (ARBORA-OPS-R877); ``None`` until the host binds one.
+        self.team: Any = None
 
     def provision_capacity(self, request: Any) -> Any:
         """Provision instances for a run before its dispatch (ARBORA-FLEET-R024.6)."""
@@ -1233,6 +1236,28 @@ class WorkItemA2AAuthority:
             "created": created,
         }
 
+    async def _with_team(
+        self,
+        metadata: dict[str, Any],
+        session: Any,
+        message: A2AMessage,
+        task_id: str,
+        owner_ref: str,
+        decision: A2ARouteDecision,
+    ) -> dict[str, Any]:
+        """The one team-coordination hook of ``dispatch`` (ARBORA-OPS-R877)."""
+        if self.team is None:
+            return metadata
+        record = await self.team(
+            session,
+            message,
+            task_id,
+            owner_ref,
+            decision.agent_name,
+            int(self.clock() * 1000),
+        )
+        return {**metadata, "a2a_team": record}
+
     async def dispatch(
         self,
         *,
@@ -1268,6 +1293,9 @@ class WorkItemA2AAuthority:
         )
         if harness is not None:
             metadata["a2a_harness"] = harness_metadata(harness)
+        metadata = await self._with_team(
+            metadata, session, message, task_id, owner_ref, decision
+        )
         from arbora.access.task_guard import screen_and_redact_agent_task
 
         description = screen_and_redact_agent_task(message.task_text())
