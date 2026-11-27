@@ -18,7 +18,7 @@ from pydantic import Field
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, bound_service, build_read_op
-from arbora.api.ops._engine import decode, engine_send
+from arbora.api.ops.engine_calls import decode, engine_send
 from arbora.api.ops.knowledge import EngineReply
 from arbora.api.ops.source import SourceReader
 from arbora.api.ops.workstreams import _props

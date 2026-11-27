@@ -15,7 +15,7 @@ import msgpack
 from pydantic import BaseModel, ConfigDict, Field
 
 from arbora.api.ops._common import Params, bound_service, build_read_op, build_write_op
-from arbora.api.ops._engine import engine_send
+from arbora.api.ops.engine_calls import engine_send
 from arbora.api.registry import AuditClass, OpSpec, Verb
 from arbora.pin_lag.medulla import guard_field, send_main
 
@@ -413,7 +413,7 @@ async def handle_retrieval_context_search(
         require_methods("RetrievalContextSearch")
     except PinLagUnavailable as missing:
         raise refusal(missing) from missing
-    from arbora.api.ops import _engine
+    from arbora.api.ops import engine_calls as _engine
 
     request: dict[str, Any] = {
         "schema_version": 1,

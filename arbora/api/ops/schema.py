@@ -5,7 +5,7 @@
 under the ``owl:read`` scope; the engine redacts importer principals and lease ids
 from that view and Arbora returns it as sent. ``GraphSchema`` stays the admin
 write and is never bound here. An engine without ``GraphSchemaGet`` refuses
-``UNAVAILABLE`` through :func:`arbora.api.ops._engine.engine_send`.
+``UNAVAILABLE`` through :func:`arbora.api.ops.engine_calls.engine_send`.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from typing import Any
 from pydantic import ConfigDict, Field
 
 from arbora.api.ops._common import Params, build_read_op
-from arbora.api.ops._engine import engine_send, unavailable
+from arbora.api.ops.engine_calls import engine_send, unavailable
 from arbora.api.registry import OpSpec
 
 

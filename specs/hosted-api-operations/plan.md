@@ -1100,7 +1100,7 @@ The values come from `.pre-commit-config.yaml` and `pyproject.toml`.
 - Dispatch on an operation is a table from operation id to engine method and op name. No handler branches on the operation id.
 - A request is one pydantic model or one dataclass. `HookRequest` and `DeliveryRequest` replace argument lists.
 - A function takes at most one boolean parameter. Use an enum such as `HookPoint` otherwise.
-- Each new concern has its own file under 900 lines. Hooks live in `arbora/api/invoke/hooks.py`. Participant operations live in `arbora/api/ops/participants.py`. Assistant operations live in `arbora/api/ops/assistants.py`. The engine send helper lives in `arbora/api/ops/_engine.py`.
+- Each new concern has its own file under 900 lines. Hooks live in `arbora/api/invoke/hooks.py`. Participant operations live in `arbora/api/ops/participants.py`. Assistant operations live in `arbora/api/ops/assistants.py`. The engine send helper lives in `arbora/api/ops/engine_calls.py`.
 - Reuse these helpers and write no near-copy: `build_read_op`, `build_write_op`, `Params`, the span masker of `arbora/security/log_redaction.py`, `Registry.get`, `_typed_refusal` and the KV calls of `arbora/api/ops/memory.py`.
 - Register every module where the wiring gate sees it: `registry_factory.py` for operation modules and `InvokeServices` for the hook chain.
 

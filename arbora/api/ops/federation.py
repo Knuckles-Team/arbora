@@ -22,7 +22,7 @@ from arbora.api.ops._common import (
     build_read_op,
     build_write_op,
 )
-from arbora.api.ops._engine import engine_send, unavailable
+from arbora.api.ops.engine_calls import engine_send, unavailable
 from arbora.api.registry import OpSpec, Verb
 from arbora.api.registry.spec import SOURCE_AUTHORITY
 

@@ -624,7 +624,7 @@ class EngineEnrich:
     context: Any
 
     async def _send(self, method: str, params: dict[str, Any]) -> Any:
-        from arbora.api.ops._engine import engine_send
+        from arbora.api.ops.engine_calls import engine_send
 
         try:
             return await engine_send(self.context, method, params)

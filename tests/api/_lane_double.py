@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from arbora.api.ops import _engine
+from arbora.api.ops import engine_calls as _engine
 
 Answer = Any | Callable[[Any], Any]
 

@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from arbora.api.ops import _question
+from arbora.api.ops import question_round as _question
 from arbora.api.ops.security_eval import (
     EngineSecurityEvaluation,
     EvaluationCatalog,

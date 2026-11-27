@@ -18,7 +18,7 @@ from typing import Any
 
 import msgpack
 
-from arbora.api.ops._engine import decode
+from arbora.api.ops.engine_calls import decode
 from arbora.messaging.action_dispatch import (
     NotificationSpec,
     Notifier,

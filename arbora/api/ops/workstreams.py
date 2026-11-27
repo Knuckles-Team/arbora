@@ -20,7 +20,7 @@ from pydantic import Field
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
-from arbora.api.ops._engine import decode, engine_send
+from arbora.api.ops.engine_calls import decode, engine_send
 from arbora.api.registry import Confirm, OpSpec, Verb
 
 #: EG replays each write by its idempotency key, so the engine owns replay.

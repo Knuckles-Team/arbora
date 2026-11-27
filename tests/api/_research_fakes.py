@@ -195,7 +195,7 @@ def _patch_engine(monkeypatch: Any) -> None:
     """Serve the research methods through the recording client."""
     import medulla.generated as generated
 
-    from arbora.api.ops import _engine
+    from arbora.api.ops import engine_calls as _engine
 
     methods = {"SelectWebPages", "EnrichDocument", "ConnectorPack"}
     monkeypatch.setattr(

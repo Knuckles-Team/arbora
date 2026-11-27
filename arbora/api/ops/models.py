@@ -17,7 +17,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from arbora.api.ops._common import Params, build_read_op
-from arbora.api.ops._engine import decode, engine_send
+from arbora.api.ops.engine_calls import decode, engine_send
 from arbora.api.registry import OpSpec
 
 #: The engine label of the model profile components.

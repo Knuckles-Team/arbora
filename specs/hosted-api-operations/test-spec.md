@@ -133,11 +133,11 @@ The emitted-client fixture is not this acceptance.
 | Wiring | `ARBORA-OPS-R067.4` | `tests/api/test_research_web_served.py::test_served_invoke_reaches_handler`: A served call reaches the handler. |
 | Refusal | `ARBORA-OPS-R067.5` | `tests/api/test_research_ops.py::test_research_web_refusals`: Each case returns its code and enqueues nothing. |
 | Evidence | `ARBORA-OPS-R067.6` | `tests/api/test_research_ops.py::test_trace_names_decision_and_backends`: The trace holds the fields and no page text. |
-| Hot-path proof | `ARBORA-OPS-R067.7` | `tests/gateway/test_research_web_served.py::test_research_web_default_archivebox_and_fallback`: Three served calls store equal Documents and cite the backend. |
+| Hot-path proof | `ARBORA-OPS-R067.7` | `tests/api/test_research_web_served.py::test_research_web_default_archivebox_and_fallback`: Three served calls store equal Documents and cite the backend. |
 | Admission | `ARBORA-OPS-R067.10` | Planned `tests/gateway/test_web_conformance_admission.py`: the served path accepts an exact current EG record. Missing, stale, revoked, mismatched and cross-tenant records cause zero backend calls. |
 | Bound | `ARBORA-OPS-R067.9` | `tests/api/test_research_web_backends.py::test_hanging_archivebox_times_out_and_falls_back`: A backend that never answers fails with `timeout` and the other backend serves the page. |
 
-Hot-path proof for `ARBORA-OPS-R067`: `tests/gateway/test_research_web_served.py::test_research_web_default_archivebox_and_fallback`.
+Hot-path proof for `ARBORA-OPS-R067`: `tests/api/test_research_web_served.py::test_research_web_default_archivebox_and_fallback`.
 
 ## Connector sources (ARBORA-OPS-R020.6)
 
@@ -201,8 +201,8 @@ Test the actual serving-root binding and contextual read path. Cover concurrent 
 | `ARBORA-OPS-R852.1` | `tests/api/test_harness_promotion_ops.py::test_registry_lists_three_operations` |
 | `ARBORA-OPS-R852.2` | `tests/api/test_harness_promotion_ops.py::test_promote_rollback_round_trip` |
 | `ARBORA-OPS-R853` | See each child. |
-| `ARBORA-OPS-R853.1` | `tests/api/test_lifecycle_ops.py::test_registry_lists_lifecycle_operations` |
-| `ARBORA-OPS-R853.2` | `tests/api/test_lifecycle_ops.py::test_defect_to_deployment_trace` |
+| `ARBORA-OPS-R853.1` | `tests/api/test_lifecycle_ops_served.py::test_registry_lists_lifecycle_operations` |
+| `ARBORA-OPS-R853.2` | `tests/api/test_lifecycle_ops_served.py::test_defect_to_deployment_trace` |
 | `ARBORA-OPS-R854` | See each child. |
 | `ARBORA-OPS-R854.1` | `tests/api/test_retrieval_ops.py::test_feedback_and_scope_operations_listed` |
 | `ARBORA-OPS-R854.2` | `tests/api/test_retrieval_ops.py::test_scope_and_feedback_served` |

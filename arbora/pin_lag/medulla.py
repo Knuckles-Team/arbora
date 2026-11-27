@@ -45,7 +45,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._engine import engine_send
+from arbora.api.ops.engine_calls import engine_send
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
 __all__ = [
@@ -271,7 +271,7 @@ async def send_main(
     """Send one engine ``main`` method as the verified caller, or refuse ``UNAVAILABLE``.
 
     The refusal names the first method or request shape the pinned release lacks. The
-    guard is the whole difference from :func:`arbora.api.ops._engine.engine_send`; delete
+    guard is the whole difference from :func:`arbora.api.ops.engine_calls.engine_send`; delete
     the call's ``models`` and this wrapper with the re-pin that carries them.
     """
     guard(method, models=models)

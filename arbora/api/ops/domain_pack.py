@@ -16,7 +16,7 @@ from pydantic import Field, ValidationError
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
-from arbora.api.ops._engine import engine_send, unavailable
+from arbora.api.ops.engine_calls import engine_send, unavailable
 from arbora.api.registry import OpSpec
 
 DOMAINS = ("human-resources", "legal", "medical", "government")

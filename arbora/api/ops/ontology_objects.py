@@ -14,7 +14,7 @@ Handlers group by the engine surface they ride on and hold no state:
 - ``interfaces.*`` read the marker on the engine schema class rows.
 
 ``functions.invoke`` is a name for a registered function operation: the target
-runs through the invoke pipeline under its own scope (``arbora.api.ops._nested``).
+runs through the invoke pipeline under its own scope (``arbora.api.ops.nested_invoke``).
 """
 
 from __future__ import annotations
@@ -28,11 +28,11 @@ from pydantic import Field
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op, build_write_op
-from arbora.api.ops._engine import engine_send, unavailable
-from arbora.api.ops._nested import invoke_registered
 from arbora.api.ops._pending import refuse_unavailable
+from arbora.api.ops.engine_calls import engine_send, unavailable
 from arbora.api.ops.knowledge import EngineReply
 from arbora.api.ops.memory import _decode, _encode, _payload, _send
+from arbora.api.ops.nested_invoke import invoke_registered
 from arbora.api.registry import Effect, OpSpec, Verb
 
 handle_unserved = refuse_unavailable

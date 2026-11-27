@@ -18,7 +18,7 @@ from pydantic import Field, ValidationError
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
-from arbora.api.ops._question import (
+from arbora.api.ops.question_round import (
     FamilyRefusal,
     advisory_scores,
     chosen_option,

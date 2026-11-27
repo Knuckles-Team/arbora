@@ -19,7 +19,7 @@ from pydantic import Field
 
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.ops._common import Params, build_read_op, build_write_op
-from arbora.api.ops._engine import engine_send, unavailable
+from arbora.api.ops.engine_calls import engine_send, unavailable
 from arbora.api.ops.knowledge import EngineReply
 from arbora.api.ops.skills_eval import decide_as_caller
 from arbora.api.registry import OpSpec, Verb

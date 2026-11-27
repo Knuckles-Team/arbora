@@ -131,7 +131,7 @@ class CapacityAdjustResult(BaseModel):
 
 async def _read_back(context: Any, cell_id: str) -> dict[str, int]:
     """The cell's capacity and headroom as the engine reports them after the step."""
-    from arbora.api.ops._engine import engine_send
+    from arbora.api.ops.engine_calls import engine_send
 
     status = await engine_send(
         context,
@@ -147,7 +147,7 @@ async def _read_back(context: Any, cell_id: str) -> dict[str, int]:
     )
     cells = status.get("cells") if isinstance(status, Mapping) else None
     if not cells:
-        from arbora.api.ops._engine import unavailable
+        from arbora.api.ops.engine_calls import unavailable
 
         raise unavailable("the engine reports no capacity cell for the resource")
     held = sum(
@@ -170,8 +170,8 @@ async def handle_capacity_adjust_apply(
     from arbora.api.invoke.bootstrap import caller_dispatch_graph
     from arbora.api.invoke.pipeline import OperationRefused
     from arbora.api.invoke.steps import claim_values
-    from arbora.api.ops._engine import refusal_code
     from arbora.api.ops.deploy import deploy_config_of, feature_schema_of
+    from arbora.api.ops.engine_calls import refusal_code
     from arbora.deployment.assembly import require_confirmed_plan
     from arbora.deployment.capacity_actuation import actuate
     from arbora.security.anonymous import client_scope

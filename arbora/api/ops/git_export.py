@@ -19,7 +19,7 @@ from pydantic import Field
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params
-from arbora.api.ops._engine import unavailable
+from arbora.api.ops.engine_calls import unavailable
 from arbora.api.ops.source import _read_op
 from arbora.api.registry import OpSpec
 from arbora.pin_lag.medulla import send_main

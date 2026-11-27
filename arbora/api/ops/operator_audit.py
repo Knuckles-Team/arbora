@@ -59,7 +59,7 @@ class EngineOperatorAudit:
     async def record_withheld(
         self, context: Any, *, withheld: int, request_id: str
     ) -> None:
-        from arbora.api.ops._engine import engine_send
+        from arbora.api.ops.engine_calls import engine_send
         from arbora.pin_lag.medulla import operator_audit_missing
 
         if operator_audit_missing() is not None:
@@ -79,7 +79,7 @@ class EngineOperatorAudit:
         )
 
     async def read(self, context: Any, *, request_id: str) -> Mapping[str, Any] | None:
-        from arbora.api.ops._engine import engine_send
+        from arbora.api.ops.engine_calls import engine_send
         from arbora.pin_lag.medulla import (
             PinLagUnavailable,
             operator_audit_missing,

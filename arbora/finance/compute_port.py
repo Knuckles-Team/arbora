@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
-from arbora.api.ops._engine import engine_send
+from arbora.api.ops.engine_calls import engine_send
 
 __all__ = ["COMPUTE_METHODS", "EngineMarketComputePort", "MarketComputePort"]
 

@@ -16,7 +16,7 @@ from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._engine import engine_send
+from arbora.api.ops.engine_calls import engine_send
 from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
 
 NAMESPACE = "model.route"

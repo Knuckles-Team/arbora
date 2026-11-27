@@ -15,7 +15,7 @@ from typing import Any, Literal
 from pydantic import Field
 
 from arbora.api.ops._common import Params, build_read_op
-from arbora.api.ops._engine import engine_send, unavailable
+from arbora.api.ops.engine_calls import engine_send, unavailable
 from arbora.api.registry import OpSpec
 
 ReceiptKind = Literal["alert_delivery", "schedule_run", "dca_proposal"]

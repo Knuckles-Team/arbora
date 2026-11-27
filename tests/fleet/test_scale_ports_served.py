@@ -84,7 +84,7 @@ def verdicts(monkeypatch: pytest.MonkeyPatch) -> Engine:
         return "graph:t1"
 
     declare_scale_builder(monkeypatch)
-    monkeypatch.setattr("arbora.api.ops._engine.engine_send", verdict)
+    monkeypatch.setattr("arbora.api.ops.engine_calls.engine_send", verdict)
     monkeypatch.setattr("arbora.api.invoke.bootstrap.caller_dispatch_graph", graph)
     return verdict
 
@@ -265,7 +265,7 @@ def test_reconcile_served_through_invoke_acts_only_on_the_engine_verdict(
     loopback: Any,  # noqa: F811
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from arbora.api.ops import _engine
+    from arbora.api.ops import engine_calls as _engine
 
     monkeypatch.setattr(work_items, "_session", Session)
     declare_scale_builder(monkeypatch)

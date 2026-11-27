@@ -15,7 +15,7 @@ from typing import Any
 from pydantic import Field, ValidationError, field_validator
 
 from arbora.api.ops import _common
-from arbora.api.ops._engine import engine_send, unavailable
+from arbora.api.ops.engine_calls import engine_send, unavailable
 from arbora.api.registry import OpSpec
 
 #: The engine method that publishes the limits (MEDULLA FOR ARBORA, see the gaps ledger).

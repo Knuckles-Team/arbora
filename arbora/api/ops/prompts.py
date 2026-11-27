@@ -281,8 +281,8 @@ async def handle_prompts_active_get(
     The agent defaults to the caller's session agent. The body is the engine
     component the entry's ``system_prompt`` names; arbora holds none of it.
     """
-    from arbora.api.ops._engine import engine_send
     from arbora.api.ops.agent_library import _current
+    from arbora.api.ops.engine_calls import engine_send
 
     agent_id = params.get("agent_id") or getattr(context.caller, "agent_id", None)
     if not agent_id:

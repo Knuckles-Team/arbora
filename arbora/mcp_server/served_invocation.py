@@ -668,7 +668,7 @@ def _delegated_subject_check(
     async def wire(method: str, params: dict[str, Any]) -> Any:
         from medulla.generated import send_by_id
 
-        from arbora.api.ops._engine import decode
+        from arbora.api.ops.engine_calls import decode
 
         client = await pool.connected_client(
             connect_context(str(session().tenant)), graph
@@ -707,7 +707,7 @@ def _with_finance_change_ports(
     async def wire(method: str, params: dict[str, Any]) -> Any:
         from medulla.generated import send_by_id
 
-        from arbora.api.ops._engine import decode
+        from arbora.api.ops.engine_calls import decode
 
         return decode(await send_by_id(await client(), method, params, graph))
 
@@ -1329,7 +1329,7 @@ def compose_served_invocation(
         """The engine as the service identity, for the approval gate question."""
         from medulla.generated import send_by_id
 
-        from arbora.api.ops._engine import decode
+        from arbora.api.ops.engine_calls import decode
         from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
 
         try:

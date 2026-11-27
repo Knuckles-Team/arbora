@@ -125,8 +125,8 @@ class EngineRetrievalPlan:
     async def plan(self, context: Any, *, query_count: int) -> RetrievalPlan:
         from medulla import decision_client as dc
 
-        from arbora.api.ops._question import decide_question, question_request
         from arbora.api.ops.plans import _feature_schema
+        from arbora.api.ops.question_round import decide_question, question_request
 
         request = question_request(
             str(context.caller.tenant),
@@ -157,8 +157,8 @@ class _RequestRetriever:
     async def search(
         self, *, tenant: str, query: str, context_budget: int
     ) -> RetrievalSearchOutcome:
-        from arbora.api.ops import _engine
-        from arbora.api.ops._engine import engine_send
+        from arbora.api.ops import engine_calls as _engine
+        from arbora.api.ops.engine_calls import engine_send
         from arbora.api.ops.retrieval import MAX_SPANS
         from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
 

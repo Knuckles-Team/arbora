@@ -47,7 +47,7 @@ def _engine_send(client: Any, graph: str) -> Callable[..., Awaitable[Any]]:
     async def send(method: str, params: dict[str, Any], tenant: str) -> Any:
         from medulla.generated import send_by_id
 
-        from arbora.api.ops._engine import decode
+        from arbora.api.ops.engine_calls import decode
 
         return decode(await send_by_id(client, method, params, graph))
 

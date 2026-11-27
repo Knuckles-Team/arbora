@@ -94,7 +94,7 @@ class FleetFinanceReadPort:
 
     async def _call(self, context: Any, tool: str, arguments: dict[str, Any]) -> Any:
         from arbora.api.invoke.pipeline import OperationRefused
-        from arbora.api.ops._nested import invoke_registered
+        from arbora.api.ops.nested_invoke import invoke_registered
 
         reply = await invoke_registered(
             context,

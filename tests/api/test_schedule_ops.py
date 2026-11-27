@@ -11,7 +11,8 @@ import pytest
 
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops import _engine, schedules
+from arbora.api.ops import engine_calls as _engine
+from arbora.api.ops import schedules
 from arbora.api.registry import Effect, Registry, Surface
 
 OPS = {op.id: op for op in schedules.operations()}

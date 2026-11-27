@@ -17,7 +17,7 @@ from pydantic import Field
 from arbora.a2a.team import read_team
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
-from arbora.api.ops._engine import engine_send
+from arbora.api.ops.engine_calls import engine_send
 from arbora.api.registry import OpSpec
 
 READ_SCOPE = "kg:read"

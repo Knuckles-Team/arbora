@@ -57,7 +57,7 @@ def boot(monkeypatch: pytest.MonkeyPatch) -> Any:
         return {}
 
     monkeypatch.setattr("medulla.generated.send_by_id", send_by_id)
-    monkeypatch.setattr("arbora.api.ops._engine.decode", lambda value: value)
+    monkeypatch.setattr("arbora.api.ops.engine_calls.decode", lambda value: value)
     monkeypatch.setattr("arbora.pin_lag.medulla.require_methods", lambda *m: None)
     monkeypatch.setattr(
         "arbora.deployment.data_prep.data_prep_path", lambda: None, raising=False

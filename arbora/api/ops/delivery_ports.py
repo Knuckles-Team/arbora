@@ -14,7 +14,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._engine import unavailable
+from arbora.api.ops.engine_calls import unavailable
 
 SOURCE_WRITE = "source:write"
 #: The engine shapes the identity-link read needs (``IdpOp::ResolveLink``, MEDULLA-IDENTITY-R752).

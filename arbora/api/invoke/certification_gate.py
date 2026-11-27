@@ -137,7 +137,7 @@ async def definition_skills(
     never falls back to what the caller declared (ARBORA-OPS-R872).
     """
     from arbora.api.errors import EngineRefusal
-    from arbora.api.ops._engine import engine_send
+    from arbora.api.ops.engine_calls import engine_send
     from arbora.pin_lag.medulla import PinLagUnavailable
 
     services = getattr(context, "services", None) or {}

@@ -101,7 +101,7 @@ def _served(monkeypatch, response, *, error=None):
     async def graph(context):
         return "g1"
 
-    monkeypatch.setattr("arbora.api.ops._engine.engine_send", send)
+    monkeypatch.setattr("arbora.api.ops.engine_calls.engine_send", send)
     monkeypatch.setattr("arbora.api.invoke.bootstrap.caller_dispatch_graph", graph)
     monkeypatch.setattr(
         "arbora.api.ops.skills_tier._feature_schema", lambda c, t: {"features": []}

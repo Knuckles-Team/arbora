@@ -18,7 +18,7 @@ from typing import Any
 import msgpack
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._engine import decode, engine_send, node_rows
+from arbora.api.ops.engine_calls import decode, engine_send, node_rows
 from arbora.fleet.city_layout import (
     CatalogEntry,
     override_from_properties,

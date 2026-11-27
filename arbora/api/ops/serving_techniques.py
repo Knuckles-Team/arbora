@@ -19,8 +19,8 @@ from pydantic import Field
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.plan import params_digest
 from arbora.api.ops import _common
-from arbora.api.ops._engine import engine_send
-from arbora.api.ops._question import (
+from arbora.api.ops.engine_calls import engine_send
+from arbora.api.ops.question_round import (
     FamilyRefusal,
     chosen_option,
     decide_question,

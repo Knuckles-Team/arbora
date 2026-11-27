@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from typing import Any, Literal, Protocol, runtime_checkable
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._engine import decode
+from arbora.api.ops.engine_calls import decode
 from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
 
 __all__ = [

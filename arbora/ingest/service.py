@@ -283,7 +283,7 @@ async def engine_index_knob(context: Any) -> int | None:
     pinned release lacks the method or the section, so the read answers ``None`` and the
     host grant alone bounds the tenant. The engine still refuses a job past its own knob.
     """
-    from arbora.api.ops._engine import engine_send
+    from arbora.api.ops.engine_calls import engine_send
     from arbora.pin_lag.medulla import (
         PinLagUnavailable,
         require_enum_member,
@@ -341,7 +341,7 @@ async def index_repository(context: Any, params: Mapping[str, Any], op: Any) -> 
             idempotency_key=context.idempotency_key,
         )
         return {"value": receipt.model_dump(mode="json")}
-    from arbora.api.ops._grants import ResourceGrantLedger
+    from arbora.api.ops.resource_grants import ResourceGrantLedger
 
     ledger = ResourceGrantLedger(context, limit=await resource_grant_bytes(context))
     job_key = f"{repo_id}:{context.idempotency_key}"

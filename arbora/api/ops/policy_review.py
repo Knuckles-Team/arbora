@@ -24,8 +24,9 @@ from pydantic import Field, field_validator
 
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops import _common, _engine
-from arbora.api.ops._engine import engine_send
+from arbora.api.ops import _common
+from arbora.api.ops import engine_calls as _engine
+from arbora.api.ops.engine_calls import engine_send
 from arbora.api.registry import Confirm, OpSpec
 from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_models
 

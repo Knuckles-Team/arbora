@@ -325,7 +325,7 @@ async def test_a_named_workflow_takes_its_skills_from_the_registry_record(
         seen.append({"method": method, **params})
         return {"skills": _GRAPH_SKILL}
 
-    monkeypatch.setattr("arbora.api.ops._engine.engine_send", send)
+    monkeypatch.setattr("arbora.api.ops.engine_calls.engine_send", send)
     identity = {"name": "wf", "version": "1"}
     skills = await gate.definition_skills(context(), workflow=identity)
     assert skills == [{"id": "skill:one", "digest": "d3"}]
@@ -335,7 +335,7 @@ async def test_a_named_workflow_takes_its_skills_from_the_registry_record(
     async def bare(context: Any, method: str, params: dict[str, Any]) -> Any:
         return {"identity": identity}
 
-    monkeypatch.setattr("arbora.api.ops._engine.engine_send", bare)
+    monkeypatch.setattr("arbora.api.ops.engine_calls.engine_send", bare)
     with pytest.raises(OperationRefused) as refused:
         await gate.definition_skills(context(), workflow=identity)
     assert refused.value.details["reason"] == "attestation_source_unavailable"

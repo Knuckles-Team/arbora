@@ -146,7 +146,7 @@ async def test_active_prompt_resolves_the_session_agent_and_truncates(
         return {"body": body["text"]}
 
     monkeypatch.setattr(agent_library, "engine_send", library)
-    import arbora.api.ops._engine as engine
+    import arbora.api.ops.engine_calls as engine
 
     monkeypatch.setattr(engine, "engine_send", library)
     context = SimpleNamespace(

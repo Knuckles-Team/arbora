@@ -21,7 +21,7 @@ from pydantic import Field, ValidationError
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_write_op
-from arbora.api.ops._engine import decode, engine_send
+from arbora.api.ops.engine_calls import decode, engine_send
 from arbora.api.ops.finance import _authority
 from arbora.api.registry import OpSpec
 from arbora.finance.dca import DCAEvaluationError, DCAPlan, minor_units

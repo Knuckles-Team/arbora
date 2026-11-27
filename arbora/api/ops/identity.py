@@ -252,7 +252,7 @@ async def handle_clients_list(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> Any:
     """Own sessions, or every session of the tenant for ``identity:admin``."""
-    from arbora.api.ops._engine import decode, engine_send
+    from arbora.api.ops.engine_calls import decode, engine_send
     from arbora.identity.client_session import CLIENT_SESSION_LABEL, visible_sessions
 
     caller = context.caller
@@ -287,7 +287,7 @@ async def handle_clients_get(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> Any:
     """A foreign or unknown session answers the one ``CLIENT_NOT_FOUND`` denial."""
-    from arbora.api.ops._engine import decode, engine_send
+    from arbora.api.ops.engine_calls import decode, engine_send
     from arbora.identity.client_session import session_node_id, visible_sessions
 
     caller = context.caller

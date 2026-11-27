@@ -17,7 +17,7 @@ from pydantic import ConfigDict, Field
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op
-from arbora.api.ops._engine import engine_send, rfc3339, unavailable
+from arbora.api.ops.engine_calls import engine_send, rfc3339, unavailable
 from arbora.api.registry import OpSpec
 
 #: The scope the rows name; the engine adds its own decision-read action.
