@@ -428,6 +428,9 @@ def mcp_server(
     from arbora.mcp_server.host_context import build_host_context
 
     host_context = build_host_context()
+    from arbora.security.error_surface import bind_errors
+
+    bind_errors(host_context.observability.errors)
     if invocation is None:
         invocation, early_session = (
             _served_invocation(

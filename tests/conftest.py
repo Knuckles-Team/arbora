@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,17 @@ def _isolated_configuration(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
     home.mkdir()
     monkeypatch.setenv("XDG_CONFIG_HOME", str(home))
     monkeypatch.setenv("ARBORA_CONFIG_DIR", str(home / "arbora"))
+
+
+@pytest.fixture(autouse=True)
+def _bound_error_store() -> Iterator[None]:
+    """Each test is a host entry point: it owns a fresh error store for its context."""
+    from arbora.observability.state import Errors
+    from arbora.security.error_surface import bind_errors, unbind_errors
+
+    token = bind_errors(Errors())
+    yield
+    unbind_errors(token)
 
 
 @pytest.fixture

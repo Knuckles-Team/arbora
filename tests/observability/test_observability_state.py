@@ -145,3 +145,64 @@ async def test_the_evidence_store_writes_the_window_under_the_process_session(
             mime_type="application/json",
             source="s",
         )
+
+
+def test_two_error_stores_keep_separate_details_and_sinks():
+    from arbora.observability.state import Errors
+
+    first, second = Errors(), Errors()
+    first.keep("correlation:a", {"error_class": "X"})
+    first.bind_sink(print)
+    assert first.detail("correlation:a") == {"error_class": "X"}
+    assert second.detail("correlation:a") is None
+    assert first.sink is print and second.sink is None
+    for index in range(Errors.MAX_ENTRIES + 1):
+        first.keep(f"correlation:{index}", {})
+    assert first.detail("correlation:a") is None
+
+
+def test_a_failure_is_recorded_in_the_store_the_entry_point_bound():
+    from arbora.observability.state import Errors
+    from arbora.security.error_surface import (
+        bind_errors,
+        public_error_payload,
+        resolve_error_detail,
+        unbind_errors,
+    )
+
+    mine = Errors()
+    token = bind_errors(mine)
+    try:
+        ref = public_error_payload(RuntimeError("boom"))["error"]["detail_ref"]
+        assert mine.detail(ref) is not None
+        assert resolve_error_detail(ref) == mine.detail(ref)
+    finally:
+        unbind_errors(token)
+
+
+def test_a_failure_reported_before_any_entry_point_bound_the_store_refuses():
+    import contextvars
+
+    from arbora.security.error_surface import ErrorsNotBound, public_error_payload
+
+    def report() -> None:
+        public_error_payload(RuntimeError("boom"))
+
+    with pytest.raises(ErrorsNotBound):
+        contextvars.Context().run(report)
+
+
+@pytest.mark.asyncio
+async def test_the_gateway_binds_the_host_error_store_for_each_request():
+    from arbora.gateway.errors_scope import ErrorsScopeMiddleware
+    from arbora.observability.state import Errors
+    from arbora.security.error_surface import current_errors
+
+    mine, seen = Errors(), []
+
+    async def app(scope, receive, send) -> None:
+        seen.append(current_errors())
+
+    await ErrorsScopeMiddleware(app, mine)({"type": "http"}, None, None)
+    assert seen == [mine]
+    assert current_errors() is not mine

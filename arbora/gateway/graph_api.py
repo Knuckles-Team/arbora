@@ -153,6 +153,11 @@ def register_graph_routes(app, host, prefix: str = "/api") -> None:
 
     app.add_middleware(ActorIdentityMiddleware, keys=host.caches.jwks)
 
+    # Every request reports its failures to this host's error store.
+    from arbora.gateway.errors_scope import ErrorsScopeMiddleware
+
+    app.add_middleware(ErrorsScopeMiddleware, errors=host.observability.errors)
+
     # Python-tier Prometheus metrics
     # (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics). Added LAST so the
     # metrics middleware is OUTERMOST — auth rejections (401) and rate-limit

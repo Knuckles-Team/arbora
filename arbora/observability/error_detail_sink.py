@@ -6,12 +6,12 @@ from arbora.unique_records import create_record
 """KG-backed durable sink for the public error-detail store (D-24).
 
 the error surface keeps a bounded, in-process
-``_detail_store`` behind every failed operation's opaque ``error.detail_ref``
+detail store behind every failed operation's opaque ``error.detail_ref``
 (``resolve_error_detail`` / ``resolve_error_detail_for_actor``, D-23). That
 store does not survive a process restart and is not shared across replicas —
 a ``detail_ref`` handed to a caller could silently become unresolvable the
 moment the recording process cycled or a different replica served the
-resolve call. ``error_surface.register_detail_persistence_sink()`` is a
+resolve call. ``Errors.bind_sink()`` is a
 de-opinionated seam for exactly this gap; this module is the concrete
 backend wired through it.
 
@@ -67,7 +67,7 @@ class GraphErrorDetailSink:
     """Durable, KG-backed ``error_surface`` detail-persistence sink.
 
     Satisfies the existing write-callable contract
-    ``register_detail_persistence_sink`` already expects
+    ``Errors.bind_sink`` already expects
     (``sink(correlation_id, record)``) via :meth:`__call__` — no change to
     that seam or its tests. Additionally exposes :meth:`resolve`, an OPTIONAL
     method the error surface's ``resolve_error_detail``

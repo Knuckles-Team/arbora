@@ -24,6 +24,7 @@ from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.served_engine import EngineHandles
 from arbora.observability.metric_evidence import EngineMetricEvidence
 from arbora.observability.state import (
+    Errors,
     GatewayTrend,
     Metrics,
     Observability,
@@ -135,6 +136,7 @@ def _compose_observability(
         health=build_health_state(),
         signals=Signals(runtime=RuntimeSignalBuffer(), gateway=trend),
         metrics=metrics,
+        errors=Errors(),
     )
 
 
