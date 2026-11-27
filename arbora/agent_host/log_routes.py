@@ -2,6 +2,7 @@
 
 import asyncio
 import ipaddress
+import logging
 import math
 from urllib.parse import urlsplit
 
@@ -17,6 +18,8 @@ from arbora.agent_host.log_access import (
 from arbora.deployment.host_config import load_hosting_deployment_settings
 from arbora.identity.engine import IdentityUnavailable
 from arbora.security.http_boundary import normalize_host_authorities
+
+logger = logging.getLogger(__name__)
 
 # Per-request deadline for the reference and read owners; slower owners refuse.
 HOST_LOG_REQUEST_BUDGET_SECONDS = 1.0
@@ -142,6 +145,7 @@ def register_host_log_routes(
         except (IdentityUnavailable, TimeoutError):
             raise HTTPException(503, "log_unavailable") from None
         except Exception:  # owner failures must not expose log material
+            logger.warning("host log owner failed", exc_info=True)
             raise HTTPException(503, "log_unavailable") from None
         try:
             return service.reference_binding(value, endpoint=endpoint)
@@ -168,6 +172,7 @@ def register_host_log_routes(
         except (IdentityUnavailable, TimeoutError):
             raise HTTPException(503, "log_unavailable") from None
         except Exception:  # owner failures must not expose log material
+            logger.warning("host log owner failed", exc_info=True)
             raise HTTPException(503, "log_unavailable") from None
         if body.version == 2:
             try:

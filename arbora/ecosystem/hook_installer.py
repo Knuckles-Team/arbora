@@ -248,12 +248,10 @@ class HookInstaller:
                 results[agent_key] = "installed"
                 self.installed.append(agent_key)
                 logger.info("[ECO-4.6] Installed configured hooks")
-            except Exception as e:
+            except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
                 results[agent_key] = f"error: {e}"
                 self.errors.append(f"{agent_key}: {e}")
-                logger.warning(
-                    "[ECO-4.6] Failed to install hooks (%s)", type(e).__name__
-                )
+                logger.warning("[ECO-4.6] Failed to install hooks", exc_info=True)
 
         return results
 
@@ -278,7 +276,7 @@ class HookInstaller:
                 else:
                     config_path.unlink()
                 results[agent_key] = "uninstalled"
-            except Exception as e:
+            except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
                 results[agent_key] = f"error: {e}"
 
         return results
@@ -340,7 +338,7 @@ class HookInstaller:
                 for k in keys_to_remove:
                     del hooks[k]
                 path.write_text(json.dumps(existing, indent=2), encoding="utf-8")
-        except Exception:
+        except (OSError, ValueError, AttributeError):
             pass  # nosec B110
 
 

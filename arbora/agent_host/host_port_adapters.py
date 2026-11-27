@@ -9,6 +9,7 @@ types come from ``arbora.pin_lag.meristem`` so a pinned release without them ref
 from __future__ import annotations
 
 import asyncio
+import logging
 import re
 import shutil
 import threading
@@ -23,6 +24,8 @@ from arbora.pin_lag.meristem import PinLagUnavailable, changeset_types, port_typ
 #: ``(operation id, params, run ref[, plan_ref])`` to the engine result as plain data. An
 #: answered result carries the pipeline ``code`` and ``details``: a plan-gated operation
 #: called without a ``plan_ref`` answers ``CONFIRMATION_REQUIRED`` with the plan reference.
+logger = logging.getLogger(__name__)
+
 RunCall = Callable[..., Awaitable[Mapping[str, Any]]]
 PLAN_REQUIRED = "CONFIRMATION_REQUIRED"
 
@@ -375,7 +378,8 @@ def plan_confirmer(
                 ref=raw.get("ref"),
                 refusal_code=raw.get("refusal_code"),
             )
-        except Exception:
+        except Exception:  # injected confirm owner: fail closed to deny
+            logger.warning("confirmation owner failed; denying", exc_info=True)
             return types.ConfirmVerdict(
                 verdict="deny", refusal_code="confirm_unavailable"
             )

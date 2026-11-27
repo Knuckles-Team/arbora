@@ -106,13 +106,12 @@ class UsageLedger:
                     key=f"usage:{run_id}:{index // self._max_batch}",
                 )
                 accepted += 1
-            except Exception as exc:  # usage never fails the run
+            except Exception:  # usage never fails the run
                 logger.warning(
-                    "usage batch %s of run %s not appended: %s %s",
+                    "usage batch %s of run %s not appended",
                     index // self._max_batch,
                     run_id,
-                    type(exc).__name__,
-                    getattr(exc, "code", ""),
+                    exc_info=True,
                 )
         return accepted
 

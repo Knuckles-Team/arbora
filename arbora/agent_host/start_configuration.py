@@ -10,6 +10,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from arbora.agent_host import AgentExecutor
+    from arbora.agent_host.log_access import HostLogAccess
+    from arbora.agent_host.log_runtime import HostLogRuntime
     from arbora.agent_host.start_admission import AdmittedHostStart, HostStartContext
 
 
@@ -97,10 +100,10 @@ class HostRuntimeResources:
 
     graph: object
     engine: object
-    graph_config: object
-    executor: object | None = None
-    host_logs: object | None = None
-    host_log_runtime: object | None = None
+    graph_config: dict
+    executor: AgentExecutor | None = None
+    host_logs: HostLogAccess | None = None
+    host_log_runtime: HostLogRuntime | None = None
     web_application: object | None = None
     #: ``client(host, admitted)``: the terminal client the owner composes. It runs in the
     #: foreground while the host serves HTTP, and returns when the terminal exits.

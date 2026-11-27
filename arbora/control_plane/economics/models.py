@@ -17,7 +17,7 @@ import json
 import math
 import re
 from datetime import UTC, datetime, timedelta
-from typing import Annotated, Literal
+from typing import Annotated, Literal, cast
 
 from pydantic import Field, StrictBool, StrictInt, field_validator, model_validator
 
@@ -246,7 +246,8 @@ class UsageFact(ProtocolModel):
                 )
             if (
                 self.input_quantity is not None
-                and self.quantity != self.input_quantity + self.output_quantity  # type: ignore[operator]
+                and self.quantity
+                != self.input_quantity + cast(int, self.output_quantity)
             ):
                 raise ValueError("token quantity must equal input plus output")
         elif self.input_quantity is not None or self.output_quantity is not None:

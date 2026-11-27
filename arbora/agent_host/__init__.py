@@ -240,11 +240,8 @@ def build_agent_host_app(
         query = _extract_text(message)
         try:
             result = run_executor(graph, graph_config, query)
-        except Exception as exc:  # A2A boundary is fail-closed
-            logger.warning(
-                "agent_host: execution failed (exception_type=%s)",
-                type(exc).__name__,
-            )
+        except Exception:  # A2A boundary is fail-closed
+            logger.warning("agent_host: execution failed", exc_info=True)
             return {
                 "jsonrpc": "2.0",
                 "id": request.id,

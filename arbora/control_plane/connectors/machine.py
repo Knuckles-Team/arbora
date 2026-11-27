@@ -38,7 +38,7 @@ class DesiredEvent(enum.Enum):
 
 _E = DesiredEvent
 #: The 5 legal edges. Every other pair is refused.
-DESIRED_EDGES: dict[tuple[str, DesiredEvent], str] = {
+DESIRED_EDGES: dict[tuple[DesiredStatus, DesiredEvent], DesiredStatus] = {
     ("disabled", _E.ENABLE): "enabled",
     ("enabled", _E.DISABLE): "disabled",
     ("disabled", _E.QUARANTINE): "quarantined",
@@ -68,7 +68,7 @@ def transition(current: DesiredStatus, event: DesiredEvent) -> DesiredStatus:
     target = DESIRED_EDGES.get((current, event))
     if target is None:
         raise IllegalDesiredTransition(current, event)
-    return target  # type: ignore[return-value]
+    return target
 
 
 def event_between(current: DesiredStatus, target: DesiredStatus) -> DesiredEvent | None:
