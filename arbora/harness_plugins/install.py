@@ -23,8 +23,8 @@ from types import MappingProxyType
 from typing import Any
 
 from arbora.core.environment import read_env
+from arbora.core.harness_profiles import HarnessProfile
 from arbora.harness_plugins.compose import DOOR_SKILLS, PLUGIN_NAME
-from arbora.harness_plugins.profiles import HarnessProfile
 
 MARKETPLACE = "arbora-local"
 BUNDLE_COMMAND = "arbora plugin bundle --harness claude-code --print-path"

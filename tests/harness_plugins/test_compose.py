@@ -6,13 +6,13 @@ from pathlib import Path
 
 import pytest
 
+from arbora.core.harness_profiles import NATIVE_CLIENT_ID, Lifecycle, profile
 from arbora.harness_plugins.compose import (
     DOOR_SKILLS,
     AgentDef,
     SkillMissing,
     compose_bundle,
 )
-from arbora.harness_plugins.profiles import NATIVE_CLIENT_ID, Lifecycle, profile
 from tests.harness_plugins.conftest import ENDPOINT
 
 

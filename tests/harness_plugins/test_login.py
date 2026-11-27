@@ -11,8 +11,8 @@ from urllib.parse import parse_qs, urlsplit
 import httpx
 import pytest
 
+from arbora.core.harness_profiles import profile
 from arbora.harness_plugins import login
-from arbora.harness_plugins.profiles import profile
 from tests.harness_plugins.conftest import ENDPOINT
 from tests.harness_plugins.test_install_machine import described_edges
 

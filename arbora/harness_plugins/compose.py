@@ -14,7 +14,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from arbora.harness_plugins.profiles import HarnessProfile, Lifecycle
+from arbora.core.harness_profiles import HarnessProfile, Lifecycle
 
 #: The skills every bundle carries (``US-CONTENT-R007``).
 DOOR_SKILLS: tuple[str, ...] = ("canopy", "session-handoff")

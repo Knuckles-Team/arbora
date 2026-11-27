@@ -18,8 +18,8 @@ from typing import Any
 
 import httpx
 
+from arbora.core.harness_profiles import HarnessProfile, Lifecycle
 from arbora.harness_plugins.login import CredentialState, TokenStore, renew
-from arbora.harness_plugins.profiles import HarnessProfile, Lifecycle
 
 TIMEOUT_S = 5.0
 OPS = MappingProxyType(

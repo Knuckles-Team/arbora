@@ -11,10 +11,10 @@ import httpx
 import pytest
 
 from arbora.api.otlp_logs import events_from_logs
+from arbora.core.harness_profiles import Lifecycle, profile
 from arbora.harness_plugins import hook_runner
 from arbora.harness_plugins.compose import compose_bundle
 from arbora.harness_plugins.login import Credential, CredentialState, TokenStore
-from arbora.harness_plugins.profiles import Lifecycle, profile
 from arbora.harness_plugins.render import render
 from tests.harness_plugins.conftest import ENDPOINT
 

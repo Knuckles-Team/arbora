@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 
+from arbora.core.harness_profiles import profile
 from arbora.harness_plugins import cli, door
 from arbora.harness_plugins.compose import compose_bundle
 from arbora.harness_plugins.layers import (
@@ -18,7 +19,6 @@ from arbora.harness_plugins.layers import (
     resolve,
     served_layers,
 )
-from arbora.harness_plugins.profiles import profile
 from tests.harness_plugins.conftest import ENDPOINT, write_skill
 
 
