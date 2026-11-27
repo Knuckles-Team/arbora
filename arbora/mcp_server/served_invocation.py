@@ -29,6 +29,7 @@ from arbora.access.action_policy import ActionPolicies, ActionPolicy
 from arbora.api.registry import EgSchemaRef
 from arbora.core.environment import read_env
 from arbora.identity.ports import BrowserBoundaryFactory
+from arbora.mcp_server.served_engine import no_process_session
 
 __all__ = [
     "PoolLeases",
@@ -222,6 +223,7 @@ def _with_fleet_source_executor(
     bindings: Mapping[str, Any] | None,
     pool: Any,
     graph: str,
+    process_session: Callable[[], Any] = no_process_session,
 ) -> Mapping[str, Any] | None:
     """Expose the governed foreign-source reader to internal query paths.
 
@@ -240,7 +242,7 @@ def _with_fleet_source_executor(
     from arbora.fleet.source_executor import FleetSourceExecutor
     from arbora.mcp_server.served_engine import ServedEngine
 
-    engine = ServedEngine(pool)
+    engine = ServedEngine(pool, process_session)
 
     def source_executor_for(
         caller: Any, *, overall_timeout_s: float = 60.0
@@ -470,7 +472,7 @@ def _task_plan_schema_publisher(
     async def client_for(tenant: str) -> Any:
         return await pool.connected_client(connect_context(tenant), graph)
 
-    engine = ServedEngine(pool)
+    engine = ServedEngine(pool, session)
 
     async def context_for(tenant: str, pin: Mapping[str, Any]) -> dict[str, Any]:
         policy = action_policies.for_engine(engine)
@@ -534,7 +536,7 @@ def _deployment_library_startup(
     from arbora.mcp_server.served_engine import ServedEngine
     from arbora.security.session import resolve_session, use_session
 
-    engine = ServedEngine(pool)
+    engine = ServedEngine(pool, session)
     tenant = str(session().tenant)
 
     async def context_for(for_tenant: str, key: str) -> Mapping[str, Any]:
@@ -1169,7 +1171,7 @@ def compose_served_invocation(
 
     minted = session()
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
-    bindings = _with_fleet_source_executor(bindings, pool, graph)
+    bindings = _with_fleet_source_executor(bindings, pool, graph, process_session)
     bindings = _with_nl_federation_planner(bindings)
     bindings = _with_projection_reader(bindings)
     bindings = _with_delivery_ports(_with_city_ports(bindings))
@@ -1225,7 +1227,10 @@ def compose_served_invocation(
         # selected native id or synthesizes a lease.
         from arbora.mcp_server.served_engine import ServedEngine
 
-        bindings = {**bindings, "task_plan_work_engine": ServedEngine(pool)}
+        bindings = {
+            **bindings,
+            "task_plan_work_engine": ServedEngine(pool, process_session),
+        }
     bindings = _with_scale_ports(bindings)
     if bindings is not None and "media_ref_store" not in bindings:
         # ARBORA-A2A-R001.5.5: uploaded image bytes live in the engine, never here.

@@ -1,0 +1,54 @@
+"""The host's process authority: the ``authority`` field of ``HostContext`` (ARBORA-HOST-R039.9).
+
+The process mints one verified graph session and renews its credential lease on
+a supervisor thread. This object owns that session slot, the renewal lock, the
+stop event and the supervisor thread, so two hosts hold two separate
+authorities and no module holds any of them.
+"""
+
+from __future__ import annotations
+
+import threading
+from typing import Any
+
+__all__ = ["ProcessAuthority"]
+
+
+class ProcessAuthority:
+    """The process's session slot and its renewal supervisor state.
+
+    The session slot is bound only on the stdio transport; a network request
+    never falls back to it. ``refresh_lock`` serializes renewals of the one
+    credential lease, ``stop`` ends the supervisor loop and every wait that
+    must yield to shutdown.
+    """
+
+    __slots__ = ("_lock", "_session", "_thread", "refresh_lock", "stop")
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._session: Any = None
+        self._thread: threading.Thread | None = None
+        self.refresh_lock = threading.Lock()
+        self.stop = threading.Event()
+
+    def session(self) -> Any:
+        """The bound process session, or ``None`` when none is bound."""
+        with self._lock:
+            return self._session
+
+    def bind_session(self, session: Any) -> None:
+        """Bind (or with ``None`` clear) the process session."""
+        with self._lock:
+            self._session = session
+
+    def bind_thread(self, thread: threading.Thread) -> None:
+        """Record the supervisor thread that renews this authority."""
+        with self._lock:
+            self._thread = thread
+
+    def take_thread(self) -> threading.Thread | None:
+        """Hand back the supervisor thread and forget it."""
+        with self._lock:
+            thread, self._thread = self._thread, None
+            return thread

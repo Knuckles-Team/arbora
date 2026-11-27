@@ -30,7 +30,18 @@ from arbora.core.environment import read_env
 from arbora.security.anonymous import client_scope, session_context
 from arbora.unique_records import record_body
 
-__all__ = ["EngineHandles", "ServedEngine", "SessionRoutedClient", "engine_unbound"]
+__all__ = [
+    "EngineHandles",
+    "ServedEngine",
+    "SessionRoutedClient",
+    "engine_unbound",
+    "no_process_session",
+]
+
+
+def no_process_session() -> None:
+    """The process-session provider of a host that binds none."""
+    return None
 
 
 def _session_context(session: Any) -> Any:
@@ -52,12 +63,11 @@ def _session_context(session: Any) -> Any:
     )
 
 
-def _ambient_session() -> Any:
+def _ambient_session(process_session: Callable[[], Any] = no_process_session) -> Any:
     """The request's verified session, else the stdio process session."""
-    from arbora.mcp_server.bootstrap import _process_session
     from arbora.security.session import SessionRequiredError, current_session
 
-    session = current_session() or _process_session()
+    session = current_session() or process_session()
     if session is None:
         raise SessionRequiredError("a verified GraphSession is required")
     return session
@@ -72,16 +82,22 @@ class SessionRoutedClient:
     claims when the request is sent.
     """
 
-    def __init__(self, pool: Any, graph: str) -> None:
+    def __init__(
+        self,
+        pool: Any,
+        graph: str,
+        process_session: Callable[[], Any] = no_process_session,
+    ) -> None:
         self._pool = pool
         self._graph = graph
+        self._process_session = process_session
 
     @property
     def graph_name(self) -> str:
         return self._graph
 
     async def _bound(self) -> tuple[Any, Any]:
-        context = _session_context(_ambient_session())
+        context = _session_context(_ambient_session(self._process_session))
         client = await self._pool.connected_client(context, self._graph)
         return client, context
 
@@ -130,19 +146,24 @@ class _RoutedAttribute:
 
 
 class _GraphView:
-    def __init__(self, pool: Any, graph: str) -> None:
+    def __init__(
+        self, pool: Any, graph: str, process_session: Callable[[], Any]
+    ) -> None:
         self.graph_name = graph
-        self.async_client = SessionRoutedClient(pool, graph)
+        self.async_client = SessionRoutedClient(pool, graph, process_session)
 
 
 class _GraphCompute:
     """``for_graph(graph).async_client``: the shape startup composition reads."""
 
-    def __init__(self, pool: Any) -> None:
+    def __init__(
+        self, pool: Any, process_session: Callable[[], Any] = no_process_session
+    ) -> None:
         self._pool = pool
+        self._process_session = process_session
 
     def for_graph(self, graph: str) -> _GraphView:
-        return _GraphView(self._pool, str(graph))
+        return _GraphView(self._pool, str(graph), self._process_session)
 
 
 _PARAMETER = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)")
@@ -253,9 +274,12 @@ class _BlockingControlLeases:
 class ServedEngine:
     """The served process's engine handle over the one EG client pool."""
 
-    def __init__(self, pool: Any) -> None:
+    def __init__(
+        self, pool: Any, process_session: Callable[[], Any] = no_process_session
+    ) -> None:
         self.pool = pool
-        self.graph_compute = _GraphCompute(pool)
+        self.process_session = process_session
+        self.graph_compute = _GraphCompute(pool, process_session)
 
     @property
     def browser_control_state(self) -> Any:
@@ -289,7 +313,7 @@ class ServedEngine:
     @property
     def control_leases(self) -> _BlockingControlLeases:
         """EG control leases on the session graph, under the caller's tenant."""
-        session = _ambient_session()
+        session = _ambient_session(self.process_session)
         return _BlockingControlLeases(
             self.graph_compute.for_graph(
                 str(session.graph)
@@ -302,7 +326,9 @@ class ServedEngine:
         return await self.graph_compute.for_graph(graph).async_client.health()
 
     def _session_client(self) -> SessionRoutedClient:
-        return self.graph_compute.for_graph(str(_ambient_session().graph)).async_client
+        return self.graph_compute.for_graph(
+            str(_ambient_session(self.process_session).graph)
+        ).async_client
 
     def query_cypher(
         self, query: str, params: Mapping[str, Any] | None = None
@@ -482,10 +508,15 @@ class EngineHandles:
     object's own lock, so two hosts hold two separate pools.
     """
 
-    __slots__ = ("_engine", "_lock", "_pool", "_pool_factory")
+    __slots__ = ("_engine", "_lock", "_pool", "_pool_factory", "_process_session")
 
-    def __init__(self, pool_factory: Callable[[], Any] = _build_process_pool) -> None:
+    def __init__(
+        self,
+        pool_factory: Callable[[], Any] = _build_process_pool,
+        process_session: Callable[[], Any] = no_process_session,
+    ) -> None:
         self._lock = threading.Lock()
+        self._process_session = process_session
         self._pool: Any = None
         self._engine: ServedEngine | None = None
         self._pool_factory = pool_factory
@@ -502,7 +533,7 @@ class EngineHandles:
         pool = self.pool()
         with self._lock:
             if self._engine is None or self._engine.pool is not pool:
-                self._engine = ServedEngine(pool)
+                self._engine = ServedEngine(pool, self._process_session)
             return self._engine
 
     def reset(self) -> None:

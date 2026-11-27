@@ -92,12 +92,10 @@ def test_native_typed_browser_bundle_is_atomic_and_labeled(native_engine):
     ) == [{"source": "trace-a", "target": "trace-b"}]
 
 
-def test_browser_state_never_uses_process_session_fallback(native_engine, monkeypatch):
-    from arbora.mcp_server import bootstrap
+def test_browser_state_never_uses_process_session_fallback(native_engine):
     from arbora.security.session import SessionRequiredError, suspend_session
 
     engine, session = native_engine
-    monkeypatch.setattr(bootstrap, "_process_session", lambda: session)
     with suspend_session(), pytest.raises(SessionRequiredError):
         engine.browser_control_state.query_cypher("MATCH (n) RETURN n")
 

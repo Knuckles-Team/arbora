@@ -33,9 +33,6 @@ from arbora.core.environment import read_env
 
 logger = logging.getLogger(__name__)
 
-#: Per-process private-key seed fallback (dev/test); env-provided in production.
-_EPHEMERAL_SEED: bytes | None = None
-
 
 def _ed25519():
     """Return the cryptography Ed25519 module, or ``None`` if unavailable (lazy)."""
@@ -87,13 +84,9 @@ def _seed() -> bytes:
             return hashlib.sha256(val.encode()).digest()
         except Exception:  # noqa: BLE001 — malformed key ⇒ derive deterministically
             return hashlib.sha256(val.encode()).digest()
-    global _EPHEMERAL_SEED
-    if _EPHEMERAL_SEED is None:
-        # Stable within a process so a publish/verify in the same run agree; never persisted.
-        _EPHEMERAL_SEED = hashlib.sha256(
-            f"au-ard-signing:{os.getpid()}".encode()
-        ).digest()
-    return _EPHEMERAL_SEED
+    # Derived from the process id: stable within a process so a publish/verify in
+    # the same run agree, never persisted, and held in no module state.
+    return hashlib.sha256(f"au-ard-signing:{os.getpid()}".encode()).digest()
 
 
 def _private_key():

@@ -31,7 +31,7 @@ from scion_sdk.credentials.runtime_references import (
 from scion_sdk.utilities import to_boolean
 
 from arbora.core.environment import read_env, read_reference, write_env
-from arbora.mcp_server.served_engine import engine_unbound
+from arbora.mcp_server.served_engine import engine_unbound, no_process_session
 from arbora.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -1812,6 +1812,7 @@ def _append_optional_middlewares(
     server_name: str,
     optional_classes: tuple[Any, Any, Any, Any, Any],
     engine_provider: Callable[[], Any] = engine_unbound,
+    process_session: Callable[[], Any] = no_process_session,
 ) -> None:
     (
         UserTokenMiddleware,
@@ -1832,6 +1833,7 @@ def _append_optional_middlewares(
             ActorContextMiddleware(
                 require_verified_session=(server_name == "arbora"),
                 engine_provider=engine_provider,
+                process_session=process_session,
             )
         )
 
@@ -1891,6 +1893,7 @@ def _configure_middleware(
     *,
     server_name: str = "",
     engine_provider: Callable[[], Any] = engine_unbound,
+    process_session: Callable[[], Any] = no_process_session,
 ) -> list[Any]:
     """Build the standard middleware stack for an MCP server.
 
@@ -1916,7 +1919,11 @@ def _configure_middleware(
         ),
     ]
     _append_optional_middlewares(
-        middlewares, server_name, _import_optional_middlewares(), engine_provider
+        middlewares,
+        server_name,
+        _import_optional_middlewares(),
+        engine_provider,
+        process_session,
     )
 
     eunomia_mw = _configure_eunomia_middleware(args)
@@ -2405,6 +2412,7 @@ def create_mcp_server(
     lifespan_extension: Callable[[Any], Any] | None = None,
     manage_engine_shutdown: bool = True,
     engine_provider: Callable[[], Any] = engine_unbound,
+    process_session: Callable[[], Any] = no_process_session,
 ):
     """Initialize a FastMCP server with a standard middleware and auth stack.
 
@@ -2460,7 +2468,10 @@ def create_mcp_server(
 
     auth = _configure_auth(args)
     middlewares = _configure_middleware(
-        args, server_name=name, engine_provider=engine_provider
+        args,
+        server_name=name,
+        engine_provider=engine_provider,
+        process_session=process_session,
     )
 
     remote_network = _is_remote_network(args)

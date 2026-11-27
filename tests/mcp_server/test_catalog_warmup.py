@@ -14,6 +14,7 @@ from arbora.access.action_policy import ActionPolicies
 from arbora.fleet.state import FleetState
 from arbora.mcp_server.catalog_warmup import CatalogWarmup
 from arbora.mcp_server.host_caches import WarmupSlot
+from arbora.security.process_authority import ProcessAuthority
 
 
 @pytest.mark.spec("ARBORA-FLEET-R078")
@@ -94,6 +95,7 @@ def test_boot_returns_while_the_catalog_composition_is_still_running(
         object(),
         SimpleNamespace(fleet=FleetState()),
         ActionPolicies(),
+        ProcessAuthority(),
     )
     assert time.monotonic() - began < 1.0
     state = slot.state()
@@ -137,6 +139,7 @@ def test_the_warmup_composes_inside_its_own_client_scope(monkeypatch) -> None:
         object(),
         SimpleNamespace(fleet=FleetState()),
         ActionPolicies(),
+        ProcessAuthority(),
     )
     deadline = time.monotonic() + 5
     while warmup.state()["status"] != "ready" and time.monotonic() < deadline:

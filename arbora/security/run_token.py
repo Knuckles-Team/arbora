@@ -15,20 +15,10 @@ import base64
 import hashlib
 import hmac
 import json
-import secrets
 import time
 from dataclasses import dataclass
 
 from arbora.core.environment import read_env
-
-# Per-process signing-secret fallback used ONLY when delegated identity is off (dev/test/
-# legacy). It is a RANDOM 256-bit value, minted once per process — NOT derived from the PID.
-# The previous PID-derived secret was forgeable (a PID is guessable and low-entropy), so any
-# process could reconstruct another's run-token signing key; it has been removed. When
-# delegation is enabled (``ENABLE_DELEGATED_IDENTITY=on``) there is NO fallback at all —
-# ``ARBORA_TOKEN_SECRET`` must resolve from the secrets backend or minting fails
-# closed (config-contract style, mirroring the engine's transport-secret requirement).
-_EPHEMERAL: bytes | None = None
 
 
 class RunTokenSecretUnavailable(RuntimeError):
@@ -36,37 +26,21 @@ class RunTokenSecretUnavailable(RuntimeError):
 
 
 def _secret() -> bytes:
-    """Return the run-token signing secret.
+    """Return the run-token signing secret, or fail closed.
 
-    Resolution order:
-
-    1. ``ARBORA_TOKEN_SECRET`` from the secrets backend / config — always preferred.
-    2. Otherwise, when ``ENABLE_DELEGATED_IDENTITY=on``, FAIL CLOSED
-       (:class:`RunTokenSecretUnavailable`): a delegated deployment must not sign run-scoped
-       authority with a process-local secret.
-    3. Otherwise (delegation off/warn), a random per-process ephemeral (stable within the
-       process so mint/validate agree; never persisted, never PID-derived).
+    ``ARBORA_TOKEN_SECRET`` resolves from the secrets backend or config. There is
+    no process-local fallback: a per-process random secret is state that other
+    replicas cannot verify, and a PID-derived one is forgeable. A deployment that
+    mints or validates a run token configures the secret reference.
     """
     val = read_env("ARBORA_TOKEN_SECRET")
-    if val:
-        return val.encode()
-
-    # Deferred import — delegation.py imports decode_token from here lazily, so keep this
-    # inside the function to avoid an import cycle at module load.
-    from arbora.security.delegation import DelegationMode, delegation_mode
-
-    if delegation_mode() is DelegationMode.ON:
+    if not val:
         raise RunTokenSecretUnavailable(
-            "ARBORA_TOKEN_SECRET must resolve from the secrets backend when "
-            "ENABLE_DELEGATED_IDENTITY=on; the PID-derived fallback secret was removed as a "
-            "forgeable-secret risk. Configure the secret reference (e.g. a vault "
-            "KV path) before enabling delegated identity."
+            "ARBORA_TOKEN_SECRET must resolve from the secrets backend to mint or "
+            "validate a run token; no process-local fallback secret exists. Configure "
+            "the secret reference (e.g. a vault KV path)."
         )
-
-    global _EPHEMERAL
-    if _EPHEMERAL is None:
-        _EPHEMERAL = secrets.token_bytes(32)
-    return _EPHEMERAL
+    return val.encode()
 
 
 def require_token_secret() -> None:

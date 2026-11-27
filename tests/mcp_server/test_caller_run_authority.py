@@ -7,6 +7,7 @@ import contextvars
 import logging
 import time
 from collections.abc import Iterator
+from functools import partial
 from typing import Any
 
 import pytest
@@ -14,6 +15,7 @@ import pytest
 from arbora.mcp_server import bootstrap
 from arbora.security import run_authority
 from arbora.security.actor_context import ActorContext, ActorType
+from arbora.security.process_authority import ProcessAuthority
 from arbora.security.run_authority import (
     CALLER_REVOCATIONS,
     RunCredentialLease,
@@ -114,7 +116,7 @@ def scope(monkeypatch: pytest.MonkeyPatch, clock: Clock) -> Any:
         )
 
     monkeypatch.setattr(run_authority, "keep_run_authority_current", fake_clock_renewer)
-    return bootstrap.authority_keepalive_scope
+    return partial(bootstrap.authority_keepalive_scope, ProcessAuthority())
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R029.1")
@@ -317,10 +319,15 @@ def test_process_renewal_never_touches_a_run_lease(clock: Clock, scope: Any) -> 
                 run_session = current_session()
                 assert run_session is not None
                 with pytest.raises(bootstrap.ProcessAuthorityRenewalError) as err:
-                    bootstrap._refresh_process_authority(run_session)
+                    bootstrap._refresh_process_authority(
+                        ProcessAuthority(), run_session
+                    )
                 assert err.value.code == "not_renewable"
                 assert (
-                    await bootstrap._ensure_process_authority_current() is run_session
+                    await bootstrap._ensure_process_authority_current(
+                        ProcessAuthority()
+                    )
+                    is run_session
                 )
                 lease = run_session.actor.credential_lease
                 assert lease is not None

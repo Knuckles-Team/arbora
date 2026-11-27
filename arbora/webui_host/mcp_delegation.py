@@ -22,6 +22,7 @@ from arbora.fleet.multiplexer import (
     require_fleet_capability,
 )
 from arbora.fleet.shared_multiplexer import run_on_served_multiplexer
+from arbora.mcp_server.host_caches import ToolTable
 
 
 class WebUiMcpDelegation(TypedDict):
@@ -75,7 +76,7 @@ async def _list_mcp_server_tools(
 
 
 async def _call_native_tool(
-    tools: Mapping[str, Any],
+    tools: ToolTable,
     mux: MCPMultiplexer,
     *,
     tool_name: str,
@@ -95,7 +96,7 @@ async def _call_native_tool(
         tools.keys() | runtime.NATIVE_INTENT_TOOLS.keys()
     ):
         raise ToolError("Native Arbora tool is unavailable")
-    with runtime.verified_tool_session_scope():
+    with runtime.verified_tool_session_scope(tools.authority):
         result = await asyncio.wait_for(
             host.call_tool(tool_name, arguments, run_middleware=True), timeout=timeout
         )

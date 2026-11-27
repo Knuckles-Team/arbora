@@ -28,6 +28,7 @@ from arbora.mcp_server.host_context import (
     bind_ranking,
 )
 from arbora.mcp_server.hosted_invocation import HostedInvocation
+from arbora.security.process_authority import ProcessAuthority
 from arbora.semantic_content import default_content_providers
 
 logger = logging.getLogger(__name__)
@@ -142,7 +143,10 @@ def _preflight_mcp_sdk_floor() -> None:
 
 
 def _attach_fleet_runtime(
-    mcp: Any, fleet_catalog_reader: Any, fleet: FleetState
+    mcp: Any,
+    fleet_catalog_reader: Any,
+    fleet: FleetState,
+    authority: ProcessAuthority,
 ) -> Any:
     """Attach the mandatory fleet surface or fail before serving."""
 
@@ -153,7 +157,7 @@ def _attach_fleet_runtime(
             mcp,
             catalog_reader=fleet_catalog_reader,
             fleet=fleet,
-            authority_scope=runtime.verified_tool_session_scope,
+            authority_scope=partial(runtime.verified_tool_session_scope, authority),
         )
     except Exception as exc:
         raise RuntimeError(
@@ -314,6 +318,7 @@ def _start_catalog_warmup(
     reader: Any,
     fleet_mux: Any,
     action_policies: ActionPolicies,
+    authority: ProcessAuthority,
     feature_schema: Any = None,
 ) -> Any:
     """Compose the catalog authorities, then onboard the fleet, off boot.
@@ -365,7 +370,7 @@ def _start_catalog_warmup(
         # the repeated composition runs under a live engine session.
         from arbora.mcp_server.bootstrap import _refresh_process_authority
 
-        _refresh_process_authority(session)
+        _refresh_process_authority(authority, session)
 
     return start_catalog_warmup(slot, compose, after=onboard, reestablish=reestablish)
 
@@ -485,7 +490,9 @@ def mcp_server(
     # CONCEPT:MERISTEM-ECO.mcp.fleet-meta-tools-always-on
     # Inject arbora's own embedding model so fleet tool search ranks by
     # query↔description MEANING (semantic), not just literal token overlap.
-    fleet_mux = _attach_fleet_runtime(mcp, fleet_catalog_reader, host_context.fleet)
+    fleet_mux = _attach_fleet_runtime(
+        mcp, fleet_catalog_reader, host_context.fleet, host_context.authority
+    )
     # The harness's thin client host fails closed until arbora registers
     # its native toolset, fleet catalog and session keepalive bindings.
     from arbora.mcp_server.harness_ports import bind_host_ports_of
@@ -506,14 +513,17 @@ def mcp_server(
     network_serving = build_network_serving_config(args)
 
     bootstrap_session = early_session or runtime._mint_process_session(transport)
-    runtime._PROCESS_SESSION = bootstrap_session if transport == "stdio" else None
-    runtime.set_process_session(runtime._PROCESS_SESSION)
-    runtime._start_process_authority_supervisor(bootstrap_session)
+    host_context.authority.bind_session(
+        bootstrap_session if transport == "stdio" else None
+    )
+    runtime._start_process_authority_supervisor(
+        host_context.authority, bootstrap_session
+    )
     if identity_lifecycle is not None:
         # ARBORA-IDENTITY-R030.4: arbora reconciles its own OAuth clients.
         identity_lifecycle.start()
     # Readiness probes the live fleet/goal authority, which is a real graph read
-    # and therefore needs a bound session. `runtime._PROCESS_SESSION` is deliberately
+    # and therefore needs a bound session. the authority's session slot is deliberately
     # None on network transports (it is a stdio fallback, and must not become a
     # way for a request path to pick up identity it never authenticated), so
     # readiness gets its own narrowly-scoped handle on the process authority.
@@ -565,7 +575,7 @@ def mcp_server(
 
         with use_actor(bootstrap_session.actor), use_session(bootstrap_session):
             runtime._start_engine_bootstrap(
-                host_context.engine.served(), bootstrap_session
+                host_context.engine.served(), bootstrap_session, host_context.authority
             )
 
             # A fresh store has no tenant or `__control__` graph; leases, queues
@@ -596,6 +606,7 @@ def mcp_server(
                 fleet_catalog_reader,
                 fleet_mux,
                 host_context.policy.action_policies,
+                host_context.authority,
                 getattr(invocation, "decision_feature_schema", None),
             )
 
@@ -678,9 +689,10 @@ def mcp_server(
             background_host.stop()
         if co_service_supervisor is not None:
             co_service_supervisor.stop_all()
-        runtime._PROCESS_SESSION = None
-        runtime.set_process_session(None)
-        runtime._stop_process_authority_supervisor(close_lease=True)
+        host_context.authority.bind_session(None)
+        runtime._stop_process_authority_supervisor(
+            host_context.authority, close_lease=True
+        )
         if identity_lifecycle is not None:
             identity_lifecycle.stop()
         runtime._release_readiness_authority(readiness_authority_owner)

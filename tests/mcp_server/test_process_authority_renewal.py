@@ -9,6 +9,7 @@ import threading
 import time
 from collections.abc import Callable, Iterator
 from dataclasses import replace
+from functools import partial
 from typing import Any
 
 import pytest
@@ -21,6 +22,7 @@ from arbora.security.actor_context import (
     CredentialLease,
     LeaseState,
 )
+from arbora.security.process_authority import ProcessAuthority
 from arbora.security.session import GraphSession, SessionExpiredError
 
 ROLES = ("kg:admin", "mcp:discover", "query:unified")
@@ -35,10 +37,14 @@ class Clock:
 
 
 @pytest.fixture
+def authority() -> ProcessAuthority:
+    return ProcessAuthority()
+
+
+@pytest.fixture
 def clock(monkeypatch: pytest.MonkeyPatch) -> Iterator[Clock]:
     fake = Clock()
     monkeypatch.setattr(time, "time", fake.time)
-    monkeypatch.setattr(bootstrap, "_PROCESS_SESSION_REFRESH_LOCK", threading.Lock())
     yield fake
     runtime_health.register_process_lease(None)
 
@@ -85,7 +91,7 @@ def _issue(monkeypatch: pytest.MonkeyPatch, clock: Clock, roles: Any) -> list[in
 
 @pytest.mark.spec("ARBORA-IDENTITY-R027")
 def test_authority_renews_across_many_token_lifetimes(
-    monkeypatch: pytest.MonkeyPatch, clock: Clock
+    authority: ProcessAuthority, monkeypatch: pytest.MonkeyPatch, clock: Clock
 ) -> None:
     """Twelve hours of 300 s tokens, with the IdP reordering and adding roles."""
     session = _session(clock)
@@ -98,7 +104,7 @@ def test_authority_renews_across_many_token_lifetimes(
         clock.now = _lease(session).expires_at - 29
         with pytest.raises(SessionExpiredError):
             session.ensure_authority_current(minimum_ttl_seconds=30)
-        assert bootstrap._refresh_process_authority(session) is session
+        assert bootstrap._refresh_process_authority(authority, session) is session
         session.ensure_authority_current(minimum_ttl_seconds=30)
     assert len(issued) > 140
     # The running session keeps its original, narrower role set.
@@ -107,7 +113,10 @@ def test_authority_renews_across_many_token_lifetimes(
 
 @pytest.mark.spec("ARBORA-IDENTITY-R027")
 def test_revoked_role_fails_closed_with_a_reason(
-    monkeypatch: pytest.MonkeyPatch, clock: Clock, caplog: pytest.LogCaptureFixture
+    authority: ProcessAuthority,
+    monkeypatch: pytest.MonkeyPatch,
+    clock: Clock,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     session = _session(clock)
     runtime_health.register_process_lease(_lease(session))
@@ -115,22 +124,25 @@ def test_revoked_role_fails_closed_with_a_reason(
     clock.now = _lease(session).expires_at - 10
     caplog.set_level(logging.ERROR, logger=bootstrap.logger.name)
     stop = threading.Event()
-    monkeypatch.setattr(bootstrap, "_PROCESS_AUTHORITY_STOP", stop)
+    authority.stop = stop
     # Revoked is terminal: the loop ends on its own, without waiting.
-    bootstrap._process_authority_refresh_loop(session)
+    bootstrap._process_authority_refresh_loop(authority, session)
     assert _lease(session).state is LeaseState.REVOKED
     assert runtime_health.readiness_reason() == "process_authority_roles_revoked"
     message = caplog.records[-1].getMessage()
     assert "code=roles_revoked" in message
     assert "changed during renewal" in message
     with pytest.raises(bootstrap.ProcessAuthorityRenewalError) as raised:
-        bootstrap._refresh_process_authority(session)
+        bootstrap._refresh_process_authority(authority, session)
     assert raised.value.code == "roles_revoked"
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R027")
 def test_acquisition_failure_logs_its_cause_without_secrets(
-    monkeypatch: pytest.MonkeyPatch, clock: Clock, caplog: pytest.LogCaptureFixture
+    authority: ProcessAuthority,
+    monkeypatch: pytest.MonkeyPatch,
+    clock: Clock,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     session = _session(clock)
     token = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ4In0.c2lnbmF0dXJl"  # sanitizer:ignore - synthetic unsigned JWT fixture for masking
@@ -149,9 +161,9 @@ def test_acquisition_failure_logs_its_cause_without_secrets(
     clock.now = _lease(session).expires_at - 10
     caplog.set_level(logging.ERROR, logger=bootstrap.logger.name)
     stop = threading.Event()
-    monkeypatch.setattr(bootstrap, "_PROCESS_AUTHORITY_STOP", stop)
+    authority.stop = stop
     monkeypatch.setattr(stop, "wait", lambda _seconds: stop.set())
-    bootstrap._process_authority_refresh_loop(session)
+    bootstrap._process_authority_refresh_loop(authority, session)
     message = caplog.records[-1].getMessage()
     assert "code=acquisition_failed" in message
     assert (
@@ -163,13 +175,13 @@ def test_acquisition_failure_logs_its_cause_without_secrets(
 
     _issue(monkeypatch, clock, ROLES)
     stop.clear()
-    bootstrap._process_authority_refresh_loop(session)
+    bootstrap._process_authority_refresh_loop(authority, session)
     assert _lease(session).state is LeaseState.LIVE
     assert runtime_health.readiness_reason() is None
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R027")
-def test_identity_change_is_refused(clock: Clock) -> None:
+def test_identity_change_is_refused(authority: ProcessAuthority, clock: Clock) -> None:
     left = _actor(clock)
     assert (
         bootstrap._process_authority_change(left, replace(left, roles=ROLES[::-1]))
@@ -188,25 +200,28 @@ def test_identity_change_is_refused(clock: Clock) -> None:
 @pytest.mark.spec("ARBORA-IDENTITY-R027.3")
 @pytest.mark.parametrize("offset", [0, 1])
 def test_request_path_never_reacquires_an_expired_lease(
-    monkeypatch: pytest.MonkeyPatch, clock: Clock, offset: int
+    authority: ProcessAuthority,
+    monkeypatch: pytest.MonkeyPatch,
+    clock: Clock,
+    offset: int,
 ) -> None:
     """A request fails closed on an expired lease; only the supervisor recovers it."""
     session = _session(clock)
     issued = _issue(monkeypatch, clock, ROLES)
     clock.now = _lease(session).expires_at + offset
     with pytest.raises(SessionExpiredError):
-        bootstrap._refresh_process_authority(session, from_request=True)
+        bootstrap._refresh_process_authority(authority, session, from_request=True)
     assert issued == []
     assert _lease(session).state is LeaseState.EXPIRED
     # The supervisor path calls the identity provider and recovers.
-    assert bootstrap._refresh_process_authority(session) is session
+    assert bootstrap._refresh_process_authority(authority, session) is session
     assert issued == [int(clock.now)]
     session.ensure_authority_current(minimum_ttl_seconds=30)
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R027.3")
 def test_acquisition_crossing_expiry_recovers_with_the_new_expiry(
-    monkeypatch: pytest.MonkeyPatch, clock: Clock
+    authority: ProcessAuthority, monkeypatch: pytest.MonkeyPatch, clock: Clock
 ) -> None:
     session = _session(clock)
     expiry = _lease(session).expires_at
@@ -217,23 +232,23 @@ def test_acquisition_crossing_expiry_recovers_with_the_new_expiry(
         return _actor(clock)
 
     monkeypatch.setattr(bootstrap, "_renewed_process_actor", slow_identity)
-    assert bootstrap._refresh_process_authority(session) is session
+    assert bootstrap._refresh_process_authority(authority, session) is session
     assert _lease(session).state is LeaseState.LIVE
     assert _lease(session).expires_at == expiry + 300
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R027")
 def test_revocation_survives_restored_roles_and_new_session(
-    monkeypatch: pytest.MonkeyPatch, clock: Clock
+    authority: ProcessAuthority, monkeypatch: pytest.MonkeyPatch, clock: Clock
 ) -> None:
     session = _session(clock)
     clock.now = _lease(session).expires_at - 10
     _issue(monkeypatch, clock, ROLES[:-1])
     with pytest.raises(bootstrap.ProcessAuthorityRenewalError):
-        bootstrap._refresh_process_authority(session)
+        bootstrap._refresh_process_authority(authority, session)
     issued = _issue(monkeypatch, clock, ROLES)
     with pytest.raises(bootstrap.ProcessAuthorityRenewalError, match="changed"):
-        bootstrap._refresh_process_authority(session)
+        bootstrap._refresh_process_authority(authority, session)
     assert issued == []
     with pytest.raises(SessionExpiredError):
         session.ensure_authority_current()
@@ -293,7 +308,7 @@ def test_gateway_revalidates_before_lease_commit(
 
 @pytest.mark.spec("ARBORA-IDENTITY-R027")
 def test_concurrent_refresh_reuses_current_identity(
-    monkeypatch: pytest.MonkeyPatch, clock: Clock
+    authority: ProcessAuthority, monkeypatch: pytest.MonkeyPatch, clock: Clock
 ) -> None:
     from concurrent.futures import ThreadPoolExecutor
 
@@ -302,7 +317,10 @@ def test_concurrent_refresh_reuses_current_identity(
     issued = _issue(monkeypatch, clock, ROLES)
     with ThreadPoolExecutor(max_workers=2) as workers:
         results = list(
-            workers.map(bootstrap._refresh_process_authority, [session, session])
+            workers.map(
+                partial(bootstrap._refresh_process_authority, authority),
+                [session, session],
+            )
         )
     assert all(result is session for result in results)
     assert len(issued) == 1
@@ -310,7 +328,7 @@ def test_concurrent_refresh_reuses_current_identity(
 
 @pytest.mark.spec("ARBORA-IDENTITY-R027")
 def test_gateway_identity_change_closes_original_lease(
-    monkeypatch: pytest.MonkeyPatch, clock: Clock
+    authority: ProcessAuthority, monkeypatch: pytest.MonkeyPatch, clock: Clock
 ) -> None:
     from arbora.gateway.daemon import refresh_process_identity
 
@@ -361,7 +379,7 @@ class SteppedStop(threading.Event):
 
 @pytest.mark.spec("ARBORA-IDENTITY-R027.2")
 def test_renewal_starts_at_half_lifetime_and_backs_off_with_jitter(
-    monkeypatch: pytest.MonkeyPatch, clock: Clock
+    authority: ProcessAuthority, monkeypatch: pytest.MonkeyPatch, clock: Clock
 ) -> None:
     import random
 
@@ -375,8 +393,8 @@ def test_renewal_starts_at_half_lifetime_and_backs_off_with_jitter(
     provider = FakeIdentityProvider(clock, recovers_at=float("inf"))
     monkeypatch.setattr(bootstrap, "_renewed_process_actor", provider)
     stop = SteppedStop(clock, until=lambda: len(provider.calls) >= 8)
-    monkeypatch.setattr(bootstrap, "_PROCESS_AUTHORITY_STOP", stop)
-    bootstrap._process_authority_refresh_loop(session, rng=random.Random(7))
+    authority.stop = stop
+    bootstrap._process_authority_refresh_loop(authority, session, rng=random.Random(7))
 
     # The first renewal attempt is at half the 300 s lifetime, not at 30 s left.
     assert provider.calls[0] == start + 150
@@ -392,7 +410,7 @@ def test_renewal_starts_at_half_lifetime_and_backs_off_with_jitter(
     provider.recovers_at = clock.now
     stop.clear()
     stop.until = lambda: _lease(session).state is LeaseState.LIVE
-    bootstrap._process_authority_refresh_loop(session, rng=random.Random(7))
+    bootstrap._process_authority_refresh_loop(authority, session, rng=random.Random(7))
     assert (lease.state, lease.attempts, lease.failure_code) == (
         LeaseState.LIVE,
         0,
@@ -402,7 +420,7 @@ def test_renewal_starts_at_half_lifetime_and_backs_off_with_jitter(
 
 @pytest.mark.spec("ARBORA-IDENTITY-R027.3")
 def test_outage_longer_than_ttl_recovers_without_restart(
-    monkeypatch: pytest.MonkeyPatch, clock: Clock
+    authority: ProcessAuthority, monkeypatch: pytest.MonkeyPatch, clock: Clock
 ) -> None:
     """Regression for the 2026-11-06 outage: the IdP is down for 3 token lifetimes."""
     session = _session(clock)
@@ -417,8 +435,8 @@ def test_outage_longer_than_ttl_recovers_without_restart(
         return clock.now > provider.recovers_at and lease.state is LeaseState.LIVE
 
     stop = SteppedStop(clock, until=recovered)
-    monkeypatch.setattr(bootstrap, "_PROCESS_AUTHORITY_STOP", stop)
-    bootstrap._process_authority_refresh_loop(session)
+    authority.stop = stop
+    bootstrap._process_authority_refresh_loop(authority, session)
 
     assert LeaseState.DEGRADED in seen and LeaseState.EXPIRED in seen
     assert seen.index(LeaseState.DEGRADED) < seen.index(LeaseState.EXPIRED)
@@ -438,7 +456,7 @@ def test_outage_longer_than_ttl_recovers_without_restart(
     provider.identity = lambda: replace(_actor(clock), tenant_id="other")
     stop.clear()
     stop.until = lambda: other_lease.state is LeaseState.REVOKED
-    bootstrap._process_authority_refresh_loop(other)
+    bootstrap._process_authority_refresh_loop(authority, other)
     assert other_lease.state is LeaseState.REVOKED
     assert other_lease.revocation_reason == "identity_changed"
     with pytest.raises(SessionExpiredError):
@@ -465,7 +483,7 @@ class Lockstep(threading.Event):
 
 @pytest.mark.spec("ARBORA-IDENTITY-R027.7")
 def test_supervisor_drives_the_lease_through_an_outage_and_ready_follows(
-    monkeypatch: pytest.MonkeyPatch, clock: Clock
+    authority: ProcessAuthority, monkeypatch: pytest.MonkeyPatch, clock: Clock
 ) -> None:
     """The real supervisor thread, loop and ``/health/ready`` route, with a fake IdP."""
     from starlette.testclient import TestClient
@@ -492,8 +510,8 @@ def test_supervisor_drives_the_lease_through_an_outage_and_ready_follows(
     client = TestClient(mcp.http_app())
 
     stop = Lockstep(clock)
-    monkeypatch.setattr(bootstrap, "_PROCESS_AUTHORITY_STOP", stop)
-    bootstrap._start_process_authority_supervisor(session)
+    authority.stop = stop
+    bootstrap._start_process_authority_supervisor(authority, session)
     assert runtime_health.process_lease() is lease
     observed: dict[LeaseState, dict[str, Any]] = {}
     try:
@@ -518,7 +536,7 @@ def test_supervisor_drives_the_lease_through_an_outage_and_ready_follows(
     finally:
         stop.set()
         stop.resume.put(None)
-        bootstrap._stop_process_authority_supervisor()
+        bootstrap._stop_process_authority_supervisor(authority)
 
     assert observed[LeaseState.DEGRADED] == {
         "status": "ready",

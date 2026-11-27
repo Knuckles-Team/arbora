@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import contextvars
 import logging
 import random
 import re
@@ -11,20 +12,23 @@ import threading
 import time
 from collections.abc import AsyncIterator
 from dataclasses import replace
-from typing import Any, cast
+from typing import Any
 
 from arbora.security.anonymous import session_context
+from arbora.security.process_authority import ProcessAuthority
 
 logger = logging.getLogger(__name__)
 
-# Bound by ``runtime`` after this module's definitions load. Keeping the host
-# state injection explicit avoids an eager bootstrap↔runtime import cycle.
-_AGENT_ID = cast(Any, None)
-_AUTHORITY_KEEPALIVE_ACTIVE = cast(Any, None)
-_PROCESS_AUTHORITY_STOP = cast(Any, None)
-_PROCESS_AUTHORITY_THREAD = cast(Any, None)
-_PROCESS_SESSION_REFRESH_LOCK = cast(Any, None)
-_SESSION_ID = cast(Any, None)
+#: Guards :func:`authority_keepalive_scope` against starting a second renewal loop
+#: for the same lease when one guarded scope nests inside another on the same task
+#: tree (for example an MCP tool dispatch whose tool body itself calls
+#: ``Orchestrator.execute_agent`` for a sub-delegation). Context variables
+#: propagate across ``await``, ``asyncio.ensure_future``/``create_task`` and
+#: ``asyncio.to_thread`` (which copies the current context into the worker
+#: thread), so the guard is visible to a nested scope across a thread boundary.
+_AUTHORITY_KEEPALIVE_ACTIVE: contextvars.ContextVar[bool] = contextvars.ContextVar(
+    "_authority_keepalive_active", default=False
+)
 
 
 def _set_readiness_authority(session: Any) -> object:
@@ -194,7 +198,9 @@ def _ensure_renewable_process_session(session: Any, lease: Any) -> None:
         )
 
 
-def _refresh_process_authority(session: Any, *, from_request: bool = False) -> Any:
+def _refresh_process_authority(
+    authority: ProcessAuthority, session: Any, *, from_request: bool = False
+) -> Any:
     """Drive one renewal of the process lease without replacing captured sessions.
 
     External identities reacquire and validate their configured token. Tiny
@@ -222,7 +228,7 @@ def _refresh_process_authority(session: Any, *, from_request: bool = False) -> A
         raise ProcessAuthorityRenewalError(
             "not_renewable", "Graph process authority is not renewable"
         )
-    with _PROCESS_SESSION_REFRESH_LOCK:
+    with authority.refresh_lock:
         _ensure_renewable_process_session(session, lease)
         lease.tick()
         if lease.state is LeaseState.LIVE:
@@ -266,14 +272,14 @@ def _refresh_process_authority(session: Any, *, from_request: bool = False) -> A
         return session
 
 
-async def _ensure_process_authority_current() -> Any:
+async def _ensure_process_authority_current(authority: ProcessAuthority) -> Any:
     """Ensure request/process authority without blocking the MCP event loop.
 
     D-SNV-5: an ambient session whose actor carries a renewable
     ``credential_lease`` (a server-minted process/client-credentials identity
     — never a caller-presented bearer JWT, which has no ``credential_lease``
     and stays exactly as fail-closed as before) is proactively renewed here
-    the same way the stdio ``_PROCESS_SESSION`` fallback already was. This is
+    the same way the stdio process-session fallback already was. This is
     the dispatch-entry check only; :func:`_keep_process_authority_current`
     covers the rest of a long-running dispatch.
     """
@@ -298,7 +304,7 @@ async def _ensure_process_authority_current() -> Any:
             ambient.ensure_authority_current(minimum_ttl_seconds=30)
         except SessionExpiredError:
             ambient = await asyncio.to_thread(
-                _refresh_process_authority, ambient, from_request=True
+                _refresh_process_authority, authority, ambient, from_request=True
             )
         if ambient is None:
             # `_refresh_process_authority` is typed `Any` (it renews in place and
@@ -309,20 +315,22 @@ async def _ensure_process_authority_current() -> Any:
             raise PermissionError("Verified GraphSession required")
         ambient.ensure_authority_current(minimum_ttl_seconds=30)
         return ambient
-    session = _process_session()
+    session = authority.session()
     if session is None:
         raise PermissionError("Verified GraphSession required")
     try:
         session.ensure_authority_current(minimum_ttl_seconds=30)
     except SessionExpiredError:
         session = await asyncio.to_thread(
-            _refresh_process_authority, session, from_request=True
+            _refresh_process_authority, authority, session, from_request=True
         )
     session.ensure_authority_current(minimum_ttl_seconds=30)
     return session
 
 
-async def _keep_process_authority_current(session: Any) -> None:
+async def _keep_process_authority_current(
+    authority: ProcessAuthority, session: Any
+) -> None:
     """Background keepalive for one in-flight dispatch under a renewable session.
 
     A tool dispatch may run for the whole ``_TOOL_CALL_TIMEOUT_S`` window
@@ -349,7 +357,7 @@ async def _keep_process_authority_current(session: Any) -> None:
             await asyncio.sleep(max(1.0, min(30.0, seconds_left - 30.0)))
             try:
                 await asyncio.to_thread(
-                    _refresh_process_authority, session, from_request=True
+                    _refresh_process_authority, authority, session, from_request=True
                 )
             except SessionExpiredError:
                 # Fail-closed: the next real authority check (the deep engine
@@ -373,7 +381,9 @@ async def _keep_process_authority_current(session: Any) -> None:
 
 
 @contextlib.asynccontextmanager
-async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator[None]:
+async def authority_keepalive_scope(
+    authority: ProcessAuthority, session: Any | None = None
+) -> AsyncIterator[None]:
     """Renew a renewable session's authority for the duration of the wrapped call.
 
     CONCEPT:MERISTEM-ORCH.execution.delegation-hot-path-authority — keep a long delegation authorized for its whole run, on every entrypoint, not just MCP dispatch.
@@ -404,7 +414,7 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
       lengthened.
     * ``session`` defaults to the ambient :func:`GraphSession
       <arbora.security.session.current_session>` (falling
-      back to the stdio ``_PROCESS_SESSION``, same as ``verified_tool_session_scope``)
+      back to the stdio process session, same as ``verified_tool_session_scope``)
       resolved WITHOUT raising when neither is set — this helper only ever adds
       renewal; it must never introduce a new precondition. A caller with no
       ambient/process session at all fails exactly as it already would, at the
@@ -423,7 +433,7 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
     if session is None:
         from arbora.security.session import current_session
 
-        session = current_session() or _process_session()
+        session = current_session() or authority.session()
     if session is None:
         yield
         return
@@ -435,7 +445,9 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
         return
 
     guard_token = _AUTHORITY_KEEPALIVE_ACTIVE.set(True)
-    keepalive = asyncio.ensure_future(_keep_process_authority_current(session))
+    keepalive = asyncio.ensure_future(
+        _keep_process_authority_current(authority, session)
+    )
     try:
         yield
     finally:
@@ -523,7 +535,9 @@ def next_delay(attempt: int, rng: Any) -> float:
     return base * rng.uniform(PROCESS_RENEWAL_JITTER_LOW, PROCESS_RENEWAL_JITTER_HIGH)
 
 
-def _process_authority_refresh_loop(session: Any, rng: Any = None) -> None:
+def _process_authority_refresh_loop(
+    authority: ProcessAuthority, session: Any, rng: Any = None
+) -> None:
     """Keep a renewable process lease current for all captured worker sessions.
 
     The loop runs for the life of the process. A ``Live`` lease sleeps until
@@ -540,64 +554,63 @@ def _process_authority_refresh_loop(session: Any, rng: Any = None) -> None:
     if lease is None:
         return
     rng = rng or random.Random()  # nosec B311 - backoff jitter, not crypto
-    while not _PROCESS_AUTHORITY_STOP.is_set():
+    while not authority.stop.is_set():
         lease.tick()
         if lease.state in TERMINAL_LEASE_STATES:
             return
         if lease.state is LeaseState.LIVE:
             idle = lease.renew_due_at - time.time()
-            _PROCESS_AUTHORITY_STOP.wait(
-                min(PROCESS_RENEWAL_MAX_IDLE_SECONDS, max(1.0, idle))
-            )
+            authority.stop.wait(min(PROCESS_RENEWAL_MAX_IDLE_SECONDS, max(1.0, idle)))
             continue
         try:
-            _refresh_process_authority(session)
+            _refresh_process_authority(authority, session)
         except Exception as exc:  # noqa: BLE001 - retry; expiry remains fail-closed
             _log_renewal_failure("Graph process authority", exc)
             if lease.state in TERMINAL_LEASE_STATES:
                 return
-            _PROCESS_AUTHORITY_STOP.wait(next_delay(lease.attempts, rng))
+            authority.stop.wait(next_delay(lease.attempts, rng))
 
 
-def _start_process_authority_supervisor(session: Any) -> None:
+def _start_process_authority_supervisor(
+    authority: ProcessAuthority, session: Any
+) -> None:
     """Start the sole external-authority renewal supervisor when required."""
-    global _PROCESS_AUTHORITY_THREAD
     from arbora.observability.runtime_health import register_process_lease
 
-    _stop_process_authority_supervisor()
-    _PROCESS_AUTHORITY_STOP.clear()
+    _stop_process_authority_supervisor(authority)
+    authority.stop.clear()
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
     if lease is None:
         return
     register_process_lease(lease)
     thread = threading.Thread(
         target=_process_authority_refresh_loop,
-        args=(session,),
+        args=(authority, session),
         daemon=True,
         name="GraphProcessAuthority",
     )
-    _PROCESS_AUTHORITY_THREAD = thread
+    authority.bind_thread(thread)
     thread.start()
 
 
-def _stop_process_authority_supervisor(*, close_lease: bool = False) -> None:
+def _stop_process_authority_supervisor(
+    authority: ProcessAuthority, *, close_lease: bool = False
+) -> None:
     """Stop and forget the process-authority supervisor.
 
     ``close_lease`` (process shutdown) also sends ``stop`` to the registered
     lease, so a captured session can no longer be used. A restart of the
     supervisor for the same session leaves the lease as it is.
     """
-    global _PROCESS_AUTHORITY_THREAD
     from arbora.observability.runtime_health import (
         process_lease,
         register_process_lease,
     )
 
-    _PROCESS_AUTHORITY_STOP.set()
-    thread = _PROCESS_AUTHORITY_THREAD
+    authority.stop.set()
+    thread = authority.take_thread()
     if thread is not None and thread is not threading.current_thread():
         thread.join(timeout=2.0)
-    _PROCESS_AUTHORITY_THREAD = None
     lease = process_lease()
     if close_lease and lease is not None:
         lease.stop()
@@ -857,7 +870,7 @@ def _wait_for_engine_materialization(
         graph_name,
         timeout_seconds,
     )
-    shutdown = stop_event or _PROCESS_AUTHORITY_STOP
+    shutdown = stop_event or threading.Event()
     deadline = time.monotonic() + max(0.0, timeout_seconds)
     last_progress: tuple[str, int | None, int | None] | None = None
     manifest_visible: bool | None = None
@@ -897,7 +910,9 @@ def _engine_ready_timeout_seconds() -> float:
     return float(getattr(runtime_config, "arbora_engine_ready_timeout", 1500.0))
 
 
-def _start_engine_bootstrap(engine: Any, session: Any) -> None:
+def _start_engine_bootstrap(
+    engine: Any, session: Any, authority: ProcessAuthority
+) -> None:
     """Prove the engine answers under the process authority before serving.
 
     EG owns its workers, materialization and durable state
@@ -920,7 +935,7 @@ def _start_engine_bootstrap(engine: Any, session: Any) -> None:
                     "medulla did not answer before serving start"
                 ) from exc
             logger.info("waiting for the engine to answer: %s", type(exc).__name__)
-            if _PROCESS_AUTHORITY_STOP.wait(1.0):
+            if authority.stop.wait(1.0):
                 raise InterruptedError("shutdown cancelled engine bootstrap") from exc
             continue
         logger.info(
@@ -928,20 +943,6 @@ def _start_engine_bootstrap(engine: Any, session: Any) -> None:
             health.get("status") if isinstance(health, dict) else "unknown",
         )
         return
-
-
-def _process_session() -> Any:
-    """The stdio process session; ``runtime`` holds the one live binding."""
-    from arbora.mcp_server import runtime
-
-    return runtime._PROCESS_SESSION
-
-
-def set_process_session(session: Any) -> None:
-    """Bind the process session on the host runtime (its single owner)."""
-    from arbora.mcp_server import runtime
-
-    runtime._PROCESS_SESSION = session
 
 
 BOOTSTRAP_EXPORTS = tuple(

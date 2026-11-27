@@ -55,8 +55,9 @@ def build_toolset(
     )
 
 
-def keepalive() -> contextlib.AbstractAsyncContextManager[None]:
-    return _runtime().authority_keepalive_scope()
+def keepalive(authority: Any) -> contextlib.AbstractAsyncContextManager[None]:
+    """The authority keepalive scope of one host's process authority."""
+    return _runtime().authority_keepalive_scope(authority)
 
 
 def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:

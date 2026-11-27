@@ -37,8 +37,12 @@ def test_refusals(mutate, kwargs) -> None:
 
 
 def test_retired_secret_names_are_not_read(monkeypatch: pytest.MonkeyPatch) -> None:
+    from arbora.security.run_token import (  # noqa: PLC0415
+        RunTokenSecretUnavailable,
+    )
     from arbora.security.run_token import _secret as _resolve_secret  # noqa: PLC0415
 
     monkeypatch.delenv("ARBORA_TOKEN_SECRET", raising=False)
     monkeypatch.setenv("MERISTEM_TOKEN_SECRET", "old" * 16)
-    assert b"old" * 16 != _resolve_secret()
+    with pytest.raises(RunTokenSecretUnavailable):
+        _resolve_secret()

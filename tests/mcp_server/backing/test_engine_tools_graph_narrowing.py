@@ -348,9 +348,9 @@ def test_verified_identity_preserved_through_narrowing(monkeypatch):
 def test_narrowing_behaves_identically_under_stdio_process_session(monkeypatch):
     """Mirrors ``test_graph_explicit_selection.py``'s unauthenticated-posture
     proof: the local/stdio bootstrap has no per-request ambient session, only
-    the process-lifetime ``_PROCESS_SESSION`` fallback
+    the process-lifetime process-session fallback
     (``runtime.verified_tool_session_scope``:
-    ``session = ambient or _PROCESS_SESSION``). Narrowing must work
+    ``session = ambient or authority.session()``). Narrowing must work
     identically there -- no auth-posture-conditional branch anywhere in
     ``_dispatch``."""
     from arbora.security.session import suspend_session
@@ -360,9 +360,8 @@ def test_narrowing_behaves_identically_under_stdio_process_session(monkeypatch):
     client, observed = _observing_client()
     monkeypatch.setattr(engine_tools, "_client_for", lambda graph: client)
 
-    saved_process_session = runtime._PROCESS_SESSION
-    runtime._PROCESS_SESSION = _session(
-        READER_ACTOR, "tenant-acme-graph", "kg:read", "kg:write"
+    caches.tools.authority.bind_session(
+        _session(READER_ACTOR, "tenant-acme-graph", "kg:read", "kg:write")
     )
     try:
         with use_actor(READER_ACTOR), suspend_session():
@@ -381,6 +380,6 @@ def test_narrowing_behaves_identically_under_stdio_process_session(monkeypatch):
             assert payload["ok"] is True
             assert current_session() is None  # restored, no leak into the caller
     finally:
-        runtime._PROCESS_SESSION = saved_process_session
+        caches.tools.authority.bind_session(None)
 
     assert observed == [("nodes", "has", "tenant-other-graph")]

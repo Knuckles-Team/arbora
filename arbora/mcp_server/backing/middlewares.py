@@ -1,4 +1,4 @@
-from arbora.mcp_server.served_engine import engine_unbound
+from arbora.mcp_server.served_engine import engine_unbound, no_process_session
 from arbora.security.anonymous import session_context
 
 #!/usr/bin/python
@@ -154,7 +154,7 @@ class ActorContextMiddleware(Middleware):
       is already set (a nested call under an already-authenticated caller), or
       (b) the tiny-profile local stdio process authority
       (:func:`~arbora.security.request_identity.mint_local_process_session`,
-      bound as ``arbora.mcp_server.runtime._PROCESS_SESSION``) is bound —
+      bound on the host's process authority) is bound —
       stdio has no per-call bearer token by protocol, so that process-lifetime,
       already-verified authority IS this transport's carrier, not an absence
       of one. Every other case raises
@@ -168,9 +168,11 @@ class ActorContextMiddleware(Middleware):
         *,
         require_verified_session: bool = False,
         engine_provider: Callable[[], Any] = engine_unbound,
+        process_session: Callable[[], Any] = no_process_session,
     ) -> None:
         self.require_verified_session = require_verified_session
         self._engine_provider = engine_provider
+        self._process_session = process_session
 
     def _claims(self, context: MiddlewareContext) -> dict | None:
         auth = getattr(context, "auth", None)
@@ -260,9 +262,7 @@ class ActorContextMiddleware(Middleware):
             # stdio local-process bootstrap.
             if current_session() is not None:
                 return await call_next(context)
-            from arbora.mcp_server import runtime
-
-            if getattr(runtime, "_PROCESS_SESSION", None) is not None:
+            if self._process_session() is not None:
                 return await call_next(context)
             raise SessionRequiredError(
                 "Verified caller identity required: no validated bearer "

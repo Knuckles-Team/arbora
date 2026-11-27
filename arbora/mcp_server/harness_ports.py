@@ -69,7 +69,7 @@ def build_host_ports(
         ),
         "remote": client_toolsets.remote_toolset_provider(),
         "tool_client": client_toolsets.open_tool_client,
-        "keepalive": harness_host.keepalive,
+        "keepalive": partial(harness_host.keepalive, host.authority),
         "probe": HostProbeProvider(slot.current),
     }
     if services is None:

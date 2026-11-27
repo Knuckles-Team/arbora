@@ -42,20 +42,20 @@ Cross-IDE Discovery:
 from __future__ import annotations
 
 import contextlib
-import contextvars
 import json
 import logging
 import re
-import threading
 import uuid
 from collections.abc import Callable
+from functools import partial
 from types import MappingProxyType
-from typing import Any, cast
+from typing import Any
 
 from arbora.core.environment import read_env
 from arbora.fleet.ranking import FLOOR_ONLY
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.security.anonymous import session_context
+from arbora.security.process_authority import ProcessAuthority
 from arbora.version import __version__
 
 logger = logging.getLogger(__name__)
@@ -91,26 +91,6 @@ def _build_dummy_request(path_params=None, json_body=None):
         req.json = mock_json
     return req
 
-
-# Server-side authority for stdio MCP, minted once from configured runtime
-# secret-reference/OAuth2 identity. Network requests receive their session from middleware and
-# never fall back to this process authority.
-_PROCESS_SESSION: Any = None
-_PROCESS_SESSION_REFRESH_LOCK = threading.Lock()
-_PROCESS_AUTHORITY_STOP = threading.Event()
-_PROCESS_AUTHORITY_THREAD: threading.Thread | None = None
-
-# D-SNV-5 follow-up: guards :func:`authority_keepalive_scope` against starting a
-# second renewal loop for the same lease when one guarded scope nests inside
-# another on the same task tree (for example an MCP tool dispatch whose tool body
-# itself calls ``Orchestrator.execute_agent`` for a sub-delegation). contextvars
-# propagate across ``await``, ``asyncio.ensure_future``/``create_task``, and
-# ``asyncio.to_thread`` (which copies the current context into the worker thread),
-# so the guard is visible to a nested scope even when the nesting crosses a
-# to_thread boundary.
-_AUTHORITY_KEEPALIVE_ACTIVE: contextvars.ContextVar[bool] = contextvars.ContextVar(
-    "_authority_keepalive_active", default=False
-)
 
 _CALLER_AUTHORITY_FIELDS = frozenset({"_actor", "_roles", "_tenant"})
 
@@ -186,7 +166,7 @@ def _resolve_verified_scope_actor(session):
 
 
 @contextlib.contextmanager
-def verified_tool_session_scope():
+def verified_tool_session_scope(authority: ProcessAuthority):
     """Scope one served tool call to middleware/process-minted authority.
 
     Identity, tenant, audience, and policy revision are validated before tool
@@ -200,7 +180,7 @@ def verified_tool_session_scope():
     )
 
     ambient = current_session()
-    session = ambient or _PROCESS_SESSION
+    session = ambient or authority.session()
     if session is None:
         raise PermissionError("Verified GraphSession required")
     try:
@@ -300,8 +280,11 @@ async def _execute_tool(tools: ToolTable, tool_name: str, /, **kwargs) -> Any:
 
     async def _guarded() -> Any:
         try:
-            active_session = await _ensure_process_authority_current()
-            with verified_tool_session_scope():
+            authority = tools.authority
+            active_session = await _bootstrap._ensure_process_authority_current(
+                authority
+            )
+            with verified_tool_session_scope(authority):
                 # D-SNV-5: a dispatch may run for the whole _TOOL_CALL_TIMEOUT_S
                 # window, but authority is otherwise checked only once, at entry.
                 # authority_keepalive_scope gives a renewable (server-minted
@@ -314,7 +297,9 @@ async def _execute_tool(tools: ToolTable, tool_name: str, /, **kwargs) -> Any:
                 # bearer JWT has no credential_lease and is never proactively
                 # renewed here — that would be forging authority the server
                 # does not hold.
-                async with authority_keepalive_scope(active_session):
+                async with _bootstrap.authority_keepalive_scope(
+                    authority, active_session
+                ):
                     return await _run()
         except TimeoutError:
             return {
@@ -701,31 +686,8 @@ _AGENT_ID = read_env("AGENT_ID", f"mcp-client-{uuid.uuid4().hex}")
 _SESSION_ID = read_env("SESSION_ID", uuid.uuid4().hex)
 
 
-_ensure_process_authority_current = cast(Any, None)
-_mint_process_session = cast(Any, None)
-_release_readiness_authority = cast(Any, None)
-_set_readiness_authority = cast(Any, None)
-_start_engine_bootstrap = cast(Any, None)
-_start_process_authority_supervisor = cast(Any, None)
-_stop_process_authority_supervisor = cast(Any, None)
-authority_keepalive_scope = cast(Any, None)
-set_process_session = cast(Any, None)
-
 import arbora.mcp_server.bootstrap as _bootstrap
 
-for _bootstrap_name in (
-    "_AGENT_ID",
-    "_AUTHORITY_KEEPALIVE_ACTIVE",
-    "_PROCESS_AUTHORITY_STOP",
-    "_PROCESS_AUTHORITY_THREAD",
-    "_PROCESS_SESSION_REFRESH_LOCK",
-    "_SESSION_ID",
-):
-    # ``bootstrap`` declares these names as explicit cycle-breaking host slots.
-    # Assign them rather than using ``setdefault``: the declarations exist with
-    # a ``None`` sentinel by design, so setdefault would retain that sentinel
-    # and make the first native dispatch fail before reaching a tool.
-    _bootstrap.__dict__[_bootstrap_name] = globals()[_bootstrap_name]
 for _bootstrap_name in _bootstrap.BOOTSTRAP_EXPORTS:
     globals()[_bootstrap_name] = getattr(_bootstrap, _bootstrap_name)
 
@@ -818,6 +780,7 @@ def _build_server(
         command_args=None if bootstrap else [],
         transport_choices=("stdio", "streamable-http"),
         engine_provider=host.engine.served,
+        process_session=host.authority.session,
     )
 
     # Unauthenticated liveness + readiness for HTTP deployments (CONCEPT:MERISTEM-OS.deployment.liveness-vs-readiness-split).
@@ -1029,7 +992,9 @@ def _register_graph_tool_surface(
             canonical=canonical,
             intent_tools=False,
         )
-        _register_served_intent_surface(mcp, invocation, ranking=host.fleet.ranking)
+        _register_served_intent_surface(
+            mcp, invocation, host.authority, ranking=host.fleet.ranking
+        )
         invocation.mount_on_mcp(mcp)
     else:
         backing = register_arbora_surface(
@@ -1080,29 +1045,33 @@ def _register_graph_tool_surface(
     )
 
 
-def _served_caller_session() -> Any:
+def _served_caller_session(authority: ProcessAuthority) -> Any:
     """The request's verified session, else the stdio process session.
 
-    ``_PROCESS_SESSION`` is bound only on the stdio transport, so a network
+    The authority's session is bound only on the stdio transport, so a network
     request without its own verified session resolves no caller.
     """
     from arbora.security.session import current_session
 
-    return current_session() or _PROCESS_SESSION
+    return current_session() or authority.session()
 
 
-def _served_credential_kind() -> str:
+def _served_credential_kind(authority: ProcessAuthority) -> str:
     from arbora.security.anonymous import admitted_actor
     from arbora.security.session import current_session
 
-    session = current_session() or _PROCESS_SESSION
+    session = current_session() or authority.session()
     if session is not None and admitted_actor(session.actor):
         return "none"
     return "bearer" if current_session() is not None else "process"
 
 
 def _register_served_intent_surface(
-    mcp: Any, invocation: Any, *, ranking: Any = FLOOR_ONLY
+    mcp: Any,
+    invocation: Any,
+    authority: ProcessAuthority,
+    *,
+    ranking: Any = FLOOR_ONLY,
 ) -> Any:
     """Register the eight-tool intent surface over ``invocation``'s services."""
     from arbora.api.invoke.pipeline import invoke
@@ -1112,8 +1081,8 @@ def _register_served_intent_surface(
 
     services = invocation.services
     caller = VerifiedMCPCaller(
-        session_for_request=_served_caller_session,
-        credential_kind_for_request=_served_credential_kind,
+        session_for_request=lambda: _served_caller_session(authority),
+        credential_kind_for_request=lambda: _served_credential_kind(authority),
     )
     global SERVED_PROJECTION
     SERVED_PROJECTION = register_intent_surface(
@@ -1134,7 +1103,9 @@ def _register_served_intent_surface(
     return SERVED_PROJECTION
 
 
-def _attach_headless_fleet_loader(mcp: Any, fleet: Any) -> None:
+def _attach_headless_fleet_loader(
+    mcp: Any, fleet: Any, authority: ProcessAuthority
+) -> None:
     """Attach the fleet loader (MERISTEM-CONTROL-R031) to a headless build.
 
     The served process attaches the fleet in :mod:`arbora.mcp_server.server`;
@@ -1153,7 +1124,7 @@ def _attach_headless_fleet_loader(mcp: Any, fleet: Any) -> None:
             mcp,
             catalog_reader=DeferredFleetCatalogReader(),
             fleet=fleet,
-            authority_scope=verified_tool_session_scope,
+            authority_scope=partial(verified_tool_session_scope, authority),
         )
     except Exception as exc:  # noqa: BLE001 - cause recorded verbatim below, never swallowed
         mcp._fleet_mux_unavailable_reason = (
@@ -1184,6 +1155,8 @@ def ensure_tools_registered(caches: HostCaches) -> None:
     from arbora.mcp_server.served_engine import EngineHandles
 
     # A headless build (no served process) owns a context of its own.
-    host = compose_host_context_over(EngineHandles(), caches)
+    host = compose_host_context_over(
+        EngineHandles(process_session=caches.tools.authority.session), caches
+    )
     _args, mcp, _middlewares = _build_server(bootstrap=False, host=host)
-    _attach_headless_fleet_loader(mcp, host.fleet)
+    _attach_headless_fleet_loader(mcp, host.fleet, host.authority)

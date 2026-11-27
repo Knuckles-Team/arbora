@@ -80,9 +80,8 @@ async def test_graph_rlm_is_composed_from_injected_authorities() -> None:
         return ControlPlane()
 
     table = ToolTable()
+    table.authority.bind_session(session)
     prior_route = runtime.ACTION_TOOL_ROUTES.get("graph_rlm")
-    prior_process_session = runtime._PROCESS_SESSION
-    runtime._PROCESS_SESSION = session
     try:
         register_graph_rlm(
             mcp,
@@ -99,7 +98,6 @@ async def test_graph_rlm_is_composed_from_injected_authorities() -> None:
         assert table["graph_rlm"] is mcp.tools["graph_rlm"]
         assert runtime.ACTION_TOOL_ROUTES["graph_rlm"] == "/graph/rlm"
     finally:
-        runtime._PROCESS_SESSION = prior_process_session
         if prior_route is None:
             runtime.ACTION_TOOL_ROUTES.pop("graph_rlm", None)
         else:
@@ -111,7 +109,7 @@ async def test_graph_rlm_call_has_no_unverified_fallback() -> None:
     mcp = Mcp()
 
     @contextlib.contextmanager
-    def missing_scope():
+    def missing_scope(_authority):
         raise PermissionError("verified authorities required")
         yield
 
@@ -137,7 +135,7 @@ async def test_graph_rlm_rejects_mismatched_ambient_session() -> None:
     mcp = Mcp()
 
     @contextlib.contextmanager
-    def mismatched_scope():
+    def mismatched_scope(_authority):
         raise PermissionError("Verified actor and GraphSession authority differ")
         yield
 

@@ -21,6 +21,7 @@ from arbora.mcp_server import runtime as mcp_runtime
 from arbora.mcp_server.host_caches import HostCaches
 from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
+from tests._support import bound_authority
 from tests.test_served_operation_api import SCOPES
 
 TENANT = "tenant:one"
@@ -126,7 +127,7 @@ def route_methods(
     client._send = send
 
 
-def serve_verbs(mcp: Any, invocation: Any) -> Any:
+def serve_verbs(mcp: Any, invocation: Any, authority: Any) -> Any:
     """Compose the served surface and attach the verbs the way startup does.
 
     Startup attaches them through ``register_mcp_tools`` once the fleet is
@@ -134,7 +135,7 @@ def serve_verbs(mcp: Any, invocation: Any) -> Any:
     """
     from arbora.api.mcp.verbs import VERBS, make_verb
 
-    projection = mcp_runtime._register_served_intent_surface(mcp, invocation)
+    projection = mcp_runtime._register_served_intent_surface(mcp, invocation, authority)
     for name in VERBS:
         mcp.add_tool(make_verb(name, projection))
     return projection
@@ -150,9 +151,8 @@ class McpAsk:
         caller: ActorContext | None = None,
     ) -> None:
         process = request_identity.mint_graph_session(caller or person("one"))
-        monkeypatch.setattr(mcp_runtime, "_PROCESS_SESSION", process)
         self.mcp = FastMCP("served-ops")
-        serve_verbs(self.mcp, invocation)
+        serve_verbs(self.mcp, invocation, bound_authority(process))
 
     def __call__(self, verb: str, op: str, params: dict[str, Any], **extra: Any) -> Any:
         async def call() -> Any:
