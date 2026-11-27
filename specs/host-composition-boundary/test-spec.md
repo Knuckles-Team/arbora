@@ -320,8 +320,7 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 | `ARBORA-HOST-R035` | `tests/test_harness_cycle_host.py::test_completed_run_drives_one_tick_and_probes_drive_none` | Exists |
 | `ARBORA-HOST-R036` | `arbora/agent_runs.py::AgentRunPort` | Planned, not yet written |
 | `ARBORA-HOST-R036` | `tests/test_run_receipt_commit.py::test_terminal_commit_carries_run_trace_nodes` | Planned, not yet written |
-| `ARBORA-HOST-R037` | `arbora/connector_runner.py::ConnectorRunnerComposition` | Planned, not yet written |
-| `ARBORA-HOST-R037` | `tests/test_connector_runner.py::test_missing_release_lock_fails_bootstrap` | Planned, not yet written |
+| `ARBORA-HOST-R037` | `tests/test_connector_runner_composition.py::test_release_verification_has_no_lock_setting`, `tests/test_connector_runner_composition.py::test_the_verified_client_reaches_the_sdk_for_release_pins` |
 | ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_unit_imports_follow_layers_and_no_cycle_remains` (planned) | Package units form a layered, acyclic import graph. |
 | ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_every_unit_is_named_in_exactly_one_layer` | The coupling policy's layer table in `pyproject.toml` names every unit once and nothing else. |
 | ARBORA-HOST-R038 | `tests/architecture/test_unit_layers.py::test_scan_reports_each_rule_with_its_location` | The scanner reports an upward import, a private reach, an unlayered unit and a cycle with their location, and passes a downward import. |
