@@ -12,6 +12,7 @@ credentials.  The durable record is held by the composed
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -235,13 +236,15 @@ async def _change(
     return {"value": _public(updated)}
 
 
-_HANDLERS = {
-    "federation.sources.list": _list,
-    "federation.sources.get": _get,
-    "federation.sources.probe": _probe,
-    "federation.sources.share": _change,
-    "federation.sources.unshare": _change,
-}
+_HANDLERS = MappingProxyType(
+    {
+        "federation.sources.list": _list,
+        "federation.sources.get": _get,
+        "federation.sources.probe": _probe,
+        "federation.sources.share": _change,
+        "federation.sources.unshare": _change,
+    }
+)
 
 
 async def handle_federation(
@@ -361,7 +364,9 @@ def operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 #: The engine replays a share or unshare by the request key.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "federation.sources.share": "medulla:ShareForeignSource",
-    "federation.sources.unshare": "medulla:UnshareForeignSource",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "federation.sources.share": "medulla:ShareForeignSource",
+        "federation.sources.unshare": "medulla:UnshareForeignSource",
+    }
+)

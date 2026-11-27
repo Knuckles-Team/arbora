@@ -9,6 +9,7 @@ through ``AddTriples``.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -26,7 +27,9 @@ from arbora.host.specialists import (
 SCOPE = "ops:admin"
 METHOD = "AddTriples"
 #: The engine replays the catalog write by the request key.
-NATIVE_IDEMPOTENCY: dict[str, str] = {"specialists.install": "medulla:AddTriples"}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {"specialists.install": "medulla:AddTriples"}
+)
 #: One asset's bytes in hex, so one asset is at most 4 MiB.
 ASSET_HEX_MAX = 8 * 1024 * 1024
 

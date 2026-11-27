@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -461,14 +462,16 @@ def _arming_verdict(record: Mapping[str, Any]) -> str:
     return str(verdict)
 
 
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "development.run.start": "medulla:DeliveryOpen",
-    "development.delivery.stop": "medulla:DeliveryStop",
-    "development.delivery.retry": "medulla:DeliveryRetry",
-    "development.delivery.answer": "medulla:DeliveryRespond",
-    # The arming verdict is one sealed engine ``Decide`` record, replayed by the key.
-    "development.delivery.arm": "medulla:Decide",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "development.run.start": "medulla:DeliveryOpen",
+        "development.delivery.stop": "medulla:DeliveryStop",
+        "development.delivery.retry": "medulla:DeliveryRetry",
+        "development.delivery.answer": "medulla:DeliveryRespond",
+        # The arming verdict is one sealed engine ``Decide`` record, replayed by the key.
+        "development.delivery.arm": "medulla:Decide",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

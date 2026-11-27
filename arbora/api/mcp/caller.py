@@ -6,6 +6,7 @@ import contextlib
 import contextvars
 import logging
 from collections.abc import Callable, Iterator, Mapping
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 from arbora.security.anonymous import session_context
@@ -73,12 +74,14 @@ def _require_step_up_authority(mfa_at_ms: int | None) -> None:
 #: client-credentials (no-email) identity as ``automated_service``
 #: (``arbora.security.request_identity``); it is a service principal. Any other
 #: kind is never inferred and refuses.
-_PRINCIPAL_KINDS: dict[str, str] = {
-    "anonymous": "anonymous",
-    "human": "human",
-    "service": "service",
-    "automated_service": "service",
-}
+_PRINCIPAL_KINDS: Mapping[str, str] = MappingProxyType(
+    {
+        "anonymous": "anonymous",
+        "human": "human",
+        "service": "service",
+        "automated_service": "service",
+    }
+)
 
 _SCOPE_TYPES = (tuple, list, set, frozenset)
 

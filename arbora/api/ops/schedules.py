@@ -15,6 +15,7 @@ caller gave none; the caller's own values win.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -30,14 +31,16 @@ from arbora.pin_lag.medulla import PinLagUnavailable, require_models
 READ_SCOPE = "loops:read"
 CONTROL_SCOPE = "loops:control"
 #: The engine job op each operation sends, in the ``AnalyticsJob`` op envelope.
-_ENGINE_OPS = {
-    "schedules.create": "ScheduleCreate",
-    "schedules.update": "ScheduleUpdate",
-    "schedules.delete": "ScheduleDelete",
-    "schedules.pause": "SchedulePause",
-    "schedules.resume": "ScheduleResume",
-    "schedules.runs": "ScheduleTicks",
-}
+_ENGINE_OPS = MappingProxyType(
+    {
+        "schedules.create": "ScheduleCreate",
+        "schedules.update": "ScheduleUpdate",
+        "schedules.delete": "ScheduleDelete",
+        "schedules.pause": "SchedulePause",
+        "schedules.resume": "ScheduleResume",
+        "schedules.runs": "ScheduleTicks",
+    }
+)
 _NAME = Field(min_length=1, max_length=128)
 
 

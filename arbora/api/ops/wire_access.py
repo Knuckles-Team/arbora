@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import secrets
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Protocol, runtime_checkable
 
 from pydantic import Field
@@ -123,10 +124,12 @@ async def handle_wire_access_revoke(
 
 
 #: Writes replay under the engine method that holds the login, never here.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "wire_access.grant": "medulla:Identity",
-    "wire_access.revoke": "medulla:Identity",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "wire_access.grant": "medulla:Identity",
+        "wire_access.revoke": "medulla:Identity",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

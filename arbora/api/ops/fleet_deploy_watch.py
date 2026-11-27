@@ -18,6 +18,7 @@ ARBORA-FLEET-R024.2; this operation covers the verdict rule only.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -41,9 +42,11 @@ class FleetDeployWatchEvaluateParams(_Params):
 
 
 #: The rollback is one ``fleet.call`` the durable effect journal settles at most once.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "fleet.deploy_watch.dispatch": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "fleet.deploy_watch.dispatch": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
+    }
+)
 
 
 class FleetDeployWatchDispatchResult(BaseModel):

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -32,9 +33,11 @@ from arbora.security.anonymous import client_scope
 
 WRITE_SCOPE = "bus:write"
 #: Writes replay under the engine method that holds the record.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "a2a.federation.forward": "medulla:StreamPublish",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "a2a.federation.forward": "medulla:StreamPublish",
+    }
+)
 
 
 class FederationForwardParams(_common.Params):

@@ -20,6 +20,7 @@ import logging
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -408,9 +409,11 @@ async def handle_write_back_proposal_approve(
 
 
 #: The engine decision log replays each approval (ARBORA-OPS-R865).
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "write_back.proposal.approve": "medulla:DecisionLog",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "write_back.proposal.approve": "medulla:DecisionLog",
+    }
+)
 
 
 def _proposal_operations() -> tuple[OpSpec, ...]:

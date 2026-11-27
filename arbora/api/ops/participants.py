@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -24,13 +25,15 @@ from arbora.api.registry import OpSpec, Verb
 READ_SCOPE = "participant:read"
 WRITE_SCOPE = "participant:write"
 #: The engine replays each of these writes by its idempotency key.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "participant.put": "medulla:Participant",
-    "participant.member.add": "medulla:Participant",
-    "participant.scope.put": "medulla:Participant",
-    "participant.observation.set": "medulla:Participant",
-    "participant.turn.append": "medulla:MemoryRemember",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "participant.put": "medulla:Participant",
+        "participant.member.add": "medulla:Participant",
+        "participant.scope.put": "medulla:Participant",
+        "participant.observation.set": "medulla:Participant",
+        "participant.turn.append": "medulla:MemoryRemember",
+    }
+)
 _SCHEMA_VERSION = 1
 _Id = Field(min_length=1, max_length=256)
 _Observer = Field(

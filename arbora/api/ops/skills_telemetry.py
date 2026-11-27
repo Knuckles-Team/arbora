@@ -10,6 +10,7 @@ refuses ``TELEMETRY_SESSION_UNKNOWN`` exactly like an absent run.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -22,9 +23,11 @@ from arbora.api.otlp_logs import MAX_RECORDS, TelemetryFieldUnknown, events_from
 from arbora.api.registry import HttpShape, OpSpec, Verb
 
 SCOPE = "telemetry:write"
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "skills.telemetry.ingest": "medulla:SkillTelemetry",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "skills.telemetry.ingest": "medulla:SkillTelemetry",
+    }
+)
 
 
 class TelemetryIngestParams(Params):

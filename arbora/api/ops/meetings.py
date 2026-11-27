@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field, ValidationError
@@ -462,9 +463,11 @@ async def handle_transcript_subscribe(
 
 
 #: The commit is replayed by the engine under the invocation's idempotency key.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "meetings.summary.create": "medulla:MeetingSummaryCommit",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "meetings.summary.create": "medulla:MeetingSummaryCommit",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

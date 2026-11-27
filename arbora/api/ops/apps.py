@@ -12,6 +12,7 @@ The tenant is the verified caller's and is never a parameter.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -22,10 +23,12 @@ from arbora.api.registry import Confirm, OpSpec
 
 SCOPE = "federation:admin"
 #: The run node and the governed change replay a retried request by their own ids.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "apps.admit": "medulla:CreateNodeIfAbsent",
-    "apps.retire_connector": "medulla:GovernedChange",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "apps.admit": "medulla:CreateNodeIfAbsent",
+        "apps.retire_connector": "medulla:GovernedChange",
+    }
+)
 _NAME = r"^[A-Za-z0-9][A-Za-z0-9_.:@-]{0,255}$"
 
 

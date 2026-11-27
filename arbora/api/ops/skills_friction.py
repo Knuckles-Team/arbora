@@ -10,6 +10,7 @@ engine checks the same grant again. Arbora keeps no friction state.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -119,10 +120,12 @@ async def handle_friction_get(
 
 
 #: Writes the engine replays by the idempotency key the pipeline forwards.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "skills.friction.report": "medulla:FrictionReport",
-    "skills.friction.transition": "medulla:FrictionReport",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "skills.friction.report": "medulla:FrictionReport",
+        "skills.friction.transition": "medulla:FrictionReport",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping, Sequence
+from types import MappingProxyType
 from typing import Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -37,11 +38,13 @@ _KNOBS = (
     "retrieval_space.document_ceiling",
 )
 #: What each hit property means; the directory carries it so the harness can navigate.
-HIT_PROPERTIES = {
-    "ref": "the provenance reference of one retrieved passage",
-    "text": "the passage text the engine returned",
-    "tokens": "the passage size in context-budget tokens",
-}
+HIT_PROPERTIES = MappingProxyType(
+    {
+        "ref": "the provenance reference of one retrieved passage",
+        "text": "the passage text the engine returned",
+        "tokens": "the passage size in context-budget tokens",
+    }
+)
 #: The navigation commands a directory supports.
 COMMANDS = ("list", "read", "search")
 

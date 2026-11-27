@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from decimal import Decimal, InvalidOperation
+from types import MappingProxyType
 from typing import Any, Literal
 
 import msgpack
@@ -29,10 +30,12 @@ from arbora.api.registry import OpSpec
 
 SCOPE = "finance:track"
 #: The engine replays a plan write by the node swap it holds.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "dca.plans.set": "medulla:CompareAndSetNodeFields",
-    "dca.plans.pause": "medulla:CompareAndSetNodeFields",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "dca.plans.set": "medulla:CompareAndSetNodeFields",
+        "dca.plans.pause": "medulla:CompareAndSetNodeFields",
+    }
+)
 _ID = r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
 
 

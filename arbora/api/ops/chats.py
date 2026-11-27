@@ -16,6 +16,7 @@ import json
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -27,11 +28,13 @@ from arbora.api.ops.knowledge import EngineReply
 from arbora.api.registry import OpSpec, Verb
 
 SCOPE = "chats:own"
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "chats.create": "medulla:SyncMemorySnapshot",
-    "chats.update": "medulla:SyncMemorySnapshot",
-    "chats.delete": "medulla:SyncMemorySnapshot",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "chats.create": "medulla:SyncMemorySnapshot",
+        "chats.update": "medulla:SyncMemorySnapshot",
+        "chats.delete": "medulla:SyncMemorySnapshot",
+    }
+)
 #: A message body is at most 256 KiB; a list page at most 100 rows.
 MAX_MESSAGE_BYTES = 256 * 1024
 MAX_PAGE = 100

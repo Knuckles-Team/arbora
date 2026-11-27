@@ -17,6 +17,7 @@ import json
 import secrets
 import time
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -43,7 +44,7 @@ _AUTH_DATA_FIXED = 37
 _FLAG_ATTESTED = 0x40
 _ES256 = -7
 _ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-_CODE_REFUSALS = {"MFA_CODE_INVALID": "MFA_CODE_INVALID"}
+_CODE_REFUSALS = MappingProxyType({"MFA_CODE_INVALID": "MFA_CODE_INVALID"})
 
 
 class TotpConfirm(_P):

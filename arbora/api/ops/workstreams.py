@@ -13,6 +13,7 @@ import hashlib
 import time
 from collections.abc import Callable, Mapping
 from enum import StrEnum
+from types import MappingProxyType
 from typing import Any
 
 import msgpack
@@ -24,11 +25,13 @@ from arbora.api.ops.engine_calls import decode, engine_send
 from arbora.api.registry import Confirm, OpSpec, Verb
 
 #: EG replays each write by its idempotency key, so the engine owns replay.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "workstream.attach": "medulla:AddNode/AddEdge",
-    "workstream.checkpoint": "medulla:CompareAndSetNodeFields",
-    "workstream.detach": "medulla:CompareAndSetNodeFields",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "workstream.attach": "medulla:AddNode/AddEdge",
+        "workstream.checkpoint": "medulla:CompareAndSetNodeFields",
+        "workstream.detach": "medulla:CompareAndSetNodeFields",
+    }
+)
 READ_SCOPE = "workstream:read"
 WRITE_SCOPE = "workstream:write"
 #: The attach context is bounded so a hook can inject it directly.
@@ -49,11 +52,15 @@ class AttachmentEvent(StrEnum):
 
 
 _S, _E = AttachmentState, AttachmentEvent
-ATTACH_EDGES: dict[tuple[AttachmentState, AttachmentEvent], AttachmentState] = {
-    (_S.DETACHED, _E.ATTACH): _S.ATTACHED,
-    (_S.ATTACHED, _E.CHECKPOINT): _S.ATTACHED,
-    (_S.ATTACHED, _E.DETACH): _S.DETACHED,
-}
+ATTACH_EDGES: Mapping[tuple[AttachmentState, AttachmentEvent], AttachmentState] = (
+    MappingProxyType(
+        {
+            (_S.DETACHED, _E.ATTACH): _S.ATTACHED,
+            (_S.ATTACHED, _E.CHECKPOINT): _S.ATTACHED,
+            (_S.ATTACHED, _E.DETACH): _S.DETACHED,
+        }
+    )
+)
 
 
 class IllegalAttachTransition(RuntimeError):

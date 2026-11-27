@@ -11,6 +11,7 @@ service actor.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -37,13 +38,15 @@ from arbora.api.ops._common import bound_service, build_write_op
 from arbora.api.registry import Composite, Confirm, Effect, OpSpec, Verb
 
 #: The replay owner of the write: the durable ledger keys an execution by its execution key.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "fleet.reconcile.run": (
-        "arbora.fleet.scaling.scaling_intent_reconciler:ScaleIntentLedger"
-    ),
-    # Every node write is keyed by the request key and the node, so the engine replays it.
-    "fleet.scale.inventory.set": "medulla:AddNode",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "fleet.reconcile.run": (
+            "arbora.fleet.scaling.scaling_intent_reconciler:ScaleIntentLedger"
+        ),
+        # Every node write is keyed by the request key and the node, so the engine replays it.
+        "fleet.scale.inventory.set": "medulla:AddNode",
+    }
+)
 
 SCOPE = "mcp:delegate"
 #: The operator scope that states the scaling inventory.

@@ -16,6 +16,7 @@ import logging
 import re
 from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime
+from types import MappingProxyType
 from typing import Any, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
@@ -45,13 +46,15 @@ _FOREIGN_ID = re.compile(r"[A-Za-z_][A-Za-z0-9_.:/-]*")
 # These are Arbora's bounded transport limits.  They are deliberately kept
 # separate from the native plan/query digests: the native result pins the
 # query, while this process owns the maximum source-read envelope.
-_DEFAULT_SOURCE_LIMITS = {
-    "chunk_bytes": 64 * 1024,
-    "chunk_rows": 256,
-    "deadline_ms": 30_000,
-    "max_bytes": 4 * 1024 * 1024,
-    "max_rows": 1_000,
-}
+_DEFAULT_SOURCE_LIMITS = MappingProxyType(
+    {
+        "chunk_bytes": 64 * 1024,
+        "chunk_rows": 256,
+        "deadline_ms": 30_000,
+        "max_bytes": 4 * 1024 * 1024,
+        "max_rows": 1_000,
+    }
+)
 
 
 class ForeignReadDescriptor(BaseModel):

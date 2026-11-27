@@ -11,6 +11,7 @@ pinned release that serves it needs no arbora change.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field, ValidationError
@@ -290,11 +291,13 @@ def _mutate(op_id: str, summary: str, example: str, params: type[Params]) -> OpS
 
 
 #: Writes the engine replays by the idempotency key the pipeline forwards.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "agents.library.create": "medulla:AgentLibrary",
-    "agents.library.update": "medulla:AgentLibrary",
-    "agents.library.delete": "medulla:AgentLibrary",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "agents.library.create": "medulla:AgentLibrary",
+        "agents.library.update": "medulla:AgentLibrary",
+        "agents.library.delete": "medulla:AgentLibrary",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

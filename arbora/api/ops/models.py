@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -26,7 +27,7 @@ MODELS_READ_SCOPE = "kg:read"
 #: The most rows one page returns.
 MAX_MODELS = 200
 
-_SETTING = {"chat": "chat_models", "embedding": "embedding_models"}
+_SETTING = MappingProxyType({"chat": "chat_models", "embedding": "embedding_models"})
 
 
 class ModelsListParams(Params):

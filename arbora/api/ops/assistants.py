@@ -10,6 +10,7 @@ grant and the compare-and-set revision.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field, model_validator
@@ -20,10 +21,12 @@ from arbora.api.ops.knowledge import EngineReply
 from arbora.api.registry import OpSpec, Verb
 
 SCOPE = "profile:write"
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "assistant.profile.put": "medulla:AssistantProfile",
-    "assistant.document_set.put": "medulla:AssistantProfile",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "assistant.profile.put": "medulla:AssistantProfile",
+        "assistant.document_set.put": "medulla:AssistantProfile",
+    }
+)
 _SCHEMA_VERSION = 1
 _Id = Field(min_length=1, max_length=256)
 _Share = dict[str, str]

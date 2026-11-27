@@ -464,15 +464,17 @@ def _knowledge_set_freshness(
     return freshness
 
 
-_KNOWLEDGE_SET_MAPPED_KEYS = {
-    "rows",
-    "answer_candidate",
-    "answer",
-    "confidence",
-    "query",
-    "question",
-    "next_actions",
-}
+_KNOWLEDGE_SET_MAPPED_KEYS = frozenset(
+    {
+        "rows",
+        "answer_candidate",
+        "answer",
+        "confidence",
+        "query",
+        "question",
+        "next_actions",
+    }
+)
 
 
 def _knowledge_set_meta_extras(ws: dict[str, Any]) -> dict[str, Any]:

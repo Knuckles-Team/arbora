@@ -21,6 +21,7 @@ import contextlib
 import re
 from collections.abc import Iterator, Mapping
 from enum import StrEnum
+from types import MappingProxyType
 from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -312,12 +313,14 @@ async def handle_policy_source_bind(
 
 
 #: The approval is a returned receipt; the engine stores it under the caller's key.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "policy.create": "medulla:DecisionLog",
-    "policy.update": "medulla:DecisionLog",
-    "policy.retire": "medulla:DecisionLog",
-    "policy.source.bind": "medulla:PolicySourceBind",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "policy.create": "medulla:DecisionLog",
+        "policy.update": "medulla:DecisionLog",
+        "policy.retire": "medulla:DecisionLog",
+        "policy.source.bind": "medulla:PolicySourceBind",
+    }
+)
 
 
 def _change_op(op_id: str, summary: str) -> OpSpec:

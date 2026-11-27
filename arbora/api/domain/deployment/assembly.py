@@ -13,6 +13,7 @@ import hashlib
 import json
 from collections.abc import Awaitable, Callable, Collection, Mapping, Sequence
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Literal
 
 from arbora.api.domain.deployment.assembly_view import render_graph
@@ -27,20 +28,22 @@ Send = Callable[[dict[str, Any]], Awaitable[Any]]
 
 UnavailableCause = Literal["decide", "placement_kind", "confirm"]
 
-_UNAVAILABLE: dict[str, tuple[str, str]] = {
-    "decide": (
-        "ENGINE_DECIDE_UNAVAILABLE",
-        "the engine is built without the decide feature",
-    ),
-    "placement_kind": (
-        "PLACEMENT_KIND_UNAVAILABLE",
-        "the engine does not serve the placement question kind",
-    ),
-    "confirm": (
-        "CONFIRM_UNAVAILABLE",
-        "the plan confirmation service is not bound",
-    ),
-}
+_UNAVAILABLE: Mapping[str, tuple[str, str]] = MappingProxyType(
+    {
+        "decide": (
+            "ENGINE_DECIDE_UNAVAILABLE",
+            "the engine is built without the decide feature",
+        ),
+        "placement_kind": (
+            "PLACEMENT_KIND_UNAVAILABLE",
+            "the engine does not serve the placement question kind",
+        ),
+        "confirm": (
+            "CONFIRM_UNAVAILABLE",
+            "the plan confirmation service is not bound",
+        ),
+    }
+)
 
 
 def refuse_unavailable(cause: UnavailableCause) -> OperationRefused:

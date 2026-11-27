@@ -21,6 +21,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Protocol
 from urllib.parse import SplitResult, urlsplit, urlunsplit
 
@@ -86,20 +87,22 @@ def _expected_list(expected: Any, actual: Any) -> bool:
 _Op = enums.ConditionOperator
 _Check = Callable[[Any, Any], bool]
 #: operator -> (the value types it applies to, the comparison)
-_OPERATORS: dict[enums.ConditionOperator, tuple[_Check, _Check]] = {
-    _Op.EQUALS: (_any_values, lambda e, a: e == a),
-    _Op.NOT_EQUALS: (_any_values, lambda e, a: e != a),
-    _Op.CONTAINS: (_both_strings, lambda e, a: e in a),
-    _Op.NOT_CONTAINS: (_both_strings, lambda e, a: e not in a),
-    _Op.STARTS_WITH: (_both_strings, lambda e, a: a.startswith(e)),
-    _Op.ENDS_WITH: (_both_strings, lambda e, a: a.endswith(e)),
-    _Op.GREATER: (_both_numbers, lambda e, a: e > a),
-    _Op.GREATER_OR_EQUAL: (_both_numbers, lambda e, a: e >= a),
-    _Op.LESS: (_both_numbers, lambda e, a: e < a),
-    _Op.LESS_OR_EQUAL: (_both_numbers, lambda e, a: e <= a),
-    _Op.IN: (_expected_list, lambda e, a: a in e),
-    _Op.NOT_IN: (_expected_list, lambda e, a: a not in e),
-}
+_OPERATORS: Mapping[enums.ConditionOperator, tuple[_Check, _Check]] = MappingProxyType(
+    {
+        _Op.EQUALS: (_any_values, lambda e, a: e == a),
+        _Op.NOT_EQUALS: (_any_values, lambda e, a: e != a),
+        _Op.CONTAINS: (_both_strings, lambda e, a: e in a),
+        _Op.NOT_CONTAINS: (_both_strings, lambda e, a: e not in a),
+        _Op.STARTS_WITH: (_both_strings, lambda e, a: a.startswith(e)),
+        _Op.ENDS_WITH: (_both_strings, lambda e, a: a.endswith(e)),
+        _Op.GREATER: (_both_numbers, lambda e, a: e > a),
+        _Op.GREATER_OR_EQUAL: (_both_numbers, lambda e, a: e >= a),
+        _Op.LESS: (_both_numbers, lambda e, a: e < a),
+        _Op.LESS_OR_EQUAL: (_both_numbers, lambda e, a: e <= a),
+        _Op.IN: (_expected_list, lambda e, a: a in e),
+        _Op.NOT_IN: (_expected_list, lambda e, a: a not in e),
+    }
+)
 
 
 def _condition_matches(condition: schemas.Condition, obj: Any) -> bool:

@@ -16,6 +16,7 @@ from __future__ import annotations
 import base64
 from collections.abc import AsyncIterator
 from secrets import token_hex
+from types import MappingProxyType
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -34,7 +35,7 @@ RECEIVE = "git-receive-pack"
 _HEADS = "refs/heads/"
 _ZERO = "0" * 40
 AGENT = "arbora-git-bridge"
-NO_STORE = {"Cache-Control": "no-store"}
+NO_STORE = MappingProxyType({"Cache-Control": "no-store"})
 
 
 def pkt(data: bytes) -> bytes:

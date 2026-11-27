@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -29,20 +30,22 @@ __all__ = [
 
 _DECIMAL = r"^-?\d+(\.\d+)?$"
 #: SDK typed reasons mapped to one arbora refusal code. Anything else fails closed.
-_REASON_CODES: Mapping[str, str] = {
-    "missing_confirmation": "CONFIRMATION_REQUIRED",
-    "plan_mismatch": "PLAN_MISMATCH",
-    "scope_mismatch": "POLICY_DENIED",
-    "missing_signature": "POLICY_DENIED",
-    "bad_signature": "POLICY_DENIED",
-    "key_revoked": "POLICY_DENIED",
-    "expired": "POLICY_DENIED",
-    "unentitled": "POLICY_DENIED",
-    "verifier_absent": "UNAVAILABLE",
-    "trust_absent": "UNAVAILABLE",
-    "binding_absent": "UNAVAILABLE",
-    "envelope_absent": "UNAVAILABLE",
-}
+_REASON_CODES: Mapping[str, str] = MappingProxyType(
+    {
+        "missing_confirmation": "CONFIRMATION_REQUIRED",
+        "plan_mismatch": "PLAN_MISMATCH",
+        "scope_mismatch": "POLICY_DENIED",
+        "missing_signature": "POLICY_DENIED",
+        "bad_signature": "POLICY_DENIED",
+        "key_revoked": "POLICY_DENIED",
+        "expired": "POLICY_DENIED",
+        "unentitled": "POLICY_DENIED",
+        "verifier_absent": "UNAVAILABLE",
+        "trust_absent": "UNAVAILABLE",
+        "binding_absent": "UNAVAILABLE",
+        "envelope_absent": "UNAVAILABLE",
+    }
+)
 
 
 class _Change(BaseModel):

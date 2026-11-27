@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -28,14 +29,20 @@ from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.registry import OpSpec
 
 State = Literal["pending", "approved", "denied", "expired"]
-_STATUS_OF: Mapping[str, str] = {
-    "pending": "active",
-    "expired": "active",
-    "approved": "consumed",
-    "denied": "revoked",
-}
-_DECISION_STATUS: Mapping[str, str] = {"approved": "consumed", "denied": "revoked"}
-_STATE_OF_STATUS: Mapping[str, str] = {"consumed": "approved", "revoked": "denied"}
+_STATUS_OF: Mapping[str, str] = MappingProxyType(
+    {
+        "pending": "active",
+        "expired": "active",
+        "approved": "consumed",
+        "denied": "revoked",
+    }
+)
+_DECISION_STATUS: Mapping[str, str] = MappingProxyType(
+    {"approved": "consumed", "denied": "revoked"}
+)
+_STATE_OF_STATUS: Mapping[str, str] = MappingProxyType(
+    {"consumed": "approved", "revoked": "denied"}
+)
 _MAX_PAGES = 16
 
 
@@ -285,9 +292,11 @@ async def handle_approvals_decide(
 
 
 #: Writes the engine replays by the idempotency key the pipeline forwards.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "approvals.decide": "medulla:LeaseTransition",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "approvals.decide": "medulla:LeaseTransition",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

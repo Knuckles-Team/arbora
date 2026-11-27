@@ -40,7 +40,7 @@ from collections.abc import Awaitable, Callable, Mapping
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from importlib import import_module
-from types import SimpleNamespace
+from types import MappingProxyType, SimpleNamespace
 from typing import Any
 
 from pydantic import Field
@@ -435,9 +435,11 @@ def replay_record(caller: Any) -> str:
 #: ``TaskPlan`` decision is evaluate-only, and ``PublishCurrentPlan`` is keyed by
 #: the run and the plan digest. A replayed run therefore returns each recorded
 #: step outcome and starts no second effect.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "agents.plan_run": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "agents.plan_run": "arbora.api.domain.mcp_server.effect_journal:EgEffectJournal",
+    }
+)
 
 
 def _audit_fields(outcome: Any) -> dict[str, Any]:

@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -41,11 +42,13 @@ Scope = Literal["principal", "shared"]
 
 #: EG replays each KV write by its idempotency key (``OperationIdentity``),
 #: so the engine owns these operations' replay.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "memory.files.save": "medulla:SyncMemorySnapshot",
-    "memory.write": "medulla:KvPut/KvCas",
-    "memory.delete": "medulla:KvDelete",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "memory.files.save": "medulla:SyncMemorySnapshot",
+        "memory.write": "medulla:KvPut/KvCas",
+        "memory.delete": "medulla:KvDelete",
+    }
+)
 
 
 class _Located(Params):

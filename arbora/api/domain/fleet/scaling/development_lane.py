@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 
@@ -47,16 +48,18 @@ class DevelopmentLaneAuthorityUnavailable(RuntimeError):
     code = "native_development_lane_authority_unavailable"
 
 
-_METHODS: dict[str, str] = {
-    "ReserveDevelopmentLane": "reserve",
-    "RenewDevelopmentLane": "renew",
-    "ObserveDevelopmentLane": "observe",
-    "FinishDevelopmentLane": "finish",
-    "CleanupDevelopmentLane": "cleanup_complete",
-    "QueryDevelopmentLane": "query",
-    "DevelopmentLaneStatus": "status",
-    "UpdateDevelopmentLaneQuota": "update_quota",
-}
+_METHODS: Mapping[str, str] = MappingProxyType(
+    {
+        "ReserveDevelopmentLane": "reserve",
+        "RenewDevelopmentLane": "renew",
+        "ObserveDevelopmentLane": "observe",
+        "FinishDevelopmentLane": "finish",
+        "CleanupDevelopmentLane": "cleanup_complete",
+        "QueryDevelopmentLane": "query",
+        "DevelopmentLaneStatus": "status",
+        "UpdateDevelopmentLaneQuota": "update_quota",
+    }
+)
 
 
 def _bounded_mapping(value: Any, name: str) -> dict[str, Any]:

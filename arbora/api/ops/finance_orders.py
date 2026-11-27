@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -125,9 +126,11 @@ specs = operations
 
 #: The receipt is a pure function of the engine's immutable admission receipt, so a
 #: replay of the same key reads the same receipt and issues the same confirmation.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "order.proposal.confirm": "medulla:FinanceOrderReceiptGet",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "order.proposal.confirm": "medulla:FinanceOrderReceiptGet",
+    }
+)
 
 __all__ = [
     "NATIVE_IDEMPOTENCY",

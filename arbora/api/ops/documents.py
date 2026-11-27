@@ -12,6 +12,7 @@ interface writes specifications by pull request.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -31,7 +32,7 @@ MAX_DOCUMENTS = 100
 MAX_BODY_BYTES = 256 * 1024
 KB_LABEL = "KbArticle"
 CONSTITUTION_PATH = ".specify/memory/constitution.md"
-_FILE = {"spec": "spec.md", "plan": "plan.md", "task": "tasks.md"}
+_FILE = MappingProxyType({"spec": "spec.md", "plan": "plan.md", "task": "tasks.md"})
 _Id = Field(default=None, min_length=1, max_length=256, pattern=r"^[A-Za-z0-9._-]+$")
 
 

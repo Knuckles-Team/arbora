@@ -7,6 +7,7 @@ One JSON object per principal lives under the engine KV namespace
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -16,12 +17,14 @@ from arbora.api.ops.memory import _decode, _encode, _payload, _send
 from arbora.api.registry import OpSpec
 
 #: EG replays each KV write by its idempotency key, so the engine owns replay.
-NATIVE_IDEMPOTENCY: dict[str, str] = {"preferences.set": "medulla:KvPut/KvCas"}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {"preferences.set": "medulla:KvPut/KvCas"}
+)
 #: The largest saved record, in bytes.
 MAX_BYTES = 65_536
 NAMESPACE = "preferences"
 KEY = "user"
-_TARGET = {"namespace": NAMESPACE, "key": KEY, "shared": False}
+_TARGET = MappingProxyType({"namespace": NAMESPACE, "key": KEY, "shared": False})
 
 
 class PreferencesGetParams(Params):

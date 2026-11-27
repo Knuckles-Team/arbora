@@ -11,6 +11,7 @@ engine's ``APPROVAL_MISSING`` and ``APPROVAL_STALE`` pass through unchanged.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -169,9 +170,11 @@ def _commit_operations() -> tuple[OpSpec, ...]:
 specs = operations
 
 #: The approval commits through the decision log, which replays by the receipt (R863).
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "decide.recommendation.approve": "medulla:DecisionLog",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "decide.recommendation.approve": "medulla:DecisionLog",
+    }
+)
 
 __all__ = [
     "NATIVE_IDEMPOTENCY",

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict
@@ -19,17 +20,19 @@ from pydantic import BaseModel, ConfigDict
 #: The venue connector server and the read tools it publishes through the fleet.
 VENUE_SERVER = "emerald-exchange"
 BINDING_TOOL = "emerald_exchange_account_binding"
-TOOLS: Mapping[str, str] = {
-    "list_markets": "emerald_exchange_list_markets",
-    "search_markets": "emerald_exchange_search_markets",
-    "get_market": "emerald_exchange_get_market",
-    "list_events": "emerald_exchange_list_events",
-    "search_events": "emerald_exchange_search_events",
-    "get_event": "emerald_exchange_get_event",
-    "list_orders": "emerald_exchange_list_orders",
-    "search_orders": "emerald_exchange_search_orders",
-    "get_order": "emerald_exchange_get_order",
-}
+TOOLS: Mapping[str, str] = MappingProxyType(
+    {
+        "list_markets": "emerald_exchange_list_markets",
+        "search_markets": "emerald_exchange_search_markets",
+        "get_market": "emerald_exchange_get_market",
+        "list_events": "emerald_exchange_list_events",
+        "search_events": "emerald_exchange_search_events",
+        "get_event": "emerald_exchange_get_event",
+        "list_orders": "emerald_exchange_list_orders",
+        "search_orders": "emerald_exchange_search_orders",
+        "get_order": "emerald_exchange_get_order",
+    }
+)
 
 
 class ReadRequest(BaseModel):

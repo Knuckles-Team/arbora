@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import contextlib
 import logging
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from arbora.api.errors import not_served
@@ -103,13 +105,15 @@ def _toggle_batch_query(
     return res
 
 
-_TOGGLE_NODE_ID_PREFIX: dict[str, str] = {
-    "mcp_server": "mcp_server_",
-    "builtin_tool": "native_tool_",
-    "skill": "skill_",
-    "skill_workflow": "skill_workflow_",
-    "skill_graph": "skill_graph_",
-}
+_TOGGLE_NODE_ID_PREFIX: Mapping[str, str] = MappingProxyType(
+    {
+        "mcp_server": "mcp_server_",
+        "builtin_tool": "native_tool_",
+        "skill": "skill_",
+        "skill_workflow": "skill_workflow_",
+        "skill_graph": "skill_graph_",
+    }
+)
 
 
 def _trino_principal_ref() -> str:

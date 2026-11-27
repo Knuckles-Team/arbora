@@ -10,6 +10,7 @@ writes the adopted harness. A foreign or absent object answers the same refusal.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from medulla.generated.models import HarnessAdoptionWrite
@@ -35,9 +36,11 @@ from arbora.api.registry import (
 READ_SCOPE = "kg:read"
 ADOPT_SCOPE = "decide:commit"
 #: Replay owner of the adoption: the engine decision log replays a write by key.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "harness.evolution.adopt": "medulla:DecisionLog",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "harness.evolution.adopt": "medulla:DecisionLog",
+    }
+)
 _KINDS = (
     "system_prompt",
     "memory",

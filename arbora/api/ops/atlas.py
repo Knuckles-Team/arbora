@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import re
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field, field_validator
@@ -432,12 +433,14 @@ async def handle_runs_list(
 
 
 #: Writes replay under the engine method that holds the record, never here.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "ingest.sources.connections.create": f"medulla:{_CONNECTION}",
-    "ingest.sources.discover": f"medulla:{_CONNECTION}",
-    "ingest.sources.mapping.propose": f"medulla:{_MAPPING}",
-    "ingest.sources.runs.cancel": f"medulla:{_RUN_RECORD}",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "ingest.sources.connections.create": f"medulla:{_CONNECTION}",
+        "ingest.sources.discover": f"medulla:{_CONNECTION}",
+        "ingest.sources.mapping.propose": f"medulla:{_MAPPING}",
+        "ingest.sources.runs.cancel": f"medulla:{_RUN_RECORD}",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

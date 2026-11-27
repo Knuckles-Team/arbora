@@ -9,6 +9,7 @@ The operation previews first and needs the administrator approval of the plan fl
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -29,7 +30,9 @@ from arbora.identity.engine_admin import IdentityRefused
 
 ADMIN_SCOPE = "identity:admin"
 #: The engine owns replay of the transition by its expected epoch.
-NATIVE_IDEMPOTENCY: dict[str, str] = {"identity.mode_transition": "medulla:Identity"}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {"identity.mode_transition": "medulla:Identity"}
+)
 
 
 class ModeTransitionParams(BaseModel):

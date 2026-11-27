@@ -16,6 +16,7 @@ from __future__ import annotations
 import difflib
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -337,11 +338,13 @@ def _write(op_id: str, summary: str, example: str, params: type[Params]) -> OpSp
 
 
 #: Writes the engine replays by the idempotency key the pipeline forwards.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "prompts.create": "medulla:KvCas",
-    "prompts.update": "medulla:KvCas",
-    "prompts.rollback": "medulla:KvCas",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "prompts.create": "medulla:KvCas",
+        "prompts.update": "medulla:KvCas",
+        "prompts.rollback": "medulla:KvCas",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

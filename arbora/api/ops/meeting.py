@@ -10,7 +10,7 @@ then does it admit the provider and run the one shared summary pipeline of
 from __future__ import annotations
 
 from collections.abc import Mapping
-from types import SimpleNamespace
+from types import MappingProxyType, SimpleNamespace
 from typing import Any
 
 from pydantic import Field
@@ -71,9 +71,11 @@ async def handle_meeting_summarize(
     return await run_summary(context, params, admission)
 
 
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "meeting.summarize": "medulla:MeetingSummaryCommit",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "meeting.summarize": "medulla:MeetingSummaryCommit",
+    }
+)
 
 
 def operations() -> tuple[OpSpec, ...]:

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -23,16 +24,18 @@ from arbora.api.ops.pin_guards import guard, send_main
 from arbora.api.registry import OpSpec, Verb
 
 #: The engine replays each of these writes by its idempotency key.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "catalog.trust_flag.set": "medulla:Stewardship",
-    "curation.proposals.review": "medulla:Glossary",
-    "query.workspace.save": "medulla:StoredQueryPut",
-    "query.workspace.delete": "medulla:StoredQueryRetire",
-    "quality.rule.put": "medulla:QualityRulePut",
-    "quality.evaluate": "medulla:AnalyticsJob",
-    "profile.run": "medulla:AnalyticsJob",
-    "access_request.decide": "medulla:AccessRequestDecide",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "catalog.trust_flag.set": "medulla:Stewardship",
+        "curation.proposals.review": "medulla:Glossary",
+        "query.workspace.save": "medulla:StoredQueryPut",
+        "query.workspace.delete": "medulla:StoredQueryRetire",
+        "quality.rule.put": "medulla:QualityRulePut",
+        "quality.evaluate": "medulla:AnalyticsJob",
+        "profile.run": "medulla:AnalyticsJob",
+        "access_request.decide": "medulla:AccessRequestDecide",
+    }
+)
 #: The stored-query methods are read and written under the query scopes.
 QUERY_READ_SCOPE = "query:read"
 QUERY_WRITE_SCOPE = "query:write"

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -29,10 +30,12 @@ from arbora.api.registry import Confirm, OpSpec
 SCOPE = "finance:track"
 SCHEDULER_BINDING = "finance_scheduler_principal"
 #: The grant and its revocation are engine ``RbacAdmin`` writes the engine replays itself.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "finance.delegation.grant": "medulla:GrantResource",
-    "finance.delegation.revoke": "medulla:RevokeResource",
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {
+        "finance.delegation.grant": "medulla:GrantResource",
+        "finance.delegation.revoke": "medulla:RevokeResource",
+    }
+)
 _DAY_S = 86_400
 
 

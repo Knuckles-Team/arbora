@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import Field
@@ -140,9 +141,9 @@ def operations() -> tuple[OpSpec, ...]:
 
 
 #: The commit is the engine's own write, replayed by the idempotency key.
-NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "serving.technique.activate": "medulla:DecisionCommit"
-}
+NATIVE_IDEMPOTENCY: Mapping[str, str] = MappingProxyType(
+    {"serving.technique.activate": "medulla:DecisionCommit"}
+)
 
 specs = operations
 

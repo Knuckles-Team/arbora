@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Callable, Mapping
+from types import MappingProxyType
 from typing import Any
 
 Builder = Callable[[Mapping[str, Any], Any], dict[str, str]]
@@ -113,14 +114,16 @@ def _plain(builder: Builder) -> CallerBuilder:
     return lambda arguments, result, caller: builder(arguments, result)
 
 
-_BUILDERS: dict[str, CallerBuilder] = {
-    **dict.fromkeys(_POLICY_OPS, _plain(_policy_change)),
-    "plans.run": _plain(_refused_plan),
-    "security.evaluate": _plain(_security_evaluate),
-    "retrieval.space": _plain(_retrieval_space),
-    "research.web": _plain(_research_web),
-    "query.projections": _projections,
-}
+_BUILDERS: Mapping[str, CallerBuilder] = MappingProxyType(
+    {
+        **dict.fromkeys(_POLICY_OPS, _plain(_policy_change)),
+        "plans.run": _plain(_refused_plan),
+        "security.evaluate": _plain(_security_evaluate),
+        "retrieval.space": _plain(_retrieval_space),
+        "research.web": _plain(_research_web),
+        "query.projections": _projections,
+    }
+)
 
 
 def result_evidence(

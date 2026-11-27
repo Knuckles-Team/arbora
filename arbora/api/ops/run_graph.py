@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass
 from graphlib import TopologicalSorter
+from types import MappingProxyType
 from typing import Annotated, Any, Literal
 
 from pydantic import Field, model_validator
@@ -21,13 +23,15 @@ PartialReason = Literal["node_bound", "edge_bound", "depth_bound", "child_unavai
 StepStatus = Literal[
     "unobserved", "running", "completed", "failed", "cancelled", "blocked"
 ]
-TASK_STATES: dict[str, StepStatus] = {
-    "task_started": "running",
-    "task_completed": "completed",
-    "task_failed": "failed",
-    "task_cancelled": "cancelled",
-    "task_blocked": "blocked",
-}
+TASK_STATES: Mapping[str, StepStatus] = MappingProxyType(
+    {
+        "task_started": "running",
+        "task_completed": "completed",
+        "task_failed": "failed",
+        "task_cancelled": "cancelled",
+        "task_blocked": "blocked",
+    }
+)
 
 
 class ExecutionGraphParams(RunReadParams):
