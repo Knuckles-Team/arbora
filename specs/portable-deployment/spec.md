@@ -65,13 +65,27 @@ A maintainer applies a reviewed profile to a single-host container environment o
 1. **Given** a profile with digest-pinned images and reference-only secrets, **When** the maintainer runs `setup-config environments validate <name>`, **Then** the profile loads and validates.
 2. **Given** a profile with a tagged image or an unknown key, **When** the same command runs, **Then** it refuses with the section and key and applies nothing.
 
+### User Story 3 - An operator moves a service endpoint through its lifecycle (Priority: P3)
+
+An operator drains, replaces or retires a service endpoint, such as an embedding model server. Arbora refuses any move that leaves a role without a serving endpoint.
+
+**Acceptance Scenarios**:
+
+1. **Given** an inventory with one serving primary embedder, **When** the operator runs `setup-config inventory transition <host> <service> drain`, **Then** Arbora refuses `ROUTING_RULE_BROKEN` and the file stays unchanged.
+2. **Given** a planned second embedder, **When** the operator sends `deploy` and then `verify`, **Then** the entry is `serving` with the date of the move, and every comment stays.
+3. **Given** a model profile with `inventory://embedder/primary`, **When** Arbora loads its configuration, **Then** it uses the endpoint of the serving primary.
+
 ### Edge Cases
 
 - A missing secret reference, an unwritable runtime path or an unsafe identity mode stops apply before any process launches.
 - A second host process on the same engine endpoint attaches and never starts a second engine.
 - A pre-push shim whose configuration path was relocated fails loudly instead of passing.
+- An inventory edited by hand between preview and apply refuses `INVENTORY_STALE` and writes nothing.
+- An endpoint transition from a terminal state refuses `ENDPOINT_TRANSITION_ILLEGAL`.
 
 ## Assumptions
 
 - The graph engine is the only durable authority; no profile implies a second store.
 - Optional components (web UI, connectors, external identity) are selected explicitly and are absent from the core path.
+- The host inventory is operator configuration, not a fact store. The graph learns it through the SDK infrastructure extractor.
+- An operator moves a role between entries by editing the file. The check operation then validates the result.

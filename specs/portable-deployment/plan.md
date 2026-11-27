@@ -67,6 +67,20 @@ Released engine 3.3.4 refuses Arbora's provisioned content. It reports `ONTOLOGY
 - **State.** `up` creates a fresh store. `down` deletes it. No state survives a restart.
 - **Environment.** The sandbox sets its own variables for one run. It reads no production secret.
 
+### Service endpoint lifecycle in the host inventory (ARBORA-DEPLOY-R604.1 to R604.7)
+
+Pre-untangled design for these rows, one line per answer.
+
+- Owner. Arbora owns the machine, the routing rules, the operations and the role references, because the host inventory is Arbora platform configuration. The SDK infrastructure extractor reads the same entries into the graph.
+- Cohesion. The machine, the rules, the role resolver and the file writer change together and live in `arbora/core/service_endpoints.py`. The operations and the subcommand only call it.
+- Dependency direction. `api/ops/inventory.py`, `deployment/cli.py`, `deployment/doctor.py` and `core/settings.py` import `core/service_endpoints.py`. That module imports only the standard library and the YAML libraries.
+- Interface depth. Four public functions: `transition`, `routing_violations`, `resolve_role_ref` and `write_endpoint_state`. The call sites are `arbora/api/ops/inventory.py` and `arbora/core/settings.py`.
+- Special cases. None. A kind is any string, so a chat endpoint uses the same machine and rules as an embedder.
+- State. The endpoint lifecycle is the explicit machine of R604.1. The entry `state` field holds it, and `state_since` dates the last edge.
+- Environment. The inventory file holds data only. The environment keeps no transition script, and `PIPE-GATES-R089` checks it.
+
+Order. R604.1, then R604.2 and R604.3 in parallel, then R604.4, then R604.5 and R604.6 in parallel, then R604.7.
+
 ## Phase 2: Task approach
 
 tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
@@ -86,7 +100,7 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 
 ## Cross-repo seams
 
-None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
+None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository. The host inventory entry shape of `ARBORA-DEPLOY-R604.1` is read by the SDK infrastructure extractor; the contract lives with that consumer row.
 
 ### Existing components
 
