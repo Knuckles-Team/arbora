@@ -6,7 +6,7 @@ budgets, stop rules). It asks its host for every decision through
 
 * :func:`decide_run` is the run decision provider. The engine serves no run-plan
   decision method today, so it returns the harness's documented default plan
-  (``meristem.runtime.default_run_plan``) over the Arbora model registry.
+  (``meristem.graph.default_run_plan``) over the Arbora model registry.
 * :func:`resolve_model` is the model provider. It builds an OpenAI-compatible
   model for a model id that the Arbora model registry names. Any other id
   passes through, so pydantic-ai resolves it itself.
@@ -28,6 +28,7 @@ from collections.abc import Awaitable, Callable, Iterator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
+from operator import attrgetter
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Literal, cast
@@ -50,7 +51,6 @@ __all__ = [
     "AgentRunPort",
     "MAX_RUN_EVENT_PAYLOAD_BYTES",
     "RUN_EVENT_PAYLOAD_ERROR_SCHEMA",
-    "bind_run_ports",
     "decide_run",
     "record_run_event",
     "resolve_model",
@@ -387,7 +387,7 @@ def decide_run(request: Any) -> Any:
     The engine serves no run-plan decision method, so this returns the
     harness's documented default plan. A run without a model fails closed.
     """
-    from meristem.runtime import default_run_plan
+    from meristem.graph import default_run_plan
 
     owner = current_native_run(request)
     plan = default_run_plan(request, run_config())
@@ -438,11 +438,9 @@ def canonical_run_statuses() -> tuple[str, ...]:
     Arbora owns no run machine and no second vocabulary: the set is the harness
     ``RunStatus`` (``Pending``, ``Running``, ``Completed``, ``Stopped``, ``Failed``).
     """
-    from typing import get_args
-
     from meristem.graph.state import RunStatus
 
-    return tuple(get_args(RunStatus))
+    return tuple(map(attrgetter("value"), RunStatus))
 
 
 class UnknownRunStatus(ValueError):
@@ -611,16 +609,23 @@ def record_run_event(event: Mapping[str, Any]) -> None:
         )
 
 
+def _status_value(status: Any) -> Any:
+    """The wire value of a harness run status (an ``Enum`` member since meristem 6)."""
+    return getattr(status, "value", status)
+
+
 def failed_run_usage(error: Exception, run_id: str) -> dict[str, int] | None:
     """Project only AU's validated failed receipt, never exception-shaped data."""
-    from meristem import runtime
+    from meristem import graph
 
-    failure_type = getattr(runtime, "RunFailed", None)
+    failure_type = getattr(graph, "RunFailed", None)
     if failure_type is None or type(error) is not failure_type:
         return None
     try:
         result = cast(Any, failure_type)(cast(Any, error).result).result
-        if result.run_id != run_id or result.status != canonical_run_status("failed"):
+        if result.run_id != run_id or _status_value(result.status) != (
+            canonical_run_status("failed")
+        ):
             return None
         # Revalidate the public snapshot and enforce the narrower wire bounds.
         receipt = AgentExecutionResult(
@@ -634,13 +639,27 @@ def failed_run_usage(error: Exception, run_id: str) -> dict[str, int] | None:
 class AgentRunPort:
     """``AgentExecutionPort`` over the harness ``AgentRunExecutor``."""
 
-    def __init__(self, executor: Any = None, *, origins: RunOriginRegistry) -> None:
+    def __init__(
+        self,
+        executor: Any = None,
+        *,
+        origins: RunOriginRegistry,
+        ports: Any = None,
+    ) -> None:
         self._origins = origins
-        if executor is None:
-            from meristem.runtime import AgentRunExecutor
+        #: The host's ``HostPortsSlot``; read when the first run starts.
+        self._ports = ports
+        self._built = executor
 
-            executor = AgentRunExecutor(run_config())
-        self._executor = executor
+    @property
+    def _executor(self) -> Any:
+        """The harness executor, built over the host's ports at the first run."""
+        if self._built is None:
+            from meristem.graph import AgentRunExecutor
+
+            ports = None if self._ports is None else self._ports.current()
+            self._built = AgentRunExecutor(run_config(), ports=ports)
+        return self._built
 
     async def execute_agent(
         self, request: AgentExecutionRequest, *, session: GraphSession
@@ -677,54 +696,3 @@ class AgentRunPort:
             execution_mode=result.execution_mode,
             usage=getattr(result, "usage", None),
         )
-
-
-#: The last ``HostPorts`` binding the host composed (the record, or the refusal).
-_HOST_PORTS: Any = None
-
-
-def host_ports_binding() -> Any:
-    """The ``HostPortsBinding`` of the served host, or ``None`` before it binds."""
-    return _HOST_PORTS
-
-
-def bind_run_ports(services: Any = None, seams: Any = None) -> Any:
-    """Register the run decision, model and run event providers with the harness.
-
-    With the served ``services`` the one ``HostPorts`` record is composed over the
-    backends the host holds (ARBORA-OPS-R890); ``seams`` are the host's own
-    (``HostSeams``). The pinned release refuses the record.
-    """
-    global _HOST_PORTS
-    from meristem import host_ports
-
-    host_ports.register_run_decision_provider(decide_run)
-    host_ports.register_model_provider(resolve_model)
-    host_ports.register_run_event_sink(record_run_event)
-    from arbora.current_plan_publication import publication_scope
-
-    host_ports.register_optional_scaffold_publication_factory(publication_scope)
-    from arbora.a2a.checkpoint import checkpoint_store
-    from arbora.agent_host.host_port_adapters import bind_host_ports
-    from arbora.mcp_server import runtime as mcp_runtime
-
-    # The engine is resolved when a run binds, never at registration.
-    store = checkpoint_store(
-        lambda: mcp_runtime._get_engine() if mcp_runtime._get_engine else None
-    )
-    host_ports.register_run_checkpoint_factory(store)
-    if services is None:
-        _HOST_PORTS = bind_host_ports(checkpoint_store=store, events=record_run_event)
-    else:
-        import asyncio
-
-        from arbora.agent_host.host_port_composition import compose_host_ports
-
-        _HOST_PORTS = compose_host_ports(
-            services,
-            wait=asyncio.sleep,
-            checkpoint_store=store,
-            events=record_run_event,
-            seams=seams,
-        )
-    return _HOST_PORTS

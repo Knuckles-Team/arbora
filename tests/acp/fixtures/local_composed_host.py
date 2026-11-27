@@ -2,10 +2,12 @@
 
 import asyncio
 import json
+from dataclasses import replace
 
-from meristem import host_ports
+from meristem.host_ports import HostPorts
 from pydantic_ai.models.function import FunctionModel
 
+from arbora.acp.local_history import LocalConversationHistory
 from arbora.acp.local_runtime import main
 
 
@@ -32,5 +34,12 @@ def provider(model_id):
     return FunctionModel(stream_function=model)
 
 
-host_ports.register_model_provider(provider)
+_bind = LocalConversationHistory.bind_ports
+
+
+def _bind_with_model(self, ports: HostPorts) -> None:
+    _bind(self, replace(ports, models=provider))
+
+
+LocalConversationHistory.bind_ports = _bind_with_model
 raise SystemExit(main())

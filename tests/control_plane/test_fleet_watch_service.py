@@ -1,9 +1,9 @@
 """Parity tests for the ported deploy-watch verdict rule (ARBORA-FLEET-R024.1).
 
 Each case reproduces one branch of meristem's
-``agent_utilities.orchestration.deploy_watch.run_deploy_watch`` post-probe
+``meristem.orchestration.deploy_watch.run_deploy_watch`` post-probe
 verdict block (read at
-``agent_utilities/orchestration/deploy_watch.py``): a ``down`` probe fails
+``meristem/orchestration/deploy_watch.py``): a ``down`` probe fails
 the window immediately with its own detail, a window with no ``down`` and at
 least one ``up`` succeeds, and a window with no probes at all is
 unobserved — never a rollback trigger on zero evidence.

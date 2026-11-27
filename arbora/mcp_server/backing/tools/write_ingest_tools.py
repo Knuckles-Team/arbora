@@ -641,7 +641,7 @@ def register_write_ingest_tools(mcp):
                     # The canonical memory store is the engine facade's MemoryMixin
                     # (engine.store_memory / engine.recall_memory) — the same path
                     # messaging/kg_ingest and the kg-memory task worker use. The old
-                    # ``agent_utilities.memory.manager.MemoryManager`` indirection
+                    # ``meristem.memory.manager.MemoryManager`` indirection
                     # never existed as a module, so this branch always fell into
                     # "memory module not available"; wire it to the real method.
                     if action_name == "store_memory":

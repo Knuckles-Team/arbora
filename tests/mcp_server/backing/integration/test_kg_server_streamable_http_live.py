@@ -383,7 +383,7 @@ def test_streamable_http_serves_real_mcp_and_rejects_unauthenticated(
         # ---- 4. Precise proof the identity bridge attempted (or completed)
         # a real session mint for this exact call --------------------------
         # This is the regression guard for the duplicate/shadowed
-        # ActorContextMiddleware bug this branch fixes (agent_utilities/mcp/
+        # ActorContextMiddleware bug this branch fixes (meristem/mcp/
         # middlewares.py): the shadowed definition minted an ActorContext but
         # never a GraphSession, so a bare, session-less tool body ran and
         # returned success immediately — silently defeating tenant/ACL
@@ -509,7 +509,7 @@ def test_streamable_http_serves_2026_07_28_protocol_natively(monkeypatch, jwks_s
         _assert_intent_contract_listed(tool_names)
 
         # ---- 3. tasks/get for an unknown task routes into the native,
-        # in-process WorkItemTasksExtension (agent_utilities/mcp/
+        # in-process WorkItemTasksExtension (meristem/mcp/
         # tasks_extension.py) rather than 404ing as an unrecognized method —
         # proof the Tasks capability this protocol version needs is answered
         # on THIS server, with no downstream hop to anywhere. ---------------

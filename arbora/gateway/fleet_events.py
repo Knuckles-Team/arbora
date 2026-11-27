@@ -15,7 +15,7 @@ each event is
   ExecutionSummary/PerformanceAnomaly node-write pattern), and
 * enqueued as a durable ``fleet_event_triage`` task on the engine task queue,
   so the host daemon's workers act on it via
-  :mod:`agent_utilities.knowledge_graph.adaptation.fleet_event_triage`.
+  :mod:`meristem.knowledge_graph.adaptation.fleet_event_triage`.
 
 Auth: Alertmanager/Kuma cannot usually mint JWTs, so the endpoint accepts a
 shared-secret header ``X-Fleet-Events-Token`` resolved through

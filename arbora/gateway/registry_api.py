@@ -1,6 +1,6 @@
 """Tenant/principal-scoped read-only registry over the native fleet catalog.
 
-The catalog writer is :mod:`agent_utilities.knowledge_graph.core.fleet_catalog_tables`;
+The catalog writer is :mod:`meristem.knowledge_graph.core.fleet_catalog_tables`;
 this module is deliberately a reader.  It never starts MCP children, probes a
 live server, writes a row, or falls back to a second store.  Authorization is
 resolved from the ambient verified :class:`GraphSession` plus the
@@ -248,7 +248,7 @@ class _KindSpec:
 # candidate additional `_KindSpec` entries here. None were added. Evidence:
 #
 # * ``builtin_tools`` — no SQL table exists at all. These are native,
-#   in-process Python callables under ``agent_utilities/tools/*.py``, never
+#   in-process Python callables under ``meristem/tools/*.py``, never
 #   MCP-discovered and never written to any fleet-catalog table. Adding a
 #   `_KindSpec` for this would require fabricating a table, which is exactly
 #   what this task was told not to do.

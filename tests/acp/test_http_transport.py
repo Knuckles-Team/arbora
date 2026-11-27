@@ -13,8 +13,8 @@ import httpx
 import pytest
 import uvicorn
 from acp import schema
-from meristem import host_ports
-from meristem.runtime import RunPlan, RunRequest
+from meristem.graph import RunPlan, RunRequest
+from meristem.host_ports import HostPorts
 from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 from starlette.applications import Starlette
 from starlette.datastructures import Headers
@@ -95,7 +95,7 @@ async def http_server(tmp_path, request, monkeypatch):
             value, harness=replace(value.harness, client_tools=("read_file",))
         )
 
-    host_ports.register_run_decision_provider(plan)
+    ports = HostPorts(decide=plan)
     app = Starlette()
     parameter = getattr(request, "param", None)
     headers = {"x-test-user": "alice"}
@@ -112,7 +112,7 @@ async def http_server(tmp_path, request, monkeypatch):
         policy=AcpSessionPolicy(timedelta(minutes=1), timedelta(minutes=5)),
         trusted_roots=frozenset({str(root)}),
         request_factory=lambda principal, session_id, text: RunRequest(
-            task=text, context=session_id
+            task=text, context=session_id, ports=ports
         ),
     )
     register_acp_routes(
@@ -140,7 +140,6 @@ async def http_server(tmp_path, request, monkeypatch):
         async with asyncio.timeout(3):
             await task
         sock.close()
-        host_ports.register_run_decision_provider(None)
 
 
 class _Client:

@@ -1631,9 +1631,9 @@ def register_ontology_tools(mcp):
         """Explicit, private-by-default sharing for the AMBIENT actor (KG-2.60).
 
         The tenant-hierarchy actions are the production write path into
-        :mod:`agent_utilities.knowledge_graph.core.tenant_registry` — the durable
+        :mod:`meristem.knowledge_graph.core.tenant_registry` — the durable
         ``__control__`` registry that
-        :func:`~agent_utilities.knowledge_graph.core.tenant_sharing.accessible_graphs`
+        :func:`~meristem.knowledge_graph.core.tenant_sharing.accessible_graphs`
         reads on every request to build its precedence chain.
         """
         if action in ("set_parent", "clear_parent", "hierarchy"):

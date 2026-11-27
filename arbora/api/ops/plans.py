@@ -827,24 +827,43 @@ def _reply_item(entry: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _bind_run_tools(plan: Mapping[str, Any], fleet: FleetStepTools | None) -> Any:
-    """Bind the run's governed caller; returns the context token to reset."""
-    from meristem.host_ports import register_tool_caller
-
-    if _plan_calls(plan):
-        if fleet is None:
-            raise OperationRefused(
-                "UNAVAILABLE", {"reason": "no governed tool caller is bound"}
-            )
-        register_tool_caller(governed_tool_caller)
+    """Bind the run's governed tools; returns the context token to reset."""
+    if _plan_calls(plan) and fleet is None:
+        raise OperationRefused(
+            "UNAVAILABLE", {"reason": "no governed tool caller is bound"}
+        )
     return _RUN_TOOLS.set(fleet)
 
 
+def _host_ports(context: Any) -> Any:
+    """The host's ``HostPorts`` for a run this operation starts, or ``None`` unbound."""
+    slot = context.services.get("run_ports")
+    return None if slot is None else slot.current()
+
+
 def _run_request(plan: Mapping[str, Any], run_id: str, ports: Any) -> Any:
-    """The run request; a process run carries its bound ``HostPorts``."""
+    """The run request; it carries the ``HostPorts`` the run executes over.
+
+    A plan with typed tool steps adds the governed caller to the record. The caller
+    reads the run's own tools from ``_RUN_TOOLS``, so the record holds no run state.
+    """
     from meristem.graph import RunRequest
 
     extra = {} if ports is None else {"ports": ports}
     return RunRequest(task=plan["output_task_id"], run_id=run_id, **extra)
+
+
+def _ports_with_caller(plan: Mapping[str, Any], ports: Any) -> Any:
+    """``ports`` with the governed caller added when the plan has typed tool steps."""
+    from dataclasses import replace
+
+    from meristem.host_ports import HostPorts
+
+    if not _plan_calls(plan):
+        return ports
+    return replace(
+        ports if ports is not None else HostPorts(), caller=governed_tool_caller
+    )
 
 
 def _harness_plan(
@@ -877,7 +896,7 @@ async def _drain_run(
     """
     from meristem.graph import iterate_run
 
-    request = _run_request(plan, run_id, ports)
+    request = _run_request(plan, run_id, _ports_with_caller(plan, ports))
     tasks: dict[str, dict[str, Any]] = {}
     started: list[str] = []
     terminal: dict[str, Any] = {}
@@ -1406,6 +1425,7 @@ async def _publish_and_execute_native_plan(
             _plan_model(context),
             run_id=admission.run_id,
             fleet=_fleet_step_tools(context, parsed.fleet_tools, context.caller, plan),
+            ports=_host_ports(context),
         )
     return published_plan, run
 
@@ -1509,6 +1529,7 @@ async def handle_plan_run(
                     _plan_model(context),
                     run_id=lease.run_id,
                     fleet=_fleet_step_tools(context, parsed.fleet_tools, caller, plan),
+                    ports=_host_ports(context),
                 )
         except asyncio.CancelledError:
             if native is not None:
@@ -1532,6 +1553,7 @@ async def handle_plan_run(
             _plan_model(context),
             run_id=run_id,
             fleet=_fleet_step_tools(context, parsed.fleet_tools, caller, plan),
+            ports=_host_ports(context),
         )
     if native is not None:
         status = run.get("status")

@@ -6,13 +6,13 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from meristem import host_ports
 from meristem.graph import RunPlanFailure, RunRequest, run
 
 from arbora import agent_runs
 from arbora.mcp_server import task_plan_runtime
 from tests.mcp_server.test_task_plan_runtime import bridge as bridge
 from tests.mcp_server.test_task_plan_runtime import chain as chain
+from tests.mcp_server.test_task_plan_runtime import chain_ports
 from tests.test_native_run_scope import CLAIM, SESSION
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R001.2.1.2")
@@ -69,16 +69,24 @@ async def test_failed_plan_terminal_ledger_exactly_once(chain, monkeypatch, phas
     host, _, calls = chain
     fail_at(phase, monkeypatch)
     events = []
-    host_ports.register_run_event_sink(events.append)
-    try:
-        with scope(host):
-            result = await run(RunRequest(task="question", run_id="run"))
-    finally:
-        host_ports.register_run_event_sink(None)
-    assert result.status == "failed"
+    with scope(host):
+        result = await run(
+            RunRequest(
+                task="question",
+                run_id="run",
+                ports=chain_ports(events=events.append),
+            )
+        )
+    assert result.status.value == "failed"
     assert result.usage == USAGE
     assert len(events) == 1
-    assert events[0]["result"] == asdict(result)
+    # The terminal event carries the result's wire form: the status by value, and
+    # neither the held output nor the media fallback count.
+    wire = asdict(result)
+    wire["status"] = result.status.value
+    wire.pop("held_output")
+    wire.pop("media_fallbacks")
+    assert events[0]["result"] == wire
     assert len(calls) == 1
 
 
@@ -112,11 +120,16 @@ async def test_interrupted_plan_preserves_measured_usage(chain, kind, monkeypatc
     eg.send_publish_current_plan = pause
     monkeypatch.setattr(task_plan_runtime, "asyncio", RecordingAsyncio())
     events = []
-    host_ports.register_run_event_sink(events.append)
 
     async def execute():
         with scope(host):
-            return await run(RunRequest(task="question", run_id="run"))
+            return await run(
+                RunRequest(
+                    task="question",
+                    run_id="run",
+                    ports=chain_ports(events=events.append),
+                )
+            )
 
     task = asyncio.create_task(execute())
     try:
@@ -127,14 +140,13 @@ async def test_interrupted_plan_preserves_measured_usage(chain, kind, monkeypatc
                 await task
         else:
             result = await task
-            assert result.status == "failed" and "TimeoutError" in result.error
+            assert result.status.value == "failed" and "TimeoutError" in result.error
             assert result.usage == USAGE
         assert len(events) == 1
         assert events[0]["result"]["usage"] == USAGE
         assert events[0]["type"] == ("run_cancelled" if kind == "cancel" else "error")
         assert len(calls) == 1
     finally:
-        host_ports.register_run_event_sink(None)
         if not task.done():
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)
@@ -178,13 +190,15 @@ async def test_unreported_provider_failure_has_no_fabricated_usage(chain, monkey
         ),
     )
     events = []
-    host_ports.register_run_event_sink(events.append)
-    try:
-        with scope(host):
-            result = await run(RunRequest(task="question", run_id="run"))
-    finally:
-        host_ports.register_run_event_sink(None)
-    assert result.status == "failed"
+    with scope(host):
+        result = await run(
+            RunRequest(
+                task="question",
+                run_id="run",
+                ports=chain_ports(events=events.append),
+            )
+        )
+    assert result.status.value == "failed"
     assert all(value == 0 for value in result.usage.values())
     assert len(events) == 1
     assert events[0]["result"]["usage"] == result.usage

@@ -6,8 +6,8 @@ import sys
 from dataclasses import replace
 from datetime import timedelta
 
-from meristem import host_ports
-from meristem.runtime import RunPlan
+from meristem.graph import RunPlan
+from meristem.host_ports import HostPorts
 from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 
 from arbora.acp import HostedACPAgent, serve_acp_stdio
@@ -61,15 +61,12 @@ def plan(request):
     value = RunPlan(model=FunctionModel(stream_function=model), steps=(request.task,))
     return replace(
         value,
-        harness=replace(
-            value.harness, plan_scaffold="off", client_tools=("read_file", "write_file")
-        ),
+        harness=replace(value.harness, client_tools=("read_file", "write_file")),
     )
 
 
-host_ports.register_run_decision_provider(plan)
 history = LocalConversationHistory("scripted:model")
-host_ports.register_run_history_provider(history.read)
+history.bind_ports(HostPorts(decide=plan, run_history=history.read))
 
 
 async def complete(request, result):

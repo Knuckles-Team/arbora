@@ -109,7 +109,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -120,7 +120,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -236,7 +235,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -247,7 +246,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -368,7 +366,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -383,7 +381,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -594,7 +591,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -607,7 +604,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -796,7 +792,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -810,7 +806,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -978,7 +973,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -992,7 +987,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -1270,7 +1264,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -1284,7 +1278,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -1763,7 +1756,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -1777,7 +1770,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -2026,7 +2018,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -2040,7 +2032,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -2228,7 +2219,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -2243,7 +2234,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -2422,7 +2412,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -2436,7 +2426,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -2699,7 +2688,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -2713,7 +2702,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -3968,7 +3956,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -3982,7 +3970,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -4523,7 +4510,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -4537,7 +4524,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -4683,7 +4669,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -4697,7 +4683,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -4878,7 +4863,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -4892,7 +4877,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -5176,7 +5160,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -5190,7 +5174,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -5617,7 +5600,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -5631,7 +5614,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -5833,7 +5815,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -5847,7 +5829,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -6308,7 +6289,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -6322,7 +6303,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -6466,7 +6446,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -6481,7 +6461,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -7016,7 +6995,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -7030,7 +7009,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -7160,7 +7138,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -7175,7 +7153,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -7493,7 +7470,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -7507,7 +7484,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -7614,7 +7590,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -7628,7 +7604,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -7858,7 +7833,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -7873,7 +7848,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -8206,7 +8180,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -8220,7 +8194,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -8370,7 +8343,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -8385,7 +8358,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -8540,7 +8512,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -8554,7 +8526,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -8970,7 +8941,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -8984,7 +8955,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -9098,7 +9068,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -9112,7 +9082,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -9252,7 +9221,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -9263,7 +9232,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": "FindCycle",
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -9557,7 +9525,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -9571,7 +9539,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -9703,7 +9670,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -9717,7 +9684,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -9879,7 +9845,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -9894,7 +9860,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -10079,7 +10044,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -10095,7 +10060,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": "BrokerAck",
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -10284,7 +10248,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -10301,7 +10265,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -10472,7 +10435,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -10486,7 +10449,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -10711,7 +10673,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -10725,7 +10687,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -10894,7 +10855,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -10908,7 +10869,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -11060,7 +11020,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -11076,7 +11036,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -11237,7 +11196,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -11251,7 +11210,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -11598,7 +11556,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -11612,7 +11570,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -11790,7 +11747,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -11805,7 +11762,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -12076,7 +12032,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -12092,7 +12048,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -12337,7 +12292,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -12354,7 +12309,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -12587,7 +12541,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -12603,7 +12557,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -12789,7 +12742,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -12804,7 +12757,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -13054,7 +13006,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -13068,7 +13020,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -13250,7 +13201,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -13264,7 +13215,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -13398,7 +13348,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -13414,7 +13364,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -13572,7 +13521,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -13587,7 +13536,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -13724,7 +13672,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -13738,7 +13686,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -13912,7 +13859,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -13929,7 +13876,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": "Fork",
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -14038,7 +13984,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -14054,7 +14000,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -14327,7 +14272,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -14342,7 +14287,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -14772,7 +14716,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -14786,7 +14730,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -15215,7 +15158,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -15232,7 +15175,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -15362,7 +15304,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -15377,7 +15319,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -15527,7 +15468,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -15545,7 +15486,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -15714,7 +15654,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -15730,7 +15670,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -15853,7 +15792,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -15870,7 +15809,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -16025,7 +15963,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -16039,7 +15977,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -16151,7 +16088,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -16169,7 +16106,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -16253,7 +16189,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -16267,7 +16203,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -16444,7 +16379,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -16460,7 +16395,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -16644,7 +16578,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -16657,7 +16591,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": "CypherQuery",
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -16863,7 +16796,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -16877,7 +16810,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -17061,7 +16993,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -17075,7 +17007,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": "SemanticSearch",
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -17250,7 +17181,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -17266,7 +17197,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -17422,7 +17352,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -17436,7 +17366,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -17630,7 +17559,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -17644,7 +17573,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -17808,7 +17736,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -17822,7 +17750,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -18030,7 +17957,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -18045,7 +17972,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -18227,7 +18153,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -18243,7 +18169,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -18563,7 +18488,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -18580,7 +18505,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -18996,7 +18920,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -19011,7 +18935,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -19226,7 +19149,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -19240,7 +19163,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -19356,7 +19278,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -19367,7 +19289,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -19516,7 +19437,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -19530,7 +19451,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": "NlQuery",
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -19737,7 +19657,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -19750,7 +19670,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -19857,7 +19776,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -19870,7 +19789,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -20024,7 +19942,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -20037,7 +19955,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -20311,7 +20228,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -20324,7 +20241,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -20664,7 +20580,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -20678,7 +20594,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -20808,7 +20723,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -20821,7 +20736,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -20958,7 +20872,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -20971,7 +20885,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -21175,7 +21088,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -21188,7 +21101,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -21269,7 +21181,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -21282,7 +21194,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -21412,7 +21323,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -21425,7 +21336,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -21549,7 +21459,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -21562,7 +21472,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -21758,7 +21667,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -21772,7 +21681,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -21896,7 +21804,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -21909,7 +21817,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -22207,7 +22114,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -22219,7 +22126,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -22316,7 +22222,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -22331,7 +22237,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -22482,7 +22387,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -22497,7 +22402,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -22592,7 +22496,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -22606,7 +22510,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -22736,7 +22639,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -22750,7 +22653,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -22943,7 +22845,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -22958,7 +22860,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -23042,7 +22943,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -23056,7 +22957,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -23172,7 +23072,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -23183,7 +23083,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,
@@ -23299,7 +23198,7 @@
       ],
       "eligibility_predicates": {
         "formula": "eligible(candidate, required) = ontology_subsumption(candidate.capability_type, required) AND tenant_match(candidate.tenant, caller.tenant) AND policy_tag_match(candidate.policy_tags, required.policy_tags), ranked by cosine(embedding) + reward_weight*(bandit_reward-0.5)",
-        "source": "agent_utilities.graph.routing.enrichers.capability_routing.explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
+        "source": "the engine action explain_routing_eligibility (X-4, CONCEPT:MERISTEM-P1-3)",
         "live_evaluation": null,
         "note": "not live-evaluated in this static generation pass — explain_routing_eligibility() needs a reachable engine AND a populated capability_type/ontology assignment for this tool's node; call it directly against a live engine for a per-request eligibility proof rather than trusting a value baked in here",
         "candidate_tags": [
@@ -23310,7 +23209,6 @@
       "provenance": {
         "generator_version": "1.0.0",
         "source_repo_au": "meristem",
-        "source_module_au": "agent_utilities.mcp.kg_server",
         "source_method_eg": null,
         "eg_ledger_path": "repo://medulla/docs/capabilities.generated.md",
         "eg_ledger_available": true,

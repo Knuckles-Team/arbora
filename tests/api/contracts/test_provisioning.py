@@ -220,7 +220,7 @@ def test_resolver_refuses_without_effect_authorizing_policy_receipt(
 ) -> None:
     """Also needs the engine package: ``resolve()`` imports the generated
     contract unconditionally before it even reaches the policy check this
-    test targets (see ``agent_utilities/api/provisioning.py``), so a denied
+    test targets (see ``meristem/api/provisioning.py``), so a denied
     policy is unreachable here without it."""
     _assert_policy_refuses_before_binding_load(monkeypatch, _Policy(allow=False))
 

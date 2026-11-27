@@ -107,6 +107,11 @@ _GRAPH_RLM_SCOPES: dict[type[BaseModel], Literal["kg:read", "kg:write"]] = {
 }
 
 
+def _current_ports(slot: Any) -> Any:
+    """The host's ``HostPorts`` for a run, or ``None`` (the harness default) without a slot."""
+    return None if slot is None else slot.current()
+
+
 class AgentControlPlane:
     """AU application operations bound to verified graph identity and policy.
 
@@ -124,6 +129,7 @@ class AgentControlPlane:
         agent_executor: AgentExecutionPort | None = None,
         work_item_store: WorkItemStorePort | None = None,
         signed_dispatch: SignedAgentDispatchPort | None = None,
+        ports: Any = None,
     ) -> None:
         if eg_client is None:
             raise ValueError("a session-routed medulla client is required")
@@ -137,6 +143,8 @@ class AgentControlPlane:
         self._session = session
         self._capability_search = capability_search
         self._agent_executor = agent_executor
+        #: The host's ``HostPortsSlot`` an RLM run executes over.
+        self._ports = ports
         self._work_item_store = work_item_store
         self._signed_dispatch = signed_dispatch
         # Validate eagerly so invalid or expired authority never creates a usable
@@ -440,7 +448,9 @@ class AgentControlPlane:
     async def _execute(self, request: GraphRlmRequest) -> GraphRlmResult:
         from meristem.rlm import run_rlm
 
-        outcome = await run_rlm(request.task, request.input_text)
+        outcome = await run_rlm(
+            request.task, request.input_text, ports=_current_ports(self._ports)
+        )
         if outcome.get("ok"):
             return GraphRlmRunResult(
                 action="run",
@@ -494,12 +504,13 @@ def compose_agent_control_plane(
     agent_executor: AgentExecutionPort | None = None,
     work_item_store: WorkItemStorePort | None = None,
     signed_dispatch: SignedAgentDispatchPort | None = None,
+    ports: Any = None,
 ) -> AgentControlPlane:
     """Compose AU application operations from verified inputs and explicit ports."""
     if agent_executor is None:
         from arbora.agent_runs import AgentRunPort
 
-        agent_executor = AgentRunPort(origins=origins)
+        agent_executor = AgentRunPort(origins=origins, ports=ports)
     return AgentControlPlane(
         eg_client,
         session,
@@ -507,4 +518,5 @@ def compose_agent_control_plane(
         agent_executor=agent_executor,
         work_item_store=work_item_store,
         signed_dispatch=signed_dispatch,
+        ports=ports,
     )

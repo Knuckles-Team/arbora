@@ -24,7 +24,7 @@ inspection at this repo's locked SDK versions (``mcp`` 2.0.0, ``fastmcp``
   variables — the exact "token-response detail" and "state" exposure this
   module is named for.
 
-Neither leak is a message-text *pattern* :class:`agent_utilities.httpsupport.
+Neither leak is a message-text *pattern* :class:`meristem.httpsupport.
 redaction.LogRedactor` can catch: it only regex-scrubs ``record.getMessage()``
 and never touches ``record.exc_info``/``exc_text``/``stack_info`` — exactly
 where the second leak lives. AGENTS.md's "Secrets & credential retrieval"

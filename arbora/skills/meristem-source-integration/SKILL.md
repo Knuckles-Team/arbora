@@ -65,7 +65,7 @@ Store via `secret-vault-manager` (OpenBao/Vault) or `config.json` / connector `.
 
 **LeanIX** (meristem config): `LEANIX_URL`, `LEANIX_TOKEN`, `LEANIX_VERIFY_SSL`,
 `LEANIX_ENABLE_WRITE` (fail-closed backfeed gate). Verify:
-`python -c "from agent_utilities.ecosystem.ea_clients import get_leanix_client; assert get_leanix_client()"`
+`python -c "from meristem.ecosystem.ea_clients import get_leanix_client; assert get_leanix_client()"`
 
 **Camunda** (`camunda-mcp` env): `CAMUNDA_PLATFORM` (`7`/`8`), `CAMUNDA7_URL` +
 `CAMUNDA7_TOKEN` or `CAMUNDA7_USERNAME`/`CAMUNDA7_PASSWORD`; or `CAMUNDA8_*` (Zeebe/

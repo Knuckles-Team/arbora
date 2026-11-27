@@ -77,8 +77,6 @@ async def test_real_local_backend_identity_and_failed_turn_without_replay(tmp_pa
 async def test_local_identity_renewal_keeps_same_binding(monkeypatch):
     import argparse
 
-    from meristem import host_ports
-
     from arbora.acp.local_runtime import compose_local
     from arbora.security import request_identity
     from arbora.security.session import GraphSession, SessionExpiredError
@@ -100,8 +98,6 @@ async def test_local_identity_renewal_keeps_same_binding(monkeypatch):
 
     monkeypatch.setattr(request_identity, "mint_local_process_session", mint)
     monkeypatch.setattr(GraphSession, "ensure_authority_current", check)
-    previous = host_ports.run_decision_provider()
-    host_ports.register_run_decision_provider(None)
     agent = compose_local(
         argparse.Namespace(
             model="missing:unused",
@@ -124,8 +120,6 @@ async def test_local_identity_renewal_keeps_same_binding(monkeypatch):
         assert issued[0].scopes == issued[1].scopes
     finally:
         await agent.aclose()
-        host_ports.register_run_decision_provider(previous)
-        host_ports.register_run_history_provider(None)
 
 
 @pytest.mark.parametrize(

@@ -1377,11 +1377,11 @@ async def test_unresolved_binding_reply_names_the_reference():
 
 # spec: ARBORA-RELEASE-R003.4.9
 async def test_handle_plan_run_binds_the_governed_caller():
-    from meristem.host_ports import tool_caller
-
     invoke = ToolInvoke()
     await _serve_tools(BINDING_PLAN, invoke=invoke)
-    assert tool_caller() is plans.governed_tool_caller
+    # The run's ports carry the governed caller; no harness module state holds it.
+    ports = plans._ports_with_caller(BINDING_PLAN, None)
+    assert ports.caller is plans.governed_tool_caller
     # Every typed step went through the invoke pipeline as ``fleet.call``.
     assert [e[:2] for e in invoke.effects] == [
         ("alpha-mcp", "create"),

@@ -76,3 +76,50 @@ def test_arbora_declares_one_scion_sdk_floor_with_the_transports_it_serves() -> 
     assert "mcp" in sdk[0]
     assert ">=" in sdk[0]
     assert "<" in sdk[0]
+
+
+_RETIRED = "agent" + "_utilities"
+_SCANNED_ROOTS = ("arbora", "tests", "docs", "scripts", ".github")
+_SCANNED_FILES = ("pyproject.toml", "README.md", "AGENTS.md")
+
+
+def _scanned_files() -> list[Path]:
+    found = [ROOT / name for name in _SCANNED_FILES if (ROOT / name).is_file()]
+    for top in _SCANNED_ROOTS:
+        base = ROOT / top
+        if base.is_dir():
+            found.extend(
+                path
+                for path in base.rglob("*")
+                if path.is_file()
+                and "__pycache__" not in path.parts
+                and path != Path(__file__).resolve()
+                and path.suffix not in {".pyc", ".png", ".ico", ".woff2", ".whl"}
+            )
+    return found
+
+
+@pytest.mark.spec("ARBORA-HOST-R040.1")
+def test_no_agent_utilities_reference_remains() -> None:
+    """The retired harness package is named nowhere in code, config, fixtures or docs."""
+    spellings = (_RETIRED, _RETIRED.replace("_", "-"), _RETIRED.upper())
+    offenders: list[str] = []
+    for path in _scanned_files():
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        if any(spelling in text for spelling in spellings):
+            offenders.append(path.relative_to(ROOT).as_posix())
+    assert offenders == []
+
+
+@pytest.mark.spec("ARBORA-HOST-R040.1")
+def test_pins_match_the_adopted_releases() -> None:
+    dependencies = _dependencies()
+    assert "meristem>=6.0.0,<7.0.0" in dependencies
+    sdk = [d for d in dependencies if d.startswith("scion-sdk")]
+    assert len(sdk) == 1
+    assert sdk[0].startswith("scion-sdk[a2a,mcp]>=0.11")
+    lock = (ROOT / "uv.lock").read_text(encoding="utf-8")
+    assert 'name = "meristem"\nversion = "6.' in lock

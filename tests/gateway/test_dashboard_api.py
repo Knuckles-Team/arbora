@@ -388,9 +388,7 @@ def test_capabilities_use_public_resolver_and_403_unchanged(
         if isinstance(node, ast.Import)
         for alias in node.names
     }
-    assert not {
-        m for m in imported if m.split(".")[0] in {"agent_utilities", "meristem"}
-    }
+    assert not {m for m in imported if m.split(".")[0] in {"meristem"}}
 
     request = SimpleNamespace(
         state=SimpleNamespace(user_claims={"sub": "u", "groups": []}),

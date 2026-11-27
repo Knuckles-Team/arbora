@@ -21,7 +21,7 @@ from typing import Any
 import httpx
 import pytest
 from fastapi import FastAPI
-from meristem import host_ports
+from meristem.host_ports import HostPorts
 
 from arbora import agent_runs
 from arbora.a2a.authority import WorkItemA2AAuthority
@@ -29,6 +29,7 @@ from arbora.a2a.routing import OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
+from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
 from arbora.api.invoke.privacy import mask_persisted_arguments
 from arbora.core.settings import runtime_config
 from arbora.fleet.state import FleetState
@@ -178,12 +179,30 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         return _actor()
 
     monkeypatch.setattr(request_identity, "actor_from_bearer_token", credential_owner)
+
+    async def library_entry(_context: Any, _agent: str) -> dict[str, Any]:
+        # The named agent's graph definition: it uses no definition-bound skill.
+        return {"skills": []}
+
+    monkeypatch.setattr("arbora.api.ops.agent_library.current_entry", library_entry)
     client = FakeClient()
     monkeypatch.setattr(mcp_runtime, "_get_engine", lambda: client)
-    agent_runs.bind_run_ports()
+    ports = HostPortsSlot()
+    ports.bind(
+        HostPortsBinding(
+            HostPorts(
+                decide=agent_runs.decide_run,
+                models=agent_runs.resolve_model,
+                events=agent_runs.record_run_event,
+            ),
+            None,
+        )
+    )
     process = request_identity.mint_graph_session(_actor())
     a2a = A2AService(
-        authority=WorkItemA2AAuthority(lambda: client, origins=RunOriginRegistry()),
+        authority=WorkItemA2AAuthority(
+            lambda: client, origins=RunOriginRegistry(), ports=ports
+        ),
         router=OrchestratorA2ARouter(lambda: client),
     )
     invocation = compose_served_invocation(
@@ -203,9 +222,6 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     register_graph_routes(app)
     yield app, client
     install_gateway_application(fleet=FleetState(), approvals=ApprovalDecisions())
-    host_ports.register_run_decision_provider(None)
-    host_ports.register_model_provider(None)
-    host_ports.register_run_event_sink(None)
 
 
 def _call(app: Any, op_id: str, params: dict[str, Any], **headers: str) -> Any:

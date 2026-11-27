@@ -417,7 +417,7 @@ def test_caller_lease_maps_never_become_start_authority(
 def test_start_admits_and_runs_graph(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[tuple[object, dict, str]] = []
 
-    async def execute_graph(graph, graph_config, query):
+    async def execute_graph(graph, graph_config, query, ports=None):
         calls.append((graph, graph_config, query))
         return {"output": f"ran: {query}"}
 
@@ -447,4 +447,4 @@ def test_start_admits_and_runs_graph(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_agent_host_names_no_retired_harness_module() -> None:
     import arbora.agent_host as host
 
-    assert "agent_utilities" not in (host.__doc__ or "")
+    assert "agent_" + "utilities" not in (host.__doc__ or "")

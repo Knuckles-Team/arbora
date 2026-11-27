@@ -17,7 +17,7 @@ is a no-op.
 | Category | content_type | target_path | Produces |
 |---|---|---|---|
 | LLM/embedding config | `config` | `config.json` | `LanguageModel`/`EmbeddingModel`/`SystemConfig` |
-| Prompts | `prompt` | `agent_utilities/prompts/*.json` | `Prompt` + `Concept` (MENTIONS) |
+| Prompts | `prompt` | `meristem/prompts/*.json` | `Prompt` + `Concept` (MENTIONS) |
 | MCP servers | `mcp_server` | `mcp_config.json` | `Server` + `NativeTool` (PROVIDES) w/ tool descriptions |
 | Skills | `skill` | a skill dir (`SKILL.md` frontmatter) | `Skill` |
 | Documents | `document` | a file, dir, or URL (md/pdf/txt) | `Document{content}` + verbatim `IdeaBlock` chunks (`PART_OF`) + `Concept` (MENTIONS) — same shape regardless of submission form |
@@ -120,7 +120,7 @@ table in lockstep with `_DELTA_HANDLERS`.
 Complementing the hub-side **pull** above (`source_sync` drains a connector from the
 hub), every `agents/*` connector also ships **native push**: its OWN code writes its
 data into the ONE engine as it works, via the shared primitive
-`agent_utilities/knowledge_graph/memory/native_ingest.py`. This is the
+`meristem/knowledge_graph/memory/native_ingest.py`. This is the
 "maximum ingestion" bar — a connector pushes in **every modality that applies**:
 
 | Primitive | Modality | Produces | Package module |
@@ -177,7 +177,7 @@ hydrated with the physical and virtual topology:
 - **Ontology authority** — EG committed GraphSchema sources and
   `ontology_infrastructure.ttl` as ingestion targets, providing the formal
   BFO-aligned class hierarchy for infrastructure nodes.
-- **Workflow catalog** — `agent_utilities/workflows/catalog.yaml` →
+- **Workflow catalog** — `meristem/workflows/catalog.yaml` →
   `WorkflowDefinition` nodes with `HAS_STEP`/`REQUIRES_TOOL` edges.
 - **Topology snapshots** — `$XDG_DATA_HOME/meristem/topology/{topology,
   service_map,network_map}.json` (the XDG data directory, per the XDG Base
@@ -190,7 +190,7 @@ hydrated with the physical and virtual topology:
 
 For a full workspace ingestion, append the inventory, both runtime configuration
 files, topology directory, workflow catalog, and
-`agent_utilities/knowledge_graph/ontology_infrastructure.ttl` to the target set.
+`meristem/knowledge_graph/ontology_infrastructure.ttl` to the target set.
 Resolve configuration and data directories according to the XDG Base Directory
 specification.
 

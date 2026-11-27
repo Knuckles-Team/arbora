@@ -437,7 +437,7 @@ async def test_installed_au_runtime_events_match_flat_projection(monkeypatch, ou
     import asyncio
 
     from meristem import host_ports
-    from meristem.runtime import (
+    from meristem.graph import (
         AgentRunExecutor,
         DependencyPlan,
         RunFailed,
@@ -470,13 +470,12 @@ async def test_installed_au_runtime_events_match_flat_projection(monkeypatch, ou
         stop=StopRule(max_steps=4),
     )
     emitted = []
-    monkeypatch.setattr(
-        host_ports, "run_decision_provider", lambda: lambda request: plan
+    executor = AgentRunExecutor(
+        ports=host_ports.HostPorts(
+            decide=lambda request: plan,
+            events=lambda value: emitted.append(dict(value)),
+        )
     )
-    monkeypatch.setattr(
-        host_ports, "emit_run_event", lambda value: emitted.append(dict(value))
-    )
-    executor = AgentRunExecutor()
     run_request = SimpleNamespace(task="controlled task", run_id="run-one")
     if outcome == "failure":
         with pytest.raises(RunFailed):
@@ -486,7 +485,7 @@ async def test_installed_au_runtime_events_match_flat_projection(monkeypatch, ou
             await executor.execute_agent(run_request)
     else:
         result = await executor.execute_agent(run_request)
-        assert result.status == "completed"
+        assert result.status.value == "completed"
     reader, _ = installed_reader(monkeypatch, emitted)
     value = await reader.execution_graph(context=reader_context(), request=request())
     assert value["availability"] == "available"

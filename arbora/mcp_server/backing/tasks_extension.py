@@ -21,7 +21,7 @@ second, parallel job system this codebase's one ``WorkItem`` state machine
 add). This module only reuses the extension's *registration* mechanism
 (``fastmcp.server.extensions.ServerExtension``/``MethodBinding``) -- never
 its execution engine -- and backs every method with
-``agent_utilities.knowledge_graph.core.work_durability`` directly, the exact same
+``meristem.knowledge_graph.core.work_durability`` directly, the exact same
 authority ``graph_jobs`` (``arbora/mcp_server/backing/tools/job_tools/py``) uses.
 The wire model field names below follow ``fastmcp_tasks.models`` (the
 current SEP-2663 draft: flat task fields, ``inputRequests`` for

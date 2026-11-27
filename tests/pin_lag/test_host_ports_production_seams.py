@@ -1,6 +1,6 @@
 """The production seams of the composed host ports, reached through the served path.
 
-Each test composes the ports the way ``bind_run_ports`` does (no explicit backends) and
+Each test composes the ports the way ``build_host_ports`` does (no explicit backends) and
 drives one seam: the approval lease read through ``approvals.get`` as the run principal,
 the sandbox process table under the action policy, the run-keyed confirm over the A2A
 grant, and the terminal outcome built from the run state machine's terminal event.

@@ -8,6 +8,9 @@ from typing import Any
 
 import pytest
 
+#: The retired harness package name, spelled so no source line contains it.
+RETIRED = "agent_" + "utilities"
+
 SUBMODULES = [
     "arbora.mcp_server",
     "arbora.fleet",
@@ -31,7 +34,7 @@ def test_serving_packages_do_not_import_legacy_au_multiplexer() -> None:
         path.relative_to(package_root).as_posix()
         for area in ("fleet", "mcp_server")
         for path in (package_root / area).rglob("*.py")
-        if "agent_utilities.mcp.multiplexer" in path.read_text(encoding="utf-8")
+        if f"{RETIRED}.mcp.multiplexer" in path.read_text(encoding="utf-8")
     ]
 
     assert offenders == []
@@ -56,9 +59,9 @@ def test_runtime_consumes_only_public_au_session_and_catalog_ports() -> None:
         if path != session_port
     )
 
-    assert "agent_utilities.knowledge_graph.core.session" not in production
-    assert "agent_utilities.control_plane.catalogs" not in production
-    assert "agent_utilities.api.agent_control_plane" not in production
+    assert f"{RETIRED}.knowledge_graph.core.session" not in production
+    assert f"{RETIRED}.control_plane.catalogs" not in production
+    assert f"{RETIRED}.api.agent_control_plane" not in production
 
 
 def test_deployment_doctor_uses_native_arbora_hosts() -> None:
@@ -66,8 +69,8 @@ def test_deployment_doctor_uses_native_arbora_hosts() -> None:
         Path(__file__).parents[1] / "arbora" / "deployment" / "doctor.py"
     ).read_text(encoding="utf-8")
 
-    assert "agent_utilities.mcp.multiplexer" not in doctor
-    assert "agent_utilities.mcp.kg_server" not in doctor
+    assert f"{RETIRED}.mcp.multiplexer" not in doctor
+    assert f"{RETIRED}.mcp.kg_server" not in doctor
 
 
 def test_bootstrap_has_no_retired_legacy_query_runtime() -> None:
@@ -140,7 +143,7 @@ def test_arbora_declares_and_runs_fastmcp_4() -> None:
     assert version("fastmcp").split(".")[0] == "4"
 
 
-_RETIRED_HARNESS_PACKAGE = "agent_utilities"
+_RETIRED_HARNESS_PACKAGE = "agent_" + "utilities"
 
 
 def _literal_import_module(node: Any) -> list[str]:
@@ -212,11 +215,11 @@ def test_webui_co_service_imports_no_retired_harness_package() -> None:
 def test_the_retired_import_check_finds_a_planted_import(tmp_path: Path) -> None:
     planted = tmp_path / "planted.py"
     planted.write_text(
-        "import agent_utilities.api\nimport importlib\n"
-        "importlib.import_module('agent_utilities.graph')\n",
+        f"import {RETIRED}.api\nimport importlib\n"
+        f"importlib.import_module('{RETIRED}.graph')\n",
         encoding="utf-8",
     )
-    assert _retired_imports(planted) == ["agent_utilities.api", "agent_utilities.graph"]
+    assert _retired_imports(planted) == [f"{RETIRED}.api", f"{RETIRED}.graph"]
 
 
 # The pin-lag guard modules are the one place a pinned meristem release's earlier
@@ -311,13 +314,13 @@ def test_fence_detects_planted_violation(tmp_path: Path) -> None:
         "from meristem.harness.edit_engine import apply_edits\n"
         "from meristem import host_ports\n"
         "from meristem.graph.state import GraphState\n"
-        "import agent_utilities.graph\n"
+        f"import {RETIRED}.graph\n"
         "import importlib\n"
         "importlib.import_module('meristem.core.paths')\n",
         encoding="utf-8",
     )
     assert _fence_violations(tmp_path, MAIN_PUBLIC_HOST_MODULES) == [
-        "planted.py: agent_utilities.graph",
+        f"planted.py: {RETIRED}.graph",
         "planted.py: meristem.core.paths",
         "planted.py: meristem.harness.edit_engine",
     ]

@@ -9,7 +9,7 @@ import httpx
 import msgpack
 import pytest
 from medulla.client import EngineResponseError, MedullaClient
-from meristem.runtime import RunBudget, RunPlan, StopRule
+from meristem.graph import RunBudget, RunPlan, StopRule
 from openai import AsyncOpenAI
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider

@@ -47,15 +47,29 @@ def carrying_harness(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @dataclass(frozen=True)
+class BareHarness:
+    """A harness without the ``action_space`` field: it cannot enforce a subset."""
+
+    response_format: str = "text"
+
+
+@pytest.fixture
+def bare_harness(monkeypatch: pytest.MonkeyPatch) -> None:
+    import meristem.graph.state as state
+
+    monkeypatch.setattr(state, "HarnessConfig", BareHarness)
+
+
+@dataclass(frozen=True)
 class Plan:
     harness: Any
 
 
 @pytest.mark.spec("ARBORA-A2A-R002.2.1")
 @pytest.mark.asyncio
-async def test_a_subset_is_refused_before_admission_while_the_harness_cannot_enforce_it() -> (
-    None
-):
+async def test_a_subset_is_refused_before_admission_while_the_harness_cannot_enforce_it(
+    bare_harness: None,
+) -> None:
     assert not carrier_available()
     authority = WorkItemA2AAuthority(
         lambda: pytest.fail("engine was accessed"), origins=RunOriginRegistry()
@@ -71,7 +85,7 @@ async def test_a_subset_is_refused_before_admission_while_the_harness_cannot_enf
             ),
         )
     with pytest.raises(A2AAssemblyUnavailable):
-        with_tool_subset(Plan(CarryingHarness()), ("graph_query",))
+        with_tool_subset(Plan(BareHarness()), ("graph_query",))
 
 
 @pytest.mark.spec("ARBORA-A2A-R002.2.1")
@@ -99,10 +113,10 @@ def test_the_native_run_plan_is_planned_with_the_subset_of_its_owner(
     monkeypatch.setattr(runtime_config, "model_registry_path", None)
     monkeypatch.setattr(runtime_config, "chat_models", [])
     monkeypatch.setattr(agent_runs, "run_config", lambda: {"agent_model": "test"})
-    import meristem.runtime as runtime
+    import meristem.graph as graph
 
     monkeypatch.setattr(
-        runtime,
+        graph,
         "default_run_plan",
         lambda request, config: Plan(CarryingHarness()),
     )

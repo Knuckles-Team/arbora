@@ -13,8 +13,8 @@ from uuid import uuid4
 
 import acp
 from acp import schema
+from meristem.graph import RunRequest
 from meristem.host_ports import ClientCapabilityRefused
-from meristem.runtime import RunRequest
 from pydantic_ai.messages import (
     PartDeltaEvent,
     PartStartEvent,

@@ -243,18 +243,8 @@ def test_the_fleet_agent_toolset_binds_the_served_intent_verbs(monkeypatch) -> N
         raise AssertionError("legacy tool called")
 
     monkeypatch.setitem(runtime.REGISTERED_TOOLS, "act", legacy_act)
-    from types import SimpleNamespace
-
-    from arbora import agent_runs
-    from arbora.agent_host.host_port_adapters import HostPortsBinding
-
-    monkeypatch.setattr(
-        agent_runs,
-        "_HOST_PORTS",
-        HostPortsBinding(SimpleNamespace(emit_run_event=events.append), None),
-    )
     toolset = runtime.build_native_arbora_toolset(
-        list(FLEET_TOOLS), toolset_id="run-a2a-1"
+        list(FLEET_TOOLS), toolset_id="run-a2a-1", emit=events.append
     )
     tools = {tool.name: tool for tool in toolset.tools.values()}
     assert set(tools) == set(FLEET_TOOLS)
@@ -342,6 +332,7 @@ def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(
 
     import arbora.work_items as work_items
 
+    monkeypatch.setattr(work_items, "get_work_item", lambda *a, **k: {})
     monkeypatch.setattr(
         work_items,
         "claim_specific",
@@ -377,20 +368,15 @@ def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(
 
 @pytest.mark.spec("ARBORA-HOST-R007.2.54")
 def test_native_intent_event_emitted(monkeypatch) -> None:
-    from types import SimpleNamespace
-
-    from arbora import agent_runs
-    from arbora.agent_host.host_port_adapters import HostPortsBinding
     from arbora.mcp_server import runtime
 
     events: list[dict[str, Any]] = []
-    ports = SimpleNamespace(emit_run_event=events.append)
-    monkeypatch.setattr(agent_runs, "_HOST_PORTS", HostPortsBinding(ports, None))
     runtime._emit_native_intent_event(
         "act",
         "run-1",
         {"op": "fleet.call", "params": {"server": "s", "tool": "t"}},
         {"ok": False, "error": {"code": "UNAVAILABLE"}},
+        events.append,
     )
     assert events == [
         {
@@ -410,15 +396,18 @@ def test_native_intent_event_emitted(monkeypatch) -> None:
 def test_native_intent_event_refuses_when_the_pin_lacks_the_record(monkeypatch) -> None:
     from types import SimpleNamespace
 
-    from arbora import agent_runs
     from arbora.agent_host.host_port_adapters import HostPortsBinding
     from arbora.mcp_server import runtime
+    from arbora.pin_lag.meristem import emit_run_event
     from arbora.pin_lag.unavailable import PinLagUnavailable
 
-    monkeypatch.setattr(
-        agent_runs, "_HOST_PORTS", HostPortsBinding(SimpleNamespace(), None)
-    )
+    # The served host's emitter sends through its slot's binding, as build_host_ports does.
+    bound = HostPortsBinding(SimpleNamespace(), None)
     with pytest.raises(PinLagUnavailable):
-        runtime._emit_native_intent_event("act", "run-1", {}, {"ok": True})
-    monkeypatch.setattr(agent_runs, "_HOST_PORTS", None)
+        runtime._emit_native_intent_event(
+            "act", "run-1", {}, {"ok": True}, lambda event: emit_run_event(event, bound)
+        )
+    runtime._emit_native_intent_event(
+        "act", "run-1", {}, {"ok": True}, lambda event: emit_run_event(event, None)
+    )
     runtime._emit_native_intent_event("act", "run-1", {}, {"ok": True})

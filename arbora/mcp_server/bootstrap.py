@@ -396,7 +396,7 @@ async def authority_keepalive_scope(session: Any | None = None) -> AsyncIterator
     ``overstory``/REST gateway, the messaging router (Telegram/Mattermost), the
     autonomous ``agent_dispatch_worker``, ``org_runtime``, a governed dynamic
     workflow, and the parallel engine — converges on the single function
-    :meth:`agent_utilities.orchestration.manager.Orchestrator.execute_agent`.
+    :meth:`meristem.orchestration.manager.Orchestrator.execute_agent`.
     A background keepalive wired ONLY into ``_execute_tool`` (the original
     D-SNV-5 fix) therefore covered MCP-dispatched delegations only; anything that
     reached ``execute_agent`` some other way still expired mid-flight with

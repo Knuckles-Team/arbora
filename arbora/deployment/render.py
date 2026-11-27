@@ -31,9 +31,9 @@ _METRIC_RE = re.compile(r"^[a-z][a-z0-9_]{2,127}$")
 _TARGET_RE = re.compile(r"^[0-9]+(?:m)?$")
 _ENGINE_CONTRACT_DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _EXPECTED_METRICS = {
-    "gateway": "agent_utilities_gateway_in_flight_requests",
-    "dispatch": "agent_utilities_dispatch_queue_depth",
-    "ingest": "agent_utilities_kg_ingest_queue_depth",
+    "gateway": "arbora_gateway_in_flight_requests",
+    "dispatch": "arbora_dispatch_queue_depth",
+    "ingest": "arbora_kg_ingest_queue_depth",
 }
 
 
@@ -128,7 +128,7 @@ def _validate_engine_contract(value: Any) -> dict[str, Any]:
         },
     )
     _require(
-        contract.get("apiVersion") == "agent-utilities.io/engine-identity/v1",
+        contract.get("apiVersion") == "arbora.io/engine-identity/v1",
         "engine identity apiVersion is not supported",
     )
     _string(contract.get("$schema"), "engine_identity_contract.$schema")
@@ -902,11 +902,8 @@ def _common_env(topology: dict[str, Any]) -> str:
               value: "/tmp"
             - name: ARBORA_CONFIG_DIR
               value: "/tmp/.config/arbora"
-            # Legacy name, read by pre-arbora-config images for one release.
-            - name: AGENT_UTILITIES_CONFIG_DIR
-              value: "/tmp/.config/arbora"
-            - name: AGENT_UTILITIES_DATA_DIR
-              value: "/tmp/.local/share/agent-utilities"
+            - name: ARBORA_DATA_DIR
+              value: "/tmp/.local/share/arbora"
             - name: MCP_CONFIG
               value: "/tmp/.config/arbora/mcp_config.json"
             - name: GRAPH_SERVICE_ENDPOINTS
@@ -1242,7 +1239,7 @@ def _render(topology: dict[str, Any], *, rollback: bool = False) -> str:
                 "            - name: config",
                 "              mountPath: /tmp/.config/arbora",
                 "            - name: local-data",
-                "              mountPath: /tmp/.local/share/agent-utilities",
+                "              mountPath: /tmp/.local/share/arbora",
                 "            - name: ca-bundle",
                 f"              mountPath: {_q(str(PurePosixPath(topology['engine_ca_path']).parent))}",
                 "              readOnly: true",

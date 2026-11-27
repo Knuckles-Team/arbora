@@ -317,7 +317,6 @@ async def admitted_run_plan(request: Any, base: Any, owner: Any) -> Any:
         return replace(
             base,
             steps=(),
-            harness=replace(base.harness, plan_scaffold=config.plan_scaffold),
             budget=budget,
             initial_usage=RunUsage(
                 requests=owner.planning_usage.get("requests", 0),

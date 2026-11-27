@@ -16,7 +16,7 @@ write-contention. The signals to *detect* these already exist as WARN logs + met
 retrieval-degrade, ``agent_runner`` run_summary); this module is the cheap, hot-path-safe
 intake that turns those otherwise-log-only events into structured, aggregatable evidence
 the EXISTING gap flywheel can reason over (see
-:mod:`agent_utilities.knowledge_graph.research.runtime_reliability` for the analyzer that
+:mod:`meristem.knowledge_graph.research.runtime_reliability` for the analyzer that
 folds them into the canonical ``:Gap``).
 
 Design (the ONE invariant): a signal write must NEVER affect the hot path.

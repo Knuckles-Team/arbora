@@ -107,6 +107,7 @@ def build_a2a_service(
     decision_principal: Callable[[], str] | None = None,
     provisioning: Any = None,
     capacity: Any = None,
+    ports: Any = None,
 ) -> A2AService:
     """One service over the WorkItem authority and its durable event cursor.
 
@@ -128,6 +129,7 @@ def build_a2a_service(
         task_plan_config=task_plan_config,
         hosted_invocation=hosted_invocation,
         events=log,
+        ports=ports,
     )
     push = PushDeliveryWorker(authority)
     authority.push = push

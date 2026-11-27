@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, cast
 
 import pytest
-from meristem import host_ports
+from meristem.host_ports import HostPorts
+from pydantic_ai.models.test import TestModel
 
 from arbora import agent_runs
+from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 from arbora.core.settings import runtime_config
+from arbora.current_plan_publication import publication_scope
 from arbora.mcp_server import runtime
 from arbora.run_origin import RunOriginRegistry
 
@@ -26,18 +28,38 @@ class _Engine:
         return True
 
 
+def _model(model_id: str) -> Any:
+    """The registry model; the bare ``test`` id answers once, without the plan tool."""
+    if model_id == "test":
+        return TestModel(call_tools=[])
+    return agent_runs.resolve_model(model_id)
+
+
+def _ports() -> HostPortsSlot:
+    """A host slot carrying the run decision, model and event providers."""
+    slot = HostPortsSlot()
+    slot.bind(
+        HostPortsBinding(
+            HostPorts(
+                decide=agent_runs.decide_run,
+                models=_model,
+                events=agent_runs.record_run_event,
+                scaffold_publication=publication_scope,
+            ),
+            None,
+        )
+    )
+    return slot
+
+
 @pytest.fixture
-def bound(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Engine]:
+def bound(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> _Engine:
     registry = tmp_path / "models.json"
     registry.write_text(json.dumps({"default": "test"}), encoding="utf-8")
     monkeypatch.setattr(runtime_config, "model_registry_path", str(registry))
     engine = _Engine()
     monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
-    agent_runs.bind_run_ports()
-    yield engine
-    host_ports.register_run_decision_provider(None)
-    host_ports.register_model_provider(None)
-    host_ports.register_run_event_sink(None)
+    return engine
 
 
 @pytest.mark.spec("ARBORA-HOST-R001.2.1")
@@ -45,7 +67,9 @@ def bound(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Engine]:
 async def test_agent_run_executes_through_the_harness_with_bound_providers(
     bound: _Engine,
 ) -> None:
-    result = await agent_runs.AgentRunPort(origins=RunOriginRegistry()).execute_agent(
+    result = await agent_runs.AgentRunPort(
+        origins=RunOriginRegistry(), ports=_ports()
+    ).execute_agent(
         AgentExecutionRequest(agent_name="helper", task="say hello"),
         session=cast(Any, object()),
     )
@@ -84,17 +108,13 @@ async def test_a_run_without_a_model_fails_closed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(runtime_config, "model_registry_path", None)
-    agent_runs.bind_run_ports()
-    try:
-        with pytest.raises(RuntimeError, match="no model"):
-            await agent_runs.AgentRunPort(origins=RunOriginRegistry()).execute_agent(
-                AgentExecutionRequest(agent_name="helper", task="say hello"),
-                session=cast(Any, object()),
-            )
-    finally:
-        host_ports.register_run_decision_provider(None)
-        host_ports.register_model_provider(None)
-        host_ports.register_run_event_sink(None)
+    with pytest.raises(RuntimeError, match="no model"):
+        await agent_runs.AgentRunPort(
+            origins=RunOriginRegistry(), ports=_ports()
+        ).execute_agent(
+            AgentExecutionRequest(agent_name="helper", task="say hello"),
+            session=cast(Any, object()),
+        )
 
 
 @pytest.mark.spec("ARBORA-A2A-R001")

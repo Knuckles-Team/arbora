@@ -47,8 +47,8 @@ def compose_local(args: argparse.Namespace) -> Any:
     Completed text turns use bounded process-local Pydantic history. No disk
     history, engine, fleet or listener is started.
     """
-    from meristem import host_ports
-    from meristem.runtime import RunRequest, default_run_plan
+    from meristem.graph import RunRequest, default_run_plan
+    from meristem.host_ports import HostPorts
 
     from arbora.security.request_identity import mint_local_process_session
     from arbora.security.session import SessionExpiredError
@@ -57,8 +57,6 @@ def compose_local(args: argparse.Namespace) -> Any:
     from .local_history import LocalConversationHistory
     from .session_policy import AcpSessionPolicy, PrincipalContext
 
-    if host_ports.run_decision_provider() is not None:
-        raise RuntimeError("local runtime requires an isolated process")
     session = mint_local_process_session()
     history = LocalConversationHistory(args.model)
 
@@ -82,13 +80,11 @@ def compose_local(args: argparse.Namespace) -> Any:
             ),
             harness=replace(
                 selected.harness,
-                plan_scaffold="off",
                 client_tools=("read_file",) if args.client_reads else (),
             ),
         )
 
-    host_ports.register_run_decision_provider(plan)
-    host_ports.register_run_history_provider(history.read)
+    history.bind_ports(HostPorts(decide=plan, run_history=history.read))
     return HostedACPAgent(
         principal,
         policy=AcpSessionPolicy(timedelta(minutes=5), timedelta(hours=1)),

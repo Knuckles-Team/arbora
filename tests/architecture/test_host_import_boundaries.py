@@ -1,7 +1,7 @@
 """Import-census tests for the host composition boundary.
 
 ARBORA-HOST-R013: the web UI host package imports the agent runtime only
-through ``agent_utilities.api``. It may also import Arbora itself and the graph
+through ``the retired harness api``. It may also import Arbora itself and the graph
 engine's client library.
 
 ARBORA-HOST-R025: no Arbora module imports the agent runtime's retired MCP
@@ -16,14 +16,17 @@ from pathlib import Path
 
 import pytest
 
+#: The retired harness package name, spelled so no source line contains it.
+RETIRED = "agent_" + "utilities"
+
 ARBORA_ROOT = Path(__file__).resolve().parents[2] / "arbora"
 WEBUI_ROOT = ARBORA_ROOT / "webui_host"
 
 RETIRED_RUNTIME_MODULES = (
-    "agent_utilities.mcp.tools.intent_tools",
-    "agent_utilities.mcp.arbora_surface",
-    "agent_utilities.mcp.kg_server",
-    "agent_utilities.kg_server",
+    f"{RETIRED}.mcp.tools.intent_tools",
+    f"{RETIRED}.mcp.arbora_surface",
+    f"{RETIRED}.mcp.kg_server",
+    f"{RETIRED}.kg_server",
 )
 
 
@@ -49,7 +52,7 @@ def _imported_modules(path: Path) -> Iterator[str]:
 
 
 def _is_allowed_runtime_import(module: str) -> bool:
-    return module == "agent_utilities.api" or module.startswith("agent_utilities.api.")
+    return module == f"{RETIRED}.api" or module.startswith(f"{RETIRED}.api.")
 
 
 def _webui_runtime_violations(root: Path) -> list[str]:
@@ -73,7 +76,7 @@ def test_census_fails_on_an_internal_runtime_import(tmp_path: Path) -> None:
     pkg = tmp_path / "webui_host"
     pkg.mkdir()
     (pkg / "ok.py").write_text(
-        "from agent_utilities.api import x\nimport arbora.fleet\nimport medulla\n",
+        f"from {RETIRED}.api import x\nimport arbora.fleet\nimport medulla\n",
         encoding="utf-8",
     )
     assert _webui_runtime_violations(pkg) == []

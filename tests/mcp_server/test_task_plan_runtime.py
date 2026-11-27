@@ -8,13 +8,14 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from meristem import host_ports
 from meristem.graph import RunRequest
+from meristem.host_ports import HostPorts
 from pydantic_ai.messages import ModelResponse, TextPart
 from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.usage import RequestUsage
 
 from arbora import agent_runs
+from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 from arbora.api.ops import plans
 from arbora.api.registry import Effect, Registry
@@ -26,6 +27,24 @@ from tests.mcp_server import test_task_plan as fixtures
 from tests.test_native_run_scope import CLAIM, SESSION
 
 PROPOSAL = fixtures.PROPOSAL
+
+
+def chain_ports(**extra):
+    """The ``HostPorts`` the chain runs on: the run decision and the chain's model."""
+    return HostPorts(
+        decide=agent_runs.decide_run,
+        models=lambda name: agent_runs.resolve_model(name),
+        **extra,
+    )
+
+
+def chain_slot(**extra):
+    """A host slot carrying :func:`chain_ports`."""
+    slot = HostPortsSlot()
+    slot.bind(HostPortsBinding(chain_ports(**extra), None))
+    return slot
+
+
 bridge = fixtures.bridge
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R001.2.1.2")
@@ -80,7 +99,9 @@ def chain(bridge, monkeypatch):
 
     def model(messages, info):
         model_calls.append((messages, info))
-        assert not info.function_tools and not info.output_tools
+        # The harness always carries its plan scaffold tool; no other tool is offered.
+        assert {tool.name for tool in info.function_tools} <= {"update_plan"}
+        assert not info.output_tools
         return ModelResponse(
             parts=[TextPart(json.dumps(PROPOSAL) if len(model_calls) == 1 else "done")],
             usage=RequestUsage(input_tokens=7, output_tokens=3),
@@ -114,18 +135,13 @@ def chain(bridge, monkeypatch):
     import meristem.graph as au
 
     monkeypatch.setattr(task_plan_runtime, "_contracts", lambda: (au, eg))
-    host_ports.register_run_decision_provider(agent_runs.decide_run)
-    host_ports.register_model_provider(lambda name: model)
-    yield host, state, model_calls
-    host_ports.register_run_decision_provider(None)
-    host_ports.register_model_provider(None)
+    return host, state, model_calls
 
 
 @pytest.mark.asyncio
 async def test_registered_provider_executes_only_durable_plan(chain):
     host, state, calls = chain
     events = []
-    host_ports.register_run_event_sink(events.append)
     with agent_runs.native_run_scope(
         run_id="run",
         task_id="different-task",
@@ -137,7 +153,7 @@ async def test_registered_provider_executes_only_durable_plan(chain):
         hosted_invocation=host,
     ):
         result = await agent_runs.AgentRunPort(
-            origins=RunOriginRegistry()
+            origins=RunOriginRegistry(), ports=chain_slot(events=events.append)
         ).execute_agent(
             AgentExecutionRequest(
                 agent_name="helper", task="actual user question", run_id="run"
@@ -153,7 +169,6 @@ async def test_registered_provider_executes_only_durable_plan(chain):
         "total_tokens": 20,
     }
     assert events[-1]["result"]["usage"] == result.usage
-    host_ports.register_run_event_sink(None)
     assert len(calls) == 2
     payload = state["published"][0]
     assert payload["snapshot"]["revision"] == 0
@@ -354,7 +369,9 @@ async def test_failed_publication_starts_no_dependency_task(chain, monkeypatch):
         hosted_invocation=host,
     ):
         with pytest.raises(RuntimeError, match="stale fence"):
-            await agent_runs.AgentRunPort(origins=RunOriginRegistry()).execute_agent(
+            await agent_runs.AgentRunPort(
+                origins=RunOriginRegistry(), ports=chain_slot()
+            ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
                 ),
@@ -389,7 +406,9 @@ async def test_readback_mismatch_starts_no_dependency_task(chain):
         hosted_invocation=host,
     ):
         with pytest.raises(RuntimeError, match="INVALID_TASK_PLAN_RECEIPT"):
-            await agent_runs.AgentRunPort(origins=RunOriginRegistry()).execute_agent(
+            await agent_runs.AgentRunPort(
+                origins=RunOriginRegistry(), ports=chain_slot()
+            ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
                 ),
@@ -423,7 +442,9 @@ async def test_publication_receipt_for_another_run_is_refused(chain):
         hosted_invocation=host,
     ):
         with pytest.raises(RuntimeError, match="INVALID_TASK_PLAN_RECEIPT"):
-            await agent_runs.AgentRunPort(origins=RunOriginRegistry()).execute_agent(
+            await agent_runs.AgentRunPort(
+                origins=RunOriginRegistry(), ports=chain_slot()
+            ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
                 ),
@@ -455,7 +476,9 @@ async def test_publication_receipt_for_another_revision_is_refused(chain):
         hosted_invocation=host,
     ):
         with pytest.raises(RuntimeError, match="INVALID_TASK_PLAN_RECEIPT"):
-            await agent_runs.AgentRunPort(origins=RunOriginRegistry()).execute_agent(
+            await agent_runs.AgentRunPort(
+                origins=RunOriginRegistry(), ports=chain_slot()
+            ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
                 ),
@@ -463,31 +486,6 @@ async def test_publication_receipt_for_another_revision_is_refused(chain):
             )
     assert len(calls) == 1
     assert state["published"]
-
-
-@pytest.mark.asyncio
-async def test_latest_scaffold_is_not_an_original_publication_retry(chain):
-    host, state, calls = chain
-    canonical = {"plan_digest": "digest"}
-    state["snapshot"] = {
-        "run_id": "run",
-        "revision": 9,
-        "items": [{"text": "advanced", "status": "done"}],
-        "task_plan": canonical,
-    }
-    _, eg = task_plan_runtime._contracts()
-    owner = SimpleNamespace(run_id="run", claim=CLAIM, owner_graph="owner-graph")
-    principal = fixtures.caller(
-        effective_scopes=frozenset({"kg:write", "query:decide"})
-    )
-    with pytest.raises(
-        task_plan_runtime.OperationRefused,
-        match="TASK_PLAN_RETRY_REQUIRES_ORIGINAL_PUBLICATION",
-    ):
-        await task_plan_runtime._publish(
-            host, principal, owner, canonical, PROPOSAL, eg
-        )
-    assert state["published"] == []
 
 
 @pytest.mark.asyncio
@@ -602,7 +600,7 @@ async def test_cancellation_revokes_scope_without_dispatching_children(chain, ph
         ):
             contexts.append(copy_context())
             return await agent_runs.AgentRunPort(
-                origins=RunOriginRegistry()
+                origins=RunOriginRegistry(), ports=chain_slot()
             ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
@@ -629,121 +627,26 @@ async def test_cancellation_revokes_scope_without_dispatching_children(chain, ph
         )
 
 
-@pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
-@pytest.mark.parametrize("setting", ["on", "off"])
-async def test_trusted_scaffold_option_reaches_actual_au_callback(
-    chain, setting, monkeypatch
-):
-    from contextlib import asynccontextmanager
-
+@pytest.mark.asyncio
+async def test_latest_scaffold_is_not_an_original_publication_retry(chain):
     host, state, calls = chain
-    host = replace(
-        host, task_plan_config=replace(host.task_plan_config, plan_scaffold=setting)
+    canonical = {"plan_digest": "digest"}
+    state["snapshot"] = {
+        "run_id": "run",
+        "revision": 9,
+        "items": [{"text": "advanced", "status": "done"}],
+        "task_plan": canonical,
+    }
+    _, eg = task_plan_runtime._contracts()
+    owner = SimpleNamespace(run_id="run", claim=CLAIM, owner_graph="owner-graph")
+    principal = fixtures.caller(
+        effective_scopes=frozenset({"kg:write", "query:decide"})
     )
-    published = []
-
-    def scaffold_model(messages, info):
-        from pydantic_ai.messages import ToolCallPart
-
-        calls.append((messages, info))
-        if len(calls) == 1:
-            assert not info.function_tools
-            return ModelResponse(parts=[TextPart(json.dumps(PROPOSAL))])
-        assert [tool.name for tool in info.function_tools] == (
-            ["update_plan"] if setting == "on" else []
-        )
-        if setting == "on" and len(calls) == 2:
-            return ModelResponse(
-                parts=[
-                    ToolCallPart(
-                        "update_plan",
-                        {"items": [{"text": "inspect", "status": "done"}]},
-                        tool_call_id="plan-update",
-                    )
-                ]
-            )
-        return ModelResponse(parts=[TextPart("done")])
-
-    model = FunctionModel(scaffold_model)
-    monkeypatch.setattr(agent_runs, "resolve_model", lambda name: model)
-    host_ports.register_model_provider(lambda name: model)
-
-    class Publisher:
-        async def publish(self, revision, items):
-            published.append((revision, items))
-
-    @asynccontextmanager
-    async def factory(request):
-        assert request.metadata["session"] is SESSION
-        assert state["published"][0]["snapshot"]["task_plan"]["plan_digest"] == "digest"
-        yield Publisher()
-
-    host_ports.register_optional_scaffold_publication_factory(factory)
-    try:
-        with agent_runs.native_run_scope(
-            run_id="run",
-            task_id="task",
-            context_id="context",
-            work_item_id="work",
-            session=SESSION,
-            claim=CLAIM,
-            owner_graph="owner-graph",
-            hosted_invocation=host,
-        ):
-            result = await agent_runs.AgentRunPort(
-                origins=RunOriginRegistry()
-            ).execute_agent(
-                AgentExecutionRequest(
-                    agent_name="helper", task="question", run_id="run"
-                ),
-                session=SESSION,
-            )
-        assert result.output == "done"
-        assert len(calls) == (3 if setting == "on" else 2)
-        assert [revision for revision, _ in published] == (
-            [0, 1] if setting == "on" else []
-        )
-        if setting == "on":
-            assert published[0][1] == ()
-            assert published[1][1][0].text == "inspect"
-    finally:
-        host_ports.register_optional_scaffold_publication_factory(None)
-
-
-@pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
-@pytest.mark.parametrize("setting, untrusted", [("off", "on"), ("on", "off")])
-async def test_only_operator_scaffold_field_changes_base_harness(
-    chain, setting, untrusted
-):
-    from meristem.runtime import default_run_plan
-
-    host, _, _ = chain
-    host = replace(
-        host, task_plan_config=replace(host.task_plan_config, plan_scaffold=setting)
-    )
-    request = RunRequest(
-        task="question", run_id="run", metadata={"plan_scaffold": untrusted}
-    )
-    base = default_run_plan(request, {"agent_model": "test"})
-    base = replace(
-        base,
-        harness=replace(
-            base.harness,
-            retries=2,
-            response_format="json",
-            model_settings={"temperature": 0.123},
-        ),
-    )
-    with agent_runs.native_run_scope(
-        run_id="run",
-        task_id="task",
-        context_id="context",
-        work_item_id="work",
-        session=SESSION,
-        claim=CLAIM,
-        owner_graph="owner-graph",
-        hosted_invocation=host,
+    with pytest.raises(
+        task_plan_runtime.OperationRefused,
+        match="TASK_PLAN_RETRY_REQUIRES_ORIGINAL_PUBLICATION",
     ):
-        owner = agent_runs.current_native_run(request)
-        plan = await task_plan_runtime.admitted_run_plan(request, base, owner)
-    assert plan.harness == replace(base.harness, plan_scaffold=setting)
+        await task_plan_runtime._publish(
+            host, principal, owner, canonical, PROPOSAL, eg
+        )
+    assert state["published"] == []

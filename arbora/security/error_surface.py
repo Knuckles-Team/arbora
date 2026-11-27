@@ -116,7 +116,7 @@ def _refusal_fields(refusal: str | None) -> dict[str, str]:
 #: Exception CLASS NAMES (never instances or messages) that mean "the engine
 #: circuit breaker tripped or the transport is down" — a transient condition,
 #: not a rejected/malformed request (BUG-048). Mirrors
-#: ``agent_utilities.knowledge_graph.core.engine_breaker``'s own trip/retry
+#: ``meristem.knowledge_graph.core.engine_breaker``'s own trip/retry
 #: vocabulary (``_TRIP_EXCEPTIONS`` / ``_RETRY_EXCEPTIONS`` plus its typed
 #: ``EngineCircuitOpenError``, itself a ``ConnectionError`` subclass),
 #: duplicated here BY NAME rather than imported, so this module (the public
@@ -165,10 +165,10 @@ def _is_engine_degraded(exc: BaseException) -> bool:
        ``TimeoutError`` are both ``OSError`` SIBLINGS, not one a subclass of
        the other, so both must be checked explicitly) raised directly. This
        is exactly the breaker's own ``_TRIP_EXCEPTIONS = (OSError, EOFError)``
-       vocabulary (:mod:`agent_utilities.knowledge_graph.core.engine_breaker`)
+       vocabulary (:mod:`meristem.knowledge_graph.core.engine_breaker`)
        — anything that trips the breaker is, by definition, this condition.
     2. The native-Cypher sanitization boundary's ``CypherEngineError``
-       (:mod:`agent_utilities.knowledge_graph.backends.medulla_backend`),
+       (:mod:`meristem.knowledge_graph.backends.medulla_backend`),
        which wraps ``from None`` — deliberately discarding
        ``__cause__``/``__context__`` so the original query/connection detail
        never crosses the boundary — but preserves the ORIGINAL exception's
@@ -220,7 +220,7 @@ def _engine_retry_after_hint() -> float:
     """Best-effort ``retry_after_s`` hint for an ``engine_degraded`` failure.
 
     Sourced from the SAME breaker cooldown configuration
-    :class:`~agent_utilities.knowledge_graph.core.engine_breaker.CircuitBreaker`
+    :class:`~meristem.knowledge_graph.core.engine_breaker.CircuitBreaker`
     itself uses, so the hint is never fabricated — falls back to the
     breaker's own default cooldown only when the config isn't reachable
     here, and never raises (a hint must not break the error path it decorates).
@@ -263,7 +263,7 @@ _FAILING_LAYER_PREFIXES: tuple[tuple[str, str], ...] = (
 #: consulted only on a miss here — e.g. after a restart, or a resolve call
 #: served by a different replica than the one that recorded the failure. See
 #: :func:`register_detail_persistence_sink` for the durable-audit seam and
-#: ``agent_utilities.observability.error_detail_sink.GraphErrorDetailSink``
+#: ``meristem.observability.error_detail_sink.GraphErrorDetailSink``
 #: for the concrete KG-provenance backend wired through it.
 _DETAIL_STORE_MAX_ENTRIES = 512
 _detail_store: OrderedDict[str, dict[str, Any]] = OrderedDict()
@@ -291,7 +291,7 @@ def register_detail_persistence_sink(sink: Any | None) -> None:
     swallowed silently) and never propagated, so a broken durable backend can
     never break the error-reporting path it is meant to observe. There is no
     default implementation baked into this module — wiring a concrete backend
-    (``agent_utilities.observability.error_detail_sink.GraphErrorDetailSink``,
+    (``meristem.observability.error_detail_sink.GraphErrorDetailSink``,
     a KG-provenance writer linking the detail to the failing operation's
     ``:RunTrace``) is left to the process that wants durability past this
     process's lifetime; see ``arbora.gateway.daemon.start_host_daemon``
@@ -447,7 +447,7 @@ def resolve_error_detail_for_actor(
     """Resolve ``detail_ref`` scoped to the caller's own verified tenant authority.
 
     Fails closed exactly like the existing read-path guard
-    (:func:`agent_utilities.knowledge_graph.core.secured_reads._verified_actor`):
+    (:func:`meristem.knowledge_graph.core.secured_reads._verified_actor`):
     an unauthenticated caller, or one with no ``tenant_id``, raises
     ``PermissionError`` rather than resolving anything — this reuses the SAME
     tenancy model every other served read already enforces, not a new scheme.

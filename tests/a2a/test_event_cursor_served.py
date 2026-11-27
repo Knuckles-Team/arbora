@@ -9,11 +9,10 @@ from typing import Any
 
 import httpx
 import pytest
-from meristem import host_ports
 
 from arbora.core.settings import runtime_config
 from arbora.mcp_server import runtime as mcp_runtime
-from tests.a2a._route_support import bind_route_decision
+from tests.a2a._route_support import bind_route_decision, bind_run_models
 from tests.test_agents_run_end_to_end import FakeEngine, engine  # noqa: F401
 
 _TOKENS = {"fixture-verified": "tenant:one", "fixture-foreign": "tenant:two"}
@@ -58,8 +57,9 @@ def _served(
         yield "the reply, "
         yield "key sk-" + "Zz9" * 8
 
-    host_ports.register_model_provider(
-        lambda _id: FunctionModel(gated_model, stream_function=gated_stream)
+    bind_run_models(
+        monkeypatch,
+        lambda _id: FunctionModel(gated_model, stream_function=gated_stream),
     )
     bind_route_decision(monkeypatch)
     _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False)

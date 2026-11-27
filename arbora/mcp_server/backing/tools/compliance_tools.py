@@ -39,8 +39,8 @@ from arbora.mcp_server import runtime
 from arbora.security.error_surface import public_error_payload
 
 #: Governance/compliance node labels already ingested by the CISO Assistant
-#: extractor (agent_utilities/knowledge_graph/enrichment/extractors/ciso_assistant.py)
-#: and the TRM portfolio-intelligence engine (agent_utilities/observability/
+#: extractor (meristem/knowledge_graph/enrichment/extractors/ciso_assistant.py)
+#: and the TRM portfolio-intelligence engine (meristem/observability/
 #: portfolio_intelligence.py) — read-only rollup, no new label taxonomy.
 _POSTURE_LABELS: tuple[str, ...] = (
     "Control",
@@ -151,7 +151,7 @@ def _nodes_by_label(engine: Any, label: str) -> list[tuple[str, dict[str, Any]]]
 def _confidence_rollup(engine: Any, label: str) -> dict[str, Any] | None:
     """Bulk confidence/contested-rate rollup for ``label`` via ``Method::KnowledgeStream``
     (CONCEPT:MERISTEM-KG.query.knowledge-stream-consumer, report §9 #3) —
-    :meth:`~agent_utilities.knowledge_graph.core.graph_compute.GraphComputeEngine.
+    :meth:`~meristem.knowledge_graph.core.graph_compute.GraphComputeEngine.
     stream_graph_confidence`, an Arrow-columnar, cursor-resumable sweep that never
     materializes the whole label's result set in one round trip (unlike
     :func:`_nodes_by_label`, which the caller already runs for the status

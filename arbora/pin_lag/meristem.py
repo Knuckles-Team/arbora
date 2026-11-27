@@ -16,6 +16,16 @@ from typing import Any
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
 HOST_PORT_FIELDS: tuple[str, ...] = (
+    "decide",
+    "models",
+    "scaffold_publication",
+    "native",
+    "fleet",
+    "remote",
+    "tool_client",
+    "keepalive",
+    "run_history",
+    "caller",
     "engine_decision",
     "decision",
     "approval",
@@ -84,11 +94,9 @@ def fence_modules() -> tuple[tuple[str, ...], bool]:
 
 
 def hosted_run() -> Any:
-    """``meristem.graph.hosted_run`` (main), or the pinned release's earlier location."""
-    try:
-        from meristem.graph import hosted_run as module
-    except ImportError:
-        from meristem.harness import hosted_run as module
+    """``meristem.graph.hosted_run``, the harness release's module."""
+    from meristem.graph import hosted_run as module
+
     return module
 
 

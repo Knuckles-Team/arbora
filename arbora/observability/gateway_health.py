@@ -33,7 +33,7 @@ Ported from the agent runtime's
 behavior change) per the ARBORA-HOST-R008 boundary move. The health
 kernel and KG-ingest modules it calls (``arbora.observability.health``
 / ``health_ingest``) and the KG memory store
-(``agent_utilities.knowledge_graph.memory.native_ingest``) have not moved
+(``meristem.knowledge_graph.memory.native_ingest``) have not moved
 yet; this module reaches back into the agent runtime for them, the normal
 direction for an incremental migration (arbora depends on the agent
 runtime, never the reverse).

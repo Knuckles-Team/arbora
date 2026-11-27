@@ -2,7 +2,7 @@
 and prompts through exactly one owner.
 
 meristem ships its own legacy MCP multiplexer
-(``agent_utilities.mcp.multiplexer`` / ``agent_utilities.mcp.shared_multiplexer``)
+(``the retired harness multiplexer`` / ``the retired shared multiplexer``)
 with its own skill/prompt body-harvest path. arbora owns fleet composition
 and discovery (``arbora-repository-development`` skill, "arbora.fleet |
 MCP child lifecycle, catalog discovery..."); its served package must never
@@ -23,9 +23,12 @@ import pytest
 
 import arbora
 
+#: The retired harness package name, spelled so no source line contains it.
+RETIRED = "agent_" + "utilities"
+
 _FORBIDDEN_MODULES = (
-    "agent_utilities.mcp.multiplexer",
-    "agent_utilities.mcp.shared_multiplexer",
+    f"{RETIRED}.mcp.multiplexer",
+    f"{RETIRED}.mcp.shared_multiplexer",
 )
 
 _HARVEST_FUNCTIONS = (

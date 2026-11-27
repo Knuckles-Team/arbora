@@ -1,6 +1,6 @@
 {
   "$schema": "https://example.test/schemas/engine-identity-contract-v1.json",
-  "apiVersion": "agent-utilities.io/engine-identity/v1",
+  "apiVersion": "arbora.io/engine-identity/v1",
   "kind": "EngineIdentityContract",
   "authority": "engine/identity-contract.v1.json",
   "contract_version": "engine-identity.v1",

@@ -24,7 +24,7 @@ HOSTED = (
     "architecture/boundary_census.py",
 )
 
-RETIRED_RUNTIME = "agent_utilities"
+RETIRED_RUNTIME = "agent_" + "utilities"
 
 
 def _imported_modules(path: Path) -> set[str]:

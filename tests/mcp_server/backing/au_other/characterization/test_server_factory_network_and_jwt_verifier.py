@@ -1,5 +1,5 @@
 """Characterization tests for the remaining CCN>10 functions in
-agent_utilities/mcp/server_factory.py -- lane CX-AU-05:
+meristem/mcp/server_factory.py -- lane CX-AU-05:
 
 - `_validate_network_exposure` (CCN 24)
 - `mcp_network_run_kwargs` (CCN 23)

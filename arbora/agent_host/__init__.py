@@ -65,13 +65,20 @@ class HostInterfaceUnavailable(RuntimeError):
 AgentExecutor = Callable[[Any, dict, str], dict]
 
 
-def _default_executor(graph: Any, graph_config: dict, query: str) -> dict:
-    """Run one query through meristem's public execution port."""
-    import asyncio
+def _default_executor(ports: Any = None) -> AgentExecutor:
+    """The executor that runs one query through meristem's public execution port.
 
-    from meristem.graph import execute_graph
+    ``ports`` is the host's ``HostPorts`` record; ``None`` runs on the harness's empty one.
+    """
 
-    return asyncio.run(execute_graph(graph, graph_config, query))
+    def run(graph: Any, graph_config: dict, query: str) -> dict:
+        import asyncio
+
+        from meristem.graph import execute_graph
+
+        return asyncio.run(execute_graph(graph, graph_config, query, ports=ports))
+
+    return run
 
 
 def _extract_text(message: dict[str, Any]) -> str:
@@ -123,6 +130,7 @@ def build_agent_host_app(
     host_start: HostStartContext | None = None,
     host_configuration: HostStartConfiguration | None = None,
     host_runtime: HostRuntimeResources | None = None,
+    ports: Any = None,
 ):
     """Build the FastAPI app that hosts one connector agent.
 
@@ -135,7 +143,7 @@ def build_agent_host_app(
 
     from fastapi import FastAPI
 
-    run_executor = executor if executor is not None else _default_executor
+    run_executor = executor if executor is not None else _default_executor(ports)
     agent_name = name or "Agent"
     agent_description = description or ""
 

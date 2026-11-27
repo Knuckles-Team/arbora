@@ -1,6 +1,6 @@
 """Characterization tests for `_configure_auth` (CCN 62) and supplementary
 coverage of `_configure_jwt_auth` (CCN 61) in
-agent_utilities/mcp/server_factory.py -- lane CX-AU-05.
+meristem/mcp/server_factory.py -- lane CX-AU-05.
 
 `_configure_jwt_auth`'s multi-realm and resource-metadata-wrap branches
 already have thorough pre-existing coverage in

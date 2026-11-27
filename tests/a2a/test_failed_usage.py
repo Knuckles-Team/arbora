@@ -6,8 +6,7 @@ import asyncio
 from unittest.mock import AsyncMock
 
 import pytest
-from meristem import host_ports
-from meristem.graph import RunFailed, RunResult
+from meristem.graph import RunFailed, RunResult, RunStatus
 
 from arbora import agent_runs, work_items
 from arbora.a2a.authority import WorkItemA2AAuthority, task_output_artifacts
@@ -15,6 +14,7 @@ from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 from tests.mcp_server.test_task_plan_failure import USAGE, fail_at, scope
 from tests.mcp_server.test_task_plan_runtime import bridge as bridge
 from tests.mcp_server.test_task_plan_runtime import chain as chain
+from tests.mcp_server.test_task_plan_runtime import chain_slot
 from tests.test_native_run_scope import CLAIM, SESSION
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R001.2.1.2")
@@ -70,12 +70,12 @@ async def test_real_executor_failure_receipt(chain, monkeypatch, phase):
     else:
         fail_at(phase, monkeypatch)
     events = []
-    host_ports.register_run_event_sink(events.append)
+    slot = chain_slot(events=events.append)
 
     async def execute(*args, **kwargs):
         with scope(host):
             return await agent_runs.AgentRunPort(
-                origins=RunOriginRegistry()
+                origins=RunOriginRegistry(), ports=slot
             ).execute_agent(
                 AgentExecutionRequest(
                     agent_name="helper", task="question", run_id="run"
@@ -83,10 +83,7 @@ async def test_real_executor_failure_receipt(chain, monkeypatch, phase):
                 session=SESSION,
             )
 
-    try:
-        usage = await invoke(monkeypatch, execute)
-    finally:
-        host_ports.register_run_event_sink(None)
+    usage = await invoke(monkeypatch, execute)
     assert usage == events[-1]["result"]["usage"]
     assert usage == ({} if phase == "provider" else USAGE)
     assert len(events) == 1
@@ -97,7 +94,7 @@ def failure(run_id="run", usage=None):
     return RunFailed(
         RunResult(
             run_id=run_id,
-            status="failed",
+            status=RunStatus.FAILED,
             output="private partial",
             error="failure",
             steps=0,

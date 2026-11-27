@@ -6,7 +6,8 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
-from meristem.runtime import RunRequest
+from meristem.graph import RunRequest
+from meristem.host_ports import HostPorts
 from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, UserPromptPart
 from pydantic_ai_harness.experimental.acp import InMemorySessionStore, StoredSession
 
@@ -48,6 +49,11 @@ class LocalConversationHistory:
         self._max_turns = max_turns
         self._max_bytes = max_bytes
         self._bindings: dict[str, _Binding] = {}
+        self._ports: Any = HostPorts()
+
+    def bind_ports(self, ports: Any) -> None:
+        """Set the ``HostPorts`` every request of this history carries."""
+        self._ports = ports
 
     async def request(
         self, principal: PrincipalContext, session_id: str, text: str
@@ -69,7 +75,10 @@ class LocalConversationHistory:
         if len(current.encode()) + 6 * (16384 + 65536) + 8192 > self._max_bytes:
             raise PermissionError("local history byte limit")
         request = RunRequest(
-            task=text, model_id=self._model, metadata={"acp_session_id": session_id}
+            task=text,
+            model_id=self._model,
+            metadata={"acp_session_id": session_id},
+            ports=self._ports,
         )
         binding.current_run_id = request.run_id
         return request

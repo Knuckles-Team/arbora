@@ -7,10 +7,11 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
-from meristem import host_ports
+from meristem.host_ports import HostPorts
 
 from arbora import agent_runs, work_items
 from arbora.a2a.authority import WorkItemA2AAuthority
+from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
 from arbora.core.settings import runtime_config
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R001")
@@ -64,6 +65,7 @@ async def test_real_a2a_run_exposes_claim_only_to_host_planning(
     monkeypatch.setattr(runtime_config, "chat_models", [])
     monkeypatch.setattr(agent_runs, "run_config", lambda: {"agent_model": "test"})
     monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: dict(CLAIM))
+    monkeypatch.setattr(work_items, "get_work_item", lambda *a, **k: {})
     monkeypatch.setattr(
         work_items, "commit_result", lambda *a, **k: commits.append((a, k))
     )
@@ -83,24 +85,20 @@ async def test_real_a2a_run_exposes_claim_only_to_host_planning(
         seen.append(owner)
         return agent_runs.decide_run(request)
 
-    host_ports.register_run_decision_provider(decide)
-    host_ports.register_run_event_sink(events.append)
-    try:
-        result = await WorkItemA2AAuthority(
-            lambda: object(), origins=RunOriginRegistry()
-        )._run(
-            object(),
-            item_id="work",
-            session=SESSION,
-            agent_name="helper",
-            task="hello",
-            task_id="task",
-            context_id="context",
-            run_id="run",
-        )
-    finally:
-        host_ports.register_run_decision_provider(None)
-        host_ports.register_run_event_sink(None)
+    slot = HostPortsSlot()
+    slot.bind(HostPortsBinding(HostPorts(decide=decide, events=events.append), None))
+    result = await WorkItemA2AAuthority(
+        lambda: object(), origins=RunOriginRegistry(), ports=slot
+    )._run(
+        object(),
+        item_id="work",
+        session=SESSION,
+        agent_name="helper",
+        task="hello",
+        task_id="task",
+        context_id="context",
+        run_id="run",
+    )
     assert seen and result and commits[0][1]["outcome"] == "succeeded"
     assert commits[0][0][2] == CLAIM
     assert agent_runs.current_native_run(SimpleNamespace(run_id="run")) is None
@@ -202,6 +200,7 @@ async def test_a2a_binds_actual_engine_graph_not_caller_default(
     from arbora.mcp_server.task_plan import TaskPlanConfig
 
     monkeypatch.setattr(work_items, "claim_specific", lambda *a, **k: dict(CLAIM))
+    monkeypatch.setattr(work_items, "get_work_item", lambda *a, **k: {})
     monkeypatch.setattr(work_items, "commit_result", lambda *a, **k: None)
     seen = []
 

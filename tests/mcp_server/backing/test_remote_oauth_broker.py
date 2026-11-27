@@ -2,7 +2,7 @@
 
 CONCEPT:MERISTEM-ECO.mcp.remote-oauth-broker
 
-Every fail-closed control in ``agent_utilities/mcp/remote_oauth_broker.py`` is proven
+Every fail-closed control in ``meristem/mcp/remote_oauth_broker.py`` is proven
 here against a KNOWN-BAD input, per the lane's own standing rule ("a security control
 never demonstrated against a known-bad input is not evidence"): mismatched state,
 replayed code/state, wrong redirect/endpoint, cross-user token access, non-allowlisted
