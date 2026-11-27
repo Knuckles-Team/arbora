@@ -13,7 +13,7 @@ import hashlib
 import json
 import re
 from collections.abc import Mapping
-from typing import Annotated, Literal, Protocol
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -35,7 +35,6 @@ __all__ = [
     "PolicyRef",
     "PolicyRule",
     "PolicyVersion",
-    "SignatureVerifier",
     "canonical_digest",
     "policy_digest",
 ]
@@ -363,13 +362,6 @@ class PolicyAuthorization(_FrozenModel):
     @property
     def authorization_digest(self) -> str:
         return canonical_digest(self)
-
-
-class SignatureVerifier(Protocol):
-    """External signature verification seam; key material never enters models."""
-
-    def verify(self, signer_ref: str, signed_digest: str, signature: str) -> bool:
-        """Return true only when the exact signature authenticates the digest."""
 
 
 def policy_digest(policy: PolicyVersion) -> str:

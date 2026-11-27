@@ -418,7 +418,6 @@ Each line below names one active row that no earlier task covers. The descriptio
 - [ ] T353 ARBORA-OPS-R882 Agent bus operations over medulla topic, roster and work-item methods.
 - [ ] T354 ARBORA-OPS-R883 Retrieval operations carry the verified agent reference.
 - [ ] T355 ARBORA-OPS-R884 Meeting summary orchestration with provider admission.
-- [ ] T356 ARBORA-OPS-R885 Review a policy revision and return a review approval.
 - [ ] T357 ARBORA-OPS-R886 Admitted ingest maintenance operation.
 - [ ] T358 ARBORA-OPS-R887 Served operation entity.approve_link.
 - [ ] T359 ARBORA-OPS-R888 Admit data-product access requests against the steward role.

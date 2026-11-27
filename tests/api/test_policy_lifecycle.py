@@ -364,3 +364,12 @@ async def test_receipt_binds_every_field_and_refuses_stale(
             OPS["policy.review.approve"],
         )
     assert self_review.value.code == "POLICY_DENIED" and rejected.sent == []
+
+
+@pytest.mark.spec("ARBORA-OPS-R071")
+def test_review_receipt_has_one_producer() -> None:
+    registry = get_registry()
+    assert registry.get("policy.review.approve") is not None
+    assert registry.get("policy.review") is None
+    assert not hasattr(policy, "handle_policy_review")
+    assert "policy.review" not in policy.NATIVE_IDEMPOTENCY

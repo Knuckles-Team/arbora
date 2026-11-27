@@ -651,6 +651,22 @@ def _with_projection_reader(
     return {**bindings, "projection_reader": EngineProjectionReader()}
 
 
+def _with_security_evaluation(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the engine security evaluation (ARBORA-OPS-R051.3).
+
+    The engine selects the probes and judges their scores. The probe runner is the
+    harness adapter the host supplies as ``security_probe_runner``; without it
+    ``security.evaluate`` refuses ``UNAVAILABLE`` before any probe starts.
+    """
+    if bindings is None or "security_evaluation" in bindings:
+        return bindings
+    from arbora.api.ops.security_eval import EngineSecurityEvaluation
+
+    return {**bindings, "security_evaluation": EngineSecurityEvaluation()}
+
+
 def _with_task_plan_schema(
     bindings: Mapping[str, Any] | None,
     pool: Any,
@@ -739,6 +755,7 @@ def compose_served_invocation(
     bindings = _with_fleet_source_executor(bindings, pool, graph)
     bindings = _with_nl_federation_planner(bindings)
     bindings = _with_projection_reader(bindings)
+    bindings = _with_security_evaluation(bindings)
     bindings, process_startup = _with_task_plan_schema(
         bindings, pool, graph, connect_context, session, action_policies
     )

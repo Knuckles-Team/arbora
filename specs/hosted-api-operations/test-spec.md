@@ -34,7 +34,6 @@ Governing [spec](spec.md).
 | HO-T31 | ARBORA-OPS-R025.1 | Planned test path: `tests/api/test_client_invoke.py::test_unknown_operation_makes_zero_calls_and_digest_mismatch_is_refused`. Assert an unknown op id raises before any transport call and a mismatched meta registry digest raises. It remains unexecuted. |
 | HO-T34 | ARBORA-OPS-R024.1.1 | Planned test path: `tests/api/test_telemetry_export_ops.py::test_export_formats_backend_opt_in_and_refused_cases`. Served test of telemetry export formats, opt-in backend selection and refusals over HTTP and MCP. It remains unexecuted. |
 | HO-T36 | ARBORA-OPS-R022.4 | Planned test path: `tests/api/test_loop_feedback_ops.py::test_loop_status_run_pause_fail_closed_until_bound`. Served test that the loop facade exposes status, run and pause, and refuses an unscoped or replayed call. It remains unexecuted. |
-| HO-T37 | ARBORA-OPS-R885 | Planned test path: `tests/api/test_policy_review_served.py::test_policy_review_returns_bound_receipt_and_refuses_self_approval`. Served over HTTP and MCP with a loopback engine: asserts the receipt digests and that an author self-approval refuses. It remains unexecuted. |
 
 ## Drift and scanner acceptance
 
@@ -403,7 +402,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R042.5` | Test: `tests/api/test_content_screening.py::test_audit_holds_fields_and_no_secret_text` (L3). It asserts the four fields and the absence of the planted secret. |
 | `ARBORA-OPS-R042.6` | Test: `tests/gateway/test_content_screening_hot_path.py::test_served_route_quarantines_hidden_instructions_and_masks_secrets` (L3). |
 | `ARBORA-OPS-R050.1` | Test: `tests/api/test_policy_lifecycle.py::test_models_validate_fields_and_closed_change_set` (L1). Verified by the root slice test `tests/api/test_policy_lifecycle.py::test_policy_create_then_violating_plan_is_refused`. |
-| `ARBORA-OPS-R050.3` | Test: `tests/api/test_policy_lifecycle.py::test_served_policy_request_reaches_engine_port_and_absent_producer_refuses` (L3). It asserts the engine call and zero effects without a producer. |
+| `ARBORA-OPS-R050.3` | Test: `tests/api/test_policy_lifecycle.py::test_served_policy_request_reaches_engine_port_and_absent_producer_refuses` (L3). It asserts the engine call and zero effects without a producer. Admission: `tests/control_plane/test_policy_runs.py::test_admission_refuses_when_the_engine_denies` and `::test_admission_fails_closed_when_the_engine_is_unreachable` assert the refusal and that nothing is recorded; `::test_arbora_keeps_no_local_policy_authority` asserts the local authority is gone. |
 | `ARBORA-OPS-R050.4` | Test: `tests/api/test_policy_lifecycle.py::test_three_refusals_have_zero_effects` (L3). It asserts each code and no plan run or policy write. |
 | `ARBORA-OPS-R050.5` | Test: `tests/api/test_policy_lifecycle.py::test_audit_record_fields_for_change_and_refused_plan` (L3). |
 | `ARBORA-OPS-R050.6` | Test: `tests/api/test_policy_lifecycle.py::test_policy_create_then_violating_plan_is_refused` (L3). |
@@ -492,7 +491,6 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R882` | Test: `tests/api/test_agent_bus_served.py::test_send_receive_dispatch_over_medulla` runs `invoke` over HTTP and MCP with a loopback medulla engine. |
 | `ARBORA-OPS-R883` | Test: `tests/api/test_retrieval_ops.py::test_agent_ref_is_taken_from_identity` calls the operations over HTTP and MCP against a recorded engine (served). |
 | `ARBORA-OPS-R884` | Test: `tests/api/test_meetings_ops.py::test_summary_create_admits_context_and_commit` (L3) runs through the registry `invoke` with a loopback medulla and a recorded harness receipt. It asserts the denied-provider refusal makes zero medulla calls. |
-| `ARBORA-OPS-R885` | A served test invokes the operation through the registry over HTTP and MCP with a loopback engine. It asserts the receipt digests. A self-approval refuses. |
 | `ARBORA-OPS-R886` | Test: `tests/api/test_ingest_maintenance_served.py::test_maintenance_run_refuses_without_authorization_and_applies_admitted_actions` (L3, through the operation registry's `invoke` over HTTP and MCP with a recorded medulla engine). |
 | `ARBORA-OPS-R887` | A served test calls the registry `invoke` over HTTP and MCP against a recorded medulla engine. It approves one proposal. It asserts the refusal passthrough for a missing approver. |
 | `ARBORA-OPS-R888` | Test: `tests/api/test_access_request_ops.py::test_access_request_approval_needs_steward` (L3) runs through the registry `invoke` over HTTP and MCP against a loopback medulla engine. It asserts the grant after a steward approval and zero effects after a non-steward approval. |

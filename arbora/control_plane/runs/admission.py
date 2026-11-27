@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import threading
 from collections.abc import Callable
 from typing import Protocol, runtime_checkable
@@ -9,6 +10,7 @@ from typing import Protocol, runtime_checkable
 from arbora.control_plane.policy.models import canonical_digest
 
 from .audit import AuditChain, AuditDiscontinuityError
+from .engine_policy import RunPolicyDecision, RunPolicyDenied, RunPolicyUnavailable
 from .models import (
     AdmissionReceipt,
     NativeAdmissionRequest,
@@ -22,7 +24,6 @@ __all__ = [
     "InMemoryNativeAdmission",
     "NativeAdmissionError",
     "NativeWorkItemAdmissionProtocol",
-    "ResolvedAuthorizationVerifier",
     "ReplayDriftError",
 ]
 
@@ -113,15 +114,8 @@ class CapacityAcquisition:
 class NativeWorkItemAdmissionProtocol(Protocol):
     """The only execution-plane seam exposed by this domain core."""
 
-    def admit_once(self, request: NativeAdmissionRequest) -> AdmissionReceipt:
+    async def admit_once(self, request: NativeAdmissionRequest) -> AdmissionReceipt:
         """Atomically admit one resolved run and one native WorkItem."""
-
-
-class ResolvedAuthorizationVerifier(Protocol):
-    def verify_authorization(
-        self, authorization: object, *, now: int | None = None
-    ) -> None:
-        """Verify the exact persisted policy authorization."""
 
 
 class InMemoryNativeAdmission:
@@ -137,7 +131,7 @@ class InMemoryNativeAdmission:
         *,
         audit: AuditChain | None = None,
         clock: Callable[[], int] | None = None,
-        authorization_verifier: ResolvedAuthorizationVerifier | None = None,
+        policy: RunPolicyDecision,
         capacity: CapacityAcquisition | None = None,
         resources_for: Callable[[NativeAdmissionRequest], dict[str, int]] | None = None,
     ) -> None:
@@ -146,13 +140,14 @@ class InMemoryNativeAdmission:
         self._resources_for = resources_for or (lambda _request: {"run": 1})
         self.audit = audit
         self.clock = clock or (lambda: 0)
-        self.authorization_verifier = authorization_verifier
+        self.policy = policy
         self._lock = threading.RLock()
+        self._gate = asyncio.Lock()
         self._records: dict[str, RunRecord] = {}
         self._work_items: dict[str, str] = {}
 
-    def admit_once(self, request: NativeAdmissionRequest) -> AdmissionReceipt:
-        with self._lock:
+    async def admit_once(self, request: NativeAdmissionRequest) -> AdmissionReceipt:
+        async with self._gate:
             run_id = request.resolution.run_id
             work_item_id = request.work_item.work_item_id
             replay = self._replay_receipt(run_id, request)
@@ -160,7 +155,7 @@ class InMemoryNativeAdmission:
                 return replay
 
             self._ensure_work_item_available(work_item_id)
-            self._verify_authorization(request)
+            await self._decide_policy(request)
             self._ensure_audit_capacity()
             self._acquire_capacity(run_id, request)
             now = self.clock()
@@ -204,16 +199,14 @@ class InMemoryNativeAdmission:
         if self._work_items.get(work_item_id) is not None:
             raise NativeAdmissionError("work_item_identity_conflict")
 
-    def _verify_authorization(self, request: NativeAdmissionRequest) -> None:
-        if self.authorization_verifier is None:
-            return
+    async def _decide_policy(self, request: NativeAdmissionRequest) -> None:
+        """The engine's active policy decides; a denial or an unreachable engine refuses."""
         try:
-            self.authorization_verifier.verify_authorization(
-                request.resolution.authorization,
-                now=self.clock(),
-            )
-        except Exception as exc:  # fail closed at the admission boundary
-            raise NativeAdmissionError("authorization_stale_or_invalid") from exc
+            await self.policy.decide(request.resolution.authorization, now=self.clock())
+        except RunPolicyDenied as exc:
+            raise NativeAdmissionError("policy_denied", exc.engine_code) from exc
+        except RunPolicyUnavailable as exc:
+            raise NativeAdmissionError("policy_unavailable") from exc
 
     def _ensure_audit_capacity(self) -> None:
         if self.audit is None:
