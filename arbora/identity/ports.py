@@ -181,3 +181,55 @@ def engine_identity_admin(graph: str) -> IdentityAdminPort:
     from .engine_admin import EngineIdentityAdmin
 
     return EngineIdentityAdmin(graph=graph)
+
+
+def service_identity_port(
+    admin: Any, runtime: Any, service_claims: Any, tenant: Callable[[], str]
+) -> Any:
+    """The administration port as the host service identity of one tenant (R010.2.3.2).
+
+    Served packages build the SCIM and directory-sync identity port only through here.
+    """
+    from .host_services import ServiceIdentityPort
+
+    return ServiceIdentityPort(admin, runtime, service_claims, tenant)
+
+
+def scim_ports_from_store(store: Any, port: Any) -> Any:
+    """The SCIM ports of the host, or ``None`` when no credential is delivered (R011.2.4)."""
+    from .host_services import scim_ports_from_store as build
+
+    return build(store, port)
+
+
+def directory_sync_service(
+    read: Callable[..., Any],
+    port: Any,
+    clock: Any,
+    directory_factory: Callable[[], Any],
+) -> Any:
+    """The ``identity.directory_sync`` job when LDAPS is configured, else ``None``."""
+    from .host_services import directory_sync_service as build
+
+    return build(read, port, clock, directory_factory)
+
+
+def ldap_directory(*, base_dn: str, password: Callable[[], str]) -> Any:
+    """The production LDAPS directory transport of the sync job (R010.2.2)."""
+    from .ldap_directory import LdapDirectory
+
+    return LdapDirectory(base_dn=base_dn, password=password)
+
+
+def bind_actor_exchange(fleet: Any) -> bool:
+    """Bind the fleet's delegated-identity exchange from the deployment (R028.3)."""
+    from .actor_exchange_composition import bind_actor_exchange as bind
+
+    return bind(fleet)
+
+
+async def record_session_open(*args: Any, **kwargs: Any) -> Any:
+    """Record one hosted ``ClientSession`` at session open (ARBORA-IDENTITY-R026.2)."""
+    from .client_session import record_session_open as record
+
+    return await record(*args, **kwargs)

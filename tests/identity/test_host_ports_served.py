@@ -48,6 +48,7 @@ def test_host_gate_asks_the_engine_decision_method(
 ) -> None:
     monkeypatch.setattr(host_ports, "require_methods", lambda *names: None)
     monkeypatch.setattr(host_ports, "require_models", lambda names: None)
+    monkeypatch.setattr(host_ports, "require_enum_member", lambda model, value: None)
     sent: list[tuple[str, dict, str]] = []
 
     async def send(method: str, params: dict, tenant: str) -> dict:
@@ -68,7 +69,7 @@ def test_host_gate_asks_the_engine_decision_method(
             {
                 "agent_id": "cli",
                 "operation": "run",
-                "protocol": "mcp",
+                "protocol": "database",
                 "resource_ref": "db:one",
             },
             "t1",
@@ -96,16 +97,36 @@ def test_pinned_release_without_the_method_refuses_unavailable(
     assert sent == []  # no engine call and no local grant
 
 
+@pytest.mark.spec("ARBORA-IDENTITY-R019.3")
+def test_the_real_protocol_goes_on_the_wire_behind_pin_lag(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(host_ports, "require_methods", lambda *names: None)
+    monkeypatch.setattr(host_ports, "require_models", lambda names: None)
+    sent: list[dict] = []
+
+    async def send(method: str, params: dict, tenant: str) -> dict:
+        sent.append(params)
+        return {"allow": True, "grant_id": "g1", "expires_at_ms": int(NOW * 1000) + 1}
+
+    # A pinned engine whose ResourceProtocol lacks `database` refuses; nothing says `mcp`.
+    assert isinstance(_call(_gate(send, [])), OpError)
+    assert sent == []
+    monkeypatch.setattr(host_ports, "require_enum_member", lambda model, value: None)
+    _call(_gate(send, []))
+    assert sent[0]["protocol"] == "database"
+
+
 @pytest.mark.spec("ARBORA-IDENTITY-R023.3")
 def test_credential_ports_refuse_unavailable_until_the_engine_decides() -> None:
     class Vault:
         def get(self, key: str) -> None:
             return None
 
-    async def send(*args: Any) -> dict:
-        raise AssertionError("never reached on a pinned release without the method")
+    async def ask(*args: Any) -> dict:
+        raise AssertionError("never reached on a pinned release without the model")
 
-    ports = host_ports.credential_ports_for_host(send, Vault())
+    ports = host_ports.credential_ports_for_host(ask, Vault())
     request = CredentialUseRequest(
         tenant="t1",
         owner_principal="ada",

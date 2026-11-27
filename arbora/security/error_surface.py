@@ -56,6 +56,63 @@ PUBLIC_ERROR_MESSAGES = MappingProxyType(
     }
 )
 
+#: Stable identity refusal codes (never messages) and the public code each one maps to
+#: (ARBORA-IDENTITY-R028.4, R023.4, R026.3). A refusal code is a closed vocabulary the
+#: caller may read; the mapping decides retryability and nothing else.
+REFUSAL_PUBLIC_CODES = MappingProxyType(
+    {
+        "IDENTITY_DELEGATION_REQUIRED": "permission_denied",
+        "IDENTITY_EXCHANGE_FAILED": "dependency_unavailable",
+        "CLIENT_SESSION_MISSING": "invalid_request",
+        "REUSE_DENIED": "permission_denied",
+        "CREDENTIAL_REVOKED": "permission_denied",
+        "CREDENTIAL_EXPIRED": "permission_denied",
+        "CREDENTIAL_MISSING": "permission_denied",
+        "INTERACTION_REQUIRED": "permission_denied",
+        "STATE_MISMATCH": "permission_denied",
+        "INSECURE_REDIRECT": "invalid_request",
+        "CREDENTIAL_REQUEST_INVALID": "invalid_request",
+        "INPUT_TIMEOUT": "dependency_unavailable",
+        "PROVIDER_UNAVAILABLE": "dependency_unavailable",
+        "CALLBACK_UNAVAILABLE": "dependency_unavailable",
+        "BROWSER_LAUNCH_FAILED": "dependency_unavailable",
+        "PERSISTENCE_FAILED": "dependency_unavailable",
+    }
+)
+
+
+def refusal_code(exc: BaseException) -> str | None:
+    """The mapped identity refusal code an exception carries, else ``None``.
+
+    Read from the ``code`` attribute of a delegation or operation refusal or from the
+    ``refusal`` enum of a credential refusal; never from the exception message.
+    """
+    for candidate in (
+        getattr(exc, "code", None),
+        getattr(getattr(exc, "refusal", None), "value", None),
+    ):
+        if isinstance(candidate, str) and candidate in REFUSAL_PUBLIC_CODES:
+            return candidate
+    return None
+
+
+def _public_code(code: str, exc: BaseException) -> tuple[str, str | None]:
+    """The public code of a failure and the identity refusal code it carries, if any.
+
+    A caller-chosen code is kept; only the ambiguous default is upgraded by a refusal code.
+    """
+    if code in PUBLIC_ERROR_MESSAGES and code != "operation_failed":
+        return code, None
+    refusal = refusal_code(exc)
+    if refusal is None:
+        return "operation_failed", None
+    return REFUSAL_PUBLIC_CODES[refusal], refusal
+
+
+def _refusal_fields(refusal: str | None) -> dict[str, str]:
+    return {} if refusal is None else {"refusal_code": refusal}
+
+
 #: Exception CLASS NAMES (never instances or messages) that mean "the engine
 #: circuit breaker tripped or the transport is down" — a transient condition,
 #: not a rejected/malformed request (BUG-048). Mirrors
@@ -482,7 +539,7 @@ def public_error_payload(
     exists"; now it is a real, dereferenceable reference.
     """
 
-    safe_code = code if code in PUBLIC_ERROR_MESSAGES else "operation_failed"
+    safe_code, refusal = _public_code(code, exc)
     # BUG-048: a caller that didn't explicitly classify its failure (the
     # ubiquitous bare ``except Exception: return public_error_json(e)`` at
     # ~200+ call sites) previously collapsed a breaker-open/transport-down
@@ -531,6 +588,7 @@ def public_error_payload(
     payload["error_class"] = error_class
     payload["failing_layer"] = failing_layer
     payload.update(_engine_code_fields(exc))
+    payload.update(_refusal_fields(refusal))
     if safe_code == "engine_degraded":
         payload["retry_after_s"] = _engine_retry_after_hint()
     return payload

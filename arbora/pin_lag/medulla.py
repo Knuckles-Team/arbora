@@ -20,6 +20,10 @@ Guards held here (delete each with the re-pin that carries it):
 - ``QuestionKind`` members ``autonomy_verdict`` (R867), ``tool_relevance`` (R866) and
   ``team_coordination`` (R877): the host composes each gate only once the pinned contract
   names the question (:func:`question_kind_served`).
+- ``ResourceProtocol`` members ``ssh``, ``database``, ``web`` and ``rdp``
+  (ARBORA-IDENTITY-R019.3): the resource gate sends the real protocol on the wire.
+- ``FamilyAnswerCredentialReuse`` (ARBORA-IDENTITY-R023.3): the typed ``credential_reuse``
+  ``Decide`` answer.
 - ``MethodSparqlParams.graph_media_type`` (R857.3): the graph body serialized by the engine.
 - ``IdentityOpWireLoginGrant`` and ``IdentityOpWireLoginRevoke`` (R858),
   ``JobKindProgramOptimize`` and ``LearningWriteMovePointer`` (R860): request shapes the
@@ -53,6 +57,7 @@ __all__ = [
     "question_kind_served",
     "refusal",
     "require_methods",
+    "require_enum_member",
     "require_model_field",
     "require_models",
     "require_question_kind",
@@ -131,6 +136,16 @@ def guard_field(model: str, field: str) -> None:
         require_model_field(model, field)
     except PinLagUnavailable as error:
         raise refusal(error) from error
+
+
+def require_enum_member(model: str, value: str) -> None:
+    """Return once the pinned enum ``model`` declares ``value``, else name ``Model.value``."""
+    from medulla.generated import models
+
+    declared = getattr(models, model, None)
+    members = {str(getattr(item, "value", item)) for item in declared or ()}
+    if value not in members:
+        raise PinLagUnavailable(f"{model}.{value}")
 
 
 def accepts_parameter(method: Any, name: str) -> bool:

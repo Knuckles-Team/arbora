@@ -132,6 +132,13 @@ _ENGINE_CONFIG_FIELDS = frozenset(
         # arbora.fleet.service_child) instead of the caller's own
         # delegated credential. Absent or any other value means "delegated".
         "credential_mode",
+        # An operator-declared actor-required connector and the client id its
+        # exchanged token is addressed to (ARBORA-IDENTITY-R028.3).
+        "requires_actor",
+        "client_id",
+        # The principal whose provider credential this connector reuses under an engine
+        # grant for the calling agent (ARBORA-IDENTITY-R023.2).
+        "credential_owner",
     }
 )
 _MAX_DELEGATED_VALUE_BYTES = 4 * 1024 * 1024
@@ -3763,7 +3770,35 @@ class MCPMultiplexer:
             emit=getattr(self._fleet, "actor_audit", lambda _event: None),
         )
 
+    async def _reused_credential_headers(self, cfg: dict, url: str) -> dict[str, str]:
+        """The one production caller of scoped credential reuse (ARBORA-IDENTITY-R023.2).
+
+        The verified caller reuses the declared owner's provider credential only under an
+        engine grant for this agent, connector and purpose; a refusal opens no session.
+        """
+        from arbora.security.actor_context import current_actor
+
+        actor = current_actor()
+        caller = SimpleNamespace(
+            tenant=actor.tenant_id,
+            principal=actor.actor_id,
+            client=actor.actor_id,
+        )
+        from arbora.fleet.remote_oauth_broker import ProviderDescriptor
+
+        descriptor = ProviderDescriptor(**cfg["oauth_provider"])
+        return await self._fleet.credentials.bearer(caller, cfg, url, descriptor)
+
     async def _apply_remote_child_oauth_grant(
+        self, cfg: dict, url: str, headers: dict[str, str] | None
+    ) -> tuple[dict[str, str] | None, dict[str, str] | None]:
+        """A reused credential of a declared owner, else the caller's own grant."""
+        if not (cfg.get("credential_owner") and oauth_gated(cfg)):
+            return await self._apply_caller_oauth_grant(cfg, url, headers)
+        reused = await self._reused_credential_headers(cfg, url)
+        return {**(headers or {}), **reused}, reused
+
+    async def _apply_caller_oauth_grant(
         self, cfg: dict, url: str, headers: dict[str, str] | None
     ) -> tuple[dict[str, str] | None, dict[str, str] | None]:
         # NE-008 (GOC-85 Deliverable 3): per-principal remote-OAuth bearer,

@@ -740,6 +740,16 @@ class TransactionStore:
     def put(self, tx: OAuthTransaction) -> None:
         self._secrets.set(self._key(tx.state), tx.to_json(), kind="oauth-transaction")
 
+    def peek(self, state: str) -> OAuthTransaction | None:
+        """Read one live transaction without consuming it; absent or malformed is ``None``."""
+        raw = self._secrets.get(self._key(state))
+        if raw is None or raw == _CONSUMED_TOMBSTONE:
+            return None
+        try:
+            return OAuthTransaction.from_json(raw)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return None
+
     def consume_once(self, state: str, *, now: float | None = None) -> OAuthTransaction:
         if (
             not isinstance(state, str)

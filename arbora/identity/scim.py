@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
 
 from .engine import IdentityUnavailable
 
@@ -121,20 +121,20 @@ def scim_create_user(
 
 def scim_update_user(
     port: ScimIdentityPort | None, user_id: str, payload: Mapping[str, object]
-) -> None:
+) -> Any:
     """Validate a full SCIM User resource (``PUT``) and apply it to an existing user."""
     user = ScimUser.from_payload(payload)
-    _require_port(port).update_user(user_id, user)
+    return _require_port(port).update_user(user_id, user)
 
 
 def scim_patch_user(
     port: ScimIdentityPort | None, user_id: str, payload: Mapping[str, object]
-) -> None:
+) -> Any:
     """Validate a SCIM User payload and apply it to an existing user."""
     user = ScimUser.from_payload(payload)
-    _require_port(port).update_user(user_id, user)
+    return _require_port(port).update_user(user_id, user)
 
 
-def scim_deactivate_user(port: ScimIdentityPort | None, user_id: str) -> None:
+def scim_deactivate_user(port: ScimIdentityPort | None, user_id: str) -> Any:
     """Deactivate a user; the port must never delete the user's owned data."""
-    _require_port(port).deactivate_user(user_id)
+    return _require_port(port).deactivate_user(user_id)

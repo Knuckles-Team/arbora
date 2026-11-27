@@ -716,6 +716,9 @@ def compose_served_invocation(
     task_plan_config: Any = None,
     browser_boundary_factory: BrowserBoundaryFactory | None = None,
     promotion_ci_tool: Mapping[str, str] | None = None,
+    scim_store: Any = None,
+    directory_factory: Callable[[], Any] | None = None,
+    scheduler_clock: Any = None,
 ) -> Any:
     """One admitted :class:`HostedInvocation` over the served EG pool."""
     from arbora.api.http.auth import (
@@ -834,19 +837,23 @@ def compose_served_invocation(
     async def service_client() -> Any:
         return await pool.connected_client(connect_context(session().tenant), graph)
 
+    service_claims = build_service_claims(
+        lambda: session().actor,
+        audience=str(minted.audience),
+        policy_version=str(minted.policy_version),
+    )
     runtime = build_operation_runtime(
         pool=pool,
         graph=graph,
         connect_context=connect_context,
         service_scopes=frozenset(minted.scopes),
         service_principal=str(minted.actor.actor_id),
-        service_claims=build_service_claims(
-            lambda: session().actor,
-            audience=str(minted.audience),
-            policy_version=str(minted.policy_version),
-        ),
+        service_claims=service_claims,
         bindings=bindings,
     )
+    # ARBORA-IDENTITY-R011.2.4, R010.2.3.2: the SCIM routes and the directory sync job
+    # make their engine ``Identity`` requests as the host service identity of this tenant.
+    identity_port = _identity_port(bindings, runtime, service_claims, session)
 
     async def audit_client(tenant: str) -> Any:
         return await pool.connected_client(connect_context(tenant), graph)
@@ -974,7 +981,22 @@ def compose_served_invocation(
         decision_tenant=lambda: str(session().tenant),
         task_plan_config=task_plan_config,
         process_startup=process_startup,
-        background_services=_background_services(services, runtime, graph, session),
+        background_services=_background_services(
+            services,
+            runtime,
+            graph,
+            session,
+            identity_port=identity_port,
+            directory_factory=directory_factory,
+            clock=scheduler_clock,
+        ),
+        scim_ports=_scim_ports(identity_port, scim_store),
+        decide_ask=build_ask_decide(
+            gate_send,
+            graph=graph,
+            feature_schema=tenant_pin,
+            principal=confirm_principal,
+        ),
         authenticator=AmbientHTTPAuthenticator(
             session_for_request=verified_bearer_session_for_request
         ),
@@ -1004,8 +1026,79 @@ def compose_served_invocation(
     return replace(invocation, browser_boundary=boundary)
 
 
+def _identity_port(
+    bindings: Mapping[str, Any] | None,
+    runtime: Any,
+    service_claims: Any,
+    session: Callable[[], Any],
+) -> Any:
+    """The service identity port, or ``None`` when no administration port is bound."""
+    from arbora.identity.ports import service_identity_port
+
+    admin = (bindings or {}).get("identity_admin")
+    if admin is None:
+        return None
+    return service_identity_port(
+        admin, runtime, service_claims, lambda: str(session().tenant)
+    )
+
+
+def _scim_ports(identity_port: Any, store: Any = None) -> Any:
+    """The SCIM ports the API application mounts, or ``None`` without a delivered credential."""
+    if identity_port is None:
+        return None
+    from arbora.core.settings import setting
+    from arbora.identity.ports import scim_ports_from_store
+
+    if store is None:
+        if not setting("SECRETS_VAULT_URL", None):
+            return None
+        from arbora.security.secrets import create_secrets_client
+
+        store = create_secrets_client().backend
+    return scim_ports_from_store(store, identity_port)
+
+
+def _directory_sync(
+    identity_port: Any, directory_factory: Callable[[], Any] | None, clock: Any = None
+) -> Any:
+    """The ``identity.directory_sync`` job (ARBORA-IDENTITY-R010.2.3.2), or ``None``."""
+    if identity_port is None:
+        return None
+    from arbora.core.settings import setting
+    from arbora.identity.ports import directory_sync_service, ldap_directory
+    from arbora.mcp_server.background import SystemClock
+
+    if directory_factory is None:
+
+        def directory_factory() -> Any:
+            from arbora.security.secrets import create_secrets_client
+
+            return ldap_directory(
+                base_dn=str(setting("ARBORA_LDAP_BASE_DN", "") or ""),
+                password=lambda: str(
+                    create_secrets_client().backend.get(LDAP_BIND_CREDENTIAL_PATH) or ""
+                ),
+            )
+
+    return directory_sync_service(
+        setting, identity_port, clock or SystemClock(), directory_factory
+    )
+
+
+#: The secret-backend path of the directory service account password.
+LDAP_BIND_CREDENTIAL_PATH = "arbora/identity/ldap-bind-password"
+
+
 def _background_services(
-    services: Any, runtime: Any, graph: str, session: Callable[[], Any]
+    services: Any,
+    runtime: Any,
+    graph: str,
+    session: Callable[[], Any],
+    *,
+    identity_port: Any = None,
+    directory_factory: Callable[[], Any] | None = None,
+    clock: Any = None,
 ) -> tuple[Any, ...]:
     """The host's own schedulers, each calling as the tenant's service caller.
 
@@ -1026,6 +1119,9 @@ def _background_services(
     push = _push_service(runtime, session)
     if push is not None:
         started.append(push)
+    started.extend(
+        filter(None, (_directory_sync(identity_port, directory_factory, clock),))
+    )
     tick_s = float(str(setting("ARBORA_CURATOR_TICK_S", "300") or "300"))
 
     async def invoke_op(op_id: str, params: Any, caller: Any, key: str) -> Any:

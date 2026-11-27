@@ -301,13 +301,17 @@ async def oauth_callback(code: str, state: str, browser_session_id: str) -> Any:
     actor = _resolve_verified_actor()
     broker = _get_broker()
     try:
-        await asyncio.to_thread(
+        stored = await asyncio.to_thread(
             broker.callback,
             code=code,
             state=state,
             actor=actor,
             browser_session_id=browser_session_id,
         )
+        # ARBORA-IDENTITY-R023.3: an inline credential-reuse challenge waits on this state.
+        from arbora.fleet.credential_bridge import CALLBACK_WAITERS
+
+        CALLBACK_WAITERS.deliver(state, stored)
     except (
         OAuthStateError,
         OAuthBindingError,

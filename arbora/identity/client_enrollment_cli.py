@@ -62,6 +62,36 @@ def _audit(event: Mapping[str, str]) -> None:
     )
 
 
+def _composed_ports(
+    config_path: str | None, provider: Any, secrets: Any
+) -> tuple[Any, Any]:
+    """Compose the Keycloak adapter and the secret store from the console config.
+
+    The config is the ``deploy.yml`` of the realm (``--config`` or ``ARBORA_DEPLOY_CONFIG``).
+    An absent or unreadable config leaves the port unset, so the command fails closed.
+    """
+    import os
+    from pathlib import Path
+
+    path = config_path or os.environ.get("ARBORA_DEPLOY_CONFIG")
+    if not path:
+        return provider, secrets
+    try:
+        if provider is None:
+            from arbora.deployment.provision import DeployConfig, Ports
+
+            provider = KeycloakProviderAdmin(
+                Ports.real(DeployConfig.load(Path(path))).admin
+            )
+        if secrets is None:
+            from arbora.security.secrets import create_secrets_client
+
+            secrets = create_secrets_client()
+    except Exception:  # noqa: BLE001 - an unreadable config fails closed with one code
+        return None, None
+    return provider, secrets
+
+
 def enroll_main(
     argv: Sequence[str],
     *,
@@ -74,7 +104,9 @@ def enroll_main(
     parser = argparse.ArgumentParser(prog="arbora clients enroll")
     parser.add_argument("name")
     parser.add_argument("--scope", action="append", default=[], dest="scopes")
+    parser.add_argument("--config", default=None, help="the deploy.yml of the realm")
     args = parser.parse_args(list(argv))
+    provider, secrets = _composed_ports(args.config, provider, secrets)
     if provider is None or secrets is None:
         print("PROVIDER_ADMIN_UNAVAILABLE", file=err)
         return 2
