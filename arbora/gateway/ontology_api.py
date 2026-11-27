@@ -25,9 +25,8 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from starlette.routing import Route
 
+from arbora.gateway.route_marks import build_router, route
 from arbora.gateway.state import gateway_of
-
-ontology_router = APIRouter(tags=["ontology"])
 
 
 class OntologyEnvelope(BaseModel):
@@ -53,7 +52,7 @@ def _not_found_if_error(result: Any, detail: str) -> Any:
 # ───────────────────────────────────────────
 
 
-@ontology_router.get("/ontology/value-types", response_model=OntologyEnvelope)
+@route("GET", "/ontology/value-types", response_model=OntologyEnvelope)
 async def list_value_types(request: Request) -> OntologyEnvelope:
     """List all constrained value-type names."""
     return OntologyEnvelope(
@@ -61,7 +60,7 @@ async def list_value_types(request: Request) -> OntologyEnvelope:
     )
 
 
-@ontology_router.get("/ontology/value-types/{name}", response_model=OntologyEnvelope)
+@route("GET", "/ontology/value-types/{name}", response_model=OntologyEnvelope)
 async def get_value_type(request: Request, name: str) -> OntologyEnvelope:
     """Describe one value type (404 if unknown)."""
     res = await _call(request, "ontology_value_types", action="describe", name=name)
@@ -72,7 +71,7 @@ async def get_value_type(request: Request, name: str) -> OntologyEnvelope:
 # ─────────────────────────────────────────
 
 
-@ontology_router.get("/ontology/property-types", response_model=OntologyEnvelope)
+@route("GET", "/ontology/property-types", response_model=OntologyEnvelope)
 async def list_property_types(request: Request) -> OntologyEnvelope:
     """List all property-type names."""
     return OntologyEnvelope(
@@ -80,8 +79,8 @@ async def list_property_types(request: Request) -> OntologyEnvelope:
     )
 
 
-@ontology_router.get(
-    "/ontology/property-types/{type_ref:path}", response_model=OntologyEnvelope
+@route(
+    "GET", "/ontology/property-types/{type_ref:path}", response_model=OntologyEnvelope
 )
 async def describe_property_type(request: Request, type_ref: str) -> OntologyEnvelope:
     """Describe a property type ref, e.g. ``array<string>`` (404 if unknown)."""
@@ -95,7 +94,7 @@ async def describe_property_type(request: Request, type_ref: str) -> OntologyEnv
 # ─────────────────────────────────────────────
 
 
-@ontology_router.get("/ontology/interfaces", response_model=OntologyEnvelope)
+@route("GET", "/ontology/interfaces", response_model=OntologyEnvelope)
 async def list_interfaces(
     request: Request,
     registry: str = Query("structural", description="'structural' or 'enterprise'."),
@@ -108,7 +107,7 @@ async def list_interfaces(
     )
 
 
-@ontology_router.get("/ontology/interfaces/{name}", response_model=OntologyEnvelope)
+@route("GET", "/ontology/interfaces/{name}", response_model=OntologyEnvelope)
 async def get_interface_implementers(
     request: Request,
     name: str,
@@ -130,7 +129,7 @@ async def get_interface_implementers(
 # ────
 
 
-@ontology_router.get("/ontology/schema-graph", response_model=OntologyEnvelope)
+@route("GET", "/ontology/schema-graph", response_model=OntologyEnvelope)
 async def get_ontology_schema_graph(
     request: Request,
     registry: str = Query("structural", description="'structural' or 'enterprise'."),
@@ -143,7 +142,7 @@ async def get_ontology_schema_graph(
     )
 
 
-@ontology_router.get("/ontology/schema-summary", response_model=OntologyEnvelope)
+@route("GET", "/ontology/schema-summary", response_model=OntologyEnvelope)
 async def get_ontology_schema_summary(
     request: Request,
     registry: str = Query("structural", description="'structural' or 'enterprise'."),
@@ -156,7 +155,7 @@ async def get_ontology_schema_summary(
     )
 
 
-@ontology_router.get("/ontology/lint", response_model=OntologyEnvelope)
+@route("GET", "/ontology/lint", response_model=OntologyEnvelope)
 async def get_ontology_lint(
     request: Request,
     registry: str = Query("structural", description="'structural' or 'enterprise'."),
@@ -185,7 +184,7 @@ class OntologyGenerateRequest(BaseModel):
     )
 
 
-@ontology_router.get("/ontology/generate", response_model=OntologyEnvelope)
+@route("GET", "/ontology/generate", response_model=OntologyEnvelope)
 async def generate_ontology_get(
     request: Request,
     sample_text: str = Query(
@@ -212,7 +211,7 @@ async def generate_ontology_get(
     )
 
 
-@ontology_router.post("/ontology/generate", response_model=OntologyEnvelope)
+@route("POST", "/ontology/generate", response_model=OntologyEnvelope)
 async def generate_ontology_post(
     request: Request, body: OntologyGenerateRequest
 ) -> OntologyEnvelope:
@@ -248,7 +247,7 @@ class OntologyValidateRequest(BaseModel):
     )
 
 
-@ontology_router.post("/ontology/validate", response_model=OntologyEnvelope)
+@route("POST", "/ontology/validate", response_model=OntologyEnvelope)
 async def validate_ontology_candidate(
     request: Request,
     body: OntologyValidateRequest,
@@ -307,7 +306,7 @@ class OntologyLoadRequest(BaseModel):
     )
 
 
-@ontology_router.post("/ontology/load", response_model=OntologyEnvelope)
+@route("POST", "/ontology/load", response_model=OntologyEnvelope)
 async def load_ontology(
     request: Request, body: OntologyLoadRequest
 ) -> OntologyEnvelope:
@@ -335,7 +334,7 @@ async def load_ontology(
     )
 
 
-@ontology_router.get("/ontology/export", response_model=OntologyEnvelope)
+@route("GET", "/ontology/export", response_model=OntologyEnvelope)
 async def export_ontology(
     request: Request,
     iri: str = Query(..., description="Ontology IRI to export."),
@@ -366,7 +365,7 @@ async def export_ontology(
 # ── Catalogue (CONCEPT:MERISTEM-KG.ontology.catalogue-browse, coverage row #4) ─────
 
 
-@ontology_router.get("/ontology/catalogue", response_model=OntologyEnvelope)
+@route("GET", "/ontology/catalogue", response_model=OntologyEnvelope)
 async def get_ontology_catalogue(
     request: Request,
     search: str = Query(
@@ -411,7 +410,7 @@ async def get_ontology_catalogue(
 # ──────────────────────────────────────────────
 
 
-@ontology_router.get("/ontology/functions", response_model=OntologyEnvelope)
+@route("GET", "/ontology/functions", response_model=OntologyEnvelope)
 async def list_functions(request: Request) -> OntologyEnvelope:
     """List registered ontology functions with their typed signatures."""
     return OntologyEnvelope(
@@ -419,7 +418,7 @@ async def list_functions(request: Request) -> OntologyEnvelope:
     )
 
 
-@ontology_router.get("/ontology/functions/{name}", response_model=OntologyEnvelope)
+@route("GET", "/ontology/functions/{name}", response_model=OntologyEnvelope)
 async def get_function(request: Request, name: str) -> OntologyEnvelope:
     """Get one function's signature by name (404 if unknown)."""
     listing = await _call(request, "ontology_function", action="list")
@@ -435,7 +434,7 @@ async def get_function(request: Request, name: str) -> OntologyEnvelope:
 # ──────────────────────
 
 
-@ontology_router.get("/objects/{object_id}", response_model=OntologyEnvelope)
+@route("GET", "/objects/{object_id}", response_model=OntologyEnvelope)
 async def get_object(request: Request, object_id: str) -> OntologyEnvelope:
     """Read a single object by id (via the object-set service)."""
     return OntologyEnvelope(
@@ -445,7 +444,7 @@ async def get_object(request: Request, object_id: str) -> OntologyEnvelope:
     )
 
 
-@ontology_router.get("/objects/{object_id}/history", response_model=OntologyEnvelope)
+@route("GET", "/objects/{object_id}/history", response_model=OntologyEnvelope)
 async def get_object_history(request: Request, object_id: str) -> OntologyEnvelope:
     """Return the edit history for one object."""
     return OntologyEnvelope(
@@ -455,7 +454,7 @@ async def get_object_history(request: Request, object_id: str) -> OntologyEnvelo
     )
 
 
-@ontology_router.get("/objects/{object_id}/as-of", response_model=OntologyEnvelope)
+@route("GET", "/objects/{object_id}/as-of", response_model=OntologyEnvelope)
 async def get_object_as_of(
     request: Request,
     object_id: str,
@@ -470,9 +469,7 @@ async def get_object_as_of(
     )
 
 
-@ontology_router.get(
-    "/objects/{source_id}/path/{target_id}", response_model=OntologyEnvelope
-)
+@route("GET", "/objects/{source_id}/path/{target_id}", response_model=OntologyEnvelope)
 async def get_object_path(
     request: Request, source_id: str, target_id: str
 ) -> OntologyEnvelope:
@@ -488,7 +485,7 @@ async def get_object_path(
 # ──────────────────────────────────
 
 
-@ontology_router.post("/ontology/leanix/sync", response_model=OntologyEnvelope)
+@route("POST", "/ontology/leanix/sync", response_model=OntologyEnvelope)
 async def sync_leanix_ontology_route(
     request: Request,
     dry_run: bool = Query(
@@ -505,6 +502,11 @@ async def sync_leanix_ontology_route(
     )
 
 
+def build_ontology_router() -> APIRouter:
+    """The granular ontology router, built for one composition."""
+    return build_router(__name__, tags=["ontology"])
+
+
 def register_ontology_routes(app, prefix: str = "/api") -> None:
     """Mount the granular typed ontology surface onto ``app``.
 
@@ -513,7 +515,7 @@ def register_ontology_routes(app, prefix: str = "/api") -> None:
     (no schema, but the endpoints still serve).
     """
     if hasattr(app, "include_router"):  # FastAPI
-        app.include_router(ontology_router, prefix=prefix)
+        app.include_router(build_ontology_router(), prefix=prefix)
         return
     # Plain Starlette fallback: bridge each typed route to a Request handler.
     from starlette.responses import JSONResponse
@@ -532,12 +534,12 @@ def register_ontology_routes(app, prefix: str = "/api") -> None:
 
         return _handler
 
-    for route in ontology_router.routes:
-        if not isinstance(route, Route):
+    for entry in build_ontology_router().routes:
+        if not isinstance(entry, Route):
             continue  # pragma: no cover - APIRouter only emits Route entries here
-        param_names = list(getattr(route, "param_convertors", {}) or {})
+        param_names = list(getattr(entry, "param_convertors", {}) or {})
         app.add_route(
-            prefix + route.path,
-            _bridge(route.endpoint, param_names),
-            methods=list(route.methods or ["GET"]),
+            prefix + entry.path,
+            _bridge(entry.endpoint, param_names),
+            methods=list(entry.methods or ["GET"]),
         )
