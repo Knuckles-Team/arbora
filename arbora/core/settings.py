@@ -43,7 +43,6 @@ __all__ = [
     "read_config_document",
     "RuntimeConfig",
     "runtime_config",
-    "save_config_item",
     "CONFIG_FIELDS",
 ]
 
@@ -110,7 +109,6 @@ def credential_shaped(key: str) -> bool:
 
 _REFERENCE_SCHEMES = ("env://", "openbao://", "vault://", "file://")
 _CONFIG_FILE = "config.json"
-_write_lock = threading.Lock()
 
 
 class ArboraConfig(BaseModel):
@@ -1199,6 +1197,7 @@ class RuntimeConfig:
     def __init__(self) -> None:
         object.__setattr__(self, "_overrides", {})
         object.__setattr__(self, "_lock", threading.Lock())
+        object.__setattr__(self, "_write_lock", threading.Lock())
 
     def __getattr__(self, name: str) -> Any:
         overrides = object.__getattribute__(self, "_overrides")
@@ -1216,6 +1215,40 @@ class RuntimeConfig:
     def __delattr__(self, name: str) -> None:
         with self._lock:
             self._overrides.pop(name, None)
+
+    def save_item(self, key: str, value: Any) -> str:
+        """Persist one setting to ``config.json`` and the live environment.
+
+        Returns the environment key. A credential-shaped key must hold a secret
+        reference. The file is written atomically with mode ``0600``.
+        """
+        env_key = key.upper()
+        _check_secret_policy(env_key, value)
+        target = _config_file()
+        with self._write_lock:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            document: dict[str, Any] = {}
+            if target.is_file():
+                loaded = json.loads(target.read_text(encoding="utf-8") or "{}")
+                if not isinstance(loaded, dict):
+                    raise ValueError(f"{target} must hold a JSON object")
+                document = loaded
+            if value is None:
+                document.pop(env_key, None)
+                unset_env(env_key)
+            else:
+                # config.json holds flat scalars; a list or mapping is JSON text.
+                stored = (
+                    json.dumps(value, sort_keys=True, separators=(",", ":"))
+                    if isinstance(value, list | tuple | dict)
+                    else value
+                )
+                document[env_key] = stored
+                write_env(
+                    env_key, stored if isinstance(stored, str) else json.dumps(stored)
+                )
+            write_private_mapping(target, document)
+        return env_key
 
 
 #: The typed, declared settings (alias to field), read by the environment manifest.
@@ -1263,41 +1296,6 @@ def _check_secret_policy(env_key: str, value: Any) -> None:
         raise ValueError(
             f"configuration key {env_key} must hold a secret reference, not a value"
         )
-
-
-def save_config_item(key: str, value: Any) -> str:
-    """Persist one setting to ``config.json`` and the live environment.
-
-    Returns the environment key. A credential-shaped key must hold a secret
-    reference. The file is written atomically with mode ``0600``.
-    """
-    env_key = key.upper()
-    _check_secret_policy(env_key, value)
-    target = _config_file()
-    with _write_lock:
-        target.parent.mkdir(parents=True, exist_ok=True)
-        document: dict[str, Any] = {}
-        if target.is_file():
-            loaded = json.loads(target.read_text(encoding="utf-8") or "{}")
-            if not isinstance(loaded, dict):
-                raise ValueError(f"{target} must hold a JSON object")
-            document = loaded
-        if value is None:
-            document.pop(env_key, None)
-            unset_env(env_key)
-        else:
-            # config.json holds flat scalars; a list or mapping is JSON text.
-            stored = (
-                json.dumps(value, sort_keys=True, separators=(",", ":"))
-                if isinstance(value, list | tuple | dict)
-                else value
-            )
-            document[env_key] = stored
-            write_env(
-                env_key, stored if isinstance(stored, str) else json.dumps(stored)
-            )
-        write_private_mapping(target, document)
-    return env_key
 
 
 def write_private_mapping(path: Path, document: dict[str, Any]) -> None:

@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 import arbora.mcp_server.backing.server_factory as server_factory
+from arbora.core.settings import RuntimeConfig
 from arbora.observability.state import Metrics
 from arbora.security.key_cache import JwksCache
 
@@ -38,7 +39,10 @@ def test_create_mcp_server_basic(mock_fastmcp):
         mock_parse.return_value = (mock_args, [])
 
         args, mcp, middlewares = server_factory.create_mcp_server(
-            keys=JwksCache(), metrics=Metrics(), name="TestServer"
+            keys=JwksCache(),
+            metrics=Metrics(),
+            name="TestServer",
+            config=RuntimeConfig(),
         )
 
         assert args == mock_args
@@ -103,6 +107,7 @@ def test_create_mcp_server_exposes_metrics_health_and_tool_middleware(monkeypatc
         name="metrics-test",
         version="0.0.0",
         instructions="t",
+        config=RuntimeConfig(),
     )
     mw_names = {type(m).__name__ for m in middlewares}
     assert "ToolMetricsMiddleware" in mw_names
@@ -135,7 +140,9 @@ def test_create_mcp_server_delegation_error(mock_get):
         mock_parse.return_value = (mock_args, [])
 
         with pytest.raises(SystemExit) as excinfo:
-            server_factory.create_mcp_server(keys=JwksCache(), metrics=Metrics())
+            server_factory.create_mcp_server(
+                keys=JwksCache(), metrics=Metrics(), config=RuntimeConfig()
+            )
         assert excinfo.value.code == 1
 
 
@@ -148,7 +155,9 @@ def test_create_mcp_server_invalid_port():
         mock_parse.return_value = (mock_args, [])
 
         with pytest.raises(SystemExit) as excinfo:
-            server_factory.create_mcp_server(keys=JwksCache(), metrics=Metrics())
+            server_factory.create_mcp_server(
+                keys=JwksCache(), metrics=Metrics(), config=RuntimeConfig()
+            )
         assert excinfo.value.code == 1
 
 
@@ -163,6 +172,7 @@ def test_create_mcp_server_eunomia(mock_create_mw):
     # Mocking parse_known_args to return Eunomia options
     with patch("argparse.ArgumentParser.parse_known_args") as mock_parse:
         # Test Case 1: Embedded Eunomia
+        config = RuntimeConfig()
         mock_args = MagicMock()
         mock_args.transport = "stdio"
         mock_args.port = 8000
@@ -176,9 +186,13 @@ def test_create_mcp_server_eunomia(mock_create_mw):
         mock_parse.return_value = (mock_args, [])
 
         server_factory.create_mcp_server(
-            keys=JwksCache(), metrics=Metrics(), name="TestServerEmbedded"
+            keys=JwksCache(),
+            metrics=Metrics(),
+            name="TestServerEmbedded",
+            config=config,
         )
         mock_create_mw.assert_called_with(
+            config=config,
             policy_file="my_custom_policy.json",
             use_remote_eunomia=False,
             require_verified_principal=False,
@@ -192,9 +206,13 @@ def test_create_mcp_server_eunomia(mock_create_mw):
         mock_args.eunomia_remote_url = "http://eunomia:8421"
 
         server_factory.create_mcp_server(
-            keys=JwksCache(), metrics=Metrics(), name="TestServerRemote"
+            keys=JwksCache(),
+            metrics=Metrics(),
+            name="TestServerRemote",
+            config=config,
         )
         mock_create_mw.assert_called_with(
+            config=config,
             policy_file=None,
             use_remote_eunomia=True,
             eunomia_endpoint="http://eunomia:8421",

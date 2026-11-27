@@ -786,6 +786,7 @@ def _build_server(
         transport_choices=("stdio", "streamable-http"),
         keys=host.caches.jwks,
         metrics=host.observability.metrics,
+        config=host.config,
         engine_provider=host.engine.served,
         process_session=host.authority.session,
         token_signer=host.authority.signer,
@@ -998,6 +999,7 @@ def _register_graph_tool_surface(
             engine_provider=host.engine.served,
             caches=host.caches,
             health=host.observability.health,
+            config=host.config,
             canonical=canonical,
             intent_tools=False,
         )
@@ -1017,6 +1019,7 @@ def _register_graph_tool_surface(
             engine_provider=host.engine.served,
             caches=host.caches,
             health=host.observability.health,
+            config=host.config,
             canonical=canonical,
         )
     register_browser_control_tools(backing, host.caches.tools, host.browser)

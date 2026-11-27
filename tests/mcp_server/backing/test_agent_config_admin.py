@@ -21,6 +21,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing import agent_config_admin as config_admin
 
 
@@ -37,7 +38,7 @@ def _clear_docstring_cache():
 
 
 def test_describe_reports_docstring_type_default_current_and_alias():
-    field = config_admin.describe("MCP_ALWAYS_LOAD")["field"]
+    field = config_admin.describe(RuntimeConfig(), "MCP_ALWAYS_LOAD")["field"]
 
     assert field["key"] == "MCP_ALWAYS_LOAD"
     assert field["field"] == "mcp_always_load"
@@ -54,26 +55,26 @@ def test_describe_is_derived_so_a_new_field_needs_no_hand_registration():
     fail this the moment anyone added a field."""
     from arbora.core.settings import ArboraConfig as AgentConfig
 
-    inventory = config_admin.describe()
+    inventory = config_admin.describe(RuntimeConfig())
     assert inventory["count"] == len(AgentConfig.model_fields)
     assert len(config_admin.field_index()) == len(AgentConfig.model_fields)
 
 
 def test_describe_accepts_either_the_alias_or_the_field_name():
-    by_alias = config_admin.describe("MCP_ALWAYS_LOAD_TOOLS")["field"]
-    by_name = config_admin.describe("mcp_always_load_tools")["field"]
+    by_alias = config_admin.describe(RuntimeConfig(), "MCP_ALWAYS_LOAD_TOOLS")["field"]
+    by_name = config_admin.describe(RuntimeConfig(), "mcp_always_load_tools")["field"]
     assert by_alias == by_name
 
 
 def test_describe_can_be_narrowed_without_reading_source():
-    result = config_admin.describe(contains="always_load")
+    result = config_admin.describe(RuntimeConfig(), contains="always_load")
     keys = {f["key"] for f in result["fields"]}
     assert keys == {"MCP_ALWAYS_LOAD", "MCP_ALWAYS_LOAD_TOOLS"}
 
 
 def test_unknown_key_is_refused_not_guessed():
     with pytest.raises(config_admin.ConfigAdminError) as exc:
-        config_admin.describe("TOTALLY_MADE_UP_KEY")
+        config_admin.describe(RuntimeConfig(), "TOTALLY_MADE_UP_KEY")
     assert exc.value.code == "unknown_key"
 
 
@@ -113,9 +114,11 @@ def test_a_structured_sensitive_value_is_redacted_wholesale():
 
 def test_get_redacts_a_sensitive_literal(monkeypatch):
     monkeypatch.setattr(
-        config_admin, "_effective", lambda name: "aVeryRealKeycloakClientSecret"
+        config_admin,
+        "_effective",
+        lambda _config, name: "aVeryRealKeycloakClientSecret",
     )
-    result = config_admin.get("OIDC_CLIENT_SECRET_REF")
+    result = config_admin.get(RuntimeConfig(), "OIDC_CLIENT_SECRET_REF")
 
     assert result["value"] == config_admin.REDACTED
     assert result["redacted"] is True
@@ -123,8 +126,10 @@ def test_get_redacts_a_sensitive_literal(monkeypatch):
 
 
 def test_describe_redacts_a_sensitive_literal(monkeypatch):
-    monkeypatch.setattr(config_admin, "_effective", lambda name: "literal-secret")
-    field = config_admin.describe("OIDC_CLIENT_SECRET_REF")["field"]
+    monkeypatch.setattr(
+        config_admin, "_effective", lambda _config, name: "literal-secret"
+    )
+    field = config_admin.describe(RuntimeConfig(), "OIDC_CLIENT_SECRET_REF")["field"]
 
     assert field["current"] == config_admin.REDACTED
     assert field["redacted"] is True
@@ -136,13 +141,13 @@ def test_diff_reports_the_changed_key_without_disclosing_either_value(monkeypatc
     monkeypatch.setattr(
         config_admin,
         "_effective",
-        lambda name: (
+        lambda _config, name: (
             "literal-secret"
             if name == "oidc_client_secret_ref"
             else config_admin._default(name)
         ),
     )
-    result = config_admin.diff()
+    result = config_admin.diff(RuntimeConfig())
     entry = next(e for e in result["changed"] if e["key"] == "OIDC_CLIENT_SECRET_REF")
 
     assert entry["effective"] == config_admin.REDACTED
@@ -153,13 +158,13 @@ def test_diff_shows_only_fields_that_differ_from_their_default(monkeypatch):
     monkeypatch.setattr(
         config_admin,
         "_effective",
-        lambda name: (
+        lambda _config, name: (
             ["only-this-one-mcp"]
             if name == "mcp_always_load"
             else config_admin._default(name)
         ),
     )
-    result = config_admin.diff()
+    result = config_admin.diff(RuntimeConfig())
 
     assert [e["key"] for e in result["changed"]] == ["MCP_ALWAYS_LOAD"]
     assert result["changed"][0]["effective"] == ["only-this-one-mcp"]
@@ -174,11 +179,12 @@ def test_diff_shows_only_fields_that_differ_from_their_default(monkeypatch):
 def test_set_refuses_an_unknown_key_before_writing(monkeypatch):
     written = []
     monkeypatch.setattr(
-        "arbora.core.settings.save_config_item",
-        lambda k, v: written.append((k, v)),
+        "arbora.core.settings.RuntimeConfig.save_item",
+        lambda _self, k, v: written.append((k, v)),
     )
     with pytest.raises(config_admin.ConfigAdminError) as exc:
         config_admin.set_value(
+            RuntimeConfig(),
             "NOT_A_REAL_SETTING",
             "x",
             action_policies=ActionPolicies(),
@@ -192,12 +198,13 @@ def test_set_refuses_an_unknown_key_before_writing(monkeypatch):
 def test_set_refuses_a_value_the_model_rejects_before_writing(monkeypatch):
     written = []
     monkeypatch.setattr(
-        "arbora.core.settings.save_config_item",
-        lambda k, v: written.append((k, v)),
+        "arbora.core.settings.RuntimeConfig.save_item",
+        lambda _self, k, v: written.append((k, v)),
     )
     # mcp_dynamic_discovery_timeout is a bounded float; a string is not one.
     with pytest.raises(config_admin.ConfigAdminError) as exc:
         config_admin.set_value(
+            RuntimeConfig(),
             "MCP_DYNAMIC_DISCOVERY_TIMEOUT",
             "not-a-number",
             action_policies=ActionPolicies(),
@@ -211,11 +218,12 @@ def test_set_refuses_a_value_the_model_rejects_before_writing(monkeypatch):
 def test_set_refuses_an_inline_secret(monkeypatch):
     written = []
     monkeypatch.setattr(
-        "arbora.core.settings.save_config_item",
-        lambda k, v: written.append((k, v)),
+        "arbora.core.settings.RuntimeConfig.save_item",
+        lambda _self, k, v: written.append((k, v)),
     )
     with pytest.raises(config_admin.ConfigAdminError) as exc:
         config_admin.set_value(
+            RuntimeConfig(),
             "OIDC_CLIENT_SECRET_REF",
             "aVeryRealClientSecret",
             action_policies=ActionPolicies(),
@@ -229,8 +237,8 @@ def test_set_refuses_an_inline_secret(monkeypatch):
 def test_set_denies_when_the_policy_gate_denies(monkeypatch):
     written = []
     monkeypatch.setattr(
-        "arbora.core.settings.save_config_item",
-        lambda k, v: written.append((k, v)),
+        "arbora.core.settings.RuntimeConfig.save_item",
+        lambda _self, k, v: written.append((k, v)),
     )
     monkeypatch.setattr(
         config_admin,
@@ -241,6 +249,7 @@ def test_set_denies_when_the_policy_gate_denies(monkeypatch):
         ),
     )
     result = config_admin.set_value(
+        RuntimeConfig(),
         "MCP_ALWAYS_LOAD",
         '["a-mcp"]',
         action_policies=ActionPolicies(),
@@ -273,8 +282,8 @@ def _allow_and_record_writes(monkeypatch) -> list:
     """Allow every config change and record each persisted ``(key, value)``."""
     written: list = []
     monkeypatch.setattr(
-        "arbora.core.settings.save_config_item",
-        lambda k, v: written.append((k, v)),
+        "arbora.core.settings.RuntimeConfig.save_item",
+        lambda _self, k, v: written.append((k, v)),
     )
     monkeypatch.setattr(
         config_admin,
@@ -293,6 +302,7 @@ def test_set_writes_through_the_standard_precedence_and_records_provenance(monke
         lambda key, **kw: provenance.append((key, kw)) or "configchange:1",
     )
     result = config_admin.set_value(
+        RuntimeConfig(),
         "MCP_ALWAYS_LOAD",
         '["tunnel-manager-mcp"]',
         reason="pin one server",
@@ -317,7 +327,9 @@ def test_bug065_set_reports_process_scoped_field_not_fleet_wide_applied_live(
     to `applied_in_this_process`; the old, overclaiming name must not
     reappear in the response, and `restart_required` (already honestly
     process-scoped) is unchanged."""
-    monkeypatch.setattr("arbora.core.settings.save_config_item", lambda k, v: None)
+    monkeypatch.setattr(
+        "arbora.core.settings.RuntimeConfig.save_item", lambda _self, k, v: None
+    )
     monkeypatch.setattr(
         config_admin,
         "_gate",
@@ -329,6 +341,7 @@ def test_bug065_set_reports_process_scoped_field_not_fleet_wide_applied_live(
     )
 
     result = config_admin.set_value(
+        RuntimeConfig(),
         "MCP_ALWAYS_LOAD",
         '["tunnel-manager-mcp"]',
         action_policies=ActionPolicies(),
@@ -345,8 +358,8 @@ def test_set_can_change_the_always_load_declaration(monkeypatch):
     modifiable through an MCP tool."""
     written = {}
     monkeypatch.setattr(
-        "arbora.core.settings.save_config_item",
-        lambda k, v: written.__setitem__(k, v),
+        "arbora.core.settings.RuntimeConfig.save_item",
+        lambda _self, k, v: written.__setitem__(k, v),
     )
     monkeypatch.setattr(
         config_admin,
@@ -356,6 +369,7 @@ def test_set_can_change_the_always_load_declaration(monkeypatch):
     monkeypatch.setattr(config_admin, "_record_provenance", lambda key, **kw: None)
 
     config_admin.set_value(
+        RuntimeConfig(),
         "MCP_ALWAYS_LOAD_TOOLS",
         '["github-mcp:github_issues"]',
         action_policies=ActionPolicies(),
@@ -370,6 +384,7 @@ def test_a_failed_provenance_write_does_not_undo_an_applied_change(monkeypatch):
     a change the operator was authorised to make and which is already durable."""
     written = _allow_and_record_writes(monkeypatch)
     result = config_admin.set_value(
+        RuntimeConfig(),
         "MCP_ALWAYS_LOAD",
         '["a-mcp"]',
         action_policies=ActionPolicies(),
@@ -402,6 +417,7 @@ def test_reload_names_the_fields_that_still_need_a_restart(monkeypatch):
 async def test_dispatch_refuses_an_unknown_action():
     with pytest.raises(config_admin.ConfigAdminError) as exc:
         await config_admin.dispatch(
+            RuntimeConfig(),
             "delete_everything",
             action_policies=ActionPolicies(),
             engine_provider=lambda: None,
@@ -426,7 +442,10 @@ async def test_dispatch_reload_notifies_the_served_catalog_authority(monkeypatch
     monkeypatch.setattr(shared_multiplexer, "run_on_served_multiplexer", run_on)
 
     result = await config_admin.dispatch(
-        "reload", action_policies=ActionPolicies(), engine_provider=lambda: None
+        RuntimeConfig(),
+        "reload",
+        action_policies=ActionPolicies(),
+        engine_provider=lambda: None,
     )
 
     assert result["catalog"] == {
@@ -450,7 +469,10 @@ async def test_dispatch_reload_reports_no_reconcile_without_a_served_authority(
     shared_multiplexer._reset_served_multiplexer_for_tests()
 
     result = await config_admin.dispatch(
-        "reload", action_policies=ActionPolicies(), engine_provider=lambda: None
+        RuntimeConfig(),
+        "reload",
+        action_policies=ActionPolicies(),
+        engine_provider=lambda: None,
     )
 
     assert result["catalog"]["reconciled"] is False

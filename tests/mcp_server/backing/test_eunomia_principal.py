@@ -8,6 +8,8 @@ import pytest
 from eunomia_core import schemas
 from fastmcp.server.middleware import MiddlewareContext
 
+from arbora.core.settings import RuntimeConfig
+
 
 def _policy(tmp_path):
     path = tmp_path / "policy.json"
@@ -54,7 +56,7 @@ def test_verified_principal_overrides_spoofed_headers(tmp_path, monkeypatch):
     from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
     middleware = create_eunomia_middleware(
-        _policy(tmp_path), require_verified_principal=True
+        _policy(tmp_path), require_verified_principal=True, config=RuntimeConfig()
     )
     monkeypatch.setattr(
         "arbora.mcp_server.backing.eunomia_principal.get_http_headers",
@@ -82,7 +84,7 @@ def test_authenticated_mode_fails_closed_without_token(tmp_path, monkeypatch):
     from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
     middleware = create_eunomia_middleware(
-        _policy(tmp_path), require_verified_principal=True
+        _policy(tmp_path), require_verified_principal=True, config=RuntimeConfig()
     )
     monkeypatch.setattr(
         "arbora.mcp_server.backing.eunomia_principal.get_http_headers",
@@ -99,7 +101,7 @@ def test_authenticated_mode_fails_closed_without_token(tmp_path, monkeypatch):
 def test_local_stdio_mode_can_use_bounded_header_identity(tmp_path, monkeypatch):
     from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
-    middleware = create_eunomia_middleware(_policy(tmp_path))
+    middleware = create_eunomia_middleware(_policy(tmp_path), config=RuntimeConfig())
     monkeypatch.setattr(
         "arbora.mcp_server.backing.eunomia_principal.get_http_headers",
         lambda: {"x-agent-id": "allowed-agent", "user-agent": "local-client"},
@@ -115,7 +117,7 @@ def test_local_stdio_mode_can_use_bounded_header_identity(tmp_path, monkeypatch)
 async def test_embedded_policy_default_deny_and_allow(tmp_path):
     from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
-    middleware = create_eunomia_middleware(_policy(tmp_path))
+    middleware = create_eunomia_middleware(_policy(tmp_path), config=RuntimeConfig())
     assert (await middleware._eunomia.check(_request())).allowed is True
     assert (
         await middleware._eunomia.check(_request("agent:not-allowed"))
@@ -125,7 +127,7 @@ async def test_embedded_policy_default_deny_and_allow(tmp_path):
 def test_resource_projection_never_contains_argument_values(tmp_path):
     from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
-    middleware = create_eunomia_middleware(_policy(tmp_path))
+    middleware = create_eunomia_middleware(_policy(tmp_path), config=RuntimeConfig())
     context = MiddlewareContext(
         message=SimpleNamespace(
             arguments={"api_key": "secret-value", "query": "personal-content"}
@@ -146,7 +148,7 @@ def test_policy_file_is_bounded(tmp_path):
     path = tmp_path / "oversize.json"
     path.write_bytes(b" " * (1024 * 1024 + 1))
     with pytest.raises(ValueError, match="limit|bounded"):
-        create_eunomia_middleware(str(path))
+        create_eunomia_middleware(str(path), config=RuntimeConfig())
 
 
 def test_remote_plaintext_requires_explicit_exception():
@@ -156,6 +158,7 @@ def test_remote_plaintext_requires_explicit_exception():
         create_eunomia_middleware(
             use_remote_eunomia=True,
             eunomia_endpoint="http://policy.example",
+            config=RuntimeConfig(),
         )
 
 
@@ -181,6 +184,7 @@ async def test_remote_bridge_uses_bounded_native_transport(monkeypatch):
         eunomia_endpoint="https://policy.example/base",
         api_key_ref="env://TEST_EUNOMIA_KEY",
         transport=httpx.MockTransport(handler),
+        config=RuntimeConfig(),
     )
     remote = middleware._eunomia._bridge
     raw = await remote._post(
@@ -203,6 +207,7 @@ async def test_remote_response_misalignment_fails_closed():
         use_remote_eunomia=True,
         eunomia_endpoint="https://policy.example",
         transport=httpx.MockTransport(lambda request: httpx.Response(200, json=[])),
+        config=RuntimeConfig(),
     )
     responses = await middleware._eunomia.bulk_check([_request(), _request()])
     assert len(responses) == 2
@@ -242,7 +247,7 @@ async def test_listing_hides_only_invalid_component_identity(tmp_path, monkeypat
 
     from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
-    middleware = create_eunomia_middleware(_policy(tmp_path))
+    middleware = create_eunomia_middleware(_policy(tmp_path), config=RuntimeConfig())
     monkeypatch.setattr(
         middleware,
         "_extract_principal",
@@ -260,7 +265,7 @@ async def test_listing_hides_only_invalid_component_identity(tmp_path, monkeypat
 async def test_listing_still_applies_policy_to_valid_names(tmp_path, monkeypatch):
     from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 
-    middleware = create_eunomia_middleware(_policy(tmp_path))
+    middleware = create_eunomia_middleware(_policy(tmp_path), config=RuntimeConfig())
     monkeypatch.setattr(
         middleware,
         "_extract_principal",

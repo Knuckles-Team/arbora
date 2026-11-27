@@ -10,6 +10,7 @@ from fastmcp import FastMCP
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.arbora_surface import register_arbora_surface
 from arbora.mcp_server.host_caches import HostCaches
@@ -51,6 +52,7 @@ def _register(caches: HostCaches) -> None:
         engine_provider=lambda: None,
         intent_tools=False,
         health=build_health_state(),
+        config=RuntimeConfig(),
     )
 
 

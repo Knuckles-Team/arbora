@@ -20,6 +20,7 @@ from arbora.api.domain.mcp_server.backing import engine_routing
 from arbora.api.errors import not_served
 from arbora.api.evidence import EvidenceBundle
 from arbora.core.environment import read_env, read_text
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.host_caches import AnalysisCore, ToolTable
 from arbora.mcp_server.legacy_action_invoke import invoke_legacy_action
 from arbora.observability.state import HealthState
@@ -117,14 +118,13 @@ def _last_declaration_named(declarations: Any, name: str) -> dict[str, Any] | No
     return found
 
 
-def _configured_external_graph_declaration(name: str) -> dict[str, Any]:
+def _configured_external_graph_declaration(
+    name: str, config: RuntimeConfig
+) -> dict[str, Any]:
     """Resolve one reference-only declaration without returning it publicly."""
-
-    from arbora.core.settings import runtime_config
-
     collections = (
-        getattr(runtime_config, "external_graph_connectors", []) or [],
-        getattr(runtime_config, "kg_connections", []) or [],
+        getattr(config, "external_graph_connectors", []) or [],
+        getattr(config, "kg_connections", []) or [],
     )
     selected: dict[str, Any] = {}
     for declarations in collections:
@@ -656,13 +656,13 @@ def _configure_action_register_mcp(action, config_key, config_value):
     )
 
 
-def _configure_add_connection_default_spec(config_key):
+def _configure_add_connection_default_spec(config_key, config):
     # extracted from 'add_connection' (CX-AU-03: split for CCN). AgentConfig
     # is the reference-only declarative plane; an operator may activate one
     # of those declarations by alias without copying any profile reference
     # into MCP arguments or traces. Returns (spec, error_json_or_None).
     try:
-        candidate = _configured_external_graph_declaration(config_key)
+        candidate = _configured_external_graph_declaration(config_key, config)
     except Exception as exc:
         logger.warning("configure action failed", exc_info=True)
         return {}, json.dumps(
@@ -678,7 +678,7 @@ def _configure_add_connection_default_spec(config_key):
     return {}, None
 
 
-def _configure_add_connection_spec(action, config_key, config_value, registry):
+def _configure_add_connection_spec(action, config_key, config_value, registry, config):
     # action(s): 'add_connection'
     try:
         spec = json.loads(config_value) if config_value else {}
@@ -699,7 +699,7 @@ def _configure_add_connection_spec(action, config_key, config_value, registry):
             }
         )
     if not spec:
-        spec, err = _configure_add_connection_default_spec(config_key)
+        spec, err = _configure_add_connection_default_spec(config_key, config)
         if err:
             return err
     if not spec:
@@ -722,13 +722,11 @@ def _configure_add_connection_spec(action, config_key, config_value, registry):
     )
 
 
-def _configure_remove_connection(action, config_key, registry):
+def _configure_remove_connection(action, config_key, registry, config):
     # action(s): 'remove_connection'
     removed = registry.remove(config_key)
     if removed:
-        from arbora.core.settings import save_config_item
-
-        save_config_item("kg_connections", registry.export_specs())
+        config.save_item("kg_connections", registry.export_specs())
     return json.dumps(
         {
             "status": "success" if removed else "not_found",
@@ -739,7 +737,7 @@ def _configure_remove_connection(action, config_key, registry):
     )
 
 
-def _configure_action_add_connection(action, config_key, config_value):
+def _configure_action_add_connection(config, action, config_key, config_value):
     # action(s): 'add_connection', 'remove_connection', 'list_connections'
     registry = engine_routing.get_connection_registry()
     if action == "list_connections":
@@ -750,10 +748,10 @@ def _configure_action_add_connection(action, config_key, config_value):
         )
     if action == "add_connection":
         return _configure_add_connection_spec(
-            action, config_key, config_value, registry
+            action, config_key, config_value, registry, config
         )
     if action == "remove_connection":
-        return _configure_remove_connection(action, config_key, registry)
+        return _configure_remove_connection(action, config_key, registry, config)
     return None
 
 
@@ -785,7 +783,7 @@ def _configure_mapping_approve_status(action, config_key, config_value, registry
     return _configure_mapping_approve(config_key, config_value, store)
 
 
-def _configure_mapping_ingest(action, config_key, config_value, registry):
+def _configure_mapping_ingest(action, config_key, config_value, registry, config):
     # action(s): 'ingest_connection'
     try:
         options = json.loads(config_value) if config_value else {}
@@ -794,7 +792,7 @@ def _configure_mapping_ingest(action, config_key, config_value, registry):
     if not isinstance(options, dict):
         return json.dumps({"error": "config_value must be a JSON object"})
     try:
-        _configured_external_graph_declaration(config_key)
+        _configured_external_graph_declaration(config_key, config)
     except Exception as exc:
         logger.warning("configure action failed", exc_info=True)
         return json.dumps(
@@ -1078,7 +1076,9 @@ def _configure_mapping_profile_flow(action, config_key, config_value, registry):
     )
 
 
-def _configure_action_approve_connection_mapping(action, config_key, config_value):
+def _configure_action_approve_connection_mapping(
+    config, action, config_key, config_value
+):
     # action(s): 'approve_connection_mapping', 'connection_mapping_status', 'discover_connection_schema', 'external_graph_doctor', 'profile_connection', 'ingest_connection', 'propose_connection_mapping'
     if not config_key:
         return json.dumps(
@@ -1093,7 +1093,9 @@ def _configure_action_approve_connection_mapping(action, config_key, config_valu
             action, config_key, config_value, registry
         )
     if action == "ingest_connection":
-        return _configure_mapping_ingest(action, config_key, config_value, registry)
+        return _configure_mapping_ingest(
+            action, config_key, config_value, registry, config
+        )
     return _configure_mapping_profile_flow(action, config_key, config_value, registry)
 
 
@@ -1315,16 +1317,6 @@ _CONFIGURE_ACTION_DISPATCH = {
     "set_secret": _configure_action_set_secret,
     "vault_sync": _configure_action_vault_sync,
     "register_mcp": _configure_action_register_mcp,
-    "add_connection": _configure_action_add_connection,
-    "remove_connection": _configure_action_add_connection,
-    "list_connections": _configure_action_add_connection,
-    "approve_connection_mapping": _configure_action_approve_connection_mapping,
-    "connection_mapping_status": _configure_action_approve_connection_mapping,
-    "discover_connection_schema": _configure_action_approve_connection_mapping,
-    "external_graph_doctor": _configure_action_approve_connection_mapping,
-    "profile_connection": _configure_action_approve_connection_mapping,
-    "ingest_connection": _configure_action_approve_connection_mapping,
-    "propose_connection_mapping": _configure_action_approve_connection_mapping,
     "mirror_status": _configure_action_mirror_status,
     "reconcile": _configure_action_mirror_status,
     "push_to_stardog": _configure_action_legacy_backend_removed,
@@ -1348,13 +1340,41 @@ _CONFIGURE_ACTION_DISPATCH = {
 
 
 def register_analysis_tools(
-    mcp, tools: ToolTable, core: AnalysisCore, health: HealthState
+    mcp,
+    tools: ToolTable,
+    core: AnalysisCore,
+    health: HealthState,
+    config: RuntimeConfig,
 ):
     """Register the analysis_tools group on the given FastMCP server."""
 
     configure_dispatch = {
         **_CONFIGURE_ACTION_DISPATCH,
         "health": partial(_configure_action_health, health),
+        "add_connection": partial(_configure_action_add_connection, config),
+        "remove_connection": partial(_configure_action_add_connection, config),
+        "list_connections": partial(_configure_action_add_connection, config),
+        "approve_connection_mapping": partial(
+            _configure_action_approve_connection_mapping, config
+        ),
+        "connection_mapping_status": partial(
+            _configure_action_approve_connection_mapping, config
+        ),
+        "discover_connection_schema": partial(
+            _configure_action_approve_connection_mapping, config
+        ),
+        "external_graph_doctor": partial(
+            _configure_action_approve_connection_mapping, config
+        ),
+        "profile_connection": partial(
+            _configure_action_approve_connection_mapping, config
+        ),
+        "ingest_connection": partial(
+            _configure_action_approve_connection_mapping, config
+        ),
+        "propose_connection_mapping": partial(
+            _configure_action_approve_connection_mapping, config
+        ),
     }
 
     async def _run_analysis_action(

@@ -126,14 +126,12 @@ def test_config_document_round_trips_structured_values(tmp_path) -> None:
     assert cfg.extra_headers == {"X": "1"}
 
 
-def test_save_config_item_writes_structured_values_as_json_text(
-    home, monkeypatch
-) -> None:
+def test_save_item_writes_structured_values_as_json_text(home, monkeypatch) -> None:
     import json
 
-    # save_config_item also sets os.environ; record the key for undo.
+    # save_item also sets os.environ; record the key for undo.
     monkeypatch.setenv("MCP_ALWAYS_LOAD", "")
-    settings.save_config_item("MCP_ALWAYS_LOAD", ["graph", "fleet"])
+    settings.RuntimeConfig().save_item("MCP_ALWAYS_LOAD", ["graph", "fleet"])
     path = home / "arbora" / "config.json"
 
     assert json.loads(path.read_text())["MCP_ALWAYS_LOAD"] == '["graph","fleet"]'

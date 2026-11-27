@@ -32,6 +32,7 @@ from typing import Any
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing._arbora_action_manifest import ARBORA_ACTIONS
 from arbora.mcp_server.backing.intent_contract import operation_id
 from arbora.mcp_server.backing.tool_specs import INTENT_VERBS
@@ -230,6 +231,7 @@ def arbora_registrars(
     caches: HostCaches,
     engine_provider: Callable[[], Any],
     health: HealthState,
+    config: RuntimeConfig,
 ) -> list[Any]:
     """The action-routed registrars that populate the dispatch core.
 
@@ -252,7 +254,7 @@ def arbora_registrars(
     return [
         bound(au_tools.register_query_tools, engine_provider),
         bound(au_tools.register_write_ingest_tools, engine_provider),
-        bound(au_tools.register_analysis_tools, caches.analysis, health),
+        bound(au_tools.register_analysis_tools, caches.analysis, health, config),
         bound(au_tools.register_analyze_suite_tools, caches.analysis),
         bound(au_tools.register_state_tools, engine_provider),
         bound(au_tools.register_ontology_tools, engine_provider),
@@ -266,12 +268,14 @@ def arbora_registrars(
         (
             "config",
             "CONFIGTOOL",
-            bound(au_tools.register_config_tools, action_policies, engine_provider),
+            bound(
+                au_tools.register_config_tools, action_policies, engine_provider, config
+            ),
         ),
         bound(au_tools.register_engine_tools),
         bound(au_tools.register_engine_surface_tools, include_unserved_mining=False),
         bound(au_tools.register_domain_ops_tools, engine_provider),
-        bound(au_tools.register_governance_tools, approvals, engine_provider),
+        bound(au_tools.register_governance_tools, approvals, engine_provider, config),
         bound(au_tools.register_audit_tools, engine_provider),
         bound(au_tools.register_epistemic_tools),
         bound(au_tools.register_compliance_tools, engine_provider),
@@ -310,6 +314,7 @@ def register_arbora_surface(
     caches: HostCaches,
     engine_provider: Callable[[], Any],
     health: HealthState,
+    config: RuntimeConfig,
     canonical: bool = False,
     intent_tools: bool = True,
 ) -> Any:
@@ -332,7 +337,7 @@ def register_arbora_surface(
     register_backing_tools(
         backing,
         registrars=arbora_registrars(
-            action_policies, approvals, caches, engine_provider, health
+            action_policies, approvals, caches, engine_provider, health, config
         ),
         force_registration=canonical,
     )
