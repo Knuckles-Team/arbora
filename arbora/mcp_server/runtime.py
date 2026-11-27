@@ -886,9 +886,7 @@ def _build_server(
         # A gate the pinned engine cannot serve is named, never silent; it never gates
         # readiness, because refusing every call on the pin would halt the system.
         body.update(ready_report())
-        from arbora.mcp_server.catalog_warmup import catalog_state
-
-        catalog = catalog_state()
+        catalog = host.caches.warmup.state()
         if catalog is not None:
             # Reported, never gating (ARBORA-FLEET-R078): arbora serves while
             # the catalog warms; requests that need it refuse retryably.

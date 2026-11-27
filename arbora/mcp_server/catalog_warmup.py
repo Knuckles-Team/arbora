@@ -20,7 +20,9 @@ import time
 from collections.abc import Callable, Coroutine
 from typing import Any, Literal
 
-__all__ = ["CatalogWarmup", "catalog_state", "start_catalog_warmup"]
+from arbora.mcp_server.host_caches import WarmupSlot
+
+__all__ = ["CatalogWarmup", "start_catalog_warmup"]
 
 logger = logging.getLogger(__name__)
 
@@ -134,23 +136,15 @@ class CatalogWarmup:
         self._stop.set()
 
 
-_CURRENT: list[CatalogWarmup | None] = [None]
-
-
-def catalog_state() -> dict[str, Any] | None:
-    """The process catalog warm-up state, or ``None`` before boot starts it."""
-    current = _CURRENT[0]
-    return None if current is None else current.state()
-
-
 def start_catalog_warmup(
+    slot: WarmupSlot,
     compose: Callable[[], Coroutine[Any, Any, Any]],
     *,
     after: Callable[[], None] | None = None,
     reestablish: Callable[[], None] | None = None,
 ) -> CatalogWarmup:
-    """Start the one process warm-up and make it the reported state."""
+    """Start the host's warm-up and make it the state ``slot`` reports."""
     warmup = CatalogWarmup(compose, after=after, reestablish=reestablish)
-    _CURRENT[0] = warmup
+    slot.bind(warmup)
     warmup.start()
     return warmup

@@ -34,7 +34,7 @@ from arbora.mcp_server.backing.tools._surface_selection import (
     register_conditional_tools,
 )
 from arbora.mcp_server.backing.tools.analysis_tools import execute_focused_analysis
-from arbora.mcp_server.host_caches import ToolTable
+from arbora.mcp_server.host_caches import AnalysisCore, ToolTable
 
 _OptionalNodeId = Annotated[str, Field(description="Optional node id.")]
 _OptionalDepth = Annotated[int, Field(description="Optional depth.")]
@@ -42,7 +42,11 @@ _OptionalTarget = Annotated[str, Field(description="Optional target.")]
 
 
 def register_analyze_suite_tools(
-    mcp: Any, tools: ToolTable, *, include_unserved_research: bool = False
+    mcp: Any,
+    tools: ToolTable,
+    core: AnalysisCore,
+    *,
+    include_unserved_research: bool = False,
 ) -> None:
     """Register the focused analyze-suite tools on the FastMCP server."""
 
@@ -50,6 +54,7 @@ def register_analyze_suite_tools(
         action: str, query: str, top_k: int, node_id: str, depth: int, target: str
     ) -> Any:
         return await execute_focused_analysis(
+            core,
             action=action,
             query=query,
             top_k=top_k,

@@ -21,6 +21,7 @@ from arbora.mcp_server.composition import (
     install_gateway_application,
     start_composed_services,
 )
+from arbora.mcp_server.host_caches import WarmupSlot
 from arbora.mcp_server.host_context import (
     HostContext,
     bind_a2a_decision,
@@ -307,6 +308,7 @@ def _register_resident_surface(
 
 
 def _start_catalog_warmup(
+    slot: WarmupSlot,
     engine: Any,
     session: Any,
     reader: Any,
@@ -365,7 +367,7 @@ def _start_catalog_warmup(
 
         _refresh_process_authority(session)
 
-    return start_catalog_warmup(compose, after=onboard, reestablish=reestablish)
+    return start_catalog_warmup(slot, compose, after=onboard, reestablish=reestablish)
 
 
 def mcp_server(
@@ -588,6 +590,7 @@ def mcp_server(
             # failing engine call is retried there and never exits the process.
             # Fleet onboarding starts once the catalog is ready.
             catalog_warmup = _start_catalog_warmup(
+                host_context.caches.warmup,
                 host_context.engine.served(),
                 bootstrap_session,
                 fleet_catalog_reader,

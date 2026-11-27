@@ -35,7 +35,7 @@ from arbora.access.approval import ApprovalDecisions
 from arbora.mcp_server.backing._arbora_action_manifest import ARBORA_ACTIONS
 from arbora.mcp_server.backing.intent_contract import operation_id
 from arbora.mcp_server.backing.tool_specs import INTENT_VERBS
-from arbora.mcp_server.host_caches import HostCaches, ToolTable
+from arbora.mcp_server.host_caches import HostCaches
 
 #: Routing group whose operations are the raw engine namespaces (their
 #: per-domain ADMIN scope policy is enforced by ``engine_tools``).
@@ -226,7 +226,7 @@ def host_operations(mcp: Any) -> Mapping[str, tuple[str, str | None]]:
 def arbora_registrars(
     action_policies: ActionPolicies,
     approvals: ApprovalDecisions,
-    tools: ToolTable,
+    caches: HostCaches,
     engine_provider: Callable[[], Any],
 ) -> list[Any]:
     """The action-routed registrars that populate the dispatch core.
@@ -238,6 +238,8 @@ def arbora_registrars(
     """
     from arbora.mcp_server.backing import tools as au_tools
 
+    tools = caches.tools
+
     def bound(register: Any, *extra: Any, **options: Any) -> Any:
         def registrar(server: Any) -> None:
             register(server, tools, *extra, **options)
@@ -248,8 +250,8 @@ def arbora_registrars(
     return [
         bound(au_tools.register_query_tools, engine_provider),
         bound(au_tools.register_write_ingest_tools, engine_provider),
-        bound(au_tools.register_analysis_tools),
-        bound(au_tools.register_analyze_suite_tools),
+        bound(au_tools.register_analysis_tools, caches.analysis),
+        bound(au_tools.register_analyze_suite_tools, caches.analysis),
         bound(au_tools.register_state_tools, engine_provider),
         bound(au_tools.register_ontology_tools, engine_provider),
         bound(au_tools.register_reach_tools, engine_provider),
@@ -327,7 +329,7 @@ def register_arbora_surface(
     register_backing_tools(
         backing,
         registrars=arbora_registrars(
-            action_policies, approvals, caches.tools, engine_provider
+            action_policies, approvals, caches, engine_provider
         ),
         force_registration=canonical,
     )

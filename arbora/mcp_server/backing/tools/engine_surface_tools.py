@@ -273,13 +273,6 @@ def _checkpoint_store(graph: str) -> Any:
     raise not_served("kvcache.checkpoint", "MEDULLA-DURABLE-KERNEL-R800")
 
 
-#: Process-lifetime RAM tier shared by every ``graph_kv_checkpoint`` call
-#: (CONCEPT:MERISTEM-KG.memory.checkpoint-worthiness-scoring). It MUST outlive a single tool
-#: invocation — "checkpoint to RAM, then decide later whether to persist" is the whole
-#: point of the tier — so it is built once and reused, not per call.
-_RAM_CHECKPOINT_STORE: Any | None = None
-
-
 def _checkpoint_manager(graph: str) -> Any:
     """Build a :class:`~meristem.kvcache.TieredCheckpointManager` over the shared
     RAM tier, binding the durable tier when the engine is reachable.
@@ -288,7 +281,6 @@ def _checkpoint_manager(graph: str) -> Any:
     RAM-only and every promotion is refused with that reason, which is the correct
     degrade for a checkpoint layer whose default tier is RAM anyway.
     """
-    global _RAM_CHECKPOINT_STORE
     raise not_served("kvcache.tiering", "MEDULLA-DURABLE-KERNEL-R800")
 
 

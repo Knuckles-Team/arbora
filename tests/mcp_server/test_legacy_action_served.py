@@ -28,7 +28,7 @@ from arbora.api.registry import (
 )
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools import analysis_tools, write_ingest_tools
-from arbora.mcp_server.host_caches import ToolTable
+from arbora.mcp_server.host_caches import AnalysisCore, ToolTable
 from arbora.mcp_server.legacy_action_invoke import invoke_legacy_action
 from arbora.mcp_server.legacy_action_mapping import (
     APPROVED_ACTION_MAPPING,
@@ -173,8 +173,11 @@ async def test_mapped_and_retired_actions_over_mcp(monkeypatch) -> None:
 async def test_analysis_action_runs_through_invoke_as_the_caller(monkeypatch) -> None:
     served, audit = _serve(monkeypatch)
     server = FastMCP("legacy-analysis-served")
-    analysis_tools.register_analysis_tools(server, ToolTable())
-    bundle = await analysis_tools.execute_focused_analysis("inspect", target="node-1")
+    core = AnalysisCore()
+    analysis_tools.register_analysis_tools(server, ToolTable(), core)
+    bundle = await analysis_tools.execute_focused_analysis(
+        core, "inspect", target="node-1"
+    )
     assert served.calls == [
         (
             "ontology.inspect",
