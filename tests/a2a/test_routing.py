@@ -166,3 +166,33 @@ def test_an_abstention_is_read_from_the_family_reason_code_only() -> None:
             _router(Odd({})).route(_message(agent_name="g"), context_budget_tokens=None)
         )
     assert refused.value.reason == "A2A_ROUTE_UNAVAILABLE"
+
+
+@pytest.mark.spec("ARBORA-A2A-R017.1")
+def test_route_decision_carries_the_library_tool_refs_as_candidates() -> None:
+    known = {
+        "model_profile_ref": "profile:one",
+        "task_class": "task:chat",
+        "tool_refs": ["tool:search", "tool:read"],
+    }
+    routed = asyncio.run(
+        _router(Engine({"g": known})).route(
+            _message(agent_name="g"), context_budget_tokens=4_096
+        )
+    )
+    assert routed.tool_refs == ("tool:search", "tool:read")
+    # A malformed, duplicated or oversized list reads as absent, never as a subset.
+    for bad in (["tool:a", "tool:a"], ["", "x"], [1], "tool:a", ["t"] * 65):
+        odd = Engine({"g": {**known, "tool_refs": bad}})
+        routed = asyncio.run(
+            _router(odd).route(_message(agent_name="g"), context_budget_tokens=4_096)
+        )
+        assert routed.tool_refs == ()
+    # An engine that seals no refs (the pinned release) leaves the field empty.
+    bare = {k: v for k, v in known.items() if k != "tool_refs"}
+    routed = asyncio.run(
+        _router(Engine({"g": bare})).route(
+            _message(agent_name="g"), context_budget_tokens=4_096
+        )
+    )
+    assert routed.tool_refs == ()

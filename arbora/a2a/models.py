@@ -250,6 +250,9 @@ class A2ARouteDecision(_WireModel):
     #: Read from the routed agent's capability record (ARBORA-A2A-R016.5).
     model_profile_ref: str | None = Field(default=None, min_length=1, max_length=512)
     task_class: str | None = Field(default=None, min_length=1, max_length=512)
+    #: The routed agent's library tool refs, declared as the harness candidates
+    #: (ARBORA-A2A-R017.1). Empty until the route answer carries them.
+    tool_refs: tuple[str, ...] = Field(default=(), max_length=64)
 
     @field_validator("selected_tools")
     @classmethod

@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from arbora.a2a.application import create_a2a_application
 from arbora.a2a.authority import A2AIdempotencyConflict
-from arbora.a2a.models import A2ARouteDecision, A2ATask, A2ATaskStatus
+from arbora.a2a.models import A2AArtifact, A2ARouteDecision, A2ATask, A2ATaskStatus
 from arbora.a2a.service import A2AService
 
 
@@ -318,3 +318,154 @@ def test_json_rpc_refuses_plan_confirm_until_approval_exchange_exists() -> None:
     )
     assert invalid.status_code == 400
     assert invalid.json()["error"]["code"] == -32602
+
+
+# -- ARBORA-A2A-R022: critique-gated output release over the real route ---------------
+
+_OUTPUT = [
+    {
+        "artifactId": "reply",
+        "parts": [{"kind": "text", "text": "the generated answer"}],
+    }
+]
+
+
+def _held(task: A2ATask, **changes: Any) -> dict[str, Any]:
+    from arbora.a2a.critique_gate import output_digest
+
+    held: dict[str, Any] = {
+        "itemRef": "held:one",
+        "contentDigest": output_digest(task),
+        "engineDecisionRef": "dec:one",
+        "checklist": [{"id": "q1", "question": "Does the answer cite its source?"}],
+    }
+    held.update(changes)
+    return held
+
+
+class _Engine:
+    """A controlled held-item decider recording each question it is asked."""
+
+    def __init__(self, outcome: str = "admitted", reason: str | None = None) -> None:
+        self.outcome, self.reason = outcome, reason
+        self.asked: list[Any] = []
+
+    async def decide(self, request: Any, *, tenant: str) -> dict[str, Any] | None:
+        self.asked.append(request)
+        return {
+            "outcome": self.outcome,
+            "verdict_ref": "verdict:one",
+            **({"reason": self.reason} if self.reason else {}),
+        }
+
+
+def _gated_app(
+    engine: _Engine, metadata: dict[str, Any] | None, *, tamper: bool = False
+) -> tuple[TestClient, list[dict[str, Any]]]:
+    from types import SimpleNamespace
+
+    from arbora.a2a.held_item_admission import HeldItemAdmitter
+
+    audits: list[dict[str, Any]] = []
+
+    async def audit(entry: Any) -> None:
+        audits.append(dict(entry))
+
+    authority = Authority()
+    task = authority.task.model_copy(
+        update={"artifacts": [A2AArtifact.model_validate(a) for a in _OUTPUT]}
+    )
+    if metadata is not None:
+        held = _held(task, **metadata)
+        if tamper:
+            task = task.model_copy(
+                update={
+                    "artifacts": [
+                        A2AArtifact.model_validate(
+                            {**_OUTPUT[0], "parts": [{"kind": "text", "text": "x"}]}
+                        )
+                    ]
+                }
+            )
+        task = task.model_copy(update={"metadata": {"heldOutput": held}})
+    authority.task = task
+    chain = SimpleNamespace(held_items=HeldItemAdmitter(engine, audit))
+    app = create_a2a_application(
+        service=A2AService(authority=authority, router=Router()),
+        authenticator=Authenticator(),
+        approvals=chain,  # type: ignore[arg-type]
+    )
+    return TestClient(app), audits
+
+
+def _send(client: TestClient) -> Any:
+    return client.post(
+        "/a2a",
+        headers={"Authorization": "Bearer verified", "Idempotency-Key": "send-key"},
+        json={
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "message/send",
+            "params": {
+                "message": {
+                    "role": "user",
+                    "parts": [{"kind": "text", "text": "do work"}],
+                    "messageId": "m-1",
+                }
+            },
+        },
+    )
+
+
+@pytest.mark.spec("ARBORA-A2A-R022")
+def test_send_message_holds_output_until_bound_critique_passes() -> None:
+    engine = _Engine()
+    client, audits = _gated_app(engine, {})
+    body = _send(client).json()
+    # Only an admitted verdict bound to this exact output releases the reply.
+    assert body["result"]["artifacts"][0]["parts"][0]["text"] == "the generated answer"
+    assert body["result"]["metadata"]["critique"] == {
+        "outcome": "admitted",
+        "verdictRef": "verdict:one",
+    }
+    [asked] = engine.asked
+    assert asked.item_kind == "run_output_proposal" and asked.item_ref == "held:one"
+    assert asked.engine_decision_ref == "dec:one"
+    # The one ApprovalChain admitter records its audit entry before and after.
+    assert [a["verdict_ref"] for a in audits] == ["", "verdict:one"]
+
+
+@pytest.mark.spec("ARBORA-A2A-R022")
+def test_send_message_rejects_untyped_preflight_and_failed_critique() -> None:
+    def refused(response: Any) -> str:
+        body = response.json()
+        assert "result" not in body, "a held output must send nothing"
+        assert body["error"]["code"] == -32011
+        return str(body["error"]["data"]["reason"])
+
+    # No typed preflight: nothing is asked of the engine and the output stays held.
+    engine = _Engine()
+    client, _ = _gated_app(engine, None)
+    assert refused(_send(client)) == "POLICY_EVIDENCE_MISSING"
+    # An empty checklist is untyped.
+    client, _ = _gated_app(engine, {"checklist": []})
+    assert refused(_send(client)) == "POLICY_EVIDENCE_MISSING"
+    # A verdict bound to a different digest than the output being sent.
+    client, _ = _gated_app(engine, {}, tamper=True)
+    assert refused(_send(client)) == "DIGEST_MISMATCH"
+    assert engine.asked == []
+    # The engine rejects, or abstains: the output stays held.
+    rejected = _Engine("rejected", "RETIRED")
+    client, audits = _gated_app(rejected, {})
+    assert refused(_send(client)) == "RETIRED"
+    assert audits[-1]["reason"] == "RETIRED"
+    client, _ = _gated_app(_Engine("abstained"), {})
+    assert refused(_send(client)) == "ABSTAINED"
+
+    # An engine that answers nothing is missing policy evidence, never a release.
+    class Silent(_Engine):
+        async def decide(self, request: Any, *, tenant: str) -> None:
+            return None
+
+    client, _ = _gated_app(Silent(), {})
+    assert refused(_send(client)) == "POLICY_EVIDENCE_MISSING"

@@ -22,6 +22,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from collections.abc import Callable, Mapping, Sequence
+from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
@@ -173,6 +174,7 @@ class ToolTaskConsumer:
         emit: Callable[[str, Mapping[str, Any]], None] | None = None,
         poll_interval_s: float = DEFAULT_POLL_INTERVAL_S,
         reconcile_interval_s: float = DEFAULT_RECONCILE_INTERVAL_S,
+        scope: Callable[[], AbstractContextManager[Any]] = nullcontext,
     ) -> None:
         self._queue = queue
         self._fence = _ClaimFence(fence)
@@ -185,6 +187,7 @@ class ToolTaskConsumer:
         self._reconcile = _bounded(
             "reconcile_interval_s", reconcile_interval_s, _RECONCILE_RANGE
         )
+        self._scope = scope
         self._uncertain_at: dict[str, float] = {}
         self._task: asyncio.Task[None] | None = None
 
@@ -265,11 +268,16 @@ class ToolTaskConsumer:
             deliveries.append(_Delivery(carrier, run))
         return deliveries
 
+    def _poll_once(self) -> list[_Delivery]:
+        """One poll under the host's session scope, on the polling thread."""
+        with self._scope():
+            return self.run_once()
+
     async def run(self) -> None:
         """Poll until cancelled; one failed poll never ends the consumer."""
         while True:
             try:
-                await asyncio.to_thread(self.run_once)
+                await asyncio.to_thread(self._poll_once)
             except Exception:  # noqa: BLE001 - the next poll retries
                 self._emit("tool_task_poll_failed", {})
             await self._sleep(self._poll)

@@ -1043,6 +1043,7 @@ def _background_services(
     from arbora.agent_host.usage_ledger import LEDGER
 
     LEDGER.configure(callers)
+    started.extend(_tool_task_service(runtime, session, callers))
     if tick_s <= 0:
         return tuple(started)
     return (build_curator_scheduler(callers, SystemClock(), tick_s=tick_s), *started)
@@ -1087,6 +1088,53 @@ def _reclaim_service(
         emit=lambda event, fields: log.warning("%s %s", event, dict(fields)),
         poll_interval_s=poll,
     )
+
+
+def _tool_task_service(
+    runtime: Any,
+    session: Callable[[], Any],
+    callers: Any,
+    *,
+    sleep: Callable[[float], Any] | None = None,
+) -> tuple[Any, ...]:
+    """The tool-task consumer for this host (ARBORA-A2A-R002.2.3.2), or none.
+
+    One consumer starts per replica when the host composes the A2A service over an
+    engine. A host that serves A2A without the engine client starts none and reports
+    ``UNAVAILABLE`` on ``/ready``; a host that serves no A2A reports nothing.
+    ``ARBORA_A2A_TOOL_TASK_POLL_S`` of ``0`` turns the poll off.
+    """
+    from arbora.a2a.tool_task_host import (
+        HEALTH_PROBE,
+        LazyEngine,
+        build_tool_task_service,
+        unavailable_probe,
+    )
+    from arbora.core.settings import setting
+    from arbora.observability.runtime_health import register_health_probe
+
+    a2a = getattr(runtime, "bindings", {}).get("a2a")
+    if a2a is None:
+        return ()
+    authority = getattr(a2a, "authority", None)
+    poll = float(str(setting("ARBORA_A2A_TOOL_TASK_POLL_S", "2") or "") or 2)
+    reader = getattr(authority, "delegation_reader", None)
+    if authority is None or not hasattr(authority, "engine") or reader is None:
+        register_health_probe(HEALTH_PROBE, unavailable_probe)
+        return ()
+    if poll <= 0:
+        return ()
+    service = build_tool_task_service(
+        engine=LazyEngine(authority.engine),
+        tenant=str(session().tenant),
+        process_session=session,
+        invoke=callers.invoke,
+        read_delegation=reader,
+        poll_interval_s=poll,
+        **({"sleep": sleep} if sleep is not None else {}),
+    )
+    register_health_probe(HEALTH_PROBE, service.probe)
+    return (service,)
 
 
 def _push_service(

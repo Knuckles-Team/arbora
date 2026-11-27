@@ -211,6 +211,7 @@ def test_admission_makes_one_engine_call() -> None:
         "task_class": "task:chat",
         "budget_tokens": 4_096,
         "priority": "interactive",
+        "tool_refs": (),
     }
     assert inspect.iscoroutinefunction(admit_tool_subset)
 
@@ -338,3 +339,73 @@ def test_partial_or_stale_answer_refuses_never_trims() -> None:
     decider.answer = OSError("down")
     after = _admit(request(), decider)
     assert after.admitted is False and after.admitted_tools == ()
+
+
+def _harness_decider(sent: list[dict[str, Any]], **evidence: Any) -> Any:
+    async def decide(body: dict[str, Any]) -> Any:
+        sent.append(body)
+        principal = "principal:sha256:" + hashlib.sha256(b"person:one").hexdigest()
+        return {
+            "records": [
+                {
+                    "record_id": "record:harness:9",
+                    "record_digest": "sha256:" + DIGEST,
+                    "caller_principal": principal,
+                    "tenant_id": body["tenant_id"],
+                    "question": body["question"],
+                    "inputs": {"params": body["params"]},
+                    "answer": {
+                        "type": "harness_config",
+                        "value": {"answer": answer_json(), **evidence},
+                    },
+                }
+            ]
+        }
+
+    return EngineHarnessConfigDecider(
+        decide,
+        feature_schema=lambda tenant: {"features": []},
+        principal=lambda: "person:one",
+    )
+
+
+@pytest.mark.spec("ARBORA-A2A-R017.1")
+def test_routed_tool_refs_are_declared_as_the_harness_candidates() -> None:
+    sent: list[dict[str, Any]] = []
+    asyncio.run(
+        _harness_decider(sent).decide(
+            tenant="tenant:one",
+            model_profile_ref="profile:one",
+            task_class="task:chat",
+            budget_tokens=4_096,
+            priority="interactive",
+            tool_refs=("tool:search", "tool:read"),
+        )
+    )
+    [body] = sent
+    assert body["candidates"]["source"] == "declared"
+    assert {o["option_id"] for o in body["candidates"]["options"]} == {
+        "profile:one",
+        "tool:search",
+        "tool:read",
+    }
+
+
+@pytest.mark.spec("ARBORA-A2A-R020.2")
+def test_the_expiry_sealed_on_the_evidence_is_read_and_enforced() -> None:
+    sent: list[dict[str, Any]] = []
+    fields = {
+        "tenant": "tenant:one",
+        "model_profile_ref": "profile:one",
+        "task_class": "task:chat",
+        "budget_tokens": 4_096,
+        "priority": "interactive",
+    }
+    sealed = asyncio.run(_harness_decider(sent, expires_at_ms=5_000).decide(**fields))
+    assert sealed.expires_at_ms == 5_000
+    # The pinned engine seals none: nothing is read and no lifetime is invented.
+    assert asyncio.run(_harness_decider(sent).decide(**fields)).expires_at_ms is None
+    # A malformed expiry is a malformed record, not "never expires".
+    for bad in (-1, "soon", True):
+        with pytest.raises(ValueError):
+            asyncio.run(_harness_decider(sent, expires_at_ms=bad).decide(**fields))

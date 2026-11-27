@@ -240,6 +240,7 @@ class A2AService:
                 task_class=decision.task_class,
                 tenant=str(getattr(session, "tenant", "")),
                 priority=priority_for(SimpleNamespace(principal_kind=kind)),
+                tool_refs=decision.tool_refs,
             ),
             self.harness_decider,
         )

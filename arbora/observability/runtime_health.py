@@ -242,6 +242,15 @@ def _check_kg_host_daemon(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform
     return _bound_probe("kg_host_daemon", mandatory=False)
 
 
+def _check_tool_task_consumer(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
+    """The A2A tool-task consumer the host starts (ARBORA-A2A-R002.2.3.2).
+
+    Not configured for a host that serves no A2A; ``UNAVAILABLE`` for a host that
+    serves A2A without the engine client or before its consumer polls.
+    """
+    return _bound_probe("tool_task_consumer", mandatory=False)
+
+
 def _check_messaging(cfg: Any) -> dict[str, Any]:
     """Messaging co-service (Telegram/Slack/Mattermost/...) — configured iff any
     platform has credentials in the environment; healthy iff every configured
@@ -663,6 +672,7 @@ _CHECKS: tuple[tuple[str, Callable[[Any], dict[str, Any]]], ...] = (
     ("engine", _check_engine),
     ("source_provenance", _check_source_provenance),
     ("kg_host_daemon", _check_kg_host_daemon),
+    ("tool_task_consumer", _check_tool_task_consumer),
     ("messaging", _check_messaging),
     ("state_store", _check_state_store),
     ("connector_components", _check_connector_components),

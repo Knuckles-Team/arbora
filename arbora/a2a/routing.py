@@ -167,13 +167,14 @@ class OrchestratorA2ARouter:
             raise A2AAssemblyUnavailable(
                 "a2a route decision unavailable", "A2A_ROUTE_UNAVAILABLE"
             )
-        profile, task_class = _route_capability(record, chosen)
+        profile, task_class, tool_refs = _route_capability(record, chosen)
         return A2ARouteDecision(
             agent_name=chosen,
             selection_mode="a2a-route",
             decision_record_ref=str(record["record_id"]),
             model_profile_ref=profile,
             task_class=task_class,
+            tool_refs=tool_refs,
         )
 
 
@@ -199,14 +200,17 @@ def _abstention_codes(outcome: Mapping[str, Any]) -> list[str]:
 
 def _route_capability(
     record: Mapping[str, Any], chosen: str
-) -> tuple[str | None, str | None]:
-    """The routed agent's model profile and task class, when the record carries them.
+) -> tuple[str | None, str | None, tuple[str, ...]]:
+    """The routed agent's model profile, task class and tool refs, when sealed.
 
     PIN-LAG: engine ``main`` seals the route as ``outcome.scores[0].option_id`` only;
-    ``FamilyAnswer`` has no ``a2a_route`` variant. The requested typed answer is
+    ``FamilyAnswer`` has no ``a2a_route`` variant yet. The requested typed answer is
     ``record.answer = {type: "a2a_route", value: {graph_id, model_profile_ref,
-    task_class}}`` (OVERSTORY-GAPS, "MEDULLA FOR ARBORA (w14)"). Until the engine
-    seals it both are ``None`` and a budgeted message refuses closed.
+    task_class, tool_refs}}`` (OVERSTORY-GAPS, "MEDULLA FOR ARBORA (w14)"); every
+    value is read from the routed graph's library entry, never from the caller.
+    Until the engine seals it all three are empty and a budgeted message refuses
+    closed. ``tool_refs`` that are malformed read as absent, so the harness never
+    declares a ref the engine did not seal.
     """
     answer = record.get("answer")
     value = answer.get("value") if isinstance(answer, Mapping) else None
@@ -216,9 +220,22 @@ def _route_capability(
         or not isinstance(value, Mapping)
         or value.get("graph_id") != chosen
     ):
-        return None, None
+        return None, None, ()
     profile, task_class = value.get("model_profile_ref"), value.get("task_class")
     return (
         profile if isinstance(profile, str) and profile else None,
         task_class if isinstance(task_class, str) and task_class else None,
+        _tool_refs(value.get("tool_refs")),
     )
+
+
+def _tool_refs(raw: Any) -> tuple[str, ...]:
+    if not isinstance(raw, list) or len(raw) > _MAX_TOOL_REFS:
+        return ()
+    if any(not isinstance(ref, str) or not ref.strip() for ref in raw):
+        return ()
+    refs = tuple(raw)
+    return refs if len(set(refs)) == len(refs) else ()
+
+
+_MAX_TOOL_REFS = 64
