@@ -25,5 +25,8 @@ fallback is implied by this package description.
 from arbora.version import __version__
 
 from . import epistemic
+from .security.log_redaction import install_traceback_redaction
+
+install_traceback_redaction()
 
 __all__ = ["__version__", "epistemic"]
