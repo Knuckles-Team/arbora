@@ -91,6 +91,7 @@ def client(aggregator: _FakeAggregator) -> TestClient:
     return TestClient(app)
 
 
+@pytest.mark.spec("ARBORA-HOST-R019")
 def test_frontend_dashboard_paths_are_mounted() -> None:
     app = FastAPI()
     dashboard_api.register_dashboard_routes(app)

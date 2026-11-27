@@ -15,6 +15,7 @@ from tests.test_run_origin import session
 pytestmark = pytest.mark.spec("ARBORA-HOST-R039")
 
 
+@pytest.mark.spec("ARBORA-HOST-R039.1")
 def test_two_host_contexts_share_no_module_state() -> None:
     first = build_host_context(lambda: None)
     second = build_host_context(lambda: None)
