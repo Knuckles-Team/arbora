@@ -10,6 +10,7 @@ unreadable verdict refuses ``UNAVAILABLE``: the gate fails closed and has no kno
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
@@ -38,7 +39,10 @@ async def require_autonomy_clearance(
         return None
     try:
         verdict = await ask(op_id, tenant, irreversible)
-    except Exception:  # noqa: BLE001 - an unreadable verdict is never an allow
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "an unreadable verdict is never an allow", exc_info=True
+        )
         return OpError("UNAVAILABLE", {"reason": "autonomy_verdict_unavailable"})
     if verdict == ALLOW:
         return None

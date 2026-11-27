@@ -254,7 +254,7 @@ async def publish_at_startup(
         for attempt in range(1, attempts + 1):
             try:
                 await pins.publish_for(tenant, publish)
-            except Exception as exc:  # noqa: BLE001 - logged; the op stays UNAVAILABLE
+            except Exception as exc:  # logged; the op stays UNAVAILABLE
                 if attempt == attempts:
                     logger.error(
                         "task-plan schema not published for %s after %d attempts "

@@ -156,7 +156,7 @@ async def release_quietly(
         await run_capacity_of(context).release(
             context, reservation, owner_digest=owner_digest or ""
         )
-    except Exception:  # noqa: BLE001 - reported below; the TTL reclaims the lease
+    except Exception:  # reported below; the TTL reclaims the lease
         LOG.warning(
             "run capacity lease %s was not released; it expires at its TTL",
             reservation.lease_id,

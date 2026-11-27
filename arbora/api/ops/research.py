@@ -343,7 +343,7 @@ async def _fetch_web_source(
     except TimeoutError as exc:
         logger.warning("research.web %s web_extract timed out", backend)
         raise FetchFailed(backend, "timeout") from exc
-    except Exception as exc:  # noqa: BLE001 - a child that cannot answer is unreachable
+    except Exception as exc:  # a child that cannot answer is unreachable
         raise FetchFailed(backend, "unreachable") from exc
     error = _is_error(raw)
     if error:

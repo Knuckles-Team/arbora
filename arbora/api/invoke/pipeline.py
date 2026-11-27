@@ -576,7 +576,7 @@ async def _effective_op(
             return OpError("UNAVAILABLE", {**not_ready_detail(), **exc.details})
         _logger.warning("fleet effect authority refused fleet.call: %s", exc.code)
         return OpError("UNAVAILABLE", {"reason": "fleet effect authority unavailable"})
-    except Exception as exc:  # noqa: BLE001 - refused closed; the cause is logged
+    except Exception as exc:  # refused closed; the cause is logged
         _logger.warning(
             "fleet effect authority refused fleet.call: %s: %s",
             type(exc).__name__,
@@ -1119,7 +1119,10 @@ async def _approval_wait(call: _Call) -> OpError | None:
         return None
     try:
         waiting = await pending(call.plan_ref, call.caller.tenant)
-    except Exception:  # noqa: BLE001 - an unreadable lease is not a wait
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "an unreadable lease is not a wait", exc_info=True
+        )
         return OpError("UNAVAILABLE", {"reason": "plan lease unavailable"})
     return OpError("APPROVAL_REQUIRED") if waiting else None
 
@@ -1279,7 +1282,10 @@ async def _plan_binding_changed(call: _Call) -> bool:
     )
     try:
         _, refusal = await call.services.plans.validate(call.plan_ref, binding)
-    except Exception:  # noqa: BLE001 - an unreadable plan keeps the conflict as is
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "an unreadable plan keeps the conflict as is", exc_info=True
+        )
         return False
     return refusal is not None and refusal.code == "PLAN_MISMATCH"
 

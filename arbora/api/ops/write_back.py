@@ -321,7 +321,7 @@ async def handle_write_back_commit(
         raise _refuse("EFFECT_UNCERTAIN") from None
     except OperationRefused:
         raise
-    except Exception:  # noqa: BLE001 - an unreadable outcome is never a success
+    except Exception:  # an unreadable outcome is never a success
         raise _refuse("REPLAY_UNRESOLVED") from None
     receipt = _verified_receipt(request, result)
     return {

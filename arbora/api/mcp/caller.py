@@ -151,7 +151,7 @@ def mcp_request_ref() -> str:
         ctx = get_context()
         request_id = ctx.request_id
         session_id = ctx.session_id
-    except Exception:  # noqa: BLE001 - no MCP request in scope
+    except (ImportError, RuntimeError):  # no MCP request in scope
         return ""
     if not request_id:
         return ""

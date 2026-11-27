@@ -34,6 +34,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import time
 from collections.abc import Awaitable, Callable, Mapping
 from contextvars import ContextVar
@@ -488,7 +489,10 @@ class FleetStepTools:
             return await self._invoke(entry, key, guard)
         except OperationRefused as exc:
             entry.update(ok=False, error=exc.code, details=exc.details)
-        except Exception as exc:  # noqa: BLE001 - the step sees the failure as data
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "the step sees the failure as data", exc_info=True
+            )
             entry.update(ok=False, error=type(exc).__name__)
         return {"ok": False, "error": entry["error"]}
 

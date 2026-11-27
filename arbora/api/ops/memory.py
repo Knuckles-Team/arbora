@@ -367,7 +367,7 @@ async def handle_memory_files_save(
                 f"{key}:ack",
             )
             value["materialized"] = True
-        except Exception as error:  # noqa: BLE001 - the head stands; the report is retried
+        except Exception as error:  # the head stands; the report is retried
             logging.getLogger(__name__).warning(
                 "memory file acknowledgment failed: %s", type(error).__name__
             )

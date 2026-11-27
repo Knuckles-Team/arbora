@@ -121,7 +121,7 @@ async def _resolve_provider[T](provider: ProvisioningProvider[T], *, label: str)
         value = provider()
         if inspect.isawaitable(value):
             return await value
-    except Exception as exc:  # noqa: BLE001 - authority providers fail closed
+    except Exception as exc:  # authority providers fail closed
         raise ProvisioningAuthorityError(f"{label} authority is unavailable") from exc
     return value
 
@@ -158,7 +158,7 @@ def _require_receipt(policy: _Policy, request: ActionRequest) -> tuple[Any, str]
         receipt = decision.receipt
         allowed = bool(decision.allowed)
         reason = str(getattr(decision, "reason", "") or "")[:200]
-    except Exception as exc:  # noqa: BLE001 - policy errors deny authority
+    except Exception as exc:  # policy errors deny authority
         raise ProvisioningAuthorityError("provisioning policy is unavailable") from exc
     if getattr(decision, "denial", "") == DENIAL_RATE_LIMITED:
         raise ProvisioningRateLimited(
@@ -276,7 +276,7 @@ def pack_import_authority(
                 trace_id=verified.trace_context,
                 created_at_ms=int(time.time() * 1000),
             )
-        except Exception as exc:  # noqa: BLE001 - generated validation denies
+        except Exception as exc:  # generated validation denies
             raise ProvisioningAuthorityError(
                 "generated medulla mutation context is invalid"
             ) from exc

@@ -99,7 +99,7 @@ async def _read(context: Any, chat_id: str) -> tuple[dict[str, Any], int]:
         answer = await engine_send(
             context, "ReadMemorySnapshot", {"doc_id": _doc_id(context, chat_id)}
         )
-    except Exception as exc:  # noqa: BLE001 - absent and refused read the same
+    except Exception as exc:  # absent and refused read the same
         if getattr(exc, "code", "") in ("NOT_FOUND", "MEMORY_NOT_FOUND", "FORBIDDEN"):
             raise _absent() from exc
         raise
