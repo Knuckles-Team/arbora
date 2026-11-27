@@ -16,6 +16,10 @@ from types import ModuleType
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
 __all__ = [
+    "CSV_PREVIEW_SYMBOL",
+    "FORECAST_SYMBOLS",
+    "require_csv_preview",
+    "require_forecast",
     "BINDING_SYMBOL",
     "DESKTOP_SYMBOL",
     "PROVISIONER_SYMBOL",
@@ -127,4 +131,42 @@ def require_environment_declarations() -> ModuleType:
         raise PinLagUnavailable(ENVIRONMENT_SYMBOL) from None
     if not hasattr(module, "environment_declarations"):
         raise PinLagUnavailable(ENVIRONMENT_SYMBOL)
+    return module
+
+
+CSV_PREVIEW_SYMBOL = "scion_sdk.finance.csv_import.CsvIssue"
+
+
+def require_csv_preview() -> ModuleType:
+    """The SDK CSV preview that reports issues (``SCION-FINANCE-SOURCES-R004``), or refuse.
+
+    The pinned preview raises on the first bad row and returns no issue lists, so the
+    preview read refuses ``UNAVAILABLE`` naming ``CsvIssue`` until the SDK re-pin.
+    """
+    try:
+        module = importlib.import_module("scion_sdk.finance.csv_import")
+    except ImportError:
+        raise PinLagUnavailable(CSV_PREVIEW_SYMBOL) from None
+    if not hasattr(module, "CsvIssue"):
+        raise PinLagUnavailable(CSV_PREVIEW_SYMBOL)
+    return module
+
+
+FORECAST_SYMBOLS = (
+    "ForecastRequest",
+    "request_forecast",
+    "forecast_provider",
+    "forecast_ingest_request",
+)
+
+
+def require_forecast() -> ModuleType:
+    """The SDK forecast contract and its provider adapter (``SCION-FINANCE-SOURCES-R901``)."""
+    try:
+        module = importlib.import_module("scion_sdk.finance.forecast")
+    except ImportError:
+        raise PinLagUnavailable("scion_sdk.finance.forecast") from None
+    for name in FORECAST_SYMBOLS:
+        if not hasattr(module, name):
+            raise PinLagUnavailable(f"scion_sdk.finance.forecast.{name}")
     return module
