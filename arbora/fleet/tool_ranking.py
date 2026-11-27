@@ -19,13 +19,13 @@ RankSend = Callable[[str, dict[str, Any], str], Awaitable[Any]]
 MAX_RANKED = 50
 
 
-def engine_tool_ranker(
+def engine_tool_order(
     send: RankSend,
 ) -> Callable[..., Awaitable[Sequence[str]]]:
     """The production ``tool_ranker`` of ``MultiplexerOps`` over engine ``Decide``."""
     from arbora.api.ops._decide import record_of
 
-    async def rank(
+    async def order(
         caller: Any,
         *,
         query: str,
@@ -53,7 +53,7 @@ def engine_tool_ranker(
             raise ValueError("the engine answered no tool ranking")
         return [str(row["tool_id"]) for row in ranked]
 
-    return rank
+    return order
 
 
-__all__ = ["MAX_RANKED", "RankSend", "engine_tool_ranker"]
+__all__ = ["MAX_RANKED", "RankSend", "engine_tool_order"]
