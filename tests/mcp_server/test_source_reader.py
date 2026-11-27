@@ -591,9 +591,7 @@ def test_actual_serving_root_composes_stateless_source_reader(monkeypatch):
         return object()
 
     monkeypatch.setattr(served_invocation, "served_invocation_from_settings", compose)
-    invocation, session = server._served_invocation(
-        host=build_host_context(lambda: None)
-    )
+    invocation, session = server._served_invocation(host=build_host_context())
     assert invocation is not None and session is not None
     assert isinstance(captured["bindings"]["source_reader"], NativeSourceReader)
     assert vars(captured["bindings"]["source_reader"]) == {}

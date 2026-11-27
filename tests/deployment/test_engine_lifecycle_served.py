@@ -43,10 +43,10 @@ def test_unset_endpoints_start_one_loopback_engine_and_serve_a_call(
             stop_grace_s=20,
         ),
     )
-    served_engine.reset_process_engine()
+    handles = served_engine.EngineHandles()
     before = composition.engine_spawn_count()
     try:
-        pool = served_engine.process_engine_pool()
+        pool = handles.pool()
         assert composition.engine_spawn_count() == before + 1
         marker = engine_lock.engine_marker_path(f"127.0.0.1:{port}")
         assert json.loads(marker.read_text())["pid"] > 0
@@ -69,7 +69,7 @@ def test_unset_endpoints_start_one_loopback_engine_and_serve_a_call(
         reply = asyncio.run(call())
         assert isinstance(reply, dict) and reply["status"] == "ok"
     finally:
-        served_engine.reset_process_engine()
+        handles.reset()
 
 
 @pytest.mark.spec("ARBORA-DEPLOY-R018.9")
@@ -84,13 +84,13 @@ def test_set_endpoint_starts_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
         raise AssertionError("a configured endpoint must never start a local engine")
 
     monkeypatch.setattr(composition, "ensure_local_engine", forbidden)
-    served_engine.reset_process_engine()
+    handles = served_engine.EngineHandles()
     before = composition.engine_spawn_count()
     try:
-        served_engine.process_engine_pool()
+        handles.pool()
         assert composition.engine_spawn_count() == before
     finally:
-        served_engine.reset_process_engine()
+        handles.reset()
 
 
 # These tests boot a real engine: the pull-request subset deselects the marker.

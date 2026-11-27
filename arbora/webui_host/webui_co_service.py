@@ -114,6 +114,7 @@ def run_web_ui(
     stop_event: threading.Event,
     *,
     action_policies: ActionPolicies,
+    engine: Any,
     host: str | None = None,
     port: int | None = None,
     session_boundary: Any = None,
@@ -199,7 +200,6 @@ def run_web_ui(
     from arbora.browser_control.browser_control_service import (
         browser_control_factory_kwargs,
     )
-    from arbora.mcp_server import runtime as mcp_runtime
     from arbora.webui_host.contact_governance import (
         contact_delivery_factory_kwargs,
     )
@@ -211,13 +211,12 @@ def run_web_ui(
     agent = Agent(build_orchestrator_model(get_engine_bounded))
     helpers = {
         **webui_mcp_delegation_helpers(),
-        **webui_voice_delegation_helpers(),
+        **webui_voice_delegation_helpers(lambda: engine),
     }
     contact_kwargs = contact_delivery_factory_kwargs(
         create_agent_web_app,
         lambda operation: invoke_governed_helper(operation, deadline=10.0),
     )
-    engine = mcp_runtime._get_engine()
     browser_control_kwargs = browser_control_factory_kwargs(
         create_agent_web_app,
         engine,

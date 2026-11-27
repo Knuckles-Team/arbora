@@ -28,6 +28,7 @@ inventing a new tool convention.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from typing import Any
 
 from pydantic import Field
@@ -36,7 +37,7 @@ from arbora.mcp_server import runtime
 from arbora.security.error_surface import public_error_payload
 
 
-def register_audit_tools(mcp: Any) -> None:
+def register_audit_tools(mcp: Any, engine_provider: Callable[[], Any]) -> None:
     """Register the ``graph_audit`` group on the given FastMCP server."""
 
     @mcp.tool(
@@ -60,7 +61,7 @@ def register_audit_tools(mcp: Any) -> None:
         action = (action or "verify").strip().lower()
 
         if action == "verify":
-            return json.dumps(_verify())
+            return json.dumps(_verify(engine_provider))
         return json.dumps(
             {
                 "surface": "audit",
@@ -77,9 +78,9 @@ def register_audit_tools(mcp: Any) -> None:
     runtime.ACTION_TOOL_ROUTES["graph_audit"] = "/audit"
 
 
-def _verify() -> dict[str, Any]:
+def _verify(engine_provider: Callable[[], Any]) -> dict[str, Any]:
     """Cryptographically verify the default graph's hash-chained audit log."""
-    engine = runtime._get_engine()
+    engine = engine_provider()
     if engine is None or getattr(engine, "graph", None) is None:
         return {
             "surface": "audit",

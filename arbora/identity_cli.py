@@ -21,10 +21,12 @@ def process_environment() -> Environment:
     from arbora.core.settings import config_dir, runtime_config
     from arbora.identity.composition import build_engine_identity_ports
     from arbora.mcp_server import bootstrap, runtime
+    from arbora.mcp_server.served_engine import EngineHandles
     from arbora.security.anonymous import session_context
 
     session = runtime._mint_process_session("http")
-    engine = runtime._get_engine()
+    # This one-shot CLI is its own composition root and owns its engine.
+    engine = EngineHandles().served()
     bootstrap._wait_for_engine_materialization(engine)
     graph = str(session.graph)
     client = engine.graph_compute.for_graph(graph).async_client

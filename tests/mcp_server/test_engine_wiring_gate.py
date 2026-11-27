@@ -86,11 +86,6 @@ def test_natural_language_tools_plan_through_eg_nl_query(monkeypatch, tool):
         return json.dumps([{"id": "n1", "name": "alpha"}, {"id": "n2"}])
 
     monkeypatch.setattr(engine_tools, "_dispatch", _dispatch)
-    monkeypatch.setattr(
-        runtime,
-        "_get_engine",
-        lambda: pytest.fail("NL planning must not use a local engine planner"),
-    )
     runtime.ensure_tools_registered()
     func = runtime.REGISTERED_TOOLS[tool]
     text_arg = "question" if tool in {"graph_ask", "ask_data"} else "text"

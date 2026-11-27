@@ -437,7 +437,10 @@ async def _provision_semantic_content(served_url: str) -> dict[str, Any]:
 
     session = runtime._mint_process_session("http")
     with use_actor(session.actor), use_session(session):
-        engine = runtime._get_engine()
+        from arbora.mcp_server.served_engine import EngineHandles
+
+        # This one-shot process is its own composition root and owns its engine.
+        engine = EngineHandles().served()
         bootstrap._wait_for_engine_materialization(engine)
         report = await provision_semantic_content(
             engine=engine,
@@ -487,7 +490,10 @@ async def _onboard_fleet(
         endpoints = select_endpoints(endpoints, profile)
     session = runtime._mint_process_session("http")
     with use_actor(session.actor), use_session(session):
-        engine = runtime._get_engine()
+        from arbora.mcp_server.served_engine import EngineHandles
+
+        # This one-shot process is its own composition root and owns its engine.
+        engine = EngineHandles().served()
         bootstrap._wait_for_engine_materialization(engine)
         report = await onboard_fleet(
             FleetOnboarding(
@@ -537,7 +543,10 @@ async def _check_fleet_coverage() -> dict[str, Any]:
 
     session = runtime._mint_process_session("http")
     with use_actor(session.actor), use_session(session):
-        engine = runtime._get_engine()
+        from arbora.mcp_server.served_engine import EngineHandles
+
+        # This one-shot process is its own composition root and owns its engine.
+        engine = EngineHandles().served()
         bootstrap._wait_for_engine_materialization(engine)
         claims = session_context(session)
         context = ReadContext(

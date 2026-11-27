@@ -203,17 +203,19 @@ def _served_invocation(
     fleet = LateFleetGateway()
     invocation = served_invocation_from_settings(
         process_session=lambda: session,
+        engine_pool=host.engine.pool,
         action_policies=host.policy.action_policies,
         bindings={
             "a2a": host.runs.a2a,
             "default_agent": DefaultAgentRegistrar(
                 DefaultAgentDefinition(agent_id=FLEET_AGENT_NAME)
             ),
+            "engine": host.engine.served,
             "run_origins": host.runs.origins,
             "run_ports": host.runs.ports,
             "fleet_gateway": fleet,
             "workflow_worker": WorkflowRunStarter(
-                runtime._get_engine, NativeIntentFleet(), worker_ref="arbora-workflow"
+                host.engine.served, NativeIntentFleet(), worker_ref="arbora-workflow"
             ),
             "fleet_virtual_catalog": host.fleet.virtual_catalog,
             "fleet_declarations": host.fleet.declarations,
@@ -222,7 +224,7 @@ def _served_invocation(
             "source_reader": NativeSourceReader(),
             "source_grants": EngineSourceGrants(runtime_config.source_run_branch),
             "run_trace_reader": NativeRunReader(
-                runtime._get_engine, origins=host.runs.origins
+                host.engine.served, origins=host.runs.origins
             ),
         },
         fleet_effect=fleet.effect,
@@ -399,7 +401,7 @@ def mcp_server(
     early_session = None
     from arbora.mcp_server.host_context import build_host_context
 
-    host_context = build_host_context(runtime._get_engine)
+    host_context = build_host_context()
     if invocation is None:
         invocation, early_session = (
             _served_invocation(
@@ -411,11 +413,14 @@ def mcp_server(
     bind_a2a_decision(host_context, invocation)
     bind_ranking(host_context, invocation)
     install_gateway_application(
-        invocation, fleet=host_context.fleet, approvals=host_context.policy.approvals
+        invocation,
+        fleet=host_context.fleet,
+        approvals=host_context.policy.approvals,
+        engine_provider=host_context.engine.served,
     )
     from arbora.host_bindings import bind_health_probes, bind_messaging_ports
 
-    bind_messaging_ports()
+    bind_messaging_ports(host_context.engine.served)
     from arbora.a2a.chain_composition import run_plan_binding
     from arbora.agent_host.port_backends import HostSeams
     from arbora.agent_host.sandbox_boundary import boundary_verified
@@ -432,11 +437,11 @@ def mcp_server(
             if invocation is not None and chain is not None
             else None,
             action_policy=lambda: host_context.policy.action_policies.for_engine(
-                runtime._get_engine() if runtime._get_engine else None
+                host_context.engine.served()
             ),
         ),
     }
-    bind_health_probes()
+    bind_health_probes(host_context.engine.served)
     _preflight_mcp_sdk_floor()
     _configure_arbora_otel()
     _configure_telemetry_engine_otel()
@@ -547,7 +552,9 @@ def mcp_server(
         from arbora.security.session import use_session
 
         with use_actor(bootstrap_session.actor), use_session(bootstrap_session):
-            runtime._start_engine_bootstrap(bootstrap_session)
+            runtime._start_engine_bootstrap(
+                host_context.engine.served(), bootstrap_session
+            )
 
             # A fresh store has no tenant or `__control__` graph; leases, queues
             # and workers read them, so create them before anything else runs.
@@ -555,7 +562,7 @@ def mcp_server(
 
             base_graphs = asyncio.run(
                 ensure_base_graphs(
-                    engine=runtime._get_engine(), session=bootstrap_session
+                    engine=host_context.engine.served(), session=bootstrap_session
                 )
             )
             logger.info("Arbora base graphs ensured: %s", base_graphs)
@@ -564,14 +571,14 @@ def mcp_server(
             # authority, before any reader (the action-policy ledger) runs.
             from arbora.data_migrations import run_data_migrations
 
-            run_data_migrations(runtime._get_engine())
+            run_data_migrations(host_context.engine.served())
 
             # ARBORA-FLEET-R078: the catalog authorities compose on a
             # background thread, so arbora binds and serves at once; a slow or
             # failing engine call is retried there and never exits the process.
             # Fleet onboarding starts once the catalog is ready.
             catalog_warmup = _start_catalog_warmup(
-                runtime._get_engine(),
+                host_context.engine.served(),
                 bootstrap_session,
                 fleet_catalog_reader,
                 fleet_mux,
@@ -581,7 +588,7 @@ def mcp_server(
 
             from arbora.mcp_server.agent_control import register_graph_rlm
 
-            graph_compute = runtime._get_engine().graph_compute
+            graph_compute = host_context.engine.served().graph_compute
 
             def client_for_session(session: Any) -> Any:
                 # The session's own graph: AU graph views refuse any other.
@@ -592,7 +599,7 @@ def mcp_server(
             installed = install_decide_consumers(
                 client_for_session,
                 bootstrap_session,
-                runtime._get_engine(),
+                host_context.engine.served(),
             )
             logger.info("Decide consumers installed: %s", installed)
 
@@ -626,7 +633,7 @@ def mcp_server(
             # independently restartable co-service.
             co_service_supervisor = start_composed_services(
                 bootstrap_session,
-                runtime._get_engine(),
+                host_context.engine.served(),
                 action_policies=host_context.policy.action_policies,
                 messaging_intake_enabled=config.messaging_intake_enabled,
                 served_network=transport == "streamable-http",

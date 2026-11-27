@@ -16,7 +16,7 @@ from arbora.mcp_server.host_context import build_host_context
 
 def _ports(multiplexer=None) -> HostPorts:
     """The ``HostPorts`` the served host builds, over a fresh host context."""
-    return build_host_ports(build_host_context(lambda: None), multiplexer=multiplexer)
+    return build_host_ports(build_host_context(), multiplexer=multiplexer)
 
 
 class _Mux:
@@ -80,7 +80,7 @@ def test_the_record_binds_native_tools_fleet_and_keepalive(monkeypatch):
 
 @pytest.mark.spec("ARBORA-HOST-R001.2")
 def test_an_unbound_host_slot_carries_no_binding():
-    context = build_host_context(lambda: None)
+    context = build_host_context()
     assert context.runs.ports.binding is None
     ports = context.runs.ports.current()
     assert ports.fleet_catalog() == {}
@@ -94,7 +94,7 @@ def test_an_unbound_host_slot_carries_no_binding():
 
 @pytest.mark.spec("ARBORA-HOST-R001.2")
 def test_binding_the_host_holds_the_record_on_its_slot():
-    context = build_host_context(lambda: None)
+    context = build_host_context()
     bind_host_ports_of(context, multiplexer=SimpleNamespace(load_catalog=dict))
     assert context.runs.ports.binding.refusal is None
     assert context.runs.ports.current() is context.runs.ports.binding.ports

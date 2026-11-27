@@ -175,10 +175,10 @@ async def test_fleet_list_and_grant_use_the_approval_leases(
     from starlette.routing import Route
 
     from arbora.gateway.fleet import fleet_approvals, fleet_grant_approval
-    from arbora.mcp_server import runtime
     from arbora.mcp_server.composition import install_gateway_application
-    from arbora.mcp_server.host_context import build_host_context
+    from arbora.mcp_server.host_context import compose_host_context
     from arbora.security.session import use_session
+    from tests._support import FixedEngineHandles
 
     leases = SyncControlLeases(tenant="test")
     engine = _Engine(leases)
@@ -189,9 +189,12 @@ async def test_fleet_list_and_grant_use_the_approval_leases(
         "lease_id": "action_approval:foreign",
         "kind": "browser.control",
     }
-    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
-    host = build_host_context(lambda: engine)
-    install_gateway_application(fleet=host.fleet, approvals=host.policy.approvals)
+    host = compose_host_context(FixedEngineHandles(engine))
+    install_gateway_application(
+        fleet=host.fleet,
+        approvals=host.policy.approvals,
+        engine_provider=host.engine.served,
+    )
     app = Starlette(
         routes=[
             Route("/fleet/approvals", fleet_approvals, methods=["GET"]),

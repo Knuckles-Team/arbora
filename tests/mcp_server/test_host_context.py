@@ -17,8 +17,8 @@ pytestmark = pytest.mark.spec("ARBORA-HOST-R039")
 
 @pytest.mark.spec("ARBORA-HOST-R039.1")
 def test_two_host_contexts_share_no_module_state() -> None:
-    first = build_host_context(lambda: None)
-    second = build_host_context(lambda: None)
+    first = build_host_context()
+    second = build_host_context()
     assert first.runs.origins is not second.runs.origins
     assert first.runs.a2a is not second.runs.a2a
     # The state moved off the modules: no registry or service global remains.
@@ -28,7 +28,7 @@ def test_two_host_contexts_share_no_module_state() -> None:
 
 
 def test_host_context_is_frozen_and_slotted() -> None:
-    host = build_host_context(lambda: None)
+    host = build_host_context()
     assert dataclasses.is_dataclass(HostContext)
     with pytest.raises(dataclasses.FrozenInstanceError):
         host.runs = host.runs  # type: ignore[misc]
@@ -36,8 +36,8 @@ def test_host_context_is_frozen_and_slotted() -> None:
 
 
 async def test_a_run_registered_on_one_context_is_invisible_to_the_other() -> None:
-    first = build_host_context(lambda: None)
-    second = build_host_context(lambda: None)
+    first = build_host_context()
+    second = build_host_context()
     admitted: GraphSession = session()
     with (
         use_session(admitted),

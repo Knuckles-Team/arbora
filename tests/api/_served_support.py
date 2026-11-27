@@ -327,7 +327,10 @@ def two_tenant_served(
         ),
     )
     install_gateway_application(
-        invocation, fleet=FleetState(), approvals=ApprovalDecisions()
+        invocation,
+        fleet=FleetState(),
+        approvals=ApprovalDecisions(),
+        engine_provider=lambda: None,
     )
     second = FastAPI()
     register_graph_routes(second)

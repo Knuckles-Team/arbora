@@ -68,14 +68,15 @@ def test_no_register_call_remains() -> None:
 
 @pytest.mark.spec("ARBORA-HOST-R040.2")
 def test_build_host_ports_sets_every_named_provider_on_the_real_record() -> None:
-    host = build_host_context(lambda: None)
+    host = build_host_context()
     ports = harness_ports.build_host_ports(host)
     from arbora.agent_runs import decide_run, record_run_event, resolve_model
 
     assert type(ports) is HostPorts
     assert ports.decide is decide_run
     assert ports.models is resolve_model
-    assert ports.events is record_run_event
+    assert ports.events.func is record_run_event
+    assert ports.events.keywords == {"engine_provider": host.engine.served}
     for name in (
         "native",
         "remote",
@@ -112,7 +113,7 @@ def test_a_structural_double_of_the_record_receives_the_same_providers(
     monkeypatch.setattr(
         lag, "_host_ports_module", lambda: SimpleNamespace(HostPorts=Double)
     )
-    ports = harness_ports.build_host_ports(build_host_context(lambda: None))
+    ports = harness_ports.build_host_ports(build_host_context())
     assert isinstance(ports, Double)
     assert callable(ports.decide)
     assert ports.native is not None
@@ -131,7 +132,7 @@ def test_a_record_without_a_field_refuses_naming_it_and_the_slot_holds_the_refus
     monkeypatch.setattr(
         lag, "_host_ports_module", lambda: SimpleNamespace(HostPorts=Short)
     )
-    host = build_host_context(lambda: None)
+    host = build_host_context()
     with pytest.raises(PinLagUnavailable) as raised:
         harness_ports.build_host_ports(host)
     assert raised.value.missing == "meristem.host_ports.HostPorts.models"
@@ -142,7 +143,7 @@ def test_a_record_without_a_field_refuses_naming_it_and_the_slot_holds_the_refus
 
 @pytest.mark.spec("ARBORA-HOST-R040.2")
 def test_an_unbound_slot_is_the_empty_record_and_two_hosts_share_no_slot() -> None:
-    first, second = build_host_context(lambda: None), build_host_context(lambda: None)
+    first, second = build_host_context(), build_host_context()
     assert first.runs.ports is not second.runs.ports
     assert first.runs.ports.current() == HostPorts()
     harness_ports.bind_host_ports_of(first)

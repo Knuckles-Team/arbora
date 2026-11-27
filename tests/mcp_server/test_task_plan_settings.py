@@ -32,17 +32,17 @@ def test_config_model_accepts_missing_static_schema_pin():
 
 @pytest.mark.spec("ARBORA-OPS-R021.4.5.1.2")
 def test_config_json_setting_reaches_trusted_composition(monkeypatch):
-    from arbora.mcp_server import served_engine, served_invocation
+    from arbora.mcp_server import served_invocation
 
     monkeypatch.setenv("ARBORA_TASK_PLAN", json.dumps(CONFIG))
     monkeypatch.setitem(
         runtime_config._overrides, "graph_service_endpoints", ["unix:///fixture"]
     )
-    monkeypatch.setattr(served_engine, "process_engine_pool", lambda: object())
     compose = Mock(return_value=object())
     monkeypatch.setattr(served_invocation, "compose_served_invocation", compose)
     served_invocation.served_invocation_from_settings(
         process_session=lambda: SimpleNamespace(graph="fixture"),
+        engine_pool=lambda: object(),
         action_policies=ActionPolicies(),
         bindings={},
         fleet_effect=None,
@@ -102,5 +102,5 @@ def test_content_digest_pin_refuses_before_process_authority(monkeypatch):
     mint = Mock(side_effect=AssertionError("must not mint"))
     monkeypatch.setattr(server.runtime, "_mint_process_session", mint)
     with pytest.raises(ValueError, match="content digest"):
-        server._served_invocation(host=build_host_context(lambda: None))
+        server._served_invocation(host=build_host_context())
     mint.assert_not_called()

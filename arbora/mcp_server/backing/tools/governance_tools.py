@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from collections.abc import Callable
 from typing import Any
 
 from pydantic import Field
@@ -14,7 +15,9 @@ from arbora.mcp_server import runtime
 from arbora.security.error_surface import public_error_text
 
 
-def register_governance_tools(mcp: Any, approvals: ApprovalDecisions) -> None:
+def register_governance_tools(
+    mcp: Any, approvals: ApprovalDecisions, engine_provider: Callable[[], Any]
+) -> None:
     """Register approval decisions, risk vetoes, and ActionPolicy verification."""
 
     @mcp.tool(
@@ -116,7 +119,7 @@ def register_governance_tools(mcp: Any, approvals: ApprovalDecisions) -> None:
             # not a graph read.
             return json.dumps(_policy_status(), indent=2, default=str)
 
-        engine = runtime._get_engine()
+        engine = engine_provider()
         if engine is None:
             return "Error: IntelligenceGraphEngine not active."
 

@@ -42,6 +42,7 @@ from arbora.mcp_server.served_invocation import (
 from arbora.run_origin import RunOriginRegistry
 from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
+from tests._support import run_events
 from tests.test_agents_run_end_to_end import FakeEngine
 
 SCOPES = (
@@ -186,14 +187,13 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
 
     monkeypatch.setattr("arbora.api.ops.agent_library.current_entry", library_entry)
     client = FakeClient()
-    monkeypatch.setattr(mcp_runtime, "_get_engine", lambda: client)
     ports = HostPortsSlot()
     ports.bind(
         HostPortsBinding(
             HostPorts(
                 decide=agent_runs.decide_run,
                 models=agent_runs.resolve_model,
-                events=agent_runs.record_run_event,
+                events=run_events(client),
             ),
             None,
         )
@@ -214,14 +214,21 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         fleet_effect=refused_fleet_effect,
     )
     install_gateway_application(
-        invocation, fleet=FleetState(), approvals=ApprovalDecisions()
+        invocation,
+        fleet=FleetState(),
+        approvals=ApprovalDecisions(),
+        engine_provider=lambda: client,
     )
     from arbora.gateway.graph_api import register_graph_routes
 
     app = FastAPI()
     register_graph_routes(app)
     yield app, client
-    install_gateway_application(fleet=FleetState(), approvals=ApprovalDecisions())
+    install_gateway_application(
+        fleet=FleetState(),
+        approvals=ApprovalDecisions(),
+        engine_provider=lambda: None,
+    )
 
 
 def _call(app: Any, op_id: str, params: dict[str, Any], **headers: str) -> Any:

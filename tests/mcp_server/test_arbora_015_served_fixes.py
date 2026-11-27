@@ -282,8 +282,9 @@ def test_run_events_are_written_through_the_served_engine_add_node(monkeypatch) 
             written.append((node_id, label, dict(properties)))
             return node_id
 
-    monkeypatch.setattr(agent_runs, "_engine", _Engine)
-    agent_runs.record_run_event({"type": "run_started", "run_id": "a2a-1", "step": 0})
+    agent_runs.record_run_event(
+        {"type": "run_started", "run_id": "a2a-1", "step": 0}, engine_provider=_Engine
+    )
     assert len(written) == 1
     node_id, label, properties = written[0]
     assert label == "RunEvent"
@@ -299,8 +300,9 @@ def test_a_failed_run_event_write_never_fails_the_run(monkeypatch) -> None:
         def add_node(self, *args: Any) -> str:
             raise RuntimeError("engine down")
 
-    monkeypatch.setattr(agent_runs, "_engine", _Engine)
-    agent_runs.record_run_event({"type": "error", "run_id": "a2a-1"})
+    agent_runs.record_run_event(
+        {"type": "error", "run_id": "a2a-1"}, engine_provider=_Engine
+    )
 
 
 @pytest.mark.parametrize("agent_name", ["arbora", "webui-assistant", "unrelated-agent"])

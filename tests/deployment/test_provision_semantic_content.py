@@ -153,12 +153,13 @@ def _session() -> GraphSession:
 @pytest.fixture
 def wired(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
     from arbora.mcp_server import bootstrap, runtime
+    from arbora.mcp_server.served_engine import EngineHandles
 
     state: dict[str, Any] = {"verified": []}
     engine = _Engine(registered=set(), graphs=set())
     session = _session()
     monkeypatch.setattr(runtime, "_mint_process_session", lambda transport: session)
-    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
+    monkeypatch.setattr(EngineHandles, "served", lambda _self: engine)
     monkeypatch.setattr(bootstrap, "_wait_for_engine_materialization", lambda e: None)
     monkeypatch.setattr(
         "arbora.access.action_policy.ActionPolicies.for_engine",

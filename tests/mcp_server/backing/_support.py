@@ -24,7 +24,7 @@ def register_graph_query():
     from arbora.mcp_server import runtime
     from arbora.mcp_server.backing.tools.query_tools import register_query_tools
 
-    register_query_tools(FastMCP("test"))
+    register_query_tools(FastMCP("test"), lambda: None)
     return runtime.REGISTERED_TOOLS["graph_query"]
 
 

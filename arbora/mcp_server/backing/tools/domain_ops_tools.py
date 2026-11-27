@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from typing import Any
 
 from pydantic import Field
@@ -11,7 +12,7 @@ from arbora.mcp_server import runtime
 from arbora.security.error_surface import public_error_text
 
 
-def register_domain_ops_tools(mcp: Any) -> None:
+def register_domain_ops_tools(mcp: Any, engine_provider: Callable[[], Any]) -> None:
     """Register persisted enterprise, finance, and ML/RLM domain operations."""
 
     @mcp.tool(
@@ -44,7 +45,7 @@ def register_domain_ops_tools(mcp: Any) -> None:
         learning_rate: float = Field(default=0.01),
         discount_factor: float = Field(default=0.99),
     ) -> str:
-        engine = runtime._get_engine()
+        engine = engine_provider()
         if engine is None:
             return "Error: IntelligenceGraphEngine not active."
         try:

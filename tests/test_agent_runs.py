@@ -15,8 +15,8 @@ from arbora.agent_host.host_port_adapters import HostPortsBinding, HostPortsSlot
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 from arbora.core.settings import runtime_config
 from arbora.current_plan_publication import publication_scope
-from arbora.mcp_server import runtime
 from arbora.run_origin import RunOriginRegistry
+from tests._support import run_events
 
 
 class _Engine:
@@ -35,7 +35,7 @@ def _model(model_id: str) -> Any:
     return agent_runs.resolve_model(model_id)
 
 
-def _ports() -> HostPortsSlot:
+def _ports(engine: _Engine | None) -> HostPortsSlot:
     """A host slot carrying the run decision, model and event providers."""
     slot = HostPortsSlot()
     slot.bind(
@@ -43,7 +43,7 @@ def _ports() -> HostPortsSlot:
             HostPorts(
                 decide=agent_runs.decide_run,
                 models=_model,
-                events=agent_runs.record_run_event,
+                events=run_events(engine),
                 scaffold_publication=publication_scope,
             ),
             None,
@@ -58,7 +58,6 @@ def bound(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> _Engine:
     registry.write_text(json.dumps({"default": "test"}), encoding="utf-8")
     monkeypatch.setattr(runtime_config, "model_registry_path", str(registry))
     engine = _Engine()
-    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
     return engine
 
 
@@ -68,7 +67,7 @@ async def test_agent_run_executes_through_the_harness_with_bound_providers(
     bound: _Engine,
 ) -> None:
     result = await agent_runs.AgentRunPort(
-        origins=RunOriginRegistry(), ports=_ports()
+        origins=RunOriginRegistry(), ports=_ports(bound)
     ).execute_agent(
         AgentExecutionRequest(agent_name="helper", task="say hello"),
         session=cast(Any, object()),
@@ -110,7 +109,7 @@ async def test_a_run_without_a_model_fails_closed(
     monkeypatch.setattr(runtime_config, "model_registry_path", None)
     with pytest.raises(RuntimeError, match="no model"):
         await agent_runs.AgentRunPort(
-            origins=RunOriginRegistry(), ports=_ports()
+            origins=RunOriginRegistry(), ports=_ports(None)
         ).execute_agent(
             AgentExecutionRequest(agent_name="helper", task="say hello"),
             session=cast(Any, object()),

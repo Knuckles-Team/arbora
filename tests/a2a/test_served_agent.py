@@ -147,14 +147,14 @@ def test_the_host_mounts_engine_storage_not_process_memory(
 
     monkeypatch.setattr(sdk_app, "create_admitted_a2a_app", create)
     monkeypatch.setattr(host_bindings, "fleet_agent", lambda: object())
-    monkeypatch.setattr(host_bindings, "prompt_normalizer", lambda: object())
+    monkeypatch.setattr(host_bindings, "prompt_normalizer", lambda _engine: object())
     import arbora.modality.agent_input as agent_input
 
     monkeypatch.setattr(agent_input, "MediaNormalizingAgent", lambda *a: object())
     mcp = SimpleNamespace(
         custom_route=lambda *a, **k: lambda fn: fn, add_extension=lambda e: None
     )
-    host_bindings.mount_sdk_a2a(mcp)
+    host_bindings.mount_sdk_a2a(mcp, engine_provider=lambda: None)
     assert isinstance(captured["storage"], EngineA2AStorage)
 
 
@@ -272,12 +272,12 @@ def test_the_host_hands_the_storage_list_to_the_served_app(
         ),
     )
     monkeypatch.setattr(host_bindings, "fleet_agent", lambda: object())
-    monkeypatch.setattr(host_bindings, "prompt_normalizer", lambda: object())
+    monkeypatch.setattr(host_bindings, "prompt_normalizer", lambda _engine: object())
     import arbora.modality.agent_input as agent_input
 
     monkeypatch.setattr(agent_input, "MediaNormalizingAgent", lambda *a: object())
     mcp = SimpleNamespace(
         custom_route=lambda *a, **k: lambda fn: fn, add_extension=lambda e: None
     )
-    host_bindings.mount_sdk_a2a(mcp)
+    host_bindings.mount_sdk_a2a(mcp, engine_provider=lambda: None)
     assert captured["list_contexts"].__self__ is captured["storage"]

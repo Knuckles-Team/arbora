@@ -15,7 +15,6 @@ import json
 import logging
 from typing import Any
 
-from arbora.access.action_policy import ActionPolicies
 from arbora.security.error_surface import public_error_payload
 
 logger = logging.getLogger(__name__)
@@ -367,40 +366,3 @@ def token_caller_material(token: Any) -> str:
             claims.get("tenant_id") if isinstance(claims, dict) else None,
         )
     )
-
-
-def action_policy_gate(
-    kind: str,
-    target: str,
-    reason: str,
-    action_policies: ActionPolicies,
-    actor_id: str | None = None,
-) -> tuple[bool, dict]:
-    """Run the fail-closed ActionPolicy gate for one mutation.
-
-    A thin call into the host's ``action_policies.for_engine(engine).decide(...)``
-    decision point on the MCP-layer engine, never a reimplementation of its
-    rules. Returns ``(allowed, decision info)``.
-    """
-    from arbora.access.action_policy import ActionRequest
-    from arbora.mcp_server import runtime
-
-    request: dict[str, Any] = {
-        "kind": kind,
-        "target": target,
-        "source": "mcp",
-        "reason": reason or f"{kind} on {target}",
-    }
-    if actor_id is not None:
-        request["actor_id"] = actor_id
-    decision = action_policies.for_engine(runtime._get_engine()).decide(
-        ActionRequest(**request)
-    )
-    info = {
-        "decision": decision.decision,
-        "tier": decision.tier,
-        "reason": decision.reason,
-        "approval_id": decision.approval_id,
-        "audit_id": decision.audit_id,
-    }
-    return decision.allowed, info

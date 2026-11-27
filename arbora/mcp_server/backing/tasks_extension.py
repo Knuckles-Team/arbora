@@ -38,7 +38,7 @@ import json
 import logging
 import math
 import unicodedata
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -47,6 +47,7 @@ from pydantic import ConfigDict, Field, field_validator
 from arbora import work_items
 from arbora.core.environment import read_env
 from arbora.fleet.protocol_compat import mcp_protocol_exception
+from arbora.mcp_server.served_engine import engine_unbound
 
 # MCP SDK v2 (which the `fastmcp>=4.0.0b1` floor pulls in) renamed
 # `McpError` -> `MCPError`. The fleet is EXPLICITLY mixed-version: child images
@@ -566,7 +567,9 @@ class WorkItemTasksExtension(ServerExtension):
         *,
         server_id: str | None = None,
         task_router: Any | None = None,
+        engine_provider: Callable[[], Any] = engine_unbound,
     ) -> None:
+        self._engine_provider = engine_provider
         self.server_id = (
             str(server_id).strip()
             if isinstance(server_id, str) and server_id.strip()
@@ -1230,11 +1233,8 @@ class WorkItemTasksExtension(ServerExtension):
             route=route,
         )
 
-    @staticmethod
-    def _engine() -> Any:
-        from arbora.mcp_server import runtime
-
-        engine = runtime._get_engine()
+    def _engine(self) -> Any:
+        engine = self._engine_provider()
         if engine is None:
             raise mcp_protocol_exception(-32603, "IntelligenceGraphEngine not active.")
         return getattr(engine, "_work_item_engine", engine)

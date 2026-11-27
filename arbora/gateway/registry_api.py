@@ -420,9 +420,9 @@ class CatalogUnavailable(RuntimeError):
 def get_catalog_engine() -> Any:
     """Resolve the existing engine singleton; no reader-owned store exists."""
 
-    from arbora.mcp_server.runtime import _get_engine
+    from arbora.gateway.ports import gateway_application
 
-    return _get_engine()
+    return gateway_application().engine()
 
 
 async def _offload_catalog_call(

@@ -30,8 +30,9 @@ def test_run_events_are_created_not_upserted(monkeypatch) -> None:
         def add_node(self, *args: Any) -> str:  # pragma: no cover - must not run
             raise AssertionError("RunEvents must not upsert through AddNode")
 
-    monkeypatch.setattr(agent_runs, "_engine", _Engine)
-    agent_runs.record_run_event({"type": "tool_call", "run_id": "a2a-1", "step": 2})
+    agent_runs.record_run_event(
+        {"type": "tool_call", "run_id": "a2a-1", "step": 2}, engine_provider=_Engine
+    )
     [(node_id, label, properties)] = created
     assert label == "RunEvent" and node_id.startswith("runevent:a2a-1:")
     assert properties["event_type"] == "tool_call" and properties["step"] == 2
@@ -76,8 +77,9 @@ def test_a_refused_run_event_logs_the_engine_code(monkeypatch, caplog) -> None:
         def create_node(self, *args: Any) -> bool:
             raise _Refusal()
 
-    monkeypatch.setattr(agent_runs, "_engine", _Engine)
-    agent_runs.record_run_event({"type": "error", "run_id": "a2a-1"})
+    agent_runs.record_run_event(
+        {"type": "error", "run_id": "a2a-1"}, engine_provider=_Engine
+    )
     assert "INTERNAL unclassified engine refusal" in caplog.text
 
 
@@ -187,7 +189,6 @@ def test_tool_call_run_events_carry_queryable_tool_provenance(monkeypatch) -> No
             created.append(dict(properties))
             return True
 
-    monkeypatch.setattr(agent_runs, "_engine", _Engine)
     agent_runs.record_run_event(
         {
             "type": "tool_call",
@@ -198,9 +199,12 @@ def test_tool_call_run_events_carry_queryable_tool_provenance(monkeypatch) -> No
             "server": "searxng-mcp",
             "tool": "web_search",
             "ok": True,
-        }
+        },
+        engine_provider=_Engine,
     )
-    agent_runs.record_run_event({"type": "run_started", "run_id": "a2a-1"})
+    agent_runs.record_run_event(
+        {"type": "run_started", "run_id": "a2a-1"}, engine_provider=_Engine
+    )
     call, started = created
     assert (
         call["tool_name"],

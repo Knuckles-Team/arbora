@@ -896,7 +896,9 @@ class NativeGatewayApplication:
         *,
         fleet: FleetState,
         approvals: ApprovalDecisions,
+        engine_provider: Callable[[], Any],
     ) -> None:
+        self._engine_provider = engine_provider
         self._invocation = invocation
         self._fleet = fleet
         self._approvals = approvals
@@ -935,7 +937,7 @@ class NativeGatewayApplication:
         return result.value
 
     def engine(self) -> Any:
-        return runtime._get_engine()
+        return self._engine_provider()
 
     def decide_approval(self, approval_id: str, decision: str) -> dict[str, str]:
         return self._approvals.decide(self.engine(), approval_id, decision)
@@ -994,10 +996,16 @@ def install_gateway_application(
     *,
     fleet: FleetState,
     approvals: ApprovalDecisions,
+    engine_provider: Callable[[], Any],
 ) -> NativeGatewayApplication:
     """Install the native application adapter at the process composition root."""
 
-    application = NativeGatewayApplication(invocation, fleet=fleet, approvals=approvals)
+    application = NativeGatewayApplication(
+        invocation,
+        fleet=fleet,
+        approvals=approvals,
+        engine_provider=engine_provider,
+    )
     configure_gateway_application(application)
     return application
 
@@ -1033,10 +1041,11 @@ def start_composed_services(
             partial(
                 run_web_ui,
                 action_policies=action_policies,
+                engine=engine,
                 session_boundary=session_boundary,
             )
             if session_boundary is not None
-            else partial(run_web_ui, action_policies=action_policies)
+            else partial(run_web_ui, action_policies=action_policies, engine=engine)
         )
         supervisor.start_service("overstory", runner, session)
     return supervisor

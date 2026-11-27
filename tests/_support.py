@@ -11,7 +11,10 @@ from __future__ import annotations
 import threading
 from collections.abc import Iterable
 from dataclasses import dataclass
+from functools import partial
 
+from arbora.agent_runs import record_run_event
+from arbora.mcp_server.served_engine import EngineHandles
 from arbora.security.secrets import SecretsBackend
 
 
@@ -65,3 +68,18 @@ def unwrap_decide(params):
     """The ``request`` of one ``Decide``; the engine's wire params are ``{request}`` only."""
     assert list(params) == ["request"], "a Decide carries MethodDecideParams {request}"
     return params["request"]
+
+
+def FixedEngineHandles(engine: object) -> EngineHandles:  # noqa: N802
+    """An ``EngineHandles`` whose engine handle is one given object, for tests."""
+
+    class _Fixed(EngineHandles):
+        def served(self):  # type: ignore[override]
+            return engine
+
+    return _Fixed()
+
+
+def run_events(engine: object):
+    """The run-event sink of the harness, writing to one given engine."""
+    return partial(record_run_event, engine_provider=lambda: engine)

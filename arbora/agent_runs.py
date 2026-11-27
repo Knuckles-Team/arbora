@@ -420,15 +420,10 @@ def resolve_model(model_id: str) -> Any:
     return OpenAIChatModel(str(entry.get("model") or model_id), provider=provider)
 
 
-def _engine() -> Any:
-    from arbora.mcp_server import runtime
-
-    get_engine = runtime._get_engine
-    if not callable(get_engine):
-        return None
+def _engine(engine_provider: Callable[[], Any]) -> Any:
     try:
-        return get_engine()
-    except Exception as exc:  # noqa: BLE001 - an unserved engine leaves events unpersisted
+        return engine_provider()
+    except (ConnectionError, OSError, RuntimeError, ValueError) as exc:
         logger.warning("run events not persisted: engine unavailable (%s)", exc)
         return None
 
@@ -528,7 +523,9 @@ def _event_suffix(event_id: Any, ordered: bool) -> str:
     return uuid.uuid4().hex
 
 
-def record_run_event(event: Mapping[str, Any]) -> None:
+def record_run_event(
+    event: Mapping[str, Any], *, engine_provider: Callable[[], Any]
+) -> None:
     """Write one run event to the engine as a ``RunEvent`` node.
 
     The served engine creates the node through EG ``CreateNodeIfAbsent``;
@@ -551,7 +548,7 @@ def record_run_event(event: Mapping[str, Any]) -> None:
         canonical_run_status(status, str(event.get("previous_status") or ""))
     TERMINALS.note(event)
     payload = _run_event_payload(event, cast(str, run_id), cast(str, event_type), step)
-    engine = _engine()
+    engine = _engine(engine_provider)
     event_id = event.get("event_id")
     sequence = event.get("sequence")
     ordered = _ordered_event(event_id, sequence)

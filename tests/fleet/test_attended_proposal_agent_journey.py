@@ -40,7 +40,7 @@ from arbora.gateway import ports
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import install_gateway_application
 from arbora.mcp_server.harness_ports import build_host_ports
-from arbora.mcp_server.host_context import build_host_context
+from arbora.mcp_server.host_context import compose_host_context
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
@@ -51,6 +51,7 @@ from arbora.security import request_identity
 from arbora.security.actor_context import use_actor
 from arbora.security.session import use_session
 from arbora.webui_host.mcp_delegation import webui_mcp_delegation_helpers
+from tests._support import FixedEngineHandles
 from tests.browser_control.test_browser_control_service import _setup
 from tests.browser_control.test_browser_proposals import (
     _registered,
@@ -70,7 +71,6 @@ def _isolate_registration(monkeypatch: pytest.MonkeyPatch, client: Any) -> None:
     monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
     monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {})
     monkeypatch.setattr(runtime, "_FULL_TOOL_NAMES", runtime._FULL_TOOL_NAMES)
-    monkeypatch.setattr(runtime, "_get_engine", lambda: client)
     monkeypatch.setattr(shared_multiplexer, "_served", None)
     monkeypatch.setattr(browser_control_runtime, "_service", None)
     monkeypatch.setattr(browser_control_runtime, "_owner_loop", None)
@@ -111,8 +111,13 @@ async def _served(
         fleet_effect=refused_fleet_effect,
     )
     fleet = FleetState()
-    install_gateway_application(invocation, fleet=fleet, approvals=ApprovalDecisions())
-    host = build_host_context(runtime._get_engine)
+    host = compose_host_context(FixedEngineHandles(client))
+    install_gateway_application(
+        invocation,
+        fleet=fleet,
+        approvals=ApprovalDecisions(),
+        engine_provider=host.engine.served,
+    )
     _args, mcp, middlewares = runtime._build_server(
         bootstrap=False, invocation=invocation, host=host
     )

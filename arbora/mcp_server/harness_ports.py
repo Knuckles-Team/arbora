@@ -7,6 +7,7 @@ provider is registered in harness module state: a run carries its own record.
 
 from __future__ import annotations
 
+from functools import partial
 from typing import Any
 
 from arbora.mcp_server import harness_host
@@ -38,7 +39,6 @@ def build_host_ports(
     from arbora.agent_runs import decide_run, record_run_event, resolve_model
     from arbora.current_plan_publication import publication_scope
     from arbora.fleet import client_toolsets
-    from arbora.mcp_server import runtime
     from arbora.pin_lag.meristem import emit_run_event
 
     slot = host.runs.ports
@@ -50,9 +50,8 @@ def build_host_ports(
         return harness_host.build_toolset(tool_names, toolset_id, emit)
 
     # The engine is resolved when a run binds, never at composition.
-    store = checkpoint_store(
-        lambda: runtime._get_engine() if runtime._get_engine else None
-    )
+    store = checkpoint_store(host.engine.served)
+    record_events = partial(record_run_event, engine_provider=host.engine.served)
     base: dict[str, Any] = {
         "decide": decide_run,
         "models": resolve_model,
@@ -71,9 +70,7 @@ def build_host_ports(
         "probe": HostProbeProvider(slot.current),
     }
     if services is None:
-        binding = bind_host_ports(
-            **base, checkpoint_store=store, events=record_run_event
-        )
+        binding = bind_host_ports(**base, checkpoint_store=store, events=record_events)
     else:
         from arbora.agent_host.host_port_composition import compose_host_ports
 
@@ -81,7 +78,7 @@ def build_host_ports(
             services,
             wait=asyncio.sleep,
             checkpoint_store=store,
-            events=record_run_event,
+            events=record_events,
             seams=seams,
             base=base,
         )

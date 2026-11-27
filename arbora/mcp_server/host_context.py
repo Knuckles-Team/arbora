@@ -8,7 +8,6 @@ would be the global the context replaces.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -19,6 +18,7 @@ from arbora.access.approval import ApprovalDecisions, verified_approval_session
 from arbora.access.policy_state import PolicyState
 from arbora.agent_host.host_port_adapters import HostPortsSlot
 from arbora.fleet.state import FleetState
+from arbora.mcp_server.served_engine import EngineHandles
 from arbora.run_origin import RunOriginRegistry
 
 __all__ = [
@@ -27,6 +27,7 @@ __all__ = [
     "bind_a2a_decision",
     "bind_ranking",
     "build_host_context",
+    "compose_host_context",
 ]
 
 
@@ -49,15 +50,21 @@ class HostContext:
     runs: RunState
     fleet: FleetState
     policy: PolicyState
+    engine: EngineHandles
 
 
-def build_host_context(engine_provider: Callable[[], Any]) -> HostContext:
-    """Build the host state once; ``engine_provider`` resolves the engine lazily."""
+def build_host_context() -> HostContext:
+    """Build the host state once; the engine pool is built on first use."""
+    return compose_host_context(EngineHandles())
+
+
+def compose_host_context(engine: EngineHandles) -> HostContext:
+    """Compose the host state over the given engine handles."""
     origins = RunOriginRegistry()
     decide = HostDecide()
     ports = HostPortsSlot()
     a2a = build_a2a_service(
-        engine_provider=engine_provider,
+        engine_provider=engine.served,
         origins=origins,
         decide=decide,
         feature_schema=decide.feature_schema,
@@ -70,6 +77,7 @@ def build_host_context(engine_provider: Callable[[], Any]) -> HostContext:
         policy=PolicyState(
             approvals=ApprovalDecisions(verified_approval_session),
         ),
+        engine=engine,
     )
 
 

@@ -96,7 +96,10 @@ def test_native_a2a_and_gateway_share_authority_and_effect_boundary(
     a2a = post(mount_a2a(monkeypatch, value))
     http = FastAPI()
     NativeGatewayApplication(
-        value, fleet=FleetState(), approvals=ApprovalDecisions()
+        value,
+        fleet=FleetState(),
+        approvals=ApprovalDecisions(),
+        engine_provider=lambda: None,
     ).mount_rest_routes(http, prefix="/api")
     response = http_post(http)
     assert a2a.status_code == response.status_code == (200 if allowed else 403)
@@ -112,7 +115,10 @@ def test_composed_gateway_refuses_dependency_replacement(monkeypatch):
     app = FastAPI()
     with pytest.raises(ValueError, match="cannot replace"):
         NativeGatewayApplication(
-            value, fleet=FleetState(), approvals=ApprovalDecisions()
+            value,
+            fleet=FleetState(),
+            approvals=ApprovalDecisions(),
+            engine_provider=lambda: None,
         ).mount_rest_routes(app, prefix="/api", services=value.services)
     assert not any(route.path.startswith("/api") for route in app.routes)
 

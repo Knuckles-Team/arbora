@@ -331,7 +331,7 @@ def _run_bulk_ingest(
 # graph_ingest had ZERO prior test coverage of any kind.
 
 
-def register_write_ingest_tools(mcp):
+def register_write_ingest_tools(mcp, engine_provider: Callable[[], Any]):
     """Register the write_ingest_tools group on the given FastMCP server."""
 
     @mcp.tool(
@@ -862,7 +862,7 @@ def register_write_ingest_tools(mcp):
         ),
     ) -> str:
         """Record a human correction (outcome/rule/eval) and apply it durably."""
-        engine = runtime._get_engine()
+        engine = engine_provider()
         if not engine:
             return "Error: IntelligenceGraphEngine not active."
 
@@ -896,7 +896,7 @@ def register_write_ingest_tools(mcp):
     )
     async def skill_classify() -> str:
         """Classify a skill and persist the choice (source file, else durable override)."""
-        engine = runtime._get_engine()
+        engine = engine_provider()
         if not engine:
             return "Error: IntelligenceGraphEngine not active."
 
@@ -920,7 +920,7 @@ def register_write_ingest_tools(mcp):
         # with no job created and no partial write. Returns
         # (engine_or_None, error_response_or_None).
         if not (action == "ingest" and (graph or connection)):
-            return runtime._get_engine(), None
+            return engine_provider(), None
         try:
             entries, errors, fanout = engine_routing._resolve_target_engines(connection)
             entries = engine_routing.resolve_explicit_graph(

@@ -57,7 +57,7 @@ async def _doctor_checks() -> dict[str, Any]:
 
 @pytest.mark.spec("ARBORA-FLEET-R083.5")
 async def test_unpublished_schema_is_named_in_ready_and_doctor() -> None:
-    host = build_host_context(lambda: None)
+    host = build_host_context()
     bind_ranking(host, _invocation(lambda _t: {"component_id": "decide.schema.other"}))
     check = _check()
     assert check["status"] == "degraded"
@@ -71,7 +71,7 @@ async def test_unpublished_schema_is_named_in_ready_and_doctor() -> None:
 
 @pytest.mark.spec("ARBORA-FLEET-R083.5")
 async def test_an_unbound_engine_names_the_floor_reason() -> None:
-    host = build_host_context(lambda: None)
+    host = build_host_context()
     bind_ranking(host, SimpleNamespace(engine_send=None))
     assert _check()["detail"]["summary"] == "ranking: floor (engine unavailable)"
     assert (await _doctor_checks())["ranking"] == "ranking: floor (engine unavailable)"
@@ -80,7 +80,7 @@ async def test_an_unbound_engine_names_the_floor_reason() -> None:
 @pytest.mark.spec("ARBORA-FLEET-R083.5")
 async def test_published_schemas_report_the_engine_order() -> None:
     assert "catalog.operation_rank" in QUESTION_IDS
-    host = build_host_context(lambda: None)
+    host = build_host_context()
     bind_ranking(host, _invocation(_published))
     assert _check()["status"] == "ok"
     assert _check()["detail"]["summary"] == "ranking: medulla"

@@ -36,6 +36,7 @@ import logging
 import time
 import types
 import typing
+from collections.abc import Callable
 from functools import lru_cache
 from typing import Any
 
@@ -342,7 +343,12 @@ def _coerce_input(value: Any) -> Any:
 
 
 def _record_provenance(
-    env_key: str, *, redacted: bool, reason: str, decision: Any
+    env_key: str,
+    *,
+    redacted: bool,
+    reason: str,
+    decision: Any,
+    engine_provider: Callable[[], Any],
 ) -> str | None:
     """Best-effort ``:ConfigChange`` provenance node for one applied write.
 
@@ -354,10 +360,8 @@ def _record_provenance(
     """
     node_id = f"configchange:{env_key}:{int(time.time() * 1000)}"
     try:
-        from arbora.mcp_server import runtime
-
         create_record(
-            runtime._get_engine(),
+            engine_provider(),
             node_id,
             "ConfigChange",
             {
@@ -381,7 +385,10 @@ def _record_provenance(
 
 
 def _gate(
-    env_key: str, reason: str, action_policies: ActionPolicies
+    env_key: str,
+    reason: str,
+    action_policies: ActionPolicies,
+    engine_provider: Callable[[], Any],
 ) -> tuple[bool, dict[str, Any]]:
     """ActionPolicy decision for a ``config.set``.
 
@@ -391,9 +398,8 @@ def _gate(
     """
     try:
         from arbora.access.action_policy import ActionRequest
-        from arbora.mcp_server import runtime
 
-        decision = action_policies.for_engine(runtime._get_engine()).decide(
+        decision = action_policies.for_engine(engine_provider()).decide(
             ActionRequest(
                 kind="config.set",
                 target=env_key,
@@ -420,7 +426,12 @@ def _gate(
 
 
 def set_value(
-    key: str, value: Any, *, action_policies: ActionPolicies, reason: str = ""
+    key: str,
+    value: Any,
+    *,
+    action_policies: ActionPolicies,
+    engine_provider: Callable[[], Any],
+    reason: str = "",
 ) -> dict[str, Any]:
     """Governed write of one ``AgentConfig`` field.
 
@@ -450,7 +461,7 @@ def set_value(
 
     validated = _validate_against_model(field_name, parsed)
 
-    allowed, decision = _gate(env_key, reason, action_policies)
+    allowed, decision = _gate(env_key, reason, action_policies, engine_provider)
     if not allowed:
         return {
             "action": "set",
@@ -468,6 +479,7 @@ def set_value(
         redacted=was_redacted,
         reason=reason,
         decision=decision.get("decision"),
+        engine_provider=engine_provider,
     )
     return {
         "action": "set",
@@ -503,6 +515,7 @@ async def _dispatch_mutation(
     value: Any,
     reason: str,
     action_policies: ActionPolicies,
+    engine_provider: Callable[[], Any],
 ) -> dict[str, Any]:
     """Run one awaited configuration mutation and catalog reconciliation."""
     import asyncio
@@ -512,7 +525,12 @@ async def _dispatch_mutation(
         request_id = "graph-config-reload"
     else:
         result = await asyncio.to_thread(
-            set_value, key, value, action_policies=action_policies, reason=reason
+            set_value,
+            key,
+            value,
+            action_policies=action_policies,
+            engine_provider=engine_provider,
+            reason=reason,
         )
         if not result.get("applied"):
             return result
@@ -553,6 +571,7 @@ async def dispatch(
     action: str,
     *,
     action_policies: ActionPolicies,
+    engine_provider: Callable[[], Any],
     key: str = "",
     value: Any = "",
     reason: str = "",
@@ -576,4 +595,5 @@ async def dispatch(
         value=value,
         reason=reason,
         action_policies=action_policies,
+        engine_provider=engine_provider,
     )

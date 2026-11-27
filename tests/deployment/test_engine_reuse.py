@@ -60,13 +60,13 @@ def test_two_hosts_reuse_one_engine_and_unavailable_reuse_starts_zero(
         raise AssertionError("a reused engine never starts a local replacement")
 
     monkeypatch.setattr(composition, "ensure_local_engine", forbidden)
-    served_engine.reset_process_engine()
+    handles = served_engine.EngineHandles()
     try:
         with pytest.raises(EngineRefusal) as refused:
-            served_engine.process_engine_pool()
+            handles.pool()
         assert refused.value.code == "REUSE_UNREACHABLE"
     finally:
-        served_engine.reset_process_engine()
+        handles.reset()
     assert composition.engine_spawn_count() == before
 
 

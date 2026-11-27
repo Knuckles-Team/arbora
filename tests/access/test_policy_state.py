@@ -7,7 +7,7 @@ import pytest
 import arbora.access.action_policy as ap
 import arbora.access.approval as approval
 from arbora.access.policy_state import PolicyState
-from arbora.mcp_server.host_context import build_host_context
+from arbora.mcp_server.host_context import build_host_context, compose_host_context
 from tests._eg_fakes import SyncControlLeases
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R039.3")
@@ -47,8 +47,8 @@ def test_every_gate_reads_the_ports_of_its_own_state() -> None:
 
 
 def test_the_host_context_owns_one_policy_state() -> None:
-    first = build_host_context(lambda: None)
-    second = build_host_context(lambda: None)
+    first = build_host_context()
+    second = build_host_context()
 
     assert isinstance(first.policy, PolicyState)
     assert first.policy.action_policies is not second.policy.action_policies
@@ -117,14 +117,17 @@ async def test_served_approval_decides_only_under_a_verified_session(
     from starlette.routing import Route
 
     from arbora.gateway.fleet import fleet_grant_approval
-    from arbora.mcp_server import runtime
     from arbora.mcp_server.composition import install_gateway_application
     from arbora.security.session import use_session
+    from tests._support import FixedEngineHandles
 
     engine = _ApprovalEngine()
-    monkeypatch.setattr(runtime, "_get_engine", lambda: engine)
-    host = build_host_context(lambda: engine)
-    install_gateway_application(fleet=host.fleet, approvals=host.policy.approvals)
+    host = compose_host_context(FixedEngineHandles(engine))
+    install_gateway_application(
+        fleet=host.fleet,
+        approvals=host.policy.approvals,
+        engine_provider=host.engine.served,
+    )
     app = Starlette(
         routes=[Route("/fleet/approvals/grant", fleet_grant_approval, methods=["POST"])]
     )

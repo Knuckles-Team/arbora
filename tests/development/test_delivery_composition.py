@@ -58,12 +58,6 @@ class LaneClient:
         return {"hold_id": "hold:1"}
 
 
-def _engine_client(app: Any) -> Any:
-    from arbora.mcp_server import runtime as mcp_runtime
-
-    return mcp_runtime._get_engine()
-
-
 @pytest.mark.spec("ARBORA-OPS-R896.9")
 @pytest.mark.spec("ARBORA-OPS-R896.12")
 def test_run_start_reaches_the_lane_and_a_signed_event_is_stamped_with_production_bindings(
@@ -149,7 +143,7 @@ def test_run_start_reaches_the_lane_and_a_signed_event_is_stamped_with_productio
         }
 
     route_methods(
-        _engine_client(app),
+        engine,
         {"DeliveryOpen": open_delivery, "DeliveryFeedback": feedback},
         monkeypatch,
         {"fixture-verified": person("one", extra_scopes=("lifecycle:write",))},

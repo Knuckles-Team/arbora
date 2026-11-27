@@ -57,7 +57,7 @@ def _register_query_tools():
 
     from arbora.mcp_server.backing.tools.query_tools import register_query_tools
 
-    register_query_tools(FastMCP("test"))
+    register_query_tools(FastMCP("test"), lambda: None)
 
 
 def _multi_tenant_session(actor: ActorContext, graph: str) -> GraphSession:

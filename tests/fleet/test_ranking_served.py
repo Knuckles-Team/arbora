@@ -171,7 +171,7 @@ def test_the_host_binds_its_fleet_port_to_the_served_engine_sender() -> None:
 
     from arbora.mcp_server.host_context import bind_ranking, build_host_context
 
-    host = build_host_context(lambda: None)
+    host = build_host_context()
     bind_ranking(host, SimpleNamespace(engine_send=None))
     assert not host.fleet.ranking.configured  # no engine endpoint: the floor answers
 

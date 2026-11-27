@@ -108,6 +108,7 @@ async def test_invoke_operation_runs_the_invoke_pipeline_as_the_request_caller(
         invocation,
         fleet=None,
         approvals=None,  # type: ignore[arg-type]
+        engine_provider=lambda: None,
     )
     value = await application.invoke_operation(
         "ingest.sources.list", {}, request="req", idempotency_key="k"
@@ -117,6 +118,8 @@ async def test_invoke_operation_runs_the_invoke_pipeline_as_the_request_caller(
     with pytest.raises(pipeline.OperationRefused) as refused:
         await application.invoke_operation("ingest.sources.list", {}, request="req")
     assert refused.value.code == "NOT_FOUND"
-    bare = NativeGatewayApplication(None, fleet=None, approvals=None)  # type: ignore[arg-type]
+    bare = NativeGatewayApplication(
+        None, fleet=None, approvals=None, engine_provider=lambda: None
+    )  # type: ignore[arg-type]
     with pytest.raises(pipeline.OperationRefused):
         await bare.invoke_operation("x", {}, request="req")

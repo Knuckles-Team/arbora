@@ -21,7 +21,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import time
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Callable, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Any
@@ -152,21 +152,20 @@ async def outbound_mirror(message: Any, engine: Any) -> None:
     )
 
 
-def prompt_normalizer() -> Any:
+def prompt_normalizer(engine_provider: Callable[[], Any]) -> Any:
     """The process modality seam, recording provenance in the served engine.
 
     ARBORA-OPS-R899: audio parts go to the fleet's speech-to-text capability
     through the governed ``find``/``act`` verbs; each kept original and its
     transcript link are written as ``MediaAttachment``/``Transcript`` records.
     """
-    from arbora.mcp_server.served_engine import served_engine
     from arbora.modality import default_normalizer
     from arbora.modality.provenance import engine_recorder
 
-    return default_normalizer(recorder=engine_recorder(served_engine))
+    return default_normalizer(recorder=engine_recorder(engine_provider))
 
 
-def bind_messaging_ports() -> None:
+def bind_messaging_ports(engine_provider: Callable[[], Any]) -> None:
     """Bind the messaging host ports at startup."""
     from arbora.messaging.host_ports import bind_host_ports
     from arbora.observability.runtime_signals import record_runtime_signal
@@ -179,7 +178,7 @@ def bind_messaging_ports() -> None:
         action_gate=action_gate,
         outbound_mirror=outbound_mirror,
         runtime_signal=runtime_signal,
-        prompt_normalizer=prompt_normalizer(),
+        prompt_normalizer=prompt_normalizer(engine_provider),
     )
 
 
@@ -242,27 +241,28 @@ class A2AAppExtension(ServerExtension):
             await stop.wait()
 
 
-def _engine_storage() -> Any:
+def _engine_storage(engine_provider: Callable[[], Any]) -> Any:
     """The served agent's task and conversation storage: the engine KV, nothing local.
 
     Each call reads the verified session of the running request, so a conversation
     belongs to the caller that opened it (ARBORA-A2A-R001.3).
     """
     from arbora.a2a.storage import EngineA2AStorage, engine_kv_send
-    from arbora.mcp_server import runtime
     from arbora.security.session import resolve_session
 
     def session() -> Any:
         return resolve_session(required_scope="kg:read")
 
     return EngineA2AStorage(
-        engine_kv_send(runtime._get_engine),
+        engine_kv_send(engine_provider),
         tenant=lambda: str(session().tenant),
         principal=lambda: str(session().actor.actor_id),
     )
 
 
-def mount_sdk_a2a(mcp: Any, *, stream_handler: Any = None) -> Any:
+def mount_sdk_a2a(
+    mcp: Any, *, engine_provider: Callable[[], Any], stream_handler: Any = None
+) -> Any:
     """Mount the SDK A2A application for the fleet agent behind admission.
 
     ``stream_handler`` is the shared A2A JSON-RPC handler: the route serves
@@ -281,9 +281,9 @@ def mount_sdk_a2a(mcp: Any, *, stream_handler: Any = None) -> Any:
     base = str(read_env("ARBORA_PUBLIC_URL") or "").rstrip("/")
     from arbora.modality.agent_input import MediaNormalizingAgent
 
-    storage = _engine_storage()
+    storage = _engine_storage(engine_provider)
     admitted = create_admitted_a2a_app(
-        agent=MediaNormalizingAgent(fleet_agent(), prompt_normalizer()),
+        agent=MediaNormalizingAgent(fleet_agent(), prompt_normalizer(engine_provider)),
         authenticator=AmbientA2AAuthenticator(),
         bind_caller=caller_session_scope,
         stream_handler=stream_handler,
@@ -307,20 +307,25 @@ def mount_sdk_a2a(mcp: Any, *, stream_handler: Any = None) -> Any:
 ENGINE_PROBE_QUERY = "MATCH (n) RETURN n LIMIT 1"
 
 
-def _engine_probe(session: Any) -> dict[str, Any]:
-    from arbora.mcp_server import runtime
+def _engine_probe(
+    engine_provider: Callable[[], Any],
+) -> Callable[[Any], dict[str, Any]]:
+    """The readiness probe of the host's engine, one query under the session."""
 
-    engine = runtime._get_engine()
-    if engine is None:
-        return {"status": "unhealthy", "reason": "no engine is bound"}
-    from arbora.security.session import use_session
+    def probe(session: Any) -> dict[str, Any]:
+        engine = engine_provider()
+        if engine is None:
+            return {"status": "unhealthy", "reason": "no engine is bound"}
+        from arbora.security.session import use_session
 
-    if session is None:
-        engine.query_cypher(ENGINE_PROBE_QUERY, {})
-    else:
-        with use_session(session):
+        if session is None:
             engine.query_cypher(ENGINE_PROBE_QUERY, {})
-    return {"status": "ok"}
+        else:
+            with use_session(session):
+                engine.query_cypher(ENGINE_PROBE_QUERY, {})
+        return {"status": "ok"}
+
+    return probe
 
 
 def _fleet_probe(session: Any) -> dict[str, Any]:
@@ -345,9 +350,9 @@ def _fleet_probe(session: Any) -> dict[str, Any]:
     }
 
 
-def bind_health_probes() -> None:
+def bind_health_probes(engine_provider: Callable[[], Any]) -> None:
     """Bind the mandatory readiness probes."""
     from arbora.observability.runtime_health import register_health_probe
 
-    register_health_probe("engine", _engine_probe)
+    register_health_probe("engine", _engine_probe(engine_provider))
     register_health_probe("fleet_supervision", _fleet_probe)

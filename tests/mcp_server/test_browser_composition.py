@@ -162,17 +162,17 @@ def test_direct_unconfigured_eg_server_refuses_before_serving(monkeypatch):
 
 
 def test_settings_composition_forwards_factory_without_constructing_it(monkeypatch):
-    from arbora.mcp_server import served_engine, served_invocation, task_plan
+    from arbora.mcp_server import served_invocation, task_plan
 
     factory, pool, calls = object(), object(), []
     monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", "unix:///fixture")
     monkeypatch.setattr(task_plan, "configured_task_plan", lambda: None)
-    monkeypatch.setattr(served_engine, "process_engine_pool", lambda: pool)
     monkeypatch.setattr(
         served_invocation, "compose_served_invocation", lambda **kw: calls.append(kw)
     )
     served_invocation.served_invocation_from_settings(
         process_session=lambda: SimpleNamespace(graph="fixture-graph"),
+        engine_pool=lambda: pool,
         action_policies=ActionPolicies(),
         bindings={},
         fleet_effect=None,

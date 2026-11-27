@@ -128,10 +128,10 @@ def _payload(result: Any) -> Any:
 async def _send(context: Any, method: str, params: dict[str, Any], key: str | None):
     """Send one KV method under the caller's own verified session."""
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.mcp_server import runtime
     from arbora.security.session import use_session
 
-    engine = runtime._get_engine() if callable(runtime._get_engine) else None
+    engine_provider = context.services.get("engine")
+    engine = engine_provider() if callable(engine_provider) else None
     if engine is None:
         raise OperationRefused("UNAVAILABLE", {"reason": "engine is not bound"})
     # The served engine routes each request to the ambient session's graph.

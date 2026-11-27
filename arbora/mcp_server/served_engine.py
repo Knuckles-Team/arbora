@@ -23,24 +23,14 @@ import contextvars
 import json
 import re
 import threading
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import Any, cast
 
 from arbora.core.environment import read_env
 from arbora.security.anonymous import client_scope, session_context
 from arbora.unique_records import record_body
 
-__all__ = [
-    "ServedEngine",
-    "SessionRoutedClient",
-    "process_engine_pool",
-    "reset_process_engine",
-    "served_engine",
-]
-
-_LOCK = threading.Lock()
-_POOL: Any = None
-_ENGINE: ServedEngine | None = None
+__all__ = ["EngineHandles", "ServedEngine", "SessionRoutedClient", "engine_unbound"]
 
 
 def _session_context(session: Any) -> Any:
@@ -444,58 +434,79 @@ class ServedEngine:
         return bool(run_blocking(run))
 
 
-def process_engine_pool() -> Any:
-    """The one EG client pool of this process, built on first use.
+def _build_process_pool() -> Any:
+    """Build the one EG client pool of a host from its configured endpoint.
 
-    With ``GRAPH_SERVICE_ENDPOINTS`` unset, the process attaches to the local
+    With ``GRAPH_SERVICE_ENDPOINTS`` unset, the host attaches to the local
     loopback engine and starts one only when none answers
     (``ARBORA-DEPLOY-R018.9``). A configured endpoint never starts an engine.
     """
-    global _POOL
-    with _LOCK:
-        if _POOL is None:
-            from medulla import MedullaClient
+    from medulla import MedullaClient
 
-            from arbora.core.settings import runtime_config
-            from arbora.epistemic import ConnectClient, EpistemicClientPool
-            from arbora.mcp_server.composition import (
-                attach_reused_engine,
-                ensure_local_engine,
-                parse_engine_endpoint,
-                require_remote_engine_credential,
-            )
+    from arbora.core.settings import runtime_config
+    from arbora.epistemic import ConnectClient, EpistemicClientPool
+    from arbora.mcp_server.composition import (
+        attach_reused_engine,
+        ensure_local_engine,
+        parse_engine_endpoint,
+        require_remote_engine_credential,
+    )
 
-            endpoints = runtime_config.graph_service_endpoints
-            if endpoints:
-                # A configured endpoint is connect-only: nothing starts locally.
-                endpoint = parse_engine_endpoint(
-                    next((item for item in endpoints if str(item).strip()), "")
-                )
-                require_remote_engine_credential(endpoint)
-                if str(read_env("ENGINE_REUSE")).strip().lower() in {"1", "true"}:
-                    attach_reused_engine(endpoint)
-            else:
-                endpoint = ensure_local_engine()
-            _POOL = EpistemicClientPool(
-                cast(ConnectClient, MedullaClient.connect),
-                **endpoint.client_kwargs(),
-            )
-        return _POOL
+    endpoints = runtime_config.graph_service_endpoints
+    if endpoints:
+        # A configured endpoint is connect-only: nothing starts locally.
+        endpoint = parse_engine_endpoint(
+            next((item for item in endpoints if str(item).strip()), "")
+        )
+        require_remote_engine_credential(endpoint)
+        if str(read_env("ENGINE_REUSE")).strip().lower() in {"1", "true"}:
+            attach_reused_engine(endpoint)
+    else:
+        endpoint = ensure_local_engine()
+    return EpistemicClientPool(
+        cast(ConnectClient, MedullaClient.connect),
+        **endpoint.client_kwargs(),
+    )
 
 
-def served_engine() -> ServedEngine:
-    """The process engine handle over :func:`process_engine_pool`."""
-    global _ENGINE
-    pool = process_engine_pool()
-    with _LOCK:
-        if _ENGINE is None or _ENGINE.pool is not pool:
-            _ENGINE = ServedEngine(pool)
-        return _ENGINE
+def engine_unbound() -> Any:
+    """The engine provider of a server composed without an engine."""
+    raise RuntimeError("this server was composed without an engine")
 
 
-def reset_process_engine() -> None:
-    """Forget the process pool (tests and process teardown only)."""
-    global _POOL, _ENGINE
-    with _LOCK:
-        _POOL = None
-        _ENGINE = None
+class EngineHandles:
+    """One host's EG client pool and its engine handle (ARBORA-HOST-R039.8).
+
+    The ``engine`` field of the host context. The pool is built on first use and
+    the handle is rebuilt only when the pool changes; both live under this
+    object's own lock, so two hosts hold two separate pools.
+    """
+
+    __slots__ = ("_engine", "_lock", "_pool", "_pool_factory")
+
+    def __init__(self, pool_factory: Callable[[], Any] = _build_process_pool) -> None:
+        self._lock = threading.Lock()
+        self._pool: Any = None
+        self._engine: ServedEngine | None = None
+        self._pool_factory = pool_factory
+
+    def pool(self) -> Any:
+        """This host's one EG client pool, built on first use."""
+        with self._lock:
+            if self._pool is None:
+                self._pool = self._pool_factory()
+            return self._pool
+
+    def served(self) -> ServedEngine:
+        """This host's engine handle over :meth:`pool`."""
+        pool = self.pool()
+        with self._lock:
+            if self._engine is None or self._engine.pool is not pool:
+                self._engine = ServedEngine(pool)
+            return self._engine
+
+    def reset(self) -> None:
+        """Forget the pool and the handle (process teardown only)."""
+        with self._lock:
+            self._pool = None
+            self._engine = None

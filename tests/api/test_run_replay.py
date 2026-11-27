@@ -275,11 +275,10 @@ async def test_http_and_mcp_use_same_registered_run_handler(
 
 
 def test_persistence_keeps_child_task_identity(monkeypatch):
-    from arbora import agent_runs
-    from tests.test_run_event_payloads import sink
+    from tests.test_run_event_payloads import emit, sink
 
     records = sink(monkeypatch)
-    agent_runs.record_run_event(event(task_id="child-task"))
+    emit(records, event(task_id="child-task"))
     assert records[0]["task_id"] == "child-task"
 
 
