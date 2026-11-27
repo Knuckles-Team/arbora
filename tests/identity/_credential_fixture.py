@@ -6,7 +6,11 @@ import asyncio
 from types import SimpleNamespace
 from typing import Any
 
-from arbora.access.credential_use import AuthorizationChallenge, CredentialUseRequest
+from arbora.access.credential_use import (
+    AuthorizationChallenge,
+    CredentialUseRequest,
+    RefreshLocks,
+)
 
 NOW = 1_800_000_000.0
 CODE = "code-" + "x" * 24
@@ -46,6 +50,7 @@ class Ports:
         self.interactive = True
         self.standing = "valid"
         self.decisions = 0
+        self.refresh_locks = RefreshLocks()
 
     def clock(self) -> float:
         return self.clock_now
