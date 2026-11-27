@@ -30,33 +30,33 @@ from scion_sdk.credentials.runtime_references import (
 )
 from scion_sdk.utilities import to_boolean
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env, read_reference, write_env
 from arbora.version import __version__
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_HOST = str(setting("HOST", "127.0.0.1"))
-DEFAULT_PORT = int(setting("PORT", 9000))
+DEFAULT_HOST = str(read_env("HOST"))
+DEFAULT_PORT = int(read_env("PORT"))
 
 
 # MCP-specific auth/delegation config (not in config.py)
 mcp_auth_config = {
-    "enable_delegation": to_boolean(setting("ENABLE_DELEGATION", "False")),
-    "audience": setting("AUDIENCE", None),
-    "delegated_scopes": setting("DELEGATED_SCOPES", "api"),
+    "enable_delegation": to_boolean(read_env("ENABLE_DELEGATION", "False")),
+    "audience": read_env("AUDIENCE"),
+    "delegated_scopes": read_env("DELEGATED_SCOPES"),
     "token_endpoint": None,
-    "oidc_client_id": setting("OIDC_CLIENT_ID", None),
+    "oidc_client_id": read_env("OIDC_CLIENT_ID"),
     "oidc_client_secret": None,
-    "oidc_config_url": setting("OIDC_CONFIG_URL", None),
-    "jwt_jwks_uri": setting("FASTMCP_SERVER_AUTH_JWT_JWKS_URI", None),
-    "jwt_issuer": setting("FASTMCP_SERVER_AUTH_JWT_ISSUER", None),
-    "jwt_audience": setting("FASTMCP_SERVER_AUTH_JWT_AUDIENCE", None),
-    "jwt_algorithm": setting("FASTMCP_SERVER_AUTH_JWT_ALGORITHM", None),
-    "jwt_secret": setting("FASTMCP_SERVER_AUTH_JWT_PUBLIC_KEY", None),
-    "jwt_required_scopes": setting("FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES", None),
+    "oidc_config_url": read_env("OIDC_CONFIG_URL"),
+    "jwt_jwks_uri": read_env("FASTMCP_SERVER_AUTH_JWT_JWKS_URI"),
+    "jwt_issuer": read_env("FASTMCP_SERVER_AUTH_JWT_ISSUER"),
+    "jwt_audience": read_env("FASTMCP_SERVER_AUTH_JWT_AUDIENCE"),
+    "jwt_algorithm": read_env("FASTMCP_SERVER_AUTH_JWT_ALGORITHM"),
+    "jwt_secret": read_env("FASTMCP_SERVER_AUTH_JWT_PUBLIC_KEY"),
+    "jwt_required_scopes": read_env("FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES"),
 }  # nosec B105
 
-DEFAULT_TRANSPORT = setting("TRANSPORT", "stdio")
+DEFAULT_TRANSPORT = read_env("TRANSPORT")
 
 _NETWORK_TRANSPORTS = frozenset({"streamable-http", "sse"})
 _ALL_TRANSPORTS = ("stdio", "streamable-http", "sse")
@@ -122,7 +122,7 @@ def _split_csv(raw: str) -> list[str]:
 
 def _csv_setting(key: str) -> list[str]:
     """Read a comma-separated env-var default via `setting()`, split and trimmed."""
-    raw = setting(key)
+    raw = read_env(key)
     return _split_csv(raw) if raw else []
 
 
@@ -676,16 +676,18 @@ def _resolve_mcp_parser_secret_defaults() -> tuple[
     default_oauth_upstream_client_secret, default_openapi_password,
     default_openapi_client_secret) -- resolved from Keycloak/env-var defaults
     and runtime-secret-ref lookups, for create_mcp_parser's flag defaults."""
-    keycloak_url = setting("KEYCLOAK_URL")
-    keycloak_realm = setting("KEYCLOAK_REALM", "master")
-    default_oidc_config = setting("OIDC_CONFIG_URL")
+    keycloak_url = read_env("KEYCLOAK_URL")
+    keycloak_realm = read_env("KEYCLOAK_REALM")
+    default_oidc_config = read_env("OIDC_CONFIG_URL")
     if not default_oidc_config and keycloak_url:
         default_oidc_config = (
             f"{keycloak_url}/realms/{keycloak_realm}/.well-known/openid-configuration"
         )
 
-    default_oidc_client_id = setting("OIDC_CLIENT_ID") or setting("KEYCLOAK_CLIENT_ID")
-    default_oidc_client_secret_ref = setting("OIDC_CLIENT_SECRET_REF") or setting(
+    default_oidc_client_id = read_env("OIDC_CLIENT_ID") or read_env(
+        "KEYCLOAK_CLIENT_ID"
+    )
+    default_oidc_client_secret_ref = read_env("OIDC_CLIENT_SECRET_REF") or read_env(
         "KEYCLOAK_CLIENT_SECRET_REF"
     )
     try:
@@ -694,19 +696,19 @@ def _resolve_mcp_parser_secret_defaults() -> tuple[
             if default_oidc_client_secret_ref
             else None
         )
-        oauth_upstream_client_secret_ref = setting("OAUTH_UPSTREAM_CLIENT_SECRET_REF")
+        oauth_upstream_client_secret_ref = read_env("OAUTH_UPSTREAM_CLIENT_SECRET_REF")
         default_oauth_upstream_client_secret = (
             resolve_runtime_secret_reference(oauth_upstream_client_secret_ref)
             if oauth_upstream_client_secret_ref
             else None
         )
-        openapi_password_ref = setting("OPENAPI_PASSWORD_REF")
+        openapi_password_ref = read_env("OPENAPI_PASSWORD_REF")
         default_openapi_password = (
             resolve_runtime_secret_reference(openapi_password_ref)
             if openapi_password_ref
             else None
         )
-        openapi_client_secret_ref = setting("OPENAPI_CLIENT_SECRET_REF")
+        openapi_client_secret_ref = read_env("OPENAPI_CLIENT_SECRET_REF")
         default_openapi_client_secret = (
             resolve_runtime_secret_reference(openapi_client_secret_ref)
             if openapi_client_secret_ref
@@ -789,70 +791,70 @@ def create_mcp_parser(
     )
     parser.add_argument(
         "--tls-certfile",
-        default=setting("MCP_TLS_CERTFILE"),
+        default=read_env("MCP_TLS_CERTFILE"),
         help="Runtime path to the inbound TLS certificate (prefer secret projection)",
     )
     parser.add_argument(
         "--tls-keyfile",
-        default=setting("MCP_TLS_KEYFILE"),
+        default=read_env("MCP_TLS_KEYFILE"),
         help="Runtime path to the inbound TLS private key (prefer secret projection)",
     )
     parser.add_argument(
         "--tls-terminated",
         action="store_true",
-        default=to_boolean(setting("MCP_TLS_TERMINATED", "False")),
+        default=to_boolean(read_env("MCP_TLS_TERMINATED")),
         help="TLS is terminated by a peer restricted with --trusted-proxy-cidrs",
     )
     parser.add_argument(
         "--trusted-proxy-cidrs",
-        default=setting("MCP_TRUSTED_PROXY_CIDRS"),
+        default=read_env("MCP_TRUSTED_PROXY_CIDRS"),
         help="Comma-separated exact ingress peer CIDRs used with --tls-terminated",
     )
     parser.add_argument(
         "--allowed-hosts",
-        default=setting("MCP_ALLOWED_HOSTS"),
+        default=read_env("MCP_ALLOWED_HOSTS"),
         help="Comma-separated exact Host-header allowlist for network transports",
     )
     parser.add_argument(
         "--allowed-origins",
-        default=setting("MCP_ALLOWED_ORIGINS"),
+        default=read_env("MCP_ALLOWED_ORIGINS"),
         help="Comma-separated exact browser/WebSocket origins; unset blocks Origin requests",
     )
     parser.add_argument(
         "--max-request-bytes",
         type=int,
-        default=int(setting("MCP_MAX_REQUEST_BYTES", str(4 * 1024 * 1024))),
+        default=int(read_env("MCP_MAX_REQUEST_BYTES", str(4 * 1024 * 1024))),
         help="Maximum buffered MCP HTTP request body",
     )
     parser.add_argument(
         "--auth-type",
-        default=setting("AUTH_TYPE", "none"),
+        default=read_env("AUTH_TYPE"),
         choices=["none", "static", "jwt", "oauth-proxy", "oidc-proxy", "remote-oauth"],
         help="Authentication type for MCP server: 'none' (disabled), 'static' (internal), 'jwt' (external token verification), 'oauth-proxy', 'oidc-proxy', 'remote-oauth' (external) (default: none)",
     )
     parser.add_argument(
         "--static-tokens-ref",
-        default=setting("FASTMCP_SERVER_AUTH_STATIC_TOKENS_REF"),
+        default=read_env("FASTMCP_SERVER_AUTH_STATIC_TOKENS_REF"),
         help="Secret reference containing the JSON map used by static authentication",
     )
     parser.add_argument(
         "--token-jwks-uri",
-        default=setting("FASTMCP_SERVER_AUTH_JWT_JWKS_URI"),
+        default=read_env("FASTMCP_SERVER_AUTH_JWT_JWKS_URI"),
         help="JWKS URI for JWT verification",
     )
     parser.add_argument(
         "--token-issuer",
-        default=setting("FASTMCP_SERVER_AUTH_JWT_ISSUER"),
+        default=read_env("FASTMCP_SERVER_AUTH_JWT_ISSUER"),
         help="Issuer for JWT verification",
     )
     parser.add_argument(
         "--token-audience",
-        default=setting("FASTMCP_SERVER_AUTH_JWT_AUDIENCE"),
+        default=read_env("FASTMCP_SERVER_AUTH_JWT_AUDIENCE"),
         help="Audience for JWT verification",
     )
     parser.add_argument(
         "--token-algorithm",
-        default=setting("FASTMCP_SERVER_AUTH_JWT_ALGORITHM"),
+        default=read_env("FASTMCP_SERVER_AUTH_JWT_ALGORITHM"),
         choices=[
             "HS256",
             "HS384",
@@ -868,17 +870,17 @@ def create_mcp_parser(
     )
     parser.add_argument(
         "--token-secret-ref",
-        default=setting("FASTMCP_SERVER_AUTH_JWT_SECRET_REF"),
+        default=read_env("FASTMCP_SERVER_AUTH_JWT_SECRET_REF"),
         help="Runtime secret reference for an HMAC JWT verification secret",
     )
     parser.add_argument(
         "--token-public-key",
-        default=setting("FASTMCP_SERVER_AUTH_JWT_PUBLIC_KEY"),
+        default=read_env("FASTMCP_SERVER_AUTH_JWT_PUBLIC_KEY"),
         help="Path to PEM public key file or inline PEM string (for static asymmetric keys).",
     )
     parser.add_argument(
         "--required-scopes",
-        default=setting("FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES"),
+        default=read_env("FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES"),
         help="Comma-separated list of required scopes (e.g., gitlab.read,gitlab.write).",
     )
     parser.add_argument(
@@ -925,12 +927,12 @@ def create_mcp_parser(
     )
     parser.add_argument(
         "--oidc-base-url",
-        default=setting("OIDC_BASE_URL"),
+        default=read_env("OIDC_BASE_URL"),
         help="Base URL for OIDC Proxy",
     )
     parser.add_argument(
         "--public-base-url",
-        default=setting("MCP_PUBLIC_BASE_URL"),
+        default=read_env("MCP_PUBLIC_BASE_URL"),
         help="Public base URL of this MCP server, used to advertise RFC 9728 "
         "protected-resource metadata for JWT auth (e.g. https://arbora.example) "
         "so an RFC 9728-aware client can discover the authorization server and "
@@ -951,39 +953,39 @@ def create_mcp_parser(
     )
     parser.add_argument(
         "--eunomia-type",
-        default=setting("EUNOMIA_TYPE", "none"),
+        default=read_env("EUNOMIA_TYPE"),
         choices=["none", "embedded", "remote"],
         help="Eunomia authorization type: 'none' (disabled), 'embedded' (built-in), 'remote' (external) (default: none)",
     )
     parser.add_argument(
         "--eunomia-policy-file",
-        default=setting("EUNOMIA_POLICY_FILE", "mcp_policies.json"),
+        default=read_env("EUNOMIA_POLICY_FILE", "mcp_policies.json"),
         help="Policy file for embedded Eunomia (default: mcp_policies.json)",
     )
     parser.add_argument(
         "--eunomia-remote-url",
-        default=setting("EUNOMIA_REMOTE_URL", None),
+        default=read_env("EUNOMIA_REMOTE_URL"),
         help="URL for remote Eunomia server",
     )
     parser.add_argument(
         "--eunomia-api-key-ref",
-        default=setting("EUNOMIA_API_KEY_REF", None),
+        default=read_env("EUNOMIA_API_KEY_REF"),
         help="Runtime secret reference for the remote Eunomia API key",
     )
     parser.add_argument(
         "--enable-delegation",
         action="store_true",
-        default=to_boolean(setting("ENABLE_DELEGATION", "False")),
+        default=to_boolean(read_env("ENABLE_DELEGATION", "False")),
         help="Enable OIDC token delegation",
     )
     parser.add_argument(
         "--audience",
-        default=setting("AUDIENCE", None),
+        default=read_env("AUDIENCE"),
         help="Audience for the delegated token",
     )
     parser.add_argument(
         "--delegated-scopes",
-        default=setting("DELEGATED_SCOPES", "api"),
+        default=read_env("DELEGATED_SCOPES"),
         help="Scopes for the delegated token (space-separated)",
     )
     parser.add_argument(
@@ -1004,7 +1006,7 @@ def create_mcp_parser(
 
     parser.add_argument(
         "--openapi-username",
-        default=setting("OPENAPI_USERNAME"),
+        default=read_env("OPENAPI_USERNAME"),
         help="Username for basic auth during OpenAPI import",
     )
 
@@ -1018,7 +1020,7 @@ def create_mcp_parser(
 
     parser.add_argument(
         "--openapi-client-id",
-        default=setting("OPENAPI_CLIENT_ID"),
+        default=read_env("OPENAPI_CLIENT_ID"),
         help="OAuth client ID for OpenAPI import",
     )
 
@@ -1033,13 +1035,13 @@ def create_mcp_parser(
     parser.add_argument(
         "--tools",
         "--toolsets",
-        default=setting("MCP_ENABLED_TOOLS"),
+        default=read_env("MCP_ENABLED_TOOLS"),
         help="Comma-separated list of enabled tools or toolsets to expose",
     )
     parser.add_argument(
         "--disabled-tools",
         "--disabled-toolsets",
-        default=setting("MCP_DISABLED_TOOLS"),
+        default=read_env("MCP_DISABLED_TOOLS"),
         help="Comma-separated list of disabled tools or toolsets to exclude",
     )
 
@@ -1128,7 +1130,7 @@ def _validate_allowed_redirect_uris(args: argparse.Namespace) -> list[str] | Non
 
 def _resolve_static_tokens_ref(reference: str) -> Any:
     if reference.startswith("env://"):
-        return setting(reference[len("env://") :])
+        return read_reference(reference[len("env://") :])
     from arbora.security.secrets import create_secrets_client
 
     return create_secrets_client().resolve_ref(reference)
@@ -1440,13 +1442,13 @@ def _resolve_jwt_basic_params(
     canonical, provider-agnostic var; FASTMCP_SERVER_AUTH_JWT_ISSUER is the
     per-server alias. Either may be a comma-separated multi-issuer list
     (OS-5.45)."""
-    jwks_uri = args.token_jwks_uri or setting("FASTMCP_SERVER_AUTH_JWT_JWKS_URI")
+    jwks_uri = args.token_jwks_uri or read_env("FASTMCP_SERVER_AUTH_JWT_JWKS_URI")
     issuer = (
-        setting("OIDC_ISSUER")
+        read_env("OIDC_ISSUER")
         or args.token_issuer
-        or setting("FASTMCP_SERVER_AUTH_JWT_ISSUER")
+        or read_env("FASTMCP_SERVER_AUTH_JWT_ISSUER")
     )
-    audience = args.token_audience or setting("FASTMCP_SERVER_AUTH_JWT_AUDIENCE")
+    audience = args.token_audience or read_env("FASTMCP_SERVER_AUTH_JWT_AUDIENCE")
     algorithm = args.token_algorithm
     secret_or_key = args.token_public_key
     return jwks_uri, issuer, audience, algorithm, secret_or_key
@@ -2006,8 +2008,8 @@ def _maybe_prepend_trusted_proxy_middleware(
 
 
 def _resolve_network_connection_bounds() -> tuple[int, int]:
-    max_connections = int(setting("MCP_MAX_CONNECTIONS", "128"))
-    backlog = int(setting("MCP_LISTEN_BACKLOG", "256"))
+    max_connections = int(read_env("MCP_MAX_CONNECTIONS"))
+    backlog = int(read_env("MCP_LISTEN_BACKLOG"))
     if not 1 <= max_connections <= 10_000 or not 1 <= backlog <= 65_535:
         raise RuntimeError("MCP listener resource bounds are invalid")
     return max_connections, backlog
@@ -2103,9 +2105,8 @@ def _fleet_registration_ttl_secs() -> int:
     """
     try:
         value = int(
-            setting(
-                "MCP_FLEET_REGISTRATION_TTL_SECS",
-                _FLEET_REGISTRATION_DEFAULT_TTL_SECS,
+            read_env(
+                "MCP_FLEET_REGISTRATION_TTL_SECS", _FLEET_REGISTRATION_DEFAULT_TTL_SECS
             )
         )
     except (TypeError, ValueError):
@@ -2144,7 +2145,7 @@ async def _register_and_heartbeat_forever(name: str, url: str, ttl_secs: int) ->
     """
     interval = max(1, ttl_secs // 3)
     {
-        "transport": str(setting("TRANSPORT", "stdio") or "stdio"),
+        "transport": str(read_env("TRANSPORT") or "stdio"),
         "pid": os.getpid(),
     }
     while True:
@@ -2172,7 +2173,7 @@ def _start_fleet_registration_heartbeat(
 ) -> asyncio.Task[None] | None:
     """Start this process's registry heartbeat when fleet registration is enabled."""
 
-    if not to_boolean(setting("MCP_FLEET_REGISTRATION", "True")):
+    if not to_boolean(read_env("MCP_FLEET_REGISTRATION")):
         return None
     url = _fleet_registration_endpoint_reference(args, name)
     ttl_secs = _fleet_registration_ttl_secs()
@@ -2262,12 +2263,12 @@ def _is_remote_network(args: argparse.Namespace) -> bool:
 
 
 def _resolve_metrics_token() -> str | None:
-    metrics_ref = str(setting("MCP_METRICS_TOKEN_REF", "") or "").strip()
+    metrics_ref = str(read_env("MCP_METRICS_TOKEN_REF") or "").strip()
     if not metrics_ref:
         return None
     try:
         if metrics_ref.startswith("env://"):
-            metrics_token = str(setting(metrics_ref[len("env://") :], "") or "")
+            metrics_token = str(read_reference(metrics_ref[len("env://") :], "") or "")
         else:
             from arbora.security.secrets import create_secrets_client
 
@@ -2450,9 +2451,7 @@ def create_mcp_server(
     remote_network = _is_remote_network(args)
     metrics_token = _resolve_metrics_token()
 
-    import os
-
-    os.environ["FASTMCP_LOG_LEVEL"] = "CRITICAL"
+    write_env("FASTMCP_LOG_LEVEL", "CRITICAL")
     mcp = FastMCP(
         name,
         version=version,

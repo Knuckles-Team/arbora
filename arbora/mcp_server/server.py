@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import sys
 from typing import Any
 
@@ -12,7 +11,7 @@ from scion_sdk.mcp.network import build_network_serving_config
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.content import register_installed_content
-from arbora.core.settings import setting
+from arbora.core.environment import read_env, write_env
 from arbora.fleet.state import FleetState
 from arbora.identity.ports import BrowserBoundaryFactory, IdentityLifecycle
 from arbora.mcp_server import runtime
@@ -58,7 +57,7 @@ def _register_semantic_content(mcp: Any) -> None:
 def _configure_arbora_otel() -> None:
     """Activate the canonical metadata-only OTLP pipeline when configured."""
 
-    if not setting("ENABLE_OTEL", False):
+    if not read_env("ENABLE_OTEL"):
         return
     try:
         from arbora.observability.custom_observability import setup_otel
@@ -126,7 +125,7 @@ def _preflight_mcp_sdk_floor() -> None:
         logger.warning("MCP SDK floor check skipped: %s", result["detail"])
         return
 
-    mode = str(setting("MCP_SDK_FLOOR_ENFORCE", "error") or "error").strip().lower()
+    mode = str(read_env("MCP_SDK_FLOOR_ENFORCE") or "error").strip().lower()
     message = (
         f"installed MCP SDK does not satisfy the declared [mcp] floor: {result['detail']}. "
         "The runtime image and this source tree have diverged — rebuild the image "
@@ -444,7 +443,7 @@ def mcp_server(
     _preflight_mcp_sdk_floor()
     _configure_arbora_otel()
     _configure_telemetry_engine_otel()
-    os.environ["IS_KG_SERVER"] = "true"
+    write_env("IS_KG_SERVER", "true")
     if invocation is None:
         args, mcp, middlewares = runtime._build_server(host=host_context)
     else:

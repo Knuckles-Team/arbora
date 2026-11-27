@@ -30,6 +30,7 @@ from fastmcp.server.middleware import CallNext, Middleware, MiddlewareContext
 from fastmcp.tools.base import Tool
 from fastmcp.utilities.components import FastMCPComponent
 
+from arbora.core.environment import read_reference
 from arbora.fleet.protocol_compat import mcp_types_module
 
 if TYPE_CHECKING:
@@ -320,9 +321,7 @@ def _resolve_api_key(reference: str | None) -> str | None:
         return None
     try:
         if reference.startswith("env://"):
-            from arbora.core.settings import setting
-
-            value = setting(reference[len("env://") :])
+            value = read_reference(reference[len("env://") :])
         else:
             from arbora.security.secrets import create_secrets_client
 

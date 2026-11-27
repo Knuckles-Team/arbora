@@ -26,7 +26,6 @@ _PROCESS_AUTHORITY_STOP = cast(Any, None)
 _PROCESS_AUTHORITY_THREAD = cast(Any, None)
 _PROCESS_SESSION_REFRESH_LOCK = cast(Any, None)
 _SESSION_ID = cast(Any, None)
-setting = cast(Any, None)
 
 
 def _get_engine():

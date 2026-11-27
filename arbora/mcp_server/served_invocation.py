@@ -27,6 +27,7 @@ from typing import Any
 
 from arbora.access.action_policy import ActionPolicies, ActionPolicy
 from arbora.api.registry import EgSchemaRef
+from arbora.core.environment import read_env
 from arbora.identity.ports import BrowserBoundaryFactory
 
 __all__ = [
@@ -584,7 +585,6 @@ def _with_approval_notices(
     shapes refuses ``UNAVAILABLE`` inside each tick (``arbora.pin_lag.medulla``).
     """
     from arbora.api.invoke.bootstrap import build_outbox_consumers
-    from arbora.core.settings import setting
     from arbora.fleet.approval_notifier import digest_delivery, role_holders
     from arbora.fleet.outbox_consumer import OutboxRunner
     from arbora.messaging.service import ReachNotifier
@@ -602,7 +602,7 @@ def _with_approval_notices(
         build_outbox_consumers(send, notifier),
         send,
         graph=graph,
-        interval_s=float(setting("ARBORA_OUTBOX_INTERVAL_S", 15.0)),
+        interval_s=float(read_env("ARBORA_OUTBOX_INTERVAL_S")),
     )
 
     async def startup() -> None:
@@ -711,7 +711,6 @@ def _with_loop_worker(
         return bindings, None
     import socket
 
-    from arbora.core.settings import setting
     from arbora.fleet.loop_worker import LoopWorker, LoopWorkerRunner
 
     async def send(method: str, params: dict[str, Any]) -> Any:
@@ -725,7 +724,7 @@ def _with_loop_worker(
     host = socket.gethostname()
     runner = LoopWorkerRunner(
         LoopWorker(send, body, worker_id=f"arbora-loops-{host}", host_iri=host),
-        interval_s=float(setting("ARBORA_LOOP_WORKER_INTERVAL_S", 5.0)),
+        interval_s=float(read_env("ARBORA_LOOP_WORKER_INTERVAL_S")),
     )
 
     async def startup() -> None:
@@ -752,7 +751,6 @@ def _with_capacity(
             return None
 
         return bindings, nothing
-    from arbora.core.settings import setting
     from arbora.fleet.capacity_binding import with_capacity
 
     async def send(method: str, params: dict[str, Any], tenant: str) -> Any:
@@ -776,7 +774,7 @@ def _with_capacity(
     return with_capacity(
         {"capacity_ask": ask, **bindings},
         send,
-        aimd_section=setting("ARBORA_CAPACITY_AIMD", ""),
+        aimd_section=read_env("ARBORA_CAPACITY_AIMD"),
     )
 
 
@@ -1422,11 +1420,10 @@ def _scim_ports(identity_port: Any, store: Any = None) -> Any:
     """The SCIM ports the API application mounts, or ``None`` without a delivered credential."""
     if identity_port is None:
         return None
-    from arbora.core.settings import setting
     from arbora.identity.ports import scim_ports_from_store
 
     if store is None:
-        if not setting("SECRETS_VAULT_URL", None):
+        if not read_env("SECRETS_VAULT_URL"):
             return None
         from arbora.security.secrets import create_secrets_client
 
@@ -1440,7 +1437,6 @@ def _directory_sync(
     """The ``identity.directory_sync`` job (ARBORA-IDENTITY-R010.2.3.2), or ``None``."""
     if identity_port is None:
         return None
-    from arbora.core.settings import setting
     from arbora.identity.ports import directory_sync_service, ldap_directory
     from arbora.mcp_server.background import SystemClock
 
@@ -1450,14 +1446,14 @@ def _directory_sync(
             from arbora.security.secrets import create_secrets_client
 
             return ldap_directory(
-                base_dn=str(setting("ARBORA_LDAP_BASE_DN", "") or ""),
+                base_dn=str(read_env("ARBORA_LDAP_BASE_DN") or ""),
                 password=lambda: str(
                     create_secrets_client().backend.get(LDAP_BIND_CREDENTIAL_PATH) or ""
                 ),
             )
 
     return directory_sync_service(
-        setting, identity_port, clock or SystemClock(), directory_factory
+        read_env, identity_port, clock or SystemClock(), directory_factory
     )
 
 
@@ -1486,13 +1482,12 @@ def _bind_scm_ingress(client: Any, graph: str) -> None:
 def _scm_poll_service(callers: Any, clock: Any) -> tuple[Any, ...]:
     """The code-host polling fallback, when a source is configured (ARBORA-OPS-R896.8)."""
     from arbora.api.ops.development_scm import DEFAULT_POLL_INTERVAL_S, ScmPollService
-    from arbora.core.settings import setting
     from arbora.identity.ports import configured_scm_sources
 
     if not configured_scm_sources():
         return ()
     tick = float(
-        str(setting("ARBORA_DEVELOPMENT_SCM_POLL_INTERVAL_S", "") or "")
+        str(read_env("ARBORA_DEVELOPMENT_SCM_POLL_INTERVAL_S", "") or "")
         or DEFAULT_POLL_INTERVAL_S
     )
     return (ScmPollService(callers, clock, tick),) if tick > 0 else ()
@@ -1516,7 +1511,6 @@ def _background_services(
     from arbora.api.invoke.pipeline import invoke
     from arbora.api.invoke.service_caller import ServiceCallers
     from arbora.api.registry import Surface
-    from arbora.core.settings import setting
     from arbora.knowledge.curator_scheduler import build_curator_scheduler
     from arbora.mcp_server.background import SystemClock
 
@@ -1530,7 +1524,7 @@ def _background_services(
     started.extend(
         filter(None, (_directory_sync(identity_port, directory_factory, clock),))
     )
-    tick_s = float(str(setting("ARBORA_CURATOR_TICK_S", "300") or "300"))
+    tick_s = float(str(read_env("ARBORA_CURATOR_TICK_S") or "300"))
 
     async def invoke_op(op_id: str, params: Any, caller: Any, key: str) -> Any:
         return await invoke(
@@ -1575,12 +1569,11 @@ def _reclaim_service(
         DEFAULT_POLL_INTERVAL_S,
         build_run_reclaim_service,
     )
-    from arbora.core.settings import setting
 
     a2a = getattr(runtime, "bindings", {}).get("a2a")
     authority = getattr(a2a, "authority", None)
     poll = float(
-        str(setting("ARBORA_A2A_RECLAIM_POLL_S", str(DEFAULT_POLL_INTERVAL_S)) or "")
+        str(read_env("ARBORA_A2A_RECLAIM_POLL_S", str(DEFAULT_POLL_INTERVAL_S)) or "")
         or DEFAULT_POLL_INTERVAL_S
     )
     if authority is None or not hasattr(authority, "work_engine") or poll <= 0:
@@ -1616,14 +1609,13 @@ def _tool_task_service(
         build_tool_task_service,
         unavailable_probe,
     )
-    from arbora.core.settings import setting
     from arbora.observability.runtime_health import register_health_probe
 
     a2a = getattr(runtime, "bindings", {}).get("a2a")
     if a2a is None:
         return ()
     authority = getattr(a2a, "authority", None)
-    poll = float(str(setting("ARBORA_A2A_TOOL_TASK_POLL_S", "2") or "") or 2)
+    poll = float(str(read_env("ARBORA_A2A_TOOL_TASK_POLL_S") or "") or 2)
     reader = getattr(authority, "delegation_reader", None)
     if authority is None or not hasattr(authority, "engine") or reader is None:
         register_health_probe(HEALTH_PROBE, unavailable_probe)
@@ -1657,12 +1649,11 @@ def _push_service(
     import logging
 
     from arbora.a2a.push import DEFAULT_POLL_INTERVAL_S, PushDeliveryService
-    from arbora.core.settings import setting
 
     a2a = getattr(runtime, "bindings", {}).get("a2a")
     worker = getattr(getattr(a2a, "authority", None), "push", None)
     poll = float(
-        str(setting("A2A_PUSH_POLL_S", str(DEFAULT_POLL_INTERVAL_S)) or "")
+        str(read_env("A2A_PUSH_POLL_S", str(DEFAULT_POLL_INTERVAL_S)) or "")
         or DEFAULT_POLL_INTERVAL_S
     )
     if worker is None or poll <= 0:
@@ -1700,7 +1691,7 @@ def served_invocation_from_settings(
     Without ``GRAPH_SERVICE_ENDPOINTS`` the process has no engine to bind and
     serves no operation-invoke API.
     """
-    from arbora.core.settings import runtime_config, setting
+    from arbora.core.settings import runtime_config
     from arbora.mcp_server.served_engine import process_engine_pool
     from arbora.mcp_server.task_plan import configured_task_plan
 
@@ -1711,27 +1702,27 @@ def served_invocation_from_settings(
         return None
     # The one process pool: startup composition reads EG through it too.
     pool = process_engine_pool()
-    raw_key = str(setting("ARBORA_PLAN_SEAL_KEY_HEX", "") or "").strip()
+    raw_key = str(read_env("ARBORA_PLAN_SEAL_KEY_HEX") or "").strip()
     return compose_served_invocation(
         pool=pool,
         # Callers are admitted only on the process authority's own graph (the
         # tenant graph minted with the session) unless a deployment pins one.
-        graph=str(setting("ARBORA_GRAPH", "") or "").strip()
+        graph=str(read_env("ARBORA_GRAPH") or "").strip()
         or str(process_session().graph),
         process_session=process_session,
         action_policies=action_policies,
-        policy_mode=str(setting("EUNOMIA_MODE", "none") or "none"),
+        policy_mode=str(read_env("EUNOMIA_MODE") or "none"),
         plan_seal_key=bytes.fromhex(raw_key) if raw_key else None,
         bindings=bindings,
         fleet_effect=fleet_effect,
         task_plan_config=task_plan_config,
         browser_boundary_factory=browser_boundary_factory,
-        promotion_ci_tool=_promotion_ci_tool(setting),
+        promotion_ci_tool=_promotion_ci_tool(),
     )
 
 
-def _promotion_ci_tool(setting: Callable[..., Any]) -> dict[str, str] | None:
+def _promotion_ci_tool() -> dict[str, str] | None:
     """The configured promotion pipeline read, or ``None`` when unset."""
-    server = str(setting("ARBORA_PROMOTION_CI_SERVER", "") or "").strip()
-    tool = str(setting("ARBORA_PROMOTION_CI_TOOL", "") or "").strip()
+    server = str(read_env("ARBORA_PROMOTION_CI_SERVER") or "").strip()
+    tool = str(read_env("ARBORA_PROMOTION_CI_TOOL") or "").strip()
     return {"server": server, "tool": tool} if server and tool else None

@@ -138,7 +138,10 @@ _PASS_THROUGH: frozenset[tuple[str, str]] = frozenset(
         ("arbora/core/settings.py", "str(info.alias)"),
         ("arbora/core/settings.py", "alias"),
         ("arbora/core/settings.py", "env_key"),
+        ("arbora/mcp_server/backing/server_factory.py", "key"),
         ("arbora/mcp_server/backing/tools/analysis_tools.py", "env_key"),
+        ("arbora/mcp_server/backing/verbose_tools.py", "env_var"),
+        ("arbora/mcp_server/composition.py", "name"),
     }
 )
 
@@ -343,6 +346,9 @@ _READ_HELPERS: dict[str, frozenset[str]] = {
     "arbora/a2a/push.py": frozenset({"number"}),
     "arbora/core/settings.py": frozenset({"_env_dir"}),
     "arbora/identity/deployment_settings.py": frozenset({"_text"}),
+    "arbora/identity/host_services.py": frozenset({"read"}),
+    "arbora/mcp_server/backing/server_factory.py": frozenset({"_csv_setting"}),
+    "arbora/mcp_server/composition.py": frozenset({"_ranged"}),
     "arbora/security/client_credentials.py": frozenset(
         {"_configured_text", "_runtime_secret_reference"}
     ),

@@ -52,6 +52,10 @@ def _owner(*names: str) -> tuple[str, em._Export]:
     return ("fake", lambda: (items, "1"))
 
 
+def _without_slots(names: set[str]) -> set[str]:
+    return {name for name in names if "{" not in name}
+
+
 @pytest.mark.spec("ARBORA-HOST-R010.2")
 def test_census_matches_declarations_and_dynamic_read_refuses(tmp_path: Path) -> None:
     declared = {d.name for d in em.arbora_declarations()}
@@ -59,6 +63,8 @@ def test_census_matches_declarations_and_dynamic_read_refuses(tmp_path: Path) ->
     unused = {name for name, _k, _s in em._OTHER_READS} - {
         r.name for r in em.package_census()
     }
+    # A family declared with a slot is read under names built at the call.
+    unused = _without_slots(unused)
     assert unused == set()
     tree = tmp_path / "arbora"
     tree.mkdir()

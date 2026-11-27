@@ -33,6 +33,7 @@ from fastmcp.dependencies import Depends
 from pydantic import Field
 
 from arbora.core.concurrency import invoke_client_method
+from arbora.core.environment import read_env
 from arbora.mcp_server.backing.action_dispatch import (
     DISCOVERY_ACTIONS,
     is_destructive_action,
@@ -673,10 +674,19 @@ def _resolve_verbose_targets(
     ]
 
 
+_TOGGLE_NAME = re.compile(r"[A-Z][A-Z0-9_]*")
+
+
+def _family_enabled(env_var: str) -> bool:
+    """The deployment toggle of one backing family; a family without a plain name is on."""
+    if _TOGGLE_NAME.fullmatch(env_var) is None:
+        return True
+    return bool(read_env(env_var, True))
+
+
 @dataclass
 class _BackingRegistrationContext:
     backing: Any
-    setting: Any
     force_registration: bool
     toggles: dict[str, str]
 
@@ -687,7 +697,7 @@ def _register_one_backing_registrar(
     """Register one action-routed registrar's tools on the backing server,
     stamping the domain tag and recording the tool->toggle-env map. Returns True
     iff it actually ran (was not toggled off)."""
-    if not ctx.force_registration and not ctx.setting(env_var, True):
+    if not ctx.force_registration and not _family_enabled(env_var):
         return False
     before = set(_provider_tools(ctx.backing))
     register_fn(ctx.backing)
@@ -712,17 +722,14 @@ def register_backing_tools(
     """Register an agent's action-routed tools on its private backing server.
 
     Each discovered/declared ``register_<tag>_tools`` is gated by
-    ``setting("<TAG>TOOL", True)`` (config.json-driven) unless
+    the declared ``<TAG>TOOL`` toggle (default on) unless
     ``force_registration``. The backing tools are the operations the served
     intent tools route to; they are never served directly. Returns the
     registered tags.
     """
-    from arbora.core.settings import setting
-
     toggles: dict[str, str] = getattr(backing, "_condensed_tool_toggles", {})
     ctx = _BackingRegistrationContext(
         backing=backing,
-        setting=setting,
         force_registration=force_registration,
         toggles=toggles,
     )

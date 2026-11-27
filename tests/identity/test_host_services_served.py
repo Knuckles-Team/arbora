@@ -153,21 +153,11 @@ def test_no_delivered_credential_mounts_no_scim_route(
 def test_host_schedules_the_directory_sync_job(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    table = {
-        "ARBORA_LDAP_HOST": "ldap.test",
-        "ARBORA_LDAP_BIND_DN": "cn=svc",
-        "ARBORA_LDAP_GROUP_ROLES": json.dumps({"cn=eng": ["engineer"]}),
-        "ARBORA_LDAP_MAX_DEPROVISION_FRACTION": "0.6",
-        "ARBORA_CURATOR_TICK_S": "0",
-    }
-    import arbora.core.settings as core_settings
-
-    real = core_settings.setting
-    monkeypatch.setattr(
-        core_settings,
-        "setting",
-        lambda name, default=None, **kw: table.get(name, real(name, default, **kw)),
-    )
+    monkeypatch.setenv("ARBORA_LDAP_HOST", "ldap.test")
+    monkeypatch.setenv("ARBORA_LDAP_BIND_DN", "cn=svc")
+    monkeypatch.setenv("ARBORA_LDAP_GROUP_ROLES", json.dumps({"cn=eng": ["engineer"]}))
+    monkeypatch.setenv("ARBORA_LDAP_MAX_DEPROVISION_FRACTION", "0.6")
+    monkeypatch.setenv("ARBORA_CURATOR_TICK_S", "0")
     admin = _Admin(existing=[{"username": "eve", "principal_id": "p-eve", "roles": []}])
     directory = _Directory()
     invocation = _compose(

@@ -145,12 +145,8 @@ def test_served_composition_binds_the_promotion_pipeline_read(
     services = _compose(GateClient({}), monkeypatch).services
     assert services.runtime.bindings["promotion_ci_tool"] == CI_TOOL
 
-    settings = {
-        "ARBORA_PROMOTION_CI_SERVER": "ci",
-        "ARBORA_PROMOTION_CI_TOOL": "ci_status",
-    }
-    assert (
-        _promotion_ci_tool(lambda key, default="": settings.get(key, default))
-        == CI_TOOL
-    )
-    assert _promotion_ci_tool(lambda key, default="": default) is None
+    monkeypatch.setenv("ARBORA_PROMOTION_CI_SERVER", "ci")
+    monkeypatch.setenv("ARBORA_PROMOTION_CI_TOOL", "ci_status")
+    assert _promotion_ci_tool() == CI_TOOL
+    monkeypatch.delenv("ARBORA_PROMOTION_CI_SERVER")
+    assert _promotion_ci_tool() is None

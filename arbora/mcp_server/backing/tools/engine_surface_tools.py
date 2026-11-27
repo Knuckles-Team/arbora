@@ -75,6 +75,7 @@ logger = logging.getLogger(__name__)
 # (``agent_utilities/knowledge_graph/actions/fleet_writeback.py``) — reused here,
 # not reinvented, so ``graph_mine_deep`` reaches data-science-mcp exactly like every
 # other fleet-delegation call site. Neither module imports torch/transformers.
+from arbora.core.environment import read_env
 from arbora.fleet_tool_call import call_fleet_tool, run_coroutine
 from arbora.security.error_surface import public_error_payload
 from arbora.security.identifiers import CYPHER_IDENTIFIER_RE
@@ -1233,9 +1234,8 @@ def _prometheus_base_url() -> str | None:
     default: no engine surface + no URL configured is a clean degrade, never an
     invented hostname.
     """
-    from arbora.core.settings import setting
 
-    url = str(setting("ENGINE_SURFACE_PROMETHEUS_URL", "") or "").strip()
+    url = str(read_env("ENGINE_SURFACE_PROMETHEUS_URL") or "").strip()
     return url or None
 
 

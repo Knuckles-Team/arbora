@@ -40,6 +40,8 @@ _UNSET: Any = object()
 _REFERENCE_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$")
 _WRITE_NAME = re.compile(r"^[A-Z][A-Z0-9_]{0,127}$")
 _SLOT = re.compile(r"\{([A-Z]+)\}")
+#: The shape of a slot value besides the platforms: a tool family tag, ``<FAMILY>TOOL``.
+_FAMILY = re.compile(r"[A-Z][A-Z0-9_]*")
 
 
 def _refuse(code: str, name: str) -> Exception:
@@ -53,15 +55,15 @@ def _index() -> tuple[dict[str, EnvironmentDeclaration], tuple[Any, ...]]:
     from arbora.core.environment_manifest import arbora_declarations
 
     exact: dict[str, EnvironmentDeclaration] = {}
-    templates: list[tuple[re.Pattern[str], EnvironmentDeclaration]] = []
+    templates: list[tuple[re.Pattern[str], EnvironmentDeclaration, str]] = []
     for item in arbora_declarations():
         if "{" in item.name:
             parts = _SLOT.split(item.name)
             body = "".join(
-                re.escape(p) if i % 2 == 0 else "([A-Z0-9]+)"
+                re.escape(p) if i % 2 == 0 else "([A-Z][A-Z0-9_]*)"
                 for i, p in enumerate(parts)
             )
-            templates.append((re.compile(f"^{body}$"), item))
+            templates.append((re.compile(f"^{body}$"), item, parts[1]))
         else:
             exact[item.name] = item
     return exact, tuple(templates)
@@ -73,14 +75,21 @@ def _platforms() -> frozenset[str]:
     return frozenset(key.upper() for key in CAPABILITY_MATRIX)
 
 
+def _slot_value(slot: str, value: str) -> bool:
+    """Whether ``value`` is one the slot enumerates: a platform, or a tool family tag."""
+    return (
+        value in _platforms() if slot == "PLATFORM" else bool(_FAMILY.fullmatch(value))
+    )
+
+
 def _declaration(name: str) -> EnvironmentDeclaration:
     exact, templates = _index()
     found = exact.get(name)
     if found is not None:
         return found
-    for pattern, template in templates:
+    for pattern, template, slot in templates:
         match = pattern.match(name)
-        if match and match.group(1) in _platforms():
+        if match and _slot_value(slot, match.group(1)):
             return template
     raise _refuse("ENV_UNDECLARED_READ", name)
 
