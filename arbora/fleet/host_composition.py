@@ -10,7 +10,7 @@ or the config does not support is skipped and logged; none stops boot.
 from __future__ import annotations
 
 import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -53,9 +53,26 @@ def _engine_send(client: Any, graph: str) -> Callable[..., Awaitable[Any]]:
     return send
 
 
-def compose_definition_admission(engine: Any, session: Any) -> DefinitionAdmission:
-    """The definition admission over the tenant client: engine port and receipt sink."""
+def _pin_lookup(
+    feature_schema: Callable[[str], Mapping[str, Any]] | None,
+) -> Callable[[str], Mapping[str, Any]]:
+    """The served pin lookup, or the closed one that refuses with no verified pin."""
     from arbora.api.task_plan_schema import published_pin
+
+    return feature_schema or (lambda tenant: published_pin(None, tenant))
+
+
+def compose_definition_admission(
+    engine: Any,
+    session: Any,
+    feature_schema: Callable[[str], Mapping[str, Any]] | None = None,
+) -> DefinitionAdmission:
+    """The definition admission over the tenant client: engine port and receipt sink.
+
+    ``feature_schema`` is the boot-time pin seam: the served invocation's
+    ``decision_feature_schema``, which reads the verified task-plan pins. Unbound,
+    the lookup refuses closed (no verified pin) and admission refuses ``UNAVAILABLE``.
+    """
     from arbora.deployment.semantic_provisioning import bind_session_graph
 
     graph = str(session.graph)
@@ -67,9 +84,7 @@ def compose_definition_admission(engine: Any, session: Any) -> DefinitionAdmissi
         with bind_session_graph(graph):
             await send_add_triples(client, {"ntriples": ntriples}, graph)
 
-    port = EngineAdmission(
-        _engine_send(client, graph), lambda tenant: published_pin(None, tenant)
-    )
+    port = EngineAdmission(_engine_send(client, graph), _pin_lookup(feature_schema))
     return DefinitionAdmission(port, write)
 
 
@@ -173,6 +188,7 @@ def compose_onboarding_ports(
     *,
     engine_endpoint: str = "",
     spawn: Callable[[tuple[str, ...]], Any] | None = None,
+    feature_schema: Callable[[str], Mapping[str, Any]] | None = None,
 ) -> OnboardingPorts:
     """Compose the admission and the supervised worker; data prep runs on the loop."""
     unit = None
@@ -184,17 +200,22 @@ def compose_onboarding_ports(
     except ValueError:
         logger.info("ingest worker unit not declared: no served engine endpoint")
     supervisor = supervise_ingest_worker(unit, engine, session, spawn=spawn)
-    return OnboardingPorts(_admission_or_none(engine, session), unit, supervisor)
+    admission = _admission_or_none(engine, session, feature_schema)
+    return OnboardingPorts(admission, unit, supervisor)
 
 
-def _admission_or_none(engine: Any, session: Any) -> DefinitionAdmission | None:
+def _admission_or_none(
+    engine: Any,
+    session: Any,
+    feature_schema: Callable[[str], Mapping[str, Any]] | None = None,
+) -> DefinitionAdmission | None:
     """The definition admission, or ``None`` for an engine with no graph compute.
 
     An engine that cannot open a graph client has no admission to compose; onboarding
     then fails a bound definition closed rather than the boot stopping.
     """
     try:
-        return compose_definition_admission(engine, session)
+        return compose_definition_admission(engine, session, feature_schema)
     except AttributeError:
         logger.info("definition admission not composed: the engine has no graph client")
         return None

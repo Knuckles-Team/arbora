@@ -278,8 +278,12 @@ def _start_catalog_warmup(
     reader: Any,
     fleet_mux: Any,
     action_policies: ActionPolicies,
+    feature_schema: Any = None,
 ) -> Any:
     """Compose the catalog authorities, then onboard the fleet, off boot.
+
+    ``feature_schema`` is the served invocation's verified-pin lookup; the
+    definition admission reads it at boot.
 
     Both run under the process session on the warm-up thread, which does not
     inherit the boot thread's context (ARBORA-FLEET-R078).
@@ -317,6 +321,7 @@ def _start_catalog_warmup(
                 virtual_catalog=fleet_mux.fleet.virtual_catalog,
                 declarations=fleet_mux.fleet.declarations,
                 action_policies=action_policies,
+                feature_schema=feature_schema,
             )
 
     def reestablish() -> None:
@@ -549,6 +554,7 @@ def mcp_server(
                 fleet_catalog_reader,
                 fleet_mux,
                 host_context.policy.action_policies,
+                getattr(invocation, "decision_feature_schema", None),
             )
 
             from arbora.mcp_server.agent_control import register_graph_rlm

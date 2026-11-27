@@ -375,9 +375,27 @@ def _admission_gate_from_config(gate_send: Any = None, bindings: Any = None) -> 
     document = read_config_document(path) if path.is_file() else {}
     from arbora.fleet.engine_admission import engine_port
 
+    grants, declarations = _admission_sources(bindings)
     return AdmissionGate(
-        AdmissionConfig.from_document(document), port=engine_port(gate_send, bindings)
+        AdmissionConfig.from_document(document),
+        port=engine_port(gate_send, bindings),
+        grants=grants,
+        declarations=declarations,
     )
+
+
+def _admission_sources(bindings: Any) -> tuple[Any, Any]:
+    """The catalog-backed ``(grants, declarations)``; ``(None, None)`` with no gateway.
+
+    Without a gateway a workflow binding fails closed (``no grant source``).
+    """
+    gateway = (bindings or {}).get("fleet_gateway")
+    if gateway is None:
+        return None, None
+    from arbora.fleet.admission_sources import CatalogAdmissionSources
+
+    sources = CatalogAdmissionSources(gateway)
+    return sources.grants, sources.declarations
 
 
 def build_outbox_consumers(send: Any, notifier: Any) -> tuple[Any, ...]:

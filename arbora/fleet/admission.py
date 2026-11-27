@@ -163,10 +163,11 @@ class AdmissionGate:
     #: The engine port (``EngineAdmission``): the stored attestation by digest and
     #: the ``SkillUpgrade`` decision. ``None`` fails a bound request closed.
     port: Any = None
-    #: ``async grants(caller) -> {"revision", "tools"}`` and ``declarations() ->
-    #: {tool: trusted schema digest}``; ``None`` fails a workflow binding closed.
+    #: ``async grants(caller) -> {"revision", "tools"}`` and ``async
+    #: declarations(caller) -> {tool: trusted schema digest}`` (``CatalogAdmissionSources``
+    #: in production); ``None`` fails a workflow binding closed.
     grants: Callable[[Any], Awaitable[Mapping[str, Any]]] | None = None
-    declarations: Callable[[], Mapping[str, str]] | None = None
+    declarations: Callable[[Any], Awaitable[Mapping[str, str]]] | None = None
 
     def applies(self, op_id: str) -> bool:
         return op_id in ADMITTED_OPERATIONS
@@ -288,7 +289,7 @@ class AdmissionGate:
             raise AdmissionRefused("CERTIFICATION_REQUIRED", {"skills": missing})
         await self._narrow(binding, caller, policy_gate)
         admitted = admit_workflow(
-            binding, await self.grants(caller), self.declarations()
+            binding, await self.grants(caller), await self.declarations(caller)
         )
         return {
             "admission.certification_receipts": ",".join(by_skill[k] for k in order),

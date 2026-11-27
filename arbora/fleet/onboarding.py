@@ -1648,6 +1648,7 @@ def start_fleet_onboarding(
     served_url: str | None = None,
     smoke_service: FleetSmokeService | None = None,
     spawn_worker: Callable[[tuple[str, ...]], Any] | None = None,
+    feature_schema: Callable[[str], Mapping[str, Any]] | None = None,
 ) -> threading.Thread | None:
     """Start the background onboarding service; never raise into boot.
 
@@ -1666,7 +1667,9 @@ def start_fleet_onboarding(
         declare_data_prep_at_boot,
     )
 
-    ports = compose_onboarding_ports(engine, session, spawn=spawn_worker)
+    ports = compose_onboarding_ports(
+        engine, session, spawn=spawn_worker, feature_schema=feature_schema
+    )
     declare_data_prep_at_boot(engine, session)
     service = FleetOnboardingService(
         onboarding=FleetOnboarding(
