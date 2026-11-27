@@ -272,3 +272,13 @@ def test_api_and_identity_import_no_subsystem_or_host() -> None:
             ):
                 offenders.append(f"{unit} -> {target}")
     assert offenders == []
+
+
+@pytest.mark.spec("ARBORA-HOST-R038.8")
+def test_no_unit_imports_another_units_private_name() -> None:
+    """No unit imports a leading-underscore module or name of another unit."""
+    findings = scan(PACKAGE, load_layers(ROOT / "pyproject.toml"))
+    reaches = [
+        f"{f.location} {f.detail}" for f in findings if f.rule == "private-reach"
+    ]
+    assert reaches == []

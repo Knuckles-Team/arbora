@@ -501,7 +501,7 @@ def _test_issuer(monkeypatch):
         assert uri == "https://issuer.invalid/jwks"
         return {"keys": [key.as_dict(private=False)]}
 
-    monkeypatch.setattr(auth, "_fetch_jwks", fetch)
+    monkeypatch.setattr(auth, "fetch_jwks", fetch)
 
     def token(**overrides):
         claims = {
@@ -625,12 +625,12 @@ async def test_connection_rejects_verified_authorization_profile_drift(
     else:
         from arbora.security import auth
 
-        original = auth._fetch_jwks
+        original = auth.fetch_jwks
 
         async def fetch(keys, uri):
             return await original(keys, "https://issuer.invalid/jwks")
 
-        monkeypatch.setattr(auth, "_fetch_jwks", fetch)
+        monkeypatch.setattr(auth, "fetch_jwks", fetch)
         monkeypatch.setenv("AUTH_JWT_JWKS_URI", "https://issuer.invalid/rotated-jwks")
     http.headers["authorization"] = "Bearer " + app.state.test_token(**claims)
     assert (await http.post(path, json={})).status_code == 401

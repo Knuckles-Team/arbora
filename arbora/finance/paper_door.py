@@ -99,12 +99,12 @@ class LatePaperDoor:
         self, context: Any, params: dict[str, Any]
     ) -> dict[str, str] | None:
         """Replace a ``notional`` by the quantity it buys at the quote read now."""
-        from arbora.api.ops.finance import _venue
+        from arbora.api.ops.finance import venue_call
 
         if "notional" not in params:
             return None
         notional = Decimal(str(params.pop("notional")))
-        quote = await _venue(
+        quote = await venue_call(
             context, QUOTE_TOOL, {"action": "quote", "symbol": params["symbol"]}
         )
         price = _price(quote)

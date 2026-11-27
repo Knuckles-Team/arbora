@@ -48,44 +48,57 @@ def b64url_encode(value: bytes) -> str:
     return base64.urlsafe_b64encode(value).rstrip(b"=").decode("ascii")
 
 
-def _cbor_item(data: bytes, at: int, depth: int = 0) -> tuple[Any, int]:
-    """One CBOR item of the subset a COSE key uses: ints, byte and text strings, maps."""
-    if depth > 4 or at >= len(data):
+def _cbor_head(data: bytes, at: int) -> tuple[int, int, int]:
+    """The major type, the argument and the next offset of one CBOR item head."""
+    if at >= len(data):
         raise WebauthnRefused("WEBAUTHN_ASSERTION_INVALID")
     major, info = data[at] >> 5, data[at] & 0x1F
     at += 1
     if info < 24:
-        value = info
-    elif info in (24, 25, 26):
-        size = {24: 1, 25: 2, 26: 4}[info]
-        if at + size > len(data):
-            raise WebauthnRefused("WEBAUTHN_ASSERTION_INVALID")
-        value = int.from_bytes(data[at : at + size], "big")
-        at += size
-    else:
+        return major, info, at
+    size = {24: 1, 25: 2, 26: 4}.get(info)
+    if size is None or at + size > len(data):
         raise WebauthnRefused("WEBAUTHN_ASSERTION_INVALID")
+    return major, int.from_bytes(data[at : at + size], "big"), at + size
+
+
+def _cbor_string(data: bytes, major: int, length: int, at: int) -> tuple[Any, int]:
+    """A byte (major 2) or text (major 3) string of ``length`` bytes at ``at``."""
+    if at + length > len(data):
+        raise WebauthnRefused("WEBAUTHN_ASSERTION_INVALID")
+    raw = data[at : at + length]
+    return (raw if major == 2 else raw.decode("utf-8", "replace")), at + length
+
+
+def _cbor_map(data: bytes, count: int, at: int, depth: int) -> tuple[Any, int]:
+    """A map of ``count`` entries starting at ``at``."""
+    found: dict[Any, Any] = {}
+    for _ in range(count):
+        key, at = cbor_item(data, at, depth + 1)
+        found[key], at = cbor_item(data, at, depth + 1)
+    return found, at
+
+
+def cbor_item(data: bytes, at: int, depth: int = 0) -> tuple[Any, int]:
+    """One CBOR item of the subset a COSE key uses: ints, byte and text strings, maps."""
+    if depth > 4:
+        raise WebauthnRefused("WEBAUTHN_ASSERTION_INVALID")
+    major, value, at = _cbor_head(data, at)
     if major == 0:
         return value, at
     if major == 1:
         return -1 - value, at
     if major in (2, 3):
-        if at + value > len(data):
-            raise WebauthnRefused("WEBAUTHN_ASSERTION_INVALID")
-        raw = data[at : at + value]
-        return (raw if major == 2 else raw.decode("utf-8", "replace")), at + value
+        return _cbor_string(data, major, value, at)
     if major == 5:
-        found: dict[Any, Any] = {}
-        for _ in range(value):
-            key, at = _cbor_item(data, at, depth + 1)
-            found[key], at = _cbor_item(data, at, depth + 1)
-        return found, at
+        return _cbor_map(data, value, at, depth)
     raise WebauthnRefused("WEBAUTHN_ASSERTION_INVALID")
 
 
 def cose_key(public_key_cose: str) -> dict[Any, Any]:
     """The COSE key map of the engine's base64url credential public key."""
     data = b64url_decode(public_key_cose)
-    key, end = _cbor_item(data, 0)
+    key, end = cbor_item(data, 0)
     if not isinstance(key, dict) or end != len(data):
         raise WebauthnRefused("WEBAUTHN_ASSERTION_INVALID")
     return key

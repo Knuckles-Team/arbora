@@ -37,7 +37,7 @@ def broker_fixture(monkeypatch, synthetic_signing_key):
         assert uri == config.auth_jwt_jwks_uri
         return {"keys": [key.as_dict(is_private=False)]}
 
-    monkeypatch.setattr(auth, "_fetch_jwks", jwks)
+    monkeypatch.setattr(auth, "fetch_jwks", jwks)
     tokens, reads = [], []
 
     def secret(reference):

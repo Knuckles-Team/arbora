@@ -286,9 +286,9 @@ async def precheck_bearer(
     keys: Mapping[str, Any] | None
     try:
         if fetch_keys is None:
-            from arbora.security.auth import _fetch_jwks
+            from arbora.security.auth import fetch_jwks
 
-            fetch_keys = partial(_fetch_jwks, key_cache)
+            fetch_keys = partial(fetch_jwks, key_cache)
         keys = await fetch_keys(profile.key_authority)
     except Exception:
         logging.getLogger(__name__).debug(
