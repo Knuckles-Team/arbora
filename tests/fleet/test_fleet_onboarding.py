@@ -19,7 +19,6 @@ from typing import Any
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
-from arbora.deployment import production_ops
 from arbora.fleet import onboarding
 from arbora.fleet.declarations import Declarations
 from arbora.fleet.onboarding import (
@@ -35,6 +34,7 @@ from arbora.fleet.onboarding import (
 )
 from arbora.fleet.virtual_catalog import VirtualCatalog
 from arbora.gateway.state import GatewayState
+from arbora.mcp_server import production_ops_cli
 from arbora.security.session import GraphSession
 from arbora.semantic_provisioning import ensure_server_registrations
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
@@ -711,7 +711,7 @@ def test_cli_runs_one_full_pass_and_fails_on_any_server(
     )
     monkeypatch.setattr(onboarding, "capture_server_pack", capture)
 
-    code = production_ops.main(["onboard-fleet", "--served-url", SELF_URL])
+    code = production_ops_cli.main(["onboard-fleet", "--served-url", SELF_URL])
 
     report = json.loads(capsys.readouterr().out)
     assert code == 1

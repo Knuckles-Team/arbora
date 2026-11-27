@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from arbora.deployment import production_ops
+from arbora.mcp_server import production_ops_cli
 
 
 @pytest.mark.parametrize(
@@ -106,7 +107,7 @@ def test_production_cli_failure_is_opaque(tmp_path, capsys, monkeypatch) -> None
     ):
         monkeypatch.delenv(name, raising=False)
 
-    exit_code = production_ops.main(
+    exit_code = production_ops_cli.main(
         ["backup", "--archive-root", str(tmp_path / "archive")]
     )
 
@@ -130,7 +131,7 @@ def test_cli_retains_diagnostics_on_stderr_and_one_json_report(
     def configure():
         print("configuration diagnostic")
 
-    def operation(_args):
+    def operation(_args, _host):
         print("operation diagnostic")
         if outcome == "exception":
             raise RuntimeError("private operation failure")
@@ -142,7 +143,7 @@ def test_cli_retains_diagnostics_on_stderr_and_one_json_report(
     )
     monkeypatch.setattr(production_ops, "_run", operation)
     stdout = sys.stdout
-    code = production_ops.main(["onboard-fleet"])
+    code = production_ops_cli.main(["onboard-fleet"])
     assert sys.stdout is stdout
     captured = capsys.readouterr()
     report = json.loads(captured.out)
