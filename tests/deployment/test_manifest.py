@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from arbora.deployment.manifest import ManifestRefused, load_manifest
+from arbora.api.domain.deployment.manifest import ManifestRefused, load_manifest
 
 DIGEST = "registry.example/app@sha256:" + "b" * 64
 GOOD = f"""schema_version: 1

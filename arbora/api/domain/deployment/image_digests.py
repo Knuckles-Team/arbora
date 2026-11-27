@@ -1,6 +1,6 @@
 """Check explicitly supplied deployment YAML for digest-pinned images.
 
-Run ``python -m arbora.deployment.image_digests rendered.yaml [--set NAME=value]``
+Run ``python -m arbora.api.domain.deployment.image_digests rendered.yaml [--set NAME=value]``
 (the ``arbora-image-digests`` console script is the same entry). Exit 0 means
 every checked image passed; exit 1 means an input or policy error. At least one
 container or service across the input files must be checked. Non-workload
@@ -194,6 +194,43 @@ def _check_services(
     return count
 
 
+def _resource_label(resource: Mapping[str, object], location: str) -> tuple[str, str]:
+    """The resource kind and its location suffixed with ``(kind/name)``."""
+    kind = resource.get("kind")
+    if not isinstance(kind, str) or not kind.strip():
+        raise ValueError(f"{location}.kind: expected a nonempty string")
+    metadata = resource.get("metadata")
+    name = (
+        metadata.get("name", "<unnamed>") if isinstance(metadata, dict) else "<unnamed>"
+    )
+    return kind, f"{location} ({kind}/{name})"
+
+
+def _check_list(
+    resource: Mapping[str, object],
+    location: str,
+    ancestors: frozenset[int],
+    values: Mapping[str, str] | None,
+    used: set[str] | None,
+) -> int:
+    items = resource.get("items")
+    if not isinstance(items, list):
+        raise ValueError(f"{location}.items: expected a list")
+    lineage = ancestors | {id(resource)}
+    return sum(
+        _check_resource(item, f"{location}.items[{index}]", lineage, values, used)
+        for index, item in enumerate(items)
+    )
+
+
+def _check_workload(kind: str, resource: dict[str, object], location: str) -> int:
+    pod = resource
+    for key in _POD_PATHS[kind]:
+        location = f"{location}.{key}"
+        pod = _mapping(pod.get(key), location)
+    return _check_containers(pod, location)
+
+
 def _check_resource(
     value: object,
     location: str,
@@ -212,30 +249,12 @@ def _check_resource(
         )
     if id(resource) in ancestors:
         raise ValueError(f"{location}: cyclic List aliases are unsupported")
-    kind = resource.get("kind")
-    if not isinstance(kind, str) or not kind.strip():
-        raise ValueError(f"{location}.kind: expected a nonempty string")
-    metadata = resource.get("metadata")
-    name = (
-        metadata.get("name", "<unnamed>") if isinstance(metadata, dict) else "<unnamed>"
-    )
-    location = f"{location} ({kind}/{name})"
+    kind, location = _resource_label(resource, location)
     if kind == "List":
-        items = resource.get("items")
-        if not isinstance(items, list):
-            raise ValueError(f"{location}.items: expected a list")
-        lineage = ancestors | {id(resource)}
-        return sum(
-            _check_resource(item, f"{location}.items[{index}]", lineage, values, used)
-            for index, item in enumerate(items)
-        )
+        return _check_list(resource, location, ancestors, values, used)
     if kind not in _POD_PATHS:
         return 0
-    pod = resource
-    for key in _POD_PATHS[kind]:
-        location = f"{location}.{key}"
-        pod = _mapping(pod.get(key), location)
-    return _check_containers(pod, location)
+    return _check_workload(kind, resource, location)
 
 
 def check_file(

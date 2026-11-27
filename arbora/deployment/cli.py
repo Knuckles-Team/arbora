@@ -95,7 +95,7 @@ def _run_onboard(args: argparse.Namespace) -> int:
     """Record one deploy or reuse choice per declared component (ARBORA-DEPLOY-R013.2)."""
     from pathlib import Path
 
-    from arbora.deployment.manifest import ManifestRefused, load_manifest
+    from arbora.api.domain.deployment.manifest import ManifestRefused, load_manifest
 
     from .component_choices import (
         ChoiceRefused,

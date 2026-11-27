@@ -8,8 +8,8 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.fleet import acceptance
 from arbora.api.ops import fleet as fleet_ops
-from arbora.fleet import acceptance
 from arbora.security.operation_result import OpResult
 
 GOOD_DIGEST = "a" * 64
@@ -64,7 +64,8 @@ def _context() -> Any:
 def test_two_connector_fixture_gives_one_pass_one_fail_and_blocks(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from arbora.fleet import acceptance_ports, onboarding
+    from arbora.api.domain.fleet import acceptance_ports
+    from arbora.fleet import onboarding
 
     endpoints = tuple(
         onboarding.FleetEndpoint(name=name, url=f"http://127.0.0.1/{name}")

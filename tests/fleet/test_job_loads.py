@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.fleet.job_loads import JobLoadRequest, apply_load_set
+from arbora.api.domain.fleet.job_loads import JobLoadRequest, apply_load_set
 
 
 @pytest.mark.spec("ARBORA-FLEET-R037.1")
@@ -67,10 +67,10 @@ async def test_multiplexer_ops_loads_the_answer_under_the_session_cap() -> None:
 
 from types import SimpleNamespace  # noqa: E402
 
+from arbora.api.domain.fleet import job_loads  # noqa: E402
 from arbora.api.errors import EngineRefusal  # noqa: E402
 from arbora.api.invoke.pipeline import OperationRefused  # noqa: E402
 from arbora.api.ops import fleet as fleet_ops  # noqa: E402
-from arbora.fleet import job_loads  # noqa: E402
 
 
 class _Gateway:

@@ -14,8 +14,8 @@ from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, replace
 from typing import Any, Protocol
 
+from arbora.api.domain.fleet.approval_meta import approval_kwargs
 from arbora.api.invoke.steps import surface_caller_admitted
-from arbora.fleet.approval_meta import approval_kwargs
 from arbora.security.anonymous import admitted_actor
 
 logger = logging.getLogger(__name__)

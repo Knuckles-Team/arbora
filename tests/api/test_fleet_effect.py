@@ -11,6 +11,7 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.fleet.service_child import ServiceChildOutcomeUnknown
 from arbora.api.errors import FleetRefusal
 from arbora.api.ops import fleet
 from arbora.api.registry import (
@@ -35,7 +36,6 @@ from arbora.fleet.gateway_ops import (
     oauth_delegated_call_for_mux,
     tool_for_multiplexer_ops,
 )
-from arbora.fleet.service_child import ServiceChildOutcomeUnknown
 
 
 def _gateway_and_caller(

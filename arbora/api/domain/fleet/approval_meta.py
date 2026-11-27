@@ -48,6 +48,24 @@ class ApprovalRefused(Exception):
         super().__init__(code)
 
 
+def _lease_deadline(lease: Mapping[str, Any]) -> int | None:
+    """The earlier of the two lease expiries, or ``None`` when either is unreadable."""
+    try:
+        return min(int(lease["expires_at_ms"]), int(lease["hard_expires_at_ms"]))
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _grant_refusal(lease: Mapping[str, Any], op_id: str, digest: str) -> str | None:
+    """``PLAN_MISMATCH`` when the lease grant is for another operation or request."""
+    grant = lease.get("grant")
+    if not isinstance(grant, Mapping) or grant.get("op_id") != op_id:
+        return "PLAN_MISMATCH"
+    if digest and grant.get("request_digest") != digest:
+        return "PLAN_MISMATCH"
+    return None
+
+
 def _refusal(lease: Any, op_id: str, digest: str, now_ms: int) -> str | None:
     """The closed refusal code of one approval lease, or ``None`` when granted."""
     if not isinstance(lease, Mapping) or lease.get("kind") != ACTION_APPROVAL_KIND:
@@ -55,25 +73,15 @@ def _refusal(lease: Any, op_id: str, digest: str, now_ms: int) -> str | None:
     status = lease.get("status")
     if status == "revoked":
         return "POLICY_DENIED"
-    try:
-        deadline = min(int(lease["expires_at_ms"]), int(lease["hard_expires_at_ms"]))
-    except (KeyError, TypeError, ValueError):
+    deadline = _lease_deadline(lease)
+    if deadline is None:
         return "PLAN_EXPIRED"
-    if status == "consumed":
-        # A decided approval stays readable; only the span can expire it.
-        pass
-    elif status == "active":
+    if status == "active":
         return "PLAN_EXPIRED" if now_ms >= deadline else "CONFIRMATION_REQUIRED"
-    else:
+    # A decided (consumed) approval stays readable; only the span can expire it.
+    if status != "consumed" or now_ms >= deadline:
         return "PLAN_EXPIRED"
-    if now_ms >= deadline:
-        return "PLAN_EXPIRED"
-    grant = lease.get("grant")
-    if not isinstance(grant, Mapping) or grant.get("op_id") != op_id:
-        return "PLAN_MISMATCH"
-    if digest and grant.get("request_digest") != digest:
-        return "PLAN_MISMATCH"
-    return None
+    return _grant_refusal(lease, op_id, digest)
 
 
 async def _plan_needs_approval(leases: Any, tenant: str, plan_ref: str) -> bool:

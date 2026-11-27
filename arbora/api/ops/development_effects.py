@@ -117,8 +117,8 @@ async def handle_delivery_effect(
     context: Any, params: Mapping[str, Any], op: Any
 ) -> dict[str, Any]:
     """Apply one effect once: a done key returns its receipt, a pending key refuses."""
+    from arbora.api.domain.fleet.service_child import ServiceChildOutcomeUnknown
     from arbora.api.ops.research import FleetCaller
-    from arbora.fleet.service_child import ServiceChildOutcomeUnknown
 
     key = delivery_effect_key(
         params["delivery_id"], params["assignment_id"], params["step"]

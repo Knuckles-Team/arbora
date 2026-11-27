@@ -16,6 +16,16 @@ from typing import Any, Literal
 from pydantic import Field
 
 from arbora.api.domain.deployment.assembly_view import render_graph
+from arbora.api.domain.deployment.manifest import (
+    DeploymentDiff,
+    DeploymentManifest,
+    ManifestRefused,
+    apply_manifest,
+    load_manifest,
+    missing_inputs,
+    plan_manifest,
+    record_rollout,
+)
 from arbora.api.domain.deployment.placement import ask_placement, chosen_target
 from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.bootstrap import caller_dispatch_graph
@@ -35,16 +45,6 @@ from arbora.deployment.assembly import (
     require_fresh_binding,
     run_confirmed_steps,
     store_secret_step,
-)
-from arbora.deployment.manifest import (
-    DeploymentDiff,
-    DeploymentManifest,
-    ManifestRefused,
-    apply_manifest,
-    load_manifest,
-    missing_inputs,
-    plan_manifest,
-    record_rollout,
 )
 from arbora.security.anonymous import client_scope
 
@@ -444,8 +444,8 @@ def deploy_config_of(context: Any) -> Mapping[str, Any]:
     """The resolved ``deploy.yaml`` (read, never written), or the bound override."""
     config = context.services.get("deploy_config")
     if config is None:
+        from arbora.api.domain.deployment.image_digests import load_strict
         from arbora.core.settings import config_dir
-        from arbora.deployment.image_digests import load_strict
 
         path = config_dir() / "deploy.yaml"
         config = load_strict(path.read_text(encoding="utf-8")) if path.is_file() else {}
@@ -601,7 +601,7 @@ async def handle_manifest_apply(
 
 def apply_receipt(manifest: DeploymentManifest, diff: DeploymentDiff) -> dict[str, Any]:
     """The receipt of a converged state: the same value the first apply returned."""
-    from arbora.deployment.manifest import ApplyReceipt
+    from arbora.api.domain.deployment.manifest import ApplyReceipt
 
     return ApplyReceipt(
         diff.manifest_digest,

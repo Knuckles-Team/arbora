@@ -153,7 +153,7 @@ async def test_actual_effect_readback() -> None:
 
 @pytest.mark.spec("ARBORA-FLEET-R003.9")
 async def test_refusal_parity() -> None:
-    from arbora.fleet.service_child import ServiceChildOutcomeUnknown
+    from arbora.api.domain.fleet.service_child import ServiceChildOutcomeUnknown
 
     request, binding, _gateway, _ctx = _good()
     gateway = FakeGateway(error=ServiceChildOutcomeUnknown("readback failed"))

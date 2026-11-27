@@ -3,7 +3,7 @@
 The deployment decision names a target; the artifact is the file the
 repository already ships under ``deploy/``. Nothing here renders anything
 (ARBORA-DEPLOY-R017.6). Image references pass the one digest checker in
-:mod:`arbora.deployment.image_digests` (ARBORA-DEPLOY-R017.18); the
+:mod:`arbora.api.domain.deployment.image_digests` (ARBORA-DEPLOY-R017.18); the
 environment profile decides whether that check is required
 (ARBORA-DEPLOY-R017.16).
 """
@@ -14,11 +14,11 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
+from arbora.api.domain.deployment.image_digests import check_paths
 from arbora.deployment.genesis_environments import (
     EnvironmentProfile,
     load_environment_profile,
 )
-from arbora.deployment.image_digests import check_paths
 
 #: The shipped artifact of each supported target, relative to ``deploy/``.
 ARTIFACTS: Mapping[str, str] = {

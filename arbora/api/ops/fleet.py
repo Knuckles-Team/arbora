@@ -26,6 +26,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from arbora.api.domain.fleet.approval_meta import ApprovalRefused, checked_approval_ref
+from arbora.api.domain.fleet.service_child import ServiceChildOutcomeUnknown
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -35,8 +37,6 @@ from arbora.api.registry import (
     Surface,
     Verb,
 )
-from arbora.fleet.approval_meta import ApprovalRefused, checked_approval_ref
-from arbora.fleet.service_child import ServiceChildOutcomeUnknown
 
 
 class _Params(BaseModel):
@@ -237,8 +237,8 @@ async def handle_fleet_acceptance(
     comparison; Arbora records nothing. ``blocked`` carries
     ``ACCEPTANCE_BLOCKED``.
     """
-    from arbora.fleet.acceptance import check_fleet
-    from arbora.fleet.acceptance_ports import ContextAcceptancePorts
+    from arbora.api.domain.fleet.acceptance import check_fleet
+    from arbora.api.domain.fleet.acceptance_ports import ContextAcceptancePorts
 
     ports = ContextAcceptancePorts(
         context,
@@ -259,10 +259,10 @@ async def _find_for_job(
     """One engine ``LoadSet`` decision for a job; the tenant is the caller's."""
     from medulla.decision_client import load_set_request
 
+    from arbora.api.domain.fleet.job_loads import JobLoadRequest, find_for_job
     from arbora.api.invoke.bootstrap import caller_dispatch_graph
     from arbora.api.ops.engine_calls import engine_send
     from arbora.api.ops.skills_tier import _feature_schema
-    from arbora.fleet.job_loads import JobLoadRequest, find_for_job
 
     tenant = str(context.caller.tenant)
     graph = await caller_dispatch_graph(context)
@@ -456,7 +456,7 @@ async def handle_fleet_call(
     """Require the injected gateway, which rechecks item authority at call time.
 
     A durable-dispatch outcome the service child itself cannot confirm
-    (:class:`~arbora.fleet.service_child.ServiceChildOutcomeUnknown`)
+    (:class:`~arbora.api.domain.fleet.service_child.ServiceChildOutcomeUnknown`)
     propagates as-is: translating it into a typed, invoke-pipeline-level
     refusal belongs to the served invocation surface once that surface
     exists on this repository, not to this operation handler.

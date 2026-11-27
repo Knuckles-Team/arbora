@@ -355,7 +355,7 @@ class _EffectFleet:
             },
         )
         if self.lose_answer:
-            from arbora.fleet.service_child import ServiceChildOutcomeUnknown
+            from arbora.api.domain.fleet.service_child import ServiceChildOutcomeUnknown
 
             raise ServiceChildOutcomeUnknown("lost")
         return {"receipt": receipt}
