@@ -53,10 +53,6 @@ from typing import Any, cast
 
 from arbora.core.settings import setting
 from arbora.fleet.ranking import FLOOR_ONLY
-from arbora.mcp_server.legacy_action_mapping import (
-    APPROVED_ACTION_MAPPING,
-    validate_served_actions,
-)
 from arbora.security.anonymous import session_context
 from arbora.version import __version__
 
@@ -354,14 +350,6 @@ async def _execute_tool(tool_name: str, **kwargs) -> Any:
         with priority_scope(PriorityClass.INTERACTIVE):
             return await _guarded()
     return await _guarded()
-
-
-def served_legacy_actions_within_approved_mapping(
-    served_actions: tuple[str, ...],
-) -> None:
-    """Refuse a served-actions set containing an action with no approved
-    legacy-host mapping (RF-ADR-009 host-composition-boundary R005)."""
-    validate_served_actions(served_actions, APPROVED_ACTION_MAPPING)
 
 
 def build_native_arbora_toolset(tool_names: list[str], *, toolset_id: str) -> Any:

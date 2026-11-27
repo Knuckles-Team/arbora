@@ -25,7 +25,7 @@ def _assert_resolves(actions: tuple[str, ...]) -> None:
     ids = _registry_ids()
     for action in actions:
         assert action in APPROVED_ACTION_MAPPING, action
-        assert APPROVED_ACTION_MAPPING[action] in ids, action
+        assert APPROVED_ACTION_MAPPING[action].operation in ids, action
 
 
 @pytest.mark.spec("ARBORA-HOST-R005.2.1.1")
@@ -38,8 +38,39 @@ def test_impact_actions_resolve_to_engine_query_ops() -> None:
     _assert_resolves(IMPACT_ACTIONS)
 
 
-# R005.2.1.3 unbound: it also covers the remaining graph_analyze actions, which
-# this test does not enumerate; only similar_code is checked here.
-@pytest.mark.spec("ARBORA-HOST-R005.2.1.3")
 def test_similarity_action_resolves_to_engine_query_ops() -> None:
     _assert_resolves(SIMILARITY_ACTIONS)
+
+
+@pytest.mark.spec("ARBORA-HOST-R005.2.1.3")
+def test_remaining_analyze_actions_mapped() -> None:
+    from arbora.api.ops.registry_factory import get_registry
+    from arbora.mcp_server.legacy_action_mapping import (
+        ANALYZE_QUERY_ACTIONS,
+        resolve_legacy_action,
+    )
+
+    _assert_resolves(SIMILARITY_ACTIONS)
+    for action in ANALYZE_QUERY_ACTIONS:
+        assert resolve_legacy_action(action).operation == "query.uql", action
+    registry = get_registry()
+    for action, operation in (
+        ("inspect", "ontology.inspect"),
+        ("security_scan", "security.posture.read"),
+        ("readiness", "ops.doctor"),
+    ):
+        assert resolve_legacy_action(action).operation == operation
+        assert registry.get(operation) is not None
+    retired = (
+        "executable_rag",
+        "recommend",
+        "placement_plan",
+        "infra_sweep",
+        "distill_memory",
+        "world_model_rollout",
+        "research_ingest",
+        "check_constraints",
+    )
+    for action in retired:
+        resolved = resolve_legacy_action(action)
+        assert resolved.operation is None and resolved.retired_by, action

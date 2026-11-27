@@ -134,8 +134,12 @@ def test_a_missing_lineage_conflict_or_lift_fails_the_scenario() -> None:
     assert lost.value.code == WRITE_LOST
 
     won = {"swapped": True}
-    check_write_conflict(won, {"code": "WRITE_CONFLICT"})
-    for first, second in ((won, won), ({"swapped": False}, won)):
+    check_write_conflict(won, {"swapped": False, "version": 1})
+    for first, second in (
+        (won, won),
+        ({"swapped": False}, won),
+        (won, {"code": "WRITE_CONFLICT"}),
+    ):
         with pytest.raises(ScenarioRefused) as conflict:
             check_write_conflict(first, second)
         assert conflict.value.code == WRITE_CONFLICT_MISSING
