@@ -263,6 +263,30 @@ def arbora_registrars(
     ]
 
 
+def register_native_primitives(backing: Any) -> None:
+    """Register native prompt, resource and resource-template primitives (R007.2).
+
+    The same pattern every connector server follows (ARBORA-FLEET-R007.1): one
+    prompt, one static resource and one template, beside the registered tools
+    and independent of them.
+    """
+
+    @backing.prompt(name="arbora-status")
+    def _status_prompt() -> str:
+        """Ask for this arbora server's current operational status."""
+        return "Report the operational status of the arbora server."
+
+    @backing.resource("arbora://status", mime_type="application/json")
+    def _status_resource() -> dict[str, str]:
+        """Native resource exposing this server's static status payload."""
+        return {"server": "arbora", "status": "ok"}
+
+    @backing.resource("arbora://capability/{capability}", mime_type="application/json")
+    def _capability_resource(capability: str) -> dict[str, str]:
+        """Native resource template describing one capability by name."""
+        return {"server": "arbora", "capability": capability}
+
+
 def register_arbora_surface(
     mcp: Any,
     *,
@@ -292,6 +316,8 @@ def register_arbora_surface(
         registrars=arbora_registrars(action_policies, approvals),
         force_registration=canonical,
     )
+    register_native_primitives(backing)
+    register_native_primitives(mcp)  # the composed server loop serves them too
     mcp._arbora_backing = backing
     if intent_tools:
         register_intent_tools(mcp)

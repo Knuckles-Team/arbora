@@ -84,7 +84,9 @@ def with_ingest_worker_health(
         except Exception:  # noqa: BLE001 - an unreachable read is a state, not a crash
             health = IngestWorkerHealth("unhealthy", "metrics_unavailable")
     if health.state == "healthy":
-        dependency = _dependency("healthy", checked, checked)
+        dependency = _dependency("healthy", checked, checked).model_copy(
+            update={"metrics": dict(health.metrics)}
+        )
     else:
         dependency = _dependency(
             "unavailable", checked, None, (f"ingest_worker: {health.reason}",)

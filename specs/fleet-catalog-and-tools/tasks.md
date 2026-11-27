@@ -314,8 +314,8 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T047 ARBORA-FLEET-R006.3.4 Harvest specs deleted.
 - [x] T048 ARBORA-FLEET-R006.4 Residual harvest-named symbol renamed off the removed path.
 - [x] T049 ARBORA-FLEET-R006.5 Closing audit: no harvest or hydration code remains.
-- [ ] T050 ARBORA-FLEET-R007.1 Connector SDK server registers native prompts, resources and templates.
-- [ ] T051 ARBORA-FLEET-R007.2 meristem's arbora bridge surface gains native prompt/resource/template registration (cross-repo, owner: meristem).
+- [x] T050 ARBORA-FLEET-R007.1 RETIRED: owned by scion-sdk.
+- [x] T051 ARBORA-FLEET-R007.2 The arbora bridge surface registers native prompts, resources and resource templates.
 - [ ] T052 ARBORA-FLEET-R007.3 The served bridge exercises native prompts, resources and templates end to end.
 - [ ] T053 ARBORA-FLEET-R011 Registry core computes a canonical digest and authorized find.
 - [ ] T054 ARBORA-FLEET-R012 Medulla-direct binding generator with reviewed exclusions.
@@ -543,8 +543,8 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T272 [US1] ARBORA-FLEET-R084 The fleet serves the city layout read from the engine world view. Size: S, 1 PR, 2 hours.
 - [ ] T273 [US1] ARBORA-FLEET-R085 A sandbox fleet profile fills the catalog without external credentials (rollup). Size: L, 2 PRs, 1 day.
 - [x] T274 [US1] ARBORA-FLEET-R085.1 The fleet onboarding command reports each connector and exits non-zero only for the declared set. Size: S, 1 PR, 2 hours.
-- [ ] T275 [US1] ARBORA-FLEET-R086 The fleet serves graph neighbourhoods as city chunks. Size: S, 1 PR, 2 hours.
-- [ ] T276 [US1] ARBORA-FLEET-R087 The fleet serves the city edit layer. Size: S, 1 PR, 2 hours.
-- [ ] T277 [US1] ARBORA-FLEET-R088 The fleet serves the city mapping registry, growth rules and seed. Size: S, 1 PR, 2 hours.
+- [x] T275 [US1] ARBORA-FLEET-R086 The fleet serves graph neighbourhoods as city chunks. Size: S, 1 PR, 2 hours.
+- [x] T276 [US1] ARBORA-FLEET-R087 The fleet serves the city edit layer. Size: S, 1 PR, 2 hours.
+- [x] T277 [US1] ARBORA-FLEET-R088 The fleet serves the city mapping registry, growth rules and seed. Size: S, 1 PR, 2 hours.
 - [ ] T280 [US1] ARBORA-FLEET-R015.7 Built-in content-pack imports leave the connector onboarding budget whole. Size: XS, 1 PR, 1 hour.
 - [x] T281 [US1] ARBORA-FLEET-R089 Per-connector connection state is a served read. Size: XS, 1 PR, 1 hour.
