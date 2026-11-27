@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from arbora.api.domain.fleet.lexical_floor import evidence
@@ -44,14 +45,16 @@ CONNECTOR_INTENT_TOOLS = ("find", "ask", "act")
 FIND_ACTIONS = ("search", DESCRIBE_ACTION)
 _FIND_TOP_K = 8
 
-_DESCRIPTIONS = {
-    "find": "Discover this server's operations: search by intent, or describe "
-    "one operation's arguments.",
-    "ask": "Run a read-only operation (action='<tool>.<op>'); action='describe' "
-    "lists them.",
-    "act": "Run any operation, including changes (action='<tool>.<op>'); "
-    "action='describe' lists them.",
-}
+_DESCRIPTIONS = MappingProxyType(
+    {
+        "find": "Discover this server's operations: search by intent, or describe "
+        "one operation's arguments.",
+        "ask": "Run a read-only operation (action='<tool>.<op>'); action='describe' "
+        "lists them.",
+        "act": "Run any operation, including changes (action='<tool>.<op>'); "
+        "action='describe' lists them.",
+    }
+)
 
 
 @dataclass(frozen=True)

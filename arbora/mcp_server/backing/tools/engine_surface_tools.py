@@ -51,6 +51,8 @@ import base64
 import json
 import logging
 import uuid
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 import httpx
@@ -130,35 +132,37 @@ _LOGS_QUERY_CANDIDATES: tuple[tuple[str, str], ...] = (
 # listed here falls back to probing the three sub-clients with the action name
 # directly, so read ops (get_summary / get_scene / get_trajectory / …) light up
 # by name once the engine ships them.
-_MEMORY_ACTION_CANDIDATES: dict[str, tuple[tuple[str, str], ...]] = {
-    # episodic → semantic memory (CreateSummaryNode / Consolidate / Maintain)
-    "create_summary": (
-        ("memory", "create_summary"),
-        ("memory", "create_summary_node"),
-    ),
-    "consolidate": (("memory", "consolidate"),),
-    "maintain": (("memory", "maintain"),),
-    # spatial scene graph (AddSceneObject / world transform)
-    "add_scene_object": (
-        ("scene", "add_object"),
-        ("scene", "add_scene_object"),
-        ("memory", "add_scene_object"),
-    ),
-    "world_transform": (
-        ("scene", "world_transform"),
-        ("scene", "set_world_transform"),
-    ),
-    # trajectories / RL episodes (StartTrajectory / AppendStep / discounted return)
-    "start_trajectory": (
-        ("trajectory", "start"),
-        ("trajectory", "start_trajectory"),
-    ),
-    "append_step": (
-        ("trajectory", "append_step"),
-        ("trajectory", "append"),
-    ),
-    "discounted_return": (("trajectory", "discounted_return"),),
-}
+_MEMORY_ACTION_CANDIDATES: Mapping[str, tuple[tuple[str, str], ...]] = MappingProxyType(
+    {
+        # episodic → semantic memory (CreateSummaryNode / Consolidate / Maintain)
+        "create_summary": (
+            ("memory", "create_summary"),
+            ("memory", "create_summary_node"),
+        ),
+        "consolidate": (("memory", "consolidate"),),
+        "maintain": (("memory", "maintain"),),
+        # spatial scene graph (AddSceneObject / world transform)
+        "add_scene_object": (
+            ("scene", "add_object"),
+            ("scene", "add_scene_object"),
+            ("memory", "add_scene_object"),
+        ),
+        "world_transform": (
+            ("scene", "world_transform"),
+            ("scene", "set_world_transform"),
+        ),
+        # trajectories / RL episodes (StartTrajectory / AppendStep / discounted return)
+        "start_trajectory": (
+            ("trajectory", "start"),
+            ("trajectory", "start_trajectory"),
+        ),
+        "append_step": (
+            ("trajectory", "append_step"),
+            ("trajectory", "append"),
+        ),
+        "discounted_return": (("trajectory", "discounted_return"),),
+    }
+)
 
 
 # ── graph_mine action manifest (CONCEPT:MEDULLA-KG.mining.frequent-itemset-mining) ─
@@ -186,10 +190,12 @@ def _mining_actions() -> frozenset[str]:
 #: actually bound as ``entity_resolve``, and ``process_mining`` as ``process``.
 #: Looked up AFTER the hyphen->underscore normalization below, so the
 #: hyphenated spellings (``entity-resolution``, ``process-mining``) resolve too.
-_MINING_ACTION_ALIASES: dict[str, str] = {
-    "entity_resolution": "entity_resolve",
-    "process_mining": "process",
-}
+_MINING_ACTION_ALIASES: Mapping[str, str] = MappingProxyType(
+    {
+        "entity_resolution": "entity_resolve",
+        "process_mining": "process",
+    }
+)
 
 
 # ── Transport resolution (reuse the one engine client; injectable for tests) ──
@@ -1436,22 +1442,26 @@ _DSM_TOOL_NAME = "deep_train_predict"
 
 #: One delegated ``graph_mine_deep`` action → the data-science-mcp
 #: ``deep_train_predict`` algo it maps to.
-_DEEP_ALGO_BY_ACTION: dict[str, str] = {
-    "deep_forecast": "lstm_forecast",
-    "deep_classify": "mlp_classify",
-    "autoencoder_anomaly": "autoencoder_anomaly",
-    "xgboost": "histgbm_classify",
-    "embed": "autoencoder_embed",
-}
+_DEEP_ALGO_BY_ACTION: Mapping[str, str] = MappingProxyType(
+    {
+        "deep_forecast": "lstm_forecast",
+        "deep_classify": "mlp_classify",
+        "autoencoder_anomaly": "autoencoder_anomaly",
+        "xgboost": "histgbm_classify",
+        "embed": "autoencoder_embed",
+    }
+)
 
 #: KG node type a delegated action's result materializes as when writeback=true.
-_DEEP_NODE_TYPE: dict[str, str] = {
-    "deep_forecast": "Forecast",
-    "deep_classify": "Classification",
-    "autoencoder_anomaly": "Anomaly",
-    "xgboost": "Classification",
-    "embed": "Embedding",
-}
+_DEEP_NODE_TYPE: Mapping[str, str] = MappingProxyType(
+    {
+        "deep_forecast": "Forecast",
+        "deep_classify": "Classification",
+        "autoencoder_anomaly": "Anomaly",
+        "xgboost": "Classification",
+        "embed": "Embedding",
+    }
+)
 
 
 def _feature_node_label(source: dict[str, Any]) -> str:

@@ -34,6 +34,7 @@ import logging
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from arbora.deployment.doctor_support import PROBE_FAULTS
@@ -63,7 +64,9 @@ Send = Callable[[str, dict[str, Any], str | None], Awaitable[Any]]
 #: One mutation context for one write: ``(tenant, idempotency_key)``.
 ContextFor = Callable[[str, str], Awaitable[Mapping[str, Any]]]
 
-_EFFECT = {"render-artifact": "read", "apply": "write", "verify": "read"}
+_EFFECT = MappingProxyType(
+    {"render-artifact": "read", "apply": "write", "verify": "read"}
+)
 
 
 @dataclass(frozen=True)

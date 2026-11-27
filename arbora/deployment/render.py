@@ -14,6 +14,7 @@ import json
 import re
 import sys
 from pathlib import Path, PurePosixPath
+from types import MappingProxyType
 from typing import Any
 from urllib.parse import urlparse
 
@@ -30,11 +31,13 @@ _RFC3339_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d
 _METRIC_RE = re.compile(r"^[a-z][a-z0-9_]{2,127}$")
 _TARGET_RE = re.compile(r"^[0-9]+(?:m)?$")
 _ENGINE_CONTRACT_DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
-_EXPECTED_METRICS = {
-    "gateway": "arbora_gateway_in_flight_requests",
-    "dispatch": "arbora_dispatch_queue_depth",
-    "ingest": "arbora_kg_ingest_queue_depth",
-}
+_EXPECTED_METRICS = MappingProxyType(
+    {
+        "gateway": "arbora_gateway_in_flight_requests",
+        "dispatch": "arbora_dispatch_queue_depth",
+        "ingest": "arbora_kg_ingest_queue_depth",
+    }
+)
 
 
 def _require(condition: object, message: str) -> None:

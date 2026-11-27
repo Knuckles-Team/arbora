@@ -40,6 +40,7 @@ import urllib.request
 import uuid
 from collections.abc import Callable, Mapping
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from arbora.core.environment import inherited_environment
@@ -821,13 +822,15 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-BROWSER_HEADERS = {
-    "User-Agent": "Mozilla/5.0 arbora-sso-probe",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Site": "none",
-}
+BROWSER_HEADERS = MappingProxyType(
+    {
+        "User-Agent": "Mozilla/5.0 arbora-sso-probe",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Site": "none",
+    }
+)
 
 
 def probe_sso(

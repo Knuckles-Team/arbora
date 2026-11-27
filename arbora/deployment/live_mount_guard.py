@@ -72,6 +72,7 @@ import enum
 import logging
 import os
 from pathlib import Path
+from types import MappingProxyType
 from typing import TypedDict
 
 from arbora.core.environment import read_env
@@ -143,12 +144,14 @@ _SKIP_ENV_VAR = "MERISTEM_SKIP_LIVE_MOUNT_CHECK"
 #: "not running under Kubernetes" signal (local dev, CI, a bare venv).
 _IN_POD_ENV_VAR = "KUBERNETES_SERVICE_HOST"
 
-_MOUNTINFO_ESCAPES = {
-    r"\040": " ",
-    r"\011": "\t",
-    r"\012": "\n",
-    r"\134": "\\",
-}
+_MOUNTINFO_ESCAPES = MappingProxyType(
+    {
+        r"\040": " ",
+        r"\011": "\t",
+        r"\012": "\n",
+        r"\134": "\\",
+    }
+)
 
 
 def _decode_mountinfo_path(value: str) -> str:

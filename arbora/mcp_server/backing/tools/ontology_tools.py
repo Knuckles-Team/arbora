@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import Field
@@ -454,19 +455,23 @@ def _classification_claims_propose_identity(ctx: _ClassificationClaimsCtx) -> st
     )
 
 
-_CLASSIFICATION_CLAIMS_ACTIONS: dict[str, Callable[[_ClassificationClaimsCtx], str]] = {
-    "record": _classification_claims_record,
-    "query": _classification_claims_query,
-    "categories": _classification_claims_categories,
-    "history": _classification_claims_history,
-    "resolve_evidence": _classification_claims_resolve_evidence,
-    "review": _classification_claims_review,
-    "promote": _classification_claims_promote,
-    "reject": _classification_claims_reject,
-    "supersede": _classification_claims_supersede,
-    "lifecycle_history": _classification_claims_lifecycle_history,
-    "propose_identity": _classification_claims_propose_identity,
-}
+_CLASSIFICATION_CLAIMS_ACTIONS: Mapping[
+    str, Callable[[_ClassificationClaimsCtx], str]
+] = MappingProxyType(
+    {
+        "record": _classification_claims_record,
+        "query": _classification_claims_query,
+        "categories": _classification_claims_categories,
+        "history": _classification_claims_history,
+        "resolve_evidence": _classification_claims_resolve_evidence,
+        "review": _classification_claims_review,
+        "promote": _classification_claims_promote,
+        "reject": _classification_claims_reject,
+        "supersede": _classification_claims_supersede,
+        "lifecycle_history": _classification_claims_lifecycle_history,
+        "propose_identity": _classification_claims_propose_identity,
+    }
+)
 
 
 def _repo_provenance_snapshot(

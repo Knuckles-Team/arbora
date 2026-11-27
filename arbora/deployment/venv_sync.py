@@ -69,11 +69,12 @@ import subprocess  # nosec B404 -- fixed-argv environment synchronization
 import sys
 import time
 import tomllib
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Protocol, runtime_checkable
 
 from .venv_sync_types import (
@@ -2891,22 +2892,26 @@ def _cmd_autosync(args: argparse.Namespace, workspace: Workspace, as_json: bool)
     return venv_autosync.dispatch(args, workspace, as_json=as_json)
 
 
-_COMMAND_HANDLERS: dict[str, Callable[[argparse.Namespace, Workspace, bool], int]] = {
-    "status": _cmd_status,
-    "plan": _cmd_plan,
-    "sync": _cmd_sync,
-    "prune": _cmd_prune,
-    "upgrade": _cmd_upgrade,
-    "relock": _cmd_upgrade,
-    "rollback": _cmd_rollback,
-    "backups": _cmd_backups,
-    "verify": _cmd_verify,
-    "members": _cmd_members,
-    "session-hint": _cmd_session_hint,
-    "activity": _cmd_activity,
-    "lease": _cmd_lease,
-    "autosync": _cmd_autosync,
-}
+_COMMAND_HANDLERS: Mapping[
+    str, Callable[[argparse.Namespace, Workspace, bool], int]
+] = MappingProxyType(
+    {
+        "status": _cmd_status,
+        "plan": _cmd_plan,
+        "sync": _cmd_sync,
+        "prune": _cmd_prune,
+        "upgrade": _cmd_upgrade,
+        "relock": _cmd_upgrade,
+        "rollback": _cmd_rollback,
+        "backups": _cmd_backups,
+        "verify": _cmd_verify,
+        "members": _cmd_members,
+        "session-hint": _cmd_session_hint,
+        "activity": _cmd_activity,
+        "lease": _cmd_lease,
+        "autosync": _cmd_autosync,
+    }
+)
 
 
 def _dispatch(args: argparse.Namespace, workspace: Workspace) -> int:

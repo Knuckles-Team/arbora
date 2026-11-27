@@ -20,8 +20,8 @@ from __future__ import annotations
 import importlib
 import ipaddress
 import logging
-from collections.abc import Callable
-from types import SimpleNamespace
+from collections.abc import Callable, Mapping
+from types import MappingProxyType, SimpleNamespace
 from typing import Any
 
 from arbora.core.environment import read_env, read_reference
@@ -2025,46 +2025,48 @@ def _check_venv_drift() -> dict[str, Any]:
 
 
 # Registry: name -> callable. Order is the report order.
-CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
-    "python_env": _check_python_env,
-    "mcp_sdk_floor": _check_mcp_sdk_floor,
-    "config": _check_config,
-    "evolution_staging": _check_evolution_staging,
-    "execution_security": _check_execution_security,
-    "permission_governance": _check_permission_governance,
-    "transport_security": _check_transport_security,
-    "google_workspace_oauth": _check_google_workspace_oauth,
-    "source_egress": _check_source_egress,
-    "eunomia": _check_eunomia,
-    "runtime_integrations": _check_runtime_integrations,
-    "engine_request_context": _check_engine_request_context,
-    "engine": _check_engine,
-    "engine_domains": _check_engine_domains,
-    "secrets": _check_secrets,
-    "secrets_backend": _check_secrets_backend,
-    "auth": _check_auth,
-    "identity_exposure": _check_identity_exposure,
-    "outbound_auth": _check_outbound_auth,
-    "skill_certification": _check_skill_certification,
-    "graph_identity": _check_graph_identity,
-    "mcp_fleet_secrets": _check_mcp_fleet_secrets,
-    "mcp_fleet": _check_mcp_fleet,
-    "hooks": _check_hooks,
-    "prepush_hook": _check_prepush_hook,
-    "observability": _check_observability,
-    "graph_connections": _check_graph_connections,
-    "a2a_persistence": _check_a2a_persistence,
-    "langfuse": _check_langfuse,
-    "skills": _check_skills,
-    "venv_drift": _check_venv_drift,
-    "kafka": _check_kafka,
-    "fuseki": _check_fuseki,
-    "seaweedfs_s3": _check_seaweedfs_s3,
-    "lakekeeper": _check_lakekeeper,
-    "lakekeeper_db": _check_lakekeeper_db,
-    "trino": _check_trino,
-    "spark_runner": _check_spark_runner,
-}
+CHECKS: Mapping[str, Callable[..., dict[str, Any]]] = MappingProxyType(
+    {
+        "python_env": _check_python_env,
+        "mcp_sdk_floor": _check_mcp_sdk_floor,
+        "config": _check_config,
+        "evolution_staging": _check_evolution_staging,
+        "execution_security": _check_execution_security,
+        "permission_governance": _check_permission_governance,
+        "transport_security": _check_transport_security,
+        "google_workspace_oauth": _check_google_workspace_oauth,
+        "source_egress": _check_source_egress,
+        "eunomia": _check_eunomia,
+        "runtime_integrations": _check_runtime_integrations,
+        "engine_request_context": _check_engine_request_context,
+        "engine": _check_engine,
+        "engine_domains": _check_engine_domains,
+        "secrets": _check_secrets,
+        "secrets_backend": _check_secrets_backend,
+        "auth": _check_auth,
+        "identity_exposure": _check_identity_exposure,
+        "outbound_auth": _check_outbound_auth,
+        "skill_certification": _check_skill_certification,
+        "graph_identity": _check_graph_identity,
+        "mcp_fleet_secrets": _check_mcp_fleet_secrets,
+        "mcp_fleet": _check_mcp_fleet,
+        "hooks": _check_hooks,
+        "prepush_hook": _check_prepush_hook,
+        "observability": _check_observability,
+        "graph_connections": _check_graph_connections,
+        "a2a_persistence": _check_a2a_persistence,
+        "langfuse": _check_langfuse,
+        "skills": _check_skills,
+        "venv_drift": _check_venv_drift,
+        "kafka": _check_kafka,
+        "fuseki": _check_fuseki,
+        "seaweedfs_s3": _check_seaweedfs_s3,
+        "lakekeeper": _check_lakekeeper,
+        "lakekeeper_db": _check_lakekeeper_db,
+        "trino": _check_trino,
+        "spark_runner": _check_spark_runner,
+    }
+)
 
 # Checks that accept a `live=` kwarg and prove real reachability when the doctor
 # is run with `--live` -- shared between `run_doctor`'s dispatch and

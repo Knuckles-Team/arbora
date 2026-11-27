@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 from arbora.api.errors import ArboraErrorCode, ArboraRefusal
@@ -21,7 +22,9 @@ from arbora.mcp_server.legacy_action_mapping import (
 )
 
 #: Legacy argument names that the mapped operation names differently.
-_ARGUMENT_FIELD: Mapping[tuple[str, str], str] = {("query.nl", "query"): "text"}
+_ARGUMENT_FIELD: Mapping[tuple[str, str], str] = MappingProxyType(
+    {("query.nl", "query"): "text"}
+)
 
 
 def _declared_fields(spec: Any) -> frozenset[str] | None:

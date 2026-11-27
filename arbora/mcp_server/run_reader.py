@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable
 from datetime import UTC, datetime
+from types import MappingProxyType
 from typing import Any
 
 from medulla import EngineResponseError
@@ -51,16 +52,18 @@ from arbora.run_origin import RunOriginRegistry
 from arbora.security.anonymous import client_scope
 from arbora.security.session import use_session
 
-_RUN_STATUS = {
-    "submitted": "pending",
-    "ready": "pending",
-    "leased": "running",
-    "running": "running",
-    "succeeded": "completed",
-    "failed": "failed",
-    "dead_letter": "failed",
-    "cancelled": "cancelled",
-}
+_RUN_STATUS = MappingProxyType(
+    {
+        "submitted": "pending",
+        "ready": "pending",
+        "leased": "running",
+        "running": "running",
+        "succeeded": "completed",
+        "failed": "failed",
+        "dead_letter": "failed",
+        "cancelled": "cancelled",
+    }
+)
 
 
 class NativeRunReader:

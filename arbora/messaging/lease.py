@@ -18,7 +18,8 @@ import logging
 import threading
 import time
 import uuid
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
+from types import MappingProxyType
 from typing import Any
 
 from arbora.core.work_item_errors import (
@@ -124,22 +125,24 @@ class IntakeLeaseEvent(enum.Enum):
 _S = IntakeLeaseState
 _E = IntakeLeaseEvent
 #: The 12 legal edges. Every other (state, event) pair is refused.
-_LEASE_TRANSITIONS: dict[
+_LEASE_TRANSITIONS: Mapping[
     tuple[IntakeLeaseState, IntakeLeaseEvent], IntakeLeaseState
-] = {
-    (_S.HELD, _E.HEARTBEAT_OK): _S.HELD,
-    (_S.HELD, _E.HEARTBEAT_ERR): _S.SUSPECT,
-    (_S.SUSPECT, _E.HEARTBEAT_OK): _S.HELD,
-    (_S.SUSPECT, _E.HEARTBEAT_ERR): _S.SUSPECT,  # guarded by within_ttl
-    (_S.HELD, _E.FENCE_REFUSED): _S.LOST,
-    (_S.SUSPECT, _E.FENCE_REFUSED): _S.LOST,
-    (_S.HELD, _E.TTL_LAPSED): _S.LOST,
-    (_S.SUSPECT, _E.TTL_LAPSED): _S.LOST,
-    (_S.LOST, _E.REACQUIRED): _S.HELD,
-    (_S.HELD, _E.RELEASE): _S.RELEASED,
-    (_S.SUSPECT, _E.RELEASE): _S.RELEASED,
-    (_S.LOST, _E.RELEASE): _S.RELEASED,
-}
+] = MappingProxyType(
+    {
+        (_S.HELD, _E.HEARTBEAT_OK): _S.HELD,
+        (_S.HELD, _E.HEARTBEAT_ERR): _S.SUSPECT,
+        (_S.SUSPECT, _E.HEARTBEAT_OK): _S.HELD,
+        (_S.SUSPECT, _E.HEARTBEAT_ERR): _S.SUSPECT,  # guarded by within_ttl
+        (_S.HELD, _E.FENCE_REFUSED): _S.LOST,
+        (_S.SUSPECT, _E.FENCE_REFUSED): _S.LOST,
+        (_S.HELD, _E.TTL_LAPSED): _S.LOST,
+        (_S.SUSPECT, _E.TTL_LAPSED): _S.LOST,
+        (_S.LOST, _E.REACQUIRED): _S.HELD,
+        (_S.HELD, _E.RELEASE): _S.RELEASED,
+        (_S.SUSPECT, _E.RELEASE): _S.RELEASED,
+        (_S.LOST, _E.RELEASE): _S.RELEASED,
+    }
+)
 
 
 class IllegalIntakeLeaseTransition(Exception):

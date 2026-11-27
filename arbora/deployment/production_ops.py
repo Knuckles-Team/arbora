@@ -19,8 +19,10 @@ import socket
 import subprocess  # nosec B404 -- fixed-argv backup/restore binaries
 import sys
 import time
+from collections.abc import Mapping
 from contextlib import AbstractContextManager, redirect_stdout
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Protocol
 
 from filelock import FileLock
@@ -665,25 +667,29 @@ def _provision(args: argparse.Namespace, host: OneShotHost) -> dict[str, Any]:
     return asyncio.run(_provision_semantic_content(args.served_url, host))
 
 
-_OPERATIONS: dict[str, Any] = {
-    "backup": lambda args, host: asyncio.run(_backup(args.archive_root)),
-    "restore-validate": lambda args, host: asyncio.run(
-        _restore_validate(args.archive_root, args.scratch_root)
-    ),
-    "provision-semantic-content": _provision,
-    "onboard-fleet": lambda args, host: asyncio.run(
-        _onboard_fleet(
-            args.served_url,
-            host,
-            _server_names(args.allow_mass_withdrawal),
-            sandbox=args.sandbox,
-        )
-    ),
-    "check-fleet-coverage": lambda args, host: asyncio.run(_check_fleet_coverage(host)),
-    "deliver-registry-manifest": lambda args, host: deliver_registry_manifest(
-        args.source, platform_config_file("workspace.yml").parent
-    ),
-}
+_OPERATIONS: Mapping[str, Any] = MappingProxyType(
+    {
+        "backup": lambda args, host: asyncio.run(_backup(args.archive_root)),
+        "restore-validate": lambda args, host: asyncio.run(
+            _restore_validate(args.archive_root, args.scratch_root)
+        ),
+        "provision-semantic-content": _provision,
+        "onboard-fleet": lambda args, host: asyncio.run(
+            _onboard_fleet(
+                args.served_url,
+                host,
+                _server_names(args.allow_mass_withdrawal),
+                sandbox=args.sandbox,
+            )
+        ),
+        "check-fleet-coverage": lambda args, host: asyncio.run(
+            _check_fleet_coverage(host)
+        ),
+        "deliver-registry-manifest": lambda args, host: deliver_registry_manifest(
+            args.source, platform_config_file("workspace.yml").parent
+        ),
+    }
+)
 
 
 def _run(args: argparse.Namespace, host: OneShotHost) -> dict[str, Any]:

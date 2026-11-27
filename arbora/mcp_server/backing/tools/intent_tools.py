@@ -40,11 +40,12 @@ import json
 import logging
 import re
 import time
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from pydantic import BaseModel
@@ -92,18 +93,20 @@ __all__ = [
 #: hints (the specific UX program-design-2026-07-11 calls out). Every other
 #: tool still resolves and dispatches — it just needs the caller's ``hints`` to
 #: carry its real parameters, exactly as calling it directly would.
-_PRIMARY_TEXT_PARAM: dict[str, str] = {
-    "nl_query": "text",
-    "ask_data": "question",
-    "graph_ask": "question",
-    "graph_search": "query",
-    "graph_promql": "query",
-    "graph_federated_search": "query",
-    "graph_analyze": "query",
-    "graph_code": "query",
-    "graph_explain": "query",
-    "graph_evaluate": "query",
-}
+_PRIMARY_TEXT_PARAM: Mapping[str, str] = MappingProxyType(
+    {
+        "nl_query": "text",
+        "ask_data": "question",
+        "graph_ask": "question",
+        "graph_search": "query",
+        "graph_promql": "query",
+        "graph_federated_search": "query",
+        "graph_analyze": "query",
+        "graph_code": "query",
+        "graph_explain": "query",
+        "graph_evaluate": "query",
+    }
+)
 
 #: Safe universal fallback for ``ask`` when the top-ranked candidate needs
 #: structured params the caller didn't supply — the engine's own NL planner
@@ -127,7 +130,7 @@ _CONTROL_HINT_FIELDS = frozenset({"tool", "_tool", "action", "plan_ref"})
 #: Kept at the intent boundary rather than adding duplicate public parameters to
 #: the underlying tool.  A delegation target is an ``agent_name`` regardless of
 #: whether a caller describes it as an agent or its backing MCP server.
-_DOCUMENTED_HINT_ALIASES: dict[str, dict[str, str]] = {}
+_DOCUMENTED_HINT_ALIASES: Mapping[str, dict[str, str]] = MappingProxyType({})
 _DESTRUCTIVE_TERMS = frozenset(
     {
         "clear",
@@ -2023,28 +2026,32 @@ FIND_ACTIONS = ("capabilities", "tools", "catalog", "status", DESCRIBE_ACTION)
 _FIND_TOP_K = 8
 #: Request bounds on fleet operations (the retired load_tools/unload_tools
 #: meta-tools' safety boundary).
-_FLEET_LIST_LIMITS = {"tools": 128, "servers": 32}
+_FLEET_LIST_LIMITS = MappingProxyType({"tools": 128, "servers": 32})
 
 #: Operations a verb serves beside the generated manifest.
-_HOST_ACTIONS: dict[str, tuple[str, ...]] = {
-    "find": FIND_ACTIONS,
-    "act": (FLEET_CALL_ACTION,),
-    "manage": (
-        APPROVE_ACTION,
-        FLEET_LOAD_ACTION,
-        FLEET_UNLOAD_ACTION,
-        LAKEHOUSE_STATUS_ACTION,
-    ),
-}
+_HOST_ACTIONS: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        "find": FIND_ACTIONS,
+        "act": (FLEET_CALL_ACTION,),
+        "manage": (
+            APPROVE_ACTION,
+            FLEET_LOAD_ACTION,
+            FLEET_UNLOAD_ACTION,
+            LAKEHOUSE_STATUS_ACTION,
+        ),
+    }
+)
 
-_VERB_SUMMARIES = {
-    "ask": "Read or answer from the Knowledge Graph.",
-    "find": "Discover capabilities, operations, fleet tools and the fleet catalog.",
-    "write": "Create or change graph data; previews first, then execute with plan_ref.",
-    "act": "Run work, an operation or a fleet tool; previews first, then execute with plan_ref.",
-    "manage": "Configure and govern arbora and fleet loading; previews first, then execute with plan_ref.",
-    "why": "Explain beliefs, decisions, provenance and changes.",
-}
+_VERB_SUMMARIES = MappingProxyType(
+    {
+        "ask": "Read or answer from the Knowledge Graph.",
+        "find": "Discover capabilities, operations, fleet tools and the fleet catalog.",
+        "write": "Create or change graph data; previews first, then execute with plan_ref.",
+        "act": "Run work, an operation or a fleet tool; previews first, then execute with plan_ref.",
+        "manage": "Configure and govern arbora and fleet loading; previews first, then execute with plan_ref.",
+        "why": "Explain beliefs, decisions, provenance and changes.",
+    }
+)
 
 
 def _verb_description(verb: str) -> str:

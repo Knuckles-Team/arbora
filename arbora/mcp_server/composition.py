@@ -19,6 +19,7 @@ import threading
 import time
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Literal
 
 from arbora.access.action_policy import ActionPolicies
@@ -281,13 +282,15 @@ class LocalEngineConfig:
         return EngineEndpoint("tcp", f"127.0.0.1:{self.port}")
 
 
-_RANGES: Mapping[str, tuple[float, float]] = {
-    "ENGINE_LOCAL_PORT": (1024, 65535),
-    "ENGINE_START_TIMEOUT_S": (5, 600),
-    "ENGINE_PROBE_TIMEOUT_S": (0.1, 30),
-    "ENGINE_IDLE_SHUTDOWN_S": (30, 86400),
-    "ENGINE_STOP_GRACE_S": (1, 120),
-}
+_RANGES: Mapping[str, tuple[float, float]] = MappingProxyType(
+    {
+        "ENGINE_LOCAL_PORT": (1024, 65535),
+        "ENGINE_START_TIMEOUT_S": (5, 600),
+        "ENGINE_PROBE_TIMEOUT_S": (0.1, 30),
+        "ENGINE_IDLE_SHUTDOWN_S": (30, 86400),
+        "ENGINE_STOP_GRACE_S": (1, 120),
+    }
+)
 
 
 def _ranged(name: str, default: float) -> float:

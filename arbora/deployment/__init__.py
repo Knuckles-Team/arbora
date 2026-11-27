@@ -13,6 +13,7 @@ directly.  There are no compatibility aliases back to ``meristem``.
 from __future__ import annotations
 
 from importlib import import_module
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 from arbora.api.domain.deployment.genesis_environments import (
@@ -60,10 +61,12 @@ if TYPE_CHECKING:
     from .doctor import CHECKS, run_doctor
     from .preflight import run_preflight
 
-_LAZY_SUBMODULES = {
-    "doctor": ".doctor",
-    "preflight": ".preflight",
-}
+_LAZY_SUBMODULES = MappingProxyType(
+    {
+        "doctor": ".doctor",
+        "preflight": ".preflight",
+    }
+)
 
 __all__ = [
     "CHECKS",
