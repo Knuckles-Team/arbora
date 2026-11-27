@@ -89,10 +89,17 @@ class BrowserAuthApplication:
         caller: Any,
         discovery: Any = None,
         audit: Any = None,
+        acting: Any = None,
+        mail: Any = None,
     ):
+        from .account_ceremonies import AccountCeremonies
         from .mfa_ceremonies import MfaCeremonies, log_audit
 
-        self.ceremonies = MfaCeremonies(client, graph, origin, audit or log_audit)
+        sink = audit or log_audit
+        self.ceremonies = MfaCeremonies(client, graph, origin, sink)
+        self.accounts = AccountCeremonies(
+            client, graph, acting=acting, audit=sink, mail=mail
+        )
         self.discovery = discovery
         self.client, self.authority = client, authority
         self.graph, self.origin = graph, origin
@@ -162,15 +169,8 @@ class BrowserAuthApplication:
             build = published.get(scope.get("path"))
             if build is not None:
                 return JSONResponse(build())
-        from .mfa_ceremonies import CEREMONY_ROUTES
-        from .mfa_totp import TOTP_ROUTES
-
-        if scope.get("method") != "POST" or scope.get("path") not in {
-            "/auth/login",
-            "/auth/logout",
-            *TOTP_ROUTES,
-            *CEREMONY_ROUTES,
-        }:
+        routes = self._routes()
+        if scope.get("method") != "POST" or scope.get("path") not in routes:
             return Response(status_code=404)
         if (
             scope.get("scheme") != "https"
@@ -180,13 +180,65 @@ class BrowserAuthApplication:
             or _headers(scope, b"authorization")
         ):
             raise PermissionError("exact secure browser origin required")
-        if scope["path"] == "/auth/logout":
-            return await self._logout(scope)
-        if scope["path"] in TOTP_ROUTES:
-            return await self._totp(scope, receive, TOTP_ROUTES[scope["path"]])
-        if scope["path"] in CEREMONY_ROUTES:
-            return await self._ceremony(scope, receive, scope["path"])
+        return await routes[scope["path"]](scope, receive)
+
+    def _routes(self) -> dict[str, Any]:
+        """Every POST route of ``/auth/*`` and the handler that answers it."""
+        from .account_ceremonies import ACCOUNT_ROUTES
+        from .mfa_ceremonies import CEREMONY_ROUTES
+        from .mfa_totp import TOTP_ROUTES
+
+        routes: dict[str, Any] = {
+            "/auth/login": self._login_route,
+            "/auth/logout": lambda scope, receive: self._logout(scope),
+        }
+        routes.update(
+            {
+                path: lambda scope, receive: self._totp(
+                    scope, receive, TOTP_ROUTES[scope["path"]]
+                )
+                for path in TOTP_ROUTES
+            }
+        )
+        routes.update(
+            {
+                path: lambda scope, receive: self._ceremony(
+                    scope, receive, scope["path"]
+                )
+                for path in CEREMONY_ROUTES
+            }
+        )
+        routes.update({path: self._account for path in ACCOUNT_ROUTES})
+        return routes
+
+    async def _login_route(self, scope: Any, receive: Any) -> Any:
         return await self._login(scope, await _login_body(scope, receive))
+
+    async def _account(self, scope: Any, receive: Any) -> Any:
+        """Register, password change, reset request and reset confirm (R005.2)."""
+        from .account_ceremonies import CHANGE_ROUTE, REGISTER, RESET_REQUEST
+
+        path = scope["path"]
+        body = await self.accounts.body(scope, receive, path)
+        if isinstance(body, JSONResponse):
+            return body
+        if path == CHANGE_ROUTE:
+            return await self._password_change(scope, body)
+        if path == REGISTER:
+            return await self.accounts.register(body)
+        if path == RESET_REQUEST:
+            return await self.accounts.reset_request(body)
+        return await self.accounts.reset_confirm(body)
+
+    async def _password_change(self, scope: Any, body: dict[str, str]) -> Any:
+        """The signed-in person's own change; the other sessions end at the engine."""
+        from .browser import require_mutation_proof, session_from_scope
+
+        require_mutation_proof(scope, trusted_origin=self.origin)
+        credential = session_from_scope(scope)
+        assert credential is not None  # require_mutation_proof refused its absence
+        session = await self.caller(await self.issuer.issue(credential), credential)
+        return await self.accounts.change(session, body)
 
     async def _totp(self, scope: Any, receive: Any, operation: str) -> Any:
         """A TOTP step for the signed-in person: the engine holds the secret and checks."""
