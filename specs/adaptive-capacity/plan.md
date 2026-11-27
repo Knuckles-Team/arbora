@@ -100,6 +100,16 @@ Boundary proof: `tests/api/test_agent_load_served.py::test_agent_run_profile_rej
 Test values below, equal to, and above both limits. Exercise missing bindings and zero samples.
 These tests have not run. This definition provides no runtime qualification receipt.
 
+### Build-slot lease serving (ARBORA-CAPACITY-R754)
+
+- **Owner.** Arbora owns serving: the six operations in `arbora/api/ops/capacity_lease.py` and the command in `arbora/fleet/lease_runner.py`. The engine owns every state, queue and priority (`MEDULLA-PLACEMENT-R786`).
+- **Cohesion.** The operations and their param models change together with the engine's lease methods; the runner's state machine changes with the command's behavior. The two stay in separate modules.
+- **Dependency direction.** The command calls the served operations over the door; it imports no engine code and no handler. The handlers call the engine client already used by `capacity.adjust.apply`.
+- **Interface depth.** Six operations and one command. No second client, queue or lock; the runner is one module with one caller, `console.py`.
+- **Special cases.** None per host, per priority or per holder: the command passes `--pool` and `--priority` through and the engine validates them.
+- **State.** The command's lifecycle is the explicit machine `LeaseRunMachine` of R754.3: seven states, nine events, fourteen edges, a typed refusal for every other pair.
+- **Environment.** The pool name, priority, wait bound and TTL are command arguments; the door address and identity come from the caller's existing client configuration.
+
 ## Phase 2: Task approach
 
 tasks.md lists one task per row, producer first. Tasks of independent rows run in parallel.
@@ -120,4 +130,6 @@ The live chain today is `arbora/api/invoke/pipeline.py::invoke` → `handle_capa
 
 ## Cross-repo seams
 
-None owned here. The `Depends on` lines of requirements.md name each dependency by the row ID that owns it in the other repository.
+- The engine's capacity-lease methods that `capacity.lease.*` call (`MEDULLA-PLACEMENT-R786.7`): [contracts/capacity-lease-wire.md](contracts/capacity-lease-wire.md).
+
+The `Depends on` lines of requirements.md name every other dependency by the row ID that owns it in the other repository.
