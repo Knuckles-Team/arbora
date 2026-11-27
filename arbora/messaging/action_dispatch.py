@@ -8,6 +8,7 @@ raised, so a dispatch never blocks the Action that triggered it.
 
 from __future__ import annotations
 
+import logging
 import time
 from collections.abc import Callable
 from typing import Any, Protocol, runtime_checkable
@@ -74,7 +75,10 @@ def send_notification(
     """Deliver through ``notifier``; a raising sink yields a recorded error."""
     try:
         return notifier.notify(spec, message)
-    except Exception as exc:  # noqa: BLE001 - dispatch never blocks the action
+    except Exception as exc:
+        logging.getLogger(__name__).debug(
+            "dispatch never blocks the action", exc_info=True
+        )
         return {
             "kind": "notification",
             "channel": spec.channel,
@@ -109,7 +113,8 @@ def send_webhook(
         return {**base, "delivered": False, "transport": "recorded"}
     try:
         status = post(spec.method, spec.url, body, spec.headers)
-    except Exception as exc:  # noqa: BLE001 - network failure is captured
+    except Exception as exc:
+        logging.getLogger(__name__).debug("network failure is captured", exc_info=True)
         return {**base, "delivered": False, "transport": "http", "error": str(exc)}
     return {
         **base,

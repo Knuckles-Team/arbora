@@ -12,6 +12,7 @@ CONCEPT:MERISTEM-ECO.messaging.single-inbound-command-dispatcher — Universal c
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from typing import Any
 
@@ -108,7 +109,8 @@ async def handle_command(content: str, *, service: Any) -> str | None:
     if name == "status":
         try:
             return "status: " + json.dumps(service.status())
-        except Exception:  # noqa: BLE001
+        except Exception:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return "status: unavailable"
     if name == "tools":
         return _capability_summary(service)
@@ -142,7 +144,8 @@ def _capability_summary(service: Any) -> str:
             label = validate_identifier(label, kind="label")
             rows = query(f"MATCH (n:{label}) RETURN count(n) AS c", {})
             return int((rows or [{}])[0].get("c", 0)) if rows else 0
-        except Exception:  # noqa: BLE001
+        except Exception:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return 0
 
     def _names(label: str, limit: int = 6) -> list[str]:
@@ -150,7 +153,8 @@ def _capability_summary(service: Any) -> str:
             label = validate_identifier(label, kind="label")
             rows = query(f"MATCH (n:{label}) RETURN n.name AS name LIMIT {limit}", {})
             return [r.get("name") for r in (rows or []) if r.get("name")]
-        except Exception:  # noqa: BLE001
+        except Exception:
+            logging.getLogger(__name__).debug("fail-closed fallback", exc_info=True)
             return []
 
     servers = _count("Server")

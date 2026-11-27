@@ -157,7 +157,7 @@ class NextcloudTalkBackend(MessagingBackend):
                 await asyncio.sleep(5)  # Poll interval
             except asyncio.CancelledError:
                 break
-            except Exception as e:  # noqa: BLE001 — polling loop backoff-and-retry; last_known cursor only advances for messages actually yielded, so no message is skipped
+            except Exception as e:  # polling loop backoff-and-retry; last_known cursor only advances for messages actually yielded, so no message is skipped
                 logger.debug(
                     "[CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction] Nextcloud poll error: %s",
                     e,
