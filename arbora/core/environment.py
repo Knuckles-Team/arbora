@@ -27,6 +27,7 @@ __all__ = [
     "PROCESS_ENVIRONMENT",
     "ProcessEnvironment",
     "copy_environment",
+    "default_env",
     "environment_names",
     "environment_view",
     "inherited_environment",
@@ -199,6 +200,12 @@ def write_env(name: str, value: str) -> None:
 def project_environment(values: Mapping[str, str]) -> None:
     """Project every key of ``values`` into the process environment."""
     for name, value in values.items():
+        write_env(name, value)
+
+
+def default_env(name: str, value: str) -> None:
+    """Project ``value`` into the process environment unless ``name`` is already set."""
+    if name not in os.environ:
         write_env(name, value)
 
 

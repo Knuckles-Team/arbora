@@ -525,7 +525,7 @@ class SecretsClient:
           "whatever is latest" — a :class:`VaultBackend` reads exactly that version
           (CONCEPT:MERISTEM-KG.ontology.release-key-rotation, D-OC-1); other backends simply
           have no second version and the pin is a no-op on them.
-        - ``env://VAR_NAME`` → ``setting(VAR_NAME)``
+        - ``env://VAR_NAME`` → ``read_reference(VAR_NAME)``
         Args:
             ref: Secret reference string.
 

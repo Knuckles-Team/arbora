@@ -17,7 +17,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from typing import Any, Protocol
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.modality.models import (
     Attachment,
     Derivation,
@@ -195,9 +195,11 @@ def default_normalizer(
         from arbora.modality.fleet_port import NativeIntentFleet
         from arbora.modality.speech import SpeechHandler
 
-        max_bytes = int(setting("ARBORA_MEDIA_MAX_BYTES", str(DEFAULT_MAX_MEDIA_BYTES)))
+        max_bytes = int(
+            read_env("ARBORA_MEDIA_MAX_BYTES", str(DEFAULT_MAX_MEDIA_BYTES))
+        )
         max_duration = float(
-            setting("ARBORA_AUDIO_MAX_DURATION_S", str(DEFAULT_MAX_AUDIO_DURATION_S))
+            read_env("ARBORA_AUDIO_MAX_DURATION_S", str(DEFAULT_MAX_AUDIO_DURATION_S))
         )
         _default = ModalityNormalizer(
             {

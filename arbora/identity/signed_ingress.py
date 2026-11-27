@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Protocol
 
+from arbora.core.environment import read_env
 from arbora.security.signed_ingress import (
     SCM_INGRESS_PREFIX,
     AdmittedIngress,
@@ -115,9 +116,8 @@ def scm_sources(text: str) -> dict[str, ScmSource]:
 
 def configured_sources() -> dict[str, ScmSource]:
     """The sources the host is configured with (``ARBORA_DEVELOPMENT_SCM_SOURCES``)."""
-    from arbora.core.settings import setting
 
-    return scm_sources(str(setting("ARBORA_DEVELOPMENT_SCM_SOURCES", "") or ""))
+    return scm_sources(str(read_env("ARBORA_DEVELOPMENT_SCM_SOURCES") or ""))
 
 
 def _resolve_secret(ref: str) -> str | None:
