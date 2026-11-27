@@ -150,3 +150,109 @@ async def test_the_fence_expiry_refuses_a_lease(ledger: Any) -> None:
         await store.acquire_controller_lease(
             record, "writer-1", now=record.fence.expires_at
         )
+
+
+def _reconciler(store: Any, *outcomes: str, now: Any = NOW) -> Any:
+    from arbora.fleet.scaling.scaling_intent_reconciler import (
+        AllowScalePolicy,
+        ScaleIntentReconciler,
+    )
+    from tests.fleet.scaling.test_scaling_intent_reconciler import Actuator
+
+    actuator = Actuator([], *outcomes)
+    return ScaleIntentReconciler(
+        store, actuator, policy=AllowScalePolicy(), clock=lambda: now
+    ), actuator
+
+
+@pytest.mark.spec("ARBORA-FLEET-R024.18")
+async def test_a_reconcile_commits_its_item_terminal_under_the_claim(
+    ledger: Any,
+) -> None:
+    store, fake = ledger
+    record = intent()
+    reconciler, actuator = _reconciler(store)
+    done = await reconciler.reconcile(record, controller_id="writer-1")
+    item = fake.items[_item_id(KIND, record.execution_key)]
+    assert done.state == ScaleIntentState.VERIFIED.value
+    assert item["status"] == "succeeded" and item["lease"] is None
+    assert fake.events.count("commit:succeeded") == 1
+    again = await reconciler.reconcile(record, controller_id="writer-1")
+    assert again.replayed is True and len(actuator.calls) == 1
+    assert fake.events.count("commit:succeeded") == 1
+
+    dry = intent(execution_key="scale-execution-dry", intent_id="scale-intent-dry")
+    await reconciler.reconcile(dry, controller_id="writer-1", dry_run=True)
+    assert fake.items[_item_id(KIND, dry.execution_key)]["status"] == "succeeded"
+
+
+@pytest.mark.spec("ARBORA-FLEET-R024.18")
+async def test_a_failed_run_commits_failed_and_a_retry_stays_open(ledger: Any) -> None:
+    store, fake = ledger
+    record = intent(retry_policy={"max_attempts": 2, "backoff_s": 1})
+    reconciler, _ = _reconciler(store, "retry", "retry")
+    item_id = _item_id(KIND, record.execution_key)
+    first = await reconciler.reconcile(record, controller_id="writer-1")
+    assert first.state == ScaleIntentState.FAILED.value
+    assert fake.items[item_id]["status"] == "ready"
+    final = await reconciler.reconcile(record, controller_id="writer-1")
+    assert final.observation is not None and final.observation.status == "failed"
+    assert fake.items[item_id]["status"] == "failed"
+    assert fake.events.count("commit:failed") == 1
+
+
+@pytest.mark.spec("ARBORA-FLEET-R024.18")
+async def test_a_crash_before_the_observation_is_repaired_under_a_fresh_claim(
+    ledger: Any,
+) -> None:
+    store, fake = ledger
+    long_fence = {**intent().fence.model_dump(), "expires_at": NOW + timedelta(hours=3)}
+    record = intent(fence=long_fence)
+    persisted = await store.persist_intent(record)
+    lease = await store.acquire_controller_lease(record, "writer-1", now=NOW)
+    assert lease is not None
+    started = await store.mark_started(record, persisted.execution, lease, now=NOW)
+    await store.record_result(record, started, lease, _done(record), now=NOW)
+    # the process died here, before observing, and its claim lapsed
+    fake.expire_lease(_item_id(KIND, record.execution_key))
+    reconciler, actuator = _reconciler(store, now=NOW + timedelta(hours=2))
+    repaired = await reconciler.reconcile(record, controller_id="writer-1")
+    assert repaired.replayed is True and actuator.calls == []
+    item = fake.items[_item_id(KIND, record.execution_key)]
+    assert item["status"] == "succeeded"
+
+
+@pytest.mark.spec("ARBORA-FLEET-R024.18")
+async def test_an_observation_under_a_lost_claim_commits_nothing(ledger: Any) -> None:
+    from arbora.fleet.scaling.scaling_intent_reconciler import (
+        ScaleObservation,
+        ScaleObservationStatus,
+        _result_digest,
+    )
+
+    store, fake = ledger
+    record = intent()
+    persisted = await store.persist_intent(record)
+    old = await store.acquire_controller_lease(record, "writer-1", now=NOW)
+    assert old is not None
+    started = await store.mark_started(record, persisted.execution, old, now=NOW)
+    result = _done(record)
+    done = await store.record_result(record, started, old, result, now=NOW)
+    fake.expire_lease(_item_id(KIND, record.execution_key))
+    new = await store.acquire_controller_lease(record, "writer-2", now=NOW)
+    assert new is not None
+    observation = ScaleObservation(
+        observation_id="observation:1",
+        execution_key=record.execution_key,
+        intent_id=record.intent_id,
+        intent_revision=record.intent_revision,
+        target=record.target,
+        status=ScaleObservationStatus.CONVERGED,
+        scaled=True,
+        observed_replicas=record.desired_replicas,
+        outcome_digest=_result_digest(result),
+        observed_at=NOW,
+    )
+    with pytest.raises(ScaleLeaseLost):
+        await store.record_observation(record, done, observation, now=NOW, lease=old)
+    assert not any(event.startswith("commit:") for event in fake.events)

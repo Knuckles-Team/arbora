@@ -49,7 +49,7 @@ def _unavailable(reason: str) -> OperationRefused:
     return OperationRefused("UNAVAILABLE", {"reason": reason})
 
 
-async def _nodes(context: Any, label: str) -> list[tuple[str, dict[str, Any]]]:
+async def class_nodes(context: Any, label: str) -> list[tuple[str, dict[str, Any]]]:
     """Every node of one class, paged by the last node id."""
     found: list[tuple[str, dict[str, Any]]] = []
     after: str | None = None
@@ -76,7 +76,7 @@ def _record(model: type[BaseModel], node: str, props: Mapping[str, Any]) -> Any:
 
 
 async def _revision(context: Any) -> int:
-    nodes = await _nodes(context, REVISION_LABEL)
+    nodes = await class_nodes(context, REVISION_LABEL)
     if len(nodes) != 1 or not isinstance(nodes[0][1].get(REVISION_FIELD), int):
         raise _unavailable("the graph holds no single scale authority revision")
     return int(nodes[0][1][REVISION_FIELD])
@@ -89,7 +89,7 @@ class GraphScaleAuthority:
         revision = await _revision(context)
         records: dict[str, tuple[Any, ...]] = {}
         for field, label, model in INVENTORY:
-            nodes = await _nodes(context, label)
+            nodes = await class_nodes(context, label)
             records[field] = tuple(_record(model, node, props) for node, props in nodes)
         try:
             return ScaleAuthority(authority_revision=revision, **records)
@@ -99,4 +99,11 @@ class GraphScaleAuthority:
             ) from invalid
 
 
-__all__ = ["INVENTORY", "REVISION_LABEL", "GraphScaleAuthority"]
+__all__ = [
+    "INVENTORY",
+    "REVISION_FIELD",
+    "REVISION_LABEL",
+    "SYSTEM_PROPERTIES",
+    "GraphScaleAuthority",
+    "class_nodes",
+]

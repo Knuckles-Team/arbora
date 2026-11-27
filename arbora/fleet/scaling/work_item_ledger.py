@@ -34,6 +34,7 @@ from arbora.fleet.scaling.scaling_intent_reconciler import (
     ScaleLeaseUnavailable,
     ScaleObservation,
     ScaleObservationConflict,
+    ScaleObservationStatus,
     _aware,
     _derived_id,
     break_glass_audit,
@@ -339,15 +340,35 @@ class WorkItemScaleIntentLedger:
         await self._write_under_lease(
             item, {**state, "execution": updated.model_dump(mode="json")}, lease
         )
-        if result.state == ScaleIntentState.FAILED.value and result.retryable:
-            await self._run(
-                work_items.defer_work_item,
-                item["work_item_id"],
-                _claim(lease),
-                next_retry_at=_aware(now, "now").timestamp(),
-                reason_ref=result.error_code,
-            )
+        await self._release_if_retrying(intent, item, lease, result, now)
         return updated
+
+    async def _release_if_retrying(
+        self,
+        intent: ScaleIntentRecord,
+        item: Mapping[str, Any],
+        lease: ControllerLease,
+        result: ScaleActuationResult,
+        now: datetime,
+    ) -> None:
+        """Defer a failure that will be retried, releasing the claim for a newer lease.
+
+        The last attempt keeps its claim so its observation is written, and the item
+        committed, under it.
+        """
+        if not (
+            result.state == ScaleIntentState.FAILED.value
+            and result.retryable
+            and lease.attempt < intent.retry_policy.max_attempts
+        ):
+            return
+        await self._run(
+            work_items.defer_work_item,
+            item["work_item_id"],
+            _claim(lease),
+            next_retry_at=_aware(now, "now").timestamp(),
+            reason_ref=result.error_code,
+        )
 
     async def record_observation(
         self,
@@ -356,47 +377,108 @@ class WorkItemScaleIntentLedger:
         observation: ScaleObservation,
         *,
         now: datetime,
+        lease: ControllerLease | None = None,
     ) -> ScaleObservation:
+        """Persist the one observation; under a lease, then commit the item terminal.
+
+        The write is fenced by the claim and the item is committed to ``succeeded`` or
+        ``failed`` while the claim is held, so the engine sees every scale intent end.
+        A replay of a stored observation commits again, which the engine answers as a
+        no-op once the item is terminal.
+        """
         for _ in range(_CAS_ATTEMPTS):
-            item = await self._read(KIND, intent.execution_key)
-            if item is None:
-                raise ScaleIntentConflict("observation requires a persisted intent")
-            state = _state(item)
+            item, state = await self._read_for_observation(intent, lease)
             current = _execution(state)
             MemoryScaleIntentLedger._validate_observation_identity(
                 intent, execution, observation, current
             )
             stored = state.get("observation")
             if stored is not None:
-                existing = ScaleObservation.model_validate(stored)
-                if existing.outcome_digest != observation.outcome_digest:
-                    raise ScaleObservationConflict("observation replay changed outcome")
+                existing = self._replayed_observation(stored, observation)
+                await self._commit_terminal(item, existing, lease)
                 return existing
-            if current.result is None:
-                raise ScaleIntentConflict(
-                    "observation requires a durable actuator result"
-                )
-            if not MemoryScaleIntentLedger._observation_matches_result(
-                observation, current.result
-            ):
-                raise ScaleObservationConflict(
-                    "observation does not match the durable actuator result"
-                )
-            verified = current.model_copy(
-                update={
-                    "state": ScaleIntentState.VERIFIED.value,
-                    "observation_id": observation.observation_id,
-                    "updated_at": _aware(now, "now"),
-                }
-            )
-            updated = {
-                **state,
-                "execution": verified.model_dump(mode="json"),
-                "observation": observation.model_dump(mode="json"),
-            }
-            if await self._store(item, updated, None):
+            updated = self._with_observation(state, current, observation, now)
+            claim = None if lease is None else _claim(lease)
+            if await self._store(item, updated, claim):
+                await self._commit_terminal(item, observation, lease)
                 return observation
         raise ScaleObservationConflict("observation lost a concurrent write")
+
+    async def _read_for_observation(
+        self, intent: ScaleIntentRecord, lease: ControllerLease | None
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        item = await self._read(KIND, intent.execution_key)
+        if item is None:
+            raise ScaleIntentConflict("observation requires a persisted intent")
+        state = _state(item)
+        if lease is not None:
+            self._require_current(state, lease)
+        return item, state
+
+    @staticmethod
+    def _replayed_observation(
+        stored: Mapping[str, Any], observation: ScaleObservation
+    ) -> ScaleObservation:
+        existing = ScaleObservation.model_validate(stored)
+        if existing.outcome_digest != observation.outcome_digest:
+            raise ScaleObservationConflict("observation replay changed outcome")
+        return existing
+
+    @staticmethod
+    def _with_observation(
+        state: Mapping[str, Any],
+        current: ScaleExecutionRecord,
+        observation: ScaleObservation,
+        now: datetime,
+    ) -> dict[str, Any]:
+        """The item state once the observation verifies the durable actuator result."""
+        if current.result is None:
+            raise ScaleIntentConflict("observation requires a durable actuator result")
+        if not MemoryScaleIntentLedger._observation_matches_result(
+            observation, current.result
+        ):
+            raise ScaleObservationConflict(
+                "observation does not match the durable actuator result"
+            )
+        verified = current.model_copy(
+            update={
+                "state": ScaleIntentState.VERIFIED.value,
+                "observation_id": observation.observation_id,
+                "updated_at": _aware(now, "now"),
+            }
+        )
+        return {
+            **state,
+            "execution": verified.model_dump(mode="json"),
+            "observation": observation.model_dump(mode="json"),
+        }
+
+    @staticmethod
+    def _require_current(state: Mapping[str, Any], lease: ControllerLease) -> None:
+        stored = state.get("lease")
+        if stored is None or stored["lease_instance_id"] != lease.lease_instance_id:
+            raise ScaleLeaseLost("controller lease is no longer current")
+
+    async def _commit_terminal(
+        self,
+        item: Mapping[str, Any],
+        observation: ScaleObservation,
+        lease: ControllerLease | None,
+    ) -> None:
+        """End the WorkItem under the claim: ``succeeded`` for a converged or simulated run."""
+        if lease is None:
+            return
+        failed = observation.status == ScaleObservationStatus.FAILED.value
+        try:
+            await self._run(
+                work_items.commit_result,
+                item["work_item_id"],
+                _claim(lease),
+                outcome="failed" if failed else "succeeded",
+                result_ref=observation.observation_id,
+            )
+        except Exception as refused:
+            raise ScaleLeaseLost("the engine refused the terminal commit") from refused
 
     async def get_observation(self, execution_key: str) -> ScaleObservation | None:
         item = await self._read(KIND, execution_key)
