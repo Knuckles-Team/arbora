@@ -40,7 +40,7 @@ def _ed25519():
         from cryptography.hazmat.primitives.asymmetric import ed25519
 
         return ed25519
-    except Exception:  # noqa: BLE001 — absent dep ⇒ serve unsigned, never crash
+    except ImportError:  # absent dep ⇒ serve unsigned, never crash
         return None
 
 
@@ -82,7 +82,7 @@ def _seed() -> bytes:
                 return raw[:32]
             # A short/opaque value is still usable as deterministic key material.
             return hashlib.sha256(val.encode()).digest()
-        except Exception:  # noqa: BLE001 — malformed key ⇒ derive deterministically
+        except ValueError:  # malformed key ⇒ derive deterministically
             return hashlib.sha256(val.encode()).digest()
     # Derived from the process id: stable within a process so a publish/verify in
     # the same run agree, never persisted, and held in no module state.
@@ -146,7 +146,10 @@ def verify_datapoint(datapoint: Any, signature_b64: str, public_key_b64_: str) -
         pub = ed.Ed25519PublicKey.from_public_bytes(_b64d(public_key_b64_))
         pub.verify(_b64d(signature_b64), canonical(datapoint).encode())
         return True
-    except Exception:  # noqa: BLE001 — any verify failure is a rejection, not an error
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "any verify failure is a rejection, not an error", exc_info=True
+        )
         return False
 
 

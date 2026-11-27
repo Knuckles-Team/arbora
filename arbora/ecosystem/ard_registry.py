@@ -88,7 +88,7 @@ def _probe_fleet(multiplexer: Any = None) -> dict[str, dict]:
     mux = multiplexer
     try:
         return _run_async(mux.probe_catalog())
-    except Exception as exc:  # noqa: BLE001 — probe is best-effort
+    except Exception as exc:  # probe is best-effort
         logger.debug("ard: probe failed: %s", exc)
         return {}
 
@@ -160,7 +160,7 @@ def _skill_entries(engine: Any, pub: dict[str, str], *, limit: int = 500) -> lis
             "RETURN s.id AS id, s.name AS name, s.description AS description "
             f"LIMIT {int(limit)}"
         )
-    except Exception as exc:  # noqa: BLE001 — KG cold/absent ⇒ no skill entries
+    except Exception as exc:  # KG cold/absent ⇒ no skill entries
         logger.debug("ard: skill query failed: %s", exc)
         return []
     entries: list[dict] = []
@@ -188,7 +188,8 @@ def _active_engine() -> Any:
         from ..knowledge_graph.core.engine import IntelligenceGraphEngine
 
         return IntelligenceGraphEngine.get_active()
-    except Exception:  # noqa: BLE001
+    except Exception:
+        logging.getLogger(__name__).debug("broad catch", exc_info=True)
         return None
 
 
@@ -284,7 +285,8 @@ def _search_servers(
 
     try:
         ranked = _run_async(mux.discover_tools(query_text, top_k=page_size * 2))
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
+        logging.getLogger(__name__).debug("broad catch", exc_info=True)
         unavailable["fleet"] = str(exc)
         return []
     unavailable.update(ranked.get("unavailable") or {})
