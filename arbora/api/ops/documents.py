@@ -23,6 +23,7 @@ from arbora.api.ops.knowledge import EngineReply
 from arbora.api.ops.source import SourceReader
 from arbora.api.ops.workstreams import _props
 from arbora.api.registry import OpSpec, Verb
+from arbora.core.environment import read_env
 
 SDD_SCOPE = "node:read"
 KB_SCOPE = "node:read"
@@ -47,16 +48,15 @@ class KbArticlesParams(Params):
 
 
 def _settings(params: Mapping[str, Any]) -> tuple[str, str]:
-    from arbora.core.settings import setting
 
     repository = params.get("repository") or str(
-        setting("ARBORA_SDD_REPOSITORY", "") or ""
+        read_env("ARBORA_SDD_REPOSITORY") or ""
     )
     if not repository:
         raise OperationRefused(
             "UNAVAILABLE", {"reason": "no specification repository is configured"}
         )
-    return str(repository), str(setting("ARBORA_SDD_REF", "main") or "main")
+    return str(repository), str(read_env("ARBORA_SDD_REF", "main") or "main")
 
 
 async def _document(

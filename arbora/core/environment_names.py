@@ -235,11 +235,19 @@ NAMES: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         False,
     ),
     (
+        "ARBORA_DEVELOPMENT_DELIVERY_MAX_PARALLEL",
+        "string",
+        "",
+        "ARBORA-OPS-R906",
+        ("arbora.api.ops.development_delivery",),
+        False,
+    ),
+    (
         "ARBORA_DEVELOPMENT_SCM_POLL_INTERVAL_S",
         "string",
         None,
         "ARBORA-OPS-R019",
-        ("arbora.mcp_server.served_invocation",),
+        ("arbora.api.ops.development_scm", "arbora.mcp_server.served_invocation"),
         False,
     ),
     (
@@ -467,6 +475,22 @@ NAMES: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         False,
     ),
     (
+        "ARBORA_SDD_REF",
+        "secret_reference",
+        None,
+        "ARBORA-OPS-R906",
+        ("arbora.api.ops.documents",),
+        False,
+    ),
+    (
+        "ARBORA_SDD_REPOSITORY",
+        "string",
+        "",
+        "ARBORA-OPS-R906",
+        ("arbora.api.ops.documents",),
+        False,
+    ),
+    (
         "ARBORA_SERVED_MCP_URL",
         "string",
         "",
@@ -536,6 +560,14 @@ NAMES: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         None,
         "ARBORA-OPS-R032",
         ("arbora.webui_host.webui_co_service",),
+        False,
+    ),
+    (
+        "ARBORA_WORKSPACE_ROOT",
+        "string",
+        "",
+        "ARBORA-OPS-R910",
+        ("arbora.api.ops.workspace_files",),
         False,
     ),
     (
@@ -1547,7 +1579,11 @@ NAMES: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         "string",
         "",
         "ARBORA-OPS-R896.8",
-        ("arbora.messaging.alert_intake", "arbora.messaging.service"),
+        (
+            "arbora.api.ops.messaging",
+            "arbora.messaging.alert_intake",
+            "arbora.messaging.service",
+        ),
         False,
     ),
     (
@@ -1555,7 +1591,11 @@ NAMES: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         "string",
         "telegram",
         "ARBORA-OPS-R896.8",
-        ("arbora.messaging.alert_intake", "arbora.messaging.service"),
+        (
+            "arbora.api.ops.messaging",
+            "arbora.messaging.alert_intake",
+            "arbora.messaging.service",
+        ),
         False,
     ),
     (
@@ -1636,6 +1676,22 @@ NAMES: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         "INFO",
         "ARBORA-MESSAGING-R001",
         ("arbora.messaging.polling",),
+        False,
+    ),
+    (
+        "MESSAGING_MATTERMOST_FLEET_SERVER",
+        "string",
+        "mattermost-mcp",
+        "ARBORA-IDENTITY-R026.8",
+        ("arbora.api.ops.messaging",),
+        False,
+    ),
+    (
+        "MESSAGING_MATTERMOST_FLEET_TOOL",
+        "string",
+        "mattermost_mcp_posts",
+        "ARBORA-IDENTITY-R026.8",
+        ("arbora.api.ops.messaging",),
         False,
     ),
     (

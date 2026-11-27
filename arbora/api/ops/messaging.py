@@ -24,7 +24,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.registry import AuditClass, Composite, Effect, HttpShape, OpSpec, Verb
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.fleet.fleet_tool_call import call_fleet_tool
 from arbora.messaging.alert_intake import extract_alert_text
 
@@ -89,8 +89,8 @@ async def _post_to_mattermost(context: Any, channel: str, text: str) -> str:
     gateway = context.services.get("fleet_gateway")
     if gateway is None:
         raise _refused("UNAVAILABLE", "fleet gateway is not bound")
-    server = str(setting(MATTERMOST_SERVER_SETTING, "mattermost-mcp"))
-    tool = str(setting(MATTERMOST_TOOL_SETTING, "mattermost_mcp_posts"))
+    server = str(read_env(MATTERMOST_SERVER_SETTING, "mattermost-mcp"))
+    tool = str(read_env(MATTERMOST_TOOL_SETTING, "mattermost_mcp_posts"))
     arguments = {
         "action": "create_post",
         "params_json": json.dumps({"channel_id": channel, "message": text}),
@@ -108,8 +108,8 @@ async def handle_messaging_alert(
     """Deliver one alert to the configured default channel."""
     del op
     text = _alert_text(params)
-    platform = str(setting("MESSAGING_DEFAULT_PLATFORM", "telegram") or "telegram")
-    channel = str(setting("MESSAGING_DEFAULT_CHANNEL", "") or "")
+    platform = str(read_env("MESSAGING_DEFAULT_PLATFORM") or "telegram")
+    channel = str(read_env("MESSAGING_DEFAULT_CHANNEL") or "")
     if not channel:
         raise _refused("UNAVAILABLE", "alert destination is not configured")
     if platform == "mattermost":
