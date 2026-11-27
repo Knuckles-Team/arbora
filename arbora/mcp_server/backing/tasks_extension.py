@@ -46,6 +46,7 @@ from pydantic import ConfigDict, Field, field_validator
 
 from arbora import work_items
 from arbora.core.environment import read_env
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.protocol_compat import mcp_protocol_exception
 from arbora.mcp_server.served_engine import engine_unbound
 from arbora.security.run_token import RunTokenSigner
@@ -578,7 +579,9 @@ class WorkItemTasksExtension(ServerExtension):
         task_router: Any | None = None,
         engine_provider: Callable[[], Any] = engine_unbound,
         signer: RunTokenSigner | None = None,
+        config: RuntimeConfig,
     ) -> None:
+        self._config = config
         self._engine_provider = engine_provider
         self._signer = signer
         self.server_id = (
@@ -838,9 +841,7 @@ class WorkItemTasksExtension(ServerExtension):
         return token, claims
 
     @staticmethod
-    def _configured_issuers() -> set[str]:
-        from arbora.core.settings import runtime_config as config
-
+    def _configured_issuers(config: RuntimeConfig) -> set[str]:
         expected_issuer = (
             getattr(config, "auth_jwt_issuer", None)
             or getattr(config, "mcp_jwt_issuer", None)
@@ -855,9 +856,7 @@ class WorkItemTasksExtension(ServerExtension):
         }
 
     @staticmethod
-    def _configured_audiences() -> set[str]:
-        from arbora.core.settings import runtime_config as config
-
+    def _configured_audiences(config: RuntimeConfig) -> set[str]:
         expected_audience = (
             getattr(config, "auth_jwt_audience", None)
             or getattr(config, "mcp_jwt_audience", None)
@@ -900,19 +899,18 @@ class WorkItemTasksExtension(ServerExtension):
 
     @staticmethod
     def _delegator_identity_facts(
-        token: Any, claims: Mapping[str, Any]
+        token: Any, claims: Mapping[str, Any], config: RuntimeConfig
     ) -> tuple[str, set[str], set[str], set[str], str, set[str]]:
         """(issuer, issuers, token_audiences, audiences, principal,
         capabilities) resolved from ``claims``/``token`` — raises the SAME
         stable protocol error as every other failure mode on this path if
         resolution itself fails."""
         try:
-            from arbora.core.settings import runtime_config as config
             from arbora.security.identity import normalize_identity
 
             identity = normalize_identity(claims)
-            issuers = WorkItemTasksExtension._configured_issuers()
-            audiences = WorkItemTasksExtension._configured_audiences()
+            issuers = WorkItemTasksExtension._configured_issuers(config)
+            audiences = WorkItemTasksExtension._configured_audiences(config)
             issuer = str(claims.get("iss") or "").strip()
             token_audiences = WorkItemTasksExtension._token_audiences(claims.get("aud"))
             principal = str(
@@ -956,8 +954,7 @@ class WorkItemTasksExtension(ServerExtension):
                 "Authenticated multiplexer service authority is required",
             )
 
-    @staticmethod
-    def _authorized_delegator(ctx: ServerRequestContext[Any, Any]) -> Any:
+    def _authorized_delegator(self, ctx: ServerRequestContext[Any, Any]) -> Any:
         """Resolve the verified service authority for a delegated task hop.
 
         The HMAC task proof carries the *end user's* bounded identity, not
@@ -980,7 +977,9 @@ class WorkItemTasksExtension(ServerExtension):
             audiences,
             principal,
             capabilities,
-        ) = WorkItemTasksExtension._delegator_identity_facts(token, claims)
+        ) = WorkItemTasksExtension._delegator_identity_facts(
+            token, claims, self._config
+        )
         WorkItemTasksExtension._validate_delegator_facts(
             issuer, issuers, token_audiences, audiences, principal, capabilities
         )

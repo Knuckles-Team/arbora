@@ -26,6 +26,7 @@ from arbora.api.registry import (
     Surface,
     Verb,
 )
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools import analysis_tools, write_ingest_tools
 from arbora.mcp_server.host_caches import AnalysisCore, ToolTable
@@ -177,7 +178,7 @@ async def test_analysis_action_runs_through_invoke_as_the_caller(monkeypatch) ->
     server = FastMCP("legacy-analysis-served")
     core = AnalysisCore()
     analysis_tools.register_analysis_tools(
-        server, ToolTable(), core, build_health_state()
+        server, ToolTable(), core, build_health_state(), config=RuntimeConfig()
     )
     bundle = await analysis_tools.execute_focused_analysis(
         core, "inspect", target="node-1"

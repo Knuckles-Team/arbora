@@ -31,6 +31,7 @@ from fastmcp.tools.base import Tool
 from fastmcp.utilities.components import FastMCPComponent
 
 from arbora.core.environment import read_reference
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.protocol_compat import mcp_types_module
 
 if TYPE_CHECKING:
@@ -713,6 +714,7 @@ def create_eunomia_middleware(
     eunomia_endpoint: str | None = None,
     enable_audit_logging: bool = True,
     *,
+    config: RuntimeConfig,
     require_verified_principal: bool = False,
     api_key_ref: str | None = None,
     allowed_private_hosts: Sequence[str] | None = None,
@@ -727,8 +729,6 @@ def create_eunomia_middleware(
     may come from XDG config or environment.  No endpoint or trust material is
     embedded in the package.
     """
-    from arbora.core.settings import runtime_config as config
-
     if use_remote_eunomia:
         if policy_file is not None or not eunomia_endpoint:
             raise ValueError("Remote Eunomia requires only a configured endpoint")
@@ -790,9 +790,12 @@ def _build_embedded_bridge(
 def create_jwt_eunomia_middleware(
     policy_file: str,
     enable_audit_logging: bool = True,
+    *,
+    config: RuntimeConfig,
 ) -> JwtPrincipalEunomiaMiddleware:
     """Compatibility constructor for a verified-principal embedded policy."""
     return create_eunomia_middleware(
+        config=config,
         policy_file=policy_file,
         enable_audit_logging=enable_audit_logging,
         require_verified_principal=True,

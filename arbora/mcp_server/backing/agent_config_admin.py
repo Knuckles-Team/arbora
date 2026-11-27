@@ -3,7 +3,7 @@
 CONCEPT:ARBORA-HOST.config.graph-config-operation
 
 arbora owns the ``graph_config`` operation: the harness keeps the
-``AgentConfig`` model and its one write-back (``save_config_item``), while the
+``AgentConfig`` model and its one write-back (``RuntimeConfig.save_item``), while the
 served operation — its ActionPolicy gate, ``:ConfigChange`` provenance and the
 post-change catalog reconcile — lives here, next to the surface that serves it.
 
@@ -26,7 +26,7 @@ Three properties are load-bearing, in priority order:
    rejects, or an inline secret is refused before anything is written. A tool
    that can silently change production configuration is a liability; the write
    path is validated, policy-gated, routed through the ONE existing write-back
-   (``save_config_item``), and recorded as provenance.
+   (``RuntimeConfig.save_item``), and recorded as provenance.
 """
 
 from __future__ import annotations
@@ -41,6 +41,7 @@ from functools import lru_cache
 from typing import Any
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.core.settings import RuntimeConfig
 from arbora.security.config_sensitivity import (
     configuration_key_is_sensitive,
     runtime_reference,
@@ -170,11 +171,9 @@ def _resolve_key(key: str) -> tuple[str, str]:
     )
 
 
-def _effective(field_name: str) -> Any:
-    """The live effective value of one field, from the process's config."""
-    from arbora.core.settings import runtime_config as agent_config
-
-    return getattr(agent_config, field_name, None)
+def _effective(config: RuntimeConfig, field_name: str) -> Any:
+    """The live effective value of one field, from the host's config."""
+    return getattr(config, field_name, None)
 
 
 def _default(field_name: str) -> Any:
@@ -187,7 +186,9 @@ def _default(field_name: str) -> Any:
         return info.get_default()
 
 
-def describe(key: str = "", *, contains: str = "") -> dict[str, Any]:
+def describe(
+    config: RuntimeConfig, key: str = "", *, contains: str = ""
+) -> dict[str, Any]:
     """Field docstring, type, default, current value and env alias.
 
     With ``key`` — one field, fully described. Without — the whole inventory
@@ -202,7 +203,7 @@ def describe(key: str = "", *, contains: str = "") -> dict[str, Any]:
 
     def _one(env_key: str, field_name: str) -> dict[str, Any]:
         info = AgentConfig.model_fields[field_name]
-        current, current_redacted = redact(env_key, _effective(field_name))
+        current, current_redacted = redact(env_key, _effective(config, field_name))
         default, default_redacted = redact(env_key, _default(field_name))
         return {
             "key": env_key,
@@ -229,12 +230,12 @@ def describe(key: str = "", *, contains: str = "") -> dict[str, Any]:
     return {"action": "describe", "count": len(fields), "fields": fields}
 
 
-def get(key: str) -> dict[str, Any]:
+def get(config: RuntimeConfig, key: str) -> dict[str, Any]:
     """The effective value of one field, redacted."""
     from arbora.deployment.config_generator import is_restart_required
 
     env_key, field_name = _resolve_key(key)
-    value, was_redacted = redact(env_key, _effective(field_name))
+    value, was_redacted = redact(env_key, _effective(config, field_name))
     return {
         "action": "get",
         "key": env_key,
@@ -246,7 +247,7 @@ def get(key: str) -> dict[str, Any]:
     }
 
 
-def diff() -> dict[str, Any]:
+def diff(config: RuntimeConfig) -> dict[str, Any]:
     """Every field whose effective value differs from its shipped default.
 
     The fastest answer to "why is this deployment behaving differently from
@@ -257,7 +258,7 @@ def diff() -> dict[str, Any]:
 
     changed: list[dict[str, Any]] = []
     for env_key, field_name in sorted(field_index().items()):
-        effective = _effective(field_name)
+        effective = _effective(config, field_name)
         default = _default(field_name)
         if effective == default:
             continue
@@ -428,6 +429,7 @@ def _gate(
 
 
 def set_value(
+    config: RuntimeConfig,
     key: str,
     value: Any,
     *,
@@ -443,7 +445,6 @@ def set_value(
     config/secret precedence path) → record provenance. Every refusal happens
     BEFORE anything is persisted.
     """
-    from arbora.core.settings import save_config_item
     from arbora.deployment.config_generator import is_restart_required
 
     env_key, field_name = _resolve_key(key)
@@ -473,7 +474,7 @@ def set_value(
             **decision,
         }
 
-    save_config_item(env_key, validated)
+    config.save_item(env_key, validated)
     restart = is_restart_required(env_key)
     safe_value, was_redacted = redact(env_key, validated)
     provenance_id = _record_provenance(
@@ -511,6 +512,7 @@ def set_value(
 
 
 async def _dispatch_mutation(
+    config: RuntimeConfig,
     action: str,
     *,
     key: str,
@@ -528,6 +530,7 @@ async def _dispatch_mutation(
     else:
         result = await asyncio.to_thread(
             set_value,
+            config,
             key,
             value,
             action_policies=action_policies,
@@ -570,6 +573,7 @@ async def _reconcile_served_catalog(request_id: str) -> dict[str, Any]:
 
 
 async def dispatch(
+    config: RuntimeConfig,
     action: str,
     *,
     action_policies: ActionPolicies,
@@ -581,17 +585,18 @@ async def dispatch(
 ) -> dict[str, Any]:
     """Route one ``graph_config`` action. Unknown actions are refused."""
     if action == "describe":
-        return describe(key, contains=contains)
+        return describe(config, key, contains=contains)
     if action == "get":
-        return get(key)
+        return get(config, key)
     if action == "diff":
-        return diff()
+        return diff(config)
     if action not in {"reload", "set"}:
         raise ConfigAdminError(
             "unknown_action",
             f"unknown action {action!r}; expected one of {', '.join(ACTIONS)}",
         )
     return await _dispatch_mutation(
+        config,
         action,
         key=key,
         value=value,

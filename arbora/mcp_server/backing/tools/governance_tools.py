@@ -12,6 +12,7 @@ from pydantic import Field
 
 from arbora.access.approval import ApprovalDecisions
 from arbora.core.event_loop import run_blocking_ordered
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_text
@@ -24,6 +25,7 @@ def register_governance_tools(
     tools: ToolTable,
     approvals: ApprovalDecisions,
     engine_provider: Callable[[], Any],
+    config: RuntimeConfig,
 ) -> None:
     """Register approval decisions, risk vetoes, and ActionPolicy verification."""
 
@@ -124,7 +126,7 @@ def register_governance_tools(
         if action == "policy_status":
             # No engine needed — this is static config + a live-wiring confirmation,
             # not a graph read.
-            return json.dumps(_policy_status(), indent=2, default=str)
+            return json.dumps(_policy_status(config), indent=2, default=str)
 
         engine = engine_provider()
         if engine is None:
@@ -251,7 +253,7 @@ def _execute_governance_action(
         return public_error_text(exc)
 
 
-def _policy_status() -> dict[str, Any]:
+def _policy_status(config: RuntimeConfig) -> dict[str, Any]:
     """Live PermissionPolicy/context_policy + KG-native audit-sink status (PA-R1).
 
     CONCEPT:MERISTEM-OS.identity.identity-policy-check / MERISTEM-KG.audit.kg-native-audit-sink.
@@ -262,8 +264,6 @@ def _policy_status() -> dict[str, Any]:
     control surface (there is nothing to set here; tune via the same config
     fields every other setting uses).
     """
-    from arbora.core.settings import runtime_config as config
-
     return {
         "surface": "governance",
         "action": "policy_status",

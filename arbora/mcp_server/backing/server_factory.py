@@ -31,6 +31,7 @@ from scion_sdk.credentials.runtime_references import (
 from scion_sdk.utilities import to_boolean
 
 from arbora.core.environment import read_env, read_reference, write_env
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.served_engine import engine_unbound, no_process_session
 from arbora.observability.state import Metrics
 from arbora.security.key_cache import JwksCache
@@ -1873,7 +1874,9 @@ def _append_optional_middlewares(
         middlewares.insert(1, UserTokenMiddleware(config=mcp_auth_config))
 
 
-def _configure_eunomia_middleware(args: argparse.Namespace) -> Any | None:
+def _configure_eunomia_middleware(
+    args: argparse.Namespace, config: RuntimeConfig
+) -> Any | None:
     """None when Eunomia is not configured for this server; the built
     middleware when it is; exits the process on a configuration/build
     failure (never returns a sentinel for that case)."""
@@ -1887,6 +1890,7 @@ def _configure_eunomia_middleware(args: argparse.Namespace) -> Any | None:
         require_verified = str(getattr(args, "auth_type", "none")) != "none"
         if args.eunomia_type == "remote":
             return create_eunomia_middleware(
+                config=config,
                 policy_file=None,
                 use_remote_eunomia=True,
                 eunomia_endpoint=args.eunomia_remote_url,
@@ -1895,6 +1899,7 @@ def _configure_eunomia_middleware(args: argparse.Namespace) -> Any | None:
             )
         policy_file = args.eunomia_policy_file or "mcp_policies.json"
         return create_eunomia_middleware(
+            config=config,
             policy_file=policy_file,
             use_remote_eunomia=False,
             require_verified_principal=require_verified,
@@ -1912,6 +1917,7 @@ def _configure_middleware(
     args: argparse.Namespace,
     keys: JwksCache,
     *,
+    config: RuntimeConfig,
     server_name: str = "",
     engine_provider: Callable[[], Any] = engine_unbound,
     process_session: Callable[[], Any] = no_process_session,
@@ -1948,7 +1954,7 @@ def _configure_middleware(
         process_session,
     )
 
-    eunomia_mw = _configure_eunomia_middleware(args)
+    eunomia_mw = _configure_eunomia_middleware(args, config)
     if eunomia_mw is not None:
         middlewares.append(eunomia_mw)
 
@@ -2323,6 +2329,7 @@ def _resolve_metrics_token() -> str | None:
 def _mount_tasks_extension_if_available(
     mcp: Any,
     name: str,
+    config: RuntimeConfig,
     engine_provider: Callable[[], Any] = engine_unbound,
     signer: RunTokenSigner | None = None,
 ) -> None:
@@ -2357,7 +2364,10 @@ def _mount_tasks_extension_if_available(
         # registry or scheduler.
         mcp.add_extension(
             WorkItemTasksExtension(
-                server_id=name, engine_provider=engine_provider, signer=signer
+                server_id=name,
+                engine_provider=engine_provider,
+                signer=signer,
+                config=config,
             )
         )
 
@@ -2440,6 +2450,7 @@ def create_mcp_server(
     *,
     keys: JwksCache,
     metrics: Metrics,
+    config: RuntimeConfig,
     lifespan_extension: Callable[[Any], Any] | None = None,
     manage_engine_shutdown: bool = True,
     engine_provider: Callable[[], Any] = engine_unbound,
@@ -2462,6 +2473,7 @@ def create_mcp_server(
         command_args: Optional list of CLI arguments (default: sys.argv).
         transport_choices: Current transports exposed by this server.
         metrics: The host's scrape samplers, read by the ``/metrics`` route.
+        config: The host's runtime settings, read by the extensions it mounts.
         lifespan_extension: Optional application lifespan nested inside the
             factory-owned registration context.
         manage_engine_shutdown: Whether this factory context owns the active
@@ -2503,6 +2515,7 @@ def create_mcp_server(
     middlewares = _configure_middleware(
         args,
         keys,
+        config=config,
         server_name=name,
         engine_provider=engine_provider,
         process_session=process_session,
@@ -2532,7 +2545,9 @@ def create_mcp_server(
         # default to apply to yet.
         tasks=False,
     )
-    _mount_tasks_extension_if_available(mcp, name, engine_provider, token_signer)
+    _mount_tasks_extension_if_available(
+        mcp, name, config, engine_provider, token_signer
+    )
     _register_operational_routes(mcp, remote_network, metrics_token, metrics)
 
     # Inject dynamic visibility transform for dynamic tag/tool filtering

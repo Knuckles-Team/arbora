@@ -15,6 +15,7 @@ from fastmcp import Client, FastMCP
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing.arbora_surface import register_arbora_surface
 from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
 from arbora.mcp_server.host_caches import HostCaches
@@ -66,7 +67,7 @@ async def _listed(server: FastMCP) -> dict[str, set[str]]:
 def _started(policy: str | None) -> FastMCP:
     server = FastMCP("host")
     if policy is not None:
-        server.add_middleware(create_eunomia_middleware(policy))
+        server.add_middleware(create_eunomia_middleware(policy, config=RuntimeConfig()))
     register_arbora_surface(
         server,
         action_policies=ActionPolicies(),
@@ -75,6 +76,7 @@ def _started(policy: str | None) -> FastMCP:
         caches=HostCaches(),
         intent_tools=False,
         health=build_health_state(),
+        config=RuntimeConfig(),
     )
     return server
 
