@@ -1211,6 +1211,7 @@ def compose_served_invocation(
         audit_adapter=EgAuditAdapter(audit_client),
         current_session=current_session,
     )
+    _bind_scm_ingress(service_client, graph)
     from arbora.mcp_server.gate_audit import gate_inactive_startup
 
     # A gate the pinned engine cannot serve is on the audit record once per process.
@@ -1354,6 +1355,39 @@ def _directory_sync(
 LDAP_BIND_CREDENTIAL_PATH = "arbora/identity/ldap-bind-password"
 
 
+def _bind_scm_ingress(client: Any, graph: str) -> None:
+    """Bind the signed code-host ingress to the identity middleware (ARBORA-OPS-R896.8).
+
+    The admitter exists only when ``ARBORA_DEVELOPMENT_SCM_SOURCES`` declares a source; with
+    none bound, a signed delivery stays unadmitted and answers the uniform 401.
+    """
+    import time
+
+    from arbora.identity.ports import scm_ingress_from_settings
+    from arbora.security.signed_ingress import bind_signed_ingress
+
+    bind_signed_ingress(
+        scm_ingress_from_settings(
+            client, graph, clock_ms=lambda: time.time_ns() // 1_000_000
+        )
+    )
+
+
+def _scm_poll_service(callers: Any, clock: Any) -> tuple[Any, ...]:
+    """The code-host polling fallback, when a source is configured (ARBORA-OPS-R896.8)."""
+    from arbora.api.ops.development_scm import DEFAULT_POLL_INTERVAL_S, ScmPollService
+    from arbora.core.settings import setting
+    from arbora.identity.ports import configured_scm_sources
+
+    if not configured_scm_sources():
+        return ()
+    tick = float(
+        str(setting("ARBORA_DEVELOPMENT_SCM_POLL_INTERVAL_S", "") or "")
+        or DEFAULT_POLL_INTERVAL_S
+    )
+    return (ScmPollService(callers, clock, tick),) if tick > 0 else ()
+
+
 def _background_services(
     services: Any,
     runtime: Any,
@@ -1404,6 +1438,7 @@ def _background_services(
     from arbora.agent_host.usage_ledger import LEDGER
 
     LEDGER.configure(callers)
+    started.extend(_scm_poll_service(callers, SystemClock()))
     started.extend(_tool_task_service(runtime, session, callers))
     if tick_s <= 0:
         return tuple(started)

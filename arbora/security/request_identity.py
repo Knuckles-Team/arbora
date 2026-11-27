@@ -1354,6 +1354,30 @@ def _extract_prevalidated_claims(scope: Any) -> Any:
     return state.get("user_claims") if isinstance(state, dict) else None
 
 
+def _without_admission_marker(scope: Any) -> Any:
+    """The scope with any signed-ingress marker removed: only this middleware may set it."""
+    from arbora.security.signed_ingress import ADMITTED_STATE_KEY
+
+    state = dict(scope.get("state") or {})
+    if state.pop(ADMITTED_STATE_KEY, None) is None:
+        return scope
+    return {**scope, "state": state}
+
+
+async def _read_body(receive: Any, limit: int = 1_048_576) -> bytes | None:
+    """The whole request body, or ``None`` past ``limit`` bytes or on a disconnect."""
+    body = bytearray()
+    while True:
+        message = await receive()
+        if message.get("type") != "http.request":
+            return None
+        body.extend(message.get("body", b""))
+        if len(body) > limit:
+            return None
+        if not message.get("more_body", False):
+            return bytes(body)
+
+
 async def _mint_request_session(actor: ActorContext, send: Any) -> GraphSession | None:
     """The server-owned GraphSession, or ``None`` once the matching 401/403 has
     already been sent.
@@ -1428,6 +1452,76 @@ class ActorIdentityMiddleware:
             suspend_session(),
         ):
             await self.app(scope, receive, send)
+
+    async def _serve_without_actor(
+        self, scope: Any, receive: Any, send: Any, path: str
+    ) -> None:
+        """No bearer identity: a signed code-host delivery is admitted by its signature
+        (ARBORA-OPS-R896.8); every other path stays unauthenticated or refused."""
+        from arbora.security.signed_ingress import is_signed_ingress_path
+
+        if is_signed_ingress_path(path):
+            await self._serve_signed_ingress(scope, receive, send, path)
+        else:
+            await self._serve_unauthenticated_path(scope, receive, send, path)
+
+    async def _serve_signed_ingress(
+        self, scope: Any, receive: Any, send: Any, path: str
+    ) -> None:
+        """Admit one signed delivery as its source's service principal (ARBORA-OPS-R896.8).
+
+        The raw body is read once, verified, then replayed to the app. A refusal is the one
+        uniform 401; the admitter has already audited the precise code.
+        """
+        from arbora.security.signed_ingress import (
+            ADMITTED_STATE_KEY,
+            SignedIngressRefused,
+            bound_signed_ingress,
+        )
+
+        admitter = bound_signed_ingress()
+        body = await _read_body(receive)
+        headers = {
+            key.decode("latin-1").lower(): value.decode("latin-1")
+            for key, value in scope.get("headers") or []
+        }
+        admitted = None
+        if admitter is not None and body is not None:
+            try:
+                admitted = await admitter.admit(path, headers, body)
+            except SignedIngressRefused:
+                admitted = None
+            except Exception:  # noqa: BLE001 - an unanswerable admission admits nothing
+                logger.warning("signed ingress admission unavailable")
+                admitted = None
+        if admitted is None:
+            await _send_json(send, 401, {"error": "Verified Bearer identity required"})
+            return
+        actor = ActorContext(
+            actor_id=admitted.principal,
+            actor_type=ActorType.AUTOMATED_SERVICE,
+            roles=admitted.scopes,
+            tenant_id=admitted.tenant,
+            authenticated=True,
+            credential_expires_at=admitted.expires_at,
+        )
+        session = await _mint_request_session(actor, send)
+        if session is None:
+            return
+        replayed = False
+
+        async def replay() -> dict[str, Any]:
+            nonlocal replayed
+            if replayed:
+                return {"type": "http.disconnect"}
+            replayed = True
+            return {"type": "http.request", "body": body, "more_body": False}
+
+        marked = {
+            **scope,
+            "state": {**(scope.get("state") or {}), ADMITTED_STATE_KEY: admitted},
+        }
+        await self._dispatch_authenticated(marked, replay, send, actor, session)
 
     async def _dispatch_authenticated(
         self,
@@ -1521,6 +1615,7 @@ class ActorIdentityMiddleware:
             return
 
         path = scope.get("path", "")
+        scope = _without_admission_marker(scope)
         prevalidated = _extract_prevalidated_claims(scope)
 
         try:
@@ -1534,7 +1629,7 @@ class ActorIdentityMiddleware:
             return
 
         if actor is None:
-            await self._serve_unauthenticated_path(scope, receive, send, path)
+            await self._serve_without_actor(scope, receive, send, path)
             return
 
         # The authenticated request establishes both ambient currencies.  The
