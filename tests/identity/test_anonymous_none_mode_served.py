@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.deployment.doctor import _check_auth
 from arbora.mcp_server.runtime import SERVED_INSTRUCTIONS, _with_unsecured_banner
 from arbora.security import anonymous
@@ -20,18 +20,22 @@ _OPS = {op.id: op for op in ops_admin.operations()}
 BANNER = "Arbora is running in unsecured loopback mode."
 
 
-def _mode(monkeypatch: pytest.MonkeyPatch, mode: str, exposed: bool = False) -> None:
-    monkeypatch.setattr(runtime_config, "arbora_auth_mode", mode)
+def _mode(
+    monkeypatch: pytest.MonkeyPatch, mode: str, exposed: bool = False
+) -> RuntimeConfig:
+    config = RuntimeConfig()
+    config.arbora_auth_mode = mode
     if exposed:
         monkeypatch.setenv("ARBORA_AUTH_NONE_EXPOSE", "acknowledged")
     else:
         monkeypatch.delenv("ARBORA_AUTH_NONE_EXPOSE", raising=False)
+    return config
 
 
-async def _doctor() -> dict[str, Any]:
-    result = await ops_admin.handle_ops_doctor(
-        _context(store=_FakeOpsAdminStore()), {}, _OPS["ops.doctor"]
-    )
+async def _doctor(config: RuntimeConfig) -> dict[str, Any]:
+    context = _context(store=_FakeOpsAdminStore())
+    context.services["config"] = config
+    result = await ops_admin.handle_ops_doctor(context, {}, _OPS["ops.doctor"])
     return dict(result["value"]["checks"])
 
 
@@ -39,25 +43,25 @@ async def _doctor() -> dict[str, Any]:
 async def test_indicators_appear_in_initialize_and_doctor(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    _mode(monkeypatch, "none")
-    assert anonymous.indicator() == {
+    config = _mode(monkeypatch, "none")
+    assert anonymous.indicator(config) == {
         "mode": "anonymous_local",
         "principal": "anonymous",
         "banner": BANNER,
         "doctor_check": "warn",
     }
-    assert _with_unsecured_banner(SERVED_INSTRUCTIONS).startswith(BANNER)
-    checks = await _doctor()
-    assert checks["auth"] == anonymous.indicator()
-    assert _check_auth()["status"] == "warn"
+    assert _with_unsecured_banner(SERVED_INSTRUCTIONS, config).startswith(BANNER)
+    checks = await _doctor(config)
+    assert checks["auth"] == anonymous.indicator(config)
+    assert _check_auth(config)["status"] == "warn"
 
-    _mode(monkeypatch, "none", exposed=True)
-    assert anonymous.indicator()["doctor_check"] == "fail"
-    assert (await _doctor())["auth"]["doctor_check"] == "fail"
-    assert _check_auth()["status"] == "fail"
+    config = _mode(monkeypatch, "none", exposed=True)
+    assert anonymous.indicator(config)["doctor_check"] == "fail"
+    assert (await _doctor(config))["auth"]["doctor_check"] == "fail"
+    assert _check_auth(config)["status"] == "fail"
 
-    _mode(monkeypatch, "external")
-    assert anonymous.indicator() == {}
-    assert _with_unsecured_banner(SERVED_INSTRUCTIONS) == SERVED_INSTRUCTIONS
-    assert "auth" not in await _doctor()
-    assert BANNER not in str(_check_auth())
+    config = _mode(monkeypatch, "external")
+    assert anonymous.indicator(config) == {}
+    assert _with_unsecured_banner(SERVED_INSTRUCTIONS, config) == SERVED_INSTRUCTIONS
+    assert "auth" not in await _doctor(config)
+    assert BANNER not in str(_check_auth(config))

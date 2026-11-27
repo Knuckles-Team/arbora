@@ -17,7 +17,7 @@ from arbora.api.ops.query_federation import (
     NaturalLanguageResult,
     PreparedFederatedQuery,
 )
-from arbora.core.settings import RuntimeConfig, runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
@@ -108,11 +108,9 @@ class _Binding:
 
 
 def _served_app(monkeypatch: pytest.MonkeyPatch) -> tuple[FastAPI, _FederatedClient]:
-    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "arbora-fixture")
-    monkeypatch.setattr(runtime_config, "kg_policy_version", "policy:fixture")
-    monkeypatch.setattr(
-        runtime_config, "auth_jwt_jwks_uri", "https://identity.invalid/jwks"
-    )
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
+    monkeypatch.setenv("KG_POLICY_VERSION", "policy:fixture")
+    monkeypatch.setenv("AUTH_JWT_JWKS_URI", "https://identity.invalid/jwks")
     base_actor = _actor()
     actor = replace(base_actor, roles=(*base_actor.roles, "query:nl"))
 
@@ -146,11 +144,9 @@ def _served_native_app(
 ) -> tuple[FastAPI, _NativeOnlyClient]:
     """Compose the served path without the optional native planner port."""
 
-    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "arbora-fixture")
-    monkeypatch.setattr(runtime_config, "kg_policy_version", "policy:fixture")
-    monkeypatch.setattr(
-        runtime_config, "auth_jwt_jwks_uri", "https://identity.invalid/jwks"
-    )
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
+    monkeypatch.setenv("KG_POLICY_VERSION", "policy:fixture")
+    monkeypatch.setenv("AUTH_JWT_JWKS_URI", "https://identity.invalid/jwks")
     base_actor = _actor()
     actor = replace(base_actor, roles=(*base_actor.roles, "query:nl"))
 

@@ -20,7 +20,7 @@ from fastapi import FastAPI
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.api.http.sparql import RDF_GRAPH_WRITE_EVENT, SPARQL_UPDATE_EVENT
-from arbora.core.settings import RuntimeConfig, runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
@@ -97,11 +97,9 @@ class _RecordingEngine(FakeClient):
 
 
 def _app(monkeypatch: pytest.MonkeyPatch, roles: tuple[str, ...]) -> Any:
-    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "arbora-fixture")
-    monkeypatch.setattr(runtime_config, "kg_policy_version", "policy:fixture")
-    monkeypatch.setattr(
-        runtime_config, "auth_jwt_jwks_uri", "https://identity.invalid/jwks"
-    )
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
+    monkeypatch.setenv("KG_POLICY_VERSION", "policy:fixture")
+    monkeypatch.setenv("AUTH_JWT_JWKS_URI", "https://identity.invalid/jwks")
     base = _actor()
     actor = replace(base, roles=(*base.roles, *roles))
 

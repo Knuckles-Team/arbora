@@ -25,6 +25,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from arbora.core.environment import read_env, read_reference
+from arbora.core.settings import RuntimeConfig
 from arbora.deployment.doctor_support import PROBE_FAULTS
 
 from . import doctor_a2a as _doctor_a2a
@@ -1482,7 +1483,7 @@ def _check_secrets_backend() -> dict[str, Any]:
     )
 
 
-def _check_identity_exposure() -> dict[str, Any]:
+def _check_identity_exposure(config: RuntimeConfig) -> dict[str, Any]:
     """Fail for an exposed none mode or a generated secret in production (R013.3).
 
     Cases: mode ``none`` bound to a non-loopback host, ``ARBORA_AUTH_NONE_EXPOSE``
@@ -1490,7 +1491,6 @@ def _check_identity_exposure() -> dict[str, Any]:
     production profile. Reads the same settings as ``arbora.security.anonymous``.
     """
 
-    from arbora.core.settings import runtime_config as config
     from arbora.security.anonymous import loopback
 
     failures: list[str] = []
@@ -1518,15 +1518,14 @@ def _check_identity_exposure() -> dict[str, Any]:
     )
 
 
-def _check_auth() -> dict[str, Any]:
-    from arbora.core.settings import runtime_config as config
+def _check_auth(config: RuntimeConfig) -> dict[str, Any]:
     from arbora.identity.deployment_settings import identity_deployment
     from arbora.security.anonymous import indicator
     from arbora.security.request_identity import (
         local_process_authority_enabled,
     )
 
-    unsecured = indicator()
+    unsecured = indicator(config)
     if unsecured:
         return _result(
             "auth",
@@ -2070,6 +2069,7 @@ CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
 # Checks that accept a `live=` kwarg and prove real reachability when the doctor
 # is run with `--live` -- shared between `run_doctor`'s dispatch and
 # `interactive_apply`'s post-apply re-run so the two never drift apart.
+_CONFIG_CHECK_NAMES = frozenset({"auth", "identity_exposure"})
 _LIVE_CHECK_NAMES = frozenset(
     {
         "mcp_fleet",
@@ -2161,7 +2161,18 @@ def _load_runtime_config(names: list[str]) -> list[dict[str, Any]] | None:
     return None
 
 
-def _run_checks(names: list[str], *, live: bool) -> list[dict[str, Any]]:
+def _call_check(
+    name: str, fn: Callable[..., dict[str, Any]], config: RuntimeConfig, live: bool
+) -> dict[str, Any]:
+    """Call one registered check with the arguments its kind takes."""
+    if name in _CONFIG_CHECK_NAMES:
+        return fn(config)
+    return fn(live=live) if name in _LIVE_CHECK_NAMES else fn()
+
+
+def _run_checks(
+    names: list[str], config: RuntimeConfig, *, live: bool
+) -> list[dict[str, Any]]:
     """Run each selected check; a check that raises becomes an error result."""
     results: list[dict[str, Any]] = []
     for name in names:
@@ -2169,21 +2180,25 @@ def _run_checks(names: list[str], *, live: bool) -> list[dict[str, Any]]:
         if fn is None:
             continue
         try:
-            res = fn(live=live) if name in _LIVE_CHECK_NAMES else fn()
+            res = _call_check(name, fn, config, live)
         except PROBE_FAULTS as exc:  # a check must never crash the doctor
             res = _result(name, "error", f"check raised ({type(exc).__name__})")
         results.append(res)
     return results
 
 
-def _apply_auto_fixes(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _apply_auto_fixes(
+    results: list[dict[str, Any]], config: RuntimeConfig
+) -> list[dict[str, Any]]:
     """Auto-remediate the ``auto_fixable`` not-ok checks and re-run each in place."""
     fixes: list[dict[str, Any]] = []
     for res in results:
         if res["status"] in ("warn", "fail") and res.get("auto_fixable"):
             fixes.append(_auto_fix(res["name"]))
             try:
-                res.update(CHECKS[res["name"]]())  # re-run after fix
+                res.update(
+                    _call_check(res["name"], CHECKS[res["name"]], config, False)
+                )  # re-run after fix
             except PROBE_FAULTS:
                 pass  # nosec B110 - auto-fix report remains failed
     return fixes
@@ -2208,12 +2223,17 @@ def _doctor_report(
 
 
 def run_doctor(
-    only: list[str] | None = None, *, fix: bool = False, live: bool = False
+    only: list[str] | None = None,
+    *,
+    config: RuntimeConfig,
+    fix: bool = False,
+    live: bool = False,
 ) -> dict[str, Any]:
     """Run the health sweep and return a structured report.
 
     Args:
         only: restrict to these check names (default: all).
+        config: the host's runtime settings, read by the checks that need them.
         fix: run conservative auto-remediations for ``auto_fixable`` checks, then
             re-run those checks.
         live: prove network and engine capabilities for live-aware checks.
@@ -2237,8 +2257,8 @@ def run_doctor(
     load_failures = _load_runtime_config(names)
     if load_failures is not None:
         return _unhealthy_report(load_failures)
-    results = _run_checks(names, live=live)
-    fixes = _apply_auto_fixes(results) if fix else []
+    results = _run_checks(names, config, live=live)
+    fixes = _apply_auto_fixes(results, config) if fix else []
     return _doctor_report(results, fixes)
 
 
@@ -2276,7 +2296,7 @@ def _format_prescription(check: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _rerun_check_proof(name: str) -> dict[str, Any] | None:
+def _rerun_check_proof(name: str, config: RuntimeConfig) -> dict[str, Any] | None:
     """Re-run one check to prove an applied remediation, live where supported.
 
     ``None`` only when the name is not a registered check; a re-run that raises
@@ -2286,12 +2306,13 @@ def _rerun_check_proof(name: str) -> dict[str, Any] | None:
     if rerun is None:
         return None
     try:
-        return rerun(live=True) if name in _LIVE_CHECK_NAMES else rerun()
+        return _call_check(name, rerun, config, True)
     except PROBE_FAULTS as exc:
         return _result(name, "error", f"re-run failed ({type(exc).__name__})")
 
 
 def _interactive_outcome(
+    config: RuntimeConfig,
     check: dict[str, Any],
     confirm: Callable[[str], bool],
     executor: Callable[[dict[str, Any]], dict[str, Any]] | None,
@@ -2326,7 +2347,7 @@ def _interactive_outcome(
     outcome["applied"] = bool(exec_result.get("applied"))
     outcome["executor_result"] = exec_result
     if outcome["applied"]:
-        proof = _rerun_check_proof(check["name"])
+        proof = _rerun_check_proof(check["name"], config)
         if proof is not None:
             outcome["proof"] = proof
     return outcome
@@ -2335,6 +2356,7 @@ def _interactive_outcome(
 def interactive_apply(
     report: dict[str, Any],
     *,
+    config: RuntimeConfig,
     confirm: Callable[[str], bool] | None = None,
     executor: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     output: Callable[[str], None] = print,
@@ -2369,7 +2391,7 @@ def interactive_apply(
             continue
         if not check.get("prescription"):
             continue
-        outcomes.append(_interactive_outcome(check, confirm, executor, output))
+        outcomes.append(_interactive_outcome(config, check, confirm, executor, output))
     return outcomes
 
 
@@ -2440,7 +2462,7 @@ def _run_preflight_cli(args: Any) -> int:
     return 0 if report["status"] != "blocked" else 1
 
 
-def _run_interactive_cli(report: dict[str, Any]) -> None:
+def _run_interactive_cli(report: dict[str, Any], config: RuntimeConfig) -> None:
     """``--interactive``: walk the prescriptions; a non-tty always declines."""
     import sys
 
@@ -2450,7 +2472,7 @@ def _run_interactive_cli(report: dict[str, Any]) -> None:
             return False
         return input(prompt).strip().lower() in ("y", "yes")
 
-    outcomes = interactive_apply(report, confirm=_confirm)
+    outcomes = interactive_apply(report, config=config, confirm=_confirm)
     if not outcomes:
         return
     print("\ninteractive apply summary:")
@@ -2472,13 +2494,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.preflight:
         return _run_preflight_cli(args)
 
-    report = run_doctor(args.only, fix=args.fix, live=args.live)
+    config = RuntimeConfig()
+    report = run_doctor(args.only, config=config, fix=args.fix, live=args.live)
     if args.json:
         print(json.dumps(report, indent=2, default=str))
     else:
         _print_human(report)
     if args.interactive:
-        _run_interactive_cli(report)
+        _run_interactive_cli(report, config)
     return 0 if report["status"] != "unhealthy" else 1
 
 

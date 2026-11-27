@@ -16,7 +16,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from arbora.access.action_policy import ActionPolicies
-from arbora.core.settings import RuntimeConfig, runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.identity.directory_sync import JOB_ID
 from arbora.identity.host_services import (
     SCIM_CREDENTIALS_PATH,
@@ -89,8 +89,8 @@ class _Clock:
 
 
 def _compose(monkeypatch: pytest.MonkeyPatch, admin: _Admin, **changes: Any) -> Any:
-    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "arbora-fixture")
-    monkeypatch.setattr(runtime_config, "kg_policy_version", "policy:fixture")
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
+    monkeypatch.setenv("KG_POLICY_VERSION", "policy:fixture")
     actor = ActorContext(
         actor_id="person:one",
         actor_type=ActorType.HUMAN,

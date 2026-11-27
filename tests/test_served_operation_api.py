@@ -171,12 +171,10 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     registry = tmp_path / "models.json"
     registry.write_text(json.dumps({"default": "test"}), encoding="utf-8")
     monkeypatch.setattr(runtime_config, "model_registry_path", str(registry))
-    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "arbora-fixture")
-    monkeypatch.setattr(runtime_config, "kg_policy_version", "policy:fixture")
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
+    monkeypatch.setenv("KG_POLICY_VERSION", "policy:fixture")
     # The identity gate needs a configured verifier; the verification is faked.
-    monkeypatch.setattr(
-        runtime_config, "auth_jwt_jwks_uri", "https://identity.invalid/jwks"
-    )
+    monkeypatch.setenv("AUTH_JWT_JWKS_URI", "https://identity.invalid/jwks")
 
     async def credential_owner(credential: str, **_kw) -> ActorContext:
         assert credential == "fixture-verified"  # sanitizer:ignore - synthetic

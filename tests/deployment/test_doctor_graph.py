@@ -12,6 +12,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.deployment import doctor as D
 from arbora.deployment import doctor as doctor_module
 
@@ -81,7 +82,7 @@ def test_bug013_engine_domains_wired_into_run_doctor_and_fails_the_sweep(monkeyp
     monkeypatch.setattr("arbora.core.settings.load_config", lambda: None)
     monkeypatch.setattr(engine_tools, "ENGINE_DOMAINS", {})
 
-    report = D.run_doctor(only=["engine_domains"])
+    report = D.run_doctor(only=["engine_domains"], config=RuntimeConfig())
 
     assert report["status"] == "unhealthy"
     names = [c["name"] for c in report["checks"]]

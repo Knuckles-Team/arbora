@@ -725,11 +725,11 @@ _LEGACY_INSTRUCTIONS = (
 )
 
 
-def _with_unsecured_banner(instructions: str) -> str:
+def _with_unsecured_banner(instructions: str, config: RuntimeConfig) -> str:
     """Name the unsecured loopback mode in the ``initialize`` reply (ARBORA-IDENTITY-R004.2)."""
     from arbora.security.anonymous import indicator
 
-    banner = indicator().get("banner")
+    banner = indicator(config).get("banner")
     return f"{banner} {instructions}" if banner else instructions
 
 
@@ -780,7 +780,8 @@ def _build_server(
         name="arbora",
         version=__version__,
         instructions=_with_unsecured_banner(
-            _LEGACY_INSTRUCTIONS if invocation is None else SERVED_INSTRUCTIONS
+            _LEGACY_INSTRUCTIONS if invocation is None else SERVED_INSTRUCTIONS,
+            host.config,
         ),
         command_args=None if bootstrap else [],
         transport_choices=("stdio", "streamable-http"),

@@ -19,7 +19,7 @@ import pytest
 from arbora.access.action_policy import ActionPolicies
 from arbora.api.domain.fleet.approval_notifier import APPROVALS_TOPIC
 from arbora.api.domain.fleet.outbox_consumer import TRUST_FLAG_TOPIC, OutboxRunner
-from arbora.core.settings import RuntimeConfig, runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
@@ -112,8 +112,8 @@ def reach(monkeypatch: pytest.MonkeyPatch) -> list[str]:
 
 
 def _compose(client: NoticeClient, monkeypatch: pytest.MonkeyPatch) -> Any:
-    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "arbora-fixture")
-    monkeypatch.setattr(runtime_config, "kg_policy_version", "policy:fixture")
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
+    monkeypatch.setenv("KG_POLICY_VERSION", "policy:fixture")
     actor = ActorContext(
         actor_id="person:one",
         actor_type=ActorType.HUMAN,

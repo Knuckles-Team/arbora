@@ -14,6 +14,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.deployment import doctor as D
 
 
@@ -306,7 +307,7 @@ def test_run_doctor_wires_a_new_check_end_to_end(monkeypatch):
     monkeypatch.setattr("arbora.core.settings.load_config", lambda: None)
     monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: _cfg())
 
-    report = D.run_doctor(only=["kafka"])
+    report = D.run_doctor(only=["kafka"], config=RuntimeConfig())
 
     assert report["checks"][0]["name"] == "kafka"
     assert report["checks"][0]["status"] == "skip"
@@ -338,7 +339,9 @@ def test_interactive_apply_default_never_applies_anything():
     """No confirm/executor supplied: this must be a strict no-op."""
     report = _failing_report_with_prescription()
 
-    outcomes = D.interactive_apply(report, output=lambda _line: None)
+    outcomes = D.interactive_apply(
+        report, output=lambda _line: None, config=RuntimeConfig()
+    )
 
     assert len(outcomes) == 1
     assert outcomes[0]["confirmed"] is False
@@ -355,7 +358,11 @@ def test_interactive_apply_confirm_false_never_applies_even_with_executor():
         return {"applied": True}
 
     outcomes = D.interactive_apply(
-        report, confirm=lambda _p: False, executor=executor, output=lambda _l: None
+        report,
+        confirm=lambda _p: False,
+        executor=executor,
+        output=lambda _l: None,
+        config=RuntimeConfig(),
     )
 
     assert outcomes[0]["confirmed"] is False
@@ -368,7 +375,7 @@ def test_interactive_apply_confirmed_without_executor_stays_plan_only():
     report = _failing_report_with_prescription()
 
     outcomes = D.interactive_apply(
-        report, confirm=lambda _p: True, output=lambda _l: None
+        report, confirm=lambda _p: True, output=lambda _l: None, config=RuntimeConfig()
     )
 
     assert outcomes[0]["confirmed"] is True
@@ -397,7 +404,11 @@ def test_interactive_apply_confirmed_with_executor_applies_and_reruns_proof(
     monkeypatch.setattr(D, "CHECKS", patched_checks)
 
     outcomes = D.interactive_apply(
-        report, confirm=lambda _p: True, executor=executor, output=lambda _l: None
+        report,
+        confirm=lambda _p: True,
+        executor=executor,
+        output=lambda _l: None,
+        config=RuntimeConfig(),
     )
 
     assert outcomes[0]["confirmed"] is True
@@ -417,7 +428,7 @@ def test_interactive_apply_ignores_ok_and_skip_checks():
     }
 
     outcomes = D.interactive_apply(
-        report, confirm=lambda _p: True, output=lambda _l: None
+        report, confirm=lambda _p: True, output=lambda _l: None, config=RuntimeConfig()
     )
 
     assert outcomes == []
@@ -429,7 +440,7 @@ def test_interactive_apply_skips_checks_without_a_prescription():
     report = {"checks": [D._result("python_env", "warn", "old python")]}
 
     outcomes = D.interactive_apply(
-        report, confirm=lambda _p: True, output=lambda _l: None
+        report, confirm=lambda _p: True, output=lambda _l: None, config=RuntimeConfig()
     )
 
     assert outcomes == []

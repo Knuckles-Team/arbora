@@ -20,6 +20,7 @@ import contextlib
 import hashlib
 import http.server
 import json
+import logging
 import os
 import platform
 import shutil
@@ -966,7 +967,6 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
     from arbora.api.invoke.steps import OpResult
     from arbora.api.mcp.caller import caller_from_session
     from arbora.api.registry import Surface
-    from arbora.core.settings import runtime_config
     from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
     from arbora.epistemic import ConnectClient, EpistemicClientPool
     from arbora.mcp_server.current_plan_reader import NativeCurrentPlanReader
@@ -984,12 +984,10 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
     with _booted_stack(
         extra_token_roles=("work:read", "work:write"),
     ) as stack:
-        monkeypatch.setattr(
-            runtime_config, "auth_jwt_jwks_uri", stack["issuer_jwks_uri"]
-        )
-        monkeypatch.setattr(runtime_config, "auth_jwt_issuer", ISSUER)
-        monkeypatch.setattr(runtime_config, "auth_jwt_audience", AUDIENCE)
-        monkeypatch.setattr(runtime_config, "kg_policy_version", POLICY_VERSION)
+        monkeypatch.setenv("AUTH_JWT_JWKS_URI", str(stack["issuer_jwks_uri"]))
+        monkeypatch.setenv("AUTH_JWT_ISSUER", str(ISSUER))
+        monkeypatch.setenv("AUTH_JWT_AUDIENCE", str(AUDIENCE))
+        monkeypatch.setenv("KG_POLICY_VERSION", str(POLICY_VERSION))
         actor = asyncio.run(actor_from_bearer_token(stack["token"], keys=JwksCache()))
         session = mint_graph_session(actor).with_graph(CONTROL_GRAPH)
         pool = EpistemicClientPool(
@@ -1321,6 +1319,7 @@ async def _direct_submit(stack: dict[str, Any], connector: str) -> str:
         )
         return "accepted"
     except Exception as exc:  # diagnostics only
+        logging.getLogger(__name__).info("probe refused", exc_info=True)
         return f"{type(exc).__name__}: {exc}"
     finally:
         await client.close()
@@ -1376,7 +1375,6 @@ def test_a_held_pack_import_queues_an_approval_lease(
         ActionRequest,
     )
     from arbora.access.approval_leases import pending_approvals
-    from arbora.core.settings import runtime_config
     from arbora.epistemic import ConnectClient, EpistemicClientPool
     from arbora.mcp_server.served_engine import ServedEngine
     from arbora.security.request_identity import (
@@ -1385,10 +1383,10 @@ def test_a_held_pack_import_queues_an_approval_lease(
     )
     from arbora.security.session import use_session
 
-    monkeypatch.setattr(runtime_config, "auth_jwt_jwks_uri", stack["issuer_jwks_uri"])
-    monkeypatch.setattr(runtime_config, "auth_jwt_issuer", ISSUER)
-    monkeypatch.setattr(runtime_config, "auth_jwt_audience", AUDIENCE)
-    monkeypatch.setattr(runtime_config, "kg_policy_version", POLICY_VERSION)
+    monkeypatch.setenv("AUTH_JWT_JWKS_URI", str(stack["issuer_jwks_uri"]))
+    monkeypatch.setenv("AUTH_JWT_ISSUER", str(ISSUER))
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", str(AUDIENCE))
+    monkeypatch.setenv("KG_POLICY_VERSION", str(POLICY_VERSION))
     monkeypatch.delenv("ACTION_POLICY_PATH", raising=False)
     session = mint_graph_session(
         asyncio.run(actor_from_bearer_token(stack["token"], keys=JwksCache()))

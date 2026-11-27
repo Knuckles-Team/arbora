@@ -19,7 +19,7 @@ import pytest
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.api.invoke.gate_class import NO_APPROVAL, STRICT_DEFAULT, resolve_gate
-from arbora.core.settings import RuntimeConfig, runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.served_invocation import (
     _promotion_ci_tool,
     compose_served_invocation,
@@ -67,8 +67,8 @@ def _compose(
     bindings: Mapping[str, Any] = MappingProxyType({}),
 ) -> Any:
     _declare(monkeypatch, present=True)
-    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "arbora-fixture")
-    monkeypatch.setattr(runtime_config, "kg_policy_version", "policy:fixture")
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
+    monkeypatch.setenv("KG_POLICY_VERSION", "policy:fixture")
     actor = ActorContext(
         actor_id="person:one",
         actor_type=ActorType.HUMAN,

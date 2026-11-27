@@ -9,7 +9,6 @@ from typing import Any
 import httpx
 import pytest
 
-from arbora.core.settings import runtime_config
 from arbora.mcp_server import runtime as mcp_runtime
 from tests.a2a._route_support import bind_route_decision, bind_run_models
 from tests.a2a._support import streaming_model
@@ -25,12 +24,8 @@ def _served_app(monkeypatch: pytest.MonkeyPatch, run_seconds: float) -> Any:
     from arbora.security import request_identity
     from arbora.security.actor_context import ActorContext, ActorType
 
-    monkeypatch.setitem(
-        runtime_config._overrides, "auth_jwt_audience", "arbora-fixture"
-    )
-    monkeypatch.setitem(
-        runtime_config._overrides, "kg_policy_version", "policy:fixture"
-    )
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
+    monkeypatch.setenv("KG_POLICY_VERSION", "policy:fixture")
 
     async def credential_owner(credential: str, **_kw) -> ActorContext:
         assert credential == "fixture-verified"  # sanitizer:ignore - synthetic

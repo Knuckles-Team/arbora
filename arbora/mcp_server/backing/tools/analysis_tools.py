@@ -1216,7 +1216,7 @@ def _configure_action_health(health, action, config_key, config_value):
     return json.dumps(collect_health(health), default=str)
 
 
-def _configure_action_system_doctor(action, config_key, config_value):
+def _configure_action_system_doctor(config, action, config_key, config_value):
     # action(s): 'system_doctor'
     from arbora.deployment import run_doctor
 
@@ -1226,6 +1226,7 @@ def _configure_action_system_doctor(action, config_key, config_value):
     return json.dumps(
         run_doctor(
             opts.get("only"),
+            config=config,
             fix=opts.get("fix", False),
             live=opts.get("live", False),
         ),
@@ -1331,7 +1332,6 @@ _CONFIGURE_ACTION_DISPATCH = {
     "config_reference": _configure_action_generate_config,
     "get_config": _configure_action_get_config,
     "list_config": _configure_action_get_config,
-    "system_doctor": _configure_action_system_doctor,
     "preflight": _configure_action_preflight,
     "install_hooks": _configure_action_install_hooks,
     "uninstall_hooks": _configure_action_uninstall_hooks,
@@ -1375,6 +1375,7 @@ def register_analysis_tools(
         "propose_connection_mapping": partial(
             _configure_action_approve_connection_mapping, config
         ),
+        "system_doctor": partial(_configure_action_system_doctor, config),
     }
 
     async def _run_analysis_action(
