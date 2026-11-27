@@ -312,8 +312,8 @@ Each row below has no bound `Spec:` trailer yet; the table names the proving tes
 | `ARBORA-HOST-R007.3` | `tests/gateway/test_rate_limit.py::test_rate_limit_counter_renamed` | Planned, not yet written |
 | `ARBORA-HOST-R031.1` | `arbora/api/ops/plans.py::_admit_native_plan_run` | Written |
 | `ARBORA-HOST-R031.1` | `tests/api/test_run_capacity_served.py::test_agents_plan_run_reserves_and_releases_engine_capacity` | Written |
-| `ARBORA-HOST-R034` | `arbora/host/specialists.py::install_package` | Planned, not yet written |
-| `ARBORA-HOST-R034` | `tests/mcp_server/test_specialist_install.py::test_install_swaps_marker_atomically_and_registers_nodes` | Planned, not yet written |
+| `ARBORA-HOST-R034` | `arbora/host/specialists.py::install_package` | Exists |
+| `ARBORA-HOST-R034` | `tests/mcp_server/test_specialist_install.py::test_install_swaps_marker_atomically_and_registers_nodes` | Exists |
 | `ARBORA-HOST-R035` | `arbora/agent_runs.py::bind_run_ports` | Exists |
 | `ARBORA-HOST-R035` | `tests/test_harness_cycle_host.py::test_completed_run_drives_one_tick_and_probes_drive_none` | Planned, not yet written |
 | `ARBORA-HOST-R036` | `arbora/agent_runs.py::AgentRunPort` | Planned, not yet written |

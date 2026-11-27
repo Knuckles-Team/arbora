@@ -337,7 +337,7 @@ units = ["access", "security"]
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "services"
-units = ["data_migrations", "ecosystem", "epistemic", "identity", "messaging", "modality", "observability", "run_origin"]
+units = ["data_migrations", "ecosystem", "epistemic", "host", "identity", "messaging", "modality", "observability", "run_origin"]
 
 [[tool.pipelines_hooks.coupling.layers]]
 name = "operations"
