@@ -97,6 +97,7 @@ def _read_context(session: Any) -> ReadContext:
 
 async def compose_catalog_authorities(
     *,
+    gateway: Any,
     engine: Any,
     session: Any,
     deferred_fleet: DeferredFleetCatalogReader,
@@ -148,6 +149,7 @@ async def compose_catalog_authorities(
         # A retried warm-up keeps the reader its first attempt installed.
         deferred_fleet.install(reader)
     configure_enhanced_catalog(
+        gateway,
         EnhancedCatalogAuthority(
             fleet=reader,
             workflows=workflows,
@@ -156,10 +158,8 @@ async def compose_catalog_authorities(
         authority_scope=lambda: _use_process_session(session),
     )
     await multiplexer.refresh_engine_catalog()
-    from arbora.gateway.fleet import bind_catalog_generation, bind_catalog_state
-
-    bind_catalog_generation(reader.generation_status)
-    bind_catalog_state(lambda: multiplexer.catalog_state)
+    gateway.catalog_generation.set(reader.generation_status)
+    gateway.catalog_state.set(lambda: multiplexer.catalog_state)
     return reader
 
 

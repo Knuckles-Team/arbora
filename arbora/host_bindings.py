@@ -339,12 +339,21 @@ def _engine_probe(
     return probe
 
 
-def _fleet_probe(session: Any) -> dict[str, Any]:
+def _fleet_probe(gateway: Any) -> Callable[[Any], dict[str, Any]]:
+    """The fleet supervision probe over the health the gateway field holds."""
+
+    def probe(session: Any) -> dict[str, Any]:
+        return _fleet_health(gateway, session)
+
+    return probe
+
+
+def _fleet_health(gateway: Any, session: Any) -> dict[str, Any]:
     from arbora.gateway import fleet as fleet_api
     from arbora.security.session import use_session
 
     def _collect() -> Any:
-        return fleet_api.collect_health()
+        return fleet_api.collect_health(gateway)
 
     if session is None:
         snapshot = _collect()
@@ -361,7 +370,9 @@ def _fleet_probe(session: Any) -> dict[str, Any]:
     }
 
 
-def bind_health_probes(health: HealthState, engine_provider: Callable[[], Any]) -> None:
+def bind_health_probes(
+    health: HealthState, engine_provider: Callable[[], Any], gateway: Any
+) -> None:
     """Bind the mandatory readiness probes."""
     health.probes.bind("engine", _engine_probe(engine_provider))
-    health.probes.bind("fleet_supervision", _fleet_probe)
+    health.probes.bind("fleet_supervision", _fleet_probe(gateway))

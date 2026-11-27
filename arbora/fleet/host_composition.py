@@ -156,6 +156,7 @@ def _metrics_reader(engine: Any, session: Any) -> Callable[[], Awaitable[Any]] |
 
 
 def supervise_ingest_worker(
+    gateway: Any,
     unit: IngestWorkerUnit | None,
     engine: Any,
     session: Any,
@@ -167,21 +168,20 @@ def supervise_ingest_worker(
     No unit (configured off, or no served engine endpoint) binds ``None``: the
     health route then reports the worker ``not_configured``, never unhealthy.
     """
-    from arbora.gateway.fleet import bind_ingest_worker
-
     if unit is None:
-        bind_ingest_worker(None)
+        gateway.ingest_worker.set(None)
         return None
     extra = {} if spawn is None else {"spawn": spawn}
     supervisor = IngestWorkerSupervisor(
         unit, read_metrics=_metrics_reader(engine, session), **extra
     )
     supervisor.start()
-    bind_ingest_worker(supervisor)
+    gateway.ingest_worker.set(supervisor)
     return supervisor
 
 
 def compose_onboarding_ports(
+    gateway: Any,
     engine: Any,
     session: Any,
     *,
@@ -198,7 +198,7 @@ def compose_onboarding_ports(
         )
     except ValueError:
         logger.info("ingest worker unit not declared: no served engine endpoint")
-    supervisor = supervise_ingest_worker(unit, engine, session, spawn=spawn)
+    supervisor = supervise_ingest_worker(gateway, unit, engine, session, spawn=spawn)
     admission = _admission_or_none(engine, session, feature_schema)
     return OnboardingPorts(admission, unit, supervisor)
 

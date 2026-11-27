@@ -15,24 +15,21 @@ and surface its state via the ``/daemon/*`` routes of ``build_dashboard_router``
 from __future__ import annotations
 
 import logging
-import threading
 import time
 from dataclasses import replace
 from typing import Any, NoReturn
 
 from arbora.api.errors import not_served
 from arbora.core.environment import read_env, write_env
+from arbora.gateway.state import GatewayState
 from arbora.security.anonymous import session_context
 from arbora.security.error_surface import public_error_payload
 from arbora.security.log_redaction import redact_for_log
 
 logger = logging.getLogger(__name__)
 
-_metrics_lock = threading.Lock()
-_metrics_started = False
 
-
-def start_daemon_metrics_listener() -> bool:
+def start_daemon_metrics_listener(gateway: GatewayState) -> bool:
     """Expose this daemon's ``meristem_*`` Prometheus registry over HTTP.
 
     CONCEPT:MERISTEM-OS.observability.daemon-metrics-listener (D-OG-4). The
@@ -99,49 +96,49 @@ def start_daemon_metrics_listener() -> bool:
       installed;
     * the bind itself fails (port already in use, permission denied, ...).
     """
-    global _metrics_started
     if not read_env("KG_DAEMON_METRICS"):
         logger.info("Daemon metrics listener disabled (KG_DAEMON_METRICS=false).")
         return False
-    with _metrics_lock:
-        if _metrics_started:
-            return True
-        try:
-            from prometheus_client import start_http_server
-        except ImportError as exc:
-            logger.error(
-                "Daemon metrics listener NOT started: the optional 'metrics' "
-                "extra (prometheus-client) is not installed (%s). "
-                "SCHEDULED_JOB_*/LANE_*/KG_INGEST_*/DISPATCH_* series recorded "
-                "by this process will not be scrapeable until it is.",
-                exc,
-            )
-            return False
-        any_interface = ".".join(("0", "0", "0", "0"))
-        host = str(read_env("KG_DAEMON_METRICS_HOST", any_interface) or any_interface)
-        port = int(read_env("KG_DAEMON_METRICS_PORT") or 9110)
-        try:
-            start_http_server(port, addr=host)
-        except OSError as exc:
-            logger.error(
-                "Daemon metrics listener NOT started: could not bind %s:%d "
-                "(%s). The daemon continues running WITHOUT "
-                "a scrapeable metrics endpoint — SCHEDULED_JOB_*/LANE_*/"
-                "KG_INGEST_*/DISPATCH_* series stay uncollectable until this "
-                "is resolved.",
-                redact_for_log(host),
-                port,
-                exc,
-            )
-            return False
-        _metrics_started = True
-        logger.info(
-            "Daemon metrics listener started on %s:%d "
-            "(CONCEPT:MERISTEM-OS.observability.daemon-metrics-listener).",
+    return gateway.metrics_listener.run_once(_bind_metrics_listener)
+
+
+def _bind_metrics_listener() -> bool:
+    """Bind the Prometheus listener; ``False`` when it could not be served."""
+    try:
+        from prometheus_client import start_http_server
+    except ImportError as exc:
+        logger.error(
+            "Daemon metrics listener NOT started: the optional 'metrics' "
+            "extra (prometheus-client) is not installed (%s). "
+            "SCHEDULED_JOB_*/LANE_*/KG_INGEST_*/DISPATCH_* series recorded "
+            "by this process will not be scrapeable until it is.",
+            exc,
+        )
+        return False
+    any_interface = ".".join(("0", "0", "0", "0"))
+    host = str(read_env("KG_DAEMON_METRICS_HOST", any_interface) or any_interface)
+    port = int(read_env("KG_DAEMON_METRICS_PORT") or 9110)
+    try:
+        start_http_server(port, addr=host)
+    except OSError as exc:
+        logger.error(
+            "Daemon metrics listener NOT started: could not bind %s:%d "
+            "(%s). The daemon continues running WITHOUT "
+            "a scrapeable metrics endpoint — SCHEDULED_JOB_*/LANE_*/"
+            "KG_INGEST_*/DISPATCH_* series stay uncollectable until this "
+            "is resolved.",
             redact_for_log(host),
             port,
+            exc,
         )
-        return True
+        return False
+    logger.info(
+        "Daemon metrics listener started on %s:%d "
+        "(CONCEPT:MERISTEM-OS.observability.daemon-metrics-listener).",
+        redact_for_log(host),
+        port,
+    )
+    return True
 
 
 def mint_process_identity() -> Any:

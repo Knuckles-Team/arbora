@@ -103,16 +103,15 @@ def _require_dashboard_write(request: Request) -> None:
         )
 
 
-# Per-process singleton, created on first request. Layout writes persist to the
-# shared YAML file, so replicas converge on their next read.
-_aggregator: Aggregator | None = None
+def _get_aggregator(request: Any) -> Aggregator:
+    """The host's aggregator, created on first request.
 
-
-def _get_aggregator() -> Aggregator:
-    global _aggregator
-    if _aggregator is None:
-        _aggregator = Aggregator(config_manager=ConfigManager())
-    return _aggregator
+    Layout writes persist to the shared YAML file, so replicas converge on their next
+    read.
+    """
+    return gateway_of(request).aggregator.get_or_build(
+        lambda: Aggregator(config_manager=ConfigManager())
+    )
 
 
 class DashboardResponse(BaseModel):
@@ -130,23 +129,23 @@ class WidgetListItem(BaseModel):
 
 
 @route("GET", "/layout")
-async def get_layout() -> DashboardLayout:
+async def get_layout(request: Request) -> DashboardLayout:
     """Return the current dashboard layout configuration."""
-    return _get_aggregator().get_layout()
+    return _get_aggregator(request).get_layout()
 
 
 @route("PUT", "/layout")
 async def save_layout(layout: DashboardLayout, request: Request) -> dict[str, str]:
     """Persist a new dashboard layout configuration."""
     _require_dashboard_write(request)
-    _get_aggregator().save_layout(layout)
+    _get_aggregator(request).save_layout(layout)
     return {"status": "saved"}
 
 
 @route("GET", "/data")
 async def get_all_data(request: Request) -> dict[str, WidgetData]:
     """Fetch data from every active widget."""
-    return await _get_aggregator().fetch_all(_reader(request))
+    return await _get_aggregator(request).fetch_all(_reader(request))
 
 
 @route("GET", "/data/{service_id}")
@@ -154,7 +153,7 @@ async def get_service_data(service_id: str, request: Request) -> WidgetData:
     """Fetch data for one service."""
     if not _SERVICE_ID_RE.fullmatch(service_id):
         raise HTTPException(status_code=404, detail="service not found")
-    data = await _get_aggregator().fetch_one(service_id, _reader(request))
+    data = await _get_aggregator(request).fetch_one(service_id, _reader(request))
     if data.status == "error" and "not found" in (data.error or ""):
         raise HTTPException(status_code=404, detail="service not found")
     return data
@@ -163,7 +162,7 @@ async def get_service_data(service_id: str, request: Request) -> WidgetData:
 @route("GET", "/full")
 async def get_full_dashboard(request: Request) -> DashboardResponse:
     """Return layout and data in one request for the initial page load."""
-    aggregator = _get_aggregator()
+    aggregator = _get_aggregator(request)
     layout = aggregator.get_layout()
     data = await aggregator.fetch_all(_reader(request))
     return DashboardResponse(layout=layout, data=data)
@@ -173,7 +172,7 @@ async def fetch_dashboard_subset(
     widget_ids: set[str], request: Any
 ) -> dict[str, WidgetData]:
     """Fetch exactly the named widgets concurrently through ``fetch_one``."""
-    aggregator = _get_aggregator()
+    aggregator = _get_aggregator(request)
     read = _reader(request)
     ordered_ids = list(widget_ids)
     results = await asyncio.gather(

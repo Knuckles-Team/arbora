@@ -326,6 +326,7 @@ def _start_catalog_warmup(
     fleet_mux: Any,
     action_policies: ActionPolicies,
     authority: ProcessAuthority,
+    gateway: Any,
     feature_schema: Any = None,
 ) -> Any:
     """Compose the catalog authorities, then onboard the fleet, off boot.
@@ -350,6 +351,7 @@ def _start_catalog_warmup(
         with use_actor(session.actor), use_session(session):
             async with temporary_client_scope():
                 await compose_catalog_authorities(
+                    gateway=gateway,
                     engine=engine,
                     session=session,
                     deferred_fleet=reader,
@@ -363,6 +365,7 @@ def _start_catalog_warmup(
 
         with use_actor(session.actor), use_session(session):
             start_fleet_onboarding(
+                gateway=gateway,
                 engine=engine,
                 session=session,
                 multiplexer=fleet_mux,
@@ -470,7 +473,11 @@ def mcp_server(
             ),
         ),
     }
-    bind_health_probes(host_context.observability.health, host_context.engine.served)
+    bind_health_probes(
+        host_context.observability.health,
+        host_context.engine.served,
+        host_context.gateway,
+    )
     bind_invocation_probes(host_context, invocation)
     _preflight_mcp_sdk_floor()
     telemetry = host_context.observability.telemetry
@@ -624,6 +631,7 @@ def mcp_server(
                 fleet_mux,
                 host_context.policy.action_policies,
                 host_context.authority,
+                host_context.gateway,
                 getattr(invocation, "decision_feature_schema", None),
             )
 

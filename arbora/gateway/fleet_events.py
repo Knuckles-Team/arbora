@@ -28,12 +28,9 @@ and normalized classifications; raw webhook content is never retained.
 
 from __future__ import annotations
 
-import hashlib
 import hmac
 import json
 import logging
-import secrets
-import threading
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -42,6 +39,7 @@ from typing import Any
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from arbora.gateway.state import RATE_CAP_PER_MINUTE, EventRates, gateway_of
 from arbora.unique_records import create_record
 
 logger = logging.getLogger(__name__)
@@ -63,15 +61,8 @@ _SEVERITY_MAP = {
     "none": "info",
 }
 
-# Naive storm cap: at most this many accepted events per source per minute.
-# In-memory and deliberately simple — its job is to keep a misconfigured
-# Alertmanager/Kuma from flooding the KG + task queue, not to be a real WAF.
-RATE_CAP_PER_MINUTE = 120
 MAX_EVENTS_PER_REQUEST = 256
 MAX_EVENT_BODY_BYTES = 16 * 1024 * 1024
-_rate_counters: dict[str, list[int]] = {}  # opaque source ref -> [minute, count]
-_rate_lock = threading.Lock()
-_rate_privacy_key = secrets.token_bytes(32)
 
 
 def _source_type(source: str) -> str:
@@ -81,13 +72,6 @@ def _source_type(source: str) -> str:
         if normalized in {"alertmanager", "uptime-kuma", "portainer"}
         else "generic"
     )
-
-
-def _ephemeral_source_ref(source: str) -> str:
-    digest = hashlib.blake2s(
-        source.encode("utf-8"), key=_rate_privacy_key, digest_size=12
-    ).hexdigest()
-    return f"source_{digest}"
 
 
 def _normalize_severity(raw: Any, default: str = "info") -> str:
@@ -328,27 +312,6 @@ def enqueue_triage(engine: Any, event_id: str, event: FleetEvent) -> str | None:
     )
 
 
-def _storm_capped(source: str, n: int = 1) -> bool:
-    """True when accepting ``n`` more events from ``source`` exceeds the cap."""
-    minute = int(time.time() // 60)
-    source_ref = _ephemeral_source_ref(source)
-    with _rate_lock:
-        if len(_rate_counters) >= 4096:
-            stale = [key for key, value in _rate_counters.items() if value[0] != minute]
-            for key in stale:
-                _rate_counters.pop(key, None)
-            if len(_rate_counters) >= 4096 and source_ref not in _rate_counters:
-                return True
-        window = _rate_counters.get(source_ref)
-        if window is None or window[0] != minute:
-            window = [minute, 0]
-            _rate_counters[source_ref] = window
-        if window[1] + n > RATE_CAP_PER_MINUTE:
-            return True
-        window[1] += n
-        return False
-
-
 # ── HTTP handler ─────────────────────────────────────────────────────
 
 
@@ -383,7 +346,7 @@ async def fleet_events_receive(request: Request) -> JSONResponse:
         or ""
     )[:256]
     events = normalize_payload(payload, source_hint=source_hint)
-    event_error = _event_request_error(events)
+    event_error = _event_request_error(events, gateway_of(request).event_rates)
     if event_error:
         return event_error
 
@@ -411,13 +374,15 @@ def _accepted_response(accepted: list[dict[str, Any]]) -> JSONResponse:
     )
 
 
-def _event_request_error(events: list[FleetEvent]) -> JSONResponse | None:
+def _event_request_error(
+    events: list[FleetEvent], rates: EventRates
+) -> JSONResponse | None:
     if not events:
         return JSONResponse(
             {"status": "error", "message": "no events recognized in payload"},
             status_code=400,
         )
-    if not _storm_capped(events[0].source, len(events)):
+    if not rates.capped(events[0].source, len(events)):
         return None
     return JSONResponse(
         {

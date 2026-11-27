@@ -13,7 +13,7 @@ from collections.abc import Awaitable, Callable
 from contextlib import AbstractContextManager, nullcontext
 from typing import Literal, cast
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
 from arbora.api.contracts import (
@@ -30,6 +30,7 @@ from arbora.fleet.catalog_reader import (
     FleetCatalog,
     FleetCatalogReader,
 )
+from arbora.gateway.state import GatewayState, gateway_of
 
 CatalogEntryKind = Literal["tool", "skill", "workflow"]
 
@@ -238,11 +239,11 @@ class EnhancedCatalogAuthority:
 
 CatalogReader = Callable[[], Awaitable[tuple[EnhancedCatalog, WorkflowCapabilities]]]
 AuthorityScope = Callable[[], AbstractContextManager[object]]
-_reader: CatalogReader | None = None
 logger = logging.getLogger(__name__)
 
 
 def configure_enhanced_catalog(
+    gateway: GatewayState,
     authority: EnhancedCatalogAuthority,
     *,
     authority_scope: AuthorityScope = nullcontext,
@@ -259,17 +260,19 @@ def configure_enhanced_catalog(
         with authority_scope():
             return await authority.read()
 
-    global _reader
-    _reader = read
+    gateway.catalog_reader.set(read)
 
 
-async def _read_catalog() -> tuple[EnhancedCatalog, WorkflowCapabilities]:
-    if _reader is None:
+async def _read_catalog(
+    request: Request,
+) -> tuple[EnhancedCatalog, WorkflowCapabilities]:
+    reader = gateway_of(request).catalog_reader.get()
+    if reader is None:
         raise HTTPException(
             status_code=503, detail="catalog authority is not configured"
         )
     try:
-        return await _reader()
+        return await reader()
     except HTTPException:
         raise
     except Exception as exc:
@@ -289,18 +292,18 @@ def register_enhanced_catalog_routes(app, *, prefix: str = "/api") -> None:
     router = APIRouter(prefix=f"{prefix}/enhanced", tags=["catalog"])
 
     @router.get("/tools", response_model=EnhancedCatalog)
-    async def tools() -> EnhancedCatalog:
-        catalog, _ = await _read_catalog()
+    async def tools(request: Request) -> EnhancedCatalog:
+        catalog, _ = await _read_catalog(request)
         return catalog
 
     @router.get("/skills", response_model=list[CatalogEntry])
-    async def skills() -> list[CatalogEntry]:
-        catalog, _ = await _read_catalog()
+    async def skills(request: Request) -> list[CatalogEntry]:
+        catalog, _ = await _read_catalog(request)
         return [item for item in catalog.components if item.kind == "skill"]
 
     @router.get("/workflows/capabilities", response_model=WorkflowCapabilities)
-    async def workflow_capabilities() -> WorkflowCapabilities:
-        _, capabilities = await _read_catalog()
+    async def workflow_capabilities(request: Request) -> WorkflowCapabilities:
+        _, capabilities = await _read_catalog(request)
         return capabilities
 
     app.include_router(router)

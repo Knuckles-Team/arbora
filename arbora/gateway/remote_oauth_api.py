@@ -59,18 +59,19 @@ import logging
 from collections.abc import Callable
 from typing import Any, NoReturn
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.routing import Route
+
+from arbora.gateway.state import GatewayState, gateway_of, gateway_on
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Broker singleton — lazily built, overridable (tests / a deployment that
-# wants to construct + inject its own registry rather than go through the
-# AgentConfig provider declaration below).
+# Broker — held by the host's gateway field, built on first use, overridable (a
+# deployment that wants to construct + inject its own registry rather than go
+# through the AgentConfig provider declaration below).
 # ---------------------------------------------------------------------------
-_BROKER: Any | None = None
 
 
 def _default_provider_registry() -> Any:
@@ -120,17 +121,8 @@ def _build_default_broker() -> Any:
     return RemoteOAuthBroker(registry=_default_provider_registry())
 
 
-def _get_broker() -> Any:
-    global _BROKER
-    if _BROKER is None:
-        _BROKER = _build_default_broker()
-    return _BROKER
-
-
-def _set_broker(broker: Any | None) -> None:
-    """Private scoped override for startup injection and test cleanup."""
-    global _BROKER
-    _BROKER = broker
+def _get_broker(gateway: GatewayState) -> Any:
+    return gateway.broker.get_or_build(_build_default_broker)
 
 
 # ---------------------------------------------------------------------------
@@ -151,13 +143,9 @@ def _default_scope_policy(
     return requested
 
 
-_SCOPE_POLICY: ScopePolicy = _default_scope_policy
-
-
-def _set_scope_policy(policy: ScopePolicy | None) -> None:
-    """Override (or reset, with ``None``) the scope-filtering policy hook."""
-    global _SCOPE_POLICY
-    _SCOPE_POLICY = policy or _default_scope_policy
+def _scope_policy(gateway: GatewayState) -> ScopePolicy:
+    """The gateway's scope-filtering policy hook, or the identity policy."""
+    return gateway.scope_policy.get() or _default_scope_policy
 
 
 def _success_redirect_url() -> str | None:
@@ -240,7 +228,9 @@ def _resolve_verified_actor() -> Any:
     return actor
 
 
-async def authorize(provider_id: str, body: AuthorizeRequest) -> AuthorizeResponse:
+async def authorize(
+    request: Request, provider_id: str, body: AuthorizeRequest
+) -> AuthorizeResponse:
     """Begin a remote-OAuth flow for the verified caller and return the
     authorization URL to send their browser to."""
     import asyncio
@@ -253,11 +243,12 @@ async def authorize(provider_id: str, body: AuthorizeRequest) -> AuthorizeRespon
     )
 
     actor = _resolve_verified_actor()
-    broker = _get_broker()
+    gateway = gateway_of(request)
+    broker = _get_broker(gateway)
     provider = broker.registry.get(provider_id)
     if provider is None or not provider.enabled:
         raise HTTPException(status_code=404, detail="Unknown provider")
-    requested_scopes = _SCOPE_POLICY(actor, provider, body.scopes)
+    requested_scopes = _scope_policy(gateway)(actor, provider, body.scopes)
     try:
         authorization_url = await asyncio.to_thread(
             broker.begin,
@@ -275,7 +266,9 @@ async def authorize(provider_id: str, body: AuthorizeRequest) -> AuthorizeRespon
     return AuthorizeResponse(authorization_url=authorization_url)
 
 
-async def oauth_callback(code: str, state: str, browser_session_id: str) -> Any:
+async def oauth_callback(
+    request: Request, code: str, state: str, browser_session_id: str
+) -> Any:
     """Complete a remote-OAuth flow and redirect to the allowlisted success URL.
 
     ``code``/``state`` arrive as query parameters (an unavoidable property of
@@ -297,7 +290,7 @@ async def oauth_callback(code: str, state: str, browser_session_id: str) -> Any:
     )
 
     actor = _resolve_verified_actor()
-    broker = _get_broker()
+    broker = _get_broker(gateway_of(request))
     try:
         stored = await asyncio.to_thread(
             broker.callback,
@@ -328,7 +321,7 @@ async def oauth_callback(code: str, state: str, browser_session_id: str) -> Any:
     return RedirectResponse(url=target, status_code=302)
 
 
-async def _revoke(provider_id: str) -> Any:
+async def _revoke(request: Request, provider_id: str) -> Any:
     """Revoke the verified caller's grant for one enabled provider."""
     import asyncio
 
@@ -337,7 +330,7 @@ async def _revoke(provider_id: str) -> Any:
     from arbora.fleet.remote_oauth_broker import OAuthProviderError
 
     actor = _resolve_verified_actor()
-    broker = _get_broker()
+    broker = _get_broker(gateway_of(request))
     provider = broker.registry.get(provider_id)
     if provider is None or not provider.enabled:
         raise HTTPException(status_code=404, detail="Unknown provider")
@@ -393,10 +386,11 @@ def register_remote_oauth_routes(
     :func:`arbora.gateway.ontology_api.register_ontology_routes`.
     Optional dependencies are injected once before route mounting.
     """
+    gateway = gateway_on(app)
     if broker is not None:
-        _set_broker(broker)
+        gateway.broker.set(broker)
     if scope_policy is not None:
-        _set_scope_policy(scope_policy)
+        gateway.scope_policy.set(scope_policy)
     if hasattr(app, "include_router"):  # FastAPI
         app.include_router(build_remote_oauth_router(), prefix=prefix)
         return
@@ -408,7 +402,7 @@ def register_remote_oauth_routes(
             kwargs = {p: request.path_params.get(p) for p in param_names}
             kwargs.update(dict(request.query_params))
             try:
-                result = await endpoint(**kwargs)
+                result = await endpoint(request, **kwargs)
             except HTTPException as e:  # noqa: PERF203
                 return JSONResponse(
                     {"status": "error", "message": e.detail}, status_code=e.status_code

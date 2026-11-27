@@ -22,6 +22,7 @@ from arbora.fleet.mcp_resource_reconciliation import (
 from arbora.fleet.multiplexer import MCPMultiplexer
 from arbora.fleet.state import FleetState
 from arbora.gateway import fleet as fleet_api
+from arbora.gateway.state import GatewayState
 from arbora.pin_lag.unavailable import PinLagUnavailable
 from tests.fleet.test_catalog_convergence import EnginePort
 
@@ -120,11 +121,9 @@ def test_health_route_carries_the_replica_generation() -> None:
     port.digest = candidate.generation.digest
     asyncio.run(mux.refresh_engine_catalog())
 
-    fleet_api.bind_catalog_generation(reader.generation_status)
-    try:
-        snapshot = asyncio.run(fleet_api._health_snapshot())
-    finally:
-        fleet_api.bind_catalog_generation(None)
+    gateway = GatewayState()
+    gateway.catalog_generation.set(reader.generation_status)
+    snapshot = asyncio.run(fleet_api._health_snapshot(gateway))
 
     from arbora.fleet.health import health_payload
 

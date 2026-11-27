@@ -1681,6 +1681,7 @@ def configured_served_url() -> str:
 
 def start_fleet_onboarding(
     *,
+    gateway: Any,
     engine: Any,
     session: Any,
     multiplexer: Any,
@@ -1710,7 +1711,7 @@ def start_fleet_onboarding(
     )
 
     ports = compose_onboarding_ports(
-        engine, session, spawn=spawn_worker, feature_schema=feature_schema
+        gateway, engine, session, spawn=spawn_worker, feature_schema=feature_schema
     )
     declare_data_prep_at_boot(engine, session)
     service = FleetOnboardingService(
