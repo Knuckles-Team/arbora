@@ -1053,7 +1053,7 @@ def _native_context_id(session: Any, owner_ref: str, run_id: str) -> str:
 
 def _native_plan_host(context: Any) -> Any:
     """Return the already-authorized hosted runtime for native publication."""
-    from arbora.mcp_server.task_plan import TaskPlanConfig
+    from arbora.core.task_plan_config import TaskPlanConfig
 
     services = getattr(context, "operation_services", None)
     config = context.services.get("task_plan_config")

@@ -186,7 +186,7 @@ async def test_caller_cancellation_is_not_classified(monkeypatch):
 
 
 def _frozen_nested_arguments():
-    from arbora.api.invoke.steps import freeze_claims
+    from arbora.core.claims import freeze_claims
 
     return freeze_claims(
         {

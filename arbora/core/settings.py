@@ -124,7 +124,7 @@ class ArboraConfig(BaseModel):
     @classmethod
     def _validate_task_plan(cls, value: Any) -> Any:
         if value is not None:
-            from arbora.mcp_server.task_plan import TaskPlanConfig
+            from arbora.core.task_plan_config import TaskPlanConfig
 
             try:
                 TaskPlanConfig(**value)

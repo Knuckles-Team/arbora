@@ -7,7 +7,8 @@ from typing import Any
 from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.invoke.pipeline import InvokeServices, OperationRefused, invoke
 from arbora.api.invoke.steps import RequestCaller
-from arbora.mcp_server.task_plan import TaskPlanConfig, evaluate_task_plan
+from arbora.core.task_plan_config import TaskPlanConfig
+from arbora.mcp_server.task_plan import evaluate_task_plan
 
 
 @dataclass(frozen=True)

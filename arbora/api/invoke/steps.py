@@ -5,12 +5,12 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from types import MappingProxyType
 from typing import Any, Literal, cast
 
 from pydantic import BaseModel, ValidationError
 
 from arbora.api.registry import EgSchemaRef, PrincipalRule
+from arbora.core.claims import freeze_claims
 
 _logger = logging.getLogger(__name__)
 #: Bound on a logged diagnostic line (it may quote request content).
@@ -18,25 +18,6 @@ _LOG_DETAIL_CHARS = 300
 
 FORBIDDEN_AUTHORITY = frozenset({"_actor", "_roles", "_tenant", "principal", "tenant"})
 FORBIDDEN_OWNER = frozenset({"owner", "owner_ref"})
-
-
-def freeze_claims(value: Any) -> Any:
-    """Own immutable JSON-shaped authority; never retain caller aliases."""
-    if isinstance(value, Mapping):
-        return _freeze_mapping(value)
-    if isinstance(value, (list, tuple)):
-        return tuple(freeze_claims(child) for child in value)
-    if isinstance(value, (set, frozenset)):
-        return frozenset(freeze_claims(child) for child in value)
-    if value is None or isinstance(value, (str, bool, int, float)):
-        return value
-    raise ValueError("authority must contain only immutable JSON values")
-
-
-def _freeze_mapping(value: Mapping[Any, Any]) -> Mapping[str, Any]:
-    if any(not isinstance(key, str) for key in value):
-        raise ValueError("authority keys must be strings")
-    return MappingProxyType({key: freeze_claims(child) for key, child in value.items()})
 
 
 def claim_values(value: Any) -> Any:
