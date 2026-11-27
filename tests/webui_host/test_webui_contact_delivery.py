@@ -112,18 +112,6 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         governance,
     )
 
-    mcp_delegation = types.ModuleType("arbora.webui_host.mcp_delegation")
-    _export(
-        mcp_delegation,
-        "webui_mcp_delegation_helpers",
-        lambda tools: {"call_mcp_tool": "mcp-helper"},
-    )
-    monkeypatch.setitem(
-        sys.modules,
-        "arbora.webui_host.mcp_delegation",
-        mcp_delegation,
-    )
-
     voice_delegation = types.ModuleType("arbora.webui_host.voice_delegation")
     _export(
         voice_delegation,
@@ -253,7 +241,8 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         stop_event,
         action_policies=policies,
         engine="arbora-engine",
-        tools={},
+        verbs={},
+        mcp_delegation={"call_mcp_tool": "mcp-helper"},
         browser=browser,
         telemetry=Telemetry(),
         host_context=host_context,

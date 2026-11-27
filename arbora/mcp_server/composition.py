@@ -33,6 +33,7 @@ from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.hosted_invocation import HostedInvocation
 from arbora.mcp_server.routes import mount_rest_routes
+from arbora.mcp_server.webui_mcp_delegation import webui_mcp_delegation_helpers
 from arbora.messaging.intake import configured_platforms, start_messaging_intake
 from arbora.messaging.memory_webhooks import start_memory_webhook_pump
 from arbora.observability.state import Telemetry
@@ -1061,7 +1062,8 @@ def start_composed_services(
                 run_web_ui,
                 action_policies=action_policies,
                 engine=engine,
-                tools=tools,
+                verbs=tools.verbs,
+                mcp_delegation=webui_mcp_delegation_helpers(tools),
                 browser=browser,
                 telemetry=telemetry,
                 host_context=host,
@@ -1072,7 +1074,8 @@ def start_composed_services(
                 run_web_ui,
                 action_policies=action_policies,
                 engine=engine,
-                tools=tools,
+                verbs=tools.verbs,
+                mcp_delegation=webui_mcp_delegation_helpers(tools),
                 browser=browser,
                 telemetry=telemetry,
                 host_context=host,

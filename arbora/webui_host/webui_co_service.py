@@ -39,13 +39,13 @@ from __future__ import annotations
 
 import logging
 import threading
+from collections.abc import Mapping
 from functools import partial
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from arbora.access.action_policy import ActionPolicies
     from arbora.browser_control.browser_state import BrowserState
-    from arbora.mcp_server.host_caches import ToolTable
     from arbora.observability.state import Telemetry
 from arbora.core.environment import default_env, read_env
 
@@ -114,7 +114,8 @@ def run_web_ui(
     *,
     action_policies: ActionPolicies,
     engine: Any,
-    tools: ToolTable,
+    verbs: Mapping[str, Any],
+    mcp_delegation: Mapping[str, Any],
     browser: BrowserState,
     telemetry: Telemetry,
     host_context: Any,
@@ -201,15 +202,14 @@ def run_web_ui(
     from arbora.webui_host.contact_governance import (
         contact_delivery_factory_kwargs,
     )
-    from arbora.webui_host.mcp_delegation import webui_mcp_delegation_helpers
     from arbora.webui_host.voice_delegation import (
         webui_voice_delegation_helpers,
     )
 
     agent = Agent(build_orchestrator_model(get_engine_bounded))
     helpers = {
-        **webui_mcp_delegation_helpers(tools),
-        **webui_voice_delegation_helpers(lambda: engine, tools.verbs),
+        **mcp_delegation,
+        **webui_voice_delegation_helpers(lambda: engine, verbs),
     }
     contact_kwargs = contact_delivery_factory_kwargs(
         create_agent_web_app,

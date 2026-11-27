@@ -294,3 +294,34 @@ def test_no_unit_imports_another_units_private_name() -> None:
         f"{f.location} {f.detail}" for f in findings if f.rule == "private-reach"
     ]
     assert reaches == []
+
+
+def _unit_pairs() -> Iterator[tuple[str, str]]:
+    """Every ``(importing unit, imported unit)`` pair of the package, function-local too."""
+    for path in sorted(PACKAGE.rglob("*.py")):
+        if "__pycache__" in path.parts:
+            continue
+        source = path.relative_to(PACKAGE).parts[0].removesuffix(".py")
+        for _line, target, name in _imports(PACKAGE, path):
+            if target[0] == "arbora":
+                yield source, (name if len(target) == 1 else target[1]) or ""
+
+
+def _same_layer_edges(
+    layers: list[tuple[str, tuple[str, ...]]],
+) -> dict[str, set[str]]:
+    """The unit import graph restricted to the edges between units of one layer."""
+    layer_of = {unit: name for name, members in layers for unit in members}
+    edges: dict[str, set[str]] = {unit: set() for unit in layer_of}
+    for source, unit in _unit_pairs():
+        if source != unit and layer_of.get(source, "") == layer_of.get(unit, None):
+            edges[source].add(unit)
+    return edges
+
+
+@pytest.mark.spec("ARBORA-HOST-R038.7")
+def test_no_cycle_remains_between_units_of_one_layer() -> None:
+    """Units of one layer import each other in one direction only."""
+    layers = load_layers(ROOT / "pyproject.toml")
+    cycles = [finding.detail for finding in _cycles(_same_layer_edges(layers))]
+    assert cycles == []
