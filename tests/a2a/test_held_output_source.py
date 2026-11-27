@@ -178,6 +178,27 @@ async def test_the_source_writes_the_held_node_and_the_decision_refs() -> None:
 
 @pytest.mark.spec("ARBORA-A2A-R022.1")
 @pytest.mark.asyncio
+async def test_arbora_writes_no_critique_field_and_reads_the_checklist() -> None:
+    engine = Engine()
+    block = await _produce(engine, Decide(engine))
+    assert block is not None and block["checklist"] == CHECKLIST
+    written = {key for node in engine.nodes.values() for key in node}
+    assert not {"critique_ref", "critique_digest", "critique_verdict"} & written
+
+    # An answer with no checklist yields no block: the checklist is the engine's.
+    class NoChecklist(Decide):
+        async def __call__(self, kind: str, params: dict[str, str], tenant: str):  # type: ignore[no-untyped-def]
+            record = await super().__call__(kind, params, tenant)
+            del record["answer"]["value"]["checklist"]
+            return record
+
+    bare = Engine()
+    assert await _produce(bare, NoChecklist(bare)) is None
+    assert any(n.get("type") == "HeldItem" for n in bare.nodes.values())
+
+
+@pytest.mark.spec("ARBORA-A2A-R022.1")
+@pytest.mark.asyncio
 async def test_a_send_with_an_artifact_is_admitted_end_to_end() -> None:
     engine = Engine()
     decide = Decide(engine)

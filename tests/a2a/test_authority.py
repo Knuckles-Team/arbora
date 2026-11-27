@@ -13,6 +13,7 @@ from arbora.a2a.authority import (
 )
 from arbora.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
 from arbora.a2a.routing import A2AAssemblyUnavailable, OrchestratorA2ARouter
+from arbora.a2a.service import A2AService
 from arbora.run_origin import RunOriginRegistry
 
 
@@ -46,9 +47,27 @@ async def test_selected_tool_subset_is_refused_before_durable_admission() -> Non
 async def test_context_budget_fails_closed_while_agent_assemble_is_unavailable() -> (
     None
 ):
+    """A budgeted message is admitted by the service, never by the router.
+
+    The router routes whatever it is given; the harness admission (R017.5) is the
+    service's, and a service with no engine harness decider refuses before dispatch.
+    """
     router = OrchestratorA2ARouter(lambda: pytest.fail("engine was accessed"))
-    with pytest.raises(A2AAssemblyUnavailable, match="AgentAssemble"):
-        await router.route(_message(), context_budget_tokens=4096)
+    routed = await router.route(_message(), context_budget_tokens=4096)
+    assert routed.selection_mode == "default-agent"
+
+    class _Authority:
+        async def dispatch(self, **_kw: object) -> object:
+            pytest.fail("a refused admission must not dispatch")
+
+    service = A2AService(authority=_Authority(), router=router)  # type: ignore[arg-type]
+    with pytest.raises(A2AAssemblyUnavailable) as refused:
+        await service.send_message(
+            message=_message().model_dump(mode="json", by_alias=True),
+            idempotency_key="key",
+            context_budget_tokens=4096,
+        )
+    assert refused.value.reason == "HARNESS_CONFIG_UNAVAILABLE"
 
 
 @pytest.mark.spec("ARBORA-A2A-R012.2")

@@ -161,6 +161,21 @@ class A2ATaskAuthority(Protocol):
     async def cancel(self, task_id: str) -> A2ATask: ...
 
 
+def _opening_session(message: A2AMessage) -> dict[str, str]:
+    """The opening session keys of ``agents.run``, copied and no other message metadata.
+
+    ``client_session_id`` and ``client_principal`` become ``a2a_client_session_id`` and
+    ``a2a_client_principal`` when each is non-empty text of at most 256 characters
+    (ARBORA-IDENTITY-R026.3).
+    """
+    found: dict[str, str] = {}
+    for key in ("client_session_id", "client_principal"):
+        value = message.metadata.get(key)
+        if isinstance(value, str) and 0 < len(value) <= 256:
+            found[f"a2a_{key}"] = value
+    return found
+
+
 def harness_metadata(harness: Any) -> dict[str, Any]:
     """The admitted harness decision a run reads by reference (ARBORA-A2A-R018.1)."""
     return {
@@ -444,6 +459,7 @@ class WorkItemA2AAuthority:
             "a2a_owner_ref": owner_ref,
             "a2a_request_digest": request_digest,
             "a2a_route": decision.model_dump(mode="json", by_alias=True),
+            **_opening_session(message),
         }
 
     @staticmethod
