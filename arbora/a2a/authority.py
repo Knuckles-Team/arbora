@@ -247,6 +247,8 @@ class WorkItemA2AAuthority:
         #: Produces the held-output refs of a finished run from engine methods
         #: (ARBORA-A2A-R022.1); ``None`` produces none and every output stays held.
         self.held_output_source: Any = None
+        #: The graph the critique is recorded under; set with the source.
+        self.held_output_graph: str = ""
         #: Records the run's ``agent_run`` delegation at admission
         #: (``ARBORA-A2A-R001.2.2``); ``None`` admits a run without one.
         self.delegations = delegations
@@ -998,6 +1000,7 @@ class WorkItemA2AAuthority:
                 tenant=str(session.tenant),
                 task_id=task_id,
                 text=reply,
+                graph=self.held_output_graph,
             )
         return await observer.finish(reply) if observer is not None else False
 

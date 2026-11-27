@@ -264,3 +264,79 @@ def test_binding_needs_the_whole_decision_port() -> None:
         ),
     )
     assert isinstance(authority.held_output_source, HeldOutputSource)
+
+
+class CritiqueEngine(Engine):
+    """The proposal node plus the engine's ``held_item_critique`` recording."""
+
+    recorded: list[dict[str, Any]]
+
+    async def send(self, method: str, params: dict[str, Any], tenant: str) -> Any:
+        assert method == "DecisionEval" and params["op"]["op"] == "held_item_critique"
+        request = params["op"]["request"]
+        node = self.nodes[request["item_ref"]]
+        assert node["content_digest"] == request["content_digest"]
+        self.recorded.append(request)
+        verdict = "accept" if all(a["passed"] for a in request["answers"]) else "reject"
+        # The engine, never arbora, writes the critique fields onto the node.
+        node.update(critique_digest="sha256:c", critique_verdict=verdict)
+        return {
+            "critique_ref": "sha256:c",
+            "item_ref": request["item_ref"],
+            "content_digest": request["content_digest"],
+            "verdict": verdict,
+        }
+
+
+@pytest.mark.spec("ARBORA-A2A-R022.1")
+@pytest.mark.asyncio
+async def test_the_critique_is_recorded_by_the_engine_between_proposal_and_admission(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The re-pinned engine declares the op; the pin guard is its only gate.
+    monkeypatch.setattr("arbora.pin_lag.medulla.guard_held_item_critique", lambda: None)
+    engine = CritiqueEngine()
+    engine.recorded = []
+    decide = Decide(engine)
+
+    async def critic(checklist: Any, text: str) -> list[dict[str, Any]]:
+        assert text == OUTPUT
+        return [{"id": item["id"], "passed": True} for item in checklist]
+
+    source = HeldOutputSource(decide, engine.send, critic)
+    block = await source.produce(
+        engine, tenant=TENANT, task_id=TASK, text=OUTPUT, graph="control"
+    )
+    assert block is not None and block["checklist"] == CHECKLIST
+    # The sequence: the proposal node, then the recorded critique, then the admission.
+    [request] = engine.recorded
+    assert request["answers"] == [{"id": "q1", "passed": True}]
+    assert request["graph"] == "control" and request["tenant_id"] == TENANT
+    node = engine.nodes[block["item_ref"]]
+    assert node["critique_verdict"] == "accept"
+    # Arbora wrote none of the critique fields: only the engine's double set them.
+    created = {"held_item_kind", "content_digest", "lifecycle", "task_id", "type"}
+    assert set(node) - created == {"critique_digest", "critique_verdict"}
+    assert (
+        await decide(
+            HELD_ITEM_KIND, {**block, "item_kind": "run_output_proposal"}, TENANT
+        )
+    )["answer"]["value"]["outcome"] == "admitted"
+
+
+@pytest.mark.spec("ARBORA-A2A-R022.1")
+@pytest.mark.asyncio
+async def test_answers_that_miss_the_checklist_record_nothing_and_hold_the_output() -> (
+    None
+):
+    engine = CritiqueEngine()
+    engine.recorded = []
+
+    async def partial(checklist: Any, text: str) -> list[dict[str, Any]]:
+        return [{"id": "other", "passed": True}]
+
+    source = HeldOutputSource(Decide(engine), engine.send, partial)
+    assert (
+        await source.produce(engine, tenant=TENANT, task_id=TASK, text=OUTPUT) is None
+    )
+    assert engine.recorded == []
