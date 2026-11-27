@@ -124,7 +124,7 @@ class ReadSamlResponse:
 class SamlResponseReader(Protocol):
     """Injected XML and signature implementation (none lives in Arbora, R012.2.2)."""
 
-    def read(self, response_b64: str) -> ReadSamlResponse:
+    def read(self, response: str) -> ReadSamlResponse:
         """Parse the response; raise ``ValueError`` when it is not a SAML response."""
         ...
 
