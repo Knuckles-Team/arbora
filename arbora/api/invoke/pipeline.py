@@ -184,6 +184,12 @@ def _declared_owners(modules: Iterable[str] | None = None) -> dict[str, str]:
 #: Operations whose effect the durable effect journal settles at most once per
 #: request: the replay owner of every write the engine does not replay by key.
 EXTERNAL_EFFECT_OPERATIONS: tuple[str, ...] = (
+    "identity.self.mfa.totp.begin",
+    "identity.self.mfa.totp.confirm",
+    "identity.self.mfa.webauthn.register_begin",
+    "identity.self.mfa.webauthn.register_finish",
+    "identity.self.mfa.recovery.regenerate",
+    "identity.self.mfa.credentials.remove",
     "fleet.call",
     "fleet.write_back.commit",
     "fleet.tools.pin",

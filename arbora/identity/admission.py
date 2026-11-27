@@ -9,6 +9,7 @@ from .broker import ArboraBrowserAuthority
 from .browser import _headers, _snapshot, require_mutation_proof, session_from_scope
 from .engine import IdentityUnavailable
 from .issuer import LocalIssuer
+from .session_credential import bind_session_credential
 
 
 class BrowserAdmission:
@@ -89,4 +90,5 @@ class BrowserAdmission:
             # Existing C routing hint only; actual verification uses private owner
             # bindings and ignores all request-state authority assertions.
             forwarded["state"]["arbora_session_admitted"] = True
-            yield forwarded
+            with bind_session_credential(credential):
+                yield forwarded
