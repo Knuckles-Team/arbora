@@ -14,6 +14,7 @@ from typing import Any
 
 from arbora.fleet.child_transport import ChildTransport
 from arbora.fleet.multiplexer import MCPMultiplexer
+from arbora.fleet.task_forwarding import TaskForwarding
 
 
 async def _no_publish(*_args: Any, **_kwargs: Any) -> None:
@@ -31,7 +32,18 @@ def _build_child_transport() -> ChildTransport:
     )
 
 
-BUILDERS = {"transport": _build_child_transport}
+def _build_task_forwarding() -> TaskForwarding:
+    return TaskForwarding(
+        fleet=SimpleNamespace(),
+        signer=SimpleNamespace(),
+        children={},
+        catalog_epoch=lambda: 0,
+        load_catalog=_no_publish,
+        mount_child=_no_publish,
+    )
+
+
+BUILDERS = {"transport": _build_child_transport, "tasks": _build_task_forwarding}
 
 
 def test_each_collaborator_is_built_without_a_multiplexer() -> None:
