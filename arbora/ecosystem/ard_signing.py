@@ -29,7 +29,7 @@ import logging
 import os
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ def _seed() -> bytes:
     we document) — anything else falls back to a deterministic per-process key so
     sign/verify still round-trips in dev/tests.
     """
-    val = (setting("ARD_SIGNING_PRIVATE_KEY", default="") or "").strip()
+    val = (read_env("ARD_SIGNING_PRIVATE_KEY", "") or "").strip()
     if val:
         try:
             raw = _b64d(val)
@@ -123,7 +123,7 @@ def public_key_b64() -> str | None:
 
 def is_configured() -> bool:
     """Whether a real (non-ephemeral) signing key is configured for this deployment."""
-    return bool((setting("ARD_SIGNING_PRIVATE_KEY", default="") or "").strip())
+    return bool((read_env("ARD_SIGNING_PRIVATE_KEY", "") or "").strip())
 
 
 def sign_datapoint(datapoint: Any) -> str | None:

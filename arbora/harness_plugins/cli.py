@@ -20,6 +20,7 @@ from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
 
+from arbora.core.environment import read_env
 from arbora.harness_plugins import install as inst
 from arbora.harness_plugins.compose import (
     HOSTED_FILES,
@@ -68,19 +69,15 @@ class Refused(Exception):
 
 
 def _home() -> Path:
-    return Path(os.environ.get("HOME") or Path.home())
+    return Path(read_env("HOME") or Path.home())
 
 
 def _cache_root() -> Path:
-    return (
-        Path(os.environ.get("XDG_CACHE_HOME") or _home() / ".cache")
-        / "arbora"
-        / "plugins"
-    )
+    return Path(read_env("XDG_CACHE_HOME") or _home() / ".cache") / "arbora" / "plugins"
 
 
 def _endpoint(arg: str | None, config: inst.PluginsConfig) -> str:
-    value = arg or config.endpoint or os.environ.get("ARBORA_PUBLIC_URL", "")
+    value = arg or config.endpoint or read_env("ARBORA_PUBLIC_URL", "")
     if not value.startswith(("http://", "https://")):
         raise Refused(BundleRefusal.ENDPOINT_UNSET)
     return value.rstrip("/")
@@ -109,7 +106,7 @@ def _refuse_hosted_install(endpoint: str) -> None:
 
 def _skill_roots(args: argparse.Namespace) -> list[Path] | None:
     roots = list(args.skills_root or [])
-    env = os.environ.get("ARBORA_PLUGIN_SKILL_ROOTS", "")
+    env = read_env("ARBORA_PLUGIN_SKILL_ROOTS", "")
     roots += [Path(p) for p in env.split(os.pathsep) if p]
     return roots or None
 

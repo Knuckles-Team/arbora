@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from __future__ import annotations
 
+from arbora.core.environment import read_env
+
 """Agent Hook Installer.
 
 CONCEPT:MERISTEM-ECO.messaging.native-backend-abstraction -- Cross-Agent Memory Hook Installer
@@ -20,8 +22,6 @@ import platform
 from pathlib import Path
 from typing import Any
 
-from arbora.core.settings import setting
-
 # The pre-tool gate command and the tools whose calls it inspects (mutations
 # and shell). Read is excluded so a normal session pays no hook round trip.
 GATE_HOOK_COMMAND = "meristem harness-gate"
@@ -40,12 +40,12 @@ def _home() -> Path:
 
 def _appdata() -> Path:
     """Windows %APPDATA% or fallback to home."""
-    return Path(setting("APPDATA", _home()))
+    return Path(read_env("APPDATA", _home()))
 
 
 def _localappdata() -> Path:
     """Windows %LOCALAPPDATA% or fallback."""
-    return Path(setting("LOCALAPPDATA", _home() / "AppData" / "Local"))
+    return Path(read_env("LOCALAPPDATA", _home() / "AppData" / "Local"))
 
 
 # -- Hook Config Templates --
@@ -188,7 +188,7 @@ AGENT_SURFACES: dict[str, dict[str, Any]] = {
     "hermes": {
         "name": "Hermes",
         "config_path": lambda: (
-            Path(setting("HERMES_HOME", _home() / ".hermes"))
+            Path(read_env("HERMES_HOME", _home() / ".hermes"))
             / "plugins"
             / "meristem-memory.json"
         ),

@@ -21,6 +21,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
+from arbora.core.environment import read_env
 from arbora.harness_plugins.compose import DOOR_SKILLS, PLUGIN_NAME
 from arbora.harness_plugins.profiles import HarnessProfile
 
@@ -269,10 +270,9 @@ def place_claude_code(record: InstallRecord, run: Runner) -> list[str]:
 
 def plugin_dir(profile: HarnessProfile, home: Path) -> Path:
     """The harness's own plugin discovery directory for the copied tree."""
-    import os
 
     if profile.id == "opencode":
-        base = Path(os.environ.get("XDG_CONFIG_HOME") or home / ".config") / "opencode"
+        base = Path(read_env("XDG_CONFIG_HOME") or home / ".config") / "opencode"
         return base / "plugins" / PLUGIN_NAME
     return home / f".{profile.id}" / "plugins" / PLUGIN_NAME
 

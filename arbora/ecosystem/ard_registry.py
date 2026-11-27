@@ -37,7 +37,7 @@ import re
 import socket
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.ecosystem import ard_signing
 
 logger = logging.getLogger(__name__)
@@ -51,16 +51,16 @@ ALL_MEDIA_TYPES = (MEDIA_MCP_SERVER, MEDIA_MCP_SERVER_CARD, MEDIA_AI_SKILL)
 
 def spec_version() -> str:
     """The ARD draft revision this generator targets (stamped into the manifest)."""
-    return str(setting("ARD_SPEC_VERSION", default="draft-0"))
+    return str(read_env("ARD_SPEC_VERSION"))
 
 
 def publisher() -> dict[str, str]:
     """This registry's domain-anchored publisher identity (ARD verification)."""
     ident = {
-        "name": str(setting("ARD_PUBLISHER_NAME", "arbora")),
-        "description": str(setting("ARD_PUBLISHER_DESCRIPTION", "")),
+        "name": str(read_env("ARD_PUBLISHER_NAME")),
+        "description": str(read_env("ARD_PUBLISHER_DESCRIPTION")),
     }
-    domain = str(setting("ARD_PUBLISHER_DOMAIN", default=socket.gethostname()))
+    domain = str(read_env("ARD_PUBLISHER_DOMAIN", socket.gethostname()))
     return {
         "domain": domain,
         "name": ident.get("name", "meristem"),
