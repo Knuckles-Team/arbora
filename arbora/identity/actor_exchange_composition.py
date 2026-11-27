@@ -13,6 +13,8 @@ import logging
 from collections.abc import Callable, Mapping
 from typing import Any
 
+from arbora.identity.ports import CredentialState
+
 __all__ = ["bind_actor_exchange"]
 
 _audit_log = logging.getLogger("arbora.audit.delegation")
@@ -21,7 +23,7 @@ _audit_log = logging.getLogger("arbora.audit.delegation")
 class _ExchangeOnlyAuthority:
     """The credential authority of an exchange-only issuer: it issues no credential."""
 
-    async def resolve_credential(self, credential: str) -> Any:
+    async def resolve_credential(self, credential: str) -> CredentialState:
         raise PermissionError("the exchange issuer issues no credential")
 
 
@@ -56,7 +58,7 @@ def bind_actor_exchange(
     signer = LocalIssuer(
         store_factory(),
         IssuerSettings(issuer, audience, tenant),
-        _ExchangeOnlyAuthority(),  # type: ignore[arg-type]
+        _ExchangeOnlyAuthority(),
     )
     fleet.actor.bind(issuer=signer, audit=audit)
     return True

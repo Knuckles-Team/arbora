@@ -90,7 +90,7 @@ def _composed_ports(
             secrets = create_secrets_client()
     except Exception:
         logging.getLogger(__name__).debug(
-            "an unreadable config fails closed with one code"
+            "an unreadable config fails closed with one code", exc_info=True
         )
         return None, None
     return provider, secrets
@@ -188,7 +188,9 @@ def token_main(
             )
         )
     except Exception:
-        logging.getLogger(__name__).debug("a stable code, never the cause text")
+        logging.getLogger(__name__).debug(
+            "a stable code, never the cause text", exc_info=True
+        )
         print("TOKEN_FETCH_FAILED", file=err)
         return 2
     print(token, file=out)

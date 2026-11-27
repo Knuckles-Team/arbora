@@ -123,7 +123,9 @@ async def totp_pass_through(
             return refusal_response(refused)
         return JSONResponse({"error": "UNAVAILABLE"}, status_code=503)
     except Exception:
-        logging.getLogger(__name__).debug("an unanswered question steps nothing up")
+        logging.getLogger(__name__).debug(
+            "an unanswered question steps nothing up", exc_info=True
+        )
         return JSONResponse({"error": "UNAVAILABLE"}, status_code=503)
     payload = response.payload
     value = payload.get("value") if isinstance(payload, dict) else None

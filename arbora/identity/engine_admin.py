@@ -9,6 +9,7 @@ name it for the console.
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Mapping
 from typing import Any
 
@@ -65,6 +66,9 @@ class EngineIdentityAdmin:
                 raise IdentityRefused(str(error.code)) from None
             raise IdentityUnavailable("identity operation unavailable") from None
         except Exception:
+            logging.getLogger(__name__).warning(
+                "identity authority unavailable", exc_info=True
+            )
             raise IdentityUnavailable("identity operation unavailable") from None
         payload = response.payload
         if not isinstance(payload, Mapping) or payload.get("kind") != expect:
@@ -84,5 +88,8 @@ class EngineIdentityAdmin:
                     response = await send_audit_verify(client, {}, self._graph)
             report = decode_audit_verify(response)
         except Exception:
+            logging.getLogger(__name__).warning(
+                "identity authority unavailable", exc_info=True
+            )
             raise IdentityUnavailable("audit verification unavailable") from None
         return report.model_dump(mode="json")

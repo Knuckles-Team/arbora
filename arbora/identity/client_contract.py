@@ -754,8 +754,8 @@ class ClientContractSupervisor:
     def _run(self) -> None:
         try:
             self.loop()
-        except Exception as exc:  # pragma: no cover - last-resort guard
-            logger.error("identity client contract supervisor crashed: %s", exc)
+        except Exception:
+            logger.error("identity client contract supervisor crashed", exc_info=True)
 
     def stop(self, identity: IdentityContract) -> None:
         self.stop_event.set()
