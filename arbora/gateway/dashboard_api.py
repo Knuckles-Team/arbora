@@ -266,12 +266,20 @@ async def discover_services() -> DashboardLayout:
     return ConfigManager()._auto_discover()
 
 
+def _gateway_engine_or_none() -> Any:
+    """The gateway port's engine, or ``None`` when no engine is composed."""
+    try:
+        return gateway_application().engine()
+    except Exception:
+        return None
+
+
 @dashboard_router.get("/daemon/status")
 async def daemon_status() -> dict[str, Any]:
     """Return the consolidated KG host daemon status."""
     from arbora.gateway.daemon import daemon_status as _status
 
-    return _status()
+    return _status(_gateway_engine_or_none())
 
 
 @dashboard_router.get("/daemon/shards")
@@ -314,7 +322,7 @@ async def daemon_start(request: Request) -> dict[str, Any]:
     from arbora.gateway.daemon import start_host_daemon
 
     start_host_daemon()
-    return _status()
+    return _status(_gateway_engine_or_none())
 
 
 #: Refusal codes of a served operation, mapped to the dashboard's HTTP statuses.

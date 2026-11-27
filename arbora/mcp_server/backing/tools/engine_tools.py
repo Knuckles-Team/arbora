@@ -52,7 +52,6 @@ import base64
 import inspect
 import json
 import logging
-import threading
 from typing import Any
 
 from pydantic import Field
@@ -196,60 +195,17 @@ def _discover_domains() -> dict[str, list[str]]:
 ENGINE_DOMAINS: dict[str, list[str]] = _discover_domains()
 
 
-# ── Engine client resolution (bounded LRU pool, MERISTEM-P0-6) ─────────────────────
-# Was: one synchronous client cached PER GRAPH forever in a plain ``dict`` —
-# connection/thread/socket count grew without bound as graph cardinality grew.
-# Now the LRU holds only graph-scoped wrappers (reusing the same primitive
-# ``TenantEnginePool`` already used for graph-scoped engine views — one
-# tested bounded-pool implementation, not a second one) sized from
-# ``KG_ENGINE_TOOL_POOL_SIZE`` (default 16); the least-recently-used
-# view is discarded at capacity. Every view shares the process authority's
-# socket, event loop, and thread; eviction never closes that transport.
-_DEFAULT_GRAPH_POOL_KEY = "__default__"
-
-
-def _client_evict(pool_key: str, client: Any) -> None:
-    """Discard a graph view without closing the process transport."""
-    del pool_key, client
-
-
-def _client_pool_capacity() -> int:
-    try:
-        from arbora.core.settings import runtime_config as config
-
-        return int(getattr(config, "kg_engine_tool_pool_size", 16) or 0)
-    except Exception:  # noqa: BLE001 — default to a small bounded pool
-        return 16
-
-
-_CLIENT_POOL_LOCK = threading.Lock()
-_CLIENT_POOL: Any = None  # lazily-built ``TenantEnginePool``, module-private
-
-
-def _get_client_pool() -> Any:
-    global _CLIENT_POOL
-    if _CLIENT_POOL is None:
-        with _CLIENT_POOL_LOCK:
-            if _CLIENT_POOL is None:
-                raise not_served(
-                    "knowledge_graph.core.tenant_engine_pool", "MEDULLA-PLACEMENT-R611"
-                )
-    return _CLIENT_POOL
-
-
-def reset_client_pool() -> None:
-    """Drop cached graph views without closing the process client (test helper)."""
-    global _CLIENT_POOL
-    with _CLIENT_POOL_LOCK:
-        if _CLIENT_POOL is not None:
-            _CLIENT_POOL.clear()
-        _CLIENT_POOL = None
+# ── Engine client resolution ───────────────────────────────────────────────────────
+# The graph-scoped client pool is owned by the engine placement, not by this
+# module (MEDULLA-PLACEMENT-R611); no pool is held at module level.
 
 
 def _client_for(graph: str) -> Any:
-    """Return a warm, non-owning process-client view bound to ``graph``."""
-    pool = _get_client_pool()
-    return pool.acquire(graph_name=graph or _DEFAULT_GRAPH_POOL_KEY)
+    """Refuse: no graph-scoped client pool is served in this process."""
+    del graph
+    raise not_served(
+        "knowledge_graph.core.tenant_engine_pool", "MEDULLA-PLACEMENT-R611"
+    )
 
 
 def _resolve_graph_name(graph: str) -> str:

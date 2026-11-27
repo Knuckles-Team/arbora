@@ -79,13 +79,6 @@ def _admin_session() -> GraphSession:
     )
 
 
-@pytest.fixture(autouse=True)
-def _fresh_client_pool(monkeypatch):
-    monkeypatch.setattr(engine_tools, "_CLIENT_POOL", None)
-    yield
-    monkeypatch.setattr(engine_tools, "_CLIENT_POOL", None)
-
-
 class _BlockingTenants:
     """Mirrors ``medulla.client.MultiTenantClient.create`` -- a plain
     synchronous call from ``_dispatch``'s point of view -- but blocks on a

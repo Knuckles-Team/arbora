@@ -265,9 +265,7 @@ def test_malformed_source_is_422_and_unknown_service_is_404(
 def test_daemon_status_key_sets_are_pinned(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from arbora.gateway import daemon
-
-    monkeypatch.setattr(daemon, "_engine", None)
+    monkeypatch.setattr(dashboard_api, "gateway_application", lambda: _App(None))
     idle = client.get("/api/dashboard/daemon/status").json()
     assert set(idle) == {"running", "role"}
     assert idle["running"] is False
@@ -282,7 +280,7 @@ def test_daemon_status_key_sets_are_pinned(
                 "queue_depth": 0,
             }
 
-    monkeypatch.setattr(daemon, "_engine", Engine())
+    monkeypatch.setattr(dashboard_api, "gateway_application", lambda: _App(Engine()))
     busy = client.get("/api/dashboard/daemon/status").json()
     assert {"running", "role", "threads", "jobs", "queue_depth"} <= set(busy)
 

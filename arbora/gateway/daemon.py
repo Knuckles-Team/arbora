@@ -18,7 +18,7 @@ import logging
 import threading
 import time
 from dataclasses import replace
-from typing import Any
+from typing import Any, NoReturn
 
 from arbora.api.errors import not_served
 from arbora.core.environment import read_env, write_env
@@ -27,9 +27,6 @@ from arbora.security.error_surface import public_error_payload
 from arbora.security.log_redaction import redact_for_log
 
 logger = logging.getLogger(__name__)
-
-_engine: Any = None
-_lock = threading.Lock()
 
 _metrics_lock = threading.Lock()
 _metrics_started = False
@@ -231,42 +228,32 @@ def refresh_process_identity(session: Any) -> Any:
     return session
 
 
-def start_host_daemon() -> Any:
-    """Start (once) the single consolidated KG daemon in this gateway process.
+def start_host_daemon() -> NoReturn:
+    """Refuse to start the consolidated KG daemon: the engine owns it.
 
-    Forces ``KG_DAEMON_ROLE=host`` so constructing the engine launches the
-    consolidated daemon threads, then returns the engine. Idempotent: repeated
-    calls return the same engine.
+    Delegated identity is validated first so a mis-configured host fails at
+    startup, then the daemon role is set; the daemon itself is not served by
+    this process (MEDULLA-PLACEMENT-R611).
     """
-    global _engine
-    with _lock:
-        if _engine is not None:
-            return _engine
-        # CONCEPT:MERISTEM-OS.identity.per-agent-on-behalf-delegation (decision 3) — fail
-        # closed at
-        # startup when delegated identity is on but no run-token signing secret
-        # resolves, so the
-        # daemon refuses to boot (config-contract) instead of failing lazily on the
-        # first spawn.
-        # No-op in the shipped `warn`/`off` posture.
-        from arbora.security.run_token import require_token_secret
+    # CONCEPT:MERISTEM-OS.identity.per-agent-on-behalf-delegation (decision 3) — fail
+    # closed at startup when delegated identity is on but no run-token signing
+    # secret resolves, so the daemon refuses to boot (config-contract) instead
+    # of failing lazily on the first spawn. No-op in the shipped `warn`/`off`
+    # posture.
+    from arbora.security.run_token import require_token_secret
 
-        require_token_secret()
-        # The gateway process is the authoritative daemon host.
-        write_env("KG_DAEMON_ROLE", "host")
-        raise not_served("knowledge_graph.core.engine", "MEDULLA-PLACEMENT-R611")
-    # CONCEPT:MERISTEM-ECO.messaging.inbound-messaging-router-runs — the inbound messaging
-    # router runs in its OWN process
-    # (the messaging intake co-service), NOT here,
-    # so
-    # the host's CPU-bound maintenance (codebase ingestion / relevance sweeps) can never
-    # starve the inbound reply loop. It connects to this same shared engine as a client.
-    return _engine
+    require_token_secret()
+    # The gateway process is the authoritative daemon host.
+    write_env("KG_DAEMON_ROLE", "host")
+    raise not_served("knowledge_graph.core.engine", "MEDULLA-PLACEMENT-R611")
 
 
-def daemon_status() -> dict[str, Any]:
-    """Return the consolidated daemon's status (role + live threads + jobs)."""
-    eng = _engine
+def daemon_status(engine: Any = None) -> dict[str, Any]:
+    """Return the consolidated daemon's status (role + live threads + jobs).
+
+    ``engine`` is the engine handle the caller holds; ``None`` reports idle.
+    """
+    eng = engine
     if eng is None:
         return {"running": False, "role": read_env("KG_DAEMON_ROLE", "auto")}
     try:
@@ -275,7 +262,7 @@ def daemon_status() -> dict[str, Any]:
         return {"running": False, **public_error_payload(exc, logger=logger)}
 
 
-def stop_host_daemon() -> None:
+def stop_host_daemon(engine: Any = None) -> None:
     """Graceful shutdown: best-effort engine checkpoint, then release the lock.
 
     The durable task queue persists on its own (SQLite/NATS/Kafka), so a
@@ -283,8 +270,7 @@ def stop_host_daemon() -> None:
     ``GRAPH_SERVICE_PERSIST_DIR`` when enabled) for a fast warm restart, then
     release the singleton host lock so a replacement host can take over.
     """
-    global _engine
-    eng = _engine
+    eng = engine
     if eng is not None:
         try:
             gc = getattr(eng, "graph_compute", None) or getattr(eng, "graph", None)
@@ -294,5 +280,4 @@ def stop_host_daemon() -> None:
                 logger.info("Engine checkpoint written on shutdown.")
         except Exception as exc:  # noqa: BLE001
             logger.warning("engine checkpoint on shutdown skipped: %s", exc)
-    _engine = None
     logger.info("Host daemon stopped.")
