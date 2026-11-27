@@ -36,7 +36,7 @@ __all__ = [
 class OnboardingPorts:
     """What the host composed for one onboarding service."""
 
-    definition_admission: DefinitionAdmission
+    definition_admission: DefinitionAdmission | None
     ingest_worker: IngestWorkerUnit | None = None
 
 
@@ -126,4 +126,17 @@ def compose_onboarding_ports(
         unit = declare_ingest_worker_unit(engine_endpoint=endpoint)
     except ValueError:
         logger.info("ingest worker unit not declared: no served engine endpoint")
-    return OnboardingPorts(compose_definition_admission(engine, session), unit)
+    return OnboardingPorts(_admission_or_none(engine, session), unit)
+
+
+def _admission_or_none(engine: Any, session: Any) -> DefinitionAdmission | None:
+    """The definition admission, or ``None`` for an engine with no graph compute.
+
+    An engine that cannot open a graph client has no admission to compose; onboarding
+    then fails a bound definition closed rather than the boot stopping.
+    """
+    try:
+        return compose_definition_admission(engine, session)
+    except AttributeError:
+        logger.info("definition admission not composed: the engine has no graph client")
+        return None
