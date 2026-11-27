@@ -5,7 +5,7 @@ Governing [spec](spec.md) and [plan](plan.md). One task per row, producer first.
 Before a pull request, run `uvx pre-commit run --all-files` at both stages. Follow the repository gate and use local fixtures, never private services.
 
 - [x] T001 [P] [US3] ARBORA-DATA-MARKET-R001.1 Finance receipts move through the engine machine.
-- [ ] T002 [US3] ARBORA-DATA-MARKET-R002 Scheduled finance backfill, scan, and explanation jobs.
+- [x] T002 [US3] ARBORA-DATA-MARKET-R002 Scheduled finance backfill, scan, and explanation jobs.
 - [x] T003 [P] [US3] ARBORA-DATA-MARKET-R003.1 Market list/search/get.
 - [x] T004 [P] [US3] ARBORA-DATA-MARKET-R003.2 Event list/search/get.
 - [x] T005 [P] [US3] ARBORA-DATA-MARKET-R003.3 Order list/search/get.
@@ -23,7 +23,7 @@ Before a pull request, run `uvx pre-commit run --all-files` at both stages. Foll
 - [x] T017 [P] [US3] ARBORA-DATA-MARKET-R003.15 Finance guide projection.
 - [x] T018 [P] [US2] ARBORA-DATA-MARKET-R004 One-at-a-time application admission with rollback.
 - [x] T019 [P] [US1] ARBORA-DATA-MARKET-R005 schema_context query surface for tables and ontology mappings.
-- [ ] T020 [P] [US3] ARBORA-DATA-MARKET-R006 Recurring DCA plans with deterministic, non-duplicating proposals.
+- [x] T020 [P] [US3] ARBORA-DATA-MARKET-R006 Recurring DCA plans with deterministic, non-duplicating proposals.
 - [ ] T021 [P] [US3] ARBORA-DATA-MARKET-R007.1 Model.
 - [ ] T022 [P] [US3] ARBORA-DATA-MARKET-R007.2 Behavior.
 - [ ] T023 [P] [US3] ARBORA-DATA-MARKET-R007.3 Wiring.
@@ -34,7 +34,7 @@ Before a pull request, run `uvx pre-commit run --all-files` at both stages. Foll
 - [ ] T028 [P] [US3] ARBORA-DATA-MARKET-R008 Served forecast operation `market.forecast.sample`.
 - [ ] T029 [P] [US3] ARBORA-DATA-MARKET-R009 Served reads and imports for the Markets app (rollup).
 - [ ] T030 [P] [US3] ARBORA-DATA-MARKET-R009.1 Performance and benchmark card read.
-- [ ] T031 [P] [US3] ARBORA-DATA-MARKET-R009.2 Instrument detail: rates and dividends.
+- [x] T031 [P] [US3] ARBORA-DATA-MARKET-R009.2 Instrument detail: rates and dividends.
 - [x] T032 [P] [US3] ARBORA-DATA-MARKET-R009.3 Strategy recommendation with evidence or an abstain reason.
 - [x] T033 [P] [US3] ARBORA-DATA-MARKET-R009.4 DCA and alert delivery receipts read.
 - [ ] T034 [P] [US3] ARBORA-DATA-MARKET-R009.5 CSV import preview.

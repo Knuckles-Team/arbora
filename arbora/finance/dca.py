@@ -14,9 +14,10 @@ module owns only the plan model and the proposal dedupe record.
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -27,11 +28,16 @@ from arbora.finance.receipts import (
 )
 
 __all__ = [
+    "DCAEvaluationError",
+    "DCAHost",
     "DCAPlan",
     "DCAProposalOutcome",
     "PlanMode",
     "build_dca_proposal_key",
+    "evaluate_dca",
+    "minor_units",
     "record_dca_proposal",
+    "run_dca_due",
 ]
 
 PlanMode = Literal["paper", "live"]
@@ -91,5 +97,101 @@ async def record_dca_proposal(
     )
     if not claimed:
         return "duplicate"
+    await complete_receipt(engine, plan.tenant_id, "dca_proposal", key)
+    return "proposed"
+
+
+#: ISO 4217 minor-unit exponents other than two (a unit conversion, not a formula).
+_ZERO_DECIMAL = frozenset({"JPY", "KRW", "VND", "CLP", "ISK", "UGX", "XAF", "XOF"})
+_THREE_DECIMAL = frozenset({"BHD", "JOD", "KWD", "OMR", "TND"})
+DCA_STRATEGY_VERSION = 1
+
+Send = Callable[[str, dict[str, Any]], Awaitable[Any]]
+
+
+class DCAEvaluationError(ValueError):
+    """The plan cannot be sized: a non-integral minor-unit amount or a bad engine answer."""
+
+    code = "INVALID_ARGUMENT"
+
+
+def minor_units(amount: Decimal, currency: str) -> int:
+    """The amount in the currency's minor units; a fractional minor unit is refused."""
+    exponent = (
+        0 if currency in _ZERO_DECIMAL else 3 if currency in _THREE_DECIMAL else 2
+    )
+    scaled = amount.scaleb(exponent)
+    if scaled != scaled.to_integral_value():
+        raise DCAEvaluationError("amount is not a whole number of minor units")
+    return int(scaled)
+
+
+async def evaluate_dca(send: Send, plan: DCAPlan) -> Mapping[str, Any]:
+    """Size one proposal with the engine's DCA evaluator (``strategy_evaluate``).
+
+    The sizing is the engine's (MEDULLA-FINANCE-PRIMITIVES-R007.1); Arbora holds no
+    formula and only converts the decimal amount to the minor units the op takes. The
+    answer is ``{strategy_version, side, amount_minor_units}``.
+    """
+    spec = {
+        "version": DCA_STRATEGY_VERSION,
+        "kind": {
+            "DollarCostAverageFixedAmount": {
+                "amount_minor_units": minor_units(plan.amount, plan.currency)
+            }
+        },
+    }
+    answer = await send(
+        "FinanceMarket", {"op": {"op": "strategy_evaluate", "spec": spec}}
+    )
+    if not isinstance(answer, Mapping) or "amount_minor_units" not in answer:
+        raise DCAEvaluationError("engine strategy answer malformed")
+    return answer
+
+
+class DCAHost:
+    """What a due occurrence needs beyond the engine: the paper door and the event."""
+
+    async def submit_paper(self, plan: DCAPlan, proposal: Mapping[str, Any]) -> None:
+        raise NotImplementedError
+
+    async def missed(self, plan: DCAPlan, occurrence: str, reason: str) -> None:
+        raise NotImplementedError
+
+
+async def run_dca_due(
+    engine: FinanceReceiptEngine,
+    send: Send,
+    host: DCAHost,
+    plan: DCAPlan,
+    occurrence: str,
+) -> DCAProposalOutcome | Literal["paused", "missed"]:
+    """One due occurrence: claim its key, size it by the engine, then paper-fill or hold.
+
+    A paused plan does nothing. A replay finds the claimed key and proposes nothing. A
+    failed sizing or paper fill yields the operator event ``DCA_MISSED``; the occurrence is
+    never skipped silently and never doubled. Live mode stays a proposal for a human.
+    """
+    if plan.paused:
+        return "paused"
+    key = build_dca_proposal_key(plan, occurrence)
+    claimed = await claim_receipt(
+        engine,
+        plan.tenant_id,
+        "dca_proposal",
+        key,
+        event_id=key,
+        mode=plan.mode,
+        recorded_at=datetime.now(UTC).isoformat(),
+    )
+    if not claimed:
+        return "duplicate"
+    try:
+        proposal = await evaluate_dca(send, plan)
+        if plan.mode == "paper":
+            await host.submit_paper(plan, proposal)
+    except Exception as error:  # noqa: BLE001 - every failure is reported as a missed occurrence
+        await host.missed(plan, occurrence, type(error).__name__)
+        return "missed"
     await complete_receipt(engine, plan.tenant_id, "dca_proposal", key)
     return "proposed"

@@ -604,6 +604,20 @@ def _with_approval_notices(
     return {**bound, **bindings}, startup
 
 
+def _loop_body(bindings: Mapping[str, Any]) -> Any:
+    """The bound loop body, else the finance schedule body over its host.
+
+    The finance schedule runs on the Loops lease and task queue, never a scheduler of
+    its own (ARBORA-DATA-MARKET-R002).
+    """
+    host = bindings.get("finance_schedule_host")
+    if bindings.get("loop_body") is not None or host is None:
+        return bindings.get("loop_body")
+    from arbora.finance.loop_body import FinanceLoopBody
+
+    return FinanceLoopBody(host)
+
+
 def _with_loop_worker(
     bindings: Mapping[str, Any],
     pool: Any,
@@ -617,7 +631,7 @@ def _with_loop_worker(
     and runs the body through the bound port. With no body bound nothing is
     claimed and the queued run stays in the engine: the capability fails closed.
     """
-    body = bindings.get("loop_body")
+    body = _loop_body(bindings)
     if body is None:
         return bindings, None
     import socket
