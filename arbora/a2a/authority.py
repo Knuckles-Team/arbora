@@ -9,21 +9,16 @@ import logging
 import threading
 import time
 from collections import OrderedDict
-from collections.abc import Callable, Mapping
-from datetime import UTC, datetime
-from types import MappingProxyType
-from typing import Any, Protocol, cast, runtime_checkable
+from collections.abc import Callable
+from typing import Any, Protocol, runtime_checkable
 
 from scion_sdk.privacy import persistence_reference
 
 from arbora.api.domain.a2a.models import (
     A2AArtifact,
     A2AMessage,
-    A2AReplyUnavailable,
     A2ARouteDecision,
     A2ATask,
-    A2ATaskState,
-    A2ATaskStatus,
     A2ATextPart,
 )
 from arbora.core.a2a_errors import A2AIdempotencyConflict
@@ -32,6 +27,18 @@ from arbora.core.work_item_errors import NativeWorkItemRequired
 from arbora.run_origin import RunOriginRegistry
 
 from .held_output import held_metadata
+from .run_lifecycle import (
+    _MAX_OUTPUT_CHARS,
+    _TERMINAL,
+    _WORK_ITEM_PREFIX,
+    RunLifecycle,
+)
+from .task_projection import (
+    _STATE_MAP,
+    TaskProjection,
+    _digest,
+    _ReplyUnavailable,
+)
 from .tool_subset import require_carrier as require_tool_subset_carrier
 
 logger = logging.getLogger(__name__)
@@ -47,15 +54,10 @@ __all__ = [
 ]
 
 _TASK_PREFIX = "a2a-"
-_WORK_ITEM_PREFIX = "workitem:orchestrator:"
 _A2A_METADATA_SCHEMA = "arbora-a2a-unary-v1"
-#: How long one agent run may hold its WorkItem lease.
-_RUN_LEASE_SECONDS = 600.0
 #: The most content one child message carries (ARBORA-RELEASE-R003.4.12).
 CHILD_INPUT_MAX_BYTES = 16_384
-_TERMINAL = frozenset({"succeeded", "failed", "cancelled", "dead_letter"})
 _MAX_OUTPUTS = 1024
-_MAX_OUTPUT_CHARS = 65_536
 
 
 class TaskOutputs:
@@ -102,26 +104,6 @@ class TaskOutputs:
                 parts=[A2ATextPart(text=text)],
             )
         ]
-
-
-_STATE_MAP: Mapping[str, A2ATaskState] = MappingProxyType(
-    {
-        "submitted": "submitted",
-        "ready": "submitted",
-        "leased": "working",
-        "running": "working",
-        "succeeded": "completed",
-        "failed": "failed",
-        "cancelled": "canceled",
-        "dead_letter": "failed",
-    }
-)
-
-
-class _ReplyUnavailable(RuntimeError):
-    def __init__(self, reason: Any) -> None:
-        super().__init__("durable A2A reply is unavailable")
-        self.availability = A2AReplyUnavailable(reason=reason)
 
 
 class A2AContextUnavailable(RuntimeError):
@@ -204,42 +186,6 @@ def harness_metadata(harness: Any) -> dict[str, Any]:
     }
 
 
-def _digest(value: Any) -> str:
-    encoded = json.dumps(
-        value,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
-    ).encode("utf-8")
-    return hashlib.sha256(encoded).hexdigest()
-
-
-def _delegated_tools(preloaded: Any, operations: tuple[str, ...] | None) -> Any:
-    """The run's tools bounded by its delegation: ``None`` operations leave them as is."""
-    if operations is None:
-        return preloaded
-    held = frozenset(operations)
-    if preloaded is None:
-        return tuple(op for op in operations if not op.startswith("agent:"))
-    return tuple(tool for tool in preloaded if tool in held)
-
-
-def _acting_scope(session: Any, acting_session: Any) -> tuple[Any, Any]:
-    """The session a run executes under and the scope that binds it.
-
-    A reclaimed run carries the host session with its delegation; any other run keeps
-    the session it was admitted under and binds nothing new.
-    """
-    from contextlib import nullcontext
-
-    from arbora.security.session import use_session
-
-    if acting_session is None:
-        return session, nullcontext()
-    return acting_session, use_session(acting_session)
-
-
 class WorkItemA2AAuthority:
     """A2A projection over AU's sole durable WorkItem and dispatch authorities."""
 
@@ -299,6 +245,26 @@ class WorkItemA2AAuthority:
         #: Writes the team records and applies the coordination decision at admission
         #: (ARBORA-OPS-R877); ``None`` until the host binds one.
         self.team: Any = None
+        self.runs = RunLifecycle(
+            engine=lambda *a, **k: self._engine(*a, **k),
+            executor=lambda: self._executor,
+            held_output_refs=self._held_output_refs,
+            clock=lambda: self.clock,
+            delegation_reader=lambda: self.delegation_reader,
+            events=lambda: self.events,
+            held_output_graph=lambda: self.held_output_graph,
+            held_output_source=lambda: self.held_output_source,
+            hosted_invocation=lambda: self.hosted_invocation,
+            outputs=self.outputs,
+            push=lambda: self.push,
+            task_plan_config=lambda: self.task_plan_config,
+        )
+        self.projection = TaskProjection(
+            work_item_id=lambda *a, **k: self._work_item_id(*a, **k),
+            engine=lambda *a, **k: self._engine(*a, **k),
+            held_output_source=lambda: self.held_output_source,
+            outputs=self.outputs,
+        )
 
     def provision_capacity(self, request: Any) -> Any:
         """Provision instances for a run before its dispatch (ARBORA-FLEET-R024.6)."""
@@ -600,258 +566,12 @@ class WorkItemA2AAuthority:
                 raise refusal(missing) from missing
         return {**metadata, DELEGATION_KEY: run_delegation_id(task_id)}
 
-    async def _publish(
-        self,
-        item_id: str,
-        claim: Any,
-        *,
-        task_id: str,
-        context_id: str,
-        kind: str,
-        state: str | None = None,
-        final: bool = False,
-        reply: str | None = None,
-    ) -> None:
-        """Write one A2A-visible run event under the run's lease fence."""
-        if self.events is not None:
-            await self._publish_event(
-                item_id,
-                claim,
-                task_id=task_id,
-                context_id=context_id,
-                kind=kind,
-                state=state,
-                final=final,
-                reply=reply,
-            )
-        if final and self.push is not None:
-            await self._push_terminal(item_id, task_id)
-
-    async def _push_terminal(self, item_id: str, task_id: str) -> None:
-        """Submit one push item per registered target of a terminal task (R013.2).
-
-        The task is already terminal, so a failure here never fails the run.
-        """
-        from arbora import work_items
-
-        try:
-            item = await asyncio.to_thread(
-                work_items.get_work_item, self._engine()[1], item_id
-            )
-            if isinstance(item, dict):
-                await asyncio.to_thread(self.push.enqueue, task_id, item)
-        except Exception:  # terminal state is already committed
-            logging.getLogger(__name__).exception("a2a push enqueue failed")
-
-    async def _publish_event(
-        self,
-        item_id: str,
-        claim: Any,
-        *,
-        task_id: str,
-        context_id: str,
-        kind: str,
-        state: str | None,
-        final: bool,
-        reply: str | None,
-    ) -> None:
-        draft: dict[str, Any] = {
-            "task_id": task_id,
-            "context_id": context_id,
-            "kind": kind,
-            "state": state,
-            "final": final,
-        }
-        if reply is not None:
-            draft["artifact"] = {
-                "artifactId": f"{task_id}:reply",
-                "name": "reply",
-                "parts": [{"kind": "text", "text": reply}],
-            }
-        await self.events.publish(item_id, draft, claim=claim)
-
-    def _run_observer(
-        self, item_id: str, claim: Any, *, task_id: str, context_id: str
-    ) -> Any:
-        """The run's stream observer, publishing through the one event log.
-
-        ``None`` when no event log is wired or an enclosing host already
-        observes the run.
-        """
-        from arbora.agent_runs import native_stream_open
-
-        if self.events is None or native_stream_open():
-            return None
-        from arbora.api.invoke.screening import screen_settings
-
-        from .run_events import RunEventObserver
-
-        async def publish(draft: dict[str, Any]) -> None:
-            await self.events.publish(item_id, draft, claim=claim)
-
-        return RunEventObserver(
-            publish,
-            task_id=task_id,
-            context_id=context_id,
-            screen=screen_settings(self.events.config),
-        )
-
     async def owned_item(self, task_id: str) -> dict[str, Any] | None:
         """The caller's own task record, or ``None`` for an absent or foreign task."""
         try:
             return await asyncio.to_thread(self._authorized_item, task_id, "kg:read")
         except ValueError:
             return None
-
-    def _agent_executor(self) -> Any:
-        if self._executor is None:
-            raise RuntimeError("the agent run port is not composed")
-        return self._executor
-
-    def _held_refs(self, task_id: str, session: Any) -> Any:
-        """The received refs of this run's held output, or ``None`` (none composed)."""
-        provider = self._held_output_refs
-        return None if provider is None else provider(task_id, session)
-
-    async def _selected_tools(self, work_engine: Any, item_id: str) -> tuple[str, ...]:
-        """The tool subset the routing decision selected, read from the durable item."""
-        from arbora import work_items
-
-        from .tool_subset import carrier_available, selected_tools_of
-
-        if not carrier_available():
-            return ()  # PIN-LAG: dispatch refused any selected subset at admission
-        item = await asyncio.to_thread(work_items.get_work_item, work_engine, item_id)
-        return selected_tools_of(item or {})
-
-    async def _execute_claimed_run(
-        self,
-        work_engine: Any,
-        *,
-        item_id: str,
-        session: Any,
-        claim: Any,
-        agent_name: str,
-        task: str,
-        task_id: str,
-        context_id: str,
-        run_id: str | None,
-        media: dict[str, Any] | None = None,
-        observer: Any = None,
-        delegated_operations: tuple[str, ...] | None = None,
-        acting_session: Any = None,
-    ) -> Any:
-        """Execute only inside the host's revocable native owner scope.
-
-        A reclaimed run passes ``acting_session``: the host session carrying the run's
-        delegation, so every engine call of the run is made as the run's owner.
-        """
-        from arbora import work_items
-        from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
-
-        if self.task_plan_config is not None and self.hosted_invocation is None:
-            raise RuntimeError("UPGRADE_REQUIRED: hosted task-plan invocation")
-        from contextlib import nullcontext
-
-        from arbora.agent_runs import native_run_scope, native_stream_scope
-        from arbora.core.agent_names import preloaded_agent_tools
-        from arbora.current_plan_publication import bind_admitted_claim
-
-        run_session, acting_scope = _acting_scope(session, acting_session)
-        subset = await self._selected_tools(work_engine, item_id)
-        with (
-            acting_scope,
-            native_run_scope(
-                run_id=run_id or task_id,
-                task_id=task_id,
-                context_id=context_id,
-                work_item_id=item_id,
-                session=run_session,
-                claim=claim,
-                owner_graph=(
-                    work_items.native_owner_graph(work_engine)
-                    if self.task_plan_config is not None
-                    else None
-                ),
-                hosted_invocation=self.hosted_invocation,
-                held_output=self._held_refs(task_id, session),
-                tool_subset=subset,
-            ),
-            (
-                bind_admitted_claim(
-                    work_engine,
-                    session=run_session,
-                    run_id=run_id or task_id,
-                    work_item_id=item_id,
-                    claim=claim,
-                    hosted_invocation=self.hosted_invocation,
-                    owner_graph=work_items.native_owner_graph(work_engine),
-                )
-                if self.task_plan_config is not None
-                else nullcontext()
-            ),
-            (
-                native_stream_scope(run_session, observer)
-                if observer is not None
-                else nullcontext()
-            ),
-        ):
-            return await self._agent_executor().execute_agent(
-                AgentExecutionRequest(
-                    agent_name=agent_name,
-                    task=task,
-                    run_id=run_id or task_id or None,
-                    allowed_tools=_delegated_tools(
-                        preloaded_agent_tools(agent_name), delegated_operations
-                    ),
-                    **(media or {}),
-                ),
-                session=run_session,
-            )
-
-    async def _run(
-        self,
-        work_engine: Any,
-        *,
-        item_id: str,
-        session: Any,
-        agent_name: str,
-        task: str,
-        task_id: str = "",
-        context_id: str = "",
-        run_id: str | None = None,
-        media: dict[str, Any] | None = None,
-    ) -> dict[str, int] | None:
-        """Lease the WorkItem, run the agent through the harness, commit the outcome.
-
-        The run takes the task id as its run id, so its RunEvents name the
-        task. The fleet agent runs with Arbora's own ``find``/``act`` verbs
-        as its tools.
-        """
-        from arbora import work_items
-
-        claim = await asyncio.to_thread(
-            work_items.claim_specific,
-            work_engine,
-            item_id,
-            token=f"arbora-a2a:{item_id}",
-            lease_ttl_s=_RUN_LEASE_SECONDS,
-            now=self.clock(),
-        )
-        if claim is None:
-            return None
-        return await self._run_claimed(
-            work_engine,
-            claim,
-            item_id=item_id,
-            session=session,
-            agent_name=agent_name,
-            task=task,
-            task_id=task_id,
-            context_id=context_id,
-            run_id=run_id,
-            media=media,
-        )
 
     async def resume_reclaimed(
         self,
@@ -861,251 +581,10 @@ class WorkItemA2AAuthority:
         *,
         session: Any,
     ) -> dict[str, int] | None:
-        """Resume a run whose lease expired, under the claim the consumer won.
-
-        The run restarts under the new lease fence. The harness restores the
-        run from ``EngineHostCheckpoint`` (``MERISTEM-BOUNDARY-R043.8``), and the
-        event log continues from the committed ``event_seq``: the ``working``
-        event of the first attempt is not published again.
-
-        The run acts under its own ``agent_run`` delegation (``delegation_id`` of the
-        claim), not the host's process session: the delegation's principal must be
-        the run's owner, and the run's tools are bounded by the delegation's
-        operations. A foreign, absent, revoked or expired delegation raises
-        ``RunDelegationRefused`` before any step runs.
-        """
-        from .run_delegation import acting_session, resolve_run_delegation
-
-        delegation = await resolve_run_delegation(
-            item,
-            claim,
-            read=self.delegation_reader,
-            tenant=str(session.tenant),
+        """Resume a run whose lease expired, under the claim the consumer won."""
+        return await self.runs.resume_reclaimed(
+            work_engine, item, claim, session=session
         )
-        acting = acting_session(session, delegation)
-        metadata = item["metadata"]
-        item_id = str(item["work_item_id"])
-        route = metadata.get("a2a_route") or {}
-        agent_name = str(route.get("agent_name") or route.get("agentName") or "")
-        task_id = item_id.removeprefix(_WORK_ITEM_PREFIX)
-        return await self._run_claimed(
-            work_engine,
-            claim,
-            item_id=item_id,
-            session=session,
-            agent_name=agent_name,
-            task=str(metadata.get("description") or ""),
-            task_id=task_id,
-            context_id=str(metadata.get("a2a_context_id") or ""),
-            run_id=str(metadata.get("a2a_run_id") or task_id),
-            resumed=True,
-            delegated_operations=delegation.operations,
-            acting_session=acting,
-        )
-
-    async def _run_claimed(
-        self,
-        work_engine: Any,
-        claim: dict[str, Any],
-        *,
-        item_id: str,
-        session: Any,
-        agent_name: str,
-        task: str,
-        task_id: str,
-        context_id: str,
-        run_id: str | None,
-        media: dict[str, Any] | None = None,
-        resumed: bool = False,
-        delegated_operations: tuple[str, ...] | None = None,
-        acting_session: Any = None,
-    ) -> dict[str, int] | None:
-        """Run the agent under a lease already held and commit its outcome."""
-        outcome, result_ref, error_ref = "succeeded", None, None
-        usage = None
-        reply: str | None = None
-        if not resumed:
-            await self._publish(
-                item_id,
-                claim,
-                task_id=task_id,
-                context_id=context_id,
-                kind="status-update",
-                state="working",
-            )
-        observer = self._run_observer(
-            item_id, claim, task_id=task_id, context_id=context_id
-        )
-        try:
-            result = await self._execute_claimed_run(
-                work_engine,
-                item_id=item_id,
-                session=session,
-                claim=claim,
-                agent_name=agent_name,
-                task=task,
-                task_id=task_id,
-                context_id=context_id,
-                run_id=run_id,
-                media=media,
-                observer=observer,
-                delegated_operations=delegated_operations,
-                acting_session=acting_session,
-            )
-            if result.run_id != (run_id or task_id):
-                raise RuntimeError("agent result does not belong to this A2A turn")
-            result_ref = persistence_reference(
-                "run", result.run_id, namespace="arbora-a2a"
-            )
-            usage = getattr(result, "usage", None)
-            self.outputs.remember(task_id, getattr(result, "output", None))
-            output = getattr(result, "output", None)
-            reply = output if isinstance(output, str) and output else None
-        except Exception as exc:
-            logging.getLogger(__name__).debug(
-                "a failed run is a failed task", exc_info=True
-            )
-            logging.getLogger(__name__).warning(
-                "A2A run %s failed: %s: %s", item_id, type(exc).__name__, str(exc)[:300]
-            )
-            from arbora.agent_runs import failed_run_usage
-
-            usage = failed_run_usage(exc, run_id or task_id)
-            outcome = "failed"
-            result_ref = None
-            self.outputs.forget(task_id)
-            error_ref = persistence_reference(
-                "error", type(exc).__name__, namespace="arbora-a2a"
-            )
-        if reply is not None:
-            reply = reply[:_MAX_OUTPUT_CHARS]
-        answered = await self._finish_reply(observer, session, task_id, reply, outcome)
-        if reply is not None and not answered:
-            await self._publish(
-                item_id,
-                claim,
-                task_id=task_id,
-                context_id=context_id,
-                kind="artifact-update",
-                reply=reply,
-            )
-        # The final event is durable before the result commits (the lease fence
-        # needs that order). The stream holds it back until the commit lands.
-        await self._publish(
-            item_id,
-            claim,
-            task_id=task_id,
-            context_id=context_id,
-            kind="status-update",
-            state="completed" if outcome == "succeeded" else "failed",
-            final=True,
-        )
-        completion_kwargs: dict[str, Any] = {}
-        if self.task_plan_config is not None:
-            completion_kwargs["run_completion"] = {
-                "schema_version": 1,
-                "run_id": run_id or task_id,
-                **({"usage": usage} if usage is not None else {}),
-            }
-        await self._commit_outcome(
-            work_engine,
-            item_id,
-            claim,
-            outcome=outcome,
-            result_ref=result_ref,
-            error_ref=error_ref,
-            task_id=task_id,
-            context_id=context_id,
-            completion_kwargs=completion_kwargs,
-        )
-        return usage
-
-    async def _finish_reply(
-        self,
-        observer: Any,
-        session: Any,
-        task_id: str,
-        reply: str | None,
-        outcome: str,
-    ) -> bool:
-        """Hold the reply as an output (R022.1), then finish its stream; was it answered."""
-        if reply and outcome == "succeeded" and self.held_output_source is not None:
-            await self.held_output_source.produce(
-                self._engine()[0],
-                tenant=str(session.tenant),
-                task_id=task_id,
-                text=reply,
-                graph=self.held_output_graph,
-            )
-        return await observer.finish(reply) if observer is not None else False
-
-    async def _commit_outcome(
-        self,
-        work_engine: Any,
-        item_id: str,
-        claim: Any,
-        *,
-        outcome: str,
-        result_ref: str | None,
-        error_ref: str | None,
-        task_id: str,
-        context_id: str,
-        completion_kwargs: dict[str, Any],
-    ) -> None:
-        """Commit the outcome, then wake the streams that wait on it.
-
-        A commit that does not apply moves a ``succeeded`` run to ``failed``
-        through the same edge: a final ``failed`` event, then the ``failed``
-        commit. The stream delivers the committed state and never the
-        ``completed`` event that was written ahead of the commit.
-        """
-        from arbora import work_items
-
-        try:
-            status = await asyncio.to_thread(
-                work_items.commit_result,
-                work_engine,
-                item_id,
-                claim,
-                outcome=outcome,
-                result_ref=result_ref,
-                error_ref=error_ref,
-                **completion_kwargs,
-            )
-        except Exception as exc:  # the failed edge is the answer
-            if outcome != "succeeded":
-                raise
-            logging.getLogger(__name__).warning(
-                "A2A run %s commit failed: %s", item_id, type(exc).__name__
-            )
-            status = "commit_failed"
-        applied = not isinstance(status, str) or status in {"committed", "noop"}
-        if applied or status in _TERMINAL or outcome != "succeeded":
-            if self.events is not None:
-                self.events.notify(item_id)
-            return
-        await self._publish(
-            item_id,
-            claim,
-            task_id=task_id,
-            context_id=context_id,
-            kind="status-update",
-            state="failed",
-            final=True,
-        )
-        await asyncio.to_thread(
-            work_items.commit_result,
-            work_engine,
-            item_id,
-            claim,
-            outcome="failed",
-            error_ref=persistence_reference(
-                "error", "CommitFailed", namespace="arbora-a2a"
-            ),
-            **completion_kwargs,
-        )
-        if self.events is not None:
-            self.events.notify(item_id)
 
     def _validate_admitted_item(
         self,
@@ -1348,7 +827,7 @@ class WorkItemA2AAuthority:
         if created:
             # One new run on the predecessor's chosen agent; a replay starts nothing.
             self._detach(
-                self._run(
+                self.runs._run(
                     work_engine,
                     item_id=item_id,
                     session=session,
@@ -1479,7 +958,7 @@ class WorkItemA2AAuthority:
             # ``tasks/get``. The detached run inherits the caller's session
             # through the copied context.
             self._detach(
-                self._run(
+                self.runs._run(
                     work_engine,
                     item_id=item_id,
                     session=session,
@@ -1493,7 +972,7 @@ class WorkItemA2AAuthority:
                 item_id,
             )
         else:
-            usage = await self._run(
+            usage = await self.runs._run(
                 work_engine,
                 item_id=item_id,
                 session=session,
@@ -1567,179 +1046,9 @@ class WorkItemA2AAuthority:
             return None
         return item if self._owned(item, self._owner_ref(session)) else None
 
-    @staticmethod
-    def _timestamp(value: Any) -> str | None:
-        if value in (None, ""):
-            return None
-        if isinstance(value, (int, float)):
-            return datetime.fromtimestamp(float(value), tz=UTC).isoformat()
-        rendered = str(value).strip()
-        return rendered or None
-
     def project_held(self, item: dict[str, Any], *, task_id: str) -> A2ATask:
         """The task of ``item``, with the held reply of a succeeded run."""
-        return self._project(
-            item, task_id=task_id, artifacts=self.outputs.artifacts(task_id)
-        )
-
-    @staticmethod
-    def _project(
-        item: dict[str, Any],
-        *,
-        task_id: str,
-        artifacts: list[A2AArtifact] | None = None,
-    ) -> A2ATask:
-        raw_state = str(item.get("status") or "")
-        from .event_log import terminal_state
-
-        state = (
-            "failed"
-            if terminal_state(item) == "failed" and raw_state == "cancelled"
-            else _STATE_MAP.get(raw_state)
-        )
-        if state is None:
-            raise RuntimeError("canonical WorkItem has an invalid A2A state")
-        metadata = item.get("metadata")
-        if not isinstance(metadata, dict):
-            raise RuntimeError("canonical WorkItem lacks A2A metadata")
-        route = metadata.get("a2a_route")
-        public_route = route if isinstance(route, dict) else {}
-        run_id = str(metadata.get("a2a_run_id") or task_id)
-        public_metadata: dict[str, Any] = {
-            "taskAuthorityRef": str(
-                item.get("work_item_id") or WorkItemA2AAuthority._work_item_id(task_id)
-            ),
-            "runId": run_id,
-            "routing": public_route,
-        }
-        from arbora.observability.trace_ontology import (
-            trace_id as canonical_trace_id,
-        )
-
-        public_metadata["runTraceRef"] = canonical_trace_id(run_id)
-        return A2ATask(
-            id=task_id,
-            context_id=str(metadata.get("a2a_context_id") or ""),
-            status=A2ATaskStatus(
-                state=state,
-                timestamp=WorkItemA2AAuthority._timestamp(
-                    item["updated_at_ms"] / 1000
-                    if isinstance(item.get("updated_at_ms"), (int, float))
-                    else item.get("updated_at")
-                ),
-            ),
-            artifacts=artifacts if raw_state == "succeeded" else None,
-            metadata={"arbora": public_metadata},
-        )
-
-    @staticmethod
-    def _read_reply_payload(payload: Any, task_id: str) -> Any:
-        """Decode the bounded durable payload before validating its identity."""
-        from arbora.agent_runs import MAX_RUN_EVENT_PAYLOAD_BYTES
-
-        if not isinstance(payload, str):
-            raise RuntimeError("durable A2A reply is unavailable")
-        try:
-            if len(payload.encode("utf-8")) > MAX_RUN_EVENT_PAYLOAD_BYTES:
-                raise ValueError("run event exceeds its payload bound")
-            event = json.loads(payload)
-        except (ValueError, UnicodeError) as exc:
-            raise RuntimeError("durable A2A reply is unavailable") from exc
-        WorkItemA2AAuthority._check_reply_marker(event, task_id)
-        return event
-
-    @staticmethod
-    def _check_reply_marker(event: Any, task_id: str) -> None:
-        """Refuse malformed markers before exposing a typed availability reason."""
-        from arbora.agent_runs import RUN_EVENT_PAYLOAD_ERROR_SCHEMA
-
-        if (
-            isinstance(event, dict)
-            and event.get("schema") == RUN_EVENT_PAYLOAD_ERROR_SCHEMA
-        ):
-            error = event.get("payload_error")
-            if not (
-                event.get("type") == "graph_complete"
-                and event.get("run_id") == task_id
-                and set(event)
-                <= {"schema", "type", "run_id", "step", "status", "payload_error"}
-                and type(event.get("step")) is int
-                and 0 <= event["step"] <= 2**63 - 1
-            ):
-                raise RuntimeError("durable A2A reply is unavailable")
-            WorkItemA2AAuthority._raise_reply_marker(event, error)
-
-    @staticmethod
-    def _raise_reply_marker(event: dict[str, Any], error: Any) -> None:
-        """Validate marker details before raising their typed refusal."""
-        from arbora.agent_runs import MAX_RUN_EVENT_PAYLOAD_BYTES
-
-        if not (
-            isinstance(error, dict)
-            and set(error) == {"code", "max_bytes"}
-            and type(error["max_bytes"]) is int
-            and error["max_bytes"] == MAX_RUN_EVENT_PAYLOAD_BYTES
-            and isinstance(error["code"], str)
-            and event.get("status") in (None, "completed", "stopped")
-            and error["code"] in {"payload_too_large", "payload_serialization_failed"}
-        ):
-            raise RuntimeError("durable A2A reply is unavailable")
-        raise _ReplyUnavailable(error["code"])
-
-    @staticmethod
-    def _reply_text(event: Any, task_id: str) -> str:
-        """Accept output only from the matching successful terminal run."""
-        result = event.get("result") if isinstance(event, dict) else None
-        if not (
-            isinstance(event, dict)
-            and event.get("type") == "graph_complete"
-            and event.get("run_id") == task_id
-            and isinstance(result, dict)
-            and result.get("run_id") == task_id
-            and result.get("status") in {"completed", "stopped"}
-            and isinstance(result.get("output"), str)
-        ):
-            raise RuntimeError("durable A2A reply is unavailable")
-        return cast(str, result["output"])
-
-    def _persisted_artifacts(
-        self, task_id: str, *, item: dict[str, Any]
-    ) -> list[A2AArtifact] | None:
-        """Read an existing terminal payload, never reconstruct a receipt."""
-        return self._persisted_reply(task_id, item=item)[0]
-
-    def _persisted_reply(
-        self, task_id: str, *, item: dict[str, Any]
-    ) -> tuple[list[A2AArtifact] | None, dict[str, Any] | None]:
-        """The terminal reply and the held-output block its run emitted, if any."""
-        if item.get("status") != "succeeded":
-            return None, None
-        run_id = str(item.get("metadata", {}).get("a2a_run_id") or task_id)
-        engine, _work_engine = self._engine()
-        rows = engine.query_cypher(
-            "MATCH (e) WHERE e.type = 'RunEvent' "
-            "AND e.run_id = $run_id AND e.task_id = $run_id "
-            "AND e.event_type = $event_type "
-            "RETURN e.payload AS payload LIMIT 2",
-            {"run_id": run_id, "event_type": "graph_complete"},
-        )
-        if rows == []:
-            return None, None
-        if not isinstance(rows, list) or len(rows) != 1:
-            raise RuntimeError("durable A2A reply is unavailable")
-        row = rows[0]
-        payload = row.get("payload") if isinstance(row, dict) else None
-        event = self._read_reply_payload(payload, run_id)
-        text = self._reply_text(event, run_id)
-        if len(text) > _MAX_OUTPUT_CHARS:
-            raise _ReplyUnavailable("reply_too_large")
-        if not text:
-            return None, None
-        from .held_output import reply_artifact
-        from .held_output_source import held_block
-
-        held = held_block(event.get("result"), engine, task_id, self.held_output_source)
-        return [reply_artifact(task_id, text)], held
+        return self.projection.held_task(item, task_id=task_id)
 
     async def get_committed_task(self, task_id: str) -> A2ATask | None:
         return await self.get(task_id, include_committed_event=True)
@@ -1766,7 +1075,7 @@ class WorkItemA2AAuthority:
         await self._attach_run_usage(task, item, read_session)
         try:
             task.artifacts, held = await asyncio.to_thread(
-                self._persisted_reply, task_id, item=item
+                self.projection._persisted_reply, task_id, item=item
             )
             task.metadata.update(held_metadata(held))
         except _ReplyUnavailable as exc:
@@ -1851,26 +1160,6 @@ class WorkItemA2AAuthority:
         ):
             raise PermissionError("A2A caller changed during terminal read")
 
-    @staticmethod
-    def _cursor(owner_ref: str, tenant: str, native_cursor: str) -> str:
-        return f"{_digest({'tenant': tenant, 'owner': owner_ref, 'cursor': native_cursor})}.{native_cursor}"
-
-    @classmethod
-    def _decode_cursor(
-        cls, cursor: str | None, *, owner_ref: str, tenant: str
-    ) -> str | None:
-        if cursor is None:
-            return None
-        digest, separator, native_cursor = cursor.partition(".")
-        if (
-            not separator
-            or not native_cursor
-            or digest
-            != _digest({"tenant": tenant, "owner": owner_ref, "cursor": native_cursor})
-        ):
-            raise ValueError("A2A task cursor is invalid")
-        return native_cursor
-
     def _list_rows(
         self, *, cursor: str | None, limit: int, tenant: str, owner_ref: str
     ) -> Any:
@@ -1899,26 +1188,6 @@ class WorkItemA2AAuthority:
             raise RuntimeError("canonical WorkItem list returned an invalid identity")
         return self.project_held(row, task_id=task_id)
 
-    @staticmethod
-    def _validated_list_page(
-        page: Any, limit: int, native_cursor: str | None
-    ) -> tuple[list[Any], str | None]:
-        """Validate bounded native rows and forward-only continuation together."""
-        if not isinstance(page, dict) or not isinstance(page.get("items"), list):
-            raise RuntimeError("canonical WorkItem list returned invalid data")
-        rows = page["items"]
-        continuation = page.get("next_cursor")
-        if len(rows) > limit or (
-            continuation is not None
-            and (
-                not isinstance(continuation, str)
-                or not continuation
-                or continuation == native_cursor
-            )
-        ):
-            raise RuntimeError("canonical WorkItem list returned invalid data")
-        return rows, continuation
-
     async def list(
         self, *, cursor: str | None, limit: int
     ) -> tuple[list[A2ATask], str | None]:
@@ -1926,7 +1195,7 @@ class WorkItemA2AAuthority:
             raise ValueError("A2A task page limit must be between 1 and 100")
         session = self._session("kg:read")
         owner_ref = self._owner_ref(session)
-        native_cursor = self._decode_cursor(
+        native_cursor = self.projection._decode_cursor(
             cursor, owner_ref=owner_ref, tenant=session.tenant
         )
         page = await asyncio.to_thread(
@@ -1938,10 +1207,12 @@ class WorkItemA2AAuthority:
         )
         if self._session("kg:read") != session:
             raise PermissionError("A2A caller changed during task listing")
-        rows, continuation = self._validated_list_page(page, limit, native_cursor)
+        rows, continuation = self.projection._validated_list_page(
+            page, limit, native_cursor
+        )
         tasks = [self._project_list_row(row, owner_ref=owner_ref) for row in rows]
         next_cursor = (
-            self._cursor(owner_ref, session.tenant, continuation)
+            self.projection._cursor(owner_ref, session.tenant, continuation)
             if continuation is not None
             else None
         )
@@ -1967,7 +1238,7 @@ class WorkItemA2AAuthority:
         ):
             raise A2ATaskNotCancelable("A2A task is not cancelable")
         self._origins.revoke(cancellation_session, run_id)
-        await self._publish(
+        await self.runs._publish(
             item_id,
             None,
             task_id=task_id,

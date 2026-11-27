@@ -6,12 +6,9 @@ import time
 from types import SimpleNamespace
 from typing import Any
 
-from arbora.a2a.authority import (
-    _A2A_METADATA_SCHEMA,
-    _WORK_ITEM_PREFIX,
-    WorkItemA2AAuthority,
-)
+from arbora.a2a.authority import _A2A_METADATA_SCHEMA, WorkItemA2AAuthority
 from arbora.a2a.push import PushDeliveryWorker, PushSettings
+from arbora.a2a.run_lifecycle import _WORK_ITEM_PREFIX
 from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 from tests.a2a.test_operation_bridge import session as _session

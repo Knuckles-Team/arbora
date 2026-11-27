@@ -867,7 +867,7 @@ def anonymous_text_app(service: AnonymousTextService) -> FastAPI:
                         A2ATaskStatus,
                     )
 
-                    from .authority import _STATE_MAP
+                    from .task_projection import _STATE_MAP
 
                     answer = result.get("text")
                     task = A2ATask(

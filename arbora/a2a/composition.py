@@ -117,8 +117,8 @@ def build_a2a_service(
     The event log is the streaming authority: the card advertises
     ``streaming`` because this function wires it (ARBORA-A2A-R014).
     """
-    from .authority import _RUN_LEASE_SECONDS
     from .run_delegation import engine_delegation_reader, engine_run_delegations
+    from .run_lifecycle import _RUN_LEASE_SECONDS
 
     log = A2AEventLog(engine_provider, config=config, clock=clock)
     authority = WorkItemA2AAuthority(

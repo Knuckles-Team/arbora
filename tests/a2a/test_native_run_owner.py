@@ -71,7 +71,7 @@ async def test_submit_retry_get_list_cancel_use_returned_engine_id(
     monkeypatch.setattr(authority, "_session", lambda scope: admitted)
     monkeypatch.setattr(authority, "_owner_ref", lambda session: "owner")
     run = AsyncMock(return_value=None)
-    monkeypatch.setattr(authority, "_run", run)
+    monkeypatch.setattr(authority.runs, "_run", run)
     message = A2AMessage(
         role="user",
         message_id="one",
@@ -184,12 +184,14 @@ def test_durable_reply_uses_native_run_not_public_work_item(payload_run):
     )
     item = {"status": "succeeded", "metadata": {"a2a_run_id": "native-run"}}
     if payload_run == "native-run":
-        artifacts = authority._persisted_artifacts("public-work-item", item=item)
+        artifacts = authority.projection._persisted_artifacts(
+            "public-work-item", item=item
+        )
         assert artifacts[0].artifact_id == "public-work-item:reply"
         assert artifacts[0].parts[0].text == "reply"
     else:
         with pytest.raises(RuntimeError, match="reply is unavailable"):
-            authority._persisted_artifacts("public-work-item", item=item)
+            authority.projection._persisted_artifacts("public-work-item", item=item)
     assert observed == [{"run_id": "native-run", "event_type": "graph_complete"}]
 
 

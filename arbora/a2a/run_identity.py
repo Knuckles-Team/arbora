@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from arbora.a2a import authority
+from arbora.a2a import task_projection as _task_projection
 
 __all__ = ["A2ARunIdentity"]
 
@@ -18,7 +19,7 @@ class A2ARunIdentity:
         return authority.WorkItemA2AAuthority._owner_ref(session)  # noqa: SLF001
 
     def digest(self, value: Any) -> str:
-        return authority._digest(value)  # noqa: SLF001
+        return _task_projection._digest(value)  # noqa: SLF001
 
     def opaque_work_item_id(self, item_id: str) -> str:
         return authority.WorkItemA2AAuthority._work_item_id(item_id)  # noqa: SLF001

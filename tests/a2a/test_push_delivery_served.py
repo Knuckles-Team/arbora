@@ -81,7 +81,7 @@ def test_push_survives_restart_and_dead_letters() -> None:
 
     async def terminal() -> None:
         session_module._current.set(first.who)
-        await first.authority._publish(
+        await first.authority.runs._publish(
             ITEM_ID,
             None,
             task_id=TASK_ID,

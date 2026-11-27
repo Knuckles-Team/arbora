@@ -96,7 +96,7 @@ def _terminal_authority(result: dict[str, Any]) -> WorkItemA2AAuthority:
 
 def _read_task(authority: WorkItemA2AAuthority) -> A2ATask:
     item = {"status": "succeeded", "metadata": {"a2a_run_id": TASK}}
-    artifacts, held = authority._persisted_reply(TASK, item=item)
+    artifacts, held = authority.projection._persisted_reply(TASK, item=item)
     metadata = {} if held is None else {"heldOutput": held}
     return A2ATask(
         id=TASK,

@@ -88,7 +88,7 @@ async def test_native_list_refuses_foreign_rows(monkeypatch: Any, change: str) -
 async def test_cursor_is_bound_to_owner_and_tenant(monkeypatch: Any) -> None:
     authority, calls = fixture(monkeypatch, [])
     for owner, tenant in [("foreign", SESSION.tenant), ("owner", "foreign")]:
-        cursor = authority._cursor(owner, tenant, "opaque")
+        cursor = authority.projection._cursor(owner, tenant, "opaque")
         with pytest.raises(ValueError, match="cursor"):
             await authority.list(cursor=cursor, limit=1)
     assert calls == []
@@ -146,7 +146,7 @@ def test_invalid_persisted_reply_is_not_reconstructed(rows: Any) -> None:
         config=RuntimeConfig(),
     )
     with pytest.raises(RuntimeError, match="reply is unavailable"):
-        authority._persisted_artifacts(TASK, item=record())
+        authority.projection._persisted_artifacts(TASK, item=record())
 
 
 @pytest.mark.asyncio
@@ -181,7 +181,7 @@ def test_missing_run_event_does_not_use_process_cache() -> None:
         config=RuntimeConfig(),
     )
     authority.outputs.remember(TASK, "not durable evidence")
-    assert authority._persisted_artifacts(TASK, item=record()) is None
+    assert authority.projection._persisted_artifacts(TASK, item=record()) is None
 
 
 @pytest.mark.asyncio

@@ -12,12 +12,13 @@ import asyncio
 
 import pytest
 
-from arbora.a2a.authority import _RUN_LEASE_SECONDS, WorkItemA2AAuthority
+from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.run_delegation import (
     EngineRunDelegations,
     engine_run_delegations,
     run_delegation_id,
 )
+from arbora.a2a.run_lifecycle import _RUN_LEASE_SECONDS
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.core.settings import RuntimeConfig
 from arbora.pin_lag import medulla

@@ -99,7 +99,7 @@ async def test_real_a2a_run_exposes_claim_only_to_host_planning(
             origins=origins, ports=slot, config=RuntimeConfig()
         ),
         config=RuntimeConfig(),
-    )._run(
+    ).runs._run(
         object(),
         item_id="work",
         session=SESSION,
@@ -229,9 +229,11 @@ async def test_a2a_binds_actual_engine_graph_not_caller_default(
         config=RuntimeConfig(),
     )
     monkeypatch.setattr(
-        authority, "_agent_executor", lambda: SimpleNamespace(execute_agent=execute)
+        authority.runs,
+        "_agent_executor",
+        lambda: SimpleNamespace(execute_agent=execute),
     )
-    await authority._run(
+    await authority.runs._run(
         SimpleNamespace(work_item_graph="owner-graph"),
         item_id="work",
         session=SESSION,

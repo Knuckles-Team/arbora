@@ -54,7 +54,7 @@ async def test_only_native_claim_path_binds_actual_au_callback(
     if native:
         authority.task_plan_config = TaskPlanConfig({}, {}, 1, 2)
         authority.hosted_invocation = object()
-    result = await authority._execute_claimed_run(
+    result = await authority.runs._execute_claimed_run(
         work_engine,
         item_id="work-item:one",
         session=session,

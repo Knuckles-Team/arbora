@@ -498,7 +498,7 @@ def _native_plan_context(engine: FakeEngine) -> Any:
 @pytest.mark.asyncio
 async def test_native_plan_admission_uses_engine_identity_and_claim(monkeypatch):
     from arbora import work_items
-    from arbora.a2a import authority as a2a_authority
+    from arbora.a2a import task_projection as _task_projection
     from arbora.a2a.authority import WorkItemA2AAuthority
 
     item_id = "work-item:" + "a" * 64
@@ -511,7 +511,7 @@ async def test_native_plan_admission_uses_engine_identity_and_claim(monkeypatch)
     context_id = plans._native_context_id(
         A2ARunIdentity(), context.caller.session, owner, run_id
     )
-    request_digest = a2a_authority._digest(
+    request_digest = _task_projection._digest(
         {
             "context_id": context_id,
             "plan_digest": plan_digest,
@@ -636,7 +636,7 @@ async def test_native_plan_admission_uses_the_composed_policy_port(monkeypatch):
 @pytest.mark.asyncio
 async def test_native_plan_replay_does_not_reclaim_terminal_item(monkeypatch):
     from arbora import work_items
-    from arbora.a2a import authority as a2a_authority
+    from arbora.a2a import task_projection as _task_projection
     from arbora.a2a.authority import WorkItemA2AAuthority
 
     item_id = "work-item:" + "d" * 64
@@ -649,7 +649,7 @@ async def test_native_plan_replay_does_not_reclaim_terminal_item(monkeypatch):
     context_id = plans._native_context_id(
         A2ARunIdentity(), context.caller.session, owner, run_id
     )
-    request_digest = a2a_authority._digest(
+    request_digest = _task_projection._digest(
         {
             "context_id": context_id,
             "plan_digest": plan_digest,
