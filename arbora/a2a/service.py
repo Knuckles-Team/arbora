@@ -121,6 +121,10 @@ class A2AService:
     #: The engine decision port for the harness configuration; without one a
     #: budgeted message refuses closed (ARBORA-A2A-R017.5).
     harness_decider: Any = None
+    #: The lifetime the engine seals on the harness configuration (``valid_for_ms``,
+    #: MEDULLA-DECISION-ENGINE-R128.17); ``None`` sends none and the engine seals none.
+    #: Arbora holds no default lifetime.
+    harness_valid_for_ms: int | None = None
     #: Reads the verified caller's principal class (ARBORA-A2A-R017.3).
     principal_kind: Callable[[], str] | None = None
     #: The durable push-notification worker (ARBORA-A2A-R013); the card
@@ -241,6 +245,7 @@ class A2AService:
                 tenant=str(getattr(session, "tenant", "")),
                 priority=priority_for(SimpleNamespace(principal_kind=kind)),
                 tool_refs=decision.tool_refs,
+                valid_for_ms=self.harness_valid_for_ms,
             ),
             self.harness_decider,
         )

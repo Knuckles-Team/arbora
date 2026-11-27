@@ -93,6 +93,7 @@ class HubFederation:
         caller_scope: Sequence[str],
         from_offset: int = 0,
         limit: int = _MAX_GROUP,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         peer = self._check_scope(self._peers(tenant, peer_name), caller_scope, topic)
         if self._transport is None:
@@ -111,7 +112,15 @@ class HubFederation:
         if not group:
             return {"forwarded": 0, "replies": 0}
         replies = await self._transport.forward(peer, group)
-        for reply in replies:
+        await self._append(stream, replies, idempotency_key)
+        return {"forwarded": len(group), "replies": len(replies)}
+
+    async def _append(
+        self, stream: str, replies: Sequence[bytes], idempotency_key: str | None
+    ) -> None:
+        for index, reply in enumerate(replies):
+            # One key per reply: a replayed forward appends each reply at most once.
+            key = None if idempotency_key is None else f"{idempotency_key}:{index}"
             await self._send(
                 "StreamPublish",
                 {
@@ -119,6 +128,5 @@ class HubFederation:
                     "payload": bytes(reply),
                     "now_ms": int(self._clock() * 1000),
                 },
-                None,
+                key,
             )
-        return {"forwarded": len(group), "replies": len(replies)}

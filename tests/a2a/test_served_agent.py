@@ -156,3 +156,128 @@ def test_the_host_mounts_engine_storage_not_process_memory(
     )
     host_bindings.mount_sdk_a2a(mcp)
     assert isinstance(captured["storage"], EngineA2AStorage)
+
+
+class _Caller:
+    """Verifies the ``x-principal`` header; a request with none is refused."""
+
+    async def authenticate(self, request: Any, *, scope: str) -> Any:
+        return request.headers.get("x-principal") or None
+
+
+def _served_app(kv: Kv) -> Any:
+    """The real SDK application behind the guard, over engine storage on ``kv``."""
+    from contextlib import contextmanager
+    from contextvars import ContextVar
+
+    from fasta2a.broker import InMemoryBroker
+
+    from arbora.a2a.sdk_app import create_admitted_a2a_app
+
+    class SchedulesNothing(InMemoryBroker):
+        """The in-flight run is not under test: only admission and storage are."""
+
+        async def run_task(self, params: Any) -> None:
+            return None
+
+    current: ContextVar[str] = ContextVar("principal")
+
+    @contextmanager
+    def bind(caller: Any) -> Any:
+        token = current.set(str(caller))
+        try:
+            yield
+        finally:
+            current.reset(token)
+
+    storage = EngineA2AStorage(
+        kv, tenant=lambda: TENANT, principal=lambda: current.get(), clock=Clock()
+    )
+    return create_admitted_a2a_app(
+        object(),
+        authenticator=_Caller(),
+        bind_caller=bind,
+        name="arbora",
+        url="http://testserver/a2a",
+        version="0",
+        storage=storage,
+        broker=SchedulesNothing(),
+        list_contexts=storage.list_contexts,
+    )
+
+
+def _rpc(client: Any, principal: str, method: str, params: dict[str, Any]) -> Any:
+    return client.post(
+        "/",
+        headers={"x-principal": principal},
+        json={"jsonrpc": "2.0", "id": 7, "method": method, "params": params},
+    )
+
+
+@pytest.mark.spec("ARBORA-A2A-R001.3")
+def test_served_tasks_list_is_caller_scoped_and_a_foreign_context_is_32001() -> None:
+    from starlette.testclient import TestClient
+
+    kv = Kv()
+    served = _served_app(kv)
+    with TestClient(served, raise_server_exceptions=False) as client:
+        sent = _rpc(
+            client,
+            "person:a",
+            "message/send",
+            {
+                "message": message("plan my week")
+                | {"contextId": "ctx-a", "messageId": "m-wire"}
+            },
+        )
+        assert sent.status_code == 200 and "error" not in sent.json()
+        mine = _rpc(client, "person:a", "tasks/list", {}).json()["result"]
+        assert [c["contextId"] for c in mine["contexts"]] == ["ctx-a"]
+        assert mine["contexts"][0]["title"] == "plan my week"
+        # Another caller sees none of it, and cannot continue it: -32001.
+        assert (
+            _rpc(client, "person:b", "tasks/list", {}).json()["result"]["contexts"]
+            == []
+        )
+        foreign = _rpc(
+            client,
+            "person:b",
+            "message/send",
+            {"message": message("hi") | {"contextId": "ctx-a", "messageId": "m-wire"}},
+        )
+        assert foreign.json()["error"]["code"] == -32001
+        # An unauthenticated caller never reaches the list.
+        assert (
+            client.post(
+                "/", json={"jsonrpc": "2.0", "id": 1, "method": "tasks/list"}
+            ).status_code
+            == 401
+        )
+        bad = _rpc(client, "person:a", "tasks/list", {"limit": "many"})
+        assert bad.json()["error"]["code"] == -32602
+
+
+@pytest.mark.spec("ARBORA-A2A-R001.3")
+def test_the_host_hands_the_storage_list_to_the_served_app(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, Any] = {}
+    import arbora.a2a.sdk_app as sdk_app
+
+    monkeypatch.setattr(
+        sdk_app,
+        "create_admitted_a2a_app",
+        lambda **kwargs: (
+            captured.update(kwargs) or SimpleNamespace(app=SimpleNamespace())
+        ),
+    )
+    monkeypatch.setattr(host_bindings, "fleet_agent", lambda: object())
+    monkeypatch.setattr(host_bindings, "prompt_normalizer", lambda: object())
+    import arbora.modality.agent_input as agent_input
+
+    monkeypatch.setattr(agent_input, "MediaNormalizingAgent", lambda *a: object())
+    mcp = SimpleNamespace(
+        custom_route=lambda *a, **k: lambda fn: fn, add_extension=lambda e: None
+    )
+    host_bindings.mount_sdk_a2a(mcp)
+    assert captured["list_contexts"].__self__ is captured["storage"]

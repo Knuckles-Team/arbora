@@ -154,6 +154,21 @@ def _with_ingest_runner(
     return {**bindings, "ingest_runner": runner}
 
 
+def _with_a2a_peer_transport(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the hub-federation peer transport (ARBORA-A2A-R024).
+
+    A peer is reached through the one SDK A2A client; its credential resolves per
+    forward from the registry reference and is never held here.
+    """
+    if bindings is None or "a2a_peer_transport" in bindings:
+        return bindings
+    from arbora.a2a.peer_transport import A2APeerTransport
+
+    return {**bindings, "a2a_peer_transport": A2APeerTransport()}
+
+
 def _with_fleet_source_executor(
     bindings: Mapping[str, Any] | None,
     pool: Any,
@@ -827,6 +842,7 @@ def compose_served_invocation(
             **bindings,
             "media_ref_store": SessionMediaRefStore(lambda: _Engine(pool)),
         }
+    bindings = _with_a2a_peer_transport(bindings)
     if bindings is not None and "identity_admin" not in bindings:
         # ARBORA-IDENTITY-R018.1: the identity operations reach the engine
         # through the one administration port of the composition root.

@@ -55,9 +55,9 @@ def _candidates(model_profile_ref: str, tool_refs: tuple[str, ...]) -> Any:
 def _expires_at_ms(record: Mapping[str, Any]) -> int | None:
     """The expiry the engine seals on ``HarnessConfigEvaluationEvidence``.
 
-    PIN-LAG: the pinned engine carries no ``expires_at_ms`` there, so none is read
-    (``None``) until the engine seals one (OVERSTORY-GAPS, "MEDULLA FOR ARBORA
-    (w14)"). A present value that is not a non-negative integer is a malformed
+    MEDULLA w14 (R128.17) seals ``expires_at_ms`` on the evidence when the request
+    carried ``valid_for_ms``. PIN-LAG: the pinned release seals none, so the value
+    reads ``None`` until the re-pin (no edit needed then). A present value that is not a non-negative integer is a malformed
     record: it raises, so the admission refuses ``HARNESS_CONFIG_UNAVAILABLE``.
     Arbora holds no default lifetime.
     """
@@ -69,6 +69,27 @@ def _expires_at_ms(record: Mapping[str, Any]) -> int | None:
     if isinstance(raw, bool) or not isinstance(raw, int) or raw < 0:
         raise ValueError("the record carries a malformed expiry")
     return raw
+
+
+def _params(
+    model_profile_ref: str,
+    task_class: str,
+    budget_tokens: int,
+    priority: str,
+    valid_for_ms: int | None,
+) -> list[Any]:
+    """The typed params of the question; ``valid_for_ms`` only when one was asked."""
+    from medulla.decision_client import param
+
+    found = [
+        param("model_profile_ref", "iri", model_profile_ref),
+        param("task_class", "iri", task_class),
+        param("usable_context_budget_tokens", "int", budget_tokens),
+        param("priority", "text", priority),
+    ]
+    if valid_for_ms:  # MEDULLA-DECISION-ENGINE-R128.17: the engine seals the expiry
+        found.append(param("valid_for_ms", "int", valid_for_ms))
+    return found
 
 
 class EngineHarnessConfigDecider:
@@ -101,8 +122,9 @@ class EngineHarnessConfigDecider:
         budget_tokens: int,
         priority: Priority,
         tool_refs: tuple[str, ...] = (),
+        valid_for_ms: int | None = None,
     ) -> HarnessConfigRecord:
-        from medulla.decision_client import decide_request, param
+        from medulla.decision_client import decide_request
 
         from arbora.deployment.placement import check_receipt, single_record
 
@@ -111,12 +133,9 @@ class EngineHarnessConfigDecider:
             (f"a2a.harness:{task_class}", QUESTION_KIND, "ordinary"),
             _candidates(model_profile_ref, tool_refs),
             self._feature_schema(tenant),
-            params=[
-                param("model_profile_ref", "iri", model_profile_ref),
-                param("task_class", "iri", task_class),
-                param("usable_context_budget_tokens", "int", budget_tokens),
-                param("priority", "text", priority),
-            ],
+            params=_params(
+                model_profile_ref, task_class, budget_tokens, priority, valid_for_ms
+            ),
         )
         record = single_record(
             await asyncio.wait_for(self._decide(request), self._timeout_s)

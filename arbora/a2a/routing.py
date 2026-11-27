@@ -203,13 +203,11 @@ def _route_capability(
 ) -> tuple[str | None, str | None, tuple[str, ...]]:
     """The routed agent's model profile, task class and tool refs, when sealed.
 
-    PIN-LAG: engine ``main`` seals the route as ``outcome.scores[0].option_id`` only;
-    ``FamilyAnswer`` has no ``a2a_route`` variant yet. The requested typed answer is
-    ``record.answer = {type: "a2a_route", value: {graph_id, model_profile_ref,
-    task_class, tool_refs}}`` (OVERSTORY-GAPS, "MEDULLA FOR ARBORA (w14)"); every
-    value is read from the routed graph's library entry, never from the caller.
-    Until the engine seals it all three are empty and a budgeted message refuses
-    closed. ``tool_refs`` that are malformed read as absent, so the harness never
+    MEDULLA w14 (R044.2.3) seals ``record.answer = {type: "a2a_route", value:
+    {graph_id, model_profile_ref?, task_class?, tool_refs[]}}``; every value is read
+    from the routed graph's library entry, never from the caller. PIN-LAG: the
+    pinned release seals only ``outcome.scores[0].option_id``, so all three read
+    empty and a budgeted message refuses closed until the re-pin (no edit needed). ``tool_refs`` that are malformed read as absent, so the harness never
     declares a ref the engine did not seal.
     """
     answer = record.get("answer")
