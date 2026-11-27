@@ -13,6 +13,7 @@ from collections.abc import Iterator, MutableMapping
 from dataclasses import dataclass, field
 from typing import Any
 
+from arbora.core.settings import RuntimeConfig
 from arbora.security.key_cache import JwksCache
 from arbora.security.process_authority import ProcessAuthority
 
@@ -22,6 +23,7 @@ __all__ = [
     "IntentCache",
     "ToolTable",
     "WarmupSlot",
+    "build_host_caches",
 ]
 
 
@@ -229,8 +231,14 @@ class IntentCache:
 class HostCaches:
     """Every owned cache of one host process."""
 
-    tools: ToolTable = field(default_factory=ToolTable)
+    tools: ToolTable
+    jwks: JwksCache
     warmup: WarmupSlot = field(default_factory=WarmupSlot)
     analysis: AnalysisCore = field(default_factory=AnalysisCore)
     intent: IntentCache = field(default_factory=IntentCache)
-    jwks: JwksCache = field(default_factory=JwksCache)
+
+
+def build_host_caches(config: RuntimeConfig) -> HostCaches:
+    """Fresh caches whose authority and key cache are bound to the host's config."""
+    keys = JwksCache(config)
+    return HostCaches(tools=ToolTable(ProcessAuthority(keys, config=config)), jwks=keys)

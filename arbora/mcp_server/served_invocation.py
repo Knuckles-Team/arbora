@@ -913,6 +913,15 @@ def _with_operation_ports(
     return {PORTS_BINDING: build_operation_ports(), **bindings}
 
 
+def _with_host_config(
+    bindings: Mapping[str, Any] | None, config: RuntimeConfig
+) -> Mapping[str, Any] | None:
+    """Bind the host's config so an operation reads it from its context services."""
+    if bindings is None:
+        return bindings
+    return {"config": config, **bindings}
+
+
 def _with_delivery_ports(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
@@ -1191,6 +1200,7 @@ def compose_served_invocation(
         )
 
     minted = session()
+    bindings = _with_host_config(bindings, config)
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
     bindings = _with_fleet_source_executor(bindings, pool, graph, process_session)
     bindings = _with_nl_federation_planner(bindings)

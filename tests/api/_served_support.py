@@ -19,7 +19,7 @@ from fastmcp import FastMCP
 
 from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime as mcp_runtime
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import build_host_caches
 from arbora.observability.state import SubsystemWindows
 from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
@@ -344,7 +344,7 @@ def two_tenant_served(
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
-        caches=HostCaches(),
+        caches=build_host_caches(RuntimeConfig()),
     )
     second = FastAPI()
     register_graph_routes(second, host)

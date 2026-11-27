@@ -105,7 +105,10 @@ def producer_trace():
     return plans, histories
 
 
-def install(monkeypatch, plans, histories, *, owned=OWNER):
+_HOST_CONFIG = RuntimeConfig()
+
+
+def install(monkeypatch, plans, histories, *, owned=OWNER, config=_HOST_CONFIG):
     calls = []
 
     def query(text, params):
@@ -128,7 +131,7 @@ def install(monkeypatch, plans, histories, *, owned=OWNER):
     reader = NativeRunReader(
         lambda: SimpleNamespace(query_cypher=query),
         origins=RunOriginRegistry(),
-        config=RuntimeConfig(),
+        config=config,
     )
 
     def authorized(task_id, scope):
@@ -411,8 +414,9 @@ async def test_child_history_gap_and_cross_run_payload_are_typed_states(monkeypa
 async def test_depth_bound_reports_partial(monkeypatch, depth, reason):
 
     plans, histories = producer_trace()
-    reader, _ = install(monkeypatch, plans, histories)
-    monkeypatch.setenv("RUNS_GRAPH_MAX_DEPTH", str(depth))
+    config = RuntimeConfig()
+    config.runs_graph_max_depth = depth
+    reader, _ = install(monkeypatch, plans, histories, config=config)
     value = await reader.execution_graph(
         context=reader_context(), request=_params(graph_request())
     )
@@ -430,8 +434,9 @@ async def test_node_and_edge_bounds_drop_whole_children_and_say_partial(
     monkeypatch, bound, reason
 ):
     plans, histories = producer_trace()
-    reader, _ = install(monkeypatch, plans, histories)
-    monkeypatch.setenv(f"RUNS_GRAPH_MAX_{bound.upper()}", "10")
+    config = RuntimeConfig()
+    setattr(config, f"runs_graph_max_{bound}", 10)
+    reader, _ = install(monkeypatch, plans, histories, config=config)
     plans["run-child"] = plan(
         "run-child",
         "p-child",

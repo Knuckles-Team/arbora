@@ -21,6 +21,7 @@ from arbora.api.mcp.resources import operation_spec, registry_index
 from arbora.api.mcp.verbs import PARAMETERS, MCPProjection, dispatch_verb, make_verb
 from arbora.api.policy import PolicyGate, PolicyUnavailable
 from arbora.api.registry import Effect, Surface, Verb
+from arbora.core.settings import RuntimeConfig
 from arbora.observability.state import SubsystemWindows
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R011")
@@ -137,7 +138,7 @@ def _projection(
 ) -> MCPProjection:
     return MCPProjection(
         registry,
-        object(),
+        SimpleNamespace(config=RuntimeConfig()),
         Resolver(),
         Caller,
         policy_gate or PolicyGate("none"),

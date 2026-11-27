@@ -877,7 +877,7 @@ async def test_probe_entry_past_ttl_is_reported_stale(tmp_path, monkeypatch):
         "error": None,
         "probed_at": fixed_now,
     }
-    monkeypatch.setenv("MCP_CATALOG_PROBE_TTL", "10.0")
+    mux._fleet.config.mcp_catalog_probe_ttl = 10.0
 
     # Inside the TTL: honestly fresh.
     monkeypatch.setattr(time, "time", lambda: fixed_now + 5.0)
@@ -909,7 +909,7 @@ async def test_probe_catalog_retargets_ttl_expired_cache_entries(tmp_path, monke
         "error": None,
         "probed_at": fixed_now,
     }
-    monkeypatch.setenv("MCP_CATALOG_PROBE_TTL", "10.0")
+    mux._fleet.config.mcp_catalog_probe_ttl = 10.0
 
     calls = 0
 
@@ -1059,7 +1059,7 @@ async def test_discover_prioritizes_named_server_inside_shared_budget(
         await asyncio.sleep(1)
         return {"tools": [], "error": None}
 
-    monkeypatch.setenv("MCP_DYNAMIC_DISCOVERY_TIMEOUT", json.dumps(0.05))
+    mux._fleet.config.mcp_dynamic_discovery_timeout = 0.05
     mux.probe_server = AsyncMock(side_effect=staged_probe)
 
     discovery = await mux.discover_tools(query, top_k=5)

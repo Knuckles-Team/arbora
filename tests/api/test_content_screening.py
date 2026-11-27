@@ -140,8 +140,9 @@ def test_each_attack_class_and_masked_secret() -> None:
 @pytest.mark.spec("ARBORA-OPS-R042.2")
 def test_content_above_the_scan_limit_is_quarantined(monkeypatch) -> None:
 
-    monkeypatch.setenv("CONTENT_SCREEN_MAX_SCAN_BYTES", str(4096))
-    outcome = screen_result("x" * 5000, screen_settings(RuntimeConfig()))
+    config = RuntimeConfig()
+    config.content_screen_max_scan_bytes = 4096
+    outcome = screen_result("x" * 5000, screen_settings(config))
     assert outcome.verdict is ContentScreenVerdict.QUARANTINED
     assert outcome.rule_ids == ("screen.scan_limit",)
 

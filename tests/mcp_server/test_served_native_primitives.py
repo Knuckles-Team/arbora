@@ -18,7 +18,7 @@ from arbora.access.approval import ApprovalDecisions
 from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing.arbora_surface import register_arbora_surface
 from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import build_host_caches
 from arbora.observability.state import build_health_state
 
 
@@ -73,7 +73,7 @@ def _started(policy: str | None) -> FastMCP:
         action_policies=ActionPolicies(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
-        caches=HostCaches(),
+        caches=build_host_caches(RuntimeConfig()),
         intent_tools=False,
         health=build_health_state(),
         config=RuntimeConfig(),

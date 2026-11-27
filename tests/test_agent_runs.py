@@ -99,10 +99,11 @@ def test_a_registry_endpoint_builds_an_openai_compatible_model(
         ),
         encoding="utf-8",
     )
-    monkeypatch.setenv("MODEL_REGISTRY_PATH", str(registry))
+    config = RuntimeConfig()
+    config.model_registry_path = str(registry)
 
-    assert agent_runs.resolve_model("unlisted", config=RuntimeConfig()) == "unlisted"
-    assert agent_runs.resolve_model("local", config=RuntimeConfig()).model_name == "m"
+    assert agent_runs.resolve_model("unlisted", config=config) == "unlisted"
+    assert agent_runs.resolve_model("local", config=config).model_name == "m"
 
 
 @pytest.mark.spec("ARBORA-HOST-R001.2.1")

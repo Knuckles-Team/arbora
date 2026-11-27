@@ -7,9 +7,10 @@ from typing import Any
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.gateway import ontology_api
 from arbora.gateway.state import GatewayState
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import build_host_caches
 
 
 class _Application:
@@ -112,7 +113,7 @@ async def test_invoke_operation_runs_the_invoke_pipeline_as_the_request_caller(
         fleet=None,
         approvals=None,  # type: ignore[arg-type]
         engine_provider=lambda: None,
-        caches=HostCaches(),
+        caches=build_host_caches(RuntimeConfig()),
     )
     value = await application.invoke_operation(
         "ingest.sources.list", {}, request="req", idempotency_key="k"
@@ -127,7 +128,7 @@ async def test_invoke_operation_runs_the_invoke_pipeline_as_the_request_caller(
         fleet=None,
         approvals=None,
         engine_provider=lambda: None,
-        caches=HostCaches(),  # type: ignore[arg-type]
+        caches=build_host_caches(RuntimeConfig()),  # type: ignore[arg-type]
     )
     with pytest.raises(pipeline.OperationRefused):
         await bare.invoke_operation("x", {}, request="req")

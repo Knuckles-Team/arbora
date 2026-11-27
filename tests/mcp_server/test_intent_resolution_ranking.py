@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing.tools import intent_tools
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import build_host_caches
 
 
 class _Recording:
@@ -41,7 +42,11 @@ def test_intent_actions_are_ordered_by_the_ranking_port() -> None:
 def test_resolved_capabilities_follow_the_port_and_carry_floor_evidence() -> None:
     port = _Recording()
     resolved = intent_tools.resolve_intent(
-        HostCaches(), None, "search the graph", top_k=5, ranking=port
+        build_host_caches(RuntimeConfig()),
+        None,
+        "search the graph",
+        top_k=5,
+        ranking=port,
     )
 
     assert [c.capability_id for c in resolved] == sorted(

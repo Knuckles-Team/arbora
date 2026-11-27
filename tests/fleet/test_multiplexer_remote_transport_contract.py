@@ -21,7 +21,7 @@ this. These live in ``tests/unit`` on purpose.
 from __future__ import annotations
 
 import contextlib
-import json
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -71,17 +71,21 @@ def recorded_http(monkeypatch):
 
     monkeypatch.setattr(mod, "streamable_http_client", _fake)
     monkeypatch.setattr(mod, "ClientSession", _FakeSessionCM)
-
-    # Plain-http fixture hostname, as a real TLS-terminated-at-ingress child.
-    monkeypatch.setenv("MCP_HTTP_ALLOWED_PRIVATE_HOSTS", json.dumps(["fleet.example"]))
     return calls
+
+
+def _mux(path: Any) -> Any:
+    # Plain-http fixture hostname, as a real TLS-terminated-at-ingress child.
+    return multiplexer_from_fixture(
+        path, mcp_http_allowed_private_hosts=["fleet.example"]
+    )
 
 
 @pytest.mark.asyncio
 async def test_remote_child_uses_v2_http_client_keyword(recorded_http, tmp_path):
     """The URL is positional and the security-hardened client is passed as
     ``http_client=`` — the SDK v2 signature, not v1's headers/auth kwargs."""
-    mux = multiplexer_from_fixture(tmp_path / "c.json")
+    mux = _mux(tmp_path / "c.json")
     result = await mux._start_child("fleet", {"url": "http://fleet.example/mcp"})
 
     assert result is not None, "remote streamable-http child must start"
@@ -100,7 +104,7 @@ async def test_remote_child_headers_ride_on_the_http_client(recorded_http, tmp_p
     """Child-declared headers must reach the wire. Under SDK v2 they can only
     do so baked into the client, so assert them there rather than on a kwarg
     the transport no longer accepts."""
-    mux = multiplexer_from_fixture(tmp_path / "c.json")
+    mux = _mux(tmp_path / "c.json")
     await mux._start_child(
         "fleet",
         {"url": "http://fleet.example/mcp", "headers": {"X-Fleet-Tenant": "acme"}},

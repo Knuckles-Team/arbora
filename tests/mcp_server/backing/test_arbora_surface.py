@@ -34,6 +34,7 @@ from typing import Literal
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing._arbora_action_manifest import ARBORA_ACTIONS
 from arbora.mcp_server.backing.arbora_surface import (
@@ -53,6 +54,7 @@ from arbora.mcp_server.backing.tool_specs import INTENT_VERBS
 from arbora.mcp_server.backing.tools import engine_tools, intent_tools
 from arbora.mcp_server.host_caches import HostCaches
 from arbora.mcp_server.host_context import build_host_context
+from arbora.security.key_cache import JwksCache
 
 #: No single listed tool may exceed this (spec: "no tool > ~500 tokens").
 MAX_TOOL_TOKENS = 500
@@ -156,7 +158,13 @@ def test_every_manifest_operation_is_reachable_through_the_intent_router(served)
                 unreachable[op_id] = "no verb accepts it"
                 continue
             result = await intent_tools._dispatch_verb(
-                HostCaches(tools=registry), mcp, verbs[0], op_id, {}, "", False
+                HostCaches(tools=registry, jwks=JwksCache(RuntimeConfig())),
+                mcp,
+                verbs[0],
+                op_id,
+                {},
+                "",
+                False,
             )
             if tool in OPTIONAL_TOOL_FEATURES and tool not in registry:
                 if OPTIONAL_TOOL_FEATURES[tool] not in str(result.get("error")):
@@ -193,7 +201,7 @@ def test_a_host_operation_is_reached_through_act_with_preview(served):
     )
 
     mcp, _listed, registry = served
-    caches = HostCaches(tools=registry)
+    caches = HostCaches(tools=registry, jwks=JwksCache(RuntimeConfig()))
     calls: list[dict] = []
 
     @backing_server(mcp).tool(name="host_echo")

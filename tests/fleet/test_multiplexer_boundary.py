@@ -15,7 +15,7 @@ from arbora.fleet.multiplexer import (
     attest_runtime_child_config,
     resolve_runtime_value,
 )
-from tests.fleet.catalog_fixture import multiplexer_from_fixture
+from tests.fleet.catalog_fixture import fleet_config, multiplexer_from_fixture
 
 
 def test_noncredential_field_cannot_expand_secret_environment_name() -> None:
@@ -31,18 +31,15 @@ def test_fleet_runtime_alias_prefers_direct_projection(monkeypatch) -> None:
             "direct-runtime-material" if alias == "CHILD_TOKEN_ALIAS" else default
         ),
     )
-    monkeypatch.setenv(
-        "MCP_FLEET_SECRET_REFS",
-        json.dumps({"CHILD_TOKEN_ALIAS": "secret://fleet/child/token"}),
+    config = fleet_config(
+        mcp_fleet_secret_refs={"CHILD_TOKEN_ALIAS": "secret://fleet/child/token"}
     )
     monkeypatch.setattr(
         "scion_sdk.credentials.runtime_references.resolve_runtime_secret_reference",
         lambda _reference: (_ for _ in ()).throw(AssertionError("fallback used")),
     )
     assert (
-        resolve_runtime_value(
-            "env://CHILD_TOKEN_ALIAS", sensitive=True, config=RuntimeConfig()
-        )
+        resolve_runtime_value("env://CHILD_TOKEN_ALIAS", sensitive=True, config=config)
         == "direct-runtime-material"
     )
 
@@ -54,9 +51,8 @@ def test_fleet_runtime_alias_uses_configured_ref_only_after_direct_miss(
     monkeypatch.setattr(
         "arbora.fleet.multiplexer.read_reference", lambda _alias, default="": default
     )
-    monkeypatch.setenv(
-        "MCP_FLEET_SECRET_REFS",
-        json.dumps({"CHILD_TOKEN_ALIAS": "secret://fleet/child/token"}),
+    config = fleet_config(
+        mcp_fleet_secret_refs={"CHILD_TOKEN_ALIAS": "secret://fleet/child/token"}
     )
     resolved_refs: list[str] = []
 
@@ -70,9 +66,7 @@ def test_fleet_runtime_alias_uses_configured_ref_only_after_direct_miss(
     )
 
     assert (
-        resolve_runtime_value(
-            "env://CHILD_TOKEN_ALIAS", sensitive=True, config=RuntimeConfig()
-        )
+        resolve_runtime_value("env://CHILD_TOKEN_ALIAS", sensitive=True, config=config)
         == "mapped-runtime-material"
     )
     assert resolved_refs == ["secret://fleet/child/token"]
@@ -85,16 +79,12 @@ def test_fleet_runtime_alias_fails_closed_without_direct_or_mapped_value(
     monkeypatch.setattr(
         "arbora.fleet.multiplexer.read_reference", lambda _alias, default="": default
     )
-    monkeypatch.setenv("MCP_FLEET_SECRET_REFS", json.dumps({}))
+    config = fleet_config(mcp_fleet_secret_refs={})
 
     with pytest.raises(RuntimeError, match="unavailable"):
-        resolve_runtime_value(
-            "env://CHILD_TOKEN_ALIAS", sensitive=True, config=RuntimeConfig()
-        )
+        resolve_runtime_value("env://CHILD_TOKEN_ALIAS", sensitive=True, config=config)
     with pytest.raises(RuntimeError, match="invalid"):
-        resolve_runtime_value(
-            "env://lowercase_alias", sensitive=True, config=RuntimeConfig()
-        )
+        resolve_runtime_value("env://lowercase_alias", sensitive=True, config=config)
 
 
 def test_delegated_arguments_have_depth_and_size_boundaries() -> None:

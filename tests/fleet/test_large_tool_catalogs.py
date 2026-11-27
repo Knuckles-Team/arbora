@@ -580,6 +580,7 @@ def test_a_call_slower_than_the_connect_budget_completes(monkeypatch) -> None:
 
     mux = mux_module.MCPMultiplexer.__new__(mux_module.MCPMultiplexer)
     mux._catalog_epoch = 0
+    mux._fleet = SimpleNamespace(config=RuntimeConfig())
     mux.credential_authority = None
     monkeypatch.setattr(mux_module, "require_fleet_capability", lambda *a, **k: None)
     monkeypatch.setattr(

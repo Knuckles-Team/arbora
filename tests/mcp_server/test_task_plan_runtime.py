@@ -245,6 +245,7 @@ async def test_native_plan_helper_wires_real_publication_and_owner_scopes(
                 run_settings=agent_runs,
                 plan_publication=current_plan_publication,
             ),
+            "config": host.services.config,
         },
         operation_services=host.services,
     )

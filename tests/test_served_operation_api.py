@@ -39,7 +39,7 @@ from arbora.core.settings import RuntimeConfig
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.mcp_server.composition import install_gateway_application
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import build_host_caches
 from arbora.mcp_server.host_context import build_host_context
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
@@ -174,9 +174,12 @@ def _actor() -> ActorContext:
 def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     registry = tmp_path / "models.json"
     registry.write_text(json.dumps({"default": "test"}), encoding="utf-8")
+    # The host composition root reads its own view from the environment; the
+    # fixture's units share one view built after these overrides are in place.
     monkeypatch.setenv("MODEL_REGISTRY_PATH", str(registry))
     monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
     monkeypatch.setenv("KG_POLICY_VERSION", "policy:fixture")
+    config = RuntimeConfig()
     # The identity gate needs a configured verifier; the verification is faked.
     monkeypatch.setenv("AUTH_JWT_JWKS_URI", "https://identity.invalid/jwks")
 
@@ -196,27 +199,27 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     ports.bind(
         HostPortsBinding(
             HostPorts(
-                decide=partial(agent_runs.decide_run, config=RuntimeConfig()),
-                models=partial(agent_runs.resolve_model, config=RuntimeConfig()),
+                decide=partial(agent_runs.decide_run, config=config),
+                models=partial(agent_runs.resolve_model, config=config),
                 events=run_events(client),
             ),
             None,
         )
     )
-    process = request_identity.mint_graph_session(_actor(), RuntimeConfig())
+    process = request_identity.mint_graph_session(_actor(), config)
     a2a = A2AService(
         authority=WorkItemA2AAuthority(
             lambda: client,
             origins=RunOriginRegistry(),
             ports=ports,
-            config=RuntimeConfig(),
+            config=config,
         ),
         router=OrchestratorA2ARouter(lambda: client),
-        config=RuntimeConfig(),
+        config=config,
     )
     invocation = compose_served_invocation(
-        config=RuntimeConfig(),
-        keys=JwksCache(RuntimeConfig()),
+        config=config,
+        keys=JwksCache(config),
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,
@@ -231,7 +234,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: client,
-        caches=HostCaches(),
+        caches=build_host_caches(config),
     )
     from arbora.gateway.graph_api import register_graph_routes
 
@@ -243,7 +246,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
-        caches=HostCaches(),
+        caches=build_host_caches(config),
     )
 
 

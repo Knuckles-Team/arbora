@@ -23,7 +23,7 @@ from arbora.core.settings import RuntimeConfig
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools.intent_tools import _fleet_mux
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import HostCaches, build_host_caches
 from arbora.security.process_authority import ProcessAuthority
 
 
@@ -109,14 +109,14 @@ def test_ensure_tools_registered_attaches_fleet_loader_to_the_built_mcp(
 ) -> None:
     """``ensure_tools_registered()`` now attaches a fleet loader to the exact
     ``mcp`` its headless ``_build_server(bootstrap=False)`` call returns."""
-    _assert_headless_build_attaches(HostCaches())
+    _assert_headless_build_attaches(build_host_caches(RuntimeConfig()))
 
 
 def test_ensure_tools_registered_skips_rebuilding_when_fully_registered(
     monkeypatch,
 ) -> None:
     """The idempotency guard short-circuits once a full build's names are present."""
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     caches.tools["find"] = object()
     caches.tools.mark_complete()
     with (
@@ -137,7 +137,7 @@ def test_ensure_tools_registered_rebuilds_a_partial_table(monkeypatch) -> None:
     gateway dispatching over a partial table (and made the suite order
     dependent).
     """
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     caches.tools["graph_a2a"] = object()
     _assert_headless_build_attaches(caches)
 

@@ -104,10 +104,11 @@ def test_query_workflow_skill_documents_the_registered_query_argument() -> None:
     """The query guide and its sidecar agree with the registered tool contract."""
     import inspect
 
+    from arbora.core.settings import RuntimeConfig
     from arbora.mcp_server import runtime
-    from arbora.mcp_server.host_caches import HostCaches
+    from arbora.mcp_server.host_caches import build_host_caches
 
-    caches = HostCaches()
+    caches = build_host_caches(RuntimeConfig())
     runtime.ensure_tools_registered(caches)
     skill = SKILLS_ROOT / "graph-query-and-explanation"
     text = (skill / "SKILL.md").read_text(encoding="utf-8")

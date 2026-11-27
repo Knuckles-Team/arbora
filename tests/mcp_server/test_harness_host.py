@@ -9,6 +9,7 @@ import pytest
 from meristem import host_ports as host
 from meristem.host_ports import HostPorts
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.mcp_server.harness_ports import bind_host_ports_of, build_host_ports
 from arbora.mcp_server.host_context import build_host_context
@@ -20,6 +21,8 @@ def _ports(host_context, multiplexer=None) -> HostPorts:
 
 
 class _Mux:
+    fleet = SimpleNamespace(config=RuntimeConfig())
+
     def load_catalog(self):
         return {"github-mcp": {"url": "http://127.0.0.1:9001/mcp/"}, "x-mcp": {}}
 
