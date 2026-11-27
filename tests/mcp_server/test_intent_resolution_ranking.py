@@ -39,7 +39,6 @@ def test_intent_actions_are_ordered_by_the_ranking_port() -> None:
 
 @pytest.mark.spec("ARBORA-FLEET-R083.2")
 def test_resolved_capabilities_follow_the_port_and_carry_floor_evidence() -> None:
-    intent_tools._RESOLUTION_CACHE.clear()
     port = _Recording()
     resolved = intent_tools.resolve_intent(
         HostCaches(), None, "search the graph", top_k=5, ranking=port

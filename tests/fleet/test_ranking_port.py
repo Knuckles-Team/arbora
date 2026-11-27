@@ -95,9 +95,7 @@ async def test_every_ranking_site_asks_the_port_and_falls_back_to_the_floor() ->
         order_operations,
     )
     from arbora.mcp_server.backing.tools import intent_tools
-    from arbora.mcp_server.backing.tools import intent_tools as _tools
 
-    _tools._RESOLUTION_CACHE.clear()
     port = _Recording()
     descriptors = [
         Descriptor(id="deploy.restart", verb="act", summary="restart a service"),

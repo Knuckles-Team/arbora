@@ -59,3 +59,25 @@ def test_host_caches_is_frozen_and_slotted() -> None:
     with pytest.raises(dataclasses.FrozenInstanceError):
         caches.tools = caches.tools  # type: ignore[misc]
     assert not hasattr(caches, "__dict__")
+
+
+def test_intent_state_is_per_host_and_previews_and_approvals_expire() -> None:
+    first, second = HostCaches().intent, HostCaches().intent
+    first.approve("op", now=0.0)
+    first.remember_preview("ref", "plan", now=0.0)
+    assert first.approved("op", now=1.0)
+    assert first.preview("ref", now=1.0) == "plan"
+    assert not second.approved("op", now=1.0)
+    assert second.preview("ref", now=1.0) is None
+    later = first.TTL_SECONDS + 1
+    assert not first.approved("op", now=later)
+    assert first.preview("ref", now=later) is None
+
+
+def test_a_rebuilt_candidate_table_versions_the_resolution_key() -> None:
+    cache = HostCaches().intent
+    assert cache.candidates() is None
+    assert cache.generation == 0
+    cache.store_candidates([])
+    assert cache.candidates() == []
+    assert cache.generation == 1

@@ -8,11 +8,12 @@ through a module accessor.
 from __future__ import annotations
 
 import threading
+from collections import OrderedDict
 from collections.abc import Iterator, MutableMapping
 from dataclasses import dataclass, field
 from typing import Any
 
-__all__ = ["AnalysisCore", "HostCaches", "ToolTable", "WarmupSlot"]
+__all__ = ["AnalysisCore", "HostCaches", "IntentCache", "ToolTable", "WarmupSlot"]
 
 
 class ToolTable(MutableMapping[str, Any]):
@@ -105,6 +106,113 @@ class AnalysisCore:
         return await handler(**arguments)
 
 
+class _BoundedLRU:
+    """A bounded least-recently-used map; the owner holds the lock."""
+
+    __slots__ = ("_items", "_limit")
+
+    def __init__(self, limit: int) -> None:
+        self._items: OrderedDict[Any, Any] = OrderedDict()
+        self._limit = limit
+
+    def get(self, key: Any) -> Any | None:
+        value = self._items.get(key)
+        if value is not None:
+            self._items.move_to_end(key)
+        return value
+
+    def put(self, key: Any, value: Any) -> None:
+        self._items[key] = value
+        self._items.move_to_end(key)
+        while len(self._items) > self._limit:
+            self._items.popitem(last=False)
+
+    def drop_older_than(self, cutoff: float) -> None:
+        """Drop entries whose stored ``(created_at, value)`` is older than ``cutoff``."""
+        for key in [k for k, (born, _) in self._items.items() if born < cutoff]:
+            del self._items[key]
+
+    def clear(self) -> None:
+        self._items.clear()
+
+
+class IntentCache:
+    """The intent router's state of one host.
+
+    It holds the candidate table (with the generation that versions it), the ranked
+    resolutions, the reviewed preview plans and the session approvals. Previews and
+    approvals expire; every part is bounded.
+    """
+
+    __slots__ = (
+        "_approvals",
+        "_candidates",
+        "_generation",
+        "_lock",
+        "_previews",
+        "_resolutions",
+    )
+
+    ENTRY_LIMIT = 256
+    TTL_SECONDS = 600.0
+
+    def __init__(self) -> None:
+        self._lock = threading.RLock()
+        self._candidates: list[Any] | None = None
+        self._generation = 0
+        self._resolutions = _BoundedLRU(self.ENTRY_LIMIT)
+        self._previews = _BoundedLRU(self.ENTRY_LIMIT)
+        self._approvals = _BoundedLRU(self.ENTRY_LIMIT)
+
+    def candidates(self) -> list[Any] | None:
+        """The built candidate table, or ``None`` before the first build."""
+        with self._lock:
+            return self._candidates
+
+    def store_candidates(self, built: list[Any]) -> None:
+        """Keep a rebuilt candidate table and version it for the resolution key."""
+        with self._lock:
+            self._candidates = built
+            self._generation += 1
+
+    @property
+    def generation(self) -> int:
+        with self._lock:
+            return self._generation
+
+    def resolution(self, key: tuple[Any, ...]) -> list[Any] | None:
+        with self._lock:
+            hit = self._resolutions.get(key)
+        return None if hit is None else list(hit)
+
+    def store_resolution(self, key: tuple[Any, ...], result: list[Any]) -> None:
+        with self._lock:
+            self._resolutions.put(key, result)
+
+    def remember_preview(self, plan_ref: str, plan: Any, now: float) -> None:
+        """Retain one reviewed plan until it expires."""
+        with self._lock:
+            self._previews.drop_older_than(now - self.TTL_SECONDS)
+            self._previews.put(plan_ref, (now, plan))
+
+    def preview(self, plan_ref: str, now: float) -> Any | None:
+        """The reviewed plan under ``plan_ref`` while it is unexpired."""
+        with self._lock:
+            self._previews.drop_older_than(now - self.TTL_SECONDS)
+            entry = self._previews.get(plan_ref)
+        return None if entry is None else entry[1]
+
+    def approve(self, key: str, now: float) -> None:
+        with self._lock:
+            self._approvals.drop_older_than(now - self.TTL_SECONDS)
+            self._approvals.put(key, (now, True))
+
+    def approved(self, key: str, now: float) -> bool:
+        with self._lock:
+            self._approvals.drop_older_than(now - self.TTL_SECONDS)
+            return self._approvals.get(key) is not None
+
+
 @dataclass(frozen=True, slots=True)
 class HostCaches:
     """Every owned cache of one host process."""
@@ -112,3 +220,4 @@ class HostCaches:
     tools: ToolTable = field(default_factory=ToolTable)
     warmup: WarmupSlot = field(default_factory=WarmupSlot)
     analysis: AnalysisCore = field(default_factory=AnalysisCore)
+    intent: IntentCache = field(default_factory=IntentCache)
