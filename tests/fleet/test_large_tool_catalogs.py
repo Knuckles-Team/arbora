@@ -650,8 +650,8 @@ def test_a_listed_prompt_keeps_its_title_arguments_and_role_meta() -> None:
 def test_a_rendered_prompt_keeps_every_content_block_and_the_role_meta() -> None:
     import mcp.types as types
 
+    from arbora.fleet.child_mounts import _json_dump, _relayed_prompt_message
     from arbora.fleet.gateway_ops import _with_listed_details
-    from arbora.fleet.multiplexer import _json_dump, _relayed_prompt_message
 
     text = types.PromptMessage(
         role="user", content=types.TextContent(type="text", text="You are...")

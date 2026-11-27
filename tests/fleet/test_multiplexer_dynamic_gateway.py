@@ -22,13 +22,12 @@ from fastmcp.exceptions import ToolError
 from fastmcp.tools import Tool
 
 from arbora.core.settings import RuntimeConfig
+from arbora.fleet.child_mounts import _make_forwarder, get_server_prefix
 from arbora.fleet.fleet_capabilities import fleet_required_capabilities
 from arbora.fleet.multiplexer import (
-    _make_forwarder,
     _register_forwarder,
     _tenant_local_discovery_binding,
     _tool_is_verbose,
-    get_server_prefix,
     require_fleet_capability,
 )
 from arbora.fleet.session_keys import LOCAL_SESSION_META_KEY, ambient_session_key
@@ -66,7 +65,9 @@ async def test_forwarder_preserves_child_tool_error_as_outer_error(
     )
 
     with pytest.raises(ToolError, match="CHILD_REFUSED") as error:
-        await _make_forwarder(mux, "synthetic__tool")()
+        await _make_forwarder(
+            lambda: getattr(mux, "_governed_fleet", None), "synthetic__tool"
+        )()
     assert "private child detail" not in str(error.value)
     assert fixture.dispatches == ["fleet.call"]
 
@@ -85,7 +86,7 @@ async def test_remove_host_forwarder_converges_only_after_verified_absence(
     mux._exposed.add(absent_name)
 
     with caplog.at_level(logging.INFO, logger="mcp_multiplexer"):
-        mux._remove_host_forwarder(absent_name)
+        mux.mounts._remove_host_forwarder(absent_name)
 
     assert absent_name not in mux._exposed
     assert "already absent during cleanup" in caplog.text
@@ -100,7 +101,7 @@ async def test_remove_host_forwarder_converges_only_after_verified_absence(
         lambda _name: (_ for _ in ()).throw(KeyError("provider mismatch")),
     )
     with pytest.raises(RuntimeError, match="remains registered"):
-        mux._remove_host_forwarder(live_tool.name)
+        mux.mounts._remove_host_forwarder(live_tool.name)
     assert live_tool.name in mux._exposed
     assert await host.get_tool(live_tool.name) is not None
 
@@ -108,7 +109,7 @@ async def test_remove_host_forwarder_converges_only_after_verified_absence(
     host._local_provider._components[base_tool.key] = base_tool
     mux._exposed.add(base_tool.name)
     with pytest.raises(RuntimeError, match="remains registered"):
-        mux._remove_host_forwarder(base_tool.name)
+        mux.mounts._remove_host_forwarder(base_tool.name)
     assert base_tool.name in mux._exposed
     assert host._local_provider._components[base_tool.key] is base_tool
     await mux.aclose()
@@ -1267,7 +1268,7 @@ def test_server_prefix_resolves_derived_collisions(tmp_path):
 def test_config_prefix_override_wins(tmp_path):
     mux = _mux_with_children(tmp_path, {"foo-bar-mcp": [("a", "")]})
     mux.load_catalog()["foo-bar-mcp"]["prefix"] = "myfoo"
-    mux._build_prefix_map()
+    mux.mounts._build_prefix_map()
     assert mux.server_prefix("foo-bar-mcp") == "myfoo"
 
 
@@ -1278,7 +1279,7 @@ def test_reverse_prefix_resolves_owner(tmp_path):
     )
     for name in ["foo-bar-mcp", "foo-baz-mcp"]:
         prefix = mux.server_prefix(name)
-        assert mux._server_for_prefixed(f"{prefix}__x") == name
+        assert mux.mounts.server_for_prefixed(f"{prefix}__x") == name
 
 
 # --------------------------------------------------------------------------- #
@@ -1430,7 +1431,7 @@ def test_forget_tool(tmp_path):
 def test_server_for_prefixed_reverses_prefix(tmp_path):
     mux = _mux_with_children(tmp_path, {CNT: [(CNT_TOOL, "a")]})
     # Not yet mounted: resolved purely from the prefix → catalog.
-    assert mux._server_for_prefixed(CNT_PREFIXED) == CNT
+    assert mux.mounts.server_for_prefixed(CNT_PREFIXED) == CNT
 
 
 # --------------------------------------------------------------------------- #
@@ -1601,7 +1602,7 @@ def test_tool_dispatchable_false_for_unknown_name_on_a_non_serving_instance(tmp_
     assert mux.is_serving() is False
     assert mux.tool_dispatchable("servicenow_servicenow_account") is False
     assert mux.tool_dispatchable("any_other_invented_name") is False
-    # Still False even after the load_catalog() side effect _server_for_prefixed
+    # Still False even after the load_catalog() side effect server_for_prefixed
     # triggers internally -- the catalog it produces is genuinely empty.
     assert mux.is_serving() is False
 
@@ -1657,7 +1658,7 @@ def test_local_session_meta_cannot_override_an_authenticated_http_session(
 
 
 async def test_notify_tools_changed_returns_false_without_request_context():
-    from arbora.fleet.multiplexer import _notify_tools_changed
+    from arbora.fleet.child_mounts import _notify_tools_changed
 
     sent = await _notify_tools_changed(None)
     assert sent is False
@@ -1669,7 +1670,7 @@ async def test_notify_tools_changed_surfaces_send_failure(monkeypatch, caplog):
     silence the caller can't observe (CLAUDE.md: never swallow an exception)."""
     import logging
 
-    from arbora.fleet.multiplexer import _notify_tools_changed
+    from arbora.fleet.child_mounts import _notify_tools_changed
 
     class _FailingContext:
         async def send_notification(self, _note):
@@ -1871,7 +1872,7 @@ def test_prefixing_preserves_child_annotations_and_output_schema(tmp_path):
     source = _schema_tool("query", "request")
     source.meta = {"fixture": "child-disclosure"}
 
-    forwarded, originals = mux._prefixed_child_tools("schema-mcp", [source], {})
+    forwarded, originals = mux.mounts._prefixed_child_tools("schema-mcp", [source], {})
 
     assert len(forwarded) == 1
     assert forwarded[0].name != source.name

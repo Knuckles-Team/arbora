@@ -2,11 +2,8 @@ import asyncio
 
 import pytest
 
-from arbora.fleet.multiplexer import (
-    MCPMultiplexer,
-    clean_tool_name,
-    get_server_prefix,
-)
+from arbora.fleet.child_mounts import clean_tool_name, get_server_prefix
+from arbora.fleet.multiplexer import MCPMultiplexer
 from arbora.fleet.state import FleetState
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 

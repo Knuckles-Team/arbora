@@ -107,7 +107,7 @@ async def _mounted(tmp_path, port: int):
     assert started is not None
     payload = started[1]
     cfg = {"url": f"http://127.0.0.1:{port}/mcp"}
-    mux._register_child_result("relay-child", payload, [], cfg)
+    mux.mounts._register_child_result("relay-child", payload, [], cfg)
     return mux, payload
 
 

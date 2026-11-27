@@ -13,7 +13,7 @@ from fastmcp.exceptions import ToolError
 from arbora.api.errors import FleetRefusal
 from arbora.api.invoke import pipeline
 from arbora.fleet import child_payload_bounds, gateway_ops, proxied_calls
-from arbora.fleet import multiplexer as mux_module
+from arbora.fleet import child_payload_bounds as _child_payload_bounds
 from arbora.fleet.child_resilience import MCPError
 from tests.fleet.proxied_calls_fixture import build_proxied_calls
 
@@ -217,7 +217,7 @@ async def test_governed_call_hands_children_plain_json_for_nested_objects(
 
     class Mux:
         async def call_admitted_child_once(self, server, tool, arguments):
-            mux_module.assert_bounded_delegated_value(arguments)
+            _child_payload_bounds.assert_bounded_delegated_value(arguments)
             seen["arguments"] = arguments
             return mcp.types.CallToolResult(content=[], isError=False)
 
@@ -260,7 +260,7 @@ async def test_governed_call_hands_children_plain_json_for_nested_objects(
 def test_delegated_bound_check_rejects_frozen_mapping():
     """The child-argument bound is for plain JSON; frozen arguments need thawing."""
     with pytest.raises(ToolError):
-        mux_module.assert_bounded_delegated_value(_frozen_nested_arguments())
+        _child_payload_bounds.assert_bounded_delegated_value(_frozen_nested_arguments())
 
 
 def test_indeterminate_message_states_unknown_outcome():

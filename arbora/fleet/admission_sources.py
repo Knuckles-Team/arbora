@@ -25,7 +25,7 @@ __all__ = ["CatalogAdmissionSources", "tool_name"]
 
 def tool_name(server_name: str, upstream_name: str) -> str:
     """The name a workflow binds a catalog tool by: the multiplexer's served name."""
-    from arbora.fleet.multiplexer import clean_tool_name, get_server_prefix
+    from arbora.fleet.child_mounts import clean_tool_name, get_server_prefix
 
     return clean_tool_name(get_server_prefix(server_name), server_name, upstream_name)
 

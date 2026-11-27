@@ -17,11 +17,8 @@ from __future__ import annotations
 import mcp.types
 import pytest
 
-from arbora.fleet.multiplexer import (
-    ToolResult,
-    _make_forwarder,
-    tool_result_from_child,
-)
+from arbora.fleet.child_mounts import _make_forwarder
+from arbora.fleet.multiplexer import ToolResult, tool_result_from_child
 from tests.fleet.catalog_fixture import (
     bind_governed_forwarder_fixture,
     multiplexer_from_fixture,
@@ -51,7 +48,9 @@ async def _forward_annotated_result(tmp_path) -> ToolResult:
         mux, _child_result_with_annotations_and_meta()
     )
 
-    forwarded: ToolResult = await _make_forwarder(mux, "synthetic__tool")()
+    forwarded: ToolResult = await _make_forwarder(
+        lambda: getattr(mux, "_governed_fleet", None), "synthetic__tool"
+    )()
     assert fixture.dispatches == ["fleet.call"]
     assert fixture.child_calls == [("synthetic", "tool", {})]
     return forwarded
@@ -94,7 +93,9 @@ async def test_direct_vs_forwarded_parity(
     fixture = await bind_governed_forwarder_fixture(mux, raw_result)
 
     direct = ToolResult.from_mcp_result(raw_result)
-    forwarded: ToolResult = await _make_forwarder(mux, "synthetic__tool")()
+    forwarded: ToolResult = await _make_forwarder(
+        lambda: getattr(mux, "_governed_fleet", None), "synthetic__tool"
+    )()
     assert fixture.dispatches == ["fleet.call"]
     assert fixture.child_calls == [("synthetic", "tool", {})]
 
@@ -121,7 +122,9 @@ async def test_structured_content_still_forwarded(
         ),
     )
 
-    forwarded: ToolResult = await _make_forwarder(mux, "synthetic__tool")()
+    forwarded: ToolResult = await _make_forwarder(
+        lambda: getattr(mux, "_governed_fleet", None), "synthetic__tool"
+    )()
     assert fixture.dispatches == ["fleet.call"]
     assert fixture.child_calls == [("synthetic", "tool", {})]
     assert forwarded.structured_content == {"key": "value"}
