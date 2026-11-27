@@ -1,0 +1,87 @@
+# The ephemeral scenario stack (ARBORA-ACCEPTANCE-R006.6).
+#
+# Starts arbora from the commit's built image, which supervises its medulla engine
+# as a child process on a fresh store, and the three fixture connectors of
+# ARBORA-ACCEPTANCE-R006.7. It uses the production image; only the store and the
+# credentials are disposable. Nothing is published beyond loopback and nothing
+# survives `down --volumes`.
+#
+# Usage (Docker Compose v2.24+):
+#   ARBORA_IMAGE=<immutable image> FIXTURE_CONNECTOR_IMAGE=<immutable image> \
+#     docker compose -f deploy/ephemeral/compose.yaml up --wait --wait-timeout 120
+#   docker compose -f deploy/ephemeral/compose.yaml down --volumes
+name: arbora-ephemeral
+
+x-fixture-connector: &fixture-connector
+  image: ${FIXTURE_CONNECTOR_IMAGE:?set FIXTURE_CONNECTOR_IMAGE to an immutable fixture connector image}
+  read_only: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  tmpfs:
+    - /tmp
+  depends_on:
+    arbora:
+      condition: service_healthy
+
+services:
+  arbora:
+    image: ${ARBORA_IMAGE:?set ARBORA_IMAGE to an immutable arbora image reference}
+    command:
+      - arbora
+      - --transport
+      - streamable-http
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    environment:
+      APP_PROFILE: dev
+      DEPLOYMENT_PROFILE: tiny
+      ARBORA_AUTH_MODE: local
+      EUNOMIA_TYPE: embedded
+      SECRETS_BACKEND: vault
+      ALLOWED_HOSTS: localhost,127.0.0.1
+    env_file:
+      - path: ../compose/arbora-runtime.env
+    ports:
+      - "127.0.0.1:${ARBORA_API_PORT:-18000}:8000"
+    # A fresh store on every run: memory-backed, gone with the stack.
+    tmpfs:
+      - /var/lib/arbora
+      - /run/medulla
+      - /tmp
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        - CMD
+        - python3
+        - -c
+        - "import urllib.request as u; u.urlopen(u.Request('http://127.0.0.1:8000/health/ready', headers={'Host': 'localhost'}), timeout=5)"
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  fixture-orders:
+    <<: *fixture-connector
+    environment:
+      FIXTURE_NAME: orders
+      FIXTURE_KIND: virtual-graph
+
+  fixture-vulns:
+    <<: *fixture-connector
+    environment:
+      FIXTURE_NAME: vulns
+      FIXTURE_KIND: virtual-graph
+
+  fixture-tools:
+    <<: *fixture-connector
+    environment:
+      FIXTURE_NAME: tools
+      FIXTURE_KIND: tools

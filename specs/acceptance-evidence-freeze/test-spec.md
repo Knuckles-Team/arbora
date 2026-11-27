@@ -21,7 +21,7 @@ Run `python3 -m pytest tests/test_check_acceptance_evidence.py -q` from the repo
 | Test ID | Requirement | Expected observation |
 |---|---|---|
 | T-ARBORA-ACCEPTANCE-R006.5 | ARBORA-ACCEPTANCE-R006.5 | Test: `tests/scenarios/test_scenario_stack.py::test_stack_serves_mcp_and_http_over_one_engine`. |
-| T-ARBORA-ACCEPTANCE-R006.6 | ARBORA-ACCEPTANCE-R006.6 | Test: `tests/scenarios/test_ephemeral_stack.py::test_compose_stack_ready_within_budget` runs in the nightly job. |
+| T-ARBORA-ACCEPTANCE-R006.6 | ARBORA-ACCEPTANCE-R006.6 | Test: `tests/scenarios/test_ephemeral_stack.py::test_stack_is_disposable_loopback_only_and_names_three_fixture_connectors` runs in every pull request; `::test_compose_stack_ready_within_budget` runs in the nightly job. |
 | T-ARBORA-ACCEPTANCE-R006.7 | ARBORA-ACCEPTANCE-R006.7 | Test: `tests/scenarios/test_p5_cross_source.py::test_answers_join_connectors_and_virtual_graphs_with_coverage` runs in the nightly job against the ephemeral stack. |
 
 ## Entries added for rows without a prior entry
