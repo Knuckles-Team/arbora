@@ -327,3 +327,11 @@ One task per active leaf row, in requirement order. A rollup parent is covered b
 - [ ] T090 [US1] ARBORA-DEPLOY-R017.22 Promote a built artifact through a governed operation. Size: M, 1 PR, 4 hours.
 - [ ] T091 [US1] ARBORA-DEPLOY-R017.23 Promotion applies only after approval and records a deploy record. Size: M, 1 PR, 4 hours.
 - [ ] T092 [US1] ARBORA-DEPLOY-R017.24 Hot-path proof: an agent runs CI to deploy through the door. Size: M, 1 PR, 4 hours.
+- [ ] T093 [US3] ARBORA-DEPLOY-R604.1 Model the service endpoint machine.
+- [ ] T094 [P] [US3] ARBORA-DEPLOY-R604.2 Describe the service endpoint machine in the ontology.
+- [ ] T095 [P] [US3] ARBORA-DEPLOY-R604.3 Check the routing rules over the endpoint entries.
+- [ ] T096 [US3] ARBORA-DEPLOY-R604.4 Serve the inventory check and transition operations.
+- [ ] T097 [P] [US3] ARBORA-DEPLOY-R604.5 Resolve inventory role references in model profiles.
+- [ ] T098 [P] [US3] ARBORA-DEPLOY-R604.6 Add the thin inventory subcommand.
+- [ ] T099 [US3] ARBORA-DEPLOY-R604.7 Prove the endpoint lifecycle served.
+- [ ] T100 [US3] ARBORA-DEPLOY-R604 Close the endpoint lifecycle rollup.

@@ -7,5 +7,6 @@ Run the focused proofs from a clean checkout after `uv sync --extra test`.
 3. Hosting settings: `uv run pytest tests/deployment/test_host_config.py`.
 4. Engine locks: `uv run pytest tests/deployment/test_process_locks.py`.
 5. Dependency manifest: `uv run pytest tests/test_dependency_manifest.py tests/architecture/test_dependency_manifest_pins_published_packages.py`.
+6. Service endpoint lifecycle (served): `uv run pytest tests/deployment/test_service_endpoints.py tests/api/test_inventory_ops.py tests/deployment/test_service_endpoints_served.py`.
 
 Scenario for the served surface: install the built wheel in a new environment, run `arbora-release-canary --json`, then `setup-config environments validate dev`. The tests above cover each step in process.

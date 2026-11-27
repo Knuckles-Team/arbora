@@ -25,3 +25,18 @@ The lock file `engine-<sha8>.lock` under the user runtime directory (existing, `
 ## Plan digests
 
 The operation `deploy.placement.plan` returns four digests that `deploy.placement.apply` must reproduce (`ARBORA-DEPLOY-R013.5`): `plan_digest` over the engine graph, `choices_digest` over the confirmed inventory, `config_digest` over the resolved configuration and `artifact_digest` over the selected artifact. The engine owns the decision and graph; Arbora stores none of them.
+
+## Service endpoint entry
+
+An endpoint entry is one item of a host `services` list in the host inventory (`ARBORA-DEPLOY-R604.1`). Its fields:
+
+| Field | Type | Rule |
+|---|---|---|
+| `name` | string | Unique within its host |
+| `kind` | string | Marks the entry as an endpoint entry, for example `embedder` |
+| `state` | `EndpointState` | `planned`, `deploying`, `serving`, `draining` or `retired` |
+| `state_since` | ISO date | Set by the writer on each edge |
+| `role` | `EndpointRole`, optional | `primary` or `fallback`; needs `serving` |
+| `endpoint` | URL, optional | Required while `serving`; absent once `retired` |
+
+The ontology class is `arbora:ServiceEndpointMachine` in `arbora/ontology/state_machines.ttl` (`ARBORA-DEPLOY-R604.2`). A model profile refers to a role as `inventory://<kind>/<role>` (`ARBORA-DEPLOY-R604.5`).
