@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from types import SimpleNamespace
 from typing import Any
 
 from fastapi import FastAPI
@@ -22,6 +23,7 @@ from arbora.fleet.catalog_reader import (
     CatalogServer as FleetServer,
 )
 from arbora.gateway import enhanced_catalog_api as api
+from arbora.gateway.state import GatewayState
 
 CONTEXT = ReadContext(
     tenant_id="tenant-a",
@@ -147,10 +149,18 @@ def _app(monkeypatch: Any) -> TestClient:
         workflows=Workflows(),
         agents=Agents(),
     )
-    monkeypatch.setattr(api, "_reader", authority.read)
-    app = FastAPI()
+    app = _host_app(authority.read)
     api.register_enhanced_catalog_routes(app)
     return TestClient(app)
+
+
+def _host_app(reader: Any) -> FastAPI:
+    """An application composed over a host whose gateway holds ``reader``."""
+    app = FastAPI()
+    gateway = GatewayState()
+    gateway.catalog_reader.set(reader)
+    app.state.host = SimpleNamespace(gateway=gateway)
+    return app
 
 
 def test_tools_contract_joins_exact_authorities_and_counts(monkeypatch: Any) -> None:
@@ -240,8 +250,7 @@ def test_current_component_without_live_registration_is_explicitly_unavailable(
         workflows=Workflows(),
         agents=Agents(),
     )
-    monkeypatch.setattr(api, "_reader", authority.read)
-    app = FastAPI()
+    app = _host_app(authority.read)
     api.register_enhanced_catalog_routes(app)
 
     response = TestClient(app).get("/api/enhanced/tools")
@@ -262,11 +271,10 @@ def test_current_component_without_live_registration_is_explicitly_unavailable(
 def test_missing_or_failed_authority_never_fabricates_an_empty_catalog(
     monkeypatch: Any,
 ) -> None:
-    app = FastAPI()
+    app = _host_app(None)
     api.register_enhanced_catalog_routes(app)
     client = TestClient(app)
 
-    monkeypatch.setattr(api, "_reader", None)
     missing = client.get("/api/enhanced/tools")
     assert missing.status_code == 503
     assert missing.json() == {"detail": "catalog authority is not configured"}
@@ -274,7 +282,7 @@ def test_missing_or_failed_authority_never_fabricates_an_empty_catalog(
     async def broken() -> Any:
         raise RuntimeError("private engine details")
 
-    monkeypatch.setattr(api, "_reader", broken)
+    app.state.host.gateway.catalog_reader.set(broken)
     failed = client.get("/api/enhanced/tools")
     assert failed.status_code == 503
     assert failed.json() == {"detail": "catalog authority unavailable"}
@@ -311,8 +319,10 @@ def test_catalog_reads_run_under_the_configured_process_authority(
             seen.append(list(bound))
             return await super().read(**kwargs)
 
-    monkeypatch.setattr(api, "_reader", None)
+    app = FastAPI()
+    app.state.host = SimpleNamespace(gateway=GatewayState())
     api.configure_enhanced_catalog(
+        app.state.host.gateway,
         api.EnhancedCatalogAuthority(
             fleet=ScopedFleet(),  # type: ignore[arg-type]
             workflows=Workflows(),
@@ -320,7 +330,6 @@ def test_catalog_reads_run_under_the_configured_process_authority(
         ),
         authority_scope=process_scope,
     )
-    app = FastAPI()
     api.register_enhanced_catalog_routes(app)
     response = TestClient(app).get("/api/enhanced/tools")
     assert response.status_code == 200
@@ -332,8 +341,7 @@ def test_failed_catalog_read_logs_its_cause(monkeypatch: Any, caplog: Any) -> No
     async def denied() -> Any:
         raise RuntimeError("ACCESS_DENIED: lacks Read access to graph '__commons__'")
 
-    monkeypatch.setattr(api, "_reader", denied)
-    app = FastAPI()
+    app = _host_app(denied)
     api.register_enhanced_catalog_routes(app)
     with caplog.at_level("WARNING", logger=api.__name__):
         response = TestClient(app).get("/api/enhanced/tools")

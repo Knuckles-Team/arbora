@@ -10,6 +10,7 @@ from typing import Any, cast
 import pytest
 
 from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
+from arbora.gateway.state import GatewayState
 from arbora.mcp_server import catalog_composition as composition
 
 
@@ -64,7 +65,7 @@ async def test_startup_injects_generated_clients_and_public_catalog_ports(
     monkeypatch.setattr(
         composition,
         "configure_enhanced_catalog",
-        lambda authority, *, authority_scope: installed.append(
+        lambda gateway, authority, *, authority_scope: installed.append(
             (authority, authority_scope)
         ),
     )
@@ -88,6 +89,7 @@ async def test_startup_injects_generated_clients_and_public_catalog_ports(
         yield
 
     reader = await composition.compose_catalog_authorities(
+        gateway=GatewayState(),
         engine=engine,
         session=Session(),
         deferred_fleet=deferred,
@@ -130,7 +132,7 @@ async def test_failed_initial_refresh_aborts_startup_without_static_fallback(
     engine = SimpleNamespace(graph_compute=GraphCompute())
     deferred = DeferredFleetCatalogReader()
     monkeypatch.setattr(
-        composition, "configure_enhanced_catalog", lambda value, **_: None
+        composition, "configure_enhanced_catalog", lambda gateway, value, **_: None
     )
 
     async def verified(**kwargs: Any) -> None:
@@ -141,6 +143,7 @@ async def test_failed_initial_refresh_aborts_startup_without_static_fallback(
 
     with pytest.raises(RuntimeError, match="catalog unavailable"):
         await composition.compose_catalog_authorities(
+            gateway=GatewayState(),
             engine=engine,
             session=Session(),
             deferred_fleet=deferred,
@@ -190,7 +193,7 @@ async def test_fleet_catalog_reads_bind_the_process_session_not_the_caller(
     monkeypatch.setattr(session_module, "use_session", use_session)
     monkeypatch.setattr(session_module, "resolve_session", ambient_is_forbidden)
     monkeypatch.setattr(
-        composition, "configure_enhanced_catalog", lambda value, **_: None
+        composition, "configure_enhanced_catalog", lambda gateway, value, **_: None
     )
 
     async def verified(**kwargs: Any) -> None:
@@ -200,6 +203,7 @@ async def test_fleet_catalog_reads_bind_the_process_session_not_the_caller(
     monkeypatch.setattr(composition, "required_content_connectors", lambda: ())
     deferred = DeferredFleetCatalogReader()
     await composition.compose_catalog_authorities(
+        gateway=GatewayState(),
         engine=SimpleNamespace(graph_compute=GraphCompute()),
         session=process,
         deferred_fleet=deferred,

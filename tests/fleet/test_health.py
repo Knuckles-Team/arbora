@@ -172,11 +172,9 @@ def test_collected_readiness_flags_derive_from_catalog_state(
 @pytest.mark.spec("ARBORA-FLEET-R081.2")
 def test_unbound_catalog_state_is_cold_and_never_ready() -> None:
     from arbora.gateway import fleet as fleet_api
+    from arbora.gateway.state import GatewayState
 
-    fleet_api.bind_catalog_state(None)
-    assert fleet_api.catalog_serving_state() is CatalogState.COLD
-    fleet_api.bind_catalog_state(lambda: CatalogState.SERVING)
-    try:
-        assert fleet_api.catalog_serving_state() is CatalogState.SERVING
-    finally:
-        fleet_api.bind_catalog_state(None)
+    gateway = GatewayState()
+    assert fleet_api.catalog_serving_state(gateway) is CatalogState.COLD
+    gateway.catalog_state.set(lambda: CatalogState.SERVING)
+    assert fleet_api.catalog_serving_state(gateway) is CatalogState.SERVING

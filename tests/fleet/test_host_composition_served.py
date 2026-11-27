@@ -14,6 +14,7 @@ import pytest
 
 from arbora.fleet import onboarding as onboarding_module
 from arbora.fleet.definition_admission import DefinitionAdmission
+from arbora.gateway.state import GatewayState
 
 DIGEST = "a" * 64
 
@@ -62,6 +63,7 @@ def booted(monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> dict[str, Any]:
         lambda self: started.append(self) or "thread",
     )
     onboarding_module.start_fleet_onboarding(
+        gateway=GatewayState(),
         engine=_engine(),
         session=SimpleNamespace(graph="g", tenant="t"),
         multiplexer=SimpleNamespace(),
@@ -93,6 +95,7 @@ def test_boot_declares_the_ingest_worker_unit(monkeypatch: pytest.MonkeyPatch) -
 
     monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", "tcp://engine:7000, tcp://b:1")
     ports = compose_onboarding_ports(
+        GatewayState(),
         _engine(),
         SimpleNamespace(graph="g", tenant="t"),
         spawn=lambda argv: _Process(),
@@ -100,7 +103,9 @@ def test_boot_declares_the_ingest_worker_unit(monkeypatch: pytest.MonkeyPatch) -
     assert ports.ingest_worker is not None
     assert ports.ingest_worker.argv[-1] == "tcp://engine:7000"
     monkeypatch.delenv("GRAPH_SERVICE_ENDPOINTS")
-    bare = compose_onboarding_ports(_engine(), SimpleNamespace(graph="g", tenant="t"))
+    bare = compose_onboarding_ports(
+        GatewayState(), _engine(), SimpleNamespace(graph="g", tenant="t")
+    )
     assert bare.ingest_worker is None
 
 
@@ -114,6 +119,7 @@ def _boot_with(monkeypatch: pytest.MonkeyPatch, **extra: Any) -> Any:
     monkeypatch.delenv("GRAPH_SERVICE_ENDPOINTS", raising=False)
     monkeypatch.setattr("arbora.deployment.data_prep.data_prep_path", lambda: None)
     onboarding_module.start_fleet_onboarding(
+        gateway=GatewayState(),
         engine=_engine(),
         session=SimpleNamespace(graph="g", tenant="t"),
         multiplexer=SimpleNamespace(),

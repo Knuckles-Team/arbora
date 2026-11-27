@@ -96,6 +96,7 @@ def test_boot_returns_while_the_catalog_composition_is_still_running(
         SimpleNamespace(fleet=FleetState()),
         ActionPolicies(),
         ProcessAuthority(),
+        object(),
     )
     assert time.monotonic() - began < 1.0
     state = slot.state()
@@ -140,6 +141,7 @@ def test_the_warmup_composes_inside_its_own_client_scope(monkeypatch) -> None:
         SimpleNamespace(fleet=FleetState()),
         ActionPolicies(),
         ProcessAuthority(),
+        object(),
     )
     deadline = time.monotonic() + 5
     while warmup.state()["status"] != "ready" and time.monotonic() < deadline:

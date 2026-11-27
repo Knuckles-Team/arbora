@@ -32,7 +32,6 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Awaitable, Callable
 from typing import Any
 
 from starlette.requests import Request
@@ -51,76 +50,37 @@ from arbora.fleet.health import (
     with_catalog_generation,
 )
 from arbora.fleet.ingest_worker_unit import (
-    IngestWorkerSupervisor,
     ingest_worker_health_snapshot,
 )
+from arbora.gateway.state import GatewayState, gateway_of
 from arbora.security.error_surface import public_error_payload
 
 logger = logging.getLogger(__name__)
 
 _MAX_PAGE = 1000
 
-#: The supervisory readers the composition root binds. Unbound readers fail
-#: closed as ``unavailable``.
-_AUTHORITIES = FleetAuthorities()
 
-
-def bind_fleet_authorities(authorities: FleetAuthorities) -> None:
-    """Bind the session-store and goal readers this process serves."""
-    global _AUTHORITIES
-    _AUTHORITIES = authorities
-
-
-#: The replica's catalog generation reader, bound by catalog composition
-#: (ARBORA-FLEET-R051.2.2). Unbound, the health payload carries no generation.
-_CATALOG_GENERATION: Callable[[], Awaitable[Any]] | None = None
-
-
-def bind_catalog_generation(source: Callable[[], Awaitable[Any]] | None) -> None:
-    """Bind the reader of this replica's catalog generation and convergence state."""
-    global _CATALOG_GENERATION
-    _CATALOG_GENERATION = source
-
-
-#: The supervised ingest worker (ARBORA-FLEET-R045), bound by host composition.
-#: Unbound, the health payload reports the dependency ``not_configured``.
-_INGEST_WORKER: IngestWorkerSupervisor | None = None
-
-
-def bind_ingest_worker(supervisor: IngestWorkerSupervisor | None) -> None:
-    """Bind the supervisor of the ingest worker this host runs (or ``None``)."""
-    global _INGEST_WORKER
-    _INGEST_WORKER = supervisor
-
-
-_CATALOG_STATE: Callable[[], CatalogState] | None = None
-
-
-def bind_catalog_state(source: Callable[[], CatalogState] | None) -> None:
-    """Bind the reader of the catalog serving state (ARBORA-FLEET-R081.2)."""
-    global _CATALOG_STATE
-    _CATALOG_STATE = source
-
-
-def catalog_serving_state() -> CatalogState:
+def catalog_serving_state(gateway: GatewayState) -> CatalogState:
     """The catalog serving state; an unbound reader is ``cold``, never ready."""
-    source = _CATALOG_STATE
+    source = gateway.catalog_state.get()
     return CatalogState.COLD if source is None else source()
 
 
-def collect_health() -> Any:
+def collect_health(gateway: GatewayState) -> Any:
     """One fleet health collection with the readiness flags derived from state."""
     return collect_fleet_health(
-        _fleet_authorities(),
+        _fleet_authorities(gateway),
         scope_resolver=_tenant_scope,
-        catalog_state=catalog_serving_state(),
+        catalog_state=catalog_serving_state(gateway),
     )
 
 
-async def _health_snapshot() -> Any:
+async def _health_snapshot(gateway: GatewayState) -> Any:
     """The fleet health snapshot with this replica's catalog generation published."""
-    snapshot = await ingest_worker_health_snapshot(collect_health(), _INGEST_WORKER)
-    source = _CATALOG_GENERATION
+    snapshot = await ingest_worker_health_snapshot(
+        collect_health(gateway), gateway.ingest_worker.get()
+    )
+    source = gateway.catalog_generation.get()
     if source is None:
         return snapshot
     try:
@@ -132,8 +92,8 @@ async def _health_snapshot() -> Any:
     return with_catalog_generation(snapshot, status)
 
 
-def _connect() -> Any:
-    connect = _AUTHORITIES.connect
+def _connect(gateway: GatewayState) -> Any:
+    connect = _fleet_authorities(gateway).connect
     if connect is None:
         raise AuthorityNotServed("session store is not served in this process")
     return connect()
@@ -182,13 +142,14 @@ def _page_params(
 
 
 def _fetch_sessions(
+    gateway: GatewayState,
     status: str | None = None,
     domain: str | None = None,
     limit: int = 200,
     offset: int = 0,
 ) -> list[dict[str, Any]]:
     """Read a filtered, paginated page of sessions tagged with their domain."""
-    conn = _connect()
+    conn = _connect(gateway)
     try:
         dom = domain_sql(conn.dialect)
         where: list[str] = []
@@ -222,15 +183,15 @@ def _multi_host_state() -> bool:
     return uri.startswith(("postgresql://", "postgres://"))
 
 
-def _fleet_authorities() -> FleetAuthorities:
-    """The supervisory readers bound by :func:`bind_fleet_authorities`."""
-    return _AUTHORITIES
+def _fleet_authorities(gateway: GatewayState) -> FleetAuthorities:
+    """The supervisory readers the gateway holds; unbound readers fail closed."""
+    return gateway.fleet_authorities.get_or_build(FleetAuthorities)
 
 
 async def fleet_health(request: Request) -> JSONResponse:
     """Aggregate swarm health from the shared fail-closed evidence collector."""
 
-    snapshot = await _health_snapshot()
+    snapshot = await _health_snapshot(gateway_of(request))
     return JSONResponse(
         health_payload(snapshot),
         status_code=200 if snapshot.evidence.ready else 503,
@@ -240,9 +201,10 @@ async def fleet_health(request: Request) -> JSONResponse:
 
 async def fleet_topology(request: Request) -> JSONResponse:
     """Live agent/team topology grouped by enterprise domain (paginated)."""
-    snapshot = collect_health()
+    gateway = gateway_of(request)
+    snapshot = collect_health(gateway)
     limit, offset, status = _page_params(request)
-    snapshot, rows = _topology_rows(snapshot, status, limit, offset)
+    snapshot, rows = _topology_rows(gateway, snapshot, status, limit, offset)
     domains = _group_sessions(rows)
 
     # Totals come from the same SQL aggregate evidence, never from the returned
@@ -279,12 +241,14 @@ async def fleet_topology(request: Request) -> JSONResponse:
 
 
 def _topology_rows(
-    snapshot: Any, status: str | None, limit: int, offset: int
+    gateway: GatewayState, snapshot: Any, status: str | None, limit: int, offset: int
 ) -> tuple[Any, list[dict[str, Any]]]:
     if not snapshot.evidence.convergence_ready:
         return snapshot, []
     try:
-        return snapshot, _fetch_sessions(status=status, limit=limit, offset=offset)
+        return snapshot, _fetch_sessions(
+            gateway, status=status, limit=limit, offset=offset
+        )
     except PermissionError:
         raise
     except Exception as exc:
@@ -334,7 +298,8 @@ async def _set_fleet_status(request: Request, new_status: str) -> JSONResponse:
     except Exception:
         body = {}
 
-    target_ids = _target_session_ids(body)
+    gateway = gateway_of(request)
+    target_ids = _target_session_ids(gateway, body)
 
     if not target_ids:
         return JSONResponse(
@@ -349,7 +314,7 @@ async def _set_fleet_status(request: Request, new_status: str) -> JSONResponse:
     requested_status = "pause_requested" if new_status == "paused" else "kill_requested"
 
     affected, applied = _write_fleet_status(
-        target_ids, new_status, requested_status, multi_host
+        gateway, target_ids, new_status, requested_status, multi_host
     )
 
     return JSONResponse(
@@ -363,26 +328,27 @@ async def _set_fleet_status(request: Request, new_status: str) -> JSONResponse:
     )
 
 
-def _target_session_ids(body: dict[str, Any]) -> list[str]:
+def _target_session_ids(gateway: GatewayState, body: dict[str, Any]) -> list[str]:
     target_ids = list(body.get("session_ids") or [])
     domain = body.get("domain")
     if domain and not target_ids:
         return [
             session["id"]
-            for session in _fetch_sessions(domain=domain, limit=_MAX_PAGE)
+            for session in _fetch_sessions(gateway, domain=domain, limit=_MAX_PAGE)
             if session.get("id")
         ]
     return target_ids
 
 
 def _write_fleet_status(
+    gateway: GatewayState,
     target_ids: list[str],
     new_status: str,
     requested_status: str,
     multi_host: bool,
 ) -> tuple[list[str], dict[str, str]]:
     applied: dict[str, str] = {}
-    conn = _connect()
+    conn = _connect(gateway)
     try:
         cur = conn.cursor()
         for session_id in target_ids:

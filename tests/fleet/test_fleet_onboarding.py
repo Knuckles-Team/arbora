@@ -35,6 +35,7 @@ from arbora.fleet.onboarding import (
     start_fleet_onboarding,
 )
 from arbora.fleet.virtual_catalog import VirtualCatalog
+from arbora.gateway.state import GatewayState
 from arbora.security.session import GraphSession
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
 
@@ -613,6 +614,7 @@ def test_a_failing_pass_never_escapes_the_boot_thread(
 
 def test_boot_without_an_engine_starts_no_thread() -> None:
     started = start_fleet_onboarding(
+        gateway=GatewayState(),
         engine=SimpleNamespace(),
         session=_session(),
         multiplexer=_Mux({}),
@@ -637,6 +639,7 @@ def test_bootstrap_passes_the_process_virtual_catalog_to_onboarding(
 
     monkeypatch.setattr(FleetOnboardingService, "start", start)
     started = start_fleet_onboarding(
+        gateway=GatewayState(),
         engine=SimpleNamespace(graph_compute=object()),
         session=_session(),
         multiplexer=_Mux({}),

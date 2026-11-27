@@ -15,6 +15,7 @@ import pytest
 
 from arbora.fleet import onboarding as onboarding_module
 from arbora.gateway import fleet as fleet_api
+from arbora.gateway.state import GatewayState
 
 METRICS = {"jobs_running": 1, "queue_depth": 4}
 
@@ -71,12 +72,15 @@ def boot(monkeypatch: pytest.MonkeyPatch) -> Any:
         spawned.append((argv, process))
         return process
 
+    gateway = GatewayState()
+
     def start(endpoint: str | None) -> None:
         if endpoint is None:
             monkeypatch.delenv("GRAPH_SERVICE_ENDPOINTS", raising=False)
         else:
             monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", endpoint)
         onboarding_module.start_fleet_onboarding(
+            gateway=gateway,
             engine=_engine(),
             session=SimpleNamespace(graph="g", tenant="t"),
             multiplexer=SimpleNamespace(),
@@ -87,12 +91,18 @@ def boot(monkeypatch: pytest.MonkeyPatch) -> Any:
             spawn_worker=spawn,
         )
 
-    yield SimpleNamespace(start=start, answers=answers, spawned=spawned)
-    fleet_api.bind_ingest_worker(None)
+    yield SimpleNamespace(
+        start=start, answers=answers, spawned=spawned, gateway=gateway
+    )
 
 
-async def _route() -> dict[str, Any]:
-    response = await fleet_api.fleet_health(SimpleNamespace())
+def _request(gateway: GatewayState) -> Any:
+    host = SimpleNamespace(gateway=gateway)
+    return SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(host=host)))
+
+
+async def _route(gateway: GatewayState) -> dict[str, Any]:
+    response = await fleet_api.fleet_health(_request(gateway))
     body = json.loads(response.body)
     return body["evidence"]["dependencies"]["ingest_worker"]
 
@@ -105,14 +115,14 @@ async def test_running_worker_reports_healthy_and_the_host_started_it(
     assert [argv for argv, _ in boot.spawned] == [
         ("ingest-worker", "--engine-endpoint", "tcp://engine:7000")
     ]
-    assert (await _route())["status"] == "healthy"
+    assert (await _route(boot.gateway))["status"] == "healthy"
 
 
 @pytest.mark.spec("ARBORA-FLEET-R045")
 async def test_stopped_worker_reports_worker_stopped(boot: Any) -> None:
     boot.start("tcp://engine:7000")
     boot.spawned[0][1].exit = 1
-    dependency = await _route()
+    dependency = await _route(boot.gateway)
     assert dependency["status"] == "unavailable"
     assert dependency["diagnostics"] == ["ingest_worker: worker_stopped"]
 
@@ -121,7 +131,7 @@ async def test_stopped_worker_reports_worker_stopped(boot: Any) -> None:
 async def test_unreachable_metrics_report_metrics_unavailable(boot: Any) -> None:
     boot.start("tcp://engine:7000")
     boot.answers["metrics"] = None
-    dependency = await _route()
+    dependency = await _route(boot.gateway)
     assert dependency["status"] == "unavailable"
     assert dependency["diagnostics"] == ["ingest_worker: metrics_unavailable"]
 
@@ -132,7 +142,7 @@ async def test_a_fleet_with_no_worker_reports_not_configured_not_unhealthy(
 ) -> None:
     boot.start(None)
     assert boot.spawned == []
-    response = await fleet_api.fleet_health(SimpleNamespace())
+    response = await fleet_api.fleet_health(_request(boot.gateway))
     evidence = json.loads(response.body)["evidence"]
     assert evidence["dependencies"]["ingest_worker"]["status"] == "not_configured"
     # Nothing supervising a worker never marks the fleet unready by itself.
@@ -150,8 +160,8 @@ async def test_the_route_returns_the_engine_worker_gauges_unchanged(boot: Any) -
     }
     boot.answers["metrics"] = gauges
     boot.start("tcp://engine:7000")
-    dependency = await _route()
+    dependency = await _route(boot.gateway)
     assert dependency["status"] == "healthy"
     assert dependency["metrics"] == gauges
     boot.spawned[0][1].exit = 1
-    assert (await _route())["metrics"] is None
+    assert (await _route(boot.gateway))["metrics"] is None
