@@ -10,6 +10,8 @@ never protocol output.
 
 from __future__ import annotations
 
+from typing import Any
+
 
 def print_usage_or_version(argv: list[str]) -> bool:
     """Print usage or the version for ``argv`` and return whether it did."""
@@ -38,6 +40,13 @@ _PROVISION_COMMANDS = (
 )
 
 
+def _deploy_realm_admin(path: Any) -> Any:
+    """The realm admin port of the console's deploy config (composed here, not by identity)."""
+    from arbora.deployment.provision import DeployConfig, Ports
+
+    return Ports.real(DeployConfig.load(path)).admin
+
+
 def main() -> None:
     """Process composition root: inject concrete browser identity exactly once."""
     import sys
@@ -55,7 +64,9 @@ def main() -> None:
     if sys.argv[1:3] == ["clients", "enroll"]:
         from arbora.identity.client_enrollment_cli import enroll_main
 
-        raise SystemExit(enroll_main(sys.argv[3:]))
+        raise SystemExit(
+            enroll_main(sys.argv[3:], admin_for_config=_deploy_realm_admin)
+        )
     if sys.argv[1:3] == ["identity", "reconcile"]:
         from arbora.identity.client_contract import reconcile_command
 
