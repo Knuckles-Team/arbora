@@ -50,18 +50,23 @@ def source_target(claim: Any) -> SourceTarget | None:
         return None
     repository, branch = grant.get("repository"), grant.get("branch")
     prefixes = grant.get("prefixes")
-    if (
-        not isinstance(repository, str)
-        or not repository
-        or not isinstance(branch, str)
-        or not branch
-        or isinstance(prefixes, str)
-        or not isinstance(prefixes, Sequence)
-        or not prefixes
-        or not all(isinstance(prefix, str) and prefix for prefix in prefixes)
-    ):
+    if not (_named(repository) and _named(branch) and _prefixes(prefixes)):
         return None
     return SourceTarget(repository, branch, tuple(prefixes))
+
+
+def _named(value: Any) -> bool:
+    return isinstance(value, str) and bool(value)
+
+
+def _prefixes(value: Any) -> bool:
+    """One or more non-empty strings in a sequence that is not itself a string."""
+    return (
+        not isinstance(value, str)
+        and isinstance(value, Sequence)
+        and bool(value)
+        and all(_named(prefix) for prefix in value)
+    )
 
 
 def is_isolated_backend(backend: Any) -> bool:
