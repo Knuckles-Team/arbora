@@ -19,7 +19,7 @@ from fastmcp import FastMCP
 
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.mcp_server.host_caches import HostCaches
-from arbora.observability.state import SubsystemWindows, build_health_state
+from arbora.observability.state import SubsystemWindows
 from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
 from arbora.security.key_cache import JwksCache

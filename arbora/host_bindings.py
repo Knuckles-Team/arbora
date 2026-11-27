@@ -29,8 +29,8 @@ from typing import Any
 from fastmcp.server.extensions import ServerExtension
 
 from arbora.core.environment import read_env
-from arbora.security.key_cache import JwksCache
 from arbora.observability.state import HealthState
+from arbora.security.key_cache import JwksCache
 from arbora.unique_records import create_record, has_record_writer
 
 __all__ = [

@@ -6,8 +6,8 @@ import pytest
 from starlette.requests import Request
 
 from arbora.api.http.auth import AmbientHTTPAuthenticator
-from arbora.security.key_cache import JwksCache
 from arbora.observability.state import SubsystemWindows
+from arbora.security.key_cache import JwksCache
 
 NOW_MS = 2_000_000
 ORIGIN = "https://console.example.test"
