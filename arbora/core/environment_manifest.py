@@ -127,6 +127,7 @@ _PASS_THROUGH: frozenset[tuple[str, str]] = frozenset(
         ("arbora/a2a/push.py", "name"),
         ("arbora/agent_runs.py", "api_key_env"),
         ("arbora/core/environment.py", "name"),
+        ("arbora/fleet/catalog_reader.py", "key"),
         ("arbora/core/settings.py", "name"),
         ("arbora/identity/deployment_settings.py", "name"),
         ("arbora/observability/runtime_health.py", "CONFIG_KEY"),
@@ -345,6 +346,7 @@ _READ_CALLS = frozenset(
 _READ_HELPERS: dict[str, frozenset[str]] = {
     "arbora/a2a/push.py": frozenset({"number"}),
     "arbora/core/settings.py": frozenset({"_env_dir"}),
+    "arbora/fleet/catalog_reader.py": frozenset({"_bounded_setting"}),
     "arbora/identity/deployment_settings.py": frozenset({"_text"}),
     "arbora/identity/host_services.py": frozenset({"read"}),
     "arbora/mcp_server/backing/server_factory.py": frozenset({"_csv_setting"}),
@@ -356,16 +358,27 @@ _READ_HELPERS: dict[str, frozenset[str]] = {
 }
 
 
+def _string_constant(node: ast.AST) -> tuple[str, str] | None:
+    """``(name, text)`` of ``NAME = "text"`` or ``NAME: T = "text"``, else ``None``."""
+    if isinstance(node, ast.Assign) and len(node.targets) == 1:
+        target = node.targets[0]
+    elif isinstance(node, ast.AnnAssign):
+        target = node.target
+    else:
+        return None
+    value = node.value
+    if not (isinstance(target, ast.Name) and isinstance(value, ast.Constant)):
+        return None
+    return (target.id, value.value) if isinstance(value.value, str) else None
+
+
 def _constants(tree: ast.AST) -> dict[str, str]:
-    return {
-        node.targets[0].id: node.value.value
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Assign)
-        and len(node.targets) == 1
-        and isinstance(node.targets[0], ast.Name)
-        and isinstance(node.value, ast.Constant)
-        and isinstance(node.value.value, str)
-    }
+    found: dict[str, str] = {}
+    for node in ast.walk(tree):
+        item = _string_constant(node)
+        if item is not None:
+            found[item[0]] = item[1]
+    return found
 
 
 def _name_argument(

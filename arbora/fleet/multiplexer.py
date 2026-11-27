@@ -45,6 +45,7 @@ import fastmcp.tools as _fastmcp_tools
 import mcp as _mcp
 from mcp.client.session import ClientSession, IncomingMessage, MessageHandlerFnT
 
+from arbora.core.environment import inherited_environment, read_env, read_reference
 from arbora.fleet.protocol_compat import mcp_types_module
 
 # Public transport seams are kept as module attributes so tests and embedders can
@@ -88,7 +89,6 @@ import arbora.core.priority as _resource_priority
 import arbora.fleet.catalog_reader as _catalog_reader
 import arbora.fleet.child_resilience as _child_resilience
 from arbora.core.capability_contract import Capability
-from arbora.core.settings import setting
 from arbora.fleet import catalog_machine as _catalog_machine
 from arbora.fleet.approval_meta import approval_call_kwargs
 from arbora.fleet.local_skill_catalog import (
@@ -349,7 +349,7 @@ def _resolve_fleet_runtime_reference(reference: str) -> str:
     env_match = _ENV_RUNTIME_REF_RE.fullmatch(reference)
     if env_match is not None:
         alias = env_match.group(1)
-        direct = setting(alias)
+        direct = read_reference(alias, None)
         if direct not in (None, ""):
             return str(direct)
 
@@ -391,14 +391,13 @@ def resolve_runtime_value(
         had_template = bool(_ENV_TEMPLATE_RE.search(rendered))
 
         def replace(match: re.Match[str]) -> str:
-            from arbora.core.settings import setting
 
             variable = match.group(1)
             if not sensitive and _sensitive_config_key(variable):
                 raise RuntimeError(
                     "Sensitive MCP runtime values require a credential field"
                 )
-            resolved = setting(variable)
+            resolved = read_reference(variable, None)
             if resolved in (None, ""):
                 raise RuntimeError("MCP child environment reference is unavailable")
             return str(resolved)
@@ -2022,9 +2021,7 @@ def _assert_tasks_caller_present(
 def _assert_tasks_signing_secret(server_name: str) -> None:
     """Fail closed unless the shared task-delegation signing secret is present."""
     try:
-        from arbora.core.settings import setting
-
-        if not str(setting("ARBORA_TOKEN_SECRET", "") or "").strip():
+        if not str(read_env("ARBORA_TOKEN_SECRET") or "").strip():
             raise RuntimeError("shared task-delegation signing secret is unavailable")
     except Exception as exc:
         logger.warning(
@@ -4083,7 +4080,7 @@ class MCPMultiplexer:
         provider_controlled_keys = {key.upper() for key in provider_environment}
         merged_env = {
             key: value
-            for key, value in os.environ.items()
+            for key, value in inherited_environment().items()
             if key.upper() in _CHILD_ENV_ALLOWLIST
             and key.upper() not in provider_controlled_keys
         }

@@ -25,6 +25,8 @@ from urllib.parse import quote
 
 from scion_sdk.ontology_namespaces import CORE_NAMESPACE, module_namespace
 
+from arbora.core.environment import read_env
+
 logger = logging.getLogger(__name__)
 
 KG = CORE_NAMESPACE
@@ -411,9 +413,8 @@ def _chunks(lines: list[str], size: int) -> Iterator[list[str]]:
 
 def batch_max_triples() -> int:
     """The batch bound: the engine value ``catalog.onboard_batch_max_triples``."""
-    from arbora.core.settings import setting
 
-    return int(setting("ARBORA_CATALOG_ONBOARD_BATCH_MAX_TRIPLES", 50000))
+    return int(read_env("ARBORA_CATALOG_ONBOARD_BATCH_MAX_TRIPLES"))
 
 
 def _term_from_row(term: Any) -> str | tuple[str]:

@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from arbora.core.environment import read_env
 from arbora.fleet.mcp_resource_reconciliation import (
     PublicationRefusedError,
     ReconciliationReceipt,
@@ -140,10 +141,9 @@ async def no_receipt() -> ReconciliationReceipt | None:
 
 def deployed_surface(registry: Any, *, clock_ms: Callable[[], int]) -> AgentSurface:
     """The surface of the running release: its digest names the release and the catalog."""
-    from arbora.core.settings import setting
 
-    release = str(setting("ARBORA_RELEASE_DIGEST", "") or "").strip() or registry.digest
-    tenant_id = str(setting("ARBORA_TENANT", "") or "").strip()
+    release = str(read_env("ARBORA_RELEASE_DIGEST") or "").strip() or registry.digest
+    tenant_id = str(read_env("ARBORA_TENANT") or "").strip()
     return AgentSurface(
         registry=registry,
         release_digest=release,

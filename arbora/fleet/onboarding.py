@@ -37,6 +37,7 @@ from types import SimpleNamespace
 from typing import Any, Literal, cast
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.core.environment import read_env
 from arbora.fleet.declarations import (
     RESOURCES_URI,
     Declarations,
@@ -1674,9 +1675,7 @@ class HandshakeOnboarder:
 def configured_served_url() -> str:
     """The MCP URL Arbora serves at, from ``ARBORA_SERVED_MCP_URL``."""
 
-    from arbora.core.settings import setting
-
-    return str(setting("ARBORA_SERVED_MCP_URL", "") or "")
+    return str(read_env("ARBORA_SERVED_MCP_URL") or "")
 
 
 def start_fleet_onboarding(

@@ -14,6 +14,7 @@ from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from arbora.core.environment import read_env
 from arbora.fleet.definition_admission import DefinitionAdmission
 from arbora.fleet.engine_admission import EngineAdmission
 from arbora.fleet.ingest_worker_unit import (
@@ -105,9 +106,8 @@ async def declare_host_data_prep(engine: Any, session: Any) -> list[str]:
 
 def _served_engine_endpoint() -> str:
     """The first ``GRAPH_SERVICE_ENDPOINTS`` entry, the engine this host serves."""
-    from arbora.core.settings import setting
 
-    value = str(setting("GRAPH_SERVICE_ENDPOINTS", "") or "")
+    value = str(read_env("GRAPH_SERVICE_ENDPOINTS", "") or "")
     return value.split(",")[0].strip()
 
 
@@ -135,9 +135,8 @@ def declare_data_prep_at_boot(engine: Any, session: Any) -> list[str]:
 
 def _ingest_worker_enabled() -> bool:
     """The config key ``ingest_worker.enabled`` (default true)."""
-    from arbora.core.settings import setting
 
-    raw = str(setting("INGEST_WORKER_ENABLED", "true") or "true")
+    raw = str(read_env("INGEST_WORKER_ENABLED") or "true")
     return raw.strip().lower() not in {"0", "false", "no", "off"}
 
 

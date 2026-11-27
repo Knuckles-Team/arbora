@@ -17,7 +17,7 @@ from collections.abc import Callable, Iterator, Mapping
 from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.fleet.fleet_tool_call import call_fleet_tool, refused_result
 from arbora.fleet.scaling.scaling_intent_reconciler import (
     ScaleActuationRequest,
@@ -58,7 +58,7 @@ def request_context() -> Any:
 
 
 def _server() -> str:
-    return str(setting(SERVER_SETTING, DEFAULT_SERVER))
+    return str(read_env(SERVER_SETTING, DEFAULT_SERVER))
 
 
 def split_workload(workload_id: str) -> tuple[str, str]:

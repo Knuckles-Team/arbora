@@ -17,6 +17,8 @@ import hashlib
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from typing import Any
 
+from arbora.core.environment import read_env
+
 #: ``send(method, params, tenant)`` reaches the engine as the host service identity.
 RankSend = Callable[[str, dict[str, Any], str], Awaitable[Any]]
 
@@ -30,9 +32,8 @@ DEFAULT_BUDGET_TOKENS = 4000
 
 def configured_budget() -> int:
     """The context budget, in tokens, asked for a search that names none."""
-    from arbora.core.settings import setting
 
-    return int(setting(BUDGET_SETTING, DEFAULT_BUDGET_TOKENS))
+    return int(read_env(BUDGET_SETTING, DEFAULT_BUDGET_TOKENS))
 
 
 def order_request(
