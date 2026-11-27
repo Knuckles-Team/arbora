@@ -11,7 +11,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from arbora.api.invoke.steps import OpError, freeze_claims
+from arbora.api.invoke.steps import OpError
+from arbora.core.claims import freeze_claims
 
 AGENT_REF_METHODS = frozenset(
     {

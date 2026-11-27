@@ -10,6 +10,11 @@ Two subcommands:
     Run from the source checkout. Fails when a non-Python file tracked under
     ``arbora/`` is absent from ``WHEEL``.
 
+``served URL``
+    Run against a served process (the installed wheel started with the loopback
+    engine). Calls ``ops.doctor``, one ``find`` and ``fleet.status`` through the
+    served MCP surface and fails unless every call succeeds.
+
 ``runtime``
     Run with the interpreter of a clean venv that installed the wheel, from a
     directory outside the source tree, as ``python -I``. Fails unless arbora
@@ -22,12 +27,25 @@ Two subcommands:
 from __future__ import annotations
 
 import argparse
+import asyncio
+import json
 import os
 import subprocess  # nosec B404 -- fixed argv for the release gate
 import sys
 import tempfile
 import zipfile
+from collections.abc import Awaitable, Callable
 from pathlib import Path
+from typing import Any
+
+#: The served calls the fresh-install boot proof makes (ARBORA-HOST-R040.4).
+BOOT_CALLS: tuple[tuple[str, dict[str, Any]], ...] = (
+    ("ask", {"op": "ops.doctor", "params": {}}),
+    ("find", {"intent": "list the served operations"}),
+    ("ask", {"op": "fleet.status", "params": {}}),
+)
+
+ServedCall = Callable[[str, dict[str, Any]], Awaitable[Any]]
 
 
 def _tracked_data_files(root: Path) -> list[str]:
@@ -135,17 +153,81 @@ def check_runtime() -> int:
     return 0
 
 
-def main(argv: list[str] | None = None) -> int:
+def _refusal(result: Any) -> str | None:
+    """The refusal code or error text of one served answer, else ``None``."""
+    if getattr(result, "is_error", False):
+        return "error"
+    text = "".join(getattr(c, "text", "") for c in getattr(result, "content", []) or [])
+    try:
+        body = json.loads(text)
+    except ValueError:
+        return None
+    if isinstance(body, dict) and body.get("ok") is False:
+        error = body.get("error")
+        return (
+            str((error or {}).get("code") or "unknown")
+            if isinstance(error, dict)
+            else "unknown"
+        )
+    return None
+
+
+async def check_served_calls(call: ServedCall) -> list[str]:
+    """Make every boot call; the failures name the call and the code, never a value."""
+    failures: list[str] = []
+    for tool, arguments in BOOT_CALLS:
+        label = arguments.get("op") or tool
+        try:
+            code = _refusal(await call(tool, arguments))
+        except Exception as exc:  # noqa: BLE001 - every failure is a boot failure
+            code = type(exc).__name__
+        if code is not None:
+            failures.append(f"{label}: {code}")
+    return failures
+
+
+async def _served(url: str) -> list[str]:
+    from fastmcp import Client
+    from fastmcp.client.auth import BearerAuth
+
+    token = os.environ.get("ARBORA_BOOT_TOKEN")
+    async with Client(url, auth=BearerAuth(token) if token else None) as client:
+
+        async def call(tool: str, arguments: dict[str, Any]) -> Any:
+            return await client.call_tool(tool, arguments, raise_on_error=False)
+
+        return await check_served_calls(call)
+
+
+def check_served(url: str) -> int:
+    failures = asyncio.run(_served(url))
+    for line in failures:
+        print(f"served boot call failed: {line}", file=sys.stderr)
+    if not failures:
+        print(f"served boot calls ok: {len(BOOT_CALLS)}")
+    return 1 if failures else 0
+
+
+def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
     contents = commands.add_parser("contents")
     contents.add_argument("wheel", type=Path)
     contents.add_argument("--source-root", type=Path, default=Path.cwd())
+    served = commands.add_parser("served")
+    served.add_argument("url")
     commands.add_parser("runtime")
-    args = parser.parse_args(argv)
-    if args.command == "contents":
-        return check_contents(args.wheel, args.source_root)
-    return check_runtime()
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parser().parse_args(argv)
+    run: dict[str, Callable[[], int]] = {
+        "served": lambda: check_served(args.url),
+        "contents": lambda: check_contents(args.wheel, args.source_root),
+        "runtime": check_runtime,
+    }
+    return run[args.command]()
 
 
 if __name__ == "__main__":

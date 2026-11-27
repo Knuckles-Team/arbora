@@ -502,7 +502,7 @@ class WorkItemA2AAuthority:
 
         native = self.task_plan_config is not None
         if native:
-            from arbora.mcp_server.task_plan import TaskPlanConfig
+            from arbora.core.task_plan_config import TaskPlanConfig
 
             if not isinstance(self.task_plan_config, TaskPlanConfig):
                 raise TypeError("trusted TaskPlanConfig is required")
