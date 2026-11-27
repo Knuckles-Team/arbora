@@ -167,7 +167,9 @@ def test_native_entry_hands_same_bundle_to_both_compositions(monkeypatch):
     monkeypatch.setattr(
         server,
         "install_gateway_application",
-        lambda invocation, *, fleet, approvals, caches: installed.append(invocation),
+        lambda invocation, *, gateway, fleet, approvals, engine_provider, caches: (
+            installed.append(invocation)
+        ),
     )
     for name in (
         "_preflight_mcp_sdk_floor",

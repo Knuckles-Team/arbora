@@ -298,6 +298,7 @@ def two_tenant_served(
     from arbora.fleet.state import FleetState
     from arbora.gateway.graph_api import register_graph_routes
     from arbora.mcp_server.composition import install_gateway_application
+    from arbora.mcp_server.host_context import build_host_context
     from arbora.mcp_server.served_invocation import refused_fleet_effect
     from tests.api.test_invoke_contract import FixtureJournal, FixtureLeases
 
@@ -329,14 +330,16 @@ def two_tenant_served(
             effects=journal,
         ),
     )
+    host = build_host_context()
     install_gateway_application(
         invocation,
+        gateway=host.gateway,
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
         caches=HostCaches(),
     )
     second = FastAPI()
-    register_graph_routes(second)
+    register_graph_routes(second, host)
     apps[TENANT_TWO], invocations[TENANT_TWO] = second, invocation
     return TwoTenants(apps, invocations, client, monkeypatch, scopes)

@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import Mock
 
@@ -17,8 +18,12 @@ from arbora.gateway.schema_context_api import register_schema_context_routes
 PATH = "/api/graph/schema/context"
 
 
-def _app() -> FastAPI:
+def _app(engine: Any = None) -> FastAPI:
     app = FastAPI()
+    application = Mock(engine=Mock(return_value=engine))
+    app.state.host = SimpleNamespace(
+        gateway=SimpleNamespace(application=lambda: application)
+    )
     register_schema_context_routes(app)
     return app
 
@@ -63,11 +68,7 @@ def test_missing_engine_capability_returns_503(
     """SC-04 over REST: no engine capability yields 503, zero engine calls."""
 
     engine = Mock(spec=[])
-    monkeypatch.setattr(
-        "arbora.gateway.ports.gateway_application",
-        lambda: Mock(engine=Mock(return_value=engine)),
-    )
-    client = TestClient(_app())
+    client = TestClient(_app(engine))
 
     response = client.post(PATH, json=_valid_body())
 
@@ -80,11 +81,7 @@ def test_available_capability_dispatches_through_the_service(
 ) -> None:
     engine = Mock()
     engine.schema_context.schema_context.return_value = {"sentinel": "answer"}
-    monkeypatch.setattr(
-        "arbora.gateway.ports.gateway_application",
-        lambda: Mock(engine=Mock(return_value=engine)),
-    )
-    client = TestClient(_app())
+    client = TestClient(_app(engine))
 
     response = client.post(PATH, json=_valid_body())
 

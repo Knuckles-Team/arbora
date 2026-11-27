@@ -229,11 +229,11 @@ def normalize_payload(payload: Any, source_hint: str | None = None) -> list[Flee
 # ── persistence + queue ──────────────────────────────────────────────
 
 
-def _get_engine() -> Any:
+def _get_engine(request: Request) -> Any:
     """Resolve the gateway's KG engine (kept as a seam for tests)."""
-    from arbora.gateway.ports import gateway_application
+    from arbora.gateway.state import gateway_of
 
-    return gateway_application().engine()
+    return gateway_of(request).application().engine()
 
 
 def _correlation_stamp() -> dict[str, str]:
@@ -387,7 +387,7 @@ async def fleet_events_receive(request: Request) -> JSONResponse:
     if event_error:
         return event_error
 
-    engine = _available_engine()
+    engine = _available_engine(request)
     if engine is None:
         # 503 so well-behaved senders (Alertmanager) retry instead of dropping.
         return JSONResponse(
@@ -477,9 +477,9 @@ async def _read_payload(request: Request, cfg: Any) -> tuple[Any, JSONResponse |
         )
 
 
-def _available_engine() -> Any:
+def _available_engine(request: Request) -> Any:
     try:
-        return _get_engine()
+        return _get_engine(request)
     except Exception as exc:
         logger.warning("fleet-events engine unavailable: %s", exc)
         return None

@@ -72,7 +72,7 @@ def client(monkeypatch: pytest.MonkeyPatch) -> Any:
     state = {"session": _session("acme", "alice", frozenset({"kg:read"}))}
     import arbora.security.session as session_module
 
-    monkeypatch.setattr(registry_api, "get_catalog_engine", lambda: object())
+    monkeypatch.setattr(registry_api, "get_catalog_engine", lambda _request: object())
     monkeypatch.setattr(registry_api, "_require_sql_exec", lambda _e: _sql)
     monkeypatch.setattr(session_module, "resolve_session", lambda: state["session"])
     app = FastAPI()
@@ -119,7 +119,7 @@ def test_refusals_leak_no_records(client: Any) -> None:
 @pytest.mark.spec("ARBORA-FLEET-R033.1")
 @pytest.mark.asyncio
 async def test_reader_refuses_before_any_read() -> None:
-    reader = FleetCatalogServersReader()
+    reader = FleetCatalogServersReader(object())
     with pytest.raises(ServersRefused) as refused:
         await reader.list(
             ServersCaller("acme", "alice", frozenset()), ServersPageRequest(limit=5)

@@ -28,9 +28,9 @@ __all__ = ["SCHEMA_CONTEXT_PATH", "register_schema_context_routes"]
 
 async def _schema_context_endpoint(request: Request) -> JSONResponse:
     from arbora.api.errors import ArboraErrorCode, ArboraRefusal
-    from arbora.gateway.ports import gateway_application
     from arbora.gateway.schema_context_service import get_schema_context
     from arbora.gateway.schemas.schema_context import SchemaContextRequest
+    from arbora.gateway.state import gateway_of
 
     try:
         body = await request.json()
@@ -48,7 +48,7 @@ async def _schema_context_endpoint(request: Request) -> JSONResponse:
         return JSONResponse({"status": "error", "message": str(exc)}, status_code=400)
 
     try:
-        result = get_schema_context(gateway_application().engine(), parsed)
+        result = get_schema_context(gateway_of(request).application().engine(), parsed)
     except ArboraRefusal as exc:
         status = 503 if exc.code is ArboraErrorCode.UNAVAILABLE else 400
         return JSONResponse(

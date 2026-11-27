@@ -70,6 +70,7 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
     browser = BrowserState()
     telemetry = Telemetry()
     engine = object()
+    host = object()
     composition.start_composed_services(
         object(),
         engine,
@@ -77,6 +78,7 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
         tools=tools,
         browser=browser,
         telemetry=telemetry,
+        host=host,
         session_boundary=boundary,
     )
     assert calls == [
@@ -88,6 +90,7 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
                 "tools": tools,
                 "browser": browser,
                 "telemetry": telemetry,
+                "host_context": host,
                 "session_boundary": boundary,
             },
         )
@@ -301,6 +304,7 @@ def test_one_runtime_reaches_mcp_server_and_webui(monkeypatch):
         tools=ToolTable(),
         browser=BrowserState(),
         telemetry=Telemetry(),
+        host=object(),
         session_boundary=boundary,
     )
     assert handed == [boundary] and handed[0] is boundary

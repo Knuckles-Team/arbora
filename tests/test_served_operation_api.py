@@ -217,8 +217,10 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         bindings={"a2a": a2a},
         fleet_effect=refused_fleet_effect,
     )
+    host = build_host_context()
     install_gateway_application(
         invocation,
+        gateway=host.gateway,
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: client,
@@ -227,9 +229,10 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     from arbora.gateway.graph_api import register_graph_routes
 
     app = FastAPI()
-    register_graph_routes(app)
+    register_graph_routes(app, host)
     yield app, client
     install_gateway_application(
+        gateway=host.gateway,
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,

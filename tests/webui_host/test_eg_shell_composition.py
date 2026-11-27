@@ -22,13 +22,15 @@ def test_real_composed_eg_shell_has_one_protected_route_owner(
     monkeypatch, tmp_path, legacy_composer
 ):
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "data"))
+    from functools import partial
+
     from fastapi.responses import JSONResponse
     from overstory import server as webui
     from pydantic_ai import Agent
     from pydantic_ai.models.test import TestModel
 
     from arbora.core.settings import runtime_config
-    from arbora.gateway import ports
+    from arbora.mcp_server.host_caches import HostCaches
     from arbora.security.request_identity import ActorIdentityMiddleware
     from arbora.webui_host.webui_co_service import compose_web_application
 
@@ -74,7 +76,10 @@ def test_real_composed_eg_shell_has_one_protected_route_owner(
 
     # Only the application port is inert; register_graph_routes and its real
     # ActorIdentityMiddleware/route registrations are deliberately not patched.
-    monkeypatch.setattr(ports, "_application", GatewayFixture())
+    fixture = GatewayFixture()
+    host = SimpleNamespace(
+        gateway=SimpleNamespace(application=lambda: fixture), caches=HostCaches()
+    )
 
     async def scenario():
         backend = OwnersFixture()
@@ -132,7 +137,9 @@ def test_real_composed_eg_shell_has_one_protected_route_owner(
             listener_host="127.0.0.1",
             auth_mode="eg",
             session_boundary=boundary,
-            application_composer=compose_web_application if legacy_composer else None,
+            application_composer=partial(compose_web_application, host=host)
+            if legacy_composer
+            else None,
         )
         assert sum(
             m.cls is ActorIdentityMiddleware for m in app.user_middleware

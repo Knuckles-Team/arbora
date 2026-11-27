@@ -124,6 +124,7 @@ async def test_served_approval_decides_only_under_a_verified_session(
     engine = _ApprovalEngine()
     host = compose_host_context(FixedEngineHandles(engine))
     install_gateway_application(
+        gateway=host.gateway,
         fleet=host.fleet,
         approvals=host.policy.approvals,
         engine_provider=host.engine.served,
@@ -132,6 +133,7 @@ async def test_served_approval_decides_only_under_a_verified_session(
     app = Starlette(
         routes=[Route("/fleet/approvals/grant", fleet_grant_approval, methods=["POST"])]
     )
+    app.state.host = host
     body = {"job_id": "action_approval:7", "decision": "approve"}
 
     async with httpx.AsyncClient(

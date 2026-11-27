@@ -111,11 +111,12 @@ def _mount_sql_schema_route(app, prefix: str = "/api") -> None:
     logger.info("Mounted read-only SQL catalog introspection at %s", path)
 
 
-def register_graph_routes(app, prefix: str = "/api") -> None:
+def register_graph_routes(app, host, prefix: str = "/api") -> None:
     """Mount the centralized Knowledge Graph REST surface onto ``app``.
 
     Args:
         app: The FastAPI/Starlette application to mount routes on.
+        host: The host context the routes read; set once as ``app.state.host``.
         prefix: Path prefix for every route (default ``/api`` → e.g.
             ``/api/graph/query``, ``/api/sessions``).
 
@@ -123,11 +124,11 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
     Graph queries use the typed ``/api/graph/query`` action surface; there is no
     second raw query route.
     """
-    from arbora.gateway.ports import gateway_application
+    app.state.host = host
 
     # Populate the host tool table without starting the MCP server's own engine
     # bootstrap — the gateway owns the engine/daemon lifecycle.
-    application = gateway_application()
+    application = host.gateway.application()
     application.ensure_tools_registered()
 
     # Per-tenant token-bucket rate limiting
@@ -148,11 +149,9 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
     # Validates ``Authorization: Bearer`` via
     # the existing JWKS machinery, scopes the request to an authenticated
     # ActorContext + GraphSession, and rejects unauthenticated requests with 401.
-    from arbora.security.key_cache import JwksCache
     from arbora.security.request_identity import ActorIdentityMiddleware
 
-    # The embedded application has no host; its identity middleware owns its keys.
-    app.add_middleware(ActorIdentityMiddleware, keys=JwksCache())
+    app.add_middleware(ActorIdentityMiddleware, keys=host.caches.jwks)
 
     # Python-tier Prometheus metrics
     # (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics). Added LAST so the

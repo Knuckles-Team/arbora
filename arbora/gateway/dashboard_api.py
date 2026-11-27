@@ -35,7 +35,7 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 from arbora.gateway.aggregator import WIDGET_READ_OP, Aggregator, WidgetReader
 from arbora.gateway.config import ConfigManager
 from arbora.gateway.models import DashboardLayout, WidgetData
-from arbora.gateway.ports import gateway_application
+from arbora.gateway.state import GatewayState, gateway_of
 from arbora.security.error_surface import public_error_payload
 
 __all__ = [
@@ -231,17 +231,16 @@ async def health_check() -> JSONResponse:
     return JSONResponse(report, headers={"Cache-Control": "no-store"})
 
 
-def _engine_probe() -> dict[str, Any]:
-    from arbora.gateway.ports import gateway_application
+def _engine_probe(gateway: GatewayState) -> dict[str, Any]:
     from arbora.observability.readiness import check
 
-    if gateway_application().engine() is not None:
+    if gateway.application().engine() is not None:
         return check("ready")
     return check("unavailable", reason="no active engine")
 
 
 @dashboard_router.get("/readiness")
-async def readiness_check() -> JSONResponse:
+async def readiness_check(request: Request) -> JSONResponse:
     """Readiness: the joined snapshot of the engine probe and registered probes."""
     from arbora.observability.readiness import (
         collect_readiness_snapshot,
@@ -249,7 +248,8 @@ async def readiness_check() -> JSONResponse:
         registered_probes,
     )
 
-    probes = {"engine": _engine_probe, **registered_probes()}
+    gateway = gateway_of(request)
+    probes = {"engine": lambda: _engine_probe(gateway), **registered_probes()}
     snapshot = await asyncio.to_thread(
         collect_readiness_snapshot, probes, required=("engine",)
     )
@@ -266,24 +266,24 @@ async def discover_services() -> DashboardLayout:
     return ConfigManager()._auto_discover()
 
 
-def _gateway_engine_or_none() -> Any:
+def _gateway_engine_or_none(request: Request) -> Any:
     """The gateway port's engine, or ``None`` when no engine is composed."""
     try:
-        return gateway_application().engine()
+        return gateway_of(request).application().engine()
     except Exception:
         return None
 
 
 @dashboard_router.get("/daemon/status")
-async def daemon_status() -> dict[str, Any]:
+async def daemon_status(request: Request) -> dict[str, Any]:
     """Return the consolidated KG host daemon status."""
     from arbora.gateway.daemon import daemon_status as _status
 
-    return _status(_gateway_engine_or_none())
+    return _status(_gateway_engine_or_none(request))
 
 
 @dashboard_router.get("/daemon/shards")
-async def daemon_shards() -> dict[str, Any]:
+async def daemon_shards(request: Request) -> dict[str, Any]:
     """Return the engine shard topology and per-shard reachability.
 
     The engine's member list, reachability and snapshot epochs are returned
@@ -293,7 +293,7 @@ async def daemon_shards() -> dict[str, Any]:
 
     unavailable = HTTPException(status_code=503, detail={"code": "UNAVAILABLE"})
     try:
-        engine = gateway_application().engine()
+        engine = gateway_of(request).application().engine()
     except Exception:
         raise unavailable from None
     topology = getattr(
@@ -322,7 +322,7 @@ async def daemon_start(request: Request) -> dict[str, Any]:
     from arbora.gateway.daemon import start_host_daemon
 
     start_host_daemon()
-    return _status(_gateway_engine_or_none())
+    return _status(_gateway_engine_or_none(request))
 
 
 #: Refusal codes of a served operation, mapped to the dashboard's HTTP statuses.
@@ -354,8 +354,12 @@ async def _served(
     from arbora.api.invoke.pipeline import OperationRefused
 
     try:
-        value = await gateway_application().invoke_operation(
-            op_id, params, request=request, idempotency_key=idempotency_key
+        value = (
+            await gateway_of(request)
+            .application()
+            .invoke_operation(
+                op_id, params, request=request, idempotency_key=idempotency_key
+            )
         )
     except HTTPAuthenticationError as exc:
         raise HTTPException(

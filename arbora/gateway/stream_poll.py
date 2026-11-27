@@ -18,7 +18,7 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from arbora.api.http.auth import HTTPAuthenticationError
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.gateway.ports import gateway_application
+from arbora.gateway.state import gateway_of
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +73,10 @@ async def stream_operation(
     try:
         while True:
             try:
-                value = await gateway_application().invoke_operation(
-                    op_id, params(cursor), request=websocket
+                value = (
+                    await gateway_of(websocket)
+                    .application()
+                    .invoke_operation(op_id, params(cursor), request=websocket)
                 )
             except HTTPAuthenticationError:
                 await websocket.close(code=CLOSE_UNAUTHENTICATED)
