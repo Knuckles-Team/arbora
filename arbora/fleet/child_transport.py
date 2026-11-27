@@ -558,7 +558,7 @@ class ChildTransport:
             principal=actor.actor_id,
             client=actor.actor_id,
         )
-        from arbora.fleet.remote_oauth_broker import ProviderDescriptor
+        from arbora.fleet.remote_oauth_tokens import ProviderDescriptor
 
         descriptor = ProviderDescriptor(**cfg["oauth_provider"])
         return await self._fleet.credentials.bearer(caller, cfg, url, descriptor)
