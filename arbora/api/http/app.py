@@ -21,6 +21,7 @@ from .git_bridge import mount_git_bridge
 from .lineage import mount_lineage_route
 from .openapi import document
 from .routes import _error, make_endpoint
+from .scm_events import mount_scm_events_route
 from .sparql import mount_sparql_protocol
 
 Visibility = Callable[[Any, Any], Awaitable[bool]]
@@ -277,6 +278,17 @@ def create_api_application(
                 methods=[str(op.http.method).upper()],
                 include_in_schema=False,
             )
+
+    # A signed code-host delivery is admitted by the identity middleware and served
+    # through the same invoke chokepoint (ARBORA-OPS-R896.8).
+    mount_scm_events_route(
+        app,
+        services=services,
+        invoke=invoke,
+        response=lambda result, current_op, request_id: _outcome_response(
+            result, current_op, digest=registry.digest, request_id=request_id
+        ),
+    )
 
     # The virtual checkout streams one repository ref as NDJSON by driving
     # the admitted ``source.tree`` operation through the same invoke

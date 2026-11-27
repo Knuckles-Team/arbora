@@ -214,6 +214,22 @@ def directory_sync_service(
     return build(read, port, clock, directory_factory)
 
 
+def scm_ingress_from_settings(
+    client: Any, graph: str, *, clock_ms: Callable[[], int]
+) -> Any:
+    """The signed code-host ingress admitter when sources are configured, else ``None``."""
+    from .signed_ingress import scm_ingress_from_settings as build
+
+    return build(client, graph, clock_ms=clock_ms)
+
+
+def configured_scm_sources() -> dict[str, Any]:
+    """The code-host sources the host is configured with, by connector id."""
+    from .signed_ingress import configured_sources
+
+    return configured_sources()
+
+
 def ldap_directory(*, base_dn: str, password: Callable[[], str]) -> Any:
     """The production LDAPS directory transport of the sync job (R010.2.2)."""
     from .ldap_directory import LdapDirectory

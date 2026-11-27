@@ -435,6 +435,8 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "ARMING_APPROVAL_MISSING": (403, False),
     "ARMING_HEAD_MISMATCH": (409, False),
     "ASSIGNMENT_ENDED": (409, False),
+    "FEEDBACK_PROPOSAL_UNKNOWN": (404, False),
+    "FEEDBACK_SOURCE_UNKNOWN": (404, False),
     "DELIVERY_NOT_FOUND": (404, False),
     "DELIVERY_SCOPE_EMPTY": (400, False),
     "MANDATE_REVOKED": (403, False),

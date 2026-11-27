@@ -163,9 +163,51 @@ async def handle_run_start(
         idempotent=True,
     )
     try:
-        return {"run_id": str(answer["delivery"]["id"])}
+        run_id = str(answer["delivery"]["id"])
     except (KeyError, TypeError):
         raise _malformed() from None
+    await _begin_assignment(context, answer["delivery"])
+    return {"run_id": run_id}
+
+
+def _assignment_ports(context: Any) -> tuple[Any, Any, int, Any]:
+    """The lane authority, the run starter, the parallel cap and the clock of this host."""
+    import time
+
+    from arbora.api.ops.development_assignments import MAX_PARALLEL_DEFAULT
+    from arbora.core.settings import setting
+
+    cap = int(
+        str(
+            setting("ARBORA_DEVELOPMENT_DELIVERY_MAX_PARALLEL", "")
+            or MAX_PARALLEL_DEFAULT
+        )
+    )
+    return (
+        context.services.get("delivery_lanes"),
+        context.services.get("delivery_run_starter"),
+        cap,
+        context.services.get("clock_ms") or (lambda: time.time_ns() // 1_000_000),
+    )
+
+
+async def _begin_assignment(context: Any, delivery: Mapping[str, Any]) -> None:
+    """Start the delivery's pending assignment on a reserved lane, or queue it."""
+    from arbora.api.ops.development_assignments import start_assignment
+
+    assignments = delivery.get("assignments") or ()
+    if not assignments:
+        return
+    lanes, runner, cap, clock = _assignment_ports(context)
+    await start_assignment(
+        delivery,
+        assignments[-1],
+        tenant=_tenant(context),
+        lanes=lanes,
+        runner=runner,
+        max_parallel=cap,
+        now_ms=clock,
+    )
 
 
 async def _unblocked_slice(

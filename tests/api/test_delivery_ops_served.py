@@ -308,3 +308,181 @@ async def test_arm_without_composed_receipts_or_connector_refuses_unavailable() 
     with pytest.raises(OperationRefused) as refused:
         await delivery.handle_delivery_arm(context, params, None)  # type: ignore[arg-type]
     assert refused.value.code == "UNAVAILABLE"
+
+
+class _KvEngine:
+    """The engine key-value store: versioned entries, compare-and-set."""
+
+    def __init__(self) -> None:
+        self.store: dict[str, tuple[int, bytes]] = {}
+
+    async def __call__(
+        self, ctx: Any, method: str, params: dict[str, Any], **_k: Any
+    ) -> Any:
+        key = params["key"]
+        version, value = self.store.get(key, (0, None))
+        if method == "KvGet":
+            return {"value": value, "version": version} if value is not None else None
+        assert method == "KvCas"
+        if version != params["expected_version"]:
+            return {"swapped": False, "version": version}
+        self.store[key] = (version + 1, params["new"])
+        return {"swapped": True, "version": version + 1}
+
+
+class _EffectFleet:
+    """The connector: applies an effect once per key, can lose its answer, and reads by key."""
+
+    def __init__(self) -> None:
+        self.applied: dict[str, dict[str, str]] = {}
+        self.calls: list[tuple[str, dict[str, Any]]] = []
+        self.lose_answer = False
+
+    async def __call__(self, server: str, tool: str, arguments: dict[str, Any]) -> Any:
+        self.calls.append((tool, arguments))
+        if tool == "effect_status":
+            key = arguments["idempotency_key"]
+            if key in self.applied:
+                return {"state": "applied", "receipt": self.applied[key]}
+            return {"state": "absent"}
+        key = arguments["request"]["idempotency_key"]
+        receipt = self.applied.setdefault(
+            key,
+            {
+                "effect_id": f"e{len(self.applied) + 1}",
+                "provider_ref": "pr#7/comment/1",
+                "applied_at": "2026-11-26T10:00:00Z",
+            },
+        )
+        if self.lose_answer:
+            from arbora.fleet.service_child import ServiceChildOutcomeUnknown
+
+            raise ServiceChildOutcomeUnknown("lost")
+        return {"receipt": receipt}
+
+
+@pytest.mark.spec("ARBORA-OPS-R896.11")
+async def test_delivery_writes_are_idempotent_and_uncertain_effects_reconcile(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
+    from arbora.api.ops import development_effects as effects
+    from arbora.api.ops.research import FleetCaller
+
+    kv, fleet = _KvEngine(), _EffectFleet()
+    monkeypatch.setattr(effects, "engine_send", kv)
+    monkeypatch.setattr(FleetCaller, "call", lambda self, s, t, a: fleet(s, t, a))
+    context = SimpleNamespace(caller=SimpleNamespace(tenant="tenant:one"), services={})
+    base = {
+        "delivery_id": "d1",
+        "assignment_id": "a1",
+        "step": "comment-1",
+        "effect_kind": "comment",
+        "target": "org/repo#7",
+        "payload_digest": "sha256:" + "a" * 64,
+        "server": "github",
+        "tool": "post_comment",
+    }
+    key = effects.delivery_effect_key("d1", "a1", "comment-1")
+    assert key == "d1:a1:comment-1"
+    first = await effects.handle_delivery_effect(context, base, None)
+    again = await effects.handle_delivery_effect(context, base, None)
+    # The effect applies once; the replay returns the same receipt and writes nothing.
+    assert first == again and first["state"] == "done"
+    assert len([c for c in fleet.calls if c[0] == "post_comment"]) == 1
+    sent = fleet.calls[0][1]["request"]
+    assert sent["idempotency_key"] == key and sent["effect_kind"] == "comment"
+
+
+@pytest.mark.spec("ARBORA-OPS-R896.11")
+async def test_a_lost_effect_answer_is_uncertain_until_reconciled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
+    from arbora.api.invoke.pipeline import OperationRefused
+    from arbora.api.ops import development_effects as effects
+    from arbora.api.ops.research import FleetCaller
+
+    kv, fleet = _KvEngine(), _EffectFleet()
+    monkeypatch.setattr(effects, "engine_send", kv)
+    monkeypatch.setattr(FleetCaller, "call", lambda self, s, t, a: fleet(s, t, a))
+    context = SimpleNamespace(caller=SimpleNamespace(tenant="tenant:one"), services={})
+    base = {
+        "delivery_id": "d1",
+        "assignment_id": "a1",
+        "step": "comment-1",
+        "effect_kind": "comment",
+        "target": "org/repo#7",
+        "payload_digest": "sha256:" + "a" * 64,
+        "server": "github",
+        "tool": "post_comment",
+    }
+    # A lost answer leaves the effect pending: uncertain, and a retry refuses.
+    lost = {**base, "step": "comment-2"}
+    fleet.lose_answer = True
+    with pytest.raises(OperationRefused) as uncertain:
+        await effects.handle_delivery_effect(context, lost, None)
+    assert uncertain.value.code == "EFFECT_UNCERTAIN"
+    fleet.lose_answer = False
+    with pytest.raises(OperationRefused) as retried:
+        await effects.handle_delivery_effect(context, lost, None)
+    assert retried.value.code == "EFFECT_UNCERTAIN"
+    assert len([c for c in fleet.calls if c[0] == "post_comment"]) == 1
+    # Reconciliation reads the connector: the effect was applied, so it settles done and
+    # the retry returns its receipt without a second write.
+    probe = {k: lost[k] for k in ("delivery_id", "assignment_id", "step")}
+    settled = await effects.handle_delivery_effect_reconcile(
+        context, {**probe, "server": "github", "tool": "effect_status"}, None
+    )
+    assert settled["state"] == "done" and settled["receipt"]["provider_ref"]
+    final = await effects.handle_delivery_effect(context, lost, None)
+    assert final["receipt"] == settled["receipt"]
+    assert len([c for c in fleet.calls if c[0] == "post_comment"]) == 1
+
+
+@pytest.mark.spec("ARBORA-OPS-R896.11")
+async def test_an_effect_the_provider_never_applied_reconciles_absent_and_retries(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
+    from arbora.api.ops import development_effects as effects
+    from arbora.api.ops.research import FleetCaller
+
+    kv, fleet = _KvEngine(), _EffectFleet()
+    monkeypatch.setattr(effects, "engine_send", kv)
+    monkeypatch.setattr(FleetCaller, "call", lambda self, s, t, a: fleet(s, t, a))
+    context = SimpleNamespace(caller=SimpleNamespace(tenant="tenant:one"), services={})
+    base = {
+        "delivery_id": "d1",
+        "assignment_id": "a1",
+        "step": "comment-3",
+        "effect_kind": "comment",
+        "target": "org/repo#7",
+        "payload_digest": "sha256:" + "a" * 64,
+        "server": "github",
+        "tool": "post_comment",
+    }
+    never = base
+    kv.store[effects.delivery_effect_key("d1", "a1", "comment-3")] = (
+        1,
+        b'{"state": "pending"}',
+    )
+    gone = await effects.handle_delivery_effect_reconcile(
+        context,
+        {
+            "delivery_id": "d1",
+            "assignment_id": "a1",
+            "step": "comment-3",
+            "server": "github",
+            "tool": "effect_status",
+        },
+        None,
+    )
+    assert gone["state"] == "absent"
+    # The reservation reads absent, so the retry applies.
+    assert (await effects.handle_delivery_effect(context, never, None))[
+        "state"
+    ] == "done"

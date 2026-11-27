@@ -18,7 +18,9 @@ from arbora.pin_lag.unavailable import PinLagUnavailable
 __all__ = [
     "BINDING_SYMBOL",
     "PROVISIONER_SYMBOL",
+    "SCM_LISTING_SYMBOL",
     "require_credential_binding",
+    "require_scm_event_listing",
     "require_provisioning",
 ]
 
@@ -61,4 +63,23 @@ def require_credential_binding() -> ModuleType:
     for name in _BINDING_NEEDED:
         if not hasattr(module, name):
             raise PinLagUnavailable(f"{_BINDING_MODULE}.{name}")
+    return module
+
+
+SCM_LISTING_SYMBOL = "scion_sdk.scm.events.ScmEventLister"
+_SCM_EVENTS_MODULE = "scion_sdk.scm.events"
+
+
+def require_scm_event_listing() -> ModuleType:
+    """The SDK code-host event listing contract, or ``PinLagUnavailable`` naming the symbol.
+
+    scion-sdk ``main`` is to serve the read tool ``<prefix>_list_scm_events`` that the polling
+    fallback of ``ARBORA-OPS-R896.8`` calls (``ScmEventLister``); the pinned release lacks it.
+    """
+    try:
+        module = importlib.import_module(_SCM_EVENTS_MODULE)
+    except ImportError:
+        raise PinLagUnavailable(SCM_LISTING_SYMBOL) from None
+    if not hasattr(module, "ScmEventLister"):
+        raise PinLagUnavailable(SCM_LISTING_SYMBOL)
     return module
