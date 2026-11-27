@@ -1,5 +1,6 @@
 from functools import partial
 
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 
 """Actual governed ACP path; model and EG/effect owners are controlled test ports."""
@@ -104,8 +105,11 @@ async def central(http_server, chain, monkeypatch):
         task_plan_config=host.task_plan_config,
         origins=RunOriginRegistry(),
         ports=slot,
+        config=RuntimeConfig(),
     )
-    service = A2AService(authority, OrchestratorA2ARouter(lambda: engine))
+    service = A2AService(
+        authority, OrchestratorA2ARouter(lambda: engine), config=RuntimeConfig()
+    )
     runtime = SessionRuntime()
     runtime.bindings = {
         **getattr(host.services.runtime, "bindings", {}),
@@ -132,7 +136,7 @@ async def central(http_server, chain, monkeypatch):
         ),
         authenticator=AmbientHTTPAuthenticator(
             session_for_request=partial(
-                verified_bearer_session_for_request, JwksCache()
+                verified_bearer_session_for_request, JwksCache(RuntimeConfig())
             )
         ),
     )
@@ -230,7 +234,7 @@ async def central(http_server, chain, monkeypatch):
         )
 
     controlled = FunctionModel(model)
-    monkeypatch.setattr(agent_runs, "resolve_model", lambda name: controlled)
+    monkeypatch.setattr(agent_runs, "resolve_model", lambda name, config: controlled)
     slot.bind(
         HostPortsBinding(HostPorts(native=native, models=lambda name: controlled), None)
     )

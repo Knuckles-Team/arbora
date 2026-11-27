@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.security.bearer import BearerRefusal, BearerRefused, precheck_bearer
 from arbora.security.key_cache import JwksCache
 from tests.identity._bearer_fixture import (
@@ -39,7 +40,7 @@ def test_audit_event_fields_and_no_token_text(monkeypatch: pytest.MonkeyPatch) -
     asyncio.run(
         precheck_bearer(
             good,
-            key_cache=JwksCache(),
+            key_cache=JwksCache(RuntimeConfig()),
             emit=events.append,
             request_id="req-1",
             now=NOW,
@@ -49,7 +50,7 @@ def test_audit_event_fields_and_no_token_text(monkeypatch: pytest.MonkeyPatch) -
         asyncio.run(
             precheck_bearer(
                 bad,
-                key_cache=JwksCache(),
+                key_cache=JwksCache(RuntimeConfig()),
                 emit=events.append,
                 request_id="req-2",
                 now=NOW,

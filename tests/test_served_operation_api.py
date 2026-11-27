@@ -15,6 +15,7 @@ import contextlib
 import json
 import time
 from collections.abc import Iterator
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -34,7 +35,7 @@ from arbora.api.domain.agent_host.host_port_adapters import (
     HostPortsSlot,
 )
 from arbora.api.invoke.privacy import mask_persisted_arguments
-from arbora.core.settings import RuntimeConfig, runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.mcp_server.composition import install_gateway_application
@@ -173,7 +174,7 @@ def _actor() -> ActorContext:
 def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     registry = tmp_path / "models.json"
     registry.write_text(json.dumps({"default": "test"}), encoding="utf-8")
-    monkeypatch.setattr(runtime_config, "model_registry_path", str(registry))
+    monkeypatch.setenv("MODEL_REGISTRY_PATH", str(registry))
     monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
     monkeypatch.setenv("KG_POLICY_VERSION", "policy:fixture")
     # The identity gate needs a configured verifier; the verification is faked.
@@ -195,8 +196,8 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     ports.bind(
         HostPortsBinding(
             HostPorts(
-                decide=agent_runs.decide_run,
-                models=agent_runs.resolve_model,
+                decide=partial(agent_runs.decide_run, config=RuntimeConfig()),
+                models=partial(agent_runs.resolve_model, config=RuntimeConfig()),
                 events=run_events(client),
             ),
             None,
@@ -205,13 +206,17 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     process = request_identity.mint_graph_session(_actor(), RuntimeConfig())
     a2a = A2AService(
         authority=WorkItemA2AAuthority(
-            lambda: client, origins=RunOriginRegistry(), ports=ports
+            lambda: client,
+            origins=RunOriginRegistry(),
+            ports=ports,
+            config=RuntimeConfig(),
         ),
         router=OrchestratorA2ARouter(lambda: client),
+        config=RuntimeConfig(),
     )
     invocation = compose_served_invocation(
         config=RuntimeConfig(),
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,

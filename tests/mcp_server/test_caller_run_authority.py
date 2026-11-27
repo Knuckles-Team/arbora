@@ -12,6 +12,7 @@ from typing import Any
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import bootstrap
 from arbora.security import run_authority
 from arbora.security.actor_context import ActorContext, ActorType
@@ -116,7 +117,9 @@ def scope(monkeypatch: pytest.MonkeyPatch, clock: Clock) -> Any:
         )
 
     monkeypatch.setattr(run_authority, "keep_run_authority_current", fake_clock_renewer)
-    return partial(bootstrap.authority_keepalive_scope, ProcessAuthority())
+    return partial(
+        bootstrap.authority_keepalive_scope, ProcessAuthority(config=RuntimeConfig())
+    )
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R029.1")
@@ -320,12 +323,12 @@ def test_process_renewal_never_touches_a_run_lease(clock: Clock, scope: Any) -> 
                 assert run_session is not None
                 with pytest.raises(bootstrap.ProcessAuthorityRenewalError) as err:
                     bootstrap._refresh_process_authority(
-                        ProcessAuthority(), run_session
+                        ProcessAuthority(config=RuntimeConfig()), run_session
                     )
                 assert err.value.code == "not_renewable"
                 assert (
                     await bootstrap._ensure_process_authority_current(
-                        ProcessAuthority()
+                        ProcessAuthority(config=RuntimeConfig())
                     )
                     is run_session
                 )

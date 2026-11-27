@@ -39,6 +39,7 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from jwt.algorithms import RSAAlgorithm
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing.intent_contract import DEFAULT_SURFACE_TOOL_LIMIT
 from arbora.mcp_server.backing.tool_specs import INTENT_VERBS
 
@@ -127,7 +128,6 @@ def _live_streamable_http_server(
     """Build and serve the REAL arbora FastMCP app over a real TCP port."""
     import uvicorn
 
-    from arbora.core.settings import runtime_config as live_config
     from arbora.mcp_server import runtime
 
     # Configure inbound JWT verification (FastMCP's own provider) exactly as
@@ -147,10 +147,8 @@ def _live_streamable_http_server(
     # The served-security profile (apply_served_security_profile, exercised
     # separately/unit-tested in test_request_identity.py) additionally
     # requires an audience + policy revision on the shared config object.
-    monkeypatch.setattr(live_config, "auth_jwt_audience", audience, raising=False)
-    monkeypatch.setattr(
-        live_config, "kg_policy_version", "e2e-test-policy-v1", raising=False
-    )
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", json.dumps(audience))
+    monkeypatch.setenv("KG_POLICY_VERSION", json.dumps("e2e-test-policy-v1"))
 
     args, mcp, middlewares = runtime._build_server(bootstrap=False)
     # Re-parse our transport/auth argv through the real parser+auth configurer
@@ -163,7 +161,7 @@ def _live_streamable_http_server(
 
     parser = create_mcp_parser(transport_choices=("stdio", "streamable-http"))
     real_args, _ = parser.parse_known_args(argv)
-    auth = _configure_auth(real_args)
+    auth = _configure_auth(real_args, RuntimeConfig())
     assert auth is not None, "jwt auth-type must produce a real FastMCP auth provider"
     mcp.auth = auth
 

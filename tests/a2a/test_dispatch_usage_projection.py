@@ -1,3 +1,4 @@
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 
 """Dispatch projection keeps native receipt and legacy snapshot paths distinct."""
@@ -16,7 +17,10 @@ pytestmark = pytest.mark.spec("ARBORA-A2A-R001")
 def projection(monkeypatch, *, native):
     config = TaskPlanConfig({}, {}, 1, 2) if native else None
     authority = WorkItemA2AAuthority(
-        lambda: None, task_plan_config=config, origins=RunOriginRegistry()
+        lambda: None,
+        task_plan_config=config,
+        origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     task = SimpleNamespace(id="task", metadata={"arbora": {"runId": "run"}})
     monkeypatch.setattr(authority, "_project", Mock(return_value=task))

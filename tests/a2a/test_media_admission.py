@@ -12,7 +12,7 @@ from arbora.api.domain.a2a.parts import (
     capability_from_assembly,
     sniff_image_type,
 )
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig
 from tests.a2a._parts_support import JPEG, PNG, WEBP, file_part, reason, send, served
 
 
@@ -40,33 +40,31 @@ def test_mismatched_signature_is_refused_with_zero_tasks() -> None:
 
 
 @pytest.mark.spec("ARBORA-A2A-R001.5.4")
-def test_request_byte_and_image_count_limits_refuse_with_reasons(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    client, authority = served()
-    monkeypatch.setitem(runtime_config._overrides, "a2a_max_image_parts", 2)
+def test_request_byte_and_image_count_limits_refuse_with_reasons() -> None:
+    config = RuntimeConfig()
+    client, authority = served(config=config)
+    config.a2a_max_image_parts = 2
     three = [file_part(PNG, "image/png")] * 3
     assert reason(send(client, three)) == "image_part_count"
-    monkeypatch.setitem(runtime_config._overrides, "a2a_max_image_parts", 4)
-    monkeypatch.setitem(runtime_config._overrides, "a2a_max_request_media_bytes", 1_024)
+    config.a2a_max_image_parts = 4
+    config.a2a_max_request_media_bytes = 1_024
     big = PNG + b"\x00" * 600
     assert reason(send(client, [file_part(big, "image/png")] * 2)) == (
         "request_media_too_large"
     )
-    monkeypatch.setitem(runtime_config._overrides, "a2a_max_file_part_bytes", 1_024)
+    config.a2a_max_file_part_bytes = 1_024
     assert reason(send(client, [file_part(PNG + b"\x00" * 2_000, "image/png")])) == (
         "file_part_too_large"
     )
     assert authority.dispatched == []
 
 
-def test_limit_table_is_bounded_to_its_ranges(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    assert MediaLimits.from_config().max_image_parts == 4
-    monkeypatch.setitem(runtime_config._overrides, "a2a_max_image_parts", 9)
+def test_limit_table_is_bounded_to_its_ranges() -> None:
+    config = RuntimeConfig()
+    assert MediaLimits.from_config(config).max_image_parts == 4
+    config.a2a_max_image_parts = 9
     with pytest.raises(ValueError):
-        MediaLimits.from_config()
+        MediaLimits.from_config(config)
 
 
 CAPABLE = MediaCapability(
@@ -173,7 +171,7 @@ def _upload(store: _Store, owner: str, data: bytes, now: Any) -> str:
     from arbora.api.ops import a2a_media
 
     context = SimpleNamespace(
-        services={"media_ref_store": store},
+        services={"media_ref_store": store, "config": RuntimeConfig()},
         caller=SimpleNamespace(
             tenant=owner.split(":")[0], principal=owner.split(":")[1]
         ),
@@ -190,22 +188,25 @@ def _upload(store: _Store, owner: str, data: bytes, now: Any) -> str:
 
 
 @pytest.mark.spec("ARBORA-A2A-R001.5.5")
-def test_upload_reference_resolves_for_owner_and_refuses_foreign_expired_unknown(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_upload_reference_resolves_for_owner_and_refuses_foreign_expired_unknown() -> (
+    None
+):
     from datetime import UTC, datetime
 
     store = _Store()
     big = PNG + b"\x00" * 2_000
     digest = _upload(store, "tenant:ann", big, datetime.now(UTC))
-    monkeypatch.setitem(runtime_config._overrides, "a2a_inline_media_max_bytes", 1_024)
-    client, authority = served(CAPABLE, media_refs=store)
+    config = RuntimeConfig()
+    config.a2a_inline_media_max_bytes = 1_024
+    client, authority = served(CAPABLE, media_refs=store, config=config)
     # Over the inline threshold the bytes must travel by reference.
     assert reason(send(client, [file_part(big, "image/png")])) == "file_part_too_large"
     assert send(client, [_ref_part(digest)]).get("error") is None
     assert authority.dispatched[0].media_files()[0][1].decoded_bytes() == big
     # A reference of another caller reads exactly like an unknown one.
-    foreign, f_authority = served(CAPABLE, media_refs=store, owner="tenant:bob")
+    foreign, f_authority = served(
+        CAPABLE, media_refs=store, owner="tenant:bob", config=config
+    )
     assert reason(send(foreign, [_ref_part(digest)])) == "media_ref_unknown"
     assert reason(send(client, [_ref_part("0" * 64)])) == "media_ref_unknown"
     old = _upload(
@@ -213,22 +214,21 @@ def test_upload_reference_resolves_for_owner_and_refuses_foreign_expired_unknown
     )
     assert reason(send(client, [_ref_part(old)])) == "media_ref_expired"
     # With no store bound a reference is unavailable, never fetched.
-    unbound, _ = served(CAPABLE)
+    unbound, _ = served(CAPABLE, config=config)
     assert send(unbound, [_ref_part(digest)])["error"]["message"] == "UNAVAILABLE"
     assert f_authority.dispatched == [] and len(authority.dispatched) == 1
 
 
 @pytest.mark.spec("ARBORA-A2A-R001.5.6")
-def test_card_media_limits_equal_enforced_limits(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    client, _ = served()
-    monkeypatch.setitem(runtime_config._overrides, "a2a_max_image_parts", 3)
-    monkeypatch.setitem(runtime_config._overrides, "a2a_inline_media_max_bytes", 2_048)
+def test_card_media_limits_equal_enforced_limits() -> None:
+    config = RuntimeConfig()
+    client, _ = served(config=config)
+    config.a2a_max_image_parts = 3
+    config.a2a_inline_media_max_bytes = 2_048
     card = client.get(
         "/.well-known/agent-card.json", headers={"Authorization": "Bearer verified"}
     ).json()["media"]
-    limits = MediaLimits.from_config()
+    limits = MediaLimits.from_config(config)
     assert card == {
         "allowedTypes": sorted(
             ["image/png", "image/jpeg", "image/webp", "text/plain", "text/markdown"]
@@ -261,18 +261,17 @@ def test_run_request_carries_attachments_capability_and_fallback_mode() -> None:
 
 
 @pytest.mark.spec("ARBORA-A2A-R001.5.8")
-def test_png_message_send_reaches_run_request_end_to_end(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_png_message_send_reaches_run_request_end_to_end() -> None:
     from datetime import UTC, datetime
 
     store = _Store()
-    client, authority = served(CAPABLE, media_refs=store)
+    config = RuntimeConfig()
+    client, authority = served(CAPABLE, media_refs=store, config=config)
     assert send(client, [file_part(PNG, "image/png")]).get("error") is None
     assert [a.data for a in _request(authority.media[0]).attachments] == [PNG]
     # One upload-reference journey.
     big = PNG + b"\x00" * 2_000
-    monkeypatch.setitem(runtime_config._overrides, "a2a_inline_media_max_bytes", 1_024)
+    config.a2a_inline_media_max_bytes = 1_024
     digest = _upload(store, "tenant:ann", big, datetime.now(UTC))
     assert send(client, [_ref_part(digest)]).get("error") is None
     assert [a.data for a in _request(authority.media[1]).attachments] == [big]

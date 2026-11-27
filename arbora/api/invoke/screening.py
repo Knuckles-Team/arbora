@@ -13,7 +13,7 @@ import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any
+from typing import Any, NamedTuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -33,6 +33,8 @@ __all__ = [
     "DEFAULT_REDACTOR",
     "default_screen_rules",
     "default_output_redactor",
+    "ScreenSettings",
+    "screen_settings",
     "screen_result",
     "screen_params",
     "redact_result",
@@ -239,13 +241,21 @@ SCREEN_REGISTRY.register_rules(DEFAULT_RULES_NAME, default_screen_rules)
 SCREEN_REGISTRY.register_redactor(DEFAULT_REDACTOR, default_output_redactor)
 
 
-def _settings() -> tuple[str, str, int]:
-    from arbora.core.settings import runtime_config
+class ScreenSettings(NamedTuple):
+    """The configured rule set, redactor and scan limit of one host."""
 
-    rules = str(getattr(runtime_config, "content_screen_rules", DEFAULT_RULES_NAME))
-    redactor = str(getattr(runtime_config, "content_screen_redactor", DEFAULT_REDACTOR))
-    limit = getattr(runtime_config, "content_screen_max_scan_bytes", 1_048_576)
-    return rules, redactor, int(limit)
+    rules: str
+    redactor: str
+    limit: int
+
+
+def screen_settings(config: Any) -> ScreenSettings:
+    """The screen settings of the host config, read at call time."""
+    return ScreenSettings(
+        str(getattr(config, "content_screen_rules", DEFAULT_RULES_NAME)),
+        str(getattr(config, "content_screen_redactor", DEFAULT_REDACTOR)),
+        int(getattr(config, "content_screen_max_scan_bytes", 1_048_576)),
+    )
 
 
 def _scan_string(
@@ -295,9 +305,9 @@ def _size(value: Any) -> int:
         return 1 << 62
 
 
-def screen_result(value: Any) -> ScreenOutcome:
+def screen_result(value: Any, settings: ScreenSettings) -> ScreenOutcome:
     """Screen one open-web result. Content above the scan limit is quarantined."""
-    rules_name, _, limit = _settings()
+    rules_name, _, limit = settings
     if _size(value) > limit:
         finding = ScreenFinding(
             attack_class=AttackClass.PERCEPTION,
@@ -314,14 +324,14 @@ def screen_result(value: Any) -> ScreenOutcome:
     return ScreenOutcome(verdict, tuple(found), cleaned)
 
 
-def screen_params(params: Mapping[str, Any]) -> ScreenOutcome:
+def screen_params(params: Mapping[str, Any], settings: ScreenSettings) -> ScreenOutcome:
     """Screen request params that carry open-web content before an effect."""
-    return screen_result(dict(params))
+    return screen_result(dict(params), settings)
 
 
-def redact_result(value: Any) -> tuple[Any, int]:
-    """Mask secrets in a result with the configured redactor."""
-    _, redactor, _ = _settings()
+def redact_result(value: Any, settings: ScreenSettings) -> tuple[Any, int]:
+    """Mask secrets in a result with the redactor the caller's settings name."""
+    redactor = settings.redactor
     return SCREEN_REGISTRY.redactor(redactor)(value)
 
 

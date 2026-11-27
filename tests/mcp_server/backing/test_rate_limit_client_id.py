@@ -93,7 +93,10 @@ async def test_configure_middleware_keys_rate_limiter_per_caller_not_one_shared_
     mock_args.eunomia_type = "none"
 
     middlewares = server_factory._configure_middleware(
-        mock_args, JwksCache(), server_name="arbora", config=RuntimeConfig()
+        mock_args,
+        JwksCache(RuntimeConfig()),
+        server_name="arbora",
+        config=RuntimeConfig(),
     )
 
     rate_limiters = [m for m in middlewares if isinstance(m, RateLimitingMiddleware)]

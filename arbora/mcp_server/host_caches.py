@@ -25,11 +25,6 @@ __all__ = [
 ]
 
 
-def _authority_or_new(authority: ProcessAuthority | None) -> ProcessAuthority:
-    """The given authority, or a new one owned by the table alone."""
-    return authority if authority is not None else ProcessAuthority()
-
-
 class ToolTable(MutableMapping[str, Any]):
     """The registered tool functions of one host, by tool name.
 
@@ -40,10 +35,10 @@ class ToolTable(MutableMapping[str, Any]):
 
     __slots__ = ("_complete", "_lock", "_tools", "authority")
 
-    def __init__(self, authority: ProcessAuthority | None = None) -> None:
+    def __init__(self, authority: ProcessAuthority) -> None:
         #: The process authority every dispatch through this table runs under
         #: (ARBORA-HOST-R039.9); it is the host's ``authority`` field.
-        self.authority = _authority_or_new(authority)
+        self.authority = authority
         self._lock = threading.RLock()
         self._tools: dict[str, Any] = {}
         self._complete: frozenset[str] = frozenset()

@@ -120,6 +120,7 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         feature_schema=decide.feature_schema,
         decision_principal=decide.principal,
         ports=ports,
+        config=caches.tools.authority.config,
     )
     fleet = FleetState(config=caches.tools.authority.config)
     gateway = GatewayState()

@@ -13,6 +13,7 @@ import asyncio
 import base64
 import json
 import time
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -31,7 +32,7 @@ from arbora.api.invoke import OpResult, invoke
 from arbora.api.invoke.executor import BoundOperationRuntime
 from arbora.api.ops import agents
 from arbora.api.registry import Registry, Surface
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.run_origin import RunOriginRegistry
 from tests._support import FixedEngineHandles, run_events
@@ -186,13 +187,13 @@ PORTS = HostPortsSlot()
 def engine(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     registry = tmp_path / "models.json"
     registry.write_text(json.dumps({"default": "test"}), encoding="utf-8")
-    monkeypatch.setitem(runtime_config._overrides, "model_registry_path", str(registry))
+    monkeypatch.setenv("MODEL_REGISTRY_PATH", str(registry))
     fake = FakeEngine()
     PORTS.bind(
         HostPortsBinding(
             HostPorts(
-                decide=agent_runs.decide_run,
-                models=agent_runs.resolve_model,
+                decide=partial(agent_runs.decide_run, config=RuntimeConfig()),
+                models=partial(agent_runs.resolve_model, config=RuntimeConfig()),
                 events=run_events(fake),
             ),
             None,
@@ -213,9 +214,13 @@ def test_served_agents_run_executes_through_a2a_work_items_and_the_harness(
     monkeypatch.setattr("arbora.api.ops.agent_library.current_entry", library_entry)
     service = A2AService(
         authority=WorkItemA2AAuthority(
-            lambda: engine, origins=RunOriginRegistry(), ports=PORTS
+            lambda: engine,
+            origins=RunOriginRegistry(),
+            ports=PORTS,
+            config=RuntimeConfig(),
         ),
         router=OrchestratorA2ARouter(lambda: engine),
+        config=RuntimeConfig(),
     )
     runtime = ServedRuntime(service)
     services, *_ = setup_services(
@@ -350,7 +355,7 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
         if attachment_case == "uri":
             file = {"uri": "file:///never-read-this", "mimeType": "text/plain"}
         if attachment_case == "configured_limit":
-            monkeypatch.setitem(runtime_config._overrides, "max_upload_size", 4)
+            monkeypatch.setenv("MAX_UPLOAD_SIZE", "4")
         if attachment_case == "aggregate":
             file["bytes"] = base64.b64encode(b"a" * 40_000).decode("ascii")
         count = (
@@ -367,7 +372,7 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
     host.runs.ports.bind(
         HostPortsBinding(
             HostPorts(
-                decide=agent_runs.decide_run,
+                decide=partial(agent_runs.decide_run, config=RuntimeConfig()),
                 models=lambda _id: streaming_model(model),
                 events=run_events(engine),
             ),
@@ -444,10 +449,12 @@ async def test_turn_usage_is_correlated_and_not_reconstructed_on_replay(
     from arbora.security.session import use_session
 
     authority = WorkItemA2AAuthority(
-        lambda: engine, origins=RunOriginRegistry(), ports=PORTS
+        lambda: engine, origins=RunOriginRegistry(), ports=PORTS, config=RuntimeConfig()
     )
     service = A2AService(
-        authority=authority, router=OrchestratorA2ARouter(lambda: engine)
+        authority=authority,
+        router=OrchestratorA2ARouter(lambda: engine),
+        config=RuntimeConfig(),
     )
     message = A2AMessage.model_validate(
         {
@@ -500,7 +507,10 @@ async def test_foreign_run_result_never_projects_usage(
         work_items, "commit_result", lambda *a, **k: outcomes.append(k["outcome"])
     )
     authority = WorkItemA2AAuthority(
-        lambda: None, executor=ForeignExecutor(), origins=RunOriginRegistry()
+        lambda: None,
+        executor=ForeignExecutor(),
+        origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     usage = await authority._run(
         object(),

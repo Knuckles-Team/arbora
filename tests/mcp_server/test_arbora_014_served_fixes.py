@@ -120,15 +120,13 @@ def test_run_config_uses_the_configured_chat_models_registry(monkeypatch) -> Non
         }
     ]
 
-    class _Config:
-        model_registry_path = None
-        chat_models = json.dumps(models)
-
-    monkeypatch.setattr(settings, "runtime_config", _Config())
+    monkeypatch.delenv("MODEL_REGISTRY_PATH", raising=False)
+    monkeypatch.setenv("CHAT_MODELS", json.dumps(models))
     monkeypatch.setenv("OPENAI_API_KEY", "test-only")
-    config = agent_runs.run_config()
+    host_config = settings.RuntimeConfig()
+    config = agent_runs.run_config(host_config)
     assert config["agent_model"] == "qwen/qwen3.8-27b"
-    model = agent_runs.resolve_model("qwen/qwen3.8-27b")
+    model = agent_runs.resolve_model("qwen/qwen3.8-27b", config=host_config)
     assert not isinstance(model, str)
 
 

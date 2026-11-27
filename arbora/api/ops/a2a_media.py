@@ -60,7 +60,7 @@ async def handle_media_upload(
         context, "media_ref_store", reason="media store unbound"
     )
     data = base64.b64decode(request.data, validate=True)
-    limits = MediaLimits.from_config()
+    limits = MediaLimits.from_config(context.services["config"])
     if request.media_type not in IMAGE_TYPES or (
         sniff_image_type(data) != request.media_type
     ):

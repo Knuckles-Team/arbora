@@ -8,6 +8,7 @@ from typing import Any, cast
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.modality import Modality, ModalityNormalizer, ModalityRefused
 from arbora.modality.speech import SpeechHandler
 
@@ -64,6 +65,7 @@ async def test_a2a_audio_part_runs_the_harness_on_the_transcript() -> None:
         authority=cast(Any, authority),
         router=cast(Any, _Router()),
         modality=_normalizer(fleet),
+        config=RuntimeConfig(),
     )
     assert (
         await service.send_message(message=_audio_message(), idempotency_key="k")
@@ -92,6 +94,7 @@ async def test_a2a_audio_without_a_capability_refuses_typed_before_dispatch() ->
         authority=cast(Any, authority),
         router=cast(Any, _Router()),
         modality=_normalizer(FakeFleet(items=[])),
+        config=RuntimeConfig(),
     )
     with pytest.raises(ModalityRefused) as caught:
         await service.send_message(message=_audio_message(None), idempotency_key="k")
@@ -251,6 +254,7 @@ async def test_a2a_refuses_a_part_no_handler_reads() -> None:
         authority=cast(Any, authority),
         router=cast(Any, _Router()),
         modality=_normalizer(),
+        config=RuntimeConfig(),
     )
     message = _audio_message()
     # A video part: the model media capability governs images only, so the part

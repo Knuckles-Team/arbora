@@ -125,7 +125,7 @@ def _compose(client: NoticeClient, monkeypatch: pytest.MonkeyPatch) -> Any:
     process = request_identity.mint_graph_session(actor, RuntimeConfig())
     return compose_served_invocation(
         config=RuntimeConfig(),
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         pool=FakePool(client),
         graph=process.graph,
         process_session=lambda: process,

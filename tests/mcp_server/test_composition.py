@@ -25,6 +25,7 @@ from arbora.mcp_server.composition import (
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.server import _register_semantic_content
 from arbora.observability.state import Telemetry
+from arbora.security.process_authority import ProcessAuthority
 
 
 def test_native_action_route_contract_serves_only_registered_tools() -> None:
@@ -106,7 +107,7 @@ def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> N
 
     policies = ActionPolicies()
     engine = object()
-    tools = ToolTable()
+    tools = ToolTable(ProcessAuthority(config=RuntimeConfig()))
     browser = BrowserState()
     telemetry = Telemetry()
     host = object()
@@ -168,7 +169,7 @@ def test_messaging_co_service_reaches_arbora_owned_intake(
         session,
         engine,
         action_policies=ActionPolicies(),
-        tools=ToolTable(),
+        tools=ToolTable(ProcessAuthority(config=RuntimeConfig())),
         browser=BrowserState(),
         telemetry=Telemetry(),
         host=object(),

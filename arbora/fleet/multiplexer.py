@@ -46,6 +46,7 @@ import mcp as _mcp
 from mcp.client.session import ClientSession, IncomingMessage, MessageHandlerFnT
 
 from arbora.core.environment import inherited_environment, read_env, read_reference
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.protocol_compat import mcp_types_module
 
 # Public transport seams are kept as module attributes so tests and embedders can
@@ -319,7 +320,7 @@ def _externalized_value(value: _typing.Any) -> bool:
     )
 
 
-def _resolve_fleet_runtime_reference(reference: str) -> str:
+def _resolve_fleet_runtime_reference(reference: str, config: RuntimeConfig) -> str:
     """Resolve one fleet reference with direct aliases taking precedence.
 
     ``env://ALIAS`` first reads the live environment projection, which includes
@@ -336,9 +337,7 @@ def _resolve_fleet_runtime_reference(reference: str) -> str:
         if direct not in (None, ""):
             return str(direct)
 
-        from arbora.core.settings import runtime_config as agent_config
-
-        mappings = getattr(agent_config, "mcp_fleet_secret_refs", None)
+        mappings = getattr(config, "mcp_fleet_secret_refs", None)
         if not isinstance(mappings, dict):
             raise RuntimeError("MCP fleet secret alias mapping is invalid")
         mapped_reference = mappings.get(alias)
@@ -363,12 +362,13 @@ def resolve_runtime_value(
     value: _typing.Any,
     *,
     sensitive: bool,
+    config: RuntimeConfig,
     materialized: bool = False,
 ) -> str:
     """Resolve externalized catalog values without ever expanding the whole file."""
     rendered = str(value or "")
     if _RUNTIME_REF_RE.fullmatch(rendered):
-        rendered = _resolve_fleet_runtime_reference(rendered)
+        rendered = _resolve_fleet_runtime_reference(rendered, config)
     elif rendered.startswith(("env://", "vault://", "secret://")):
         raise RuntimeError("MCP child runtime reference is invalid")
     else:
@@ -1239,7 +1239,7 @@ def _runtime_child_policy_config(
 
 
 def _prepare_runtime_child_policy(
-    cfg: dict[str, _typing.Any],
+    cfg: dict[str, _typing.Any], config: RuntimeConfig
 ) -> tuple[dict[str, _typing.Any], _typing.Any]:
     """Resolve and materialize one optional provider-neutral child policy."""
 
@@ -1247,12 +1247,10 @@ def _prepare_runtime_child_policy(
         return cfg, None
     policy_name, profile_name = _runtime_child_policy_names(cfg)
 
-    from arbora.core.settings import runtime_config as agent_config
-
     factory = _load_runtime_child_policy_factory(policy_name)
     policy: _typing.Any = _ABSENT
     try:
-        policy = factory(profile_name=profile_name, config=agent_config)
+        policy = factory(profile_name=profile_name, config=config)
         transport = _runtime_child_policy_transport(policy)
         return _runtime_child_policy_config(cfg, transport, policy), policy
     except Exception:
@@ -1263,10 +1261,10 @@ def _prepare_runtime_child_policy(
 
 
 def _child_transport_values(
-    cfg: dict, command: _typing.Any
+    cfg: dict, command: _typing.Any, config: RuntimeConfig
 ) -> tuple[_typing.Any, str, str, bool | None]:
     """Resolve child transport fields; ``None`` marks an invalid declaration."""
-    url = resolve_runtime_value(cfg.get("url", ""), sensitive=False)
+    url = resolve_runtime_value(cfg.get("url", ""), sensitive=False, config=config)
     explicit_transport = str(cfg.get("transport", "")).lower()
     invalid = (
         explicit_transport not in {"", "streamable-http", "sse"}
@@ -1279,7 +1277,7 @@ def _child_transport_values(
     return command, url, explicit_transport, is_remote
 
 
-def _child_transport_is_remote(cfg: dict) -> bool | None:
+def _child_transport_is_remote(cfg: dict, config: RuntimeConfig) -> bool | None:
     """Whether one child speaks HTTP; ``None`` when its declaration is invalid.
 
     A child is remote (HTTP) when it declares a ``url`` or an http/sse
@@ -1287,7 +1285,7 @@ def _child_transport_is_remote(cfg: dict) -> bool | None:
     ``command``. Either kind loads transparently from the same config.
     """
 
-    command, _, _, is_remote = _child_transport_values(cfg, cfg.get("command"))
+    command, _, _, is_remote = _child_transport_values(cfg, cfg.get("command"), config)
     if is_remote is None:
         logger.error("MCP child transport declaration is invalid")
         return None
@@ -1310,7 +1308,7 @@ def _child_timeout_admissible(cfg: dict) -> bool:
     return True
 
 
-def _child_pool_size(cfg: dict, is_remote: bool) -> int | None:
+def _child_pool_size(cfg: dict, is_remote: bool, config: RuntimeConfig) -> int | None:
     """Session-pool sizing (CONCEPT:MERISTEM-ECO.mcp.profile-differences-from-client).
 
     Remote children may hold N independent connections for parallel in-flight
@@ -1320,10 +1318,8 @@ def _child_pool_size(cfg: dict, is_remote: bool) -> int | None:
 
     if not is_remote:
         return 1
-    from arbora.core.settings import runtime_config as agent_config
-
     try:
-        pool_size = int(cfg.get("pool_size") or agent_config.mcp_child_pool_size)
+        pool_size = int(cfg.get("pool_size") or config.mcp_child_pool_size)
     except (TypeError, ValueError):
         pool_size = 0
     if not 1 <= pool_size <= 64:
@@ -1332,15 +1328,15 @@ def _child_pool_size(cfg: dict, is_remote: bool) -> int | None:
     return pool_size
 
 
-def _child_launch_shape(cfg: dict) -> tuple[bool, int] | None:
+def _child_launch_shape(cfg: dict, config: RuntimeConfig) -> tuple[bool, int] | None:
     """``(is_remote, pool_size)`` for one child, or ``None`` when any part of its
     declaration is outside a safety boundary (already logged by the gate that
     rejected it)."""
 
-    is_remote = _child_transport_is_remote(cfg)
+    is_remote = _child_transport_is_remote(cfg, config)
     if is_remote is None or not _child_timeout_admissible(cfg):
         return None
-    pool_size = _child_pool_size(cfg, is_remote)
+    pool_size = _child_pool_size(cfg, is_remote, config)
     if pool_size is None:
         return None
     return is_remote, pool_size
@@ -1470,7 +1466,7 @@ def _stdio_capabilities() -> frozenset[str]:
     return frozenset(str(role).strip() for role in actor.roles if str(role).strip())
 
 
-def _http_capabilities(token: _typing.Any) -> frozenset[str]:
+def _http_capabilities(token: _typing.Any, config: RuntimeConfig) -> frozenset[str]:
     """Capabilities for a verified HTTP bearer token: its own declared
     scopes plus any identity-group-derived capabilities its claims map to.
     """
@@ -1483,7 +1479,6 @@ def _http_capabilities(token: _typing.Any) -> frozenset[str]:
     if isinstance(claims, dict):
         try:
             import arbora.security.identity as _identity
-            from arbora.core.settings import runtime_config as config
 
             capabilities.update(
                 _identity.base_capabilities(
@@ -1499,7 +1494,7 @@ def _http_capabilities(token: _typing.Any) -> frozenset[str]:
     return frozenset(capabilities)
 
 
-def _request_capabilities() -> frozenset[str]:
+def _request_capabilities(config: RuntimeConfig) -> frozenset[str]:
     """Return the verified caller's capabilities for every transport.
 
     Either path (stdio or HTTP) must resolve to a concrete, authenticated
@@ -1526,7 +1521,7 @@ def _request_capabilities() -> frozenset[str]:
     token = get_access_token()
     if token is None:
         raise _fastmcp_exceptions.ToolError("Authenticated HTTP context required")
-    return _http_capabilities(token)
+    return _http_capabilities(token, config)
 
 
 def _fleet_required_capabilities(kind: str) -> set[str]:
@@ -1546,11 +1541,13 @@ def _fleet_required_capabilities(kind: str) -> set[str]:
     }.get(kind, {"mcp:delegate"})
 
 
-def require_fleet_capability(kind: str, extra_scopes: list[str] | None = None) -> None:
+def require_fleet_capability(
+    kind: str, config: RuntimeConfig, extra_scopes: list[str] | None = None
+) -> None:
     """Authorize fleet discovery/delegation for every transport, local stdio
     included: the exact same capability check applies regardless of how the
     caller connected."""
-    capabilities = _request_capabilities()
+    capabilities = _request_capabilities(config)
     required = _fleet_required_capabilities(kind)
     if not capabilities.intersection(required):
         raise _fastmcp_exceptions.ToolError(f"MCP fleet {kind} capability required")
@@ -2562,7 +2559,9 @@ class MCPMultiplexer:
         child_config = self.load_catalog().get(server_name)
         if child_config is None:
             raise _fastmcp_exceptions.ToolError("MCP child is no longer enabled")
-        require_fleet_capability("delegate", _child_required_scopes(child_config))
+        require_fleet_capability(
+            "delegate", self._fleet.config, _child_required_scopes(child_config)
+        )
         runtime = self.children.get(server_name)
         if runtime is None:
             raise RuntimeError("MCP child session is not active")
@@ -2824,7 +2823,9 @@ class MCPMultiplexer:
         """Capture generation and authorization checks for queue and preflight waits."""
 
         def recheck(current_generation: int, _secret: str | None) -> None:
-            require_fleet_capability("delegate", _child_required_scopes(child_config))
+            require_fleet_capability(
+                "delegate", self._fleet.config, _child_required_scopes(child_config)
+            )
             if runtime.generation != current_generation or (
                 schema_bound and runtime.generation != generation
             ):
@@ -2931,7 +2932,7 @@ class MCPMultiplexer:
         :meth:`start_children` and forwards the call to that child's live
         ``ClientSession``. Raises if the tool/server is unknown or inactive.
         """
-        require_fleet_capability("delegate")
+        require_fleet_capability("delegate", self._fleet.config)
         logger.info("Calling delegated MCP tool")
         call_arguments = arguments or {}
         assert_bounded_delegated_value(call_arguments)
@@ -3012,7 +3013,7 @@ class MCPMultiplexer:
         timeout: float | None,
         approval_ref: str = "",
     ) -> MCPCallToolResult:
-        require_fleet_capability("delegate")
+        require_fleet_capability("delegate", self._fleet.config)
         cfg = self.load_catalog().get(server_name)
         if cfg is None:
             # Nothing was sent to the child, so the outcome is certain: the
@@ -3025,7 +3026,9 @@ class MCPMultiplexer:
             raise _fastmcp_exceptions.ToolError(
                 "Server is not a configured service-credential MCP child"
             )
-        require_fleet_capability("delegate", _child_required_scopes(cfg))
+        require_fleet_capability(
+            "delegate", self._fleet.config, _child_required_scopes(cfg)
+        )
         catalog_epoch = self._catalog_epoch
         call_arguments = arguments or {}
         assert_bounded_delegated_value(call_arguments)
@@ -3121,13 +3124,15 @@ class MCPMultiplexer:
         :meth:`probe_server` call, which DOES run live and per-principal for
         an OAuth-gated server) can call this directly today.
         """
-        require_fleet_capability("delegate")
+        require_fleet_capability("delegate", self._fleet.config)
         cfg = self.load_catalog().get(server_name)
         if cfg is None or not oauth_gated(cfg):
             raise _fastmcp_exceptions.ToolError(
                 "Server is not a configured OAuth-gated remote MCP child"
             )
-        require_fleet_capability("delegate", _child_required_scopes(cfg))
+        require_fleet_capability(
+            "delegate", self._fleet.config, _child_required_scopes(cfg)
+        )
         catalog_epoch = self._catalog_epoch
         call_arguments = arguments or {}
         assert_bounded_delegated_value(call_arguments)
@@ -3199,7 +3204,9 @@ class MCPMultiplexer:
 
     def _assert_oauth_catalog(self, server_name: str, cfg: dict, epoch: int) -> None:
         """Reauthorize the principal and refuse a changed child configuration."""
-        require_fleet_capability("delegate", _child_required_scopes(cfg))
+        require_fleet_capability(
+            "delegate", self._fleet.config, _child_required_scopes(cfg)
+        )
         if (
             self._catalog_epoch != epoch
             or self._catalog is None
@@ -3224,7 +3231,9 @@ class MCPMultiplexer:
         (:meth:`_invoke_oauth_tool`) run on the dedicated session.
         """
         self._assert_oauth_catalog(server_name, cfg, catalog_epoch)
-        runtime_cfg, runtime_policy = _prepare_runtime_child_policy(cfg)
+        runtime_cfg, runtime_policy = _prepare_runtime_child_policy(
+            cfg, self._fleet.config
+        )
         try:
             async with contextlib.AsyncExitStack() as stack:
                 session = await self._open_one_session(server_name, runtime_cfg, stack)
@@ -3257,7 +3266,9 @@ class MCPMultiplexer:
         only by server name, so a per-user OAuth grant is never shared.
         """
         self._assert_oauth_catalog(server_name, cfg, catalog_epoch)
-        runtime_cfg, runtime_policy = _prepare_runtime_child_policy(cfg)
+        runtime_cfg, runtime_policy = _prepare_runtime_child_policy(
+            cfg, self._fleet.config
+        )
         try:
             async with contextlib.AsyncExitStack() as stack:
                 session = await self._open_one_session(server_name, runtime_cfg, stack)
@@ -3394,9 +3405,9 @@ class MCPMultiplexer:
             )
         # Apply the same fleet/delegation authorization used by tool
         # forwarding before a task poll can lazily spawn a child.
-        require_fleet_capability("delegate")
+        require_fleet_capability("delegate", self._fleet.config)
         require_fleet_capability(
-            "delegate", _child_required_scopes(catalog[server_name])
+            "delegate", self._fleet.config, _child_required_scopes(catalog[server_name])
         )
 
         runtime = await self._admit_tasks_owner(server_name)
@@ -3574,16 +3585,14 @@ class MCPMultiplexer:
         only into the local branch.
         """
         command, url, explicit_transport, is_remote = _child_transport_values(
-            cfg, self._child_command(cfg)
+            cfg, self._child_command(cfg), self._fleet.config
         )
         if is_remote is None:
             raise RuntimeError("MCP child transport declaration is invalid")
         if not command and not is_remote:
             raise RuntimeError("MCP child requires a command or URL")
         if not is_remote:
-            from arbora.core.settings import runtime_config
-
-            if runtime_config.mcp_stdio_prohibited:
+            if self._fleet.config.mcp_stdio_prohibited:
                 raise RuntimeError(
                     "stdio transport is not permitted in this process "
                     f"(server={server_name!r}): MCP_STDIO_PROHIBITED is set"
@@ -3690,7 +3699,7 @@ class MCPMultiplexer:
 
     @staticmethod
     def _resolve_remote_allowed_private_hosts(
-        cfg: dict, parsed_url: _typing.Any, url: str
+        cfg: dict, parsed_url: _typing.Any, url: str, config: RuntimeConfig
     ) -> list[str]:
         # Computed here (not just at the transport-pinning site below) so the
         # scheme gate consults the SAME allowlist as the actual DNS-pinned
@@ -3700,13 +3709,11 @@ class MCPMultiplexer:
         # so a deployment that legitimately reaches its MCP fleet over
         # plain HTTP behind a TLS-terminating ingress (MCP_TLS_TERMINATED)
         # could never declare that trust; it always hard-failed here first.
-        from arbora.core.settings import runtime_config as agent_config
-
         child_private_hosts = cfg.get("allowed_private_hosts", [])
         if not isinstance(child_private_hosts, list):
             raise RuntimeError("Remote MCP child private-host policy is invalid")
         allowed_private_hosts = [
-            *agent_config.mcp_http_allowed_private_hosts,
+            *config.mcp_http_allowed_private_hosts,
             *(str(value) for value in child_private_hosts),
         ]
         if parsed_url.scheme.lower() == "http" and parsed_url.hostname.lower() not in {
@@ -3720,7 +3727,7 @@ class MCPMultiplexer:
 
     @staticmethod
     def _validate_one_remote_header(
-        name: str, value: str, materialized: set[str]
+        name: str, value: str, materialized: set[str], config: RuntimeConfig
     ) -> str:
         lowered = name.lower()
         if lowered in {
@@ -3738,6 +3745,7 @@ class MCPMultiplexer:
             value,
             sensitive=_sensitive_config_key(name),
             materialized=name in materialized,
+            config=config,
         )
         if (
             not re.fullmatch(r"[!#$%&'*+.^_`|~0-9A-Za-z-]{1,128}", name)
@@ -3749,7 +3757,9 @@ class MCPMultiplexer:
         return rendered
 
     @staticmethod
-    def _validate_remote_child_headers(cfg: dict) -> dict[str, str] | None:
+    def _validate_remote_child_headers(
+        cfg: dict, config: RuntimeConfig
+    ) -> dict[str, str] | None:
         headers = cfg.get("headers")
         if not headers:
             return headers
@@ -3764,7 +3774,7 @@ class MCPMultiplexer:
         for key, value in headers.items():
             name = str(key)
             validated_headers[name] = MCPMultiplexer._validate_one_remote_header(
-                name, value, materialized
+                name, value, materialized, config
             )
         return validated_headers
 
@@ -3861,9 +3871,8 @@ class MCPMultiplexer:
 
     @staticmethod
     def _resolve_remote_child_tls_trust(
-        cfg: dict, stack: contextlib.AsyncExitStack
+        cfg: dict, stack: contextlib.AsyncExitStack, config: RuntimeConfig
     ) -> _typing.Any:
-        from arbora.core.settings import runtime_config as agent_config
         from arbora.core.transport import (
             resolve_configured_tls_profile,
         )
@@ -3874,7 +3883,7 @@ class MCPMultiplexer:
             "MCP_CHILD",
             profile_name=profile_name,
             profile_ref=profile_ref,
-            config=agent_config,
+            config=config,
         )
         stack.callback(trust.cleanup)
         if trust.proxy_url:
@@ -3976,13 +3985,13 @@ class MCPMultiplexer:
     ) -> tuple[_typing.Any, _typing.Any]:
         parsed_url = self._validate_remote_child_url(url)
         allowed_private_hosts = self._resolve_remote_allowed_private_hosts(
-            cfg, parsed_url, url
+            cfg, parsed_url, url, self._fleet.config
         )
-        headers = self._validate_remote_child_headers(cfg)
+        headers = self._validate_remote_child_headers(cfg, self._fleet.config)
         headers, oauth_bearer_headers = await self._apply_remote_child_oauth_grant(
             cfg, url, headers
         )
-        trust = self._resolve_remote_child_tls_trust(cfg, stack)
+        trust = self._resolve_remote_child_tls_trust(cfg, stack, self._fleet.config)
         return await self._open_remote_child_transport(
             url,
             explicit_transport,
@@ -4012,16 +4021,19 @@ class MCPMultiplexer:
 
     @staticmethod
     def _validate_local_child_command_and_args(
-        command: str, cfg: dict
+        command: str, cfg: dict, config: RuntimeConfig
     ) -> tuple[str, list, dict]:
         # `command` is guaranteed set here: the earlier guard raises unless
         # `command` or `is_remote` is truthy, and this is the `not is_remote`
         # branch.
         assert command, "unreachable: non-remote server must have a 'command'"
-        command = resolve_runtime_value(command, sensitive=False)
+        command = resolve_runtime_value(command, sensitive=False, config=config)
         raw_args = cfg.get("args", [])
         args = (
-            [resolve_runtime_value(value, sensitive=False) for value in raw_args]
+            [
+                resolve_runtime_value(value, sensitive=False, config=config)
+                for value in raw_args
+            ]
             if isinstance(raw_args, list)
             else raw_args
         )
@@ -4039,6 +4051,7 @@ class MCPMultiplexer:
         raw_value: _typing.Any,
         provider_controlled_keys: set[str],
         materialized: set[str],
+        config: RuntimeConfig,
     ) -> None:
         key = str(raw_key)
         if key.upper() in (
@@ -4051,6 +4064,7 @@ class MCPMultiplexer:
             raw_value,
             sensitive=_sensitive_config_key(key),
             materialized=key in materialized,
+            config=config,
         )
         if (
             not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,127}", key)
@@ -4075,6 +4089,7 @@ class MCPMultiplexer:
         provider_environment: dict[str, str],
         configured_env: dict,
         generation_secret: str | None,
+        config: RuntimeConfig,
     ) -> dict[str, str]:
         # A child receives only execution/runtime trust variables plus the
         # variables explicitly delegated in its own catalog entry. Copying
@@ -4094,7 +4109,12 @@ class MCPMultiplexer:
         )
         for raw_key, raw_value in configured_env.items():
             MCPMultiplexer._apply_one_configured_env_var(
-                merged_env, raw_key, raw_value, provider_controlled_keys, materialized
+                merged_env,
+                raw_key,
+                raw_value,
+                provider_controlled_keys,
+                materialized,
+                config,
             )
         MCPMultiplexer._apply_generation_secret(merged_env, generation_secret)
         return merged_env
@@ -4139,10 +4159,14 @@ class MCPMultiplexer:
         stack: contextlib.AsyncExitStack,
     ) -> tuple[_typing.Any, _typing.Any]:
         command, args, configured_env = self._validate_local_child_command_and_args(
-            command, cfg
+            command, cfg, self._fleet.config
         )
         merged_env = self._build_local_child_environment(
-            cfg, provider_environment, configured_env, generation_secret
+            cfg,
+            provider_environment,
+            configured_env,
+            generation_secret,
+            self._fleet.config,
         )
         server_params = StdioServerParameters(
             command=command, args=args, env=merged_env
@@ -4322,7 +4346,7 @@ class MCPMultiplexer:
         # that retired runtime must not re-populate the new catalog's state.
         catalog_epoch = self._catalog_epoch
         try:
-            cfg, runtime_policy = _prepare_runtime_child_policy(cfg)
+            cfg, runtime_policy = _prepare_runtime_child_policy(cfg, self._fleet.config)
         except RuntimeError:
             logger.error("MCP child runtime policy resolution failed")
             return None
@@ -4331,7 +4355,7 @@ class MCPMultiplexer:
             if runtime_policy is not None:
                 _close_runtime_child_policy(runtime_policy)
 
-        shape = _child_launch_shape(cfg)
+        shape = _child_launch_shape(cfg, self._fleet.config)
         if shape is None:
             _close_policy()
             return None
@@ -4401,6 +4425,7 @@ class MCPMultiplexer:
             session_max_age=session_max_age,
             on_generation=_on_generation,
             confirmations=self._fleet.confirmations,
+            config=self._fleet.config,
         )
         try:
             tools = await runtime.start()
@@ -4935,7 +4960,10 @@ class MCPMultiplexer:
         else:
             sessions = list(payload) if isinstance(payload, list | tuple) else [payload]
             runtime = _child_resilience.ChildRuntime(
-                server_name, cfg, confirmations=self._fleet.confirmations
+                server_name,
+                cfg,
+                confirmations=self._fleet.confirmations,
+                config=self._fleet.config,
             )
             runtime.adopt_sessions(sessions)
         self.children[server_name] = runtime
@@ -5111,7 +5139,7 @@ class MCPMultiplexer:
         self, server_name: str
     ) -> list[dict[str, _typing.Any]]:
         """Return one child's bounded tools through the served probe cache."""
-        require_fleet_capability("discover")
+        require_fleet_capability("discover", self._fleet.config)
         info = await self.probe_server(server_name)
         if info.get("error"):
             raise RuntimeError("MCP server probe failed")
@@ -5126,7 +5154,7 @@ class MCPMultiplexer:
         timeout: float,
     ) -> _typing.Any:
         """Invoke one original child tool through this served child pool."""
-        require_fleet_capability("delegate")
+        require_fleet_capability("delegate", self._fleet.config)
         assert_bounded_delegated_value(arguments)
         await self.mount_child(server_name)
         public_name = next(
@@ -5148,7 +5176,7 @@ class MCPMultiplexer:
         self, *, server_name: str, uri: str, timeout: float
     ) -> dict[str, str]:
         """Read one text resource through this served child connection."""
-        require_fleet_capability("delegate")
+        require_fleet_capability("delegate", self._fleet.config)
         if not uri or len(uri.encode("utf-8")) > 8_192:
             raise _fastmcp_exceptions.ToolError("MCP resource URI is invalid")
         await self.mount_child(server_name)
@@ -5178,7 +5206,7 @@ class MCPMultiplexer:
         timeout: float,
     ) -> dict[str, _typing.Any]:
         """Render one child prompt through this served child connection."""
-        require_fleet_capability("delegate")
+        require_fleet_capability("delegate", self._fleet.config)
         if not name or len(name.encode("utf-8")) > 1_024:
             raise _fastmcp_exceptions.ToolError("MCP prompt name is invalid")
         assert_bounded_delegated_value(arguments)
@@ -5470,16 +5498,13 @@ class MCPMultiplexer:
                 if binding is not None:
                     self._record_discovery_binding(str(server_name), info, binding)
 
-    @staticmethod
-    def _probe_ttl() -> float:
+    def _probe_ttl(self) -> float:
         """The configured freshness window for a cached probe result
         (``MCP_CATALOG_PROBE_TTL`` / ``AgentConfig.mcp_catalog_probe_ttl``).
         Local import, same reason every other read of ``config`` in this
         module is local (avoid a module-load-time circular import with
         ``core.config``) (CONCEPT:MERISTEM-ECO.multiplexer.catalog-probe-ttl-staleness)."""
-        from arbora.core.settings import runtime_config as agent_config
-
-        return agent_config.mcp_catalog_probe_ttl
+        return self._fleet.config.mcp_catalog_probe_ttl
 
     def _probe_cache_hit(
         self, server_name: str, now: float | None = None
@@ -5636,7 +5661,9 @@ class MCPMultiplexer:
             # closed in the same task even on timeout-cancellation. (Wrapping
             # only the connect in wait_for would exit the scope in a different
             # task — "Attempted to exit cancel scope in a different task".)
-            runtime_cfg, runtime_policy = _prepare_runtime_child_policy(cfg)
+            runtime_cfg, runtime_policy = _prepare_runtime_child_policy(
+                cfg, self._fleet.config
+            )
             binding_token = _CURRENT_DISCOVERY_BINDING.set(None)
             try:
                 async with contextlib.AsyncExitStack() as stack:
@@ -6514,12 +6541,10 @@ class MCPMultiplexer:
         Returns ``{"results": [...], "unavailable": {server: error}}`` so the
         caller can both pick tools and see which servers couldn't be reached.
         """
-        from arbora.core.settings import runtime_config as agent_config
-
         if not top_k or top_k <= 0:
-            top_k = agent_config.mcp_dynamic_top_k
+            top_k = self._fleet.config.mcp_dynamic_top_k
         catalog = self.load_catalog()
-        discovery_timeout = agent_config.mcp_dynamic_discovery_timeout
+        discovery_timeout = self._fleet.config.mcp_dynamic_discovery_timeout
         deadline = asyncio.get_running_loop().time() + discovery_timeout
         fleet_probe = await self._discovery_probe(
             query, catalog, discovery_timeout, deadline
@@ -6611,10 +6636,8 @@ class MCPMultiplexer:
         local_info = self._local_skill_probe_info()
         if not include_tools:
             return {**dict(self._probe_cache), LOCAL_SKILLS_SERVER: local_info}
-        from arbora.core.settings import runtime_config as agent_config
-
         probe = await self.probe_catalog(
-            budget=agent_config.mcp_dynamic_discovery_timeout,
+            budget=self._fleet.config.mcp_dynamic_discovery_timeout,
             priority=_resource_priority.PriorityClass.BACKGROUND_INGESTION,
         )
         return {**probe, LOCAL_SKILLS_SERVER: local_info}
@@ -6864,7 +6887,7 @@ class MCPMultiplexer:
         """Authorize one fleet operation kind (``discover``/``delegate``) for the
         current caller — the check the intent tools apply before they search
         or call the fleet."""
-        require_fleet_capability(kind)
+        require_fleet_capability(kind, self._fleet.config)
 
     def session_loaded(self, session_key: str) -> set[str]:
         """The set of prefixed tools loaded (visible) for one session."""

@@ -11,6 +11,7 @@ import pytest
 
 from arbora.a2a.authority import harness_metadata
 from arbora.a2a.service import A2AService
+from arbora.core.settings import RuntimeConfig
 from tests.a2a._admission_support import DIGEST, TOOLS, Scripted
 from tests.a2a._service_support import (
     CapabilityRouter,
@@ -29,6 +30,7 @@ def test_message_send_enqueues_envelope_with_harness_config() -> None:
         router=CapabilityRouter(),
         harness_decider=decider,
         principal_kind=lambda: "service",
+        config=RuntimeConfig(),
     )
     assert send(client(service)).status_code == 200
     assert len(decider.calls) == 1 and decider.calls[0]["priority"] == "orchestration"
@@ -53,6 +55,7 @@ def test_a_principal_without_a_priority_class_is_refused_before_the_engine() -> 
         router=CapabilityRouter(),
         harness_decider=decider,
         principal_kind=lambda: "agent",
+        config=RuntimeConfig(),
     )
     response = send(client(service))
     assert response.status_code in (401, 403)

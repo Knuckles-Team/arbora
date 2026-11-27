@@ -13,6 +13,8 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from arbora.core.settings import RuntimeConfig
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["AnonymousA2AEntry", "anonymous_a2a_provider"]
@@ -21,7 +23,12 @@ Provider = Callable[[], Awaitable[Any]]
 
 
 def anonymous_a2a_provider(
-    *, origin: str, graph: str, revision: str, connect: Callable[[], Awaitable[Any]]
+    *,
+    origin: str,
+    graph: str,
+    revision: str,
+    connect: Callable[[], Awaitable[Any]],
+    config: RuntimeConfig,
 ) -> Provider:
     """A provider of the anonymous application: composed once, ``None`` until it can."""
     from .anonymous import AnonymousReadPolicy
@@ -37,7 +44,7 @@ def anonymous_a2a_provider(
                 return composed[0]
             try:
                 app = await compose_anonymous_a2a(
-                    await connect(), graph=graph, policy=policy
+                    await connect(), graph=graph, policy=policy, config=config
                 )
             except Exception as exc:
                 logging.getLogger(__name__).debug(

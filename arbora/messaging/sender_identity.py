@@ -77,6 +77,7 @@ def _exchange_for_principal(principal: str, config: RuntimeConfig) -> str:
             security_settings(config).kg_identity_oauth2
         ),
         requested_subject=principal,
+        settings=config,
     )
 
 

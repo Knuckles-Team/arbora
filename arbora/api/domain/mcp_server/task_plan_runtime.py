@@ -274,7 +274,7 @@ async def admitted_run_plan(
         async with asyncio.timeout(timeout):
             # Text output, no tools/toolsets or structured-output tools, no retries.
             planner = Agent(
-                resolve_model(base.model),
+                resolve_model(base.model, config=host.services.config),
                 output_type=str,
                 retries=0,
                 instructions=PLANNER_INSTRUCTIONS,

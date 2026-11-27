@@ -139,8 +139,7 @@ def run_web_ui(
 
     import uvicorn
 
-    from arbora.core.settings import runtime_config as config
-
+    config = host_context.config
     bind_host = host or str(getattr(config, "host", None) or DEFAULT_WEB_UI_HOST)
     if port:
         bind_port = int(port)

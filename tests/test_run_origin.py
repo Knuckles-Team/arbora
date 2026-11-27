@@ -13,6 +13,7 @@ from arbora import run_origin, work_items
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.agent_runs import AgentRunPort
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.runtime import _call_native_intent
 from arbora.run_origin import RunOriginRegistry
 from arbora.security.actor_context import ActorContext, ActorType
@@ -137,7 +138,9 @@ async def test_a2a_durable_cancel_revokes_real_pending_native_call(
     ready = asyncio.Event()
     captured = []
     durable = {"status": status}
-    authority = WorkItemA2AAuthority(lambda: object(), origins=registry)
+    authority = WorkItemA2AAuthority(
+        lambda: object(), origins=registry, config=RuntimeConfig()
+    )
     item: dict[str, Any] = {
         "kind": "orchestrator_task",
         "metadata": {
@@ -180,7 +183,9 @@ async def test_a2a_durable_cancel_revokes_real_pending_native_call(
 
     with use_session(admitted):
         pending = asyncio.create_task(
-            AgentRunPort(Executor(), origins=registry).execute_agent(
+            AgentRunPort(
+                Executor(), origins=registry, config=RuntimeConfig()
+            ).execute_agent(
                 AgentExecutionRequest(agent_name="web", task="navigate", run_id=run_id),
                 session=admitted,
             )
@@ -210,7 +215,9 @@ async def test_run_without_explicit_identity_does_not_fabricate_origin() -> None
             )
 
     with use_session(admitted):
-        await AgentRunPort(Executor(), origins=registry).execute_agent(
+        await AgentRunPort(
+            Executor(), origins=registry, config=RuntimeConfig()
+        ).execute_agent(
             AgentExecutionRequest(agent_name="web", task="navigate"),
             session=admitted,
         )
@@ -225,7 +232,9 @@ async def test_refused_a2a_cancel_does_not_revoke_origin(
 
     admitted = session()
     task_id = "a2a-" + "b" * 64
-    authority = WorkItemA2AAuthority(lambda: object(), origins=registry)
+    authority = WorkItemA2AAuthority(
+        lambda: object(), origins=registry, config=RuntimeConfig()
+    )
     item: dict[str, Any] = {
         "kind": "orchestrator_task",
         "status": "running",

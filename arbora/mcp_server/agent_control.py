@@ -11,6 +11,7 @@ from arbora.api.contracts import (
     GraphRlmRequest,
     compose_agent_control_plane,
 )
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 
@@ -19,14 +20,14 @@ ClientForSession = Callable[[Any], Any]
 
 
 def compose_run_control_plane(
-    client: Any, session: Any, *, origins: Any
+    client: Any, session: Any, *, origins: Any, config: RuntimeConfig
 ) -> AgentControlPlane:
     """The control plane that runs agents through the host's own run port."""
     return compose_agent_control_plane(
         client,
         session,
         origins=origins,
-        agent_executor=AgentRunPort(origins=origins, ports=None),
+        agent_executor=AgentRunPort(origins=origins, ports=None, config=config),
     )
 
 
@@ -40,6 +41,7 @@ def register_graph_rlm(
     *,
     client_for_session: ClientForSession,
     origins: Any,
+    config: RuntimeConfig,
     factory: ControlPlaneFactory = compose_run_control_plane,
 ) -> None:
     """Register the sole retained AU operation from verified injected inputs."""
@@ -54,7 +56,7 @@ def register_graph_rlm(
     async def graph_rlm(request: GraphRlmRequest) -> str:
         with runtime.verified_tool_session_scope(tools.authority) as session:
             control_plane = factory(
-                client_for_session(session), session, origins=origins
+                client_for_session(session), session, origins=origins, config=config
             )
             result = await control_plane.graph_rlm(request)
         return result.model_dump_json()

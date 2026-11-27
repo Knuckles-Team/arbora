@@ -214,7 +214,7 @@ async def test_absent_published_method_is_unavailable(monkeypatch):
 
 @pytest.mark.spec("ARBORA-IDENTITY-R004.3")
 def test_actual_serving_root_composes_stateless_reader(monkeypatch):
-    from arbora.core.settings import runtime_config
+    from arbora.core.settings import RuntimeConfig
     from arbora.mcp_server import served_invocation, server
     from arbora.mcp_server.backing import server_factory
 
@@ -240,7 +240,7 @@ def test_actual_serving_root_composes_stateless_reader(monkeypatch):
         config_patch.setenv("GRAPH_SERVICE_ENDPOINTS", "unix:///test-only")
         invocation, session = server._served_invocation(host=build_host_context())
     monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", "tcp://192.0.2.1:80")
-    assert runtime_config.graph_service_endpoints == ["tcp://192.0.2.1:80"]
+    assert RuntimeConfig().graph_service_endpoints == ["tcp://192.0.2.1:80"]
     assert invocation is not None and session is not None
     assert isinstance(
         captured["bindings"]["current_plan_reader"], NativeCurrentPlanReader

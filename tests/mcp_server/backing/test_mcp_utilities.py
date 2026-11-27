@@ -39,7 +39,7 @@ def test_create_mcp_server_basic(mock_fastmcp):
         mock_parse.return_value = (mock_args, [])
 
         args, mcp, middlewares = server_factory.create_mcp_server(
-            keys=JwksCache(),
+            keys=JwksCache(RuntimeConfig()),
             metrics=Metrics(),
             name="TestServer",
             config=RuntimeConfig(),
@@ -102,7 +102,7 @@ def test_create_mcp_server_exposes_metrics_health_and_tool_middleware(monkeypatc
     (no mock) so the registered HTTP routes can be inspected."""
     monkeypatch.setattr("sys.argv", ["test-mcp"])  # defaults: auth none, eunomia none
     args, mcp, middlewares = server_factory.create_mcp_server(
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         metrics=Metrics(),
         name="metrics-test",
         version="0.0.0",
@@ -141,7 +141,9 @@ def test_create_mcp_server_delegation_error(mock_get):
 
         with pytest.raises(SystemExit) as excinfo:
             server_factory.create_mcp_server(
-                keys=JwksCache(), metrics=Metrics(), config=RuntimeConfig()
+                keys=JwksCache(RuntimeConfig()),
+                metrics=Metrics(),
+                config=RuntimeConfig(),
             )
         assert excinfo.value.code == 1
 
@@ -156,7 +158,9 @@ def test_create_mcp_server_invalid_port():
 
         with pytest.raises(SystemExit) as excinfo:
             server_factory.create_mcp_server(
-                keys=JwksCache(), metrics=Metrics(), config=RuntimeConfig()
+                keys=JwksCache(RuntimeConfig()),
+                metrics=Metrics(),
+                config=RuntimeConfig(),
             )
         assert excinfo.value.code == 1
 
@@ -186,7 +190,7 @@ def test_create_mcp_server_eunomia(mock_create_mw):
         mock_parse.return_value = (mock_args, [])
 
         server_factory.create_mcp_server(
-            keys=JwksCache(),
+            keys=JwksCache(RuntimeConfig()),
             metrics=Metrics(),
             name="TestServerEmbedded",
             config=config,
@@ -206,7 +210,7 @@ def test_create_mcp_server_eunomia(mock_create_mw):
         mock_args.eunomia_remote_url = "http://eunomia:8421"
 
         server_factory.create_mcp_server(
-            keys=JwksCache(),
+            keys=JwksCache(RuntimeConfig()),
             metrics=Metrics(),
             name="TestServerRemote",
             config=config,

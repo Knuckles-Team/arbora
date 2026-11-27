@@ -14,6 +14,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.agents import handle_agent
 from arbora.api.registry import OpSpec
 from arbora.core.provision_errors import REFUSALS, ProvisionRefused
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.provision_service import ProvisioningService
 from arbora.fleet.provisioning import (
     PROVISION_PROOF_KIND,
@@ -130,7 +131,9 @@ class _Service:
 async def test_agents_run_reaches_provisioner_and_consumer(sdk: Any) -> None:
     adapter = DisposableAdapter()
     ledger, journal = new_run(10)
-    authority = WorkItemA2AAuthority(lambda: None, origins=RunOriginRegistry())
+    authority = WorkItemA2AAuthority(
+        lambda: None, origins=RunOriginRegistry(), config=RuntimeConfig()
+    )
     authority.provisioning = ProvisioningService(
         provisioner=make_provisioner(sdk, adapter),
         ledger=ledger,
@@ -159,7 +162,9 @@ async def test_agents_run_reaches_provisioner_and_consumer(sdk: Any) -> None:
 @pytest.mark.asyncio
 @pytest.mark.spec("ARBORA-FLEET-R024.6")
 async def test_agents_run_refuses_a_foreign_tenant_and_a_lagging_sdk() -> None:
-    authority = WorkItemA2AAuthority(lambda: None, origins=RunOriginRegistry())
+    authority = WorkItemA2AAuthority(
+        lambda: None, origins=RunOriginRegistry(), config=RuntimeConfig()
+    )
     service = _Service(authority)
     op = OpSpec.model_construct(id="agents.run")
     body = {

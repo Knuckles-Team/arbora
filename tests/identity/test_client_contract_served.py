@@ -9,6 +9,7 @@ from typing import Any
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.identity import client_contract as cc
 from arbora.identity.client_contract import (
     ContractEvent,
@@ -121,7 +122,7 @@ def test_degraded_contract_keeps_registration_in_metadata() -> None:
             required_scopes=None,
             public_base_url="https://arbora.example",
         )
-        provider = _configure_jwt_auth(args)
+        provider = _configure_jwt_auth(args, RuntimeConfig())
         app = Starlette(routes=provider.get_routes(mcp_path="/mcp"))
         document = (
             TestClient(app).get("/.well-known/oauth-protected-resource/mcp").json()

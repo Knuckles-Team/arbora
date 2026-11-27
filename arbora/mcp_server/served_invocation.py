@@ -1260,7 +1260,9 @@ def compose_served_invocation(
 
         bindings = {
             **bindings,
-            "media_ref_store": SessionMediaRefStore(lambda: _Engine(pool)),
+            "media_ref_store": SessionMediaRefStore(
+                lambda: _Engine(pool), config=config
+            ),
         }
     bindings = _with_a2a_peer_transport(bindings)
     bindings = _with_finance_read_port(bindings)
@@ -1277,7 +1279,7 @@ def compose_served_invocation(
         # heads to the hosted directory and reports them to the engine.
         from arbora.api.ops.memory_files import MemoryMaterializer
 
-        bindings = {**bindings, "memory_materializer": MemoryMaterializer()}
+        bindings = {**bindings, "memory_materializer": MemoryMaterializer(config)}
     if (
         bindings is not None
         and promotion_ci_tool is not None

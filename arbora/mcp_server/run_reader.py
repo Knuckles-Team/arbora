@@ -77,7 +77,9 @@ class NativeRunReader:
         config: RuntimeConfig,
     ) -> None:
         self._config = config
-        self._authority = WorkItemA2AAuthority(engine_provider, origins=origins)
+        self._authority = WorkItemA2AAuthority(
+            engine_provider, origins=origins, config=config
+        )
 
     async def _owned(
         self, context: ExecutionContext, run_id: str, task_id: str | None = None

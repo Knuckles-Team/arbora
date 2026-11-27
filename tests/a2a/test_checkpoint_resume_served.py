@@ -23,6 +23,7 @@ from arbora.a2a.event_log import A2AEventLog, A2AEventStreams
 from arbora.a2a.run_delegation import EngineRunDelegations
 from arbora.a2a.run_reclaim import A2ARunReclaimConsumer, ExpiredLeaseCandidates
 from arbora.api.domain.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 from arbora.security.session import use_session
 from tests.a2a._agent_run_delegation import (
@@ -87,7 +88,9 @@ class Host:
         delegation_reader: Any = "store",
     ) -> None:
         self.executor = SteppedExecutor(checkpoints, die_after)
-        self.log = A2AEventLog(lambda: engine, clock=StepClock())
+        self.log = A2AEventLog(
+            lambda: engine, clock=StepClock(), config=RuntimeConfig()
+        )
         self.authority = WorkItemA2AAuthority(
             lambda: engine,
             origins=RunOriginRegistry(),
@@ -100,6 +103,7 @@ class Host:
             if delegation_reader == "store"
             else delegation_reader,
             clock=clock,
+            config=RuntimeConfig(),
         )
 
 

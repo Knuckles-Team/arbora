@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from arbora.a2a.service import A2AService
+from arbora.core.settings import RuntimeConfig
 from tests.a2a._admission_support import Scripted, part, record
 from tests.a2a._service_support import (
     CapabilityRouter,
@@ -21,6 +22,7 @@ def _service(decider, authority=None, router=None):  # type: ignore[no-untyped-d
         router=router or CapabilityRouter(),
         harness_decider=decider,
         principal_kind=lambda: "human",
+        config=RuntimeConfig(),
     )
 
 
@@ -63,5 +65,5 @@ def test_a_message_without_budget_keeps_the_default_agent_path() -> None:
     assert response.status_code == 200
     assert decider.calls == [] and "harness" not in authority.dispatched[0]
     # A service with no router capability and no budget needs no admission wiring.
-    plain = A2AService(authority=Authority(), router=Router())
+    plain = A2AService(authority=Authority(), router=Router(), config=RuntimeConfig())
     assert send(client(plain), budget=None).status_code == 200

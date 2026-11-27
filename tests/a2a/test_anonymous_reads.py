@@ -16,6 +16,7 @@ from arbora.a2a.anonymous import (
 from arbora.a2a.authority import remember_task_output
 from arbora.a2a.service import A2AService
 from arbora.api.invoke.steps import authenticate
+from arbora.core.settings import RuntimeConfig
 from arbora.security.actor_context import IdentityRequiredError, current_actor
 from arbora.security.session import current_session
 
@@ -62,7 +63,7 @@ def stack(operations=frozenset({"tasks/get"})):
         ),
         work_items=native,
     )
-    service = A2AService(authority=owner, router=None)
+    service = A2AService(authority=owner, router=None, config=RuntimeConfig())
     return native, owner, create_anonymous_a2a_application(owner=owner, service=service)
 
 

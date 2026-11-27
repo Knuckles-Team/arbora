@@ -11,8 +11,10 @@ import pytest
 from arbora.api.domain.browser_control.browser_control_api import BrowserLeaseReceipt
 from arbora.browser_control import mcp as browser_control_mcp
 from arbora.browser_control.browser_state import BrowserState
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
+from arbora.security.process_authority import ProcessAuthority
 
 
 def _recording_mcp(tools: dict[str, Any]) -> SimpleNamespace:
@@ -49,7 +51,7 @@ async def test_browser_control_registers_one_mcp_rest_workflow_dispatch(
     monkeypatch.setattr(browser_control_mcp, "dispatch_browser_control", dispatch)
     tools: dict[str, Any] = {}
     mcp = _recording_mcp(tools)
-    table = ToolTable()
+    table = ToolTable(ProcessAuthority(config=RuntimeConfig()))
     try:
         browser_control_mcp.register_browser_control_tools(mcp, table, BrowserState())
         assert table["browser_control"] is tools["browser_control"]

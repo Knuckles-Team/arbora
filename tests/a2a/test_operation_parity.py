@@ -158,7 +158,9 @@ class Surfaces:
     async def a2a(self, case: Case) -> Outcome:
         services = self.parts["a2a"][0]
         app = create_a2a_application(
-            service=A2AService(authority=Authority(), router=Router()),
+            service=A2AService(
+                authority=Authority(), router=Router(), config=RuntimeConfig()
+            ),
             authenticator=Authenticator(),
             operation_services=services,
             operation_authenticator=AmbientHTTPAuthenticator(

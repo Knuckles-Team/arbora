@@ -164,6 +164,7 @@ def test_find_merges_only_authorized_registry_and_filtered_fleet_entries() -> No
             policy_gate=PolicyGate("none"),
             resolver=Resolver(),
             fleet_search=fleet,
+            budget_s=5.0,
             intent="things",
         )
     )
@@ -189,6 +190,7 @@ def test_real_resolver_keeps_distinct_fleet_items_when_merging_find() -> None:
             policy_gate=PolicyGate("none"),
             resolver=IntentResolver(),
             fleet_search=fleet,
+            budget_s=5.0,
             intent="search",
             scope_ref="verified-scope",
         )

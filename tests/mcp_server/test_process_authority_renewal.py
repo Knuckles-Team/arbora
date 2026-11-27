@@ -14,6 +14,7 @@ from typing import Any
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import bootstrap
 from arbora.mcp_server.host_context import build_host_context
 from arbora.observability import runtime_health
@@ -41,7 +42,7 @@ class Clock:
 
 @pytest.fixture
 def authority() -> ProcessAuthority:
-    return ProcessAuthority()
+    return ProcessAuthority(config=RuntimeConfig())
 
 
 @pytest.fixture
@@ -314,7 +315,7 @@ def test_gateway_revalidates_before_lease_commit(
 
     _gateway_issuer(monkeypatch, validated)
     with pytest.raises(SessionExpiredError):
-        refresh_process_identity(session, JwksCache())
+        refresh_process_identity(session, JwksCache(RuntimeConfig()))
     assert _lease(session).expires_at == expiry
 
 
@@ -350,7 +351,7 @@ def test_gateway_identity_change_closes_original_lease(
         monkeypatch, lambda _, _k: replace(_actor(clock), tenant_id="other")
     )
     with pytest.raises(RuntimeError, match="changed during renewal"):
-        refresh_process_identity(session, JwksCache())
+        refresh_process_identity(session, JwksCache(RuntimeConfig()))
     assert _lease(session).revocation_reason == "identity_changed"
     with pytest.raises(SessionExpiredError):
         session.ensure_authority_current()

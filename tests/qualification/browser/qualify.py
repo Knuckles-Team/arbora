@@ -171,7 +171,7 @@ async def prepare(
         os.environ["QUALIFICATION_BROKER_TOKEN"] = broker_token
         del broker_token
         process_actor = await actor_from_bearer_token(
-            context["process_token"], keys=JwksCache()
+            context["process_token"], keys=JwksCache(RuntimeConfig())
         )
         process_session = mint_graph_session(process_actor, RuntimeConfig())
 
@@ -183,7 +183,7 @@ async def prepare(
             tenant=boot.TENANT,
             audience=boot.AUDIENCE,
             process_claims=process_session.engine_verified_context,
-            keys=JwksCache(),
+            keys=JwksCache(RuntimeConfig()),
         )
         context["fixture_step"] = "configured_broker_verification"
         await broker_authority()
@@ -206,7 +206,7 @@ async def prepare(
         )
         caller = BrowserCallerResolver(
             authority,
-            partial(verify_local_bearer_token, keys=JwksCache()),
+            partial(verify_local_bearer_token, keys=JwksCache(RuntimeConfig())),
             graph="__control__",
         )
         context["fixture_step"] = "native_primary_authentication"
@@ -237,7 +237,7 @@ async def prepare(
         engine = ServedEngine(pool)
         invocation = compose_served_invocation(
             config=RuntimeConfig(),
-            keys=JwksCache(),
+            keys=JwksCache(RuntimeConfig()),
             pool=pool,
             graph="__control__",
             process_session=lambda: session,

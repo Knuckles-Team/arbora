@@ -110,7 +110,7 @@ def test_config_accepts_json_text_for_structured_fields(
     monkeypatch.setenv(alias, text)
 
     assert getattr(settings.ArboraConfig(), field) == expected
-    assert getattr(settings.runtime_config, field) == expected
+    assert getattr(settings.RuntimeConfig(), field) == expected
     assert getattr(settings.ArboraConfig(**{alias: text}), field) == expected
 
 

@@ -23,10 +23,6 @@ def _keys_or_new(keys: JwksCache | None, config: RuntimeConfig) -> JwksCache:
     return keys if keys is not None else JwksCache(config)
 
 
-def _config_or_new(config: RuntimeConfig | None) -> RuntimeConfig:
-    return config if config is not None else RuntimeConfig()
-
-
 class ProcessAuthority:
     """The process's session slot and its renewal supervisor state.
 
@@ -51,10 +47,11 @@ class ProcessAuthority:
         self,
         keys: JwksCache | None = None,
         token_secret: Callable[[], str | None] = token_secret_from_config,
-        config: RuntimeConfig | None = None,
+        *,
+        config: RuntimeConfig,
     ) -> None:
         #: The host's settings view; renewal reads its identity settings from it.
-        self.config = _config_or_new(config)
+        self.config = config
         #: The host's key cache; boot and renewal validate the process token against it.
         self.keys = _keys_or_new(keys, self.config)
         self.signer = RunTokenSigner(token_secret)

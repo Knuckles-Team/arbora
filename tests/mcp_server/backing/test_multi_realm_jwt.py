@@ -12,6 +12,7 @@ import asyncio
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
 
 
@@ -38,7 +39,8 @@ def test_single_realm_returns_plain_jwtverifier() -> None:
         _args(
             token_jwks_uri="https://kc.test/realms/master/protocol/openid-connect/certs",
             token_issuer="https://kc.test/realms/master",
-        )
+        ),
+        RuntimeConfig(),
     )
     assert isinstance(verifier, JWTVerifier)
 
@@ -51,7 +53,8 @@ def test_multi_realm_builds_one_verifier_per_realm() -> None:
                 "https://kc.test/realms/homelab/protocol/openid-connect/certs"
             ),
             token_issuer="https://kc.test/realms/master,https://kc.test/realms/homelab",
-        )
+        ),
+        RuntimeConfig(),
     )
     assert hasattr(verifier, "_verifiers")
     assert len(verifier._verifiers) == 2
@@ -63,7 +66,8 @@ def test_multi_realm_mismatched_list_lengths_exit() -> None:
             _args(
                 token_jwks_uri="https://kc.test/realms/master/protocol/openid-connect/certs",
                 token_issuer="https://kc.test/realms/master,https://kc.test/realms/homelab",
-            )
+            ),
+            RuntimeConfig(),
         )
 
 
@@ -75,7 +79,8 @@ def _multi() -> object:
                 "https://kc.test/realms/homelab/protocol/openid-connect/certs"
             ),
             token_issuer="https://kc.test/realms/master,https://kc.test/realms/homelab",
-        )
+        ),
+        RuntimeConfig(),
     )
 
 

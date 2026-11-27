@@ -16,6 +16,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from arbora.a2a.history import EngineTransitionHistory
+from arbora.core.settings import RuntimeConfig
 from tests.a2a.test_transition_history import HEADERS, _client, _Owned
 
 
@@ -103,10 +104,12 @@ def test_push_capability_follows_wired_worker() -> None:
             "capabilities"
         ]
 
-    unwired = A2AService(authority=Authority(), router=Router())
+    unwired = A2AService(authority=Authority(), router=Router(), config=RuntimeConfig())
     assert card(unwired)["pushNotifications"] is False
     worker = world().worker
-    wired = A2AService(authority=Authority(), router=Router(), push=worker)
+    wired = A2AService(
+        authority=Authority(), router=Router(), push=worker, config=RuntimeConfig()
+    )
     assert card(wired)["pushNotifications"] is True
     # The unwired method is unknown, so the card and the table agree.
     client = TestClient(
@@ -131,9 +134,9 @@ def test_card_has_no_harness_field_before_admission_e2e() -> None:
     from arbora.api.domain.a2a.models import A2AAgentCapabilities, A2AAgentCard
     from tests.a2a.test_application import Authority, Router
 
-    card = A2AService(authority=Authority(), router=Router()).agent_card(
-        "https://x/a2a"
-    )
+    card = A2AService(
+        authority=Authority(), router=Router(), config=RuntimeConfig()
+    ).agent_card("https://x/a2a")
     dumped = card.model_dump(mode="json", by_alias=True)
     assert not [key for key in dumped if "harness" in key.lower()]
     assert not [key for key in dumped["capabilities"] if "harness" in key.lower()]

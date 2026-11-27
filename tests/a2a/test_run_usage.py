@@ -1,3 +1,4 @@
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 
 """Native receipt consumer boundaries, not native persistence qualification."""
@@ -138,7 +139,10 @@ async def test_snapshot_is_committed_once(monkeypatch, failed, counts):
     from tests.a2a.test_failed_usage import failure
 
     authority = WorkItemA2AAuthority(
-        lambda: None, task_plan_config=object(), origins=RunOriginRegistry()
+        lambda: None,
+        task_plan_config=object(),
+        origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     result = AgentExecutionResult(run_id="run", output="answer", usage=counts)
     execute = AsyncMock(return_value=result)
@@ -258,7 +262,9 @@ async def test_get_restores_failed_usage_from_owner_bound_receipt(monkeypatch, c
         )
     )
     session = SimpleNamespace(tenant="tenant")
-    authority = WorkItemA2AAuthority(lambda: engine, origins=RunOriginRegistry())
+    authority = WorkItemA2AAuthority(
+        lambda: engine, origins=RunOriginRegistry(), config=RuntimeConfig()
+    )
     monkeypatch.setattr(authority, "_session", lambda scope: session)
     monkeypatch.setattr(authority, "_owner_ref", lambda session: "owner")
     monkeypatch.setattr(authority, "_engine", lambda: (engine, object()))
@@ -278,7 +284,10 @@ async def test_cancelled_native_run_is_not_wrapped_or_committed(monkeypatch):
     from arbora import work_items
 
     authority = WorkItemA2AAuthority(
-        lambda: None, task_plan_config=object(), origins=RunOriginRegistry()
+        lambda: None,
+        task_plan_config=object(),
+        origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     monkeypatch.setattr(
         authority, "_execute_claimed_run", AsyncMock(side_effect=asyncio.CancelledError)

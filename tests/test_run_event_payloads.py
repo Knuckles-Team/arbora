@@ -15,6 +15,7 @@ from arbora.a2a.authority import (
     remember_task_output,
     task_output_artifacts,
 )
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R001.2.1", "ARBORA-A2A-R001")
@@ -64,6 +65,7 @@ def read(records: list[dict[str, Any]], status: str = "succeeded") -> Any:
             query_cypher=lambda *args: [{"payload": row["payload"]} for row in records]
         ),
         origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     return authority._persisted_artifacts(TASK, item={"status": status})
 
@@ -212,6 +214,7 @@ async def test_task_read_preserves_completion_with_typed_unavailable_reply(
             query_cypher=lambda *args: [{"payload": records[0]["payload"]}]
         ),
         origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     session = SimpleNamespace(tenant="tenant", graph="graph")
     monkeypatch.setattr(authority, "_session", lambda scope: session)

@@ -17,6 +17,7 @@ from arbora.a2a.application import create_a2a_application
 from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.a2a.history import EngineTransitionHistory
 from arbora.a2a.service import A2AService
+from arbora.core.settings import RuntimeConfig
 from tests.a2a.test_application import Authenticator, Authority, Router
 
 HEADERS = {"Authorization": "Bearer verified"}
@@ -70,7 +71,11 @@ def _client(history: Any = None, *, streaming: Any = None) -> tuple[TestClient, 
     authority = Authority()
     app = create_a2a_application(
         service=A2AService(
-            authority=authority, router=Router(), history=history, streaming=streaming
+            authority=authority,
+            router=Router(),
+            history=history,
+            streaming=streaming,
+            config=RuntimeConfig(),
         ),
         authenticator=Authenticator(),
     )

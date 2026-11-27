@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.identity.browser_broker import ConfiguredBrowserBroker
 from arbora.identity.engine import IdentityUnavailable
 from arbora.security.key_cache import JwksCache
@@ -69,7 +70,7 @@ def broker_fixture(monkeypatch, synthetic_signing_key):
         tenant="fixture-tenant",
         audience="fixture",
         process_claims=lambda: process,
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
     )
 
     class Fixture(SimpleNamespace):
@@ -133,7 +134,7 @@ def test_invalid_reference_is_not_resolved_or_exposed(reference):
             tenant="fixture",
             audience="fixture",
             process_claims=lambda: {},
-            keys=JwksCache(),
+            keys=JwksCache(RuntimeConfig()),
         )
     assert str(failure.value) == "existing browser broker reference required"
     assert failure.value.__cause__ is None
@@ -166,11 +167,11 @@ def test_external_default_keeps_existing_behavior_but_direct_service_refuses(
 
     broker_fixture.issue(email="human@fixture.invalid", act={"sub": "other"})
     token = broker_fixture.tokens[-1]
-    actor = asyncio.run(actor_from_bearer_token(token, keys=JwksCache()))
+    actor = asyncio.run(actor_from_bearer_token(token, keys=JwksCache(RuntimeConfig())))
     assert actor.actor_type == ActorType.HUMAN
     with pytest.raises(PermissionError, match="direct service bearer"):
         asyncio.run(
             actor_from_bearer_token(
-                token, keys=JwksCache(), require_direct_service=True
+                token, keys=JwksCache(RuntimeConfig()), require_direct_service=True
             )
         )

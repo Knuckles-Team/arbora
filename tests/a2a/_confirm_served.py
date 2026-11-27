@@ -27,6 +27,7 @@ from arbora.api.domain.a2a.held_item_admission import HeldItemAdmitter
 from arbora.api.domain.a2a.tool_action_admission import ToolActionAdmitter
 from arbora.api.invoke.plan import PlanBinding
 from arbora.core.claims import params_digest
+from arbora.core.settings import RuntimeConfig
 from arbora.identity.approval import RegisteredApprovalKey
 from tests._support import unwrap_decide
 from tests.a2a.test_application import Authority, Router
@@ -212,7 +213,9 @@ class Served:
                 return caller
 
         app = create_a2a_application(
-            service=A2AService(authority=Authority(), router=Router()),
+            service=A2AService(
+                authority=Authority(), router=Router(), config=RuntimeConfig()
+            ),
             authenticator=Authenticator(),
             approvals=self.chain,
         )

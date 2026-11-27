@@ -17,6 +17,7 @@ from fastapi.testclient import TestClient
 from arbora.a2a.application import create_a2a_application
 from arbora.a2a.push import PUSH_KIND
 from arbora.a2a.service import A2AService
+from arbora.core.settings import RuntimeConfig
 from arbora.security import session as session_module
 from tests.a2a._push_support import ITEM_ID, TASK_ID, Target, seed_task, world
 from tests.a2a.test_application import Router
@@ -41,6 +42,7 @@ def _client(host: Any) -> TestClient:
         authority=host.authority,  # type: ignore[arg-type]
         router=Router(),
         push=host.worker,
+        config=RuntimeConfig(),
     )
     return TestClient(
         create_a2a_application(service=service, authenticator=Authenticator(host.who))

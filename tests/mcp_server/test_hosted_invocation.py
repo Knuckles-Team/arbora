@@ -17,6 +17,7 @@ from arbora.access.policy_state import PolicyState
 from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.registry import Surface
 from arbora.browser_control.browser_state import BrowserState
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import NativeGatewayApplication
@@ -64,7 +65,9 @@ def mount_a2a(monkeypatch, value):
         invocation=value,
         host=SimpleNamespace(
             runs=SimpleNamespace(
-                a2a=A2AService(authority=Authority(), router=Router())
+                a2a=A2AService(
+                    authority=Authority(), router=Router(), config=RuntimeConfig()
+                )
             ),
             policy=PolicyState(),
             caches=HostCaches(),

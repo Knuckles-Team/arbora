@@ -1,3 +1,4 @@
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 
 """Committed terminal point-read consumer boundaries (injected producer)."""
@@ -121,6 +122,7 @@ def authority(monkeypatch: pytest.MonkeyPatch) -> WorkItemA2AAuthority:
     instance = WorkItemA2AAuthority(
         lambda: SimpleNamespace(work_item_graph="__control__"),
         origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     item = {
         "status": "succeeded",
@@ -170,7 +172,9 @@ async def test_shared_service_opt_in_reads_public_au_run_client(
     )
 
     service = A2AService(
-        authority=authority, router=OrchestratorA2ARouter(lambda: object())
+        authority=authority,
+        router=OrchestratorA2ARouter(lambda: object()),
+        config=RuntimeConfig(),
     )
     ordinary = await service.get_task(TASK)
     assert calls == []
@@ -231,7 +235,9 @@ async def test_http_committed_read_and_refusal_are_privacy_safe(
     monkeypatch.setattr(terminal, "read_terminal_event", read)
     app = create_a2a_application(
         service=A2AService(
-            authority=authority, router=OrchestratorA2ARouter(lambda: object())
+            authority=authority,
+            router=OrchestratorA2ARouter(lambda: object()),
+            config=RuntimeConfig(),
         ),
         authenticator=Auth(),
     )

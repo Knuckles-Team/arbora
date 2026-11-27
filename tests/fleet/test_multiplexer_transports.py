@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import contextlib
 import importlib
+import json
 from unittest.mock import MagicMock
 
 import pytest
@@ -56,7 +57,6 @@ class _FakeSessionCM:
 
 @pytest.fixture
 def transports(monkeypatch):
-    from arbora.core.settings import runtime_config as config
 
     rec = {"stdio": [], "http": [], "sse": []}
     # MCP SDK v2 yields (read, write) for BOTH streamable-http and sse — the
@@ -70,10 +70,11 @@ def transports(monkeypatch):
     # These tests use plain-http fixture hostnames on purpose (mirroring a real
     # deployment's TLS-terminated-at-ingress children); declare them trusted the
     # same way a real deployment would via MCP_HTTP_ALLOWED_PRIVATE_HOSTS.
-    monkeypatch.setattr(
-        config,
-        "mcp_http_allowed_private_hosts",
-        ["egeria-mcp.example", "foo.example", "bar.example", "auth.example"],
+    monkeypatch.setenv(
+        "MCP_HTTP_ALLOWED_PRIVATE_HOSTS",
+        json.dumps(
+            ["egeria-mcp.example", "foo.example", "bar.example", "auth.example"]
+        ),
     )
     return rec
 
@@ -165,9 +166,8 @@ async def test_stdio_child_refused_when_prohibited(transports, tmp_path, monkeyp
     """MCP_STDIO_PROHIBITED refuses a stdio child at ``_open_one_session`` --
     the single chokepoint ``_start_child`` and ``probe_server`` both share --
     instead of ever constructing ``StdioServerParameters``/``stdio_client``."""
-    from arbora.core.settings import runtime_config as config
 
-    monkeypatch.setattr(config, "mcp_stdio_prohibited", True)
+    monkeypatch.setenv("MCP_STDIO_PROHIBITED", json.dumps(True))
     mux = multiplexer_from_fixture(tmp_path / "c.json")
     res = await mux._start_child("arbora", {"command": "arbora", "args": []})
     assert res is None
@@ -178,9 +178,8 @@ async def test_stdio_child_refused_when_prohibited(transports, tmp_path, monkeyp
 async def test_open_one_session_raises_stated_reason_when_stdio_prohibited(
     tmp_path, monkeypatch
 ):
-    from arbora.core.settings import runtime_config as config
 
-    monkeypatch.setattr(config, "mcp_stdio_prohibited", True)
+    monkeypatch.setenv("MCP_STDIO_PROHIBITED", json.dumps(True))
     mux = multiplexer_from_fixture(tmp_path / "c.json")
     with pytest.raises(RuntimeError, match="stdio transport is not permitted"):
         async with contextlib.AsyncExitStack() as stack:
@@ -202,9 +201,8 @@ async def test_probe_server_reports_stdio_prohibited_as_stated_reason(
     structurally excluded from the catalog (self, served natively) by the
     Medulla-backed catalog source, so probing it would report "not in catalog"
     rather than exercising the stdio-prohibition path under test."""
-    from arbora.core.settings import runtime_config as config
 
-    monkeypatch.setattr(config, "mcp_stdio_prohibited", True)
+    monkeypatch.setenv("MCP_STDIO_PROHIBITED", json.dumps(True))
     config_path = tmp_path / "c.json"
     config_path.write_text(
         '{"mcpServers": {"example-mcp": {"command": "example-mcp", "args": []}}}'
@@ -221,9 +219,8 @@ async def test_remote_child_unaffected_by_stdio_prohibition(
     transports, tmp_path, monkeypatch
 ):
     """The prohibition is stdio-specific -- a remote (HTTP) child is untouched."""
-    from arbora.core.settings import runtime_config as config
 
-    monkeypatch.setattr(config, "mcp_stdio_prohibited", True)
+    monkeypatch.setenv("MCP_STDIO_PROHIBITED", json.dumps(True))
     mux = multiplexer_from_fixture(tmp_path / "c.json")
     res = await mux._start_child("egeria-mcp", {"url": "http://egeria-mcp.example/mcp"})
     assert res is not None

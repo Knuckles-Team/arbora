@@ -14,6 +14,7 @@ from arbora.mcp_server import composition
 from arbora.mcp_server.composition import CompositionPlan, start_composed_services
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.observability.state import Telemetry
+from arbora.security.process_authority import ProcessAuthority
 
 
 # spec: ARBORA-DEPLOY-R017.7
@@ -56,7 +57,7 @@ def test_live_start_calls_start_composed_services_with_detected_composition(
         object(),
         engine,
         action_policies=ActionPolicies(),
-        tools=ToolTable(),
+        tools=ToolTable(ProcessAuthority(config=RuntimeConfig())),
         browser=BrowserState(),
         telemetry=Telemetry(),
         host=object(),

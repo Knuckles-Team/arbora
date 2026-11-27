@@ -102,7 +102,7 @@ def _compose(monkeypatch: pytest.MonkeyPatch, admin: _Admin, **changes: Any) -> 
     process = request_identity.mint_graph_session(actor, RuntimeConfig())
     return compose_served_invocation(
         config=RuntimeConfig(),
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         pool=FakePool(FakeClient()),
         graph=process.graph,
         process_session=lambda: process,

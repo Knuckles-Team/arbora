@@ -6,6 +6,7 @@ import pytest
 
 from arbora.a2a.service import A2AService
 from arbora.api.domain.a2a.models import A2AAgentCapabilities
+from arbora.core.settings import RuntimeConfig
 from tests.a2a._push_support import world
 from tests.a2a.test_application import Authority, Router
 
@@ -18,9 +19,9 @@ def test_capabilities_false_without_authorities() -> None:
         capabilities.push_notifications,
         capabilities.state_transition_history,
     ) == (False, False, False)
-    card = A2AService(authority=Authority(), router=Router()).agent_card(
-        "https://x/a2a"
-    )
+    card = A2AService(
+        authority=Authority(), router=Router(), config=RuntimeConfig()
+    ).agent_card("https://x/a2a")
     assert card.capabilities == capabilities
 
 

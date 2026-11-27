@@ -25,7 +25,7 @@ from arbora.a2a.tool_subset import (
     with_tool_subset,
 )
 from arbora.api.domain.a2a.models import A2ARouteDecision
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 from tests.a2a.test_authority import _message
 from tests.test_native_run_scope import SESSION, scope
@@ -72,7 +72,9 @@ async def test_a_subset_is_refused_before_admission_while_the_harness_cannot_enf
 ) -> None:
     assert not carrier_available()
     authority = WorkItemA2AAuthority(
-        lambda: pytest.fail("engine was accessed"), origins=RunOriginRegistry()
+        lambda: pytest.fail("engine was accessed"),
+        origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     with pytest.raises(A2AAssemblyUnavailable, match="cannot yet enforce"):
         await authority.dispatch(
@@ -110,9 +112,9 @@ def test_the_plan_carries_the_selected_subset_in_the_harness_field(
 def test_the_native_run_plan_is_planned_with_the_subset_of_its_owner(
     carrying_harness: None, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(runtime_config, "model_registry_path", None)
-    monkeypatch.setattr(runtime_config, "chat_models", [])
-    monkeypatch.setattr(agent_runs, "run_config", lambda: {"agent_model": "test"})
+    monkeypatch.setattr(
+        agent_runs, "run_config", lambda config: {"agent_model": "test"}
+    )
     import meristem.graph as graph
 
     monkeypatch.setattr(
@@ -122,7 +124,10 @@ def test_the_native_run_plan_is_planned_with_the_subset_of_its_owner(
     )
     request = RunRequest(task="hello", run_id="run", metadata={"session": SESSION})
     with scope(tool_subset=("graph_query",)):
-        plan = agent_runs.decide_run(request)
+        plan = agent_runs.decide_run(request, config=RuntimeConfig())
     assert plan.harness.action_space == {"tool_subset": ["graph_query"]}
     with scope():
-        assert agent_runs.decide_run(request).harness.action_space is None
+        assert (
+            agent_runs.decide_run(request, config=RuntimeConfig()).harness.action_space
+            is None
+        )

@@ -16,6 +16,7 @@ from arbora.api.domain.agent_host.host_port_adapters import (
     HostPortsBinding,
     HostPortsSlot,
 )
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import harness_ports
 from arbora.mcp_server.host_context import build_host_context
 from arbora.pin_lag.meristem import PinLagUnavailable
@@ -78,8 +79,12 @@ def test_build_host_ports_sets_every_named_provider_on_the_real_record() -> None
 
     assert type(ports) is HostPorts
     assert ports.decide.func is decide_run
-    assert ports.decide.keywords == {"shape_plan": harness_ports.shaped_run_plan}
-    assert ports.models is resolve_model
+    assert ports.decide.keywords == {
+        "config": host.config,
+        "shape_plan": harness_ports.shaped_run_plan,
+    }
+    assert ports.models.func is resolve_model
+    assert ports.models.keywords == {"config": host.config}
     assert ports.events.func is record_run_event
     assert ports.events.keywords == {
         "engine_provider": host.engine.served,
@@ -191,7 +196,9 @@ def test_every_run_entry_point_receives_the_host_ports(
     from arbora.api.contracts.agent_control_plane import AgentControlPlane
     from arbora.run_origin import RunOriginRegistry
 
-    _ = AgentRunPort(origins=RunOriginRegistry(), ports=slot)._executor
+    _ = AgentRunPort(
+        origins=RunOriginRegistry(), ports=slot, config=RuntimeConfig()
+    )._executor
     assert seen["executor"] == slot.current()
 
     _default_executor(slot.current())(object(), {}, "q")

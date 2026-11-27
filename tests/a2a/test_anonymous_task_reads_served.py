@@ -13,6 +13,7 @@ from medulla.client import MedullaClient
 from arbora.a2a.anonymous import AnonymousReadPolicy, create_anonymous_a2a_application
 from arbora.a2a.anonymous_native import compose_anonymous_task_reads
 from arbora.a2a.service import A2AService
+from arbora.core.settings import RuntimeConfig
 from tests.a2a.test_anonymous_native_reads import (
     RUN,
     LocalWriter,
@@ -44,7 +45,8 @@ def _client(value: Any, *, mode: str = "none", supported: bool = True) -> Any:
 
 async def _read(owner: Any, task: str = RUN) -> httpx.Response:
     app = create_anonymous_a2a_application(
-        owner=owner, service=A2AService(authority=owner, router=None)
+        owner=owner,
+        service=A2AService(authority=owner, router=None, config=RuntimeConfig()),
     )
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url=ORIGIN

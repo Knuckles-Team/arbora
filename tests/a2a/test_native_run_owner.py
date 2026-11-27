@@ -1,3 +1,4 @@
+from arbora.core.settings import RuntimeConfig
 from arbora.core.work_item_errors import NativeWorkItemRequired
 from arbora.run_origin import RunOriginRegistry
 
@@ -64,6 +65,7 @@ async def test_submit_retry_get_list_cancel_use_returned_engine_id(
         lambda: engine,
         task_plan_config=TaskPlanConfig({}, {}, 1, 2),
         origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     admitted = graph_session(frozenset({"kg:read", "kg:write"}))
     monkeypatch.setattr(authority, "_session", lambda scope: admitted)
@@ -176,7 +178,9 @@ def test_durable_reply_uses_native_run_not_public_work_item(payload_run):
         ]
 
     authority = WorkItemA2AAuthority(
-        lambda: SimpleNamespace(query_cypher=query), origins=RunOriginRegistry()
+        lambda: SimpleNamespace(query_cypher=query),
+        origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     item = {"status": "succeeded", "metadata": {"a2a_run_id": "native-run"}}
     if payload_run == "native-run":
@@ -202,6 +206,7 @@ def test_native_admission_conflict_translates_at_a2a_boundary(monkeypatch, code)
         lambda: object(),
         task_plan_config=TaskPlanConfig({}, {}, 1, 2),
         origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     expected = (
         A2AIdempotencyConflict if code == "IDEMPOTENCY_CONFLICT" else OperationRefused
@@ -223,7 +228,9 @@ async def test_native_access_denied_is_unavailable_to_foreign_owner(monkeypatch)
 
     from arbora.a2a.authority import A2ATaskNotCancelable
 
-    authority = WorkItemA2AAuthority(lambda: object(), origins=RunOriginRegistry())
+    authority = WorkItemA2AAuthority(
+        lambda: object(), origins=RunOriginRegistry(), config=RuntimeConfig()
+    )
     monkeypatch.setattr(authority, "_session", lambda scope: SESSION)
     monkeypatch.setattr(authority, "_engine", lambda: (object(), object()))
 
@@ -239,7 +246,9 @@ async def test_native_access_denied_is_unavailable_to_foreign_owner(monkeypatch)
 def test_owner_lookup_does_not_hide_other_native_failures(monkeypatch):
     from medulla import EngineResponseError
 
-    authority = WorkItemA2AAuthority(lambda: object(), origins=RunOriginRegistry())
+    authority = WorkItemA2AAuthority(
+        lambda: object(), origins=RunOriginRegistry(), config=RuntimeConfig()
+    )
     monkeypatch.setattr(authority, "_session", lambda scope: SESSION)
     monkeypatch.setattr(authority, "_engine", lambda: (object(), object()))
 

@@ -22,7 +22,8 @@ from datetime import UTC, datetime
 from types import MappingProxyType
 from typing import Any, Protocol
 
-from arbora.api.invoke.screening import redact_result
+from arbora.api.invoke.screening import redact_result, screen_settings
+from arbora.core.settings import RuntimeConfig
 
 __all__ = [
     "FAILURE_KEY",
@@ -202,10 +203,13 @@ class A2AEventLog:
         self,
         engine_provider: Callable[[], Any],
         *,
+        config: RuntimeConfig,
         store: A2AEventStore | None = None,
         clock: StreamClock | None = None,
     ) -> None:
         self._engine_provider = engine_provider
+        #: The host settings; the run events and the screen read them.
+        self.config = config
         self.store: A2AEventStore = store or EngineKvEventStore(engine_provider)
         self.clock: StreamClock = clock or SystemStreamClock()
         # Wake-up signals of waiting streams. Never read for correctness.
@@ -250,7 +254,7 @@ class A2AEventLog:
         sequence = int(metadata.get(EVENT_SEQ_KEY, 0)) + 1
         fence = int(claim["fencing_token"]) if claim is not None else _EXTERNAL_FENCE
         record = {
-            **redact_result(dict(draft))[0],
+            **redact_result(dict(draft), screen_settings(self.config))[0],
             "event_seq": sequence,
             "timestamp_ms": self.clock.now_ms(),
             "fence": fence,

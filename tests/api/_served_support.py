@@ -316,7 +316,7 @@ def two_tenant_served(
     process = request_identity.mint_graph_session(actor, RuntimeConfig())
     invocation = harness.compose_served_invocation(
         config=RuntimeConfig(),
-        keys=JwksCache(),
+        keys=JwksCache(RuntimeConfig()),
         pool=harness.FakePool(client),
         graph=process.graph,
         process_session=lambda: process,

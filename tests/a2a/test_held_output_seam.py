@@ -29,6 +29,7 @@ from arbora.a2a.held_output import (
 )
 from arbora.api.domain.a2a.held_item_admission import HeldItemAdmitter, HeldItemRefusal
 from arbora.api.domain.a2a.models import A2ATask, A2ATaskStatus
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 from tests.a2a.test_application import _Engine
 
@@ -89,6 +90,7 @@ def _terminal_authority(result: dict[str, Any]) -> WorkItemA2AAuthority:
     return WorkItemA2AAuthority(
         lambda: SimpleNamespace(query_cypher=lambda q, p: [{"payload": payload}]),
         origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
 
 

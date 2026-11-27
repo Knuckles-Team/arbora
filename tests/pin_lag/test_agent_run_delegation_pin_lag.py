@@ -19,6 +19,7 @@ from arbora.a2a.run_delegation import (
     run_delegation_id,
 )
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.core.settings import RuntimeConfig
 from arbora.pin_lag import medulla
 from arbora.pin_lag.unavailable import PinLagUnavailable
 from arbora.run_origin import RunOriginRegistry
@@ -75,6 +76,7 @@ def test_admission_on_the_pinned_release_is_refused_unavailable_and_admits_nothi
         delegations=EngineRunDelegations(
             store.send, clock=lambda: 0.0, lease_s=_RUN_LEASE_SECONDS
         ),
+        config=RuntimeConfig(),
     )
 
     async def admit() -> None:
@@ -110,6 +112,7 @@ def test_the_main_shape_records_one_agent_run_delegation_through_the_real_path(
         delegations=EngineRunDelegations(
             store.send, clock=lambda: now, lease_s=_RUN_LEASE_SECONDS
         ),
+        config=RuntimeConfig(),
     )
 
     async def admit() -> dict[str, object]:

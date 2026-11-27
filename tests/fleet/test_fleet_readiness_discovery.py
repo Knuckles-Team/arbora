@@ -15,8 +15,9 @@ from typing import Any
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
-from arbora.api.mcp.discovery import find_visible
+from arbora.api.mcp.discovery import discovery_budget_s, find_visible
 from arbora.api.policy import PolicyGate
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.declarations import Declarations
 from arbora.mcp_server.fleet_composition import LateFleetGateway
 
@@ -59,6 +60,7 @@ def _find(**kwargs: Any) -> dict[str, Any]:
             caller=_Caller(),
             policy_gate=PolicyGate("none"),
             resolver=_Resolver(),
+            budget_s=discovery_budget_s(RuntimeConfig()),
             **kwargs,
         )
     )
@@ -66,9 +68,8 @@ def _find(**kwargs: Any) -> dict[str, Any]:
 
 @pytest.mark.spec("ARBORA-FLEET-R062")
 def test_find_returns_partial_when_fleet_search_times_out(monkeypatch) -> None:
-    from arbora.core.settings import runtime_config
 
-    monkeypatch.setattr(runtime_config, "mcp_dynamic_discovery_timeout", 0.05)
+    monkeypatch.setenv("MCP_DYNAMIC_DISCOVERY_TIMEOUT", str(0.05))
 
     async def slow(**_kwargs: Any) -> list[dict[str, Any]]:
         await asyncio.sleep(5)

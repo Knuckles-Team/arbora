@@ -19,6 +19,7 @@ from unittest.mock import ANY, patch
 import pytest
 
 from arbora.api.domain.fleet.catalog_reader import DeferredFleetCatalogReader
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools.intent_tools import _fleet_mux
@@ -32,7 +33,7 @@ def test_attach_headless_fleet_loader_calls_attach_fleet_loader_with_composed_ar
     """Same arguments the served process passes in ``server._attach_fleet_runtime``."""
     mcp = SimpleNamespace()
     fleet = FleetState()
-    authority = ProcessAuthority()
+    authority = ProcessAuthority(config=RuntimeConfig())
     with patch("arbora.fleet.multiplexer.attach_fleet_loader") as mock_attach:
         runtime._attach_headless_fleet_loader(mcp, fleet, authority)
 
@@ -73,7 +74,9 @@ def test_attach_headless_fleet_loader_records_the_exact_failure_cause(
             side_effect=RuntimeError("no mcp_config.json found"),
         ),
     ):
-        runtime._attach_headless_fleet_loader(mcp, FleetState(), ProcessAuthority())
+        runtime._attach_headless_fleet_loader(
+            mcp, FleetState(), ProcessAuthority(config=RuntimeConfig())
+        )
 
     assert getattr(mcp, "_fleet_mux", None) is None
     reason = mcp._fleet_mux_unavailable_reason

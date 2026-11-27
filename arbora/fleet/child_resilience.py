@@ -67,6 +67,7 @@ from typing import Any
 import anyio
 
 from arbora.api.domain.fleet.plan_confirmation import PlanConfirmations
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.protocol_compat import mcp_protocol_error
 from arbora.observability.gateway_metrics import (
     MCP_CHILD_BREAKER_STATE,
@@ -404,9 +405,8 @@ class ChildRuntime:
         session_max_age: float | None = None,
         on_generation: GenerationCallback | None = None,
         confirmations: PlanConfirmations,
+        config: RuntimeConfig,
     ) -> None:
-        from arbora.core.settings import runtime_config as config
-
         self.name = name
         # ARBORA-HOST-R039.2: the fleet's armed plan confirmations.
         self._confirmations = confirmations

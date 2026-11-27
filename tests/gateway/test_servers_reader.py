@@ -10,6 +10,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from arbora.core.settings import RuntimeConfig
 from arbora.gateway import registry_api
 from arbora.gateway.servers_reader import (
     FleetCatalogServersReader,
@@ -73,9 +74,9 @@ def _session(tenant: str, principal: str, scopes: frozenset[str]) -> Any:
 def _host_app(secret: str) -> FastAPI:
     """An application over a host whose authority signs with ``secret``."""
     app = FastAPI()
-    authority = ProcessAuthority(token_secret=lambda: secret)
+    authority = ProcessAuthority(token_secret=lambda: secret, config=RuntimeConfig())
     app.state.host = SimpleNamespace(
-        authority=authority, caches=SimpleNamespace(jwks=JwksCache())
+        authority=authority, caches=SimpleNamespace(jwks=JwksCache(RuntimeConfig()))
     )
     registry_api.register_registry_routes(app)
     return app
@@ -133,7 +134,7 @@ def test_refusals_leak_no_records(client: Any) -> None:
 @pytest.mark.asyncio
 async def test_reader_refuses_before_any_read() -> None:
     reader = FleetCatalogServersReader(
-        object(), RunTokenSigner(lambda: "s" * 48), JwksCache()
+        object(), RunTokenSigner(lambda: "s" * 48), JwksCache(RuntimeConfig())
     )
     with pytest.raises(ServersRefused) as refused:
         await reader.list(

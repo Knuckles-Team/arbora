@@ -14,6 +14,7 @@ from arbora.a2a.authority import (
 from arbora.a2a.routing import A2AAssemblyUnavailable, OrchestratorA2ARouter
 from arbora.a2a.service import A2AService
 from arbora.api.domain.a2a.models import A2AMessage, A2ARouteDecision, A2ATextPart
+from arbora.core.settings import RuntimeConfig
 from arbora.run_origin import RunOriginRegistry
 
 
@@ -30,7 +31,9 @@ def _message(text: str = "do work") -> A2AMessage:
 @pytest.mark.asyncio
 async def test_selected_tool_subset_is_refused_before_durable_admission() -> None:
     authority = WorkItemA2AAuthority(
-        lambda: pytest.fail("engine was accessed"), origins=RunOriginRegistry()
+        lambda: pytest.fail("engine was accessed"),
+        origins=RunOriginRegistry(),
+        config=RuntimeConfig(),
     )
     with pytest.raises(A2AAssemblyUnavailable, match="cannot yet enforce"):
         await authority.dispatch(
@@ -61,7 +64,7 @@ async def test_context_budget_fails_closed_while_agent_assemble_is_unavailable()
         async def dispatch(self, **_kw: object) -> object:
             pytest.fail("a refused admission must not dispatch")
 
-    service = A2AService(authority=_Authority(), router=router)  # type: ignore[arg-type]
+    service = A2AService(authority=_Authority(), router=router, config=RuntimeConfig())  # type: ignore[arg-type]
     with pytest.raises(A2AAssemblyUnavailable) as refused:
         await service.send_message(
             message=_message().model_dump(mode="json", by_alias=True),

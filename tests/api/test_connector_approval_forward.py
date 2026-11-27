@@ -63,7 +63,7 @@ def _mux(tmp_path: Any, monkeypatch: Any, *, oauth: bool) -> tuple[Any, _MetaSes
     monkeypatch.setattr(
         multiplexer_module,
         "_prepare_runtime_child_policy",
-        lambda current: (current, None),
+        lambda current, config: (current, None),
     )
     monkeypatch.setattr(multiplexer_module, "oauth_gated", lambda _cfg: oauth)
     return mux, session

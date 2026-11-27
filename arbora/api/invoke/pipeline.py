@@ -38,6 +38,7 @@ from arbora.api.invoke.screening import (
     redact_result,
     screen_params,
     screen_result,
+    screen_settings,
     screening_fields,
 )
 from arbora.api.invoke.steps import (
@@ -571,7 +572,8 @@ async def _effective_op(
 
     try:
         resolved = await asyncio.wait_for(
-            services.fleet_effect(op, params, caller), timeout=discovery_budget_s()
+            services.fleet_effect(op, params, caller),
+            timeout=discovery_budget_s(services.config),
         )
     except TimeoutError:
         # A fleet still coming up answers fast and typed (ARBORA-FLEET-R062).
@@ -1414,7 +1416,7 @@ def _screen_params_refusal(call: _Call) -> tuple[OpError, dict[str, str]] | None
         or call.arguments.get("content_origin") != ContentOrigin.OPEN_WEB.value
     ):
         return None
-    outcome = screen_params(call.arguments)
+    outcome = screen_params(call.arguments, screen_settings(call.services.config))
     if outcome.verdict == ContentScreenVerdict.CLEAN:
         return None
     return (
@@ -1435,7 +1437,8 @@ def _screen_outcome(
     screened: ScreenOutcome | None = None
     value = result.value
     if call.op.content_origin == ContentOrigin.OPEN_WEB:
-        screened = screen_result(value)
+        settings = screen_settings(call.services.config)
+        screened = screen_result(value, settings)
         if screened.verdict == ContentScreenVerdict.QUARANTINED:
             refusal = OpError(
                 "CONTENT_QUARANTINED",
@@ -1446,7 +1449,7 @@ def _screen_outcome(
             )
             return refusal, screening_fields(screened, 0)
         value = screened.value
-    value, redactions = redact_result(value)
+    value, redactions = redact_result(value, screen_settings(call.services.config))
     if screened is None and not redactions:
         return result, {}
     return replace(result, value=value), screening_fields(screened, redactions)

@@ -409,11 +409,10 @@ async def test_child_history_gap_and_cross_run_payload_are_typed_states(monkeypa
 @pytest.mark.spec("ARBORA-OPS-R021.4.8.2")
 @pytest.mark.parametrize("depth,reason", [(1, "depth_bound"), (2, None), (3, None)])
 async def test_depth_bound_reports_partial(monkeypatch, depth, reason):
-    from arbora.core.settings import runtime_config
 
     plans, histories = producer_trace()
     reader, _ = install(monkeypatch, plans, histories)
-    monkeypatch.setattr(runtime_config, "runs_graph_max_depth", depth)
+    monkeypatch.setenv("RUNS_GRAPH_MAX_DEPTH", str(depth))
     value = await reader.execution_graph(
         context=reader_context(), request=_params(graph_request())
     )
@@ -430,11 +429,9 @@ async def test_depth_bound_reports_partial(monkeypatch, depth, reason):
 async def test_node_and_edge_bounds_drop_whole_children_and_say_partial(
     monkeypatch, bound, reason
 ):
-    from arbora.core.settings import runtime_config
-
     plans, histories = producer_trace()
     reader, _ = install(monkeypatch, plans, histories)
-    monkeypatch.setattr(runtime_config, f"runs_graph_max_{bound}", 10)
+    monkeypatch.setenv(f"RUNS_GRAPH_MAX_{bound.upper()}", "10")
     plans["run-child"] = plan(
         "run-child",
         "p-child",

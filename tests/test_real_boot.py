@@ -988,7 +988,9 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
         monkeypatch.setenv("AUTH_JWT_ISSUER", str(ISSUER))
         monkeypatch.setenv("AUTH_JWT_AUDIENCE", str(AUDIENCE))
         monkeypatch.setenv("KG_POLICY_VERSION", str(POLICY_VERSION))
-        actor = asyncio.run(actor_from_bearer_token(stack["token"], keys=JwksCache()))
+        actor = asyncio.run(
+            actor_from_bearer_token(stack["token"], keys=JwksCache(RuntimeConfig()))
+        )
         session = mint_graph_session(actor, RuntimeConfig()).with_graph(CONTROL_GRAPH)
         pool = EpistemicClientPool(
             cast(ConnectClient, MedullaClient.connect),
@@ -998,7 +1000,7 @@ def test_native_current_plan_lifecycle_uses_installed_engine(
         engine = ServedEngine(pool)
         invocation = compose_served_invocation(
             config=RuntimeConfig(),
-            keys=JwksCache(),
+            keys=JwksCache(RuntimeConfig()),
             pool=pool,
             graph=CONTROL_GRAPH,
             process_session=lambda: session,
@@ -1389,7 +1391,9 @@ def test_a_held_pack_import_queues_an_approval_lease(
     monkeypatch.setenv("KG_POLICY_VERSION", str(POLICY_VERSION))
     monkeypatch.delenv("ACTION_POLICY_PATH", raising=False)
     session = mint_graph_session(
-        asyncio.run(actor_from_bearer_token(stack["token"], keys=JwksCache())),
+        asyncio.run(
+            actor_from_bearer_token(stack["token"], keys=JwksCache(RuntimeConfig()))
+        ),
         RuntimeConfig(),
     )
     engine = ServedEngine(

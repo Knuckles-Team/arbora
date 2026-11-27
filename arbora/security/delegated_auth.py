@@ -32,6 +32,8 @@ import logging
 from contextvars import ContextVar, Token
 from typing import Any
 
+from arbora.core.settings import RuntimeConfig
+
 logger = logging.getLogger(__name__)
 
 _MAX_TOKEN_RESPONSE_BYTES = 1024 * 1024
@@ -77,11 +79,11 @@ def _post_token(
     endpoint: str,
     data: dict[str, Any],
     *,
+    settings: RuntimeConfig,
     auth: tuple[str, str] | None = None,
     timeout: int = 30,
 ) -> dict[str, Any]:
     """POST one bounded token request through the canonical OIDC transport."""
-    from arbora.core.settings import RuntimeConfig
     from arbora.security.oidc_discovery import (
         canonical_oidc_endpoint,
         oidc_http_client,
@@ -91,7 +93,7 @@ def _post_token(
     if not 1 <= int(timeout) <= 60:
         raise ValueError("Token request timeout is outside the safe range")
 
-    with oidc_http_client(RuntimeConfig(), timeout=float(timeout)) as client:
+    with oidc_http_client(settings, timeout=float(timeout)) as client:
         with client.stream("POST", endpoint, data=data, auth=auth) as response:
             response.raise_for_status()
             body = bytearray()
@@ -171,6 +173,8 @@ def get_delegated_token(
     audience: str | None = None,
     scopes: str | None = None,
     timeout: int = 30,
+    *,
+    settings: RuntimeConfig,
 ) -> str:
     """Exchange the MCP-layer user token for a downstream service token.
 
@@ -245,6 +249,7 @@ def get_delegated_token(
         scopes=target_scopes,
         client_auth=(oidc_client_id, oidc_client_secret),
         timeout=timeout,
+        settings=settings,
     )
 
 
@@ -256,6 +261,7 @@ def _token_exchange(
     scopes: str,
     client_auth: tuple[str, str],
     timeout: int,
+    settings: RuntimeConfig,
     extra: dict[str, Any] | None = None,
 ) -> str:
     """POST one RFC 8693 token-exchange request and return the delegated ``access_token``.
@@ -283,6 +289,7 @@ def _token_exchange(
             exchange_data,
             auth=client_auth,
             timeout=timeout,
+            settings=settings,
         )
         new_token = payload["access_token"]
         if not isinstance(new_token, str) or not 1 <= len(new_token) <= 65_536:
@@ -309,6 +316,7 @@ def exchange_token_for_agent(
     scopes: str | None = None,
     timeout: int = 30,
     requested_subject: str | None = None,
+    settings: RuntimeConfig,
 ) -> str:
     """Exchange the caller's token for one acting on behalf of a spawned agent (RFC 8693).
 
@@ -376,6 +384,7 @@ def exchange_token_for_agent(
         scopes=target_scopes,
         client_auth=(oidc_client_id, oidc_client_secret),
         timeout=timeout,
+        settings=settings,
         # RFC 8693 §2.1: identify the acting party (the spawned agent) so the IdP records the
         # delegation in the issued token's `act` claim (Keycloak reads this via a client-scope
         # protocol mapper configured per the W1.10 checklist).
@@ -457,6 +466,8 @@ def exchange_authorization_code(
     code: str,
     redirect_uri: str,
     timeout: int = 30,
+    *,
+    settings: RuntimeConfig,
 ) -> dict[str, Any]:
     """Exchange an authorization code for access and refresh tokens.
 
@@ -509,7 +520,9 @@ def exchange_authorization_code(
     logger.info("Exchanging authorization code for tokens")
 
     try:
-        token_data = _post_token(token_endpoint, data, timeout=timeout)
+        token_data = _post_token(
+            token_endpoint, data, timeout=timeout, settings=settings
+        )
         access_token = token_data.get("access_token")
         if not isinstance(access_token, str) or not 1 <= len(access_token) <= 65_536:
             raise RuntimeError("Authorization response had an invalid token")
@@ -530,6 +543,8 @@ def refresh_access_token(
     client_secret: str,
     refresh_token: str,
     timeout: int = 30,
+    *,
+    settings: RuntimeConfig,
 ) -> dict[str, Any]:
     """Use a refresh token to obtain a new access token.
 
@@ -568,7 +583,7 @@ def refresh_access_token(
     }
 
     try:
-        payload = _post_token(token_endpoint, data, timeout=timeout)
+        payload = _post_token(token_endpoint, data, timeout=timeout, settings=settings)
         access_token = payload.get("access_token")
         if not isinstance(access_token, str) or not 1 <= len(access_token) <= 65_536:
             raise RuntimeError("Token refresh response had an invalid token")

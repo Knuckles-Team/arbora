@@ -17,7 +17,7 @@ import json
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from arbora.api.invoke.screening import redact_result
+from arbora.api.invoke.screening import ScreenSettings, redact_result
 
 __all__ = ["RunEventObserver"]
 
@@ -29,9 +29,9 @@ MAX_TOOL_CHARS = 4_000
 Publish = Callable[[dict[str, Any]], Awaitable[Any]]
 
 
-def _bounded(value: Any) -> str:
+def _bounded(value: Any, screen: ScreenSettings) -> str:
     text = value if isinstance(value, str) else json.dumps(value, default=str)
-    return str(redact_result(text)[0])[:MAX_TOOL_CHARS]
+    return str(redact_result(text, screen)[0])[:MAX_TOOL_CHARS]
 
 
 class RunEventObserver:
@@ -43,8 +43,10 @@ class RunEventObserver:
         *,
         task_id: str,
         context_id: str,
+        screen: ScreenSettings,
         flush_chars: int = FLUSH_CHARS,
     ) -> None:
+        self._screen = screen
         self._publish = publish
         self._task_id = task_id
         self._context_id = context_id
@@ -74,7 +76,11 @@ class RunEventObserver:
                 "tool-call",
                 part.tool_call_id,
                 part.tool_name,
-                {"args": _bounded(part.args if part.args is not None else {})},
+                {
+                    "args": _bounded(
+                        part.args if part.args is not None else {}, self._screen
+                    )
+                },
             )
         elif kind == "function_tool_result":
             await self.flush()
@@ -84,7 +90,7 @@ class RunEventObserver:
                 getattr(part, "tool_call_id", ""),
                 getattr(part, "tool_name", None) or "",
                 {
-                    "result": _bounded(getattr(part, "content", "")),
+                    "result": _bounded(getattr(part, "content", ""), self._screen),
                     "ok": getattr(part, "part_kind", "") == "tool-return"
                     and getattr(part, "outcome", None) in (None, "success"),
                 },

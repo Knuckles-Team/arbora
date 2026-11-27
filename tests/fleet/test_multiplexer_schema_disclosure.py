@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 
 from arbora.api.domain.fleet.plan_confirmation import PlanConfirmations
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.child_resilience import ChildRuntime
 from tests.fleet.catalog_fixture import multiplexer_from_fixture
 
@@ -110,7 +111,9 @@ def setup_mux(tmp_path: Any, runtime: ChildRuntime, descriptor: Any) -> Any:
 
 def connect_schema_session(tmp_path: Any, session: SchemaSession) -> Any:
     """Attach the supplied schema session through the ordinary child runtime."""
-    runtime = ChildRuntime("markets", {}, confirmations=PlanConfirmations())
+    runtime = ChildRuntime(
+        "markets", {}, confirmations=PlanConfirmations(), config=RuntimeConfig()
+    )
     runtime.adopt_sessions([session])
     return setup_mux(tmp_path, runtime, session.descriptor)
 
@@ -300,7 +303,7 @@ def setup_oauth_sessions(
     monkeypatch.setattr(
         multiplexer_module,
         "_prepare_runtime_child_policy",
-        lambda current: (current, None),
+        lambda current, config: (current, None),
     )
     opened: list[SchemaSession] = []
 

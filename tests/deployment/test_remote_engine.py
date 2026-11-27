@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
 
 import pytest
 
-from arbora.core.settings import runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import composition, served_engine
 from arbora.mcp_server.composition import (
     EngineEndpoint,
@@ -37,14 +38,10 @@ def test_remote_url_starts_nothing_locally_and_missing_credential_refuses(
     assert not is_remote_engine(EngineEndpoint("tcp", "localhost:4000"))
     assert not is_remote_engine(EngineEndpoint("unix", "/run/engine.sock"))
 
-    # setattr would restore the frozen live value as a permanent override at
-    # teardown; setitem drops the key so later reads stay live.
-    monkeypatch.setitem(
-        runtime_config._overrides,
-        "graph_service_endpoints",
-        ["tcp://engine.example.com:4000"],
+    monkeypatch.setenv(
+        "GRAPH_SERVICE_ENDPOINTS", json.dumps(["tcp://engine.example.com:4000"])
     )
-    handles = served_engine.EngineHandles()
+    handles = served_engine.EngineHandles(config=RuntimeConfig())
     before = composition.engine_spawn_count()
     with pytest.raises(EngineRefusal) as refused:
         handles.pool()

@@ -16,6 +16,7 @@ from fastmcp import FastMCP
 from fastmcp.server.auth.providers.jwt import RSAKeyPair
 from starlette.testclient import TestClient
 
+from arbora.core.settings import RuntimeConfig
 from arbora.identity import client_contract as cc
 from arbora.identity.client_contract import ContractEvent, ReconcileResult
 from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
@@ -40,7 +41,7 @@ def _provider(keys: RSAKeyPair, required_scopes: str | None = None) -> Any:
         required_scopes=required_scopes,
         public_base_url="https://arbora.example",
     )
-    return _configure_jwt_auth(args)
+    return _configure_jwt_auth(args, RuntimeConfig())
 
 
 def _client(provider: Any) -> TestClient:

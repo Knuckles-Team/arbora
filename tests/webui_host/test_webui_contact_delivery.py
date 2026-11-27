@@ -89,11 +89,10 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     monkeypatch.setitem(sys.modules, "uvicorn", uvicorn)
 
     # Keep the real configuration exports for lazily imported host dependencies.
-    from arbora.core.settings import runtime_config
 
-    monkeypatch.setattr(runtime_config, "host", "127.0.0.1")
-    monkeypatch.setattr(runtime_config, "port", 8000)
-    monkeypatch.setattr(runtime_config, "webui_auth_mode", auth_mode)
+    monkeypatch.setenv("HOST", "127.0.0.1")
+    monkeypatch.setenv("PORT", str(8000))
+    monkeypatch.setenv("WEBUI_AUTH_MODE", str(auth_mode))
 
     governance = types.ModuleType("arbora.webui_host.contact_governance")
 
