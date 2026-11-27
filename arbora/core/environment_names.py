@@ -139,6 +139,14 @@ NAMES: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         False,
     ),
     (
+        "ARBORA_AUDIO_MAX_DURATION_S",
+        "string",
+        None,
+        "ARBORA-OPS-R899",
+        ("arbora.modality.normalizer",),
+        False,
+    ),
+    (
         "ARBORA_AUTH_NONE_EXPOSE",
         "string",
         None,
@@ -248,6 +256,14 @@ NAMES: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         None,
         "ARBORA-OPS-R019",
         ("arbora.api.ops.development_scm", "arbora.mcp_server.served_invocation"),
+        False,
+    ),
+    (
+        "ARBORA_DEVELOPMENT_SCM_SOURCES",
+        "string",
+        "",
+        "ARBORA-HARNESS-PLUGINS-R001.4",
+        ("arbora.identity.signed_ingress",),
         False,
     ),
     (
@@ -385,6 +401,14 @@ NAMES: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         "ARBORA-FLEET-R007.3",
         ("arbora.mcp_server.backing.tasks_extension",),
         True,
+    ),
+    (
+        "ARBORA_MEDIA_MAX_BYTES",
+        "string",
+        None,
+        "ARBORA-OPS-R899",
+        ("arbora.modality.normalizer",),
+        False,
     ),
     (
         "ARBORA_OUTBOX_INTERVAL_S",

@@ -43,6 +43,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from arbora.access.action_policy import ActionPolicies
+from arbora.core.environment import default_env, read_env
 
 __all__ = ["compose_web_application", "run_web_ui"]
 
@@ -131,7 +132,6 @@ def run_web_ui(
     """
 
     import asyncio
-    import os
 
     import uvicorn
 
@@ -141,7 +141,7 @@ def run_web_ui(
     if port:
         bind_port = int(port)
     else:
-        raw = str(os.environ.get(WEB_UI_PORT_ENV, "") or "").strip()
+        raw = str(read_env(WEB_UI_PORT_ENV, "") or "").strip()
         try:
             bind_port = int(raw) if raw else DEFAULT_WEB_UI_PORT
         except ValueError:
@@ -164,7 +164,7 @@ def run_web_ui(
     # server actually does -- the same choice overstory's own entrypoint
     # makes. `setdefault`, so an operator may select `redacted` instead and
     # supply a redacting access logger.
-    os.environ.setdefault(ACCESS_LOG_POLICY_ENV, "disabled")
+    default_env(ACCESS_LOG_POLICY_ENV, "disabled")
 
     # Import here, not at module import: arbora must start normally when the
     # `ag-ui` extra is absent, and only a deployment that asked for the WebUI

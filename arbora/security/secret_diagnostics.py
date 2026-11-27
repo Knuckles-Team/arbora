@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import sys
 from collections.abc import Collection, Iterable, Mapping, Sequence
@@ -24,6 +23,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
+
+from arbora.core.environment import environment_names
 
 SCHEMA_VERSION = "secret-diagnostics.v1"
 MAX_ENTRIES = 64
@@ -468,7 +469,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             # read, copied, hashed, measured, or serialized.
             report = diagnose(
                 allowlist,
-                environment_names=os.environ.keys(),
+                environment_names=environment_names(),
                 secret_refs=observations,
             )
             result = report.to_dict()

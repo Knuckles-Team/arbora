@@ -71,7 +71,7 @@ class UnsupportedAuthTypeError(ValueError):
     its dispatch chain and return ``None`` -- which FastMCP reads as "no auth"
     -- so an unrecognised value silently produced an UNAUTHENTICATED server.
     ``--auth-type`` carries ``choices=``, but argparse does **not** validate a
-    *default*, and the default is ``setting("AUTH_TYPE", "none")``: a typo'd
+    *default*, and the default is ``read_env("AUTH_TYPE")``: a typo'd
     ``AUTH_TYPE`` environment variable therefore reached the dispatch chain
     completely unchecked. Refusing is the only safe reading of an auth mode we
     do not understand.
@@ -121,7 +121,7 @@ def _split_csv(raw: str) -> list[str]:
 
 
 def _csv_setting(key: str) -> list[str]:
-    """Read a comma-separated env-var default via `setting()`, split and trimmed."""
+    """Read a comma-separated env-var default via `read_env()`, split and trimmed."""
     raw = read_env(key)
     return _split_csv(raw) if raw else []
 
