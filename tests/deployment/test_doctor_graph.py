@@ -21,14 +21,14 @@ def test_bug013_engine_domains_doctor_fails_closed_on_production_profile(monkeyp
     """BUG-013: a required capability module (the `medulla` client,
     which populates the 21 REQUIRED `engine_<domain>` tool families) silently
     absent must FAIL readiness on a real deployment profile, not warn/skip
-    past it. Reproduces the exact live shape: `engine_tools.ENGINE_DOMAINS`
+    past it. Reproduces the exact live shape: `discover_domains()`
     degrades to `{}` (its own documented graceful-but-loud fallback) when the
     `medulla` package is not importable."""
-    from arbora.mcp_server.backing.tools import engine_tools
+    from arbora.core import engine_domains
 
     cfg = SimpleNamespace(deployment_profile="single-node-prod")
     monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
-    monkeypatch.setattr(engine_tools, "ENGINE_DOMAINS", {})
+    monkeypatch.setattr(engine_domains, "discover_domains", lambda: {})
 
     result = D._check_engine_domains()
 
@@ -42,11 +42,11 @@ def test_bug013_engine_domains_doctor_warns_not_fails_on_tiny_profile(monkeypatc
     """`tiny` is the one documented engine-less pre-bootstrap profile — the
     same distinction `_check_config` already draws — so the same absence is a
     `warn`, not a `fail`, there."""
-    from arbora.mcp_server.backing.tools import engine_tools
+    from arbora.core import engine_domains
 
     cfg = SimpleNamespace(deployment_profile="tiny")
     monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
-    monkeypatch.setattr(engine_tools, "ENGINE_DOMAINS", {})
+    monkeypatch.setattr(engine_domains, "discover_domains", lambda: {})
 
     result = D._check_engine_domains()
 
@@ -56,12 +56,14 @@ def test_bug013_engine_domains_doctor_warns_not_fails_on_tiny_profile(monkeypatc
 def test_bug013_engine_domains_doctor_ok_when_domains_registered(monkeypatch):
     """Negative-direction proof: a real, populated registry reports `ok` on
     every profile — this check does not fail a healthy deployment."""
-    from arbora.mcp_server.backing.tools import engine_tools
+    from arbora.core import engine_domains
 
     cfg = SimpleNamespace(deployment_profile="enterprise")
     monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
     monkeypatch.setattr(
-        engine_tools, "ENGINE_DOMAINS", {"nodes": ["get_node"], "edges": ["get_edge"]}
+        engine_domains,
+        "discover_domains",
+        lambda: {"nodes": ["get_node"], "edges": ["get_edge"]},
     )
 
     result = D._check_engine_domains()
@@ -75,12 +77,12 @@ def test_bug013_engine_domains_wired_into_run_doctor_and_fails_the_sweep(monkeyp
     just the standalone check function — proves `engine_domains` is actually
     registered in `CHECKS` and that its `fail` status propagates to the
     overall sweep verdict, exactly like every other doctor check."""
-    from arbora.mcp_server.backing.tools import engine_tools
+    from arbora.core import engine_domains
 
     cfg = SimpleNamespace(deployment_profile="single-node-prod")
     monkeypatch.setattr("arbora.core.settings.ArboraConfig", lambda: cfg)
     monkeypatch.setattr("arbora.core.settings.load_config", lambda: None)
-    monkeypatch.setattr(engine_tools, "ENGINE_DOMAINS", {})
+    monkeypatch.setattr(engine_domains, "discover_domains", lambda: {})
 
     report = D.run_doctor(only=["engine_domains"], config=RuntimeConfig())
 

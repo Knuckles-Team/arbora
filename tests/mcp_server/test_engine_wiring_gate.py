@@ -16,6 +16,7 @@ pytest.importorskip("medulla")
 
 from medulla import client as eg_client  # noqa: E402
 
+from arbora.core.engine_domains import DOMAIN_CLASSES
 from arbora.mcp_server.backing.tools import engine_tools, query_tools  # noqa: E402
 from arbora.mcp_server.host_caches import HostCaches
 
@@ -24,18 +25,18 @@ from arbora.mcp_server.host_caches import HostCaches
 def test_every_engine_domain_family_resolves_to_an_eg_client_class():
     missing = {
         domain: name
-        for domain, name in engine_tools._DOMAIN_CLASSES.items()
+        for domain, name in DOMAIN_CLASSES.items()
         if getattr(eg_client, name, None) is None
     }
     assert engine_tools.ENGINE_DOMAINS, "no engine_<domain> families discovered"
-    assert set(engine_tools.ENGINE_DOMAINS) <= set(engine_tools._DOMAIN_CLASSES)
+    assert set(engine_tools.ENGINE_DOMAINS) <= set(DOMAIN_CLASSES)
     assert not set(missing) & set(engine_tools.ENGINE_DOMAINS)
 
 
 @pytest.mark.spec("ARBORA-HOST-R001.8")
 def test_every_served_engine_method_is_an_eg_coroutine():
     for domain, methods in engine_tools.ENGINE_DOMAINS.items():
-        cls = getattr(eg_client, engine_tools._DOMAIN_CLASSES[domain])
+        cls = getattr(eg_client, DOMAIN_CLASSES[domain])
         for method in methods:
             assert inspect.iscoroutinefunction(getattr(cls, method)), (
                 f"engine_{domain}.{method} is not served by medulla"

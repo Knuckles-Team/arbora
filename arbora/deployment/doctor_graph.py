@@ -30,7 +30,7 @@ def _check_engine_domains() -> dict[str, Any]:
     deployment always ships them (unlike the deployment-configurable
     ``quant``/``finance`` optional features). They are populated at runtime
     only when the ``medulla`` client package is importable
-    (``engine_tools._discover_domains``); when it is not, that function
+    (``core.engine_domains.discover_domains``); when it is not, that function
     already degrades gracefully rather than crashing the whole MCP process
     (so a ``tiny`` pre-bootstrap profile can still start) and logs a loud
     warning — but until this check existed, nothing turned that warning into
@@ -52,12 +52,12 @@ def _check_engine_domains() -> dict[str, Any]:
     advisory on ``tiny``, a hard failure elsewhere).
     """
     try:
+        from arbora.core.engine_domains import discover_domains
         from arbora.core.settings import ArboraConfig as AgentConfig
-        from arbora.mcp_server.backing.tools import engine_tools
 
         cfg = AgentConfig()
         profile = cfg.deployment_profile
-        domain_count = len(engine_tools.ENGINE_DOMAINS)
+        domain_count = len(discover_domains())
     except PROBE_FAULTS as exc:
         return _result(
             "engine_domains",
