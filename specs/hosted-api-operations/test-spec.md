@@ -126,13 +126,13 @@ The emitted-client fixture is not this acceptance.
 
 | Case | Row | Proving test and observation |
 |---|---|---|
-| Model | `ARBORA-OPS-R067.1` | `tests/api/test_research_web.py::test_params_and_result_round_trip`: A round trip keeps every field. |
-| Behavior | `ARBORA-OPS-R067.2` | `tests/api/test_research_web.py::test_composes_four_steps_in_order`: The engine receives the query, the question and the work item in order. |
+| Model | `ARBORA-OPS-R067.1` | `tests/api/test_research_ops.py::test_params_and_result_round_trip`: A round trip keeps every field. |
+| Behavior | `ARBORA-OPS-R067.2` | `tests/api/test_research_ops.py::test_composes_four_steps_in_order`: The engine receives the query, the question and the work item in order. |
 | Backend | `ARBORA-OPS-R067.3` | `tests/api/test_research_web_backends.py::test_explicit_archivebox_run`: A `backend=archivebox` run stores equal Documents. |
 | Fallback | `ARBORA-OPS-R067.3` | `tests/api/test_research_web_backends.py::test_forced_fallback_run`: A failed primary page reaches `archivebox` once and records it. |
-| Wiring | `ARBORA-OPS-R067.4` | `tests/api/test_research_web.py::test_served_invoke_reaches_handler`: A served call reaches the handler. |
-| Refusal | `ARBORA-OPS-R067.5` | `tests/api/test_research_web.py::test_research_web_refusals`: Each case returns its code and enqueues nothing. |
-| Evidence | `ARBORA-OPS-R067.6` | `tests/api/test_research_web.py::test_trace_names_decision_and_backends`: The trace holds the fields and no page text. |
+| Wiring | `ARBORA-OPS-R067.4` | `tests/api/test_research_web_served.py::test_served_invoke_reaches_handler`: A served call reaches the handler. |
+| Refusal | `ARBORA-OPS-R067.5` | `tests/api/test_research_ops.py::test_research_web_refusals`: Each case returns its code and enqueues nothing. |
+| Evidence | `ARBORA-OPS-R067.6` | `tests/api/test_research_ops.py::test_trace_names_decision_and_backends`: The trace holds the fields and no page text. |
 | Hot-path proof | `ARBORA-OPS-R067.7` | `tests/gateway/test_research_web_served.py::test_research_web_default_archivebox_and_fallback`: Three served calls store equal Documents and cite the backend. |
 | Admission | `ARBORA-OPS-R067.10` | Planned `tests/gateway/test_web_conformance_admission.py`: the served path accepts an exact current EG record. Missing, stale, revoked, mismatched and cross-tenant records cause zero backend calls. |
 | Bound | `ARBORA-OPS-R067.9` | `tests/api/test_research_web_backends.py::test_hanging_archivebox_times_out_and_falls_back`: A backend that never answers fails with `timeout` and the other backend serves the page. |
