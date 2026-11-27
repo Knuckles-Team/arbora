@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
-from arbora.deployment.artifacts import select_artifact
-from arbora.deployment.assembly import (
+from arbora.api.domain.deployment.artifacts import select_artifact
+from arbora.api.domain.deployment.assembly import (
     artifact_digest,
     choices_digest,
     config_digest,

@@ -17,7 +17,7 @@ from typing import Any
 import pytest
 import yaml
 
-from arbora.deployment import genesis_environments as genesis
+from arbora.api.domain.deployment import genesis_environments as genesis
 from arbora.deployment.host_config import UnknownServeFlag, parse_serve_argv
 
 ROOT = Path(__file__).resolve().parents[2]

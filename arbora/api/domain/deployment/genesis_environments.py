@@ -49,22 +49,21 @@ from typing import TYPE_CHECKING, Any
 
 import yaml
 
+from arbora.core.secret_names import is_secret_name
 from arbora.core.settings import config_dir
-
-from .config_generator import _is_secret
 
 if TYPE_CHECKING:
     from .public_ingress_identity import PublicIngressProfile
 
 #: Repo-shipped default profiles (dev/test/prod). Never written to at runtime.
 BUILTIN_ENVIRONMENTS_DIR = (
-    Path(__file__).resolve().parents[2] / "deploy" / "environments"
+    Path(__file__).resolve().parents[4] / "deploy" / "environments"
 )
 
 #: ``genesis.yaml`` — read as data (not imported) so this module has no dependency
 #: on the generator and no circular-import risk; see design doc "reuses genesis.yaml
 #: instead of redeclaring its enums".
-_GENESIS_MANIFEST_PATH = Path(__file__).resolve().parents[2] / "genesis.yaml"
+_GENESIS_MANIFEST_PATH = Path(__file__).resolve().parents[4] / "genesis.yaml"
 
 _SECRET_REF_RE = re.compile(
     r"^(?:"
@@ -923,7 +922,7 @@ def _validate_identity_secret_reference(
 def _validate_configuration(profile: EnvironmentProfile, source: Path) -> None:
     """Keep secret-shaped values out of the non-secret configuration section."""
     for key in profile.configuration.env:
-        if _is_secret(key):
+        if is_secret_name(key):
             raise EnvironmentProfileError(
                 f"{source}: configuration.env has secret-shaped key {key!r}. "
                 "configuration is for non-secret settings only — declare this in "

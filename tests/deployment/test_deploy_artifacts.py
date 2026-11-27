@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from arbora.deployment.artifacts import (
+from arbora.api.domain.deployment.artifacts import (
     ArtifactRefused,
     DigestCheckDecision,
     default_deploy_root,

@@ -8,15 +8,15 @@ from pathlib import Path
 import pytest
 import yaml
 
-from arbora.deployment import genesis_environments as genesis
-from arbora.deployment.genesis_environments import (
+from arbora.api.domain.deployment import genesis_environments as genesis
+from arbora.api.domain.deployment.genesis_environments import (
     ORCHESTRATOR_TARGET,
     PRIVILEGES,
     RUNTIMES,
     target_cell_refusal,
 )
 
-BUILTIN = Path(genesis.__file__).resolve().parents[2] / "deploy" / "environments"
+BUILTIN = Path(genesis.__file__).resolve().parents[4] / "deploy" / "environments"
 
 pytestmark = pytest.mark.spec("ARBORA-DEPLOY-R013.4")
 

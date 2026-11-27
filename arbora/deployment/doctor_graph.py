@@ -45,7 +45,7 @@ def _check_engine_domains() -> dict[str, Any]:
     was never actually verified".
 
     ``tiny`` is the one profile documented
-    (:mod:`arbora.deployment.genesis_environments`) to run
+    (:mod:`arbora.api.domain.deployment.genesis_environments`) to run
     engine-less by design — warn there, fail everywhere else. This mirrors
     the exact ``tiny``-vs-else split :func:`_check_config` already
     established for the same profile distinction (durability findings are

@@ -73,7 +73,7 @@ def test_every_touched_component_receives_and_verifies_the_bundle(
     _assembling(loopback)
     params = _apply_params(loopback, COMPONENTS, [])
     # The confirmed digest binds the configuration that carries the trust rows.
-    from arbora.deployment.assembly import config_digest
+    from arbora.api.domain.deployment.assembly import config_digest
 
     params["config_digest"] = config_digest(loopback.config)
 
@@ -111,7 +111,7 @@ def test_a_missing_bundle_and_a_failed_check_refuse_naming_the_component(
     )
     _assembling(loopback)
     params = _apply_params(loopback, COMPONENTS, [])
-    from arbora.deployment.assembly import config_digest
+    from arbora.api.domain.deployment.assembly import config_digest
 
     params["config_digest"] = config_digest(loopback.config)
     refused = loopback.confirmed("deploy.placement.apply", params, "trust-2")
@@ -127,7 +127,7 @@ def test_a_missing_bundle_and_a_failed_check_refuse_naming_the_component(
 def test_inline_secret_is_refused_and_vault_reference_is_written(
     loopback: Any,  # noqa: F811
 ) -> None:
-    from arbora.deployment.assembly import config_digest
+    from arbora.api.domain.deployment.assembly import config_digest
 
     _assembling(loopback)
     loopback.config.update({"engine": {"api_token": "plain-value"}})

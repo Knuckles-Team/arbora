@@ -17,18 +17,18 @@ from typing import Any
 
 import pytest
 
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.deployment.assembly import graph_digest, run_confirmed_steps
-from arbora.deployment.component_choices import (
-    ChoiceInventory,
-    ChoiceRefused,
-    build_inventory,
-)
-from arbora.deployment.genesis_environments import (
+from arbora.api.domain.deployment.assembly import graph_digest, run_confirmed_steps
+from arbora.api.domain.deployment.genesis_environments import (
     ORCHESTRATOR_TARGET,
     PRIVILEGES,
     RUNTIMES,
     target_cell_refusal,
+)
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.deployment.component_choices import (
+    ChoiceInventory,
+    ChoiceRefused,
+    build_inventory,
 )
 from arbora.security.operation_result import OpResult
 

@@ -11,8 +11,8 @@ from dataclasses import replace
 import anyio
 import pytest
 
+from arbora.api.domain.deployment.genesis_environments import load_environment_profile
 from arbora.deployment import kubernetes_first_boot as boot
-from arbora.deployment.genesis_environments import load_environment_profile
 
 IMAGE = "example.invalid/arbora@sha256:" + "a" * 64
 CLAIM_SPEC = {

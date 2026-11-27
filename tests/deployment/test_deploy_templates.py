@@ -10,8 +10,8 @@ import pytest
 
 pytest.importorskip("medulla.generated.models")
 
+from arbora.api.domain.deployment.assembly import assemble_deployment  # noqa: E402
 from arbora.deployment import assembly_library as library  # noqa: E402
-from arbora.deployment.assembly import assemble_deployment  # noqa: E402
 from tests.deployment.test_assembly_library import (  # noqa: E402
     LoopbackEngine,
     _bindings,

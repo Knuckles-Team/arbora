@@ -38,11 +38,11 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from arbora.core.environment import read_env
-from arbora.deployment.genesis_environments import (
+from arbora.api.domain.deployment.genesis_environments import (
     EnvironmentProfileError,
     load_environment_profile,
 )
+from arbora.core.environment import read_env
 from arbora.webui_host.package_layout_expectation import (
     EXPECTED_TOP_LEVEL_MODULES,
     OVERSTORY_DISTRIBUTION,

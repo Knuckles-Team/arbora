@@ -214,8 +214,8 @@ def _graph_for(capabilities: list[str]) -> dict[str, Any]:
 
 
 def _apply_params(loop: Any, components: list[str], reuse: list[str]) -> dict[str, Any]:
-    from arbora.deployment.artifacts import select_artifact
-    from arbora.deployment.assembly import (
+    from arbora.api.domain.deployment.artifacts import select_artifact
+    from arbora.api.domain.deployment.assembly import (
         artifact_digest,
         choices_digest,
         config_digest,

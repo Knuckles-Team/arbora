@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.deployment.assembly import refuse_unavailable
+from arbora.api.domain.deployment.assembly import refuse_unavailable
 
 pytestmark = pytest.mark.spec("ARBORA-DEPLOY-R017.5")
 

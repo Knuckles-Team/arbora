@@ -380,7 +380,7 @@ def test_module_is_the_one_checker_and_script_is_removed() -> None:
     """The checker lives in the package; no script copy or wrapper remains."""
     assert not (ROOT / "scripts" / "check_deployment_image_digests.py").exists()
     assert checker.__name__ == "arbora.api.domain.deployment.image_digests"
-    from arbora.deployment import artifacts
+    from arbora.api.domain.deployment import artifacts
 
     assert artifacts.check_paths is checker.check_paths
 

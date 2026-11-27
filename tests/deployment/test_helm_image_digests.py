@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from arbora.deployment.artifacts import select_artifact, verify_digests
+from arbora.api.domain.deployment.artifacts import select_artifact, verify_digests
 
 PINNED_VALUES = Path(__file__).parent / "fixtures" / "helm-pinned-values.yaml"
 HELM = shutil.which("helm")

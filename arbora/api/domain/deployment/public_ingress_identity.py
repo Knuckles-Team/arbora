@@ -7,7 +7,7 @@ This slice is the versioned public-origin, TLS-reference, exact-callback and
 trusted-proxy contract the plan calls for, as a closed-schema value object
 with its own load-time refusals (test-spec.md T-IN-01/T-IN-02). It is
 deliberately standalone: it does not yet extend
-:class:`arbora.deployment.genesis_environments.EnvironmentProfile`, is not
+:class:`arbora.api.domain.deployment.genesis_environments.EnvironmentProfile`, is not
 wired into the gateway/MCP identity admission path, and renders no live
 config. That wiring is ARBORA-INGRESS-R001.2+.
 """
@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Any
 
-from arbora.deployment.genesis_environments import EnvironmentProfileError
+from arbora.api.domain.deployment.genesis_environments import EnvironmentProfileError
 
 #: The only schema version this slice accepts. A profile migration (mapping
 #: old keys to new ones) is out of scope for this slice — see plan.md
@@ -29,7 +29,7 @@ from arbora.deployment.genesis_environments import EnvironmentProfileError
 SUPPORTED_VERSION = 1
 
 #: Same reference grammar as
-#: ``arbora.deployment.genesis_environments._SECRET_REF_RE`` — a secret is
+#: ``arbora.api.domain.deployment.genesis_environments._SECRET_REF_RE`` — a secret is
 #: always a reference, never a value.
 _SECRET_REF_RE = re.compile(
     r"^(?:"
@@ -206,12 +206,7 @@ def _validate_trusted_proxy(trusted_proxy: Any) -> str:
     return trusted_proxy
 
 
-def _validate_legacy_redirect(
-    hostname: Any, until: Any, *, today: date
-) -> tuple[str | None, date | None]:
-    """Validate the all-or-nothing, short-lived legacy ingress route."""
-    if hostname is None and until is None:
-        return None, None
+def _legacy_hostname(hostname: Any) -> str:
     if (
         not isinstance(hostname, str)
         or not hostname
@@ -221,6 +216,10 @@ def _validate_legacy_redirect(
         raise PublicIngressProfileError(
             "public ingress profile 'legacy_hostname' must name one concrete host."
         )
+    return hostname
+
+
+def _legacy_until(until: Any, today: date) -> date:
     if not isinstance(until, str):
         raise PublicIngressProfileError(
             "public ingress profile 'legacy_redirect_until' must be an ISO date."
@@ -239,7 +238,16 @@ def _validate_legacy_redirect(
         raise PublicIngressProfileError(
             "public ingress profile 'legacy_redirect_until' is LEGACY_REDIRECT_TOO_LONG."
         )
-    return hostname, parsed_until
+    return parsed_until
+
+
+def _validate_legacy_redirect(
+    hostname: Any, until: Any, *, today: date
+) -> tuple[str | None, date | None]:
+    """Validate the all-or-nothing, short-lived legacy ingress route."""
+    if hostname is None and until is None:
+        return None, None
+    return _legacy_hostname(hostname), _legacy_until(until, today)
 
 
 def public_ingress_profile_from_mapping(

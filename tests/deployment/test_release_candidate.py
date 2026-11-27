@@ -10,8 +10,8 @@ import json
 import pytest
 from pydantic import ValidationError
 
+from arbora.api.domain.deployment.genesis_environments import BUILTIN_ENVIRONMENTS_DIR
 from arbora.deployment.cli import main
-from arbora.deployment.genesis_environments import BUILTIN_ENVIRONMENTS_DIR
 from arbora.deployment.release_candidate import (
     CandidateError,
     ExitCriteriaError,
