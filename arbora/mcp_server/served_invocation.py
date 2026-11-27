@@ -678,6 +678,48 @@ def _delegated_subject_check(
     return DelegatedSubjectAccess(wire, deny_subject_access)
 
 
+def _with_finance_change_ports(
+    bindings: Mapping[str, Any],
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+    session: Callable[[], Any],
+) -> Mapping[str, Any]:
+    """Compose the wallet authority and the order and position change door.
+
+    ARBORA-DATA-MARKET-R007.3: ``wallet.operate`` verifies the SDK proof against engine key
+    trust, asks the engine's grant ledger and reserves the effect once in the engine; the SDK
+    shapes it needs are guarded by the pin (a pinned release refuses naming the symbol). A
+    port the deployment binds itself wins.
+    """
+    import time
+
+    from arbora.finance.wallet_port import (
+        EngineWalletOperations,
+        FleetFinanceChangePort,
+    )
+
+    async def client() -> Any:
+        return await pool.connected_client(
+            connect_context(str(session().tenant)), graph
+        )
+
+    async def wire(method: str, params: dict[str, Any]) -> Any:
+        from medulla.generated import send_by_id
+
+        from arbora.api.ops._engine import decode
+
+        return decode(await send_by_id(await client(), method, params, graph))
+
+    return {
+        "wallet_operations": EngineWalletOperations(
+            wire, client, clock_ms=lambda: time.time_ns() // 1_000_000
+        ),
+        "finance_change_port": FleetFinanceChangePort(),
+        **bindings,
+    }
+
+
 def _with_finance_schedule_host(
     bindings: Mapping[str, Any],
     pool: Any,
@@ -1154,6 +1196,9 @@ def compose_served_invocation(
         process_startup = _chained_startup(process_startup, outbox_startup)
         bindings = _with_finance_import_ports(bindings)
         bindings = _with_finance_schedule_host(
+            bindings, pool, graph, connect_context, session
+        )
+        bindings = _with_finance_change_ports(
             bindings, pool, graph, connect_context, session
         )
         bindings, loop_startup = _with_loop_worker(

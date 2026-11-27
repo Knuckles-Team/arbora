@@ -190,6 +190,11 @@ class OpSpec(BaseModel):
     #: authority; ``invoke`` refuses its result unless it carries the engine's
     #: sources-used-and-why block (ARBORA-FLEET-R052.3).
     tags: frozenset[str] = frozenset()
+    #: Params that travel in the request envelope, beside the intent. The invoke pipeline
+    #: separates them before validation, plan hashing, audit and reservation, so the plan
+    #: digest covers the intent only and a resubmit that adds them matches the plan
+    #: (ARBORA-DATA-MARKET-R007.2). The handler reads them from ``ExecutionContext.envelope``.
+    envelope: tuple[str, ...] = ()
 
     @field_validator("tags")
     @classmethod

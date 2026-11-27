@@ -86,7 +86,11 @@ class Wallet:
         self.reconciled.append(key)
 
 
-def context(wallet: Wallet | None = None, **services: Any) -> Any:
+def context(
+    wallet: Wallet | None = None,
+    envelope: dict[str, Any] | None = None,
+    **services: Any,
+) -> Any:
     bound = dict(services)
     if wallet is not None:
         bound["wallet_operations"] = wallet
@@ -94,6 +98,7 @@ def context(wallet: Wallet | None = None, **services: Any) -> Any:
         caller=SimpleNamespace(tenant="t1", principal="actor-1", request_id="r1"),
         services=bound,
         idempotency_key="key-1",
+        envelope=envelope,
     )
 
 
@@ -137,7 +142,7 @@ async def test_digest_is_stable_across_signing_and_retries_reuse_effect_key(
     port = Wallet()
     unsigned = await ops.handle_wallet_operate(context(port), confirmed(), NO_OP)
     signed = await ops.handle_wallet_operate(
-        context(port), {**confirmed(), "proof": {"signature": "SECRET"}}, NO_OP
+        context(port, {"proof": {"signature": "SECRET"}}), confirmed(), NO_OP
     )
     assert unsigned["value"]["plan_digest"] == signed["value"]["plan_digest"]
     # Both calls carry the one effect key the pipeline gave them; arbora mints no nonce.
@@ -155,7 +160,8 @@ def test_operations_are_registered_and_envelope_is_shared_over_http_and_mcp() ->
         assert spec.idempotency is Idempotency.KEY_REQUIRED
         assert {Surface.HTTP, Surface.MCP} <= set(spec.surfaces)
         assert op_id in EXTERNAL_EFFECT_OPERATIONS
-    # One params model carries intent, confirmation and proof for both routes.
+    # The proof travels in the envelope of the one pipeline both routes call.
+    assert registry.get("wallet.operate").envelope == ("proof",)
     assert set(ops.WalletOperateParams.model_fields) == {
         "intent",
         "confirmation",
@@ -246,10 +252,11 @@ async def test_audit_joins_authorization_and_proof_digest_without_secrets(
 @pytest.mark.spec("ARBORA-DATA-MARKET-R007.6")
 async def test_wallet_proof_confirmation_and_replay(sdk: ModuleType) -> None:
     port = Wallet()
-    params = {**confirmed(), "proof": {"signature": "SECRET"}}
-    first = await ops.handle_wallet_operate(context(port), params, NO_OP)
+    params = confirmed()
+    signed = {"proof": {"signature": "SECRET"}}
+    first = await ops.handle_wallet_operate(context(port, signed), params, NO_OP)
     # A replay carries the same effect key, so the port reads the one receipt.
-    again = await ops.handle_wallet_operate(context(port), params, NO_OP)
+    again = await ops.handle_wallet_operate(context(port, signed), params, NO_OP)
     assert first["value"]["effect_receipt"] == again["value"]["effect_receipt"]
     assert {key for _p, key in port.applied} == {"key-1"}
     for altered in ("account_id", "network_id", "key_id"):
@@ -338,3 +345,28 @@ async def test_order_and_position_changes_need_the_composed_door() -> None:
             context(finance_change_port=Door()), {**params, "action": "amend"}, NO_OP
         )
     assert bad.value.code == "INVALID_ARGUMENT"
+
+
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.2")
+def test_the_plan_digest_is_the_same_with_and_without_the_proof() -> None:
+    from arbora.api.invoke.pipeline import split_envelope
+    from arbora.api.invoke.plan import bind_plan, params_digest
+
+    op = get_registry().get("wallet.operate")
+    caller = SimpleNamespace(
+        principal="actor-1", tenant="t1", policy_revision="p1", request_id="r1"
+    )
+    unsigned = confirmed()
+    signed = {**unsigned, "proof": {"signature": "SECRET"}}
+    kept_unsigned, extension_unsigned = split_envelope(op, unsigned)
+    kept_signed, extension = split_envelope(op, signed)
+    # The proof is separated before hashing: the resubmit with the proof matches the plan.
+    assert extension == {"proof": {"signature": "SECRET"}} and extension_unsigned == {}
+    assert "proof" not in kept_signed
+    assert params_digest(kept_signed) == params_digest(kept_unsigned)
+    assert bind_plan(op, kept_signed, caller, "d") == bind_plan(
+        op, kept_unsigned, caller, "d"
+    )
+    # An op with no declared envelope is untouched.
+    other = get_registry().get("orders.change")
+    assert split_envelope(other, signed) == (signed, {})

@@ -57,6 +57,8 @@ class PositionChangeParams(Params):
 
 
 class WalletOperateParams(Params):
+    """``proof`` travels in the request envelope (``OpSpec.envelope``), not in the plan."""
+
     intent: dict[str, Any]
     confirmation: dict[str, Any] | None = None
     proof: dict[str, Any] | None = None
@@ -143,6 +145,10 @@ def _confirmed(wallet: WalletOperation, params: Mapping[str, Any]) -> None:
         raise _refuse("PLAN_MISMATCH")
 
 
+def _effect_key(verdict: Mapping[str, Any], context: Any) -> str | None:
+    return verdict.get("effect_key") or context.idempotency_key
+
+
 async def handle_wallet_operate(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
@@ -152,17 +158,20 @@ async def handle_wallet_operate(
         context, "wallet_operations", reason="the wallet authority is not composed"
     )
     projection = wallet.projection()
-    verdict = dict(await ports.verify(projection, params.get("proof")))
+    verdict = dict(await ports.verify(projection, context.envelope.get("proof")))
     if verdict.get("outcome") != "verified":
         code, details = refusal_for(str(verdict.get("reason", "")))
         raise _refuse(code, details)
     decision = dict(await ports.authorize(projection))
     if decision.get("allowed") is not True:
         raise _refuse("POLICY_DENIED", {"reason": "unentitled"})
-    receipt = dict(await ports.apply(projection, context.idempotency_key))
+    # The effect is keyed by what the proof signed, so a second plan carrying the same proof
+    # finds the first reservation and never applies twice.
+    key = _effect_key(verdict, context)
+    receipt = dict(await ports.apply(projection, key))
     state = "reconciling" if receipt.get("state") == "uncertain" else "applied"
     if state == "reconciling":
-        await ports.reconcile(projection, context.idempotency_key)
+        await ports.reconcile(projection, key)
     evidence = safe_evidence({**verdict, **decision, **receipt})
     return {
         "value": {"plan_digest": projection["plan_digest"], "state": state, **evidence},
@@ -190,8 +199,15 @@ async def handle_order_confirm(
     return {"value": dict(answer) if isinstance(answer, Mapping) else {}}
 
 
-def _op(op_id: str, summary: str, params: Any, handler: str) -> OpSpec:
+def _op(
+    op_id: str,
+    summary: str,
+    params: Any,
+    handler: str,
+    envelope: tuple[str, ...] = (),
+) -> OpSpec:
     return build_write_op(
+        envelope=envelope,
         op_id=op_id,
         summary=summary,
         examples=(summary.lower(),),
@@ -207,7 +223,7 @@ def operations() -> tuple[OpSpec, ...]:
     return (
         _op("orders.change", "Amend or cancel an open order", OrderChangeParams, "handle_orders_change"),
         _op("positions.change", "Change a position to a target quantity", PositionChangeParams, "handle_positions_change"),
-        _op("wallet.operate", "Run one confirmed wallet operation", WalletOperateParams, "handle_wallet_operate"),
+        _op("wallet.operate", "Run one confirmed wallet operation", WalletOperateParams, "handle_wallet_operate", ("proof",)),
         _op("market.order.stage", "Stage an order proposal with the engine", StageParams, "handle_order_stage"),
         _op("market.order.confirm", "Confirm and promote a staged order proposal", ConfirmParams, "handle_order_confirm"),
     )  # fmt: skip

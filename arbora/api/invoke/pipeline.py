@@ -446,6 +446,21 @@ def _anonymous_effect(
     return None if code is None else OpError(code)
 
 
+def split_envelope(
+    op: Any, params: Mapping[str, Any]
+) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
+    """The params without the op's envelope fields, and those fields (ARBORA-DATA-MARKET-R007.2).
+
+    This is the one place the extension is separated, for every surface: the remainder is
+    what validation, the plan digest, audit and reservation see.
+    """
+    fields = getattr(op, "envelope", ())
+    if not fields:
+        return params, {}
+    kept = {k: v for k, v in params.items() if k not in fields}
+    return kept, {k: params[k] for k in fields if params.get(k) is not None}
+
+
 async def _effect(
     op: Any,
     params: Mapping[str, Any],
@@ -729,6 +744,7 @@ async def _dispatch(
     decision: FleetCallDecision | None,
     audit_ref: str = "",
     surface: str = "",
+    envelope: Mapping[str, Any] = MappingProxyType({}),
 ) -> Any:
     async with execution_context(
         op,
@@ -749,6 +765,7 @@ async def _dispatch(
             operation_services=services,
             audit_ref=audit_ref,
             surface=surface,
+            envelope=MappingProxyType(dict(envelope)),
         )
         return await services.runtime.dispatch(op, params, context)
 
@@ -802,6 +819,8 @@ class _Call:
     hooks_enabled: bool = True
     #: Digests, policy names and field names the admission gate recorded.
     admission_evidence: Mapping[str, str] = field(default_factory=dict)
+    #: The declared envelope fields, separated from the params before hashing.
+    envelope: Mapping[str, Any] = field(default_factory=dict)
 
     @property
     def needs_plan(self) -> bool:
@@ -1306,6 +1325,7 @@ async def _dispatch_outcome(call: _Call, audit_ref: str) -> OpResult | OpError:
                 call.decision,
                 audit_ref,
                 call.surface.value,
+                call.envelope,
             ),
             timeout=DISPATCH_TIMEOUT_SECONDS,
         )
@@ -1527,6 +1547,7 @@ async def invoke(
     refused = _static_refusal(op, surface)
     if refused is not None:
         return refused
+    params, envelope = split_envelope(op, params)
     arguments = _arguments(op, params, services)
     if isinstance(arguments, OpError):
         return arguments
@@ -1558,6 +1579,7 @@ async def invoke(
         resolved_from_intent,
         input_records,
         hooks_enabled,
+        envelope=envelope,
     )
     admitted = await _admission_gate(call)
     if isinstance(admitted, OpError):
