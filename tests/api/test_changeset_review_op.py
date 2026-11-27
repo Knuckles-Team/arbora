@@ -40,7 +40,7 @@ async def test_op_calls_decide_and_returns_the_record_digest(
         "head_rev": "h1",
     }
     question = engine.sent[0][1]["request"]["question"]
-    assert question["kind"] == "ChangesetReview" and question["head_rev"] == "h1"
+    assert question["kind"] == "changeset_review" and question["head_rev"] == "h1"
     context.services = {"source_reader": _Reader()}
     with pytest.raises(OperationRefused) as absent:
         await review.handle_review_changeset(context, _PARAMS, _OP)

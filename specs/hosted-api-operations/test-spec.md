@@ -481,7 +481,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R872` | Test: `tests/api/test_certification_gate_served.py::test_each_attestation_case_refuses_without_effect` (served). The exact current attestation admits the run. |
 | `ARBORA-OPS-R873` | Test: `tests/control_plane/test_workflow_host_lazy_start.py::test_start_counter_zero_then_one` (served). Counter is 0 before first use, 1 after repeats, 0 after an unknown id. |
 | `ARBORA-OPS-R874` | Test: `tests/control_plane/test_workflow_match_identity.py::test_entry_resolves_registered_record_and_unknown_refuses` (served). |
-| `ARBORA-OPS-R875` | Test: `tests/api/test_skill_upgrade_gate_served.py::test_breaking_stops_and_compatible_and_migrated_dispatch` (served). |
+| `ARBORA-OPS-R875` | Test: `tests/api/test_certification_gate_served.py::test_breaking_stops_and_compatible_and_migrated_dispatch` (served). |
 | `ARBORA-OPS-R876` | Test: `tests/api/test_loops_continuation_served.py::test_same_continuation_after_host_restart` (served). The host restarts between two reads. |
 | `ARBORA-OPS-R877` | Test: `tests/a2a/test_team_coordination_served.py::test_unavailable_starts_team_available_keeps_primary_and_status_survives_restart` (served). |
 | `ARBORA-OPS-R878` | Test: `tests/api/ops/test_models_list.py::test_lists_only_visible_profiles_over_http_and_mcp` runs the handler under two tenants and asserts a cross-tenant profile is absent. |

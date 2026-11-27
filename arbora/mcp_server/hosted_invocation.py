@@ -46,6 +46,8 @@ class HostedInvocation:
     #: The engine ``Decide`` seam of the host (``kind, params, tenant`` to the record); the
     #: credential reuse ports bind it (ARBORA-IDENTITY-R023.3).
     decide_ask: Any = None
+    #: The graph the engine ``Decide`` questions that read the graph name.
+    decision_graph: str = ""
 
     def __post_init__(self) -> None:
         if not isinstance(self.services, InvokeServices) or not isinstance(

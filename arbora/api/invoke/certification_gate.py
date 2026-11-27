@@ -21,7 +21,7 @@ def _denied(reason: str) -> OperationRefused:
 
 async def require_upgrade_admission(context: Any, skill: Mapping[str, Any]) -> None:
     """Continue on a compatible or declared-migration upgrade; an abstention refuses."""
-    record = await decide_record(context, "SkillUpgrade", {"skill": dict(skill)})
+    record = await decide_record(context, "skill_upgrade", {"skill": dict(skill)})
     receipt = record.get("receipt") or record
     if receipt.get("outcome") not in ("compatible", "migrated"):
         raise _denied("upgrade_not_admitted")

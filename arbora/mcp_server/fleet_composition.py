@@ -213,18 +213,26 @@ def _pin_store(services: Any) -> Any:
     return EgPinStore(SimpleNamespace(control_leases=leases))
 
 
-def tool_ranker_for(engine_send: Any) -> Any:
+def tool_ranker_for(
+    engine_send: Any, feature_schema: Any = None, principal: Any = None
+) -> Any:
     """The engine tool ranker of the host, or ``None`` (ARBORA-OPS-R866).
 
     Tool search orders by the engine ranking once the pinned contract names the
-    ``tool_relevance`` question; without a send or the question the catalog order stands.
+    ``tool_relevance`` question; without a send, the tenant feature-schema pin, the
+    service principal or the question the catalog order stands (the inactive gate is
+    reported by ``arbora.pin_lag.gates``).
     """
     from arbora.fleet.tool_ranking import engine_tool_order
     from arbora.pin_lag.medulla import question_kind_served
 
-    if engine_send is None or not question_kind_served("tool_relevance"):
+    if None in (engine_send, feature_schema, principal):
         return None
-    return engine_tool_order(engine_send)
+    if not question_kind_served("tool_relevance"):
+        return None
+    return engine_tool_order(
+        engine_send, feature_schema=feature_schema, principal=principal
+    )
 
 
 def bind_fleet_gateway(
@@ -234,6 +242,8 @@ def bind_fleet_gateway(
     reader: Any,
     services: Any,
     engine_send: Any = None,
+    feature_schema: Any = None,
+    principal: Any = None,
 ) -> Any:
     """Compose the multiplexer operation service and governed gateway; bind both.
 
@@ -274,7 +284,7 @@ def bind_fleet_gateway(
         invoke=bound_invoke,
         session_key_for=session_key,
         pin_store=_pin_store(services),
-        tool_ranker=tool_ranker_for(engine_send),
+        tool_ranker=tool_ranker_for(engine_send, feature_schema, principal),
     )
 
     async def policy_check(server: str, tool: str, caller: Any) -> bool:

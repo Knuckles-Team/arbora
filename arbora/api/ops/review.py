@@ -46,7 +46,7 @@ async def handle_review_changeset(
     findings = await producer.findings(diff=diff, context=context)
     record = await decide_record(
         context,
-        "ChangesetReview",
+        "changeset_review",
         {
             "repository": params["repository"],
             "base_rev": params["base_rev"],

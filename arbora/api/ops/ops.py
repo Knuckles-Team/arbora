@@ -186,6 +186,10 @@ async def handle_ops_doctor(
     if unsecured:
         # The unsecured mode is named in every report, beside the store's own checks.
         value["checks"] = {**value["checks"], "auth": unsecured}
+    from arbora.pin_lag.gates import gate_checks
+
+    # A gate the pinned engine cannot serve is named in every report (PIN-LAG).
+    value["checks"] = {**value["checks"], **gate_checks()}
     return {"value": value}
 
 

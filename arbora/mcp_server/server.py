@@ -242,6 +242,8 @@ def _bind_served_fleet(
             reader=reader,
             services=invocation.services,
             engine_send=invocation.engine_send,
+            feature_schema=invocation.decision_feature_schema,
+            principal=invocation.decision_principal,
         )
 
 

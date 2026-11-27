@@ -52,4 +52,4 @@ async def test_breaking_stops_and_compatible_and_migrated_dispatch(
         await gate.require_upgrade_admission(context, SKILL)
     assert refused.value.details["reason"] == "upgrade_not_admitted"
     sent = engine.sent[0][1]["request"]["question"]
-    assert sent["kind"] == "SkillUpgrade"
+    assert sent["kind"] == "skill_upgrade"

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
@@ -21,6 +22,17 @@ def record_of(answer: Any) -> dict[str, Any]:
     if isinstance(answer, (list, tuple)):
         answer = answer[0] if answer else {}
     return dict(answer) if isinstance(answer, Mapping) else {}
+
+
+#: The engine ``QuestionKind`` wire form: snake_case, never the Rust variant name.
+_WIRE_KIND = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*\Z")
+
+
+def require_wire_kind(kind: str) -> str:
+    """``kind`` when it is a snake_case wire kind, else ``ValueError``."""
+    if _WIRE_KIND.fullmatch(kind) is None:
+        raise ValueError(f"a Decide question kind is snake_case on the wire: {kind!r}")
+    return kind
 
 
 def record_digest(record: Mapping[str, Any]) -> str:
@@ -37,6 +49,7 @@ async def decide_with(
 ) -> dict[str, Any]:
     """Ask one ``QuestionKind`` over ``send(method, params)`` and return its sealed record."""
     guard("Decide")
+    require_wire_kind(kind)
     request = {"tenant_id": tenant, "question": {"kind": kind, **dict(fields or {})}}
     return record_of(await send("Decide", {"request": request}))
 
@@ -65,4 +78,5 @@ __all__ = [
     "decide_with",
     "record_digest",
     "record_of",
+    "require_wire_kind",
 ]
