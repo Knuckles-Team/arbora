@@ -78,12 +78,12 @@ async def test_local_identity_renewal_keeps_same_binding(monkeypatch):
     import argparse
 
     from arbora.acp.local_runtime import compose_local
-    from arbora.security import request_identity
+    from arbora.security import system_session
     from arbora.security.session import GraphSession, SessionExpiredError
 
     issued = []
     expired = [False]
-    original_mint = request_identity.mint_local_process_session
+    original_mint = system_session.mint_local_process_session
     original_check = GraphSession.ensure_authority_current
 
     def mint():
@@ -96,7 +96,7 @@ async def test_local_identity_renewal_keeps_same_binding(monkeypatch):
             raise SessionExpiredError("test expiry")
         return original_check(self, **kwargs)
 
-    monkeypatch.setattr(request_identity, "mint_local_process_session", mint)
+    monkeypatch.setattr(system_session, "mint_local_process_session", mint)
     monkeypatch.setattr(GraphSession, "ensure_authority_current", check)
     agent = compose_local(
         argparse.Namespace(

@@ -396,8 +396,8 @@ def _catalog_service_session(keys: JwksCache) -> Any:
     own), so an unguarded call would just hand back the caller's own session
     and fix nothing.
     """
-    from arbora.security.request_identity import system_write_session
     from arbora.security.session import suspend_session
+    from arbora.security.system_session import system_write_session
 
     with suspend_session():
         return system_write_session(keys)

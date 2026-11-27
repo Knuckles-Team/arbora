@@ -154,7 +154,7 @@ class ActorContextMiddleware(Middleware):
       (a) an ambient :class:`~arbora.security.session.GraphSession`
       is already set (a nested call under an already-authenticated caller), or
       (b) the tiny-profile local stdio process authority
-      (:func:`~arbora.security.request_identity.mint_local_process_session`,
+      (:func:`~arbora.security.system_session.mint_local_process_session`,
       bound on the host's process authority) is bound —
       stdio has no per-call bearer token by protocol, so that process-lifetime,
       already-verified authority IS this transport's carrier, not an absence
