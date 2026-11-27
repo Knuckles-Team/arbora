@@ -67,6 +67,10 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
                 "access_log": access_log,
             }
 
+    from arbora.browser_control.browser_state import BrowserState
+
+    browser = BrowserState()
+
     class _Server:
         def __init__(self, config: _Config):
             self.config = config
@@ -74,11 +78,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
             calls["server"] = self
 
         async def serve(self) -> None:
-            from arbora.browser_control.browser_control_runtime import (
-                _registered_authority,
-            )
-
-            assert _registered_authority() == (service, asyncio.get_running_loop())
+            assert browser.authority() == (service, asyncio.get_running_loop())
             calls["served"] = True
             stop_event.set()
 
@@ -116,7 +116,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
     _export(
         mcp_delegation,
         "webui_mcp_delegation_helpers",
-        lambda: {"call_mcp_tool": "mcp-helper"},
+        lambda tools: {"call_mcp_tool": "mcp-helper"},
     )
     monkeypatch.setitem(
         sys.modules,
@@ -214,6 +214,7 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         engine: object,
         sync_runner: object,
         *,
+        browser: object,
         action_policy: object,
         session_revalidator: object,
     ) -> dict[str, object]:
@@ -250,6 +251,8 @@ def test_run_web_ui_builds_the_live_contact_delivery_path(
         stop_event,
         action_policies=policies,
         engine="arbora-engine",
+        tools={},
+        browser=browser,
         host=listener,
         port=8181,
         session_boundary=boundary,

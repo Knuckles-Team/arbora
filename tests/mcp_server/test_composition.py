@@ -11,6 +11,7 @@ import pytest
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
+from arbora.browser_control.browser_state import BrowserState
 from arbora.fleet.oauth_brokers import RemoteOAuthBrokers
 from arbora.fleet.state import FleetState
 from arbora.gateway.ports import gateway_application
@@ -89,7 +90,14 @@ def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> N
     policies = ActionPolicies()
     engine = object()
     tools = ToolTable()
-    start_composed_services(object(), engine, action_policies=policies, tools=tools)
+    browser = BrowserState()
+    start_composed_services(
+        object(),
+        engine,
+        action_policies=policies,
+        tools=tools,
+        browser=browser,
+    )
 
     assert started[0][0] == "overstory"
     assert started[0][1].func.__module__ == "arbora.webui_host.webui_co_service"
@@ -97,6 +105,7 @@ def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> N
         "action_policies": policies,
         "engine": engine,
         "tools": tools,
+        "browser": browser,
     }
 
 
@@ -132,7 +141,11 @@ def test_messaging_co_service_reaches_arbora_owned_intake(
     engine = object()
     session = object()
     start_composed_services(
-        session, engine, action_policies=ActionPolicies(), tools=ToolTable()
+        session,
+        engine,
+        action_policies=ActionPolicies(),
+        tools=ToolTable(),
+        browser=BrowserState(),
     )
 
     assert calls == [(engine, session, ("telegram",))]

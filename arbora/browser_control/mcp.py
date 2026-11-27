@@ -11,9 +11,12 @@ from arbora.browser_control.browser_control_runtime import (
     BrowserControlAction,
     dispatch_browser_control,
 )
+from arbora.browser_control.browser_state import BrowserState
 
 
-def register_browser_control_tools(mcp: Any, tools: MutableMapping[str, Any]) -> None:
+def register_browser_control_tools(
+    mcp: Any, tools: MutableMapping[str, Any], browser: BrowserState
+) -> None:
     """Register one action router shared by the MCP and REST projections."""
 
     @mcp.tool(
@@ -32,7 +35,7 @@ def register_browser_control_tools(mcp: Any, tools: MutableMapping[str, Any]) ->
             Field(description="Exact request object for the selected action."),
         ],
     ) -> str:
-        receipt = await dispatch_browser_control(action, payload)
+        receipt = await dispatch_browser_control(browser, action, payload)
         return receipt.model_dump_json()
 
     tools["browser_control"] = browser_control

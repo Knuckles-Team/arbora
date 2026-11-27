@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import threading
 from typing import Any, Literal
 
 from pydantic import BaseModel
@@ -18,6 +17,7 @@ from arbora.browser_control.browser_control_api import (
     ReconcileCallRequest,
     RevokeLeaseRequest,
 )
+from arbora.browser_control.browser_state import BrowserState
 from arbora.security.session import resolve_session
 
 BrowserControlAction = Literal[
@@ -31,65 +31,8 @@ BrowserControlAction = Literal[
 ]
 
 
-_binding_lock = threading.RLock()
-_service: Any | None = None
-_owner_loop: asyncio.AbstractEventLoop | None = None
-
-
-def register_browser_control_service(service: Any) -> None:
-    """Register the exact service injected into overstory."""
-
-    global _owner_loop, _service
-    with _binding_lock:
-        if _service is service:
-            return
-        if _service is not None:
-            raise RuntimeError("a different live browser-control service is registered")
-        _service = service
-        _owner_loop = None
-
-
-def unregister_browser_control_service(service: Any) -> None:
-    """Release only the exact service whose owning application is stopping."""
-
-    global _owner_loop, _service
-    with _binding_lock:
-        if _service is not service:
-            raise RuntimeError("browser-control service unregister identity changed")
-        _service = None
-        _owner_loop = None
-
-
-def bind_browser_control_owner(service: Any) -> None:
-    """Bind a registered service to overstory's current event loop."""
-
-    global _owner_loop
-    loop = asyncio.get_running_loop()
-    with _binding_lock:
-        if _service is None:
-            return
-        if _service is not service:
-            raise RuntimeError("browser-control owner does not match registration")
-        if (
-            _owner_loop is not None
-            and _owner_loop is not loop
-            and not _owner_loop.is_closed()
-        ):
-            raise RuntimeError("browser-control service already has a live owner loop")
-        _owner_loop = loop
-
-
-def _registered_authority() -> tuple[Any, asyncio.AbstractEventLoop]:
-    with _binding_lock:
-        service = _service
-        loop = _owner_loop
-    if service is None or loop is None or loop.is_closed() or not loop.is_running():
-        raise RuntimeError("browser-control service is not attached to a live WebUI")
-    return service, loop
-
-
-async def _invoke(method: str, request: BaseModel) -> BaseModel:
-    service, owner_loop = _registered_authority()
+async def _invoke(browser: BrowserState, method: str, request: BaseModel) -> BaseModel:
+    service, owner_loop = browser.authority()
     operation = getattr(service, method, None)
     if not callable(operation):
         raise RuntimeError("browser-control service contract is incomplete")
@@ -104,23 +47,17 @@ async def _invoke(method: str, request: BaseModel) -> BaseModel:
 
 
 async def dispatch_browser_control(
-    action: BrowserControlAction, payload: dict[str, Any]
+    browser: BrowserState, action: BrowserControlAction, payload: dict[str, Any]
 ) -> BaseModel:
     """Authorize and invoke one caller action on the WebUI-owned service."""
 
     resolve_session(required_scope="kg:read" if action == "discover" else "kg:write")
     if action == "discover":
         discovery_request = BrowserDiscoveryRequest.model_validate(payload)
-        with _binding_lock:
-            available = (
-                _service is not None
-                and _owner_loop is not None
-                and not _owner_loop.is_closed()
-                and _owner_loop.is_running()
-            )
+        available = browser.attached()
         if not available:
             return BrowserDiscoveryReceipt(bridge_available=False)
-        return await _invoke("discover", discovery_request)
+        return await _invoke(browser, "discover", discovery_request)
     contracts: dict[str, tuple[type[BaseModel], str]] = {
         "request_call": (BrowserProposalRequest, "request_call"),
         "issue_lease": (IssueLeaseRequest, "issue_lease"),
@@ -134,21 +71,21 @@ async def dispatch_browser_control(
         raise ValueError("unsupported browser-control action")
     model, method = contract
     request = model.model_validate(payload)
-    return await _invoke(method, request)
+    return await _invoke(browser, method, request)
 
 
 __all__ = [
     "BrowserControlAction",
-    "bind_browser_control_owner",
     "dispatch_browser_control",
-    "register_browser_control_service",
-    "unregister_browser_control_service",
 ]
 
 
 async def dispatch_browser_operation(
-    action: BrowserControlAction, payload: dict[str, Any], caller: Any
+    browser: BrowserState,
+    action: BrowserControlAction,
+    payload: dict[str, Any],
+    caller: Any,
 ) -> BaseModel:
     """Adapt the governed operation contract without minting caller authority."""
     resolve_session(caller.session)
-    return await dispatch_browser_control(action, payload)
+    return await dispatch_browser_control(browser, action, payload)

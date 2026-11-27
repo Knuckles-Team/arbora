@@ -49,6 +49,7 @@ from arbora.browser_control.browser_control_service import (
     BrowserControlService,
     browser_control_factory_kwargs,
 )
+from arbora.browser_control.browser_state import BrowserState
 from arbora.security.actor_context import ActorContext, ActorType
 from arbora.security.session import GraphSession, use_session
 
@@ -399,6 +400,7 @@ async def _setup(
     sent = _Sent()
     service = BrowserControlService(
         engine,
+        browser=BrowserState(),
         sync_runner=_runner,
         session_revalidator=_live_session,
         action_policy=_Policy(),
@@ -437,6 +439,7 @@ def test_factory_implements_the_real_webui_port_protocol() -> None:
         app_factory,
         _Engine(),
         _runner,
+        browser=BrowserState(),
         action_policy=_Policy(),
         session_revalidator=_live_session,
     )
@@ -772,6 +775,7 @@ async def test_registration_recomputes_metadata_digest_before_authority(
     binding = _binding(session, _tool=tool)
     service = BrowserControlService(
         engine,
+        browser=BrowserState(),
         sync_runner=_runner,
         session_revalidator=_live_session,
         action_policy=_Policy(),
@@ -812,6 +816,7 @@ async def test_attended_receipt_is_single_use_across_replicas(
     binding = _binding(session, _tool=tool)
     first = BrowserControlService(
         engine,
+        browser=BrowserState(),
         sync_runner=_runner,
         session_revalidator=_live_session,
         action_policy=_Policy(),
@@ -819,6 +824,7 @@ async def test_attended_receipt_is_single_use_across_replicas(
     )
     second = BrowserControlService(
         engine,
+        browser=BrowserState(),
         sync_runner=_runner,
         session_revalidator=_live_session,
         action_policy=_Policy(),
@@ -840,6 +846,7 @@ async def test_finalized_arm_can_be_revoked_before_channel_open(
     binding = _binding(session, _tool=tool)
     service = BrowserControlService(
         engine,
+        browser=BrowserState(),
         sync_runner=_runner,
         session_revalidator=_live_session,
         action_policy=_Policy(),
@@ -864,6 +871,7 @@ async def test_expired_arm_revocation_does_not_require_live_backchannel(
     binding = _binding(session, _tool=tool)
     service = BrowserControlService(
         engine,
+        browser=BrowserState(),
         sync_runner=_runner,
         session_revalidator=_live_session,
         action_policy=_Policy(),
@@ -890,6 +898,7 @@ async def test_finalize_rejects_pre_redirect_route_snapshot(
     binding = _binding(session, _tool=tool)
     service = BrowserControlService(
         engine,
+        browser=BrowserState(),
         sync_runner=_runner,
         session_revalidator=_live_session,
         action_policy=_Policy(),
@@ -913,6 +922,7 @@ async def test_live_session_failure_closes_channel_before_catalog(
     binding = _binding(session, _tool=tool)
     service = BrowserControlService(
         engine,
+        browser=BrowserState(),
         sync_runner=_runner,
         session_revalidator=session_status,
         action_policy=_Policy(),
@@ -1029,6 +1039,7 @@ async def test_browser_authority_requires_verified_human_actor(
     )
     service = BrowserControlService(
         _Engine(),
+        browser=BrowserState(),
         sync_runner=_runner,
         session_revalidator=_live_session,
         action_policy=_Policy(allow=True),
@@ -1456,6 +1467,7 @@ async def test_renewal_requires_fresh_step_up_and_channel(
         sent = _Sent()
         service = BrowserControlService(
             engine,
+            browser=BrowserState(),
             sync_runner=_runner,
             session_revalidator=_live_session,
             action_policy=_Policy(),
@@ -1497,6 +1509,7 @@ async def test_expired_arm_expires_lease_before_call(session: GraphSession) -> N
     binding = _binding(session, _now=now, _tool=tool)
     service = BrowserControlService(
         engine,
+        browser=BrowserState(),
         sync_runner=_runner,
         session_revalidator=_live_session,
         action_policy=_Policy(),
@@ -1618,6 +1631,7 @@ async def test_cached_reconcile_revalidates_live_session(session: GraphSession) 
         engine = _Engine()
         service = BrowserControlService(
             engine,
+            browser=BrowserState(),
             sync_runner=_runner,
             session_revalidator=session_status,
             action_policy=_Policy(),

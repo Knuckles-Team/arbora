@@ -30,11 +30,7 @@ class BrowserAttendanceMixin(BrowserControlMixinState):
     ) -> AttendedArmReceipt:
         """Finalize post-redirect current scope into a one-use arm receipt."""
 
-        from arbora.browser_control.browser_control_runtime import (
-            bind_browser_control_owner,
-        )
-
-        bind_browser_control_owner(self)
+        self._browser.bind_owner(self)
         grant = coerce_recent_auth_grant(grant)
         binding = coerce_binding(binding)
         validate_origin(binding.origin)
@@ -60,11 +56,7 @@ class BrowserAttendanceMixin(BrowserControlMixinState):
     ) -> AttendedArmReceipt:
         """Idempotently revoke one exact finalized or connected arm receipt."""
 
-        from arbora.browser_control.browser_control_runtime import (
-            bind_browser_control_owner,
-        )
-
-        bind_browser_control_owner(self)
+        self._browser.bind_owner(self)
         binding = coerce_binding(binding)
         validate_origin(binding.origin)
         self._validate_ambient_binding(binding)

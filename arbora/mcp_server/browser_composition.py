@@ -1,8 +1,10 @@
 """Opt-in EG browser composition over the existing served invocation owners."""
 
+from functools import partial
 from typing import Any
 from urllib.parse import urlsplit
 
+from arbora.browser_control.browser_state import BrowserState
 from arbora.identity.engine import IdentityUnavailable
 
 
@@ -83,6 +85,7 @@ def configured_browser_boundary(
     tenant: str,
     broker_claims: Any,
     request_dispatch: Any,
+    browser: BrowserState,
 ) -> Any:
     """Require explicit existing deployment inputs, never provision defaults."""
     from arbora.core.settings import runtime_config
@@ -117,7 +120,7 @@ def configured_browser_boundary(
         issuer=deployed.issuer or config.auth_jwt_issuer,
         audience=config.auth_jwt_audience,
         store=create_secrets_client().backend,
-        request_dispatch=request_dispatch,
+        request_dispatch=partial(request_dispatch, browser.capacity),
     )
 
 

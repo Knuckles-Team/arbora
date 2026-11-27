@@ -150,7 +150,11 @@ def test_cancellation_waits_for_actual_owner_cleanup(owner_loop):
 
 
 def test_capacity_rejects_before_owner_submission():
+    import threading
+
     from arbora.mcp_server import browser_dispatch
+
+    capacity = threading.BoundedSemaphore(16)
 
     async def scenario():
         messages = []
@@ -163,20 +167,22 @@ def test_capacity_rejects_before_owner_submission():
 
         acquired = 0
         try:
-            while browser_dispatch._capacity.acquire(blocking=False):
+            while capacity.acquire(blocking=False):
                 acquired += 1
             await browser_dispatch.dispatch_browser_request(
-                forbidden, {"type": "http"}, forbidden, send
+                capacity, forbidden, {"type": "http"}, forbidden, send
             )
         finally:
             for _ in range(acquired):
-                browser_dispatch._capacity.release()
+                capacity.release()
         assert messages[0]["status"] == 503
 
     asyncio.run(scenario())
 
 
 def test_missing_owner_fails_closed(monkeypatch):
+    import threading
+
     from arbora.fleet import shared_multiplexer
     from arbora.mcp_server.browser_dispatch import dispatch_browser_request
 
@@ -194,7 +200,9 @@ def test_missing_owner_fails_closed(monkeypatch):
         async def forbidden(*args):
             pytest.fail("unavailable owner dispatched")
 
-        await dispatch_browser_request(forbidden, {"type": "http"}, forbidden, send)
+        await dispatch_browser_request(
+            threading.BoundedSemaphore(1), forbidden, {"type": "http"}, forbidden, send
+        )
         assert messages[0]["status"] == 503
 
     asyncio.run(scenario())

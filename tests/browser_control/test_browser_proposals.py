@@ -16,11 +16,9 @@ from arbora.browser_control.browser_control_client import (
     ControlResultMessage,
 )
 from arbora.browser_control.browser_control_runtime import (
-    bind_browser_control_owner,
     dispatch_browser_control,
-    register_browser_control_service,
-    unregister_browser_control_service,
 )
+from arbora.browser_control.browser_state import BrowserState
 from arbora.run_origin import (
     RunOriginRegistry,
     native_call_origin_scope,
@@ -37,6 +35,9 @@ from tests.browser_control.test_browser_control_service import session as sessio
 _ORIGINS = RunOriginRegistry()
 
 pytestmark = [pytest.mark.asyncio, pytest.mark.spec("ARBORA-FLEET-R015")]
+
+
+_BROWSER = BrowserState()
 
 
 def _request(session: GraphSession, tool: Any) -> BrowserProposalRequest:
@@ -64,7 +65,7 @@ async def _propose(
                 origins.append(require_native_call_origin())
             if routed:
                 return await dispatch_browser_control(
-                    "request_call", request.model_dump(mode="json")
+                    _BROWSER, "request_call", request.model_dump(mode="json")
                 )
             return await service.request_call(request)
 
@@ -92,12 +93,12 @@ def _leases(engine: Any) -> list[Any]:
 
 @contextmanager
 def _registered(service: Any) -> Iterator[None]:
-    register_browser_control_service(service)
-    bind_browser_control_owner(service)
+    _BROWSER.register(service)
+    _BROWSER.bind_owner(service)
     try:
         yield
     finally:
-        unregister_browser_control_service(service)
+        _BROWSER.unregister(service)
 
 
 async def test_proposal_refuses_missing_native_origin(session: GraphSession) -> None:
