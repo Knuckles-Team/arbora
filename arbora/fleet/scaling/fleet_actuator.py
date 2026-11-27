@@ -49,6 +49,14 @@ def bind_request(context: Any) -> Iterator[None]:
         _REQUEST.reset(token)
 
 
+def request_context() -> Any:
+    """The verified request the running reconcile serves; refuses when none is bound."""
+    bound = _REQUEST.get()
+    if bound is None:
+        raise OperationRefused("UNAVAILABLE", {"reason": "no request is bound"})
+    return bound[0]
+
+
 def _server() -> str:
     return str(setting(SERVER_SETTING, DEFAULT_SERVER))
 

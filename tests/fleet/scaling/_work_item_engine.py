@@ -15,6 +15,14 @@ from typing import Any
 from arbora.api.invoke.pipeline import OperationRefused
 
 
+class _Refused(Exception):
+    """The engine's ``TRANSITION_REFUSED`` for a commit on a terminal item."""
+
+    code = "TRANSITION_REFUSED"
+    reason = "terminal_state"
+    machine, from_state, event = "work_item", "succeeded", "commit"
+
+
 class FakeWorkItems:
     def __init__(self) -> None:
         self.items: dict[str, dict[str, Any]] = {}
@@ -104,6 +112,18 @@ class FakeWorkItems:
         item.update(status="ready", lease=None)
         self.events.append("defer")
         return {"status": "deferred"}
+
+    def commit_result(self, **kw: Any) -> dict[str, Any]:
+        item = self.items[kw["work_item_id"]]
+        if item["status"] in {"succeeded", "failed"}:
+            raise _Refused()
+        if not self._fenced(
+            item, kw["worker_id"], kw["lease_epoch"], kw["fencing_token"]
+        ):
+            return {"status": "fenced"}
+        item.update(status=kw["outcome"], lease=None)
+        self.events.append(f"commit:{kw['outcome']}")
+        return {"status": kw["outcome"]}
 
     def expire_lease(self, work_item_id: str) -> None:
         """The lease lapses: the next claim is granted."""

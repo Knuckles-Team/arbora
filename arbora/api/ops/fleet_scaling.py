@@ -17,9 +17,18 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import bound_service, build_write_op
-from arbora.api.registry import Composite, Effect, OpSpec, Verb
+from arbora.api.registry import Composite, Confirm, Effect, OpSpec, Verb
 from arbora.fleet.scaling.fleet_actuator import bind_request
-from arbora.fleet.scaling.scaling_authority import ScaleIntent, validate_scale_intent
+from arbora.fleet.scaling.inventory_writer import set_inventory
+from arbora.fleet.scaling.scaling_authority import (
+    ControllerRegistration,
+    FailureDomain,
+    ResourcePool,
+    ScaleIntent,
+    ScaleUnit,
+    WorkloadClass,
+    validate_scale_intent,
+)
 from arbora.fleet.scaling.scaling_intent_reconciler import (
     ScaleIntentConflict,
     ScaleIntentRecord,
@@ -32,9 +41,13 @@ NATIVE_IDEMPOTENCY: dict[str, str] = {
     "fleet.reconcile.run": (
         "arbora.fleet.scaling.scaling_intent_reconciler:ScaleIntentLedger"
     ),
+    # Every node write is keyed by the request key and the node, so the engine replays it.
+    "fleet.scale.inventory.set": "medulla:AddNode",
 }
 
 SCOPE = "mcp:delegate"
+#: The operator scope that states the scaling inventory.
+ADMIN_SCOPE = "mcp:admin"
 
 
 class _Params(BaseModel):
@@ -60,10 +73,24 @@ class FleetScaleEvaluateResult(BaseModel):
     detail: str
 
 
-def _require_scope(context: Any) -> None:
+class FleetScaleInventorySetParams(_Params):
+    #: The revision the operator read; ``0`` before any inventory exists.
+    base_revision: int = Field(ge=0)
+    failure_domains: tuple[FailureDomain, ...] = ()
+    pools: tuple[ResourcePool, ...] = ()
+    workloads: tuple[WorkloadClass, ...] = ()
+    units: tuple[ScaleUnit, ...] = ()
+    controllers: tuple[ControllerRegistration, ...] = ()
+
+
+class FleetScaleInventorySetResult(BaseModel):
+    value: dict[str, int]
+
+
+def _require_scope(context: Any, scope: str = SCOPE) -> None:
     scopes = getattr(context.caller, "effective_scopes", None) or ()
-    if SCOPE not in scopes:
-        raise OperationRefused("FLEET_SCOPE_REQUIRED", {"scope": SCOPE})
+    if scope not in scopes:
+        raise OperationRefused("FLEET_SCOPE_REQUIRED", {"scope": scope})
 
 
 def _model(value: Any, model: type[BaseModel]) -> Any:
@@ -112,6 +139,22 @@ async def handle_fleet_scale_evaluate(
     return {"admitted": True, "detail": "intent admitted by the scaling authority"}
 
 
+async def handle_fleet_scale_inventory_set(
+    context: Any, params: Mapping[str, Any], op: OpSpec
+) -> dict[str, Any]:
+    """Set the scaling inventory graph nodes at the next revision (ARBORA-FLEET-R024.17)."""
+    from arbora.deployment.assembly import require_confirmed_plan
+
+    require_confirmed_plan(op)
+    _require_scope(context, ADMIN_SCOPE)
+    model = _model(params, FleetScaleInventorySetParams)
+    records = {
+        name: tuple(getattr(model, name))
+        for name in ("failure_domains", "pools", "workloads", "units", "controllers")
+    }
+    return {"value": await set_inventory(context, model.base_revision, records)}
+
+
 def operations() -> tuple[OpSpec, ...]:
     return (
         build_write_op(
@@ -122,6 +165,16 @@ def operations() -> tuple[OpSpec, ...]:
             result=FleetReconcileRunResult,
             handler="arbora.api.ops.fleet_scaling.handle_fleet_reconcile_run",
             scope=SCOPE,
+        ),
+        build_write_op(
+            op_id="fleet.scale.inventory.set",
+            summary="Set the scaling inventory nodes the scale authority is read from",
+            examples=("set the scale inventory",),
+            params=FleetScaleInventorySetParams,
+            result=FleetScaleInventorySetResult,
+            handler="arbora.api.ops.fleet_scaling.handle_fleet_scale_inventory_set",
+            scope=ADMIN_SCOPE,
+            confirm=Confirm.PLAN,
         ),
         OpSpec(
             id="fleet.scale.evaluate",
@@ -145,7 +198,9 @@ __all__ = [
     "NATIVE_IDEMPOTENCY",
     "FleetReconcileRunParams",
     "FleetScaleEvaluateParams",
+    "FleetScaleInventorySetParams",
     "handle_fleet_reconcile_run",
+    "handle_fleet_scale_inventory_set",
     "handle_fleet_scale_evaluate",
     "operations",
     "specs",

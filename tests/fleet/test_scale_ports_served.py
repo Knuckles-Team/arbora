@@ -8,6 +8,7 @@ and node-read methods.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import Any
 
@@ -25,13 +26,19 @@ from arbora.mcp_server.served_invocation import (
     _with_provisioning_ports,
     _with_scale_ports,
 )
+from tests.api._loopback_engine import loopback  # noqa: F401
 from tests.fleet.scaling._work_item_engine import Session, engine
+from tests.fleet.scaling.test_engine_scale_policy import PRINCIPAL, SCHEMA, Engine
 from tests.fleet.scaling.test_scaling_authority_contract import INTENT as PLAN_INTENT
 from tests.fleet.scaling.test_scaling_authority_contract import authority
 from tests.fleet.scaling.test_scaling_intent_reconciler import INTENT, NOW
 from tests.fleet.test_provisioning_ports_served import OPERATOR, FakeGateway
+from tests.test_served_operation_api import served  # noqa: F401
 
 OPS = {op.id: op for op in fleet_scaling.operations()}
+SCALER = SimpleNamespace(
+    effective_scopes=OPERATOR.effective_scopes, tenant="t1", principal=PRINCIPAL
+)
 
 
 class FakeGraph:
@@ -67,14 +74,32 @@ def graph(monkeypatch: pytest.MonkeyPatch) -> FakeGraph:
 
 
 @pytest.fixture
-def host(monkeypatch: pytest.MonkeyPatch) -> tuple[dict[str, Any], Any]:
+def verdicts(monkeypatch: pytest.MonkeyPatch) -> Engine:
+    """The engine's ``Decide`` answers (the question kind declared, as after the re-pin)."""
+    from arbora.fleet.scaling import engine_policy
+
+    verdict = Engine()
+
+    async def graph(context: Any) -> str:
+        return "graph:t1"
+
+    monkeypatch.setattr(engine_policy, "require_question_kind", lambda kind: None)
+    monkeypatch.setattr("arbora.api.ops._engine.engine_send", verdict)
+    monkeypatch.setattr("arbora.api.invoke.bootstrap.caller_dispatch_graph", graph)
+    return verdict
+
+
+@pytest.fixture
+def host(
+    monkeypatch: pytest.MonkeyPatch, verdicts: Engine
+) -> tuple[dict[str, Any], Any]:
     """The bindings the host composes, over a WorkItem engine double."""
     monkeypatch.setattr(work_items, "_session", Session)
-    served, fake = engine()
+    work_engine, fake = engine()
     gateway = FakeGateway()
     bindings = _with_scale_ports(
         _with_provisioning_ports(
-            {"fleet_gateway": gateway, "task_plan_work_engine": served}
+            {"fleet_gateway": gateway, "task_plan_work_engine": work_engine}
         )
     )
     assert bindings is not None
@@ -86,8 +111,8 @@ def host(monkeypatch: pytest.MonkeyPatch) -> tuple[dict[str, Any], Any]:
 
 def _context(bindings: dict[str, Any]) -> Any:
     return SimpleNamespace(
-        caller=OPERATOR,
-        services=bindings,
+        caller=SCALER,
+        services={"deploy_feature_schema": SCHEMA, **bindings},
         service_identity=True,
         owner="owner",
         registry_digest="digest",
@@ -187,3 +212,97 @@ async def test_a_missing_or_invalid_inventory_refuses_unavailable(
     with pytest.raises(OperationRefused) as inconsistent:
         await reader.snapshot(object())
     assert inconsistent.value.code == "UNAVAILABLE"
+
+
+class ServedGateway(FakeGateway):
+    """The gateway of a served call: the operator's own request carries no service identity."""
+
+    async def call(
+        self, caller: Any, server: str, tool: str, arguments: Any, **kw: Any
+    ) -> Any:
+        return await super().call(
+            caller, server, tool, arguments, **{**kw, "service_identity": True}
+        )
+
+
+#: The stack the served tests drive: the engine WorkItem double and the fleet gateway.
+STACK: dict[str, Any] = {}
+
+
+def loopback_bindings() -> dict[str, Any]:
+    """Extra bindings of the served app: the host composes the scale ports over them."""
+    served_engine, fake = engine()
+    gateway = ServedGateway()
+    STACK.update(work_items=fake, gateway=gateway)
+    return {"task_plan_work_engine": served_engine, "fleet_gateway": gateway}
+
+
+def _decide(option: str) -> Any:
+    from tests.fleet.scaling.test_engine_scale_policy import _record
+
+    return lambda params, principal: _record(params["request"], option)
+
+
+def _reconcile_params(
+    execution_key: str, intent_id: str = "scale-intent-1"
+) -> dict[str, Any]:
+    from tests.fleet.scaling.test_scaling_intent_reconciler import intent
+
+    # The host reconciler runs on the real clock, so the fence lies far in the future.
+    fence = {**INTENT["fence"], "expires_at": datetime(2099, 1, 1, tzinfo=UTC)}
+    target = {**INTENT["target"], "runtime_id": "deployment", "workload_id": "a/b"}
+    record = intent(
+        execution_key=execution_key, intent_id=intent_id, fence=fence, target=target
+    )
+    return {
+        "intent": record.model_dump(mode="json"),
+        "controller_id": "writer-1",
+    }
+
+
+@pytest.mark.spec("ARBORA-FLEET-R024.16")
+def test_reconcile_served_through_invoke_acts_only_on_the_engine_verdict(
+    loopback: Any,  # noqa: F811
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.api.ops import _engine
+    from arbora.fleet.scaling import engine_policy
+
+    monkeypatch.setattr(work_items, "_session", Session)
+    monkeypatch.setattr(engine_policy, "require_question_kind", lambda kind: None)
+    verdict = {"option": "allow"}
+    loopback.serve_unreleased(
+        _engine,
+        {
+            "Decide": lambda params, principal: _decide(verdict["option"])(
+                params, principal
+            )
+        },
+    )
+    loopback.serve({}, "mcp:delegate")
+
+    allowed = loopback.call("fleet.reconcile.run", _reconcile_params("exec-1"), "k1")
+    value = loopback.value(allowed)
+    assert value["scaled"] is True and value["actuator_called"] is True
+    gateway = STACK["gateway"]
+    assert len(gateway.calls) == 1
+    asked = [call for call in loopback.engine_calls if call[0] == "Decide"]
+    assert len(asked) == 1
+    assert asked[0][1]["request"]["question"]["kind"] == "scale_intent"
+
+    replay = loopback.value(
+        loopback.call("fleet.reconcile.run", _reconcile_params("exec-1"), "k2")
+    )
+    assert replay["replayed"] is True and len(gateway.calls) == 1
+    assert len([c for c in loopback.engine_calls if c[0] == "Decide"]) == 1
+
+    verdict["option"] = "refuse:SCALE_POOL_HEADROOM_EXCEEDED"
+    denied = loopback.value(
+        loopback.call(
+            "fleet.reconcile.run", _reconcile_params("exec-2", "scale-intent-2"), "k3"
+        )
+    )
+    assert denied["state"] == "denied" and denied["actuator_called"] is False
+    assert len(gateway.calls) == 1
+    committed = [e for e in STACK["work_items"].events if e.startswith("commit:")]
+    assert committed == ["commit:succeeded"]

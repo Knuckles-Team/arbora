@@ -555,15 +555,15 @@ class ScaleActuator(Protocol):
 
 @runtime_checkable
 class ScalePolicy(Protocol):
-    def decide(self, intent: ScaleIntentRecord) -> ScalePolicyDecision:
+    async def decide(self, intent: ScaleIntentRecord) -> ScalePolicyDecision:
         """Return a durable-policy verdict before actuation."""
         ...  # ABSTRACT-OK
 
 
 class AllowScalePolicy:
-    """Explicit allow fixture; deployments should inject governance."""
+    """Explicit allow fixture for tests; the host composes the engine verdict instead."""
 
-    def decide(self, intent: ScaleIntentRecord) -> ScalePolicyDecision:
+    async def decide(self, intent: ScaleIntentRecord) -> ScalePolicyDecision:
         return ScalePolicyDecision(
             decision_id=_derived_id("decision", intent.execution_key),
             allowed=True,
@@ -571,27 +571,10 @@ class AllowScalePolicy:
         )
 
 
-class AdmittedScalePolicy:
-    """The verdict of the served admission, recorded as the durable decision.
-
-    ``fleet.reconcile.run`` runs behind the registry chokepoint: caller verification,
-    the policy filter, plan confirmation and audit. A reconcile that reaches the
-    reconciler was admitted there, so this policy allows it and names that authority;
-    it decides nothing a second time.
-    """
-
-    def decide(self, intent: ScaleIntentRecord) -> ScalePolicyDecision:
-        return ScalePolicyDecision(
-            decision_id=_derived_id("decision", intent.execution_key),
-            allowed=True,
-            reason="admitted by the served reconcile operation",
-        )
-
-
 class DenyScalePolicy:
     """Fail-closed policy used when a deployment has not injected governance."""
 
-    def decide(self, intent: ScaleIntentRecord) -> ScalePolicyDecision:
+    async def decide(self, intent: ScaleIntentRecord) -> ScalePolicyDecision:
         return ScalePolicyDecision(
             decision_id=_derived_id("decision", intent.execution_key),
             allowed=False,
@@ -647,8 +630,13 @@ class ScaleIntentLedger(Protocol):
         observation: ScaleObservation,
         *,
         now: datetime,
+        lease: ControllerLease | None = None,
     ) -> ScaleObservation:
-        """Persist exactly one convergence/failure observation."""
+        """Persist exactly one convergence/failure observation.
+
+        With the live ``lease`` the write is fenced by it and the item is then
+        committed to its terminal state while the claim is held.
+        """
         ...  # ABSTRACT-OK
 
     async def get_observation(self, execution_key: str) -> ScaleObservation | None:
@@ -994,7 +982,9 @@ class MemoryScaleIntentLedger:
         observation: ScaleObservation,
         *,
         now: datetime,
+        lease: ControllerLease | None = None,
     ) -> ScaleObservation:
+        del lease  # the fixture ledger has no claim to commit under
         with self._lock:
             current_execution = self._executions.get(intent.execution_key)
             if current_execution is None:
@@ -1167,8 +1157,23 @@ class ScaleIntentReconciler:
             detail="terminal execution replayed",
         )
 
+    async def _repair_lease(
+        self, intent: ScaleIntentRecord, controller_id: str, now: datetime
+    ) -> ControllerLease | None:
+        """The claim a repair writes its observation under, when this controller can hold it."""
+        try:
+            return await self.ledger.acquire_controller_lease(
+                intent, controller_id, now=now
+            )
+        except (ScaleLeaseUnavailable, ScaleLeaseLost):
+            return None
+
     async def _replay_durable_success(
-        self, intent: ScaleIntentRecord, execution: ScaleExecutionRecord, now: datetime
+        self,
+        intent: ScaleIntentRecord,
+        execution: ScaleExecutionRecord,
+        now: datetime,
+        controller_id: str,
     ) -> ScaleReconcileResult | None:
         if (
             execution.state
@@ -1180,7 +1185,11 @@ class ScaleIntentReconciler:
         ):
             return None
         observation = await self._observe_result(
-            intent, execution, execution.result, now
+            intent,
+            execution,
+            execution.result,
+            now,
+            lease=await self._repair_lease(intent, controller_id, now),
         )
         return ScaleReconcileResult(
             state=ScaleIntentState.VERIFIED,
@@ -1193,7 +1202,11 @@ class ScaleIntentReconciler:
         )
 
     async def _replay_terminal_failure(
-        self, intent: ScaleIntentRecord, execution: ScaleExecutionRecord, now: datetime
+        self,
+        intent: ScaleIntentRecord,
+        execution: ScaleExecutionRecord,
+        now: datetime,
+        controller_id: str,
     ) -> ScaleReconcileResult | None:
         """A durable non-retryable result (or an exhausted retry budget) is
         terminal even if the process died before writing its observation."""
@@ -1205,7 +1218,11 @@ class ScaleIntentReconciler:
         ):
             return None
         observation = await self._observe_result(
-            intent, execution, execution.result, now
+            intent,
+            execution,
+            execution.result,
+            now,
+            lease=await self._repair_lease(intent, controller_id, now),
         )
         return ScaleReconcileResult(
             state=ScaleIntentState.VERIFIED,
@@ -1234,7 +1251,11 @@ class ScaleIntentReconciler:
             )
 
     async def _replay_terminal_execution(
-        self, intent: ScaleIntentRecord, execution: ScaleExecutionRecord, now: datetime
+        self,
+        intent: ScaleIntentRecord,
+        execution: ScaleExecutionRecord,
+        now: datetime,
+        controller_id: str,
     ) -> ScaleReconcileResult | None:
         """Repair/replay a terminal or durably-resolved execution without
         consulting policy or invoking an actuator again — the execution key
@@ -1243,10 +1264,14 @@ class ScaleIntentReconciler:
         result = await self._replay_verified_or_observed(intent, execution)
         if result is not None:
             return result
-        result = await self._replay_durable_success(intent, execution, now)
+        result = await self._replay_durable_success(
+            intent, execution, now, controller_id
+        )
         if result is not None:
             return result
-        result = await self._replay_terminal_failure(intent, execution, now)
+        result = await self._replay_terminal_failure(
+            intent, execution, now, controller_id
+        )
         if result is not None:
             return result
         self._reject_exhausted_retry_budget(intent, execution)
@@ -1263,7 +1288,7 @@ class ScaleIntentReconciler:
         """``(early_result, audit)`` — ``early_result`` is non-``None`` only
         for a policy-denied-without-break-glass response the caller must
         return as-is."""
-        decision = self.policy.decide(intent)
+        decision = await self.policy.decide(intent)
         if decision.allowed:
             return None, None
         if break_glass is None:
@@ -1299,7 +1324,9 @@ class ScaleIntentReconciler:
         execution = await self.ledger.record_result(
             intent, execution, lease, result, now=now
         )
-        observation = await self._observe_result(intent, execution, result, now)
+        observation = await self._observe_result(
+            intent, execution, result, now, lease=lease
+        )
         return ScaleReconcileResult(
             state=ScaleIntentState.VERIFIED,
             replayed=persisted.replayed,
@@ -1389,7 +1416,9 @@ class ScaleIntentReconciler:
                 retry_after_s=intent.retry_policy.backoff_s,
                 detail="retryable actuator failure persisted",
             )
-        observation = await self._observe_result(intent, execution, result, now)
+        observation = await self._observe_result(
+            intent, execution, result, now, lease=lease
+        )
         return ScaleReconcileResult(
             state=ScaleIntentState.VERIFIED,
             replayed=persisted.replayed,
@@ -1415,7 +1444,9 @@ class ScaleIntentReconciler:
         execution = persisted.execution
         await self._validate_dry_run_reuse(intent, execution, dry_run)
 
-        replay = await self._replay_terminal_execution(intent, execution, now)
+        replay = await self._replay_terminal_execution(
+            intent, execution, now, controller_id
+        )
         if replay is not None:
             return replay
 
@@ -1458,6 +1489,8 @@ class ScaleIntentReconciler:
         execution: ScaleExecutionRecord,
         result: ScaleActuationResult,
         now: datetime,
+        *,
+        lease: ControllerLease | None = None,
     ) -> ScaleObservation:
         status = (
             ScaleObservationStatus.CONVERGED
@@ -1485,6 +1518,7 @@ class ScaleIntentReconciler:
             execution,
             observation,
             now=now,
+            lease=lease,
         )
 
     async def _observe_failure(
@@ -1517,7 +1551,6 @@ class ScaleIntentReconciler:
 
 
 __all__ = [
-    "AdmittedScalePolicy",
     "AllowScalePolicy",
     "BreakGlassAudit",
     "BreakGlassAuthorization",

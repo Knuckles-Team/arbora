@@ -552,3 +552,6 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T283 [US1] ARBORA-FLEET-R024.13 The scale actuator applies a typed request through one governed fleet call. Size: S, 1 PR, 2 hours.
 - [x] T284 [US1] ARBORA-FLEET-R024.14 The scale reconciler runs over engine WorkItems. Size: M, 1 PR, 4 hours.
 - [x] T285 [US1] ARBORA-FLEET-R024.15 The scale authority snapshot is read from graph nodes. Size: S, 1 PR, 2 hours.
+- [x] T286 [US1] ARBORA-FLEET-R024.16 The scale verdict is the engine's decision. Size: S, 1 PR, 2 hours.
+- [x] T287 [US1] ARBORA-FLEET-R024.17 An operator sets the scaling inventory through one governed write. Size: S, 1 PR, 2 hours.
+- [x] T288 [US1] ARBORA-FLEET-R024.18 Every scale WorkItem ends in a terminal state. Size: S, 1 PR, 2 hours.

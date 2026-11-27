@@ -84,7 +84,7 @@ class Actuator:
 
 
 class DenyPolicy:
-    def decide(self, intent: ScaleIntentRecord) -> ScalePolicyDecision:
+    async def decide(self, intent: ScaleIntentRecord) -> ScalePolicyDecision:
         return ScalePolicyDecision(
             decision_id="deny:1", allowed=False, reason="needs explicit approval"
         )
