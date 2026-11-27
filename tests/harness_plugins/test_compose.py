@@ -8,12 +8,11 @@ import pytest
 
 from arbora.harness_plugins.compose import (
     DOOR_SKILLS,
-    NATIVE_CLIENT_ID,
     AgentDef,
     SkillMissing,
     compose_bundle,
 )
-from arbora.harness_plugins.profiles import Lifecycle, profile
+from arbora.harness_plugins.profiles import NATIVE_CLIENT_ID, Lifecycle, profile
 from tests.harness_plugins.conftest import ENDPOINT
 
 
