@@ -243,9 +243,16 @@ def test_the_fleet_agent_toolset_binds_the_served_intent_verbs(monkeypatch) -> N
         raise AssertionError("legacy tool called")
 
     monkeypatch.setitem(runtime.REGISTERED_TOOLS, "act", legacy_act)
-    from meristem import host_ports
+    from types import SimpleNamespace
 
-    monkeypatch.setattr(host_ports, "emit_run_event", events.append)
+    from arbora import agent_runs
+    from arbora.agent_host.host_port_adapters import HostPortsBinding
+
+    monkeypatch.setattr(
+        agent_runs,
+        "_HOST_PORTS",
+        HostPortsBinding(SimpleNamespace(emit_run_event=events.append), None),
+    )
     toolset = runtime.build_native_arbora_toolset(
         list(FLEET_TOOLS), toolset_id="run-a2a-1"
     )
@@ -369,12 +376,15 @@ def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(
 
 @pytest.mark.spec("ARBORA-HOST-R007.2.54")
 def test_native_intent_event_emitted(monkeypatch) -> None:
-    from meristem import host_ports
+    from types import SimpleNamespace
 
+    from arbora import agent_runs
+    from arbora.agent_host.host_port_adapters import HostPortsBinding
     from arbora.mcp_server import runtime
 
     events: list[dict[str, Any]] = []
-    monkeypatch.setattr(host_ports, "emit_run_event", events.append)
+    ports = SimpleNamespace(emit_run_event=events.append)
+    monkeypatch.setattr(agent_runs, "_HOST_PORTS", HostPortsBinding(ports, None))
     runtime._emit_native_intent_event(
         "act",
         "run-1",
@@ -393,3 +403,21 @@ def test_native_intent_event_emitted(monkeypatch) -> None:
             "error": "UNAVAILABLE",
         }
     ]
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.54")
+def test_native_intent_event_refuses_when_the_pin_lacks_the_record(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from arbora import agent_runs
+    from arbora.agent_host.host_port_adapters import HostPortsBinding
+    from arbora.mcp_server import runtime
+    from arbora.pin_lag.unavailable import PinLagUnavailable
+
+    monkeypatch.setattr(
+        agent_runs, "_HOST_PORTS", HostPortsBinding(SimpleNamespace(), None)
+    )
+    with pytest.raises(PinLagUnavailable):
+        runtime._emit_native_intent_event("act", "run-1", {}, {"ok": True})
+    monkeypatch.setattr(agent_runs, "_HOST_PORTS", None)
+    runtime._emit_native_intent_event("act", "run-1", {}, {"ok": True})

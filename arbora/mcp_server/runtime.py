@@ -455,10 +455,11 @@ def _emit_native_intent_event(
 ) -> None:
     params = kwargs.get("params")
     params = params if isinstance(params, dict) else {}
-    from meristem import host_ports
+    from arbora.agent_runs import host_ports_binding
+    from arbora.pin_lag.meristem import emit_run_event
 
     error = payload.get("error") if isinstance(payload, dict) else None
-    host_ports.emit_run_event(
+    emit_run_event(
         {
             "type": "tool_call",
             "run_id": run_id,
@@ -468,7 +469,8 @@ def _emit_native_intent_event(
             "tool": params.get("tool") or "",
             "ok": bool(isinstance(payload, dict) and payload.get("ok")),
             "error": (error or {}).get("code") if isinstance(error, dict) else None,
-        }
+        },
+        host_ports_binding(),
     )
 
 

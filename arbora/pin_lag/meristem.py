@@ -27,6 +27,7 @@ HOST_PORT_FIELDS: tuple[str, ...] = (
     "sandbox_processes",
     "liveness_wait",
     "checkpoint_store",
+    "events",
     "changeset_submitter",
     "gate_runner",
 )
@@ -163,6 +164,24 @@ def require_task_fields(names: tuple[str, ...]) -> None:
     for name in names:
         if name not in declared:
             raise PinLagUnavailable(f"meristem.graph.RunTask.{name}")
+
+
+def emit_run_event(event: Any, binding: Any) -> None:
+    """Send one run event through the bound ``HostPorts.emit_run_event`` (meristem main).
+
+    ``binding`` is the host's ``HostPortsBinding`` or ``None`` before it binds, which
+    sends nothing (the record's own contract: a no-op without a host). A pinned
+    release refuses the record, so its refusal is raised, and a record without the
+    method refuses naming it.
+    """
+    if binding is None:
+        return
+    if binding.refusal is not None:
+        raise binding.refusal
+    emit = getattr(binding.ports, "emit_run_event", None)
+    if not callable(emit):
+        raise PinLagUnavailable("meristem.host_ports.HostPorts.emit_run_event")
+    emit(event)
 
 
 def require_fields(names: tuple[str, ...]) -> Any:

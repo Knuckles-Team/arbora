@@ -714,13 +714,17 @@ def bind_run_ports(services: Any = None, seams: Any = None) -> Any:
     )
     host_ports.register_run_checkpoint_factory(store)
     if services is None:
-        _HOST_PORTS = bind_host_ports(checkpoint_store=store)
+        _HOST_PORTS = bind_host_ports(checkpoint_store=store, events=record_run_event)
     else:
         import asyncio
 
         from arbora.agent_host.host_port_composition import compose_host_ports
 
         _HOST_PORTS = compose_host_ports(
-            services, wait=asyncio.sleep, checkpoint_store=store, seams=seams
+            services,
+            wait=asyncio.sleep,
+            checkpoint_store=store,
+            events=record_run_event,
+            seams=seams,
         )
     return _HOST_PORTS

@@ -146,6 +146,7 @@ def compose_host_ports(
     *,
     wait: Callable[[float], Any],
     checkpoint_store: Any = None,
+    events: Any = None,
     resolve_run: Callable[[str], Any] = _run_of,
     method_op: Callable[[str], str | None] = lambda _: None,
     backends: PortBackends | None = None,
@@ -175,6 +176,7 @@ def compose_host_ports(
         "decision": decision_port(call, tenant_of=tenant_of, schema_of=schema_of),
         "liveness_wait": liveness_wait(wait),
         "checkpoint_store": checkpoint_store,
+        "events": events,
         "summary_provider": summary_provider(
             SummaryService(call, backends.summary_model)
         ),
