@@ -15,6 +15,7 @@ from arbora.api.otlp_logs import body_key
 from arbora.api.registry import Invoke
 
 from .auth import HTTPAuthenticationError
+from .bundles import mount_bundle_transfer
 from .checkout import make_checkout_endpoint
 from .lineage import mount_lineage_route
 from .openapi import document
@@ -301,6 +302,13 @@ def create_api_application(
     # The SPARQL 1.1 Protocol and Graph Store endpoints drive query.sparql
     # and eg.graph.ApplyMutation through the same invoke chokepoint
     # (ARBORA-OPS-R857.1).
+    mount_bundle_transfer(
+        app,
+        services=services,
+        authenticate=authenticate,
+        invoke=invoke,
+        is_console_request=auth.is_console_request,
+    )
     mount_sparql_protocol(
         app,
         services=services,
