@@ -180,6 +180,41 @@ class ArboraConfig(BaseModel):
         alias="RESOURCE_GRANTS_MAX_WORKING_BYTES",
         description="Per-tenant ceiling on the working bytes of the repository index jobs held at once (ARBORA-OPS-R073). The engine holds the ledger; an index request that would exceed the ceiling is refused LOAD_CAP_EXCEEDED before the job is admitted.",
     )
+    runs_graph_max_nodes: int = Field(
+        default=500,
+        ge=10,
+        le=5_000,
+        alias="RUNS_GRAPH_MAX_NODES",
+        description="Most nodes one execution graph snapshot may carry (ARBORA-OPS-R021.4.8). Past it the snapshot says partial and drops whole child runs; it never claims completeness.",
+    )
+    runs_graph_max_edges: int = Field(
+        default=2_000,
+        ge=10,
+        le=20_000,
+        alias="RUNS_GRAPH_MAX_EDGES",
+        description="Most edges one execution graph snapshot may carry (ARBORA-OPS-R021.4.8). Past it the snapshot says partial.",
+    )
+    runs_graph_max_depth: int = Field(
+        default=4,
+        ge=1,
+        le=8,
+        alias="RUNS_GRAPH_MAX_DEPTH",
+        description="Deepest chain of producer-declared child runs an execution graph follows (ARBORA-OPS-R021.4.8.2). A run past the bound is reported partial, never followed.",
+    )
+    graph_changes_max_batch: int = Field(
+        default=500,
+        ge=1,
+        le=5_000,
+        alias="GRAPH_CHANGES_MAX_BATCH",
+        description="Most graph change events one stream frame may carry (ARBORA-OPS-R062.2).",
+    )
+    graph_changes_commit_to_visible_p95_ms: int = Field(
+        default=2_000,
+        ge=100,
+        le=60_000,
+        alias="GRAPH_CHANGES_COMMIT_TO_VISIBLE_P95_MS",
+        description="The commit-to-visible limit of the graph change stream, in milliseconds (ARBORA-OPS-R062.4).",
+    )
     source_run_branch: str = Field(
         default="main",
         min_length=1,
