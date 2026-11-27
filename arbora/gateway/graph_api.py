@@ -119,13 +119,13 @@ def register_graph_routes(app, prefix: str = "/api") -> None:
         prefix: Path prefix for every route (default ``/api`` → e.g.
             ``/api/graph/query``, ``/api/sessions``).
 
-    Registers all KG tools so handlers dispatch through ``REGISTERED_TOOLS``.
+    Registers all KG tools so handlers dispatch through the host tool table.
     Graph queries use the typed ``/api/graph/query`` action surface; there is no
     second raw query route.
     """
     from arbora.gateway.ports import gateway_application
 
-    # Populate REGISTERED_TOOLS without starting the MCP server's own engine
+    # Populate the host tool table without starting the MCP server's own engine
     # bootstrap — the gateway owns the engine/daemon lifecycle.
     application = gateway_application()
     application.ensure_tools_registered()

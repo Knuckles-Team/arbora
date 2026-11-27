@@ -15,9 +15,9 @@ from pydantic import Field
 
 from arbora.api.errors import not_served
 from arbora.core.event_loop import run_blocking_ordered
-from arbora.mcp_server import runtime
 from arbora.mcp_server.backing import engine_routing
 from arbora.mcp_server.backing.context_helpers import coerce_dict_param
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.mcp_server.legacy_action_invoke import invoke_legacy_action
 from arbora.security.error_surface import (
     public_error_json,
@@ -331,7 +331,9 @@ def _run_bulk_ingest(
 # graph_ingest had ZERO prior test coverage of any kind.
 
 
-def register_write_ingest_tools(mcp, engine_provider: Callable[[], Any]):
+def register_write_ingest_tools(
+    mcp, tools: ToolTable, engine_provider: Callable[[], Any]
+):
     """Register the write_ingest_tools group on the given FastMCP server."""
 
     @mcp.tool(
@@ -826,7 +828,7 @@ def register_write_ingest_tools(mcp, engine_provider: Callable[[], Any]):
 
         return await run_blocking_ordered(_execute)
 
-    runtime.REGISTERED_TOOLS["graph_write"] = graph_write
+    tools["graph_write"] = graph_write
 
     @mcp.tool(
         name="graph_feedback",
@@ -874,7 +876,7 @@ def register_write_ingest_tools(mcp, engine_provider: Callable[[], Any]):
 
         return await run_blocking_ordered(_execute)
 
-    runtime.REGISTERED_TOOLS["graph_feedback"] = graph_feedback
+    tools["graph_feedback"] = graph_feedback
 
     @mcp.tool(
         name="skill_classify",
@@ -909,7 +911,7 @@ def register_write_ingest_tools(mcp, engine_provider: Callable[[], Any]):
 
         return await run_blocking_ordered(_execute)
 
-    runtime.REGISTERED_TOOLS["skill_classify"] = skill_classify
+    tools["skill_classify"] = skill_classify
 
     def _ingest_resolve_engine(action, graph, connection):
         # extracted from graph_ingest's preamble (CX-AU-03: split for CCN).
@@ -1026,4 +1028,4 @@ def register_write_ingest_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:
             return public_error_text(e)
 
-    runtime.REGISTERED_TOOLS["graph_ingest"] = graph_ingest
+    tools["graph_ingest"] = graph_ingest

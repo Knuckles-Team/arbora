@@ -55,6 +55,7 @@ pytest.importorskip("medulla.client")
 
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools import engine_tools
+from arbora.mcp_server.host_caches import HostCaches
 from arbora.security.actor_context import ActorContext, ActorType, use_actor
 from arbora.security.session import GraphSession, use_session
 
@@ -119,8 +120,9 @@ class _BlockingClient:
 
 
 def test_engine_tenants_create_offloads_blocking_native_io(monkeypatch):
-    runtime.ensure_tools_registered()
-    tool = runtime.REGISTERED_TOOLS["engine_tenants"]
+    caches = HostCaches()
+    runtime.ensure_tools_registered(caches)
+    tool = caches.tools["engine_tenants"]
 
     dispatch_started = threading.Event()
     release_dispatch = threading.Event()

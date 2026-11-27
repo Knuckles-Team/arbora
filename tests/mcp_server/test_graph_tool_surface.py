@@ -21,32 +21,36 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
     backing = object()
     calls: list[tuple[str, Any, Any]] = []
 
-    def surface(mcp: Any, **_: Any) -> Any:
+    def surface(mcp: Any, *, caches: Any, **_: Any) -> Any:
         calls.append(("surface", mcp, None))
-        runtime.REGISTERED_TOOLS["graph_query"] = object()
+        caches.tools["graph_query"] = object()
         return backing
 
     monkeypatch.setattr(arbora_surface, "register_arbora_surface", surface)
     monkeypatch.setattr(
         browser_mcp,
         "register_browser_control_tools",
-        lambda target: calls.append(("browser", target, None)),
+        lambda target, tools: calls.append(("browser", target, None)),
     )
     monkeypatch.setattr(
         a2a_mcp,
         "register_a2a_tools",
-        lambda mcp, *, service, tools=None: calls.append(("a2a", mcp, tools)),
+        lambda mcp, *, service, tool_table, tools=None: calls.append(
+            ("a2a", mcp, tools)
+        ),
     )
     from arbora import host_bindings
 
     monkeypatch.setattr(
         host_bindings,
         "mount_sdk_a2a",
-        lambda mcp, *, engine_provider: calls.append(("sdk_a2a", mcp, None)),
+        lambda mcp, tools, *, engine_provider, **_: calls.append(
+            ("sdk_a2a", mcp, None)
+        ),
     )
-    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
+    host = build_host_context(lambda: None)
 
-    runtime._register_graph_tool_surface(served, host=build_host_context())
+    runtime._register_graph_tool_surface(served, host=host)
 
     assert calls == [
         ("surface", served, None),
@@ -56,4 +60,4 @@ def test_surface_serves_intent_contract_and_registers_host_operations(
         ("sdk_a2a", served, None),
     ]
     # REST dispatches exactly what the intent tools route to.
-    assert "graph_query" in runtime.REGISTERED_TOOLS
+    assert "graph_query" in host.caches.tools

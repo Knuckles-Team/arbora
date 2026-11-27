@@ -8,7 +8,7 @@ connection, or keeps a second catalog/probe cache.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
 from functools import partial
 from typing import Any, TypedDict
 
@@ -36,7 +36,9 @@ class WebUiMcpDelegation(TypedDict):
 NATIVE_SERVER_NAME = "arbora"
 
 
-async def _native_server_tools(mux: MCPMultiplexer) -> list[dict[str, Any]]:
+async def _native_server_tools(
+    tools: Mapping[str, Any], mux: MCPMultiplexer
+) -> list[dict[str, Any]]:
     """List the registered native tools that ``_call_native_tool`` admits."""
     from arbora.mcp_server import runtime
 
@@ -51,7 +53,7 @@ async def _native_server_tools(mux: MCPMultiplexer) -> list[dict[str, Any]]:
             "inputSchema": getattr(tool, "parameters", None) or {},
         }
         for name, tool in sorted(provider_tools(host).items())
-        if name in runtime.REGISTERED_TOOLS or name in runtime.NATIVE_INTENT_TOOLS
+        if name in tools or name in runtime.NATIVE_INTENT_TOOLS
     ]
 
 
@@ -61,9 +63,11 @@ async def _child_server_tools(
     return await mux.delegated_server_tools(server_name)
 
 
-async def _list_mcp_server_tools(*, server_name: str) -> list[dict[str, Any]]:
+async def _list_mcp_server_tools(
+    tools: Mapping[str, Any], *, server_name: str
+) -> list[dict[str, Any]]:
     async def list_tools(mux: MCPMultiplexer) -> list[dict[str, Any]]:
-        native = {NATIVE_SERVER_NAME: _native_server_tools}
+        native = {NATIVE_SERVER_NAME: partial(_native_server_tools, tools)}
         lister = native.get(server_name, partial(_child_server_tools, server_name))
         return await lister(mux)
 
@@ -71,6 +75,7 @@ async def _list_mcp_server_tools(*, server_name: str) -> list[dict[str, Any]]:
 
 
 async def _call_native_tool(
+    tools: Mapping[str, Any],
     mux: MCPMultiplexer,
     *,
     tool_name: str,
@@ -87,7 +92,7 @@ async def _call_native_tool(
         raise ToolError("Verified caller session required")
     host = mux._host_mcp
     if host is None or tool_name not in (
-        runtime.REGISTERED_TOOLS.keys() | runtime.NATIVE_INTENT_TOOLS.keys()
+        tools.keys() | runtime.NATIVE_INTENT_TOOLS.keys()
     ):
         raise ToolError("Native Arbora tool is unavailable")
     with runtime.verified_tool_session_scope():
@@ -98,6 +103,7 @@ async def _call_native_tool(
 
 
 async def _call_mcp_tool(
+    tools: Mapping[str, Any],
     *,
     server_name: str,
     tool_name: str,
@@ -105,7 +111,7 @@ async def _call_mcp_tool(
     timeout: float = 30.0,
 ) -> Any:
     async def call_tool(mux: MCPMultiplexer) -> Any:
-        native = {NATIVE_SERVER_NAME: partial(_call_native_tool, mux)}
+        native = {NATIVE_SERVER_NAME: partial(_call_native_tool, tools, mux)}
         dispatch = native.get(
             server_name, partial(mux.delegate_server_tool, server_name=server_name)
         )
@@ -129,10 +135,10 @@ async def _read_mcp_resource(
     return await run_on_served_multiplexer(read_resource)
 
 
-def webui_mcp_delegation_helpers() -> WebUiMcpDelegation:
+def webui_mcp_delegation_helpers(tools: Mapping[str, Any]) -> WebUiMcpDelegation:
     """Return the three governed helpers backed by the served authority."""
     return WebUiMcpDelegation(
-        list_mcp_server_tools=_list_mcp_server_tools,
-        call_mcp_tool=_call_mcp_tool,
+        list_mcp_server_tools=partial(_list_mcp_server_tools, tools),
+        call_mcp_tool=partial(_call_mcp_tool, tools),
         read_mcp_resource=_read_mcp_resource,
     )

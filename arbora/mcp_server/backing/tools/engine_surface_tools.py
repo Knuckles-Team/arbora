@@ -66,6 +66,7 @@ from arbora.mcp_server.backing.tools._surface_selection import (
     conditional_tool_decorator,
     register_conditional_tools,
 )
+from arbora.mcp_server.host_caches import ToolTable
 
 logger = logging.getLogger(__name__)
 
@@ -2089,11 +2090,11 @@ def _fork_branches(branches_json: str, code: str, n: int) -> tuple[Any, str | No
 
 
 def register_engine_surface_tools(
-    mcp, *, include_unserved_mining: bool = False
+    mcp, tools: ToolTable, *, include_unserved_mining: bool = False
 ) -> None:
     """Register the KG-2.310 engine-surface tools + their REST twins.
 
-    Each tool is added to ``REGISTERED_TOOLS`` and mapped to a ``/graph/<name>``
+    Each tool is added to the host tool table and mapped to a ``/graph/<name>``
     route in ``ACTION_TOOL_ROUTES`` (auto-mounted by the generic REST factory), so
     MCP and REST stay in lockstep. CONCEPT:MERISTEM-KG.coordination.engine-message-broker.
     """
@@ -2164,7 +2165,7 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    runtime.REGISTERED_TOOLS["graph_broker"] = graph_broker
+    tools["graph_broker"] = graph_broker
     runtime.ACTION_TOOL_ROUTES["graph_broker"] = "/graph/broker"
 
     # ══════════════════════════════════════════════════════════════════
@@ -2208,7 +2209,7 @@ def register_engine_surface_tools(
         finally:
             _kvcache_close(backend)
 
-    runtime.REGISTERED_TOOLS["graph_kvcache"] = graph_kvcache
+    tools["graph_kvcache"] = graph_kvcache
 
     # ══════════════════════════════════════════════════════════════════
     # graph_kv_checkpoint — KV-cache checkpoints as graph resources
@@ -2443,7 +2444,7 @@ def register_engine_surface_tools(
             {"surface": "kv_checkpoint", "error": f"unknown action {action!r}"}
         )
 
-    runtime.REGISTERED_TOOLS["graph_kv_checkpoint"] = graph_kv_checkpoint
+    tools["graph_kv_checkpoint"] = graph_kv_checkpoint
     runtime.ACTION_TOOL_ROUTES["graph_kv_checkpoint"] = "/graph/kv_checkpoint"
     runtime.ACTION_TOOL_ROUTES["graph_kvcache"] = "/graph/kvcache"
 
@@ -2502,7 +2503,7 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    runtime.REGISTERED_TOOLS["graph_federated_search"] = graph_federated_search
+    tools["graph_federated_search"] = graph_federated_search
     runtime.ACTION_TOOL_ROUTES["graph_federated_search"] = "/graph/federated-search"
 
     # ══════════════════════════════════════════════════════════════════
@@ -2561,7 +2562,7 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    runtime.REGISTERED_TOOLS["graph_promql"] = graph_promql
+    tools["graph_promql"] = graph_promql
     runtime.ACTION_TOOL_ROUTES["graph_promql"] = "/graph/promql"
 
     # ══════════════════════════════════════════════════════════════════
@@ -2628,7 +2629,7 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    runtime.REGISTERED_TOOLS["graph_traces"] = graph_traces
+    tools["graph_traces"] = graph_traces
     runtime.ACTION_TOOL_ROUTES["graph_traces"] = "/graph/traces"
 
     # ══════════════════════════════════════════════════════════════════
@@ -2694,7 +2695,7 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    runtime.REGISTERED_TOOLS["graph_logs"] = graph_logs
+    tools["graph_logs"] = graph_logs
     runtime.ACTION_TOOL_ROUTES["graph_logs"] = "/graph/logs"
 
     # ══════════════════════════════════════════════════════════════════
@@ -2744,7 +2745,7 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    runtime.REGISTERED_TOOLS["graph_gis"] = graph_gis
+    tools["graph_gis"] = graph_gis
     runtime.ACTION_TOOL_ROUTES["graph_gis"] = "/graph/gis"
 
     # ══════════════════════════════════════════════════════════════════
@@ -2820,7 +2821,7 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    runtime.REGISTERED_TOOLS["graph_memory"] = graph_memory
+    tools["graph_memory"] = graph_memory
     runtime.ACTION_TOOL_ROUTES["graph_memory"] = "/graph/memory"
 
     # ══════════════════════════════════════════════════════════════════
@@ -3200,7 +3201,7 @@ def register_engine_surface_tools(
         )
 
     register_conditional_tools(
-        runtime.REGISTERED_TOOLS,
+        tools,
         [
             ("graph_mine", graph_mine, "/mining/associate"),
             (
@@ -3291,7 +3292,7 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    runtime.REGISTERED_TOOLS["graph_learn"] = graph_learn
+    tools["graph_learn"] = graph_learn
     # REST twin path: POST {prefix}/graphlearn/fit (bespoke natural-body mount in
     # runtime → the SAME _execute_tool core as the MCP verb).
     runtime.ACTION_TOOL_ROUTES["graph_learn"] = "/graphlearn/fit"
@@ -3396,7 +3397,7 @@ def register_engine_surface_tools(
             params=params,
         )
 
-    runtime.REGISTERED_TOOLS["graph_pipeline"] = graph_pipeline
+    tools["graph_pipeline"] = graph_pipeline
     # REST twin path: POST {prefix}/pipeline/train (natural-body mount in runtime →
     # the SAME _execute_tool core as the MCP verb).
     runtime.ACTION_TOOL_ROUTES["graph_pipeline"] = "/pipeline/train"
@@ -3451,7 +3452,7 @@ def register_engine_surface_tools(
             return rejection
         return _fork_fanout(branches, seed_vars, sandbox.strip())
 
-    runtime.REGISTERED_TOOLS["graph_fork"] = graph_fork
+    tools["graph_fork"] = graph_fork
     runtime.ACTION_TOOL_ROUTES["graph_fork"] = "/graph/fork"
 
     # ══════════════════════════════════════════════════════════════════
@@ -3623,5 +3624,5 @@ def register_engine_surface_tools(
             }
         )
 
-    runtime.REGISTERED_TOOLS["graph_viz"] = graph_viz
+    tools["graph_viz"] = graph_viz
     runtime.ACTION_TOOL_ROUTES["graph_viz"] = "/graph/viz"

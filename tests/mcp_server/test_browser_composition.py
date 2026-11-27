@@ -7,6 +7,7 @@ import pytest
 from arbora.access.action_policy import ActionPolicies
 from arbora.identity.engine import IdentityUnavailable
 from arbora.mcp_server.browser_composition import configured_browser_boundary
+from arbora.mcp_server.host_caches import ToolTable
 
 pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.5.2")
 
@@ -60,11 +61,23 @@ def test_supervisor_receives_exact_boundary(monkeypatch):
         composition, "run_web_ui", lambda stop, **kwargs: calls.append((stop, kwargs))
     )
     policies = ActionPolicies()
+    tools = ToolTable()
     composition.start_composed_services(
-        object(), object(), action_policies=policies, session_boundary=boundary
+        object(),
+        object(),
+        action_policies=policies,
+        tools=tools,
+        session_boundary=boundary,
     )
     assert calls == [
-        ("fixture-stop", {"action_policies": policies, "session_boundary": boundary})
+        (
+            "fixture-stop",
+            {
+                "action_policies": policies,
+                "tools": tools,
+                "session_boundary": boundary,
+            },
+        )
     ]
 
 
@@ -268,7 +281,11 @@ def test_one_runtime_reaches_mcp_server_and_webui(monkeypatch):
         lambda stop, **kw: handed.append(kw["session_boundary"]),
     )
     composition.start_composed_services(
-        object(), object(), action_policies=ActionPolicies(), session_boundary=boundary
+        object(),
+        object(),
+        action_policies=ActionPolicies(),
+        tools=ToolTable(),
+        session_boundary=boundary,
     )
     assert handed == [boundary] and handed[0] is boundary
     for name, text in _production_sources().items():

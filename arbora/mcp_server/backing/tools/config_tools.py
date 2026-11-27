@@ -30,11 +30,14 @@ from typing import Any, Literal
 from pydantic import Field
 
 from arbora.access.action_policy import ActionPolicies
-from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 
 
 def register_config_tools(
-    mcp, action_policies: ActionPolicies, engine_provider: Callable[[], Any]
+    mcp,
+    tools: ToolTable,
+    action_policies: ActionPolicies,
+    engine_provider: Callable[[], Any],
 ):
     """Register the ``graph_config`` tool onto the MCP server."""
 
@@ -112,4 +115,4 @@ def register_config_tools(
         except ConfigAdminError as exc:
             return json.dumps({"error": exc.code, "detail": exc.message})
 
-    runtime.REGISTERED_TOOLS["graph_config"] = graph_config
+    tools["graph_config"] = graph_config

@@ -133,7 +133,7 @@ def test_webui_helpers_use_one_owner_loop_for_inventory_call_and_resource() -> N
     owner = _LoopOwner(mux)
     owner.start()
     try:
-        helpers = webui_mcp_delegation_helpers()
+        helpers = webui_mcp_delegation_helpers({})
 
         async def exercise() -> tuple[Any, Any, Any]:
             tools = await helpers["list_mcp_server_tools"](server_name="docs")
@@ -227,12 +227,11 @@ async def test_served_intent_inventory_and_call_preserve_caller_session(
     async def unregistered() -> str:
         raise AssertionError("unregistered tool must never execute")
 
-    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
     monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {"find": find})
     config = tmp_path / "mcp.json"
     config.write_text('{"mcpServers": {}}', encoding="utf-8")
     mux = attach_multiplexer_from_fixture(host, config)
-    helpers = webui_mcp_delegation_helpers()
+    helpers = webui_mcp_delegation_helpers({})
     try:
         async with host._lifespan_manager():
             for owner, tenant in (("owner-a", "tenant-a"), ("owner-b", "tenant-b")):

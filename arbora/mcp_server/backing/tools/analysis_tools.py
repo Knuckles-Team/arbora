@@ -18,8 +18,8 @@ from pydantic import Field
 from arbora.api.errors import not_served
 from arbora.api.evidence import EvidenceBundle
 from arbora.core.environment import read_env, read_text
-from arbora.mcp_server import runtime
 from arbora.mcp_server.backing import engine_routing
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.mcp_server.legacy_action_invoke import invoke_legacy_action
 from arbora.security.config_sensitivity import (
     ENDPOINT_KEY_PARTS as _ENDPOINT_MCP_KEY_PARTS,
@@ -1340,7 +1340,7 @@ _CONFIGURE_ACTION_DISPATCH = {
 }
 
 
-def register_analysis_tools(mcp):
+def register_analysis_tools(mcp, tools: ToolTable):
     """Register the analysis_tools group on the given FastMCP server."""
 
     async def _run_analysis_action(
@@ -1448,7 +1448,7 @@ def register_analysis_tools(mcp):
             target=target,
         )
 
-    runtime.REGISTERED_TOOLS["graph_analyze"] = graph_analyze
+    tools["graph_analyze"] = graph_analyze
 
     @mcp.tool(
         name="graph_configure",
@@ -1515,4 +1515,4 @@ def register_analysis_tools(mcp):
                 }
             )
 
-    runtime.REGISTERED_TOOLS["graph_configure"] = graph_configure
+    tools["graph_configure"] = graph_configure

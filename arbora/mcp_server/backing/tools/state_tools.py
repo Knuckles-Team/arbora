@@ -17,6 +17,7 @@ from starlette.responses import JSONResponse
 
 from arbora.api.errors import not_served
 from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import (
     public_error_json,
 )
@@ -159,7 +160,7 @@ def _feeds_sync_action(engine: Any, url: str, mode: str) -> str:
     raise not_served("knowledge_graph.core.source_sync", "MEDULLA-INGEST-WORKER-R605")
 
 
-def register_state_tools(mcp, engine_provider: Callable[[], Any]):
+def register_state_tools(mcp, tools: ToolTable, engine_provider: Callable[[], Any]):
     """Register the state_tools group on the given FastMCP server."""
 
     @mcp.tool(
@@ -200,7 +201,7 @@ def register_state_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["graph_sessions"] = graph_sessions
+    tools["graph_sessions"] = graph_sessions
 
     @mcp.tool(
         name="graph_feeds",
@@ -230,7 +231,7 @@ def register_state_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["graph_feeds"] = graph_feeds
+    tools["graph_feeds"] = graph_feeds
 
     # ══════════════════════════════════════════════════════════════════
     # Ontology System — Palantir Foundry parity (type/link/function layer)

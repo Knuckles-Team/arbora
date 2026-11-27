@@ -194,6 +194,7 @@ async def test_fleet_list_and_grant_use_the_approval_leases(
         fleet=host.fleet,
         approvals=host.policy.approvals,
         engine_provider=host.engine.served,
+        caches=host.caches,
     )
     app = Starlette(
         routes=[

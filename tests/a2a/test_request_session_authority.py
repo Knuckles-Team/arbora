@@ -20,7 +20,6 @@ from arbora.a2a.application import AmbientA2AAuthenticator
 from arbora.a2a.service import A2AService
 from arbora.api.registry import Surface
 from arbora.core.settings import runtime_config as config
-from arbora.mcp_server import runtime as mcp_runtime
 from arbora.security import request_identity
 from arbora.security.actor_context import (
     ActorContext,
@@ -272,10 +271,11 @@ def registered_unary(monkeypatch: pytest.MonkeyPatch, failure: str = "") -> Any:
             return await super().cancel(task_id)
 
     authority = RecordingAuthority()
-    monkeypatch.setattr(mcp_runtime, "REGISTERED_TOOLS", {})
     registrar = _Mcp()
     a2a_mcp.register_a2a_tools(
-        registrar, service=A2AService(authority=authority, router=Router())
+        registrar,
+        service=A2AService(authority=authority, router=Router()),
+        tool_table={},
     )
     app = FastAPI()
     for (path, methods), handler in registrar.routes.items():

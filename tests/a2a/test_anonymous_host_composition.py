@@ -35,6 +35,7 @@ def _host(client: Any) -> FastMCP:
     register_a2a_tools(
         mcp,
         service=A2AService(authority=None, router=None),  # type: ignore[arg-type]
+        tool_table={},
         anonymous=anonymous_a2a_provider(
             origin=ORIGIN, graph="control", revision="test", connect=connect
         ),

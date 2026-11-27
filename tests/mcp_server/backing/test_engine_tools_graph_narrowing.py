@@ -36,6 +36,7 @@ import pytest
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing import engine_routing
 from arbora.mcp_server.backing.tools import engine_tools
+from arbora.mcp_server.host_caches import HostCaches
 from arbora.security.actor_context import ActorContext, ActorType, use_actor
 from arbora.security.session import (
     GraphSession,
@@ -113,7 +114,8 @@ def _fresh_client_pool(monkeypatch):
 def test_explicit_graph_mismatch_narrows_session_before_client_construction(
     monkeypatch,
 ):
-    runtime.ensure_tools_registered()
+    caches = HostCaches()
+    runtime.ensure_tools_registered(caches)
     client, observed = _observing_client()
 
     client_for_calls: list[tuple[str, str]] = []
@@ -148,7 +150,8 @@ def test_explicit_graph_mismatch_narrows_session_before_client_construction(
 
 
 def test_no_narrowing_when_graph_matches_or_is_empty(monkeypatch):
-    runtime.ensure_tools_registered()
+    caches = HostCaches()
+    runtime.ensure_tools_registered(caches)
     client, observed = _observing_client()
 
     client_for_calls: list[str] = []
@@ -174,7 +177,8 @@ def test_no_narrowing_when_graph_matches_or_is_empty(monkeypatch):
 
 
 def test_recursion_terminates_after_exactly_one_narrowing(monkeypatch):
-    runtime.ensure_tools_registered()
+    caches = HostCaches()
+    runtime.ensure_tools_registered(caches)
     client, _observed = _observing_client()
     monkeypatch.setattr(engine_tools, "_client_for", lambda graph: client)
 
@@ -223,7 +227,8 @@ def test_engine_tenants_list_then_engine_nodes_list_by_label_succeeds(monkeypatc
     normal domain) against a session still naming the deployment default
     must succeed via the one-step narrowing -- not raise ``PermissionError``
     for a graph the caller just legitimately discovered."""
-    runtime.ensure_tools_registered()
+    caches = HostCaches()
+    runtime.ensure_tools_registered(caches)
 
     listed_graphs = ["tenant-acme-graph", "tenant-other-graph"]
 
@@ -297,7 +302,8 @@ def test_verified_identity_preserved_through_narrowing(monkeypatch):
     """Only ``.graph`` moves during narrowing -- actor, tenant, scopes, and
     policy_version are carried through unchanged (``with_graph`` is a
     ``dataclasses.replace`` of ONE field)."""
-    runtime.ensure_tools_registered()
+    caches = HostCaches()
+    runtime.ensure_tools_registered(caches)
     client, observed_calls = _observing_client()
     monkeypatch.setattr(engine_tools, "_client_for", lambda graph: client)
 
@@ -358,7 +364,8 @@ def test_narrowing_behaves_identically_under_stdio_process_session(monkeypatch):
     ``_dispatch``."""
     from arbora.security.session import suspend_session
 
-    runtime.ensure_tools_registered()
+    caches = HostCaches()
+    runtime.ensure_tools_registered(caches)
     client, observed = _observing_client()
     monkeypatch.setattr(engine_tools, "_client_for", lambda graph: client)
 
@@ -374,6 +381,7 @@ def test_narrowing_behaves_identically_under_stdio_process_session(monkeypatch):
 
             out = asyncio.run(
                 runtime._execute_tool(
+                    caches.tools,
                     "engine_nodes",
                     action="has",
                     params_json=json.dumps({"node_id": "n1"}),

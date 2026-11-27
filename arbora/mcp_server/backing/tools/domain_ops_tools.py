@@ -9,10 +9,13 @@ from typing import Any
 from pydantic import Field
 
 from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_text
 
 
-def register_domain_ops_tools(mcp: Any, engine_provider: Callable[[], Any]) -> None:
+def register_domain_ops_tools(
+    mcp: Any, tools: ToolTable, engine_provider: Callable[[], Any]
+) -> None:
     """Register persisted enterprise, finance, and ML/RLM domain operations."""
 
     @mcp.tool(
@@ -111,5 +114,5 @@ def register_domain_ops_tools(mcp: Any, engine_provider: Callable[[], Any]) -> N
         except Exception as exc:
             return public_error_text(exc)
 
-    runtime.REGISTERED_TOOLS["graph_domain_ops"] = graph_domain_ops
+    tools["graph_domain_ops"] = graph_domain_ops
     runtime.ACTION_TOOL_ROUTES["graph_domain_ops"] = "/graph/domain-ops"

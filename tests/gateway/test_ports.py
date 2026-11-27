@@ -12,6 +12,7 @@ from arbora.gateway.ports import (
     configure_gateway_application,
     gateway_application,
 )
+from arbora.mcp_server.host_caches import HostCaches
 
 
 class _Application:
@@ -109,6 +110,7 @@ async def test_invoke_operation_runs_the_invoke_pipeline_as_the_request_caller(
         fleet=None,
         approvals=None,  # type: ignore[arg-type]
         engine_provider=lambda: None,
+        caches=HostCaches(),
     )
     value = await application.invoke_operation(
         "ingest.sources.list", {}, request="req", idempotency_key="k"
@@ -119,7 +121,11 @@ async def test_invoke_operation_runs_the_invoke_pipeline_as_the_request_caller(
         await application.invoke_operation("ingest.sources.list", {}, request="req")
     assert refused.value.code == "NOT_FOUND"
     bare = NativeGatewayApplication(
-        None, fleet=None, approvals=None, engine_provider=lambda: None
-    )  # type: ignore[arg-type]
+        None,
+        fleet=None,
+        approvals=None,
+        engine_provider=lambda: None,
+        caches=HostCaches(),  # type: ignore[arg-type]
+    )
     with pytest.raises(pipeline.OperationRefused):
         await bare.invoke_operation("x", {}, request="req")

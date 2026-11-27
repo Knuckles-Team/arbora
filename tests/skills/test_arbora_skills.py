@@ -105,12 +105,14 @@ def test_query_workflow_skill_documents_the_registered_query_argument() -> None:
     import inspect
 
     from arbora.mcp_server import runtime
+    from arbora.mcp_server.host_caches import HostCaches
 
-    runtime.ensure_tools_registered()
+    caches = HostCaches()
+    runtime.ensure_tools_registered(caches)
     skill = SKILLS_ROOT / "graph-query-and-explanation"
     text = (skill / "SKILL.md").read_text(encoding="utf-8")
     sidecar = (skill / "agents" / "arbora.yaml").read_text(encoding="utf-8")
-    parameters = inspect.signature(runtime.REGISTERED_TOOLS["graph_query"]).parameters
+    parameters = inspect.signature(caches.tools["graph_query"]).parameters
 
     assert "query" in parameters
     assert "cypher" not in parameters

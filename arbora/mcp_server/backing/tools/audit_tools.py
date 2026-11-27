@@ -21,7 +21,7 @@ One action:
   is a corresponding change in the ``medulla`` repo, NOT this one.
 
 Mirrors the ``graph_ops_causal`` action-router shape (single ``@mcp.tool``, an
-``action`` enum, registered into ``runtime.REGISTERED_TOOLS``) rather than
+``action`` enum, registered into ``tools``) rather than
 inventing a new tool convention.
 """
 
@@ -34,10 +34,13 @@ from typing import Any
 from pydantic import Field
 
 from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_payload
 
 
-def register_audit_tools(mcp: Any, engine_provider: Callable[[], Any]) -> None:
+def register_audit_tools(
+    mcp: Any, tools: ToolTable, engine_provider: Callable[[], Any]
+) -> None:
     """Register the ``graph_audit`` group on the given FastMCP server."""
 
     @mcp.tool(
@@ -70,7 +73,7 @@ def register_audit_tools(mcp: Any, engine_provider: Callable[[], Any]) -> None:
             }
         )
 
-    runtime.REGISTERED_TOOLS["graph_audit"] = graph_audit
+    tools["graph_audit"] = graph_audit
     # No bespoke endpoint needed — the generic REST-twin factory in
     # runtime._build_server (CONCEPT:MERISTEM-KG.coordination.engine-message-broker) mounts
     # POST /audit for every ACTION_TOOL_ROUTES entry without a bespoke handler,

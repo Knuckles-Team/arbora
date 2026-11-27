@@ -67,36 +67,32 @@ SEND_SCOPES = frozenset({"kg:write", "kg:admin"})
 #: Where the SDK A2A application is mounted.
 A2A_PATH = "/a2a/agent"
 
-_agent: Any = None
+
+def fleet_agent(tools: Mapping[str, Any]) -> Any:
+    """Build the fleet agent over the host tool table; its toolset is the multiplexer."""
+    from pydantic_ai import Agent
+
+    def toolset(_ctx: Any) -> Any:
+        from arbora.mcp_server import runtime
+
+        return runtime.build_native_arbora_toolset(
+            list(FLEET_TOOLS), tools, toolset_id="arbora-fleet"
+        )
+
+    model = str(read_env(MODEL_SETTING, "") or "") or None
+    return Agent(model, name=FLEET_AGENT_NAME, toolsets=[toolset])
 
 
-def _fleet_toolset(_ctx: Any) -> Any:
-    from arbora.mcp_server import runtime
-
-    return runtime.build_native_arbora_toolset(
-        list(FLEET_TOOLS), toolset_id="arbora-fleet"
-    )
-
-
-def fleet_agent() -> Any:
-    """Return the one fleet agent; its toolset is the multiplexer."""
-    global _agent
-    if _agent is None:
-        from pydantic_ai import Agent
-
-        model = str(read_env(MODEL_SETTING, "") or "") or None
-        _agent = Agent(model, name=FLEET_AGENT_NAME, toolsets=[_fleet_toolset])
-    return _agent
-
-
-async def turn_handler(engine: Any, text: str, *, session: Any = "") -> str | None:
+async def turn_handler(
+    tools: Mapping[str, Any], engine: Any, text: str, *, session: Any = ""
+) -> str | None:
     """Run one inbound turn on the fleet agent and return the reply text.
 
     ``session`` is the sender's ``SenderSession`` (ARBORA-MESSAGING-R007.1) for a
     channel turn; the fleet agent runs under the principal it names.
     """
     del engine, session
-    result = await fleet_agent().run(text)
+    result = await fleet_agent(tools).run(text)
     output = getattr(result, "output", None)
     return str(output) if output else None
 
@@ -165,8 +161,12 @@ def prompt_normalizer(engine_provider: Callable[[], Any]) -> Any:
     return default_normalizer(recorder=engine_recorder(engine_provider))
 
 
-def bind_messaging_ports(engine_provider: Callable[[], Any]) -> None:
-    """Bind the messaging host ports at startup."""
+def bind_messaging_ports(
+    engine_provider: Callable[[], Any], tools: Mapping[str, Any]
+) -> None:
+    """Bind the messaging host ports at startup; the turn handler runs over ``tools``."""
+    from functools import partial
+
     from arbora.messaging.host_ports import bind_host_ports
     from arbora.observability.runtime_signals import record_runtime_signal
 
@@ -174,7 +174,7 @@ def bind_messaging_ports(engine_provider: Callable[[], Any]) -> None:
         record_runtime_signal(kind, subject, dict(detail))
 
     bind_host_ports(
-        turn_handler=turn_handler,
+        turn_handler=partial(turn_handler, tools),
         action_gate=action_gate,
         outbound_mirror=outbound_mirror,
         runtime_signal=runtime_signal,
@@ -261,7 +261,11 @@ def _engine_storage(engine_provider: Callable[[], Any]) -> Any:
 
 
 def mount_sdk_a2a(
-    mcp: Any, *, engine_provider: Callable[[], Any], stream_handler: Any = None
+    mcp: Any,
+    tools: Mapping[str, Any],
+    *,
+    engine_provider: Callable[[], Any],
+    stream_handler: Any = None,
 ) -> Any:
     """Mount the SDK A2A application for the fleet agent behind admission.
 
@@ -283,7 +287,9 @@ def mount_sdk_a2a(
 
     storage = _engine_storage(engine_provider)
     admitted = create_admitted_a2a_app(
-        agent=MediaNormalizingAgent(fleet_agent(), prompt_normalizer(engine_provider)),
+        agent=MediaNormalizingAgent(
+            fleet_agent(tools), prompt_normalizer(engine_provider)
+        ),
         authenticator=AmbientA2AAuthenticator(),
         bind_caller=caller_session_scope,
         stream_handler=stream_handler,

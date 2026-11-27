@@ -28,6 +28,10 @@ class _FakeMux:
         return [{"name": f"{server_name}_tool"}]
 
 
+#: The host tool table of the delegation under test.
+_TOOLS = {"graph_registered": object()}
+
+
 @pytest.fixture
 def mux(monkeypatch: pytest.MonkeyPatch) -> _FakeMux:
     fake = _FakeMux()
@@ -44,12 +48,11 @@ def mux(monkeypatch: pytest.MonkeyPatch) -> _FakeMux:
     monkeypatch.setattr(mcp_delegation, "require_fleet_capability", lambda kind: None)
     monkeypatch.setattr(mcp_delegation, "provider_tools", lambda host: host_tools)
     monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {"find": object()})
-    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {"graph_registered": object()})
     return fake
 
 
 def _list(server_name: str) -> list[dict[str, Any]]:
-    helpers = mcp_delegation.webui_mcp_delegation_helpers()
+    helpers = mcp_delegation.webui_mcp_delegation_helpers(_TOOLS)
 
     async def _call() -> list[dict[str, Any]]:
         return await helpers["list_mcp_server_tools"](server_name=server_name)
@@ -68,7 +71,7 @@ def test_native_server_lists_registered_tools_without_a_child_probe(
 
 
 def test_a_child_server_is_probed_through_the_catalog(mux: _FakeMux) -> None:
-    helpers = mcp_delegation.webui_mcp_delegation_helpers()
+    helpers = mcp_delegation.webui_mcp_delegation_helpers(_TOOLS)
 
     async def _call() -> list[dict[str, Any]]:
         return await helpers["list_mcp_server_tools"](server_name="jellyfin")

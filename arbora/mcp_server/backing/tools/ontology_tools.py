@@ -15,11 +15,11 @@ from typing import Any
 from pydantic import Field
 
 from arbora.api.errors import not_served
-from arbora.mcp_server import runtime
 from arbora.mcp_server.backing import engine_routing
 from arbora.mcp_server.backing.ontology_types import (
     OntologyCatalogRequest,
 )
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import (
     public_error_json,
 )
@@ -675,7 +675,7 @@ def _object_set_algebra(
     )
 
 
-def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
+def register_ontology_tools(mcp, tools: ToolTable, engine_provider: Callable[[], Any]):
     """Register the ontology_tools group on the given FastMCP server."""
 
     @mcp.tool(
@@ -700,7 +700,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
             "knowledge_graph.ontology.property_types", "MEDULLA-TYPED-PACKS-R650"
         )
 
-    runtime.REGISTERED_TOOLS["ontology_property_types"] = ontology_property_types
+    tools["ontology_property_types"] = ontology_property_types
 
     @mcp.tool(
         name="ontology_value_types",
@@ -723,7 +723,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
             "knowledge_graph.ontology.value_types", "MEDULLA-TYPED-PACKS-R650"
         )
 
-    runtime.REGISTERED_TOOLS["ontology_value_types"] = ontology_value_types
+    tools["ontology_value_types"] = ontology_value_types
 
     @mcp.tool(
         name="ontology_interface",
@@ -778,7 +778,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
             "knowledge_graph.ontology.interfaces", "MEDULLA-TYPED-PACKS-R650"
         )
 
-    runtime.REGISTERED_TOOLS["ontology_interface"] = ontology_interface
+    tools["ontology_interface"] = ontology_interface
 
     @mcp.tool(
         name="ontology_leanix_sync",
@@ -798,7 +798,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
             owner="scion-sdk",
         )
 
-    runtime.REGISTERED_TOOLS["ontology_leanix_sync"] = ontology_leanix_sync
+    tools["ontology_leanix_sync"] = ontology_leanix_sync
 
     @mcp.tool(
         name="graph_ontology",
@@ -837,7 +837,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
             "knowledge_graph.ontology.lifecycle", "MEDULLA-TYPED-PACKS-R651"
         )
 
-    runtime.REGISTERED_TOOLS["graph_ontology"] = graph_ontology
+    tools["graph_ontology"] = graph_ontology
 
     @mcp.tool(
         name="graph_writeback",
@@ -928,7 +928,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["graph_writeback"] = graph_writeback
+    tools["graph_writeback"] = graph_writeback
 
     @mcp.tool(
         name="spec_ticket",
@@ -978,7 +978,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["spec_ticket"] = spec_ticket
+    tools["spec_ticket"] = spec_ticket
 
     @mcp.tool(
         name="source_sync",
@@ -1058,7 +1058,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["source_sync"] = source_sync
+    tools["source_sync"] = source_sync
 
     @mcp.tool(
         name="source_drain",
@@ -1076,7 +1076,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
             "knowledge_graph.core.chunked_drain", "MEDULLA-INGEST-WORKER-R605"
         )
 
-    runtime.REGISTERED_TOOLS["source_drain"] = source_drain
+    tools["source_drain"] = source_drain
 
     @mcp.tool(
         name="graph_etl",
@@ -1163,7 +1163,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["graph_etl"] = graph_etl
+    tools["graph_etl"] = graph_etl
 
     @mcp.tool(
         name="ontology_classification_claims",
@@ -1286,9 +1286,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["ontology_classification_claims"] = (
-        ontology_classification_claims
-    )
+    tools["ontology_classification_claims"] = ontology_classification_claims
 
     @mcp.tool(
         name="ontology_repository_provenance",
@@ -1373,9 +1371,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["ontology_repository_provenance"] = (
-        ontology_repository_provenance
-    )
+    tools["ontology_repository_provenance"] = ontology_repository_provenance
 
     @mcp.tool(
         name="ontology_function",
@@ -1401,7 +1397,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
             "knowledge_graph.ontology.functions", "MEDULLA-TYPED-PACKS-R650"
         )
 
-    runtime.REGISTERED_TOOLS["ontology_function"] = ontology_function
+    tools["ontology_function"] = ontology_function
 
     @mcp.tool(
         name="ontology_derive",
@@ -1439,7 +1435,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["ontology_derive"] = ontology_derive
+    tools["ontology_derive"] = ontology_derive
 
     @mcp.tool(
         name="ontology_link_materialize",
@@ -1460,7 +1456,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         """List link types or reify + persist a M:N link via the graph_write path."""
         raise not_served("knowledge_graph.ontology.links", "MEDULLA-TYPED-PACKS-R650")
 
-    runtime.REGISTERED_TOOLS["ontology_link_materialize"] = ontology_link_materialize
+    tools["ontology_link_materialize"] = ontology_link_materialize
 
     @mcp.tool(
         name="object_edits",
@@ -1547,7 +1543,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["object_edits"] = object_edits
+    tools["object_edits"] = object_edits
 
     @mcp.tool(
         name="object_index",
@@ -1586,7 +1582,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["object_index"] = object_index
+    tools["object_index"] = object_index
 
     @mcp.tool(
         name="object_permissioning",
@@ -1609,7 +1605,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
             "knowledge_graph.ontology.permissioning", "MEDULLA-TYPED-PACKS-R652"
         )
 
-    runtime.REGISTERED_TOOLS["object_permissioning"] = object_permissioning
+    tools["object_permissioning"] = object_permissioning
 
     @mcp.tool(
         name="graph_share",
@@ -1658,7 +1654,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["graph_share"] = graph_share
+    tools["graph_share"] = graph_share
 
     @mcp.tool(
         name="object_set",
@@ -1728,7 +1724,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["object_set"] = object_set
+    tools["object_set"] = object_set
 
     @mcp.tool(
         name="document_process",
@@ -1754,7 +1750,7 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         """Process a document into Document + Chunk ontology objects through the live graph."""
         raise not_served("knowledge_graph.facade", "MEDULLA-CONTRACT-R005")
 
-    runtime.REGISTERED_TOOLS["document_process"] = document_process
+    tools["document_process"] = document_process
 
     @mcp.tool(
         name="source_connector",
@@ -1786,4 +1782,4 @@ def register_ontology_tools(mcp, engine_provider: Callable[[], Any]):
         """List or run a document-source connector (CONCEPT:MERISTEM-ECO.connector.document-source-framework–4.29)."""
         raise not_served("knowledge_graph.facade", "MEDULLA-CONTRACT-R005")
 
-    runtime.REGISTERED_TOOLS["source_connector"] = source_connector
+    tools["source_connector"] = source_connector

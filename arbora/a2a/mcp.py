@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, Any, Literal
 
 from .application import AmbientA2AAuthenticator, create_a2a_handlers
@@ -35,6 +36,7 @@ def register_a2a_tools(
     *,
     service: A2AService,
     tools: Any = None,
+    tool_table: MutableMapping[str, Any],
     operation_services: InvokeServices | None = None,
     operation_authenticator: AmbientHTTPAuthenticator | None = None,
     task_plan_config: Any = None,
@@ -106,9 +108,7 @@ def register_a2a_tools(
             result = await service.cancel_task(task_id)
         return result.model_dump_json(by_alias=True)
 
-    from arbora.mcp_server import runtime
-
-    runtime.REGISTERED_TOOLS["graph_a2a"] = graph_a2a
+    tool_table["graph_a2a"] = graph_a2a
     mcp.custom_route("/.well-known/agent-card.json", methods=["GET"])(card_handler)
     # A2A clients read the card next to the endpoint the card names.
     mcp.custom_route("/a2a/.well-known/agent-card.json", methods=["GET"])(card_handler)

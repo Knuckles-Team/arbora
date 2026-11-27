@@ -214,6 +214,7 @@ def test_the_fleet_agent_toolset_binds_the_served_intent_verbs(monkeypatch) -> N
     """0.1.4: 'requested native Arbora tool is unavailable' for find/act."""
     from arbora.host_bindings import FLEET_TOOLS
     from arbora.mcp_server import runtime
+    from arbora.mcp_server.host_caches import ToolTable
 
     calls: list[tuple[str, str | None, str]] = []
     events: list[dict[str, Any]] = []
@@ -242,9 +243,10 @@ def test_the_fleet_agent_toolset_binds_the_served_intent_verbs(monkeypatch) -> N
     async def legacy_act(action: str = "") -> str:
         raise AssertionError("legacy tool called")
 
-    monkeypatch.setitem(runtime.REGISTERED_TOOLS, "act", legacy_act)
+    table = ToolTable()
+    table["act"] = legacy_act
     toolset = runtime.build_native_arbora_toolset(
-        list(FLEET_TOOLS), toolset_id="run-a2a-1", emit=events.append
+        list(FLEET_TOOLS), table, toolset_id="run-a2a-1", emit=events.append
     )
     tools = {tool.name: tool for tool in toolset.tools.values()}
     assert set(tools) == set(FLEET_TOOLS)

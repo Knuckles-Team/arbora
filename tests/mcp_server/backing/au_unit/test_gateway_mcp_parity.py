@@ -20,6 +20,7 @@ from arbora.mcp_server.backing.tool_specs import (
     canonical_tool_names,
 )
 from arbora.mcp_server.backing.tools import engine_tools
+from arbora.mcp_server.host_caches import HostCaches
 from arbora.mcp_server.routes import mount_rest_routes
 
 # The 21 ``engine_<domain>`` tool families are declared as REQUIRED
@@ -39,7 +40,7 @@ _NEEDS_ENGINE_DOMAINS = pytest.mark.skipif(
     reason=(
         "medulla package not installed in this environment -- the "
         "required engine_<domain> tool families cannot be registered, so "
-        "REGISTERED_TOOLS vs. the canonical ToolSpec universe legitimately "
+        "the host tool table vs. the canonical ToolSpec universe legitimately "
         "diverge by exactly those families."
     ),
 )
@@ -55,15 +56,15 @@ class _RecordingApp:
         self.routes.append((path, list(methods or [])))
 
 
-def _mounted_paths(prefix: str = "") -> set[str]:
-    runtime.ensure_tools_registered()
+def _mounted_paths(caches: HostCaches, prefix: str = "") -> set[str]:
+    runtime.ensure_tools_registered(caches)
     app = _RecordingApp()
-    mount_rest_routes(app, prefix=prefix)
+    mount_rest_routes(app, caches.tools, prefix=prefix)
     return {path for path, _methods in app.routes}
 
 
-def _canonical_runtime_names() -> frozenset[str]:
-    tools = set(runtime.REGISTERED_TOOLS)
+def _canonical_runtime_names(caches: HostCaches) -> frozenset[str]:
+    tools = set(caches.tools)
     unknown = tools - set(TOOL_SPECS_BY_NAME)
     assert not unknown, (
         f"runtime registered unknown ToolSpec families: {sorted(unknown)}"
@@ -79,11 +80,12 @@ def _canonical_runtime_names() -> frozenset[str]:
 
 @_NEEDS_ENGINE_DOMAINS
 def test_every_mcp_tool_has_a_rest_route():
-    runtime.ensure_tools_registered()
-    tools = set(runtime.REGISTERED_TOOLS)
+    caches = HostCaches()
+    runtime.ensure_tools_registered(caches)
+    tools = set(caches.tools)
     mapped = set(runtime.ACTION_TOOL_ROUTES)
 
-    assert tools == set(_canonical_runtime_names())
+    assert tools == set(_canonical_runtime_names(caches))
 
     missing = tools - mapped
     assert not missing, (
@@ -94,20 +96,21 @@ def test_every_mcp_tool_has_a_rest_route():
 
 @_NEEDS_ENGINE_DOMAINS
 def test_no_phantom_routes_for_missing_tools():
-    runtime.ensure_tools_registered()
-    tools = set(runtime.REGISTERED_TOOLS)
+    caches = HostCaches()
+    runtime.ensure_tools_registered(caches)
+    tools = set(caches.tools)
     mapped = set(runtime.ACTION_TOOL_ROUTES)
 
-    assert tools == set(_canonical_runtime_names())
+    assert tools == set(_canonical_runtime_names(caches))
 
     phantom = mapped - tools
     assert not phantom, (
-        f"ACTION_TOOL_ROUTES references tools not in REGISTERED_TOOLS: {sorted(phantom)}."
+        f"ACTION_TOOL_ROUTES references tools not in the host tool table: {sorted(phantom)}."
     )
 
 
 def test_mapped_routes_are_actually_mounted():
-    paths = _mounted_paths()
+    paths = _mounted_paths(HostCaches())
     for tool, path in runtime.ACTION_TOOL_ROUTES.items():
         assert path in paths, (
             f"Tool '{tool}' maps to '{path}' but that route is not mounted by "
@@ -117,16 +120,17 @@ def test_mapped_routes_are_actually_mounted():
 
 def test_prefix_is_applied_to_mounted_routes():
     # The API gateway mounts these under /api — confirm the prefix is honoured.
-    paths = _mounted_paths(prefix="/api")
+    paths = _mounted_paths(HostCaches(), prefix="/api")
     for path in runtime.ACTION_TOOL_ROUTES.values():
         assert ("/api" + path) in paths
 
 
 def test_retired_legacy_tool_fanout_is_not_mounted():
     """Old standalone mining/research routes are absent from AU's served API."""
-    paths = _mounted_paths()
+    caches = HostCaches()
+    paths = _mounted_paths(caches)
     retired = {"graph_mine", "graph_mine_deep", "graph_ops_causal", "graph_research"}
-    assert retired.isdisjoint(runtime.REGISTERED_TOOLS)
+    assert retired.isdisjoint(caches.tools)
     assert retired.isdisjoint(runtime.ACTION_TOOL_ROUTES)
     assert "/graph/research" not in paths
     assert "/ops/causal" not in paths

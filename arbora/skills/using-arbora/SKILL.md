@@ -63,7 +63,7 @@ runtime.py`, `_build_server`) restate this contract to every client.
 Before grepping source, use arbora's own operations. Reach each one
 through an intent tool, e.g. `ask(action="graph_code.code_context",
 params={...})`. They are registered under these exact names (`arbora/mcp_server/backing/tools/`, served
-through arbora's `REGISTERED_TOOLS`/`_execute_tool` dispatch in
+through arbora's host tool table and `_execute_tool` dispatch in
 `arbora/mcp_server/runtime.py`, with a REST `/api` twin):
 
 - `graph_code(action="code_context", target="<symbol or area>", direction="how"|"usage"|"impact")`

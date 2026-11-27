@@ -17,6 +17,7 @@ from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
 from arbora.mcp_server.backing.arbora_surface import register_arbora_surface
 from arbora.mcp_server.backing.eunomia_principal import create_eunomia_middleware
+from arbora.mcp_server.host_caches import HostCaches
 
 
 def _policy(tmp_path: Path, allowed_names: list[str]) -> str:
@@ -70,6 +71,7 @@ def _started(policy: str | None) -> FastMCP:
         action_policies=ActionPolicies(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
+        caches=HostCaches(),
         intent_tools=False,
     )
     return server

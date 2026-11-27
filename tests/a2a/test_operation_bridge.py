@@ -23,7 +23,6 @@ from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.invoke.bootstrap import verify_current_from_session
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import Confirm, Surface
-from arbora.mcp_server import runtime as mcp_runtime
 from arbora.security.actor_context import (
     ActorContext,
     ActorType,
@@ -284,14 +283,15 @@ def test_registered_mcp_route_reaches_request_auth_and_shared_pipeline(
         requests.append(request)
         return bound
 
-    monkeypatch.setattr(mcp_runtime, "REGISTERED_TOOLS", {})
+    table: dict[str, Any] = {}
     a2a_mcp.register_a2a_tools(
         registrar,
         service=A2AService(authority=Authority(), router=Router()),
+        tool_table=table,
         operation_services=services,
         operation_authenticator=AmbientHTTPAuthenticator(session_for_request=resolve),
     )
-    assert mcp_runtime.REGISTERED_TOOLS["graph_a2a"] is registrar.tools["graph_a2a"]
+    assert table["graph_a2a"] is registrar.tools["graph_a2a"]
     app = FastAPI()
     for (path, methods), handler in registrar.routes.items():
         app.add_api_route(path, handler, methods=list(methods))

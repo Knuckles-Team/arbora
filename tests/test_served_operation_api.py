@@ -35,6 +35,7 @@ from arbora.core.settings import runtime_config
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.mcp_server.composition import install_gateway_application
+from arbora.mcp_server.host_caches import HostCaches
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
@@ -218,6 +219,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: client,
+        caches=HostCaches(),
     )
     from arbora.gateway.graph_api import register_graph_routes
 
@@ -228,6 +230,7 @@ def served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
+        caches=HostCaches(),
     )
 
 

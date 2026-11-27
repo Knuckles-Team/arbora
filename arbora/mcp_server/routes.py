@@ -5,13 +5,14 @@ from __future__ import annotations
 from typing import Any
 
 from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 
 
 def _route(app: Any, prefix: str, path: str, handler: Any) -> None:
     app.add_route(prefix + path, handler, methods=["POST"])
 
 
-def mount_rest_routes(app: Any, prefix: str = "") -> None:
+def mount_rest_routes(app: Any, tools: ToolTable, prefix: str = "") -> None:
     """Mount one REST twin per operation arbora serves.
 
     ``runtime.ACTION_TOOL_ROUTES`` is the only REST surface: each entry is a
@@ -20,7 +21,7 @@ def mount_rest_routes(app: Any, prefix: str = "") -> None:
     """
 
     for tool_name, path in runtime.ACTION_TOOL_ROUTES.items():
-        _route(app, prefix, path, runtime._make_tool_endpoint(tool_name))
+        _route(app, prefix, path, runtime._make_tool_endpoint(tools, tool_name))
 
 
 __all__ = ["mount_rest_routes"]

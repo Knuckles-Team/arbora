@@ -56,8 +56,11 @@ def _register_query_tools():
     from fastmcp import FastMCP
 
     from arbora.mcp_server.backing.tools.query_tools import register_query_tools
+    from arbora.mcp_server.host_caches import ToolTable
 
-    register_query_tools(FastMCP("test"), lambda: None)
+    tools = ToolTable()
+    register_query_tools(FastMCP("test"), tools, lambda: None)
+    return tools
 
 
 def _multi_tenant_session(actor: ActorContext, graph: str) -> GraphSession:
@@ -158,7 +161,7 @@ def test_graph_query_implicit_union_fanout_succeeds_across_two_graphs(monkeypatc
     implicit-default ``graph_query`` fans out across the "default" graph PLUS
     two distinct content graphs, and every leg actually grounds real rows —
     not per-target ``PermissionError``s hidden in the union merge."""
-    _register_query_tools()
+    tools = _register_query_tools()
 
     actor = ActorContext(
         actor_id="agent:tenant-b18",
@@ -179,7 +182,7 @@ def test_graph_query_implicit_union_fanout_succeeds_across_two_graphs(monkeypatc
 
     with use_actor(actor), use_session(session):
         out = asyncio.run(
-            runtime._execute_tool("graph_query", query="MATCH (n) RETURN n")
+            runtime._execute_tool(tools, "graph_query", query="MATCH (n) RETURN n")
         ).model_dump()
         # The narrowing is scoped to the call — the ambient session is
         # restored to the caller's own graph afterward, never leaked.
@@ -225,7 +228,7 @@ def test_graph_search_implicit_union_fanout_succeeds_across_two_graphs(monkeypat
     """The ``graph_search`` twin of the ``graph_query`` acceptance test above
     -- proves the same fix on the ``_run_search``/``_content_graph_search``
     path."""
-    _register_query_tools()
+    tools = _register_query_tools()
 
     actor = ActorContext(
         actor_id="agent:tenant-b18-search",
@@ -245,7 +248,9 @@ def test_graph_search_implicit_union_fanout_succeeds_across_two_graphs(monkeypat
     )
 
     with use_actor(actor), use_session(session):
-        text = asyncio.run(runtime._execute_tool("graph_search", query="anything"))
+        text = asyncio.run(
+            runtime._execute_tool(tools, "graph_search", query="anything")
+        )
     # Every leg's own tag (its fixed graph name, echoed by `_GraphScopedEngine`)
     # made it into the merged output — none was swallowed as a mismatch error.
     assert "code:repo-a" in text

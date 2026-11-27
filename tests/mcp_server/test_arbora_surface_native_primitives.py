@@ -10,6 +10,7 @@ from fastmcp import Client, FastMCP
 from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
 from arbora.mcp_server.backing.arbora_surface import register_arbora_surface
+from arbora.mcp_server.host_caches import HostCaches
 
 
 @pytest.mark.spec("ARBORA-FLEET-R007.2")
@@ -21,6 +22,7 @@ async def test_backing_surface_exposes_prompts_resources_and_templates() -> None
         action_policies=ActionPolicies(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
+        caches=HostCaches(),
         intent_tools=False,
     )
     async with Client(backing) as client:

@@ -20,12 +20,14 @@ from arbora.mcp_server.composition import (
     install_gateway_application,
     start_composed_services,
 )
+from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.server import _register_semantic_content
 
 
 def test_native_action_route_contract_serves_only_registered_tools() -> None:
-    runtime.ensure_tools_registered()
-    assert set(runtime.ACTION_TOOL_ROUTES) == set(runtime.REGISTERED_TOOLS)
+    caches = HostCaches()
+    runtime.ensure_tools_registered(caches)
+    assert set(runtime.ACTION_TOOL_ROUTES) == set(caches.tools)
     assert runtime.ACTION_TOOL_ROUTES["browser_control"] == "/browser/control"
     assert runtime.ACTION_TOOL_ROUTES["graph_a2a"] == "/graph/a2a"
 
@@ -47,13 +49,16 @@ async def test_installed_gateway_port_dispatches_native_runtime(
 ) -> None:
     calls: list[tuple[str, dict[str, Any]]] = []
 
-    async def execute(tool: str, **kwargs: Any) -> dict[str, Any]:
+    async def execute(_tools: Any, tool: str, **kwargs: Any) -> dict[str, Any]:
         calls.append((tool, kwargs))
         return {"ok": True}
 
     monkeypatch.setattr(runtime, "_execute_tool", execute)
     application = install_gateway_application(
-        fleet=FleetState(), approvals=ApprovalDecisions(), engine_provider=lambda: None
+        fleet=FleetState(),
+        approvals=ApprovalDecisions(),
+        engine_provider=lambda: None,
+        caches=HostCaches(),
     )
 
     assert gateway_application() is application
@@ -83,11 +88,16 @@ def test_webui_co_service_uses_arbora_host(monkeypatch: pytest.MonkeyPatch) -> N
 
     policies = ActionPolicies()
     engine = object()
-    start_composed_services(object(), engine, action_policies=policies)
+    tools = ToolTable()
+    start_composed_services(object(), engine, action_policies=policies, tools=tools)
 
     assert started[0][0] == "overstory"
     assert started[0][1].func.__module__ == "arbora.webui_host.webui_co_service"
-    assert started[0][1].keywords == {"action_policies": policies, "engine": engine}
+    assert started[0][1].keywords == {
+        "action_policies": policies,
+        "engine": engine,
+        "tools": tools,
+    }
 
 
 # spec: ARBORA-HOST-R011
@@ -121,7 +131,9 @@ def test_messaging_co_service_reaches_arbora_owned_intake(
 
     engine = object()
     session = object()
-    start_composed_services(session, engine, action_policies=ActionPolicies())
+    start_composed_services(
+        session, engine, action_policies=ActionPolicies(), tools=ToolTable()
+    )
 
     assert calls == [(engine, session, ("telegram",))]
 
@@ -166,6 +178,7 @@ def test_gateway_adapter_satisfies_runtime_protocol() -> None:
             fleet=FleetState(),
             approvals=ApprovalDecisions(),
             engine_provider=lambda: None,
+            caches=HostCaches(),
         ),
         GatewayApplicationPort,
     )
@@ -183,7 +196,10 @@ def test_gateway_adapter_uses_native_oauth_binding_source(
     )
 
     application = NativeGatewayApplication(
-        fleet=FleetState(), approvals=ApprovalDecisions(), engine_provider=lambda: None
+        fleet=FleetState(),
+        approvals=ApprovalDecisions(),
+        engine_provider=lambda: None,
+        caches=HostCaches(),
     )
     assert application.remote_oauth_grant_bindings(actor) is expected
 

@@ -3,7 +3,7 @@
 
 The generated action manifest is the distribution-owned inventory of Arbora
 tool families and their actions.  Runtime registration is deliberately *not* a
-source of truth here: ``REGISTERED_TOOLS`` is an execution table and can change
+source of truth here: the host tool table is an execution table and can change
 as servers are built, tests install fakes, or optional features are loaded.
 
 This module projects the manifest into frozen :class:`ToolSpec` values.  The

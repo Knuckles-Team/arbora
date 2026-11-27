@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from typing import Annotated, Any
 
 from pydantic import Field
@@ -12,7 +13,7 @@ from arbora.browser_control.browser_control_runtime import (
 )
 
 
-def register_browser_control_tools(mcp: Any) -> None:
+def register_browser_control_tools(mcp: Any, tools: MutableMapping[str, Any]) -> None:
     """Register one action router shared by the MCP and REST projections."""
 
     @mcp.tool(
@@ -34,9 +35,7 @@ def register_browser_control_tools(mcp: Any) -> None:
         receipt = await dispatch_browser_control(action, payload)
         return receipt.model_dump_json()
 
-    from arbora.mcp_server import runtime
-
-    runtime.REGISTERED_TOOLS["browser_control"] = browser_control
+    tools["browser_control"] = browser_control
 
 
 __all__ = ["register_browser_control_tools"]
