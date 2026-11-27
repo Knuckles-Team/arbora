@@ -825,7 +825,7 @@ def test_mcp_fleet_secret_doctor_reports_only_aggregate_readiness(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "arbora.deployment.doctor.read_reference",
+        "arbora.deployment.doctor_fleet.read_reference",
         lambda alias, default="": (
             direct_material if alias == "DIRECT_ALIAS" else default
         ),
@@ -861,7 +861,8 @@ def test_mcp_fleet_secret_doctor_fails_closed_and_redacted(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "arbora.deployment.doctor.read_reference", lambda _alias, default="": default
+        "arbora.deployment.doctor_fleet.read_reference",
+        lambda _alias, default="": default,
     )
     monkeypatch.setattr(
         "scion_sdk.credentials.runtime_references.resolve_runtime_secret_reference",

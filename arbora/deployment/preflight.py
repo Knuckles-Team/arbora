@@ -22,7 +22,7 @@ Design notes that shaped the checks:
   Qt system libs + a display only when ``geniusbot`` is selected. The core deploy
   never drags those in.
 
-Reuses :func:`arbora.deployment.doctor._result` so a preflight report has
+Reuses :func:`arbora.deployment.doctor_security._result` so a preflight report has
 the same shape (and same human/JSON renderers) as a doctor report.
 """
 
