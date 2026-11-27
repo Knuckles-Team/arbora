@@ -1,14 +1,10 @@
 """Fleet city layout: the engine world view's one spatial query (ARBORA-FLEET-R084).
 
-Arbora serves the spatial layout of the fleet tenant from the Medulla world
-view: districts, buildings, rooms, streets, the ``locatedIn``/``position``/
-``hasInterior`` relations and the active manual overrides. It invokes the
-engine's one spatial query method as the bound actor
-(``MEDULLA-WORLD-VIEW-R003``) and serves its stable envelope unchanged; it
-adds no placement logic and no second registry. An uncomposed world-view
-port fails closed with a typed ``UNAVAILABLE``; the engine's typed
-unknown-tenant and unknown-layout refusals are preserved in arbora's closed
-error enum.
+Arbora serves the layout of the fleet tenant: districts and buildings derived
+from the fleet catalog, with the stored manual overrides applied. The engine has
+no spatial method (``MEDULLA-WORLD-VIEW-R003``): the port computes the layout
+client-side from plain graph reads and serves its envelope unchanged. An
+uncomposed port fails closed with a typed ``UNAVAILABLE``.
 """
 
 from __future__ import annotations
@@ -31,7 +27,7 @@ from arbora.api.registry import Confirm, OpSpec, Verb
 #: The edit-layer write replays under the engine's world-view edit-layer version
 #: write (ARBORA-FLEET-R087); arbora keeps no store of its own.
 NATIVE_IDEMPOTENCY: dict[str, str] = {
-    "fleet.city.edit_layer.put": "medulla:WorldViewEditLayer",
+    "fleet.city.edit_layer.put": "medulla:AddNode/CompareAndSetNodeFields",
 }
 
 #: Engine-reported edit refusals, carried as the reason of one closed code.
@@ -200,7 +196,7 @@ def operations() -> tuple[OpSpec, ...]:
             params=EditLayerPutParams,
             result=EditLayerPutResult,
             handler=h + "edit_layer_put",
-            scope="fleet:write",
+            scope="fleet:control",
             confirm=Confirm.PLAN,
         ),
         build_read_op(
