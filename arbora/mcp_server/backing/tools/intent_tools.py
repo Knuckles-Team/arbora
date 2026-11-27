@@ -40,10 +40,10 @@ import json
 import logging
 import re
 import time
-from collections import OrderedDict
 from collections.abc import Sequence
 from copy import deepcopy
 from dataclasses import dataclass, field
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -71,7 +71,7 @@ from arbora.mcp_server.backing.tool_specs import (
     READ_ONLY_ACTIONS,
     TOOL_VERBS,
 )
-from arbora.mcp_server.host_caches import HostCaches, ToolTable
+from arbora.mcp_server.host_caches import HostCaches, IntentCache, ToolTable
 from arbora.security.error_surface import public_error_payload
 from arbora.security.prompt_injection import PromptInjectionScanner
 
@@ -174,45 +174,12 @@ class CapabilityCandidate:
         return f"{self.tool}:{self.action}" if self.action else self.tool
 
 
-_CANDIDATES_CACHE: list[CapabilityCandidate] | None = None
-_ACTIONS_BY_TOOL_CACHE: dict[str, list[str]] | None = None
-
-#: Bumped every time :func:`_build_candidates` actually rebuilds (CONCEPT:MERISTEM-ECO.mcp.intent-surface-resolution-cache)
-#: — the "CPD/policy version" half of the resolution-cache key below. Tests
-#: force a rebuild by resetting ``_CANDIDATES_CACHE`` to ``None``.
-_CANDIDATES_GENERATION: int = 0
-
-#: Bumped every time an outcome is recorded (CONCEPT:MERISTEM-ECO.mcp.intent-surface-outcome-learning) — the
-#: "policy just changed" half of the resolution-cache key: a fresh outcome
-#: invalidates cached rankings that could have used it, without a full flush.
-_REWARD_EPOCH: int = 0
-
-#: Bounded LRU of ranked (non-pinned) resolutions (CONCEPT:MERISTEM-ECO.mcp.intent-surface-resolution-cache) — see
-#: :func:`_cache_key`. A pinned (``hints={"tool": ...}``) resolution is O(1)
-#: already and is never cached.
-_RESOLUTION_CACHE: OrderedDict[tuple[Any, ...], list[CapabilityCandidate]] = (
-    OrderedDict()
-)
-_RESOLUTION_CACHE_MAX = 256
-
-#: Short-lived, process-local previews keyed by their opaque plan reference.
-#: The cache makes the documented ``preview -> resubmit plan_ref`` contract
-#: executable without forcing clients to replay every original hint. Entries
-#: remain bound to the verb, intent, tenant/policy partition, and exact
-#: argument digest; a restart or expiry intentionally requires a new preview.
-_PREVIEW_PLAN_CACHE: OrderedDict[str, _PreviewPlan] = OrderedDict()
-_PREVIEW_PLAN_CACHE_MAX = 256
-_PREVIEW_PLAN_TTL_SECONDS = 600.0
-
 #: Soft weight of the learned reward-EMA blend into the lexical score (mirrors
 #: ``CapabilityIndex.designate``'s own ``reward_weight`` default) — early on
 #: (every candidate at the neutral 0.5 prior) the lexical ranking is
 #: untouched; as outcomes accumulate a candidate's blended score rises or
 #: sinks with its real success rate under that verb.
 _LEARNED_REWARD_WEIGHT = 0.2
-
-#: Lazily constructed shared learner (CONCEPT:MERISTEM-ECO.mcp.intent-surface-outcome-learning).
-_OUTCOME_ROUTER: Any = None
 
 
 @dataclass(frozen=True)
@@ -269,6 +236,7 @@ def _cache_key(
     hints: dict[str, Any],
     top_k: int,
     outcome_scope_ref: str | None,
+    generation: int,
 ) -> tuple[Any, ...]:
     """The resolution-cache key (CONCEPT:MERISTEM-ECO.mcp.intent-surface-resolution-cache).
 
@@ -287,8 +255,7 @@ def _cache_key(
         persistence_reference("intent_hints", hints_json),
         outcome_scope_ref or "unverified",
         int(top_k),
-        _CANDIDATES_GENERATION,
-        _REWARD_EPOCH,
+        generation,
     )
 
 
@@ -311,10 +278,8 @@ def _load_cpds_required() -> dict[str, dict[str, Any]]:
     return cpds
 
 
+@functools.cache
 def _actions_by_tool() -> dict[str, list[str]]:
-    global _ACTIONS_BY_TOOL_CACHE
-    if _ACTIONS_BY_TOOL_CACHE is not None:
-        return _ACTIONS_BY_TOOL_CACHE
     out: dict[str, list[str]] = {}
     from arbora.mcp_server.backing._arbora_action_manifest import ARBORA_ACTIONS
 
@@ -323,7 +288,6 @@ def _actions_by_tool() -> dict[str, list[str]]:
         if action is None:
             continue
         out.setdefault(op["tool"], []).append(action)
-    _ACTIONS_BY_TOOL_CACHE = out
     return out
 
 
@@ -339,11 +303,11 @@ def _build_candidates(
 
     Cached process-wide (tool registration happens once at server build); pass
     ``force=True`` in tests after changing the host tool table. Bumps
-    :data:`_CANDIDATES_GENERATION` on every actual rebuild (CONCEPT:MERISTEM-ECO.mcp.intent-surface-resolution-cache).
+    the candidate generation on every actual rebuild (CONCEPT:MERISTEM-ECO.mcp.intent-surface-resolution-cache).
     """
-    global _CANDIDATES_CACHE, _CANDIDATES_GENERATION
-    if _CANDIDATES_CACHE is not None and not force:
-        return _CANDIDATES_CACHE
+    built = caches.intent.candidates()
+    if built is not None and not force:
+        return built
     runtime.ensure_tools_registered(caches)
     actions_by_tool = _actions_by_tool()
     cpds = _load_cpds_required()
@@ -358,8 +322,7 @@ def _build_candidates(
         _build_candidate_for_tool(tool, cpds[tool], actions_by_tool)
         for tool in live_tools
     ]
-    _CANDIDATES_CACHE = out
-    _CANDIDATES_GENERATION += 1
+    caches.intent.store_candidates(out)
     return out
 
 
@@ -500,17 +463,18 @@ def resolve_intent(
         return _pinned_resolution(candidates, verb, pinned, hints)
 
     outcome_scope_ref = _outcome_scope_ref()
-    cache_key = _cache_key(verb, intent, hints, top_k, outcome_scope_ref)
-    cached = _RESOLUTION_CACHE.get(cache_key)
+    cache_key = _cache_key(
+        verb, intent, hints, top_k, outcome_scope_ref, caches.intent.generation
+    )
+    cached = caches.intent.resolution(cache_key)
     if cached is not None:
-        _RESOLUTION_CACHE.move_to_end(cache_key)
-        return list(cached)
+        return cached
 
     explicit_action = hints.get("action")
     pool = _resolution_pool(candidates, verb, explicit_action)
     cpds = _load_cpds_required() if explicit_action is not None else {}
     request = _PortRequest(intent, explicit_action, cpds, ranking, top_k)
-    return _resolve_by_port(cache_key, pool, request)
+    return _resolve_by_port(caches.intent, cache_key, pool, request)
 
 
 @dataclass(frozen=True)
@@ -525,7 +489,10 @@ class _PortRequest:
 
 
 def _resolve_by_port(
-    cache_key: tuple[Any, ...], pool: list[CapabilityCandidate], request: _PortRequest
+    intent_cache: IntentCache,
+    cache_key: tuple[Any, ...],
+    pool: list[CapabilityCandidate],
+    request: _PortRequest,
 ) -> list[CapabilityCandidate]:
     """The pool in the port's order with the floor's evidence, cached when final.
 
@@ -545,7 +512,7 @@ def _resolve_by_port(
     final = ordered.source == "medulla" or not getattr(
         request.ranking, "configured", False
     )
-    _cache_resolution(cache_key, result) if final else None
+    intent_cache.store_resolution(cache_key, result) if final else None
     return list(result)
 
 
@@ -583,16 +550,6 @@ def _resolved_candidate(
         matched_terms=matched,
         accepts_skill_name=c.accepts_skill_name,
     )
-
-
-def _cache_resolution(
-    cache_key: tuple[Any, ...], result: list[CapabilityCandidate]
-) -> None:
-    """Helper for `resolve_intent`: store `result`, evicting the LRU entry over capacity."""
-    _RESOLUTION_CACHE[cache_key] = result
-    _RESOLUTION_CACHE.move_to_end(cache_key)
-    while len(_RESOLUTION_CACHE) > _RESOLUTION_CACHE_MAX:
-        _RESOLUTION_CACHE.popitem(last=False)
 
 
 def _pinned_resolution(
@@ -979,19 +936,8 @@ def _plan_ref(
     return persistence_reference("intent_plan", payload)
 
 
-def _expire_preview_plans(now: float) -> None:
-    """Drop expired previews before a cache read or write."""
-
-    expired = [
-        ref
-        for ref, preview in _PREVIEW_PLAN_CACHE.items()
-        if now - preview.created_at > _PREVIEW_PLAN_TTL_SECONDS
-    ]
-    for ref in expired:
-        _PREVIEW_PLAN_CACHE.pop(ref, None)
-
-
 def _remember_preview_plan(
+    intent_cache: IntentCache,
     plan_ref: str,
     *,
     verb: str,
@@ -1002,20 +948,21 @@ def _remember_preview_plan(
     """Retain one bounded plan so ``plan_ref`` alone can replay its hints."""
 
     now = time.monotonic()
-    _expire_preview_plans(now)
-    _PREVIEW_PLAN_CACHE[plan_ref] = _PreviewPlan(
-        created_at=now,
-        verb=verb,
-        intent_ref=intent_ref,
-        outcome_scope_ref=outcome_scope_ref,
-        hints=deepcopy({k: v for k, v in hints.items() if k != "plan_ref"}),
+    intent_cache.remember_preview(
+        plan_ref,
+        _PreviewPlan(
+            created_at=now,
+            verb=verb,
+            intent_ref=intent_ref,
+            outcome_scope_ref=outcome_scope_ref,
+            hints=deepcopy({k: v for k, v in hints.items() if k != "plan_ref"}),
+        ),
+        now,
     )
-    _PREVIEW_PLAN_CACHE.move_to_end(plan_ref)
-    while len(_PREVIEW_PLAN_CACHE) > _PREVIEW_PLAN_CACHE_MAX:
-        _PREVIEW_PLAN_CACHE.popitem(last=False)
 
 
 def _restore_preview_hints(
+    intent_cache: IntentCache,
     plan_ref: str,
     *,
     verb: str,
@@ -1024,8 +971,7 @@ def _restore_preview_hints(
 ) -> dict[str, Any] | None:
     """Return reviewed hints only when the caller and policy context match."""
 
-    _expire_preview_plans(time.monotonic())
-    preview = _PREVIEW_PLAN_CACHE.get(plan_ref)
+    preview = intent_cache.preview(plan_ref, time.monotonic())
     if preview is None:
         return None
     if (
@@ -1034,7 +980,6 @@ def _restore_preview_hints(
         or preview.outcome_scope_ref != outcome_scope_ref
     ):
         return None
-    _PREVIEW_PLAN_CACHE.move_to_end(plan_ref)
     return deepcopy(preview.hints)
 
 
@@ -1206,12 +1151,9 @@ def _require_candidate(candidate: CapabilityCandidate | None) -> CapabilityCandi
     return candidate
 
 
-#: Session-scoped approvals recorded by ``manage(action="approve")``:
-#: ``{opaque approval key: created_at}``. Bounded and expiring like the preview
-#: cache; a restart or expiry requires a fresh approval.
-_APPROVALS: OrderedDict[str, float] = OrderedDict()
-_APPROVALS_MAX = 256
-_APPROVAL_TTL_SECONDS = 600.0
+#: Session-scoped approvals recorded by ``manage(action="approve")`` live in the
+#: host's :class:`~arbora.mcp_server.host_caches.IntentCache`, bounded and expiring
+#: like the preview plans; a restart or expiry requires a fresh approval.
 
 
 def _approval_key(op_id: str) -> str:
@@ -1224,28 +1166,12 @@ def _approval_key(op_id: str) -> str:
     return persistence_reference("intent_approval", payload)
 
 
-def _expire_approvals(now: float) -> None:
-    expired = [
-        key
-        for key, created in _APPROVALS.items()
-        if now - created > _APPROVAL_TTL_SECONDS
-    ]
-    for key in expired:
-        _APPROVALS.pop(key, None)
-
-
-def _record_approval(op_id: str) -> None:
+def _record_approval(intent_cache: IntentCache, op_id: str) -> None:
     """Record this session's approval of exactly ``op_id``."""
-    now = time.monotonic()
-    _expire_approvals(now)
-    key = _approval_key(op_id)
-    _APPROVALS[key] = now
-    _APPROVALS.move_to_end(key)
-    while len(_APPROVALS) > _APPROVALS_MAX:
-        _APPROVALS.popitem(last=False)
+    intent_cache.approve(_approval_key(op_id), time.monotonic())
 
 
-def _operation_approved(op_id: str) -> bool:
+def _operation_approved(intent_cache: IntentCache, op_id: str) -> bool:
     """BUG-040: has THIS caller's session approved exactly ``op_id``?
 
     An approval-required (destructive, or non-``auto`` ``approval_class``)
@@ -1263,9 +1189,8 @@ def _operation_approved(op_id: str) -> bool:
     ``load_tools`` acknowledgement with one every client can perform (no
     tool-list refresh involved — the gap BUG-040/BUG-050 found).
     """
-    _expire_approvals(time.monotonic())
     try:
-        return _approval_key(op_id) in _APPROVALS
+        return intent_cache.approved(_approval_key(op_id), time.monotonic())
     except Exception:  # noqa: BLE001 — a broken session probe must fail closed
         return False
 
@@ -1508,6 +1433,7 @@ def _should_fall_back_to_nl_planner(
 
 
 def _policy_gate_preview_response(
+    intent_cache: IntentCache,
     verb: str,
     should_execute: bool,
     plan_ref: str,
@@ -1521,6 +1447,7 @@ def _policy_gate_preview_response(
         return None
     if verb in _NON_READ_VERBS:
         _remember_preview_plan(
+            intent_cache,
             plan_ref,
             verb=verb,
             intent_ref=intent_ref,
@@ -1577,12 +1504,13 @@ def _policy_gate_execution_checks(
 
 
 def _policy_gate_approval_check(
+    intent_cache: IntentCache,
     plan: dict[str, Any],
     routing: dict[str, Any],
 ) -> dict[str, Any] | None:
     """Helper for `dispatch_intent`'s `_policy_gate` closure: the approval check."""
     required = operation_id(plan["tool"], plan["action"])
-    if not plan["approval"]["required"] or _operation_approved(required):
+    if not plan["approval"]["required"] or _operation_approved(intent_cache, required):
         return None
     return {
         "error": (
@@ -1763,6 +1691,7 @@ async def dispatch_intent(
             # ``ask`` is answered here, before capability ranking.
             return await _question_route(verb, intent, raw_hints, intent_ref)
         restored_hints = _restore_preview_hints(
+            caches.intent,
             supplied_plan_ref,
             verb=verb,
             intent_ref=intent_ref,
@@ -2032,6 +1961,7 @@ async def dispatch_intent(
 
     def _policy_gate() -> dict[str, Any] | None:
         preview_response = _policy_gate_preview_response(
+            caches.intent,
             verb,
             should_execute,
             plan_ref,
@@ -2053,7 +1983,7 @@ async def dispatch_intent(
         )
         if execution_error is not None:
             return execution_error
-        return _policy_gate_approval_check(plan, routing)
+        return _policy_gate_approval_check(caches.intent, plan, routing)
 
     _policy_outcome = _policy_gate()
     if _policy_outcome is not None:
@@ -2110,8 +2040,6 @@ _VERB_SUMMARIES = {
     "why": "Explain beliefs, decisions, provenance and changes.",
 }
 
-_OPERATION_VERBS_CACHE: dict[str, tuple[str, ...]] | None = None
-
 
 def _verb_description(verb: str) -> str:
     if verb == "find":
@@ -2156,17 +2084,15 @@ def _act_fallback(tool: str, action: str | None) -> bool:
     return "act" not in TOOL_VERBS.get(tool, ()) and not _policy_verbs(tool, action)
 
 
+@functools.cache
 def operation_verbs() -> dict[str, tuple[str, ...]]:
     """``{operation id: verbs that accept it}`` for every manifest operation."""
-    global _OPERATION_VERBS_CACHE
-    if _OPERATION_VERBS_CACHE is None:
-        from arbora.mcp_server.backing.arbora_surface import manifest_operations
+    from arbora.mcp_server.backing.arbora_surface import manifest_operations
 
-        _OPERATION_VERBS_CACHE = {
-            op_id: _accepting_verbs(tool, action)
-            for op_id, (tool, action) in manifest_operations().items()
-        }
-    return _OPERATION_VERBS_CACHE
+    return {
+        op_id: _accepting_verbs(tool, action)
+        for op_id, (tool, action) in manifest_operations().items()
+    }
 
 
 def _verb_catalog(mcp: Any, verb: str, group: str | None) -> dict[str, Any]:
@@ -2465,7 +2391,9 @@ async def _fleet_unload(mcp: Any, params: dict[str, Any], execute: bool) -> Any:
     )
 
 
-async def _approve(mcp: Any, params: dict[str, Any], execute: bool) -> Any:
+async def _approve(
+    intent_cache: IntentCache, mcp: Any, params: dict[str, Any], execute: bool
+) -> Any:
     """``manage(action="approve")``: approve one operation for this session."""
     from arbora.mcp_server.backing.arbora_surface import resolve_operation
 
@@ -2476,8 +2404,8 @@ async def _approve(mcp: Any, params: dict[str, Any], execute: bool) -> Any:
         )
 
     async def _run() -> Any:
-        _record_approval(op_id)
-        return {"approved": op_id, "ttl_seconds": int(_APPROVAL_TTL_SECONDS)}
+        _record_approval(intent_cache, op_id)
+        return {"approved": op_id, "ttl_seconds": int(IntentCache.TTL_SECONDS)}
 
     return await _governed(
         "manage", APPROVE_ACTION, {"action": op_id}, params, execute, _run
@@ -2722,7 +2650,12 @@ async def _lakehouse_status(hints: dict[str, Any]) -> dict[str, Any]:
 
 
 async def _host_dispatch(
-    mcp: Any, verb: str, action: str, params: dict[str, Any], execute: bool
+    caches: HostCaches,
+    mcp: Any,
+    verb: str,
+    action: str,
+    params: dict[str, Any],
+    execute: bool,
 ) -> Any:
     """Serve a verb's operation outside the manifest, or ``None`` if not one."""
     from arbora.mcp_server.backing.arbora_surface import (
@@ -2732,7 +2665,7 @@ async def _host_dispatch(
 
     handlers = {
         ("act", FLEET_CALL_ACTION): _fleet_call,
-        ("manage", APPROVE_ACTION): _approve,
+        ("manage", APPROVE_ACTION): partial(_approve, caches.intent),
         ("manage", FLEET_LOAD_ACTION): _fleet_load,
         ("manage", FLEET_UNLOAD_ACTION): _fleet_unload,
     }
@@ -2807,7 +2740,9 @@ async def _dispatch_verb(
         return security_failure
     try:
         hosted = (
-            await _host_dispatch(mcp, verb, action, params, execute) if action else None
+            await _host_dispatch(caches, mcp, verb, action, params, execute)
+            if action
+            else None
         )
         if hosted is not None:
             return hosted
