@@ -34,3 +34,31 @@ def default_agent_registered(monkeypatch: pytest.MonkeyPatch) -> None:
         return await real(context, agent_id)
 
     monkeypatch.setattr(agent_library, "current_entry", current)
+
+
+@pytest.fixture(autouse=True)
+def _granting_run_capacity(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Tests of other rows admit runs against an engine cell that always grants.
+
+    ``real_run_capacity`` keeps the real port so the row's own tests drive the engine
+    methods through a recorded engine.
+    """
+    if request.node.get_closest_marker("real_run_capacity") is not None:
+        return
+    from arbora.api.ops.run_capacity import CapacityReservation, EngineRunCapacity
+
+    async def reserve(self, context, *, run_id, work_item_id, owner_digest):
+        return CapacityReservation(
+            cell_id="run:agents",
+            lease_id=f"lease-{run_id}",
+            lease_epoch=1,
+            fence_token=1,
+        )
+
+    async def release(self, context, reservation, *, owner_digest):
+        return None
+
+    monkeypatch.setattr(EngineRunCapacity, "reserve", reserve)
+    monkeypatch.setattr(EngineRunCapacity, "release", release)

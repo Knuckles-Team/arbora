@@ -54,6 +54,11 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import claim_values
 from arbora.api.ops._common import Params
 from arbora.api.ops.policy import policy_guard
+from arbora.api.ops.run_capacity import (
+    CapacityReservation,
+    release_quietly,
+    run_capacity_of,
+)
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -107,6 +112,8 @@ class _NativePlanAdmission:
     terminal_status: str | None = None
     context_id: str | None = None
     owner_graph: str | None = None
+    capacity: CapacityReservation | None = None
+    owner_digest: str | None = None
 
 
 class FleetToolRef(Params):
@@ -1134,6 +1141,12 @@ async def _admit_native_plan_run(
                 owner_graph=work_items.native_owner_graph(engine),
             )
 
+        # The engine capacity lease is taken before the claim and released when
+        # the terminal outcome commits (ARBORA-HOST-R031.1).
+        owner_digest = a2a_authority._digest({"owner": owner_ref})  # noqa: SLF001
+        capacity = await run_capacity_of(context).reserve(
+            context, run_id=run_id, work_item_id=item_id, owner_digest=owner_digest
+        )
         worker_id = f"arbora-a2a:{item_id}"
         claim = await asyncio.to_thread(
             work_items.claim_specific,
@@ -1143,6 +1156,7 @@ async def _admit_native_plan_run(
             lease_ttl_s=600.0,
         )
     if claim is None:
+        await release_quietly(context, capacity, owner_digest=owner_digest)
         raise OperationRefused(
             "UNAVAILABLE", {"reason": "native WorkItem claim was not granted"}
         )
@@ -1152,6 +1166,7 @@ async def _admit_native_plan_run(
         worker_id=worker_id,
         work_item_id=item_id,
     ):
+        await release_quietly(context, capacity, owner_digest=owner_digest)
         raise OperationRefused(
             "UNAVAILABLE", {"reason": "native WorkItem claim is invalid"}
         )
@@ -1167,6 +1182,8 @@ async def _admit_native_plan_run(
         claim=claim,
         context_id=context_id,
         owner_graph=work_items.native_owner_graph(engine),
+        capacity=capacity,
+        owner_digest=owner_digest,
     )
 
 
@@ -1240,6 +1257,9 @@ async def _settle_native_plan_run(
                     {"reason": "native terminal commit was cancelled"},
                 ) from None
             continue
+    await release_quietly(
+        context, admission.capacity, owner_digest=admission.owner_digest
+    )
     if status != "committed":
         raise OperationRefused(
             "UNAVAILABLE",
