@@ -507,6 +507,29 @@ class FleetOnboarding:
                 contract["reason"] = code
             raise
         self._record_import_receipt(endpoint.name, result)
+        self._remember_deployed(
+            endpoint.name,
+            pack,
+            getattr(result, "binding_revision", None),
+            str(getattr(result, "pack_digest", "")),
+        )
+
+    def _remember_deployed(
+        self, connector: str, pack: Any, revision: Any, digest: str
+    ) -> None:
+        """Keep what is deployed for the conformance check (ARBORA-OPS-R067.10)."""
+        from arbora.fleet.conformance import DeployedPack, live_tool_fingerprints
+
+        if revision is None or not digest:
+            return
+        self.declarations.remember_deployed(
+            connector,
+            DeployedPack(
+                revision=int(revision),
+                pack_digest=digest,
+                tool_fingerprints=live_tool_fingerprints(pack.archive.entries),
+            ),
+        )
 
     def _record_import_receipt(self, connector: str, result: Any) -> None:
         """Record the import answer and the engine's seed digest on the contract surface."""
@@ -791,7 +814,16 @@ class FleetOnboarding:
         digest = pack_digest(
             endpoint.name, head.catalog, pack.archive.server, pack.archive.entries
         )
-        return head.pack_digest == digest
+        return self._head_matches(endpoint.name, pack, head, digest)
+
+    def _head_matches(self, connector: str, pack: Any, head: Any, digest: str) -> bool:
+        """Compare the head's digest; an unchanged head is what is deployed."""
+        unchanged = head.pack_digest == digest
+        if unchanged:
+            self._remember_deployed(
+                connector, pack, head.binding_revision, str(head.pack_digest)
+            )
+        return unchanged
 
     def register_contracts(
         self, endpoint: FleetEndpoint, pack: Any

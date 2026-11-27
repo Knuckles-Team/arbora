@@ -72,6 +72,21 @@ def _retrieval_space(arguments: Mapping[str, Any], result: Any) -> dict[str, str
     }
 
 
+def _research_web(arguments: Mapping[str, Any], result: Any) -> dict[str, str]:
+    """Identifiers and counts only: never page text, titles or snippets (R067.6)."""
+    value = _value(result)
+    documents = [d for d in value.get("documents", []) if isinstance(d, Mapping)]
+    subject = str(arguments.get("query") or " ".join(arguments.get("urls") or ()))
+    return {
+        "query_digest": hashlib.sha256(subject.encode()).hexdigest(),
+        "decision_id": str(value.get("decision_id") or ""),
+        "work_item_id": str(value.get("work_item_id") or ""),
+        "backends": ",".join(str(d.get("backend", "")) for d in documents),
+        "fallback_count": str(value.get("fallbacks", 0)),
+        "document_ids": ",".join(str(d.get("document_id", "")) for d in documents),
+    }
+
+
 def _digest_of(values: Any) -> str:
     return hashlib.sha256(json.dumps(sorted(values)).encode()).hexdigest()
 
@@ -103,6 +118,7 @@ _BUILDERS: dict[str, CallerBuilder] = {
     "plans.run": _plain(_refused_plan),
     "security.evaluate": _plain(_security_evaluate),
     "retrieval.space": _plain(_retrieval_space),
+    "research.web": _plain(_research_web),
     "query.projections": _projections,
 }
 

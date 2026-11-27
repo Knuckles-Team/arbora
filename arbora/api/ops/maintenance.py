@@ -3,7 +3,8 @@
 ``maintenance.paper_shortfall.run`` purges the papers the engine's ingest-shortfall
 verdict allows, under an owner authorization. The admission verdict is the sealed
 ``IngestShortfall`` decision record (read with ``DecisionLog`` get); it names the
-allowed ``purge:<id>`` options and the cost of each candidate it was asked about.
+allowed ``purge:<id>`` options (``PurgeCandidate.item_id``) and the funded ``goal:<id>``
+options whose declared cost is the order's cost.
 Arbora refuses before any effect: a missing authorization is ``SCOPE_REQUIRED``, a
 purge the verdict did not allow is ``POLICY_DENIED`` (``purge_not_admitted``) and a
 total cost above the ceiling is ``POLICY_DENIED`` (``cost_over_ceiling``).
@@ -84,15 +85,41 @@ def _typed_text(record: Mapping[str, Any], name: str) -> str | None:
     return None
 
 
-def candidate_costs(record: Mapping[str, Any]) -> dict[str, int]:
-    """The cost in cents of each purge candidate the sealed verdict was asked about."""
+def _candidates(record: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    """The ``PurgeCandidate`` rows the sealed verdict was asked about (``item_id`` keyed)."""
     text = _typed_text(record, "purge_candidates")
     try:
         rows = json.loads(text) if text else []
-        return {str(r.get("purge_id", r.get("id"))): int(r["cost"]) for r in rows}
-    except (TypeError, ValueError, KeyError, AttributeError):
+        return [r for r in rows if isinstance(r.get("item_id"), str)]
+    except (TypeError, ValueError, AttributeError):
         raise OperationRefused(
             "RECEIPT_MISMATCH", {"reason": "verdict_candidates_unreadable"}
+        ) from None
+
+
+def candidate_ids(record: Mapping[str, Any]) -> set[str]:
+    """The ``item_id`` of every purge candidate the sealed verdict was asked about."""
+    return {str(row["item_id"]) for row in _candidates(record)}
+
+
+def funded_cost(record: Mapping[str, Any]) -> int:
+    """The summed cost in cents of the goals the verdict funded (what the purge makes room for).
+
+    A ``PurgeCandidate`` carries no cost, so the order's cost is the declared cost of each
+    ``goal:<id>`` option the engine funded, read from the sealed ``goals`` parameter.
+    """
+    text = _typed_text(record, "goals")
+    funded = {
+        name.removeprefix("goal:")
+        for name, _ in advisory_scores(record)
+        if name.startswith("goal:")
+    }
+    try:
+        rows = json.loads(text) if text else []
+        return sum(int(r["cost"]) for r in rows if str(r["goal_id"]) in funded)
+    except (TypeError, ValueError, KeyError, AttributeError):
+        raise OperationRefused(
+            "RECEIPT_MISMATCH", {"reason": "verdict_goals_unreadable"}
         ) from None
 
 
@@ -149,10 +176,9 @@ async def _admitted_cost(
         for name, _ in advisory_scores(record)
         if name.startswith("purge:")
     }
-    costs = candidate_costs(record)
-    if not set(wanted) <= allowed or any(node not in costs for node in wanted):
+    if not set(wanted) <= allowed or not set(wanted) <= candidate_ids(record):
         raise OperationRefused("POLICY_DENIED", {"reason": "purge_not_admitted"})
-    cost = sum(costs[node] for node in wanted)
+    cost = funded_cost(record)
     if cost > params["cost_ceiling"]:
         raise OperationRefused("POLICY_DENIED", {"reason": "cost_over_ceiling"})
     return cost
@@ -226,7 +252,8 @@ __all__ = [
     "NATIVE_IDEMPOTENCY",
     "METHOD",
     "PaperShortfallRunParams",
-    "candidate_costs",
+    "candidate_ids",
+    "funded_cost",
     "purge_envelope",
     "handle_paper_shortfall_run",
     "method_published",

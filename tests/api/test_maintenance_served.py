@@ -24,6 +24,20 @@ def _score(name: str) -> dict:
     return {"option_id": name, "score": {"value": 1}}
 
 
+def _candidate(item_id: str) -> dict:
+    """One engine ``PurgeCandidate`` (MEDULLA-DECISION-ENGINE-R826): no cost field."""
+    return {
+        "item_id": item_id,
+        "terminal": True,
+        "leased": False,
+        "authoritative": False,
+        "source_receipt": True,
+        "decision_receipt": True,
+        "last_source_copy": False,
+        "active_work": False,
+    }
+
+
 def _verdict(**changes: object) -> dict:
     record = {
         "question_kind": "ingest_shortfall",
@@ -33,18 +47,26 @@ def _verdict(**changes: object) -> dict:
         },
         "params": [
             {
-                "name": "purge_candidates",
+                "name": "goals",
                 "value": {
                     "type": "text",
                     "value": json.dumps(
                         [
-                            {"purge_id": "p1", "cost": 200},
-                            {"purge_id": "p2", "cost": 250},
-                            {"purge_id": "p3", "cost": 10},
+                            {"goal_id": "g1", "cost": 450, "expected_papers": 9},
+                            {"goal_id": "g2", "cost": 900, "expected_papers": 1},
                         ]
                     ),
                 },
-            }
+            },
+            {
+                "name": "purge_candidates",
+                "value": {
+                    "type": "text",
+                    "value": json.dumps(
+                        [_candidate("p1"), _candidate("p2"), _candidate("p3")]
+                    ),
+                },
+            },
         ],
     }
     return {**record, **changes}
