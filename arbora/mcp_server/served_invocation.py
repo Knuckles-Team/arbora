@@ -701,6 +701,21 @@ def _with_security_evaluation(
     return {**bindings, "security_evaluation": EngineSecurityEvaluation()}
 
 
+def _with_operator_audit(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the operator-only audit chain behind pin-lag (ARBORA-OPS-R052.5).
+
+    The adapter is always composed; it records and reads only once the pinned engine
+    serves the operator chain, and ``ops.doctor`` names what is missing until then.
+    """
+    if bindings is None or "operator_audit" in bindings:
+        return bindings
+    from arbora.api.ops.operator_audit import EngineOperatorAudit
+
+    return {**bindings, "operator_audit": EngineOperatorAudit()}
+
+
 def _with_retriever(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
@@ -863,6 +878,7 @@ def compose_served_invocation(
     bindings = _with_fleet_source_executor(bindings, pool, graph)
     bindings = _with_nl_federation_planner(bindings)
     bindings = _with_projection_reader(bindings)
+    bindings = _with_operator_audit(bindings)
     bindings = _with_security_evaluation(bindings)
     bindings = _with_host_adapters(bindings)
     bindings = _with_retriever(bindings)

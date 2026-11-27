@@ -26,6 +26,8 @@ Guards held here (delete each with the re-pin that carries it):
   (ARBORA-IDENTITY-R019.3): the resource gate sends the real protocol on the wire.
 - ``FamilyAnswerCredentialReuse`` (ARBORA-IDENTITY-R023.3): the typed ``credential_reuse``
   ``Decide`` answer.
+- ``AuditList`` (ARBORA-OPS-R052.5): the operator-only audit chain read
+  (:func:`operator_audit_missing`).
 - ``MethodSparqlParams.graph_media_type`` (R857.3): the graph body serialized by the engine.
 - ``IdentityOpWireLoginGrant`` and ``IdentityOpWireLoginRevoke`` (R858),
   ``JobKindProgramOptimize`` and ``LearningWriteMovePointer`` (R860): request shapes the
@@ -59,6 +61,7 @@ __all__ = [
     "guard",
     "guard_field",
     "missing_model",
+    "operator_audit_missing",
     "question_kind_served",
     "refusal",
     "require_methods",
@@ -156,6 +159,21 @@ def guard_field(model: str, field: str) -> None:
         require_model_field(model, field)
     except PinLagUnavailable as error:
         raise refusal(error) from error
+
+
+def operator_audit_missing() -> str | None:
+    """The first capability the operator-only audit chain lacks, or ``None`` when served.
+
+    The chain is written by ``AuditAppend`` of class ``operator`` and read by
+    ``AuditList`` under ``audit:operator`` (ARBORA-OPS-R052.5). A pinned release
+    without ``AuditList`` leaves the ``operator_audit`` port inactive and
+    ``ops.doctor`` says so by name.
+    """
+    try:
+        require_methods("AuditList")
+    except PinLagUnavailable as missing:
+        return missing.missing
+    return None
 
 
 def require_enum_member(model: str, value: str) -> None:

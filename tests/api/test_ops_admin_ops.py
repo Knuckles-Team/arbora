@@ -83,6 +83,8 @@ async def test_ops_doctor_is_scoped_to_the_callers_own_tenant(
     store = _FakeOpsAdminStore()
     context = _context(store=store, tenant="tenant-a")
     result = await ops_admin.handle_ops_doctor(context, {}, _OPS["ops.doctor"])
+    checks = result["value"]["checks"]
+    assert checks.pop("operator_audit").startswith("operator_audit: ")
     assert result == {
         "value": {"tenant": "tenant-a", "status": "healthy", "checks": {"disk": "ok"}}
     }
