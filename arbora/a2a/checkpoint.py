@@ -17,7 +17,7 @@ from collections.abc import AsyncIterator, Callable
 from typing import Any
 
 from arbora.agent_runs import NativeRunContext, current_native_run
-from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+from arbora.semantic_provisioning import CONTROL_GRAPH
 
 logger = logging.getLogger(__name__)
 

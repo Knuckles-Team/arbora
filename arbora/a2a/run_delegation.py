@@ -222,7 +222,7 @@ def engine_identity_sender(engine_provider: Callable[[], Any]) -> IdentitySender
         from medulla.generated.security import decode_identity, send_identity
 
         from arbora import work_items
-        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+        from arbora.semantic_provisioning import CONTROL_GRAPH
 
         engine = engine_provider()
         if engine is None:
@@ -267,7 +267,7 @@ def engine_delegation_reader(
         )
 
         from arbora import work_items
-        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+        from arbora.semantic_provisioning import CONTROL_GRAPH
 
         engine = engine_provider()
         if engine is None:

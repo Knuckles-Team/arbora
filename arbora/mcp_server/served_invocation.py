@@ -142,8 +142,8 @@ def _with_ingest_runner(
     """
     if not bindings or "fleet_gateway" not in bindings or "ingest_runner" in bindings:
         return bindings
-    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
     from arbora.ingest.connector_sources import ConnectorIngestRunner
+    from arbora.semantic_provisioning import CONTROL_GRAPH
 
     async def data_client(tenant: str) -> Any:
         return await pool.connected_client(connect_context(tenant), graph)
@@ -1310,7 +1310,7 @@ def compose_served_invocation(
     # Every external effect, and every plan-gated one, is reserved and recorded
     # in EG before dispatch: one coordinator settles a confirmed replay.
     from arbora.api.domain.mcp_server.effect_journal import EgEffectJournal
-    from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+    from arbora.semantic_provisioning import CONTROL_GRAPH
 
     async def control_client() -> Any:
         # EG holds WorkItems on the tenant's control graph.

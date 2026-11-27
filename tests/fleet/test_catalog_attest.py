@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from arbora.deployment import semantic_provisioning as sp
+from arbora import semantic_provisioning as sp
 from tests._eg_fakes import FakeEgEngine
 
 TENANT = "tenant-a"

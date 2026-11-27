@@ -301,7 +301,7 @@ class ServedEngine:
     @property
     def work_item_graph(self) -> str:
         """The native graph used by this engine's WorkItem namespace."""
-        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+        from arbora.semantic_provisioning import CONTROL_GRAPH
 
         return CONTROL_GRAPH
 

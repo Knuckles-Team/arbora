@@ -628,7 +628,7 @@ def mcp_server(
 
             # A fresh store has no tenant or `__control__` graph; leases, queues
             # and workers read them, so create them before anything else runs.
-            from arbora.deployment.semantic_provisioning import ensure_base_graphs
+            from arbora.semantic_provisioning import ensure_base_graphs
 
             base_graphs = asyncio.run(
                 ensure_base_graphs(

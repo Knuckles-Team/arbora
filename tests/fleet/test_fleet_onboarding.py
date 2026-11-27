@@ -20,7 +20,6 @@ import pytest
 
 from arbora.access.action_policy import ActionPolicies
 from arbora.deployment import production_ops
-from arbora.deployment.semantic_provisioning import ensure_server_registrations
 from arbora.fleet import onboarding
 from arbora.fleet.declarations import Declarations
 from arbora.fleet.onboarding import (
@@ -37,6 +36,7 @@ from arbora.fleet.onboarding import (
 from arbora.fleet.virtual_catalog import VirtualCatalog
 from arbora.gateway.state import GatewayState
 from arbora.security.session import GraphSession
+from arbora.semantic_provisioning import ensure_server_registrations
 from tests._eg_fakes import AllowPolicy, FakeEgEngine, service_session
 
 TENANT = "tenant-a"

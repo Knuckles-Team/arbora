@@ -216,7 +216,7 @@ async def dispatch_eg_method(
         # the provider.
         if payload.get("tenant") != context.caller.tenant:
             raise OperationRefused("INVALID_ARGUMENT", {"field": "tenant"})
-        from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
+        from arbora.semantic_provisioning import CONTROL_GRAPH
 
         graph = CONTROL_GRAPH
     if method == "NlQuery":

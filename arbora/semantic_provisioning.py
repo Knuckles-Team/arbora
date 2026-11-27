@@ -34,6 +34,8 @@ from arbora.semantic_content import (
     verify_semantic_content,
 )
 
+#: The pack index URI prefix of a seed part (``seed://identity``, ``seed://catalog``).
+SEED_URI_PREFIX = "seed://"
 COMMONS_GRAPH = "__commons__"
 TENANT_GRAPH_TYPE = "Team"
 #: The system graph that durable WorkItems (leases, queues, dispatch) live on.
@@ -430,8 +432,6 @@ def _rejection(result: Any, connector: str) -> SemanticProvisioningError | None:
 
 def seed_part_entries(pack: Any) -> tuple[Any, ...]:
     """The pack's seed entries: ``seed://`` URIs or the engine ``seed_part`` kind."""
-    from arbora.fleet.connect_contract import SEED_URI_PREFIX
-
     return tuple(
         entry
         for entry in pack.archive.entries
@@ -456,6 +456,7 @@ async def import_attested_pack(
     commons: Any,
     pack: Any,
     action_policies: ActionPolicies,
+    pack_import_authority: Callable[..., Any],
     bind_graph: GraphBinder = bind_session_graph,
     allow_mass_withdrawal: bool = False,
 ) -> Any:
@@ -476,7 +477,6 @@ async def import_attested_pack(
 
     from scion_sdk.sinks.medulla import MedullaSink
 
-    from arbora.api.contracts import pack_import_authority
     from arbora.pin_lag.medulla import require_seed_parts
 
     if seed_part_entries(pack):
@@ -634,6 +634,7 @@ async def provision_semantic_content(
     session: Any,
     served_url: str,
     action_policies: ActionPolicies,
+    pack_import_authority: Callable[..., Any],
     providers: Sequence[ContentProvider] | None = None,
     bind_graph: GraphBinder = bind_session_graph,
 ) -> dict[str, Any]:
@@ -666,6 +667,7 @@ async def provision_semantic_content(
             commons=commons,
             pack=pack,
             action_policies=action_policies,
+            pack_import_authority=pack_import_authority,
             bind_graph=bind_graph,
         )
         with bind_graph(graph):
