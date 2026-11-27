@@ -318,7 +318,9 @@ class VaultBackend(SecretsBackend):
             logger.info("Vault OIDC/JWT authentication succeeded")
             return True
         except Exception as e:  # one candidate in _authenticate()'s auto-detect chain (oidc/approle/token/kubernetes); a loud logger.warning already fires there if every candidate fails
-            logger.debug("Vault OIDC authentication failed: %s", e)
+            logger.debug(
+                "Vault OIDC authentication failed: %s", type(e).__name__, exc_info=True
+            )
             return False
 
     def _try_approle(self) -> bool:
@@ -338,7 +340,11 @@ class VaultBackend(SecretsBackend):
             logger.info("Vault: AppRole auth successful.")
             return True
         except Exception as e:  # one candidate in _authenticate()'s auto-detect chain; a loud logger.warning already fires there if every candidate fails
-            logger.debug("Vault AppRole authentication failed: %s", e)
+            logger.debug(
+                "Vault AppRole authentication failed: %s",
+                type(e).__name__,
+                exc_info=True,
+            )
             return False
 
     def _try_kubernetes(self) -> bool:
@@ -360,7 +366,11 @@ class VaultBackend(SecretsBackend):
             logger.info("Vault: Kubernetes auth successful.")
             return True
         except Exception as e:  # one candidate in _authenticate()'s auto-detect chain; a loud logger.warning already fires there if every candidate fails
-            logger.debug("Vault Kubernetes authentication failed: %s", e)
+            logger.debug(
+                "Vault Kubernetes authentication failed: %s",
+                type(e).__name__,
+                exc_info=True,
+            )
             return False
 
     def _ensure_authenticated(self) -> None:
@@ -417,7 +427,12 @@ class VaultBackend(SecretsBackend):
             # look identical to a missing key and degrade every consumer's
             # config silently unless this is visible at a level someone
             # actually watches.
-            logger.warning("Vault secret lookup failed for %r: %s", full_key, exc)
+            logger.warning(
+                "Vault secret lookup failed for %r: %s",
+                full_key,
+                type(exc).__name__,
+                exc_info=True,
+            )
             return None
 
     def set(self, key: str, value: str, **metadata: Any) -> None:
@@ -441,6 +456,7 @@ class VaultBackend(SecretsBackend):
             logger.info("Secret deleted from the configured vault backend")
             return True
         except Exception:
+            logger.debug("delete failed", exc_info=True)
             return False
 
     def list_keys(self) -> list[str]:
@@ -452,6 +468,7 @@ class VaultBackend(SecretsBackend):
             )
             return sorted(resp.get("data", {}).get("keys", []))
         except Exception:
+            logger.debug("list_keys failed", exc_info=True)
             return []
 
 

@@ -321,13 +321,14 @@ def _recording_actor_tenant() -> str:
 
     try:
         return str(current_actor().tenant_id or "").strip()
-    except Exception as exc:  # diagnostics must never fail the error path
+    except Exception:  # diagnostics must never fail the error path
         # Logged with its REAL cause (not just the type name) so an unexpected
         # identity-layer failure here is still diagnosable, at debug level because
         # the ordinary "no actor bound outside a served request" case is expected
         # and would otherwise be pure noise.
-        _DEFAULT_LOGGER.debug(
-            "error-detail tenant scope unresolved; recording with empty scope: %s", exc
+        logging.getLogger(__name__).debug(
+            "error-detail tenant scope unresolved; recording with empty scope",
+            exc_info=True,
         )
         return ""
 

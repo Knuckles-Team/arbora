@@ -1265,7 +1265,7 @@ async def _resolve_bearer_actor(
         await _send_json(send, exc.status_code, {"error": exc.detail})
         return None, True
     except Exception as exc:  # any other failure = invalid credential
-        logger.debug("bearer validation failed: %s", type(exc).__name__)
+        logger.debug("bearer validation failed: %s", type(exc).__name__, exc_info=True)
         await _send_json(send, 401, {"error": "Token validation failed"})
         return None, True
 
@@ -1441,7 +1441,7 @@ class ActorIdentityMiddleware:
             except SignedIngressRefused:
                 admitted = None
             except Exception:  # an unanswerable admission admits nothing
-                logger.warning("signed ingress admission unavailable")
+                logger.warning("signed ingress admission unavailable", exc_info=True)
                 admitted = None
         if admitted is None:
             await _send_json(send, 401, {"error": "Verified Bearer identity required"})

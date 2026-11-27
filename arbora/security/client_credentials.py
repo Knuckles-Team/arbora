@@ -364,7 +364,7 @@ class RotatingFileBearerAuth(httpx.Auth):
         if response.status_code == 401:
             try:
                 fresh = read_rotating_bearer_token(self._token_path)
-            except Exception as exc:  # pragma: no cover - degrade to the 401
+            except RuntimeError as exc:
                 # This module's logger is fastmcp.MultiplexerClientAuth, OUTSIDE
                 # the meristem.* privacy boundary installed by
                 # meristem/core/log_privacy.py (only loggers named
@@ -378,6 +378,7 @@ class RotatingFileBearerAuth(httpx.Auth):
                     redact_for_log(self._token_path),
                     type(exc).__name__,
                     redact_for_log(exc),
+                    exc_info=True,
                 )
                 return
             request.headers["Authorization"] = f"Bearer {fresh}"
@@ -400,7 +401,7 @@ class RotatingFileBearerAuth(httpx.Auth):
                 fresh = await anyio.to_thread.run_sync(
                     read_rotating_bearer_token, self._token_path
                 )
-            except Exception as exc:  # pragma: no cover - degrade to the 401
+            except RuntimeError as exc:
                 # See the sync _flow() branch above: this logger sits outside
                 # the meristem.* privacy boundary, so redact by hand.
                 logger.warning(
@@ -409,6 +410,7 @@ class RotatingFileBearerAuth(httpx.Auth):
                     redact_for_log(self._token_path),
                     type(exc).__name__,
                     redact_for_log(exc),
+                    exc_info=True,
                 )
                 return
             request.headers["Authorization"] = f"Bearer {fresh}"
@@ -600,10 +602,11 @@ def _oidc_bearer_header() -> dict[str, str]:
         raise RuntimeError("Outbound MCP service identity is unavailable")
     try:
         return {"Authorization": f"Bearer {provider.get_token()}"}
-    except Exception as exc:  # pragma: no cover - network/permission failure
+    except Exception as exc:
         logger.warning(
             "Could not mint multiplexer service token (exception_type=%s)",
             type(exc).__name__,
+            exc_info=True,
         )
         raise RuntimeError("Could not mint outbound MCP credential") from None
 
@@ -661,7 +664,8 @@ class ClientCredentialsAuth(httpx.Auth):
         if response.status_code == 401:
             try:
                 fresh = self._provider.get_token(force=True)
-            except Exception:  # pragma: no cover - degrade to the 401
+            except Exception:
+                logger.warning("_flow failed", exc_info=True)
                 return
             request.headers["Authorization"] = f"Bearer {fresh}"
             yield request
@@ -669,10 +673,11 @@ class ClientCredentialsAuth(httpx.Auth):
     def auth_flow(self, request: httpx.Request):
         try:
             token = self._provider.get_token()
-        except Exception as exc:  # pragma: no cover - network/permission failure
+        except Exception as exc:
             logger.warning(
                 "Could not mint multiplexer service token (exception_type=%s)",
                 type(exc).__name__,
+                exc_info=True,
             )
             raise RuntimeError("Could not mint outbound MCP credential") from None
         yield from self._flow(request, token)
@@ -682,10 +687,11 @@ class ClientCredentialsAuth(httpx.Auth):
         # token refresh never stalls the multiplexer's event loop.
         try:
             token = await anyio.to_thread.run_sync(self._provider.get_token)
-        except Exception as exc:  # pragma: no cover - network/permission failure
+        except Exception as exc:
             logger.warning(
                 "Could not mint multiplexer service token (exception_type=%s)",
                 type(exc).__name__,
+                exc_info=True,
             )
             raise RuntimeError("Could not mint outbound MCP credential") from None
         request.headers["Authorization"] = f"Bearer {token}"
@@ -695,7 +701,8 @@ class ClientCredentialsAuth(httpx.Auth):
                 fresh = await anyio.to_thread.run_sync(
                     functools.partial(self._provider.get_token, force=True)
                 )
-            except Exception:  # pragma: no cover - degrade to the 401
+            except Exception:
+                logger.warning("async_auth_flow failed", exc_info=True)
                 return
             request.headers["Authorization"] = f"Bearer {fresh}"
             yield request
@@ -759,6 +766,6 @@ def service_session_max_age(existing: dict | None) -> float | None:
         return None
     try:
         provider.get_token()  # prime (cached) so access_token_ttl is real
-    except Exception:  # pragma: no cover - mint failure; fall back to default TTL
+    except Exception:
         logger.debug("token prime failed; using default session TTL", exc_info=True)
     return max(_MIN_SESSION_MAX_AGE, provider.access_token_ttl - _EXPIRY_SKEW_S - 5.0)

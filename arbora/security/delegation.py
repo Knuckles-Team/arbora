@@ -377,6 +377,7 @@ def is_delegation_live(
             logger.warning(
                 "[delegation] run-token revalidation failed (treating as expired): %s",
                 exc,
+                exc_info=True,
             )
             return False
     return True
@@ -436,7 +437,9 @@ def resolve_principal_identity(
                 ceiling=tuple(_dedup(actor.roles)),
             )
     except Exception as exc:  # no bound actor (tiny/local): unresolved ceiling
-        logger.debug("delegation: actor-derived ceiling unavailable: %s", exc)
+        logger.debug(
+            "delegation: actor-derived ceiling unavailable: %s", exc, exc_info=True
+        )
     return PrincipalIdentity()
 
 
