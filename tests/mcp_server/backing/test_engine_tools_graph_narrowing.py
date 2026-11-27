@@ -31,8 +31,6 @@ from __future__ import annotations
 import asyncio
 import json
 
-import pytest
-
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing import engine_routing
 from arbora.mcp_server.backing.tools import engine_tools
@@ -99,13 +97,6 @@ def _observing_client():
             return _sub(name)
 
     return _Client(), observed
-
-
-@pytest.fixture(autouse=True)
-def _fresh_client_pool(monkeypatch):
-    monkeypatch.setattr(engine_tools, "_CLIENT_POOL", None)
-    yield
-    monkeypatch.setattr(engine_tools, "_CLIENT_POOL", None)
 
 
 # ── (1) narrowing happens before the client is constructed ─────────────────
@@ -369,9 +360,7 @@ def test_narrowing_behaves_identically_under_stdio_process_session(monkeypatch):
     client, observed = _observing_client()
     monkeypatch.setattr(engine_tools, "_client_for", lambda graph: client)
 
-    saved_registry = engine_routing._CONNECTION_REGISTRY
     saved_process_session = runtime._PROCESS_SESSION
-    engine_routing._CONNECTION_REGISTRY = None
     runtime._PROCESS_SESSION = _session(
         READER_ACTOR, "tenant-acme-graph", "kg:read", "kg:write"
     )
@@ -392,7 +381,6 @@ def test_narrowing_behaves_identically_under_stdio_process_session(monkeypatch):
             assert payload["ok"] is True
             assert current_session() is None  # restored, no leak into the caller
     finally:
-        engine_routing._CONNECTION_REGISTRY = saved_registry
         runtime._PROCESS_SESSION = saved_process_session
 
     assert observed == [("nodes", "has", "tenant-other-graph")]

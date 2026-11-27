@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import contextlib
 import logging
-import threading
 from pathlib import Path
 from typing import Any, TypedDict
 
@@ -590,11 +589,6 @@ def _build_tools_payload_sync(
     }
 
 
-_TABULAR_QUERY_SERVICE: Any = None
-_TABULAR_QUERY_SERVICE_KEY: tuple[str, str, str] | None = None
-_TABULAR_QUERY_SERVICE_LOCK = threading.Lock()
-
-
 def _trino_principal_ref() -> str:
     """Resolve the current verified caller's opaque persistence reference."""
 
@@ -641,42 +635,25 @@ def get_tabular_query_service() -> Any:
     )
 
 
-_EXTRACTION_MANAGER: Any = None
-
-
 def _get_extraction_manager(engine: Any) -> Any:
-    """Lazily build the single GPU-slot extraction job manager (KG-2.65)."""
-    global _EXTRACTION_MANAGER
-    if _EXTRACTION_MANAGER is None:
-        raise not_served(
-            "knowledge_graph.extraction.job_manager", "MEDULLA-DURABLE-KERNEL-R071"
-        )
-    return _EXTRACTION_MANAGER
+    """Refuse: the extraction job manager is not served here (KG-2.65)."""
+    del engine
+    raise not_served(
+        "knowledge_graph.extraction.job_manager", "MEDULLA-DURABLE-KERNEL-R071"
+    )
 
 
 # ── CONCEPT:MERISTEM-KG.backend.multi-connection-registry — Named multi-connection graph registry ────────────────
-_CONNECTION_REGISTRY = None
-_REGISTRY_LOCK = threading.Lock()
-
-
 def get_connection_registry():
-    """Process-wide :class:`ConnectionRegistry` singleton.
+    """Refuse: the named connection registry is not served here.
 
     The reserved ``"default"`` target resolves only the process-active authority;
-    registry construction never creates or seeds a second engine. Reference-only
-    ``config.external_graph_connectors`` and ``config.kg_connections`` are
-    registered on first build.
+    no registry is held at module level.
     """
-    global _CONNECTION_REGISTRY
-    if _CONNECTION_REGISTRY is not None:
-        return _CONNECTION_REGISTRY
-    with _REGISTRY_LOCK:
-        if _CONNECTION_REGISTRY is not None:
-            return _CONNECTION_REGISTRY
-        raise not_served(
-            "knowledge_graph.core.connection_registry",
-            "MEDULLA-UNIFIED-DATA-PLANE-R612",
-        )
+    raise not_served(
+        "knowledge_graph.core.connection_registry",
+        "MEDULLA-UNIFIED-DATA-PLANE-R612",
+    )
 
 
 def _seed_external_graph_connectors(registry: Any) -> None:
