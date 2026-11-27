@@ -8,6 +8,7 @@ causes no effect: every refusal is raised before the first tool call.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -27,6 +28,8 @@ from arbora.fleet.admission_policy import (
     WORKFLOW_POLICIES,
     AdmissionConfig,
 )
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "ADMITTED_OPERATIONS",
@@ -309,6 +312,7 @@ class AdmissionGate:
         try:
             allowed = await policy_gate.loadable(items, caller)
         except Exception:
+            logger.warning("_narrow failed", exc_info=True)
             raise AdmissionRefused("POLICY_UNAVAILABLE") from None
         for name, ok in zip(names, allowed, strict=True):
             if ok is not True:

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
+import logging
 import secrets
 import threading
 import time
@@ -28,6 +29,8 @@ from arbora.access.credential_use import (
     CredentialUseGrant,
     CredentialUseRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 __all__ = ["CALLBACK_WAITERS", "BrokerPkceBridge", "CallbackWaiters"]
 
@@ -120,6 +123,7 @@ class BrokerPkceBridge:
                 requested_scopes=tuple(request.scopes),
             )
         except Exception:  # one stable code; the cause never leaves
+            logger.warning("challenge failed", exc_info=True)
             raise CredentialRefused(CredentialRefusal.PROVIDER_UNAVAILABLE) from None
         parts = urlsplit(url)
         query = {key: values[0] for key, values in parse_qs(parts.query).items()}
@@ -179,5 +183,6 @@ class BrokerPkceBridge:
         try:
             fresh = await asyncio.to_thread(rotate)
         except Exception:  # the narrowed authority never widens on failure
+            logger.warning("refresh failed", exc_info=True)
             raise CredentialRefused(CredentialRefusal.EXPIRED) from None
         return dataclasses.asdict(fresh)

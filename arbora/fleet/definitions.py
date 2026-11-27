@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from scion_sdk.manifest.fingerprints import output_schema_digest
@@ -75,7 +75,9 @@ class VersionedDefinition(_Closed):
 
     @property
     def semver(self) -> tuple[int, int, int]:
-        major, minor, patch = _SEMVER.fullmatch(self.version).groups()  # type: ignore[union-attr]
+        # ``validate_definition`` refuses any version that is not semver.
+        match = cast("re.Match[str]", _SEMVER.fullmatch(self.version))
+        major, minor, patch = match.groups()
         return int(major), int(minor), int(patch)
 
 

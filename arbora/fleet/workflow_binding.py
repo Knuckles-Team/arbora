@@ -8,10 +8,13 @@ used; no second authority exists here.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from arbora.fleet.admission import WorkflowAdmission
+
+logger = logging.getLogger(__name__)
 
 __all__ = ["REFUSALS", "WorkflowBindings"]
 
@@ -58,6 +61,7 @@ class WorkflowBindings:
         try:
             current = bound.grant_source()
         except Exception:
+            logger.warning("refusal failed", exc_info=True)
             return "WORKFLOW_GRANT_REVOKED"
         if current != bound.admission.grant_revision:
             return "WORKFLOW_GRANT_REVOKED"

@@ -11,12 +11,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import asdict, dataclass, field
 from enum import StrEnum
 from typing import Any, Protocol
 
 from arbora.fleet.error_budget import Partition, ThrottleDecision, ThrottleMode
+
+logger = logging.getLogger(__name__)
 
 PROPOSAL_FIELD_INVALID = "PROPOSAL_FIELD_INVALID"
 VERDICT_UNAVAILABLE = "VERDICT_UNAVAILABLE"
@@ -167,6 +170,7 @@ async def judge(ask: Judge, proposal: CapacityAdjustmentProposal) -> CapacityVer
     try:
         answer = await ask(proposal.wire())
     except Exception:
+        logger.warning("judge failed", exc_info=True)
         return CapacityVerdict(
             VerdictKind.UNAVAILABLE,
             VERDICT_UNAVAILABLE,

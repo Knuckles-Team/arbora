@@ -354,6 +354,7 @@ def _resolve_fleet_runtime_reference(reference: str) -> str:
     try:
         return resolve_runtime_secret_reference(reference)
     except Exception:
+        logger.warning("_resolve_fleet_runtime_reference failed", exc_info=True)
         raise RuntimeError("MCP child runtime reference is unavailable") from None
 
 
@@ -1141,12 +1142,14 @@ def _load_runtime_child_policy_factory(name: str) -> _typing.Any:
             )
         )
     except Exception:
+        logger.warning("_load_runtime_child_policy_factory failed", exc_info=True)
         raise RuntimeError("MCP child runtime policy registry is unavailable") from None
     if len(matches) != 1:
         raise RuntimeError("MCP child runtime policy is unavailable")
     try:
         factory = matches[0].load()
     except Exception:
+        logger.warning("_load_runtime_child_policy_factory failed", exc_info=True)
         raise RuntimeError("MCP child runtime policy is unavailable") from None
     if not callable(factory):
         raise RuntimeError("MCP child runtime policy is invalid")
@@ -1159,7 +1162,7 @@ def _close_runtime_child_policy(policy: _typing.Any) -> None:
     try:
         policy.close()
     except Exception:
-        logger.error("MCP child runtime policy cleanup failed")
+        logger.error("MCP child runtime policy cleanup failed", exc_info=True)
 
 
 # The method surface every provider-neutral child policy must implement before
@@ -1252,6 +1255,7 @@ def _prepare_runtime_child_policy(
         transport = _runtime_child_policy_transport(policy)
         return _runtime_child_policy_config(cfg, transport, policy), policy
     except Exception:
+        logger.warning("_prepare_runtime_child_policy failed", exc_info=True)
         if policy is not _ABSENT:
             _close_runtime_child_policy(policy)
         raise RuntimeError("MCP child runtime policy is unavailable") from None
@@ -1412,6 +1416,7 @@ async def _run_bounded_probe(
             None,
         )
     except Exception as e:
+        logger.warning("_run_bounded_probe failed", exc_info=True)
         return (
             {
                 "tools": [],
@@ -1453,6 +1458,7 @@ def _stdio_capabilities() -> frozenset[str]:
     try:
         actor = current_actor()
     except Exception:
+        logger.warning("_stdio_capabilities failed", exc_info=True)
         raise _fastmcp_exceptions.ToolError(
             "Authenticated local process context required"
         ) from None
@@ -1485,6 +1491,7 @@ def _http_capabilities(token: _typing.Any) -> frozenset[str]:
                 )
             )
         except Exception:
+            logger.warning("_http_capabilities failed", exc_info=True)
             raise _fastmcp_exceptions.ToolError(
                 "Verified capability mapping unavailable"
             ) from None
@@ -1511,6 +1518,7 @@ def _request_capabilities() -> frozenset[str]:
     except RuntimeError:
         return _stdio_capabilities()
     except Exception:
+        logger.warning("_request_capabilities failed", exc_info=True)
         raise _fastmcp_exceptions.ToolError(
             "Authenticated HTTP context required"
         ) from None
@@ -2010,6 +2018,7 @@ def _assert_tasks_signing_secret(server_name: str) -> None:
             "Tasks route delegation proof unavailable for child %s (%s)",
             server_name,
             type(exc).__name__,
+            exc_info=True,
         )
         raise _fastmcp_exceptions.ToolError(
             "Authenticated task delegation is unavailable; use portable rm_jobs tools"
@@ -2055,6 +2064,7 @@ def _build_task_request(
             "Tasks route delegation proof unavailable for child %s (%s)",
             server_name,
             type(exc).__name__,
+            exc_info=True,
         )
         raise _fastmcp_exceptions.ToolError(
             "Authenticated task delegation is unavailable; use portable rm_jobs tools"
@@ -2941,6 +2951,7 @@ class MCPMultiplexer:
             )
             return _child_error_result(type(e).__name__)
         except Exception as e:
+            logger.warning("call_proxied_tool failed", exc_info=True)
             return _child_error_result(public_error_text(e))
 
     async def call_admitted_child_once(
@@ -3022,6 +3033,7 @@ class MCPMultiplexer:
         except TimeoutError:
             return _child_error_result("MCPChildTimeout")
         except Exception as e:
+            logger.warning("_call_service_child_once failed", exc_info=True)
             return _child_failure_result(server_name, original_name, e)
 
     async def _admitted_ephemeral_call(
@@ -3126,6 +3138,7 @@ class MCPMultiplexer:
         except TimeoutError:
             return _child_error_result("MCPChildTimeout")
         except Exception as e:
+            logger.warning("call_oauth_gated_tool failed", exc_info=True)
             return _child_failure_result(server_name, original_name, e)
 
     async def _assert_oauth_tool_admitted(
@@ -3532,6 +3545,7 @@ class MCPMultiplexer:
                 if policy.allows_tool(tool.name, getattr(tool, "annotations", None))
             ]
         except Exception:
+            logger.warning("_admit_runtime_policy_tools failed", exc_info=True)
             raise RuntimeError(
                 "MCP child runtime policy rejected live catalog"
             ) from None
@@ -3592,6 +3606,7 @@ class MCPMultiplexer:
         try:
             policy_environment = runtime_policy.child_environment()
         except Exception:
+            logger.warning("_runtime_policy_environment failed", exc_info=True)
             raise RuntimeError(
                 "MCP child runtime policy environment is unavailable"
             ) from None
@@ -4084,6 +4099,9 @@ class MCPMultiplexer:
             try:
                 runtime_policy.verify_before_spawn()
             except Exception:
+                logger.warning(
+                    "_verify_child_runtime_policy_before_spawn failed", exc_info=True
+                )
                 raise RuntimeError(
                     "MCP child runtime policy pre-spawn verification failed"
                 ) from None
@@ -4165,7 +4183,9 @@ class MCPMultiplexer:
             )
         except Exception as exc:
             logger.warning(
-                "handshake onboarding not scheduled: %s", redact_for_log(exc)
+                "handshake onboarding not scheduled: %s",
+                redact_for_log(exc),
+                exc_info=True,
             )
 
     def _child_message_handler(
@@ -4196,6 +4216,7 @@ class MCPMultiplexer:
                     "list_changed refresh of %s failed: %s",
                     server_name,
                     redact_for_log(exc),
+                    exc_info=True,
                 )
                 return
             # ARBORA-FLEET-R070: the new list replaces the served one now,
@@ -4384,6 +4405,7 @@ class MCPMultiplexer:
                 "Failed to start MCP child: %s: %s",
                 type(exc).__name__,
                 redact_for_log(exc),
+                exc_info=True,
             )
             _close_policy()
             return None
@@ -4877,6 +4899,7 @@ class MCPMultiplexer:
                 server_name,
                 type(exc).__name__,
                 redact_for_log(exc),
+                exc_info=True,
             )
         else:
             self._child_schema_refresh_errors.pop(server_name, None)
@@ -5759,6 +5782,7 @@ class MCPMultiplexer:
                 kind,
                 type(exc).__name__,
                 redact_for_log(exc),
+                exc_info=True,
             )
             return []
         try:
@@ -5772,6 +5796,7 @@ class MCPMultiplexer:
                 kind,
                 type(exc).__name__,
                 redact_for_log(exc),
+                exc_info=True,
             )
             return []
         self._fill_bodies_from_local_catalog(entries, body_field)
@@ -7033,6 +7058,7 @@ class MCPMultiplexer:
                 "Could not publish multiplexer child gauges (exception_type=%s): %s",
                 type(exc).__name__,
                 redact_for_log(exc),
+                exc_info=True,
             )
         return snapshot
 
@@ -7249,6 +7275,7 @@ async def _notify_tools_changed(mcp) -> bool:
             "tools/list_changed notification failed to send: %s: %s",
             type(exc).__name__,
             redact_for_log(exc),
+            exc_info=True,
         )
         return False
     return True
@@ -7305,6 +7332,7 @@ def _explicit_local_session_key() -> str | None:
         request_context = get_context().request_context
         meta = request_context.meta if request_context is not None else None
     except Exception:
+        logger.debug("_explicit_local_session_key failed", exc_info=True)
         return None
     if not isinstance(meta, _collections_abc.Mapping):
         return None
@@ -7384,6 +7412,7 @@ def ambient_session_key() -> str:
     try:
         token = get_access_token()
     except Exception:
+        logger.debug("ambient_session_key failed", exc_info=True)
         token = None
     if token is None:
         return "__unauthenticated_http__"

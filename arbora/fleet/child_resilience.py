@@ -626,6 +626,7 @@ class ChildRuntime:
             except asyncio.CancelledError:
                 raise
             except BaseException as e:
+                logger.warning("_supervise failed", exc_info=True)
                 if self._report_first_failure(first, e):
                     return
                 self._log_reconnect_failure(e)
@@ -761,6 +762,7 @@ class ChildRuntime:
                 self.name,
                 type(exc).__name__,
                 redact_for_log(exc),
+                exc_info=True,
             )
 
     def _record(self, outcome: str) -> None:
@@ -999,8 +1001,10 @@ class ChildRuntime:
         # the call never lands on a session whose auth context has died (which
         # would wedge it until call_timeout instead of erroring).
         await self._recycle_if_stale()
-        attempts = 2 if retry_on_transient else 1
-        for attempt in range(attempts):
+        # The recovery check refuses every attempt after the first, so the
+        # loop only repeats once and always ends by returning or raising.
+        attempt = 0
+        while True:
             try:
                 return await self._call_once(
                     original_name,
@@ -1011,7 +1015,7 @@ class ChildRuntime:
                 if not await self._recover_tool_call(exc, retry_on_transient, attempt):
                     raise
                 generation_marker = self._retry_generation_marker(generation_marker)
-        raise AssertionError("unreachable")  # pragma: no cover
+                attempt += 1
 
     def _retry_generation_marker(self, marker: int | None) -> int | None:
         """Rebind an explicitly marked retry to the recovered generation."""
@@ -1052,7 +1056,8 @@ class ChildRuntime:
         """
 
         await self._recycle_if_stale()
-        for attempt in range(2):
+        attempt = 0
+        while True:
             try:
                 return await self._call_request_once(
                     request,
@@ -1067,6 +1072,7 @@ class ChildRuntime:
                     and attempt == 0
                     and isinstance(exc, _GenerationChanged)
                 ):
+                    attempt += 1
                     continue
                 if (
                     retry_on_transient
@@ -1079,9 +1085,9 @@ class ChildRuntime:
                             self._ready.wait(),
                             timeout=min(self.connect_timeout, _RECOVERY_WAIT),
                         )
+                    attempt += 1
                     continue
                 raise
-        raise AssertionError("unreachable")  # pragma: no cover
 
     async def _call_once(
         self,

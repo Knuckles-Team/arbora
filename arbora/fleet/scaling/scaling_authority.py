@@ -914,7 +914,7 @@ def _scale_intent_context(
         ),
         None,
     )
-    if pool is None:  # pragma: no cover - ScaleAuthority already rejects this
+    if pool is None:
         raise ValueError("scale intent references an unknown resource pool")
     return unit, pool
 

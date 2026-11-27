@@ -21,6 +21,7 @@ beside it and share its state.
 from __future__ import annotations
 
 import contextlib
+import logging
 from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from dataclasses import dataclass, replace
 from typing import Any
@@ -48,6 +49,8 @@ from arbora.fleet.error_budget import (
     ThrottleMode,
     decide,
 )
+
+logger = logging.getLogger(__name__)
 
 CAPACITY_THROTTLED = "CAPACITY_THROTTLED"
 FALLBACK_MODEL_LIMIT = 1
@@ -499,6 +502,7 @@ class ModelCapacityGate:
         try:
             answer = await self._ask(endpoint)
         except Exception:
+            logger.warning("limit_for failed", exc_info=True)
             return _FALLBACK_MODEL
         if not isinstance(answer, Mapping):
             return _FALLBACK_MODEL
