@@ -227,7 +227,7 @@ def test_host_starts_the_push_service_only_with_a_worker(
     from types import SimpleNamespace
 
     from arbora.a2a.push import PushDeliveryService
-    from arbora.mcp_server.served_invocation import _push_service
+    from arbora.mcp_server.served_background import _push_service
 
     host = world()
     runtime = SimpleNamespace(

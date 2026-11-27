@@ -156,7 +156,7 @@ def test_reads_declare_no_effect_confirmation_or_submission() -> None:
 @pytest.mark.spec("ARBORA-DATA-MARKET-R003.6")
 def test_the_host_composes_the_fleet_read_port() -> None:
     from arbora.api.domain.finance.fleet_read_port import FleetFinanceReadPort
-    from arbora.mcp_server.served_invocation import _with_finance_read_port
+    from arbora.mcp_server.served_finance import _with_finance_read_port
 
     composed = _with_finance_read_port({})
     assert composed is not None

@@ -12,7 +12,7 @@ from test_invoke_contract import caller, run, setup_services
 from arbora.api.errors import EngineRefusal, engine_reason_details, to_envelope
 from arbora.api.ops import get_registry
 from arbora.api.registry import Surface
-from arbora.mcp_server.served_invocation import validate_provider_schema
+from arbora.mcp_server.served_schema import validate_provider_schema
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R009.4")
 

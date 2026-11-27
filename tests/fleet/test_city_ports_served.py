@@ -15,7 +15,7 @@ import pytest
 
 from arbora.api.invoke import OpError, OpResult, invoke
 from arbora.api.registry import Surface
-from arbora.mcp_server.served_invocation import _with_city_ports
+from arbora.mcp_server.served_finance import _with_city_ports
 from tests.fleet._city_support import caller, services_with
 
 PUT = {"edits": [{"pin": "building:one", "cell": "2:2"}], "base_version": 0}

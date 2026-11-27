@@ -74,7 +74,7 @@ def test_http_fleet_ports_run_under_the_callers_own_session(monkeypatch) -> None
 def test_a_parameterless_eg_method_accepts_an_empty_input() -> None:
     """0.1.3: ``ask eg.graph.NodeCount`` with ``{}`` was INVALID_ARGUMENT."""
     from arbora.api.registry import EgSchemaRef
-    from arbora.mcp_server.served_invocation import validate_provider_schema
+    from arbora.mcp_server.served_schema import validate_provider_schema
 
     ref = EgSchemaRef(path="medulla:method/NodeCount#request")
     assert validate_provider_schema(ref, {}) == {}

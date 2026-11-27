@@ -16,11 +16,8 @@ from arbora.finance.schedule_host import (
     schedule_node_id,
 )
 from arbora.fleet.loop_worker import LoopRun
-from arbora.mcp_server.served_invocation import (
-    _loop_body,
-    _with_finance_schedule_host,
-    _with_loop_worker,
-)
+from arbora.mcp_server.served_background import _loop_body, _with_loop_worker
+from arbora.mcp_server.served_finance import _with_finance_schedule_host
 
 LAST = "2026-03-06T12:00:00+00:00"
 
@@ -262,7 +259,7 @@ async def test_the_paper_door_is_the_one_paper_handler_and_refuses_before_bindin
 def test_composition_binds_scheduler_principal_paper_door_and_import_ports() -> None:
     from arbora.finance.import_ports import BlobImportSource, EngineActivitySink
     from arbora.finance.paper_door import LatePaperDoor
-    from arbora.mcp_server.served_invocation import _with_finance_import_ports
+    from arbora.mcp_server.served_finance import _with_finance_import_ports
 
     session = lambda: SimpleNamespace(  # noqa: E731
         tenant="t1", actor=SimpleNamespace(actor_id="svc-1")
