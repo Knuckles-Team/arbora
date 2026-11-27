@@ -129,7 +129,7 @@ async def resolve_actor_exchange_bearer(
         identity, token = await exchange_for_actor(
             caller, connector_client_id, issuer=issuer, claims=claims
         )
-    except Exception:  # noqa: BLE001 - one code for every failed exchange
+    except Exception:  # one code for every failed exchange
         raise DelegationRefused("IDENTITY_EXCHANGE_FAILED") from None
     emit(
         audit_event(

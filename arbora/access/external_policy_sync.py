@@ -309,7 +309,7 @@ class BundleFetcher:
                 response.raise_for_status()
                 bundle = PolicyBundle.from_json(response.json())
             return FetchedBundle(bundle=bundle, fetched_at_monotonic=time.monotonic())
-        except Exception as exc:  # noqa: BLE001 -- any fetch/parse failure is fail-closed data
+        except Exception as exc:  # any fetch/parse failure is fail-closed data
             logger.warning("policy bundle fetch failed: %s", exc)
             return FetchedBundle(
                 bundle=None, fetched_at_monotonic=time.monotonic(), error=str(exc)

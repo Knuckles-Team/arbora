@@ -16,6 +16,7 @@ same :func:`approval_lease_to_props` projection.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from collections.abc import Mapping
 from typing import Any
@@ -135,7 +136,10 @@ def file_approval(engine: Any, grant: Mapping[str, Any], *, now_ms: int) -> str:
         pending = _approvals(
             leases, status="active", grant_match={"request_digest": digest}
         )
-    except Exception:  # noqa: BLE001 — dedup is best-effort; filing still runs
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "dedup is best-effort; filing still runs", exc_info=True
+        )
         pending = []
     for lease in pending:
         if _unexpired(lease, now_ms):

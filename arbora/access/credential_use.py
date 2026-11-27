@@ -218,7 +218,7 @@ async def _authorize(
 ) -> CredentialUseGrant:
     try:
         answer = await ports.decide(request)
-    except Exception:  # noqa: BLE001 - an unanswered question grants nothing
+    except Exception:  # an unanswered question grants nothing
         raise CredentialRefused(CredentialRefusal.PROVIDER_UNAVAILABLE) from None
     if not answer.get("allow"):
         raise CredentialRefused(CredentialRefusal.REUSE_DENIED)
@@ -263,7 +263,7 @@ async def _acquire(
         raise CredentialRefused(CredentialRefusal.MISSING)
     try:
         evidence["vault_receipt"] = await ports.vault_put(grant.vault_ref, token)
-    except Exception:  # noqa: BLE001 - nothing is ready until it is stored
+    except Exception:  # nothing is ready until it is stored
         raise CredentialRefused(CredentialRefusal.PERSISTENCE_FAILED) from None
     evidence["issuance"] = challenge.state[:8]
     await _authorize(request, ports, {})  # fresh engine authorization before resuming
@@ -287,7 +287,7 @@ async def _refresh_once(
             evidence["vault_receipt"] = await ports.vault_put(grant.vault_ref, fresh)
         except CredentialRefused:
             raise
-        except Exception:  # noqa: BLE001 - the narrowed authority never widens on failure
+        except Exception:  # the narrowed authority never widens on failure
             raise CredentialRefused(CredentialRefusal.EXPIRED) from None
         evidence["refresh"] = grant.engine_decision_ref[:8]
         return fresh

@@ -9,6 +9,7 @@ import asyncio
 import contextvars
 import hashlib
 import json
+import logging
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -147,7 +148,10 @@ def qualified_policy_source(policy: Any) -> _QualifiedPolicySource:
             _override_rules(policy.engine),
             policy._irreversibility_aversion,
         )
-    except Exception:  # noqa: BLE001 - redact source failures before refusal
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "redact source failures before refusal", exc_info=True
+        )
         source = None
     if source is None:
         raise RuntimeError("Qualified configured action policy unavailable")
@@ -166,7 +170,10 @@ async def _retained_file_document(path: Path | None) -> dict[str, Any]:
             await asyncio.shield(worker)
         except asyncio.CancelledError as error:
             cancelled = error
-        except Exception:  # noqa: BLE001 - retrieve and redact in source owner
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "retrieve and redact in source owner", exc_info=True
+            )
             break
     if cancelled is not None:
         # Retrieve any failure without leaking it through the cancellation chain.
@@ -208,7 +215,10 @@ async def qualified_policy_source_async(policy: Any) -> _QualifiedPolicySource:
         _check_selection(policy, engine, path, aversion)
         resolve_session(caller, required_scope="kg:read")
         source = _source_from_inputs(document, _rules_from_rows(rows), aversion)
-    except Exception:  # noqa: BLE001 - redact source failures before refusal
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "redact source failures before refusal", exc_info=True
+        )
         source = None
     if source is None:
         raise RuntimeError("Qualified configured action policy unavailable")
