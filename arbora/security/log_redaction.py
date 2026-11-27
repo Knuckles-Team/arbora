@@ -21,8 +21,10 @@ literal value.
 """
 
 import hashlib
+import logging
+import traceback
 
-__all__ = ["redact_for_log"]
+__all__ = ["install_traceback_redaction", "redact_for_log", "redacted_traceback"]
 
 
 def redact_for_log(value: object) -> str:
@@ -36,3 +38,52 @@ def redact_for_log(value: object) -> str:
         return "<empty>"
     digest = hashlib.sha256(str(value).encode("utf-8", errors="replace")).hexdigest()
     return f"<redacted:{digest[:12]}>"
+
+
+def redacted_traceback(exc: BaseException) -> str:
+    """Render ``exc`` and its cause chain with every message redacted.
+
+    Frames (file, line, function, source line) are kept, because they carry no
+    runtime values; the message of each exception is replaced by
+    :func:`redact_for_log`, so a secret carried in an exception message never
+    reaches a log sink.
+    """
+    chain: list[BaseException] = []
+    node: BaseException | None = exc
+    while node is not None and node not in chain:
+        chain.append(node)
+        node = node.__cause__ or node.__context__
+    parts: list[str] = []
+    for item in reversed(chain):
+        frames = "".join(traceback.format_tb(item.__traceback__))
+        parts.append(
+            f"Traceback (most recent call last):\n{frames}"
+            f"{type(item).__qualname__}: {redact_for_log(str(item))}\n"
+        )
+    return "\n".join(parts).rstrip("\n")
+
+
+_RECORD_FACTORY_MARK = "_arbora_traceback_redaction"
+
+
+def install_traceback_redaction() -> None:
+    """Redact the exception text of every log record that carries ``exc_info``.
+
+    A log call with ``exc_info=True`` renders the exception message through the
+    formatter; that message may hold a secret. The record factory pre-fills the
+    record's rendered traceback with :func:`redacted_traceback`, which every
+    stdlib formatter then reuses. Safe to call more than once.
+    """
+    current = logging.getLogRecordFactory()
+    if getattr(current, _RECORD_FACTORY_MARK, False):
+        return
+
+    def factory(*args: object, **kwargs: object) -> logging.LogRecord:
+        record = current(*args, **kwargs)
+        info = record.exc_info
+        if isinstance(info, tuple) and isinstance(info[1], BaseException):
+            record.exc_text = redacted_traceback(info[1])
+        return record
+
+    setattr(factory, _RECORD_FACTORY_MARK, True)
+    logging.setLogRecordFactory(factory)
