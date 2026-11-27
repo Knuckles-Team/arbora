@@ -54,7 +54,7 @@ def resolve_original_caller(
     """Prove the request's original caller still holds authority, or refuse."""
     try:
         state = read_delegation(request.authority_ref)
-    except Exception as exc:  # noqa: BLE001 - an unreadable record grants nothing
+    except Exception as exc:  # an unreadable record grants nothing
         raise CallerAuthorityRefused(CALLER_AUTHORITY_REVOKED) from exc
     if not isinstance(state, Mapping):
         raise CallerAuthorityRefused(CALLER_AUTHORITY_REVOKED)

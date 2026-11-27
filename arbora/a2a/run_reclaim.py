@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import logging
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -161,7 +162,7 @@ class A2ARunReclaimConsumer:
                     lease_ttl_s=self._lease_ttl_s,
                     now=self._clock(),
                 )
-            except Exception as exc:  # noqa: BLE001 - only the delegation refusal is an answer
+            except Exception as exc:  # only the delegation refusal is an answer
                 if not delegation_refused(exc):
                     raise
                 await self._fail(engine, item)
@@ -218,7 +219,10 @@ class A2ARunReclaimConsumer:
         for candidate in candidates:
             try:
                 outcomes.append(await self.reclaim(candidate))
-            except Exception:  # noqa: BLE001 - the next poll retries this item
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "the next poll retries this item", exc_info=True
+                )
                 self._emit(
                     "a2a_run_reclaim_failed",
                     {"work_item_id": str(candidate.item.get("work_item_id"))},
@@ -230,7 +234,10 @@ class A2ARunReclaimConsumer:
         while True:
             try:
                 await self.run_once()
-            except Exception:  # noqa: BLE001 - the next poll retries
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "the next poll retries", exc_info=True
+                )
                 self._emit("a2a_run_reclaim_poll_failed", {})
             await self._sleep(self._poll)
 
@@ -261,7 +268,10 @@ class A2ARunReclaimService:
         while not should_stop():
             try:
                 await self.consumer.run_once()
-            except Exception:  # noqa: BLE001 - the next poll retries
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "the next poll retries", exc_info=True
+                )
                 self.consumer._emit("a2a_run_reclaim_poll_failed", {})
             await self.consumer._sleep(self.consumer._poll)
 

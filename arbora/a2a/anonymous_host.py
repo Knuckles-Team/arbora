@@ -39,7 +39,10 @@ def anonymous_a2a_provider(
                 app = await compose_anonymous_a2a(
                     await connect(), graph=graph, policy=policy
                 )
-            except Exception as exc:  # noqa: BLE001 - no owner leaves the verified route
+            except Exception as exc:
+                logging.getLogger(__name__).debug(
+                    "no owner leaves the verified route", exc_info=True
+                )
                 logger.warning("anonymous a2a unavailable: %s", type(exc).__name__)
                 return None
             if app is not None:

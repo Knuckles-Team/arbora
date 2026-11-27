@@ -325,7 +325,7 @@ class A2AService:
             )
         except A2ATransitionHistoryUnavailable:
             raise
-        except Exception:  # noqa: BLE001 - the refusal never echoes the failure text
+        except Exception:  # the refusal never echoes the failure text
             raise A2ATransitionHistoryUnavailable() from None
         if page is None:
             raise A2ATransitionHistoryUnavailable()

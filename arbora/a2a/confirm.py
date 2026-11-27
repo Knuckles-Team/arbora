@@ -12,6 +12,7 @@ Arbora keeps no approval state: every fact lives in the engine lease.
 from __future__ import annotations
 
 import hashlib
+import logging
 import time
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
@@ -84,7 +85,10 @@ class RegisteredKeyProducer:
             key = await self._authority.resolve_key(
                 self.key_id_for(human), principal_id=human, purpose="signed_approval"
             )
-        except Exception:  # noqa: BLE001 - an unresolvable key is an absent key
+        except Exception:
+            logging.getLogger(__name__).debug(
+                "an unresolvable signing identity is absent", exc_info=True
+            )
             return None
         if (
             key.tenant != tenant

@@ -236,7 +236,10 @@ class HeldOutputSource:
                     "checklist_json": json.dumps(checklist, separators=(",", ":")),
                 },
             )
-        except Exception as exc:  # noqa: BLE001 - no refs leaves the output held
+        except Exception as exc:
+            logging.getLogger(__name__).debug(
+                "no refs leaves the output held", exc_info=True
+            )
             logger.warning(
                 "held output refs unavailable for %s: %s", task_id, type(exc).__name__
             )

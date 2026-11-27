@@ -110,7 +110,7 @@ async def resolve_run_delegation(
         raise RunDelegationRefused("absent")
     try:
         state = await read(delegation_id)
-    except Exception as exc:  # noqa: BLE001 - an unreadable record grants nothing
+    except Exception as exc:  # an unreadable record grants nothing
         raise RunDelegationRefused("unreadable") from exc
     record = state.get("record") if isinstance(state, Mapping) else None
     if not isinstance(record, Mapping):
@@ -284,7 +284,7 @@ def engine_delegation_reader(
             answer = await send_get_delegation_record(
                 client, {"work_item_id": delegation_id}, graph
             )
-        except Exception as exc:  # noqa: BLE001 - DELEGATION_UNKNOWN is an absent record
+        except Exception as exc:  # DELEGATION_UNKNOWN is an absent record
             if getattr(exc, "code", None) == "DELEGATION_UNKNOWN":
                 return None
             raise

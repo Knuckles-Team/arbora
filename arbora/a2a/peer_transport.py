@@ -95,7 +95,7 @@ class A2APeerTransport:
             raise FederationRefused(MESSAGE_NOT_TEXT) from None
         try:
             token = self._resolve(str(peer["credential_ref"]))
-        except Exception:  # noqa: BLE001 - never name the reference or the value
+        except Exception:  # never name the reference or the value
             raise FederationRefused(PEER_CREDENTIAL_UNAVAILABLE) from None
         client = A2AClient(
             timeout=self._timeout,
