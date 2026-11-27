@@ -15,6 +15,7 @@ from functools import partial
 
 from arbora.agent_runs import record_run_event
 from arbora.mcp_server.served_engine import EngineHandles
+from arbora.security.process_authority import ProcessAuthority
 from arbora.security.secrets import SecretsBackend
 
 
@@ -83,3 +84,10 @@ def FixedEngineHandles(engine: object) -> EngineHandles:  # noqa: N802
 def run_events(engine: object):
     """The run-event sink of the harness, writing to one given engine."""
     return partial(record_run_event, engine_provider=lambda: engine)
+
+
+def bound_authority(session: object) -> ProcessAuthority:
+    """A process authority whose session slot holds one given session, for tests."""
+    authority = ProcessAuthority()
+    authority.bind_session(session)
+    return authority

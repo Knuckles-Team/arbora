@@ -138,7 +138,9 @@ def fixture(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
         reads.append(sessions[0])
         return sessions[0]
 
-    monkeypatch.setattr(served_engine, "ServedEngine", lambda _pool: audit)
+    monkeypatch.setattr(
+        served_engine, "ServedEngine", lambda _pool, _session=None: audit
+    )
 
     def connect_context(tenant: str) -> ClientContext:
         return ClientContext(

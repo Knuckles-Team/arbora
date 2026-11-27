@@ -33,15 +33,28 @@ def test_native_action_route_contract_serves_only_registered_tools() -> None:
     assert runtime.ACTION_TOOL_ROUTES["graph_a2a"] == "/graph/a2a"
 
 
-def test_bootstrap_exports_bind_runtime_host_state() -> None:
-    """Cycle-breaking bootstrap slots must hold the real runtime authorities."""
+def test_bootstrap_holds_no_injected_runtime_state() -> None:
+    """No process authority state lives on a module, and nothing is injected."""
+    from arbora.mcp_server import bootstrap
 
-    assert (
-        runtime.authority_keepalive_scope.__wrapped__.__globals__[
-            "_AUTHORITY_KEEPALIVE_ACTIVE"
-        ]
-        is runtime._AUTHORITY_KEEPALIVE_ACTIVE
-    )
+    for name in (
+        "_AGENT_ID",
+        "_SESSION_ID",
+        "_PROCESS_AUTHORITY_STOP",
+        "_PROCESS_AUTHORITY_THREAD",
+        "_PROCESS_SESSION_REFRESH_LOCK",
+        "_process_session",
+        "set_process_session",
+    ):
+        assert not hasattr(bootstrap, name), name
+    for name in (
+        "_PROCESS_SESSION",
+        "_PROCESS_SESSION_REFRESH_LOCK",
+        "_PROCESS_AUTHORITY_STOP",
+        "_PROCESS_AUTHORITY_THREAD",
+        "set_process_session",
+    ):
+        assert not hasattr(runtime, name), name
 
 
 @pytest.mark.asyncio

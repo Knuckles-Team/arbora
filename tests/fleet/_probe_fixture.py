@@ -23,9 +23,9 @@ from arbora.fleet.gateway_ops import (
 )
 from arbora.fleet.multiplexer_ops import MultiplexerOps
 from arbora.fleet.session_loads import SessionLoads
-from arbora.mcp_server import runtime as mcp_runtime
 from arbora.mcp_server.fleet_composition import _scoped
 from arbora.security import request_identity
+from tests._support import bound_authority
 from tests.api._served_support import RecordingEngine, confirmable_invocation, person
 
 READ = {"readOnlyHint": True}
@@ -71,14 +71,13 @@ class ProbeStack:
         who: Any,
     ) -> None:
         process = request_identity.mint_graph_session(who)
-        monkeypatch.setattr(mcp_runtime, "_PROCESS_SESSION", process)
         self.engine = engine
         self.gateway = gateway
         self.child_calls: list[tuple[str, str, Any]] = []
         self._mcp = FastMCP("probe")
         from tests.api._served_support import serve_verbs
 
-        serve_verbs(self._mcp, invocation)
+        serve_verbs(self._mcp, invocation, bound_authority(process))
 
     def __call__(
         self, verb: str, intent: str, params: dict[str, Any] | None = None, **x: Any

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping
+from collections.abc import Callable
 from typing import Any, Protocol
 
 from arbora.api.contracts import (
@@ -11,6 +11,7 @@ from arbora.api.contracts import (
     compose_agent_control_plane,
 )
 from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 
 ControlPlaneFactory = Callable[..., AgentControlPlane]
 ClientForSession = Callable[[Any], Any]
@@ -22,7 +23,7 @@ class ToolRegistrar(Protocol):
 
 def register_graph_rlm(
     mcp: ToolRegistrar,
-    tools: MutableMapping[str, Any],
+    tools: ToolTable,
     *,
     client_for_session: ClientForSession,
     origins: Any,
@@ -38,7 +39,7 @@ def register_graph_rlm(
         tags={"arbora", "agent-control-plane", "rlm"},
     )
     async def graph_rlm(request: GraphRlmRequest) -> str:
-        with runtime.verified_tool_session_scope() as session:
+        with runtime.verified_tool_session_scope(tools.authority) as session:
             control_plane = factory(
                 client_for_session(session), session, origins=origins
             )

@@ -36,6 +36,7 @@ from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime as mcp_runtime
 from arbora.mcp_server.composition import install_gateway_application
 from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_context import build_host_context
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
@@ -376,8 +377,9 @@ async def test_served_mcp_surface_lists_the_intent_verbs_and_finds(
     served: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     process = request_identity.mint_graph_session(_actor())
-    monkeypatch.setattr(mcp_runtime, "_PROCESS_SESSION", process)
-    _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False)
+    host = build_host_context()
+    host.authority.bind_session(process)
+    _args, mcp, _middlewares = mcp_runtime._build_server(bootstrap=False, host=host)
 
     listed = {tool.name for tool in await mcp.list_tools()}
     found = await mcp.call_tool("find", {"intent": "list graph nodes with a label"})

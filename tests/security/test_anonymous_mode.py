@@ -247,7 +247,6 @@ def test_effect_journal_records_honest_anonymous_provenance(local_mode):
 def test_system_session_does_not_reuse_verified_cache(local_mode, monkeypatch):
     from arbora.security import request_identity
 
-    monkeypatch.setattr(request_identity, "_system_write_session", object())
     session = request_identity.system_write_session()
     assert session.actor.authenticated is False
     assert anonymous.admitted_actor(session.actor)

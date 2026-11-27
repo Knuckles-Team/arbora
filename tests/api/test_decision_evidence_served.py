@@ -10,8 +10,8 @@ import pytest
 from fastmcp import FastMCP
 from medulla import EngineResponseError
 
-from arbora.mcp_server import runtime as mcp_runtime
 from arbora.security import request_identity
+from tests._support import bound_authority
 from tests.test_served_operation_api import (  # noqa: F401
     _actor,
     _call,
@@ -256,11 +256,10 @@ def test_decision_evidence_journey_over_mcp_and_http(
 ) -> None:
     app, _recording, invocation = engine
     process = request_identity.mint_graph_session(_actor())
-    monkeypatch.setattr(mcp_runtime, "_PROCESS_SESSION", process)
     mcp = FastMCP("decision-evidence")
     from tests.api._served_support import serve_verbs
 
-    serve_verbs(mcp, invocation)
+    serve_verbs(mcp, invocation, bound_authority(process))
 
     async def call(op: str, params: dict[str, Any]) -> Any:
         result = await mcp.call_tool("ask", {"op": op, "params": params})

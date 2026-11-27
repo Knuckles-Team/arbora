@@ -52,7 +52,7 @@ def test_the_record_binds_native_tools_fleet_and_keepalive(monkeypatch):
     entered = []
 
     @contextlib.asynccontextmanager
-    async def scope(session=None):
+    async def scope(authority, session=None):
         entered.append(True)
         yield
 

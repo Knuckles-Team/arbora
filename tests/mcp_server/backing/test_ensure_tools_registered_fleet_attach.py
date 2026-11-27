@@ -23,6 +23,7 @@ from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools.intent_tools import _fleet_mux
 from arbora.mcp_server.host_caches import HostCaches
+from arbora.security.process_authority import ProcessAuthority
 
 
 def test_attach_headless_fleet_loader_calls_attach_fleet_loader_with_composed_args() -> (
@@ -31,15 +32,19 @@ def test_attach_headless_fleet_loader_calls_attach_fleet_loader_with_composed_ar
     """Same arguments the served process passes in ``server._attach_fleet_runtime``."""
     mcp = SimpleNamespace()
     fleet = FleetState()
+    authority = ProcessAuthority()
     with patch("arbora.fleet.multiplexer.attach_fleet_loader") as mock_attach:
-        runtime._attach_headless_fleet_loader(mcp, fleet)
+        runtime._attach_headless_fleet_loader(mcp, fleet, authority)
 
     mock_attach.assert_called_once_with(
         mcp,
         catalog_reader=ANY,
         fleet=fleet,
-        authority_scope=runtime.verified_tool_session_scope,
+        authority_scope=ANY,
     )
+    scope = mock_attach.call_args.kwargs["authority_scope"]
+    assert scope.func is runtime.verified_tool_session_scope
+    assert scope.args == (authority,)
     assert isinstance(
         mock_attach.call_args.kwargs["catalog_reader"], DeferredFleetCatalogReader
     )
@@ -68,7 +73,7 @@ def test_attach_headless_fleet_loader_records_the_exact_failure_cause(
             side_effect=RuntimeError("no mcp_config.json found"),
         ),
     ):
-        runtime._attach_headless_fleet_loader(mcp, FleetState())
+        runtime._attach_headless_fleet_loader(mcp, FleetState(), ProcessAuthority())
 
     assert getattr(mcp, "_fleet_mux", None) is None
     reason = mcp._fleet_mux_unavailable_reason
@@ -93,7 +98,7 @@ def _assert_headless_build_attaches(caches: HostCaches) -> None:
     host = mock_build.call_args.kwargs["host"]
     assert host.caches is caches
     mock_build.assert_called_once_with(bootstrap=False, host=host)
-    mock_attach.assert_called_once_with(built_mcp, host.fleet)
+    mock_attach.assert_called_once_with(built_mcp, host.fleet, host.authority)
 
 
 def test_ensure_tools_registered_attaches_fleet_loader_to_the_built_mcp(

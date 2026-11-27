@@ -19,9 +19,10 @@ from arbora.access.policy_state import PolicyState
 from arbora.agent_host.host_port_adapters import HostPortsSlot
 from arbora.browser_control.browser_state import BrowserState
 from arbora.fleet.state import FleetState
-from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.served_engine import EngineHandles
 from arbora.run_origin import RunOriginRegistry
+from arbora.security.process_authority import ProcessAuthority
 
 __all__ = [
     "HostContext",
@@ -56,11 +57,16 @@ class HostContext:
     engine: EngineHandles
     caches: HostCaches
     browser: BrowserState
+    authority: ProcessAuthority
 
 
 def build_host_context() -> HostContext:
     """Build the host state once; the engine pool is built on first use."""
-    return compose_host_context(EngineHandles())
+    authority = ProcessAuthority()
+    return compose_host_context_over(
+        EngineHandles(process_session=authority.session),
+        HostCaches(tools=ToolTable(authority)),
+    )
 
 
 def compose_host_context(engine: EngineHandles) -> HostContext:
@@ -94,6 +100,7 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         engine=engine,
         caches=caches,
         browser=BrowserState(),
+        authority=caches.tools.authority,
     )
 
 
