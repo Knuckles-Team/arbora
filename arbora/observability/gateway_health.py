@@ -80,8 +80,8 @@ def record_request_duration(trend_state: GatewayTrend, duration_s: float) -> Non
     """
     try:
         trend = trend_state.buffer(_new_buffer).add(float(duration_s), at=time.time())
-    except Exception as e:  # must never affect the response path
-        logger.debug("gateway health sample skipped: %s", e)
+    except Exception:  # must never affect the response path
+        logger.debug("gateway health sample skipped", exc_info=True)
         return
     if trend is not None:
         try:
@@ -138,5 +138,5 @@ async def _check_and_record(trend_state: GatewayTrend, trend: dict[str, Any]) ->
             mime_type="application/json",
             source="gateway-health",
         )
-    except Exception as e:  # best-effort, never affects the request path
-        logger.debug("gateway health anomaly check failed: %s", e)
+    except Exception:  # best-effort, never affects the request path
+        logger.debug("gateway health anomaly check failed", exc_info=True)

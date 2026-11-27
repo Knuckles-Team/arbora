@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any
 
 from cryptography import x509
-from cryptography.exceptions import InvalidSignature
+from cryptography.exceptions import InvalidSignature, UnsupportedAlgorithm
 from cryptography.hazmat.primitives.asymmetric import (
     dsa,
     ec,
@@ -37,6 +37,7 @@ from cryptography.utils import CryptographyDeprecationWarning
 from cryptography.x509.oid import ExtensionOID
 from packaging.version import InvalidVersion, Version
 from scion_sdk.config import AgentConfig
+from scion_sdk.credentials.resolver import CredentialUnavailableError
 from scion_sdk.tls.profile import ResolvedTLSProfile
 
 from arbora.core.environment import (
@@ -379,7 +380,8 @@ def _resolve_secret_reference_material(
         if isinstance(material, bytes):
             material = material.decode("utf-8")
         return _concrete_runtime_value(material)
-    except Exception:
+    except (CredentialUnavailableError, OSError, ValueError):
+        # A resolver's declared contract: unavailable, unreadable or malformed.
         return ""
 
 
@@ -525,7 +527,7 @@ def _read_ca_bundle_payload(value: bytes | str | Path) -> bytes | None:
         if isinstance(value, bytes):
             return value
         return value.encode("utf-8")
-    except Exception:
+    except OSError:
         return None
 
 
@@ -536,7 +538,7 @@ def _parse_ca_bundle_certificates(payload: bytes) -> list[x509.Certificate]:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", CryptographyDeprecationWarning)
             return [x509.load_pem_x509_certificate(block) for block in blocks]
-    except Exception:
+    except (ValueError, UnsupportedAlgorithm):
         return []
 
 
@@ -627,7 +629,7 @@ def _validate_platform_trust_store(path: Path) -> LangfuseTrustStatus:
         ):
             raise ValueError("not_platform_store")
         ssl.create_default_context(cafile=str(path))
-    except Exception:
+    except (OSError, ValueError):
         return LangfuseTrustStatus(
             configured=True,
             valid=False,
@@ -916,7 +918,7 @@ def resolve_langfuse_requests_transport(
         raise LangfuseTrustError("langfuse_requests_transport_invalid")
     try:
         request_kwargs = trust.requests_kwargs()
-    except Exception:
+    except (OSError, ValueError, TypeError, AttributeError):
         trust.cleanup()
         raise LangfuseTrustError("langfuse_requests_transport_invalid") from None
     _project_langfuse_trust(trust, target_env)

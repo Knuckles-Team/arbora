@@ -26,6 +26,8 @@ from scion_sdk.privacy_reference import persistence_reference
 from arbora.observability.state import Telemetry
 from arbora.unique_records import create_record
 
+logger = logging.getLogger(__name__)
+
 TRACE_SCHEMA_VERSION = 1
 TRACE_NODE_LABEL = "RunTrace"
 TOOL_CALL_NODE_LABEL = "ToolCall"
@@ -95,6 +97,7 @@ def load_trace_cursor(engine: Any, consumer: str) -> TraceCursor:
             {"consumer_ref": consumer_ref},
         )
     except Exception as exc:
+        logger.warning("trace cursor authority read failed", exc_info=True)
         raise RuntimeError(
             f"trace cursor authority read failed (error_type={type(exc).__name__})"
         ) from None
@@ -143,6 +146,7 @@ def save_trace_cursor(
                 {**properties, "cursor_kind": "checkpoint"},
             )
         except Exception as exc:
+            logger.warning("trace cursor authority write failed", exc_info=True)
             raise RuntimeError(
                 f"trace cursor authority write failed (error_type={type(exc).__name__})"
             ) from None

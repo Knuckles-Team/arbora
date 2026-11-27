@@ -195,7 +195,7 @@ class _NoopMetric:
         self._value.set(value)
 
 
-try:  # pragma: no cover - exercised only when the extra is installed
+try:
     from prometheus_client import REGISTRY, Counter, Gauge, Histogram
     from prometheus_client.core import GaugeMetricFamily
 
@@ -1030,11 +1030,10 @@ def _run_scrape_samplers(metrics: Metrics) -> None:
             sampler()
         except Exception as exc:
             logger.warning(
-                "Metrics scrape sampler %r failed (exception_type=%s): %s — its "
+                "Metrics scrape sampler %r failed — its "
                 "gauges are serving their last known values.",
                 getattr(sampler, "__qualname__", sampler),
-                type(exc).__name__,
-                exc,
+                exc_info=exc,
             )
 
 
@@ -1140,13 +1139,12 @@ def _collection_registry() -> Any:
     except Exception as exc:
         logger.error(
             "PROMETHEUS_MULTIPROC_DIR=%r is set but multiprocess collection "
-            "failed (exception_type=%s: %s); falling back to this worker's "
+            "failed; falling back to this worker's "
             "registry only — the scrape UNDER-REPORTS the other workers. "
             "Either make the directory writable and empty at boot or unset the "
             "variable. (CONCEPT:MERISTEM-OS.observability.multiprocess-registry-guard)",
             multiproc_dir,
-            type(exc).__name__,
-            exc,
+            exc_info=exc,
         )
         return REGISTRY
 
@@ -1212,11 +1210,10 @@ async def _fetch_engine_metrics() -> tuple[bytes, bool]:
             return resp.content, True
     except Exception as exc:
         logger.warning(
-            "engine metrics unreachable at %s (%s: %s) — /metrics will omit "
+            "engine metrics unreachable at %s — /metrics will omit "
             "engine series this scrape",
             _ENGINE_METRICS_URL,
-            type(exc).__name__,
-            exc,
+            exc_info=exc,
         )
         return (
             f"# engine metrics unavailable ({type(exc).__name__}): "
@@ -1321,8 +1318,8 @@ class GatewayMetricsMiddleware:
                 # MERISTEM-OS.observability.unified-health-kernels /
                 # MERISTEM-KG.identity.evidence-spine-convergence). Best-effort.
                 record_request_duration(self.trend, duration)
-            except Exception as e:  # feeds an in-memory trend sample only (record_request_duration is itself documented as must-never-affect-the-response-path); a dropped sample just thins one window's anomaly-detection density, the response and the histogram above are already recorded
-                logger.debug("gateway health sample failed: %s", e)
+            except Exception:  # feeds an in-memory trend sample only (record_request_duration is itself documented as must-never-affect-the-response-path); a dropped sample just thins one window's anomaly-detection density, the response and the histogram above are already recorded
+                logger.debug("gateway health sample failed", exc_info=True)
 
 
 async def metrics_endpoint(request: Request) -> Any:
