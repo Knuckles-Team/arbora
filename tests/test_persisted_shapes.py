@@ -95,3 +95,16 @@ def test_served_engine_writes_build_their_body_from_the_label_model(monkeypatch)
     engine.create_node("a", "ActionDecision", {"kind": "k"})
     engine.add_node("b", "ActionDecision", {"kind": "k"})
     assert sent == [record_body("ActionDecision", {"kind": "k"})] * 2
+
+
+def test_shape_digest_is_lowercase_sha256_hex_independent_of_field_order():
+    digest = shape_digest("X", ["b", "a"])
+    assert len(digest) == 64
+    assert digest == digest.lower()
+    assert all(c in "0123456789abcdef" for c in digest)
+    assert digest == shape_digest("X", ["a", "b", "a"])
+    assert digest != shape_digest("Y", ["a", "b"])
+
+
+def test_a_changed_field_set_changes_the_digest():
+    assert shape_digest("X", ["a"]) != shape_digest("X", ["a", "b"])

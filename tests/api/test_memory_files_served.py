@@ -10,7 +10,12 @@ import pytest
 
 from arbora.api.ops.memory_files import MemoryFilesSave, digest_matches, sync_outcome
 from tests import test_served_operation_api as served_api
-from tests.test_served_operation_api import FakeClient, _call, _value, served  # noqa: F401
+from tests.test_served_operation_api import (  # noqa: F401
+    FakeClient,
+    _call,
+    _value,
+    served,
+)
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R024.4")
 

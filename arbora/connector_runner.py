@@ -8,9 +8,9 @@ letting the SDK discover credentials from ambient process state.
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Mapping
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import cast
 
@@ -28,16 +28,35 @@ from scion_sdk.runner.descriptors import RunnerSettings
 from scion_sdk.runner.services import RunnerServices
 from scion_sdk.sinks.medulla import PackImportAuthorityResolver
 
+from arbora.core.settings import config_dir
 from arbora.epistemic import ClientContext, ConnectClient, EpistemicClientPool
 
 __all__ = [
     "ConnectorRunnerComposition",
     "ConnectorRunnerConfig",
     "ConnectorRunnerNotReadyError",
+    "RELEASE_LOCK_DEFAULT_NAME",
+    "RELEASE_LOCK_MISSING",
     "SOURCE_INGEST_SCOPE",
+    "configured_release_lock",
 ]
 
 SOURCE_INGEST_SCOPE = "source:ingest"
+RELEASE_LOCK_MISSING = "RELEASE_LOCK_MISSING"
+RELEASE_LOCK_DEFAULT_NAME = "connector-release.lock"
+
+
+def configured_release_lock(section: Mapping[str, object] | None = None) -> Path:
+    """The release-lock path: ``connector_runner.release_lock`` or the default.
+
+    ``section`` is the ``connector_runner`` mapping of ``arbora.yml``. The
+    default is ``connector-release.lock`` in the Arbora config directory. No
+    environment variable or fallback disables release verification.
+    """
+    raw = (section or {}).get("release_lock")
+    if raw is None or not str(raw).strip():
+        return config_dir() / RELEASE_LOCK_DEFAULT_NAME
+    return Path(str(raw)).expanduser()
 
 
 class ConnectorRunnerNotReadyError(RuntimeError):
@@ -58,6 +77,7 @@ class ConnectorRunnerConfig:
     auth_secret_ref: str
     socket_path: str | None = None
     tcp_addr: str | None = None
+    release_lock: Path = field(default_factory=configured_release_lock)
 
     def __post_init__(self) -> None:
         if not self.graph.strip():
@@ -70,7 +90,23 @@ class ConnectorRunnerConfig:
             value = getattr(self, name)
             if value is not None and (not isinstance(value, str) or not value.strip()):
                 raise ValueError(f"connector runner {name} must be non-empty")
+        _require_path(self.release_lock)
         parse_secret_reference(self.auth_secret_ref)
+
+
+def _require_path(value: object) -> None:
+    if not isinstance(value, Path):
+        raise TypeError("connector runner release_lock must be a Path")
+
+
+def _require_release_lock(lock: Path) -> None:
+    """Release verification has no off switch: bootstrap stops before any
+    secret is resolved or any client is created."""
+    if not lock.is_file():
+        raise ConnectorRunnerNotReadyError(
+            f"{RELEASE_LOCK_MISSING}: create the release lock with "
+            "create_release_key_lock at connector_runner.release_lock"
+        )
 
 
 ServicesFactory = Callable[..., RunnerServices]
@@ -95,6 +131,7 @@ class ConnectorRunnerComposition:
         connect: ConnectClient = _DEFAULT_CONNECT,
         services_factory: ServicesFactory = default_services,
     ) -> None:
+        _require_release_lock(config.release_lock)
         if credential_resolver is None:
             raise TypeError("credential_resolver is required")
         if not callable(pack_import_authority):
@@ -123,6 +160,16 @@ class ConnectorRunnerComposition:
         context.require_scope(SOURCE_INGEST_SCOPE)
         return validate_request_context(context.to_claims())
 
+    def _with_release_lock(self, settings: RunnerSettings) -> RunnerSettings:
+        """Set the SDK's required ``release_lock`` on a settings copy.
+
+        A scion-sdk release that predates the field carries no lock to set; the
+        composition still refuses a missing lock at construction.
+        """
+        if "release_lock" not in type(settings).model_fields:
+            return settings
+        return settings.model_copy(update={"release_lock": self._config.release_lock})
+
     @asynccontextmanager
     async def services(
         self,
@@ -145,7 +192,7 @@ class ConnectorRunnerComposition:
             required_scope=SOURCE_INGEST_SCOPE,
         ) as client:
             services = self._services_factory(
-                settings,
+                self._with_release_lock(settings),
                 state_dir=self._config.state_dir,
                 sink_name="medulla",
                 sink_client=client,

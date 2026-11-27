@@ -22,6 +22,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _reason(exc: Exception) -> str:
+    """The skip reason a fault carries: a refusal's message, else its text."""
+    return str(getattr(exc, "message", "") or exc)
+
+
 def _mutation_context(session: Any, purpose_id: str) -> dict[str, Any]:
     """A best-effort ``AgentLibraryMutationContext`` for one assembly step.
 
@@ -222,22 +227,22 @@ def install_decide_consumers(
         assembler = _install_assembler(eg_client, session, engine, run)
         installed["assembler"] = True
     except Exception as exc:
-        logger.warning("assembler install skipped: %s", exc)
+        logger.warning("assembler install skipped: %s", _reason(exc))
     if assembler is not None:
         try:
             _install_topology(assembler, run)
             installed["topology"] = True
         except Exception as exc:
-            logger.warning("topology asker install skipped: %s", exc)
+            logger.warning("topology asker install skipped: %s", _reason(exc))
         try:
             _install_planner(assembler, run, eg_client, session, engine)
             installed["task_planner"] = True
         except Exception as exc:
-            logger.warning("task planner install skipped: %s", exc)
+            logger.warning("task planner install skipped: %s", _reason(exc))
     try:
         installed["cross_source"] = _install_cross_source(eg_client)
     except Exception as exc:
-        logger.warning("cross-source install skipped: %s", exc)
+        logger.warning("cross-source install skipped: %s", _reason(exc))
     return installed
 
 

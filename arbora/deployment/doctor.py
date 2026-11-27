@@ -24,6 +24,7 @@ from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any
 
+from . import doctor_a2a as _doctor_a2a
 from . import doctor_certification as _doctor_certification
 from . import doctor_coverage as _doctor_coverage
 from . import doctor_graph as _doctor_graph
@@ -178,6 +179,21 @@ def _langfuse_ready_result(*args: Any, **kwargs: Any) -> Any:
 
 def _check_engine_domains() -> Any:
     return _doctor_graph._check_engine_domains()
+
+
+def _check_a2a_persistence(
+    live: bool = False, service: Any = None, read_task: Any = None
+) -> Any:
+    """Probe A2A task persistence; only a process that serves A2A can run it."""
+    if not live or service is None:
+        return _doctor_a2a._result(
+            "a2a_persistence",
+            "skip",
+            "the A2A persistence probe runs live inside a serving process",
+        )
+    import asyncio
+
+    return asyncio.run(_doctor_a2a.check_a2a_persistence(service, read_task))
 
 
 def _check_graph_connections(live: bool = False) -> Any:
@@ -2040,6 +2056,7 @@ CHECKS: dict[str, Callable[..., dict[str, Any]]] = {
     "prepush_hook": _check_prepush_hook,
     "observability": _check_observability,
     "graph_connections": _check_graph_connections,
+    "a2a_persistence": _check_a2a_persistence,
     "langfuse": _check_langfuse,
     "skills": _check_skills,
     "venv_drift": _check_venv_drift,
@@ -2059,6 +2076,7 @@ _LIVE_CHECK_NAMES = frozenset(
     {
         "mcp_fleet",
         "graph_connections",
+        "a2a_persistence",
         "langfuse",
         "kafka",
         "fuseki",

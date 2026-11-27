@@ -125,6 +125,7 @@ def get_registry() -> Registry:
         viewport,
         wire_access,
         work,
+        workbench,
         workspace_files,
         workstreams,
         write_back,
@@ -235,6 +236,7 @@ def get_registry() -> Registry:
         wire_access,
         viewport,
         work,
+        workbench,
         workspace_files,
         workstreams,
     ):

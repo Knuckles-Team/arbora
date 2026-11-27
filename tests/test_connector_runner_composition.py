@@ -13,9 +13,11 @@ from scion_sdk.runner.descriptors import RunnerSettings
 from scion_sdk.sinks.medulla import PackImportAuthorityResolver
 
 from arbora.connector_runner import (
+    RELEASE_LOCK_MISSING,
     ConnectorRunnerComposition,
     ConnectorRunnerConfig,
     ConnectorRunnerNotReadyError,
+    configured_release_lock,
 )
 from arbora.epistemic import AuthorityError, ClientContext, ConnectClient
 
@@ -52,6 +54,12 @@ class Sink:
         return self._readiness
 
 
+def _lock(tmp_path: Path) -> Path:
+    lock = tmp_path / "connector-release.lock"
+    lock.write_text("{}", encoding="utf-8")
+    return lock
+
+
 def config(tmp_path: Path, **overrides: object) -> ConnectorRunnerConfig:
     values: dict[str, object] = {
         "graph": "tenant-a:connectors",
@@ -59,6 +67,7 @@ def config(tmp_path: Path, **overrides: object) -> ConnectorRunnerConfig:
         "auth_secret_ref": "env://GRAPH_SERVICE_AUTH_SECRET",
         "socket_path": "/run/medulla.sock",
     }
+    values["release_lock"] = _lock(tmp_path)
     values.update(overrides)
     return ConnectorRunnerConfig(**values)  # type: ignore[arg-type]
 
@@ -249,3 +258,72 @@ async def test_tenant_graph_binding_is_not_reused_across_tenants(
     with pytest.raises(AuthorityError, match="another tenant"):
         async with composition.services(other, RunnerSettings()):
             pass
+
+
+@pytest.mark.spec("ARBORA-HOST-R037")
+def test_missing_release_lock_fails_bootstrap(tmp_path: Path) -> None:
+    connects = 0
+
+    async def connect(**_kwargs: Any) -> Client:
+        nonlocal connects
+        connects += 1
+        return Client()
+
+    resolver = Resolver()
+    with pytest.raises(ConnectorRunnerNotReadyError, match=RELEASE_LOCK_MISSING):
+        ConnectorRunnerComposition(
+            config(tmp_path, release_lock=tmp_path / "absent.lock"),
+            credential_resolver=resolver,
+            pack_import_authority=PACK_AUTHORITY,
+            connect=cast(ConnectClient, connect),
+        )
+    assert connects == 0
+    assert resolver.seen == []
+
+
+@pytest.mark.spec("ARBORA-HOST-R037")
+def test_release_lock_defaults_under_the_config_dir_and_honours_the_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("ARBORA_CONFIG_DIR", str(tmp_path))
+    assert configured_release_lock(None) == tmp_path / "connector-release.lock"
+    assert configured_release_lock({}) == tmp_path / "connector-release.lock"
+    assert configured_release_lock({"release_lock": "/srv/x.lock"}) == Path(
+        "/srv/x.lock"
+    )
+
+
+@pytest.mark.spec("ARBORA-HOST-R037")
+@pytest.mark.asyncio
+async def test_the_configured_lock_reaches_the_sdk_settings(tmp_path: Path) -> None:
+    class LockedSettings:
+        """Structural double for an SDK settings model that carries the lock."""
+
+        model_fields = {"release_lock": object()}
+
+        def __init__(self, release_lock: Path | None = None) -> None:
+            self.release_lock = release_lock
+
+        def model_copy(self, *, update: dict[str, Any]) -> LockedSettings:
+            return LockedSettings(**update)
+
+    seen: list[Any] = []
+
+    async def connect(**_kwargs: Any) -> Client:
+        return Client()
+
+    def services_factory(settings: Any, **_kwargs: Any) -> Any:
+        seen.append(settings)
+        return SimpleNamespace(sink=Sink())
+
+    cfg = config(tmp_path)
+    composition = ConnectorRunnerComposition(
+        cfg,
+        credential_resolver=Resolver(),
+        pack_import_authority=PACK_AUTHORITY,
+        connect=cast(ConnectClient, connect),
+        services_factory=services_factory,
+    )
+    async with composition.services(context(), cast(Any, LockedSettings())):
+        pass
+    assert seen[0].release_lock == cfg.release_lock
