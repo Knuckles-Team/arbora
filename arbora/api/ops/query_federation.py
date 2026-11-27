@@ -260,6 +260,7 @@ class NativeNlQueryPlanPlanner:
         try:
             decoded = self._decode_plan(result)
         except Exception:
+            logging.getLogger(__name__).warning("authority call failed", exc_info=True)
             raise OperationRefused(
                 "UNAVAILABLE", {"reason": "native NL plan result is unavailable"}
             ) from None

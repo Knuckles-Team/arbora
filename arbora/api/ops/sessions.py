@@ -245,10 +245,13 @@ class DiscoveryStatusParams(Params):
     harness_id: str | None = Field(default=None, min_length=1, max_length=128)
 
 
+JobState = Literal["not_started", "queued", "running", "completed", "failed"]
+
+
 class DiscoveryProgress(Params):
     schema_version: int = Field(default=_SCHEMA_VERSION, ge=1)
     harness_id: str
-    state: Literal["not_started", "queued", "running", "completed", "failed"]
+    state: JobState
     reason: str | None = None
     indexed_session_revision: int | None = Field(default=None, ge=0)
 
@@ -293,7 +296,7 @@ async def handle_harness_manifest(
     return manifest.model_dump(mode="json")
 
 
-async def _job_state(context: Any, entry: HarnessEntry) -> tuple[str, str | None]:
+async def _job_state(context: Any, entry: HarnessEntry) -> tuple[JobState, str | None]:
     if entry.last_job_id is None:
         return "not_started", None
     runner = bound_service(
@@ -328,7 +331,7 @@ async def handle_discovery_status(
         progress.append(
             DiscoveryProgress(
                 harness_id=entry.harness_id,
-                state=state,  # type: ignore[arg-type]
+                state=state,
                 reason=reason,
                 indexed_session_revision=(
                     _summary(summary)["index_revision"] if summary else None

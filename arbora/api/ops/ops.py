@@ -338,6 +338,11 @@ PROCESS_QUESTION = "process_remediation"
 #: The engine family's own refusals (MEDULLA-DECISION-ENGINE-R820).
 PROCESS_REFUSALS = frozenset({"LIVENESS_EVIDENCE_STALE", "LIVENESS_EVIDENCE_MISMATCH"})
 ProcessVerdict = Literal["zombie", "hung", "progressing"]
+_PROCESS_VERDICTS: dict[str, ProcessVerdict] = {
+    "zombie": "zombie",
+    "hung": "hung",
+    "progressing": "progressing",
+}
 
 
 class LivenessEvidence(Params):
@@ -440,12 +445,12 @@ async def _process_verdict(context: Any, params: Mapping[str, Any]) -> ProcessVe
         raise OperationRefused(
             "POLICY_DENIED", {"engine_code": refused.code}
         ) from refused
-    verdict = chosen_option(record)
-    if verdict not in ("zombie", "hung", "progressing"):
+    verdict = _PROCESS_VERDICTS.get(chosen_option(record))
+    if verdict is None:
         from arbora.api.invoke.pipeline import OperationRefused
 
         raise OperationRefused("RECEIPT_MISMATCH", {"reason": "unknown verdict"})
-    return verdict  # type: ignore[return-value]
+    return verdict
 
 
 async def handle_process_propose(

@@ -369,7 +369,9 @@ async def handle_memory_files_save(
             value["materialized"] = True
         except Exception as error:  # the head stands; the report is retried
             logging.getLogger(__name__).warning(
-                "memory file acknowledgment failed: %s", type(error).__name__
+                "memory file acknowledgment failed: %s",
+                type(error).__name__,
+                exc_info=True,
             )
     return {"value": value}
 

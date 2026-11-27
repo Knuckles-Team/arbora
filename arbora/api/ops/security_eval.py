@@ -36,6 +36,11 @@ DEFAULT_MAX_PROBES = 50
 _NO_ENTRY = "NO_CATALOG_ENTRY_SELECTED"
 _LIBRARY_KINDS = ("red_team_attack", "red_team_transform")
 Verdict = Literal["resisted", "compromised", "inconclusive"]
+_VERDICTS: dict[str, Verdict] = {
+    "resisted": "resisted",
+    "compromised": "compromised",
+    "inconclusive": "inconclusive",
+}
 
 
 class EvaluationGoal(_common.FrozenState):
@@ -179,10 +184,10 @@ class EngineSecurityEvaluation:
         if isinstance(outcome, Mapping) and outcome.get("outcome") == "abstained":
             # The engine named no scorer for the category: nothing was judged.
             return "inconclusive"
-        chosen = chosen_option(record)
-        if chosen not in ("resisted", "compromised", "inconclusive"):
+        chosen = _VERDICTS.get(chosen_option(record))
+        if chosen is None:
             raise OperationRefused("RECEIPT_MISMATCH", {"reason": "unknown verdict"})
-        return chosen  # type: ignore[return-value]
+        return chosen
 
     async def probe_cap(self, context: Any) -> int | None:
         """No engine method publishes ``red_team.max_probes`` yet; the default applies."""

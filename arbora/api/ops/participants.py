@@ -202,7 +202,7 @@ async def handle_turn_append(
         "speaker": params["speaker"],
         "timestamp_ms": params["timestamp_ms"],
     }
-    derive = "enqueued"
+    derive: Literal["enqueued", "deferred"] = "enqueued"
     try:
         await engine_send(
             context, "MemoryRemember", {"request": {"record": record}}, idempotent=True
@@ -215,7 +215,7 @@ async def handle_turn_append(
     return TurnResult(
         turn_committed=True,
         memory_id=memory_id,
-        derive=derive,  # type: ignore[arg-type]
+        derive=derive,
     ).model_dump(mode="json")
 
 

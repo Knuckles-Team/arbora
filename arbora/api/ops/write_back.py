@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -322,6 +323,7 @@ async def handle_write_back_commit(
     except OperationRefused:
         raise
     except Exception:  # an unreadable outcome is never a success
+        logging.getLogger(__name__).warning("authority call failed", exc_info=True)
         raise _refuse("REPLAY_UNRESOLVED") from None
     receipt = _verified_receipt(request, result)
     return {

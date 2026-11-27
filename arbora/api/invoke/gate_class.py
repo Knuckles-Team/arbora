@@ -17,7 +17,8 @@ from dataclasses import dataclass
 from typing import Any, Literal
 
 #: The closed class set, strictest first.
-GATE_CLASSES: tuple[str, ...] = (
+GateClass = Literal["legal_filing", "money_movement", "publishing", "production_qa"]
+GATE_CLASSES: tuple[GateClass, ...] = (
     "legal_filing",
     "money_movement",
     "publishing",

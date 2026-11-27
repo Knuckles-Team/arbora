@@ -419,6 +419,7 @@ async def _policy(
     try:
         allowed = await services.policy_gate.check_op(op, caller)
     except Exception:
+        logging.getLogger(__name__).warning("authority call failed", exc_info=True)
         return OpError("POLICY_UNAVAILABLE")
     return None if allowed is True else OpError("POLICY_DENIED")
 
@@ -505,6 +506,7 @@ async def _effect_plan(
     try:
         return await services.plans.consume(plan_ref, binding)
     except Exception:
+        logging.getLogger(__name__).warning("authority call failed", exc_info=True)
         return OpError("UNAVAILABLE", {"reason": "plan lease unavailable"})
 
 
@@ -519,6 +521,7 @@ async def _issue_plan(
         gate = await resolve_gate(services.gate_reader, op.id, binding.tenant)
         reference = await services.plans.issue(binding, params, gate)
     except Exception:
+        logging.getLogger(__name__).warning("authority call failed", exc_info=True)
         return unavailable
     if not isinstance(reference, str) or not reference:
         return unavailable
@@ -578,9 +581,9 @@ async def _effective_op(
         return OpError("UNAVAILABLE", {"reason": "fleet effect authority unavailable"})
     except Exception as exc:  # refused closed; the cause is logged
         _logger.warning(
-            "fleet effect authority refused fleet.call: %s: %s",
+            "fleet effect authority refused fleet.call: %s",
             type(exc).__name__,
-            exc,
+            exc_info=True,
         )
         return OpError("UNAVAILABLE", {"reason": "fleet effect authority unavailable"})
     if isinstance(resolved, FleetCallDecision):
@@ -670,6 +673,7 @@ async def _refresh(
     try:
         current = await services.runtime.verify_current(caller)
     except Exception:
+        logging.getLogger(__name__).warning("authority call failed", exc_info=True)
         return OpError("UNAUTHENTICATED")
     refused = authenticate(current)
     if refused is not None:

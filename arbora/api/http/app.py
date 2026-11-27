@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable, Callable
 from secrets import token_hex
 from typing import Any
@@ -154,6 +155,9 @@ def create_api_application(
             try:
                 allowed[op.id] = bool(await visibility(op, caller))
             except Exception:  # fail closed on a policy service failure
+                logging.getLogger(__name__).warning(
+                    "authority call failed", exc_info=True
+                )
                 allowed[op.id] = False
         return registry.find(
             caller,

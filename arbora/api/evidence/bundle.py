@@ -187,10 +187,8 @@ def _group_structured_comparable_claims(
     """Group claims by their declared comparison domain (comparable rows only)."""
     groups: dict[str, list[tuple[str, dict[str, Any]]]] = {}
     for cid, claim in indexed_claims:
-        if not _is_structured_comparable(claim):
-            continue
         key = _structured_comparison_key(claim)
-        if key is None:  # pragma: no cover - guaranteed by the check above
+        if key is None or not _is_structured_comparable(claim):
             continue
         groups.setdefault(key, []).append((cid, claim))
     return groups

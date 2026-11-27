@@ -44,9 +44,10 @@ class ArtifactStore(Protocol):
 
 
 def _store(context: Any) -> ArtifactStore:
-    return bound_service(
+    store: ArtifactStore = bound_service(
         context, "artifact_store", reason="artifact store is not configured"
-    )  # type: ignore[no-any-return]
+    )
+    return store
 
 
 def _found(artifact: dict[str, Any] | None) -> dict[str, Any]:

@@ -23,6 +23,8 @@ if TYPE_CHECKING:
 class HTTPAuthenticationError(PermissionError):
     """A request has no verified HTTP identity or a valid CSRF proof."""
 
+    status_code: int
+
 
 class AmbientHTTPAuthenticator:
     """Decide console eligibility for an already-verified caller.
@@ -239,7 +241,7 @@ async def verify_local_bearer_request(
     except BearerRefused as refused:
         error = HTTPAuthenticationError("Verified local bearer required")
         #: 401 for every credential refusal, 503 while the authority is unreadable.
-        error.status_code = refused.status_code  # type: ignore[attr-defined]
+        error.status_code = refused.status_code
         raise error from None
     except PermissionError:
         raise HTTPAuthenticationError("Verified local bearer required") from None

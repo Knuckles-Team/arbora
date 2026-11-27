@@ -22,7 +22,7 @@ from arbora.access.approval_leases import (
     APPROVAL_ID_PREFIX,
     approval_lease_to_props,
 )
-from arbora.api.invoke.gate_class import GATE_CLASSES
+from arbora.api.invoke.gate_class import GATE_CLASSES, GateClass
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.registry import OpSpec
@@ -40,7 +40,7 @@ _MAX_PAGES = 16
 
 
 class ApprovalsListParams(Params):
-    gate_class: Literal[*GATE_CLASSES] | None = None  # type: ignore[valid-type]
+    gate_class: GateClass | None = None
     state: State | None = None
     approver_role: str | None = Field(default=None, min_length=1, max_length=128)
     cursor: str | None = None
