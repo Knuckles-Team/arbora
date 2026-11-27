@@ -12,25 +12,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
-def print_usage_or_version(argv: list[str]) -> bool:
-    """Print usage or the version for ``argv`` and return whether it did."""
-    if "--version" in argv:
-        from arbora.version import __version__
-
-        print(f"arbora {__version__}")
-        return True
-    if "--help" in argv or "-h" in argv:
-        from arbora.mcp_server.backing.server_factory import create_mcp_parser
-
-        parser = create_mcp_parser(resolve_secret_defaults=False)
-        parser.prog = "arbora"
-        parser.add_argument("--version", action="store_true", help="Show the version")
-        parser.print_help()
-        return True
-    return False
-
-
 _PROVISION_COMMANDS = (
     "provision",
     "enrol",
@@ -51,6 +32,7 @@ def main() -> None:
     """Process composition root: inject concrete browser identity exactly once."""
     import sys
 
+    from arbora.mcp_server.static_answers import print_usage_or_version
     from arbora.observability.state import Errors
     from arbora.security.error_surface import bind_errors
 

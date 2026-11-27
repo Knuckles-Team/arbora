@@ -45,12 +45,12 @@ from arbora.mcp_server.served_invocation import (
     refused_fleet_effect,
 )
 from arbora.mcp_server.server import _attach_fleet_runtime
+from arbora.mcp_server.webui_mcp_delegation import webui_mcp_delegation_helpers
 from arbora.run_origin import RunOriginRegistry
 from arbora.security import request_identity
 from arbora.security.actor_context import use_actor
 from arbora.security.key_cache import JwksCache
 from arbora.security.session import use_session
-from arbora.webui_host.mcp_delegation import webui_mcp_delegation_helpers
 from tests._support import FixedEngineHandles
 from tests.browser_control.test_browser_control_service import _setup
 from tests.browser_control.test_browser_proposals import (

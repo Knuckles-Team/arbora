@@ -7,7 +7,7 @@ transcription backend itself. It calls one host-supplied workspace helper,
 ``transcribe_voice``, and reports 501 when it is absent (GOC-07's honest-501
 contract — see ``overstory``'s ``tests/test_destubbed_endpoints.py::
 test_voice_transcribe_honest_without_whisper``). This module is that host side,
-mirroring :mod:`~arbora.webui_host.mcp_delegation`'s shape.
+mirroring :mod:`~arbora.mcp_server.webui_mcp_delegation`'s shape.
 
 It delegates through the modality seam (:mod:`arbora.modality`), which finds
 the fleet's ``speech-to-text`` tool by contract and calls it through the

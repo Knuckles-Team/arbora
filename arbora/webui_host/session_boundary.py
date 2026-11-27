@@ -2,7 +2,7 @@
 
 import inspect
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 from arbora.identity.ports import (
     BrowserAdmissionPort,
@@ -16,6 +16,14 @@ def _owned_by_auth(path: str) -> bool:
     return (
         path == "/auth" or path.startswith("/auth/") or path.startswith("/.well-known/")
     )
+
+
+@runtime_checkable
+class _BrowserOperations(Protocol):
+    """The browser operation application the composition root qualifies and passes in."""
+
+    admission: Any
+    authenticator: Any
 
 
 class WebUISessionBoundary:
@@ -50,12 +58,8 @@ class WebUISessionBoundary:
         self.request_dispatch = request_dispatch
 
     def __call__(self, app: Any) -> None:
-        from arbora.mcp_server.browser_app import BrowserOperationApplication
-
         if (
-            not isinstance(
-                getattr(self, "operations", None), BrowserOperationApplication
-            )
+            not isinstance(getattr(self, "operations", None), _BrowserOperations)
             or self.operations.admission is not self.admission
         ):
             raise IdentityUnavailable(

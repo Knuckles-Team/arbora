@@ -13,9 +13,9 @@ from typing import Any
 import pytest
 
 from arbora.core.settings import RuntimeConfig
+from arbora.mcp_server import webui_mcp_delegation as mcp_delegation
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.process_authority import ProcessAuthority
-from arbora.webui_host import mcp_delegation
 
 pytestmark = pytest.mark.spec("ARBORA-HOST-R017")
 

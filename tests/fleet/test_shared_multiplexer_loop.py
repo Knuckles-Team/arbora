@@ -23,8 +23,8 @@ from arbora.fleet.shared_multiplexer import (
     run_on_served_multiplexer,
 )
 from arbora.mcp_server.host_caches import ToolTable
+from arbora.mcp_server.webui_mcp_delegation import webui_mcp_delegation_helpers
 from arbora.security.process_authority import ProcessAuthority
-from arbora.webui_host.mcp_delegation import webui_mcp_delegation_helpers
 from tests.fleet.catalog_fixture import (
     attach_multiplexer_from_fixture,
     multiplexer_from_fixture,

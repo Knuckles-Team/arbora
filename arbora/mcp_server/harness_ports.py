@@ -67,9 +67,7 @@ def build_host_ports(
         record_run_event, engine_provider=host.engine.served, notify=TERMINALS.note
     )
     base: dict[str, Any] = {
-        "decide": partial(
-            decide_run, config=host.config, shape_plan=shaped_run_plan
-        ),
+        "decide": partial(decide_run, config=host.config, shape_plan=shaped_run_plan),
         "models": partial(resolve_model, config=host.config),
         "scaffold_publication": publication_scope,
         "native": NativeToolsetProvider(

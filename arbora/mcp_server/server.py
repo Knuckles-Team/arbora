@@ -428,7 +428,7 @@ def mcp_server(
     ``/goals``, ``/tools``) is centralized in the API gateway
     (:mod:`arbora.gateway`) — see :func:`_mount_rest_routes`.
     """
-    from arbora.console import print_usage_or_version
+    from arbora.mcp_server.static_answers import print_usage_or_version
 
     if print_usage_or_version(sys.argv[1:]):
         return
@@ -478,6 +478,7 @@ def mcp_server(
         host_context.caches.tools,
         host_context.observability.signals.runtime,
         host_context.delegation,
+        build_toolset=runtime.fleet_toolset(host_context.caches.tools),
     )
     from arbora.a2a.chain_composition import run_plan_binding
     from arbora.agent_host.port_backends import HostSeams

@@ -52,6 +52,7 @@ from types import MappingProxyType
 from typing import Any, cast
 
 from arbora.api.domain.fleet.ranking import FLOOR_ONLY
+from arbora.core.agent_names import FLEET_TOOLS
 from arbora.core.environment import read_env
 from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
@@ -333,6 +334,13 @@ async def _execute_tool(tools: ToolTable, tool_name: str, /, **kwargs) -> Any:
 
 def discard_event(_event: dict[str, Any]) -> None:
     """The run-event sink of a native toolset built without a host record."""
+
+
+def fleet_toolset(tools: ToolTable) -> Callable[[], Any]:
+    """The factory of the fleet agent's native toolset over the host tool table."""
+    return partial(
+        build_native_arbora_toolset, list(FLEET_TOOLS), tools, toolset_id="arbora-fleet"
+    )
 
 
 def build_native_arbora_toolset(
@@ -1061,6 +1069,7 @@ def _register_graph_tool_surface(
     mount_sdk_a2a(
         mcp,
         host.caches.tools,
+        build_toolset=fleet_toolset(host.caches.tools),
         engine_provider=host.engine.served,
         stream_handler=rpc_handler,
         keys=host.caches.jwks,

@@ -150,7 +150,7 @@ def test_the_host_mounts_engine_storage_not_process_memory(
     import arbora.a2a.sdk_app as sdk_app
 
     monkeypatch.setattr(sdk_app, "create_admitted_a2a_app", create)
-    monkeypatch.setattr(host_bindings, "fleet_agent", lambda tools: object())
+    monkeypatch.setattr(host_bindings, "fleet_agent", lambda build: object())
     monkeypatch.setattr(
         host_bindings, "prompt_normalizer", lambda _engine, _verbs: object()
     )
@@ -163,6 +163,7 @@ def test_the_host_mounts_engine_storage_not_process_memory(
     host_bindings.mount_sdk_a2a(
         mcp,
         ToolTable(ProcessAuthority(config=RuntimeConfig())),
+        build_toolset=lambda: None,
         engine_provider=lambda: None,
         keys=JwksCache(RuntimeConfig()),
     )
@@ -282,7 +283,7 @@ def test_the_host_hands_the_storage_list_to_the_served_app(
             captured.update(kwargs) or SimpleNamespace(app=SimpleNamespace())
         ),
     )
-    monkeypatch.setattr(host_bindings, "fleet_agent", lambda tools: object())
+    monkeypatch.setattr(host_bindings, "fleet_agent", lambda build: object())
     monkeypatch.setattr(
         host_bindings, "prompt_normalizer", lambda _engine, _verbs: object()
     )
@@ -295,6 +296,7 @@ def test_the_host_hands_the_storage_list_to_the_served_app(
     host_bindings.mount_sdk_a2a(
         mcp,
         ToolTable(ProcessAuthority(config=RuntimeConfig())),
+        build_toolset=lambda: None,
         engine_provider=lambda: None,
         keys=JwksCache(RuntimeConfig()),
     )
