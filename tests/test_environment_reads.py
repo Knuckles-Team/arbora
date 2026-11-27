@@ -13,12 +13,12 @@ from arbora.core.environment_manifest import EnvironmentRefusal
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "arbora"
-TABLE = SOURCE / "core" / "environment_names.py"
+TABLES = tuple((SOURCE / "core").glob("environment_names*.py"))
 
 
 def _text() -> str:
     return "\n".join(
-        p.read_text(encoding="utf-8") for p in SOURCE.rglob("*.py") if p != TABLE
+        p.read_text(encoding="utf-8") for p in SOURCE.rglob("*.py") if p not in TABLES
     )
 
 
