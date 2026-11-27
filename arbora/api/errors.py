@@ -154,7 +154,9 @@ class ArboraErrorCode(StrEnum):
     REUSE_UNREACHABLE = "REUSE_UNREACHABLE"
     SCOPE_DENIED = "SCOPE_DENIED"
     SCOPE_MISSING = "SCOPE_MISSING"
-    SECRET_INLINE_REFUSED = "SECRET_INLINE_REFUSED"  # sanitizer:ignore - a refusal code name, not a credential
+    SECRET_INLINE_REFUSED = (
+        "SECRET_INLINE_REFUSED"  # sanitizer:ignore - refusal code name  # nosec B105
+    )
     SOURCES_BLOCK_MISSING = "SOURCES_BLOCK_MISSING"
     STEWARD_ROLE_MISSING = "STEWARD_ROLE_MISSING"
     TASK_PLAN_CONFLICT = "TASK_PLAN_CONFLICT"

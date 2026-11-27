@@ -179,3 +179,80 @@ def _constant(value: int) -> Any:
         return value
 
     return read
+
+
+def _engine_pages(monkeypatch: pytest.MonkeyPatch, pages: list[dict[str, Any]]) -> list:
+    """Serve ``Introspect`` pages as the engine and record each request."""
+    from arbora.api.ops import _engine
+    from arbora.pin_lag import medulla as pin
+
+    seen: list[tuple[str, dict[str, Any]]] = []
+
+    async def send(context: Any, method: str, params: dict[str, Any], **_: Any) -> Any:
+        seen.append((method, dict(params)))
+        return pages[len(seen) - 1]
+
+    monkeypatch.setattr(_engine, "engine_send", send)
+    monkeypatch.setattr(pin, "require_methods", lambda *names: None)
+    monkeypatch.setattr(pin, "require_enum_member", lambda model, value: None)
+    return seen
+
+
+@pytest.mark.spec("ARBORA-CAPACITY-R753")
+async def test_the_engine_knob_is_read_from_introspect_knobs_across_pages(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.core.settings import runtime_config
+
+    monkeypatch.setattr(runtime_config, "resource_grants_max_working_bytes", 8_000)
+    seen = _engine_pages(
+        monkeypatch,
+        [
+            {"rows": [{"key": "a.knob", "value": 1}], "next_cursor": "a.knob"},
+            {
+                "rows": [{"key": service.INDEX_KNOB, "value": 5_000}],
+                "next_cursor": None,
+            },
+        ],
+    )
+    unbound = SimpleNamespace(services={})
+    assert await service.resource_grant_bytes(unbound) == 5_000
+    assert [method for method, _ in seen] == ["Introspect", "Introspect"]
+    assert seen[0][1]["section"] == "knobs"
+    assert seen[1][1]["cursor"] == "a.knob"
+
+
+@pytest.mark.spec("ARBORA-CAPACITY-R753")
+async def test_a_knob_above_the_host_grant_leaves_the_host_grant(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.core.settings import runtime_config
+
+    monkeypatch.setattr(runtime_config, "resource_grants_max_working_bytes", 8_000)
+    _engine_pages(
+        monkeypatch,
+        [{"rows": [{"key": service.INDEX_KNOB, "value": 1_073_741_824}]}],
+    )
+    assert await service.resource_grant_bytes(SimpleNamespace(services={})) == 8_000
+
+
+@pytest.mark.spec("ARBORA-CAPACITY-R753")
+async def test_a_pinned_engine_without_the_knobs_section_leaves_the_host_grant(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.api.ops import _engine
+    from arbora.core.settings import runtime_config
+    from arbora.pin_lag import medulla as pin
+    from arbora.pin_lag.unavailable import PinLagUnavailable
+
+    def lacking(model: str, value: str) -> None:
+        raise PinLagUnavailable(f"{model}.{value}")
+
+    async def never(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("no engine call may be made without the section")
+
+    monkeypatch.setattr(runtime_config, "resource_grants_max_working_bytes", 8_000)
+    monkeypatch.setattr(pin, "require_methods", lambda *names: None)
+    monkeypatch.setattr(pin, "require_enum_member", lacking)
+    monkeypatch.setattr(_engine, "engine_send", never)
+    assert await service.resource_grant_bytes(SimpleNamespace(services={})) == 8_000
