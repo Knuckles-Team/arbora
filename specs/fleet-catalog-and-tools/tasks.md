@@ -548,3 +548,5 @@ The WebUI bridge is configured by the host and discovered through the existing p
 - [x] T277 [US1] ARBORA-FLEET-R088 The fleet serves the city mapping registry, growth rules and seed. Size: S, 1 PR, 2 hours.
 - [ ] T280 [US1] ARBORA-FLEET-R015.7 Built-in content-pack imports leave the connector onboarding budget whole. Size: XS, 1 PR, 1 hour.
 - [x] T281 [US1] ARBORA-FLEET-R089 Per-connector connection state is a served read. Size: XS, 1 PR, 1 hour.
+- [x] T282 [US1] ARBORA-FLEET-R024.12 The deploy rollback acts through one governed fleet call. Size: XS, 1 PR, 1 hour.
+- [x] T283 [US1] ARBORA-FLEET-R024.13 The scale actuator applies a typed request through one governed fleet call. Size: S, 1 PR, 2 hours.

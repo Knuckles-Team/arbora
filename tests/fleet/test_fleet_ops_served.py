@@ -102,7 +102,7 @@ async def test_reconcile_scale_and_watch_served() -> None:
     assert refused["admitted"] is False and "min/max" in refused["detail"]
     rolled: list[tuple[str, str]] = []
 
-    async def rollback(service: str, detail: str) -> None:
+    async def rollback(context: Any, service: str, detail: str) -> None:
         rolled.append((service, detail))
 
     watch_context = _context(OPERATOR, deploy_rollback=rollback)

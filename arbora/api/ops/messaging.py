@@ -25,6 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.registry import AuditClass, Composite, Effect, HttpShape, OpSpec, Verb
 from arbora.core.settings import setting
+from arbora.fleet.fleet_tool_call import call_fleet_tool
 from arbora.messaging.alert_intake import extract_alert_text
 
 logger = logging.getLogger(__name__)
@@ -85,8 +86,6 @@ def _alert_text(params: Mapping[str, Any]) -> str:
 
 async def _post_to_mattermost(context: Any, channel: str, text: str) -> str:
     """Post through the fleet's mattermost connector under the caller's authority."""
-    from arbora.api.ops import fleet
-
     gateway = context.services.get("fleet_gateway")
     if gateway is None:
         raise _refused("UNAVAILABLE", "fleet gateway is not bound")
@@ -96,22 +95,7 @@ async def _post_to_mattermost(context: Any, channel: str, text: str) -> str:
         "action": "create_post",
         "params_json": json.dumps({"channel_id": channel, "message": text}),
     }
-    call_op = next(op for op in fleet.operations() if op.id == "fleet.call")
-    params = {"server": server, "tool": tool, "arguments": arguments}
-    caller = context.caller
-    decision = await gateway.effect(call_op, params, caller)
-    result = await gateway.call(
-        caller,
-        server,
-        tool,
-        arguments,
-        expected_effect=decision.effect,
-        service_identity=context.service_identity,
-        owner=context.owner,
-        owner_ref=getattr(context, "owner_ref", None),
-        fleet_decision=decision,
-        registry_digest=context.registry_digest,
-    )
+    result = await call_fleet_tool(context, server, tool, arguments)
     if isinstance(result, Mapping) and (result.get("error") or result.get("isError")):
         raise _refused("UPSTREAM_FAILED", "the mattermost connector refused the post")
     post_id = result.get("id", "") if isinstance(result, Mapping) else ""
