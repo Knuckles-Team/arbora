@@ -10,6 +10,7 @@ the knowledge engine decides what the priority means.
 from __future__ import annotations
 
 import contextvars
+import logging
 import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -111,7 +112,10 @@ def inject(headers: dict[str, str] | None = None) -> dict[str, str]:
     merged.update(_context_headers())
     try:
         actor = current_actor()
-    except Exception:  # noqa: BLE001 - identity is optional context on a header
+    except Exception:
+        logging.getLogger(__name__).debug(
+            "identity is optional context on a header", exc_info=True
+        )
         return merged
     if actor.tenant_id:
         merged[TENANT_HEADER] = actor.tenant_id

@@ -154,7 +154,7 @@ class LangfuseExporter:
                 kwargs["host"] = self._host
             self._client = Langfuse(**kwargs)
             logger.info("Langfuse exporter active.")
-        except Exception as exc:  # noqa: BLE001 — optional dep / offline
+        except Exception as exc:  # optional dep / offline
             logger.debug(
                 "Langfuse client unavailable; exporter no-ops (%s).",
                 type(exc).__name__,
@@ -195,7 +195,10 @@ class LangfuseExporter:
                 from scion_sdk.identity import current_actor
 
                 tenant_id = current_actor().tenant_id
-            except Exception:  # noqa: BLE001 — empty namespace is dev-safe
+            except Exception:
+                logging.getLogger(__name__).debug(
+                    "empty namespace is dev-safe", exc_info=True
+                )
                 tenant_id = ""
             clean_run_id = normalize_run_id(run_id, tenant_id=tenant_id)
             controlled_evidence = _validated_trace_evidence(evidence)
@@ -247,7 +250,7 @@ class LangfuseExporter:
                     md["correlation_id"] = persistence_reference(
                         "correlation", cid, namespace=tenant_ref
                     )
-            except Exception:  # noqa: BLE001 — never let correlation crash export
+            except Exception:  # never let correlation crash export
                 logger.debug("langfuse correlation reference skipped", exc_info=True)
             trace = self._make_trace(
                 client,
@@ -271,7 +274,7 @@ class LangfuseExporter:
             if observation_emitted:
                 self.exported_observations += 1
             return True
-        except Exception as exc:  # noqa: BLE001 — observability must never crash a run
+        except Exception as exc:  # observability must never crash a run
             logger.debug(
                 "Langfuse export skipped (%s).",
                 type(exc).__name__,
@@ -341,7 +344,7 @@ class LangfuseExporter:
         if client is not None:
             try:
                 client.flush()
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.debug("Langfuse flush skipped (%s).", type(exc).__name__)
 
 
