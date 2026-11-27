@@ -330,13 +330,14 @@ def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(
                 run_id=request.run_id, output="see https://x.example"
             )
 
-    auth = authority_mod.WorkItemA2AAuthority.__new__(
-        authority_mod.WorkItemA2AAuthority
+    from arbora.run_origin import RunOriginRegistry
+
+    auth = authority_mod.WorkItemA2AAuthority(
+        lambda: None,
+        origins=RunOriginRegistry(),
+        executor=_Executor(),
+        clock=lambda: 1_700_000_000.0,
     )
-    auth._executor = _Executor()
-    auth.task_plan_config = None
-    auth.hosted_invocation = None
-    auth._detached = set()
     task_id = "a2a-" + "a" * 64
 
     import arbora.work_items as work_items
