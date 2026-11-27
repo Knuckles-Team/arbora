@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from arbora.core.settings import RuntimeConfig
+from arbora.mcp_server.backing.tools import intent_candidates as _intent_candidates
 from arbora.mcp_server.backing.tools import intent_tools
 from arbora.mcp_server.host_caches import build_host_caches
 
@@ -27,11 +28,13 @@ class _Recording:
 def test_intent_actions_are_ordered_by_the_ranking_port() -> None:
     port = _Recording()
     tool = next(
-        t for t, actions in intent_tools._actions_by_tool().items() if len(actions) > 2
+        t
+        for t, actions in _intent_candidates._actions_by_tool().items()
+        if len(actions) > 2
     )
-    actions = intent_tools._actions_by_tool()[tool]
+    actions = _intent_candidates._actions_by_tool()[tool]
 
-    ordered = [a for a, _ in intent_tools._order_actions(tool, "anything", port)]
+    ordered = [a for a, _ in _intent_candidates._order_actions(tool, "anything", port)]
 
     assert ordered == sorted(actions, reverse=True)
     assert port.asked[0][0] == "catalog.intent_action_rank"
@@ -41,7 +44,7 @@ def test_intent_actions_are_ordered_by_the_ranking_port() -> None:
 @pytest.mark.spec("ARBORA-FLEET-R083.2")
 def test_resolved_capabilities_follow_the_port_and_carry_floor_evidence() -> None:
     port = _Recording()
-    resolved = intent_tools.resolve_intent(
+    resolved = _intent_candidates.resolve_intent(
         build_host_caches(RuntimeConfig()),
         None,
         "search the graph",
