@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -35,6 +35,8 @@ __all__ = [
     "PlanMode",
     "build_dca_proposal_key",
     "evaluate_dca",
+    "price_reference",
+    "quantity_for_notional",
     "minor_exponent",
     "minor_units",
     "record_dca_proposal",
@@ -150,6 +152,36 @@ async def evaluate_dca(send: Send, plan: DCAPlan) -> Mapping[str, Any]:
     if not isinstance(answer, Mapping) or "amount_minor_units" not in answer:
         raise DCAEvaluationError("engine strategy answer malformed")
     return answer
+
+
+#: Order quantities are whole units of the venue's smallest lot: eight decimal places.
+_QUANTITY_STEP = Decimal("0.00000001")
+
+
+def quantity_for_notional(notional: Decimal, price: Decimal) -> Decimal:
+    """The quantity a notional buys at ``price``: exact decimal, rounded down to the lot.
+
+    A zero or negative price, or a notional too small for one lot, is refused; the
+    notional is never returned as a quantity.
+    """
+    if price <= 0 or not price.is_finite():
+        raise DCAEvaluationError("price is not positive")
+    quantity = (notional / price).quantize(_QUANTITY_STEP, rounding=ROUND_DOWN)
+    if quantity <= 0:
+        raise DCAEvaluationError("notional is below one lot")
+    return quantity
+
+
+def price_reference(
+    source: str, symbol: str, price: Decimal, read_at: str
+) -> dict[str, str]:
+    """The evidence of the price a fill was sized with, recorded on the receipt."""
+    return {
+        "source": source,
+        "symbol": symbol,
+        "price": format(price, "f"),
+        "read_at": read_at,
+    }
 
 
 class DCAHost:

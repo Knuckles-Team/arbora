@@ -17,6 +17,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from arbora.api.invoke.steps import claim_values
+
 __all__ = [
     "OrderChange",
     "PositionChange",
@@ -104,7 +106,10 @@ class WalletOperation:
         from arbora.pin_lag.scion_sdk import require_wallet_intent
 
         module = require_wallet_intent()
-        return cls(tenant_id, actor, module.WalletBusinessIntent(**dict(params)))
+        # The served params are frozen; the strict SDK model takes plain JSON values.
+        return cls(
+            tenant_id, actor, module.WalletBusinessIntent(**claim_values(params))
+        )
 
     def plan_digest(self) -> str:
         from arbora.pin_lag.scion_sdk import require_wallet_intent

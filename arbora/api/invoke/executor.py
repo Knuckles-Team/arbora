@@ -70,6 +70,9 @@ class ExecutionContext:
     # The surface that carried the call; a composite that audits a further event
     # of its own needs it to bind that event.
     surface: str = ""
+    # The request-envelope fields the operation declares (``OpSpec.envelope``), separated
+    # from the params before the plan was hashed; never part of the intent.
+    envelope: Mapping[str, Any] = MappingProxyType({})
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "services", MappingProxyType(dict(self.services)))

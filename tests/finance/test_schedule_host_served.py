@@ -226,7 +226,7 @@ async def test_dca_due_fills_a_paper_plan_through_the_bound_paper_door() -> None
         "account_id": "acct-1",
         "symbol": "VTI",
         "side": "buy",
-        "qty": 25.5,
+        "notional": "25.50",
         "order_type": "market",
         "mode": "paper",
     }

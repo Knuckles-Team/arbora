@@ -5,6 +5,9 @@ double of ``scion_sdk.writeback.wallet_intent`` (the shapes on scion-sdk main) a
 handlers with recording ports. A pinned release without the contract refuses UNAVAILABLE.
 """
 
+# ruff: noqa: F811
+# The served fixture is imported for pytest and re-requested by name, the repo idiom.
+
 from __future__ import annotations
 
 import hashlib
@@ -21,6 +24,8 @@ from arbora.api.ops import finance_changes as ops
 from arbora.api.ops.registry_factory import get_registry
 from arbora.api.registry import Confirm, Idempotency, Surface
 from arbora.finance.changes import OrderChange, WalletOperation, refusal_for
+from tests.api._served_support import confirmable  # noqa: F401
+from tests.test_served_operation_api import served  # noqa: F401
 
 NO_OP: Any = None
 INTENT = {
@@ -69,10 +74,12 @@ class Wallet:
         }
         self.allowed = allowed
         self.applied: list[tuple[dict[str, str], str | None]] = []
+        self.proofs: list[Any] = []
         self.reconciled: list[Any] = []
         self.state = "applied"
 
     async def verify(self, projection: Any, proof: Any) -> Any:
+        self.proofs.append(proof)
         return self.verdict
 
     async def authorize(self, projection: Any) -> Any:
@@ -86,7 +93,14 @@ class Wallet:
         self.reconciled.append(key)
 
 
-def context(wallet: Wallet | None = None, **services: Any) -> Any:
+NO_ENVELOPE: dict[str, Any] = {}
+
+
+def context(
+    wallet: Wallet | None = None,
+    envelope: dict[str, Any] = NO_ENVELOPE,
+    **services: Any,
+) -> Any:
     bound = dict(services)
     if wallet is not None:
         bound["wallet_operations"] = wallet
@@ -94,6 +108,7 @@ def context(wallet: Wallet | None = None, **services: Any) -> Any:
         caller=SimpleNamespace(tenant="t1", principal="actor-1", request_id="r1"),
         services=bound,
         idempotency_key="key-1",
+        envelope=envelope,
     )
 
 
@@ -137,7 +152,7 @@ async def test_digest_is_stable_across_signing_and_retries_reuse_effect_key(
     port = Wallet()
     unsigned = await ops.handle_wallet_operate(context(port), confirmed(), NO_OP)
     signed = await ops.handle_wallet_operate(
-        context(port), {**confirmed(), "proof": {"signature": "SECRET"}}, NO_OP
+        context(port, {"proof": {"signature": "SECRET"}}), confirmed(), NO_OP
     )
     assert unsigned["value"]["plan_digest"] == signed["value"]["plan_digest"]
     # Both calls carry the one effect key the pipeline gave them; arbora mints no nonce.
@@ -155,7 +170,8 @@ def test_operations_are_registered_and_envelope_is_shared_over_http_and_mcp() ->
         assert spec.idempotency is Idempotency.KEY_REQUIRED
         assert {Surface.HTTP, Surface.MCP} <= set(spec.surfaces)
         assert op_id in EXTERNAL_EFFECT_OPERATIONS
-    # One params model carries intent, confirmation and proof for both routes.
+    # The proof travels in the envelope of the one pipeline both routes call.
+    assert registry.get("wallet.operate").envelope == ("proof",)
     assert set(ops.WalletOperateParams.model_fields) == {
         "intent",
         "confirmation",
@@ -246,10 +262,11 @@ async def test_audit_joins_authorization_and_proof_digest_without_secrets(
 @pytest.mark.spec("ARBORA-DATA-MARKET-R007.6")
 async def test_wallet_proof_confirmation_and_replay(sdk: ModuleType) -> None:
     port = Wallet()
-    params = {**confirmed(), "proof": {"signature": "SECRET"}}
-    first = await ops.handle_wallet_operate(context(port), params, NO_OP)
+    params = confirmed()
+    signed = {"proof": {"signature": "SECRET"}}
+    first = await ops.handle_wallet_operate(context(port, signed), params, NO_OP)
     # A replay carries the same effect key, so the port reads the one receipt.
-    again = await ops.handle_wallet_operate(context(port), params, NO_OP)
+    again = await ops.handle_wallet_operate(context(port, signed), params, NO_OP)
     assert first["value"]["effect_receipt"] == again["value"]["effect_receipt"]
     assert {key for _p, key in port.applied} == {"key-1"}
     for altered in ("account_id", "network_id", "key_id"):
@@ -273,7 +290,9 @@ class Doors:
 
 @pytest.mark.asyncio
 @pytest.mark.spec("ARBORA-DATA-MARKET-R007.7")
-async def test_stage_confirm_promote(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_stage_confirm_promote_handlers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     doors = Doors()
     monkeypatch.setattr(ops, "send_main", doors.send_main)
     staged = await ops.handle_order_stage(
@@ -338,3 +357,187 @@ async def test_order_and_position_changes_need_the_composed_door() -> None:
             context(finance_change_port=Door()), {**params, "action": "amend"}, NO_OP
         )
     assert bad.value.code == "INVALID_ARGUMENT"
+
+
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.2")
+def test_the_plan_digest_is_the_same_with_and_without_the_proof() -> None:
+    from arbora.api.invoke.pipeline import split_envelope
+    from arbora.api.invoke.plan import bind_plan, params_digest
+
+    op = get_registry().get("wallet.operate")
+    caller = SimpleNamespace(
+        principal="actor-1", tenant="t1", policy_revision="p1", request_id="r1"
+    )
+    unsigned = confirmed()
+    signed = {**unsigned, "proof": {"signature": "SECRET"}}
+    kept_unsigned, extension_unsigned = split_envelope(op, unsigned)
+    kept_signed, extension = split_envelope(op, signed)
+    # The proof is separated before hashing: the resubmit with the proof matches the plan.
+    assert extension == {"proof": {"signature": "SECRET"}} and extension_unsigned == {}
+    assert "proof" not in kept_signed
+    assert params_digest(kept_signed) == params_digest(kept_unsigned)
+    assert bind_plan(op, kept_signed, caller, "d") == bind_plan(
+        op, kept_unsigned, caller, "d"
+    )
+    # An op with no declared envelope is untouched.
+    other = get_registry().get("orders.change")
+    assert split_envelope(other, signed) == (signed, {})
+
+
+PROPOSAL = {"snapshot": {"proposal_id": "pr-1"}}
+PROMOTION = {
+    "proposal_id": "pr-1",
+    "candidate_revision": 1,
+    "snapshot_digest": "s",
+    "required_gate_manifest_digest": "m",
+    "manifest_gate_ids": ["g1"],
+    "gate_receipts": [{"gate_id": "g1", "digest": "d"}],
+}
+OPS = ("market.order.stage", "market.order.confirm")
+
+
+def _served_order_journey(
+    monkeypatch: pytest.MonkeyPatch, served: Any, confirmable: dict[str, Any]
+) -> tuple[Any, list[tuple[str, dict[str, Any], str]]]:
+    from tests.api._market_support import MarketServed
+
+    sent: list[tuple[str, dict[str, Any], str]] = []
+
+    async def door(context: Any, method: str, params: dict[str, Any], **_k: Any) -> Any:
+        sent.append((method, params, str(context.caller.principal)))
+        return {"proposal_id": "pr-1", "revision": 1}
+
+    monkeypatch.setattr(ops, "send_main", door)
+    market = MarketServed(
+        confirmable, served, monkeypatch, {}, scopes=("finance:propose-order",)
+    )
+    return market, sent
+
+
+def _http_planned(market: Any, op_id: str, params: dict[str, Any], key: str) -> Any:
+    """Preview, then resubmit under the confirmed plan: the one confirmation protocol."""
+    preview = market.http(op_id, params, **{"Idempotency-Key": key})
+    ref = preview.json()["error"]["details"]["plan_ref"]
+    return market.http(
+        op_id, params, **{"Idempotency-Key": key, "Arbora-Plan-Ref": ref}
+    )
+
+
+def _mcp_planned(market: Any, op_id: str, params: dict[str, Any], key: str) -> Any:
+    preview = market.mcp(op_id, params, verb="act", idempotency_key=key)
+    assert preview["ok"] is True, preview
+    ref = preview["meta"]["plan"]["plan_ref"]
+    return market.mcp(op_id, params, verb="act", idempotency_key=key, plan_ref=ref)
+
+
+def _previews_leave_no_engine_call(market: Any, sent: list[Any]) -> None:
+    for op_id, params in zip(OPS, (PROPOSAL, PROMOTION), strict=True):
+        assert get_registry().get(op_id).confirm is Confirm.PLAN
+        before = len(sent)
+        preview = market.http(op_id, params, **{"Idempotency-Key": "k-preview"})
+        assert preview.json()["error"]["code"] == "CONFIRMATION_REQUIRED"
+        assert len(sent) == before
+
+
+def _both_doors_under_a_plan(market: Any) -> tuple[list[Any], list[Any]]:
+    pairs = list(zip(OPS, (PROPOSAL, PROMOTION), strict=True))
+    over_http = [
+        _http_planned(market, op_id, params, f"http-{i}")
+        for i, (op_id, params) in enumerate(pairs)
+    ]
+    over_mcp = [
+        _mcp_planned(market, op_id, params, f"mcp-{i}")
+        for i, (op_id, params) in enumerate(pairs)
+    ]
+    return over_http, over_mcp
+
+
+def _both_doors_run_once_each(market: Any, sent: list[Any]) -> None:
+    over_http, over_mcp = _both_doors_under_a_plan(market)
+    assert [r.status_code for r in over_http] == [200, 200]
+    assert [answer["ok"] for answer in over_mcp] == [True, True]
+    assert [m for m, _p, _w in sent] == ["FinanceOrderStage", "FinanceOrderPromote"] * 2
+
+
+def _a_tenant_field_is_refused(market: Any) -> None:
+    refused = market.http("market.order.confirm", {**PROMOTION, "tenant_id": "x"})
+    assert refused.status_code == 400
+
+
+def _promotions_name_the_verified_approver(sent: list[Any]) -> None:
+    from tests.api._market_support import plain
+
+    promoted = [
+        (plain(wire)["request"], principal)
+        for method, wire, principal in sent
+        if method == "FinanceOrderPromote"
+    ]
+    assert len(promoted) == 2
+    for request, principal in promoted:
+        # The verified caller is the approver; the tenant is never a request field.
+        assert request["approver"] == principal == "person:one"
+        assert request["tenant_id"] == "tenant:one"
+        assert request["gate_receipts"] == PROMOTION["gate_receipts"]
+
+
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.7")
+def test_stage_confirm_promote(
+    confirmable: dict[str, Any],
+    served: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    market, sent = _served_order_journey(monkeypatch, served, confirmable)
+    _previews_leave_no_engine_call(market, sent)
+    _both_doors_run_once_each(market, sent)
+    _promotions_name_the_verified_approver(sent)
+    _a_tenant_field_is_refused(market)
+
+
+@pytest.fixture
+def wallet_bound(
+    confirmable: dict[str, Any], monkeypatch: pytest.MonkeyPatch
+) -> tuple[dict[str, Any], Wallet]:
+    """Compose the recording wallet authority before ``served`` builds the app."""
+    from tests.api._market_support import capture_with_bindings
+
+    wallet = Wallet()
+    return capture_with_bindings(monkeypatch, {"wallet_operations": wallet}), wallet
+
+
+@pytest.mark.spec("ARBORA-DATA-MARKET-R007.3")
+def test_the_proof_envelope_reaches_the_handler_over_http_and_mcp(
+    sdk: ModuleType,
+    wallet_bound: tuple[dict[str, Any], Wallet],
+    served: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from tests.api._market_support import MarketServed
+
+    captured, wallet = wallet_bound
+    market = MarketServed(
+        captured, served, monkeypatch, {}, scopes=("finance:propose-order",)
+    )
+    body = confirmed()
+    proof = {"signature": "SECRET"}
+    # HTTP: the plan is previewed without the proof; the resubmit adds it and keeps the plan.
+    key = {"Idempotency-Key": "wallet-http"}
+    preview = market.http("wallet.operate", body, **key)
+    ref = preview.json()["error"]["details"]["plan_ref"]
+    signed = market.http(
+        "wallet.operate", {**body, "proof": proof}, **key, **{"Arbora-Plan-Ref": ref}
+    )
+    assert signed.status_code == 200, signed.text
+    # MCP: the same envelope over the same pipeline.
+    shown = market.mcp("wallet.operate", body, verb="act", idempotency_key="wallet-mcp")
+    mcp_ref = shown["meta"]["plan"]["plan_ref"]
+    answered = market.mcp(
+        "wallet.operate",
+        {**body, "proof": proof},
+        verb="act",
+        idempotency_key="wallet-mcp",
+        plan_ref=mcp_ref,
+    )
+    assert answered["ok"] is True, answered
+    assert wallet.proofs == [proof, proof]
+    assert len(wallet.applied) == 2
+    assert "SECRET" not in json.dumps(preview.json())

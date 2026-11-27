@@ -650,6 +650,76 @@ def _with_finance_import_ports(bindings: Mapping[str, Any]) -> Mapping[str, Any]
     }
 
 
+def _delegated_subject_check(
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+    session: Callable[[], Any],
+) -> Any:
+    """The service executor's subject check, with the finance delegation path.
+
+    ARBORA-DATA-MARKET-R006: a scheduled paper fill passes the same ownership check as any
+    service operation, admitted by the owner's delegated grant that the engine confirms.
+    Everything else falls to the default refusal until a subject authority is composed.
+    """
+    from arbora.api.invoke.bootstrap import deny_subject_access
+    from arbora.finance.delegation import DelegatedSubjectAccess
+
+    async def wire(method: str, params: dict[str, Any]) -> Any:
+        from medulla.generated import send_by_id
+
+        from arbora.api.ops._engine import decode
+
+        client = await pool.connected_client(
+            connect_context(str(session().tenant)), graph
+        )
+        return decode(await send_by_id(client, method, params, graph))
+
+    return DelegatedSubjectAccess(wire, deny_subject_access)
+
+
+def _with_finance_change_ports(
+    bindings: Mapping[str, Any],
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+    session: Callable[[], Any],
+) -> Mapping[str, Any]:
+    """Compose the wallet authority and the order and position change door.
+
+    ARBORA-DATA-MARKET-R007.3: ``wallet.operate`` verifies the SDK proof against engine key
+    trust, asks the engine's grant ledger and reserves the effect once in the engine; the SDK
+    shapes it needs are guarded by the pin (a pinned release refuses naming the symbol). A
+    port the deployment binds itself wins.
+    """
+    import time
+
+    from arbora.finance.wallet_port import (
+        EngineWalletOperations,
+        FleetFinanceChangePort,
+    )
+
+    async def client() -> Any:
+        return await pool.connected_client(
+            connect_context(str(session().tenant)), graph
+        )
+
+    async def wire(method: str, params: dict[str, Any]) -> Any:
+        from medulla.generated import send_by_id
+
+        from arbora.api.ops._engine import decode
+
+        return decode(await send_by_id(await client(), method, params, graph))
+
+    return {
+        "wallet_operations": EngineWalletOperations(
+            wire, client, clock_ms=lambda: time.time_ns() // 1_000_000
+        ),
+        "finance_change_port": FleetFinanceChangePort(),
+        **bindings,
+    }
+
+
 def _with_finance_schedule_host(
     bindings: Mapping[str, Any],
     pool: Any,
@@ -1128,6 +1198,9 @@ def compose_served_invocation(
         bindings = _with_finance_schedule_host(
             bindings, pool, graph, connect_context, session
         )
+        bindings = _with_finance_change_ports(
+            bindings, pool, graph, connect_context, session
+        )
         bindings, loop_startup = _with_loop_worker(
             bindings, pool, graph, connect_context, session
         )
@@ -1208,6 +1281,7 @@ def compose_served_invocation(
         service_scopes=frozenset(minted.scopes),
         service_principal=str(minted.actor.actor_id),
         service_claims=service_claims,
+        check_access=_delegated_subject_check(pool, graph, connect_context, session),
         bindings=bindings,
     )
     # ARBORA-IDENTITY-R011.2.4, R010.2.3.2: the SCIM routes and the directory sync job

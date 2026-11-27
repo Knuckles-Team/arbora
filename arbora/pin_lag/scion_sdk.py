@@ -18,6 +18,8 @@ from arbora.pin_lag.unavailable import PinLagUnavailable
 __all__ = [
     "CSV_PREVIEW_SYMBOL",
     "WALLET_INTENT_SYMBOL",
+    "WALLET_TRUST_SYMBOL",
+    "require_wallet_trust",
     "require_wallet_intent",
     "FORECAST_SYMBOLS",
     "require_csv_preview",
@@ -196,4 +198,22 @@ def require_wallet_intent() -> ModuleType:
     for name in _WALLET_NEEDED:
         if not hasattr(module, name):
             raise PinLagUnavailable(f"scion_sdk.writeback.wallet_intent.{name}")
+    return module
+
+
+WALLET_TRUST_SYMBOL = "scion_sdk.writeback.wallet_trust.EngineWalletKeyResolver"
+
+
+def require_wallet_trust() -> ModuleType:
+    """The SDK engine wallet-key resolver (``SCION-GOVERNED-WRITEBACK-R001.4``), or refuse.
+
+    The signature verifier of ``wallet_proof`` ships in the pinned release; the resolver
+    that reads key trust from the engine is on SDK ``main``. Arbora resolves no key of its own.
+    """
+    try:
+        module = importlib.import_module("scion_sdk.writeback.wallet_trust")
+    except ImportError:
+        raise PinLagUnavailable(WALLET_TRUST_SYMBOL) from None
+    if not hasattr(module, "EngineWalletKeyResolver"):
+        raise PinLagUnavailable(WALLET_TRUST_SYMBOL)
     return module
