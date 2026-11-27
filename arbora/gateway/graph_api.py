@@ -23,6 +23,8 @@ import logging
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from arbora.gateway.state import gateway_of
+
 logger = logging.getLogger(__name__)
 
 SQL_SCHEMA_PATH = "/graph/sql-schema"
@@ -49,10 +51,6 @@ SQL_SCHEMA_DESCRIPTION = (
 
 async def _sql_schema_endpoint(request: Request) -> JSONResponse:
     """Serve ``POST /graph/sql-schema`` — the read-only catalog projection."""
-    from arbora.mcp_server.backing.tools.graph_tools import (
-        SqlSchemaUnavailable,
-        sql_schema,
-    )
     from arbora.security.session import resolve_session
 
     try:
@@ -68,11 +66,18 @@ async def _sql_schema_endpoint(request: Request) -> JSONResponse:
             status_code=403,
         )
 
-    try:
-        schema = await _sql_schema_filter(request)
-        return JSONResponse(await sql_schema(schema=schema))
-    except SqlSchemaUnavailable as exc:
-        return JSONResponse(exc.as_payload(), status_code=exc.status_code)
+    handler = gateway_of(request).sql_schema.get()
+    if handler is None:
+        return JSONResponse(
+            {
+                "status": "error",
+                "code": "catalog_unavailable",
+                "message": "SQL catalog introspection is not configured",
+            },
+            status_code=503,
+        )
+    status, payload = await handler(await _sql_schema_filter(request))
+    return JSONResponse(payload, status_code=status)
 
 
 async def _sql_schema_filter(request: Request) -> str | None:

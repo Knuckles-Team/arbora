@@ -116,3 +116,36 @@ def test_a_route_reads_the_gateway_of_its_own_applications_host() -> None:
     gateway = GatewayState()
     app = SimpleNamespace(state=SimpleNamespace(host=SimpleNamespace(gateway=gateway)))
     assert gateway_of(SimpleNamespace(app=app)) is gateway
+
+
+def _sql_schema_request(gateway: GatewayState) -> SimpleNamespace:
+    async def body() -> dict[str, str]:
+        return {"schema": "main"}
+
+    host = SimpleNamespace(gateway=gateway)
+    return SimpleNamespace(
+        app=SimpleNamespace(state=SimpleNamespace(host=host)), json=body
+    )
+
+
+@pytest.mark.asyncio
+async def test_sql_schema_route_reads_its_handler_from_the_request_host(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.gateway import graph_api
+
+    monkeypatch.setattr("arbora.security.session.resolve_session", lambda **_: object())
+    gateway = GatewayState()
+    unbound = await graph_api._sql_schema_endpoint(_sql_schema_request(gateway))
+    assert unbound.status_code == 503
+
+    seen: list[str | None] = []
+
+    async def handler(schema: str | None) -> tuple[int, dict[str, object]]:
+        seen.append(schema)
+        return 200, {"catalogs": []}
+
+    gateway.sql_schema.set(handler)
+    bound = await graph_api._sql_schema_endpoint(_sql_schema_request(gateway))
+    assert bound.status_code == 200
+    assert seen == ["main"]

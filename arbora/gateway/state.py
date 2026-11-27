@@ -11,7 +11,7 @@ import hashlib
 import secrets
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from arbora.gateway.ports import GatewayApplicationPort
@@ -22,6 +22,7 @@ __all__ = [
     "Flag",
     "GatewayState",
     "Slot",
+    "SqlSchemaHandler",
     "gateway_of",
     "gateway_on",
 ]
@@ -31,6 +32,10 @@ __all__ = [
 #: task queue, not to be a real WAF.
 RATE_CAP_PER_MINUTE = 120
 _RATE_TABLE_LIMIT = 4096
+
+
+#: ``(schema filter) -> (HTTP status, JSON body)`` of the SQL catalog projection.
+SqlSchemaHandler = Callable[[str | None], Awaitable[tuple[int, dict[str, Any]]]]
 
 
 class Slot[T]:
@@ -137,6 +142,7 @@ class GatewayState:
         "ingest_worker",
         "metrics_listener",
         "scope_policy",
+        "sql_schema",
     )
 
     def __init__(self) -> None:
@@ -157,6 +163,9 @@ class GatewayState:
         self.ingest_worker: Slot[Any] = Slot()
         #: The catalog serving state reader (ARBORA-FLEET-R081.2); unbound is cold.
         self.catalog_state: Slot[Callable[[], Any]] = Slot()
+        #: The read-only SQL catalog projection the composition binds: it answers
+        #: the status code and the JSON body; unbound answers unavailable.
+        self.sql_schema: Slot[SqlSchemaHandler] = Slot()
         self.event_rates = EventRates()
         #: Set once the standalone daemon's metrics listener is serving.
         self.metrics_listener = Flag()
