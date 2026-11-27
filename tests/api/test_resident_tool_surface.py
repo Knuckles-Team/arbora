@@ -18,8 +18,8 @@ from __future__ import annotations
 import pytest
 
 from arbora.api.http.protocol_routes import PROTOCOL_ROUTES
-from arbora.api.mcp.registration import FLEET_OPERATIONS, RESIDENT_NAMES
 from arbora.api.mcp.verbs import VERBS
+from arbora.mcp_server.registration import FLEET_OPERATIONS, RESIDENT_NAMES
 
 EXPECTED_VERBS = ("find", "ask", "why", "write", "act", "manage")
 EXPECTED_FLEET_TOOLS = (

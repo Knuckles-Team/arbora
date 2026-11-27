@@ -68,7 +68,6 @@ async def bind_governed_forwarder_fixture(mux: MCPMultiplexer, result: Any) -> A
     from arbora.api.errors import FleetRefusal
     from arbora.api.invoke import InvokeServices, VerifiedCaller, invoke
     from arbora.api.invoke.audit import EffectReservation
-    from arbora.api.mcp.registration import FleetMCPBinding, register_mcp_tools
     from arbora.api.mcp.verbs import MCPProjection
     from arbora.api.ops.fleet import handle_fleet_call, operations
     from arbora.api.policy import PolicyGate
@@ -78,6 +77,7 @@ async def bind_governed_forwarder_fixture(mux: MCPMultiplexer, result: Any) -> A
     from arbora.fleet.multiplexer import make_governed_tool_mount
     from arbora.fleet.multiplexer_ops import MultiplexerOps
     from arbora.fleet.session_loads import SessionLoads
+    from arbora.mcp_server.registration import FleetMCPBinding, register_mcp_tools
 
     scopes = frozenset({"mcp:discover", "mcp:delegate"})
     caller = VerifiedCaller(

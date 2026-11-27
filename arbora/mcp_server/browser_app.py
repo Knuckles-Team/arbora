@@ -2,12 +2,11 @@
 
 from typing import Any
 
+from arbora.api.http.app import create_api_application
+from arbora.api.http.browser_auth import BoundBrowserHTTPAuthenticator
+from arbora.api.http.routes import _error
 from arbora.identity.admission import BrowserAdmission
 from arbora.identity.engine import IdentityUnavailable
-
-from .app import create_api_application
-from .browser_auth import BoundBrowserHTTPAuthenticator
-from .routes import _error
 
 
 class BrowserOperationApplication:
@@ -59,46 +58,22 @@ class BrowserOperationApplication:
             return
         if scope.get("type") != "http":
             raise RuntimeError("unsupported browser operation transport")
-        from fastapi import HTTPException
-        from fastapi.responses import JSONResponse
+        status = _framing_refusal(scope)
+        if status is not None:
+            from fastapi.responses import JSONResponse
 
-        from .routes import MAX_BODY_BYTES
-
-        lengths = [
-            v for k, v in scope.get("headers", ()) if k.lower() == b"content-length"
-        ]
-        transfers = [
-            v for k, v in scope.get("headers", ()) if k.lower() == b"transfer-encoding"
-        ]
-        invalid = (
-            len(lengths) > 1
-            or len(transfers) > 1
-            or bool(lengths and transfers)
-            or any(not value.isdigit() or len(value) > 20 for value in lengths)
-            or any(value.lower() != b"chunked" for value in transfers)
-        )
-        oversized = bool(lengths and not invalid and int(lengths[0]) > MAX_BODY_BYTES)
-        if invalid or oversized:
             response = JSONResponse(
                 {"detail": "Request rejected"},
-                status_code=400 if invalid else 413,
+                status_code=status,
                 headers={"Cache-Control": "no-store"},
             )
             await response(scope, receive, send)
             return
-        received = 0
+        await self._admit_and_forward(scope, _bounded_receive(receive), receive, send)
 
-        async def bounded_receive():
-            nonlocal received
-            message = await receive()
-            if message.get("type") == "http.request":
-                received += len(message.get("body", b""))
-                if received > MAX_BODY_BYTES:
-                    # The canonical app's own privacy handler catches this,
-                    # before its server-error middleware could emit a 500.
-                    raise HTTPException(status_code=413, detail="Request rejected")
-            return message
-
+    async def _admit_and_forward(
+        self, scope: Any, bounded_receive: Any, receive: Any, send: Any
+    ) -> None:
         # Catch only admission-entry failures. Exceptions after dispatch may
         # describe unknown effect outcomes and must not become auth refusals.
         from contextlib import AsyncExitStack
@@ -119,6 +94,49 @@ class BrowserOperationApplication:
                 await response(scope, receive, send)
                 return
             await self.app(forwarded, bounded_receive, send)
+
+
+def _framing_is_invalid(lengths: list[bytes], transfers: list[bytes]) -> bool:
+    """True for repeated, mixed, non-numeric or non-chunked length framing headers."""
+    if len(lengths) > 1 or len(transfers) > 1 or bool(lengths and transfers):
+        return True
+    return any(not value.isdigit() or len(value) > 20 for value in lengths) or any(
+        value.lower() != b"chunked" for value in transfers
+    )
+
+
+def _framing_refusal(scope: Any) -> int | None:
+    """The refusal status of a request whose framing is invalid or oversized, else ``None``."""
+    from arbora.api.http.routes import MAX_BODY_BYTES
+
+    headers = scope.get("headers", ())
+    lengths = [v for k, v in headers if k.lower() == b"content-length"]
+    transfers = [v for k, v in headers if k.lower() == b"transfer-encoding"]
+    if _framing_is_invalid(lengths, transfers):
+        return 400
+    return 413 if lengths and int(lengths[0]) > MAX_BODY_BYTES else None
+
+
+def _bounded_receive(receive: Any) -> Any:
+    """``receive`` that refuses a body past the byte bound as 413."""
+    from fastapi import HTTPException
+
+    from arbora.api.http.routes import MAX_BODY_BYTES
+
+    received = 0
+
+    async def bounded_receive():
+        nonlocal received
+        message = await receive()
+        if message.get("type") == "http.request":
+            received += len(message.get("body", b""))
+            if received > MAX_BODY_BYTES:
+                # The canonical app's own privacy handler catches this,
+                # before its server-error middleware could emit a 500.
+                raise HTTPException(status_code=413, detail="Request rejected")
+        return message
+
+    return bounded_receive
 
 
 def create_browser_api_application(

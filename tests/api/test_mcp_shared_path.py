@@ -12,12 +12,6 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 
 from arbora.api.invoke import OpError, OpResult, VerifiedCaller
-from arbora.api.mcp.registration import (
-    RESIDENT_NAMES,
-    FleetMCPBinding,
-    GovernedSessionVisibility,
-    register_mcp_tools,
-)
 from arbora.api.mcp.verbs import MCPProjection
 from arbora.api.ops.fleet import operations
 from arbora.api.policy import PolicyGate
@@ -26,6 +20,12 @@ from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
 from arbora.fleet.multiplexer import _make_forwarder, make_governed_tool_mount
 from arbora.fleet.multiplexer_ops import MultiplexerOps
 from arbora.fleet.session_loads import SessionLoads
+from arbora.mcp_server.registration import (
+    RESIDENT_NAMES,
+    FleetMCPBinding,
+    GovernedSessionVisibility,
+    register_mcp_tools,
+)
 
 
 @pytest.fixture

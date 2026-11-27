@@ -16,12 +16,12 @@ import pytest
 
 from arbora.api.invoke import invoke
 from arbora.api.mcp.resolve import IntentResolver
-from arbora.api.mcp.serving import MCPProjection
 from arbora.api.mcp.verbs import dispatch_verb
 from arbora.api.ops import activity as activity_ops
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import Registry
 from arbora.fleet.ranking import HostRanking, engine_ask
+from arbora.mcp_server.serving import MCPProjection
 from tests._support import unwrap_decide
 from tests.api._support import make_verified_caller
 from tests.api.test_activity_ops_served import _services

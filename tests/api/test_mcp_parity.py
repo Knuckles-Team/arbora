@@ -11,7 +11,9 @@ import pytest
 from arbora.api.http.app import create_api_application
 from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.api.invoke.pipeline import invoke
-from arbora.api.mcp.serving import (
+from arbora.api.mcp.verbs import MCPProjection, dispatch_verb
+from arbora.api.registry import Registry, Verb
+from arbora.mcp_server.serving import (
     PARITY_SCHEMA_DIVERGED,
     PARITY_TOOL_MISSING,
     ParityRefused,
@@ -19,8 +21,6 @@ from arbora.api.mcp.serving import (
     http_catalog,
     mcp_catalog,
 )
-from arbora.api.mcp.verbs import MCPProjection, dispatch_verb
-from arbora.api.registry import Registry, Verb
 from tests.api.test_invoke_contract import setup_services
 from tests.api.test_mcp_serving import _caller, _operation
 

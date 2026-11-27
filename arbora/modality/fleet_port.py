@@ -2,7 +2,7 @@
 
 Handlers never open their own connector connection. They reach the fleet the
 way the fleet agent does: the served ``find`` and ``act`` intent verbs, bound
-in-process by :func:`arbora.api.mcp.serving.register_intent_surface`. Each call
+in-process by :func:`arbora.mcp_server.serving.register_intent_surface`. Each call
 therefore runs under the current verified session with the same admission,
 scope and audit as an MCP client's ``act op=fleet.call``.
 """

@@ -167,7 +167,7 @@ def test_composition_root_refuses_a_non_qualifying_admission():
     moved to ``create_webui_session_boundary``. An object that merely looks
     like an admission never yields a boundary, even with a matching fence.
     """
-    from arbora.api.http.browser_app import (
+    from arbora.mcp_server.browser_app import (
         BrowserOperationApplication,
         create_webui_session_boundary,
     )

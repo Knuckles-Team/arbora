@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from arbora.api.mcp.registration import FLEET_OPERATIONS
+from arbora.mcp_server.registration import FLEET_OPERATIONS
 
 DOC_PATH = Path(__file__).resolve().parents[2] / "docs" / "mcp-server.md"
 ROW_PATTERN = re.compile(r"\|\s*`(\w+)`\s*\|\s*`([\w.]+)`\s*\|")

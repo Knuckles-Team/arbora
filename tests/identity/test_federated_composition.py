@@ -47,7 +47,6 @@ def test_providers_in_settings_build_a_federation_and_none_builds_nothing(
 def test_browser_boundary_hands_the_federation_to_the_auth_application(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from arbora.api.http import browser_app
     from arbora.identity import (
         admission,
         broker,
@@ -57,6 +56,7 @@ def test_browser_boundary_hands_the_federation_to_the_auth_application(
         issuer,
         issuer_discovery,
     )
+    from arbora.mcp_server import browser_app
 
     sentinel = object()
     captured: dict[str, Any] = {}

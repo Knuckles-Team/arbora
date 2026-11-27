@@ -6,12 +6,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from arbora.api.http.browser_app import (
+from arbora.identity.admission import BrowserAdmission
+from arbora.identity.issuer import LocalIssuer
+from arbora.mcp_server.browser_app import (
     create_browser_api_application,
     create_webui_session_boundary,
 )
-from arbora.identity.admission import BrowserAdmission
-from arbora.identity.issuer import LocalIssuer
 from arbora.webui_host.session_boundary import identity_factory_kwargs
 from tests.api._support import identity_read_op
 from tests.identity.test_console_admission import CallerFixture, OwnersFixture

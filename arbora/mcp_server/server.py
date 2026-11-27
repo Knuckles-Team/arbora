@@ -281,8 +281,8 @@ def _register_resident_surface(
     """
     if invocation is None:
         return
-    from arbora.api.mcp.registration import FleetMCPBinding, register_mcp_tools
     from arbora.mcp_server.fleet_composition import LateFleetGateway, session_key
+    from arbora.mcp_server.registration import FleetMCPBinding, register_mcp_tools
 
     late = getattr(invocation.services.runtime, "bindings", {}).get("fleet_gateway")
     projection = runtime.SERVED_PROJECTION
