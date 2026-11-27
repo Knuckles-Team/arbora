@@ -398,7 +398,7 @@ def test_audit_chain_and_observations_fail_on_discontinuity_or_regression() -> N
 def test_definition_side_objects_do_not_claim_or_complete_work() -> None:
     policy = _policy()
     approval = _approval(policy, request_digest=_digest("q"))
-    admission = InMemoryNativeAdmission()
+    admission = InMemoryNativeAdmission(policy=_engine_policy(EngineDouble()))
     assert not hasattr(admission, "claim_work_item")
     assert not hasattr(admission, "renew_work_item_lease")
     assert not hasattr(admission, "commit_work_item_result")

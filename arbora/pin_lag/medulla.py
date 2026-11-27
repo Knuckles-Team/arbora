@@ -51,6 +51,7 @@ __all__ = [
     "require_methods",
     "require_model_field",
     "require_models",
+    "require_question_kind",
     "send_main",
 ]
 
@@ -241,3 +242,28 @@ def guard_certification_read() -> None:
     ``LocalCertificationAttestation`` are engine ``main`` shapes.
     """
     guard("DecisionEval", models=("LocalCertificationAttestation",))
+
+
+def _literal_members(annotation: Any) -> set[str]:
+    """Every string a (possibly nested) ``Literal`` union names."""
+    import typing
+
+    found: set[str] = set()
+    for member in typing.get_args(annotation):
+        if typing.get_origin(member) is typing.Literal:
+            found.update(str(value) for value in typing.get_args(member))
+        else:
+            found |= _literal_members(member)
+    return found
+
+
+def require_question_kind(kind: str) -> None:
+    """Return once the pinned engine declares the ``Decide`` question ``kind``, else name it.
+
+    PIN-LAG: engine ``main`` serves question kinds the pinned release does not list
+    (the wire type also accepts any string, so only the declared members count).
+    """
+    from medulla.generated import models
+
+    if kind not in _literal_members(getattr(models, "QuestionKind", None)):
+        raise PinLagUnavailable(f"QuestionKind.{kind}")
