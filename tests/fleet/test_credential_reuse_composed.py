@@ -20,11 +20,10 @@ from arbora.access.credential_use import CredentialRefused
 from arbora.fleet import credential_reuse
 from arbora.fleet.credential_bridge import BrokerPkceBridge, CallbackWaiters
 from arbora.fleet.multiplexer import MCPMultiplexer
-from arbora.fleet.remote_oauth_broker import (
+from arbora.fleet.remote_oauth_broker import ProviderRegistry, RemoteOAuthBroker
+from arbora.fleet.remote_oauth_tokens import (
     OAuthTransaction,
     ProviderDescriptor,
-    ProviderRegistry,
-    RemoteOAuthBroker,
     StoredToken,
 )
 from arbora.fleet.state import FleetState

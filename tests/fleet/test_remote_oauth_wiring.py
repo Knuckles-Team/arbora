@@ -35,13 +35,12 @@ from arbora.fleet.discovery_authority import (
     TenantLocalDiscoveryBinding,
 )
 from arbora.fleet.oauth_brokers import RemoteOAuthBrokers
-from arbora.fleet.remote_oauth_broker import (
+from arbora.fleet.remote_oauth_broker import ProviderRegistry, RemoteOAuthBroker
+from arbora.fleet.remote_oauth_tokens import (
     OAuthProviderError,
     OAuthTokenAbsentError,
     OAuthTokenStore,
     ProviderDescriptor,
-    ProviderRegistry,
-    RemoteOAuthBroker,
     StoredToken,
 )
 from arbora.security.actor_context import ActorContext, ActorType, use_actor

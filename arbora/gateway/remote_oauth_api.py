@@ -84,10 +84,8 @@ def _default_provider_registry(config: RuntimeConfig) -> Any:
     configuration disables the registry with a bounded diagnostic — never a
     silently-accepted malformed provider.
     """
-    from arbora.fleet.remote_oauth_broker import (
-        ProviderDescriptor,
-        ProviderRegistry,
-    )
+    from arbora.fleet.remote_oauth_broker import ProviderRegistry
+    from arbora.fleet.remote_oauth_tokens import ProviderDescriptor
 
     registry = ProviderRegistry()
     try:
@@ -235,11 +233,11 @@ async def authorize(
     authorization URL to send their browser to."""
     import asyncio
 
-    from arbora.fleet.remote_oauth_broker import (
+    from arbora.fleet.remote_oauth_broker import OAuthScopeError
+    from arbora.fleet.remote_oauth_tokens import (
         OAuthBindingError,
         OAuthDiscoveryError,
         OAuthProviderError,
-        OAuthScopeError,
     )
 
     actor = _resolve_verified_actor()
@@ -284,11 +282,11 @@ async def oauth_callback(
 
     from starlette.responses import JSONResponse, RedirectResponse
 
-    from arbora.fleet.remote_oauth_broker import (
+    from arbora.fleet.remote_oauth_broker import OAuthScopeError
+    from arbora.fleet.remote_oauth_tokens import (
         OAuthBindingError,
         OAuthDiscoveryError,
         OAuthRevokedError,
-        OAuthScopeError,
         OAuthStateError,
     )
 
@@ -333,7 +331,7 @@ async def _revoke(request: Request, provider_id: str) -> Any:
 
     from starlette.responses import Response
 
-    from arbora.fleet.remote_oauth_broker import OAuthProviderError
+    from arbora.fleet.remote_oauth_tokens import OAuthProviderError
 
     actor = _resolve_verified_actor()
     broker = _get_broker(gateway_of(request), request.app.state.host.config)

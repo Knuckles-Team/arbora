@@ -29,19 +29,21 @@ import pytest
 
 from arbora.fleet.discovery_authority import OAuthGrantBinding
 from arbora.fleet.remote_oauth_broker import (
+    OAuthScopeError,
+    ProviderRegistry,
+    RemoteOAuthBroker,
+)
+from arbora.fleet.remote_oauth_tokens import (
     OAuthBindingError,
     OAuthDiscoveryError,
     OAuthProviderError,
     OAuthRefreshRaceError,
     OAuthRevokedError,
-    OAuthScopeError,
     OAuthStateError,
     OAuthTokenAbsentError,
     OAuthTokenStore,
     OAuthTransaction,
     ProviderDescriptor,
-    ProviderRegistry,
-    RemoteOAuthBroker,
     StoredToken,
     TransactionStore,
     discover_authorization_server,
@@ -337,10 +339,8 @@ class TestProviderRegistration:
 # ---------------------------------------------------------------------------
 class TestDynamicClientRegistration:
     def test_registrar_requires_pkce_s256(self):
-        from arbora.fleet.remote_oauth_broker import (
-            AuthorizationServerMetadata,
-            Rfc7591DynamicClientRegistrar,
-        )
+        from arbora.fleet.remote_oauth_broker import Rfc7591DynamicClientRegistrar
+        from arbora.fleet.remote_oauth_tokens import AuthorizationServerMetadata
 
         as_meta = AuthorizationServerMetadata(
             issuer=ISSUER,
@@ -355,10 +355,10 @@ class TestDynamicClientRegistration:
             registrar.register(dcr_provider(), as_meta)
 
     def test_registrar_requires_registration_endpoint(self):
-        from arbora.fleet.remote_oauth_broker import (
+        from arbora.fleet.remote_oauth_broker import Rfc7591DynamicClientRegistrar
+        from arbora.fleet.remote_oauth_tokens import (
             AuthorizationServerMetadata,
             OAuthProviderError,
-            Rfc7591DynamicClientRegistrar,
         )
 
         as_meta = AuthorizationServerMetadata(

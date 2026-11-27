@@ -42,11 +42,8 @@ class RemoteOAuthBrokers:
         provider block, reusing ONE broker instance per ``provider_id`` so its
         encrypted token store and DCR registration cache persist across calls
         instead of being rebuilt (and, for DCR, re-registered) on every request."""
-        from arbora.fleet.remote_oauth_broker import (
-            ProviderDescriptor,
-            ProviderRegistry,
-            RemoteOAuthBroker,
-        )
+        from arbora.fleet.remote_oauth_broker import ProviderRegistry, RemoteOAuthBroker
+        from arbora.fleet.remote_oauth_tokens import ProviderDescriptor
 
         descriptor = ProviderDescriptor(**provider_cfg)
         with self._lock:
@@ -119,9 +116,9 @@ class RemoteOAuthBrokers:
         from arbora.fleet.discovery_authority import (
             OAuthGrantBinding,
         )
-        from arbora.fleet.remote_oauth_broker import (
+        from arbora.fleet.remote_oauth_broker import OAuthScopeError
+        from arbora.fleet.remote_oauth_tokens import (
             OAuthProviderError,
-            OAuthScopeError,
             OAuthTokenAbsentError,
             OAuthTokenStore,
         )
