@@ -243,6 +243,26 @@ class A2AAppExtension(ServerExtension):
             await stop.wait()
 
 
+def _engine_storage() -> Any:
+    """The served agent's task and conversation storage: the engine KV, nothing local.
+
+    Each call reads the verified session of the running request, so a conversation
+    belongs to the caller that opened it (ARBORA-A2A-R001.3).
+    """
+    from arbora.a2a.storage import EngineA2AStorage, engine_kv_send
+    from arbora.mcp_server import runtime
+    from arbora.security.session import resolve_session
+
+    def session() -> Any:
+        return resolve_session(required_scope="kg:read")
+
+    return EngineA2AStorage(
+        engine_kv_send(runtime._get_engine),
+        tenant=lambda: str(session().tenant),
+        principal=lambda: str(session().actor.actor_id),
+    )
+
+
 def mount_sdk_a2a(mcp: Any, *, stream_handler: Any = None) -> Any:
     """Mount the SDK A2A application for the fleet agent behind admission.
 
@@ -251,7 +271,6 @@ def mount_sdk_a2a(mcp: Any, *, stream_handler: Any = None) -> Any:
     log, never through the SDK application (ARBORA-A2A-R001.4.1).
     """
     from fasta2a.broker import InMemoryBroker
-    from fasta2a.storage import InMemoryStorage
 
     from arbora import __version__
     from arbora.a2a.application import (
@@ -271,7 +290,7 @@ def mount_sdk_a2a(mcp: Any, *, stream_handler: Any = None) -> Any:
         name="arbora",
         url=f"{base}{A2A_PATH}",
         version=__version__,
-        storage=InMemoryStorage(),
+        storage=_engine_storage(),
         broker=InMemoryBroker(),
         description="The Arbora fleet agent over A2A.",
     )

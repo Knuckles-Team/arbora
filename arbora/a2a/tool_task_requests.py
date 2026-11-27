@@ -11,6 +11,8 @@ import re
 from collections.abc import Mapping
 from typing import Any
 
+from pydantic_core import to_jsonable_python
+
 from arbora import work_items
 from arbora.deployment.semantic_provisioning import CONTROL_GRAPH
 from arbora.mcp_server.served_engine import _run_blocking
@@ -104,6 +106,7 @@ class EgToolTaskRequestStore:
                 "request_blob": digest,
                 "request_principal": request.principal,
                 "request_session": request.session_id,
+                "request_operation": request.operation_id,
             },
         )
         if submitted != item_id:
@@ -119,22 +122,26 @@ class EgToolTaskRequestStore:
         return carrier
 
     def resolve(
-        self, request_ref: str, *, job_id: str, tenant: str, session_id: str
+        self,
+        request_ref: str,
+        *,
+        job_id: str,
+        tenant: str,
+        session_id: str,
+        service: bool = False,
     ) -> ToolTaskRequest:
-        """Read a job's native locator, then validate its bounded immutable bytes."""
-        principal = self._caller(tenant)
-        item = work_items.get_work_item(self._engine, tool_task_work_item_id(job_id))
+        """Read a job's native locator, then validate its bounded immutable bytes.
+
+        A ``service`` read is the host consumer's: the ambient session is the
+        host's own authority, so the stored request principal is the one the
+        record names. It grants nothing; the original caller is proven by the
+        delegation read before any effect (``ARBORA-A2A-R002.2.3.3``).
+        """
+        session_principal = self._caller(tenant)
+        metadata = self._native_metadata(request_ref, job_id)
+        principal = metadata.get("request_principal") if service else session_principal
         if (
-            not isinstance(item, Mapping)
-            or item.get("work_item_id") != tool_task_work_item_id(job_id)
-            or item.get("kind") != "tool_task"
-            or item.get("input_ref") != request_ref
-        ):
-            raise ToolTaskRefused("tool_task_work_item_mismatch")
-        metadata = item.get("metadata")
-        if (
-            not isinstance(metadata, Mapping)
-            or metadata.get("schema") != _SCHEMA
+            metadata.get("schema") != _SCHEMA
             or metadata.get("request_principal") != principal
             or metadata.get("request_session") != session_id
         ):
@@ -155,9 +162,45 @@ class EgToolTaskRequestStore:
             or _request_bytes(request) != raw
         ):
             raise ToolTaskRefused("tool_task_request_mismatch")
-        if self._caller(tenant) != principal:
+        if self._caller(tenant) != session_principal:
             raise ToolTaskRefused("tool_task_caller_mismatch")
         return request
+
+    def _native_metadata(self, request_ref: str, job_id: str) -> Mapping[str, Any]:
+        """The WorkItem metadata of the job, once its locator matches the request."""
+        item_id = tool_task_work_item_id(job_id)
+        item = work_items.get_work_item(self._engine, item_id)
+        if (
+            not isinstance(item, Mapping)
+            or item.get("work_item_id") != item_id
+            or item.get("kind") != "tool_task"
+            or item.get("input_ref") != request_ref
+        ):
+            raise ToolTaskRefused("tool_task_work_item_mismatch")
+        metadata = item.get("metadata")
+        if not isinstance(metadata, Mapping):
+            raise ToolTaskRefused("tool_task_request_mismatch")
+        return metadata
+
+    def store_result(self, job_id: str, value: Any) -> str:
+        """Store one job's full result in the blob holder and return its reference.
+
+        The reference is content-addressed and the holder durable, like the
+        request bytes: a repeat store of the same result names the same bytes.
+        """
+        raw = json.dumps(
+            {"job_id": job_id, "value": to_jsonable_python(value)},
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        ).encode("utf-8")
+        blob = self._blob()
+        digest = _run_blocking(lambda: blob.store(raw, chunk_size=1 << 20))
+        if not isinstance(digest, str) or _BLOB_DIGEST.fullmatch(digest) is None:
+            raise ToolTaskRefused("tool_task_blob_unavailable")
+        _run_blocking(lambda: blob.incref(digest))
+        return f"tool-task-result:sha256:{digest}"
 
     async def _read_bounded(self, digest: str) -> bytes:
         blob = self._blob()

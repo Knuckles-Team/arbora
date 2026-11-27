@@ -44,7 +44,24 @@ class HeldItemRefusal(ConfirmRefusal):
     """Why a held item was not admitted; the item stays held."""
 
 
-class HeldItemAdmissionRequest(A2APlanConfirmParams):
+class HeldItemSubject(_WireModel):
+    """The held item the engine decides on: what it is, its digest and its decision.
+
+    The confirm route signs it (:class:`HeldItemAdmissionRequest`); the critique gate
+    of ``message/send`` asks about the same subject with no human in the exchange.
+    """
+
+    model_config = ConfigDict(
+        alias_generator=to_camel, populate_by_name=True, extra="forbid", frozen=True
+    )
+
+    item_kind: Literal["run_output_proposal", "stored_run_program"]
+    item_ref: str = Field(min_length=1, max_length=512)
+    content_digest: str = Field(pattern=SHA256_HEX)
+    engine_decision_ref: str = Field(min_length=1, max_length=512)
+
+
+class HeldItemAdmissionRequest(A2APlanConfirmParams, HeldItemSubject):
     """The signed confirmation of one held item."""
 
     model_config = ConfigDict(
@@ -52,10 +69,6 @@ class HeldItemAdmissionRequest(A2APlanConfirmParams):
     )
 
     confirmation_kind: Literal["held_item"]
-    item_kind: Literal["run_output_proposal", "stored_run_program"]
-    item_ref: str = Field(min_length=1, max_length=512)
-    content_digest: str = Field(pattern=SHA256_HEX)
-    engine_decision_ref: str = Field(min_length=1, max_length=512)
 
 
 class HeldItemVerdict(_WireModel):
@@ -77,7 +90,7 @@ class HeldItemDecider(Protocol):
     """One engine ``held_item_admission`` decision."""
 
     async def decide(
-        self, request: HeldItemAdmissionRequest, *, tenant: str
+        self, request: HeldItemSubject, *, tenant: str
     ) -> Mapping[str, Any] | None: ...
 
 
@@ -97,7 +110,7 @@ class HeldItemAdmitter:
 
     @staticmethod
     def _entry(
-        request: HeldItemAdmissionRequest,
+        request: HeldItemSubject,
         verdict: HeldItemVerdict | None,
         reason: str = "",
     ) -> dict[str, str]:
@@ -112,9 +125,7 @@ class HeldItemAdmitter:
             entry["reason"] = reason
         return entry
 
-    async def admit(
-        self, request: HeldItemAdmissionRequest, *, tenant: str
-    ) -> HeldItemVerdict:
+    async def admit(self, request: HeldItemSubject, *, tenant: str) -> HeldItemVerdict:
         await reserve_then(self._audit, self._entry(request, None), HeldItemRefusal)
         try:
             answer = await asyncio.wait_for(
@@ -143,7 +154,7 @@ class HeldItemAdmitter:
         return verdict
 
     async def _refuse(
-        self, request: HeldItemAdmissionRequest, verdict: HeldItemVerdict, reason: str
+        self, request: HeldItemSubject, verdict: HeldItemVerdict, reason: str
     ) -> None:
         reason = reason if reason in HELD_ITEM_REASONS else "ABSTAINED"
         await reserve_then(

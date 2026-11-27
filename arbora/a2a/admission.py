@@ -127,6 +127,7 @@ class HarnessConfigDecider(Protocol):
         task_class: str,
         budget_tokens: int,
         priority: Priority,
+        tool_refs: tuple[str, ...] = (),
     ) -> HarnessConfigRecord: ...
 
 
@@ -143,6 +144,8 @@ class ToolSubsetAdmissionRequest(_WireModel):
     task_class: str = Field(min_length=1, max_length=512)
     tenant: str = Field(default="", max_length=512)
     priority: Priority = "interactive"
+    #: The routed agent's library tool refs; the engine admits a subset of them.
+    tool_refs: tuple[str, ...] = Field(default=(), max_length=64)
 
 
 class ToolSubsetAdmissionDecision(_WireModel):
@@ -241,6 +244,7 @@ async def admit_tool_subset(
             task_class=request.task_class,
             budget_tokens=tokens,
             priority=request.priority,
+            tool_refs=request.tool_refs,
         )
     except Exception:  # noqa: BLE001 - an unanswered question admits nothing
         return _refused("HARNESS_CONFIG_UNAVAILABLE", f"{_OPERATION}:unavailable")

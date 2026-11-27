@@ -251,6 +251,10 @@ class WorkItemA2AAuthority:
 
         return resolve_session(required_scope=scope)
 
+    def engine(self) -> Any:
+        """The served engine: the tool-task host reads its blobs and WorkItems here."""
+        return self._engine()[0]
+
     def work_engine(self) -> Any:
         """The engine's WorkItem surface the host reclaim consumer lists and claims through."""
         return self._engine()[1]

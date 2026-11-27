@@ -43,6 +43,34 @@ def _answer(record: Mapping[str, Any]) -> Mapping[str, Any]:
     return answer
 
 
+def _candidates(model_profile_ref: str, tool_refs: tuple[str, ...]) -> Any:
+    """The model profile and the routed agent's library tools, declared as candidates."""
+    from medulla.decision_client import DeclaredOption, declared
+
+    return declared(
+        [DeclaredOption(model_profile_ref), *map(DeclaredOption, tool_refs)]
+    )
+
+
+def _expires_at_ms(record: Mapping[str, Any]) -> int | None:
+    """The expiry the engine seals on ``HarnessConfigEvaluationEvidence``.
+
+    PIN-LAG: the pinned engine carries no ``expires_at_ms`` there, so none is read
+    (``None``) until the engine seals one (OVERSTORY-GAPS, "MEDULLA FOR ARBORA
+    (w14)"). A present value that is not a non-negative integer is a malformed
+    record: it raises, so the admission refuses ``HARNESS_CONFIG_UNAVAILABLE``.
+    Arbora holds no default lifetime.
+    """
+    family = record.get("answer")
+    value = family.get("value") if isinstance(family, Mapping) else None
+    raw = value.get("expires_at_ms") if isinstance(value, Mapping) else None
+    if raw is None:
+        return None
+    if isinstance(raw, bool) or not isinstance(raw, int) or raw < 0:
+        raise ValueError("the record carries a malformed expiry")
+    return raw
+
+
 class EngineHarnessConfigDecider:
     """Ask the engine for the harness configuration of one admitted task."""
 
@@ -72,20 +100,16 @@ class EngineHarnessConfigDecider:
         task_class: str,
         budget_tokens: int,
         priority: Priority,
+        tool_refs: tuple[str, ...] = (),
     ) -> HarnessConfigRecord:
-        from medulla.decision_client import (
-            DeclaredOption,
-            decide_request,
-            declared,
-            param,
-        )
+        from medulla.decision_client import decide_request, param
 
         from arbora.deployment.placement import check_receipt, single_record
 
         request = decide_request(
             tenant,
             (f"a2a.harness:{task_class}", QUESTION_KIND, "ordinary"),
-            declared([DeclaredOption(model_profile_ref)]),
+            _candidates(model_profile_ref, tool_refs),
             self._feature_schema(tenant),
             params=[
                 param("model_profile_ref", "iri", model_profile_ref),
@@ -101,12 +125,11 @@ class EngineHarnessConfigDecider:
         digest = _HEX.search(str(record.get("record_digest", "")))
         if digest is None:
             raise ValueError("the record carries no digest")
-        # PIN-LAG: ``StatisticalDecisionRecord`` has no expiry field on engine main
-        # (only ``created_at_ms``), so no expiry is read until the engine carries one.
         return HarnessConfigRecord(
             answer=HarnessConfigMirror.model_validate(_answer(record)),
             decision_record_ref=str(record["record_id"]),
             digest=digest.group(0),
+            expires_at_ms=_expires_at_ms(record),
         )
 
 

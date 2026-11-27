@@ -10,7 +10,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [x] T004 ARBORA-A2A-R002.2.2.1 Single-invocation worker contract
 - [x] T005 ARBORA-A2A-R002.2.2.2 Native WorkItem fence binding
 - [x] T006 ARBORA-A2A-R002.2.3.1 Immutable native request transport
-- [ ] T007 ARBORA-A2A-R002.2.3.2 Served consumer and original-caller recovery
+- [x] T007 ARBORA-A2A-R002.2.3.2 Served consumer and original-caller recovery
 - [x] T008 ARBORA-A2A-R003 No duplicate skill or prompt harvesting in the multiplexer
 - [x] T009 ARBORA-A2A-R004 Served MCP bridge runs FastMCP 4, matching its declared version
 - [x] T010 ARBORA-A2A-R005.1 Fail-closed `arbora.plan/confirm` stub on the A2A method table
@@ -60,11 +60,11 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T054 ARBORA-A2A-R020.1 Abstention refuses and records the named default
 - [ ] T055 ARBORA-A2A-R020.2 Unavailable, stale or partial answers refuse
 - [ ] T056 ARBORA-A2A-R021 Fresh checkout runs the admission tests
-- [ ] T057 ARBORA-A2A-R022 Critique-gated output release
+- [x] T057 ARBORA-A2A-R022 Critique-gated output release
 - [ ] T058 ARBORA-A2A-R001.2 Run checkpoint and event-cursor binding
 - [ ] T086 ARBORA-A2A-R001.2.2 Agent-run delegation and reclaim of an expired-lease run
 - [x] T059 ARBORA-A2A-R010.1 Opt-in committed terminal point read
-- [ ] T060 ARBORA-A2A-R001.3 Served agent keeps and lists caller conversations
+- [x] T060 ARBORA-A2A-R001.3 Served agent keeps and lists caller conversations
 - [ ] T061 ARBORA-A2A-R001.4.1 Served A2A route streams task events
 - [x] T062 ARBORA-A2A-R001.6 Non-blocking `message/send`
 - [x] T063 ARBORA-A2A-R001.5.1 Bounded inline text input
@@ -75,7 +75,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T080 ARBORA-A2A-R001.5.6 Serve the effective media limits to clients
 - [ ] T081 ARBORA-A2A-R001.5.7 Hand admitted images to the run with the capability and fallback mode
 - [ ] T082 ARBORA-A2A-R001.5.8 Hot-path proof for image admission
-- [ ] T065 ARBORA-A2A-R001.7 Outbound A2A peer registry served as operations
+- [x] T065 ARBORA-A2A-R001.7 Outbound A2A peer registry served as operations
 - [ ] T066 ARBORA-A2A-R002.2.3.3 Original-caller authority resolver
 - [ ] T067 ARBORA-A2A-R002.2.3.4 Uncertain-effect reconciliation
 - [ ] T068 ARBORA-A2A-R002.2.3.5 Duplicate delivery is idempotent
@@ -86,7 +86,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T072 ARBORA-A2A-R013.4 Hot-path proof: pending pushes survive a restart
 - [ ] T073 ARBORA-A2A-R016.6 Caller model preference is a request the engine decides
 - [ ] T074 ARBORA-A2A-R023 Inbound A2A tasks route through the medulla `A2aRoute` decision
-- [ ] T075 ARBORA-A2A-R024 Hub federation forwards topic messages to a registered peer
+- [x] T075 ARBORA-A2A-R024 Hub federation forwards topic messages to a registered peer
 - [ ] T076 ARBORA-A2A-R025 Admit anonymous chat under the text-only constraint
 - [ ] T083 ARBORA-A2A-R026 Refuse a model task plan that breaks the plan model with a typed code
 - [ ] T085 ARBORA-A2A-R001.2.1 Durable event cursor and run-event publisher

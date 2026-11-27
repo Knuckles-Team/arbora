@@ -24,6 +24,7 @@ def get_registry() -> Registry:
     """
     from . import (
         a2a_media,
+        a2a_peers,
         access,
         agent_library,
         agents,
@@ -117,6 +118,7 @@ def get_registry() -> Registry:
     curated: list[OpSpec] = []
     for module in (
         a2a_media,
+        a2a_peers,
         access,
         agent_library,
         agents,

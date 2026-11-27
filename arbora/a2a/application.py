@@ -24,6 +24,7 @@ from .authority import (
     A2ATransitionHistoryUnavailable,
 )
 from .confirm import UNQUALIFIED, ApprovalChain, ApprovalRefused, confirm_dispatch
+from .critique_gate import release_output
 from .event_log import A2AEventGap, A2AEventStream, wire_event
 from .media_refs import MediaRefRefused, MediaStoreUnavailable
 from .models import (
@@ -377,7 +378,11 @@ async def _invoke_method(
     if method == "arbora.plan/confirm":
         return await confirm_dispatch(raw_params, caller=caller, chain=approvals)
     if method == "message/send":
-        return await _send_message(service, request, raw_params)
+        sent = await _send_message(service, request, raw_params)
+        # ARBORA-A2A-R022: the reply is held until the engine admits its exact output.
+        return await release_output(
+            sent, approvals, tenant=str(getattr(caller, "tenant", ""))
+        )
     if method == "tasks/get":
         return await _get_task(service, raw_params, request_id)
     if method == "tasks/list":
