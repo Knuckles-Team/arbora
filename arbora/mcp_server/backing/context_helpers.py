@@ -64,6 +64,7 @@ async def ctx_confirm_destructive(
         logger.warning(
             "Elicitation failed; destructive operation denied (exception_type=%s)",
             type(exc).__name__,
+            exc_info=True,
         )
         return False
 
@@ -104,7 +105,7 @@ def ctx_log(
                     except RuntimeError:
                         pass
             except Exception:
-                pass  # nosec
+                logger.debug("client log dispatch failed", exc_info=True)
 
 
 async def ctx_set_state(
@@ -133,6 +134,7 @@ async def ctx_set_state(
             logger.debug(
                 "ctx_set_state failed (exception_type=%s)",
                 type(exc).__name__,
+                exc_info=True,
             )
 
 
@@ -160,7 +162,7 @@ async def ctx_get_state(
             val = await ctx.session.get_state(namespaced)
             return val if val is not None else default
         except Exception:
-            pass  # nosec
+            logger.debug("ctx_get_state failed", exc_info=True)
     return default
 
 
@@ -211,7 +213,9 @@ async def ctx_sample(
         logger.debug("mcp.types not available — sampling disabled.")
         return None
     except Exception as exc:
-        logger.debug("ctx_sample failed (exception_type=%s)", type(exc).__name__)
+        logger.debug(
+            "ctx_sample failed (exception_type=%s)", type(exc).__name__, exc_info=True
+        )
         return None
 
 
@@ -247,6 +251,7 @@ async def ctx_graphql_list_types(
             res = execute_gql_fn(query)
         return res
     except Exception as exc:
+        logger.warning("operation failed", exc_info=True)
         return public_error_payload(exc, logger=logger)
 
 
@@ -307,6 +312,7 @@ async def ctx_graphql_get_type_details(
             res = execute_gql_fn(query, variables=variables)
         return res
     except Exception as exc:
+        logger.warning("operation failed", exc_info=True)
         return public_error_payload(exc, logger=logger)
 
 

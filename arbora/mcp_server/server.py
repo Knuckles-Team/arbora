@@ -74,6 +74,7 @@ def _configure_arbora_otel(telemetry: Telemetry) -> None:
         logger.warning(
             "Arbora OTLP setup failed; trace export is disabled: %s",
             exc,
+            exc_info=True,
         )
 
 
@@ -100,6 +101,7 @@ def _configure_telemetry_engine_otel(telemetry: Telemetry) -> None:
         logger.warning(
             "Arbora TelemetryEngine OTel setup failed: %s",
             exc,
+            exc_info=True,
         )
 
 
@@ -734,4 +736,4 @@ def mcp_server(
             try:
                 asyncio.run(fleet_mux.aclose())
             except Exception as exc:  # best-effort teardown of a lazily-mounted fleet child at process exit
-                logger.warning("fleet loader close failed: %s", exc)
+                logger.warning("fleet loader close failed: %s", exc, exc_info=True)

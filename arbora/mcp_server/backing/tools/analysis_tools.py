@@ -640,6 +640,7 @@ def _configure_action_register_mcp(action, config_key, config_value):
     except PermissionError:
         raise
     except Exception as exc:
+        logger.warning("configure action failed", exc_info=True)
         return json.dumps(
             {
                 "error": "MCP registration rejected",
@@ -663,6 +664,7 @@ def _configure_add_connection_default_spec(config_key):
     try:
         candidate = _configured_external_graph_declaration(config_key)
     except Exception as exc:
+        logger.warning("configure action failed", exc_info=True)
         return {}, json.dumps(
             {
                 "error": "configured connection lookup failed",
@@ -680,7 +682,7 @@ def _configure_add_connection_spec(action, config_key, config_value, registry):
     # action(s): 'add_connection'
     try:
         spec = json.loads(config_value) if config_value else {}
-    except Exception:
+    except (ValueError, TypeError):
         return json.dumps({"error": "config_value must contain valid JSON"})
     if not isinstance(spec, dict):
         return json.dumps(
@@ -787,13 +789,14 @@ def _configure_mapping_ingest(action, config_key, config_value, registry):
     # action(s): 'ingest_connection'
     try:
         options = json.loads(config_value) if config_value else {}
-    except Exception:
+    except (ValueError, TypeError):
         return json.dumps({"error": "config_value must be a JSON object"})
     if not isinstance(options, dict):
         return json.dumps({"error": "config_value must be a JSON object"})
     try:
         _configured_external_graph_declaration(config_key)
     except Exception as exc:
+        logger.warning("configure action failed", exc_info=True)
         return json.dumps(
             {
                 "error": "configured source lookup failed",
@@ -819,6 +822,7 @@ def _configure_profile_setup(config_key, config_value, registry):
     try:
         registry.get_engine(config_key)
     except Exception as e:
+        logger.warning("configure action failed", exc_info=True)
         return (
             None,
             None,
@@ -836,7 +840,7 @@ def _configure_profile_setup(config_key, config_value, registry):
         )
     try:
         options = json.loads(config_value) if config_value else {}
-    except Exception:
+    except (ValueError, TypeError):
         return (
             None,
             None,
@@ -942,6 +946,7 @@ def _configure_profile_policy(backend_kind, store, connector_config):
                 runtime_policy_digest,
             ) = _resolved_external_mapping_policy(store, connector_config)
         except Exception as exc:
+            logger.warning("configure action failed", exc_info=True)
             return (
                 {},
                 "",
@@ -1113,7 +1118,7 @@ def _configure_parse_json_opts(config_value):
     # Returns (opts, error_json_or_None).
     try:
         opts = json.loads(config_value) if config_value else {}
-    except Exception:
+    except (ValueError, TypeError):
         return None, json.dumps({"error": "config_value must contain valid JSON"})
     if not isinstance(opts, dict):
         return None, json.dumps({"error": "config_value must be a JSON object"})
@@ -1259,6 +1264,7 @@ def _configure_action_install_hooks(action, config_key, config_value):
     except PermissionError:
         raise
     except Exception as exc:
+        logger.warning("configure action failed", exc_info=True)
         return json.dumps(
             {
                 "error": "hook installation failed",
@@ -1278,6 +1284,7 @@ def _configure_action_uninstall_hooks(action, config_key, config_value):
     except PermissionError:
         raise
     except Exception as exc:
+        logger.warning("configure action failed", exc_info=True)
         return json.dumps(
             {
                 "error": "hook removal failed",
@@ -1295,6 +1302,7 @@ def _configure_action_doctor(action, config_key, config_value):
     except PermissionError:
         raise
     except Exception as exc:
+        logger.warning("configure action failed", exc_info=True)
         return json.dumps(
             {
                 "error": "configuration doctor failed",
@@ -1382,6 +1390,7 @@ def register_analysis_tools(
                 },
             )
         except Exception as e:
+            logger.warning("operation failed", exc_info=True)
             return public_error_text(e)
 
     core.bind(_run_analysis_action)
@@ -1513,7 +1522,7 @@ def register_analysis_tools(
             # not successful MCP payloads.  Preserve fail-closed dispatch.
             raise PermissionError("configuration operation denied") from None
         except Exception as exc:
-            logger.warning("graph_configure operation failed: %s", exc)
+            logger.warning("graph_configure operation failed: %s", exc, exc_info=True)
             return json.dumps(
                 {
                     "error": "configuration operation failed",

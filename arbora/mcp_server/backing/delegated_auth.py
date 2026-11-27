@@ -293,7 +293,9 @@ def _token_exchange(
             "Token exchange response missing 'access_token' field."
         ) from None
     except Exception as e:
-        logger.error("Token exchange failed (exception_type=%s)", type(e).__name__)
+        logger.error(
+            "Token exchange failed (exception_type=%s)", type(e).__name__, exc_info=True
+        )
         raise RuntimeError("Token exchange failed") from None
 
 
@@ -516,6 +518,7 @@ def exchange_authorization_code(
         logger.error(
             "Authorization code exchange failed (exception_type=%s)",
             type(e).__name__,
+            exc_info=True,
         )
         raise RuntimeError("Authorization code exchange failed") from None
 
@@ -570,7 +573,9 @@ def refresh_access_token(
             raise RuntimeError("Token refresh response had an invalid token")
         return payload
     except Exception as e:
-        logger.error("Token refresh failed (exception_type=%s)", type(e).__name__)
+        logger.error(
+            "Token refresh failed (exception_type=%s)", type(e).__name__, exc_info=True
+        )
         raise RuntimeError("Token refresh failed") from None
 
 

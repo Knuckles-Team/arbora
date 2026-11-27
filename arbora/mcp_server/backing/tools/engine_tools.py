@@ -157,7 +157,7 @@ def _discover_domains() -> dict[str, list[str]]:
     """
     try:
         from medulla import client as _client_mod
-    except Exception as exc:  # engine client absent ⇒ register nothing
+    except (ImportError, OSError) as exc:  # engine client absent ⇒ register nothing
         # Degrade gracefully (a deployment with no engine client bound yet — e.g.
         # `tiny` pre-bootstrap — must not crash the whole MCP process just
         # because engine_<domain> introspection can't run), but LOUDLY: a silent
@@ -172,6 +172,7 @@ def _discover_domains() -> dict[str, list[str]]:
             "absent this run (exception_type=%s). Install the engine with "
             "`pip install medulla` if this MCP process is meant to serve engine tools.",
             type(exc).__name__,
+            exc_info=True,
         )
         return {}
 

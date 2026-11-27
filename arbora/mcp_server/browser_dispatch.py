@@ -86,15 +86,15 @@ async def _on_owner(
     def done(task: Any) -> None:
         # Release the slot before completing: the awaiting loop may resume the
         # moment `completion` is set, and must never observe a held slot.
-        try:
-            result = task.result()
-        except BaseException as exc:
+        error = _task_error(task)
+        if error is not None:
             try:
                 release()
             finally:
-                completion.set_exception(exc)
+                completion.set_exception(error)
                 finished.set_result(None)
             return
+        result = task.result()
         try:
             release()
         finally:
@@ -116,7 +116,9 @@ async def _on_owner(
             finally:
                 completion.set_exception(exc)
                 finished.set_result(None)
-            return
+            # The awaiting side now owns the error; re-raising hands the
+            # same traceback to the owner loop's exception handler.
+            raise
         tasks.append(task)
         task.add_done_callback(done)
         if cancelled.is_set():
@@ -157,6 +159,11 @@ async def _on_owner(
         # Retrieve the eventual exception even when WebUI has disconnected.
         wrapped.add_done_callback(_consume_result)
         raise
+
+
+def _task_error(task: Any) -> BaseException | None:
+    """The finished task's failure, or ``CancelledError`` when it was cancelled."""
+    return asyncio.CancelledError() if task.cancelled() else task.exception()
 
 
 def _consume_result(result: Any) -> None:

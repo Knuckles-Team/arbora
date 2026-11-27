@@ -74,7 +74,7 @@ class UserTokenMiddleware(Middleware):
             from fastmcp.server.dependencies import get_access_token
 
             access_token = get_access_token()
-        except Exception:
+        except (ImportError, RuntimeError, LookupError):
             access_token = None
         raw_token = getattr(access_token, "token", None)
         claims = getattr(access_token, "claims", None)
@@ -187,7 +187,7 @@ class ActorContextMiddleware(Middleware):
             from fastmcp.server.dependencies import get_access_token
 
             token = get_access_token()
-        except Exception:
+        except (ImportError, RuntimeError, LookupError):
             return None
         claims = getattr(token, "claims", None) if token is not None else None
         return dict(claims) if claims else None

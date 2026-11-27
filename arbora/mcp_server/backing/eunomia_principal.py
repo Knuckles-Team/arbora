@@ -389,6 +389,7 @@ class _RemotePolicyBridge:
             logger.warning(
                 "Remote authorization check failed closed (exception_type=%s)",
                 type(exc).__name__,
+                exc_info=True,
             )
             return schemas.CheckResponse(
                 allowed=False, reason="authorization service unavailable"
@@ -412,6 +413,7 @@ class _RemotePolicyBridge:
             logger.warning(
                 "Remote bulk authorization check failed closed (exception_type=%s)",
                 type(exc).__name__,
+                exc_info=True,
             )
             return [
                 schemas.CheckResponse(

@@ -78,10 +78,10 @@ class CatalogWarmup:
             # A class name only: the readiness route is unauthenticated.
             self._set(status="retrying", last_error=type(exc).__name__)
             logger.warning(
-                "catalog warm-up attempt %d failed: %s: %s",
+                "catalog warm-up attempt %d failed: %s",
                 attempts,
                 type(exc).__name__,
-                exc,
+                exc_info=True,
             )
             return False
         self._set(status="ready", ready_at=self._clock(), last_error=None)
@@ -113,7 +113,7 @@ class CatalogWarmup:
         try:
             self._after()
         except Exception as exc:  # serving outlives the follow-up
-            logger.warning("catalog warm-up follow-up failed: %s", exc)
+            logger.warning("catalog warm-up follow-up failed: %s", exc, exc_info=True)
 
     def run(self) -> None:
         """Compose until ready or stopped; never raises."""

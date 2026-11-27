@@ -277,7 +277,7 @@ def _build_typed_tool(
             annotation=Context | None,
         )
     )
-    _tool.__signature__ = inspect.Signature(sig_params)  # type: ignore[attr-defined]
+    _tool.__dict__["__signature__"] = inspect.Signature(sig_params)
     _tool.__annotations__ = {
         **annotations,
         "client": Any,
@@ -549,10 +549,11 @@ def _resolve_action_provider(provider: Any) -> list[str]:
         else:
             candidates = provider
         names = [str(a) for a in (candidates or []) if isinstance(a, str) and a]
-    except Exception as exc:  # pragma: no cover - defensive per-provider
+    except Exception as exc:  # one bad provider never breaks the table
         logger.warning(
             "operation table: action provider failed (exception_type=%s)",
             type(exc).__name__,
+            exc_info=True,
         )
         return []
     # Drop discovery keywords (list_actions/help/actions) and de-dup, stable-sorted.

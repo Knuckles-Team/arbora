@@ -49,7 +49,7 @@ import uuid
 from collections.abc import Callable
 from functools import partial
 from types import MappingProxyType
-from typing import Any
+from typing import Any, cast
 
 from arbora.core.environment import read_env
 from arbora.fleet.ranking import FLOOR_ONLY
@@ -232,8 +232,10 @@ async def _execute_tool(tools: ToolTable, tool_name: str, /, **kwargs) -> Any:
                 _resolved = _default.default
                 if _resolved is not PydanticUndefined:
                     kwargs[_name] = _resolved
-                elif getattr(_default, "default_factory", None) is not None:
-                    kwargs[_name] = _default.default_factory()  # type: ignore[misc, call-arg]
+                elif (
+                    _factory := getattr(_default, "default_factory", None)
+                ) is not None:
+                    kwargs[_name] = cast("Callable[[], Any]", _factory)()
                 else:
                     # Required param (Field with no default) omitted: without this the
                     # raw FieldInfo would bind and later blow up deep in the tool with a
@@ -241,7 +243,7 @@ async def _execute_tool(tools: ToolTable, tool_name: str, /, **kwargs) -> Any:
                     # with the actual missing-arg name instead.
                     _missing_required.append(_name)
     except Exception as exc:
-        logger.warning("tool default resolution failed: %s", exc)
+        logger.warning("tool default resolution failed: %s", exc, exc_info=True)
     if _missing_required:
         raise ValueError(
             f"Tool {tool_name!r} missing required argument(s): "
@@ -642,7 +644,7 @@ def _make_tool_endpoint(tools: ToolTable, tool_name: str):
     async def _handler(request: Request) -> JSONResponse:
         try:
             body = await request.json()
-        except Exception:
+        except ValueError:
             body = {}
         try:
             res = await _execute_tool(tools, tool_name, **body)
@@ -676,6 +678,7 @@ def _make_tool_endpoint(tools: ToolTable, tool_name: str):
             # 4xx instead of the generic 500 every other exception maps to.
             return _external_error_response(e, status_code=400, code="invalid_request")
         except Exception as e:
+            logger.warning("%s endpoint failed", tool_name, exc_info=True)
             return _external_error_response(e)
 
     _handler.__name__ = f"{tool_name}_endpoint"
@@ -1153,9 +1156,9 @@ def _attach_headless_fleet_loader(
             f"fleet loader attach failed in this headless build ({type(exc).__name__})"
         )
         logger.warning(
-            "ensure_tools_registered: fleet loader attach failed in this headless build (%s): %s",
+            "ensure_tools_registered: fleet loader attach failed in this headless build (%s)",
             type(exc).__name__,
-            exc,
+            exc_info=True,
         )
 
 

@@ -749,6 +749,9 @@ def register_write_ingest_tools(
                 try:
                     return handler()
                 except Exception as e:
+                    logging.getLogger(__name__).warning(
+                        "write action failed", exc_info=True
+                    )
                     return public_error_text(e)
 
             def _echo_graph_selection(raw: str, name: str, requested_graph: str) -> str:
@@ -943,6 +946,9 @@ def register_write_ingest_tools(
         except engine_routing.GraphSelectionConflictError as e:
             return None, public_error_text(e, code="graph_selection_conflict")
         except Exception as e:
+            logging.getLogger(__name__).warning(
+                "graph resolution failed", exc_info=True
+            )
             return None, public_error_text(e)
         if fanout or len(entries) != 1:
             return None, public_error_text(
@@ -1036,6 +1042,7 @@ def register_write_ingest_tools(
                 },
             )
         except Exception as e:
+            logging.getLogger(__name__).warning("ingest action failed", exc_info=True)
             return public_error_text(e)
 
     tools["graph_ingest"] = graph_ingest

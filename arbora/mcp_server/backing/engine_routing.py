@@ -97,6 +97,7 @@ def _toggle_batch_query(
             "item to enabled=True: %s",
             len(seen),
             exc,
+            exc_info=True,
         )
         return None
     return res
@@ -196,6 +197,7 @@ def _seed_external_graph_connectors(registry: Any) -> None:
             logger.warning(
                 "Skipping invalid external source declaration: %s",
                 type(exc).__name__,
+                exc_info=True,
             )
 
 
@@ -213,6 +215,7 @@ def _seed_kg_connections(registry: Any) -> None:
                 logger.warning(
                     "Skipping invalid graph connection declaration: %s",
                     type(e).__name__,
+                    exc_info=True,
                 )
 
 
@@ -231,6 +234,7 @@ def _seed_connection_registry(registry: Any) -> None:
         logger.debug(
             "Graph connection declarations were not seeded (%s)",
             type(exc).__name__,
+            exc_info=True,
         )
 
 
@@ -369,6 +373,7 @@ def resolve_graph_targets(
     except GraphSelectionConflictError as e:
         return public_error_text(e, code="graph_selection_conflict")
     except Exception as e:
+        logger.warning("operation failed", exc_info=True)
         return public_error_text(e)
     return entries, errors, fanout
 
@@ -528,6 +533,7 @@ def fanout_execute(entries, fn, *, timeout=None):
             logger.warning(
                 "Graph fan-out target failed (exception_type=%s)",
                 type(exc).__name__,
+                exc_info=True,
             )
             errors[name] = fanout_error_label(exc)
     for fut in not_done:

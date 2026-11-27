@@ -395,6 +395,7 @@ def _run_graph_query_engine(
     except engine_routing.GraphSelectionConflictError as e:
         return public_error_json(e, code="graph_selection_conflict")
     except Exception as e:
+        logger.warning("operation failed", exc_info=True)
         return public_error_json(e)
     if not fanout:
         name, engine = entries[0]
@@ -410,6 +411,7 @@ def _run_graph_query_engine(
                 e, code="permission_denied" if graph else "operation_failed"
             )
         except Exception as e:
+            logger.warning("operation failed", exc_info=True)
             return public_error_json(e)
     results, fan_errors = engine_routing.fanout_execute(
         entries, lambda _name, engine: run_query(engine, query)
@@ -468,6 +470,7 @@ def _run_graph_query_federated(
         )
         return json.dumps(results, default=str)
     except Exception as e:
+        logger.warning("operation failed", exc_info=True)
         return public_error_json(e)
 
 
@@ -800,6 +803,7 @@ def _uql_fanout_target_evidence(
             "UQL fan-out provenance target failed (target=%s exception_type=%s)",
             name,
             type(exc).__name__,
+            exc_info=True,
         )
         return []
 
@@ -980,6 +984,7 @@ def _run_graph_query_resolve_local(
     except engine_routing.GraphSelectionConflictError as e:
         return [], {}, False, public_error_json(e, code="graph_selection_conflict")
     except Exception as e:
+        logger.warning("read engine resolution failed", exc_info=True)
         return [], {}, False, public_error_json(e)
 
 
@@ -1141,6 +1146,7 @@ def _run_graph_query_union_aggregate(
             default=str,
         )
     except Exception as e:
+        logger.warning("operation failed", exc_info=True)
         return public_error_json(e)
 
 
@@ -1215,6 +1221,7 @@ def _run_graph_query_single(
             e, code="permission_denied" if graph else "operation_failed"
         )
     except Exception as e:
+        logger.warning("operation failed", exc_info=True)
         return public_error_json(e)
 
 
@@ -1246,6 +1253,7 @@ def _run_graph_query_fanout_primary(
             logger.warning(
                 "Graph fan-out primary target failed (exception_type=%s)",
                 type(exc).__name__,
+                exc_info=True,
             )
             fan_errors[name] = engine_routing.fanout_error_label(exc)
     return results, fan_errors
@@ -3096,6 +3104,7 @@ def register_query_tools(mcp, tools: ToolTable, engine_provider: Callable[[], An
                 try:
                     return _search_with_engine(engine)
                 except Exception as e:
+                    logger.warning("operation failed", exc_info=True)
                     return public_error_text(e)
 
             def _content_graph_search(name: str, engine: Any) -> str:
@@ -3115,6 +3124,7 @@ def register_query_tools(mcp, tools: ToolTable, engine_provider: Callable[[], An
                     with engine_routing.bound_to_graph(name):
                         return _run_search(engine)
                 except Exception as e:
+                    logger.warning("operation failed", exc_info=True)
                     return public_error_text(e)
 
             def _search_with_engine(engine: Any) -> str:

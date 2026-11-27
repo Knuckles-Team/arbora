@@ -175,6 +175,7 @@ def probe_engine(
         except (TimeoutError, OSError):
             return EngineProbe("absent")
         except Exception:  # an engine refusal is still an answer
+            logger.debug("engine answered the probe with a refusal", exc_info=True)
             return EngineProbe("running")
     version = reply.get("version") if isinstance(reply, Mapping) else None
     return EngineProbe("running", str(version) if version else None)

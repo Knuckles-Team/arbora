@@ -87,6 +87,7 @@ def fleet_catalog_view(multiplexer: Any) -> Callable[[], Mapping[str, Any]]:
                         "fleet catalog URL unresolved for %s (%s)",
                         name,
                         type(exc).__name__,
+                        exc_info=True,
                     )
             servers[name] = FleetServer(
                 prefix=multiplexer.server_prefix(name), url=url.rstrip("/")
