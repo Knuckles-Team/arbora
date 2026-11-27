@@ -35,13 +35,14 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 from arbora.gateway.aggregator import WIDGET_READ_OP, Aggregator, WidgetReader
 from arbora.gateway.config import ConfigManager
 from arbora.gateway.models import DashboardLayout, WidgetData
+from arbora.gateway.route_marks import build_router, route
 from arbora.gateway.state import GatewayState, gateway_of
 from arbora.security.error_surface import public_error_payload
 
 __all__ = [
     "DASHBOARD_WS_PATH",
     "DashboardResponse",
-    "dashboard_router",
+    "build_dashboard_router",
     "fetch_dashboard_subset",
     "get_full_dashboard",
     "register_dashboard_routes",
@@ -102,10 +103,6 @@ def _require_dashboard_write(request: Request) -> None:
         )
 
 
-dashboard_router = APIRouter(
-    tags=["dashboard"], dependencies=[Depends(_require_dashboard_read)]
-)
-
 # Per-process singleton, created on first request. Layout writes persist to the
 # shared YAML file, so replicas converge on their next read.
 _aggregator: Aggregator | None = None
@@ -132,13 +129,13 @@ class WidgetListItem(BaseModel):
     supports_websocket: bool
 
 
-@dashboard_router.get("/layout")
+@route("GET", "/layout")
 async def get_layout() -> DashboardLayout:
     """Return the current dashboard layout configuration."""
     return _get_aggregator().get_layout()
 
 
-@dashboard_router.put("/layout")
+@route("PUT", "/layout")
 async def save_layout(layout: DashboardLayout, request: Request) -> dict[str, str]:
     """Persist a new dashboard layout configuration."""
     _require_dashboard_write(request)
@@ -146,13 +143,13 @@ async def save_layout(layout: DashboardLayout, request: Request) -> dict[str, st
     return {"status": "saved"}
 
 
-@dashboard_router.get("/data")
+@route("GET", "/data")
 async def get_all_data(request: Request) -> dict[str, WidgetData]:
     """Fetch data from every active widget."""
     return await _get_aggregator().fetch_all(_reader(request))
 
 
-@dashboard_router.get("/data/{service_id}")
+@route("GET", "/data/{service_id}")
 async def get_service_data(service_id: str, request: Request) -> WidgetData:
     """Fetch data for one service."""
     if not _SERVICE_ID_RE.fullmatch(service_id):
@@ -163,7 +160,7 @@ async def get_service_data(service_id: str, request: Request) -> WidgetData:
     return data
 
 
-@dashboard_router.get("/full")
+@route("GET", "/full")
 async def get_full_dashboard(request: Request) -> DashboardResponse:
     """Return layout and data in one request for the initial page load."""
     aggregator = _get_aggregator()
@@ -185,7 +182,7 @@ async def fetch_dashboard_subset(
     return dict(zip(ordered_ids, results, strict=True))
 
 
-@dashboard_router.get("/data-subset")
+@route("GET", "/data-subset")
 async def get_dashboard_subset(
     request: Request,
     widget_id: Annotated[list[str] | None, Query()] = None,
@@ -194,7 +191,7 @@ async def get_dashboard_subset(
     return await fetch_dashboard_subset(set(widget_id or ()), request)
 
 
-@dashboard_router.get("/widgets")
+@route("GET", "/widgets")
 async def list_available_widgets(request: Request) -> list[WidgetListItem]:
     """List every connector of the fleet census a widget can read."""
     items: list[WidgetListItem] = []
@@ -222,7 +219,7 @@ async def list_available_widgets(request: Request) -> list[WidgetListItem]:
     return items
 
 
-@dashboard_router.get("/health")
+@route("GET", "/health")
 async def health_check(request: Request) -> JSONResponse:
     """Liveness: always 200, with the shared runtime health report as body."""
     from arbora.observability.runtime_health import collect_health_async
@@ -239,7 +236,7 @@ def _engine_probe(gateway: GatewayState) -> dict[str, Any]:
     return check("unavailable", reason="no active engine")
 
 
-@dashboard_router.get("/readiness")
+@route("GET", "/readiness")
 async def readiness_check(request: Request) -> JSONResponse:
     """Readiness: the joined snapshot of the engine probe and registered probes."""
     from arbora.observability.readiness import (
@@ -262,7 +259,7 @@ async def readiness_check(request: Request) -> JSONResponse:
     )
 
 
-@dashboard_router.get("/discover")
+@route("GET", "/discover")
 async def discover_services() -> DashboardLayout:
     """Auto-discover services from the MCP configuration as a layout."""
     return ConfigManager()._auto_discover()
@@ -276,7 +273,7 @@ def _gateway_engine_or_none(request: Request) -> Any:
         return None
 
 
-@dashboard_router.get("/daemon/status")
+@route("GET", "/daemon/status")
 async def daemon_status(request: Request) -> dict[str, Any]:
     """Return the consolidated KG host daemon status."""
     from arbora.gateway.daemon import daemon_status as _status
@@ -284,7 +281,7 @@ async def daemon_status(request: Request) -> dict[str, Any]:
     return _status(_gateway_engine_or_none(request))
 
 
-@dashboard_router.get("/daemon/shards")
+@route("GET", "/daemon/shards")
 async def daemon_shards(request: Request) -> dict[str, Any]:
     """Return the engine shard topology and per-shard reachability.
 
@@ -316,7 +313,7 @@ async def daemon_shards(request: Request) -> dict[str, Any]:
         raise unavailable from None
 
 
-@dashboard_router.post("/daemon/start")
+@route("POST", "/daemon/start")
 async def daemon_start(request: Request) -> dict[str, Any]:
     """Ensure the consolidated KG host daemon runs in this process."""
     _require_dashboard_write(request)
@@ -415,7 +412,7 @@ async def _source_ids(request: Request) -> list[str]:
     return [str(source["source_id"]) for source in inventory.get("sources", ())]
 
 
-@dashboard_router.post("/hydrate/{source}")
+@route("POST", "/hydrate/{source}")
 async def trigger_hydration(source: str, request: Request) -> dict[str, Any]:
     """Trigger hydration for one external source through served ingest."""
     _require_dashboard_write(request)
@@ -424,7 +421,7 @@ async def trigger_hydration(source: str, request: Request) -> dict[str, Any]:
     return await _sync_source(request, source)
 
 
-@dashboard_router.post("/hydrate")
+@route("POST", "/hydrate")
 async def trigger_all_hydration(request: Request) -> dict[str, Any]:
     """Trigger hydration for every configured source in sequence."""
     _require_dashboard_write(request)
@@ -434,7 +431,7 @@ async def trigger_all_hydration(request: Request) -> dict[str, Any]:
     }
 
 
-@dashboard_router.get("/hydration-status")
+@route("GET", "/hydration-status")
 async def get_hydration_status(request: Request) -> dict[str, Any]:
     """Return one status entry per hydration source."""
     status: dict[str, Any] = {}
@@ -529,9 +526,16 @@ async def dashboard_websocket(websocket: WebSocket) -> None:
         logger.warning("/ws/dashboard stream failed", exc_info=True)
 
 
+def build_dashboard_router() -> APIRouter:
+    """The dashboard router, built for one composition."""
+    return build_router(
+        __name__, tags=["dashboard"], dependencies=[Depends(_require_dashboard_read)]
+    )
+
+
 def register_dashboard_routes(app: Any, *, prefix: str = "/api") -> None:
     """Mount ``{prefix}/dashboard/*`` and ``/ws/dashboard`` onto ``app``."""
-    app.include_router(dashboard_router, prefix=f"{prefix}/dashboard")
+    app.include_router(build_dashboard_router(), prefix=f"{prefix}/dashboard")
     if not any(getattr(r, "path", None) == DASHBOARD_WS_PATH for r in app.routes):
         app.add_api_websocket_route(DASHBOARD_WS_PATH, dashboard_websocket)
     logger.info("Mounted service dashboard API at %s/dashboard", prefix)

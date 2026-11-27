@@ -68,8 +68,6 @@ _CURSOR_TTL_SECONDS = 900.0
 # of hanging the request indefinitely.
 _CATALOG_READ_TIMEOUT_S = 30.0
 
-registry_router = APIRouter(tags=["registry"])
-
 
 class _RegistryModel(BaseModel):
     """Strict public projection model; catalog shape errors fail closed."""
@@ -1704,47 +1702,52 @@ def _make_get_handler(kind: str, model: type[BaseModel]) -> Callable[..., Any]:
     return handler
 
 
-registry_router.add_api_route(
-    "/registry",
-    _list_multi_kind,
-    methods=["GET"],
-    response_model=RegistryMultiKindPage,
-    name="list_registry_multi_kind",
-)
-
-
-for _kind, _spec in KIND_SPECS.items():
-    _model = _spec.model
-    _page_response_model, _item_response_model = _RESPONSE_MODELS[_kind]
-    _list_handler = (
+def _add_kind_routes(router: APIRouter, kind: str) -> None:
+    model = KIND_SPECS[kind].model
+    page_response_model, item_response_model = _RESPONSE_MODELS[kind]
+    list_handler = (
         _make_servers_list_handler()
-        if _kind == "servers"
-        else _make_list_handler(_kind, _model)
+        if kind == "servers"
+        else _make_list_handler(kind, model)
     )
-    _get_handler = _make_get_handler(_kind, _model)
-    registry_router.add_api_route(
-        f"/registry/{_kind}",
-        _list_handler,
+    router.add_api_route(
+        f"/registry/{kind}",
+        list_handler,
         methods=["GET"],
-        response_model=_page_response_model,
-        name=f"list_registry_{_kind}",
+        response_model=page_response_model,
+        name=f"list_registry_{kind}",
     )
-    registry_router.add_api_route(
-        f"/registry/{_kind}/{{item_id}}",
-        _get_handler,
+    router.add_api_route(
+        f"/registry/{kind}/{{item_id}}",
+        _make_get_handler(kind, model),
         methods=["GET"],
-        response_model=_item_response_model,
-        name=f"get_registry_{_kind}",
+        response_model=item_response_model,
+        name=f"get_registry_{kind}",
     )
+
+
+def build_registry_router() -> APIRouter:
+    """The typed registry router, built for one composition."""
+    router = APIRouter(tags=["registry"])
+    router.add_api_route(
+        "/registry",
+        _list_multi_kind,
+        methods=["GET"],
+        response_model=RegistryMultiKindPage,
+        name="list_registry_multi_kind",
+    )
+    for kind in KIND_SPECS:
+        _add_kind_routes(router, kind)
+    return router
 
 
 def register_registry_routes(app: Any, prefix: str = "/api") -> None:
     """Mount the typed GET-only registry routes on FastAPI or Starlette."""
 
     if hasattr(app, "include_router"):
-        app.include_router(registry_router, prefix=prefix)
+        app.include_router(build_registry_router(), prefix=prefix)
         return
-    for route in registry_router.routes:
+    for route in build_registry_router().routes:
         if not isinstance(route, Route):
             continue
         app.add_route(
@@ -1766,6 +1769,6 @@ __all__ = [
     "RegistryServer",
     "RegistrySkill",
     "RegistryTool",
+    "build_registry_router",
     "register_registry_routes",
-    "registry_router",
 ]

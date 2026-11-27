@@ -9,7 +9,7 @@ spawns NO background threads; their work is enqueued to the durable task queue
 that this host daemon drains.
 
 Mount the daemon with ``start_host_daemon()`` from the gateway's lifespan/startup
-and surface its state via the ``/daemon/*`` routes on ``dashboard_router``.
+and surface its state via the ``/daemon/*`` routes of ``build_dashboard_router``.
 """
 
 from __future__ import annotations

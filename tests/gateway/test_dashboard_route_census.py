@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from fastapi.routing import APIRoute
 
-from arbora.gateway.dashboard_api import dashboard_router
+from arbora.gateway.dashboard_api import build_dashboard_router
 
 PINNED = {
     ("GET", "/layout"),
@@ -31,7 +31,7 @@ PINNED = {
 def test_dashboard_router_exposes_every_route() -> None:
     pairs = {
         (method, route.path)
-        for route in dashboard_router.routes
+        for route in build_dashboard_router().routes
         if isinstance(route, APIRoute)
         for method in (route.methods or ())
     }

@@ -65,8 +65,6 @@ from starlette.routing import Route
 
 logger = logging.getLogger(__name__)
 
-remote_oauth_router = APIRouter(tags=["remote-oauth"])
-
 # ---------------------------------------------------------------------------
 # Broker singleton — lazily built, overridable (tests / a deployment that
 # wants to construct + inject its own registry rather than go through the
@@ -356,18 +354,22 @@ async def _revoke(provider_id: str) -> Any:
     return Response(status_code=204)
 
 
-# Explicit registration makes the production call graph visible to the
-# repository's source-reachability gate.
-remote_oauth_router.add_api_route(
-    "/providers/{provider_id}/authorize",
-    authorize,
-    methods=["POST"],
-    response_model=AuthorizeResponse,
-)
-remote_oauth_router.add_api_route("/oauth/callback", oauth_callback, methods=["GET"])
-remote_oauth_router.add_api_route(
-    "/providers/{provider_id}/revoke", _revoke, methods=["POST"]
-)
+def build_remote_oauth_router() -> APIRouter:
+    """The remote-OAuth router, built for one composition.
+
+    Explicit registration makes the production call graph visible to the
+    repository's source-reachability gate.
+    """
+    router = APIRouter(tags=["remote-oauth"])
+    router.add_api_route(
+        "/providers/{provider_id}/authorize",
+        authorize,
+        methods=["POST"],
+        response_model=AuthorizeResponse,
+    )
+    router.add_api_route("/oauth/callback", oauth_callback, methods=["GET"])
+    router.add_api_route("/providers/{provider_id}/revoke", _revoke, methods=["POST"])
+    return router
 
 
 def register_remote_oauth_routes(
@@ -396,7 +398,7 @@ def register_remote_oauth_routes(
     if scope_policy is not None:
         _set_scope_policy(scope_policy)
     if hasattr(app, "include_router"):  # FastAPI
-        app.include_router(remote_oauth_router, prefix=prefix)
+        app.include_router(build_remote_oauth_router(), prefix=prefix)
         return
 
     from starlette.responses import JSONResponse
@@ -417,7 +419,7 @@ def register_remote_oauth_routes(
 
         return _handler
 
-    for route in remote_oauth_router.routes:
+    for route in build_remote_oauth_router().routes:
         if not isinstance(route, Route):
             continue  # pragma: no cover - APIRouter only emits Route entries here
         param_names = list(getattr(route, "param_convertors", {}) or {})
@@ -434,6 +436,6 @@ __all__ = [
     "ScopePolicy",
     "authorize",
     "oauth_callback",
+    "build_remote_oauth_router",
     "register_remote_oauth_routes",
-    "remote_oauth_router",
 ]
