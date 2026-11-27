@@ -10,11 +10,23 @@ from __future__ import annotations
 
 import threading
 import time
-from collections.abc import Callable
+from collections import deque
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-__all__ = ["Observability", "Telemetry"]
+__all__ = [
+    "HealthState",
+    "IdentityContract",
+    "Observability",
+    "build_health_state",
+    "ProbeTable",
+    "ReadinessAuthority",
+    "Slot",
+    "SUBSYSTEMS",
+    "SubsystemWindows",
+    "Telemetry",
+]
 
 
 class Telemetry:
@@ -92,8 +104,186 @@ class Telemetry:
             return self._agent_instrumented
 
 
+#: The served subsystems whose calls are tracked.
+SUBSYSTEMS = ("engine", "discovery", "fleet")
+
+
+def _open_calls(names: Sequence[str]) -> dict[str, dict[int, float]]:
+    return {name: {} for name in names}
+
+
+def _recent_outcomes(
+    names: Sequence[str], window: int
+) -> dict[str, deque[tuple[bool, float]]]:
+    return {name: deque(maxlen=window) for name in names}
+
+
+class SubsystemWindows:
+    """Per-subsystem in-flight calls and the window of recent outcomes."""
+
+    def __init__(self, names: Sequence[str] = SUBSYSTEMS, window: int = 50) -> None:
+        self._lock = threading.Lock()
+        self._in_flight = _open_calls(names)
+        self._recent = _recent_outcomes(names, window)
+        self._next_id = 0
+
+    def begin(self, name: str, started: float) -> int:
+        """Record one call entering ``name``; return its id."""
+        with self._lock:
+            self._next_id += 1
+            self._in_flight[name][self._next_id] = started
+            return self._next_id
+
+    def end(self, name: str, call_id: int, *, ok: bool, elapsed: float) -> None:
+        """Record one call leaving ``name`` with its outcome."""
+        with self._lock:
+            self._in_flight[name].pop(call_id, None)
+            self._recent[name].append((ok, elapsed))
+
+    def view(
+        self, names: Sequence[str]
+    ) -> dict[str, tuple[list[float], list[tuple[bool, float]]]]:
+        """One consistent copy of every named subsystem's calls and outcomes."""
+        with self._lock:
+            return {
+                name: (list(self._in_flight[name].values()), list(self._recent[name]))
+                for name in names
+            }
+
+
+class ProbeTable:
+    """Named probes bound by the host; the table owns its lock."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._probes: dict[str, Callable[..., Any]] = {}
+
+    def bind(self, name: str, probe: Callable[..., Any]) -> None:
+        """Bind (or replace) the probe for ``name``."""
+        with self._lock:
+            self._probes[name] = probe
+
+    def clear(self) -> None:
+        """Unbind every probe."""
+        with self._lock:
+            self._probes.clear()
+
+    def get(self, name: str) -> Callable[..., Any] | None:
+        """The probe bound to ``name``, or ``None``."""
+        with self._lock:
+            return self._probes.get(name)
+
+    def copy(self) -> dict[str, Callable[..., Any]]:
+        """A snapshot of every bound probe."""
+        with self._lock:
+            return dict(self._probes)
+
+
+class ReadinessAuthority:
+    """The one readiness session of the process and the token of its owner."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._session: Any = None
+        self._owner: object | None = None
+
+    def claim(self, session: Any) -> object:
+        """Claim the authority; a second claim fails closed."""
+        with self._lock:
+            if self._session is not None or self._owner is not None:
+                raise RuntimeError("readiness authority is already claimed")
+            self._session = session
+            self._owner = object()
+            return self._owner
+
+    def release(self, owner: object) -> bool:
+        """Release the authority only for the opaque token that claimed it."""
+        with self._lock:
+            if owner is not self._owner:
+                return False
+            self._session = None
+            self._owner = None
+            return True
+
+    @property
+    def session(self) -> Any:
+        """The claimed readiness session, or ``None``."""
+        with self._lock:
+            return self._session
+
+
+class Slot:
+    """One replaceable value that readiness reads (the process credential lease)."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._value: Any = None
+
+    def set(self, value: Any) -> None:
+        """Replace the value (``None`` clears)."""
+        with self._lock:
+            self._value = value
+
+    def get(self) -> Any:
+        """The value, or ``None``."""
+        with self._lock:
+            return self._value
+
+    def take(self) -> Any:
+        """The value, cleared in the same step."""
+        with self._lock:
+            value, self._value = self._value, None
+            return value
+
+
+class IdentityContract:
+    """The OAuth client contract reconciler and its config-invalid flag."""
+
+    def __init__(self) -> None:
+        self.reconciler = Slot()
+        self.supervisor = Slot()
+        self._lock = threading.Lock()
+        self._config_invalid = False
+
+    def set_config_invalid(self, invalid: bool) -> None:
+        """Record that the contract configuration is set but unusable."""
+        with self._lock:
+            self._config_invalid = bool(invalid)
+
+    @property
+    def config_invalid(self) -> bool:
+        """Whether the contract configuration is set but unusable."""
+        with self._lock:
+            return self._config_invalid
+
+
+@dataclass(frozen=True, slots=True)
+class HealthState:
+    """Subsystem windows, the host's probes and the readiness inputs."""
+
+    windows: SubsystemWindows
+    probes: ProbeTable
+    authority: ReadinessAuthority
+    lease: Slot
+    identity: IdentityContract
+    readiness_probes: ProbeTable
+
+
+def build_health_state() -> HealthState:
+    """A fresh health state: empty windows, no probes, no authority claimed."""
+    return HealthState(
+        windows=SubsystemWindows(),
+        probes=ProbeTable(),
+        authority=ReadinessAuthority(),
+        lease=Slot(),
+        identity=IdentityContract(),
+        readiness_probes=ProbeTable(),
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class Observability:
     """Every owned observability object of one host process."""
 
     telemetry: Telemetry
+    health: HealthState

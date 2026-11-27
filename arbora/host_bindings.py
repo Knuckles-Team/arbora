@@ -30,6 +30,7 @@ from fastmcp.server.extensions import ServerExtension
 
 from arbora.core.environment import read_env
 from arbora.security.key_cache import JwksCache
+from arbora.observability.state import HealthState
 from arbora.unique_records import create_record, has_record_writer
 
 __all__ = [
@@ -358,9 +359,7 @@ def _fleet_probe(session: Any) -> dict[str, Any]:
     }
 
 
-def bind_health_probes(engine_provider: Callable[[], Any]) -> None:
+def bind_health_probes(health: HealthState, engine_provider: Callable[[], Any]) -> None:
     """Bind the mandatory readiness probes."""
-    from arbora.observability.runtime_health import register_health_probe
-
-    register_health_probe("engine", _engine_probe(engine_provider))
-    register_health_probe("fleet_supervision", _fleet_probe)
+    health.probes.bind("engine", _engine_probe(engine_provider))
+    health.probes.bind("fleet_supervision", _fleet_probe)

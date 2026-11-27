@@ -10,6 +10,7 @@ import pytest
 from arbora.api.ops import ops as ops_admin
 from arbora.api.ops.ops import DoctorReport
 from arbora.mcp_server.gate_audit import gate_inactive_event, gate_inactive_startup
+from arbora.mcp_server.host_context import build_host_context
 from arbora.pin_lag import gates
 from arbora.security.session import use_session
 from tests.a2a.test_operation_bridge import session
@@ -49,12 +50,13 @@ def test_ready_reports_the_inactive_gates_and_stays_ready(
     from arbora.mcp_server import runtime
     from arbora.observability import runtime_health
 
-    async def healthy() -> dict[str, Any]:
+    async def healthy(_health) -> dict[str, Any]:
         return {"checks": [{"name": "engine", "status": "healthy"}]}
 
     monkeypatch.setattr(runtime_health, "collect_health_async", healthy)
     _served(monkeypatch, "tool_relevance")
-    _args, mcp, _middlewares = runtime._build_server(bootstrap=False)
+    host = build_host_context()
+    _args, mcp, _middlewares = runtime._build_server(bootstrap=False, host=host)
     client = TestClient(mcp.http_app())
     body = client.get("/health/ready").json()
     # Readiness is never gated by a missing question: refusing every call would halt.

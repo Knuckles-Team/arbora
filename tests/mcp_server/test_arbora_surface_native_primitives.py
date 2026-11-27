@@ -11,6 +11,7 @@ from arbora.access.action_policy import ActionPolicies
 from arbora.access.approval import ApprovalDecisions
 from arbora.mcp_server.backing.arbora_surface import register_arbora_surface
 from arbora.mcp_server.host_caches import HostCaches
+from arbora.observability.state import build_health_state
 
 
 @pytest.mark.spec("ARBORA-FLEET-R007.2")
@@ -24,6 +25,7 @@ async def test_backing_surface_exposes_prompts_resources_and_templates() -> None
         engine_provider=lambda: None,
         caches=HostCaches(),
         intent_tools=False,
+        health=build_health_state(),
     )
     async with Client(backing) as client:
         prompts = {prompt.name for prompt in await client.list_prompts()}

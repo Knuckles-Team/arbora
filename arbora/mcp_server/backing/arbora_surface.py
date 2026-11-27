@@ -36,6 +36,7 @@ from arbora.mcp_server.backing._arbora_action_manifest import ARBORA_ACTIONS
 from arbora.mcp_server.backing.intent_contract import operation_id
 from arbora.mcp_server.backing.tool_specs import INTENT_VERBS
 from arbora.mcp_server.host_caches import HostCaches
+from arbora.observability.state import HealthState
 
 #: Routing group whose operations are the raw engine namespaces (their
 #: per-domain ADMIN scope policy is enforced by ``engine_tools``).
@@ -228,6 +229,7 @@ def arbora_registrars(
     approvals: ApprovalDecisions,
     caches: HostCaches,
     engine_provider: Callable[[], Any],
+    health: HealthState,
 ) -> list[Any]:
     """The action-routed registrars that populate the dispatch core.
 
@@ -250,7 +252,7 @@ def arbora_registrars(
     return [
         bound(au_tools.register_query_tools, engine_provider),
         bound(au_tools.register_write_ingest_tools, engine_provider),
-        bound(au_tools.register_analysis_tools, caches.analysis),
+        bound(au_tools.register_analysis_tools, caches.analysis, health),
         bound(au_tools.register_analyze_suite_tools, caches.analysis),
         bound(au_tools.register_state_tools, engine_provider),
         bound(au_tools.register_ontology_tools, engine_provider),
@@ -307,6 +309,7 @@ def register_arbora_surface(
     approvals: ApprovalDecisions,
     caches: HostCaches,
     engine_provider: Callable[[], Any],
+    health: HealthState,
     canonical: bool = False,
     intent_tools: bool = True,
 ) -> Any:
@@ -329,7 +332,7 @@ def register_arbora_surface(
     register_backing_tools(
         backing,
         registrars=arbora_registrars(
-            action_policies, approvals, caches, engine_provider
+            action_policies, approvals, caches, engine_provider, health
         ),
         force_registration=canonical,
     )

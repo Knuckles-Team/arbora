@@ -21,6 +21,7 @@ from arbora.mcp_server.serving import (
     http_catalog,
     mcp_catalog,
 )
+from arbora.observability.state import SubsystemWindows
 from tests.api.test_invoke_contract import setup_services
 from tests.api.test_mcp_serving import _caller, _operation
 
@@ -52,6 +53,7 @@ def _served(scopes: frozenset[str]) -> tuple[Any, Any, Any]:
         lambda: caller,
         services.policy_gate,
         invoke,
+        windows=SubsystemWindows(),
     )
     return app, projection, runtime
 

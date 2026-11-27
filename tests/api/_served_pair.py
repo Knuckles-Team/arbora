@@ -19,6 +19,7 @@ from arbora.api.invoke.pipeline import invoke
 from arbora.api.mcp.caller import caller_from_session
 from arbora.api.mcp.verbs import MCPProjection, dispatch_verb
 from arbora.api.registry import Registry
+from arbora.observability.state import SubsystemWindows
 from tests.a2a.test_operation_bridge import session
 from tests.api.test_invoke_contract import setup_services
 
@@ -66,6 +67,7 @@ async def serve_both(
         lambda: caller,
         services.policy_gate,
         invoke,
+        windows=SubsystemWindows(),
     )
     mcp = await dispatch_verb(verb, projection, op=op.id, params=params)
     return response, mcp, caller

@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import re
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,7 @@ from arbora.core.environment import read_env, read_text
 from arbora.mcp_server.backing import engine_routing
 from arbora.mcp_server.host_caches import AnalysisCore, ToolTable
 from arbora.mcp_server.legacy_action_invoke import invoke_legacy_action
+from arbora.observability.state import HealthState
 from arbora.security.config_sensitivity import (
     ENDPOINT_KEY_PARTS as _ENDPOINT_MCP_KEY_PARTS,
 )
@@ -1200,11 +1202,11 @@ def _configure_action_get_config(action, config_key, config_value):
     return _configure_get_config_value(env_key, known[env_key])
 
 
-def _configure_action_health(action, config_key, config_value):
+def _configure_action_health(health, action, config_key, config_value):
     # action(s): 'health'
     from arbora.observability.runtime_health import collect_health
 
-    return json.dumps(collect_health(), default=str)
+    return json.dumps(collect_health(health), default=str)
 
 
 def _configure_action_system_doctor(action, config_key, config_value):
@@ -1329,7 +1331,6 @@ _CONFIGURE_ACTION_DISPATCH = {
     "config_reference": _configure_action_generate_config,
     "get_config": _configure_action_get_config,
     "list_config": _configure_action_get_config,
-    "health": _configure_action_health,
     "system_doctor": _configure_action_system_doctor,
     "preflight": _configure_action_preflight,
     "install_hooks": _configure_action_install_hooks,
@@ -1338,8 +1339,15 @@ _CONFIGURE_ACTION_DISPATCH = {
 }
 
 
-def register_analysis_tools(mcp, tools: ToolTable, core: AnalysisCore):
+def register_analysis_tools(
+    mcp, tools: ToolTable, core: AnalysisCore, health: HealthState
+):
     """Register the analysis_tools group on the given FastMCP server."""
+
+    configure_dispatch = {
+        **_CONFIGURE_ACTION_DISPATCH,
+        "health": partial(_configure_action_health, health),
+    }
 
     async def _run_analysis_action(
         action: str = Field(
@@ -1495,7 +1503,7 @@ def register_analysis_tools(mcp, tools: ToolTable, core: AnalysisCore):
         ),
     ) -> str:
         """Manage backend configurations and abstract credentials. Allows dynamic registry updates and credential injection during agent provisioning."""
-        handler = _CONFIGURE_ACTION_DISPATCH.get(action)
+        handler = configure_dispatch.get(action)
         if handler is None:
             return json.dumps({"error": "unknown configuration action"})
         try:

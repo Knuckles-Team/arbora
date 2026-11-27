@@ -34,6 +34,7 @@ from arbora.api.registry import (
     Verb,
 )
 from arbora.mcp_server.serving import register_intent_surface
+from arbora.observability.state import SubsystemWindows
 from tests.api._support import make_verified_caller
 
 #: The agent runtime's previously served contract (``register_intent_tools``
@@ -71,6 +72,7 @@ def test_register_intent_surface_registers_launchers_and_no_verb() -> None:
         caller_for_request=lambda: None,
         policy_gate=PolicyGate("none"),
         invoke=_unused_invoke,
+        windows=SubsystemWindows(),
     )
     names = {tool.name for tool in asyncio.run(mcp.list_tools())}
     # The verbs are attached by ``register_mcp_tools``, the one registration path.
@@ -208,6 +210,7 @@ def _build_projection(op: OpSpec) -> tuple[MCPProjection, _FixtureRuntime]:
         lambda: _caller(),
         PolicyGate("none"),
         invoke,
+        windows=SubsystemWindows(),
     )
     return projection, runtime
 
@@ -263,6 +266,7 @@ def test_ask_fallback_uses_registered_nl_operation_through_shared_invoke() -> No
         ),
         PolicyGate("none"),
         invoke,
+        windows=SubsystemWindows(),
     )
     result = asyncio.run(dispatch_verb("ask", projection, intent="what is a widget?"))
     assert result["ok"] is True, result
@@ -305,6 +309,7 @@ def test_ask_fallback_is_not_offered_without_a_registered_nl_operation() -> None
         lambda: _caller(),
         PolicyGate("none"),
         _unused_invoke,
+        windows=SubsystemWindows(),
     )
     result = asyncio.run(dispatch_verb("ask", projection, intent="what is a widget?"))
     assert result["ok"] is False

@@ -20,6 +20,7 @@ from arbora.api.ops.run_graph import GRAPH_SCHEMA, step_key
 from arbora.api.ops.runs import operations
 from arbora.mcp_server import run_reader
 from arbora.mcp_server.run_reader import NativeRunReader
+from arbora.observability.state import SubsystemWindows
 from arbora.run_origin import RunOriginRegistry
 from tests.api.test_run_replay import event, reader_context, rows
 
@@ -201,6 +202,7 @@ async def serve(op_id, params, reader, *, allowed=True):
         lambda: caller,
         services.policy_gate,
         invoke,
+        windows=SubsystemWindows(),
     )
     return response, await dispatch_verb("ask", projection, op=op_id, params=params)
 

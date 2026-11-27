@@ -1,3 +1,4 @@
+from arbora.observability.state import SubsystemWindows
 from arbora.run_origin import RunOriginRegistry
 
 """Public replay contract, without external models or credentials."""
@@ -256,6 +257,7 @@ async def test_http_and_mcp_use_same_registered_run_handler(
         lambda: caller,
         services.policy_gate,
         invoke,
+        windows=SubsystemWindows(),
     )
     mcp = await dispatch_verb(
         "ask",
@@ -404,6 +406,7 @@ async def test_native_refusals_preserved_on_http_and_mcp(
             lambda: caller,
             services.policy_gate,
             invoke,
+            windows=SubsystemWindows(),
         ),
         op=op.id,
         params={"run_id": "run-one", "task_id": task_id},

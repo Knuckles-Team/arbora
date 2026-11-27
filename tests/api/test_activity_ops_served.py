@@ -27,6 +27,7 @@ from arbora.api.ops import activity as activity_ops
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import Registry, Surface
 from arbora.mcp_server.serving import MCPProjection
+from arbora.observability.state import SubsystemWindows
 from tests.api._support import make_verified_caller
 from tests.api.test_invoke_contract import setup_services
 
@@ -163,6 +164,7 @@ def _projection(services: Any) -> MCPProjection:
         lambda: caller(),
         PolicyGate("none"),
         invoke,
+        windows=SubsystemWindows(),
     )
 
 

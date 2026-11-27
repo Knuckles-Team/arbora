@@ -15,7 +15,9 @@ from arbora.identity.client_contract import (
     ContractState,
     ReconcileResult,
 )
+from arbora.mcp_server.host_context import build_host_context
 from arbora.observability import runtime_health
+from arbora.observability.state import build_health_state
 from tests.identity.test_client_contract import CONFIG, FakeRealm, factory
 
 
@@ -43,18 +45,19 @@ def test_deleted_native_client_is_recreated_and_readiness_follows(
 
     from arbora.mcp_server import runtime
 
-    async def health() -> dict[str, Any]:
+    async def health(_health) -> dict[str, Any]:
         return {"checks": [{"name": "engine", "status": "healthy"}]}
 
     monkeypatch.setattr(runtime_health, "collect_health_async", health)
-    _args, mcp, _middlewares = runtime._build_server(bootstrap=False)
+    host = build_host_context()
+    _args, mcp, _middlewares = runtime._build_server(bootstrap=False, host=host)
     client = TestClient(mcp.http_app())
 
     realm = FakeRealm()
     supervisor = cc.ClientContractSupervisor(CONFIG, admin_factory=factory(realm))
     stop = Lockstep()
     supervisor.stop_event = stop
-    supervisor.start()
+    supervisor.start(host.observability.health.identity)
     observed: list[dict[str, Any]] = []
     try:
         stop.asked.get(timeout=30)  # first pass done: converged, waiting the interval
@@ -73,7 +76,7 @@ def test_deleted_native_client_is_recreated_and_readiness_follows(
     finally:
         stop.set()
         stop.resume.put(None)
-        supervisor.stop()
+        supervisor.stop(host.observability.health.identity)
 
     assert [body.get("identity") for body in observed] == [
         {"status": "ready"},
@@ -86,7 +89,9 @@ def test_deleted_native_client_is_recreated_and_readiness_follows(
     assert realm.defaults[native["id"]] == set(cc.NATIVE_DEFAULT_SCOPES)
     assert not any(method == "DELETE" for method, _ in realm.calls)
     assert supervisor.reconciler.state is ContractState.STOPPED
-    assert runtime_health.identity_readiness() == {"status": "unconfigured"}
+    assert runtime_health.identity_readiness(host.observability.health) == {
+        "status": "unconfigured"
+    }
 
 
 @pytest.mark.spec("ARBORA-IDENTITY-R030.4.4")
@@ -97,13 +102,14 @@ def test_degraded_contract_keeps_registration_in_metadata() -> None:
 
     from arbora.mcp_server.backing.server_factory import _configure_jwt_auth
 
+    health = build_health_state()
     machine = cc.ClientContractReconciler()
     machine.apply(ContractEvent.RECONCILE_START)
     machine.apply(
         ContractEvent.RECONCILE_ERR,
         result=ReconcileResult(False, "client_missing", ("client:arbora-native-mcp",)),
     )
-    runtime_health.register_identity_contract(machine)
+    health.identity.reconciler.set(machine)
     try:
         args = argparse.Namespace(
             token_jwks_uri="https://idp.example/realms/fixture/protocol/openid-connect/certs",
@@ -120,12 +126,12 @@ def test_degraded_contract_keeps_registration_in_metadata() -> None:
         document = (
             TestClient(app).get("/.well-known/oauth-protected-resource/mcp").json()
         )
-        assert runtime_health.identity_readiness() == {
+        assert runtime_health.identity_readiness(health) == {
             "status": "degraded",
             "reason": "identity_client_missing",
         }
     finally:
-        runtime_health.register_identity_contract(None)
+        health.identity.reconciler.set(None)
     # The authorization server stays advertised, so a native client discovers
     # the provider's own registration endpoint and registers dynamically.
     assert document["authorization_servers"] == ["https://idp.example/realms/fixture"]

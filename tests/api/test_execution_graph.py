@@ -22,6 +22,7 @@ from arbora.api.ops.run_replay import RunEventsParams, project_page
 from arbora.api.ops.runs import handle_runs_execution_graph, operations
 from arbora.mcp_server import run_reader
 from arbora.mcp_server.run_reader import NativeRunReader
+from arbora.observability.state import SubsystemWindows
 from arbora.run_origin import RunOriginRegistry
 from tests.api.test_run_replay import event, reader_context, replay_engine, rows
 
@@ -371,6 +372,7 @@ async def test_http_and_mcp_share_native_owner_checked_projection(monkeypatch, a
         lambda: caller,
         services.policy_gate,
         invoke,
+        windows=SubsystemWindows(),
     )
     mcp = await dispatch_verb(
         "ask", projection, op=op.id, params=request().model_dump()

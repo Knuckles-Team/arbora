@@ -35,6 +35,7 @@ from arbora.mcp_server.legacy_action_mapping import (
     ActionOperationMapping,
     require_served_action,
 )
+from arbora.observability.state import SubsystemWindows, build_health_state
 from tests.api._support import make_verified_caller
 from tests.api.test_mcp_serving import (
     _FixtureJournal,
@@ -119,6 +120,7 @@ def _serve(monkeypatch, *, authenticated: bool = True):
         lambda: caller(authenticated=authenticated),
         PolicyGate("none"),
         invoke,
+        windows=SubsystemWindows(),
     )
     monkeypatch.setattr(runtime, "SERVED_PROJECTION", projection)
     return runtime_double, audit
@@ -174,7 +176,9 @@ async def test_analysis_action_runs_through_invoke_as_the_caller(monkeypatch) ->
     served, audit = _serve(monkeypatch)
     server = FastMCP("legacy-analysis-served")
     core = AnalysisCore()
-    analysis_tools.register_analysis_tools(server, ToolTable(), core)
+    analysis_tools.register_analysis_tools(
+        server, ToolTable(), core, build_health_state()
+    )
     bundle = await analysis_tools.execute_focused_analysis(
         core, "inspect", target="node-1"
     )

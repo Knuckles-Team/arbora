@@ -69,6 +69,8 @@ from concurrent.futures import TimeoutError as _FutureTimeoutError
 from typing import Any, NotRequired, TypedDict, cast
 from urllib.parse import urlsplit
 
+from arbora.observability.state import HealthState
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -199,58 +201,36 @@ def _tcp_reachable(host: str, port: int, timeout: float) -> bool:
 # converted to "unhealthy", never swallowed into "ok".
 # --------------------------------------------------------------------------- #
 HealthProbe = Callable[[Any], dict[str, Any]]
-_HOST_PROBES: dict[str, HealthProbe] = {}
-_HOST_PROBES_LOCK = threading.Lock()
 
 
-def register_health_probe(name: str, probe: HealthProbe) -> None:
-    """Bind the host's probe for one check (``engine``, ``fleet_supervision``, ...).
-
-    The probe receives the readiness session (or ``None``) and returns one
-    check dict. The knowledge engine owns topology, placement and the worker
-    registry, so the host binds the probes that read them at startup.
-    """
-    with _HOST_PROBES_LOCK:
-        _HOST_PROBES[name] = probe
-
-
-def reset_health_probes() -> None:
-    """Unbind every host probe."""
-    with _HOST_PROBES_LOCK:
-        _HOST_PROBES.clear()
-
-
-def _bound_probe(name: str, *, mandatory: bool) -> dict[str, Any]:
-    with _HOST_PROBES_LOCK:
-        probe = _HOST_PROBES.get(name)
+def _bound_probe(health: HealthState, name: str, *, mandatory: bool) -> dict[str, Any]:
+    probe = health.probes.get(name)
     if probe is None:
         if mandatory:
             return _unhealthy(name, "the host has not bound this probe")
         return _not_configured(name, "the host has not bound this probe")
-    with _READINESS_AUTHORITY_LOCK:
-        session = _READINESS_AUTHORITY
-    result = dict(probe(session))
+    result = dict(probe(health.authority.session))
     result.setdefault("name", name)
     return result
 
 
-def _check_engine(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
+def _check_engine(cfg: Any) -> dict[str, Any]:
     """Reachability of the knowledge engine; the engine is never "not configured"."""
-    return _bound_probe("engine", mandatory=True)
+    return _bound_probe(cfg.health, "engine", mandatory=True)
 
 
-def _check_kg_host_daemon(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
+def _check_kg_host_daemon(cfg: Any) -> dict[str, Any]:
     """Optional dependency probe bound by the host."""
-    return _bound_probe("kg_host_daemon", mandatory=False)
+    return _bound_probe(cfg.health, "kg_host_daemon", mandatory=False)
 
 
-def _check_tool_task_consumer(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
+def _check_tool_task_consumer(cfg: Any) -> dict[str, Any]:
     """The A2A tool-task consumer the host starts (ARBORA-A2A-R002.2.3.2).
 
     Not configured for a host that serves no A2A; ``UNAVAILABLE`` for a host that
     serves A2A without the engine client or before its consumer polls.
     """
-    return _bound_probe("tool_task_consumer", mandatory=False)
+    return _bound_probe(cfg.health, "tool_task_consumer", mandatory=False)
 
 
 def _check_messaging(cfg: Any) -> dict[str, Any]:
@@ -339,22 +319,17 @@ def connector_components_probe(
     return probe
 
 
-def _check_connector_components(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
+def _check_connector_components(cfg: Any) -> dict[str, Any]:
     """Connector component states, bound by the host."""
-    return _bound_probe("connector_components", mandatory=False)
+    return _bound_probe(cfg.health, "connector_components", mandatory=False)
 
 
-def _check_state_store(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
+def _check_state_store(cfg: Any) -> dict[str, Any]:
     """Optional dependency probe bound by the host."""
-    return _bound_probe("state_store", mandatory=False)
+    return _bound_probe(cfg.health, "state_store", mandatory=False)
 
 
-_READINESS_AUTHORITY: Any = None
-_READINESS_AUTHORITY_OWNER: object | None = None
-_READINESS_AUTHORITY_LOCK = threading.Lock()
-
-
-def claim_readiness_authority(session: Any) -> object:
+def claim_readiness_authority(health: HealthState, session: Any) -> object:
     """Claim the process readiness authority for one serving owner.
 
     A token is returned instead of exposing ownership as a caller-controlled
@@ -363,26 +338,16 @@ def claim_readiness_authority(session: Any) -> object:
     authority used by an already-serving process.
     """
 
-    global _READINESS_AUTHORITY, _READINESS_AUTHORITY_OWNER
-    with _READINESS_AUTHORITY_LOCK:
-        if _READINESS_AUTHORITY is not None or _READINESS_AUTHORITY_OWNER is not None:
-            raise RuntimeError("readiness authority is already claimed")
-        owner = object()
-        _READINESS_AUTHORITY = session
-        _READINESS_AUTHORITY_OWNER = owner
+    owner = health.authority.claim(session)
     _FLEET_SUPERVISION_CACHE.invalidate()
     return owner
 
 
-def release_readiness_authority(owner: object) -> bool:
+def release_readiness_authority(health: HealthState, owner: object) -> bool:
     """Release readiness only when ``owner`` is the active opaque token."""
 
-    global _READINESS_AUTHORITY, _READINESS_AUTHORITY_OWNER
-    with _READINESS_AUTHORITY_LOCK:
-        if owner is not _READINESS_AUTHORITY_OWNER:
-            return False
-        _READINESS_AUTHORITY = None
-        _READINESS_AUTHORITY_OWNER = None
+    if not health.authority.release(owner):
+        return False
     _FLEET_SUPERVISION_CACHE.invalidate()
     return True
 
@@ -422,9 +387,9 @@ _FLEET_SUPERVISION_CACHE_TTL_S = 30.0
 _FLEET_SUPERVISION_MAX_STALENESS_S = 120.0
 
 
-def _collect_fleet_supervision_check() -> dict[str, Any]:
+def _collect_fleet_supervision_check(cfg: Any) -> dict[str, Any]:
     """Fleet supervisory evidence through the host-bound probe (mandatory)."""
-    return _bound_probe("fleet_supervision", mandatory=True)
+    return _bound_probe(cfg.health, "fleet_supervision", mandatory=True)
 
 
 class _FleetSupervisionCache:
@@ -551,7 +516,7 @@ _FLEET_SUPERVISION_CACHE = _FleetSupervisionCache(
 )
 
 
-def _check_fleet_supervision(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
+def _check_fleet_supervision(cfg: Any) -> dict[str, Any]:
     """Truthful fleet-supervision readiness, served from the bounded cache above.
 
     See :func:`_collect_fleet_supervision_check` for what is actually read and
@@ -563,7 +528,7 @@ def _check_fleet_supervision(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - unif
     instead of re-scanned on every tick.
     """
 
-    return _FLEET_SUPERVISION_CACHE._get(_collect_fleet_supervision_check)
+    return _FLEET_SUPERVISION_CACHE._get(lambda: _collect_fleet_supervision_check(cfg))
 
 
 def _check_kafka_bus(cfg: Any) -> dict[str, Any]:
@@ -616,26 +581,26 @@ def _check_stardog_mirror(cfg: Any) -> dict[str, Any]:
     return _unhealthy("stardog_mirror", "stardog mirror endpoint unreachable")
 
 
-def _check_kg_mirrors(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
+def _check_kg_mirrors(cfg: Any) -> dict[str, Any]:
     """Optional dependency probe bound by the host."""
-    return _bound_probe("kg_mirrors", mandatory=False)
+    return _bound_probe(cfg.health, "kg_mirrors", mandatory=False)
 
 
-def _check_embedding_endpoint(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
+def _check_embedding_endpoint(cfg: Any) -> dict[str, Any]:
     """Optional dependency probe bound by the host."""
-    return _bound_probe("embedding_endpoint", mandatory=False)
+    return _bound_probe(cfg.health, "embedding_endpoint", mandatory=False)
 
 
-def _check_ranking(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
+def _check_ranking(cfg: Any) -> dict[str, Any]:
     """Which order ``find`` serves: the engine's, or the floor and why."""
-    return _bound_probe("ranking", mandatory=False)
+    return _bound_probe(cfg.health, "ranking", mandatory=False)
 
 
-def run_bound_probe(name: str) -> dict[str, Any] | None:
+def run_bound_probe(health: HealthState, name: str) -> dict[str, Any] | None:
     """One host-bound probe's result, or ``None`` when the host bound none."""
-    with _HOST_PROBES_LOCK:
-        bound = name in _HOST_PROBES
-    return _bound_probe(name, mandatory=False) if bound else None
+    if health.probes.get(name) is None:
+        return None
+    return _bound_probe(health, name, mandatory=False)
 
 
 def _check_source_provenance(cfg: Any) -> dict[str, Any]:  # noqa: ARG001 - uniform check signature
@@ -724,11 +689,12 @@ def _run_bounded(
     return result
 
 
-def _health_config() -> Any:
+def _health_config(health: HealthState) -> Any:
     """The settings the in-process checks read."""
     from types import SimpleNamespace
 
     return SimpleNamespace(
+        health=health,
         agent_bus_log_backend=read_env("AGENT_BUS_LOG_BACKEND"),
         task_queue_backend=read_env("TASK_QUEUE_BACKEND"),
         kafka_bootstrap_servers=read_env("KAFKA_BOOTSTRAP_SERVERS"),
@@ -736,7 +702,7 @@ def _health_config() -> Any:
     )
 
 
-def collect_health() -> HealthReport:
+def collect_health(health: HealthState) -> HealthReport:
     """Run every runtime-health check concurrently and return one truthful report.
 
     Returns::
@@ -762,7 +728,7 @@ def collect_health() -> HealthReport:
     bounded by the SLOWEST single check, not their sum).
     """
     try:
-        cfg = _health_config()
+        cfg = _health_config(health)
     except Exception as exc:
         # Config itself is unreadable — that is unambiguously unhealthy, not a
         # reason to fall back to "ok".
@@ -799,7 +765,7 @@ def collect_health() -> HealthReport:
     )
 
 
-async def collect_health_async() -> HealthReport:
+async def collect_health_async(health: HealthState) -> HealthReport:
     """Collect health without competing for asyncio's shared default executor.
 
     HTTP liveness/readiness callers must use this helper instead of
@@ -809,7 +775,7 @@ async def collect_health_async() -> HealthReport:
     bounded per-check probe pool.
     """
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(_COLLECTOR_EXECUTOR, collect_health)
+    return await loop.run_in_executor(_COLLECTOR_EXECUTOR, collect_health, health)
 
 
 def is_overall_healthy(report: Mapping[str, Any]) -> bool:
@@ -863,24 +829,9 @@ PROCESS_AUTHORITY_FAILURE_CODES = frozenset(
         "too_short_lived",
     }
 )
-_PROCESS_LEASE: list[Any] = [None]
 
 
-def register_process_lease(lease: Any) -> None:
-    """Register the process credential lease readiness reads (``None`` clears).
-
-    The supervisor registers its lease at start and clears it on stop
-    (ARBORA-IDENTITY-R027.5); readiness has no failure state of its own.
-    """
-    _PROCESS_LEASE[0] = lease
-
-
-def process_lease() -> Any:
-    """The registered process credential lease, or ``None``."""
-    return _PROCESS_LEASE[0]
-
-
-def readiness_reason() -> str | None:
+def readiness_reason(health: HealthState) -> str | None:
     """``process_authority_<code>`` while the process lease is not usable for renewal.
 
     Derived from the registered lease's state: ``Live``, ``RenewDue`` and
@@ -889,7 +840,7 @@ def readiness_reason() -> str | None:
     """
     from arbora.security.actor_context import LeaseState
 
-    lease = _PROCESS_LEASE[0]
+    lease = health.lease.get()
     if lease is None:
         return None
     state = lease.state
@@ -904,21 +855,7 @@ def readiness_reason() -> str | None:
     return f"process_authority_{code}"
 
 
-_IDENTITY_CONTRACT: list[Any] = [None]
-_IDENTITY_CONFIG_INVALID: list[bool] = [False]
-
-
-def register_identity_contract(reconciler: Any) -> None:
-    """Register the OAuth client contract reconciler (``None`` clears; R030.4.3)."""
-    _IDENTITY_CONTRACT[0] = reconciler
-
-
-def register_identity_config_invalid(invalid: bool) -> None:
-    """Record that ``ARBORA_IDENTITY_CLIENT_CONTRACT`` is set but unusable (R030.4.8)."""
-    _IDENTITY_CONFIG_INVALID[0] = bool(invalid)
-
-
-def identity_readiness() -> dict[str, Any]:
+def identity_readiness(health: HealthState) -> dict[str, Any]:
     """``identity`` readiness from the contract state (R030.4.3, R030.4.8).
 
     ``ready``, ``checking``, ``degraded`` (with ``reason: identity_<code>``) and
@@ -928,10 +865,10 @@ def identity_readiness() -> dict[str, Any]:
     name or a secret. Reported, never gating: issued tokens stay valid and
     dynamic client registration stays available while the contract is degraded.
     """
-    reconciler = _IDENTITY_CONTRACT[0]
+    reconciler = health.identity.reconciler.get()
     if reconciler is not None:
         return dict(reconciler.readiness())
-    if _IDENTITY_CONFIG_INVALID[0]:
+    if health.identity.config_invalid:
         return {"status": "degraded", "reason": "identity_config_invalid"}
     from arbora.identity.client_contract import CONFIG_KEY
 

@@ -162,7 +162,7 @@ def test_health_is_served_without_capabilities(
 ) -> None:
     from arbora.observability import runtime_health
 
-    async def _report() -> dict[str, Any]:
+    async def _report(_health) -> dict[str, Any]:
         return {"status": "ok"}
 
     monkeypatch.setattr(runtime_health, "collect_health_async", _report)

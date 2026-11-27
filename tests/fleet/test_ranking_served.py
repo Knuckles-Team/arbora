@@ -22,6 +22,7 @@ from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import Registry
 from arbora.fleet.ranking import HostRanking, engine_ask
 from arbora.mcp_server.serving import MCPProjection
+from arbora.observability.state import SubsystemWindows
 from tests._support import unwrap_decide
 from tests.api._support import make_verified_caller
 from tests.api.test_activity_ops_served import _services
@@ -85,6 +86,7 @@ def _projection(ranking: HostRanking) -> MCPProjection:
         lambda: caller(),
         PolicyGate("none"),
         invoke,
+        windows=SubsystemWindows(),
     )
 
 

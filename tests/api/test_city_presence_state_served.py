@@ -25,6 +25,7 @@ from arbora.api.ops import presence as presence_ops
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import Registry, Surface
 from arbora.mcp_server.serving import MCPProjection
+from arbora.observability.state import SubsystemWindows
 from tests.api._support import make_verified_caller
 from tests.api.test_invoke_contract import setup_services
 
@@ -194,6 +195,7 @@ def _projection(services: Any) -> MCPProjection:
         lambda: viewer(),
         PolicyGate("none"),
         invoke,
+        windows=SubsystemWindows(),
     )
 
 
@@ -390,6 +392,7 @@ def test_heartbeat_is_served_over_mcp_and_refuses_unbound() -> None:
         lambda: writer(),
         PolicyGate("none"),
         invoke,
+        windows=SubsystemWindows(),
     )
     result = asyncio.run(
         dispatch_verb(

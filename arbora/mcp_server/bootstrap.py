@@ -14,6 +14,7 @@ from collections.abc import AsyncIterator
 from dataclasses import replace
 from typing import Any
 
+from arbora.observability.state import HealthState
 from arbora.security.anonymous import session_context
 from arbora.security.process_authority import ProcessAuthority
 
@@ -31,20 +32,20 @@ _AUTHORITY_KEEPALIVE_ACTIVE: contextvars.ContextVar[bool] = contextvars.ContextV
 )
 
 
-def _set_readiness_authority(session: Any) -> object:
+def _set_readiness_authority(health: HealthState, session: Any) -> object:
     """Hand the readiness probe the process's own verified authority."""
 
     from arbora.observability.runtime_health import claim_readiness_authority
 
-    return claim_readiness_authority(session)
+    return claim_readiness_authority(health, session)
 
 
-def _release_readiness_authority(owner: object) -> None:
+def _release_readiness_authority(health: HealthState, owner: object) -> None:
     """Release only the readiness authority claimed by this serving lifecycle."""
 
     from arbora.observability.runtime_health import release_readiness_authority
 
-    if not release_readiness_authority(owner):
+    if not release_readiness_authority(health, owner):
         raise RuntimeError("arbora no longer owns the readiness authority")
 
 
@@ -572,17 +573,15 @@ def _process_authority_refresh_loop(
 
 
 def _start_process_authority_supervisor(
-    authority: ProcessAuthority, session: Any
+    authority: ProcessAuthority, session: Any, health: HealthState
 ) -> None:
     """Start the sole external-authority renewal supervisor when required."""
-    from arbora.observability.runtime_health import register_process_lease
-
-    _stop_process_authority_supervisor(authority)
+    _stop_process_authority_supervisor(authority, health)
     authority.stop.clear()
     lease = getattr(getattr(session, "actor", None), "credential_lease", None)
     if lease is None:
         return
-    register_process_lease(lease)
+    health.lease.set(lease)
     thread = threading.Thread(
         target=_process_authority_refresh_loop,
         args=(authority, session),
@@ -594,7 +593,7 @@ def _start_process_authority_supervisor(
 
 
 def _stop_process_authority_supervisor(
-    authority: ProcessAuthority, *, close_lease: bool = False
+    authority: ProcessAuthority, health: HealthState, *, close_lease: bool = False
 ) -> None:
     """Stop and forget the process-authority supervisor.
 
@@ -602,19 +601,13 @@ def _stop_process_authority_supervisor(
     lease, so a captured session can no longer be used. A restart of the
     supervisor for the same session leaves the lease as it is.
     """
-    from arbora.observability.runtime_health import (
-        process_lease,
-        register_process_lease,
-    )
-
     authority.stop.set()
     thread = authority.take_thread()
     if thread is not None and thread is not threading.current_thread():
         thread.join(timeout=2.0)
-    lease = process_lease()
+    lease = health.lease.take()
     if close_lease and lease is not None:
         lease.stop()
-    register_process_lease(None)
 
 
 # A 9–10 GiB four-shard graph can legitimately need just over five minutes to

@@ -14,6 +14,7 @@ from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.arbora_surface import register_arbora_surface
 from arbora.mcp_server.host_caches import HostCaches
 from arbora.mcp_server.host_context import build_host_context
+from arbora.observability.state import build_health_state
 
 _REPLACED = {
     "arbora.security.auth": ("_jwks_cache",),
@@ -49,6 +50,7 @@ def _register(caches: HostCaches) -> None:
         caches=caches,
         engine_provider=lambda: None,
         intent_tools=False,
+        health=build_health_state(),
     )
 
 

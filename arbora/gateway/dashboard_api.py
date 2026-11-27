@@ -223,11 +223,11 @@ async def list_available_widgets(request: Request) -> list[WidgetListItem]:
 
 
 @dashboard_router.get("/health")
-async def health_check() -> JSONResponse:
+async def health_check(request: Request) -> JSONResponse:
     """Liveness: always 200, with the shared runtime health report as body."""
     from arbora.observability.runtime_health import collect_health_async
 
-    report = await collect_health_async()
+    report = await collect_health_async(request.app.state.host.observability.health)
     return JSONResponse(report, headers={"Cache-Control": "no-store"})
 
 
@@ -245,11 +245,13 @@ async def readiness_check(request: Request) -> JSONResponse:
     from arbora.observability.readiness import (
         collect_readiness_snapshot,
         is_snapshot_ready,
-        registered_probes,
     )
 
     gateway = gateway_of(request)
-    probes = {"engine": lambda: _engine_probe(gateway), **registered_probes()}
+    probes = {
+        "engine": lambda: _engine_probe(gateway),
+        **request.app.state.host.observability.health.readiness_probes.copy(),
+    }
     snapshot = await asyncio.to_thread(
         collect_readiness_snapshot, probes, required=("engine",)
     )

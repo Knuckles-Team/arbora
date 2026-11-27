@@ -22,7 +22,11 @@ from arbora.fleet.state import FleetState
 from arbora.gateway.state import GatewayState
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.served_engine import EngineHandles
-from arbora.observability.state import Observability, Telemetry
+from arbora.observability.state import (
+    Observability,
+    Telemetry,
+    build_health_state,
+)
 from arbora.run_origin import RunOriginRegistry
 from arbora.security.process_authority import ProcessAuthority
 
@@ -30,6 +34,7 @@ __all__ = [
     "HostContext",
     "RunState",
     "bind_a2a_decision",
+    "bind_invocation_probes",
     "bind_ranking",
     "build_host_context",
     "compose_host_context",
@@ -105,7 +110,7 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         caches=caches,
         browser=BrowserState(),
         authority=caches.tools.authority,
-        observability=Observability(telemetry=Telemetry()),
+        observability=Observability(telemetry=Telemetry(), health=build_health_state()),
         gateway=GatewayState(),
     )
 
@@ -124,6 +129,12 @@ def bind_a2a_decision(host: HostContext, invocation: Any) -> None:
     host.runs.decide.bind(send, feature_schema=schema, principal=principal)
 
 
+def bind_invocation_probes(host: HostContext, invocation: Any) -> None:
+    """Bind the readiness probes the served composition built into the host's health."""
+    for name, probe in getattr(invocation, "health_probes", {}).items():
+        host.observability.health.probes.bind(name, probe)
+
+
 def bind_ranking(host: HostContext, invocation: Any) -> None:
     """Bind the fleet's ranking port to the served invocation's engine sender.
 
@@ -131,9 +142,8 @@ def bind_ranking(host: HostContext, invocation: Any) -> None:
     every ranking site answers the lexical floor (ARBORA-FLEET-R083.5).
     """
     from arbora.fleet.ranking import engine_ask, ranking_probe, schemas_published
-    from arbora.observability.runtime_health import register_health_probe
 
-    register_health_probe("ranking", ranking_probe(host.fleet.ranking))
+    host.observability.health.probes.bind("ranking", ranking_probe(host.fleet.ranking))
     send = getattr(invocation, "engine_send", None)
     schema = getattr(invocation, "decision_feature_schema", None)
     principal = getattr(invocation, "decision_principal", None)

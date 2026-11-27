@@ -38,6 +38,7 @@ from arbora.api.registry import (
     Surface,
     Verb,
 )
+from arbora.observability.state import SubsystemWindows
 from tests.a2a.test_application import Authenticator, Authority, Router
 from tests.a2a.test_operation_bridge import DenyPolicy, SessionRuntime, session
 from tests.api.test_invoke_contract import operation, setup_services
@@ -229,6 +230,7 @@ class Surfaces:
             lambda: caller,
             services.policy_gate,
             invoke,
+            windows=SubsystemWindows(),
         )
         body = await dispatch_verb(
             case.verb,

@@ -7,6 +7,7 @@ from starlette.requests import Request
 
 from arbora.api.http.auth import AmbientHTTPAuthenticator
 from arbora.security.key_cache import JwksCache
+from arbora.observability.state import SubsystemWindows
 
 NOW_MS = 2_000_000
 ORIGIN = "https://console.example.test"
@@ -417,6 +418,7 @@ def test_real_http_endpoint_and_mcp_projection_share_verified_context(revoked):
         caller_for_request=mcp.caller_for_request,
         policy_gate=object(),
         invoke=invocation,
+        windows=SubsystemWindows(),
     )
     req = bearer_request((b"authorization", b"Bearer fixture"))
     req.scope["method"] = "GET"
