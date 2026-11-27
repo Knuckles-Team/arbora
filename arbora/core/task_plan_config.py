@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any
 
 from arbora.core.claims import freeze_claims
 
@@ -29,14 +29,8 @@ class TaskPlanConfig:
     request_limit: int = 50
     total_tokens_limit: int = 100_000
     timeout_seconds: float = 600.0
-    plan_scaffold: Literal["on", "off"] = "off"
 
     def __post_init__(self) -> None:
-        if type(self.plan_scaffold) is not str or self.plan_scaffold not in (
-            "on",
-            "off",
-        ):
-            raise ValueError("plan_scaffold must be on or off")
         if not isinstance(self.feature_schema, Mapping) or not isinstance(
             self.policy, Mapping
         ):
