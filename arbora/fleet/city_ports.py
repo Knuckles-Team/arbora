@@ -118,11 +118,8 @@ def _collisions(edits: list[dict[str, Any]]) -> bool:
     return False
 
 
-async def _catalog_entries(context: Any) -> list[CatalogEntry]:
-    """Every fleet connector with its group, read through the bound gateway."""
-    gateway = context.services.get("fleet_gateway")
-    if gateway is None:
-        raise OperationRefused("UNAVAILABLE", {"reason": "fleet catalog unbound"})
+async def _server_names(gateway: Any, context: Any) -> list[str]:
+    """Every fleet connector name, paged from the census."""
     names: list[str] = []
     cursor: str | None = None
     while True:
@@ -132,14 +129,17 @@ async def _catalog_entries(context: Any) -> list[CatalogEntry]:
         names.extend(str(row["server"]) for row in page.get("servers", ()))
         cursor = page.get("next_cursor")
         if cursor is None:
-            break
-    return [await _entry(gateway, context, name) for name in names]
+            return names
 
 
-async def _entry(gateway: Any, context: Any, name: str) -> CatalogEntry:
-    found = await gateway.list(context.caller, servers=(name,), limit=1)
-    items = found.get("items") or ()
-    return CatalogEntry(name, str(items[0].get("group") or "") if items else "")
+async def _catalog_entries(context: Any) -> list[CatalogEntry]:
+    """Every fleet connector with its group: the census, then one batch group read."""
+    gateway = context.services.get("fleet_gateway")
+    if gateway is None:
+        raise OperationRefused("UNAVAILABLE", {"reason": "fleet catalog unbound"})
+    names = await _server_names(gateway, context)
+    groups = await gateway.server_groups(context.caller, names)
+    return [CatalogEntry(name, str(groups.get(name) or "")) for name in names]
 
 
 async def _layout(context: Any) -> dict[str, Any]:

@@ -47,7 +47,26 @@ class Override:
 
 
 def derive_placements(catalog: Iterable[CatalogEntry]) -> tuple[Placement, ...]:
-    """Place each connector by group and server id; input order never matters."""
+    """Place each connector by group and server id; input order never matters.
+
+    The engine's ``medulla.world_view`` owns the rules once the pinned release carries
+    it; until then the copy below answers (PIN-LAG, MEDULLA-WORLD-VIEW-R002).
+    """
+    from arbora.pin_lag.medulla import world_view_layout_rules
+
+    rules = world_view_layout_rules()
+    if rules is None:
+        return _derive_placements_local(catalog)
+    placed = rules.derive_placements(
+        [rules.CatalogEntry(e.server_id, e.group) for e in catalog]
+    )
+    return tuple(Placement(p.server_id, p.district, p.plot, p.x, p.z) for p in placed)
+
+
+def _derive_placements_local(
+    catalog: Iterable[CatalogEntry],
+) -> tuple[Placement, ...]:
+    """The local copy of the engine's layout rules; delete it with the re-pin."""
     seen: dict[str, str] = {}
     for entry in catalog:
         if entry.server_id in seen:
