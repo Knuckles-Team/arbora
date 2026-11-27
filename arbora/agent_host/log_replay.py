@@ -58,23 +58,21 @@ def cursor_key(directory: int) -> bytes:
         os.close(fd)
 
 
+#: Oldest first: ``host_logs.keep_files`` is at most 50, so at most 49 rotated files.
+_RETAINED_NAMES = (*(f"server.log.{index}" for index in range(49, 0, -1)), "server.log")
+
+
 def retained_records(
     directory: int, workspace: str
 ) -> Iterator[tuple[HostLogRecord, str]]:
     sequences: dict[tuple[str, str], int] = {}
-    for name in (
-        "server.log.4",
-        "server.log.3",
-        "server.log.2",
-        "server.log.1",
-        "server.log",
-    ):
+    for name in _RETAINED_NAMES:
         try:
             fd = private_file(directory, name, os.O_RDONLY)
         except FileNotFoundError:
             continue
         with os.fdopen(fd, "rb") as source:
-            if os.fstat(source.fileno()).st_size > 10 * 1024 * 1024:
+            if os.fstat(source.fileno()).st_size > 1 << 30:
                 raise HostLogDenied("log_unavailable")
             while line := source.readline(16385):
                 if len(line) > 16384 or not line.endswith(b"\n"):

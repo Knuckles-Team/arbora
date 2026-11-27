@@ -186,3 +186,63 @@ async def test_restarted_source_metadata_and_rotation_gap_in_terminal(
                 terminal.close()
     finally:
         sink.close()
+
+
+# ---- terminal exit (ARBORA-HOST-R009.4.2) ----
+
+
+@pytest.mark.spec("ARBORA-HOST-R009.4.2")
+def test_terminal_exit_stops_owned_thread_and_keeps_reused_services(
+    tmp_path: Path,
+) -> None:
+    import threading
+
+    from arbora.agent_host import create_agent_server
+    from arbora.agent_host.terminal_host import run_terminal_host
+    from arbora.agent_host.terminal_http import HTTP_THREAD_NAME
+    from arbora.mcp_server.composition import CoServiceSupervisor
+    from tests.agent_host._terminal_owner import (
+        FakeLogRuntime,
+        FakeSink,
+        launch_arguments,
+        terminal_owner,
+    )
+
+    supervisor = CoServiceSupervisor()
+    borrowed_started = threading.Event()
+
+    def borrowed(stop: threading.Event) -> None:
+        borrowed_started.set()
+        stop.wait()
+
+    supervisor.start_service("borrowed", borrowed, session=object())
+    assert borrowed_started.wait(timeout=2)
+    sink = FakeSink()
+    exits: list[str] = []
+
+    def client(host: Any, admitted: Any) -> None:
+        exits.append(host.endpoint)
+
+    owner = terminal_owner(tmp_path, client, FakeLogRuntime(sink))
+    context = owner.context()
+    configuration = owner.configuration
+    checked = context.check_runtime(configuration, owner.resources)
+    run_terminal_host(
+        context=context,
+        admitted=checked,
+        configuration=configuration,
+        runtime=owner.resources,
+        supervisor=supervisor,
+    )
+    assert len(exits) == 1 and sink.drains == 1
+    assert supervisor.running() == ("borrowed",)
+    assert not any(t.name == HTTP_THREAD_NAME for t in threading.enumerate())
+
+    failing = terminal_owner(
+        tmp_path, lambda host, admitted: 1 / 0, FakeLogRuntime(FakeSink("host-2"))
+    )
+    with pytest.raises(ZeroDivisionError):
+        create_agent_server(**launch_arguments(failing))
+    assert failing.resources.host_log_runtime.sink.drains == 1  # type: ignore[union-attr]
+    assert not any(t.name == HTTP_THREAD_NAME for t in threading.enumerate())
+    assert supervisor.stop_all(timeout=2) is True

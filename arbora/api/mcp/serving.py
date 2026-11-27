@@ -16,14 +16,23 @@ of the agent runtime's ``arbora.mcp_server.backing.arbora_surface.register_arbor
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import json
+from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
 from arbora.api.mcp.discovery import FleetCatalog, FleetSearch
 from arbora.api.mcp.verbs import VERBS, MCPProjection, native_verb
 from arbora.api.registry import Invoke
 
-__all__ = ["register_intent_surface"]
+__all__ = [
+    "PARITY_SCHEMA_DIVERGED",
+    "PARITY_TOOL_MISSING",
+    "ParityRefused",
+    "compare_catalogs",
+    "http_catalog",
+    "mcp_catalog",
+    "register_intent_surface",
+]
 
 
 def register_intent_surface(
@@ -81,3 +90,60 @@ def _register_app_launchers(mcp: Any) -> None:
     from arbora.mcp_server.backing.tools.mcp_apps import register_mcp_apps_tools
 
     register_mcp_apps_tools(mcp)
+
+
+# ---- transport parity (ARBORA-HOST-R023.2) ----
+#
+# The HTTP registrar and the MCP verbs are both built from one registry generation. These
+# functions compare the two catalogs a client of each transport reads: the HTTP ``/registry``
+# document and the MCP ``find`` descriptors. A tool one transport lacks is
+# ``PARITY_TOOL_MISSING``; a tool whose parameter schema differs is ``PARITY_SCHEMA_DIVERGED``.
+
+PARITY_TOOL_MISSING = "PARITY_TOOL_MISSING"
+PARITY_SCHEMA_DIVERGED = "PARITY_SCHEMA_DIVERGED"
+
+
+class ParityRefused(Exception):
+    """One transport lacks a tool or serves it with a different schema."""
+
+    def __init__(self, code: str, tool: str) -> None:
+        super().__init__(f"{code}: {tool}")
+        self.code = code
+        self.tool = tool
+
+
+def _normalized(schema: Any) -> str:
+    return json.dumps(schema, sort_keys=True, separators=(",", ":"), default=str)
+
+
+def http_catalog(document: Mapping[str, Any]) -> dict[str, str]:
+    """``{tool name: normalized parameter schema}`` from the HTTP ``/registry`` document."""
+    catalog: dict[str, str] = {}
+    for row in document.get("ops", ()):
+        params = row["params"]
+        shape = (
+            {"eg_schema": params["eg_schema"]}
+            if "eg_schema" in params
+            else params["schema"]
+        )
+        catalog[str(row["id"])] = _normalized(shape)
+    return catalog
+
+
+def mcp_catalog(descriptors: Iterable[Mapping[str, Any]]) -> dict[str, str]:
+    """``{tool name: normalized parameter schema}`` from the MCP ``find`` descriptors."""
+    catalog: dict[str, str] = {}
+    for item in descriptors:
+        schema = item["params_schema"]
+        shape = {"eg_schema": schema["$ref"]} if "$ref" in schema else schema
+        catalog[str(item["op"])] = _normalized(shape)
+    return catalog
+
+
+def compare_catalogs(http: Mapping[str, str], mcp: Mapping[str, str]) -> None:
+    """Return when both transports serve the same tools with the same schemas."""
+    for name in sorted(http.keys() ^ mcp.keys()):
+        raise ParityRefused(PARITY_TOOL_MISSING, name)
+    for name in sorted(http):
+        if http[name] != mcp[name]:
+            raise ParityRefused(PARITY_SCHEMA_DIVERGED, name)

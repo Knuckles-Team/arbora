@@ -751,6 +751,11 @@ def _stand_down_all() -> None:
             )
 
 
+def _service_thread_name(service: str, given: str | None) -> str:
+    """The thread name a service asked for, else ``CoService-<service>``."""
+    return given or f"CoService-{service}"
+
+
 class CoServiceSupervisor:
     """Own optional Arbora co-services under the caller's verified context."""
 
@@ -763,8 +768,14 @@ class CoServiceSupervisor:
         name: str,
         run: Callable[[threading.Event], None],
         session: Any,
+        *,
+        thread_name: str | None = None,
     ) -> None:
-        """Start one bounded-restart service in a copy of the ambient context."""
+        """Start one bounded-restart service in a copy of the ambient context.
+
+        ``thread_name`` names the thread for a service whose thread is part of its
+        contract (the terminal-mode HTTP host); the default is ``CoService-<name>``.
+        """
         if session is None:
             raise PermissionError("verified co-service session is required")
         context = contextvars.copy_context()
@@ -772,7 +783,7 @@ class CoServiceSupervisor:
         thread = threading.Thread(
             target=context.run,
             args=(self._run_supervised, name, run, stop_event),
-            name=f"CoService-{name}",
+            name=_service_thread_name(name, thread_name),
             daemon=True,
         )
         with self._lock:
@@ -821,6 +832,12 @@ class CoServiceSupervisor:
         else:
             if not stop_event.is_set():
                 logger.error("co-service %s exited without a stop request", name)
+
+    def service_thread(self, name: str) -> threading.Thread | None:
+        """The thread this supervisor started for ``name``, if it still holds it."""
+        with self._lock:
+            service = self._services.get(name)
+        return None if service is None else service[1]
 
     def stop_all(self, timeout: float = 10.0) -> bool:
         """Signal all services and join within one shared shutdown deadline."""

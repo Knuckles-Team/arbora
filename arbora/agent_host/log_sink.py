@@ -27,6 +27,15 @@ from arbora.agent_host.log_replay import (
 )
 
 
+def _check_bounds(host_instance: str, max_bytes: int, keep_files: int) -> None:
+    if (
+        not host_instance
+        or not 1024 <= max_bytes <= 1 << 30
+        or not 1 <= keep_files <= 50
+    ):
+        raise ValueError("invalid sink bounds")
+
+
 class WorkspaceLogSink:
     """Write before projection; never hand a shared descriptor to a client.
 
@@ -35,10 +44,15 @@ class WorkspaceLogSink:
     """
 
     def __init__(
-        self, workspace: str, host_instance: str, *, max_bytes: int = 10 * 1024 * 1024
+        self,
+        workspace: str,
+        host_instance: str,
+        *,
+        max_bytes: int = 10 * 1024 * 1024,
+        keep_files: int = 5,
     ) -> None:
-        if not host_instance or not 1024 <= max_bytes <= 10 * 1024 * 1024:
-            raise ValueError("invalid sink bounds")
+        _check_bounds(host_instance, max_bytes, keep_files)
+        self._keep_files = keep_files
         self.workspace = str(Path(workspace).resolve(strict=True))
         self.host_instance = host_instance
         self._max_bytes = max_bytes
@@ -104,23 +118,31 @@ class WorkspaceLogSink:
         return fd
 
     def _rotate(self) -> None:
-        for index in range(4, 0, -1):
-            source = "server.log" if index == 1 else f"server.log.{index - 1}"
-            target = f"server.log.{index}"
-            try:
-                info = os.stat(source, dir_fd=self._directory, follow_symlinks=False)
-            except FileNotFoundError:
-                continue
-            if (
-                not stat.S_ISREG(info.st_mode)
-                or info.st_uid != os.getuid()
-                or info.st_nlink != 1
-                or info.st_mode & 0o077
-            ):
-                raise PermissionError("log_unavailable")
-            os.replace(
-                source, target, src_dir_fd=self._directory, dst_dir_fd=self._directory
-            )
+        chain = ["server.log", *(f"server.log.{i}" for i in range(1, self._keep_files))]
+        # Newest first: each file moves to the next name; the last one is dropped.
+        for source, target in reversed(
+            list(zip(chain, [*chain[1:], None], strict=False))
+        ):
+            self._shift(source, target)
+
+    def _shift(self, source: str, target: str | None) -> None:
+        try:
+            info = os.stat(source, dir_fd=self._directory, follow_symlinks=False)
+        except FileNotFoundError:
+            return
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.getuid()
+            or info.st_nlink != 1
+            or info.st_mode & 0o077
+        ):
+            raise PermissionError("log_unavailable")
+        if target is None:
+            os.unlink(source, dir_fd=self._directory)
+            return
+        os.replace(
+            source, target, src_dir_fd=self._directory, dst_dir_fd=self._directory
+        )
 
     async def emit(self, *, tenant: str, request_id: str, message: str) -> None:
         """Redact before any bytes enter the required file or private projection."""
@@ -270,6 +292,14 @@ class WorkspaceLogSink:
             return HostLogBatch(
                 tuple(selected), codec.encode(last) if last else None, gap
             )
+
+    async def drain(self) -> None:
+        """Wait for every accepted write to finish; a stalled one never blocks serving.
+
+        Called on terminal exit (ARBORA-HOST-R009.4.2) before the sink is released.
+        """
+        while self._pending:
+            await asyncio.gather(*list(self._pending), return_exceptions=True)
 
     def close(self) -> None:
         """Close only this sink's descriptor; borrowed callers must not close it."""

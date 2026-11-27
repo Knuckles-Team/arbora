@@ -10,6 +10,10 @@ from starlette.responses import JSONResponse
 
 from arbora.agent_host.log_access import HostLogAccess, WorkspaceGrantProvider
 from arbora.agent_host.log_routes import host_log_credential
+from arbora.agent_host.log_settings import (
+    HostLogSettings,
+    resolve_host_log_settings,
+)
 from arbora.agent_host.log_sink import WorkspaceLogSink
 from arbora.identity.ports import SessionAuthority, SessionState
 
@@ -31,8 +35,15 @@ class HostLogRuntime:
         workspace: str,
         interface_mode: Literal["terminal", "web", "both"],
         web_logs: bool,
+        settings: "HostLogSettings | None" = None,
     ) -> "HostLogRuntime":
-        sink = WorkspaceLogSink(workspace, uuid.uuid4().hex)
+        bounds = resolve_host_log_settings(settings)
+        sink = WorkspaceLogSink(
+            workspace,
+            uuid.uuid4().hex,
+            max_bytes=bounds.max_bytes,
+            keep_files=bounds.keep_files,
+        )
         try:
             access = HostLogAccess(
                 sessions=sessions,
