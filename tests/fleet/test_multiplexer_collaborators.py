@@ -12,6 +12,7 @@ import inspect
 from types import SimpleNamespace
 from typing import Any
 
+from arbora.fleet.child_mounts import ChildMounts
 from arbora.fleet.child_transport import ChildTransport
 from arbora.fleet.multiplexer import MCPMultiplexer
 from arbora.fleet.proxied_calls import ProxiedCalls
@@ -67,10 +68,18 @@ def _build_proxied_calls() -> ProxiedCalls:
     )
 
 
+def _build_child_mounts() -> ChildMounts:
+    stand_ins = {
+        name: SimpleNamespace() for name in inspect.signature(ChildMounts).parameters
+    }
+    return ChildMounts(**stand_ins)
+
+
 BUILDERS = {
     "transport": _build_child_transport,
     "tasks": _build_task_forwarding,
     "calls": _build_proxied_calls,
+    "mounts": _build_child_mounts,
 }
 
 

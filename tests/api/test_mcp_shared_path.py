@@ -17,7 +17,8 @@ from arbora.api.ops.fleet import operations
 from arbora.api.policy import PolicyGate
 from arbora.api.registry import Registry, Surface
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
-from arbora.fleet.multiplexer import _make_forwarder, make_governed_tool_mount
+from arbora.fleet.child_mounts import _make_forwarder
+from arbora.fleet.multiplexer import make_governed_tool_mount
 from arbora.fleet.multiplexer_ops import MultiplexerOps
 from arbora.fleet.session_loads import SessionLoads
 from arbora.mcp_server.registration import (
@@ -218,7 +219,10 @@ def test_scope_revocation_filters_list_and_prevents_stale_native_call(surface) -
         visible = await middleware.on_list_tools(None, listed)
         assert {tool.name for tool in visible} == set(RESIDENT_NAMES)
         with pytest.raises(ToolError, match="UNKNOWN_TOOL"):
-            await _make_forwarder(surface.mux, surface.native_name)()
+            await _make_forwarder(
+                lambda: getattr(surface.mux, "_governed_fleet", None),
+                surface.native_name,
+            )()
         assert surface.calls == []
 
     asyncio.run(run())
@@ -231,7 +235,9 @@ def test_missing_governed_binding_never_dispatches_child() -> None:
 
         mux = SimpleNamespace(call_proxied_tool=forbidden)
         with pytest.raises(ToolError, match="governed_fleet_unavailable"):
-            await _make_forwarder(mux, "child")()
+            await _make_forwarder(
+                lambda: getattr(mux, "_governed_fleet", None), "child"
+            )()
 
     asyncio.run(run())
 
@@ -264,7 +270,9 @@ def test_governed_native_preserves_child_annotations_and_meta(surface) -> None:
         surface.outcome = OpResult(
             {"value": child.model_dump(mode="json", by_alias=True)}
         )
-        result = await _make_forwarder(surface.mux, surface.native_name)()
+        result = await _make_forwarder(
+            lambda: getattr(surface.mux, "_governed_fleet", None), surface.native_name
+        )()
         assert result.content[0].annotations.priority == 0.8
         assert result.structured_content == {"answer": 42}
         assert result.meta == {"child_trace": "trace"}
@@ -281,7 +289,9 @@ def test_native_idle_expiry_and_one_shot_never_bypass_membership(surface) -> Non
         await surface.ops.load(
             surface.caller, items=[surface.tool_id], auto_unload=True
         )
-        forward = _make_forwarder(surface.mux, surface.native_name)
+        forward = _make_forwarder(
+            lambda: getattr(surface.mux, "_governed_fleet", None), surface.native_name
+        )
         await forward()
         with pytest.raises(ToolError, match="UNKNOWN_TOOL"):
             await forward()
@@ -325,7 +335,10 @@ def test_current_unauthenticated_caller_cannot_use_previously_loaded_tool(
         await surface.ops.load(surface.caller, items=[surface.tool_id])
         surface.caller = None
         with pytest.raises(ToolError, match="UNAUTHENTICATED"):
-            await _make_forwarder(surface.mux, surface.native_name)()
+            await _make_forwarder(
+                lambda: getattr(surface.mux, "_governed_fleet", None),
+                surface.native_name,
+            )()
         assert surface.calls == []
 
     asyncio.run(run())

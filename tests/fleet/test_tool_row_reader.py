@@ -39,9 +39,10 @@ def _mux(reader: ToolRowReader) -> Any:
     return SimpleNamespace(
         _tool_rows=reader,
         _fleet=SimpleNamespace(config=RuntimeConfig()),
-        _tool_enabled=lambda server, tool: True,
+        mounts=SimpleNamespace(
+            _tool_enabled=lambda server, tool: True, server_prefix=lambda server: "p"
+        ),
         tool_dispatchable=lambda name: True,
-        server_prefix=lambda server: "p",
     )
 
 
@@ -83,17 +84,22 @@ async def test_the_fleet_listing_reads_through_the_reader() -> None:
 
 
 async def test_the_delegated_server_tools_read_through_the_reader(monkeypatch) -> None:
-    from arbora.fleet import multiplexer as module
+    from arbora.fleet import child_mounts as module
 
     monkeypatch.setattr(module, "require_fleet_capability", lambda *a, **k: None)
+    from arbora.fleet.child_mounts import ChildMounts
+
     reader = _Recording()
-    mux = _mux(reader)
 
     async def probe(name: str) -> dict[str, Any]:
         return {"tools": [{"name": "probe_only"}], "error": None}
 
-    mux.probe_server = probe
-    rows = await MCPMultiplexer.delegated_server_tools(mux, "srv")
+    mounts: Any = SimpleNamespace(
+        _tool_rows=lambda: reader,
+        _fleet=SimpleNamespace(config=RuntimeConfig()),
+        probe_server=probe,
+    )
+    rows = await ChildMounts.delegated_server_tools(mounts, "srv")
     assert [row["name"] for row in rows] == ["from_reader"]
 
 

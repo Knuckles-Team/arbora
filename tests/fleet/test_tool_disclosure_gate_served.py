@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 from fastmcp.exceptions import ToolError
 
-from arbora.fleet.multiplexer import _make_forwarder
+from arbora.fleet.child_mounts import _make_forwarder
 from arbora.mcp_server.registration import register_mcp_tools
 from tests.api.test_mcp_shared_path import surface  # noqa: F401 - the served fixture
 
@@ -32,7 +32,10 @@ def test_disclosed_tool_runs_and_undisclosed_tool_refuses_before_call(
         # Searching ranks the tool but does not disclose it to the session: the call
         # refuses before any child call is made.
         with pytest.raises(ToolError, match="UNKNOWN_TOOL"):
-            await _make_forwarder(surface.mux, surface.native_name)()
+            await _make_forwarder(
+                lambda: getattr(surface.mux, "_governed_fleet", None),
+                surface.native_name,
+            )()
         assert surface.calls == []
 
         # Loading the ranked tool discloses it; it then runs through the one path.

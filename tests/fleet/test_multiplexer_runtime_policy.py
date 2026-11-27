@@ -139,7 +139,7 @@ async def test_runtime_policy_owns_spawn_catalog_call_and_teardown(
     assert events[:4] == ["verify", "spawn", "initialize", "list"]
     assert events[4] == "fingerprint"
 
-    registered = mux._register_child_result(server_name, runtime, tools, cfg)
+    registered = mux.mounts._register_child_result(server_name, runtime, tools, cfg)
     assert len(registered) == 1
     host = FastMCP("runtime-policy-fixture")
     mod._register_forwarder(host, mux, registered[0])

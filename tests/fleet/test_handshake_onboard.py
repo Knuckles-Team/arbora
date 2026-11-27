@@ -17,8 +17,8 @@ from typing import Any, cast
 
 import pytest
 
+from arbora.fleet.child_mounts import ChildMounts
 from arbora.fleet.child_transport import ChildTransport
-from arbora.fleet.multiplexer import MCPMultiplexer
 from arbora.fleet.onboarding import (
     RESOURCES_URI,
     SLOW_RETRY_S,
@@ -294,7 +294,7 @@ def test_list_changed_notification_recaptures_through_the_one_pass() -> None:
         probe_cache=probe_cache,
         list_changed_tasks=list_changed_tasks,
         publish_live_tools=functools.partial(
-            MCPMultiplexer._publish_live_tools, cast(Any, publisher)
+            ChildMounts._publish_live_tools, cast(Any, publisher)
         ),
     )
     transport.set_handshake_listener(

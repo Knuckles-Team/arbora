@@ -167,7 +167,7 @@ async def test_catalog_detail_rows_carry_input_schema() -> None:
 
     mux: Any = SimpleNamespace(
         _tool_rows=ProbeToolRows(),
-        _tool_enabled=lambda server_name, tool_name: True,
+        mounts=SimpleNamespace(_tool_enabled=lambda server_name, tool_name: True),
         tool_dispatchable=lambda prefixed_name: True,
     )
     schema = {"type": "object", "properties": {"url": {"type": "string"}}}

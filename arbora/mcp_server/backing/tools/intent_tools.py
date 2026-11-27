@@ -415,7 +415,7 @@ def _fleet_dotted_tool_name(mcp: Any, action: str) -> str | None:
     single, deterministic translation from the dotted ``<server>.<tool>``
     action id a caller types into that exact internal name, reusing the
     multiplexer's own collision-free prefix/catalog lookup
-    (``_server_for_prefixed``) — never a second guess at server naming. A dot
+    (``server_for_prefixed``) — never a second guess at server naming. A dot
     with no matching catalog server (a typo, or an unrelated dotted action
     id) returns ``None`` so the caller falls through to the native manifest's
     own "Unknown operation" error instead of a confusing fleet failure.
@@ -424,7 +424,7 @@ def _fleet_dotted_tool_name(mcp: Any, action: str) -> str | None:
     if mux is None or "." not in action:
         return None
     prefixed = action.replace(".", "__", 1)
-    return prefixed if mux._server_for_prefixed(prefixed) is not None else None
+    return prefixed if mux.mounts.server_for_prefixed(prefixed) is not None else None
 
 
 def _fleet_dispatch_params(tool: str, params: dict[str, Any]) -> dict[str, Any]:
