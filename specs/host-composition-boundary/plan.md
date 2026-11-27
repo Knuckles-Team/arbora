@@ -769,6 +769,7 @@ Each row names its entry point and caller chain in its own text. This plan adds 
 |---|---|---|
 | Composition owners (engine, connector SDK, harness, web UI) | [`contracts/composition-owners.md`](contracts/composition-owners.md) | `ARBORA-HOST-R001` |
 | Single gateway | [`contracts/single-gateway.md`](contracts/single-gateway.md) | `ARBORA-HOST-R004` |
+| Connector release digest | [`contracts/release-digest.md`](contracts/release-digest.md) | `SCION-CONNECTOR-CONTROL-R650.1.4`, `PIPE-RELEASE-R019` |
 | Fleet multiplexer ownership | [`contracts/fleet-multiplexer.md`](contracts/fleet-multiplexer.md) | `ARBORA-HOST-R006` |
 | Harness host-facing module set (meristem) | [`contracts/harness-host-modules.md`](contracts/harness-host-modules.md) | `ARBORA-HOST-R007` |
 
