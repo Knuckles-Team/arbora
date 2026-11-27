@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -137,3 +138,82 @@ def test_arbora_declares_and_runs_fastmcp_4() -> None:
     declared = [r for r in requires("arbora") or [] if r.startswith("fastmcp")]
     assert declared and ">=4" in declared[0]
     assert version("fastmcp").split(".")[0] == "4"
+
+
+_RETIRED_HARNESS_PACKAGE = "agent_utilities"
+
+
+def _literal_import_module(node: Any) -> list[str]:
+    """The literal argument of an ``importlib.import_module`` call."""
+    import ast
+
+    literal = node.args[0] if node.args else None
+    named = getattr(node.func, "attr", "") == "import_module"
+    if named and isinstance(literal, ast.Constant) and isinstance(literal.value, str):
+        return [literal.value]
+    return []
+
+
+def _from_import(node: Any) -> list[str]:
+    return [node.module] if node.level == 0 and node.module else []
+
+
+def _node_imports(node: Any) -> list[str]:
+    """The modules one ``ast`` node imports."""
+    handlers = {
+        "Import": lambda n: [alias.name for alias in n.names],
+        "ImportFrom": _from_import,
+        "Call": _literal_import_module,
+    }
+    handler = handlers.get(type(node).__name__)
+    return handler(node) if handler else []
+
+
+def _imports_of(path: Path) -> set[str]:
+    """Every module a file imports, from ``import`` statements and literal ``import_module`` calls."""
+    import ast
+
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    return {module for node in ast.walk(tree) for module in _node_imports(node)}
+
+
+def _retired_imports(path: Path) -> list[str]:
+    return sorted(
+        module
+        for module in _imports_of(path)
+        if module.split(".", 1)[0] == _RETIRED_HARNESS_PACKAGE
+    )
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.1")
+def test_a2a_authority_imports_no_retired_harness_package() -> None:
+    root = Path(__file__).parents[1] / "arbora"
+    assert _retired_imports(root / "a2a" / "authority.py") == []
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.2")
+def test_a2a_routing_imports_no_retired_harness_package() -> None:
+    root = Path(__file__).parents[1] / "arbora"
+    assert _retired_imports(root / "a2a" / "routing.py") == []
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.55")
+def test_mcp_server_entry_imports_no_retired_harness_package() -> None:
+    root = Path(__file__).parents[1] / "arbora"
+    assert _retired_imports(root / "mcp_server" / "server.py") == []
+
+
+@pytest.mark.spec("ARBORA-HOST-R007.2.68")
+def test_webui_co_service_imports_no_retired_harness_package() -> None:
+    root = Path(__file__).parents[1] / "arbora"
+    assert _retired_imports(root / "webui_host" / "webui_co_service.py") == []
+
+
+def test_the_retired_import_check_finds_a_planted_import(tmp_path: Path) -> None:
+    planted = tmp_path / "planted.py"
+    planted.write_text(
+        "import agent_utilities.api\nimport importlib\n"
+        "importlib.import_module('agent_utilities.graph')\n",
+        encoding="utf-8",
+    )
+    assert _retired_imports(planted) == ["agent_utilities.api", "agent_utilities.graph"]

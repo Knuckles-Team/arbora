@@ -18,6 +18,7 @@ def _unbind():
     reset_host_ports()
 
 
+@pytest.mark.spec("ARBORA-HOST-R008.1001")
 @pytest.mark.parametrize(
     ("session", "allowed"),
     [
@@ -36,6 +37,21 @@ def test_send_gate_admits_only_a_session_with_a_send_scope(
     assert decision.decision == ("allow" if allowed else "deny")
 
 
+@pytest.mark.spec("ARBORA-HOST-R008.1001")
+def test_decision_is_a_frozen_record_and_the_fleet_toolset_has_two_tools():
+    import dataclasses
+
+    assert hb.FLEET_TOOLS == ("find", "act")
+    assert dataclasses.is_dataclass(hb.SendDecision)
+    fields = {f.name for f in dataclasses.fields(hb.SendDecision)}
+    assert {"allowed", "decision", "reason"} == fields
+    decision = hb.action_gate({"kind": "message.send"}, engine=None)
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        decision.allowed = True  # type: ignore[misc]
+
+
+@pytest.mark.spec("ARBORA-HOST-R008.1000")
+@pytest.mark.spec("ARBORA-HOST-R008.1003")
 def test_bind_messaging_ports_binds_all_four_ports():
     hb.bind_messaging_ports()
     ports = host_ports()
@@ -46,6 +62,7 @@ def test_bind_messaging_ports_binds_all_four_ports():
     ports.runtime_signal("listener_restart", "telegram", {"delay_s": 1.0})
 
 
+@pytest.mark.spec("ARBORA-HOST-R008.1002")
 def test_outbound_mirror_records_one_node_per_message():
     written = {}
 
