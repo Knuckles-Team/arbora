@@ -8,6 +8,7 @@ a tool. This type is distinct from ``SpawnDelegation`` in ``arbora/security/dele
 
 from __future__ import annotations
 
+import logging
 import secrets
 import time
 from collections.abc import Callable, Mapping
@@ -16,6 +17,8 @@ from types import SimpleNamespace
 from typing import Any
 
 from arbora.api.invoke.audit import audit_event
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "EXCHANGE_MAX_SECONDS",
@@ -130,6 +133,7 @@ async def resolve_actor_exchange_bearer(
             caller, connector_client_id, issuer=issuer, claims=claims
         )
     except Exception:  # one code for every failed exchange
+        logger.warning("credential authority call failed", exc_info=True)
         raise DelegationRefused("IDENTITY_EXCHANGE_FAILED") from None
     emit(
         audit_event(

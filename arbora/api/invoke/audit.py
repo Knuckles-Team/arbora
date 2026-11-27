@@ -10,10 +10,23 @@ from arbora.api.invoke.plan import params_digest
 from arbora.api.invoke.steps import OpError, OpResult, RequestCaller
 
 
+class AuditSubject(Protocol):
+    """The three caller facts an audit event records."""
+
+    @property
+    def principal(self) -> str: ...
+
+    @property
+    def tenant(self) -> str: ...
+
+    @property
+    def request_id(self) -> str: ...
+
+
 def audit_event(
     op: Any,
     params: Mapping[str, Any],
-    caller: RequestCaller,
+    caller: AuditSubject,
     surface: Any,
     status: str,
     audit_ref: str = "",
