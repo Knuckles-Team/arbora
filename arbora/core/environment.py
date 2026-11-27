@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import os
 import re
-from collections.abc import Iterator, Mapping, MutableMapping
+from collections.abc import Iterable, Iterator, Mapping, MutableMapping
 from functools import cache
 from typing import TYPE_CHECKING, Any
 
@@ -36,6 +36,7 @@ __all__ = [
     "read_reference",
     "read_text",
     "register_platform",
+    "read_tool_family_toggle",
     "template_covers",
     "unset_env",
     "write_env",
@@ -47,7 +48,7 @@ _UNSET: Any = object()
 _REFERENCE_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$")
 _WRITE_NAME = re.compile(r"^[A-Z][A-Z0-9_]{0,127}$")
 _SLOT = re.compile(r"\{([A-Z]+)\}")
-#: The shape of a slot value besides the platforms: a tool family tag, ``<FAMILY>TOOL``.
+#: The shape of a registered platform id.
 _FAMILY = re.compile(r"[A-Z][A-Z0-9_]*")
 
 
@@ -107,10 +108,8 @@ def _platforms() -> frozenset[str]:
 
 
 def _slot_value(slot: str, value: str) -> bool:
-    """Whether ``value`` is one the slot enumerates: a platform, or a tool family tag."""
-    return (
-        value in _platforms() if slot == "PLATFORM" else bool(_FAMILY.fullmatch(value))
-    )
+    """Whether ``value`` is one the slot enumerates: a messaging platform."""
+    return slot == "PLATFORM" and value in _platforms()
 
 
 def _declaration(name: str) -> EnvironmentDeclaration:
@@ -155,6 +154,23 @@ def read_env(name: str, fallback: Any = _UNSET) -> Any:
         return default if raw is None or raw == "" else _typed(kind, raw)
     except (TypeError, ValueError):
         return default
+
+
+def read_tool_family_toggle(name: str, families: Iterable[str]) -> bool:
+    """The deployment toggle ``<FAMILY>TOOL`` of one tool family, on unless set false.
+
+    ``families`` are the ``register_<family>_tools`` tags of the tools module being
+    built; the toggle of any other family refuses ``ENV_UNDECLARED_READ`` before any read.
+    """
+    if name not in {f"{tag.upper()}TOOL" for tag in families}:
+        raise _refuse("ENV_UNDECLARED_READ", name)
+    raw = os.environ.get(name)
+    if raw is None or raw == "":
+        return True
+    try:
+        return bool(to_boolean(raw))
+    except (TypeError, ValueError):
+        return True
 
 
 def read_text(name: str) -> str | None:
