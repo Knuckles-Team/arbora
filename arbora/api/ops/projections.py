@@ -44,6 +44,18 @@ class ProjectionReader(Protocol):
     async def list(self, context: Any) -> tuple[SchemaProjection, ...]: ...
 
 
+class OperatorAudit(Protocol):
+    """The operator-only audit chain: a withheld count lives here and nowhere else."""
+
+    async def record_withheld(
+        self, context: Any, *, withheld: int, request_id: str
+    ) -> None: ...
+
+    async def read(
+        self, context: Any, *, request_id: str
+    ) -> Mapping[str, Any] | None: ...
+
+
 def scope_covers(grants: Iterable[str], projection: SchemaProjection) -> bool:
     """True when every scope the projection requires is among ``grants``."""
     held = frozenset(grants)
@@ -83,6 +95,16 @@ class EngineProjectionReader:
         return tuple(_entry(entry) for entry in value.get("entries", ()))
 
 
+async def _record_withheld(context: Any, *, withheld: int) -> None:
+    """The withheld count is operator evidence: it goes to the separately authorized
+    chain and never reaches a response, trace or caller-readable view."""
+    operator = context.services.get("operator_audit")
+    if operator is not None:
+        await operator.record_withheld(
+            context, withheld=withheld, request_id=str(context.caller.request_id)
+        )
+
+
 async def handle_query_projections(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
@@ -100,6 +122,7 @@ async def handle_query_projections(
         raise OperationRefused("UNAVAILABLE", {"reason": "no schema boundaries"})
     grants = context.caller.effective_scopes
     covered = tuple(item for item in listed if scope_covers(grants, item))
+    await _record_withheld(context, withheld=len(listed) - len(covered))
     if not covered:
         raise OperationRefused("SUBJECT_ACCESS_DENIED")
     return ProjectionsResult(projections=covered).model_dump(mode="json")

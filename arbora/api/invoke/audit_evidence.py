@@ -14,6 +14,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 Builder = Callable[[Mapping[str, Any], Any], dict[str, str]]
+CallerBuilder = Callable[[Mapping[str, Any], Any, Any], dict[str, str]]
 
 _POLICY_OPS = frozenset({"policy.create", "policy.update", "policy.retire"})
 
@@ -57,16 +58,58 @@ def _security_evaluate(arguments: Mapping[str, Any], result: Any) -> dict[str, s
     }
 
 
-_BUILDERS: dict[str, Builder] = {
-    **dict.fromkeys(_POLICY_OPS, _policy_change),
-    "plans.run": _refused_plan,
-    "security.evaluate": _security_evaluate,
+def _retrieval_space(arguments: Mapping[str, Any], result: Any) -> dict[str, str]:
+    """Counts only: the queries and the passages never enter the audit record."""
+    value = _value(result)
+    counts = value.get("hit_counts", [])
+    return {
+        "query_count": str(value.get("query_count", 0)),
+        "boundary_size": str(value.get("boundary_size", 0)),
+        "hit_counts": ",".join(str(n) for n in counts)
+        if isinstance(counts, list)
+        else "",
+        "context_budget": str(value.get("context_budget", 0)),
+    }
+
+
+def _digest_of(values: Any) -> str:
+    return hashlib.sha256(json.dumps(sorted(values)).encode()).hexdigest()
+
+
+def _projections(
+    arguments: Mapping[str, Any], result: Any, caller: Any
+) -> dict[str, str]:
+    """The caller's scope and the returned projections, as digests only (R052.5)."""
+    listed = _value(result).get("projections", [])
+    references = [
+        str(p.get("mapping_ref", "")) for p in listed if isinstance(p, Mapping)
+    ]
+    return {
+        "caller_scope_digest": _digest_of(
+            getattr(caller, "effective_scopes", ()) or ()
+        ),
+        "projection_refs_digest": _digest_of(references),
+        "projection_count": str(len(references)),
+    }
+
+
+def _plain(builder: Builder) -> CallerBuilder:
+    """A builder that reads no caller, in the one dispatch shape."""
+    return lambda arguments, result, caller: builder(arguments, result)
+
+
+_BUILDERS: dict[str, CallerBuilder] = {
+    **dict.fromkeys(_POLICY_OPS, _plain(_policy_change)),
+    "plans.run": _plain(_refused_plan),
+    "security.evaluate": _plain(_security_evaluate),
+    "retrieval.space": _plain(_retrieval_space),
+    "query.projections": _projections,
 }
 
 
 def result_evidence(
-    op_id: str, arguments: Mapping[str, Any], result: Any
+    op_id: str, arguments: Mapping[str, Any], result: Any, caller: Any = None
 ) -> dict[str, str]:
     """The audit fields ``op_id`` names for this outcome; empty for other operations."""
     builder = _BUILDERS.get(op_id)
-    return builder(arguments, result) if builder is not None else {}
+    return builder(arguments, result, caller) if builder is not None else {}

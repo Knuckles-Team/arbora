@@ -686,6 +686,26 @@ def _with_security_evaluation(
     return {**bindings, "security_evaluation": EngineSecurityEvaluation()}
 
 
+def _with_retriever(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the engine-backed retriever and plan decision (ARBORA-OPS-R053.3).
+
+    ``retrieval.search``, ``retrieval.freshness`` and ``retrieval.space`` share the
+    one ``retriever``; each request binds it to the caller's own session. Without
+    bindings the operations refuse ``UNAVAILABLE``.
+    """
+    if bindings is None:
+        return bindings
+    from arbora.api.ops.retrieval_space import EngineRetrievalPlan, EngineRetriever
+
+    adapters = {
+        "retriever": EngineRetriever(),
+        "retrieval_plan": EngineRetrievalPlan(),
+    }
+    return {**{k: v for k, v in adapters.items() if k not in bindings}, **bindings}
+
+
 def _with_host_adapters(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
@@ -804,6 +824,7 @@ def compose_served_invocation(
     bindings = _with_projection_reader(bindings)
     bindings = _with_security_evaluation(bindings)
     bindings = _with_host_adapters(bindings)
+    bindings = _with_retriever(bindings)
     bindings, process_startup = _with_task_plan_schema(
         bindings, pool, graph, connect_context, session, action_policies
     )
