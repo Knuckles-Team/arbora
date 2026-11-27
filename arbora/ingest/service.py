@@ -270,20 +270,60 @@ async def sync_source(context: Any, params: Mapping[str, Any], op: Any) -> Any:
     return {"value": receipt.model_dump(mode="json", exclude_none=True)}
 
 
+#: The engine knob that bounds one index job's working bytes (MEDULLA-OBSERVE-R006.12).
+INDEX_KNOB = "scheduler.index_max_working_bytes"
+_KNOB_PAGE = 500
+_KNOB_PAGES = 8
+
+
+async def engine_index_knob(context: Any) -> int | None:
+    """Read the engine's index working-bytes knob from ``Introspect`` section ``knobs``.
+
+    PIN-LAG (remove after the medulla re-pin that carries ``IntrospectSection.knobs``): the
+    pinned release lacks the method or the section, so the read answers ``None`` and the
+    host grant alone bounds the tenant. The engine still refuses a job past its own knob.
+    """
+    from arbora.api.ops._engine import engine_send
+    from arbora.pin_lag.medulla import (
+        PinLagUnavailable,
+        require_enum_member,
+        require_methods,
+    )
+
+    try:
+        require_methods("Introspect")
+        require_enum_member("IntrospectSection", "knobs")
+    except PinLagUnavailable:
+        return None
+    cursor: str | None = None
+    for _ in range(_KNOB_PAGES):
+        params: dict[str, Any] = {"section": "knobs", "limit": _KNOB_PAGE}
+        if cursor is not None:
+            params["cursor"] = cursor
+        page = await engine_send(context, "Introspect", params)
+        for row in page.get("rows") or ():
+            if row.get("key") == INDEX_KNOB:
+                return int(row["value"])
+        cursor = page.get("next_cursor")
+        if not cursor:
+            return None
+    return None
+
+
 async def resource_grant_bytes(context: Any) -> int:
     """The working bytes one tenant may hold at once: the host grant clamped to the engine knob.
 
     ARBORA-CAPACITY-R753: ``IndexRepository`` has no ``max_working_bytes`` request field;
-    the engine knob ``ingest.index_max_working_bytes`` bounds each job and is reserved per
-    job. The ``index_knob_reader`` service reads that knob; with none bound (PIN-LAG: the
-    engine publishes no knob read) the host grant alone bounds the tenant, and the engine
-    still refuses a job past its own knob.
+    the engine knob ``scheduler.index_max_working_bytes`` bounds each job and is reserved
+    per job. The knob is read through ``Introspect`` section ``knobs``
+    (:func:`engine_index_knob`); a bound ``index_knob_reader`` service replaces that read.
+    With no knob read (PIN-LAG) the host grant alone bounds the tenant.
     """
     from arbora.core.settings import runtime_config
 
     host = int(runtime_config.resource_grants_max_working_bytes)
     reader = context.services.get("index_knob_reader")
-    knob = await reader() if reader is not None else None
+    knob = await reader() if reader is not None else await engine_index_knob(context)
     return min(host, int(knob)) if knob else host
 
 

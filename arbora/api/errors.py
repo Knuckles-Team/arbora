@@ -121,6 +121,66 @@ class ArboraErrorCode(StrEnum):
     APPROVAL_NOT_PENDING = "APPROVAL_NOT_PENDING"
     APPROVER_NOT_IN_ROLE = "APPROVER_NOT_IN_ROLE"
     PROCESS_PROMPT_UNRESOLVED = "PROCESS_PROMPT_UNRESOLVED"
+    # Refusals the served operations raise through ``OperationRefused``; each has a
+    # closed wire status so none reaches a caller as an untyped 500.
+    AUTHORITY_UNAVAILABLE = "AUTHORITY_UNAVAILABLE"
+    BUDGET_EXHAUSTED = "BUDGET_EXHAUSTED"
+    BUS_RECIPIENT_UNKNOWN = "BUS_RECIPIENT_UNKNOWN"
+    CAPACITY_ACTUATION_FAILED = "CAPACITY_ACTUATION_FAILED"
+    CI_NOT_GREEN = "CI_NOT_GREEN"
+    CLIENT_NOT_FOUND = "CLIENT_NOT_FOUND"
+    CONNECTION_NOT_FOUND = "CONNECTION_NOT_FOUND"
+    CONNECTOR_RUN_NOT_FOUND = "CONNECTOR_RUN_NOT_FOUND"
+    ESCALATION_NOT_ALLOWED = "ESCALATION_NOT_ALLOWED"
+    FLEET_LEASE_FENCED = "FLEET_LEASE_FENCED"
+    FLEET_SCOPE_REQUIRED = "FLEET_SCOPE_REQUIRED"
+    IMAGE_NOT_DIGEST_PINNED = "IMAGE_NOT_DIGEST_PINNED"
+    INBOX_RECIPIENT_UNKNOWN = "INBOX_RECIPIENT_UNKNOWN"
+    INBOX_SEND_DENIED = "INBOX_SEND_DENIED"
+    INTERFACE_NOT_FOUND = "INTERFACE_NOT_FOUND"
+    INVALID_TASK_PLAN_RECEIPT = "INVALID_TASK_PLAN_RECEIPT"
+    LOCAL_MODEL_UNAVAILABLE = "LOCAL_MODEL_UNAVAILABLE"
+    MAPPING_NOT_FOUND = "MAPPING_NOT_FOUND"
+    MAPPING_UNDECLARED = "MAPPING_UNDECLARED"
+    ONTOLOGY_DRIFT = "ONTOLOGY_DRIFT"
+    ONTOLOGY_DUPLICATE = "ONTOLOGY_DUPLICATE"
+    PATH_ESCAPE = "PATH_ESCAPE"
+    PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE"
+    PLAN_REQUIRED = "PLAN_REQUIRED"
+    PRECONDITION_FAILED = "PRECONDITION_FAILED"
+    PROFILE_UNSET = "PROFILE_UNSET"
+    PROVISION_GRANT_DENIED = "PROVISION_GRANT_DENIED"
+    REUSE_COMPONENT_MUTATION = "REUSE_COMPONENT_MUTATION"
+    REUSE_UNREACHABLE = "REUSE_UNREACHABLE"
+    SCOPE_DENIED = "SCOPE_DENIED"
+    SCOPE_MISSING = "SCOPE_MISSING"
+    SECRET_INLINE_REFUSED = (
+        "SECRET_INLINE_REFUSED"  # sanitizer:ignore - refusal code name  # nosec B105
+    )
+    SOURCES_BLOCK_MISSING = "SOURCES_BLOCK_MISSING"
+    STEWARD_ROLE_MISSING = "STEWARD_ROLE_MISSING"
+    TASK_PLAN_CONFLICT = "TASK_PLAN_CONFLICT"
+    TASK_PLAN_INVALID = "TASK_PLAN_INVALID"
+    TASK_PLAN_RETRY_REQUIRES_ORIGINAL_PUBLICATION = (
+        "TASK_PLAN_RETRY_REQUIRES_ORIGINAL_PUBLICATION"
+    )
+    TENANT_DENIED = "TENANT_DENIED"
+    TRUST_BUNDLE_MISSING = "TRUST_BUNDLE_MISSING"
+    TRUST_VERIFY_FAILED = "TRUST_VERIFY_FAILED"
+    UPGRADE_REQUIRED = "UPGRADE_REQUIRED"
+    WRITE_CONFLICT = "WRITE_CONFLICT"
+    AGENT_NOT_FOUND = "AGENT_NOT_FOUND"
+    PEER_CREDENTIAL_VALUE = "PEER_CREDENTIAL_VALUE"
+    PEER_ENDPOINT_INSECURE = "PEER_ENDPOINT_INSECURE"
+    UPSTREAM_FAILED = "UPSTREAM_FAILED"
+    SESSION_NOT_OWNED = "SESSION_NOT_OWNED"
+    APPROVAL_EXPIRED = "APPROVAL_EXPIRED"
+    APPROVAL_MISMATCH = "APPROVAL_MISMATCH"
+    LIVE_STATE_TOOL_NOT_READ = "LIVE_STATE_TOOL_NOT_READ"
+    LIVE_STATE_UNAVAILABLE = "LIVE_STATE_UNAVAILABLE"
+    MANIFEST_INPUT_MISSING = "MANIFEST_INPUT_MISSING"
+    MANIFEST_INVALID = "MANIFEST_INVALID"
+    ROLLOUT_FAILED = "ROLLOUT_FAILED"
 
 
 # Wire status and retry posture are part of the closed Arbora vocabulary.
@@ -218,6 +278,60 @@ _ARBORA_STATUS: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.APPROVAL_NOT_PENDING: 409,
     ArboraErrorCode.APPROVER_NOT_IN_ROLE: 403,
     ArboraErrorCode.PROCESS_PROMPT_UNRESOLVED: 422,
+    ArboraErrorCode.AUTHORITY_UNAVAILABLE: 503,
+    ArboraErrorCode.BUDGET_EXHAUSTED: 429,
+    ArboraErrorCode.BUS_RECIPIENT_UNKNOWN: 404,
+    ArboraErrorCode.CAPACITY_ACTUATION_FAILED: 502,
+    ArboraErrorCode.CI_NOT_GREEN: 409,
+    ArboraErrorCode.CLIENT_NOT_FOUND: 404,
+    ArboraErrorCode.CONNECTION_NOT_FOUND: 404,
+    ArboraErrorCode.CONNECTOR_RUN_NOT_FOUND: 404,
+    ArboraErrorCode.ESCALATION_NOT_ALLOWED: 403,
+    ArboraErrorCode.FLEET_LEASE_FENCED: 409,
+    ArboraErrorCode.FLEET_SCOPE_REQUIRED: 403,
+    ArboraErrorCode.IMAGE_NOT_DIGEST_PINNED: 400,
+    ArboraErrorCode.INBOX_RECIPIENT_UNKNOWN: 404,
+    ArboraErrorCode.INBOX_SEND_DENIED: 403,
+    ArboraErrorCode.INTERFACE_NOT_FOUND: 404,
+    ArboraErrorCode.INVALID_TASK_PLAN_RECEIPT: 400,
+    ArboraErrorCode.LOCAL_MODEL_UNAVAILABLE: 503,
+    ArboraErrorCode.MAPPING_NOT_FOUND: 404,
+    ArboraErrorCode.MAPPING_UNDECLARED: 422,
+    ArboraErrorCode.ONTOLOGY_DRIFT: 409,
+    ArboraErrorCode.ONTOLOGY_DUPLICATE: 409,
+    ArboraErrorCode.PATH_ESCAPE: 400,
+    ArboraErrorCode.PAYLOAD_TOO_LARGE: 413,
+    ArboraErrorCode.PLAN_REQUIRED: 428,
+    ArboraErrorCode.PRECONDITION_FAILED: 412,
+    ArboraErrorCode.PROFILE_UNSET: 409,
+    ArboraErrorCode.PROVISION_GRANT_DENIED: 403,
+    ArboraErrorCode.REUSE_COMPONENT_MUTATION: 409,
+    ArboraErrorCode.REUSE_UNREACHABLE: 503,
+    ArboraErrorCode.SCOPE_DENIED: 403,
+    ArboraErrorCode.SCOPE_MISSING: 403,
+    ArboraErrorCode.SECRET_INLINE_REFUSED: 422,
+    ArboraErrorCode.SOURCES_BLOCK_MISSING: 422,
+    ArboraErrorCode.STEWARD_ROLE_MISSING: 403,
+    ArboraErrorCode.TASK_PLAN_CONFLICT: 409,
+    ArboraErrorCode.TASK_PLAN_INVALID: 400,
+    ArboraErrorCode.TASK_PLAN_RETRY_REQUIRES_ORIGINAL_PUBLICATION: 409,
+    ArboraErrorCode.TENANT_DENIED: 403,
+    ArboraErrorCode.TRUST_BUNDLE_MISSING: 503,
+    ArboraErrorCode.TRUST_VERIFY_FAILED: 403,
+    ArboraErrorCode.UPGRADE_REQUIRED: 426,
+    ArboraErrorCode.WRITE_CONFLICT: 409,
+    ArboraErrorCode.AGENT_NOT_FOUND: 404,
+    ArboraErrorCode.PEER_CREDENTIAL_VALUE: 422,
+    ArboraErrorCode.PEER_ENDPOINT_INSECURE: 400,
+    ArboraErrorCode.UPSTREAM_FAILED: 502,
+    ArboraErrorCode.SESSION_NOT_OWNED: 404,
+    ArboraErrorCode.APPROVAL_EXPIRED: 409,
+    ArboraErrorCode.APPROVAL_MISMATCH: 409,
+    ArboraErrorCode.LIVE_STATE_TOOL_NOT_READ: 409,
+    ArboraErrorCode.LIVE_STATE_UNAVAILABLE: 503,
+    ArboraErrorCode.MANIFEST_INPUT_MISSING: 400,
+    ArboraErrorCode.MANIFEST_INVALID: 400,
+    ArboraErrorCode.ROLLOUT_FAILED: 502,
 }
 
 _RETRYABLE = frozenset(
@@ -619,6 +733,24 @@ def _classify_fleet_refusal(
     )
 
 
+def _unmapped_code(code: str) -> tuple[str, str, int, bool, dict[str, Any]]:
+    """A code outside the closed enum is a typed ``INTERNAL``, never an untyped 500.
+
+    The unmapped code rides in ``details`` (bounded, code-shaped only) so the
+    caller and the operator can see which refusal lacks a wire mapping.
+    """
+    details: dict[str, Any] = {}
+    if isinstance(code, str) and _FLEET_CODE.fullmatch(code) is not None:
+        details["unmapped_code"] = code
+    return (
+        ArboraErrorCode.INTERNAL.value,
+        "arbora",
+        _ARBORA_STATUS[ArboraErrorCode.INTERNAL],
+        False,
+        details,
+    )
+
+
 def _classify_arbora_code(
     code: str, details: Mapping[str, Any]
 ) -> tuple[str, str, int, bool, dict[str, Any]]:
@@ -630,6 +762,22 @@ def _classify_arbora_code(
         parsed in _RETRYABLE,
         _public_details(parsed, details),
     )
+
+
+def _member(code: str) -> ArboraErrorCode | None:
+    try:
+        return ArboraErrorCode(code)
+    except ValueError:
+        return None
+
+
+def _classify_open_code(
+    code: str, details: Mapping[str, Any]
+) -> tuple[str, str, int, bool, dict[str, Any]]:
+    """An Arbora-sourced code: its mapping, or a typed ``INTERNAL`` naming the code."""
+    if _member(code) is None:
+        return _unmapped_code(code)
+    return _classify_arbora_code(code, details)
 
 
 def _classify_op_error(
@@ -644,7 +792,7 @@ def _classify_op_error(
         return _classify_fleet_code(error.code, retryable=False, details=error.details)
     if source != "arbora":
         raise ValueError("unknown operation error source")
-    return _classify_arbora_code(error.code, error.details)
+    return _classify_open_code(error.code, error.details)
 
 
 def _classified_error(
@@ -732,7 +880,85 @@ _RPC_CODES: dict[ArboraErrorCode, int] = {
     ArboraErrorCode.APPROVER_NOT_IN_ROLE: -32003,
     ArboraErrorCode.PROCESS_PROMPT_UNRESOLVED: -32602,
     ArboraErrorCode.HISTORY_REVISION_CONFLICT: -32009,
+    ArboraErrorCode.AUTHORITY_UNAVAILABLE: -32050,
+    ArboraErrorCode.BUDGET_EXHAUSTED: -32029,
+    ArboraErrorCode.BUS_RECIPIENT_UNKNOWN: -32002,
+    ArboraErrorCode.CAPACITY_ACTUATION_FAILED: -32603,
+    ArboraErrorCode.CI_NOT_GREEN: -32009,
+    ArboraErrorCode.CLIENT_NOT_FOUND: -32002,
+    ArboraErrorCode.CONNECTION_NOT_FOUND: -32002,
+    ArboraErrorCode.CONNECTOR_RUN_NOT_FOUND: -32002,
+    ArboraErrorCode.ESCALATION_NOT_ALLOWED: -32003,
+    ArboraErrorCode.FLEET_LEASE_FENCED: -32009,
+    ArboraErrorCode.FLEET_SCOPE_REQUIRED: -32003,
+    ArboraErrorCode.IMAGE_NOT_DIGEST_PINNED: -32602,
+    ArboraErrorCode.INBOX_RECIPIENT_UNKNOWN: -32002,
+    ArboraErrorCode.INBOX_SEND_DENIED: -32003,
+    ArboraErrorCode.INTERFACE_NOT_FOUND: -32002,
+    ArboraErrorCode.INVALID_TASK_PLAN_RECEIPT: -32602,
+    ArboraErrorCode.LOCAL_MODEL_UNAVAILABLE: -32050,
+    ArboraErrorCode.MAPPING_NOT_FOUND: -32002,
+    ArboraErrorCode.MAPPING_UNDECLARED: -32602,
+    ArboraErrorCode.ONTOLOGY_DRIFT: -32009,
+    ArboraErrorCode.ONTOLOGY_DUPLICATE: -32009,
+    ArboraErrorCode.PATH_ESCAPE: -32602,
+    ArboraErrorCode.PAYLOAD_TOO_LARGE: -32602,
+    ArboraErrorCode.PLAN_REQUIRED: -32009,
+    ArboraErrorCode.PRECONDITION_FAILED: -32009,
+    ArboraErrorCode.PROFILE_UNSET: -32009,
+    ArboraErrorCode.PROVISION_GRANT_DENIED: -32003,
+    ArboraErrorCode.REUSE_COMPONENT_MUTATION: -32009,
+    ArboraErrorCode.REUSE_UNREACHABLE: -32050,
+    ArboraErrorCode.SCOPE_DENIED: -32003,
+    ArboraErrorCode.SCOPE_MISSING: -32003,
+    ArboraErrorCode.SECRET_INLINE_REFUSED: -32602,
+    ArboraErrorCode.SOURCES_BLOCK_MISSING: -32602,
+    ArboraErrorCode.STEWARD_ROLE_MISSING: -32003,
+    ArboraErrorCode.TASK_PLAN_CONFLICT: -32009,
+    ArboraErrorCode.TASK_PLAN_INVALID: -32602,
+    ArboraErrorCode.TASK_PLAN_RETRY_REQUIRES_ORIGINAL_PUBLICATION: -32009,
+    ArboraErrorCode.TENANT_DENIED: -32003,
+    ArboraErrorCode.TRUST_BUNDLE_MISSING: -32050,
+    ArboraErrorCode.TRUST_VERIFY_FAILED: -32003,
+    ArboraErrorCode.UPGRADE_REQUIRED: -32009,
+    ArboraErrorCode.WRITE_CONFLICT: -32009,
+    ArboraErrorCode.AGENT_NOT_FOUND: -32002,
+    ArboraErrorCode.PEER_CREDENTIAL_VALUE: -32602,
+    ArboraErrorCode.PEER_ENDPOINT_INSECURE: -32602,
+    ArboraErrorCode.UPSTREAM_FAILED: -32603,
+    ArboraErrorCode.SESSION_NOT_OWNED: -32002,
+    ArboraErrorCode.APPROVAL_EXPIRED: -32009,
+    ArboraErrorCode.APPROVAL_MISMATCH: -32009,
+    ArboraErrorCode.LIVE_STATE_TOOL_NOT_READ: -32009,
+    ArboraErrorCode.LIVE_STATE_UNAVAILABLE: -32050,
+    ArboraErrorCode.MANIFEST_INPUT_MISSING: -32602,
+    ArboraErrorCode.MANIFEST_INVALID: -32602,
+    ArboraErrorCode.ROLLOUT_FAILED: -32603,
+    ArboraErrorCode.ALREADY_DECIDED: -32009,
+    ArboraErrorCode.APPROVAL_DENIED: -32003,
+    ArboraErrorCode.APPROVAL_REQUIRED: -32003,
+    ArboraErrorCode.CONTENT_QUARANTINED: -32602,
+    ArboraErrorCode.HOOK_FAILED: -32603,
+    ArboraErrorCode.HOOK_REJECTED: -32602,
+    ArboraErrorCode.SELF_APPROVAL: -32003,
+    ArboraErrorCode.UNSCREENED_MEMORY_WRITE: -32602,
+    ArboraErrorCode.WRITE_BACK_BINDING_CHANGED: -32009,
+    ArboraErrorCode.WRITE_BACK_CONFIG_CHANGED: -32009,
+    ArboraErrorCode.WRITE_BACK_EFFECT_UNCERTAIN: -32603,
+    ArboraErrorCode.WRITE_BACK_INTENT_MISMATCH: -32602,
+    ArboraErrorCode.WRITE_BACK_PLAN_UNBOUND: -32009,
+    ArboraErrorCode.WRITE_BACK_PRODUCER_MISSING: -32050,
+    ArboraErrorCode.WRITE_BACK_RECEIPT_UNBOUND: -32603,
+    ArboraErrorCode.WRITE_BACK_REPLAY_UNAVAILABLE: -32050,
+    ArboraErrorCode.WRITE_BACK_REPLAY_UNRESOLVED: -32009,
+    ArboraErrorCode.WRITE_BACK_UNKNOWN_FIELD: -32602,
 }
+
+
+def _arbora_rpc_pair(code: str) -> tuple[int, int]:
+    """JSON-RPC and HTTP status of an Arbora code; one outside the enum is ``INTERNAL``."""
+    typed = _member(code) or ArboraErrorCode.INTERNAL
+    return _RPC_CODES[typed], _ARBORA_STATUS[typed]
 
 
 def a2a_error_status(
@@ -749,8 +975,7 @@ def a2a_error_status(
         return -32000, 502
     if source != "arbora":
         raise ValueError("unknown operation error source")
-    typed = ArboraErrorCode(code)
-    return _RPC_CODES[typed], _ARBORA_STATUS[typed]
+    return _arbora_rpc_pair(str(code))
 
 
 def to_envelope(
