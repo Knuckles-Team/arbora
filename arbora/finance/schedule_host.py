@@ -36,7 +36,7 @@ from arbora.finance.dca import (
     minor_exponent,
     run_dca_due,
 )
-from arbora.finance.delegation import DELEGATION_PROTOCOL, delegation_resource
+from arbora.finance.delegation import delegated, delegation_holds
 from arbora.finance.receipts import (
     FinanceReceiptEngine,
     ServedReceiptEngine,
@@ -60,10 +60,6 @@ def schedule_node_id(tenant: str, loop_id: str) -> str:
     return f"finance-schedule:{tenant}:{loop_id}"
 
 
-def _allowed(answer: Any) -> bool:
-    return isinstance(answer, Mapping) and answer.get("allow") is True
-
-
 async def _paper_unbound(plan: DCAPlan, arguments: Mapping[str, Any], key: str) -> Any:
     raise OperationRefused(
         "UNAVAILABLE", {"reason": "the paper order door is not bound"}
@@ -74,34 +70,59 @@ def _pack(value: Mapping[str, Any]) -> bytes:
     return msgpack.packb(dict(value), use_bin_type=True)
 
 
+def _price_reference_of(answer: Any) -> dict[str, Any] | None:
+    reference = answer.get("price_reference") if isinstance(answer, Mapping) else None
+    return dict(reference) if reference else None
+
+
 class _EngineDcaHost(DCAHost):
-    """A failed occurrence moves its receipt to ``failed``; paper fills need a bound door."""
+    """A failed occurrence moves its receipt to ``failed``; paper fills need a bound door.
+
+    A DCA plan is a notional amount and the paper order takes a quantity, so the door gets
+    the notional and prices it at fill time; the price reference it answers is recorded on
+    the occurrence's receipt. The fill runs under the owner's delegation, which the
+    ownership check confirms with the engine's grant ledger.
+    """
 
     def __init__(
         self,
         engine: FinanceReceiptEngine,
         paper: PaperDoor | None,
         occurrence: str,
+        grant: str,
     ) -> None:
         self._engine = engine
         self._paper = paper or _paper_unbound
         self._occurrence = occurrence
+        self._grant = grant
 
     async def submit_paper(self, plan: DCAPlan, proposal: Mapping[str, Any]) -> None:
-        exponent = minor_exponent(plan.currency)
-        qty = Decimal(int(proposal["amount_minor_units"])).scaleb(-exponent)
-        await self._paper(
-            plan,
-            {
-                "account_id": plan.account_id,
-                "symbol": plan.symbol,
-                "side": str(proposal.get("side", "buy")).lower(),
-                "qty": float(qty),
-                "order_type": "market",
-                "mode": "paper",
-            },
-            f"dca:{build_dca_proposal_key(plan, self._occurrence)}",
+        key = build_dca_proposal_key(plan, self._occurrence)
+        answer = await self._fill(plan, proposal, key)
+        await self._record_price(plan, key, answer)
+
+    async def _fill(self, plan: DCAPlan, proposal: Mapping[str, Any], key: str) -> Any:
+        notional = Decimal(int(proposal["amount_minor_units"])).scaleb(
+            -minor_exponent(plan.currency)
         )
+        order = {
+            "account_id": plan.account_id,
+            "symbol": plan.symbol,
+            "side": str(proposal.get("side", "buy")).lower(),
+            "notional": format(notional, "f"),
+            "order_type": "market",
+            "mode": "paper",
+        }
+        with delegated(plan.owner, self._grant, plan.account_id):
+            return await self._paper(plan, order, f"dca:{key}")
+
+    async def _record_price(self, plan: DCAPlan, key: str, answer: Any) -> None:
+        reference = _price_reference_of(answer)
+        if reference:
+            await self._engine.annotate(
+                receipt_id(plan.tenant_id, "dca_proposal", key),
+                {"priceReference": reference},
+            )
 
     async def missed(self, plan: DCAPlan, occurrence: str, reason: str) -> None:
         key = build_dca_proposal_key(plan, occurrence)
@@ -166,19 +187,9 @@ class EngineFinanceScheduleHost:
 
     async def owner_holds(self, record: Any) -> bool:
         """The engine's resource grant ledger decides; no local grant stands in."""
-        from arbora.pin_lag.medulla import guard
-
-        guard("CheckResourceAccess")
-        answer = await self._wire(
-            "CheckResourceAccess",
-            {
-                "agent_id": self._scheduler,
-                "resource_ref": delegation_resource(record.entry.owner),
-                "protocol": DELEGATION_PROTOCOL,
-                "operation": record.grant,
-            },
+        return await delegation_holds(
+            self._wire, self._scheduler, record.entry.owner, record.grant
         )
-        return _allowed(answer)
 
     def receipts(self, record: Any) -> FinanceReceiptEngine:
         return ServedReceiptEngine(self._send)
@@ -223,7 +234,7 @@ class EngineFinanceScheduleHost:
         await run_dca_due(
             engine,
             self._wire,
-            _EngineDcaHost(engine, self._paper_order, occurrence_key),
+            _EngineDcaHost(engine, self._paper_order, occurrence_key, record.grant),
             plan,
             occurrence_key,
         )

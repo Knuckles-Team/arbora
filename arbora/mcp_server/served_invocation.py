@@ -650,6 +650,34 @@ def _with_finance_import_ports(bindings: Mapping[str, Any]) -> Mapping[str, Any]
     }
 
 
+def _delegated_subject_check(
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+    session: Callable[[], Any],
+) -> Any:
+    """The service executor's subject check, with the finance delegation path.
+
+    ARBORA-DATA-MARKET-R006: a scheduled paper fill passes the same ownership check as any
+    service operation, admitted by the owner's delegated grant that the engine confirms.
+    Everything else falls to the default refusal until a subject authority is composed.
+    """
+    from arbora.api.invoke.bootstrap import deny_subject_access
+    from arbora.finance.delegation import DelegatedSubjectAccess
+
+    async def wire(method: str, params: dict[str, Any]) -> Any:
+        from medulla.generated import send_by_id
+
+        from arbora.api.ops._engine import decode
+
+        client = await pool.connected_client(
+            connect_context(str(session().tenant)), graph
+        )
+        return decode(await send_by_id(client, method, params, graph))
+
+    return DelegatedSubjectAccess(wire, deny_subject_access)
+
+
 def _with_finance_schedule_host(
     bindings: Mapping[str, Any],
     pool: Any,
@@ -1208,6 +1236,7 @@ def compose_served_invocation(
         service_scopes=frozenset(minted.scopes),
         service_principal=str(minted.actor.actor_id),
         service_claims=service_claims,
+        check_access=_delegated_subject_check(pool, graph, connect_context, session),
         bindings=bindings,
     )
     # ARBORA-IDENTITY-R011.2.4, R010.2.3.2: the SCIM routes and the directory sync job

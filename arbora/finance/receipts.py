@@ -44,6 +44,10 @@ class FinanceReceiptEngine(Protocol):
         """True when the engine took the event; false on ``TRANSITION_REFUSED``."""
         ...
 
+    async def annotate(self, receipt: str, fields: Mapping[str, Any]) -> None:
+        """Record evidence on a claimed receipt (for example the price a fill used)."""
+        ...
+
 
 def receipt_id(tenant: str, kind: str, key: str) -> str:
     """The engine node id of one receipt (MEDULLA-FINANCE-PRIMITIVES-R011.4)."""
@@ -80,6 +84,18 @@ class ServedReceiptEngine:
                 return False
             raise
         return True
+
+    async def annotate(self, receipt: str, fields: Mapping[str, Any]) -> None:
+        await self._send(
+            "CompareAndSetNodeFields",
+            {
+                "node_id": receipt,
+                "conditions_msgpack": msgpack.packb(
+                    {"receiptState": "claimed"}, use_bin_type=True
+                ),
+                "updates_msgpack": msgpack.packb(dict(fields), use_bin_type=True),
+            },
+        )
 
 
 def _check(tenant: str, kind: str, key: str) -> None:
