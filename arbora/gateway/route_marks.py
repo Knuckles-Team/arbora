@@ -14,10 +14,16 @@ from collections.abc import Callable
 from typing import Any
 
 from fastapi import APIRouter
+from starlette.routing import Route
 
-__all__ = ["build_router", "route"]
+__all__ = ["build_router", "plain_routes", "route"]
 
 _ATTRIBUTE = "__gateway_route__"
+
+
+def plain_routes(router: APIRouter) -> list[Route]:
+    """The router's plain HTTP routes, in order; websocket mounts are not bridged."""
+    return [entry for entry in router.routes if isinstance(entry, Route)]
 
 
 def route(method: str, path: str, **options: Any) -> Callable[[Any], Any]:

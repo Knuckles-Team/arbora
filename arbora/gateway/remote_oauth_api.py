@@ -61,8 +61,8 @@ from typing import Any, NoReturn
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
-from starlette.routing import Route
 
+from arbora.gateway.route_marks import plain_routes
 from arbora.gateway.state import GatewayState, gateway_of, gateway_on
 
 logger = logging.getLogger(__name__)
@@ -97,6 +97,7 @@ def _default_provider_registry() -> Any:
         logger.error(
             "Remote OAuth provider configuration is invalid; registry disabled: %s",
             exc,
+            exc_info=True,
         )
         return registry
     if entries is None:
@@ -109,6 +110,7 @@ def _default_provider_registry() -> Any:
                 "Skipping invalid REMOTE_OAUTH_PROVIDERS_JSON entry %s: %s",
                 entry.get("provider_id", "<no provider_id>"),
                 exc,
+                exc_info=True,
             )
             continue
         registry.register(descriptor)
@@ -164,6 +166,7 @@ def _success_redirect_url() -> str | None:
         logger.error(
             "Remote OAuth redirect configuration is invalid; redirect disabled: %s",
             exc,
+            exc_info=True,
         )
         return None
 
@@ -422,9 +425,7 @@ def register_remote_oauth_routes(
 
         return _handler
 
-    for route in build_remote_oauth_router().routes:
-        if not isinstance(route, Route):
-            continue  # pragma: no cover - APIRouter only emits Route entries here
+    for route in plain_routes(build_remote_oauth_router()):
         param_names = list(getattr(route, "param_convertors", {}) or {})
         app.add_route(
             prefix + route.path,

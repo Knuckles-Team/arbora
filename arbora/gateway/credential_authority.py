@@ -11,12 +11,15 @@ no other. The grant lives in the engine; arbora holds none. The SDK types come f
 from __future__ import annotations
 
 import contextlib
+import logging
 from collections.abc import AsyncIterator, Callable, Mapping
 from contextvars import ContextVar
 from typing import Any, Protocol
 
 from arbora.pin_lag.scion_sdk import require_credential_binding
 from arbora.pin_lag.unavailable import PinLagUnavailable
+
+logger = logging.getLogger(__name__)
 
 #: The four closed refusal reasons of the authority.
 REFUSALS: tuple[str, ...] = (
@@ -132,6 +135,7 @@ class CredentialAuthority:
         except PinLagUnavailable:
             raise
         except Exception:
+            logger.warning("gateway boundary failed", exc_info=True)
             reason, binding = "authority_unavailable", None
         await self._receipt(ask, reason, binding, module)
         if reason != "ok":

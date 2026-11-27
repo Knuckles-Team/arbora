@@ -34,7 +34,7 @@ async def _schema_context_endpoint(request: Request) -> JSONResponse:
 
     try:
         body = await request.json()
-    except Exception:
+    except ValueError:
         return JSONResponse(
             {"status": "error", "message": "invalid JSON body"}, status_code=400
         )

@@ -82,6 +82,7 @@ def _dashboard_capabilities(request: Request) -> set[str] | None:
             )
         )
     except Exception:
+        logger.warning("gateway boundary failed", exc_info=True)
         raise HTTPException(
             status_code=403, detail="dashboard capability required"
         ) from None
@@ -162,9 +163,14 @@ async def get_service_data(service_id: str, request: Request) -> WidgetData:
 @route("GET", "/full")
 async def get_full_dashboard(request: Request) -> DashboardResponse:
     """Return layout and data in one request for the initial page load."""
-    aggregator = _get_aggregator(request)
+    return await _full_dashboard(request)
+
+
+async def _full_dashboard(carrier: Any) -> DashboardResponse:
+    """Layout and data for the caller carried by a request or a websocket."""
+    aggregator = _get_aggregator(carrier)
     layout = aggregator.get_layout()
-    data = await aggregator.fetch_all(_reader(request))
+    data = await aggregator.fetch_all(_reader(carrier))
     return DashboardResponse(layout=layout, data=data)
 
 
@@ -269,6 +275,7 @@ def _gateway_engine_or_none(request: Request) -> Any:
     try:
         return gateway_of(request).application().engine()
     except Exception:
+        logger.warning("gateway boundary failed", exc_info=True)
         return None
 
 
@@ -293,6 +300,7 @@ async def daemon_shards(request: Request) -> dict[str, Any]:
     try:
         engine = gateway_of(request).application().engine()
     except Exception:
+        logger.warning("gateway boundary failed", exc_info=True)
         raise unavailable from None
     topology = getattr(
         getattr(engine, "placement_directory", None), "shard_topology", None
@@ -379,6 +387,7 @@ async def _served(
             detail=public_error_payload(exc, logger=logger, code="invalid_request"),
         ) from None
     except Exception as exc:
+        logger.warning("gateway boundary failed", exc_info=True)
         raise HTTPException(
             status_code=500, detail=public_error_payload(exc, logger=logger)
         ) from None
@@ -467,7 +476,7 @@ async def _widgets_for(
     subscription: set[str] | None, websocket: WebSocket
 ) -> dict[str, WidgetData]:
     if subscription is None:
-        return (await get_full_dashboard(websocket)).data  # type: ignore[arg-type]
+        return (await _full_dashboard(websocket)).data
     return await fetch_dashboard_subset(subscription, websocket)
 
 

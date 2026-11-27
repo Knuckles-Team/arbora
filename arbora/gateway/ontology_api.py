@@ -23,9 +23,8 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
-from starlette.routing import Route
 
-from arbora.gateway.route_marks import build_router, route
+from arbora.gateway.route_marks import build_router, plain_routes, route
 from arbora.gateway.state import gateway_of
 
 
@@ -534,9 +533,7 @@ def register_ontology_routes(app, prefix: str = "/api") -> None:
 
         return _handler
 
-    for entry in build_ontology_router().routes:
-        if not isinstance(entry, Route):
-            continue  # pragma: no cover - APIRouter only emits Route entries here
+    for entry in plain_routes(build_ontology_router()):
         param_names = list(getattr(entry, "param_convertors", {}) or {})
         app.add_route(
             prefix + entry.path,

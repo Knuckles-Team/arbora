@@ -276,5 +276,7 @@ def stop_host_daemon(engine: Any = None) -> None:
                 client.checkpoint()
                 logger.info("Engine checkpoint written on shutdown.")
         except Exception as exc:
-            logger.warning("engine checkpoint on shutdown skipped: %s", exc)
+            logger.warning(
+                "engine checkpoint on shutdown skipped: %s", exc, exc_info=True
+            )
     logger.info("Host daemon stopped.")
