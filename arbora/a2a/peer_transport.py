@@ -14,12 +14,16 @@ topic for a half-answered group.
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from typing import Any
 
 import httpx
 
 from .hub_federation import FederationRefused
+
+logger = logging.getLogger(__name__)
+
 
 __all__ = [
     "A2APeerTransport",
@@ -96,6 +100,7 @@ class A2APeerTransport:
         try:
             token = self._resolve(str(peer["credential_ref"]))
         except Exception:  # never name the reference or the value
+            logger.warning("forward failed", exc_info=True)
             raise FederationRefused(PEER_CREDENTIAL_UNAVAILABLE) from None
         client = A2AClient(
             timeout=self._timeout,

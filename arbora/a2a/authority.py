@@ -29,6 +29,9 @@ from .models import (
 )
 from .tool_subset import require_carrier as require_tool_subset_carrier
 
+logger = logging.getLogger(__name__)
+
+
 __all__ = [
     "A2AContextUnavailable",
     "A2AIdempotencyConflict",
@@ -1127,6 +1130,7 @@ class WorkItemA2AAuthority:
                     ):
                         raise RuntimeError("cancellation not confirmed")
             except (Exception, asyncio.CancelledError):
+                logger.warning("notify admission or settle failed", exc_info=True)
                 raise RuntimeError(
                     "native admission notification failed: settlement unavailable"
                 ) from None

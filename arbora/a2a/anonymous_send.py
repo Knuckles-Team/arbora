@@ -26,6 +26,8 @@ from meristem.graph import AgentRunExecutor, RunPlan, RunRequest
 
 from .anonymous import AnonymousReadPolicy, AnonymousTaskReadOwner, _unique_object
 
+logger = logging.getLogger(__name__)
+
 
 def _digest(value: Any) -> str:
     return hashlib.sha256(
@@ -415,8 +417,8 @@ class AnonymousTextService:
                         )
                 except BaseException as cleanup_error:
                     logging.getLogger(__name__).warning(
-                        "Anonymous native cleanup unavailable (%s)",
-                        type(cleanup_error).__name__,
+                        "Anonymous native cleanup unavailable",
+                        exc_info=cleanup_error,
                     )
             # Queued cancellation never cancels an active lease. Unknown claim
             # acknowledgement remains in-flight/unknown and is never re-executed.
@@ -437,8 +439,8 @@ class AnonymousTextService:
                         )
                 except BaseException as cleanup_error:
                     logging.getLogger(__name__).warning(
-                        "Anonymous native cleanup unavailable (%s)",
-                        type(cleanup_error).__name__,
+                        "Anonymous native cleanup unavailable",
+                        exc_info=cleanup_error,
                     )
             raise
 
@@ -525,8 +527,8 @@ class AnonymousTextService:
                     )
             except BaseException as cleanup_error:
                 logging.getLogger(__name__).warning(
-                    "Anonymous native cleanup unavailable (%s)",
-                    type(cleanup_error).__name__,
+                    "Anonymous native cleanup unavailable",
+                    exc_info=cleanup_error,
                 )
             raise
 
@@ -897,6 +899,7 @@ def anonymous_text_app(service: AnonymousTextService) -> FastAPI:
         except (ValueError, TypeError):
             return _error(request_id, -32602, "Invalid text request")
         except Exception:
+            logger.warning("send failed", exc_info=True)
             return _error(
                 request_id,
                 -32014,

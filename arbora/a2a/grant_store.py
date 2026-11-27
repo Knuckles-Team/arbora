@@ -10,6 +10,7 @@ same grant finds it already consumed.
 
 from __future__ import annotations
 
+import logging
 import secrets
 import time
 from collections.abc import Callable, Mapping
@@ -20,6 +21,8 @@ from typing import Any
 from arbora.api.invoke.plan import PLAN_TTL_MS, PlanBinding
 
 from .approval import PendingCallBinding
+
+logger = logging.getLogger(__name__)
 
 
 class GrantRefusal(StrEnum):
@@ -91,6 +94,7 @@ class HumanGrantStore:
         try:
             return await call()
         except Exception:
+            logger.warning("engine failed", exc_info=True)
             # Fail closed: an unreachable or erroring engine grants nothing.
             raise GrantError(GrantRefusal.STORE_UNAVAILABLE) from None
 

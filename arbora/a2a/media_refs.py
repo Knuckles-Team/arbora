@@ -12,12 +12,16 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import logging
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 
 from arbora.a2a.models import A2AInlineMediaFile
+
+logger = logging.getLogger(__name__)
+
 
 REF_PATTERN = re.compile(r"^media:sha256:([0-9a-f]{64})$")
 NAMESPACE = "a2a.media"
@@ -123,6 +127,7 @@ class EngineMediaRefStore:
         except MediaStoreUnavailable:
             raise
         except Exception:
+            logger.warning("put failed", exc_info=True)
             raise MediaStoreUnavailable("media upload failed") from None
         return MediaReceipt(f"sha256:{digest}", media_type, len(data), expires_at)
 
@@ -152,6 +157,7 @@ class EngineMediaRefStore:
         except MediaRefRefused:
             raise
         except Exception:
+            logger.warning("get failed", exc_info=True)
             raise MediaStoreUnavailable("media read failed") from None
         if _hex(data) != digest or len(data) != record["bytes"]:
             raise MediaRefRefused("media_ref_unknown")

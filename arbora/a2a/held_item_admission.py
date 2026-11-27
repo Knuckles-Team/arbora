@@ -9,6 +9,7 @@ compiler. A refusal leaves the item held.
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Mapping
 from typing import Any, Literal, Protocol
 
@@ -23,6 +24,9 @@ from .tool_action_admission import (
     bounded_timeout,
     reserve_then,
 )
+
+logger = logging.getLogger(__name__)
+
 
 HELD_ITEM_REASONS = frozenset(
     {
@@ -134,6 +138,7 @@ class HeldItemAdmitter:
         except ConfirmRefusal:
             raise
         except Exception:  # an unreachable engine decides nothing
+            logger.warning("admit failed", exc_info=True)
             raise HeldItemRefusal("ENGINE_UNAVAILABLE") from None
         if answer is None:
             raise HeldItemRefusal("POLICY_EVIDENCE_MISSING")
