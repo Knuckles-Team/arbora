@@ -20,7 +20,12 @@ from .push import PushDeliveryWorker
 from .routing import OrchestratorA2ARouter
 from .service import A2ACardMetadata, A2AService
 
-__all__ = ["A2AComposition", "build_a2a_service", "compose_a2a"]
+__all__ = [
+    "A2AComposition",
+    "build_a2a_service",
+    "compose_a2a",
+    "compose_anonymous_a2a",
+]
 
 
 def _tenant() -> str:
@@ -74,6 +79,31 @@ def _harness_decider(
 class A2AComposition:
     application: Any
     service: A2AService
+    #: The none-mode read application of anonymous tasks, or ``None`` when no owner composed.
+    anonymous_application: Any = None
+
+
+async def compose_anonymous_a2a(
+    client: Any, *, graph: str, policy: Any, audit: Any = None
+) -> Any:
+    """The read-only anonymous ``/a2a`` application, or ``None`` when it must not compose.
+
+    The owner composes only for a client in explicit none mode that reports
+    ``GetRunWorkItem`` support (ARBORA-IDENTITY-R004.8.2); the application is mounted
+    beside, never in place of, the verified one.
+    """
+    from .anonymous import create_anonymous_a2a_application
+    from .anonymous_native import compose_anonymous_task_reads, log_audit
+
+    owner = await compose_anonymous_task_reads(
+        client, graph=graph, policy=policy, audit=audit or log_audit
+    )
+    if owner is None:
+        return None
+    return create_anonymous_a2a_application(
+        owner=owner,
+        service=A2AService(authority=owner, router=None),  # type: ignore[arg-type]
+    )
 
 
 def build_a2a_service(
@@ -151,6 +181,7 @@ def compose_a2a(
     decision_principal: Callable[[], str] | None = None,
     provisioning: Any = None,
     capacity: Any = None,
+    anonymous_application: Any = None,
 ) -> A2AComposition:
     """Compose one projection over the existing WorkItem/dispatch authorities."""
     service = build_a2a_service(
@@ -172,4 +203,5 @@ def compose_a2a(
             authenticator=authenticator,
         ),
         service=service,
+        anonymous_application=anonymous_application,
     )
