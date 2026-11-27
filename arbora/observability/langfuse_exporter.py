@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from __future__ import annotations
 
+from arbora.core.environment import read_env
+
 """CONCEPT:MERISTEM-OS.observability.langfuse-exporter — Langfuse exporter for spans, token usage and traces.
 
 The orchestration engine already opens an OpenTelemetry span around every graph
@@ -28,7 +30,6 @@ from typing import Any
 from scion_sdk.privacy import PersistencePrivacyGuard
 from scion_sdk.privacy_reference import persistence_reference
 
-from arbora.core.settings import setting
 from arbora.observability.langfuse_trust import (
     configure_langfuse_trust,
     langfuse_credentials_configured,
@@ -198,7 +199,7 @@ class LangfuseExporter:
             clean_run_id = normalize_run_id(run_id, tenant_id=tenant_id)
             controlled_evidence = _validated_trace_evidence(evidence)
             capture_content = str(
-                setting("LANGFUSE_CAPTURE_CONTENT", "false") or "false"
+                read_env("LANGFUSE_CAPTURE_CONTENT") or "false"
             ).strip().lower() in {"1", "true", "yes", "on"}
             clean_query, query_privacy = self._privacy.sanitize_text(query)
             if not capture_content:
@@ -358,7 +359,7 @@ def get_langfuse_exporter() -> LangfuseExporter | None:
     if _EXPORTER_BUILT:
         return _EXPORTER
     _EXPORTER_BUILT = True
-    enabled = str(setting("TRACE_EXPORT_ENABLED", "false") or "false").strip()
+    enabled = str(read_env("TRACE_EXPORT_ENABLED", "false") or "false").strip()
     if enabled.casefold() not in {"1", "true", "yes", "on"}:
         _EXPORTER = None
         return None

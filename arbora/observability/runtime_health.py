@@ -1,6 +1,8 @@
 #!/usr/bin/python
 from __future__ import annotations
 
+from arbora.core.environment import read_env
+
 """The ONE shared runtime health-check core for arbora (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics).
 
 Both the REST gateway (the REST gateway's ``/health``
@@ -603,9 +605,7 @@ def _check_stardog_mirror(cfg: Any) -> dict[str, Any]:
     if not bool(getattr(cfg, "continuous_stardog_mirror", False)):
         return _not_configured("stardog_mirror", "CONTINUOUS_STARDOG_MIRROR is off")
 
-    from arbora.core.settings import setting
-
-    endpoint = str(setting("STARDOG_ENDPOINT", "http://localhost:5820") or "")
+    endpoint = str(read_env("STARDOG_ENDPOINT") or "")
     parts = urlsplit(endpoint if "://" in endpoint else f"//{endpoint}")
     host = parts.hostname
     port = parts.port or 5820
@@ -728,13 +728,11 @@ def _health_config() -> Any:
     """The settings the in-process checks read."""
     from types import SimpleNamespace
 
-    from arbora.core.settings import setting
-
     return SimpleNamespace(
-        agent_bus_log_backend=setting("AGENT_BUS_LOG_BACKEND", ""),
-        task_queue_backend=setting("TASK_QUEUE_BACKEND", ""),
-        kafka_bootstrap_servers=setting("KAFKA_BOOTSTRAP_SERVERS", ""),
-        continuous_stardog_mirror=setting("CONTINUOUS_STARDOG_MIRROR", False),
+        agent_bus_log_backend=read_env("AGENT_BUS_LOG_BACKEND"),
+        task_queue_backend=read_env("TASK_QUEUE_BACKEND"),
+        kafka_bootstrap_servers=read_env("KAFKA_BOOTSTRAP_SERVERS"),
+        continuous_stardog_mirror=read_env("CONTINUOUS_STARDOG_MIRROR"),
     )
 
 
@@ -935,7 +933,6 @@ def identity_readiness() -> dict[str, Any]:
         return dict(reconciler.readiness())
     if _IDENTITY_CONFIG_INVALID[0]:
         return {"status": "degraded", "reason": "identity_config_invalid"}
-    from arbora.core.environment import read_env
     from arbora.identity.client_contract import CONFIG_KEY
 
     return {"status": "checking" if read_env(CONFIG_KEY, "") else "unconfigured"}
