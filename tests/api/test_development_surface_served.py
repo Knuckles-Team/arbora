@@ -332,3 +332,163 @@ async def test_unreleased_engine_methods_refuse_unavailable(method: str) -> None
     with pytest.raises(OperationRefused) as refused:
         await engine_send(None, method, {})
     assert refused.value.code == "UNAVAILABLE"
+
+
+class RunEngine:
+    """The engine's delivery records; a run is a delivery owned by the opening principal."""
+
+    def __init__(self, modes: dict[str, str]) -> None:
+        self.modes = modes
+        self.calls: list[tuple[str, dict[str, Any]]] = []
+        self.owners: dict[str, str] = {
+            "run:theirs": "person:two",
+            "run:mine": "person:one",
+        }
+
+    def open(self, params: dict[str, Any], who: str) -> Any:
+        self.calls.append(("DeliveryOpen", params))
+        self.owners["run:mine"] = who
+        return {
+            "delivery": {"id": "run:mine"},
+            "would_dispatch": None,
+            "reopened": False,
+        }
+
+    def status(self, params: dict[str, Any], who: str) -> Any:
+        self.calls.append(("DeliveryStatus", params))
+        run = params["request"]["delivery_id"]
+        # A foreign delivery answers exactly like an absent one.
+        if self.owners.get(run) != who:
+            raise EngineResponseError("DELIVERY_NOT_FOUND", "no such delivery")
+        return {
+            "stage": "working",
+            "mandate": {"scope_rows": ["T001", "T002"]},
+            "proposals": [{"id": "p1", "state": "open"}],
+            "assignments": [{"id": "a1", "report": {"evidence": ["d1"]}}],
+        }
+
+
+@pytest.fixture
+def runs_env(stack: Any, served: Any, monkeypatch: pytest.MonkeyPatch) -> Any:  # noqa: F811
+    app, client = served
+    engine = LoopbackEngine()
+    runs = RunEngine(engine.modes)
+    route_methods(
+        client,
+        {
+            "ProjectModeGet": engine.mode_get,
+            "ProjectModeSet": engine.mode_set,
+            "ProposalList": engine.proposal_list,
+            "ProposalDecide": engine.proposal_decide,
+            "GetNodeProperties": engine.node,
+            "SpecQuestion": engine.question,
+            "DeliveryOpen": runs.open,
+            "DeliveryStatus": runs.status,
+        },
+        monkeypatch,
+        {"fixture-verified": person("one", extra_scopes=("lifecycle:write",))},
+    )
+    return app, engine, runs, stack["invocation"], monkeypatch
+
+
+@pytest.mark.spec("ARBORA-OPS-R896.3")
+def test_run_start_returns_run_id_and_refuses_reference_mode(runs_env: Any) -> None:
+    app, engine, runs, *_ = runs_env
+    start = {"repository": "repo", "phase": "phase-1"}
+    refused = _call(app, "development.run.start", start, **{KEY: "s1"})
+    assert refused.json()["error"]["code"] == "PROJECT_MODE_REFERENCE"
+    assert [n for n, _ in runs.calls] == []
+    engine.modes["repo"] = "development"
+    done = _value(_call(app, "development.run.start", start, **{KEY: "s2"}))
+    assert done == {"run_id": "run:mine"}
+    sent = runs.calls[0][1]["request"]
+    # Arbora names no task: the slice is the engine's own next_unblocked_task answer.
+    assert sent["scope_rows"] == ["T001"] and sent["dispatch_decision_id"] == "abc"
+    assert sent["repo"] == "repo" and sent["origin"] == "requested"
+    assert sent["slice_root"] == "phase-1" and sent["run_trace_id"].startswith("run:")
+    _value(
+        _call(app, "development.run.start", {**start, "task_id": "T9"}, **{KEY: "s3"})
+    )
+    assert runs.calls[1][1]["request"]["scope_rows"] == []
+    assert _call(app, "development.run.start", start).status_code == 400
+
+
+@pytest.mark.spec("ARBORA-OPS-R896.4")
+def test_run_status_reports_evidence_and_hides_other_tenants(runs_env: Any) -> None:
+    app, _engine, runs, *_ = runs_env
+    status = _value(_call(app, "development.run.status", {"run_id": "run:mine"}))
+    assert status["state"] == "working"
+    assert status["scope_rows"] == ["T001", "T002"] and status["evidence"] == ["d1"]
+    assert status["proposals"] == [{"id": "p1", "state": "open"}]
+    foreign = _call(app, "development.run.status", {"run_id": "run:theirs"})
+    absent = _call(app, "development.run.status", {"run_id": "run:nope"})
+    assert foreign.json()["error"]["code"] == "RUN_NOT_FOUND"
+    # A foreign run answers byte-for-byte like an absent one (only the request id differs).
+    assert foreign.status_code == absent.status_code == 404
+    drop = {"request_id"}
+    assert {k: v for k, v in foreign.json()["error"].items() if k not in drop} == {
+        k: v for k, v in absent.json()["error"].items() if k not in drop
+    }
+    assert {n for n, _ in runs.calls} == {"DeliveryStatus"}
+
+
+@pytest.mark.spec("ARBORA-OPS-R896.6")
+def test_artifact_graph_drives_a_run_over_mcp(runs_env: Any) -> None:
+    _app, engine, runs, invocation, monkeypatch = runs_env
+    ask = McpAsk(
+        invocation, monkeypatch, person("one", extra_scopes=("lifecycle:write",))
+    )
+    next_task = ask(
+        "ask", "spec.query", {"question": "next_unblocked_task", "subject": "phase-1"}
+    )
+    assert next_task["ok"] is True, next_task
+    moved = ask(
+        "manage",
+        "project.mode.set",
+        {"repository": "repo", "mode": "development"},
+        idempotency_key="j1",
+    )
+    plan_ref = moved["meta"]["plan"]["plan_ref"]
+    done = ask(
+        "manage",
+        "project.mode.set",
+        {"repository": "repo", "mode": "development"},
+        idempotency_key="j1",
+        plan_ref=plan_ref,
+        execute=True,
+    )
+    assert done["result"]["mode"] == "development", done
+    started = ask(
+        "act",
+        "development.run.start",
+        {"repository": "repo", "phase": "phase-1"},
+        idempotency_key="j2",
+    )
+    assert started["result"] == {"run_id": "run:mine"}, started
+    status = ask("ask", "development.run.status", {"run_id": "run:mine"})
+    assert status["result"]["scope_rows"] == ["T001", "T002"]
+    proposals = ask("find", "development.proposal.list", {"repository": "repo"})
+    assert proposals["result"]["items"][0]["id"] == "proposal:1"
+    accepted = ask(
+        "act",
+        "development.proposal.review",
+        {
+            "proposal_id": "proposal:1",
+            "decision": "accept",
+            "reason": "evidence holds",
+            "pull_request": {"head": "change/x", "base": "main"},
+        },
+        idempotency_key="j3",
+    )
+    assert accepted["result"]["state"] == "approved"
+    reviews = [p for n, p in engine.calls if n == "ProposalDecide"]
+    assert len(reviews) == 1 and "specs/" not in str(reviews[0])
+    assert {n for n, _ in engine.calls} <= {
+        "SpecQuestion",
+        "ProjectModeGet",
+        "ProjectModeSet",
+        "ProposalList",
+        "ProposalDecide",
+        "GetNodeProperties",
+    }
+    assert [n for n, _ in runs.calls] == ["DeliveryOpen", "DeliveryStatus"]

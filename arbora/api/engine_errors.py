@@ -427,6 +427,21 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "RDF_DATASET_GRAPH_MISMATCH": (400, False),
     "RDF_MEDIA_TYPE_UNSUPPORTED": (415, False),
     "RDF_PARSE_FAILED": (400, False),
+    # Development runs and deliveries (ARBORA-OPS-R896.3 to R896.10). Drop the engine
+    # codes with the re-pin that generates the catalog.
+    "ANSWER_INVALID": (400, False),
+    "DELIVERY_NO_QUESTION": (409, False),
+    "ARMING_APPROVAL_MISSING": (403, False),
+    "ARMING_HEAD_MISMATCH": (409, False),
+    "ASSIGNMENT_ENDED": (409, False),
+    "DELIVERY_NOT_FOUND": (404, False),
+    "DELIVERY_SCOPE_EMPTY": (400, False),
+    "MANDATE_REVOKED": (403, False),
+    "MERGE_APPROVAL_REQUIRED": (403, False),
+    "MERGE_BY_PLATFORM_REFUSED": (403, False),
+    "MERGE_HEAD_MISMATCH": (409, False),
+    "PROJECT_MODE_REFERENCE": (409, False),
+    "RUN_NOT_FOUND": (404, False),
     # Engine main (unreleased) server_error_code.rs tokens the generated catalog lacks.
     # Drop with the re-pin that generates the catalog (ARBORA-OPS-R898.6, R923.3, R924.1).
     "ACCESS_CHECK_UNAVAILABLE": (503, False),
@@ -621,7 +636,6 @@ ENGINE_ERRORS: dict[str, tuple[int, bool]] = {
     "DEFECT_UNVERIFIED": (400, False),
     "DELEGATION_INVALID": (400, False),
     "DELEGATION_UNKNOWN": (404, False),
-    "DELIVERY_SCOPE_EMPTY": (400, False),
     "DELTA_WEIGHT_OVERFLOW": (400, False),
     "DEPLOYMENT_PROFILE_UNKNOWN": (404, False),
     "DEPLOY_RECORD_INVALID": (400, False),
