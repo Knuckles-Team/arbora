@@ -685,6 +685,23 @@ def _with_projection_reader(
     return {**bindings, "projection_reader": EngineProjectionReader()}
 
 
+def _with_city_ports(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the engine world-view port to the four city services (ARBORA-FLEET-R086).
+
+    One port sends each city read and write to the engine as the verified caller;
+    until the installed engine serves the world-view methods each call refuses
+    ``UNAVAILABLE`` naming the method. A service the host already bound is kept.
+    """
+    if bindings is None:
+        return bindings
+    from arbora.fleet.city_ports import CITY_SERVICES, EngineWorldViewPort
+
+    port = EngineWorldViewPort()
+    return {**{name: port for name in CITY_SERVICES}, **bindings}
+
+
 def _with_security_evaluation(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
@@ -893,6 +910,7 @@ def compose_served_invocation(
     bindings = _with_fleet_source_executor(bindings, pool, graph)
     bindings = _with_nl_federation_planner(bindings)
     bindings = _with_projection_reader(bindings)
+    bindings = _with_city_ports(bindings)
     bindings = _with_operator_audit(bindings)
     bindings = _with_federation_sources(bindings)
     bindings = _with_security_evaluation(bindings)
