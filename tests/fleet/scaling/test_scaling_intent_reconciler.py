@@ -93,13 +93,33 @@ class DenyPolicy:
 ALLOW = AllowScalePolicy()
 
 
-@pytest.fixture
-def ledger() -> MemoryScaleIntentLedger:
+def _memory_ledger(monkeypatch: pytest.MonkeyPatch) -> Any:
     return MemoryScaleIntentLedger()
 
 
+def _work_item_ledger(monkeypatch: pytest.MonkeyPatch) -> Any:
+    from arbora import work_items
+    from arbora.fleet.scaling.work_item_ledger import WorkItemScaleIntentLedger
+    from tests.fleet.scaling._work_item_engine import Session, engine
+
+    monkeypatch.setattr(work_items, "_session", Session)
+    served, fake = engine()
+    ledger = WorkItemScaleIntentLedger(served)
+    ledger.events = fake.events  # type: ignore[attr-defined]
+    return ledger
+
+
+LEDGERS = {"memory": _memory_ledger, "work_items": _work_item_ledger}
+
+
+@pytest.fixture(params=sorted(LEDGERS))
+def ledger(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> Any:
+    """The same contract holds for the fixture ledger and the engine WorkItem ledger."""
+    return LEDGERS[request.param](monkeypatch)
+
+
 def run(
-    ledger: MemoryScaleIntentLedger,
+    ledger: Any,
     *outcomes: str,
     policy: ScalePolicy | None = ALLOW,
 ) -> tuple[ScaleIntentReconciler, Actuator]:
@@ -109,10 +129,10 @@ def run(
     ), actuator
 
 
-def test_persists_before_actuation_and_replays_duplicates(ledger) -> None:
+async def test_persists_before_actuation_and_replays_duplicates(ledger) -> None:
     reconciler, actuator = run(ledger)
-    first = reconciler.reconcile(intent(), controller_id="writer-1")
-    second = reconciler.reconcile(intent(), controller_id="writer-1")
+    first = await reconciler.reconcile(intent(), controller_id="writer-1")
+    second = await reconciler.reconcile(intent(), controller_id="writer-1")
     assert first.state == ScaleIntentState.VERIFIED.value
     assert first.observation is not None and first.observation.status == "converged"
     assert ledger.events.index("persist_intent") < ledger.events.index("actuator:call")
@@ -122,12 +142,14 @@ def test_persists_before_actuation_and_replays_duplicates(ledger) -> None:
 
 
 @pytest.mark.parametrize("result_recorded", [True, False])
-def test_crash_recovery_never_double_actuates(ledger, result_recorded: bool) -> None:
+async def test_crash_recovery_never_double_actuates(
+    ledger, result_recorded: bool
+) -> None:
     record = intent()
-    persisted = ledger.persist_intent(record)
-    lease = ledger.acquire_controller_lease(record, "writer-1", now=NOW)
+    persisted = await ledger.persist_intent(record)
+    lease = await ledger.acquire_controller_lease(record, "writer-1", now=NOW)
     assert lease is not None
-    started = ledger.mark_started(record, persisted.execution, lease, now=NOW)
+    started = await ledger.mark_started(record, persisted.execution, lease, now=NOW)
     if result_recorded:
         done = ScaleActuationResult(
             execution_key=record.execution_key,
@@ -136,17 +158,17 @@ def test_crash_recovery_never_double_actuates(ledger, result_recorded: bool) -> 
             scaled=True,
             observed_replicas=record.desired_replicas,
         )
-        ledger.record_result(record, started, lease, done, now=NOW)
+        await ledger.record_result(record, started, lease, done, now=NOW)
     reconciler, actuator = run(ledger)
-    result = reconciler.reconcile(record, controller_id="writer-1")
+    result = await reconciler.reconcile(record, controller_id="writer-1")
     assert result.state == ScaleIntentState.VERIFIED.value
     assert len(actuator.calls) == (0 if result_recorded else 1)
 
 
-def test_retry_reuses_key_under_a_newer_fenced_lease(ledger) -> None:
+async def test_retry_reuses_key_under_a_newer_fenced_lease(ledger) -> None:
     reconciler, actuator = run(ledger, "retry")
-    first = reconciler.reconcile(intent(), controller_id="writer-1")
-    second = reconciler.reconcile(intent(), controller_id="writer-1")
+    first = await reconciler.reconcile(intent(), controller_id="writer-1")
+    second = await reconciler.reconcile(intent(), controller_id="writer-1")
     assert (first.state, first.retry_after_s) == (ScaleIntentState.FAILED.value, 2)
     assert second.state == ScaleIntentState.VERIFIED.value
     assert second.execution.result_attempt == 2
@@ -168,19 +190,19 @@ def test_retry_reuses_key_under_a_newer_fenced_lease(ledger) -> None:
         {"intent_revision": 2, "expected_unit_revision": 8},
     ],
 )
-def test_same_key_with_changed_binding_conflicts(ledger, update) -> None:
+async def test_same_key_with_changed_binding_conflicts(ledger, update) -> None:
     reconciler, actuator = run(ledger)
-    reconciler.reconcile(intent(), controller_id="writer-1")
+    await reconciler.reconcile(intent(), controller_id="writer-1")
     with pytest.raises(ScaleIntentConflict):
-        reconciler.reconcile(intent(**update), controller_id="writer-1")
+        await reconciler.reconcile(intent(**update), controller_id="writer-1")
     assert len(actuator.calls) == 1
 
 
-def test_dry_run_is_simulated_and_never_actuates(ledger) -> None:
+async def test_dry_run_is_simulated_and_never_actuates(ledger) -> None:
     reconciler, actuator = run(ledger)
-    first, second = (
-        reconciler.reconcile(intent(), controller_id="writer-1", dry_run=True)
-        for _ in range(2)
+    first = await reconciler.reconcile(intent(), controller_id="writer-1", dry_run=True)
+    second = await reconciler.reconcile(
+        intent(), controller_id="writer-1", dry_run=True
     )
     assert first.observation is not None and first.observation.status == "simulated"
     assert (first.scaled, first.execution.dry_run, second.replayed) == (
@@ -192,14 +214,14 @@ def test_dry_run_is_simulated_and_never_actuates(ledger) -> None:
 
 
 @pytest.mark.parametrize("policy", [None, DenyPolicy()])
-def test_missing_or_denying_policy_fails_closed(ledger, policy) -> None:
+async def test_missing_or_denying_policy_fails_closed(ledger, policy) -> None:
     reconciler, actuator = run(ledger, policy=policy)
-    result = reconciler.reconcile(intent(), controller_id="writer-1")
+    result = await reconciler.reconcile(intent(), controller_id="writer-1")
     assert result.state == ScaleIntentState.DENIED.value
     assert actuator.calls == []
 
 
-def test_break_glass_is_audited_before_actuation(ledger) -> None:
+async def test_break_glass_is_audited_before_actuation(ledger) -> None:
     reconciler, actuator = run(ledger, policy=DenyPolicy())
     approval = BreakGlassAuthorization(
         authorization_id="break-glass-1",
@@ -209,7 +231,7 @@ def test_break_glass_is_audited_before_actuation(ledger) -> None:
         target=intent().target,
         authorized_until=NOW + timedelta(minutes=1),
     )
-    result = reconciler.reconcile(
+    result = await reconciler.reconcile(
         intent(), controller_id="writer-1", break_glass=approval
     )
     assert result.break_glass_audit is not None
@@ -219,8 +241,8 @@ def test_break_glass_is_audited_before_actuation(ledger) -> None:
     )
 
 
-def test_only_the_declared_replica_writer_may_actuate(ledger) -> None:
+async def test_only_the_declared_replica_writer_may_actuate(ledger) -> None:
     reconciler, actuator = run(ledger)
     with pytest.raises(ScaleLeaseUnavailable, match="declared replica writer"):
-        reconciler.reconcile(intent(), controller_id="writer-2")
+        await reconciler.reconcile(intent(), controller_id="writer-2")
     assert actuator.calls == []

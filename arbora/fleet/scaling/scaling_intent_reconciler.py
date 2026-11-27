@@ -26,6 +26,7 @@ actuator again.  A dry-run uses the explicit ``simulated`` state and can
 never claim that replicas changed.
 """
 
+import asyncio
 import hashlib
 import json
 import math
@@ -570,6 +571,23 @@ class AllowScalePolicy:
         )
 
 
+class AdmittedScalePolicy:
+    """The verdict of the served admission, recorded as the durable decision.
+
+    ``fleet.reconcile.run`` runs behind the registry chokepoint: caller verification,
+    the policy filter, plan confirmation and audit. A reconcile that reaches the
+    reconciler was admitted there, so this policy allows it and names that authority;
+    it decides nothing a second time.
+    """
+
+    def decide(self, intent: ScaleIntentRecord) -> ScalePolicyDecision:
+        return ScalePolicyDecision(
+            decision_id=_derived_id("decision", intent.execution_key),
+            allowed=True,
+            reason="admitted by the served reconcile operation",
+        )
+
+
 class DenyScalePolicy:
     """Fail-closed policy used when a deployment has not injected governance."""
 
@@ -585,11 +603,11 @@ class DenyScalePolicy:
 class ScaleIntentLedger(Protocol):
     """Durable store required by the reconcile ordering contract."""
 
-    def persist_intent(self, intent: ScaleIntentRecord) -> PersistedIntent:
+    async def persist_intent(self, intent: ScaleIntentRecord) -> PersistedIntent:
         """Atomically insert/deduplicate the intent before any actuator call."""
         ...  # ABSTRACT-OK
 
-    def acquire_controller_lease(
+    async def acquire_controller_lease(
         self,
         intent: ScaleIntentRecord,
         controller_id: str,
@@ -599,7 +617,7 @@ class ScaleIntentLedger(Protocol):
         """Return a fenced lease or ``None`` when another controller owns it."""
         ...  # ABSTRACT-OK
 
-    def mark_started(
+    async def mark_started(
         self,
         intent: ScaleIntentRecord,
         execution: ScaleExecutionRecord,
@@ -610,7 +628,7 @@ class ScaleIntentLedger(Protocol):
         """Persist started state under the live lease before applying a side effect."""
         ...  # ABSTRACT-OK
 
-    def record_result(
+    async def record_result(
         self,
         intent: ScaleIntentRecord,
         execution: ScaleExecutionRecord,
@@ -622,7 +640,7 @@ class ScaleIntentLedger(Protocol):
         """Persist one typed result idempotently under the execution key."""
         ...  # ABSTRACT-OK
 
-    def record_observation(
+    async def record_observation(
         self,
         intent: ScaleIntentRecord,
         execution: ScaleExecutionRecord,
@@ -633,11 +651,11 @@ class ScaleIntentLedger(Protocol):
         """Persist exactly one convergence/failure observation."""
         ...  # ABSTRACT-OK
 
-    def get_observation(self, execution_key: str) -> ScaleObservation | None:
+    async def get_observation(self, execution_key: str) -> ScaleObservation | None:
         """Read the durable terminal observation for crash/replay repair."""
         ...  # ABSTRACT-OK
 
-    def record_break_glass(
+    async def record_break_glass(
         self,
         intent: ScaleIntentRecord,
         authorization: BreakGlassAuthorization,
@@ -651,6 +669,60 @@ class ScaleIntentLedger(Protocol):
 class PersistedIntent(_ScaleModel):
     execution: ScaleExecutionRecord
     replayed: StrictBool = False
+
+
+def break_glass_audit(
+    intent: ScaleIntentRecord,
+    authorization: BreakGlassAuthorization,
+    *,
+    now: datetime,
+    persisted: ScaleExecutionRecord | None,
+    existing: BreakGlassAudit | None,
+) -> BreakGlassAudit:
+    """The audit one authorization yields: validated, and replay-checked by digest.
+
+    A ledger persists the audit it returns when ``existing`` was ``None``; a replay of
+    the same authorization returns ``existing`` and a changed one refuses.
+    """
+    if not authorization.authorized or now >= authorization.authorized_until:
+        raise ScaleIntentConflict("break-glass authorization is not active")
+    if authorization.target != intent.target:
+        raise ScaleIntentConflict("break-glass target does not match intent")
+    if persisted is None or persisted.identity_digest != intent.identity_digest():
+        raise ScaleIntentConflict("break-glass requires the persisted intent identity")
+    material = json.dumps(
+        {
+            "authorization_id": authorization.authorization_id,
+            "intent_id": intent.intent_id,
+            "actor_id": authorization.actor_id,
+            "approval_ref": authorization.approval_ref,
+            "reason": authorization.reason,
+            "target": authorization.target.model_dump(mode="json"),
+            "authorized_until": authorization.authorized_until.isoformat(),
+            "authorized": authorization.authorized,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    audit_digest = hashlib.sha256(material.encode("utf-8")).hexdigest()
+    if existing is not None:
+        if existing.audit_digest != audit_digest:
+            raise ScaleIntentConflict(
+                "break-glass authorization replay changed its identity"
+            )
+        return existing
+    return BreakGlassAudit(
+        audit_id=_derived_id("audit", authorization.authorization_id),
+        authorization_id=authorization.authorization_id,
+        intent_id=intent.intent_id,
+        actor_id=authorization.actor_id,
+        approval_ref=authorization.approval_ref,
+        target=authorization.target,
+        reason=authorization.reason,
+        authorized_until=authorization.authorized_until,
+        recorded_at=now,
+        audit_digest=audit_digest,
+    )
 
 
 class MemoryScaleIntentLedger:
@@ -670,7 +742,7 @@ class MemoryScaleIntentLedger:
         self.events: list[str] = []
         self._lock = threading.RLock()
 
-    def persist_intent(self, intent: ScaleIntentRecord) -> PersistedIntent:
+    async def persist_intent(self, intent: ScaleIntentRecord) -> PersistedIntent:
         with self._lock:
             identity = intent.identity_digest()
             intent_key = (intent.intent_id, intent.intent_revision)
@@ -737,7 +809,7 @@ class MemoryScaleIntentLedger:
             return True, None
         return False, None
 
-    def acquire_controller_lease(
+    async def acquire_controller_lease(
         self,
         intent: ScaleIntentRecord,
         controller_id: str,
@@ -778,7 +850,7 @@ class MemoryScaleIntentLedger:
             self.events.append("lease:acquired")
             return lease
 
-    def mark_started(
+    async def mark_started(
         self,
         intent: ScaleIntentRecord,
         execution: ScaleExecutionRecord,
@@ -837,7 +909,7 @@ class MemoryScaleIntentLedger:
             raise ScaleIntentConflict("execution key returned a different result")
         return same_result and same_attempt
 
-    def record_result(
+    async def record_result(
         self,
         intent: ScaleIntentRecord,
         execution: ScaleExecutionRecord,
@@ -915,7 +987,7 @@ class MemoryScaleIntentLedger:
             and observation.outcome_digest == _result_digest(result)
         )
 
-    def record_observation(
+    async def record_observation(
         self,
         intent: ScaleIntentRecord,
         execution: ScaleExecutionRecord,
@@ -955,7 +1027,7 @@ class MemoryScaleIntentLedger:
             self.events.append("observation:verified")
             return observation
 
-    def record_break_glass(
+    async def record_break_glass(
         self,
         intent: ScaleIntentRecord,
         authorization: BreakGlassAuthorization,
@@ -964,58 +1036,21 @@ class MemoryScaleIntentLedger:
     ) -> BreakGlassAudit:
         with self._lock:
             now = _aware(now, "now")
-            if not authorization.authorized or now >= authorization.authorized_until:
-                raise ScaleIntentConflict("break-glass authorization is not active")
-            if authorization.target != intent.target:
-                raise ScaleIntentConflict("break-glass target does not match intent")
             persisted = self._executions.get(intent.execution_key)
-            if (
-                persisted is None
-                or persisted.identity_digest != intent.identity_digest()
-            ):
-                raise ScaleIntentConflict(
-                    "break-glass requires the persisted intent identity"
-                )
             key = (intent.execution_key, authorization.authorization_id)
-            material = json.dumps(
-                {
-                    "authorization_id": authorization.authorization_id,
-                    "intent_id": intent.intent_id,
-                    "actor_id": authorization.actor_id,
-                    "approval_ref": authorization.approval_ref,
-                    "reason": authorization.reason,
-                    "target": authorization.target.model_dump(mode="json"),
-                    "authorized_until": authorization.authorized_until.isoformat(),
-                    "authorized": authorization.authorized,
-                },
-                sort_keys=True,
-                separators=(",", ":"),
+            audit = break_glass_audit(
+                intent,
+                authorization,
+                now=now,
+                persisted=persisted,
+                existing=self._break_glass.get(key),
             )
-            audit_digest = hashlib.sha256(material.encode("utf-8")).hexdigest()
-            existing = self._break_glass.get(key)
-            if existing is not None:
-                if existing.audit_digest != audit_digest:
-                    raise ScaleIntentConflict(
-                        "break-glass authorization replay changed its identity"
-                    )
-                return existing
-            audit = BreakGlassAudit(
-                audit_id=_derived_id("audit", authorization.authorization_id),
-                authorization_id=authorization.authorization_id,
-                intent_id=intent.intent_id,
-                actor_id=authorization.actor_id,
-                approval_ref=authorization.approval_ref,
-                target=authorization.target,
-                reason=authorization.reason,
-                authorized_until=authorization.authorized_until,
-                recorded_at=now,
-                audit_digest=audit_digest,
-            )
-            self._break_glass[key] = audit
-            self.events.append("break_glass:audit")
+            if key not in self._break_glass:
+                self._break_glass[key] = audit
+                self.events.append("break_glass:audit")
             return audit
 
-    def get_observation(self, execution_key: str) -> ScaleObservation | None:
+    async def get_observation(self, execution_key: str) -> ScaleObservation | None:
         with self._lock:
             return self._observations.get(execution_key)
 
@@ -1087,13 +1122,13 @@ class ScaleIntentReconciler:
         if now >= intent.fence.expires_at:
             raise ScaleLeaseUnavailable("scale intent fence is expired")
 
-    def _validate_dry_run_reuse(
+    async def _validate_dry_run_reuse(
         self, intent: ScaleIntentRecord, execution: ScaleExecutionRecord, dry_run: bool
     ) -> None:
         if not dry_run:
             return
         if execution.state == ScaleIntentState.VERIFIED.value:
-            existing = self._existing_observation(intent.execution_key)
+            existing = await self._existing_observation(intent.execution_key)
             if (
                 existing is None
                 or existing.status != ScaleObservationStatus.SIMULATED.value
@@ -1109,7 +1144,7 @@ class ScaleIntentReconciler:
                 "dry-run cannot reuse a live or retrying execution key"
             )
 
-    def _replay_verified_or_observed(
+    async def _replay_verified_or_observed(
         self, intent: ScaleIntentRecord, execution: ScaleExecutionRecord
     ) -> ScaleReconcileResult | None:
         if execution.state not in {
@@ -1117,7 +1152,7 @@ class ScaleIntentReconciler:
             ScaleIntentState.VERIFIED.value,
         }:
             return None
-        observation = self._existing_observation(intent.execution_key)
+        observation = await self._existing_observation(intent.execution_key)
         if observation is None:
             raise ScaleObservationConflict(
                 "verified execution is missing its durable observation"
@@ -1132,7 +1167,7 @@ class ScaleIntentReconciler:
             detail="terminal execution replayed",
         )
 
-    def _replay_durable_success(
+    async def _replay_durable_success(
         self, intent: ScaleIntentRecord, execution: ScaleExecutionRecord, now: datetime
     ) -> ScaleReconcileResult | None:
         if (
@@ -1144,7 +1179,9 @@ class ScaleIntentReconciler:
             or execution.result is None
         ):
             return None
-        observation = self._observe_result(intent, execution, execution.result, now)
+        observation = await self._observe_result(
+            intent, execution, execution.result, now
+        )
         return ScaleReconcileResult(
             state=ScaleIntentState.VERIFIED,
             replayed=True,
@@ -1155,7 +1192,7 @@ class ScaleIntentReconciler:
             detail="durable result replayed into missing observation",
         )
 
-    def _replay_terminal_failure(
+    async def _replay_terminal_failure(
         self, intent: ScaleIntentRecord, execution: ScaleExecutionRecord, now: datetime
     ) -> ScaleReconcileResult | None:
         """A durable non-retryable result (or an exhausted retry budget) is
@@ -1167,7 +1204,9 @@ class ScaleIntentReconciler:
             and execution.attempt < intent.retry_policy.max_attempts
         ):
             return None
-        observation = self._observe_result(intent, execution, execution.result, now)
+        observation = await self._observe_result(
+            intent, execution, execution.result, now
+        )
         return ScaleReconcileResult(
             state=ScaleIntentState.VERIFIED,
             replayed=True,
@@ -1194,26 +1233,26 @@ class ScaleIntentReconciler:
                 "retry budget exhausted before an actuator result was durable"
             )
 
-    def _replay_terminal_execution(
+    async def _replay_terminal_execution(
         self, intent: ScaleIntentRecord, execution: ScaleExecutionRecord, now: datetime
     ) -> ScaleReconcileResult | None:
         """Repair/replay a terminal or durably-resolved execution without
         consulting policy or invoking an actuator again — the execution key
         is already consumed. Returns ``None`` when reconcile must continue
         past this point (a fresh scale, or an exhausted retry budget raise)."""
-        result = self._replay_verified_or_observed(intent, execution)
+        result = await self._replay_verified_or_observed(intent, execution)
         if result is not None:
             return result
-        result = self._replay_durable_success(intent, execution, now)
+        result = await self._replay_durable_success(intent, execution, now)
         if result is not None:
             return result
-        result = self._replay_terminal_failure(intent, execution, now)
+        result = await self._replay_terminal_failure(intent, execution, now)
         if result is not None:
             return result
         self._reject_exhausted_retry_budget(intent, execution)
         return None
 
-    def _decide_policy_and_break_glass(
+    async def _decide_policy_and_break_glass(
         self,
         intent: ScaleIntentRecord,
         execution: ScaleExecutionRecord,
@@ -1238,10 +1277,10 @@ class ScaleIntentReconciler:
                 None,
             )
         self._validate_break_glass(intent, break_glass, now)
-        audit = self.ledger.record_break_glass(intent, break_glass, now=now)
+        audit = await self.ledger.record_break_glass(intent, break_glass, now=now)
         return None, audit
 
-    def _execute_dry_run(
+    async def _execute_dry_run(
         self,
         intent: ScaleIntentRecord,
         execution: ScaleExecutionRecord,
@@ -1257,8 +1296,10 @@ class ScaleIntentReconciler:
             scaled=False,
             detail="dry-run: actuator not called",
         )
-        execution = self.ledger.record_result(intent, execution, lease, result, now=now)
-        observation = self._observe_result(intent, execution, result, now)
+        execution = await self.ledger.record_result(
+            intent, execution, lease, result, now=now
+        )
+        observation = await self._observe_result(intent, execution, result, now)
         return ScaleReconcileResult(
             state=ScaleIntentState.VERIFIED,
             replayed=persisted.replayed,
@@ -1270,11 +1311,11 @@ class ScaleIntentReconciler:
             detail="dry-run simulated; no replicas changed",
         )
 
-    def _invoke_actuator(
+    async def _invoke_actuator(
         self, intent: ScaleIntentRecord, request: ScaleActuationRequest
     ) -> ScaleActuationResult:
         try:
-            result = self.actuator.apply(request)
+            result = await asyncio.to_thread(self.actuator.apply, request)
         except Exception as exc:  # noqa: BLE001 — typed failure is persisted, never raised as success
             return ScaleActuationResult(
                 execution_key=intent.execution_key,
@@ -1307,7 +1348,7 @@ class ScaleIntentReconciler:
             )
         return result
 
-    def _execute_live(
+    async def _execute_live(
         self,
         intent: ScaleIntentRecord,
         execution: ScaleExecutionRecord,
@@ -1316,7 +1357,7 @@ class ScaleIntentReconciler:
         audit: BreakGlassAudit | None,
         now: datetime,
     ) -> ScaleReconcileResult:
-        execution = self.ledger.mark_started(intent, execution, lease, now=now)
+        execution = await self.ledger.mark_started(intent, execution, lease, now=now)
         request = ScaleActuationRequest(
             intent_id=intent.intent_id,
             intent_revision=intent.intent_revision,
@@ -1329,8 +1370,10 @@ class ScaleIntentReconciler:
             lease=lease,
             dry_run=False,
         )
-        result = self._invoke_actuator(intent, request)
-        execution = self.ledger.record_result(intent, execution, lease, result, now=now)
+        result = await self._invoke_actuator(intent, request)
+        execution = await self.ledger.record_result(
+            intent, execution, lease, result, now=now
+        )
         if (
             result.state == ScaleIntentState.FAILED.value
             and result.retryable
@@ -1346,7 +1389,7 @@ class ScaleIntentReconciler:
                 retry_after_s=intent.retry_policy.backoff_s,
                 detail="retryable actuator failure persisted",
             )
-        observation = self._observe_result(intent, execution, result, now)
+        observation = await self._observe_result(intent, execution, result, now)
         return ScaleReconcileResult(
             state=ScaleIntentState.VERIFIED,
             replayed=persisted.replayed,
@@ -1358,7 +1401,7 @@ class ScaleIntentReconciler:
             detail=result.detail,
         )
 
-    def reconcile(
+    async def reconcile(
         self,
         intent: ScaleIntentRecord,
         *,
@@ -1368,30 +1411,32 @@ class ScaleIntentReconciler:
     ) -> ScaleReconcileResult:
         now = _aware(self.clock(), "clock")
         self._reconcile_preflight(intent, controller_id, now)
-        persisted = self.ledger.persist_intent(intent)
+        persisted = await self.ledger.persist_intent(intent)
         execution = persisted.execution
-        self._validate_dry_run_reuse(intent, execution, dry_run)
+        await self._validate_dry_run_reuse(intent, execution, dry_run)
 
-        replay = self._replay_terminal_execution(intent, execution, now)
+        replay = await self._replay_terminal_execution(intent, execution, now)
         if replay is not None:
             return replay
 
-        early_result, audit = self._decide_policy_and_break_glass(
+        early_result, audit = await self._decide_policy_and_break_glass(
             intent, execution, persisted, break_glass, now
         )
         if early_result is not None:
             return early_result
 
-        lease = self.ledger.acquire_controller_lease(intent, controller_id, now=now)
+        lease = await self.ledger.acquire_controller_lease(
+            intent, controller_id, now=now
+        )
         if lease is None:
             raise ScaleLeaseUnavailable("another controller owns the scale lease")
 
         if dry_run:
-            return self._execute_dry_run(
+            return await self._execute_dry_run(
                 intent, execution, lease, persisted, audit, now
             )
 
-        return self._execute_live(intent, execution, lease, persisted, audit, now)
+        return await self._execute_live(intent, execution, lease, persisted, audit, now)
 
     @staticmethod
     def _verified_execution(
@@ -1407,7 +1452,7 @@ class ScaleIntentReconciler:
             }
         )
 
-    def _observe_result(
+    async def _observe_result(
         self,
         intent: ScaleIntentRecord,
         execution: ScaleExecutionRecord,
@@ -1435,14 +1480,14 @@ class ScaleIntentReconciler:
             observed_at=now,
             detail=result.detail,
         )
-        return self.ledger.record_observation(
+        return await self.ledger.record_observation(
             intent,
             execution,
             observation,
             now=now,
         )
 
-    def _observe_failure(
+    async def _observe_failure(
         self,
         intent: ScaleIntentRecord,
         execution: ScaleExecutionRecord,
@@ -1450,10 +1495,12 @@ class ScaleIntentReconciler:
     ) -> ScaleObservation:
         if execution.result is None:
             raise ScaleIntentConflict("terminal failure lacks durable actuator result")
-        return self._observe_result(intent, execution, execution.result, now)
+        return await self._observe_result(intent, execution, execution.result, now)
 
-    def _existing_observation(self, execution_key: str) -> ScaleObservation | None:
-        return self.ledger.get_observation(execution_key)
+    async def _existing_observation(
+        self, execution_key: str
+    ) -> ScaleObservation | None:
+        return await self.ledger.get_observation(execution_key)
 
     @staticmethod
     def _validate_break_glass(
@@ -1470,6 +1517,7 @@ class ScaleIntentReconciler:
 
 
 __all__ = [
+    "AdmittedScalePolicy",
     "AllowScalePolicy",
     "BreakGlassAudit",
     "BreakGlassAuthorization",
@@ -1498,4 +1546,5 @@ __all__ = [
     "ScaleReconcileResult",
     "ScaleRetryPolicy",
     "ScaleTargetBinding",
+    "break_glass_audit",
 ]
