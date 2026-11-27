@@ -20,6 +20,7 @@ from arbora.api.evidence import EvidenceBundle
 from arbora.core.event_loop import run_blocking_ordered
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing import engine_routing
+from arbora.mcp_server.legacy_action_mapping import require_served_action
 from arbora.security.config_sensitivity import (
     ENDPOINT_KEY_PARTS as _ENDPOINT_MCP_KEY_PARTS,
 )
@@ -2524,6 +2525,7 @@ def register_analysis_tools(mcp):
         if handler is None:
             return f"Error: Unknown analyze action '{action}'"
         try:
+            require_served_action(action)
             return await handler(engine, action, query, top_k, node_id, depth, target)
         except Exception as e:
             return public_error_text(e)

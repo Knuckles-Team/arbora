@@ -20,6 +20,7 @@ from arbora.mcp_server import runtime
 from arbora.mcp_server.backing import engine_routing
 from arbora.mcp_server.backing.context_helpers import coerce_dict_param
 from arbora.mcp_server.backing.write_ingest_types import IngestRequest
+from arbora.mcp_server.legacy_action_mapping import require_served_action
 from arbora.security.error_surface import (
     public_error_json,
     public_error_text,
@@ -1679,6 +1680,7 @@ def register_write_ingest_tools(mcp):
             graph=graph,
         )
         try:
+            require_served_action(action)
             return await handler(engine, request)
         except Exception as e:
             return public_error_text(e)

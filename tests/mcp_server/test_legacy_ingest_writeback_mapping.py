@@ -21,13 +21,17 @@ def _resolves(actions: tuple[str, ...]) -> None:
     registry = get_registry()
     for action in actions:
         assert action in APPROVED_ACTION_MAPPING, action
-        assert registry.get(APPROVED_ACTION_MAPPING[action]) is not None, action
+        assert registry.get(APPROVED_ACTION_MAPPING[action].operation) is not None, (
+            action
+        )
 
 
 @pytest.mark.spec("ARBORA-HOST-R005.2.1.4")
 def test_process_writeback_resolves_to_engine_write_back() -> None:
     _resolves(("process_writeback",))
-    assert APPROVED_ACTION_MAPPING["process_writeback"] == "eg.storage.WriteBack"
+    assert (
+        APPROVED_ACTION_MAPPING["process_writeback"].operation == "eg.storage.WriteBack"
+    )
 
 
 @pytest.mark.spec("ARBORA-HOST-R005.2.1.5")
@@ -128,3 +132,30 @@ async def test_submit_list_prioritize_cancel_round_trip(lifecycle: Any) -> None:
     ]
     assert cancelled["applied"] is True
     assert items.items[receipt["job_id"]]["status"] == "cancelled"
+
+
+@pytest.mark.spec("ARBORA-HOST-R005.2.3.2")
+def test_submission_actions_resolve() -> None:
+    from arbora.mcp_server.legacy_action_mapping import resolve_legacy_action
+
+    _resolves(INGEST_SUBMISSION_ACTIONS)
+    for action in INGEST_SUBMISSION_ACTIONS:
+        resolved = resolve_legacy_action(action)
+        assert resolved.operation == "ingest.submissions.create"
+        assert dict(resolved.params) == {"kind": action}
+
+
+@pytest.mark.spec("ARBORA-HOST-R005.2.3.4")
+def test_job_actions_resolve() -> None:
+    from arbora.mcp_server.legacy_action_mapping import resolve_legacy_action
+
+    expected = {
+        "jobs": "ingest.jobs.list",
+        "job_status": "ingest.jobs.status",
+        "status": "ingest.jobs.status",
+        "cancel": "ingest.jobs.cancel",
+        "prioritize": "ingest.jobs.prioritize",
+    }
+    for action, operation in expected.items():
+        assert resolve_legacy_action(action).operation == operation
+    assert resolve_legacy_action("clear").retired_by == "MEDULLA-INGEST-WORKER"

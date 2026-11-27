@@ -10,5 +10,7 @@ from arbora.mcp_server.legacy_action_mapping import APPROVED_ACTION_MAPPING
 
 @pytest.mark.spec("ARBORA-HOST-R005.2.3.1")
 def test_sync_maps_to_registered_ingest_operation() -> None:
-    assert APPROVED_ACTION_MAPPING["sync"] == "ingest.sources.sync"
-    assert APPROVED_ACTION_MAPPING["sync"] in {op.id for op in ingest.operations()}
+    assert APPROVED_ACTION_MAPPING["sync"].operation == "ingest.sources.sync"
+    assert APPROVED_ACTION_MAPPING["sync"].operation in {
+        op.id for op in ingest.operations()
+    }
