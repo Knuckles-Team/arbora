@@ -35,7 +35,7 @@ import ipaddress
 from typing import Any
 from urllib.parse import urlsplit
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 
 # The validated configuration object (attribute reads); its type is owned by
 # the configuration loader, so the guard reads it structurally.
@@ -128,7 +128,7 @@ def is_production_profile(profile: str | None = None) -> bool:
         environment variable is consulted.
     """
     if profile is None:
-        profile = setting(PROFILE_ENV_VAR)
+        profile = read_env(PROFILE_ENV_VAR)
     if not profile:
         return False
     return profile.strip().lower() in PROD_PROFILE_VALUES
@@ -578,7 +578,7 @@ def assert_production_safe(config: AgentConfig, *, profile: str | None = None) -
     :param profile: Optional explicit profile override (otherwise ``APP_PROFILE``).
     :raises ProductionProfileError: If running as production with unsafe settings.
     """
-    active_profile = profile if profile is not None else setting(PROFILE_ENV_VAR, "")
+    active_profile = profile if profile is not None else read_env(PROFILE_ENV_VAR, "")
     if not is_production_profile(active_profile):
         return
 

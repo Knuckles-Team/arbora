@@ -161,11 +161,8 @@ def test_atomic_write_failure_preserves_existing_document(
 def test_workspace_mcp_path_rejects_escape(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    values = {"WORKSPACE_PATH": str(tmp_path), "MCP_CONFIG": "../outside.json"}
-    monkeypatch.setattr(
-        "arbora.core.settings.setting",
-        lambda key, default="": values.get(key, default),
-    )
+    monkeypatch.setenv("WORKSPACE_PATH", str(tmp_path))
+    monkeypatch.setenv("MCP_CONFIG", "../outside.json")
 
     with pytest.raises(PermissionError):
         analysis_tools._workspace_mcp_config_path()

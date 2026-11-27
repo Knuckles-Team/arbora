@@ -74,7 +74,7 @@ import os
 from pathlib import Path
 from typing import TypedDict
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 
 logger = logging.getLogger("arbora.live_mount_guard")
 
@@ -159,7 +159,7 @@ def _decode_mountinfo_path(value: str) -> str:
 
 def _configured_source_roots() -> tuple[Path, ...]:
     """Return canonical live-source roots explicitly declared on ``PYTHONPATH``."""
-    python_path = setting("PYTHONPATH", "")
+    python_path = read_env("PYTHONPATH")
     return tuple(
         Path(entry).resolve() for entry in python_path.split(os.pathsep) if entry
     )
@@ -237,9 +237,9 @@ def check_live_mount_status(
     strictly worse than the silent-staleness defect this guard exists to
     catch, so any internal failure degrades to ``NOT_APPLICABLE``.
     """
-    if setting(_SKIP_ENV_VAR, False, cast=bool):
+    if read_env(_SKIP_ENV_VAR):
         return LiveMountStatus.NOT_APPLICABLE, {"reason": "check skipped by env var"}
-    if not setting(_IN_POD_ENV_VAR, ""):
+    if not read_env(_IN_POD_ENV_VAR, ""):
         return LiveMountStatus.NOT_APPLICABLE, {
             "reason": "not running under Kubernetes"
         }

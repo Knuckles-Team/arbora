@@ -12,7 +12,6 @@ import argparse
 import asyncio
 import hashlib
 import json
-import os
 import re
 import secrets
 import shutil
@@ -27,8 +26,9 @@ from typing import Any
 from filelock import FileLock
 
 from arbora.access.action_policy import ActionPolicies
+from arbora.core.environment import inherited_environment, read_env
 from arbora.core.settings import ArboraConfig as AgentConfig
-from arbora.core.settings import platform_config_file, setting
+from arbora.core.settings import platform_config_file
 
 
 class ProductionOperationError(RuntimeError):
@@ -71,7 +71,7 @@ def deliver_registry_manifest(source: Path, target_dir: Path) -> dict[str, Any]:
 
 
 def _required_env(name: str) -> str:
-    value = str(setting(name, "") or "").strip()
+    value = str(read_env(name, "") or "").strip()
     if not value:
         raise ProductionOperationError(f"required runtime setting {name} is absent")
     return value
@@ -153,7 +153,7 @@ def _archive_lock(archive_root: Path, *, timeout_seconds: int = 7500) -> FileLoc
 
 
 def _retention_count() -> int:
-    value = int(setting("ARBORA_BACKUP_RETENTION_COUNT", 2))
+    value = int(read_env("ARBORA_BACKUP_RETENTION_COUNT"))
     if not 2 <= value <= 1440:
         raise ProductionOperationError(
             "ARBORA_BACKUP_RETENTION_COUNT must be inside 2..1440"
@@ -350,9 +350,9 @@ async def _restore_validate(archive_root: Path, scratch_root: Path) -> dict[str,
         scratch_root / f"restore-{int(time.time())}-{secrets.token_hex(6)}",
     )
     destination.mkdir(mode=0o700)
-    restore_bin = str(setting("MEDULLA_RESTORE_BIN", "restore"))
-    server_bin = str(setting("MEDULLA_BIN", "medulla-server"))
-    port = int(setting("RESTORE_VALIDATION_PORT", 19_100))
+    restore_bin = str(read_env("MEDULLA_RESTORE_BIN"))
+    server_bin = str(read_env("MEDULLA_BIN", "medulla-server"))
+    port = int(read_env("RESTORE_VALIDATION_PORT"))
     if not 1024 <= port <= 65535:
         raise ProductionOperationError("RESTORE_VALIDATION_PORT is outside 1024..65535")
     try:
@@ -385,7 +385,7 @@ async def _restore_validate(archive_root: Path, scratch_root: Path) -> dict[str,
                     "restore omitted the admin mutation coordinator"
                 )
             bundle_digest, file_count, byte_count = _tree_digest(bundle)
-        env = dict(os.environ)
+        env = inherited_environment()
         process = subprocess.Popen(  # nosec B603 -- validated server and local args
             [
                 server_bin,
@@ -600,7 +600,7 @@ def _server_names(values: list[str]) -> frozenset[str]:
 def _served_url_argument(parser: argparse.ArgumentParser, help_text: str) -> None:
     parser.add_argument(
         "--served-url",
-        default=str(setting("ARBORA_SERVED_MCP_URL", "") or ""),
+        default=str(read_env("ARBORA_SERVED_MCP_URL") or ""),
         help=help_text,
     )
 

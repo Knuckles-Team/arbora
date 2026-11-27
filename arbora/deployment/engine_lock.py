@@ -37,7 +37,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-from arbora.core.settings import setting
+from arbora.core.environment import read_env
 from arbora.deployment.file_lock import (
     LockUnavailable,
     lock_exclusive_nb,
@@ -61,7 +61,7 @@ def _runtime_base() -> Path:
 
         base = Path(platformdirs.user_runtime_dir("arbora"))
     except Exception:  # pragma: no cover - platformdirs present in practice
-        base = Path(setting("XDG_RUNTIME_DIR", "/tmp")) / "arbora"  # nosec B108 — XDG fallback
+        base = Path(read_env("XDG_RUNTIME_DIR")) / "arbora"  # nosec B108 — XDG fallback
     base.mkdir(parents=True, exist_ok=True)
     return base
 

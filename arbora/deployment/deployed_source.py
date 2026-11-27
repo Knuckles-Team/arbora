@@ -15,12 +15,13 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import subprocess  # nosec B404 -- fixed git argv, no shell
 import sys
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
+
+from arbora.core.environment import read_env
 
 PROMOTION_REF = "refs/heads/deployed"
 PROMOTION_BRANCH = "deployed"
@@ -717,14 +718,10 @@ def _locations(args: argparse.Namespace) -> tuple[Path, Path]:
         raw = yaml.safe_load(Path(args.config).read_text(encoding="utf-8")) or {}
         declared = dict(raw.get("deployed_source") or {})
     source = (
-        args.source_repo
-        or declared.get("source_repo")
-        or os.environ.get(SOURCE_REPO_ENV)
+        args.source_repo or declared.get("source_repo") or read_env(SOURCE_REPO_ENV)
     )
     worktree = (
-        args.worktree
-        or declared.get("worktree")
-        or os.environ.get(DEPLOYED_WORKTREE_ENV)
+        args.worktree or declared.get("worktree") or read_env(DEPLOYED_WORKTREE_ENV)
     )
     if not source or not worktree:
         raise OperatorError(

@@ -23,6 +23,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+from arbora.core.environment import inherited_environment
 from arbora.identity.sandbox_principal import (
     ROLES,
     SANDBOX_TENANTS,
@@ -58,7 +59,7 @@ def _launch(command: Sequence[str], environment: Mapping[str, str]) -> int:
     """Start ``command`` detached from this terminal, on loopback, and return its PID."""
     process = subprocess.Popen(  # noqa: S603  # nosec B603 - fixed argv, no shell
         list(command),
-        env={**os.environ, **environment},
+        env={**inherited_environment(), **environment},
         stdin=subprocess.DEVNULL,
         start_new_session=True,
     )

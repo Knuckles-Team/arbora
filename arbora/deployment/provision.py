@@ -42,6 +42,8 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
+from arbora.core.environment import inherited_environment
+
 #: The realm roles the process token must carry.
 PROCESS_ROLES = (
     "kg:admin",
@@ -714,7 +716,7 @@ def _pod_enrol(spec_json: str) -> int:
 
     from epistemic_graph import EpistemicGraphClient
 
-    environment = os.environ
+    environment = inherited_environment()
     signers = json.loads(environment["EPISTEMIC_GRAPH_SIGNER_KEYS_JSON"])
     if len(signers) != 1:
         print(

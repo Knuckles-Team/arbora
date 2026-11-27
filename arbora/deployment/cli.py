@@ -14,6 +14,8 @@ import json
 import sys
 from collections.abc import Callable
 
+from arbora.core.environment import read_env
+
 from .config_generator import (
     PROFILES,
     config_doctor,
@@ -59,14 +61,13 @@ def _run_release_plan(args: argparse.Namespace) -> int:
 def _run_deploy(args: argparse.Namespace) -> int:
     """Ask the served door where a workload runs and print what it returns."""
     import asyncio
-    import os
     from pathlib import Path
 
     from arbora.client.http import HttpTransport, OperationError
     from arbora.client.invoke import invoke
 
-    base_url = args.url or os.environ.get("ARBORA_URL", "")
-    token = os.environ.get("ARBORA_TOKEN", "")
+    base_url = args.url or read_env("ARBORA_URL", "")
+    token = read_env("ARBORA_TOKEN", "")
     try:
         request = json.loads(Path(args.request).read_text(encoding="utf-8"))
         transport = HttpTransport(base_url, token)

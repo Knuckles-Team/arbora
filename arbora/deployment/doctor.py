@@ -24,6 +24,8 @@ from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any
 
+from arbora.core.environment import read_env, read_reference
+
 from . import doctor_a2a as _doctor_a2a
 from . import doctor_certification as _doctor_certification
 from . import doctor_coverage as _doctor_coverage
@@ -1486,20 +1488,18 @@ def _check_identity_exposure() -> dict[str, Any]:
     set, or ``GRAPH_SERVICE_AUTH_SECRET`` generated automatically under the
     production profile. Reads the same settings as ``arbora.security.anonymous``.
     """
-    import os
 
     from arbora.core.settings import runtime_config as config
-    from arbora.core.settings import setting
     from arbora.security.anonymous import loopback
 
     failures: list[str] = []
     if config.arbora_auth_mode == "none":
         if not loopback(str(config.host)):
             failures.append("identity.exposed_none_mode")
-        elif os.environ.get("ARBORA_AUTH_NONE_EXPOSE"):
+        elif read_env("ARBORA_AUTH_NONE_EXPOSE"):
             failures.append("identity.exposed_none_mode")
-    production = str(setting("ARBORA_PROFILE", "") or "").lower() == "production"
-    if production and setting("GRAPH_SERVICE_AUTH_SECRET_GENERATED", ""):
+    production = str(read_env("ARBORA_PROFILE") or "").lower() == "production"
+    if production and read_env("GRAPH_SERVICE_AUTH_SECRET_GENERATED"):
         failures.append("identity.generated_secret")
     if not failures:
         return _result(
@@ -1519,7 +1519,6 @@ def _check_identity_exposure() -> dict[str, Any]:
 
 def _check_auth() -> dict[str, Any]:
     from arbora.core.settings import runtime_config as config
-    from arbora.core.settings import setting
     from arbora.identity.deployment_settings import identity_deployment
     from arbora.security.anonymous import indicator
     from arbora.security.request_identity import (
@@ -1550,9 +1549,9 @@ def _check_auth() -> dict[str, Any]:
             },
         )
 
-    jwks = str(setting("AUTH_JWT_JWKS_URI", "") or "").strip()
-    audience = str(setting("AUTH_JWT_AUDIENCE", "") or "").strip()
-    policy_version = str(setting("KG_POLICY_VERSION", "") or "").strip()
+    jwks = str(read_env("AUTH_JWT_JWKS_URI", "") or "").strip()
+    audience = str(read_env("AUTH_JWT_AUDIENCE", "") or "").strip()
+    policy_version = str(read_env("KG_POLICY_VERSION", "") or "").strip()
     missing = [
         name
         for name, value in (
@@ -1797,10 +1796,8 @@ def _fleet_alias_kind(alias: str, reference: Any) -> str:
         resolve_runtime_secret_reference,
     )
 
-    from arbora.core.settings import setting
-
     try:
-        direct = setting(alias)
+        direct = read_reference(alias, None)
         if direct not in (None, ""):
             if any(character in str(direct) for character in "\x00\r\n"):
                 raise ValueError("invalid direct runtime material")

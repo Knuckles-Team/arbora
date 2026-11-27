@@ -127,6 +127,7 @@ _PASS_THROUGH: frozenset[tuple[str, str]] = frozenset(
         ("arbora/a2a/push.py", "name"),
         ("arbora/agent_runs.py", "api_key_env"),
         ("arbora/core/environment.py", "name"),
+        ("arbora/deployment/production_ops.py", "name"),
         ("arbora/fleet/catalog_reader.py", "key"),
         ("arbora/messaging/backends/_channel_http.py", "self._key(suffix)"),
         ("arbora/messaging/backends/email.py", "name"),
@@ -354,6 +355,7 @@ _READ_CALLS = frozenset(
 _READ_HELPERS: dict[str, frozenset[str]] = {
     "arbora/a2a/push.py": frozenset({"number"}),
     "arbora/core/settings.py": frozenset({"_env_dir"}),
+    "arbora/deployment/production_ops.py": frozenset({"_required_env"}),
     "arbora/fleet/catalog_reader.py": frozenset({"_bounded_setting"}),
     "arbora/identity/deployment_settings.py": frozenset({"_text"}),
     "arbora/identity/host_services.py": frozenset({"read"}),
