@@ -19,17 +19,20 @@ from typing import Any
 import pytest
 
 from arbora.access.action_policy import ActionPolicies
-from arbora.fleet import onboarding
+from arbora.fleet import onboarding as _onboarding_module
+from arbora.fleet import onboarding_capture as _onboarding_capture
+from arbora.fleet import onboarding_service as _onboarding_service
 from arbora.fleet.declarations import Declarations
 from arbora.fleet.onboarding import (
     RENEW_MARGIN_MS,
-    FleetEndpoint,
     FleetOnboarding,
-    FleetOnboardingService,
     OnboardingReport,
-    fleet_endpoints,
     onboard_fleet,
     refresh_serving_catalog,
+)
+from arbora.fleet.onboarding_capture import FleetEndpoint, fleet_endpoints
+from arbora.fleet.onboarding_service import (
+    FleetOnboardingService,
     start_fleet_onboarding,
 )
 from arbora.fleet.virtual_catalog import VirtualCatalog
@@ -177,7 +180,7 @@ async def _served_pack(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
 
     async with McpTransport().session(TransportEndpoint(in_process=server)) as session:
         return await build_content_pack(
-            session, connector=endpoint.name, kinds=onboarding._capture_kinds()
+            session, connector=endpoint.name, kinds=_onboarding_capture._capture_kinds()
         )
 
 
@@ -192,9 +195,9 @@ def eg(monkeypatch: pytest.MonkeyPatch) -> _Registry:
         "scion_sdk.sinks.medulla.MedullaSink",
         _RecordingSink,
     )
-    monkeypatch.setattr(onboarding, "_child_auth", lambda *_: None)
+    monkeypatch.setattr(_onboarding_module, "_child_auth", lambda *_: None)
     monkeypatch.setattr(
-        onboarding, "self_served_connectors", lambda: ("arbora", "meristem")
+        _onboarding_module, "self_served_connectors", lambda: ("arbora", "meristem")
     )
     _RecordingSink.imported = []
     return registry
@@ -252,7 +255,7 @@ def test_configured_fleet_reads_the_active_arbora_directory(
     monkeypatch.setenv("ARBORA_CONFIG_DIR", f"  {active}  ")
     monkeypatch.setenv("MERISTEM_CONFIG_DIR", str(tmp_path / "legacy"))
 
-    assert onboarding.configured_fleet_endpoints() == (
+    assert _onboarding_capture.configured_fleet_endpoints() == (
         FleetEndpoint("alpha-mcp", "https://alpha/mcp"),
     )
 
@@ -521,7 +524,7 @@ def test_missing_child_credential_reports_once(
     def no_identity() -> Any:
         raise RuntimeError("Outbound MCP service identity is incomplete")
 
-    monkeypatch.setattr(onboarding, "_child_auth", no_identity)
+    monkeypatch.setattr(_onboarding_module, "_child_auth", no_identity)
 
     report = _run_in_session(onboard_fleet(_onboarding(eg), (ALPHA, BETA)))
 
@@ -572,7 +575,7 @@ def test_service_pass_publishes_its_report_to_multiplexer_status(
     eg: _Registry, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(
-        onboarding, "configured_fleet_endpoints", lambda **_kwargs: (ALPHA,)
+        _onboarding_service, "configured_fleet_endpoints", lambda **_kwargs: (ALPHA,)
     )
     mux = _Mux({})
     service = FleetOnboardingService(onboarding=_onboarding(eg), multiplexer=mux)
@@ -604,7 +607,7 @@ def test_a_failing_pass_never_escapes_the_boot_thread(
     def broken(**_kwargs: Any) -> Any:
         raise ValueError("MCP catalog must be an object")
 
-    monkeypatch.setattr(onboarding, "configured_fleet_endpoints", broken)
+    monkeypatch.setattr(_onboarding_service, "configured_fleet_endpoints", broken)
     service = FleetOnboardingService(onboarding=_onboarding(eg), multiplexer=_Mux({}))
 
     service._run_pass_safely()
@@ -707,9 +710,11 @@ def test_cli_runs_one_full_pass_and_fails_on_any_server(
     monkeypatch.setattr(EngineHandles, "served", lambda _self: eg)
     monkeypatch.setattr(bootstrap, "_wait_for_engine_materialization", lambda e: None)
     monkeypatch.setattr(
-        onboarding, "configured_fleet_endpoints", lambda **_kwargs: (ALPHA, BETA)
+        _onboarding_capture,
+        "configured_fleet_endpoints",
+        lambda **_kwargs: (ALPHA, BETA),
     )
-    monkeypatch.setattr(onboarding, "capture_server_pack", capture)
+    monkeypatch.setattr(_onboarding_module, "capture_server_pack", capture)
 
     code = production_ops_cli.main(["onboard-fleet", "--served-url", SELF_URL])
 

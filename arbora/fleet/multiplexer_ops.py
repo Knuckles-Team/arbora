@@ -82,14 +82,14 @@ def _load_cap_refusal(exc: LoadCapExceeded) -> Any:
 def _default_coverage_registry() -> tuple[Any, ...]:
     """The org registry: the ``connectors`` group of ``workspace.yml``."""
     from arbora.fleet.coverage import registered_connectors
-    from arbora.fleet.onboarding import self_served_connectors
+    from arbora.fleet.onboarding_capture import self_served_connectors
 
     return registered_connectors(exclude=self_served_connectors())
 
 
 def _default_coverage_endpoints() -> tuple[Any, ...]:
     """The deployed MCP config's enabled endpoints, self-served excluded."""
-    from arbora.fleet.onboarding import (
+    from arbora.fleet.onboarding_capture import (
         configured_fleet_endpoints,
         self_served_connectors,
     )

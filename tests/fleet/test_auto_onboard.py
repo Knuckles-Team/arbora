@@ -7,15 +7,11 @@ from typing import Any
 
 import pytest
 
-from arbora.fleet import onboarding
 from arbora.fleet import onboarding as onboarding_module
-from arbora.fleet.onboarding import (
-    FleetEndpoint,
-    FleetOnboarding,
-    FleetOnboardingService,
-    OnboardingTrigger,
-    onboard_fleet,
-)
+from arbora.fleet import onboarding_service as _onboarding_service
+from arbora.fleet.onboarding import FleetOnboarding, OnboardingTrigger, onboard_fleet
+from arbora.fleet.onboarding_capture import FleetEndpoint
+from arbora.fleet.onboarding_service import FleetOnboardingService
 from tests.fleet.test_fleet_onboarding import (
     ALPHA,
     _Mux,
@@ -46,7 +42,7 @@ def test_every_trigger_reaches_the_one_onboard_function(
 
     monkeypatch.setattr(FleetOnboarding, "onboard", recording_onboard)
     monkeypatch.setattr(
-        onboarding, "configured_fleet_endpoints", lambda **_kwargs: (ALPHA,)
+        _onboarding_service, "configured_fleet_endpoints", lambda **_kwargs: (ALPHA,)
     )
 
     async def drive() -> None:

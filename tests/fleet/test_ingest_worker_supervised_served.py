@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from arbora.fleet import onboarding as onboarding_module
+from arbora.fleet import onboarding_service as _onboarding_service
 from arbora.gateway import fleet as fleet_api
 from arbora.gateway.state import GatewayState
 
@@ -64,7 +64,7 @@ def boot(monkeypatch: pytest.MonkeyPatch) -> Any:
         "arbora.fleet.data_prep.data_prep_path", lambda: None, raising=False
     )
     monkeypatch.setattr(
-        onboarding_module.FleetOnboardingService, "start", lambda self: "thread"
+        _onboarding_service.FleetOnboardingService, "start", lambda self: "thread"
     )
 
     def spawn(argv: tuple[str, ...]) -> _Process:
@@ -79,7 +79,7 @@ def boot(monkeypatch: pytest.MonkeyPatch) -> Any:
             monkeypatch.delenv("GRAPH_SERVICE_ENDPOINTS", raising=False)
         else:
             monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", endpoint)
-        onboarding_module.start_fleet_onboarding(
+        _onboarding_service.start_fleet_onboarding(
             gateway=gateway,
             engine=_engine(),
             session=SimpleNamespace(graph="g", tenant="t"),

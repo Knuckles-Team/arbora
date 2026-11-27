@@ -377,7 +377,8 @@ def test_onboarding_registers_after_import(fake_sdk, monkeypatch) -> None:
     import asyncio
 
     from arbora import semantic_provisioning
-    from arbora.fleet.onboarding import FleetEndpoint, FleetOnboarding
+    from arbora.fleet.onboarding import FleetOnboarding
+    from arbora.fleet.onboarding_capture import FleetEndpoint
     from arbora.security.session import use_session
     from tests._eg_fakes import service_session
 
@@ -492,7 +493,8 @@ def test_onboarding_passes_the_operator_mass_withdrawal_decision(
 
     from arbora import semantic_provisioning
     from arbora.deployment.production_ops import _parser, _server_names
-    from arbora.fleet.onboarding import FleetEndpoint, FleetOnboarding
+    from arbora.fleet.onboarding import FleetOnboarding
+    from arbora.fleet.onboarding_capture import FleetEndpoint
     from arbora.security.session import use_session
     from tests._eg_fakes import service_session
 

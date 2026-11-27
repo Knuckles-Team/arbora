@@ -22,8 +22,9 @@ from scion_sdk.mcp.declaration_resource import register_live_declaration
 from scion_sdk.ports.session import TransportEndpoint
 from scion_sdk.transports.mcp import McpTransport
 
-from arbora.fleet import onboarding
-from arbora.fleet.onboarding import FleetEndpoint, onboard_fleet
+from arbora.fleet import onboarding_capture as _onboarding_capture
+from arbora.fleet.onboarding import onboard_fleet
+from arbora.fleet.onboarding_capture import FleetEndpoint
 from tests.fleet.test_fleet_onboarding import (  # noqa: F401
     _onboarding,
     _RecordingSink,
@@ -78,7 +79,7 @@ def _capture_from(server: FastMCP) -> Any:
     async def capture(endpoint: FleetEndpoint, *, auth: Any = None) -> Any:
         async with McpTransport().session(TransportEndpoint(in_process=server)) as s:
             return await build_content_pack(
-                s, connector=endpoint.name, kinds=onboarding._capture_kinds()
+                s, connector=endpoint.name, kinds=_onboarding_capture._capture_kinds()
             )
 
     return capture

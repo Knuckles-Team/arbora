@@ -189,12 +189,8 @@ async def test_catalog_detail_rows_carry_input_schema() -> None:
 
 @pytest.mark.spec("ARBORA-FLEET-R064")
 def test_onboarding_failure_names_step_and_engine_code(caplog) -> None:
-    from arbora.fleet.onboarding import (
-        FleetEndpoint,
-        FleetOnboarding,
-        OnboardingReport,
-        _onboard_all,
-    )
+    from arbora.fleet.onboarding import FleetOnboarding, OnboardingReport, _onboard_all
+    from arbora.fleet.onboarding_capture import FleetEndpoint
 
     class EngineResponseError(RuntimeError):
         def __init__(self, code: str, detail: str | None = None) -> None:

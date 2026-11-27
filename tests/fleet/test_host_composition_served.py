@@ -12,7 +12,7 @@ from typing import Any
 
 import pytest
 
-from arbora.fleet import onboarding as onboarding_module
+from arbora.fleet import onboarding_service as _onboarding_service
 from arbora.fleet.definition_admission import DefinitionAdmission
 from arbora.gateway.state import GatewayState
 
@@ -58,11 +58,11 @@ def booted(monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> dict[str, Any]:
     monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", "tcp://engine:7000")
     started: list[Any] = []
     monkeypatch.setattr(
-        onboarding_module.FleetOnboardingService,
+        _onboarding_service.FleetOnboardingService,
         "start",
         lambda self: started.append(self) or "thread",
     )
-    onboarding_module.start_fleet_onboarding(
+    _onboarding_service.start_fleet_onboarding(
         gateway=GatewayState(),
         engine=_engine(),
         session=SimpleNamespace(graph="g", tenant="t"),
@@ -112,13 +112,13 @@ def test_boot_declares_the_ingest_worker_unit(monkeypatch: pytest.MonkeyPatch) -
 def _boot_with(monkeypatch: pytest.MonkeyPatch, **extra: Any) -> Any:
     started: list[Any] = []
     monkeypatch.setattr(
-        onboarding_module.FleetOnboardingService,
+        _onboarding_service.FleetOnboardingService,
         "start",
         lambda self: started.append(self) or "thread",
     )
     monkeypatch.delenv("GRAPH_SERVICE_ENDPOINTS", raising=False)
     monkeypatch.setattr("arbora.fleet.data_prep.data_prep_path", lambda: None)
-    onboarding_module.start_fleet_onboarding(
+    _onboarding_service.start_fleet_onboarding(
         gateway=GatewayState(),
         engine=_engine(),
         session=SimpleNamespace(graph="g", tenant="t"),

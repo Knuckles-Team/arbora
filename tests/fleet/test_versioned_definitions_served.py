@@ -15,11 +15,8 @@ import pytest
 
 from arbora.api.domain.fleet.engine_admission import EngineAdmission
 from arbora.fleet.definition_admission import DefinitionAdmission
-from arbora.fleet.onboarding import (
-    FleetEndpoint,
-    FleetOnboarding,
-    OnboardingStepRefused,
-)
+from arbora.fleet.onboarding import FleetOnboarding, OnboardingStepRefused
+from arbora.fleet.onboarding_capture import FleetEndpoint
 from tests.fleet._certified_support import no_pin_lag
 from tests.fleet.test_skill_upgrade_served import UpgradeEngine
 

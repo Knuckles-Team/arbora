@@ -13,7 +13,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops.research import _require_declared_mappings
 from arbora.fleet import declarations
 from arbora.fleet.declarations import Declarations
-from arbora.fleet.onboarding import _PackResourceSession, _remember_declaration
+from arbora.fleet.onboarding_capture import _PackResourceSession, _remember_declaration
 
 
 class _Listing:
@@ -47,7 +47,7 @@ async def _capture(declaration: object) -> Any:
     from scion_sdk.ports.session import TransportEndpoint
     from scion_sdk.transports.mcp import McpTransport
 
-    from arbora.fleet.onboarding import _capture_kinds, _PacedSession
+    from arbora.fleet.onboarding_capture import _capture_kinds, _PacedSession
 
     server: FastMCP[object] = FastMCP("web-mcp", version="1.0.0")
 

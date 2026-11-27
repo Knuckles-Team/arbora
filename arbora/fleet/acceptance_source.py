@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from arbora.fleet import onboarding
+from arbora.fleet import onboarding_capture as _onboarding_capture
 
 __all__ = ["OnboardingAcceptance"]
 
@@ -14,16 +14,22 @@ class OnboardingAcceptance:
 
     def configured(self) -> tuple[str, ...]:
         """The connectors the deployment's MCP configuration runs as fleet children."""
-        return tuple(item.name for item in onboarding.configured_fleet_endpoints())
+        return tuple(
+            item.name for item in _onboarding_capture.configured_fleet_endpoints()
+        )
 
     async def digest_matches(self, context: Any, connector: str) -> bool | None:
         """Whether the connector's captured pack equals the onboarded one; ``None`` unread."""
         recorded = context.services.get("fleet_onboarding")
         endpoint = next(
-            (e for e in onboarding.configured_fleet_endpoints() if e.name == connector),
+            (
+                e
+                for e in _onboarding_capture.configured_fleet_endpoints()
+                if e.name == connector
+            ),
             None,
         )
         if recorded is None or endpoint is None:
             return None
-        pack = await onboarding.capture_server_pack(endpoint)
+        pack = await _onboarding_capture.capture_server_pack(endpoint)
         return bool(await recorded.pack_unchanged(endpoint, pack))

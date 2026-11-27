@@ -68,18 +68,20 @@ def test_two_connector_fixture_gives_one_pass_one_fail_and_blocks(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from arbora.api.domain.fleet import acceptance_ports
-    from arbora.fleet import onboarding
+    from arbora.fleet import onboarding_capture as _onboarding_capture
 
     endpoints = tuple(
-        onboarding.FleetEndpoint(name=name, url=f"http://127.0.0.1/{name}")
+        _onboarding_capture.FleetEndpoint(name=name, url=f"http://127.0.0.1/{name}")
         for name in ("alpha", "beta")
     )
-    monkeypatch.setattr(onboarding, "configured_fleet_endpoints", lambda **_: endpoints)
+    monkeypatch.setattr(
+        _onboarding_capture, "configured_fleet_endpoints", lambda **_: endpoints
+    )
 
     async def capture(endpoint: Any, *, auth: Any = None) -> Any:
         return object()
 
-    monkeypatch.setattr(onboarding, "capture_server_pack", capture)
+    monkeypatch.setattr(_onboarding_capture, "capture_server_pack", capture)
     monkeypatch.setattr(fleet_ops, "handle_pack_status", _pack_status)
     probes = {
         "alpha": {"tool": "list_things", "arguments": {}},

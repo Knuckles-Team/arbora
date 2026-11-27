@@ -12,6 +12,7 @@ from urllib.parse import quote
 import pytest
 
 from arbora.fleet import catalog_graph
+from arbora.fleet import onboarding_capture as _onboarding_capture
 from arbora.fleet.catalog_graph import (
     CAT,
     CP,
@@ -251,7 +252,7 @@ async def _write(graph: _Graph, pack: Any, monkeypatch: pytest.MonkeyPatch) -> N
         "arbora.semantic_provisioning.catalog_content_digest",
         lambda _pack: "e" * 64,
     )
-    endpoint = onboarding.FleetEndpoint(name="c", url="http://c/mcp")
+    endpoint = _onboarding_capture.FleetEndpoint(name="c", url="http://c/mcp")
     await onboarding.FleetOnboarding.write_catalog(_fleet(), endpoint, pack)  # type: ignore[arg-type]
 
 
@@ -267,7 +268,9 @@ async def test_onboarding_writes_the_catalog_and_never_fails_on_a_refusal(
         "arbora.semantic_provisioning.catalog_content_digest",
         lambda _pack: "e" * 64,
     )
-    endpoint = onboarding.FleetEndpoint(name="servicenow-mcp", url="http://sn/mcp")
+    endpoint = _onboarding_capture.FleetEndpoint(
+        name="servicenow-mcp", url="http://sn/mcp"
+    )
     await onboarding.FleetOnboarding.write_catalog(fleet, endpoint, _pack())  # type: ignore[arg-type]
     assert f"<{KG}systemPromptFor>" in "\n".join(graph.lines)
     assert fleet.surfaces["servicenow-mcp"]["catalog_triples"] > 10

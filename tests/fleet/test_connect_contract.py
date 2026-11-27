@@ -99,7 +99,8 @@ from arbora import semantic_provisioning  # noqa: E402
 from arbora.api.contracts import pack_import_authority  # noqa: E402
 from arbora.fleet.connect_contract import ContractRefused  # noqa: E402
 from arbora.fleet.declarations import Declarations  # noqa: E402
-from arbora.fleet.onboarding import FleetEndpoint, FleetOnboarding  # noqa: E402
+from arbora.fleet.onboarding import FleetOnboarding
+from arbora.fleet.onboarding_capture import FleetEndpoint
 
 
 def contract_pack(seed: bytes | None = b"seed-v1", manifest: bytes = b"m1"):
@@ -160,7 +161,8 @@ def make_onboarding(packs, monkeypatch, *, result=None, error=None):
 
     monkeypatch.setattr(semantic_provisioning, "import_attested_pack", fake_import)
     monkeypatch.setattr(
-        "arbora.fleet.onboarding._remember_declaration", lambda *args, **kw: None
+        "arbora.fleet.onboarding._remember_declaration",
+        lambda *args, **kw: None,
     )
     engine = types.SimpleNamespace(
         graph_compute=types.SimpleNamespace(
