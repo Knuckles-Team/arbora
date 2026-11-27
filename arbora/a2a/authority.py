@@ -14,6 +14,7 @@ from typing import Any, Protocol, cast, runtime_checkable
 
 from scion_sdk.privacy import persistence_reference
 
+from arbora.core.work_item_errors import NativeWorkItemRequired
 from arbora.run_origin import RunOriginRegistry
 
 from .held_output import held_metadata
@@ -1795,7 +1796,7 @@ class WorkItemA2AAuthority:
                 ),
                 timeout=5.0,
             )
-        except (TimeoutError, work_items.NativeWorkItemRequired) as exc:
+        except (TimeoutError, NativeWorkItemRequired) as exc:
             raise A2ATerminalEventUnavailable(
                 "committed terminal event is unavailable"
             ) from exc

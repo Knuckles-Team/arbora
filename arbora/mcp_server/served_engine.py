@@ -17,9 +17,6 @@ behavior of its own; EG owns every fact and every method.
 
 from __future__ import annotations
 
-import asyncio
-import concurrent.futures
-import contextvars
 import json
 import re
 import threading
@@ -29,6 +26,7 @@ from typing import Any, cast
 
 from arbora.core.environment import read_env
 from arbora.core.settings import RuntimeConfig
+from arbora.epistemic import run_blocking
 from arbora.security.anonymous import client_scope, session_context
 from arbora.unique_records import record_body
 
@@ -196,28 +194,6 @@ def _bind_parameters(query: str, params: Mapping[str, Any] | None) -> str:
         return _cypher_literal(values[name])
 
     return _PARAMETER.sub(literal, query)
-
-
-def run_blocking(coroutine_factory: Any) -> Any:
-    """Run one EG request to completion from synchronous code.
-
-    Synchronous callers (the action-policy ledger) may run inside an event
-    loop; the request then runs on a worker thread with its own loop, under a
-    copy of the caller's context so the ambient session still authorizes it.
-    """
-    from arbora.epistemic import temporary_client_scope
-
-    async def request() -> Any:
-        async with temporary_client_scope():
-            return await coroutine_factory()
-
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(request())
-    context = contextvars.copy_context()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as worker:
-        return worker.submit(context.run, asyncio.run, request()).result()
 
 
 class _BlockingWorkItems:

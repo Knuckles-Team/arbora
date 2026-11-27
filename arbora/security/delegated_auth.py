@@ -44,14 +44,14 @@ _user_claims_ctx: ContextVar[dict[str, Any] | None] = ContextVar(
 )
 
 
-def _set_delegated_identity(
+def set_delegated_identity(
     token: str, claims: dict[str, Any]
 ) -> tuple[Token[str | None], Token[dict[str, Any] | None]]:
     """Scope validated delegation material to the current async task."""
     return _user_token_ctx.set(token), _user_claims_ctx.set(dict(claims))
 
 
-def _reset_delegated_identity(
+def reset_delegated_identity(
     tokens: tuple[Token[str | None], Token[dict[str, Any] | None]],
 ) -> None:
     _user_token_ctx.reset(tokens[0])

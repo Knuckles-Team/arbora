@@ -65,7 +65,7 @@ def _principal_map() -> Mapping[str, str]:
 
 def _exchange_for_principal(principal: str) -> str:
     """Exchange Arbora's process token for one whose subject is ``principal``."""
-    from arbora.mcp_server.backing.delegated_auth import exchange_token_for_agent
+    from arbora.security.delegated_auth import exchange_token_for_agent
     from arbora.security.request_identity import client_credentials_token
     from arbora.security.settings import security_settings
 

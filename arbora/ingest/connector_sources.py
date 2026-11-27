@@ -44,6 +44,7 @@ from arbora.api.domain.ingest.service import (
     IngestSyncReceipt,
 )
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.core.work_item_errors import WorkItemBackendUnavailable
 from arbora.fleet.declarations import RESOURCES_URI, parse_declaration
 
 __all__ = [
@@ -302,7 +303,7 @@ class ConnectorIngestRunner:
     ) -> IngestSyncReceipt:
 
         declaration, spec = await self._declared(caller, source_id)
-        from arbora.work_items import WorkItemBackendUnavailable
+        from arbora.core.work_item_errors import WorkItemBackendUnavailable
 
         try:
             with _caller_session(caller):
@@ -514,7 +515,7 @@ class ConnectorIngestRunner:
                     description=f"{kind} {target}"[:256],
                     metadata={"submission_kind": kind, "target": target, **options},
                 )
-        except work_items.WorkItemBackendUnavailable as exc:
+        except WorkItemBackendUnavailable as exc:
             raise OperationRefused("UNAVAILABLE", {"reason": str(exc)}) from exc
         return IngestSubmissionReceipt(
             job_id=item_id,

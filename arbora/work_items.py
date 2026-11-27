@@ -16,6 +16,10 @@ import time
 from collections.abc import Mapping
 from typing import Any
 
+from arbora.core.work_item_errors import (
+    NativeWorkItemRequired,
+    WorkItemBackendUnavailable,
+)
 from arbora.security.anonymous import session_context
 
 #: The engine's spec row that owns durable WorkItem transitions.
@@ -27,10 +31,6 @@ TERMINAL_WORK_ITEM_STATUSES = frozenset(
 )
 
 _MAX_TENANT_IN_FLIGHT = 4096
-
-
-class WorkItemBackendUnavailable(RuntimeError):
-    """The engine WorkItem authority cannot serve the transition."""
 
 
 class TransitionRefused(Exception):
@@ -61,10 +61,6 @@ def transition_refusal(error: Exception) -> TransitionRefused | None:
         str(getattr(error, "event", "")),
         str(getattr(error, "reason", "")),
     )
-
-
-class NativeWorkItemRequired(WorkItemBackendUnavailable):
-    """The engine-native WorkItem method is required and not bound."""
 
 
 def _session() -> Any:
@@ -494,8 +490,6 @@ __all__ = [
     "list_work_items",
     "set_priority_bucket",
     "TERMINAL_WORK_ITEM_STATUSES",
-    "NativeWorkItemRequired",
-    "WorkItemBackendUnavailable",
     "cancel_work_item",
     "claim_specific",
     "commit_result",

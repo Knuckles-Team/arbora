@@ -104,7 +104,7 @@ def test_a_tool_family_toggle_is_a_declared_pattern_with_a_fixed_shape(
 def test_a_platform_family_declares_exactly_the_platforms_that_exist(
     monkeypatch,
 ) -> None:
-    from arbora.messaging.capabilities import CAPABILITY_MATRIX
+    from arbora.core.messaging_capabilities import CAPABILITY_MATRIX
 
     for platform in CAPABILITY_MATRIX:
         monkeypatch.setenv(f"MESSAGING_{platform.upper()}_TOKEN", "t")

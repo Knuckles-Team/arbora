@@ -87,16 +87,16 @@ class UserTokenMiddleware(Middleware):
             logger.warning("Delegation denied: validated user token unavailable")
             raise PermissionError("Validated user token required for delegation")
 
-        from arbora.mcp_server.backing.delegated_auth import (
-            _reset_delegated_identity,
-            _set_delegated_identity,
+        from arbora.security.delegated_auth import (
+            reset_delegated_identity,
+            set_delegated_identity,
         )
 
-        tokens = _set_delegated_identity(raw_token, claims)
+        tokens = set_delegated_identity(raw_token, claims)
         try:
             return await call_next(context)
         finally:
-            _reset_delegated_identity(tokens)
+            reset_delegated_identity(tokens)
 
 
 class JWTClaimsLoggingMiddleware(Middleware):

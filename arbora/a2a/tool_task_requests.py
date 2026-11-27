@@ -14,7 +14,7 @@ from typing import Any
 from pydantic_core import to_jsonable_python
 
 from arbora import work_items
-from arbora.mcp_server.served_engine import run_blocking
+from arbora.epistemic import run_blocking
 from arbora.security.session import resolve_session
 from arbora.semantic_provisioning import CONTROL_GRAPH
 

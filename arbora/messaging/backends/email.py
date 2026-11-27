@@ -20,13 +20,13 @@ from email.message import EmailMessage
 from typing import Any
 
 from arbora.core.environment import read_env
+from arbora.core.messaging_capabilities import CAPABILITY_MATRIX, MessagingCapabilities
 from arbora.messaging.backends._channel_http import (
     POLL_INTERVAL_DEFAULT_S,
     POLL_INTERVAL_RANGE_S,
     clamp,
 )
 from arbora.messaging.base import MessagingBackend
-from arbora.messaging.capabilities import CAPABILITY_MATRIX, MessagingCapabilities
 from arbora.messaging.models import (
     EventType,
     InboundEvent,

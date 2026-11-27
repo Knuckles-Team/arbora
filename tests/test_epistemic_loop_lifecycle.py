@@ -4,8 +4,7 @@ import asyncio
 import contextlib
 from typing import Any
 
-from arbora.epistemic import EpistemicClientPool
-from arbora.mcp_server.served_engine import run_blocking
+from arbora.epistemic import EpistemicClientPool, run_blocking
 from tests.test_epistemic_adapter import Client, context
 
 
