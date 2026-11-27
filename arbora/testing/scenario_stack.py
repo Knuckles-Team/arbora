@@ -179,7 +179,7 @@ async def record_scenario_run(send: Send, tenant: str, run: ScenarioRun) -> Any:
 
     PIN-LAG: refuses ``UNAVAILABLE`` naming the shape the pinned release lacks.
     """
-    from arbora.pin_lag.medulla import guard
+    from arbora.api.ops.pin_guards import guard
 
     guard("DecisionLog", models=("ScenarioRun", "LifecycleRecordWriteScenarioRun"))
     params = {

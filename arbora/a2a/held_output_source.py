@@ -160,7 +160,7 @@ class HeldOutputSource:
         answers = await self._critic(checklist, text)
         if answers is None:
             return
-        from arbora.pin_lag.medulla import guard_held_item_critique
+        from arbora.api.ops.pin_guards import guard_held_item_critique
 
         guard_held_item_critique()
         reply = await self._send(

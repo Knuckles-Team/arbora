@@ -19,8 +19,8 @@ from arbora.api.invoke.bootstrap import caller_dispatch_graph
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops.engine_calls import engine_send, unavailable
+from arbora.api.ops.pin_guards import guard, send_main
 from arbora.api.registry import OpSpec, Verb
-from arbora.pin_lag.medulla import guard, send_main
 
 #: The engine replays each of these writes by its idempotency key.
 NATIVE_IDEMPOTENCY: dict[str, str] = {

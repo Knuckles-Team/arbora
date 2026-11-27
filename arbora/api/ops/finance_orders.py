@@ -23,6 +23,7 @@ from pydantic import Field
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
 from arbora.api.ops.engine_calls import engine_send
+from arbora.api.ops.pin_guards import refusal
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -36,7 +37,7 @@ from arbora.api.registry import (
     SubjectSource,
     Verb,
 )
-from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 
 SCOPE = "agent:decision-write"
 #: What the engine publishes on ``main`` (MEDULLA w16, MEDULLA-FINANCE-PRIMITIVES-R015.1.4).

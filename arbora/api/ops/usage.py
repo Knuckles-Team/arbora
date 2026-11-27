@@ -241,7 +241,8 @@ def run_metrics_request(context: Any, params: Mapping[str, Any]) -> dict[str, An
 
 async def run_metrics_answer(context: Any, params: Mapping[str, Any]) -> dict[str, Any]:
     """Send ``RunMetrics`` as the verified caller; a pin without it refuses ``UNAVAILABLE``."""
-    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+    from arbora.api.ops.pin_guards import refusal
+    from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 
     try:
         require_methods(INDEX_METHOD)

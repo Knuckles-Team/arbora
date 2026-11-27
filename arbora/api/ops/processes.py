@@ -117,13 +117,14 @@ async def handle_process_plan(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """The engine's sealed plan of one workflow version, its digest and its bindings."""
+    from arbora.api.ops.pin_guards import refusal
     from arbora.api.ops.plans import _feature_schema
     from arbora.deployment.placement import (
         check_receipt,
         decide_params,
         single_record,
     )
-    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_question_kind
+    from arbora.pin_lag.medulla import PinLagUnavailable, require_question_kind
 
     try:
         require_question_kind("process_plan")
@@ -248,7 +249,8 @@ def _decide_call(context: Any) -> Any:
 
 
 def _run_ports(context: Any, evidence: Any, graph: str) -> Any:
-    from arbora.pin_lag.medulla import PinLagUnavailable, refusal
+    from arbora.api.ops.pin_guards import refusal
+    from arbora.pin_lag.medulla import PinLagUnavailable
     from arbora.processes.run_ports import process_host_ports
 
     clock = context.services.get("now_ms")

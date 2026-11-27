@@ -27,8 +27,9 @@ from arbora.api.ops._common import (
     build_write_op,
 )
 from arbora.api.ops.engine_calls import engine_send, unavailable
+from arbora.api.ops.pin_guards import refusal
 from arbora.api.registry import Confirm, OpSpec, Verb
-from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_symbol
+from arbora.pin_lag.medulla import PinLagUnavailable, require_symbol
 
 #: The refusals of a provider admission, in the order they are checked.
 ADMISSION_CODES = frozenset(

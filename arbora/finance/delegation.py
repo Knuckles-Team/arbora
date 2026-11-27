@@ -45,7 +45,7 @@ async def delegation_holds(wire: Wire, agent: str, owner: str, grant: str) -> bo
     The engine decides; no local grant stands in. A pinned release without
     ``CheckResourceAccess`` refuses ``UNAVAILABLE`` naming the method (PIN-LAG).
     """
-    from arbora.pin_lag.medulla import guard
+    from arbora.api.ops.pin_guards import guard
 
     guard("CheckResourceAccess")
     answer = await wire(

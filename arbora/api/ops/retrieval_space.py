@@ -159,8 +159,9 @@ class _RequestRetriever:
     ) -> RetrievalSearchOutcome:
         from arbora.api.ops import engine_calls as _engine
         from arbora.api.ops.engine_calls import engine_send
+        from arbora.api.ops.pin_guards import refusal
         from arbora.api.ops.retrieval import MAX_SPANS
-        from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+        from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 
         try:
             require_methods("RetrievalContextSearch")

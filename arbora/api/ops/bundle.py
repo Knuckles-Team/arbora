@@ -7,7 +7,7 @@
 runs no export logic and holds no bundle bytes: each chunk is read from or staged into
 the engine blob store (``BlobFetchBegin``, ``BlobChunkGet``, ``BlobBegin``,
 ``BlobChunkPut``, ``BlobCommit``). The bundle methods are engine ``main`` shapes the pinned
-release lacks, so they go through :func:`arbora.pin_lag.medulla.send_main` and refuse
+release lacks, so they go through :func:`arbora.api.ops.pin_guards.send_main` and refuse
 ``UNAVAILABLE`` naming the missing method until the re-pin.
 """
 
@@ -24,8 +24,8 @@ from pydantic import Field, model_validator
 from arbora.api.errors import EngineRefusal
 from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops.engine_calls import engine_send, unavailable
+from arbora.api.ops.pin_guards import send_main
 from arbora.api.registry import Confirm, OpSpec, Verb
-from arbora.pin_lag.medulla import send_main
 
 READ_SCOPE = "graph:read"
 WRITE_SCOPE = "graph:write"

@@ -27,8 +27,9 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
 from arbora.api.ops import engine_calls as _engine
 from arbora.api.ops.engine_calls import engine_send
+from arbora.api.ops.pin_guards import refusal
 from arbora.api.registry import Confirm, OpSpec
-from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_models
+from arbora.pin_lag.medulla import PinLagUnavailable, require_models
 
 SCOPE = "agent:decision-write"
 _DIGEST = re.compile(r"[0-9a-f]{64}")

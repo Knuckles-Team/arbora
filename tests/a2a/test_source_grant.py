@@ -88,7 +88,7 @@ def _served(monkeypatch: pytest.MonkeyPatch, answer: dict[str, Any]) -> list[Any
         sent.append((method, params))
         return answer
 
-    monkeypatch.setattr("arbora.pin_lag.medulla.engine_send", fake_send)
+    monkeypatch.setattr("arbora.api.ops.pin_guards.engine_send", fake_send)
     monkeypatch.setattr(models, "ListPathGrantsRequest", object, raising=False)
     monkeypatch.setattr(models, "PathGrantList", object, raising=False)
     monkeypatch.setattr("medulla.generated.METHOD_IDS", {*METHOD_IDS, "ListPathGrants"})
@@ -155,7 +155,7 @@ async def test_resolution_lists_the_path_grants_of_the_verified_principal(
 @pytest.mark.asyncio
 async def test_the_pinned_release_grants_nothing_and_names_the_missing_method() -> None:
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.pin_lag.medulla import send_main
+    from arbora.api.ops.pin_guards import send_main
 
     caller = SimpleNamespace(principal="user:1")
     composed = SimpleNamespace(

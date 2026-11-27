@@ -20,9 +20,9 @@ from pydantic import Field
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params
 from arbora.api.ops.engine_calls import unavailable
+from arbora.api.ops.pin_guards import send_main
 from arbora.api.ops.source import _read_op
 from arbora.api.registry import OpSpec
-from arbora.pin_lag.medulla import send_main
 
 _NAME = Field(min_length=1, max_length=1024)
 _OID = Field(min_length=40, max_length=64, pattern=r"^[0-9a-f]+$")

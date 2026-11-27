@@ -25,8 +25,9 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops._common import Params, build_read_op
 from arbora.api.ops.engine_calls import engine_send
 from arbora.api.ops.nested_invoke import invoke_registered
+from arbora.api.ops.pin_guards import refusal
 from arbora.api.registry import OpSpec
-from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_models
+from arbora.pin_lag.medulla import PinLagUnavailable, require_models
 
 READ_SCOPE = "finance:read"
 #: The venue connector and its strategy tool, reached through the governed fleet call.

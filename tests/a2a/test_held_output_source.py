@@ -294,7 +294,9 @@ async def test_the_critique_is_recorded_by_the_engine_between_proposal_and_admis
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # The re-pinned engine declares the op; the pin guard is its only gate.
-    monkeypatch.setattr("arbora.pin_lag.medulla.guard_held_item_critique", lambda: None)
+    monkeypatch.setattr(
+        "arbora.api.ops.pin_guards.guard_held_item_critique", lambda: None
+    )
     engine = CritiqueEngine()
     engine.recorded = []
     decide = Decide(engine)

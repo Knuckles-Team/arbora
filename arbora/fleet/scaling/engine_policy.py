@@ -17,6 +17,7 @@ from __future__ import annotations
 from typing import Any
 
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops.pin_guards import refusal
 from arbora.api.ops.question_round import advisory_scores
 from arbora.fleet.scaling.fleet_actuator import request_context
 from arbora.fleet.scaling.scaling_intent_reconciler import (
@@ -24,7 +25,7 @@ from arbora.fleet.scaling.scaling_intent_reconciler import (
     ScalePolicyDecision,
     _derived_id,
 )
-from arbora.pin_lag.medulla import refusal, require_symbol
+from arbora.pin_lag.medulla import require_symbol
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
 #: The engine question kind of a scale verdict and the builder that frames it.

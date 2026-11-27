@@ -20,8 +20,8 @@ from typing import Any, Protocol, runtime_checkable
 from pydantic import Field
 
 from arbora.api.ops._common import Params, bound_service, build_write_op
+from arbora.api.ops.pin_guards import send_main
 from arbora.api.registry import AuditClass, Confirm, Effect, OpSpec, Verb
-from arbora.pin_lag.medulla import send_main
 
 SCOPE = "identity:admin"
 STORE_PATH_ROOT = "wire_access/"

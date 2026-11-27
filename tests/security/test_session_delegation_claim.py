@@ -6,7 +6,8 @@ import time
 
 import pytest
 
-from arbora.pin_lag.medulla import PinLagUnavailable, require_delegated_identity
+from arbora.api.ops.pin_guards import require_delegated_identity
+from arbora.pin_lag.medulla import PinLagUnavailable
 from arbora.security.actor_context import ActorContext, ActorType, CredentialLease
 from arbora.security.request_identity import validate_carrier_claims
 from arbora.security.session import GraphSession

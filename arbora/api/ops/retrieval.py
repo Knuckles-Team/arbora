@@ -16,8 +16,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from arbora.api.ops._common import Params, bound_service, build_read_op, build_write_op
 from arbora.api.ops.engine_calls import engine_send
+from arbora.api.ops.pin_guards import guard_field, send_main
 from arbora.api.registry import AuditClass, OpSpec, Verb
-from arbora.pin_lag.medulla import guard_field, send_main
 
 
 class RetrievalSearchParams(Params):
@@ -367,7 +367,8 @@ async def handle_retrieval_compare(
 ) -> dict[str, Any]:
     """Forward one ranking submission; the engine computes every number."""
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_models
+    from arbora.api.ops.pin_guards import refusal
+    from arbora.pin_lag.medulla import PinLagUnavailable, require_models
 
     try:
         require_models(("DecisionEvalOpRetrievalRankingSubmit",))
@@ -407,7 +408,8 @@ async def handle_retrieval_context_search(
 ) -> dict[str, Any]:
     """Authorized context spans over original bytes; a bad byte map refuses the page."""
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+    from arbora.api.ops.pin_guards import refusal
+    from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 
     try:
         require_methods("RetrievalContextSearch")

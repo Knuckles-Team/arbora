@@ -1338,7 +1338,8 @@ def compose_served_invocation(
         from medulla.generated import send_by_id
 
         from arbora.api.ops.engine_calls import decode
-        from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+        from arbora.api.ops.pin_guards import refusal
+        from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 
         try:
             require_methods(method)

@@ -44,8 +44,6 @@ import importlib
 from collections.abc import Iterable
 from typing import Any
 
-from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops.engine_calls import engine_send
 from arbora.pin_lag.unavailable import PinLagUnavailable
 
 __all__ = [
@@ -54,28 +52,21 @@ __all__ = [
     "AGENT_RUN_DELEGATION_FIELDS",
     "CLAIM_IDENTITY_FIELDS",
     "agent_run_delegation_served",
-    "guard_certification_read",
-    "guard_skill_upgrade",
     "require_agent_run_delegation",
-    "require_delegated_identity",
     "admission_models",
     "require_claim_identity",
     "OUTBOX_MODELS",
     "PinLagUnavailable",
     "accepts_parameter",
-    "guard",
-    "guard_field",
     "missing_model",
     "operator_audit_missing",
     "question_kind_served",
-    "refusal",
     "require_methods",
     "require_enum_member",
     "require_model_field",
     "require_models",
     "require_question_kind",
     "require_symbol",
-    "send_main",
 ]
 
 #: The request shapes of the engine outbox pull and acknowledge.
@@ -175,14 +166,6 @@ def require_model_field(model: str, field: str) -> None:
         raise PinLagUnavailable(f"{model}.{field}")
 
 
-def guard_field(model: str, field: str) -> None:
-    """Refuse ``UNAVAILABLE`` naming ``Model.field`` when the pinned shape lacks it."""
-    try:
-        require_model_field(model, field)
-    except PinLagUnavailable as error:
-        raise refusal(error) from error
-
-
 def operator_audit_missing() -> str | None:
     """The first capability the operator-only audit chain lacks, or ``None`` when served.
 
@@ -219,15 +202,6 @@ def accepts_parameter(method: Any, name: str) -> bool:
     return name in inspect.signature(method).parameters
 
 
-def refusal(error: PinLagUnavailable) -> OperationRefused:
-    """The served refusal of a missing capability: ``UNAVAILABLE`` naming it."""
-    details: dict[str, Any] = {
-        "reason": f"the installed engine does not serve {error.missing}",
-        "missing": error.missing,
-    }
-    return OperationRefused("UNAVAILABLE", details)
-
-
 def admission_models() -> Any:
     """The typed admission answer models, or refuse naming the first one missing."""
     from types import SimpleNamespace
@@ -251,33 +225,6 @@ def require_claim_identity() -> None:
             raise PinLagUnavailable(f"ClaimWorkItemResult.{name}")
 
 
-def guard(*methods: str, models: Iterable[str] = ()) -> None:
-    """Refuse ``UNAVAILABLE`` naming the first method or request shape the pin lacks."""
-    try:
-        require_methods(*methods)
-        require_models(models)
-    except PinLagUnavailable as error:
-        raise refusal(error) from error
-
-
-async def send_main(
-    context: Any,
-    method: str,
-    params: dict[str, Any],
-    *,
-    idempotent: bool = False,
-    models: Iterable[str] = (),
-) -> Any:
-    """Send one engine ``main`` method as the verified caller, or refuse ``UNAVAILABLE``.
-
-    The refusal names the first method or request shape the pinned release lacks. The
-    guard is the whole difference from :func:`arbora.api.ops.engine_calls.engine_send`; delete
-    the call's ``models`` and this wrapper with the re-pin that carries them.
-    """
-    guard(method, models=models)
-    return await engine_send(context, method, params, idempotent=idempotent)
-
-
 def require_agent_run_delegation() -> None:
     """Return once the engine serves agent-run delegations, else name what is missing.
 
@@ -294,26 +241,6 @@ def require_agent_run_delegation() -> None:
     claim = getattr(models, "ClaimWorkItemResult", None)
     if "delegation_id" not in getattr(claim, "model_fields", {}):
         raise PinLagUnavailable("ClaimWorkItemResult.delegation_id")
-
-
-#: The service-only host scope that lets a host act under an engine delegation
-#: (MEDULLA-IDENTITY-R744; engine ``main``, unreleased).
-DELEGATE_SCOPE = "identity:delegate"
-
-
-def require_delegated_identity() -> None:
-    """Return once the engine serves the acting delegation, else name what is missing.
-
-    PIN-LAG: two pieces must exist. The envelope claim shape must declare
-    ``RequestContextClaims.delegation_id``, and the engine's served scope registry
-    must carry ``identity:delegate``. A release without either cannot run a call as
-    a delegation's principal, so nothing sends the claim.
-    """
-    require_model_field("RequestContextClaims", "delegation_id")
-    from arbora.security.scope_registry import session_scopes
-
-    if DELEGATE_SCOPE not in session_scopes():
-        raise PinLagUnavailable(f"scope {DELEGATE_SCOPE}")
 
 
 def require_seed_parts() -> None:
@@ -373,42 +300,6 @@ def agent_run_delegation_served() -> bool:
     except PinLagUnavailable:
         return False
     return True
-
-
-def guard_skill_upgrade() -> None:
-    """Refuse ``UNAVAILABLE`` naming what a ``SkillUpgrade`` ``Decide`` needs (R034.13).
-
-    PIN-LAG: engine ``main`` answers ``Decide`` with ``QuestionKind::SkillUpgrade`` and
-    declares ``SkillUpgradeRequest``; the pinned release may lack the shape.
-    """
-    guard("Decide", models=("SkillUpgradeRequest", "SkillUpgradeReceipt"))
-
-
-def guard_certification_read() -> None:
-    """Refuse ``UNAVAILABLE`` naming what reading a stored attestation needs (R034.14).
-
-    PIN-LAG: ``DecisionEval`` ``CertifyLocalSkill`` and its
-    ``LocalCertificationAttestation`` are engine ``main`` shapes. The by-digest read
-    op ``certification`` (``{tenant_id, digest}``, answering the attestation or null,
-    MEDULLA-DECISION-ENGINE-R142.103) is decided for engine ``main`` and is not served
-    by the pinned release, so the guard refuses until the contract declares it.
-    """
-    guard(
-        "DecisionEval",
-        models=("LocalCertificationAttestation", "DecisionEvalOpCertification"),
-    )
-
-
-def guard_held_item_critique() -> None:
-    """Refuse ``UNAVAILABLE`` naming what recording a critique needs (ARBORA-A2A-R022.1).
-
-    PIN-LAG: the ``DecisionEval`` op ``held_item_critique`` is an engine ``main`` shape
-    (MEDULLA-DECISION-ENGINE-R038.6); the pinned release may not declare it.
-    """
-    guard(
-        "DecisionEval",
-        models=("DecisionEvalOpHeldItemCritique", "HeldItemCritiqueRequest"),
-    )
 
 
 def _literal_members(annotation: Any) -> set[str]:

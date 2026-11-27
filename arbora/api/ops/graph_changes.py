@@ -20,8 +20,9 @@ from arbora.api.errors import EngineRefusal
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import _common
 from arbora.api.ops.engine_calls import engine_send, unavailable
+from arbora.api.ops.pin_guards import refusal
 from arbora.api.registry import OpSpec
-from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 
 READ_SCOPE = "kg:read"
 #: The engine refusals that mean "this cursor can no longer be continued".

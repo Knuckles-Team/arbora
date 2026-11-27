@@ -75,7 +75,8 @@ async def handle_schema_context(
     from pydantic import ValidationError
 
     from arbora.api.invoke.pipeline import OperationRefused
-    from arbora.pin_lag.medulla import PinLagUnavailable, refusal, require_methods
+    from arbora.api.ops.pin_guards import refusal
+    from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 
     try:
         require_methods("SchemaContext")
