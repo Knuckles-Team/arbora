@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Mapping
 from contextvars import ContextVar, Token
 from typing import Any
 
@@ -63,16 +64,6 @@ def reset_delegated_identity(
 # ---------------------------------------------------------------------------
 # Config resolution
 # ---------------------------------------------------------------------------
-
-
-def _get_default_config() -> dict[str, Any]:
-    """Return the shared ``mcp_auth_config`` from server_factory.
-
-    Deferred import to avoid circular dependencies during startup.
-    """
-    from arbora.mcp_server.backing.server_factory import mcp_auth_config
-
-    return mcp_auth_config
 
 
 def _post_token(
@@ -169,7 +160,7 @@ def get_user_identity() -> dict[str, Any]:
 
 
 def get_delegated_token(
-    config: dict[str, Any] | None = None,
+    config: Mapping[str, Any],
     audience: str | None = None,
     scopes: str | None = None,
     timeout: int = 30,
@@ -185,8 +176,7 @@ def get_delegated_token(
     Parameters
     ----------
     config:
-        Override dict with OIDC configuration keys.  Defaults to the
-        shared ``mcp_auth_config`` from ``server_factory``.
+        The host's delegation settings (OIDC configuration keys).
     audience:
         Override for the target service audience (e.g.
         ``https://gitlab.example.com``).  Falls back to
@@ -209,7 +199,7 @@ def get_delegated_token(
     RuntimeError
         If the token exchange request fails.
     """
-    cfg = config or _get_default_config()
+    cfg = config
     user_token = get_user_token()
     if not user_token:
         raise ValueError(
@@ -311,7 +301,7 @@ def exchange_token_for_agent(
     agent_label: str,
     *,
     subject_token: str | None = None,
-    config: dict[str, Any] | None = None,
+    config: Mapping[str, Any],
     audience: str | None = None,
     scopes: str | None = None,
     timeout: int = 30,
@@ -343,7 +333,7 @@ def exchange_token_for_agent(
     RuntimeError
         If the token exchange request fails.
     """
-    cfg = config or _get_default_config()
+    cfg = config
     subject = subject_token or get_user_token()
     if not subject:
         raise ValueError(
@@ -600,7 +590,7 @@ def refresh_access_token(
 # ---------------------------------------------------------------------------
 
 
-def is_delegation_enabled(config: dict[str, Any] | None = None) -> bool:
+def is_delegation_enabled(config: Mapping[str, Any]) -> bool:
     """Return True if OIDC token delegation is active."""
-    cfg = config or _get_default_config()
+    cfg = config
     return bool(cfg.get("enable_delegation", False))

@@ -24,6 +24,8 @@ from arbora.gateway.state import GatewayState
 from arbora.mcp_server.host_caches import HostCaches, ToolTable, build_host_caches
 from arbora.mcp_server.served_engine import EngineHandles
 from arbora.mcp_server.sql_schema_binding import serve_sql_schema
+from arbora.modality import default_normalizer
+from arbora.modality.fleet_port import NativeIntentFleet
 from arbora.observability.metric_evidence import EngineMetricEvidence
 from arbora.observability.state import (
     Errors,
@@ -36,6 +38,7 @@ from arbora.observability.state import (
     build_health_state,
 )
 from arbora.run_origin import RunOriginRegistry
+from arbora.security.delegation_config import McpAuthConfig
 from arbora.security.key_cache import JwksCache
 from arbora.security.process_authority import ProcessAuthority
 
@@ -77,6 +80,7 @@ class HostContext:
     observability: Observability
     gateway: GatewayState
     config: RuntimeConfig
+    delegation: McpAuthConfig
 
 
 def build_host_context() -> HostContext:
@@ -117,6 +121,7 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         decision_principal=decide.principal,
         ports=ports,
         config=caches.tools.authority.config,
+        modality=default_normalizer(fleet=NativeIntentFleet(caches.tools.verbs)),
     )
     fleet = FleetState(config=caches.tools.authority.config)
     gateway = GatewayState()
@@ -134,6 +139,7 @@ def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> Host
         observability=_compose_observability(engine, caches.tools.authority, fleet),
         gateway=gateway,
         config=caches.tools.authority.config,
+        delegation=McpAuthConfig(),
     )
 
 

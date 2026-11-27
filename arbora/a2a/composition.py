@@ -109,6 +109,7 @@ def build_a2a_service(
     capacity: Any = None,
     ports: Any = None,
     config: RuntimeConfig,
+    modality: Any = None,
 ) -> A2AService:
     """One service over the WorkItem authority and its durable event cursor.
 
@@ -138,6 +139,7 @@ def build_a2a_service(
     authority.provisioning = provisioning
     return A2AService(
         authority=authority,
+        modality=modality,
         push=push,
         router=OrchestratorA2ARouter(
             engine_provider,

@@ -9,8 +9,11 @@ import pytest
 
 from arbora import host_bindings as hb
 from arbora.core.agent_names import FLEET_TOOLS
+from arbora.core.settings import RuntimeConfig
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.messaging.host_ports import host_ports, reset_host_ports
 from arbora.observability.state import RuntimeSignalBuffer
+from arbora.security.process_authority import ProcessAuthority
 
 
 @pytest.fixture(autouse=True)
@@ -55,8 +58,8 @@ def test_decision_is_a_frozen_record_and_the_fleet_toolset_has_two_tools():
 @pytest.mark.spec("ARBORA-HOST-R008.1000")
 @pytest.mark.spec("ARBORA-HOST-R008.1003")
 def test_bind_messaging_ports_binds_all_four_ports():
-    tools: dict = {}
-    hb.bind_messaging_ports(lambda: None, tools, RuntimeSignalBuffer())
+    tools = ToolTable(ProcessAuthority(config=RuntimeConfig()))
+    hb.bind_messaging_ports(lambda: None, tools, RuntimeSignalBuffer(), {})
     ports = host_ports()
     assert ports.turn_handler.func is hb.turn_handler
     assert ports.turn_handler.args == (tools,)

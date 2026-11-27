@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import dataclasses
 from collections.abc import Awaitable, Callable, Mapping
+from types import MappingProxyType
 from typing import Any
 
 __all__ = ["MessagingHostPorts", "bind_host_ports", "host_ports", "reset_host_ports"]
@@ -43,6 +44,8 @@ class MessagingHostPorts:
     action_gate: ActionGate | None = None
     outbound_mirror: OutboundMirror | None = None
     runtime_signal: RuntimeSignal | None = None
+    #: The host's token-delegation settings; unbound, a sender exchange refuses closed.
+    delegation: Mapping[str, Any] = MappingProxyType({})
     prompt_normalizer: Any = None
 
 

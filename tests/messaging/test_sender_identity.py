@@ -66,7 +66,7 @@ async def test_mapped_sender_runs_turn_under_principal(mapped: None) -> None:
 
     bind_host_ports(turn_handler=turn)
     session = session_for_sender(
-        "telegram", "7", config=RuntimeConfig(), exchange=exchange
+        "telegram", "7", config=RuntimeConfig(), delegation={}, exchange=exchange
     )
     assert (session.principal, session.token) == ("principal-7", "exchanged-token")
     assert exchanged == ["principal-7"]
@@ -75,7 +75,9 @@ async def test_mapped_sender_runs_turn_under_principal(mapped: None) -> None:
     import arbora.messaging.sender_identity as identity
 
     identity_exchange = identity._exchange_for_principal
-    identity._exchange_for_principal = lambda principal, config: exchange(principal)  # type: ignore[assignment]
+    identity._exchange_for_principal = lambda principal, config, delegation: exchange(
+        principal
+    )  # type: ignore[assignment]
     try:
         backend = _Backend()
         responder = planner_handler._burst_responder(_Service())
@@ -103,17 +105,23 @@ async def test_refused_exchange_runs_no_turn(
         raise RuntimeError("exchange denied")
 
     with pytest.raises(SenderRefused) as refused:
-        session_for_sender("telegram", "7", config=RuntimeConfig(), exchange=refuse)
+        session_for_sender(
+            "telegram", "7", config=RuntimeConfig(), delegation={}, exchange=refuse
+        )
     assert refused.value.code == TOKEN_EXCHANGE_REFUSED
     with pytest.raises(SenderRefused) as unmapped:
         session_for_sender(
-            "telegram", "8", config=RuntimeConfig(), exchange=lambda p: "t"
+            "telegram",
+            "8",
+            config=RuntimeConfig(),
+            delegation={},
+            exchange=lambda p: "t",
         )
     assert unmapped.value.code == SENDER_UNMAPPED
 
     monkeypatch.setattr(
         "arbora.messaging.sender_identity._exchange_for_principal",
-        lambda principal, config: refuse(principal),
+        lambda principal, config, delegation: refuse(principal),
     )
     backend = _Backend()
     responder = planner_handler._burst_responder(_Service())

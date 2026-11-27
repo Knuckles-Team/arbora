@@ -42,6 +42,7 @@ from jwt.algorithms import RSAAlgorithm
 from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.backing.intent_contract import DEFAULT_SURFACE_TOOL_LIMIT
 from arbora.mcp_server.backing.tool_specs import INTENT_VERBS
+from arbora.security.delegation_config import McpAuthConfig
 
 pytestmark = pytest.mark.timeout(120)
 
@@ -161,7 +162,7 @@ def _live_streamable_http_server(
 
     parser = create_mcp_parser(transport_choices=("stdio", "streamable-http"))
     real_args, _ = parser.parse_known_args(argv)
-    auth = _configure_auth(real_args, RuntimeConfig())
+    auth = _configure_auth(real_args, McpAuthConfig(), RuntimeConfig())
     assert auth is not None, "jwt auth-type must produce a real FastMCP auth provider"
     mcp.auth = auth
 

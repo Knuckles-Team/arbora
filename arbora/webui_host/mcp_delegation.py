@@ -8,7 +8,7 @@ connection, or keeps a second catalog/probe cache.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable
 from functools import partial
 from typing import Any, TypedDict
 
@@ -38,11 +38,9 @@ NATIVE_SERVER_NAME = "arbora"
 
 
 async def _native_server_tools(
-    tools: Mapping[str, Any], mux: MCPMultiplexer
+    tools: ToolTable, mux: MCPMultiplexer
 ) -> list[dict[str, Any]]:
     """List the registered native tools that ``_call_native_tool`` admits."""
-    from arbora.mcp_server import runtime
-
     require_fleet_capability("discover", mux.fleet.config)
     host = mux._host_mcp
     if host is None:
@@ -54,7 +52,7 @@ async def _native_server_tools(
             "inputSchema": getattr(tool, "parameters", None) or {},
         }
         for name, tool in sorted(provider_tools(host).items())
-        if name in tools or name in runtime.NATIVE_INTENT_TOOLS
+        if name in tools or name in tools.verbs
     ]
 
 
@@ -65,7 +63,7 @@ async def _child_server_tools(
 
 
 async def _list_mcp_server_tools(
-    tools: Mapping[str, Any], *, server_name: str
+    tools: ToolTable, *, server_name: str
 ) -> list[dict[str, Any]]:
     async def list_tools(mux: MCPMultiplexer) -> list[dict[str, Any]]:
         native = {NATIVE_SERVER_NAME: partial(_native_server_tools, tools)}
@@ -92,9 +90,7 @@ async def _call_native_tool(
     if current_session() is None:
         raise ToolError("Verified caller session required")
     host = mux._host_mcp
-    if host is None or tool_name not in (
-        tools.keys() | runtime.NATIVE_INTENT_TOOLS.keys()
-    ):
+    if host is None or tool_name not in (tools.keys() | tools.verbs.keys()):
         raise ToolError("Native Arbora tool is unavailable")
     with runtime.verified_tool_session_scope(tools.authority):
         result = await asyncio.wait_for(
@@ -104,7 +100,7 @@ async def _call_native_tool(
 
 
 async def _call_mcp_tool(
-    tools: Mapping[str, Any],
+    tools: ToolTable,
     *,
     server_name: str,
     tool_name: str,
@@ -136,7 +132,7 @@ async def _read_mcp_resource(
     return await run_on_served_multiplexer(read_resource)
 
 
-def webui_mcp_delegation_helpers(tools: Mapping[str, Any]) -> WebUiMcpDelegation:
+def webui_mcp_delegation_helpers(tools: ToolTable) -> WebUiMcpDelegation:
     """Return the three governed helpers backed by the served authority."""
     return WebUiMcpDelegation(
         list_mcp_server_tools=partial(_list_mcp_server_tools, tools),

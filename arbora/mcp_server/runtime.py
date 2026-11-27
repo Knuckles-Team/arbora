@@ -63,11 +63,6 @@ from arbora.version import __version__
 logger = logging.getLogger(__name__)
 
 
-#: The served intent verbs (``find``, ``act``, ...) as in-process functions,
-#: registered by the served intent surface. An agent run binds them as its
-#: native tools; each call goes through the same invocation pipeline as an
-#: MCP client's call, under the run's verified session.
-NATIVE_INTENT_TOOLS: dict[str, Any] = {}
 #: The served MCP projection ``register_mcp_tools`` binds at startup (ARBORA-OPS-R035.2).
 SERVED_PROJECTION: Any = None
 
@@ -372,7 +367,7 @@ def build_native_arbora_toolset(
             raise ValueError("native Arbora tool name is invalid")
         # A served intent verb wins over a legacy registered tool of the same
         # name: the run must call the governed verb, not an action tool.
-        function = NATIVE_INTENT_TOOLS.get(name) or tools.get(name)
+        function = tools.verbs.get(name) or tools.get(name)
         if function is None:
             raise RuntimeError("requested native Arbora tool is unavailable")
         registered.append((name, function))
@@ -384,7 +379,7 @@ def build_native_arbora_toolset(
 
         dispatch = (
             _intent_dispatch(name, function, run_id, emit)
-            if name in NATIVE_INTENT_TOOLS
+            if name in tools.verbs
             else _registered_dispatch(tools, name)
         )
         bound.append(
@@ -786,6 +781,7 @@ def _build_server(
         command_args=None if bootstrap else [],
         transport_choices=("stdio", "streamable-http"),
         keys=host.caches.jwks,
+        delegation=host.delegation,
         metrics=host.observability.metrics,
         config=host.config,
         engine_provider=host.engine.served,
@@ -1010,6 +1006,7 @@ def _register_graph_tool_surface(
             invocation,
             host.authority,
             host.observability.health.windows,
+            host.caches.tools,
             ranking=host.fleet.ranking,
         )
         invocation.mount_on_mcp(mcp)
@@ -1096,10 +1093,14 @@ def _register_served_intent_surface(
     invocation: Any,
     authority: ProcessAuthority,
     windows: SubsystemWindows,
+    tools: ToolTable,
     *,
     ranking: Any = FLOOR_ONLY,
 ) -> Any:
-    """Register the eight-tool intent surface over ``invocation``'s services."""
+    """Register the eight-tool intent surface over ``invocation``'s services.
+
+    The native verb twins bind into ``tools``, the host's tool table.
+    """
     from arbora.api.invoke.pipeline import invoke
     from arbora.api.mcp.caller import VerifiedMCPCaller
     from arbora.api.mcp.resolve import IntentResolver
@@ -1126,6 +1127,7 @@ def _register_served_intent_surface(
             services.runtime.bindings.get("fleet_gateway"), "fleet_catalog", None
         ),
         windows=windows,
+        tools=tools,
     )
     return SERVED_PROJECTION
 

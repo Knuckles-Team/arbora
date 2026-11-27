@@ -62,7 +62,7 @@ async def _handler(monkeypatch, timer, *, waiting: bool = False):
     monkeypatch.setenv("MESSAGING_SENDER_PRINCIPALS", '{"telegram:7": "principal-7"}')
     monkeypatch.setattr(
         "arbora.messaging.sender_identity._exchange_for_principal",
-        lambda principal, config: f"token-for-{principal}",
+        lambda principal, config, delegation: f"token-for-{principal}",
     )
     monkeypatch.setattr(
         MessagingService, "instance", lambda _engine=None: _Service(waiting)

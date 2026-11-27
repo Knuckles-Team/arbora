@@ -65,7 +65,9 @@ def _principal_map() -> Mapping[str, str]:
     return {str(k): str(v) for k, v in raw.items()} if isinstance(raw, dict) else {}
 
 
-def _exchange_for_principal(principal: str, config: RuntimeConfig) -> str:
+def _exchange_for_principal(
+    principal: str, config: RuntimeConfig, delegation: Mapping[str, Any]
+) -> str:
     """Exchange Arbora's process token for one whose subject is ``principal``."""
     from arbora.security.delegated_auth import exchange_token_for_agent
     from arbora.security.request_identity import client_credentials_token
@@ -78,6 +80,7 @@ def _exchange_for_principal(principal: str, config: RuntimeConfig) -> str:
         ),
         requested_subject=principal,
         settings=config,
+        config=delegation,
     )
 
 
@@ -86,6 +89,7 @@ def session_for_sender(
     user_id: str,
     *,
     config: RuntimeConfig,
+    delegation: Mapping[str, Any],
     exchange: Exchange | None = None,
 ) -> SenderSession:
     """Return the turn session of ``<platform>:<user_id>`` or raise ``SenderRefused``."""
@@ -93,7 +97,10 @@ def session_for_sender(
     if not principal:
         raise SenderRefused(SENDER_UNMAPPED)
     try:
-        token = (exchange or partial(_exchange_for_principal, config=config))(principal)
+        token = (
+            exchange
+            or partial(_exchange_for_principal, config=config, delegation=delegation)
+        )(principal)
     except Exception as exc:  # any exchange failure is one typed refusal
         logger.warning(
             "sender token exchange refused (%s)", type(exc).__name__, exc_info=True

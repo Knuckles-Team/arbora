@@ -34,7 +34,6 @@ __all__ = [
     "ModalityHandler",
     "ModalityNormalizer",
     "default_normalizer",
-    "reset_default_normalizer",
 ]
 
 DEFAULT_MAX_MEDIA_BYTES = 25 * 1024 * 1024
@@ -182,40 +181,23 @@ def compose(
     return "\n".join(lines)
 
 
-_default: ModalityNormalizer | None = None
-
-
 def default_normalizer(
-    *, fleet: Any = None, recorder: ProvenanceRecorder | None = None
+    *, fleet: Any, recorder: ProvenanceRecorder | None = None
 ) -> ModalityNormalizer:
-    """The process normaliser: audio through the fleet's speech-to-text tool.
+    """A normaliser: audio through ``fleet``'s speech-to-text tool.
 
     ``ARBORA_MEDIA_MAX_BYTES`` bounds every attachment and
-    ``ARBORA_AUDIO_MAX_DURATION_S`` bounds audio length.
+    ``ARBORA_AUDIO_MAX_DURATION_S`` bounds audio length. The caller owns the
+    result; nothing here keeps it.
     """
-    global _default
-    if _default is None:
-        from arbora.modality.fleet_port import NativeIntentFleet
-        from arbora.modality.speech import SpeechHandler
+    from arbora.modality.speech import SpeechHandler
 
-        max_bytes = int(
-            read_env("ARBORA_MEDIA_MAX_BYTES", str(DEFAULT_MAX_MEDIA_BYTES))
-        )
-        max_duration = float(
-            read_env("ARBORA_AUDIO_MAX_DURATION_S", str(DEFAULT_MAX_AUDIO_DURATION_S))
-        )
-        _default = ModalityNormalizer(
-            {
-                Modality.AUDIO: SpeechHandler(
-                    fleet or NativeIntentFleet(), max_duration_s=max_duration
-                )
-            },
-            max_bytes=max_bytes,
-            recorder=recorder,
-        )
-    return _default
-
-
-def reset_default_normalizer() -> None:
-    global _default
-    _default = None
+    max_bytes = int(read_env("ARBORA_MEDIA_MAX_BYTES", str(DEFAULT_MAX_MEDIA_BYTES)))
+    max_duration = float(
+        read_env("ARBORA_AUDIO_MAX_DURATION_S", str(DEFAULT_MAX_AUDIO_DURATION_S))
+    )
+    return ModalityNormalizer(
+        {Modality.AUDIO: SpeechHandler(fleet, max_duration_s=max_duration)},
+        max_bytes=max_bytes,
+        recorder=recorder,
+    )

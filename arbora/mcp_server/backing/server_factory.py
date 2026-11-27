@@ -34,6 +34,7 @@ from arbora.core.environment import read_env, read_reference, write_env
 from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.served_engine import engine_unbound, no_process_session
 from arbora.observability.state import Metrics
+from arbora.security.delegation_config import McpAuthConfig
 from arbora.security.key_cache import JwksCache
 from arbora.security.run_token import RunTokenSigner
 from arbora.version import __version__
@@ -43,23 +44,6 @@ logger = logging.getLogger(__name__)
 DEFAULT_HOST = str(read_env("HOST"))
 DEFAULT_PORT = int(read_env("PORT"))
 
-
-# MCP-specific auth/delegation config (not in config.py)
-mcp_auth_config = {
-    "enable_delegation": to_boolean(read_env("ENABLE_DELEGATION", "False")),
-    "audience": read_env("AUDIENCE"),
-    "delegated_scopes": read_env("DELEGATED_SCOPES"),
-    "token_endpoint": None,
-    "oidc_client_id": read_env("OIDC_CLIENT_ID"),
-    "oidc_client_secret": None,
-    "oidc_config_url": read_env("OIDC_CONFIG_URL"),
-    "jwt_jwks_uri": read_env("FASTMCP_SERVER_AUTH_JWT_JWKS_URI"),
-    "jwt_issuer": read_env("FASTMCP_SERVER_AUTH_JWT_ISSUER"),
-    "jwt_audience": read_env("FASTMCP_SERVER_AUTH_JWT_AUDIENCE"),
-    "jwt_algorithm": read_env("FASTMCP_SERVER_AUTH_JWT_ALGORITHM"),
-    "jwt_secret": read_env("FASTMCP_SERVER_AUTH_JWT_PUBLIC_KEY"),
-    "jwt_required_scopes": read_env("FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES"),
-}  # nosec B105
 
 DEFAULT_TRANSPORT = read_env("TRANSPORT")
 
@@ -1058,26 +1042,18 @@ def create_mcp_parser(
     return parser
 
 
-def _apply_mcp_auth_config_overrides(args: argparse.Namespace) -> None:
-    """Layer parsed CLI auth/delegation flags onto the module-level
-    ``mcp_auth_config`` dict (unchanged from the original inline block)."""
-    mcp_auth_config["enable_delegation"] = args.enable_delegation
-    mcp_auth_config["audience"] = args.audience or mcp_auth_config["audience"]
-    mcp_auth_config["delegated_scopes"] = (
-        args.delegated_scopes or mcp_auth_config["delegated_scopes"]
+def _apply_mcp_auth_config_overrides(
+    args: argparse.Namespace, delegation: McpAuthConfig
+) -> None:
+    """Layer parsed CLI auth/delegation flags onto the host's ``delegation`` settings."""
+    delegation.set("enable_delegation", args.enable_delegation)
+    delegation.set("audience", args.audience or delegation["audience"])
+    delegation.set(
+        "delegated_scopes", args.delegated_scopes or delegation["delegated_scopes"]
     )
-    if hasattr(args, "oidc_config_url"):
-        mcp_auth_config["oidc_config_url"] = (
-            args.oidc_config_url or mcp_auth_config["oidc_config_url"]
-        )
-    if hasattr(args, "oidc_client_id"):
-        mcp_auth_config["oidc_client_id"] = (
-            args.oidc_client_id or mcp_auth_config["oidc_client_id"]
-        )
-    if hasattr(args, "oidc_client_secret"):
-        mcp_auth_config["oidc_client_secret"] = (
-            args.oidc_client_secret or mcp_auth_config["oidc_client_secret"]
-        )
+    for key in ("oidc_config_url", "oidc_client_id", "oidc_client_secret"):
+        if hasattr(args, key):
+            delegation.set(key, getattr(args, key) or delegation[key])
 
 
 def _discover_delegation_token_endpoint(config_url: str, config: RuntimeConfig) -> str:
@@ -1098,30 +1074,31 @@ def _discover_delegation_token_endpoint(config_url: str, config: RuntimeConfig) 
 
 
 def _enforce_delegation_requirements(
-    args: argparse.Namespace, config: RuntimeConfig
+    args: argparse.Namespace, delegation: McpAuthConfig, config: RuntimeConfig
 ) -> None:
     """When token delegation is enabled, require oidc-proxy + a complete
     OIDC configuration, and resolve the delegation token endpoint."""
-    if not mcp_auth_config["enable_delegation"]:
+    if not delegation["enable_delegation"]:
         return
     if args.auth_type != "oidc-proxy":
         logger.error("Error: Token delegation requires auth-type=oidc-proxy")
         sys.exit(1)
-    if not mcp_auth_config["audience"]:
+    if not delegation["audience"]:
         logger.error("Error: audience is required for delegation")
         sys.exit(1)
     if not all(
         [
-            mcp_auth_config["oidc_config_url"],
-            mcp_auth_config["oidc_client_id"],
-            mcp_auth_config["oidc_client_secret"],
+            delegation["oidc_config_url"],
+            delegation["oidc_client_id"],
+            delegation["oidc_client_secret"],
         ]
     ):
         logger.error("Error: Delegation requires complete OIDC configuration")
         sys.exit(1)
     try:
-        mcp_auth_config["token_endpoint"] = _discover_delegation_token_endpoint(
-            mcp_auth_config["oidc_config_url"], config
+        delegation.set(
+            "token_endpoint",
+            _discover_delegation_token_endpoint(delegation["oidc_config_url"], config),
         )
     except Exception as exc:
         logger.error(
@@ -1415,7 +1392,9 @@ def _configure_remote_oauth_auth(
     )
 
 
-def _configure_auth(args: argparse.Namespace, config: RuntimeConfig) -> Any:
+def _configure_auth(
+    args: argparse.Namespace, delegation: McpAuthConfig, config: RuntimeConfig
+) -> Any:
     """Configure authentication provider based on parsed CLI args.
 
     Returns the auth provider instance, or ``None`` only for the explicitly
@@ -1426,8 +1405,8 @@ def _configure_auth(args: argparse.Namespace, config: RuntimeConfig) -> Any:
     if args.auth_type == "none" or not args.auth_type:
         return None
 
-    _apply_mcp_auth_config_overrides(args)
-    _enforce_delegation_requirements(args, config)
+    _apply_mcp_auth_config_overrides(args, delegation)
+    _enforce_delegation_requirements(args, delegation, config)
     allowed_uris = _validate_allowed_redirect_uris(args)
 
     if args.auth_type == "none":
@@ -1845,6 +1824,7 @@ def _append_optional_middlewares(
     server_name: str,
     optional_classes: tuple[Any, Any, Any, Any, Any],
     keys: JwksCache,
+    delegation: McpAuthConfig,
     engine_provider: Callable[[], Any] = engine_unbound,
     process_session: Callable[[], Any] = no_process_session,
 ) -> None:
@@ -1883,10 +1863,10 @@ def _append_optional_middlewares(
     if EntityLinkingMiddleware is not None:
         middlewares.append(EntityLinkingMiddleware())
 
-    if mcp_auth_config["enable_delegation"] and UserTokenMiddleware is not None:
+    if delegation["enable_delegation"] and UserTokenMiddleware is not None:
         # Keep the privacy-safe error middleware outermost so a delegation
         # rejection cannot bypass the standardized exception surface.
-        middlewares.insert(1, UserTokenMiddleware(config=mcp_auth_config))
+        middlewares.insert(1, UserTokenMiddleware(config=delegation))
 
 
 def _configure_eunomia_middleware(
@@ -1931,6 +1911,7 @@ def _configure_eunomia_middleware(
 def _configure_middleware(
     args: argparse.Namespace,
     keys: JwksCache,
+    delegation: McpAuthConfig,
     *,
     config: RuntimeConfig,
     server_name: str = "",
@@ -1965,6 +1946,7 @@ def _configure_middleware(
         server_name,
         _import_optional_middlewares(),
         keys,
+        delegation,
         engine_provider,
         process_session,
     )
@@ -2464,6 +2446,7 @@ def create_mcp_server(
     transport_choices: tuple[str, ...] = _ALL_TRANSPORTS,
     *,
     keys: JwksCache,
+    delegation: McpAuthConfig,
     metrics: Metrics,
     config: RuntimeConfig,
     lifespan_extension: Callable[[Any], Any] | None = None,
@@ -2526,10 +2509,11 @@ def create_mcp_server(
 
     _validate_network_exposure(args)
 
-    auth = _configure_auth(args, config)
+    auth = _configure_auth(args, delegation, config)
     middlewares = _configure_middleware(
         args,
         keys,
+        delegation,
         config=config,
         server_name=name,
         engine_provider=engine_provider,

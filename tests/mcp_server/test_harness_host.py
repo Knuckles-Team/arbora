@@ -44,7 +44,7 @@ def test_the_record_binds_native_tools_fleet_and_keepalive(monkeypatch):
     built = []
     host_context = build_host_context()
     host_context.caches.tools["graph_query"] = lambda: None
-    monkeypatch.setitem(runtime.NATIVE_INTENT_TOOLS, "find", lambda: None)
+    host_context.caches.tools.bind_verb("find", lambda: None)
     monkeypatch.setattr(
         runtime,
         "build_native_arbora_toolset",
