@@ -280,7 +280,7 @@ async def test_oauth_preflight_and_alias_call_share_each_ephemeral_session(
     ]
     mux, cfg, opened = setup_oauth_sessions(tmp_path, monkeypatch, sessions)
     for _ in range(2):
-        await mux._call_ephemeral_oauth_session(
+        await mux.calls._call_ephemeral_oauth_session(
             "markets", ALIAS, cfg, arguments, mux._catalog_epoch
         )
 
@@ -328,7 +328,7 @@ async def test_nonprefixed_oauth_alias_refuses_stale_schema(tmp_path, monkeypatc
     mux, cfg, opened = setup_oauth_sessions(tmp_path, monkeypatch, [session])
 
     with pytest.raises(Exception, match="no longer matches"):
-        await mux._call_ephemeral_oauth_session(
+        await mux.calls._call_ephemeral_oauth_session(
             "markets", alias, cfg, arguments, mux._catalog_epoch
         )
 
@@ -345,7 +345,7 @@ async def test_oauth_ordinary_tool_calls_without_schema_resources(
     session = SchemaSession({}, descriptor)
     mux, cfg, _opened = setup_oauth_sessions(tmp_path, monkeypatch, [session])
 
-    await mux._call_ephemeral_oauth_session(
+    await mux.calls._call_ephemeral_oauth_session(
         "markets", descriptor.name, cfg, {}, mux._catalog_epoch
     )
 

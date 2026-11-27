@@ -12,10 +12,10 @@ from fastmcp.exceptions import ToolError
 
 from arbora.api.errors import FleetRefusal
 from arbora.api.invoke import pipeline
-from arbora.core.settings import RuntimeConfig
-from arbora.fleet import gateway_ops
+from arbora.fleet import child_payload_bounds, gateway_ops, proxied_calls
 from arbora.fleet import multiplexer as mux_module
 from arbora.fleet.child_resilience import MCPError
+from tests.fleet.proxied_calls_fixture import build_proxied_calls
 
 pytestmark = pytest.mark.spec("ARBORA-FLEET-R015.1")
 
@@ -38,7 +38,9 @@ def test_child_refusal_inside_task_group_keeps_child_message(caplog):
         )
     )
 
-    result = mux_module._child_failure_result("qbittorrent-mcp", "get_version", exc)
+    result = child_payload_bounds._child_failure_result(
+        "qbittorrent-mcp", "get_version", exc
+    )
 
     assert result.isError is True
     assert gateway_ops._child_error_code(result) == "CHILD_REFUSED"
@@ -51,7 +53,7 @@ def test_child_refusal_inside_task_group_keeps_child_message(caplog):
 def test_transport_leaf_is_unavailable_not_refused():
     exc = _group(ConnectionRefusedError("connection refused"))
 
-    result = mux_module._child_failure_result("langfuse-mcp", "health", exc)
+    result = child_payload_bounds._child_failure_result("langfuse-mcp", "health", exc)
 
     assert gateway_ops._child_error_code(result) == "UNAVAILABLE"
 
@@ -59,7 +61,7 @@ def test_transport_leaf_is_unavailable_not_refused():
 def test_dead_session_signature_is_unavailable():
     exc = _group(_mcp_error(32600, "Session terminated"))
 
-    result = mux_module._child_failure_result("langfuse-mcp", "health", exc)
+    result = child_payload_bounds._child_failure_result("langfuse-mcp", "health", exc)
 
     assert gateway_ops._child_error_code(result) == "UNAVAILABLE"
 
@@ -68,7 +70,9 @@ def test_credential_text_is_redacted_from_log_and_result(caplog):
     caplog.set_level(logging.WARNING, logger="mcp_multiplexer")
     exc = _group(_mcp_error(-32603, "login failed password=hunter2-synthetic"))
 
-    result = mux_module._child_failure_result("qbittorrent-mcp", "get_version", exc)
+    result = child_payload_bounds._child_failure_result(
+        "qbittorrent-mcp", "get_version", exc
+    )
 
     assert "hunter2-synthetic" not in caplog.text
     assert "hunter2-synthetic" not in gateway_ops._child_error_text(result)
@@ -78,19 +82,17 @@ def test_unknown_cause_stays_opaque_but_logs_leaf_class(caplog):
     caplog.set_level(logging.WARNING, logger="mcp_multiplexer")
     exc = _group(ValueError("internal detail"))
 
-    result = mux_module._child_failure_result("x-mcp", "t", exc)
+    result = child_payload_bounds._child_failure_result("x-mcp", "t", exc)
 
     assert gateway_ops._child_error_code(result) == "CHILD_REFUSED"
     assert "ValueError" in caplog.text
 
 
 async def test_unmountable_child_answers_unavailable_without_dispatch(monkeypatch):
-    mux = mux_module.MCPMultiplexer.__new__(mux_module.MCPMultiplexer)
-    mux._fleet = SimpleNamespace(config=RuntimeConfig())
-    monkeypatch.setattr(mux_module, "require_fleet_capability", lambda *a, **k: None)
-    monkeypatch.setattr(type(mux), "load_catalog", lambda self: {})
+    mux = SimpleNamespace(calls=build_proxied_calls(catalog={}))
+    monkeypatch.setattr(proxied_calls, "require_fleet_capability", lambda *a, **k: None)
 
-    result = await mux._call_service_child_once(
+    result = await mux.calls._call_service_child_once(
         "langfuse-mcp", "health", {}, timeout=None
     )
 
@@ -135,7 +137,7 @@ def test_transport_precedes_nested_refusal_and_redacts_every_leaf(
     leaves = [transport, refusal] if transport_first else [refusal, transport]
     exc = _group(_group(leaves[0]), leaves[1])
 
-    result = mux_module._child_failure_result("s", "t", exc)
+    result = child_payload_bounds._child_failure_result("s", "t", exc)
 
     text = gateway_ops._child_error_text(result)
     assert gateway_ops._child_error_code(result) == "UNAVAILABLE"
@@ -154,7 +156,7 @@ def test_nested_refusals_keep_first_leaf_message():
         _mcp_error(-32603, "second refusal"),
     )
 
-    result = mux_module._child_failure_result("s", "t", exc)
+    result = child_payload_bounds._child_failure_result("s", "t", exc)
 
     assert gateway_ops._child_error_code(result) == "CHILD_REFUSED"
     assert "first refusal" in gateway_ops._child_error_text(result)
@@ -165,7 +167,7 @@ def test_nested_refusals_keep_first_leaf_message():
 def test_empty_unknown_leaf_logs_class_without_separator(caplog):
     caplog.set_level(logging.WARNING, logger="mcp_multiplexer")
 
-    result = mux_module._child_failure_result("s", "t", ValueError())
+    result = child_payload_bounds._child_failure_result("s", "t", ValueError())
 
     assert "causes=ValueError)" in caplog.text
     assert "ValueError:" not in caplog.text
@@ -175,18 +177,15 @@ def test_empty_unknown_leaf_logs_class_without_separator(caplog):
 async def test_caller_cancellation_is_not_classified(monkeypatch):
     import asyncio
 
-    mux = mux_module.MCPMultiplexer.__new__(mux_module.MCPMultiplexer)
-    mux._fleet = SimpleNamespace(config=RuntimeConfig())
-    mux._catalog_epoch = 0
-    monkeypatch.setattr(mux_module, "require_fleet_capability", lambda *a, **k: None)
-    monkeypatch.setattr(type(mux), "load_catalog", lambda self: {"s": {}})
+    mux = SimpleNamespace(calls=build_proxied_calls(catalog={"s": {}}))
+    monkeypatch.setattr(proxied_calls, "require_fleet_capability", lambda *a, **k: None)
 
     async def cancelled(*args):
         raise asyncio.CancelledError()
 
-    monkeypatch.setattr(mux, "_call_ephemeral_child_session", cancelled)
+    monkeypatch.setattr(mux.calls, "_call_ephemeral_child_session", cancelled)
     with pytest.raises(asyncio.CancelledError):
-        await mux._call_service_child_once("s", "t", {}, timeout=1.0)
+        await mux.calls._call_service_child_once("s", "t", {}, timeout=1.0)
 
 
 def _frozen_nested_arguments():

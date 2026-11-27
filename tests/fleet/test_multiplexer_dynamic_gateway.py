@@ -24,15 +24,14 @@ from fastmcp.tools import Tool
 from arbora.core.settings import RuntimeConfig
 from arbora.fleet.fleet_capabilities import fleet_required_capabilities
 from arbora.fleet.multiplexer import (
-    _LOCAL_SESSION_META_KEY,
     _make_forwarder,
     _register_forwarder,
     _tenant_local_discovery_binding,
     _tool_is_verbose,
-    ambient_session_key,
     get_server_prefix,
     require_fleet_capability,
 )
+from arbora.fleet.session_keys import LOCAL_SESSION_META_KEY, ambient_session_key
 from tests.fleet.catalog_fixture import (
     bind_governed_forwarder_fixture,
     multiplexer_from_fixture,
@@ -209,7 +208,7 @@ async def _call_after_schema_recovery(mux, prefixed_name, recovered):
     """A refused uncertain call recovers transport, then a fresh call is admitted."""
     server_name, _original_name = mux.tool_to_server[prefixed_name]
     runtime = mux.children[server_name]
-    assert mux._proxied_tool_allows_transient_retry(prefixed_name)
+    assert mux.calls._proxied_tool_allows_transient_retry(prefixed_name)
     assert (
         mux.tool_object(prefixed_name).output_schema == recovered.tools[0].output_schema
     )
@@ -231,7 +230,7 @@ async def _list_session_tool_names(client: Any, session_id: str) -> set[str]:
     # the MCP spec); mypy does not yet implement PEP 728's ``extra_items``,
     # so the reserved session key is cast to the TypedDict's own declared
     # type rather than widened to ``Any``.
-    meta = cast(RequestParamsMeta, {_LOCAL_SESSION_META_KEY: session_id})
+    meta = cast(RequestParamsMeta, {LOCAL_SESSION_META_KEY: session_id})
     result = await client.session.list_tools(params=PaginatedRequestParams(_meta=meta))
     return {t.name for t in result.tools}
 
@@ -1629,11 +1628,11 @@ def test_local_session_meta_cannot_override_an_authenticated_http_session(
     monkeypatch,
 ):
     """D-W2-6 trust-boundary proof: the caller-declared local-session id
-    (``_LOCAL_SESSION_META_KEY``) must NEVER be consulted once a real,
+    (``LOCAL_SESSION_META_KEY``) must NEVER be consulted once a real,
     authenticated HTTP request context exists — otherwise an HTTP caller could
     simply declare another session's id in its own request ``_meta`` and
     inherit that session's loaded tools. This is why
-    :func:`arbora.fleet.multiplexer._explicit_local_session_key` is only
+    :func:`arbora.fleet.session_keys._explicit_local_session_key` is only
     ever consulted from the non-HTTP except-arms of ``_session_key`` — never
     from the HTTP try-body — so scoping this correlator can only ever ADD
     isolation between local, same-process callers; it can never be used to
@@ -1647,7 +1646,7 @@ def test_local_session_meta_cannot_override_an_authenticated_http_session(
     mock_context = MagicMock()
     mock_context.session_id = "real-authenticated-http-session"
     mock_context.request_context.meta = {
-        _LOCAL_SESSION_META_KEY: "someone-elses-declared-session"
+        LOCAL_SESSION_META_KEY: "someone-elses-declared-session"
     }
     monkeypatch.setattr(
         "fastmcp.server.dependencies.get_context",

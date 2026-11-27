@@ -558,7 +558,7 @@ async def test_candidate_set_is_bounded_before_the_port_call(tmp_path) -> None:
 @pytest.mark.spec("ARBORA-FLEET-R075")
 def test_the_call_deadline_ignores_the_connect_budget() -> None:
     from arbora.fleet.child_resilience import ChildRuntime
-    from arbora.fleet.multiplexer import _child_call_timeout
+    from arbora.fleet.proxied_calls import _child_call_timeout
 
     assert _child_call_timeout({"timeout": 15}, None) == 300.0
     assert _child_call_timeout({"timeout": 15, "call_timeout": 120}, None) == 120.0
@@ -576,23 +576,22 @@ def test_the_call_deadline_ignores_the_connect_budget() -> None:
 
 @pytest.mark.spec("ARBORA-FLEET-R075")
 def test_a_call_slower_than_the_connect_budget_completes(monkeypatch) -> None:
-    from arbora.fleet import multiplexer as mux_module
+    from arbora.fleet import proxied_calls
+    from tests.fleet.proxied_calls_fixture import build_proxied_calls
 
-    mux = mux_module.MCPMultiplexer.__new__(mux_module.MCPMultiplexer)
-    mux._catalog_epoch = 0
-    mux._fleet = SimpleNamespace(config=RuntimeConfig())
-    mux.credential_authority = None
-    monkeypatch.setattr(mux_module, "require_fleet_capability", lambda *a, **k: None)
-    monkeypatch.setattr(
-        type(mux), "load_catalog", lambda self: {"egeria": {"timeout": 0.05}}
+    mux = SimpleNamespace(
+        calls=build_proxied_calls(catalog={"egeria": {"timeout": 0.05}})
     )
+    monkeypatch.setattr(proxied_calls, "require_fleet_capability", lambda *a, **k: None)
 
     async def slow(*_args: Any) -> str:
         await asyncio.sleep(0.2)
         return "200 glossary terms"
 
-    monkeypatch.setattr(mux, "_call_ephemeral_child_session", slow)
-    result = asyncio.run(mux._call_service_child_once("egeria", "t", {}, timeout=None))
+    monkeypatch.setattr(mux.calls, "_call_ephemeral_child_session", slow)
+    result = asyncio.run(
+        mux.calls._call_service_child_once("egeria", "t", {}, timeout=None)
+    )
     assert result == "200 glossary terms"
 
 
@@ -797,9 +796,9 @@ def test_a_confirm_argument_tool_is_planned_and_confirmed_under_its_plan() -> No
 def test_the_ephemeral_call_path_arms_its_session() -> None:
     import inspect
 
-    from arbora.fleet.multiplexer import MCPMultiplexer
+    from arbora.fleet.proxied_calls import ProxiedCalls
 
-    source = inspect.getsource(MCPMultiplexer._invoke_oauth_tool)
+    source = inspect.getsource(ProxiedCalls._invoke_oauth_tool)
     assert (
         "async with self._fleet.confirmations.armed(session, original_name):" in source
     )
