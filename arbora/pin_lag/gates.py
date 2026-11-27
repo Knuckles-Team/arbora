@@ -10,10 +10,12 @@ questions; delete this module's callers with it.
 
 from __future__ import annotations
 
-from arbora.pin_lag.medulla import question_kind_served
+from arbora.pin_lag.medulla import AUTONOMY_MODELS, missing_model, question_kind_served
 
 __all__ = [
     "GATE_QUESTIONS",
+    "GATE_SHAPES",
+    "gate_served",
     "gate_inactive_line",
     "inactive_gate_lines",
     "inactive_gates",
@@ -27,16 +29,31 @@ GATE_QUESTIONS: dict[str, str] = {
 }
 
 
+#: The typed request and answer shapes a gate also needs, named when they are missing.
+GATE_SHAPES: dict[str, tuple[str, ...]] = {"autonomy": AUTONOMY_MODELS}
+
+
+def _missing(name: str) -> str | None:
+    """What the pinned engine lacks for gate ``name``: its question, else a typed shape."""
+    kind = GATE_QUESTIONS[name]
+    if not question_kind_served(kind):
+        return kind
+    return missing_model(GATE_SHAPES.get(name, ()))
+
+
 def gate_inactive_line(name: str) -> str:
     """The one report line of an inactive gate."""
-    return f"gate_inactive: {name} (engine lacks {GATE_QUESTIONS[name]})"
+    return f"gate_inactive: {name} (engine lacks {_missing(name)})"
+
+
+def gate_served(name: str) -> bool:
+    """Whether the pinned engine names the question and shapes of gate ``name``."""
+    return _missing(name) is None
 
 
 def inactive_gates() -> tuple[str, ...]:
-    """The gates whose question the pinned contract does not name."""
-    return tuple(
-        name for name, kind in GATE_QUESTIONS.items() if not question_kind_served(kind)
-    )
+    """The gates whose question or typed shapes the pinned contract does not name."""
+    return tuple(name for name in GATE_QUESTIONS if not gate_served(name))
 
 
 def inactive_gate_lines() -> list[str]:

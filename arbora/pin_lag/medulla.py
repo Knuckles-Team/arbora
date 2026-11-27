@@ -17,6 +17,8 @@ Guards held here (delete each with the re-pin that carries it):
   (R854), ``QualityRulePut`` and ``ColumnLineage`` (R856), ``ApproveEntityLink``
   (R887): methods engine ``main`` serves and the pinned release lacks. They go through
   :func:`send_main`.
+- ``AutonomyRequest``, ``IrreversibilityClass`` and ``FamilyAnswerAutonomy`` (R867): the typed
+  autonomy question body and answer; the gate composes only once the contract names them.
 - ``QuestionKind`` members ``autonomy_verdict`` (R867), ``tool_relevance`` (R866) and
   ``team_coordination`` (R877): the host composes each gate only once the pinned contract
   names the question (:func:`question_kind_served`).
@@ -41,6 +43,7 @@ from arbora.pin_lag.unavailable import PinLagUnavailable
 
 __all__ = [
     "ADMISSION_MODELS",
+    "AUTONOMY_MODELS",
     "AGENT_RUN_DELEGATION_FIELDS",
     "CLAIM_IDENTITY_FIELDS",
     "agent_run_delegation_served",
@@ -54,6 +57,7 @@ __all__ = [
     "accepts_parameter",
     "guard",
     "guard_field",
+    "missing_model",
     "question_kind_served",
     "refusal",
     "require_methods",
@@ -110,6 +114,21 @@ def question_kind_served(kind: str) -> bool:
 
     members = typing.get_args(models.QuestionKind)
     return any(kind in typing.get_args(member) for member in members)
+
+
+#: The typed autonomy question body and answer (R867), engine ``main``, unreleased.
+AUTONOMY_MODELS: tuple[str, ...] = (
+    "AutonomyRequest",
+    "IrreversibilityClass",
+    "FamilyAnswerAutonomy",
+)
+
+
+def missing_model(names: Iterable[str]) -> str | None:
+    """The first request shape the pinned engine lacks, or ``None`` when all are declared."""
+    from medulla.generated import models
+
+    return next((name for name in names if not hasattr(models, name)), None)
 
 
 def require_models(names: Iterable[str]) -> None:
@@ -289,12 +308,13 @@ def guard_certification_read() -> None:
 
     PIN-LAG: ``DecisionEval`` ``CertifyLocalSkill`` and its
     ``LocalCertificationAttestation`` are engine ``main`` shapes. The by-digest read
-    op ``certification_get`` is not on engine ``main`` yet (requested, MEDULLA FOR
-    ARBORA w15), so the guard keeps refusing until it is served.
+    op ``certification`` (``{tenant_id, digest}``, answering the attestation or null,
+    MEDULLA-DECISION-ENGINE-R142.103) is decided for engine ``main`` and is not served
+    by the pinned release, so the guard refuses until the contract declares it.
     """
     guard(
         "DecisionEval",
-        models=("LocalCertificationAttestation", "DecisionEvalOpCertificationGet"),
+        models=("LocalCertificationAttestation", "DecisionEvalOpCertification"),
     )
 
 

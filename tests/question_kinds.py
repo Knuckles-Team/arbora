@@ -13,6 +13,50 @@ def declare_question_kinds(monkeypatch: pytest.MonkeyPatch, *kinds: str) -> None
 
     literal = typing.Literal[kinds]  # type: ignore[valid-type]
     monkeypatch.setattr(models, "QuestionKind", models.QuestionKind | literal)
+    declare_autonomy_shapes(monkeypatch)
+
+
+def declare_autonomy_shapes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A structural double of the typed autonomy shapes of engine ``main`` (R867).
+
+    The shapes mirror ``medulla/generated/models.py`` on ``origin/main``: the request
+    body ``AutonomyRequest``, its ``IrreversibilityClass`` and the typed answer
+    ``FamilyAnswerAutonomy`` carrying an ``AutonomyReading``.
+    """
+    import enum
+
+    from medulla.generated import models
+    from pydantic import BaseModel, ConfigDict
+
+    class IrreversibilityClass(enum.StrEnum):
+        REVERSIBLE = "reversible"
+        IRREVERSIBLE = "irreversible"
+
+    class CorrigibilityVerdict(enum.StrEnum):
+        ALLOW = "allow"
+        REQUIRE_CONFIRMATION = "require_confirmation"
+
+    class AutonomyRequest(BaseModel):
+        model_config = ConfigDict(extra="forbid", frozen=True)
+        irreversibility: IrreversibilityClass
+
+    class AutonomyReading(BaseModel):
+        model_config = ConfigDict(extra="forbid", frozen=True)
+        verdict: CorrigibilityVerdict
+        clean_outcomes: int
+        code: str | None = None
+
+    class FamilyAnswerAutonomy(BaseModel):
+        model_config = ConfigDict(extra="forbid", frozen=True)
+        type: typing.Literal["autonomy"]
+        value: AutonomyReading
+
+    for name, value in (
+        ("IrreversibilityClass", IrreversibilityClass),
+        ("AutonomyRequest", AutonomyRequest),
+        ("FamilyAnswerAutonomy", FamilyAnswerAutonomy),
+    ):
+        monkeypatch.setattr(models, name, value, raising=False)
 
 
 #: Every engine ``QuestionKind`` wire value on medulla main (snake_case), for the wire test.

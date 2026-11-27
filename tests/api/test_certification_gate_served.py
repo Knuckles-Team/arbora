@@ -21,7 +21,7 @@ async def test_each_attestation_case_refuses_without_effect() -> None:
         ({"skill_id": "s1", "revision": 3, "digest": "dX"}, "attestation_mismatch"),
     ):
 
-        async def read(skill_id: str, stored=stored):
+        async def read(skill: dict, stored=stored):
             return stored
 
         with pytest.raises(OperationRefused) as refused:
@@ -29,7 +29,7 @@ async def test_each_attestation_case_refuses_without_effect() -> None:
         assert refused.value.code == "POLICY_DENIED"
         assert refused.value.details["reason"] == reason
 
-    async def exact(skill_id: str):
+    async def exact(skill: dict):
         return {"skill_id": "s1", "revision": 3, "digest": "d3"}
 
     await gate.require_attestation(engine_context(), [SKILL], read=exact)

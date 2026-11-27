@@ -994,10 +994,24 @@ def compose_served_invocation(
 
     changes.setdefault("resource_gate", resource_gate_for_host(gate_send))
 
+    from arbora.api.task_plan_schema import published_pin
+    from arbora.security.session import current_session
+
+    def confirm_principal() -> str:
+        # The engine sees the host's service identity: the record's receipt names it.
+        return str(session().actor.actor_id)
+
+    def tenant_pin(tenant: str) -> Any:
+        return published_pin((bindings or {}).get("task_plan_schema_pins"), tenant)
+
     from arbora.api.invoke.autonomy import served_autonomy
 
     # ARBORA-OPS-R867: every non-read effect asks the engine autonomy verdict first.
-    changes.update(served_autonomy(gate_send))
+    changes.update(
+        served_autonomy(
+            gate_send, feature_schema=tenant_pin, principal=confirm_principal
+        )
+    )
     services = build_invoke_services(
         gate_send=gate_send,
         registry=registry,
@@ -1014,15 +1028,6 @@ def compose_served_invocation(
     from arbora.a2a.chain_composition import compose_approval_chain
     from arbora.a2a.engine_decide import build_ask_decide
     from arbora.api.invoke.eg_audit import EgAuditAdapter
-    from arbora.api.task_plan_schema import published_pin
-    from arbora.security.session import current_session
-
-    def confirm_principal() -> str:
-        # The engine sees the host's service identity: the record's receipt names it.
-        return str(session().actor.actor_id)
-
-    def tenant_pin(tenant: str) -> Any:
-        return published_pin((bindings or {}).get("task_plan_schema_pins"), tenant)
 
     approval_chain = compose_approval_chain(
         ask_decide=build_ask_decide(
