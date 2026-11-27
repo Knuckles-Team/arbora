@@ -269,9 +269,7 @@ def compose_multiplexer_ops(
         return mux.status_snapshot().get("children", {})
 
     if pinned_cap is None:
-        from arbora.core.settings import runtime_config
-
-        pinned_cap = runtime_config.fleet_pinned_cap
+        pinned_cap = mux.fleet.config.fleet_pinned_cap
     if unadmitted_servers is None:
 
         def unadmitted_servers():

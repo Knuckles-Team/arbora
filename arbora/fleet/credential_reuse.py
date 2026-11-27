@@ -8,6 +8,7 @@ for a connector entry that declares a ``credential_owner``. An unbound holder re
 
 from __future__ import annotations
 
+import functools
 import threading
 from collections.abc import Mapping
 from typing import Any
@@ -18,6 +19,7 @@ from arbora.access.credential_use import (
     CredentialUseRequest,
     resolve_credential,
 )
+from arbora.core.settings import RuntimeConfig
 
 __all__ = ["CredentialReuse", "bind_credential_reuse"]
 
@@ -95,16 +97,16 @@ def bind_credential_reuse(
 
         vault = create_secrets_client()
     if providers is None:
-        providers = _declared_provider
+        providers = functools.partial(_declared_provider, config=fleet.config)
     bridge = BrokerPkceBridge(fleet.oauth_brokers, providers)
     fleet.credentials.bind(credential_ports_for_host(ask, vault, broker=bridge))
     return True
 
 
-def _declared_provider(provider_id: str) -> Mapping[str, Any] | None:
-    from arbora.core.settings import runtime_config
-
-    entries = runtime_config.remote_oauth_providers or ()
+def _declared_provider(
+    provider_id: str, config: RuntimeConfig
+) -> Mapping[str, Any] | None:
+    entries = config.remote_oauth_providers or ()
     for entry in entries:
         if isinstance(entry, Mapping) and entry.get("provider_id") == provider_id:
             return entry
