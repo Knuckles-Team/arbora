@@ -150,9 +150,9 @@ def provider(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[dict, Pat
 
 
 #: Modules the factory leaves uncomposed on purpose: every call to their operations could
-#: only answer ``UNAVAILABLE`` until the engine serves the world view, so they are not
-#: listed (pinned by ``test_city_operations_unregistered_until_engine_world_view``).
-_UNCOMPOSED = frozenset({"fleet_city", "presence", "activity"})
+#: only answer ``UNAVAILABLE`` until the engine serves the city state and the run trace,
+#: so they are not listed (pinned by ``test_city_state_operations_unregistered_until_served``).
+_UNCOMPOSED = frozenset({"presence", "activity"})
 
 
 def _declared_operations() -> list:
@@ -400,26 +400,29 @@ def test_harness_operations_registered_once_in_the_registry() -> None:
 @pytest.mark.spec(
     "ARBORA-OPS-R915", "ARBORA-OPS-R915.1", "ARBORA-OPS-R916", "ARBORA-FLEET-R084"
 )
-def test_city_operations_unregistered_until_engine_world_view() -> None:
-    """No ``fleet.city.*`` op is served before the engine publishes the
-    world-view and run-trace wire surface.
-
-    A served operation whose every call can only answer ``UNAVAILABLE``
-    must not be listed: the presence read and heartbeat wait on the
-    Medulla city-state read/write (``MEDULLA-WORLD-VIEW-R004``), the
-    activity stream on the run-trace read (``MEDULLA-ORCH-VOCAB-R803``,
-    the ``RunMetrics`` method) and the city layout on the one spatial
-    query (``MEDULLA-WORLD-VIEW-R003``).
+def test_city_state_operations_unregistered_until_served() -> None:
+    """The presence and activity operations are not served before the engine publishes
+    the city-state and run-trace wire surface; the layout, chunk, edit-layer and rules
+    operations are served now, from plain graph reads (ARBORA-FLEET-R084 to R088).
     """
     import importlib.util
 
     from arbora.api.ops.registry_factory import get_registry
     from arbora.api.registry.eg_binding import load_catalog
 
+    served = {op.id for op in get_registry() if op.id.startswith("fleet.city.")}
+    assert {
+        "fleet.city.layout",
+        "fleet.city.chunk",
+        "fleet.city.rules",
+        "fleet.city.edit_layer.get",
+        "fleet.city.edit_layer.put",
+    } <= served
     world_view = importlib.util.find_spec("medulla.generated.world_view") is not None
     run_trace = any(m["id"] == "RunMetrics" for m in load_catalog()["methods"])
-    served = {op.id for op in get_registry() if op.id.startswith("fleet.city.")}
-    assert (world_view or run_trace) or not served
+    assert (world_view or run_trace) or not (
+        served & {"fleet.city.presence", "fleet.city.activity"}
+    )
 
 
 @pytest.mark.spec("ARBORA-FLEET-R012.1")

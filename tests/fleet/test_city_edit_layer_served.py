@@ -110,8 +110,9 @@ def test_edit_layer_unbound_refuses_and_put_is_plan_confirmed_with_replay_owner(
 
     spec = _op("fleet.city.edit_layer.put")
     assert spec.effect is Effect.WRITE and spec.confirm is Confirm.PLAN
-    assert spec.scopes == frozenset({"fleet:write"})
+    assert spec.scopes == frozenset({"fleet:control"})
     assert (
-        _declared_owners()["fleet.city.edit_layer.put"] == "medulla:WorldViewEditLayer"
+        _declared_owners()["fleet.city.edit_layer.put"]
+        == "medulla:AddNode/CompareAndSetNodeFields"
     )
     assert "fleet.city.edit_layer.put" not in uncovered_write_operations(get_registry())

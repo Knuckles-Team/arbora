@@ -688,17 +688,17 @@ def _with_projection_reader(
 def _with_city_ports(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
-    """Bind the engine world-view port to the four city services (ARBORA-FLEET-R086).
+    """Bind the graph city port to the four city services (ARBORA-FLEET-R086).
 
-    One port sends each city read and write to the engine as the verified caller;
-    until the installed engine serves the world-view methods each call refuses
-    ``UNAVAILABLE`` naming the method. A service the host already bound is kept.
+    One port serves each city read and write from the tenant graph through the
+    engine's existing node reads and writes as the verified caller; the engine has
+    no spatial method. A service the host already bound is kept.
     """
     if bindings is None:
         return bindings
-    from arbora.fleet.city_ports import CITY_SERVICES, EngineWorldViewPort
+    from arbora.fleet.city_ports import CITY_SERVICES, GraphCityPort
 
-    port = EngineWorldViewPort()
+    port = GraphCityPort()
     return {**{name: port for name in CITY_SERVICES}, **bindings}
 
 
