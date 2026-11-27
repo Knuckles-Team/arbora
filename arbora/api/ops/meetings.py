@@ -123,6 +123,7 @@ async def admit_provider(context: Any, params: Mapping[str, Any]) -> dict[str, s
         reason="provider admission is not composed",
     )
     admission = await port.admit(
+        request=context,
         tenant=context.caller.tenant,
         principal=context.caller.principal,
         provider=params["provider"],
@@ -149,7 +150,7 @@ async def run_summary(
         context, "meeting_summarizer", reason="meeting summarizer is not composed"
     )
     transcript = await transcripts.read(
-        tenant=context.caller.tenant, meeting_id=params["meeting_id"]
+        request=context, tenant=context.caller.tenant, meeting_id=params["meeting_id"]
     )
     engine_admission = {
         key: admission[key]
@@ -290,7 +291,7 @@ async def require_exact_receipt(
         context, "meeting_final", reason="meeting finalization reader is not composed"
     )
     current = await finals.get_final(
-        tenant=context.caller.tenant, meeting_id=request.meeting_id
+        request=context, tenant=context.caller.tenant, meeting_id=request.meeting_id
     )
     if not current.get("finalization_digest"):
         raise OperationRefused("POLICY_DENIED", {"reason": "SUMMARY_BEFORE_FINALIZE"})
