@@ -18,6 +18,7 @@ from arbora.api.ops import apps
 from arbora.api.ops.registry_factory import get_registry
 from arbora.api.registry import Confirm, Idempotency
 from arbora.control_plane.admission import AdmissionState
+from arbora.control_plane.admission.engine import SOURCE_METHODS, EngineAdmissionSources
 from arbora.control_plane.admission.run import TRANSITIONS
 
 NO_OP: Any = None
@@ -94,8 +95,8 @@ class FakeEngine:
     def _ProbeForeignSource(self, p: dict[str, Any]) -> dict[str, Any]:
         return {"ok": self.healthy}
 
-    def _ForeignSourceAdmit(self, p: dict[str, Any]) -> None:
-        return None
+    def _GetForeignSource(self, p: dict[str, Any]) -> dict[str, Any]:
+        return {"name": p["name"]}
 
     def _ForeignSourceDetach(self, p: dict[str, Any]) -> None:
         return None
@@ -130,7 +131,9 @@ async def admit(engine_: FakeEngine, **over: Any) -> dict[str, Any]:
 
 
 def detached(engine_: FakeEngine) -> list[str]:
-    return [p["name"] for p in engine_.sent("ForeignSourceDetach")]
+    """The sources detached, one entry each (a table's registration is ``<source>.<table>``)."""
+    names = [p["name"].split(".")[0] for p in engine_.sent("ForeignSourceDetach")]
+    return list(dict.fromkeys(names))
 
 
 @pytest.mark.asyncio
@@ -330,3 +333,46 @@ def test_parity_sample_reads_data_apps_config() -> None:
     for bad in (9, 100001, "x"):
         with pytest.raises(ValueError):
             parity_sample({"data_apps": {"parity_sample": bad}})
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-DATA-MARKET-R004")
+async def test_attach_reads_each_table_registration_and_detach_removes_each(
+    engine: FakeEngine,
+) -> None:
+    await admit(engine)
+    await admit(engine, approve=True)
+    asked = [p["name"] for p in engine.sent("GetForeignSource")]
+    assert asked == ["ledger-new.accounts", "ledger-new.entries"]
+    assert engine.sent("ForeignSourceAdmit") == []
+    sources = EngineAdmissionSources(lambda m, p: engine.send(None, m, p))
+    await sources.detach("ledger-new", ["accounts", "same"])
+    await sources.detach("same", ["same"])
+    assert [p["name"] for p in engine.sent("ForeignSourceDetach")][-3:] == [
+        "ledger-new.accounts",
+        "ledger-new.same",
+        "same",
+    ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.spec("ARBORA-DATA-MARKET-R004")
+async def test_the_pinned_release_refuses_detach_and_parity_naming_the_method(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import medulla.generated as generated
+
+    ids = generated.METHOD_IDS
+    lacking = (
+        {k: v for k, v in ids.items() if k not in SOURCE_METHODS}
+        if isinstance(ids, dict)
+        else frozenset(ids) - set(SOURCE_METHODS)
+    )
+    monkeypatch.setattr(generated, "METHOD_IDS", lacking)
+    from arbora.pin_lag.medulla import guard
+
+    for method in SOURCE_METHODS:
+        with pytest.raises(OperationRefused) as refused:
+            guard(method)
+        assert refused.value.code == "UNAVAILABLE"
+        assert method in str(refused.value.details)
