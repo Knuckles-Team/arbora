@@ -795,6 +795,23 @@ def _with_city_ports(
     return {**{name: port for name in CITY_SERVICES}, **bindings}
 
 
+def _with_delivery_ports(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the six delivery ports to the host (ARBORA-OPS-R896.9, R896.10, R896.12).
+
+    The lane authority, the run starter, the identity links, the source access, the owner
+    receipts and the code-host connector each act as the verified caller of one request.
+    Without them an assignment queues and no event is stamped. A port the host already
+    bound is kept.
+    """
+    if bindings is None:
+        return bindings
+    from arbora.api.ops.delivery_ports import delivery_bindings
+
+    return {**delivery_bindings(), **bindings}
+
+
 def _with_provisioning_ports(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
@@ -1054,7 +1071,7 @@ def compose_served_invocation(
     bindings = _with_fleet_source_executor(bindings, pool, graph)
     bindings = _with_nl_federation_planner(bindings)
     bindings = _with_projection_reader(bindings)
-    bindings = _with_city_ports(bindings)
+    bindings = _with_delivery_ports(_with_city_ports(bindings))
     bindings = _with_provisioning_ports(bindings)
     bindings = _with_operator_audit(bindings)
     bindings = _with_federation_sources(bindings)

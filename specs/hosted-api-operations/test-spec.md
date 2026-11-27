@@ -517,7 +517,7 @@ Each entry below names a row whose proof is the verification text of that row in
 | `ARBORA-OPS-R896.9` | Test: `tests/development/test_scm_intake_served.py::test_only_principals_with_source_write_are_stamped` (L3). |
 | `ARBORA-OPS-R896.10` | Test: `tests/api/test_delivery_ops_served.py::test_arm_needs_owner_receipt_on_head_and_platform_never_merges` (L3: HTTP and MCP). |
 | `ARBORA-OPS-R896.11` | Test: `tests/api/test_delivery_ops_served.py::test_delivery_writes_are_idempotent_and_uncertain_effects_reconcile` (L3). |
-| `ARBORA-OPS-R896.12` | Test: `tests/development/test_assignments_served.py::test_assignments_reserve_lanes_and_keep_a_person_slot` (L3). |
+| `ARBORA-OPS-R896.12` | Test: `tests/development/test_assignments_served.py::test_assignments_reserve_lanes_and_keep_a_person_slot` (L3) and `tests/development/test_delivery_composition.py::test_run_start_reaches_the_lane_and_a_signed_event_is_stamped_with_production_bindings` (L4). |
 | `ARBORA-OPS-R896.13` | Test: `tests/api/test_delivery_surface_served.py::test_delivery_runs_from_slice_to_merge_over_mcp` (L4). |
 | `ARBORA-OPS-R022.2.6` | Test: `tests/api/test_schedule_ops.py::test_create_requires_loops_control_key_and_forwards_owner` (L1). (planned: the schedule ops files do not exist yet) |
 | `ARBORA-OPS-R022.2.7` | Test: `tests/api/test_schedule_ops.py::test_delete_requires_step_up_and_owner` (L1). |

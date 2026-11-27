@@ -247,7 +247,7 @@ def _decide_call(context: Any) -> Any:
     return call
 
 
-def _run_ports(context: Any, evidence: Any) -> Any:
+def _run_ports(context: Any, evidence: Any, graph: str) -> Any:
     from arbora.pin_lag.medulla import PinLagUnavailable, refusal
     from arbora.processes.run_ports import process_host_ports
 
@@ -258,6 +258,7 @@ def _run_ports(context: Any, evidence: Any) -> Any:
         return process_host_ports(
             call=_decide_call(context),
             tenant=_tenant(context),
+            graph=graph,
             schema_of=schema if callable(schema) else _published_schema(context),
             broker=broker_for(context),
             wait=wait,
@@ -330,7 +331,7 @@ async def handle_process_run(
             "PROCESS_PROMPT_UNRESOLVED", {"task_id": unresolved.task_id}
         ) from None
     evidence = RunEvidence()
-    ports = _run_ports(context, evidence)
+    ports = _run_ports(context, evidence, await caller_dispatch_graph(context))
     try:
         run_id = await _begin_run(context, planned, params)
     except _Replayed as replay:

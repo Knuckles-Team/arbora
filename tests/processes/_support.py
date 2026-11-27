@@ -96,6 +96,14 @@ def main_run_task(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(graph, "RunTask", RunTask)
 
 
+def advisory(*options: str) -> dict[str, Any]:
+    """The engine's advisory outcome of a control step: scored option ids."""
+    return {
+        "outcome": "advisory",
+        "scores": [{"option_id": o, "score": {"value": 1 << 32}} for o in options],
+    }
+
+
 def decide_record(
     request: Mapping[str, Any], value: Mapping[str, Any]
 ) -> dict[str, Any]:
@@ -139,8 +147,9 @@ class ProcessEngine:
             raise EngineRefusal("WORKFLOW_UNKNOWN")
         if kind == "process_plan":
             return {"records": [decide_record(request, PLAN)]}
-        taken = {"taken_task_ids": [self.arm]}
-        return {"records": [decide_record(request, taken)]}
+        record = decide_record(request, {})
+        record["outcome"] = advisory(f"taken:{self.arm}", "default:false")
+        return {"records": [record]}
 
 
 class _Loop:

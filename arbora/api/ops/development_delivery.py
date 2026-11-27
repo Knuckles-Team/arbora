@@ -183,9 +183,11 @@ def _assignment_ports(context: Any) -> tuple[Any, Any, int, Any]:
             or MAX_PARALLEL_DEFAULT
         )
     )
+    from arbora.api.ops.delivery_ports import delivery_port
+
     return (
-        context.services.get("delivery_lanes"),
-        context.services.get("delivery_run_starter"),
+        delivery_port(context, "delivery_lanes"),
+        delivery_port(context, "delivery_run_starter"),
         cap,
         context.services.get("clock_ms") or (lambda: time.time_ns() // 1_000_000),
     )
@@ -401,7 +403,9 @@ async def _verified_receipt(context: Any, params: Mapping[str, Any]) -> None:
     ref = params.get("approval_ref")
     if not ref:
         raise OperationRefused("MERGE_APPROVAL_REQUIRED", {})
-    receipts = context.services.get("owner_receipts")
+    from arbora.api.ops.delivery_ports import delivery_port
+
+    receipts = delivery_port(context, "owner_receipts")
     if receipts is None:
         raise unavailable("owner receipts are not composed")
     verdict = await receipts.verify(
@@ -417,6 +421,7 @@ async def handle_delivery_arm(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Arm only on the engine's ``arm`` verdict and an owner receipt of the head commit."""
+    from arbora.api.ops.delivery_ports import delivery_port
     from arbora.deployment.placement import check_receipt, single_record
     from arbora.pin_lag.medulla import guard
 
@@ -432,7 +437,7 @@ async def handle_delivery_arm(
     # The sealed record must answer this request, for this caller.
     check_receipt(record, request, str(context.caller.principal))
     verdict = _arming_verdict(record)
-    connector = context.services.get("delivery_connector")
+    connector = delivery_port(context, "delivery_connector")
     if verdict != "hold":
         if connector is None:
             raise unavailable("the code-host connector is not composed")

@@ -169,11 +169,17 @@ def compose_host_ports(
         owner = resolve_run(run_ref)
         return "" if owner is None else str(owner.session.tenant)
 
+    def graph_of(run_ref: str) -> str:
+        owner = resolve_run(run_ref)
+        return "" if owner is None else str(owner.session.graph)
+
     ports: dict[str, Any] = {
         "engine_decision": EngineDecisionAdapter(
-            call, method_op, tenant_of=tenant_of, schema_of=schema_of
+            call, method_op, tenant_of=tenant_of, schema_of=schema_of, graph_of=graph_of
         ),
-        "decision": decision_port(call, tenant_of=tenant_of, schema_of=schema_of),
+        "decision": decision_port(
+            call, tenant_of=tenant_of, schema_of=schema_of, graph_of=graph_of
+        ),
         "liveness_wait": liveness_wait(wait),
         "checkpoint_store": checkpoint_store,
         "events": events,

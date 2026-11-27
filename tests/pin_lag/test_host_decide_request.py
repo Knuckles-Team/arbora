@@ -9,6 +9,7 @@ engine that does not list the question refuses ``UNAVAILABLE`` naming it.
 from __future__ import annotations
 
 import asyncio
+import json
 from collections.abc import Mapping
 from typing import Any, Literal
 
@@ -34,6 +35,23 @@ def _recorder(seen: list[tuple[str, Any, str]]) -> Any:
     return call
 
 
+def _assert_control_params(request: Mapping[str, Any]) -> None:
+    # One declared option ``decision``; exactly two text params (MEDULLA-DECISION-ENGINE-R180).
+    assert [o["option_id"] for o in request["candidates"]["options"]] == ["decision"]
+    assert [p["name"] for p in request["params"]] == ["graph", "process_decision"]
+    graph, decision = request["params"]
+    assert graph["value"] == {"type": "text", "value": "graph:one"}
+    assert decision["value"]["type"] == "text"
+    assert json.loads(decision["value"]["value"]) == {
+        "plan_digest": "p1",
+        "branch_task_id": "b1",
+        "inputs": {
+            "n": {"type": "integer", "value": 3},
+            "ok": {"type": "boolean", "value": True},
+        },
+    }
+
+
 @pytest.mark.spec("ARBORA-HOST-R001.2.5")
 def test_a_branch_question_travels_as_one_wrapped_decide_request(
     main_shape: None,  # noqa: F811
@@ -42,7 +60,10 @@ def test_a_branch_question_travels_as_one_wrapped_decide_request(
     serve_control_kinds(monkeypatch)
     seen: list[tuple[str, Any, str]] = []
     port = adapters.decision_port(
-        _recorder(seen), tenant_of=lambda _: "tenant:one", schema_of=_schema_of
+        _recorder(seen),
+        tenant_of=lambda _: "tenant:one",
+        schema_of=_schema_of,
+        graph_of=lambda _: "graph:one",
     )
     payload = {
         "plan_digest": "p1",
@@ -62,10 +83,7 @@ def test_a_branch_question_travels_as_one_wrapped_decide_request(
         "safety": "ordinary",
     }
     assert request["feature_schema"] == _SCHEMA
-    assert request["candidates"] == {"source": "declared", "options": []}
-    names = [p["name"] for p in request["params"]]
-    assert names == sorted(names)
-    assert {"input.n", "input.ok", "plan_digest", "branch_task_id"} <= set(names)
+    _assert_control_params(request)
 
 
 @pytest.mark.spec("ARBORA-HOST-R001.2.5")
@@ -97,7 +115,10 @@ def test_a_float_input_has_no_typed_form_and_sends_nothing(
     serve_control_kinds(monkeypatch)
     seen: list[tuple[str, Any, str]] = []
     engine = adapters.EngineDecisionAdapter(
-        _recorder(seen), tenant_of=lambda _: "tenant:one", schema_of=_schema_of
+        _recorder(seen),
+        tenant_of=lambda _: "tenant:one",
+        schema_of=_schema_of,
+        graph_of=lambda _: "graph:one",
     )
     with pytest.raises(RuntimeError) as refused:
         asyncio.run(

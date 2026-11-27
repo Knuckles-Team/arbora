@@ -50,6 +50,43 @@ def assignment_context(
     }
 
 
+async def _reserve_lane(
+    delivery: Mapping[str, Any],
+    assignment: Mapping[str, Any],
+    *,
+    tenant: str,
+    lanes: LanePort,
+    max_parallel: int,
+    person_input: bool,
+    now_ms: Callable[[], int],
+) -> dict[str, Any]:
+    """The lane hold, or ``{"queued": reason}`` when no slot is free or the engine lacks lanes."""
+    from arbora.fleet.scaling.development_lane import (
+        DevelopmentLaneAuthorityUnavailable,
+    )
+
+    try:
+        status = await asyncio.to_thread(
+            lanes.status, {"tenant_ref": tenant, "limit": 1, "now_ms": now_ms()}
+        )
+        active = int(status.get("tenant_active_count", 0))
+        # Delivery work holds ``max_parallel`` slots; the one beyond them is a person's.
+        if active >= max_parallel + (PERSON_SLOTS if person_input else 0):
+            return {"queued": "LANE_QUOTA"}
+        return await asyncio.to_thread(
+            lanes.reserve,
+            {
+                "tenant_ref": tenant,
+                "work_item_id": f"delivery:{delivery['id']}:{assignment['id']}",
+                "idempotency_key": f"delivery:{delivery['id']}:{assignment['id']}:lane",
+                "now_ms": now_ms(),
+            },
+        )
+    except DevelopmentLaneAuthorityUnavailable as unavailable:
+        # The engine serves no lane methods: the assignment waits, nothing is invented.
+        return {"queued": unavailable.code}
+
+
 async def start_assignment(
     delivery: Mapping[str, Any],
     assignment: Mapping[str, Any],
@@ -62,25 +99,26 @@ async def start_assignment(
     now_ms: Callable[[], int],
 ) -> dict[str, Any]:
     """Reserve a lane and start the run, or queue; never refuses for want of a slot."""
+    from arbora.api.invoke.pipeline import OperationRefused
+
     if lanes is None or runner is None:
         return {"state": "queued", "reason": "lane authority not composed"}
-    status = await asyncio.to_thread(
-        lanes.status, {"tenant_ref": tenant, "limit": 1, "now_ms": now_ms()}
+    hold = await _reserve_lane(
+        delivery,
+        assignment,
+        tenant=tenant,
+        lanes=lanes,
+        max_parallel=max_parallel,
+        person_input=person_input,
+        now_ms=now_ms,
     )
-    active = int(status.get("tenant_active_count", 0))
-    # Delivery work holds ``max_parallel`` slots; the one beyond them is a person's.
-    if active >= max_parallel + (PERSON_SLOTS if person_input else 0):
-        return {"state": "queued", "reason": "LANE_QUOTA"}
-    hold = await asyncio.to_thread(
-        lanes.reserve,
-        {
-            "tenant_ref": tenant,
-            "work_item_id": f"delivery:{delivery['id']}:{assignment['id']}",
-            "idempotency_key": f"delivery:{delivery['id']}:{assignment['id']}:lane",
-            "now_ms": now_ms(),
-        },
-    )
-    run_id = await runner.start(assignment_context(delivery, assignment), hold)
+    if "queued" in hold:
+        return {"state": "queued", "reason": hold["queued"]}
+    try:
+        run_id = await runner.start(assignment_context(delivery, assignment), hold)
+    except OperationRefused as refused:
+        # The held lease lapses; a retry replays the same hold and the same run key.
+        return {"state": "queued", "reason": refused.code}
     return {"state": "started", "run_id": run_id, "hold_id": hold.get("hold_id")}
 
 

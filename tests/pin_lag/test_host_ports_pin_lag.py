@@ -204,6 +204,7 @@ def test_real_path_binds_every_port_through_the_main_shape(
             verdict,
             tenant_of=lambda _: "tenant:one",
             schema_of=lambda t, q: {"component_id": f"decide.schema.{q}"},
+            graph_of=lambda _: "graph:one",
         )("BranchSelect", {}, "t1")
         assert taken.taken_task_ids == ("t2",)
 

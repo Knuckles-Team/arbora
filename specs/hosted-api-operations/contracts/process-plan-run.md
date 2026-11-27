@@ -1,11 +1,15 @@
 # Seam: Process plan served and run
 
-Provider: medulla `MEDULLA-CQ-ORCH-R704.5` (plan) and `MEDULLA-DECISION-ENGINE-R180.4` (branch and table verdicts); meristem `MERISTEM-RUN-R018.5` (run loop).
-Consumer: arbora `ARBORA-OPS-R898`.
+Provider: medulla MEDULLA-CQ-ORCH-R704.5
+Provider: medulla MEDULLA-DECISION-ENGINE-R180.4
+Provider: medulla MEDULLA-DECISION-ENGINE-R180.8
+Provider: meristem MERISTEM-RUN-R018.5
+Consumer: arbora ARBORA-OPS-R898
+Consumer: arbora ARBORA-OPS-R898.5
 
 ## Wire shape
 
-Arbora sends `Decide` with `QuestionKind::ProcessPlan` and `{workflow_id, version}`. The engine returns the sealed task plan, its digest and one `StepBinding` per step. Arbora maps agent steps to prompt text and passes control steps to `iterate_run` unchanged. During the run the decision port sends `Decide` `BranchSelect` with the plan digest and the branch task id. The approval waiter blocks on `process.approval.decide`.
+Arbora sends `Decide` with `QuestionKind::ProcessPlan` and `{workflow_id, version}`. The engine returns the sealed task plan, its digest and one `StepBinding` per step. Arbora maps agent steps to prompt text and passes control steps to `iterate_run` unchanged. During the run the decision port sends `Decide` `BranchSelect` with the declared option `decision` and the text params `graph` and `process_decision` (`{plan_digest, branch_task_id, inputs}`), and reads the advisory options `taken:<task id>`. The approval waiter blocks on `process.approval.decide`.
 
 ## Refusal codes
 

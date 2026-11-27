@@ -233,18 +233,18 @@ async def _write_next(
         await engine_send(context, "CompareAndSetNodeFields", request, idempotent=True)
     )
     if swapped is False:
-        raise OperationRefused("STALE_EDIT", {})
+        raise OperationRefused("REVISION_CONFLICT", {"reason": "STALE_EDIT"})
 
 
 async def _put_layer(
     context: Any, tenant: str, edits: list[dict[str, Any]], base_version: int
 ) -> dict[str, Any]:
     if _collisions(edits):
-        raise OperationRefused("PIN_COLLISION", {})
+        raise OperationRefused("REVISION_CONFLICT", {"reason": "PIN_COLLISION"})
     current = await _layer(context, tenant)
     version = int(current.get("version", 0)) if current else 0
     if version != base_version:
-        raise OperationRefused("STALE_EDIT", {})
+        raise OperationRefused("REVISION_CONFLICT", {"reason": "STALE_EDIT"})
     actor = str(context.caller.principal)
     body = {"version": version + 1, "edits": edits, "actor": actor}
     node = edit_layer_id(tenant)

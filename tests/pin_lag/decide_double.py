@@ -24,5 +24,20 @@ def serve_control_kinds(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def answered_branch(*taken: str) -> dict[str, object]:
     """The ``RunCall`` envelope of an answered ``BranchSelect`` that took ``taken``."""
-    record = {"record_id": "rec", "answer": {"value": {"taken_task_ids": list(taken)}}}
+    record = {"record_id": "rec", "outcome": advisory(*taken_options(taken))}
     return {"outcome": "answered", "payload": {"records": [record]}}
+
+
+def advisory(*options: str) -> dict[str, object]:
+    """The engine's advisory outcome: each option id scored in the order the engine seals."""
+    return {
+        "outcome": "advisory",
+        "scores": [
+            {"option_id": option, "score": {"value": 1 << 32}} for option in options
+        ],
+    }
+
+
+def taken_options(taken: tuple[str, ...]) -> list[str]:
+    """The ``taken:<task id>`` option ids of a branch answer."""
+    return [f"taken:{task}" for task in taken]
