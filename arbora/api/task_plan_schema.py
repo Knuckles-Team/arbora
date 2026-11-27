@@ -304,6 +304,64 @@ def published_pin(pins: TaskPlanSchemaPins | None, tenant: str) -> dict[str, Any
 RANK_EXPORT_NAME = "CATALOG_RANK_FEATURE_SCHEMAS"
 
 
+def _found_export(export_name: str, modules: Sequence[str]) -> Mapping[str, Any]:
+    """The first installed module's export named ``export_name``, or empty."""
+    for name in modules:
+        try:
+            module = importlib.import_module(name)
+        except ImportError:
+            continue
+        found = getattr(module, export_name, None)
+        if found is not None:
+            return found  # type: ignore[no-any-return]
+    return {}
+
+
+def _entry_pin(entry: Mapping[str, Any], stat: Any) -> TaskPlanSchemaPins:
+    """The pin publisher of one export entry; a body that misses its digest raises."""
+    from importlib.metadata import version
+
+    digest, _attributes = (stat or _stat()).encode_body(entry["body"])
+    if (
+        digest != entry["content_digest"]
+        and "sha256:" + digest != entry["content_digest"]
+    ):
+        raise ValueError("body does not match its digest")
+    return TaskPlanSchemaPins(
+        {
+            "component_id": entry["component_id"],
+            "kind": entry["kind"],
+            "engine_version": version("medulla"),
+            "available": True,
+            "schema_version": entry["schema_version"],
+            "content_digest": entry["content_digest"],
+            "body": entry["body"],
+        }
+    )
+
+
+def _export_pins(
+    export_name: str,
+    modules: Sequence[str],
+    stat: Any,
+    question_ids: Sequence[str] | None = None,
+) -> dict[str, TaskPlanSchemaPins]:
+    """One pin publisher per question of the engine export named ``export_name``.
+
+    An entry whose body does not hash to its own digest is refused and logged; with
+    ``question_ids`` an entry outside that closed set is ignored.
+    """
+    pins: dict[str, TaskPlanSchemaPins] = {}
+    for question_id, entry in _found_export(export_name, modules).items():
+        if question_ids is not None and question_id not in question_ids:
+            continue
+        try:
+            pins[question_id] = _entry_pin(entry, stat)
+        except (KeyError, TypeError, ValueError) as exc:
+            logger.error("schema for %s not bound: %s", question_id, exc)
+    return pins
+
+
 def catalog_rank_pins(
     *, modules: Sequence[str] = EXPORT_MODULES, stat: Any = None
 ) -> dict[str, TaskPlanSchemaPins]:
@@ -311,44 +369,33 @@ def catalog_rank_pins(
 
     PIN-LAG: the pinned engine release exports no ``CATALOG_RANK_FEATURE_SCHEMAS``
     (``MEDULLA-DECISION-ENGINE-R829.4``); with none installed the result is empty,
-    nothing is published and ``find`` answers the floor. An entry whose body does not
-    hash to its own digest is refused and logged. Delete the lag with the re-pin.
+    nothing is published and ``find`` answers the floor. Delete the lag with the re-pin.
     """
-    exports: Mapping[str, Mapping[str, Any]] = {}
-    for name in modules:
-        try:
-            module = importlib.import_module(name)
-        except ImportError:
-            continue
-        found = getattr(module, RANK_EXPORT_NAME, None)
-        if found is not None:
-            exports = found
-            break
-    pins: dict[str, TaskPlanSchemaPins] = {}
-    for question_id, entry in exports.items():
-        try:
-            digest, _attributes = (stat or _stat()).encode_body(entry["body"])
-            if digest != entry["content_digest"] and (
-                "sha256:" + digest != entry["content_digest"]
-            ):
-                raise ValueError("body does not match its digest")
-        except (KeyError, TypeError, ValueError) as exc:
-            logger.error("rank schema for %s not bound: %s", question_id, exc)
-            continue
-        from importlib.metadata import version
+    return _export_pins(RANK_EXPORT_NAME, modules, stat)
 
-        pins[question_id] = TaskPlanSchemaPins(
-            {
-                "component_id": entry["component_id"],
-                "kind": entry["kind"],
-                "engine_version": version("medulla"),
-                "available": True,
-                "schema_version": entry["schema_version"],
-                "content_digest": entry["content_digest"],
-                "body": entry["body"],
-            }
-        )
-    return pins
+
+PROCESS_EXPORT_NAME = "PROCESS_CONTROL_FEATURE_SCHEMAS"
+#: The closed set of process control-step questions (ARBORA-OPS-R898.5).
+PROCESS_QUESTION_IDS: tuple[str, ...] = (
+    "process.branch_select",
+    "process.decision_table_eval",
+)
+
+
+def process_schema_pins(
+    *, modules: Sequence[str] = EXPORT_MODULES, stat: Any = None
+) -> dict[str, TaskPlanSchemaPins]:
+    """One pin publisher per process control-step question (ARBORA-OPS-R898.5).
+
+    The engine does not publish ``decide.schema.process.branch_select`` or
+    ``decide.schema.process.decision_table_eval`` itself (coordinator decision): the
+    host publishes the engine's exported bodies once per tenant, as it does the
+    catalog ranking schemas, and the control-step decision port pins each digest.
+    PIN-LAG: the pinned engine client exports no ``PROCESS_CONTROL_FEATURE_SCHEMAS``;
+    with none installed the result is empty, nothing is published and every control
+    step refuses ``decide_request_incomplete``. Delete the lag with the re-pin.
+    """
+    return _export_pins(PROCESS_EXPORT_NAME, modules, stat, PROCESS_QUESTION_IDS)
 
 
 def rank_pin(

@@ -188,7 +188,7 @@ def decision_port(
             schema_of=schema_of,
             task_id=task_id,
         )
-        raw = await call(DECIDE_OP, decide_params(request), task_id)
+        raw = verdict_fields(await call(DECIDE_OP, decide_params(request), task_id))
         return port_types().DecisionVerdict(
             record_id=str(raw.get("record_id") or ""),
             taken_task_ids=tuple(raw.get("taken_task_ids") or ()),
@@ -197,6 +197,30 @@ def decision_port(
         )
 
     return decide
+
+
+def verdict_fields(raw: Mapping[str, Any]) -> dict[str, Any]:
+    """The verdict an answered ``Decide`` carries, from the ``RunCall`` envelope.
+
+    A refused call, or an answer that is not exactly one record with a value, abstains
+    with its code: the harness then fails the step and applies nothing.
+    """
+    if raw.get("outcome") != "answered":
+        return {"abstention": str(raw.get("refusal_code") or "UNAVAILABLE")}
+    records = (raw.get("payload") or {}).get("records")
+    if not isinstance(records, list) or len(records) != 1:
+        return {"abstention": "DECISION_MALFORMED"}
+    record = records[0] if isinstance(records[0], Mapping) else {}
+    answer = record.get("answer")
+    value = answer.get("value") if isinstance(answer, Mapping) else None
+    if not isinstance(value, Mapping):
+        return {"abstention": "DECISION_MALFORMED"}
+    return {
+        "record_id": record.get("record_id"),
+        "taken_task_ids": value.get("taken_task_ids"),
+        "outputs": value.get("outputs"),
+        "abstention": value.get("abstention"),
+    }
 
 
 def approval_waiter(

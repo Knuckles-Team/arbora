@@ -16,7 +16,7 @@ import pytest
 
 from arbora.agent_host import host_port_adapters as adapters
 from arbora.pin_lag import meristem as guard
-from tests.pin_lag.decide_double import serve_control_kinds
+from tests.pin_lag.decide_double import answered_branch, serve_control_kinds
 from tests.pin_lag.test_host_ports_pin_lag import main_shape  # noqa: F401
 
 _SCHEMA = {"component_id": "decide.schema.process.branch_select"}
@@ -29,7 +29,7 @@ def _schema_of(tenant: str, question_id: str) -> Mapping[str, Any] | None:
 def _recorder(seen: list[tuple[str, Any, str]]) -> Any:
     async def call(op: str, params: Mapping[str, Any], ref: str) -> Mapping[str, Any]:
         seen.append((op, params, ref))
-        return {"record_id": "rec", "taken_task_ids": ["t2"]}
+        return answered_branch("t2")
 
     return call
 

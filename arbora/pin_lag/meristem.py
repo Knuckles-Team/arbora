@@ -153,6 +153,18 @@ def changeset_types() -> SimpleNamespace:
     return SimpleNamespace(**found)
 
 
+def require_task_fields(names: tuple[str, ...]) -> None:
+    """``RunTask.<name>`` of the harness for each control step kind, or refuse naming it."""
+    try:
+        from meristem.graph import RunTask
+    except ImportError:
+        raise PinLagUnavailable("meristem.graph.RunTask") from None
+    declared = {field.name for field in dataclasses.fields(RunTask)}
+    for name in names:
+        if name not in declared:
+            raise PinLagUnavailable(f"meristem.graph.RunTask.{name}")
+
+
 def require_fields(names: tuple[str, ...]) -> Any:
     """``HostPorts`` once every named field exists on it, else refuse the first missing."""
     cls = host_ports_type()

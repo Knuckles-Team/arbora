@@ -887,12 +887,15 @@ def _with_task_plan_schema(
         return bindings, None
     from arbora.api.task_plan_schema import (
         catalog_rank_pins,
+        process_schema_pins,
         publish_all,
         startup_pins,
     )
 
     pins = startup_pins()
-    rank_pins = catalog_rank_pins()
+    # The process control-step schemas publish and pin the same way as the ranking ones
+    # (ARBORA-OPS-R898.5): both are keyed by question id.
+    rank_pins = {**catalog_rank_pins(), **process_schema_pins()}
     if not any((pins, rank_pins)):
         return bindings, None
     publish = _task_plan_schema_publisher(

@@ -314,6 +314,27 @@ def _task_call(task: Mapping[str, Any]) -> Any:
     return ToolStep(server=call["server"], tool=call["tool"], arguments=arguments)
 
 
+#: The control step kinds of an engine plan task (MERISTEM-RUN-R018.1).
+CONTROL_STEP_KEYS: tuple[str, ...] = ("branch", "join", "decision", "approval")
+
+
+def _control_steps(task: Mapping[str, Any]) -> dict[str, Any]:
+    """The task's control step as ``RunTask`` fields; a pinned harness without them refuses."""
+    found = {
+        k: dict(task[k]) for k in CONTROL_STEP_KEYS if isinstance(task.get(k), Mapping)
+    }
+    if found:
+        from arbora.pin_lag.meristem import PinLagUnavailable, require_task_fields
+
+        try:
+            require_task_fields(tuple(found))
+        except PinLagUnavailable as lag:
+            from arbora.pin_lag.medulla import refusal
+
+            raise refusal(lag) from lag
+    return found
+
+
 def run_plan_for(plan: Mapping[str, Any], model: Any, toolsets: tuple = ()) -> Any:
     """The harness ``RunPlan`` for an engine plan: same tasks, edges and limits."""
     from meristem.graph import (
@@ -331,6 +352,7 @@ def run_plan_for(plan: Mapping[str, Any], model: Any, toolsets: tuple = ()) -> A
                 prompt=task["prompt"],
                 depends_on=tuple(task["depends_on"]),
                 call=_task_call(task),
+                **_control_steps(task),
             )
             for task in plan["tasks"]
         ),
@@ -817,17 +839,49 @@ def _bind_run_tools(plan: Mapping[str, Any], fleet: FleetStepTools | None) -> An
     return _RUN_TOOLS.set(fleet)
 
 
-async def _drain_run(
-    plan: Mapping[str, Any], model: Any, run_id: str, fleet: FleetStepTools | None
-) -> tuple[dict[str, dict[str, Any]], list[str], dict[str, Any]]:
-    """Run the harness and collect each task's terminal event."""
-    from meristem.graph import RunRequest, iterate_run
+def _run_request(plan: Mapping[str, Any], run_id: str, ports: Any) -> Any:
+    """The run request; a process run carries its bound ``HostPorts``."""
+    from meristem.graph import RunRequest
 
-    request = RunRequest(task=plan["output_task_id"], run_id=run_id)
+    extra = {} if ports is None else {"ports": ports}
+    return RunRequest(task=plan["output_task_id"], run_id=run_id, **extra)
+
+
+def _harness_plan(
+    plan: Mapping[str, Any],
+    model: Any,
+    fleet: FleetStepTools | None,
+    prompts: Mapping[str, str] | None,
+) -> Any:
+    """The run plan: a process plan resolves its prompt texts, any other maps one to one."""
+    if prompts is None:
+        return run_plan_for(plan, model, _step_toolsets(fleet))
+    from arbora.processes.run_plan import map_process_plan
+
+    return map_process_plan(plan, prompts, model=model, toolsets=_step_toolsets(fleet))
+
+
+async def _drain_run(
+    plan: Mapping[str, Any],
+    model: Any,
+    run_id: str,
+    fleet: FleetStepTools | None,
+    *,
+    ports: Any = None,
+    prompts: Mapping[str, str] | None = None,
+) -> tuple[dict[str, dict[str, Any]], list[str], dict[str, Any]]:
+    """Run the harness and collect each task's terminal event.
+
+    A process run (ARBORA-OPS-R898.5) passes the ``HostPorts`` that bind its decision port
+    and approval waiter, and the resolved prompt texts its agent steps take.
+    """
+    from meristem.graph import iterate_run
+
+    request = _run_request(plan, run_id, ports)
     tasks: dict[str, dict[str, Any]] = {}
     started: list[str] = []
     terminal: dict[str, Any] = {}
-    run_plan = run_plan_for(plan, model, _step_toolsets(fleet))
+    run_plan = _harness_plan(plan, model, fleet, prompts)
     async for event in iterate_run(request, {}, plan=run_plan):
         kind, task_id = event.get("type"), event.get("task_id")
         if kind == "task_started" and task_id:
@@ -848,11 +902,15 @@ async def execute_task_plan(
     *,
     run_id: str,
     fleet: FleetStepTools | None = None,
+    ports: Any = None,
+    prompts: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """Run the plan in the harness and collect every task's terminal result."""
     token = _bind_run_tools(plan, fleet)
     try:
-        tasks, started, terminal = await _drain_run(plan, model, run_id, fleet)
+        tasks, started, terminal = await _drain_run(
+            plan, model, run_id, fleet, ports=ports, prompts=prompts
+        )
     finally:
         _RUN_TOOLS.reset(token)
     return {
