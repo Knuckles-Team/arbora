@@ -135,6 +135,11 @@ class ComponentSearchRequest:
     kinds: tuple[ComponentKind, ...]
     limit: int
     cursor: Any | None = None
+    #: Page one server's components, or one named component, without reading
+    #: content (ARBORA-FLEET-R073). Needs the engine search filters; a pinned
+    #: engine without them refuses ``UNAVAILABLE`` (``require_component_search_filters``).
+    server_name: str | None = None
+    upstream_name: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

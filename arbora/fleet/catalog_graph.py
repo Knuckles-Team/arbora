@@ -234,10 +234,283 @@ def to_ntriples(triples: Iterable[Triple]) -> str:
     return "\n".join(lines) + "\n"
 
 
-async def write_catalog(client: Any, graph: str, connector: str, pack: Any) -> int:
-    """Write ``pack``'s catalog into ``graph`` with one ``AddTriples``; return the count."""
-    from medulla.generated.graph import send_add_triples
+# -- R041.17.1: owner, version, hop, schema nodes ----------------------------------
 
-    triples = catalog_triples(connector, pack)
-    await send_add_triples(client, {"ntriples": to_ntriples(triples)}, graph)
+PACK_VERSION = f"{CP}packVersion"
+DECLARED_OWNER = f"{CP}declaredOwner"
+FLAG = f"{CAT}flag"
+_ASSET_KINDS = frozenset(
+    f"{CAT}{name}"
+    for name in (
+        "ToolAsset",
+        "PromptAsset",
+        "SkillAsset",
+        "DataResource",
+        "Field",
+        "SchemaAsset",
+        "KeyAsset",
+        "IndexAsset",
+        "ViewAsset",
+    )
+)
+
+
+def principal_iri(principal: str) -> str:
+    if principal.startswith(("urn:", "http://", "https://")):
+        return principal
+    return f"urn:arbora:principal:{quote(principal, safe='')}"
+
+
+def _declaration(pack: Any) -> Mapping[str, Any]:
+    for entry in pack.archive.entries:
+        if str(getattr(entry, "uri", "")) == RESOURCES_URI:
+            return _json(_body(pack, entry))
+    return {}
+
+
+def declared_owner(pack: Any) -> str | None:
+    """The owner the pack declares for itself, from its resources declaration."""
+    owner = _declaration(pack).get("owner")
+    return owner.strip() if isinstance(owner, str) and owner.strip() else None
+
+
+def _stewardship(asset: str, principal: str) -> list[Triple]:
+    node = asset.replace("urn:arbora:asset:", "urn:arbora:steward:", 1)
+    return [
+        (node, RDF_TYPE, f"{CAT}StewardshipAssignment"),
+        (node, f"{CAT}assignedTo", asset),
+        (node, f"{CAT}principal", principal_iri(principal)),
+        (node, f"{CAT}role", f"{CAT}owner"),
+    ]
+
+
+def _hop(source: str, target: str, hop: str) -> list[Triple]:
+    node = (
+        f"urn:arbora:lineage:{hop}:{quote(source, safe='')}:to:{quote(target, safe='')}"
+    )
+    return [
+        (node, RDF_TYPE, f"{CAT}LineageEdge"),
+        (node, f"{CAT}from", source),
+        (node, f"{CAT}to", target),
+        (node, f"{CAT}hop", (hop,)),
+        (source, f"{CAT}lineageTo", target),
+    ]
+
+
+def _node(connector: str, kind: str, name: str, cls: str, spec: Any) -> list[Triple]:
+    node = asset_iri(connector, kind, name)
+    digest = hashlib.sha256(json.dumps(spec, sort_keys=True, default=str).encode())
+    return _asset(
+        node, f"{CAT}{cls}", name, connector_iri(connector), digest.hexdigest()
+    )
+
+
+def _field_mapped(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        return any(value.get(k) for k in ("property", "predicate", "ontology_property"))
+    return bool(value)
+
+
+def _source_nodes(
+    connector: str, source: Mapping[str, Any], fields: Any
+) -> list[Triple]:
+    sid = str(source["source_id"])
+    resource = asset_iri(connector, "resource", sid)
+    out = _node(connector, "schema", sid, "SchemaAsset", source)
+    out.append((asset_iri(connector, "schema", sid), f"{CAT}schemaTable", resource))
+    for name in sorted(fields if isinstance(fields, Mapping) else ()):
+        node = asset_iri(connector, "field", f"{sid}.{name}")
+        out += _node(connector, "field", f"{sid}.{name}", "Field", [name, fields[name]])
+        out += [(resource, f"{CAT}hasField", node), (node, f"{CAT}columnName", (name,))]
+        out += _hop(resource, node, "resource")
+        if not _field_mapped(fields[name]):
+            out.append((node, FLAG, ("field_unmapped",)))
+    return out
+
+
+def _key_nodes(connector: str, source: Mapping[str, Any]) -> list[Triple]:
+    key = source.get("key_field")
+    if not isinstance(key, str) or not key:
+        return []
+    sid = str(source["source_id"])
+    out = _node(connector, "key", f"{sid}.{key}", "KeyAsset", [sid, key])
+    node = asset_iri(connector, "key", f"{sid}.{key}")
+    return out + [
+        (node, f"{CAT}keyKind", ("primary",)),
+        (node, f"{CAT}keyOf", asset_iri(connector, "resource", sid)),
+        (node, f"{CAT}keyField", asset_iri(connector, "field", f"{sid}.{key}")),
+    ]
+
+
+def _schema_nodes(connector: str, declaration: Mapping[str, Any]) -> list[Triple]:
+    out: list[Triple] = []
+    mappings = declaration.get("schema_mappings")
+    for source in declaration.get("sources") or ():
+        if not isinstance(source, Mapping) or not source.get("source_id"):
+            continue
+        mapping = (mappings or {}).get(str(source.get("record_type") or ""))
+        fields = mapping.get("fields") if isinstance(mapping, Mapping) else None
+        out += _source_nodes(connector, source, fields)
+        out += _key_nodes(connector, source)
+    return out
+
+
+def _asset_subjects(triples: Iterable[Triple]) -> list[str]:
+    return sorted({s for s, p, o in triples if p == RDF_TYPE and o in _ASSET_KINDS})
+
+
+def _ownership(
+    subjects: Iterable[str], owner: str | None, importer: str
+) -> list[Triple]:
+    out: list[Triple] = []
+    for asset in subjects:
+        out += _stewardship(asset, owner or importer)
+        if owner is None:
+            out.append((asset, FLAG, ("owner_missing",)))
+    return out
+
+
+def _hop_triples(conn: str, base: list[Triple]) -> list[Triple]:
+    """The connector-to-tool and tool-to-resource lineage hops of ``base``."""
+    out: list[Triple] = []
+    for s, p, o in base:
+        if p == f"{CAT}lineageTo" and isinstance(o, str):
+            out += _hop(s, o, "operation")
+        if p == RDF_TYPE and o == f"{CAT}ToolAsset":
+            out += _hop(conn, s, "connector")
+    return out
+
+
+def enrichment_triples(
+    connector: str,
+    pack: Any,
+    base: list[Triple],
+    *,
+    importer: str,
+    version: str | None,
+) -> list[Triple]:
+    """Owner, version, lineage-hop and schema nodes for the asset set (R041.17.1)."""
+    extra = _schema_nodes(connector, _declaration(pack))
+    subjects = _asset_subjects(base + extra)
+    out = extra + _ownership(subjects, declared_owner(pack), importer)
+    out += _hop_triples(connector_iri(connector), base)
+    return out + [(asset, PACK_VERSION, (version,)) for asset in subjects if version]
+
+
+def item_digests(triples: Iterable[Triple]) -> dict[str, str]:
+    """Asset id to its served-definition digest, for the delta receipts."""
+    return {
+        s: o[0] for s, p, o in triples if p == f"{CP}digest" and isinstance(o, tuple)
+    }
+
+
+def _chunks(lines: list[str], size: int) -> Iterator[list[str]]:
+    for start in range(0, len(lines), size):
+        yield lines[start : start + size]
+
+
+def batch_max_triples() -> int:
+    """The batch bound: the engine value ``catalog.onboard_batch_max_triples``."""
+    from arbora.core.settings import setting
+
+    return int(setting("ARBORA_CATALOG_ONBOARD_BATCH_MAX_TRIPLES", 50000))
+
+
+def _term_from_row(term: Any) -> str | tuple[str]:
+    value = str(term["value"] if isinstance(term, Mapping) else term)
+    literal = isinstance(term, Mapping) and term.get("kind") == "literal"
+    return (value,) if literal else value
+
+
+async def _select(client: Any, graph: str, query: str) -> list[list[Any]]:
+    from medulla.generated.reasoning import send_sparql
+
+    result = await send_sparql(client, {"query": query}, graph)
+    payload = getattr(result, "payload", result)
+    rows = payload.get("rows", []) if isinstance(payload, Mapping) else []
+    return [list(row) for row in rows]
+
+
+def _departed_query(subjects: list[str]) -> str:
+    values = " ".join(f"<{s}>" for s in subjects)
+    links = " UNION ".join(
+        f"{{ ?n <{CAT}{link}> ?s . ?n ?p ?o }}" for link in ("assignedTo", "from", "to")
+    )
+    return (
+        f"SELECT ?n ?p ?o WHERE {{ VALUES ?s {{ {values} }} "
+        f"{{ BIND(?s AS ?n) ?n ?p ?o }} UNION {links} }}"
+    )
+
+
+async def departed_triples(
+    client: Any, graph: str, subjects: list[str]
+) -> list[Triple]:
+    """Every stored triple of nodes that left the pack, and of their attachments."""
+    out: list[Triple] = []
+    for start in range(0, len(subjects), 100):
+        rows = await _select(
+            client, graph, _departed_query(subjects[start : start + 100])
+        )
+        out += [(_value_iri(n), _value_iri(p), _term_from_row(o)) for n, p, o in rows]
+    return out
+
+
+def _value_iri(term: Any) -> str:
+    return str(term["value"] if isinstance(term, Mapping) else term)
+
+
+async def _prior_state(
+    client: Any, graph: str, tenant: str
+) -> tuple[Any, dict[str, str]]:
+    from arbora.fleet.catalog_replay import read_receipts, replay_deltas
+
+    receipts = await read_receipts(client, graph, tenant)
+    state: dict[str, str] = {}
+    replay_deltas(receipts, state=state, applied=set())
+    return receipts, state
+
+
+async def write_catalog(
+    client: Any,
+    graph: str,
+    connector: str,
+    pack: Any,
+    *,
+    tenant: str = "",
+    importer: str = "",
+    version: str | None = None,
+) -> int:
+    """Write ``pack``'s catalog into ``graph``; return the triple count.
+
+    One pass sends ``RemoveTriples`` for nodes that left the pack, then the
+    ``AddTriples`` batches (split above the batch bound), the last of which
+    carries one delta receipt per change (ARBORA-FLEET-R022).
+    """
+    base = catalog_triples(connector, pack)
+    triples = base + enrichment_triples(
+        connector, pack, base, importer=importer, version=version
+    )
+    await _write_pass(client, graph, connector, triples, tenant)
     return len(triples)
+
+
+async def _write_pass(
+    client: Any, graph: str, connector: str, triples: list[Triple], tenant: str
+) -> None:
+    from medulla.generated.graph import send_add_triples, send_remove_triples
+
+    from arbora.fleet.catalog_replay import next_position, plan_deltas
+
+    current = item_digests(triples)
+    receipts, state = await _prior_state(client, graph, tenant)
+    prefix = f"urn:arbora:asset:{quote(connector, safe='')}:"
+    prior = {k: v for k, v in state.items() if k.startswith(prefix)}
+    deltas = plan_deltas(tenant, prior, current, next_position(receipts))
+    departed = sorted(item for item in prior if item not in current)
+    if departed:
+        gone = await departed_triples(client, graph, departed)
+        await send_remove_triples(client, {"ntriples": to_ntriples(gone)}, graph)
+    receipt_triples = [t for delta in deltas for t in delta.triples()]
+    lines = to_ntriples(triples + receipt_triples).splitlines()
+    for chunk in _chunks(lines, batch_max_triples()):
+        await send_add_triples(client, {"ntriples": "\n".join(chunk) + "\n"}, graph)

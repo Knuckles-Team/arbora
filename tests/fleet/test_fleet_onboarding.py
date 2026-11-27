@@ -94,6 +94,9 @@ class _Registry(FakeEgEngine):
     def _on_catalog_authority_status(self, _params: Any, _key: Any) -> Any:
         return None
 
+    def _on_AgentComponent(self, _params: Any, _key: Any) -> Any:
+        return {"entries": [], "next_cursor": None}
+
     def _on_attest_self_served_catalog(self, params: Any, _key: Any) -> Any:
         self.attested.append(params["op"]["request"]["server_name"])
         return {

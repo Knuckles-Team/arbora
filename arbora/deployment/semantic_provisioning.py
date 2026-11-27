@@ -231,6 +231,41 @@ async def ensure_registrations(
     )
 
 
+async def published_server_component(
+    client: Any,
+    *,
+    tenant_id: str,
+    graph: str,
+    connector: str,
+    bind_graph: GraphBinder,
+) -> dict[str, Any] | None:
+    """The revision and digest of the connector's published server component.
+
+    Read from the engine's component search (kind ``mcp_server``); ``None``
+    when none is published yet (ARBORA-FLEET-R041.21).
+    """
+
+    from medulla.generated.agent_component import AgentComponentSearchRequest
+    from medulla.generated.storage import send_agent_component_search
+
+    cursor: str | None = None
+    while True:
+        request = AgentComponentSearchRequest(
+            tenant_id=tenant_id, kinds=["mcp_server"], limit=256, cursor=cursor
+        )
+        with bind_graph(graph):
+            page = await send_agent_component_search(client, request, graph)
+        for entry in page.entries:
+            if (entry.attributes or {}).get("pack.connector") == connector:
+                return {
+                    "entry_revision": entry.entry_revision,
+                    "definition_digest": entry.definition_digest,
+                }
+        cursor = page.next_cursor
+        if cursor is None:
+            return None
+
+
 async def attest_self_served_catalog(
     client: Any,
     commons: Any,
@@ -281,7 +316,17 @@ async def attest_self_served_catalog(
             None if current is None else current.catalog_generation
         ),
     }
-    key = f"mcp-catalog:self-served:{connector}:{_sha256_json(observed)[:32]}"
+    component = await published_server_component(
+        client,
+        tenant_id=tenant_id,
+        graph=graph,
+        connector=connector,
+        bind_graph=bind_graph,
+    )
+    # The key covers the published server component too: a moved component is a
+    # new key, an unmoved one replays the same key (ARBORA-FLEET-R041.21).
+    digest = _sha256_json({**observed, "server_component": component})
+    key = f"mcp-catalog:self-served:{connector}:{digest[:32]}"
     request = McpSelfServedCatalogAttestRequest(
         context=shell_context(tenant_id, key), **observed
     )
@@ -622,6 +667,7 @@ async def provision_semantic_content(
 __all__ = [
     "SemanticProvisioningError",
     "attest_self_served_catalog",
+    "published_server_component",
     "ensure_base_graphs",
     "catalog_content_digest",
     "ensure_registrations",

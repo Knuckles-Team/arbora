@@ -54,6 +54,20 @@ _KINDS = {
 GraphBinder = Callable[[str], AbstractContextManager[object]]
 
 
+def _search_filters(request: ComponentSearchRequest) -> dict[str, str]:
+    """The server and name filters of a search, once the engine serves them (R073)."""
+    wanted = {
+        "server_name": request.server_name,
+        "upstream_name": request.upstream_name,
+    }
+    named = {key: value for key, value in wanted.items() if value}
+    if named:
+        from arbora.pin_lag.medulla import require_component_search_filters
+
+        require_component_search_filters()
+    return named
+
+
 class GeneratedFleetCatalogPort:
     """Translate generated EG results into the Arbora read-domain port.
 
@@ -133,6 +147,7 @@ class GeneratedFleetCatalogPort:
                     kinds=[_KINDS[kind] for kind in request.kinds],
                     limit=request.limit,
                     cursor=request.cursor,
+                    **_search_filters(request),
                 ),
                 self._tenant_graph,
             )

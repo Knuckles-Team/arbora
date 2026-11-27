@@ -243,11 +243,8 @@ def bind_fleet_gateway(
     """
     from arbora.api.invoke.pipeline import invoke
     from arbora.fleet.catalog_composition import compose_multiplexer_ops
+    from arbora.fleet.feeds import FEED_INTAKE
     from arbora.fleet.gateway_ops import compose_fleet_gateway
-
-    async def no_sdk_entries() -> tuple[Mapping[str, Any], ...]:
-        return ()
-
     from arbora.fleet.multiplexer import clean_tool_name, make_governed_tool_mount
 
     def native_name(item: Any) -> str:
@@ -267,7 +264,7 @@ def bind_fleet_gateway(
     ops = compose_multiplexer_ops(
         reader=reader,
         mux=mux,
-        sdk_entries=no_sdk_entries,
+        sdk_entries=FEED_INTAKE.entries,
         visible=_scoped,
         loadable=_scoped,
         callable_item=_scoped,
