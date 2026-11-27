@@ -687,6 +687,7 @@ def _run_bounded(
         # The one place a bug INSIDE a check function still cannot report
         # healthy — any exception here becomes an explicit "unhealthy", never
         # a swallowed pass. (CONCEPT:MERISTEM-OS.observability.no-op-without-metrics)
+        logger.warning("health probe %s raised", name, exc_info=exc)
         result = _unhealthy(name, f"probe raised {type(exc).__name__}: {exc}")
     result.setdefault("name", name)
     result["latency_ms"] = round((time.monotonic() - started) * 1000.0, 1)
@@ -736,6 +737,7 @@ def collect_health(health: HealthState) -> HealthReport:
     except Exception as exc:
         # Config itself is unreadable — that is unambiguously unhealthy, not a
         # reason to fall back to "ok".
+        logger.warning("health config unreadable", exc_info=exc)
         return HealthReport(
             status="unhealthy",
             checks=[

@@ -95,7 +95,9 @@ __all__ = [
 
 logfire: Any
 try:
-    import logfire  # type: ignore[no-redef,unused-ignore]  # Any-typed fallback above
+    import logfire as _logfire_module
+
+    logfire = _logfire_module
 except ImportError:
     logfire = None
 
@@ -648,16 +650,16 @@ def _create_otlp_span_processor(
         logger.info("Metadata-only OTLP span processor created")
         return processor
 
-    except ImportError as exc:
+    except ImportError:
         logger.warning(
-            "Failed to create OTLP span processor (exception_type=%s)",
-            type(exc).__name__,
+            "Failed to create OTLP span processor",
+            exc_info=True,
         )
         return None
-    except Exception as exc:
+    except Exception:
         logger.error(
-            "Failed to create OTLP span processor (exception_type=%s)",
-            type(exc).__name__,
+            "Failed to create OTLP span processor",
+            exc_info=True,
         )
         return None
 
@@ -688,10 +690,10 @@ def _resolve_setup_otel_context(
             public_key=public_key,
             secret_key=secret_key,
         )
-    except Exception as exc:
+    except Exception:
         logger.warning(
-            "OTLP setup skipped: endpoint configuration is invalid (%s)",
-            type(exc).__name__,
+            "OTLP setup skipped: endpoint configuration is invalid",
+            exc_info=True,
         )
         return None
     if not target_endpoint:
@@ -713,10 +715,10 @@ def _resolve_setup_otel_context(
             public_key=public_key,
             secret_key=secret_key,
         )
-    except Exception as exc:
+    except Exception:
         logger.warning(
-            "OTLP setup skipped: credential references are invalid (%s)",
-            type(exc).__name__,
+            "OTLP setup skipped: credential references are invalid",
+            exc_info=True,
         )
         return None
 
@@ -762,10 +764,10 @@ def _build_otel_span_processors(ctx: _SetupOtelContext) -> list[Any] | None:
     try:
         transport_security = _resolve_otel_transport(ctx.target_endpoint)
         project_environment(transport_security.child_env())
-    except Exception as exc:
+    except Exception:
         logger.warning(
-            "OTLP setup skipped: transport security profile is invalid (%s)",
-            type(exc).__name__,
+            "OTLP setup skipped: transport security profile is invalid",
+            exc_info=True,
         )
         return None
     span_processors: list[Any] = []
@@ -844,13 +846,12 @@ def _instrument_metadata_only_agents() -> bool:
         ):
             raise RuntimeError("instrumentation content policy was not installed")
         return True
-    except Exception as exc:
+    except Exception:
         with contextlib.suppress(Exception):
             disable_context_agent_instrumentation()
         logger.warning(
-            "PydanticAI tracing disabled: metadata-only policy unavailable "
-            "(exception_type=%s)",
-            type(exc).__name__,
+            "PydanticAI tracing disabled: metadata-only policy unavailable",
+            exc_info=True,
         )
         return False
 
@@ -968,6 +969,7 @@ def _resolve_verify_otel_state() -> tuple[str, str, str | None]:
                 secret_key=None,
             )
     except Exception as exc:
+        logger.warning("OTLP header resolution failed", exc_info=True)
         return endpoint, resolved_headers, type(exc).__name__
     return endpoint, resolved_headers, None
 
@@ -1065,6 +1067,7 @@ def verify_otel_pipeline(telemetry: Telemetry) -> dict[str, Any]:
         try:
             report.update(_probe_langfuse_otel_health(endpoint, resolved_headers))
         except Exception as exc:
+            logger.warning("Langfuse OTLP health probe failed", exc_info=True)
             report["exporter_ok"] = False
             report["endpoint_error"] = type(exc).__name__
 

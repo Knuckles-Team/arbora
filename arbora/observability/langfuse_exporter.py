@@ -154,11 +154,8 @@ class LangfuseExporter:
                 kwargs["host"] = self._host
             self._client = Langfuse(**kwargs)
             logger.info("Langfuse exporter active.")
-        except Exception as exc:  # optional dep / offline
-            logger.debug(
-                "Langfuse client unavailable; exporter no-ops (%s).",
-                type(exc).__name__,
-            )
+        except Exception:  # optional dep / offline
+            logger.debug("Langfuse client unavailable; exporter no-ops.", exc_info=True)
             self._client = None
         return self._client
 
@@ -274,11 +271,8 @@ class LangfuseExporter:
             if observation_emitted:
                 self.exported_observations += 1
             return True
-        except Exception as exc:  # observability must never crash a run
-            logger.debug(
-                "Langfuse export skipped (%s).",
-                type(exc).__name__,
-            )
+        except Exception:  # observability must never crash a run
+            logger.debug("Langfuse export skipped.", exc_info=True)
             return False
 
     def _make_trace(
@@ -344,8 +338,8 @@ class LangfuseExporter:
         if client is not None:
             try:
                 client.flush()
-            except Exception as exc:
-                logger.debug("Langfuse flush skipped (%s).", type(exc).__name__)
+            except Exception:
+                logger.debug("Langfuse flush skipped.", exc_info=True)
 
 
 # ── the host's exporter (held by ``Observability.telemetry``) ─────────────────

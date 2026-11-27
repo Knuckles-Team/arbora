@@ -211,7 +211,9 @@ def record_runtime_signal(
         buffer.append(signal)
     except Exception:  # a signal must never affect the caller's hot path
         with contextlib.suppress(Exception):
-            logger.debug("record_runtime_signal dropped a signal (kind=%s)", kind)
+            logger.debug(
+                "record_runtime_signal dropped a signal (kind=%s)", kind, exc_info=True
+            )
 
 
 def buffered_runtime_signals(buffer: RuntimeSignalBuffer) -> list[dict[str, Any]]:
@@ -287,8 +289,10 @@ def persist_runtime_signals(
                     "properties": _signal_properties(signal, sid),
                 }
             )
-        except Exception as e:  # one malformed signal never drops the batch
-            logger.debug("persist_runtime_signals: skipped a malformed signal: %s", e)
+        except Exception:  # one malformed signal never drops the batch
+            logger.debug(
+                "persist_runtime_signals: skipped a malformed signal", exc_info=True
+            )
     if not mutations:
         return 0
 
@@ -297,11 +301,11 @@ def persist_runtime_signals(
         try:
             if batch(mutations):
                 return len(mutations)
-        except Exception as e:  # an all-or-nothing batch failure wrote nothing
+        except Exception:  # an all-or-nothing batch failure wrote nothing
             logger.error(
-                "persist_runtime_signals: typed batch of %d signal(s) failed: %s",
+                "persist_runtime_signals: typed batch of %d signal(s) failed",
                 len(mutations),
-                e,
+                exc_info=True,
             )
             return 0
         # A falsy return means "this backend has no native typed-batch capability"
@@ -314,8 +318,8 @@ def persist_runtime_signals(
                 engine, mutation["id"], RUNTIME_SIGNAL_LABEL, mutation["properties"]
             )
             written += 1
-        except Exception as e:  # fallback is best-effort, per-signal isolated
-            logger.debug("persist_runtime_signals: node write failed: %s", e)
+        except Exception:  # fallback is best-effort, per-signal isolated
+            logger.debug("persist_runtime_signals: node write failed", exc_info=True)
     return written
 
 
@@ -346,8 +350,8 @@ def read_recent_runtime_signals(
             f"RETURN n LIMIT {int(limit)}",
             {"cutoff": cutoff},
         )
-    except Exception as e:  # read is best-effort
-        logger.debug("read_recent_runtime_signals query failed: %s", e)
+    except Exception:  # read is best-effort
+        logger.debug("read_recent_runtime_signals query failed", exc_info=True)
         return []
     out: list[dict[str, Any]] = []
     for row in rows or []:
