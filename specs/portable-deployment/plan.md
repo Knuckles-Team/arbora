@@ -71,13 +71,13 @@ Released engine 3.3.4 refuses Arbora's provisioned content. It reports `ONTOLOGY
 
 Pre-untangled design for these rows, one line per answer.
 
-- Owner. Arbora owns the machine, the routing rules, the operations and the role references, because the host inventory is Arbora platform configuration. The SDK infrastructure extractor reads the same entries into the graph.
-- Cohesion. The machine, the rules, the role resolver and the file writer change together and live in `arbora/core/service_endpoints.py`. The operations and the subcommand only call it.
-- Dependency direction. `api/ops/inventory.py`, `deployment/cli.py`, `deployment/doctor.py` and `core/settings.py` import `core/service_endpoints.py`. That module imports only the standard library and the YAML libraries.
-- Interface depth. Four public functions: `transition`, `routing_violations`, `resolve_role_ref` and `write_endpoint_state`. The call sites are `arbora/api/ops/inventory.py` and `arbora/core/settings.py`.
-- Special cases. None. A kind is any string, so a chat endpoint uses the same machine and rules as an embedder.
-- State. The endpoint lifecycle is the explicit machine of R604.1. The entry `state` field holds it, and `state_since` dates the last edge.
-- Environment. The inventory file holds data only. The environment keeps no transition script, and `PIPE-GATES-R089` checks it.
+- **Owner.** Arbora owns the machine, the routing rules, the operations and the role references, because the host inventory is Arbora platform configuration. The SDK infrastructure extractor reads the same entries into the graph.
+- **Cohesion.** The machine, the rules, the role resolver and the file writer change together and live in `arbora/core/service_endpoints.py`. The operations and the subcommand only call it.
+- **Dependency direction.** `api/ops/inventory.py`, `deployment/cli.py`, `deployment/doctor.py` and `core/settings.py` import `core/service_endpoints.py`. That module imports only the standard library and the YAML libraries.
+- **Interface depth.** Four public functions: `transition`, `routing_violations`, `resolve_role_ref` and `write_endpoint_state`. The call sites are `arbora/api/ops/inventory.py` and `arbora/core/settings.py`.
+- **Special cases.** None. A kind is any string, so a chat endpoint uses the same machine and rules as an embedder.
+- **State.** The endpoint lifecycle is the explicit machine of R604.1. The entry `state` field holds it, and `state_since` dates the last edge.
+- **Environment.** The inventory file holds data only. The environment keeps no transition script, and `PIPE-GATES-R089` checks it.
 
 Order. R604.1, then R604.2 and R604.3 in parallel, then R604.4, then R604.5 and R604.6 in parallel, then R604.7.
 
