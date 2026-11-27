@@ -14,11 +14,11 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from arbora.api.domain.deployment.image_digests import check_paths
-from arbora.deployment.genesis_environments import (
+from arbora.api.domain.deployment.genesis_environments import (
     EnvironmentProfile,
     load_environment_profile,
 )
+from arbora.api.domain.deployment.image_digests import check_paths
 
 #: The shipped artifact of each supported target, relative to ``deploy/``.
 ARTIFACTS: Mapping[str, str] = {
@@ -65,7 +65,7 @@ class DigestCheckDecision:
 
 def default_deploy_root() -> Path:
     """The ``deploy/`` directory of the source tree this package ships from."""
-    return Path(__file__).resolve().parents[2] / "deploy"
+    return Path(__file__).resolve().parents[4] / "deploy"
 
 
 def select_artifact(target: str, *, deploy_root: Path | None = None) -> Path:

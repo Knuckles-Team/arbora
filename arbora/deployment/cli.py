@@ -14,13 +14,13 @@ import json
 import sys
 from collections.abc import Callable
 
-from arbora.core.environment import read_env
-from arbora.deployment.genesis_environments import (
+from arbora.api.domain.deployment.genesis_environments import (
     EnvironmentProfileError,
     list_environment_profiles,
     load_environment_profile,
     profile_summary,
 )
+from arbora.core.environment import read_env
 
 from .config_generator import (
     PROFILES,

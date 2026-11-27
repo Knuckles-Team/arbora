@@ -130,7 +130,7 @@ def require_fresh_binding(
     configuration refuses ``PLAN_MISMATCH`` and a changed shipped artifact
     refuses ``ARTIFACT_STALE``, both before any step runs.
     """
-    from arbora.deployment.artifacts import ArtifactRefused, select_artifact
+    from arbora.api.domain.deployment.artifacts import ArtifactRefused, select_artifact
 
     if config_digest(config) != expected_config:
         raise OperationRefused("PLAN_MISMATCH", {"reason": "the configuration changed"})
@@ -225,6 +225,24 @@ async def run_confirmed_steps(
     if graph_digest(graph) != plan_digest:
         raise OperationRefused("PLAN_MISMATCH", {"reason": "the graph changed"})
     rows = render_graph(graph)
+    _check_rows(rows, reuse)
+    if probe_reused is not None:
+        for component in sorted(reuse):
+            if not await probe_reused(component):
+                raise OperationRefused("REUSE_UNREACHABLE", {"component_id": component})
+    steps: list[dict[str, Any]] = []
+    for row in rows:
+        key = f"{key_prefix or f'deploy:{plan_digest}'}:{row['node_id']}"
+        step_arguments = dict((arguments or {}).get(row["node_id"], {}))
+        step = await _run_step(invoke, caller, row, key, step_arguments)
+        steps.append(step)
+        if not step["ok"]:
+            return {"ok": False, "steps": steps}
+    return {"ok": True, "steps": steps}
+
+
+def _check_rows(rows: Sequence[Mapping[str, Any]], reuse: Collection[str]) -> None:
+    """Refuse a node on a reused component or one without a fleet tool, before any call."""
     for row in rows:
         if row["component_id"] in reuse:
             raise OperationRefused(
@@ -238,37 +256,28 @@ async def run_confirmed_steps(
             and isinstance(tool.get("tool"), str)
         ):
             raise OperationRefused("INVALID_ARGUMENT", {"node_id": row["node_id"]})
-    if probe_reused is not None:
-        for component in sorted(reuse):
-            if not await probe_reused(component):
-                raise OperationRefused("REUSE_UNREACHABLE", {"component_id": component})
-    steps: list[dict[str, Any]] = []
-    ok = True
-    for row in rows:
-        node_id = row["node_id"]
-        tool = row["tool"]
-        key = f"{key_prefix or f'deploy:{plan_digest}'}:{node_id}"
-        outcome = await invoke(
-            "fleet.call",
-            {
-                "server": tool["server"],
-                "tool": tool["tool"],
-                "arguments": dict((arguments or {}).get(node_id, {})),
-            },
-            caller,
-            key,
-        )
-        failed = isinstance(outcome, OpError) or outcome.code != "OK"
-        steps.append(
-            {
-                "node_id": node_id,
-                "slot": row["slot"],
-                "idempotency_key": key,
-                "ok": not failed,
-                **({"error": outcome.code} if failed else {}),
-            }
-        )
-        if failed:
-            ok = False
-            break
-    return {"ok": ok, "steps": steps}
+
+
+async def _run_step(
+    invoke: StepInvoke,
+    caller: Any,
+    row: Mapping[str, Any],
+    key: str,
+    arguments: Mapping[str, Any],
+) -> dict[str, Any]:
+    """One governed ``fleet.call`` for a graph node and its recorded outcome."""
+    tool = row["tool"]
+    outcome = await invoke(
+        "fleet.call",
+        {"server": tool["server"], "tool": tool["tool"], "arguments": dict(arguments)},
+        caller,
+        key,
+    )
+    failed = isinstance(outcome, OpError) or outcome.code != "OK"
+    return {
+        "node_id": row["node_id"],
+        "slot": row["slot"],
+        "idempotency_key": key,
+        "ok": not failed,
+        **({"error": outcome.code} if failed else {}),
+    }

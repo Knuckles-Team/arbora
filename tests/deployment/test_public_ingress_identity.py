@@ -12,16 +12,16 @@ from datetime import date
 
 import pytest
 
-from arbora.deployment.config_generator import generate_config
-from arbora.deployment.genesis_environments import (
+from arbora.api.domain.deployment.genesis_environments import (
     load_environment_profile,
     profile_summary,
 )
-from arbora.deployment.public_ingress_identity import (
+from arbora.api.domain.deployment.public_ingress_identity import (
     PublicIngressProfile,
     PublicIngressProfileError,
     public_ingress_profile_from_mapping,
 )
+from arbora.deployment.config_generator import generate_config
 
 pytestmark = pytest.mark.spec("ARBORA-INGRESS-R001.1")
 

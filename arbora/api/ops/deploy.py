@@ -15,6 +15,19 @@ from typing import Any, Literal
 
 from pydantic import Field
 
+from arbora.api.domain.deployment.assembly import (
+    artifact_digest,
+    assemble_deployment,
+    choices_digest,
+    config_digest,
+    graph_digest,
+    propagate_trust_step,
+    refuse_unavailable,
+    require_confirmed_plan,
+    require_fresh_binding,
+    run_confirmed_steps,
+    store_secret_step,
+)
 from arbora.api.domain.deployment.assembly_view import render_graph
 from arbora.api.domain.deployment.manifest import (
     DeploymentDiff,
@@ -33,19 +46,6 @@ from arbora.api.ops._common import Params, build_read_op, build_write_op
 from arbora.api.ops.engine_calls import engine_send, refusal_code
 from arbora.api.registry import Confirm, Effect, OpSpec
 from arbora.core.claims import claim_values
-from arbora.deployment.assembly import (
-    artifact_digest,
-    assemble_deployment,
-    choices_digest,
-    config_digest,
-    graph_digest,
-    propagate_trust_step,
-    refuse_unavailable,
-    require_confirmed_plan,
-    require_fresh_binding,
-    run_confirmed_steps,
-    store_secret_step,
-)
 from arbora.security.anonymous import client_scope
 
 #: Engine refusal tokens that mean the question kind is not served.
@@ -182,7 +182,7 @@ def _current_artifact_digest(context: Any, target: str) -> str:
     """The digest of the shipped artifact the target deploys; empty when none ships."""
     from pathlib import Path
 
-    from arbora.deployment.artifacts import ArtifactRefused, select_artifact
+    from arbora.api.domain.deployment.artifacts import ArtifactRefused, select_artifact
 
     root = context.services.get("deploy_root")
     try:

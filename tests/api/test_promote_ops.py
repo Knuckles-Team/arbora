@@ -8,10 +8,10 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.deployment.assembly import choices_digest, graph_digest  # noqa: F401
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.plan import approval_id_for
 from arbora.api.ops import promote
-from arbora.deployment.assembly import choices_digest, graph_digest  # noqa: F401
 from arbora.security.operation_result import OpResult
 
 DIGEST = "sha256:" + "a" * 64

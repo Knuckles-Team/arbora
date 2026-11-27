@@ -143,7 +143,7 @@ async def handle_fleet_scale_inventory_set(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> dict[str, Any]:
     """Set the scaling inventory graph nodes at the next revision (ARBORA-FLEET-R024.17)."""
-    from arbora.deployment.assembly import require_confirmed_plan
+    from arbora.api.domain.deployment.assembly import require_confirmed_plan
 
     require_confirmed_plan(op)
     _require_scope(context, ADMIN_SCOPE)

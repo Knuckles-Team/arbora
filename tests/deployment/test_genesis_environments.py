@@ -18,7 +18,7 @@ import copy
 import pytest
 import yaml
 
-from arbora.deployment.genesis_environments import (
+from arbora.api.domain.deployment.genesis_environments import (
     BUILTIN_ENVIRONMENTS_DIR,
     EnvironmentProfileError,
     MissingSecretReferenceError,
@@ -86,7 +86,7 @@ def test_extension_directory_adds_a_new_profile_with_zero_code_change(
     (ext_dir / "uat.yaml").write_text(yaml.safe_dump(uat), encoding="utf-8")
 
     monkeypatch.setattr(
-        "arbora.deployment.genesis_environments._extension_dir",
+        "arbora.api.domain.deployment.genesis_environments._extension_dir",
         lambda: ext_dir,
     )
 
@@ -104,7 +104,7 @@ def test_extension_directory_overrides_a_builtin_by_name(tmp_path, monkeypatch):
     (ext_dir / "dev.yaml").write_text(yaml.safe_dump(custom_dev), encoding="utf-8")
 
     monkeypatch.setattr(
-        "arbora.deployment.genesis_environments._extension_dir",
+        "arbora.api.domain.deployment.genesis_environments._extension_dir",
         lambda: ext_dir,
     )
 
@@ -194,7 +194,7 @@ def test_writable_path_with_unknown_medium_is_rejected():
 
 # ── fail loud: filesystem.runtime_paths (BUG-ROFS-1 configurability) ──────
 def test_default_profiles_bind_every_runtime_path_env_var():
-    from arbora.deployment.genesis_environments import RUNTIME_PATH_ENV_VARS
+    from arbora.api.domain.deployment.genesis_environments import RUNTIME_PATH_ENV_VARS
 
     for name in ("dev", "test", "prod"):
         profile = load_environment_profile(name)

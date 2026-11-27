@@ -89,12 +89,12 @@ def test_generate_config_roundtrips_through_agent_config(profile):
 
 
 def test_generate_config_redacts_populated_secrets():
-    from arbora.deployment.config_generator import _is_secret
+    from arbora.core.secret_names import is_secret_name
 
     cfg = generate_config("enterprise")
     # No populated credential survives (None/"" are acceptable placeholders).
     for key, val in cfg.items():
-        if _is_secret(key):
+        if is_secret_name(key):
             assert val in (None, ""), f"{key} not redacted: {val!r}"
     # Non-credential config keys with 'SECRET' in the name are NOT clobbered.
     assert cfg["SECRETS_BACKEND"] == "vault"

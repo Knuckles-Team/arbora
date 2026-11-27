@@ -38,24 +38,10 @@ from arbora.deployment.doctor_support import PROBE_FAULTS
 if TYPE_CHECKING:
     from arbora.core.config_admin import HostingDeploymentSettings
 from arbora.core.environment import read_env, read_reference
+from arbora.core.secret_names import is_secret_name
 
 # Recognized deployment profiles (rungs of docs/guides/deployment-configurations.md).
 PROFILES = ("tiny", "single-node-prod", "enterprise")
-
-# Suffixes that mark a key as a credential VALUE holder — blanked in generated
-# templates so a committed/shared config.json never carries a secret. Suffix-precise
-# so config keys like SECRETS_BACKEND / SECRETS_VAULT_URL (not credentials) are NOT
-# blanked, while raw credential-value fields remain excluded from current config.
-_SECRET_SUFFIXES = (
-    "API_KEY",
-    "PASSWORD",
-    "PRIVATE_KEY",
-    "SECRET_KEY",
-    "ACCESS_KEY",
-    "_SECRET",
-    "_TOKEN",
-    "TOKEN",
-)
 
 # Host-local defaults are resolved by AgentConfig at runtime and omitted from a
 # generated template. Serializing an evaluated XDG/home default would bind a
@@ -234,11 +220,6 @@ _PROFILE_REQUIRED: dict[str, tuple[str, ...]] = {
 }
 
 
-def _is_secret(env_key: str) -> bool:
-    up = env_key.upper()
-    return any(up.endswith(suffix) for suffix in _SECRET_SUFFIXES)
-
-
 #: Settings that only take effect on an engine/daemon rebuild — a live `set_config`
 #: persists + updates the value but cannot apply it to the running process; callers
 #: should restart the daemon (CONCEPT:MERISTEM-KG.backend.connection-registry).
@@ -323,7 +304,7 @@ def _sanitize_generated_value(value: Any, *, key: str = "", parent: str = "") ->
     normalized = key.strip().lower().replace("-", "_")
     if normalized in _HEADER_CONTAINER_KEYS:
         return {}
-    if _is_secret(normalized) or normalized in _NORMALIZED_SENSITIVE_MAPPING_KEYS:
+    if is_secret_name(normalized) or normalized in _NORMALIZED_SENSITIVE_MAPPING_KEYS:
         return _sanitize_sensitive_generated_value(value, key=normalized, parent=parent)
     if isinstance(value, dict):
         return {
@@ -441,7 +422,9 @@ def generate_config(profile: str = "tiny") -> dict[str, Any]:
     # JSON-normalize (drops non-serializable defaults to their str form).
     data = json.loads(json.dumps(data, default=str))
     data.update(_PROFILE_PRESETS[profile])
-    from arbora.deployment.genesis_environments import load_environment_profile
+    from arbora.api.domain.deployment.genesis_environments import (
+        load_environment_profile,
+    )
 
     environment = {"tiny": "dev", "single-node-prod": "prod", "enterprise": "prod"}[
         profile
@@ -579,9 +562,9 @@ def config_reference() -> list[dict[str, Any]]:
                 "env": info.alias or name.upper(),
                 "type": type_name,
                 "default": default_repr
-                if not _is_secret(info.alias or name)
+                if not is_secret_name(info.alias or name)
                 else "***",
-                "secret": _is_secret(info.alias or name),
+                "secret": is_secret_name(info.alias or name),
             }
         )
     return [{"section": s, "fields": grouped[s]} for s in order]

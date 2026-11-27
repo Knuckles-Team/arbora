@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import pytest
 import yaml
 
-from arbora.deployment import genesis_environments as environments
+from arbora.api.domain.deployment import genesis_environments as environments
 from arbora.deployment import preflight as P
 
 

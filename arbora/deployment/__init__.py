@@ -15,7 +15,7 @@ from __future__ import annotations
 from importlib import import_module
 from typing import TYPE_CHECKING, Any
 
-from arbora.deployment.genesis_environments import (
+from arbora.api.domain.deployment.genesis_environments import (
     EnvironmentProfile,
     EnvironmentProfileError,
     MissingSecretReferenceError,

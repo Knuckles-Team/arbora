@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
+from arbora.api.domain.deployment.assembly import graph_digest, run_confirmed_steps
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.deployment.assembly import graph_digest, run_confirmed_steps
 from arbora.security.operation_result import OpError, OpResult
 
 pytestmark = pytest.mark.spec("ARBORA-DEPLOY-R017.21")
