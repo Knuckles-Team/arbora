@@ -618,6 +618,37 @@ def _loop_body(bindings: Mapping[str, Any]) -> Any:
     return FinanceLoopBody(host)
 
 
+def _with_finance_schedule_host(
+    bindings: Mapping[str, Any],
+    pool: Any,
+    graph: str,
+    connect_context: Callable[[str], Any],
+    session: Callable[[], Any],
+) -> Mapping[str, Any]:
+    """Compose the finance schedule host so the Loops worker runs finance schedules.
+
+    ARBORA-DATA-MARKET-R002: the host reads schedule entries, delegated grants and
+    receipts from the engine as the worker's verified service session. A host the
+    deployment binds itself wins.
+    """
+    if bindings.get("finance_schedule_host") is not None:
+        return bindings
+    from arbora.finance.schedule_host import EngineFinanceScheduleHost
+
+    tenant = str(session().tenant)
+
+    async def send(method: str, params: dict[str, Any]) -> Any:
+        from medulla.generated import send_by_id
+
+        client = await pool.connected_client(connect_context(tenant), graph)
+        return await send_by_id(client, method, params, graph)
+
+    return {
+        **bindings,
+        "finance_schedule_host": EngineFinanceScheduleHost(send, tenant),
+    }
+
+
 def _with_loop_worker(
     bindings: Mapping[str, Any],
     pool: Any,
@@ -1034,6 +1065,9 @@ def compose_served_invocation(
             bindings, pool, graph, connect_context, session
         )
         process_startup = _chained_startup(process_startup, outbox_startup)
+        bindings = _with_finance_schedule_host(
+            bindings, pool, graph, connect_context, session
+        )
         bindings, loop_startup = _with_loop_worker(
             bindings, pool, graph, connect_context, session
         )
