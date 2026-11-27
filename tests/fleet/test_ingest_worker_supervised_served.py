@@ -61,7 +61,7 @@ def boot(monkeypatch: pytest.MonkeyPatch) -> Any:
     monkeypatch.setattr("arbora.api.ops.engine_calls.decode", lambda value: value)
     monkeypatch.setattr("arbora.pin_lag.medulla.require_methods", lambda *m: None)
     monkeypatch.setattr(
-        "arbora.deployment.data_prep.data_prep_path", lambda: None, raising=False
+        "arbora.fleet.data_prep.data_prep_path", lambda: None, raising=False
     )
     monkeypatch.setattr(
         onboarding_module.FleetOnboardingService, "start", lambda self: "thread"

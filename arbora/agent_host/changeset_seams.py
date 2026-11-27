@@ -18,16 +18,16 @@ bind at host start. Everything here is read from the door, never held:
 from __future__ import annotations
 
 import base64
-from collections.abc import Awaitable, Callable, Mapping, Sequence
+from collections.abc import Awaitable, Callable, Mapping
 from typing import Any
 
+from arbora.a2a.source_grant import source_target
 from arbora.api.domain.agent_host.host_port_adapters import (
     ChangesetSeams,
     RunCall,
     SourceTarget,
 )
 
-SOURCE_GRANT_KEY = "source_grant"
 #: Workspace backends that isolate execution from the host; ``local`` does not.
 ISOLATED_BACKENDS = frozenset({"docker"})
 BLOB_CHUNK_BYTES = 1 << 20
@@ -36,37 +36,6 @@ DIRECTORY_MODE = "040000"
 
 #: ``(method, params, tenant)`` to the decoded engine answer.
 EngineSend = Callable[[str, dict[str, Any], str], Awaitable[Any]]
-
-
-def source_target(claim: Any) -> SourceTarget | None:
-    """The run's target from its work item's source grant, or ``None`` when it has none.
-
-    The grant names one repository, one branch and one or more path prefixes; a grant
-    that is malformed in any part is no grant.
-    """
-    metadata = claim.get("metadata") if isinstance(claim, Mapping) else None
-    grant = metadata.get(SOURCE_GRANT_KEY) if isinstance(metadata, Mapping) else None
-    if not isinstance(grant, Mapping):
-        return None
-    repository, branch = grant.get("repository"), grant.get("branch")
-    prefixes = grant.get("prefixes")
-    if not (_named(repository) and _named(branch) and _prefixes(prefixes)):
-        return None
-    return SourceTarget(repository, branch, tuple(prefixes))
-
-
-def _named(value: Any) -> bool:
-    return isinstance(value, str) and bool(value)
-
-
-def _prefixes(value: Any) -> bool:
-    """One or more non-empty strings in a sequence that is not itself a string."""
-    return (
-        not isinstance(value, str)
-        and isinstance(value, Sequence)
-        and bool(value)
-        and all(_named(prefix) for prefix in value)
-    )
 
 
 def is_isolated_backend(backend: Any) -> bool:

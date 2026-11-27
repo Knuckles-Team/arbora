@@ -91,7 +91,7 @@ def compose_definition_admission(
 
 async def declare_host_data_prep(engine: Any, session: Any) -> list[str]:
     """Declare ``data_prep.yml`` to the engine; an absent file declares nothing."""
-    from arbora.deployment.data_prep import declare_data_prep
+    from arbora.fleet.data_prep import declare_data_prep
     from arbora.pin_lag.medulla import require_methods
 
     require_methods("DataPrepDeclare")

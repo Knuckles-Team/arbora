@@ -13,10 +13,12 @@ submission refuses closed.
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Iterator, Mapping
+from collections.abc import AsyncIterator, Iterator, Mapping, Sequence
 from contextlib import asynccontextmanager, contextmanager
 from contextvars import ContextVar
 from typing import Any
+
+from arbora.api.domain.agent_host.host_port_adapters import SourceTarget
 
 #: The work-item metadata key the changeset seams read.
 SOURCE_GRANT_KEY = "source_grant"
@@ -28,10 +30,39 @@ _bound: ContextVar[Mapping[str, Any] | None] = ContextVar(
 )
 
 
+def source_target(claim: Any) -> SourceTarget | None:
+    """The run's target from its work item's source grant, or ``None`` when it has none.
+
+    The grant names one repository, one branch and one or more path prefixes; a grant
+    that is malformed in any part is no grant.
+    """
+    metadata = claim.get("metadata") if isinstance(claim, Mapping) else None
+    grant = metadata.get(SOURCE_GRANT_KEY) if isinstance(metadata, Mapping) else None
+    if not isinstance(grant, Mapping):
+        return None
+    repository, branch = grant.get("repository"), grant.get("branch")
+    prefixes = grant.get("prefixes")
+    if not (_named(repository) and _named(branch) and _prefixes(prefixes)):
+        return None
+    return SourceTarget(repository, branch, tuple(prefixes))
+
+
+def _named(value: Any) -> bool:
+    return isinstance(value, str) and bool(value)
+
+
+def _prefixes(value: Any) -> bool:
+    """One or more non-empty strings in a sequence that is not itself a string."""
+    return (
+        not isinstance(value, str)
+        and isinstance(value, Sequence)
+        and bool(value)
+        and all(_named(prefix) for prefix in value)
+    )
+
+
 def normalized(raw: Any) -> dict[str, Any] | None:
     """The grant in its one shape, or ``None`` when any part is malformed."""
-    from arbora.agent_host.changeset_seams import source_target
-
     target = source_target({"metadata": {SOURCE_GRANT_KEY: raw}})
     if target is None:
         return None
