@@ -372,7 +372,7 @@ def is_delegation_live(
 
             if moment >= decode_token(delegation.run_token).expires_at:
                 return False
-        except Exception as exc:  # noqa: BLE001 — a bad/expired token is not-live, fail closed
+        except Exception as exc:  # a bad/expired token is not-live, fail closed
             logger.warning(
                 "[delegation] run-token revalidation failed (treating as expired): %s",
                 exc,
@@ -434,7 +434,7 @@ def resolve_principal_identity(
                 tenant=str(actor.tenant_id or ""),
                 ceiling=tuple(_dedup(actor.roles)),
             )
-    except Exception as exc:  # noqa: BLE001 — no bound actor (tiny/local): unresolved ceiling
+    except Exception as exc:  # no bound actor (tiny/local): unresolved ceiling
         logger.debug("delegation: actor-derived ceiling unavailable: %s", exc)
     return PrincipalIdentity()
 

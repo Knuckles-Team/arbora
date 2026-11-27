@@ -977,7 +977,7 @@ def system_write_session(config: Any = None) -> GraphSession:
         ambient = GraphSession.from_ambient()
         _require_system_session_mode(ambient)
         return ambient
-    except SessionRequiredError:  # noqa: BLE001 — expected control flow: no ambient session bound is the documented signal to fall through to minting this process's own verified system identity below, not a real failure (see docstring above)
+    except SessionRequiredError:  # expected control flow: no ambient session bound is the documented signal to fall through to minting this process's own verified system identity below, not a real failure (see docstring above)
         pass
 
     if enabled():
@@ -1264,7 +1264,8 @@ async def _resolve_bearer_actor(
         )
         await _send_json(send, exc.status_code, {"error": exc.detail})
         return None, True
-    except Exception:  # noqa: BLE001 — any other failure = invalid credential
+    except Exception as exc:  # any other failure = invalid credential
+        logger.debug("bearer validation failed: %s", type(exc).__name__)
         await _send_json(send, 401, {"error": "Token validation failed"})
         return None, True
 
@@ -1439,7 +1440,7 @@ class ActorIdentityMiddleware:
                 admitted = await admitter.admit(path, headers, body)
             except SignedIngressRefused:
                 admitted = None
-            except Exception:  # noqa: BLE001 - an unanswerable admission admits nothing
+            except Exception:  # an unanswerable admission admits nothing
                 logger.warning("signed ingress admission unavailable")
                 admitted = None
         if admitted is None:
