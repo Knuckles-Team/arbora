@@ -23,7 +23,6 @@ import pytest
 from arbora.api.ops import development_scm as scm_intake
 from arbora.identity.signed_ingress import ScmSignedIngress, scm_sources
 from arbora.pin_lag.unavailable import PinLagUnavailable
-from arbora.security.signed_ingress import bind_signed_ingress
 from tests.api._served_support import confirmable_invocation, person, route_methods
 from tests.test_served_operation_api import served  # noqa: F401
 
@@ -93,7 +92,7 @@ def intake(
     fixture = Fixture()
     monkeypatch.setenv("ARBORA_DEVELOPMENT_SCM_SOURCES", SOURCES)
     held: set[str] = set()
-    bind_signed_ingress(
+    app.state.host.policy.ingress.bind(
         ScmSignedIngress(
             scm_sources(SOURCES),
             lambda _source: MemoryReplay(held),
@@ -128,7 +127,7 @@ def intake(
     monkeypatch.setattr(scm_intake, "_call_connector", normalize)
     monkeypatch.setattr(scm_intake, "_system_clock_ms", lambda: NOW_MS)
     yield app, fixture, stack
-    bind_signed_ingress(None)
+    app.state.host.policy.ingress.bind(None)
 
 
 def _post(
@@ -250,7 +249,7 @@ def test_a_bearer_cannot_serve_the_signed_operation_and_no_admitter_admits_nothi
 
     refused = asyncio.run(call())
     assert refused.status_code != 200 and not fixture.feedback
-    bind_signed_ingress(None)
+    app.state.host.policy.ingress.bind(None)
     assert _post(app, BODY, delivery="nobody").status_code == 401
 
 

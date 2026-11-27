@@ -4,7 +4,7 @@ The engine and every connector serve their scopes, each with its class, in their
 (``MEDULLA-CONTRACT-R054``, ``MEDULLA-CONTRACT-R057``). Arbora holds them in one registry
 object filled by :func:`register_served_scopes`; no module is rendered from a packaged file
 and no scope list is committed. The engine's own scopes come from its run-time method
-catalog, read once on first use (:func:`ingest_engine_catalog`). A scope an engine or
+catalog, read once on first use (:func:`registry`). A scope an engine or
 connector does not serve never reaches a session.
 
 A served scope whose name is already registered with a different class refuses the
@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import threading
 from collections.abc import Iterable, Mapping
+from functools import cache
 from types import MappingProxyType
 from typing import Any
 
@@ -27,7 +28,6 @@ __all__ = [
     "OnboardingRefused",
     "ScopeRegistry",
     "approver_groups",
-    "ingest_engine_catalog",
     "register_served_scopes",
     "registry",
     "scope_classes",
@@ -98,35 +98,23 @@ class ScopeRegistry:
         return frozenset(self._classes)
 
 
-_REGISTRY = ScopeRegistry()
-_ingested = threading.Event()
-_ingest_lock = threading.Lock()
-
-
+@cache
 def registry() -> ScopeRegistry:
-    """The process registry, with the engine's served scopes ingested."""
-    ingest_engine_catalog()
-    return _REGISTRY
+    """The process registry, built once with the engine's served scopes ingested.
 
+    A failed engine read builds nothing, so the next call reads again.
+    """
+    import importlib
 
-def ingest_engine_catalog() -> None:
-    """Register the scopes of the engine's run-time method catalog, once."""
-    if _ingested.is_set():
-        return
-    with _ingest_lock:
-        if _ingested.is_set():
-            return
-        import importlib
-
-        engine = importlib.import_module("medulla.engine")
-        _REGISTRY.register("engine", json.loads(engine.method_catalog())["scopes"])
-        _ingested.set()
+    held = ScopeRegistry()
+    engine = importlib.import_module("medulla.engine")
+    held.register("engine", json.loads(engine.method_catalog())["scopes"])
+    return held
 
 
 def register_served_scopes(server: str, entries: Iterable[Mapping[str, Any]]) -> None:
     """Register one connector's handshake scopes, or refuse its onboarding on a conflict."""
-    ingest_engine_catalog()
-    _REGISTRY.register(server, entries)
+    registry().register(server, entries)
 
 
 def scope_classes() -> Mapping[str, str]:

@@ -19,7 +19,6 @@ import pytest
 from arbora.api.ops import development_delivery as delivery
 from arbora.api.ops import development_scm as scm_intake
 from arbora.identity.signed_ingress import ScmSignedIngress, scm_sources
-from arbora.security.signed_ingress import bind_signed_ingress
 from tests.api._served_support import McpAsk, person, route_methods
 from tests.api.test_delivery_ops_served import _arming_record, _Connector, _Receipts
 from tests.api.test_development_surface_served import (  # noqa: F401
@@ -60,7 +59,7 @@ def test_delivery_runs_from_slice_to_merge_over_mcp(
     monkeypatch.setenv("ARBORA_DEVELOPMENT_SCM_SOURCES", SOURCES)
     held: set[str] = set()
     audit: list[dict[str, str]] = []
-    bind_signed_ingress(
+    app.state.host.policy.ingress.bind(
         ScmSignedIngress(
             scm_sources(SOURCES),
             lambda _s: MemoryReplay(held),
@@ -176,4 +175,4 @@ def test_delivery_runs_from_slice_to_merge_over_mcp(
         "merge" in tool and tool.endswith("_merge") for tool, _ in off.calls + on.calls
     )
     assert not any(tool == "merge" for tool, _ in off.calls + on.calls)
-    bind_signed_ingress(None)
+    app.state.host.policy.ingress.bind(None)

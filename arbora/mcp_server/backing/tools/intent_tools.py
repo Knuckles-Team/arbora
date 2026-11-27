@@ -880,6 +880,6 @@ def register_intent_tools(mcp: Any, caches: HostCaches) -> list[str]:
         caches.tools[verb] = fn
         # REST twin (CONCEPT:MERISTEM-ECO.mcp.two-surfaces-mcp-rest) — the generic
         # ACTION_TOOL_ROUTES loop in _mount_rest_routes wires this automatically.
-        runtime.ACTION_TOOL_ROUTES[verb] = f"/intent/{verb}"
+        caches.tools.bind_route(verb, f"/intent/{verb}")
         registered.append(verb)
     return registered

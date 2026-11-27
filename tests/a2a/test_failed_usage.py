@@ -10,7 +10,7 @@ import pytest
 from meristem.graph import RunFailed, RunResult, RunStatus
 
 from arbora import agent_runs, work_items
-from arbora.a2a.authority import WorkItemA2AAuthority, task_output_artifacts
+from arbora.a2a.authority import WorkItemA2AAuthority
 from arbora.api.contracts.agent_control_contracts import AgentExecutionRequest
 from tests.mcp_server.test_task_plan_failure import USAGE, fail_at, scope
 from tests.mcp_server.test_task_plan_runtime import bridge as bridge
@@ -47,7 +47,7 @@ async def invoke(monkeypatch, execute, *, commit_error=False):
     assert commits == [
         {"outcome": "failed", "result_ref": None, "error_ref": commits[0]["error_ref"]}
     ]
-    assert task_output_artifacts("failed-task") is None
+    assert authority.outputs.artifacts("failed-task") is None
     return usage
 
 

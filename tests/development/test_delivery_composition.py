@@ -23,7 +23,6 @@ from arbora.api.ops.plans import LateStepInvoke
 from arbora.identity.signed_ingress import ScmSignedIngress, scm_sources
 from arbora.mcp_server.backing.tools import engine_tools
 from arbora.security.operation_result import OpError, OpResult
-from arbora.security.signed_ingress import bind_signed_ingress
 from tests.api._served_support import McpAsk, person, route_methods
 from tests.api.test_development_surface_served import (  # noqa: F401
     runs_env,
@@ -111,7 +110,7 @@ def test_run_start_reaches_the_lane_and_a_signed_event_is_stamped_with_productio
     monkeypatch.setattr("arbora.api.ops.pin_guards.guard", lambda *a, **k: None)
     monkeypatch.setattr("arbora.api.ops.pin_guards.engine_send", engine_answer)
     monkeypatch.setenv("ARBORA_DEVELOPMENT_SCM_SOURCES", SOURCES)
-    bind_signed_ingress(
+    app.state.host.policy.ingress.bind(
         ScmSignedIngress(
             scm_sources(SOURCES),
             lambda _s: MemoryReplay(set()),
@@ -178,7 +177,7 @@ def test_run_start_reaches_the_lane_and_a_signed_event_is_stamped_with_productio
     assert _post(app, BODY).status_code == 200
     assert fed[0]["admitted_principal"] == "person:one"
     assert [method for method, _ in asked] == ["Identity", "ListPathGrants"]
-    bind_signed_ingress(None)
+    app.state.host.policy.ingress.bind(None)
 
 
 @pytest.mark.spec("ARBORA-OPS-R896.12")

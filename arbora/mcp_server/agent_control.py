@@ -58,7 +58,7 @@ def register_graph_rlm(
         return result.model_dump_json()
 
     tools["graph_rlm"] = graph_rlm
-    runtime.ACTION_TOOL_ROUTES["graph_rlm"] = "/graph/rlm"
+    tools.bind_route("graph_rlm", "/graph/rlm")
 
 
 __all__ = ["register_graph_rlm"]

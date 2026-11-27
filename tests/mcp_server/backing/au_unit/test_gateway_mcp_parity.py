@@ -3,7 +3,7 @@
 Both surfaces dispatch through ``_execute_tool`` against the same in-process
 engine, while the immutable ToolSpec universe is the capability source of
 truth. This test enforces that every canonical profile tool has exactly one
-collapsed REST twin (via ``ACTION_TOOL_ROUTES``) and that the twin is actually
+collapsed REST twin (via the tool table routes) and that the twin is actually
 mounted by ``_mount_rest_routes`` — and vice versa. If a new MCP tool is added
 without a REST route (or a route is added for a non-existent tool), this fails,
 preventing the two surfaces from drifting.
@@ -84,7 +84,7 @@ def test_every_mcp_tool_has_a_rest_route():
     caches = build_host_caches(RuntimeConfig())
     runtime.ensure_tools_registered(caches)
     tools = set(caches.tools)
-    mapped = set(runtime.ACTION_TOOL_ROUTES)
+    mapped = set(caches.tools.routes)
 
     assert tools == set(_canonical_runtime_names(caches))
 
@@ -100,7 +100,7 @@ def test_no_phantom_routes_for_missing_tools():
     caches = build_host_caches(RuntimeConfig())
     runtime.ensure_tools_registered(caches)
     tools = set(caches.tools)
-    mapped = set(runtime.ACTION_TOOL_ROUTES)
+    mapped = set(caches.tools.routes)
 
     assert tools == set(_canonical_runtime_names(caches))
 
@@ -111,8 +111,9 @@ def test_no_phantom_routes_for_missing_tools():
 
 
 def test_mapped_routes_are_actually_mounted():
-    paths = _mounted_paths(build_host_caches(RuntimeConfig()))
-    for tool, path in runtime.ACTION_TOOL_ROUTES.items():
+    caches = build_host_caches(RuntimeConfig())
+    paths = _mounted_paths(caches)
+    for tool, path in caches.tools.routes.items():
         assert path in paths, (
             f"Tool '{tool}' maps to '{path}' but that route is not mounted by "
             "_mount_rest_routes."
@@ -121,8 +122,9 @@ def test_mapped_routes_are_actually_mounted():
 
 def test_prefix_is_applied_to_mounted_routes():
     # The API gateway mounts these under /api — confirm the prefix is honoured.
-    paths = _mounted_paths(build_host_caches(RuntimeConfig()), prefix="/api")
-    for path in runtime.ACTION_TOOL_ROUTES.values():
+    caches = build_host_caches(RuntimeConfig())
+    paths = _mounted_paths(caches, prefix="/api")
+    for path in caches.tools.routes.values():
         assert ("/api" + path) in paths
 
 
@@ -132,7 +134,7 @@ def test_retired_legacy_tool_fanout_is_not_mounted():
     paths = _mounted_paths(caches)
     retired = {"graph_mine", "graph_mine_deep", "graph_ops_causal", "graph_research"}
     assert retired.isdisjoint(caches.tools)
-    assert retired.isdisjoint(runtime.ACTION_TOOL_ROUTES)
+    assert retired.isdisjoint(caches.tools.routes)
     assert "/graph/research" not in paths
     assert "/ops/causal" not in paths
     assert not any(path.startswith("/mining/") for path in paths)

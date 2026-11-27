@@ -38,7 +38,6 @@ from pydantic import Field
 from arbora.api.errors import not_served
 from arbora.core.event_loop import run_blocking_ordered
 from arbora.core.settings import RuntimeConfig
-from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_payload
 
@@ -425,4 +424,4 @@ def register_compliance_tools(
     # runtime._build_server mounts POST /compliance for every
     # ACTION_TOOL_ROUTES entry without a bespoke handler, dispatching through
     # the SAME _execute_tool core.
-    runtime.ACTION_TOOL_ROUTES["graph_compliance"] = "/compliance"
+    tools.bind_route("graph_compliance", "/compliance")

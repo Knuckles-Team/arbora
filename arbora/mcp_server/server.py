@@ -22,12 +22,13 @@ from arbora.mcp_server.composition import (
     install_gateway_application,
     start_composed_services,
 )
-from arbora.mcp_server.host_caches import WarmupSlot
+from arbora.mcp_server.host_caches import ToolTable, WarmupSlot
 from arbora.mcp_server.host_context import (
     HostContext,
     bind_a2a_decision,
     bind_invocation_probes,
     bind_ranking,
+    bind_signed_ingress,
 )
 from arbora.mcp_server.hosted_invocation import HostedInvocation
 from arbora.observability.state import Telemetry
@@ -309,7 +310,7 @@ def _bind_served_fleet(
 
 
 def _register_resident_surface(
-    mcp: Any, fleet_mux: Any, invocation: HostedInvocation | None
+    mcp: Any, fleet_mux: Any, invocation: HostedInvocation | None, tools: ToolTable
 ) -> None:
     """Attach the six verbs and four fleet tools once (ARBORA-OPS-R035.2).
 
@@ -323,7 +324,7 @@ def _register_resident_surface(
     from arbora.mcp_server.registration import FleetMCPBinding, register_mcp_tools
 
     late = getattr(invocation.services.runtime, "bindings", {}).get("fleet_gateway")
-    projection = runtime.SERVED_PROJECTION
+    projection = tools.projection
     if not isinstance(late, LateFleetGateway) or late.ops is None or projection is None:
         raise RuntimeError(
             "the resident MCP surface needs the bound fleet gateway and the "
@@ -462,6 +463,7 @@ def mcp_server(
             else _served_invocation(host=host_context)
         )
     bind_a2a_decision(host_context, invocation)
+    bind_signed_ingress(host_context, invocation)
     bind_ranking(host_context, invocation)
     install_gateway_application(
         invocation,
@@ -553,7 +555,7 @@ def mcp_server(
     from arbora.fleet.credential_reuse import bind_credential_reuse
 
     bind_credential_reuse(host_context.fleet, invocation)
-    _register_resident_surface(mcp, fleet_mux, invocation)
+    _register_resident_surface(mcp, fleet_mux, invocation, host_context.caches.tools)
 
     transport = getattr(args, "transport", "stdio")
     host = getattr(args, "host", "127.0.0.1")
@@ -591,7 +593,7 @@ def mcp_server(
     try:
         from arbora.mcp_server.serving_options import log_startup
 
-        log_startup(logger, transport, runtime.SERVED_PROJECTION, fleet_mux)
+        log_startup(logger, transport, host_context.caches.tools.projection, fleet_mux)
 
         from arbora.security.request_identity import (
             apply_served_security_profile,
@@ -742,7 +744,9 @@ def mcp_server(
                 host=host,
                 port=port,
                 **network_run_kwargs(
-                    network_serving.fastmcp_run_kwargs(), host_context.caches.jwks
+                    network_serving.fastmcp_run_kwargs(),
+                    host_context.caches.jwks,
+                    host_context.policy.ingress,
                 ),
             )
         else:

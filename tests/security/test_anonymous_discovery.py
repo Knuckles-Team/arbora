@@ -28,6 +28,7 @@ from arbora.observability.state import SubsystemWindows
 from arbora.security import anonymous
 from arbora.security.key_cache import JwksCache
 from arbora.security.request_identity import ActorIdentityMiddleware
+from arbora.security.signed_ingress import SignedIngressSlot
 from tests.api.test_invoke_contract import operation, setup_services
 from tests.security.test_anonymous_mode import local_mode as local_mode
 
@@ -120,7 +121,9 @@ async def test_http_mcp_discovery_and_invoke_policy_parity(local_mode, denied):
         ),
     )
     transport = httpx.ASGITransport(
-        app=ActorIdentityMiddleware(app, JwksCache(RuntimeConfig())),
+        app=ActorIdentityMiddleware(
+            app, JwksCache(RuntimeConfig()), SignedIngressSlot()
+        ),
         client=("127.0.0.1", 1234),
     )
     async with httpx.AsyncClient(

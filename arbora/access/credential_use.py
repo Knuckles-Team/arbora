@@ -29,6 +29,7 @@ __all__ = [
     "CredentialUse",
     "CredentialUseGrant",
     "CredentialUseRequest",
+    "RefreshLocks",
     "resolve_credential",
 ]
 
@@ -166,6 +167,17 @@ class AuthorizationChallenge:
             _text(getattr(self, name))
 
 
+class RefreshLocks:
+    """One refresh lock per grant, owned by the ports of one host."""
+
+    def __init__(self) -> None:
+        self._locks: dict[str, asyncio.Lock] = {}
+
+    def for_grant(self, decision_ref: str) -> asyncio.Lock:
+        """The lock serialising refreshes of the grant ``decision_ref``."""
+        return self._locks.setdefault(decision_ref, asyncio.Lock())
+
+
 class CredentialUse(Protocol):
     """The ports of one resolution; each answers from the engine, vault or provider."""
 
@@ -182,9 +194,7 @@ class CredentialUse(Protocol):
     complete: Callable[[AuthorizationChallenge, float], Awaitable[Mapping[str, Any]]]
     emit: Callable[[Mapping[str, str]], None]
     clock: Callable[[], float]
-
-
-_REFRESH_LOCKS: dict[str, asyncio.Lock] = {}
+    refresh_locks: RefreshLocks
 
 
 async def resolve_credential(
@@ -282,7 +292,7 @@ async def _refresh_once(
     evidence: dict[str, str],
 ) -> Mapping[str, Any]:
     """One refresh at a time per grant; a waiting caller reads the refreshed record."""
-    lock = _REFRESH_LOCKS.setdefault(grant.engine_decision_ref, asyncio.Lock())
+    lock = ports.refresh_locks.for_grant(grant.engine_decision_ref)
     async with lock:
         current = await ports.vault_get(grant.vault_ref)
         if current is not None and await ports.validate(current, grant) == "valid":

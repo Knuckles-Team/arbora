@@ -33,6 +33,7 @@ from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.hosted_invocation import HostedInvocation
 from arbora.mcp_server.routes import mount_rest_routes
+from arbora.mcp_server.served_engine import EngineAttachments
 from arbora.mcp_server.webui_mcp_delegation import webui_mcp_delegation_helpers
 from arbora.messaging.intake import configured_platforms, start_messaging_intake
 from arbora.messaging.memory_webhooks import start_memory_webhook_pump
@@ -393,18 +394,6 @@ class _Attachment:
     process: subprocess.Popen[bytes] | None = None
 
 
-_ATTACHED: dict[str, _Attachment] = {}
-_SPAWNED = 0
-
-
-def engine_spawn_count() -> int:
-    """How many engine processes this process has started."""
-    return _SPAWNED
-
-
-_ATTACHED_LOCK = threading.Lock()
-
-
 def _take_client_lock(endpoint: EngineEndpoint) -> int:
     from arbora.deployment import engine_lock, file_lock
 
@@ -460,8 +449,6 @@ def _spawn_engine(
             start_new_session=True,
             env={**inherited_environment(), **config.extra_env},
         )
-    global _SPAWNED
-    _SPAWNED += 1
     ENGINE_SPAWNS.inc()
     _write_marker(endpoint, process.pid)
     logger.info(
@@ -501,7 +488,9 @@ def _abandon(endpoint: EngineEndpoint, process: subprocess.Popen[bytes]) -> None
         engine_lock.engine_marker_path(endpoint.address).unlink()
 
 
-def ensure_local_engine(config: LocalEngineConfig) -> EngineEndpoint:
+def ensure_local_engine(
+    config: LocalEngineConfig, attachments: EngineAttachments
+) -> EngineEndpoint:
     """Return the loopback engine endpoint, starting an engine only when none answers.
 
     Every process attaches by holding a shared lock on the endpoint's client
@@ -513,8 +502,8 @@ def ensure_local_engine(config: LocalEngineConfig) -> EngineEndpoint:
     from arbora.deployment import engine_lock
 
     endpoint = config.endpoint
-    with _ATTACHED_LOCK:
-        if endpoint.address in _ATTACHED:
+    with attachments.lock:
+        if endpoint.address in attachments.attached:
             return endpoint
         fd = _take_client_lock(endpoint)
         attachment = _Attachment(endpoint, config, fd)
@@ -533,6 +522,7 @@ def ensure_local_engine(config: LocalEngineConfig) -> EngineEndpoint:
                                 f" (pid {(holder or {}).get('pid', '?')})",
                             )
                         attachment.process = _spawn_engine(endpoint, config)
+                        attachments.spawned += 1
                         try:
                             _wait_until_running(endpoint, config, attachment.process)
                         except BaseException:
@@ -541,9 +531,9 @@ def ensure_local_engine(config: LocalEngineConfig) -> EngineEndpoint:
         except BaseException:
             _release_client_lock(fd)
             raise
-        _ATTACHED[endpoint.address] = attachment
-        if len(_ATTACHED) == 1:
-            atexit.register(_stand_down_all)
+        attachments.attached[endpoint.address] = attachment
+        if len(attachments.attached) == 1:
+            atexit.register(_stand_down_all, attachments)
     return endpoint
 
 
@@ -598,7 +588,7 @@ def attach_reused_engine(
             f"the reused engine {digest} is {probe.version}; this release needs"
             f" {'.'.join(map(str, floor))}",
         )
-    logger.info("attached to the reused engine %s (spawns: %d)", digest, _SPAWNED)
+    logger.info("attached to the reused engine %s", digest)
     return probe
 
 
@@ -657,7 +647,7 @@ def _pid_alive(pid: int) -> bool:
     return True
 
 
-def stand_down_engine(endpoint: EngineEndpoint) -> bool:
+def stand_down_engine(endpoint: EngineEndpoint, attachments: EngineAttachments) -> bool:
     """Release this process's client lock; stop the engine when it owns the last one.
 
     Returns True when this call stopped the engine. The engine is stopped only
@@ -666,8 +656,8 @@ def stand_down_engine(endpoint: EngineEndpoint) -> bool:
     """
     from arbora.deployment import engine_lock, file_lock
 
-    with _ATTACHED_LOCK:
-        attachment = _ATTACHED.pop(endpoint.address, None)
+    with attachments.lock:
+        attachment = attachments.attached.pop(endpoint.address, None)
     if attachment is None:
         return False
     _release_client_lock(attachment.lock_fd)
@@ -745,10 +735,10 @@ def _stop_marked_engine(
     return True
 
 
-def _stand_down_all() -> None:
-    for attachment in list(_ATTACHED.values()):
+def _stand_down_all(attachments: EngineAttachments) -> None:
+    for attachment in list(attachments.attached.values()):
         try:
-            stand_down_engine(attachment.endpoint)
+            stand_down_engine(attachment.endpoint, attachments)
         except EngineRefusal as refusal:
             logger.error("engine stand-down refused: %s", refusal)
         except Exception:

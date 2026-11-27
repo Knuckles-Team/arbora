@@ -13,6 +13,7 @@ import pytest
 from arbora.fleet.gateway_ops import ConfirmingTools
 from arbora.security import anonymous
 from arbora.security.key_cache import JwksCache
+from arbora.security.signed_ingress import SignedIngressSlot
 
 pytestmark = pytest.mark.spec("ARBORA-IDENTITY-R004.3")
 
@@ -163,7 +164,9 @@ async def test_real_asgi_admission_projects_anonymous_caller(local_mode):
         }
 
     transport = httpx.ASGITransport(
-        app=ActorIdentityMiddleware(app, JwksCache(RuntimeConfig())),
+        app=ActorIdentityMiddleware(
+            app, JwksCache(RuntimeConfig()), SignedIngressSlot()
+        ),
         client=("127.0.0.1", 1234),
     )
     async with httpx.AsyncClient(
@@ -361,7 +364,7 @@ async def test_real_fastmcp_outer_http_boundary_covers_public_routes(local_mode)
     )
     assert network is not None
     kwargs = anonymous.network_run_kwargs(
-        network.fastmcp_run_kwargs(), JwksCache(RuntimeConfig())
+        network.fastmcp_run_kwargs(), JwksCache(RuntimeConfig()), SignedIngressSlot()
     )
     app = mcp.http_app(path="/mcp", middleware=kwargs["middleware"])
     async with httpx.AsyncClient(

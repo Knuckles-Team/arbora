@@ -220,11 +220,12 @@ def test_applier_rejects_mismatched_names():
 
 
 def test_dirty_tenant_bookkeeping_and_flag(monkeypatch):
-    sync.invalidate_cache("", "n")
-    assert not sync.is_dirty("")
-    sync.invalidate_cache("tenant-x", "n")
-    assert sync.is_dirty("tenant-x")
-    sync.clear_dirty_state("tenant-x")
-    assert not sync.is_dirty("tenant-x")
+    dirty = sync.DirtyTenants()
+    dirty.invalidate("", "n")
+    assert not dirty.is_dirty("")
+    dirty.invalidate("tenant-x", "n")
+    assert dirty.is_dirty("tenant-x")
+    dirty.clear("tenant-x")
+    assert not dirty.is_dirty("tenant-x")
     monkeypatch.delenv("EXTERNAL_POLICY_SYNC_ENABLED")
     assert sync.external_policy_sync_enabled() is False

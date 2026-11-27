@@ -63,7 +63,6 @@ from typing import Any
 
 from pydantic import Field
 
-from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_json
 
@@ -267,4 +266,4 @@ def register_epistemic_tools(mcp: Any, tools: ToolTable) -> None:
     # runtime._build_server mounts POST /epistemic for every ACTION_TOOL_ROUTES
     # entry without a bespoke handler, dispatching through the SAME
     # _execute_tool core.
-    runtime.ACTION_TOOL_ROUTES["graph_epistemic"] = "/epistemic"
+    tools.bind_route("graph_epistemic", "/epistemic")

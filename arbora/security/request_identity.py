@@ -79,6 +79,7 @@ from arbora.core.environment import read_env
 from arbora.core.settings import RuntimeConfig
 from arbora.security.error_surface import carry_errors
 from arbora.security.key_cache import JwksCache
+from arbora.security.signed_ingress import SignedIngressSlot
 
 from .actor_context import (
     ActorContext,
@@ -1139,9 +1140,10 @@ class ActorIdentityMiddleware:
     same server-minted session authority.
     """
 
-    def __init__(self, app: Any, keys: JwksCache) -> None:
+    def __init__(self, app: Any, keys: JwksCache, ingress: SignedIngressSlot) -> None:
         self.app = app
         self._keys = keys
+        self._ingress = ingress
 
     async def _serve_unauthenticated_path(
         self, scope: Any, receive: Any, send: Any, path: str
@@ -1199,10 +1201,9 @@ class ActorIdentityMiddleware:
         from arbora.security.signed_ingress import (
             ADMITTED_STATE_KEY,
             SignedIngressRefused,
-            bound_signed_ingress,
         )
 
-        admitter = bound_signed_ingress()
+        admitter = self._ingress.admitter()
         body = await _read_body(receive)
         headers = {
             key.decode("latin-1").lower(): value.decode("latin-1")

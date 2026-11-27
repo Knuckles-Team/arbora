@@ -40,7 +40,6 @@ PEERS_FILE = "a2a_peers.yml"
 MAX_REVISIONS = 50
 _REFERENCE = re.compile(r"^(openbao|vault|env|secret):[A-Za-z0-9_./-]{1,200}$")
 _LOOPBACK = frozenset({"localhost", "127.0.0.1", "::1"})
-_LOCK = threading.Lock()
 
 
 class PeerRegisterParams(_common.Params):
@@ -91,6 +90,7 @@ class PeerRegistry:
     ) -> None:
         self._path = path
         self._clock = clock
+        self._lock = threading.Lock()
         self._stamp: tuple[int, int] | None = None
         self._index: dict[tuple[str, str], dict[str, Any]] = {}
 
@@ -140,7 +140,7 @@ class PeerRegistry:
         self, tenant: str, caller: str, request: PeerRegisterParams
     ) -> dict[str, Any]:
         now = self._clock().isoformat()
-        with _LOCK:
+        with self._lock:
             index = dict(self._load())
             prior = index.get((tenant, request.name))
             revisions = list(prior.get("revisions", [])) if prior else []
@@ -164,7 +164,7 @@ class PeerRegistry:
         return _public(record)
 
     def delete(self, tenant: str, name: str) -> bool:
-        with _LOCK:
+        with self._lock:
             index = dict(self._load())
             removed = index.pop((tenant, name), None) is not None
             if removed:
@@ -193,11 +193,15 @@ def _default_path() -> Path:
     return config_dir() / PEERS_FILE
 
 
-_REGISTRY = PeerRegistry(_default_path)
+def build_peer_registry() -> PeerRegistry:
+    """The host peer registry over the peers file of the config directory."""
+    return PeerRegistry(_default_path)
 
 
 def _registry(context: Any) -> PeerRegistry:
-    return context.services.get("a2a_peers") or _REGISTRY
+    return _common.bound_service(
+        context, "a2a_peers", reason="the A2A peer registry is not composed"
+    )
 
 
 async def handle_peer_register(

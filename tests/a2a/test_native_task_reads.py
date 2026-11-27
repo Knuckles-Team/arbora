@@ -175,14 +175,12 @@ async def test_changed_listing_caller_refuses_rows(monkeypatch: Any) -> None:
 
 
 def test_missing_run_event_does_not_use_process_cache() -> None:
-    from arbora.a2a.authority import remember_task_output
-
-    remember_task_output(TASK, "not durable evidence")
     authority = WorkItemA2AAuthority(
         lambda: SimpleNamespace(query_cypher=lambda *args: []),
         origins=RunOriginRegistry(),
         config=RuntimeConfig(),
     )
+    authority.outputs.remember(TASK, "not durable evidence")
     assert authority._persisted_artifacts(TASK, item=record()) is None
 
 

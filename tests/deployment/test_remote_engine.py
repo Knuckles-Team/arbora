@@ -42,7 +42,6 @@ def test_remote_url_starts_nothing_locally_and_missing_credential_refuses(
         "GRAPH_SERVICE_ENDPOINTS", json.dumps(["tcp://engine.example.com:4000"])
     )
     handles = served_engine.EngineHandles(config=RuntimeConfig())
-    before = composition.engine_spawn_count()
     with pytest.raises(EngineRefusal) as refused:
         handles.pool()
     assert refused.value.code == "ENGINE_CREDENTIAL_MISSING"
@@ -50,4 +49,4 @@ def test_remote_url_starts_nothing_locally_and_missing_credential_refuses(
     monkeypatch.setenv("GRAPH_SERVICE_AUTH_SECRET", "a-credential")  # nosec B105
     pool = handles.pool()
     assert pool is handles.pool()
-    assert composition.engine_spawn_count() == before
+    assert handles.attachments.spawned == 0

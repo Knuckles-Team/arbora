@@ -53,7 +53,7 @@ def test_mint_is_sandbox_only_loopback_only_and_single(
     started: list[composition.LocalEngineConfig] = []
 
     def fake_engine(
-        config: composition.LocalEngineConfig,
+        config: composition.LocalEngineConfig, attachments: object
     ) -> composition.EngineEndpoint:
         started.append(config)
         return config.endpoint
@@ -127,13 +127,15 @@ def test_second_tenant_principal_cannot_read_the_first_tenants_object(
     started: list[composition.LocalEngineConfig] = []
 
     def fake_engine(
-        config: composition.LocalEngineConfig,
+        config: composition.LocalEngineConfig, attachments: object
     ) -> composition.EngineEndpoint:
         started.append(config)
         return config.endpoint
 
     monkeypatch.setattr(composition, "ensure_local_engine", fake_engine)
-    monkeypatch.setattr(composition, "stand_down_engine", lambda endpoint: None)
+    monkeypatch.setattr(
+        composition, "stand_down_engine", lambda endpoint, attachments: None
+    )
     args = argparse.Namespace(
         root=str(tmp_path),
         principal="operator",

@@ -65,16 +65,10 @@ MCP_APP_TOOLS = frozenset({"graph_task_progress_app", "graph_trace_waterfall_app
 @pytest.fixture(scope="module")
 def served():
     """``(mcp, {name: tools/list definition})`` for a freshly built arbora."""
-    routes = dict(runtime.ACTION_TOOL_ROUTES)
     host = build_host_context()
-    try:
-        _args, mcp, _middlewares = runtime._build_server(bootstrap=False, host=host)
-        listed = asyncio.run(mcp.list_tools())
-        registry = host.caches.tools
-        yield mcp, {tool.name: tool_definition(tool) for tool in listed}, registry
-    finally:
-        runtime.ACTION_TOOL_ROUTES.clear()
-        runtime.ACTION_TOOL_ROUTES.update(routes)
+    _args, mcp, _middlewares = runtime._build_server(bootstrap=False, host=host)
+    listed = asyncio.run(mcp.list_tools())
+    yield mcp, {tool.name: tool_definition(tool) for tool in listed}, host.caches.tools
 
 
 def test_default_tools_list_is_the_intent_verbs_and_the_app_launchers(served):
@@ -136,7 +130,7 @@ def test_the_dispatch_core_holds_every_served_manifest_family(served):
     assert not unserved, sorted(unserved)
     assert set(INTENT_VERBS) <= set(registry)
     for verb in INTENT_VERBS:
-        assert runtime.ACTION_TOOL_ROUTES[verb] == f"/intent/{verb}"
+        assert registry.routes[verb] == f"/intent/{verb}"
     assert families - set(OPTIONAL_TOOL_FEATURES) <= set(backing_tools(mcp))
 
 

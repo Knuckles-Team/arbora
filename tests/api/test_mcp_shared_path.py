@@ -510,15 +510,24 @@ def test_consumed_one_shot_is_revocable_while_transport_setup_waits() -> None:
     asyncio.run(run())
 
 
+def _projected_tools(surface) -> Any:
+    """A host tool table with the surface's served projection bound."""
+    from arbora.core.settings import RuntimeConfig
+    from arbora.mcp_server.host_caches import ToolTable
+    from arbora.security.process_authority import ProcessAuthority
+
+    tools = ToolTable(ProcessAuthority(config=RuntimeConfig()))
+    tools.bind_projection(surface.projection)
+    return tools
+
+
 def _served(surface, monkeypatch, *, bound: bool = True) -> SimpleNamespace:
     """A served invocation whose fleet gateway is (or is not) bound."""
-    from arbora.mcp_server import runtime
     from arbora.mcp_server.fleet_composition import LateFleetGateway
 
     late = LateFleetGateway()
     if bound:
         late.bind(object(), surface.ops)
-    monkeypatch.setattr(runtime, "SERVED_PROJECTION", surface.projection)
     runtime_ns = SimpleNamespace(bindings={"fleet_gateway": late})
     return SimpleNamespace(services=SimpleNamespace(runtime=runtime_ns))
 
@@ -530,8 +539,9 @@ def test_running_server_lists_exactly_the_resident_tools(surface, monkeypatch) -
     from arbora.mcp_server.server import _register_resident_surface
 
     invocation = _served(surface, monkeypatch)
+    tools = _projected_tools(surface)
     register_mcp_apps_tools(surface.mcp)  # registered by the host before startup
-    _register_resident_surface(surface.mcp, surface.mux, invocation)
+    _register_resident_surface(surface.mcp, surface.mux, invocation, tools)
 
     async def listed() -> set[str]:
         tools = await surface.mcp.list_tools()
@@ -551,7 +561,7 @@ def test_running_server_lists_exactly_the_resident_tools(surface, monkeypatch) -
     assert {tool.name for tool in visible} == names
     # A second attachment refuses: one registration path, attached once.
     with pytest.raises(RuntimeError, match="empty and unbound"):
-        _register_resident_surface(surface.mcp, surface.mux, invocation)
+        _register_resident_surface(surface.mcp, surface.mux, invocation, tools)
 
 
 @pytest.mark.spec("ARBORA-OPS-R035.2")
@@ -559,8 +569,9 @@ def test_an_unbound_fleet_gateway_aborts_startup(surface, monkeypatch) -> None:
     from arbora.mcp_server.server import _register_resident_surface
 
     invocation = _served(surface, monkeypatch, bound=False)
+    tools = _projected_tools(surface)
     with pytest.raises(RuntimeError, match="bound fleet gateway"):
-        _register_resident_surface(surface.mcp, surface.mux, invocation)
+        _register_resident_surface(surface.mcp, surface.mux, invocation, tools)
     assert not hasattr(surface.mux, "_governed_fleet")
     # With no served invocation there is no resident surface to attach.
-    _register_resident_surface(surface.mcp, surface.mux, None)
+    _register_resident_surface(surface.mcp, surface.mux, None, tools)

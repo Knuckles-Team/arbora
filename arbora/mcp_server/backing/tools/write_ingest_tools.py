@@ -1040,6 +1040,7 @@ def register_write_ingest_tools(
                     "connection": connection if isinstance(connection, str) else "",
                     "graph": graph if isinstance(graph, str) else "",
                 },
+                tools=tools,
             )
         except Exception as e:
             logging.getLogger(__name__).warning("ingest action failed", exc_info=True)

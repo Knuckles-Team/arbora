@@ -24,6 +24,7 @@ from typing import Any
 from pydantic import Field
 
 from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.ops import _common
 from arbora.api.ops._common import Params, build_read_op
 from arbora.api.ops.nested_invoke import invoke_registered
 from arbora.api.registry import OpSpec
@@ -52,14 +53,28 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-#: (tenant, widget) -> the rows of the last healthy read; softens a down connector only.
-_last_rows: dict[tuple[str, str], list[dict[str, Any]]] = {}
+class LastRows:
+    """(tenant, widget) -> the rows of the last healthy read; softens a down connector only.
+
+    One instance is the host's, bound as the ``widget_rows`` service.
+    """
+
+    def __init__(self) -> None:
+        self._rows: dict[tuple[str, str], list[dict[str, Any]]] = {}
+
+    def remember(self, key: tuple[str, str], rows: list[dict[str, Any]]) -> None:
+        if key not in self._rows and len(self._rows) >= _LAST_ROWS_LIMIT:
+            self._rows.pop(next(iter(self._rows)))
+        self._rows[key] = rows
+
+    def get(self, key: tuple[str, str]) -> list[dict[str, Any]]:
+        return list(self._rows.get(key, []))
 
 
-def _remember(key: tuple[str, str], rows: list[dict[str, Any]]) -> None:
-    if key not in _last_rows and len(_last_rows) >= _LAST_ROWS_LIMIT:
-        _last_rows.pop(next(iter(_last_rows)))
-    _last_rows[key] = rows
+def _last_rows(context: Any) -> LastRows:
+    return _common.bound_service(
+        context, "widget_rows", reason="the widget row cache is not composed"
+    )
 
 
 def widget_name(server: str) -> str:
@@ -220,10 +235,10 @@ async def handle_widget_read(
     except OperationRefused as refusal:
         if refusal.code != "UNAVAILABLE":
             raise
-        return _degraded(key, widget)
+        return _degraded(context, key, widget)
     except (ConnectionError, TimeoutError, OSError, RuntimeError):
-        return _degraded(key, widget)
-    _remember(key, rows)
+        return _degraded(context, key, widget)
+    _last_rows(context).remember(key, rows)
     return {
         "rows": rows,
         "source": widget,
@@ -232,9 +247,9 @@ async def handle_widget_read(
     }
 
 
-def _degraded(key: tuple[str, str], widget: str) -> dict[str, Any]:
+def _degraded(context: Any, key: tuple[str, str], widget: str) -> dict[str, Any]:
     return {
-        "rows": list(_last_rows.get(key, [])),
+        "rows": _last_rows(context).get(key),
         "source": widget,
         "degraded": True,
         "fetched_at": _now().isoformat(),

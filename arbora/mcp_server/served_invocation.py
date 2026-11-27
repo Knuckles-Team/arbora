@@ -922,6 +922,25 @@ def _with_host_config(
     return {"config": config, **bindings}
 
 
+def _with_host_owned_state(
+    bindings: Mapping[str, Any] | None,
+) -> Mapping[str, Any] | None:
+    """Bind the objects the host owns for operations: the outbound A2A peer registry
+    (ARBORA-A2A-R001.7) the widget last-rows cache and the heartbeat rate fence."""
+    if bindings is None:
+        return bindings
+    from arbora.api.ops.a2a_peers import build_peer_registry
+    from arbora.api.ops.ecosystem import LastRows
+    from arbora.api.ops.presence import HeartbeatFence
+
+    return {
+        "a2a_peers": build_peer_registry(),
+        "widget_rows": LastRows(),
+        "heartbeat_fence": HeartbeatFence(),
+        **bindings,
+    }
+
+
 def _with_delivery_ports(
     bindings: Mapping[str, Any] | None,
 ) -> Mapping[str, Any] | None:
@@ -1201,6 +1220,7 @@ def compose_served_invocation(
 
     minted = session()
     bindings = _with_host_config(bindings, config)
+    bindings = _with_host_owned_state(bindings)
     bindings = _with_ingest_runner(bindings, pool, graph, connect_context)
     bindings = _with_fleet_source_executor(bindings, pool, graph, process_session)
     bindings = _with_nl_federation_planner(bindings)
@@ -1434,7 +1454,6 @@ def compose_served_invocation(
         audit_adapter=EgAuditAdapter(audit_client),
         current_session=current_session,
     )
-    _bind_scm_ingress(service_client, graph)
     from arbora.mcp_server.gate_audit import gate_inactive_startup
 
     # A gate the pinned engine cannot serve is on the audit record once per process.
@@ -1471,6 +1490,7 @@ def compose_served_invocation(
         task_plan_config=task_plan_config,
         process_startup=process_startup,
         health_probes=health_probes,
+        signed_ingress=_scm_ingress(service_client, graph),
         background_services=_background_services(
             services,
             runtime,
@@ -1577,8 +1597,8 @@ def _directory_sync(
 LDAP_BIND_CREDENTIAL_PATH = "arbora/identity/ldap-bind-password"
 
 
-def _bind_scm_ingress(client: Any, graph: str) -> None:
-    """Bind the signed code-host ingress to the identity middleware (ARBORA-OPS-R896.8).
+def _scm_ingress(client: Any, graph: str) -> Any:
+    """The signed code-host ingress admitter for the host's ingress slot (ARBORA-OPS-R896.8).
 
     The admitter exists only when ``ARBORA_DEVELOPMENT_SCM_SOURCES`` declares a source; with
     none bound, a signed delivery stays unadmitted and answers the uniform 401.
@@ -1586,12 +1606,9 @@ def _bind_scm_ingress(client: Any, graph: str) -> None:
     import time
 
     from arbora.identity.ports import scm_ingress_from_settings
-    from arbora.security.signed_ingress import bind_signed_ingress
 
-    bind_signed_ingress(
-        scm_ingress_from_settings(
-            client, graph, clock_ms=lambda: time.time_ns() // 1_000_000
-        )
+    return scm_ingress_from_settings(
+        client, graph, clock_ms=lambda: time.time_ns() // 1_000_000
     )
 
 

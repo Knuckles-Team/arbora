@@ -18,7 +18,6 @@ from arbora.access.external_policy_sync import (
     Applier,
     ApplyReport,
     BundleFetcher,
-    clear_dirty_state,
 )
 from arbora.security.elevation import (
     ElevationApproval,
@@ -46,7 +45,7 @@ def sync_external_policy(
     """
     fetched = fetcher.fetch(tenant=tenant, graphs=graphs, marking_names=marking_names)
     report = applier.apply_all(fetched)
-    clear_dirty_state(tenant)
+    applier.dirty.clear(tenant)
     return report
 
 

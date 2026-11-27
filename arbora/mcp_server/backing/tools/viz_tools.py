@@ -8,7 +8,6 @@ from typing import Any
 
 from pydantic import Field
 
-from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.engine_surface_types import (
     ChartRenderRequest,
 )
@@ -624,4 +623,4 @@ def register_viz_tools(mcp, tools: ToolTable) -> None:
 
     tools["graph_viz"] = graph_viz
 
-    runtime.ACTION_TOOL_ROUTES["graph_viz"] = "/graph/viz"
+    tools.bind_route("graph_viz", "/graph/viz")

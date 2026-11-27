@@ -11,7 +11,6 @@ from pydantic import Field
 
 from arbora.api.errors import not_served
 from arbora.api.evidence import EvidenceBundle
-from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools.query_execution import (
     _parse_projection_request,
     _project_node_link,
@@ -319,4 +318,4 @@ def register_graph_query_tools(
 
     tools["graph_projection"] = graph_projection
 
-    runtime.ACTION_TOOL_ROUTES["graph_projection"] = "/graph/projection"
+    tools.bind_route("graph_projection", "/graph/projection")

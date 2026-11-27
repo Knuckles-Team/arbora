@@ -124,7 +124,6 @@ __all__ = [
     "member_install_states",
     "plan_prune",
     "prune",
-    "register_guardrail",
     "rollback",
     "session_start_hint",
     "sync",
@@ -334,24 +333,20 @@ class UninstallBudgetGuardrail:
         )
 
 
-GUARDRAILS: list[Guardrail] = [
+GUARDRAILS: tuple[Guardrail, ...] = (
     ActivityGuardrail(),
     LockConsistencyGuardrail(),
     MemberUninstallGuardrail(),
     LockedDistributionUninstallGuardrail(),
     UninstallBudgetGuardrail(),
-]
+)
 
 
-def register_guardrail(guardrail: Guardrail, *, replace_existing: bool = True) -> None:
-    """Add (or replace) a guardrail."""
-
-    if replace_existing:
-        GUARDRAILS[:] = [g for g in GUARDRAILS if g.name != guardrail.name]
-    GUARDRAILS.append(guardrail)
-
-
-def evaluate_plan(plan: SyncPlan | None, ctx: SyncContext) -> Verdict:
+def evaluate_plan(
+    plan: SyncPlan | None,
+    ctx: SyncContext,
+    guardrails: Sequence[Guardrail] = GUARDRAILS,
+) -> Verdict:
     """Run the guardrails and return the first non-allow verdict.
 
     Refusals win over deferrals: a plan that would destroy the environment is
@@ -359,7 +354,7 @@ def evaluate_plan(plan: SyncPlan | None, ctx: SyncContext) -> Verdict:
     """
 
     verdicts: list[Verdict] = []
-    for guardrail in GUARDRAILS:
+    for guardrail in guardrails:
         if plan is None and not guardrail.pre_plan:
             continue
         verdict = guardrail.evaluate(plan, ctx)

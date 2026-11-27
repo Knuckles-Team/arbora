@@ -34,7 +34,6 @@ from typing import Any
 
 from pydantic import Field
 
-from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_payload
 
@@ -79,7 +78,7 @@ def register_audit_tools(
     # runtime._build_server (CONCEPT:MERISTEM-KG.coordination.engine-message-broker) mounts
     # POST /audit for every ACTION_TOOL_ROUTES entry without a bespoke handler,
     # dispatching through the SAME _execute_tool core.
-    runtime.ACTION_TOOL_ROUTES["graph_audit"] = "/audit"
+    tools.bind_route("graph_audit", "/audit")
 
 
 def _verify(engine_provider: Callable[[], Any]) -> dict[str, Any]:

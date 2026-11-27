@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import threading
 import time
 from collections import OrderedDict
 from collections.abc import Callable, Mapping
@@ -53,41 +54,54 @@ _RUN_LEASE_SECONDS = 600.0
 #: The most content one child message carries (ARBORA-RELEASE-R003.4.12).
 CHILD_INPUT_MAX_BYTES = 16_384
 _TERMINAL = frozenset({"succeeded", "failed", "cancelled", "dead_letter"})
-#: Agent reply text of recent runs, by task id. A WorkItem holds only the
-#: result reference; the durable record is the run's RunEvents in EG. This
-#: bounded process-local view serves immediate dispatch/list projections;
-#: tasks/get reads the durable record rather than trusting this cache.
-_OUTPUTS: OrderedDict[str, str] = OrderedDict()
 _MAX_OUTPUTS = 1024
 _MAX_OUTPUT_CHARS = 65_536
 
 
-def remember_task_output(task_id: str, output: Any) -> None:
-    """Keep the reply text of one finished run for its task reads."""
-    if not task_id or output in (None, ""):
-        return
-    text = output if isinstance(output, str) else json.dumps(output, default=str)
-    if len(text) > _MAX_OUTPUT_CHARS:
-        _OUTPUTS.pop(task_id, None)
-        return
-    _OUTPUTS[task_id] = text
-    _OUTPUTS.move_to_end(task_id)
-    while len(_OUTPUTS) > _MAX_OUTPUTS:
-        _OUTPUTS.popitem(last=False)
+class TaskOutputs:
+    """Agent reply text of recent runs, by task id (owned by one authority).
 
+    A WorkItem holds only the result reference; the durable record is the run's
+    RunEvents in EG. This bounded view serves immediate dispatch/list projections;
+    tasks/get reads the durable record rather than trusting it.
+    """
 
-def task_output_artifacts(task_id: str) -> list[A2AArtifact] | None:
-    """The agent's reply to ``task_id`` as the task's one artifact, when known."""
-    text = _OUTPUTS.get(task_id)
-    if not text:
-        return None
-    return [
-        A2AArtifact(
-            artifact_id=f"{task_id}:reply",
-            name="reply",
-            parts=[A2ATextPart(text=text)],
-        )
-    ]
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._texts: OrderedDict[str, str] = OrderedDict()
+
+    def remember(self, task_id: str, output: Any) -> None:
+        """Keep the reply text of one finished run for its task reads."""
+        if not task_id or output in (None, ""):
+            return
+        text = output if isinstance(output, str) else json.dumps(output, default=str)
+        with self._lock:
+            if len(text) > _MAX_OUTPUT_CHARS:
+                self._texts.pop(task_id, None)
+                return
+            self._texts[task_id] = text
+            self._texts.move_to_end(task_id)
+            while len(self._texts) > _MAX_OUTPUTS:
+                self._texts.popitem(last=False)
+
+    def forget(self, task_id: str) -> None:
+        """Drop the reply text of ``task_id``."""
+        with self._lock:
+            self._texts.pop(task_id, None)
+
+    def artifacts(self, task_id: str) -> list[A2AArtifact] | None:
+        """The agent's reply to ``task_id`` as the task's one artifact, when known."""
+        with self._lock:
+            text = self._texts.get(task_id)
+        if not text:
+            return None
+        return [
+            A2AArtifact(
+                artifact_id=f"{task_id}:reply",
+                name="reply",
+                parts=[A2ATextPart(text=text)],
+            )
+        ]
 
 
 _STATE_MAP: Mapping[str, A2ATaskState] = MappingProxyType(
@@ -246,6 +260,8 @@ class WorkItemA2AAuthority:
         config: RuntimeConfig,
     ) -> None:
         self._engine_provider = engine_provider
+        #: The recent run replies this authority serves to its projections.
+        self.outputs = TaskOutputs()
         #: The host settings the default agent executor reads.
         self._config = config
         #: The host's ``HostPortsSlot`` the default agent executor runs on.
@@ -942,7 +958,7 @@ class WorkItemA2AAuthority:
                 "run", result.run_id, namespace="arbora-a2a"
             )
             usage = getattr(result, "usage", None)
-            remember_task_output(task_id, getattr(result, "output", None))
+            self.outputs.remember(task_id, getattr(result, "output", None))
             output = getattr(result, "output", None)
             reply = output if isinstance(output, str) and output else None
         except Exception as exc:
@@ -957,7 +973,7 @@ class WorkItemA2AAuthority:
             usage = failed_run_usage(exc, run_id or task_id)
             outcome = "failed"
             result_ref = None
-            _OUTPUTS.pop(task_id, None)
+            self.outputs.forget(task_id)
             error_ref = persistence_reference(
                 "error", type(exc).__name__, namespace="arbora-a2a"
             )
@@ -1507,7 +1523,7 @@ class WorkItemA2AAuthority:
         usage: Any,
     ) -> A2ATask:
         """Keep native receipt attachment separate from dispatch control flow."""
-        task = self._project(item, task_id=task_id)
+        task = self.project_held(item, task_id=task_id)
         if self.task_plan_config is not None:
             await self._attach_run_usage(task, item, session)
         elif usage is not None:
@@ -1560,8 +1576,19 @@ class WorkItemA2AAuthority:
         rendered = str(value).strip()
         return rendered or None
 
+    def project_held(self, item: dict[str, Any], *, task_id: str) -> A2ATask:
+        """The task of ``item``, with the held reply of a succeeded run."""
+        return self._project(
+            item, task_id=task_id, artifacts=self.outputs.artifacts(task_id)
+        )
+
     @staticmethod
-    def _project(item: dict[str, Any], *, task_id: str) -> A2ATask:
+    def _project(
+        item: dict[str, Any],
+        *,
+        task_id: str,
+        artifacts: list[A2AArtifact] | None = None,
+    ) -> A2ATask:
         raw_state = str(item.get("status") or "")
         from .event_log import terminal_state
 
@@ -1601,9 +1628,7 @@ class WorkItemA2AAuthority:
                     else item.get("updated_at")
                 ),
             ),
-            artifacts=task_output_artifacts(task_id)
-            if raw_state == "succeeded"
-            else None,
+            artifacts=artifacts if raw_state == "succeeded" else None,
             metadata={"arbora": public_metadata},
         )
 
@@ -1737,7 +1762,7 @@ class WorkItemA2AAuthority:
                 raise PermissionError("A2A caller changed during task read")
         if self._session("kg:read") != read_session:
             raise PermissionError("A2A caller changed during task read")
-        task = self._project(item, task_id=task_id)
+        task = self.project_held(item, task_id=task_id)
         await self._attach_run_usage(task, item, read_session)
         try:
             task.artifacts, held = await asyncio.to_thread(
@@ -1861,9 +1886,8 @@ class WorkItemA2AAuthority:
             limit=limit,
         )
 
-    @classmethod
-    def _project_list_row(cls, row: Any, *, owner_ref: str) -> A2ATask:
-        if not cls._owned(row, owner_ref):
+    def _project_list_row(self, row: Any, *, owner_ref: str) -> A2ATask:
+        if not self._owned(row, owner_ref):
             raise RuntimeError("canonical WorkItem list crossed its authority scope")
         item_id = str(row.get("work_item_id") or "")
         task_id = (
@@ -1871,9 +1895,9 @@ class WorkItemA2AAuthority:
             if row["metadata"].get("a2a_run_id")
             else item_id.removeprefix(_WORK_ITEM_PREFIX)
         )
-        if cls._work_item_id(task_id) != item_id:
+        if self._work_item_id(task_id) != item_id:
             raise RuntimeError("canonical WorkItem list returned an invalid identity")
-        return cls._project(row, task_id=task_id)
+        return self.project_held(row, task_id=task_id)
 
     @staticmethod
     def _validated_list_page(
@@ -1931,7 +1955,7 @@ class WorkItemA2AAuthority:
         run_id = str(item["metadata"].get("a2a_run_id") or task_id)
         if item.get("status") == "cancelled":
             self._origins.revoke(cancellation_session, run_id)
-            return self._project(item, task_id=task_id)
+            return self.project_held(item, task_id=task_id)
         if item.get("status") in _TERMINAL:
             raise A2ATaskNotCancelable("A2A task is not cancelable")
         from arbora import work_items
@@ -1957,4 +1981,4 @@ class WorkItemA2AAuthority:
         )
         if not isinstance(current, dict):
             raise A2ATaskNotCancelable("A2A task is not cancelable")
-        return self._project(current, task_id=task_id)
+        return self.project_held(current, task_id=task_id)

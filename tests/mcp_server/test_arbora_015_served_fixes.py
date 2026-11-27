@@ -367,7 +367,7 @@ def test_the_a2a_run_uses_the_task_id_and_the_fleet_tools(
     assert seen[0].allowed_tools == (
         FLEET_TOOLS if agent_name != "unrelated-agent" else None
     )
-    artifacts = authority_mod.task_output_artifacts(task_id)
+    artifacts = auth.outputs.artifacts(task_id)
     assert artifacts is not None
     assert artifacts[0].parts[0].text == "see https://x.example"
     dumped = artifacts[0].model_dump(mode="json", by_alias=True)

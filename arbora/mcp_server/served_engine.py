@@ -439,7 +439,19 @@ class ServedEngine:
         return bool(run_blocking(run))
 
 
-def _build_process_pool(settings: RuntimeConfig) -> Any:
+class EngineAttachments:
+    """The local engines one host is attached to, by endpoint address, and its spawn count.
+
+    The ``attachments`` of the host's engine handles; the lock guards both.
+    """
+
+    def __init__(self) -> None:
+        self.attached: dict[str, Any] = {}
+        self.lock = threading.Lock()
+        self.spawned = 0
+
+
+def _build_process_pool(settings: RuntimeConfig, attachments: EngineAttachments) -> Any:
     """Build the one EG client pool of a host from its configured endpoint.
 
     With ``GRAPH_SERVICE_ENDPOINTS`` unset, the host attaches to the local
@@ -467,7 +479,7 @@ def _build_process_pool(settings: RuntimeConfig) -> Any:
         if str(read_env("ENGINE_REUSE")).strip().lower() in {"1", "true"}:
             attach_reused_engine(endpoint)
     else:
-        endpoint = ensure_local_engine(local_engine_config(settings))
+        endpoint = ensure_local_engine(local_engine_config(settings), attachments)
     return EpistemicClientPool(
         cast(ConnectClient, MedullaClient.connect),
         **endpoint.client_kwargs(),
@@ -480,12 +492,14 @@ def engine_unbound() -> Any:
 
 
 def _pool_factory_over(
-    pool_factory: Callable[[], Any] | None, config: RuntimeConfig
+    pool_factory: Callable[[], Any] | None,
+    config: RuntimeConfig,
+    attachments: EngineAttachments,
 ) -> Callable[[], Any]:
     """The given pool factory, or the process pool over the host's config."""
     if pool_factory is not None:
         return pool_factory
-    return partial(_build_process_pool, config)
+    return partial(_build_process_pool, config, attachments)
 
 
 class EngineHandles:
@@ -496,7 +510,14 @@ class EngineHandles:
     object's own lock, so two hosts hold two separate pools.
     """
 
-    __slots__ = ("_engine", "_lock", "_pool", "_pool_factory", "_process_session")
+    __slots__ = (
+        "_engine",
+        "_lock",
+        "_pool",
+        "_pool_factory",
+        "_process_session",
+        "attachments",
+    )
 
     def __init__(
         self,
@@ -509,7 +530,9 @@ class EngineHandles:
         self._process_session = process_session
         self._pool: Any = None
         self._engine: ServedEngine | None = None
-        self._pool_factory = _pool_factory_over(pool_factory, config)
+        #: The local engines this host started or attached to.
+        self.attachments = EngineAttachments()
+        self._pool_factory = _pool_factory_over(pool_factory, config, self.attachments)
 
     def pool(self) -> Any:
         """This host's one EG client pool, built on first use."""

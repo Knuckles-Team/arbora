@@ -599,21 +599,14 @@ def _validate_operations(ops: list[dict]) -> None:
 def canonical_surface() -> Iterator[Any]:
     """Build the canonical action-routed surface in isolation; yield :mod:`arbora.mcp_server.runtime`.
 
-    The host built for it is private to the build; the route table is restored on exit.
+    The host built for it is private to the build, route table included.
     """
     from arbora.mcp_server import runtime
     from arbora.mcp_server.host_context import build_host_context
 
-    routes_before = dict(runtime.ACTION_TOOL_ROUTES)
     host = build_host_context()
-    try:
-        runtime.ACTION_TOOL_ROUTES.clear()
-        runtime.ACTION_TOOL_ROUTES.update(runtime.BASE_ACTION_TOOL_ROUTES)
-        runtime._build_server(bootstrap=False, canonical_surface=True, host=host)
-        yield runtime, host.caches.tools
-    finally:
-        runtime.ACTION_TOOL_ROUTES.clear()
-        runtime.ACTION_TOOL_ROUTES.update(routes_before)
+    runtime._build_server(bootstrap=False, canonical_surface=True, host=host)
+    yield runtime, host.caches.tools
 
 
 def build_manifest() -> list[dict]:
@@ -646,7 +639,7 @@ def build_manifest() -> list[dict]:
 
     with canonical_surface() as (runtime, tools):
         ops: list[dict] = []
-        for tool in sorted(runtime.ACTION_TOOL_ROUTES):
+        for tool in sorted(tools.routes):
             func = tools.get(tool)
             if tool in engine_actions:
                 actions = engine_actions[tool]

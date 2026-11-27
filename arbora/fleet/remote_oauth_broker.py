@@ -112,6 +112,7 @@ import httpx
 from arbora.fleet.discovery_authority import OAuthGrantBinding
 from arbora.fleet.remote_oauth_tokens import (
     AuthorizationServerMetadata,
+    KeyedLocks,
     OAuthBindingError,
     OAuthDiscoveryError,
     OAuthProviderError,
@@ -123,7 +124,6 @@ from arbora.fleet.remote_oauth_tokens import (
     TransactionStore,
     _bounded_token_post,
     _generate_pkce,
-    _lock_for,
     _new_grant_revision,
     _normalize_granted_scopes,
     discover_authorization_server,
@@ -317,7 +317,7 @@ class _DynamicClientRegistrationCache:
     (the DCR deliverable's own idempotency requirement): a cached ``client_id``
     is reused for every subsequent :meth:`RemoteOAuthBroker.begin`. Concurrent
     first-callers in ONE process serialize on a per-provider lock
-    (:func:`_lock_for`, the same primitive token refresh uses); across
+    (:class:`KeyedLocks`, the same primitive token refresh uses); across
     processes, :meth:`~arbora.security.secrets.SecretsClient.set_if_absent`
     is the durable engine backend's atomic create-if-absent, so exactly one
     racer's registration wins and every other racer reads back the winner's
@@ -327,6 +327,7 @@ class _DynamicClientRegistrationCache:
 
     def __init__(self, secrets_client: Any) -> None:
         self._secrets = secrets_client
+        self._locks = KeyedLocks()
 
     @staticmethod
     def _key(provider_id: str) -> str:
@@ -345,7 +346,7 @@ class _DynamicClientRegistrationCache:
         cached = self._secrets.get(key)
         if cached:
             return cached
-        with _lock_for(key):
+        with self._locks.lock_for(key):
             cached = self._secrets.get(key)
             if cached:
                 return cached

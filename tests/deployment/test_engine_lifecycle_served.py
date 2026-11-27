@@ -24,7 +24,6 @@ def test_unset_endpoints_start_one_loopback_engine_and_serve_a_call(
     runtime_dir: Path,
     tmp_path: Path,
     free_port: Callable[[], int],
-    clean_attachments: None,
 ) -> None:
     port = free_port()
     # The explicit local no-auth mode: the pool then connects without credentials.
@@ -43,10 +42,9 @@ def test_unset_endpoints_start_one_loopback_engine_and_serve_a_call(
         ),
     )
     handles = served_engine.EngineHandles(config=config)
-    before = composition.engine_spawn_count()
     try:
         pool = handles.pool()
-        assert composition.engine_spawn_count() == before + 1
+        assert handles.attachments.spawned == 1
         marker = engine_lock.engine_marker_path(f"127.0.0.1:{port}")
         assert json.loads(marker.read_text())["pid"] > 0
 
@@ -69,6 +67,7 @@ def test_unset_endpoints_start_one_loopback_engine_and_serve_a_call(
         assert isinstance(reply, dict) and reply["status"] == "ok"
     finally:
         handles.reset()
+        composition._stand_down_all(handles.attachments)
 
 
 @pytest.mark.spec("ARBORA-DEPLOY-R018.9")
@@ -83,10 +82,9 @@ def test_set_endpoint_starts_nothing(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(composition, "ensure_local_engine", forbidden)
     handles = served_engine.EngineHandles(config=config)
-    before = composition.engine_spawn_count()
     try:
         handles.pool()
-        assert composition.engine_spawn_count() == before
+        assert handles.attachments.spawned == 0
     finally:
         handles.reset()
 

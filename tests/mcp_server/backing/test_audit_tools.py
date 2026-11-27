@@ -10,7 +10,6 @@ used across the other MCP tool-surface tests (e.g. ``test_ops_causal_tools.py``)
 from __future__ import annotations
 
 from arbora.core.settings import RuntimeConfig
-from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools.audit_tools import register_audit_tools
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.process_authority import ProcessAuthority
@@ -56,4 +55,4 @@ def test_registered_on_arbora_tool_table():
     register_audit_tools(mcp, table, lambda: None)
     assert "graph_audit" in mcp.tools
     assert table.get("graph_audit") is not None
-    assert runtime.ACTION_TOOL_ROUTES.get("graph_audit") == "/audit"
+    assert table.routes.get("graph_audit") == "/audit"

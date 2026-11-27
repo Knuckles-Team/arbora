@@ -37,13 +37,6 @@ viewer = make_verified_caller("fleet:read")
 writer = make_verified_caller("scene:write")
 
 
-@pytest.fixture(autouse=True)
-def _clean_heartbeat_fence():
-    presence_ops._accepted_heartbeats.clear()
-    presence_ops._last_heartbeat.clear()
-    yield
-
-
 class _ClaimsClient:
     """One shared fake client that records the bound per-request claims."""
 
@@ -181,6 +174,7 @@ def _services(port: Any | None, config: RuntimeConfig | None = None) -> Any:
         service_principal="service:arbora",
         bindings={
             "config": fresh_config(config),
+            "heartbeat_fence": presence_ops.HeartbeatFence(),
             **({} if port is None else {"city_state": port}),
         },
     )

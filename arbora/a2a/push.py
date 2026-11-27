@@ -270,7 +270,7 @@ class PushDeliveryWorker:
         wanted = list(targets if targets is not None else metadata.get(TARGETS_KEY, ()))
         if not wanted:
             return 0
-        task = self._authority._project(dict(item), task_id=task_id)
+        task = self._authority.project_held(dict(item), task_id=task_id)
         document = task.model_dump(mode="json", by_alias=True)
         state = str(document.get("status", {}).get("state", ""))
         engine = self._authority.work_engine()

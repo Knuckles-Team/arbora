@@ -30,7 +30,7 @@ from pydantic import Field, ValidationError, model_validator
 
 from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
-from arbora.api.ops._common import FrozenState, Params, build_read_op
+from arbora.api.ops._common import FrozenState, Params, bound_service, build_read_op
 from arbora.api.registry import (
     AuditClass,
     Composite,
@@ -166,9 +166,19 @@ class HeartbeatResult(Params):
 #: the stored outcome per (tenant, subject, expected_revision) for replay.
 #: The fence is a presentation guard; the engine's compare-and-set is the
 #: source of truth, so a refusal never consumes the window.
-_accepted_heartbeats: dict[tuple[str, str, int], HeartbeatReceipt] = {}
-_last_heartbeat: dict[tuple[str, str], datetime] = {}
-_fence_lock = threading.Lock()
+class HeartbeatFence:
+    """The host's heartbeat rate fence, bound as the ``heartbeat_fence`` service."""
+
+    def __init__(self) -> None:
+        self.lock = threading.Lock()
+        self.accepted: dict[tuple[str, str, int], HeartbeatReceipt] = {}
+        self.last: dict[tuple[str, str], datetime] = {}
+
+
+def _fence(context: Any) -> HeartbeatFence:
+    return bound_service(
+        context, "heartbeat_fence", reason="the heartbeat fence is not composed"
+    )
 
 
 def _heartbeat_result(receipt: HeartbeatReceipt, context: Any) -> dict[str, Any]:
@@ -200,11 +210,12 @@ async def handle_city_heartbeat(
     tenant = context.caller.tenant
     subject = context.caller.principal
     key = (tenant, subject, request.expected_revision)
-    with _fence_lock:
-        replay = _accepted_heartbeats.get(key)
+    fence = _fence(context)
+    with fence.lock:
+        replay = fence.accepted.get(key)
         if replay is not None:
             return _heartbeat_result(replay, context)
-        last = _last_heartbeat.get((tenant, subject))
+        last = fence.last.get((tenant, subject))
         if last is not None and (clock() - last).total_seconds() < HEARTBEAT_WINDOW_S:
             raise OperationRefused(
                 "RATE_LIMITED",
@@ -231,9 +242,9 @@ async def handle_city_heartbeat(
         ) from None
     if receipt.tenant != tenant or receipt.subject != subject:
         raise OperationRefused("SUBJECT_ACCESS_DENIED", {"subject": subject})
-    with _fence_lock:
-        _accepted_heartbeats[key] = receipt
-        _last_heartbeat[(tenant, subject)] = clock()
+    with fence.lock:
+        fence.accepted[key] = receipt
+        fence.last[(tenant, subject)] = clock()
     return _heartbeat_result(receipt, context)
 
 
