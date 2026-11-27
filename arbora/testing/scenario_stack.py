@@ -232,19 +232,13 @@ def filter_claims(
 
 
 def check_write_conflict(first: Mapping[str, Any], second: Mapping[str, Any]) -> None:
-    """Two writers at one version: the first commits, the second is the refused conflict.
+    """Two writers at one version: the first commits, the second loses the compare-and-set.
 
-    The served memory write answers a lost compare-and-set as ``swapped: false``; the
-    engine's typed claim write refuses ``WRITE_CONFLICT`` (``MEDULLA-DURABLE-KERNEL-R084``).
-    Either form is the one refusal, and the stored value stays the first writer's.
+    The served memory write answers a lost compare-and-set as ``swapped: false`` with
+    the current version (``ARBORA-OPS-R844``); that is the one accepted form. A typed
+    ``WRITE_CONFLICT`` error body is a different surface and does not satisfy this check.
     """
-
-    def lost(outcome: Mapping[str, Any]) -> bool:
-        return (
-            outcome.get("swapped") is False or outcome.get("code") == "WRITE_CONFLICT"
-        )
-
-    if lost(first) or not lost(second):
+    if first.get("swapped") is not True or second.get("swapped") is not False:
         raise ScenarioRefused(
             WRITE_CONFLICT_MISSING, {"first": dict(first), "second": dict(second)}
         )

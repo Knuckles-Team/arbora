@@ -177,8 +177,21 @@ def test_http_mcp_use_same_b_owned_caller_and_exact_authority():
     assert caller.mfa_at_ms is None
 
 
+# ai_agent is deliberately refused: the engine claim kinds are `human` and `service`
+# only (ARBORA-IDENTITY spec, local claims) and ARBORA-A2A-R006.2.1 forbids relabelling
+# ai_agent as human or service. An agent acts through a service principal's own scopes.
 @pytest.mark.parametrize(
-    "kind", ["service", "automated_service", "unknown", "agent", "system", "", None]
+    "kind",
+    [
+        "service",
+        "automated_service",
+        "ai_agent",
+        "unknown",
+        "agent",
+        "system",
+        "",
+        None,
+    ],
 )
 def test_principal_kind_is_never_inferred(kind):
     import asyncio
