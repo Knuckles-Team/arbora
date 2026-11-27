@@ -280,7 +280,7 @@ line-length = 88
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B"]
+select = ["E", "F", "I", "UP", "B", "BLE"]
 # Deployment modules use long operator remediations and guarded imports. Keep
 # these narrow exceptions while retaining import, correctness, and modern
 # Python checks across Arbora.
