@@ -61,6 +61,7 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. The task nu
 - [ ] T055 ARBORA-A2A-R020.2 Unavailable, stale or partial answers refuse
 - [ ] T056 ARBORA-A2A-R021 Fresh checkout runs the admission tests
 - [x] T057 ARBORA-A2A-R022 Critique-gated output release
+- [ ] T090 ARBORA-A2A-R022.1 Compose the held-output refs source
 - [ ] T058 ARBORA-A2A-R001.2 Run checkpoint and event-cursor binding
 - [ ] T086 ARBORA-A2A-R001.2.2 Agent-run delegation and reclaim of an expired-lease run
 - [x] T059 ARBORA-A2A-R010.1 Opt-in committed terminal point read
