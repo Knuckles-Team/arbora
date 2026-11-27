@@ -26,7 +26,10 @@ from medulla.generated import storage  # noqa: E402
 from medulla.server_binary import resolve_server_binary  # noqa: E402
 
 from arbora.deployment import assembly_library as library  # noqa: E402
-from tests.test_real_boot import HEAVY_BOOT_TEST_TIMEOUT_S, _heavy_engine_slot  # noqa: E402
+from tests.test_real_boot import (  # noqa: E402
+    HEAVY_BOOT_TEST_TIMEOUT_S,
+    _heavy_engine_slot,
+)
 
 _START_DEADLINE_S = 240
 _GRAPH = "tenant__local"

@@ -17,9 +17,11 @@ from arbora.pin_lag.unavailable import PinLagUnavailable
 
 __all__ = [
     "BINDING_SYMBOL",
+    "DESKTOP_SYMBOL",
     "PROVISIONER_SYMBOL",
     "SCM_LISTING_SYMBOL",
     "require_credential_binding",
+    "require_desktop",
     "require_scm_event_listing",
     "require_provisioning",
 ]
@@ -82,4 +84,28 @@ def require_scm_event_listing() -> ModuleType:
         raise PinLagUnavailable(SCM_LISTING_SYMBOL) from None
     if not hasattr(module, "ScmEventLister"):
         raise PinLagUnavailable(SCM_LISTING_SYMBOL)
+    return module
+
+
+DESKTOP_SYMBOL = "scion_sdk.desktop.DesktopProvider"
+
+
+def require_desktop() -> ModuleType:
+    """The SDK native desktop port (``SCION-CONNECTOR-CONTROL-R909``), or refuse.
+
+    A pinned release without it leaves ``browser.desktop_action`` unavailable,
+    naming the symbol; no local desktop driver stands in.
+    """
+    try:
+        module = importlib.import_module("scion_sdk.desktop")
+    except ImportError:
+        raise PinLagUnavailable(DESKTOP_SYMBOL) from None
+    for name in (
+        "DesktopAction",
+        "DesktopActionKind",
+        "DesktopGrant",
+        "DesktopProvider",
+    ):
+        if not hasattr(module, name):
+            raise PinLagUnavailable(f"scion_sdk.desktop.{name}")
     return module
