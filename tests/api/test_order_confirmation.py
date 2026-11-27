@@ -19,7 +19,8 @@ from typing import Any
 import pytest
 
 from arbora.api.domain.finance.changes import OrderChange, WalletOperation, refusal_for
-from arbora.api.invoke.pipeline import EXTERNAL_EFFECT_OPERATIONS, OperationRefused
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.pipeline_services import EXTERNAL_EFFECT_OPERATIONS
 from arbora.api.ops import finance_changes as ops
 from arbora.api.ops.registry_factory import get_registry
 from arbora.api.registry import Confirm, Idempotency, Surface
@@ -361,7 +362,7 @@ async def test_order_and_position_changes_need_the_composed_door() -> None:
 
 @pytest.mark.spec("ARBORA-DATA-MARKET-R007.2")
 def test_the_plan_digest_is_the_same_with_and_without_the_proof() -> None:
-    from arbora.api.invoke.pipeline import split_envelope
+    from arbora.api.invoke.pipeline_authority import split_envelope
     from arbora.api.invoke.plan import bind_plan
     from arbora.core.claims import params_digest
 

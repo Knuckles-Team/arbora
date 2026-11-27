@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.api.invoke import pipeline
-from arbora.api.invoke.pipeline import uncovered_write_operations
+from arbora.api.invoke import pipeline_services as _pipeline_services
+from arbora.api.invoke.pipeline_services import uncovered_write_operations
 from arbora.api.ops.registry_factory import get_registry
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R009.10")
@@ -32,8 +32,12 @@ def test_the_check_flags_an_operation_that_loses_its_owner(
     registry = get_registry()
     assert "rlm.run" not in uncovered_write_operations(registry)
     monkeypatch.setattr(
-        pipeline,
+        _pipeline_services,
         "EXTERNAL_EFFECT_OPERATIONS",
-        tuple(op for op in pipeline.EXTERNAL_EFFECT_OPERATIONS if op != "rlm.run"),
+        tuple(
+            op
+            for op in _pipeline_services.EXTERNAL_EFFECT_OPERATIONS
+            if op != "rlm.run"
+        ),
     )
     assert "rlm.run" in uncovered_write_operations(registry)

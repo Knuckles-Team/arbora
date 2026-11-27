@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from arbora.api.invoke.pipeline import EXTERNAL_EFFECT_OPERATIONS
+from arbora.api.invoke.pipeline_services import EXTERNAL_EFFECT_OPERATIONS
 from arbora.api.ops import get_registry
 from arbora.api.registry import Confirm, Effect, Idempotency
 

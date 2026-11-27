@@ -17,7 +17,8 @@ from typing import Any
 import pytest
 from cryptography.hazmat.primitives.asymmetric import ec
 
-from arbora.api.invoke.pipeline import EXTERNAL_EFFECT_OPERATIONS, OperationRefused
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.pipeline_services import EXTERNAL_EFFECT_OPERATIONS
 from arbora.api.ops import identity_mfa
 from arbora.core.settings import RuntimeConfig
 from arbora.identity.engine_admin import IdentityRefused

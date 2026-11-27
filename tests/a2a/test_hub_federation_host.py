@@ -21,7 +21,8 @@ from arbora.a2a.peer_transport import (
     PEER_UNREACHABLE,
     A2APeerTransport,
 )
-from arbora.api.invoke.pipeline import OperationRefused, _declared_owners
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.pipeline_services import _declared_owners
 from arbora.api.ops import a2a_federation, a2a_peers
 from arbora.api.ops.registry_factory import get_registry
 from arbora.mcp_server.served_invocation import _with_a2a_peer_transport

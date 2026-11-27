@@ -14,7 +14,8 @@ from arbora.api.domain.fleet.scale_records import (
     ScaleIntentState,
 )
 from arbora.api.domain.fleet.scaling.scaling_authority import ScaleIntent
-from arbora.api.invoke.pipeline import OperationRefused, _declared_owners
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.pipeline_services import _declared_owners
 from arbora.api.ops import fleet_deploy_watch, fleet_scaling
 from arbora.api.ops.registry_factory import get_registry
 from arbora.api.registry import Effect, Idempotency, OpSpec

@@ -9,8 +9,8 @@ from typing import Any
 import pytest
 
 from arbora.api.invoke import OpError, OpResult, invoke
-from arbora.api.invoke.pipeline import (
-    OperationRefused,
+from arbora.api.invoke.pipeline import OperationRefused
+from arbora.api.invoke.pipeline_services import (
     _declared_owners,
     uncovered_write_operations,
 )

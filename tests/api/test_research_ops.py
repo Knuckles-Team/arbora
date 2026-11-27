@@ -287,7 +287,7 @@ async def test_trace_names_decision_and_backends(
 @pytest.mark.spec("ARBORA-OPS-R067.1")
 def test_research_web_declares_its_replay_owner() -> None:
     """A governed write needs a replay owner, or invoke refuses it UNAVAILABLE."""
-    from arbora.api.invoke.pipeline import _declared_owners
+    from arbora.api.invoke.pipeline_services import _declared_owners
 
     assert _declared_owners()["research.web"] == "medulla:SourceIngest"
 

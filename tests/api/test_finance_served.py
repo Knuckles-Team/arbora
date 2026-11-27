@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from arbora.api.invoke.executor import prepare_executor
-from arbora.api.invoke.pipeline import EXTERNAL_EFFECT_OPERATIONS
+from arbora.api.invoke.pipeline_services import EXTERNAL_EFFECT_OPERATIONS
 from arbora.api.ops import finance
 from arbora.api.registry import Effect, Executor, PrincipalRule, SubjectSource
 
