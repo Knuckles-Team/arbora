@@ -19,7 +19,7 @@ from arbora.api.registry import Surface
 from arbora.browser_control.browser_control_client import ControlResultMessage
 from arbora.browser_control.browser_control_runtime import dispatch_browser_operation
 from arbora.browser_control.browser_state import BrowserState
-from arbora.core.settings import RuntimeConfig, runtime_config
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.served_invocation import (
     compose_served_invocation,
     refused_fleet_effect,
@@ -136,8 +136,8 @@ class EffectClient(FakeClient):
 def _composed_authority(
     monkeypatch: pytest.MonkeyPatch,
 ) -> tuple[Any, EffectClient, Any]:
-    monkeypatch.setattr(runtime_config, "auth_jwt_audience", "arbora-fixture")
-    monkeypatch.setattr(runtime_config, "kg_policy_version", "test-1")
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
+    monkeypatch.setenv("KG_POLICY_VERSION", "test-1")
     session = request_identity.mint_graph_session(
         request_identity.actor_from_claims(
             {

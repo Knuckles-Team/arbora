@@ -37,6 +37,7 @@ from pydantic import Field
 
 from arbora.api.errors import not_served
 from arbora.core.event_loop import run_blocking_ordered
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server import runtime
 from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_payload
@@ -81,7 +82,7 @@ _SECRETS_POSTURE_CHECKS: tuple[str, ...] = (
 )
 
 
-def _doctor_posture(names: tuple[str, ...]) -> dict[str, Any]:
+def _doctor_posture(names: tuple[str, ...], config: RuntimeConfig) -> dict[str, Any]:
     """One slice of :func:`arbora.deployment.doctor.run_doctor` —
     status/counts/checks only (the SAME already-redacted shape ``doctor``
     itself returns). Best-effort: a failure to even reach the doctor module
@@ -90,7 +91,7 @@ def _doctor_posture(names: tuple[str, ...]) -> dict[str, Any]:
     try:
         from arbora.deployment.doctor import run_doctor
 
-        report = run_doctor(only=list(names))
+        report = run_doctor(only=list(names), config=config)
     except Exception as exc:
         logging.getLogger(__name__).debug(
             "one doctor slice must not break posture()", exc_info=True
@@ -189,7 +190,9 @@ def _confidence_rollup(engine: Any, label: str) -> dict[str, Any] | None:
     )
 
 
-def _posture(engine_provider: Callable[[], Any]) -> dict[str, Any]:
+def _posture(
+    engine_provider: Callable[[], Any], config: RuntimeConfig
+) -> dict[str, Any]:
     engine = engine_provider()
 
     # X4: policy version + auth/secrets posture reuse the existing
@@ -201,8 +204,8 @@ def _posture(engine_provider: Callable[[], Any]) -> dict[str, Any]:
         "surface": "compliance",
         "action": "posture",
         "policy_version": _policy_version(),
-        "auth_posture": _doctor_posture(_AUTH_POSTURE_CHECKS),
-        "secrets_posture": _doctor_posture(_SECRETS_POSTURE_CHECKS),
+        "auth_posture": _doctor_posture(_AUTH_POSTURE_CHECKS, config),
+        "secrets_posture": _doctor_posture(_SECRETS_POSTURE_CHECKS, config),
     }
     if engine is None:
         result["error"] = "IntelligenceGraphEngine not active"

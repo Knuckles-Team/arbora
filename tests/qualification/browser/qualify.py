@@ -107,7 +107,7 @@ async def prepare(
     from medulla import MedullaClient
 
     from arbora.access.action_policy import ActionPolicies
-    from arbora.core.settings import runtime_config
+    from arbora.core.environment import write_env
     from arbora.epistemic import EpistemicClient, EpistemicClientPool
     from arbora.identity.browser_broker import ConfiguredBrowserBroker
     from arbora.identity.browser_runtime import BrowserCallerResolver
@@ -127,10 +127,10 @@ async def prepare(
     )
 
     # These settings belong only to this fixture controller process.
-    runtime_config.auth_jwt_jwks_uri = context["issuer"].jwks_uri
-    runtime_config.auth_jwt_issuer = boot.ISSUER
-    runtime_config.auth_jwt_audience = boot.AUDIENCE
-    runtime_config.kg_policy_version = boot.POLICY_VERSION
+    write_env("AUTH_JWT_JWKS_URI", str(context["issuer"].jwks_uri))
+    write_env("AUTH_JWT_ISSUER", str(boot.ISSUER))
+    write_env("AUTH_JWT_AUDIENCE", str(boot.AUDIENCE))
+    write_env("KG_POLICY_VERSION", str(boot.POLICY_VERSION))
     context["native_runtime_version"] = await verify_runtime(context)
     context["fixture_step"] = "fixture_admin_connect"
     admin = await connect(context, "identity:admin")

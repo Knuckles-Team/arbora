@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.deployment import doctor
 
 
@@ -19,7 +20,7 @@ def test_python_diagnostic_does_not_probe_local_rdf(
     probe = Mock(side_effect=lambda name: object() if name in installed else None)
     monkeypatch.setattr(doctor.importlib.util, "find_spec", probe)
 
-    report = doctor.run_doctor(["python_env"])
+    report = doctor.run_doctor(["python_env"], config=RuntimeConfig())
 
     check = report["checks"][0]
     assert check["name"] == "python_env"

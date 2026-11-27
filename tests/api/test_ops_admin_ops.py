@@ -21,6 +21,7 @@ from arbora.api.ops.ops import (
     RestoreReceipt,
     TenantPage,
 )
+from arbora.core.settings import RuntimeConfig
 from tests.question_kinds import declare_question_kinds
 
 _OPS = {op.id: op for op in ops_admin.operations()}
@@ -33,7 +34,9 @@ def _context(
     tenant: str = "tenant-a",
 ):
     caller = SimpleNamespace(tenant=tenant, principal="caller-a")
-    services = {} if store is None else {"ops_admin_store": store}
+    services: dict[str, object] = {"config": RuntimeConfig()}
+    if store is not None:
+        services["ops_admin_store"] = store
     return SimpleNamespace(
         caller=caller, services=services, idempotency_key=idempotency_key
     )

@@ -1,5 +1,7 @@
 from functools import partial
 
+from arbora.core.settings import RuntimeConfig
+
 """Explicit anonymous admission never establishes credential authentication."""
 
 from argparse import Namespace
@@ -29,7 +31,9 @@ def local_mode(monkeypatch):
         "MEDULLA_SIGNER_KEYS_JSON",
     ):
         monkeypatch.delenv(key, raising=False)
-    anonymous.validate_startup(Namespace(host="127.0.0.1", auth_type="none"))
+    anonymous.validate_startup(
+        Namespace(host="127.0.0.1", auth_type="none"), RuntimeConfig()
+    )
 
 
 def test_anonymous_provenance_is_not_verified(local_mode):
@@ -66,7 +70,9 @@ def test_anonymous_cannot_satisfy_human_or_service_rule(local_mode):
 @pytest.mark.parametrize("host", ["0.0.0.0", "::", "example.com", "localhost"])
 def test_nonliteral_or_remote_bind_refused(local_mode, host):
     with pytest.raises(ValueError):
-        anonymous.validate_startup(Namespace(host=host, auth_type="none"))
+        anonymous.validate_startup(
+            Namespace(host=host, auth_type="none"), RuntimeConfig()
+        )
 
 
 @pytest.mark.parametrize(
@@ -99,13 +105,17 @@ def test_mode_cannot_flip_running_process(local_mode, monkeypatch):
     monkeypatch.setenv("ARBORA_AUTH_MODE", "external")
     assert anonymous.enabled()
     with pytest.raises(ValueError, match="new serving process"):
-        anonymous.validate_startup(Namespace(host="127.0.0.1", auth_type="jwt"))
+        anonymous.validate_startup(
+            Namespace(host="127.0.0.1", auth_type="jwt"), RuntimeConfig()
+        )
 
 
 def test_default_does_not_enable_none(monkeypatch):
     monkeypatch.setattr(anonymous, "_ACTIVE_MODE", None)
     monkeypatch.delenv("ARBORA_AUTH_MODE", raising=False)
-    anonymous.validate_startup(Namespace(host="127.0.0.1", auth_type="none"))
+    anonymous.validate_startup(
+        Namespace(host="127.0.0.1", auth_type="none"), RuntimeConfig()
+    )
     assert not anonymous.enabled()
     with pytest.raises(PermissionError):
         anonymous.session()
@@ -264,7 +274,7 @@ def test_explicit_transport_credentials_refused(local_mode, field):
         host="127.0.0.1", auth_type="none", **{field: "synthetic-conflict"}
     )
     with pytest.raises(ValueError, match="credentials"):
-        anonymous.validate_startup(args)
+        anonymous.validate_startup(args, RuntimeConfig())
 
 
 @pytest.mark.parametrize(
@@ -433,9 +443,9 @@ def test_engine_credentials_checked_through_settings(
     args = Namespace(host="127.0.0.1", auth_type="none")
     if value:
         with pytest.raises(ValueError, match="must not configure engine secrets"):
-            anonymous.validate_startup(args)
+            anonymous.validate_startup(args, RuntimeConfig())
     else:
-        anonymous.validate_startup(args)
+        anonymous.validate_startup(args, RuntimeConfig())
 
 
 @pytest.mark.parametrize("peer", [None, (), ("192.0.2.1", 1000), ("localhost", 1000)])
@@ -465,7 +475,9 @@ def test_anonymous_accepts_local_host_authorities(local_mode, host):
 def test_anonymous_rejects_remote_engine_endpoints(local_mode, monkeypatch, endpoint):
     monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", endpoint)
     with pytest.raises(ValueError, match="local engine endpoint"):
-        anonymous.validate_startup(Namespace(host="127.0.0.1", auth_type="none"))
+        anonymous.validate_startup(
+            Namespace(host="127.0.0.1", auth_type="none"), RuntimeConfig()
+        )
 
 
 @pytest.mark.parametrize(
@@ -474,7 +486,9 @@ def test_anonymous_rejects_remote_engine_endpoints(local_mode, monkeypatch, endp
 )
 def test_anonymous_accepts_local_engine_endpoints(local_mode, monkeypatch, endpoint):
     monkeypatch.setenv("GRAPH_SERVICE_ENDPOINTS", endpoint)
-    anonymous.validate_startup(Namespace(host="127.0.0.1", auth_type="none"))
+    anonymous.validate_startup(
+        Namespace(host="127.0.0.1", auth_type="none"), RuntimeConfig()
+    )
 
 
 @pytest.mark.asyncio

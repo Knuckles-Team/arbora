@@ -10,6 +10,7 @@ from arbora.api.invoke.executor import ExecutionContext
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.invoke.steps import claim_values
 from arbora.api.mcp.caller import caller_from_session
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.source_reader import NativeSourceReader
 from arbora.security import anonymous
 from tests.mcp_server.test_source_reader import Client, context
@@ -31,7 +32,9 @@ def local_mode(monkeypatch):
         "MEDULLA_SIGNER_KEYS_JSON",
     ):
         monkeypatch.delenv(key, raising=False)
-    anonymous.validate_startup(Namespace(host="127.0.0.1", auth_type="none"))
+    anonymous.validate_startup(
+        Namespace(host="127.0.0.1", auth_type="none"), RuntimeConfig()
+    )
 
 
 def anonymous_context():

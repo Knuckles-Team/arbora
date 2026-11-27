@@ -295,12 +295,8 @@ def test_served_process_runs_an_agent_over_its_http_a2a_route(
     from arbora.security import request_identity
     from arbora.security.actor_context import ActorContext, ActorType
 
-    monkeypatch.setitem(
-        runtime_config._overrides, "auth_jwt_audience", "arbora-fixture"
-    )
-    monkeypatch.setitem(
-        runtime_config._overrides, "kg_policy_version", "policy:fixture"
-    )
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "arbora-fixture")
+    monkeypatch.setenv("KG_POLICY_VERSION", "policy:fixture")
 
     async def credential_owner(credential: str, **_kw) -> ActorContext:
         assert credential == "fixture-verified"  # sanitizer:ignore - synthetic

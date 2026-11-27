@@ -33,14 +33,14 @@ DEFAULT_JWT_ALGORITHMS: tuple[str, ...] = (
 def _raw(key: str) -> Any:
     """The value of ``key`` through the one Arbora settings view.
 
-    A ``ArboraConfig`` field is read through ``runtime_config`` so a process
-    override and the environment agree; any other key reads the environment.
+    A ``ArboraConfig`` field is read through its declared type from the
+    environment; any other key reads the environment as text.
     """
-    from arbora.core.settings import ArboraConfig, runtime_config
+    from arbora.core.settings import ArboraConfig, read_field
 
     for name, info in ArboraConfig.model_fields.items():
         if info.alias == key:
-            value = getattr(runtime_config, name)
+            value = read_field(name)
             if isinstance(value, (list, dict)):
                 return json.dumps(value)
             return value

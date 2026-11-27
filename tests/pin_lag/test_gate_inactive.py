@@ -9,6 +9,7 @@ import pytest
 
 from arbora.api.ops import ops as ops_admin
 from arbora.api.ops.ops import DoctorReport
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.gate_audit import gate_inactive_event, gate_inactive_startup
 from arbora.mcp_server.host_context import build_host_context
 from arbora.pin_lag import gates
@@ -78,7 +79,7 @@ async def test_ops_doctor_reports_the_inactive_gates(
     _served(monkeypatch, "autonomy_verdict")
     context = SimpleNamespace(
         caller=SimpleNamespace(tenant="tenant-a", principal="p"),
-        services={"ops_admin_store": _Store()},
+        services={"ops_admin_store": _Store(), "config": RuntimeConfig()},
         idempotency_key=None,
     )
     op = {o.id: o for o in ops_admin.operations()}["ops.doctor"]

@@ -3,6 +3,7 @@
 import asyncio
 import copy
 import json
+import logging
 import sys
 import uuid
 from types import SimpleNamespace
@@ -11,13 +12,15 @@ from medulla import MedullaClient
 
 from arbora.api.domain.mcp_server.effect_journal import EgEffectJournal, request_context
 from arbora.api.invoke.steps import OpResult
-from arbora.core.settings import load_config
+from arbora.core.settings import RuntimeConfig, load_config
 from arbora.security.anonymous import session, session_context, validate_startup
 
 
 async def main():
     load_config()
-    validate_startup(SimpleNamespace(host="127.0.0.1", auth_type="none"))
+    validate_startup(
+        SimpleNamespace(host="127.0.0.1", auth_type="none"), RuntimeConfig()
+    )
     claims = session_context(session())
     client = await MedullaClient.connect(
         auth_mode="none", tcp_addr=sys.argv[1], graph_name="tenant__local"
@@ -73,6 +76,7 @@ async def main():
             try:
                 await client.work_items.submit(request)
             except Exception as exc:
+                logging.getLogger(__name__).info("refused", exc_info=True)
                 assert "context does not match verified request authority" in str(
                     exc
                 ), str(exc)

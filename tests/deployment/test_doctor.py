@@ -15,6 +15,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.deployment import doctor as D
 
 
@@ -42,7 +43,7 @@ def test_module_entrypoint_is_warning_free_and_emits_exact_json() -> None:
 
     assert completed.returncode == 0, completed.stderr
     assert completed.stderr == ""
-    expected = D.run_doctor(["python_env"])
+    expected = D.run_doctor(["python_env"], config=RuntimeConfig())
     assert completed.stdout == json.dumps(expected, indent=2, default=str) + "\n"
     assert json.loads(completed.stdout) == expected
 
@@ -112,7 +113,7 @@ print(json.dumps({
 
 def test_run_doctor_all_ok(monkeypatch):
     monkeypatch.setattr(D, "CHECKS", {n: _ok(n) for n in ("a", "b", "c")})
-    rep = D.run_doctor()
+    rep = D.run_doctor(config=RuntimeConfig())
     assert rep["status"] == "healthy"
     assert len(rep["checks"]) == 3
     assert rep["summary"] == "All checks passed."
@@ -131,7 +132,7 @@ def test_run_doctor_loads_agent_config_before_checks(monkeypatch):
     monkeypatch.setattr("arbora.core.settings.load_config", load_config)
     monkeypatch.setattr(D, "CHECKS", {"config": check})
 
-    rep = D.run_doctor()
+    rep = D.run_doctor(config=RuntimeConfig())
 
     assert rep["status"] == "healthy"
     assert observed == {"loaded": True, "checked": True}
@@ -146,7 +147,7 @@ def test_run_doctor_redacts_configuration_load_failure(monkeypatch):
         D, "CHECKS", {"config": lambda: D._result("config", "ok", "fine")}
     )
 
-    rep = D.run_doctor()
+    rep = D.run_doctor(config=RuntimeConfig())
 
     assert rep["status"] == "unhealthy"
     assert rep["checks"][0]["status"] == "error"
@@ -166,7 +167,7 @@ def test_run_doctor_worst_status_wins(monkeypatch):
             ),
         },
     )
-    rep = D.run_doctor()
+    rep = D.run_doctor(config=RuntimeConfig())
     assert rep["status"] == "unhealthy"  # a fail dominates
     assert rep["counts"]["fail"] == 1 and rep["counts"]["warn"] == 1
 
@@ -175,7 +176,7 @@ def test_run_doctor_skip_is_not_unhealthy(monkeypatch):
     monkeypatch.setattr(
         D, "CHECKS", {"a": _ok("a"), "b": lambda **kw: D._result("b", "skip", "n/a")}
     )
-    assert D.run_doctor()["status"] == "healthy"
+    assert D.run_doctor(config=RuntimeConfig())["status"] == "healthy"
 
 
 def test_run_doctor_check_exception_is_contained(monkeypatch):
@@ -183,7 +184,7 @@ def test_run_doctor_check_exception_is_contained(monkeypatch):
         raise RuntimeError("kaboom")
 
     monkeypatch.setattr(D, "CHECKS", {"a": _ok("a"), "b": _boom})
-    rep = D.run_doctor()
+    rep = D.run_doctor(config=RuntimeConfig())
     # The crashing check becomes an 'error' result, doctor still completes.
     b = next(c for c in rep["checks"] if c["name"] == "b")
     assert b["status"] == "error" and "RuntimeError" in b["detail"]
@@ -193,7 +194,7 @@ def test_run_doctor_check_exception_is_contained(monkeypatch):
 
 def test_run_doctor_only_filter(monkeypatch):
     monkeypatch.setattr(D, "CHECKS", {n: _ok(n) for n in ("a", "b", "c")})
-    rep = D.run_doctor(["b"])
+    rep = D.run_doctor(["b"], config=RuntimeConfig())
     assert [c["name"] for c in rep["checks"]] == ["b"]
 
 
@@ -217,7 +218,7 @@ def test_run_doctor_forwards_live_only_to_live_capability_checks(monkeypatch):
         },
     )
 
-    rep = D.run_doctor(live=True)
+    rep = D.run_doctor(live=True, config=RuntimeConfig())
 
     assert rep["status"] == "healthy"
     assert seen == {
@@ -244,7 +245,7 @@ def test_run_doctor_fix_runs_autofix_then_reruns(monkeypatch):
         return {"fixed": name, "result": "ok"}
 
     monkeypatch.setattr(D, "_auto_fix", fake_fix)
-    rep = D.run_doctor(fix=True)
+    rep = D.run_doctor(fix=True, config=RuntimeConfig())
     assert rep["fixes"] and rep["fixes"][0]["fixed"] == "hooks"
     # After the fix the re-run flipped the check to ok → overall healthy.
     assert rep["checks"][0]["status"] == "ok"
@@ -255,7 +256,7 @@ def test_individual_checks_never_raise():
     # Every real check must return a dict with the contract keys, never raise,
     # even with nothing deployed.
     for name, fn in D.CHECKS.items():
-        res = fn(live=False) if name == "mcp_fleet" else fn()
+        res = D._call_check(name, fn, RuntimeConfig(), False)
         assert set(res) >= {"name", "status", "detail"}
         assert res["status"] in ("ok", "warn", "fail", "skip", "error")
 
@@ -768,7 +769,7 @@ def test_secrets_backend_doctor_never_leaks_reference_paths(monkeypatch):
 
 @pytest.mark.parametrize("selection", [[], ["unknown"], ["config", "config"]])
 def test_doctor_rejects_empty_unknown_or_duplicate_selection(selection):
-    result = D.run_doctor(selection)
+    result = D.run_doctor(selection, config=RuntimeConfig())
     rendered = json.dumps(result, sort_keys=True)
 
     assert result["status"] == "unhealthy"

@@ -203,7 +203,7 @@ async def handle_ops_doctor(
     value = report.model_dump(mode="json")
     from arbora.security.anonymous import indicator
 
-    unsecured = indicator()
+    unsecured = indicator(context.services["config"])
     if unsecured:
         # The unsecured mode is named in every report, beside the store's own checks.
         value["checks"] = {**value["checks"], "auth": unsecured}

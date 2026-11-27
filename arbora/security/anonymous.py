@@ -10,6 +10,7 @@ import ipaddress
 from typing import Any
 from urllib.parse import urlsplit
 
+from arbora.core.settings import RuntimeConfig
 from arbora.security.key_cache import JwksCache
 
 PRINCIPAL = "anonymous"
@@ -26,7 +27,7 @@ def enabled() -> bool:
 BANNER = "Arbora is running in unsecured loopback mode."
 
 
-def indicator() -> dict[str, str]:
+def indicator(runtime: RuntimeConfig) -> dict[str, str]:
     """The unsecured-mode indicator read by MCP ``initialize`` and ``ops.doctor``.
 
     Empty outside none mode. ``doctor_check`` is ``fail`` when the exposure
@@ -34,9 +35,8 @@ def indicator() -> dict[str, str]:
     administrator, and ``warn`` otherwise (ARBORA-IDENTITY-R004.2).
     """
     from arbora.core.environment import read_env
-    from arbora.core.settings import runtime_config
 
-    if runtime_config.arbora_auth_mode != "none":
+    if runtime.arbora_auth_mode != "none":
         return {}
     exposed = bool(read_env("ARBORA_AUTH_NONE_EXPOSE"))
     return {
@@ -54,12 +54,10 @@ def loopback(value: str) -> bool:
         return False
 
 
-def validate_startup(args: Any) -> None:
+def validate_startup(args: Any, runtime: RuntimeConfig) -> None:
     """Reject unsafe or ambiguous anonymous configuration before minting state."""
     global _ACTIVE_MODE
-    from arbora.core.settings import runtime_config
-
-    mode = runtime_config.arbora_auth_mode
+    mode = runtime.arbora_auth_mode
     if _ACTIVE_MODE is not None and _ACTIVE_MODE != mode:
         raise ValueError("Authentication mode changes require a new serving process")
     if mode != "none":
@@ -70,7 +68,7 @@ def validate_startup(args: Any) -> None:
     config = security_settings()
     _validate_transport(args)
     _validate_credentials(config)
-    _validate_engine_endpoints(runtime_config.graph_service_endpoints or ())
+    _validate_engine_endpoints(runtime.graph_service_endpoints or ())
 
     _ACTIVE_MODE = mode
     import logging

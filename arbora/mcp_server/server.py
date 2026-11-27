@@ -243,6 +243,7 @@ def _served_invocation(
             "run_origins": host.runs.origins,
             "run_ports": host.runs.ports,
             "health": host.observability.health,
+            "config": host.config,
             "fleet_gateway": fleet,
             "workflow_worker": WorkflowRunStarter(
                 host.engine.served, NativeIntentFleet(), worker_ref="arbora-workflow"
