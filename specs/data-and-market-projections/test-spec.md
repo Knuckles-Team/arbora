@@ -123,10 +123,10 @@ Each active row has one planned or existing proving test. A test that does not y
 | Row | Proving test |
 |---|---|
 | `ARBORA-DATA-MARKET-R001.1` | `tests/finance/test_receipts_served.py::test_receipt_claims_once_and_survives_a_new_port` |
-| `ARBORA-DATA-MARKET-R002` | `tests/finance/test_scheduler_served.py::test_dst_and_replay_run_each_occurrence_once` (planned) |
+| `ARBORA-DATA-MARKET-R002` | `tests/finance/test_scheduler_served.py::test_dst_and_replay_run_each_occurrence_once` |
 | `ARBORA-DATA-MARKET-R004` | `tests/data_apps/test_admission_served.py::test_failed_admission_rolls_back_without_retiring_prior_connector` |
 | `ARBORA-DATA-MARKET-R005` | `tests/gateway/test_schema_context_served.py::test_each_intent_over_http_and_mcp_and_unsupported_source` |
-| `ARBORA-DATA-MARKET-R006` | `tests/finance/test_dca_served.py::test_replay_and_clock_drift_yield_one_proposal_and_missed_is_reported` (planned) |
+| `ARBORA-DATA-MARKET-R006` | `tests/finance/test_dca_served.py::test_replay_and_clock_drift_yield_one_proposal_and_missed_is_reported` |
 | `ARBORA-DATA-MARKET-R007.1` | `tests/api/test_order_confirmation.py::test_models_bind_exact_intent_and_exclude_proof` (planned) |
 | `ARBORA-DATA-MARKET-R007.2` | `tests/api/test_order_confirmation.py::test_digest_is_stable_across_signing_and_retries_reuse_effect_key` (planned) |
 | `ARBORA-DATA-MARKET-R007.3` | `tests/api/test_order_confirmation.py::test_operations_are_registered_and_envelope_is_shared_over_http_and_mcp` (planned) |
@@ -152,7 +152,7 @@ Each active row has one planned or existing proving test. A test that does not y
 | `ARBORA-DATA-MARKET-R008` | `tests/api/test_market_forecast_served.py::test_sample_is_stored_with_probabilistic_flag` (planned) |
 | `ARBORA-DATA-MARKET-R009` | Roll-up of its children. |
 | `ARBORA-DATA-MARKET-R009.1` | `tests/api/test_market_performance.py::test_card_is_verbatim_unavailable_never_zero_and_refuses_unverified_binding` (planned) |
-| `ARBORA-DATA-MARKET-R009.2` | `tests/api/test_market_instrument_detail.py::test_rates_and_dividends_tabs_and_unknown_listing` (planned) |
+| `ARBORA-DATA-MARKET-R009.2` | `tests/api/test_market_instrument_detail.py::test_rates_and_dividends_tabs_and_unknown_listing` |
 | `ARBORA-DATA-MARKET-R009.3` | `tests/api/test_market_recommendation.py::test_recommendation_cites_evidence_abstains_and_has_no_order_field` |
 | `ARBORA-DATA-MARKET-R009.4` | `tests/api/test_finance_receipts_list.py::test_states_filter_by_tenant_and_paper_stays_paper` |
 | `ARBORA-DATA-MARKET-R009.5` | `tests/api/test_finance_import_served.py::test_preview_reports_mapping_and_row_errors_without_cell_contents` (planned) |

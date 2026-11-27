@@ -14,8 +14,10 @@ follow-on work; this module owns only the dedupe record.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+import re
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -26,9 +28,15 @@ from arbora.finance.receipts import (
 )
 
 __all__ = [
+    "MIN_INTERVAL_S",
     "FinanceScheduleEntry",
+    "Occurrence",
     "RunOutcome",
     "ScheduleAction",
+    "ScheduleRefused",
+    "due_occurrences",
+    "occurrence_key",
+    "parse_trigger",
     "record_schedule_run",
 ]
 
@@ -74,3 +82,102 @@ async def record_schedule_run(
         engine, entry.tenant_id, "schedule_run", entry.idempotency_key
     )
     return "executed"
+
+
+#: The shortest interval trigger, in seconds (ARBORA-DATA-MARKET-R002).
+MIN_INTERVAL_S = 60
+_DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+_CLOCK = r"([01]\d|2[0-3]):([0-5]\d)"
+_DAILY = re.compile(rf"^daily@{_CLOCK}$")
+_WEEKLY = re.compile(rf"^weekly:({'|'.join(_DAYS)})@{_CLOCK}$")
+_INTERVAL = re.compile(r"^interval:(\d{1,9})$")
+
+
+class ScheduleRefused(ValueError):
+    """A bad trigger or zone; the served code is ``INVALID_ARGUMENT``."""
+
+    code = "INVALID_ARGUMENT"
+
+
+class Occurrence:
+    """One due fire: the instant it runs and the key that claims it once."""
+
+    __slots__ = ("instant", "key")
+
+    def __init__(self, instant: datetime, key: str) -> None:
+        self.instant = instant
+        self.key = key
+
+    def __repr__(self) -> str:
+        return f"Occurrence({self.key!r})"
+
+
+def parse_trigger(trigger: str) -> tuple[str, int | tuple[int | None, time]]:
+    """The one trigger grammar: ``daily@HH:MM``, ``weekly:<mon..sun>@HH:MM``, ``interval:<s>``."""
+    if (match := _DAILY.match(trigger)) is not None:
+        return "daily", (None, time(int(match[1]), int(match[2])))
+    if (match := _WEEKLY.match(trigger)) is not None:
+        return "weekly", (_DAYS.index(match[1]), time(int(match[2]), int(match[3])))
+    if (match := _INTERVAL.match(trigger)) is not None:
+        seconds = int(match[1])
+        if seconds < MIN_INTERVAL_S:
+            raise ScheduleRefused(f"interval must be at least {MIN_INTERVAL_S} seconds")
+        return "interval", seconds
+    raise ScheduleRefused("unknown trigger")
+
+
+def _zone(name: str) -> ZoneInfo:
+    try:
+        return ZoneInfo(name)
+    except (ZoneInfoNotFoundError, ValueError, OSError):
+        raise ScheduleRefused("unknown time zone") from None
+
+
+def occurrence_key(entry_id: str, wall: datetime, zone: str) -> str:
+    """``<entry_id>:<local wall time ISO 8601>[<zone name>]``; the wall time is nominal."""
+    return (
+        f"{entry_id}:{wall.replace(tzinfo=None).isoformat(timespec='minutes')}[{zone}]"
+    )
+
+
+def _instant(day: date, clock: time, zone: ZoneInfo) -> datetime:
+    """A wall time on a day as a UTC instant. A skipped time fires once at the next
+    valid instant (fold 0 reads the offset before the gap); a repeated time fires on
+    its first pass."""
+    return datetime.combine(day, clock, tzinfo=zone).replace(fold=0).astimezone(UTC)
+
+
+def due_occurrences(
+    entry_id: str, trigger: str, zone_name: str, after: datetime, now: datetime
+) -> list[Occurrence]:
+    """Every occurrence with ``after < instant <= now`` (UTC), oldest first."""
+    kind, spec = parse_trigger(trigger)
+    zone = _zone(zone_name)
+    if kind == "interval":
+        step = int(spec)  # type: ignore[arg-type]
+        first = int(after.timestamp()) // step + 1
+        last = int(now.timestamp()) // step
+        found = []
+        for slot in range(first, last + 1):
+            instant = datetime.fromtimestamp(slot * step, UTC)
+            found.append(
+                Occurrence(
+                    instant,
+                    occurrence_key(entry_id, instant.astimezone(zone), zone_name),
+                )
+            )
+        return found
+    weekday, clock = spec  # type: ignore[misc]
+    day = after.astimezone(zone).date() - timedelta(days=1)
+    end = now.astimezone(zone).date() + timedelta(days=1)
+    found = []
+    while day <= end:
+        if weekday is None or day.weekday() == weekday:
+            instant = _instant(day, clock, zone)
+            if after < instant <= now:
+                nominal = datetime.combine(day, clock)
+                found.append(
+                    Occurrence(instant, occurrence_key(entry_id, nominal, zone_name))
+                )
+        day += timedelta(days=1)
+    return found
