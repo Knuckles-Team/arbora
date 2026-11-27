@@ -240,6 +240,23 @@ def test_per_domain_toggle_still_disables_a_backing_registrar(
     assert not any(op.startswith("svc_change_management") for op in operations)
 
 
+@pytest.mark.spec("ARBORA-HOST-R010.2")
+def test_declared_family_toggle_is_read_and_an_undeclared_family_refuses(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from arbora.core.environment import read_tool_family_toggle
+    from arbora.core.environment_manifest import EnvironmentRefusal
+
+    monkeypatch.setenv("CMDBTOOL", "False")
+    monkeypatch.setenv("ROGUETOOL", "False")
+    families = frozenset({"cmdb", "change_management"})
+    assert read_tool_family_toggle("CMDBTOOL", families) is False
+    assert read_tool_family_toggle("CHANGE_MANAGEMENTTOOL", families) is True
+    with pytest.raises(EnvironmentRefusal) as refused:
+        read_tool_family_toggle("ROGUETOOL", families)
+    assert refused.value.code == "ENV_UNDECLARED_READ"
+
+
 def test_multi_client_targets_each_contribute_operations() -> None:
     class _Sonarr:
         def get_series(self, **k):

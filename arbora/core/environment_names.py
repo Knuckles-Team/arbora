@@ -2442,12 +2442,4 @@ NAMES: tuple[tuple[str, str, str | None, str, tuple[str, ...], bool], ...] = (
         ("arbora.deployment.engine_lock", "arbora.identity.client_enrollment"),
         False,
     ),
-    (
-        "{FAMILY}TOOL",
-        "bool",
-        "true",
-        "ARBORA-FLEET-R007.3",
-        ("arbora.mcp_server.backing.verbose_tools",),
-        False,
-    ),
 )

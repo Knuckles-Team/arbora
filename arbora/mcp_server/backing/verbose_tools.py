@@ -33,7 +33,7 @@ from fastmcp.dependencies import Depends
 from pydantic import Field
 
 from arbora.core.concurrency import invoke_client_method
-from arbora.core.environment import read_env
+from arbora.core.environment import read_tool_family_toggle
 from arbora.mcp_server.backing.action_dispatch import (
     DISCOVERY_ACTIONS,
     is_destructive_action,
@@ -677,11 +677,14 @@ def _resolve_verbose_targets(
 _TOGGLE_NAME = re.compile(r"[A-Z][A-Z0-9_]*")
 
 
-def _family_enabled(env_var: str) -> bool:
-    """The deployment toggle of one backing family; a family without a plain name is on."""
+def _family_enabled(env_var: str, families: frozenset[str]) -> bool:
+    """The deployment toggle of one backing family; a family without a plain name is on.
+
+    Only the families of the module being built are declared (ARBORA-HOST-R010.2).
+    """
     if _TOGGLE_NAME.fullmatch(env_var) is None:
         return True
-    return bool(read_env(env_var, True))
+    return read_tool_family_toggle(env_var, families)
 
 
 @dataclass
@@ -689,6 +692,7 @@ class _BackingRegistrationContext:
     backing: Any
     force_registration: bool
     toggles: dict[str, str]
+    families: frozenset[str] = frozenset()
 
 
 def _register_one_backing_registrar(
@@ -697,7 +701,7 @@ def _register_one_backing_registrar(
     """Register one action-routed registrar's tools on the backing server,
     stamping the domain tag and recording the tool->toggle-env map. Returns True
     iff it actually ran (was not toggled off)."""
-    if not ctx.force_registration and not _family_enabled(env_var):
+    if not ctx.force_registration and not _family_enabled(env_var, ctx.families):
         return False
     before = set(_provider_tools(ctx.backing))
     register_fn(ctx.backing)
@@ -709,6 +713,18 @@ def _register_one_backing_registrar(
             tags_attr.add(GRANULAR_TAG)
         ctx.toggles[name] = env_var
     return True
+
+
+def _backing_context(
+    backing: Any, force_registration: bool, entries: list[tuple[str, str, Any]]
+) -> _BackingRegistrationContext:
+    """The registration context; its families are the tags of the module being built."""
+    return _BackingRegistrationContext(
+        backing=backing,
+        force_registration=force_registration,
+        toggles=getattr(backing, "_condensed_tool_toggles", {}),
+        families=frozenset(tag for tag, _, _ in entries),
+    )
 
 
 def register_backing_tools(
@@ -727,16 +743,11 @@ def register_backing_tools(
     intent tools route to; they are never served directly. Returns the
     registered tags.
     """
-    toggles: dict[str, str] = getattr(backing, "_condensed_tool_toggles", {})
-    ctx = _BackingRegistrationContext(
-        backing=backing,
-        force_registration=force_registration,
-        toggles=toggles,
-    )
+    entries = _condensed_entries(tool_registry, tools_module, registrars)
+    ctx = _backing_context(backing, force_registration, entries)
+    toggles = ctx.toggles
     registered_tags: list[str] = []
-    for tag, env_var, register_fn in _condensed_entries(
-        tool_registry, tools_module, registrars
-    ):
+    for tag, env_var, register_fn in entries:
         if _register_one_backing_registrar(ctx, tag, env_var, register_fn):
             registered_tags.append(tag)
     if toggles:
