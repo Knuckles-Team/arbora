@@ -174,8 +174,8 @@
 - [ ] T174 [US1] ARBORA-HOST-R038.7 Cycles inside layers get one direction each. Size: M, 3 PRs, 5 hours.
 - [ ] T175 [US1] ARBORA-HOST-R038.8 Remaining private reaches become public names or move. Size: S, 2 PRs, 3 hours.
 - [ ] T176 [US1] ARBORA-HOST-R038.9 The multiplexer splits into six collaborators. Size: L, 6 PRs, 2 days.
-- [ ] T177 [US1] ARBORA-HOST-R038.10 Six modules over 2500 lines split by tool family. Size: L, 6 PRs, 2 days.
-- [ ] T178 [US1] ARBORA-HOST-R038.11 Nine modules between 1500 and 2500 lines split. Size: L, 9 PRs, 2 days.
+- [ ] T177 [US1] ARBORA-HOST-R038.10 Four modules over 2500 lines split by tool family. Size: L, 4 PRs, 2 days.
+- [ ] T178 [US1] ARBORA-HOST-R038.11 The remaining modules between 1500 and 2500 lines split. Size: L, 10 PRs, 2 days.
 - [ ] T179 [US1] ARBORA-HOST-R038.12 The unit-layer bound test lands and the local scanner goes. Size: S, 1 PR, 2 hours.
 - [ ] T180 [US1] ARBORA-HOST-R039.1 The runs field of the host context. Size: S, 1 PR, 5 hours.
 - [ ] T181 [US1] ARBORA-HOST-R039.2 The fleet field of the host context. Size: M, 1 PR, 5 hours.
