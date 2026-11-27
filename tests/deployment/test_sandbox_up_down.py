@@ -12,6 +12,7 @@ import pytest
 
 from arbora.deployment import sandbox
 from arbora.mcp_server import composition
+from arbora.mcp_server.sandbox_cli import CompositionEngine
 
 
 @pytest.mark.spec("ARBORA-DEPLOY-R019")
@@ -45,7 +46,7 @@ def test_up_serves_the_real_stack_and_down_removes_it(
         serving_port=19101,
         webui_port=19102,
     )
-    summary = sandbox.up(args, hold=False, launcher=launcher)
+    summary = sandbox.up(args, CompositionEngine(), hold=False, launcher=launcher)
 
     assert len(launched) == 1
     command, environment = launched[0]
@@ -66,9 +67,9 @@ def test_up_serves_the_real_stack_and_down_removes_it(
     record = json.loads((tmp_path / sandbox.STATE_FILE).read_text())
     assert record["processes"] == [424242]
 
-    assert sandbox.down(args, terminate=stopped.append) is True
+    assert sandbox.down(args, CompositionEngine(), terminate=stopped.append) is True
     assert stopped == [424242]
     assert len(stood_down) == 1
     assert not (tmp_path / sandbox.STATE_FILE).exists()
-    assert sandbox.down(args, terminate=stopped.append) is False
+    assert sandbox.down(args, CompositionEngine(), terminate=stopped.append) is False
     assert stopped == [424242]

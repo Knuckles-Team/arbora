@@ -21,7 +21,7 @@ import tempfile
 import time
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from arbora.core.environment import inherited_environment
 from arbora.identity.sandbox_principal import (
@@ -53,6 +53,20 @@ def _root(override: str | None) -> Path:
 Launcher = Callable[[Sequence[str], Mapping[str, str]], int]
 #: Stops one process by PID. Tests inject a recorder.
 Terminator = Callable[[int], None]
+
+
+class LocalEngine(Protocol):
+    """The local engine a sandbox runs on, composed by the process that starts it.
+
+    ``ensure`` starts (or reuses) the engine on ``port`` over ``persist_dir`` and returns its
+    endpoint, which carries ``address``; ``stand_down`` stops the engine at ``address``.
+    """
+
+    def ensure(
+        self, port: int, persist_dir: Path, extra_args: Sequence[str]
+    ) -> Any: ...
+
+    def stand_down(self, address: str) -> None: ...
 
 
 def _launch(command: Sequence[str], environment: Mapping[str, str]) -> int:
@@ -189,6 +203,7 @@ def resolve_engine(pinned: str | None = None, installed: str | None = None) -> s
 
 def up(
     args: argparse.Namespace,
+    engine: LocalEngine,
     *,
     hold: bool = True,
     launcher: Launcher = _launch,
@@ -199,8 +214,6 @@ def up(
     environment on loopback with the web UI co-service enabled; its PID is
     recorded so ``down`` stops exactly that process. The summary names no secret.
     """
-    from arbora.mcp_server.composition import LocalEngineConfig, ensure_local_engine
-
     resolve_engine()
     root = _root(args.root)
     state = root / STATE_FILE
@@ -218,10 +231,7 @@ def up(
     rendered = render_sandbox(
         engine_port=port, webui_port=getattr(args, "webui_port", DEFAULT_WEBUI_PORT)
     )
-    config = LocalEngineConfig(
-        port=port, persist_dir=store, extra_args=("--auth-mode", "none")
-    )
-    endpoint = ensure_local_engine(config)
+    endpoint = engine.ensure(port, store, ("--auth-mode", "none"))
     serving_port = getattr(args, "serving_port", 0) or _free_port()
     serving_pid = launcher(serving_command(serving_port), rendered["environment"])
     state.write_text(
@@ -247,7 +257,7 @@ def up(
     print(json.dumps(summary), flush=True)
     if hold:
         _hold()
-        down(args)
+        down(args, engine)
     return summary
 
 
@@ -264,7 +274,9 @@ def _hold() -> None:
         time.sleep(0.5)
 
 
-def down(args: argparse.Namespace, *, terminate: Terminator = _terminate) -> bool:
+def down(
+    args: argparse.Namespace, engine: LocalEngine, *, terminate: Terminator = _terminate
+) -> bool:
     """Stop the holding process, the processes ``up`` launched, and the engine; delete the store."""
     root = _root(args.root)
     state = root / STATE_FILE
@@ -275,28 +287,22 @@ def down(args: argparse.Namespace, *, terminate: Terminator = _terminate) -> boo
         with contextlib.suppress(ProcessLookupError):
             os.kill(int(record["pid"]), signal.SIGTERM)
             return True
-    from arbora.mcp_server.composition import EngineEndpoint, stand_down_engine
-
     for pid in record.get("processes", []):
         terminate(int(pid))
-    stand_down_engine(EngineEndpoint("tcp", record["address"]))
+    engine.stand_down(record["address"])
     shutil.rmtree(record["store"], ignore_errors=True)
     state.unlink(missing_ok=True)
     return True
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(argv: Sequence[str] | None, engine: LocalEngine) -> int:
     args = _arguments(argv)
     try:
         if args.command == "up":
-            up(args)
+            up(args, engine)
         else:
-            down(args)
+            down(args, engine)
     except SandboxPrincipalRefusal as refusal:
         print(str(refusal), file=sys.stderr)
         return 2
     return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

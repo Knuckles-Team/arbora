@@ -64,8 +64,16 @@ def _audit(event: Mapping[str, str]) -> None:
     )
 
 
+def refuse_admin_for_config(path: Any) -> Any:
+    """The default ``admin_for_config``: no realm admin is composed, so the command fails closed."""
+    raise ValueError("no realm admin is composed for this config")
+
+
 def _composed_ports(
-    config_path: str | None, provider: Any, secrets: Any
+    config_path: str | None,
+    provider: Any,
+    secrets: Any,
+    admin_for_config: Callable[[Any], Any],
 ) -> tuple[Any, Any]:
     """Compose the Keycloak adapter and the secret store from the console config.
 
@@ -79,11 +87,7 @@ def _composed_ports(
         return provider, secrets
     try:
         if provider is None:
-            from arbora.deployment.provision import DeployConfig, Ports
-
-            provider = KeycloakProviderAdmin(
-                Ports.real(DeployConfig.load(Path(path))).admin
-            )
+            provider = KeycloakProviderAdmin(admin_for_config(Path(path)))
         if secrets is None:
             from arbora.security.secrets import create_secrets_client
 
@@ -101,6 +105,7 @@ def enroll_main(
     *,
     provider: ProviderAdmin | None = None,
     secrets: Any = None,
+    admin_for_config: Callable[[Any], Any] = refuse_admin_for_config,
     stdout: Any = None,
     stderr: Any = None,
 ) -> int:
@@ -110,7 +115,9 @@ def enroll_main(
     parser.add_argument("--scope", action="append", default=[], dest="scopes")
     parser.add_argument("--config", default=None, help="the deploy.yml of the realm")
     args = parser.parse_args(list(argv))
-    provider, secrets = _composed_ports(args.config, provider, secrets)
+    provider, secrets = _composed_ports(
+        args.config, provider, secrets, admin_for_config
+    )
     if provider is None or secrets is None:
         print("PROVIDER_ADMIN_UNAVAILABLE", file=err)
         return 2
