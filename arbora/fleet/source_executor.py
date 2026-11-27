@@ -23,6 +23,8 @@ from scion_sdk.http.safe_post import SsrfBlockedError
 
 from arbora.api.registry import Effect
 
+logger = logging.getLogger(__name__)
+
 MAX_PAGES_CAP = 20
 MAX_ROWS_CAP = 10_000
 MAX_SOURCES = 32
@@ -249,6 +251,7 @@ async def _abort_foreign(
         async with asyncio.timeout(_FOREIGN_ABORT_CLEANUP_TIMEOUT_S):
             await asyncio.shield(task)
     except BaseException:
+        logger.debug("_abort_foreign failed", exc_info=True)
         # A caller cancellation must not leave the abort task detached, and an
         # abort failure must never replace the source read's closed error.
         if not task.done():
@@ -373,6 +376,7 @@ class FleetSourceExecutor:
                 pages=done,
             )
         except Exception as exc:
+            logger.warning("read failed", exc_info=True)
             return _failure(
                 request,
                 "SOURCE_UNAVAILABLE",
@@ -524,6 +528,7 @@ class FleetSourceExecutor:
                 )
             raise
         except Exception as exc:
+            logger.warning("read_foreign failed", exc_info=True)
             code, reason = _foreign_error(exc)
             if execution is not None and sequence is not None:
                 await _abort_foreign(

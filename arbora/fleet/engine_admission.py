@@ -16,6 +16,7 @@ Both shapes are engine ``main`` shapes behind :mod:`arbora.pin_lag.medulla`
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable, Callable, Iterator, Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -24,6 +25,8 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.fleet.admission_models import AdmissionRefused, canonical_digest
 from arbora.fleet.definitions import CompatibilityDecision
 from arbora.pin_lag import medulla as pin_lag
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "EngineAdmission",
@@ -167,6 +170,7 @@ class EngineAdmission:
                 tenant,
             )
         except Exception:
+            logger.debug("attestation failed", exc_info=True)
             return None
         if not isinstance(stored, Mapping) or "body" not in stored:
             return None
@@ -206,6 +210,7 @@ class EngineAdmission:
         try:
             answer = await send_decide(self.send, request, tenant)
         except Exception as error:
+            logger.warning("skill_upgrade failed", exc_info=True)
             code = str(getattr(error, "code", ""))
             if code in _UPGRADE_CODES:
                 raise AdmissionRefused(code, {"subject": question.subject_id}) from None

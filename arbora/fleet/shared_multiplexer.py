@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import contextvars
+import logging
 from collections.abc import AsyncIterator, Callable, Coroutine
 from concurrent.futures import Future
 from contextlib import asynccontextmanager
@@ -22,6 +23,8 @@ from typing import TypeVar
 from fastmcp.server.extensions import ServerExtension
 
 from arbora.fleet.multiplexer import MCPMultiplexer
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "ServedMultiplexerBindingError",
@@ -95,6 +98,7 @@ class _ServedMultiplexer:
                 try:
                     completion.set_result(done.result())
                 except BaseException as exc:
+                    logger.debug("complete failed", exc_info=True)
                     completion.set_exception(exc)
 
             task.add_done_callback(complete)

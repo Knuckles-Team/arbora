@@ -750,7 +750,9 @@ class FleetOnboarding:
                     version=catalog_content_digest(pack),
                 )
         except Exception as exc:  # reported, never fatal
-            logger.warning("%s: catalog write failed: %s", endpoint.name, exc)
+            logger.warning(
+                "%s: catalog write failed: %s", endpoint.name, exc, exc_info=True
+            )
             if isinstance(report, dict):
                 report["catalog_error"] = _failure(exc)
             return
@@ -1050,6 +1052,7 @@ class FleetOnboarding:
                     endpoint.name,
                     getattr(contract, "contract_iri", ""),
                     type(exc).__name__,
+                    exc_info=True,
                 )
         self.source_decisions[endpoint.name] = tuple(resolved)
         self._record_source_approvals(endpoint.name, resolved, tuple(receipts))
@@ -1163,14 +1166,18 @@ async def _onboard_all(
         auth = _child_auth()
     except Exception as exc:  # no service identity: nothing can be captured
         report.failed["child-auth"] = _failure(exc)
-        logger.warning("fleet onboarding has no child credential: %s", exc)
+        logger.warning(
+            "fleet onboarding has no child credential: %s", exc, exc_info=True
+        )
         return
     for endpoint in pending:
         try:
             changed = await onboarding.onboard_renewing(endpoint, auth=auth)
         except Exception as exc:  # one child must not stop the fleet
             report.failed[endpoint.name] = _failure(exc)
-            logger.warning("fleet onboarding of %s failed: %s", endpoint.name, exc)
+            logger.warning(
+                "fleet onboarding of %s failed: %s", endpoint.name, exc, exc_info=True
+            )
         else:
             (report.onboarded if changed else report.renewed).append(endpoint.name)
         surfaces = onboarding.surfaces.get(endpoint.name)
@@ -1196,7 +1203,7 @@ async def onboard_fleet(
         await _renew_all(onboarding, endpoints, served_url=served_url, report=report)
     except Exception as exc:  # the registry may be briefly unavailable
         report.failed["registry"] = _failure(exc)
-        logger.warning("fleet registration renewal failed: %s", exc)
+        logger.warning("fleet registration renewal failed: %s", exc, exc_info=True)
         return report
     pending = [item for item in endpoints if item.name not in admitted]
     await _onboard_all(onboarding, pending, report)
@@ -1221,7 +1228,9 @@ async def refresh_serving_catalog(
     try:
         await multiplexer.refresh_engine_catalog()
     except Exception as exc:  # serving continues on the prior catalog
-        logger.warning("fleet catalog refresh after onboarding refused: %s", exc)
+        logger.warning(
+            "fleet catalog refresh after onboarding refused: %s", exc, exc_info=True
+        )
         return False
     return True
 
@@ -1281,12 +1290,12 @@ class FleetOnboardingService:
         try:
             asyncio.run(self._run_pass_scoped())
         except Exception as exc:  # serving must outlive any onboarding fault
-            logger.warning("fleet onboarding pass failed: %s", exc)
+            logger.warning("fleet onboarding pass failed: %s", exc, exc_info=True)
         if self.smoke is not None:
             try:
                 asyncio.run(self.smoke.tick())
             except Exception as exc:  # a failed sweep never stops onboarding
-                logger.warning("fleet smoke sweep failed: %s", exc)
+                logger.warning("fleet smoke sweep failed: %s", exc, exc_info=True)
 
     async def _run_pass_scoped(self) -> OnboardingReport:
         from arbora.epistemic import temporary_client_scope
@@ -1377,6 +1386,7 @@ async def served_catalog_digest(session: Any, tools: Sequence[Any]) -> str:
         try:
             return list(getattr(await call(), attr))
         except Exception:
+            logger.debug("optional failed", exc_info=True)
             # Do not let a transient discovery/read error masquerade as an
             # empty, unchanged surface.  The next handshake must produce a
             # different digest and drive the existing recapture path.
@@ -1393,6 +1403,7 @@ async def served_catalog_digest(session: Any, tools: Sequence[Any]) -> str:
                 str(getattr(c, "text", "") or "") for c in result.contents
             )
         except Exception:
+            logger.warning("served_catalog_digest failed", exc_info=True)
             failures.append("declaration:read_failed")
             declaration = ""
     return handshake_catalog_digest(
@@ -1487,7 +1498,10 @@ class HandshakeOnboarder:
             thread.start()
         except Exception as exc:  # serving must outlive any onboarding fault
             logger.warning(
-                "handshake onboarding of %s not scheduled: %s", connector, exc
+                "handshake onboarding of %s not scheduled: %s",
+                connector,
+                exc,
+                exc_info=True,
             )
 
     def drain(self, timeout: float = 10.0) -> None:
@@ -1519,8 +1533,10 @@ class HandshakeOnboarder:
     def _work(self, connector: str) -> None:
         try:
             self._loop(connector)
-        except Exception as exc:  # pragma: no cover - last-resort guard
-            logger.warning("handshake onboarding of %s crashed: %s", connector, exc)
+        except Exception as exc:
+            logger.warning(
+                "handshake onboarding of %s crashed: %s", connector, exc, exc_info=True
+            )
         finally:
             with self._lock:
                 self._active.pop(connector, None)
@@ -1612,7 +1628,9 @@ class HandshakeOnboarder:
                     "%s: handshake pass awaits mass-withdrawal approval", endpoint.name
                 )
                 return "held", _failure(exc)
-            logger.warning("%s: handshake onboarding failed: %s", endpoint.name, exc)
+            logger.warning(
+                "%s: handshake onboarding failed: %s", endpoint.name, exc, exc_info=True
+            )
             return "error", _failure(exc)
         return "ok", outcome
 

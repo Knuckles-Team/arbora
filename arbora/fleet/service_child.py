@@ -191,6 +191,7 @@ async def _record_outcome_unknown_best_effort(
             "ServiceChildOutcomeUnknown is raised regardless",
             record_id,
             type(journal_exc).__name__,
+            exc_info=True,
         )
 
 

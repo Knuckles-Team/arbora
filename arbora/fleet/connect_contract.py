@@ -15,7 +15,7 @@ import json
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 __all__ = [
     "CONTRACT_REJECTION_CODES",
@@ -74,7 +74,13 @@ class ConnectContract:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, object]) -> ConnectContract:
-        return cls(**{name: data[name] for name in cls.__dataclass_fields__})  # type: ignore[arg-type]
+        return cls(
+            connector=str(data["connector"]),
+            manifest_digest=str(data["manifest_digest"]),
+            ontology_digests=cast("Mapping[str, str]", data["ontology_digests"]),
+            seed_digest=str(data["seed_digest"]),
+            observed_at_ms=int(cast("int", data["observed_at_ms"])),
+        )
 
 
 def build_connect_contract(

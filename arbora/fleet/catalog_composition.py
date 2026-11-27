@@ -135,6 +135,7 @@ class ProbePrimer:
                 "fleet probe of %s for catalog schema failed: %s",
                 server,
                 type(exc).__name__,
+                exc_info=True,
             )
             info = None
         self._keep_last_good(server, previous)

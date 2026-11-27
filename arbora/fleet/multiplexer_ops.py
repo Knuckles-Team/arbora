@@ -13,7 +13,7 @@ from arbora.fleet.job_loads import JobLoadResult
 from arbora.fleet.pin_store import PinRecord, PinStore, pinned_now_ms
 from arbora.fleet.session_loads import LoadCapExceeded, SessionLoads
 
-_LOG = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 Loadable = Callable[[CatalogItem, Any], Awaitable[bool]]
 Mount = Callable[[CatalogItem, Callable[..., Awaitable[Any]] | None], Awaitable[None]]
@@ -537,7 +537,7 @@ class MultiplexerOps:
             detail = str(exc)
             if detail != self._registry_warned:
                 self._registry_warned = detail
-                _LOG.warning("fleet coverage registry is unreadable: %s", detail)
+                logger.warning("fleet coverage registry is unreadable: %s", detail)
             return {
                 "ok": False,
                 "error": "registry_unreadable",
@@ -574,7 +574,9 @@ class MultiplexerOps:
         try:
             records = await store.list(caller.tenant, caller.principal)
         except Exception:
-            _LOG.warning("pin store unavailable; suspended pins cannot be listed")
+            logger.warning(
+                "pin store unavailable; suspended pins cannot be listed", exc_info=True
+            )
             return []
         loaded = self.sessions.loaded(key)
         pinned = self.sessions.pinned_items(key)
@@ -588,6 +590,7 @@ class MultiplexerOps:
                 try:
                     loadable = await self._loadable(item, caller)
                 except Exception:
+                    logger.warning("_suspended_pins failed", exc_info=True)
                     loadable = False
                     code = "POLICY_UNAVAILABLE"
                 else:
@@ -930,6 +933,7 @@ class MultiplexerOps:
                 for item_id in targets & pinned:
                     await store.delete(caller.tenant, caller.principal, item_id)
             except Exception:
+                logger.warning("unload_tools failed", exc_info=True)
                 from arbora.api.invoke.pipeline import OperationRefused
 
                 raise OperationRefused(
@@ -979,6 +983,7 @@ class MultiplexerOps:
             try:
                 loadable = await self._loadable(item, caller)
             except Exception:
+                logger.warning("pin failed", exc_info=True)
                 raise OperationRefused(
                     "POLICY_UNAVAILABLE",
                     {"reason": "the load policy is unavailable"},
@@ -1025,7 +1030,9 @@ class MultiplexerOps:
                 )
                 written.append(item.id)
         except Exception:
-            _LOG.warning("pin store write failed; rolling back this request")
+            logger.warning(
+                "pin store write failed; rolling back this request", exc_info=True
+            )
             # A store failure pins nothing (R059.6): drop what this request
             # already stored, best effort, so no partial pin set survives.
             for item_id in written:
@@ -1033,7 +1040,7 @@ class MultiplexerOps:
                     try:
                         await store.delete(caller.tenant, caller.principal, item_id)
                     except Exception:
-                        _LOG.warning("pin store rollback failed")
+                        logger.warning("pin store rollback failed", exc_info=True)
             self.sessions.unpin(key, new_pins)
             self.sessions.unload(key, newly_loaded)
             raise OperationRefused(
@@ -1071,6 +1078,7 @@ class MultiplexerOps:
                 for record in await store.list(caller.tenant, caller.principal)
             }
         except Exception:
+            logger.warning("unpin failed", exc_info=True)
             raise OperationRefused(
                 "UNAVAILABLE", {"reason": "the pin store is unavailable"}
             ) from None
@@ -1081,6 +1089,7 @@ class MultiplexerOps:
             try:
                 await store.delete(caller.tenant, caller.principal, item_id)
             except Exception:
+                logger.warning("unpin failed", exc_info=True)
                 raise OperationRefused(
                     "UNAVAILABLE", {"reason": "the pin store is unavailable"}
                 ) from None
@@ -1106,7 +1115,7 @@ class MultiplexerOps:
         try:
             records = await store.list(caller.tenant, caller.principal)
         except Exception:
-            _LOG.warning("pin store unavailable; no pins restored")
+            logger.warning("pin store unavailable; no pins restored", exc_info=True)
             return {"restored": [], "suspended": [], "store_unavailable": True}
         restored: builtins.list[str] = []
         suspended: builtins.list[dict[str, str]] = []
@@ -1119,6 +1128,7 @@ class MultiplexerOps:
             try:
                 loadable = await self._loadable(item, caller)
             except Exception:
+                logger.warning("restore_pins failed", exc_info=True)
                 loadable = False
                 code = "POLICY_UNAVAILABLE"
             else:
@@ -1177,6 +1187,7 @@ class MultiplexerOps:
         try:
             records, next_cursor = await store.list_tenant(caller.tenant, cursor, limit)
         except Exception:
+            logger.warning("pins_list failed", exc_info=True)
             raise OperationRefused(
                 "UNAVAILABLE", {"reason": "the pin store is unavailable"}
             ) from None

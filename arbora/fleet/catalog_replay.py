@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping, MutableSet
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from scion_sdk.ontology_namespaces import module_namespace
 
@@ -96,8 +96,8 @@ def receipts_from_rows(rows: Iterable[Iterable[Any]]) -> list[CatalogDeltaReceip
                 int(generation),
                 int(sequence),
                 item,
-                op,
-                digest,  # type: ignore[arg-type]
+                cast(DeltaOp, op),
+                digest,
             )
         )
     return sorted(found, key=lambda r: (r.generation, r.sequence, r.item_id))

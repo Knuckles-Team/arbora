@@ -11,6 +11,7 @@ never repeated. Arbora keeps no allocation store: replay fencing is the SDK's.
 from __future__ import annotations
 
 import hashlib
+import logging
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -28,6 +29,8 @@ from arbora.control_plane.runs.capacity import (
     CapacityReDecisionExhaustedError,
 )
 from arbora.pin_lag.scion_sdk import require_provisioning
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "DEFAULT_MAX_CONCURRENT_INSTANCES",
@@ -122,6 +125,7 @@ def _allocate(sdk: Any, provisioner: Any, request: ProvisionRequest) -> Any:
             "PROVISION_OUTCOME_UNKNOWN", allocation_id=exc.allocation_id
         ) from None
     except Exception:
+        logger.warning("_allocate failed", exc_info=True)
         raise ProvisionRefused("PROVISION_OUTCOME_UNKNOWN") from None
 
 

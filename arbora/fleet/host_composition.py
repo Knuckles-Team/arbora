@@ -129,7 +129,7 @@ def declare_data_prep_at_boot(engine: Any, session: Any) -> list[str]:
     try:
         return asyncio.run(run())
     except Exception as exc:  # boot never fails on data prep
-        logger.warning("data-prep declaration skipped: %s", exc)
+        logger.warning("data-prep declaration skipped: %s", exc, exc_info=True)
         return []
 
 
