@@ -38,21 +38,20 @@ def _runtime() -> Any:
     return runtime
 
 
-def available_tools() -> tuple[str, ...]:
+def available_tools(tools: Mapping[str, Any]) -> tuple[str, ...]:
     runtime = _runtime()
-    return tuple(
-        sorted(runtime.REGISTERED_TOOLS.keys() | runtime.NATIVE_INTENT_TOOLS.keys())
-    )
+    return tuple(sorted(tools.keys() | runtime.NATIVE_INTENT_TOOLS.keys()))
 
 
 def build_toolset(
+    tools: Mapping[str, Any],
     tool_names: list[str],
     toolset_id: str,
     emit: Callable[[dict[str, Any]], None],
 ) -> Any:
     """One in-process native toolset; ``emit`` receives each served intent call event."""
     return _runtime().build_native_arbora_toolset(
-        list(tool_names), toolset_id=toolset_id, emit=emit
+        list(tool_names), tools, toolset_id=toolset_id, emit=emit
     )
 
 

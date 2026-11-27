@@ -20,6 +20,7 @@ from arbora.api.evidence import EvidenceBundle
 from arbora.core.event_loop import run_blocking_ordered
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing import engine_routing
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_json, public_error_text
 
 logger = logging.getLogger(__name__)
@@ -2045,7 +2046,7 @@ def _catalog_unavailable_domain(domain: str, hint: str) -> dict[str, Any]:
     return _capability_entry(True, methods=methods)
 
 
-async def _catalog_graphs() -> dict[str, Any]:
+async def _catalog_graphs(tools: ToolTable) -> dict[str, Any]:
     """Physical graphs — via the already-registered ``engine_tenants`` tool
     (CONCEPT reference: `engine_tenants(action='list')`, referenced by name
     in several docstrings across this codebase but never centralized behind
@@ -2058,7 +2059,7 @@ async def _catalog_graphs() -> dict[str, Any]:
         return _capability_entry(
             False, reason="no MultiTenantClient on the installed engine client"
         )
-    listing_fn = runtime.REGISTERED_TOOLS.get("engine_tenants")
+    listing_fn = tools.get("engine_tenants")
     if listing_fn is None:
         return _capability_entry(True, methods=methods)
     try:
@@ -2133,9 +2134,9 @@ async def _catalog_sources() -> dict[str, Any]:
     return build_source_catalog(registry=registry)
 
 
-async def _build_graph_catalog() -> dict[str, Any]:
+async def _build_graph_catalog(tools: ToolTable) -> dict[str, Any]:
     catalog: dict[str, Any] = {
-        "graphs": await _safe_catalog_entry(_catalog_graphs()),
+        "graphs": await _safe_catalog_entry(_catalog_graphs(tools)),
         "sql": await _safe_catalog_entry(_catalog_sql()),
         # Atlas's governed external-source view is one more modality in this
         # catalog.  It projects graph_configure's named connection registry,
@@ -2189,6 +2190,7 @@ async def _build_graph_catalog() -> dict[str, Any]:
 
 
 async def _graph_catalog_response(
+    tools: ToolTable,
     action: str,
     *,
     source: str,
@@ -2225,7 +2227,7 @@ async def _graph_catalog_response(
         engine_provider()
     except Exception as exc:  # noqa: BLE001
         return public_error_json(exc, code="dependency_unavailable")
-    catalog = await _build_graph_catalog()
+    catalog = await _build_graph_catalog(tools)
     return json.dumps(catalog, default=str)
 
 
@@ -2359,7 +2361,7 @@ async def _graph_context_list(engine: Any, session_id: str) -> str:
         return public_error_json(exc)
 
 
-def register_query_tools(mcp, engine_provider: Callable[[], Any]):
+def register_query_tools(mcp, tools: ToolTable, engine_provider: Callable[[], Any]):
     """Register the query_tools group on the given FastMCP server."""
 
     def _run_graph_query(
@@ -2576,7 +2578,7 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
         )
         return EvidenceBundle.from_payload(raw, operation="graph_query")
 
-    runtime.REGISTERED_TOOLS["graph_query"] = graph_query
+    tools["graph_query"] = graph_query
 
     @mcp.tool(
         name="tabular_query",
@@ -2594,7 +2596,7 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
             "MEDULLA-UNIFIED-DATA-PLANE-R612",
         )
 
-    runtime.REGISTERED_TOOLS["tabular_query"] = tabular_query
+    tools["tabular_query"] = tabular_query
 
     # ══════════════════════════════════════════════════════════════════
     # 1a-bis. graph_ask — CONCEPT:MERISTEM-KG.ingest.mirror-inbound natural-language → query
@@ -2657,7 +2659,7 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
                 public_error_json(e), operation="graph_ask"
             )
 
-    runtime.REGISTERED_TOOLS["graph_ask"] = graph_ask
+    tools["graph_ask"] = graph_ask
 
     # ══════════════════════════════════════════════════════════════════
     # 1a-quater. nl_query — CONCEPT:MERISTEM-KG.query.ask-gateway-rest-twin Meristem-fleet-LLM as the engine's NL planner
@@ -2713,7 +2715,7 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
                 public_error_json(e), operation="nl_query"
             )
 
-    runtime.REGISTERED_TOOLS["nl_query"] = nl_query
+    tools["nl_query"] = nl_query
     # CONCEPT:MERISTEM-KG.query.ask-gateway-rest-twin — gateway REST twin (W1 exposure; MCP⇄REST parity)
     runtime.ACTION_TOOL_ROUTES["nl_query"] = "/graph/nl-query"
 
@@ -2768,7 +2770,7 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
             default=str,
         )
 
-    runtime.REGISTERED_TOOLS["ask_data"] = ask_data
+    tools["ask_data"] = ask_data
     # CONCEPT:MERISTEM-KG.query.data-gateway-rest-twin — gateway REST twin (W1 exposure; MCP⇄REST parity)
     runtime.ACTION_TOOL_ROUTES["ask_data"] = "/graph/ask-data"
 
@@ -2823,7 +2825,7 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
             "knowledge_graph.core.table_ingest", "MEDULLA-INGEST-WORKER-R606"
         )
 
-    runtime.REGISTERED_TOOLS["graph_table"] = graph_table
+    tools["graph_table"] = graph_table
 
     # ══════════════════════════════════════════════════════════════════
     # 1a-quater. graph_projection — CONCEPT:MERISTEM-KG.query.node-link-projection
@@ -2875,7 +2877,7 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
         projection["graph"] = run_kwargs["graph"]
         return json.dumps(projection, default=str)
 
-    runtime.REGISTERED_TOOLS["graph_projection"] = graph_projection
+    tools["graph_projection"] = graph_projection
     runtime.ACTION_TOOL_ROUTES["graph_projection"] = "/graph/projection"
 
     # ══════════════════════════════════════════════════════════════════
@@ -2952,6 +2954,7 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
         return await _graph_catalog_response(
+            tools,
             action,
             source=source,
             mode=mode,
@@ -2961,7 +2964,7 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
             engine_provider=engine_provider,
         )
 
-    runtime.REGISTERED_TOOLS["graph_catalog"] = graph_catalog
+    tools["graph_catalog"] = graph_catalog
     runtime.ACTION_TOOL_ROUTES["graph_catalog"] = "/graph/catalog"
 
     # ══════════════════════════════════════════════════════════════════
@@ -3007,7 +3010,7 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
             return await _graph_context_list(engine, session_id)
         return json.dumps({"error": f"unknown action: {action}"})
 
-    runtime.REGISTERED_TOOLS["graph_context"] = graph_context
+    tools["graph_context"] = graph_context
 
     # ══════════════════════════════════════════════════════════════════
     # 2. kg_search — Unified search (hybrid, concept, analogy, memory)
@@ -3159,7 +3162,7 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
 
         return await run_blocking_ordered(_execute)
 
-    runtime.REGISTERED_TOOLS["graph_search"] = graph_search
+    tools["graph_search"] = graph_search
 
     @mcp.tool(
         name="graph_search_synthesis",
@@ -3194,7 +3197,7 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
 
         raise not_served("graph.training_signals", "MEDULLA-DECISION-ENGINE-R751")
 
-    runtime.REGISTERED_TOOLS["graph_search_synthesis"] = graph_search_synthesis
+    tools["graph_search_synthesis"] = graph_search_synthesis
 
     # ══════════════════════════════════════════════════════════════════
     # graph_code_nav — CONCEPT:MERISTEM-KG.backend.declared-columns-so-schema code-symbol navigation over the
@@ -3288,7 +3291,7 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["graph_code_nav"] = graph_code_nav
+    tools["graph_code_nav"] = graph_code_nav
 
     def _graph_document_tree_build(
         document_id: str,
@@ -3522,4 +3525,4 @@ def register_query_tools(mcp, engine_provider: Callable[[], Any]):
             }
         )
 
-    runtime.REGISTERED_TOOLS["graph_document_tree"] = graph_document_tree
+    tools["graph_document_tree"] = graph_document_tree

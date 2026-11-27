@@ -71,6 +71,7 @@ from arbora.mcp_server.backing.tool_specs import (
     READ_ONLY_ACTIONS,
     TOOL_VERBS,
 )
+from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.security.error_surface import public_error_payload
 from arbora.security.prompt_injection import PromptInjectionScanner
 
@@ -326,7 +327,9 @@ def _actions_by_tool() -> dict[str, list[str]]:
     return out
 
 
-def _build_candidates(*, force: bool = False) -> list[CapabilityCandidate]:
+def _build_candidates(
+    caches: HostCaches, *, force: bool = False
+) -> list[CapabilityCandidate]:
     """Build one CPD-backed candidate per live granular tool.
 
     CONCEPT:MERISTEM-ECO.mcp.intent-surface-cpd-ranking. The packaged CPD set is
@@ -335,16 +338,16 @@ def _build_candidates(*, force: bool = False) -> list[CapabilityCandidate]:
     current ``one_line``/``examples``/``does`` descriptor fields.
 
     Cached process-wide (tool registration happens once at server build); pass
-    ``force=True`` in tests after monkeypatching ``REGISTERED_TOOLS``. Bumps
+    ``force=True`` in tests after changing the host tool table. Bumps
     :data:`_CANDIDATES_GENERATION` on every actual rebuild (CONCEPT:MERISTEM-ECO.mcp.intent-surface-resolution-cache).
     """
     global _CANDIDATES_CACHE, _CANDIDATES_GENERATION
     if _CANDIDATES_CACHE is not None and not force:
         return _CANDIDATES_CACHE
-    runtime.ensure_tools_registered()
+    runtime.ensure_tools_registered(caches)
     actions_by_tool = _actions_by_tool()
     cpds = _load_cpds_required()
-    live_tools = sorted(set(runtime.REGISTERED_TOOLS) - set(INTENT_VERBS))
+    live_tools = sorted(set(caches.tools) - set(INTENT_VERBS))
     _require_cpd_coverage(live_tools, cpds)
     _require_verb_authority_coverage(live_tools)
 
@@ -465,6 +468,7 @@ def _port_text(c: CapabilityCandidate) -> str:
 
 
 def resolve_intent(
+    caches: HostCaches,
     verb: str | None,
     intent: str,
     *,
@@ -491,7 +495,7 @@ def resolve_intent(
     top_k = max(1, min(int(top_k), 20))
     hints = hints or {}
     pinned = hints.get("tool") or hints.get("_tool")
-    candidates = _build_candidates()
+    candidates = _build_candidates(caches)
     if pinned:
         return _pinned_resolution(candidates, verb, pinned, hints)
 
@@ -683,8 +687,8 @@ def _operation_is_destructive(tool: str, action: str | None) -> bool:
     return not words.isdisjoint(_DESTRUCTIVE_TERMS)
 
 
-def _tool_accepts_argument(tool: str, argument: str) -> bool:
-    function = runtime.REGISTERED_TOOLS.get(tool)
+def _tool_accepts_argument(tools: ToolTable, tool: str, argument: str) -> bool:
+    function = tools.get(tool)
     if function is None:
         return False
     try:
@@ -721,7 +725,9 @@ def _normalize_documented_hint_aliases(hints: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
-def _unsupported_hint_arguments(tool: str, call_kwargs: dict[str, Any]) -> list[str]:
+def _unsupported_hint_arguments(
+    tools: ToolTable, tool: str, call_kwargs: dict[str, Any]
+) -> list[str]:
     """Return unsupported direct-call arguments for a selected tool.
 
     A ``**kwargs`` tool explicitly owns its open-ended schema.  All other
@@ -729,7 +735,7 @@ def _unsupported_hint_arguments(tool: str, call_kwargs: dict[str, Any]) -> list[
     a reviewed plan has been produced.
     """
 
-    function = runtime.REGISTERED_TOOLS.get(tool)
+    function = tools.get(tool)
     if function is None:
         return sorted(call_kwargs)
     try:
@@ -748,10 +754,10 @@ def _unsupported_hint_arguments(tool: str, call_kwargs: dict[str, Any]) -> list[
     return sorted(set(call_kwargs) - accepted)
 
 
-def _hint_argument_error(tool: str, unsupported: list[str]) -> str:
+def _hint_argument_error(tools: ToolTable, tool: str, unsupported: list[str]) -> str:
     """Give callers a stable correction path without exposing raw exceptions."""
 
-    function = runtime.REGISTERED_TOOLS.get(tool)
+    function = tools.get(tool)
     try:
         parameters = inspect.signature(function).parameters.values() if function else ()
         accepted = sorted(
@@ -1357,9 +1363,9 @@ def _validate_explicit_action(
     return None
 
 
-def _declared_default_action(tool: str) -> str | None:
+def _declared_default_action(tools: ToolTable, tool: str) -> str | None:
     """The default of the tool's own ``action`` parameter, if it declares one."""
-    function = runtime.REGISTERED_TOOLS.get(tool)
+    function = tools.get(tool)
     if function is None:
         return None
     try:
@@ -1406,6 +1412,7 @@ def _routed_tool(
 
 
 def _read_tie_outcome(
+    tools: ToolTable,
     verb: str,
     chosen_tool: str,
     read_actions: frozenset[str],
@@ -1417,7 +1424,7 @@ def _read_tie_outcome(
     The default leads the ranked list; the tied alternatives stay in it, so the
     routing record reports them.
     """
-    default = _declared_default_action(chosen_tool)
+    default = _declared_default_action(tools, chosen_tool)
     if default in read_actions:
         rest = [item for item in filtered if item[0] != default]
         return [(default, filtered[0][1] if filtered else 0.0), *rest], None
@@ -1434,6 +1441,7 @@ def _read_tie_outcome(
 
 
 def _restrict_to_read_actions(
+    tools: ToolTable,
     verb: str,
     chosen_tool: str,
     explicit_action: Any,
@@ -1468,7 +1476,7 @@ def _restrict_to_read_actions(
     )
     if explicit_action is None and read_action_ambiguity["ambiguous"]:
         return _read_tie_outcome(
-            verb, chosen_tool, read_actions, filtered, read_action_ambiguity
+            tools, verb, chosen_tool, read_actions, filtered, read_action_ambiguity
         )
     return filtered, None
 
@@ -1619,6 +1627,7 @@ def _dispatch_reward_and_learning_eligibility(
 
 
 async def _dispatch_execute_and_record(
+    tools: ToolTable,
     verb: str,
     chosen_tool: str,
     call_kwargs: dict[str, Any],
@@ -1631,7 +1640,7 @@ async def _dispatch_execute_and_record(
     and build the final response dict.
     """
     try:
-        result = await runtime._execute_tool(chosen_tool, **call_kwargs)
+        result = await runtime._execute_tool(tools, chosen_tool, **call_kwargs)
     except Exception as e:  # noqa: BLE001 — surface as a structured routing failure, not a 500
         routing["decision_trace"]["result_provenance"]["status"] = "failed"
         routing["learning"]["recorded"] = False
@@ -1682,6 +1691,7 @@ async def _question_route(
 
 
 async def dispatch_intent(
+    caches: HostCaches,
     verb: str,
     intent: str,
     *,
@@ -1794,6 +1804,7 @@ async def dispatch_intent(
         candidates = await run_with_port(
             ranking,
             resolve_intent,
+            caches,
             verb,
             intent,
             hints=raw_hints,
@@ -1810,7 +1821,8 @@ async def dispatch_intent(
                 # is not "disallowed for this verb"; it is reached through
                 # act(action="fleet.call") instead.
                 known_to_intent_surface = any(
-                    candidate.tool == pinned_name for candidate in _build_candidates()
+                    candidate.tool == pinned_name
+                    for candidate in _build_candidates(caches)
                 )
                 error = (
                     "Pinned capability is not allowed for this intent verb."
@@ -1873,7 +1885,7 @@ async def dispatch_intent(
             ranking, _order_actions, chosen_tool, intent
         )
         ranked_actions, read_action_error = _restrict_to_read_actions(
-            verb, chosen_tool, explicit_action, ranked_actions
+            caches.tools, verb, chosen_tool, explicit_action, ranked_actions
         )
         if read_action_error is not None:
             return read_action_error
@@ -1911,13 +1923,19 @@ async def dispatch_intent(
             call_kwargs = {_PRIMARY_TEXT_PARAM[_ASK_FALLBACK_TOOL]: intent}
             ranked_actions = []
 
-        if chosen_action is not None and _tool_accepts_argument(chosen_tool, "action"):
+        if chosen_action is not None and _tool_accepts_argument(
+            caches.tools, chosen_tool, "action"
+        ):
             call_kwargs.setdefault("action", chosen_action)
 
-        unsupported_hints = _unsupported_hint_arguments(chosen_tool, call_kwargs)
+        unsupported_hints = _unsupported_hint_arguments(
+            caches.tools, chosen_tool, call_kwargs
+        )
         if unsupported_hints:
             return {
-                "error": _hint_argument_error(chosen_tool, unsupported_hints),
+                "error": _hint_argument_error(
+                    caches.tools, chosen_tool, unsupported_hints
+                ),
                 "executed": False,
                 "routing": {
                     "verb": verb,
@@ -2042,7 +2060,13 @@ async def dispatch_intent(
         return _policy_outcome
 
     return await _dispatch_execute_and_record(
-        verb, chosen_tool, call_kwargs, outcome_scope_ref, learning_eligible, routing
+        caches.tools,
+        verb,
+        chosen_tool,
+        call_kwargs,
+        outcome_scope_ref,
+        learning_eligible,
+        routing,
     )
 
 
@@ -2225,13 +2249,13 @@ def _describe(mcp: Any, verb: str, params: dict[str, Any]) -> dict[str, Any]:
 
 
 def _operation_hints(
-    tool: str, action: str | None, params: dict[str, Any]
+    tools: ToolTable, tool: str, action: str | None, params: dict[str, Any]
 ) -> dict[str, Any]:
     """Router hints for an explicit operation: shaped arguments + the pin."""
     from arbora.mcp_server.backing.intent_contract import shape_arguments
 
     controls = {key: params.pop(key) for key in ("plan_ref",) if key in params}
-    function = runtime.REGISTERED_TOOLS.get(tool)
+    function = tools.get(tool)
     accepted: set[str] = set()
     var_keyword = False
     if function is not None:
@@ -2315,7 +2339,9 @@ def _bounded_names(params: dict[str, Any], key: str) -> list[str]:
     return [str(name) for name in names]
 
 
-async def _find(mcp: Any, action: str, params: dict[str, Any], intent: str) -> Any:
+async def _find(
+    caches: HostCaches, mcp: Any, action: str, params: dict[str, Any], intent: str
+) -> Any:
     """``find``: capability ranking, fleet tool search, fleet catalog, fleet health."""
     selected = action or "capabilities"
     if selected not in FIND_ACTIONS:
@@ -2327,7 +2353,7 @@ async def _find(mcp: Any, action: str, params: dict[str, Any], intent: str) -> A
     if selected == "capabilities":
         if not intent:
             return {"error": "find needs an `intent` to rank capabilities."}
-        return await _find_capability(mcp, intent, top_k=top_k)
+        return await _find_capability(caches, mcp, intent, top_k=top_k)
     mux = _fleet_mux(mcp)
     mux.require_capability("discover")
     if selected == "tools":
@@ -2619,7 +2645,9 @@ def _port_of(mcp: Any) -> RankingPort:
     return getattr(fleet, "ranking", FLOOR_ONLY)
 
 
-async def _find_capability(mcp: Any, intent: str, top_k: int = 8) -> dict[str, Any]:
+async def _find_capability(
+    caches: HostCaches, mcp: Any, intent: str, top_k: int = 8
+) -> dict[str, Any]:
     """Capability discovery across every verb, plus a best-effort fleet-wide search.
 
     ``mcp`` is the live FastMCP server — the fleet multiplexer, when attached,
@@ -2631,7 +2659,9 @@ async def _find_capability(mcp: Any, intent: str, top_k: int = 8) -> dict[str, A
     if security_failure is not None:
         return security_failure
     ranking = _port_of(mcp)
-    local = await run_with_port(ranking, resolve_intent, None, intent, top_k=top_k)
+    local = await run_with_port(
+        ranking, resolve_intent, caches, None, intent, top_k=top_k
+    )
     payload: dict[str, Any] = {
         "query_ref": persistence_reference("intent", intent),
         "count": len(local),
@@ -2730,7 +2760,7 @@ async def _host_dispatch(
 
 
 def _explicit_operation_hints(
-    verb: str, action: str, params: dict[str, Any]
+    tools: ToolTable, verb: str, action: str, params: dict[str, Any]
 ) -> dict[str, Any]:
     """Router hints for ``verb(action=<manifest operation id>)``.
 
@@ -2745,7 +2775,7 @@ def _explicit_operation_hints(
             f"Unknown operation {action!r}; {verb}(action='describe') lists them."
         )
     feature = OPTIONAL_TOOL_FEATURES.get(resolved[0])
-    if feature and resolved[0] not in runtime.REGISTERED_TOOLS:
+    if feature and resolved[0] not in tools:
         raise ValueError(
             f"{action!r} needs the optional '{feature}' feature, which this "
             "deployment does not install."
@@ -2755,10 +2785,11 @@ def _explicit_operation_hints(
         raise ValueError(
             f"{action!r} is not a {verb} operation; use one of {list(verbs)}."
         )
-    return _operation_hints(resolved[0], resolved[1], params)
+    return _operation_hints(tools, resolved[0], resolved[1], params)
 
 
 async def _dispatch_verb(
+    caches: HostCaches,
     mcp: Any,
     verb: str,
     action: str,
@@ -2770,7 +2801,7 @@ async def _dispatch_verb(
     if action == DESCRIBE_ACTION:
         return _describe(mcp, verb, params)
     if verb == "find":
-        return await _find(mcp, action, params, intent)
+        return await _find(caches, mcp, action, params, intent)
     security_failure = _intent_security_failure(intent, params)
     if security_failure is not None:
         return security_failure
@@ -2780,23 +2811,29 @@ async def _dispatch_verb(
         )
         if hosted is not None:
             return hosted
-        hints = _explicit_operation_hints(verb, action, params) if action else params
+        hints = (
+            _explicit_operation_hints(caches.tools, verb, action, params)
+            if action
+            else params
+        )
     except ValueError as exc:
         return {
             "error": exc.args[0] if exc.args else "invalid params",
             "executed": False,
         }
-    return await dispatch_intent(verb, intent, hints=hints, execute=execute, mcp=mcp)
+    return await dispatch_intent(
+        caches, verb, intent, hints=hints, execute=execute, mcp=mcp
+    )
 
 
-def register_intent_tools(mcp: Any) -> list[str]:
+def register_intent_tools(mcp: Any, caches: HostCaches) -> list[str]:
     """Register arbora's six intent tools (CONCEPT:MERISTEM-ECO.mcp.intent-surface-condensed-collapse).
 
     Each takes the ecosystem's condensed contract (``action`` + ``params`` +
     optional ``intent`` + ``execute``; :mod:`arbora.mcp_server.backing.intent_contract`)
     and runs through :func:`dispatch_intent` — the same governed router and the
     same ``_execute_tool`` core the backing operations use. Every one also gets a
-    ``REGISTERED_TOOLS`` entry and a REST twin (``runtime.ACTION_TOOL_ROUTES``)
+    tool-table entry and a REST twin (``runtime.ACTION_TOOL_ROUTES``)
     so MCP and REST dispatch it identically.
     """
     from arbora.mcp_server.backing.intent_contract import make_intent_tool
@@ -2805,7 +2842,7 @@ def register_intent_tools(mcp: Any) -> list[str]:
     for verb in INTENT_VERBS:
 
         def _handler(action, params, intent, execute, _verb=verb):
-            return _dispatch_verb(mcp, _verb, action, params, intent, execute)
+            return _dispatch_verb(caches, mcp, _verb, action, params, intent, execute)
 
         async def _run(action, params, intent, execute, _handle=_handler) -> str:
             return json.dumps(
@@ -2820,7 +2857,7 @@ def register_intent_tools(mcp: Any) -> list[str]:
         )
         fn.__doc__ = _verb_description(verb)
         mcp.tool(name=verb, tags={"intent"}, description=_verb_description(verb))(fn)
-        runtime.REGISTERED_TOOLS[verb] = fn
+        caches.tools[verb] = fn
         # REST twin (CONCEPT:MERISTEM-ECO.mcp.two-surfaces-mcp-rest) — the generic
         # ACTION_TOOL_ROUTES loop in _mount_rest_routes wires this automatically.
         runtime.ACTION_TOOL_ROUTES[verb] = f"/intent/{verb}"

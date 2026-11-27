@@ -58,11 +58,11 @@ import json
 from pydantic import Field
 
 from arbora.api.errors import not_served
-from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_json
 
 
-def register_candidate_claim_tools(mcp):
+def register_candidate_claim_tools(mcp, tools: ToolTable):
     """Register the ``graph_candidate_claims`` tool onto the MCP server."""
 
     @mcp.tool(
@@ -170,4 +170,4 @@ def register_candidate_claim_tools(mcp):
         except Exception as e:  # noqa: BLE001
             return public_error_json(e)
 
-    runtime.REGISTERED_TOOLS["graph_candidate_claims"] = graph_candidate_claims
+    tools["graph_candidate_claims"] = graph_candidate_claims

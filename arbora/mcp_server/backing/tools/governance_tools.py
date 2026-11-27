@@ -12,11 +12,15 @@ from pydantic import Field
 from arbora.access.approval import ApprovalDecisions
 from arbora.core.event_loop import run_blocking_ordered
 from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_text
 
 
 def register_governance_tools(
-    mcp: Any, approvals: ApprovalDecisions, engine_provider: Callable[[], Any]
+    mcp: Any,
+    tools: ToolTable,
+    approvals: ApprovalDecisions,
+    engine_provider: Callable[[], Any],
 ) -> None:
     """Register approval decisions, risk vetoes, and ActionPolicy verification."""
 
@@ -143,7 +147,7 @@ def register_governance_tools(
             apply=apply,
         )
 
-    runtime.REGISTERED_TOOLS["graph_governance"] = graph_governance
+    tools["graph_governance"] = graph_governance
     runtime.ACTION_TOOL_ROUTES["graph_governance"] = "/graph/governance"
 
 

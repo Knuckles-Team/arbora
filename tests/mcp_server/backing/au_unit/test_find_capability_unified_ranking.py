@@ -15,6 +15,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from arbora.mcp_server.backing.tools import intent_tools
+from arbora.mcp_server.host_caches import HostCaches
 
 
 class _FakeFleetMux:
@@ -69,7 +70,7 @@ async def test_find_capability_fleet_results_span_both_kinds() -> None:
     mcp = _FakeMCP(_FakeFleetMux(discovery))
 
     payload = await intent_tools._find_capability(
-        mcp, "draft release notes and list open issues", top_k=5
+        HostCaches(), mcp, "draft release notes and list open issues", top_k=5
     )
 
     fleet_results = payload["fleet_results"]

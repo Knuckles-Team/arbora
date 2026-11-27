@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools.audit_tools import register_audit_tools
+from arbora.mcp_server.host_caches import ToolTable
 from tests.mcp_server.backing._support import CollectingMCP as _CollectingMCP
 
 
@@ -41,13 +42,14 @@ class _FakeEngine:
 
 def _register(monkeypatch, engine):
     mcp = _CollectingMCP()
-    register_audit_tools(mcp, lambda: engine)
+    register_audit_tools(mcp, ToolTable(), lambda: engine)
     return mcp.tools["graph_audit"]
 
 
 def test_registered_on_arbora_tool_table():
     mcp = _CollectingMCP()
-    register_audit_tools(mcp, lambda: None)
+    table = ToolTable()
+    register_audit_tools(mcp, table, lambda: None)
     assert "graph_audit" in mcp.tools
-    assert runtime.REGISTERED_TOOLS.get("graph_audit") is not None
+    assert table.get("graph_audit") is not None
     assert runtime.ACTION_TOOL_ROUTES.get("graph_audit") == "/audit"

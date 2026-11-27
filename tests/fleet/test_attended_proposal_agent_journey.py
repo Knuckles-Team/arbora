@@ -68,13 +68,10 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.spec("ARBORA-FLEET-R015")]
 
 
 def _isolate_registration(monkeypatch: pytest.MonkeyPatch, client: Any) -> None:
-    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
     monkeypatch.setattr(runtime, "NATIVE_INTENT_TOOLS", {})
-    monkeypatch.setattr(runtime, "_FULL_TOOL_NAMES", runtime._FULL_TOOL_NAMES)
     monkeypatch.setattr(shared_multiplexer, "_served", None)
     monkeypatch.setattr(browser_control_runtime, "_service", None)
     monkeypatch.setattr(browser_control_runtime, "_owner_loop", None)
-    monkeypatch.setattr(host_bindings, "_agent", None)
     monkeypatch.setattr(ports, "_application", ports._application)
     monkeypatch.setenv("MCP_FLEET_REGISTRATION", "false")
 
@@ -117,6 +114,7 @@ async def _served(
         fleet=fleet,
         approvals=ApprovalDecisions(),
         engine_provider=host.engine.served,
+        caches=host.caches,
     )
     _args, mcp, middlewares = runtime._build_server(
         bootstrap=False, invocation=invocation, host=host

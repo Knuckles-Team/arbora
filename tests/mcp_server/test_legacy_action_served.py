@@ -28,6 +28,7 @@ from arbora.api.registry import (
 )
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools import analysis_tools, write_ingest_tools
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.mcp_server.legacy_action_invoke import invoke_legacy_action
 from arbora.mcp_server.legacy_action_mapping import (
     APPROVED_ACTION_MAPPING,
@@ -127,7 +128,7 @@ def _serve(monkeypatch, *, authenticated: bool = True):
 async def test_mapped_and_retired_actions_over_mcp(monkeypatch) -> None:
     served, audit = _serve(monkeypatch)
     server = FastMCP("legacy-action-served")
-    write_ingest_tools.register_write_ingest_tools(server, lambda: None)
+    write_ingest_tools.register_write_ingest_tools(server, ToolTable(), lambda: None)
     async with Client(server) as client:
         mapped = await client.call_tool(
             "graph_ingest",
@@ -172,7 +173,7 @@ async def test_mapped_and_retired_actions_over_mcp(monkeypatch) -> None:
 async def test_analysis_action_runs_through_invoke_as_the_caller(monkeypatch) -> None:
     served, audit = _serve(monkeypatch)
     server = FastMCP("legacy-analysis-served")
-    analysis_tools.register_analysis_tools(server)
+    analysis_tools.register_analysis_tools(server, ToolTable())
     bundle = await analysis_tools.execute_focused_analysis("inspect", target="node-1")
     assert served.calls == [
         (
@@ -187,7 +188,7 @@ async def test_analysis_action_runs_through_invoke_as_the_caller(monkeypatch) ->
 async def test_an_unverified_caller_reaches_no_operation(monkeypatch) -> None:
     served, audit = _serve(monkeypatch, authenticated=False)
     server = FastMCP("legacy-action-unauthenticated")
-    write_ingest_tools.register_write_ingest_tools(server, lambda: None)
+    write_ingest_tools.register_write_ingest_tools(server, ToolTable(), lambda: None)
     async with Client(server) as client:
         refused = await client.call_tool(
             "graph_ingest", {"action": "corpus"}, raise_on_error=False

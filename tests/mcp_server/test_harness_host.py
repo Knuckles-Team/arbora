@@ -14,9 +14,9 @@ from arbora.mcp_server.harness_ports import bind_host_ports_of, build_host_ports
 from arbora.mcp_server.host_context import build_host_context
 
 
-def _ports(multiplexer=None) -> HostPorts:
-    """The ``HostPorts`` the served host builds, over a fresh host context."""
-    return build_host_ports(build_host_context(), multiplexer=multiplexer)
+def _ports(host_context, multiplexer=None) -> HostPorts:
+    """The ``HostPorts`` the served host builds, over ``host_context``."""
+    return build_host_ports(host_context, multiplexer=multiplexer)
 
 
 class _Mux:
@@ -39,12 +39,13 @@ def test_without_arbora_the_harness_fails_closed():
 @pytest.mark.spec("ARBORA-HOST-R001.2")
 def test_the_record_binds_native_tools_fleet_and_keepalive(monkeypatch):
     built = []
-    monkeypatch.setitem(runtime.REGISTERED_TOOLS, "graph_query", lambda: None)
+    host_context = build_host_context()
+    host_context.caches.tools["graph_query"] = lambda: None
     monkeypatch.setitem(runtime.NATIVE_INTENT_TOOLS, "find", lambda: None)
     monkeypatch.setattr(
         runtime,
         "build_native_arbora_toolset",
-        lambda names, *, toolset_id, emit=None: (
+        lambda names, tools, *, toolset_id, emit=None: (
             built.append((names, toolset_id)) or "ts"
         ),
     )
@@ -57,7 +58,7 @@ def test_the_record_binds_native_tools_fleet_and_keepalive(monkeypatch):
 
     monkeypatch.setattr(runtime, "authority_keepalive_scope", scope)
 
-    ports = _ports(_Mux())
+    ports = _ports(host_context, _Mux())
 
     assert {"graph_query", "find"} <= ports.native_tool_names()
     assert ports.build_native_toolset(["graph_query"], toolset_id="t1") == "ts"
@@ -112,7 +113,7 @@ def test_the_record_binds_remote_toolsets_and_tool_clients(monkeypatch, tmp_path
         return []
 
     monkeypatch.setattr("pydantic_ai.mcp.load_mcp_toolsets", fake_load)
-    ports = _ports()
+    ports = _ports(build_host_context())
 
     config = tmp_path / "mcp_config.json"
     assert ports.load_config_toolsets(config) == []
@@ -137,7 +138,7 @@ def test_tool_client_reports_tool_errors_as_host_errors():
     def broken() -> int:
         raise ToolError("nope")
 
-    ports = _ports()
+    ports = _ports(build_host_context())
 
     async def run():
         async with ports.open_tool_client(server) as client:

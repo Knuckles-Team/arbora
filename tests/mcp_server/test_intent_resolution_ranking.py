@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from arbora.mcp_server.backing.tools import intent_tools
+from arbora.mcp_server.host_caches import HostCaches
 
 
 class _Recording:
@@ -41,7 +42,7 @@ def test_resolved_capabilities_follow_the_port_and_carry_floor_evidence() -> Non
     intent_tools._RESOLUTION_CACHE.clear()
     port = _Recording()
     resolved = intent_tools.resolve_intent(
-        None, "search the graph", top_k=5, ranking=port
+        HostCaches(), None, "search the graph", top_k=5, ranking=port
     )
 
     assert [c.capability_id for c in resolved] == sorted(

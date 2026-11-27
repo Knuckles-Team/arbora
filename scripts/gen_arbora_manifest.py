@@ -599,21 +599,19 @@ def _validate_operations(ops: list[dict]) -> None:
 def canonical_surface() -> Iterator[Any]:
     """Build the canonical action-routed surface in isolation; yield :mod:`arbora.mcp_server.runtime`.
 
-    The global tool registries are restored on exit.
+    The host built for it is private to the build; the route table is restored on exit.
     """
     from arbora.mcp_server import runtime
+    from arbora.mcp_server.host_context import build_host_context
 
-    registered_before = dict(runtime.REGISTERED_TOOLS)
     routes_before = dict(runtime.ACTION_TOOL_ROUTES)
+    host = build_host_context()
     try:
-        runtime.REGISTERED_TOOLS.clear()
         runtime.ACTION_TOOL_ROUTES.clear()
         runtime.ACTION_TOOL_ROUTES.update(runtime.BASE_ACTION_TOOL_ROUTES)
-        runtime._build_server(bootstrap=False, canonical_surface=True)
-        yield runtime
+        runtime._build_server(bootstrap=False, canonical_surface=True, host=host)
+        yield runtime, host.caches.tools
     finally:
-        runtime.REGISTERED_TOOLS.clear()
-        runtime.REGISTERED_TOOLS.update(registered_before)
         runtime.ACTION_TOOL_ROUTES.clear()
         runtime.ACTION_TOOL_ROUTES.update(routes_before)
 
@@ -646,10 +644,10 @@ def build_manifest() -> list[dict]:
         f"engine_{domain}": set(methods) for domain, methods in ENGINE_DOMAINS.items()
     }
 
-    with canonical_surface() as runtime:
+    with canonical_surface() as (runtime, tools):
         ops: list[dict] = []
         for tool in sorted(runtime.ACTION_TOOL_ROUTES):
-            func = runtime.REGISTERED_TOOLS.get(tool)
+            func = tools.get(tool)
             if tool in engine_actions:
                 actions = engine_actions[tool]
             else:

@@ -27,6 +27,7 @@ from arbora.core.environment import inherited_environment, read_env
 from arbora.fleet.state import FleetState
 from arbora.gateway.ports import configure_gateway_application
 from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.mcp_server.hosted_invocation import HostedInvocation
 from arbora.mcp_server.routes import mount_rest_routes
 from arbora.messaging.intake import configured_platforms, start_messaging_intake
@@ -897,14 +898,16 @@ class NativeGatewayApplication:
         fleet: FleetState,
         approvals: ApprovalDecisions,
         engine_provider: Callable[[], Any],
+        caches: HostCaches,
     ) -> None:
         self._engine_provider = engine_provider
         self._invocation = invocation
         self._fleet = fleet
         self._approvals = approvals
+        self._caches = caches
 
     async def execute_tool(self, tool: str, /, **kwargs: Any) -> Any:
-        return await runtime._execute_tool(tool, **kwargs)
+        return await runtime._execute_tool(self._caches.tools, tool, **kwargs)
 
     async def invoke_operation(
         self,
@@ -943,7 +946,7 @@ class NativeGatewayApplication:
         return self._approvals.decide(self.engine(), approval_id, decision)
 
     def ensure_tools_registered(self) -> None:
-        runtime.ensure_tools_registered()
+        runtime.ensure_tools_registered(self._caches)
 
     def mount_rest_routes(
         self,
@@ -967,7 +970,7 @@ class NativeGatewayApplication:
             self._invocation.mount_http(app, prefix=prefix)
             return
         if all(value is None for value in dependencies):
-            mount_rest_routes(app, prefix=prefix)
+            mount_rest_routes(app, self._caches.tools, prefix=prefix)
             return
         from arbora.api.registry.eg_binding import EgContractError
 
@@ -997,6 +1000,7 @@ def install_gateway_application(
     fleet: FleetState,
     approvals: ApprovalDecisions,
     engine_provider: Callable[[], Any],
+    caches: HostCaches,
 ) -> NativeGatewayApplication:
     """Install the native application adapter at the process composition root."""
 
@@ -1005,6 +1009,7 @@ def install_gateway_application(
         fleet=fleet,
         approvals=approvals,
         engine_provider=engine_provider,
+        caches=caches,
     )
     configure_gateway_application(application)
     return application
@@ -1015,6 +1020,7 @@ def start_composed_services(
     engine: Any,
     *,
     action_policies: ActionPolicies,
+    tools: ToolTable,
     messaging_intake_enabled: bool | None = None,
     served_network: bool = False,
     session_boundary: Any = None,
@@ -1042,10 +1048,13 @@ def start_composed_services(
                 run_web_ui,
                 action_policies=action_policies,
                 engine=engine,
+                tools=tools,
                 session_boundary=session_boundary,
             )
             if session_boundary is not None
-            else partial(run_web_ui, action_policies=action_policies, engine=engine)
+            else partial(
+                run_web_ui, action_policies=action_policies, engine=engine, tools=tools
+            )
         )
         supervisor.start_service("overstory", runner, session)
     return supervisor

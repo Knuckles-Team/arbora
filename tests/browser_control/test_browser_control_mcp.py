@@ -11,6 +11,7 @@ import pytest
 from arbora.browser_control import mcp as browser_control_mcp
 from arbora.browser_control.browser_control_api import BrowserLeaseReceipt
 from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 
 
 def _recording_mcp(tools: dict[str, Any]) -> SimpleNamespace:
@@ -45,10 +46,10 @@ async def test_browser_control_registers_one_mcp_rest_workflow_dispatch(
     monkeypatch.setattr(browser_control_mcp, "dispatch_browser_control", dispatch)
     tools: dict[str, Any] = {}
     mcp = _recording_mcp(tools)
-    prior_tool = runtime.REGISTERED_TOOLS.get("browser_control")
+    table = ToolTable()
     try:
-        browser_control_mcp.register_browser_control_tools(mcp)
-        assert runtime.REGISTERED_TOOLS["browser_control"] is tools["browser_control"]
+        browser_control_mcp.register_browser_control_tools(mcp, table)
+        assert table["browser_control"] is tools["browser_control"]
         assert runtime.ACTION_TOOL_ROUTES["browser_control"] == "/browser/control"
         raw = await tools["browser_control"](
             action="issue_lease",
@@ -70,7 +71,4 @@ async def test_browser_control_registers_one_mcp_rest_workflow_dispatch(
             )
         ]
     finally:
-        if prior_tool is None:
-            runtime.REGISTERED_TOOLS.pop("browser_control", None)
-        else:
-            runtime.REGISTERED_TOOLS["browser_control"] = prior_tool
+        table.pop("browser_control", None)

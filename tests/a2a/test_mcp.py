@@ -11,6 +11,7 @@ from arbora.a2a import mcp as a2a_mcp
 from arbora.a2a.models import A2ATask, A2ATaskStatus
 from arbora.a2a.service import A2AService
 from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 
 
 class _Mcp:
@@ -49,10 +50,10 @@ async def test_registration_exposes_exact_mcp_rest_and_native_subset(
 
     service = A2AService(authority=Authority(), router=object())  # type: ignore[arg-type]
     mcp = _Mcp()
-    prior = runtime.REGISTERED_TOOLS.get("graph_a2a")
+    table = ToolTable()
     try:
-        a2a_mcp.register_a2a_tools(mcp, service=service)
-        assert runtime.REGISTERED_TOOLS["graph_a2a"] is mcp.tools["graph_a2a"]
+        a2a_mcp.register_a2a_tools(mcp, service=service, tool_table=table)
+        assert table["graph_a2a"] is mcp.tools["graph_a2a"]
         assert runtime.ACTION_TOOL_ROUTES["graph_a2a"] == "/graph/a2a"
         assert set(mcp.routes) == {
             ("/.well-known/agent-card.json", ("GET",)),
@@ -68,7 +69,4 @@ async def test_registration_exposes_exact_mcp_rest_and_native_subset(
         card = json.loads(await mcp.tools["graph_a2a"](action="card"))
         assert card["capabilities"]["streaming"] is False
     finally:
-        if prior is None:
-            runtime.REGISTERED_TOOLS.pop("graph_a2a", None)
-        else:
-            runtime.REGISTERED_TOOLS["graph_a2a"] = prior
+        table.pop("graph_a2a", None)

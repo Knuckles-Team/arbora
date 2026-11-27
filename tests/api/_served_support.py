@@ -18,6 +18,7 @@ import pytest
 from fastmcp import FastMCP
 
 from arbora.mcp_server import runtime as mcp_runtime
+from arbora.mcp_server.host_caches import HostCaches
 from arbora.security import request_identity
 from arbora.security.actor_context import ActorContext, ActorType
 from tests.test_served_operation_api import SCOPES
@@ -331,6 +332,7 @@ def two_tenant_served(
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
+        caches=HostCaches(),
     )
     second = FastAPI()
     register_graph_routes(second)

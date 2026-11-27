@@ -60,6 +60,7 @@ from pydantic import Field
 from arbora.api.errors import not_served
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing import engine_routing
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_json
 
 logger = logging.getLogger(__name__)
@@ -679,11 +680,11 @@ def _make_domain_tool(domain: str, methods: list[str]):
     return _engine_domain_tool
 
 
-def register_engine_tools(mcp) -> None:
+def register_engine_tools(mcp, tools: ToolTable) -> None:
     """Register the full low-level engine surface — one ``engine_<domain>`` tool
     per engine client sub-client, each with its ``/engine/<domain>`` REST twin.
 
-    REGISTERED_TOOLS + ACTION_TOOL_ROUTES are populated in lockstep so the
+    The host tool table + ACTION_TOOL_ROUTES are populated in lockstep so the
     surface-parity gate stays green. CONCEPT:MERISTEM-ECO.mcp.full-api-mcp-surface.
     """
     for domain, methods in ENGINE_DOMAINS.items():
@@ -710,5 +711,5 @@ def register_engine_tools(mcp) -> None:
         if _is_admin_domain(domain):
             tags.append("admin")
         mcp.tool(name=tool_name, description=description, tags=tags)(fn)
-        runtime.REGISTERED_TOOLS[tool_name] = fn
+        tools[tool_name] = fn
         runtime.ACTION_TOOL_ROUTES[tool_name] = f"/engine/{domain}"

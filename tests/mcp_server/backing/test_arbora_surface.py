@@ -15,7 +15,7 @@ amendment):
   (``_arbora_action_manifest.ARBORA_ACTIONS``) belongs to exactly one job-based
   routing group and is reachable through the intent router;
 * the action-routed tools stay registered in the dispatch core
-  (``REGISTERED_TOOLS``) the REST gateway and the router share.
+  (the host tool table) the REST gateway and the router share.
 
 The MCP Apps launchers are the one justified exception to "intent tools only":
 the MCP Apps extension (``io.modelcontextprotocol/ui``) binds a UI resource to a
@@ -51,6 +51,8 @@ from arbora.mcp_server.backing.intent_contract import (
 from arbora.mcp_server.backing.optional_tool_features import OPTIONAL_TOOL_FEATURES
 from arbora.mcp_server.backing.tool_specs import INTENT_VERBS
 from arbora.mcp_server.backing.tools import engine_tools, intent_tools
+from arbora.mcp_server.host_caches import HostCaches
+from arbora.mcp_server.host_context import build_host_context
 
 #: No single listed tool may exceed this (spec: "no tool > ~500 tokens").
 MAX_TOOL_TOKENS = 500
@@ -61,17 +63,14 @@ MCP_APP_TOOLS = frozenset({"graph_task_progress_app", "graph_trace_waterfall_app
 @pytest.fixture(scope="module")
 def served():
     """``(mcp, {name: tools/list definition})`` for a freshly built arbora."""
-    saved = dict(runtime.REGISTERED_TOOLS)
     routes = dict(runtime.ACTION_TOOL_ROUTES)
-    runtime.REGISTERED_TOOLS.clear()
+    host = build_host_context()
     try:
-        _args, mcp, _middlewares = runtime._build_server(bootstrap=False)
+        _args, mcp, _middlewares = runtime._build_server(bootstrap=False, host=host)
         listed = asyncio.run(mcp.list_tools())
-        registry = dict(runtime.REGISTERED_TOOLS)
+        registry = host.caches.tools
         yield mcp, {tool.name: tool_definition(tool) for tool in listed}, registry
     finally:
-        runtime.REGISTERED_TOOLS.clear()
-        runtime.REGISTERED_TOOLS.update(saved)
         runtime.ACTION_TOOL_ROUTES.clear()
         runtime.ACTION_TOOL_ROUTES.update(routes)
 
@@ -124,7 +123,7 @@ def _engine_client_absent_families(registry) -> set[str]:
 
 
 def test_the_dispatch_core_holds_every_served_manifest_family(served):
-    """Registered is not listed: the backing tools populate ``REGISTERED_TOOLS``
+    """Registered is not listed: the backing tools populate the host tool table
     (the REST gateway's and the router's dispatch table) while only the intent
     tools are listed."""
     mcp, _listed, registry = served
@@ -157,7 +156,7 @@ def test_every_manifest_operation_is_reachable_through_the_intent_router(served)
                 unreachable[op_id] = "no verb accepts it"
                 continue
             result = await intent_tools._dispatch_verb(
-                mcp, verbs[0], op_id, {}, "", False
+                HostCaches(tools=registry), mcp, verbs[0], op_id, {}, "", False
             )
             if tool in OPTIONAL_TOOL_FEATURES and tool not in registry:
                 if OPTIONAL_TOOL_FEATURES[tool] not in str(result.get("error")):
@@ -193,7 +192,8 @@ def test_a_host_operation_is_reached_through_act_with_preview(served):
         host_operations,
     )
 
-    mcp, _listed, _registry = served
+    mcp, _listed, registry = served
+    caches = HostCaches(tools=registry)
     calls: list[dict] = []
 
     @backing_server(mcp).tool(name="host_echo")
@@ -208,14 +208,14 @@ def test_a_host_operation_is_reached_through_act_with_preview(served):
     async def _run() -> tuple[dict, dict, dict]:
         params = {"text": "hi"}
         preview = await intent_tools._dispatch_verb(
-            mcp, "act", "host_echo.say", dict(params), "", False
+            caches, mcp, "act", "host_echo.say", dict(params), "", False
         )
         refused = await intent_tools._dispatch_verb(
-            mcp, "act", "host_echo.say", dict(params), "", True
+            caches, mcp, "act", "host_echo.say", dict(params), "", True
         )
         ref = preview["plan"]["plan_ref"]
         done = await intent_tools._dispatch_verb(
-            mcp, "act", "host_echo.say", {**params, "plan_ref": ref}, "", True
+            caches, mcp, "act", "host_echo.say", {**params, "plan_ref": ref}, "", True
         )
         return preview, refused, done
 

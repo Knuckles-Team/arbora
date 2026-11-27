@@ -10,6 +10,7 @@ import pytest
 from arbora.access.action_policy import ActionPolicies
 from arbora.mcp_server import composition
 from arbora.mcp_server.composition import CompositionPlan, start_composed_services
+from arbora.mcp_server.host_caches import ToolTable
 
 
 # spec: ARBORA-DEPLOY-R017.7
@@ -51,6 +52,7 @@ def test_live_start_calls_start_composed_services_with_detected_composition(
         object(),
         engine,
         action_policies=ActionPolicies(),
+        tools=ToolTable(),
         messaging_intake_enabled=True,
         served_network=True,
     )

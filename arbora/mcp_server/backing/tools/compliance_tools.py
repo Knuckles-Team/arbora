@@ -37,6 +37,7 @@ from pydantic import Field
 from arbora.api.errors import not_served
 from arbora.core.event_loop import run_blocking_ordered
 from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_payload
 
 #: Governance/compliance node labels already ingested by the CISO Assistant
@@ -314,7 +315,9 @@ def _export(
     }
 
 
-def register_compliance_tools(mcp: Any, engine_provider: Callable[[], Any]) -> None:
+def register_compliance_tools(
+    mcp: Any, tools: ToolTable, engine_provider: Callable[[], Any]
+) -> None:
     """Register the ``graph_compliance`` group on the given FastMCP server."""
 
     @mcp.tool(
@@ -398,7 +401,7 @@ def register_compliance_tools(mcp: Any, engine_provider: Callable[[], Any]) -> N
             }
         )
 
-    runtime.REGISTERED_TOOLS["graph_compliance"] = graph_compliance
+    tools["graph_compliance"] = graph_compliance
     # No bespoke endpoint needed — the generic REST-twin factory in
     # runtime._build_server mounts POST /compliance for every
     # ACTION_TOOL_ROUTES entry without a bespoke handler, dispatching through

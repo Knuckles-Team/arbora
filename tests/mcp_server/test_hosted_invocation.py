@@ -19,6 +19,7 @@ from arbora.api.registry import Surface
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime
 from arbora.mcp_server.composition import NativeGatewayApplication
+from arbora.mcp_server.host_caches import HostCaches
 from arbora.mcp_server.hosted_invocation import HostedInvocation
 from arbora.security.actor_context import LeaseEvent
 from tests.a2a.test_application import Authority, Router
@@ -54,8 +55,9 @@ def mount_a2a(monkeypatch, value):
     monkeypatch.setattr(
         arbora_surface, "register_arbora_surface", lambda _mcp, **_kwargs: served
     )
-    monkeypatch.setattr(browser_mcp, "register_browser_control_tools", lambda _: None)
-    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
+    monkeypatch.setattr(
+        browser_mcp, "register_browser_control_tools", lambda _, __: None
+    )
     runtime._register_graph_tool_surface(
         served,
         invocation=value,
@@ -64,6 +66,7 @@ def mount_a2a(monkeypatch, value):
                 a2a=A2AService(authority=Authority(), router=Router())
             ),
             policy=PolicyState(),
+            caches=HostCaches(),
         ),
     )
     return served.http_app()
@@ -100,6 +103,7 @@ def test_native_a2a_and_gateway_share_authority_and_effect_boundary(
         fleet=FleetState(),
         approvals=ApprovalDecisions(),
         engine_provider=lambda: None,
+        caches=HostCaches(),
     ).mount_rest_routes(http, prefix="/api")
     response = http_post(http)
     assert a2a.status_code == response.status_code == (200 if allowed else 403)
@@ -119,6 +123,7 @@ def test_composed_gateway_refuses_dependency_replacement(monkeypatch):
             fleet=FleetState(),
             approvals=ApprovalDecisions(),
             engine_provider=lambda: None,
+            caches=HostCaches(),
         ).mount_rest_routes(app, prefix="/api", services=value.services)
     assert not any(route.path.startswith("/api") for route in app.routes)
 
@@ -160,7 +165,7 @@ def test_native_entry_hands_same_bundle_to_both_compositions(monkeypatch):
     monkeypatch.setattr(
         server,
         "install_gateway_application",
-        lambda invocation, *, fleet, approvals: installed.append(invocation),
+        lambda invocation, *, fleet, approvals, caches: installed.append(invocation),
     )
     for name in (
         "_preflight_mcp_sdk_floor",

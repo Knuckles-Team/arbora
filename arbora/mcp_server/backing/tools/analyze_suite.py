@@ -29,12 +29,12 @@ from arbora.gateway.schemas.graph_core import (
     GraphExplainAction,
     GraphResearchAction,
 )
-from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools._surface_selection import (
     conditional_tool_decorator,
     register_conditional_tools,
 )
 from arbora.mcp_server.backing.tools.analysis_tools import execute_focused_analysis
+from arbora.mcp_server.host_caches import ToolTable
 
 _OptionalNodeId = Annotated[str, Field(description="Optional node id.")]
 _OptionalDepth = Annotated[int, Field(description="Optional depth.")]
@@ -42,7 +42,7 @@ _OptionalTarget = Annotated[str, Field(description="Optional target.")]
 
 
 def register_analyze_suite_tools(
-    mcp: Any, *, include_unserved_research: bool = False
+    mcp: Any, tools: ToolTable, *, include_unserved_research: bool = False
 ) -> None:
     """Register the focused analyze-suite tools on the FastMCP server."""
 
@@ -208,7 +208,7 @@ def register_analyze_suite_tools(
         return await _delegate(action, query, top_k, node_id, depth, target)
 
     register_conditional_tools(
-        runtime.REGISTERED_TOOLS,
+        tools,
         [
             ("graph_code", graph_code, None),
             ("graph_research", graph_research, None),

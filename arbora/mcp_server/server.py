@@ -417,10 +417,11 @@ def mcp_server(
         fleet=host_context.fleet,
         approvals=host_context.policy.approvals,
         engine_provider=host_context.engine.served,
+        caches=host_context.caches,
     )
     from arbora.host_bindings import bind_health_probes, bind_messaging_ports
 
-    bind_messaging_ports(host_context.engine.served)
+    bind_messaging_ports(host_context.engine.served, host_context.caches.tools)
     from arbora.a2a.chain_composition import run_plan_binding
     from arbora.agent_host.port_backends import HostSeams
     from arbora.agent_host.sandbox_boundary import boundary_verified
@@ -620,6 +621,7 @@ def mcp_server(
             # An ``act`` operation on the backing server, not a listed tool.
             register_graph_rlm(
                 backing_server(mcp),
+                host_context.caches.tools,
                 client_for_session=client_for_session,
                 origins=host_context.runs.origins,
             )
@@ -635,6 +637,7 @@ def mcp_server(
                 bootstrap_session,
                 host_context.engine.served(),
                 action_policies=host_context.policy.action_policies,
+                tools=host_context.caches.tools,
                 messaging_intake_enabled=config.messaging_intake_enabled,
                 served_network=transport == "streamable-http",
                 session_boundary=invocation.browser_boundary if invocation else None,

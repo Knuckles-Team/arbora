@@ -127,6 +127,7 @@ async def test_served_approval_decides_only_under_a_verified_session(
         fleet=host.fleet,
         approvals=host.policy.approvals,
         engine_provider=host.engine.served,
+        caches=host.caches,
     )
     app = Starlette(
         routes=[Route("/fleet/approvals/grant", fleet_grant_approval, methods=["POST"])]

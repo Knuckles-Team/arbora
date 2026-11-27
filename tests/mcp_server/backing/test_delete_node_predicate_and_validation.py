@@ -83,11 +83,9 @@ def graph_write_and_engine(tmp_path, monkeypatch):
         from arbora.mcp_server.runtime import _build_server
         from tests._support import FixedEngineHandles
 
-        _build_server(
-            bootstrap=False, host=compose_host_context(FixedEngineHandles(engine))
-        )
+        host = compose_host_context(FixedEngineHandles(engine))
+        _build_server(bootstrap=False, host=host)
 
-    from arbora.mcp_server import runtime
     from arbora.mcp_server.backing import engine_routing
 
     registry = MagicMock()
@@ -100,7 +98,7 @@ def graph_write_and_engine(tmp_path, monkeypatch):
     monkeypatch.setattr(engine_routing, "get_connection_registry", lambda: registry)
     # The action-routed tools register on arbora's private backing server
     # and populate the shared dispatch core the intent tools route through.
-    return runtime.REGISTERED_TOOLS["graph_write"], engine
+    return host.caches.tools["graph_write"], engine
 
 
 @pytest.mark.asyncio

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, MutableMapping
 from typing import Any, Protocol
 
 from arbora.api.contracts import (
@@ -22,6 +22,7 @@ class ToolRegistrar(Protocol):
 
 def register_graph_rlm(
     mcp: ToolRegistrar,
+    tools: MutableMapping[str, Any],
     *,
     client_for_session: ClientForSession,
     origins: Any,
@@ -44,7 +45,7 @@ def register_graph_rlm(
             result = await control_plane.graph_rlm(request)
         return result.model_dump_json()
 
-    runtime.REGISTERED_TOOLS["graph_rlm"] = graph_rlm
+    tools["graph_rlm"] = graph_rlm
     runtime.ACTION_TOOL_ROUTES["graph_rlm"] = "/graph/rlm"
 
 

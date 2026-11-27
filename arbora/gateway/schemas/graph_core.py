@@ -11,7 +11,7 @@ routes (a later, single-owner lane); it does not touch ``runtime.py`` itself.
 Every model here was derived by reading the actual handler in
 ``arbora/mcp_server/runtime.py`` and, where the handler dispatches through
 ``_execute_tool("<tool>", **body)``, the real target tool signature in
-``REGISTERED_TOOLS`` (``arbora/mcp_server/backing/tools/*.py``) — never invented.
+the host tool table (``arbora/mcp_server/backing/tools/*.py``) — never invented.
 See each model's docstring for its source handler/tool and the exact
 permissiveness contract (``extra="allow"`` vs ``extra="forbid"``) proven
 against that handler's code, not assumed.

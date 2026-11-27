@@ -7,7 +7,6 @@ provider is registered in harness module state: a run carries its own record.
 
 from __future__ import annotations
 
-from functools import partial
 from typing import Any
 
 from arbora.mcp_server import harness_host
@@ -30,6 +29,7 @@ def build_host_ports(
     ``multiplexer`` is the served fleet multiplexer, or ``None`` when no fleet is served.
     """
     import asyncio
+    from functools import partial
 
     from meristem.host_ports import NativeToolsetProvider
 
@@ -47,7 +47,9 @@ def build_host_ports(
         emit_run_event(event, slot.binding)
 
     def build_toolset(tool_names: list[str], toolset_id: str) -> Any:
-        return harness_host.build_toolset(tool_names, toolset_id, emit)
+        return harness_host.build_toolset(
+            host.caches.tools, tool_names, toolset_id, emit
+        )
 
     # The engine is resolved when a run binds, never at composition.
     store = checkpoint_store(host.engine.served)
@@ -57,7 +59,8 @@ def build_host_ports(
         "models": resolve_model,
         "scaffold_publication": publication_scope,
         "native": NativeToolsetProvider(
-            available_tools=harness_host.available_tools, build_toolset=build_toolset
+            available_tools=partial(harness_host.available_tools, host.caches.tools),
+            build_toolset=build_toolset,
         ),
         "fleet": (
             harness_host.fleet_catalog_view(multiplexer)

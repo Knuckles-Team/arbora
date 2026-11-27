@@ -16,10 +16,10 @@ from typing import Any
 
 from pydantic import Field
 
-from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 
 
-def register_reach_tools(mcp, engine_provider: Callable[[], Any]):
+def register_reach_tools(mcp, tools: ToolTable, engine_provider: Callable[[], Any]):
     """Register the ``graph_reach`` tool onto the MCP server. CONCEPT:MERISTEM-ECO.mcp.graph-reach-mcp-tool"""
 
     @mcp.tool(
@@ -97,4 +97,4 @@ def register_reach_tools(mcp, engine_provider: Callable[[], Any]):
             return json.dumps(svc.status())
         return json.dumps({"error": f"unknown action: {action}"})
 
-    runtime.REGISTERED_TOOLS["graph_reach"] = graph_reach
+    tools["graph_reach"] = graph_reach

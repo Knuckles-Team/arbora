@@ -1,6 +1,6 @@
 """Engine routing support for arbora's one MCP server.
 
-The served tools, their registry (``REGISTERED_TOOLS``/``ACTION_TOOL_ROUTES``),
+The served tools, their registry (the host tool table/``ACTION_TOOL_ROUTES``),
 the dispatch core (``_execute_tool``), the process session and the engine
 binding all live in :mod:`arbora.mcp_server.runtime` and
 :mod:`arbora.mcp_server.bootstrap`. This module only holds what those tools

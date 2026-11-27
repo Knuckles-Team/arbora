@@ -22,6 +22,7 @@ from arbora.fleet.catalog_reader import DeferredFleetCatalogReader
 from arbora.fleet.state import FleetState
 from arbora.mcp_server import runtime
 from arbora.mcp_server.backing.tools.intent_tools import _fleet_mux
+from arbora.mcp_server.host_caches import HostCaches
 
 
 def test_attach_headless_fleet_loader_calls_attach_fleet_loader_with_composed_args() -> (
@@ -77,7 +78,7 @@ def test_attach_headless_fleet_loader_records_the_exact_failure_cause(
     assert "RuntimeError" in caplog.text
 
 
-def _assert_headless_build_attaches() -> None:
+def _assert_headless_build_attaches(caches: HostCaches) -> None:
     built_mcp = SimpleNamespace()
     with (
         patch.object(
@@ -87,9 +88,10 @@ def _assert_headless_build_attaches() -> None:
         ) as mock_build,
         patch.object(runtime, "_attach_headless_fleet_loader") as mock_attach,
     ):
-        runtime.ensure_tools_registered()
+        runtime.ensure_tools_registered(caches)
 
     host = mock_build.call_args.kwargs["host"]
+    assert host.caches is caches
     mock_build.assert_called_once_with(bootstrap=False, host=host)
     mock_attach.assert_called_once_with(built_mcp, host.fleet)
 
@@ -99,21 +101,21 @@ def test_ensure_tools_registered_attaches_fleet_loader_to_the_built_mcp(
 ) -> None:
     """``ensure_tools_registered()`` now attaches a fleet loader to the exact
     ``mcp`` its headless ``_build_server(bootstrap=False)`` call returns."""
-    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {})
-    _assert_headless_build_attaches()
+    _assert_headless_build_attaches(HostCaches())
 
 
 def test_ensure_tools_registered_skips_rebuilding_when_fully_registered(
     monkeypatch,
 ) -> None:
     """The idempotency guard short-circuits once a full build's names are present."""
-    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {"find": object()})
-    monkeypatch.setattr(runtime, "_FULL_TOOL_NAMES", frozenset({"find"}))
+    caches = HostCaches()
+    caches.tools["find"] = object()
+    caches.tools.mark_complete()
     with (
         patch.object(runtime, "_build_server") as mock_build,
         patch.object(runtime, "_attach_headless_fleet_loader") as mock_attach,
     ):
-        runtime.ensure_tools_registered()
+        runtime.ensure_tools_registered(caches)
 
     mock_build.assert_not_called()
     mock_attach.assert_not_called()
@@ -127,9 +129,9 @@ def test_ensure_tools_registered_rebuilds_a_partial_table(monkeypatch) -> None:
     gateway dispatching over a partial table (and made the suite order
     dependent).
     """
-    monkeypatch.setattr(runtime, "REGISTERED_TOOLS", {"graph_a2a": object()})
-    monkeypatch.setattr(runtime, "_FULL_TOOL_NAMES", frozenset())
-    _assert_headless_build_attaches()
+    caches = HostCaches()
+    caches.tools["graph_a2a"] = object()
+    _assert_headless_build_attaches(caches)
 
 
 def test_fleet_mux_returns_the_attached_multiplexer() -> None:

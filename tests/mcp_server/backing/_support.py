@@ -21,11 +21,12 @@ def register_graph_query():
     """Register the query tools onto a throwaway FastMCP and return graph_query."""
     from fastmcp import FastMCP
 
-    from arbora.mcp_server import runtime
     from arbora.mcp_server.backing.tools.query_tools import register_query_tools
+    from arbora.mcp_server.host_caches import ToolTable
 
-    register_query_tools(FastMCP("test"), lambda: None)
-    return runtime.REGISTERED_TOOLS["graph_query"]
+    tools = ToolTable()
+    register_query_tools(FastMCP("test"), tools, lambda: None)
+    return tools["graph_query"]
 
 
 class FakeStdioSession:

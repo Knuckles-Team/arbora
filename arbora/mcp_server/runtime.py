@@ -54,19 +54,13 @@ from typing import Any, cast
 
 from arbora.core.environment import read_env
 from arbora.fleet.ranking import FLOOR_ONLY
+from arbora.mcp_server.host_caches import HostCaches, ToolTable
 from arbora.security.anonymous import session_context
 from arbora.version import __version__
 
 logger = logging.getLogger(__name__)
 
 
-REGISTERED_TOOLS: dict[str, Any] = {}
-#: Names one complete ``_build_server`` registration produced. A non-empty
-#: ``REGISTERED_TOOLS`` alone does not prove the table is complete: a surface
-#: registrar (A2A, browser control, a single tool module) can add a few
-#: entries before the full build runs, which used to make
-#: :func:`ensure_tools_registered` a silent no-op over a partial table.
-_FULL_TOOL_NAMES: frozenset[str] = frozenset()
 #: The served intent verbs (``find``, ``act``, ...) as in-process functions,
 #: registered by the served intent surface. An agent run binds them as its
 #: native tools; each call goes through the same invocation pipeline as an
@@ -224,8 +218,8 @@ def verified_tool_session_scope():
         yield session
 
 
-async def _execute_tool(tool_name: str, **kwargs) -> Any:
-    tool_func = REGISTERED_TOOLS.get(tool_name)
+async def _execute_tool(tools: ToolTable, tool_name: str, /, **kwargs) -> Any:
+    tool_func = tools.get(tool_name)
     if not tool_func:
         raise ValueError(f"Tool {tool_name} not registered")
 
@@ -359,6 +353,7 @@ def discard_event(_event: dict[str, Any]) -> None:
 
 def build_native_arbora_toolset(
     tool_names: list[str],
+    tools: ToolTable,
     *,
     toolset_id: str,
     emit: Callable[[dict[str, Any]], None] = discard_event,
@@ -388,22 +383,22 @@ def build_native_arbora_toolset(
             raise ValueError("native Arbora tool name is invalid")
         # A served intent verb wins over a legacy registered tool of the same
         # name: the run must call the governed verb, not an action tool.
-        function = NATIVE_INTENT_TOOLS.get(name) or REGISTERED_TOOLS.get(name)
+        function = NATIVE_INTENT_TOOLS.get(name) or tools.get(name)
         if function is None:
             raise RuntimeError("requested native Arbora tool is unavailable")
         registered.append((name, function))
 
     run_id = toolset_id[4:] if toolset_id.startswith("run-") else ""
-    tools: list[Any] = []
+    bound: list[Any] = []
     for name, function in registered:
         schema_source = Tool(function, name=name)
 
         dispatch = (
             _intent_dispatch(name, function, run_id, emit)
             if name in NATIVE_INTENT_TOOLS
-            else _registered_dispatch(name)
+            else _registered_dispatch(tools, name)
         )
-        tools.append(
+        bound.append(
             Tool.from_schema(
                 dispatch,
                 name=name,
@@ -414,15 +409,15 @@ def build_native_arbora_toolset(
         )
 
     return FunctionToolset(
-        tools,
+        bound,
         id=toolset_id,
         metadata={"arbora_native": True},
     )
 
 
-def _registered_dispatch(name: str) -> Any:
+def _registered_dispatch(tools: ToolTable, name: str) -> Any:
     async def dispatch(**kwargs: Any) -> Any:
-        return await _execute_tool(name, **kwargs)
+        return await _execute_tool(tools, name, **kwargs)
 
     return dispatch
 
@@ -538,13 +533,13 @@ def _external_error_response(
 
 
 # ── Canonical tool ⇄ REST parity map ────────────────────────────────────────
-# Single source of truth: every action-routed MCP tool in ``REGISTERED_TOOLS``
+# Single source of truth: every action-routed MCP tool in the host tool table
 # has exactly one collapsed action-routed REST twin (POST, JSON body carries the
 # ``action`` and its args). Granular CRUD sub-routes (``/graph/write/node`` etc.)
 # are layered on top for fine-grained HTTP clients, but this map guarantees that
 # anything callable over MCP is also callable over REST and vice versa. The
 # parity contract test (tests/unit/test_gateway_mcp_parity.py) asserts this map
-# stays in lockstep with REGISTERED_TOOLS so the two surfaces never drift.
+# stays in lockstep with the host tool table so the two surfaces never drift.
 ACTION_TOOL_ROUTES: dict[str, str] = {
     "graph_query": "/graph/query",
     "tabular_query": "/query/tabular",
@@ -645,7 +640,7 @@ def _is_engine_dispatch_client_error(parsed: Any) -> bool:
     return False
 
 
-def _make_tool_endpoint(tool_name: str):
+def _make_tool_endpoint(tools: ToolTable, tool_name: str):
     """Build a thin REST handler that dispatches a JSON body to an MCP tool.
 
     Both the MCP tool surface and the REST surface funnel through
@@ -664,7 +659,7 @@ def _make_tool_endpoint(tool_name: str):
         except Exception:
             body = {}
         try:
-            res = await _execute_tool(tool_name, **body)
+            res = await _execute_tool(tools, tool_name, **body)
             parsed = safe_json_load(res)
             # U-74 (GOC-83-W05): an `engine_<domain>` action-name or
             # parameter mistake never raises (see `_is_engine_dispatch_
@@ -785,7 +780,7 @@ def _build_server(
             background engine bootstrap only after process identity is minted.
             The API gateway calls this with ``bootstrap=False`` (via
             :func:`ensure_tools_registered`) because it owns the engine/daemon
-            lifecycle itself and only needs ``REGISTERED_TOOLS`` populated so the
+            lifecycle itself and only needs the host tool table populated so the
             centralized REST handlers can dispatch.
         canonical_surface: Register every condensed domain regardless of
             deployment toggles. This is reserved for catalog/gate construction;
@@ -811,7 +806,7 @@ def _build_server(
         return None
 
     # In embedded mode (bootstrap=False, e.g. the API gateway populating
-    # REGISTERED_TOOLS) do NOT parse the host process's argv — pass an empty
+    # the host tool table) do NOT parse the host process's argv — pass an empty
     # command line so the factory uses defaults instead of choking on unrelated
     # flags (pytest/uvicorn args) with SystemExit.
     args, mcp, middlewares = create_mcp_server(
@@ -957,8 +952,7 @@ def _build_server(
         anonymous=_anonymous_a2a(args, invocation),
     )
 
-    global _FULL_TOOL_NAMES
-    _FULL_TOOL_NAMES = frozenset(REGISTERED_TOOLS)
+    host.caches.tools.mark_complete()
     return args, mcp, middlewares
 
 
@@ -1009,7 +1003,7 @@ def _register_graph_tool_surface(
     A2A here, the RLM control plane at serve time — register on that same
     backing server and are reached through ``act``. Every operation
     dispatches through meristem's ``_execute_tool`` core, and this
-    process's ``REGISTERED_TOOLS`` mirrors the same functions so the REST
+    process's host tool table mirrors the same functions so the REST
     gateway reaches exactly what the intent tools route to.
     """
 
@@ -1033,6 +1027,7 @@ def _register_graph_tool_surface(
             action_policies=host.policy.action_policies,
             approvals=host.policy.approvals,
             engine_provider=host.engine.served,
+            caches=host.caches,
             canonical=canonical,
             intent_tools=False,
         )
@@ -1044,16 +1039,20 @@ def _register_graph_tool_surface(
             action_policies=host.policy.action_policies,
             approvals=host.policy.approvals,
             engine_provider=host.engine.served,
+            caches=host.caches,
             canonical=canonical,
         )
-    register_browser_control_tools(backing)
+    register_browser_control_tools(backing, host.caches.tools)
     if invocation is None:
-        rpc_handler = register_a2a_tools(mcp, service=host.runs.a2a, tools=backing)
+        rpc_handler = register_a2a_tools(
+            mcp, service=host.runs.a2a, tools=backing, tool_table=host.caches.tools
+        )
     else:
         rpc_handler = register_a2a_tools(
             mcp,
             service=host.runs.a2a,
             tools=backing,
+            tool_table=host.caches.tools,
             anonymous=anonymous,
             operation_services=invocation.services,
             operation_authenticator=invocation.authenticator,
@@ -1075,7 +1074,12 @@ def _register_graph_tool_surface(
 
         # ARBORA-A2A-R022.1: a finished run's reply becomes a held output.
         bind_held_output(host.runs.a2a.authority, invocation)
-    mount_sdk_a2a(mcp, engine_provider=host.engine.served, stream_handler=rpc_handler)
+    mount_sdk_a2a(
+        mcp,
+        host.caches.tools,
+        engine_provider=host.engine.served,
+        stream_handler=rpc_handler,
+    )
 
 
 def _served_caller_session() -> Any:
@@ -1138,7 +1142,7 @@ def _attach_headless_fleet_loader(mcp: Any, fleet: Any) -> None:
     The served process attaches the fleet in :mod:`arbora.mcp_server.server`;
     a gateway-only process reaches the tools only through
     :func:`ensure_tools_registered`, so without this every ``find``/``act``
-    fleet call through ``REGISTERED_TOOLS`` raised "No fleet multiplexer is
+    fleet call through the host tool table raised "No fleet multiplexer is
     attached". When attach fails, nothing is attached and a class-name-only
     cause is recorded on ``mcp`` for ``intent_tools._fleet_mux`` to raise; the
     full exception is logged server-side.
@@ -1164,11 +1168,11 @@ def _attach_headless_fleet_loader(mcp: Any, fleet: Any) -> None:
         )
 
 
-def ensure_tools_registered() -> None:
-    """Idempotently register all ``graph_*`` tools into ``REGISTERED_TOOLS``.
+def ensure_tools_registered(caches: HostCaches) -> None:
+    """Idempotently register all ``graph_*`` tools into ``caches.tools``.
 
     The centralized REST handlers (and the API gateway that mounts them via
-    :func:`_mount_rest_routes`) dispatch through ``REGISTERED_TOOLS`` using
+    :func:`_mount_rest_routes`) dispatch through the host tool table using
     :func:`_execute_tool`. Building the MCP server populates that dict as a side
     effect; we discard the throwaway FastMCP instance and skip the engine
     bootstrap (``bootstrap=False``) because the gateway owns the engine/daemon
@@ -1176,11 +1180,12 @@ def ensure_tools_registered() -> None:
     The throwaway ``mcp`` also gets the fleet loader
     (:func:`_attach_headless_fleet_loader`).
     """
-    if _FULL_TOOL_NAMES and _FULL_TOOL_NAMES <= REGISTERED_TOOLS.keys():
+    if caches.tools.is_complete():
         return
-    from arbora.mcp_server.host_context import build_host_context
+    from arbora.mcp_server.host_context import compose_host_context_over
+    from arbora.mcp_server.served_engine import EngineHandles
 
     # A headless build (no served process) owns a context of its own.
-    host = build_host_context()
+    host = compose_host_context_over(EngineHandles(), caches)
     _args, mcp, _middlewares = _build_server(bootstrap=False, host=host)
     _attach_headless_fleet_loader(mcp, host.fleet)

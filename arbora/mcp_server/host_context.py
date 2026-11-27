@@ -18,6 +18,7 @@ from arbora.access.approval import ApprovalDecisions, verified_approval_session
 from arbora.access.policy_state import PolicyState
 from arbora.agent_host.host_port_adapters import HostPortsSlot
 from arbora.fleet.state import FleetState
+from arbora.mcp_server.host_caches import HostCaches
 from arbora.mcp_server.served_engine import EngineHandles
 from arbora.run_origin import RunOriginRegistry
 
@@ -28,6 +29,7 @@ __all__ = [
     "bind_ranking",
     "build_host_context",
     "compose_host_context",
+    "compose_host_context_over",
 ]
 
 
@@ -51,6 +53,7 @@ class HostContext:
     fleet: FleetState
     policy: PolicyState
     engine: EngineHandles
+    caches: HostCaches
 
 
 def build_host_context() -> HostContext:
@@ -59,7 +62,16 @@ def build_host_context() -> HostContext:
 
 
 def compose_host_context(engine: EngineHandles) -> HostContext:
-    """Compose the host state over the given engine handles."""
+    """Compose the host state over the given engine handles and fresh caches."""
+    return compose_host_context_over(engine, HostCaches())
+
+
+def compose_host_context_over(engine: EngineHandles, caches: HostCaches) -> HostContext:
+    """Compose the host state over the given engine handles and caches.
+
+    ``ensure_tools_registered`` composes over a cache field its caller owns; every
+    other build goes through :func:`compose_host_context` and gets a fresh one.
+    """
     origins = RunOriginRegistry()
     decide = HostDecide()
     ports = HostPortsSlot()
@@ -78,6 +90,7 @@ def compose_host_context(engine: EngineHandles) -> HostContext:
             approvals=ApprovalDecisions(verified_approval_session),
         ),
         engine=engine,
+        caches=caches,
     )
 
 

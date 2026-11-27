@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import logging
 import threading
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
@@ -115,6 +116,7 @@ def run_web_ui(
     *,
     action_policies: ActionPolicies,
     engine: Any,
+    tools: Mapping[str, Any],
     host: str | None = None,
     port: int | None = None,
     session_boundary: Any = None,
@@ -210,7 +212,7 @@ def run_web_ui(
 
     agent = Agent(build_orchestrator_model(get_engine_bounded))
     helpers = {
-        **webui_mcp_delegation_helpers(),
+        **webui_mcp_delegation_helpers(tools),
         **webui_voice_delegation_helpers(lambda: engine),
     }
     contact_kwargs = contact_delivery_factory_kwargs(

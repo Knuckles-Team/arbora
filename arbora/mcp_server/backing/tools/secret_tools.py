@@ -25,7 +25,7 @@ from typing import Any
 from pydantic import Field
 
 from arbora.access.action_policy import ActionPolicies
-from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 
 
 def _gate(
@@ -56,7 +56,10 @@ def _gate(
 
 
 def register_secret_tools(
-    mcp, action_policies: ActionPolicies, engine_provider: Callable[[], Any]
+    mcp,
+    tools: ToolTable,
+    action_policies: ActionPolicies,
+    engine_provider: Callable[[], Any],
 ):
     """Register the ``graph_secret`` tool onto the MCP server. CONCEPT:MERISTEM-OS.identity.encrypted-secret-store"""
 
@@ -119,4 +122,4 @@ def register_secret_tools(
             return json.dumps({"deleted": client.delete(key), "key": key, **info})
         return json.dumps({"error": f"unknown action: {action}"})
 
-    runtime.REGISTERED_TOOLS["graph_secret"] = graph_secret
+    tools["graph_secret"] = graph_secret

@@ -62,6 +62,7 @@ from typing import Any
 from pydantic import Field
 
 from arbora.mcp_server import runtime
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.error_surface import public_error_json
 
 #: Friendly action name -> underlying ``client.query.<method>`` name.
@@ -103,7 +104,7 @@ def _epistemic_status_view(result: Any) -> dict[str, Any]:
     return result if isinstance(result, dict) else {}
 
 
-def register_epistemic_tools(mcp: Any) -> None:
+def register_epistemic_tools(mcp: Any, tools: ToolTable) -> None:
     """Register the ``graph_epistemic`` group on the given FastMCP server."""
 
     @mcp.tool(
@@ -257,7 +258,7 @@ def register_epistemic_tools(mcp: Any) -> None:
             default=str,
         )
 
-    runtime.REGISTERED_TOOLS["graph_epistemic"] = graph_epistemic
+    tools["graph_epistemic"] = graph_epistemic
     # No bespoke endpoint needed — the generic REST-twin factory in
     # runtime._build_server mounts POST /epistemic for every ACTION_TOOL_ROUTES
     # entry without a bespoke handler, dispatching through the SAME

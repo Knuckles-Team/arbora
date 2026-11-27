@@ -12,6 +12,7 @@ import pytest
 from arbora.api.contracts.agent_control_plane import GraphRlmRunRequest
 from arbora.mcp_server import runtime
 from arbora.mcp_server.agent_control import register_graph_rlm
+from arbora.mcp_server.host_caches import ToolTable
 from arbora.security.actor_context import ActorContext, ActorType
 from arbora.security.session import GraphSession, resolve_session
 
@@ -34,13 +35,8 @@ class Mcp:
 
 @pytest.fixture(autouse=True)
 def restore_graph_rlm_registration():
-    prior_tool = runtime.REGISTERED_TOOLS.get("graph_rlm")
     prior_route = runtime.ACTION_TOOL_ROUTES.get("graph_rlm")
     yield
-    if prior_tool is None:
-        runtime.REGISTERED_TOOLS.pop("graph_rlm", None)
-    else:
-        runtime.REGISTERED_TOOLS["graph_rlm"] = prior_tool
     if prior_route is None:
         runtime.ACTION_TOOL_ROUTES.pop("graph_rlm", None)
     else:
@@ -83,13 +79,14 @@ async def test_graph_rlm_is_composed_from_injected_authorities() -> None:
         assert resolve_session(actual_session) is session
         return ControlPlane()
 
-    prior_tool = runtime.REGISTERED_TOOLS.get("graph_rlm")
+    table = ToolTable()
     prior_route = runtime.ACTION_TOOL_ROUTES.get("graph_rlm")
     prior_process_session = runtime._PROCESS_SESSION
     runtime._PROCESS_SESSION = session
     try:
         register_graph_rlm(
             mcp,
+            table,
             client_for_session=lambda actual_session: (
                 client if actual_session is session else None
             ),
@@ -99,14 +96,10 @@ async def test_graph_rlm_is_composed_from_injected_authorities() -> None:
         request = GraphRlmRunRequest(task="inspect", input_text="state")
         assert await mcp.tools["graph_rlm"](request) == ('{"action":"run","ok":true}')
         assert calls == [request]
-        assert runtime.REGISTERED_TOOLS["graph_rlm"] is mcp.tools["graph_rlm"]
+        assert table["graph_rlm"] is mcp.tools["graph_rlm"]
         assert runtime.ACTION_TOOL_ROUTES["graph_rlm"] == "/graph/rlm"
     finally:
         runtime._PROCESS_SESSION = prior_process_session
-        if prior_tool is None:
-            runtime.REGISTERED_TOOLS.pop("graph_rlm", None)
-        else:
-            runtime.REGISTERED_TOOLS["graph_rlm"] = prior_tool
         if prior_route is None:
             runtime.ACTION_TOOL_ROUTES.pop("graph_rlm", None)
         else:
@@ -126,7 +119,10 @@ async def test_graph_rlm_call_has_no_unverified_fallback() -> None:
     runtime.verified_tool_session_scope = missing_scope
     try:
         register_graph_rlm(
-            mcp, client_for_session=lambda session: object(), origins=object()
+            mcp,
+            ToolTable(),
+            client_for_session=lambda session: object(),
+            origins=object(),
         )
         with pytest.raises(PermissionError, match="verified authorities required"):
             await mcp.tools["graph_rlm"](
@@ -149,7 +145,10 @@ async def test_graph_rlm_rejects_mismatched_ambient_session() -> None:
     runtime.verified_tool_session_scope = mismatched_scope
     try:
         register_graph_rlm(
-            mcp, client_for_session=lambda session: object(), origins=object()
+            mcp,
+            ToolTable(),
+            client_for_session=lambda session: object(),
+            origins=object(),
         )
         with pytest.raises(PermissionError, match="authority differ"):
             await mcp.tools["graph_rlm"](
