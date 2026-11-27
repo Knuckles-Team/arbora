@@ -16,6 +16,7 @@ from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import capacity_questions
 from arbora.api.ops.question_round import Q32_ONE
 from arbora.api.ops.registry_factory import get_registry
+from arbora.core.settings import RuntimeConfig
 from tests.api._lane_double import EngineDouble, context
 
 
@@ -186,18 +187,20 @@ async def test_a_mid_run_widening_is_the_engine_refusal(
 async def test_index_grant_is_the_host_grant_clamped_to_the_engine_knob(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from arbora.core.settings import runtime_config
 
-    monkeypatch.setattr(runtime_config, "resource_grants_max_working_bytes", 8_000)
+    config = RuntimeConfig()
+    config.resource_grants_max_working_bytes = 8_000
 
     async def knob() -> int:
         return 5_000
 
-    bound = SimpleNamespace(services={"index_knob_reader": knob})
+    bound = SimpleNamespace(services={"config": config, "index_knob_reader": knob})
     assert await service.resource_grant_bytes(bound) == 5_000
-    large = SimpleNamespace(services={"index_knob_reader": _constant(9_000)})
+    large = SimpleNamespace(
+        services={"config": config, "index_knob_reader": _constant(9_000)}
+    )
     assert await service.resource_grant_bytes(large) == 8_000
-    unread = SimpleNamespace(services={})
+    unread = SimpleNamespace(services={"config": config})
     assert await service.resource_grant_bytes(unread) == 8_000
 
 
@@ -229,9 +232,9 @@ def _engine_pages(monkeypatch: pytest.MonkeyPatch, pages: list[dict[str, Any]]) 
 async def test_the_engine_knob_is_read_from_introspect_knobs_across_pages(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from arbora.core.settings import runtime_config
 
-    monkeypatch.setattr(runtime_config, "resource_grants_max_working_bytes", 8_000)
+    config = RuntimeConfig()
+    config.resource_grants_max_working_bytes = 8_000
     seen = _engine_pages(
         monkeypatch,
         [
@@ -242,7 +245,7 @@ async def test_the_engine_knob_is_read_from_introspect_knobs_across_pages(
             },
         ],
     )
-    unbound = SimpleNamespace(services={})
+    unbound = SimpleNamespace(services={"config": config})
     assert await service.resource_grant_bytes(unbound) == 5_000
     assert [method for method, _ in seen] == ["Introspect", "Introspect"]
     assert seen[0][1]["section"] == "knobs"
@@ -253,14 +256,17 @@ async def test_the_engine_knob_is_read_from_introspect_knobs_across_pages(
 async def test_a_knob_above_the_host_grant_leaves_the_host_grant(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from arbora.core.settings import runtime_config
 
-    monkeypatch.setattr(runtime_config, "resource_grants_max_working_bytes", 8_000)
+    config = RuntimeConfig()
+    config.resource_grants_max_working_bytes = 8_000
     _engine_pages(
         monkeypatch,
         [{"rows": [{"key": service.INDEX_KNOB, "value": 1_073_741_824}]}],
     )
-    assert await service.resource_grant_bytes(SimpleNamespace(services={})) == 8_000
+    assert (
+        await service.resource_grant_bytes(SimpleNamespace(services={"config": config}))
+        == 8_000
+    )
 
 
 @pytest.mark.spec("ARBORA-CAPACITY-R753")
@@ -268,7 +274,6 @@ async def test_a_pinned_engine_without_the_knobs_section_leaves_the_host_grant(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from arbora.api.ops import engine_calls as _engine
-    from arbora.core.settings import runtime_config
     from arbora.pin_lag import medulla as pin
     from arbora.pin_lag.unavailable import PinLagUnavailable
 
@@ -278,8 +283,12 @@ async def test_a_pinned_engine_without_the_knobs_section_leaves_the_host_grant(
     async def never(*args: Any, **kwargs: Any) -> Any:
         raise AssertionError("no engine call may be made without the section")
 
-    monkeypatch.setattr(runtime_config, "resource_grants_max_working_bytes", 8_000)
+    config = RuntimeConfig()
+    config.resource_grants_max_working_bytes = 8_000
     monkeypatch.setattr(pin, "require_methods", lambda *names: None)
     monkeypatch.setattr(pin, "require_enum_member", lacking)
     monkeypatch.setattr(_engine, "engine_send", never)
-    assert await service.resource_grant_bytes(SimpleNamespace(services={})) == 8_000
+    assert (
+        await service.resource_grant_bytes(SimpleNamespace(services={"config": config}))
+        == 8_000
+    )

@@ -14,6 +14,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 from arbora.api.otlp_logs import body_key
 from arbora.api.registry import Invoke
+from arbora.core.settings import RuntimeConfig
 
 from .auth import HTTPAuthenticationError
 from .bundles import mount_bundle_transfer
@@ -95,6 +96,7 @@ def create_api_application(
     visibility: Visibility,
     authenticator: Any,
     invoke: Invoke,
+    config: RuntimeConfig,
     scim_ports: Any = None,
 ) -> FastAPI:
     """Create an isolated sub-app with explicit shared authority dependencies.
@@ -345,6 +347,7 @@ def create_api_application(
         authenticate=authenticate,
         invoke=invoke,
         is_console_request=auth.is_console_request,
+        max_result_bytes=config.sparql_max_result_bytes,
     )
     # OpenLineage run events drive eg.ingestion.LineageIngest through the same
     # chokepoint (ARBORA-OPS-R889).

@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from arbora.api.http.auth import HTTPAuthenticationError
 from arbora.api.http.browser_auth import BoundBrowserHTTPAuthenticator
 from arbora.api.http.routes import make_endpoint
+from arbora.core.settings import RuntimeConfig
 from tests.identity.test_console_admission import (
     CallerFixture,
     OwnersFixture,
@@ -27,7 +28,9 @@ def parts():
     scope["state"] = {"arbora_session_admitted": True}
     scope["headers"].append((b"content-type", b"application/json"))
     session = CallerFixture(backend.resolution)
-    auth = BoundBrowserHTTPAuthenticator(owner, console_origin=ORIGIN)
+    auth = BoundBrowserHTTPAuthenticator(
+        owner, console_origin=ORIGIN, config=RuntimeConfig()
+    )
     return backend, owner, scope, session, auth
 
 
@@ -205,6 +208,7 @@ def test_registry_visibility_await_uses_same_owner_fence(revoke):
             visibility=visibility,
             authenticator=auth,
             invoke=invoke,
+            config=RuntimeConfig(),
         )
         endpoint = next(
             route.endpoint for route in app.routes if route.path == "/registry"
@@ -243,6 +247,7 @@ def test_browser_stream_checkout_is_explicitly_unavailable():
             visibility=forbidden,
             authenticator=auth,
             invoke=forbidden,
+            config=RuntimeConfig(),
         )
         endpoint = next(
             route.endpoint for route in app.routes if route.path == "/source/checkout"
@@ -373,6 +378,7 @@ def test_actual_asgi_dispatch_requires_binding_after_mount_routing(outer_mount):
             visibility=visibility,
             authenticator=auth,
             invoke=invoke,
+            config=RuntimeConfig(),
         )
         if outer_mount:
             parent = FastAPI()
@@ -478,6 +484,7 @@ def test_mounted_browser_composition_uses_real_admission_and_same_owner(transiti
                 services=SimpleNamespace(registry=Registry()),
                 visibility=visibility,
                 invoke=invoke,
+                config=RuntimeConfig(),
             ),
         )
         if transition == "effect-error":

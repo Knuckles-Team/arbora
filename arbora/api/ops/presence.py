@@ -259,9 +259,7 @@ async def handle_city_presence(
         ) from None
     if snapshot.tenant != context.caller.tenant:
         raise OperationRefused("SUBJECT_ACCESS_DENIED", {"subject": snapshot.tenant})
-    from arbora.core.settings import runtime_config
-
-    interval = float(runtime_config.presence_snapshot_interval_s)
+    interval = float(context.services["config"].presence_snapshot_interval_s)
     age = (clock() - snapshot.simulated_at).total_seconds()
     value = PresenceSnapshotValue(
         tenant=snapshot.tenant,

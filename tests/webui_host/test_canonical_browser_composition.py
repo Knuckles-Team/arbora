@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.identity.admission import BrowserAdmission
 from arbora.identity.issuer import LocalIssuer
 from arbora.mcp_server.browser_app import (
@@ -170,6 +171,7 @@ def test_actual_webui_factory_dispatches_only_canonical_bound_operations(
             visibility=visibility,
             invoke=invoke,
             max_in_flight=1,
+            config=RuntimeConfig(),
         )
         boundary = create_webui_session_boundary(
             admission=admission, auth_app=auth_app, operations=operations

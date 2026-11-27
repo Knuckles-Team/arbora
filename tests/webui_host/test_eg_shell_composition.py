@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.identity.admission import BrowserAdmission
 from arbora.identity.issuer import LocalIssuer
 from arbora.mcp_server.browser_app import (
@@ -127,6 +128,7 @@ def test_real_composed_eg_shell_has_one_protected_route_owner(
             services=SimpleNamespace(registry=Registry()),
             visibility=visible,
             invoke=invoke,
+            config=RuntimeConfig(),
         )
         boundary = create_webui_session_boundary(
             admission=admission, auth_app=auth, operations=operations

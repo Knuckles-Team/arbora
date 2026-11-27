@@ -8,6 +8,7 @@ from typing import Any
 
 import pytest
 
+from arbora.core.settings import RuntimeConfig
 from arbora.identity import federated
 from arbora.identity.engine import IdentityUnavailable
 from arbora.security.key_cache import JwksCache
@@ -100,5 +101,6 @@ def test_browser_boundary_hands_the_federation_to_the_auth_application(
         store=object(),
         request_dispatch=None,
         keys=JwksCache(),
+        config=RuntimeConfig(),
     )
     assert captured["auth_app"].federation is sentinel

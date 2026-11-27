@@ -24,8 +24,10 @@ from arbora.api.mcp.verbs import dispatch_verb
 from arbora.api.ops import presence as presence_ops
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import Registry, Surface
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.serving import MCPProjection
 from arbora.observability.state import SubsystemWindows
+from tests.api._engine_double import fresh_config
 from tests.api._support import make_verified_caller
 from tests.api.test_invoke_contract import setup_services
 
@@ -140,7 +142,7 @@ def _refused(code: str, details: dict[str, Any]) -> Any:
     return OperationRefused(code, details)
 
 
-def _services(port: Any | None) -> Any:
+def _services(port: Any | None, config: RuntimeConfig | None = None) -> Any:
     """One invoke composition whose composite dispatch reaches the real handlers."""
     client = _ClaimsClient()
 
@@ -177,7 +179,10 @@ def _services(port: Any | None) -> Any:
         eg_dispatch=eg_dispatch,
         service_scopes=frozenset({"example:execute"}),
         service_principal="service:arbora",
-        bindings={} if port is None else {"city_state": port},
+        bindings={
+            "config": fresh_config(config),
+            **({} if port is None else {"city_state": port}),
+        },
     )
     services, *_rest = setup_services(
         effects=None,

@@ -293,7 +293,7 @@ def mount_sparql_protocol(
     authenticate: Any,
     invoke: Any,
     is_console_request: Any = None,
-    max_result_bytes: int | None = None,
+    max_result_bytes: int,
 ) -> None:
     """Add ``/sparql`` and ``/sparql/graphs`` to ``app``.
 
@@ -301,11 +301,6 @@ def mount_sparql_protocol(
     caller themselves. ``max_result_bytes`` bounds one serialized answer
     (``sparql_max_result_bytes``); a larger answer is refused, never truncated.
     """
-
-    if max_result_bytes is None:
-        from arbora.core.settings import runtime_config
-
-        max_result_bytes = runtime_config.sparql_max_result_bytes
 
     async def run(
         request: Request,

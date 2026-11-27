@@ -1383,6 +1383,7 @@ def compose_served_invocation(
         ),
         policy_gate=PolicyGate(policy_mode),
         audit_client_factory=audit_client,
+        config=config,
         **changes,
     )
     _bind_late_doors(services, step_invoke, (bindings or {}).get("finance_paper_door"))

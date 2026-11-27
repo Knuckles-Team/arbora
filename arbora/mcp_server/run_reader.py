@@ -44,6 +44,7 @@ from arbora.api.ops.runs import (
     project_current_plan,
     unavailable_capabilities,
 )
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.current_plan_reader import _project, read_native_snapshot
 from arbora.pin_lag.medulla import PinLagUnavailable, require_methods
 from arbora.run_origin import RunOriginRegistry
@@ -66,8 +67,13 @@ class NativeRunReader:
     """Stateless host adapter; EG owns events and WorkItems, AU their ordering."""
 
     def __init__(
-        self, engine_provider: Callable[[], Any], *, origins: RunOriginRegistry
+        self,
+        engine_provider: Callable[[], Any],
+        *,
+        origins: RunOriginRegistry,
+        config: RuntimeConfig,
     ) -> None:
+        self._config = config
         self._authority = WorkItemA2AAuthority(engine_provider, origins=origins)
 
     async def _owned(
@@ -134,7 +140,7 @@ class NativeRunReader:
         The root and every producer-declared child are authorized through
         ``_owned`` before any payload read; a foreign child reads as absent.
         """
-        bounds = GraphBounds.from_config()
+        bounds = GraphBounds.from_config(self._config)
         try:
             flat = await self._flat_graph(context, request)
             if flat is None:

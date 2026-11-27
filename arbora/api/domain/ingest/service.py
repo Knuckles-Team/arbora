@@ -319,9 +319,7 @@ async def resource_grant_bytes(context: Any) -> int:
     (:func:`engine_index_knob`); a bound ``index_knob_reader`` service replaces that read.
     With no knob read (PIN-LAG) the host grant alone bounds the tenant.
     """
-    from arbora.core.settings import runtime_config
-
-    host = int(runtime_config.resource_grants_max_working_bytes)
+    host = int(context.services["config"].resource_grants_max_working_bytes)
     reader = context.services.get("index_knob_reader")
     knob = await reader() if reader is not None else await engine_index_knob(context)
     return min(host, int(knob)) if knob else host

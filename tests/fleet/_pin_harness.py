@@ -17,6 +17,7 @@ from arbora.api.invoke.audit import EffectReservation
 from arbora.api.ops.fleet import handle_fleet_operation, operations
 from arbora.api.policy import PolicyGate
 from arbora.api.registry import Registry, Surface
+from arbora.core.settings import RuntimeConfig
 from arbora.fleet.catalog_items import CatalogItem, FleetCatalog
 from arbora.fleet.gateway_ops import (
     ConfirmingTools,
@@ -173,6 +174,7 @@ async def harness(
     state.ops = ops
     state.gateway = gateway
     state.services = InvokeServices(
+        config=RuntimeConfig(),
         registry=Registry(operations()),
         runtime=runtime,
         plans=SimpleNamespace(

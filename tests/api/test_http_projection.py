@@ -29,6 +29,7 @@ from arbora.api.http.openapi import document
 from arbora.api.http.protocol_routes import PROTOCOL_ROUTES
 from arbora.api.http.routes import _params, make_endpoint
 from arbora.api.registry import Surface
+from arbora.core.settings import RuntimeConfig
 
 
 def request(
@@ -126,6 +127,7 @@ def test_v1_subapp_mount_has_one_prefix(monkeypatch: pytest.MonkeyPatch) -> None
         visibility=visibility,
         authenticator=Auth(),
         invoke=_unused_invoke,
+        config=RuntimeConfig(),
     )
     assert "/identity/users" in {getattr(route, "path", None) for route in child.routes}
     parent = FastAPI()
@@ -183,6 +185,7 @@ def test_swagger_ui_renders_the_mounted_caller_filtered_openapi_document() -> No
         visibility=_empty_visibility,
         authenticator=_OpenAuth(),
         invoke=_unused_invoke,
+        config=RuntimeConfig(),
     )
     parent = FastAPI()
     parent.mount("/api/v1", child)

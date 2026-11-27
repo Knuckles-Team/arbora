@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 
 import pytest
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import models
+from arbora.core.settings import RuntimeConfig
 
 pytestmark = pytest.mark.spec("ARBORA-OPS-R922.2")
 
@@ -15,9 +17,8 @@ _PLAIN = "sk-plain-value-must-never-leave"
 
 
 @pytest.fixture
-def configured(monkeypatch: pytest.MonkeyPatch) -> None:
-    from arbora.core.settings import runtime_config
-
+def configured() -> SimpleNamespace:
+    config = RuntimeConfig()
     chat = [
         {
             "id": "org/model-a",
@@ -34,13 +35,14 @@ def configured(monkeypatch: pytest.MonkeyPatch) -> None:
             },
         }
     ]
-    monkeypatch.setattr(runtime_config, "chat_models", json.dumps(chat), raising=False)
-    monkeypatch.setattr(runtime_config, "embedding_models", [], raising=False)
+    config.chat_models = json.dumps(chat)
+    config.embedding_models = []
+    return SimpleNamespace(services={"config": config})
 
 
 async def test_get_returns_secret_references_and_never_values(configured) -> None:
     result = await models.handle_models_get(
-        None,
+        configured,
         {"kind": "chat", "model_id": "org/model-a"},
         None,  # type: ignore[arg-type]
     )
@@ -66,14 +68,14 @@ async def test_get_returns_secret_references_and_never_values(configured) -> Non
 async def test_get_refuses_unknown_kind_and_unknown_model(configured) -> None:
     with pytest.raises(OperationRefused) as kind:
         await models.handle_models_get(
-            None,
+            configured,
             {"kind": "image", "model_id": "x"},
             None,  # type: ignore[arg-type]
         )
     assert kind.value.code == "UNKNOWN_KIND"
     with pytest.raises(OperationRefused) as missing:
         await models.handle_models_get(
-            None,
+            configured,
             {"kind": "chat", "model_id": "nope"},
             None,  # type: ignore[arg-type]
         )

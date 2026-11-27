@@ -201,12 +201,10 @@ async def handle_totp_confirm(
     return {"value": {"enrolled": True}}
 
 
-def _relying_party() -> tuple[str, str]:
+def _relying_party(config: Any) -> tuple[str, str]:
     from urllib.parse import urlsplit
 
-    from arbora.core.settings import runtime_config
-
-    origin = str(runtime_config.webui_origin or "")
+    origin = str(config.webui_origin or "")
     return origin, urlsplit(origin).hostname or ""
 
 
@@ -214,7 +212,7 @@ async def handle_webauthn_begin(
     context: Any, params: Mapping[str, Any], op: OpSpec
 ) -> Any:
     credential = _fresh(context)
-    origin, rp_id = _relying_party()
+    origin, rp_id = _relying_party(context.services["config"])
     if not rp_id:
         raise OperationRefused("UNAVAILABLE", {"reason": "browser origin unset"})
     label = params["label"].encode("utf-8")
@@ -288,7 +286,7 @@ async def handle_webauthn_finish(
     )
     if challenge_id_of(challenge) != params["challenge_id"]:
         raise OperationRefused("WEBAUTHN_CHALLENGE_USED")
-    origin, rp_id = _relying_party()
+    origin, rp_id = _relying_party(context.services["config"])
     try:
         identifier, cose = _parsed_attestation(
             params["attestation"], challenge, origin, rp_id

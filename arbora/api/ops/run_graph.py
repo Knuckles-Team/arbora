@@ -11,6 +11,7 @@ from pydantic import Field, model_validator
 
 from arbora.api.ops._common import Params
 from arbora.api.ops.run_replay import MAX_PAGE_BYTES, RunReadParams
+from arbora.core.settings import RuntimeConfig
 
 GRAPH_SCHEMA: Literal["arbora-execution-graph-v1"] = "arbora-execution-graph-v1"
 MAX_GRAPH_EVENTS = 1000
@@ -391,13 +392,11 @@ class GraphBounds:
     max_depth: int = 4
 
     @classmethod
-    def from_config(cls) -> GraphBounds:
-        from arbora.core.settings import runtime_config
-
+    def from_config(cls, config: RuntimeConfig) -> GraphBounds:
         return cls(
-            max_nodes=int(runtime_config.runs_graph_max_nodes),
-            max_edges=int(runtime_config.runs_graph_max_edges),
-            max_depth=int(runtime_config.runs_graph_max_depth),
+            max_nodes=int(config.runs_graph_max_nodes),
+            max_edges=int(config.runs_graph_max_edges),
+            max_depth=int(config.runs_graph_max_depth),
         )
 
 

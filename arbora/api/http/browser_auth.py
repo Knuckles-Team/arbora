@@ -11,6 +11,7 @@ from typing import Any
 from fastapi import HTTPException
 
 from arbora.api.mcp.caller import caller_from_session
+from arbora.core.settings import RuntimeConfig
 from arbora.identity.broker import ArboraBrowserAuthority
 
 from .auth import (
@@ -46,12 +47,19 @@ class BoundBrowserHTTPAuthenticator(AmbientHTTPAuthenticator):
     fence supplements, never replaces, native policy/CAS/effect journal checks.
     """
 
-    def __init__(self, authority: ArboraBrowserAuthority, *, console_origin: str):
+    def __init__(
+        self,
+        authority: ArboraBrowserAuthority,
+        *,
+        console_origin: str,
+        config: RuntimeConfig,
+    ):
         if not isinstance(authority, ArboraBrowserAuthority):
             raise ValueError("one qualified browser authority required")
         from arbora.api.domain.gateway.rate_limit import GatewayRateLimitMiddleware
 
-        self._rate_limiter = GatewayRateLimitMiddleware(None)
+        self._config = config
+        self._rate_limiter = GatewayRateLimitMiddleware(None, config=config)
         self._policy_started = False
         self._authority = authority
         self._active: ContextVar[_RequestCaller | None] = ContextVar(
@@ -75,7 +83,9 @@ class BoundBrowserHTTPAuthenticator(AmbientHTTPAuthenticator):
             not math.isfinite(value) or value < 0 for value in (rate, burst)
         ):
             raise ValueError("valid pre-serving rate policy required")
-        self._rate_limiter = GatewayRateLimitMiddleware(None, rate=rate, burst=burst)
+        self._rate_limiter = GatewayRateLimitMiddleware(
+            None, rate=rate, burst=burst, config=self._config
+        )
 
     @asynccontextmanager
     async def operation_scope(self, request: Any):

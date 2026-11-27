@@ -37,6 +37,7 @@ from arbora.api.invoke.steps import (
 )
 from arbora.api.policy.eunomia import PolicyGate
 from arbora.api.registry import EgMethod, Registry
+from arbora.core.settings import RuntimeConfig
 from arbora.epistemic import ClientContext, EpistemicClientPool, VerifiedActor
 from arbora.security.anonymous import admitted_actor, session_context
 
@@ -331,6 +332,7 @@ def build_invoke_services(
     plans: EgPlanStore,
     policy_gate: PolicyGate,
     audit_client_factory: ClientFactory,
+    config: RuntimeConfig,
     gate_send: Any = None,
     **changes: Any,
 ) -> InvokeServices:
@@ -362,6 +364,7 @@ def build_invoke_services(
         policy_gate=policy_gate,
         audit_preflight=audit.preflight,
         audit_write=audit.write,
+        config=config,
         **changes,
     )
 

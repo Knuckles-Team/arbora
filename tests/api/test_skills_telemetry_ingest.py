@@ -8,6 +8,7 @@ import pytest
 
 from arbora.api.invoke.pipeline import OperationRefused
 from arbora.api.ops import skills_telemetry
+from arbora.core.settings import RuntimeConfig
 from tests.api._knowledge_support import NO_OP, caller_context, record_engine
 
 
@@ -130,6 +131,7 @@ def test_logs_route_drives_the_same_op_with_the_same_closed_list(
             visibility=visible,
             authenticator=Auth(),
             invoke=invoke,
+            config=RuntimeConfig(),
         ),
     )
     good = {"Authorization": "Bearer good"}

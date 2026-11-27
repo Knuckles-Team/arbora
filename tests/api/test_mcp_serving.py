@@ -33,6 +33,7 @@ from arbora.api.registry import (
     Surface,
     Verb,
 )
+from arbora.core.settings import RuntimeConfig
 from arbora.mcp_server.serving import register_intent_surface
 from arbora.observability.state import SubsystemWindows
 from tests.api._support import make_verified_caller
@@ -202,6 +203,7 @@ def _build_projection(op: OpSpec) -> tuple[MCPProjection, _FixtureRuntime]:
         audit_preflight=_audit_preflight,
         audit_write=_audit_write,
         effects=_FixtureJournal(),
+        config=RuntimeConfig(),
     )
     projection = MCPProjection(
         registry,
